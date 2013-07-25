@@ -29,37 +29,37 @@ def _cholesky_omp(X, y, n_nonzero_coefs, tol=None, copy_X=True,
 
     Parameters
     ----------
-    X: array, shape = (n_samples, n_features)
+    X : array, shape (n_samples, n_features)
         Input dictionary. Columns are assumed to have unit norm.
 
-    y: array, shape = (n_samples,)
+    y : array, shape (n_samples,)
         Input targets
 
-    n_nonzero_coefs: int
+    n_nonzero_coefs : int
         Targeted number of non-zero elements
 
-    tol: float
+    tol : float
         Targeted squared error, if not None overrides n_nonzero_coefs.
 
-    copy_X: bool, optional
+    copy_X : bool, optional
         Whether the design matrix X must be copied by the algorithm. A false
         value is only helpful if X is already Fortran-ordered, otherwise a
         copy is made anyway.
 
-    Returns
-    -------
-    return_path: bool, optional. Default: False
+    return_path : bool, optional. Default: False
         Whether to return every value of the nonzero coefficients along the
         forward path. Useful for cross-validation.
 
-    gamma: array, shape = (n_nonzero_coefs,)
+    Returns
+    -------
+    gamma : array, shape (n_nonzero_coefs,)
         Non-zero elements of the solution
 
-    idx: array, shape = (n_nonzero_coefs,)
+    idx : array, shape (n_nonzero_coefs,)
         Indices of the positions of the elements in gamma within the solution
         vector
 
-    coefs, array, shape = (n_features, n_nonzero_coefs)
+    coef : array, shape (n_features, n_nonzero_coefs)
         The first k values of column k correspond to the coefficient value
         for the active features at that step. The lower left triangle contains
         garbage. Only returned if ``return_path=True``.
@@ -130,44 +130,44 @@ def _gram_omp(Gram, Xy, n_nonzero_coefs, tol_0=None, tol=None,
 
     Parameters
     ----------
-    Gram: array, shape = (n_features, n_features)
+    Gram : array, shape (n_features, n_features)
         Gram matrix of the input data matrix
 
-    Xy: array, shape = (n_features,)
+    Xy : array, shape (n_features,)
         Input targets
 
-    n_nonzero_coefs: int
+    n_nonzero_coefs : int
         Targeted number of non-zero elements
 
-    tol_0: float
+    tol_0 : float
         Squared norm of y, required if tol is not None.
 
-    tol: float
+    tol : float
         Targeted squared error, if not None overrides n_nonzero_coefs.
 
-    copy_Gram: bool, optional
+    copy_Gram : bool, optional
         Whether the gram matrix must be copied by the algorithm. A false
         value is only helpful if it is already Fortran-ordered, otherwise a
         copy is made anyway.
 
-    copy_Xy: bool, optional
+    copy_Xy : bool, optional
         Whether the covariance vector Xy must be copied by the algorithm.
         If False, it may be overwritten.
 
-    Returns
-    -------
-    return_path: bool, optional. Default: False
+    return_path : bool, optional. Default: False
         Whether to return every value of the nonzero coefficients along the
         forward path. Useful for cross-validation.
 
-    gamma: array, shape = (n_nonzero_coefs,)
+    Returns
+    -------
+    gamma : array, shape (n_nonzero_coefs,)
         Non-zero elements of the solution
 
-    idx: array, shape = (n_nonzero_coefs,)
+    idx : array, shape (n_nonzero_coefs,)
         Indices of the positions of the elements in gamma within the solution
         vector
 
-    coefs, array, shape = (n_features, n_nonzero_coefs)
+    coefs : array, shape (n_features, n_nonzero_coefs)
         The first k values of column k correspond to the coefficient value
         for the active features at that step. The lower left triangle contains
         garbage. Only returned if ``return_path=True``.
@@ -235,6 +235,7 @@ def _gram_omp(Gram, Xy, n_nonzero_coefs, tol_0=None, tol=None,
     else:
         return gamma, indices[:n_active]
 
+# XXX : rename precompute_gram to precompute for consistency
 
 def orthogonal_mp(X, y, n_nonzero_coefs=None, tol=None, precompute_gram=False,
                   copy_X=True, return_path=False):
@@ -252,10 +253,10 @@ def orthogonal_mp(X, y, n_nonzero_coefs=None, tol=None, precompute_gram=False,
 
     Parameters
     ----------
-    X: array, shape = (n_samples, n_features)
+    X: array, shape (n_samples, n_features)
         Input data. Columns are assumed to have unit norm.
 
-    y: array, shape = (n_samples,) or (n_samples, n_targets)
+    y: array, shape (n_samples,) or (n_samples, n_targets)
         Input targets
 
     n_nonzero_coefs: int
@@ -280,7 +281,7 @@ def orthogonal_mp(X, y, n_nonzero_coefs=None, tol=None, precompute_gram=False,
 
     Returns
     -------
-    coef: array, shape = (n_features,) or (n_features, n_targets)
+    coef: array, shape (n_features,) or (n_features, n_targets)
         Coefficients of the OMP solution. If `return_path=True`, this contains
         the whole coefficient path. In this case its shape is
         (n_features, n_features) or (n_features, n_targets, n_features) and
@@ -367,10 +368,10 @@ def orthogonal_mp_gram(Gram, Xy, n_nonzero_coefs=None, tol=None,
 
     Parameters
     ----------
-    Gram: array, shape = (n_features, n_features)
+    Gram: array, shape (n_features, n_features)
         Gram matrix of the input data: X.T * X
 
-    Xy: array, shape = (n_features,) or (n_features, n_targets)
+    Xy: array, shape (n_features,) or (n_features, n_targets)
         Input targets multiplied by X: X.T * y
 
     n_nonzero_coefs: int
@@ -380,7 +381,7 @@ def orthogonal_mp_gram(Gram, Xy, n_nonzero_coefs=None, tol=None,
     tol: float
         Maximum norm of the residual. If not None, overrides n_nonzero_coefs.
 
-    norms_squared: array-like, shape = (n_targets,)
+    norms_squared: array-like, shape (n_targets,)
         Squared L2 norms of the lines of y. Required if tol is not None.
 
     copy_Gram: bool, optional
@@ -398,7 +399,7 @@ def orthogonal_mp_gram(Gram, Xy, n_nonzero_coefs=None, tol=None,
 
     Returns
     -------
-    coef: array, shape = (n_features,) or (n_features, n_targets)
+    coef: array, shape (n_features,) or (n_features, n_targets)
         Coefficients of the OMP solution. If `return_path=True`, this contains
         the whole coefficient path. In this case its shape is
         (n_features, n_features) or (n_features, n_targets, n_features) and
@@ -513,10 +514,10 @@ class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
 
     Attributes
     ----------
-    `coef_` : array, shape = (n_features,) or (n_features, n_targets)
+    `coef_` : array, shape (n_features,) or (n_features, n_targets)
         parameter vector (w in the fomulation formula)
 
-    `intercept_` : float or array, shape =(n_targets,)
+    `intercept_` : float or array, shape (n_targets,)
         independent term in decision function.
 
     Notes
@@ -558,16 +559,16 @@ class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
 
         Parameters
         ----------
-        X: array-like, shape = (n_samples, n_features)
+        X : array-like, shape (n_samples, n_features)
             Training data.
 
-        y: array-like, shape = (n_samples,) or (n_samples, n_targets)
+        y : array-like, shape (n_samples,) or (n_samples, n_targets)
             Target values.
 
-        Gram: array-like, shape = (n_features, n_features) (optional)
+        Gram : array-like, shape (n_features, n_features) (optional)
             Gram matrix of the input data: X.T * X
 
-        Xy: array-like, shape = (n_features,) or (n_features, n_targets)
+        Xy : array-like, shape (n_features,) or (n_features, n_targets)
             (optional)
             Input targets multiplied by X: X.T * y
 
@@ -673,8 +674,8 @@ def _omp_path_residues(X_train, y_train, X_test, y_test, copy=True,
 
     Returns
     -------
-        residues: array, shape [n_samples, max_features]
-            Residues of the prediction on the test data
+    residues: array, shape (n_samples, max_features)
+        Residues of the prediction on the test data
     """
 
     if copy:
@@ -748,10 +749,10 @@ class OrthogonalMatchingPursuitCV(LinearModel, RegressorMixin):
         Estimated number of non-zero coefficients giving the best mean
         squared error over the cross-validation folds.
 
-    `coef_` : array, shape = (n_features,) or (n_features, n_targets)
+    `coef_` : array, shape (n_features,) or (n_features, n_targets)
         parameter vector (w in the problem formulation).
 
-    `intercept_` : float or array, shape = (n_targets,)
+    `intercept_` : float or array, shape (n_targets,)
         independent term in decision function.
 
     See also
@@ -782,10 +783,10 @@ class OrthogonalMatchingPursuitCV(LinearModel, RegressorMixin):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like, shape [n_samples, n_features]
             Training data.
 
-        y : array-like, shape = [n_samples]
+        y : array-like, shape [n_samples]
             Target values.
 
         Returns
