@@ -1051,7 +1051,7 @@ def test_imputation_copy():
         Xt[0, 0] = np.nan
         # Check that the objects are different and that they don't use
         # the same buffer
-        assert_false(np.equal(X.todense(), Xt).all())
+        assert_false(np.all(X.todense() == Xt))
 
         # Sparse
         imputer = Imputer(missing_values=0, strategy="mean", **params)
@@ -1060,4 +1060,4 @@ def test_imputation_copy():
         Xt[0, 0] = np.nan
         # Check that the objects are different and that they don't use
         # the same buffer
-        assert_false(np.equal(X, Xt).all())
+        assert_false(np.all(X == Xt))
