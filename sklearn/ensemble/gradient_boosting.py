@@ -24,8 +24,7 @@ from __future__ import print_function
 from __future__ import division
 from abc import ABCMeta, abstractmethod
 from warnings import warn
-
-import sys
+from time import time
 
 import numpy as np
 
@@ -331,8 +330,8 @@ class BinomialDeviance(LossFunction):
     """
     def __init__(self, n_classes):
         if n_classes != 2:
-            raise ValueError("%s requires 2 classes." %
-                             self.__class__.__name__)
+            raise ValueError("{0:s} requires 2 classes.".format(
+                self.__class__.__name__))
         # we only need to fit one tree for binary clf.
         super(BinomialDeviance, self).__init__(1)
 
@@ -383,8 +382,8 @@ class MultinomialDeviance(LossFunction):
 
     def __init__(self, n_classes):
         if n_classes < 3:
-            raise ValueError("%s requires more than 2 classes."
-                             % self.__class__.__name__)
+            raise ValueError("{0:s} requires more than 2 classes.".format(
+                self.__class__.__name__))
         super(MultinomialDeviance, self).__init__(n_classes)
 
     def init_estimator(self):
@@ -491,36 +490,8 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
 
         return y_pred
 
-    def fit(self, X, y):
-        """Fit the gradient boosting model.
-
-        Parameters
-        ----------
-        X : array-like, shape = [n_samples, n_features]
-            Training vectors, where n_samples is the number of samples
-            and n_features is the number of features.
-
-        y : array-like, shape = [n_samples]
-            Target values (integers in classification, real numbers in
-            regression)
-            For classification, labels must correspond to classes
-            ``0, 1, ..., n_classes_-1``
-
-        Returns
-        -------
-        self : object
-            Returns self.
-        """
-        # Check input
-        X, = check_arrays(X, dtype=DTYPE, sparse_format="dense",
-                          check_ccontiguous=True)
-
-        y = np.ravel(y, order="C")
-
-        # Check parameters
-        n_samples, n_features = X.shape
-        self.n_features = n_features
-
+    def _check_params(self):
+        """Check validity of parameters and raise ValueError if not valid. """
         if self.n_estimators <= 0:
             raise ValueError("n_estimators must be greater than 0")
 
@@ -528,7 +499,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             raise ValueError("learning_rate must be greater than 0")
 
         if self.loss not in LOSS_FUNCTIONS:
-            raise ValueError("Loss '%s' not supported. " % self.loss)
+            raise ValueError("Loss '{0:s}' not supported. ".format(self.loss))
 
         if self.loss == 'deviance':
             loss_class = (MultinomialDeviance
@@ -556,25 +527,46 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         if not (0.0 < self.alpha and self.alpha < 1.0):
             raise ValueError("alpha must be in (0.0, 1.0)")
 
+    def fit(self, X, y):
+        """Fit the gradient boosting model.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+            Training vectors, where n_samples is the number of samples
+            and n_features is the number of features.
+
+        y : array-like, shape = [n_samples]
+            Target values (integers in classification, real numbers in
+            regression)
+            For classification, labels must correspond to classes
+            ``0, 1, ..., n_classes_-1``
+
+        Returns
+        -------
+        self : object
+            Returns self.
+        """
+        self._check_params()
+
+        # Check input
+        X, = check_arrays(X, dtype=DTYPE, sparse_format="dense",
+                          check_ccontiguous=True)
+        y = np.ravel(y, order="C")
+        n_samples, n_features = X.shape
+        self.n_features = n_features
         random_state = check_random_state(self.random_state)
 
-        # fit initial model
-        self.init_.fit(X, y)
-
-        # init predictions
-        y_pred = self.init_.predict(X)
-
-        self.estimators_ = np.empty((self.n_estimators, self.loss_.K),
-                                    dtype=np.object)
-
-        self.train_score_ = np.zeros((self.n_estimators,), dtype=np.float64)
-
-        # pull some obj into local scope
+        # pull freq used parameters into local scope
         subsample = self.subsample
         loss_ = self.loss_
         do_oob = subsample < 1.0
 
-        if self.subsample < 1.0:
+        # allocate model state data structures
+        self.estimators_ = np.empty((self.n_estimators, self.loss_.K),
+                                    dtype=np.object)
+        self.train_score_ = np.zeros((self.n_estimators,), dtype=np.float64)
+        if do_oob:
             self._oob_score_ = np.zeros((self.n_estimators), dtype=np.float64)
             self.oob_improvement_ = np.zeros((self.n_estimators),
                                              dtype=np.float64)
@@ -582,15 +574,37 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         sample_mask = np.ones((n_samples,), dtype=np.bool)
         n_inbag = max(1, int(subsample * n_samples))
 
+        if self.verbose:
+            # header fields and line format str
+            header_fields = ['Iter', 'Train Loss']
+            verbose_fmt = ['{iter:>10d}', '{train_score:>16.4f}']
+            if do_oob:
+                header_fields.append('OOB Improve')
+                verbose_fmt.append('{oob_impr:>16.4f}')
+            header_fields.append('Remaining Time')
+            verbose_fmt.append('{remaining_time:>16s}')
+            verbose_fmt = ' '.join(verbose_fmt)
+            # print the header line
+            print(('{:>10} ' + '{:>16} ' *
+                   (len(header_fields) - 1)).format(*header_fields))
+            # plot verbose info each time i % verbose_mod == 0
+            verbose_mod = 1
+            start_time = time()
+
+        # fit initial model
+        self.init_.fit(X, y)
+
+        # init predictions
+        y_pred = self.init_.predict(X)
+
         # perform boosting iterations
         for i in range(self.n_estimators):
 
             # subsampling
             if do_oob:
-                # TODO replace with ``np.choice`` if possible.
                 sample_mask = _random_sample_mask(n_samples, n_inbag,
                                                   random_state)
-                # OOB score before this stage
+                # OOB score before adding this stage
                 old_oob_score = loss_(y[~sample_mask],
                                       y_pred[~sample_mask])
 
@@ -605,22 +619,26 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
                 self._oob_score_[i] = loss_(y[~sample_mask],
                                             y_pred[~sample_mask])
                 self.oob_improvement_[i] = old_oob_score - self._oob_score_[i]
-
-                if self.verbose > 1:
-                    print("built tree %d of %d, train score = %.6e, "
-                          "oob improvement = %.6e" % (i + 1, self.n_estimators,
-                                                self.train_score_[i],
-                                                self.oob_improvement_[i]))
-
             else:
                 # no need to fancy index w/ no subsampling
                 self.train_score_[i] = self.loss_(y, y_pred)
-                if self.verbose > 1:
-                    print("built tree %d of %d, train score = %.6e" %
-                          (i + 1, self.n_estimators, self.train_score_[i]))
-            if self.verbose == 1:
-                print(end='.')
-                sys.stdout.flush()
+
+            if self.verbose > 0:
+                if (i + 1) % verbose_mod == 0:
+                    oob_impr = self.oob_improvement_[i] if do_oob else 0
+                    remaining_time = ((self.n_estimators - (i + 1)) *
+                                      (time() - start_time) / float(i + 1))
+                    if remaining_time > 60:
+                        remaining_time = '{0:.2f}m'.format(remaining_time / 60.0)
+                    else:
+                        remaining_time = '{0:.2f}s'.format(remaining_time)
+                    print(verbose_fmt.format(iter=i + 1,
+                                             train_score=self.train_score_[i],
+                                             oob_impr=oob_impr,
+                                             remaining_time=remaining_time))
+                if self.verbose == 1 and ((i + 1) // (verbose_mod * 10) > 0):
+                    # adjust verbose frequency (powers of 10)
+                    verbose_mod *= 10
 
         return self
 
@@ -634,8 +652,8 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             raise ValueError("Estimator not fitted, call `fit` "
                              "before making predictions`.")
         if X.shape[1] != self.n_features:
-            raise ValueError("X.shape[1] should be %d, not %d." %
-                             (self.n_features, X.shape[1]))
+            raise ValueError("X.shape[1] should be {0:d}, not {1:d}.".format(
+                self.n_features, X.shape[1]))
         score = self.init_.predict(X).astype(np.float64)
         return score
 
@@ -784,8 +802,9 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         If None it uses ``loss.init_estimator``.
 
     verbose : int, default: 0
-        Enable verbose output. If 1 then it prints '.' for every tree built.
-        If greater than 1 then it prints the score for every tree.
+        Enable verbose output. If 1 then it prints progress and performance
+        once in a while (the more trees the lower the frequency).
+        If greater than 1 then it prints progress and performance for every tree.
 
     Attributes
     ----------
@@ -1021,8 +1040,9 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         If None it uses ``loss.init_estimator``.
 
     verbose : int, default: 0
-        Enable verbose output. If 1 then it prints '.' for every tree built.
-        If greater than 1 then it prints the score for every tree.
+        Enable verbose output. If 1 then it prints progress and performance
+        once in a while (the more trees the lower the frequency).
+        If greater than 1 then it prints progress and performance for every tree.
 
     Attributes
     ----------
