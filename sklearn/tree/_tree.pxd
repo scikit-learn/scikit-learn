@@ -121,7 +121,7 @@ cdef class Tree:
     cdef SIZE_t* children_right          # children_right[i] is the right child of node i
     cdef SIZE_t* feature                 # features[i] is the feature used for splitting node i
     cdef double* threshold               # threshold[i] is the threshold value at node i
-    cdef double* value                   # value[i] is the values contained at node i
+    cdef double* value                   # value[i * value_stride:(i+1) * value_stride] are the values contained at node i
     cdef double* impurity                # impurity[i] is the impurity of node i (i.e., the value of the criterion)
     cdef SIZE_t* n_node_samples          # n_node_samples[i] is the number of samples at node i
 
