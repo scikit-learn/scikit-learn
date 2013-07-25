@@ -21,6 +21,7 @@ from sklearn.cluster import AgglomerativeClustering, FeatureAgglomeration
 from sklearn.cluster.hierarchical import (_hc_cut, _TREE_BUILDERS,
                                           linkage_tree)
 from sklearn.feature_extraction.image import grid_to_graph
+from sklearn.metrics.pairwise import _VALID_METRICS
 
 
 def test_linkage_misc():
@@ -164,11 +165,12 @@ def test_agglomerative_clustering():
     assert_raises(ValueError, clustering.fit, X)
 
     # Test using another metric than euclidean works with linkage complete
-    clustering = AgglomerativeClustering(
-        n_clusters=10,
-        connectivity=connectivity.todense(),
-        affinity="l1",
-        linkage="complete")
+    for affinity in _VALID_METRICS:
+        clustering = AgglomerativeClustering(
+            n_clusters=10,
+            connectivity=connectivity.todense(),
+            affinity=affinity,
+            linkage="complete")
 
 
 def test_ward_agglomeration():

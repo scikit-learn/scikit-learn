@@ -604,6 +604,14 @@ def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
     return np.hstack(ret)
 
 
+_VALID_METRICS = ['euclidean', 'l2', 'l1', 'manhattan', 'cityblock',
+                  'braycurtis', 'canberra', 'chebyshev', 'correlation',
+                  'cosine', 'dice', 'hamming', 'jaccard', 'kulsinski',
+                  'mahalanobis', 'matching', 'minkowski', 'rogerstanimoto',
+                  'russellrao', 'seuclidean', 'sokalmichener',
+                  'sokalsneath', 'sqeuclidean', 'yule', "wminkowski"]
+
+
 def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
     """ Compute the distance matrix from a vector array X and optional Y.
 
@@ -684,6 +692,13 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
         from X and the jth array from Y.
 
     """
+    if metric not in _VALID_METRICS and \
+       not callable(metric) and \
+       metric != "precomputed":
+        raise ValueError("Unknown metric %s. "
+                         "Valid metrics are %s, or 'precomputed', or a "
+                         "callable" % (metric, _VALID_METRICS))
+
     if metric == "precomputed":
         return X
     elif metric in PAIRWISE_DISTANCE_FUNCTIONS:
