@@ -1073,7 +1073,7 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
     labels : array
         Integer array of labels.
 
-    pos_label : int, 1 by default
+    pos_label : str or int, 1 by default
         If ``average`` is not ``None`` and the classification target is binary,
         only this class's scores will be returned.
 
@@ -1197,7 +1197,7 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
     labels : array
         Integer array of labels.
 
-    pos_label : int, 1 by default
+    pos_label : str or int, 1 by default
         If ``average`` is not ``None`` and the classification target is binary,
         only this class's scores will be returned.
 
@@ -1460,7 +1460,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     labels : array
         Integer array of labels.
 
-    pos_label : int, 1 by default
+    pos_label : str or int, 1 by default
         If ``average`` is not ``None`` and the classification target is binary,
         only this class's scores will be returned.
 
@@ -1743,7 +1743,7 @@ def precision_score(y_true, y_pred, labels=None, pos_label=1,
     labels : array
         Integer array of labels.
 
-    pos_label : int, 1 by default
+    pos_label : str or int, 1 by default
         If ``average`` is not ``None`` and the classification target is binary,
         only this class's scores will be returned.
 
@@ -1865,7 +1865,7 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
     labels : array
         Integer array of labels.
 
-    pos_label : int, 1 by default
+    pos_label : str or int, 1 by default
         If ``average`` is not ``None`` and the classification target is binary,
         only this class's scores will be returned.
 
