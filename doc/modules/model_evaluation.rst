@@ -661,6 +661,22 @@ Then the metrics are defined as:
 |``None``       | :math:`\langle P(y_l, \hat{y}_l) | l \in L \rangle`                                                              | :math:`\langle R(y_l, \hat{y}_l) | l \in L \rangle`                                                              | :math:`\langle F_\beta(y_l, \hat{y}_l) | l \in L \rangle`                                                            |
 +---------------+------------------------------------------------------------------------------------------------------------------+------------------------------------------------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------------+
 
+  >>> from sklearn import metrics
+  >>> y_true = [0, 1, 2, 0, 1, 2]
+  >>> y_pred = [0, 2, 1, 0, 0, 1]
+  >>> metrics.precision_score(y_true, y_pred, average='macro')  # doctest: +ELLIPSIS
+  0.22...
+  >>> metrics.recall_score(y_true, y_pred, average='micro')
+  ... # doctest: +ELLIPSIS
+  0.33...
+  >>> metrics.f1_score(y_true, y_pred, average='weighted')  # doctest: +ELLIPSIS
+  0.26...
+  >>> metrics.fbeta_score(y_true, y_pred, average='macro', beta=0.5)  # doctest: +ELLIPSIS
+  0.23...
+  >>> metrics.precision_recall_fscore_support(y_true, y_pred, beta=0.5, average=None)
+  ... # doctest: +ELLIPSIS
+  (array([ 0.66...,  0.        ,  0.        ]), array([ 1.,  0.,  0.]), array([ 0.71...,  0.        ,  0.        ]), array([2, 2, 2]...))
+
 
 Hinge loss
 ...........
@@ -693,7 +709,7 @@ with a svm classifier::
   >>> pred_decision  # doctest: +ELLIPSIS
   array([-2.18...,  2.36...,  0.09...])
   >>> hinge_loss([-1, 1, 1], pred_decision)  # doctest: +ELLIPSIS
-  0.30...
+  0.3...
 
 
 Matthews correlation coefficient
