@@ -124,7 +124,7 @@ $(function() {
           $(this).css('background-color', '#D0D0D0');
       },
       function () {
-          $(this).css('background-color', '#F0F0F0');
+          $(this).css('background-color', '#F6F6F6');
       }
     );
   }
