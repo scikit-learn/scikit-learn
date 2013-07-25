@@ -186,8 +186,10 @@ def test_lasso_path_return_models_vs_new_return_gives_same_coefficients():
     y = np.array([1, 2, 3.1])
     alphas = [5., 1., .5]
     # Compute the lasso_path
-    coef_path = [e.coef_ for e in lasso_path(X, y, alphas=alphas,
-                                             fit_intercept=False)]
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", DeprecationWarning)
+        coef_path = [e.coef_ for e in lasso_path(X, y, alphas=alphas,
+                                                 fit_intercept=False)]
 
     # Use lars_path and lasso_path(new output) with 1D linear interpolation
     # to compute the the same path
@@ -258,23 +260,14 @@ def test_path_parameters():
 
 def test_warm_start():
     X, y, _, _ = build_dataset()
-    # Test that explicit warm restart...
-    clf = ElasticNet(alpha=1.0, max_iter=50)
+    clf = ElasticNet(alpha=1.0, max_iter=50, warm_start=True)
+    clf.fit(X, y)
+    clf.set_params(alpha=0.1)
     clf.fit(X, y)
 
-    clf2 = ElasticNet(alpha=0.1, max_iter=50)
-    clf2.fit(X, y, coef_init=clf.coef_.copy())
-
-    #... and implicit warm restart are equivalent.
-    clf3 = ElasticNet(alpha=1.0, max_iter=50, warm_start=True)
-    clf3.fit(X, y)
-
-    assert_array_almost_equal(clf3.coef_, clf.coef_)
-
-    clf3.set_params(alpha=0.1)
-    clf3.fit(X, y)
-
-    assert_array_almost_equal(clf3.coef_, clf2.coef_)
+    clf2 = ElasticNet(alpha=0.1, max_iter=500)
+    clf2.fit(X, y)
+    assert_array_almost_equal(clf2.coef_, clf.coef_)
 
 
 def test_lasso_alpha_warning():
