@@ -384,7 +384,7 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         rng.shuffle(idx)
 
         X = X4[idx, :]
-        Y = Y4[idx, :]
+        Y = Y4[idx]
 
         clf = self.factory(penalty='l1', alpha=.2, fit_intercept=False,
                            n_iter=2000)
