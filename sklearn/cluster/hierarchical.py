@@ -498,8 +498,10 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         unstructured.
 
     affinity : string or callable, default: "euclidean"
-        Metric used to compute the linkage.
-        If linkage is "ward", only "euclidean is accepted.
+        Metric used to compute the linkage. Can be "euclidean", "l1", "l2",
+        "manhattan", "hamming", "jaccard", ... See the metrics.pairwise module
+        for the full list.
+        If linkage is "ward", only "euclidean" is accepted.
 
     memory : Instance of joblib.Memory or string (optional)
         Used to cache the output of the computation of the tree.

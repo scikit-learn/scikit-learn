@@ -102,6 +102,9 @@ def test_pairwise_distances():
     assert_raises(TypeError, pairwise_distances, X, Y_sparse,
                   metric="minkowski")
 
+    # Test that a value error is raised if the metric is unkown
+    assert_raises(ValueError, pairwise_distances, X, Y, metric="blah")
+
 
 def test_pairwise_parallel():
     rng = np.random.RandomState(0)
