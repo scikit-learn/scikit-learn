@@ -44,13 +44,13 @@ def test_n_nonzero_coefs():
     assert_true(count_nonzero(orthogonal_mp(X, y[:, 0],
                               n_nonzero_coefs=5)) <= 5)
     assert_true(count_nonzero(orthogonal_mp(X, y[:, 0], n_nonzero_coefs=5,
-                                            precompute_gram=True)) <= 5)
+                                            precompute=True)) <= 5)
 
 
 def test_tol():
     tol = 0.5
     gamma = orthogonal_mp(X, y[:, 0], tol=tol)
-    gamma_gram = orthogonal_mp(X, y[:, 0], tol=tol, precompute_gram=True)
+    gamma_gram = orthogonal_mp(X, y[:, 0], tol=tol, precompute=True)
     assert_true(np.sum((y[:, 0] - np.dot(X, gamma)) ** 2) <= tol)
     assert_true(np.sum((y[:, 0] - np.dot(X, gamma_gram)) ** 2) <= tol)
 
@@ -58,13 +58,13 @@ def test_tol():
 def test_with_without_gram():
     assert_array_almost_equal(
         orthogonal_mp(X, y, n_nonzero_coefs=5),
-        orthogonal_mp(X, y, n_nonzero_coefs=5, precompute_gram=True))
+        orthogonal_mp(X, y, n_nonzero_coefs=5, precompute=True))
 
 
 def test_with_without_gram_tol():
     assert_array_almost_equal(
         orthogonal_mp(X, y, tol=1.),
-        orthogonal_mp(X, y, tol=1., precompute_gram=True))
+        orthogonal_mp(X, y, tol=1., precompute=True))
 
 
 def test_unreachable_accuracy():
@@ -75,8 +75,8 @@ def test_unreachable_accuracy():
             orthogonal_mp(X, y, n_nonzero_coefs=n_features))
 
         assert_array_almost_equal(
-            orthogonal_mp(X, y, tol=0, precompute_gram=True),
-            orthogonal_mp(X, y, precompute_gram=True,
+            orthogonal_mp(X, y, tol=0, precompute=True),
+            orthogonal_mp(X, y, precompute=True,
                           n_nonzero_coefs=n_features))
         assert_greater(len(w), 0)  # warnings should be raised
 
@@ -117,15 +117,21 @@ def test_estimator():
 
     omp.set_params(fit_intercept=False, normalize=False)
 
-    omp.fit(X, y[:, 0], Gram=G, Xy=Xy[:, 0])
-    assert_equal(omp.coef_.shape, (n_features,))
-    assert_equal(omp.intercept_, 0)
-    assert_true(count_nonzero(omp.coef_) <= n_nonzero_coefs)
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter('always')
+        omp.fit(X, y[:, 0], Gram=G, Xy=Xy[:, 0])
+        assert_equal(omp.coef_.shape, (n_features,))
+        assert_equal(omp.intercept_, 0)
+        assert_true(count_nonzero(omp.coef_) <= n_nonzero_coefs)
+        assert_true(len(w) == 2)
 
-    omp.fit(X, y, Gram=G, Xy=Xy)
-    assert_equal(omp.coef_.shape, (n_targets, n_features))
-    assert_equal(omp.intercept_, 0)
-    assert_true(count_nonzero(omp.coef_) <= n_targets * n_nonzero_coefs)
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter('always')
+        omp.fit(X, y, Gram=G, Xy=Xy)
+        assert_equal(omp.coef_.shape, (n_targets, n_features))
+        assert_equal(omp.intercept_, 0)
+        assert_true(count_nonzero(omp.coef_) <= n_targets * n_nonzero_coefs)
+        assert_true(len(w) == 2)
 
 
 def test_scaling_with_gram():
@@ -140,15 +146,15 @@ def test_scaling_with_gram():
                                          fit_intercept=False, normalize=True)
         omp1.fit(X, y, Gram=G)
         omp1.fit(X, y, Gram=G, Xy=Xy)
-        assert_true(len(w) == 0)
-        omp2.fit(X, y, Gram=G)
-        assert_true(len(w) == 1)
-        omp2.fit(X, y, Gram=G, Xy=Xy)
-        assert_true(len(w) == 2)
-        omp3.fit(X, y, Gram=G)
         assert_true(len(w) == 3)
+        omp2.fit(X, y, Gram=G)
+        assert_true(len(w) == 5)
+        omp2.fit(X, y, Gram=G, Xy=Xy)
+        assert_true(len(w) == 8)
+        omp3.fit(X, y, Gram=G)
+        assert_true(len(w) == 10)
         omp3.fit(X, y, Gram=G, Xy=Xy)
-        assert_true(len(w) == 4)
+        assert_true(len(w) == 13)
 
 
 def test_identical_regressors():

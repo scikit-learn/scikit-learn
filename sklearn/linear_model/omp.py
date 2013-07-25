@@ -236,8 +236,6 @@ def _gram_omp(Gram, Xy, n_nonzero_coefs, tol_0=None, tol=None,
         return gamma, indices[:n_active]
 
 
-# XXX : rename precompute_gram to precompute for consistency
-
 def orthogonal_mp(X, y, n_nonzero_coefs=None, tol=None, precompute_gram=False,
                   copy_X=True, return_path=False):
     """Orthogonal Matching Pursuit (OMP)
@@ -492,26 +490,29 @@ class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
     normalize : boolean, optional
         If False, the regressors X are assumed to be already normalized.
 
-    precompute_gram : {True, False, 'auto'},
+    precompute : {True, False, 'auto'}, default 'auto'
         Whether to use a precomputed Gram and Xy matrix to speed up
         calculations. Improves performance when `n_targets` or `n_samples` is
         very large. Note that if you already have such matrices, you can pass
         them directly to the fit method.
+        WARNING : will be deprecated in 0.15. Renamed to precompute.
 
     copy_X : bool, optional
         Whether the design matrix X must be copied by the algorithm. A false
         value is only helpful if X is already Fortran-ordered, otherwise a
         copy is made anyway.
+        WARNING : will be deprecated in 0.15
 
     copy_Gram : bool, optional
         Whether the gram matrix must be copied by the algorithm. A false
         value is only helpful if X is already Fortran-ordered, otherwise a
         copy is made anyway.
+        WARNING : will be deprecated in 0.15
 
     copy_Xy : bool, optional
         Whether the covariance vector Xy must be copied by the algorithm.
         If False, it may be overwritten.
-
+        WARNING : will be deprecated in 0.15
 
     Attributes
     ----------
@@ -543,14 +544,47 @@ class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
     decomposition.sparse_encode
 
     """
-    def __init__(self, copy_X=True, copy_Gram=True, copy_Xy=True,
+    def __init__(self, copy_X=None, copy_Gram=None, copy_Xy=None,
                  n_nonzero_coefs=None, tol=None, fit_intercept=True,
-                 normalize=True, precompute_gram=False):
+                 normalize=True, precompute='auto', precompute_gram=None):
         self.n_nonzero_coefs = n_nonzero_coefs
         self.tol = tol
         self.fit_intercept = fit_intercept
         self.normalize = normalize
-        self.precompute_gram = precompute_gram
+
+        if precompute_gram is not None:
+            warnings.warn("precompute_gram will be removed in 0.15."
+                          " Use the precompute parameter.",
+                          DeprecationWarning, stacklevel=2)
+        else:
+            precompute = precompute_gram
+
+        self.precompute = precompute
+
+        if copy_Gram is not None:
+            warnings.warn("copy_Gram will be removed in 0.15."
+                          " Use the orthogonal_mp function for"
+                          " low level memory control.",
+                          DeprecationWarning, stacklevel=2)
+        else:
+            copy_Gram = True
+
+        if copy_Xy is not None:
+            warnings.warn("copy_Xy will be removed in 0.15."
+                          " Use the orthogonal_mp function for"
+                          " low level memory control.",
+                          DeprecationWarning, stacklevel=2)
+        else:
+            copy_Xy = True
+
+        if copy_X is not None:
+            warnings.warn("copy_X will be removed in 0.15."
+                          " Use the orthogonal_mp function for"
+                          " low level memory control.",
+                          DeprecationWarning, stacklevel=2)
+        else:
+            copy_X = True
+
         self.copy_Gram = copy_Gram
         self.copy_Xy = copy_Xy
         self.copy_X = copy_X
@@ -568,10 +602,12 @@ class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
 
         Gram : array-like, shape (n_features, n_features) (optional)
             Gram matrix of the input data: X.T * X
+            WARNING : will be deprecated in 0.15
 
         Xy : array-like, shape (n_features,) or (n_features, n_targets)
             (optional)
             Input targets multiplied by X: X.T * y
+            WARNING : will be deprecated in 0.15
 
 
         Returns
@@ -583,6 +619,18 @@ class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
         y = np.asarray(y)
         n_features = X.shape[1]
 
+        if Gram is not None:
+            warnings.warn("Gram will be removed in 0.15."
+                          " Use the orthogonal_mp function for"
+                          " low level memory control.",
+                          DeprecationWarning, stacklevel=2)
+
+        if Xy is not None:
+            warnings.warn("Xy will be removed in 0.15."
+                          " Use the orthogonal_mp function for"
+                          " low level memory control.",
+                          DeprecationWarning, stacklevel=2)
+
         if (Gram is not None or Xy is not None) and (self.fit_intercept
                                                      or self.normalize):
             warnings.warn('Mean subtraction (fit_intercept) and normalization '
@@ -593,7 +641,10 @@ class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
                           'False.', RuntimeWarning, stacklevel=2)
             Gram, Xy = None, None
 
-        precompute = Gram
+        precompute = self.precompute
+        if Gram is not None:
+            precompute = Gram
+
         X, y, X_mean, y_mean, X_std, Gram, Xy = \
             _pre_fit(X, y, Xy, precompute, self.normalize, self.fit_intercept,
                      copy=self.copy_X)
@@ -801,7 +852,7 @@ class OrthogonalMatchingPursuitCV(LinearModel, RegressorMixin):
         best_n_nonzero_coefs = np.argmin(mse_folds.mean(axis=0)) + 1
         self.n_nonzero_coefs_ = best_n_nonzero_coefs
         omp = OrthogonalMatchingPursuit(n_nonzero_coefs=best_n_nonzero_coefs,
-                                        copy_X=self.copy,
+                                        copy_X=True,
                                         fit_intercept=self.fit_intercept,
                                         normalize=self.normalize)
         omp.fit(X, y)
