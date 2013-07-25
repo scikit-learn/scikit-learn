@@ -19,7 +19,7 @@ from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.cluster import Ward, WardAgglomeration, ward_tree
 from sklearn.cluster import AgglomerativeClustering, FeatureAgglomeration
 from sklearn.cluster.hierarchical import (_hc_cut, _TREE_BUILDERS,
-    linkage_tree)
+                                          linkage_tree)
 from sklearn.feature_extraction.image import grid_to_graph
 
 
@@ -49,8 +49,6 @@ def test_linkage_misc():
         ward_tree(X, copy=True)
     # We should be getting 1 warnings: for using the copy argument
     assert_equal(len(warning_list), 1)
-
-
 
 
 def test_structured_linkage_tree():
@@ -144,15 +142,33 @@ def test_agglomerative_clustering():
         clustering.fit(X)
         assert_true(np.size(np.unique(clustering.labels_)) == 10)
         # Check that we raise a TypeError on dense matrices
-        clustering = AgglomerativeClustering(n_clusters=10,
-                        connectivity=connectivity.todense(),
-                        linkage=linkage)
+        clustering = AgglomerativeClustering(
+            n_clusters=10,
+            connectivity=connectivity.todense(),
+            linkage=linkage)
         assert_raises(TypeError, clustering.fit, X)
-        clustering = AgglomerativeClustering(n_clusters=10,
-                        connectivity=sparse.lil_matrix(
-                            connectivity.todense()[:10, :10]),
-                        linkage=linkage)
+        clustering = AgglomerativeClustering(
+            n_clusters=10,
+            connectivity=sparse.lil_matrix(
+                connectivity.todense()[:10, :10]),
+            linkage=linkage)
         assert_raises(ValueError, clustering.fit, X)
+
+    # Test that using ward with another metric than euclidean raises an
+    # exception
+    clustering = AgglomerativeClustering(
+        n_clusters=10,
+        connectivity=connectivity.todense(),
+        affinity="manhattan",
+        linkage="ward")
+    assert_raises(ValueError, clustering.fit, X)
+
+    # Test using another metric than euclidean works with linkage complete
+    clustering = AgglomerativeClustering(
+        n_clusters=10,
+        connectivity=connectivity.todense(),
+        affinity="l1",
+        linkage="complete")
 
 
 def test_ward_agglomeration():
