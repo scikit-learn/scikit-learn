@@ -10,7 +10,7 @@ from ..utils import check_arrays
 from ..externals import six
 
 import warnings
-from abc import ABCMeta
+from abc import ABCMeta, abstractmethod
 import numpy as np
 from scipy import linalg
 
@@ -209,6 +209,7 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
     PLS_SVD
     """
 
+    @abstractmethod
     def __init__(self, n_components=2, scale=True, deflation_mode="regression",
                  mode="A", algorithm="nipals", norm_y_weights=False,
                  max_iter=500, tol=1e-06, copy=True):
