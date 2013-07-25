@@ -21,13 +21,12 @@
 {% block htmltitle %}
 {{ super() }}
 <!-- htmltitle is before nature.css - we use this hack to load bootstrap first -->
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="stylesheet" href="{{ pathto('_static/css/bootstrap.min.css', 1) }}" media="screen" />
 <link rel="stylesheet" href="{{ pathto('_static/css/bootstrap-responsive.css', 1) }}"/>
 {% endblock %}
 
 {% block extrahead %}
-
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script src="{{ pathto('_static/js/bootstrap.min.js', 1)}}"></script>
 
 {% if theme_google_analytics|tobool %}
