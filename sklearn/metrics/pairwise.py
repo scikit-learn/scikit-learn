@@ -101,7 +101,7 @@ def check_pairwise_arrays(X, Y):
     return X, Y
 
 
-# Distances
+# Pairwise distances
 def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
     """
     Considering the rows of X (and Y=X) as vectors, compute the
@@ -300,6 +300,68 @@ def cosine_distances(X, Y=None):
     S *= -1
     S += 1
     return S    
+
+
+# Paired distances
+def paired_euclidean_distances(X, Y):
+    """
+    Computes the paired distances between X and Y
+
+    Parameters
+    ----------
+    X : array-like, shape = [n_samples, n_features]
+
+    Y : array-like, shape = [n_samples, n_features]
+
+    Returns
+    -------
+    Distances: ndarray (n_samples, )
+    """
+    if len(X) != len(Y):
+        raise ValueError("X and Y should be of same size. They were "
+                         "respectively %d and %d long." % (len(X), len(Y)))
+    X, Y = check_pairwise_arrays(X, Y)
+    return np.sqrt(((X - Y) ** 2).sum(axis=-1))
+
+
+def paired_manhattan_distances(X, Y):
+    """ Compute the L1 distances between the vectors in X and Y.
+    """
+    X, Y = check_pairwise_arrays(X, Y)
+    return np.abs(X - Y).sum(axis=-1)
+
+
+PAIRED_DISTANCES = {
+    'euclidean': paired_euclidean_distances,
+    'l2': paired_euclidean_distances,
+    'l1': paired_manhattan_distances,
+    'manhattan': paired_manhattan_distances,
+    'cityblock': paired_manhattan_distances,
+    }
+
+
+def paired_distances(X, Y, metric="euclidean"):
+    """
+
+    Parameters
+    ----------
+    X, Y : ndarray (n_samples, n_features]
+
+    metric : string or callable
+
+    Returns
+    -------
+    distances : ndarray (n_samples, )
+    """
+
+    if metric in PAIRED_DISTANCES:
+        func = PAIRED_DISTANCES[metric]
+        return func(X, Y)
+    elif callable(metric):
+        distances = np.zeros(len(X))
+        for i in range(len(X)):
+            distances[i] = metric(X[i], Y[i])
+        return distances
 
 
 # Kernels

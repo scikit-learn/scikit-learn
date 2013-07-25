@@ -21,7 +21,7 @@ from sklearn.cluster import AgglomerativeClustering, FeatureAgglomeration
 from sklearn.cluster.hierarchical import (_hc_cut, _TREE_BUILDERS,
                                           linkage_tree)
 from sklearn.feature_extraction.image import grid_to_graph
-from sklearn.metrics.pairwise import _VALID_METRICS
+from sklearn.metrics.pairwise import PAIRED_DISTANCES
 
 
 def test_linkage_misc():
@@ -165,7 +165,7 @@ def test_agglomerative_clustering():
     assert_raises(ValueError, clustering.fit, X)
 
     # Test using another metric than euclidean works with linkage complete
-    for affinity in _VALID_METRICS:
+    for affinity in PAIRED_DISTANCES.keys():
         clustering = AgglomerativeClustering(
             n_clusters=10,
             connectivity=connectivity.todense(),

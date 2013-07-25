@@ -17,7 +17,7 @@ from scipy.cluster import hierarchy
 from ..base import BaseEstimator, ClusterMixin
 from ..externals.joblib import Memory
 from ..externals import six
-from ..metrics.pairwise import pairwise_distances
+from ..metrics.pairwise import paired_distances, pairwise_distances
 from ..utils import array2d
 from ..utils.sparsetools import connected_components
 
@@ -282,8 +282,9 @@ def linkage_tree(X, connectivity=None, n_components=None,
             - complete or maximum linkage uses the maximum distances between
               all observations of the two sets.
 
-
-    affinity : FIXME
+    affinity : string, optional, default: "euclidean".
+        which metric to use. Can be "euclidean", "manhattan", or any of the
+        scikits known paired distance (see metric.pairwise)
 
     Returns
     -------
@@ -343,7 +344,8 @@ def linkage_tree(X, connectivity=None, n_components=None,
 
     # FIXME We compute all the distances, while we could have only computed
     # the "interesting" distances
-    distances = pairwise_distances(X)[connectivity.row, connectivity.col]
+    distances = paired_distances(X[connectivity.row],
+                                 X[connectivity.col])
     connectivity.data = distances
 
     if n_clusters is None:
