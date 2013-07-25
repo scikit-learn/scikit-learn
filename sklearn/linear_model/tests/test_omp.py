@@ -13,7 +13,8 @@ from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_greater
 
 from sklearn.linear_model import (orthogonal_mp, orthogonal_mp_gram,
-                                  OrthogonalMatchingPursuit)
+                                  OrthogonalMatchingPursuit,
+                                  OrthogonalMatchingPursuitCV)
 from sklearn.utils.fixes import count_nonzero
 from sklearn.datasets import make_sparse_coded_signal
 
@@ -186,3 +187,28 @@ def test_no_atoms():
         gamma_empty_gram = orthogonal_mp_gram(G, Xy_empty, 1)
     assert_equal(np.all(gamma_empty == 0), True)
     assert_equal(np.all(gamma_empty_gram == 0), True)
+
+
+def test_omp_path():
+    path = orthogonal_mp(X, y, n_nonzero_coefs=5, return_path=True)
+    last = orthogonal_mp(X, y, n_nonzero_coefs=5, return_path=False)
+    assert_equal(path.shape, (n_features, n_targets, 5))
+    assert_array_almost_equal(path[:, :, -1], last)
+    path = orthogonal_mp_gram(G, Xy, n_nonzero_coefs=5, return_path=True)
+    last = orthogonal_mp_gram(G, Xy, n_nonzero_coefs=5, return_path=False)
+    assert_equal(path.shape, (n_features, n_targets, 5))
+    assert_array_almost_equal(path[:, :, -1], last)
+
+
+def test_omp_cv():
+    y_ = y[:, 0]
+    gamma_ = gamma[:, 0]
+    ompcv = OrthogonalMatchingPursuitCV(normalize=True, fit_intercept=False,
+                                        max_iter=10, cv=5)
+    ompcv.fit(X, y_)
+    assert_equal(ompcv.n_nonzero_coefs_, n_nonzero_coefs)
+    assert_array_almost_equal(ompcv.coef_, gamma_)
+    omp = OrthogonalMatchingPursuit(normalize=True, fit_intercept=False,
+                                    n_nonzero_coefs=ompcv.n_nonzero_coefs_)
+    omp.fit(X, y_)
+    assert_array_almost_equal(ompcv.coef_, omp.coef_)
