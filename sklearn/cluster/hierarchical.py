@@ -719,13 +719,13 @@ class WardAgglomeration(AgglomerationTransform, Ward):
     n_clusters : int or ndarray
         The number of clusters.
 
-    connectivity : sparse matrix
+    connectivity : sparse matrix, optional
         connectivity matrix. Defines for each feature the neighboring
         features following a given structure of the data.
         Default is None, i.e, the hierarchical agglomeration algorithm is
         unstructured.
 
-    memory : Instance of joblib.Memory or string
+    memory : Instance of joblib.Memory or string, optional
         Used to cache the output of the computation of the tree.
         By default, no caching is done. If a string is given, it is the
         path to the caching directory.
@@ -742,7 +742,6 @@ class WardAgglomeration(AgglomerationTransform, Ward):
         when varying the number of cluster and using caching, it may
         be advantageous to compute the full tree.
 
-
     Attributes
     ----------
     `children_` : array-like, shape = [n_nodes, 2]
@@ -755,6 +754,9 @@ class WardAgglomeration(AgglomerationTransform, Ward):
 
     `n_leaves_` : int
         Number of leaves in the hierarchical tree.
+
+    `n_components_` : int
+        The estimated number of connected components in the graph.
 
     """
 
