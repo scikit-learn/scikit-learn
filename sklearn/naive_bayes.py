@@ -22,6 +22,7 @@ from scipy.sparse import issparse
 import warnings
 
 from .base import BaseEstimator, ClassifierMixin
+from .linear_model.base import LinearClassifierMixin
 from .preprocessing import binarize
 from .preprocessing import LabelBinarizer
 from .preprocessing import label_binarize
@@ -201,13 +202,21 @@ class BaseDiscreteNB(BaseNB):
             if len(class_prior) != n_classes:
                 raise ValueError("Number of priors must match number of"
                                  " classes.")
-            self.class_log_prior_ = np.log(class_prior)
+            class_log_prior = np.log(class_prior)
         elif self.fit_prior:
             # empirical prior, with sample_weight taken into account
-            self.class_log_prior_ = (np.log(self.class_count_)
-                                     - np.log(self.class_count_.sum()))
+            class_log_prior = (np.log(self.class_count_)
+                               - np.log(self.class_count_.sum()))
         else:
-            self.class_log_prior_ = np.zeros(n_classes) - np.log(n_classes)
+            class_log_prior = np.zeros(n_classes) - np.log(n_classes)
+
+        self.class_log_prior_ = class_log_prior
+        if n_classes == 2:
+            # Set intercept_ to the log-odds ratio to make decision_function
+            # work out.
+            self.intercept_ = class_log_prior[1:] - class_log_prior[0]
+        else:
+            self.intercept_ = class_log_prior
 
     def partial_fit(self, X, y, classes=None, sample_weight=None):
         """Incremental fit on a batch of samples.
@@ -342,21 +351,8 @@ class BaseDiscreteNB(BaseNB):
         self._update_class_log_prior(class_prior=class_prior)
         return self
 
-    # XXX The following is a stopgap measure; we need to set the dimensions
-    # of class_log_prior_ and feature_log_prob_ correctly.
-    def _get_coef(self):
-        return (self.feature_log_prob_[1:]
-                if len(self.classes_) == 2 else self.feature_log_prob_)
 
-    def _get_intercept(self):
-        return (self.class_log_prior_[1:]
-                if len(self.classes_) == 2 else self.class_log_prior_)
-
-    coef_ = property(_get_coef)
-    intercept_ = property(_get_intercept)
-
-
-class MultinomialNB(BaseDiscreteNB):
+class MultinomialNB(BaseDiscreteNB, LinearClassifierMixin):
     """
     Naive Bayes classifier for multinomial models
 
@@ -381,20 +377,23 @@ class MultinomialNB(BaseDiscreteNB):
 
     Attributes
     ----------
-    `class_log_prior_` : array, shape (n_classes, )
-        Smoothed empirical log probability for each class.
+    `class_log_prior_` : array, shape = (n_classes,)
+        Smoothed empirical log probability for each class. DEPRECATED.
 
-    `intercept_` : property
-        Mirrors ``class_log_prior_`` for interpreting MultinomialNB
-        as a linear model.
+    `intercept_` : array, shape = (n_classes,) or (1,)
+        Intercept for naive Bayes considered as a linear model. This is the
+        log of the class prior P(y) in the multiclass case; in the binary case,
+        this is the log-odds ratio of the positive and negative priors.
 
-    `feature_log_prob_`: array, shape (n_classes, n_features)
-        Empirical log probability of features
-        given a class, ``P(x_i|y)``.
+    `feature_log_prob_`, `coef_` : array, shape = [n_classes, n_features]
+        Empirical log probability of features given a class, P(x_i|y).
+        DEPRECATED.
 
-    `coef_` : property
-        Mirrors ``feature_log_prob_`` for interpreting MultinomialNB
-        as a linear model.
+    `coef_` : array, shape = (n_classes, n_features) or (1, n_features)
+        Coefficients of naive Bayes as a linear model. This is a matrix of
+        feature log probabilities log P(x_i|y) in the multiclass case; in the
+        binary case, this is the log-odds ratio of the positive and negative
+        feature probabilities.
 
     `class_count_` : array, shape (n_classes,)
         Number of samples encountered for each class during fitting. This
@@ -419,9 +418,9 @@ class MultinomialNB(BaseDiscreteNB):
 
     Notes
     -----
-    For the rationale behind the names `coef_` and `intercept_`, i.e.
-    naive Bayes as a linear classifier, see J. Rennie et al. (2003),
-    Tackling the poor assumptions of naive Bayes text classifiers, ICML.
+    For the rationale behind `coef_` and `intercept_`, i.e.  naive Bayes
+    as a linear classifier, see J. Rennie et al. (2003), Tackling the poor
+    assumptions of naive Bayes text classifiers, ICML.
 
     References
     ----------
@@ -448,8 +447,15 @@ class MultinomialNB(BaseDiscreteNB):
         smoothed_fc = self.feature_count_ + self.alpha
         smoothed_cc = smoothed_fc.sum(axis=1)
 
-        self.feature_log_prob_ = (np.log(smoothed_fc)
-                                  - np.log(smoothed_cc.reshape(-1, 1)))
+        feature_log_prob = (np.log(smoothed_fc)
+                            - np.log(smoothed_cc.reshape(-1, 1)))
+
+        self.feature_log_prob_ = feature_log_prob
+        n_classes = len(self.classes_)
+        if n_classes == 2:
+            self.coef_ = feature_log_prob[1:] - feature_log_prob[0]
+        else:
+            self.coef_ = feature_log_prob
 
     def _joint_log_likelihood(self, X):
         """Calculate the posterior log probability of the samples X"""
@@ -458,7 +464,7 @@ class MultinomialNB(BaseDiscreteNB):
                 + self.class_log_prior_)
 
 
-class BernoulliNB(BaseDiscreteNB):
+class BernoulliNB(BaseDiscreteNB, LinearClassifierMixin):
     """Naive Bayes classifier for multivariate Bernoulli models.
 
     Like MultinomialNB, this classifier is suitable for discrete data. The
