@@ -133,7 +133,6 @@ Changelog
    - Python 3 support fixes by `Justin Vincent`_, `Lars Buitinck`_ and
      `Olivier Grisel`_. All tests now pass under Python 3.3.
 
-<<<<<<< HEAD
    - Reduce memory footprint of FastICA by `Denis Engemann`_ and
      `Alexandre Gramfort`_.
 
@@ -147,11 +146,9 @@ Changelog
      how to use OOB estimates to select the number of trees was added.
      By `Peter Prettenhofer`_.
 
-
-=======
    - Most metrics now support string labels for multiclass classification
      by `Arnaud Joly`_ and `Lars Buitinck`_.
->>>>>>> Update what's new
+
 
 API changes summary
 -------------------
