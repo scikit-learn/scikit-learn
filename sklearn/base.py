@@ -172,10 +172,11 @@ class BaseEstimator(object):
             # to represent
             args, varargs, kw, default = inspect.getargspec(init)
             if not varargs is None:
-                raise RuntimeError("scikit learn estimators should always "
+                raise RuntimeError("scikit-learn estimators should always "
                                    "specify their parameters in the signature"
-                                   " of their init (no varargs). %s doesn't "
-                                   "follow this convention." % (cls, ))
+                                   " of their __init__ (no varargs)."
+                                   " %s doesn't follow this convention."
+                                   % (cls, ))
             # Remove 'self'
             # XXX: This is going to fail if the init is a staticmethod, but
             # who would do this?
@@ -187,7 +188,7 @@ class BaseEstimator(object):
         return args
 
     def get_params(self, deep=True):
-        """Get parameters for the estimator
+        """Get parameters for this estimator.
 
         Parameters
         ----------
@@ -224,7 +225,7 @@ class BaseEstimator(object):
         return out
 
     def set_params(self, **params):
-        """Set the parameters of the estimator.
+        """Set the parameters of this estimator.
 
         The method works on simple estimators as well as on nested objects
         (such as pipelines). The former have parameters of the form
@@ -271,7 +272,7 @@ class BaseEstimator(object):
 
 ###############################################################################
 class ClassifierMixin(object):
-    """Mixin class for all classifiers in scikit-learn"""
+    """Mixin class for all classifiers in scikit-learn."""
 
     def score(self, X, y):
         """Returns the mean accuracy on the given test data and labels.
@@ -295,7 +296,7 @@ class ClassifierMixin(object):
 
 ###############################################################################
 class RegressorMixin(object):
-    """Mixin class for all regression estimators in scikit-learn"""
+    """Mixin class for all regression estimators in scikit-learn."""
 
     def score(self, X, y):
         """Returns the coefficient of determination R^2 of the prediction.
@@ -304,7 +305,6 @@ class RegressorMixin(object):
         sum of squares ((y_true - y_pred) ** 2).sum() and v is the residual
         sum of squares ((y_true - y_true.mean()) ** 2).sum().
         Best possible score is 1.0, lower values are worse.
-
 
         Parameters
         ----------
@@ -324,7 +324,7 @@ class RegressorMixin(object):
 
 ###############################################################################
 class ClusterMixin(object):
-    """Mixin class for all cluster estimators in scikit-learn"""
+    """Mixin class for all cluster estimators in scikit-learn."""
     def fit_predict(self, X, y=None):
         """Performs clustering on X and returns cluster labels.
 
@@ -346,10 +346,10 @@ class ClusterMixin(object):
 
 ###############################################################################
 class TransformerMixin(object):
-    """Mixin class for all transformers in scikit-learn"""
+    """Mixin class for all transformers in scikit-learn."""
 
     def fit_transform(self, X, y=None, **fit_params):
-        """Fit to data, then transform it
+        """Fit to data, then transform it.
 
         Fits transformer to X and y with optional parameters fit_params
         and returns a transformed version of X.
@@ -380,7 +380,7 @@ class TransformerMixin(object):
 
 ###############################################################################
 class MetaEstimatorMixin(object):
-    """Mixin class for all meta estimators in scikit-learn"""
+    """Mixin class for all meta estimators in scikit-learn."""
     # this is just a tag for the moment
 
 
