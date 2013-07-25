@@ -12,8 +12,8 @@ value using the `strategy` hyper-parameter.
 Script output:
 
   Score with the entire dataset = 0.56
-  Score without the samples containing missing values = 0.53
-  Score after imputation of the missing values = 0.54
+  Score without the samples containing missing values = 0.48
+  Score after imputation of the missing values = 0.55
 
 """
 import numpy as np
@@ -25,7 +25,6 @@ from sklearn.preprocessing import Imputer
 from sklearn.cross_validation import cross_val_score
 
 rng = np.random.RandomState(0)
-missing_values = "NaN" # Missing values are encoded as np.nan
 
 dataset = load_boston()
 X_full, y_full = dataset.data, dataset.target
@@ -37,8 +36,8 @@ estimator = RandomForestRegressor(random_state=0, n_estimators=100)
 score = cross_val_score(estimator, X_full, y_full).mean()
 print("Score with the entire dataset = %.2f" % score)
 
-# Add missing values in 50% of the lines
-missing_rate = 0.50
+# Add missing values in 75% of the lines
+missing_rate = 0.75
 n_missing_samples = np.floor(n_samples * missing_rate)
 missing_samples = np.hstack((np.zeros(n_samples - n_missing_samples,
                                       dtype=np.bool),
@@ -58,7 +57,7 @@ print("Score without the samples containing missing values = %.2f" % score)
 X_missing = X_full.copy()
 X_missing[np.where(missing_samples)[0], missing_features] = 0
 y_missing = y_full.copy()
-estimator = Pipeline([("imputer", Imputer(missing_values=missing_values,
+estimator = Pipeline([("imputer", Imputer(missing_values=0,
                                           strategy="mean",
                                           axis=0)),
                       ("forest", RandomForestRegressor(random_state=0,
