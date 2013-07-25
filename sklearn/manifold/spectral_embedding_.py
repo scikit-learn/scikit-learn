@@ -224,7 +224,7 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
 
     if not _graph_is_connected(adjacency):
         warnings.warn("Graph is not fully connected, spectral embedding"
-                      " may not works as expected.")
+                      " may not work as expected.")
 
     laplacian, dd = graph_laplacian(adjacency,
                                     normed=norm_laplacian, return_diag=True)
