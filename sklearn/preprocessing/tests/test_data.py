@@ -10,6 +10,7 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
+from sklearn.utils.testing import assert_warns
 
 from sklearn.utils.sparsefuncs import mean_variance_axis0
 from sklearn.preprocessing.data import _transform_selected
@@ -306,13 +307,13 @@ def test_warning_scaling_integers():
     X = np.array([[1, 2, 0],
                   [0, 0, 0]], dtype=np.uint8)
 
-    with warnings.catch_warnings(record=True) as w:
-        StandardScaler().fit(X)
-        assert_equal(len(w), 1)
+    with warnings.catch_warnings(record=True):
+        warnings.simplefilter("always")
+        assert_warns(UserWarning, StandardScaler().fit, X)
 
-    with warnings.catch_warnings(record=True) as w:
-        MinMaxScaler().fit(X)
-        assert_equal(len(w), 1)
+    with warnings.catch_warnings(record=True):
+        warnings.simplefilter("always")
+        assert_warns(UserWarning, MinMaxScaler().fit, X)
 
 
 def test_normalizer_l1():
