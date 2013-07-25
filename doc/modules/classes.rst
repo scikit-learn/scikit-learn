@@ -160,6 +160,8 @@ Loaders
    datasets.fetch_mldata
    datasets.fetch_olivetti_faces
    datasets.fetch_california_housing
+   datasets.fetch_covtype
+   datasets.load_mlcomp
    datasets.load_sample_image
    datasets.load_sample_images
    datasets.load_svmlight_file
@@ -180,6 +182,7 @@ Samples generator
    datasets.make_friedman1
    datasets.make_friedman2
    datasets.make_friedman3
+   datasets.make_gaussian_quantiles
    datasets.make_hastie_10_2
    datasets.make_low_rank_matrix
    datasets.make_moons
