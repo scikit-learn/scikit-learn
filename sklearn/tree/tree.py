@@ -280,30 +280,22 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
                              " input n_features is %s "
                              % (self.n_features_, n_features))
 
-        proba = self.tree_.predict(X)
+        leaves = self.tree_.predict_leaf(X)
 
         # Classification
         if isinstance(self, ClassifierMixin):
+            indices = np.argmax(self.tree_.value, axis=-1)
             if self.n_outputs_ == 1:
-                return self.classes_.take(np.argmax(proba, axis=1), axis=0)
-
+                values = self.classes_[indices[:, 0]]
             else:
-                predictions = np.zeros((n_samples, self.n_outputs_))
-
-                for k in xrange(self.n_outputs_):
-                    predictions[:, k] = self.classes_[k].take(
-                        np.argmax(proba[:, k], axis=1),
-                        axis=0)
-
-                return predictions
-
+                values = np.transpose([classes[inds] for classes, inds
+                                       in zip(self.classes_, indices.T)])
         # Regression
         else:
+            values = self.tree_.value[..., 0]
             if self.n_outputs_ == 1:
-                return proba[:, 0]
-
-            else:
-                return proba[:, :, 0]
+                values = values[:, 0]
+        return values[leaves]
 
     @property
     def feature_importances_(self):
@@ -475,27 +467,19 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
                              " input n_features is %s "
                              % (self.n_features_, n_features))
 
-        proba = self.tree_.predict(X)
+        proba = self.tree_.value
+        normalizer = proba.sum(axis=-1)[..., np.newaxis]
+        normalizer[normalizer == 0.0] = 1.0
+        proba /= normalizer
 
+        leaves = self.tree_.predict_leaf(X)
+        proba = proba[leaves]
         if self.n_outputs_ == 1:
-            proba = proba[:, :self.n_classes_]
-            normalizer = proba.sum(axis=1)[:, np.newaxis]
-            normalizer[normalizer == 0.0] = 1.0
-            proba /= normalizer
-
-            return proba
-
+            proba = proba[:, 0, :]
         else:
-            all_proba = []
-
-            for k in xrange(self.n_outputs_):
-                proba_k = proba[:, k, :self.n_classes_[k]]
-                normalizer = proba_k.sum(axis=1)[:, np.newaxis]
-                normalizer[normalizer == 0.0] = 1.0
-                proba_k /= normalizer
-                all_proba.append(proba_k)
-
-            return all_proba
+            proba = [proba_k[:, :k_n_classes] for proba_k, k_n_classes
+                     in zip(np.rollaxis(proba, 1), self.n_classes_)]
+        return proba
 
     def predict_log_proba(self, X):
         """Predict class log-probabilities of the input samples X.
