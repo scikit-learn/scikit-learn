@@ -23,7 +23,7 @@ from ..utils.sparsetools import connected_components
 
 from . import _hierarchical
 from ._feature_agglomeration import AgglomerationTransform
-from .fast_dict import IntFloatDict, average_merge, max_merge,\
+from ..utils.fast_dict import IntFloatDict, average_merge, max_merge,\
     WeightedEdge
 
 
