@@ -139,7 +139,7 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
 
     Parameters
     ----------
-    X : array-like, shape = [n_samples, n_features]
+    X : array-like, shape (n_samples, n_features)
         Training vector, where n_samples is the number of samples and
         n_features is the number of features.
     n_components : int, optional
@@ -187,22 +187,22 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
 
     Returns
     -------
-    K : (n_components, p) array or None.
+    K : array, shape (n_components, n_features) | None.
         If whiten is 'True', K is the pre-whitening matrix that projects data
-        onto the first n.comp principal components. If whiten is 'False', K is
-        'None'.
+        onto the first n_components principal components. If whiten is 'False',
+        K is 'None'.
 
-    W : (n_components, n_components) array
+    W : array, shape (n_components, n_components)
         Estimated un-mixing matrix.
         The mixing matrix can be obtained by::
 
             w = np.dot(W, K.T)
             A = w.T * (w * w.T).I
 
-    S : (n_components, n) array | None
-        estimated source matrix
+    S : array, shape (n_components, n_samples) | None
+        Estimated source matrix
 
-    X_mean : array, shape=(n_features,)
+    X_mean : array, shape (n_features, )
         The mean over features. Returned only if return_X_mean is True.
 
     Notes
@@ -364,11 +364,11 @@ class FastICA(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-    `components_` : 2D array, [n_components, n_features]
-        The unmixing matrix
-    `mixing_` : array, shape = [n_features, n_components]
-        Mixing matrix.
-    `sources_` : 2D array, [n_samples, n_components]
+    `components_` : 2D array, shape (n_components, n_features)
+        The unmixing matrix.
+    `mixing_` : array, shape (n_features, n_components)
+        The mixing matrix.
+    `sources_` : 2D array, shape (n_samples, n_components)
         The estimated latent sources of the data. This attribute is deprecated
         and will be removed in 0.16. Use `fit_transform` instead and store
         the result.
@@ -379,8 +379,8 @@ class FastICA(BaseEstimator, TransformerMixin):
     `A. Hyvarinen and E. Oja, Independent Component Analysis:
     Algorithms and Applications, Neural Networks, 13(4-5), 2000,
     pp. 411-430`
-    """
 
+    """
     def __init__(self, n_components=None, algorithm='parallel', whiten=True,
                  fun='logcosh', fun_args=None, max_iter=200, tol=1e-4,
                  w_init=None, random_state=None):
