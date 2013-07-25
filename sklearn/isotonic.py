@@ -67,6 +67,7 @@ def isotonic_regression(y, sample_weight=None, y_min=None, y_max=None,
     if not increasing:
         y = y[::-1]
         sample_weight = sample_weight[::-1]
+
     if y_min is not None or y_max is not None:
         y = np.copy(y)
         sample_weight = np.copy(sample_weight)
