@@ -4,8 +4,16 @@ Receiver operating characteristic (ROC) with cross validation
 =============================================================
 
 Example of Receiver operating characteristic (ROC) metric to
-evaluate the quality of the output of a classifier using
-cross-validation.
+evaluate the quality of the output of a classifier with crossvalidation.
+
+ROC curves typically feature true positive rate on the Y axis,
+and false positive rate on the X axis. This means that the top left corner
+of the plot is considered the "ideal" point - no false positives and all
+true positive results. This is not very realistic, but it does mean that
+more area under the curve is usually better.
+
+The "steepness" of ROC curves is also important, since it is ideal to
+maximize true positives while minimizing false positives.
 """
 print(__doc__)
 
@@ -33,7 +41,7 @@ X = np.c_[X, np.random.randn(n_samples, 200 * n_features)]
 ###############################################################################
 # Classification and ROC analysis
 
-# Run classifier with cross-validation and plot ROC curves
+# Run classifier with crossvalidation and plot ROC curves
 cv = StratifiedKFold(y, n_folds=6)
 classifier = svm.SVC(kernel='linear', probability=True, random_state=0)
 
