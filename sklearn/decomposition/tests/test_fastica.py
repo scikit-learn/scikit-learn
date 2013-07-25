@@ -117,14 +117,13 @@ def test_fastica_simple(add_noise=False):
             assert_almost_equal(np.dot(s2_, s2) / n_samples, 1, decimal=1)
 
     # Test FastICA class
+    _, _, sources_fun = fastica(X, fun=nl, algorithm=algo, random_state=0)
     ica = FastICA(fun=nl, algorithm=algo, random_state=0)
-    ica.fit(m.T)
+    sources = ica.fit_transform(m.T)
     assert_equal(ica.components_.shape, (2, 2))
-    assert_equal(ica.sources_.shape, (1000, 2))
+    assert_equal(sources.shape, (1000, 2))
 
-    sources = FastICA(fun=nl, algorithm=algo, random_state=0).\
-                      fit_transform(m.T)
-    assert_array_almost_equal(sources, ica.sources_)
+    assert_array_almost_equal(sources_fun, sources)
     assert_array_almost_equal(sources, ica.transform(m.T))
 
     assert_equal(ica.mixing_.shape, (2, 2))
@@ -203,12 +202,11 @@ def test_fit_transform():
         ica = FastICA(n_components=5, whiten=whiten, random_state=0)
         Xt = ica.fit_transform(X)
         assert_equal(ica.components_.shape, (n_components, 10))
-        assert_equal(ica.sources_.shape, (100, n_components))
+        assert_equal(Xt.shape, (100, n_components))
 
         ica = FastICA(n_components=5, whiten=whiten, random_state=0)
         ica.fit(X)
         assert_equal(ica.components_.shape, (n_components, 10))
-        assert_equal(ica.sources_.shape, (100, n_components))
         Xt2 = ica.transform(X)
 
         assert_array_almost_equal(Xt, Xt2)
