@@ -27,7 +27,6 @@ from ..preprocessing import LabelBinarizer
 from ..utils import check_arrays
 from ..utils import deprecated
 from ..utils.fixes import divide
-from ..utils.fixes import unique
 from ..utils.multiclass import unique_labels
 from ..utils.multiclass import type_of_target
 
