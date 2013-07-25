@@ -119,7 +119,7 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
             if 'warn_on_equidistant' in kwargs:
                 kwargs.pop('warn_on_equidistant')
                 warnings.warn("The warn_on_equidistant parameter is "
-                              "deprecated and will be removed in the future.",
+                              "deprecated and will be removed in 0.16.",
                               DeprecationWarning,
                               stacklevel=2)
         self._init_params(n_neighbors=n_neighbors,
