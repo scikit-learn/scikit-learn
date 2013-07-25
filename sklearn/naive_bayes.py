@@ -197,12 +197,6 @@ class BaseDiscreteNB(BaseNB):
 
     def _update_class_log_prior(self, class_prior=None):
         n_classes = len(self.classes_)
-        smoothed_fc = self.feature_count_ + self.alpha
-        smoothed_cc = self.class_count_ + self.alpha * n_classes
-
-        self.feature_log_prob_ = (np.log(smoothed_fc)
-                                  - np.log(smoothed_cc.reshape(-1, 1)))
-
         if class_prior is not None:
             if len(class_prior) != n_classes:
                 raise ValueError("Number of priors must match number of"
