@@ -151,26 +151,27 @@ algorithms. The simplest clustering algorithm is
 Hierarchical agglomerative clustering: Ward
 ---------------------------------------------
 
-A :ref:`hierarchical_clustering` method is a type of cluster analysis 
+A :ref:`hierarchical_clustering` method is a type of cluster analysis
 that aims to build a hierarchy of clusters. In general, the various approaches
 of this technique are either:
 
-  * **Agglomerative** - `bottom-up` approaches, or
-  * **Divisive** - `top-down` approaches.
+  * **Agglomerative** - `bottom-up` approaches: each observation starts in its
+    own clusters, and clusters are iterativelly merged in such a way to
+    minimize a *linkage* criteria. This approach is particularly interesting
+    when the clusters of interest are made of only a few observations. When
+    the number os clusters is large, it is much more computationally efficient
+    than k-means.
 
-For estimating a large number of clusters, top-down approaches are both
-statistically ill-posed and slow due to it starting with all observations
-as one cluster, which it splits recursively. Agglomerative 
-hierarchical-clustering is a bottom-up approach that successively merges 
-observations together and is particularly useful when the clusters of interest 
-are made of only a few observations. *Ward* clustering minimizes a criterion 
-similar to k-means in a bottom-up approach. When the number of clusters is large, 
-it is much more computationally efficient than k-means.
+  * **Divisive** - `top-down` approaches: all observations start in one
+    cluster, which is iteratively splitted as one moves down the hierarchy.
+    For estimating large numbers of clusters, this approach is both slow (due
+    to all observations starting as one cluster, which it splits recursively)
+    and statistically ill-posed.
 
 Connectivity-constrained clustering
 .....................................
 
-With Ward clustering, it is possible to specify which samples can be
+With Agglomerative clustering, it is possible to specify which samples can be
 clustered together by giving a connectivity graph. Graphs in the scikit
 are represented by their adjacency matrix. Often, a sparse matrix is used.
 This can be useful, for instance, to retrieve connected regions (sometimes
