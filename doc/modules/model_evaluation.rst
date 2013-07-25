@@ -19,7 +19,7 @@ model:
   :class:`grid_search.GridSearchCV`) rely on an internal *scoring* strategy.
   This is discussed on section :ref:`scoring_parameter`.
 
-* **Metric functions** The :mod:`metrics` module implements functions
+* **Metric functions**: The :mod:`metrics` module implements functions
   assessing prediction errors for specific purpose. This is discussed in
   the section :ref:`prediction_error_metrics`.
 
@@ -28,16 +28,15 @@ value of those metrics under the chance.
 
 .. seealso::
    
-   For pairwise metrics, giving metrics (*e.g.* distances, kernels, ...)
-   between *samples* and not estimators or predictions, see the :ref:`metrics`
-   section.
+   For "pairwise" metrics, between *samples* and not estimators or
+   predictions, see the :ref:`metrics` section.
 
 .. _scoring_parameter:
 
 The `scoring` parameter: defining model evaluation rules
 =========================================================
 
-Model selection and evaluation using tools such as
+Model selection and evaluation using tools, such as
 :class:`grid_search.GridSearchCV` and
 :func:`cross_validation.cross_val_score`, take a `scoring` parameter that
 controls what metric they apply to estimators evaluated.
@@ -87,7 +86,7 @@ The above choices correspond to error-metric functions that can be applied to
 predicted values. These are detailed below, in the next sections.
 
 
-.. currentmodule:: sklearn
+.. currentmodule:: sklearn.metrics
 
 .. _score_func_objects:
 
@@ -124,12 +123,18 @@ from a simple python function::
     >>> my_custom_scorer = make_scorer(my_custom_loss_func, greater_is_better=False)
     >>> grid = GridSearchCV(LinearSVC(), param_grid={'C': [1, 10]}, scoring=my_custom_scorer)
 
-:func:`make_scorer` takes as parameters the function you want to use, whether it is
-a score (``greater_is_better=True``) or a loss (``greater_is_better=False``),
-whether the function you provided takes predictions as input
-(``needs_threshold=False``) or needs confidence scores
-(``needs_threshold=True``) and any additional parameters, such as ``beta`` in
-the previous example.
+:func:`make_scorer` takes as parameters:
+
+* the function you want to use
+
+* whether it is a score (``greater_is_better=True``) or a loss
+  (``greater_is_better=False``),
+
+* whether the function you provided takes predictions as input
+ (``needs_threshold=False``) or needs confidence scores
+ (``needs_threshold=True``)
+ 
+* any additional parameters, such as ``beta`` in an :func:`f1_score`.
 
 
 Implementing your own scoring object
@@ -140,26 +145,27 @@ For a callable to be a scorer, it needs to meet the protocol specified by
 the following two rules:
 
 - It can be called with parameters ``(estimator, X, y)``, where ``estimator``
-  it the model that should be evaluated, ``X`` is validation data and ``y`` is
-  the ground truth target for ``X`` (in the supervised case) or ``None`` in the
-  unsupervised case.
+  is the model that should be evaluated, ``X`` is validation data, and ``y`` is
+  the ground truth target for ``X`` (in the supervised case) or ``None`` (in the
+  unsupervised case).
 
 - It returns a floating point number that quantifies the quality of
   ``estimator``'s predictions on ``X`` which reference to ``y``.
   Again, higher numbers are better.
 
-TODO
-
-- Functions ending with ``_score`` return a value to
-  maximize (the higher the better).
-
-- Functions ending with ``_error`` or ``_loss`` return a
-  value to minimize (the lower the better).
-
 .. _prediction_error_metrics:
 
 Function for prediction-error metrics
 ======================================
+
+The module :mod:`sklearn.metric` also exposes a set of simple functions
+measuring a prediction error given ground truth and prediction:
+
+- functions ending with ``_score`` return a value to
+  maximize (the higher the better).
+
+- functions ending with ``_error`` or ``_loss`` return a
+  value to minimize (the lower the better).
 
 .. _classification_metrics:
 
@@ -1048,7 +1054,7 @@ Clustering metrics
 -------------------
 
 The :mod:`sklearn.metrics` implements several losses, scores and utility
-function for more information see the :ref:`clustering_evaluation` section.
+functions. For more information see the :ref:`clustering_evaluation` section.
 
 
 .. _dummy_estimators:
