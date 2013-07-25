@@ -17,7 +17,7 @@ from scipy.cluster import hierarchy
 from ..base import BaseEstimator, ClusterMixin
 from ..externals.joblib import Memory
 from ..externals import six
-from ..metrics import euclidean_distances
+from ..metrics.pairwise import pairwise_distances
 from ..utils import array2d
 from ..utils.sparsetools import connected_components
 
@@ -30,7 +30,8 @@ from ..utils.fast_dict import IntFloatDict, average_merge, max_merge,\
 ###############################################################################
 # For non fully-connected graphs
 
-def _fix_connectivity(X, connectivity, n_components=None):
+def _fix_connectivity(X, connectivity, n_components=None,
+                      affinity="euclidean"):
     """
     Fixes the connectivity matrix
 
@@ -70,8 +71,7 @@ def _fix_connectivity(X, connectivity, n_components=None):
             for j in xrange(i):
                 idx_j = np.where(labels == j)[0]
                 Xj = X[idx_j]
-                # XXX: distance should be plugable
-                D = euclidean_distances(Xi, Xj)
+                D = pairwise_distances(Xi, Xj)
                 ii, jj = np.where(D == np.min(D))
                 ii = ii[0]
                 jj = jj[0]
@@ -243,7 +243,7 @@ def ward_tree(X, connectivity=None, n_components=None, copy=None,
 
 # average and complete linkage
 def linkage_tree(X, connectivity=None, n_components=None,
-                 n_clusters=None, linkage='complete'):
+                 n_clusters=None, linkage='complete', affinity="euclidean"):
     """Linkage agglomerative clustering based on a Feature matrix.
 
     The inertia matrix uses a Heapq-based representation.
@@ -281,6 +281,9 @@ def linkage_tree(X, connectivity=None, n_components=None,
               the two sets
             - complete or maximum linkage uses the maximum distances between
               all observations of the two sets.
+
+
+    affinity : FIXME
 
     Returns
     -------
@@ -337,13 +340,11 @@ def linkage_tree(X, connectivity=None, n_components=None,
     connectivity.col = connectivity.col[diag_mask]
     connectivity.data = connectivity.data[diag_mask]
     del diag_mask
-    distances = X[connectivity.row] - X[connectivity.col]
-    distances **= 2
-    if linkage == 'average':
-        connectivity.data = np.sqrt(distances.sum(axis=-1))
-    else:
-        connectivity.data = distances.sum(axis=-1)
-    del distances
+
+    # FIXME We compute all the distances, while we could have only computed
+    # the "interesting" distances
+    distances = pairwise_distances(X)[connectivity.row, connectivity.col]
+    connectivity.data = distances
 
     if n_clusters is None:
         n_nodes = 2 * n_samples - 1
@@ -496,6 +497,10 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         Default is None, i.e, the hierarchical clustering algorithm is
         unstructured.
 
+    affinity : string or callable, default: "euclidean"
+        Metric used to compute the linkage.
+        If linkage is "ward", only "euclidean is accepted.
+
     memory : Instance of joblib.Memory or string (optional)
         Used to cache the output of the computation of the tree.
         By default, no caching is done. If a string is given, it is the
@@ -540,7 +545,8 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         The estimated number of connected components in the graph.
     """
 
-    def __init__(self, n_clusters=2, memory=Memory(cachedir=None, verbose=0),
+    def __init__(self, n_clusters=2, affinity="euclidean",
+                 memory=Memory(cachedir=None, verbose=0),
                  connectivity=None, n_components=None,
                  compute_full_tree='auto', linkage='ward'):
         self.n_clusters = n_clusters
@@ -549,6 +555,7 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         self.connectivity = connectivity
         self.compute_full_tree = compute_full_tree
         self.linkage = linkage
+        self.affinity = affinity
 
     def fit(self, X):
         """Fit the hierarchical clustering on the data
@@ -566,6 +573,12 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         memory = self.memory
         if isinstance(memory, six.string_types):
             memory = Memory(cachedir=memory, verbose=0)
+
+        # FIXME check affinity exists.
+        if self.linkage == "ward" and self.affinity != "euclidean":
+            raise ValueError("%s was provided as affinity. Ward can only "
+                             "work with euclidean distances." %
+                             (self.affinity, ))
 
         if not self.linkage in _TREE_BUILDERS:
             raise ValueError("Unknown linkage type %s."
@@ -709,6 +722,7 @@ class Ward(AgglomerativeClustering):
         self.n_components = n_components
         self.connectivity = connectivity
         self.compute_full_tree = compute_full_tree
+        self.affinity = "euclidean"
 
 
 class WardAgglomeration(AgglomerationTransform, Ward):
@@ -773,5 +787,3 @@ class WardAgglomeration(AgglomerationTransform, Ward):
         self
         """
         return Ward.fit(self, X.T, **params)
-
-
