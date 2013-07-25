@@ -640,7 +640,7 @@ class _RidgeGCV(LinearModel):
     def _pre_compute_svd(self, X, y):
         if sparse.issparse(X):
             raise TypeError("SVD not supported for sparse matrices")
-        U, s, _ = np.linalg.svd(X, full_matrices=0)
+        U, s, _ = linalg.svd(X, full_matrices=0)
         v = s ** 2
         UT_y = np.dot(U.T, y)
         return v, U, UT_y
