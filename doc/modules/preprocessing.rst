@@ -12,8 +12,8 @@ into a representation that is more suitable for the downstream estimators.
 
 .. _preprocessing_scaler:
 
-Standardization or Mean Removal and Variance Scaling
-====================================================
+Standardization, or mean removal and variance scaling
+=====================================================
 
 **Standardization** of datasets is a **common requirement for many
 machine learning estimators** implemented in the scikit: they might behave
@@ -98,7 +98,7 @@ passing ``with_mean=False`` or ``with_std=False`` to the constructor
 of :class:`StandardScaler`.
 
 
-Scaling Features to a Range
+Scaling features to a range
 ---------------------------
 An alternative standardization is scaling features to
 lie between a given minimum and maximum value, often between zero and one.
@@ -421,11 +421,11 @@ Imputation of missing values
 ============================
 
 For various reasons, many real world datasets contain missing values, often
-encoded as blanks, `NaN`s or other placeholders. Such datasets however are
+encoded as blanks, NaNs or other placeholders. Such datasets however are
 incompatible with scikit-learn estimators which assume that all values in an
 array are numerical, and that all have and hold meaning. A basic strategy to use
 incomplete datasets is to discard entire rows and/or columns containing missing
-values. However, this comes at the price of losing data  which may be valuable
+values. However, this comes at the price of losing data which may be valuable
 (even though incomplete). A better strategy is to impute the missing values,
 i.e., to infer them from the known part of the data.
 
@@ -435,8 +435,8 @@ the row or column in which the missing values are located. This class
 also allows for different missing values encodings.
 
 The following snippet demonstrates how to replace missing values,
-encoded as `np.nan`, using the mean value of the columns (axis 0) in which
-the missing values are.
+encoded as ``np.nan``, using the mean value of the columns (axis 0)
+that contain the missing values::
 
     >>> import numpy as np
     >>> from sklearn.preprocessing import Imputer
@@ -449,7 +449,7 @@ the missing values are.
      [ 6.          3.66666667]
      [ 7.          6.        ]]
 
-The :class:`Imputer` class also supports sparse matrices:
+The :class:`Imputer` class also supports sparse matrices::
 
     >>> import scipy.sparse as sp
     >>> X = sp.csc_matrix([[1, 2], [0, 3], [7, 6]])
@@ -466,6 +466,5 @@ Note that, here, missing values are encoded by 0 and are thus implicitly stored
 in the matrix. This format is thus suitable when there are many more missing
 values than observed values.
 
-:class:`Imputer` can be used in a Pipeline as a way to build a black-box
+:class:`Imputer` can be used in a Pipeline as a way to build a composite
 estimator that supports imputation. See :ref:`example_imputation.py`
-
