@@ -227,11 +227,10 @@ to use a :class:`sklearn.pipeline.Pipeline`::
   ])
   clf.fit(X, y)
 
-In this snippet we make use of a first :class:`sklearn.svm.LinearSVC` 
-to evaluate feature importances and select the most relevant features. 
-Then, a second classifier 
-(:class:`sklearn.ensemble.GradientBoostingClassifier`) is trained on the 
-transformed output (i.e. using only relevant features). You can perform 
+In this snippet we make use of a :class:`sklearn.svm.LinearSVC` 
+to evaluate feature importances and select the most relevant features.
+Then, a class:`sklearn.ensemble.GradientBoostingClassifier` is trained on the 
+transformed output, i.e. using only relevant features. You can perform 
 similar operations with the other feature selection methods and also
 classifiers that provide a way to evaluate feature importances of course. 
 See the :class:`sklearn.pipeline.Pipeline` examples for more details.
