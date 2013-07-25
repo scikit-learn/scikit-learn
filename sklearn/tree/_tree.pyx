@@ -1190,7 +1190,7 @@ cdef class RandomSplitter(Splitter):
 # =============================================================================
 
 cdef class Tree:
-   """Struct-of-arrays representation of a binary decision tree.
+    """Struct-of-arrays representation of a binary decision tree.
 
     The binary tree is represented as a number of parallel arrays. The i-th
     element of each array holds information about the node `i`. Node 0 is the
