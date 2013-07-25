@@ -17,7 +17,7 @@ from ..base import BaseEstimator, RegressorMixin
 from ..feature_selection.from_model import _LearntSelectorMixin
 from ..utils import array2d, atleast2d_or_csr, check_arrays, deprecated
 from ..utils.extmath import safe_sparse_dot
-from ..utils.multiclass import _check_partial_fit_classes_consistency
+from ..utils.multiclass import _check_partial_fit_first_call
 from ..externals import six
 
 from .sgd_fast import plain_sgd as plain_sgd
@@ -342,7 +342,7 @@ class BaseSGDClassifier(BaseSGD, LinearClassifierMixin):
         _check_fit_data(X, y)
 
         self._validate_params()
-        _check_partial_fit_classes_consistency(self, classes)
+        _check_partial_fit_first_call(self, classes)
 
         n_classes = self.classes_.shape[0]
 

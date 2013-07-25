@@ -28,7 +28,7 @@ from .preprocessing import label_binarize
 from .utils import array2d, atleast2d_or_csr
 from .utils.extmath import safe_sparse_dot, logsumexp
 from .utils import check_arrays
-from .utils.multiclass import _check_partial_fit_classes_consistency
+from .utils.multiclass import _check_partial_fit_first_call
 from .externals import six
 
 __all__ = ['BernoulliNB', 'GaussianNB', 'MultinomialNB']
@@ -249,7 +249,7 @@ class BaseDiscreteNB(BaseNB):
         X = atleast2d_or_csr(X).astype(np.float64)
         _, n_features = X.shape
 
-        if _check_partial_fit_classes_consistency(self, classes):
+        if _check_partial_fit_first_call(self, classes):
             # This is the first call to partial_fit:
             # initialize various cumulative counters
             n_effective_classes = len(classes) if len(classes) > 1 else 2

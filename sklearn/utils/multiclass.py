@@ -310,7 +310,7 @@ def type_of_target(y):
         return 'multiclass' + suffix
 
 
-def _check_partial_fit_classes_consistency(clf, classes=None):
+def _check_partial_fit_first_call(clf, classes=None):
     """Private helper function for factorizing common classes param logic
 
     Estimator that implement the ``partial_fit`` API need to be provided with
