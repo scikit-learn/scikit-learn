@@ -236,8 +236,8 @@ def _gram_omp(Gram, Xy, n_nonzero_coefs, tol_0=None, tol=None,
         return gamma, indices[:n_active]
 
 
-def orthogonal_mp(X, y, n_nonzero_coefs=None, tol=None, precompute_gram=False,
-                  copy_X=True, return_path=False):
+def orthogonal_mp(X, y, n_nonzero_coefs=None, tol=None, precompute=False,
+                  copy_X=True, return_path=False, precompute_gram=None):
     """Orthogonal Matching Pursuit (OMP)
 
     Solves n_targets Orthogonal Matching Pursuit problems.
@@ -265,7 +265,7 @@ def orthogonal_mp(X, y, n_nonzero_coefs=None, tol=None, precompute_gram=False,
     tol: float
         Maximum norm of the residual. If not None, overrides n_nonzero_coefs.
 
-    precompute_gram: {True, False, 'auto'},
+    precompute: {True, False, 'auto'},
         Whether to perform precomputations. Improves performance when n_targets
         or n_samples is very large.
 
@@ -307,6 +307,14 @@ def orthogonal_mp(X, y, n_nonzero_coefs=None, tol=None, precompute_gram=False,
     http://www.cs.technion.ac.il/~ronrubin/Publications/KSVD-OMP-v2.pdf
 
     """
+    if precompute_gram is not None:
+        warnings.warn("precompute_gram will be removed in 0.15."
+                      " Use the precompute parameter.",
+                      DeprecationWarning, stacklevel=2)
+        precompute = precompute_gram
+
+    del precompute_gram
+
     X = array2d(X, order='F', copy=copy_X)
     copy_X = False
     y = np.asarray(y)
@@ -325,9 +333,9 @@ def orthogonal_mp(X, y, n_nonzero_coefs=None, tol=None, precompute_gram=False,
     if tol is None and n_nonzero_coefs > X.shape[1]:
         raise ValueError("The number of atoms cannot be more than the number "
                          "of features")
-    if precompute_gram == 'auto':
-        precompute_gram = X.shape[0] > X.shape[1]
-    if precompute_gram:
+    if precompute == 'auto':
+        precompute = X.shape[0] > X.shape[1]
+    if precompute:
         G = np.dot(X.T, X)
         G = np.asfortranarray(G)
         Xy = np.dot(X.T, y)
@@ -495,7 +503,6 @@ class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
         calculations. Improves performance when `n_targets` or `n_samples` is
         very large. Note that if you already have such matrices, you can pass
         them directly to the fit method.
-        WARNING : will be deprecated in 0.15. Renamed to precompute.
 
     copy_X : bool, optional
         Whether the design matrix X must be copied by the algorithm. A false
@@ -556,7 +563,6 @@ class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
             warnings.warn("precompute_gram will be removed in 0.15."
                           " Use the precompute parameter.",
                           DeprecationWarning, stacklevel=2)
-        else:
             precompute = precompute_gram
 
         self.precompute = precompute
@@ -659,15 +665,14 @@ class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
         else:
             self.n_nonzero_coefs_ = self.n_nonzero_coefs
 
-        if Gram is not None:
+        if Gram is False:
+            self.coef_ = orthogonal_mp(X, y, self.n_nonzero_coefs_, self.tol,
+                                       precompute=False, copy_X=self.copy_X).T
+        else:
             norms_sq = np.sum(y ** 2, axis=0) if self.tol is not None else None
             self.coef_ = orthogonal_mp_gram(Gram, Xy, self.n_nonzero_coefs_,
                                             self.tol, norms_sq,
                                             self.copy_Gram, True).T
-        else:
-            self.coef_ = orthogonal_mp(X, y, self.n_nonzero_coefs_, self.tol,
-                                       precompute_gram=False,
-                                       copy_X=self.copy_X).T
 
         if self.normalize:
             nonzeros = np.flatnonzero(X_std)
@@ -742,7 +747,7 @@ def _omp_path_residues(X_train, y_train, X_test, y_test, copy=True,
         X_train[:, nonzeros] /= norms[nonzeros]
 
     coefs = orthogonal_mp(X_train, y_train, n_nonzero_coefs=max_iter, tol=None,
-                          precompute_gram=False, copy_X=False,
+                          precompute=False, copy_X=False,
                           return_path=True)
     if coefs.ndim == 1:
         coefs = coefs[:, np.newaxis]
@@ -852,7 +857,7 @@ class OrthogonalMatchingPursuitCV(LinearModel, RegressorMixin):
         best_n_nonzero_coefs = np.argmin(mse_folds.mean(axis=0)) + 1
         self.n_nonzero_coefs_ = best_n_nonzero_coefs
         omp = OrthogonalMatchingPursuit(n_nonzero_coefs=best_n_nonzero_coefs,
-                                        copy_X=True,
+                                        copy_X=None,
                                         fit_intercept=self.fit_intercept,
                                         normalize=self.normalize)
         omp.fit(X, y)
