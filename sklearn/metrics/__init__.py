@@ -42,8 +42,8 @@ from .cluster import (adjusted_rand_score,
                       normalized_mutual_info_score,
                       silhouette_score,
                       silhouette_samples,
-                      v_measure_score)
-
+                      v_measure_score,
+                      consensus_score)
 
 from .pairwise import (euclidean_distances,
                        pairwise_distances,
@@ -84,6 +84,7 @@ __all__ = ['accuracy_score',
            'silhouette_score',
            'silhouette_samples',
            'v_measure_score',
+           'consensus_score',
            'zero_one_loss',
            'make_scorer',
            'SCORERS']

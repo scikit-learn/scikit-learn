@@ -21,6 +21,10 @@ from sklearn.datasets import make_sparse_uncorrelated
 from sklearn.datasets import make_spd_matrix
 from sklearn.datasets import make_swiss_roll
 from sklearn.datasets import make_s_curve
+from sklearn.datasets import make_biclusters
+from sklearn.datasets import make_checkerboard
+
+from sklearn.utils.validation import assert_all_finite
 
 
 def test_make_classification():
@@ -191,3 +195,39 @@ def test_make_s_curve():
     assert_equal(t.shape, (5,), "t shape mismatch")
     assert_array_equal(X[:, 0], np.sin(t))
     assert_array_equal(X[:, 2], np.sign(t) * (np.cos(t) - 1))
+
+
+def test_make_biclusters():
+    X, rows, cols = make_biclusters(
+        shape=(100, 100), n_clusters=4, shuffle=True, random_state=0)
+    assert_equal(X.shape, (100, 100), "X shape mismatch")
+    assert_equal(rows.shape, (4, 100), "rows shape mismatch")
+    assert_equal(cols.shape, (4, 100,), "columns shape mismatch")
+    assert_all_finite(X)
+    assert_all_finite(rows)
+    assert_all_finite(cols)
+
+    X2, _, _ = make_biclusters(shape=(100, 100), n_clusters=4,
+                               shuffle=True, random_state=0)
+    assert_array_equal(X, X2)
+
+
+def test_make_checkerboard():
+    X, rows, cols = make_checkerboard(
+        shape=(100, 100), n_clusters=(20, 5),
+        shuffle=True, random_state=0)
+    assert_equal(X.shape, (100, 100), "X shape mismatch")
+    assert_equal(rows.shape, (100, 100), "rows shape mismatch")
+    assert_equal(cols.shape, (100, 100,), "columns shape mismatch")
+
+    X, rows, cols = make_checkerboard(
+        shape=(100, 100), n_clusters=2, shuffle=True, random_state=0)
+    assert_all_finite(X)
+    assert_all_finite(rows)
+    assert_all_finite(cols)
+
+    X1, _, _ = make_checkerboard(shape=(100, 100), n_clusters=2,
+                                 shuffle=True, random_state=0)
+    X2, _, _ = make_checkerboard(shape=(100, 100), n_clusters=2,
+                                 shuffle=True, random_state=0)
+    assert_array_equal(X1, X2)
