@@ -128,6 +128,21 @@ METRICS_WITH_POS_LABEL = [
     "macro_precision_score", "macro_recall_score",
 ]
 
+METRICS_WITH_LABELS = [
+    "confusion_matrix",
+
+    "precision_score", "recall_score", "f1_score", "f2_score", "f0.5_score",
+
+    "weighted_f0.5_score", "weighted_f1_score", "weighted_f2_score",
+    "weighted_precision_score", "weighted_recall_score",
+
+    "micro_f0.5_score", "micro_f1_score", "micro_f2_score",
+    "micro_precision_score", "micro_recall_score",
+
+    "macro_f0.5_score", "macro_f1_score", "macro_f2_score",
+    "macro_precision_score", "macro_recall_score",
+]
+
 METRICS_WITH_NORMALIZE_OPTION = {
     "accuracy_score ": accuracy_score,
     "jaccard_similarity_score": jaccard_similarity_score,
@@ -1076,6 +1091,13 @@ def test_invariance_string_vs_numbers_labels():
         assert_array_equal(measure_with_number, measure_with_str,
                            err_msg="{0} failed string vs number invariance "
                                    "test".format(name))
+
+        if name in METRICS_WITH_LABELS:
+            metric_str = partial(metric_str, labels=labels_str)
+            measure_with_str = metric_str(y1_str, y2_str)
+            assert_array_equal(measure_with_number, measure_with_str,
+                               err_msg="{0} failed string vs number  "
+                                       "invariance test".format(name))
 
     # TODO Currently not supported
     for name, metrics in THRESHOLDED_METRICS.items():
