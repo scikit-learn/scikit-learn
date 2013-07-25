@@ -5,11 +5,15 @@ import scipy.sparse
 
 import warnings
 
+from sklearn.datasets import load_digits
+from sklearn.cross_validation import cross_val_score
+
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_greater
 
 from sklearn.naive_bayes import GaussianNB, BernoulliNB, MultinomialNB
 
@@ -317,3 +321,34 @@ def test_coef_intercept_shape():
         clf.fit(X, y)
         assert_equal(clf.coef_.shape, (1, 3))
         assert_equal(clf.intercept_.shape, (1,))
+
+
+def test_check_accuracy_on_digits():
+    # Non regression test to make sure that any further refactoring / optim
+    # of the NB models do not harm the performance on a non linearly separable
+    # dataset
+    digits = load_digits()
+    X, y = digits.data, digits.target
+    binary_3v8 = np.logical_or(digits.target == 3, digits.target == 8)
+    X_3v8, y_3v8 = X[binary_3v8], y[binary_3v8]
+
+    # Multinomial NB
+    scores = cross_val_score(MultinomialNB(alpha=10), X, y, cv=10)
+    assert_greater(scores.mean(), 0.90)
+
+    scores = cross_val_score(MultinomialNB(alpha=10), X_3v8, y_3v8, cv=10)
+    assert_greater(scores.mean(), 0.95)
+
+    # Bernoulli NB
+    scores = cross_val_score(BernoulliNB(alpha=10), X > 0, y, cv=10)
+    assert_greater(scores.mean(), 0.81)
+
+    scores = cross_val_score(BernoulliNB(alpha=10), X_3v8 > 0, y_3v8, cv=10)
+    assert_greater(scores.mean(), 0.94)
+
+    # Bernoulli NB (maybe not appropriate for this dataset...)
+    scores = cross_val_score(GaussianNB(), X > 0, y, cv=10)
+    assert_greater(scores.mean(), 0.68)
+
+    scores = cross_val_score(GaussianNB(), X_3v8 > 0, y_3v8, cv=10)
+    assert_greater(scores.mean(), 0.88)
