@@ -371,7 +371,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
                       " will become the norm.",
                       DeprecationWarning, stacklevel=2)
 
-    if normalize is not None:
+    if normalize is True:
         warnings.warn("normalize param will be removed in 0.15."
                       " Intercept fitting and feature normalization will be"
                       " done in estimators.",
@@ -379,12 +379,13 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     else:
         normalize = False
 
-    if fit_intercept is not None:
+    if fit_intercept is True or fit_intercept is None:
         warnings.warn("fit_intercept param will be removed in 0.15."
                       " Intercept fitting and feature normalization will be"
                       " done in estimators.",
                       DeprecationWarning, stacklevel=2)
-    else:
+
+    if fit_intercept is None:
         fit_intercept = True
 
     if rho is not None:
