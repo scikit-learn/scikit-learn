@@ -1476,6 +1476,13 @@ def _most_frequent(array, extra_value, n_repeat):
 class Imputer(BaseEstimator, TransformerMixin):
     """Imputation transformer for completing missing values.
 
+    Notes:
+    - When `axis=0`, columns which only contained missing values at `fit`
+      are discarded upon `transform`.
+    - When `axis=1`, an exception is raised if there are rows for which it is
+      not possible to fill in the missing values (e.g., because they only
+      contain missing values).
+
     Parameters
     ----------
     missing_values : integer or string, optional (default="NaN")
@@ -1687,11 +1694,6 @@ class Imputer(BaseEstimator, TransformerMixin):
     def transform(self, X):
         """Impute all missing values in X.
 
-        When `axis=0`, columns which only contained missing values at
-        `fit` are discarded upon `transform`. When `axis=1`, rows for which
-        it is not possible to fill in the missing values (e.g., because they
-        only contain missing values) are discarded upon `transform`.
-
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape = [n_samples, n_features]
@@ -1738,10 +1740,7 @@ class Imputer(BaseEstimator, TransformerMixin):
                               "observed values: %s" % missing)
             X = X[:, valid_statistics_indexes]
         elif self.axis == 1 and invalid_mask.any():
-            if self.verbose:
-                warnings.warn("Deleting samples without "
-                              "observed values: %s" % missing)
-            X = X[valid_statistics_indexes, :]
+            raise ValueError("Some rows only contain missing values.")
 
         # Do actual imputation
         if sp.issparse(X) and self.missing_values != 0:
