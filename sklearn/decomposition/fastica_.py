@@ -133,7 +133,7 @@ def _cube(x, fun_args):
 
 
 def fastica(X, n_components=None, algorithm="parallel", whiten=True,
-            fun="logcosh", fun_args={}, max_iter=200, tol=1e-04, w_init=None,
+            fun="logcosh", fun_args=None, max_iter=200, tol=1e-04, w_init=None,
             random_state=None, return_X_mean=False, compute_sources=True):
     """Perform Fast Independent Component Analysis.
 
@@ -165,7 +165,7 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
             return x ** 3, 3 * x ** 2
     fun_args : dictionary, optional
         Arguments to send to the functional form.
-        If empty and if fun='logcosh', fun_args will take value
+        If empty or None and if fun='logcosh', fun_args will take value
         {'alpha' : 1.0}
     max_iter : int, optional
         Maximum number of iterations to perform
@@ -226,6 +226,7 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
 
     """
     random_state = check_random_state(random_state)
+    fun_args = {} if fun_args is None else fun_args
     # make interface compatible with other decompositions
     # a copy is required only for non whitened data
     X = array2d(X, copy=whiten).T
@@ -360,9 +361,6 @@ class FastICA(BaseEstimator, TransformerMixin):
         The mixing matrix to be used to initialize the algorithm.
     random_state : int or RandomState
         Pseudo number generator state used for random sampling.
-    compute_sources : bool, optional
-        If False, sources are not computed but only the rotation matrix. This
-        can save memory when working with big data. Defaults to True.
 
     Attributes
     ----------
@@ -371,7 +369,9 @@ class FastICA(BaseEstimator, TransformerMixin):
     `mixing_` : array, shape = [n_features, n_components]
         Mixing matrix.
     `sources_` : 2D array, [n_samples, n_components]
-        The estimated latent sources of the data.
+        The estimated latent sources of the data. This attribute is deprecated
+        and will be removed in 0.16. Use `fit_transform` instead and store
+        the result.
 
     Notes
     -----
@@ -383,7 +383,7 @@ class FastICA(BaseEstimator, TransformerMixin):
 
     def __init__(self, n_components=None, algorithm='parallel', whiten=True,
                  fun='logcosh', fun_args=None, max_iter=200, tol=1e-4,
-                 w_init=None, random_state=None, compute_sources=True):
+                 w_init=None, random_state=None):
         super(FastICA, self).__init__()
         self.n_components = n_components
         self.algorithm = algorithm
@@ -394,7 +394,45 @@ class FastICA(BaseEstimator, TransformerMixin):
         self.tol = tol
         self.w_init = w_init
         self.random_state = random_state
-        self.compute_sources = compute_sources
+
+    def _fit(self, X, compute_sources=False):
+        """Fit the model
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            Training data, where n_samples is the number of samples
+            and n_features is the number of features.
+
+        compute_sources : bool
+            If False, sources are not computes but only the rotation matrix.
+            This can save memory when working with big data. Defaults to False.
+
+        Returns
+        -------
+            X_new : array-like, shape (n_samples, n_components)
+        """
+        fun_args = {} if self.fun_args is None else self.fun_args
+        whitening, unmixing, sources, X_mean = fastica(
+            X=X, n_components=self.n_components, algorithm=self.algorithm,
+            whiten=self.whiten, fun=self.fun, fun_args=fun_args,
+            max_iter=self.max_iter, tol=self.tol, w_init=self.w_init,
+            random_state=self.random_state, return_X_mean=True,
+            compute_sources=compute_sources)
+
+        if self.whiten:
+            self.components_ = np.dot(unmixing, whitening)
+            self.mean_ = X_mean
+            self.whitening_ = whitening
+        else:
+            self.components_ = unmixing
+
+        self.mixing_ = linalg.pinv(self.components_)
+
+        if compute_sources:
+            self.__sources = sources
+
+        return sources
 
     def fit_transform(self, X, y=None):
         """Fit the model and recover the sources from X.
@@ -409,26 +447,7 @@ class FastICA(BaseEstimator, TransformerMixin):
         -------
         X_new : array-like, shape (n_samples, n_components)
         """
-        fun_args = {} if self.fun_args is None else self.fun_args
-        whitening_, unmixing_, sources_, X_mean = fastica(
-            X=X, n_components=self.n_components, algorithm=self.algorithm,
-            whiten=self.whiten, fun=self.fun, fun_args=fun_args,
-            max_iter=self.max_iter, tol=self.tol, w_init=self.w_init,
-            random_state=self.random_state, return_X_mean=True,
-            compute_sources=self.compute_sources)
-        if self.whiten:
-            self.components_ = np.dot(unmixing_, whitening_)
-            self.mean_ = X_mean
-            self.whitening_ = whitening_
-        else:
-            self.components_ = unmixing_
-
-        self.mixing_ = linalg.pinv(self.components_)
-
-        if self.compute_sources:
-            self.sources_ = sources_
-
-        return sources_
+        return self._fit(X, compute_sources=True)
 
     def fit(self, X, y=None):
         """Fit the model to X.
@@ -443,7 +462,7 @@ class FastICA(BaseEstimator, TransformerMixin):
         -------
         self
         """
-        self.fit_transform(X)
+        self._fit(X, compute_sources=True)  # will become False in 0.16
         return self
 
     def transform(self, X, y=None, copy=True):
@@ -476,6 +495,12 @@ class FastICA(BaseEstimator, TransformerMixin):
         mixing_matrix : array, shape (n_features, n_components)
         """
         return self.mixing_
+
+    @property
+    @deprecated('To be removed in 0.16.  Use `fit_transform` and store the '
+                'output instead.')
+    def sources_(self):
+        return self.__sources
 
     def inverse_transform(self, X, copy=True):
         """Transform the sources back to the mixed data (apply mixing matrix).
