@@ -45,6 +45,7 @@ from scipy.sparse import issparse
 from ..utils import atleast2d_or_csr
 from ..utils import gen_even_slices
 from ..utils import safe_asarray
+from ..utils import gen_even_slices
 from ..utils.extmath import safe_sparse_dot
 from ..preprocessing import normalize
 from ..externals.joblib import Parallel
@@ -190,7 +191,7 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
 
 
 def euclidean_distances_argmin(X, Y=None, axis=1,
-                               chunk_x_size=None, chunk_y_size=None,
+                               chunk_x_num=None, chunk_y_num=None,
                                return_distances=False, squared=False):
     """Compute minimum distances between one point and a set of points.
 
@@ -213,9 +214,14 @@ def euclidean_distances_argmin(X, Y=None, axis=1,
         for both. Sample numbers can be different, but feature number must be
         identical for both X and Y.
 
-    chunk_x_size, chunk_y_size: integers
-        Number of points to process in a chunk, for X and Y respectively.
-        If None, the sizes are determined automatically.
+    chunk_x_num, chunk_y_num: integers
+        Number of chunks to use for X and Y respectively.
+        If None, these numbers are determined automatically.
+        Tweaking these numbers allows for fine-tuning memory usage and
+        execution time. The memory usage is maximal for
+        chunk_x_num == chunk_y_size == 1. In any other case, memory usage
+        is reduced by a factor of chunk_x_num*chunk_y_size compared to the
+        maximum. Execution time will be large for a large number of chunks.
 
     return_distances: bool
         flag telling if found minimum distances must be returned or not.
@@ -237,48 +243,35 @@ def euclidean_distances_argmin(X, Y=None, axis=1,
 
     if axis == 0:
         X, Y = Y, X
-        chunk_x_size, chunk_y_size = chunk_y_size, chunk_x_size
+        chunk_x_num, chunk_y_num = chunk_y_num, chunk_x_num
 
-    if chunk_x_size is None and chunk_y_size is None:
+    if chunk_x_num is None and chunk_y_num is None:
         # Cut arrays in a given number of pieces, along x or Y, depending
         # on which arrays is bigger.
-        chunk_num = 50
-
         if X.shape[0] >= Y.shape[0] / 2 and Y.shape[0] >= X.shape[0] / 2:
-            chunk_x_size = max(int(X.shape[0] / 7), 1)
-            chunk_y_size = max(int(Y.shape[0] / 7), 1)
+            chunk_x_num, chunk_y_num = (7, 7)
         elif X.shape[0] > Y.shape[0]:
-            chunk_x_size = max(int(X.shape[0] / chunk_num), 1)
-            chunk_y_size = Y.shape[0]
+            chunk_x_num, chunk_y_num = (50, 1)
         else:
-            chunk_x_size = X.shape[0]
-            chunk_y_size = max(int(Y.shape[0] / chunk_num), 1)
+            chunk_x_num, chunk_y_num = (1, 50)
 
-    if chunk_x_size is None or chunk_x_size <= 0:
-        chunk_x_size = X.shape[0]
-    if chunk_y_size is None or chunk_y_size <= 0:
-        chunk_y_size = Y.shape[0]
-
-    # Note: the last chunk can be incomplete
-    n_chunks_x = (X.shape[0] - 1) // chunk_x_size + 1
-    n_chunks_y = (Y.shape[0] - 1) // chunk_y_size + 1
+    if chunk_x_num is None:
+        chunk_x_num = 1
+    if chunk_y_num is None:
+        chunk_y_num = 1
 
     # Allocate output arrays
     indices = np.empty(X.shape[0], dtype='int32')
     values = np.empty(X.shape[0])
-    values.fill(float('inf'))
+    values.fill(np.infty)
 
-    for chunk_x in range(n_chunks_x):
-        x_sind = chunk_x * chunk_x_size
-        x_eind = min((chunk_x + 1) * chunk_x_size, X.shape[0])
-        X_chunk = X[x_sind:x_eind, :]
+    for chunk_x in gen_even_slices(X.shape[0], chunk_x_num):
+        X_chunk = X[chunk_x, :]
 
-        for chunk_y in range(n_chunks_y):
-            y_sind = chunk_y * chunk_y_size
-            y_eind = (chunk_y + 1) * chunk_y_size
-            Y_chunk = Y[y_sind:y_eind, :]
+        for chunk_y in gen_even_slices(Y.shape[0], chunk_y_num):
+            Y_chunk = Y[chunk_y, :]
 
-            # Compute distances in chunk
+            # Compute distances in current chunk
             tvar = np.dot(X_chunk, Y_chunk.T)
             tvar *= -2
             tvar += (X_chunk * X_chunk).sum(axis=1)[:, np.newaxis]
@@ -287,15 +280,14 @@ def euclidean_distances_argmin(X, Y=None, axis=1,
 
             # Update indices and minimum values using chunk
             min_indices = tvar.argmin(axis=1)
-            min_values = tvar[range(x_eind - x_sind), min_indices]
+            min_values = tvar[range(chunk_x.stop - chunk_x.start), min_indices]
 
-            flags = values[x_sind:x_eind] > min_values
+            flags = values[chunk_x] > min_values
+            indices[chunk_x] = np.where(
+                flags, min_indices + chunk_y.start, indices[chunk_x])
 
-            indices[x_sind:x_eind] = np.where(
-                flags, min_indices + y_sind, indices[x_sind:x_eind])
-
-            values[x_sind:x_eind] = np.where(
-                flags, min_values, values[x_sind:x_eind])
+            values[chunk_x] = np.where(
+                flags, min_values, values[chunk_x])
 
     if return_distances:
         if not squared:
