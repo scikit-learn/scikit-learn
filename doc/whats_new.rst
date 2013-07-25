@@ -185,7 +185,8 @@ Changelog
      :class:`neighbors.RadiusNeighborsClassifier` support multioutput data
      by `Arnaud Joly`_.
 
-
+   - Add `fast_dot` wrapper allowing to call `BLAS gemm` directly and avoiding
+   extra memory copies by `Denis Engemann`_ and `Alexandre Gramfort`_.
 
 
 API changes summary

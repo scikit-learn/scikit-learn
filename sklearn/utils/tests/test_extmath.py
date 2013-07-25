@@ -19,7 +19,9 @@ from sklearn.utils.extmath import randomized_svd
 from sklearn.utils.extmath import weighted_mode
 from sklearn.utils.extmath import cartesian
 from sklearn.utils.extmath import logistic_sigmoid
+from sklearn.utils.extmath import fast_dot
 from sklearn.datasets.samples_generator import make_low_rank_matrix
+from nose.tools import assert_raises
 
 
 def test_density():
@@ -266,3 +268,43 @@ def test_logistic_sigmoid():
     extreme_x = np.array([-100, 100], dtype=np.float)
     assert_array_almost_equal(logistic_sigmoid(extreme_x), [0, 1])
     assert_array_almost_equal(logistic_sigmoid(extreme_x, log=True), [-100, 0])
+
+
+def test_fast_dot():
+    """Check fast dot blas wrapper function"""
+    rng = np.random.RandomState(42)
+    A = rng.random_sample([2, 10])
+    B = rng.random_sample([2, 10])
+    assert_raises(ValueError, fast_dot, A, A.astype('f4'))
+    assert_raises(ValueError, fast_dot, A.astype('i4'), A)
+    # test cov-like use case + dtypes
+    for dtype in ['f8', 'f4']:
+        A = A.astype(dtype)
+        B = B.astype(dtype)
+
+        #  col < row
+        C = np.dot(A.T, A)
+        C_ = fast_dot(A.T, A)
+        assert_array_equal(C, C_)
+
+        C = np.dot(A.T, B)
+        C_ = fast_dot(A.T, B)
+        assert_array_equal(C, C_)
+
+        C = np.dot(A, B.T)
+        C_ = fast_dot(A, B.T)
+        assert_array_equal(C, C_)
+
+    # test square matrix * rectangular use case
+    A = rng.random_sample([2, 2])
+    for dtype in ['f8', 'f4']:
+        A = A.astype(dtype)
+        B = B.astype(dtype)
+
+        C = np.dot(A, B)
+        C_ = fast_dot(A, B)
+        assert_array_equal(C, C_)
+
+        C = np.dot(A.T, B)
+        C_ = fast_dot(A.T, B)
+        assert_array_equal(C, C_)
