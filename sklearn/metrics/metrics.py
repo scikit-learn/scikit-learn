@@ -1112,16 +1112,6 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
 
     Examples
     --------
-    In the binary case:
-
-    >>> from sklearn.metrics import f1_score
-    >>> y_pred = [0, 1, 0, 0]
-    >>> y_true = [0, 1, 0, 1]
-    >>> f1_score(y_true, y_pred)  # doctest: +ELLIPSIS
-    0.666...
-
-    In the multiclass case:
-
     >>> from sklearn.metrics import f1_score
     >>> y_true = [0, 1, 2, 0, 1, 2]
     >>> y_pred = [0, 2, 1, 0, 0, 1]
@@ -1134,37 +1124,6 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
     >>> f1_score(y_true, y_pred, average=None)
     array([ 0.8,  0. ,  0. ])
 
-    In the multilabel case with binary indicator format:
-
-    >>> from sklearn.metrics import f1_score
-    >>> y_true = np.array([[0.0, 1.0, 0.0], [1.0, 1.0, 0.0], [0.0, 0.0, 1.0]])
-    >>> y_pred = np.ones((3, 3))
-    >>> f1_score(y_true, y_pred, average='macro')  # doctest: +ELLIPSIS
-    0.59...
-    >>> f1_score(y_true, y_pred, average='micro')  # doctest: +ELLIPSIS
-    0.61...
-    >>> f1_score(y_true, y_pred, average='weighted')  # doctest: +ELLIPSIS
-    0.65...
-    >>> f1_score(y_true, y_pred, average='samples')  # doctest: +ELLIPSIS
-    0.59...
-    >>> f1_score(y_true, y_pred, average=None)
-    array([ 0.5,  0.8,  0.5])
-
-    and with a list of labels format:
-
-    >>> from sklearn.metrics import f1_score
-    >>> y_true = [(1, 2), (3, )]
-    >>> y_pred = [(1, 2), tuple()]
-    >>> f1_score(y_true, y_pred, average='macro')  # doctest: +ELLIPSIS
-    0.66...
-    >>> f1_score(y_true, y_pred, average='micro')  # doctest: +ELLIPSIS
-    0.8...
-    >>> f1_score(y_true, y_pred, average='weighted')  # doctest: +ELLIPSIS
-    0.66...
-    >>> f1_score(y_true, y_pred, average='samples')  # doctest: +ELLIPSIS
-    0.5
-    >>> f1_score(y_true, y_pred, average=None)
-    array([ 1.,  1.,  0.])
 
     """
     return fbeta_score(y_true, y_pred, 1, labels=labels,
@@ -1239,20 +1198,6 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
 
     Examples
     --------
-    In the binary case:
-
-    >>> from sklearn.metrics import fbeta_score
-    >>> y_pred = [0, 1, 0, 0]
-    >>> y_true = [0, 1, 0, 1]
-    >>> fbeta_score(y_true, y_pred, beta=0.5)  # doctest: +ELLIPSIS
-    0.83...
-    >>> fbeta_score(y_true, y_pred, beta=1)  # doctest: +ELLIPSIS
-    0.66...
-    >>> fbeta_score(y_true, y_pred, beta=2)  # doctest: +ELLIPSIS
-    0.55...
-
-    In the multiclass case:
-
     >>> from sklearn.metrics import fbeta_score
     >>> y_true = [0, 1, 2, 0, 1, 2]
     >>> y_pred = [0, 2, 1, 0, 0, 1]
@@ -1268,47 +1213,6 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
     >>> fbeta_score(y_true, y_pred, average=None, beta=0.5)
     ... # doctest: +ELLIPSIS
     array([ 0.71...,  0.        ,  0.        ])
-
-
-    In the multilabel case with binary indicator format:
-
-    >>> from sklearn.metrics import fbeta_score
-    >>> y_true = np.array([[0.0, 1.0, 0.0], [1.0, 1.0, 0.0], [0.0, 0.0, 1.0]])
-    >>> y_pred = np.ones((3, 3))
-    >>> fbeta_score(y_true, y_pred, average='macro', beta=0.5)
-    ... # doctest: +ELLIPSIS
-    0.49...
-    >>> fbeta_score(y_true, y_pred, average='micro', beta=0.5)
-    0.5
-    >>> fbeta_score(y_true, y_pred, average='weighted', beta=0.5)
-    ... # doctest: +ELLIPSIS
-    0.54...
-    >>> fbeta_score(y_true, y_pred, average='samples', beta=0.5)
-    ... # doctest: +ELLIPSIS
-    0.66...
-    >>> fbeta_score(y_true, y_pred, average=None, beta=0.5)
-    ... # doctest: +ELLIPSIS
-    array([ 0.38...,  0.71...,  0.38...])
-
-    and with a list of labels format:
-
-    >>> from sklearn.metrics import fbeta_score
-    >>> y_true = [(1, 2), (3, )]
-    >>> y_pred = [(1, 2), tuple()]
-    >>> fbeta_score(y_true, y_pred, average='macro', beta=0.5)
-    ... # doctest: +ELLIPSIS
-    0.66...
-    >>> fbeta_score(y_true, y_pred, average='micro', beta=0.5)
-    ... # doctest: +ELLIPSIS
-    0.90...
-    >>> fbeta_score(y_true, y_pred, average='weighted', beta=0.5)
-    ... # doctest: +ELLIPSIS
-    0.66...
-    >>> fbeta_score(y_true, y_pred, average='samples', beta=0.5)
-    ... # doctest: +ELLIPSIS
-    0.42...
-    >>> fbeta_score(y_true, y_pred, average=None, beta=0.5)
-    array([ 1.,  1.,  0.])
 
     """
     _, _, f, _ = precision_recall_fscore_support(y_true, y_pred,
@@ -1516,23 +1420,6 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
 
     Examples
     --------
-    In the binary case:
-
-    >>> from sklearn.metrics import precision_recall_fscore_support
-    >>> y_pred = [0, 1, 0, 0]
-    >>> y_true = [0, 1, 0, 1]
-    >>> p, r, f, s = precision_recall_fscore_support(y_true, y_pred, beta=0.5)
-    >>> p  # doctest: +ELLIPSIS
-    array([ 0.66...,  1.        ])
-    >>> r
-    array([ 1. ,  0.5])
-    >>> f  # doctest: +ELLIPSIS
-    array([ 0.71...,  0.83...])
-    >>> s  # doctest: +ELLIPSIS
-    array([2, 2]...)
-
-    In the multiclass case:
-
     >>> from sklearn.metrics import precision_recall_fscore_support
     >>> y_true = np.array([0, 1, 2, 0, 1, 2])
     >>> y_pred = np.array([0, 2, 1, 0, 0, 1])
@@ -1545,42 +1432,6 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     >>> precision_recall_fscore_support(y_true, y_pred, average='weighted')
     ... # doctest: +ELLIPSIS
     (0.22..., 0.33..., 0.26..., None)
-
-    In the multilabel case with binary indicator format:
-
-    >>> from sklearn.metrics import precision_recall_fscore_support
-    >>> y_true = np.array([[0.0, 1.0, 0.0], [1.0, 1.0, 0.0], [0.0, 0.0, 1.0]])
-    >>> y_pred = np.ones((3, 3))
-    >>> precision_recall_fscore_support(y_true, y_pred, average='macro')
-    ... # doctest: +ELLIPSIS
-    (0.44..., 1.0, 0.59..., None)
-    >>> precision_recall_fscore_support(y_true, y_pred, average='micro')
-    ... # doctest: +ELLIPSIS
-    (0.44..., 1.0, 0.61..., None)
-    >>> precision_recall_fscore_support(y_true, y_pred, average='weighted')
-    ... # doctest: +ELLIPSIS
-    (0.499..., 1.0, 0.65..., None)
-    >>> precision_recall_fscore_support(y_true, y_pred, average='samples')
-    ... # doctest: +ELLIPSIS
-    (1.0, 0.44..., 0.59..., None)
-
-    and with a list of labels format:
-
-    >>> from sklearn.metrics import precision_recall_fscore_support
-    >>> y_true = [(1, 2), (3, )]
-    >>> y_pred = [(1, 2), tuple()]
-    >>> precision_recall_fscore_support(y_true, y_pred, average='macro')
-    ... # doctest: +ELLIPSIS
-    (0.66..., 0.66..., 0.66..., None)
-    >>> precision_recall_fscore_support(y_true, y_pred, average='micro')
-    ... # doctest: +ELLIPSIS
-    (1.0, 0.66..., 0.8..., None)
-    >>> precision_recall_fscore_support(y_true, y_pred, average='weighted')
-    ... # doctest: +ELLIPSIS
-    (0.66..., 0.66..., 0.66..., None)
-    >>> precision_recall_fscore_support(y_true, y_pred, average='samples')
-    ... # doctest: +ELLIPSIS
-    (0.5, 1.0, 0.5, None)
 
     """
     if beta <= 0:
@@ -1777,15 +1628,6 @@ def precision_score(y_true, y_pred, labels=None, pos_label=1,
 
     Examples
     --------
-    In the binary case:
-
-    >>> from sklearn.metrics import precision_score
-    >>> y_pred = [0, 1, 0, 0]
-    >>> y_true = [0, 1, 0, 1]
-    >>> precision_score(y_true, y_pred)
-    1.0
-
-    In the multiclass case:
 
     >>> from sklearn.metrics import precision_score
     >>> y_true = [0, 1, 2, 0, 1, 2]
@@ -1799,43 +1641,6 @@ def precision_score(y_true, y_pred, labels=None, pos_label=1,
     0.22...
     >>> precision_score(y_true, y_pred, average=None)  # doctest: +ELLIPSIS
     array([ 0.66...,  0.        ,  0.        ])
-
-    In the multilabel case with binary indicator format:
-
-    >>> from sklearn.metrics import precision_score
-    >>> y_true = np.array([[0.0, 1.0, 0.0], [1.0, 1.0, 0.0], [0.0, 0.0, 1.0]])
-    >>> y_pred = np.ones((3, 3))
-    >>> precision_score(y_true, y_pred, average='macro')  # doctest: +ELLIPSIS
-    0.44...
-    >>> precision_score(y_true, y_pred, average='micro')  # doctest: +ELLIPSIS
-    0.44...
-    >>> precision_score(y_true, y_pred, average='weighted')
-    ... # doctest: +ELLIPSIS
-    0.49...
-    >>> precision_score(y_true, y_pred, average='samples')
-    1.0
-    >>> precision_score(y_true, y_pred, average=None)
-    ... # doctest: +ELLIPSIS
-    array([ 0.33...,  0.66...,  0.33...])
-
-    and with a list of labels format:
-
-    >>> from sklearn.metrics import precision_score
-    >>> y_true = [(1, 2), (3, )]
-    >>> y_pred = [(1, 2), tuple()]
-    >>> precision_score(y_true, y_pred, average='macro')  # doctest: +ELLIPSIS
-    0.66...
-    >>> precision_score(y_true, y_pred, average='micro')  # doctest: +ELLIPSIS
-    1.0
-    >>> precision_score(y_true, y_pred, average='weighted')
-    ... # doctest: +ELLIPSIS
-    0.66...
-    >>> precision_score(y_true, y_pred, average='samples')
-    ... # doctest: +ELLIPSIS
-    0.5
-    >>> precision_score(y_true, y_pred, average=None)
-    array([ 1.,  1.,  0.])
-
 
     """
     p, _, _, _ = precision_recall_fscore_support(y_true, y_pred,
@@ -1899,16 +1704,6 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
 
     Examples
     --------
-    In the binary case:
-
-    >>> from sklearn.metrics import recall_score
-    >>> y_pred = [0, 1, 0, 0]
-    >>> y_true = [0, 1, 0, 1]
-    >>> recall_score(y_true, y_pred)
-    0.5
-
-    In the multiclass case:
-
     >>> from sklearn.metrics import recall_score
     >>> y_true = [0, 1, 2, 0, 1, 2]
     >>> y_pred = [0, 2, 1, 0, 0, 1]
@@ -1921,37 +1716,6 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
     >>> recall_score(y_true, y_pred, average=None)
     array([ 1.,  0.,  0.])
 
-    In the multilabel case with binary indicator format:
-
-    >>> from sklearn.metrics import recall_score
-    >>> y_true = np.array([[0.0, 1.0, 0.0], [1.0, 1.0, 0.0], [0.0, 0.0, 1.0]])
-    >>> y_pred = np.ones((3, 3))
-    >>> recall_score(y_true, y_pred, average='macro')
-    1.0
-    >>> recall_score(y_true, y_pred, average='micro')
-    1.0
-    >>> recall_score(y_true, y_pred, average='weighted')  # doctest: +ELLIPSIS
-    1.0
-    >>> recall_score(y_true, y_pred, average='samples')  # doctest: +ELLIPSIS
-    0.44...
-    >>> recall_score(y_true, y_pred, average=None)
-    array([ 1.,  1.,  1.])
-
-    and with a list of labels format:
-
-    >>> from sklearn.metrics import recall_score
-    >>> y_true = [(1, 2), (3, )]
-    >>> y_pred = [(1, 2), tuple()]
-    >>> recall_score(y_true, y_pred, average='macro')  # doctest: +ELLIPSIS
-    0.66...
-    >>> recall_score(y_true, y_pred, average='micro')  # doctest: +ELLIPSIS
-    0.66...
-    >>> recall_score(y_true, y_pred, average='weighted')  # doctest: +ELLIPSIS
-    0.66...
-    >>> recall_score(y_true, y_pred, average='samples')
-    1.0
-    >>> recall_score(y_true, y_pred, average=None)
-    array([ 1.,  1.,  0.])
     """
     _, r, _, _ = precision_recall_fscore_support(y_true, y_pred,
                                                  labels=labels,

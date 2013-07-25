@@ -13,7 +13,7 @@ model:
   default evaluation criterion for the problem they are designed to solve.
   This is not discussed on this page, but in each estimator's documentation.
 
-* **Scoring parameter**: Model-evaluation tools using 
+* **Scoring parameter**: Model-evaluation tools using
   :ref:`cross-validation <cross-validation>` (such as
   :func:`cross_validation.cross_val_score` and
   :class:`grid_search.GridSearchCV`) rely on an internal *scoring* strategy.
@@ -27,7 +27,7 @@ Finally, :ref:`dummy_estimators` are useful to get a baseline
 value of those metrics for random predictions.
 
 .. seealso::
-   
+
    For "pairwise" metrics, between *samples* and not estimators or
    predictions, see the :ref:`metrics` section.
 
@@ -94,7 +94,7 @@ Defining your scoring strategy from score functions
 -----------------------------------------------------
 
 The scoring parameter can be a callable that takes model predictions and
-ground truth. 
+ground truth.
 
 However, if you want to use a scoring function that takes additional parameters, such as
 :func:`fbeta_score`, you need to generate an appropriate scoring object.  The
@@ -133,7 +133,7 @@ from a simple python function::
 * whether the function you provided takes predictions as input
  (``needs_threshold=False``) or needs confidence scores
  (``needs_threshold=True``)
- 
+
 * any additional parameters, such as ``beta`` in an :func:`f1_score`.
 
 
@@ -661,82 +661,6 @@ Then the metrics are defined as:
 |``None``       | :math:`\langle P(y_l, \hat{y}_l) | l \in L \rangle`                                                              | :math:`\langle R(y_l, \hat{y}_l) | l \in L \rangle`                                                              | :math:`\langle F_\beta(y_l, \hat{y}_l) | l \in L \rangle`                                                            |
 +---------------+------------------------------------------------------------------------------------------------------------------+------------------------------------------------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------------+
 
-
-Here is an example where ``average`` is set to ``macro``::
-
-  >>> from sklearn import metrics
-  >>> y_true = [0, 1, 2, 0, 1, 2]
-  >>> y_pred = [0, 2, 1, 0, 0, 1]
-  >>> metrics.precision_score(y_true, y_pred, average='macro')  # doctest: +ELLIPSIS
-  0.22...
-  >>> metrics.recall_score(y_true, y_pred, average='macro')  # doctest: +ELLIPSIS
-  0.33...
-  >>> metrics.fbeta_score(y_true, y_pred, average='macro', beta=0.5)  # doctest: +ELLIPSIS
-  0.23...
-  >>> metrics.f1_score(y_true, y_pred, average='macro')  # doctest: +ELLIPSIS
-  0.26...
-  >>> metrics.precision_recall_fscore_support(y_true, y_pred, average='macro')  # doctest: +ELLIPSIS
-  (0.22..., 0.33..., 0.26..., None)
-
-Here is an example where ``average`` is set to ``micro``::
-
-  >>> from sklearn import metrics
-  >>> y_true = [0, 1, 2, 0, 1, 2]
-  >>> y_pred = [0, 2, 1, 0, 0, 1]
-  >>> metrics.precision_score(y_true, y_pred, average='micro')
-  ... # doctest: +ELLIPSIS
-  0.33...
-  >>> metrics.recall_score(y_true, y_pred, average='micro')
-  ... # doctest: +ELLIPSIS
-  0.33...
-  >>> metrics.f1_score(y_true, y_pred, average='micro')
-  ... # doctest: +ELLIPSIS
-  0.33...
-  >>> metrics.fbeta_score(y_true, y_pred, average='micro', beta=0.5)
-  ... # doctest: +ELLIPSIS
-  0.33...
-  >>> metrics.precision_recall_fscore_support(y_true, y_pred, average='micro')
-  ... # doctest: +ELLIPSIS
-  (0.33..., 0.33..., 0.33..., None)
-
-Here is an example where ``average`` is set to ``weighted``::
-
-  >>> from sklearn import metrics
-  >>> y_true = [0, 1, 2, 0, 1, 2]
-  >>> y_pred = [0, 2, 1, 0, 0, 1]
-  >>> metrics.precision_score(y_true, y_pred, average='weighted')
-  ... # doctest: +ELLIPSIS
-  0.22...
-  >>> metrics.recall_score(y_true, y_pred, average='weighted')
-  ... # doctest: +ELLIPSIS
-  0.33...
-  >>> metrics.fbeta_score(y_true, y_pred, average='weighted', beta=0.5)
-  ... # doctest: +ELLIPSIS
-  0.23...
-  >>> metrics.f1_score(y_true, y_pred, average='weighted')  # doctest: +ELLIPSIS
-  0.26...
-  >>> metrics.precision_recall_fscore_support(y_true, y_pred,
-  ... average='weighted')  # doctest: +ELLIPSIS
-  (0.22..., 0.33..., 0.26..., None)
-
-Here is an example where ``average`` is set to ``None``::
-
-  >>> from sklearn import metrics
-  >>> y_true = [0, 1, 2, 0, 1, 2]
-  >>> y_pred = [0, 2, 1, 0, 0, 1]
-  >>> metrics.precision_score(y_true, y_pred, average=None)
-  ... # doctest: +ELLIPSIS
-  array([ 0.66...,  0.        ,  0.        ])
-  >>> metrics.recall_score(y_true, y_pred, average=None)
-  array([ 1.,  0.,  0.])
-  >>> metrics.f1_score(y_true, y_pred, average=None)  # doctest: +ELLIPSIS
-  array([ 0.8,  0. ,  0. ])
-  >>> metrics.fbeta_score(y_true, y_pred, average=None, beta=0.5)
-  ... # doctest: +ELLIPSIS
-  array([ 0.71...,  0.        ,  0.        ])
-  >>> metrics.precision_recall_fscore_support(y_true, y_pred, beta=0.5)
-  ... # doctest: +ELLIPSIS
-  (array([ 0.66...,  0.        ,  0.        ]), array([ 1.,  0.,  0.]), array([ 0.71...,  0.        ,  0.        ]), array([2, 2, 2]...))
 
 Hinge loss
 ...........
