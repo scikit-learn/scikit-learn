@@ -1422,12 +1422,12 @@ def _get_median(negative_elements, n_zeros, positive_elements):
 
     if round(median_position) == median_position:
         median = _get_elem_at_rank(negative_elements, n_zeros,
-                              positive_elements, median_position)
+                                   positive_elements, median_position)
     else:
         a = _get_elem_at_rank(negative_elements, n_zeros,
-                         positive_elements, math.floor(median_position))
+                              positive_elements, math.floor(median_position))
         b = _get_elem_at_rank(negative_elements, n_zeros,
-                         positive_elements, math.ceil(median_position))
+                              positive_elements, math.ceil(median_position))
         median = (a + b) / 2.0
 
     return median

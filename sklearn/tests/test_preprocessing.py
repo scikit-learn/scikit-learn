@@ -816,7 +816,7 @@ def test_add_dummy_feature_csr():
 
 
 def _check_statistics(X, X_true,
-                          strategy, statistics, missing_values):
+                      strategy, statistics, missing_values):
     """Utility function for testing imputation for a given strategy.
 
     Test:
@@ -846,7 +846,8 @@ def _check_statistics(X, X_true,
         X_trans = imputer.transform(X.copy().transpose())
         assert_array_equal(imputer.statistics_, statistics,
                            err_msg.format(1, False))
-        assert_array_equal(X_trans, X_true.transpose(), err_msg.format(1, False))
+        assert_array_equal(X_trans, X_true.transpose(),
+                           err_msg.format(1, False))
 
     # Sparse matrix, axis = 0
     imputer = Imputer(missing_values, strategy=strategy, axis=0)
@@ -972,7 +973,7 @@ def test_imputation_mean_median():
         X_true = X_true[:, cols_to_keep]
 
         _check_statistics(X, X_true, strategy,
-                              true_statistics, test_missing_values)
+                          true_statistics, test_missing_values)
 
 
 def test_imputation_most_frequent():
@@ -1039,7 +1040,7 @@ def test_imputation_copy():
     l = 5
 
     # Test default behaviour and with copy=True
-    for params in [{}, {'copy' : True}]:
+    for params in [{}, {'copy': True}]:
         X = sparse_random_matrix(l, l, density=0.75, random_state=0)
 
         # Dense
