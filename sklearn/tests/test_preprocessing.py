@@ -937,7 +937,7 @@ def test_imputation_mean_median():
         #    - with only missing values
         #    - with zeros, missing values and values
         # And a matrix X_true containing all true values
-        for j in xrange(shape[1]):
+        for j in range(shape[1]):
             nb_zeros = (j - dec + 1 > 0) * (j - dec + 1) * (j - dec + 1)
             nb_missing_values = max(shape[0] + dec * dec
                                     - (j + dec) * (j + dec), 0)
