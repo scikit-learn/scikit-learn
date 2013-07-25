@@ -48,7 +48,7 @@ class BaseNB(six.with_metaclass(ABCMeta, BaseEstimator, ClassifierMixin)):
         predict_proba and predict_log_proba.
         """
 
-    def predict(self, X):
+    def _predict(self, X):
         """
         Perform classification on an array of test vectors X.
 
@@ -172,6 +172,22 @@ class GaussianNB(BaseNB):
             self.sigma_[i, :] = np.var(X[y == y_i, :], axis=0) + epsilon
             self.class_prior_[i] = np.float(np.sum(y == y_i)) / n_samples
         return self
+
+    def predict(self, X):
+        """
+        Perform classification on an array of test vectors X.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+
+        Returns
+        -------
+        C : array, shape = [n_samples]
+            Predicted target values for X
+        """
+        jll = self._joint_log_likelihood(X)
+        return self.classes_[np.argmax(jll, axis=1)]
 
     def _joint_log_likelihood(self, X):
         X = array2d(X)
@@ -553,8 +569,16 @@ class BernoulliNB(BaseDiscreteNB, LinearClassifierMixin):
         smoothed_fc = self.feature_count_ + self.alpha
         smoothed_cc = self.class_count_ + self.alpha * n_classes
 
-        self.feature_log_prob_ = (np.log(smoothed_fc)
-                                  - np.log(smoothed_cc.reshape(-1, 1)))
+        feature_log_prob = (np.log(smoothed_fc)
+                            - np.log(smoothed_cc.reshape(-1, 1)))
+
+        neg_log_prob = np.log(1 - np.exp(feature_log_prob))
+
+        self.feature_log_prob_ = feature_log_prob
+        if n_classes == 2:
+            self.coef_ = feature_log_prob[1:]
+        else:
+            self.coef_ = feature_log_prob
 
     def _joint_log_likelihood(self, X):
         """Calculate the posterior log probability of the samples X"""
@@ -577,3 +601,6 @@ class BernoulliNB(BaseDiscreteNB, LinearClassifierMixin):
         jll += self.class_log_prior_ + neg_prob.sum(axis=1)
 
         return jll
+
+    def decision_function(self, X):
+        return self._joint_log_likelihood(X)
