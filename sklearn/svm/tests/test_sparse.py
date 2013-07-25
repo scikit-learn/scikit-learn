@@ -3,7 +3,7 @@ import numpy as np
 from scipy import sparse
 from sklearn import datasets, svm, linear_model, base
 from numpy.testing import (assert_array_almost_equal, assert_array_equal,
-                           assert_equal)
+                           assert_equal, assert_warns)
 
 from nose.tools import assert_raises, assert_true, assert_false
 from nose.tools import assert_equal as nose_assert_equal
@@ -275,13 +275,7 @@ def test_sparse_svc_clone_with_callable_kernel():
 def test_timeout():
     sp = svm.SVC(C=1, kernel=lambda x, y: x * y.T, probability=True,
                  max_iter=1)
-    with warnings.catch_warnings(record=True) as foo:
-        sp.fit(X_sp, Y)
-        nose_assert_equal(len(foo), 1, msg=foo)
-        nose_assert_equal(foo[0].category, ConvergenceWarning,
-                          msg=foo[0].category)
+    with warnings.catch_warnings(record=True):
+        warnings.simplefilter("always")
 
-
-if __name__ == '__main__':
-    import nose
-    nose.runmodule()
+        assert_warns(ConvergenceWarning, sp.fit, X_sp, Y)
