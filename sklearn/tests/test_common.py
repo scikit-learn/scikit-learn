@@ -496,7 +496,7 @@ def test_clustering():
     n_samples, n_features = X.shape
     X = StandardScaler().fit_transform(X)
     for name, Alg in clustering:
-        if name == 'WardAgglomeration':
+        if name in['WardAgglomeration', "FeatureAgglomeration"]:
             # this is clustering on the features
             # let's not test that here.
             continue
