@@ -1,7 +1,7 @@
 import warnings
 import numpy as np
 import numpy.linalg as la
-import scipy.sparse as sp
+from scipy import sparse
 
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
@@ -190,8 +190,8 @@ def test_scaler_without_centering():
     rng = np.random.RandomState(42)
     X = rng.randn(4, 5)
     X[:, 0] = 0.0  # first feature is always of zero
-    X_csr = sp.csr_matrix(X)
-    X_csc = sp.csc_matrix(X)
+    X_csr = sparse.csr_matrix(X)
+    X_csc = sparse.csc_matrix(X)
 
     assert_raises(ValueError, StandardScaler().fit, X_csr)
 
@@ -252,7 +252,7 @@ def test_scaler_without_copy():
     rng = np.random.RandomState(42)
     X = rng.randn(4, 5)
     X[:, 0] = 0.0  # first feature is always of zero
-    X_csr = sp.csr_matrix(X)
+    X_csr = sparse.csr_matrix(X)
 
     X_copy = X.copy()
     StandardScaler(copy=False).fit(X)
@@ -266,7 +266,7 @@ def test_scaler_without_copy():
 def test_scale_sparse_with_mean_raise_exception():
     rng = np.random.RandomState(42)
     X = rng.randn(4, 5)
-    X_csr = sp.csr_matrix(X)
+    X_csr = sparse.csr_matrix(X)
 
     # check scaling and fit with direct calls on sparse data
     assert_raises(ValueError, scale, X_csr, with_mean=True)
@@ -276,7 +276,7 @@ def test_scale_sparse_with_mean_raise_exception():
     scaler = StandardScaler(with_mean=True).fit(X)
     assert_raises(ValueError, scaler.transform, X_csr)
 
-    X_transformed_csr = sp.csr_matrix(scaler.transform(X))
+    X_transformed_csr = sparse.csr_matrix(scaler.transform(X))
     assert_raises(ValueError, scaler.inverse_transform, X_transformed_csr)
 
 
@@ -284,7 +284,7 @@ def test_scale_function_without_centering():
     rng = np.random.RandomState(42)
     X = rng.randn(4, 5)
     X[:, 0] = 0.0  # first feature is always of zero
-    X_csr = sp.csr_matrix(X)
+    X_csr = sparse.csr_matrix(X)
 
     X_scaled = scale(X, with_mean=False)
     assert_false(np.any(np.isnan(X_scaled)))
@@ -327,7 +327,7 @@ def test_warning_scaling_integers():
 def test_normalizer_l1():
     rng = np.random.RandomState(0)
     X_dense = rng.randn(4, 5)
-    X_sparse_unpruned = sp.csr_matrix(X_dense)
+    X_sparse_unpruned = sparse.csr_matrix(X_dense)
 
     # set the row number 3 to zero
     X_dense[3, :] = 0.0
@@ -338,7 +338,7 @@ def test_normalizer_l1():
     X_sparse_unpruned.data[indptr_3:indptr_4] = 0.0
 
     # build the pruned variant using the regular constructor
-    X_sparse_pruned = sp.csr_matrix(X_dense)
+    X_sparse_pruned = sparse.csr_matrix(X_dense)
 
     # check inputs that support the no-copy optim
     for X in (X_dense, X_sparse_pruned, X_sparse_unpruned):
@@ -360,12 +360,12 @@ def test_normalizer_l1():
             assert_almost_equal(row_sums[3], 0.0)
 
     # check input for which copy=False won't prevent a copy
-    for init in (sp.coo_matrix, sp.csc_matrix, sp.lil_matrix):
+    for init in (sparse.coo_matrix, sparse.csc_matrix, sparse.lil_matrix):
         X = init(X_dense)
         X_norm = normalizer = Normalizer(norm='l2', copy=False).transform(X)
 
         assert_true(X_norm is not X)
-        assert_true(isinstance(X_norm, sp.csr_matrix))
+        assert_true(isinstance(X_norm, sparse.csr_matrix))
 
         X_norm = toarray(X_norm)
         for i in range(3):
@@ -376,7 +376,7 @@ def test_normalizer_l1():
 def test_normalizer_l2():
     rng = np.random.RandomState(0)
     X_dense = rng.randn(4, 5)
-    X_sparse_unpruned = sp.csr_matrix(X_dense)
+    X_sparse_unpruned = sparse.csr_matrix(X_dense)
 
     # set the row number 3 to zero
     X_dense[3, :] = 0.0
@@ -387,7 +387,7 @@ def test_normalizer_l2():
     X_sparse_unpruned.data[indptr_3:indptr_4] = 0.0
 
     # build the pruned variant using the regular constructor
-    X_sparse_pruned = sp.csr_matrix(X_dense)
+    X_sparse_pruned = sparse.csr_matrix(X_dense)
 
     # check inputs that support the no-copy optim
     for X in (X_dense, X_sparse_pruned, X_sparse_unpruned):
@@ -408,12 +408,12 @@ def test_normalizer_l2():
             assert_almost_equal(la.norm(X_norm[3]), 0.0)
 
     # check input for which copy=False won't prevent a copy
-    for init in (sp.coo_matrix, sp.csc_matrix, sp.lil_matrix):
+    for init in (sparse.coo_matrix, sparse.csc_matrix, sparse.lil_matrix):
         X = init(X_dense)
         X_norm = normalizer = Normalizer(norm='l2', copy=False).transform(X)
 
         assert_true(X_norm is not X)
-        assert_true(isinstance(X_norm, sp.csr_matrix))
+        assert_true(isinstance(X_norm, sparse.csr_matrix))
 
         X_norm = toarray(X_norm)
         for i in range(3):
@@ -430,7 +430,7 @@ def test_normalize_errors():
 def test_binarizer():
     X_ = np.array([[1, 0, 5], [2, 3, -1]])
 
-    for init in (np.array, list, sp.csr_matrix, sp.csc_matrix):
+    for init in (np.array, list, sparse.csr_matrix, sparse.csc_matrix):
 
         X = init(X_.copy())
 
@@ -439,7 +439,7 @@ def test_binarizer():
         assert_equal(np.sum(X_bin == 0), 4)
         assert_equal(np.sum(X_bin == 1), 2)
         X_bin = binarizer.transform(X)
-        assert_equal(sp.issparse(X), sp.issparse(X_bin))
+        assert_equal(sparse.issparse(X), sparse.issparse(X_bin))
 
         binarizer = Binarizer(copy=True).fit(X)
         X_bin = toarray(binarizer.transform(X))
@@ -472,7 +472,7 @@ def test_binarizer():
         X_bin = binarizer.transform(X)
 
     # Cannot use threshold < 0 for sparse
-    assert_raises(ValueError, binarizer.transform, sp.csc_matrix(X))
+    assert_raises(ValueError, binarizer.transform, sparse.csc_matrix(X))
 
 
 def test_label_binarizer():
@@ -628,7 +628,7 @@ def test_one_hot_encoder():
 
 
 def _check_transform_selected(X, X_expected, sel):
-    for M in (X, sp.csr_matrix(X)):
+    for M in (X, sparse.csr_matrix(X)):
         Xtr = _transform_selected(M, Binarizer().transform, sel)
         assert_array_equal(toarray(Xtr), X_expected)
 
@@ -795,23 +795,23 @@ def test_add_dummy_feature():
 
 
 def test_add_dummy_feature_coo():
-    X = sp.coo_matrix([[1, 0], [0, 1], [0, 1]])
+    X = sparse.coo_matrix([[1, 0], [0, 1], [0, 1]])
     X = add_dummy_feature(X)
-    assert_true(sp.isspmatrix_coo(X), X)
+    assert_true(sparse.isspmatrix_coo(X), X)
     assert_array_equal(X.toarray(), [[1, 1, 0], [1, 0, 1], [1, 0, 1]])
 
 
 def test_add_dummy_feature_csc():
-    X = sp.csc_matrix([[1, 0], [0, 1], [0, 1]])
+    X = sparse.csc_matrix([[1, 0], [0, 1], [0, 1]])
     X = add_dummy_feature(X)
-    assert_true(sp.isspmatrix_csc(X), X)
+    assert_true(sparse.isspmatrix_csc(X), X)
     assert_array_equal(X.toarray(), [[1, 1, 0], [1, 0, 1], [1, 0, 1]])
 
 
 def test_add_dummy_feature_csr():
-    X = sp.csr_matrix([[1, 0], [0, 1], [0, 1]])
+    X = sparse.csr_matrix([[1, 0], [0, 1], [0, 1]])
     X = add_dummy_feature(X)
-    assert_true(sp.isspmatrix_csr(X), X)
+    assert_true(sparse.isspmatrix_csr(X), X)
     assert_array_equal(X.toarray(), [[1, 1, 0], [1, 0, 1], [1, 0, 1]])
 
 
@@ -851,9 +851,10 @@ def _check_statistics(X, X_true,
 
     # Sparse matrix, axis = 0
     imputer = Imputer(missing_values, strategy=strategy, axis=0)
-    X_trans = imputer.fit(sp.csc_matrix(X)).transform(sp.csc_matrix(X.copy()))
+    imputer.fit(sparse.csc_matrix(X))
+    X_trans = imputer.transform(sparse.csc_matrix(X.copy()))
 
-    if sp.issparse(X_trans):
+    if sparse.issparse(X_trans):
         X_trans = X_trans.toarray()
 
     assert_array_equal(imputer.statistics_, statistics,
@@ -862,14 +863,14 @@ def _check_statistics(X, X_true,
 
     # Sparse matrix, axis = 1
     imputer = Imputer(missing_values, strategy=strategy, axis=1)
-    imputer.fit(sp.csc_matrix(X.transpose()))
+    imputer.fit(sparse.csc_matrix(X.transpose()))
     if np.isnan(statistics).any():
         assert_raises(ValueError, imputer.transform,
-                      sp.csc_matrix(X.copy().transpose()))
+                      sparse.csc_matrix(X.copy().transpose()))
     else:
-        X_trans = imputer.transform(sp.csc_matrix(X.copy().transpose()))
+        X_trans = imputer.transform(sparse.csc_matrix(X.copy().transpose()))
 
-        if sp.issparse(X_trans):
+        if sparse.issparse(X_trans):
             X_trans = X_trans.toarray()
 
         assert_array_equal(imputer.statistics_, statistics,
