@@ -2,9 +2,17 @@
 =======================================
 Receiver operating characteristic (ROC)
 =======================================
-
 Example of Receiver operating characteristic (ROC) metric to
 evaluate the quality of the output of a classifier.
+
+ROC curves typically feature true positive rate on the Y axis,
+and false positive rate on the X axis. This means that the top left corner
+of the plot is considered the "ideal" point - no false positives and all
+true positive results. This is not very realistic, but it does mean that
+more area under the curve is usually better.
+
+The "steepness" of ROC curves is also important, since it is ideal to
+maximize true positives while minimizing false positives.
 
 .. note::
 
@@ -18,8 +26,8 @@ import pylab as pl
 from sklearn import svm, datasets
 from sklearn.utils import shuffle
 from sklearn.metrics import roc_curve, auc
+from sklearn.cross_validation import train_test_split
 
-random_state = np.random.RandomState(0)
 
 # Import some data to play with
 iris = datasets.load_iris()
@@ -28,16 +36,14 @@ y = iris.target
 
 # Make it a binary classification problem by removing the third class
 X, y = X[y != 2], y[y != 2]
-n_samples, n_features = X.shape
 
 # Add noisy features to make the problem harder
-X = np.c_[X, random_state.randn(n_samples, 200 * n_features)]
+np.random.seed(0)
+n_samples, n_features = X.shape
+X = np.c_[X, np.random.randn(n_samples, 200 * n_features)]
 
 # shuffle and split training and test sets
-X, y = shuffle(X, y, random_state=random_state)
-half = int(n_samples / 2)
-X_train, X_test = X[:half], X[half:]
-y_train, y_test = y[:half], y[half:]
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.5, random_state=0)
 
 # Run classifier
 classifier = svm.SVC(kernel='linear', probability=True, random_state=0)
