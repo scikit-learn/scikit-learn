@@ -94,11 +94,3 @@ __all__ = ['clear_data_home',
            'make_spd_matrix',
            'make_swiss_roll',
            'mldata_filename']
-
-
-# backward compatibility
-@deprecated("to be removed in 0.9;"
-            " use sklearn.datasets.load_files instead")
-def load_filenames(*args, **kwargs):
-    """Deprecated, use ``sklearn.datasets.load_files`` instead"""
-    return load_files(*args, **kwargs)
