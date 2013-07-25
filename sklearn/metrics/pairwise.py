@@ -199,10 +199,47 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
 
 def euclidean_distances_argmin(X, Y=None, axis=1,
                                chunk_x_size=None, chunk_y_size=None,
-                              return_values=False):
-    """Pairwise distances from dense matrices.
-    Chunking performed on X.
-    chunk_size=None means automatic chunk size
+                               return_distances=False, squared=False):
+    """Compute minimum distances between one point and a set of points.
+
+    This function computes for each row in X, the index of the row of Y which
+    is closest (according to the euclidean distance). The distance value is
+    also returned if requested.
+
+    This is mostly equivalent to calling:
+
+        euclidean_distances(X, Y=Y).argmin(axis=axis)
+
+    but uses much less memory, and is faster for large arrays.
+
+    This function works with dense matrices only.
+
+    Parameters
+    ==========
+    X, Y: array-like
+        arrays containing points. Shape must be (sample number, feature number)
+        for both. Sample numbers can be different, but feature number must be
+        identical for both X and Y.
+
+    chunk_x_size, chunk_y_size: integers
+        Number of points to process in a chunk, for X and Y respectively.
+        If None, the sizes are determined automatically.
+
+    return_distances: bool
+        flag telling if found minimum distances must be returned or not.
+
+    squared: bool
+        if True, the squared distances are returned instead of the distances.
+        This spares a call to numpy.sqrt, which is useful in some cases.
+
+    Returns
+    =======
+    indices: numpy.ndarray
+        indices[i] is the row in Y that is closest to the i-th row in X.
+
+    distances: numpy.ndarray
+        distances[i] is the distances between the i-th row in X and the
+        indices[i]-th row in Y. Returned only if return_distances is True.
     """
     X, Y = check_pairwise_arrays(X, Y)
 
@@ -268,7 +305,9 @@ def euclidean_distances_argmin(X, Y=None, axis=1,
             values[x_sind:x_eind] = np.where(
                 flags, min_values, values[x_sind:x_eind])
 
-    if return_values:
+    if return_distances:
+        if not squared:
+            values = np.sqrt(values)
         return indices, values
     else:
         return indices

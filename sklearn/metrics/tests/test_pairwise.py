@@ -210,12 +210,12 @@ def test_euclidean_distances_argmin():
     X = np.random.randn(3, 4)
     Y = np.random.randn(5, 4)
 
-    dist = euclidean_distances(X, Y=Y, squared=True)
+    dist = euclidean_distances(X, Y=Y)
     dist_orig_ind = dist.argmin(axis=0)
     dist_orig_val = dist[dist_orig_ind, range(len(dist_orig_ind))]
 
     dist_chunked_ind, dist_chunked_val = euclidean_distances_argmin(
-        X, Y=Y, axis=0, return_values=True)
+        X, Y=Y, axis=0, return_distances=True)
     np.testing.assert_almost_equal(dist_orig_ind, dist_chunked_ind, decimal=7)
     np.testing.assert_almost_equal(dist_orig_val, dist_chunked_val, decimal=7)
 
