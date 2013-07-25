@@ -881,7 +881,6 @@ Pairwise metrics
    neighbors.kneighbors_graph
    neighbors.radius_neighbors_graph
 
-
 .. _neural_network_ref:
 
 :mod:`sklearn.neural_network`: Neural network models
@@ -902,16 +901,16 @@ Pairwise metrics
    neural_network.BernoulliRBM
 
 
-.. _pls_ref:
+.. _cross_decomposition_ref:
 
-:mod:`sklearn.pls`: Partial Least Squares
-=========================================
+:mod:`sklearn.cross_decomposition`: Cross Decomposition
+==========================================================
 
-.. automodule:: sklearn.pls
+.. automodule:: sklearn.cross_decomposition
    :no-members:
    :no-inherited-members:
 
-**User guide:** See the :ref:`pls` section for further details.
+**User guide:** See the :ref:`cross_decomposition` section for further details.
 
 .. currentmodule:: sklearn
 
@@ -919,10 +918,10 @@ Pairwise metrics
    :toctree: generated/
    :template: class.rst
 
-   pls.PLSRegression
-   pls.PLSCanonical
-   pls.CCA
-   pls.PLSSVD
+   cross_decomposition.PLSRegression
+   cross_decomposition.PLSCanonical
+   cross_decomposition.CCA
+   cross_decomposition.PLSSVD
 
 
 .. _pipeline_ref:

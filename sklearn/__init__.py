@@ -69,8 +69,9 @@ else:
                'feature_selection', 'semi_supervised',
                'gaussian_process', 'grid_search', 'hmm', 'lda', 'linear_model',
                'metrics', 'mixture', 'naive_bayes', 'neighbors', 'pipeline',
-               'preprocessing', 'qda', 'svm', 'test', 'clone', 'pls',
-               'isotonic']
+               'preprocessing', 'qda', 'svm', 'test', 'clone',
+               'cross_decomposition',
+               'isotonic', 'pls']
 
 
 def setup_module(module):

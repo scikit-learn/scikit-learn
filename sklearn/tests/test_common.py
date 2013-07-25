@@ -189,7 +189,7 @@ def test_transformers():
 
         # fit
 
-        if name in ('_PLS', 'PLSCanonical', 'PLSRegression', 'CCA', 'PLSSVD'):
+        if name in ('PLSCanonical', 'PLSRegression', 'CCA', 'PLSSVD'):
             random_state = np.random.RandomState(seed=12345)
             y_ = np.vstack([y, 2 * y + random_state.randint(2, size=len(y))])
             y_ = y_.T
@@ -212,7 +212,7 @@ def test_transformers():
             continue
 
         if hasattr(transformer, 'transform'):
-            if name in ('_PLS', 'PLSCanonical', 'PLSRegression', 'CCA',
+            if name in ('PLSCanonical', 'PLSRegression', 'CCA',
                         'PLSSVD'):
                 X_pred2 = transformer.transform(X, y_)
                 X_pred3 = transformer.fit_transform(X, y=y_)
@@ -306,7 +306,7 @@ def test_estimators_nan_inf():
         for name, Estimator in estimators:
             if name in dont_test:
                 continue
-            if name in ('_PLS', 'PLSCanonical', 'PLSRegression', 'CCA',
+            if name in ('PLSCanonical', 'PLSRegression', 'CCA',
                         'PLSSVD'):
                 continue
 
@@ -415,7 +415,8 @@ def test_transformers_pickle():
             transformer.n_components = 1
 
         # fit
-        if name in ('_PLS', 'PLSCanonical', 'PLSRegression', 'CCA', 'PLSSVD'):
+        if name in ('PLSCanonical', 'PLSRegression', 'CCA',
+                    'PLSSVD'):
             random_state = np.random.RandomState(seed=12345)
             y_ = np.vstack([y, 2 * y + random_state.randint(2, size=len(y))])
             y_ = y_.T
@@ -704,7 +705,7 @@ def test_regressors_int():
     rnd = np.random.RandomState(0)
     y = rnd.randint(2, size=X.shape[0])
     for name, Regressor in regressors:
-        if name in dont_test or name in ('CCA',):
+        if name in dont_test or name in ('CCA'):
             continue
         # catch deprecation warnings
         with warnings.catch_warnings(record=True):
@@ -750,7 +751,7 @@ def test_regressors_train():
         assert_raises(ValueError, regressor.fit, X, y[:-1])
         # fit
         try:
-            if name in ('_PLS', 'PLSCanonical', 'PLSRegression', 'CCA'):
+            if name in ('PLSCanonical', 'PLSRegression', 'CCA'):
                 y_ = np.vstack([y, 2 * y + rnd.randint(2, size=len(y))])
                 y_ = y_.T
             else:
@@ -789,7 +790,7 @@ def test_regressor_pickle():
             # linear regressors need to set alpha, but not generalized CV ones
             regressor.alpha = 0.01
 
-        if name in ('_PLS', 'PLSCanonical', 'PLSRegression', 'CCA'):
+        if name in ('PLSCanonical', 'PLSRegression', 'CCA'):
             y_ = np.vstack([y, 2 * y + rnd.randint(2, size=len(y))])
             y_ = y_.T
         else:
@@ -929,7 +930,8 @@ def test_estimators_overwrite_params():
         X -= X.min()
         for name, Estimator in estimators:
             if (name in dont_test
-                    or name in ['CCA', 'PLSCanonical', 'PLSRegression',
+                    or name in ['CCA', '_CCA', 'PLSCanonical',
+                                'PLSRegression',
                                 'PLSSVD', 'GaussianProcess']):
                 # FIXME!
                 # in particular GaussianProcess!
