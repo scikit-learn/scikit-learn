@@ -1740,7 +1740,8 @@ class Imputer(BaseEstimator, TransformerMixin):
                               "observed values: %s" % missing)
             X = X[:, valid_statistics_indexes]
         elif self.axis == 1 and invalid_mask.any():
-            raise ValueError("Some rows only contain missing values.")
+            raise ValueError("Some rows only contain "
+                             "missing values: %s" % missing)
 
         # Do actual imputation
         if sp.issparse(X) and self.missing_values != 0:
