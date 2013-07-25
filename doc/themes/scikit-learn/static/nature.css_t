@@ -118,7 +118,7 @@ div.navbar ul li a:hover {
 
 div.content-wrapper {
     background-color: #ffffff;
-    color: #3E4349;
+    color: #1D1F22;
     max-width: 1024px;
     margin-top: 10px;
     margin-left: auto;
@@ -302,7 +302,7 @@ div.sphinxsidebar input[type=text]{
 /* -- body styles ----------------------------------------------------------- */
 
 a {
-    color: #355F7C;
+    color: #008EB2;
     text-decoration: none;
     word-wrap: break-word;
 }
@@ -435,14 +435,11 @@ p.admonition-title:after {
 
 pre {
     padding: 10px;
-    background-color: White;
+    background-color: #F5F8FC;
     color: #222;
     line-height: 1.2em;
-    border: 1px solid #C6C9CB;
-    font-size: 1.1em;
+    border: 1px solid #D6D6D6;
     margin: 1.5em 0 1.5em 0;
-    -webkit-box-shadow: 1px 1px 1px #d8d8d8;
-    -moz-box-shadow: 1px 1px 1px #d8d8d8;
 }
 
 div.highlight-python pre {
@@ -547,7 +544,7 @@ div.rellink:hover span.hiddenrellink {
     width: 200px;
     background-color: #ff9c34;
     padding: 3px;
-    border: 2px solid #3E4349;
+    border: 2px solid #1D1F22;
     color: white;
 }
 
@@ -764,7 +761,9 @@ div.banner-container h2 {
 }
 
 div.box h2 {
+    height: 26px;
     background-color: transparent;
+    padding: 0px;
 }
 
 div.box h2 p {
@@ -793,16 +792,9 @@ div.body h2.no-bg, div.body h3.no-bg{
 
 div.box-links {
     margin-top: 8px;
-    color: #888;
-    font-size: 85%;
-    line-height: 1.5em;
+    font-size: 88%;
 }
 
 div.box-links p {
     display: inline;
-}
-
-div.row-fluid div.box h2 {
-    padding-bottom: 0px;
-    margin-bottom: -10px;
 }

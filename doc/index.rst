@@ -17,7 +17,7 @@
     <p>Identifying to which set of categories a new observation belong
     to.</p>
     <div class="box-links">
-    <strong>Applications</strong>: Spam detection, image recognition.</br>
+    <strong>Applications</strong>: Spam detection, Image recognition.</br>
     <strong>Algorithms</strong>:&nbsp;
 
 :ref:`SVM<svm>`, :ref:`nearest neighbors<classification>`, :ref:`random forest<forest>`, ...
@@ -47,7 +47,7 @@
     <blockquote>
     <p>Predicting a continuous value for a new example.</p>
     <div class="box-links">
-    <strong>Applications</strong>: drug response, stock prices.</br>
+    <strong>Applications</strong>: Drug response, Stock prices.</br>
     <strong>Algorithms</strong>:&nbsp;
 
 :ref:`SVR<svm>`, :ref:`ridge regression<ridge_regression>`, :ref:`Lasso<lasso>`, ...
@@ -77,7 +77,7 @@
     <blockquote>
     <p>Automatic grouping of similar objects into sets.</p>
     <div class="box-links">
-    <strong>Applications</strong>: customer segmentation, grouping experiment outcomes</br>
+    <strong>Applications</strong>: Customer segmentation, Grouping experiment outcomes</br>
     <strong>Algorithms</strong>:&nbsp;
 
 :ref:`k-Means<k_means>`, :ref:`spectral clustering<spectral_clustering>`, :ref:`mean-shift<mean_shift>`, ...
@@ -111,7 +111,7 @@
     <blockquote>
     <p>Reducing the number of random variables to consider.</p>
     <div class="box-links">
-    <strong>Applications</strong>: visualization, increased efficiency</br>
+    <strong>Applications</strong>: Visualization, Increased efficiency</br>
     <strong>Algorithms</strong>:&nbsp;
 
 :ref:`PCA<PCA>`, :ref:`Isomap<isomap>`, :ref:`non-negative matrix factorization<NMF>`.
@@ -172,7 +172,7 @@
     <blockquote>
     <p>Creating and normalizing features.</p>
     <div class="box-links">
-    <strong>Application</strong>: transforming input data such as text for use with machine learning algorithms.</br>
+    <strong>Application</strong>: Transforming input data such as text for use with machine learning algorithms.</br>
     <strong>Modules</strong>:&nbsp;
 
 :ref:`preprocessing<preprocessing>`, :ref:`feature extraction<feature_extraction>`.
