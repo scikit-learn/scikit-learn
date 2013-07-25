@@ -7,6 +7,9 @@
 
 Changelog
 ---------
+   - Missing values with sparse and dense matrices can be imputed with the
+     transformer :class:`preprocessing.Imputer` by `Nicolas Trésegnie`_.
+
    - The core implementation of decisions trees has been rewritten from
      scratch, allowing for faster tree induction and lower memory
      consumption in all tree-based estimators. By `Gilles Louppe`_.
@@ -2029,3 +2032,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Justin Vincent: https://github.com/justinvf
 
 .. _Denis Engemann: https://github.com/dengemann
+
+.. _Nicolas Trésegnie : http://nicolastr.com/
