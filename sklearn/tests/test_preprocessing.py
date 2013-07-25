@@ -1040,7 +1040,7 @@ def test_imputation_copy():
 
     # Test default behaviour and with copy=True
     for params in [{}, {'copy' : True}]:
-        X = sparse_random_matrix(l, l, density=0.75)
+        X = sparse_random_matrix(l, l, density=0.75, random_state=0)
 
         # Dense
         imputer = Imputer(missing_values=0, strategy="mean", **params)
