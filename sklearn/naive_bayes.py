@@ -391,11 +391,13 @@ class MultinomialNB(BaseDiscreteNB):
         `feature_log_prob_`, respectively.)
 
     `class_count_` : array, shape = [n_classes]
-        Integer number of samples encountered for each class during fitting.
+        Number of samples encountered for each class during fitting. This
+        value is weighted by the sample weight when provided.
 
     `feature_count_` : array, shape = [n_classes, n_features]
-        Integer number of samples encountered for each (class, feature)
-        during fitting.
+        Number of samples encountered for each (class, feature)
+        during fitting. This value is weighted by the sample weight when
+        provided.
 
     Examples
     --------
@@ -485,11 +487,13 @@ class BernoulliNB(BaseDiscreteNB):
         Empirical log probability of features given a class, P(x_i|y).
 
     `class_count_` : array, shape = [n_classes]
-        Integer number of samples encountered for each class during fitting.
+        Number of samples encountered for each class during fitting. This
+        value is weighted by the sample weight when provided.
 
     `feature_count_` : array, shape = [n_classes, n_features]
-        Integer number of samples encountered for each (class, feature)
-        during fitting.
+        Number of samples encountered for each (class, feature)
+        during fitting. This value is weighted by the sample weight when
+        provided.
 
     Examples
     --------
