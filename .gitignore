@@ -32,6 +32,7 @@ coverages
 samples
 doc/coverages
 doc/samples
+*.prof
 
 lfw_preprocessed/
 nips2010_pdf/
