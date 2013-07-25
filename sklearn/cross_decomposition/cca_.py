@@ -1,9 +1,9 @@
-from .pls_ import _CCA
+from .pls_ import _PLS
 
 __all__ = ['CCA']
 
 
-class CCA(_CCA):
+class CCA(_PLS):
     """CCA Canonical Correlation Analysis.
 
     CCA inherits from PLS with mode="B" and deflation_mode="canonical".
@@ -104,5 +104,7 @@ class CCA(_CCA):
 
     def __init__(self, n_components=2, scale=True,
                  max_iter=500, tol=1e-06, copy=True):
-        _CCA.__init__(self, n_components=n_components, scale=scale,
+        _PLS.__init__(self, n_components=n_components, scale=scale,
+                      deflation_mode="canonical", mode="B",
+                      norm_y_weights=True, algorithm="nipals",
                       max_iter=max_iter, tol=tol, copy=copy)

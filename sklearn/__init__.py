@@ -71,7 +71,7 @@ else:
                'metrics', 'mixture', 'naive_bayes', 'neighbors', 'pipeline',
                'preprocessing', 'qda', 'svm', 'test', 'clone',
                'cross_decomposition',
-               'isotonic']
+               'isotonic', 'pls']
 
 
 def setup_module(module):
