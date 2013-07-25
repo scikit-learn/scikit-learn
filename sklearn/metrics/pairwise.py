@@ -190,6 +190,81 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
     return distances if squared else np.sqrt(distances)
 
 
+def pairwise_distances_argmin(X, Y=None, axis=1, metric="euclidean",
+                              chunk_x_num=None, chunk_y_num=None,
+                              return_distances=False, **kwargs):
+
+    dist_func = None
+    if metric in PAIRWISE_DISTANCE_FUNCTIONS:
+        dist_func = PAIRWISE_DISTANCE_FUNCTIONS[metric]
+    elif not callable(metric):
+        raise ValueError("'metric' must be string or a callable")
+
+    X, Y = check_pairwise_arrays(X, Y)
+
+    if axis == 0:
+        X, Y = Y, X
+        chunk_x_num, chunk_y_num = chunk_y_num, chunk_x_num
+
+    if chunk_x_num is None and chunk_y_num is None:
+        # Cut arrays in a given number of pieces, along x or Y, depending
+        # on which arrays is bigger.
+        if X.shape[0] >= Y.shape[0] / 2 and Y.shape[0] >= X.shape[0] / 2:
+            chunk_x_num, chunk_y_num = (7, 7)
+        elif X.shape[0] > Y.shape[0]:
+            chunk_x_num, chunk_y_num = (50, 1)
+        else:
+            chunk_x_num, chunk_y_num = (1, 50)
+
+    if chunk_x_num is None:
+        chunk_x_num = 1
+    if chunk_y_num is None:
+        chunk_y_num = 1
+
+    # Allocate output arrays
+    indices = np.empty(X.shape[0], dtype='int32')
+    values = np.empty(X.shape[0])
+    values.fill(np.infty)
+
+    for chunk_x in gen_even_slices(X.shape[0], chunk_x_num):
+        X_chunk = X[chunk_x, :]
+
+        for chunk_y in gen_even_slices(Y.shape[0], chunk_y_num):
+            Y_chunk = Y[chunk_y, :]
+
+            if dist_func is not None:
+                tvar = dist_func(X_chunk, Y_chunk, **kwargs)
+            else:
+                tvar = np.empty((X_chunk.shape[0], Y_chunk.shape[0]),
+                                dtype='float')
+                for n_x in range(X_chunk.shape[0]):
+                    start = 0
+                    if X is Y:
+                        start = n_x
+                    for n_y in range(start, Y_chunk.shape[0]):
+                        # distance assumed to be symmetric.
+                        tvar[n_x, n_y] = metric(X_chunk[n_x], Y_chunk[n_y],
+                                                **kwargs)
+                        if X is Y:
+                            tvar[n_y, n_x] = tvar[n_x, n_y]
+
+            # Update indices and minimum values using chunk
+            min_indices = tvar.argmin(axis=1)
+            min_values = tvar[range(chunk_x.stop - chunk_x.start), min_indices]
+
+            flags = values[chunk_x] > min_values
+            indices[chunk_x] = np.where(
+                flags, min_indices + chunk_y.start, indices[chunk_x])
+
+            values[chunk_x] = np.where(
+                flags, min_values, values[chunk_x])
+
+    if return_distances:
+        return indices, values
+    else:
+        return indices
+
+
 def euclidean_distances_argmin(X, Y=None, axis=1,
                                chunk_x_num=None, chunk_y_num=None,
                                return_distances=False, squared=False):
@@ -808,6 +883,7 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
         n_x, n_y = X.shape[0], Y.shape[0]
         # Calculate distance for each element in X and Y.
         # FIXME: can use n_jobs here too
+        # FIXME: np.zeros can be replaced by np.empty
         D = np.zeros((n_x, n_y), dtype='float')
         for i in range(n_x):
             start = 0

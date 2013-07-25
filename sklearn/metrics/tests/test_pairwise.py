@@ -23,6 +23,7 @@ from sklearn.metrics.pairwise import sigmoid_kernel
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.metrics.pairwise import cosine_distances
 from sklearn.metrics.pairwise import pairwise_distances
+from sklearn.metrics.pairwise import pairwise_distances_argmin
 from sklearn.metrics.pairwise import pairwise_kernels
 from sklearn.metrics.pairwise import PAIRWISE_KERNEL_FUNCTIONS
 from sklearn.metrics.pairwise import check_pairwise_arrays
@@ -183,6 +184,32 @@ def test_pairwise_kernels_filter_param():
     assert_array_almost_equal(K, K2)
 
     assert_raises(TypeError, pairwise_kernels, X, Y, "rbf", **params)
+
+
+def test_pairwise_distances_argmin():
+    """ Check the pairwise distances computation for any metrics"""
+    X = [[0], [1]]
+    Y = [[-1], [2]]
+    # Non-euclidean sklearn metric
+    D = pairwise_distances_argmin(X, Y, metric="manhattan")
+    assert_array_almost_equal(D, [0, 1])
+    # Non-euclidean scipy distance
+    D = pairwise_distances_argmin(X, Y, metric=cityblock)
+    assert_array_almost_equal(D, [0, 1])
+
+    # Compare with naive implementation
+    np.random.seed(1)
+    X = np.random.randn(3, 4)
+    Y = np.random.randn(5, 4)
+
+    dist = pairwise_distances(X, Y=Y, metric="manhattan")
+    dist_orig_ind = dist.argmin(axis=0)
+    dist_orig_val = dist[dist_orig_ind, range(len(dist_orig_ind))]
+
+    dist_chunked_ind, dist_chunked_val = pairwise_distances_argmin(
+        X, Y=Y, axis=0, return_distances=True, metric="manhattan")
+    np.testing.assert_almost_equal(dist_orig_ind, dist_chunked_ind, decimal=7)
+    np.testing.assert_almost_equal(dist_orig_val, dist_chunked_val, decimal=7)
 
 
 def test_euclidean_distances():
