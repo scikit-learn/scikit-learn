@@ -1,26 +1,176 @@
+.. currentmodule:: sklearn
+
 .. _model_evaluation:
 
-===================
-Model evaluation
-===================
+========================================================
+Model evaluation: quantifying the quality of predictions
+========================================================
 
-The :mod:`sklearn.metrics` module implements useful functions for assessing the
-performance of an estimator under a specific criterion.  Functions whose name
-ends with ``_score`` return a scalar value to maximize (the higher the better).
-Functions whose name ends with  ``_error`` or ``_loss`` return a scalar value
-to minimize (the lower the better).
+There are 3 different approaches to evaluate the quality of predictions of a
+model:
+
+* **Estimator score method**: Estimators have a ``score`` method providing a
+  default evaluation criterion for the problem they are designed to solve.
+  This is not discussed on this page, but in each estimator's documentation.
+
+* **Scoring parameter**: Model-evaluation tools using 
+  :ref:`cross-validation <cross-validation>` (such as
+  :func:`cross_validation.cross_val_score` and
+  :class:`grid_search.GridSearchCV`) rely on an internal *scoring* strategy.
+  This is discussed on section :ref:`scoring_parameter`.
+
+* **Metric functions**: The :mod:`metrics` module implements functions
+  assessing prediction errors for specific purposes. This is discussed in
+  the section :ref:`prediction_error_metrics`.
+
+Finally, :ref:`dummy_estimators` are useful to get a baseline
+value of those metrics under the chance.
+
+.. seealso::
+   
+   For "pairwise" metrics, between *samples* and not estimators or
+   predictions, see the :ref:`metrics` section.
+
+.. _scoring_parameter:
+
+The `scoring` parameter: defining model evaluation rules
+=========================================================
+
+Model selection and evaluation using tools, such as
+:class:`grid_search.GridSearchCV` and
+:func:`cross_validation.cross_val_score`, take a `scoring` parameter that
+controls what metric they apply to estimators evaluated.
+
+Common cases: predefined values
+--------------------------------
+
+For the most common usecases, you can simply provide a string as the
+``scoring`` parameter. Possible values are:
+
+===================     ===============================================
+Scoring                 Function
+===================     ===============================================
+**Classification**
+'accuracy'              :func:`sklearn.metrics.accuracy_score`
+'average_precision'     :func:`sklearn.metrics.average_precision_score`
+'f1'                    :func:`sklearn.metrics.f1_score`
+'precision'             :func:`sklearn.metrics.precision_score`
+'recall'                :func:`sklearn.metrics.recall_score`
+'roc_auc'               :func:`sklearn.metrics.auc_score`
+
+**Clustering**
+'ari'`                  :func:`sklearn.metrics.adjusted_rand_score`
+
+**Regression**
+'mse'                   :func:`sklearn.metrics.mean_squared_error`
+'r2'                    :func:`sklearn.metrics.r2_score`
+===================     ===============================================
+
+Setting the ``scoring`` parameter to a wrong value should give you a list
+of acceptable values::
+
+    >>> from sklearn import svm, cross_validation, datasets
+    >>> iris = datasets.load_iris()
+    >>> X, y = iris.data, iris.target
+    >>> model = svm.SVC()
+    >>> cross_validation.cross_val_score(model, X, y, scoring='wrong_choice')
+    Traceback (most recent call last):
+    ValueError: 'wrong_choice' is not a valid scoring value. Valid options are ['accuracy', 'ari', 'average_precision', 'f1', 'mse', 'precision', 'r2', 'recall', 'roc_auc']
 
 .. note::
 
-    Estimators usually define a ``score`` method which provides a suitable evaluation
-    score for this estimator.
+    The corresponding scorer objects are stored in the dictionary
+    ``sklearn.metrics.SCORERS``.
 
-For pairwise metrics, see the :ref:`metrics` section.
+The above choices correspond to error-metric functions that can be applied to
+predicted values. These are detailed below, in the next sections.
+
+
+.. currentmodule:: sklearn.metrics
+
+.. _score_func_objects:
+
+Defining your scoring strategy from score functions
+-----------------------------------------------------
+
+The scoring parameter can be a callable that takes model predictions and
+ground truth. 
+
+However, if you want to use a scoring function that takes additional parameters, such as
+:func:`fbeta_score`, you need to generate an appropriate scoring object.  The
+simplest way to generate a callable object for scoring is by using
+:func:`make_scorer`.
+That function converts score functions as above into callables that can be
+used for model evaluation.
+
+One typical use case is to wrap an existing scoring function from the library
+with non default value for its parameters such as the beta parameter for the
+:func:`fbeta_score` function::
+
+    >>> from sklearn.metrics import fbeta_score, make_scorer
+    >>> ftwo_scorer = make_scorer(fbeta_score, beta=2)
+    >>> from sklearn.grid_search import GridSearchCV
+    >>> from sklearn.svm import LinearSVC
+    >>> grid = GridSearchCV(LinearSVC(), param_grid={'C': [1, 10]}, scoring=ftwo_scorer)
+
+The second use case is to help build a completely new and custom scorer object
+from a simple python function::
+
+    >>> def my_custom_loss_func(ground_truth, predictions):
+    ...     diff = np.abs(ground_truth - predictions).max()
+    ...     return np.log(1 + diff)
+    ...
+    >>> my_custom_scorer = make_scorer(my_custom_loss_func, greater_is_better=False)
+    >>> grid = GridSearchCV(LinearSVC(), param_grid={'C': [1, 10]}, scoring=my_custom_scorer)
+
+:func:`make_scorer` takes as parameters:
+
+* the function you want to use
+
+* whether it is a score (``greater_is_better=True``) or a loss
+  (``greater_is_better=False``),
+
+* whether the function you provided takes predictions as input
+ (``needs_threshold=False``) or needs confidence scores
+ (``needs_threshold=True``)
+ 
+* any additional parameters, such as ``beta`` in an :func:`f1_score`.
+
+
+Implementing your own scoring object
+------------------------------------
+You can generate even more flexible model scores by constructing your own
+scoring object from scratch, without using the :func:`make_scorer` factory.
+For a callable to be a scorer, it needs to meet the protocol specified by
+the following two rules:
+
+- It can be called with parameters ``(estimator, X, y)``, where ``estimator``
+  is the model that should be evaluated, ``X`` is validation data, and ``y`` is
+  the ground truth target for ``X`` (in the supervised case) or ``None`` (in the
+  unsupervised case).
+
+- It returns a floating point number that quantifies the quality of
+  ``estimator``'s predictions on ``X`` which reference to ``y``.
+  Again, higher numbers are better.
+
+.. _prediction_error_metrics:
+
+Function for prediction-error metrics
+======================================
+
+The module :mod:`sklearn.metric` also exposes a set of simple functions
+measuring a prediction error given ground truth and prediction:
+
+- functions ending with ``_score`` return a value to
+  maximize (the higher the better).
+
+- functions ending with ``_error`` or ``_loss`` return a
+  value to minimize (the lower the better).
 
 .. _classification_metrics:
 
 Classification metrics
-======================
+-----------------------
 
 .. currentmodule:: sklearn.metrics
 
@@ -71,7 +221,8 @@ confidence values or binary decisions value.
 In the following sub-sections, we will describe each of those functions.
 
 Accuracy score
----------------
+..............
+
 The :func:`accuracy_score` function computes the
 `accuracy <http://en.wikipedia.org/wiki/Accuracy_and_precision>`_, the fraction
 (default) or the number of correct predictions.
@@ -118,7 +269,8 @@ and with a list of labels format:
     the dataset.
 
 Area under the curve (AUC)
---------------------------
+...........................
+
 The :func:`auc_score` function computes the 'area under the curve' (AUC) which
 is the area under the receiver operating characteristic (ROC) curve.
 
@@ -141,7 +293,8 @@ and the :ref:`roc_metrics` section.
 .. _average_precision_metrics:
 
 Average precision score
------------------------
+........................
+
 The :func:`average_precision_score` function computes the average precision
 (AP) from prediction scores. This score corresponds to the area under the
 precision-recall curve.
@@ -160,7 +313,8 @@ and the :ref:`precision_recall_f_measure_metrics` section.
 
 
 Confusion matrix
-----------------
+................
+
 The :func:`confusion_matrix` function computes the `confusion matrix
 <http://en.wikipedia.org/wiki/Confusion_matrix>`_ to evaluate
 the accuracy on a classification problem.
@@ -201,10 +355,11 @@ from the :ref:`example_plot_confusion_matrix.py` example):
 
 
 Classification report
----------------------
+......................
+
 The :func:`classification_report` function builds a text report showing the
 main classification metrics. Here a small example with custom ``target_names``
-and inferred labels:
+and inferred labels::
 
    >>> from sklearn.metrics import classification_report
    >>> y_true = [0, 1, 2, 2, 0]
@@ -235,7 +390,8 @@ and inferred labels:
     grid search with a nested cross-validation.
 
 Hamming loss
-------------
+.............
+
 The :func:`hamming_loss` computes the average Hamming loss or `Hamming
 distance <http://en.wikipedia.org/wiki/Hamming_distance>`_ between two sets
 of samples.
@@ -250,7 +406,7 @@ Hamming loss :math:`L_{Hamming}` between two samples is defined as:
    L_{Hamming}(y, \hat{y}) = \frac{1}{n_\text{labels}} \sum_{j=0}^{n_\text{labels} - 1} 1(\hat{y}_j \not= y_j)
 
 where :math:`1(x)` is the `indicator function
-<http://en.wikipedia.org/wiki/Indicator_function>`_.
+<http://en.wikipedia.org/wiki/Indicator_function>`_. ::
 
   >>> from sklearn.metrics import hamming_loss
   >>> y_pred = [1, 2, 3, 4]
@@ -258,12 +414,12 @@ where :math:`1(x)` is the `indicator function
   >>> hamming_loss(y_true, y_pred)
   0.25
 
-In the multilabel case with binary indicator format:
+In the multilabel case with binary indicator format: ::
 
   >>> hamming_loss(np.array([[0.0, 1.0], [1.0, 1.0]]), np.zeros((2, 2)))
   0.75
 
-and with a list of labels format:
+and with a list of labels format: ::
 
   >>> hamming_loss([(1, 2), (3,)], [(1, 2), tuple()])  # doctest: +ELLIPSIS
   0.166...
@@ -286,7 +442,7 @@ and with a list of labels format:
 
 
 Jaccard similarity coefficient score
-------------------------------------
+.....................................
 
 The :func:`jaccard_similarity_score` function computes the average (default)
 or sum of `Jaccard similarity coefficients
@@ -326,11 +482,10 @@ and with a list of labels format:
   0.25
 
 
-
 .. _precision_recall_f_measure_metrics:
 
 Precision, recall and F-measures
---------------------------------
+.................................
 
 The `precision <http://en.wikipedia.org/wiki/Precision_and_recall#Precision>`_
 is intuitively the ability of the classifier not to label as
@@ -584,7 +739,7 @@ Here is an example where ``average`` is set to ``None``::
   (array([ 0.66...,  0.        ,  0.        ]), array([ 1.,  0.,  0.]), array([ 0.71...,  0.        ,  0.        ]), array([2, 2, 2]...))
 
 Hinge loss
-----------
+...........
 
 The :func:`hinge_loss` function computes the average
 `hinge loss function <http://en.wikipedia.org/wiki/Hinge_loss>`_. The hinge
@@ -618,7 +773,8 @@ with a svm classifier::
 
 
 Matthews correlation coefficient
---------------------------------
+.................................
+
 The :func:`matthews_corrcoef` function computes the Matthew's correlation
 coefficient (MCC) for binary classes (quoting the `Wikipedia article on the
 Matthew's correlation coefficient
@@ -653,7 +809,7 @@ function:
 .. _roc_metrics:
 
 Receiver operating characteristic (ROC)
----------------------------------------
+........................................
 
 The function :func:`roc_curve` computes the `receiver operating characteristic
 curve, or ROC curve (quoting
@@ -702,7 +858,8 @@ The following figure shows an example of such ROC curve.
 .. _zero_one_loss:
 
 Zero one loss
---------------
+..............
+
 The :func:`zero_one_loss` function computes the sum or the average of the 0-1
 classification loss (:math:`L_{0-1}`) over :math:`n_{\text{samples}}`. By
 defaults, the function normalizes over the sample. To get the sum of the
@@ -752,7 +909,7 @@ and with a list of labels format:
 .. _regression_metrics:
 
 Regression metrics
-==================
+-------------------
 
 .. currentmodule:: sklearn.metrics
 
@@ -763,7 +920,8 @@ to handle the multioutput case: :func:`mean_absolute_error`,
 
 
 Explained variance score
-------------------------
+.........................
+
 The :func:`explained_variance_score` computes the `explained variance
 regression score <http://en.wikipedia.org/wiki/Explained_variation>`_.
 
@@ -787,7 +945,8 @@ function::
     0.957...
 
 Mean absolute error
--------------------
+...................
+
 The :func:`mean_absolute_error` function computes the `mean absolute
 error <http://en.wikipedia.org/wiki/Mean_absolute_error>`_, which is a risk
 function corresponding to the expected value of the absolute error loss or
@@ -816,7 +975,8 @@ Here a small example of usage of the :func:`mean_absolute_error` function::
 
 
 Mean squared error
-------------------
+...................
+
 The :func:`mean_squared_error` function computes the `mean square
 error <http://en.wikipedia.org/wiki/Mean_squared_error>`_, which is a risk
 function corresponding to the expected value of the squared error loss or
@@ -850,7 +1010,8 @@ function::
     evaluate gradient boosting regression.
 
 R² score, the coefficient of determination
-------------------------------------------
+...........................................
+
 The :func:`r2_score` function computes R², the `coefficient of
 determination <http://en.wikipedia.org/wiki/Coefficient_of_determination>`_.
 It provides a measure of how well future samples are likely to
@@ -885,111 +1046,15 @@ Here a small example of usage of the :func:`r2_score` function::
     for an example of R² score usage to
     evaluate Lasso and Elastic Net on sparse signals.
 
-Clustering metrics
-======================
-
-The :mod:`sklearn.metrics` implements several losses, scores and utility
-function for more information see the :ref:`clustering_evaluation` section.
-
-
-.. _score_func_objects:
-
-.. currentmodule:: sklearn
-
-`Scoring` objects: defining your scoring rules
-===============================================
-While the above functions provide a simple interface for most use-cases, they
-can not directly be used for model selection and evaluation using
-:class:`grid_search.GridSearchCV` and
-:func:`cross_validation.cross_val_score`, as scoring functions have different
-signatures and might require additional parameters.
-
-Instead, :class:`grid_search.GridSearchCV` and
-:func:`cross_validation.cross_val_score` both take callables that implement
-estimator dependent functions. That allows for very flexible evaluation of
-models, for example taking complexity of the model into account.
-
-For scoring functions that take no additional parameters (which are most of
-them), you can simply provide a string as the ``scoring`` parameter. Possible
-values are:
-
-
-===================     ===============================================
-Scoring                 Function
-===================     ===============================================
-**Classification**
-'accuracy'              :func:`sklearn.metrics.accuracy_score`
-'average_precision'     :func:`sklearn.metrics.average_precision_score`
-'f1'                    :func:`sklearn.metrics.f1_score`
-'precision'             :func:`sklearn.metrics.precision_score`
-'recall'                :func:`sklearn.metrics.recall_score`
-'roc_auc'               :func:`sklearn.metrics.auc_score`
-
-**Clustering**
-'ari'`                  :func:`sklearn.metrics.adjusted_rand_score`
-
-**Regression**
-'mse'                   :func:`sklearn.metrics.mean_squared_error`
-'r2'                    :func:`sklearn.metrics.r2_score`
-===================     ===============================================
-
-The corresponding scorer objects are stored in the dictionary
-``sklearn.metrics.SCORERS``.
-
 .. currentmodule:: sklearn.metrics
 
-Creating scoring objects from score functions
----------------------------------------------
-If you want to use a scoring function that takes additional parameters, such as
-:func:`fbeta_score`, you need to generate an appropriate scoring object.  The
-simplest way to generate a callable object for scoring is by using
-:func:`make_scorer`.
-That function converts score functions as above into callables that can be
-used for model evaluation.
+.. _clustering_metrics:
 
-One typical use case is to wrap an existing scoring function from the library
-with non default value for its parameters such as the beta parameter for the
-:func:`fbeta_score` function::
+Clustering metrics
+-------------------
 
-    >>> from sklearn.metrics import fbeta_score, make_scorer
-    >>> ftwo_scorer = make_scorer(fbeta_score, beta=2)
-    >>> from sklearn.grid_search import GridSearchCV
-    >>> from sklearn.svm import LinearSVC
-    >>> grid = GridSearchCV(LinearSVC(), param_grid={'C': [1, 10]}, scoring=ftwo_scorer)
-
-The second use case is to help build a completely new and custom scorer object
-from a simple python function::
-
-    >>> def my_custom_loss_func(ground_truth, predictions):
-    ...     diff = np.abs(ground_truth - predictions).max()
-    ...     return np.log(1 + diff)
-    ...
-    >>> my_custom_scorer = make_scorer(my_custom_loss_func, greater_is_better=False)
-    >>> grid = GridSearchCV(LinearSVC(), param_grid={'C': [1, 10]}, scoring=my_custom_scorer)
-
-:func:`make_scorer` takes as parameters the function you want to use, whether it is
-a score (``greater_is_better=True``) or a loss (``greater_is_better=False``),
-whether the function you provided takes predictions as input
-(``needs_threshold=False``) or needs confidence scores
-(``needs_threshold=True``) and any additional parameters, such as ``beta`` in
-the previous example.
-
-
-Implementing your own scoring object
-------------------------------------
-You can generate even more flexible model scores by constructing your own
-scoring object from scratch, without using the :func:`make_scorer` factory.
-For a callable to be a scorer, it needs to meet the protocol specified by
-the following two rules:
-
-- It can be called with parameters ``(estimator, X, y)``, where ``estimator``
-  it the model that should be evaluated, ``X`` is validation data and ``y`` is
-  the ground truth target for ``X`` (in the supervised case) or ``None`` in the
-  unsupervised case.
-
-- It returns a floating point number that quantifies the quality of
-  ``estimator``'s predictions on ``X`` which reference to ``y``.
-  Again, higher numbers are better.
+The :mod:`sklearn.metrics` implements several losses, scores and utility
+functions. For more information see the :ref:`clustering_evaluation` section.
 
 
 .. _dummy_estimators:
