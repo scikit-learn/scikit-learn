@@ -14,9 +14,9 @@ from abc import ABCMeta, abstractmethod
 import numpy as np
 from scipy import sparse
 
-from .base import LinearModel
+from .base import LinearModel, _pre_fit
 from ..base import RegressorMixin
-from .base import sparse_center_data, center_data
+from .base import center_data
 from ..utils import array2d, atleast2d_or_csc, deprecated
 from ..cross_validation import check_cv
 from ..externals.joblib import Parallel, delayed
@@ -29,37 +29,6 @@ from . import cd_fast
 
 ###############################################################################
 # Paths functions
-
-def _pre_fit(X, y, Xy, precompute, normalize, fit_intercept, copy):
-    n_samples, n_features = X.shape
-    if sparse.isspmatrix(X):
-        precompute = False
-        X, y, X_mean, y_mean, X_std = sparse_center_data(
-            X, y, fit_intercept, normalize)
-    else:
-        # copy was done in fit if necessary
-        X, y, X_mean, y_mean, X_std = center_data(
-            X, y, fit_intercept, normalize, copy=copy)
-
-    if hasattr(precompute, '__array__') \
-            and not np.allclose(X_mean, np.zeros(n_features)) \
-            and not np.allclose(X_std, np.ones(n_features)):
-        # recompute Gram
-        precompute = 'auto'
-        Xy = None
-
-    # precompute if n_samples > n_features
-    if precompute == 'auto':
-        precompute = (n_samples > n_features)
-
-    if precompute is True:
-        precompute = np.dot(X.T, X)
-        Xy = np.dot(X.T, y)
-    else:
-        Xy = None
-
-    return X, y, X_mean, y_mean, X_std, precompute, Xy
-
 
 def _alpha_grid(X, y, Xy=None, l1_ratio=1.0, fit_intercept=True,
                 eps=1e-3, n_alphas=100, normalize=False, copy_X=True):

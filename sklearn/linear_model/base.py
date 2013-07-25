@@ -18,6 +18,7 @@ import numbers
 import numpy as np
 import scipy.sparse as sp
 from scipy import linalg
+from scipy import sparse
 
 from ..externals import six
 from ..externals.joblib import Parallel, delayed
@@ -379,3 +380,38 @@ class LinearRegression(LinearModel, RegressorMixin):
             self.coef_ = np.ravel(self.coef_)
         self._set_intercept(X_mean, y_mean, X_std)
         return self
+
+
+def _pre_fit(X, y, Xy, precompute, normalize, fit_intercept, copy):
+    """Aux function used at beginning of fit in linear models"""
+    n_samples, n_features = X.shape
+    if sparse.isspmatrix(X):
+        precompute = False
+        X, y, X_mean, y_mean, X_std = sparse_center_data(
+            X, y, fit_intercept, normalize)
+    else:
+        # copy was done in fit if necessary
+        X, y, X_mean, y_mean, X_std = center_data(
+            X, y, fit_intercept, normalize, copy=copy)
+
+    if hasattr(precompute, '__array__') \
+            and not np.allclose(X_mean, np.zeros(n_features)) \
+            and not np.allclose(X_std, np.ones(n_features)):
+        # recompute Gram
+        precompute = 'auto'
+        Xy = None
+
+    # precompute if n_samples > n_features
+    if precompute == 'auto':
+        precompute = (n_samples > n_features)
+
+    if precompute is True:
+        precompute = np.dot(X.T, X)
+
+    if not hasattr(precompute, '__array__'):
+        Xy = None  # cannot use Xy if precompute is not Gram
+
+    if hasattr(precompute, '__array__') and Xy is None:
+        Xy = np.dot(X.T, y)
+
+    return X, y, X_mean, y_mean, X_std, precompute, Xy

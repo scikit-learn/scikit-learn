@@ -11,7 +11,7 @@ import numpy as np
 from scipy import linalg
 from scipy.linalg.lapack import get_lapack_funcs
 
-from .base import LinearModel
+from .base import LinearModel, _pre_fit
 from ..base import RegressorMixin
 from ..utils import array2d, as_float_array
 from ..cross_validation import check_cv
@@ -234,6 +234,7 @@ def _gram_omp(Gram, Xy, n_nonzero_coefs, tol_0=None, tol=None,
         return gamma, indices[:n_active], coefs[:, :n_active]
     else:
         return gamma, indices[:n_active]
+
 
 # XXX : rename precompute_gram to precompute for consistency
 
@@ -582,20 +583,6 @@ class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
         y = np.asarray(y)
         n_features = X.shape[1]
 
-        X, y, X_mean, y_mean, X_std = self._center_data(X, y,
-                                                        self.fit_intercept,
-                                                        self.normalize,
-                                                        self.copy_X)
-
-        if y.ndim == 1:
-            y = y[:, np.newaxis]
-
-        if self.n_nonzero_coefs is None and self.tol is None:
-            # default for n_nonzero_coefs is 0.1 * n_features
-            # but at least one.
-            self.n_nonzero_coefs_ = max(int(0.1 * n_features), 1)
-        else:
-            self.n_nonzero_coefs_ = self.n_nonzero_coefs
         if (Gram is not None or Xy is not None) and (self.fit_intercept
                                                      or self.normalize):
             warnings.warn('Mean subtraction (fit_intercept) and normalization '
@@ -606,33 +593,37 @@ class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
                           'False.', RuntimeWarning, stacklevel=2)
             Gram, Xy = None, None
 
+        precompute = Gram
+        X, y, X_mean, y_mean, X_std, Gram, Xy = \
+            _pre_fit(X, y, Xy, precompute, self.normalize, self.fit_intercept,
+                     copy=self.copy_X)
+
+        if y.ndim == 1:
+            y = y[:, np.newaxis]
+
+        if self.n_nonzero_coefs is None and self.tol is None:
+            # default for n_nonzero_coefs is 0.1 * n_features
+            # but at least one.
+            self.n_nonzero_coefs_ = max(int(0.1 * n_features), 1)
+        else:
+            self.n_nonzero_coefs_ = self.n_nonzero_coefs
+
         if Gram is not None:
-            if Xy is None:
-                Xy = np.dot(X.T, y)
-            else:
-                if self.copy_Xy:
-                    Xy = Xy.copy()
-                if self.normalize:
-                    if len(Xy.shape) == 1:
-                        Xy /= X_std
-                    else:
-                        Xy /= X_std[:, np.newaxis]
-
-            if self.normalize:
-                Gram /= X_std
-                Gram /= X_std[:, np.newaxis]
-
             norms_sq = np.sum(y ** 2, axis=0) if self.tol is not None else None
             self.coef_ = orthogonal_mp_gram(Gram, Xy, self.n_nonzero_coefs_,
                                             self.tol, norms_sq,
                                             self.copy_Gram, True).T
         else:
-            precompute_gram = self.precompute_gram
-            if precompute_gram == 'auto':
-                precompute_gram = X.shape[0] > X.shape[1]
             self.coef_ = orthogonal_mp(X, y, self.n_nonzero_coefs_, self.tol,
-                                       precompute_gram=self.precompute_gram,
+                                       precompute_gram=False,
                                        copy_X=self.copy_X).T
+
+        if self.normalize:
+            nonzeros = np.flatnonzero(X_std)
+            scaling = X_std[nonzeros]
+            if self.coef_.ndim == 2:
+                scaling = scaling[np.newaxis, :]
+            self.coef_[:, nonzeros] /= scaling
 
         self._set_intercept(X_mean, y_mean, X_std)
         return self
