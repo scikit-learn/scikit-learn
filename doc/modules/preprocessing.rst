@@ -184,6 +184,17 @@ full formula is::
     This is very useful for scaling the target / response variables used
     for regression.
 
+
+Centering kernel matrices
+-------------------------
+
+If you have a kernel matrix of a kernel :math:`K` that computes a dot product
+in a feature space defined by function :math:`phi`,
+a :class:`KernelCenterer` can transform the kernel matrix
+so that it contains inner products in the feature space
+defined by :math:`phi` followed by removal of the mean in that space.
+
+
 Normalization
 =============
 
@@ -407,14 +418,6 @@ hashable and comparable) to numerical labels::
     array([2, 2, 1])
     >>> list(le.inverse_transform([2, 2, 1]))
     ['tokyo', 'tokyo', 'paris']
-
-
-.. TODO
-
-  Kernel centering
-  ================
-
-  Please @mblondel or someone else write me!
 
 
 Imputation of missing values
