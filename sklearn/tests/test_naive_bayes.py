@@ -9,6 +9,10 @@ from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
 
+from sklearn.datasets import load_digits
+
+from nose import SkipTest
+
 from sklearn.naive_bayes import GaussianNB, BernoulliNB, MultinomialNB
 
 # Data is just 6 separable points in the plane
@@ -24,6 +28,14 @@ y1 = (rng.normal(size=(10)) > 0).astype(np.int)
 # three classes.
 X2 = rng.randint(5, size=(6, 100))
 y2 = np.array([1, 1, 2, 2, 3, 3])
+
+# Data is from the digits database, 3 and 8 are not separable on a plane
+digits = load_digits()
+y3 = digits.target.copy() 
+three_vs_eight_subsample= np.logical_or(y3 == 3, y3 == 8)
+y3 = y3[three_vs_eight_subsample]
+X3 = digits.data[three_vs_eight_subsample]
+
 
 
 def test_gnb():
@@ -181,3 +193,14 @@ def test_coef_intercept_shape():
         clf.fit(X, y)
         assert_equal(clf.coef_.shape, (1, 3))
         assert_equal(clf.intercept_.shape, (1,))
+
+
+def test_coef_decision_fcn():
+    """the decision function should give the same answer than the manual
+    function"""
+    raise SkipTest('clf.coef_ is currently buggy')
+    clf = MultinomialNB().fit(X3, y3)
+    clf_predict = clf.predict(X3)
+    formula_predict = np.where(np.dot(X3, clf.coef_.T) +
+                               clf.intercept_ > 0, 8, 3).ravel()
+    assert_array_equal(clf_predict, formula_predict)
