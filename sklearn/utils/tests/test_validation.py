@@ -12,6 +12,31 @@ from sklearn.utils import (array2d, as_float_array, atleast2d_or_csr,
 from sklearn.random_projection import sparse_random_matrix
 
 
+def test_safe_asarray():
+    """Test that array dtype conversion works."""
+    # Test with sparse arrays
+    X = sp.csc_matrix(np.arange(4, dtype=np.float))
+    Y = safe_asarray(X)
+    assert_true(Y.dtype == np.float)
+    # Check that no copy has been performed
+    Y.data[0] = 7  # value not in original array
+    assert_equal(X.data[0], Y.data[0])
+
+    Y = safe_asarray(X, dtype=np.int)
+    assert_equal(Y.data.dtype, np.int)
+
+    # Test with dense arrays
+    X = np.arange(4, dtype=np.float)
+    Y = safe_asarray(X)
+    assert_true(Y.dtype == np.float)
+    # Check that no copy has been performed
+    Y[0] = 7
+    assert_equal(X[0], Y[0])
+
+    Y = safe_asarray(X, dtype=np.int)
+    assert_equal(Y.dtype, np.int)
+
+
 def test_as_float_array():
     """Test function for as_float_array"""
     X = np.ones((3, 10), dtype=np.int32)
