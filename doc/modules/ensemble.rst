@@ -602,10 +602,12 @@ test deviance by computing the improvement in deviance on the examples that are
 not included in the bootstrap sample (i.e. the out-of-bag examples).
 The improvements are stored in the attribute
 :attr:`~GradientBoostingRegressor.oob_improvement_`. ``oob_improvement_[i]`` holds
-the improvement in terms of the loss on the OOB sample if you add the i-th stage
+the improvement in terms of the loss on the OOB samples if you add the i-th stage
 to the current predictions.
 Out-of-bag estimates can be used for model selection, for example to determine
-the optimal number of iterations.
+the optimal number of iterations. OOB estimates are usually very pessimistic thus
+we recommend to use cross-validation instead and only use OOB if cross-validation
+is too time consuming.
 
 .. topic:: Examples:
 
