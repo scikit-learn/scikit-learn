@@ -9,7 +9,7 @@ Model evaluation: quantifying the quality of predictions
 There are 3 different approaches to evaluate the quality of predictions of a
 model:
 
-* **Estimator score method**: Estimators have a ``score`` method proving a
+* **Estimator score method**: Estimators have a ``score`` method providing a
   default evaluation criterion for the problem they are designed to solve.
   This is not discussed on this page, but in each estimator's documentation.
 
@@ -20,7 +20,7 @@ model:
   This is discussed on section :ref:`scoring_parameter`.
 
 * **Metric functions**: The :mod:`metrics` module implements functions
-  assessing prediction errors for specific purpose. This is discussed in
+  assessing prediction errors for specific purposes. This is discussed in
   the section :ref:`prediction_error_metrics`.
 
 Finally, :ref:`dummy_estimators` are useful to get a baseline
