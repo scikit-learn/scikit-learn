@@ -133,7 +133,7 @@ def _cube(x, fun_args):
 
 
 def fastica(X, n_components=None, algorithm="parallel", whiten=True,
-            fun="logcosh", fun_args={}, max_iter=200, tol=1e-04, w_init=None,
+            fun="logcosh", fun_args=None, max_iter=200, tol=1e-04, w_init=None,
             random_state=None, return_X_mean=False, compute_sources=True):
     """Perform Fast Independent Component Analysis.
 
@@ -165,7 +165,7 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
             return x ** 3, 3 * x ** 2
     fun_args : dictionary, optional
         Arguments to send to the functional form.
-        If empty and if fun='logcosh', fun_args will take value
+        If empty or None and if fun='logcosh', fun_args will take value
         {'alpha' : 1.0}
     max_iter : int, optional
         Maximum number of iterations to perform
@@ -226,6 +226,7 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
 
     """
     random_state = check_random_state(random_state)
+    fun_args = {} if fun_args is None else fun_args
     # make interface compatible with other decompositions
     # a copy is required only for non whitened data
     X = array2d(X, copy=whiten).T
