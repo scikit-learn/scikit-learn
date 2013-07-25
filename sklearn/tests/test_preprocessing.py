@@ -827,8 +827,8 @@ def _test_statistics(X, X_true,
         - the statistics (mean, median, mode) are correct
         - the missing values are imputed correctly"""
 
-    err_msg = "Parameters: strategy = %s, " \
-              "missing_values = %s" % (strategy, missing_values)
+    err_msg = ("Parameters: strategy = %s, "
+               "missing_values = %s" % (strategy, missing_values))
     err_msg = err_msg + ", axis = %s, sparse = %s"
 
     # Normal matrix, axis = 0
