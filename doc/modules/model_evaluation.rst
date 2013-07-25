@@ -24,7 +24,7 @@ model:
   the section :ref:`prediction_error_metrics`.
 
 Finally, :ref:`dummy_estimators` are useful to get a baseline
-value of those metrics under the chance.
+value of those metrics for random predictions.
 
 .. seealso::
    
@@ -100,11 +100,11 @@ However, if you want to use a scoring function that takes additional parameters,
 :func:`fbeta_score`, you need to generate an appropriate scoring object.  The
 simplest way to generate a callable object for scoring is by using
 :func:`make_scorer`.
-That function converts score functions as above into callables that can be
+That function converts score functions (discussed below in :ref:`prediction_error_metrics`) into callables that can be
 used for model evaluation.
 
 One typical use case is to wrap an existing scoring function from the library
-with non default value for its parameters such as the beta parameter for the
+with non default value for its parameters such as the ``beta`` parameter for the
 :func:`fbeta_score` function::
 
     >>> from sklearn.metrics import fbeta_score, make_scorer
@@ -113,7 +113,7 @@ with non default value for its parameters such as the beta parameter for the
     >>> from sklearn.svm import LinearSVC
     >>> grid = GridSearchCV(LinearSVC(), param_grid={'C': [1, 10]}, scoring=ftwo_scorer)
 
-The second use case is to help build a completely new and custom scorer object
+The second use case is to build a completely new and custom scorer object
 from a simple python function::
 
     >>> def my_custom_loss_func(ground_truth, predictions):
