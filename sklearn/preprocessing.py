@@ -10,8 +10,8 @@ import math
 
 import numpy as np
 import numpy.ma as ma
-import scipy.sparse as sp
-import scipy.stats as st
+from scipy import sparse
+from scipy import stats
 
 from .base import BaseEstimator, TransformerMixin
 from .utils import check_arrays
@@ -121,7 +121,7 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
     scaling using the ``Transformer`` API (e.g. as part of a preprocessing
     :class:`sklearn.pipeline.Pipeline`)
     """
-    if sp.issparse(X):
+    if sparse.issparse(X):
         if with_mean:
             raise ValueError(
                 "Cannot center sparse matrices: pass `with_mean=False` instead"
@@ -130,7 +130,7 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
             raise ValueError("Can only scale sparse matrix on axis=0, "
                              " got axis=%d" % axis)
         warn_if_not_float(X, estimator='The scale function')
-        if not sp.isspmatrix_csr(X):
+        if not sparse.isspmatrix_csr(X):
             X = X.tocsr()
             copy = False
         if copy:
@@ -317,7 +317,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
             used for later scaling along the features axis.
         """
         X = check_arrays(X, copy=self.copy, sparse_format="csr")[0]
-        if sp.issparse(X):
+        if sparse.issparse(X):
             if self.with_mean:
                 raise ValueError(
                     "Cannot center sparse matrices: pass `with_mean=False` "
@@ -348,7 +348,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         """
         copy = copy if copy is not None else self.copy
         X = check_arrays(X, copy=copy, sparse_format="csr")[0]
-        if sp.issparse(X):
+        if sparse.issparse(X):
             if self.with_mean:
                 raise ValueError(
                     "Cannot center sparse matrices: pass `with_mean=False` "
@@ -373,12 +373,12 @@ class StandardScaler(BaseEstimator, TransformerMixin):
             The data used to scale along the features axis.
         """
         copy = copy if copy is not None else self.copy
-        if sp.issparse(X):
+        if sparse.issparse(X):
             if self.with_mean:
                 raise ValueError(
                     "Cannot uncenter sparse matrices: pass `with_mean=False` "
                     "instead See docstring for motivation and alternatives.")
-            if not sp.isspmatrix_csr(X):
+            if not sparse.isspmatrix_csr(X):
                 X = X.tocsr()
                 copy = False
             if copy:
@@ -447,7 +447,7 @@ def normalize(X, norm='l2', axis=1, copy=True):
     if axis == 0:
         X = X.T
 
-    if sp.issparse(X):
+    if sparse.issparse(X):
         if norm == 'l1':
             inplace_csr_row_normalize_l1(X)
         elif norm == 'l2':
@@ -563,7 +563,7 @@ def binarize(X, threshold=0.0, copy=True):
             sparse_format = X.format
 
     X = check_arrays(X, sparse_format=sparse_format, copy=copy)[0]
-    if sp.issparse(X):
+    if sparse.issparse(X):
         if threshold < 0:
             raise ValueError('Cannot binarize a sparse matrix with threshold '
                              '< 0')
@@ -687,8 +687,8 @@ def _transform_selected(X, transform, selected="all", copy=True):
         X_sel = transform(X[:, ind[sel]])
         X_not_sel = X[:, ind[not_sel]]
 
-        if sp.issparse(X_sel) or sp.issparse(X_not_sel):
-            return sp.hstack((X_sel, X_not_sel))
+        if sparse.issparse(X_sel) or sparse.issparse(X_not_sel):
+            return sparse.hstack((X_sel, X_not_sel))
         else:
             return np.hstack((X_sel, X_not_sel))
 
@@ -818,9 +818,9 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         row_indices = np.repeat(np.arange(n_samples, dtype=np.int32),
                                 n_features)
         data = np.ones(n_samples * n_features)
-        out = sp.coo_matrix((data, (row_indices, column_indices)),
-                            shape=(n_samples, indices[-1]),
-                            dtype=self.dtype).tocsr()
+        out = sparse.coo_matrix((data, (row_indices, column_indices)),
+                                shape=(n_samples, indices[-1]),
+                                dtype=self.dtype).tocsr()
 
         if self.n_values == 'auto':
             mask = np.array(out.sum(axis=0)).ravel() != 0
@@ -860,9 +860,9 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         row_indices = np.repeat(np.arange(n_samples, dtype=np.int32),
                                 n_features)
         data = np.ones(n_samples * n_features)
-        out = sp.coo_matrix((data, (row_indices, column_indices)),
-                            shape=(n_samples, indices[-1]),
-                            dtype=self.dtype).tocsr()
+        out = sparse.coo_matrix((data, (row_indices, column_indices)),
+                                shape=(n_samples, indices[-1]),
+                                dtype=self.dtype).tocsr()
         if self.n_values == 'auto':
             out = out[:, self.active_features_]
         return out
@@ -1371,8 +1371,8 @@ def add_dummy_feature(X, value=1.0):
     X = safe_asarray(X)
     n_samples, n_features = X.shape
     shape = (n_samples, n_features + 1)
-    if sp.issparse(X):
-        if sp.isspmatrix_coo(X):
+    if sparse.issparse(X):
+        if sparse.isspmatrix_coo(X):
             # Shift columns to the right.
             col = X.col + 1
             # Column indices of dummy feature are 0 everywhere.
@@ -1381,8 +1381,8 @@ def add_dummy_feature(X, value=1.0):
             row = np.concatenate((np.arange(n_samples), X.row))
             # Prepend the dummy feature n_samples times.
             data = np.concatenate((np.ones(n_samples) * value, X.data))
-            return sp.coo_matrix((data, (row, col)), shape)
-        elif sp.isspmatrix_csc(X):
+            return sparse.coo_matrix((data, (row, col)), shape)
+        elif sparse.isspmatrix_csc(X):
             # Shift index pointers since we need to add n_samples elements.
             indptr = X.indptr + n_samples
             # indptr[0] must be 0.
@@ -1391,7 +1391,7 @@ def add_dummy_feature(X, value=1.0):
             indices = np.concatenate((np.arange(n_samples), X.indices))
             # Prepend the dummy feature n_samples times.
             data = np.concatenate((np.ones(n_samples) * value, X.data))
-            return sp.csc_matrix((data, indices, indptr), shape)
+            return sparse.csc_matrix((data, indices, indptr), shape)
         else:
             klass = X.__class__
             return klass(add_dummy_feature(X.tocoo(), value))
@@ -1453,7 +1453,7 @@ def _most_frequent(array, extra_value, n_repeat):
        of the array."""
     # Compute the most frequent value in array only
     if array.size > 0:
-        mode = st.mode(array)
+        mode = stats.mode(array)
         most_frequent_value = mode[0][0]
         most_frequent_count = mode[1][0]
     else:
@@ -1558,7 +1558,7 @@ class Imputer(BaseEstimator, TransformerMixin):
         if self.axis == 0:
             X = atleast2d_or_csc(X, dtype=np.float64, force_all_finite=False)
 
-            if sp.issparse(X):
+            if sparse.issparse(X):
                 self.statistics_ = self._sparse_fit(X,
                                                     self.strategy,
                                                     self.missing_values,
@@ -1598,13 +1598,15 @@ class Imputer(BaseEstimator, TransformerMixin):
                 # Sum only the valid elements
                 new_data = X.data.copy()
                 new_data[mask_missing_values] = 0
-                X = sp.csc_matrix((new_data, X.indices, X.indptr), copy=False)
+                X = sparse.csc_matrix((new_data, X.indices, X.indptr),
+                                      copy=False)
                 sums = X.sum(axis=0)
 
                 # Count the elements != 0
-                mask_non_zeros = sp.csc_matrix((mask_valids.astype(np.float64),
-                                               X.indices,
-                                               X.indptr), copy=False)
+                mask_non_zeros = sparse.csc_matrix(
+                    (mask_valids.astype(np.float64),
+                     X.indices,
+                     X.indptr), copy=False)
                 s = mask_non_zeros.sum(axis=0)
                 n_non_missing = np.add(n_non_missing, s)
 
@@ -1715,7 +1717,7 @@ class Imputer(BaseEstimator, TransformerMixin):
         if self.axis == 1:
             X = atleast2d_or_csr(X, force_all_finite=False).astype(np.float)
 
-            if sp.issparse(X):
+            if sparse.issparse(X):
                 self.statistics_ = self._sparse_fit(X,
                                                     self.strategy,
                                                     self.missing_values,
@@ -1746,7 +1748,7 @@ class Imputer(BaseEstimator, TransformerMixin):
                              "missing values: %s" % missing)
 
         # Do actual imputation
-        if sp.issparse(X) and self.missing_values != 0:
+        if sparse.issparse(X) and self.missing_values != 0:
             if self.axis == 0:
                 X = X.tocsr()
             else:
@@ -1757,7 +1759,7 @@ class Imputer(BaseEstimator, TransformerMixin):
 
             X.data[mask] = valid_statistics[indexes].astype(X.dtype)
         else:
-            if sp.issparse(X):
+            if sparse.issparse(X):
                 X = X.toarray()
 
             mask = _get_mask(X, self.missing_values)
