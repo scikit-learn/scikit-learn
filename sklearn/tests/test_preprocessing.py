@@ -888,22 +888,24 @@ def test_imputation_mean_median_only_zero():
         [np.nan, 6, 0,  5,  13],
     ])
 
-    mean = np.array([
+    X_imputed_mean = np.array([
         [3,  5],
         [1,  3],
         [2,  7],
         [6, 13],
     ])
+    statistics_mean = [np.nan, 3, np.nan, np.nan, 7]
 
-    median = np.array([
+    X_imputed_median = np.array([
         [2, 5,  5],
         [1, np.nan,  3],
         [2, 5, 5],
         [6, 5,  13],
     ])
+    statistics_median = [np.nan, 2, np.nan, 5, 5]
 
-    _check_statistics(X, mean, "mean", [np.nan, 3, np.nan, np.nan, 7], 0)
-    _check_statistics(X, median, "median", [np.nan, 2, np.nan, 5, 5], 0)
+    _check_statistics(X, X_imputed_mean, "mean", statistics_mean, 0)
+    _check_statistics(X, X_imputed_median, "median", statistics_median, 0)
 
 
 def test_imputation_mean_median():
