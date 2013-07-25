@@ -232,7 +232,7 @@ class BaseDiscreteNB(BaseNB):
         y : array-like, shape = [n_samples]
             Target values.
 
-        classes: array-like, shape = [n_classes]
+        classes : array-like, shape = [n_classes]
             List of all the classes that can possibly appear in the y vector.
 
             Must be provided at the first call to partial_fit, can be omitted
