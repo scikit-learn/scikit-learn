@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 The :mod:`sklearn.metrics.pairwise` submodule implements utilities to evaluate
-pairwise distances or affinity of sets of samples.
+pairwise distances, paired distances or affinity of sets of samples.
 
 This module contains both distance metrics and kernels. A brief summary is
 given on the two here.
@@ -101,6 +101,44 @@ def check_pairwise_arrays(X, Y):
     return X, Y
 
 
+def check_paired_arrays(X, Y):
+    """ Set X and Y appropriately and checks inputs for paired distances
+
+    All paired distance metrics should use this function first to assert that
+    the given parameters are correct and safe to use.
+
+    Specifically, this function first ensures that both X and Y are arrays,
+    then checks that they are at least two dimensional while ensuring that
+    their elements are floats. Finally, the function checks that the size
+    of the dimensions of the two arrays are equal.
+
+    Parameters
+    ----------
+    X : {array-like, sparse matrix}, shape = [n_samples_a, n_features]
+
+    Y : {array-like, sparse matrix}, shape = [n_samples_b, n_features]
+
+    Returns
+    -------
+    safe_X : {array-like, sparse matrix}, shape = [n_samples_a, n_features]
+        An array equal to X, guaranteed to be a numpy array.
+
+    safe_Y : {array-like, sparse matrix}, shape = [n_samples_b, n_features]
+        An array equal to Y if Y was not None, guaranteed to be a numpy array.
+        If Y was None, safe_Y will be a pointer to X.
+
+    """
+    X, Y = check_pairwise_arrays(X, Y)
+    if X.shape != Y.shape:
+        raise ValueError("X and Y should be of same shape. They were "
+                         "respectively (%d, %d) and (%d, %d) long." % (
+                             X.shape[0],
+                             X.shape[1],
+                             Y.shape[0],
+                             Y.shape[1]))
+    return X, Y
+
+
 # Pairwise distances
 def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
     """
@@ -146,6 +184,10 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
     >>> euclidean_distances(X, [[0, 0]])
     array([[ 1.        ],
            [ 1.41421356]])
+
+    See also
+    --------
+    paired_distances : distances betweens pairs of elements of X and Y.
     """
     # should not need X_norm_squared because if you could precompute that as
     # well as Y, then you should just pre-compute the output and not even
@@ -305,7 +347,7 @@ def cosine_distances(X, Y=None):
 # Paired distances
 def paired_euclidean_distances(X, Y):
     """
-    Computes the paired distances between X and Y
+    Computes the paired euclidean distances between X and Y
 
     Parameters
     ----------
@@ -315,19 +357,27 @@ def paired_euclidean_distances(X, Y):
 
     Returns
     -------
-    Distances: ndarray (n_samples, )
+    distances : ndarray (n_samples, )
     """
-    if len(X) != len(Y):
-        raise ValueError("X and Y should be of same size. They were "
-                         "respectively %d and %d long." % (len(X), len(Y)))
-    X, Y = check_pairwise_arrays(X, Y)
+    X, Y = check_paired_arrays(X, Y)
+
     return np.sqrt(((X - Y) ** 2).sum(axis=-1))
 
 
 def paired_manhattan_distances(X, Y):
-    """ Compute the L1 distances between the vectors in X and Y.
+    """Compute the L1 distances between the vectors in X and Y.
+
+    Parameters
+    ----------
+    X : array-like, shape = [n_samples, n_features]
+
+    Y : array-like, shape = [n_samples, n_features]
+
+    Returns
+    -------
+    distances : ndarray (n_samples, )
     """
-    X, Y = check_pairwise_arrays(X, Y)
+    X, Y = check_paired_arrays(X, Y)
     return np.abs(X - Y).sum(axis=-1)
 
 
@@ -340,24 +390,49 @@ PAIRED_DISTANCES = {
     }
 
 
-def paired_distances(X, Y, metric="euclidean"):
+def paired_distances(X, Y, metric="euclidean", **kwds):
     """
+    Computes the paired distances between X and Y.
+
+    Computes the distances between (X[0], Y[0]), (X[1], Y[1]), etc...
 
     Parameters
     ----------
     X, Y : ndarray (n_samples, n_features]
 
     metric : string or callable
+        XXX
+        The metric to use when calculating distance between instances in a
+        feature array. If metric is a string, it must be one of the options
+        specified in PAIRED_DISTANCES
+        Alternatively, if metric is a callable function, it is called on each
+        pair of instances (rows) and the resulting value recorded. The callable
+        should take two arrays from X as input and return a value indicating
+        the distance between them.
 
     Returns
     -------
     distances : ndarray (n_samples, )
+
+    Examples
+    --------
+    >>> from sklearn.metrics.pairwise import paired_distances
+    >>> X = [[0, 1], [1, 1]]
+    >>> Y = [[0, 1], [2, 1]]
+    >>> paired_distances(X, Y)
+    array([ 0.,  1.])
+
+    See also
+    --------
+    pairwise_distances : pairwise distances.
     """
 
     if metric in PAIRED_DISTANCES:
         func = PAIRED_DISTANCES[metric]
         return func(X, Y)
     elif callable(metric):
+        # Check the matrix first (it is usually done by the metric)
+        X, Y = check_paired_arrays(X, Y)
         distances = np.zeros(len(X))
         for i in range(len(X)):
             distances[i] = metric(X[i], Y[i])
