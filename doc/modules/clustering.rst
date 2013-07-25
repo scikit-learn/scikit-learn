@@ -425,35 +425,42 @@ Hierarchical clustering
 =======================
 
 Hierarchical clustering is a general family of clustering algorithms that
-build nested clusters by merging them successively. This hierarchy of
-clusters represented as a tree (or dendrogram). The root of the tree is
-the unique cluster that gathers all the samples, the leaves being the
+build nested clusters by merging or splitting them successively. This
+hierarchy of clusters represented as a tree (or dendrogram). The root of the
+tree is the unique cluster that gathers all the samples, the leaves being the
 clusters with only one sample. See the `Wikipedia page
-<http://en.wikipedia.org/wiki/Hierarchical_clustering>`_ for more
-details.
+<http://en.wikipedia.org/wiki/Hierarchical_clustering>`_ for more details.
 
-The :class:`Ward` object performs a hierarchical clustering based on
-the Ward algorithm, that is a variance-minimizing approach. At each
-step, it minimizes the sum of squared differences within all clusters
-(inertia criterion).
+The :class:`AgglomerativeClustering` object performs a hierarchical clustering
+using a bottom up approach: each observations starts in its own clusters, and
+clusters are successively merged together. The linkage criteria determines the
+metric used for the merge strategy:
 
-This algorithm can scale to large number of samples when it is used jointly
-with an connectivity matrix, but can be computationally expensive when no
-connectivity constraints are added between samples: it considers at each step
-all the possible merges.
+- **Ward** minimizes the sum of squared differences within all clusters. It is a
+  variance-minimizing approach.
+- **Maximum** or **complete linkage** minimizes the maximum distance between
+  observations of pairs of clusters.
+- **Average linkage** minimizes the average of the distances between all
+  observations of pairs of clusters.
 
+The :class:`AgglomerativeClustering` can also scale to large number of samples
+when it is used jointly with an connectivity matrix, but can be
+computationally expensive when no connectivity constraints are added between
+samples: it considers at each step all the possible merges.
+
+It is also very efficient for large number of clusters.
 
 Adding connectivity constraints
 -------------------------------
 
-An interesting aspect of the :class:`Ward` object is that connectivity
-constraints can be added to this algorithm (only adjacent clusters can be
-merged together), through an connectivity matrix that defines for each
-sample the neighboring samples following a given structure of the data. For
-instance, in the swiss-roll example below, the connectivity constraints
-forbid the merging of points that are not adjacent on the swiss roll, and
-thus avoid forming clusters that extend across overlapping folds of the
-roll.
+An interesting aspect of the :class:`AgglomerativeClustering` object is that
+connectivity constraints can be added to this algorithm (only adjacent
+clusters can be merged together), through an connectivity matrix that defines
+for each sample the neighboring samples following a given structure of the
+data. For instance, in the swiss-roll example below, the connectivity
+constraints forbid the merging of points that are not adjacent on the swiss
+roll, and thus avoid forming clusters that extend across overlapping folds of
+the roll.
 
 .. |unstructured| image:: ../auto_examples/cluster/images/plot_ward_structured_vs_unstructured_1.png
         :target: ../auto_examples/cluster/plot_ward_structured_vs_unstructured.html
