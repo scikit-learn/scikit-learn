@@ -344,15 +344,15 @@ def test_check_accuracy_on_digits():
     assert_greater(scores.mean(), 0.95)
 
     # Bernoulli NB
-    scores = cross_val_score(BernoulliNB(alpha=10), X > 0, y, cv=10)
-    assert_greater(scores.mean(), 0.81)
+    scores = cross_val_score(BernoulliNB(alpha=10), X > 4, y, cv=10)
+    assert_greater(scores.mean(), 0.85)
 
-    scores = cross_val_score(BernoulliNB(alpha=10), X_3v8 > 0, y_3v8, cv=10)
+    scores = cross_val_score(BernoulliNB(alpha=10), X_3v8 > 4, y_3v8, cv=10)
     assert_greater(scores.mean(), 0.94)
 
-    # Gaussian NB (maybe not appropriate for this dataset...)
-    scores = cross_val_score(GaussianNB(), X > 0, y, cv=10)
-    assert_greater(scores.mean(), 0.68)
+    # Gaussian NB
+    scores = cross_val_score(GaussianNB(), X, y, cv=10)
+    assert_greater(scores.mean(), 0.81)
 
-    scores = cross_val_score(GaussianNB(), X_3v8 > 0, y_3v8, cv=10)
-    assert_greater(scores.mean(), 0.88)
+    scores = cross_val_score(GaussianNB(), X_3v8, y_3v8, cv=10)
+    assert_greater(scores.mean(), 0.86)
