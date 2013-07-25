@@ -147,36 +147,36 @@ def test_min_max_scaler_iris():
 
 def test_min_max_scaler_zero_variance_features():
     """Check min max scaler on toy data with zero variance features"""
-    X = [[0.,  1.,  0.5],
-         [0.,  1., -0.1],
-         [0.,  1.,  1.1]]
+    X = [[0., 1., +0.5],
+         [0., 1., -0.1],
+         [0., 1., +1.1]]
 
-    X_new = [[+0.,  2.,  0.5],
-             [-1.,  1.,  0.0],
-             [+0.,  1.,  1.5]]
+    X_new = [[+0., 2., 0.5],
+             [-1., 1., 0.0],
+             [+0., 1., 1.5]]
 
     # default params
     scaler = MinMaxScaler()
     X_trans = scaler.fit_transform(X)
-    X_expected_0_1 = [[0.,  0.,  0.5],
-                      [0.,  0.,  0.0],
-                      [0.,  0.,  1.0]]
+    X_expected_0_1 = [[0., 0., 0.5],
+                      [0., 0., 0.0],
+                      [0., 0., 1.0]]
     assert_array_almost_equal(X_trans, X_expected_0_1)
     X_trans_inv = scaler.inverse_transform(X_trans)
     assert_array_almost_equal(X, X_trans_inv)
 
     X_trans_new = scaler.transform(X_new)
-    X_expected_0_1_new = [[+0.,  1.,  0.500],
-                          [-1.,  0.,  0.083],
-                          [+0.,  0.,  1.333]]
+    X_expected_0_1_new = [[+0., 1., 0.500],
+                          [-1., 0., 0.083],
+                          [+0., 0., 1.333]]
     assert_array_almost_equal(X_trans_new, X_expected_0_1_new, decimal=2)
 
     # not default params
     scaler = MinMaxScaler(feature_range=(1, 2))
     X_trans = scaler.fit_transform(X)
-    X_expected_1_2 = [[1.,  1.,  1.5],
-                      [1.,  1.,  1.0],
-                      [1.,  1.,  2.0]]
+    X_expected_1_2 = [[1., 1., 1.5],
+                      [1., 1., 1.0],
+                      [1., 1., 2.0]]
     assert_array_almost_equal(X_trans, X_expected_1_2)
 
 
@@ -214,7 +214,7 @@ def test_scaler_without_centering():
     assert_array_almost_equal(scaler.std_, scaler_csc.std_)
 
     assert_array_almost_equal(
-        X_scaled.mean(axis=0), [0., -0.01,  2.24, -0.35, -0.78], 2)
+        X_scaled.mean(axis=0), [0., -0.01, 2.24, -0.35, -0.78], 2)
     assert_array_almost_equal(X_scaled.std(axis=0), [0., 1., 1., 1., 1.])
 
     X_csr_scaled_mean, X_csr_scaled_std = mean_variance_axis0(X_csr_scaled)
@@ -294,7 +294,7 @@ def test_scale_function_without_centering():
     assert_raises(ValueError, scale, X_csr, with_mean=False, axis=1)
 
     assert_array_almost_equal(X_scaled.mean(axis=0),
-                              [0., -0.01,  2.24, -0.35, -0.78], 2)
+                              [0., -0.01, 2.24, -0.35, -0.78], 2)
     assert_array_almost_equal(X_scaled.std(axis=0), [0., 1., 1., 1., 1.])
     # Check that X has not been copied
     assert_true(X_scaled is not X)
@@ -476,6 +476,8 @@ def test_label_binarizer():
     inp = ["neg", "pos", "pos", "neg"]
     expected = np.array([[0, 1, 1, 0]]).T
     got = lb.fit_transform(inp)
+    assert_false(lb.multilabel_)
+    assert_array_equal(lb.classes_, ["neg", "pos"])
     assert_array_equal(expected, got)
     assert_array_equal(lb.inverse_transform(got), inp)
 
@@ -487,6 +489,8 @@ def test_label_binarizer():
                          [0, 0, 1, 0],
                          [1, 0, 0, 0]])
     got = lb.fit_transform(inp)
+    assert_array_equal(lb.classes_, ['0', 'eggs', 'ham', 'spam'])
+    assert_false(lb.multilabel_)
     assert_array_equal(expected, got)
     assert_array_equal(lb.inverse_transform(got), inp)
 
@@ -498,6 +502,7 @@ def test_label_binarizer_set_label_encoding():
     inp = np.array([0, 1, 1, 0])
     expected = np.array([[-2, 2, 2, -2]]).T
     got = lb.fit_transform(inp)
+    assert_false(lb.multilabel_)
     assert_array_equal(expected, got)
     assert_array_equal(lb.inverse_transform(got), inp)
 
@@ -509,6 +514,7 @@ def test_label_binarizer_set_label_encoding():
                          [-2, -2, +2, -2],
                          [+2, -2, -2, -2]])
     got = lb.fit_transform(inp)
+    assert_false(lb.multilabel_)
     assert_array_equal(expected, got)
     assert_array_equal(lb.inverse_transform(got), inp)
 
@@ -522,6 +528,7 @@ def test_label_binarizer_multilabel():
                               [1, 0, 0],
                               [1, 1, 0]])
     got = lb.fit_transform(inp)
+    assert_true(lb.multilabel_)
     assert_array_equal(indicator_mat, got)
     assert_equal(lb.inverse_transform(got), inp)
 
@@ -532,13 +539,13 @@ def test_label_binarizer_multilabel():
 
     # regression test for the two-class multilabel case
     lb = LabelBinarizer()
-
     inp = [[1, 0], [0], [1], [0, 1]]
     expected = np.array([[1, 1],
                          [1, 0],
                          [0, 1],
                          [1, 1]])
     got = lb.fit_transform(inp)
+    assert_true(lb.multilabel_)
     assert_array_equal(expected, got)
     assert_equal([set(x) for x in lb.inverse_transform(got)],
                  [set(x) for x in inp])
@@ -548,6 +555,7 @@ def test_label_binarizer_errors():
     """Check that invalid arguments yield ValueError"""
     one_class = np.array([0, 0, 0, 0])
     lb = LabelBinarizer().fit(one_class)
+    assert_false(lb.multilabel_)
 
     multi_label = [(2, 3), (0,), (0, 2)]
     assert_raises(ValueError, lb.transform, multi_label)
