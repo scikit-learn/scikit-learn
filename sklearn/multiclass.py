@@ -270,7 +270,7 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
     @property
     def multilabel_(self):
         """Whether this is a multilabel classifier"""
-        return self.label_binarizer_.multilabel
+        return self.label_binarizer_.multilabel_
 
     def score(self, X, y):
         if self.multilabel_:

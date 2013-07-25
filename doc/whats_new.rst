@@ -852,6 +852,11 @@ Highlights
      ``shrink_threshold`` parameter, which implements **shrunken centroid
      classification**, by `Robert Layton`_.
 
+   - Out-of-core learning support for discrete naive Bayes classifiers
+     :class:`sklearn.naive_bayes.MultinomialNB` and
+     :class:`sklearn.naive_bayes.BernoulliNB` by adding the ``partial_fit``
+     method by `Olivier Grisel`_.
+
 Other changes
 ..............
 
