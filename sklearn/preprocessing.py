@@ -1706,18 +1706,13 @@ class Imputer(BaseEstimator, TransformerMixin):
         X : {array-like, sparse matrix}, shape = [n_samples, n_features]
             The input data to complete.
         """
-        # Use copy=copy with as_float_array when this pull request
-        # will be merged:
-        # https://github.com/scikit-learn/scikit-learn/pull/2194 is merged
-        if self.copy and not isinstance(X, list):
-            X = X.copy()
-        #X = as_float_array(X, force_all_finite=False)
+        X = as_float_array(X, copy=self.copy)
 
         # Since two different arrays can be provided in fit(X) and
         # transform(X), the imputation data need to be recomputed
         # when the imputation is done per sample
         if self.axis == 1:
-            X = atleast2d_or_csr(X, force_all_finite=False).astype(np.float)
+            X = atleast2d_or_csr(X, force_all_finite=False)
 
             if sp.issparse(X):
                 self.statistics_ = self._sparse_fit(X,
@@ -1731,7 +1726,7 @@ class Imputer(BaseEstimator, TransformerMixin):
                                                    self.missing_values,
                                                    self.axis)
         else:
-            X = atleast2d_or_csc(X, force_all_finite=False).astype(np.float)
+            X = atleast2d_or_csc(X, force_all_finite=False)
 
         # Delete the invalid rows/columns
         invalid_mask = np.isnan(self.statistics_)
