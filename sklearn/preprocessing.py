@@ -1582,16 +1582,16 @@ class Imputer(BaseEstimator, TransformerMixin):
 
         # Count the zeros
         if missing_values == 0:
-            n_zeros = np.zeros(X.shape[not axis])
+            n_zeros_axis = np.zeros(X.shape[not axis])
         else:
-            n_zeros = X.shape[axis] - np.diff(X.indptr)
+            n_zeros_axis = X.shape[axis] - np.diff(X.indptr)
 
         # Mean
         if strategy == "mean":
             if missing_values != 0:
-                n_non_missing = n_zeros
+                n_non_missing = n_zeros_axis
 
-                # Mask the elements != 0
+                # Mask the missing elements
                 mask_missing_values = _get_mask(X.data, missing_values)
                 mask_valids = np.logical_not(mask_missing_values)
 
@@ -1623,11 +1623,11 @@ class Imputer(BaseEstimator, TransformerMixin):
             # Remove the missing values, for each column
             columns_all = np.hsplit(X.data, X.indptr[1:-1])
             mask_missing_values = _get_mask(X.data, missing_values)
-            mask_valids = np.hsplit(~mask_missing_values, X.indptr[1:-1])
-            columns = []
+            mask_valids = np.hsplit(np.logical_not(mask_missing_values),
+                                    X.indptr[1:-1])
 
-            for col, mask in zip(columns_all, mask_valids):
-                columns.append(col[mask.astype(np.bool)])
+            columns = [col[mask.astype(np.bool)]
+                       for col, mask in zip(columns_all, mask_valids)]
 
             # Median
             if strategy == "median":
@@ -1636,7 +1636,9 @@ class Imputer(BaseEstimator, TransformerMixin):
 
                     negatives = column[column < 0]
                     positives = column[column > 0]
-                    median[i] = _get_median(negatives, n_zeros[i], positives)
+                    median[i] = _get_median(negatives,
+                                            n_zeros_axis[i],
+                                            positives)
 
                 return median
 
@@ -1645,7 +1647,9 @@ class Imputer(BaseEstimator, TransformerMixin):
                 most_frequent = np.empty(len(columns))
 
                 for i, column in enumerate(columns):
-                    most_frequent[i] = _most_frequent(column, 0, n_zeros[i])
+                    most_frequent[i] = _most_frequent(column,
+                                                      0,
+                                                      n_zeros_axis[i])
 
                 return most_frequent
 
@@ -1731,7 +1735,7 @@ class Imputer(BaseEstimator, TransformerMixin):
 
         # Delete the invalid rows/columns
         invalid_mask = np.isnan(self.statistics_)
-        valid_mask = ~invalid_mask
+        valid_mask = np.logical_not(invalid_mask)
         valid_statistics = self.statistics_[valid_mask]
         valid_statistics_indexes = np.where(valid_mask)[0]
         missing = ",".join(

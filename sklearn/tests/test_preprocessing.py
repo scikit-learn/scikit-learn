@@ -815,7 +815,7 @@ def test_add_dummy_feature_csr():
     assert_array_equal(X.toarray(), [[1, 1, 0], [1, 0, 1], [1, 0, 1]])
 
 
-def _test_statistics(X, X_true,
+def _check_statistics(X, X_true,
                           strategy, statistics, missing_values):
     """Utility function for testing imputation for a given strategy.
 
@@ -827,16 +827,15 @@ def _test_statistics(X, X_true,
         - the statistics (mean, median, mode) are correct
         - the missing values are imputed correctly"""
 
-    err_msg = ("Parameters: strategy = %s, "
-               "missing_values = %s" % (strategy, missing_values))
-    err_msg = err_msg + ", axis = %s, sparse = %s"
+    err_msg = "Parameters: strategy = %s, missing_values = %s, " \
+              "axis = %%s, sparse = %%s".format(strategy, missing_values)
 
     # Normal matrix, axis = 0
     imputer = Imputer(missing_values, strategy=strategy, axis=0)
     X_trans = imputer.fit(X).transform(X.copy())
     assert_array_equal(imputer.statistics_, statistics,
-                       err_msg % (0, False))
-    assert_array_equal(X_trans, X_true, err_msg % (0, False))
+                       err_msg.format(0, False))
+    assert_array_equal(X_trans, X_true, err_msg.format(0, False))
 
     # Normal matrix, axis = 1
     imputer = Imputer(missing_values, strategy=strategy, axis=1)
@@ -846,8 +845,8 @@ def _test_statistics(X, X_true,
     else:
         X_trans = imputer.transform(X.copy().transpose())
         assert_array_equal(imputer.statistics_, statistics,
-                           err_msg % (1, False))
-        assert_array_equal(X_trans, X_true.transpose(), err_msg % (1, False))
+                           err_msg.format(1, False))
+        assert_array_equal(X_trans, X_true.transpose(), err_msg.format(1, False))
 
     # Sparse matrix, axis = 0
     imputer = Imputer(missing_values, strategy=strategy, axis=0)
@@ -857,8 +856,8 @@ def _test_statistics(X, X_true,
         X_trans = X_trans.toarray()
 
     assert_array_equal(imputer.statistics_, statistics,
-                       err_msg % (0, True))
-    assert_array_equal(X_trans, X_true, err_msg % (0, True))
+                       err_msg.format(0, True))
+    assert_array_equal(X_trans, X_true, err_msg.format(0, True))
 
     # Sparse matrix, axis = 1
     imputer = Imputer(missing_values, strategy=strategy, axis=1)
@@ -873,9 +872,9 @@ def _test_statistics(X, X_true,
             X_trans = X_trans.toarray()
 
         assert_array_equal(imputer.statistics_, statistics,
-                           err_msg % (1, True))
+                           err_msg.format(1, True))
         assert_array_equal(X_trans, X_true.transpose(),
-                           err_msg % (1, True))
+                           err_msg.format(1, True))
 
 
 def test_imputation_mean_median_only_zero():
@@ -902,8 +901,8 @@ def test_imputation_mean_median_only_zero():
         [6, 5,  13],
     ])
 
-    _test_statistics(X, mean, "mean", [np.nan, 3, np.nan, np.nan, 7], 0)
-    _test_statistics(X, median, "median", [np.nan, 2, np.nan, 5, 5], 0)
+    _check_statistics(X, mean, "mean", [np.nan, 3, np.nan, np.nan, 7], 0)
+    _check_statistics(X, median, "median", [np.nan, 2, np.nan, 5, 5], 0)
 
 
 def test_imputation_mean_median():
@@ -972,7 +971,7 @@ def test_imputation_mean_median():
 
         X_true = X_true[:, cols_to_keep]
 
-        _test_statistics(X, X_true, strategy,
+        _check_statistics(X, X_true, strategy,
                               true_statistics, test_missing_values)
 
 
@@ -996,7 +995,7 @@ def test_imputation_most_frequent():
     # frequent as promised in the doc but the lowest most frequent. When this
     # test will fail after an update of scipy, Imputer will need to be updated
     # to be consistent with the new (correct) behaviour
-    _test_statistics(X, X_true, "most_frequent", [np.nan, 2, 3, 3], -1)
+    _check_statistics(X, X_true, "most_frequent", [np.nan, 2, 3, 3], -1)
 
 
 def test_imputation_pipeline_grid_search():
