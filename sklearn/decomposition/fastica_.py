@@ -369,7 +369,9 @@ class FastICA(BaseEstimator, TransformerMixin):
     `mixing_` : array, shape = [n_features, n_components]
         Mixing matrix.
     `sources_` : 2D array, [n_samples, n_components]
-        The estimated latent sources of the data.
+        The estimated latent sources of the data. This attribute is deprecated
+        and will be removed in 0.16. Use `fit_transform` instead and store
+        the result.
 
     Notes
     -----
