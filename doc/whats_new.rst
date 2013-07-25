@@ -7,8 +7,8 @@
 
 Changelog
 ---------
-   - The core implementation of decisions trees has been rewritten from 
-     scratch, allowing for faster tree induction and lower memory 
+   - The core implementation of decisions trees has been rewritten from
+     scratch, allowing for faster tree induction and lower memory
      consumption in all tree-based estimators. By `Gilles Louppe`_.
 
    - Ability to pass one penalty (alpha value) per target in
@@ -132,6 +132,17 @@ Changelog
    - Reduce memory footprint of FastICA by `Denis Engemann`_ and
      `Alexandre Gramfort`_.
 
+   - Verbose output in :mod:`sklearn.ensemble.gradient_boosting` now uses
+     a column format and prints progress in decreasing frequency.
+     It also shows the remaining time. By `Peter Prettenhofer`_.
+
+   - :mod:`sklearn.ensemble.gradient_boosting` provides out-of-bag improvement
+     :attr:`~sklearn.ensemble.GradientBoostingRegressor.oob_improvement_`
+     rather than the OOB score for model selection. An example that shows
+     how to use OOB estimates to select the number of trees was added.
+     By `Peter Prettenhofer`_.
+
+
 
 API changes summary
 -------------------
@@ -182,6 +193,10 @@ API changes summary
 
    - :func:`datasets.load_files`'s ``charset`` and ``charset_errors``
      parameters were renamed ``encoding`` and ``decode_errors``.
+
+   - Attribute ``oob_score_`` in :class:`sklearn.ensemble.GradientBoostingRegressor`
+     and :class:`sklearn.ensemble.GradientBoostingClassifier`
+     is deprecated and has been replaced by ``oob_improvement_`` .
 
 .. _changes_0_13_1:
 
