@@ -233,7 +233,14 @@ def pairwise_distances_argmin(X, Y=None, axis=1, metric="euclidean",
             Y_chunk = Y[chunk_y, :]
 
             if dist_func is not None:
-                tvar = dist_func(X_chunk, Y_chunk, **kwargs)
+                if metric == 'euclidean':  # special case, for speed
+                    tvar = np.dot(X_chunk, Y_chunk.T)
+                    tvar *= -2
+                    tvar += (X_chunk * X_chunk).sum(axis=1)[:, np.newaxis]
+                    tvar += (Y_chunk * Y_chunk).sum(axis=1)[np.newaxis, :]
+                    np.maximum(tvar, 0, tvar)
+                else:
+                    tvar = dist_func(X_chunk, Y_chunk, **kwargs)
             else:
                 tvar = np.empty((X_chunk.shape[0], Y_chunk.shape[0]),
                                 dtype='float')
@@ -260,6 +267,8 @@ def pairwise_distances_argmin(X, Y=None, axis=1, metric="euclidean",
                 flags, min_values, values[chunk_x])
 
     if return_distances:
+        if metric == "euclidean" and not kwargs.get("squared", False):
+            values = np.sqrt(values)
         return indices, values
     else:
         return indices
