@@ -68,6 +68,7 @@ Classes
    :toctree: generated/
    :template: class.rst
 
+   ChengChurch
    SpectralBiclustering
    SpectralCoclustering
 

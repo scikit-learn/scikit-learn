@@ -84,6 +84,51 @@ diagonal and checkerboard bicluster structures.
 
 .. currentmodule:: sklearn.cluster.bicluster
 
+.. _cheng_church:
+
+Cheng and Church
+================
+
+:class:`ChengChurch` tries to find biclusters with low variance, low
+row variance, and low column variance, as quantified by the mean
+square residue of the bicluster. For a matrix :math:`A`, the mean
+square residue is computed as:
+
+.. math::
+    a_{ij} - a_{iJ} - a{Ij} - a{IJ}
+
+where
+
+.. math::
+   a_{iJ] = \frac{1}{|J|} \sum_{j} a_{ij}
+
+   a_{Ij} = \frac{1}{|I|} \sum_{i} a_{ij}
+
+   a_{IJ] = \frac{1}{|I| |J|} \sum_{i,j} a_{ij}
+
+are the row, column, and overall means of :math:`A`.
+
+Scaling :math:`A` to :math:`A+c`, where :math:`c` is any constant,
+does not change its MSR. Therefore, for some datasets, it may be
+beneficial to apply a log transformation, in order to remove scaling
+effects.
+
+Cheng and Church finds biclusters that are as large as possible, with
+the constraint that a bicluster's MSR must be less than the theshold
+:math:`\delta`. The algorithm proceeds in an iterative greedy fashion.
+It starts with the whole dataset, greedily removes rows and columns
+until :math:`\text{MSR} < \delta`, then greedily adds rows and columns
+while maintaining the MSR threshold. Once a bicluster has been found,
+Cheng and Church masks those elements with uniform random values, then
+iterates to find the next bicluster.
+
+
+References
+----------
+- Cheng, Y., & Church, G. M. (2000). `Biclustering of
+  expression data
+  <ftp://samba.ad.sdsc.edu/pub/sdsc/biology/ISMB00/157.pdf>`__.
+
 
 .. _spectral_coclustering:
 
