@@ -12,10 +12,9 @@ from .ball_tree import BallTree, DTYPE
 from .kd_tree import KDTree
 
 
-VALID_KERNELS = ['gaussian', 'tophat', 'epanechnikov',
-                 'exponential', 'linear', 'cosine']
-TREE_DICT = {'ball_tree': BallTree,
-             'kd_tree': KDTree}
+VALID_KERNELS = ['gaussian', 'tophat', 'epanechnikov', 'exponential', 'linear',
+                 'cosine']
+TREE_DICT = {'ball_tree': BallTree, 'kd_tree': KDTree}
 
 
 # TODO: implement a brute force version for testing purposes
@@ -27,14 +26,17 @@ class KernelDensity(BaseEstimator):
     Parameters
     ----------
     bandwidth : float
-        The bandwidth of the kernel
+        The bandwidth of the kernel.
+
     algorithm : string
         The tree algorithm to use.  Valid options are
         ['kd_tree'|'ball_tree'|'auto'].  Default is 'auto'.
+
     kernel : string
         The kernel to use.  Valid kernels are
         ['gaussian'|'tophat'|'epanechnikov'|'exponential'|'linear'|'cosine']
         Default is 'gaussian'.
+
     metric : string
         The distance metric to use.  Note that not all metrics are
         valid with all algorithms.  Refer to the documentation of
@@ -42,18 +44,23 @@ class KernelDensity(BaseEstimator):
         available algorithms.  Note that the normalization of the density
         output is correct only for the Euclidean distance metric. Default
         is 'euclidean'.
+
     atol : float
         The desired absolute tolerance of the result.  A larger tolerance will
         generally lead to faster execution. Default is 0.
+
     rtol : float
         The desired relative tolerance of the result.  A larger tolerance will
         generally lead to faster execution.  Default is 1E-8.
+
     breadth_first : boolean
         If true (default), use a breadth-first approach to the problem.
         Otherwise use a depth-first approach.
+
     leaf_size : int
         Specify the leaf size of the underlying tree.  See :class:`BallTree`
         or :class:`KDTree` for details.  Default is 40.
+
     metric_params : dict
         Additional parameters to be passed to the tree for use with the
         metric.  For more information, see the documentation of
@@ -103,11 +110,11 @@ class KernelDensity(BaseEstimator):
             raise ValueError("invalid algorithm: '{0}'".format(algorithm))
 
     def fit(self, X):
-        """Fit the Kernel Density model on the data
+        """Fit the Kernel Density model on the data.
 
         Parameters
         ----------
-        X: array_like, shape (n_samples, n_features)
+        X : array_like, shape (n_samples, n_features)
             List of n_features-dimensional data points.  Each row
             corresponds to a single data point.
         """
@@ -122,14 +129,14 @@ class KernelDensity(BaseEstimator):
                                           **kwargs)
         return self
 
-    def eval(self, X):
-        """Evaluate the model on the data.
+    def score_samples(self, X):
+        """Evaluate the density model on the data.
 
         Parameters
         ----------
-        X : array_like
+        X : array_like, shape (n_samples, n_features)
             An array of points to query.  Last dimension should match dimension
-            of training data (n_features)
+            of training data (n_features).
 
         Returns
         -------
@@ -160,9 +167,9 @@ class KernelDensity(BaseEstimator):
         Returns
         -------
         logprob : array_like, shape (n_samples,)
-            Log probabilities of each data point in X
+            Log probabilities of each data point in X.
         """
-        return np.sum(self.eval(X))
+        return np.sum(self.score_samples(X))
 
     def sample(self, n_samples=1, random_state=None):
         """Generate random samples from the model.
@@ -174,13 +181,13 @@ class KernelDensity(BaseEstimator):
         n_samples : int, optional
             Number of samples to generate. Defaults to 1.
 
-        random_state: RandomState or an int seed (0 by default)
-            A random number generator instance
+        random_state : RandomState or an int seed (0 by default)
+            A random number generator instance.
 
         Returns
         -------
         X : array_like, shape (n_samples, n_features)
-            List of samples
+            List of samples.
         """
         # TODO: implement sampling for other valid kernel shapes
         if self.kernel not in ['gaussian', 'tophat']:

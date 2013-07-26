@@ -1,6 +1,6 @@
 import numpy as np
-from numpy.testing import assert_raises, assert_equal
-from sklearn.utils.testing import assert_allclose
+from sklearn.utils.testing import (assert_allclose, assert_raises,
+                                   assert_equal)
 from sklearn.neighbors import KernelDensity, KDTree, NearestNeighbors
 from sklearn.neighbors.ball_tree import kernel_norm
 
@@ -38,7 +38,7 @@ def test_kernel_density(n_samples=100, n_features=3):
             def check_results(kernel, bandwidth, atol, rtol):
                 kde = KernelDensity(kernel=kernel, bandwidth=bandwidth,
                                     atol=atol, rtol=rtol)
-                log_dens = kde.fit(X).eval(Y)
+                log_dens = kde.fit(X).score_samples(Y)
                 assert_allclose(np.exp(log_dens), dens_true,
                                 atol=atol, rtol=max(1E-7, rtol))
                 assert_allclose(np.exp(kde.score(Y)),
@@ -95,7 +95,7 @@ def test_kde_algorithm_metric_choice():
             else:
                 kde = KernelDensity(algorithm=algorithm, metric=metric)
                 kde.fit(X)
-                y_dens = kde.eval(Y)
+                y_dens = kde.score_samples(Y)
                 assert_equal(y_dens.shape, Y.shape[:1])
 
 

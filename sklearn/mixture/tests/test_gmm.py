@@ -165,7 +165,7 @@ class GMMTester():
         n_samples = len(gaussidx)
         X = rng.randn(n_samples, self.n_features) + g.means_[gaussidx]
 
-        ll, responsibilities = g.eval(X)
+        ll, responsibilities = g.score_samples(X)
 
         self.assertEqual(len(ll), n_samples)
         self.assertEqual(responsibilities.shape,

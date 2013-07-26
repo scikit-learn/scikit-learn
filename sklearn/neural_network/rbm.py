@@ -244,9 +244,9 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         self.h_samples_ = np.floor(h_neg, h_neg)
 
         if self.verbose:
-            return self.pseudo_likelihood(v_pos)
+            return self.score_samples(v_pos)
 
-    def pseudo_likelihood(self, v):
+    def score_samples(self, v):
         """Compute the pseudo-likelihood of v.
 
         Parameters
