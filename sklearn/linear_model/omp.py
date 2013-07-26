@@ -679,13 +679,6 @@ class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
                                             self.tol, norms_sq,
                                             copy_Gram, True).T
 
-        if self.normalize:
-            nonzeros = np.flatnonzero(X_std)
-            scaling = X_std[nonzeros]
-            if self.coef_.ndim == 2:
-                scaling = scaling[np.newaxis, :]
-            self.coef_[:, nonzeros] /= scaling
-
         self._set_intercept(X_mean, y_mean, X_std)
         return self
 
