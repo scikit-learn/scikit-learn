@@ -28,7 +28,17 @@ class EmptyBiclusterException(Exception):
 
 class ChengChurch(six.with_metaclass(ABCMeta, BaseEstimator,
                                      BiclusterMixin)):
-    """Algorithm to find biclusters with low mean squared residues.
+    """Algorithm that finds biclusters with small mean square residue (MSR).
+
+    The residue of an array ``X`` is calculated as ``X -
+    X.mean(axis=1)[np.newaxis].T - X.mean(axis=0) + X.mean()``. It
+    measures an element's coherence with the overall array, other
+    elements in the same row, and other elements in the same column.
+    To get the mean square residue, the residues are squared and their
+    mean is calculated.
+
+    ChengChurch tries to maximize bicluser size with the constraint
+    that its mean square residue cannot exceed ``max_msr``.
 
     Parameters
     -----------
@@ -36,8 +46,8 @@ class ChengChurch(six.with_metaclass(ABCMeta, BaseEstimator,
         The number of biclusters to find.
 
     max_msr : float, default: 1.0
-        Maximum MSR of a bicluster. Equivalent to 'delta` in original
-        paper.
+        Maximum mean square residue of a bicluster. Equivalent to
+        'delta` in original paper.
 
     deletion_threshold : float, optional, default: 1.5
         Multiplier for multiple node deletion. Equivalent to `alpha`
@@ -72,7 +82,6 @@ class ChengChurch(six.with_metaclass(ABCMeta, BaseEstimator,
     - Cheng, Y., & Church, G. M. (2000). `Biclustering of
       expression data
       <ftp://samba.ad.sdsc.edu/pub/sdsc/biology/ISMB00/157.pdf>`__.
-      In Ismb (Vol. 8, pp. 93-103).
 
     """
     def __init__(self, n_clusters=100, max_msr=1.0, deletion_threshold=1.5,
@@ -104,23 +113,23 @@ class ChengChurch(six.with_metaclass(ABCMeta, BaseEstimator,
                              " value is {}".format(
                                  self.column_deletion_cutoff))
 
-    def _sr(self, rows, cols, X):
+    def _square_residue(self, rows, cols, X):
         if not rows.size or not cols.size:
             raise EmptyBiclusterException()
         return square_residue(rows.ravel(), cols, X)
 
-    def _sr_add(self, rows, cols, X):
+    def _square_residue_add(self, rows, cols, X):
         if not rows.size or not cols.size:
             raise EmptyBiclusterException()
         return square_residue_add(rows.ravel(), cols, X, inverse=False)
 
-    def _isr_add(self, rows, cols, X):
+    def _inverse_square_residue_add(self, rows, cols, X):
         if not rows.size or not cols.size:
             raise EmptyBiclusterException()
         return square_residue_add(rows.ravel(), cols, X, inverse=True)
 
     def _single_node_deletion(self, rows, cols, X):
-        sr = self._sr(rows, cols, X)
+        sr = self._square_residue(rows, cols, X)
         while sr.mean() > self.max_msr:
             n_rows, n_cols = len(rows), len(cols)
             row_msr = sr.mean(axis=1)
@@ -132,11 +141,11 @@ class ChengChurch(six.with_metaclass(ABCMeta, BaseEstimator,
                 rows = np.setdiff1d(rows, [rows[row_id]])[np.newaxis].T
             else:
                 cols = np.setdiff1d(cols, [cols[col_id]])
-            sr = self._sr(rows, cols, X)
+            sr = self._square_residue(rows, cols, X)
         return rows, cols
 
     def _multiple_node_deletion(self, rows, cols, X):
-        sr = self._sr(rows, cols, X)
+        sr = self._square_residue(rows, cols, X)
         while sr.mean() > self.max_msr:
             msr = sr.mean()
             n_rows, n_cols = len(rows), len(cols)
@@ -146,32 +155,33 @@ class ChengChurch(six.with_metaclass(ABCMeta, BaseEstimator,
                 rows = rows.ravel()
                 rows = np.setdiff1d(rows, rows[to_remove])[np.newaxis].T
 
-            col_msr = self._sr(rows, cols, X).mean(axis=0)
+            col_msr = self._square_residue(rows, cols, X).mean(axis=0)
             if n_cols >= self.column_deletion_cutoff:
                 to_remove = col_msr > (self.deletion_threshold * msr)
                 cols = np.setdiff1d(cols, cols[to_remove])
 
             if n_rows == len(rows) and n_cols == len(cols):
                 break
-            sr = self._sr(rows, cols, X)
+            sr = self._square_residue(rows, cols, X)
         return rows, cols
 
     def _node_addition(self, rows, cols, X):
         while True:
             n_rows, n_cols = len(rows), len(cols)
-            msr = self._sr(rows, cols, X).mean()
-            col_score = self._sr_add(rows, cols, X).mean(axis=0)
+            msr = self._square_residue(rows, cols, X).mean()
+            col_score = self._square_residue_add(rows, cols, X).mean(axis=0)
             to_add = np.nonzero(col_score < msr)[0]
             cols = np.union1d(cols, to_add)
 
-            msr = self._sr(rows, cols, X).mean()
-            row_score = self._sr_add(rows, cols, X).mean(axis=1)
+            msr = self._square_residue(rows, cols, X).mean()
+            row_score = self._square_residue_add(rows, cols, X).mean(axis=1)
             to_add = np.nonzero(row_score < msr)[0]
             old_rows = rows.copy()  # save for inverse
             rows = np.union1d(rows.ravel(), to_add)[np.newaxis].T
 
             if self.inverse_rows:
-                row_score = self._isr_add(old_rows, cols, X).mean(axis=1)
+                row_score = self._inverse_square_residue_add(
+                    old_rows, cols, X).mean(axis=1)
                 to_add = np.nonzero(row_score < msr)[0]
                 rows = np.union1d(rows.ravel(), to_add)[np.newaxis].T
 

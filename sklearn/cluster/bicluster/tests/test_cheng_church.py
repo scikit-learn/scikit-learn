@@ -112,5 +112,11 @@ def test_errors():
     model = ChengChurch(column_deletion_cutoff=0)
     assert_raises(ValueError, model.fit, data)
 
-    assert_raises(EmptyBiclusterException, model._sr, np.array([]),
-                  np.array([]), data)
+    assert_raises(EmptyBiclusterException, model._square_residue,
+                  np.array([]), np.array([]), data)
+
+    assert_raises(EmptyBiclusterException, model._square_residue_add,
+                  np.array([]), np.array([]), data)
+
+    assert_raises(EmptyBiclusterException, model._inverse_square_residue_add,
+                  np.array([]), np.array([]), data)
