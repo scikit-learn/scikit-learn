@@ -532,6 +532,8 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
         """
         self._label_binarizer = LabelBinarizer(pos_label=1, neg_label=-1)
         Y = self._label_binarizer.fit_transform(y)
+        if not self._label_binarizer.multilabel_:
+            y = column_or_1d(y)
 
         if self.class_weight:
             cw = compute_class_weight(self.class_weight,
