@@ -967,7 +967,7 @@ cdef class BestSplitter(Splitter):
                     criterion.update(current_pos)
                     current_impurity = criterion.children_impurity()
 
-                    if current_impurity < best_impurity:
+                    if current_impurity < (best_impurity - 1e-7):
                         best_impurity = current_impurity
                         best_pos = current_pos
                         best_feature = current_feature
@@ -1544,7 +1544,7 @@ cdef class Tree:
                        (n_node_samples < 2 * self.min_samples_leaf))
 
             splitter.node_reset(start, end, &impurity)
-            is_leaf = is_leaf or (impurity == 0.0)
+            is_leaf = is_leaf or (impurity < 1e-9)
 
             if not is_leaf:
                 splitter.node_split(&pos, &feature, &threshold)
