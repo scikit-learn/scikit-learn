@@ -69,10 +69,11 @@ for i in range(n_faces):
     true_face = np.hstack((X_test[i], y_test[i]))
 
     if i:
+        sub = plt.subplot(n_faces, n_cols, i * n_cols + 1)
+    else:
         sub = plt.subplot(n_faces, n_cols, i * n_cols + 1,
                           title="true faces")
-    else:
-        sub = plt.subplot(n_faces, n_cols, i * n_cols + 1)
+
 
     sub.axis("off")
     sub.imshow(true_face.reshape(image_shape),
