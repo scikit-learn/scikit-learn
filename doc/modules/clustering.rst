@@ -128,7 +128,7 @@ the most basic method being to choose :math:`k` samples from the dataset
 two other steps. The first step assigns each sample to its nearest centroid.
 The second step creates new centroids by taking the mean value of all of the
 samples assigned to each previous centroid. The difference between the old
-and the new centroids is computed and the algorithm repeats these last two
+and the new centroids are computed and the algorithm repeats these last two
 steps until this value is less than a threshold. In other words, it repeats
 until the centroids do not move significantly.
 
