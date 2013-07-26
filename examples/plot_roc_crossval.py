@@ -4,7 +4,7 @@ Receiver operating characteristic (ROC) with cross validation
 =============================================================
 
 Example of Receiver operating characteristic (ROC) metric to
-evaluate the quality of the output of a classifier using cross-validation.
+evaluate classifier output quality using cross-validation.
 
 ROC curves typically feature true positive rate on the Y axis,
 and false positive rate on the X axis. This means that the top left corner
