@@ -558,39 +558,8 @@ class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
         self.tol = tol
         self.fit_intercept = fit_intercept
         self.normalize = normalize
-
-        if precompute_gram is not None:
-            warnings.warn("precompute_gram will be removed in 0.15."
-                          " Use the precompute parameter.",
-                          DeprecationWarning, stacklevel=2)
-            precompute = precompute_gram
-
         self.precompute = precompute
-
-        if copy_Gram is not None:
-            warnings.warn("copy_Gram will be removed in 0.15."
-                          " Use the orthogonal_mp function for"
-                          " low level memory control.",
-                          DeprecationWarning, stacklevel=2)
-        else:
-            copy_Gram = True
-
-        if copy_Xy is not None:
-            warnings.warn("copy_Xy will be removed in 0.15."
-                          " Use the orthogonal_mp function for"
-                          " low level memory control.",
-                          DeprecationWarning, stacklevel=2)
-        else:
-            copy_Xy = True
-
-        if copy_X is not None:
-            warnings.warn("copy_X will be removed in 0.15."
-                          " Use the orthogonal_mp function for"
-                          " low level memory control.",
-                          DeprecationWarning, stacklevel=2)
-        else:
-            copy_X = True
-
+        self.precompute_gram = precompute_gram
         self.copy_Gram = copy_Gram
         self.copy_Xy = copy_Xy
         self.copy_X = copy_X
@@ -625,6 +594,41 @@ class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
         y = np.asarray(y)
         n_features = X.shape[1]
 
+        if self.precompute_gram is not None:
+            warnings.warn("precompute_gram will be removed in 0.15."
+                          " Use the precompute parameter.",
+                          DeprecationWarning, stacklevel=2)
+            precompute = self.precompute_gram
+        else:
+            precompute = self.precompute
+
+        if self.copy_Gram is not None:
+            warnings.warn("copy_Gram will be removed in 0.15."
+                          " Use the orthogonal_mp function for"
+                          " low level memory control.",
+                          DeprecationWarning, stacklevel=2)
+            copy_Gram = self.copy_Gram
+        else:
+            copy_Gram = True
+
+        if self.copy_Xy is not None:
+            warnings.warn("copy_Xy will be removed in 0.15."
+                          " Use the orthogonal_mp function for"
+                          " low level memory control.",
+                          DeprecationWarning, stacklevel=2)
+            copy_Xy = self.copy_Xy
+        else:
+            copy_Xy = True
+
+        if self.copy_X is not None:
+            warnings.warn("copy_X will be removed in 0.15."
+                          " Use the orthogonal_mp function for"
+                          " low level memory control.",
+                          DeprecationWarning, stacklevel=2)
+            copy_X = self.copy_X
+        else:
+            copy_X = True
+
         if Gram is not None:
             warnings.warn("Gram will be removed in 0.15."
                           " Use the orthogonal_mp function for"
@@ -647,13 +651,14 @@ class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
                           'False.', RuntimeWarning, stacklevel=2)
             Gram, Xy = None, None
 
-        precompute = self.precompute
         if Gram is not None:
             precompute = Gram
+            if Xy is not None and copy_Xy:
+                Xy = Xy.copy()
 
         X, y, X_mean, y_mean, X_std, Gram, Xy = \
             _pre_fit(X, y, Xy, precompute, self.normalize, self.fit_intercept,
-                     copy=self.copy_X)
+                     copy=copy_X)
 
         if y.ndim == 1:
             y = y[:, np.newaxis]
@@ -667,12 +672,12 @@ class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
 
         if Gram is False:
             self.coef_ = orthogonal_mp(X, y, self.n_nonzero_coefs_, self.tol,
-                                       precompute=False, copy_X=self.copy_X).T
+                                       precompute=False, copy_X=copy_X).T
         else:
             norms_sq = np.sum(y ** 2, axis=0) if self.tol is not None else None
             self.coef_ = orthogonal_mp_gram(Gram, Xy, self.n_nonzero_coefs_,
                                             self.tol, norms_sq,
-                                            self.copy_Gram, True).T
+                                            copy_Gram, True).T
 
         if self.normalize:
             nonzeros = np.flatnonzero(X_std)
@@ -777,7 +782,7 @@ class OrthogonalMatchingPursuitCV(LinearModel, RegressorMixin):
 
     max_iter : integer, optional
         Maximum numbers of iterations to perform, therefore maximum features
-        to include. 10% of ``n_features`` but at least 1 by default.
+        to include. 10% of ``n_features`` but at least 5 if available.
 
     cv : cross-validation generator, optional
         see :mod:`sklearn.cross_validation`. If ``None`` is passed, default to
@@ -843,7 +848,8 @@ class OrthogonalMatchingPursuitCV(LinearModel, RegressorMixin):
         """
         X = array2d(X)
         cv = check_cv(self.cv, X, y, classifier=False)
-        max_iter = (max(int(0.1 * X.shape[1]), 1) if not self.max_iter
+        max_iter = (min(max(int(0.1 * X.shape[1]), 5), X.shape[1])
+                    if not self.max_iter
                     else self.max_iter)
         cv_paths = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
             delayed(_omp_path_residues)(
