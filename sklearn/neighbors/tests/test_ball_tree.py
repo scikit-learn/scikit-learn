@@ -4,9 +4,10 @@ from sklearn.neighbors.ball_tree import (BallTree, NeighborsHeap,
                                          simultaneous_sort, kernel_norm,
                                          nodeheap_sort, DTYPE, ITYPE)
 from sklearn.neighbors.dist_metrics import DistanceMetric
-from sklearn.utils.testing import SkipTest
+from sklearn.utils.testing import SkipTest, assert_allclose
 
-V = np.random.random((3, 3))
+rng = np.random.RandomState(10)
+V = rng.rand(3, 3)
 V = np.dot(V, V.T)
 
 DIMENSION = 3
@@ -150,7 +151,7 @@ def compute_kernel_slow(Y, X, kernel, h):
         raise ValueError('kernel not recognized')
 
 
-def test_ball_tree_KDE(n_samples=100, n_features=3):
+def test_ball_tree_kde(n_samples=100, n_features=3):
     np.random.seed(0)
     X = np.random.random((n_samples, n_features))
     Y = np.random.random((n_samples, n_features))
@@ -165,8 +166,8 @@ def test_ball_tree_KDE(n_samples=100, n_features=3):
                 dens = bt.kernel_density(Y, h, atol=atol, rtol=rtol,
                                          kernel=kernel,
                                          breadth_first=breadth_first)
-                assert_array_almost_equal(dens, dens_true, atol=atol,
-                                          rtol=max(1E-7, rtol))
+                assert_allclose(dens, dens_true, atol=atol,
+                                          rtol=max(rtol, 1e-7))
 
             for rtol in [0, 1E-5]:
                 for atol in [1E-6, 1E-2]:
@@ -193,7 +194,7 @@ def test_gaussian_kde(n_samples=1000):
         dens_bt = bt.kernel_density(x_out[:, None], h) / n_samples
         dens_gkde = gkde.evaluate(x_out)
 
-        assert_array_almost_equal(dens_bt, dens_gkde, rtol=1E-3, atol=1E-3)
+        assert_array_almost_equal(dens_bt, dens_gkde, decimal=3)
 
 
 def test_ball_tree_two_point(n_samples=100, n_features=3):
