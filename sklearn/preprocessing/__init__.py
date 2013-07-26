@@ -13,6 +13,7 @@ from .data import binarize
 from .data import normalize
 from .data import scale
 
+from .label import label_binarize
 from .label import LabelBinarizer
 from .label import LabelEncoder
 from .label import OneHotEncoder
