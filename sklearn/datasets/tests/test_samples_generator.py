@@ -202,21 +202,23 @@ def test_nudging():
         raise SkipTest("Download digits to run this test")
     rng = np.random.RandomState(42)
     # test default nudging (1px)
-    X, y = make_nudged_dataset(data.data, data.target, random_state=rng)
-    assert_array_equal(np.array(
-        [0.,0.,13.,10.,6.,16.,7.,0.,0.,5.,16.,3.,2.,14.,6.,
-         0.,0.,0.,10.,16.,16.,16.,4.,0.,0.,0.,0.,0.,0.,12.,
-         5.,0.,0.,0.,0.,0.,0.,13.,4.,0.,0.,3.,11.,2.,5.,
-         15.,0.,0.,0.,0.,4.,12.,16.,10.,0.,0.,0.,0.,4.,12.,
-         16.,10.,0.,0.]), X[-1])
-    assert(y[-1] == 9)
+    X, y = make_nudged_dataset(data.data[:1], data.target[:1], 
+            n_samples=4, random_state=rng)
+    assert_array_equal(
+            np.array([0.,0.,13.,15.,10.,15.,5.,0.,0.,3.,15.,2.,0.,11.,8.,
+                0.,0.,4.,12.,0.,0.,8.,8.,0.,0.,5.,8.,0.,0.,9.,
+                8.,0.,0.,4.,11.,0.,1.,12.,7.,0.,0.,2.,14.,5.,10.,
+                12.,0.,0.,0.,0.,6.,13.,10.,0.,0.,0.,0.,0.,0.,0.,
+                0.,0.,0.,0.]), X[-1])
+    assert(y[-1] == 0)
     # test bigger nudgin (2px, digits is 8x8px)
-    X, y = make_nudged_dataset(data.data, data.target, n_samples=10,
+    X, y = make_nudged_dataset(data.data[:1], data.target[:1], n_samples=4,
             nudging_strength=2, random_state=rng)
-    assert_array_equal(np.array(
-        [0.,12.,6.,0.,0.,13.,4.,0.,0.,6.,16.,13.,16.,16.,7.,
-         0.,0.,0.,3.,4.,1.,8.,8.,0.,0.,0.,0.,0.,0.,4.,
-         12.,0.,0.,0.,8.,9.,2.,9.,9.,0.,0.,0.,2.,13.,16.,
-         15.,3.,0.,0.,0.,8.,9.,2.,9.,9.,0.,0.,0.,2.,13.,
-         16.,15.,3.,0.]), X[-1])
-    assert(y[-1] == 9)
+    assert_array_equal(
+            np.array([0.,3.,15.,2.,0.,11.,8.,0.,0.,4.,12.,0.,0.,8.,8.,
+                0.,0.,5.,8.,0.,0.,9.,8.,0.,0.,4.,11.,0.,1.,12.,
+                7.,0.,0.,2.,14.,5.,10.,12.,0.,0.,0.,0.,6.,13.,10.,
+                0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,0.,
+                0.,0.,0.,0.]), X[-1])
+    assert(y[-1] == 0)
+test_nudging()

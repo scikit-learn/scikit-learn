@@ -1319,7 +1319,7 @@ def make_nudged_dataset(X, y, images_shape=(8, 8),
         (default=(8,8,1))
 
     n_samples : number of additional samples generated from the dataset
-        (default=100)
+        (default=100) should be multiple of 4 (4 directions left/right/down/up)
 
     nudging_strength : number of pixels by which to nudge the images
         (default=1)
@@ -1348,21 +1348,19 @@ def make_nudged_dataset(X, y, images_shape=(8, 8),
     # behold the hackery here (nudging images in -X/X/-Y/Y)
     for dir_ind in xrange(4):
         i_ = rng.randint(0, X.shape[0], n_samples/4)
-        subset_X = X[i_]
-        for i in xrange(ix):
-            if dir_ind == 0: # left
-                subset_X[:, i*ix:(i+1)*ix - n_s] = subset_X[:,
-                        i*ix + n_s:(i+1)*ix]
-            elif dir_ind == 1: # right
-                subset_X[:, i*ix + n_s:(i+1)*ix] = subset_X[:,
-                        i*ix:(i+1)*ix - n_s]
-        for i in xrange(iy - n_s):
-            if dir_ind == 2: # down
-                subset_X[:, (i + n_s)*iy:(i+1 + n_s)*iy] = subset_X[:,
-                        i*iy:(i+1)*iy]
-            elif dir_ind == 3: # up
-                subset_X[:, i*iy:(i+1)*iy] = subset_X[:,
-                        (i + n_s)*iy:(i+1 + n_s)*iy]
+        subset_X = np.zeros((n_samples/4, X.shape[1]))
+        if dir_ind == 0: # left
+            for i in xrange(ix):
+                subset_X[:, i*ix:(i+1)*ix - n_s] = X[i_, i*ix + n_s:(i+1)*ix]
+        elif dir_ind == 1: # right
+            for i in xrange(ix):
+                subset_X[:, i*ix + n_s:(i+1)*ix] = X[i_, i*ix:(i+1)*ix - n_s]
+        if dir_ind == 2: # down
+            for i in xrange(iy - n_s):
+                subset_X[:, (i + n_s)*iy:(i+1 + n_s)*iy] = X[i_, i*iy:(i+1)*iy]
+        elif dir_ind == 3: # up
+            for i in xrange(iy - n_s):
+                subset_X[:, i*iy:(i+1)*iy] = X[i_, (i + n_s)*iy:(i+1 + n_s)*iy]
         additionals_X.append(subset_X)
         additionals_y.append(y[i_])
 
