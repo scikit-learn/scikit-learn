@@ -176,6 +176,11 @@ def test_unicode_decode_error():
                          encoding='ascii').build_analyzer()
     assert_raises(UnicodeDecodeError, ca, text_bytes)
 
+    # Check the old interface
+    ca = CountVectorizer(analyzer='char', ngram_range=(3, 6),
+                         charset='ascii').build_analyzer()
+    assert_raises(UnicodeDecodeError, ca, text_bytes)
+
 
 def test_char_ngram_analyzer():
     cnga = CountVectorizer(analyzer='char', strip_accents='unicode',
