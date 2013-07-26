@@ -13,6 +13,7 @@ import warnings
 from abc import ABCMeta, abstractmethod
 import numpy as np
 from scipy import linalg
+from scipy.sparse.linalg import arpack
 
 __all__ = ['PLSCanonical', 'PLSRegression', 'PLSSVD']
 
@@ -745,7 +746,11 @@ class PLSSVD(BaseEstimator, TransformerMixin):
             _center_scale_xy(X, Y, self.scale)
         # svd(X'Y)
         C = np.dot(X.T, Y)
-        U, s, V = linalg.svd(C, full_matrices=False)
+
+        if self.n_components == C.shape[1]:
+            U, s, V = linalg.svd(C, full_matrices=False)
+        else:
+            U, s, V = arpack.svds(C, k=self.n_components)
         V = V.T
         self.x_scores_ = np.dot(X, U)
         self.y_scores_ = np.dot(Y, V)
