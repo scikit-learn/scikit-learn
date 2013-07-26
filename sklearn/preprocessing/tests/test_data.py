@@ -12,9 +12,8 @@ from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
 
 from sklearn.utils.sparsefuncs import mean_variance_axis0
-from sklearn.preprocessing import Binarizer
-from sklearn.preprocessing import KernelCenterer
-
+from sklearn.preprocessing.data import Binarizer
+from sklearn.preprocessing.data import KernelCenterer
 from sklearn.preprocessing.data import Normalizer
 from sklearn.preprocessing.data import normalize
 from sklearn.preprocessing.data import StandardScaler
