@@ -509,7 +509,7 @@ If you are having trouble decoding text, here are some things to try:
 - You could try UTF-8 and disregard the errors. You can decode byte
   strings with ``bytes.decode(errors='replace')`` to replace all
   decoding errors with a meaningless character, or set
-  ``encoding_error='replace'`` in the vectorizer. This may damage the
+  ``decode_error='replace'`` in the vectorizer. This may damage the
   usefulness of your features.
 
 - Real text may come from a variety of sources that may have used different

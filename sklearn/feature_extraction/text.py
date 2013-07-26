@@ -379,12 +379,14 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
         self.decode_error = decode_error
         if charset is not None:
             warnings.warn("The charset parameter is deprecated as of version "
-                          "0.14 and will be removed in 0.16.",
+                          "0.14 and will be removed in 0.16. Use encoding "
+                          "instead.",
                           DeprecationWarning)
             self.encoding = charset
         if charset_error is not None:
             warnings.warn("The charset_error parameter is deprecated as of "
-                          "version 0.14 and will be removed in 0.16.",
+                          "version 0.14 and will be removed in 0.16. Use "
+                          "decode_error instead.",
                           DeprecationWarning)
             self.decode_error = charset_error
 
@@ -602,12 +604,14 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         self.decode_error = decode_error
         if charset is not None:
             warnings.warn("The charset parameter is deprecated as of version "
-                          "0.14 and will be removed in 0.16.",
+                          "0.14 and will be removed in 0.16. Use encoding "
+                          "instead.",
                           DeprecationWarning)
             self.encoding = charset
         if charset_error is not None:
             warnings.warn("The charset_error parameter is deprecated as of "
-                          "version 0.14 and will be removed in 0.16.",
+                          "version 0.14 and will be removed in 0.16. Use "
+                          "decode_error instead.",
                           DeprecationWarning)
             self.decode_error = charset_error
 

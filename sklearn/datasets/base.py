@@ -157,13 +157,14 @@ def load_files(container_path, description=None, categories=None,
     """
     if charset is not None:
         warnings.warn("The charset parameter is deprecated as of version "
-                      "0.14 and will be removed in 0.16.",
+                      "0.14 and will be removed in 0.16. Use encode instead.",
                       DeprecationWarning)
         encoding = charset
 
     if charset_error is not None:
         warnings.warn("The charset_error parameter is deprecated as of "
-                      "version 0.14 and will be removed in 0.16.",
+                      "version 0.14 and will be removed in 0.16. Use "
+                      "decode_error instead.",
                       DeprecationWarning)
         decode_error = charset_error
 
