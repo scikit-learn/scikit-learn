@@ -232,6 +232,7 @@ def check_arrays(*arrays, **options):
 
 
 def make_y_1d(y):
+    y = np.asarray(y)
     if y.ndim == 1:
         return y
 
