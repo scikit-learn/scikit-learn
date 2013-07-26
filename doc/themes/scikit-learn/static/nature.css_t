@@ -155,9 +155,9 @@ div.body {
 }
 
 div.footer {
-    color: #555;
+    color: #999;
     width: 100%;
-    padding: 13px 0;
+    padding: 15px 0;
     text-align: center;
     font-size: 75%;
 }
@@ -765,6 +765,52 @@ div.banner-container h2 {
   margin-top: -5px;
 }
 
+div.container.index-upper {
+    width: 100%;
+}
+
+div.container.index-lower {
+    width: 100%;
+    margin-top: 40px;
+    background-color: #F8F8F8;
+    color: #222;
+    border: 1px solid #DDD;
+    padding: 10px;
+    border-radius: 4px;
+    font-size: 88%;
+}
+
+div.container.index-lower .span4 {
+    padding-left: 5px;
+}
+
+div.container.index-lower h4,  div.container.index-lower h4 a{
+    color: #FF9C34;
+}
+
+div.container.index-lower h4 {
+    margin-bottom: 10px;
+    margin-left: 0px;
+    margin-top: 5px;
+    font-size: 1.5em;
+    font-weight: bold;
+    background-color: transparent;
+}
+
+div.container.index-lower ul {
+    list-style-type: none;
+    margin-left: 0;
+}
+
+div.container.index-lower ul li {
+    margin-bottom: 5px;
+}
+
+div.container.index-lower ul li em {
+    font-style: normal;
+    color: #888;
+}
+
 div.box h2 {
     height: 26px;
     background-color: transparent;
@@ -802,6 +848,12 @@ div.box-links {
 
 div.box-links p {
     display: inline;
+}
+
+div.carousel img {
+    max-height: 80px;
+    height: 80px;
+    background-color: #fff;
 }
 
 

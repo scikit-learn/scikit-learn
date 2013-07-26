@@ -245,8 +245,7 @@ index -->
     {% endif %}
     {%- for rellink in rellinks[1:]|reverse %}
     <div class="{{ loop.cycle('buttonPrevious', 'buttonNext') }}">
-      <a href="{{ pathto(rellink[0]) }}">
-        {{loop.cycle('Previous', 'Next')}}
+      <a href="{{ pathto(rellink[0]) }}">{{ loop.cycle('Previous', 'Next') }}
       </a>
     </div>
     {%- endfor %}
@@ -265,10 +264,8 @@ index -->
            }
        );
        var bodywrapper = $('.bodywrapper');
-    var sidebarbutton = $('#sidebarbutton');
-        sidebarbutton.css({
-'height': '900px'
-       });
+       var sidebarbutton = $('#sidebarbutton');
+       sidebarbutton.css({'height': '900px'});
      </script>
 
     {% if theme_google_analytics|tobool %}

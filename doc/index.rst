@@ -1,7 +1,7 @@
 .. raw:: html
 
     <!-- Block section -->
-    <div class="container", style="width:100%;">
+    <div class="container index-upper">
     <div class="row-fluid">
 
     <!-- Classification -->
@@ -196,62 +196,51 @@
     </div> <!-- container -->
 
 
-    <div class="container" style="padding-top: 40px; width:100%">
+    <div class="container index-lower">
         <div class="row-fluid">
             <!-- News -->
-            <div class="span3" style="border-right: 1px solid #CCC; padding-right:5px">
-                <h4 class="no-bg">News</h4>
+            <div class="span4">
+                <h4>News</h4>
                 <ul>
-                <li>The scikit-learn international code sprint is around the corner! Please, sponsor us.</li>
-                <li>scikit-learn 0.13.1 is available for download.</li>
+                <li><em>July 2013.</em> The scikit-learn international code sprint is around the corner! Please, sponsor us.</li>
+                <li><em>February 2013.</em> scikit-learn 0.13.1 is available for download. <a href="#">Changelog</a>.</li>
                 </ul>
             </div>
 
-            <!-- Sponsors -->
-            <div class="span3" style="border-right: 1px solid #CCC; padding-right:5px">
-                <h4 class="no-bg">Sponsors/Donations</h4>
-                <p>Any donations are very welcome!</p>
-                <form target="_top" method="post" action="https://www.paypal.com/cgi-bin/webscr">
-                <input type="hidden" value="_s-xclick" name="cmd">
-                <input type="hidden" value="74EYUMF3FTSW8" name="hosted_button_id">
-                <input border="0" type="image" style="margin: 0 auto; position: relative; left: 6%;" alt="PayPal - The safer, easier way to pay online!" name="submit" src="https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif">
-                <img border="0" width="1" height="1" src="https://www.paypalobjects.com/en_US/i/scr/pixel.gif" alt="">
-                </form>
-                <a href="#">Read more here ...</a>
-            </div>
-
             <!-- Community -->
-            <div class="span3" style="border-right: 1px solid #CCC; padding-right:5px">
-                <h4 class="no-bg">Community</h4>
+            <div class="span4">
+                <h4>Community</h4>
                 <ul>
-                <li>Appication and usage questions are best posted on <a href="#">stackoverflow.com</a> with tag sklearn.</li>
-                <li>The mailing list for general discussions is scikit-learn-general@lists.sourceforge.net</li>
-                <li>There is a #scikit-learn IRC channel on freenode that is frequented by devs and user.</li>
+                <li><em>Questions?</em> See <a href="http://stackoverflow.com/questions/tagged/scikit-learn">stackoverflow</a> # scikit-learn for applications and usage questions</li>
+                <li><em>Mailing list:</em> scikit-learn-general@lists.sourceforge.net</li>
+                <li><em>IRC:</em> #scikit-learn @ <a href="http://webchat.freenode.net/">freenode</a></li>
+                <li><em>Donations:</em> <a href="javascript:{}" onclick="document.getElementById('paypal-form').submit(); return false;">PayPal</a> (<a href="#">read more</a> about donations)</li>
+                    <form target="_top" id="paypal-form" method="post" action="https://www.paypal.com/cgi-bin/webscr">
+                    <input type="hidden" value="_s-xclick" name="cmd">
+                    <input type="hidden" value="74EYUMF3FTSW8" name="hosted_button_id">
+                    </form>
                 </ul>
             </div>
 
             <!-- who using -->
-            <div class="span3">
-                <h4 class="no-bg">
+            <div class="span4">
+                <h4>Who is using scikit-learn?</h4>
 
-:ref:`Who is using it?<testimonials>`
-
-.. raw::html
                 </h4>
                 <div id="myCarousel" class="carousel slide">
+                    <div class="carousel-inner">
+                        <div class="active item"><img src="_images/inria.jpg" class="thumbnail" /><br /> <em>-- Great stuff!</em></div>
+                        <div class="item"><img src="_static/img/google.png" class="thumbnail" /><br /> <em>-- So good!</em></div>
+                    </div>
+                    <div style="margin-top: 5px"><a href="#">More testimonials</a></div>
+                    <!--
                     <ol class="carousel-indicators">
                     <li data-target="#myCarousel" data-slide-to="0" class="active"></li>
                     <li data-target="#myCarousel" data-slide-to="1"></li>
-                    <li data-target="#myCarousel" data-slide-to="2"></li>
                     </ol>
-                    <!-- Carousel items -->
-                    <div class="carousel-inner">
-                        <div class="active item"><img style="height:70px" src="img/inria.jpg"/></div>
-                        <div class="item"><img style="height:70px" src="img/google.png"/></div>
-                        <div class="item"><img style="height:70px" src="img/telecom.jpg"/></div>
-                    </div>
+                    -->
                 </div>
-                <script>$('.carousel').carousel()</script>
+                <script>$('#myCarousel').carousel()</script>
             </div>
 
         </div>
