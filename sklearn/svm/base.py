@@ -100,16 +100,17 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
             Training vectors, where n_samples is the number of samples
             and n_features is the number of features.
 
-        y : array-like, shape = [n_samples]
+        y : array-like, shape (n_samples)
             Target values (class labels in classification, real numbers in
             regression)
 
-        sample_weight : array-like, shape = [n_samples], optional
-            Weights applied to individual samples (1. for unweighted).
+        sample_weight : array-like, shape (n_samples,)
+            Per-sample weights. Rescale C per sample. Higher weights
+            force the classifier to put more emphasis on these points.
 
         Returns
         -------
@@ -263,11 +264,11 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
 
         Returns
         -------
-        y_pred : array, shape = [n_samples]
+        y_pred : array, shape (n_samples)
         """
         X = self._validate_for_predict(X)
         predict = self._sparse_predict if self._sparse else self._dense_predict

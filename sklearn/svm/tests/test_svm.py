@@ -340,6 +340,14 @@ def test_sample_weights():
     clf.fit(X, Y, sample_weight=sample_weight)
     assert_array_equal(clf.predict(X[2]), [2.])
 
+    # test that rescaling all samples is the same as changing C
+    clf = svm.SVC()
+    clf.fit(X, Y)
+    dual_coef_no_weight = clf.dual_coef_
+    clf.set_params(C=100)
+    clf.fit(X, Y, sample_weight=np.repeat(0.01, len(X)))
+    assert_array_almost_equal(dual_coef_no_weight, clf.dual_coef_)
+
 
 def test_auto_weight():
     """Test class weights for imbalanced data"""
