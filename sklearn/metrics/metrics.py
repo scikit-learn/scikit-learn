@@ -23,7 +23,7 @@ from scipy.sparse import coo_matrix
 from scipy.spatial.distance import hamming as sp_hamming
 
 from ..externals.six.moves import zip
-from ..preprocessing import LabelBinarizer
+from ..preprocessing import LabelBinarizer, label_binarize
 from ..utils import check_arrays
 from ..utils import deprecated
 from ..utils import column_or_1d
@@ -2095,16 +2095,20 @@ def r2_score(y_true, y_pred):
     return 1 - numerator / denominator
 
 
-def log_loss(y_true, y_pred, eps=1e-15, normalize=True):
-    """Log loss, aka logistic loss or cross-entropy loss.
+def log_likelihood_score(y_true, y_pred, eps=1e-15, normalize=True):
+    """Log-likelihood of the model that generated y_pred.
 
-    This is the loss function used in (multinomial) logistic regression
-    and extensions of it such as neural networks, defined as the negative
-    log-likelihood of the true labels given a probabilistic classifier's
-    predictions. For a single sample with true label yt in {0,1} and
-    estimated probability yp that yt = 1, the log loss is
+    This function returns the probability of y_true being the true labels
+    when a probability model has returned y_pred, also known as the likelihood
+    of the model. Log-likelihood is the most common optimization objective for
+    probability models such as logistic regression.
 
-        -log P(yt|yp) = -(yt log(yp) + (1 - yt) log(1 - yp))
+    For a single sample with true label yt in {0,1} and estimated probability
+    yp that yt = 1, the log-likelihood is
+
+        log P(yt|yp) = (yt log(yp) + (1 - yt) log(1 - yp))
+
+    Note that log-probabilities are <= 0 with 0 meaning perfect predictions.
 
     Parameters
     ----------
@@ -2125,18 +2129,22 @@ def log_loss(y_true, y_pred, eps=1e-15, normalize=True):
 
     Returns
     -------
-    loss : float
+    score : float
 
     Examples
     --------
-    >>> log_loss(["spam", "ham", "ham", "spam"],  # doctest: +ELLIPSIS
-    ...          [[.1, .9], [.9, .1], [.8, .2], [.35, .65]])
-    0.21616...
+    >>> log_likelihood_score(["spam", "ham", "ham", "spam"],  # doctest: +ELLIPSIS
+    ...                      [[.1, .9], [.9, .1], [.8, .2], [.35, .65]])
+    -0.21616...
 
     References
     ----------
     C.M. Bishop (2006). Pattern Recognition and Machine Learning. Springer,
     p. 209.
+
+    See also
+    --------
+    log_loss
 
     Notes
     -----
@@ -2151,5 +2159,26 @@ def log_loss(y_true, y_pred, eps=1e-15, normalize=True):
     Y = np.clip(y_pred, eps, 1 - eps)
     Y /= Y.sum(axis=1)[:, np.newaxis]
 
-    loss = -(T * np.log(Y)).sum()
+    loss = (T * np.log(Y)).sum()
     return loss / T.shape[0] if normalize else loss
+
+
+def log_loss(y_true, y_pred, eps=1e-15, normalize=True):
+    """Log loss, aka logistic loss or cross-entropy loss.
+
+    This is the loss function used in logistic regression and other
+    probability models, defined as the negative log-likelihood of a models
+    prediction given ground truth labels. For a single sample with true label
+    yt in {0,1} and estimated probability yp that yt = 1, the log loss is
+
+        -log P(yt|yp) = -(yt log(yp) + (1 - yt) log(1 - yp))
+
+    See log_likelihood_score for the parameters.
+
+    Examples
+    --------
+    >>> log_loss(["spam", "ham", "ham", "spam"],  # doctest: +ELLIPSIS
+    ...          [[.1, .9], [.9, .1], [.8, .2], [.35, .65]])
+    0.21616...
+    """
+    return -log_likelihood_score(y_true, y_pred, eps, normalize)
