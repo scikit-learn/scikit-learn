@@ -25,9 +25,8 @@ from .base import BaseEstimator, ClassifierMixin
 from .preprocessing import binarize
 from .preprocessing import LabelBinarizer
 from .preprocessing import label_binarize
-from .utils import array2d, atleast2d_or_csr
+from .utils import array2d, atleast2d_or_csr, make_y_1d, check_arrays
 from .utils.extmath import safe_sparse_dot, logsumexp
-from .utils import check_arrays
 from .utils.multiclass import _check_partial_fit_first_call
 from .externals import six
 
@@ -156,6 +155,7 @@ class GaussianNB(BaseNB):
         """
 
         X, y = check_arrays(X, y, sparse_format='dense')
+        y = make_y_1d(y)
 
         n_samples, n_features = X.shape
 
@@ -304,7 +304,8 @@ class BaseDiscreteNB(BaseNB):
         self : object
             Returns self.
         """
-        X = atleast2d_or_csr(X).astype(np.float64)
+        X, y = check_arrays(X, y, sparse_format='csr', dtype=np.float)
+        y = make_y_1d(y)
         _, n_features = X.shape
 
         labelbin = LabelBinarizer()

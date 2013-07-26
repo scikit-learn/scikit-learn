@@ -123,7 +123,7 @@ class KernelDensity(BaseEstimator):
         return self
 
     def eval(self, X):
-        """Evaluate the model on the data
+        """Evaluate the model on the data.
 
         Parameters
         ----------

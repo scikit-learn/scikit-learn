@@ -31,7 +31,7 @@ from ..externals import six
 from ..externals.six.moves import xrange, zip
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
 from ..tree._tree import DTYPE
-from ..utils import array2d, check_arrays, check_random_state
+from ..utils import array2d, check_arrays, check_random_state, make_y_1d
 from ..metrics import accuracy_score, r2_score
 
 
@@ -91,6 +91,8 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
 
         # Check data
         X, y = check_arrays(X, y, sparse_format="dense")
+
+        y = make_y_1d(y)
 
         if ((getattr(X, "dtype", None) != DTYPE) or
                 (X.ndim != 2) or (not X.flags.contiguous)):
