@@ -696,9 +696,13 @@ class OneClassSVM(BaseLibSVM):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
             Set of samples, where n_samples is the number of samples and
             n_features is the number of features.
+
+        sample_weight : array-like, shape (n_samples,)
+            Per-sample weights. Rescale C per sample. Higher weights
+            force the classifier to put more emphasis on these points.
 
         Returns
         -------
