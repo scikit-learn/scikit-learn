@@ -34,6 +34,8 @@ cdef class PruningPassRecord(Record):
 cdef class ForwardPassRecord(Record):
     cdef int stopping_condition
     
+    cdef list xlabels
+    
     cpdef set_stopping_condition(ForwardPassRecord self, int stopping_condition)
     
 cdef class Iteration:

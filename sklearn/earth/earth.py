@@ -102,18 +102,6 @@ class Earth(BaseEstimator, RegressorMixin, TransformerMixin):
         calculated based on min_search_points (above).
     
     
-    linvars : iterable of strings or ints, optional (empty by default)
-        Used to specify features that may only enter terms as linear basis functions (without 
-        knots).  Can include both column numbers an column names (see xlabels, below).
-    
-    
-    xlabels : iterable of strings, optional (empty by default)
-        The xlabels argument can be used to assign names to data columns.  This argument is not
-        generally needed, as names can be captured automatically from most standard data 
-        structures.  If included, must have length n, where n is the number of features.  Note 
-        that column order is used to compute term values and make predictions, not column names.  
-    
-    
     Attributes
     ----------
     `coef_` : array, shape = [pruned basis length]
@@ -143,11 +131,11 @@ class Earth(BaseEstimator, RegressorMixin, TransformerMixin):
     
     forward_pass_arg_names = set(['endspan','minspan','endspan_alpha','minspan_alpha',
                                   'max_terms','max_degree','thresh','penalty','check_every',
-                                  'min_searh_points','xlabels_','linvars'])
+                                  'min_searh_points'])
     pruning_pass_arg_names = set(['penalty'])
     
     def __init__(self, endspan=None, minspan=None, endspan_alpha=None, minspan_alpha=None, max_terms=None, max_degree=None, 
-                 thresh=None, penalty=None, check_every=None, min_search_points=None, xlabels=None, linvars=None):
+                 thresh=None, penalty=None, check_every=None, min_search_points=None):
         kwargs = {}
         call = locals()
         for name in self._get_param_names():
@@ -206,39 +194,37 @@ class Earth(BaseEstimator, RegressorMixin, TransformerMixin):
                 result[name] = kwargs[name]
         return result
     
+    def _scrape_labels(self, X):
+        '''
+        Try to get labels from input data (for example, if X is a pandas DataFrame).  Return None
+        if no labels can be extracted.
+        '''
+        try:
+            labels = list(X.columns)
+        except AttributeError:
+            try:
+                labels = list(X.design_info.column_names)
+            except AttributeError:
+                try:
+                    labels = list(X.dtype.names)
+                except TypeError:
+                    labels = None
+        
+        return labels
+    
     def _scrub_x(self, X, **kwargs):
         '''
         Sanitize input predictors and extract column names if appropriate.
         '''
-        no_labels = False
-        if 'xlabels' not in kwargs and 'xlabels_' not in self.__dict__:
-            #Try to get xlabels from input data (for example, if X is a pandas DataFrame)
-            try:
-                self.xlabels_ = list(X.columns)
-            except AttributeError:
-                try:
-                    self.xlabels_ = list(X.design_info.column_names)
-                except AttributeError:
-                    try:
-                        self.xlabels = list(X.dtype.names)
-                    except TypeError:
-                        no_labels = True
-        elif 'xlabels_' not in self.__dict__:
-            self.xlabels_ = kwargs['xlabels']
         
         #Convert to internally used data type
         X = safe_asarray(X,dtype=np.float64)
         if len(X.shape) == 1:
             X = X.reshape((X.shape[0], 1))
-        m,n = X.shape
         
-        #Make up labels if none were found
-        if no_labels:
-            self.xlabels = ['x'+str(i) for i in range(n)]
-            
         return X
     
-    def _scrub(self, X, y, weights, **kwargs):
+    def _scrub(self, X, y, sample_weight, **kwargs):
         '''
         Sanitize input data.
         '''
@@ -253,27 +239,27 @@ class Earth(BaseEstimator, RegressorMixin, TransformerMixin):
         y = safe_asarray(y,dtype=np.float64)
         y = y.reshape(y.shape[0])
         
-        #Deal with weights
-        if weights is None:
-            weights = np.ones(y.shape[0], dtype=y.dtype)
+        #Deal with sample_weight
+        if sample_weight is None:
+            sample_weight = np.ones(y.shape[0], dtype=y.dtype)
         else:
-            weights = safe_asarray(weights)
-            weights = weights.reshape(weights.shape[0])
+            sample_weight = safe_asarray(sample_weight)
+            sample_weight = sample_weight.reshape(sample_weight.shape[0])
         
         #Make sure dimensions match
         if y.shape[0] != X.shape[0]:
             raise ValueError('X and y do not have compatible dimensions.')
-        if y.shape != weights.shape:
-            raise ValueError('y and weights do not have compatible dimensions.')
+        if y.shape != sample_weight.shape:
+            raise ValueError('y and sample_weight do not have compatible dimensions.')
         
         #Make sure everything is finite
         assert_all_finite(X)
         assert_all_finite(y)
-        assert_all_finite(weights)
+        assert_all_finite(sample_weight)
         
-        return X, y, weights
+        return X, y, sample_weight
     
-    def fit(self, X, y = None, weights=None, xlabels=None, linvars=None):
+    def fit(self, X, y=None, sample_weight=None, xlabels=None, linvars=[]):
         '''
         Fit an Earth model to the input data X and y.
         
@@ -291,37 +277,43 @@ class Earth(BaseEstimator, RegressorMixin, TransformerMixin):
             call to patsy.dmatrices (in which case, X contains the response).
             
             
-        weights : array-like, optional (default=None), shape = [m] where m is the number of samples
+        sample_weight : array-like, optional (default=None), shape = [m] where m is the number of samples
             Sample weights for training.  Weights must be greater than or equal to zero.  Rows with 
             greater weights contribute more strongly to the fitted model.  Rows with zero weight do
             not contribute at all.  Weights are useful when dealing with heteroscedasticity.  In such
             cases, the weight should be proportional to the inverse of the (known) variance.
             
             
-        xlabels : iterable of strings, optional (default=None)
-            Convenient way to set the xlabels parameter while calling fit.  Ignored if None (default).  
-            See the Earth class for an explanation of the xlabels parameter.
-            
+        linvars : iterable of strings or ints, optional (empty by default)
+            Used to specify features that may only enter terms as linear basis functions (without 
+            knots).  Can include both column numbers and column names (see xlabels, below).  If left 
+            empty, some variables may still enter linearly during the forward pass if no knot would
+            provide a reduction in GCV compared to the linear function.  Note that this feature differs
+            from the R package earth.
+    
+    
+        xlabels : iterable of strings, optional (empty by default)
+            The xlabels argument can be used to assign names to data columns.  This argument is not
+            generally needed, as names can be captured automatically from most standard data 
+            structures.  If included, must have length n, where n is the number of features.  Note 
+            that column order is used to compute term values and make predictions, not column names.  
         
-        linvars : iterable of ints or strings or both, optional (default=None)
-            Convenient way to set the linvars parameter while calling fit.  Ignored if None (default).  
-            See the Earth class for an explanation of the linvars parameter.
             
         '''
+        
         #Format and label the data
-        if xlabels is not None:
-            self.set_params(xlabels_=xlabels)
-        if linvars is not None:
-            self.set_params(linvars=linvars)
-        X, y, weights = self._scrub(X,y,weights,**self.__dict__)
+        if xlabels is None:
+            xlabels = self._scrape_labels(X)
+        self.linvars_ = linvars
+        X, y, sample_weight = self._scrub(X,y,sample_weight)
         
         #Do the actual work
-        self.forward_pass(X, y, weights)
-        self.pruning_pass(X, y, weights)
-        self.linear_fit(X, y, weights)
+        self.forward_pass(X, y, sample_weight, xlabels, linvars)
+        self.pruning_pass(X, y, sample_weight)
+        self.linear_fit(X, y, sample_weight)
         return self
     
-    def forward_pass(self, X, y = None, weights = None, **kwargs):
+    def forward_pass(self, X, y=None, sample_weight=None, xlabels=None, linvars=[]):
         '''
         Perform the forward pass of the multivariate adaptive regression splines algorithm.  Users
         will normally want to call the fit method instead, which performs the forward pass, the pruning 
@@ -341,65 +333,40 @@ class Earth(BaseEstimator, RegressorMixin, TransformerMixin):
             call to patsy.dmatrices (in which case, X contains the response).
         
         
-        weights : array-like, optional (default=None), shape = [m] where m is the number of samples
+        sample_weight : array-like, optional (default=None), shape = [m] where m is the number of samples
             Sample weights for training.  Weights must be greater than or equal to zero.  Rows with 
             greater weights contribute more strongly to the fitted model.  Rows with zero weight do
             not contribute at all.  Weights are useful when dealing with heteroscedasticity.  In such
             cases, the weight should be proportional to the inverse of the (known) variance.
             
             
-        xlabels : iterable of strings, optional (default=None)
-            Convenient way to set the xlabels parameter while calling forward_pass.  Ignored if None 
-            (default).  See the Earth class for an explanation of the xlabels parameter.
+        linvars : iterable of strings or ints, optional (empty by default)
+            Used to specify features that may only enter terms as linear basis functions (without 
+            knots).  Can include both column numbers an column names (see xlabels, below).
+    
+    
+        xlabels : iterable of strings, optional (empty by default)
+            The xlabels argument can be used to assign names to data columns.  This argument is not
+            generally needed, as names can be captured automatically from most standard data 
+            structures.  If included, must have length n, where n is the number of features.  Note 
+            that column order is used to compute term values and make predictions, not column names.
             
-        
-        linvars : iterable of ints or strings or both, optional (default=None)
-            Convenient way to set the linvars parameter while calling forward_pass.  Ignored if None 
-            (default).  See the Earth class for an explanation of the linvars parameter.
-            
-        
-        Note
-        ----
-        The forward_pass method accepts all other named parameters listed in Earth.forward_pass_arg_names. 
-        Passing these parameters to the forward_pass method sets them only for this call, and does not
-        change the parameters of the Earth object itself.  To change the parameters of the object 
-        itself, use the set_params method.
         
         '''
         
-        #Pull new labels and linear variables if necessary
-        if 'xlabels' in kwargs and 'xlabels_' not in self.__dict__:
-            self.set_params(xlabels_=kwargs['xlabels'])
-            del kwargs['xlabels']
-        if 'linvars' in kwargs and 'linvars' not in self.__dict__:
-            self.set_params(linvars=kwargs['linvars'])
-            del kwargs['linvars']
-        
         #Label and format data
-        X, y, weights = self._scrub(X,y,weights,**self.__dict__)
-         
-        #Check for additional forward pass arguments, and fail if someone tried
-        #to use other arguments
-        args = self._pull_forward_args(**self.__dict__)
-        new_args = self._pull_forward_args(**kwargs)
-        if len(new_args) < len(kwargs):
-            msg = 'Invalid forward pass arguments: '
-            for k, v in kwargs.iteritems():
-                if k in new_args:
-                    continue
-                msg += k+': '+str(v) + ','
-            msg = msg[0:-1]+'.'
-            raise ValueError(msg)
-        args.update(new_args)
-
+        if xlabels is None:
+            xlabels = self._scrape_labels(X)
+        X, y, sample_weight = self._scrub(X,y,sample_weight)
+        
         #Do the actual work
         args = self._pull_forward_args(**self.__dict__)
-        forward_passer = ForwardPasser(X, y, weights, **args)
+        forward_passer = ForwardPasser(X, y, sample_weight, xlabels=xlabels, linvars=linvars, **args)
         forward_passer.run()
         self.forward_pass_record_ = forward_passer.trace()
         self.basis_ = forward_passer.get_basis()
         
-    def pruning_pass(self, X, y = None, weights = None, **kwargs):
+    def pruning_pass(self, X, y = None, sample_weight = None):
         '''
         Perform the pruning pass of the multivariate adaptive regression splines algorithm.  Users
         will normally want to call the fit method instead, which performs the forward pass, the pruning 
@@ -419,38 +386,22 @@ class Earth(BaseEstimator, RegressorMixin, TransformerMixin):
             call to patsy.dmatrices (in which case, X contains the response).
             
             
-        weights : array-like, optional (default=None), shape = [m] where m is the number of samples
+        sample_weight : array-like, optional (default=None), shape = [m] where m is the number of samples
             Sample weights for training.  Weights must be greater than or equal to zero.  Rows with 
             greater weights contribute more strongly to the fitted model.  Rows with zero weight do
             not contribute at all.  Weights are useful when dealing with heteroscedasticity.  In such
             cases, the weight should be proportional to the inverse of the (known) variance.
             
-                
-        Note
-        ----
-        The pruning_pass method accepts all other named parameters listed in Earth.pruning_pass_arg_names. 
-        Passing these parameters to the pruning_pass method sets them only for this call, and does not
-        change the parameters of the Earth object itself.  To change the parameters of the object 
-        itself, use the set_params method.
+            
         '''
         #Format data
-        X, y, weights = self._scrub(X,y,weights)
+        X, y, sample_weight = self._scrub(X,y,sample_weight)
         
-        #Check for additional pruning arguments and raise ValueError if other arguments are present
+        #Pull arguments from self
         args = self._pull_pruning_args(**self.__dict__)
-        new_args = self._pull_pruning_args(**kwargs)
-        if len(new_args) < len(kwargs):
-            msg = 'Invalid pruning pass arguments: '
-            for k, v in kwargs.iteritems():
-                if k in new_args:
-                    continue
-                msg += k+': '+str(v) + ','
-            msg = msg[0:-1]+'.'
-            raise ValueError(msg)
-        args.update(new_args)
         
         #Do the actual work
-        pruning_passer = PruningPasser(self.basis_, X, y, weights, **args)
+        pruning_passer = PruningPasser(self.basis_, X, y, sample_weight, **args)
         pruning_passer.run()
         self.pruning_pass_record_ = pruning_passer.trace()
     
@@ -507,7 +458,7 @@ class Earth(BaseEstimator, RegressorMixin, TransformerMixin):
         result += 'MSE: %.4f, GCV: %.4f, RSQ: %.4f, GRSQ: %.4f' % (record.mse(selection), record.gcv(selection), record.rsq(selection), record.grsq(selection))
         return result
     
-    def linear_fit(self, X, y = None, weights = None):
+    def linear_fit(self, X, y = None, sample_weight = None):
         '''
         Solve the linear least squares problem to determine the coefficients of the unpruned basis functions.
         
@@ -525,7 +476,7 @@ class Earth(BaseEstimator, RegressorMixin, TransformerMixin):
             call to patsy.dmatrices (in which case, X contains the response).
             
             
-        weights : array-like, optional (default=None), shape = [m] where m is the number of samples
+        sample_weight : array-like, optional (default=None), shape = [m] where m is the number of samples
             Sample weights for training.  Weights must be greater than or equal to zero.  Rows with 
             greater weights contribute more strongly to the fitted model.  Rows with zero weight do
             not contribute at all.  Weights are useful when dealing with heteroscedasticity.  In such
@@ -533,17 +484,17 @@ class Earth(BaseEstimator, RegressorMixin, TransformerMixin):
         '''
         
         #Format data
-        X, y, weights = self._scrub(X,y,weights)
+        X, y, sample_weight = self._scrub(X,y,sample_weight)
         
         #Transform into basis space
         B = self.transform(X)
         
         #Apply weights to B
-        apply_weights_2d(B,weights)
+        apply_weights_2d(B,sample_weight)
         
         #Apply weights to y
         weighted_y = y.copy()
-        apply_weights_1d(weighted_y,weights)
+        apply_weights_1d(weighted_y,sample_weight)
         
         #Solve the linear least squares problem
         self.coef_ = np.linalg.lstsq(B,weighted_y)[0]
@@ -564,7 +515,7 @@ class Earth(BaseEstimator, RegressorMixin, TransformerMixin):
         B = self.transform(X)
         return np.dot(B,self.coef_)
     
-    def score(self, X, y = None, weights = None):
+    def score(self, X, y = None, sample_weight = None):
         '''
         Calculate the generalized r^2 of the model on data X and y.
         
@@ -581,18 +532,18 @@ class Earth(BaseEstimator, RegressorMixin, TransformerMixin):
             column, a Patsy DesignMatrix, or can be left as None (default) if X was the output of a 
             call to patsy.dmatrices (in which case, X contains the response).
             
-        weights : array-like, optional (default=None), shape = [m] where m is the number of samples
+        sample_weight : array-like, optional (default=None), shape = [m] where m is the number of samples
             Sample weights for training.  Weights must be greater than or equal to zero.  Rows with 
             greater weights contribute more strongly to the fitted model.  Rows with zero weight do
             not contribute at all.  Weights are useful when dealing with heteroscedasticity.  In such
             cases, the weight should be proportional to the inverse of the (known) variance.
         '''
-        X, y, weights = self._scrub(X, y, weights)
+        X, y, sample_weight = self._scrub(X, y, sample_weight)
         y_hat = self.predict(X)
-        m, n = X.shape
+        m, _ = X.shape
         residual = y-y_hat
-        mse = np.sum(weights * (residual**2)) / m
-        mse0 = np.sum(weights*((y -np.average(y,weights=weights))**2)) / m
+        mse = np.sum(sample_weight * (residual**2)) / m
+        mse0 = np.sum(sample_weight*((y -np.average(y,weights=sample_weight))**2)) / m
         return 1 - (mse/mse0)
     
     def transform(self, X):

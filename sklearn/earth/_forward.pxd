@@ -33,7 +33,7 @@ cdef class ForwardPasser:
     #Input data
     cdef cnp.ndarray X
     cdef cnp.ndarray y
-    cdef cnp.ndarray weights
+    cdef cnp.ndarray sample_weight
     cdef INDEX_t m
     cdef INDEX_t n
     cdef FLOAT_t sst

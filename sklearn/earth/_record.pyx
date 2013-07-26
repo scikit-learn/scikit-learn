@@ -100,22 +100,24 @@ cdef class PruningPassRecord(Record):
         return result
     
 cdef class ForwardPassRecord(Record):
-    def __init__(ForwardPassRecord self, INDEX_t num_samples, INDEX_t num_variables, FLOAT_t penalty, FLOAT_t sst):
+    def __init__(ForwardPassRecord self, INDEX_t num_samples, INDEX_t num_variables, FLOAT_t penalty, FLOAT_t sst, list xlabels):
         self.num_samples = num_samples
         self.num_variables = num_variables
         self.penalty = penalty
         self.sst = sst
         self.iterations = [FirstForwardPassIteration(self.sst)]
+        self.xlabels = xlabels
         
     def __reduce__(ForwardPassRecord self):
-        return (ForwardPassRecord, (1,1,1.0,1.0), self._getstate())
+        return (ForwardPassRecord, (self.num_samples,self.num_variables,self.penalty,self.sst,self.xlabels), self._getstate())
         
     def _getstate(ForwardPassRecord self):
         return {'num_samples': self.num_samples,
                 'num_variables': self.num_variables,
                 'penalty': self.penalty,
                 'sst': self.sst,
-                'iterations': self.iterations}
+                'iterations': self.iterations,
+                'xlabels': self.xlabels}
     
     def __setstate__(ForwardPassRecord self, dict state):
         self.num_samples = state['num_samples']
@@ -123,6 +125,7 @@ cdef class ForwardPassRecord(Record):
         self.penalty = state['penalty']
         self.sst = state['sst']
         self.iterations = state['iterations']
+        self.xlabels = state['xlabels']
         
     cpdef set_stopping_condition(ForwardPassRecord self, int stopping_condition):
         self.stopping_condition = stopping_condition

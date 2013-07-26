@@ -22,12 +22,12 @@ stopping_conditions = {
 
 cdef class ForwardPasser:
     
-    def __init__(ForwardPasser self, cnp.ndarray[FLOAT_t, ndim=2] X, cnp.ndarray[FLOAT_t, ndim=1] y, cnp.ndarray[FLOAT_t, ndim=1] weights, **kwargs):
+    def __init__(ForwardPasser self, cnp.ndarray[FLOAT_t, ndim=2] X, cnp.ndarray[FLOAT_t, ndim=1] y, cnp.ndarray[FLOAT_t, ndim=1] sample_weight, **kwargs):
         cdef INDEX_t i
         self.X = X
         self.y = y.copy()
-        self.weights = weights
-        apply_weights_1d(self.y, self.weights)
+        self.sample_weight = sample_weight
+        apply_weights_1d(self.y, self.sample_weight)
         self.m = self.X.shape[0]
         self.n = self.X.shape[1]
         self.endspan = kwargs['endspan'] if 'endspan' in kwargs else -1
@@ -40,12 +40,14 @@ cdef class ForwardPasser:
         self.penalty = kwargs['penalty'] if 'penalty' in kwargs else 3.0
         self.check_every = kwargs['check_every'] if 'check_every' in kwargs else -1
         self.min_search_points = kwargs['min_search_points'] if 'min_search_points' in kwargs else 100
-        self.xlabels = kwargs['xlabels_'] if 'xlabels_' in kwargs else ['x'+str(i) for i in range(self.n)]
+        self.xlabels = kwargs['xlabels'] if 'xlabels' in kwargs else None
+        if self.xlabels is None:
+            self.xlabels = ['x'+str(i) for i in range(self.n)]
         if self.check_every < 0:
             self.check_every = <int> (self.m / self.min_search_points) if self.m > self.min_search_points else 1
-        self.sst = (np.dot(self.y,self.y) - (np.dot(np.sqrt(self.weights),self.y) / np.sqrt(np.sum(self.weights)))**2) / self.m
+        self.sst = (np.dot(self.y,self.y) - (np.dot(np.sqrt(self.sample_weight),self.y) / np.sqrt(np.sum(self.sample_weight)))**2) / self.m
         self.y_squared = np.dot(self.y,self.y)
-        self.record = ForwardPassRecord(self.m,self.n,self.penalty,self.sst)
+        self.record = ForwardPassRecord(self.m,self.n,self.penalty,self.sst,self.xlabels)
         self.basis = Basis()
         self.basis.append(ConstantBasisFunction())
         
@@ -54,7 +56,7 @@ cdef class ForwardPasser:
         self.u = np.empty(shape=self.max_terms, dtype=float)
         self.B_orth_times_parent_cum = np.empty(shape=self.max_terms,dtype=np.float)
         self.B = np.ones(shape=(self.m,self.max_terms), order='C',dtype=np.float)
-        self.basis.weighted_transform(self.X,self.B,self.weights)
+        self.basis.weighted_transform(self.X,self.B,self.sample_weight)
         self.B_orth = self.B.copy() #An orthogonal matrix with the same column space as B
         self.u = np.empty(shape=self.max_terms, dtype=np.float)
         self.c = np.empty(shape=self.max_terms, dtype=np.float)
@@ -323,7 +325,7 @@ cdef class ForwardPasser:
                     
         #Make sure at least one candidate was checked
         if first:
-            self.record[-1].set_no_candidates(True)
+            self.record[len(self.record) - 1].set_no_candidates(True)
             return
         
         #Add the new basis functions
@@ -357,7 +359,7 @@ cdef class ForwardPasser:
                 bf1.make_unsplittable()
         else:#dependent and knot_idx_choice == -1
             #In this case there were no acceptable choices remaining, so end the forward pass
-            self.record[-1].set_no_candidates(True)
+            self.record[len(self.record) - 1].set_no_candidates(True)
             return
             
         #Update the build record
