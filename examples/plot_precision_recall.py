@@ -3,25 +3,24 @@
 Precision-Recall
 ================
 
-Example of Precision-Recall metric to evaluate the quality
-of the output of a classifier.
+Example of Precision-Recall metric to evaluate classifier output quality.
 
+Precision is a measure of result relevancy, while recall
+is a measure of how many truly relevant documents are returned.
 A high area under the curve represents both high recall and precision,
 where high precision relates to a low false positive rate, and high recall
-relates to a low number of false negatives. High scores for both will
+relates to a low false negative rate. High scores for both will
 represent a stronger test.
 
 Precision (:math:`P`) is a metric which is defined as the number of
 true positives (:math:`T_p`) over the number of true positives plus
-number of false positives (:math:`F_p`). Precision is a measure of the
-relevancy of retrieved results.
+the number of false positives (:math:`F_p`).
 
 :math:`P = \\frac{T_p}{T_p+F_p}`
 
 Recall (:math:`R`) is a metric which is defined as the number of
 true positives (:math:`T_p`) over the number of true positives plus the number
-of false negatives (:math:`F_n`). Recall is a measure of how many
-truly relevant documents were returned.
+of false negatives (:math:`F_n`).
 
 :math:`R = \\frac{T_p}{T_p + F_n}`
 
@@ -32,14 +31,15 @@ defined as the 2 times precision times recall over precision plus recall.
 
 It is important to note that the precision may not decrease with recall.
 The definition of precision (:math:`\\frac{T_p}{T_p + F_p}`) shows that
-changing the threshold of a classifier may increase the denominator, by
+lowering the threshold of a classifier may increase the denominator, by
 increasing the number of results returned.
-If all of the newly returned results are true positives then precision
+If all of the new results are true positives, then precision
 will increase. Otherwise, precision will decrease.
 
 Recall is defined as :math:`\\frac{T_p}{T_p+F_n}`, where :math:`T_p+F_n`
-*does not* depend on the classifier threshold.
-It is entirely possible that changing the threshold may leave
+does not depend on the classifier threshold. This means that lowering the
+classifier threshold may increase recall, by increasing the number of true
+positives shown. It is also possible that lowering the threshold may leave
 recall unchanged, while the precision fluctuates.
 
 .. note::
