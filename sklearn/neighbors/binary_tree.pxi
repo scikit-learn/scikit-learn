@@ -1275,7 +1275,8 @@ cdef class BinaryTree:
                              "to the number of training points")
 
         # flatten X, and save original shape information
-        cdef DTYPE_t[:, ::1] Xarr = X.reshape((-1, self.data.shape[1]))
+        cdef DTYPE_t[:, ::1] Xarr =\
+                  get_memview_DTYPE_2D(X.reshape((-1, self.data.shape[1])))
         cdef DTYPE_t reduced_dist_LB
         cdef ITYPE_t i
         cdef DTYPE_t* pt
@@ -1406,7 +1407,7 @@ cdef class BinaryTree:
         cdef ITYPE_t i, count_i = 0
         cdef ITYPE_t n_features = self.data.shape[1]
         cdef DTYPE_t[::1] dist_arr_i
-        cdef ITYPE_t[::1] idx_arr_i, count_arr
+        cdef ITYPE_t[::1] idx_arr_i, counts
         cdef DTYPE_t* pt
 
         # validate X and prepare for query
@@ -1416,7 +1417,8 @@ cdef class BinaryTree:
             raise ValueError("query data dimension must "
                              "match training data dimension")
 
-        cdef DTYPE_t[:, ::1] Xarr = X.reshape((-1, self.data.shape[1]))
+        cdef DTYPE_t[:, ::1] Xarr =\
+                get_memview_DTYPE_2D(X.reshape((-1, self.data.shape[1])))
 
         # prepare r for query
         r = np.asarray(r, dtype=DTYPE, order='C')
@@ -1427,7 +1429,8 @@ cdef class BinaryTree:
             if r.shape != X.shape[:X.ndim - 1]:
                 raise ValueError("r must be broadcastable to X.shape")
 
-        cdef DTYPE_t[::1] rarr = r.reshape(-1)
+        cdef DTYPE_t[::1] rarr =\
+                 get_memview_DTYPE_1D(r.reshape(-1))
 
         # prepare variables for iteration
         if not count_only:
@@ -1436,20 +1439,21 @@ cdef class BinaryTree:
                 distances = np.zeros(Xarr.shape[0], dtype='object')
 
         np_idx_arr = np.zeros(self.data.shape[0], dtype=ITYPE)
-        idx_arr_i = np_idx_arr
+        idx_arr_i = get_memview_ITYPE_1D(np_idx_arr)
 
         np_dist_arr = np.zeros(self.data.shape[0], dtype=DTYPE)
-        dist_arr_i = np_dist_arr
+        dist_arr_i = get_memview_DTYPE_1D(np_dist_arr)
 
-        count_arr = np.zeros(Xarr.shape[0], dtype=ITYPE)
+        counts_arr = np.zeros(Xarr.shape[0], dtype=ITYPE)
+        counts = get_memview_ITYPE_1D(counts_arr)
 
         pt = &Xarr[0, 0]
         for i in range(Xarr.shape[0]):
-            count_arr[i] = self._query_radius_single(0, pt, rarr[i],
-                                                     &idx_arr_i[0],
-                                                     &dist_arr_i[0],
-                                                     0, count_only,
-                                                     return_distance)
+            counts[i] = self._query_radius_single(0, pt, rarr[i],
+                                                  &idx_arr_i[0],
+                                                  &dist_arr_i[0],
+                                                  0, count_only,
+                                                  return_distance)
             pt += n_features
 
             if count_only:
@@ -1457,15 +1461,15 @@ cdef class BinaryTree:
             else:
                 if sort_results:
                     _simultaneous_sort(&dist_arr_i[0], &idx_arr_i[0],
-                                       count_arr[i])
+                                       counts[i])
 
-                indices[i] = np_idx_arr[:count_arr[i]].copy()
+                indices[i] = np_idx_arr[:counts[i]].copy()
                 if return_distance:
-                    distances[i] = np_dist_arr[:count_arr[i]].copy()
+                    distances[i] = np_dist_arr[:counts[i]].copy()
 
         # deflatten results
         if count_only:
-            return np.asarray(count_arr).reshape(X.shape[:X.ndim - 1])
+            return counts_arr.reshape(X.shape[:X.ndim - 1])
         elif return_distance:
             return (indices.reshape(X.shape[:X.ndim - 1]),
                     distances.reshape(X.shape[:X.ndim - 1]))
@@ -1561,9 +1565,11 @@ cdef class BinaryTree:
         if X.shape[X.ndim - 1] != n_features:
             raise ValueError("query data dimension must "
                              "match training data dimension")
-        cdef DTYPE_t[:, ::1] Xarr = X.reshape((-1, n_features))
+        cdef DTYPE_t[:, ::1] Xarr =\
+                        get_memview_DTYPE_2D(X.reshape((-1, n_features)))
 
-        cdef DTYPE_t[::1] log_density = np.zeros(Xarr.shape[0], dtype=DTYPE)
+        log_density_arr = np.zeros(Xarr.shape[0], dtype=DTYPE)
+        cdef DTYPE_t[::1] log_density = get_memview_DTYPE_1D(log_density_arr)
 
         cdef DTYPE_t* pt = &Xarr[0, 0]
 
@@ -1576,8 +1582,10 @@ cdef class BinaryTree:
         #       this is difficult because of the need to cache values
         #       computed between node pairs.
         if breadth_first:
-            node_log_min_bounds = -np.inf + np.zeros(self.n_nodes)
-            node_bound_widths = np.zeros(self.n_nodes)
+            node_log_min_bounds_arr = -np.inf + np.zeros(self.n_nodes)
+            node_log_min_bounds = get_memview_DTYPE_1D(node_log_min_bounds_arr)
+            node_bound_widths_arr = np.zeros(self.n_nodes)
+            node_bound_widths = get_memview_DTYPE_1D(node_bound_widths_arr)
             for i in range(Xarr.shape[0]):
                 log_density[i] = self._kde_single_breadthfirst(
                                             pt, kernel_c, h_c,
@@ -1611,12 +1619,12 @@ cdef class BinaryTree:
         for i in range(log_density.shape[0]):
             log_density[i] += log_knorm
 
-        log_density = np.asarray(log_density).reshape(X.shape[:X.ndim - 1])
+        log_density_arr = log_density_arr.reshape(X.shape[:X.ndim - 1])
 
         if return_log:
-            return log_density
+            return log_density_arr
         else:
-            return np.exp(log_density)
+            return np.exp(log_density_arr)
 
     def two_point_correlation(self, X, r, dualtree=False):
         """Compute the two-point correlation function
@@ -1660,7 +1668,8 @@ cdef class BinaryTree:
             raise ValueError("query data dimension must "
                              "match training data dimension")
 
-        cdef DTYPE_t[:, ::1] Xarr = X.reshape((-1, self.data.shape[1]))
+        cdef DTYPE_t[:, ::1] Xarr =\
+                      get_memview_DTYPE_2D(X.reshape((-1, self.data.shape[1])))
 
         # prepare r for query
         r = np.asarray(r, dtype=DTYPE, order='C')
@@ -1668,11 +1677,12 @@ cdef class BinaryTree:
         if r.ndim != 1:
             raise ValueError("r must be a 1-dimensional array")
         i_rsort = np.argsort(r)
-        cdef DTYPE_t[::1] rarr = r[i_rsort]
+        rarr_np = r[i_rsort]
+        cdef DTYPE_t[::1] rarr = get_memview_DTYPE_1D(rarr_np)
 
         # create array to hold counts
         count = np.zeros(r.shape[0], dtype=ITYPE)
-        cdef ITYPE_t[::1] carr = count
+        cdef ITYPE_t[::1] carr = get_memview_ITYPE_1D(count)
 
         cdef DTYPE_t* pt = &Xarr[0, 0]
 
