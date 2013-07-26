@@ -146,6 +146,7 @@ Changelog
      how to use OOB estimates to select the number of trees was added.
      By `Peter Prettenhofer`_.
 
+
    - Most metrics now support string labels for multiclass classification
      by `Arnaud Joly`_ and `Lars Buitinck`_.
 
@@ -155,6 +156,10 @@ Changelog
      generation methods (:func:`sklearn.datasets.make_biclusters` and
      :func:`sklearn.datasets.make_checkerboard`), and scoring metrics
      (:func:`sklearn.metrics.consensus_score`). By `Kemal Eren`_.
+
+   - New OrthogonalMatchingPursuitCV class by `Alexandre Gramfort`_
+     and `Vlad Niculae`_.
+
 
 
 API changes summary
@@ -210,6 +215,10 @@ API changes summary
    - Attribute ``oob_score_`` in :class:`sklearn.ensemble.GradientBoostingRegressor`
      and :class:`sklearn.ensemble.GradientBoostingClassifier`
      is deprecated and has been replaced by ``oob_improvement_`` .
+
+   - Attributes in OrthogonalMatchingPursuit have been deprecated
+     (copy_X, Gram, ...) and precompute_gram renamed precompute
+     for consistency. See #2224
 
 .. _changes_0_13_1:
 

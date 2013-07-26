@@ -627,6 +627,7 @@ From text
    linear_model.MultiTaskLasso
    linear_model.MultiTaskElasticNet
    linear_model.OrthogonalMatchingPursuit
+   linear_model.OrthogonalMatchingPursuitCV
    linear_model.PassiveAggressiveClassifier
    linear_model.PassiveAggressiveRegressor
    linear_model.Perceptron
