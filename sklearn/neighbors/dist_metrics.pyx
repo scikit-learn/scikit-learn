@@ -12,6 +12,22 @@ cimport numpy as np
 np.import_array()  # required in order to use C-API
 
 
+######################################################################
+# Numpy 1.3-1.4 compatibility utilities
+cdef DTYPE_t[:, ::1] get_memview_DTYPE_2D(
+                               np.ndarray[DTYPE_t, ndim=2, mode='c'] X):
+    return <DTYPE_t[:X.shape[0],:X.shape[1]:1]> (<DTYPE_t*> X.data)
+
+
+cdef DTYPE_t* get_vec_ptr(np.ndarray[DTYPE_t, ndim=1, mode='c'] vec):
+    return &vec[0]
+
+
+cdef DTYPE_t* get_mat_ptr(np.ndarray[DTYPE_t, ndim=2, mode='c'] mat):
+    return &mat[0, 0]
+######################################################################
+
+
 # First, define a function to get an ndarray from a memory bufffer
 cdef extern from "arrayobject.h":
     object PyArray_SimpleNewFromData(int nd, np.npy_intp* dims,
@@ -22,7 +38,7 @@ cdef inline np.ndarray _buffer_to_ndarray(DTYPE_t* x, np.npy_intp n):
     # Wrap a memory buffer with an ndarray. Warning: this is not robust.
     # In particular, if x is deallocated before the returned array goes
     # out of scope, this could cause memory errors.  Since there is not
-    # a possibility of this here, this should be safe.
+    # a possibility of this for our use-case, this should be safe.
 
     # Note: this Segfaults unless np.import_array() is called above
     return PyArray_SimpleNewFromData(1, &n, DTYPECODE, <void*>x)
@@ -192,10 +208,10 @@ cdef class DistanceMetric:
     """
     def __cinit__(self):
         self.p = 2
-        self.vec = np.zeros(1, dtype=DTYPE)
-        self.mat = np.zeros((1, 1), dtype=DTYPE)
-        self.vec_ptr = &self.vec[0]
-        self.mat_ptr = &self.mat[0, 0]
+        self.vec = np.zeros(1, dtype=DTYPE, order='c')
+        self.mat = np.zeros((1, 1), dtype=DTYPE, order='c')
+        self.vec_ptr = get_vec_ptr(self.vec)
+        self.mat_ptr = get_mat_ptr(self.mat)
         self.size = 1
 
     def __reduce__(self):
@@ -208,9 +224,7 @@ cdef class DistanceMetric:
         """
         get state for pickling
         """
-        return (float(self.p),
-                np.asarray(self.vec),
-                np.asarray(self.mat))
+        return (float(self.p), self.vec, self.mat)
 
     def __setstate__(self, state):
         """
@@ -219,8 +233,8 @@ cdef class DistanceMetric:
         self.p = state[0]
         self.vec = state[1]
         self.mat = state[2]
-        self.vec_ptr = &self.vec[0]
-        self.mat_ptr = &self.mat[0, 0]
+        self.vec_ptr = get_vec_ptr(self.vec)
+        self.mat_ptr = get_mat_ptr(self.mat)
         self.size = 1
 
     @classmethod
@@ -356,17 +370,24 @@ cdef class DistanceMetric:
             The shape (Nx, Ny) array of pairwise distances between points in
             X and Y.
         """
-        X = np.asarray(X, dtype=DTYPE)
+        cdef np.ndarray[DTYPE_t, ndim=2, mode='c'] Xarr
+        cdef np.ndarray[DTYPE_t, ndim=2, mode='c'] Yarr
+        cdef np.ndarray[DTYPE_t, ndim=2, mode='c'] Darr
+
+        Xarr = np.asarray(X, dtype=DTYPE, order='C')
         if Y is None:
-            D = np.zeros((X.shape[0], X.shape[0]),
+            Darr = np.zeros((Xarr.shape[0], Xarr.shape[0]),
                          dtype=DTYPE, order='C')
-            self.pdist(X, D)
+            self.pdist(get_memview_DTYPE_2D(Xarr),
+                       get_memview_DTYPE_2D(Darr))
         else:
-            Y = np.asarray(Y, dtype=DTYPE)
-            D = np.zeros((X.shape[0], Y.shape[0]),
+            Yarr = np.asarray(Y, dtype=DTYPE, order='C')
+            Darr = np.zeros((Xarr.shape[0], Yarr.shape[0]),
                          dtype=DTYPE, order='C')
-            self.cdist(X, Y, D)
-        return np.asarray(D)
+            self.cdist(get_memview_DTYPE_2D(Xarr),
+                       get_memview_DTYPE_2D(Yarr),
+                       get_memview_DTYPE_2D(Darr))
+        return Darr
 
 
 #------------------------------------------------------------
@@ -413,8 +434,8 @@ cdef class SEuclideanDistance(DistanceMetric):
     """
     def __init__(self, V):
         self.vec = np.asarray(V, dtype=DTYPE)
+        self.vec_ptr = get_vec_ptr(self.vec)
         self.size = self.vec.shape[0]
-        self.vec_ptr = &self.vec[0]
         self.p = 2
 
     cdef inline DTYPE_t rdist(self, DTYPE_t* x1, DTYPE_t* x2,
@@ -557,8 +578,8 @@ cdef class WMinkowskiDistance(DistanceMetric):
                              "For p=inf, use ChebyshevDistance.")
         self.p = p
         self.vec = np.asarray(w, dtype=DTYPE)
+        self.vec_ptr = get_vec_ptr(self.vec)
         self.size = self.vec.shape[0]
-        self.vec_ptr = &self.vec[0]
 
     cdef inline DTYPE_t rdist(self, DTYPE_t* x1, DTYPE_t* x2,
                               ITYPE_t size) except -1:
@@ -610,13 +631,15 @@ cdef class MahalanobisDistance(DistanceMetric):
             VI = np.linalg.inv(V)
         if VI.ndim != 2 or VI.shape[0] != VI.shape[1]:
             raise ValueError("V/VI must be square")
+
         self.mat = np.asarray(VI, dtype=float, order='C')
-        self.mat_ptr = &self.mat[0, 0]
+        self.mat_ptr = get_mat_ptr(self.mat)
+
         self.size = self.mat.shape[0]
 
         # we need vec as a work buffer
         self.vec = np.zeros(self.size, dtype=DTYPE)
-        self.vec_ptr = &self.vec[0]
+        self.vec_ptr = get_vec_ptr(self.vec)
 
     cdef inline DTYPE_t rdist(self, DTYPE_t* x1, DTYPE_t* x2,
                               ITYPE_t size) except -1:
@@ -1048,46 +1071,3 @@ cdef class PyFuncDistance(DistanceMetric):
         cdef np.ndarray x1arr = _buffer_to_ndarray(x1, size)
         cdef np.ndarray x2arr = _buffer_to_ndarray(x2, size)
         return self.func(x1arr, x2arr, **self.kwargs)
-
-
-######################################################################
-# Functions for benchmarking and testing
-cdef int euclidean_cdist(DTYPE_t[:, ::1] X, DTYPE_t[:, ::1] Y,
-                         DTYPE_t[:, ::1] D) except -1:
-    if X.shape[1] != Y.shape[1]:
-        raise ValueError('X and Y must have the same second dimension')
-
-    for i1 in range(X.shape[0]):
-        for i2 in range(Y.shape[0]):
-            D[i1, i2] = euclidean_dist(&X[i1, 0], &Y[i2, 0], X.shape[1])
-    return 0
-
-
-def euclidean_pairwise_inline(DTYPE_t[:, ::1] X, DTYPE_t[:, ::1] Y):
-    D = np.zeros((X.shape[0], Y.shape[0]), dtype=DTYPE, order='c')
-    D = euclidean_cdist(X, Y, D)
-    return np.asarray(D)
-
-
-def euclidean_pairwise_class(DTYPE_t[:, ::1] X, DTYPE_t[:, ::1] Y):
-    cdef EuclideanDistance eucl_dist = EuclideanDistance()
-
-    assert X.shape[1] == Y.shape[1]
-    cdef DTYPE_t[:, ::1] D = np.zeros((X.shape[0], Y.shape[0]), dtype=DTYPE)
-
-    for i1 in range(X.shape[0]):
-        for i2 in range(Y.shape[0]):
-            D[i1, i2] = eucl_dist.dist(&X[i1, 0], &Y[i2, 0], X.shape[1])
-    return np.asarray(D)
-
-
-def euclidean_pairwise_polymorphic(DTYPE_t[:, ::1] X, DTYPE_t[:, ::1] Y):
-    cdef DistanceMetric eucl_dist = EuclideanDistance()
-
-    assert X.shape[1] == Y.shape[1]
-    cdef DTYPE_t[:, ::1] D = np.zeros((X.shape[0], Y.shape[0]), dtype=DTYPE)
-
-    for i1 in range(X.shape[0]):
-        for i2 in range(Y.shape[0]):
-            D[i1, i2] = eucl_dist.dist(&X[i1, 0], &Y[i2, 0], X.shape[1])
-    return np.asarray(D)
