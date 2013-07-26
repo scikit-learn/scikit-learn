@@ -116,7 +116,7 @@ class ChengChurch(six.with_metaclass(ABCMeta, BaseEstimator,
                X[rows, :].mean(axis=0) + X.mean())
         return np.power(arr, 2)
 
-    def _node_deletion(self, rows, cols, X):
+    def _single_node_deletion(self, rows, cols, X):
         sr = self._sr(rows, cols, X)
         while sr.mean() > self.max_msr:
             n_rows, n_cols = len(rows), len(cols)
@@ -151,7 +151,6 @@ class ChengChurch(six.with_metaclass(ABCMeta, BaseEstimator,
                 cols = np.setdiff1d(cols, cols[to_remove])
 
             if n_rows == len(rows) and n_cols == len(cols):
-                rows, cols = self._node_deletion(rows, cols, X)
                 break
             sr = self._sr(rows, cols, X)
         return rows, cols
@@ -199,6 +198,7 @@ class ChengChurch(six.with_metaclass(ABCMeta, BaseEstimator,
                 rows = np.arange(n_rows, dtype=np.int)[None].T
                 cols = np.arange(n_cols, dtype=np.int)
                 rows, cols = self._multiple_node_deletion(rows, cols, X)
+                rows, cols = self._single_node_deletion(rows, cols, X)
                 rows, cols = self._node_addition(rows, cols, X)
                 self._mask(X, rows, cols, generator, minval, maxval)
                 if len(rows) == 0 or len(cols) == 0:
