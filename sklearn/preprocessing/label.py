@@ -4,23 +4,14 @@
 #          Andreas Mueller <amueller@ais.uni-bonn.de>
 # License: BSD 3 clause
 
-import warnings
 import numbers
-import math
 
 import numpy as np
-import numpy.ma as ma
 from scipy import sparse
-from scipy import stats
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_arrays
-from ..utils import array2d
-from ..utils import as_float_array
-from ..utils import atleast2d_or_csr
 from ..utils import atleast2d_or_csc
-from ..utils import safe_asarray
-from ..utils import warn_if_not_float
 from ..utils.fixes import unique
 from ..utils import deprecated
 
@@ -42,6 +33,7 @@ __all__ = [
     'LabelEncoder',
     'OneHotEncoder',
 ]
+
 
 def _transform_selected(X, transform, selected="all", copy=True):
     """Apply a transform function to portion of selected features

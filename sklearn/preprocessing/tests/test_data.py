@@ -14,32 +14,24 @@ from sklearn.utils.testing import assert_false
 from sklearn.utils.sparsefuncs import mean_variance_axis0
 from sklearn.preprocessing import Binarizer
 from sklearn.preprocessing import KernelCenterer
-from sklearn.preprocessing import LabelBinarizer
 
-from sklearn.preprocessing import OneHotEncoder
-from sklearn.preprocessing import LabelEncoder
-from sklearn.preprocessing import Normalizer
-from sklearn.preprocessing import normalize
-from sklearn.preprocessing import StandardScaler
-from sklearn.preprocessing import scale
-from sklearn.preprocessing import MinMaxScaler
-from sklearn.preprocessing import add_dummy_feature
-
-from sklearn.preprocessing import Imputer
-from sklearn.pipeline import Pipeline
-from sklearn import grid_search
-from sklearn import tree
-from sklearn.random_projection import sparse_random_matrix
+from sklearn.preprocessing.data import Normalizer
+from sklearn.preprocessing.data import normalize
+from sklearn.preprocessing.data import StandardScaler
+from sklearn.preprocessing.data import scale
+from sklearn.preprocessing.data import MinMaxScaler
+from sklearn.preprocessing.data import add_dummy_feature
 
 from sklearn import datasets
-from sklearn.linear_model.stochastic_gradient import SGDClassifier
 
 iris = datasets.load_iris()
+
 
 def toarray(a):
     if hasattr(a, "toarray"):
         a = a.toarray()
     return a
+
 
 def test_scaler_1d():
     """Test scaling of dataset along single axis"""
@@ -471,8 +463,6 @@ def test_binarizer():
 
     # Cannot use threshold < 0 for sparse
     assert_raises(ValueError, binarizer.transform, sparse.csc_matrix(X))
-
-
 
 
 def test_center_kernel():

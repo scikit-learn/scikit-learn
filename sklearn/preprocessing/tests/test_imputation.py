@@ -1,37 +1,16 @@
-import warnings
 import numpy as np
-import numpy.linalg as la
 from scipy import sparse
 
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
 
-from sklearn.utils.sparsefuncs import mean_variance_axis0
-from sklearn.preprocessing import Binarizer
-from sklearn.preprocessing import KernelCenterer
-from sklearn.preprocessing import LabelBinarizer
-from sklearn.preprocessing import OneHotEncoder
-from sklearn.preprocessing import LabelEncoder
-from sklearn.preprocessing import Normalizer
-from sklearn.preprocessing import normalize
-from sklearn.preprocessing import StandardScaler
-from sklearn.preprocessing import scale
-from sklearn.preprocessing import MinMaxScaler
-from sklearn.preprocessing import add_dummy_feature
-
-from sklearn.preprocessing import Imputer
+from sklearn.preprocessing.imputation import Imputer
 from sklearn.pipeline import Pipeline
 from sklearn import grid_search
 from sklearn import tree
 from sklearn.random_projection import sparse_random_matrix
 
-from sklearn import datasets
-from sklearn.linear_model.stochastic_gradient import SGDClassifier
 
 def _check_statistics(X, X_true,
                       strategy, statistics, missing_values):
