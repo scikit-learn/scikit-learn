@@ -231,16 +231,22 @@ def check_arrays(*arrays, **options):
     return checked_arrays
 
 
-def make_y_1d(y):
-    y = np.asarray(y)
-    if y.ndim == 1:
-        return y
+def column_or_1d(y):
+    """ Ravel column or 1d numpy array, else raises an error
 
-    y_ = y.ravel()
-    if len(y_) != len(y):
-        raise ValueError("Expected y of shape (%d,), got %s."
-                         % (len(y), y.shape))
-    return y_
+    Parameters
+    ----------
+    y : array-like
+
+    Returns
+    -------
+    y : array
+
+    """
+    shape = np.shape(y)
+    if len(shape) == 1 or (len(shape) == 2 and shape[1] == 1):
+        return np.ravel(y)
+    raise ValueError("bad input shape {0}".format(shape))
 
 
 def warn_if_not_float(X, estimator='This algorithm'):
