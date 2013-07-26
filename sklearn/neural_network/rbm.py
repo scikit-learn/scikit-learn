@@ -170,7 +170,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         p = logistic_sigmoid(np.dot(h, self.components_)
                              + self.intercept_visible_)
         p[rng.uniform(size=p.shape) < p] = 1.
-        return np.floor(p, out=p)
+        return np.floor(p, p)
 
     def _free_energy(self, v):
         """Computes the free energy F(v) = - log sum_h exp(-E(v,h)).
@@ -241,7 +241,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
                                          v_neg.sum(axis=0))
 
         h_neg[rng.uniform(size=h_neg.shape) < h_neg] = 1.0  # sample binomial
-        self.h_samples_ = np.floor(h_neg, out=h_neg)
+        self.h_samples_ = np.floor(h_neg, h_neg)
 
         if self.verbose:
             return self.pseudo_likelihood(v_pos)

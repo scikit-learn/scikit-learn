@@ -1,5 +1,5 @@
 import numpy as np
-from numpy.testing import assert_allclose, assert_raises, assert_equal
+from numpy.testing import assert_array_almost_equal, assert_raises, assert_equal
 from sklearn.neighbors import KernelDensity, KDTree, NearestNeighbors
 from sklearn.neighbors.ball_tree import kernel_norm
 
@@ -38,11 +38,11 @@ def test_KernelDensity(n_samples=100, n_features=3):
                 kde = KernelDensity(kernel=kernel, bandwidth=bandwidth,
                                     atol=atol, rtol=rtol)
                 log_dens = kde.fit(X).eval(Y)
-                assert_allclose(np.exp(log_dens), dens_true, atol=atol,
-                                rtol=max(1E-7, rtol))
-                assert_allclose(np.exp(kde.score(Y)),
-                                np.prod(dens_true),
-                                atol=atol, rtol=max(1E-7, rtol))
+                assert_array_almost_equal(np.exp(log_dens), dens_true,
+                                          atol=atol, rtol=max(1E-7, rtol))
+                assert_array_almost_equal(np.exp(kde.score(Y)),
+                                          np.prod(dens_true),
+                                          atol=atol, rtol=max(1E-7, rtol))
 
             for rtol in [0, 1E-5]:
                 for atol in [1E-6, 1E-2]:
