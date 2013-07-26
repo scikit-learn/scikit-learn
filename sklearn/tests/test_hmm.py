@@ -105,11 +105,11 @@ class TestBaseHMM(TestCase):
         reflogprob = -4.4590
         self.assertAlmostEqual(logprob, reflogprob, places=4)
 
-    def test_eval(self):
+    def test_score_samples(self):
         h, framelogprob = self.setup_example_hmm()
         nobs = len(framelogprob)
 
-        logprob, posteriors = h.eval([])
+        logprob, posteriors = h.score_samples([])
 
         assert_array_almost_equal(posteriors.sum(axis=1), np.ones(nobs))
 
@@ -123,7 +123,7 @@ class TestBaseHMM(TestCase):
                                   [0.8673, 0.1327]])
         assert_array_almost_equal(posteriors, refposteriors, decimal=4)
 
-    def test_hmm_eval_consistent_with_gmm(self):
+    def test_hmm_score_samples_consistent_with_gmm(self):
         n_components = 8
         nobs = 10
         h = self.StubHMM(n_components)
@@ -136,7 +136,7 @@ class TestBaseHMM(TestCase):
         # default), the transitions are uninformative - the model
         # reduces to a GMM with uniform mixing weights (in terms of
         # posteriors, not likelihoods).
-        logprob, hmmposteriors = h.eval([])
+        logprob, hmmposteriors = h.score_samples([])
 
         assert_array_almost_equal(hmmposteriors.sum(axis=1), np.ones(nobs))
 
@@ -241,7 +241,7 @@ class GaussianHMMBaseTester(object):
         self.assertRaises(ValueError, hmm.GaussianHMM, 20,
                           'badcovariance_type')
 
-    def test_eval_and_decode(self):
+    def test_score_samples_and_decode(self):
         h = hmm.GaussianHMM(self.n_components, self.covariance_type)
         h.means_ = self.means
         h.covars_ = self.covars[self.covariance_type]
@@ -254,7 +254,7 @@ class GaussianHMMBaseTester(object):
         nobs = len(gaussidx)
         obs = self.prng.randn(nobs, self.n_features) + h.means_[gaussidx]
 
-        ll, posteriors = h.eval(obs)
+        ll, posteriors = h.score_samples(obs)
 
         self.assertEqual(posteriors.shape, (nobs, self.n_components))
         assert_array_almost_equal(posteriors.sum(axis=1), np.ones(nobs))
@@ -474,12 +474,12 @@ class MultinomialHMMTestCase(TestCase):
                           np.zeros((self.n_components - 2, self.n_symbols)))
         self.assertEqual(h.n_symbols, self.n_symbols)
 
-    def test_eval(self):
+    def test_score_samples(self):
         idx = np.repeat(np.arange(self.n_components), 10)
         nobs = len(idx)
         obs = [int(x) for x in np.floor(self.prng.rand(nobs) * self.n_symbols)]
 
-        ll, posteriors = self.h.eval(obs)
+        ll, posteriors = self.h.score_samples(obs)
 
         self.assertEqual(posteriors.shape, (nobs, self.n_components))
         assert_array_almost_equal(posteriors.sum(axis=1), np.ones(nobs))
@@ -596,7 +596,7 @@ class GMMHMMBaseTester(object):
         self.assertRaises(ValueError, h.__setattr__, 'transmat_',
                           np.zeros((self.n_components - 2, self.n_components)))
 
-    def test_eval_and_decode(self):
+    def test_score_samples_and_decode(self):
         h = hmm.GMMHMM(self.n_components, gmms=self.gmms_)
         # Make sure the means are far apart so posteriors.argmax()
         # picks the actual component used to generate the observations.
@@ -607,7 +607,7 @@ class GMMHMMBaseTester(object):
         nobs = len(refstateseq)
         obs = [h.gmms_[x].sample(1).flatten() for x in refstateseq]
 
-        ll, posteriors = h.eval(obs)
+        ll, posteriors = h.score_samples(obs)
 
         self.assertEqual(posteriors.shape, (nobs, self.n_components))
         assert_array_almost_equal(posteriors.sum(axis=1), np.ones(nobs))

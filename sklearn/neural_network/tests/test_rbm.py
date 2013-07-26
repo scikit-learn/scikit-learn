@@ -23,7 +23,7 @@ def test_fit():
                        batch_size=10, n_iter=7, random_state=9)
     rbm.fit(X)
 
-    assert_almost_equal(rbm.pseudo_likelihood(X).mean(), -21., decimal=0)
+    assert_almost_equal(rbm.score_samples(X).mean(), -21., decimal=0)
 
     # in-place tricks shouldn't have modified X
     assert_array_equal(X, Xdigits)
@@ -100,7 +100,7 @@ def test_gibbs_smoke():
     assert_all_finite(X_sampled)
 
 
-def test_pseudo_likelihood_no_clipping():
+def test_score_samples():
     """Check that the pseudo likelihood is computed without clipping.
 
     http://fa.bianp.net/blog/2013/numerical-optimizers-for-logistic-regression/
@@ -110,7 +110,7 @@ def test_pseudo_likelihood_no_clipping():
     rbm1 = BernoulliRBM(n_components=10, batch_size=2,
                         n_iter=10, random_state=rng)
     rbm1.fit(X)
-    assert((rbm1.pseudo_likelihood(X) < -300).all())
+    assert((rbm1.score_samples(X) < -300).all())
 
 
 def test_rbm_verbose():

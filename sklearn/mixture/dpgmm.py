@@ -16,7 +16,7 @@ from scipy import linalg
 from scipy.spatial.distance import cdist
 
 from ..externals.six.moves import xrange
-from ..utils import check_random_state
+from ..utils import check_random_state, deprecated
 from ..utils.extmath import norm, logsumexp, pinvh
 from .. import cluster
 from .gmm import GMM
@@ -222,8 +222,13 @@ class DPGMM(GMM):
         raise NotImplementedError("""The variational algorithm does
         not support setting the covariance parameters.""")
 
+    @deprecated("DPGMM.eval was renamed to DPGMM.score_samples in 0.14 and "
+                "will be  removed in 0.16.")
     def eval(self, X):
-        """Evaluate the model on data
+        return self.score_samples(X)
+
+    def score_samples(self, X):
+        """Return the likelihood of the data under the model.
 
         Compute the bound on log probability of X under the model
         and return the posterior distribution (responsibilities) of
@@ -564,7 +569,7 @@ class DPGMM(GMM):
         self.converged_ = False
         for i in range(self.n_iter):
             # Expectation step
-            curr_logprob, z = self.eval(X)
+            curr_logprob, z = self.score_samples(X)
             logprob.append(curr_logprob.sum() + self._logprior(z))
 
             # Check for convergence.
@@ -656,8 +661,13 @@ class VBGMM(DPGMM):
             n_iter=n_iter, params=params, init_params=init_params)
         self.alpha = float(alpha) / n_components
 
+    @deprecated("VBGMM.eval was renamed to VBGMM.score_samples in 0.14 and"
+                " will be removed in 0.16.")
     def eval(self, X):
-        """Evaluate the model on data
+        return self.score_samples(X)
+
+    def score_samples(self, X):
+        """Return the likelihood of the data under the model.
 
         Compute the bound on log probability of X under the model
         and return the posterior distribution (responsibilities) of
