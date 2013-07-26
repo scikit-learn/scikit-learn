@@ -351,7 +351,7 @@ def orthogonal_mp(X, y, n_nonzero_coefs=None, tol=None, precompute=False,
     else:
         coef = np.zeros((X.shape[1], y.shape[1]))
 
-    for k in xrange(y.shape[1]):
+    for k in range(y.shape[1]):
         out = _cholesky_omp(X, y[:, k], n_nonzero_coefs, tol,
                             copy_X=copy_X, return_path=return_path)
         if return_path:
