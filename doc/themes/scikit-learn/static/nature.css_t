@@ -263,6 +263,7 @@ div.sphinxsidebarwrapper {
 /* for collapsible sidebar */
 div#sidebarbutton {
     background-color: #F6F6F6;
+    position: relative;
 }
 {% endif %}
 

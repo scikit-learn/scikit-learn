@@ -63,7 +63,8 @@ $(function() {
     bodywrapper.css('margin-left', bw_margin_collapsed);
     sidebarbutton.css({
         'margin-left': '0',
-        'height': bodywrapper.height()
+        'height': bodywrapper.height(),
+	'left': '8px'
     });
     sidebarbutton.find('span').text('»');
     sidebarbutton.attr('title', _('Expand sidebar'));
@@ -76,7 +77,8 @@ $(function() {
     sidebarwrapper.show();
     sidebarbutton.css({
         'margin-left': ssb_width_expanded-13,
-        'height': bodywrapper.height()
+        'height': bodywrapper.height(),
+	'left': '0'
     });
     sidebarbutton.find('span').text('«');
     sidebarbutton.attr('title', _('Collapse sidebar'));
