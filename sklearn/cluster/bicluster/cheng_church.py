@@ -35,12 +35,12 @@ class ChengChurch(six.with_metaclass(ABCMeta, BaseEstimator,
         The number of biclusters to find.
 
     max_msr : float, default: 1.0
-        Maximum MSR of a bicluster. Equivalent to :math:`delta` in
-        original paper.
+        Maximum MSR of a bicluster. Equivalent to 'delta` in original
+        paper.
 
     deletion_threshold : float, optional, default: 1.5
-        Multiplier for multiple node deletion. Equivalent to
-        :math:`\alpha` in original paper.
+        Multiplier for multiple node deletion. Equivalent to `alpha`
+        in original paper.
 
     row_deletion_cutoff : integer, optional, default: 100
         Number of rows at which to switch to single node deletion.
@@ -104,7 +104,9 @@ class ChengChurch(six.with_metaclass(ABCMeta, BaseEstimator,
                                  self.column_deletion_cutoff))
 
     def _sr(self, rows, cols, X):
-        return square_residue(rows.squeeze(), cols, X)
+        if not rows.size or not cols.size:
+            raise EmptyBiclusterException()
+        return square_residue(rows.ravel(), cols, X)
 
     def _sr_add(self, rows, cols, X):
         arr = (X - X[:, cols].mean(axis=1)[None].T -
@@ -125,7 +127,7 @@ class ChengChurch(six.with_metaclass(ABCMeta, BaseEstimator,
             row_id = np.argmax(row_msr)
             col_id = np.argmax(col_msr)
             if row_msr[row_id] > col_msr[col_id]:
-                rows = rows.squeeze()
+                rows = rows.ravel()
                 rows = np.setdiff1d(rows, [rows[row_id]])[None].T
             else:
                 cols = np.setdiff1d(cols, [cols[col_id]])
@@ -142,7 +144,7 @@ class ChengChurch(six.with_metaclass(ABCMeta, BaseEstimator,
             row_msr = sr.mean(axis=1)
             if n_rows >= self.row_deletion_cutoff:
                 to_remove = row_msr > (self.deletion_threshold * msr)
-                rows = rows.squeeze()
+                rows = rows.ravel()
                 rows = np.setdiff1d(rows, rows[to_remove])[None].T
 
             col_msr = self._sr(rows, cols, X).mean(axis=0)
@@ -167,12 +169,12 @@ class ChengChurch(six.with_metaclass(ABCMeta, BaseEstimator,
             row_score = self._sr_add(rows, cols, X).mean(axis=1)
             to_add = np.nonzero(row_score < msr)[0]
             old_rows = rows.copy()  # save for inverse
-            rows = np.union1d(rows.squeeze(), to_add)[None].T
+            rows = np.union1d(rows.ravel(), to_add)[None].T
 
             if self.inverse_rows:
                 row_score = self._isr_add(old_rows, cols, X).mean(axis=1)
                 to_add = np.nonzero(row_score < msr)[0]
-                rows = np.union1d(rows.squeeze(), to_add)[None].T
+                rows = np.union1d(rows.ravel(), to_add)[None].T
 
             if n_rows == len(rows) and n_cols == len(cols):
                 break
@@ -203,11 +205,10 @@ class ChengChurch(six.with_metaclass(ABCMeta, BaseEstimator,
                 self._mask(X, rows, cols, generator, minval, maxval)
                 if len(rows) == 0 or len(cols) == 0:
                     break
-                results.append((rows.squeeze(), cols))
+                results.append((rows.ravel(), cols))
             except EmptyBiclusterException:
                 break
         if results:
-            # TODO: move this to utils
             indicators = (get_indicators(r, c, X.shape) for r, c in results)
             rows, cols = zip(*indicators)
             self.rows_ = np.vstack(rows)
