@@ -118,13 +118,13 @@ class IterGrid(ParameterGrid):
 
     Parameters
     ----------
-    param_grid: dict of string to sequence
+    param_grid : dict of string to sequence
         The parameter grid to explore, as a dictionary mapping estimator
         parameters to sequences of allowed values.
 
     Returns
     -------
-    params: dict of string to any
+    params : dict of string to any
         **Yields** dictionaries mapping each estimator parameter to one of its
         allowed values.
 
@@ -402,8 +402,9 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         X : array-like, shape = [n_samples, n_features]
             Training set.
 
-        y : array-like, shape = [n_samples], optional
-            Labels for X.
+        y : array-like, shape = [n_samples] or [n_samples, n_output], optional
+            Target relative to X for classification or regression;
+            None for unsupervised learning.
 
         Returns
         -------
@@ -716,12 +717,12 @@ class GridSearchCV(BaseSearchCV):
         Parameters
         ----------
 
-        X: array-like, shape = [n_samples, n_features]
-            Training vector, where n_samples in the number of samples and
+        X : array-like, shape = [n_samples, n_features]
+            Training vector, where n_samples is the number of samples and
             n_features is the number of features.
 
-        y: array-like, shape = [n_samples], optional
-            Target vector relative to X for classification;
+        y : array-like, shape = [n_samples] or [n_samples, n_output], optional
+            Target relative to X for classification or regression;
             None for unsupervised learning.
 
         """
@@ -873,12 +874,12 @@ class RandomizedSearchCV(BaseSearchCV):
 
         Parameters
         ----------
-        X: array-like, shape = [n_samples, n_features]
+        X : array-like, shape = [n_samples, n_features]
             Training vector, where n_samples in the number of samples and
             n_features is the number of features.
 
-        y: array-like, shape = [n_samples], optional
-            Target vector relative to X for classification;
+        y : array-like, shape = [n_samples] or [n_samples, n_output], optional
+            Target relative to X for classification or regression;
             None for unsupervised learning.
 
         """
