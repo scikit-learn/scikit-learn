@@ -13,24 +13,18 @@ meant to turn a binary classifier or a regressor into a multiclass/label classif
 
     - **Multiclass classification** means classification with more than two classes;
       e.g., classify a set of images of fruits which may be oranges, apples, or pears.
-    - **Multilabel classification** is a different task, where a classifier is used to
-      predict a set of target labels for each instance; i.e., the set of target
-      classes is not assumed to be disjoint as in ordinary (binary or multiclass)
-      classification. This is also called any-of classification.
-      e.g., predict the topics of a set of documents, from any combination
-      of religion, politics, and Apple. Every document may therefore refer to more than
-      one topic.
 
-The estimators provided in this module are meta-estimators:
+    - **Multilabel classification** assigns to each sample a set of target labels.
+      This can be thought of predicting properties of a data-point that are not mutually
+      exclusive, such as topics that are relevant for a document. A text might be about any
+      of religion, politics, finance or education at the same time.
+
+The estimators provided in this module are meta-estimators.
+They require a base estimator to be provided in their construcor:
 
     - one-vs-the-rest / one-vs-all
     - one-vs-one
     - error correcting output codes
-
-The meta-estimators require a base estimator to be provided in 
-their constructor. It is also possible to use these estimators
-with multiclass estimators in the hope that their accuracy or
-runtime performance improves.
 
 .. warning::
 
@@ -43,13 +37,10 @@ runtime performance improves.
     multiclass classification out-of-the-box. Below is a summary of the
     classifiers supported in scikit-learn grouped by the strategy used.
 
-    - Inherently multiclass: :ref:`Naive Bayes <naive_bayes>`, :class:`sklearn.lda.LDA`,
-      :ref:`Decision Trees <tree>`, :ref:`Random Forests <forest>`, :class:`sklearn.neighbors.KNeighborsClassifier`
+    - Inherently multiclass: :ref:`Naive Bayes <naive_bayes>`, :ref:`LDA and QDA <lda_qda>`,
+      :ref:`Decision Trees <tree>`, :ref:`Ensembles of trees <ensemble>`, :ref:`Nearest neighbors <neighbors>`
     - One-Vs-One: :class:`sklearn.svm.SVC`.
-    - One-Vs-All: :class:`sklearn.svm.LinearSVC`,
-      :class:`sklearn.linear_model.LogisticRegression`,
-      :class:`sklearn.linear_model.SGDClassifier`,
-      :class:`sklearn.linear_model.RidgeClassifier`.
+    - One-Vs-All: all linear models except :class:`sklearn.svm.SVC`.
 
 
 One-Vs-The-Rest
