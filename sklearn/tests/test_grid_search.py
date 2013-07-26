@@ -25,13 +25,18 @@ from sklearn.utils.testing import assert_array_almost_equal
 from scipy.stats import distributions
 
 from sklearn.base import BaseEstimator
-from sklearn.datasets.samples_generator import make_classification, make_blobs
+from sklearn.datasets.samples_generator import make_classification
+from sklearn.datasets.samples_generator import make_blobs
+from sklearn.datasets import make_multilabel_classification
 from sklearn.grid_search import (GridSearchCV, RandomizedSearchCV,
                                  ParameterGrid, ParameterSampler)
 from sklearn.svm import LinearSVC, SVC
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.tree import DecisionTreeClassifier
 from sklearn.cluster import KMeans, MeanShift
 from sklearn.metrics import f1_score
 from sklearn.metrics import make_scorer
+from sklearn.metrics import auc_score
 from sklearn.cross_validation import KFold, StratifiedKFold
 
 
@@ -458,8 +463,7 @@ def test_refit():
 
 
 def test_X_as_list():
-    """Pass X as list in GridSearchCV
-    """
+    """Pass X as list in GridSearchCV"""
     X = np.arange(100).reshape(10, 10)
     y = np.array([0] * 5 + [1] * 5)
 
@@ -552,7 +556,6 @@ def test_randomized_search_cv_scores():
 
 def test_grid_search_score_consistency():
     # test that correct scores are used
-    from sklearn.metrics import auc_score
     clf = LinearSVC(random_state=0)
     X, y = make_blobs(random_state=0, centers=2)
     Cs = [.1, 1, 10]
@@ -586,3 +589,41 @@ def test_pickle():
                                        refit=True)
     random_search.fit(X, y)
     pickle.dumps(random_search)  # smoke test
+
+
+def test_grid_search_with_multioutput_data():
+    """ Test search with multioutput estimator"""
+    X, y = make_multilabel_classification(return_indicator=True,
+                                          random_state=0)
+
+    est_parameters = {"max_depth": [1, 2, 3, 4]}
+    cv = KFold(y.shape[0], random_state=0)
+
+    estimators = [DecisionTreeRegressor(random_state=0),
+                  DecisionTreeClassifier(random_state=0)]
+
+    # Test with grid search cv
+    for est in estimators:
+        grid_search = GridSearchCV(est, est_parameters, cv=cv)
+        grid_search.fit(X, y)
+        for parameters, _, cv_validation_scores in grid_search.cv_scores_:
+            est.set_params(**parameters)
+
+            for i, (train, test) in enumerate(cv):
+                est.fit(X[train], y[train])
+                correct_score = est.score(X[test], y[test])
+                assert_almost_equal(correct_score,
+                                    cv_validation_scores[i])
+
+    # Test with a randomized search
+    for est in estimators:
+        random_search = RandomizedSearchCV(est, est_parameters, cv=cv)
+        random_search.fit(X, y)
+        for parameters, _, cv_validation_scores in random_search.cv_scores_:
+            est.set_params(**parameters)
+
+            for i, (train, test) in enumerate(cv):
+                est.fit(X[train], y[train])
+                correct_score = est.score(X[test], y[test])
+                assert_almost_equal(correct_score,
+                                    cv_validation_scores[i])

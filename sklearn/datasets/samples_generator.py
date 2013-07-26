@@ -11,6 +11,7 @@ import numbers
 import numpy as np
 from scipy import linalg
 
+from ..preprocessing import LabelBinarizer
 from ..utils import array2d, check_random_state
 from ..utils import shuffle as util_shuffle
 from ..externals import six
@@ -232,8 +233,8 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
 
 
 def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
-                                   n_labels=2, length=50,
-                                   allow_unlabeled=True, random_state=None):
+                                   n_labels=2, length=50, allow_unlabeled=True,
+                                   return_indicator=False, random_state=None):
     """Generate a random multilabel classification problem.
 
     For each sample, the generative process is:
@@ -267,6 +268,10 @@ def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
     allow_unlabeled : bool, optional (default=True)
         If ``True``, some instances might not belong to any class.
 
+    return_indicator : bool, optional (default=False),
+        If ``True``, return ``Y`` in the binary indicator format, else
+        return a tuple of lists of labels
+
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
@@ -278,8 +283,9 @@ def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
     X : array of shape [n_samples, n_features]
         The generated samples.
 
-    Y : list of tuples
+    Y : tuple of lists or array of shape [n_samples, n_classes]
         The label sets.
+
     """
     generator = check_random_state(random_state)
     p_c = generator.rand(n_classes)
@@ -324,6 +330,11 @@ def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
         return x, y
 
     X, Y = zip(*[sample_example() for i in range(n_samples)])
+
+    if return_indicator:
+        lb = LabelBinarizer()
+        Y = lb.fit([range(n_classes)]).transform(Y)
+
     return np.array(X, dtype=np.float64), Y
 
 

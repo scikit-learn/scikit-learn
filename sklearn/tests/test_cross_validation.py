@@ -267,6 +267,10 @@ def test_cross_val_score():
         scores = cval.cross_val_score(clf, X, y)
         assert_array_equal(scores, clf.score(X, y))
 
+        # test with multioutput y
+        scores = cval.cross_val_score(clf, X_sparse, X)
+        assert_array_equal(scores, clf.score(X_sparse, X))
+
         scores = cval.cross_val_score(clf, X_sparse, y)
         assert_array_equal(scores, clf.score(X_sparse, y))
 
