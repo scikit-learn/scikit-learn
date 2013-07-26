@@ -4,7 +4,7 @@ Test the hashing module.
 
 # Author: Gael Varoquaux <gael dot varoquaux at normalesup dot org>
 # Copyright (c) 2009 Gael Varoquaux
-# License: BSD 3 clause
+# License: BSD Style, 3 clauses.
 
 import nose
 import time
@@ -238,8 +238,8 @@ def test_numpy_scalar():
 
 
 def test_dict_hash():
-    # Check that dictionaries hash consistently, even though the ordering
-    # of the keys is not guaranteed
+    # Check that dictionaries hash consistently, eventhough the ordering
+    # of the keys is not garanteed
     k = KlassWithCachedMethod()
 
     d = {'#s12069__c_maps.nii.gz': [33],
@@ -264,8 +264,8 @@ def test_dict_hash():
 
 
 def test_set_hash():
-    # Check that sets hash consistently, even though their ordering
-    # is not guaranteed
+    # Check that sets hash consistently, eventhough their ordering
+    # is not garanteed
     k = KlassWithCachedMethod()
 
     s = set(['#s12069__c_maps.nii.gz',

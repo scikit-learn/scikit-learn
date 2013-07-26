@@ -4,7 +4,7 @@ Utilities for fast persistence of big data, with optional compression.
 
 # Author: Gael Varoquaux <gael dot varoquaux at normalesup dot org>
 # Copyright (c) 2009 Gael Varoquaux
-# License: BSD 3 clause
+# License: BSD Style, 3 clauses.
 
 import pickle
 import traceback
@@ -54,7 +54,7 @@ def read_zfile(file_handle):
     """Read the z-file and return the content as a string
 
     Z-files are raw data compressed with zlib used internally by joblib
-    for persistence. Backward compatibility is not garantied. Do not
+    for persistence. Backward compatibility is not guaranteed. Do not
     use for external purposes.
     """
     file_handle.seek(0)
@@ -405,7 +405,7 @@ def load(filename, mmap_mode=None):
     file was saved with compression, the arrays cannot be memmaped.
     """
     file_handle = open(filename, 'rb')
-    # We are careful to open the file hanlde early and keep it open to
+    # We are careful to open the file handle early and keep it open to
     # avoid race-conditions on renames. That said, if data are stored in
     # companion files, moving the directory will create a race when
     # joblib tries to access the companion files.
