@@ -463,8 +463,7 @@ def test_refit():
 
 
 def test_X_as_list():
-    """Pass X as list in GridSearchCV
-    """
+    """Pass X as list in GridSearchCV"""
     X = np.arange(100).reshape(10, 10)
     y = np.array([0] * 5 + [1] * 5)
 
@@ -593,8 +592,7 @@ def test_pickle():
 
 
 def test_grid_search_with_multioutput_data():
-    """ Test search with multioutput estimator
-    """
+    """ Test search with multioutput estimator"""
     X, y = make_multilabel_classification(return_indicator=True,
                                           random_state=0)
 
