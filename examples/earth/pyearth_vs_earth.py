@@ -1,10 +1,16 @@
 '''
-This script randomly generates earth-style models, then randomly generates data from those models and 
-fits earth models to those data using both the python and R implementations.  It records the sample size,
-m, the number of input dimensions, n, the number of forward pass iterations, the runtime, and the r^2 
-statistic for each fit and writes the result to a CSV file.
-'''
+=============================
+Comparison with the R package
+=============================
 
+
+This script randomly generates earth-style models, then randomly generates data from those models and 
+fits earth models to those data using both the python (:class:`Earth`) and R implementations.  It records the sample size,
+m, the number of input dimensions, n, the number of forward pass iterations, the runtime, and the r^2 
+statistic for each fit and writes the result to a CSV file.  This script requires pandas, rpy2, and a
+functioning R installation with the earth package installed.
+'''
+from __future__ import print_function
 import numpy
 import pandas.rpy.common as com
 import rpy2.robjects as robjects
@@ -12,12 +18,13 @@ import time
 import pandas
 from sklearn.earth import Earth
 
+print(__doc__)
+
 class DataGenerator(object):
     def __init__(self):
         pass
     def generate(self, m):
         pass
-
 
 class NoiseGenerator(DataGenerator):
     def __init__(self, n):
@@ -63,7 +70,6 @@ class RandomComplexityGenerator(DataGenerator):
         self.n = n
         self.max_terms = max_terms
         self.max_degree = max_degree
-        
         
     def generate(self, m):
         X = numpy.random.normal(size=(m,self.n))
@@ -124,7 +130,6 @@ def compare(generator_class, sample_sizes, dimensions, repetitions, **kwargs):
         generator = generator_class(n=n)
         for m in sample_sizes:
             for rep in range(repetitions):
-                print n, m, rep
                 X, y = generator.generate(m=m)
                 y_pred_r, time_r, iter_r = run_earth(X,y,**kwargs)
                 rsq_r = 1 - (numpy.sum((y-y_pred_r)**2))/(numpy.sum((y-numpy.mean(y))**2))
@@ -140,7 +145,7 @@ if __name__ == '__main__':
     rep = 5
     numpy.random.seed(1)
     data = compare(RandomComplexityGenerator,sample_sizes,dimensions,rep,max_degree=2,penalty=3.0)
-    print data
+    print(data)
     data.to_csv('comparison.csv')
 
         

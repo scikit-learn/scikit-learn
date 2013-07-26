@@ -143,7 +143,7 @@ class Earth(BaseEstimator, RegressorMixin, TransformerMixin):
     
     forward_pass_arg_names = set(['endspan','minspan','endspan_alpha','minspan_alpha',
                                   'max_terms','max_degree','thresh','penalty','check_every',
-                                  'min_searh_points','xlabels','linvars'])
+                                  'min_searh_points','xlabels_','linvars'])
     pruning_pass_arg_names = set(['penalty'])
     
     def __init__(self, endspan=None, minspan=None, endspan_alpha=None, minspan_alpha=None, max_terms=None, max_degree=None, 
@@ -211,20 +211,20 @@ class Earth(BaseEstimator, RegressorMixin, TransformerMixin):
         Sanitize input predictors and extract column names if appropriate.
         '''
         no_labels = False
-        if 'xlabels' not in kwargs and 'xlabels' not in self.__dict__:
+        if 'xlabels' not in kwargs and 'xlabels_' not in self.__dict__:
             #Try to get xlabels from input data (for example, if X is a pandas DataFrame)
             try:
-                self.xlabels = list(X.columns)
+                self.xlabels_ = list(X.columns)
             except AttributeError:
                 try:
-                    self.xlabels = list(X.design_info.column_names)
+                    self.xlabels_ = list(X.design_info.column_names)
                 except AttributeError:
                     try:
                         self.xlabels = list(X.dtype.names)
                     except TypeError:
                         no_labels = True
-        elif 'xlabels' not in self.__dict__:
-            self.xlabels = kwargs['xlabels']
+        elif 'xlabels_' not in self.__dict__:
+            self.xlabels_ = kwargs['xlabels']
         
         #Convert to internally used data type
         X = safe_asarray(X,dtype=np.float64)
@@ -310,7 +310,7 @@ class Earth(BaseEstimator, RegressorMixin, TransformerMixin):
         '''
         #Format and label the data
         if xlabels is not None:
-            self.set_params(xlabels=xlabels)
+            self.set_params(xlabels_=xlabels)
         if linvars is not None:
             self.set_params(linvars=linvars)
         X, y, weights = self._scrub(X,y,weights,**self.__dict__)
@@ -368,8 +368,8 @@ class Earth(BaseEstimator, RegressorMixin, TransformerMixin):
         '''
         
         #Pull new labels and linear variables if necessary
-        if 'xlabels' in kwargs and 'xlabels' not in self.__dict__:
-            self.set_params(xlabels=kwargs['xlabels'])
+        if 'xlabels' in kwargs and 'xlabels_' not in self.__dict__:
+            self.set_params(xlabels_=kwargs['xlabels'])
             del kwargs['xlabels']
         if 'linvars' in kwargs and 'linvars' not in self.__dict__:
             self.set_params(linvars=kwargs['linvars'])

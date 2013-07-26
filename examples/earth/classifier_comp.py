@@ -1,14 +1,21 @@
 '''
+====================================
+Classification comparison with Earth
+====================================
+
+
 This script recreates the scikit-learn classifier comparison example found at http://scikit-learn.org/dev/auto_examples/plot_classifier_comparison.html.
-It has been modified to include an Earth based classifier.
+It has been modified to include an :class:`Earth` based classifier.  The Earth based classifier is made up of a Pipeline
+that uses an Earth model as a transformer and a LogisticRegression model as a predictor.
 '''
 
 # Code source: Gael Varoqueux
 #              Andreas Mueller
 # Modified for Documentation merge by Jaques Grobler
 # License: BSD 3 clause
-# Modified to include pyearth by Jason Rudy 
+# Modified to include Earth by Jason Rudy 
 
+from __future__ import print_function
 import numpy as np
 import pylab as pl
 from matplotlib.colors import ListedColormap
@@ -22,6 +29,8 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.naive_bayes import GaussianNB
 from sklearn.lda import LDA
 from sklearn.qda import QDA
+
+print(__doc__)
 
 h = .02  # step size in the mesh
 

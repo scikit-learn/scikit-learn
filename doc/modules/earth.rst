@@ -7,8 +7,8 @@ Multivariate Adaptive Regression Splines
 .. currentmodule:: sklearn.earth
 
 Multivariate adaptive regression splines, implemented by the :class:`Earth` class, is a method for supervised 
-learning that is most commonly used for feature extraction and selection.  Earth models can be thought of as linear models in a higher dimensional 
-basis space.  Earth automatically searches for interactions and non-linear relationships.  Each term in an Earth model is a 
+learning that is most commonly used for feature extraction and selection.  ``Earth`` models can be thought of as linear models in a higher dimensional 
+basis space.  ``Earth`` automatically searches for interactions and non-linear relationships.  Each term in an ``Earth`` model is a 
 product of so called "hinge functions".  A hinge function is a function that's equal to its argument where that argument 
 is greater than zero and is zero everywhere else.
 
@@ -20,7 +20,7 @@ is greater than zero and is zero everywhere else.
 
 .. image:: ../images/hinge.png
 
-An Earth model is a linear combination of basis functions, each of which is a product of one 
+An ``Earth`` model is a linear combination of basis functions, each of which is a product of one 
 or more of the following:
 
 	1. A constant
@@ -28,7 +28,7 @@ or more of the following:
 	3. Hinge functions of input variables  
 
 For example, a simple piecewise linear function in one variable can be expressed 
-as a linear combination of two hinge functions and a constant (see below).  During fitting, the Earth class 
+as a linear combination of two hinge functions and a constant (see below).  During fitting, the ``Earth`` class 
 automatically determines which variables and basis functions to use.  
 The algorithm has two stages.  First, the 
 forward pass searches for terms that locally minimize squared error loss on the training set.  Next, a pruning pass selects a subset of those 
@@ -89,14 +89,28 @@ A Simple Earth Example
 .. image:: ../images/simple_earth_example.png
 
 
-Bibliography
-------------
-.. bibliography:: earth_bibliography.bib
+.. topic:: Bibliography:
 
-References :cite:`Hastie2009`, :cite:`Millborrow2012`, :cite:`Friedman1991`, :cite:`Friedman1993`, 
-and :cite:`Friedman1991a` contain discussions likely to be useful to users of py-earth.  
-References :cite:`Friedman1991`, :cite:`Millborrow2012`, :cite:`Bjorck1996`, :cite:`Stewart1998`,
-:cite:`Golub1996`, :cite:`Friedman1993`, and :cite:`Friedman1991a` were useful during the 
-implementation process.
+	1. Friedman, J. (1991). Multivariate adaptive regression splines. The annals of statistics, 
+	   19(1), 1–67. http://www.jstor.org/stable/10.2307/2241837
+	2. Stephen Milborrow. Derived from mda:mars by Trevor Hastie and Rob Tibshirani.
+	   (2012). earth: Multivariate Adaptive Regression Spline Models. R package
+	   version 3.2-3.
+	3. Friedman, J. (1993). Fast MARS. Stanford University Department of Statistics, Technical Report No 110. 
+	   http://statistics.stanford.edu/~ckirby/techreports/LCS/LCS%20110.pdf
+	4. Friedman, J. (1991). Estimating functions of mixed ordinal and categorical variables using adaptive splines.
+	   Stanford University Department of Statistics, Technical Report No 108. 
+	   http://statistics.stanford.edu/~ckirby/techreports/LCS/LCS%20108.pdf
+	5. Stewart, G.W. Matrix Algorithms, Volume 1: Basic Decompositions. (1998). Society for Industrial and Applied 
+	   Mathematics.
+	6. Bjorck, A. Numerical Methods for Least Squares Problems. (1996). Society for Industrial and Applied 
+	   Mathematics.
+	7. Hastie, T., Tibshirani, R., & Friedman, J. The Elements of Statistical Learning (2nd Edition). (2009).  
+	   Springer Series in Statistics
+	8. Golub, G., & Van Loan, C. Matrix Computations (3rd Edition). (1996). Johns Hopkins University Press.
+	   
+
+	References 7, 2, 1, 3, and 4 contain discussions likely to be useful to users.  References 1, 2, 6, 5, 
+	8, 3, and 4 are useful in understanding the implementation.
 
 
