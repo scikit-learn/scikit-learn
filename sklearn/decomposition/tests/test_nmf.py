@@ -77,31 +77,42 @@ def test_projgrad_nmf_fit_nn_output():
 
 def test_projgrad_nmf_fit_close():
     """Test that the fit is not too far away"""
-    pnmf = nmf.ProjectedGradientNMF(5, init='nndsvda', random_state=0)
     X = np.abs(random_state.randn(6, 5))
-    assert_less(pnmf.fit(X).reconstruction_err_, 0.05)
+    for solver in ('pg', 'lbfgs'):
+        pnmf = nmf.NMF(n_components=5, init='nndsvda', nnls_solver=solver,
+                       random_state=0)
+        print pnmf
+        assert_less(pnmf.fit(X).reconstruction_err_, 0.05)
 
 
 @raises(ValueError)
 def test_nls_nn_input():
     """Test NLS solver's behaviour on negative input"""
     A = np.ones((2, 2))
-    nmf._nls_subproblem(A, A, -A, 0.001, 20)
+    for solver in ('pg', 'lbfgs'):
+        model = nmf.NMF(nnls_solver=solver)
+        model._nnls(A, A, -A, 0.001, 20)
 
 
 def test_nls_nn_output():
     """Test that NLS solver doesn't return negative values"""
     A = np.arange(1, 5).reshape(1, -1)
-    Ap, _, _ = nmf._nls_subproblem(np.dot(A.T, -A), A.T, A, 0.001, 100)
+    for solver in ('pg', 'lbfgs'):
+        model = nmf.NMF(nnls_solver=solver)
+        Ap, _, _ = model._nnls(A.T, np.dot(A.T, -A),  A, 0.001, 100)
     assert_false((Ap < 0).any())
 
 
 def test_nls_close():
     """Test that the NLS results should be close"""
     A = np.arange(1, 5).reshape(1, -1)
-    Ap, _, _ = nmf._nls_subproblem(np.dot(A.T, A), A.T, np.zeros_like(A),
-                                   0.001, 100)
-    assert_true((np.abs(Ap - A) < 0.01).all())
+    for solver in ('pg', 'lbfgs'):
+        model = nmf.NMF(nnls_solver=solver)
+        Ap, _, _ = model._nnls(A.T, np.dot(A.T, A), np.zeros_like(A),
+                               0.001, 100)
+        print model
+        print Ap
+        assert_array_almost_equal(Ap, A, decimal=3)
 
 
 def test_projgrad_nmf_transform():
@@ -110,16 +121,19 @@ def test_projgrad_nmf_transform():
     (transform uses scipy.optimize.nnls for now)
     """
     A = np.abs(random_state.randn(6, 5))
-    m = nmf.ProjectedGradientNMF(n_components=5, init='nndsvd', random_state=0)
-    transf = m.fit_transform(A)
-    assert_true(np.allclose(transf, m.transform(A), atol=1e-2, rtol=0))
+    for solver in ('pg', 'lbfgs'):
+        m = nmf.NMF(n_components=5, init='nndsvd', random_state=0,
+                    nnls_solver=solver)
+        transf = m.fit_transform(A)
+        assert_array_almost_equal(transf, m.transform(A), decimal=2)
 
 
 def test_n_components_greater_n_features():
     """Smoke test for the case of more components than features."""
     A = np.abs(random_state.randn(30, 10))
-    nmf.ProjectedGradientNMF(n_components=15, sparseness='data',
-                             random_state=0).fit(A)
+    for solver in ('pg', 'lbfgs'):
+        nmf.NMF(n_components=15, sparseness='data', random_state=0,
+                nnls_solver=solver).fit(A)
 
 
 def test_projgrad_nmf_sparseness():

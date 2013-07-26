@@ -15,7 +15,7 @@ import warnings
 import numbers
 
 import numpy as np
-from scipy.optimize import nnls
+from scipy.optimize import fmin_l_bfgs_b
 import scipy.sparse as sp
 
 from ..base import BaseEstimator, TransformerMixin
@@ -154,110 +154,35 @@ def _initialize_nmf(X, n_components, variant=None, eps=1e-6,
     return W, H
 
 
-def _nls_subproblem(V, W, H_init, tol, max_iter, sigma=0.01, beta=0.1):
-    """Non-negative least square solver
+def _nls_lbfgs(X, y, init=None, tol=1e-3, max_iter=100):
+    """Non-negative least squares solver using L-BFGS.
 
-    Solves a non-negative least squares subproblem using the
-    projected gradient descent algorithm.
-    min || WH - V ||_2
-
-    Parameters
-    ----------
-    V, W : array-like
-        Constant matrices.
-
-    H_init : array-like
-        Initial guess for the solution.
-
-    tol : float
-        Tolerance of the stopping condition.
-
-    max_iter : int
-        Maximum number of iterations before timing out.
-
-    sigma : float
-        Constant used in the sufficient decrease condition checked by the line
-        search.  Smaller values lead to a looser sufficient decrease condition,
-        thus reducing the time taken by the line search, but potentially
-        increasing the number of iterations of the projected gradient
-        procedure. 0.01 is a commonly used value in the optimization
-        literature.
-
-    beta : float
-        Factor by which the step size is decreased (resp. increased) until
-        (resp. as long as) the sufficient decrease condition is satisfied.
-        Larger values allow to find a better step size but lead to longer line
-        search. 0.1 is a commonly used value in the optimization literature.
-
-    Returns
-    -------
-    H : array-like
-        Solution to the non-negative least squares problem.
-
-    grad : array-like
-        The gradient.
-
-    n_iter : int
-        The number of iterations done by the algorithm.
-
-    Reference
-    ---------
-
-    C.-J. Lin. Projected gradient methods
-    for non-negative matrix factorization. Neural
-    Computation, 19(2007), 2756-2779.
-    http://www.csie.ntu.edu.tw/~cjlin/nmf/
-
+    Solves for w in Xw = y
     """
-    if (H_init < 0).any():
-        raise ValueError("Negative values in H_init passed to NLS solver.")
+    n_samples, n_features = X.shape
+    last_grad = np.empty((n_features))
 
-    H = H_init
-    WtV = safe_sparse_dot(W.T, V, dense_output=True)
-    WtW = safe_sparse_dot(W.T, W, dense_output=True)
+    def f(w, *args):
+        return 0.5 * np.sum((safe_sparse_dot(X, w) - y) ** 2)
 
-    # values justified in the paper
-    alpha = 1
-    for n_iter in range(1, max_iter + 1):
-        grad = np.dot(WtW, H) - WtV
-        proj_gradient = norm(grad[np.logical_or(grad < 0, H > 0)])
-        if proj_gradient < tol:
-            break
+    def fprime(w, last_grad, *args):
+        last_grad[:] = safe_sparse_dot(X.T, safe_sparse_dot(X, w) - y)
+        return last_grad
 
-        for inner_iter in range(1, 20):
-            # Gradient step.
-            Hn = H - alpha * grad
-            # Projection step.
-            Hn = np.maximum(Hn, 0)
-            d = Hn - H
-            gradd = np.sum(grad * d)
-            dQd = np.sum(np.dot(WtW, d) * d)
-            suff_decr = (1 - sigma) * gradd + 0.5 * dQd < 0
-            if inner_iter == 1:
-                decr_alpha = not suff_decr
-                Hp = H
+    if init is None:
+        init = np.zeros(n_features, dtype=np.float64)
+    w, _, d = fmin_l_bfgs_b(f, x0=init, fprime=fprime, pgtol=tol,
+                            bounds=[(0, None)] * n_features,
+                            maxiter=max_iter,
+                            args=[last_grad],
+                            disp=0)
 
-            if decr_alpha:
-                if suff_decr:
-                    H = Hn
-                    break
-                else:
-                    alpha *= beta
-            elif not suff_decr or (Hp == Hn).all():
-                H = Hp
-                break
-            else:
-                alpha /= beta
-                Hp = Hn
-
-    if n_iter == max_iter:
-        warnings.warn("Iteration limit reached in nls subproblem.")
-
-    return H, grad, n_iter
+    return w, last_grad, d['nit']
 
 
 class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
-    """Non-Negative matrix factorization by Projected Gradient (NMF)
+    """
+    Non-negative Matrix Factorization by Alternating NNLS.
 
     Parameters
     ----------
@@ -278,6 +203,10 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
                 (generally faster, less accurate alternative to NNDSVDa
                 for when sparsity is not desired)
             'random': non-negative random matrices
+
+    nnls_solver : {'pg', 'lbfgs'}
+        Non-negative least squares solver to use for learning.  Note that
+        L-bfgs is always used for transforming.
 
     sparseness : 'data' | 'components' | None, default: None
         Where to enforce sparsity in the model.
@@ -362,21 +291,19 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
     http://tinyurl.com/nndsvd
     """
 
-    def __init__(self, n_components=None, init=None, sparseness=None, beta=1,
-                 eta=0.1, tol=1e-4, max_iter=200, nls_max_iter=2000,
-                 random_state=None):
+    def __init__(self, n_components=None, init=None, nnls_solver='pg',
+                 sparseness=None, beta=1, eta=0.1, tol=1e-4, max_iter=200,
+                 nls_max_iter=2000, adaptive=True, random_state=None):
         self.n_components = n_components
         self.init = init
         self.tol = tol
-        if sparseness not in (None, 'data', 'components'):
-            raise ValueError(
-                'Invalid sparseness parameter: got %r instead of one of %r' %
-                (sparseness, (None, 'data', 'components')))
+        self.nnls_solver = nnls_solver
         self.sparseness = sparseness
         self.beta = beta
         self.eta = eta
         self.max_iter = max_iter
         self.nls_max_iter = nls_max_iter
+        self.adaptive = adaptive
         self.random_state = random_state
 
     def _init(self, X):
@@ -423,42 +350,42 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
         n_samples, n_features = X.shape
 
         if self.sparseness is None:
-            W, gradW, iterW = _nls_subproblem(X.T, H.T, W.T, tolW,
-                                              self.nls_max_iter)
+            W, gradW, iterW = self._nnls(H.T, X.T, W.T, tolW,
+                                         self.nls_max_iter)
         elif self.sparseness == 'data':
-            W, gradW, iterW = _nls_subproblem(
-                safe_vstack([X.T, np.zeros((1, n_samples))]),
+            W, gradW, iterW = self._nnls(
                 safe_vstack([H.T, np.sqrt(self.beta) * np.ones((1,
                              self.n_components_))]),
+                safe_vstack([X.T, np.zeros((1, n_samples))]),
                 W.T, tolW, self.nls_max_iter)
         elif self.sparseness == 'components':
-            W, gradW, iterW = _nls_subproblem(
-                safe_vstack([X.T,
-                             np.zeros((self.n_components_, n_samples))]),
+            W, gradW, iterW = self._nnls(
                 safe_vstack([H.T,
                              np.sqrt(self.eta) * np.eye(self.n_components_)]),
+                safe_vstack([X.T,
+                             np.zeros((self.n_components_, n_samples))]),
                 W.T, tolW, self.nls_max_iter)
 
         return W, gradW, iterW
 
     def _update_H(self, X, H, W, tolH):
         n_samples, n_features = X.shape
-
         if self.sparseness is None:
-            H, gradH, iterH = _nls_subproblem(X, W, H, tolH,
-                                              self.nls_max_iter)
+            H, gradH, iterH = self._nnls(W, X, H, tolH,
+                                         self.nls_max_iter)
         elif self.sparseness == 'data':
-            H, gradH, iterH = _nls_subproblem(
-                safe_vstack([X, np.zeros((self.n_components_, n_features))]),
+            H, gradH, iterH = self._nnls(
                 safe_vstack([W,
                              np.sqrt(self.eta) * np.eye(self.n_components_)]),
+                safe_vstack([X, np.zeros((self.n_components_, n_features))]),
                 H, tolH, self.nls_max_iter)
+
         elif self.sparseness == 'components':
-            H, gradH, iterH = _nls_subproblem(
-                safe_vstack([X, np.zeros((1, n_features))]),
+            H, gradH, iterH = self._nnls(
                 safe_vstack([W,
                              np.sqrt(self.beta)
                              * np.ones((1, self.n_components_))]),
+                safe_vstack([X, np.zeros((1, n_features))]),
                 H, tolH, self.nls_max_iter)
 
         return H, gradH, iterH
@@ -482,6 +409,11 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
         X = atleast2d_or_csr(X)
         check_non_negative(X, "NMF.fit")
 
+        if self.sparseness not in (None, 'data', 'components'):
+            raise ValueError(
+                'Invalid sparseness parameter: got %r instead of one of %r' %
+                (self.sparseness, (None, 'data', 'components')))
+
         n_samples, n_features = X.shape
 
         if not self.n_components:
@@ -495,15 +427,19 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
                  - safe_sparse_dot(X, H.T, dense_output=True))
         gradH = (np.dot(np.dot(W.T, W), H)
                  - safe_sparse_dot(W.T, X, dense_output=True))
-        init_grad = norm(np.r_[gradW, gradH.T])
-        tolW = max(0.001, self.tol) * init_grad  # why max?
-        tolH = tolW
+        init_grad = sqrt(norm(gradW) ** 2 + norm(gradH.T) ** 2)
+
+        if self.adaptive:
+            tolW = tolH = max(0.001, self.tol) * init_grad  # why max?
+        else:
+            tolW = tolH = self.tol
 
         for n_iter in range(1, self.max_iter + 1):
             # stopping condition
             # as discussed in paper
-            proj_norm = norm(np.r_[gradW[np.logical_or(gradW < 0, W > 0)],
-                                   gradH[np.logical_or(gradH < 0, H > 0)]])
+            proj_norm = sqrt(
+                norm(gradW[np.logical_or(gradW < 0, W > 0)]) ** 2 +
+                norm(gradH[np.logical_or(gradH < 0, H > 0)]) ** 2)
             if proj_norm < self.tol * init_grad:
                 break
 
@@ -512,13 +448,14 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
 
             W = W.T
             gradW = gradW.T
-            if iterW == 1:
+
+            if self.adaptive and iterW == 1:
                 tolW = 0.1 * tolW
 
             # update H
             H, gradH, iterH = self._update_H(X, H, W, tolH)
 
-            if iterH == 1:
+            if self.adaptive and iterH == 1:
                 tolH = 0.1 * tolH
 
             self.comp_sparseness_ = _sparseness(H.ravel())
@@ -572,9 +509,130 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
         """
         X = atleast2d_or_csr(X)
         W = np.zeros((X.shape[0], self.n_components_))
-        for j in range(0, X.shape[0]):
-            W[j, :], _ = nnls(self.components_.T, X[j, :])
-        return W
+        W, _, _ = self._nnls_lbfgs(self.components_.T, X.T, W.T, tol=1e-7)
+        return W.T
+
+    def _nnls(self, X, Y, W, tol=1e-3, max_iter=100, *args):
+        if self.nnls_solver == 'pg':
+            return self._nnls_pg(X, Y, W, tol, max_iter, *args)
+        elif self.nnls_solver == 'lbfgs':
+            return self._nnls_lbfgs(X, Y, W, tol, max_iter, *args)
+        else:
+            raise ValueError('Unsupported solver: %s' % self.nnls_solver)
+
+    def _nnls_pg(self, X, Y, W, tol=1e-3, max_iter=100, sigma=0.01, beta=0.1):
+        """Non-negative least square solver
+
+        Solves a non-negative least squares subproblem using the
+        projected gradient descent algorithm.
+        min || XW - Y ||_2
+
+        Parameters
+        ----------
+        V, W : array-like
+            Constant matrices.
+
+        H_init : array-like
+            Initial guess for the solution.
+
+        tol : float
+            Tolerance of the stopping condition.
+
+        max_iter : int
+            Maximum number of iterations before timing out.
+
+        sigma : float
+            Constant used in the sufficient decrease condition checked by the
+            line search.  Smaller values lead to a looser sufficient decrease
+            condition, thus reducing the time taken by the line search, but
+            potentially increasing the number of iterations of the projected
+            gradient procedure. 0.01 is a commonly used value in the
+            optimization literature.
+
+        beta : float
+            Factor by which the step size is decreased (resp. increased) until
+            (resp. as long as) the sufficient decrease condition is satisfied.
+            Larger values allow to find a better step size but lead to longer
+            line search. 0.1 is a commonly used value in the optimization
+            literature.
+
+        Returns
+        -------
+        W : array-like
+            Solution to the non-negative least squares problem.
+
+        grad : array-like
+            The gradient.
+
+        n_iter : int
+            The number of iterations done by the algorithm.
+
+        Reference
+        ---------
+
+        C.-J. Lin. Projected gradient methods
+        for non-negative matrix factorization. Neural
+        Computation, 19(2007), 2756-2779.
+        http://www.csie.ntu.edu.tw/~cjlin/nmf/
+
+        """
+        if (W < 0).any():
+            raise ValueError("Negative values in H_init passed to NLS solver.")
+
+        Xy = safe_sparse_dot(X.T, Y, dense_output=True)
+        G = safe_sparse_dot(X.T, X, dense_output=True)
+
+        # values justified in the paper
+        alpha = 1
+        for n_iter in range(1, max_iter + 1):
+            grad = np.dot(G, W) - Xy
+            proj_gradient = norm(grad[np.logical_or(grad < 0, W > 0)])
+            if proj_gradient < tol:
+                break
+
+            for inner_iter in range(1, 20):
+                # Gradient step.
+                Wn = W - alpha * grad
+                # Projection step.
+                Wn = np.maximum(Wn, 0)
+                d = Wn - W
+                gradd = np.sum(grad * d)
+                dGd = np.sum(np.dot(G, d) * d)
+                suff_decr = (1 - sigma) * gradd + 0.5 * dGd < 0
+                if inner_iter == 1:
+                    decr_alpha = not suff_decr
+                    Wp = W
+
+                if decr_alpha:
+                    if suff_decr:
+                        W = Wn
+                        break
+                    else:
+                        alpha *= beta
+                elif not suff_decr or (Wp == Wn).all():
+                    W = Wp
+                    break
+                else:
+                    alpha /= beta
+                    Wp = Wn
+
+        if n_iter == max_iter:
+            warnings.warn("Iteration limit reached in nls subproblem.")
+
+        return W, grad, n_iter
+
+    def _nnls_lbfgs(self, X, Y, W=None, tol=1e-3, max_iter=100):
+        n_samples, n_features = X.shape
+        n_targets = Y.shape[1]
+        n_iter = np.empty(n_targets, dtype=np.int)
+        if W is None:
+            W = np.zeros((n_features, n_targets))
+        grad = np.empty((n_features, n_targets))
+        for k in xrange(n_targets):
+            W[:, k], grad[:, k], n_iter[k] = _nls_lbfgs(X, Y[:, k],
+                                                        init=W[:, k],
+                                                        tol=tol)
+        return W, grad, n_iter.max() + 1
 
 
 class NMF(ProjectedGradientNMF):
