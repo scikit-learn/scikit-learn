@@ -127,15 +127,16 @@ class LinearModel(six.with_metaclass(ABCMeta, BaseEstimator)):
         """Fit model."""
 
     def decision_function(self, X):
-        """Decision function of the linear model
+        """Decision function of the linear model.
 
         Parameters
         ----------
-        X : numpy array of shape [n_samples, n_features]
+        X : {array-like, sparse matrix}, shape = (n_samples, n_features)
+            Samples.
 
         Returns
         -------
-        C : array, shape = [n_samples]
+        C : array, shape = (n_samples,)
             Returns predicted values.
         """
         X = safe_asarray(X)
@@ -147,11 +148,12 @@ class LinearModel(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         Parameters
         ----------
-        X : numpy array of shape [n_samples, n_features]
+        X : {array-like, sparse matrix}, shape = (n_samples, n_features)
+            Samples.
 
         Returns
         -------
-        C : array, shape = [n_samples]
+        C : array, shape = (n_samples,)
             Returns predicted values.
         """
         return self.decision_function(X)
@@ -184,14 +186,15 @@ class LinearClassifierMixin(ClassifierMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix}, shape = (n_samples, n_features)
             Samples.
 
         Returns
         -------
-        array, shape = [n_samples] if n_classes == 2 else [n_samples,n_classes]
+        array, shape=(n_samples,) if n_classes == 2 else (n_samples, n_classes)
             Confidence scores per (sample, class) combination. In the binary
-            case, confidence score for the "positive" class.
+            case, confidence score for self.classes_[1] where >0 means this
+            class would be predicted.
         """
         X = atleast2d_or_csr(X)
 
