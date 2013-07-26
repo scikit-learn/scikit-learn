@@ -43,6 +43,7 @@ VERSION = sklearn.__version__
 if len(set(('develop', 'release', 'bdist_egg', 'bdist_rpm',
            'bdist_wininst', 'install_egg_info', 'build_sphinx',
            'egg_info', 'easy_install', 'upload',
+           '--single-version-externally-managed',
             )).intersection(sys.argv)) > 0:
     import setuptools
     extra_setuptools_args = dict(
