@@ -88,7 +88,8 @@ def array2d(X, dtype=None, order=None, copy=False, force_all_finite=True):
     return X_2d
 
 
-def _atleast2d_or_sparse(X, dtype, order, copy, sparse_class, convmethod, force_all_finite):
+def _atleast2d_or_sparse(X, dtype, order, copy, sparse_class, convmethod,
+                         force_all_finite):
     if sparse.issparse(X):
         if dtype is None or X.dtype == dtype:
             X = getattr(X, convmethod)()
@@ -98,13 +99,15 @@ def _atleast2d_or_sparse(X, dtype, order, copy, sparse_class, convmethod, force_
             _assert_all_finite(X.data)
         X.data = np.array(X.data, copy=False, order=order)
     else:
-        X = array2d(X, dtype=dtype, order=order, copy=copy, force_all_finite=force_all_finite)
+        X = array2d(X, dtype=dtype, order=order, copy=copy,
+                    force_all_finite=force_all_finite)
         if force_all_finite:
             _assert_all_finite(X)
     return X
 
 
-def atleast2d_or_csc(X, dtype=None, order=None, copy=False, force_all_finite=True):
+def atleast2d_or_csc(X, dtype=None, order=None, copy=False,
+                     force_all_finite=True):
     """Like numpy.atleast_2d, but converts sparse matrices to CSC format.
 
     Also, converts np.matrix to np.ndarray.
@@ -113,7 +116,8 @@ def atleast2d_or_csc(X, dtype=None, order=None, copy=False, force_all_finite=Tru
                                 "tocsc", force_all_finite)
 
 
-def atleast2d_or_csr(X, dtype=None, order=None, copy=False, force_all_finite=True):
+def atleast2d_or_csr(X, dtype=None, order=None, copy=False,
+                     force_all_finite=True):
     """Like numpy.atleast_2d, but converts sparse matrices to CSR format
 
     Also, converts np.matrix to np.ndarray.
@@ -225,6 +229,17 @@ def check_arrays(*arrays, **options):
         checked_arrays.append(array)
 
     return checked_arrays
+
+
+def make_y_1d(y):
+    if y.ndim == 1:
+        return y
+
+    y_ = y.ravel()
+    if len(y_) != len(y):
+        raise ValueError("Expected y of shape (%d,), got %s."
+                         % (len(y), y.shape))
+    return y_
 
 
 def warn_if_not_float(X, estimator='This algorithm'):
