@@ -3,7 +3,7 @@ Generate samples of synthetic data sets.
 """
 
 # Authors: B. Thirion, G. Varoquaux, A. Gramfort, V. Michel, O. Grisel,
-#          G. Louppe
+#          G. Louppe, G. Synnaeve
 # License: BSD 3 clause
 
 from itertools import product
@@ -1300,4 +1300,72 @@ def make_gaussian_quantiles(mean=None, cov=1., n_samples=100,
     if shuffle:
         X, y = util_shuffle(X, y, random_state=generator)
 
+    return X, y
+
+
+def make_nudged_dataset(X, y, images_shape=(8, 8),
+        n_samples=100, nudging_strength=1, random_state=None):
+    """ 
+    Generate randomly nudged (left-right-up-down) images of the the ones in
+    the given dataset.
+
+    X : array of shape [n_examples, n_features]
+        images examples
+
+    y : array of shape [n_examples] 
+        images labels
+
+    images_shape : 3 elements tuple, (images_x_size, images_y_size)
+        (default=(8,8,1))
+
+    n_samples : number of additional samples generated from the dataset
+        (default=100)
+
+    nudging_strength : number of pixels by which to nudge the images
+        (default=1)
+
+    random_state : random state initialization
+        (default=None)
+
+    Returns
+    -------
+
+    X : array of shape [n_examples + n_samples, n_features]
+        images examples
+
+    y : array of shape [n_examples + n_samples] 
+        images labels
+    """
+    rng = check_random_state(random_state)
+
+    # TODO rotations? scipy.ndimage.rotate(img, angle_in_deg, reshape=False)
+
+    additionals_X = []
+    additionals_y = []
+    ix = images_shape[0]
+    iy = images_shape[1]
+    n_s = nudging_strength
+    # behold the hackery here (nudging images in -X/X/-Y/Y)
+    for dir_ind in xrange(4):
+        i_ = rng.randint(0, X.shape[0], n_samples/4)
+        subset_X = X[i_]
+        for i in xrange(ix):
+            if dir_ind == 0: # left
+                subset_X[:, i*ix:(i+1)*ix - n_s] = subset_X[:,
+                        i*ix + n_s:(i+1)*ix]
+            elif dir_ind == 1: # right
+                subset_X[:, i*ix + n_s:(i+1)*ix] = subset_X[:,
+                        i*ix:(i+1)*ix - n_s]
+        for i in xrange(iy - n_s):
+            if dir_ind == 2: # down
+                subset_X[:, (i + n_s)*iy:(i+1 + n_s)*iy] = subset_X[:,
+                        i*iy:(i+1)*iy]
+            elif dir_ind == 3: # up
+                subset_X[:, i*iy:(i+1)*iy] = subset_X[:,
+                        (i + n_s)*iy:(i+1 + n_s)*iy]
+        additionals_X.append(subset_X)
+        additionals_y.append(y[i_])
+
+    X = np.concatenate([X] + additionals_X)
+    y = np.concatenate([y] + additionals_y, axis=0)
     return X, y

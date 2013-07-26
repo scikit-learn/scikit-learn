@@ -21,6 +21,7 @@ from sklearn.datasets import make_sparse_uncorrelated
 from sklearn.datasets import make_spd_matrix
 from sklearn.datasets import make_swiss_roll
 from sklearn.datasets import make_s_curve
+from sklearn.datasets import make_nudged_dataset
 
 
 def test_make_classification():
@@ -191,3 +192,31 @@ def test_make_s_curve():
     assert_equal(t.shape, (5,), "t shape mismatch")
     assert_array_equal(X[:, 0], np.sin(t))
     assert_array_equal(X[:, 2], np.sign(t) * (np.cos(t) - 1))
+
+def test_nudging():
+    try:
+        from sklearn.utils.testing import SkipTest
+        from sklearn import datasets
+        data = datasets.load_digits()
+    except IOError:
+        raise SkipTest("Download digits to run this test")
+    rng = np.random.RandomState(42)
+    # test default nudging (1px)
+    X, y = make_nudged_dataset(data.data, data.target, random_state=rng)
+    assert_array_equal(np.array(
+        [0.,0.,13.,10.,6.,16.,7.,0.,0.,5.,16.,3.,2.,14.,6.,
+         0.,0.,0.,10.,16.,16.,16.,4.,0.,0.,0.,0.,0.,0.,12.,
+         5.,0.,0.,0.,0.,0.,0.,13.,4.,0.,0.,3.,11.,2.,5.,
+         15.,0.,0.,0.,0.,4.,12.,16.,10.,0.,0.,0.,0.,4.,12.,
+         16.,10.,0.,0.]), X[-1])
+    assert(y[-1] == 9)
+    # test bigger nudgin (2px, digits is 8x8px)
+    X, y = make_nudged_dataset(data.data, data.target, n_samples=10,
+            nudging_strength=2, random_state=rng)
+    assert_array_equal(np.array(
+        [0.,12.,6.,0.,0.,13.,4.,0.,0.,6.,16.,13.,16.,16.,7.,
+         0.,0.,0.,3.,4.,1.,8.,8.,0.,0.,0.,0.,0.,0.,4.,
+         12.,0.,0.,0.,8.,9.,2.,9.,9.,0.,0.,0.,2.,13.,16.,
+         15.,3.,0.,0.,0.,8.,9.,2.,9.,9.,0.,0.,0.,2.,13.,
+         16.,15.,3.,0.]), X[-1])
+    assert(y[-1] == 9)
