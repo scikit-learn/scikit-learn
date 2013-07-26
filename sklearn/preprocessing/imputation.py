@@ -341,23 +341,24 @@ class Imputer(BaseEstimator, TransformerMixin):
             X = atleast2d_or_csr(X, force_all_finite=False).astype(np.float)
 
             if sparse.issparse(X):
-                self.statistics_ = self._sparse_fit(X,
-                                                    self.strategy,
-                                                    self.missing_values,
-                                                    self.axis)
+                statistics = self._sparse_fit(X,
+                                              self.strategy,
+                                              self.missing_values,
+                                              self.axis)
 
             else:
-                self.statistics_ = self._dense_fit(X,
-                                                   self.strategy,
-                                                   self.missing_values,
-                                                   self.axis)
+                statistics = self._dense_fit(X,
+                                             self.strategy,
+                                             self.missing_values,
+                                             self.axis)
         else:
             X = atleast2d_or_csc(X, force_all_finite=False).astype(np.float)
+            statistics = self.statistics_
 
         # Delete the invalid rows/columns
-        invalid_mask = np.isnan(self.statistics_)
+        invalid_mask = np.isnan(statistics)
         valid_mask = np.logical_not(invalid_mask)
-        valid_statistics = self.statistics_[valid_mask]
+        valid_statistics = self.statistics[valid_mask]
         valid_statistics_indexes = np.where(valid_mask)[0]
         missing = np.arange(X.shape[not self.axis])[invalid_mask]
 
