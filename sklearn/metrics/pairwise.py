@@ -190,46 +190,94 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
     return distances if squared else np.sqrt(distances)
 
 
+# FIXME: chunk_x_num -> n_batches_x
 def pairwise_distances_argmin(X, Y=None, axis=1, metric="euclidean",
-                              chunk_x_num=None, chunk_y_num=None,
+                              n_batches_x=None, n_batches_y=None,
                               return_distances=False, **kwargs):
+    """Compute minimum distances between one point and a set of points.
 
+    This function computes for each row in X, the index of the row of Y which
+    is closest (according to the specified distance). The distances are also
+    returned if requested.
+
+    This is mostly equivalent to calling:
+
+        pairwise_distances(X, Y=Y, metric=metric).argmin(axis=axis)
+
+    but uses much less memory (n_batches_x * n_batches_y less), and is
+    faster for large arrays.
+
+    This function works with dense matrices only.
+
+    Parameters
+    ==========
+    X, Y: array-like
+        arrays containing points. Shape must be (sample number, feature number)
+        for both. Sample numbers can be different, but feature number must be
+        identical for both X and Y.
+
+    n_batches_x, n_batches_y: integers
+        Number of batches to use for X and Y respectively.
+        If None, these numbers are determined automatically. Tweaking them
+        allows for fine-tuning memory usage and execution time. The memory
+        usage is maximal for n_batches_x == chunk_y_size == 1. In any other
+        case, memory usage is reduced by a factor of n_batches_x*chunk_y_size
+        compared to the maximum. Execution time will be large for a large
+        number of chunks.
+
+    return_distances: bool
+        flag telling if found minimum distances must be returned or not.
+
+    Returns
+    =======
+    indices: numpy.ndarray
+        indices[i] is the row in Y that is closest to the i-th row in X.
+
+    distances: numpy.ndarray
+        distances[i] is the distance between the i-th row in X and the
+        indices[i]-th row in Y. Returned only if return_distances is True.
+
+    Notes
+    =====
+    provided metric is assumed to be symmetric.
+    """
     dist_func = None
     if metric in PAIRWISE_DISTANCE_FUNCTIONS:
         dist_func = PAIRWISE_DISTANCE_FUNCTIONS[metric]
     elif not callable(metric):
-        raise ValueError("'metric' must be string or a callable")
+        raise ValueError("'metric' must be a string or a callable")
 
     X, Y = check_pairwise_arrays(X, Y)
 
     if axis == 0:
         X, Y = Y, X
-        chunk_x_num, chunk_y_num = chunk_y_num, chunk_x_num
+        n_batches_x, n_batches_y = n_batches_y, n_batches_x
 
-    if chunk_x_num is None and chunk_y_num is None:
-        # Cut arrays in a given number of pieces, along x or Y, depending
-        # on which arrays is bigger.
+    if n_batches_x is None and n_batches_y is None:
+        # Heuristic for determining batch numbers along X and Y.
+        # A number of 50 batches seems to give acceptable or good results
+        # for a large range of dimensions.
         if X.shape[0] >= Y.shape[0] / 2 and Y.shape[0] >= X.shape[0] / 2:
-            chunk_x_num, chunk_y_num = (7, 7)
+            n_batches_x, n_batches_y = (7, 7)
         elif X.shape[0] > Y.shape[0]:
-            chunk_x_num, chunk_y_num = (50, 1)
+            n_batches_x, n_batches_y = (50, 1)
         else:
-            chunk_x_num, chunk_y_num = (1, 50)
+            n_batches_x, n_batches_y = (1, 50)
 
-    if chunk_x_num is None:
-        chunk_x_num = 1
-    if chunk_y_num is None:
-        chunk_y_num = 1
+    if n_batches_x is None:
+        n_batches_x = 1
+    if n_batches_y is None:
+        n_batches_y = 1
 
     # Allocate output arrays
     indices = np.empty(X.shape[0], dtype='int32')
     values = np.empty(X.shape[0])
     values.fill(np.infty)
 
-    for chunk_x in gen_even_slices(X.shape[0], chunk_x_num):
+    for chunk_x in gen_even_slices(X.shape[0], n_batches_x):
         X_chunk = X[chunk_x, :]
 
-        for chunk_y in gen_even_slices(Y.shape[0], chunk_y_num):
+        for chunk_y in gen_even_slices(Y.shape[0], n_batches_y):
             Y_chunk = Y[chunk_y, :]
 
             if dist_func is not None:
@@ -268,113 +316,6 @@ def pairwise_distances_argmin(X, Y=None, axis=1, metric="euclidean",
 
     if return_distances:
         if metric == "euclidean" and not kwargs.get("squared", False):
-            values = np.sqrt(values)
-        return indices, values
-    else:
-        return indices
-
-
-def euclidean_distances_argmin(X, Y=None, axis=1,
-                               chunk_x_num=None, chunk_y_num=None,
-                               return_distances=False, squared=False):
-    """Compute minimum distances between one point and a set of points.
-
-    This function computes for each row in X, the index of the row of Y which
-    is closest (according to the euclidean distance). The distance value is
-    also returned if requested.
-
-    This is mostly equivalent to calling:
-
-        euclidean_distances(X, Y=Y).argmin(axis=axis)
-
-    but uses much less memory, and is faster for large arrays.
-
-    This function works with dense matrices only.
-
-    Parameters
-    ==========
-    X, Y: array-like
-        arrays containing points. Shape must be (sample number, feature number)
-        for both. Sample numbers can be different, but feature number must be
-        identical for both X and Y.
-
-    chunk_x_num, chunk_y_num: integers
-        Number of chunks to use for X and Y respectively.
-        If None, these numbers are determined automatically.
-        Tweaking these numbers allows for fine-tuning memory usage and
-        execution time. The memory usage is maximal for
-        chunk_x_num == chunk_y_size == 1. In any other case, memory usage
-        is reduced by a factor of chunk_x_num*chunk_y_size compared to the
-        maximum. Execution time will be large for a large number of chunks.
-
-    return_distances: bool
-        flag telling if found minimum distances must be returned or not.
-
-    squared: bool
-        if True, the squared distances are returned instead of the distances.
-        This spares a call to numpy.sqrt, which is useful in some cases.
-
-    Returns
-    =======
-    indices: numpy.ndarray
-        indices[i] is the row in Y that is closest to the i-th row in X.
-
-    distances: numpy.ndarray
-        distances[i] is the distances between the i-th row in X and the
-        indices[i]-th row in Y. Returned only if return_distances is True.
-    """
-    X, Y = check_pairwise_arrays(X, Y)
-
-    if axis == 0:
-        X, Y = Y, X
-        chunk_x_num, chunk_y_num = chunk_y_num, chunk_x_num
-
-    if chunk_x_num is None and chunk_y_num is None:
-        # Cut arrays in a given number of pieces, along x or Y, depending
-        # on which arrays is bigger.
-        if X.shape[0] >= Y.shape[0] / 2 and Y.shape[0] >= X.shape[0] / 2:
-            chunk_x_num, chunk_y_num = (7, 7)
-        elif X.shape[0] > Y.shape[0]:
-            chunk_x_num, chunk_y_num = (50, 1)
-        else:
-            chunk_x_num, chunk_y_num = (1, 50)
-
-    if chunk_x_num is None:
-        chunk_x_num = 1
-    if chunk_y_num is None:
-        chunk_y_num = 1
-
-    # Allocate output arrays
-    indices = np.empty(X.shape[0], dtype='int32')
-    values = np.empty(X.shape[0])
-    values.fill(np.infty)
-
-    for chunk_x in gen_even_slices(X.shape[0], chunk_x_num):
-        X_chunk = X[chunk_x, :]
-
-        for chunk_y in gen_even_slices(Y.shape[0], chunk_y_num):
-            Y_chunk = Y[chunk_y, :]
-
-            # Compute distances in current chunk
-            tvar = np.dot(X_chunk, Y_chunk.T)
-            tvar *= -2
-            tvar += (X_chunk * X_chunk).sum(axis=1)[:, np.newaxis]
-            tvar += (Y_chunk * Y_chunk).sum(axis=1)[np.newaxis, :]
-            np.maximum(tvar, 0, tvar)
-
-            # Update indices and minimum values using chunk
-            min_indices = tvar.argmin(axis=1)
-            min_values = tvar[range(chunk_x.stop - chunk_x.start), min_indices]
-
-            flags = values[chunk_x] > min_values
-            indices[chunk_x] = np.where(
-                flags, min_indices + chunk_y.start, indices[chunk_x])
-
-            values[chunk_x] = np.where(
-                flags, min_values, values[chunk_x])
-
-    if return_distances:
-        if not squared:
             values = np.sqrt(values)
         return indices, values
     else:

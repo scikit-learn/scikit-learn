@@ -51,7 +51,6 @@ from .cluster import (adjusted_rand_score,
 
 from .pairwise import (euclidean_distances,
                        pairwise_distances,
-                       euclidean_distances_argmin,
                        pairwise_distances_argmin,
                        pairwise_kernels)
 
@@ -66,7 +65,6 @@ __all__ = ['accuracy_score',
            'completeness_score',
            'confusion_matrix',
            'euclidean_distances',
-           'euclidean_distances_argmin',
            'pairwise_distances_argmin',
            'explained_variance_score',
            'f1_score',

@@ -13,7 +13,6 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_true
 
 from sklearn.metrics.pairwise import euclidean_distances
-from sklearn.metrics.pairwise import euclidean_distances_argmin
 from sklearn.metrics.pairwise import manhattan_distances
 from sklearn.metrics.pairwise import linear_kernel
 from sklearn.metrics.pairwise import chi2_kernel, additive_chi2_kernel
@@ -225,28 +224,6 @@ def test_euclidean_distances():
     assert_array_almost_equal(D, [[1., 2.]])
 
 
-def test_euclidean_distances_argmin():
-    """ Check the pairwise Euclidean minimum distances computation"""
-    X = [[0], [1]]
-    Y = [[-1], [2]]
-    D = euclidean_distances_argmin(X, Y)
-    assert_array_almost_equal(D, [0, 1])
-
-    # Compare with naive implementation
-    np.random.seed(1)
-    X = np.random.randn(3, 4)
-    Y = np.random.randn(5, 4)
-
-    dist = euclidean_distances(X, Y=Y)
-    dist_orig_ind = dist.argmin(axis=0)
-    dist_orig_val = dist[dist_orig_ind, range(len(dist_orig_ind))]
-
-    dist_chunked_ind, dist_chunked_val = euclidean_distances_argmin(
-        X, Y=Y, axis=0, return_distances=True)
-    np.testing.assert_almost_equal(dist_orig_ind, dist_chunked_ind, decimal=7)
-    np.testing.assert_almost_equal(dist_orig_val, dist_chunked_val, decimal=7)
-
-
 def test_chi_square_kernel():
     rng = np.random.RandomState(0)
     X = rng.random_sample((5, 4))
@@ -283,7 +260,7 @@ def test_chi_square_kernel():
 
     # check that kernel of similar things is greater than dissimilar ones
     X = [[.3, .7], [1., 0]]
-    Y = [[0,   1], [.9, .1]]
+    Y = [[0, 1], [.9, .1]]
     K = chi2_kernel(X, Y)
     assert_greater(K[0, 0], K[0, 1])
     assert_greater(K[1, 1], K[1, 0])
