@@ -176,6 +176,14 @@ Changelog
    - :func:`datasets.make_multilabel_classification` can now return
      the output in label indicator multilabel format  by `Arnaud Joly`_.
 
+   - K-nearest neighbors, :class:`neighbors.KNeighborsRegressor` and
+     :class:`neighbors.RadiusNeighborsRegressor`,
+      and radius neighbors, :class:`neighbors.RadiusNeighborsRegressor` and
+     :class:`neighbors.RadiusNeighbors,Classifier`support multioutput data
+     by `Arnaud Joly`_.
+
+
+
 
 API changes summary
 -------------------
