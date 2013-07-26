@@ -146,8 +146,8 @@ class ChengChurch(six.with_metaclass(ABCMeta, BaseEstimator,
 
     def _multiple_node_deletion(self, rows, cols, X):
         sr = self._square_residue(rows, cols, X)
-        while sr.mean() > self.max_msr:
-            msr = sr.mean()
+        msr = sr.mean()
+        while msr > self.max_msr:
             n_rows, n_cols = len(rows), len(cols)
             row_msr = sr.mean(axis=1)
             if n_rows >= self.row_deletion_cutoff:
@@ -163,6 +163,7 @@ class ChengChurch(six.with_metaclass(ABCMeta, BaseEstimator,
             if n_rows == len(rows) and n_cols == len(cols):
                 break
             sr = self._square_residue(rows, cols, X)
+            msr = sr.mean()
         return rows, cols
 
     def _node_addition(self, rows, cols, X):
