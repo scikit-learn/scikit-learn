@@ -10,7 +10,7 @@ def configuration(parent_package="", top_path=None):
     if os.name == 'posix':
         libraries.append('m')
     config.add_extension("_tree",
-                         sources=["_tree.c", "rand_r.c"],
+                         sources=["_tree.c"],
                          include_dirs=[numpy.get_include()],
                          libraries=libraries,
                          extra_compile_args=["-O3"])

@@ -8,6 +8,11 @@
 #          Brian Holt <bdholt1@gmail.com>
 #          Noel Dawe <noel@dawe.me>
 #          Satrajit Gosh <satrajit.ghosh@gmail.com>
+#          Lars Buitinck <L.J.Buitinck@uva.nl>
+#
+# rand_r function taken from the 4.4BSD C library:
+# Copyright (c) 1990 The Regents of the University of California.
+#
 # Licence: BSD 3 clause
 
 
@@ -19,12 +24,11 @@ import numpy as np
 cimport numpy as np
 np.import_array()
 
-cdef extern:
-    int sklearn_rand_r(unsigned int *seedp) nogil
-
 cdef enum:
-    # XXX we should put this in a header somewhere
-    RAND_MAX = 0x7FFFFFFF
+    # Max value for our rand_r replacement (near the bottom).
+    # We don't use RAND_MAX because it's different across platforms and
+    # particularly tiny on Windows/MSVC.
+    RAND_R_MAX = 0x7FFFFFFF
 
 
 # =============================================================================
@@ -826,7 +830,7 @@ cdef class Splitter:
             free(self.features)
 
         # Reset random state
-        self.rand_r_state = self.random_state.randint(0, RAND_MAX)
+        self.rand_r_state = self.random_state.randint(0, RAND_R_MAX)
 
         # Initialize samples and features structures
         cdef SIZE_t n_samples = X.shape[0]
@@ -1721,6 +1725,11 @@ cdef class Tree:
 # Utils
 # =============================================================================
 
+# rand_r replacement taken from 4.4BSD C library.
+cdef inline int our_rand_r(unsigned *seed) nogil:
+    seed[0] = seed[0] * 1103515245 + 12345
+    return (seed[0] % (<unsigned>RAND_R_MAX + 1))
+
 cdef inline np.ndarray int_ptr_to_ndarray(int* data, SIZE_t size):
     """Encapsulate data into a 1D numpy array of int's."""
     cdef np.npy_intp shape[1]
@@ -1739,10 +1748,10 @@ cdef inline np.ndarray double_ptr_to_ndarray(double* data, SIZE_t size):
     shape[0] = <np.npy_intp> size
     return np.PyArray_SimpleNewFromData(1, shape, np.NPY_DOUBLE, data)
 
-cdef inline SIZE_t rand_int(SIZE_t end, unsigned int* random_state):
+cdef inline SIZE_t rand_int(SIZE_t end, unsigned int* random_state) nogil:
     """Generate a random integer in [0; end)."""
-    return sklearn_rand_r(random_state) % end
+    return our_rand_r(random_state) % end
 
-cdef inline double rand_double(unsigned int* random_state):
+cdef inline double rand_double(unsigned int* random_state) nogil:
     """Generate a random double in [0; 1)."""
-    return <double> sklearn_rand_r(random_state) / <double> RAND_MAX
+    return <double> our_rand_r(random_state) / <double> RAND_R_MAX
