@@ -45,7 +45,6 @@ from scipy.sparse import issparse
 from ..utils import atleast2d_or_csr
 from ..utils import gen_even_slices
 from ..utils import safe_asarray
-from ..utils import gen_even_slices
 from ..utils.extmath import safe_sparse_dot
 from ..preprocessing import normalize
 from ..externals.joblib import Parallel
@@ -190,7 +189,6 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
     return distances if squared else np.sqrt(distances)
 
 
-# FIXME: chunk_x_num -> n_batches_x
 def pairwise_distances_argmin(X, Y=None, axis=1, metric="euclidean",
                               n_batches_x=None, n_batches_y=None,
                               return_distances=False, **kwargs):
