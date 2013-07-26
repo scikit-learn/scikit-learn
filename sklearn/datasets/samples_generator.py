@@ -16,6 +16,7 @@ from ..utils import shuffle as util_shuffle
 from ..externals import six
 map = six.moves.map
 zip = six.moves.zip
+xrange = six.moves.xrange
 
 
 def make_classification(n_samples=100, n_features=20, n_informative=2,
@@ -1315,8 +1316,8 @@ def make_nudged_dataset(X, y, images_shape=(8, 8),
     y : array of shape [n_examples]
         images labels
 
-    images_shape : 3 elements tuple, (images_x_size, images_y_size)
-        (default=(8,8,1))
+    images_shape : 2 elements tuple, (images_x_size, images_y_size)
+        (default=(8,8))
 
     n_samples : number of additional samples generated from the dataset
         (default=100) should be multiple of 4 (4 directions left/right/down/up)
@@ -1335,8 +1336,21 @@ def make_nudged_dataset(X, y, images_shape=(8, 8),
 
     y : array of shape [n_examples + n_samples]
         images labels
+
+    Examples
+    --------
+    >>> from sklearn.datasets.samples_generator import make_nudged_dataset
+    >>> glider = np.array([[0, 0, 1, 1, 0, 1, 0, 1, 1],
+    ...                    [1, 0, 0, 0, 1, 1, 1, 1, 0],
+    ...                    [0, 1, 0, 0, 0, 1, 1, 1, 1],
+    ...                    [1, 0, 1, 0, 1, 1, 0, 1, 0],
+    ...                    [0, 0, 1, 1, 0, 1, 0, 1, 1]])
+    >>> X, y = make_nudged_dataset(glider, np.array([0 for i in
+    ...                            xrange(glider.shape[0])]),
+    ...                            images_shape=(3, 3))
+    >>> print(X.shape)
+    (105, 9)
     """
-    # could do rotations? scipy.ndimage.rotate(img, angle_deg, reshape=False)
     rng = check_random_state(random_state)
 
     additionals_X = []
