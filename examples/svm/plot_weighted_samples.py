@@ -9,6 +9,8 @@ is proportional to its weight.
 The sample weighting rescales the C parameter, which means that the classifier
 puts more emphasis on getting these points right. The effect might often be
 subtle.
+To emphasis the effect here, we particularly weight outliers, making the
+deformation of the decision boundary very visible.
 """
 print(__doc__)
 
@@ -39,8 +41,9 @@ X = np.r_[np.random.randn(10, 2) + [1, 1], np.random.randn(10, 2)]
 Y = [1] * 10 + [-1] * 10
 sample_weight_last_ten = abs(np.random.randn(len(X)))
 sample_weight_constant = np.ones(len(X))
-# and assign a bigger weight to the last 5 samples
+# and bigger weights to some outliers
 sample_weight_last_ten[15:] *= 5
+sample_weight_last_ten[9] *= 15
 
 # for reference, first fit without class weights
 
