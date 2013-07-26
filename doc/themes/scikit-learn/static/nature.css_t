@@ -803,3 +803,35 @@ div.box-links {
 div.box-links p {
     display: inline;
 }
+
+
+/*----- testimonials ----------*/
+
+div.testimonial h2 {
+    background-color: transparent;
+    color: #008EB2;
+    height: 26px;
+    line-height: 1.1em;
+    font-size: 22px;
+    font-family: Arial, sans-serif;
+    font-weight: bold;
+    text-align: center;
+}
+
+div.testimonial img {
+    float: left;
+    padding-right: 30px;
+}
+
+div.testimonial p {
+    line-height: 1.5em;
+    padding-left: 30px;
+    font-size: 1.1em;
+}
+
+div.testimonial-website {
+    width: 100%;
+    text-align: right;
+    font-size: 0.8em;
+}
+

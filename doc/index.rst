@@ -232,7 +232,12 @@
 
             <!-- who using -->
             <div class="span3">
-                <h4 class="no-bg">Who is using it</h4>
+                <h4 class="no-bg">
+
+:ref:`Who is using it?<testimonials>`
+
+.. raw::html
+                </h4>
                 <div id="myCarousel" class="carousel slide">
                     <ol class="carousel-indicators">
                     <li data-target="#myCarousel" data-slide-to="0" class="active"></li>
