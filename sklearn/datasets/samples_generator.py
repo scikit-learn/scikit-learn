@@ -1304,15 +1304,15 @@ def make_gaussian_quantiles(mean=None, cov=1., n_samples=100,
 
 
 def make_nudged_dataset(X, y, images_shape=(8, 8),
-        n_samples=100, nudging_strength=1, random_state=None):
-    """ 
+                        n_samples=100, nudging_strength=1, random_state=None):
+    """
     Generate randomly nudged (left-right-up-down) images of the the ones in
     the given dataset.
 
     X : array of shape [n_examples, n_features]
         images examples
 
-    y : array of shape [n_examples] 
+    y : array of shape [n_examples]
         images labels
 
     images_shape : 3 elements tuple, (images_x_size, images_y_size)
@@ -1333,12 +1333,11 @@ def make_nudged_dataset(X, y, images_shape=(8, 8),
     X : array of shape [n_examples + n_samples, n_features]
         images examples
 
-    y : array of shape [n_examples + n_samples] 
+    y : array of shape [n_examples + n_samples]
         images labels
     """
+    # could do rotations? scipy.ndimage.rotate(img, angle_deg, reshape=False)
     rng = check_random_state(random_state)
-
-    # TODO rotations? scipy.ndimage.rotate(img, angle_in_deg, reshape=False)
 
     additionals_X = []
     additionals_y = []
@@ -1349,16 +1348,16 @@ def make_nudged_dataset(X, y, images_shape=(8, 8),
     for dir_ind in xrange(4):
         i_ = rng.randint(0, X.shape[0], n_samples/4)
         subset_X = np.zeros((n_samples/4, X.shape[1]))
-        if dir_ind == 0: # left
+        if dir_ind == 0:  # left
             for i in xrange(ix):
                 subset_X[:, i*ix:(i+1)*ix - n_s] = X[i_, i*ix + n_s:(i+1)*ix]
-        elif dir_ind == 1: # right
+        elif dir_ind == 1:  # right
             for i in xrange(ix):
                 subset_X[:, i*ix + n_s:(i+1)*ix] = X[i_, i*ix:(i+1)*ix - n_s]
-        if dir_ind == 2: # down
+        if dir_ind == 2:  # down
             for i in xrange(iy - n_s):
                 subset_X[:, (i + n_s)*iy:(i+1 + n_s)*iy] = X[i_, i*iy:(i+1)*iy]
-        elif dir_ind == 3: # up
+        elif dir_ind == 3:  # up
             for i in xrange(iy - n_s):
                 subset_X[:, i*iy:(i+1)*iy] = X[i_, (i + n_s)*iy:(i+1 + n_s)*iy]
         additionals_X.append(subset_X)
