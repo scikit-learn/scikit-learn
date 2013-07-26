@@ -747,6 +747,10 @@ class PLSSVD(BaseEstimator, TransformerMixin):
         # svd(X'Y)
         C = np.dot(X.T, Y)
 
+        # The arpack svds solver only works if the number of extracted
+        # components is small than rank(X) - 1. Hence, if we want to extract
+        # all the components (C.shape[1]), we have to use another one. Else,
+        # let's use arpacks to compute only the interesting components.
         if self.n_components == C.shape[1]:
             U, s, V = linalg.svd(C, full_matrices=False)
         else:
