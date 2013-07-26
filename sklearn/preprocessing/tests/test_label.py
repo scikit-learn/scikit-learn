@@ -8,9 +8,9 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
 
-from sklearn.preprocessing.label import Binarizer
+from sklearn.preprocessing.data import Binarizer
 from sklearn.preprocessing.label import LabelBinarizer
-from sklearn.preprocessing.label.label import _transform_selected
+from sklearn.preprocessing.label import _transform_selected
 from sklearn.preprocessing.label import OneHotEncoder
 from sklearn.preprocessing.label import LabelEncoder
 
