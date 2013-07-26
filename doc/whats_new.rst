@@ -170,6 +170,12 @@ Changelog
      time may thus increase significantly compared to the previous
      version (bug results are correct now). By `Philippe Gervais`_.
 
+   - :class:`cross_validation.cross_val_score` and the :mod:`grid_search`
+     module is now tested with multi-output data by `Arnaud Joly`_.
+
+   - :func:`datasets.make_multilabel_classification` can now return
+     the output in label indicator multilabel format  by `Arnaud Joly`_.
+
 
 API changes summary
 -------------------
