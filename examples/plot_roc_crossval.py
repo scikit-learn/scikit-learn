@@ -8,9 +8,9 @@ evaluate classifier output quality using cross-validation.
 
 ROC curves typically feature true positive rate on the Y axis,
 and false positive rate on the X axis. This means that the top left corner
-of the plot is considered the "ideal" point - a false positive rate of
+of the plot is the "ideal" point - a false positive rate of
 zero, and a true positive rate of one.
-This is not very realistic, but it does mean that more area under the curve
+This is not very realistic, but it does mean that a larger area under the curve
 is usually better.
 
 The "steepness" of ROC curves is also important, since it is ideal to
