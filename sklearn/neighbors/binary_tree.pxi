@@ -171,6 +171,20 @@ cdef DTYPE_t LOG_PI = log(PI)
 cdef DTYPE_t LOG_2PI = log(2 * PI)
 
 
+# Some compound datatypes used below:
+cdef struct NodeHeapData_t:
+    DTYPE_t val
+    ITYPE_t i1
+    ITYPE_t i2
+NodeHeapData = np.dtype([('val', DTYPE), ('i1', ITYPE), ('i2', ITYPE)])
+
+cdef struct NodeData_t:
+    ITYPE_t idx_start
+    ITYPE_t idx_end
+    ITYPE_t is_leaf
+    DTYPE_t radius
+NodeData = np.dtype([('idx_start', ITYPE), ('idx_end', ITYPE),
+                     ('is_leaf', ITYPE), ('radius', DTYPE)])
 
 
 ######################################################################
@@ -190,6 +204,11 @@ cdef ITYPE_t[:, ::1] get_memview_ITYPE_2D(
 cdef ITYPE_t[::1] get_memview_ITYPE_1D(
                                np.ndarray[ITYPE_t, ndim=1, mode='c'] X):
     return <ITYPE_t[:X.shape[0]:1]> (<ITYPE_t*> X.data)
+
+cdef NodeHeapData_t[::1] get_memview_NodeHeapData_1D(
+                    np.ndarray[NodeHeapData_t, ndim=1, mode='c'] X):
+    return <NodeHeapData_t[:X.shape[0]:1]> (<NodeHeapData_t*> X.data)
+    
 ######################################################################
 
 
@@ -796,15 +815,6 @@ cdef int partition_node_indices(DTYPE_t* data,
 ######################################################################
 # NodeHeap : min-heap used to keep track of nodes during
 #            breadth-first query
-
-cdef struct NodeHeapData_t:
-    DTYPE_t val
-    ITYPE_t i1
-    ITYPE_t i2
-
-NodeHeapData = np.dtype([('val', DTYPE), ('i1', ITYPE), ('i2', ITYPE)])
-
-
 cdef inline void swap_nodes(NodeHeapData_t* arr, ITYPE_t i1, ITYPE_t i2):
     cdef NodeHeapData_t tmp = arr[i1]
     arr[i1] = arr[i2]
@@ -824,35 +834,42 @@ cdef class NodeHeap:
 
         heap[i].val < min(heap[2 * i + 1].val, heap[2 * i + 2].val)
     """
+    cdef np.ndarray data_arr
     cdef NodeHeapData_t[::1] data
     cdef ITYPE_t n
 
     def __cinit__(self):
-        self.data = np.zeros(0, dtype=NodeHeapData, order='C')
+        self.data_arr = np.zeros(1, dtype=NodeHeapData, order='C')
+        self.data = get_memview_NodeHeapData_1D(self.data_arr)
 
     def __init__(self, size_guess=100):
-        self.data = np.zeros(size_guess, dtype=NodeHeapData, order='C')
+        size_guess = max(size_guess, 1)  # need space for at least one item
+        self.data_arr = np.zeros(size_guess, dtype=NodeHeapData, order='C')
+        self.data = get_memview_NodeHeapData_1D(self.data_arr)
         self.n = size_guess
         self.clear()
 
     cdef int resize(self, ITYPE_t new_size) except -1:
         """Resize the heap to be either larger or smaller"""
-        cdef NodeHeapData_t *data_arr, *new_data_arr
+        cdef NodeHeapData_t *data_ptr, *new_data_ptr
         cdef ITYPE_t i
         cdef ITYPE_t size = self.data.shape[0]
-        cdef NodeHeapData_t[::1] new_data = np.zeros(new_size,
-                                                     dtype=NodeHeapData)
+        cdef np.ndarray new_data_arr = np.zeros(new_size,
+                                                dtype=NodeHeapData)
+        cdef NodeHeapData_t[::1] new_data =\
+                                    get_memview_NodeHeapData_1D(new_data_arr)
 
         if size > 0 and new_size > 0:
-            data_arr = &self.data[0]
-            new_data_arr = &new_data[0]
+            data_ptr = &self.data[0]
+            new_data_ptr = &new_data[0]
             for i in range(min(size, new_size)):
-                new_data_arr[i] = data_arr[i]
+                new_data_ptr[i] = data_ptr[i]
 
         if new_size < size:
             self.n = new_size
 
         self.data = new_data
+        self.data_arr = new_data_arr
         return 0
 
     cdef int push(self, NodeHeapData_t data) except -1:
@@ -941,17 +958,6 @@ VALID_METRIC_IDS = get_valid_metric_ids(VALID_METRICS)
 
 ######################################################################
 # Binary Tree class
-
-cdef struct NodeData_t:
-    ITYPE_t idx_start
-    ITYPE_t idx_end
-    ITYPE_t is_leaf
-    DTYPE_t radius
-
-NodeData = np.dtype([('idx_start', ITYPE), ('idx_end', ITYPE),
-                     ('is_leaf', ITYPE), ('radius', DTYPE)])
-
-
 cdef class BinaryTree:
     __doc__ = CLASS_DOC
 
