@@ -196,23 +196,17 @@ class ChengChurch(six.with_metaclass(ABCMeta, BaseEstimator,
         results = []
 
         for i in range(self.n_clusters):
-            try:
-                rows = np.arange(n_rows, dtype=np.int)[None].T
-                cols = np.arange(n_cols, dtype=np.int)
-                rows, cols = self._multiple_node_deletion(rows, cols, X)
-                rows, cols = self._single_node_deletion(rows, cols, X)
-                rows, cols = self._node_addition(rows, cols, X)
-                self._mask(X, rows, cols, generator, minval, maxval)
-                if len(rows) == 0 or len(cols) == 0:
-                    break
-                results.append((rows.ravel(), cols))
-            except EmptyBiclusterException:
+            rows = np.arange(n_rows, dtype=np.int)[None].T
+            cols = np.arange(n_cols, dtype=np.int)
+            rows, cols = self._multiple_node_deletion(rows, cols, X)
+            rows, cols = self._single_node_deletion(rows, cols, X)
+            rows, cols = self._node_addition(rows, cols, X)
+            self._mask(X, rows, cols, generator, minval, maxval)
+            if len(rows) == 0 or len(cols) == 0:
                 break
-        if results:
-            indicators = (get_indicators(r, c, X.shape) for r, c in results)
-            rows, cols = zip(*indicators)
-            self.rows_ = np.vstack(rows)
-            self.columns_ = np.vstack(cols)
-        else:
-            self.rows_ = np.array([])
-            self.columns_ = np.array([])
+            results.append((rows.ravel(), cols))
+
+        indicators = (get_indicators(r, c, X.shape) for r, c in results)
+        rows, cols = zip(*indicators)
+        self.rows_ = np.vstack(rows)
+        self.columns_ = np.vstack(cols)

@@ -25,12 +25,18 @@ def test_cheng_church():
 
 
 def test_empty_biclusters():
-    generator = np.random.RandomState(0)
-    data = generator.uniform(0, 1000, (50, 50))
-    model = ChengChurch(n_clusters=1, max_msr=0)
-    model.fit(data)
-    assert_equal(len(model.rows_), 0)
-    assert_equal(len(model.columns_), 0)
+    """Cheng and Church should always find at least one bicluster.
+
+    The MSR of a bicluster with one row or one column is zero.
+
+    """
+    for i in range(10):
+        generator = np.random.RandomState(i)
+        data = generator.uniform(0, 1000, (50, 50))
+        model = ChengChurch(n_clusters=1, max_msr=0)
+        model.fit(data)
+        assert_equal(len(model.rows_), 1)
+        assert_equal(len(model.columns_), 1)
 
 
 def test_single_node_deletion():
