@@ -4,24 +4,16 @@
 #          Andreas Mueller <amueller@ais.uni-bonn.de>
 # License: BSD 3 clause
 
-import numbers
-
 import numpy as np
-from scipy import sparse
 
 from ..base import BaseEstimator, TransformerMixin
-from ..utils import check_arrays
-from ..utils import atleast2d_or_csc
+
 from ..utils.fixes import unique
 from ..utils import deprecated
 
 from ..utils.multiclass import unique_labels
 from ..utils.multiclass import type_of_target
 
-from ..utils.sparsefuncs import inplace_csr_row_normalize_l1
-from ..utils.sparsefuncs import inplace_csr_row_normalize_l2
-from ..utils.sparsefuncs import inplace_csr_column_scale
-from ..utils.sparsefuncs import mean_variance_axis0
 from ..externals import six
 
 zip = six.moves.zip

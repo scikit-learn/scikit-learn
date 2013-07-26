@@ -36,4 +36,5 @@ __all__ = [
     'binarize',
     'normalize',
     'scale',
+    'label_binarize',
 ]

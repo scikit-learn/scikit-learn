@@ -987,4 +987,3 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         """
         return _transform_selected(X, self._transform,
                                    self.categorical_features, copy=True)
-
