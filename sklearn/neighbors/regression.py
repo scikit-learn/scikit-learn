@@ -4,7 +4,7 @@
 #          Fabian Pedregosa <fabian.pedregosa@inria.fr>
 #          Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #          Sparseness support by Lars Buitinck <L.J.Buitinck@uva.nl>
-#          Multioutput support by Arnaud Joly <a.joly@ulg.ac.be>
+#          Multi-output support by Arnaud Joly <a.joly@ulg.ac.be>
 #
 # License: BSD 3 clause (C) INRIA, University of Amsterdam
 
@@ -12,10 +12,8 @@ import warnings
 
 import numpy as np
 
-from .base import \
-    _get_weights, _check_weights, \
-    NeighborsBase, KNeighborsMixin, \
-    RadiusNeighborsMixin, SupervisedFloatMixin
+from .base import _get_weights, _check_weights, NeighborsBase, KNeighborsMixin
+from .base import RadiusNeighborsMixin, SupervisedFloatMixin
 from ..base import RegressorMixin
 from ..utils import atleast2d_or_csr
 

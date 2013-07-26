@@ -4,7 +4,7 @@
 #          Fabian Pedregosa <fabian.pedregosa@inria.fr>
 #          Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #          Sparseness support by Lars Buitinck <L.J.Buitinck@uva.nl>
-#          Multioutput support by Arnaud Joly <a.joly@ulg.ac.be>
+#          Multi-output support by Arnaud Joly <a.joly@ulg.ac.be>
 #
 # License: BSD 3 clause (C) INRIA, University of Amsterdam
 
@@ -145,27 +145,27 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
 
         neigh_dist, neigh_ind = self.kneighbors(X)
 
+        classes_ = self.classes_
+        _y = self._y
         if not self.outputs_2d_:
-            self._y = self._y.reshape((-1, 1))
-            self.classes_ = [self.classes_]
+            _y = self._y.reshape((-1, 1))
+            classes_ = [self.classes_]
 
-        n_outputs = len(self.classes_)
+        n_outputs = len(classes_)
         n_samples = X.shape[0]
         weights = _get_weights(neigh_dist, self.weights)
 
-        y_pred = np.empty((n_samples, n_outputs), dtype=self.classes_[0].dtype)
-        for k, classes_k in enumerate(self.classes_):
+        y_pred = np.empty((n_samples, n_outputs), dtype=classes_[0].dtype)
+        for k, classes_k in enumerate(classes_):
             if weights is None:
-                mode, _ = stats.mode(self._y[neigh_ind, k], axis=1)
+                mode, _ = stats.mode(_y[neigh_ind, k], axis=1)
             else:
-                mode, _ = weighted_mode(self._y[neigh_ind, k], weights, axis=1)
+                mode, _ = weighted_mode(_y[neigh_ind, k], weights, axis=1)
 
             y_pred[:, k] = classes_k.take(mode.flatten().astype(np.int))
 
         if not self.outputs_2d_:
             y_pred = y_pred.ravel()
-            self._y = self._y.ravel()
-            self.classes_ = self.classes_[0]
 
         return y_pred
 
@@ -188,9 +188,11 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
 
         neigh_dist, neigh_ind = self.kneighbors(X)
 
+        classes_ = self.classes_
+        _y = self._y
         if not self.outputs_2d_:
-            self._y = self._y.reshape((-1, 1))
-            self.classes_ = [self.classes_]
+            _y = self._y.reshape((-1, 1))
+            classes_ = [self.classes_]
 
         n_samples = X.shape[0]
 
@@ -200,8 +202,8 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
 
         all_rows = np.arange(X.shape[0])
         probabilities = []
-        for k, classes_k in enumerate(self.classes_):
-            pred_labels = self._y[:, k][neigh_ind]
+        for k, classes_k in enumerate(classes_):
+            pred_labels = _y[:, k][neigh_ind]
             proba_k = np.zeros((n_samples, classes_k.size))
 
             # a simple ':' index doesn't work right
@@ -216,8 +218,6 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
             probabilities.append(proba_k)
 
         if not self.outputs_2d_:
-            self._y = self._y.ravel()
-            self.classes_ = self.classes_[0]
             probabilities = probabilities[0]
 
         return probabilities
@@ -339,15 +339,15 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
         n_samples = X.shape[0]
 
         neigh_dist, neigh_ind = self.radius_neighbors(X)
-        inliers = np.array([i for i, nind in enumerate(neigh_ind)
-                            if len(nind) != 0], dtype=np.int)
-        outliers = np.array([i for i, nind in enumerate(neigh_ind)
-                             if len(nind) == 0], dtype=np.int)
+        inliers = [i for i, nind in enumerate(neigh_ind) if len(nind) != 0]
+        outliers = [i for i, nind in enumerate(neigh_ind) if len(nind) == 0]
 
+        classes_ = self.classes_
+        _y = self._y
         if not self.outputs_2d_:
-            self._y = self._y.reshape((-1, 1))
-            self.classes_ = [self.classes_]
-        n_outputs = len(self.classes_)
+            _y = self._y.reshape((-1, 1))
+            classes_ = [self.classes_]
+        n_outputs = len(classes_)
 
         if self.outlier_label is not None:
             neigh_dist[outliers] = 1e-6
@@ -360,9 +360,9 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
 
         weights = _get_weights(neigh_dist, self.weights)
 
-        y_pred = np.empty((n_samples, n_outputs), dtype=self.classes_[0].dtype)
-        for k, classes_k in enumerate(self.classes_):
-            pred_labels = np.array([self._y[ind, k] for ind in neigh_ind],
+        y_pred = np.empty((n_samples, n_outputs), dtype=classes_[0].dtype)
+        for k, classes_k in enumerate(classes_):
+            pred_labels = np.array([_y[ind, k] for ind in neigh_ind],
                                    dtype=object)
             if weights is None:
                 mode = np.array([stats.mode(pl)[0]
@@ -382,7 +382,5 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
 
         if not self.outputs_2d_:
             y_pred = y_pred.ravel()
-            self._y = self._y.ravel()
-            self.classes_ = self.classes_[0]
 
         return y_pred
