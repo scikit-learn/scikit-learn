@@ -189,25 +189,40 @@ NodeData = np.dtype([('idx_start', ITYPE), ('idx_end', ITYPE),
 
 ######################################################################
 # Numpy 1.3-1.4 compatibility utilities
-cdef DTYPE_t[:, ::1] get_memview_DTYPE_2D(
-                               np.ndarray[DTYPE_t, ndim=2, mode='c'] X):
-    return <DTYPE_t[:X.shape[0], :X.shape[1]:1]> (<DTYPE_t*> X.data)
-
 cdef DTYPE_t[::1] get_memview_DTYPE_1D(
                                np.ndarray[DTYPE_t, ndim=1, mode='c'] X):
     return <DTYPE_t[:X.shape[0]:1]> (<DTYPE_t*> X.data)
 
-cdef ITYPE_t[:, ::1] get_memview_ITYPE_2D(
-                               np.ndarray[ITYPE_t, ndim=2, mode='c'] X):
-    return <ITYPE_t[:X.shape[0], :X.shape[1]:1]> (<ITYPE_t*> X.data)
+
+cdef DTYPE_t[:, ::1] get_memview_DTYPE_2D(
+                               np.ndarray[DTYPE_t, ndim=2, mode='c'] X):
+    return <DTYPE_t[:X.shape[0], :X.shape[1]:1]> (<DTYPE_t*> X.data)
+
+
+cdef DTYPE_t[:, :, ::1] get_memview_DTYPE_3D(
+                               np.ndarray[DTYPE_t, ndim=3, mode='c'] X):
+    return <DTYPE_t[:X.shape[0], :X.shape[1], :X.shape[2]:1]>\
+                                                       (<DTYPE_t*> X.data)
+
 
 cdef ITYPE_t[::1] get_memview_ITYPE_1D(
                                np.ndarray[ITYPE_t, ndim=1, mode='c'] X):
     return <ITYPE_t[:X.shape[0]:1]> (<ITYPE_t*> X.data)
 
+
+cdef ITYPE_t[:, ::1] get_memview_ITYPE_2D(
+                               np.ndarray[ITYPE_t, ndim=2, mode='c'] X):
+    return <ITYPE_t[:X.shape[0], :X.shape[1]:1]> (<ITYPE_t*> X.data)
+
+
 cdef NodeHeapData_t[::1] get_memview_NodeHeapData_1D(
                     np.ndarray[NodeHeapData_t, ndim=1, mode='c'] X):
     return <NodeHeapData_t[:X.shape[0]:1]> (<NodeHeapData_t*> X.data)
+
+
+cdef NodeData_t[::1] get_memview_NodeData_1D(
+                    np.ndarray[NodeData_t, ndim=1, mode='c'] X):
+    return <NodeData_t[:X.shape[0]:1]> (<NodeData_t*> X.data)
     
 ######################################################################
 
@@ -961,6 +976,11 @@ VALID_METRIC_IDS = get_valid_metric_ids(VALID_METRICS)
 cdef class BinaryTree:
     __doc__ = CLASS_DOC
 
+    cdef np.ndarray data_arr
+    cdef np.ndarray idx_array_arr
+    cdef np.ndarray node_data_arr
+    cdef np.ndarray node_bounds_arr
+
     cdef readonly DTYPE_t[:, ::1] data
     cdef public ITYPE_t[::1] idx_array
     cdef public NodeData_t[::1] node_data
@@ -984,10 +1004,15 @@ cdef class BinaryTree:
     # Use cinit to initialize all arrays to empty: this will prevent memory
     # errors and seg-faults in rare cases where __init__ is not called
     def __cinit__(self):
-        self.data = np.empty((0, 1), dtype=DTYPE, order='C')
-        self.idx_array = np.empty(0, dtype=ITYPE, order='C')
-        self.node_data = np.empty(0, dtype=NodeData, order='C')
-        self.node_bounds = np.empty((0, 1, 1), dtype=DTYPE)
+        self.data_arr = np.empty((1, 1), dtype=DTYPE, order='C')
+        self.idx_array_arr = np.empty(1, dtype=ITYPE, order='C')
+        self.node_data_arr = np.empty(1, dtype=NodeData, order='C')
+        self.node_bounds_arr = np.empty((1, 1, 1), dtype=DTYPE)
+
+        self.data = get_memview_DTYPE_2D(self.data_arr)
+        self.idx_array = get_memview_ITYPE_1D(self.idx_array_arr)
+        self.node_data = get_memview_NodeData_1D(self.node_data_arr)
+        self.node_bounds = get_memview_DTYPE_3D(self.node_bounds_arr)
 
         self.leaf_size = 0
         self.n_levels = 0
@@ -1002,7 +1027,9 @@ cdef class BinaryTree:
 
     def __init__(self, data,
                  leaf_size=40, metric='minkowski', **kwargs):
-        self.data = np.asarray(data, dtype=DTYPE, order='C')
+        self.data_arr = np.asarray(data, dtype=DTYPE, order='C')
+        self.data = get_memview_DTYPE_2D(self.data_arr)
+
         self.leaf_size = leaf_size
         self.dist_metric = DistanceMetric.get_metric(metric, **kwargs)
         self.euclidean = (self.dist_metric.__class__.__name__
@@ -1031,8 +1058,11 @@ cdef class BinaryTree:
         self.n_nodes = (2 ** self.n_levels) - 1
 
         # allocate arrays for storage
-        self.idx_array = np.arange(n_samples, dtype=ITYPE)
-        self.node_data = np.zeros(self.n_nodes, dtype=NodeData)
+        self.idx_array_arr = np.arange(n_samples, dtype=ITYPE)
+        self.idx_array = get_memview_ITYPE_1D(self.idx_array_arr)
+
+        self.node_data_arr = np.zeros(self.n_nodes, dtype=NodeData)
+        self.node_data = get_memview_NodeData_1D(self.node_data_arr)
 
         # Allocate tree-specific data
         allocate_data(self, self.n_nodes, n_features)
@@ -1048,10 +1078,10 @@ cdef class BinaryTree:
         """
         get state for pickling
         """
-        return (np.asarray(self.data),
-                np.asarray(self.idx_array),
-                np.asarray(self.node_data),
-                np.asarray(self.node_bounds),
+        return (self.data_arr,
+                self.idx_array_arr,
+                self.node_data_arr,
+                self.node_bounds_arr,
                 int(self.leaf_size),
                 int(self.n_levels),
                 int(self.n_nodes),
@@ -1065,10 +1095,16 @@ cdef class BinaryTree:
         """
         set state for pickling
         """
-        self.data = state[0]
-        self.idx_array = state[1]
-        self.node_data = state[2]
-        self.node_bounds = state[3]
+        self.data_arr = state[0]
+        self.idx_array_arr = state[1]
+        self.node_data_arr = state[2]
+        self.node_bounds_arr = state[3]
+
+        self.data = get_memview_DTYPE_2D(self.data_arr)
+        self.idx_array = get_memview_ITYPE_1D(self.idx_array_arr)
+        self.node_data = get_memview_NodeData_1D(self.node_data_arr)
+        self.node_bounds = get_memview_DTYPE_3D(self.node_bounds_arr)
+
         self.leaf_size = state[4]
         self.n_levels = state[5]
         self.n_nodes = state[6]
@@ -1090,8 +1126,8 @@ cdef class BinaryTree:
         return self.n_calls
 
     def get_arrays(self):
-        return map(np.asarray, (self.data, self.idx_array,
-                                self.node_data, self.node_bounds))
+        return (self.data_arr, self.idx_array_arr,
+                self.node_data_arr, self.node_bounds_arr)
 
     cdef inline DTYPE_t dist(self, DTYPE_t* x1, DTYPE_t* x2,
                              ITYPE_t size) except -1:
