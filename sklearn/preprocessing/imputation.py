@@ -14,10 +14,6 @@ from ..utils import array2d
 from ..utils import atleast2d_or_csr
 from ..utils import atleast2d_or_csc
 
-from ..utils.sparsefuncs import inplace_csr_row_normalize_l1
-from ..utils.sparsefuncs import inplace_csr_row_normalize_l2
-from ..utils.sparsefuncs import inplace_csr_column_scale
-from ..utils.sparsefuncs import mean_variance_axis0
 from ..externals import six
 
 zip = six.moves.zip
@@ -66,8 +62,6 @@ def _get_elem_at_rank(negative_elements, n_zeros, positive_elements, k):
     """Compute the kth largest element of the array formed by
        negative_elements, n_zeros zeros and positive_elements."""
     len_neg = len(negative_elements)
-    len_pos = len(positive_elements)
-
     if k < len_neg:
         return negative_elements[k]
     elif k >= len_neg + n_zeros:

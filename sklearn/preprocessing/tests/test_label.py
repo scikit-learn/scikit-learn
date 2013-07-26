@@ -1,5 +1,4 @@
 import numpy as np
-from scipy import sparse
 
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
@@ -8,7 +7,6 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
 
-from sklearn.preprocessing.data import Binarizer
 from sklearn.preprocessing.label import LabelBinarizer
 from sklearn.preprocessing.label import LabelEncoder
 
@@ -121,7 +119,6 @@ def test_label_binarizer_errors():
 
     assert_raises(ValueError, LabelBinarizer, neg_label=2, pos_label=1)
     assert_raises(ValueError, LabelBinarizer, neg_label=2, pos_label=2)
-
 
 
 def test_label_encoder():
