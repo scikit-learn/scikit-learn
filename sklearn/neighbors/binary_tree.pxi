@@ -1196,7 +1196,7 @@ cdef class BinaryTree:
         # XXX: we should allow X to be a pre-built tree.
         X = array2d(X, dtype=DTYPE, order='C')
 
-        if X.shape[-1] != self.data.shape[1]:
+        if X.shape[X.ndim - 1] != self.data.shape[1]:
             raise ValueError("query data dimension must "
                              "match training data dimension")
 
@@ -1254,10 +1254,10 @@ cdef class BinaryTree:
 
         # deflatten results
         if return_distance:
-            return (distances.reshape(X.shape[:-1] + (k,)),
-                    indices.reshape(X.shape[:-1] + (k,)))
+            return (distances.reshape(X.shape[:X.ndim - 1] + (k,)),
+                    indices.reshape(X.shape[:X.ndim - 1] + (k,)))
         else:
-            return indices.reshape(X.shape[:-1] + (k,))
+            return indices.reshape(X.shape[:X.ndim - 1] + (k,))
 
     def query_radius(self, X, r, return_distance=False,
                      int count_only=False, int sort_results=False):
@@ -1342,7 +1342,7 @@ cdef class BinaryTree:
         # validate X and prepare for query
         X = array2d(X, dtype=DTYPE, order='C')
 
-        if X.shape[-1] != self.data.shape[1]:
+        if X.shape[X.ndim - 1] != self.data.shape[1]:
             raise ValueError("query data dimension must "
                              "match training data dimension")
 
@@ -1352,9 +1352,9 @@ cdef class BinaryTree:
         r = np.asarray(r, dtype=DTYPE, order='C')
         r = np.atleast_1d(r)
         if r.shape == (1,):
-            r = r[0] + np.zeros(X.shape[:-1], dtype=DTYPE)
+            r = r[0] + np.zeros(X.shape[:X.ndim - 1], dtype=DTYPE)
         else:
-            if r.shape != X.shape[:-1]:
+            if r.shape != X.shape[:X.ndim - 1]:
                 raise ValueError("r must be broadcastable to X.shape")
 
         cdef DTYPE_t[::1] rarr = r.reshape(-1)
@@ -1395,12 +1395,12 @@ cdef class BinaryTree:
 
         # deflatten results
         if count_only:
-            return np.asarray(count_arr).reshape(X.shape[:-1])
+            return np.asarray(count_arr).reshape(X.shape[:X.ndim - 1])
         elif return_distance:
-            return (indices.reshape(X.shape[:-1]),
-                    distances.reshape(X.shape[:-1]))
+            return (indices.reshape(X.shape[:X.ndim - 1]),
+                    distances.reshape(X.shape[:X.ndim - 1]))
         else:
-            return indices.reshape(X.shape[:-1])
+            return indices.reshape(X.shape[:X.ndim - 1])
 
     def kernel_density(BinaryTree self, X, h, kernel='gaussian',
                        atol=0, rtol=1E-8,
@@ -1488,7 +1488,7 @@ cdef class BinaryTree:
         # validate X and prepare for query
         X = array2d(X, dtype=DTYPE, order='C')
 
-        if X.shape[-1] != n_features:
+        if X.shape[X.ndim - 1] != n_features:
             raise ValueError("query data dimension must "
                              "match training data dimension")
         cdef DTYPE_t[:, ::1] Xarr = X.reshape((-1, n_features))
@@ -1541,7 +1541,7 @@ cdef class BinaryTree:
         for i in range(log_density.shape[0]):
             log_density[i] += log_knorm
 
-        log_density = np.asarray(log_density).reshape(X.shape[:-1])
+        log_density = np.asarray(log_density).reshape(X.shape[:X.ndim - 1])
 
         if return_log:
             return log_density
@@ -1586,7 +1586,7 @@ cdef class BinaryTree:
         # validate X and prepare for query
         X = array2d(X, dtype=DTYPE, order='C')
 
-        if X.shape[-1] != self.data.shape[1]:
+        if X.shape[X.ndim - 1] != self.data.shape[1]:
             raise ValueError("query data dimension must "
                              "match training data dimension")
 
