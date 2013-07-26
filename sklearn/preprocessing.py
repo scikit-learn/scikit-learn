@@ -1289,11 +1289,11 @@ def label_binarize(y, classes, multilabel=False, neg_label=0, pos_label=1):
 class KernelCenterer(BaseEstimator, TransformerMixin):
     """Center a kernel matrix
 
-    Let K(x_i, x_j) be a kernel defined by K(x_i, x_j) = phi(x_i)^T phi(x_j),
-    where phi(x) is a function mapping x to a hilbert space. KernelCenterer is
-    a class to center (i.e., normalize to have zero-mean) the data without
-    explicitly computing phi(x). It is equivalent equivalent to centering
-    phi(x) with sklearn.preprocessing.StandardScaler(with_std=False).
+    Let K(x, z) be a kernel defined by phi(x)^T phi(z), where phi is a
+    function mapping x to a Hilbert space. KernelCenterer centers (i.e.,
+    normalize to have zero mean) the data without explicitly computing phi(x).
+    It is equivalent to centering phi(x) with
+    sklearn.preprocessing.StandardScaler(with_std=False).
     """
 
     def fit(self, K, y=None):
@@ -1315,7 +1315,7 @@ class KernelCenterer(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, K, y=None, copy=True):
-        """Center kernel
+        """Center kernel matrix.
 
         Parameters
         ----------
