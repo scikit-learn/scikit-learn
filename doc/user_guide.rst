@@ -17,7 +17,7 @@
                     if ($(this).children('ul').length > 0) {
                                 $(this).css('list-style-image',
                                 (!$(this).children('ul').is(':hidden')) ? 'url(_static/plusBoxHighlight.png)' : 'url(_static/minBoxHighlight.png)');
-                                $(this).children('ul').toggle();
+                                $(this).children('ul').toggle("slow");
                             }
                             return true; //Makes links clickable
                         }
@@ -26,8 +26,8 @@
                     .css({cursor:'pointer', 'list-style-image':'url(_static/plusBox.png)'})
                     .children('ul').hide();
                 $('ul li ul li:not(:has(ul))').css({cursor:'default', 'list-style-image':'url(_static/noneBox.png)'});
+                $('ul li ul').css('margin-left', '0px');
             $('.toctree-l3').css({cursor:'default', 'list-style-image':'url(_static/noneBox.png)'});
-
             $('.toctree-l2').hover(
                 function () {
                 if ($(this).children('ul').length > 0) {
