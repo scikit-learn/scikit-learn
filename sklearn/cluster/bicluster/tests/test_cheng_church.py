@@ -6,9 +6,11 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_raises
 
-from sklearn.cluster.bicluster import ChengChurch
 from sklearn.metrics import consensus_score
 from sklearn.datasets import make_msr
+
+from sklearn.cluster.bicluster.cheng_church import ChengChurch
+from sklearn.cluster.bicluster.cheng_church import EmptyBiclusterException
 
 
 def test_cheng_church():
@@ -44,10 +46,10 @@ def test_single_node_deletion():
     model = ChengChurch()
     arr = generator.uniform(20, 100, (20, 20))
     arr[5:15, 5:15] = 10
-    rows = np.arange(20)
+    rows = np.arange(20)[np.newaxis].T
     cols = np.arange(20)
     rows, cols = model._single_node_deletion(rows, cols, arr)
-    assert_array_equal(rows, np.arange(5, 15)[None].T)
+    assert_array_equal(rows, np.arange(5, 15)[np.newaxis].T)
     assert_array_equal(cols, np.arange(5, 15))
 
 
@@ -62,8 +64,22 @@ def test_multiple_node_deletion():
     rows = np.arange(20)
     cols = np.arange(20)
     rows, cols = model._multiple_node_deletion(rows, cols, arr)
-    assert_array_equal(rows, np.arange(3, 18)[None].T)
+    assert_array_equal(rows, np.arange(3, 18)[np.newaxis].T)
     assert_array_equal(cols, np.arange(3, 18))
+
+
+def test_node_deletion_when_unnecessary():
+    model = ChengChurch()
+    arr = np.zeros((20, 20))
+    rows = np.arange(20)[np.newaxis].T
+    cols = np.arange(20)
+    rows, cols = model._single_node_deletion(rows, cols, arr)
+    assert_array_equal(rows, np.arange(20)[np.newaxis].T)
+    assert_array_equal(cols, np.arange(20))
+
+    rows, cols = model._multiple_node_deletion(rows, cols, arr)
+    assert_array_equal(rows, np.arange(20)[np.newaxis].T)
+    assert_array_equal(cols, np.arange(20))
 
 
 def test_node_addition():
@@ -74,7 +90,7 @@ def test_node_addition():
     rows = np.arange(5, 10)
     cols = np.arange(5, 10)
     rows, cols = model._node_addition(rows, cols, arr)
-    assert_array_equal(rows, np.arange(20)[None].T)
+    assert_array_equal(rows, np.arange(20)[np.newaxis].T)
     assert_array_equal(cols, np.arange(20))
 
 
@@ -95,3 +111,6 @@ def test_errors():
 
     model = ChengChurch(column_deletion_cutoff=0)
     assert_raises(ValueError, model.fit, data)
+
+    assert_raises(EmptyBiclusterException, model._sr, np.array([]),
+                  np.array([]), data)

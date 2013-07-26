@@ -109,12 +109,12 @@ class ChengChurch(six.with_metaclass(ABCMeta, BaseEstimator,
         return square_residue(rows.ravel(), cols, X)
 
     def _sr_add(self, rows, cols, X):
-        arr = (X - X[:, cols].mean(axis=1)[None].T -
+        arr = (X - X[:, cols].mean(axis=1)[np.newaxis].T -
                X[rows, :].mean(axis=0) + X.mean())
         return np.power(arr, 2)
 
     def _isr_add(self, rows, cols, X):
-        arr = (-X + X[:, cols].mean(axis=1)[None].T -
+        arr = (-X + X[:, cols].mean(axis=1)[np.newaxis].T -
                X[rows, :].mean(axis=0) + X.mean())
         return np.power(arr, 2)
 
@@ -128,11 +128,9 @@ class ChengChurch(six.with_metaclass(ABCMeta, BaseEstimator,
             col_id = np.argmax(col_msr)
             if row_msr[row_id] > col_msr[col_id]:
                 rows = rows.ravel()
-                rows = np.setdiff1d(rows, [rows[row_id]])[None].T
+                rows = np.setdiff1d(rows, [rows[row_id]])[np.newaxis].T
             else:
                 cols = np.setdiff1d(cols, [cols[col_id]])
-            if n_rows == len(rows) and n_cols == len(cols):
-                break
             sr = self._sr(rows, cols, X)
         return rows, cols
 
@@ -145,7 +143,7 @@ class ChengChurch(six.with_metaclass(ABCMeta, BaseEstimator,
             if n_rows >= self.row_deletion_cutoff:
                 to_remove = row_msr > (self.deletion_threshold * msr)
                 rows = rows.ravel()
-                rows = np.setdiff1d(rows, rows[to_remove])[None].T
+                rows = np.setdiff1d(rows, rows[to_remove])[np.newaxis].T
 
             col_msr = self._sr(rows, cols, X).mean(axis=0)
             if n_cols >= self.column_deletion_cutoff:
@@ -169,12 +167,12 @@ class ChengChurch(six.with_metaclass(ABCMeta, BaseEstimator,
             row_score = self._sr_add(rows, cols, X).mean(axis=1)
             to_add = np.nonzero(row_score < msr)[0]
             old_rows = rows.copy()  # save for inverse
-            rows = np.union1d(rows.ravel(), to_add)[None].T
+            rows = np.union1d(rows.ravel(), to_add)[np.newaxis].T
 
             if self.inverse_rows:
                 row_score = self._isr_add(old_rows, cols, X).mean(axis=1)
                 to_add = np.nonzero(row_score < msr)[0]
-                rows = np.union1d(rows.ravel(), to_add)[None].T
+                rows = np.union1d(rows.ravel(), to_add)[np.newaxis].T
 
             if n_rows == len(rows) and n_cols == len(cols):
                 break
@@ -196,14 +194,12 @@ class ChengChurch(six.with_metaclass(ABCMeta, BaseEstimator,
         results = []
 
         for i in range(self.n_clusters):
-            rows = np.arange(n_rows, dtype=np.int)[None].T
+            rows = np.arange(n_rows, dtype=np.int)[np.newaxis].T
             cols = np.arange(n_cols, dtype=np.int)
             rows, cols = self._multiple_node_deletion(rows, cols, X)
             rows, cols = self._single_node_deletion(rows, cols, X)
             rows, cols = self._node_addition(rows, cols, X)
             self._mask(X, rows, cols, generator, minval, maxval)
-            if len(rows) == 0 or len(cols) == 0:
-                break
             results.append((rows.ravel(), cols))
 
         indicators = (get_indicators(r, c, X.shape) for r, c in results)
