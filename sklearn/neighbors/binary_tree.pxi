@@ -304,7 +304,7 @@ Query for neighbors within a given radius
     >>> import numpy as np
     >>> np.random.seed(0)
     >>> X = np.random.random((10, 3))  # 10 points in 3 dimensions
-    >>> tree = BinaryTree(X, leaf_size=2)     # doctest: +SKIP
+    >>> tree = {BinaryTree}(X, leaf_size=2)     # doctest: +SKIP
     >>> print tree.query_radius(X[0], r=0.3, count_only=True)
     3
     >>> ind = tree.query_radius(X[0], r=0.3)  # doctest: +SKIP
@@ -317,7 +317,7 @@ Compute a gaussian kernel density estimate:
     >>> import numpy as np
     >>> np.random.seed(1)
     >>> X = np.random.random((100, 3))
-    >>> tree = BinaryTree(X)                  # doctest: +SKIP
+    >>> tree = {BinaryTree}(X)                # doctest: +SKIP
     >>> tree.kernel_density(X[:3], h=0.1, kernel='gaussian')
     array([ 6.94114649,  7.83281226,  7.2071716 ])
 
@@ -327,7 +327,7 @@ Compute a two-point auto-correlation function
     >>> np.random.seed(0)
     >>> X = np.random.random((30, 3))
     >>> r = np.linspace(0, 1, 5)
-    >>> tree = BinaryTree(X)                  # doctest: +SKIP
+    >>> tree = {BinaryTree}(X)                # doctest: +SKIP
     >>> tree.two_point_correlation(X, r)
     array([ 30,  62, 278, 580, 820])
 
@@ -1275,8 +1275,8 @@ cdef class BinaryTree:
                              "to the number of training points")
 
         # flatten X, and save original shape information
-        cdef DTYPE_t[:, ::1] Xarr =\
-                  get_memview_DTYPE_2D(X.reshape((-1, self.data.shape[1])))
+        np_Xarr = X.reshape((-1, self.data.shape[1]))
+        cdef DTYPE_t[:, ::1] Xarr = get_memview_DTYPE_2D(np_Xarr)
         cdef DTYPE_t reduced_dist_LB
         cdef ITYPE_t i
         cdef DTYPE_t* pt
@@ -1297,7 +1297,7 @@ cdef class BinaryTree:
         self.n_splits = 0
 
         if dualtree:
-            other = self.__class__(Xarr, metric=self.dist_metric,
+            other = self.__class__(np_Xarr, metric=self.dist_metric,
                                    leaf_size=self.leaf_size)
             if breadth_first:
                 self._query_dual_breadthfirst(other, heap, nodeheap)
@@ -1429,8 +1429,8 @@ cdef class BinaryTree:
             if r.shape != X.shape[:X.ndim - 1]:
                 raise ValueError("r must be broadcastable to X.shape")
 
-        cdef DTYPE_t[::1] rarr =\
-                 get_memview_DTYPE_1D(r.reshape(-1))
+        rarr_np = r.reshape(-1)  # store explicitly to keep in scope
+        cdef DTYPE_t[::1] rarr = get_memview_DTYPE_1D(rarr_np)
 
         # prepare variables for iteration
         if not count_only:
@@ -1565,8 +1565,8 @@ cdef class BinaryTree:
         if X.shape[X.ndim - 1] != n_features:
             raise ValueError("query data dimension must "
                              "match training data dimension")
-        cdef DTYPE_t[:, ::1] Xarr =\
-                        get_memview_DTYPE_2D(X.reshape((-1, n_features)))
+        Xarr_np = X.reshape((-1, n_features))
+        cdef DTYPE_t[:, ::1] Xarr = get_memview_DTYPE_2D(Xarr_np)
 
         log_density_arr = np.zeros(Xarr.shape[0], dtype=DTYPE)
         cdef DTYPE_t[::1] log_density = get_memview_DTYPE_1D(log_density_arr)
@@ -1668,8 +1668,8 @@ cdef class BinaryTree:
             raise ValueError("query data dimension must "
                              "match training data dimension")
 
-        cdef DTYPE_t[:, ::1] Xarr =\
-                      get_memview_DTYPE_2D(X.reshape((-1, self.data.shape[1])))
+        np_Xarr = X.reshape((-1, self.data.shape[1]))
+        cdef DTYPE_t[:, ::1] Xarr = get_memview_DTYPE_2D(np_Xarr)
 
         # prepare r for query
         r = np.asarray(r, dtype=DTYPE, order='C')
@@ -1677,7 +1677,7 @@ cdef class BinaryTree:
         if r.ndim != 1:
             raise ValueError("r must be a 1-dimensional array")
         i_rsort = np.argsort(r)
-        rarr_np = r[i_rsort]
+        rarr_np = r[i_rsort]  # needed to keep memory in scope
         cdef DTYPE_t[::1] rarr = get_memview_DTYPE_1D(rarr_np)
 
         # create array to hold counts
