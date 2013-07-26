@@ -37,6 +37,7 @@ zip = six.moves.zip
 map = six.moves.map
 
 __all__ = [
+    'label_binarize',
     'LabelBinarizer',
     'LabelEncoder',
     'OneHotEncoder',
