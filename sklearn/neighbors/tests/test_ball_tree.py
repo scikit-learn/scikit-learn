@@ -1,5 +1,5 @@
 import numpy as np
-from numpy.testing import assert_allclose
+from numpy.testing import assert_array_almost_equal
 from sklearn.neighbors.ball_tree import (BallTree, NeighborsHeap,
                                          simultaneous_sort, kernel_norm,
                                          nodeheap_sort, DTYPE, ITYPE)
@@ -48,7 +48,7 @@ def test_ball_tree_query():
 
         # don't check indices here: if there are any duplicate distances,
         # the indices may not match.  Distances should not have this problem.
-        assert_allclose(dist1, dist2)
+        assert_array_almost_equal(dist1, dist2)
 
     for (metric, kwargs) in METRICS.items():
         for k in (1, 3, 5):
@@ -69,7 +69,7 @@ def test_ball_tree_query_boolean_metrics():
         bt = BallTree(X, leaf_size=1, metric=metric)
         dist1, ind1 = bt.query(Y, k)
         dist2, ind2 = brute_force_neighbors(X, Y, k, metric)
-        assert_allclose(dist1, dist2)
+        assert_array_almost_equal(dist1, dist2)
 
     for metric in BOOLEAN_METRICS:
         yield check_neighbors, metric
@@ -85,7 +85,7 @@ def test_ball_tree_query_discrete_metrics():
         bt = BallTree(X, leaf_size=1, metric=metric)
         dist1, ind1 = bt.query(Y, k)
         dist2, ind2 = brute_force_neighbors(X, Y, k, metric)
-        assert_allclose(dist1, dist2)
+        assert_array_almost_equal(dist1, dist2)
 
     for metric in DISCRETE_METRICS:
         yield check_neighbors, metric
@@ -107,7 +107,7 @@ def test_ball_tree_query_radius(n_samples=100, n_features=10):
         ind.sort()
         i.sort()
 
-        assert_allclose(i, ind)
+        assert_array_almost_equal(i, ind)
 
 
 def test_ball_tree_query_radius_distance(n_samples=100, n_features=10):
@@ -127,7 +127,7 @@ def test_ball_tree_query_radius_distance(n_samples=100, n_features=10):
 
         d = np.sqrt(((query_pt - X[ind]) ** 2).sum(1))
 
-        assert_allclose(d, dist)
+        assert_array_almost_equal(d, dist)
 
 
 def compute_kernel_slow(Y, X, kernel, h):
@@ -165,8 +165,8 @@ def test_ball_tree_KDE(n_samples=100, n_features=3):
                 dens = bt.kernel_density(Y, h, atol=atol, rtol=rtol,
                                          kernel=kernel,
                                          breadth_first=breadth_first)
-                assert_allclose(dens, dens_true, atol=atol,
-                                rtol=max(1E-7, rtol))
+                assert_array_almost_equal(dens, dens_true, atol=atol,
+                                          rtol=max(1E-7, rtol))
 
             for rtol in [0, 1E-5]:
                 for atol in [1E-6, 1E-2]:
@@ -193,7 +193,7 @@ def test_gaussian_kde(n_samples=1000):
         dens_bt = bt.kernel_density(x_out[:, None], h) / n_samples
         dens_gkde = gkde.evaluate(x_out)
 
-        assert_allclose(dens_bt, dens_gkde, rtol=1E-3, atol=1E-3)
+        assert_array_almost_equal(dens_bt, dens_gkde, rtol=1E-3, atol=1E-3)
 
 
 def test_ball_tree_two_point(n_samples=100, n_features=3):
@@ -208,7 +208,7 @@ def test_ball_tree_two_point(n_samples=100, n_features=3):
 
     def check_two_point(r, dualtree):
         counts = bt.two_point_correlation(Y, r=r, dualtree=dualtree)
-        assert_allclose(counts, counts_true)
+        assert_array_almost_equal(counts, counts_true)
 
     for dualtree in (True, False):
         yield check_two_point, r, dualtree
@@ -225,8 +225,8 @@ def test_ball_tree_pickle():
         s = pickle.dumps(bt1, protocol=protocol)
         bt2 = pickle.loads(s)
         ind2, dist2 = bt2.query(X)
-        assert_allclose(ind1, ind2)
-        assert_allclose(dist1, dist2)
+        assert_array_almost_equal(ind1, ind2)
+        assert_array_almost_equal(dist1, dist2)
 
     for protocol in (0, 1, 2):
         yield check_pickle_protocol, protocol
@@ -247,8 +247,8 @@ def test_neighbors_heap(n_pts=5, n_nbrs=10):
 
         d_heap, i_heap = heap.get_arrays(sort=True)
 
-        assert_allclose(d_in[:n_nbrs], d_heap[row])
-        assert_allclose(i_in[:n_nbrs], i_heap[row])
+        assert_array_almost_equal(d_in[:n_nbrs], d_heap[row])
+        assert_array_almost_equal(i_in[:n_nbrs], i_heap[row])
 
 
 def test_node_heap(n_nodes=50):
@@ -257,8 +257,8 @@ def test_node_heap(n_nodes=50):
     i1 = np.argsort(vals)
     vals2, i2 = nodeheap_sort(vals)
 
-    assert_allclose(i1, i2)
-    assert_allclose(vals[i1], vals2)
+    assert_array_almost_equal(i1, i2)
+    assert_array_almost_equal(vals[i1], vals2)
 
 
 def test_simultaneous_sort(n_rows=10, n_pts=201):
@@ -277,8 +277,8 @@ def test_simultaneous_sort(n_rows=10, n_pts=201):
     dist2 = dist2[row_ind, i]
     ind2 = ind2[row_ind, i]
 
-    assert_allclose(dist, dist2)
-    assert_allclose(ind, ind2)
+    assert_array_almost_equal(dist, dist2)
+    assert_array_almost_equal(ind, ind2)
 
 
 def test_query_haversine():
@@ -288,8 +288,8 @@ def test_query_haversine():
     dist1, ind1 = bt.query(X, k=5)
     dist2, ind2 = brute_force_neighbors(X, X, k=5, metric='haversine')
 
-    assert_allclose(dist1, dist2)
-    assert_allclose(ind1, ind2)
+    assert_array_almost_equal(dist1, dist2)
+    assert_array_almost_equal(ind1, ind2)
 
 
 if __name__ == '__main__':

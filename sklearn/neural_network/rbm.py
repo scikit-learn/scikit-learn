@@ -149,7 +149,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         """
         p = self._mean_hiddens(v)
         p[rng.uniform(size=p.shape) < p] = 1.
-        return np.floor(p, out=p)
+        return np.floor(p, p)
 
     def _sample_visibles(self, h, rng):
         """Sample from the distribution P(v|h).
