@@ -111,7 +111,7 @@ time)::
 The mean score and the standard deviation of the score estimate are hence given
 by::
 
-  >>> print("Accuracy: %0.2f (+/- %0.2f)" % (scores.mean(), scores.std() / 2))
+  >>> print("Accuracy: %0.2f (+/- %0.2f)" % (scores.mean(), scores.std() * 2))
   Accuracy: 0.97 (+/- 0.02)
 
 By default, the score computed at each CV iteration is the ``score``
