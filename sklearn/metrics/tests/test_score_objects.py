@@ -118,7 +118,7 @@ def test_unsupervised_scorers():
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
     km = KMeans(n_clusters=3)
     km.fit(X_train)
-    score1 = SCORERS['ari'](km, X_test, y_test)
+    score1 = SCORERS['adjusted_rand_score'](km, X_test, y_test)
     score2 = adjusted_rand_score(y_test, km.predict(X_test))
     assert_almost_equal(score1, score2)
 

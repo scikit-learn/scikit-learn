@@ -209,7 +209,8 @@ def make_scorer(score_func, greater_is_better=True, needs_proba=False,
 
 # Standard regression scores
 r2_scorer = make_scorer(r2_score)
-mse_scorer = make_scorer(mean_squared_error, greater_is_better=False)
+mean_squared_error_scorer = make_scorer(mean_squared_error,
+                                        greater_is_better=False)
 
 # Standard Classification Scores
 accuracy_scorer = make_scorer(accuracy_score)
@@ -224,10 +225,11 @@ precision_scorer = make_scorer(precision_score)
 recall_scorer = make_scorer(recall_score)
 
 # Clustering scores
-ari_scorer = make_scorer(adjusted_rand_score)
+adjusted_rand_scorer = make_scorer(adjusted_rand_score)
 
-SCORERS = dict(r2=r2_scorer, mse=mse_scorer, accuracy=accuracy_scorer,
-               f1=f1_scorer, roc_auc=auc_scorer,
+SCORERS = dict(r2=r2_scorer,
+               mean_squared_error=mean_squared_error_scorer,
+               accuracy=accuracy_scorer, f1=f1_scorer, roc_auc=auc_scorer,
                average_precision=average_precision_scorer,
                precision=precision_scorer, recall=recall_scorer,
-               ari=ari_scorer)
+               adjusted_rand_score=adjusted_rand_scorer)

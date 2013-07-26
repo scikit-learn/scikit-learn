@@ -479,7 +479,7 @@ def test_unsupervised_grid_search():
     X, y = make_blobs(random_state=0)
     km = KMeans(random_state=0)
     grid_search = GridSearchCV(km, param_grid=dict(n_clusters=[2, 3, 4]),
-                               scoring='ari')
+                               scoring='adjusted_rand_score')
     grid_search.fit(X, y)
     # ARI can find the right number :)
     assert_equal(grid_search.best_params_["n_clusters"], 3)

@@ -160,6 +160,21 @@ Changelog
    - New OrthogonalMatchingPursuitCV class by `Alexandre Gramfort`_
      and `Vlad Niculae`_.
 
+   - Fixed a bug in :class:`sklearn.covariance.GraphLassoCV`: the
+     'alphas' parameter now works as expected when given a list of
+     values. By `Philippe Gervais`_.
+
+   - Fixed an important bug in :class:`sklearn.covariance.GraphLassoCV`
+     that prevented all folds provided by a CV object to be used (only
+     the first 3 were used). When providing a CV object, execution
+     time may thus increase significantly compared to the previous
+     version (bug results are correct now). By `Philippe Gervais`_.
+
+   - :class:`cross_validation.cross_val_score` and the :mod:`grid_search`
+     module is now tested with multi-output data by `Arnaud Joly`_.
+
+   - :func:`datasets.make_multilabel_classification` can now return
+     the output in label indicator multilabel format  by `Arnaud Joly`_.
 
 
 API changes summary

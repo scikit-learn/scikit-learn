@@ -351,7 +351,7 @@ def orthogonal_mp(X, y, n_nonzero_coefs=None, tol=None, precompute=False,
     else:
         coef = np.zeros((X.shape[1], y.shape[1]))
 
-    for k in xrange(y.shape[1]):
+    for k in range(y.shape[1]):
         out = _cholesky_omp(X, y[:, k], n_nonzero_coefs, tol,
                             copy_X=copy_X, return_path=return_path)
         if return_path:
@@ -678,13 +678,6 @@ class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
             self.coef_ = orthogonal_mp_gram(Gram, Xy, self.n_nonzero_coefs_,
                                             self.tol, norms_sq,
                                             copy_Gram, True).T
-
-        if self.normalize:
-            nonzeros = np.flatnonzero(X_std)
-            scaling = X_std[nonzeros]
-            if self.coef_.ndim == 2:
-                scaling = scaling[np.newaxis, :]
-            self.coef_[:, nonzeros] /= scaling
 
         self._set_intercept(X_mean, y_mean, X_std)
         return self

@@ -1,7 +1,7 @@
 import itertools
 
 import numpy as np
-from numpy.testing import assert_allclose
+from numpy.testing import assert_array_almost_equal
 
 import scipy
 from scipy.spatial.distance import cdist
@@ -68,12 +68,12 @@ class TestMetrics:
             raise SkipTest("Canberra distance incorrect in scipy < 0.9")
         dm = DistanceMetric.get_metric(metric, **kwargs)
         D12 = dm.pairwise(self.X1, self.X2)
-        assert_allclose(D12, D_true)
+        assert_array_almost_equal(D12, D_true)
 
     def check_cdist_bool(self, metric, D_true):
         dm = DistanceMetric.get_metric(metric)
         D12 = dm.pairwise(self.X1_bool, self.X2_bool)
-        assert_allclose(D12, D_true)
+        assert_array_almost_equal(D12, D_true)
 
     def test_pdist(self):
         for metric, argdict in self.metrics.items():
@@ -92,12 +92,12 @@ class TestMetrics:
             raise SkipTest("Canberra distance incorrect in scipy < 0.9")
         dm = DistanceMetric.get_metric(metric, **kwargs)
         D12 = dm.pairwise(self.X1)
-        assert_allclose(D12, D_true)
+        assert_array_almost_equal(D12, D_true)
 
     def check_pdist_bool(self, metric, D_true):
         dm = DistanceMetric.get_metric(metric)
         D12 = dm.pairwise(self.X1_bool)
-        assert_allclose(D12, D_true)
+        assert_array_almost_equal(D12, D_true)
 
 
 def test_haversine_metric():
@@ -116,9 +116,9 @@ def test_haversine_metric():
         for j, x2 in enumerate(X):
             D2[i, j] = haversine_slow(x1, x2)
 
-    assert_allclose(D1, D2)
-    assert_allclose(haversine.dist_to_rdist(D1),
-                    np.sin(0.5 * D2) ** 2)
+    assert_array_almost_equal(D1, D2)
+    assert_array_almost_equal(haversine.dist_to_rdist(D1),
+                              np.sin(0.5 * D2) ** 2)
 
 
 def test_pyfunc_metric():
@@ -133,7 +133,7 @@ def test_pyfunc_metric():
     D1 = euclidean.pairwise(X)
     D2 = pyfunc.pairwise(X)
 
-    assert_allclose(D1, D2)
+    assert_array_almost_equal(D1, D2)
 
 
 if __name__ == '__main__':

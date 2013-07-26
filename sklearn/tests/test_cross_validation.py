@@ -405,7 +405,8 @@ def test_cross_val_score_with_score_func_regression():
     assert_array_almost_equal(r2_scores, [0.94, 0.97, 0.97, 0.99, 0.92], 2)
 
     # Mean squared error; this is a loss function, so "scores" are negative
-    mse_scores = cval.cross_val_score(reg, X, y, cv=5, scoring="mse")
+    mse_scores = cval.cross_val_score(reg, X, y, cv=5,
+                                      scoring="mean_squared_error")
     expected_mse = np.array([-763.07, -553.16, -274.38, -273.26, -1681.99])
     assert_array_almost_equal(mse_scores, expected_mse, 2)
 

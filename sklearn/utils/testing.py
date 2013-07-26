@@ -39,6 +39,7 @@ from numpy.testing import assert_almost_equal
 from numpy.testing import assert_array_equal
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_less
+import numpy as np
 
 from sklearn.base import (ClassifierMixin, RegressorMixin, TransformerMixin,
                           ClusterMixin)
@@ -84,6 +85,22 @@ try:
     from nose.tools import assert_greater
 except ImportError:
     assert_greater = _assert_greater
+
+
+def _assert_allclose(actual, desired, rtol=1e-7, atol=0,
+                     err_msg='', verbose=True):
+    actual, desired = np.asanyarray(actual), np.asanyarray(desired)
+    if np.allclose(actual, desired, rtol=rtol, atol=atol):
+        return
+    msg = ('Array not equal to tolerance rtol=%g, atol=%g:'
+           'actual %s, desired %s') % (rtol, atol, actual, desired)
+    raise AssertionError(msg)
+
+
+if hasattr(np.testing, 'assert_allclose'):
+    assert_allclose = np.testing.assert_allclose
+else:
+    assert_allclose = _assert_allclose
 
 
 def assert_raise_message(exception, message, function, *args, **kwargs):
