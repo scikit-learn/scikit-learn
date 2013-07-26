@@ -24,7 +24,6 @@ from ..utils import compute_class_weight
 from ..preprocessing import LabelBinarizer
 from ..grid_search import GridSearchCV
 from ..externals import six
-from numbers import Number
 
 
 def _solve_sparse_cg(X, y, alpha, max_iter=None, tol=1e-3):
@@ -136,7 +135,6 @@ def _solve_dense_cholesky_kernel(K, y, alpha, sample_weight=None):
         return dual_coef
     else:
         # One penalty per target. We need to solve each target separately.
-        coef = np.empty([n_targets, n_features])
         dual_coefs = np.empty([n_targets, n_samples])
 
         for dual_coef, target, current_alpha in zip(dual_coefs, y.T, alpha):
@@ -462,7 +460,7 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
 
     class_weight : dict, optional
         Weights associated with classes in the form
-        {class_label : weight}. If not given, all classes are
+        ``{class_label : weight}``. If not given, all classes are
         supposed to have weight one.
 
     copy_X : boolean, optional, default True
@@ -642,7 +640,7 @@ class _RidgeGCV(LinearModel):
     def _pre_compute_svd(self, X, y):
         if sparse.issparse(X):
             raise TypeError("SVD not supported for sparse matrices")
-        U, s, _ = np.linalg.svd(X, full_matrices=0)
+        U, s, _ = linalg.svd(X, full_matrices=0)
         v = s ** 2
         UT_y = np.dot(U.T, y)
         return v, U, UT_y

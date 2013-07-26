@@ -41,6 +41,8 @@ from .samples_generator import make_swiss_roll
 from .samples_generator import make_s_curve
 from .samples_generator import make_sparse_spd_matrix
 from .samples_generator import make_gaussian_quantiles
+from .samples_generator import make_biclusters
+from .samples_generator import make_checkerboard
 from .svmlight_format import load_svmlight_file
 from .svmlight_format import load_svmlight_files
 from .svmlight_format import dump_svmlight_file
@@ -64,7 +66,6 @@ __all__ = ['clear_data_home',
            'load_boston',
            'load_diabetes',
            'load_digits',
-           'load_filenames',
            'load_files',
            'load_iris',
            'load_lfw_pairs',
@@ -93,13 +94,4 @@ __all__ = ['clear_data_home',
            'make_sparse_uncorrelated',
            'make_spd_matrix',
            'make_swiss_roll',
-           'mldata_filename',
-           'samples_generator']
-
-
-# backward compatibility
-@deprecated("to be removed in 0.9;"
-            " use sklearn.datasets.load_files instead")
-def load_filenames(*args, **kwargs):
-    """Deprecated, use ``sklearn.datasets.load_files`` instead"""
-    return load_files(*args, **kwargs)
+           'mldata_filename']

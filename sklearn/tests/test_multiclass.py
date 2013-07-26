@@ -176,6 +176,32 @@ def test_ovr_single_label_predict_proba():
     assert_false((pred - Y_pred).any())
 
 
+def test_ovr_multilabel_decision_function():
+    X, Y = datasets.make_multilabel_classification(n_samples=100,
+                                                   n_features=20,
+                                                   n_classes=5,
+                                                   n_labels=3,
+                                                   length=50,
+                                                   allow_unlabeled=True,
+                                                   random_state=0)
+    X_train, Y_train = X[:80], Y[:80]
+    X_test, Y_test = X[80:], Y[80:]
+    clf = OneVsRestClassifier(svm.SVC()).fit(X_train, Y_train)
+    assert_array_equal((clf.decision_function(X_test) > 0).nonzero()[1],
+                       np.hstack(clf.predict(X_test)))
+
+
+def test_ovr_single_label_decision_function():
+    X, Y = datasets.make_classification(n_samples=100,
+                                        n_features=20,
+                                        random_state=0)
+    X_train, Y_train = X[:80], Y[:80]
+    X_test, Y_test = X[80:], Y[80:]
+    clf = OneVsRestClassifier(svm.SVC()).fit(X_train, Y_train)
+    assert_array_equal(clf.decision_function(X_test).ravel() > 0,
+                       clf.predict(X_test))
+
+
 def test_ovr_gridsearch():
     ovr = OneVsRestClassifier(LinearSVC(random_state=0))
     Cs = [0.1, 0.5, 0.8]

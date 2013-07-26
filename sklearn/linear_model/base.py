@@ -45,8 +45,10 @@ def sparse_center_data(X, y, fit_intercept, normalize=False):
     axis 0. Be aware that X will not be centered since it would break
     the sparsity, but will be normalized if asked so.
     """
-    X_data = np.array(X.data, np.float64)
+    X = X.astype(np.float64)
+
     if fit_intercept:
+        X_data = X.data
         # copy if 'normalize' is True or X is not a csc matrix
         X = sp.csc_matrix(X, copy=normalize)
         X_mean, X_std = csc_mean_variance_axis0(X)
@@ -65,8 +67,7 @@ def sparse_center_data(X, y, fit_intercept, normalize=False):
         X_std = np.ones(X.shape[1])
         y_mean = 0. if y.ndim == 1 else np.zeros(y.shape[1], dtype=X.dtype)
 
-    X_data = np.array(X.data, np.float64)
-    return X_data, y, X_mean, y_mean, X_std
+    return X, y, X_mean, y_mean, X_std
 
 
 def center_data(X, y, fit_intercept, normalize=False, copy=True,

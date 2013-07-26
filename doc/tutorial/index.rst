@@ -13,7 +13,8 @@ Tutorials: From the bottom up with scikit-learn
     we highly recommend the `Python Scientific Lecture
     Notes <http://scipy-lectures.github.io/>`_. This will help you
     find your footing a bit and will definitely improve your
-    scikit-learn experience.
+    scikit-learn experience. A basic understanding of NumPy arrays
+    is recommended to make the most of scikit-learn.
 
 .. topic:: Quick start
 

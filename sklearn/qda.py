@@ -32,10 +32,10 @@ class QDA(BaseEstimator, ClassifierMixin):
     ----------
     priors : array, optional, shape = [n_classes]
         Priors on classes
-        
+
     reg_param : float, optional
-        Regularizes the covariance estimate as 
-        (1-reg_param)*Sigma + reg_param*np.eye(n_features)
+        Regularizes the covariance estimate as
+        ``(1-reg_param)*Sigma + reg_param*np.eye(n_features)``
 
     Attributes
     ----------

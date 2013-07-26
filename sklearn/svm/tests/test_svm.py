@@ -610,21 +610,23 @@ def test_svc_clone_with_callable_kernel():
                            probability=True)
     # clone for checking clonability with lambda functions..
     svm_cloned = base.clone(svm_callable)
-    svm_cloned.fit(X, Y)
+    svm_cloned.fit(iris.data, iris.target)
 
     svm_builtin = svm.SVC(kernel='linear', probability=True)
-    svm_builtin.fit(X, Y)
+    svm_builtin.fit(iris.data, iris.target)
 
     assert_array_almost_equal(svm_cloned.dual_coef_,
                               svm_builtin.dual_coef_)
     assert_array_almost_equal(svm_cloned.intercept_,
                               svm_builtin.intercept_)
-    assert_array_equal(svm_cloned.predict(X), svm_builtin.predict(X))
+    assert_array_equal(svm_cloned.predict(iris.data),
+                       svm_builtin.predict(iris.data))
 
-    assert_array_almost_equal(svm_cloned.predict_proba(X),
-                              svm_builtin.predict_proba(X))
-    assert_array_almost_equal(svm_cloned.decision_function(X),
-                              svm_builtin.decision_function(X))
+    assert_array_almost_equal(svm_cloned.predict_proba(iris.data),
+                              svm_builtin.predict_proba(iris.data),
+                              decimal=1)
+    assert_array_almost_equal(svm_cloned.decision_function(iris.data),
+                              svm_builtin.decision_function(iris.data))
 
 
 def test_svc_bad_kernel():

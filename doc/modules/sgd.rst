@@ -190,10 +190,6 @@ robust regression. The width of the insensitive region has to be
 specified via the parameter ``epsilon``. This parameter depends on the
 scale of the target variables.
 
-.. topic:: Examples:
-
- - :ref:`example_linear_model_plot_sgd_ols.py`,
-
 
 Stochastic Gradient Descent for sparse data
 ===========================================

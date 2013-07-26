@@ -31,4 +31,5 @@ __all__ = ['DictionaryLearning',
            'dict_learning_online',
            'fastica',
            'sparse_encode',
-           'FactorAnalysis']
+           'FactorAnalysis',
+           'TruncatedSVD']

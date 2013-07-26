@@ -24,7 +24,7 @@ from sklearn.metrics import accuracy_score
 from sklearn.metrics import f1_score
 from sklearn.metrics import explained_variance_score
 from sklearn.metrics import fbeta_score
-from sklearn.metrics import Scorer
+from sklearn.metrics import make_scorer
 
 from sklearn.externals import six
 from sklearn.linear_model import Ridge
@@ -274,6 +274,9 @@ def test_cross_val_score():
     clf = MockListClassifier()
     scores = cval.cross_val_score(clf, X.tolist(), y)
 
+    assert_raises(ValueError, cval.cross_val_score, clf, X, y,
+                  scoring="sklearn")
+
 
 def test_cross_val_score_precomputed():
     # test for svm with precomputed kernel
@@ -397,9 +400,9 @@ def test_cross_val_score_with_score_func_regression():
     r2_scores = cval.cross_val_score(reg, X, y, scoring="r2", cv=5)
     assert_array_almost_equal(r2_scores, [0.94, 0.97, 0.97, 0.99, 0.92], 2)
 
-    # Mean squared error
+    # Mean squared error; this is a loss function, so "scores" are negative
     mse_scores = cval.cross_val_score(reg, X, y, cv=5, scoring="mse")
-    expected_mse = np.array([763.07, 553.16, 274.38, 273.26, 1681.99])
+    expected_mse = np.array([-763.07, -553.16, -274.38, -273.26, -1681.99])
     assert_array_almost_equal(mse_scores, expected_mse, 2)
 
     # Explained variance
@@ -428,7 +431,7 @@ def test_permutation_score():
     assert_true(pvalue_label == pvalue)
 
     # test with custom scoring object
-    scorer = Scorer(fbeta_score, beta=2)
+    scorer = make_scorer(fbeta_score, beta=2)
     score_label, _, pvalue_label = cval.permutation_test_score(
         svm, X, y, scoring=scorer, cv=cv, labels=np.ones(y.size),
         random_state=0)

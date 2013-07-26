@@ -1,9 +1,9 @@
 """
 =========================
-PLS Partial Least Squares
+Cross decomposition
 =========================
 
-Simple usage of various PLS flavor:
+Simple usage of various cross decomposition algorithms:
 - PLSCanonical
 - PLSRegression, with multivariate response, a.k.a. PLS2
 - PLSRegression, with univariate response, a.k.a. PLS1
@@ -22,7 +22,7 @@ print(__doc__)
 
 import numpy as np
 import pylab as pl
-from sklearn.pls import PLSCanonical, PLSRegression, CCA
+from sklearn.cross_decomposition import PLSCanonical, PLSRegression, CCA
 
 ###############################################################################
 # Dataset based latent variables model

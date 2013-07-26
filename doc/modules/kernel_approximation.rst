@@ -20,7 +20,7 @@ of learning with very large datasets.
 Standard kernelized SVMs do not scale well to large datasets, but using an
 approximate kernel map it is possible to use much more efficient linear SVMs.
 In particularly the combination of kernel map approximations with
-:class:`SGDClassifier` can make nonlinear learning on large datasets possible.
+:class:`SGDClassifier` can make non-linear learning on large datasets possible.
 
 Since there has not been much empirical work using approximate embeddings, it
 is advisable to compare results against exact kernel methods when possible.

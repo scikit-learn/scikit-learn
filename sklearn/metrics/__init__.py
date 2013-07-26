@@ -30,7 +30,7 @@ from .metrics import (accuracy_score,
 from .metrics import zero_one
 from .metrics import zero_one_score
 
-from .scorer import Scorer, SCORERS
+from .scorer import make_scorer, SCORERS
 
 from . import cluster
 from .cluster import (adjusted_rand_score,
@@ -42,8 +42,8 @@ from .cluster import (adjusted_rand_score,
                       normalized_mutual_info_score,
                       silhouette_score,
                       silhouette_samples,
-                      v_measure_score)
-
+                      v_measure_score,
+                      consensus_score)
 
 from .pairwise import (euclidean_distances,
                        pairwise_distances,
@@ -84,6 +84,7 @@ __all__ = ['accuracy_score',
            'silhouette_score',
            'silhouette_samples',
            'v_measure_score',
+           'consensus_score',
            'zero_one_loss',
-           'Scorer',
+           'make_scorer',
            'SCORERS']

@@ -16,7 +16,7 @@ from ..externals import six
 from ..utils import check_random_state
 from ..utils.validation import atleast2d_or_csr
 from ..utils.graph import graph_laplacian
-from ..utils._csgraph import cs_graph_components
+from ..utils.sparsetools import connected_components
 from ..utils.arpack import eigsh
 from ..metrics.pairwise import rbf_kernel
 from ..neighbors import kneighbors_graph
@@ -70,7 +70,7 @@ def _graph_is_connected(graph):
     """
     if sparse.isspmatrix(graph):
         # sparse graph, find all the connected components
-        n_connected_components, _ = cs_graph_components(graph)
+        n_connected_components, _ = connected_components(graph)
         return n_connected_components == 1
     else:
         # dense graph, find all connected components start from node 0

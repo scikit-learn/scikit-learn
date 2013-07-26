@@ -18,6 +18,7 @@ from sklearn.utils.extmath import logsumexp
 from sklearn.utils.extmath import randomized_svd
 from sklearn.utils.extmath import weighted_mode
 from sklearn.utils.extmath import cartesian
+from sklearn.utils.extmath import logistic_sigmoid
 from sklearn.datasets.samples_generator import make_low_rank_matrix
 
 
@@ -251,3 +252,17 @@ def test_cartesian():
     # check single axis
     x = np.arange(3)
     assert_array_equal(x[:, np.newaxis], cartesian((x,)))
+
+
+def test_logistic_sigmoid():
+    """Check correctness and robustness of logistic sigmoid implementation"""
+    naive_logsig = lambda x: 1 / (1 + np.exp(-x))
+    naive_log_logsig = lambda x: np.log(naive_logsig(x))
+
+    x = np.linspace(-2, 2, 50)
+    assert_array_almost_equal(logistic_sigmoid(x), naive_logsig(x))
+    assert_array_almost_equal(logistic_sigmoid(x, log=True),
+                              naive_log_logsig(x))
+    extreme_x = np.array([-100, 100], dtype=np.float)
+    assert_array_almost_equal(logistic_sigmoid(extreme_x), [0, 1])
+    assert_array_almost_equal(logistic_sigmoid(extreme_x, log=True), [-100, 0])

@@ -133,6 +133,8 @@ can be used to build artificial datasets of controlled size and complexity.
    make_swiss_roll
    make_s_curve
    make_sparse_spd_matrix
+   make_biclusters
+   make_checkerboard
 
 .. _libsvm_loader:
 

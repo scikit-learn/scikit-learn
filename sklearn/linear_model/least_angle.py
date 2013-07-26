@@ -731,25 +731,25 @@ def _lars_path_residues(X_train, y_train, X_test, y_test, Gram=None,
 
     Parameters
     -----------
-    X_train: array, shape (n_samples, n_features)
+    X_train : array, shape (n_samples, n_features)
         The data to fit the LARS on
-    y_train: array, shape (n_samples)
+    y_train : array, shape (n_samples)
         The target variable to fit LARS on
-    X_test: array, shape (n_samples, n_features)
+    X_test : array, shape (n_samples, n_features)
         The data to compute the residues on
-    y_test: array, shape (n_samples)
+    y_test : array, shape (n_samples)
         The target variable to compute the residues on
-    Gram: None, 'auto', array, shape: (n_features, n_features), optional
+    Gram : None, 'auto', array, shape: (n_features, n_features), optional
         Precomputed Gram matrix (X' * X), if ``'auto'``, the Gram
         matrix is precomputed from the given X, if there are more samples
         than features
-    copy: boolean, optional
+    copy : boolean, optional
         Whether X_train, X_test, y_train and y_test should be copied;
         if False, they may be overwritten.
-    method: 'lar' | 'lasso'
+    method : 'lar' | 'lasso'
         Specifies the returned model. Select ``'lar'`` for Least Angle
         Regression, ``'lasso'`` for the Lasso.
-    verbose: integer, optional
+    verbose : integer, optional
         Sets the amount of verbosity
     fit_intercept : boolean
         whether to calculate the intercept for this model. If set
@@ -757,10 +757,10 @@ def _lars_path_residues(X_train, y_train, X_test, y_test, Gram=None,
         (e.g. data is expected to be already centered).
     normalize : boolean, optional, default False
         If True, the regressors X will be normalized before regression.
-    max_iter: integer, optional
+    max_iter : integer, optional
         Maximum number of iterations to perform.
-    eps: float, optional
-            The machine-precision regularization in the computation of the
+    eps : float, optional
+        The machine-precision regularization in the computation of the
         Cholesky diagonal factors. Increase this for very ill-conditioned
         systems. Unlike the ``tol`` parameter in some iterative
         optimization-based algorithms, this parameter does not control
@@ -769,18 +769,18 @@ def _lars_path_residues(X_train, y_train, X_test, y_test, Gram=None,
 
     Returns
     --------
-    alphas: array, shape: [n_alphas + 1]
+    alphas : array, shape: [n_alphas]
         Maximum of covariances (in absolute value) at each iteration.
         ``n_alphas`` is either ``max_iter`` or ``n_features``, whichever
         is smaller.
 
-    active: array, shape [n_alphas]
+    active : list
         Indices of active variables at the end of the path.
 
-    coefs: array, shape [n_features, n_alphas + 1)
+    coefs: array, shape [n_features, n_alphas)
         Coefficients along the path
 
-    residues: array, shape [n_features, n_alphas + 1]
+    residues: array, shape [n_alphas, n_samples]
         Residues of the prediction on the test data
     """
     if copy:
@@ -809,9 +809,8 @@ def _lars_path_residues(X_train, y_train, X_test, y_test, Gram=None,
         method=method, verbose=max(0, verbose - 1), max_iter=max_iter, eps=eps)
     if normalize:
         coefs[nonzeros] /= norms[nonzeros][:, np.newaxis]
-    residues = np.array([(np.dot(X_test, coef) - y_test)
-                         for coef in coefs.T])
-    return alphas, active, coefs, residues
+    residues = np.dot(X_test, coefs) - y_test[:, np.newaxis]
+    return alphas, active, coefs, residues.T
 
 
 class LarsCV(Lars):

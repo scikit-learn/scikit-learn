@@ -7,6 +7,14 @@
 
 Changelog
 ---------
+
+   - Missing values with sparse and dense matrices can be imputed with the
+     transformer :class:`preprocessing.Imputer` by `Nicolas Trésegnie`_.
+
+   - The core implementation of decisions trees has been rewritten from
+     scratch, allowing for faster tree induction and lower memory
+     consumption in all tree-based estimators. By `Gilles Louppe`_.
+
    - Ability to pass one penalty (alpha value) per target in
      :class:`linear_model.Ridge`, by @eickenberg and `Mathieu Blondel`_.
 
@@ -39,7 +47,7 @@ Changelog
      :func:`metrics.precision_score` and :func:`metrics.recall_score`
      by `Arnaud Joly`_.
 
-  -  Two new metrics :func:`metrics.hamming_loss` and
+   - Two new metrics :func:`metrics.hamming_loss` and
      :func:`metrics.jaccard_similarity_score`
      are added with multi-label support by `Arnaud Joly`_.
 
@@ -125,9 +133,38 @@ Changelog
    - Python 3 support fixes by `Justin Vincent`_, `Lars Buitinck`_ and
      `Olivier Grisel`_. All tests now pass under Python 3.3.
 
+   - Reduce memory footprint of FastICA by `Denis Engemann`_ and
+     `Alexandre Gramfort`_.
+
+   - Verbose output in :mod:`sklearn.ensemble.gradient_boosting` now uses
+     a column format and prints progress in decreasing frequency.
+     It also shows the remaining time. By `Peter Prettenhofer`_.
+
+   - :mod:`sklearn.ensemble.gradient_boosting` provides out-of-bag improvement
+     :attr:`~sklearn.ensemble.GradientBoostingRegressor.oob_improvement_`
+     rather than the OOB score for model selection. An example that shows
+     how to use OOB estimates to select the number of trees was added.
+     By `Peter Prettenhofer`_.
+
+   - Most metrics now support string labels for multiclass classification
+     by `Arnaud Joly`_ and `Lars Buitinck`_.
+
+   - Added :ref:`biclustering <biclustering>` algorithms
+     (:class:`sklearn.cluster.bicluster.SpectralCoclustering` and
+     :class:`sklearn.cluster.bicluster.SpectralBiclustering`), data
+     generation methods (:func:`sklearn.datasets.make_biclusters` and
+     :func:`sklearn.datasets.make_checkerboard`), and scoring metrics
+     (:func:`sklearn.metrics.consensus_score`). By `Kemal Eren`_.
+
 
 API changes summary
 -------------------
+
+   - :class:`linear_model.lasso_path` and
+     :class:`linear_model.enet_path` can return its results in the same
+     format as that of :class:`linear_model.lars_path`. This is done by
+     setting the `return_models` parameter to `False`. By
+     `Jaques Grobler`_ and `Alexandre Gramfort`_
 
    - :class:`grid_search.IterGrid` was renamed to
      :class:`grid_search.ParameterGrid`.
@@ -169,6 +206,10 @@ API changes summary
 
    - :func:`datasets.load_files`'s ``charset`` and ``charset_errors``
      parameters were renamed ``encoding`` and ``decode_errors``.
+
+   - Attribute ``oob_score_`` in :class:`sklearn.ensemble.GradientBoostingRegressor`
+     and :class:`sklearn.ensemble.GradientBoostingClassifier`
+     is deprecated and has been replaced by ``oob_improvement_`` .
 
 .. _changes_0_13_1:
 
@@ -270,7 +311,7 @@ New Estimator Classes
 
    - :class:`manifold.SpectralEmbedding` and function
      :func:`manifold.spectral_embedding`, implementing the "laplacian
-     eigenmaps" transformation for nonlinear dimensionality reduction by Wei
+     eigenmaps" transformation for non-linear dimensionality reduction by Wei
      Li. See :ref:`spectral_embedding` in the user guide.
 
    - :class:`isotonic.IsotonicRegression` by `Fabian Pedregosa`_, `Alexandre Gramfort`_
@@ -375,6 +416,9 @@ Changelog
 
    - :class:`MiniBatchKMeans`: Add random reassignment of cluster centers
      with little observations attached to them, by `Gael Varoquaux`_.
+
+   - New transformer :ref:`neural_network.BernoulliRBM`
+     by `Yann Dauphin`_.
 
 
 API changes summary
@@ -835,6 +879,11 @@ Highlights
    - :class:`sklearn.neighbors.NearestCentroid` classifier added, along with a
      ``shrink_threshold`` parameter, which implements **shrunken centroid
      classification**, by `Robert Layton`_.
+
+   - Out-of-core learning support for discrete naive Bayes classifiers
+     :class:`sklearn.naive_bayes.MultinomialNB` and
+     :class:`sklearn.naive_bayes.BernoulliNB` by adding the ``partial_fit``
+     method by `Olivier Grisel`_.
 
 Other changes
 ..............
@@ -1991,3 +2040,9 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Eustache Diemert: https://github.com/oddskool
 
 .. _Justin Vincent: https://github.com/justinvf
+
+.. _Denis Engemann: https://github.com/dengemann
+
+.. _Nicolas Trésegnie : http://nicolastr.com/
+
+.. _Kemal Eren: http://www.kemaleren.com

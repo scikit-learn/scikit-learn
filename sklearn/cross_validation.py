@@ -24,7 +24,7 @@ from .utils import check_arrays, check_random_state, safe_mask
 from .utils.fixes import unique
 from .externals.joblib import Parallel, delayed
 from .externals.six import string_types, with_metaclass
-from .metrics import SCORERS, Scorer
+from .metrics import make_scorer, SCORERS
 
 __all__ = ['Bootstrap',
            'KFold',
@@ -1136,9 +1136,14 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
         warnings.warn("Passing function as ``score_func`` is "
                       "deprecated and will be removed in 0.15. "
                       "Either use strings or score objects.", stacklevel=2)
-        scorer = Scorer(score_func)
+        scorer = make_scorer(score_func)
     elif isinstance(scoring, string_types):
-        scorer = SCORERS[scoring]
+        try:
+            scorer = SCORERS[scoring]
+        except KeyError:
+            raise ValueError('%r is not a valid scoring value. '
+                             'Valid options are %s' % (scoring,
+                             sorted(SCORERS.keys())))
     else:
         scorer = scoring
     if scorer is None and not hasattr(estimator, 'score'):
@@ -1199,6 +1204,12 @@ def check_cv(cv, X=None, y=None, classifier=False):
     classifier : boolean optional
         Whether the task is a classification task, in which case
         stratified KFold will be used.
+
+    Returns
+    -------
+    checked_cv: a cross-validation generator instance.
+        The return value is guaranteed to be a cv generator instance, whatever
+        the input type.
     """
     is_sparse = sp.issparse(X)
     needs_indices = is_sparse or not hasattr(X, "shape")
@@ -1293,7 +1304,7 @@ def permutation_test_score(estimator, X, y, scoring=None, cv=None,
         warnings.warn("Passing function as ``score_func`` is "
                       "deprecated and will be removed in 0.15. "
                       "Either use strings or score objects.")
-        scorer = Scorer(score_func)
+        scorer = make_scorer(score_func)
     elif isinstance(scoring, string_types):
         scorer = SCORERS[scoring]
     else:

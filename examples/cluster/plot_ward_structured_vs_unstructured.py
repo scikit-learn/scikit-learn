@@ -4,12 +4,14 @@ Hierarchical clustering: structured vs unstructured ward
 ===========================================================
 
 Example builds a swiss roll dataset and runs
-:ref:`hierarchical_clustering` on their position.
+hierarchical clustering on their position.
 
-In a first step, the hierarchical clustering without connectivity
-constraints on structure, solely based on distance, whereas in a second
-step clustering restricted to the k-Nearest Neighbors graph: it's a
-hierarchical clustering with structure prior.
+For more information, see :ref:`hierarchical_clustering`.
+
+In a first step, the hierarchical clustering is performed without connectivity
+constraints on the structure and is solely based on distance, whereas in
+a second step the clustering is restricted to the k-Nearest Neighbors
+graph: it's a hierarchical clustering with structure prior.
 
 Some of the clusters learned without connectivity constraints do not
 respect the structure of the swiss roll and extend across different folds of

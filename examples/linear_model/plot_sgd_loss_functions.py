@@ -3,8 +3,11 @@
 SGD: Convex Loss Functions
 ==========================
 
-Plot the convex loss functions supported by
-`sklearn.linear_model.stochastic_gradient`.
+An example that compares various convex loss functions.
+
+
+All of the above loss functions are supported by
+:class:`sklearn.linear_model.stochastic_gradient` .
 """
 print(__doc__)
 
