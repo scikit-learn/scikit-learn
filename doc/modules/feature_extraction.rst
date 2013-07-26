@@ -291,12 +291,13 @@ reasonable (please see  the :ref:`reference documentation
 
   >>> vectorizer = CountVectorizer(min_df=1)
   >>> vectorizer                     # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-  CountVectorizer(analyzer=...'word', binary=False, charset=...'utf-8',
-          charset_error=...'strict', dtype=<... 'numpy.int64'>,
-          input=...'content', lowercase=True, max_df=1.0, max_features=None,
-          min_df=1, ngram_range=(1, 1), preprocessor=None, 
-          stop_words=None, strip_accents=None,
-          token_pattern=...'(?u)\\b\\w\\w+\\b', tokenizer=None, vocabulary=None)
+    CountVectorizer(analyzer=...'word', binary=False, charset=None,
+            charset_error=None, decode_error=...'strict',
+            dtype=<type 'numpy.int64'>, encoding=...'utf-8', input=u'content',
+            lowercase=True, max_df=1.0, max_features=None, min_df=1,
+            ngram_range=(1, 1), preprocessor=None, stop_words=None,
+            strip_accents=None, token_pattern=...'(?u)\\b\\w\\w+\\b',
+            tokenizer=None, vocabulary=None)
 
 Let's use it to tokenize and count the word occurrences of a minimalistic
 corpus of text documents::
@@ -487,10 +488,10 @@ decode it with the correct encoding.
 
 An encoding can also be called a 'charset' or 'character set', though
 this terminology is less accurate. The :class:`CountVectorizer` takes
-a ``charset`` parameter to tell it what encoding to decode text from.
+a ``encoding`` parameter to tell it what encoding to decode text from.
 
 For modern text files, the correct encoding is probably UTF-8. The
-:class:`CountVectorizer` has ``charset='utf-8'`` as the default. If the
+:class:`CountVectorizer` has ``encoding='utf-8'`` as the default. If the
 text you are loading is not actually encoded with UTF-8, however, you
 will get a ``UnicodeDecodeError``.
 
@@ -508,7 +509,7 @@ If you are having trouble decoding text, here are some things to try:
 - You could try UTF-8 and disregard the errors. You can decode byte
   strings with ``bytes.decode(errors='replace')`` to replace all
   decoding errors with a meaningless character, or set
-  ``charset_error='replace'`` in the vectorizer. This may damage the
+  ``encoding_error='replace'`` in the vectorizer. This may damage the
   usefulness of your features.
 
 - Real text may come from a variety of sources that may have used different
