@@ -5,27 +5,16 @@
 # License: BSD 3 clause
 
 import warnings
-import numbers
-import math
 
 import numpy as np
-import numpy.ma as ma
 from scipy import sparse
-from scipy import stats
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_arrays
 from ..utils import array2d
-from ..utils import as_float_array
 from ..utils import atleast2d_or_csr
-from ..utils import atleast2d_or_csc
 from ..utils import safe_asarray
 from ..utils import warn_if_not_float
-from ..utils.fixes import unique
-from ..utils import deprecated
-
-from ..utils.multiclass import unique_labels
-from ..utils.multiclass import type_of_target
 
 from ..utils.sparsefuncs import inplace_csr_row_normalize_l1
 from ..utils.sparsefuncs import inplace_csr_row_normalize_l2
@@ -47,6 +36,7 @@ __all__ = [
     'normalize',
     'scale',
 ]
+
 
 def _mean_and_std(X, axis=0, with_mean=True, with_std=True):
     """Compute mean and std deviation for centering, scaling.
@@ -637,6 +627,7 @@ class Binarizer(BaseEstimator, TransformerMixin):
         """
         copy = copy if copy is not None else self.copy
         return binarize(X, threshold=self.threshold, copy=copy)
+
 
 class KernelCenterer(BaseEstimator, TransformerMixin):
     """Center a kernel matrix

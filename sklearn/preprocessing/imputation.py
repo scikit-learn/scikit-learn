@@ -2,7 +2,6 @@
 # License: BSD 3 clause
 
 import warnings
-import numbers
 import math
 
 import numpy as np
@@ -11,18 +10,9 @@ from scipy import sparse
 from scipy import stats
 
 from ..base import BaseEstimator, TransformerMixin
-from ..utils import check_arrays
 from ..utils import array2d
-from ..utils import as_float_array
 from ..utils import atleast2d_or_csr
 from ..utils import atleast2d_or_csc
-from ..utils import safe_asarray
-from ..utils import warn_if_not_float
-from ..utils.fixes import unique
-from ..utils import deprecated
-
-from ..utils.multiclass import unique_labels
-from ..utils.multiclass import type_of_target
 
 from ..utils.sparsefuncs import inplace_csr_row_normalize_l1
 from ..utils.sparsefuncs import inplace_csr_row_normalize_l2
@@ -36,6 +26,7 @@ map = six.moves.map
 __all__ = [
     'Imputer',
 ]
+
 
 def _get_mask(X, value_to_mask):
     """Compute the boolean mask X == missing_values."""
