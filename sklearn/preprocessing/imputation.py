@@ -358,7 +358,7 @@ class Imputer(BaseEstimator, TransformerMixin):
         # Delete the invalid rows/columns
         invalid_mask = np.isnan(statistics)
         valid_mask = np.logical_not(invalid_mask)
-        valid_statistics = self.statistics[valid_mask]
+        valid_statistics = statistics[valid_mask]
         valid_statistics_indexes = np.where(valid_mask)[0]
         missing = np.arange(X.shape[not self.axis])[invalid_mask]
 
