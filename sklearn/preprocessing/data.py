@@ -9,7 +9,6 @@ import warnings
 
 import numpy as np
 from scipy import sparse
-
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_arrays
 from ..utils import atleast2d_or_csc

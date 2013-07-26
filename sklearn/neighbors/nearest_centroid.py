@@ -14,7 +14,7 @@ from scipy import sparse as sp
 from ..base import BaseEstimator, ClassifierMixin
 from ..externals.six.moves import xrange
 from ..metrics.pairwise import pairwise_distances
-from ..utils.validation import check_arrays, atleast2d_or_csr, make_y_1d
+from ..utils.validation import check_arrays, atleast2d_or_csr, column_or_1d
 
 
 class NearestCentroid(BaseEstimator, ClassifierMixin):
@@ -89,7 +89,7 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
         if sp.issparse(X) and self.shrink_threshold:
             raise ValueError("threshold shrinking not supported"
                              " for sparse input")
-        y = make_y_1d(y)
+        y = column_or_1d(y)
 
         n_samples, n_features = X.shape
         classes = np.unique(y)

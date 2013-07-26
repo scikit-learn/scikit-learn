@@ -26,6 +26,7 @@ from ..externals.six.moves import zip
 from ..preprocessing import LabelBinarizer
 from ..utils import check_arrays
 from ..utils import deprecated
+from ..utils import column_or_1d
 from ..utils.fixes import divide
 from ..utils.multiclass import unique_labels
 from ..utils.multiclass import type_of_target
@@ -34,24 +35,6 @@ from ..utils.multiclass import type_of_target
 ###############################################################################
 # General utilities
 ###############################################################################
-def _column_or_1d(y):
-    """ Ravel column or 1d numpy array, else raises an error
-
-    Parameters
-    ----------
-    y : array-like
-
-    Returns
-    -------
-    y : array
-
-    """
-    shape = np.shape(y)
-    if len(shape) == 1 or (len(shape) == 2 and shape[1] == 1):
-        return np.ravel(y)
-    raise ValueError("bad input shape {0}".format(shape))
-
-
 def _check_reg_targets(y_true, y_pred):
     """Check that y_true and y_pred belong to the same regression task
 
@@ -138,8 +121,8 @@ def _check_clf_targets(y_true, y_pred):
         raise ValueError("{0} is not supported".format(y_type))
 
     if y_type in ["binary", "multiclass"]:
-        y_true = _column_or_1d(y_true)
-        y_pred = _column_or_1d(y_pred)
+        y_true = column_or_1d(y_true)
+        y_pred = column_or_1d(y_pred)
 
     return y_type, y_true, y_pred
 
@@ -470,8 +453,8 @@ def _binary_clf_curve(y_true, y_score, pos_label=None):
         Decreasing score values.
     """
     y_true, y_score = check_arrays(y_true, y_score)
-    y_true = _column_or_1d(y_true)
-    y_score = _column_or_1d(y_score)
+    y_true = column_or_1d(y_true)
+    y_score = column_or_1d(y_score)
 
     # ensure binary classification if pos_label is not specified
     classes = np.unique(y_true)
@@ -710,7 +693,6 @@ def confusion_matrix(y_true, y_pred, labels=None):
     y_type, y_true, y_pred = _check_clf_targets(y_true, y_pred)
     if y_type not in ("binary", "multiclass"):
         raise ValueError("%s is not supported" % y_type)
-
 
     if labels is None:
         labels = unique_labels(y_true, y_pred)
