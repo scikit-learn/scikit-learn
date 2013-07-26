@@ -49,7 +49,7 @@ Multilabel utilities
 Multilabel learning requires a specific data structure to assign multiple labels
 to the same sample. The One-vs-Rest meta-classifier currently supports two formats.
 The first one is basically a sequence of sequences, and the second one is a 2d binary array
-of shape (n_samples, n_labels) where non-zero elements correspond to the labels.
+of shape (n_samples, n_classes) where non-zero elements correspond to the labels.
 
 :class:`sklearn.preprocessing.label_binarize` and :class:`sklearn.preprocessing.LabelBinarizer`
 are helper functions that can convert one format to the other::
