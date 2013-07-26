@@ -168,13 +168,25 @@ def test_unicode_decode_error():
     text_bytes = text.encode('utf-8')
 
     # Then let the Analyzer try to decode it as ascii. It should fail,
-    # because we have given it an incorrect charset.
-    wa = CountVectorizer(ngram_range=(1, 2), charset='ascii').build_analyzer()
+    # because we have given it an incorrect encoding.
+    wa = CountVectorizer(ngram_range=(1, 2), encoding='ascii').build_analyzer()
     assert_raises(UnicodeDecodeError, wa, text_bytes)
 
     ca = CountVectorizer(analyzer='char', ngram_range=(3, 6),
-                         charset='ascii').build_analyzer()
+                         encoding='ascii').build_analyzer()
     assert_raises(UnicodeDecodeError, ca, text_bytes)
+
+    # Check the old interface
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")
+
+        ca = CountVectorizer(analyzer='char', ngram_range=(3, 6),
+                             charset='ascii').build_analyzer()
+        assert_raises(UnicodeDecodeError, ca, text_bytes)
+
+        assert_equal(len(w), 1)
+        assert_true(issubclass(w[0].category, DeprecationWarning))
+        assert_true("charset" in str(w[0].message).lower())
 
 
 def test_char_ngram_analyzer():
