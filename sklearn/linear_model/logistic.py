@@ -325,9 +325,10 @@ def logistic_regression(X, y, C=1., fit_intercept=False, w0=None,
         out = optimize.fmin_l_bfgs_b(func, w0, fprime=None,
                                      args=(X, y, 1./C),
                                      iprint=verbose > 0,
-                                     m=20, pgtol=gtol)
+                                     #m=20,
+                                     pgtol=gtol)
         out = out[0]
-    else:
+    elif solver == 'newton':
         if fit_intercept:
             func_grad_hess = _logistic_loss_grad_hess_intercept
             func = _logistic_loss_intercept
@@ -337,6 +338,9 @@ def logistic_regression(X, y, C=1., fit_intercept=False, w0=None,
         # XXX: newton_cg is not given any parameters (max_iter, xtol,
         # pgtol...)
         out = newton_cg(func_grad_hess, func, w0, args=(X, y, 1./C),)
+    else:
+        raise ValueError("solver=%r is not implemented, possible "
+                         "options newton or lbfgs" % solver)
     return out
 
 
