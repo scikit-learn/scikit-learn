@@ -697,6 +697,9 @@ user guide for further details.
 
 Model Selection Interface
 -------------------------
+See the :ref:`scoring_parameter` section of the user guide for further
+details.
+
 .. autosummary::
    :toctree: generated/
    :template: function.rst
@@ -705,6 +708,9 @@ Model Selection Interface
 
 Classification metrics
 ----------------------
+
+See the :ref:`classification_metrics` section of the user guide for further
+details.
 
 .. autosummary::
    :toctree: generated/
