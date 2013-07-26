@@ -170,6 +170,30 @@ cdef DTYPE_t ROOT_2PI = sqrt(2 * PI)
 cdef DTYPE_t LOG_PI = log(PI)
 cdef DTYPE_t LOG_2PI = log(2 * PI)
 
+
+
+
+######################################################################
+# Numpy 1.3-1.4 compatibility utilities
+cdef DTYPE_t[:, ::1] get_memview_DTYPE_2D(
+                               np.ndarray[DTYPE_t, ndim=2, mode='c'] X):
+    return <DTYPE_t[:X.shape[0], :X.shape[1]:1]> (<DTYPE_t*> X.data)
+
+cdef DTYPE_t[::1] get_memview_DTYPE_1D(
+                               np.ndarray[DTYPE_t, ndim=1, mode='c'] X):
+    return <DTYPE_t[:X.shape[0]:1]> (<DTYPE_t*> X.data)
+
+cdef ITYPE_t[:, ::1] get_memview_ITYPE_2D(
+                               np.ndarray[ITYPE_t, ndim=2, mode='c'] X):
+    return <ITYPE_t[:X.shape[0], :X.shape[1]:1]> (<ITYPE_t*> X.data)
+
+cdef ITYPE_t[::1] get_memview_ITYPE_1D(
+                               np.ndarray[ITYPE_t, ndim=1, mode='c'] X):
+    return <ITYPE_t[:X.shape[0]:1]> (<ITYPE_t*> X.data)
+######################################################################
+
+
+
 ######################################################################
 # Define doc strings, substituting the appropriate class name using
 # the DOC_DICT variable defined in the pyx files.
@@ -456,6 +480,7 @@ def kernel_norm(h, d, kernel, return_log=False):
     else:
         return np.exp(result)
 
+
 ######################################################################
 # Tree Utility Routines
 cdef inline void swap(DITYPE_t* arr, ITYPE_t i1, ITYPE_t i2):
@@ -492,16 +517,24 @@ cdef class NeighborsHeap:
     n_nbrs : int
         the size of each heap.
     """
+    cdef np.ndarray distances_arr
+    cdef np.ndarray indices_arr
+
     cdef DTYPE_t[:, ::1] distances
     cdef ITYPE_t[:, ::1] indices
 
     def __cinit__(self):
-        self.distances = np.zeros((1, 1), dtype=DTYPE)
-        self.indices = np.zeros((1, 1), dtype=ITYPE)
+        self.distances_arr = np.zeros((1, 1), dtype=DTYPE, order='C')
+        self.indices_arr = np.zeros((1, 1), dtype=ITYPE, order='C')
+        self.distances = get_memview_DTYPE_2D(self.distances_arr)
+        self.indices = get_memview_ITYPE_2D(self.indices_arr)
 
     def __init__(self, n_pts, n_nbrs):
-        self.distances = np.zeros((n_pts, n_nbrs), dtype=DTYPE) + np.inf
-        self.indices = np.zeros((n_pts, n_nbrs), dtype=ITYPE)
+        self.distances_arr = np.inf + np.zeros((n_pts, n_nbrs), dtype=DTYPE,
+                                               order='C')
+        self.indices_arr = np.zeros((n_pts, n_nbrs), dtype=ITYPE, order='C')
+        self.distances = get_memview_DTYPE_2D(self.distances_arr)
+        self.indices = get_memview_ITYPE_2D(self.indices_arr)
 
     def get_arrays(self, sort=True):
         """Get the arrays of distances and indices within the heap.
@@ -511,7 +544,7 @@ cdef class NeighborsHeap:
         """
         if sort:
             self._sort()
-        return map(np.asarray, (self.distances, self.indices))
+        return self.distances_arr, self.indices_arr
 
     cdef inline DTYPE_t largest(self, ITYPE_t row) except -1:
         """Return the largest distance in the given row"""
@@ -769,12 +802,6 @@ cdef struct NodeHeapData_t:
     ITYPE_t i1
     ITYPE_t i2
 
-# use a dummy variable to determine the python data type
-# Note: this requires the buffer interface, which is in numpy 1.5+.  For
-#       backward compatibility we'll just do this by hand
-#cdef NodeHeapData_t ndummy
-#cdef NodeHeapData_t[:] ndummy_view = <NodeHeapData_t[:1]> &ndummy
-#NodeHeapData = np.asarray(ndummy_view).dtype
 NodeHeapData = np.dtype([('val', DTYPE), ('i1', ITYPE), ('i2', ITYPE)])
 
 
@@ -801,10 +828,10 @@ cdef class NodeHeap:
     cdef ITYPE_t n
 
     def __cinit__(self):
-        self.data = np.zeros(0, dtype=NodeHeapData)
+        self.data = np.zeros(0, dtype=NodeHeapData, order='C')
 
     def __init__(self, size_guess=100):
-        self.data = np.zeros(size_guess, dtype=NodeHeapData)
+        self.data = np.zeros(size_guess, dtype=NodeHeapData, order='C')
         self.n = size_guess
         self.clear()
 
@@ -921,12 +948,6 @@ cdef struct NodeData_t:
     ITYPE_t is_leaf
     DTYPE_t radius
 
-# use a dummy variable to determine the python data type
-# Note: this requires the buffer interface, which is in numpy 1.5+.  For
-#       backward compatibility we'll just do this by hand
-#cdef NodeData_t dummy
-#cdef NodeData_t[:] dummy_view = <NodeData_t[:1]> &dummy
-#NodeData = np.asarray(dummy_view).dtype
 NodeData = np.dtype([('idx_start', ITYPE), ('idx_end', ITYPE),
                      ('is_leaf', ITYPE), ('radius', DTYPE)])
 
