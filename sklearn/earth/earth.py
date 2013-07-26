@@ -1,8 +1,8 @@
-from pyearth._forward import ForwardPasser
-from pyearth._pruning import PruningPasser
-from pyearth._util import ascii_table, gcv, apply_weights_2d, apply_weights_1d
-from sklearn.base import RegressorMixin, BaseEstimator, TransformerMixin
-from sklearn.utils.validation import assert_all_finite, safe_asarray
+from ._forward import ForwardPasser
+from ._pruning import PruningPasser
+from ._util import ascii_table, gcv, apply_weights_2d, apply_weights_1d
+from ..base import RegressorMixin, BaseEstimator, TransformerMixin
+from ..utils.validation import assert_all_finite, safe_asarray
 import numpy as np
 
 class Earth(BaseEstimator, RegressorMixin, TransformerMixin):

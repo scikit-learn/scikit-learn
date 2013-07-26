@@ -4,9 +4,9 @@
 # cython: wraparound = False
 # cython: profile = False
 
-from _util cimport gcv_adjust, log2, apply_weights_1d
-from _basis cimport Basis, BasisFunction, ConstantBasisFunction, HingeBasisFunction, LinearBasisFunction
-from _record cimport ForwardPassIteration
+from ._util cimport gcv_adjust, log2, apply_weights_1d
+from ._basis cimport Basis, BasisFunction, ConstantBasisFunction, HingeBasisFunction, LinearBasisFunction
+from ._record cimport ForwardPassIteration
 
 from libc.math cimport sqrt, abs, log
 import numpy as np

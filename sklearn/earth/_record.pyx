@@ -4,8 +4,8 @@
 # cython: wraparound = False
 # cython: profile = False
 
-from _util cimport gcv, ascii_table
-import _forward
+from ._util cimport gcv, ascii_table
+from . import _forward
 
 cdef class Record:
 

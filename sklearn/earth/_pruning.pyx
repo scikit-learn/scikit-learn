@@ -4,8 +4,8 @@
 # cython: wraparound = False
 # cython: profile = False
 
-from _record cimport PruningPassIteration
-from _util cimport gcv, apply_weights_1d
+from ._record cimport PruningPassIteration
+from ._util cimport gcv, apply_weights_1d
 import numpy as np
 
 cdef class PruningPasser:
