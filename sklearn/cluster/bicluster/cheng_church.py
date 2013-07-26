@@ -19,6 +19,7 @@ from .utils import check_array_ndim
 from .utils import get_indicators
 
 from ._square_residue import square_residue
+from ._square_residue import square_residue_add
 
 
 class EmptyBiclusterException(Exception):
@@ -109,14 +110,14 @@ class ChengChurch(six.with_metaclass(ABCMeta, BaseEstimator,
         return square_residue(rows.ravel(), cols, X)
 
     def _sr_add(self, rows, cols, X):
-        arr = (X - X[:, cols].mean(axis=1)[np.newaxis].T -
-               X[rows, :].mean(axis=0) + X.mean())
-        return np.power(arr, 2)
+        if not rows.size or not cols.size:
+            raise EmptyBiclusterException()
+        return square_residue_add(rows.ravel(), cols, X, inverse=False)
 
     def _isr_add(self, rows, cols, X):
-        arr = (-X + X[:, cols].mean(axis=1)[np.newaxis].T -
-               X[rows, :].mean(axis=0) + X.mean())
-        return np.power(arr, 2)
+        if not rows.size or not cols.size:
+            raise EmptyBiclusterException()
+        return square_residue_add(rows.ravel(), cols, X, inverse=True)
 
     def _single_node_deletion(self, rows, cols, X):
         sr = self._sr(rows, cols, X)
