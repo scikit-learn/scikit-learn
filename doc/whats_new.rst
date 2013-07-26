@@ -160,6 +160,15 @@ Changelog
    - New OrthogonalMatchingPursuitCV class by `Alexandre Gramfort`_
      and `Vlad Niculae`_.
 
+   - Fixed a bug in :class:`sklearn.covariance.GraphLassoCV`: the
+     'alphas' parameter now works as expected when given a list of
+     values. By `Philippe Gervais`_.
+
+   - Fixed an important bug in :class:`sklearn.covariance.GraphLassoCV`
+     that prevented all folds provided by a CV object to be used (only
+     the first 3 were used). When providing a CV object, execution
+     time may thus increase significantly compared to the previous
+     version (bug results are correct now). By `Philippe Gervais`_.
 
 
 API changes summary
