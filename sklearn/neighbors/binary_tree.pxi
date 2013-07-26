@@ -770,9 +770,12 @@ cdef struct NodeHeapData_t:
     ITYPE_t i2
 
 # use a dummy variable to determine the python data type
-cdef NodeHeapData_t ndummy
-cdef NodeHeapData_t[:] ndummy_view = <NodeHeapData_t[:1]> &ndummy
-NodeHeapData = np.asarray(ndummy_view).dtype
+# Note: this requires the buffer interface, which is in numpy 1.5+.  For
+#       backward compatibility we'll just do this by hand
+#cdef NodeHeapData_t ndummy
+#cdef NodeHeapData_t[:] ndummy_view = <NodeHeapData_t[:1]> &ndummy
+#NodeHeapData = np.asarray(ndummy_view).dtype
+NodeHeapData = np.dtype([('val', DTYPE), ('i1', ITYPE), ('i2', ITYPE)])
 
 
 cdef inline void swap_nodes(NodeHeapData_t* arr, ITYPE_t i1, ITYPE_t i2):
@@ -915,13 +918,17 @@ VALID_METRIC_IDS = get_valid_metric_ids(VALID_METRICS)
 cdef struct NodeData_t:
     ITYPE_t idx_start
     ITYPE_t idx_end
-    int is_leaf
+    ITYPE_t is_leaf
     DTYPE_t radius
 
 # use a dummy variable to determine the python data type
-cdef NodeData_t dummy
-cdef NodeData_t[:] dummy_view = <NodeData_t[:1]> &dummy
-NodeData = np.asarray(dummy_view).dtype
+# Note: this requires the buffer interface, which is in numpy 1.5+.  For
+#       backward compatibility we'll just do this by hand
+#cdef NodeData_t dummy
+#cdef NodeData_t[:] dummy_view = <NodeData_t[:1]> &dummy
+#NodeData = np.asarray(dummy_view).dtype
+NodeData = np.dtype([('idx_start', ITYPE), ('idx_end', ITYPE),
+                     ('is_leaf', ITYPE), ('radius', DTYPE)])
 
 
 cdef class BinaryTree:
