@@ -48,6 +48,8 @@ from ._gradient_boosting import _random_sample_mask
 
 from ..feature_selection.from_model import _LearntSelectorMixin
 
+from ..feature_selection.from_model import _LearntSelectorMixin
+
 
 class QuantileEstimator(BaseEstimator):
     """An estimator predicting the alpha-quantile of the training targets."""
