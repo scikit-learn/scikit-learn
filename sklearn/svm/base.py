@@ -104,7 +104,7 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
             Training vectors, where n_samples is the number of samples
             and n_features is the number of features.
 
-        y : array-like, shape (n_samples)
+        y : array-like, shape (n_samples,)
             Target values (class labels in classification, real numbers in
             regression)
 
@@ -268,7 +268,7 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         Returns
         -------
-        y_pred : array, shape (n_samples)
+        y_pred : array, shape (n_samples,)
         """
         X = self._validate_for_predict(X)
         predict = self._sparse_predict if self._sparse else self._dense_predict
