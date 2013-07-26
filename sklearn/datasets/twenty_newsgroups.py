@@ -102,7 +102,7 @@ def strip_newsgroup_header(text):
     Given text in "news" format, strip the headers, by removing everything
     before the first blank line.
     """
-    _before, _blankline, after = text.partition(u'\n\n')
+    _before, _blankline, after = text.partition('\n\n')
     return after
 
 
@@ -116,9 +116,9 @@ def strip_newsgroup_quoting(text):
     characters > or |, plus lines that often introduce a quoted section
     (for example, because they contain the string 'writes:'.)
     """
-    good_lines = [line for line in text.split(u'\n')
+    good_lines = [line for line in text.split('\n')
                   if not _QUOTE_RE.search(line)]
-    return u'\n'.join(good_lines)
+    return '\n'.join(good_lines)
 
 
 def strip_newsgroup_footer(text):
@@ -129,14 +129,14 @@ def strip_newsgroup_footer(text):
     a blank line or a line made of hyphens, and that it is the last such line
     in the file (disregarding blank lines at the end).
     """
-    lines = text.strip().split(u'\n')
+    lines = text.strip().split('\n')
     for line_num in range(len(lines) - 1, -1, -1):
         line = lines[line_num]
-        if line.strip().strip(u'-') == u'':
+        if line.strip().strip('-') == '':
             break
 
     if line_num > 0:
-        return u'\n'.join(lines[:line_num])
+        return '\n'.join(lines[:line_num])
     else:
         return text
 
