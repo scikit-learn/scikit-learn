@@ -183,7 +183,7 @@ class PCA(BaseEstimator, TransformerMixin):
         self.copy = copy
         self.whiten = whiten
 
-    def fit(self, X, y=None, **params):
+    def fit(self, X, y=None):
         """Fit the model with X.
 
         Parameters
@@ -197,10 +197,10 @@ class PCA(BaseEstimator, TransformerMixin):
         self : object
             Returns the instance itself.
         """
-        self._fit(X, **params)
+        self._fit(X)
         return self
 
-    def fit_transform(self, X, y=None, **params):
+    def fit_transform(self, X, y=None):
         """Fit the model with X and apply the dimensionality reduction on X.
 
         Parameters
@@ -214,7 +214,7 @@ class PCA(BaseEstimator, TransformerMixin):
         X_new : array-like, shape (n_samples, n_components)
 
         """
-        U, S, V = self._fit(X, **params)
+        U, S, V = self._fit(X)
         U = U[:, :self.n_components]
 
         if self.whiten:
@@ -460,7 +460,7 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         self.mean_ = None
         self.random_state = random_state
 
-    def fit(self, X, y=None, **params):
+    def fit(self, X, y=None):
         """Fit the model with X.
 
         Parameters
@@ -474,7 +474,7 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         self : object
             Returns the instance itself.
         """
-        self._fit(X, **params)
+        self._fit(X)
         return self
 
     def _fit(self, X, y=None):
@@ -563,9 +563,7 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         X_new : array-like, shape (n_samples, n_components)
 
         """
-        # XXX remove scipy.sparse support here in 0.16
-        X = atleast2d_or_csr(X)
-        X = self._fit(X)
+        X = self._fit(atleast2d_or_csr(X))
         X = safe_sparse_dot(X, self.components_.T)
         return X
 
