@@ -2347,6 +2347,11 @@ PREFIX(model) *PREFIX(train)(const PREFIX(problem) *prob, const svm_parameter *p
 	model->param = *param;
 	model->free_sv = 0;	// XXX
 
+    if(param->random_seed > 0)
+    {
+        srand(param->random_seed);
+    }
+
 	if(param->svm_type == ONE_CLASS ||
 	   param->svm_type == EPSILON_SVR ||
 	   param->svm_type == NU_SVR)

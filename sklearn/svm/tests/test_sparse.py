@@ -283,7 +283,8 @@ def test_timeout():
 
 
 def test_consistent_proba():
-    a = svm.SVC(probability=True, max_iter=1)
+    a = svm.SVC(probability=True, max_iter=1, random_state=0)
     proba_1 = a.fit(X, Y).predict_proba(X)
+    a = svm.SVC(probability=True, max_iter=1, random_state=0)
     proba_2 = a.fit(X, Y).predict_proba(X)
     assert_array_almost_equal(proba_1, proba_2)

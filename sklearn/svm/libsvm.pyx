@@ -2,7 +2,7 @@
 Binding for libsvm_skl
 ----------------------
 
-These are the bindings for libsvm_skl, which is a fork o libsvm[1]
+These are the bindings for libsvm_skl, which is a fork of libsvm[1]
 that adds to libsvm some capabilities, like index of support vectors
 and efficient representation of dense matrices.
 
@@ -63,7 +63,8 @@ def fit(
         sample_weight=np.empty(0),
     int shrinking=1, int probability=0,
     double cache_size=100.,
-    int max_iter=-1):
+    int max_iter=-1,
+    int random_seed=0):
     """
     Train the model using libsvm (low-level method)
 
@@ -104,10 +105,13 @@ def fit(
     cache_size : float64
         Cache size for gram matrix columns (in megabytes)
 
-    max_iter: int (-1 for no limit)
+    max_iter : int (-1 for no limit)
         Stop solver after this many iterations regardless of accuracy
         (XXX Currently there is no API to know whether this kicked in.)
 
+    random_seed : int
+        Seed for the random number generator used for probability estimates.
+        0 by default.
 
     Returns
     -------
@@ -156,11 +160,10 @@ def fit(
         raise MemoryError("Seems we've run out of memory")
     cdef np.ndarray[np.int32_t, ndim=1, mode='c'] \
         class_weight_label = np.arange(class_weight.shape[0], dtype=np.int32)
-
     set_parameter(
         &param, svm_type, kernel_index, degree, gamma, coef0, nu, cache_size,
         C, tol, epsilon, shrinking, probability, <int> class_weight.shape[0],
-        class_weight_label.data, class_weight.data, max_iter)
+        class_weight_label.data, class_weight.data, max_iter, random_seed)
 
     error_msg = svm_check_parameter(&problem, &param)
     if error_msg:
@@ -249,7 +252,7 @@ cdef void set_predict_params(
 
     set_parameter(param, svm_type, kernel_index, degree, gamma, coef0, nu,
                          cache_size, C, tol, epsilon, shrinking, probability,
-                         nr_weight, weight_label, weight, max_iter)
+                         nr_weight, weight_label, weight, max_iter, -1)
 
 
 def predict(np.ndarray[np.float64_t, ndim=2, mode='c'] X,
@@ -403,7 +406,8 @@ def decision_function(
         class_weight=np.empty(0),
     np.ndarray[np.float64_t, ndim=1, mode='c']
          sample_weight=np.empty(0),
-    double cache_size=100.):
+    double cache_size=100.,
+    int random_seed=0):
     """
     Predict margin (libsvm name for this is predict_values)
 
@@ -536,7 +540,7 @@ def cross_validation(
         &param, svm_type, kernel_index, degree, gamma, coef0, nu, cache_size,
         C, tol, tol, shrinking, probability, <int>
         class_weight.shape[0], class_weight_label.data,
-        class_weight.data, max_iter)
+        class_weight.data, max_iter, -1)
 
     error_msg = svm_check_parameter(&problem, &param);
     if error_msg:

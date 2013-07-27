@@ -76,7 +76,7 @@ class LinearSVC(BaseLibLinear, LinearClassifierMixin, _LearntSelectorMixin,
         per-process runtime setting in liblinear that, if enabled, may not work
         properly in a multithreaded context.
 
-    random_state: int seed, RandomState instance, or None (default)
+    random_state : int seed, RandomState instance, or None (default)
         The seed of the pseudo random number generator to use when
         shuffling the data.
 
@@ -206,6 +206,10 @@ class SVC(BaseSVC):
     max_iter : int, optional (default=-1)
         Hard limit on iterations within solver, or -1 for no limit.
 
+    random_state : int seed, RandomState instance, or None (default)
+        The seed of the pseudo random number generator to use when
+        shuffling the data for probability estimation.
+
     Attributes
     ----------
     `support_` : array-like, shape = [n_SV]
@@ -263,11 +267,12 @@ class SVC(BaseSVC):
     def __init__(self, C=1.0, kernel='rbf', degree=3, gamma=0.0,
                  coef0=0.0, shrinking=True, probability=False,
                  tol=1e-3, cache_size=200, class_weight=None,
-                 verbose=False, max_iter=-1):
+                 verbose=False, max_iter=-1, random_state=None):
 
         super(SVC, self).__init__(
             'c_svc', kernel, degree, gamma, coef0, tol, C, 0., 0., shrinking,
-            probability, cache_size, class_weight, verbose, max_iter)
+            probability, cache_size, class_weight, verbose, max_iter,
+            random_state)
 
 
 class NuSVC(BaseSVC):
@@ -325,6 +330,10 @@ class NuSVC(BaseSVC):
     max_iter : int, optional (default=-1)
         Hard limit on iterations within solver, or -1 for no limit.
 
+    random_state : int seed, RandomState instance, or None (default)
+        The seed of the pseudo random number generator to use when
+        shuffling the data for probability estimation.
+
     Attributes
     ----------
     `support_` : array-like, shape = [n_SV]
@@ -379,11 +388,12 @@ class NuSVC(BaseSVC):
 
     def __init__(self, nu=0.5, kernel='rbf', degree=3, gamma=0.0,
                  coef0=0.0, shrinking=True, probability=False,
-                 tol=1e-3, cache_size=200, verbose=False, max_iter=-1):
+                 tol=1e-3, cache_size=200, verbose=False, max_iter=-1,
+                 random_state=None):
 
         super(NuSVC, self).__init__(
             'nu_svc', kernel, degree, gamma, coef0, tol, 0., nu, 0., shrinking,
-            probability, cache_size, None, verbose, max_iter)
+            probability, cache_size, None, verbose, max_iter, random_state)
 
 
 class SVR(BaseLibSVM, RegressorMixin):
@@ -444,6 +454,10 @@ class SVR(BaseLibSVM, RegressorMixin):
     max_iter : int, optional (default=-1)
         Hard limit on iterations within solver, or -1 for no limit.
 
+    random_state : int seed, RandomState instance, or None (default)
+        The seed of the pseudo random number generator to use when
+        shuffling the data for probability estimaton.
+
     Attributes
     ----------
     `support_` : array-like, shape = [n_SV]
@@ -488,12 +502,13 @@ class SVR(BaseLibSVM, RegressorMixin):
     """
     def __init__(self, kernel='rbf', degree=3, gamma=0.0, coef0=0.0, tol=1e-3,
                  C=1.0, epsilon=0.1, shrinking=True, probability=False,
-                 cache_size=200, verbose=False, max_iter=-1):
+                 cache_size=200, verbose=False, max_iter=-1,
+                 random_state=None):
 
         super(SVR, self).__init__(
             'epsilon_svr', kernel, degree, gamma, coef0, tol, C, 0., epsilon,
             shrinking, probability, cache_size, None, verbose,
-            max_iter)
+            max_iter, random_state)
 
 
 class NuSVR(BaseLibSVM, RegressorMixin):
@@ -555,6 +570,10 @@ class NuSVR(BaseLibSVM, RegressorMixin):
     max_iter : int, optional (default=-1)
         Hard limit on iterations within solver, or -1 for no limit.
 
+    random_state : int seed, RandomState instance, or None (default)
+        The seed of the pseudo random number generator to use when
+        shuffling the data for probability estimation.
+
     Attributes
     ----------
     `support_` : array-like, shape = [n_SV]
@@ -603,11 +622,11 @@ class NuSVR(BaseLibSVM, RegressorMixin):
     def __init__(self, nu=0.5, C=1.0, kernel='rbf', degree=3,
                  gamma=0.0, coef0=0.0, shrinking=True,
                  probability=False, tol=1e-3, cache_size=200,
-                 verbose=False, max_iter=-1):
+                 verbose=False, max_iter=-1, random_state=None):
 
         super(NuSVR, self).__init__(
             'nu_svr', kernel, degree, gamma, coef0, tol, C, nu, 0., shrinking,
-            probability, cache_size, None, verbose, max_iter)
+            probability, cache_size, None, verbose, max_iter, random_state)
 
 
 class OneClassSVM(BaseLibSVM):
@@ -660,6 +679,10 @@ class OneClassSVM(BaseLibSVM):
     max_iter : int, optional (default=-1)
         Hard limit on iterations within solver, or -1 for no limit.
 
+    random_state : int seed, RandomState instance, or None (default)
+        The seed of the pseudo random number generator to use when
+        shuffling the data for probability estimation.
+
     Attributes
     ----------
     `support_` : array-like, shape = [n_SV]
@@ -684,11 +707,12 @@ class OneClassSVM(BaseLibSVM):
     """
     def __init__(self, kernel='rbf', degree=3, gamma=0.0, coef0=0.0, tol=1e-3,
                  nu=0.5, shrinking=True, cache_size=200, verbose=False,
-                 max_iter=-1):
+                 max_iter=-1, random_state=None):
 
         super(OneClassSVM, self).__init__(
             'one_class', kernel, degree, gamma, coef0, tol, 0., nu, 0.,
-            shrinking, False, cache_size, None, verbose, max_iter)
+            shrinking, False, cache_size, None, verbose, max_iter,
+            random_state)
 
     def fit(self, X, sample_weight=None, **params):
         """
