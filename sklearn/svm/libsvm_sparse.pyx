@@ -266,7 +266,8 @@ def libsvm_sparse_predict (np.ndarray[np.float64_t, ndim=1, mode='c'] T_data,
                           100., # cache size has no effect on predict
                           C, eps, p, shrinking,
                           probability, <int> class_weight.shape[0], class_weight_label.data,
-                          class_weight.data, -1, -1)
+                          class_weight.data, -1,
+                          -1) # random seed has no effect on predict either
 
     model = csr_set_model(param, <int> nSV.shape[0], SV_data.data,
                           SV_indices.shape, SV_indices.data,
@@ -322,7 +323,8 @@ def libsvm_sparse_predict_proba(
                           100., # cache size has no effect on predict
                           C, eps, p, shrinking,
                           probability, <int> class_weight.shape[0], class_weight_label.data,
-                          class_weight.data, -1, -1)
+                          class_weight.data, -1,
+                          -1) # random seed has no effect on predict either
 
     model = csr_set_model(param, <int> nSV.shape[0], SV_data.data,
                           SV_indices.shape, SV_indices.data,
