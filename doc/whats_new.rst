@@ -158,6 +158,13 @@ Changelog
    - Most metrics now support string labels for multiclass classification
      by `Arnaud Joly`_ and `Lars Buitinck`_.
 
+   - Added :ref:`biclustering <biclustering>` algorithms
+     (:class:`sklearn.cluster.bicluster.SpectralCoclustering` and
+     :class:`sklearn.cluster.bicluster.SpectralBiclustering`), data
+     generation methods (:func:`sklearn.datasets.make_biclusters` and
+     :func:`sklearn.datasets.make_checkerboard`), and scoring metrics
+     (:func:`sklearn.metrics.consensus_score`). By `Kemal Eren`_.
+
    - New OrthogonalMatchingPursuitCV class by `Alexandre Gramfort`_
      and `Vlad Niculae`_.
 
@@ -205,6 +212,8 @@ Changelog
 
    - Speed optimization of the :mod:`hmm` module by `Mikhail Korobov`_
 
+   - Significant speed improvements for :class:`sklearn.cluster.DBSCAN`_
+     by `cleverless <https://github.com/cleverless>`_
 
 
 API changes summary
