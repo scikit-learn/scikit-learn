@@ -1,6 +1,7 @@
 import numpy as np
 from sklearn.utils.testing import assert_array_equal
-from .._squared_residue import squared_residue
+from sklearn.utils.testing import assert_equal
+from .._squared_residue import all_msr
 
 
 def squared_residue_python(X):
@@ -19,5 +20,10 @@ def test_squared_residue():
 
     for shape in ((20, 20), (10, 20), (20, 10)):
         X, rows, cols = make_data(*shape)
-        assert_array_equal(squared_residue(rows, cols, X),
-                           squared_residue_python(X[rows[None].T, cols]))
+        rows_t = rows[None].T
+        sr = squared_residue_python(X[rows_t, cols])
+
+        msr, row_msr, col_msr = all_msr(rows, cols, X)
+        assert_array_equal(row_msr, sr.mean(axis=1))
+        assert_array_equal(col_msr, sr.mean(axis=0))
+        assert_equal(msr, sr.mean())

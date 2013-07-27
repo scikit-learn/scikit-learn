@@ -17,7 +17,7 @@ from sklearn.utils.validation import check_random_state
 from .utils import check_array_ndim
 from .utils import get_indicators
 
-from ._squared_residue import squared_residue
+from ._squared_residue import all_msr
 
 
 class EmptyBiclusterException(Exception):
@@ -115,10 +115,10 @@ class ChengChurch(six.with_metaclass(ABCMeta, BaseEstimator,
                              " value is {}".format(
                                  self.column_deletion_cutoff))
 
-    def _squared_residue(self, rows, cols, X):
+    def _all_msr(self, rows, cols, X):
         if not rows.size or not cols.size:
             raise EmptyBiclusterException()
-        return squared_residue(rows.ravel(), cols, X)
+        return all_msr(rows.ravel(), cols, X)
 
     def _row_msr(self, rows, cols, X, inverse=False):
         # TODO: not necessary for rows already in bicluster
@@ -147,11 +147,9 @@ class ChengChurch(six.with_metaclass(ABCMeta, BaseEstimator,
         return np.power(arr, 2).mean(axis=0)
 
     def _single_node_deletion(self, rows, cols, X):
-        sr = self._squared_residue(rows, cols, X)
-        while sr.mean() > self.max_msr:
+        msr, row_msr, col_msr = self._all_msr(rows, cols, X)
+        while msr > self.max_msr:
             n_rows, n_cols = len(rows), len(cols)
-            row_msr = sr.mean(axis=1)
-            col_msr = sr.mean(axis=0)
             row_id = np.argmax(row_msr)
             col_id = np.argmax(col_msr)
             if row_msr[row_id] > col_msr[col_id]:
@@ -159,35 +157,32 @@ class ChengChurch(six.with_metaclass(ABCMeta, BaseEstimator,
                 rows = np.setdiff1d(rows, [rows[row_id]])[np.newaxis].T
             else:
                 cols = np.setdiff1d(cols, [cols[col_id]])
-            sr = self._squared_residue(rows, cols, X)
+            msr, row_msr, col_msr = self._all_msr(rows, cols, X)
         return rows, cols
 
     def _multiple_node_deletion(self, rows, cols, X):
-        sr = self._squared_residue(rows, cols, X)
-        msr = sr.mean()
+        msr, row_msr, col_msr = self._all_msr(rows, cols, X)
         while msr > self.max_msr:
             n_rows, n_cols = len(rows), len(cols)
-            row_msr = sr.mean(axis=1)
             if n_rows >= self.row_deletion_cutoff:
                 to_remove = row_msr > (self.deletion_threshold * msr)
                 rows = rows.ravel()
                 rows = np.setdiff1d(rows, rows[to_remove])[np.newaxis].T
 
-            col_msr = self._squared_residue(rows, cols, X).mean(axis=0)
+            msr, row_msr, col_msr = self._all_msr(rows, cols, X)
             if n_cols >= self.column_deletion_cutoff:
                 to_remove = col_msr > (self.deletion_threshold * msr)
                 cols = np.setdiff1d(cols, cols[to_remove])
 
             if n_rows == len(rows) and n_cols == len(cols):
                 break
-            sr = self._squared_residue(rows, cols, X)
-            msr = sr.mean()
+            msr, row_msr, col_msr = self._all_msr(rows, cols, X)
         return rows, cols
 
     def _node_addition(self, rows, cols, X):
         while True:
             n_rows, n_cols = len(rows), len(cols)
-            msr = self._squared_residue(rows, cols, X).mean()
+            msr, _, _ = self._all_msr(rows, cols, X)
             col_msr = self._col_msr(rows, cols, X)
             to_add = np.nonzero(col_msr < msr)[0]
             old_cols = cols.copy()  # save for inverse
@@ -199,7 +194,7 @@ class ChengChurch(six.with_metaclass(ABCMeta, BaseEstimator,
                 to_add = np.nonzero(col_msr < msr)[0]
                 cols = np.union1d(cols, to_add)
 
-            msr = self._squared_residue(rows, cols, X).mean()
+            msr, _, _ = self._all_msr(rows, cols, X)
             row_msr = self._row_msr(rows, cols, X)
             to_add = np.nonzero(row_msr < msr)[0]
             old_rows = rows.copy()  # save for inverse
