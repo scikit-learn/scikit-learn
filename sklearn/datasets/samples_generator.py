@@ -1304,52 +1304,62 @@ def make_gaussian_quantiles(mean=None, cov=1., n_samples=100,
     return X, y
 
 
-def make_nudged_dataset(X, y, images_shape=(8, 8),
-                        n_samples=100, nudging_strength=1, random_state=None):
-    """
-    Generate randomly nudged (left-right-up-down) images of the the ones in
-    the given dataset.
+def make_translated_images(X, y, images_shape=(8, 8),
+                           n_samples=100, nudging_strength=1,
+                           random_state=None):
+    """ Generate from X randomly selected additional image by translations.
+
+    This dataset enhancer moves images around (left/right/down/up) by the
+    nudging_strengh.
 
     X : array of shape [n_examples, n_features]
-        images examples
+        Images examples
 
     y : array of shape [n_examples]
-        images labels
+        Images labels
 
-    images_shape : 2 elements tuple, (images_x_size, images_y_size)
+    images_shape : array of shape [images_x_size, images_y_size], optional
         (default=(8,8))
+        Size of the images in the array (= arg to the reshape to imshow them)
 
-    n_samples : number of additional samples generated from the dataset
-        (default=100) should be multiple of 4 (4 directions left/right/down/up)
+    n_samples : int, optional (default=100)
+        Number of additional samples generated from the dataset
+        Should be multiple of 4 (4 directions left/right/down/up)
 
-    nudging_strength : number of pixels by which to nudge the images
-        (default=1)
+    nudging_strength : int, optional (default=1)
+        Number of pixels by which to translate the images
 
-    random_state : random state initialization
-        (default=None)
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
 
     Returns
     -------
 
     X : array of shape [n_examples + n_samples, n_features]
-        images examples
+        Images examples, including the inputs
 
     y : array of shape [n_examples + n_samples]
-        images labels
+        Images labels, including the inputs
 
     Examples
     --------
-    >>> from sklearn.datasets.samples_generator import make_nudged_dataset
+    >>> from sklearn.datasets.samples_generator import make_translated_images
     >>> glider = np.array([[0, 0, 1, 1, 0, 1, 0, 1, 1],
     ...                    [1, 0, 0, 0, 1, 1, 1, 1, 0],
     ...                    [0, 1, 0, 0, 0, 1, 1, 1, 1],
     ...                    [1, 0, 1, 0, 1, 1, 0, 1, 0],
     ...                    [0, 0, 1, 1, 0, 1, 0, 1, 1]])
-    >>> X, y = make_nudged_dataset(glider, np.array([0 for i in
+    >>> rng = np.random.RandomState(42)
+    >>> X, y = make_translated_images(glider, np.array([0 for i in
     ...                            xrange(glider.shape[0])]),
-    ...                            images_shape=(3, 3))
+    ...                            images_shape=(3, 3), random_state=rng)
     >>> print(X.shape)
     (105, 9)
+    >>> print(X[-1])
+    [ 1.  0.  1.  0.  1.  1.  0.  0.  0.]
     """
     rng = check_random_state(random_state)
 

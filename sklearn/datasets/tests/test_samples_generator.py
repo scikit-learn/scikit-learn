@@ -21,7 +21,7 @@ from sklearn.datasets import make_sparse_uncorrelated
 from sklearn.datasets import make_spd_matrix
 from sklearn.datasets import make_swiss_roll
 from sklearn.datasets import make_s_curve
-from sklearn.datasets import make_nudged_dataset
+from sklearn.datasets import make_translated_images
 
 
 def test_make_classification():
@@ -194,7 +194,7 @@ def test_make_s_curve():
     assert_array_equal(X[:, 2], np.sign(t) * (np.cos(t) - 1))
 
 
-def test_nudging():
+def test_translate_images():
     try:
         from sklearn.utils.testing import SkipTest
         from sklearn import datasets
@@ -203,8 +203,8 @@ def test_nudging():
         raise SkipTest("Download digits to run this test")
     rng = np.random.RandomState(42)
     # test default nudging (1px)
-    X, y = make_nudged_dataset(data.data[:1], data.target[:1],
-                               n_samples=4, random_state=rng)
+    X, y = make_translated_images(data.data[:1], data.target[:1],
+                                  n_samples=4, random_state=rng)
     assert_array_equal(np.array(
         [0., 0., 13., 15., 10., 15., 5., 0., 0., 3., 15., 2., 0., 11., 8., 0.,
          0., 4., 12., 0., 0., 8., 8., 0., 0., 5., 8., 0., 0., 9., 8., 0.,
@@ -213,8 +213,8 @@ def test_nudging():
          0.]),  X[-1])
     assert(y[-1] == 0)
     # test bigger nudgin (2px, digits is 8x8px)
-    X, y = make_nudged_dataset(data.data[:1], data.target[:1], n_samples=4,
-                               nudging_strength=2, random_state=rng)
+    X, y = make_translated_images(data.data[:1], data.target[:1], n_samples=4,
+                                  nudging_strength=2, random_state=rng)
     assert_array_equal(np.array(
         [0., 3., 15., 2., 0., 11., 8., 0., 0., 4., 12., 0., 0., 8., 8., 0., 0.,
          5., 8., 0., 0., 9., 8., 0., 0., 4., 11., 0., 1., 12., 7., 0., 0.,
