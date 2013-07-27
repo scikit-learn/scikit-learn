@@ -147,11 +147,11 @@ Cheng and Church masks those elements with uniform random values, then
 iterates to find the next bicluster.
 
 
-References
-----------
-- Cheng, Y., & Church, G. M. (2000). `Biclustering of
-  expression data
-  <ftp://samba.ad.sdsc.edu/pub/sdsc/biology/ISMB00/157.pdf>`__.
+.. topic:: References:
+
+ *  Cheng, Y., & Church, G. M. (2000). `Biclustering of
+    expression data
+    <ftp://samba.ad.sdsc.edu/pub/sdsc/biology/ISMB00/157.pdf>`__.
 
 
 .. _spectral_coclustering:
