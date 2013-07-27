@@ -407,8 +407,10 @@ class RankScaler(BaseEstimator, TransformerMixin):
 
     Rank-scaling happens independently on each feature, by determining
     the percentile of the feature value.
-    A feature value that is smaller than observed during fitting will scale to 0.
-    A feature value that is larger than observed during fitting will scale to 1.
+    A feature value that is smaller than observed during fitting
+    will scale to 0.
+    A feature value that is larger than observed during fitting
+    will scale to 1.
     A feature value that is the median will scale to 0.5.
 
     Standardization of a dataset is a common requirement for many
@@ -440,7 +442,7 @@ class RankScaler(BaseEstimator, TransformerMixin):
         """
         TODO: Add min and max parameters? Default = [0, 1]
         """
-        self.copy=True  # We don't have self.copy=False implemented
+        self.copy = True  # We don't have self.copy=False implemented
         pass
 
     def fit(self, X, y=None):
@@ -451,16 +453,11 @@ class RankScaler(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X : array-like or CSR matrix with shape [n_samples, n_features]
+        X : array-like matrix with shape [n_samples, n_features]
             The data used to compute feature ranks.
         """
-        X = check_arrays(X, copy=self.copy, sparse_format="csr")[0]
-        if sp.issparse(X):
-            raise ValueError("Cannot rank-standardize sparse matrices.")
-        if X.ndim != 2:
-            raise ValueError("Rank-standardization only tested on 2-D matrices.")
-        else:
-            self.sort_X_ = np.sort(X, axis=0)
+        X = array2d(X)
+        self.sort_X_ = np.sort(X, axis=0)
         return self
 
     def transform(self, X):
@@ -474,19 +471,14 @@ class RankScaler(BaseEstimator, TransformerMixin):
         X : array-like with shape [n_samples, n_features]
             The data used to scale along the features axis.
         """
-#        copy = copy if copy is not None else self.copy
-#        X = check_arrays(X, copy=copy, sparse_format="csr")[0]
-        X = check_arrays(X, copy=self.copy, sparse_format="csr")[0]
-        if sp.issparse(X):
-            raise ValueError("Cannot rank-standardize sparse matrices.")
-        if X.ndim != 2:
-            raise ValueError("Rank-standardization only tested on 2-D matrices.")
-        else:
-            warn_if_not_float(X, estimator=self)
-            newX = []
-            for j in range(X.shape[1]):
-                newX.append(1. * (np.searchsorted(self.sort_X_[:,j], X[:,j], side='left') + np.searchsorted(self.sort_X_[:,j], X[:,j], side='right')) / (2 * self.sort_X_.shape[0]))
-            X = np.vstack(newX).T
+        X = array2d(X)
+        warn_if_not_float(X, estimator=self)
+        newX = []
+        for j in range(X.shape[1]):
+            lidx = np.searchsorted(self.sort_X_[:, j], X[:, j], side='left')
+            ridx = np.searchsorted(self.sort_X_[:, j], X[:, j], side='right')
+            newX.append(1. * (lidx + ridx) / (2 * self.sort_X_.shape[0]))
+        X = np.vstack(newX).T
         return X
 
 #    def inverse_transform(self, X, copy=None):
