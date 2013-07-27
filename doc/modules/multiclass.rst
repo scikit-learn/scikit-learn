@@ -31,15 +31,13 @@ classifier.
     jointly several classification tasks. This is a generalisation
     over the multi-label classification task, where the set of classification
     problem is restricted to binary classification, and over the multi-class
-    classification task.
+    classification task. *The output format is a 2d numpy array.*
 
-    The set of labels can be different for each ouput variable.
+    The set of labels can be different for each output variable.
     For instance a sample could be assigned "pear" for an output variable that
     takes possible values in a finite set of species such as "pear", "apple",
-    "orange" and "green" for a second ouput variable that takes possible values
+    "orange" and "green" for a second output variable that takes possible values
     in a finite set of colors such as "green", "red", "orange", "yellow"...
-
-    *Note that the output format is a 2d numpy array.*
 
     This means that any classifiers handling multi-output
     multiclass or multi-task classification task
