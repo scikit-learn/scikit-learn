@@ -91,8 +91,8 @@ Cheng and Church
 
 :class:`ChengChurch` tries to find biclusters with low variance, low
 row variance, and low column variance, as quantified by the mean
-square residue of the bicluster. For a matrix :math:`A`, the mean
-square residue is computed as:
+squared residue. For a matrix :math:`A`, the mean squared residue is
+computed as:
 
 .. math::
     a_{ij} - a_{iJ} - a{Ij} - a{IJ}
@@ -107,6 +107,29 @@ where
    a_{IJ] = \frac{1}{|I| |J|} \sum_{i,j} a_{ij}
 
 are the row, column, and overall means of :math:`A`.
+
+.. note::
+   Although the mean squared residue is meant to find biclusters with
+   small row, column, and overall variance, it can also be small for other
+   other patterns. For instance::
+       >>> import numpy as np
+       >>> a = np.arange(25).reshape(5, 5)
+       >>> a
+       array([[ 0,  1,  2,  3,  4],
+              [ 5,  6,  7,  8,  9],
+              [10, 11, 12, 13, 14],
+              [15, 16, 17, 18, 19],
+              [20, 21, 22, 23, 24]])
+       >>> a.var()
+       52.0
+       >>> a.var(axis=1)
+       array([ 2.,  2.,  2.,  2.,  2.])
+       >>> a.var(axis=0)
+       array([ 50.,  50.,  50.,  50.,  50.])
+       >>> residue = a - a.mean(axis=1)[:, np.newaxis] - a.mean(axis=0) + a.mean()
+       >>> msr = np.power(residue, 2).mean()
+       >>> msr
+       0.0
 
 Scaling :math:`A` to :math:`A+c`, where :math:`c` is any constant,
 does not change its MSR. Therefore, for some datasets, it may be
