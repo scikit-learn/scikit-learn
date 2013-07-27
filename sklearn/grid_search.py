@@ -834,10 +834,8 @@ class RandomizedSearchCV(BaseSearchCV):
 
     Notes
     -----
-    The parameters selected are those that maximize the score of the left out
-    data, unless an explicit score_func is passed in which case it is used
-    instead. If a loss function loss_func is passed, it overrides the score
-    functions and is minimized.
+    The parameters selected are those that maximize the score of the held-out
+    data, according to the scoring parameter.
 
     If `n_jobs` was set to a value higher than one, the data is copied for each
     parameter setting(and not `n_jobs` times). This is done for efficiency
@@ -859,16 +857,16 @@ class RandomizedSearchCV(BaseSearchCV):
     """
 
     def __init__(self, estimator, param_distributions, n_iter=10, scoring=None,
-                 loss_func=None, score_func=None, fit_params=None, n_jobs=1,
-                 iid=True, refit=True, cv=None, verbose=0,
-                 pre_dispatch='2*n_jobs', random_state=None):
+                 fit_params=None, n_jobs=1, iid=True, refit=True, cv=None,
+                 verbose=0, pre_dispatch='2*n_jobs', random_state=None):
 
         self.param_distributions = param_distributions
         self.n_iter = n_iter
         self.random_state = random_state
         super(RandomizedSearchCV, self).__init__(
-            estimator, scoring, loss_func, score_func, fit_params, n_jobs, iid,
-            refit, cv, verbose, pre_dispatch)
+            estimator=estimator, scoring=scoring, fit_params=fit_params,
+            n_jobs=n_jobs, iid=iid, refit=refit, cv=cv, verbose=verbose,
+            pre_dispatch=pre_dispatch)
 
     def fit(self, X, y=None):
         """Run fit on the estimator with randomly drawn parameters.
