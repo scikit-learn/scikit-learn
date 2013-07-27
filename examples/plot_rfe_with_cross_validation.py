@@ -22,7 +22,7 @@ X, y = make_classification(n_samples=1000, n_features=25, n_informative=3,
 # Create the RFE object and compute a cross-validated score.
 svc = SVC(kernel="linear")
 rfecv = RFECV(estimator=svc, step=1, cv=StratifiedKFold(y, 2),
-              loss_func=zero_one_loss)
+              scoring='accuracy')
 rfecv.fit(X, y)
 
 print("Optimal number of features : %d" % rfecv.n_features_)
