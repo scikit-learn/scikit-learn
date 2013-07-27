@@ -183,10 +183,12 @@ div.related a {
 div.sphinxsidebar h3,
 div.sphinxsidebar h4 {
     padding: 5px 10px;
-    background-color: #4EACC5;
+    background-color: #CDE8EF;
     font-weight: normal;
     color: white;
-    margin: 25px 20px 0 10px;
+    margin: 0;
+    margin-right: 10px;
+    border-radius: 4px;
 }
 
 div.sphinxsidebar h3 a,
@@ -303,13 +305,13 @@ div.sphinxsidebar input[type=text]{
 /* -- body styles ----------------------------------------------------------- */
 
 a {
-    color: #008EB2;
+    color: #3499CD;
     text-decoration: none;
     word-wrap: break-word;
 }
 
 a:hover {
-    color: #355F7C;
+    color: #055781;
     text-decoration: underline;
 }
 
@@ -866,6 +868,13 @@ div.carousel img {
     background-color: #fff;
 }
 
+p.doc-version {
+    text-align: center;
+    color: #B94A48;
+    background-color: #F2DEDE;
+    border: 1px solid #EED3D7;
+    border-radius: 4px;
+}
 
 /*----- testimonials ----------*/
 
