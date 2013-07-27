@@ -1,7 +1,7 @@
 .. _neural_network:
 
 ====================================
-Neural Network models (unsupervised)
+Neural network models (unsupervised)
 ====================================
 
 .. currentmodule:: sklearn.neural_network
@@ -9,10 +9,10 @@ Neural Network models (unsupervised)
 
 .. _rbm:
 
-Restricted Boltzmann Machines
+Restricted Boltzmann machines
 =============================
 
-Restricted Boltzmann Machines (RBM) are unsupervised nonlinear feature learners
+Restricted Boltzmann machines (RBM) are unsupervised nonlinear feature learners
 based on a probabilistic model. The features extracted by an RBM or a hierarchy
 of RBMs often give good results when fed into a linear classifier such as a
 linear SVM or a perceptron.
@@ -30,7 +30,7 @@ makes the model less useful for small datasets, and usually not useful for
 density estimation.
 
 The method gained popularity for initializing deep neural networks with the
-weights of independent RBMs. This method is known as unsupervized pre-training.
+weights of independent RBMs. This method is known as unsupervised pre-training.
 
 .. figure:: ../auto_examples/images/plot_rbm_logistic_classification_1.png
    :target: ../auto_examples/plot_rbm_logistic_classification.html
@@ -83,7 +83,7 @@ This means that the following conditional independencies are assumed:
 The bipartite structure allows for the use of efficient block Gibbs sampling for
 inference.
 
-Bernoulli Restricted Boltzmann Machines
+Bernoulli Restricted Boltzmann machines
 ---------------------------------------
 
 In the :class:`BernoulliRBM`, all units are binary stochastic units. This
@@ -110,12 +110,12 @@ where :math:`\sigma` is the logistic sigmoid function:
 
 .. _sml:
 
-Stochastic Maximum Likelihood Learning
+Stochastic Maximum Likelihood learning
 --------------------------------------
 
 The training algorithm implemented in :class:`BernoulliRBM` is known as
 Stochastic Maximum Likelihood (SML) or Persistent Contrastive Divergence
-(PCD). Optimizing Maximum Likelihood directly is infeasible because of
+(PCD). Optimizing maximum likelihood directly is infeasible because of
 the form of the data likelihood:
 
 .. math::
@@ -128,12 +128,12 @@ the ones above. They are usually known as the positive gradient and the negative
 gradient, because of their respective signs.  In this implementation, the
 gradients are estimated over mini-batches of samples.
 
-In maximizing the log likelihood, the positive gradient makes the model prefer
+In maximizing the log-likelihood, the positive gradient makes the model prefer
 hidden states that are compatible with the observed training data. Because of
-the the bipartite structure of RBMs, it can be computed efficiently. The
+the bipartite structure of RBMs, it can be computed efficiently. The
 negative gradient, however, is intractable. Its goal is to lower the energy of
 joint states that the model prefers, therefore making it stay true to the data.
-It can be approximated by Markov Chain Monte Carlo using block Gibbs sampling by
+It can be approximated by Markov chain Monte Carlo using block Gibbs sampling by
 iteratively sampling each of :math:`v` and :math:`h` given the other, until the
 chain mixes. Samples generated in this way are sometimes refered as fantasy
 particles. This is inefficient and it is difficult to determine whether the
