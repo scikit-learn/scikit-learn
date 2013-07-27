@@ -305,7 +305,7 @@ div.sphinxsidebar input[type=text]{
 /* -- body styles ----------------------------------------------------------- */
 
 a {
-    color: #3499CD;
+    color: #2878A2;
     text-decoration: none;
     word-wrap: break-word;
 }
@@ -825,7 +825,6 @@ div.body h2.no-bg, div.body h3.no-bg{
 
 div.box-links {
     margin-top: 8px;
-    font-size: 88%;
 }
 
 div.box-links p {
@@ -947,14 +946,14 @@ div.navbar ul.dropdown-menu li{
 }
 
 div.navbar ul.dropdown-menu li a {
-  font-size: 12px;
-  color: #355F7C;
+  font-size: 88%;
+  color: #2878A2;
   padding: 0;
   font-weight: normal;
 }
 
 div.navbar ul.dropdown-menu li a:hover {
-  color: #000;
+  color: #055781;
   text-decoration: underline;
   background-color: transparent;
   background-image: none;
@@ -1027,7 +1026,7 @@ div.navbar .btn-group li.bnt-li a {
   margin-top: 5px;
   background-color: #fff;
   overflow: hidden;
-  border-bottom: 2px solid #e5e5e5;
+  border-bottom: 1px solid #e5e5e5;
 }
 
 div.navbar ul.dropdown-menu li {
@@ -1035,3 +1034,6 @@ div.navbar ul.dropdown-menu li {
   font-size: 11px;
   color: #000;
 }
+
+
+
