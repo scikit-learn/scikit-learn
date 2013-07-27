@@ -7,7 +7,6 @@ descr = """A set of python modules for machine learning and data mining"""
 
 import sys
 import os
-import shutil
 
 if sys.version_info[0] < 3:
     import __builtin__ as builtins
@@ -93,11 +92,18 @@ def setup_package():
                                  'Operating System :: Microsoft :: Windows',
                                  'Operating System :: POSIX',
                                  'Operating System :: Unix',
-                                 'Operating System :: MacOS'],
+                                 'Operating System :: MacOS',
+                                 'Programming Language :: Python :: 2',
+                                 'Programming Language :: Python :: 2.6',
+                                 'Programming Language :: Python :: 2.7',
+                                 'Programming Language :: Python :: 3',
+                                 'Programming Language :: Python :: 3.3',
+                                 ],
                     **extra_setuptools_args)
 
-    if len(sys.argv) >= 2 and ('--help' in sys.argv[1:] or sys.argv[1]
-       in ('--help-commands', 'egg_info', '--version', 'clean')):
+    if (len(sys.argv) >= 2
+            and ('--help' in sys.argv[1:] or sys.argv[1]
+                 in ('--help-commands', 'egg_info', '--version', 'clean'))):
 
         # For these actions, NumPy is not required.
         #
