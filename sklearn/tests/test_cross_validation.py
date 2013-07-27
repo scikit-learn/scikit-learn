@@ -20,7 +20,6 @@ from sklearn import cross_validation as cval
 from sklearn.base import BaseEstimator
 from sklearn.datasets import make_regression
 from sklearn.datasets import load_iris
-from sklearn.datasets import make_multilabel_classification
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import f1_score
 from sklearn.metrics import explained_variance_score

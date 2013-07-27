@@ -11,6 +11,7 @@ from sklearn.utils import (array2d, as_float_array, atleast2d_or_csr,
 
 from sklearn.random_projection import sparse_random_matrix
 
+
 def test_as_float_array():
     """Test function for as_float_array"""
     X = np.ones((3, 10), dtype=np.int32)

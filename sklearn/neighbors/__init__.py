@@ -14,6 +14,7 @@ from .nearest_centroid import NearestCentroid
 from .kde import KernelDensity
 
 __all__ = ['BallTree',
+           'DistanceMetric',
            'KDTree',
            'KNeighborsClassifier',
            'KNeighborsRegressor',

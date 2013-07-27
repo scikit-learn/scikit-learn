@@ -6,7 +6,6 @@ from numpy.testing import (assert_array_almost_equal, assert_array_equal,
                            assert_equal, assert_warns)
 
 from nose.tools import assert_raises, assert_true, assert_false
-from nose.tools import assert_equal as nose_assert_equal
 from sklearn.datasets import make_classification, load_digits
 from sklearn.svm.tests import test_svm
 from sklearn.utils import ConvergenceWarning

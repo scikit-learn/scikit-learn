@@ -49,7 +49,6 @@ from .svmlight_format import dump_svmlight_file
 from .olivetti_faces import fetch_olivetti_faces
 from .species_distributions import fetch_species_distributions
 from .california_housing import fetch_california_housing
-from ..utils import deprecated
 
 __all__ = ['clear_data_home',
            'dump_svmlight_file',
@@ -76,9 +75,11 @@ __all__ = ['clear_data_home',
            'load_sample_images',
            'load_svmlight_file',
            'load_svmlight_files',
+           'make_biclusters',
            'make_blobs',
            'make_circles',
            'make_classification',
+           'make_checkerboard',
            'make_friedman1',
            'make_friedman2',
            'make_friedman3',

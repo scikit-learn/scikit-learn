@@ -1,7 +1,6 @@
-import numpy as np
 import pickle
 
-from sklearn.utils.testing import assert_almost_equal, assert_array_equal
+from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_raises
 
 from sklearn.metrics import (f1_score, r2_score, auc_score, fbeta_score,
@@ -20,7 +19,8 @@ from sklearn.grid_search import GridSearchCV
 def test_make_scorer():
     """Sanity check on the make_scorer factory function."""
     f = lambda *args: 0
-    assert_raises(ValueError, make_scorer, f, needs_threshold=True, needs_proba=True)
+    assert_raises(ValueError, make_scorer, f, needs_threshold=True,
+                  needs_proba=True)
 
 
 def test_classification_scores():

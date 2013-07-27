@@ -70,7 +70,6 @@ def test_assert_raise_message():
                   _raise_ValueError, "test")
 
 
-
 # This class is taken from numpy 1.7
 class TestWarns(unittest.TestCase):
     def test_warn(self):

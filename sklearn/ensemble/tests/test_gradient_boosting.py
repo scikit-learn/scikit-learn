@@ -486,7 +486,7 @@ def test_oob_score():
     clf.fit(X, y)
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter("always")
-        _ = clf.oob_score_
+        assert_true(hasattr(clf, 'oob_score_'))
         assert_equal(len(w), 1)
 
 
@@ -507,7 +507,7 @@ def test_oob_improvement_raise():
     clf = GradientBoostingClassifier(n_estimators=100, random_state=1,
                                      subsample=1.0)
     clf.fit(X, y)
-    assert_raises(AttributeError, lambda : clf.oob_improvement_)
+    assert_raises(AttributeError, lambda: clf.oob_improvement_)
 
 
 def test_oob_multilcass_iris():
