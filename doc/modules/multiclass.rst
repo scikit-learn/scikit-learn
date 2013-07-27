@@ -80,9 +80,8 @@ is expressed with either a sequence of sequences or a label binary indicator
 array.
 
 In the sequence of sequences format, each set of labels is represented as
-as sequences of integer, e.g. ``[0]``, ``[1, 2]``. An empty set of labels is then
-expressed as an empty sequence ``[]``. A set of samples is then
-expressed as ``[[0], [1, 2], []]``.
+a sequence of integer, e.g. ``[0]``, ``[1, 2]``. An empty set of labels is
+then expressed as ``[]``, and a set of samples as ``[[0], [1, 2], []]``.
 In the label indicator format, each sample is one row of a 2d array of
 shape (n_samples, n_classes) with binary values: the one, i.e. the non zero
 elements, corresponds to the subset of labels. Our previous example is
