@@ -256,6 +256,8 @@ def warn_if_not_float(X, estimator='This algorithm'):
     if X.dtype.kind != 'f':
         warnings.warn("%s assumes floating point values as input, "
                       "got %s" % (estimator, X.dtype))
+        return True
+    return False
 
 
 def check_random_state(seed):

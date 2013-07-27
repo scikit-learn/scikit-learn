@@ -239,6 +239,71 @@ def test_scaler_without_centering():
     assert_array_almost_equal(X_csc_scaled_back.toarray(), X)
 
 
+def test_scaler_int():
+    # test that scaler converts integer input to floating
+    # for both sparse and dense matrices
+    rng = np.random.RandomState(42)
+    X = rng.randint(20, size=(4, 5))
+    X[:, 0] = 0  # first feature is always of zero
+    X_csr = sparse.csr_matrix(X)
+    X_csc = sparse.csc_matrix(X)
+
+    assert_raises(ValueError, StandardScaler().fit, X_csr)
+
+    null_transform = StandardScaler(with_mean=False, with_std=False, copy=True)
+    X_null = null_transform.fit_transform(X_csr)
+    assert_array_equal(X_null.data, X_csr.data)
+    X_orig = null_transform.inverse_transform(X_null)
+    assert_array_equal(X_orig.data, X_csr.data)
+
+    scaler = StandardScaler(with_mean=False).fit(X)
+    X_scaled = scaler.transform(X, copy=True)
+    assert_false(np.any(np.isnan(X_scaled)))
+
+    scaler_csr = StandardScaler(with_mean=False).fit(X_csr)
+    X_csr_scaled = scaler_csr.transform(X_csr, copy=True)
+    assert_false(np.any(np.isnan(X_csr_scaled.data)))
+
+    scaler_csc = StandardScaler(with_mean=False).fit(X_csc)
+    X_csc_scaled = scaler_csr.transform(X_csc, copy=True)
+    assert_false(np.any(np.isnan(X_csc_scaled.data)))
+
+    assert_equal(scaler.mean_, scaler_csr.mean_)
+    assert_array_almost_equal(scaler.std_, scaler_csr.std_)
+
+    assert_equal(scaler.mean_, scaler_csc.mean_)
+    assert_array_almost_equal(scaler.std_, scaler_csc.std_)
+
+    assert_array_almost_equal(
+        X_scaled.mean(axis=0),
+        [0., 1.10976527, 1.85655824, 21., 1.55977928], 2)
+    assert_array_almost_equal(X_scaled.std(axis=0), [0., 1., 1., 1., 1.])
+
+    X_csr_scaled_mean, X_csr_scaled_std = mean_variance_axis0(
+        X_csr_scaled.astype(np.float))
+    assert_array_almost_equal(X_csr_scaled_mean, X_scaled.mean(axis=0))
+    assert_array_almost_equal(X_csr_scaled_std, X_scaled.std(axis=0))
+
+    # Check that X has not been modified (copy)
+    assert_true(X_scaled is not X)
+    assert_true(X_csr_scaled is not X_csr)
+
+    X_scaled_back = scaler.inverse_transform(X_scaled)
+    assert_true(X_scaled_back is not X)
+    assert_true(X_scaled_back is not X_scaled)
+    assert_array_almost_equal(X_scaled_back, X)
+
+    X_csr_scaled_back = scaler_csr.inverse_transform(X_csr_scaled)
+    assert_true(X_csr_scaled_back is not X_csr)
+    assert_true(X_csr_scaled_back is not X_csr_scaled)
+    assert_array_almost_equal(X_csr_scaled_back.toarray(), X)
+
+    X_csc_scaled_back = scaler_csr.inverse_transform(X_csc_scaled.tocsc())
+    assert_true(X_csc_scaled_back is not X_csc)
+    assert_true(X_csc_scaled_back is not X_csc_scaled)
+    assert_array_almost_equal(X_csc_scaled_back.toarray(), X)
+
+
 def test_scaler_without_copy():
     """Check that StandardScaler.fit does not change input"""
     rng = np.random.RandomState(42)
