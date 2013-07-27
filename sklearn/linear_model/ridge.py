@@ -862,15 +862,10 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
     normalize : boolean, optional, default False
         If True, the regressors X will be normalized before regression.
 
-    score_func: callable, optional
-        function that takes 2 arguments and compares them in
-        order to evaluate the performance of prediction (big is good)
-        if None is passed, the score of the estimator is maximized
-
-    loss_func: callable, optional
-        function that takes 2 arguments and compares them in
-        order to evaluate the performance of prediction (small is good)
-        if None is passed, the score of the estimator is maximized
+    scoring : callable or None.
+        A string (see model evaluation documentation) or
+        a scorer callable object / function with signature
+        ``scorer(estimator, X, y)``.
 
     cv : cross-validation generator, optional
         If None, Generalized Cross-Validation (efficient Leave-One-Out)
@@ -944,15 +939,10 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
     normalize : boolean, optional, default False
         If True, the regressors X will be normalized before regression.
 
-    score_func: callable, optional
-        function that takes 2 arguments and compares them in
-        order to evaluate the performance of prediction (big is good)
-        if None is passed, the score of the estimator is maximized
-
-    loss_func: callable, optional
-        function that takes 2 arguments and compares them in
-        order to evaluate the performance of prediction (small is good)
-        if None is passed, the score of the estimator is maximized
+    scoring : callable or None.
+        A string (see model evaluation documentation) or
+        a scorer callable object / function with signature
+        ``scorer(estimator, X, y)``.
 
     cv : cross-validation generator, optional
         If None, Generalized Cross-Validation (efficient Leave-One-Out)
