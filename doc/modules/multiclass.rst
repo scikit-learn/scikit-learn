@@ -22,6 +22,10 @@ classifier.
     document. A text might be about any of religion, politics, finance or
     education at the same time or none of these.
 
+    Multiclass classification makes the assumption that each sample is assigned
+    to one and only one label: a fruit can be either an apple or a pear but not
+    both at the same time.
+
   - **Multioutput-multiclass classification** and **multi-task classification**
     means that an estimators have to handle
     jointly several classification tasks. This is a generalisation
@@ -29,9 +33,17 @@ classifier.
     problem is restricted to binary classification, and over the multi-class
     classification task.
 
+    The set of labels can be different for each ouput variable.
+    For instance a sample could be assigned "pear" for an output variable that
+    takes possible values in a finite set of species such as "pear", "apple",
+    "orange" and "green" for a second ouput variable that takes possible values
+    in a finite set of colors such as "green", "red", "orange", "yellow"...
+
+    *Note that the output format is a 2d numpy array.*
+
     This means that any classifiers handling multi-output
-    multiclass or muli-task classification task
-    supports the multi-label classification task.
+    multiclass or multi-task classification task
+    supports the multi-label classification task as a special case.
     Multi-task classification is similar to the multi-output
     classification task with different model formulations. For
     more information, see the relevant estimator documentation.
@@ -40,7 +52,7 @@ The estimators provided in this module are meta-estimators required a base
 estimator in their constructor. For example, it is possible to
 use these estimators to turn a binary classifier or a regressor into a
 multiclass classifier. It is also possible to use these estimators with
-multiclass estimators in the hope that their generalisation error or runtime
+multiclass estimators in the hope that their generalization error or runtime
 performance improves.
 
 You don't need to use these estimators unless you want to experiment with
@@ -62,8 +74,8 @@ tasks :ref:`Decision Trees <tree>`, :ref:`Random Forests <forest>`,
 
 .. warning::
 
-  For the moment, no metrics support the multioutput-multiclass
-  classification task.
+    For the moment, no metrics support the multioutput-multiclass
+    classification task.
 
 Multilabel classification format
 ================================
@@ -91,20 +103,21 @@ indicator format.
 
   >>> from sklearn.datasets import make_multilabel_classification
   >>> from sklearn.preprocessing import LabelBinarizer
-  >>> X, Y = make_multilabel_classification(n_samples=5)
+  >>> X, Y = make_multilabel_classification(n_samples=5, random_state=0)
   >>> Y
-  ([0], [1], [2, 3, 4, 1], [3], [1])
+  ([0, 1, 2], [4, 1, 0, 2], [4, 0, 1], [1, 0], [3, 2])
   >>> LabelBinarizer().fit_transform(Y)
-  array([[1, 0, 0, 0, 0],
-         [0, 1, 0, 0, 0],
-      	 [0, 1, 1, 1, 1],
-      	 [0, 0, 0, 1, 0],
-      	 [0, 1, 0, 0, 0]])
+  array([[1, 1, 1, 0, 0],
+         [1, 1, 1, 0, 1],
+         [1, 1, 0, 0, 1],
+         [1, 1, 0, 0, 0],
+         [0, 0, 1, 1, 0]])
 
 .. warning::
 
-  - The sequence of sequences format will disappear in a near future.
-  - All estimators or functions support both multilabel format.
+    - The sequence of sequences format will disappear in a near future.
+    - All estimators or functions support both multilabel format.
+
 
 One-Vs-The-Rest
 ===============
