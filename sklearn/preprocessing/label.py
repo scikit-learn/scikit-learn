@@ -9,7 +9,7 @@ import numpy as np
 from ..base import BaseEstimator, TransformerMixin
 
 from ..utils.fixes import unique
-from ..utils import deprecated
+from ..utils import deprecated, column_or_1d
 
 from ..utils.multiclass import unique_labels
 from ..utils.multiclass import type_of_target
@@ -412,7 +412,7 @@ def label_binarize(y, classes, multilabel=False, neg_label=0, pos_label=1):
         return Y
 
     else:
-        y = np.asarray(y)
+        y = column_or_1d(y)
 
         if len(classes) == 2:
             Y[y == classes[1], 0] = pos_label

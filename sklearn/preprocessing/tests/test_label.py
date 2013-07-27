@@ -48,6 +48,33 @@ def test_label_binarizer():
     assert_array_equal(lb.inverse_transform(got), inp)
 
 
+def test_label_binarizer_column_y():
+    lb = LabelBinarizer()
+    # first for binary
+    # lists are multi-label, array is multi-class :-/
+    inp = [[1], [2], [1]]
+    inp2 = np.array(inp)
+    expected = np.array([[1, 0], [0, 1], [1, 0]])
+    expected2 = np.array([[0], [1], [0]])
+
+    out = lb.fit_transform(inp)
+    out2 = lb.fit_transform(inp2)
+
+    assert_array_equal(out, expected)
+    assert_array_equal(out2, expected2)
+
+    # now multi-label
+    inp = [[1], [2], [1], [3]]
+    inp2 = np.array(inp)
+    expected = np.array([[1, 0, 0], [0, 1, 0], [1, 0, 0], [0, 0, 1]])
+
+    out = lb.fit_transform(inp)
+    out2 = lb.fit_transform(inp2)
+
+    assert_array_equal(out, out2)
+    assert_array_equal(out, expected)
+
+
 def test_label_binarizer_set_label_encoding():
     lb = LabelBinarizer(neg_label=-2, pos_label=2)
 
