@@ -123,9 +123,9 @@ class PCA(BaseEstimator, TransformerMixin):
         percentage specified by n_components
 
     copy : bool
-        If False, data passed to fit are overwritten.  You should prefer
-        'fit_transform(X)' to 'fit(X).transform(X)' to transform the data used
-        on fitting.
+        If False, data passed to fit are overwritten and running
+        fit(X).transform(X) will not yield the expected results,
+        use fit_transform(X) instead.
 
     whiten : bool, optional
         When True (False by default) the `components_` vectors are divided
@@ -383,9 +383,9 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         is set to n_features (the second dimension of the training data).
 
     copy : bool
-        If False, data passed to fit are overwritten. You should prefer
-        'fit_transform(X)' to 'fit(X).transform(X)' to transform the data used
-        on fitting.
+        If False, data passed to fit are overwritten and running
+        fit(X).transform(X) will not yield the expected results,
+        use fit_transform(X) instead.
 
     iterated_power : int, optional
         Number of iterations for the power method. 3 by default.
