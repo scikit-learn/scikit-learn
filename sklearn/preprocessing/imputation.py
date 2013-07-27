@@ -295,7 +295,7 @@ class Imputer(BaseEstimator, TransformerMixin):
 
         # Median
         elif strategy == "median":
-            if tuple(np.__version__.split('.')[:2]) < (1, 5):
+            if tuple(int(v) for v in np.__version__.split('.')[:2]) < (1, 5):
                 # In old versions of numpy, calling a median on an array
                 # containing nans returns nan. This is different is
                 # recent versions of numpy, which we want to mimic
