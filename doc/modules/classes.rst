@@ -626,6 +626,7 @@ From text
    linear_model.LogisticRegression
    linear_model.MultiTaskLasso
    linear_model.MultiTaskElasticNet
+   linear_model.NonNegativeGarrote
    linear_model.OrthogonalMatchingPursuit
    linear_model.OrthogonalMatchingPursuitCV
    linear_model.PassiveAggressiveClassifier
@@ -647,6 +648,8 @@ From text
    linear_model.lars_path
    linear_model.lasso_path
    linear_model.lasso_stability_path
+   linear_model.non_negative_garrote
+   linear_model.non_negative_garrote_path
    linear_model.orthogonal_mp
    linear_model.orthogonal_mp_gram
 

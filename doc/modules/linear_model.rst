@@ -443,6 +443,76 @@ column is always zero.
    by Hastie et al.
 
 
+.. _nng:
+
+Non-negative Garrote
+====================
+
+The :class:`NonNegativeGarrote` is a method that Leo Breiman[1] proposed for
+doing better subset regression. It basically both shrinks as well as
+zeroes coefficients.
+
+Normal subset regression is useful for:
+       * Reducing the variance (each additional coefficient adds to the variance
+       	 of the regression equation).
+       * Simplicity, as it would ideally not lose any valuable information, while
+       	 reducing the number of features one has to work with.
+The prime competitor against subset regression, is of
+course :class:`Ridge` Regression, which can be more stable and accurate. Its
+drawbacks are that it's equation is no simpler than that of the Ordinary
+Least Squares problem, as well as not being scale invariant (if the scales
+used to express the individual predictor variables are changed,
+the ridge coefficients will not change inversely proportional to the changes
+in the variable scales)
+
+The Non-negative Garrote, however, is scale invariant whilst having an accuracy
+that can compete with that of ridge regression. It will eliminate some variables, while
+shrinking others and is relatively stable.
+Unless a large part of the `true` coefficients are nonnegligible, it gives
+an accuracy better than or comparable to ridge methods[1].
+
+
+::
+
+   >>> clf = linear_model.NonNegativeGarrote(alpha=0.1)
+   >>> clf.fit ([[0, 0], [0, 0], [1, 1]], [0, .1, 1])  # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
+   NonNegativeGarrote(alpha=0.1, copy_X=True, fit_intercept=True, max_iter=1000,
+              normalize=False, precompute='auto', tol=0.0001)
+   >>> clf.coef_    # doctest: +ELLIPSIS
+   array([ 0.00263158,  0.        ])
+   >>> clf.intercept_    # doctest: +ELLIPSIS
+   0.36578947368421072
+
+
+Ultimately, it aims to minimize a function
+similiar to that of the :class:`Lasso`:
+
+.. math::  \underset{c}{min\,} { \frac{1}{2n_{samples}} ||X c \beta - y||_2 ^ 2 + \alpha ||w||_1}
+
+where :math:`c` must follow the constraint:
+
+.. math::  c => 0
+
+:math:`\beta` are ordinary least square coefficients.
+The new predictor coefficients are thusly obtained by the product of :math:`c` and
+:math:`\beta`.
+
+There is also the :func:`non_negative_garrote_path` function that is
+useful for lower-level tasks by computing the coefficients along the full
+path of possible values.
+
+
+.. topic:: Examples:
+
+  * :ref:`example_linear_model_plot_nng_lasso_compare.py`
+
+.. topic:: References:
+
+ * Original Algorithm is detailed in the paper
+   `Better Subset Regression Using the Nonnegative Garrote
+   <http://www-personal.umich.edu/~jizhu/jizhu/wuke/Breiman-Technometrics95.pdf>`_
+   by Leo Breiman.
+
 .. _omp:
 
 Orthogonal Matching Pursuit (OMP)

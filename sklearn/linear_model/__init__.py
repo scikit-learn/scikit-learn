@@ -29,6 +29,8 @@ from .passive_aggressive import PassiveAggressiveRegressor
 from .perceptron import Perceptron
 from .randomized_l1 import (RandomizedLasso, RandomizedLogisticRegression,
                             lasso_stability_path)
+from .nng import NonNegativeGarrote, non_negative_garrote, \
+    non_negative_garrote_path
 
 __all__ = ['ARDRegression',
            'BayesianRidge',
@@ -49,6 +51,7 @@ __all__ = ['ARDRegression',
            'ModifiedHuber',
            'MultiTaskElasticNet',
            'MultiTaskLasso',
+           'NonNegativeGarrote',
            'OrthogonalMatchingPursuit',
            'OrthogonalMatchingPursuitCV',
            'PassiveAggressiveClassifier',
@@ -67,6 +70,8 @@ __all__ = ['ARDRegression',
            'lars_path',
            'lasso_path',
            'lasso_stability_path',
+           'non_negative_garrote',
+           'non_negative_garrote_path',
            'orthogonal_mp',
            'orthogonal_mp_gram',
            'ridge_regression']
