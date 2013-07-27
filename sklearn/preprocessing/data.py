@@ -308,12 +308,13 @@ class StandardScaler(BaseEstimator, TransformerMixin):
             used for later scaling along the features axis.
         """
         X = check_arrays(X, copy=self.copy, sparse_format="csr")[0]
+        if warn_if_not_float(X, estimator=self):
+            X = X.astype(np.float)
         if sparse.issparse(X):
             if self.with_mean:
                 raise ValueError(
                     "Cannot center sparse matrices: pass `with_mean=False` "
                     "instead. See docstring for motivation and alternatives.")
-            warn_if_not_float(X, estimator=self)
             self.mean_ = None
 
             if self.with_std:
@@ -324,7 +325,6 @@ class StandardScaler(BaseEstimator, TransformerMixin):
                 self.std_ = None
             return self
         else:
-            warn_if_not_float(X, estimator=self)
             self.mean_, self.std_ = _mean_and_std(
                 X, axis=0, with_mean=self.with_mean, with_std=self.with_std)
             return self
@@ -339,16 +339,16 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         """
         copy = copy if copy is not None else self.copy
         X = check_arrays(X, copy=copy, sparse_format="csr")[0]
+        if warn_if_not_float(X, estimator=self):
+            X = X.astype(np.float)
         if sparse.issparse(X):
             if self.with_mean:
                 raise ValueError(
                     "Cannot center sparse matrices: pass `with_mean=False` "
-                    "instead See docstring for motivation and alternatives.")
+                    "instead. See docstring for motivation and alternatives.")
             if self.std_ is not None:
-                warn_if_not_float(X, estimator=self)
                 inplace_csr_column_scale(X, 1 / self.std_)
         else:
-            warn_if_not_float(X, estimator=self)
             if self.with_mean:
                 X -= self.mean_
             if self.with_std:
