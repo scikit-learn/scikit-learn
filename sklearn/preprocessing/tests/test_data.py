@@ -248,24 +248,26 @@ def test_scaler_int():
     X_csr = sparse.csr_matrix(X)
     X_csc = sparse.csc_matrix(X)
 
-    assert_raises(ValueError, StandardScaler().fit, X_csr)
-
     null_transform = StandardScaler(with_mean=False, with_std=False, copy=True)
-    X_null = null_transform.fit_transform(X_csr)
+    with warnings.catch_warnings(record=True):
+        X_null = null_transform.fit_transform(X_csr)
     assert_array_equal(X_null.data, X_csr.data)
     X_orig = null_transform.inverse_transform(X_null)
     assert_array_equal(X_orig.data, X_csr.data)
 
-    scaler = StandardScaler(with_mean=False).fit(X)
-    X_scaled = scaler.transform(X, copy=True)
+    with warnings.catch_warnings(record=True):
+        scaler = StandardScaler(with_mean=False).fit(X)
+        X_scaled = scaler.transform(X, copy=True)
     assert_false(np.any(np.isnan(X_scaled)))
 
-    scaler_csr = StandardScaler(with_mean=False).fit(X_csr)
-    X_csr_scaled = scaler_csr.transform(X_csr, copy=True)
+    with warnings.catch_warnings(record=True):
+        scaler_csr = StandardScaler(with_mean=False).fit(X_csr)
+        X_csr_scaled = scaler_csr.transform(X_csr, copy=True)
     assert_false(np.any(np.isnan(X_csr_scaled.data)))
 
-    scaler_csc = StandardScaler(with_mean=False).fit(X_csc)
-    X_csc_scaled = scaler_csr.transform(X_csc, copy=True)
+    with warnings.catch_warnings(record=True):
+        scaler_csc = StandardScaler(with_mean=False).fit(X_csc)
+        X_csc_scaled = scaler_csr.transform(X_csc, copy=True)
     assert_false(np.any(np.isnan(X_csc_scaled.data)))
 
     assert_equal(scaler.mean_, scaler_csr.mean_)
@@ -276,7 +278,7 @@ def test_scaler_int():
 
     assert_array_almost_equal(
         X_scaled.mean(axis=0),
-        [0., 1.10976527, 1.85655824, 21., 1.55977928], 2)
+        [0., 1.109, 1.856, 21., 1.559], 2)
     assert_array_almost_equal(X_scaled.std(axis=0), [0., 1., 1., 1., 1.])
 
     X_csr_scaled_mean, X_csr_scaled_std = mean_variance_axis0(
