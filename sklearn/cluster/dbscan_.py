@@ -70,7 +70,7 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski',
 
     Notes
     -----
-    See examples/plot_dbscan.py for an example.
+    See examples/cluster/plot_dbscan.py for an example.
 
     References
     ----------
