@@ -359,7 +359,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
 
         sample_weight : array-like of shape = [n_samples], optional
             Sample weights. If None, the sample weights are initialized to
-            1 / n_samples.
+            ``1 / n_samples``.
 
         Returns
         -------

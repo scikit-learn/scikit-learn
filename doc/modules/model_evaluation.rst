@@ -47,24 +47,24 @@ Common cases: predefined values
 For the most common usecases, you can simply provide a string as the
 ``scoring`` parameter. Possible values are:
 
-===================     ===============================================
-Scoring                 Function
-===================     ===============================================
+======================     =================================================
+Scoring                    Function
+======================     =================================================
 **Classification**
-'accuracy'              :func:`sklearn.metrics.accuracy_score`
-'average_precision'     :func:`sklearn.metrics.average_precision_score`
-'f1'                    :func:`sklearn.metrics.f1_score`
-'precision'             :func:`sklearn.metrics.precision_score`
-'recall'                :func:`sklearn.metrics.recall_score`
-'roc_auc'               :func:`sklearn.metrics.auc_score`
+'accuracy'                 :func:`sklearn.metrics.accuracy_score`
+'average_precision'        :func:`sklearn.metrics.average_precision_score`
+'f1'                       :func:`sklearn.metrics.f1_score`
+'precision'                :func:`sklearn.metrics.precision_score`
+'recall'                   :func:`sklearn.metrics.recall_score`
+'roc_auc'                  :func:`sklearn.metrics.auc_score`
 
 **Clustering**
-'adjusted_rand_score'   :func:`sklearn.metrics.adjusted_rand_score`
+'adjusted_rand_score'      :func:`sklearn.metrics.adjusted_rand_score`
 
 **Regression**
-'mean_squared_error'    :func:`sklearn.metrics.mean_squared_error`
-'r2'                    :func:`sklearn.metrics.r2_score`
-===================     ===============================================
+'mean_squared_error'       :func:`sklearn.metrics.mean_squared_error`
+'r2'                       :func:`sklearn.metrics.r2_score`
+======================     =================================================
 
 Setting the ``scoring`` parameter to a wrong value should give you a list
 of acceptable values::

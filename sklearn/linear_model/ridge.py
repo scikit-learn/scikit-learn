@@ -987,19 +987,19 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like, shape (n_samples, n_features)
             Training vectors, where n_samples is the number of samples
             and n_features is the number of features.
 
-        y : array-like, shape = [n_samples]
+        y : array-like, shape (n_samples,)
             Target values.
 
-        sample_weight : float or numpy array of shape [n_samples]
-            Sample weight
+        sample_weight : float or numpy array of shape (n_samples,)
+            Sample weight.
 
         class_weight : dict, optional
-             Weights associated with classes in the form
-            {class_label : weight}. If not given, all classes are
+            Weights associated with classes in the form
+            ``{class_label : weight}``. If not given, all classes are
             supposed to have weight one. This is parameter is
             deprecated.
 
