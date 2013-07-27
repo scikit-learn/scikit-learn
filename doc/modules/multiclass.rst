@@ -9,61 +9,85 @@ Multiclass and multilabel algorithms
 
 The :mod:`sklearn.multiclass` module implements *meta-estimators* to perform
 ``multiclass`` and ``multilabel`` classification. Those meta-estimators are
-meant to turn a binary classifier or a regressor into a multiclass/label classifier.
+meant to turn a binary classifier or a regressor into a multi-class/label
+classifier.
 
-    - **Multiclass classification** means classification with more than two classes;
-      e.g., classify a set of images of fruits which may be oranges, apples, or pears.
+  - **Multiclass classification** means a classification task with more than
+    two classes; e.g., classify a set of images of fruits which may be oranges,
+    apples, or pears.
 
-    - **Multilabel classification** assigns to each sample a set of target labels.
-      This can be thought of predicting properties of a data-point that are not mutually
-      exclusive, such as topics that are relevant for a document. A text might be about any
-      of religion, politics, finance or education at the same time.
+  - **Multilabel classification** assigns to each sample a set of target
+    labels. This can be thought as predicting properties of a data-point
+    that are not mutually exclusive, such as topics that are relevant for a
+    document. A text might be about any of religion, politics, finance or
+    education at the same time or none of these.
 
-The estimators provided in this module are meta-estimators.
-They require a base estimator to be provided in their construcor:
+  - **Multioutput-multiclass classification** and **multi-task classification**
+    means that an estimators have to handle
+    jointly several classification tasks. This is a generalisation
+    over the multi-label classification task, where the set of classification
+    problem is restricted to binary classification, and over the multi-class
+    classification task.
 
-    - one-vs-the-rest / one-vs-all
-    - one-vs-one
-    - error correcting output codes
+    This means that any classifiers handling multi-output
+    multiclass or muli-task classification task
+    supports the multi-label classification task.
+    Multi-task classification is similar to the multi-output
+    classification task with different model formulations. For
+    more information, see the relevant estimator documentation.
+
+The estimators provided in this module are meta-estimators required a base
+estimator in their constructor. For example, it is possible to
+use these estimators to turn a binary classifier or a regressor into a
+multiclass classifier. It is also possible to use these estimators with
+multiclass estimators in the hope that their generalisation error or runtime
+performance improves.
+
+You don't need to use these estimators unless you want to experiment with
+different multiclass strategies: all classifiers in scikit-learn support
+multiclass classification out-of-the-box. Below is a summary of the
+classifiers supported in scikit-learn grouped by strategy.
+
+  - Inherently multiclass: :ref:`Naive Bayes <naive_bayes>`,
+    :class:`sklearn.lda.LDA`,
+    :ref:`Decision Trees <tree>`, :ref:`Random Forests <forest>`,
+    :ref:`Nearest Neighbors <neighbors>`.
+  - One-Vs-One: :class:`sklearn.svm.SVC`.
+  - One-Vs-All: all linear models except :class:`sklearn.svm.SVC`.
+
+Some estimators also support multioutput-multiclass classification
+tasks :ref:`Decision Trees <tree>`, :ref:`Random Forests <forest>`,
+:ref:`Nearest Neighbors <neighbors>`.
+
 
 .. warning::
 
-Multioutput-multiclass classification means that the estimators have to handle
-jointly several classification tasks. This is a generalisation
-of multiclass classification task and of multilabel classification task.
+  For the moment, no metrics support the multioutput-multiclass
+  classification task.
 
-The estimators provided in this module are meta-estimators: they require a base
-estimator to be provided in their constructor. For example, it is possible to
-use these estimators to turn a binary classifier or a regressor into a
-multiclass classifier. It is also possible to use these estimators with
-multiclass estimators in the hope that their accuracy or runtime performance
-improves.
+Multilabel classification format
+================================
 
-.. note::
+In multilabel learning, the joint set of binary classification task
+is expressed with either a sequence of sequences or a label binary indicator
+array.
 
-    You don't need to use these estimators unless you want to experiment with
-    different multiclass strategies: all classifiers in scikit-learn support
-    multiclass classification out-of-the-box. Below is a summary of the
-    classifiers supported in scikit-learn grouped by the strategy used.
+In the sequence of sequences format, each set of labels is represented as
+as sequences of integer, e.g. ``[0]``, ``[1, 2]``. An empty set of labels is then
+expressed as an empty sequence ``[]``. A set of samples is then
+expressed as ``[[0], [1, 2], []]``.
+In the label indicator format, each sample is one row of 2d array of
+shape (n_samples, n_classes) with binary value. The ones, the
+non-zero elements, corresponds to subset of labels. An empty set of labels
+is therefore expressed as a row with only zero elements. Our previous
+example is therefore expressed as
+``np.array([[1, 0, 0], [0, 1, 1], [0, 0, 0])``.
 
-    - Inherently multiclass: :ref:`Naive Bayes <naive_bayes>`,
-      :class:`sklearn.lda.LDA`,
-      :ref:`Decision Trees <tree>`, :ref:`Random Forests <forest>`,
-      :ref:`Nearest Neighbors <neighbors>`.
-    - One-Vs-One: :class:`sklearn.svm.SVC`.
-    - One-Vs-All: all linear models except :class:`sklearn.svm.SVC`.
-
-
-Multilabel utilities
-====================
-
-Multilabel learning requires a specific data structure to assign multiple labels
-to the same sample. The One-vs-Rest meta-classifier currently supports two formats.
-The first one is basically a sequence of sequences, and the second one is a 2d binary array
-of shape (n_samples, n_classes) where non-zero elements correspond to the labels.
-
-:class:`sklearn.preprocessing.label_binarize` and :class:`sklearn.preprocessing.LabelBinarizer`
-are helper functions that can convert one format to the other::
+In the preprocessing module, the transformer
+:class:`sklearn.preprocessing.label_binarize` and the function
+:func:`sklearn.preprocessing.LabelBinarizer`
+can help you to convert the sequence of sequences format to the label
+indicator format.
 
   >>> from sklearn.datasets import make_multilabel_classification
   >>> from sklearn.preprocessing import LabelBinarizer
@@ -73,19 +97,14 @@ are helper functions that can convert one format to the other::
   >>> LabelBinarizer().fit_transform(Y)
   array([[1, 0, 0, 0, 0],
          [0, 1, 0, 0, 0],
-	 [0, 1, 1, 1, 1],
-	 [0, 0, 0, 1, 0],
-	 [0, 1, 0, 0, 0]])
-
-    Some estimators also support directly multioutput-multiclass classification
-    tasks :ref:`Decision Trees <tree>`, :ref:`Random Forests <forest>`,
-    :ref:`Nearest Neighbors <neighbors>`.
+      	 [0, 1, 1, 1, 1],
+      	 [0, 0, 0, 1, 0],
+      	 [0, 1, 0, 0, 0]])
 
 .. warning::
 
-    For the moment, no metrics support the multioutput-multiclass
-    classification task.
-
+  - The sequence of sequences format will disappear in a near future.
+  - All estimators or functions support both multilabel format.
 
 One-Vs-The-Rest
 ===============
