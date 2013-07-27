@@ -91,20 +91,20 @@ Cheng and Church
 
 :class:`ChengChurch` tries to find biclusters with low variance, low
 row variance, and low column variance, as quantified by the mean
-squared residue. For a matrix :math:`A`, the mean squared residue is
-computed as:
+squared residue. For a matrix :math:`A` with shape :math:`m \times n`,
+the mean squared residue is computed as:
 
 .. math::
-    a_{ij} - a_{iJ} - a{Ij} - a{IJ}
+    \frac{1}{mn} \sum \left (a_{ij} - a_{iJ} - a_{Ij} + a_{IJ} \right)^2
 
 where
 
 .. math::
-   a_{iJ] = \frac{1}{|J|} \sum_{j} a_{ij}
+   a_{iJ} = \frac{1}{n} \sum_{j} a_{ij}
 
-   a_{Ij} = \frac{1}{|I|} \sum_{i} a_{ij}
+   a_{Ij} = \frac{1}{m} \sum_{i} a_{ij}
 
-   a_{IJ] = \frac{1}{|I| |J|} \sum_{i,j} a_{ij}
+   a_{IJ} = \frac{1}{mn} \sum_{i, j} a_{ij}
 
 are the row, column, and overall means of :math:`A`.
 
@@ -131,10 +131,11 @@ are the row, column, and overall means of :math:`A`.
        >>> msr
        0.0
 
-Scaling :math:`A` to :math:`A+c`, where :math:`c` is any constant,
-does not change its MSR. Therefore, for some datasets, it may be
-beneficial to apply a log transformation, in order to remove scaling
-effects.
+Additive scaling does not affect the MSR score: :math:`A` and
+:math:`A+c`, where :math:`c` is any constant, have the same MSR.
+Therefore, for some datasets, it may be beneficial to apply a log
+transformation, because it transforms multiplicative scaling into
+additive scaling.
 
 Cheng and Church finds biclusters that are as large as possible, with
 the constraint that a bicluster's MSR must be less than the theshold
