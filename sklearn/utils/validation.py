@@ -231,7 +231,7 @@ def check_arrays(*arrays, **options):
     return checked_arrays
 
 
-def column_or_1d(y):
+def column_or_1d(y, warn=False):
     """ Ravel column or 1d numpy array, else raises an error
 
     Parameters
@@ -244,8 +244,15 @@ def column_or_1d(y):
 
     """
     shape = np.shape(y)
-    if len(shape) == 1 or (len(shape) == 2 and shape[1] == 1):
+    if len(shape) == 1:
         return np.ravel(y)
+    if len(shape) == 2 and shape[1] == 1:
+        if warn:
+            warnings.warn("A column-vector y was passed when a 1d array was"
+                          " expected. Please change the shape of y to "
+                          "(n_samples, ), for example using ravel().")
+        return np.ravel(y)
+
     raise ValueError("bad input shape {0}".format(shape))
 
 
