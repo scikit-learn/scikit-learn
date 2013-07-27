@@ -899,6 +899,25 @@ dl.class dt, dl.function dt {
     font-weight: normal;
 }
 
+table.citation {
+    border-left: 0;
+    margin-left: 0;
+    border: 0;
+}
+
+table.docutils.citation td, table.docutils.citation tr {
+    border: 0;
+    background-color: white;
+}
+
+table.citation tr td.label {
+    font-size: 0.9em;
+    background-color: #fff;
+    border-radius: 0px;
+    color: #1D1F22;
+    text-shadow: none;
+}
+
 /*----- testimonials ----------*/
 
 div.testimonial h2 {
