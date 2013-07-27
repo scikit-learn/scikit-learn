@@ -61,7 +61,7 @@ def test_multiple_node_deletion():
                         column_deletion_cutoff=1)
     arr = generator.uniform(20, 100, (20, 20))
     arr[3:18, 3:18] = 10
-    rows = np.arange(20)
+    rows = np.arange(20)[np.newaxis].T
     cols = np.arange(20)
     rows, cols = model._multiple_node_deletion(rows, cols, arr)
     assert_array_equal(rows, np.arange(3, 18)[np.newaxis].T)
@@ -87,11 +87,31 @@ def test_node_addition():
     model = ChengChurch()
     arr = np.zeros((20, 20)) + 15
     arr[5:10, 5:10] = generator.uniform(10, 20, (5, 5))
-    rows = np.arange(5, 10)
+    rows = np.arange(5, 10)[np.newaxis].T
     cols = np.arange(5, 10)
     rows, cols = model._node_addition(rows, cols, arr)
     assert_array_equal(rows, np.arange(20)[np.newaxis].T)
     assert_array_equal(cols, np.arange(20))
+
+
+def test_row_msr():
+    X = np.arange(9).reshape(3, 3)
+    rows = np.arange(2)[np.newaxis].T
+    cols = np.arange(2)
+    model = ChengChurch()
+    vec = model._row_msr(rows, cols, X)
+    expected = np.zeros(3)
+    assert_array_equal(vec, expected)
+
+
+def test_col_msr():
+    X = np.arange(9).reshape(3, 3)
+    rows = np.arange(2)[np.newaxis].T
+    cols = np.arange(2)
+    model = ChengChurch()
+    vec = model._col_msr(rows, cols, X)
+    expected = np.zeros(3)
+    assert_array_equal(vec, expected)
 
 
 def test_errors():
@@ -115,8 +135,8 @@ def test_errors():
     assert_raises(EmptyBiclusterException, model._square_residue,
                   np.array([]), np.array([]), data)
 
-    assert_raises(EmptyBiclusterException, model._square_residue_add,
+    assert_raises(EmptyBiclusterException, model._row_msr,
                   np.array([]), np.array([]), data)
 
-    assert_raises(EmptyBiclusterException, model._inverse_square_residue_add,
+    assert_raises(EmptyBiclusterException, model._col_msr,
                   np.array([]), np.array([]), data)

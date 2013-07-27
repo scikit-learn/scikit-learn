@@ -1,4 +1,3 @@
-
 """Implements the Cheng and Church biclustering algorithm.
 
 Authors : Kemal Eren
@@ -19,7 +18,6 @@ from .utils import check_array_ndim
 from .utils import get_indicators
 
 from ._square_residue import square_residue
-from ._square_residue import square_residue_add
 
 
 class EmptyBiclusterException(Exception):
@@ -62,6 +60,9 @@ class ChengChurch(six.with_metaclass(ABCMeta, BaseEstimator,
     inverse_rows : bool, optional, default: True
         Whether to add rows with inverse patterns during node addition.
 
+    inverse_columns : bool, optional, default: True
+        Whether to add columns with inverse patterns during node addition.
+
     random_state : int seed, RandomState instance, or None (default)
         A pseudo random number generator used by the K-Means
         initialization.
@@ -86,13 +87,14 @@ class ChengChurch(six.with_metaclass(ABCMeta, BaseEstimator,
     """
     def __init__(self, n_clusters=100, max_msr=1.0, deletion_threshold=1.5,
                  row_deletion_cutoff=100, column_deletion_cutoff=100,
-                 inverse_rows=True, random_state=None):
+                 inverse_rows=False, inverse_columns=False, random_state=None):
         self.n_clusters = n_clusters
         self.max_msr = max_msr
         self.deletion_threshold = deletion_threshold
         self.row_deletion_cutoff = row_deletion_cutoff
         self.column_deletion_cutoff = column_deletion_cutoff
         self.inverse_rows = inverse_rows
+        self.inverse_columns = inverse_columns
         self.random_state = random_state
 
     def _check_parameters(self):
@@ -118,15 +120,31 @@ class ChengChurch(six.with_metaclass(ABCMeta, BaseEstimator,
             raise EmptyBiclusterException()
         return square_residue(rows.ravel(), cols, X)
 
-    def _square_residue_add(self, rows, cols, X):
+    def _row_msr(self, rows, cols, X, inverse=False):
+        # TODO: not necessary for rows already in bicluster
         if not rows.size or not cols.size:
             raise EmptyBiclusterException()
-        return square_residue_add(rows.ravel(), cols, X, inverse=False)
+        row_mean = X[:, cols].mean(axis=1)[np.newaxis].T
+        col_mean = X[rows, cols].mean(axis=0)
+        if inverse:
+            arr = -X[:, cols] + row_mean - col_mean + X[rows, cols].mean()
+        else:
+            arr = X[:, cols] - row_mean - col_mean + X[rows, cols].mean()
+        return np.power(arr, 2).mean(axis=1)
 
-    def _inverse_square_residue_add(self, rows, cols, X):
+    def _col_msr(self, rows, cols, X, inverse=False):
+        # TODO: not necessary for columns already in bicluster
         if not rows.size or not cols.size:
             raise EmptyBiclusterException()
-        return square_residue_add(rows.ravel(), cols, X, inverse=True)
+        rows_t = rows
+        rows = rows_t.ravel()
+        row_mean = X[rows_t, cols].mean(axis=1)[np.newaxis].T
+        col_mean = X[rows, :].mean(axis=0)
+        if inverse:
+            arr = -X[rows, :] + row_mean - col_mean + X[rows_t, cols].mean()
+        else:
+            arr = X[rows, :] - row_mean - col_mean + X[rows_t, cols].mean()
+        return np.power(arr, 2).mean(axis=0)
 
     def _single_node_deletion(self, rows, cols, X):
         sr = self._square_residue(rows, cols, X)
@@ -170,20 +188,27 @@ class ChengChurch(six.with_metaclass(ABCMeta, BaseEstimator,
         while True:
             n_rows, n_cols = len(rows), len(cols)
             msr = self._square_residue(rows, cols, X).mean()
-            col_score = self._square_residue_add(rows, cols, X).mean(axis=0)
-            to_add = np.nonzero(col_score < msr)[0]
+            col_msr = self._col_msr(rows, cols, X)
+            to_add = np.nonzero(col_msr < msr)[0]
+            old_cols = cols.copy()  # save for inverse
             cols = np.union1d(cols, to_add)
 
+            if self.inverse_columns:
+                col_msr = self._col_msr(rows, old_cols, X,
+                                        inverse=True).mean(axis=1)
+                to_add = np.nonzero(col_msr < msr)[0]
+                cols = np.union1d(cols, to_add)
+
             msr = self._square_residue(rows, cols, X).mean()
-            row_score = self._square_residue_add(rows, cols, X).mean(axis=1)
-            to_add = np.nonzero(row_score < msr)[0]
+            row_msr = self._row_msr(rows, cols, X)
+            to_add = np.nonzero(row_msr < msr)[0]
             old_rows = rows.copy()  # save for inverse
             rows = np.union1d(rows.ravel(), to_add)[np.newaxis].T
 
             if self.inverse_rows:
-                row_score = self._inverse_square_residue_add(
-                    old_rows, cols, X).mean(axis=1)
-                to_add = np.nonzero(row_score < msr)[0]
+                row_msr = self._row_msr(old_rows, cols, X,
+                                        inverse=True).mean(axis=1)
+                to_add = np.nonzero(row_msr < msr)[0]
                 rows = np.union1d(rows.ravel(), to_add)[np.newaxis].T
 
             if n_rows == len(rows) and n_cols == len(cols):
