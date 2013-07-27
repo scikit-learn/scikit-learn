@@ -401,9 +401,9 @@ div.note {
 }
 
 div.seealso {
-    background-color: #fcf8e3;
+    background-color: #FFFBE8;
     border: 1px solid #fbeed5;
-    color: #c09853;
+    color: #AF8A4B;
 }
 
 div.topic {
@@ -425,7 +425,7 @@ div.admonition {
 
 div.warning {
     color: #b94a48;
-    background-color: #f2dede;
+    background-color: #F3E5E5;
     border: 1px solid #eed3d7;
 }
 
@@ -839,17 +839,17 @@ div.carousel img {
 
 p.doc-version {
     text-align: center;
-    color: #B94A48;
-    background-color: #F2DEDE;
-    border: 1px solid #EED3D7;
+    color: #b94a48;
+    background-color: #F3E5E5;
+    border: 1px solid #eed3d7;
     border-radius: 4px;
     margin-right: 10px;
 }
 
 p.citing {
-    background-color: #fcf8e3;
+    background-color: #FFFBE8;
     border: 1px solid #fbeed5;
-    color: #c09853;
+    color: #AF8A4B;
     text-align: center;
     border-radius: 4px;
     margin-right: 10px;
