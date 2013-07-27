@@ -79,7 +79,26 @@
             <ul>
                 <li><a href="{{pathto('index')}}">Home</a></li>
                 <li><a href="{{pathto('install')}}">Installation</a></li>
-                <li><a href="{{pathto('documentation')}}">Documentation</a></li>
+                <li class="btn-li"><div class="btn-group">
+		      <a href="{{pathto('documentation')}}">Documentation</a>
+		      <a class="btn dropdown-toggle" data-toggle="dropdown">
+			<span class="caret"></span>
+		      </a>
+		      <ul class="dropdown-menu">
+			<li class="link-title">Scikit-learn 0.14 (stable)</li>
+			<li><a href="{{ pathto('tutorial/basic/tutorial') }}">Quick Start</a></li>
+			<li><a href="{{ pathto('tutorial/index') }}">Tutorials</a></li>
+			<li><a href="{{ pathto('user_guide') }}">User guide</a></li>
+			<li><a href="{{ pathto('modules/classes') }}">API</a></li>
+			<li class="divider"></li>
+		        <li><a href="http://scikit-learn.org/dev/">Development</a></li>
+		        <li><a href="http://scikit-learn.org/0.13/">Scikit-learn 0.13</a></li>
+		        <li><a href="http://scikit-learn.org/0.12/">Scikit-learn 0.12</a></li>
+		        <li><a href="http://scikit-learn.org/0.11/">Scikit-learn 0.11</a></li>
+		        <li><a href="{{ pathto('documentation')}}">More versions...</a></li>
+		      </ul>
+		    </div>
+		</li>
                 <li><a href="{{pathto('auto_examples/index')}}">Examples</a></li>
             </ul>
 
