@@ -1,7 +1,7 @@
 """
-=========================
-Cross decomposition
-=========================
+===================================
+Compare cross decomposition methods
+===================================
 
 Simple usage of various cross decomposition algorithms:
 - PLSCanonical

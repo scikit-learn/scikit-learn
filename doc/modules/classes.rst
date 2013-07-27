@@ -953,8 +953,8 @@ Pairwise metrics
 
 .. _cross_decomposition_ref:
 
-:mod:`sklearn.cross_decomposition`: Cross Decomposition
-==========================================================
+:mod:`sklearn.cross_decomposition`: Cross decomposition
+=======================================================
 
 .. automodule:: sklearn.cross_decomposition
    :no-members:

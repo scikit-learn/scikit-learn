@@ -12,7 +12,7 @@ Supervised learning
     modules/sgd
     modules/neighbors
     modules/gaussian_process
-    modules/cross_decomposition
+    modules/cross_decomposition.rst
     modules/naive_bayes
     modules/tree
     modules/ensemble
