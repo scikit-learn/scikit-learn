@@ -286,7 +286,7 @@ def make_prediction(dataset=None, binary=False):
     X = np.c_[X, rng.randn(n_samples, 200 * n_features)]
 
     # run classifier, get class probabilities and label predictions
-    clf = svm.SVC(kernel='linear', probability=True)
+    clf = svm.SVC(kernel='linear', probability=True, random_state=0)
     probas_pred = clf.fit(X[:half], y[:half]).predict_proba(X[half:])
 
     if binary:

@@ -32,7 +32,7 @@ np.random.seed(0)
 X = np.c_[X, np.random.randn(n_samples, 200 * n_features)]
 
 # Run classifier
-classifier = svm.SVC(kernel='linear', probability=True)
+classifier = svm.SVC(kernel='linear', probability=True, random_state=0)
 probas_ = classifier.fit(X[:half], y[:half]).predict_proba(X[half:])
 
 # Compute Precision-Recall and plot curve

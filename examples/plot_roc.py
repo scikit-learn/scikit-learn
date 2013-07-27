@@ -40,7 +40,7 @@ X_train, X_test = X[:half], X[half:]
 y_train, y_test = y[:half], y[half:]
 
 # Run classifier
-classifier = svm.SVC(kernel='linear', probability=True)
+classifier = svm.SVC(kernel='linear', probability=True, random_state=0)
 probas_ = classifier.fit(X_train, y_train).predict_proba(X_test)
 
 # Compute ROC curve and area the curve
