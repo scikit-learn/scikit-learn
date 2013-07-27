@@ -17,6 +17,7 @@ ground truth labeling (or ``None`` in the case of unsupervised models).
 #          Lars Buitinck <L.J.Buitinck@uva.nl>
 # License: Simplified BSD
 
+import warnings
 from abc import ABCMeta, abstractmethod
 
 import numpy as np
@@ -142,6 +143,31 @@ class _ThresholdScorer(_BaseScorer):
     def _factory_args(self):
         return ", needs_threshold=True"
 
+def _deprecate_loss_and_score_funcs(loss_func, score_func, scoring):
+
+        if loss_func is not None:
+            warnings.warn("Passing a loss function is "
+                          "deprecated and will be removed in 0.15. "
+                          "Either use strings or score objects."
+                          "The relevant new parameter is called ''scoring''. ")
+            scorer = make_scorer(loss_func, greater_is_better=False)
+        elif score_func is not None:
+            warnings.warn("Passing function as ``score_func`` is "
+                          "deprecated and will be removed in 0.15. "
+                          "Either use strings or score objects."
+                          "The relevant new parameter is called ''scoring''.")
+            scorer = make_scorer(score_func)
+        elif isinstance(scoring, six.string_types):
+            try:
+                scorer = SCORERS[scoring]
+            except KeyError:
+                raise ValueError('%r is not a valid scoring value. '
+                                 'Valid options are %s' % (scoring,
+                                 sorted(SCORERS.keys())))
+        else:
+            scorer = scoring
+
+        return scorer
 
 def make_scorer(score_func, greater_is_better=True, needs_proba=False,
                 needs_threshold=False, **kwargs):

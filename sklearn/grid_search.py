@@ -28,7 +28,7 @@ from .externals.joblib import Parallel, delayed, logger
 from .externals import six
 from .utils import safe_mask, check_random_state
 from .utils.validation import _num_samples, check_arrays
-from .metrics import make_scorer, SCORERS
+from .metrics.scorer import _deprecate_loss_and_score_funcs
 
 
 __all__ = ['GridSearchCV', 'ParameterGrid', 'fit_grid_point',
@@ -462,29 +462,8 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         n_samples = _num_samples(X)
         X, y = check_arrays(X, y, allow_lists=True, sparse_format='csr')
 
-        if self.loss_func is not None:
-            warnings.warn("Passing a loss function is "
-                          "deprecated and will be removed in 0.15. "
-                          "Either use strings or score objects."
-                          "The relevant new parameter is called ''scoring''. ")
-            scorer = make_scorer(self.loss_func, greater_is_better=False)
-        elif self.score_func is not None:
-            warnings.warn("Passing function as ``score_func`` is "
-                          "deprecated and will be removed in 0.15. "
-                          "Either use strings or score objects."
-                          "The relevant new parameter is called ''scoring''.")
-            scorer = make_scorer(self.score_func)
-        elif isinstance(self.scoring, six.string_types):
-            try:
-                scorer = SCORERS[self.scoring]
-            except KeyError:
-                raise ValueError('%r is not a valid scoring value. '
-                                 'Valid options are %s' % (self.scoring,
-                                 sorted(SCORERS.keys())))
-        else:
-            scorer = self.scoring
-
-        self.scorer_ = scorer
+        self.scorer_ = _deprecate_loss_and_score_funcs(
+            self.loss_func, self.score_func, self.scoring)
 
         if y is not None:
             if len(y) != n_samples:
@@ -509,7 +488,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
             n_jobs=self.n_jobs, verbose=self.verbose,
             pre_dispatch=pre_dispatch)(
                 delayed(fit_grid_point)(
-                    X, y, base_estimator, parameters, train, test, scorer,
+                    X, y, base_estimator, parameters, train, test, self.scorer_,
                     self.verbose, **self.fit_params)
                 for parameters in parameter_iterable
                 for train, test in cv)
