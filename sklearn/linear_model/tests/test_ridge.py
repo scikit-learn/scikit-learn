@@ -11,6 +11,7 @@ from sklearn.utils.testing import assert_raises
 
 from sklearn import datasets
 from sklearn.metrics import mean_squared_error
+from sklearn.metrics.scorer import SCORERS
 
 from sklearn.linear_model.base import LinearRegression
 from sklearn.linear_model.ridge import ridge_regression
@@ -286,6 +287,12 @@ def _test_ridge_loo(filter_):
     ridge_gcv3 = RidgeCV(fit_intercept=False, score_func=func)
     ridge_gcv3.fit(filter_(X_diabetes), y_diabetes)
     assert_equal(ridge_gcv3.alpha_, alpha_)
+
+    # check that we get same best alpha with a scorer
+    scorer = SCORERS['mean_squared_error']
+    ridge_gcv4 = RidgeCV(fit_intercept=False, scoring=scorer)
+    ridge_gcv4.fit(filter_(X_diabetes), y_diabetes)
+    assert_equal(ridge_gcv4.alpha_, alpha_)
 
     # check that we get same best alpha with sample weights
     ridge_gcv.fit(filter_(X_diabetes), y_diabetes,
