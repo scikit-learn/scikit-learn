@@ -295,6 +295,12 @@ class Imputer(BaseEstimator, TransformerMixin):
 
         # Median
         elif strategy == "median":
+            if np.__version__.split('.')[:2] < (1, 5):
+                # In old versions of numpy, calling a median on an array
+                # containing nans returns nan. This is different is
+                # recent versions of numpy, which we want to mimic
+                masked_X.mask = np.logical_or(masked_X.mask,
+                                              np.isnan(X))
             median_masked = np.ma.median(masked_X, axis=axis)
             # Avoid the warning "Warning: converting a masked element to nan."
             median = np.ma.getdata(median_masked)

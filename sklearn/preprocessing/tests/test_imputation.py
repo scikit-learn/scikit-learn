@@ -25,7 +25,7 @@ def _check_statistics(X, X_true,
         - the missing values are imputed correctly"""
 
     err_msg = "Parameters: strategy = %s, missing_values = %s, " \
-              "axis = %%s, sparse = %%s".format(strategy, missing_values)
+              "axis = {0}, sparse = {1}" % (strategy, missing_values)
 
     # Normal matrix, axis = 0
     imputer = Imputer(missing_values, strategy=strategy, axis=0)
