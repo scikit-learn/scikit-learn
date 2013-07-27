@@ -9,8 +9,8 @@ def configuration(parent_package="", top_path=None):
     libraries = []
     if os.name == 'posix':
         libraries.append('m')
-    config.add_extension("_square_residue",
-                         sources=["_square_residue.c"],
+    config.add_extension("_squared_residue",
+                         sources=["_squared_residue.c"],
                          include_dirs=[numpy.get_include()],
                          libraries=libraries)
 

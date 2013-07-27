@@ -15,7 +15,7 @@ ctypedef np.int64_t LONG
 
 # TODO: try getting submatrix first
 
-def square_residue(np.ndarray[LONG, ndim=1, mode="c"] rows,
+def squared_residue(np.ndarray[LONG, ndim=1, mode="c"] rows,
                    np.ndarray[LONG, ndim=1, mode="c"] cols,
                    np.ndarray[DOUBLE, ndim=2, mode="c"] X):
 
