@@ -1225,7 +1225,7 @@ def test_multilabel_representation_invariance():
     y2_shuffle_binary_indicator = lb.transform(y2_shuffle)
 
     for name, metric in MULTILABELS_METRICS.items():
-        with warnings.catch_warnings(True):
+        with warnings.catch_warnings(record=True):
             warnings.simplefilter("always")
 
             measure = metric(y1, y2)
