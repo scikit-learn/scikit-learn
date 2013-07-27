@@ -250,7 +250,11 @@ def column_or_1d(y):
 
 
 def warn_if_not_float(X, estimator='This algorithm'):
-    """Warning utility function to check that data type is floating point"""
+    """Warning utility function to check that data type is floating point.
+
+    Returns True if a warning was raised (i.e. the input is not float) and
+    False otherwise, for easier input validation.
+    """
     if not isinstance(estimator, six.string_types):
         estimator = estimator.__class__.__name__
     if X.dtype.kind != 'f':
