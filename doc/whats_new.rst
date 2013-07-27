@@ -1,9 +1,9 @@
 .. currentmodule:: sklearn
 
-.. _changes_0_14:
+.. _changes_0_14_rc:
 
-0.14
-====
+0.14-rc
+=======
 
 Changelog
 ---------
@@ -244,7 +244,11 @@ API changes summary
 
    - Attributes in OrthogonalMatchingPursuit have been deprecated
      (copy_X, Gram, ...) and precompute_gram renamed precompute
-     for consistency. See #2224
+     for consistency. See #2224.
+
+   - :class:`sklearn.preprocessing.StandardScaler` now converts integer input
+     to float, and raises a warning. Previously it rounded for dense integer
+     input.
 
 .. _changes_0_13_1:
 
