@@ -72,7 +72,7 @@ tasks :ref:`Decision Trees <tree>`, :ref:`Random Forests <forest>`,
 
 .. warning::
 
-    For the moment, no metrics support the multioutput-multiclass
+    For the moment, no metric support the multioutput-multiclass
     classification task.
 
 Multilabel classification format
