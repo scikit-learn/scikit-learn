@@ -1,5 +1,5 @@
 import numpy as np
-from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_array_equal
 from .._square_residue import square_residue
 
 
@@ -19,6 +19,5 @@ def test_square_residue():
 
     for shape in ((20, 20), (10, 20), (20, 10)):
         X, rows, cols = make_data(*shape)
-        assert_array_almost_equal(square_residue(rows, cols, X),
-                                  square_residue_python(X[rows[None].T, cols]),
-                                  decimal=10)
+        assert_array_equal(square_residue(rows, cols, X),
+                           square_residue_python(X[rows[None].T, cols]))
