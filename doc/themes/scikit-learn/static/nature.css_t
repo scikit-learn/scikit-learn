@@ -519,7 +519,7 @@ div.rellarge div.spacer {
 
 
 div.rel {
-    margin-bottom: 15px;
+    margin-bottom: 10px;
 }
 
 div.rel a,
@@ -846,6 +846,15 @@ p.doc-version {
     margin-right: 10px;
 }
 
+p.citing {
+    background-color: #fcf8e3;
+    border: 1px solid #fbeed5;
+    color: #c09853;
+    text-align: center;
+    border-radius: 4px;
+    margin-right: 10px;
+}
+
 .field-odd, .field-even {
     background-color: #fff;
 }
@@ -980,7 +989,7 @@ div.navbar ul.dropdown-menu li a.btn {
   box-shadow: inset 0 0px 0 rgba(255,255,255,.2), 0 0px 0px rgba(0,0,0,.05);
 }
 
-.btn, .open>.btn, .btn:hover{
+.navbar .btn, .navbar .open>.btn, .navbar .btn:hover{
   display: inline-block;
   padding: 4px 12px;
   margin-bottom: 0;
@@ -995,25 +1004,25 @@ div.navbar ul.dropdown-menu li a.btn {
   box-shadow: inset 0 0px 0 rgba(255,255,255,.2), 0 0px 0px rgba(0,0,0,.05);
 }
 
-.btn:hover .caret{
+.navbar .btn:hover .caret{
   color: rgb(220, 220, 220);
   border-top-color: rgb(220, 220, 220);
 
 }
 
-div.navbar li.btn-li {
+.navbar li.btn-li {
   margin: 0;
   vertical-align: middle;
   padding: 4px 0px 5px 0px;
 }
 
-div.navbar .btn-group li.bnt-li a {
+.navbar .btn-group li.bnt-li a {
   padding: 4px 10px 5px 10px;
   vertical-align: middle;
   height: 100%;
 }
 
-.btn .caret{
+.navbar .btn .caret{
   margin: 0px;
   color: #fff;
   vertical-align: middle;
@@ -1021,7 +1030,7 @@ div.navbar .btn-group li.bnt-li a {
   padding-bottom: 8px;
 }
 
-.dropdown-menu .divider {
+.navbar .dropdown-menu .divider {
   height: 1px;
   margin-top: 5px;
   background-color: #fff;
@@ -1029,7 +1038,7 @@ div.navbar .btn-group li.bnt-li a {
   border-bottom: 1px solid #e5e5e5;
 }
 
-div.navbar ul.dropdown-menu li {
+.navbar ul.dropdown-menu li {
   font-weight: bold;
   font-size: 11px;
   color: #000;

@@ -164,6 +164,9 @@
 {%- if pagename != 'index' and pagename != 'documentation' %}
     <div class="sphinxsidebar">
     <div class="sphinxsidebarwrapper">
+
+    {%- if rellinks[1:] %}
+
     {%- if parents %}
         <div class="rel">
     {% else %}
@@ -217,10 +220,13 @@
         </div>
     {%- endif %}
     </div>
+    {% endif %}
+
     {%- if pagename != "install" %}
-    <p class="doc-version">This documentation is for {{project}} <strong>version {{ release|e }}</strong> &mdash; <a href="http://scikit-learn.org/stable/support.html#documentation-resources">Other versions</a></p>
+      <p class="doc-version">This documentation is for {{project}} <strong>version {{ release|e }}</strong> &mdash; <a href="http://scikit-learn.org/stable/support.html#documentation-resources">Other versions</a></p>
     {%- endif %}
-        {{ toc }}
+    <p class="citing">If you use the software, please consider <a href="{{pathto('about')}}#citing-scikit-learn">citing scikit-learn</a>.</p>
+    {{ toc }}
     </div>
 </div>
 {% endif %}

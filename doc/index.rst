@@ -231,7 +231,7 @@
                 <ul>
                 <li><em>July 2013.</em> Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris consequat a justo iaculis viverra. Pellentesque interdum nibh blandit metus molestie pharetra. Sed felis quam, condimentum quis blandit ultrices, rutrum at magna. Fusce tincidunt ultrices porta. Donec volutpat bibendum nibh nec mollis. <a href="whats_new.html">Changelog</a>.</li>
                 <li><em>July 2013.</em> Mauris dui elit, rhoncus lacinia elit non, auctor aliquam ante. Nam ac enim ligula. Nunc sit amet nunc accumsan, laoreet urna in, rutrum sapien. Mauris tempus euismod adipiscing. Suspendisse potenti. Integer non arcu sed erat porttitor tincidunt. </li>
-                <!-- 
+                <!--
                     <li><em>July 2013.</em> The scikit-learn international code sprint is around the corner! Please, sponsor us.</li>
                     <li><em>February 2013.</em> scikit-learn 0.13.1 is available for download. <a href="whats_new.html">Changelog</a> .</li>
                     -->
@@ -242,10 +242,10 @@
             <div class="span6">
                 <h4>Community</h4>
                 <ul>
-                <li><em>Questions?</em> See <a href="http://stackoverflow.com/questions/tagged/scikit-learn">stackoverflow</a>#scikit-learn for applications and usage questions</li>
+                <li><em>Questions?</em> See <a href="http://stackoverflow.com/questions/tagged/scikit-learn">stackoverflow</a> # scikit-learn for usage questions</li>
                 <li><em>Mailing list:</em> scikit-learn-general@lists.sourceforge.net</li>
                 <li><em>IRC:</em> #scikit-learn @ <a href="http://webchat.freenode.net/">freenode</a></li>
-                <li><em>Donations:</em> <a href="javascript:{}" onclick="document.getElementById('paypal-form').submit(); return false;">PayPal</a> (<a href="#">read more</a> about donations)</li>
+                <li><em>Help us:</em> <button class="btn btn-small" onclick="document.getElementById('paypal-form').submit(); return false;">Donate!</button> (<a href="about.html#funding">read more</a>)</li>
                     <form target="_top" id="paypal-form" method="post" action="https://www.paypal.com/cgi-bin/webscr">
                     <input type="hidden" value="_s-xclick" name="cmd">
                     <input type="hidden" value="74EYUMF3FTSW8" name="hosted_button_id">
