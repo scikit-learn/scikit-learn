@@ -74,7 +74,8 @@ def test_libsvm_iris():
 
     pred = svm.libsvm.cross_validation(iris.data,
                                        iris.target.astype(np.float64), 5,
-                                       kernel='linear')
+                                       kernel='linear',
+                                       random_seed=0)
     assert_greater(np.mean(pred == iris.target), .95)
 
 

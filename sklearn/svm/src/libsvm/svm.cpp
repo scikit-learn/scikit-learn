@@ -2192,6 +2192,8 @@ static double svm_svr_probability(
 
 	svm_parameter newparam = *param;
 	newparam.probability = 0;
+    newparam.random_seed = -1; // This is called from train, which already sets
+                               // the seed.
 	PREFIX(cross_validation)(prob,&newparam,nr_fold,ymv);
 	for(i=0;i<prob->l;i++)
 	{
@@ -2627,6 +2629,10 @@ void PREFIX(cross_validation)(const PREFIX(problem) *prob, const svm_parameter *
 	int l = prob->l;
 	int *perm = Malloc(int,l);
 	int nr_class;
+    if(param->random_seed > 0)
+    {
+        srand(param->random_seed);
+    }
 
 	// stratified cv may not give leave-one-out rate
 	// Each class to l folds -> some folds may have zero elements
