@@ -159,7 +159,7 @@
 
     {%- for rellink in rellinks[1:]|reverse %}
         <div class="rellink">
-        <a href="{{ pathto(rellink[0]) }}" title="{{ rellink[1]|striptags|e }}"
+        <a href="{{ pathto(rellink[0]) }}"
         {{ accesskey(rellink[2]) }}>{{ rellink[3]|capitalize }}
         <br>
         <span class="smallrellink">
@@ -186,7 +186,7 @@
         &nbsp;
         </div>
         <div class="rellink">
-        <a href="{{ parents[-1].link|e }}" title="{{ parents[-1].title|striptags }}" >
+        <a href="{{ parents[-1].link|e }}">
         Up
         <br>
         <span class="smallrellink">
@@ -204,8 +204,6 @@
     {%- if pagename != "install" %}
     <p class="doc-version">This documentation is for {{project}} <strong>version {{ release|e }}</strong> &mdash; <a href="http://scikit-learn.org/stable/support.html#documentation-resources">Other versions</a></p>
     {%- endif %}
-
-    <h3>{{ _('This page') }}</h3>
         {{ toc }}
     </div>
 </div>

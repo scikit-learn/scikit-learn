@@ -482,11 +482,11 @@ div.viewcode-block:target {
 
 div.rel {
     text-align: center;
-    margin: 5px 3px 0px 2px;
+    margin-right: 10px;
     background-color: #ff9c34;
     color: white;
-    border-radius: 5px;
-    -moz-border-radius: 5px;
+    border-radius: 4px;
+    -moz-border-radius: 4px;
 }
 
 div.rel div.spacer {
@@ -503,14 +503,9 @@ div.rel div.rellink {
     margin-left: auto;
     margin-right: auto;
     margin-bottom: auto;
-    width: 28%;
+    width: 27%;
     vertical-align: top;
     position: relative
-}
-
-div.rellarge {
-    margin-left: 5px;
-    margin-right: 5px;
 }
 
 div.rellarge div.rellink {
@@ -535,7 +530,7 @@ div.rel a:hover {
     color: white;
     text-decoration: none;
     font-weight: bold;
-    font-size: 13px;
+    font-size: 12px;
 }
 
 div.rel a:hover {
@@ -874,6 +869,7 @@ p.doc-version {
     background-color: #F2DEDE;
     border: 1px solid #EED3D7;
     border-radius: 4px;
+    margin-right: 10px;
 }
 
 /*----- testimonials ----------*/
