@@ -1087,11 +1087,10 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
         The target variable to try to predict in the case of
         supervised learning.
 
-    scoring : string or callable, optional
-        Either one of either a string ("zero_one", "f1", "roc_auc", ... for
-        classification, "mse", "r2", ... for regression) or a callable.
-        See 'Scoring objects' in the model evaluation section of the user guide
-        for details.
+    scoring : callable or None.
+        A string (see model evaluation documentation) or
+        a scorer callable object / function with signature
+        ``scorer(estimator, X, y)``.
 
     cv : cross-validation generator, optional
         A cross-validation generator. If None, a 3-fold cross
@@ -1238,11 +1237,10 @@ def permutation_test_score(estimator, X, y, scoring=None, cv=None,
         The target variable to try to predict in the case of
         supervised learning.
 
-    scoring : string or object, optional
-        Either one of either a string ("zero_one", "f1", "roc_auc", ... for
-        classification, "mse", "r2", ... for regression) or a callable.
-        See 'Scoring objects' in the model evaluation section of the user guide
-        for details.
+    scoring : callable or None.
+        A string (see model evaluation documentation) or
+        a scorer callable object / function with signature
+        ``scorer(estimator, X, y)``.
 
     cv : integer or cross-validation generator, optional
         If an integer is passed, it is the number of fold (default 3).

@@ -234,9 +234,10 @@ class RFECV(RFE, MetaEstimatorMixin):
         Specific cross-validation objects can also be passed, see
         `sklearn.cross_validation module` for details.
 
-    loss_func : function, optional (default=None)
-        The loss function to minimize by cross-validation. If None, then the
-        score function of the estimator is maximized.
+    scoring : callable or None.
+        A string (see model evaluation documentation) or
+        a scorer callable object / function with signature
+        ``scorer(estimator, X, y)``.
 
     estimator_params : dict
         Parameters for the external estimator.

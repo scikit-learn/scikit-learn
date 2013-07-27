@@ -247,7 +247,7 @@ def fit_grid_point(X, y, base_estimator, parameters, train, test, scorer,
         Boolean mask or indices for test set.
 
     scorer : callable or None.
-        If provided must be a scoring object / function with signature
+        If provided must be a scorer callable object / function with signature
         ``scorer(estimator, X, y)``.
 
     verbose : int
@@ -564,11 +564,10 @@ class GridSearchCV(BaseSearchCV):
         in the list are explored. This enables searching over any sequence
         of parameter settings.
 
-    scoring : string or callable, optional
-        Either one of either a string ("zero_one", "f1", "roc_auc", ... for
-        classification, "mse", "r2",... for regression) or a callable.
-        See 'Scoring objects' in the model evaluation section of the user guide
-        for details.
+    scoring : callable or None.
+        A string (see model evaluation documentation) or
+        a scorer callable object / function with signature
+        ``scorer(estimator, X, y)``.
 
     fit_params : dict, optional
         Parameters to pass to the fit method.
@@ -740,11 +739,10 @@ class RandomizedSearchCV(BaseSearchCV):
         Number of parameter settings that are sampled. n_iter trades
         off runtime vs quality of the solution.
 
-    scoring : string or callable, optional
-        Either one of either a string ("zero_one", "f1", "roc_auc", ... for
-        classification, "mse", "r2",... for regression) or a callable.
-        See 'Scoring objects' in the model evaluation section of the user guide
-        for details.
+    scoring : callable or None.
+        A string (see model evaluation documentation) or
+        a scorer callable object / function with signature
+        ``scorer(estimator, X, y)``.
 
     fit_params : dict, optional
         Parameters to pass to the fit method.
