@@ -5,6 +5,7 @@ from scipy.sparse import csr_matrix
 
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_less, assert_greater
@@ -63,7 +64,8 @@ def test_whitening():
     for this_PCA, copy in [(x, y) for x in PCA, RandomizedPCA
                            for y in True, False]:
         # whiten the data while projecting to the lower dim subspace
-        X_ = X
+        X_ = X.copy()
+        assert X_ is not X
         pca = this_PCA(n_components=n_components, whiten=True, copy=copy)
         # test fit_transform
         if copy == True:
@@ -80,6 +82,7 @@ def test_whitening():
 
         # is possible to project on the low dim space without scaling by the
         # singular values
+        X_ = X.copy()
         pca = this_PCA(n_components=n_components, whiten=False,
                        copy=copy).fit(X_)
         X_unwhitened = pca.transform(X_)
@@ -87,7 +90,7 @@ def test_whitening():
 
         # in that case the output components still have varying variances
         assert_almost_equal(X_unwhitened.std(axis=0).std(), 74.1, 1)
-        assert_almost_equal(X_whitened.mean(axis=0), np.zeros(n_components))
+        # we always center, so no test for non-centering
 
 
 def test_pca_check_projection():
