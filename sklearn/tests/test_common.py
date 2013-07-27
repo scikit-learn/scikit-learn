@@ -495,6 +495,7 @@ def test_clustering():
             continue
         # catch deprecation and neighbors warnings
         with warnings.catch_warnings(record=True):
+            warnings.simplefilter("always")
             alg = Alg()
             if hasattr(alg, "n_clusters"):
                 alg.set_params(n_clusters=3)
@@ -662,7 +663,9 @@ def test_classifiers_input_shapes():
 
         set_random_state(classifier)
         classifier.fit(X, y[:, np.newaxis])
-
+        with warnings.catch_warnings(record=True) as w:
+            classifier.fit(X, y[:, np.newaxis])
+            print(w)
         assert_array_equal(y_pred, classifier.predict(X))
 
 

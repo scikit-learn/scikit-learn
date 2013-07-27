@@ -92,7 +92,7 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         # Check data
         X, y = check_arrays(X, y, sparse_format="dense")
 
-        y = column_or_1d(y)
+        y = column_or_1d(y, warn=True)
 
         if ((getattr(X, "dtype", None) != DTYPE) or
                 (X.ndim != 2) or (not X.flags.contiguous)):

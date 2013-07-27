@@ -155,7 +155,7 @@ class GaussianNB(BaseNB):
         """
 
         X, y = check_arrays(X, y, sparse_format='dense')
-        y = column_or_1d(y)
+        y = column_or_1d(y, warn=True)
 
         n_samples, n_features = X.shape
 
@@ -306,7 +306,7 @@ class BaseDiscreteNB(BaseNB):
         """
         X, y = check_arrays(X, y, sparse_format='csr')
         X = X.astype(np.float)
-        y = column_or_1d(y)
+        y = column_or_1d(y, warn=True)
         _, n_features = X.shape
 
         labelbin = LabelBinarizer()
