@@ -585,8 +585,8 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             verbose_fmt.append('{remaining_time:>16s}')
             verbose_fmt = ' '.join(verbose_fmt)
             # print the header line
-            print(('{:>10} ' + '{:>16} ' *
-                   (len(header_fields) - 1)).format(*header_fields))
+            print(('%10s ' + '%16s ' *
+                   (len(header_fields) - 1)) % tuple(header_fields))
             # plot verbose info each time i % verbose_mod == 0
             verbose_mod = 1
             start_time = time()

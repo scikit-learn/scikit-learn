@@ -38,7 +38,8 @@ KDTree = BinaryTree
 cdef int allocate_data(BinaryTree tree, ITYPE_t n_nodes,
                        ITYPE_t n_features) except -1:
     """Allocate arrays needed for the KD Tree"""
-    tree.node_bounds = np.zeros((2, n_nodes, n_features), dtype=DTYPE)
+    tree.node_bounds_arr = np.zeros((2, n_nodes, n_features), dtype=DTYPE)
+    tree.node_bounds = get_memview_DTYPE_3D(tree.node_bounds_arr)
     return 0
 
 
