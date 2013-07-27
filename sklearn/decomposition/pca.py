@@ -280,8 +280,9 @@ class PCA(BaseEstimator, TransformerMixin):
 
         """
         X = array2d(X)
-        X_transformed = X - self.mean_
-        X_transformed = np.dot(X_transformed, self.components_.T)
+        if self.mean_ is not None and self.copy:
+            X = X - self.mean_
+        X_transformed = np.dot(X, self.components_.T)
         return X_transformed
 
     def inverse_transform(self, X):
@@ -380,7 +381,7 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         is set to n_features (the second dimension of the training data).
 
     copy : bool
-        If False, data passed to fit are overwritten
+        If False, data passed to fit are overwritten.
 
     iterated_power : int, optional
         Number of iterations for the power method. 3 by default.
@@ -521,7 +522,7 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         """
         # XXX remove scipy.sparse support here in 0.16
         X = atleast2d_or_csr(X)
-        if self.mean_ is not None:
+        if self.mean_ is not None and self.copy:
             X = X - self.mean_
 
         X = safe_sparse_dot(X, self.components_.T)

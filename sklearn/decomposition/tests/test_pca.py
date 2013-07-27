@@ -60,61 +60,28 @@ def test_whitening():
     # the component-wise variance is thus highly varying:
     assert_almost_equal(X.std(axis=0).std(), 43.9, 1)
 
-    # whiten the data while projecting to the lower dim subspace
-    pca = PCA(n_components=n_components, whiten=True)
-
-    # test fit_transform
-    X_whitened = pca.fit_transform(X)
-    assert_equal(X_whitened.shape, (n_samples, n_components))
-    X_whitened2 = pca.transform(X)
-    assert_array_almost_equal(X_whitened, X_whitened2)
-
-    # all output component have unit variances
-    assert_almost_equal(X_whitened.std(axis=0), np.ones(n_components))
-
-    # is possible to project on the low dim space without scaling by the
-    # singular values
-    pca = PCA(n_components=n_components, whiten=False).fit(X)
-    X_unwhitened = pca.transform(X)
-    assert_equal(X_unwhitened.shape, (n_samples, n_components))
-
-    # in that case the output components still have varying variances
-    assert_almost_equal(X_unwhitened.std(axis=0).std(), 74.1, 1)
-
-
-def test_randomized_whitening():
-    """Check that PCA output has unit-variance"""
-    rng = np.random.RandomState(0)
-    n_samples = 100
-    n_features = 80
-    n_components = 30
-    rank = 50
-
-    # some low rank data with correlated features
-    X = np.dot(rng.randn(n_samples, rank),
-               np.dot(np.diag(np.linspace(10.0, 1.0, rank)),
-                      rng.randn(rank, n_features)))
-    # the component-wise variance of the first 50 features is 3 times the
-    # mean component-wise variance of the remaingin 30 features
-    X[:, :50] *= 3
-
-    assert_equal(X.shape, (n_samples, n_features))
-
-    # the component-wise variance is thus highly varying:
-    assert_almost_equal(X.std(axis=0).std(), 43.9, 1)
-
-    # whiten the data while projecting to the lower dim subspace
-    for copy in [True, False]:
-        pca = RandomizedPCA(n_components=n_components, whiten=True, copy=copy)
-
+    for this_PCA, copy in [(x, y) for x in PCA, RandomizedPCA
+                           for y in True, False]:
+        # whiten the data while projecting to the lower dim subspace
+        pca = this_PCA(n_components=n_components, whiten=True, copy=False)
         # test fit_transform
         X_whitened = pca.fit_transform(X)
         assert_equal(X_whitened.shape, (n_samples, n_components))
         X_whitened2 = pca.transform(X)
         assert_array_almost_equal(X_whitened, X_whitened2)
+
         # all output component have unit variances
         assert_almost_equal(X_whitened.std(axis=0), np.ones(n_components))
         assert_almost_equal(X_whitened.mean(axis=0), np.zeros(n_components))
+
+        # is possible to project on the low dim space without scaling by the
+        # singular values
+        pca = PCA(n_components=n_components, whiten=False).fit(X)
+        X_unwhitened = pca.transform(X)
+        assert_equal(X_unwhitened.shape, (n_samples, n_components))
+
+        # in that case the output components still have varying variances
+        assert_almost_equal(X_unwhitened.std(axis=0).std(), 74.1, 1)
 
 
 def test_pca_check_projection():
