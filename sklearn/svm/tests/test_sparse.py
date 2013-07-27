@@ -1,16 +1,18 @@
 import warnings
-import numpy as np
-from scipy import sparse
-from sklearn import datasets, svm, linear_model, base
-from numpy.testing import (assert_array_almost_equal, assert_array_equal,
-                           assert_equal, assert_warns)
-
 from nose.tools import assert_raises, assert_true, assert_false
 from nose.tools import assert_equal as nose_assert_equal
+
+import numpy as np
+from scipy import sparse
+from numpy.testing import (assert_array_almost_equal, assert_array_equal,
+                           assert_equal)
+
+from sklearn import datasets, svm, linear_model, base
 from sklearn.datasets import make_classification, load_digits
 from sklearn.svm.tests import test_svm
 from sklearn.utils import ConvergenceWarning
 from sklearn.utils.extmath import safe_sparse_dot
+from sklearn.utils.testing import assert_warns
 
 # test sample 1
 X = np.array([[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]])
