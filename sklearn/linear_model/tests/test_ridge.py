@@ -1,6 +1,8 @@
 import numpy as np
 import scipy.sparse as sp
 
+import warnings
+
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
@@ -279,13 +281,15 @@ def _test_ridge_loo(filter_):
 
     # check that we get same best alpha with custom loss_func
     ridge_gcv2 = RidgeCV(fit_intercept=False, loss_func=mean_squared_error)
-    ridge_gcv2.fit(filter_(X_diabetes), y_diabetes)
+    with warnings.catch_warnings(record=True):
+        ridge_gcv2.fit(filter_(X_diabetes), y_diabetes)
     assert_equal(ridge_gcv2.alpha_, alpha_)
 
     # check that we get same best alpha with custom score_func
     func = lambda x, y: -mean_squared_error(x, y)
     ridge_gcv3 = RidgeCV(fit_intercept=False, score_func=func)
-    ridge_gcv3.fit(filter_(X_diabetes), y_diabetes)
+    with warnings.catch_warnings(record=True):
+        ridge_gcv3.fit(filter_(X_diabetes), y_diabetes)
     assert_equal(ridge_gcv3.alpha_, alpha_)
 
     # check that we get same best alpha with a scorer
