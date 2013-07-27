@@ -712,13 +712,17 @@ table.docutils tr:nth-child(even) {
 }
 table.docutils tr:nth-child(odd) {
     //background-color: #FFFFEE;
-    background-color: #E7F7FC;
+    background-color: #F0F7FA;
 }
 
 table.docutils tr {
     border-style: solid none solid none;
     border-width: 1px 0 1px 0;
-    border-color: #AAAAAA;
+    border-color: #ddd;
+}
+
+table.docutils td {
+    border-color: #ddd;
 }
 
 /* ------- tighter layout in pre -------------------------- */
@@ -870,6 +874,29 @@ p.doc-version {
     border: 1px solid #EED3D7;
     border-radius: 4px;
     margin-right: 10px;
+}
+
+.field-odd, .field-even {
+    background-color: #fff;
+}
+
+.field-name {
+    background-color: #F0F7FA;
+}
+
+.field-body {
+    background-color: #fff;
+}
+
+dl.class dt, dl.function dt {
+    padding: 10px;
+    background-color: #f8f8f8;
+    color: #222;
+    line-height: 1.2em;
+    border: 1px solid #ddd;
+    margin: 1.5em 0 1.5em 0;
+    border-radius: 4px;
+    font-weight: normal;
 }
 
 /*----- testimonials ----------*/
