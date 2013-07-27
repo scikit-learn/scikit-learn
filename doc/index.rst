@@ -229,8 +229,12 @@
             <div class="span6">
                 <h4>News</h4>
                 <ul>
-                <li><em>July 2013.</em> Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris consequat a justo iaculis viverra. Pellentesque interdum nibh blandit metus molestie pharetra. Sed felis quam, condimentum quis blandit ultrices, rutrum at magna. Fusce tincidunt ultrices porta. Donec volutpat bibendum nibh nec mollis. <a href="#">Changelog</a>.</li>
+                <li><em>July 2013.</em> Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris consequat a justo iaculis viverra. Pellentesque interdum nibh blandit metus molestie pharetra. Sed felis quam, condimentum quis blandit ultrices, rutrum at magna. Fusce tincidunt ultrices porta. Donec volutpat bibendum nibh nec mollis. <a href="whats_new.html">Changelog</a>.</li>
                 <li><em>July 2013.</em> Mauris dui elit, rhoncus lacinia elit non, auctor aliquam ante. Nam ac enim ligula. Nunc sit amet nunc accumsan, laoreet urna in, rutrum sapien. Mauris tempus euismod adipiscing. Suspendisse potenti. Integer non arcu sed erat porttitor tincidunt. </li>
+                <!-- 
+                    <li><em>July 2013.</em> The scikit-learn international code sprint is around the corner! Please, sponsor us.</li>
+                    <li><em>February 2013.</em> scikit-learn 0.13.1 is available for download. <a href="whats_new.html">Changelog</a> .</li>
+                    -->
                 </ul>
             </div>
 
