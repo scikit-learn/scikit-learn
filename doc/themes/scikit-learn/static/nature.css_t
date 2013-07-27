@@ -163,7 +163,7 @@ div.footer {
 }
 
 div.footer a {
-    color: #444;
+    color: #999;
     text-decoration: underline;
 }
 

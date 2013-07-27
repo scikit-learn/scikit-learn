@@ -147,7 +147,7 @@
 
     <small class="float-right example-links">
 
-:ref:`Examples<manifold_examples>`
+:ref:`Examples<decomposition_examples>`
 
 .. raw:: html
 

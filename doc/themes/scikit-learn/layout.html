@@ -232,6 +232,12 @@
     {%- if last_updated %}
       {% trans last_updated=last_updated|e %}Last updated on {{ last_updated }}.{% endtrans %}
     {%- endif %}
+    {%- if show_source and has_source and sourcename %}
+    <span style="padding-left: 5ex;">
+        <a href="{{ pathto('_sources/' + sourcename, true)|e }}"
+    rel="nofollow">{{ _('Show this page source') }}</a>
+    </span>
+    {%- endif %}
     </div>
 
     {%- if pagename != 'index' %}
