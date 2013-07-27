@@ -421,7 +421,6 @@ class MultinomialNB(BaseDiscreteNB):
 
     References
     ----------
-
     C.D. Manning, P. Raghavan and H. Schütze (2008). Introduction to
     Information Retrieval. Cambridge University Press, pp. 234–265.
     http://nlp.stanford.edu/IR-book/html/htmledition/

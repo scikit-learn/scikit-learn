@@ -39,4 +39,4 @@ Classes included in this module are :class:`PLSRegression`
 
 .. topic:: Examples:
 
-    * :ref:`example_plot_pls.py`
+    * :ref:`example_cross_decomposition_plot_pls.py`

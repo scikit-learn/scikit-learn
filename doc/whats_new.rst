@@ -165,13 +165,13 @@ Changelog
 
    - Fixed a bug in :class:`sklearn.covariance.GraphLassoCV`: the
      'alphas' parameter now works as expected when given a list of
-     values. By `Philippe Gervais`_.
+     values. By Philippe Gervais.
 
    - Fixed an important bug in :class:`sklearn.covariance.GraphLassoCV`
      that prevented all folds provided by a CV object to be used (only
      the first 3 were used). When providing a CV object, execution
      time may thus increase significantly compared to the previous
-     version (bug results are correct now). By `Philippe Gervais`_.
+     version (bug results are correct now). By Philippe Gervais.
 
    - :class:`cross_validation.cross_val_score` and the :mod:`grid_search`
      module is now tested with multi-output data by `Arnaud Joly`_.
@@ -181,7 +181,7 @@ Changelog
 
    - K-nearest neighbors, :class:`neighbors.KNeighborsRegressor` and
      :class:`neighbors.RadiusNeighborsRegressor`,
-      and radius neighbors, :class:`neighbors.RadiusNeighborsRegressor` and
+     and radius neighbors, :class:`neighbors.RadiusNeighborsRegressor` and
      :class:`neighbors.RadiusNeighbors,Classifier`support multioutput data
      by `Arnaud Joly`_.
 
@@ -456,8 +456,8 @@ Changelog
    - :class:`MiniBatchKMeans`: Add random reassignment of cluster centers
      with little observations attached to them, by `Gael Varoquaux`_.
 
-   - New transformer :ref:`neural_network.BernoulliRBM`
-     by `Yann Dauphin`_.
+   - :ref:`Restricted Boltzmann Machines<rbm>` implemented in class
+     :class:`neural_network.BernoulliRBM` by `Yann Dauphin`_.
 
 
 API changes summary
@@ -1545,7 +1545,7 @@ scikit-learn 0.8 was released on May 2011, one month after the first
 "international" `scikit-learn coding sprint
 <https://github.com/scikit-learn/scikit-learn/wiki/Upcoming-events>`_ and is
 marked by the inclusion of important modules: :ref:`hierarchical_clustering`,
-:ref:`pls`, :ref:`NMF`, initial support for Python 3 and by important
+:ref:`cross_decomposition`, :ref:`NMF`, initial support for Python 3 and by important
 enhancements and bug fixes.
 
 
@@ -1561,7 +1561,7 @@ Several new modules where introduced during this release:
 
   - :ref:`labeled_faces_in_the_wild` by `Olivier Grisel`_.
 
-  - New :ref:`pls` module by `Edouard Duchesnay`_.
+  - New :ref:`cross_decomposition` module by `Edouard Duchesnay`_.
 
   - :ref:`NMF` module `Vlad Niculae`_
 
@@ -2085,3 +2085,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Nicolas Trésegnie : http://nicolastr.com/
 
 .. _Kemal Eren: http://www.kemaleren.com
+
+.. _Yann dauphin: http://ynd.github.io/

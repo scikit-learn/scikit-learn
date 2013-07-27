@@ -948,7 +948,7 @@ class SGDRegressor(BaseSGDRegressor, _LearntSelectorMixin):
 
     Parameters
     ----------
-    loss : str, 'squared_loss', 'huber', 'epsilon_insensitive',
+    loss : str, 'squared_loss', 'huber', 'epsilon_insensitive', \
                 or 'squared_epsilon_insensitive'
         The loss function to be used. Defaults to 'squared_loss' which refers
         to the ordinary least squares fit. 'huber' modifies 'squared_loss' to

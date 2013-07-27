@@ -12,7 +12,7 @@ Supervised learning
     modules/sgd
     modules/neighbors
     modules/gaussian_process
-    modules/pls
+    modules/cross_correlation
     modules/naive_bayes
     modules/tree
     modules/ensemble

@@ -157,7 +157,7 @@ amount of time (e.g., on large datasets).
 
  * :ref:`example_ensemble_plot_forest_iris.py`
  * :ref:`example_ensemble_plot_forest_importances_faces.py`
- * :ref:`example_ensemble_plot_forest_multioutput.py`
+ * :ref:`example_plot_multioutput_face_completion.py`
 
 .. topic:: References
 

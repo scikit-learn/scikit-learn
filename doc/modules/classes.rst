@@ -55,7 +55,7 @@ Functions
 .. _bicluster_ref:
 
 :mod:`sklearn.cluster.bicluster`: Biclustering
-======================================
+==============================================
 
 .. automodule:: sklearn.cluster.bicluster
    :no-members:

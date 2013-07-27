@@ -40,8 +40,8 @@ def isotonic_regression(y, sample_weight=None, y_min=None, y_max=None,
         If not None, set the highest value of the fit to y_max.
 
     increasing : boolean, optional, default: True
-        Whether to compute y_ is increasing (if set to True) or decreasing (if
-        set to False)
+        Whether to compute ``y_`` is increasing (if set to True) or decreasing
+        (if set to False)
 
     Returns
     -------

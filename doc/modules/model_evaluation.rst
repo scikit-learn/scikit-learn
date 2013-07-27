@@ -14,7 +14,7 @@ model:
   This is not discussed on this page, but in each estimator's documentation.
 
 * **Scoring parameter**: Model-evaluation tools using
-  :ref:`cross-validation <cross-validation>` (such as
+  :ref:`cross-validation <cross_validation>` (such as
   :func:`cross_validation.cross_val_score` and
   :class:`grid_search.GridSearchCV`) rely on an internal *scoring* strategy.
   This is discussed on section :ref:`scoring_parameter`.
@@ -88,7 +88,7 @@ predicted values. These are detailed below, in the next sections.
 
 .. currentmodule:: sklearn.metrics
 
-.. _score_func_objects:
+.. _scoring:
 
 Defining your scoring strategy from score functions
 -----------------------------------------------------
@@ -131,8 +131,8 @@ from a simple python function::
   (``greater_is_better=False``),
 
 * whether the function you provided takes predictions as input
- (``needs_threshold=False``) or needs confidence scores
- (``needs_threshold=True``)
+  (``needs_threshold=False``) or needs confidence scores \
+  (``needs_threshold=True``)
 
 * any additional parameters, such as ``beta`` in an :func:`f1_score`.
 
