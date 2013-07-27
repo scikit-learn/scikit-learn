@@ -604,7 +604,7 @@ class SupervisedIntegerMixin(object):
         if not isinstance(X, (KDTree, BallTree)):
             X, y = check_arrays(X, y, sparse_format="csr")
 
-        if y.ndim == 1:
+        if y.ndim == 1 or y.ndim == 2 and y.shape[1] == 1:
             self.outputs_2d_ = False
             y = y.reshape((-1, 1))
         else:
