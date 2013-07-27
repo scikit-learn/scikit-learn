@@ -209,7 +209,7 @@ div.sphinxsidebar p.topless {
 }
 
 div.sphinxsidebar ul {
-    margin: 10px 10px;
+    margin: 10px 0px;
     padding: 0;
     color: #000;
     font-weight: bold;
@@ -217,15 +217,16 @@ div.sphinxsidebar ul {
 
 div.sphinxsidebar ul ul {
     margin-right: 0;
-    margin-left: 10px;
-    list-style: disc outside none;
+    margin-left: 0;
+    list-style: none;
     color: #355F7C;
     font-weight: normal;
 }
 
 div.sphinxsidebar ul ul ul {
-    font-size: 80%;
-    list-style: square outside none;
+    font-size: 90%;
+    list-style: square;
+    margin-left: 15px;
 }
 
 div.sphinxsidebar {
@@ -358,14 +359,14 @@ div.bodywrapper h1 {
 
 div.body h3 {
     font-size: 120%;
-    background-color: #D8DEE3;
+    background-color: #eee;
     padding: 5px;
     border-radius: 10px;
 
 }
-div.body h4 { font-size: 110%; background-color: #D8DEE3; }
-div.body h5 { font-size: 100%; background-color: #D8DEE3; }
-div.body h6 { font-size: 100%; background-color: #D8DEE3; }
+div.body h4 { font-size: 110%; background-color: #F4F4F4; }
+div.body h5 { font-size: 100%; background-color: #F4F4F4; }
+div.body h6 { font-size: 100%; background-color: #F4F4F4; }
 
 a.headerlink {
     color: #c60f0f;
@@ -574,31 +575,6 @@ div.warning-wrapper p {
     margin: 0;
 }
 
-/* -------- banner for advertising the survey ------------------------------*/
-
-div.survey-wrapper {
-    z-index: 10;
-    background-color: #FF9C34;
-    text-align: center;
-    position: fixed;
-    top: 0px;
-    left: 0px;
-    width: 100%;
-    padding-top: 1px;
-    height: 21px;
-    box-shadow: 4px -4px 10px 3px #8AA, inset 4px 0px 13px 3px #FF9E6D;
-}
-div.survey-wrapper p {
-    margin: 0;
-    white-space: nowrap;
-}
-
-{% if theme_surveybanner == true %}
-/* for survey banner */
-div.header-wrapper {
-    margin-top: 21px;
-}
-{% endif %}
 
 /*-----------------------The Code Sprint Sponser Banner---------------------*/
 
@@ -657,10 +633,6 @@ div#examples.section .figure:hover img ,
 div#examples.section .figure:focus img,
 div#examples.section .figure:active img{
   z-index: 100;
-  /* Bigger box shadow */
-  -moz-box-shadow: 0px 0px 20px rgba(0, 0, 0, .5); /* FF3.5 - 3.6 */
-  -webkit-box-shadow: 0px 0px 20px rgba(0, 0, 0, .5); /* Saf3.0+, Chrome */
-  box-shadow: 0px 0px 20px rgba(0, 0, 0, .5); /* Opera 10.5, IE9, FF4+, Chrome 10+ */
   /* --> Full image size */
   /*width: 240px;*/
   /*height: 132px;*/
@@ -899,20 +871,20 @@ dl.class dt, dl.function dt {
     font-weight: normal;
 }
 
-table.citation {
+table.docutils.citation, table.docutils.footnote  {
     border-left: 0;
     margin-left: 0;
     border: 0;
 }
 
-table.docutils.citation td, table.docutils.citation tr {
+table.docutils.citation td, table.docutils.citation tr, table.docutils.footnote td, table.docutils.footnote tr{
     border: 0;
-    background-color: white;
+    background-color: transparent;
 }
 
-table.citation tr td.label {
+table.docutils.citation tr td.label, table.docutils.footnote tr td.label {
     font-size: 0.9em;
-    background-color: #fff;
+    background-color: transparent;
     border-radius: 0px;
     color: #1D1F22;
     text-shadow: none;
