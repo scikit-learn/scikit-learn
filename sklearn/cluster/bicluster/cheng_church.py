@@ -226,7 +226,9 @@ class ChengChurch(six.with_metaclass(ABCMeta, BaseEstimator,
         results = []
 
         for i in range(self.n_clusters):
-            rows = np.arange(n_rows, dtype=np.int)[np.newaxis].T
+            # reshape rows so that X[rows, cols] works as expected.
+            # NOTE: this makes X[rows] != X[rows.ravel()]
+            rows = np.arange(n_rows, dtype=np.int)[np.newaxis]
             cols = np.arange(n_cols, dtype=np.int)
             rows, cols = self._multiple_node_deletion(rows, cols, X)
             rows, cols = self._single_node_deletion(rows, cols, X)
