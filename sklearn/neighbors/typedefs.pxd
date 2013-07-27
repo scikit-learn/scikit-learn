@@ -6,7 +6,7 @@ ctypedef np.float64_t DTYPE_t  # WARNING: should match DTYPE in typedefs.pyx
 
 cdef enum:
     DTYPECODE = np.NPY_FLOAT64
-    ITYPECODE = np.NPY_INT32
+    ITYPECODE = np.NPY_INTP
 
 # Index/integer type.
 #  WARNING: ITYPE_t must be a signed integer type or you will have a bad time!
