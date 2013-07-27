@@ -399,8 +399,9 @@ div.note {
 }
 
 div.seealso {
-    background-color: #ffc;
-    border: 1px solid #ff6;
+    background-color: #fcf8e3;
+    border: 1px solid #fbeed5;
+    color: #c09853;
 }
 
 div.topic {
@@ -421,13 +422,15 @@ div.admonition {
 }
 
 div.warning {
-    background-color: #ffe4e4;
-    border: 1px solid #f66;
+    color: #b94a48;
+    background-color: #f2dede;
+    border: 1px solid #eed3d7;
 }
 
 div.green {
-    background-color: #e4ffe4;
-    border: 1px solid #6f6;
+    color: #468847;
+    background-color: #dff0d8;
+    border: 1px solid #d6e9c6;
 }
 
 p.admonition-title {
@@ -706,10 +709,13 @@ div.body img.align-center {
 
 /* ------- alternating colors in table rows -------------------------- */
 table.docutils tr:nth-child(even) {
-    background-color: #F3F3FF;
+    //background-color: #F3F3FF;
+    background-color: #FDFDFD;
+
 }
 table.docutils tr:nth-child(odd) {
-    background-color: #FFFFEE;
+    //background-color: #FFFFEE;
+    background-color: #E7F7FC;
 }
 
 table.docutils tr {
@@ -744,7 +750,7 @@ span.example-links {
 
 div.banner-container {
   width:100%;
-  background-color: rgb(78, 172, 197);
+  background-color: #3499CD;
 }
 
 div.banner-inner {
@@ -782,7 +788,6 @@ div.container.index-lower {
     border: 1px solid #DDD;
     padding: 10px;
     border-radius: 4px;
-    font-size: 88%;
 }
 
 div.container.index-lower .span4 {
@@ -813,7 +818,7 @@ div.container.index-lower ul li {
 
 div.container.index-lower ul li em {
     font-style: normal;
-    color: #888;
+    font-weight: bold;
 }
 
 div.box h2 {
