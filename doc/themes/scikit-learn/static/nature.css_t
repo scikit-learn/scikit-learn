@@ -517,6 +517,11 @@ div.rellarge div.spacer {
     height: 45px;
 }
 
+
+div.rel {
+    margin-bottom: 15px;
+}
+
 div.rel a,
 div.rel a:link,
 div.rel a:visited,
@@ -525,7 +530,7 @@ div.rel a:hover {
     color: white;
     text-decoration: none;
     font-weight: bold;
-    font-size: 14px;
+    font-size: 13px;
 }
 
 div.rel a:hover {
@@ -887,3 +892,6 @@ div.testimonial-website {
     font-size: 0.8em;
 }
 
+.no-display {
+  display: none;
+}

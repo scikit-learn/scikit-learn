@@ -1,3 +1,30 @@
+.. We want the previous/next button to work on the user guide pages and on the
+   API. We have to put the doctree so that sphinx populates the
+   rellinks. Yet, we don't want it to be displayed on the main page, hence we
+   don't display through the css.
+
+.. raw:: html
+
+   <div class="no-display">
+
+.. toctree::
+
+    tutorials
+    user_guide
+    auto_examples/index
+    support
+    whats_new
+    presentations
+
+
+.. raw:: html
+
+   </div>
+
+
+.. This is were the real work starts.
+
+
 .. raw:: html
 
     <!-- Block section -->

@@ -153,8 +153,10 @@
     {% else %}
         <div class="rel rellarge">
     {% endif %}
-<!-- rellinks[1:] is an ugly hack to avoid link to module
-index -->
+
+  <!-- rellinks[1:] is an ugly hack to avoid link to module
+  index -->
+
     {%- for rellink in rellinks[1:]|reverse %}
         <div class="rellink">
         <a href="{{ pathto(rellink[0]) }}" title="{{ rellink[1]|striptags|e }}"
@@ -167,16 +169,18 @@ index -->
             <span class="hiddenrellink">
             {{ rellink[1]|striptags}}
             </span>
-        {% endif %}
+        {%- endif %}
         </a>
         </div>
         {%- if not loop.last %}
             <div class="spacer">
             &nbsp;
             </div>
-        {% endif %}
+        {%- endif %}
     {%- endfor %}
-<!-- Ad a link to the 'up' page -->
+
+    <!-- Ad a link to the 'up' page -->
+
     {%- if parents %}
         <div class="spacer">
         &nbsp;
