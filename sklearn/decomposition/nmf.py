@@ -154,19 +154,24 @@ def _initialize_nmf(X, n_components, variant=None, eps=1e-6,
     return W, H
 
 
-def _nls_lbfgs(X, y, init=None, tol=1e-3, max_iter=100):
+def _nls_lbfgs(X, Y, init=None, tol=1e-3, max_iter=100):
     """Non-negative least squares solver using L-BFGS.
 
-    Solves for w in Xw = y
+    Solves for w in Xw = Y
     """
+    X, Y = check_arrays(sparse_format='csr')
     n_samples, n_features = X.shape
+    n_targets = Y.shape[1]
     last_grad = np.empty((n_features))
+    G = safe_sparse_dot(X.T, X)
+    Xy = safe_sparse_dot(X.T, Y)
 
     def f(w, *args):
-        return 0.5 * np.sum((safe_sparse_dot(X, w) - y) ** 2)
+        return 0.5 * np.sum((safe_sparse_dot(X, w) - Y[:, k]) ** 2)
 
     def fprime(w, last_grad, *args):
-        last_grad[:] = safe_sparse_dot(X.T, safe_sparse_dot(X, w) - y)
+        last_grad[:] = np.dot(G, w) - Xy[:, k]
+        # last_grad[:] = safe_sparse_dot(X.T, safe_sparse_dot(X, w) - y)
         return last_grad
 
     if init is None:
