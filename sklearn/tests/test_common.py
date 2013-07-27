@@ -662,6 +662,7 @@ def test_classifiers_input_shapes():
 
         set_random_state(classifier)
         classifier.fit(X, y[:, np.newaxis])
+
         assert_array_equal(y_pred, classifier.predict(X))
 
 
