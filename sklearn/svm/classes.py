@@ -247,8 +247,8 @@ class SVC(BaseSVC):
     >>> clf = SVC()
     >>> clf.fit(X, y) #doctest: +NORMALIZE_WHITESPACE
     SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0, degree=3,
-            gamma=0.0, kernel='rbf', max_iter=-1, probability=False,
-            shrinking=True, tol=0.001, verbose=False)
+        gamma=0.0, kernel='rbf', max_iter=-1, probability=False,
+        random_state=None, shrinking=True, tol=0.001, verbose=False)
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
 
@@ -371,8 +371,8 @@ class NuSVC(BaseSVC):
     >>> clf = NuSVC()
     >>> clf.fit(X, y) #doctest: +NORMALIZE_WHITESPACE
     NuSVC(cache_size=200, coef0=0.0, degree=3, gamma=0.0, kernel='rbf',
-            max_iter=-1, nu=0.5, probability=False, shrinking=True, tol=0.001,
-            verbose=False)
+          max_iter=-1, nu=0.5, probability=False, random_state=None,
+          shrinking=True, tol=0.001, verbose=False)
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
 
@@ -490,8 +490,8 @@ class SVR(BaseLibSVM, RegressorMixin):
     >>> clf = SVR(C=1.0, epsilon=0.2)
     >>> clf.fit(X, y) #doctest: +NORMALIZE_WHITESPACE
     SVR(C=1.0, cache_size=200, coef0=0.0, degree=3, epsilon=0.2, gamma=0.0,
-      kernel='rbf', max_iter=-1, probability=False, shrinking=True, tol=0.001,
-      verbose=False)
+        kernel='rbf', max_iter=-1, probability=False, random_state=None,
+        shrinking=True, tol=0.001, verbose=False)
 
     See also
     --------
@@ -606,8 +606,8 @@ class NuSVR(BaseLibSVM, RegressorMixin):
     >>> clf = NuSVR(C=1.0, nu=0.1)
     >>> clf.fit(X, y)  #doctest: +NORMALIZE_WHITESPACE
     NuSVR(C=1.0, cache_size=200, coef0=0.0, degree=3, gamma=0.0, kernel='rbf',
-       max_iter=-1, nu=0.1, probability=False, shrinking=True, tol=0.001,
-       verbose=False)
+          max_iter=-1, nu=0.1, probability=False, random_state=None,
+          shrinking=True, tol=0.001, verbose=False)
 
     See also
     --------
