@@ -49,30 +49,45 @@ def test_label_binarizer():
 
 
 def test_label_binarizer_column_y():
-    lb = LabelBinarizer()
-    # first for binary
+    # first for binary classification vs multi-label with 1 possible class
     # lists are multi-label, array is multi-class :-/
-    inp = [[1], [2], [1]]
-    inp2 = np.array(inp)
-    expected = np.array([[1, 0], [0, 1], [1, 0]])
-    expected2 = np.array([[0], [1], [0]])
+    inp_list = [[1], [2], [1]]
+    inp_array = np.array(inp_list)
 
-    out = lb.fit_transform(inp)
-    out2 = lb.fit_transform(inp2)
+    multilabel_indicator = np.array([[1, 0], [0, 1], [1, 0]])
+    binaryclass_array = np.array([[0], [1], [0]])
 
-    assert_array_equal(out, expected)
-    assert_array_equal(out2, expected2)
+    lb_1 = LabelBinarizer()
+    out_1 = lb_1.fit_transform(inp_list)
 
-    # now multi-label
-    inp = [[1], [2], [1], [3]]
-    inp2 = np.array(inp)
-    expected = np.array([[1, 0, 0], [0, 1, 0], [1, 0, 0], [0, 0, 1]])
+    lb_2 = LabelBinarizer()
+    out_2 = lb_2.fit_transform(inp_array)
 
-    out = lb.fit_transform(inp)
-    out2 = lb.fit_transform(inp2)
+    assert_array_equal(out_1, multilabel_indicator)
+    assert_true(lb_1.multilabel_)
 
-    assert_array_equal(out, out2)
-    assert_array_equal(out, expected)
+    assert_array_equal(out_2, binaryclass_array)
+    assert_false(lb_2.multilabel_)
+
+    # second for multiclass classification vs multi-label with multiple
+    # classes
+    inp_list = [[1], [2], [1], [3]]
+    inp_array = np.array(inp_list)
+
+    # the indicator matrix output is the same in this case
+    indicator = np.array([[1, 0, 0], [0, 1, 0], [1, 0, 0], [0, 0, 1]])
+
+    lb_1 = LabelBinarizer()
+    out_1 = lb_1.fit_transform(inp_list)
+
+    lb_2 = LabelBinarizer()
+    out_2 = lb_2.fit_transform(inp_array)
+
+    assert_array_equal(out_1, out_2)
+    assert_true(lb_1.multilabel_)
+
+    assert_array_equal(out_2, indicator)
+    assert_false(lb_2.multilabel_)
 
 
 def test_label_binarizer_set_label_encoding():
