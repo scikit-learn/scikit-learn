@@ -13,7 +13,7 @@ import warnings
 from abc import ABCMeta, abstractmethod
 import numpy as np
 from scipy import linalg
-from scipy.sparse.linalg import arpack
+from ..utils import arpack
 
 __all__ = ['PLSCanonical', 'PLSRegression', 'PLSSVD']
 
