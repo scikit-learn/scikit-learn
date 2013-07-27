@@ -42,8 +42,10 @@ iris.data = sparse.csr_matrix(iris.data)
 def test_svc():
     """Check that sparse SVC gives the same result as SVC"""
 
-    clf = svm.SVC(kernel='linear', probability=True).fit(X, Y)
-    sp_clf = svm.SVC(kernel='linear', probability=True).fit(X_sp, Y)
+    clf = svm.SVC(kernel='linear', probability=True, random_state=0)
+    clf.fit(X, Y)
+    sp_clf = svm.SVC(kernel='linear', probability=True, random_state=0)
+    sp_clf.fit(X_sp, Y)
 
     assert_array_equal(sp_clf.predict(T), true_result)
 
@@ -81,8 +83,10 @@ def test_unsorted_indices():
     X_test = sparse.csr_matrix(digits.data[50:100])
 
     X_sparse = sparse.csr_matrix(X)
-    coef_dense = svm.SVC(kernel='linear', probability=True).fit(X, y).coef_
-    sparse_svc = svm.SVC(kernel='linear', probability=True).fit(X_sparse, y)
+    coef_dense = svm.SVC(kernel='linear', probability=True,
+                         random_state=0).fit(X, y).coef_
+    sparse_svc = svm.SVC(kernel='linear', probability=True,
+                         random_state=0).fit(X_sparse, y)
     coef_sorted = sparse_svc.coef_
     # make sure dense and sparse SVM give the same result
     assert_array_almost_equal(coef_dense, coef_sorted.toarray())
@@ -94,8 +98,8 @@ def test_unsorted_indices():
     assert_false(X_sparse_unsorted.has_sorted_indices)
     assert_false(X_test_unsorted.has_sorted_indices)
 
-    unsorted_svc = svm.SVC(kernel='linear',
-                           probability=True).fit(X_sparse_unsorted, y)
+    unsorted_svc = svm.SVC(kernel='linear', probability=True,
+                           random_state=0).fit(X_sparse_unsorted, y)
     coef_unsorted = unsorted_svc.coef_
     # make sure unsorted indices give same result
     assert_array_almost_equal(coef_unsorted.toarray(), coef_sorted.toarray())
@@ -259,7 +263,8 @@ def test_sparse_realdata():
 def test_sparse_svc_clone_with_callable_kernel():
     # Test that the "dense_fit" is called even though we use sparse input
     # meaning that everything works fine.
-    a = svm.SVC(C=1, kernel=lambda x, y: x * y.T, probability=True)
+    a = svm.SVC(C=1, kernel=lambda x, y: x * y.T, probability=True,
+                random_state=0)
     b = base.clone(a)
 
     b.fit(X_sp, Y)
@@ -267,7 +272,7 @@ def test_sparse_svc_clone_with_callable_kernel():
     b.predict_proba(X_sp)
 
     dense_svm = svm.SVC(C=1, kernel=lambda x, y: np.dot(x, y.T),
-                        probability=True)
+                        probability=True, random_state=0)
     pred_dense = dense_svm.fit(X, Y).predict(X)
     assert_array_equal(pred_dense, pred)
     # b.decision_function(X_sp)  # XXX : should be supported
@@ -275,7 +280,7 @@ def test_sparse_svc_clone_with_callable_kernel():
 
 def test_timeout():
     sp = svm.SVC(C=1, kernel=lambda x, y: x * y.T, probability=True,
-                 max_iter=1)
+                 random_state=0, max_iter=1)
     with warnings.catch_warnings(record=True):
         warnings.simplefilter("always")
 
