@@ -59,7 +59,7 @@ $(function() {
 
   function collapse_sidebar() {
     sidebarwrapper.hide();
-    sidebar.css('width', ssb_width_collapsed);
+    sidebar.width(ssb_width_collapsed);
     bodywrapper.css('margin-left', bw_margin_collapsed);
     sidebarbutton.css({
         'margin-left': '0',
@@ -73,7 +73,7 @@ $(function() {
 
   function expand_sidebar() {
     bodywrapper.css('margin-left', bw_margin_expanded);
-    sidebar.css('width', ssb_width_expanded);
+    sidebar.width(ssb_width_expanded);
     sidebarwrapper.show();
     sidebarbutton.css({
         'margin-left': ssb_width_expanded-13,
