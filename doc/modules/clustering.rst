@@ -527,25 +527,6 @@ sample. For any sample that is not a core sample, and does have a
 distance higher than `eps` to any core sample, it is considered an outlier by
 the algorithm.
 
-The algorithm is non-deterministic, however the core samples themselves will
-always belong to the same clusters (although the labels themselves may be
-different). The non-determinism comes from deciding on which cluster a
-non-core sample belongs to. A non-core sample can have a distance lower
-than `eps` to two core samples in different classes. Following from the
-triangular inequality, those two core samples would be more distant than
-`eps` from each other -- else they would be in the same class. The non-core
-sample is simply assigned to which ever cluster is generated first, where
-the order is determined randomly within the code. Other than the ordering of,
-the dataset, the algorithm is deterministic, making the results relatively
-stable between iterations on the same data.
-
-The current implementation relies heavily on :class:'NearestNeighbors': 
-to determine the number of samples within distance eps. This is to take
-advantage of the ball tree and kd-tree methods of speeding up neighbor
-searching and to avoid calculating the full distance matrix.
-We also retain the flexibility of custom metrics -- for details, 
-see :class:'NearestNeighbors':.
-
 In the figure below, the color indicates cluster membership, with large circles
 indicating core samples found by the algorithm. Smaller circles are non-core
 samples that are still part of a cluster. Moreover, the outliers are indicated
@@ -559,7 +540,28 @@ by black points below.
 
 .. topic:: Examples:
 
- * :ref:`example_cluster_plot_dbscan.py`: Clustering synthetic data with DBSCAN
+    * :ref:`example_cluster_plot_dbscan.py`
+
+.. topic:: Implementation
+
+    The algorithm is non-deterministic, however the core samples themselves will
+    always belong to the same clusters (although the labels themselves may be
+    different). The non-determinism comes from deciding on which cluster a
+    non-core sample belongs to. A non-core sample can have a distance lower
+    than `eps` to two core samples in different classes. Following from the
+    triangular inequality, those two core samples would be more distant than
+    `eps` from each other -- else they would be in the same class. The non-core
+    sample is simply assigned to which ever cluster is generated first, where
+    the order is determined randomly within the code. Other than the ordering of,
+    the dataset, the algorithm is deterministic, making the results relatively
+    stable between iterations on the same data.
+
+    The current implementation relies heavily on :class:`NearestNeighbors` 
+    to determine the number of samples within distance eps. This is to take
+    advantage of the ball tree and kd-tree methods of speeding up neighbor
+    searching and to avoid calculating the full distance matrix.
+    We also retain the flexibility of custom metrics -- for details, 
+    see :class:`NearestNeighbors`.
 
 .. topic:: References:
 
