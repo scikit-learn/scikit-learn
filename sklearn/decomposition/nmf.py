@@ -15,7 +15,6 @@ import warnings
 import numbers
 
 import numpy as np
-from scipy.optimize import nnls
 import scipy.sparse as sp
 
 from ..base import BaseEstimator, TransformerMixin
@@ -572,10 +571,8 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
         """
         X, = check_arrays(X, sparse_format='csc')
         Wt = np.zeros((self.n_components_, X.shape[0]))
-        Wt, _, _ = _nls_subproblem(X.T, self.components_.T, Wt, tol=1e-10,
-                                  max_iter=1000000)
-        #for j in range(0, X.shape[0]):
-        #    W[j, :], _ = nnls(self.components_.T, X[j, :])
+        Wt, _, _ = _nls_subproblem(X.T, self.components_.T, Wt, tol=self.tol,
+                                   max_iter=self.nls_max_iter)
         return Wt.T
 
 
