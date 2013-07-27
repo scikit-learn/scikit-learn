@@ -19,6 +19,9 @@ def configuration(parent_package='', top_path=None):
                        sources=[join('src', 'libsvm', 'libsvm_template.cpp')],
                        depends=[join('src', 'libsvm', 'svm.cpp'),
                                 join('src', 'libsvm', 'svm.h')],
+                       # Force C++ linking in case gcc is picked up instead
+                       # of g++ under windows with some versions of MinGW
+                       extra_compile_args=['-lstdc++'],
                        )
 
     libsvm_sources = ['libsvm.c']
