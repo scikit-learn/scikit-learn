@@ -227,6 +227,18 @@ class PCA(BaseEstimator, TransformerMixin):
         return U
 
     def _fit(self, X):
+        """ Fit the model on X
+        Parameters
+        ----------
+        X: array-like, shape (n_samples, n_features)
+            Training vector, where n_samples in the number of samples and
+            n_features is the number of features.
+
+        Returns
+        -------
+        X : ndarray, shape (n_samples, n_features)
+            The input data, copied, centered and whitened when requested.
+        """
         X = array2d(X)
         n_samples, n_features = X.shape
         X = as_float_array(X, copy=self.copy)
@@ -477,7 +489,7 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         self._fit(X)
         return self
 
-    def _fit(self, X, y=None):
+    def _fit(self, X):
         """Fit the model to the data X.
 
         Parameters
@@ -488,8 +500,8 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
 
         Returns
         -------
-        self : object
-            Returns the instance itself.
+        X : ndarray, shape (n_samples, n_features)
+            The input data, copied, centered and whitened when requested.
         """
         random_state = check_random_state(self.random_state)
         if hasattr(X, 'todense'):
