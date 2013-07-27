@@ -763,7 +763,7 @@ div.container.index-lower {
     border-radius: 4px;
 }
 
-div.container.index-lower .span4 {
+div.container.index-lower .span4, div.container.index-lower .span8, div.container.index-lower .span6 {
     padding-left: 5px;
 }
 

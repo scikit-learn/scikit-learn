@@ -226,19 +226,19 @@
     <div class="container index-lower">
         <div class="row-fluid">
             <!-- News -->
-            <div class="span4">
+            <div class="span6">
                 <h4>News</h4>
                 <ul>
-                <li><em>July 2013.</em> The scikit-learn international code sprint is around the corner! Please, sponsor us.</li>
-                <li><em>February 2013.</em> scikit-learn 0.13.1 is available for download. <a href="#">Changelog</a>.</li>
+                <li><em>July 2013.</em> Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris consequat a justo iaculis viverra. Pellentesque interdum nibh blandit metus molestie pharetra. Sed felis quam, condimentum quis blandit ultrices, rutrum at magna. Fusce tincidunt ultrices porta. Donec volutpat bibendum nibh nec mollis. <a href="#">Changelog</a>.</li>
+                <li><em>July 2013.</em> Mauris dui elit, rhoncus lacinia elit non, auctor aliquam ante. Nam ac enim ligula. Nunc sit amet nunc accumsan, laoreet urna in, rutrum sapien. Mauris tempus euismod adipiscing. Suspendisse potenti. Integer non arcu sed erat porttitor tincidunt. </li>
                 </ul>
             </div>
 
             <!-- Community -->
-            <div class="span4">
+            <div class="span6">
                 <h4>Community</h4>
                 <ul>
-                <li><em>Questions?</em> See <a href="http://stackoverflow.com/questions/tagged/scikit-learn">stackoverflow</a> # scikit-learn for applications and usage questions</li>
+                <li><em>Questions?</em> See <a href="http://stackoverflow.com/questions/tagged/scikit-learn">stackoverflow</a>#scikit-learn for applications and usage questions</li>
                 <li><em>Mailing list:</em> scikit-learn-general@lists.sourceforge.net</li>
                 <li><em>IRC:</em> #scikit-learn @ <a href="http://webchat.freenode.net/">freenode</a></li>
                 <li><em>Donations:</em> <a href="javascript:{}" onclick="document.getElementById('paypal-form').submit(); return false;">PayPal</a> (<a href="#">read more</a> about donations)</li>
@@ -250,6 +250,7 @@
             </div>
 
             <!-- who using -->
+            <!--
             <div class="span4">
                 <h4>Who is using scikit-learn?</h4>
 
@@ -260,15 +261,10 @@
                         <div class="item"><img src="_static/img/google.png" class="thumbnail" /><br /> <em>-- So good!</em></div>
                     </div>
                     <div style="margin-top: 5px"><a href="#">More testimonials</a></div>
-                    <!--
-                    <ol class="carousel-indicators">
-                    <li data-target="#myCarousel" data-slide-to="0" class="active"></li>
-                    <li data-target="#myCarousel" data-slide-to="1"></li>
-                    </ol>
-                    -->
                 </div>
                 <script>$('#myCarousel').carousel()</script>
             </div>
+            -->
 
         </div>
     </div>
