@@ -16,6 +16,7 @@ import numbers
 
 import numpy as np
 import scipy.sparse as sp
+from scipy.optimize import nnls
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import atleast2d_or_csr, check_random_state, check_arrays
@@ -571,8 +572,13 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
         """
         X, = check_arrays(X, sparse_format='csc')
         Wt = np.zeros((self.n_components_, X.shape[0]))
-        Wt, _, _ = _nls_subproblem(X.T, self.components_.T, Wt, tol=self.tol,
-                                   max_iter=self.nls_max_iter)
+        if sp.issparse(X):
+            Wt, _, _ = _nls_subproblem(X.T, self.components_.T, Wt,
+                                       tol=self.tol,
+                                       max_iter=self.nls_max_iter)
+        else:
+            for j in range(0, X.shape[0]):
+                Wt[:, j], _ = nnls(self.components_.T, X[j, :])
         return Wt.T
 
 
