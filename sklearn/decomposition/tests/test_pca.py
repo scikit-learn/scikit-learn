@@ -63,10 +63,9 @@ def test_whitening():
     for this_PCA, copy in [(x, y) for x in PCA, RandomizedPCA
                            for y in True, False]:
         # whiten the data while projecting to the lower dim subspace
-        X_ = X.copy()
+        X_ = X.copy()  # make sure we keep an original across iterations.
         pca = this_PCA(n_components=n_components, whiten=True, copy=copy)
         # test fit_transform
-        # if copy == True:
         X_whitened = pca.fit_transform(X_.copy())
         assert_equal(X_whitened.shape, (n_samples, n_components))
         X_whitened2 = pca.transform(X_)
@@ -83,7 +82,7 @@ def test_whitening():
 
         # in that case the output components still have varying variances
         assert_almost_equal(X_unwhitened.std(axis=0).std(), 74.1, 1)
-        # we always center, so no test for non-centering
+        # we always center, so no test for non-centering.
 
 
 def test_pca_check_projection():
