@@ -533,8 +533,7 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         self.explained_variance_ratio_ = exp_var / exp_var.sum()
 
         if self.whiten:
-            n = X.shape[0]
-            self.components_ = V / S[:, np.newaxis] * np.sqrt(n)
+            self.components_ = V / S[:, np.newaxis] * np.sqrt(n_samples)
         else:
             self.components_ = V
 
