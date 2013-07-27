@@ -236,8 +236,9 @@ class PCA(BaseEstimator, TransformerMixin):
 
         Returns
         -------
-        X : ndarray, shape (n_samples, n_features)
-            The input data, copied, centered and whitened when requested.
+        U, s, V : ndarrays
+            The SVD of the input data, copied and centered when
+            requested.
         """
         X = array2d(X)
         n_samples, n_features = X.shape
