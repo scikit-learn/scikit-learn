@@ -655,6 +655,13 @@ def test_timeout():
         assert_equal(foo[0].category, ConvergenceWarning, msg=foo[0].category)
 
 
+def test_consistent_proba():
+    a = svm.SVC(probability=True, max_iter=1)
+    proba_1 = a.fit(X, Y).predict_proba(X)
+    proba_2 = a.fit(X, Y).predict_proba(X)
+    assert_array_almost_equal(proba_1, proba_2)
+
+
 if __name__ == '__main__':
     import nose
     nose.runmodule()
