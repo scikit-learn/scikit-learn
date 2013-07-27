@@ -28,7 +28,16 @@ import pylab as pl
 #Load the digits dataset
 digits = datasets.load_digits()
 
-#Display the first digit
+#Display the last digit
 pl.figure(1, figsize=(3, 3))
 pl.imshow(digits.images[-1], cmap=pl.cm.gray_r, interpolation='nearest')
+pl.show()
+
+from sklearn.datasets import make_translated_images
+
+#Translates the last digits, show the "1px up" translation
+X, y = make_translated_images([digits.data[-1]],
+                              [digits.target[-1]],
+                              images_shape=(8, 8), n_samples=4)
+pl.imshow(X[-1].reshape((8, 8)), cmap=pl.cm.gray_r, interpolation='nearest')
 pl.show()

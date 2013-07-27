@@ -11,7 +11,7 @@ import numbers
 import numpy as np
 from scipy import linalg
 
-from ..utils import array2d, check_random_state
+from ..utils import array2d, check_random_state, safe_asarray
 from ..utils import shuffle as util_shuffle
 from ..externals import six
 map = six.moves.map
@@ -1362,6 +1362,8 @@ def make_translated_images(X, y, images_shape=(8, 8),
     [ 1.  0.  1.  0.  1.  1.  0.  0.  0.]
     """
     rng = check_random_state(random_state)
+    X = array2d(X)
+    y = safe_asarray(y)
 
     additionals_X = []
     additionals_y = []
