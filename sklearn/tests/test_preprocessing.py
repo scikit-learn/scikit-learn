@@ -67,7 +67,6 @@ def test_scaler_1d():
 #    rank_scaler = RankScaler()
 #    X_rank_scaled = rank_scaler.fit(X).transform(X)
 
-
 def test_scaler_2d_arrays():
     """Test scaling of 2d array along first axis"""
     rng = np.random.RandomState(0)
@@ -133,6 +132,25 @@ def test_scaler_2d_arrays():
     X2 = np.array([[0, 1.5, 0, 5, 10]])
     X2_scaled = rank_scaler.transform(X2)
     assert_array_almost_equal(X2_scaled, [[ 0.  ,  0.75,  0.25,  1.  ,  1.  ]])
+
+
+    # Check RankScaler at different resolution
+    for ninstances in [10, 100, 1000]:
+        for resolution in [ninstances+1, ninstances, ninstances-1, \
+                int(ninstances/2), int(ninstances/7), int(ninstances/10)]:
+            X = rng.randn(ninstances, 100)
+            rank_scaler1 = RankScaler(resolution=None)
+            rank_scaler2 = RankScaler(resolution=resolution)
+            rank_scaler1.fit(X)
+            rank_scaler2.fit(X)
+
+            X2 = rng.randn(1000, 100)
+            X21 = rank_scaler1.transform(X2)
+            X22 = rank_scaler2.transform(X2)
+
+            # In the approximate version X22, all values must
+        	be within resolution of the exact value X11.
+            assert_true(np.all(np.fabs(X21 - X22) < 1./resolution))
 
 
 

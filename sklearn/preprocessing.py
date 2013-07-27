@@ -10,6 +10,8 @@ import numbers
 import numpy as np
 import scipy.sparse as sp
 
+from numpy.testing import assert_almost_equal
+
 from .base import BaseEstimator, TransformerMixin
 from .externals.six import string_types
 from .utils import check_arrays
@@ -421,16 +423,27 @@ class RankScaler(BaseEstimator, TransformerMixin):
     you want outliers to be given high importance (StandardScaler)
     or not (RankScaler).
 
-    Memory used will be equivalent to the size of the initial fit X.
-    (An approximation could be made by downsampling, which would
-    improve memory and speed.)
-
     TODO: min and max parameters?
+
+    Parameters
+    ----------
+    resolution : int, 1000 by default
+        The number of different ranks possible.
+	    i.e. The number of indices in the compressed ranking matrix
+    	`sort_X_`.
+	    This is an approximation, to save memory and transform
+    	computation time.
+        e.g. if 1000, transformed values will have resolution 0.001.
+	    If `None`, we store the full size matrix, comparable
+	    in size to the initial fit `X`.
 
     Attributes
     ----------
     `sort_X_` : array of ints with shape [n_samples, n_features]
         The rank-index of every feature in the fit X.
+
+    `resolution_` : int
+        Desired resolution (number of ranks).
 
     See also
     --------
@@ -438,18 +451,21 @@ class RankScaler(BaseEstimator, TransformerMixin):
     that is faster, but less robust to outliers.
     """
 
-    def __init__(self):
+    def __init__(self, resolution):
         """
         TODO: Add min and max parameters? Default = [0, 1]
         """
         self.copy = True  # We don't have self.copy=False implemented
+        self.resolution_ = resolution
         pass
 
     def fit(self, X, y=None):
         """Compute the feature ranks for later scaling.
 
         fit will take time O(n_features * n_samples * log(n_samples)),
-        and use memory O(n_samples * n_features).
+        because it must sort the entire matrix.
+
+        It use memory O(n_features * resolution).
 
         Parameters
         ----------
@@ -457,13 +473,37 @@ class RankScaler(BaseEstimator, TransformerMixin):
             The data used to compute feature ranks.
         """
         X = array2d(X)
-        self.sort_X_ = np.sort(X, axis=0)
+        full_sort_X_ = np.sort(X, axis=0)
+        if not self.resolution_ or self.resolution_ >= X.shape[0]:
+            # Store the full resolution
+            self.sort_X_ = full_sort_X_
+        else:
+            # Approximate the stored sort_X_
+            self.sort_X_ = np.zeros((self.resolution_, X.shape[1]))
+            for i in range(self.resolution_):
+                for j in range(X.shape[1]):
+                    # Find the corresponding i at the original resolution
+                    iorig = i * 1. * X.shape[0] / self.resolution_
+                    ioriglo = int(iorig)
+                    iorighi = ioriglo + 1
+
+                    if ioriglo == X.shape[0]:
+                        self.sort_X_[i,j] = full_sort_X_[ioriglo,j]
+                    else:
+		                # And use linear interpolation to combine the
+            		    # original values.
+                        wlo = (1 - (iorig - ioriglo))
+                        whi = (1 - (iorighi - iorig))
+                        assert wlo >= 0 and wlo <= 1
+                        assert whi >= 0 and whi <= 1
+                        assert_almost_equal(wlo+whi, 1.)
+                        self.sort_X_[i,j] = wlo * full_sort_X_[ioriglo,j] + whi * full_sort_X_[iorighi,j]
         return self
 
     def transform(self, X):
         """Perform rank-standardization.
 
-        transform will take O(n_samples * n_samples * log(n_fit_samples)),
+        transform will take O(n_features * n_samples * log(resolution)),
         where `n_fit_samples` is the number of samples used during `fit`.
 
         Parameters
