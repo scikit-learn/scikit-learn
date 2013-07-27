@@ -14,7 +14,9 @@ classifier.
 
   - **Multiclass classification** means a classification task with more than
     two classes; e.g., classify a set of images of fruits which may be oranges,
-    apples, or pears.
+    apples, or pears. Multiclass classification makes the assumption that each
+    sample is assigned to one and only one label: a fruit can be either an
+    apple or a pear but not both at the same time.
 
   - **Multilabel classification** assigns to each sample a set of target
     labels. This can be thought as predicting properties of a data-point
@@ -22,15 +24,11 @@ classifier.
     document. A text might be about any of religion, politics, finance or
     education at the same time or none of these.
 
-    Multiclass classification makes the assumption that each sample is assigned
-    to one and only one label: a fruit can be either an apple or a pear but not
-    both at the same time.
-
   - **Multioutput-multiclass classification** and **multi-task classification**
     means that an estimators have to handle
-    jointly several classification tasks. This is a generalisation
-    over the multi-label classification task, where the set of classification
-    problem is restricted to binary classification, and over the multi-class
+    jointly several classification tasks. This is a generalization
+    of the multi-label classification task, where the set of classification
+    problem is restricted to binary classification, and of the multi-class
     classification task. *The output format is a 2d numpy array.*
 
     The set of labels can be different for each output variable.
@@ -46,8 +44,7 @@ classifier.
     classification task with different model formulations. For
     more information, see the relevant estimator documentation.
 
-The estimators provided in this module are meta-estimators required a base
-estimator in their constructor. For example, it is possible to
+Estimators in this module are meta-estimators. For example, it is possible to
 use these estimators to turn a binary classifier or a regressor into a
 multiclass classifier. It is also possible to use these estimators with
 multiclass estimators in the hope that their generalization error or runtime
@@ -56,7 +53,7 @@ performance improves.
 You don't need to use these estimators unless you want to experiment with
 different multiclass strategies: all classifiers in scikit-learn support
 multiclass classification out-of-the-box. Below is a summary of the
-classifiers supported in scikit-learn grouped by strategy.
+classifiers supported by scikit-learn grouped by strategy:
 
   - Inherently multiclass: :ref:`Naive Bayes <naive_bayes>`,
     :class:`sklearn.lda.LDA`,
@@ -72,7 +69,7 @@ tasks :ref:`Decision Trees <tree>`, :ref:`Random Forests <forest>`,
 
 .. warning::
 
-    For the moment, no metric support the multioutput-multiclass
+    For the moment, no metric supports the multioutput-multiclass
     classification task.
 
 Multilabel classification format
@@ -86,12 +83,12 @@ In the sequence of sequences format, each set of labels is represented as
 as sequences of integer, e.g. ``[0]``, ``[1, 2]``. An empty set of labels is then
 expressed as an empty sequence ``[]``. A set of samples is then
 expressed as ``[[0], [1, 2], []]``.
-In the label indicator format, each sample is one row of 2d array of
-shape (n_samples, n_classes) with binary value. The ones, the
-non-zero elements, corresponds to subset of labels. An empty set of labels
-is therefore expressed as a row with only zero elements. Our previous
-example is therefore expressed as
-``np.array([[1, 0, 0], [0, 1, 1], [0, 0, 0])``.
+In the label indicator format, each sample is one row of a 2d array of
+shape (n_samples, n_classes) with binary values: the one, i.e. the non zero
+elements, corresponds to the subset of labels. Our previous example is
+therefore expressed as ``np.array([[1, 0, 0], [0, 1, 1], [0, 0, 0])``
+and an empty set of labels would be represented by a row of zero elements.
+
 
 In the preprocessing module, the transformer
 :class:`sklearn.preprocessing.label_binarize` and the function
