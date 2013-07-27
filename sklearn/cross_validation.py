@@ -24,7 +24,7 @@ from .utils import check_arrays, check_random_state, safe_mask
 from .utils.fixes import unique
 from .externals.joblib import Parallel, delayed
 from .externals.six import string_types, with_metaclass
-from .metrics import make_scorer, SCORERS
+from .metrics.scorer import _deprecate_loss_and_score_funcs
 
 __all__ = ['Bootstrap',
            'KFold',
@@ -1132,20 +1132,11 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
     """
     X, y = check_arrays(X, y, sparse_format='csr', allow_lists=True)
     cv = check_cv(cv, X, y, classifier=is_classifier(estimator))
-    if score_func is not None:
-        warnings.warn("Passing function as ``score_func`` is "
-                      "deprecated and will be removed in 0.15. "
-                      "Either use strings or score objects.", stacklevel=2)
-        scorer = make_scorer(score_func)
-    elif isinstance(scoring, string_types):
-        try:
-            scorer = SCORERS[scoring]
-        except KeyError:
-            raise ValueError('%r is not a valid scoring value. '
-                             'Valid options are %s' % (scoring,
-                             sorted(SCORERS.keys())))
-    else:
-        scorer = scoring
+    scorer = _deprecate_loss_and_score_funcs(
+        loss_func=None,
+        score_func=score_func,
+        scoring=scoring
+    )
     if scorer is None and not hasattr(estimator, 'score'):
         raise TypeError(
             "If no scoring is specified, the estimator passed "
@@ -1299,20 +1290,11 @@ def permutation_test_score(estimator, X, y, scoring=None, cv=None,
     """
     X, y = check_arrays(X, y, sparse_format='csr')
     cv = check_cv(cv, X, y, classifier=is_classifier(estimator))
-
-    if score_func is not None:
-        warnings.warn("Passing function as ``score_func`` is "
-                      "deprecated and will be removed in 0.15. "
-                      "Either use strings or score objects.")
-        scorer = make_scorer(score_func)
-    elif isinstance(scoring, string_types):
-        scorer = SCORERS[scoring]
-    else:
-        scorer = scoring
-
-    if scorer is None:
-        raise ValueError("No valid scoring provided.")
-
+    scorer = _deprecate_loss_and_score_funcs(
+        loss_func=None,
+        score_func=score_func,
+        scoring=scoring
+    )
     random_state = check_random_state(random_state)
 
     # We clone the estimator to make sure that all the folds are
