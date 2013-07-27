@@ -65,23 +65,17 @@ def test_whitening():
                            for y in True, False]:
         # whiten the data while projecting to the lower dim subspace
         X_ = X.copy()
-        assert X_ is not X
         pca = this_PCA(n_components=n_components, whiten=True, copy=copy)
         # test fit_transform
-        if copy == True:
-            X_whitened = pca.fit_transform(X_)
-            assert_equal(X_whitened.shape, (n_samples, n_components))
-            X_whitened2 = pca.transform(X_)
-            assert_array_almost_equal(X_whitened, X_whitened2)
-        else:
-            X_whitened = pca.fit_transform(X_)
+        # if copy == True:
+        X_whitened = pca.fit_transform(X_.copy())
+        assert_equal(X_whitened.shape, (n_samples, n_components))
+        X_whitened2 = pca.transform(X_)
+        assert_array_almost_equal(X_whitened, X_whitened2)
 
-        # all output component have unit variances and zero mean
         assert_almost_equal(X_whitened.std(axis=0), np.ones(n_components))
         assert_almost_equal(X_whitened.mean(axis=0), np.zeros(n_components))
 
-        # is possible to project on the low dim space without scaling by the
-        # singular values
         X_ = X.copy()
         pca = this_PCA(n_components=n_components, whiten=False,
                        copy=copy).fit(X_)
