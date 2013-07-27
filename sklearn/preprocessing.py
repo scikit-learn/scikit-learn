@@ -429,13 +429,13 @@ class RankScaler(BaseEstimator, TransformerMixin):
     ----------
     resolution : int, 1000 by default
         The number of different ranks possible.
-	    i.e. The number of indices in the compressed ranking matrix
-    	`sort_X_`.
-	    This is an approximation, to save memory and transform
-    	computation time.
+        i.e. The number of indices in the compressed ranking matrix
+        `sort_X_`.
+        This is an approximation, to save memory and transform
+        computation time.
         e.g. if 1000, transformed values will have resolution 0.001.
-	    If `None`, we store the full size matrix, comparable
-	    in size to the initial fit `X`.
+        If `None`, we store the full size matrix, comparable
+        in size to the initial fit `X`.
 
     Attributes
     ----------
@@ -488,16 +488,17 @@ class RankScaler(BaseEstimator, TransformerMixin):
                     iorighi = ioriglo + 1
 
                     if ioriglo == X.shape[0]:
-                        self.sort_X_[i,j] = full_sort_X_[ioriglo,j]
+                        self.sort_X_[i, j] = full_sort_X_[ioriglo, j]
                     else:
-		                # And use linear interpolation to combine the
-            		    # original values.
+                        # And use linear interpolation to combine the
+                        # original values.
                         wlo = (1 - (iorig - ioriglo))
                         whi = (1 - (iorighi - iorig))
                         assert wlo >= 0 and wlo <= 1
                         assert whi >= 0 and whi <= 1
                         assert_almost_equal(wlo+whi, 1.)
-                        self.sort_X_[i,j] = wlo * full_sort_X_[ioriglo,j] + whi * full_sort_X_[iorighi,j]
+                        self.sort_X_[i, j] = wlo * full_sort_X_[ioriglo, j] \
+                                           + whi * full_sort_X_[iorighi, j]
         return self
 
     def transform(self, X):

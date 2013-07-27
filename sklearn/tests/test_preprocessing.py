@@ -149,7 +149,7 @@ def test_scaler_2d_arrays():
             X22 = rank_scaler2.transform(X2)
 
             # In the approximate version X22, all values must
-        	be within resolution of the exact value X11.
+        	# be within resolution of the exact value X11.
             assert_true(np.all(np.fabs(X21 - X22) < 1./resolution))
 
 
