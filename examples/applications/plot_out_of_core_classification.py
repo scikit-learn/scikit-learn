@@ -359,11 +359,11 @@ ax.set_title('Time in Process')
 
 
 def autolabel(rectangles):
-    """attach some text vi autolabel on rectangles."""
+    """attach some text autolabel(rectangles)"""
     for rect in rectangles:
         height = rect.get_height()
         ax.text(rect.get_x() + rect.get_width() / 2.,
-                1.05 * height, '%.4f' % height,
+                1.05*height, '%.4f' % height,
                 ha='center', va='bottom')
 
 autolabel(rectangles)
