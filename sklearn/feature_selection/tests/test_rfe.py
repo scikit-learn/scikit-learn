@@ -12,7 +12,7 @@ from sklearn.datasets import load_iris
 from sklearn.metrics import zero_one_loss
 from sklearn.svm import SVC
 from sklearn.utils import check_random_state
-
+from sklearn.metrics.scorer import SCORERS
 
 def test_rfe_set_params():
     generator = check_random_state(0)
@@ -87,6 +87,16 @@ def test_rfecv():
     # Test using a customized loss function
     rfecv = RFECV(estimator=SVC(kernel="linear"), step=1, cv=3,
                   loss_func=zero_one_loss)
+    rfecv.fit(X, y)
+    X_r = rfecv.transform(X)
+
+    assert_equal(X_r.shape, iris.data.shape)
+    assert_array_almost_equal(X_r[:10], iris.data[:10])
+
+    # Test using a scorer
+    scorer = SCORERS['accuracy']
+    rfecv = RFECV(estimator=SVC(kernel="linear"), step=1, cv=3,
+                  scoring=scorer)
     rfecv.fit(X, y)
     X_r = rfecv.transform(X)
 

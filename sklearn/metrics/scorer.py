@@ -144,7 +144,7 @@ class _ThresholdScorer(_BaseScorer):
         return ", needs_threshold=True"
 
 def _deprecate_loss_and_score_funcs(
-        loss_func, score_func, scoring,
+        loss_func=None, score_func=None, scoring=None,
         score_overrides_loss=False):
 
     scorer = None

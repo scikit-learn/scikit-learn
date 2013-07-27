@@ -14,7 +14,7 @@ from ..base import clone
 from ..base import is_classifier
 from ..cross_validation import check_cv
 from .base import SelectorMixin
-
+from ..metrics.scorer import _deprecate_loss_and_score_funcs
 
 class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
     """Feature ranking with recursive feature elimination.
@@ -292,11 +292,12 @@ class RFECV(RFE, MetaEstimatorMixin):
            for cancer classification using support vector machines",
            Mach. Learn., 46(1-3), 389--422, 2002.
     """
-    def __init__(self, estimator, step=1, cv=None, loss_func=None,
-                 estimator_params={}, verbose=0):
+    def __init__(self, estimator, step=1, cv=None, scoring=None,
+                 loss_func=None, estimator_params={}, verbose=0):
         self.estimator = estimator
         self.step = step
         self.cv = cv
+        self.scoring = scoring
         self.loss_func = loss_func
         self.estimator_params = estimator_params
         self.verbose = verbose
@@ -337,29 +338,27 @@ class RFECV(RFE, MetaEstimatorMixin):
                 estimator = clone(self.estimator)
                 estimator.fit(X_train[:, mask], y_train)
 
-                if self.loss_func is None:
-                    loss_k = 1.0 - estimator.score(X_test[:, mask], y_test)
+                if self.loss_func is None and self.scoring is None:
+                    score = estimator.score(X_test[:, mask], y_test)
                 else:
-                    loss_k = self.loss_func(
-                        y_test, estimator.predict(X_test[:, mask]))
+                    scorer = _deprecate_loss_and_score_funcs(
+                        loss_func=self.loss_func,
+                        scoring=self.scoring
+                    )
+                    score = scorer(estimator, X_test[:, mask], y_test)
 
                 if self.verbose > 0:
-                    print("Finished fold with %d / %d feature ranks, loss=%f"
-                          % (k, max(ranking_), loss_k))
-                scores[k] += loss_k
+                    print("Finished fold with %d / %d feature ranks, score=%f"
+                          % (k, max(ranking_), score))
+                scores[k] += score
 
         # Pick the best number of features on average
-        best_score = np.inf
-        best_k = None
-
-        for k, score in enumerate(scores):
-            if score < best_score:
-                best_score = score
-                best_k = k + 1
+        k = np.argmax(scores)
+        best_score = scores[k]
 
         # Re-execute an elimination with best_k over the whole set
         rfe = RFE(estimator=self.estimator,
-                  n_features_to_select=best_k,
+                  n_features_to_select=k+1,
                   step=self.step, estimator_params=self.estimator_params)
 
         rfe.fit(X, y)
