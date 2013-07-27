@@ -90,9 +90,21 @@ def test_mnnb():
 
         # Check that incremental fitting yields the same results
         clf2 = MultinomialNB()
-        clf2.partial_fit(X[:2], y2[:2], classes=np.unique(y2))
-        clf2.partial_fit(X[2:5], y2[2:5])
-        clf2.partial_fit(X[5:], y2[5:])
+        try:
+            warnings.simplefilter("always", RuntimeWarning)
+            with warnings.catch_warnings(record=True) as w:
+                clf2.partial_fit(X[:2], y2[:2], classes=np.unique(y2))
+                clf2.partial_fit(X[2:5], y2[2:5])
+                clf2.partial_fit(X[5:], y2[5:])
+
+            # Partial fit on very small mini-batches can cause some columns
+            # in clf2.feature_count_ and clf2.class_count_ to be all zeros
+            # but this does not prevent the prediction to be correct
+            assert_equal(len(w), 1)
+            assert_equal(w[0].message.args,
+                         ('divide by zero encountered in log',))
+        finally:
+            warnings.filters.pop()
 
         y_pred2 = clf2.predict(X)
         assert_array_equal(y_pred2, y2)
