@@ -3,26 +3,30 @@
         <!-- Block section -->
             <h1>Documentation of scikit-learn 0.13</h1>
             <div class="row-fluid">
+                <div class="span4 box">
+                    <h2><a href="tutorial/basic/tutorial.html">Quick Start</a></h2>
+                    <blockquote>A very short introduction into machine learning
+                    problems and how to solve them using scikit-learn.
+                    Introduced basic concepts and conventions.
+                    </blockquote>
+                </div>
+                <div class="span4 box">
+                    <h2><a href="user_guide.html">User Guide</a></h2>
+                    <blockquote>The main documentation. This contains an
+                        in-depth description of all algorithms and how
+                        to apply them.
+                    </blockquote>
+                </div>
+                <div class="span4 box">
+                    <h2><a href="developers/index.html">Contributing</a></h2>
+                    <blockquote>bla bla bla
+                    </blockquote>
+                </div>
+            </div>
+
+            <div class="row-fluid">
                 <div class="span8">
                     <!-- Documentation overview -->
-                    <div class="row-fluid">
-                        <div class="span6 box">
-                            <h2><a href="tutorial/basic/tutorial.html">Quick Start</a></h2>
-                            <blockquote>A very short introduction into machine learning
-                            problems and how to solve them using scikit-learn.
-                            Introduced basic concepts and conventions.
-                            </blockquote>
-                        </div>
-                        <div class="span6 box">
-                            <h2><a href="user_guide.html">User Guide</a></h2>
-                            <blockquote>The main documentation. This contains an
-                                in-depth description of all algorithms and how
-                                to apply them.
-                            </blockquote>
-                        </div>
-                        <!-- row -->
-                    </div>
-
                     <div class="row-fluid">
                         <div class="span6 box">
                             <h2><a href="tutorial/index.html">Tutorial</a></h2>
@@ -62,6 +66,7 @@
                 </div>
 
                 <!-- doc versions -->
+
                 <div class="span4 box">
                     <h2>Other Versions</h2>
                     <ul>
@@ -78,7 +83,7 @@
                     </ul>
 
                 </div>
-                <!-- doc versions -->
+
 
                 <!-- row -->
             </div>
