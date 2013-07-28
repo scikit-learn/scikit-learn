@@ -476,6 +476,7 @@ cdef DTYPE_t _log_kernel_norm(DTYPE_t h, ITYPE_t d,
     h is the bandwidth, d is the dimension.
     """
     cdef DTYPE_t tmp, factor = 0
+    cdef ITYPE_t k
     if kernel == GAUSSIAN_KERNEL:
         factor = 0.5 * d * LOG_2PI
     elif kernel == TOPHAT_KERNEL:
@@ -1565,6 +1566,7 @@ cdef class BinaryTree:
 
         cdef ITYPE_t n_samples = self.data.shape[0]
         cdef ITYPE_t n_features = self.data.shape[1]
+        cdef ITYPE_t i
         cdef KernelType kernel_c
 
         # validate kernel
@@ -1686,6 +1688,7 @@ cdef class BinaryTree:
         array([ 30,  62, 278, 580, 820])
         """
         cdef ITYPE_t n_features = self.data.shape[1]
+        cdef ITYPE_t i
 
         # validate X and prepare for query
         X = array2d(X, dtype=DTYPE, order='C')

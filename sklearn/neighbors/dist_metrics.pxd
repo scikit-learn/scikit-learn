@@ -18,6 +18,7 @@ from typedefs import DTYPE, ITYPE
 cdef inline DTYPE_t euclidean_dist(DTYPE_t* x1, DTYPE_t* x2,
                                    ITYPE_t size) except -1:
     cdef DTYPE_t tmp, d=0
+    cdef np.intp_t j
     for j in range(size):
         tmp = x1[j] - x2[j]
         d += tmp * tmp
@@ -27,6 +28,7 @@ cdef inline DTYPE_t euclidean_dist(DTYPE_t* x1, DTYPE_t* x2,
 cdef inline DTYPE_t euclidean_rdist(DTYPE_t* x1, DTYPE_t* x2,
                                     ITYPE_t size) except -1:
     cdef DTYPE_t tmp, d=0
+    cdef np.intp_t j
     for j in range(size):
         tmp = x1[j] - x2[j]
         d += tmp * tmp
