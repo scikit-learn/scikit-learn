@@ -677,8 +677,12 @@ def test_classifiers_input_shapes():
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always", DataConversionWarning)
             classifier.fit(X, y[:, np.newaxis])
-        assert_equal(len(w), 1)
-        assert_array_equal(y_pred, classifier.predict(X))
+        try:
+            assert_equal(len(w), 1)
+            assert_array_equal(y_pred, classifier.predict(X))
+        except Exception:
+            print(classifier)
+            raise
 
 
 def test_classifiers_pickle():

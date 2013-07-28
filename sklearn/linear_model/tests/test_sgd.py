@@ -157,8 +157,8 @@ class CommonTest(object):
         """Input format tests. """
         clf = self.factory(alpha=0.01, n_iter=5,
                            shuffle=False)
+        clf.fit(X, Y)
         Y_ = np.array(Y)[:, np.newaxis]
-        clf.fit(X, Y_)
 
         Y_ = np.c_[Y_, Y_]
         assert_raises(ValueError, clf.fit, X, Y_)
