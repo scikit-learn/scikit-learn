@@ -277,7 +277,7 @@
     {% endif %}
      </div>
      {% if theme_collapsiblesidebar|tobool %}
-         <script type="text/javascript" src="_static/sidebar.js"></script>
+         <script type="text/javascript" src="{{ pathto('_static/sidebar.js') }}"></script>
      {% endif %}
      <script type="text/javascript">
        $("div.buttonNext, div.buttonPrevious").hover(
