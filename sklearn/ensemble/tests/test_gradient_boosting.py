@@ -14,6 +14,7 @@ from sklearn.utils.testing import assert_true
 
 from sklearn.metrics import mean_squared_error
 from sklearn.utils import check_random_state, tosequence
+from sklearn.utils.validation import DataConversionWarning
 
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.ensemble import GradientBoostingRegressor
@@ -443,7 +444,12 @@ def test_shape_y():
     y_ = np.asarray(y, dtype=np.int32)
     y_ = y_[:, np.newaxis]
 
-    clf.fit(X, y_)
+    with warnings.catch_warnings(record=True):
+        # This will raise a DataConversionWarning that we want to
+        # "always" raise, elsewhere the warnings gets ignored in the
+        # later tests, and the tests that check for this warning fail
+        warnings.simplefilter("always", DataConversionWarning)
+        clf.fit(X, y_)
     assert_array_equal(clf.predict(T), true_result)
     assert_equal(100, len(clf.estimators_))
 
@@ -463,7 +469,6 @@ def test_mem_layout():
     assert_equal(100, len(clf.estimators_))
 
     y_ = np.asarray(y, dtype=np.int32)
-    y_ = y_[:, np.newaxis]
     y_ = np.ascontiguousarray(y_)
     clf = GradientBoostingClassifier(n_estimators=100, random_state=1)
     clf.fit(X, y_)
@@ -471,7 +476,6 @@ def test_mem_layout():
     assert_equal(100, len(clf.estimators_))
 
     y_ = np.asarray(y, dtype=np.int32)
-    y_ = y_[:, np.newaxis]
     y_ = np.asfortranarray(y_)
     clf = GradientBoostingClassifier(n_estimators=100, random_state=1)
     clf.fit(X, y_)

@@ -113,6 +113,13 @@ def test_all_estimators():
                     assert_equal(params[arg], default)
 
 
+def test_all_estimator_no_base_class():
+    for name, Estimator in all_estimators():
+        msg = ("Base estimators such as {0} should not be included"
+               " in all_estimators").format(name)
+        assert_false(name.lower().startswith('base'), msg=msg)
+
+
 def test_estimators_sparse_data():
     # All estimators should either deal with sparse data, or raise an
     # intelligible error message
@@ -670,8 +677,12 @@ def test_classifiers_input_shapes():
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always", DataConversionWarning)
             classifier.fit(X, y[:, np.newaxis])
-        assert_equal(len(w), 1)
-        assert_array_equal(y_pred, classifier.predict(X))
+        try:
+            assert_equal(len(w), 1)
+            assert_array_equal(y_pred, classifier.predict(X))
+        except Exception:
+            print(classifier)
+            raise
 
 
 def test_classifiers_pickle():

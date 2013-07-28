@@ -4,7 +4,7 @@ Authors : Kemal Eren
 License: BSD 3 clause
 
 """
-from abc import ABCMeta
+from abc import ABCMeta, abstractmethod
 
 import numpy as np
 
@@ -92,6 +92,7 @@ class BaseSpectral(six.with_metaclass(ABCMeta, BaseEstimator,
                                       BiclusterMixin)):
     """Base class for spectral biclustering."""
 
+    @abstractmethod
     def __init__(self, n_clusters=3, svd_method="randomized",
                  n_svd_vecs=None, mini_batch=False, init="k-means++",
                  n_init=10, n_jobs=1, random_state=None):
