@@ -1220,9 +1220,9 @@ def check_cv(cv, X=None, y=None, classifier=False):
     return cv
 
 
-def permutation_test_score(estimator, X, y, scoring=None, cv=None,
+def permutation_test_score(estimator, X, y, score_func=None, cv=None,
                            n_permutations=100, n_jobs=1, labels=None,
-                           random_state=0, verbose=0, score_func=None):
+                           random_state=0, verbose=0, scoring=None):
     """Evaluate the significance of a cross-validated score with permutations
 
     Parameters
