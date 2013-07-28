@@ -567,8 +567,7 @@ class BernoulliNB(BaseDiscreteNB):
 
         neg_prob = np.log(1 - np.exp(self.feature_log_prob_))
         # Compute  neg_prob · (1 - X).T  as  ∑neg_prob - X · neg_prob
-        X_neg_prob = (neg_prob.sum(axis=1)
-                      - safe_sparse_dot(X, neg_prob.T))
-        jll = safe_sparse_dot(X, self.feature_log_prob_.T) + X_neg_prob
+        jll = safe_sparse_dot(X, (self.feature_log_prob_ - neg_prob).T)
+        jll += self.class_log_prior_ + neg_prob.sum(axis=1)
 
-        return jll + self.class_log_prior_
+        return jll
