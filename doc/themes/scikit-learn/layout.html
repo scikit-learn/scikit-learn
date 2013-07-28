@@ -18,14 +18,14 @@
 {% block htmltitle %}
 {{ super() }}
 <!-- htmltitle is before nature.css - we use this hack to load bootstrap first -->
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <link rel="stylesheet" href="{{ pathto('_static/css/bootstrap.min.css', 1) }}" media="screen" />
 <link rel="stylesheet" href="{{ pathto('_static/css/bootstrap-responsive.css', 1) }}"/>
 {% endblock %}
 
 {% block extrahead %}
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<script src="{{ pathto('_static/js/bootstrap.min.js', 1)}}"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<script src="{{ pathto('_static/js/bootstrap.min.js', 1)}}" type="text/javascript"></script>
 
 {% if theme_google_analytics|tobool %}
 <script type="text/javascript">
@@ -41,7 +41,7 @@
   })();
 </script>
 {% endif %}
-      <link rel="canonical" href="http://scikit-learn.org/stable/{{pagename}}.html">
+      <link rel="canonical" href="http://scikit-learn.org/stable/{{pagename}}.html" />
 
 {%- if pagename == 'index' or pagename == 'documentation' %}
     <style type="text/css">
@@ -156,7 +156,7 @@
 <a class="fork-me" href="https://github.com/scikit-learn/scikit-learn">
   <img style="position: absolute; top: 0; right: 0; border: 0;"
        src="{{ pathto('_static/img/forkme.png', 1) }}"
-       alt="Fork me on GitHub">
+       alt="Fork me on GitHub" />
 </a>
 
 <div class="content-wrapper">
@@ -180,7 +180,7 @@
         <div class="rellink">
         <a href="{{ pathto(rellink[0]) }}"
         {{ accesskey(rellink[2]) }}>{{ rellink[3]|capitalize }}
-        <br>
+        <br/>
         <span class="smallrellink">
         {{ rellink[1]|striptags|truncate(16, killwords=True) }}
         </span>
@@ -207,7 +207,7 @@
         <div class="rellink">
         <a href="{{ parents[-1].link|e }}">
         Up
-        <br>
+        <br/>
         <span class="smallrellink">
         {{ parents[-1].title|striptags|truncate(16, killwords=True) }}
         </span>
