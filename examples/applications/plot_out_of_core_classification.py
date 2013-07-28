@@ -194,7 +194,7 @@ class ReutersStreamReader():
 # Main
 ###############################################################################
 # Create the hasher and limit the number of features to a reasonable maximum
-hasher = HashingVectorizer(charset_error='ignore', n_features=2 ** 18)
+hasher = HashingVectorizer(decode_error='ignore', n_features=2 ** 18)
 
 # Create an online classifier i.e. supporting `partial_fit()`
 classifier = SGDClassifier()

@@ -39,7 +39,7 @@ from sklearn.multiclass import OneVsRestClassifier
 from sklearn.svm import SVC
 from sklearn.preprocessing import LabelBinarizer
 from sklearn.decomposition import PCA
-from sklearn.pls import CCA
+from sklearn.cross_decomposition import CCA
 
 
 def plot_hyperplane(clf, min_x, max_x, linestyle, label):
