@@ -15,7 +15,8 @@ from ..externals.joblib import Parallel, delayed
 from .base import LinearClassifierMixin, SparseCoefMixin
 from ..base import BaseEstimator, RegressorMixin
 from ..feature_selection.from_model import _LearntSelectorMixin
-from ..utils import array2d, atleast2d_or_csr, check_arrays, deprecated
+from ..utils import (array2d, atleast2d_or_csr, check_arrays, deprecated,
+                     column_or_1d)
 from ..utils.extmath import safe_sparse_dot
 from ..utils.multiclass import _check_partial_fit_first_call
 from ..externals import six
@@ -336,7 +337,7 @@ class BaseSGDClassifier(BaseSGD, LinearClassifierMixin):
                      classes, sample_weight,
                      coef_init, intercept_init):
         X = atleast2d_or_csr(X, dtype=np.float64, order="C")
-        y = np.asarray(y).ravel()
+        y = column_or_1d(y, warn=True)
 
         n_samples, n_features = X.shape
         _check_fit_data(X, y)
@@ -773,7 +774,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
                      coef_init, intercept_init):
         X, y = check_arrays(X, y, sparse_format="csr", copy=False,
                             check_ccontiguous=True, dtype=np.float64)
-        y = y.ravel()
+        y = column_or_1d(y, warn=True)
 
         n_samples, n_features = X.shape
         _check_fit_data(X, y)

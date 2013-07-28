@@ -651,6 +651,10 @@ def test_classifiers_input_shapes():
         if name in ["MultinomialNB", "LabelPropagation", "LabelSpreading"]:
             # TODO some complication with -1 label
             continue
+        if name in ["DecisionTreeClassifier", "ExtraTreeClassifier"]:
+            # We don't raise a warning in these classifiers, as
+            # the column y interface is used by the forests.
+            continue
 
         # catch deprecation warnings
         with warnings.catch_warnings(record=True):
@@ -661,7 +665,6 @@ def test_classifiers_input_shapes():
         y_pred = classifier.predict(X)
 
         set_random_state(classifier)
-        classifier.fit(X, y[:, np.newaxis])
         # Check that when a 2D y is given, a DataConversionWarning is
         # raised
         with warnings.catch_warnings(record=True) as w:

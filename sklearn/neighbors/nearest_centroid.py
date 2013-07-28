@@ -89,7 +89,7 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
         if sp.issparse(X) and self.shrink_threshold:
             raise ValueError("threshold shrinking not supported"
                              " for sparse input")
-        y = column_or_1d(y)
+        y = column_or_1d(y, warn=True)
 
         n_samples, n_features = X.shape
         classes = np.unique(y)
