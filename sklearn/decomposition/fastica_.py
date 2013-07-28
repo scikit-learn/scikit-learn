@@ -93,8 +93,8 @@ def _ica_par(X, tol, g, fun_args, max_iter, w_init):
     p_ = float(X.shape[1])
     for ii in moves.xrange(max_iter):
         gwtx, g_wtx = g(np.dot(W, X), fun_args)
-        W1 = _sym_decorrelation(np.dot(gwtx, X.T) /
-                                p_ - g_wtx[:, np.newaxis] * W)
+        W1 = _sym_decorrelation(np.dot(gwtx, X.T) / p_
+                                - g_wtx[:, np.newaxis] * W)
         del gwtx, g_wtx
         # builtin max, abse are faster than numpy counter parts.
         lim = max(abs(abs(np.diag(np.dot(W1, W.T))) - 1))
@@ -487,7 +487,7 @@ class FastICA(BaseEstimator, TransformerMixin):
 
         return np.dot(X, self.components_.T)
 
-    @deprecated('To be removed in 0.16. Use the mixing_ attribute.')
+    @deprecated('To be removed in 0.16. Use `mixing_` attribute.')
     def get_mixing_matrix(self):
         """Compute the mixing matrix.
 

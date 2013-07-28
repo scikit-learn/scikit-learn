@@ -550,7 +550,10 @@ Independent component analysis (ICA)
 Independent component analysis separates a multivariate signal into
 additive subcomponents that are maximally independent. It is
 implemented in scikit-learn using the :class:`Fast ICA <FastICA>`
-algorithm.
+algorithm. Typically, ICA is not used for reducing dimensionality but
+for separating superimposed signals. Since the ICA model does not include
+a noise term, for the model to be correct, whitening must be applied. This can be done internally using the whiten argument or manually using one of the PCA
+variants.
 
 It is classically used to separate mixed signals (a problem known as
 *blind source separation*), as in the example below:
