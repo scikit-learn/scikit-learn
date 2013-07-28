@@ -115,8 +115,8 @@ by::
   Accuracy: 0.97 (+/- 0.07)
 
 By default, the score computed at each CV iteration is the ``score``
-method of the estimator. It is possible to change this by passing a custom
-scoring function::
+method of the estimator. It is possible to change this by using the
+scoring parameter::
 
   >>> from sklearn import metrics
   >>> cross_validation.cross_val_score(clf, iris.data, iris.target, cv=5,
@@ -124,7 +124,7 @@ scoring function::
   ...                                                     # doctest: +ELLIPSIS
   array([ 1.  ...,  0.96...,  0.89...,  0.96...,  1.        ])
 
-See :ref:`score_func_objects` for details.
+See :ref:`scoring_parameter` for details.
 In the case of the Iris dataset, the samples are balanced across target
 classes hence the accuracy and the F1-score are almost equal.
 
