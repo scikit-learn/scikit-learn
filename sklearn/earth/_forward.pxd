@@ -14,6 +14,8 @@ ctypedef enum StoppingCondition:
     LOWGRSQ=3,
     NOCAND=4
 
+cdef dict stopping_conditions
+
 cdef class ForwardPasser:
 
 	#User selected parameters
