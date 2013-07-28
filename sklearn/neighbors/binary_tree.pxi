@@ -178,9 +178,10 @@ cdef struct NodeHeapData_t:
     ITYPE_t i2
 
 # build the corresponding numpy dtype for NodeHeapData
-offsets = [<Py_ssize_t>&(<NodeHeapData_t*>NULL).val,
-           <Py_ssize_t>&(<NodeHeapData_t*>NULL).i1,
-           <Py_ssize_t>&(<NodeHeapData_t*>NULL).i2]
+cdef NodeHeapData_t nhd_tmp
+offsets = [<np.intp_t>&(nhd_tmp.val) - <np.intp_t>&nhd_tmp,
+           <np.intp_t>&(nhd_tmp.i1) - <np.intp_t>&nhd_tmp,
+           <np.intp_t>&(nhd_tmp.i2) - <np.intp_t>&nhd_tmp]
 NodeHeapData = np.dtype({'names': ['val', 'i1', 'i2'],
                          'formats': [DTYPE, ITYPE, ITYPE],
                          'offsets': [o - offsets[0] for o in offsets],
@@ -193,10 +194,11 @@ cdef struct NodeData_t:
     DTYPE_t radius
 
 # build the corresponding numpy dtype for NodeData
-offsets = [<Py_ssize_t>&(<NodeData_t*>NULL).idx_start,
-           <Py_ssize_t>&(<NodeData_t*>NULL).idx_end,
-           <Py_ssize_t>&(<NodeData_t*>NULL).is_leaf,
-           <Py_ssize_t>&(<NodeData_t*>NULL).radius]
+cdef NodeData_t nd_tmp
+offsets = [<np.intp_t>&(nd_tmp.idx_start) - <np.intp_t>&nd_tmp,
+           <np.intp_t>&(nd_tmp.idx_end) - <np.intp_t>&nd_tmp,
+           <np.intp_t>&(nd_tmp.is_leaf) - <np.intp_t>&nd_tmp,
+           <np.intp_t>&(nd_tmp.radius) - <np.intp_t>&nd_tmp]
 NodeData = np.dtype({'names': ['idx_start', 'idx_end', 'is_leaf', 'radius'],
                      'formats': [ITYPE, ITYPE, ITYPE, DTYPE],
                      'offsets': [o - offsets[0] for o in offsets],
