@@ -179,15 +179,15 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
         {'alpha' : 1.0}
 
     max_iter : int, optional
-        Maximum number of iterations to perform
+        Maximum number of iterations to perform.
 
     tol: float, optional
         A positive scalar giving the tolerance at which the
-        un-mixing matrix is considered to have converged
+        un-mixing matrix is considered to have converged.
 
     w_init : (n_components, n_components) array, optional
         Initial un-mixing array of dimension (n.comp,n.comp).
-        If None (default) then an array of normal r.v.'s is used
+        If None (default) then an array of normal r.v.'s is used.
 
     random_state : int or RandomState
         Pseudo number generator state used for random sampling.
@@ -350,7 +350,7 @@ class FastICA(BaseEstimator, TransformerMixin):
         Number of components to use. If none is passed, all are used.
 
     algorithm : {'parallel', 'deflation'}
-        Apply parallel or deflational algorithm for FastICA
+        Apply parallel or deflational algorithm for FastICA.
 
     whiten : boolean, optional
         If whiten is false, the data is already considered to be
@@ -370,13 +370,13 @@ class FastICA(BaseEstimator, TransformerMixin):
     fun_args : dictionary, optional
         Arguments to send to the functional form.
         If empty and if fun='logcosh', fun_args will take value
-        {'alpha' : 1.0}
+        {'alpha' : 1.0}.
 
     max_iter : int, optional
-        Maximum number of iterations during fit
+        Maximum number of iterations during fit.
 
     tol : float, optional
-        Tolerance on update at each iteration
+        Tolerance on update at each iteration.
 
     w_init : None of an (n_components, n_components) ndarray
         The mixing matrix to be used to initialize the algorithm.
