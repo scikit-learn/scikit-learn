@@ -160,7 +160,7 @@
     <div class="span4 box">
     <h2>
 
-:ref:`Model Selection<model_selection>`
+:ref:`Model selection<model_selection>`
 
 .. raw:: html
 
@@ -197,7 +197,7 @@
 
     </h2>
     <blockquote>
-    <p>Creating and normalizing features.</p>
+    <p>Feature extraction and normalization.</p>
     <div class="box-links">
     <strong>Application</strong>: Transforming input data such as text for use with machine learning algorithms.</br>
     <strong>Modules</strong>:&nbsp;
