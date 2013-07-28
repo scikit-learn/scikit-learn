@@ -632,7 +632,8 @@ def test_svc_clone_with_callable_kernel():
                        svm_builtin.predict(iris.data))
 
     assert_array_almost_equal(svm_cloned.predict_proba(iris.data),
-                              svm_builtin.predict_proba(iris.data))
+                              svm_builtin.predict_proba(iris.data),
+                              decimal=4)
     assert_array_almost_equal(svm_cloned.decision_function(iris.data),
                               svm_builtin.decision_function(iris.data))
 
