@@ -34,21 +34,20 @@ print("Computing regularization path using the lasso...")
 # the alphas and the coefficients as output, instead of a list
 # of models as it does by default. Returning the list of models
 # is deprecated and will eventually be removed in 0.15
-alphas_lasso, coefs_lasso, _ = lasso_path(X, y, eps, return_models=False)
+alphas_lasso, coefs_lasso, _ = lasso_path(X, y, eps, return_models=False,
+                                          fit_intercept=False)
 
 print("Computing regularization path using the positive lasso...")
-alphas_positive_lasso, coefs_positive_lasso, _ = lasso_path(X, y, eps,
-                                                        positive=True,
-                                                        return_models=False)
+alphas_positive_lasso, coefs_positive_lasso, _ = lasso_path(
+    X, y, eps, positive=True, return_models=False, fit_intercept=False)
 print("Computing regularization path using the elastic net...")
-alphas_enet, coefs_enet, _ = enet_path(X, y, eps=eps, l1_ratio=0.8,
-                                    return_models=False)
+alphas_enet, coefs_enet, _ = enet_path(
+    X, y, eps=eps, l1_ratio=0.8, return_models=False, fit_intercept=False)
 
 print("Computing regularization path using the positve elastic net...")
-alphas_positive_enet, coefs_positive_enet, _ = enet_path(X, y, eps=eps,
-                                                      l1_ratio=0.8,
-                                                      positive=True,
-                                                      return_models=False)
+alphas_positive_enet, coefs_positive_enet, _ = enet_path(
+    X, y, eps=eps, l1_ratio=0.8, positive=True, return_models=False,
+    fit_intercept=False)
 
 # Display results
 

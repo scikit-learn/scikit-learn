@@ -173,11 +173,6 @@ well suited for regression problems with a large number of training
 samples (> 10.000), for other problems we recommend :class:`Ridge`,
 :class:`Lasso`, or :class:`ElasticNet`.
 
-.. figure:: ../auto_examples/linear_model/images/plot_sgd_ols_1.png
-   :target: ../auto_examples/linear_model/plot_sgd_ols.html
-   :align: center
-   :scale: 75
-
 The concrete loss function can be set via the ``loss``
 parameter. :class:`SGDRegressor` supports the following loss functions:
 
