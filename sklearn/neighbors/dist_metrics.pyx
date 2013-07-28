@@ -443,6 +443,7 @@ cdef class SEuclideanDistance(DistanceMetric):
         if size != self.size:
             raise ValueError('SEuclidean dist: size of V does not match')
         cdef DTYPE_t tmp, d=0
+        cdef np.intp_t j
         for j in range(size):
             tmp = x1[j] - x2[j]
             d += tmp * tmp / self.vec_ptr[j]
@@ -480,6 +481,7 @@ cdef class ManhattanDistance(DistanceMetric):
     cdef inline DTYPE_t dist(self, DTYPE_t* x1, DTYPE_t* x2,
                              ITYPE_t size) except -1:
         cdef DTYPE_t d = 0
+        cdef np.intp_t j
         for j in range(size):
             d += fabs(x1[j] - x2[j])
         return d
@@ -500,6 +502,7 @@ cdef class ChebyshevDistance(DistanceMetric):
     cdef inline DTYPE_t dist(self, DTYPE_t* x1, DTYPE_t* x2,
                              ITYPE_t size) except -1:
         cdef DTYPE_t d = 0
+        cdef np.intp_t j
         for j in range(size):
             d = fmax(d, fabs(x1[j] - x2[j]))
         return d
@@ -530,6 +533,7 @@ cdef class MinkowskiDistance(DistanceMetric):
     cdef inline DTYPE_t rdist(self, DTYPE_t* x1, DTYPE_t* x2,
                               ITYPE_t size) except -1:
         cdef DTYPE_t d=0
+        cdef np.intp_t j
         for j in range(size):
             d += pow(fabs(x1[j] - x2[j]), self.p)
         return d
@@ -587,6 +591,7 @@ cdef class WMinkowskiDistance(DistanceMetric):
             raise ValueError('WMinkowskiDistance dist: '
                              'size of w does not match')
         cdef DTYPE_t d=0
+        cdef np.intp_t j
         for j in range(size):
             d += pow(self.vec_ptr[j] * fabs(x1[j] - x2[j]), self.p)
         return d
@@ -647,6 +652,7 @@ cdef class MahalanobisDistance(DistanceMetric):
             raise ValueError('Mahalanobis dist: size of V does not match')
 
         cdef DTYPE_t tmp, d = 0
+        cdef np.intp_t i, j
 
         # compute (x1 - x2).T * VI * (x1 - x2)
         for i in range(size):
@@ -691,6 +697,7 @@ cdef class HammingDistance(DistanceMetric):
     cdef inline DTYPE_t dist(self, DTYPE_t* x1, DTYPE_t* x2,
                              ITYPE_t size) except -1:
         cdef int n_unequal = 0
+        cdef np.intp_t j
         for j in range(size):
             if x1[j] != x2[j]:
                 n_unequal += 1
@@ -712,6 +719,7 @@ cdef class CanberraDistance(DistanceMetric):
     cdef inline DTYPE_t dist(self, DTYPE_t* x1, DTYPE_t* x2,
                              ITYPE_t size) except -1:
         cdef DTYPE_t denom, d = 0
+        cdef np.intp_t j
         for j in range(size):
             denom = abs(x1[j]) + abs(x2[j])
             if denom > 0:
@@ -734,6 +742,7 @@ cdef class BrayCurtisDistance(DistanceMetric):
     cdef inline DTYPE_t dist(self, DTYPE_t* x1, DTYPE_t* x2,
                              ITYPE_t size) except -1:
         cdef DTYPE_t num = 0, denom = 0
+        cdef np.intp_t j
         for j in range(size):
             num += abs(x1[j] - x2[j])
             denom += abs(x1[j]) + abs(x2[j])
@@ -759,6 +768,7 @@ cdef class JaccardDistance(DistanceMetric):
     cdef inline DTYPE_t dist(self, DTYPE_t* x1, DTYPE_t* x2,
                              ITYPE_t size) except -1:
         cdef int tf1, tf2, n_eq = 0, nnz = 0
+        cdef np.intp_t j
         for j in range(size):
             tf1 = x1[j] != 0
             tf2 = x2[j] != 0
@@ -783,6 +793,7 @@ cdef class MatchingDistance(DistanceMetric):
     cdef inline DTYPE_t dist(self, DTYPE_t* x1, DTYPE_t* x2,
                              ITYPE_t size) except -1:
         cdef int tf1, tf2, n_neq = 0
+        cdef np.intp_t j
         for j in range(size):
             tf1 = x1[j] != 0
             tf2 = x2[j] != 0
@@ -806,6 +817,7 @@ cdef class DiceDistance(DistanceMetric):
     cdef inline DTYPE_t dist(self, DTYPE_t* x1, DTYPE_t* x2,
                              ITYPE_t size) except -1:
         cdef int tf1, tf2, n_neq = 0, ntt = 0
+        cdef np.intp_t j
         for j in range(size):
             tf1 = x1[j] != 0
             tf2 = x2[j] != 0
@@ -830,6 +842,7 @@ cdef class KulsinskiDistance(DistanceMetric):
     cdef inline DTYPE_t dist(self, DTYPE_t* x1, DTYPE_t* x2,
                              ITYPE_t size) except -1:
         cdef int tf1, tf2, ntt = 0, n_neq = 0
+        cdef np.intp_t j
         for j in range(size):
             tf1 = x1[j] != 0
             tf2 = x2[j] != 0
@@ -854,6 +867,7 @@ cdef class RogersTanimotoDistance(DistanceMetric):
     cdef inline DTYPE_t dist(self, DTYPE_t* x1, DTYPE_t* x2,
                              ITYPE_t size) except -1:
         cdef int tf1, tf2, n_neq = 0
+        cdef np.intp_t j
         for j in range(size):
             tf1 = x1[j] != 0
             tf2 = x2[j] != 0
@@ -877,6 +891,7 @@ cdef class RussellRaoDistance(DistanceMetric):
     cdef inline DTYPE_t dist(self, DTYPE_t* x1, DTYPE_t* x2,
                              ITYPE_t size) except -1:
         cdef int tf1, tf2, ntt = 0
+        cdef np.intp_t j
         for j in range(size):
             tf1 = x1[j] != 0
             tf2 = x2[j] != 0
@@ -900,6 +915,7 @@ cdef class SokalMichenerDistance(DistanceMetric):
     cdef inline DTYPE_t dist(self, DTYPE_t* x1, DTYPE_t* x2,
                              ITYPE_t size) except -1:
         cdef int tf1, tf2, n_neq = 0
+        cdef np.intp_t j
         for j in range(size):
             tf1 = x1[j] != 0
             tf2 = x2[j] != 0
@@ -923,6 +939,7 @@ cdef class SokalSneathDistance(DistanceMetric):
     cdef inline DTYPE_t dist(self, DTYPE_t* x1, DTYPE_t* x2,
                              ITYPE_t size) except -1:
         cdef int tf1, tf2, ntt = 0, n_neq = 0
+        cdef np.intp_t j
         for j in range(size):
             tf1 = x1[j] != 0
             tf2 = x2[j] != 0
@@ -987,6 +1004,7 @@ cdef class HaversineDistance(DistanceMetric):
 #cdef class YuleDistance(DistanceMetric):
 #    cdef inline DTYPE_t dist(self, DTYPE_t* x1, DTYPE_t* x2, ITYPE_t size):
 #        cdef int tf1, tf2, ntf = 0, nft = 0, ntt = 0, nff = 0
+#        cdef np.intp_t j
 #        for j in range(size):
 #            tf1 = x1[j] != 0
 #            tf2 = x2[j] != 0
@@ -1005,6 +1023,7 @@ cdef class HaversineDistance(DistanceMetric):
 #cdef class CosineDistance(DistanceMetric):
 #    cdef inline DTYPE_t dist(self, DTYPE_t* x1, DTYPE_t* x2, ITYPE_t size):
 #        cdef DTYPE_t d = 0, norm1 = 0, norm2 = 0
+#        cdef np.intp_t j
 #        for j in range(size):
 #            d += x1[j] * x2[j]
 #            norm1 += x1[j] * x1[j]
@@ -1022,6 +1041,7 @@ cdef class HaversineDistance(DistanceMetric):
 #        cdef DTYPE_t mu1 = 0, mu2 = 0, x1nrm = 0, x2nrm = 0, x1Tx2 = 0
 #        cdef DTYPE_t tmp1, tmp2
 #
+#        cdef np.intp_t i
 #        for i in range(size):
 #            mu1 += x1[i]
 #            mu2 += x2[i]
