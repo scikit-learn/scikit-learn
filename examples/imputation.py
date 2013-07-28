@@ -6,8 +6,8 @@ Imputing missing values before building an estimator
 This example shows that imputing the missing values can give better results
 than discarding the samples containing any missing value.
 
-Missing value can be replaced by the mean, the median or the most frequent
-value using the `strategy` hyper-parameter.
+Missing values can be replaced by the mean, the median or the most frequent
+value using the ``strategy`` hyper-parameter.
 
 Script output:
 
