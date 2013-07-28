@@ -17,7 +17,7 @@ cdef class PruningPasser:
     cdef FLOAT_t penalty
     cdef FLOAT_t sst
     cdef PruningPassRecord record
-    
+
     cpdef run(PruningPasser self)
-    
+
     cpdef PruningPassRecord trace(PruningPasser self)
