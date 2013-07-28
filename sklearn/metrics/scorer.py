@@ -17,8 +17,8 @@ ground truth labeling (or ``None`` in the case of unsupervised models).
 #          Lars Buitinck <L.J.Buitinck@uva.nl>
 # License: Simplified BSD
 
-import warnings
 from abc import ABCMeta, abstractmethod
+from warnings import warn
 
 import numpy as np
 
@@ -143,6 +143,7 @@ class _ThresholdScorer(_BaseScorer):
     def _factory_args(self):
         return ", needs_threshold=True"
 
+
 def _deprecate_loss_and_score_funcs(
         loss_func=None, score_func=None, scoring=None,
         score_overrides_loss=False):
@@ -151,16 +152,18 @@ def _deprecate_loss_and_score_funcs(
     if loss_func is not None or score_func is not None:
 
         if loss_func is not None:
-            warnings.warn("Passing a loss function is "
-                          "deprecated and will be removed in 0.15. "
-                          "Either use strings or score objects."
-                          "The relevant new parameter is called ''scoring''. ")
+            warn("Passing a loss function is "
+                 "deprecated and will be removed in 0.15. "
+                 "Either use strings or score objects."
+                 "The relevant new parameter is called ''scoring''. ",
+                 category=DeprecationWarning, stacklevel=2)
             scorer = make_scorer(loss_func, greater_is_better=False)
         if score_func is not None:
-            warnings.warn("Passing function as ``score_func`` is "
-                          "deprecated and will be removed in 0.15. "
-                          "Either use strings or score objects."
-                          "The relevant new parameter is called ''scoring''.")
+            warn("Passing function as ``score_func`` is "
+                 "deprecated and will be removed in 0.15. "
+                 "Either use strings or score objects."
+                 "The relevant new parameter is called ''scoring''.",
+                 category=DeprecationWarning, stacklevel=2)
             if loss_func is None or score_overrides_loss:
                 scorer = make_scorer(score_func)
 
@@ -174,6 +177,7 @@ def _deprecate_loss_and_score_funcs(
     else:
         scorer = scoring
     return scorer
+
 
 def make_scorer(score_func, greater_is_better=True, needs_proba=False,
                 needs_threshold=False, **kwargs):
