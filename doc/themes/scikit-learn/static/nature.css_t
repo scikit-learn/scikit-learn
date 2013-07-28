@@ -72,8 +72,6 @@ div.navbar ul {
     border-radius: 5px;
     -moz-border-radius: 5px;
     list-style: none;
-    z-index: 10000;
-    position: relative;
 }
 
 div.navbar ul, div.navbar li {
@@ -90,12 +88,10 @@ div.navbar ul li a:hover {
     text-decoration: none;
     font-weight: bold;
     font-size: 14px;
-    z-index: inherit;
 }
 
 div.navbar ul li a:hover {
     color: #EEE;
-    z-index: inherit;
 }
 
 .gsc-input {
