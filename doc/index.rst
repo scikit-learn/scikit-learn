@@ -9,12 +9,31 @@
 
 .. toctree::
 
-    tutorials
+    tutorial/index
     user_guide
     auto_examples/index
     support
     whats_new
     presentations
+    about
+    documentation
+    datasets/index
+    datasets/covtype
+    datasets/labeled_faces
+    datasets/mldata
+    datasets/olivetti_faces
+    datasets/twenty_newsgroups
+    modules/classes
+    testimonials/testimonials
+    developers/index
+    developers/debugging
+    developers/maintainer
+    developers/performance
+    developers/utilities
+    install
+    tutorial/basic/tutorial
+    tutorial/machine_learning_map/index
+
 
 
 .. raw:: html

@@ -1,8 +1,10 @@
+Documentation of scikit-learn 0.13
+==================================
+
 .. raw:: html
 
   <div class="container-index">
         <!-- Block section -->
-            <h1>Documentation of scikit-learn 0.13</h1>
             <div class="row-fluid">
                 <div class="span4 box">
                     <h2><a href="tutorial/basic/tutorial.html">Quick Start</a></h2>
