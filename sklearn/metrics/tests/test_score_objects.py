@@ -72,7 +72,7 @@ def test_thresholded_scorers():
     assert_almost_equal(score1, score2)
     assert_almost_equal(score1, score3)
 
-    logscore = SCORERS['log_likelihood'](clf, X_test, y_test)
+    logscore = SCORERS['log_loss'](clf, X_test, y_test)
     logloss = log_loss(y_test, clf.predict_proba(X_test))
     assert_almost_equal(-logscore, logloss)
 

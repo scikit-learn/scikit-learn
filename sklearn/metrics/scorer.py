@@ -24,7 +24,7 @@ import numpy as np
 
 from . import (r2_score, mean_squared_error, accuracy_score, f1_score,
                auc_score, average_precision_score, precision_score,
-               recall_score, log_likelihood_score)
+               recall_score, log_loss)
 
 from .cluster import adjusted_rand_score
 from ..externals import six
@@ -261,7 +261,8 @@ precision_scorer = make_scorer(precision_score)
 recall_scorer = make_scorer(recall_score)
 
 # Score function for probabilistic classification
-log_likelihood_scorer = make_scorer(log_likelihood_score, needs_proba=True)
+log_loss_scorer = make_scorer(log_loss, greater_is_better=False,
+                              needs_proba=True)
 
 # Clustering scores
 adjusted_rand_scorer = make_scorer(adjusted_rand_score)
@@ -271,5 +272,5 @@ SCORERS = dict(r2=r2_scorer,
                accuracy=accuracy_scorer, f1=f1_scorer, roc_auc=auc_scorer,
                average_precision=average_precision_scorer,
                precision=precision_scorer, recall=recall_scorer,
-               log_likelihood=log_likelihood_scorer,
+               log_loss=log_loss_scorer,
                adjusted_rand_score=adjusted_rand_scorer)
