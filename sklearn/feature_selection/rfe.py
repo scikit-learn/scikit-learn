@@ -261,9 +261,9 @@ class RFECV(RFE, MetaEstimatorMixin):
         Selected (i.e., estimated best)
         features are assigned rank 1.
 
-    `cv_scores_` : array of shape [n_subsets_of_features]
+    `grid_scores_` : array of shape [n_subsets_of_features]
         The cross-validation scores such that
-        `cv_scores_[i]` corresponds to
+        `grid_scores_[i]` corresponds to
         the CV score of the i-th subset of features.
 
     `estimator_` : object
@@ -373,5 +373,5 @@ class RFECV(RFE, MetaEstimatorMixin):
         self.estimator_.set_params(**self.estimator_params)
         self.estimator_.fit(self.transform(X), y)
 
-        self.cv_scores_ = scores / n
+        self.grid_scores_ = scores / n
         return self

@@ -488,8 +488,8 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
             n_jobs=self.n_jobs, verbose=self.verbose,
             pre_dispatch=pre_dispatch)(
                 delayed(fit_grid_point)(
-                    X, y, base_estimator, parameters, train, test, self.scorer_,
-                    self.verbose, **self.fit_params)
+                    X, y, base_estimator, parameters, train, test,
+                    self.scorer_, self.verbose, **self.fit_params)
                 for parameters in parameter_iterable
                 for train, test in cv)
 
@@ -498,7 +498,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         n_folds = len(cv)
 
         scores = list()
-        cv_scores = list()
+        grid_scores = list()
         for grid_start in range(0, n_fits, n_folds):
             n_test_samples = 0
             score = 0
@@ -516,16 +516,16 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                 score /= float(n_folds)
             scores.append((score, parameters))
             # TODO: shall we also store the test_fold_sizes?
-            cv_scores.append(_CVScoreTuple(
+            grid_scores.append(_CVScoreTuple(
                 parameters,
                 score,
                 np.array(all_scores)))
         # Store the computed scores
-        self.cv_scores_ = cv_scores
+        self.grid_scores_ = grid_scores
 
         # Find the best parameters by comparing on the mean validation score:
         # note that `sorted` is deterministic in the way it breaks ties
-        best = sorted(cv_scores, key=lambda x: x.mean_validation_score,
+        best = sorted(grid_scores, key=lambda x: x.mean_validation_score,
                       reverse=True)[0]
         self.best_params_ = best.parameters
         self.best_score_ = best.mean_validation_score
@@ -630,7 +630,7 @@ class GridSearchCV(BaseSearchCV):
 
     Attributes
     ----------
-    `cv_scores_` : list of named tuples
+    `grid_scores_` : list of named tuples
         Contains scores for all parameter combinations in param_grid.
         Each entry corresponds to one parameter setting.
         Each named tuple has the attributes:
@@ -684,12 +684,6 @@ class GridSearchCV(BaseSearchCV):
             refit, cv, verbose, pre_dispatch)
         self.param_grid = param_grid
         _check_param_grid(param_grid)
-
-    @property
-    def grid_scores_(self):
-        warnings.warn("grid_scores_ is deprecated and will be removed in 0.15."
-                      " Use cv_scores_ instead.", DeprecationWarning)
-        return self.cv_scores_
 
     def fit(self, X, y=None, **params):
         """Run fit with all sets of parameters.
@@ -789,7 +783,7 @@ class RandomizedSearchCV(BaseSearchCV):
 
     Attributes
     ----------
-    `cv_scores_` : list of named tuples
+    `grid_scores_` : list of named tuples
         Contains scores for all parameter combinations in param_grid.
         Each entry corresponds to one parameter setting.
         Each named tuple has the attributes:
