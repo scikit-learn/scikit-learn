@@ -18,7 +18,7 @@
 
 from libc.stdlib cimport calloc, free, malloc, realloc
 from libc.string cimport memcpy
-from libc.math cimport log2 as log
+from libc.math cimport log as ln
 
 import numpy as np
 cimport numpy as np
@@ -1755,3 +1755,6 @@ cdef inline SIZE_t rand_int(SIZE_t end, unsigned int* random_state) nogil:
 cdef inline double rand_double(unsigned int* random_state) nogil:
     """Generate a random double in [0; 1)."""
     return <double> our_rand_r(random_state) / <double> RAND_R_MAX
+
+cdef inline double log(double x) nogil:
+    return ln(x) / ln(2.0)
