@@ -2,6 +2,7 @@ import numpy as np
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.datasets import load_linnerud
 from sklearn.cross_decomposition import pls_
+from nose.tools import assert_equal
 
 
 def test_pls():
@@ -219,6 +220,19 @@ def test_pls():
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     check_ortho(pls_ca.x_scores_, "x scores are not orthogonal")
     check_ortho(pls_ca.y_scores_, "y scores are not orthogonal")
+
+
+def test_PLSSVD():
+    # Let's check the PLSSVD doesn't return all possible component but just
+    # the specificied number
+    d = load_linnerud()
+    X = d.data
+    Y = d.target
+    n_components = 2
+    for clf in [pls_.PLSSVD, pls_.PLSRegression, pls_.PLSCanonical]:
+        pls = clf(n_components=n_components)
+        pls.fit(X, Y)
+        assert_equal(n_components, pls.y_scores_.shape[1])
 
 
 def test_scale():

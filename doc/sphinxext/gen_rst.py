@@ -16,7 +16,6 @@ import glob
 import sys
 from StringIO import StringIO
 import cPickle
-import re
 import urllib2
 import gzip
 import posixpath
@@ -375,13 +374,15 @@ def extract_docstring(filename, ignore_heading=False):
             docstring = eval(tok_content)
             # If the docstring is formatted with several paragraphs, extract
             # the first one:
-            paragraphs = '\n'.join(line.rstrip()
-                              for line in docstring.split('\n')).split('\n\n')
+            paragraphs = '\n'.join(
+                line.rstrip() for line
+                in docstring.split('\n')).split('\n\n')
             if paragraphs:
                 if ignore_heading:
                     if len(paragraphs) > 1:
                         first_par = re.sub('\n', ' ', paragraphs[1])
-                        first_par = (first_par[:95] + '...') if len(first_par) > 95 else first_par
+                        first_par = ((first_par[:95] + '...')
+                                     if len(first_par) > 95 else first_par)
                     else:
                         raise ValueError("Docstring not found by gallery",
                                          "Please check your example's layout",
@@ -557,12 +558,13 @@ Examples
             generate_dir_rst(dir, fhindex, example_dir, root_dir, plot_gallery)
     fhindex.flush()
 
+
 def extract_line_count(filename, target_dir):
     # Extract the line count of a file
     example_file = os.path.join(target_dir, filename)
     lines = file(example_file).readlines()
     start_row = 0
-    if lines[0].startswith('#!'):
+    if lines and lines[0].startswith('#!'):
         lines.pop(0)
         start_row = 1
     tokens = tokenize.generate_tokens(lines.__iter__().next)
@@ -572,10 +574,11 @@ def extract_line_count(filename, target_dir):
         tok_type = token.tok_name[tok_type]
         if tok_type in ('NEWLINE', 'COMMENT', 'NL', 'INDENT', 'DEDENT'):
             continue
-        elif ((tok_type == 'STRING') and (check_docstring == True)):
+        elif ((tok_type == 'STRING') and check_docstring):
             erow_docstring = erow
             check_docstring = False
     return erow_docstring+1+start_row, erow+1+start_row
+
 
 def line_count_sort(file_list, target_dir):
     # Sort the list of examples by line-count
@@ -586,9 +589,10 @@ def line_count_sort(file_list, target_dir):
         docstr_lines, total_lines = extract_line_count(exmpl, target_dir)
         unsorted[count][1] = total_lines - docstr_lines
         unsorted[count][0] = exmpl
-    index = np.lexsort((unsorted[:,0].astype(np.str),
-                        unsorted[:,1].astype(np.float)))
-    return np.array(unsorted[index][:,0]).tolist()
+    index = np.lexsort((unsorted[:, 0].astype(np.str),
+                        unsorted[:, 1].astype(np.float)))
+    return np.array(unsorted[index][:, 0]).tolist()
+
 
 def generate_dir_rst(dir, fhindex, example_dir, root_dir, plot_gallery):
     """ Generate the rst file for an example directory.
@@ -601,8 +605,8 @@ def generate_dir_rst(dir, fhindex, example_dir, root_dir, plot_gallery):
         src_dir = example_dir
     if not os.path.exists(os.path.join(src_dir, 'README.txt')):
         print 80 * '_'
-        print ('Example directory %s does not have a README.txt file'
-                        % src_dir)
+        print ('Example directory %s does not have a README.txt file' %
+               src_dir)
         print 'Skipping this directory'
         print 80 * '_'
         return
@@ -640,7 +644,7 @@ def generate_dir_rst(dir, fhindex, example_dir, root_dir, plot_gallery):
                 link_name = link_name[2:]
             if dir != '.':
                 fhindex.write('   :target: ./%s/%s.html\n\n' % (dir,
-                                                               fname[:-3]))
+                                                                fname[:-3]))
             else:
                 fhindex.write('   :target: ./%s.html\n\n' % link_name[:-3])
             fhindex.write("""   :ref:`example_%s`
@@ -744,7 +748,7 @@ def generate_file_rst(fname, target_dir, src_dir, plot_gallery):
     stdout_path = os.path.join(image_dir,
                                'stdout_%s.txt' % base_image_name)
     time_path = os.path.join(image_dir,
-                               'time_%s.txt' % base_image_name)
+                             'time_%s.txt' % base_image_name)
     thumb_file = os.path.join(thumb_dir, fname[:-3] + '.png')
     time_elapsed = 0
     if plot_gallery and fname.startswith('plot'):
@@ -759,9 +763,8 @@ def generate_file_rst(fname, target_dir, src_dir, plot_gallery):
         if os.path.exists(time_path):
             time_elapsed = float(open(time_path).read())
 
-        if (not os.path.exists(first_image_file) or
-                os.stat(first_image_file).st_mtime <=
-                                    os.stat(src_file).st_mtime):
+        if not os.path.exists(first_image_file) or \
+           os.stat(first_image_file).st_mtime <= os.stat(src_file).st_mtime:
             # We need to execute the code
             print 'plotting %s' % fname
             t0 = time()
@@ -812,11 +815,19 @@ def generate_file_rst(fname, target_dir, src_dir, plot_gallery):
                             continue
                         for match in funregex.findall(line):
                             fun_name = match[:-1]
+
                             try:
                                 exec('this_fun = %s' % fun_name, my_globals)
                             except Exception as err:
-                                print 'extracting function failed'
-                                print err
+                                # Here, we were not able to execute the
+                                # previous statement, either because the
+                                # fun_name was not a function but a statement
+                                # (print), or because the regexp didn't
+                                # catch the whole function name :
+                                #    eg:
+                                #       X = something().blah()
+                                # will work for something, but not blah.
+
                                 continue
                             this_fun = my_globals['this_fun']
                             if not callable(this_fun):
@@ -852,8 +863,8 @@ def generate_file_rst(fname, target_dir, src_dir, plot_gallery):
                     # The __doc__ is often printed in the example, we
                     # don't with to echo it
                     my_stdout = my_stdout.replace(
-                                            my_globals['__doc__'],
-                                            '')
+                        my_globals['__doc__'],
+                        '')
                 my_stdout = my_stdout.strip()
                 if my_stdout:
                     stdout = '**Script output**::\n\n  %s\n\n' % (
@@ -869,7 +880,7 @@ def generate_file_rst(fname, target_dir, src_dir, plot_gallery):
                 # * iterate over [fig_mngr.num for fig_mngr in
                 #   matplotlib._pylab_helpers.Gcf.get_all_fig_managers()]
                 for fig_num in (fig_mngr.num for fig_mngr in
-                        matplotlib._pylab_helpers.Gcf.get_all_fig_managers()):
+                    matplotlib._pylab_helpers.Gcf.get_all_fig_managers()):
                     # Set the fig_num figure as the current figure as we can't
                     # save a figure that's not the current figure.
                     plt.figure(fig_num)

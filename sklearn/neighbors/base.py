@@ -3,6 +3,7 @@
 #          Fabian Pedregosa <fabian.pedregosa@inria.fr>
 #          Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #          Sparseness support by Lars Buitinck <L.J.Buitinck@uva.nl>
+#          Multi-output support by Arnaud Joly <a.joly@ulg.ac.be>
 #
 # License: BSD 3 clause (C) INRIA, University of Amsterdam
 import warnings
@@ -579,6 +580,7 @@ class SupervisedFloatMixin(object):
 
         y : {array-like, sparse matrix}
             Target values, array of float values, shape = [n_samples]
+             or [n_samples, n_outputs]
         """
         if not isinstance(X, (KDTree, BallTree)):
             X, y = check_arrays(X, y, sparse_format="csr")
@@ -596,11 +598,28 @@ class SupervisedIntegerMixin(object):
             Training data. If array or matrix, shape = [n_samples, n_features]
 
         y : {array-like, sparse matrix}
-            Target values, array of integer values, shape = [n_samples]
+            Target values of shape = [n_samples] or [n_samples, n_outputs]
+
         """
         if not isinstance(X, (KDTree, BallTree)):
             X, y = check_arrays(X, y, sparse_format="csr")
-        self.classes_, self._y = unique(y, return_inverse=True)
+
+        if y.ndim == 1 or y.ndim == 2 and y.shape[1] == 1:
+            self.outputs_2d_ = False
+            y = y.reshape((-1, 1))
+        else:
+            self.outputs_2d_ = True
+
+        self.classes_ = []
+        self._y = np.empty(y.shape, dtype=np.int)
+        for k in range(self._y.shape[1]):
+            classes, self._y[:, k] = unique(y[:, k], return_inverse=True)
+            self.classes_.append(classes)
+
+        if not self.outputs_2d_:
+            self.classes_ = self.classes_[0]
+            self._y = self._y.ravel()
+
         return self._fit(X)
 
 

@@ -23,9 +23,10 @@ from scipy.sparse import coo_matrix
 from scipy.spatial.distance import hamming as sp_hamming
 
 from ..externals.six.moves import zip
-from ..preprocessing import LabelBinarizer
+from ..preprocessing import LabelBinarizer, label_binarize
 from ..utils import check_arrays
 from ..utils import deprecated
+from ..utils import column_or_1d
 from ..utils.fixes import divide
 from ..utils.multiclass import unique_labels
 from ..utils.multiclass import type_of_target
@@ -34,24 +35,6 @@ from ..utils.multiclass import type_of_target
 ###############################################################################
 # General utilities
 ###############################################################################
-def _column_or_1d(y):
-    """ Ravel column or 1d numpy array, else raises an error
-
-    Parameters
-    ----------
-    y : array-like
-
-    Returns
-    -------
-    y : array
-
-    """
-    shape = np.shape(y)
-    if len(shape) == 1 or (len(shape) == 2 and shape[1] == 1):
-        return np.ravel(y)
-    raise ValueError("bad input shape {0}".format(shape))
-
-
 def _check_reg_targets(y_true, y_pred):
     """Check that y_true and y_pred belong to the same regression task
 
@@ -138,8 +121,8 @@ def _check_clf_targets(y_true, y_pred):
         raise ValueError("{0} is not supported".format(y_type))
 
     if y_type in ["binary", "multiclass"]:
-        y_true = _column_or_1d(y_true)
-        y_pred = _column_or_1d(y_pred)
+        y_true = column_or_1d(y_true)
+        y_pred = column_or_1d(y_pred)
 
     return y_type, y_true, y_pred
 
@@ -470,8 +453,8 @@ def _binary_clf_curve(y_true, y_score, pos_label=None):
         Decreasing score values.
     """
     y_true, y_score = check_arrays(y_true, y_score)
-    y_true = _column_or_1d(y_true)
-    y_score = _column_or_1d(y_score)
+    y_true = column_or_1d(y_true)
+    y_score = column_or_1d(y_score)
 
     # ensure binary classification if pos_label is not specified
     classes = np.unique(y_true)
@@ -711,7 +694,6 @@ def confusion_matrix(y_true, y_pred, labels=None):
     if y_type not in ("binary", "multiclass"):
         raise ValueError("%s is not supported" % y_type)
 
-
     if labels is None:
         labels = unique_labels(y_true, y_pred)
     else:
@@ -928,11 +910,9 @@ def jaccard_similarity_score(y_true, y_pred, normalize=True):
     # Compute accuracy for each possible representation
     y_type, y_true, y_pred = _check_clf_targets(y_true, y_pred)
     if y_type == 'multilabel-indicator':
-        try:
+        with np.errstate(divide='ignore', invalid='ignore'):
             # oddly, we may get an "invalid" rather than a "divide"
             # error here
-            old_err_settings = np.seterr(divide='ignore',
-                                         invalid='ignore')
             y_pred_pos_label = y_pred == 1
             y_true_pos_label = y_true == 1
             pred_inter_true = np.sum(np.logical_and(y_pred_pos_label,
@@ -947,8 +927,6 @@ def jaccard_similarity_score(y_true, y_pred, normalize=True):
             # the jaccard to 1: lim_{x->0} x/x = 1
             # Note with py2.6 and np 1.3: we can't check safely for nan.
             score[pred_union_true == 0.0] = 1.0
-        finally:
-            np.seterr(**old_err_settings)
 
     elif y_type == 'multilabel-sequences':
         score = np.empty(len(y_true), dtype=np.float)
@@ -1466,24 +1444,37 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
                 size_true[i] = len(true_set)
         else:
             raise ValueError("Example-based precision, recall, fscore is "
-                             "not meaning full outside multilabe"
-                             "classification. See the accuracy_score instead.")
+                             "not meaningful outside of multilabel"
+                             "classification. Use accuracy_score instead.")
 
-        try:
+        warning_msg = ""
+        if np.any(size_pred == 0):
+            warning_msg += ("Sample-based precision is undefined for some "
+                            "samples. ")
+
+        if np.any(size_true == 0):
+            warning_msg += ("Sample-based recall is undefined for some "
+                            "samples. ")
+
+        if np.any((beta2 * size_true + size_pred) == 0):
+            warning_msg += ("Sample-based f_score is undefined for some "
+                            "samples. ")
+
+        if warning_msg:
+            warnings.warn(warning_msg)
+
+        with np.errstate(divide="ignore", invalid="ignore"):
             # oddly, we may get an "invalid" rather than a "divide" error
             # here
-            old_err_settings = np.seterr(divide='ignore', invalid='ignore')
+            precision = divide(size_inter, size_pred, dtype=np.double)
+            recall = divide(size_inter, size_true, dtype=np.double)
+            f_score = divide((1 + beta2) * size_inter,
+                             (beta2 * size_true + size_pred),
+                             dtype=np.double)
 
-            precision = size_inter / size_true
-            recall = size_inter / size_pred
-            f_score = ((1 + beta2 ** 2) * size_inter /
-                       (beta2 * size_pred + size_true))
-        finally:
-            np.seterr(**old_err_settings)
-
-        precision[size_true == 0] = 1.0
-        recall[size_pred == 0] = 1.0
-        f_score[(beta2 * size_pred + size_true) == 0] = 1.0
+        precision[size_pred == 0] = 0.0
+        recall[size_true == 0] = 0.0
+        f_score[(beta2 * size_true + size_pred) == 0] = 0.0
 
         precision = np.mean(precision)
         recall = np.mean(recall)
@@ -1494,26 +1485,50 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     true_pos, _, false_pos, false_neg = _tp_tn_fp_fn(y_true, y_pred, labels)
     support = true_pos + false_neg
 
-    try:
+    with np.errstate(divide='ignore', invalid='ignore'):
         # oddly, we may get an "invalid" rather than a "divide" error here
-        old_err_settings = np.seterr(divide='ignore', invalid='ignore')
 
         # precision and recall
         precision = divide(true_pos.astype(np.float), true_pos + false_pos)
         recall = divide(true_pos.astype(np.float), true_pos + false_neg)
 
+        idx_ill_defined_precision = (true_pos + false_pos) == 0
+        idx_ill_defined_recall = (true_pos + false_neg) == 0
+
         # handle division by 0 in precision and recall
-        precision[(true_pos + false_pos) == 0] = 0.0
-        recall[(true_pos + false_neg) == 0] = 0.0
+        precision[idx_ill_defined_precision] = 0.0
+        recall[idx_ill_defined_recall] = 0.0
 
         # fbeta score
         fscore = divide((1 + beta2) * precision * recall,
                         beta2 * precision + recall)
 
         # handle division by 0 in fscore
-        fscore[(beta2 * precision + recall) == 0] = 0.0
-    finally:
-        np.seterr(**old_err_settings)
+        idx_ill_defined_fbeta_score = (beta2 * precision + recall) == 0
+        fscore[idx_ill_defined_fbeta_score] = 0.0
+
+    if average in (None, "macro", "weighted"):
+        warning_msg = ""
+        if np.any(idx_ill_defined_precision):
+            warning_msg += ("The sum of true positives and false positives "
+                            "are equal to zero for some labels. Precision is "
+                            "ill defined for those labels %s. "
+                            % labels[idx_ill_defined_precision])
+
+        if np.any(idx_ill_defined_recall):
+            warning_msg += ("The sum of true positives and false negatives "
+                            "are equal to zero for some labels. Recall is ill "
+                            "defined for those labels %s. "
+                            % labels[idx_ill_defined_recall])
+
+        if np.any(idx_ill_defined_fbeta_score):
+            warning_msg += ("The precision and recall are equal to zero for "
+                            "some labels. fbeta_score is ill defined for "
+                            "those labels %s. "
+                            % labels[idx_ill_defined_fbeta_score])
+
+        if warning_msg:
+            warnings.warn(warning_msg, stacklevel=2)
 
     if not average:
         return precision, recall, fscore, support
@@ -1531,24 +1546,40 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     else:
         average_options = (None, 'micro', 'macro', 'weighted', 'samples')
         if average == 'micro':
-            avg_precision = divide(true_pos.sum(),
-                                   true_pos.sum() + false_pos.sum(),
-                                   dtype=np.double)
-            avg_recall = divide(true_pos.sum(),
-                                true_pos.sum() + false_neg.sum(),
-                                dtype=np.double)
-            avg_fscore = divide((1 + beta2) * (avg_precision * avg_recall),
-                                beta2 * avg_precision + avg_recall,
-                                dtype=np.double)
+            with np.errstate(divide='ignore', invalid='ignore'):
+                # oddly, we may get an "invalid" rather than a "divide" error
+                # here
 
-            if np.isnan(avg_precision):
+                tp_sum = true_pos.sum()
+                fp_sum = false_pos.sum()
+                fn_sum = false_neg.sum()
+                avg_precision = divide(tp_sum, tp_sum + fp_sum,
+                                       dtype=np.double)
+                avg_recall = divide(tp_sum, tp_sum + fn_sum, dtype=np.double)
+                avg_fscore = divide((1 + beta2) * (avg_precision * avg_recall),
+                                    beta2 * avg_precision + avg_recall,
+                                    dtype=np.double)
+
+            warning_msg = ""
+            if tp_sum + fp_sum == 0:
                 avg_precision = 0.
+                warning_msg += ("The sum of true positives and false "
+                                "positives are equal to zero. Micro-precision"
+                                " is ill defined. ")
 
-            if np.isnan(avg_recall):
+            if tp_sum + fn_sum == 0:
                 avg_recall = 0.
+                warning_msg += ("The sum of true positives and false "
+                                "negatives are equal to zero. Micro-recall "
+                                "is ill defined. ")
 
-            if np.isnan(avg_fscore):
+            if beta2 * avg_precision + avg_recall == 0:
                 avg_fscore = 0.
+                warning_msg += ("Micro-precision and micro-recall are equal "
+                                "to zero. Micro-fbeta_score is ill defined.")
+
+            if warning_msg:
+                warnings.warn(warning_msg, stacklevel=2)
 
         elif average == 'macro':
             avg_precision = np.mean(precision)
@@ -1560,6 +1591,11 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
                 avg_precision = 0.
                 avg_recall = 0.
                 avg_fscore = 0.
+                warnings.warn("There isn't any labels in y_true. "
+                              "Weighted-precision, weighted-recall and "
+                              "weighted-fbeta_score are ill defined.",
+                              stacklevel=2)
+
             else:
                 avg_precision = np.average(precision, weights=support)
                 avg_recall = np.average(recall, weights=support)
@@ -1715,6 +1751,7 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
     0.33...
     >>> recall_score(y_true, y_pred, average=None)
     array([ 1.,  0.,  0.])
+
 
     """
     _, r, _, _ = precision_recall_fscore_support(y_true, y_pred,
@@ -2111,3 +2148,92 @@ def r2_score(y_true, y_pred):
             return 0.0
 
     return 1 - numerator / denominator
+
+
+def log_likelihood_score(y_true, y_pred, eps=1e-15, normalize=True):
+    """Log-likelihood of the model that generated y_pred.
+
+    This function returns the probability of y_true being the true labels
+    when a probability model has returned y_pred, also known as the likelihood
+    of the model. Log-likelihood is the most common optimization objective for
+    probability models such as logistic regression.
+
+    For a single sample with true label yt in {0,1} and estimated probability
+    yp that yt = 1, the log-likelihood is
+
+        log P(yt|yp) = (yt log(yp) + (1 - yt) log(1 - yp))
+
+    Note that log-probabilities are <= 0 with 0 meaning perfect predictions.
+
+    Parameters
+    ----------
+    y_true : array-like or list of labels or label indicator matrix
+        Ground truth (correct) labels for n_samples samples.
+
+    y_pred : array-like of float, shape = (n_samples, n_classes)
+        Predicted probabilities, as returned by a classifier's
+        predict_proba method.
+
+    eps : float
+        Log loss is undefined for p=0 or p=1, so probabilities are
+        clipped to max(eps, min(1 - eps, p)).
+
+    normalize : bool, optional (default=True)
+        If true, return the mean loss per sample.
+        Otherwise, return the total loss.
+
+    Returns
+    -------
+    score : float
+
+    Examples
+    --------
+    >>> log_likelihood_score(["spam", "ham", "ham", "spam"],  # doctest: +ELLIPSIS
+    ...                      [[.1, .9], [.9, .1], [.8, .2], [.35, .65]])
+    -0.21616...
+
+    References
+    ----------
+    C.M. Bishop (2006). Pattern Recognition and Machine Learning. Springer,
+    p. 209.
+
+    See also
+    --------
+    log_loss
+
+    Notes
+    -----
+    The logarithm used is the natural logarithm (base-e).
+    """
+    lb = LabelBinarizer()
+    T = lb.fit_transform(y_true)
+    if T.shape[1] == 1:
+        T = np.append(1 - T, T, axis=1)
+
+    # Clip and renormalize
+    Y = np.clip(y_pred, eps, 1 - eps)
+    Y /= Y.sum(axis=1)[:, np.newaxis]
+
+    loss = (T * np.log(Y)).sum()
+    return loss / T.shape[0] if normalize else loss
+
+
+def log_loss(y_true, y_pred, eps=1e-15, normalize=True):
+    """Log loss, aka logistic loss or cross-entropy loss.
+
+    This is the loss function used in logistic regression and other
+    probability models, defined as the negative log-likelihood of a models
+    prediction given ground truth labels. For a single sample with true label
+    yt in {0,1} and estimated probability yp that yt = 1, the log loss is
+
+        -log P(yt|yp) = -(yt log(yp) + (1 - yt) log(1 - yp))
+
+    See log_likelihood_score for the parameters.
+
+    Examples
+    --------
+    >>> log_loss(["spam", "ham", "ham", "spam"],  # doctest: +ELLIPSIS
+    ...          [[.1, .9], [.9, .1], [.8, .2], [.35, .65]])
+    0.21616...
+    """
+    return -log_likelihood_score(y_true, y_pred, eps, normalize)

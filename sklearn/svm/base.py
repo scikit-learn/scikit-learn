@@ -68,7 +68,7 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
     @abstractmethod
     def __init__(self, impl, kernel, degree, gamma, coef0,
                  tol, C, nu, epsilon, shrinking, probability, cache_size,
-                 class_weight, verbose, max_iter):
+                 class_weight, verbose, max_iter, random_state):
 
         if not impl in LIBSVM_IMPL:  # pragma: no cover
             raise ValueError("impl should be one of %s, %s was given" % (
@@ -89,6 +89,7 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         self.class_weight = class_weight
         self.verbose = verbose
         self.max_iter = max_iter
+        self.random_state = random_state
 
     @property
     def _pairwise(self):
@@ -100,16 +101,17 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
             Training vectors, where n_samples is the number of samples
             and n_features is the number of features.
 
-        y : array-like, shape = [n_samples]
+        y : array-like, shape (n_samples,)
             Target values (class labels in classification, real numbers in
             regression)
 
-        sample_weight : array-like, shape = [n_samples], optional
-            Weights applied to individual samples (1. for unweighted).
+        sample_weight : array-like, shape (n_samples,)
+            Per-sample weights. Rescale C per sample. Higher weights
+            force the classifier to put more emphasis on these points.
 
         Returns
         -------
@@ -124,6 +126,8 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         If X is a dense array, then the other methods will not support sparse
         matrices as input.
         """
+
+        rnd = check_random_state(self.random_state)
 
         self._sparse = sp.isspmatrix(X) and not self._pairwise
 
@@ -169,7 +173,10 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         fit = self._sparse_fit if self._sparse else self._dense_fit
         if self.verbose:  # pragma: no cover
             print('[LibSVM]', end='')
-        fit(X, y, sample_weight, solver_type, kernel)
+
+        seed = rnd.randint(np.iinfo('i').max)
+        fit(X, y, sample_weight, solver_type, kernel, random_seed=seed)
+        # see comment on the other call to np.iinfo in this file
 
         self.shape_fit_ = X.shape
 
@@ -198,7 +205,8 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
                           ' StandardScaler or MinMaxScaler.'
                           % self.max_iter, ConvergenceWarning)
 
-    def _dense_fit(self, X, y, sample_weight, solver_type, kernel):
+    def _dense_fit(self, X, y, sample_weight, solver_type, kernel,
+                   random_seed):
         if callable(self.kernel):
             # you must store a reference to X to compute the kernel in predict
             # TODO: add keyword copy to copy on demand
@@ -222,11 +230,12 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
                 shrinking=self.shrinking, tol=self.tol,
                 cache_size=self.cache_size, coef0=self.coef0,
                 gamma=self._gamma, epsilon=self.epsilon,
-                max_iter=self.max_iter)
+                max_iter=self.max_iter, random_seed=random_seed)
 
         self._warn_from_fit_status()
 
-    def _sparse_fit(self, X, y, sample_weight, solver_type, kernel):
+    def _sparse_fit(self, X, y, sample_weight, solver_type, kernel,
+                    random_seed):
         X.data = np.asarray(X.data, dtype=np.float64, order='C')
         X.sort_indices()
 
@@ -242,7 +251,8 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
                 kernel_type, self.degree, self._gamma, self.coef0, self.tol,
                 self.C, self.class_weight_,
                 sample_weight, self.nu, self.cache_size, self.epsilon,
-                int(self.shrinking), int(self.probability), self.max_iter)
+                int(self.shrinking), int(self.probability), self.max_iter,
+                random_seed)
 
         self._warn_from_fit_status()
 
@@ -263,11 +273,11 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
 
         Returns
         -------
-        y_pred : array, shape = [n_samples]
+        y_pred : array, shape (n_samples,)
         """
         X = self._validate_for_predict(X)
         predict = self._sparse_predict if self._sparse else self._dense_predict

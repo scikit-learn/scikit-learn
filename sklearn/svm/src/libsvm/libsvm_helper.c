@@ -58,7 +58,7 @@ struct svm_node *dense_to_libsvm (double *x, npy_intp *dims)
 void set_parameter(struct svm_parameter *param, int svm_type, int kernel_type, int degree,
 		double gamma, double coef0, double nu, double cache_size, double C,
 		double eps, double p, int shrinking, int probability, int nr_weight,
-		char *weight_label, char *weight, int max_iter)
+		char *weight_label, char *weight, int max_iter, int random_seed)
 {
     param->svm_type = svm_type;
     param->kernel_type = kernel_type;
@@ -76,6 +76,7 @@ void set_parameter(struct svm_parameter *param, int svm_type, int kernel_type, i
     param->weight = (double *) weight;
     param->gamma = gamma;
     param->max_iter = max_iter;
+    param->random_seed = random_seed;
 }
 
 /*

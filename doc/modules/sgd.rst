@@ -98,7 +98,7 @@ parameter. :class:`SGDClassifier` supports the following loss functions:
 
   * ``loss="hinge"``: (soft-margin) linear Support Vector Machine,
   * ``loss="modified_huber"``: smoothed hinge loss,
-  * ``loss="log"``: Logistic Regression,
+  * ``loss="log"``: logistic regression,
   * and all regression losses below.
 
 The first two loss functions are lazy, they only update the model
@@ -106,9 +106,9 @@ parameters if an example violates the margin constraint, which makes
 training very efficient and may result in sparser models, even when L2 penalty
 is used.
 
-In the case of binary classification and ``loss="log"`` or
-``loss="modified_huber"`` you get a probability estimate :math:`P(y=C|x)` using
-:meth:`SGDClassifier.predict_proba`, where `C` is the largest class label::
+Using ``loss="log"`` or ``loss="modified_huber"`` enables the
+``predict_proba`` method, which gives a vector of probability estimates
+:math:`P(y|x)` per sample :math:`x`::
 
     >>> clf = SGDClassifier(loss="log").fit(X, y)
     >>> clf.predict_proba([[1., 1.]])

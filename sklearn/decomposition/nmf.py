@@ -15,11 +15,11 @@ import warnings
 import numbers
 
 import numpy as np
-from scipy.optimize import nnls
 import scipy.sparse as sp
+from scipy.optimize import nnls
 
 from ..base import BaseEstimator, TransformerMixin
-from ..utils import atleast2d_or_csr, check_random_state
+from ..utils import atleast2d_or_csr, check_random_state, check_arrays
 from ..utils.extmath import randomized_svd, safe_sparse_dot
 
 
@@ -570,11 +570,16 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
         data: array, [n_samples, n_components]
             Transformed data
         """
-        X = atleast2d_or_csr(X)
-        W = np.zeros((X.shape[0], self.n_components_))
-        for j in range(0, X.shape[0]):
-            W[j, :], _ = nnls(self.components_.T, X[j, :])
-        return W
+        X, = check_arrays(X, sparse_format='csc')
+        Wt = np.zeros((self.n_components_, X.shape[0]))
+        if sp.issparse(X):
+            Wt, _, _ = _nls_subproblem(X.T, self.components_.T, Wt,
+                                       tol=self.tol,
+                                       max_iter=self.nls_max_iter)
+        else:
+            for j in range(0, X.shape[0]):
+                Wt[:, j], _ = nnls(self.components_.T, X[j, :])
+        return Wt.T
 
 
 class NMF(ProjectedGradientNMF):

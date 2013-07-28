@@ -13,6 +13,7 @@ import warnings
 from abc import ABCMeta, abstractmethod
 import numpy as np
 from scipy import linalg
+from ..utils import arpack
 
 __all__ = ['PLSCanonical', 'PLSRegression', 'PLSSVD']
 
@@ -745,7 +746,15 @@ class PLSSVD(BaseEstimator, TransformerMixin):
             _center_scale_xy(X, Y, self.scale)
         # svd(X'Y)
         C = np.dot(X.T, Y)
-        U, s, V = linalg.svd(C, full_matrices=False)
+
+        # The arpack svds solver only works if the number of extracted
+        # components is smaller than rank(X) - 1. Hence, if we want to extract
+        # all the components (C.shape[1]), we have to use another one. Else,
+        # let's use arpacks to compute only the interesting components.
+        if self.n_components == C.shape[1]:
+            U, s, V = linalg.svd(C, full_matrices=False)
+        else:
+            U, s, V = arpack.svds(C, k=self.n_components)
         V = V.T
         self.x_scores_ = np.dot(X, U)
         self.y_scores_ = np.dot(Y, V)

@@ -1,9 +1,9 @@
 .. currentmodule:: sklearn
 
-.. _changes_0_14:
+.. _changes_0_14_rc:
 
-0.14
-====
+0.14-rc
+=======
 
 Changelog
 ---------
@@ -99,6 +99,9 @@ Changelog
      the fraction or the number of correctly classified sample
      by `Arnaud Joly`_.
 
+   - Added :func:`metrics.log_loss` that computes log loss, aka cross-entropy
+     loss. By Jochen Wersdörfer and `Lars Buitinck`_.
+
    - A bug that caused :class:`ensemble.AdaBoostClassifier`'s to output
      incorrect probabilities has been fixed.
 
@@ -146,6 +149,7 @@ Changelog
      how to use OOB estimates to select the number of trees was added.
      By `Peter Prettenhofer`_.
 
+
    - Most metrics now support string labels for multiclass classification
      by `Arnaud Joly`_ and `Lars Buitinck`_.
 
@@ -155,6 +159,33 @@ Changelog
      generation methods (:func:`sklearn.datasets.make_biclusters` and
      :func:`sklearn.datasets.make_checkerboard`), and scoring metrics
      (:func:`sklearn.metrics.consensus_score`). By `Kemal Eren`_.
+
+   - New OrthogonalMatchingPursuitCV class by `Alexandre Gramfort`_
+     and `Vlad Niculae`_.
+
+   - Fixed a bug in :class:`sklearn.covariance.GraphLassoCV`: the
+     'alphas' parameter now works as expected when given a list of
+     values. By Philippe Gervais.
+
+   - Fixed an important bug in :class:`sklearn.covariance.GraphLassoCV`
+     that prevented all folds provided by a CV object to be used (only
+     the first 3 were used). When providing a CV object, execution
+     time may thus increase significantly compared to the previous
+     version (bug results are correct now). By Philippe Gervais.
+
+   - :class:`cross_validation.cross_val_score` and the :mod:`grid_search`
+     module is now tested with multi-output data by `Arnaud Joly`_.
+
+   - :func:`datasets.make_multilabel_classification` can now return
+     the output in label indicator multilabel format  by `Arnaud Joly`_.
+
+   - K-nearest neighbors, :class:`neighbors.KNeighborsRegressor`
+     and :class:`neighbors.RadiusNeighborsRegressor`,
+     and radius neighbors, :class:`neighbors.RadiusNeighborsRegressor` and
+     :class:`neighbors.RadiusNeighborsClassifier` support multioutput data
+     by `Arnaud Joly`_.
+
+
 
 
 API changes summary
@@ -210,6 +241,14 @@ API changes summary
    - Attribute ``oob_score_`` in :class:`sklearn.ensemble.GradientBoostingRegressor`
      and :class:`sklearn.ensemble.GradientBoostingClassifier`
      is deprecated and has been replaced by ``oob_improvement_`` .
+
+   - Attributes in OrthogonalMatchingPursuit have been deprecated
+     (copy_X, Gram, ...) and precompute_gram renamed precompute
+     for consistency. See #2224.
+
+   - :class:`sklearn.preprocessing.StandardScaler` now converts integer input
+     to float, and raises a warning. Previously it rounded for dense integer
+     input.
 
 .. _changes_0_13_1:
 
@@ -417,8 +456,8 @@ Changelog
    - :class:`MiniBatchKMeans`: Add random reassignment of cluster centers
      with little observations attached to them, by `Gael Varoquaux`_.
 
-   - New transformer :ref:`neural_network.BernoulliRBM`
-     by `Yann Dauphin`_.
+   - :ref:`Restricted Boltzmann Machines<rbm>` implemented in class
+     :class:`neural_network.BernoulliRBM` by `Yann Dauphin`_.
 
 
 API changes summary
@@ -1506,7 +1545,7 @@ scikit-learn 0.8 was released on May 2011, one month after the first
 "international" `scikit-learn coding sprint
 <https://github.com/scikit-learn/scikit-learn/wiki/Upcoming-events>`_ and is
 marked by the inclusion of important modules: :ref:`hierarchical_clustering`,
-:ref:`pls`, :ref:`NMF`, initial support for Python 3 and by important
+:ref:`cross_decomposition`, :ref:`NMF`, initial support for Python 3 and by important
 enhancements and bug fixes.
 
 
@@ -1522,7 +1561,7 @@ Several new modules where introduced during this release:
 
   - :ref:`labeled_faces_in_the_wild` by `Olivier Grisel`_.
 
-  - New :ref:`pls` module by `Edouard Duchesnay`_.
+  - New :ref:`cross_decomposition` module by `Edouard Duchesnay`_.
 
   - :ref:`NMF` module `Vlad Niculae`_
 
@@ -1566,7 +1605,7 @@ Some other modules benefited from significant improvements or cleanups.
 People
 -------
 
-People that made this release possible preceeded by number of commits:
+People that made this release possible preceded by number of commits:
 
 
    - 159  `Olivier Grisel`_
@@ -2046,3 +2085,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Nicolas Trésegnie : http://nicolastr.com/
 
 .. _Kemal Eren: http://www.kemaleren.com
+
+.. _Yann dauphin: http://ynd.github.io/

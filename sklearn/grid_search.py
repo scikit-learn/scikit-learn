@@ -118,13 +118,13 @@ class IterGrid(ParameterGrid):
 
     Parameters
     ----------
-    param_grid: dict of string to sequence
+    param_grid : dict of string to sequence
         The parameter grid to explore, as a dictionary mapping estimator
         parameters to sequences of allowed values.
 
     Returns
     -------
-    params: dict of string to any
+    params : dict of string to any
         **Yields** dictionaries mapping each estimator parameter to one of its
         allowed values.
 
@@ -179,7 +179,7 @@ class ParameterSampler(object):
 
     Returns
     -------
-    params: dict of string to any
+    params : dict of string to any
         **Yields** dictionaries mapping each estimator parameter to
         as sampled value.
 
@@ -400,10 +400,12 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         Parameters
         ----------
         X : array-like, shape = [n_samples, n_features]
-            Training set.
+            Input data, where n_samples is the number of samples and
+            n_features is the number of features.
 
-        y : array-like, shape = [n_samples], optional
-            Labels for X.
+        y : array-like, shape = [n_samples] or [n_samples, n_output], optional
+            Target relative to X for classification or regression;
+            None for unsupervised learning.
 
         Returns
         -------
@@ -642,7 +644,7 @@ class GridSearchCV(BaseSearchCV):
     GridSearchCV(cv=None,
         estimator=SVC(C=1.0, cache_size=..., coef0=..., degree=...,
             gamma=..., kernel='rbf', max_iter=-1, probability=False,
-            shrinking=True, tol=...),
+            random_state=None, shrinking=True, tol=...),
         fit_params={}, iid=True, loss_func=None, n_jobs=1,
             param_grid=...,
             ...)
@@ -716,12 +718,12 @@ class GridSearchCV(BaseSearchCV):
         Parameters
         ----------
 
-        X: array-like, shape = [n_samples, n_features]
-            Training vector, where n_samples in the number of samples and
+        X : array-like, shape = [n_samples, n_features]
+            Training vector, where n_samples is the number of samples and
             n_features is the number of features.
 
-        y: array-like, shape = [n_samples], optional
-            Target vector relative to X for classification;
+        y : array-like, shape = [n_samples] or [n_samples, n_output], optional
+            Target relative to X for classification or regression;
             None for unsupervised learning.
 
         """
@@ -832,10 +834,8 @@ class RandomizedSearchCV(BaseSearchCV):
 
     Notes
     -----
-    The parameters selected are those that maximize the score of the left out
-    data, unless an explicit score_func is passed in which case it is used
-    instead. If a loss function loss_func is passed, it overrides the score
-    functions and is minimized.
+    The parameters selected are those that maximize the score of the held-out
+    data, according to the scoring parameter.
 
     If `n_jobs` was set to a value higher than one, the data is copied for each
     parameter setting(and not `n_jobs` times). This is done for efficiency
@@ -857,28 +857,28 @@ class RandomizedSearchCV(BaseSearchCV):
     """
 
     def __init__(self, estimator, param_distributions, n_iter=10, scoring=None,
-                 loss_func=None, score_func=None, fit_params=None, n_jobs=1,
-                 iid=True, refit=True, cv=None, verbose=0,
-                 pre_dispatch='2*n_jobs', random_state=None):
+                 fit_params=None, n_jobs=1, iid=True, refit=True, cv=None,
+                 verbose=0, pre_dispatch='2*n_jobs', random_state=None):
 
         self.param_distributions = param_distributions
         self.n_iter = n_iter
         self.random_state = random_state
         super(RandomizedSearchCV, self).__init__(
-            estimator, scoring, loss_func, score_func, fit_params, n_jobs, iid,
-            refit, cv, verbose, pre_dispatch)
+            estimator=estimator, scoring=scoring, fit_params=fit_params,
+            n_jobs=n_jobs, iid=iid, refit=refit, cv=cv, verbose=verbose,
+            pre_dispatch=pre_dispatch)
 
     def fit(self, X, y=None):
         """Run fit on the estimator with randomly drawn parameters.
 
         Parameters
         ----------
-        X: array-like, shape = [n_samples, n_features]
+        X : array-like, shape = [n_samples, n_features]
             Training vector, where n_samples in the number of samples and
             n_features is the number of features.
 
-        y: array-like, shape = [n_samples], optional
-            Target vector relative to X for classification;
+        y : array-like, shape = [n_samples] or [n_samples, n_output], optional
+            Target relative to X for classification or regression;
             None for unsupervised learning.
 
         """

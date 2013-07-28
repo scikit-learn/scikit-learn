@@ -5,7 +5,7 @@ hashing of numpy arrays.
 
 # Author: Gael Varoquaux <gael dot varoquaux at normalesup dot org>
 # Copyright (c) 2009 Gael Varoquaux
-# License: BSD 3 clause
+# License: BSD Style, 3 clauses.
 
 import warnings
 import pickle
@@ -31,7 +31,7 @@ class _ConsistentSet(object):
 
 
 class _MyHash(object):
-    """ Class used to hash objects that won't normaly pickle """
+    """ Class used to hash objects that won't normally pickle """
 
     def __init__(self, *args):
         self.args = args

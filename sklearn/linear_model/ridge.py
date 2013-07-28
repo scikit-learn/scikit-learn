@@ -21,6 +21,7 @@ from ..base import RegressorMixin
 from ..utils.extmath import safe_sparse_dot
 from ..utils import safe_asarray
 from ..utils import compute_class_weight
+from ..utils import column_or_1d
 from ..preprocessing import LabelBinarizer
 from ..grid_search import GridSearchCV
 from ..externals import six
@@ -531,6 +532,8 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
         """
         self._label_binarizer = LabelBinarizer(pos_label=1, neg_label=-1)
         Y = self._label_binarizer.fit_transform(y)
+        if not self._label_binarizer.multilabel_:
+            y = column_or_1d(y)
 
         if self.class_weight:
             cw = compute_class_weight(self.class_weight,
@@ -914,7 +917,7 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
         Array of alpha values to try.
         Small positive values of alpha improve the conditioning of the
         problem and reduce the variance of the estimates.
-        Alpha corresponds to (2*C)^-1 in other linear models such as
+        Alpha corresponds to ``(2*C)^-1`` in other linear models such as
         LogisticRegression or LinearSVC.
 
     fit_intercept : boolean
@@ -941,7 +944,7 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
 
     class_weight : dict, optional
         Weights associated with classes in the form
-        {class_label : weight}. If not given, all classes are
+        ``{class_label : weight}``. If not given, all classes are
         supposed to have weight one.
 
     Attributes
@@ -984,19 +987,19 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like, shape (n_samples, n_features)
             Training vectors, where n_samples is the number of samples
             and n_features is the number of features.
 
-        y : array-like, shape = [n_samples]
+        y : array-like, shape (n_samples,)
             Target values.
 
-        sample_weight : float or numpy array of shape [n_samples]
-            Sample weight
+        sample_weight : float or numpy array of shape (n_samples,)
+            Sample weight.
 
         class_weight : dict, optional
-             Weights associated with classes in the form
-            {class_label : weight}. If not given, all classes are
+            Weights associated with classes in the form
+            ``{class_label : weight}``. If not given, all classes are
             supposed to have weight one. This is parameter is
             deprecated.
 
@@ -1015,6 +1018,8 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
 
         self._label_binarizer = LabelBinarizer(pos_label=1, neg_label=-1)
         Y = self._label_binarizer.fit_transform(y)
+        if not self._label_binarizer.multilabel_:
+            y = column_or_1d(y)
         cw = compute_class_weight(class_weight,
                                   self.classes_, Y)
         # modify the sample weights with the corresponding class weight

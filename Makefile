@@ -15,6 +15,7 @@ clean-pyc:
 clean-so:
 	find sklearn -name "*.so" | xargs rm -f
 	find sklearn -name "*.pyd" | xargs rm -f
+	find sklearn -name "__pycache__" | xargs rm -rf
 
 clean-build:
 	rm -rf build

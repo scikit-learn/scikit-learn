@@ -88,7 +88,7 @@ for i in range(2):
 
     # evaluate only on the land: -9999 indicates ocean
     Z = -9999 + np.zeros(land_mask.shape[0])
-    Z[land_mask] = np.exp(kde.eval(xy))
+    Z[land_mask] = np.exp(kde.score_samples(xy))
     Z = Z.reshape(X.shape)
 
     # plot contours of the density

@@ -41,10 +41,6 @@ cdef inline DTYPE_t euclidean_rdist_to_dist(DTYPE_t dist) except -1:
     return sqrt(dist)
 
 
-cdef int euclidean_cdist(DTYPE_t[:, ::1] X, DTYPE_t[:, ::1] Y,
-                         DTYPE_t[:, ::1] D) except -1
-
-
 ######################################################################
 # DistanceMetric base class
 cdef class DistanceMetric:
@@ -53,8 +49,10 @@ cdef class DistanceMetric:
     # Because we don't expect to instantiate a lot of these objects, the
     # extra memory overhead of this setup should not be an issue.
     cdef DTYPE_t p
-    cdef DTYPE_t[::1] vec
-    cdef DTYPE_t[:, ::1] mat
+    #cdef DTYPE_t[::1] vec
+    #cdef DTYPE_t[:, ::1] mat
+    cdef np.ndarray vec
+    cdef np.ndarray mat
     cdef DTYPE_t* vec_ptr
     cdef DTYPE_t* mat_ptr
     cdef ITYPE_t size

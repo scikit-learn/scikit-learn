@@ -54,15 +54,17 @@ features, projected on the 2 dimensions that explain most variance:
 Approximate PCA
 ---------------
 
-Often we are interested in projecting the data onto a lower dimensional
-space that preserves most of the variance by dropping the singular vector
+It is often interesting to project data to a lower-dimensional
+space that preserves most of the variance, by dropping the singular vector
 of components associated with lower singular values.
 
-For instance for face recognition, if we work with 64x64 gray level pixel
-pictures the dimensionality of the data is 4096 and it is slow to train a
-RBF Support Vector Machine on such wide data. Furthermore we know that
-intrinsic dimensionality of the data is much lower than 4096 since all
-faces pictures look alike. The samples lie on a manifold of much lower
+For instance, if we work with 64x64 pixel gray-level pictures
+for face recognition,
+the dimensionality of the data is 4096 and it is slow to train an
+RBF support vector machine on such wide data. Furthermore we know that
+the intrinsic dimensionality of the data is much lower than 4096 since all
+pictures of human faces look somewhat alike.
+The samples lie on a manifold of much lower
 dimension (say around 200 for instance). The PCA algorithm can be used
 to linearly transform the data while both reducing the dimensionality
 and preserve most of the explained variance at the same time.
@@ -90,8 +92,8 @@ less than 1s:
 .. centered:: |orig_img| |pca_img|
 
 :class:`RandomizedPCA` can hence be used as a drop in replacement for
-:class:`PCA` minor the exception that we need to give it the size of
-the lower dimensional space `n_components` as mandatory input parameter.
+:class:`PCA` with the exception that we need to give it the size of
+the lower-dimensional space `n_components` as a mandatory input parameter.
 
 If we note :math:`n_{max} = max(n_{samples}, n_{features})` and
 :math:`n_{min} = min(n_{samples}, n_{features})`, the time complexity
@@ -149,13 +151,13 @@ applications including denoising, compression and structured prediction
 
 .. _SparsePCA:
 
-Sparse Principal Components Analysis (SparsePCA and MiniBatchSparsePCA)
+Sparse principal components analysis (SparsePCA and MiniBatchSparsePCA)
 -----------------------------------------------------------------------
 
 :class:`SparsePCA` is a variant of PCA, with the goal of extracting the
 set of sparse components that best reconstruct the data.
 
-Mini Batch Sparse PCA (:class:`MiniBatchSparsePCA`) is a variant of
+Mini-batch sparse PCA (:class:`MiniBatchSparsePCA`) is a variant of
 :class:`SparsePCA` that is faster but less accurate. The increased speed is
 reached by iterating over small chunks of the set of features, for a given
 number of iterations.
@@ -205,7 +207,7 @@ problem solved is a PCA problem (dictionary learning) with an
                 0 \leq k < n_{components}
 
 
-The sparsity inducing :math:`\ell_1` norm also prevents learning
+The sparsity-inducing :math:`\ell_1` norm also prevents learning
 components from noise when few training samples are available. The degree
 of penalization (and thus sparsity) can be adjusted through the
 hyperparameter `alpha`. Small values lead to a gently regularized

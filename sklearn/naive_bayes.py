@@ -25,9 +25,8 @@ from .base import BaseEstimator, ClassifierMixin
 from .preprocessing import binarize
 from .preprocessing import LabelBinarizer
 from .preprocessing import label_binarize
-from .utils import array2d, atleast2d_or_csr
+from .utils import array2d, atleast2d_or_csr, column_or_1d, check_arrays
 from .utils.extmath import safe_sparse_dot, logsumexp
-from .utils import check_arrays
 from .utils.multiclass import _check_partial_fit_first_call
 from .externals import six
 
@@ -156,6 +155,7 @@ class GaussianNB(BaseNB):
         """
 
         X, y = check_arrays(X, y, sparse_format='dense')
+        y = column_or_1d(y)
 
         n_samples, n_features = X.shape
 
@@ -304,7 +304,9 @@ class BaseDiscreteNB(BaseNB):
         self : object
             Returns self.
         """
-        X = atleast2d_or_csr(X).astype(np.float64)
+        X, y = check_arrays(X, y, sparse_format='csr')
+        X = X.astype(np.float)
+        y = column_or_1d(y)
         _, n_features = X.shape
 
         labelbin = LabelBinarizer()
@@ -379,22 +381,26 @@ class MultinomialNB(BaseDiscreteNB):
 
     Attributes
     ----------
-    `intercept_`, `class_log_prior_` : array, shape = [n_classes]
+    `class_log_prior_` : array, shape (n_classes)
         Smoothed empirical log probability for each class.
 
-    `feature_log_prob_`, `coef_` : array, shape = [n_classes, n_features]
+    `intercept_` : property
+        Mirrors ``class_log_prior_`` for interpreting MultinomialNB
+        as a linear model.
+
+    `feature_log_prob_`: array, shape (n_classes, n_features)
         Empirical log probability of features
         given a class, P(x_i|y).
 
-        (`intercept_` and `coef_` are properties
-        referring to `class_log_prior_` and
-        `feature_log_prob_`, respectively.)
+    `coef_` : property
+        Mirrors ``feature_log_prob_`` for interpreting MultinomialNB
+        as a linear model.
 
-    `class_count_` : array, shape = [n_classes]
+    `class_count_` : array, shape (n_classes,)
         Number of samples encountered for each class during fitting. This
         value is weighted by the sample weight when provided.
 
-    `feature_count_` : array, shape = [n_classes, n_features]
+    `feature_count_` : array, shape (n_classes, n_features)
         Number of samples encountered for each (class, feature)
         during fitting. This value is weighted by the sample weight when
         provided.
@@ -419,7 +425,6 @@ class MultinomialNB(BaseDiscreteNB):
 
     References
     ----------
-
     C.D. Manning, P. Raghavan and H. Schütze (2008). Introduction to
     Information Retrieval. Cambridge University Press, pp. 234–265.
     http://nlp.stanford.edu/IR-book/html/htmledition/
