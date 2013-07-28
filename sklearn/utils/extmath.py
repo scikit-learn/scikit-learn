@@ -11,7 +11,7 @@ from scipy.sparse import issparse
 
 from . import check_random_state
 from .fixes import qr_economic
-from ._logistic_sigmoid import _logistic_sigmoid, _log_logistic_sigmoid
+from ._logistic_sigmoid import _log_logistic_sigmoid
 from ..externals.six.moves import xrange
 from .validation import array2d
 
@@ -507,7 +507,12 @@ def logistic_sigmoid(X, log=False, out=None):
     if log:
         _log_logistic_sigmoid(n_samples, n_features, X, out)
     else:
-        _logistic_sigmoid(n_samples, n_features, X, out)
+        # logistic(x) = (1 + tanh(x / 2)) / 2
+        out[:] = X
+        out *= .5
+        np.tanh(out, out)
+        out += 1
+        out *= .5
 
     if is_1d:
         return np.squeeze(out)
