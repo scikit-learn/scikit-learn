@@ -27,7 +27,9 @@ def _gs_decorrelation(w, W, j):
     Parameters
     ----------
     w: array of shape(n), to be orthogonalized
+
     W: array of shape(p, n), null space definition
+
     j: int < p
 
     caveats
@@ -145,17 +147,21 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
     X : array-like, shape (n_samples, n_features)
         Training vector, where n_samples is the number of samples and
         n_features is the number of features.
+
     n_components : int, optional
         Number of components to extract. If None no dimension reduction
         is performed.
+
     algorithm : {'parallel', 'deflation'}, optional
         Apply a parallel or deflational FASTICA algorithm.
+
     whiten : boolean, optional
         If True perform an initial whitening of the data.
         If False, the data is assumed to have already been
         preprocessed: it should be centered, normed and white.
         Otherwise you will get incorrect results.
         In this case the parameter n_components will be ignored.
+
     fun : string or function, optional. Default: 'logcosh'
         The functional form of the G function used in the
         approximation to neg-entropy. Could be either 'logcosh', 'exp',
@@ -166,22 +172,29 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
 
         def my_g(x):
             return x ** 3, 3 * x ** 2
+
     fun_args : dictionary, optional
         Arguments to send to the functional form.
         If empty or None and if fun='logcosh', fun_args will take value
         {'alpha' : 1.0}
+
     max_iter : int, optional
         Maximum number of iterations to perform
+
     tol: float, optional
         A positive scalar giving the tolerance at which the
         un-mixing matrix is considered to have converged
+
     w_init : (n_components, n_components) array, optional
         Initial un-mixing array of dimension (n.comp,n.comp).
         If None (default) then an array of normal r.v.'s is used
+
     random_state : int or RandomState
         Pseudo number generator state used for random sampling.
+
     return_X_mean : bool, optional
         If True, X_mean is returned too.
+
     compute_sources : bool, optional
         If False, sources are not computes but only the rotation matrix. This
         can save memory when working with big data. Defaults to True.
@@ -329,17 +342,20 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
 
 
 class FastICA(BaseEstimator, TransformerMixin):
-    """FastICA: a fast algorithm for Independent Component Analysis
+    """FastICA: a fast algorithm for Independent Component Analysis.
 
     Parameters
     ----------
     n_components : int, optional
         Number of components to use. If none is passed, all are used.
+
     algorithm : {'parallel', 'deflation'}
         Apply parallel or deflational algorithm for FastICA
+
     whiten : boolean, optional
         If whiten is false, the data is already considered to be
         whitened, and no whitening is performed.
+
     fun : string or function, optional. Default: 'logcosh'
         The functional form of the G function used in the
         approximation to neg-entropy. Could be either 'logcosh', 'exp',
@@ -350,16 +366,21 @@ class FastICA(BaseEstimator, TransformerMixin):
 
         def my_g(x):
             return x ** 3, 3 * x ** 2
+
     fun_args : dictionary, optional
         Arguments to send to the functional form.
         If empty and if fun='logcosh', fun_args will take value
         {'alpha' : 1.0}
+
     max_iter : int, optional
         Maximum number of iterations during fit
+
     tol : float, optional
         Tolerance on update at each iteration
+
     w_init : None of an (n_components, n_components) ndarray
         The mixing matrix to be used to initialize the algorithm.
+
     random_state : int or RandomState
         Pseudo number generator state used for random sampling.
 
@@ -367,8 +388,10 @@ class FastICA(BaseEstimator, TransformerMixin):
     ----------
     `components_` : 2D array, shape (n_components, n_features)
         The unmixing matrix.
+
     `mixing_` : array, shape (n_features, n_components)
         The mixing matrix.
+
     `sources_` : 2D array, shape (n_samples, n_components)
         The estimated latent sources of the data. This attribute is deprecated
         and will be removed in 0.16. Use `fit_transform` instead and store
