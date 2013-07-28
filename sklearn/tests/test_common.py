@@ -113,6 +113,13 @@ def test_all_estimators():
                     assert_equal(params[arg], default)
 
 
+def test_all_estimator_no_base_class():
+    for name, Estimator in all_estimators():
+        msg = ("Base estimators such as {0} should not be included"
+               " in all_estimators").format(name)
+        assert_false(name.lower().startswith('base'), msg=msg)
+
+
 def test_estimators_sparse_data():
     # All estimators should either deal with sparse data, or raise an
     # intelligible error message

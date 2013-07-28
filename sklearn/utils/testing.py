@@ -318,7 +318,7 @@ def all_estimators(include_meta_estimators=False, include_other=False,
         estimators = [est for est in estimators
                       if issubclass(est[1], ClusterMixin)]
     elif type_filter is not None:
-        raise ValueError("Parmeter type_filter must be 'classifier', "
+        raise ValueError("Parameter type_filter must be 'classifier', "
                          "'regressor', 'transformer', 'cluster' or None, got"
                          " %s." % repr(type_filter))
 
