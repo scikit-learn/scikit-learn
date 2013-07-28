@@ -249,11 +249,12 @@
             <div class="span6">
                 <h4>News</h4>
                 <ul>
-                <li><em>July 28th, 2013.</em>
-                The sprint is drawing to a close and we will push a 0.14
-                release candidate soon. Or new shiny website is up, too.
+                <li><em>On-going development:</em>
+                <a href="whats_new.html"><em>What's new</em> (changelog)</a>
+                </li>
+                <li><em>July 22th - 28th, 2013: internal sprint</em>
                 During this week-long sprint, we gathered most of the core
-                developers in Paris for a blend of fun and productivity.
+                developers in Paris.
                 <!--
                 Here are some of the biggest changes in the upcoming version:
                 <ul>
@@ -265,23 +266,13 @@
                 </ul>
                 -->
 
-                We want to thank again our sponsors, in particular
-                <a href="http://www.telecom-paristech.fr/">Télécom ParisTech</a>
-                and <a href="http://www.tinyclues.com/">tinyclues</a>, who hosted
-                our sprint during the week and the weekend respectively.
-                Private donations also helped fund this event.
+                We want to thank our sponsors, our
+                hosts <a href="http://www.telecom-paristech.fr/">Télécom ParisTech</a>
+                and <a href="http://www.tinyclues.com/">tinyclues</a>, and
+                donations that helped fund this event.
 
+                <li><em>February 2013.</em> scikit-learn 0.13.1 is available for download (<a href="whats_new.html">Changelog</a>).
                 </li>
-                <li><em>July 22th, 2013.</em>
-                The sprint has started! It is great to meet so many core developers in person. Also,
-                some new contributors managed to make it, which makes for a great and productive crowd.
-                We kick-started the sprint with merges of some very important contributions and hope
-                we can continue this pace through the week.
-                </li>
-                <!--
-                    <li><em>July 2013.</em> The scikit-learn international code sprint is around the corner! Please, sponsor us.</li>
-                    <li><em>February 2013.</em> scikit-learn 0.13.1 is available for download. <a href="whats_new.html">Changelog</a> .</li>
-                    -->
                 </ul>
             </div>
 
