@@ -245,8 +245,10 @@
                 </ul>
                 -->
 
-                We want to thank again our sponsors, in particular Télécom ParisTech 
-                and Tinyclues, who hosted our sprint during the week and the weekend respectively.
+                We want to thank again our sponsors, in particular
+                <a href="http://www.telecom-paristech.fr/">Télécom ParisTech</a>
+                and <a href="http://www.tinyclues.com/">tinyclues</a>, who hosted
+                our sprint during the week and the weekend respectively.
                 Private donations also helped fund this event.
 
                 </li>
@@ -270,7 +272,8 @@
                 <li><em>Questions?</em> See <a href="http://stackoverflow.com/questions/tagged/scikit-learn">stackoverflow</a> # scikit-learn for usage questions</li>
                 <li><em>Mailing list:</em> scikit-learn-general@lists.sourceforge.net</li>
                 <li><em>IRC:</em> #scikit-learn @ <a href="http://webchat.freenode.net/">freenode</a></li>
-                <li><em>Help us:</em> <button class="btn btn-small" onclick="document.getElementById('paypal-form').submit(); return false;">Donate!</button> (<a href="about.html#funding">read more</a>)</li>
+                <li><em>Help us:</em>
+                  <button class="btn btn-warning btn-big" onclick="document.getElementById('paypal-form').submit(); return false;"><b>Donate!</b></button> (<a href="about.html#funding">read more</a>)</li>
                     <form target="_top" id="paypal-form" method="post" action="https://www.paypal.com/cgi-bin/webscr">
                     <input type="hidden" value="_s-xclick" name="cmd">
                     <input type="hidden" value="74EYUMF3FTSW8" name="hosted_button_id">
