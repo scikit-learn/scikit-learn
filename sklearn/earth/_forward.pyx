@@ -48,7 +48,7 @@ cdef class ForwardPasser:
         self.sst = (np.dot(self.y,self.y) - (np.dot(np.sqrt(self.sample_weight),self.y) / np.sqrt(np.sum(self.sample_weight)))**2) / self.m
         self.y_squared = np.dot(self.y,self.y)
         self.record = ForwardPassRecord(self.m,self.n,self.penalty,self.sst,self.xlabels)
-        self.basis = Basis()
+        self.basis = Basis(self.n)
         self.basis.append(ConstantBasisFunction())
         
         self.sorting = np.empty(shape=self.m, dtype=np.int)

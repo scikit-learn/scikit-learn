@@ -4,6 +4,7 @@ from ._util import ascii_table, gcv, apply_weights_2d, apply_weights_1d
 from ..base import RegressorMixin, BaseEstimator, TransformerMixin
 from ..utils.validation import assert_all_finite, safe_asarray
 import numpy as np
+from scipy import sparse
 
 class Earth(BaseEstimator, RegressorMixin, TransformerMixin):
     '''
@@ -216,11 +217,20 @@ class Earth(BaseEstimator, RegressorMixin, TransformerMixin):
         '''
         Sanitize input predictors and extract column names if appropriate.
         '''
+        #Check for sparseness
+        if sparse.issparse(X):
+            raise TypeError('A sparse matrix was passed, but dense data '
+                            'is required. Use X.toarray() to convert to dense.')
         
         #Convert to internally used data type
         X = safe_asarray(X,dtype=np.float64)
         if len(X.shape) == 1:
             X = X.reshape((X.shape[0], 1))
+        
+        #Ensure correct number of columns
+        if hasattr(self,'basis_') and self.basis_ is not None:
+            if X.shape[1] != self.basis_.num_variables:
+                raise ValueError('Wrong number of columns in X')
         
         return X
     
@@ -228,6 +238,14 @@ class Earth(BaseEstimator, RegressorMixin, TransformerMixin):
         '''
         Sanitize input data.
         '''
+        #Check for sparseness
+        if sparse.issparse(y):
+            raise TypeError('A sparse matrix was passed, but dense data '
+                            'is required. Use y.toarray() to convert to dense.')
+        if sparse.issparse(sample_weight):
+            raise TypeError('A sparse matrix was passed, but dense data '
+                            'is required. Use sample_weight.toarray() to convert to dense.')
+        
         #Check whether X is the output of patsy.dmatrices
         if y is None and type(X) is tuple:
             y, X = X

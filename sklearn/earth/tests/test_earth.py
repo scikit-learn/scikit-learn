@@ -17,7 +17,7 @@ class TestEarth(object):
 
     def __init__(self):
         numpy.random.seed(0)
-        self.basis = Basis()
+        self.basis = Basis(10)
         constant = ConstantBasisFunction()
         self.basis.append(constant)
         bf1 = HingeBasisFunction(constant,0.1,10,1,False,'x1')

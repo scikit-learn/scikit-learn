@@ -105,6 +105,7 @@ cdef class Basis:
     added.'''
     
     cdef list order
+    cdef readonly INDEX_t num_variables
     
     cpdef translate(Basis self, cnp.ndarray[FLOAT_t,ndim=1] slopes, cnp.ndarray[FLOAT_t,ndim=1] intercepts)
         

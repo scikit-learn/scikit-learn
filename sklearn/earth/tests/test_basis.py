@@ -83,7 +83,7 @@ class TestLinearBasisFunction(BaseTestClass):
 class TestBasis(BaseTestClass):
     def __init__(self):
         super(self.__class__,self).__init__()
-        self.basis = Basis()
+        self.basis = Basis(self.X.shape[1])
         self.parent = ConstantBasisFunction()
         self.bf = HingeBasisFunction(self.parent,1.0,10,1,False)
         self.basis.append(self.parent)

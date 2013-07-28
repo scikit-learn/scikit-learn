@@ -481,11 +481,12 @@ cdef class Basis:
     common ConstantBasisFunction ancestor.  Retains the order in which BasisFunctions are 
     added.'''
 
-    def __init__(Basis self): #@DuplicatedSignature
+    def __init__(Basis self, num_variables): #@DuplicatedSignature
         self.order = []
+        self.num_variables = num_variables
     
     def __reduce__(self):
-        return (self.__class__, (), self._getstate())
+        return (self.__class__, (self.num_variables,), self._getstate())
     
     def _getstate(self):
         return {'order': self.order}
