@@ -45,7 +45,7 @@ cdef inline np.ndarray _buffer_to_ndarray(DTYPE_t* x, np.npy_intp n):
 
 
 # some handy constants
-from libc.math cimport fmax, fmin, fabs, sqrt, exp, pow, cos, sin, asin
+from libc.math cimport fabs, sqrt, exp, pow, cos, sin, asin
 cdef DTYPE_t INF = np.inf
 
 from typedefs cimport DTYPE_t, ITYPE_t, DITYPE_t, DTYPECODE
@@ -1091,3 +1091,7 @@ cdef class PyFuncDistance(DistanceMetric):
         cdef np.ndarray x1arr = _buffer_to_ndarray(x1, size)
         cdef np.ndarray x2arr = _buffer_to_ndarray(x2, size)
         return self.func(x1arr, x2arr, **self.kwargs)
+
+
+cdef inline double fmax(double a, double b):
+    return max(a, b)
