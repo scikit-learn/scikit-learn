@@ -1,5 +1,6 @@
 *.pyc
 *.so
+*.pyd
 *~
 .#*
 *.lprof
