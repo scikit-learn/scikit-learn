@@ -1,9 +1,12 @@
+.. raw:: html
+
+  <div class="container-index">
+
 Documentation of scikit-learn 0.13
 ==================================
 
 .. raw:: html
 
-  <div class="container-index">
         <!-- Block section -->
             <div class="row-fluid">
                 <div class="span4 box">
