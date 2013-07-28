@@ -423,11 +423,9 @@ class RankScaler(BaseEstimator, TransformerMixin):
     you want outliers to be given high importance (StandardScaler)
     or not (RankScaler).
 
-    TODO: min and max parameters?
-
     Parameters
     ----------
-    resolution : int, 1000 by default
+    n_ranks : int, 1000 by default
         The number of different ranks possible.
         i.e. The number of indices in the compressed ranking matrix
         `sort_X_`.
@@ -442,22 +440,15 @@ class RankScaler(BaseEstimator, TransformerMixin):
     `sort_X_` : array of ints with shape [n_samples, n_features]
         The rank-index of every feature in the fit X.
 
-    `resolution_` : int
-        Desired resolution (number of ranks).
-
     See also
     --------
     :class:`sklearn.preprocessing.StandardScaler` to perform standardization
     that is faster, but less robust to outliers.
     """
 
-    def __init__(self, resolution):
-        """
-        TODO: Add min and max parameters? Default = [0, 1]
-        """
-        self.copy = True  # We don't have self.copy=False implemented
-        self.resolution_ = resolution
-        pass
+    def __init__(self, n_ranks=1000):
+        # TODO: Add min and max parameters? Default = [0, 1]
+        self.n_ranks = n_ranks
 
     def fit(self, X, y=None):
         """Compute the feature ranks for later scaling.
@@ -465,29 +456,30 @@ class RankScaler(BaseEstimator, TransformerMixin):
         fit will take time O(n_features * n_samples * log(n_samples)),
         because it must sort the entire matrix.
 
-        It use memory O(n_features * resolution).
+        It use memory O(n_features * n_ranks).
 
         Parameters
         ----------
-        X : array-like matrix with shape [n_samples, n_features]
+        X : array-like, shape (n_samples, n_features)
             The data used to compute feature ranks.
         """
         X = array2d(X)
+        n_samples, n_features = X.shape
         full_sort_X_ = np.sort(X, axis=0)
-        if not self.resolution_ or self.resolution_ >= X.shape[0]:
-            # Store the full resolution
+        if not self.n_ranks or self.n_ranks >= n_samples:
+            # Store the full matrix
             self.sort_X_ = full_sort_X_
         else:
             # Approximate the stored sort_X_
-            self.sort_X_ = np.zeros((self.resolution_, X.shape[1]))
-            for i in range(self.resolution_):
-                for j in range(X.shape[1]):
-                    # Find the corresponding i at the original resolution
-                    iorig = i * 1. * X.shape[0] / self.resolution_
+            self.sort_X_ = np.zeros((self.n_ranks, n_features))
+            for i in range(self.n_ranks):
+                for j in range(n_features):
+                    # Find the corresponding i in the original ranking
+                    iorig = i * 1. * n_samples / self.n_ranks
                     ioriglo = int(iorig)
                     iorighi = ioriglo + 1
 
-                    if ioriglo == X.shape[0]:
+                    if ioriglo == n_samples:
                         self.sort_X_[i, j] = full_sort_X_[ioriglo, j]
                     else:
                         # And use linear interpolation to combine the
@@ -504,7 +496,7 @@ class RankScaler(BaseEstimator, TransformerMixin):
     def transform(self, X):
         """Perform rank-standardization.
 
-        transform will take O(n_features * n_samples * log(resolution)),
+        transform will take O(n_features * n_samples * log(n_ranks)),
         where `n_fit_samples` is the number of samples used during `fit`.
 
         Parameters
@@ -522,8 +514,9 @@ class RankScaler(BaseEstimator, TransformerMixin):
         X = np.vstack(newX).T
         return X
 
-#    def inverse_transform(self, X, copy=None):
-##       Not implemented
+#    def inverse_transform(self, X):
+##       Not implemented, but I believe we could reuse the approximation
+##       code in `fit`.
 
 def normalize(X, norm='l2', axis=1, copy=True):
     """Normalize a dataset along any axis
