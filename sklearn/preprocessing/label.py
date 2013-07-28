@@ -31,7 +31,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-    `classes_`: array of shape [n_class]
+    `classes_` : array of shape (n_class,)
         Holds the label for each class.
 
     Examples
@@ -73,13 +73,14 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        y : array-like of shape [n_samples]
+        y : array-like of shape (n_samples,)
             Target values.
 
         Returns
         -------
         self : returns an instance of self.
         """
+        y = column_or_1d(y, warn=True)
         self.classes_ = np.unique(y)
         return self
 
@@ -95,6 +96,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         -------
         y : array-like of shape [n_samples]
         """
+        y = column_or_1d(y, warn=True)
         self.classes_, y = unique(y, return_inverse=True)
         return y
 

@@ -18,6 +18,7 @@ from ..base import BaseEstimator
 from ..metrics import pairwise_distances
 from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
 from ..utils import safe_asarray, atleast2d_or_csr, check_arrays
+from ..utils.validation import DataConversionWarning
 from ..utils.fixes import unique
 from ..externals import six
 
@@ -605,6 +606,12 @@ class SupervisedIntegerMixin(object):
             X, y = check_arrays(X, y, sparse_format="csr")
 
         if y.ndim == 1 or y.ndim == 2 and y.shape[1] == 1:
+            if y.ndim != 1:
+                warnings.warn("A column-vector y was passed when a 1d array"
+                              "was expected. Please change the shape of y to"
+                              "(n_samples, ), for example using ravel().",
+                              DataConversionWarning, stacklevel=2)
+
             self.outputs_2d_ = False
             y = y.reshape((-1, 1))
         else:

@@ -13,7 +13,7 @@ import numpy as np
 from .base import BaseEstimator, ClassifierMixin
 from .externals.six.moves import xrange
 from .utils.fixes import unique
-from .utils import check_arrays, array2d
+from .utils import check_arrays, array2d, column_or_1d
 
 __all__ = ['QDA']
 
@@ -96,6 +96,7 @@ class QDA(BaseEstimator, ClassifierMixin):
             `self.covariances_` attribute.
         """
         X, y = check_arrays(X, y)
+        y = column_or_1d(y, warn=True)
         self.classes_, y = unique(y, return_inverse=True)
         n_samples, n_features = X.shape
         n_classes = len(self.classes_)
