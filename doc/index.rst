@@ -229,7 +229,7 @@
             <div class="span6">
                 <h4>News</h4>
                 <ul>
-                <li><em>July 2013.</em>
+                <li><em>July 28th, 2013.</em>
                 The sprint is drawing to a close and we will push a 0.14
                 release candidate soon. Or new shiny website is up, too.
                 During this week-long sprint, we gathered most of the core
@@ -250,7 +250,7 @@
                 Private donations also helped fund this event.
 
                 </li>
-                <li><em>July 2013.</em>
+                <li><em>July 22th, 2013.</em>
                 The sprint has started! It is great to meet so many core developers in person. Also,
                 some new contributors managed to make it, which makes for a great and productive crowd.
                 We kick-started the sprint with merges of some very important contributions and hope
