@@ -60,8 +60,8 @@ def test_whitening():
     # the component-wise variance is thus highly varying:
     assert_almost_equal(X.std(axis=0).std(), 43.9, 1)
 
-    for this_PCA, copy in [(x, y) for x in PCA, RandomizedPCA
-                           for y in True, False]:
+    for this_PCA, copy in [(x, y) for x in (PCA, RandomizedPCA)
+                           for y in (True, False)]:
         # whiten the data while projecting to the lower dim subspace
         X_ = X.copy()  # make sure we keep an original across iterations.
         pca = this_PCA(n_components=n_components, whiten=True, copy=copy)
