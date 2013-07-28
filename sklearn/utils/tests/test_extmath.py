@@ -259,10 +259,26 @@ def test_logistic_sigmoid():
     naive_logsig = lambda x: 1 / (1 + np.exp(-x))
     naive_log_logsig = lambda x: np.log(naive_logsig(x))
 
+    # Simulate the previous Cython implementations of logistic_sigmoid based on
+    #http://fa.bianp.net/blog/2013/numerical-optimizers-for-logistic-regression
+    def stable_logsig(x):
+        out = np.zeros_like(x)
+        positive = x > 0
+        negative = x <= 0
+        out[positive] = 1. / (1 + np.exp(-x[positive]))
+        out[negative] = np.exp(x[negative]) / (1. + np.exp(x[negative]))
+        return out
+
     x = np.linspace(-2, 2, 50)
     assert_array_almost_equal(logistic_sigmoid(x), naive_logsig(x))
     assert_array_almost_equal(logistic_sigmoid(x, log=True),
                               naive_log_logsig(x))
+    assert_array_almost_equal(logistic_sigmoid(x), stable_logsig(x),
+                              decimal=16)
+
     extreme_x = np.array([-100, 100], dtype=np.float)
     assert_array_almost_equal(logistic_sigmoid(extreme_x), [0, 1])
     assert_array_almost_equal(logistic_sigmoid(extreme_x, log=True), [-100, 0])
+    assert_array_almost_equal(logistic_sigmoid(extreme_x),
+                              stable_logsig(extreme_x),
+                              decimal=16)
