@@ -122,6 +122,23 @@ def test_parameter_checks():
                   X, [0, 0, 0, 0])
 
 
+def test_loss_function():
+    assert_raises(ValueError,
+                  GradientBoostingClassifier(loss='ls').fit, X, y)
+    assert_raises(ValueError,
+                  GradientBoostingClassifier(loss='lad').fit, X, y)
+    assert_raises(ValueError,
+                  GradientBoostingClassifier(loss='quantile').fit, X, y)
+    assert_raises(ValueError,
+                  GradientBoostingClassifier(loss='huber').fit, X, y)
+    assert_raises(ValueError,
+                  GradientBoostingRegressor(loss='deviance').fit, X, y)
+    assert_raises(ValueError,
+                  GradientBoostingRegressor(loss='bdeviance').fit, X, y)
+    assert_raises(ValueError,
+                  GradientBoostingRegressor(loss='mdeviance').fit, X, y)
+
+
 def test_classification_synthetic():
     """Test GradientBoostingClassifier on synthetic dataset used by
     Hastie et al. in ESLII Example 12.7. """
