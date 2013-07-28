@@ -1059,4 +1059,20 @@ class SGDRegressor(BaseSGDRegressor, _LearntSelectorMixin):
     Ridge, ElasticNet, Lasso, SVR
 
     """
-    pass
+    def __init__(self, loss="squared_loss", penalty="l2", alpha=0.0001,
+                 l1_ratio=0.15, fit_intercept=True, n_iter=5, shuffle=False,
+                 verbose=0, epsilon=DEFAULT_EPSILON, random_state=None,
+                 learning_rate="invscaling", eta0=0.01, power_t=0.25,
+                 warm_start=False, rho=None):
+        super(SGDRegressor, self).__init__(loss=loss, penalty=penalty,
+                                               alpha=alpha, l1_ratio=l1_ratio,
+                                               fit_intercept=fit_intercept,
+                                               n_iter=n_iter, shuffle=shuffle,
+                                               verbose=verbose,
+                                               epsilon=epsilon,
+                                               random_state=random_state,
+                                               rho=rho,
+                                               learning_rate=learning_rate,
+                                               eta0=eta0, power_t=power_t,
+                                               warm_start=False)
+
