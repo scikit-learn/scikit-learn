@@ -295,12 +295,13 @@ def test_fast_dot():
     rng = np.random.RandomState(42)
     A = rng.random_sample([2, 10])
     B = rng.random_sample([2, 10])
-    # test cov-like use case + dtypes
     for dt1, dt2 in [['f8', 'f4'], ['i4', 'i4']]:
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always", DataConversionWarning)
             fast_dot(A.astype(dt1), B.astype(dt2).T)
             assert_true(len(w) == 1)
+
+    # test cov-like use case + dtypes
     for dtype in ['f8', 'f4']:
         A = A.astype(dtype)
         B = B.astype(dtype)
