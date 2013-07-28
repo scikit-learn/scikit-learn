@@ -32,5 +32,5 @@ import pylab as pl
 pl.figure()
 pl.xlabel("Number of features selected")
 pl.ylabel("Cross validation score (nb of misclassifications)")
-pl.plot(range(1, len(rfecv.cv_scores_) + 1), rfecv.cv_scores_)
+pl.plot(range(1, len(rfecv.grid_scores_) + 1), rfecv.grid_scores_)
 pl.show()

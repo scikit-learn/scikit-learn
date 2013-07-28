@@ -157,7 +157,7 @@ def test_grid_search():
     assert_equal(grid_search.best_estimator_.foo_param, 2)
 
     for i, foo_i in enumerate([1, 2, 3]):
-        assert_true(grid_search.cv_scores_[i][0]
+        assert_true(grid_search.grid_scores_[i][0]
                     == {'foo_param': foo_i})
     # Smoke test the score etc:
     grid_search.score(X, y)
@@ -194,19 +194,19 @@ def test_grid_search_no_score():
                          GridSearchCV, clf_no_score, {'C': Cs})
 
 
-def test_trivial_cv_scores():
+def test_trivial_grid_scores():
     """Test search over a "grid" with only one point.
 
-    Non-regression test: cv_scores_ wouldn't be set by GridSearchCV.
+    Non-regression test: grid_scores_ wouldn't be set by GridSearchCV.
     """
     clf = MockClassifier()
     grid_search = GridSearchCV(clf, {'foo_param': [1]})
     grid_search.fit(X, y)
-    assert_true(hasattr(grid_search, "cv_scores_"))
+    assert_true(hasattr(grid_search, "grid_scores_"))
 
     random_search = RandomizedSearchCV(clf, {'foo_param': [0]})
     random_search.fit(X, y)
-    assert_true(hasattr(random_search, "cv_scores_"))
+    assert_true(hasattr(random_search, "grid_scores_"))
 
 
 def test_no_refit():
@@ -245,7 +245,7 @@ def test_grid_search_iid():
     # once with iid=True (default)
     grid_search = GridSearchCV(svm, param_grid={'C': [1, 10]}, cv=cv)
     grid_search.fit(X, y)
-    first = grid_search.cv_scores_[0]
+    first = grid_search.grid_scores_[0]
     assert_equal(first.parameters['C'], 1)
     assert_array_almost_equal(first.cv_validation_scores, [1, 1. / 3.])
     # for first split, 1/4 of dataset is in test, for second 3/4.
@@ -257,7 +257,7 @@ def test_grid_search_iid():
     grid_search = GridSearchCV(svm, param_grid={'C': [1, 10]}, cv=cv,
                                iid=False)
     grid_search.fit(X, y)
-    first = grid_search.cv_scores_[0]
+    first = grid_search.grid_scores_[0]
     assert_equal(first.parameters['C'], 1)
     # scores are the same as above
     assert_array_almost_equal(first.cv_validation_scores, [1, 1. / 3.])
@@ -471,7 +471,7 @@ def test_X_as_list():
     cv = KFold(n=len(X), n_folds=3)
     grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]}, cv=cv)
     grid_search.fit(X.tolist(), y).score(X, y)
-    assert_true(hasattr(grid_search, "cv_scores_"))
+    assert_true(hasattr(grid_search, "grid_scores_"))
 
 
 def test_unsupervised_grid_search():
@@ -511,7 +511,7 @@ def test_param_sampler():
         assert_true(0 <= sample["C"] <= 1)
 
 
-def test_randomized_search_cv_scores():
+def test_randomized_search_grid_scores():
     # Make a dataset with a lot of noise to get various kind of prediction
     # errors across CV folds and parameter settings
     X, y = make_classification(n_samples=200, n_features=100, n_informative=3,
@@ -527,10 +527,10 @@ def test_randomized_search_cv_scores():
     search = RandomizedSearchCV(SVC(), n_iter=n_search_iter, cv=n_cv_iter,
                                 param_distributions=params, iid=False)
     search.fit(X, y)
-    assert_equal(len(search.cv_scores_), n_search_iter)
+    assert_equal(len(search.grid_scores_), n_search_iter)
 
     # Check consistency of the structure of each cv_score item
-    for cv_score in search.cv_scores_:
+    for cv_score in search.grid_scores_:
         assert_equal(len(cv_score.cv_validation_scores), n_cv_iter)
         # Because we set iid to False, the mean_validation score is the
         # mean of the fold mean scores instead of the aggregate sample-wise
@@ -541,12 +541,12 @@ def test_randomized_search_cv_scores():
                      list(sorted(params.keys())))
 
     # Check the consistency with the best_score_ and best_params_ attributes
-    sorted_cv_scores = list(sorted(search.cv_scores_,
+    sorted_grid_scores = list(sorted(search.grid_scores_,
                             key=lambda x: x.mean_validation_score))
-    best_score = sorted_cv_scores[-1].mean_validation_score
+    best_score = sorted_grid_scores[-1].mean_validation_score
     assert_equal(search.best_score_, best_score)
 
-    tied_best_params = [s.parameters for s in sorted_cv_scores
+    tied_best_params = [s.parameters for s in sorted_grid_scores
                         if s.mean_validation_score == best_score]
     assert_true(search.best_params_ in tied_best_params,
                 "best_params_={0} is not part of the"
@@ -563,7 +563,7 @@ def test_grid_search_score_consistency():
         grid_search = GridSearchCV(clf, {'C': Cs}, scoring=score)
         grid_search.fit(X, y)
         cv = StratifiedKFold(n_folds=3, y=y)
-        for C, scores in zip(Cs, grid_search.cv_scores_):
+        for C, scores in zip(Cs, grid_search.grid_scores_):
             clf.set_params(C=C)
             scores = scores[2]  # get the separate runs from grid scores
             i = 0
@@ -607,7 +607,7 @@ def test_grid_search_with_multioutput_data():
     for est in estimators:
         grid_search = GridSearchCV(est, est_parameters, cv=cv)
         grid_search.fit(X, y)
-        for parameters, _, cv_validation_scores in grid_search.cv_scores_:
+        for parameters, _, cv_validation_scores in grid_search.grid_scores_:
             est.set_params(**parameters)
 
             for i, (train, test) in enumerate(cv):
@@ -620,7 +620,7 @@ def test_grid_search_with_multioutput_data():
     for est in estimators:
         random_search = RandomizedSearchCV(est, est_parameters, cv=cv)
         random_search.fit(X, y)
-        for parameters, _, cv_validation_scores in random_search.cv_scores_:
+        for parameters, _, cv_validation_scores in random_search.grid_scores_:
             est.set_params(**parameters)
 
             for i, (train, test) in enumerate(cv):
@@ -633,7 +633,7 @@ def test_grid_search_with_multioutput_data():
     for est in estimators:
         random_search = RandomizedSearchCV(est, est_parameters, cv=cv)
         random_search.fit(X, y)
-        for parameters, _, cv_validation_scores in random_search.cv_scores_:
+        for parameters, _, cv_validation_scores in random_search.grid_scores_:
             est.set_params(**parameters)
 
             for i, (train, test) in enumerate(cv):

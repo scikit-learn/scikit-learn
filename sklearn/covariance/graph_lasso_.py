@@ -422,7 +422,7 @@ class GraphLassoCV(GraphLasso):
     `cv_alphas_`: list of float
         All penalization parameters explored.
 
-    `cv_scores`: 2D numpy.ndarray (n_alphas, n_folds)
+    `grid_scores`: 2D numpy.ndarray (n_alphas, n_folds)
         Log-likelihood score on left-out data across folds.
 
     See Also
@@ -551,14 +551,14 @@ class GraphLassoCV(GraphLasso):
                       % (i + 1, n_refinements, time.time() - t0))
 
         path = list(zip(*path))
-        cv_scores = list(path[1])
+        grid_scores = list(path[1])
         alphas = list(path[0])
         # Finally, compute the score with alpha = 0
         alphas.append(0)
-        cv_scores.append(cross_val_score(EmpiricalCovariance(), X,
+        grid_scores.append(cross_val_score(EmpiricalCovariance(), X,
                                          cv=cv, n_jobs=self.n_jobs,
                                          verbose=inner_verbose))
-        self.cv_scores = np.array(cv_scores)
+        self.grid_scores = np.array(grid_scores)
         best_alpha = alphas[best_index]
         self.alpha_ = best_alpha
         self.cv_alphas_ = alphas
