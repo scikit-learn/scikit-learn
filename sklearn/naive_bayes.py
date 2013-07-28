@@ -375,13 +375,13 @@ class MultinomialNB(BaseDiscreteNB):
         Whether to learn class prior probabilities or not.
         If false, a uniform prior will be used.
 
-    class_prior : array-like, size=[n_classes,]
+    class_prior : array-like, size (n_classes,)
         Prior probabilities of the classes. If specified the priors are not
         adjusted according to the data.
 
     Attributes
     ----------
-    `class_log_prior_` : array, shape (n_classes)
+    `class_log_prior_` : array, shape (n_classes, )
         Smoothed empirical log probability for each class.
 
     `intercept_` : property
@@ -390,7 +390,7 @@ class MultinomialNB(BaseDiscreteNB):
 
     `feature_log_prob_`: array, shape (n_classes, n_features)
         Empirical log probability of features
-        given a class, P(x_i|y).
+        given a class, ``P(x_i|y)``.
 
     `coef_` : property
         Mirrors ``feature_log_prob_`` for interpreting MultinomialNB

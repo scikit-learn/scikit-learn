@@ -263,7 +263,7 @@ whereas the weights are decreased for those that were predicted correctly. As
 iterations proceed, examples that are difficult to predict receive
 ever-increasing influence. Each subsequent weak learner is thereby forced to
 concentrate on the examples that are missed by the previous ones in the sequence
-[HTF2009]_.
+[HTF]_.
 
 .. figure:: ../auto_examples/ensemble/images/plot_adaboost_hastie_10_2_1.png
    :target: ../auto_examples/ensemble/plot_adaboost_hastie_10_2.html
@@ -328,7 +328,7 @@ decision trees).
 
  .. [D1997] H. Drucker. "Improving Regressors using Boosting Techniques", 1997.
 
- .. [HTF2009] T. Hastie, R. Tibshirani and J. Friedman, "Elements of
+ .. [HTF] T. Hastie, R. Tibshirani and J. Friedman, "Elements of
               Statistical Learning Ed. 2", Springer, 2009.
 
 
