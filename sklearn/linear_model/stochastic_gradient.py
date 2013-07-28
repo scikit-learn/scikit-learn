@@ -653,6 +653,19 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
 
     """
 
+    def __init__(self, loss="hinge", penalty='l2', alpha=0.0001, l1_ratio=0.15,
+                 fit_intercept=True, n_iter=5, shuffle=False, verbose=0,
+                 epsilon=DEFAULT_EPSILON, n_jobs=1, random_state=None,
+                 learning_rate="optimal", eta0=0.0, power_t=0.5,
+                 class_weight=None, warm_start=False, rho=None, seed=None):
+        super(SGDClassifier, self).__init__(
+            loss=loss, penalty=penalty, alpha=alpha, l1_ratio=l1_ratio,
+            fit_intercept=fit_intercept, n_iter=n_iter, shuffle=shuffle,
+            verbose=verbose, epsilon=epsilon, n_jobs=n_jobs,
+            random_state=random_state, learning_rate=learning_rate, eta0=eta0,
+            power_t=power_t, class_weight=class_weight, warm_start=warm_start,
+            rho=rho, seed=seed)
+
     def predict_proba(self, X):
         """Probability estimates.
 
