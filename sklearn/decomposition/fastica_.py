@@ -113,7 +113,7 @@ def _ica_par(X, tol, g, fun_args, max_iter, w_init):
 
 # Some standard non-linear functions.
 # XXX: these should be optimized, as they can be a bottleneck.
-def _logcosh(x, fun_args):
+def _logcosh(x, fun_args=None):
     alpha = fun_args.get('alpha', 1.0)  # comment it out?
 
     x *= alpha
@@ -497,6 +497,7 @@ class FastICA(BaseEstimator, TransformerMixin):
         X : array-like, shape (n_samples, n_features)
             Data to transform, where n_samples is the number of samples
             and n_features is the number of features.
+
         copy : bool (optional)
             If False, data passed to fit are overwritten. Defaults to True.
 
