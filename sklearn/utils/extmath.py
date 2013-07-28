@@ -13,7 +13,7 @@ from . import check_random_state
 from .fixes import qr_economic
 from ._logistic_sigmoid import _log_logistic_sigmoid
 from ..externals.six.moves import xrange
-from .validation import array2d
+from .validation import array2d, DataConversionWarning
 
 
 def norm(v):
@@ -86,7 +86,7 @@ def _fast_dot(A, B):
         for x in [A, B]):
         warnings.warn('Data must be of same type. Supported types '
                       'are 32 and 64 bit float. '
-                      'Falling back to np.dot.')
+                      'Falling back to np.dot.', DataConversionWarning)
         return np.dot(A, B)
 
     dot = linalg.get_blas_funcs('gemm', (A, B))

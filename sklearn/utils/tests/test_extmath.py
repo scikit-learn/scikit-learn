@@ -297,9 +297,9 @@ def test_fast_dot():
     # test cov-like use case + dtypes
     for dt1, dt2 in [['f8', 'f4'], ['i4', 'i4']]:
         with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter("always")
+            # warnings.simplefilter("always")
             fast_dot(A.astype(dt1), B.astype(dt2).T)
-            assert_true(len(w) > 0)  # 1 warning should be raised
+            assert_true('DataConversionWarning' in '%s' % w[0].category)
     for dtype in ['f8', 'f4']:
         A = A.astype(dtype)
         B = B.astype(dtype)
