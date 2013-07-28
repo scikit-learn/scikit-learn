@@ -39,8 +39,8 @@ clf = RandomForestClassifier(n_estimators=20)
 
 
 # Utility function to report best scores
-def report(cv_scores, n_top=3):
-    top_scores = sorted(cv_scores, key=itemgetter(1), reverse=True)[:n_top]
+def report(grid_scores, n_top=3):
+    top_scores = sorted(grid_scores, key=itemgetter(1), reverse=True)[:n_top]
     for i, score in enumerate(top_scores):
         print("Model with rank: {0}".format(i + 1))
         print("Mean validation score: {0:.3f} (std: {1:.3f})".format(
@@ -67,7 +67,7 @@ start = time()
 random_search.fit(X, y)
 print("RandomizedSearchCV took %.2f seconds for %d candidates"
       " parameter settings." % ((time() - start), n_iter_search))
-report(random_search.cv_scores_)
+report(random_search.grid_scores_)
 
 # use a full grid over all parameters
 param_grid = {"max_depth": [3, None],
@@ -82,5 +82,5 @@ grid_search = GridSearchCV(clf, param_grid=param_grid)
 grid_search.fit(X, y)
 
 print("GridSearchCV took %.2f seconds for %d candidate parameter settings."
-      % (time() - start, len(grid_search.cv_scores_)))
-report(grid_search.cv_scores_)
+      % (time() - start, len(grid_search.grid_scores_)))
+report(grid_search.grid_scores_)
