@@ -64,6 +64,9 @@ def plot_subfigure(X, Y, subplot, title, transform):
     min_x = np.min(X[:, 0])
     max_x = np.max(X[:, 0])
 
+    min_y = np.min(X[:, 1])
+    max_y = np.max(X[:, 1])
+
     classif = OneVsRestClassifier(SVC(kernel='linear'))
     classif.fit(X, Y)
 
@@ -77,7 +80,6 @@ def plot_subfigure(X, Y, subplot, title, transform):
                facecolors='none', linewidths=2, label='Class 1')
     pl.scatter(X[one_class, 0], X[one_class, 1], s=80, edgecolors='orange',
                facecolors='none', linewidths=2, label='Class 2')
-    pl.axis('tight')
 
     plot_hyperplane(classif.estimators_[0], min_x, max_x, 'k--',
                     'Boundary\nfor class 1')
@@ -86,8 +88,9 @@ def plot_subfigure(X, Y, subplot, title, transform):
     pl.xticks(())
     pl.yticks(())
 
+    pl.xlim(min_x - .5 * max_x, max_x + .5 * max_x)
+    pl.ylim(min_y - .5 * max_y, max_y + .5 * max_y)
     if subplot == 2:
-        pl.xlim(min_x - 5, max_x)
         pl.xlabel('First principal component')
         pl.ylabel('Second principal component')
         pl.legend(loc="upper left")
