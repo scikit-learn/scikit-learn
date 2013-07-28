@@ -73,6 +73,7 @@ div.navbar ul {
     -moz-border-radius: 5px;
     list-style: none;
     z-index: 10000;
+    position: relative;
 }
 
 div.navbar ul, div.navbar li {
@@ -89,10 +90,12 @@ div.navbar ul li a:hover {
     text-decoration: none;
     font-weight: bold;
     font-size: 14px;
+    z-index: inherit;
 }
 
 div.navbar ul li a:hover {
     color: #EEE;
+    z-index: inherit;
 }
 
 .gsc-input {
@@ -102,7 +105,6 @@ div.navbar ul li a:hover {
 
 .search_form {
     margin-top: -23px;
-    z-index: -1;
 }
 
 .gsc-branding {
@@ -1047,4 +1049,26 @@ div.navbar ul.dropdown-menu li a.btn {
 
 .fork-me {
   z-index: 100;
+}
+
+@media all and (max-width: 780px) {
+  .fork-me {
+      display: none;
+  }
+
+  .search_form {
+    display: none;
+  }
+
+  .sphinxsidebar {
+    display: none;
+  }
+
+  div.content {
+    margin-left: 0;
+  }
+  
+  div.container.index-upper, div.container.index-lower {
+    margin-left: 210px;
+  }
 }
