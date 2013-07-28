@@ -16,42 +16,35 @@
 
 
 {% block htmltitle %}
-{{ super() }}
-<!-- htmltitle is before nature.css - we use this hack to load bootstrap first -->
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<link rel="stylesheet" href="{{ pathto('_static/css/bootstrap.min.css', 1) }}" media="screen" />
-<link rel="stylesheet" href="{{ pathto('_static/css/bootstrap-responsive.css', 1) }}"/>
+  {{ super() }}
+  <!-- htmltitle is before nature.css - we use this hack to load bootstrap first -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="{{ pathto('_static/css/bootstrap.min.css', 1) }}" media="screen" />
+  <link rel="stylesheet" href="{{ pathto('_static/css/bootstrap-responsive.css', 1) }}"/>
 {% endblock %}
 
 {% block extrahead %}
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<script src="{{ pathto('_static/js/bootstrap.min.js', 1)}}" type="text/javascript"></script>
+   {% if theme_collapsiblesidebar|tobool %}
+       <script type="text/javascript" src="{{ pathto('_static/sidebar.js', 1) }}"></script>
+   {% endif %}
 
-{% if theme_google_analytics|tobool %}
-<script type="text/javascript">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="{{ pathto('_static/js/bootstrap.min.js', 1)}}" type="text/javascript"></script>
+  <link rel="canonical" href="http://scikit-learn.org/stable/{{pagename}}.html" />
 
-  var _gaq = _gaq || [];
-  _gaq.push(['_setAccount', 'UA-22606712-2']);
-  _gaq.push(['_trackPageview']);
-
-  (function() {
-    var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-    ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-  })();
-</script>
-{% endif %}
-      <link rel="canonical" href="http://scikit-learn.org/stable/{{pagename}}.html" />
-
-{%- if pagename == 'index' or pagename == 'documentation' %}
-    <style type="text/css">
-    {%- if pagename == 'index'%}
-            div.body {margin: 0px}
-    {%- endif %}
-
-    </style>
-{%- endif %}
-
+  <script type="text/javascript">
+    $("div.buttonNext, div.buttonPrevious").hover(
+       function () {
+           $(this).css('background-color', '#FF9C34');
+       },
+       function () {
+           $(this).css('background-color', '#A7D6E2');
+       }
+    );
+    var bodywrapper = $('.bodywrapper');
+    var sidebarbutton = $('#sidebarbutton');
+    sidebarbutton.css({'height': '900px'});
+  </script>
 {% endblock %}
 
 {%- if pagename == 'index' %}
@@ -81,7 +74,7 @@
                 <li class="btn-li"><div class="btn-group">
 		      <a href="{{pathto('documentation')}}">Documentation</a>
 		      <a class="btn dropdown-toggle" data-toggle="dropdown">
-			<span class="caret"></span>
+			     <span class="caret"></span>
 		      </a>
 		      <ul class="dropdown-menu">
 			<li class="link-title">Scikit-learn 0.14 (stable)</li>
@@ -98,24 +91,11 @@
 		      </ul>
 		    </div>
 		</li>
-                <li><a href="{{pathto('auto_examples/index')}}">Examples</a></li>
+            <li><a href="{{pathto('auto_examples/index')}}">Examples</a></li>
             </ul>
 
             <div class="search_form">
-
                 <div id="cse" style="width: 100%;"></div>
-                <script src="http://www.google.com/jsapi"
-                    type="text/javascript"></script>
-                <script type="text/javascript"> google.load('search', '1',
-                    {language : 'en'}); google.setOnLoadCallback(function() {
-                        var customSearchControl = new
-                        google.search.CustomSearchControl('016639176250731907682:tjtqbvtvij0');
-                        customSearchControl.setResultSetSize(google.search.Search.FILTERED_CSE_RESULTSET);
-                        var options = new google.search.DrawOptions();
-                        options.setAutoComplete(true);
-                        customSearchControl.draw('cse', options); }, true);
-                </script>
-
             </div>
         </div> <!-- end navbar -->
 
@@ -276,26 +256,9 @@
     {%- endfor %}
     {% endif %}
      </div>
-     {% if theme_collapsiblesidebar|tobool %}
-         <script type="text/javascript" src="{{ pathto('_static/sidebar.js') }}"></script>
-     {% endif %}
-     <script type="text/javascript">
-       $("div.buttonNext, div.buttonPrevious").hover(
-           function () {
-               $(this).css('background-color', '#FF9C34');
-           },
-           function () {
-               $(this).css('background-color', '#A7D6E2');
-           }
-       );
-       var bodywrapper = $('.bodywrapper');
-       var sidebarbutton = $('#sidebarbutton');
-       sidebarbutton.css({'height': '900px'});
-     </script>
 
     {% if theme_google_analytics|tobool %}
     <script type="text/javascript">
-
       var _gaq = _gaq || [];
       _gaq.push(['_setAccount', 'UA-22606712-2']);
       _gaq.push(['_trackPageview']);
@@ -305,7 +268,17 @@
         ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
         var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
       })();
-
     </script>
     {% endif %}
+
+    <script src="http://www.google.com/jsapi" type="text/javascript"></script>
+    <script type="text/javascript"> google.load('search', '1',
+        {language : 'en'}); google.setOnLoadCallback(function() {
+            var customSearchControl = new
+            google.search.CustomSearchControl('016639176250731907682:tjtqbvtvij0');
+            customSearchControl.setResultSetSize(google.search.Search.FILTERED_CSE_RESULTSET);
+            var options = new google.search.DrawOptions();
+            options.setAutoComplete(true);
+            customSearchControl.draw('cse', options); }, true);
+    </script>
 {%- endblock %}
