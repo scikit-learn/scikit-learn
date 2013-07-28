@@ -93,7 +93,7 @@ Changelog
      now supports percentage values. By `Gilles Louppe`_.
 
    - Performance improvements in :class:`isotonic.IsotonicRegression` by
-     Nelle Varoquaux.
+     `Nelle Varoquaux`_.
 
    - :func:`metrics.accuracy_score` has an option normalize to return
      the fraction or the number of correctly classified sample
@@ -184,6 +184,9 @@ Changelog
      and radius neighbors, :class:`neighbors.RadiusNeighborsRegressor` and
      :class:`neighbors.RadiusNeighborsClassifier` support multioutput data
      by `Arnaud Joly`_.
+
+   - New website design and navigation by `Gilles Louppe`_, `Nelle Varoquaux`_,
+     `Vincent Michael`_ and `Andreas Müller`_.
 
 
 
@@ -289,7 +292,7 @@ List of contributors for release 0.13.1 by number of commits.
  *  1  Diego Molla
  *  1  `Gilles Louppe`_
  *  1  `Mathieu Blondel`_
- *  1  Nelle Varoquaux
+ *  1  `Nelle Varoquaux`_
  *  1  Rafael Cunha de Almeida
  *  1  Rolando Espinoza La fuente
  *  1  `Vlad Niculae`_
@@ -354,7 +357,7 @@ New Estimator Classes
      Li. See :ref:`spectral_embedding` in the user guide.
 
    - :class:`isotonic.IsotonicRegression` by `Fabian Pedregosa`_, `Alexandre Gramfort`_
-     and Nelle Varoquaux.
+     and `Nelle Varoquaux`_,
 
 
 Changelog
@@ -2086,4 +2089,6 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 
 .. _Kemal Eren: http://www.kemaleren.com
 
-.. _Yann dauphin: http://ynd.github.io/
+.. _Yann Dauphin: http://ynd.github.io/
+
+.. _Nelle Varoquaux: https://github.com/nellev
