@@ -178,13 +178,17 @@ cdef struct NodeHeapData_t:
     ITYPE_t i2
 
 # build the corresponding numpy dtype for NodeHeapData
+# There is no offsetof() function in cython, so we hack it.
+# If we can ensure numpy 1.5 or greater, a cleaner way is to do
+#     cdef NodeHeapData_t nhd_tmp
+#     NodeHeapData = np.asarray(<NodeHeapData_t[:1]>(&nhd_tmp)).dtype
 cdef NodeHeapData_t nhd_tmp
 offsets = [<np.intp_t>&(nhd_tmp.val) - <np.intp_t>&nhd_tmp,
            <np.intp_t>&(nhd_tmp.i1) - <np.intp_t>&nhd_tmp,
            <np.intp_t>&(nhd_tmp.i2) - <np.intp_t>&nhd_tmp]
 NodeHeapData = np.dtype({'names': ['val', 'i1', 'i2'],
                          'formats': [DTYPE, ITYPE, ITYPE],
-                         'offsets': [o - offsets[0] for o in offsets],
+                         'offsets': offsets,
                          'itemsize': sizeof(NodeHeapData_t)})
 
 cdef struct NodeData_t:
@@ -194,6 +198,10 @@ cdef struct NodeData_t:
     DTYPE_t radius
 
 # build the corresponding numpy dtype for NodeData
+# There is no offsetof() function in cython, so we hack it.
+# If we can ensure numpy 1.5 or greater, a cleaner way is to do
+#     cdef NodeData_t nd_tmp
+#     NodeData = np.asarray(<NodeData_t[:1]>(&nd_tmp)).dtype
 cdef NodeData_t nd_tmp
 offsets = [<np.intp_t>&(nd_tmp.idx_start) - <np.intp_t>&nd_tmp,
            <np.intp_t>&(nd_tmp.idx_end) - <np.intp_t>&nd_tmp,
@@ -201,7 +209,7 @@ offsets = [<np.intp_t>&(nd_tmp.idx_start) - <np.intp_t>&nd_tmp,
            <np.intp_t>&(nd_tmp.radius) - <np.intp_t>&nd_tmp]
 NodeData = np.dtype({'names': ['idx_start', 'idx_end', 'is_leaf', 'radius'],
                      'formats': [ITYPE, ITYPE, ITYPE, DTYPE],
-                     'offsets': [o - offsets[0] for o in offsets],
+                     'offsets': offsets,
                      'itemsize': sizeof(NodeData_t)})
 
 
