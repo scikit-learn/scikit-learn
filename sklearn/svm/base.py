@@ -575,7 +575,7 @@ class BaseSVC(BaseLibSVM, ClassifierMixin):
         return self.classes_
 
 
-class BaseLibLinear(BaseEstimator):
+class BaseLibLinear(six.with_metaclass(ABCMeta, BaseEstimator)):
     """Base for classes binding liblinear (dense and sparse versions)"""
 
     _solver_type_dict = {
@@ -589,6 +589,7 @@ class BaseLibLinear(BaseEstimator):
         'PL2_LLR_D1': 7,  # L2 penalty, logistic regression, dual form
     }
 
+    @abstractmethod
     def __init__(self, penalty='l2', loss='l2', dual=True, tol=1e-4, C=1.0,
                  multi_class='ovr', fit_intercept=True, intercept_scaling=1,
                  class_weight=None, verbose=0, random_state=None):

@@ -772,6 +772,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
                                         DEFAULT_EPSILON),
     }
 
+    @abstractmethod
     def __init__(self, loss="squared_loss", penalty="l2", alpha=0.0001,
                  l1_ratio=0.15, fit_intercept=True, n_iter=5, shuffle=False,
                  verbose=0, epsilon=DEFAULT_EPSILON, random_state=None,
