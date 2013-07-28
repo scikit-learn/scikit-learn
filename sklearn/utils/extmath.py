@@ -100,6 +100,8 @@ try:
     fast_dot = _fast_dot
 except (ImportError, AttributeError):
     fast_dot = np.dot
+    warnings.warn('Could not import BLAS, falling back to np.dot',
+                   DataConversionWarning)
 
 
 def density(w, **kwargs):

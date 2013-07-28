@@ -295,11 +295,19 @@ def test_fast_dot():
     rng = np.random.RandomState(42)
     A = rng.random_sample([2, 10])
     B = rng.random_sample([2, 10])
-    for dt1, dt2 in [['f8', 'f4'], ['i4', 'i4']]:
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter("always", DataConversionWarning)
-            fast_dot(A.astype(dt1), B.astype(dt2).T)
-            assert_true(len(w) == 1)
+
+    try:
+        linalg.get_blas('gemm')
+        has_blas = True
+    except:
+        has_blas = False
+
+    if has_blas:
+        for dt1, dt2 in [['f8', 'f4'], ['i4', 'i4']]:
+            with warnings.catch_warnings(record=True) as w:
+                warnings.simplefilter("always", DataConversionWarning)
+                fast_dot(A.astype(dt1), B.astype(dt2).T)
+                assert_true(len(w) == 1)
 
     # test cov-like use case + dtypes
     for dtype in ['f8', 'f4']:
@@ -333,5 +341,6 @@ def test_fast_dot():
         C_ = fast_dot(A.T, B)
         assert_array_equal(C, C_)
 
-    for x in [np.array([[d] * 10] * 2) for d in [np.inf, np.nan]]:
-        assert_raises(ValueError, fast_dot, x, x.T)
+    if has_blas:
+        for x in [np.array([[d] * 10] * 2) for d in [np.inf, np.nan]]:
+            assert_raises(ValueError, fast_dot, x, x.T)
