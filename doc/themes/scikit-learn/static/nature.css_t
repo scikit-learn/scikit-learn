@@ -72,6 +72,7 @@ div.navbar ul {
     border-radius: 5px;
     -moz-border-radius: 5px;
     list-style: none;
+    z-index: 10000;
 }
 
 div.navbar ul, div.navbar li {
@@ -1044,5 +1045,6 @@ div.navbar ul.dropdown-menu li a.btn {
   color: #000;
 }
 
-
-
+.fork-me {
+  z-index: 100;
+}
