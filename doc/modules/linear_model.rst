@@ -70,6 +70,7 @@ This method computes the least squares solution using a singular value
 decomposition of X. If X is a matrix of size (n, p) this method has a
 cost of :math:`O(n p^2)`, assuming that :math:`n \geq p`.
 
+.. _ridge_regression:
 
 Ridge Regression
 ================

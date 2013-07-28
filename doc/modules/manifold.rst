@@ -94,6 +94,8 @@ from the data itself, without the use of predetermined classifications.
 The manifold learning implementations available in sklearn are
 summarized below
 
+.. _isomap:
+
 Isomap
 ======
 
