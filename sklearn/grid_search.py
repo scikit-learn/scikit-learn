@@ -564,7 +564,7 @@ class GridSearchCV(BaseSearchCV):
         in the list are explored. This enables searching over any sequence
         of parameter settings.
 
-    scoring : callable or None.
+    scoring : string, callable or None, optional, default: None
         A string (see model evaluation documentation) or
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)``.
@@ -740,7 +740,7 @@ class RandomizedSearchCV(BaseSearchCV):
         Number of parameter settings that are sampled. n_iter trades
         off runtime vs quality of the solution.
 
-    scoring : callable or None.
+    scoring : string, callable or None, optional, default: None
         A string (see model evaluation documentation) or
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)``.

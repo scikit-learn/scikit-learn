@@ -1083,16 +1083,16 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
     X : array-like of shape at least 2D
         The data to fit.
 
-    y : array-like, optional
+    y : array-like, optional, default: None
         The target variable to try to predict in the case of
         supervised learning.
 
-    scoring : callable or None.
+    scoring : string, callable or None, optional, default: None
         A string (see model evaluation documentation) or
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)``.
 
-    cv : cross-validation generator, optional
+    cv : cross-validation generator, optional, default: None
         A cross-validation generator. If None, a 3-fold cross
         validation is used or 3-fold stratified cross-validation
         when y is supplied and estimator is a classifier.
@@ -1237,7 +1237,7 @@ def permutation_test_score(estimator, X, y, scoring=None, cv=None,
         The target variable to try to predict in the case of
         supervised learning.
 
-    scoring : callable or None.
+    scoring : string, callable or None, optional, default: None
         A string (see model evaluation documentation) or
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)``.

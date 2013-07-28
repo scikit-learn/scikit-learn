@@ -16,6 +16,7 @@ from ..cross_validation import check_cv
 from .base import SelectorMixin
 from ..metrics.scorer import _deprecate_loss_and_score_funcs
 
+
 class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
     """Feature ranking with recursive feature elimination.
 
@@ -234,7 +235,7 @@ class RFECV(RFE, MetaEstimatorMixin):
         Specific cross-validation objects can also be passed, see
         `sklearn.cross_validation module` for details.
 
-    scoring : callable or None.
+    scoring : string, callable or None, optional, default: None
         A string (see model evaluation documentation) or
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)``.

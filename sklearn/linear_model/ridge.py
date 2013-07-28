@@ -862,7 +862,7 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
     normalize : boolean, optional, default False
         If True, the regressors X will be normalized before regression.
 
-    scoring : callable or None.
+    scoring : string, callable or None, optional, default: None
         A string (see model evaluation documentation) or
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)``.
@@ -939,7 +939,7 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
     normalize : boolean, optional, default False
         If True, the regressors X will be normalized before regression.
 
-    scoring : callable or None.
+    scoring : string, callable or None, optional, default: None
         A string (see model evaluation documentation) or
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)``.
