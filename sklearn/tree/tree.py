@@ -137,6 +137,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         is_classification = isinstance(self, ClassifierMixin)
 
         y = np.atleast_1d(y)
+
         if y.ndim == 1:
             # reshape is necessary to preserve the data contiguity against vs
             # [:, np.newaxis] that does not.

@@ -9,7 +9,7 @@ from . import libsvm, liblinear
 from . import libsvm_sparse
 from ..base import BaseEstimator, ClassifierMixin
 from ..preprocessing import LabelEncoder
-from ..utils import atleast2d_or_csr, array2d, check_random_state
+from ..utils import atleast2d_or_csr, array2d, check_random_state, column_or_1d
 from ..utils import ConvergenceWarning, compute_class_weight, deprecated
 from ..utils.fixes import unique
 from ..utils.extmath import safe_sparse_dot
@@ -437,6 +437,7 @@ class BaseSVC(BaseLibSVM, ClassifierMixin):
     """ABC for LibSVM-based classifiers."""
 
     def _validate_targets(self, y):
+        y = column_or_1d(y, warn=True)
         cls, y = unique(y, return_inverse=True)
         self.class_weight_ = compute_class_weight(self.class_weight, cls, y)
         if len(cls) < 2:

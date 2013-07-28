@@ -34,7 +34,7 @@ from .base import BaseEnsemble
 from ..base import BaseEstimator
 from ..base import ClassifierMixin
 from ..base import RegressorMixin
-from ..utils import check_random_state, array2d, check_arrays
+from ..utils import check_random_state, array2d, check_arrays, column_or_1d
 from ..utils.extmath import logsumexp
 from ..utils.fixes import unique
 from ..externals import six
@@ -552,7 +552,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         # Check input
         X, = check_arrays(X, dtype=DTYPE, sparse_format="dense",
                           check_ccontiguous=True)
-        y = np.ravel(y, order="C")
+        y = column_or_1d(y, warn=True)
         n_samples, n_features = X.shape
         self.n_features = n_features
         random_state = check_random_state(self.random_state)
@@ -883,6 +883,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         self : object
             Returns self.
         """
+        y = column_or_1d(y, warn=True)
         self.classes_, y = unique(y, return_inverse=True)
         self.n_classes_ = len(self.classes_)
 

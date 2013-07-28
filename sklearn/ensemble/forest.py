@@ -54,6 +54,7 @@ from ..tree import (DecisionTreeClassifier, DecisionTreeRegressor,
                     ExtraTreeClassifier, ExtraTreeRegressor)
 from ..tree._tree import DTYPE, DOUBLE
 from ..utils import array2d, check_random_state, check_arrays, safe_asarray
+from ..utils.validation import DataConversionWarning
 from ..utils.fixes import bincount, unique
 
 
@@ -259,6 +260,12 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
         n_samples, self.n_features_ = X.shape
 
         y = np.atleast_1d(y)
+        if y.ndim == 2 and y.shape[1] == 1:
+            warn("A column-vector y was passed when a 1d array was"
+                 " expected. Please change the shape of y to "
+                 "(n_samples, ), for example using ravel().",
+                 DataConversionWarning, stacklevel=2)
+
         if y.ndim == 1:
             # reshape is necessary to preserve the data contiguity against vs
             # [:, np.newaxis] that does not.

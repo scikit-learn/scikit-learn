@@ -253,6 +253,8 @@ API changes summary
      to float, and raises a warning. Previously it rounded for dense integer
      input.
 
+   - Better input validation, warning on unexpected shapes for y.
+
 .. _changes_0_13_1:
 
 0.13.1

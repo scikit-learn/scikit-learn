@@ -534,7 +534,7 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
         self._label_binarizer = LabelBinarizer(pos_label=1, neg_label=-1)
         Y = self._label_binarizer.fit_transform(y)
         if not self._label_binarizer.multilabel_:
-            y = column_or_1d(y)
+            y = column_or_1d(y, warn=True)
 
         if self.class_weight:
             cw = compute_class_weight(self.class_weight,
@@ -749,8 +749,8 @@ class _RidgeGCV(LinearModel):
             # identity_estimator will just return them
             def identity_estimator():
                 pass
-            identity_estimator.decision_function = lambda y_predict : y_predict
-            identity_estimator.predict = lambda y_predict : y_predict
+            identity_estimator.decision_function = lambda y_predict: y_predict
+            identity_estimator.predict = lambda y_predict: y_predict
 
             out = [scorer(identity_estimator, y.ravel(), cv_values[:, i])
                    for i in range(len(self.alphas))]
@@ -1025,7 +1025,7 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
         self._label_binarizer = LabelBinarizer(pos_label=1, neg_label=-1)
         Y = self._label_binarizer.fit_transform(y)
         if not self._label_binarizer.multilabel_:
-            y = column_or_1d(y)
+            y = column_or_1d(y, warn=True)
         cw = compute_class_weight(class_weight,
                                   self.classes_, Y)
         # modify the sample weights with the corresponding class weight
