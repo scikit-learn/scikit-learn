@@ -4,7 +4,7 @@ Created on Feb 17, 2013
 @author: jasonrudy
 '''
 from nose.tools import assert_true, assert_false, assert_equal
-from sklearn.earth._basis import Basis, ConstantBasisFunction, HingeBasisFunction, LinearBasisFunction
+from .._basis import Basis, ConstantBasisFunction, HingeBasisFunction, LinearBasisFunction
 import numpy
 import pickle
 import os
