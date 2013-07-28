@@ -186,7 +186,7 @@ Changelog
      by `Arnaud Joly`_.
 
    - New website design and navigation by `Gilles Louppe`_, `Nelle Varoquaux`_,
-     `Vincent Michael`_ and `Andreas Müller`_.
+     Vincent Michael and `Andreas Müller`_.
 
 
 

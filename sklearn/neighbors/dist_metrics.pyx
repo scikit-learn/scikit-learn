@@ -126,9 +126,9 @@ cdef class DistanceMetric:
 
     *Metrics intended for real-valued vector spaces:*
 
-    ==============  ====================  ========  ===========================
+    ==============  ====================  ========  ============================
     identifier      class name            args      distance function
-    --------------  --------------------  --------  ---------------------------
+    --------------  --------------------  --------  ----------------------------
     "euclidean"     EuclideanDistance     -         sqrt(sum((x - y)^2))
     "manhattan"     ManhattanDistance     -         sum(|x - y|)
     "chebyshev"     ChebyshevDistance     -         sum(max(|x - y|))
@@ -136,28 +136,28 @@ cdef class DistanceMetric:
     "wminkowski"    WMinkowskiDistance    p, w      sum(w * |x - y|^p)^(1/p)
     "seuclidean"    SEuclideanDistance    V         sqrt(sum((x - y)^2 / V))
     "mahalanobis"   MahalanobisDistance   V or VI   sqrt((x - y)' V^-1 (x - y))
-    ==============  ====================  ========  ===========================
+    ==============  ====================  ========  ============================
 
     *Metrics intended for two-dimensional vector spaces:*
-    ===========  =================  =======================================
-    identifier   class name         distance function
-    -----------  -----------------  ----------------------------------------
-    "haversine"  HaversineDistance  2 arcsin(sqrt(sin^2(0.5*dx)
+    ============  ==================  ========================================
+    identifier    class name          distance function
+    ------------  ------------------  ----------------------------------------
+    "haversine"   HaversineDistance   2 arcsin(sqrt(sin^2(0.5*dx)
                                              + cos(x1)cos(x2)sin^2(0.5*dy)))
-    ===========  =================  ========================================
+    ============  ==================  ========================================
 
 
     *Metrics intended for integer-valued vector spaces:*  Though intended
     for integer-valued vectors, these are also valid metrics in the case of
     real-valued vectors.
 
-    =============  ====================  ====================================
+    =============  ====================  =====================================
     identifier     class name            distance function
-    -------------  --------------------  ------------------------------------
+    -------------  --------------------  -------------------------------------
     "hamming"      HammingDistance       N_unequal(x, y) / N_tot
     "canberra"     CanberraDistance      sum(|x - y| / (|x| + |y|))
     "braycurtis"   BrayCurtisDistance    sum(|x - y|) / (sum(|x|) + sum(|y|))
-    =============  ====================  ====================================
+    =============  ====================  =====================================
 
     *Metrics intended for boolean-valued vector spaces:*  Any nonzero entry
     is evaluated to "True".  In the listings below, the following
@@ -171,26 +171,26 @@ cdef class DistanceMetric:
      - NNEQ : number of non-equal dimensions, NNEQ = NTF + NFT
      - NNZ : number of nonzero dimensions, NNZ = NTF + NFT + NTT
 
-    =============     ======================  =================================
-    identifier        class name              distance function
-    -------------     ----------------------  ---------------------------------
-    "jaccard"         JaccardDistance         NNEQ / NNZ
-    "maching"         MatchingDistance        NNEQ / N
-    "dice"            DiceDistance            NNEQ / (NTT + NNZ)
-    "kulsinski"       KulsinskiDistance       (NNEQ + N - NTT) / (NNEQ + N)
-    "rogerstanimoto"  RogersTanimotoDistance  2 * NNEQ / (N + NNEQ)
-    "russellrao"      RussellRaoDistance      NNZ / N
-    "sokalmichener"   SokalMichenerDistance   2 * NNEQ / (N + NNEQ)
-    "sokalsneath"     SokalSneathDistance     NNEQ / (NNEQ + 0.5 * NTT)
-    ================  ======================  =================================
+    =================  =======================  =================================
+    identifier         class name               distance function
+    -----------------  -----------------------  ---------------------------------
+    "jaccard"          JaccardDistance          NNEQ / NNZ
+    "maching"          MatchingDistance         NNEQ / N
+    "dice"             DiceDistance             NNEQ / (NTT + NNZ)
+    "kulsinski"        KulsinskiDistance        (NNEQ + N - NTT) / (NNEQ + N)
+    "rogerstanimoto"   RogersTanimotoDistance   2 * NNEQ / (N + NNEQ)
+    "russellrao"       RussellRaoDistance       NNZ / N
+    "sokalmichener"    SokalMichenerDistance    2 * NNEQ / (N + NNEQ)
+    "sokalsneath"      SokalSneathDistance      NNEQ / (NNEQ + 0.5 * NTT)
+    =================  =======================  =================================
 
     *User-defined distance:*
 
-    ==========    ==============    =======
-    identifier    class name        args
-    ----------    --------------    -------
-    "pyfunc"      PyFuncDistance    func
-    ==========    ==============    =======
+    ===========    ===============    =======
+    identifier     class name         args
+    -----------    ---------------    -------
+    "pyfunc"       PyFuncDistance     func
+    ===========    ===============    =======
 
     Here ``func`` is a function which takes two one-dimensional numpy
     arrays, and returns a distance.  Note that in order to be used within

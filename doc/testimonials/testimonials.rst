@@ -26,6 +26,7 @@ sodales aliquam quam.
 .. raw:: html
 
    <div class="testimonial-website">
+
 **website:** `www.inria.fr <http://www.inria.fr>`_
 
 .. raw:: html
@@ -47,6 +48,7 @@ sodales aliquam quam.
 .. raw:: html
 
    <div class="testimonial-website">
+
 **website:** `www.inria.fr <http://www.inria.fr>`_
 
 .. raw:: html

@@ -158,18 +158,18 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
     Parameters
     ----------
 
-    neg_label: int (default: 0)
+    neg_label : int (default: 0)
         Value with which negative labels must be encoded.
 
-    pos_label: int (default: 1)
+    pos_label : int (default: 1)
         Value with which positive labels must be encoded.
 
     Attributes
     ----------
-    `classes_`: array of shape [n_class]
+    `classes_` : array of shape [n_class]
         Holds the label for each class.
 
-    `multilabel_`: boolean
+    `multilabel_` : boolean
         True if the transformer was fitted on a multilabel rather than a
         multiclass set of labels.
 
@@ -209,7 +209,7 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         self.pos_label = pos_label
 
     @property
-    @deprecated("Attribute 'multilabel' was renamed to 'multilabel_' in "
+    @deprecated("Attribute `multilabel` was renamed to `multilabel_` in "
                 "0.14 and will be removed in 0.16")
     def multilabel(self):
         return self.multilabel_
@@ -223,7 +223,7 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        y : numpy array of shape [n_samples] or sequence of sequences
+        y : numpy array of shape (n_samples,) or sequence of sequences
             Target values. In the multilabel case the nested sequences can
             have variable lengths.
 

@@ -563,19 +563,22 @@ class ElasticNet(LinearModel, RegressorMixin):
         self.intercept_ = 0.0
 
     def fit(self, X, y, Xy=None, coef_init=None):
-        """Fit model with coordinate descent
+        """Fit model with coordinate descent.
 
         Parameters
         -----------
-        X: ndarray or scipy.sparse matrix, (n_samples, n_features)
+        X : ndarray or scipy.sparse matrix, (n_samples, n_features)
             Data
-        y: ndarray, shape = (n_samples,) or (n_samples, n_targets)
+
+        y : ndarray, shape = (n_samples,) or (n_samples, n_targets)
             Target
+
         Xy : array-like, optional
             Xy = np.dot(X.T, y) that can be precomputed. It is useful
             only when the Gram matrix is precomputed.
             WARNING : ignored and will be deprecated in 0.15
-        coef_init: ndarray of shape n_features or (n_targets, n_features)
+
+        coef_init : ndarray of shape n_features or (n_targets, n_features)
             The initial coeffients to warm-start the optimization
             WARNING : ignored and will be deprecated in 0.15
 
