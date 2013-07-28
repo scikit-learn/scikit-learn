@@ -331,5 +331,5 @@ def test_fast_dot():
         C_ = fast_dot(A.T, B)
         assert_array_equal(C, C_)
 
-    for x in [np.array([[np.nan] * 10] * 2), A / 0]:
+    for x in [np.array([[d] * 10] * 2) for d in [np.inf, np.nan]]:
         assert_raises(ValueError, fast_dot, x, x.T)
