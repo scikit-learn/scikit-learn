@@ -150,7 +150,8 @@
 
 cimport cython
 cimport numpy as np
-from libc.math cimport fmax, fmin, fabs, sqrt, exp, cos, pow, log, lgamma
+from libc.math cimport fabs, sqrt, exp, cos, pow, log
+from sklearn.utils.lgamma cimport lgamma
 
 import numpy as np
 import warnings
@@ -2519,3 +2520,10 @@ def nodeheap_sort(DTYPE_t[::1] vals):
         indices[i] = data.i1
 
     return np.asarray(vals_sorted), np.asarray(indices)
+
+# Reimplementation for MSVC support
+cdef inline double fmin(double a, double b):
+    return min(a, b)
+
+cdef inline double fmax(double a, double b):
+    return max(a, b)
