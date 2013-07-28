@@ -1051,6 +1051,10 @@ div.navbar ul.dropdown-menu li a.btn {
   z-index: 100;
 }
 
+div.container-index {
+  margin-left: -210px;
+}
+
 @media all and (max-width: 780px) {
   .fork-me {
       display: none;
@@ -1067,8 +1071,10 @@ div.navbar ul.dropdown-menu li a.btn {
   div.content {
     margin-left: 0;
   }
-  
-  div.container.index-upper, div.container.index-lower {
-    margin-left: 210px;
+
+
+  div.container-index {
+    margin-left: 0;
   }
+
 }

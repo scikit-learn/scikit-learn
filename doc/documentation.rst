@@ -1,5 +1,6 @@
 .. raw:: html
 
+  <div class="container-index">
         <!-- Block section -->
             <h1>Documentation of scikit-learn 0.13</h1>
             <div class="row-fluid">
@@ -90,3 +91,4 @@
 
                 <!-- row -->
             </div>
+    </div>

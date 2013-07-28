@@ -28,6 +28,7 @@
 .. raw:: html
 
     <!-- Block section -->
+    <div class="container-index">
     <div class="container index-upper">
     <div class="row-fluid">
 
@@ -299,4 +300,5 @@
             -->
 
         </div>
+    </div>
     </div>
