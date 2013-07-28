@@ -191,9 +191,8 @@ def test_transformers():
         # fit
 
         if name in ('PLSCanonical', 'PLSRegression', 'CCA', 'PLSSVD'):
-            random_state = np.random.RandomState(seed=12345)
-            y_ = np.vstack([y, 2 * y + random_state.randint(2, size=len(y))])
-            y_ = y_.T
+            y_ = np.c_[y, y]
+            y_[::2, 1] *= 2
         else:
             y_ = y
 
