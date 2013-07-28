@@ -266,7 +266,7 @@ In the multilabel case with binary label indicators: ::
 
 .. topic:: Example:
 
-  * See :ref:`example_plot_permutation_test_for_classification.py`
+  * See :ref:`example_feature_selection_plot_permutation_test_for_classification.py`
     for an example of accuracy score usage using permutations of
     the dataset.
 
@@ -290,24 +290,24 @@ predicted to be in group :math:`j`. Here an example of such confusion matrix::
          [1, 0, 2]])
 
 Here a visual representation of such confusion matrix (this figure comes
-from the :ref:`example_plot_confusion_matrix.py` example):
+from the :ref:`example_model_selection_plot_confusion_matrix.py` example):
 
-.. image:: ../auto_examples/images/plot_confusion_matrix_001.png
-   :target: ../auto_examples/plot_confusion_matrix.html
+.. image:: ../auto_examples/model_selection/images/plot_confusion_matrix_001.png
+   :target: ../auto_examples/model_selection/plot_confusion_matrix.html
    :scale: 75
    :align: center
 
 .. topic:: Example:
 
-  * See :ref:`example_plot_confusion_matrix.py`
+  * See :ref:`example_model_selection_plot_confusion_matrix.py`
     for an example of confusion matrix usage to evaluate the quality of the
     output of a classifier.
 
-  * See :ref:`example_plot_digits_classification.py`
+  * See :ref:`example_classification_plot_digits_classification.py`
     for an example of confusion matrix usage in the classification of
     hand-written digits.
 
-  * See :ref:`example_document_classification_20newsgroups.py`
+  * See :ref:`example_text_document_classification_20newsgroups.py`
     for an example of confusion matrix usage in the classification of text
     documents.
 
@@ -335,15 +335,15 @@ and inferred labels::
 
 .. topic:: Example:
 
-  * See :ref:`example_plot_digits_classification.py`
+  * See :ref:`example_classification_plot_digits_classification.py`
     for an example of classification report usage in the classification of the
     hand-written digits.
 
-  * See :ref:`example_document_classification_20newsgroups.py`
+  * See :ref:`example_text_document_classification_20newsgroups.py`
     for an example of classification report usage in the classification of text
     documents.
 
-  * See :ref:`example_grid_search_digits.py`
+  * See :ref:`example_model_selection_grid_search_digits.py`
     for an example of classification report usage in parameter estimation using
     grid search with a nested cross-validation.
 
@@ -477,15 +477,15 @@ binary classification and multilabel indicator format.
 
 .. topic:: Examples:
 
-  * See :ref:`example_document_classification_20newsgroups.py`
+  * See :ref:`example_text_document_classification_20newsgroups.py`
     for an example of :func:`f1_score` usage with classification of text
     documents.
 
-  * See :ref:`example_grid_search_digits.py`
+  * See :ref:`example_model_selection_grid_search_digits.py`
     for an example of :func:`precision_score` and :func:`recall_score` usage
     in parameter estimation using grid search with a nested cross-validation.
 
-  * See :ref:`example_plot_precision_recall.py`
+  * See :ref:`example_model_selection_plot_precision_recall.py`
     for an example of precision-Recall metric to evaluate the quality of the
     output of a classifier with :func:`precision_recall_curve`.
 
@@ -794,8 +794,8 @@ Here a small example of how to use the :func:`roc_curve` function::
 
 The following figure shows an example of such ROC curve.
 
-.. image:: ../auto_examples/images/plot_roc_001.png
-   :target: ../auto_examples/plot_roc.html
+.. image:: ../auto_examples/model_selection/images/plot_roc_001.png
+   :target: ../auto_examples/model_selection/plot_roc.html
    :scale: 75
    :align: center
 
@@ -835,18 +835,18 @@ F1 score, ROC AUC doesn't require to optimize a threshold for each label. The
 if predicted outputs have been binarized.
 
 
-.. image:: ../auto_examples/images/plot_roc_002.png
-   :target: ../auto_examples/plot_roc.html
+.. image:: ../auto_examples/model_selection/images/plot_roc_002.png
+   :target: ../auto_examples/model_selection/plot_roc.html
    :scale: 75
    :align: center
 
 .. topic:: Examples:
 
-  * See :ref:`example_plot_roc.py`
+  * See :ref:`example_model_selection_plot_roc.py`
     for an example of receiver operating characteristic (ROC) metric to
     evaluate the quality of the output of a classifier.
 
-  * See :ref:`example_plot_roc_crossval.py`
+  * See :ref:`example_model_selection_plot_roc_crossval.py`
     for an example of receiver operating characteristic (ROC) metric to
     evaluate the quality of the output of a classifier using cross-validation.
 
@@ -895,7 +895,7 @@ In the multilabel case with binary label indicators: ::
 
 .. topic:: Example:
 
-  * See :ref:`example_plot_rfe_with_cross_validation.py`
+  * See :ref:`example_feature_selection_plot_rfe_with_cross_validation.py`
     for an example of the zero one loss usage to perform recursive feature
     elimination with cross-validation.
 

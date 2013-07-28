@@ -88,10 +88,10 @@ can be specified via the ``scoring`` parameter to :class:`GridSearchCV`.  See
 
 .. topic:: Examples:
 
-    - See :ref:`example_grid_search_digits.py` for an example of
+    - See :ref:`example_model_selection_grid_search_digits.py` for an example of
       Grid Search computation on the digits dataset.
 
-    - See :ref:`example_grid_search_text_feature_extraction.py` for an example
+    - See :ref:`example_model_selection_grid_search_text_feature_extraction.py` for an example
       of Grid Search coupling parameters from a text documents feature
       extractor (n-gram count vectorizer and TF-IDF transformer) with a
       classifier (here a linear SVM trained with SGD with either elastic
@@ -145,7 +145,7 @@ increasing ``n_iter`` will always lead to a finer search.
 
 .. topic:: Examples:
 
-    * :ref:`example_randomized_search.py` compares the usage and efficiency
+    * :ref:`example_model_selection_randomized_search.py` compares the usage and efficiency
       of randomized search and grid search.
 
 .. topic:: References:

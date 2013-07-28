@@ -148,10 +148,10 @@ The available cross validation iterators are introduced in the following.
 
 .. topic:: Examples
 
-    * :ref:`example_plot_roc_crossval.py`,
-    * :ref:`example_plot_rfe_with_cross_validation.py`,
-    * :ref:`example_grid_search_digits.py`,
-    * :ref:`example_grid_search_text_feature_extraction.py`,
+    * :ref:`example_model_selection_plot_roc_crossval.py`,
+    * :ref:`example_feature_selection_plot_rfe_with_cross_validation.py`,
+    * :ref:`example_model_selection_grid_search_digits.py`,
+    * :ref:`example_model_selection_grid_search_text_feature_extraction.py`,
 
 
 Cross validation iterators

@@ -16,8 +16,8 @@ can be easily computed, are inherently multiclass,
 and have proven to work well in practice.
 Also there are no parameters to tune for these algorithms.
 
-.. |ldaqda| image:: ../auto_examples/images/plot_lda_qda_001.png
-        :target: ../auto_examples/plot_lda_qda.html
+.. |ldaqda| image:: ../auto_examples/classification/images/plot_lda_qda_001.png
+        :target: ../auto_examples/classification/plot_lda_qda.html
         :scale: 80
 
 .. centered:: |ldaqda|
@@ -28,7 +28,7 @@ quadratic boundaries and is therefore more flexible.
 
 .. topic:: Examples:
 
-    :ref:`example_plot_lda_qda.py`: Comparison of LDA and QDA on synthetic data.
+    :ref:`example_classification_plot_lda_qda.py`: Comparison of LDA and QDA on synthetic data.
 
 .. topic:: References:
 

@@ -90,7 +90,7 @@ New features
 
    - Added :func:`learning_curve <learning_curve.learning_curve>` utility to
      chart performance with respect to training size. See
-     :ref:`example_plot_learning_curve.py`. By Alexander Fabisch.
+     :ref:`example_model_selection_plot_learning_curve.py`. By Alexander Fabisch.
 
    - Add positive option in :class:`LassoCV <linear_model.LassoCV>` and
      :class:`ElasticNetCV <linear_model.ElasticNetCV>`.
@@ -2574,7 +2574,7 @@ Examples
 
     - new examples using some of the mlcomp datasets:
       ``example_mlcomp_sparse_document_classification.py`` (since removed) and
-      :ref:`example_document_classification_20newsgroups.py`
+      :ref:`example_text_document_classification_20newsgroups.py`
 
     - Many more examples. `See here
       <http://scikit-learn.org/stable/auto_examples/index.html>`_

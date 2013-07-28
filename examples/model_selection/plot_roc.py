@@ -25,7 +25,7 @@ each element of the label indicator matrix as a binary prediction
 .. note::
 
     See also :func:`sklearn.metrics.roc_auc_score`,
-             :ref:`example_plot_roc_crossval.py`.
+             :ref:`example_model_selection_plot_roc_crossval.py`.
 
 """
 print(__doc__)
