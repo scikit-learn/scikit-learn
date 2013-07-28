@@ -1,6 +1,6 @@
 from ._forward import ForwardPasser
 from ._pruning import PruningPasser
-from ._util import ascii_table, gcv, apply_weights_2d, apply_weights_1d
+from ._util import ascii_table, apply_weights_2d, apply_weights_1d
 from ..base import RegressorMixin, BaseEstimator, TransformerMixin
 from ..utils.validation import assert_all_finite, safe_asarray
 import numpy as np
