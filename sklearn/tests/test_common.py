@@ -43,6 +43,7 @@ from sklearn.lda import LDA
 from sklearn.svm.base import BaseLibSVM
 
 from sklearn.cross_validation import train_test_split
+from sklearn.utils.validation import DataConversionWarning
 
 dont_test = ['SparseCoder', 'EllipticEnvelope', 'EllipticEnvelop',
              'DictVectorizer', 'LabelBinarizer', 'LabelEncoder',
@@ -495,7 +496,6 @@ def test_clustering():
             continue
         # catch deprecation and neighbors warnings
         with warnings.catch_warnings(record=True):
-            warnings.simplefilter("always")
             alg = Alg()
             if hasattr(alg, "n_clusters"):
                 alg.set_params(n_clusters=3)
@@ -663,9 +663,12 @@ def test_classifiers_input_shapes():
 
         set_random_state(classifier)
         classifier.fit(X, y[:, np.newaxis])
+        # Check that when a 2D y is given, a DataConversionWarning is
+        # raised
         with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always", DataConversionWarning)
             classifier.fit(X, y[:, np.newaxis])
-            print(w)
+        assert_equal(len(w), 1)
         assert_array_equal(y_pred, classifier.predict(X))
 
 

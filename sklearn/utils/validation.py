@@ -12,6 +12,14 @@ from ..externals import six
 from .fixes import safe_copy
 
 
+class DataConversionWarning(UserWarning):
+    "A warning on implicit data conversions happening in the code"
+    pass
+
+
+warnings.simplefilter("always", DataConversionWarning)
+
+
 def _assert_all_finite(X):
     """Like assert_all_finite, but only for ndarray."""
     if (X.dtype.char in np.typecodes['AllFloat'] and not np.isfinite(X.sum())
@@ -250,7 +258,8 @@ def column_or_1d(y, warn=False):
         if warn:
             warnings.warn("A column-vector y was passed when a 1d array was"
                           " expected. Please change the shape of y to "
-                          "(n_samples, ), for example using ravel().")
+                          "(n_samples, ), for example using ravel().",
+                          DataConversionWarning, stacklevel=2)
         return np.ravel(y)
 
     raise ValueError("bad input shape {0}".format(shape))
