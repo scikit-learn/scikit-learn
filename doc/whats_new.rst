@@ -31,7 +31,7 @@ Changelog
      :func:`sklearn.datasets.make_checkerboard`), and scoring metrics
      (:func:`sklearn.metrics.consensus_score`). By `Kemal Eren`_.
 
-   - Added :ref:`Restricted Boltzmann Machines<rbm>` 
+   - Added :ref:`Restricted Boltzmann Machines<rbm>`
      (:class:`neural_network.BernoulliRBM`). By `Yann Dauphin`_.
 
    - Python 3 support by `Justin Vincent`_, `Lars Buitinck`_,
@@ -196,6 +196,15 @@ Changelog
 
    - New website design and navigation by `Gilles Louppe`_, `Nelle Varoquaux`_,
      Vincent Michel and `Andreas Müller`_.
+
+   - Improved documentation on :ref:`multi-class, multi-label and multi-output
+     classification <multiclass>` by `Yannick Schwartz`_ and `Arnaud Joly`_.
+
+   - Better input and error handling in the :mod:`metrics` module by
+     `Arnaud Joly`_ and `Joel Nothman`_.
+
+   - Speed optimization of the :mod:`hmm` module by `Mikhail Korobov`_
+
 
 
 API changes summary
@@ -2101,3 +2110,7 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Nelle Varoquaux: https://github.com/nellev
 
 .. _Subhodeep Moitra: https://github.com/smoitra87
+
+.. _Yannick Schwartz: https://team.inria.fr/parietal/schwarty/
+
+.. _Mikhail Korobov: http://kmike.ru/pages/about/
