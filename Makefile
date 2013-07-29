@@ -19,6 +19,7 @@ clean-so:
 
 clean-build:
 	rm -rf build
+	rm -rf dist
 
 clean-ctags:
 	rm -f tags
