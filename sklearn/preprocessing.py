@@ -437,7 +437,7 @@ class RankScaler(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-    `sort_X_` : array of ints with shape [n_samples, n_features]
+    `sort_X_` : array of ints, shape (n_samples, n_features)
         The rank-index of every feature in the fit X.
 
     See also
@@ -501,22 +501,22 @@ class RankScaler(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X : array-like with shape [n_samples, n_features]
+        X : array-like, shape (n_samples, n_features)
             The data used to scale along the features axis.
         """
         X = array2d(X)
         warn_if_not_float(X, estimator=self)
-        newX = []
+        # TODO: Can add a copy parameter, and simply overwrite X if copy=False
+        X2 = np.zeros(X.shape)
         for j in range(X.shape[1]):
             lidx = np.searchsorted(self.sort_X_[:, j], X[:, j], side='left')
             ridx = np.searchsorted(self.sort_X_[:, j], X[:, j], side='right')
-            newX.append(1. * (lidx + ridx) / (2 * self.sort_X_.shape[0]))
-        X = np.vstack(newX).T
-        return X
+            v = 1. * (lidx + ridx) / (2 * self.sort_X_.shape[0])
+            X2[:,j] = v
+        return X2
 
-#    def inverse_transform(self, X):
-##       Not implemented, but I believe we could reuse the approximation
-##       code in `fit`.
+    # TODO : Add inverse_transform method.
+    #        I believe we could reuse the approximation code in `fit`.
 
 def normalize(X, norm='l2', axis=1, copy=True):
     """Normalize a dataset along any axis
