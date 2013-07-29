@@ -193,7 +193,7 @@ Changelog
      `Vlad Niculae`_.
 
    - New website design and navigation by `Gilles Louppe`_, `Nelle Varoquaux`_,
-     Vincent Michael and `Andreas Müller`_.
+     Vincent Michel and `Andreas Müller`_.
 
 
 
