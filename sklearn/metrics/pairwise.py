@@ -44,6 +44,7 @@ from scipy.sparse import issparse
 
 from ..utils import atleast2d_or_csr
 from ..utils import gen_even_slices
+from ..utils import gen_batches
 from ..utils import safe_asarray
 from ..utils.extmath import safe_sparse_dot
 from ..preprocessing import normalize
@@ -190,20 +191,19 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
 
 
 def pairwise_distances_argmin(X, Y=None, axis=1, metric="euclidean",
-                              n_batches_x=None, n_batches_y=None,
-                              return_distances=False, **kwargs):
+                              batch_size_x=500, batch_size_y=500,
+                              **kwargs):
     """Compute minimum distances between one point and a set of points.
 
     This function computes for each row in X, the index of the row of Y which
-    is closest (according to the specified distance). The distances are also
-    returned if requested.
+    is closest (according to the specified distance). The minimal distances are
+    also returned.
 
     This is mostly equivalent to calling:
 
         pairwise_distances(X, Y=Y, metric=metric).argmin(axis=axis)
 
-    but uses much less memory (n_batches_x * n_batches_y less), and is
-    faster for large arrays.
+    but uses much less memory, and is faster for large arrays.
 
     This function works with dense matrices only.
 
@@ -214,17 +214,12 @@ def pairwise_distances_argmin(X, Y=None, axis=1, metric="euclidean",
         for both. Sample numbers can be different, but feature number must be
         identical for both X and Y.
 
-    n_batches_x, n_batches_y: integers
-        Number of batches to use for X and Y respectively.
-        If None, these numbers are determined automatically. Tweaking them
-        allows for fine-tuning memory usage and execution time. The memory
-        usage is maximal for n_batches_x == chunk_y_size == 1. In any other
-        case, memory usage is reduced by a factor of n_batches_x*chunk_y_size
-        compared to the maximum. Execution time will be large for a large
-        number of chunks.
-
-    return_distances: bool
-        flag telling if found minimum distances must be returned or not.
+    batch_size_x, batch_size_y: integers
+        To reduce memory consumption over the naive solution, data are
+        processed in batches, comprising batch_size_x rows of X and
+        batch_size_y rows of Y. The default values are quite conservative, but
+        can be changed for fine-tuning. The larger the number, the larger the
+        memory usage.
 
     Returns
     =======
@@ -233,7 +228,7 @@ def pairwise_distances_argmin(X, Y=None, axis=1, metric="euclidean",
 
     distances: numpy.ndarray
         distances[i] is the distance between the i-th row in X and the
-        indices[i]-th row in Y. Returned only if return_distances is True.
+        indices[i]-th row in Y.
 
     Notes
     =====
@@ -249,33 +244,17 @@ def pairwise_distances_argmin(X, Y=None, axis=1, metric="euclidean",
 
     if axis == 0:
         X, Y = Y, X
-        n_batches_x, n_batches_y = n_batches_y, n_batches_x
-
-    if n_batches_x is None and n_batches_y is None:
-        # Heuristic for determining batch numbers along X and Y.
-        # A number of 50 batches seems to give acceptable or good results
-        # for a large range of dimensions.
-        if X.shape[0] >= Y.shape[0] / 2 and Y.shape[0] >= X.shape[0] / 2:
-            n_batches_x, n_batches_y = (7, 7)
-        elif X.shape[0] > Y.shape[0]:
-            n_batches_x, n_batches_y = (50, 1)
-        else:
-            n_batches_x, n_batches_y = (1, 50)
-
-    if n_batches_x is None:
-        n_batches_x = 1
-    if n_batches_y is None:
-        n_batches_y = 1
+        batch_size_x, batch_size_y = batch_size_y, batch_size_x
 
     # Allocate output arrays
     indices = np.empty(X.shape[0], dtype='int32')
     values = np.empty(X.shape[0])
     values.fill(np.infty)
 
-    for chunk_x in gen_even_slices(X.shape[0], n_batches_x):
+    for chunk_x in gen_batches(X.shape[0], batch_size_x):
         X_chunk = X[chunk_x, :]
 
-        for chunk_y in gen_even_slices(Y.shape[0], n_batches_y):
+        for chunk_y in gen_batches(Y.shape[0], batch_size_y):
             Y_chunk = Y[chunk_y, :]
 
             if dist_func is not None:
@@ -312,12 +291,9 @@ def pairwise_distances_argmin(X, Y=None, axis=1, metric="euclidean",
             values[chunk_x] = np.where(
                 flags, min_values, values[chunk_x])
 
-    if return_distances:
-        if metric == "euclidean" and not kwargs.get("squared", False):
-            values = np.sqrt(values)
-        return indices, values
-    else:
-        return indices
+    if metric == "euclidean" and not kwargs.get("squared", False):
+        values = np.sqrt(values)
+    return indices, values
 
 
 def manhattan_distances(X, Y=None, sum_over_features=True,

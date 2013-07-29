@@ -190,11 +190,13 @@ def test_pairwise_distances_argmin():
     X = [[0], [1]]
     Y = [[-1], [2]]
     # Non-euclidean sklearn metric
-    D = pairwise_distances_argmin(X, Y, metric="manhattan")
+    D, E = pairwise_distances_argmin(X, Y, metric="manhattan")
     assert_array_almost_equal(D, [0, 1])
+    assert_array_almost_equal(E, [1, 1])
     # Non-euclidean scipy distance
-    D = pairwise_distances_argmin(X, Y, metric=cityblock)
+    D, E = pairwise_distances_argmin(X, Y, metric=cityblock)
     assert_array_almost_equal(D, [0, 1])
+    assert_array_almost_equal(E, [1, 1])
 
     # Compare with naive implementation
     np.random.seed(1)
@@ -206,7 +208,7 @@ def test_pairwise_distances_argmin():
     dist_orig_val = dist[dist_orig_ind, range(len(dist_orig_ind))]
 
     dist_chunked_ind, dist_chunked_val = pairwise_distances_argmin(
-        X, Y=Y, axis=0, return_distances=True, metric="manhattan")
+        X, Y=Y, axis=0, metric="manhattan")
     np.testing.assert_almost_equal(dist_orig_ind, dist_chunked_ind, decimal=7)
     np.testing.assert_almost_equal(dist_orig_val, dist_chunked_val, decimal=7)
 
