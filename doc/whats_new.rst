@@ -34,8 +34,9 @@ Changelog
    - Added :ref:`Restricted Boltzmann Machines<rbm>` 
      (:class:`neural_network.BernoulliRBM`). By `Yann Dauphin`_.
 
-   - Python 3 support fixes by `Justin Vincent`_, `Lars Buitinck`_ and
-     `Olivier Grisel`_. All tests now pass under Python 3.3.
+   - Python 3 support by `Justin Vincent`_, `Lars Buitinck`_,
+     `Subhodeep Moitra`_ and `Olivier Grisel`_. All tests now pass under
+     Python 3.3.
 
    - Ability to pass one penalty (alpha value) per target in
      :class:`linear_model.Ridge`, by @eickenberg and `Mathieu Blondel`_.
@@ -2098,3 +2099,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Yann Dauphin: http://ynd.github.io/
 
 .. _Nelle Varoquaux: https://github.com/nellev
+
+.. _Subhodeep Moitra: https://github.com/smoitra87
