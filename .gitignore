@@ -12,6 +12,7 @@ sklearn/datasets/__config__.py
 sklearn/**/*.html
 
 dist/
+MANIFEST
 doc/_build/
 doc/auto_examples/
 doc/modules/generated/
