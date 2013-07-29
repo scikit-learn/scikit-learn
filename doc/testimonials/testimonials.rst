@@ -12,52 +12,80 @@ Who is using scikit-learn?
 .. to add a testimonials, just XXX
 
 
-Inria
+`Inria <http://www.inria.fr>`_
 -------------------------------
 
+.. raw:: html
+
+  <div class="logo">
+
 .. image:: images/inria.jpg
-
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vivamus et ipsum ac
-ipsum auctor pulvinar. In fermentum justo libero, in aliquet dui tempus sit
-amet. Maecenas sed sem purus. Nulla mollis mi sit amet diam tristique, vitae
-accumsan tellus ullamcorper. Pellentesque ligula est, molestie non eros sed,
-sodales aliquam quam.
+   :target: http://www.inria.fr
 
 .. raw:: html
 
-   <div class="testimonial-website">
+  </div>
 
-**website:** `www.inria.fr <http://www.inria.fr>`_
+.. title Scikit-learn for efficient and easier machine learning research
+.. Author: Gaël Varoquaux
+
+
+At INRIA, we use scikit-learn to support leading-edge basic research in many
+teams: `Parietal <https://team.inria.fr/parietal/>`_ for neuroimaging, `Lear
+<http://lear.inrialpes.fr/>`_ for computer vision, `Visages
+<https://www.irisa.fr/visages/index>`_ for medical image analysis, `Privatics
+<https://team.inria.fr/privatics>`_ for security. The project is a fantastic
+tool to address difficult applications of machine learing in an academic
+environment as it is performant and versatile, but all easy-to-use and well
+documented, which makes it well suited to grad students.
+
 
 .. raw:: html
 
-    </div>
+   <span class="testimonial-author">
+
+Gaël Varoquaux, research at Parietal
+
+.. raw:: html
+
+   </span>
 
 
-Inria
+`Evernote <http://evernote.com>`_
 -------------------------------
 
-.. image:: images/inria.jpg
+.. raw:: html
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vivamus et ipsum ac
-ipsum auctor pulvinar. In fermentum justo libero, in aliquet dui tempus sit
-amet. Maecenas sed sem purus. Nulla mollis mi sit amet diam tristique, vitae
-accumsan tellus ullamcorper. Pellentesque ligula est, molestie non eros sed,
-sodales aliquam quam.
+  <div class="logo">
+
+.. image:: images/evernote.png
+   :target: https://evernote.com
 
 .. raw:: html
 
-   <div class="testimonial-website">
+  </div>
 
-**website:** `www.inria.fr <http://www.inria.fr>`_
+
+Building a classifier is typically an iterative process of exploring
+the data, selecting the features (the attributes of the data believed
+to be predictive in some way), training the models, and finally
+evaluating them. For many of these tasks, we relied on the excellent
+scikit-learn package for Python. Currently, we use a variant of Naive
+Bayes classification to do our prediction. We picked Naive Bayes
+because it’s simple, fast, and performs quite well on this kind of
+classification problem despite a few limitations arising from its
+simplicity.
+
+`Read more <http://blog.evernote.com/tech/2013/01/22/stay-classified/>`_
 
 .. raw:: html
 
-    </div>
+   <span class="testimonial-author">
 
-
-.. END
+Mark Ayzenshtat, Head of Data Products
 
 .. raw:: html
 
-    </div>
+   </span>
+
+
