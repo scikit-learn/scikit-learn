@@ -430,12 +430,13 @@ def test_permutation_score():
     cv = cval.StratifiedKFold(y, 2)
 
     score, scores, pvalue = cval.permutation_test_score(
-        svm, X, y, "accuracy", cv)
+        svm, X, y, cv=cv, scoring="accuracy")
     assert_greater(score, 0.9)
     assert_almost_equal(pvalue, 0.0, 1)
 
     score_label, _, pvalue_label = cval.permutation_test_score(
-        svm, X, y, "accuracy", cv, labels=np.ones(y.size), random_state=0)
+        svm, X, y, cv=cv, scoring="accuracy", labels=np.ones(y.size),
+        random_state=0)
     assert_true(score_label == score)
     assert_true(pvalue_label == pvalue)
 
@@ -451,8 +452,8 @@ def test_permutation_score():
     svm_sparse = SVC(kernel='linear')
     cv_sparse = cval.StratifiedKFold(y, 2, indices=True)
     score_label, _, pvalue_label = cval.permutation_test_score(
-        svm_sparse, X_sparse, y, "accuracy", cv_sparse,
-        labels=np.ones(y.size), random_state=0)
+        svm_sparse, X_sparse, y, cv=cv_sparse,
+        scoring="accuracy", labels=np.ones(y.size), random_state=0)
 
     assert_true(score_label == score)
     assert_true(pvalue_label == pvalue)
@@ -460,8 +461,8 @@ def test_permutation_score():
     # set random y
     y = np.mod(np.arange(len(y)), 3)
 
-    score, scores, pvalue = cval.permutation_test_score(svm, X, y,
-                                                        "accuracy", cv)
+    score, scores, pvalue = cval.permutation_test_score(svm, X, y, cv=cv,
+                                                        scoring="accuracy")
 
     assert_less(score, 0.5)
     assert_greater(pvalue, 0.4)
