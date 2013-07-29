@@ -136,8 +136,8 @@ def test_scaler_2d_arrays():
     # Check RankScaler at different n_ranks
     n_features = 100
     for n_samples in [10, 100, 1000]:
-        for n_ranks in [n_samples+1, n_samples, n_samples-1,
-                        int(n_samples/2), int(n_samples/7), int(n_samples/10)]:
+        for n_ranks in [n_samples + 1, n_samples, n_samples - 1,
+                        int(n_samples / 2), int(n_samples / 7), int(n_samples / 10)]:
             X = rng.randn(n_samples, n_features)
             rank_scaler1 = RankScaler(n_ranks=None)
             rank_scaler2 = RankScaler(n_ranks=n_ranks)
@@ -150,7 +150,7 @@ def test_scaler_2d_arrays():
 
             # In the approximate version X22, all values must
             # be within 1./n_ranks of the exact value X11.
-            assert_true(np.all(np.fabs(X21 - X22) < 1./n_ranks))
+            assert_true(np.all(np.fabs(X21 - X22) < 1. / n_ranks))
 
 
 def test_min_max_scaler_iris():
