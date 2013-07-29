@@ -24,8 +24,10 @@ from sklearn.tree import ExtraTreeRegressor
 
 from sklearn import tree
 from sklearn import datasets
-from sklearn.utils import safe_asarray
 from sklearn.utils.fixes import bincount
+
+from sklearn.preprocessing import balance_weights
+
 
 CLF_CRITERIONS = ("gini", "entropy")
 REG_CRITERIONS = ("mse", )
@@ -65,41 +67,6 @@ boston = datasets.load_boston()
 perm = rng.permutation(boston.target.size)
 boston.data = boston.data[perm]
 boston.target = boston.target[perm]
-
-
-def balance_weights(y):
-    """Compute sample weights such that the class distribution of y becomes
-       balanced.
-
-    Parameters
-    ----------
-    y : array-like
-        Labels for the samples.
-
-    Returns
-    -------
-    weights : array-like
-        The sample weights.
-    """
-    y = safe_asarray(y)
-    y = np.searchsorted(np.unique(y), y)
-    bins = np.bincount(y)
-
-    weights = 1. / bins.take(y)
-    weights *= bins.min()
-
-    return weights
-
-
-def test_balance_weights():
-    weights = balance_weights([0, 0, 1, 1])
-    assert_array_equal(weights, [1., 1., 1., 1.])
-
-    weights = balance_weights([0, 1, 1, 1, 1])
-    assert_array_equal(weights, [1., 0.25, 0.25, 0.25, 0.25])
-
-    weights = balance_weights([0, 0])
-    assert_array_equal(weights, [1., 1.])
 
 
 def test_classification_toy():
