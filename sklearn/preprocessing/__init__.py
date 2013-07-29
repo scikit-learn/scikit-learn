@@ -20,7 +20,7 @@ from .label import LabelBinarizer
 from .label import LabelEncoder
 
 from .imputation import Imputer
-from .weights import balance_weights
+from ._weights import balance_weights
 
 __all__ = [
     'Binarizer',
