@@ -48,22 +48,6 @@ class BaseNB(six.with_metaclass(ABCMeta, BaseEstimator, ClassifierMixin)):
         predict_proba and predict_log_proba.
         """
 
-    def _predict(self, X):
-        """
-        Perform classification on an array of test vectors X.
-
-        Parameters
-        ----------
-        X : array-like, shape = [n_samples, n_features]
-
-        Returns
-        -------
-        C : array, shape = [n_samples]
-            Predicted target values for X
-        """
-        jll = self._joint_log_likelihood(X)
-        return self.classes_[np.argmax(jll, axis=1)]
-
     def predict_log_proba(self, X):
         """
         Return log-probability estimates for the test vector X.
@@ -394,7 +378,8 @@ class MultinomialNB(BaseDiscreteNB, LinearClassifierMixin):
     Attributes
     ----------
     `class_log_prior_` : array, shape = (n_classes,)
-        Smoothed empirical log probability for each class. DEPRECATED.
+        Smoothed empirical log probability for each class. DEPRECATED; will be
+        removed in 0.16. Use intercept_ instead.
 
     `intercept_` : array, shape = (n_classes,) or (1,)
         Intercept for naive Bayes considered as a linear model. This is the
@@ -403,7 +388,7 @@ class MultinomialNB(BaseDiscreteNB, LinearClassifierMixin):
 
     `feature_log_prob_`, `coef_` : array, shape = [n_classes, n_features]
         Empirical log probability of features given a class, P(x_i|y).
-        DEPRECATED.
+        DEPRECATED; will be removed in 0.16. Use coef_ instead.
 
     `coef_` : array, shape = (n_classes, n_features) or (1, n_features)
         Coefficients of naive Bayes as a linear model. This is a matrix of
@@ -573,6 +558,7 @@ class BernoulliNB(BaseDiscreteNB, LinearClassifierMixin):
                             - np.log(smoothed_cc.reshape(-1, 1)))
 
         neg_log_prob = np.log(1 - np.exp(feature_log_prob))
+        feature_log_prob -= neg_log_prob
 
         self.feature_log_prob_ = feature_log_prob
         if n_classes == 2:
