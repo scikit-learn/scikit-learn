@@ -15,6 +15,28 @@ Changelog
      scratch, allowing for faster tree induction and lower memory
      consumption in all tree-based estimators. By `Gilles Louppe`_.
 
+   - Added :class:`ensemble.AdaBoostClassifier` and
+     :class:`ensemble.AdaBoostRegressor`, by `Noel Dawe`_  and
+     `Gilles Louppe`_. See the :ref:`AdaBoost <adaboost>` section of the user
+     guide for details and examples.
+
+   - Added :class:`grid_search.RandomizedSearchCV` and
+     :class:`grid_search.ParameterSampler` for randomized hyperparameter
+     optimization. By `Andreas Müller`_.
+
+   - Added :ref:`biclustering <biclustering>` algorithms
+     (:class:`sklearn.cluster.bicluster.SpectralCoclustering` and
+     :class:`sklearn.cluster.bicluster.SpectralBiclustering`), data
+     generation methods (:func:`sklearn.datasets.make_biclusters` and
+     :func:`sklearn.datasets.make_checkerboard`), and scoring metrics
+     (:func:`sklearn.metrics.consensus_score`). By `Kemal Eren`_.
+
+   - Added :ref:`Restricted Boltzmann Machines<rbm>` 
+     (:class:`neural_network.BernoulliRBM`). By `Yann Dauphin`_.
+
+   - Python 3 support fixes by `Justin Vincent`_, `Lars Buitinck`_ and
+     `Olivier Grisel`_. All tests now pass under Python 3.3.
+
    - Ability to pass one penalty (alpha value) per target in
      :class:`linear_model.Ridge`, by @eickenberg and `Mathieu Blondel`_.
 
@@ -35,11 +57,6 @@ Changelog
      and `Lars Buitinck`_.
      Passing a function from :mod:`sklearn.metrics` as ``score_func`` is
      deprecated.
-
-   - Added :class:`ensemble.AdaBoostClassifier` and
-     :class:`ensemble.AdaBoostRegressor`, by `Noel Dawe`_  and
-     `Gilles Louppe`_. See the :ref:`AdaBoost <adaboost>` section of the user
-     guide for details and examples.
 
    - Multi-label classification output is now supported by
      :func:`metrics.accuracy_score`, :func:`metrics.zero_one_loss`,
@@ -63,16 +80,6 @@ Changelog
      has been reset to 1 to avoid unpleasant surprises (empty vocabularies)
      for novice users who try it out on tiny document collections.
      A value of at least 2 is still recommended for practical use.
-
-   - Feature importances in :class:`tree.DecisionTreeClassifier`,
-     :class:`tree.DecisionTreeRegressor` and all derived ensemble estimators
-     are now computed on the fly when accessing  the ``feature_importances_``
-     attribute. Setting ``compute_importances=True`` is no longer required.
-     By `Gilles Louppe`_.
-
-   - Added :class:`grid_search.RandomizedSearchCV` and
-     :class:`grid_search.ParameterSampler` for randomized hyperparameter
-     optimization. By `Andreas Müller`_.
 
    - :class:`svm.LinearSVC`, :class:`linear_model.SGDClassifier` and
      :class:`linear_model.SGDRegressor` now have a ``sparsify`` method that
@@ -134,9 +141,6 @@ Changelog
      faster on sparse data (the speedup depends on the sparsity). By
      `Lars Buitinck`_.
 
-   - Python 3 support fixes by `Justin Vincent`_, `Lars Buitinck`_ and
-     `Olivier Grisel`_. All tests now pass under Python 3.3.
-
    - Reduce memory footprint of FastICA by `Denis Engemann`_ and
      `Alexandre Gramfort`_.
 
@@ -150,16 +154,8 @@ Changelog
      how to use OOB estimates to select the number of trees was added.
      By `Peter Prettenhofer`_.
 
-
    - Most metrics now support string labels for multiclass classification
      by `Arnaud Joly`_ and `Lars Buitinck`_.
-
-   - Added :ref:`biclustering <biclustering>` algorithms
-     (:class:`sklearn.cluster.bicluster.SpectralCoclustering` and
-     :class:`sklearn.cluster.bicluster.SpectralBiclustering`), data
-     generation methods (:func:`sklearn.datasets.make_biclusters` and
-     :func:`sklearn.datasets.make_checkerboard`), and scoring metrics
-     (:func:`sklearn.metrics.consensus_score`). By `Kemal Eren`_.
 
    - New OrthogonalMatchingPursuitCV class by `Alexandre Gramfort`_
      and `Vlad Niculae`_.
@@ -196,10 +192,14 @@ Changelog
      Vincent Michael and `Andreas Müller`_.
 
 
-
-
 API changes summary
 -------------------
+
+   - Feature importances in :class:`tree.DecisionTreeClassifier`,
+     :class:`tree.DecisionTreeRegressor` and all derived ensemble estimators
+     are now computed on the fly when accessing  the ``feature_importances_``
+     attribute. Setting ``compute_importances=True`` is no longer required.
+     By `Gilles Louppe`_.
 
    - :class:`linear_model.lasso_path` and
      :class:`linear_model.enet_path` can return its results in the same
@@ -467,9 +467,6 @@ Changelog
 
    - :class:`MiniBatchKMeans`: Add random reassignment of cluster centers
      with little observations attached to them, by `Gael Varoquaux`_.
-
-   - :ref:`Restricted Boltzmann Machines<rbm>` implemented in class
-     :class:`neural_network.BernoulliRBM` by `Yann Dauphin`_.
 
 
 API changes summary
