@@ -186,6 +186,12 @@ Changelog
      :class:`neighbors.RadiusNeighborsClassifier` support multioutput data
      by `Arnaud Joly`_.
 
+   - Random state in LibSVM-based estimators (:class:`svm.SVC`, :class:`NuSVC`,
+     :class:`OneClassSVM`, :class:`svm.SVR`, :class:`svm.NuSVR`) can now be
+     controlled.  This is useful to ensure consistency in the probability
+     estimates for the classifiers trained with ``probability=True``. By
+     `Vlad Niculae`_.
+
    - New website design and navigation by `Gilles Louppe`_, `Nelle Varoquaux`_,
      Vincent Michael and `Andreas Müller`_.
 
