@@ -977,22 +977,33 @@ div.testimonial h2 {
     text-align: center;
 }
 
-div.testimonial img {
+div.logo {
     float: left;
-    padding-right: 30px;
+    width: 200px;
+}
+
+div.logo img {
+  max-width: 200px;
 }
 
 div.testimonial p {
     line-height: 1.5em;
-    padding-left: 30px;
     font-size: 1.1em;
+    color: #1c1c1c;
+    padding-left: 230px;
 }
 
-div.testimonial-website {
+div.testimonial span.testimonial-author {
     width: 100%;
-    text-align: right;
-    font-size: 0.8em;
+    text-align: right; 
 }
+
+div.testimonial span.testimonial-author p{
+    font-size: 0.8em;
+    font-style: italic;
+    color: #808080;
+}
+
 
 .no-display {
   display: none;
