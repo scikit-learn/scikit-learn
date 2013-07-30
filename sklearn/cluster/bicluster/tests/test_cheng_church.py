@@ -3,14 +3,42 @@
 import numpy as np
 
 from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_raises
 
 from sklearn.metrics import consensus_score
 from sklearn.datasets import make_msr
 
+from sklearn.cluster.bicluster.cheng_church import IncrementalMSR
 from sklearn.cluster.bicluster.cheng_church import ChengChurch
 from sklearn.cluster.bicluster.cheng_church import EmptyBiclusterException
+
+
+def test_incremental_msr():
+    generator = np.random.RandomState(0)
+    data = generator.uniform(1, 100, (20, 20))
+    rows = np.ones(20, dtype=np.bool)
+    cols = np.ones(20, dtype=np.bool)
+    inc = IncrementalMSR(rows, cols, data)
+
+    new_rows = rows.copy()
+    new_rows[0] = False
+
+    new_cols = cols.copy()
+    new_cols[0] = False
+
+    inc.remove_row(0)
+    inc.remove_col(0)
+
+    arr = data[new_rows][:, new_cols]
+    sr = arr - arr.mean(axis=1, keepdims=True) - arr.mean(axis=0) + arr.mean()
+    sr = np.power(sr, 2)
+
+    assert_almost_equal(inc.msr, sr.mean())
+    assert_array_almost_equal(inc.row_msr, sr.mean(axis=1))
+    assert_array_almost_equal(inc.col_msr, sr.mean(axis=0))
 
 
 def test_cheng_church():
@@ -46,11 +74,17 @@ def test_single_node_deletion():
     model = ChengChurch()
     arr = generator.uniform(20, 100, (20, 20))
     arr[5:15, 5:15] = 10
-    rows = np.arange(20)[np.newaxis].T
-    cols = np.arange(20)
+    expected_rows = np.zeros(20, dtype=np.bool)
+    expected_cols = np.zeros(20, dtype=np.bool)
+    expected_rows[5:15] = True
+    expected_cols[5:15] = True
+
+    rows = np.ones(20, dtype=np.bool)
+    cols = np.ones(20, dtype=np.bool)
     rows, cols = model._single_node_deletion(rows, cols, arr)
-    assert_array_equal(rows, np.arange(5, 15)[np.newaxis].T)
-    assert_array_equal(cols, np.arange(5, 15))
+
+    assert_array_equal(rows, expected_rows)
+    assert_array_equal(cols, expected_cols)
 
 
 def test_multiple_node_deletion():
@@ -61,25 +95,34 @@ def test_multiple_node_deletion():
                         column_deletion_cutoff=1)
     arr = generator.uniform(20, 100, (20, 20))
     arr[3:18, 3:18] = 10
-    rows = np.arange(20)[np.newaxis].T
-    cols = np.arange(20)
+    expected_rows = np.zeros(20, dtype=np.bool)
+    expected_cols = np.zeros(20, dtype=np.bool)
+    expected_rows[3:18] = True
+    expected_cols[3:18] = True
+
+    rows = np.ones(20, dtype=np.bool)
+    cols = np.ones(20, dtype=np.bool)
     rows, cols = model._multiple_node_deletion(rows, cols, arr)
-    assert_array_equal(rows, np.arange(3, 18)[np.newaxis].T)
-    assert_array_equal(cols, np.arange(3, 18))
+    assert_array_equal(rows, expected_rows)
+    assert_array_equal(cols, expected_cols)
 
 
 def test_node_deletion_when_unnecessary():
     model = ChengChurch()
     arr = np.zeros((20, 20))
-    rows = np.arange(20)[np.newaxis].T
-    cols = np.arange(20)
+    rows = np.ones(20, dtype=np.bool)
+    cols = np.ones(20, dtype=np.bool)
+
+    expected_rows = np.ones(20, dtype=np.bool)
+    expected_cols = np.ones(20, dtype=np.bool)
+
     rows, cols = model._single_node_deletion(rows, cols, arr)
-    assert_array_equal(rows, np.arange(20)[np.newaxis].T)
-    assert_array_equal(cols, np.arange(20))
+    assert_array_equal(rows, expected_rows)
+    assert_array_equal(cols, expected_cols)
 
     rows, cols = model._multiple_node_deletion(rows, cols, arr)
-    assert_array_equal(rows, np.arange(20)[np.newaxis].T)
-    assert_array_equal(cols, np.arange(20))
+    assert_array_equal(rows, expected_rows)
+    assert_array_equal(cols, expected_cols)
 
 
 def test_node_addition():
@@ -87,28 +130,30 @@ def test_node_addition():
     model = ChengChurch()
     arr = np.zeros((20, 20)) + 15
     arr[5:10, 5:10] = generator.uniform(10, 20, (5, 5))
-    rows = np.arange(5, 10)[np.newaxis].T
-    cols = np.arange(5, 10)
+    rows = np.zeros(20, dtype=np.bool)
+    cols = np.zeros(20, dtype=np.bool)
+    rows[5:10] = True
+    cols[5:10] = True
+    expected_rows = np.ones(20, dtype=np.bool)
+    expected_cols = np.ones(20, dtype=np.bool)
+
     rows, cols = model._node_addition(rows, cols, arr)
-    assert_array_equal(rows, np.arange(20)[np.newaxis].T)
-    assert_array_equal(cols, np.arange(20))
+    assert_array_equal(rows, expected_rows)
+    assert_array_equal(cols, expected_cols)
 
 
-def test_row_msr():
+def test_row_and_col_msr():
     X = np.arange(9).reshape(3, 3)
-    rows = np.arange(2)[np.newaxis].T
-    cols = np.arange(2)
+    rows = np.zeros(3, dtype=np.bool)
+    cols = np.zeros(3, dtype=np.bool)
+    rows[0:2] = True
+    cols[0:2] = True
     model = ChengChurch()
+
     vec = model._row_msr(rows, cols, X)
     expected = np.zeros(3)
     assert_array_equal(vec, expected)
 
-
-def test_col_msr():
-    X = np.arange(9).reshape(3, 3)
-    rows = np.arange(2)[np.newaxis].T
-    cols = np.arange(2)
-    model = ChengChurch()
     vec = model._col_msr(rows, cols, X)
     expected = np.zeros(3)
     assert_array_equal(vec, expected)
@@ -132,7 +177,7 @@ def test_errors():
     model = ChengChurch(column_deletion_cutoff=0)
     assert_raises(ValueError, model.fit, data)
 
-    assert_raises(EmptyBiclusterException, model._all_msr,
+    assert_raises(EmptyBiclusterException, model._msr,
                   np.array([]), np.array([]), data)
 
     assert_raises(EmptyBiclusterException, model._row_msr,

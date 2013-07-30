@@ -15,13 +15,115 @@ from sklearn.utils.validation import check_arrays
 from sklearn.utils.validation import check_random_state
 
 from .utils import check_array_ndim
-from .utils import get_indicators
 
-from ._squared_residue import all_msr
+from ._squared_residue import compute
 
 
 class EmptyBiclusterException(Exception):
     pass
+
+
+class IncrementalMSR(object):
+    def __init__(self, rows, cols, arr, tol=1e-5):
+        assert rows.dtype == np.bool
+        assert cols.dtype == np.bool
+
+        self.arr = arr
+        self.rows = rows
+        self.cols = cols
+        self.tol = tol
+
+        self._sum = arr.sum()
+        self._row_sum = arr.sum(axis=1)
+        self._col_sum = arr.sum(axis=0)
+
+        self._reset()
+        self._row_idxs = None
+        self._col_idxs = None
+
+    def _reset(self):
+        self._msr = None
+        self._row_msr = None
+        self._col_msr = None
+
+    @property
+    def row_idxs(self):
+        if self._row_idxs is None:
+            self._row_idxs = np.nonzero(self.rows)[0]
+        return self._row_idxs
+
+    @property
+    def col_idxs(self):
+        if self._col_idxs is None:
+            self._col_idxs = np.nonzero(self.cols)[0]
+        return self._col_idxs
+
+    def remove_row(self, row):
+        if len(self.row_idxs) <= 1:
+            raise EmptyBiclusterException()
+        self._reset()
+        vec = self.arr[row, self.col_idxs].ravel()
+        self._sum -= vec.sum()
+        self._col_sum -= vec
+
+        idx = np.searchsorted(self.row_idxs, row)
+        self._row_sum = np.delete(self._row_sum, idx)
+        self.rows[row] = False
+        self._row_idxs = None
+
+    def remove_col(self, col):
+        if len(self.col_idxs) <= 1:
+            raise EmptyBiclusterException()
+        self._reset()
+        vec = self.arr[self.row_idxs, col].ravel()
+        self._sum -= vec.sum()
+        self._row_sum -= vec
+
+        idx = np.searchsorted(self.col_idxs, col)
+        self._col_sum = np.delete(self._col_sum, idx)
+        self.cols[col] = False
+        self._col_idxs = None
+
+    def remove_rows(self, rows):
+        for r in rows:
+            self.remove_row(r)
+
+    def remove_cols(self, cols):
+        for c in cols:
+            self.remove_col(c)
+
+    def _compute(self):
+        n_rows = len(self.row_idxs)
+        n_cols = len(self.col_idxs)
+
+        row_mean = self._row_sum / n_cols
+        col_mean = self._col_sum / n_rows
+        mean = self._sum / (n_rows * n_cols)
+
+        self._msr, self._row_msr, self._col_msr = \
+            compute(self.row_idxs, self.col_idxs, row_mean, col_mean,
+                    mean, self.arr)
+        self._msr = 0 if self._msr < self.tol else self._msr
+        self._row_msr[self._row_msr < self.tol] = 0
+        self.col_msr[self._col_msr < self.tol] = 0
+
+    @property
+    def msr(self):
+        if self._msr is None:
+            self._compute()
+        return self._msr
+
+    @property
+    def row_msr(self):
+        if self._row_msr is None:
+            self._compute()
+        return self._row_msr
+
+    @property
+    def col_msr(self):
+        if self._col_msr is None:
+            self._compute()
+        return self._col_msr
 
 
 class ChengChurch(six.with_metaclass(ABCMeta, BaseEstimator,
@@ -115,104 +217,113 @@ class ChengChurch(six.with_metaclass(ABCMeta, BaseEstimator,
                              " value is {}".format(
                                  self.column_deletion_cutoff))
 
-    def _all_msr(self, rows, cols, X):
+    def _msr(self, rows, cols, X):
+        rows = rows.nonzero()[0][np.newaxis].T
+        cols = cols.nonzero()[0]
         if not rows.size or not cols.size:
             raise EmptyBiclusterException()
-        return all_msr(rows.ravel(), cols, X)
+        sub = X[rows, cols]
+        residue = (sub - sub.mean(axis=1, keepdims=True) -
+                   sub.mean(axis=0) + sub.mean())
+        return np.power(residue, 2).mean()
 
     def _row_msr(self, rows, cols, X, inverse=False):
         # TODO: not necessary for rows already in bicluster
-        if not rows.size or not cols.size:
+        if not np.count_nonzero(rows) or not np.count_nonzero(cols):
             raise EmptyBiclusterException()
-        row_mean = X[:, cols].mean(axis=1)[np.newaxis].T
-        col_mean = X[rows, cols].mean(axis=0)
+        row_mean = X[:, cols].mean(axis=1, keepdims=True)
+        col_mean = X[rows][:, cols].mean(axis=0)
         if inverse:
-            arr = -X[:, cols] + row_mean - col_mean + X[rows, cols].mean()
+            arr = (-X[:, cols] + row_mean - col_mean +
+                   X[rows][:, cols].mean())
         else:
-            arr = X[:, cols] - row_mean - col_mean + X[rows, cols].mean()
+            arr = (X[:, cols] - row_mean - col_mean +
+                   X[rows][:, cols].mean())
         return np.power(arr, 2).mean(axis=1)
 
     def _col_msr(self, rows, cols, X, inverse=False):
-        # TODO: not necessary for columns already in bicluster
+        # TODO: not necessary for cols already in bicluster
         if not rows.size or not cols.size:
             raise EmptyBiclusterException()
-        rows_t = rows
-        rows = rows_t.ravel()
-        row_mean = X[rows_t, cols].mean(axis=1)[np.newaxis].T
+        row_mean = X[rows][:, cols].mean(axis=1, keepdims=True)
         col_mean = X[rows, :].mean(axis=0)
         if inverse:
-            arr = -X[rows, :] + row_mean - col_mean + X[rows_t, cols].mean()
+            arr = (-X[rows, :] + row_mean - col_mean +
+                   X[rows][:, cols].mean())
         else:
-            arr = X[rows, :] - row_mean - col_mean + X[rows_t, cols].mean()
+            arr = X[rows, :] - row_mean - col_mean + X[rows][:, cols].mean()
         return np.power(arr, 2).mean(axis=0)
 
     def _single_node_deletion(self, rows, cols, X):
-        msr, row_msr, col_msr = self._all_msr(rows, cols, X)
-        while msr > self.max_msr:
-            n_rows, n_cols = len(rows), len(cols)
-            row_id = np.argmax(row_msr)
-            col_id = np.argmax(col_msr)
-            if row_msr[row_id] > col_msr[col_id]:
-                rows = rows.ravel()
-                rows = np.setdiff1d(rows, [rows[row_id]])[np.newaxis].T
+        inc = IncrementalMSR(rows, cols, X)
+        while inc.msr > self.max_msr:
+            row_idx = np.argmax(inc.row_msr)
+            col_idx = np.argmax(inc.col_msr)
+            if inc.row_msr[row_idx] > inc.col_msr[col_idx]:
+                inc.remove_row(inc.row_idxs[row_idx])
             else:
-                cols = np.setdiff1d(cols, [cols[col_id]])
-            msr, row_msr, col_msr = self._all_msr(rows, cols, X)
-        return rows, cols
+                inc.remove_col(inc.col_idxs[col_idx])
+        return inc.rows, inc.cols
 
     def _multiple_node_deletion(self, rows, cols, X):
-        msr, row_msr, col_msr = self._all_msr(rows, cols, X)
-        while msr > self.max_msr:
-            n_rows, n_cols = len(rows), len(cols)
+        inc = IncrementalMSR(rows, cols, X)
+        while inc.msr > self.max_msr:
+            n_rows = np.count_nonzero(rows)
+            n_cols = np.count_nonzero(cols)
             if n_rows >= self.row_deletion_cutoff:
-                to_remove = row_msr > (self.deletion_threshold * msr)
-                rows = rows.ravel()
-                rows = np.setdiff1d(rows, rows[to_remove])[np.newaxis].T
+                to_remove = inc.row_msr > (self.deletion_threshold * inc.msr)
+                inc.remove_rows(inc.row_idxs[to_remove])
 
-            msr, row_msr, col_msr = self._all_msr(rows, cols, X)
             if n_cols >= self.column_deletion_cutoff:
-                to_remove = col_msr > (self.deletion_threshold * msr)
-                cols = np.setdiff1d(cols, cols[to_remove])
+                to_remove = inc.col_msr > (self.deletion_threshold *
+                                           inc.msr)
+                inc.remove_cols(inc.col_idxs[to_remove])
 
-            if n_rows == len(rows) and n_cols == len(cols):
+            if (n_rows == np.count_nonzero(rows)) and \
+               (n_cols == np.count_nonzero(cols)):
                 break
-            msr, row_msr, col_msr = self._all_msr(rows, cols, X)
-        return rows, cols
+        return inc.rows, inc.cols
 
     def _node_addition(self, rows, cols, X):
         while True:
-            n_rows, n_cols = len(rows), len(cols)
-            msr, _, _ = self._all_msr(rows, cols, X)
-            col_msr = self._col_msr(rows, cols, X)
-            to_add = np.nonzero(col_msr < msr)[0]
+            n_rows = np.count_nonzero(rows)
+            n_cols = np.count_nonzero(cols)
+
             old_cols = cols.copy()  # save for inverse
-            cols = np.union1d(cols, to_add)
+            msr = self._msr(rows, cols, X)
+            col_msr = self._col_msr(rows, cols, X)
+            to_add = col_msr < msr
+            cols = cols + to_add
 
             if self.inverse_columns:
                 col_msr = self._col_msr(rows, old_cols, X,
                                         inverse=True).mean(axis=1)
-                to_add = np.nonzero(col_msr < msr)[0]
-                cols = np.union1d(cols, to_add)
+                to_add = col_msr < msr
+                cols = cols + to_add
 
-            msr, _, _ = self._all_msr(rows, cols, X)
-            row_msr = self._row_msr(rows, cols, X)
-            to_add = np.nonzero(row_msr < msr)[0]
             old_rows = rows.copy()  # save for inverse
-            rows = np.union1d(rows.ravel(), to_add)[np.newaxis].T
+            msr = self._msr(rows, cols, X)
+            row_msr = self._row_msr(rows, cols, X)
+            to_add = row_msr < msr
+            rows = rows + to_add
 
             if self.inverse_rows:
                 row_msr = self._row_msr(old_rows, cols, X,
                                         inverse=True).mean(axis=1)
-                to_add = np.nonzero(row_msr < msr)[0]
-                rows = np.union1d(rows.ravel(), to_add)[np.newaxis].T
+                to_add = row_msr < msr
+                rows = rows + to_add
 
-            if n_rows == len(rows) and n_cols == len(cols):
+            if (n_rows == np.count_nonzero(rows)) and \
+               (n_cols == np.count_nonzero(cols)):
                 break
         return rows, cols
 
     def _mask(self, X, rows, cols, generator, minval, maxval):
-        mask_vals = generator.uniform(minval, maxval, (len(rows), len(cols)))
-        X[rows, cols] = mask_vals
+        shape = np.count_nonzero(rows), np.count_nonzero(cols)
+        mask_vals = generator.uniform(minval, maxval, shape)
+        r = rows.nonzero()[0][:, np.newaxis]
+        c = cols.nonzero()[0]
+        X[r, c] = mask_vals
 
     def fit(self, X):
         X = X.copy()  # need to modify it in-place
@@ -223,20 +334,18 @@ class ChengChurch(six.with_metaclass(ABCMeta, BaseEstimator,
         n_rows, n_cols = X.shape
 
         generator = check_random_state(self.random_state)
-        results = []
+        result_rows = []
+        result_cols = []
 
         for i in range(self.n_clusters):
-            # reshape rows so that X[rows, cols] works as expected.
-            # NOTE: this makes X[rows] != X[rows.ravel()]
-            rows = np.arange(n_rows, dtype=np.int)[np.newaxis]
-            cols = np.arange(n_cols, dtype=np.int)
+            rows = np.ones(n_rows, dtype=np.bool)
+            cols = np.ones(n_cols, dtype=np.bool)
             rows, cols = self._multiple_node_deletion(rows, cols, X)
             rows, cols = self._single_node_deletion(rows, cols, X)
             rows, cols = self._node_addition(rows, cols, X)
             self._mask(X, rows, cols, generator, minval, maxval)
-            results.append((rows.ravel(), cols))
+            result_rows.append(rows)
+            result_cols.append(cols)
 
-        indicators = (get_indicators(r, c, X.shape) for r, c in results)
-        rows, cols = zip(*indicators)
-        self.rows_ = np.vstack(rows)
-        self.columns_ = np.vstack(cols)
+        self.rows_ = np.vstack(result_rows)
+        self.columns_ = np.vstack(result_cols)
