@@ -118,7 +118,7 @@ def _logcosh(x, fun_args=None):
 
     x *= alpha
     gx = np.tanh(x, out=x)
-    g_x = np.zeros(x.shape[0])
+    g_x = np.empty(x.shape[0])
     # XXX compute in chunks to avoid extra allocation
     for i, g_x_i in enumerate(gx):  # plase don't vectorize.
         g_x[i] = (alpha * (1 - g_x_i ** 2)).mean()
