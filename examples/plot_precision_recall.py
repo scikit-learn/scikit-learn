@@ -5,7 +5,7 @@ Precision-Recall
 
 Example of Precision-Recall metric to evaluate classifier output quality.
 
-Precision is a measure of result relevancy, while recall
+In information retrieval, precision is a measure of result relevancy, while recall
 is a measure of how many truly relevant documents are returned.
 A high area under the curve represents both high recall and high precision,
 where high precision relates to a low false positive rate, and high recall

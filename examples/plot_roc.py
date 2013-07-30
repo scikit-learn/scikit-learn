@@ -45,7 +45,8 @@ n_samples, n_features = X.shape
 X = np.c_[X, np.random.randn(n_samples, 200 * n_features)]
 
 # shuffle and split training and test sets
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.5, random_state=0)
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=.5, random_state=0)
 
 # Run classifier
 classifier = svm.SVC(kernel='linear', probability=True, random_state=0)
