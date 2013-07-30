@@ -94,6 +94,10 @@ div.navbar ul li a:hover {
     color: #EEE;
 }
 
+/*-------------------------------------------------------------*/
+/* The next few elements have to do with the gsc (referring to */
+/* Google's custom search bar */
+
 .gsc-input {
     width: 180px;
     float: right;
@@ -101,11 +105,22 @@ div.navbar ul li a:hover {
 
 .search_form {
     margin-top: -23px;
+    /*The min-height is added here, to prevent the element from shrinking
+    too much, while the scripts are still loading the search-bar.
+    Without it, layout glitches occur, as the element keeps dynamically
+    changing it's size while its loading-contents adjusts into position.*/
+    min-height: 42px;
+}
+
+#cse .gsc-clear-button {
+    width: 50px;
 }
 
 .gsc-branding {
     display: none;
 }
+
+/*---------------------------------------------------------------*/
 
 .quote {
     text-align: right;
@@ -722,6 +737,7 @@ span.example-links {
 div.banner-container {
   width:100%;
   background-color: #3499CD;
+  min-height: 229px;
 }
 
 div.banner-inner {
