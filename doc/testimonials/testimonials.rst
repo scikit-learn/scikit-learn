@@ -88,4 +88,35 @@ Mark Ayzenshtat, Head of Data Products
 
    </span>
 
+`Télécom ParisTech <http://www.telecom-paristech.fr>`_
+------------------------
+
+.. raw:: html
+
+  <div class="logo">
+
+.. image:: images/telecomparistech.jpg
+   :target: https://www.telecom-paristech.fr
+
+.. raw:: html
+
+  </div>
+
+
+At Telecom ParisTech, scikit-learn is used for hands on sessions and home
+assignments in introductory and advanced machine learning courses. The classes
+are for undergrads and masters students. The great benefit of scikit-learn is
+its fast learning curve that allows students to quickly start working on
+interesting and motivating problems.
+
+.. raw:: html
+
+   <span class="testimonial-author">
+
+Alexandre Gramfort, Assistant Professor
+
+.. raw:: html
+
+   </span>
+
 
