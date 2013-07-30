@@ -199,12 +199,12 @@ def test_fit_transform():
     X = rng.random_sample((100, 10))
     for whiten, n_components in [[True, 5], [False, 10]]:
 
-        ica = FastICA(n_components=5, whiten=whiten, random_state=0)
+        ica = FastICA(n_components=n_components, whiten=whiten, random_state=0)
         Xt = ica.fit_transform(X)
         assert_equal(ica.components_.shape, (n_components, 10))
         assert_equal(Xt.shape, (100, n_components))
 
-        ica = FastICA(n_components=5, whiten=whiten, random_state=0)
+        ica = FastICA(n_components=n_components, whiten=whiten, random_state=0)
         ica.fit(X)
         assert_equal(ica.components_.shape, (n_components, 10))
         Xt2 = ica.transform(X)
@@ -214,18 +214,17 @@ def test_fit_transform():
 
 def test_inverse_transform():
     """Test FastICA.inverse_transform"""
+    n_features = 10
+    n_samples = 100
+    n1, n2 = 5, 10
     rng = np.random.RandomState(0)
-    X = rng.random_sample((100, 10))
-    rng = np.random.RandomState(0)
-    X = rng.random_sample((100, 10))
-    n_features = X.shape[1]
-    expected = {(True, 5): (n_features, 5),
-                (True, 10): (n_features, 10),
-                (False, 5): (n_features, 10),
-                (False, 10): (n_features, 10)}
-
+    X = rng.random_sample((n_samples, n_features))
+    expected = {(True, n1): (n_features, n1),
+                (True, n2): (n_features, n2),
+                (False, n1): (n_features, n2),
+                (False, n2): (n_features, n2)}
     for whiten in [True, False]:
-        for n_components in [5, 10]:
+        for n_components in [n1, n2]:
             ica = FastICA(n_components=n_components, random_state=rng,
                           whiten=whiten)
             Xt = ica.fit_transform(X)

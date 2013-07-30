@@ -17,7 +17,6 @@ from ..externals import six
 from ..externals.six import moves
 from ..utils import array2d, as_float_array, check_random_state, deprecated
 
-
 __all__ = ['fastica', 'FastICA']
 
 
@@ -28,7 +27,9 @@ def _gs_decorrelation(w, W, j):
     Parameters
     ----------
     w: array of shape(n), to be orthogonalized
+
     W: array of shape(p, n), null space definition
+
     j: int < p
 
     caveats
@@ -97,6 +98,7 @@ def _ica_par(X, tol, g, fun_args, max_iter, w_init):
         W1 = _sym_decorrelation(np.dot(gwtx, X.T) / p_
                                 - g_wtx[:, np.newaxis] * W)
         del gwtx, g_wtx
+        # builtin max, abs are faster than numpy counter parts.
         lim = max(abs(abs(np.diag(np.dot(W1, W.T))) - 1))
         W = W1
         if lim < tol:
@@ -113,12 +115,14 @@ def _ica_par(X, tol, g, fun_args, max_iter, w_init):
 # XXX: these should be optimized, as they can be a bottleneck.
 def _logcosh(x, fun_args=None):
     alpha = fun_args.get('alpha', 1.0)  # comment it out?
-    gx = np.tanh(alpha * x, x)
-    # then compute g_x = alpha * (1 - gx ** 2) avoiding extra allocation
-    g_x = gx ** 2
-    g_x -= 1.
-    g_x *= -alpha
-    return gx, g_x.mean(axis=-1)
+
+    x *= alpha
+    gx = np.tanh(x, out=x)
+    g_x = np.empty(x.shape[0])
+    # XXX compute in chunks to avoid extra allocation
+    for i, gx_i in enumerate(gx):  # please don't vectorize.
+        g_x[i] = (alpha * (1 - gx_i ** 2)).mean()
+    return gx, g_x
 
 
 def _exp(x, fun_args):
@@ -174,18 +178,15 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
         {'alpha' : 1.0}
 
     max_iter : int, optional
-        Maximum number of iterations to perform
+        Maximum number of iterations to perform.
 
     tol: float, optional
         A positive scalar giving the tolerance at which the
-        un-mixing matrix is considered to have converged
+        un-mixing matrix is considered to have converged.
 
     w_init : (n_components, n_components) array, optional
         Initial un-mixing array of dimension (n.comp,n.comp).
-        If None (default) then an array of normal r.v.'s is used
-
-    source_only : boolean, optional
-        If True, only the sources matrix is returned.
+        If None (default) then an array of normal r.v.'s is used.
 
     random_state : int or RandomState
         Pseudo number generator state used for random sampling.
@@ -509,7 +510,7 @@ class FastICA(BaseEstimator, TransformerMixin):
 
         return np.dot(X, self.components_.T)
 
-    @deprecated('To be removed in 0.16. Use the ``mixing_`` attribute.')
+    @deprecated('To be removed in 0.16. Use the `mixing_` attribute.')
     def get_mixing_matrix(self):
         """Compute the mixing matrix.
 
