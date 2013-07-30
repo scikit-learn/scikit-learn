@@ -120,8 +120,8 @@ def _logcosh(x, fun_args=None):
     gx = np.tanh(x, out=x)
     g_x = np.empty(x.shape[0])
     # XXX compute in chunks to avoid extra allocation
-    for i, g_x_i in enumerate(gx):  # plase don't vectorize.
-        g_x[i] = (alpha * (1 - g_x_i ** 2)).mean()
+    for i, gx_i in enumerate(gx):  # please don't vectorize.
+        g_x[i] = (alpha * (1 - gx_i ** 2)).mean()
     return gx, g_x
 
 
