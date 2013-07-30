@@ -24,6 +24,7 @@ class EmptyBiclusterException(Exception):
 
 
 class IncrementalMSR(object):
+    """Utility for incrementally calculating MSR during deletion."""
     def __init__(self, rows, cols, arr, tol=1e-5):
         assert rows.dtype == np.bool
         assert cols.dtype == np.bool
