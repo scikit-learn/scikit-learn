@@ -98,7 +98,7 @@ def _ica_par(X, tol, g, fun_args, max_iter, w_init):
         W1 = _sym_decorrelation(np.dot(gwtx, X.T) / p_
                                 - g_wtx[:, np.newaxis] * W)
         del gwtx, g_wtx
-        # builtin max, abse are faster than numpy counter parts.
+        # builtin max, abs are faster than numpy counter parts.
         lim = max(abs(abs(np.diag(np.dot(W1, W.T))) - 1))
         W = W1
         if lim < tol:
@@ -118,11 +118,10 @@ def _logcosh(x, fun_args=None):
 
     x *= alpha
     gx = np.tanh(x, out=x)
-    # compute in chunks to avoid extra allocation
-    g_x = np.zeros(gx.shape[0])
-    for ii, gx_ in enumerate(gx):
-        g_x[ii] = (alpha * (1 - gx_ ** 2)).mean()
-
+    g_x = np.zeros(x.shape[0])
+    # XXX compute in chunks to avoid extra allocation
+    for i, g_x_i in enumerate(gx):  # plase don't vectorize.
+        g_x[i] = (alpha * (1 - g_x_i ** 2)).mean()
     return gx, g_x
 
 
@@ -511,7 +510,7 @@ class FastICA(BaseEstimator, TransformerMixin):
 
         return np.dot(X, self.components_.T)
 
-    @deprecated('To be removed in 0.16. Use `mixing_` attribute.')
+    @deprecated('To be removed in 0.16. Use the `mixing_` attribute.')
     def get_mixing_matrix(self):
         """Compute the mixing matrix.
 
