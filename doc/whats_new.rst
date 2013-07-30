@@ -217,6 +217,9 @@ Changelog
    - Better input and error handling in the :mod:`metrics` module by
      `Arnaud Joly`_ and `Joel Nothman`_.
 
+   - Precision-recall and ROC examples now use train_test_split, and have more
+     explanation of why these metrics are useful. By `Kyle Kastner`_
+
    - Speed optimization of the :mod:`hmm` module by `Mikhail Korobov`_
 
    - Significant speed improvements for :class:`sklearn.cluster.DBSCAN`_
@@ -295,6 +298,12 @@ API changes summary
    - :class:`sklearn.preprocessing.StandardScaler` now converts integer input
      to float, and raises a warning. Previously it rounded for dense integer
      input.
+
+   - :class:`sklearn.multiclass.OneVsRestClassifier` now has a 
+     ``decision_function`` method. This will return the distance of each
+     sample from the decision boundary for each class, as long as the
+     underlying estimators implement the ``decision_function`` method.
+     By `Kyle Kastner`_.
 
    - Better input validation, warning on unexpected shapes for y.
 
@@ -2228,3 +2237,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Yannick Schwartz: https://team.inria.fr/parietal/schwarty/
 
 .. _Mikhail Korobov: http://kmike.ru/pages/about/
+
+.. _Kyle Kastner: http://kastnerkyle.github.io
