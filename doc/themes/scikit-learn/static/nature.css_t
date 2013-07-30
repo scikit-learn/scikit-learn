@@ -101,6 +101,11 @@ div.navbar ul li a:hover {
 
 .search_form {
     margin-top: -23px;
+    min-height: 42px;
+}
+
+#cse .gsc-clear-button {
+    width: 50px;
 }
 
 .gsc-branding {
@@ -722,6 +727,7 @@ span.example-links {
 div.banner-container {
   width:100%;
   background-color: #3499CD;
+  min-height: 229px;
 }
 
 div.banner-inner {
