@@ -30,7 +30,7 @@ on your hard-drive named ``sklearn_tut_workspace`` where you
 will edit your own files for the exercices while keeping
 the original skeletons intact::
 
-    % cp -r skeletons work_directory/sklear_tut_workspace
+    % cp -r skeletons work_directory/sklearn_tut_workspace
 
 
 Download the datasets
