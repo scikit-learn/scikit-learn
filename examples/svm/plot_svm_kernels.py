@@ -15,7 +15,7 @@ data-points are not linearly separable.
 print(__doc__)
 
 
-# Code source: Gael Varoqueux
+# Code source: Gaël Varoquaux
 # License: BSD 3 clause
 
 import numpy as np
