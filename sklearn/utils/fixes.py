@@ -237,14 +237,3 @@ except TypeError:
         if out_orig is None and np.isscalar(x1):
             out = np.asscalar(out)
         return out
-
-# fix tanh for old numpy
-def _tanh(x, out=None):
-    """A replacement for the np.tanh that supports out parameter
-    """
-    return np.tanh(x)
-
-if np_version[:2] < (1, 4):
-    tanh = _tanh
-else:
-    tanh = np.tanh
