@@ -47,7 +47,7 @@ Tutorials: From the bottom up with scikit-learn
 .. toctree::
    :maxdepth: 2
 
-   text_analytics/index.rst
+   text_analytics/working_with_text_data.rst
 
 
 .. topic:: **Machine Learning Cheat Sheet (for scikit-learn)**

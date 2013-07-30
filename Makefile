@@ -32,7 +32,8 @@ test-code: in
 	$(NOSETESTS) -s -v sklearn
 test-doc:
 	$(NOSETESTS) -s -v doc/ doc/modules/ doc/datasets/ \
-	doc/developers doc/tutorial/basic doc/tutorial/statistical_inference
+	doc/developers doc/tutorial/basic doc/tutorial/statistical_inference \
+	doc/tutorial/text_analytics
 
 test-coverage:
 	rm -rf coverage .coverage

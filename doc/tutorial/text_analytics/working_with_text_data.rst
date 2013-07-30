@@ -1,7 +1,7 @@
 Working with text data
 ======================
 
-The goal of this section is to explore some of the main ``scikit-learn``
+The goal of this guide is to explore some of the main ``scikit-learn``
 tools on a single practical task: analysing a collection of text
 documents (newsgroups posts) on twenty different topics.
 
@@ -34,7 +34,7 @@ description, quoted from the `website
   such as text classification and text clustering.
 
 In the following we will use the built-in dataset loader for 20 newsgroups
-from scikit-learn. Alternatively it is possible to download the dataset
+from scikit-learn. Alternatively, it is possible to download the dataset
 manually from the web-site and use the :func:`sklearn.datasets.load_files`
 function by pointing it to the ``20news-bydate-train`` subfolder of the
 uncompressed archive folder.
@@ -76,7 +76,7 @@ Let's print the first lines of the first loaded file::
   Nntp-Posting-Host: hampton
 
   >>> print twenty_train.target_names[twenty_train.target[0]]
-  alt.atheism
+  comp.graphics
 
 Supervised learning algorithms will require a category label for each
 document in the training set. In this case the category is the name of the
@@ -89,7 +89,7 @@ index of the category name in the ``target_names`` list. The category
 integer id of each sample is stored in the ``target`` attribute::
 
   >>> twenty_train.target[:10]
-  array([0, 1, 3, 1, 2, 1, 1, 1, 3, 3])
+  array([1, 1, 3, 3, 3, 3, 3, 2, 2, 2])
 
 It is possible to get back the category names as follows::
 
@@ -129,9 +129,9 @@ The most intuitive way to do so is the bags of words representation:
      of the training set (for instance by building a dictionary
      from words to integer indices).
 
-  2. for each document #i, count the number of occurrences of each
-     word w and store it in ``X[i, j]`` as the value of feature
-     #j where j is the index of word w in the dictionary
+  2. for each document ``#i``, count the number of occurrences of each
+     word ``w`` and store it in ``X[i, j]`` as the value of feature
+     ``#j`` where ``j`` is the index of word ``w`` in the dictionary
 
 The bags of words representation implies that ``n_features`` is
 the number of distinct words in the corpus: this number is typically
@@ -161,13 +161,13 @@ dictionary of features and transform documents to feature vectors::
   >>> count_vect = CountVectorizer()
   >>> X_train_counts = count_vect.fit_transform(twenty_train.data)
   >>> X_train_counts.shape
-  (2257, 18494)
+  (2257, 35788)
 
 ``CountVectorizer`` supports counts of N-grams of words or consequective characters.
 Once fitted, the vectorizer has built a dictionary of feature indices::
 
   >>> count_vect.vocabulary_.get(u'algorithm')
-  1815
+  4690
 
 The index value of a word in the vocabulary is linked to its frequency
 in the whole training corpus.
@@ -191,7 +191,7 @@ even though they might talk about the same topics.
 
 To avoid these potential discrepancies it suffices to divide the
 number of occurrences of each word in a document by the total number
-of words in the document: these new features are called "tf" for Term
+of words in the document: these new features are called ``tf`` for Term
 Frequencies.
 
 Another refinement on top of tf is to downscale weights for words
@@ -205,7 +205,7 @@ Inverse Document Frequency".
 .. _`tf–idf`: http://en.wikipedia.org/wiki/Tf–idf
 
 
-Both tf and tf–idf can be computed as follows::
+Both **tf** and **tf–idf** can be computed as follows::
 
   >>> from sklearn.feature_extraction.text import TfidfTransformer
   >>> tf_transformer = TfidfTransformer(use_idf=False).fit(X_train_counts)
@@ -223,7 +223,8 @@ Training a classifier
 ---------------------
 
 Now that we have our feature, we can train a classifier to try to predict
-the category of a post. Let's start with a naïve Bayes classifier, which
+the category of a post. Let's start with a :ref:`naïve Bayes <naive_bayes>`
+classifier, which
 provides a nice baseline for this task. ``scikit-learn`` includes several
 variants of this classifier; the one most suitable for word counts is the
 multinomial variant::
@@ -280,10 +281,11 @@ Evaluating the predictive accuracy of the model is equally easy::
   >>> docs_test = twenty_test.data
   >>> predicted = text_clf.predict(docs_test)
   >>> np.mean(predicted == twenty_test.target)            # doctest: +ELLIPSIS
-  0.859...
+  0.834...
 
-I.e., we achieved 85.9% accuracy. Let's see if we can do better with a
-linear support vector machine (SVM), which is widely regarded as one of
+I.e., we achieved 83.4% accuracy. Let's see if we can do better with a
+linear :ref:`support vector machine (SVM) <svm>`,
+which is widely regarded as one of
 the best text classification algorithms (although it's also a bit slower
 than naïve Bayes). We can change the learner by just plugging a different
 classifier object into our pipeline::
