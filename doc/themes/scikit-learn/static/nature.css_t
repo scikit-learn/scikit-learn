@@ -983,7 +983,8 @@ div.logo {
 }
 
 div.logo img {
-  max-width: 200px;
+  max-width: 150px;
+  max-height: 150px;
 }
 
 div.testimonial p {
@@ -996,6 +997,7 @@ div.testimonial p {
 div.testimonial span.testimonial-author {
     width: 100%;
     text-align: right; 
+    margin-bottom: 30px;
 }
 
 div.testimonial span.testimonial-author p{
