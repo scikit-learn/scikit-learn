@@ -16,6 +16,7 @@ from ..base import BaseEstimator, TransformerMixin
 from ..externals import six
 from ..externals.six import moves
 from ..utils import array2d, as_float_array, check_random_state, deprecated
+from ..utils.fixes import tanh
 
 __all__ = ['fastica', 'FastICA']
 
@@ -117,7 +118,7 @@ def _logcosh(x, fun_args=None):
     alpha = fun_args.get('alpha', 1.0)  # comment it out?
 
     x *= alpha
-    gx = np.tanh(x, out=x)
+    gx = tanh(x, out=x)
     g_x = np.empty(x.shape[0])
     # XXX compute in chunks to avoid extra allocation
     for i, gx_i in enumerate(gx):  # please don't vectorize.
