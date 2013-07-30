@@ -12,6 +12,8 @@ the lower the better
 #          Mathieu Blondel <mathieu@mblondel.org>
 #          Olivier Grisel <olivier.grisel@ensta.org>
 #          Arnaud Joly <a.joly@ulg.ac.be>
+#          Jochen Wersdörfer <jochen@wersdoerfer.de>
+#          Lars Buitinck <L.J.Buitinck@uva.nl>
 # License: BSD 3 clause
 
 from __future__ import division
