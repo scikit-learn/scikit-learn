@@ -19,16 +19,12 @@ Here is sketch of a system designed to achieve this goal:
 
   1. a way to stream instances
   2. a way to extract features from instances
-  3. an online algorithm
+  3. an incremental algorithm
 
 Streaming instances
 ------------------
-Basically, \1. could be either a reader that yields instances from files on a
-hard drive or a program that listens to a socket and parses instances from a 
-network stream. This is the case of the *all-reduce* computing paradigm where
-all mappers of a computing cluster send their data to one learner as 
-popularized by projects like 
-`Vowpal Wabbit <https://github.com/JohnLangford/vowpal_wabbit/wiki>`_. However, 
+Basically, 1. may be a reader that yields instances from files on a
+hard drive, a database, from a network stream etc. However, 
 details on how to achieve this are beyond the scope of this documentation.
 
 Extracting features
@@ -37,24 +33,26 @@ Extracting features
 different :ref:`feature extraction <feature_extraction>` methods supported by
 Scikit-learn. However, when working with data that needs vectorization and 
 where the set of features or values is not known in advance one should take 
-explicit care by using a stateless feature extractor. A good example is text
-classification where unknown terms are likely to be found during training.
-Currently the preferred way to do this is to use the so-called 
-:ref:`hashing trick<feature_hashing>` as implemented by 
-:class:`sklearn.feature_extraction.FeatureHasher`.
+explicit care. A good example is text classification where unknown terms are
+likely to be found during training. It is possible to use a statefull 
+vectorizer if making multiple passes over the data is reasonable from an
+application point of view. Otherwise, one can turn up the difficulty by using
+a stateless feature extractor.  Currently the preferred way to do this is to
+use the so-called :ref:`hashing trick<feature_hashing>` as implemented by 
+:class:`sklearn.feature_extraction.FeatureHasher`. 
 
-Online learning
----------------
-Finally, for \3. we have a number of options inside Scikit-learn. Although all
-learning algorithms can not learn online (i.e. without seeing all the instances
-at once), all estimators implementing the `partial_fit` API are candidates.
-Actually, the ability to learn iteratively from a mini-batch of instances is key
-to out-of-core learning as it guarantees that at any given time there will be
-only a small amount of instances in the main memory. Choosing a good size for
-the mini-batch that balances relevancy and memory footprint could involve some
-tuning.
+Incremental learning
+--------------------
+Finally, for 3. we have a number of options inside Scikit-learn. Although all
+algorithms can not learn incrementally (i.e. without seeing all the instances
+at once), all estimators implementing the ``partial_fit`` API are candidates.
+Actually, the ability to learn incrementally from a mini-batch of instances 
+(sometimes called "online learning") is key to out-of-core learning as it
+guarantees that at any given time there will be only a small amount of
+instances in the main memory. Choosing a good size for the mini-batch that 
+balances relevancy and memory footprint could involve some tuning [1]_.
 
-Here is a list of online estimators for different tasks:
+Here is a list of incremental estimators for different tasks:
 
   - Classification
       + :class:`sklearn.naive_bayes.MultinomialNB`
@@ -71,11 +69,11 @@ Here is a list of online estimators for different tasks:
       + :class:`sklearn.decomposition.MiniBatchDictionaryLearning`
       + :class:`sklearn.cluster.MiniBatchKMeans`
 
-A somewhat important thing to note is that although a stateless feature 
-extraction routine may be able to to cope with new/unseen attributes, the 
-online learner itself may be unable to cope with new/unseen targets. E.g. for
-classification you need to pass all the possible classes to the first 
-`partial_fit` call using the `classes=` parameter.
+For classification, a somewhat important thing to note is that although a 
+stateless feature extraction routine may be able to cope with new/unseen
+attributes, the incremental learner itself may be unable to cope with 
+new/unseen targets classes. In this case you have to pass all the possible
+classes to the first ``partial_fit`` call using the ``classes=`` parameter.
 
 Examples
 --------
@@ -86,6 +84,11 @@ It is aimed at providing a starting point for people wanting to build
 out-of-core learning systems and demonstrates most of the notions discussed
 above.
 
+Notes
+-----
 
-
-
+.. [1] Depending on the algorithm the mini-batch size can influence results or
+       not. SGD*, PassiveAggressive*, and discrete NaiveBayes are truly online
+       and are not affected by batch size. Conversely, MiniBatchKMeans 
+       convergence rate is affected by the batch size. Also, its memory
+       footprint can vary dramatically with batch size.
