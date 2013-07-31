@@ -17,8 +17,10 @@
                     if ($(this).children('ul').length > 0) {
                                 $(this).css('list-style-image',
                                 (!$(this).children('ul').is(':hidden')) ? 'url(_static/plusBoxHighlight.png)' : 'url(_static/minBoxHighlight.png)');
-                                $(this).children('ul').toggle("slow");
+                                $(this).children('ul').toggle();
                             }
+			    // Update the sidebar height when expanding/collapsing toctree elemements
+                            $('#sidebarbutton').animate({height : $('.toctree-wrapper').height() + 50}, 0);
                             return true; //Makes links clickable
                         }
             })
@@ -27,6 +29,8 @@
                     .children('ul').hide();
                 $('ul li ul li:not(:has(ul))').css({cursor:'default', 'list-style-image':'url(_static/noneBox.png)'});
                 $('ul li ul').css('margin-left', '0px');
+		//Initialise the sidebar button with the collapsing toctree
+                $('#sidebarbutton').animate({height : $('.toctree-wrapper').height() + 50}, 0);
             $('.toctree-l3').css({cursor:'default', 'list-style-image':'url(_static/noneBox.png)'});
             $('.toctree-l2').hover(
                 function () {
