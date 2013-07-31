@@ -58,6 +58,9 @@ class _PartitionIterator(with_metaclass(ABCMeta)):
     """
 
     def __init__(self, n, indices=True):
+        if not indices:
+            warnings.warn("The indices parameter is deprecated and will be "
+                          "removed (assumed True) in 0.17", DeprecationWarning)
         if abs(n - int(n)) >= np.finfo('f').eps:
             raise ValueError("n must be an integer")
         self.n = int(n)
@@ -711,6 +714,9 @@ class BaseShuffleSplit(with_metaclass(ABCMeta)):
 
     def __init__(self, n, n_iter=10, test_size=0.1, train_size=None,
                  indices=True, random_state=None, n_iterations=None):
+        if not indices:
+            warnings.warn("The indices parameter is deprecated and will be "
+                          "removed (assumed True) in 0.17", DeprecationWarning)
         self.n = n
         self.n_iter = n_iter
         if n_iterations is not None:  # pragma: no cover
@@ -1198,18 +1204,18 @@ def check_cv(cv, X=None, y=None, classifier=False):
         the input type.
     """
     is_sparse = sp.issparse(X)
-    needs_indices = is_sparse or not hasattr(X, "shape")
     if cv is None:
         cv = 3
     if isinstance(cv, numbers.Integral):
         if classifier:
-            cv = StratifiedKFold(y, cv, indices=needs_indices)
+            cv = StratifiedKFold(y, cv)
         else:
             if not is_sparse:
                 n_samples = len(X)
             else:
                 n_samples = X.shape[0]
-            cv = KFold(n_samples, cv, indices=needs_indices)
+            cv = KFold(n_samples, cv)
+    needs_indices = is_sparse or not hasattr(X, "shape")
     if needs_indices and not getattr(cv, "indices", True):
         raise ValueError("Sparse data and lists require indices-based cross"
                          " validation generator, got: %r", cv)
