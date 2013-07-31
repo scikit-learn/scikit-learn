@@ -188,9 +188,10 @@ class ChengChurch(six.with_metaclass(ABCMeta, BaseEstimator,
       <ftp://samba.ad.sdsc.edu/pub/sdsc/biology/ISMB00/157.pdf>`__.
 
     """
-    def __init__(self, n_clusters=100, max_msr=1.0, deletion_threshold=1.5,
-                 row_deletion_cutoff=100, column_deletion_cutoff=100,
-                 inverse_rows=False, inverse_columns=False, random_state=None):
+    def __init__(self, n_clusters=100, max_msr=1.0,
+                 deletion_threshold=1.5, row_deletion_cutoff=100,
+                 column_deletion_cutoff=100, inverse_rows=False,
+                 inverse_columns=False, random_state=None):
         self.n_clusters = n_clusters
         self.max_msr = max_msr
         self.deletion_threshold = deletion_threshold
