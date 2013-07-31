@@ -71,7 +71,7 @@ Here is a list of online estimators for different tasks:
       + :class:`sklearn.decomposition.MiniBatchDictionaryLearning`
       + :class:`sklearn.cluster.MiniBatchKMeans`
 
-An somewhat important thing to note is that although a stateless feature 
+A somewhat important thing to note is that although a stateless feature 
 extraction routine may be able to to cope with new/unseen attributes, the 
 online learner itself may be unable to cope with new/unseen targets. E.g. for
 classification you need to pass all the possible classes to the first 
@@ -82,6 +82,9 @@ Examples
 Finally, we have a full-fledged example of
 :ref:`example_applications_plot_out_of_core_classification.py` comparing the
 performance of different algorithms with the number of processed examples.
+It is aimed at providing a starting point for people wanting to build 
+out-of-core learning systems and demonstrates most of the notions discussed
+above.
 
 
 
