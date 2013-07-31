@@ -4,6 +4,7 @@ import numpy as np
 
 from sklearn.utils.linear_assignment_ import linear_assignment
 from sklearn.utils.validation import check_arrays
+from sklearn.utils.validation import array2d
 
 
 def _check_rows_and_columns(a, b):
@@ -71,6 +72,8 @@ def consensus_score(a, b, similarity="jaccard"):
       <https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2881408/>`__.
 
     """
+    a = map(array2d, a)
+    b = map(array2d, b)
     if similarity == "jaccard":
         similarity = _jaccard
     matrix = _pairwise_similarity(a, b, similarity)
