@@ -70,11 +70,7 @@ Building a classifier is typically an iterative process of exploring
 the data, selecting the features (the attributes of the data believed
 to be predictive in some way), training the models, and finally
 evaluating them. For many of these tasks, we relied on the excellent
-scikit-learn package for Python. Currently, we use a variant of Naive
-Bayes classification to do our prediction. We picked Naive Bayes
-because it’s simple, fast, and performs quite well on this kind of
-classification problem despite a few limitations arising from its
-simplicity.
+scikit-learn package for Python.
 
 `Read more <http://blog.evernote.com/tech/2013/01/22/stay-classified/>`_
 
@@ -82,7 +78,7 @@ simplicity.
 
    <span class="testimonial-author">
 
-Mark Ayzenshtat, Head of Data Products
+Mark Ayzenshtat, VP, Augmented Intelligence
 
 .. raw:: html
 
