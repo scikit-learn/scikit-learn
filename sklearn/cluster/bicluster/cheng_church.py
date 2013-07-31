@@ -16,7 +16,7 @@ from sklearn.utils.validation import check_random_state
 
 from .utils import check_array_ndim
 
-from ._squared_residue import compute
+from ._squared_residue import compute_msr
 
 
 class EmptyBiclusterException(Exception):
@@ -102,8 +102,8 @@ class IncrementalMSR(object):
         mean = self._sum / (n_rows * n_cols)
 
         self._msr, self._row_msr, self._col_msr = \
-            compute(self.row_idxs, self.col_idxs, row_mean, col_mean,
-                    mean, self.arr)
+            compute_msr(self.row_idxs, self.col_idxs, row_mean,
+                        col_mean, mean, self.arr)
         self._msr = 0 if self._msr < self.tol else self._msr
         self._row_msr[self._row_msr < self.tol] = 0
         self.col_msr[self._col_msr < self.tol] = 0

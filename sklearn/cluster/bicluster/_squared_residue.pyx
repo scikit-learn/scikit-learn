@@ -14,12 +14,12 @@ ctypedef np.float64_t DOUBLE
 ctypedef np.int64_t LONG
 
 
-def compute(np.ndarray[LONG, ndim=1, mode="c"] rows,
-            np.ndarray[LONG, ndim=1, mode="c"] cols,
-            np.ndarray[DOUBLE, ndim=1, mode="c"] row_mean,
-            np.ndarray[DOUBLE, ndim=1, mode="c"] col_mean,
-            double arr_mean,
-            np.ndarray[DOUBLE, ndim=2, mode="c"] X):
+def compute_msr(np.ndarray[LONG, ndim=1, mode="c"] rows,
+                np.ndarray[LONG, ndim=1, mode="c"] cols,
+                np.ndarray[DOUBLE, ndim=1, mode="c"] row_mean,
+                np.ndarray[DOUBLE, ndim=1, mode="c"] col_mean,
+                double arr_mean,
+                np.ndarray[DOUBLE, ndim=2, mode="c"] X):
     cdef int n_rows = rows.shape[0]
     cdef int n_cols = cols.shape[0]
 
