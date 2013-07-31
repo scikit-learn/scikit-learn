@@ -20,7 +20,7 @@ from ..utils import ConvergenceWarning
 from ..utils.extmath import pinvh
 from ..linear_model import lars_path
 from ..linear_model import cd_fast
-from ..cross_validation import check_cv, cross_val_score
+from ..cross_validation import _check_cv as check_cv, cross_val_score
 from ..externals.joblib import Parallel, delayed
 import collections
 

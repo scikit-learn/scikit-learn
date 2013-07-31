@@ -112,6 +112,18 @@ def assert_no_warnings(func, *args, **kw):
                                  % (func.__name__, w))
     return result
 
+
+def ignore_warnings(fn):
+    """Decorator to catch and hide warnings without visual nesting"""
+    @wraps(fn)
+    def wrapper(*args, **kwargs):
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter('always')
+            return fn(*args, **kwargs)
+            w[:] = []
+    return wrapper
+
+
 try:
     from nose.tools import assert_less
 except ImportError:

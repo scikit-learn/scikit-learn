@@ -13,6 +13,8 @@ from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import ignore_warnings
 
 from sklearn.utils.fixes import unique
 
@@ -146,6 +148,7 @@ def test_kfold_balance():
         assert_equal(np.sum(sizes), kf.n)
 
 
+@ignore_warnings
 def test_shuffle_kfold():
     # Check the indices are shuffled properly, and that all indices are
     # returned in the different test folds
@@ -231,6 +234,7 @@ def test_stratified_shuffle_split_iter():
             assert_array_equal(np.lib.arraysetops.intersect1d(train, test), [])
 
 
+@ignore_warnings
 def test_stratified_shuffle_split_iter_no_indices():
     y = np.asarray([0, 1, 2] * 10)
 
@@ -479,13 +483,20 @@ def test_cross_val_generator_with_mask():
     X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
     y = np.array([1, 1, 2, 2])
     labels = np.array([1, 2, 3, 4])
-    loo = cval.LeaveOneOut(4, indices=False)
-    lpo = cval.LeavePOut(4, 2, indices=False)
-    kf = cval.KFold(4, 2, indices=False)
-    skf = cval.StratifiedKFold(y, 2, indices=False)
-    lolo = cval.LeaveOneLabelOut(labels, indices=False)
-    lopo = cval.LeavePLabelOut(labels, 2, indices=False)
-    ss = cval.ShuffleSplit(4, indices=False)
+    loo = assert_warns(DeprecationWarning, cval.LeaveOneOut,
+                       4, indices=False)
+    lpo = assert_warns(DeprecationWarning, cval.LeavePOut,
+                       4, 2, indices=False)
+    kf = assert_warns(DeprecationWarning, cval.KFold,
+                      4, 2, indices=False)
+    skf = assert_warns(DeprecationWarning, cval.StratifiedKFold,
+                       y, 2, indices=False)
+    lolo = assert_warns(DeprecationWarning, cval.LeaveOneLabelOut,
+                        labels, indices=False)
+    lopo = assert_warns(DeprecationWarning, cval.LeavePLabelOut,
+                        labels, 2, indices=False)
+    ss = assert_warns(DeprecationWarning, cval.ShuffleSplit,
+                      4, indices=False)
     for cv in [loo, lpo, kf, skf, lolo, lopo, ss]:
         for train, test in cv:
             X_train, X_test = X[train], X[test]
@@ -510,6 +521,7 @@ def test_cross_val_generator_with_indices():
             y_train, y_test = y[train], y[test]
 
 
+@ignore_warnings
 def test_cross_val_generator_mask_indices_same():
     # Test that the cross validation generators return the same results when
     # indices=True and when indices=False
@@ -571,6 +583,7 @@ def test_shufflesplit_reproducible():
     assert_array_equal(list(a for a, b in ss), list(a for a, b in ss))
 
 
+@ignore_warnings
 def test_cross_indices_exception():
     X = coo_matrix(np.array([[1, 2], [3, 4], [5, 6], [7, 8]]))
     y = np.array([1, 1, 2, 2])
