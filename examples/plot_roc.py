@@ -17,7 +17,8 @@ the true positive rate while minimizing the false positive rate.
 
 .. note::
 
-    See also :ref:`example_plot_roc_crossval.py`
+    See also :func:`sklearn.metrics.auc_score`,
+             :ref:`example_plot_roc_crossval.py`
 
 """
 print(__doc__)

@@ -59,8 +59,8 @@ phenomenon.
 
 .. note::
 
-    See also :func:`sklearn.metrics.auc`,
-    :func:`sklearn.metrics.average_precision_score`
+    See also :func:`sklearn.metrics.average_precision_score`,
+             :func:`sklearn.metrics.recall_score`
 """
 print(__doc__)
 
