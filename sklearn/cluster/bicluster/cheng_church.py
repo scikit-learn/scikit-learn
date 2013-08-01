@@ -33,11 +33,13 @@ class IncrementalMSR(object):
         self.cols = cols
         self.tol = tol
 
-        self._sum = arr.sum()
-        self._row_sum = arr.sum(axis=1)
-        self._col_sum = arr.sum(axis=0)
         self._row_idxs = None
         self._col_idxs = None
+
+        subarr = arr[self.row_idxs[:, np.newaxis], self.col_idxs]
+        self._sum = subarr.sum()
+        self._row_sum = subarr.sum(axis=1)
+        self._col_sum = subarr.sum(axis=0)
 
         self._reset()
 

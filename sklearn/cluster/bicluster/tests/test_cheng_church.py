@@ -52,7 +52,7 @@ def test_cheng_church():
                                     deletion_threshold=deletion_threshold,
                                     random_state=0)
                 model.fit(data)
-                assert(consensus_score((rows, cols), model.biclusters_) > 0.9)
+                assert(consensus_score((rows, cols), model.biclusters_) > 0.8)
 
 
 def test_inverse_rows():
