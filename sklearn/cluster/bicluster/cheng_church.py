@@ -15,7 +15,6 @@ from sklearn.utils.validation import check_arrays
 from sklearn.utils.validation import check_random_state
 
 from .utils import check_array_ndim
-
 from ._squared_residue import compute_msr
 
 
@@ -24,7 +23,7 @@ class EmptyBiclusterException(Exception):
 
 
 class IncrementalMSR(object):
-    """Utility for incrementally calculating MSR during deletion."""
+    """Incrementally calculates MSR during node deletion."""
     def __init__(self, rows, cols, arr, tol=1e-5):
         assert rows.dtype == np.bool
         assert cols.dtype == np.bool
@@ -37,10 +36,10 @@ class IncrementalMSR(object):
         self._sum = arr.sum()
         self._row_sum = arr.sum(axis=1)
         self._col_sum = arr.sum(axis=0)
-
-        self._reset()
         self._row_idxs = None
         self._col_idxs = None
+
+        self._reset()
 
     def _reset(self):
         self._msr = None
@@ -60,6 +59,9 @@ class IncrementalMSR(object):
         return self._col_idxs
 
     def remove_row(self, row):
+        if not self.rows[row]:
+            raise ValueError('cannot remove row {}; it is not in the'
+                             ' bicluster'.format(row))
         if len(self.row_idxs) <= 1:
             raise EmptyBiclusterException()
         self._reset()
@@ -73,6 +75,9 @@ class IncrementalMSR(object):
         self._row_idxs = None
 
     def remove_col(self, col):
+        if not self.cols[col]:
+            raise ValueError('cannot remove col {}; it is not in the'
+                             ' bicluster'.format(col))
         if len(self.col_idxs) <= 1:
             raise EmptyBiclusterException()
         self._reset()
@@ -160,11 +165,13 @@ class ChengChurch(six.with_metaclass(ABCMeta, BaseEstimator,
     column_deletion_cutoff : integer, optional, default: 100
         Number of columns at which to switch to single node deletion.
 
-    inverse_rows : bool, optional, default: True
-        Whether to add rows with inverse patterns during node addition.
+    inverse_rows : bool, optional, default: False
+        If the inverse of a row has a low MSR, add it to the bicluster
+        during node addition.
 
-    inverse_columns : bool, optional, default: True
-        Whether to add columns with inverse patterns during node addition.
+    inverse_columns : bool, optional, default: False
+        If the inverse of a column has a low MSR, add it to the bicluster
+        during node addition.
 
     random_state : int seed, RandomState instance, or None (default)
         A pseudo random number generator used by the K-Means
@@ -230,7 +237,6 @@ class ChengChurch(six.with_metaclass(ABCMeta, BaseEstimator,
         return np.power(residue, 2).mean()
 
     def _row_msr(self, rows, cols, X, inverse=False):
-        # TODO: not necessary for rows already in bicluster
         if not np.count_nonzero(rows) or not np.count_nonzero(cols):
             raise EmptyBiclusterException()
         row_mean = X[:, cols].mean(axis=1, keepdims=True)
@@ -244,13 +250,12 @@ class ChengChurch(six.with_metaclass(ABCMeta, BaseEstimator,
         return np.power(arr, 2).mean(axis=1)
 
     def _col_msr(self, rows, cols, X, inverse=False):
-        # TODO: not necessary for cols already in bicluster
         if not rows.size or not cols.size:
             raise EmptyBiclusterException()
         row_mean = X[rows][:, cols].mean(axis=1, keepdims=True)
         col_mean = X[rows, :].mean(axis=0)
         if inverse:
-            arr = (-X[rows, :] + row_mean - col_mean +
+            arr = (-X[rows, :] - row_mean + col_mean +
                    X[rows][:, cols].mean())
         else:
             arr = X[rows, :] - row_mean - col_mean + X[rows][:, cols].mean()
@@ -299,7 +304,7 @@ class ChengChurch(six.with_metaclass(ABCMeta, BaseEstimator,
 
             if self.inverse_columns:
                 col_msr = self._col_msr(rows, old_cols, X,
-                                        inverse=True).mean(axis=1)
+                                        inverse=True)
                 to_add = col_msr < msr
                 cols = cols + to_add
 
@@ -311,7 +316,7 @@ class ChengChurch(six.with_metaclass(ABCMeta, BaseEstimator,
 
             if self.inverse_rows:
                 row_msr = self._row_msr(old_rows, cols, X,
-                                        inverse=True).mean(axis=1)
+                                        inverse=True)
                 to_add = row_msr < msr
                 rows = rows + to_add
 

@@ -44,14 +44,53 @@ def test_incremental_msr():
 def test_cheng_church():
     """Test Cheng and Church algorithm on a simple problem."""
     for shape in ((150, 150), (50, 50)):
-        for noise in (0, 5):
+        for noise in (0, 1):
             for deletion_threshold in (1.5, 2):
-                data, rows, cols = make_msr(shape, 3, random_state=0)
+                data, rows, cols = make_msr(shape, 3, noise=noise,
+                                            random_state=0)
                 model = ChengChurch(n_clusters=3, max_msr=max(noise * 2, 1),
                                     deletion_threshold=deletion_threshold,
                                     random_state=0)
                 model.fit(data)
                 assert(consensus_score((rows, cols), model.biclusters_) > 0.9)
+
+
+def test_inverse_rows():
+    data = np.zeros((15, 10))
+    data[:10] = np.arange(100).reshape(10, 10)
+    data[10:15] = -np.arange(100, 150).reshape(5, 10)
+    rows = np.ones(15, dtype=np.bool)
+    cols = np.ones(10, dtype=np.bool)
+
+    model = ChengChurch(n_clusters=1, max_msr=1, random_state=0,
+                        inverse_rows=False)
+    model.fit(data)
+    old_score = consensus_score((rows, cols), model.biclusters_)
+
+    model = ChengChurch(n_clusters=1, max_msr=1, random_state=0,
+                        inverse_rows=True)
+    model.fit(data)
+    new_score = consensus_score((rows, cols), model.biclusters_)
+    assert(new_score > old_score)
+
+
+def test_inverse_cols():
+    data = np.zeros((10, 15))
+    data[:, :10] = np.arange(100).reshape(10, 10).T
+    data[:, 10:15] = -np.arange(100, 150).reshape(5, 10).T
+    rows = np.ones(10, dtype=np.bool)
+    cols = np.ones(15, dtype=np.bool)
+
+    model = ChengChurch(n_clusters=1, max_msr=1, random_state=0,
+                        inverse_columns=False)
+    model.fit(data)
+    old_score = consensus_score((rows, cols), model.biclusters_)
+
+    model = ChengChurch(n_clusters=1, max_msr=1, random_state=0,
+                        inverse_columns=True)
+    model.fit(data)
+    new_score = consensus_score((rows, cols), model.biclusters_)
+    assert(new_score > old_score)
 
 
 def test_empty_biclusters():
@@ -185,3 +224,23 @@ def test_errors():
 
     assert_raises(EmptyBiclusterException, model._col_msr,
                   np.array([]), np.array([]), data)
+
+
+def test_incremental_msr_errors():
+    data = np.arange(25).reshape((5, 5))
+    rows = np.zeros(5, dtype=np.bool)
+    cols = np.zeros(5, dtype=np.bool)
+    rows[0] = True
+    cols[0] = True
+
+    inc = IncrementalMSR(rows, cols, data)
+    assert_raises(EmptyBiclusterException, inc.remove_row, 0)
+
+    inc = IncrementalMSR(rows, cols, data)
+    assert_raises(EmptyBiclusterException, inc.remove_col, 0)
+
+    inc = IncrementalMSR(rows, cols, data)
+    assert_raises(ValueError, inc.remove_row, 1)
+
+    inc = IncrementalMSR(rows, cols, data)
+    assert_raises(ValueError, inc.remove_col, 1)
