@@ -60,7 +60,8 @@ phenomenon.
 .. note::
 
     See also :func:`sklearn.metrics.average_precision_score`,
-             :func:`sklearn.metrics.recall_score`
+             :func:`sklearn.metrics.recall_score`,
+             :func:`sklearn.metrics.precision_score`
 """
 print(__doc__)
 
