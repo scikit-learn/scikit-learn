@@ -463,7 +463,7 @@ def matthews_corrcoef(y_true, y_pred):
     lb.fit(np.hstack([y_true, y_pred]))
     y_true = lb.transform(y_true)
     y_pred = lb.transform(y_pred)
-    with np.errstate(divide='warn', invalid='warn'):
+    with np.errstate(invalid='ignore'):
         mcc = np.corrcoef(y_true, y_pred)[0, 1]
 
     if np.isnan(mcc):
