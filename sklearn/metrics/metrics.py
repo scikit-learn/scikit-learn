@@ -463,7 +463,8 @@ def matthews_corrcoef(y_true, y_pred):
     lb.fit(np.hstack([y_true, y_pred]))
     y_true = lb.transform(y_true)
     y_pred = lb.transform(y_pred)
-    mcc = np.corrcoef(y_true, y_pred)[0, 1]
+    with np.errstate(divide='warn', invalid='warn'):
+        mcc = np.corrcoef(y_true, y_pred)[0, 1]
 
     if np.isnan(mcc):
         return 0.
@@ -1256,6 +1257,9 @@ def _prf_divide(numerator, denominator, metric, modifier, average):
 
     On zero-division, sets the corresponding result elements to zero
     and raises a warning.
+
+    The metric, modifier and average arguments are used only for determining
+    an appropriate warning.
     """
     result = numerator / denominator
     mask = denominator == 0.0
