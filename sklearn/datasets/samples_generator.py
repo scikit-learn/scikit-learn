@@ -1557,7 +1557,7 @@ def make_msr(shape, n_clusters, noise=0.0, minval=0, maxval=100,
            expression data. In Ismb (Vol. 8, pp. 93-103).
 
     """
-    # TODO: too similar to make_biclusters and make_msr. combine them.
+    # TODO: similar to make_biclusters and make_msr. combine them.
     generator = check_random_state(random_state)
     n_rows, n_cols = shape
     consts = generator.uniform(minval, maxval, n_clusters)

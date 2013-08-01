@@ -227,6 +227,7 @@ class ChengChurch(six.with_metaclass(ABCMeta, BaseEstimator,
                                  self.column_deletion_cutoff))
 
     def _msr(self, rows, cols, X):
+        """Compute the MSR of a bicluster."""
         rows = rows.nonzero()[0][:, np.newaxis]
         cols = cols.nonzero()[0]
         if not rows.size or not cols.size:
@@ -237,6 +238,7 @@ class ChengChurch(six.with_metaclass(ABCMeta, BaseEstimator,
         return np.power(residue, 2).mean()
 
     def _row_msr(self, rows, cols, X, inverse=False):
+        """Compute MSR of all rows for adding them to the bicluster."""
         if not np.count_nonzero(rows) or not np.count_nonzero(cols):
             raise EmptyBiclusterException()
         row_mean = X[:, cols].mean(axis=1, keepdims=True)
@@ -250,6 +252,7 @@ class ChengChurch(six.with_metaclass(ABCMeta, BaseEstimator,
         return np.power(arr, 2).mean(axis=1)
 
     def _col_msr(self, rows, cols, X, inverse=False):
+        """Compute MSR of all columns for adding them to the bicluster."""
         if not rows.size or not cols.size:
             raise EmptyBiclusterException()
         row_mean = X[rows][:, cols].mean(axis=1, keepdims=True)
@@ -262,6 +265,7 @@ class ChengChurch(six.with_metaclass(ABCMeta, BaseEstimator,
         return np.power(arr, 2).mean(axis=0)
 
     def _single_node_deletion(self, rows, cols, X):
+        """Iteratively remove single rows and columns."""
         inc = IncrementalMSR(rows, cols, X)
         while inc.msr > self.max_msr:
             row_idx = np.argmax(inc.row_msr)
@@ -273,6 +277,7 @@ class ChengChurch(six.with_metaclass(ABCMeta, BaseEstimator,
         return inc.rows, inc.cols
 
     def _multiple_node_deletion(self, rows, cols, X):
+        """Iteratively remove multiple rows and columns at once."""
         inc = IncrementalMSR(rows, cols, X)
         while inc.msr > self.max_msr:
             n_rows = np.count_nonzero(rows)
@@ -292,6 +297,7 @@ class ChengChurch(six.with_metaclass(ABCMeta, BaseEstimator,
         return inc.rows, inc.cols
 
     def _node_addition(self, rows, cols, X):
+        """Add rows and columns with MSR smaller than the bicluster's."""
         while True:
             n_rows = np.count_nonzero(rows)
             n_cols = np.count_nonzero(cols)
@@ -326,6 +332,7 @@ class ChengChurch(six.with_metaclass(ABCMeta, BaseEstimator,
         return rows, cols
 
     def _mask(self, X, rows, cols, generator, minval, maxval):
+        """Mask a bicluster in the data with random values."""
         shape = np.count_nonzero(rows), np.count_nonzero(cols)
         mask_vals = generator.uniform(minval, maxval, shape)
         r = rows.nonzero()[0][:, np.newaxis]
@@ -333,6 +340,13 @@ class ChengChurch(six.with_metaclass(ABCMeta, BaseEstimator,
         X[r, c] = mask_vals
 
     def fit(self, X):
+        """Creates a biclustering for X.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+
+        """
         X = X.copy()  # need to modify it in-place
         self._check_parameters()
         X, = check_arrays(X, dtype=np.float64)
