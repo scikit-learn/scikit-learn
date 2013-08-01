@@ -259,3 +259,10 @@ def test_make_msr():
     X2, _, _ = make_msr(shape=(100, 100), n_clusters=5,
                         shuffle=True, random_state=0)
     assert_array_equal(X, X2)
+
+    X, rows, cols = make_msr(shape=(100, 100), n_clusters=5,
+                             identical=True, constant=True,
+                             shuffle=True, random_state=0)
+    for i in range(5):
+        bicluster = X[rows[i]][:, cols[i]]
+        assert(np.all(bicluster == bicluster[0, 0]))
