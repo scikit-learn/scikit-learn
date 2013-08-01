@@ -89,10 +89,9 @@ diagonal and checkerboard bicluster structures.
 Cheng and Church
 ================
 
-:class:`ChengChurch` tries to find biclusters with low variance, low
-row variance, and low column variance, as quantified by the mean
-squared residue. For a matrix :math:`A` with shape :math:`m \times n`,
-the mean squared residue is computed as:
+:class:`ChengChurch` tries to find biclusters with a low mean squared
+residue (MSR). For a matrix :math:`A` with shape :math:`m \times n`, the
+mean squared residue is computed as:
 
 .. math::
     \frac{1}{mn} \sum \left (a_{ij} - a_{iJ} - a_{Ij} + a_{IJ} \right)^2
@@ -108,30 +107,12 @@ where
 
 are the row, column, and overall means of :math:`A`.
 
-.. note::
-   Although the mean squared residue is meant to find biclusters with
-   small row, column, and overall variance, it can also be small for other
-   other patterns. For instance::
-       >>> import numpy as np
-       >>> a = np.arange(25).reshape(5, 5)
-       >>> a
-       array([[ 0,  1,  2,  3,  4],
-              [ 5,  6,  7,  8,  9],
-              [10, 11, 12, 13, 14],
-              [15, 16, 17, 18, 19],
-              [20, 21, 22, 23, 24]])
-       >>> a.var()
-       52.0
-       >>> a.var(axis=1)
-       array([ 2.,  2.,  2.,  2.,  2.])
-       >>> a.var(axis=0)
-       array([ 50.,  50.,  50.,  50.,  50.])
-       >>> residue = a - a.mean(axis=1)[:, np.newaxis] - a.mean(axis=0) + a.mean()
-       >>> msr = np.power(residue, 2).mean()
-       >>> msr
-       0.0
-
-Additive scaling does not affect the MSR score: :math:`A` and
+The mean squared residue achieves its minimum of 0 when all the rows
+or all the columns of a bicluster are shifted versions of each other.
+Constant biclusters and biclusters with identical rows or identical
+columns are special cases of this condition, all of which have an MSR
+of 0. As a corollary, additive scaling of the entire bicluster does
+not affect the MSR score of any of its biclusters: :math:`A` and
 :math:`A+c`, where :math:`c` is any constant, have the same MSR.
 Therefore, for some datasets, it may be beneficial to apply a log
 transformation, because it transforms multiplicative scaling into
