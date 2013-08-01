@@ -54,7 +54,7 @@ unchanged, while the precision fluctuates.
 The relationship between recall and precision can be observed in the
 stairstep area of the plot - at the edges of these steps a small change
 in the threshold considerably reduces precision, with only a minor gain in
-recall. See the corner at recall = .6, precision = .8 for an example of this
+recall. See the corner at recall = .59, precision = .8 for an example of this
 phenomenon.
 
 .. note::
@@ -88,7 +88,8 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.5,
                                                     random_state=random_state)
 
 # Run classifier
-classifier = svm.SVC(kernel='linear', probability=True)
+classifier = svm.SVC(kernel='linear', probability=True,
+                     random_state=random_state)
 probas_ = classifier.fit(X_train, y_train).predict_proba(X_test)
 
 # Compute Precision-Recall and plot curve
