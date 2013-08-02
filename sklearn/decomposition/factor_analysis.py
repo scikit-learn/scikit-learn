@@ -208,8 +208,8 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         cov : array, shape=(n_features, n_features)
             Estimated covariance of data.
         """
-        cov = (np.dot(self.components_.T, self.components_)
-               + np.diag(self.noise_variance_))
+        cov = np.dot(self.components_.T, self.components_)
+        cov.flat[::len(cov) + 1] += self.noise_variance_  # modify diag inplace
         return cov
 
     def score(self, X, y=None):
