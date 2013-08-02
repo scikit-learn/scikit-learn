@@ -7,13 +7,14 @@ from __future__ import print_function
 # Licence: BSD 3 clause
 
 import numpy as np
-from scipy import linalg, optimize, rand
+from scipy import linalg, optimize, rand, sparse, stats
 
-from ..base import BaseEstimator, RegressorMixin
+from ..base import BaseEstimator, RegressorMixin, ClassifierMixin
 from ..metrics.pairwise import manhattan_distances
 from ..utils import array2d, check_random_state
 from . import regression_models as regression
 from . import correlation_models as correlation
+from ..utils.extmath import logsumexp
 
 MACHINE_EPSILON = np.finfo(np.double).eps
 if hasattr(linalg, 'solve_triangular'):
@@ -24,6 +25,34 @@ else:
     def solve_triangular(x, y, lower=True):
         return linalg.solve(x, y)
 
+def inv_triangular(A, lower = False):
+    """
+    Compute the inverse of triangular matrix
+    
+    Parameters
+    ----------
+    
+    A - Triangular matrix
+    lower - if A is lower-triangular
+    
+    Returns
+    -------
+    A_inv - Inverse of A (equivalant to linalg.inv(A))
+    
+    """
+    
+    A_inv = None
+    # see if available use scipy.linalg.lapack.clapack.dtrtri instead
+    if hasattr(linalg, 'lapack'):
+        if hasattr(linalg.lapack, 'clapack'):
+            dtrtri = linalg.lapack.clapack.dtrtri
+            A = np.double(A)
+            A_inv, info = dtrtri(A, lower = lower)
+            
+    if A_inv is None:
+        A_inv = solve_triangular(A, np.eye(len(A)), lower = lower)
+    
+    return A_inv
 
 def l1_cross_distances(X):
     """
@@ -878,3 +907,642 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
         # Force random_start type to int
         self.random_start = int(self.random_start)
+
+
+class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
+    """The Gaussian Process Classifier class.
+
+    Parameters
+    ----------
+    method : string, optional
+        'laplace' - Use laplace approximation (default)
+    
+    verbose : boolean, optional
+        A boolean specifying the verbose level.
+        Default is verbose = False.
+        
+    normalize : boolean, optional
+        Input X is centered and reduced wrt
+        means and standard deviations estimated from the n_samples
+        observations provided.
+        Default is normalize = True so that data is normalized to ease
+        maximum likelihood estimations.
+        
+    nugget : double or ndarray, optional
+        Introduce a nugget effect to allow smooth predictions from noisy
+        data.  If nugget is an ndarray, it must be the same length as the
+        number of data points used for the fit.
+        The nugget is added to the diagonal of the assumed training covariance;
+        in this way it acts as a Tikhonov regularization in the problem.  In
+        the special case of the squared exponential correlation function, the
+        nugget mathematically represents the variance of the input values.
+        Default assumes a nugget close to machine precision for the sake of
+        robustness (nugget = 10. * MACHINE_EPSILON).
+    
+    max_iter : int, optional
+        Maximum number of iterations in newton algorithm in MAP
+        Default: 0 means 10 * n_samples * n_classes
+    
+    mc_iter: int, optional
+        Number of Monte Carlo (MC) samples to take to estimate test
+        Default: None, do enough sampling for 95% confidence interval
+        
+    tol: float
+        Convergence tolerance in MAP algorithm
+        Default: 10. * MACHINE_EPSILON
+
+    theta0 : double array_like, optional
+        An array with shape (n_classes, n_features, ) or (n_classes,) or (1, ).
+        The parameters in the autocorrelation model.
+        Default assumes isotropic autocorrelation model with theta0 = 1e-1 for all classes and all features.
+
+    Attributes
+    ----------
+    `theta_`: array
+        Specified theta OR the best set of autocorrelation parameters (the \
+        sought maximizer of the reduced likelihood function).
+        
+    `means_` : array, shape (`n_classes`, `n_samples`)
+        Mean parameters for each latent function value.
+
+    `reduced_likelihood_function_value_`: array
+        The optimal reduced likelihood function value.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.gaussian_process import GaussianProcessClassifier
+    >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
+    >>> y = np.array([0, 0, 0, 1, 1, 1])
+    >>> gpc = GaussianProcessClassifier()
+    >>> gpc.fit(X, y)
+    >>> print(gpc.predict([[-0.8, -1]]))
+
+    Notes
+    -----
+    The presentation implementation is based on the Gaussian 
+    Processes for Machine Learning (Rassmussen Williams), 
+    see reference [RASWIL06]
+
+    References
+    ----------
+
+    .. [RASWIL06] C. E. Rasmussen & C. K. I. Williams, G, `Gaussian Processes for Machine Learning`, 
+                the MIT Press, 2006, ISBN 026218253X
+        http://www.gaussianprocess.org/gpml/
+
+    """
+
+    _correlation_types = {
+        'absolute_exponential': correlation.absolute_exponential,
+        'squared_exponential': correlation.squared_exponential,
+        'generalized_exponential': correlation.generalized_exponential,
+        'cubic': correlation.cubic,
+        'linear': correlation.linear}
+
+    def __init__(self, method='laplace', corr='squared_exponential', verbose=False,
+                 normalize=True, max_iter=0, mc_iter = None, tol=10 * MACHINE_EPSILON, theta0=1e-1, 
+                 nugget=10. * MACHINE_EPSILON):
+
+        self.method = method
+        self.verbose = verbose
+        self.normalize = normalize
+        self.max_iter = max_iter
+        self.mc_iter = mc_iter
+        self.tol = tol
+        self.theta0 = theta0
+        self.nugget = nugget 
+        self.corr = corr
+
+    def fit(self, X, y):
+        """
+        The Gaussian Process model fitting method.
+
+        Parameters
+        ----------
+        X : double array_like
+            An array with shape (n_samples, n_features) with the input at which
+            observations were made.
+
+        y : double array_like
+            An array with shape (n_samples, ) with the class labels
+
+        Returns
+        -------
+        gpc : self
+            A fitted Gaussian Process Classifier model object awaiting data to perform
+            predictions.
+        """
+
+        # TODO: maximize hyperparameter theta using arg_max_reduced_likelyhood
+        # TODO: Implement expectation maximization 'EM'/'EP' method for multiclass
+        # TODO: Can use PyMC for multiclass posterior approximation
+        # TODO: Implement variational approximation to the posterior
+        # TODO: better initialize f_vec
+        # TODO: investigate reformulating to use fmin_ncg but without the need to K^-1 
+        # TODO: implement numerical integration for prediction to use if mc_iter=0
+        
+        # Force data to 2D numpy.array
+        X = array2d(X)
+
+        # Check shapes of DOE & observations
+        n_samples_X, n_features = X.shape
+        n_samples_y = y.shape[0]
+
+        if n_samples_X != n_samples_y:
+            raise ValueError("X and y must have the same number of rows.")
+        else:
+            n_samples = n_samples_X
+
+        n_classes = len(np.unique(y))
+        
+        # Run input checks
+        self._check_params(n_classes, n_samples)
+        
+        # Create empty cache
+        self._remove_cache()
+        
+        # Normalize data or don't
+        if self.normalize:
+            X_mean = np.mean(X, axis=0)
+            X_std = np.std(X, axis=0)
+            X_std[X_std == 0.] = 1.
+            # center and scale X if necessary
+            X = (X - X_mean) / X_std
+        else:
+            X_mean = np.zeros(1)
+            X_std = np.ones(1)
+        
+        D, ij = l1_cross_distances(X)
+        if (np.min(np.sum(D, axis=1)) == 0.
+                and self.corr != correlation.pure_nugget):
+            raise Exception("Multiple input features cannot have the same"
+                            " value.")
+        
+        self._cache['D'] = D
+        self._cache['ij'] = ij
+        
+        # 0/1 encoding of the labels     
+        y_vec = np.zeros((n_classes, n_samples))
+        for c in range(n_classes):
+            y_vec[c, y == c] = 1 
+        y_vec = y_vec.reshape((n_classes * n_samples, 1))
+        
+        # Keep model parameters
+        self.X = X
+        self.y = y_vec
+        self.X_mean, self.X_std = X_mean, X_std
+        self.n_classes = n_classes
+        
+        # Compute the maximum aposteriori value
+        self.theta_ = self.theta0
+        self.reduced_likelihood_function_value_, par = self.reduced_likelihood_function()
+        
+        # Keep some needed computed values
+        self.means_ = par['f_vec'].reshape(n_classes, n_samples) # posterios mean
+        self.E = par['E']
+        self.F_inv = par['F_inv']
+        self.pi_vec = par['pi_vec']
+        
+        # Remove cache
+        self._remove_cache()
+        
+        return self
+    
+    def predict(self, X):
+        """Predict label for data.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_eval, n_features]
+
+        Returns
+        -------
+        C : array, shape = (n_eval,) with predicted class labels
+        """
+        responsibilities = self.predict_proba(X)
+        return responsibilities.argmax(axis=1)
+    
+    def predict_proba(self, X):
+        """
+        This function evaluates the Gaussian Process model at X.
+
+        Parameters
+        ----------
+        X : array_like
+            An array with shape (n_eval, n_features) giving the point(s) at
+            which the prediction(s) should be made.
+
+        Returns
+        -------
+        responsibilities : array-like, shape = (n_eval, n_classes)
+            Returns the probability of the sample for each class.
+
+        """
+
+        # Check input shapes
+        X = array2d(X)
+        n_eval, n_features_X = X.shape
+        n_samples, n_features = self.X.shape
+        n_classes = self.n_classes
+        
+        # Run input checks
+        self._check_params()
+
+        if n_features_X != n_features:
+            raise ValueError(("The number of features in X (X.shape[1] = %d) "
+                             "should match the sample size used for fit() "
+                             "which is %d.") % (n_features_X, n_features))
+
+        # No memory management for now
+        # (evaluates all given points in a single batch run)
+
+        # Normalize input
+        X = (X - self.X_mean) / self.X_std
+
+        y_mat = self.y.reshape(n_classes, n_samples)
+        pi_mat =  self.pi_vec.reshape(n_classes, n_samples)
+         
+        # Get pairwise componentwise L1-distances to the input training set
+        dx = manhattan_distances(X, Y=self.X, sum_over_features=False)
+        
+        # test mean
+        test_means_ = np.zeros((n_eval, n_classes))
+        
+        K_test = []
+        for c in range(n_classes):
+            # Test correlation model
+            r = self.corr(self.theta_[c,:], dx).reshape(n_eval, n_samples)
+            K_test.append(r)
+            
+            # Compute test mean
+            tmp = (y_mat[c,:] - pi_mat[c,:]).reshape(n_samples, 1)
+            test_means_[:, c] = np.dot(r, tmp).reshape(n_eval)
+        
+        # Compute test covariance
+        test_covars_ = np.zeros((n_eval, n_classes, n_classes))
+        D = np.zeros((1, n_features))
+        for c in range(n_classes):
+            # For each test point x_0, for each class c compute the vector of k_c(x_0, x_0)
+            #  should be 1 for most interesting correlations
+            r = self.corr(self.theta_[c,:], D)
+            
+            b = np.dot(self.E[c], K_test[c].T)
+            # corrected based on errata 
+            #  note: first term could be saved during training
+            v = np.dot(np.dot(self.E[c], self.F_inv), b)
+            
+            for idx in range(n_eval): 
+                for c_p in range(n_classes):
+                    sigma = np.dot(K_test[c_p][idx, :], v[:,idx])
+                    test_covars_[idx,c,c_p] = sigma
+                test_covars_[idx][c,c] = test_covars_[idx][c,c] + r - np.dot(b[:, idx].T, K_test[c][idx, :])                       
+        
+        # decision
+        p = np.zeros((n_eval, n_classes))
+        # if montecarlo (MC) is specified then sample from the posterior
+        if self.mc_iter is None:
+            for idx in range(n_eval):
+                sv = linalg.svd(test_covars_[idx], compute_uv=False)
+                # only need to care about the component with maximum variance
+                max_std_idx = np.argmax(sv)
+                max_std = sv[max_std_idx]
+                
+                # Compute output standard deviation (perhaps should do this in a feedback loop)
+                f_vec = np.random.multivariate_normal(test_means_[idx], test_covars_[idx], 100).T
+                f_vec = f_vec.reshape(f_vec.size)
+                pi_vec = self.soft_max(f_vec)
+                pi_vec = pi_vec.reshape(n_classes, 100)
+                
+                out_std = np.std(pi_vec[max_std_idx,:])
+                confidence = 1. / stats.norm.cdf((1 + .95)/2)
+                N = int((max_std * confidence / out_std) ** 2)
+                if self.verbose:
+                    print "Computed MC samples for 95%% confidense is %s" % N
+                
+                if N > 100:
+                    f_vec = np.random.multivariate_normal(test_means_[idx], test_covars_[idx], N - 100).T
+                    f_vec = f_vec.reshape(f_vec.size)
+                    pi_vec2 = self.soft_max(f_vec)
+                    pi_vec2 = pi_vec2.reshape(n_classes, N - 100)
+                    # Looka at them all
+                    pi_vec = np.hstack((pi_vec, pi_vec2))
+                    
+                p[idx] = pi_vec.mean(axis = 1)
+                    
+        elif self.mc_iter > 0:
+            # If a specific number is given, use it
+            for idx in range(n_eval):
+                f_vec = np.random.multivariate_normal(test_means_[idx], test_covars_[idx], self.mc_iter).T
+                f_vec = f_vec.reshape(f_vec.size)
+                pi_vec = self.soft_max(f_vec)
+                pi_vec = pi_vec.reshape(n_classes, self.mc_iter)
+                p[idx] = pi_vec.mean(axis = 1)
+        else:
+            # TODO: use a integrals calculation
+            raise ValueError("Only monte carlo method implemented at this stage.")
+                
+        return p
+
+    def soft_max(self, f_vec):
+        """
+        Soft-max decision function
+        
+        Parameters
+        ----------
+        f_vec : array_like shape=(n_classes * n_samples)
+            latent function values
+            
+        Returns
+        -------
+        pi_vec : array_like
+            An array with shape (n_classes * n_samples) with 
+            squashed probabilities for decision function values
+        """
+        
+        # loggit softmax
+        loggit_soft_max = (lambda c,i,f: np.exp(f[c,i]) / np.exp(logsumexp(f[:,i])))
+        n_classes = self.n_classes
+        n_samples = f_vec.size / n_classes
+        
+        # Reshape is cheap
+        f_vec = f_vec.reshape(n_classes, n_samples)
+        # decision function values: - of size Cn
+        pi_vec = np.zeros((n_classes, n_samples))
+        for i in range(n_samples):
+            for c in range(n_classes):
+                pi_vec[c, i] = loggit_soft_max(c, i, f_vec)
+        pi_vec = pi_vec.reshape((n_classes * n_samples, 1))
+        return pi_vec
+
+    def _remove_cache(self):
+        """
+        Remove cached values
+        """
+        self._cache = {'R': None, 'D': None, 'ij': None}
+        
+    def _get_R(self):
+        """
+        Create and cache R, return from cache if available
+        Returns
+        -------
+            R - Sparse matrix of stacked identity matrices
+        """
+        
+        n_samples = self.X.shape[0]
+        n_classes = self.n_classes
+        R_sparse = self._cache['R']
+        if R_sparse is None:    
+            # Matrix of stacked identity matrices
+            R_sparse = []
+            for c in range(n_classes):
+                R = sparse.csr_matrix(np.eye(n_samples))
+                R_sparse.append(R)
+            R_sparse = sparse.vstack(R_sparse).tocsr()
+            self._cache['R'] = R_sparse
+        
+        return R_sparse
+    
+    def _update_func(self, f_vec, K, K_sparse, R_sparse):
+        """
+        Update function
+        
+        Parameters
+        ----------
+        f_vec : array_like shape=(n_classes * n_samples, 1)
+            latent function values
+        
+        K : Kernel matrix in dense form, shape=(n_classes * n_samples, n_samples)
+        K_sparse : Kernel matrix in sparse form, shape=(n_classes * n_samples, n_samples)
+        
+        R_sparse: Stacked identity matrix, in sparse form
+        """
+        
+        n_classes = self.n_classes
+        n_samples = f_vec.size / n_classes
+        
+        pi_vec = self.soft_max(f_vec)
+        pi_mat = pi_vec.reshape(n_classes, n_samples)
+        
+        # Stacked diagonal matrices: p of size Cn x n
+        P = np.zeros((n_classes * n_samples, n_samples)) 
+        
+        # Stack vertically to build p 
+        for c in range(n_classes):
+            P[c * n_samples : (c + 1) * n_samples,:] = np.diagflat(pi_mat[c,:])
+        
+        # W = D - p x p^T
+        W = np.diagflat(pi_vec) - np.dot(P, P.T)
+        y_pi_diff = self.y - pi_vec
+        b = np.dot(W, f_vec) + y_pi_diff
+
+        # E is block diagonal
+        E = []
+        
+        F = np.zeros((n_samples, n_samples))
+        # B = I + W^1/2 x K x W^1/2
+        # Compute B^-1 and det(B)
+        B_log_det = 0
+        for c in range(n_classes):
+            D_c_sqrt = np.diagflat(pi_mat[c,:] ** .5)
+            B_c = np.eye(n_samples) + np.dot(np.dot(D_c_sqrt, K[c]), D_c_sqrt)
+            # B_c is stable
+            L = linalg.cholesky(B_c, lower=True)
+            L_inv = inv_triangular(L, lower = True)
+            # det(L x L^T) = det(L)^2
+            B_log_det = B_log_det + 2 * np.sum(np.log(np.diagonal(L)))
+            # B_c = L x L^T => B_c^-1 = (L^T)^-1 x L^-1 = (L^-1)^T x L^-1 
+            B_c_inv = np.dot(L_inv.T, L_inv)
+            E_c = np.dot(np.dot(D_c_sqrt, B_c_inv), D_c_sqrt)
+            E.append(E_c)
+            # F = R^T x E x R = sum{E_c}
+            F = F + E_c
+        
+        L = linalg.cholesky(F, lower=True)
+        L_inv = inv_triangular(L, lower = True)
+        F_inv = np.dot(L_inv.T, L_inv)
+
+        E_sparse = sparse.block_diag(E, format='csr')
+        c = E_sparse.dot(K_sparse).dot(b)
+        ERM = E_sparse.dot(R_sparse).dot(F_inv)
+        RTC = R_sparse.T.dot(c)
+        # a = K^-1 x f
+        a = b - c + np.dot(ERM, RTC)
+        f_vec = K_sparse.dot(a)
+        # gradiant = -K^-1 x f + y - - 
+        gradiant = -a + y_pi_diff
+        # At maximum must have f = K x (y - -) and gradiant = 0
+        
+        return f_vec, E, F_inv, B_log_det, a, pi_vec, gradiant
+        
+    def reduced_likelihood_function(self, theta=None, f_vec=None):
+        """
+        This function determines the laplace approximated marginal
+        likelihood function for the given autocorrelation parameters theta.
+
+        Maximizing this function wrt the latent function values is
+        equivalent to maximizing the likelihood of the assumed joint Gaussian
+        distribution of the observations y evaluated onto the design of
+        experiments X.
+
+        Parameters
+        ----------
+        theta : array_like, optional
+            An array containing the autocorrelation parameters at which the
+            Gaussian Process model parameters should be determined.
+            Default uses the built-in autocorrelation parameters
+            (ie ``theta = self.theta_``).
+        
+        f_vec: array_like, optional
+            Starting values for latent function values.
+            Default uses vector of zeros.
+
+        Returns
+        -------
+        reduced_likelihood_function_value : double
+            The value of the reduced likelihood function associated to the
+            given latent function values f_vec.
+            
+        par : dict
+            A dictionary containing the requested Gaussian Process model
+            parameters:
+
+                f_vec
+                        Latent function values
+                E
+                        Computed block-diagonal matrix to find hessian inverse.
+                F_inv
+                        Internal square matrix to find hessian inverse.
+                pi_vec
+                        Squashed decision function values.
+        """
+
+        n_classes = self.n_classes
+        n_samples = self.X.shape[0]
+
+        if theta is None:
+            # Use built-in autocorrelation parameters
+            theta = self.theta_
+        
+        if f_vec is None:
+            # Column vector of latent function values at all training 
+            #     points for all classes, shape = (Cn,1)
+            f_vec = np.zeros((n_classes * n_samples, 1))
+
+        D, ij = self._cache['D'], self._cache['ij']
+        
+        # Numerical considerations:
+        # should avoid computing K^-1, formulating based on fmin_ncg needs this term  
+        #       see if we can change the cost function, with new hessian and prime
+        #       in a way that K^-1 is avoided (hopefully replaced by B^-1)
+        #       then we could use fmin_ncg
+        
+        # Kernel is block diagonal with equivalant dense shape of Cn x Cn
+        K = []
+        for c in range(n_classes):
+            # Assumption is that C latent processes are uncorrelated (between classes)
+            # Calculate matrix of distances D between samples for each class
+            
+            # Correlation model
+            r = self.corr(theta[c,:], D)
+            # Set up kernel matrix
+            R = np.eye(n_samples) * (1. + self.nugget)
+            R[ij[:, 0], ij[:, 1]] = r
+            R[ij[:, 1], ij[:, 0]] = r
+            
+            K.append(R)
+
+        K_sparse = sparse.block_diag(K, format='csr')
+
+        # Get R from cache
+        R_sparse = self._get_R()
+
+        # Initialize output
+        reduced_likelihood_function_value = - np.inf
+
+        k = 0
+        xtol = len(f_vec) * self.tol
+        update = [2 * xtol]
+        
+        f_vec_old = f_vec
+        objective = 0
+        while k < self.max_iter and np.sum(np.abs(update)) > xtol:
+            f_vec, E, F_inv, B_log_det, a, pi_vec, gradiant = self._update_func(f_vec, K, K_sparse, R_sparse)
+            # TODO: use gradiant to update step-size and feed it back to _update_func
+            
+            # update to x is inherent to the algorithm above 
+            update = f_vec - f_vec_old
+            f_vec_old = f_vec
+            
+            objective = -0.5 * np.dot(a.T, f_vec) + np.dot(self.y.T, f_vec)
+            objective = np.asarray(objective).squeeze()
+            
+            f_mat = f_vec.reshape(n_classes, n_samples)
+            logsquash_term = np.sum(logsumexp(f_mat, axis = 0))
+            objective = objective - logsquash_term
+            
+            k = k + 1
+            
+        if self.verbose:
+            print "Maximum objective reached %s" % objective
+            print "Number of iterations %s (of total %s)" % (k, self.max_iter)
+        
+        # Reduced likelyhood value 
+        reduced_likelihood_function_value = objective - 0.5 * B_log_det    
+        
+        # Save those that are used for prediction
+        #  soome can be computed from f_vec for a lightweight edition
+        par = {}
+        par['f_vec'] = f_vec
+        par['E'] = E
+        par['F_inv'] = F_inv
+        par['pi_vec'] = pi_vec
+        
+        return reduced_likelihood_function_value, par
+
+
+    def _check_params(self, n_classes = None, n_samples = None):
+        '''
+        Check to make sure parameters are valid
+        '''
+        
+        if self.method != 'laplace':
+            raise ValueError("Method can only be 'laplace' currently.")
+        
+        if (n_classes is not None
+                and n_classes < 2):
+            raise ValueError("at least two classes are needed for training.")
+        
+        theta0 = array2d(self.theta0)
+        if n_classes is not None:
+            # if for single class given, extend it to all classes
+            if theta0.shape[0] == 1: 
+                theta0 = np.tile(theta0[0,:], (n_classes,1))
+            elif theta0.shape[0] != n_classes:
+                raise ValueError("first dimension of theta0 (if non-single) must be number of classs (= %s)." % n_classes)
+        self.theta0 = theta0
+        
+        # Check nugget value
+        self.nugget = np.asarray(self.nugget)
+        if np.any(self.nugget) < 0.:
+            raise ValueError("nugget must be positive or zero.")
+        
+        if (n_samples is not None
+                and self.nugget.shape not in [(), (n_samples,)]):
+            raise ValueError("nugget must be either a scalar "
+                             "or array of length n_samples.")
+            
+        if (n_samples is not None
+                and n_classes is not None):
+                if self.max_iter < 1:
+                    self.max_iter = 10 * n_samples * n_classes
+        
+        # Check correlation model
+        if not callable(self.corr):
+            if self.corr in self._correlation_types:
+                self.corr = self._correlation_types[self.corr]
+            else:
+                raise ValueError("corr should be one of %s or callable, "
+                                 "%s was given."
+                                 % (self._correlation_types.keys(), self.corr))
+
