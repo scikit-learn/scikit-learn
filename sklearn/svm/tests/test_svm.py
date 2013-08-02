@@ -499,11 +499,13 @@ def test_linearsvc_crammer_singer():
 def test_crammer_singer_binary():
     """Test Crammer-Singer formulation in the binary case"""
     X, y = make_classification(n_classes=2, random_state=0)
-    acc = svm.LinearSVC(random_state=0).fit(X, y).score(X, y)
-    acc2 = svm.LinearSVC(multi_class="crammer_singer",
-                         random_state=0).fit(X, y).score(X, y)
-    assert_almost_equal(acc, 0.66)
-    assert_almost_equal(acc2, 0.68)
+
+    for fit_intercept in (True, False):
+        acc = svm.LinearSVC(fit_intercept=fit_intercept,
+                            multi_class="crammer_singer",
+                            random_state=0).fit(X, y).score(X, y)
+        assert_almost_equal(acc, 0.68)
+
 
 
 def test_linearsvc_iris():

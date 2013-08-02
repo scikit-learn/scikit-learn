@@ -702,6 +702,12 @@ class BaseLibLinear(six.with_metaclass(ABCMeta, BaseEstimator)):
             self.coef_ = self.raw_coef_
             self.intercept_ = 0.
 
+        if self.multi_class == "crammer_singer" and len(self.classes_) == 2:
+            self.coef_ = (self.coef_[1] - self.coef_[0]).reshape(1, -1)
+            if self.fit_intercept:
+                intercept = self.intercept_[1] - self.intercept_[0]
+                self.intercept_ = np.array([intercept])
+
         return self
 
     @property
