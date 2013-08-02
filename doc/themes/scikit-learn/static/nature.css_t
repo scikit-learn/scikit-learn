@@ -857,7 +857,7 @@ div.carousel img {
 }
 
 div#examples_carousel img {
-    max-height: 227px;
+    max-height: 176px;
     height: 100%;
     width: 96%;
     background-color: #fff;
@@ -865,11 +865,8 @@ div#examples_carousel img {
 }
 
 div#index_carousel_tn {
-    height: 250px;
-}
-
-div#intro_to_sklearn_p li {
-    line-height: 30px;
+    height: 194px;
+    background: white;
 }
 
 p.doc-version {
