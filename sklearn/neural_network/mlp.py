@@ -114,6 +114,7 @@ def _log_softmax(X):
 def _softmax(X):
     """
     Implements the K-way softmax, (exp(X).T / exp(X).sum(axis=1)).T
+<<<<<<< HEAD
 =======
 def softmax(X):
 =======
@@ -123,6 +124,8 @@ def _softmax(X):
     Implements the K-way softmax, (exp(X).T / exp(X).sum(axis=1)).T,
     in the log domain
 >>>>>>> replaced 'einsum' to a more readable and faster operation
+=======
+>>>>>>> Updated the method descriptions
 
     Parameters
     ----------
@@ -220,16 +223,23 @@ class BaseMLP(BaseEstimator):
         Activation function for the hidden layer; either "logistic" for
         1 / (1 + exp(x)), or "tanh" for the hyperbolic tangent.
 <<<<<<< HEAD
+<<<<<<< HEAD
     loss: 'squared_loss', or 'log'
         The loss function to be used. Defaults to 'squared_loss' for Regression
         and 'log' for Classification
 =======
 >>>>>>> replaced 'einsum' to a more readable and faster operation
+=======
+    loss: 'squared_loss', or 'log'
+        The loss function to be used. Defaults to 'squared_loss' for Regression
+        and 'log' for Classification
+>>>>>>> Updated the method descriptions
     alpha : float, optional
         L2 penalty (weight decay) parameter.
     batch_size : int, optional
         Size of minibatches in SGD optimizer.
     learning_rate : float, optional
+<<<<<<< HEAD
 <<<<<<< HEAD
         Base learning rate for weight updates. 
 =======
@@ -237,6 +247,9 @@ class BaseMLP(BaseEstimator):
         input-to-hidden weights, and by sqrt(n_hidden) for the hidden-to-output
         weights.
 >>>>>>> replaced 'einsum' to a more readable and faster operation
+=======
+        Base learning rate for weight updates. 
+>>>>>>> Updated the method descriptions
     max_iter : int, optional
         Maximum number of iterations.
     random_state : int or RandomState, optional
@@ -249,12 +262,18 @@ class BaseMLP(BaseEstimator):
         less than this amount from that at iteration i, convergence is
         considered to be reached.
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> Updated the method descriptions
     eta0 : double, optional
         The initial learning rate [default 0.01].
     power_t : double, optional
         The exponent for inverse scaling learning rate [default 0.25].
+<<<<<<< HEAD
 =======
 >>>>>>> replaced 'einsum' to a more readable and faster operation
+=======
+>>>>>>> Updated the method descriptions
     verbose : bool, optional
         Whether to print progress messages to stdout.
 
@@ -1021,9 +1040,12 @@ class BaseMLP(BaseEstimator):
         else:
             Y = self._lbin.transform(y)
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 
 >>>>>>> replaced 'einsum' to a more readable and faster operation
+=======
+>>>>>>> Updated the method descriptions
         self.backprop_naive(X, Y, 1)
         return self
 
@@ -1099,6 +1121,9 @@ class MLPClassifier(BaseMLP, ClassifierMixin):
         
     def fit(self, X, y):
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> Updated the method descriptions
         """
         Fit the model to the data X and target y.
 
@@ -1115,8 +1140,11 @@ class MLPClassifier(BaseMLP, ClassifierMixin):
         -------
         self
         """
+<<<<<<< HEAD
 =======
 >>>>>>> More Travis error fixes
+=======
+>>>>>>> Updated the method descriptions
         self.classes_ = np.unique(y)
         self._lbin = LabelBinarizer()
         Y = self._lbin.fit_transform(y)
@@ -1127,6 +1155,9 @@ class MLPClassifier(BaseMLP, ClassifierMixin):
     
     def predict(self, X):
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> Updated the method descriptions
         """Predict using the multi-layer perceptron model
 
         Parameters
@@ -1138,11 +1169,14 @@ class MLPClassifier(BaseMLP, ClassifierMixin):
         array, shape = [n_samples]
            Predicted target values per element in X.
         """
+<<<<<<< HEAD
         scores = super(MLPClassifier, self).predict(X)
 =======
         scores = self.decision_function(X)
 >>>>>>> replaced 'einsum' to a more readable and faster operation
 =======
+=======
+>>>>>>> Updated the method descriptions
         scores = super(MLPClassifier, self).predict(X)
 >>>>>>> More Travis error fixes
         if len(scores.shape) == 1:
