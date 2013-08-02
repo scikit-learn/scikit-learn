@@ -105,6 +105,8 @@ Click on any estimator in the chart below to see it's documentation.
 	</img>
       </p>
       <script type="text/javascript">
+          // Note that this is a hack-fix for now. This should be
+	  // fixed using css, not js. See issue #2328 for reference
           $('.map').css({'height': '1300px'});
       </script>
     </body>
