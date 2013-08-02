@@ -111,14 +111,30 @@
     <div class="row-fluid banner-inner">
         <div class="span6">
             <div class="row-fluid">
-                <div class="offset2 span8"><div class="thumbnail">
-		  <a href="{{ pathto('auto_examples/plot_classifier_comparison') }}">
-		    <img src="{{ pathto('_static/banner_example.png', 1) }}"/>
+                <div class="offset2 span8"><div id="index_carousel_tn" class="thumbnail">
+		  <a href="{{ pathto('auto_examples/index') }}">
+		    <div id="examples_carousel" class="carousel slide">
+		      <ol class="carousel-indicators">
+			<li data-target="#examples_carousel" data-slide-to="0" class="active"></li>
+			<li data-target="#examples_carousel" data-slide-to="1"></li>
+			<li data-target="#examples_carousel" data-slide-to="2"></li>
+		      </ol>
+		      <!-- Carousel items -->
+		      <div class="carousel-inner">
+			<div class="active item"><img src="_static/banner_example1.png" alt></div>
+			<div class="item"><img src="_static/banner_example2.png" alt></div>
+			<div class="item"><img src="_static/banner_example3.png" alt></div>
+			<div class="item"><img src="_static/banner_example4.png" alt></div>
+		      </div>
+		      <!-- Carousel nav -->
+		      <a class="carousel-control left" href="#examples_carousel" data-slide="prev">&lsaquo;</a>
+		      <a class="carousel-control right" href="#examples_carousel" data-slide="next">&rsaquo;</a>
+		    </div>
 		  </a>
 		</div></div>
             </div>
         </div>
-        <div class="span6">
+        <div id="intro_to_sklearn_p" class="span6">
             <h1>scikit-learn</h1>
             <h2>Machine Learning in Python</h2>
             <ul>
