@@ -299,13 +299,32 @@ def make_prediction(dataset=None, binary=False):
     return y_true, y_pred, probas_pred
 
 
+def _auc(y_true, y_score):
+    n_samples = y_true.shape[0]
+    ind = np.arange(n_samples)
+    pos_label = np.unique(y_true)[1]
+    pos = ind[y_true == pos_label]
+    neg = ind[y_true != pos_label]
+
+    # Count the number of times positive samples are correctly ranked above
+    # negative samples.
+    n_correct = 0
+    for i in pos:
+        for j in neg:
+            if y_score[i] > y_score[j]:
+                n_correct += 1
+
+    return n_correct / float(len(pos) * len(neg))
+
+
 def test_roc_curve():
     """Test Area under Receiver Operating Characteristic (ROC) curve"""
     y_true, _, probas_pred = make_prediction(binary=True)
 
     fpr, tpr, thresholds = roc_curve(y_true, probas_pred)
     roc_auc = auc(fpr, tpr)
-    assert_array_almost_equal(roc_auc, 0.90, decimal=2)
+    expected_auc = _auc(y_true, probas_pred)
+    assert_array_almost_equal(roc_auc, expected_auc, decimal=2)
     assert_almost_equal(roc_auc, auc_score(y_true, probas_pred))
     assert_equal(fpr.shape, tpr.shape)
     assert_equal(fpr.shape, thresholds.shape)
