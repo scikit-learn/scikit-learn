@@ -88,10 +88,10 @@ def _infer_dimension_(spectrum, n_samples, n_features):
 
     The dataset is described by its spectrum `spectrum`.
     """
-    ll = []
-    for rank in range(len(spectrum)):
-        ll.append(_assess_dimension_(spectrum, rank, n_samples, n_features))
-    ll = np.array(ll)
+    n_spectrum = len(spectrum)
+    ll = np.empty(n_spectrum)
+    for rank in range(n_spectrum):
+        ll[rank] = _assess_dimension_(spectrum, rank, n_samples, n_features)
     return ll.argmax()
 
 
