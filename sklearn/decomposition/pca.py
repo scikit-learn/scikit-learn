@@ -6,10 +6,12 @@
 #         Mathieu Blondel <mathieu@mblondel.org>
 # License: BSD 3 clause
 
-import numpy as np
-from scipy import linalg
 from math import log, sqrt
 import warnings
+
+import numpy as np
+from scipy import linalg
+from scipy.special import gammaln
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import array2d, check_random_state, as_float_array
@@ -49,36 +51,34 @@ def _assess_dimension_(spectrum, rank, n_samples, n_features):
     if rank > len(spectrum):
         raise ValueError("The tested rank cannot exceed the rank of the"
                          " dataset")
-    from scipy.special import gammaln
 
-    pu = -rank * np.log(2)
+    pu = -rank * log(2.)
     for i in range(rank):
-        pu += (gammaln((n_features - i) / 2)
-               - np.log(np.pi) * (n_features - i) / 2)
+        pu += (gammaln((n_features - i) / 2.)
+               - log(np.pi) * (n_features - i) / 2.)
 
     pl = np.sum(np.log(spectrum[:rank]))
-    pl = -pl * n_samples / 2
+    pl = -pl * n_samples / 2.
 
     if rank == n_features:
         pv = 0
         v = 1
     else:
         v = np.sum(spectrum[rank:]) / (n_features - rank)
-        pv = -np.log(v) * n_samples * (n_features - rank) / 2
+        pv = -np.log(v) * n_samples * (n_features - rank) / 2.
 
-    m = n_features * rank - rank * (rank + 1) / 2
-    pp = np.log(2 * np.pi) * (m + rank + 1) / 2
+    m = n_features * rank - rank * (rank + 1.) / 2.
+    pp = log(2. * np.pi) * (m + rank + 1.) / 2.
 
-    pa = 0
+    pa = 0.
     spectrum_ = spectrum.copy()
     spectrum_[rank:n_features] = v
     for i in range(rank):
         for j in range(i + 1, len(spectrum)):
-            pa += (np.log((spectrum[i] - spectrum[j])
-                          * (1. / spectrum_[j] - 1. / spectrum_[i]))
-                   + np.log(n_samples))
+            pa += log((spectrum[i] - spectrum[j]) *
+                       (1. / spectrum_[j] - 1. / spectrum_[i])) + log(n_samples)
 
-    ll = pu + pl + pv + pp - pa / 2 - rank * np.log(n_samples) / 2
+    ll = pu + pl + pv + pp - pa / 2. - rank * log(n_samples) / 2.
 
     return ll
 
@@ -146,6 +146,11 @@ class PCA(BaseEstimator, TransformerMixin):
         Percentage of variance explained by each of the selected components. \
         k is not set then all components are stored and the sum of explained \
         variances is equal to 1.0
+
+    `n_components_` : int
+        The estimated number of components. Relevant when n_components is set
+        to 'mle' or a number between 0 and 1 to select is using explained
+        variance.
 
     Notes
     -----
@@ -256,28 +261,29 @@ class PCA(BaseEstimator, TransformerMixin):
         else:
             self.components_ = V
 
-        if self.n_components == 'mle':
+        n_components = self.n_components
+        if n_components is None:
+            n_components = n_features
+        elif n_components == 'mle':
             if n_samples < n_features:
                 raise ValueError("n_components='mle' is only supported "
                                  "if n_samples >= n_features")
-            self.n_components = _infer_dimension_(self.explained_variance_,
+            n_components = _infer_dimension_(self.explained_variance_,
                                                   n_samples, n_features)
 
-        elif (self.n_components is not None
-              and 0 < self.n_components
-              and self.n_components < 1.0):
+        if 0 < n_components < 1.0:
             # number of components for which the cumulated explained variance
             # percentage is superior to the desired threshold
             ratio_cumsum = self.explained_variance_ratio_.cumsum()
-            self.n_components = np.sum(ratio_cumsum < self.n_components) + 1
+            n_components = np.sum(ratio_cumsum < n_components) + 1
 
-        if self.n_components is not None:
-            self.components_ = self.components_[:self.n_components, :]
-            self.explained_variance_ = \
-                self.explained_variance_[:self.n_components]
-            self.explained_variance_ratio_ = \
-                self.explained_variance_ratio_[:self.n_components]
+        self.components_ = self.components_[:n_components, :]
+        self.explained_variance_ = \
+            self.explained_variance_[:n_components]
+        self.explained_variance_ratio_ = \
+            self.explained_variance_ratio_[:n_components]
 
+        self.n_components_ = n_components
         return (U, S, V)
 
     def transform(self, X):
