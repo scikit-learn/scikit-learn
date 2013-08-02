@@ -355,8 +355,9 @@ class BaseMLP(BaseEstimator):
         if self.loss == 'squared_loss':
             cost = np.sum(diff**2)/ (2 * n_samples)
         elif self.loss == 'log':
-            cost = np.sum(
-                np.sum(-Y * np.log(a_output) - (1 - Y) * np.log(1 - a_output)))
+            # To avoid math error, tanh values are re-scaled
+            if self.activation == 'tanh': a_output = 0.5*(a_output + 1) 
+            cost = -np.sum(Y * np.log(a_output))
         # Get regularized gradient
         W1grad = safe_sparse_dot(X.T, delta_h) + \
                 (self.alpha * self.coef_hidden_)
@@ -566,8 +567,8 @@ class BaseMLP(BaseEstimator):
 class MLPClassifier(BaseMLP, ClassifierMixin):
 
     def __init__(
-        self, n_hidden=100, activation="tanh",
-        loss='log', algorithm='sgd', alpha=0.00001, batch_size=200,
+        self, n_hidden=100, activation="logistic",
+        loss='log', algorithm='l-bfgs', alpha=0.00001, batch_size=200,
         learning_rate="constant", eta0=0.8, power_t=0.5, max_iter=200,
         shuffle_data=False, random_state=None, tol=1e-5, verbose=False):
         super(
