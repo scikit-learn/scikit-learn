@@ -303,16 +303,13 @@ def _auc(y_true, y_score):
     n_samples = y_true.shape[0]
     ind = np.arange(n_samples)
     pos_label = np.unique(y_true)[1]
-    pos = ind[y_true == pos_label]
-    neg = ind[y_true != pos_label]
 
     # Count the number of times positive samples are correctly ranked above
     # negative samples.
-    n_correct = 0
-    for i in pos:
-        for j in neg:
-            if y_score[i] > y_score[j]:
-                n_correct += 1
+    pos = y_score[y_true == pos_label]
+    neg = y_score[y_true != pos_label]
+    diff_matrix = pos.reshape(1, -1) - neg.reshape(-1, 1)
+    n_correct = np.sum(diff_matrix > 0)
 
     return n_correct / float(len(pos) * len(neg))
 
