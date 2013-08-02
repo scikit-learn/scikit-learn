@@ -11,7 +11,7 @@ Algorithm 21.1
 #         Alexandre Gramfort <alexandre.gramfort@inria.fr>
 # Licence: BSD3
 
-from math import sqrt
+from math import sqrt, log
 import numpy as np
 from scipy import linalg
 
@@ -125,7 +125,7 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
 
         # some constant terms
         nsqrt = sqrt(n_samples)
-        llconst = n_features * np.log(2 * np.pi) + n_components
+        llconst = n_features * log(2. * np.pi) + n_components
         var = np.var(X, axis=0)
 
         if self.noise_variance_init is None:
@@ -148,7 +148,7 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
             V = V[:n_components]
             s **= 2
             # Use 'maximum' here to avoid sqrt problems.
-            W = np.sqrt(np.maximum(s[:n_components] - 1, 0))[:, np.newaxis] * V
+            W = np.sqrt(np.maximum(s[:n_components] - 1., 0.))[:, np.newaxis] * V
             W *= sqrt_psi
 
             # loglikelihood
@@ -231,5 +231,5 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         log_like = np.zeros(X.shape[0])
         self.precision_ = linalg.inv(cov)
         log_like = -.5 * (Xr * (np.dot(Xr, self.precision_))).sum(axis=1)
-        log_like -= .5 * (fast_logdet(cov) + n_features * np.log(2 * np.pi))
+        log_like -= .5 * (fast_logdet(cov) + n_features * log(2. * np.pi))
         return log_like
