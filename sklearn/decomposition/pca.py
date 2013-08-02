@@ -8,7 +8,7 @@
 
 import numpy as np
 from scipy import linalg
-from math import log
+from math import log, sqrt
 import warnings
 
 from ..base import BaseEstimator, TransformerMixin
@@ -219,7 +219,7 @@ class PCA(BaseEstimator, TransformerMixin):
 
         if self.whiten:
             # X_new = X * V / S * sqrt(n_samples) = U * sqrt(n_samples)
-            U *= np.sqrt(X.shape[0])
+            U *= sqrt(X.shape[0])
         else:
             # X_new = X * V = U * S * V^T * V = U * S
             U *= S[:self.n_components]
@@ -252,7 +252,7 @@ class PCA(BaseEstimator, TransformerMixin):
                                           self.explained_variance_.sum())
 
         if self.whiten:
-            self.components_ = V / S[:, np.newaxis] * np.sqrt(n_samples)
+            self.components_ = V / S[:, np.newaxis] * sqrt(n_samples)
         else:
             self.components_ = V
 
@@ -343,20 +343,26 @@ class ProbabilisticPCA(PCA):
         Xr = X - self.mean_
         Xr -= np.dot(np.dot(Xr, self.components_.T), self.components_)
         n_samples = X.shape[0]
-        if self.n_components is None or n_features <= self.n_components:
-            delta = np.zeros(n_features)
-        elif homoscedastic:
-            delta = ((Xr ** 2).sum() * np.ones(n_features)
-                     / (n_samples * n_features))
-        else:
-            delta = (Xr ** 2).mean(0) / (n_features - self.n_components)
-        self.covariance_ = np.diag(delta)
+
         n_components = self.n_components
         if n_components is None:
             n_components = n_features
-        for k in range(n_components):
-            add_cov = np.outer(self.components_[k], self.components_[k])
-            self.covariance_ += self.explained_variance_[k] * add_cov
+
+        # Make the low rank part of the estimated covariance
+        self.covariance_ = np.dot(self.components_[:n_components].T *
+                                  self.explained_variance_[:n_components],
+                                  self.components_[:n_components])
+
+        if n_features == n_components:
+            delta = 0.
+        elif homoscedastic:
+            delta = (Xr ** 2).sum() / (n_samples * n_features)
+        else:
+            delta = (Xr ** 2).mean(axis=0) / (n_features - n_components)
+
+        # Add delta to the diagonal without extra allocation
+        self.covariance_.flat[::n_features + 1] += delta
+
         return self
 
     def score(self, X, y=None):
@@ -378,7 +384,7 @@ class ProbabilisticPCA(PCA):
         self.precision_ = linalg.inv(self.covariance_)
         log_like = -.5 * (Xr * (np.dot(Xr, self.precision_))).sum(axis=1)
         log_like -= .5 * (fast_logdet(self.covariance_)
-                          + n_features * log(2 * np.pi))
+                          + n_features * log(2. * np.pi))
         return log_like
 
 
@@ -533,7 +539,7 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         self.explained_variance_ratio_ = exp_var / exp_var.sum()
 
         if self.whiten:
-            self.components_ = V / S[:, np.newaxis] * np.sqrt(n_samples)
+            self.components_ = V / S[:, np.newaxis] * sqrt(n_samples)
         else:
             self.components_ = V
 
