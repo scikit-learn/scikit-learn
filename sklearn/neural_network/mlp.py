@@ -66,8 +66,7 @@ def _log_softmax(X):
 
 def _softmax(X):
     """
-    Implements the K-way softmax, (exp(X).T / exp(X).sum(axis=1)).T,
-    in the log domain
+    Implements the K-way softmax, (exp(X).T / exp(X).sum(axis=1)).T
 
     Parameters
     ----------
@@ -130,14 +129,15 @@ class BaseMLP(BaseEstimator):
     activation: string, optional
         Activation function for the hidden layer; either "logistic" for
         1 / (1 + exp(x)), or "tanh" for the hyperbolic tangent.
+    loss: 'squared_loss', or 'log'
+        The loss function to be used. Defaults to 'squared_loss' for Regression
+        and 'log' for Classification
     alpha : float, optional
         L2 penalty (weight decay) parameter.
     batch_size : int, optional
         Size of minibatches in SGD optimizer.
     learning_rate : float, optional
-        Base learning rate. This will be scaled by sqrt(n_features) for the
-        input-to-hidden weights, and by sqrt(n_hidden) for the hidden-to-output
-        weights.
+        Base learning rate for weight updates. 
     max_iter : int, optional
         Maximum number of iterations.
     random_state : int or RandomState, optional
@@ -149,6 +149,10 @@ class BaseMLP(BaseEstimator):
         Tolerance for the optimization. When the loss at iteration i+1 differs
         less than this amount from that at iteration i, convergence is
         considered to be reached.
+    eta0 : double, optional
+        The initial learning rate [default 0.01].
+    power_t : double, optional
+        The exponent for inverse scaling learning rate [default 0.25].
     verbose : bool, optional
         Whether to print progress messages to stdout.
 
@@ -525,7 +529,6 @@ class BaseMLP(BaseEstimator):
             self._init_fit(n_features, Y.shape[1])
         else:
             Y = self._lbin.transform(y)
-
         self.backprop_naive(X, Y, 1)
         return self
 
@@ -578,6 +581,22 @@ class MLPClassifier(BaseMLP, ClassifierMixin):
         self.classes_ = None
         
     def fit(self, X, y):
+        """
+        Fit the model to the data X and target y.
+
+        Parameters
+        ----------
+        X: {array-like, sparse matrix}, shape (n_samples, n_features)
+            Training data, where n_samples in the number of samples
+            and n_features is the number of features.
+
+        Y : numpy array of shape [n_samples]
+            Subset of the target values.
+
+        Returns
+        -------
+        self
+        """
         self.classes_ = np.unique(y)
         self._lbin = LabelBinarizer()
         Y = self._lbin.fit_transform(y)
@@ -587,6 +606,17 @@ class MLPClassifier(BaseMLP, ClassifierMixin):
         return self
     
     def predict(self, X):
+        """Predict using the multi-layer perceptron model
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+
+        Returns
+        -------
+        array, shape = [n_samples]
+           Predicted target values per element in X.
+        """
         scores = super(MLPClassifier, self).predict(X)
         if len(scores.shape) == 1:
             indices = (scores > 0).astype(np.int)
