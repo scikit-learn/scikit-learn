@@ -149,7 +149,7 @@ class PCA(BaseEstimator, TransformerMixin):
 
     `n_components_` : int
         The estimated number of components. Relevant when n_components is set
-        to 'mle' or a number between 0 and 1 to select is using explained
+        to 'mle' or a number between 0 and 1 to select using explained
         variance.
 
     Notes
