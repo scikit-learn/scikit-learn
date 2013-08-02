@@ -344,11 +344,10 @@ class ProbabilisticPCA(PCA):
             If True, average variance across remaining dimensions
         """
         PCA.fit(self, X)
-        n_features = X.shape[1]
+        n_samples, n_features = X.shape
         self._dim = n_features
         Xr = X - self.mean_
         Xr -= np.dot(np.dot(Xr, self.components_.T), self.components_)
-        n_samples = X.shape[0]
 
         n_components = self.n_components
         if n_components is None:
