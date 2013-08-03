@@ -238,7 +238,8 @@ def test_pca_dim():
     X = rng.randn(n, p) * .1
     X[:10] += np.array([3, 4, 5, 1, 2])
     pca = PCA(n_components='mle').fit(X)
-    assert_equal(pca.n_components, 1)
+    assert_equal(pca.n_components, 'mle')
+    assert_equal(pca.n_components_, 1)
 
 
 def test_infer_dim_1():
@@ -295,17 +296,20 @@ def test_infer_dim_by_explained_variance():
     X = iris.data
     pca = PCA(n_components=0.95)
     pca.fit(X)
-    assert_equal(pca.n_components, 2)
+    assert_equal(pca.n_components, 0.95)
+    assert_equal(pca.n_components_, 2)
 
     pca = PCA(n_components=0.01)
     pca.fit(X)
-    assert_equal(pca.n_components, 1)
+    assert_equal(pca.n_components, 0.01)
+    assert_equal(pca.n_components_, 1)
 
     rng = np.random.RandomState(0)
     # more features than samples
     X = rng.rand(5, 20)
     pca = PCA(n_components=.5).fit(X)
-    assert_equal(pca.n_components, 2)
+    assert_equal(pca.n_components, 0.5)
+    assert_equal(pca.n_components_, 2)
 
 
 def test_probabilistic_pca_1():
