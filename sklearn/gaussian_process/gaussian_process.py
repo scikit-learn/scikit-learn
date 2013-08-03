@@ -1,6 +1,6 @@
-from __future__ import print_function
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+from __future__ import print_function
 
 # Author: Vincent Dubourg <vincent.dubourg@gmail.com>
 #         (mostly translation, see implementation details)
