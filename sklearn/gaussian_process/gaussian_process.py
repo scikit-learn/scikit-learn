@@ -1218,7 +1218,7 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
                 confidence = 1. / stats.norm.cdf((1 + .95)/2)
                 N = int((max_std * confidence / out_std) ** 2)
                 if self.verbose:
-                    print "Computed MC samples for 95%% confidense is %s" % N
+                    print("Computed MC samples for 95%% confidense is %s" % N)
                 
                 if N > 100:
                     f_vec = np.random.multivariate_normal(test_means_[idx], test_covars_[idx], N - 100).T
@@ -1484,8 +1484,8 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
             k = k + 1
             
         if self.verbose:
-            print "Maximum objective reached %s" % objective
-            print "Number of iterations %s (of total %s)" % (k, self.max_iter)
+            print("Maximum objective reached %s" % objective)
+            print("Number of iterations %s (of total %s)" % (k, self.max_iter))
         
         # Reduced likelyhood value 
         reduced_likelihood_function_value = objective - 0.5 * B_log_det    
