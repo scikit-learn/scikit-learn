@@ -220,14 +220,14 @@ class PCA(BaseEstimator, TransformerMixin):
 
         """
         U, S, V = self._fit(X)
-        U = U[:, :self.n_components]
+        U = U[:, :self.n_components_]
 
         if self.whiten:
             # X_new = X * V / S * sqrt(n_samples) = U * sqrt(n_samples)
             U *= sqrt(X.shape[0])
         else:
             # X_new = X * V = U * S * V^T * V = U * S
-            U *= S[:self.n_components]
+            U *= S[:self.n_components_]
 
         return U
 
