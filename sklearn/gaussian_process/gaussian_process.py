@@ -54,6 +54,15 @@ def inv_triangular(A, lower = False):
     
     return A_inv
 
+if hasattr(sparse, 'block_diag'):
+    # only in scipy since 0.11
+    block_diag = sparse.block_diag
+else:
+    # slower, but works
+    def block_diag(lst, *params, **kwargs):
+        return sparse.csr_matrix(linalg.block_diag(*lst))
+
+
 def l1_cross_distances(X):
     """
     Computes the nonzero componentwise L1 cross-distances between the vectors
@@ -976,8 +985,9 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
     >>> y = np.array([0, 0, 0, 1, 1, 1])
     >>> gpc = GaussianProcessClassifier()
     >>> gpc.fit(X, y)
-    >>> print(gpc.predict([[-0.8, -1]]))
-
+    >>> gpc.predict([[-0.8, -1]])
+    array([0])
+    
     Notes
     -----
     The presentation implementation is based on the Gaussian 
@@ -1267,7 +1277,7 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
         
         # Reshape is cheap
         f_vec = f_vec.reshape(n_classes, n_samples)
-        # decision function values: - of size Cn
+        # decision function values: π of size Cn
         pi_vec = np.zeros((n_classes, n_samples))
         for i in range(n_samples):
             for c in range(n_classes):
@@ -1324,14 +1334,14 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
         pi_vec = self.soft_max(f_vec)
         pi_mat = pi_vec.reshape(n_classes, n_samples)
         
-        # Stacked diagonal matrices: p of size Cn x n
+        # Stacked diagonal matrices: Π of size Cn x n
         P = np.zeros((n_classes * n_samples, n_samples)) 
         
-        # Stack vertically to build p 
+        # Stack vertically to build Π 
         for c in range(n_classes):
             P[c * n_samples : (c + 1) * n_samples,:] = np.diagflat(pi_mat[c,:])
         
-        # W = D - p x p^T
+        # W = D - Π x Π^T
         W = np.diagflat(pi_vec) - np.dot(P, P.T)
         y_pi_diff = self.y - pi_vec
         b = np.dot(W, f_vec) + y_pi_diff
@@ -1362,16 +1372,16 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
         L_inv = inv_triangular(L, lower = True)
         F_inv = np.dot(L_inv.T, L_inv)
 
-        E_sparse = sparse.block_diag(E, format='csr')
+        E_sparse = block_diag(E, format='csr')
         c = E_sparse.dot(K_sparse).dot(b)
         ERM = E_sparse.dot(R_sparse).dot(F_inv)
         RTC = R_sparse.T.dot(c)
         # a = K^-1 x f
         a = b - c + np.dot(ERM, RTC)
         f_vec = K_sparse.dot(a)
-        # gradiant = -K^-1 x f + y - - 
+        # gradiant = -K^-1 x f + y - π 
         gradiant = -a + y_pi_diff
-        # At maximum must have f = K x (y - -) and gradiant = 0
+        # At maximum must have f = K x (y - π) and gradiant = 0
         
         return f_vec, E, F_inv, B_log_det, a, pi_vec, gradiant
         
@@ -1452,7 +1462,7 @@ class GaussianProcessClassifier(BaseEstimator, ClassifierMixin):
             
             K.append(R)
 
-        K_sparse = sparse.block_diag(K, format='csr')
+        K_sparse = block_diag(K, format='csr')
 
         # Get R from cache
         R_sparse = self._get_R()
