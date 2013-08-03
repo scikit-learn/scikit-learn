@@ -1132,7 +1132,7 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
         Array of scores of the estimator for each run of the cross validation.
     """
     X, y = check_arrays(X, y, sparse_format='csr', allow_lists=True)
-    cv = check_cv(cv, X, y, classifier=is_classifier(estimator))
+    cv = _check_cv(cv, X, y, classifier=is_classifier(estimator))
     scorer = _deprecate_loss_and_score_funcs(
         loss_func=None,
         score_func=score_func,
@@ -1203,19 +1203,29 @@ def check_cv(cv, X=None, y=None, classifier=False):
         The return value is guaranteed to be a cv generator instance, whatever
         the input type.
     """
+    return _check_cv(cv, X=X, y=y, classifier=classifier, warn_mask=True)
+
+
+def _check_cv(cv, X=None, y=None, classifier=False, warn_mask=False):
+    # This exists for internal use while indices is being deprecated.
     is_sparse = sp.issparse(X)
+    needs_indices = is_sparse or not hasattr(X, "shape")
     if cv is None:
         cv = 3
     if isinstance(cv, numbers.Integral):
+        if warn_mask and not needs_indices:
+            warnings.warn('check_cv will return indices instead of boolean '
+                          'masks from 0.17', DeprecationWarning)
+        else:
+            needs_indices = True
         if classifier:
-            cv = StratifiedKFold(y, cv)
+            cv = StratifiedKFold(y, cv, indices=needs_indices)
         else:
             if not is_sparse:
                 n_samples = len(X)
             else:
                 n_samples = X.shape[0]
-            cv = KFold(n_samples, cv)
-    needs_indices = is_sparse or not hasattr(X, "shape")
+            cv = KFold(n_samples, cv, indices=needs_indices)
     if needs_indices and not getattr(cv, "indices", True):
         raise ValueError("Sparse data and lists require indices-based cross"
                          " validation generator, got: %r", cv)
@@ -1289,7 +1299,7 @@ def permutation_test_score(estimator, X, y, score_func=None, cv=None,
 
     """
     X, y = check_arrays(X, y, sparse_format='csr')
-    cv = check_cv(cv, X, y, classifier=is_classifier(estimator))
+    cv = _check_cv(cv, X, y, classifier=is_classifier(estimator))
     scorer = _deprecate_loss_and_score_funcs(
         loss_func=None,
         score_func=score_func,
