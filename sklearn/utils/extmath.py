@@ -64,7 +64,7 @@ def _impose_f_order(X):
     # important to access flags instead of calling np.isfortran,
     # this catches corner cases.
     if X.flags.c_contiguous:
-        return (array2d(X.T, copy=False, order='F'), True)
+        return array2d(X.T, copy=False, order='F'), True
     else:
         return array2d(X, copy=False, order='F'), False
 
@@ -132,18 +132,6 @@ def safe_sparse_dot(a, b, dense_output=False):
         return ret
     else:
         return fast_dot(a, b)
-
-
-def safe_sparse_dot2(a, b, dense_output=False):
-    """Dot product that handle the sparse matrix case correctly"""
-    from scipy import sparse
-    if sparse.issparse(a) or sparse.issparse(b):
-        ret = a * b
-        if dense_output and hasattr(ret, "toarray"):
-            ret = ret.toarray()
-        return ret
-    else:
-        return np.dot(a, b)
 
 
 def randomized_range_finder(A, size, n_iter, random_state=None,
