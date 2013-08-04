@@ -64,7 +64,7 @@ def _impose_f_order(X):
     # important to access flags instead of calling np.isfortran,
     # this catches corner cases.
     if X.flags.c_contiguous:
-        return array2d(X.T, copy=False, order='F'), True
+        return (array2d(X.T, copy=False, order='F'), True)
     else:
         return array2d(X, copy=False, order='F'), False
 
@@ -87,6 +87,12 @@ def _fast_dot(A, B):
         warnings.warn('Data must be of same type. Supported types '
                       'are 32 and 64 bit float. '
                       'Falling back to np.dot.', DataConversionWarning)
+        return np.dot(A, B)
+    if ((A.ndim == 1 or B.ndim == 1) or
+        (min(A.shape) == 1) or (min(B.shape) == 1)):
+        warnings.warn('Data must be 2D with more than one colum / row.'
+                      'Falling back to np.dot',
+                      DataConversionWarning)
         return np.dot(A, B)
 
     dot = linalg.get_blas_funcs('gemm', (A, B))
@@ -117,6 +123,18 @@ def density(w, **kwargs):
 
 
 def safe_sparse_dot(a, b, dense_output=False):
+    """Dot product that handle the sparse matrix case correctly"""
+    from scipy import sparse
+    if sparse.issparse(a) or sparse.issparse(b):
+        ret = a * b
+        if dense_output and hasattr(ret, "toarray"):
+            ret = ret.toarray()
+        return ret
+    else:
+        return fast_dot(a, b)
+
+
+def safe_sparse_dot2(a, b, dense_output=False):
     """Dot product that handle the sparse matrix case correctly"""
     from scipy import sparse
     if sparse.issparse(a) or sparse.issparse(b):

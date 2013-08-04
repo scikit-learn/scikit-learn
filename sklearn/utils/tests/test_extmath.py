@@ -341,6 +341,21 @@ def test_fast_dot():
         C_ = fast_dot(A.T, B)
         assert_array_equal(C, C_)
 
+    # test special case of 1-column vectors
+    A = rng.random_sample([1, 10])
+    B = rng.random_sample([10, 5])
+    for dtype in ['f8', 'f4']:
+        A = A.astype(dtype)
+        B = B.astype(dtype)
+
+        C = np.dot(A, B)
+        C_ = fast_dot(A, B)
+        assert_array_almost_equal(C, C_)
+
+        C = np.dot(A.T, B)
+        C_ = fast_dot(A.T, B)
+        assert_array_almost_equal(C, C_)
+
     if has_blas:
         for x in [np.array([[d] * 10] * 2) for d in [np.inf, np.nan]]:
             assert_raises(ValueError, fast_dot, x, x.T)
