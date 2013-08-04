@@ -279,15 +279,16 @@ class ClassifierMixin(object):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
-            Training set.
+        X : array-like, shape = (n_samples, n_features)
+            Test samples.
 
-        y : array-like, shape = [n_samples]
-            Labels for X.
+        y : array-like, shape = (n_samples,)
+            True labels for X.
 
         Returns
         -------
-        z : float
+        score : float
+            Mean accuracy of self.predict(X) wrt. y.
 
         """
         from .metrics import accuracy_score
@@ -308,14 +309,16 @@ class RegressorMixin(object):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
-            Training set.
+        X : array-like, shape = (n_samples, n_features)
+            Test samples.
 
-        y : array-like, shape = [n_samples]
+        y : array-like, shape = (n_samples,)
+            True values for X.
 
         Returns
         -------
-        z : float
+        score : float
+            R^2 of self.predict(X) wrt. y.
         """
 
         from .metrics import r2_score
