@@ -859,7 +859,6 @@ div.carousel img {
 div#examples_carousel img {
     max-height: 176px;
     height: 100%;
-    width: 96%;
     background-color: #fff;
     margin: 10px auto;
 }
