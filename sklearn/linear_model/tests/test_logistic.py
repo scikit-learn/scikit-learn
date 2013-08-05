@@ -202,13 +202,13 @@ def test__logistic_loss_and_grad():
                                                             alpha=1.)[0],
                             1e-3
                             )
-        np.testing.assert_array_almost_equal(grad, approx_grad, decimal=2)
+        assert_array_almost_equal(grad, approx_grad, decimal=2)
 
         # Second check that our intercept implementation is good
         w = np.zeros(n_features + 1)
         loss_interp, grad_interp =logistic._logistic_loss_and_grad_intercept(w,
                                                     X, y, alpha=1.)
-        np.testing.assert_allclose(loss, loss_interp)
+        assert_array_almost_equal(loss, loss_interp)
 
         approx_grad = optimize.approx_fprime(w,
                             lambda w:
@@ -216,7 +216,7 @@ def test__logistic_loss_and_grad():
                                                             alpha=1.)[0],
                             1e-3
                             )
-        np.testing.assert_array_almost_equal(grad_interp, approx_grad, decimal=2)
+        assert_array_almost_equal(grad_interp, approx_grad, decimal=2)
 
 
 def test__logistic_loss_grad_hess():
@@ -236,7 +236,7 @@ def test__logistic_loss_grad_hess():
         loss, grad = logistic._logistic_loss_and_grad(w, X, y, alpha=1.)
         loss_2, grad_2, hess = logistic._logistic_loss_grad_hess(w, X, y,
                                                     alpha=1.)
-        np.testing.assert_array_almost_equal(grad, grad_2)
+        assert_array_almost_equal(grad, grad_2)
         # XXX: we should check a few simple properties of our problem, such
         # as the fact that if X=0, the problem is alpha * ||w||**2, so we
         # know the hessian
@@ -261,8 +261,7 @@ def test__logistic_loss_grad_hess():
         d_grad -= d_grad.mean(axis=0)
         approx_hess_col = linalg.lstsq(d_x[:, np.newaxis], d_grad)[0].ravel()
 
-        np.testing.assert_array_almost_equal(approx_hess_col, hess_col,
-                                            decimal=3)
+        assert_array_almost_equal(approx_hess_col, hess_col, decimal=3)
 
         # Second check that our intercept implementation is good
         w = np.zeros(n_features + 1)
@@ -271,5 +270,5 @@ def test__logistic_loss_grad_hess():
         loss_interp_2, grad_interp_2, hess = \
                     logistic._logistic_loss_grad_hess_intercept(w,
                                                     X, y, alpha=1.)
-        np.testing.assert_allclose(loss_interp, loss_interp_2)
-        np.testing.assert_allclose(grad_interp, grad_interp_2)
+        assert_array_almost_equal(loss_interp, loss_interp_2)
+        assert_array_almost_equal(grad_interp, grad_interp_2)
