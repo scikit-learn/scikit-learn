@@ -858,14 +858,14 @@ div.carousel img {
 
 div#examples_carousel img {
     max-height: 201px;
-    height: 100%;
+    height: 186px;
     background-color: #fff;
     margin: 10px auto;
 }
 
 div#examples_carousel .carousel-indicators {
     position: absolute;
-    top: 98%;
+    top: 217px;
     right: 30%;
 }
 
@@ -883,6 +883,7 @@ div#intro_to_sklearn_p li {
 
 div#index_carousel_tn {
     height: 226px;
+    width: 380px;
     background: white;
 }
 
