@@ -864,6 +864,20 @@ div#examples_carousel img {
     margin: 10px auto;
 }
 
+div#examples_carousel .carousel-indicators {
+    position: absolute;
+    top: 93%;
+    right: 30%;
+}
+
+div#examples_carousel .carousel-indicators .active {
+    background-color: #0F72F0;
+}
+
+div#examples_carousel .carousel-indicators li {
+    background-color: rgba(52, 147, 235, 0.25);
+}
+
 div#index_carousel_tn {
     height: 194px;
     background: white;
