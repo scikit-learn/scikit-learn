@@ -25,7 +25,7 @@ Manifold learning
    :align: center
    :scale: 60
 
-Manifold learning is an approach to nonlinear dimensionality reduction.
+Manifold learning is an approach to non-linear dimensionality reduction.
 Algorithms for this task are based on the idea that the dimensionality of
 many data sets is only artificially high.
 
@@ -62,7 +62,7 @@ dimensionality reduction frameworks have been designed, such as Principal
 Component Analysis (PCA), Independent Component Analysis, Linear 
 Discriminant Analysis, and others.  These algorithms define specific 
 rubrics to choose an "interesting" linear projection of the data.
-These methods can be powerful, but often miss important nonlinear 
+These methods can be powerful, but often miss important non-linear 
 structure in the data.
 
 
@@ -77,7 +77,7 @@ structure in the data.
 .. centered:: |PCA_img| |LDA_img|
 
 Manifold Learning can be thought of as an attempt to generalize linear
-frameworks like PCA to be sensitive to nonlinear structure in data. Though
+frameworks like PCA to be sensitive to non-linear structure in data. Though
 supervised variants exist, the typical manifold learning problem is
 unsupervised: it learns the high-dimensional structure of the data
 from the data itself, without the use of predetermined classifications.
@@ -93,6 +93,8 @@ from the data itself, without the use of predetermined classifications.
 
 The manifold learning implementations available in sklearn are
 summarized below
+
+.. _isomap:
 
 Isomap
 ======
@@ -154,7 +156,7 @@ Locally Linear Embedding
 Locally linear embedding (LLE) seeks a lower-dimensional projection of the data
 which preserves distances within local neighborhoods.  It can be thought
 of as a series of local Principal Component Analyses which are globally
-compared to find the best nonlinear embedding.
+compared to find the best non-linear embedding.
 
 Locally linear embedding can be performed with function
 :func:`locally_linear_embedding` or its object-oriented counterpart
@@ -202,7 +204,7 @@ of neighbors is greater than the number of input dimensions, the matrix
 defining each local neighborhood is rank-deficient.  To address this, standard
 LLE applies an arbitrary regularization parameter :math:`r`, which is chosen
 relative to the trace of the local weight matrix.  Though it can be shown
-formally that as :math:`r \to 0`, the solution coverges to the desired
+formally that as :math:`r \to 0`, the solution converges to the desired
 embedding, there is no guarantee that the optimal solution will be found
 for :math:`r > 0`.  This problem manifests itself in embeddings which distort
 the underlying geometry of the manifold.
@@ -303,7 +305,7 @@ Spectral Embedding
 ====================
 
 Spectral Embedding (also known as Laplacian Eigenmaps) is one method
-to calculate nonlinear embedding. It finds a low dimensional representation
+to calculate non-linear embedding. It finds a low dimensional representation
 of the data using a spectral decomposition of the graph Laplacian.
 The graph generated can be considered as a discrete approximation of the 
 low dimensional manifold in the high dimensional space. Minimization of a 
@@ -407,7 +409,7 @@ countries.
 
 There exists two types of MDS algorithm: metric and non metric. In the
 scikit-learn, the class :class:`MDS` implements both. In Metric MDS, the input
-simiarity matrix arises from a metric (and thus respects the triangular
+similarity matrix arises from a metric (and thus respects the triangular
 inequality), the distances between output two points are then set to be as
 close as possible to the similarity or dissimilarity data. In the non metric
 vision, the algorithms will try to preserve the order of the distances, and

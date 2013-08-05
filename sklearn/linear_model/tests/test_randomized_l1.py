@@ -1,5 +1,5 @@
 # Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-# License: BSD Style.
+# License: BSD 3 clause
 
 import numpy as np
 from scipy import sparse
@@ -89,7 +89,9 @@ def test_randomized_logistic():
     clf = RandomizedLogisticRegression(verbose=False, C=1., random_state=42,
                                        scaling=scaling, n_resampling=50,
                                        tol=1e-3)
+    X_orig = X.copy()
     feature_scores = clf.fit(X, y).scores_
+    assert_array_equal(X, X_orig)   # fit does not modify X
     assert_array_equal(np.argsort(F), np.argsort(feature_scores))
 
     clf = RandomizedLogisticRegression(verbose=False, C=[1., 0.5],

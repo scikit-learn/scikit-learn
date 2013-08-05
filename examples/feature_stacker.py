@@ -4,7 +4,7 @@ Concatenating multiple feature extraction methods
 =================================================
 
 In many real-world examples, there are many ways to extract features from a
-dataset. Often it is benefitial to combine several methods to obtain good
+dataset. Often it is beneficial to combine several methods to obtain good
 performance. This example shows how to use ``FeatureUnion`` to combine
 features obtained by PCA and univariate selection.
 
@@ -17,7 +17,7 @@ dataset and is only used to illustrate the usage of FeatureUnion.
 
 # Author: Andreas Mueller <amueller@ais.uni-bonn.de>
 #
-# License: BSD 3-clause
+# License: BSD 3 clause
 
 from sklearn.pipeline import Pipeline, FeatureUnion
 from sklearn.grid_search import GridSearchCV

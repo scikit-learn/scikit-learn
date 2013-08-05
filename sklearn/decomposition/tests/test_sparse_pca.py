@@ -1,5 +1,5 @@
 # Author: Vlad Niculae
-# License: BSD
+# License: BSD 3 clause
 
 import sys
 

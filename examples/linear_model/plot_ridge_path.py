@@ -3,10 +3,12 @@
 Plot Ridge coefficients as a function of the regularization
 ===========================================================
 
+Shows the effect of collinearity in the coefficients of an estimator.
+
 .. currentmodule:: sklearn.linear_model
 
-Shows the effect of collinearity in the coefficients or the
-:class:`Ridge`. Each color represents a different feature of the
+:class:`Ridge` Regression is the estimator used in this example.
+Each color represents a different feature of the
 coefficient vector, and this is displayed as a function of the
 regularization parameter.
 
@@ -16,9 +18,9 @@ exhibit big oscillations.
 """
 
 # Author: Fabian Pedregosa -- <fabian.pedregosa@inria.fr>
-# License: BSD Style.
+# License: BSD 3 clause
 
-print __doc__
+print(__doc__)
 
 import numpy as np
 import pylab as pl

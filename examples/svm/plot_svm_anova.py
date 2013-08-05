@@ -6,7 +6,7 @@ SVM-Anova: SVM with univariate feature selection
 This example shows how to perform univariate feature before running a SVC
 (support vector classifier) to improve the classification scores.
 """
-print __doc__
+print(__doc__)
 
 import numpy as np
 import pylab as pl

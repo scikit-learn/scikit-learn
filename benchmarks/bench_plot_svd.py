@@ -1,4 +1,4 @@
-"""Benchmarks of Singular Values Decomposition (Exact and Approximate)
+"""Benchmarks of Singular Value Decomposition (Exact and Approximate)
 
 The data is mostly low rank but is a fat infinite tail.
 """
@@ -22,29 +22,29 @@ def compute_bench(samples_range, features_range, n_iter=3, rank=50):
     for n_samples in samples_range:
         for n_features in features_range:
             it += 1
-            print '===================='
-            print 'Iteration %03d of %03d' % (it, max_it)
-            print '===================='
+            print('====================')
+            print('Iteration %03d of %03d' % (it, max_it))
+            print('====================')
             X = make_low_rank_matrix(n_samples, n_features,
                                   effective_rank=rank,
                                   tail_strength=0.2)
 
             gc.collect()
-            print "benching scipy svd: "
+            print("benchmarking scipy svd: ")
             tstart = time()
             svd(X, full_matrices=False)
             results['scipy svd'].append(time() - tstart)
 
             gc.collect()
-            print "benching scikit-learn randomized_svd: n_iter=0"
+            print("benchmarking scikit-learn randomized_svd: n_iter=0")
             tstart = time()
             randomized_svd(X, rank, n_iter=0)
             results['scikit-learn randomized_svd (n_iter=0)'].append(
                 time() - tstart)
 
             gc.collect()
-            print ("benching scikit-learn randomized_svd: n_iter=%d "
-                   % n_iter)
+            print("benchmarking scikit-learn randomized_svd: n_iter=%d "
+                  % n_iter)
             tstart = time()
             randomized_svd(X, rank, n_iter=n_iter)
             results['scikit-learn randomized_svd (n_iter=%d)'
@@ -61,7 +61,8 @@ if __name__ == '__main__':
     features_range = np.linspace(2, 1000, 4).astype(np.int)
     results = compute_bench(samples_range, features_range)
 
-    fig = plt.figure()
+    label = 'scikit-learn singular value decomposition benchmark results'
+    fig = plt.figure(label)
     ax = fig.gca(projection='3d')
     for c, (label, timings) in zip('rbg', sorted(results.iteritems())):
         X, Y = np.meshgrid(samples_range, features_range)
@@ -76,6 +77,6 @@ if __name__ == '__main__':
 
     ax.set_xlabel('n_samples')
     ax.set_ylabel('n_features')
-    ax.set_zlabel('time (s)')
+    ax.set_zlabel('Time (s)')
     ax.legend()
     plt.show()

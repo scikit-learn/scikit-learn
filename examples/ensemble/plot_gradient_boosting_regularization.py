@@ -19,24 +19,24 @@ analogous to the random splits in Random Forests
 .. [1] T. Hastie, R. Tibshirani and J. Friedman, "Elements of Statistical
     Learning Ed. 2", Springer, 2009.
 """
-print __doc__
+print(__doc__)
 
 # Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
 #
-# License: BSD
+# License: BSD 3 clause
 
 import numpy as np
 import pylab as pl
 from sklearn import ensemble
 from sklearn import datasets
+from sklearn.utils.fixes import unique
 
 
 X, y = datasets.make_hastie_10_2(n_samples=12000, random_state=1)
 X = X.astype(np.float32)
 
 # map labels from {-1, 1} to {0, 1}
-labels = np.unique(y)
-y = np.searchsorted(labels, y)
+labels, y = unique(y, return_inverse=True)
 
 X_train, X_test = X[:2000], X[2000:]
 y_train, y_test = y[:2000], y[2000:]

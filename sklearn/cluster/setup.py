@@ -1,5 +1,5 @@
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-# License: BSD Style.
+# License: BSD 3 clause
 import os
 from os.path import join
 

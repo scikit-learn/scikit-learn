@@ -4,9 +4,9 @@ Spectral clustering for image segmentation
 ===========================================
 
 In this example, an image with connected circles is generated and
-:ref:`spectral_clustering` is used to separate the circles.
+spectral clustering is used to separate the circles.
 
-In these settings, the spectral clustering approach solves the problem
+In these settings, the :ref:`spectral_clustering` approach solves the problem
 know as 'normalized graph cuts': the image is seen as a graph of
 connected voxels, and the spectral clustering algorithm amounts to
 choosing graph cuts defining regions while minimizing the ratio of the
@@ -24,11 +24,11 @@ In addition, we use the mask of the objects to restrict the graph to the
 outline of the objects. In this example, we are interested in
 separating the objects one from the other, and not from the background.
 """
-print __doc__
+print(__doc__)
 
 # Authors:  Emmanuelle Gouillart <emmanuelle.gouillart@normalesup.org>
 #           Gael Varoquaux <gael.varoquaux@normalesup.org>
-# License: BSD
+# License: BSD 3 clause
 
 import numpy as np
 import pylab as pl
@@ -65,7 +65,7 @@ img += 1 + 0.2 * np.random.randn(*img.shape)
 graph = image.img_to_graph(img, mask=mask)
 
 # Take a decreasing function of the gradient: we take it weakly
-# dependant from the gradient the segmentation is close to a voronoi
+# dependent from the gradient the segmentation is close to a voronoi
 graph.data = np.exp(-graph.data / graph.data.std())
 
 # Force the solver to be arpack, since amg is numerically

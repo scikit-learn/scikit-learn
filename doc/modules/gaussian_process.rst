@@ -19,7 +19,7 @@ The advantages of Gaussian Processes for Machine Learning are:
       correlation models).
 
     - The prediction is probabilistic (Gaussian) so that one can compute
-      empirical confidence intervals and exceedence probabilities that might be
+      empirical confidence intervals and exceedance probabilities that might be
       used to refit (online fitting, adaptive fitting) the prediction in some
       region of interest.
 
@@ -55,7 +55,7 @@ Say we want to surrogate the function :math:`g(x) = x \sin(x)`. To do so,
 the function is evaluated onto a design of experiments. Then, we define a
 GaussianProcess model whose regression and correlation models might be
 specified using additional kwargs, and ask for the model to be fitted to the
-data. Depending on the number of parameters provided at instanciation, the
+data. Depending on the number of parameters provided at instantiation, the
 fitting procedure may recourse to maximum likelihood estimation for the
 parameters or alternatively it uses the given parameters.
 
@@ -151,7 +151,7 @@ basic least squares linear regression problem:
 
         g(X) \approx f(X)^T \beta
 
-Except we additionaly assume some spatial coherence (correlation) between the
+Except we additionally assume some spatial coherence (correlation) between the
 samples dictated by the correlation function. Indeed, ordinary least squares
 assumes the correlation model :math:`R(|X - X'|)` is one when :math:`X = X'`
 and zero otherwise : a *dirac* correlation model -- sometimes referred to as a
@@ -316,7 +316,7 @@ Correlation Models
 
 Common correlation models matches some famous SVM's kernels because they are
 mostly built on equivalent assumptions. They must fulfill Mercer's conditions
-and should additionaly remain stationary. Note however, that the choice of the
+and should additionally remain stationary. Note however, that the choice of the
 correlation model should be made in agreement with the known properties of the
 original experiment from which the observations come. For instance:
 

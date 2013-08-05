@@ -119,12 +119,12 @@ def _smacof_single(similarities, metric=True, n_components=2, init=None,
 
         dis = np.sqrt((X ** 2).sum(axis=1)).sum()
         if verbose == 2:
-            print 'it: %d, stress %s' % (it, stress)
+            print('it: %d, stress %s' % (it, stress))
         if old_stress is not None:
             if(old_stress - stress / dis) < eps:
                 if verbose:
-                    print 'breaking at iteration %d with stress %s' % (it,
-                                                                       stress)
+                    print('breaking at iteration %d with stress %s' % (it,
+                                                                       stress))
                 break
         old_stress = stress / dis
 
@@ -141,7 +141,7 @@ def smacof(similarities, metric=True, n_components=2, init=None, n_init=8,
     a objective function, the *stress*, using a majorization technique. The
     Stress Majorization, also known as the Guttman Transform, guarantees a
     monotone convergence of Stress, and is more powerful than traditional
-    technics such as gradient descent.
+    techniques such as gradient descent.
 
     The SMACOF algorithm for metric MDS can summarized by the following steps:
 
@@ -181,7 +181,7 @@ def smacof(similarities, metric=True, n_components=2, init=None, n_init=8,
         parallel.
 
         If -1 all CPUs are used. If 1 is given, no parallel computing code is
-        used at all, which is useful for debuging. For n_jobs below -1,
+        used at all, which is useful for debugging. For n_jobs below -1,
         (n_cpus + 1 + n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
         are used.
 
@@ -291,7 +291,7 @@ class MDS(BaseEstimator):
         parallel.
 
         If -1 all CPUs are used. If 1 is given, no parallel computing code is
-        used at all, which is useful for debuging. For n_jobs below -1,
+        used at all, which is useful for debugging. For n_jobs below -1,
         (n_cpus + 1 + n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
         are used.
 

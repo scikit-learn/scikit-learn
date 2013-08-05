@@ -43,7 +43,7 @@ classification task (hence supervised learning)::
   >>> lfw_people = fetch_lfw_people(min_faces_per_person=70, resize=0.4)
 
   >>> for name in lfw_people.target_names:
-  ...     print name
+  ...     print(name)
   ...
   Ariel Sharon
   Colin Powell
@@ -97,7 +97,7 @@ possible to get an additional dimension with the RGB color channels by
 passing ``color=True``, in that case the shape will be
 ``(2200, 2, 62, 47, 3)``.
 
-The ``fetch_lfw_pairs`` datasets is subdived in 3 subsets: the development
+The ``fetch_lfw_pairs`` datasets is subdivided into 3 subsets: the development
 ``train`` set, the development ``test`` set and an evaluation ``10_folds``
 set meant to compute performance metrics using a 10-folds cross
 validation scheme.

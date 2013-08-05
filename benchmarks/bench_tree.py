@@ -26,7 +26,7 @@ mu_second = 0.0 + 10 ** 6  # number of microseconds in a second
 
 
 def bench_scikit_tree_classifier(X, Y):
-    """Bench with scikit-learn decision tree classifier"""
+    """Benchmark with scikit-learn decision tree classifier"""
 
     from sklearn.tree import DecisionTreeClassifier
 
@@ -44,7 +44,7 @@ def bench_scikit_tree_classifier(X, Y):
 
 
 def bench_scikit_tree_regressor(X, Y):
-    """Bench with scikit-learn decision tree regressor"""
+    """Benchmark with scikit-learn decision tree regressor"""
 
     from sklearn.tree import DecisionTreeRegressor
 
@@ -63,9 +63,9 @@ def bench_scikit_tree_regressor(X, Y):
 
 if __name__ == '__main__':
 
-    print '============================================'
-    print 'Warning: this is going to take a looong time'
-    print '============================================'
+    print('============================================')
+    print('Warning: this is going to take a looong time')
+    print('============================================')
 
     n = 10
     step = 10000
@@ -73,9 +73,9 @@ if __name__ == '__main__':
     dim = 10
     n_classes = 10
     for i in range(n):
-        print '============================================'
-        print 'Entering iteration %s of %s' % (i, n)
-        print '============================================'
+        print('============================================')
+        print('Entering iteration %s of %s' % (i, n))
+        print('============================================')
         n_samples += step
         X = np.random.randn(n_samples, dim)
         Y = np.random.randint(0, n_classes, (n_samples,))
@@ -84,14 +84,14 @@ if __name__ == '__main__':
         bench_scikit_tree_regressor(X, Y)
 
     xx = range(0, n * step, step)
-    pl.figure(1)
+    pl.figure('scikit-learn tree benchmark results')
     pl.subplot(211)
     pl.title('Learning with varying number of samples')
     pl.plot(xx, scikit_classifier_results, 'g-', label='classification')
     pl.plot(xx, scikit_regressor_results, 'r-', label='regression')
-    pl.legend()
+    pl.legend(loc='upper left')
     pl.xlabel('number of samples')
-    pl.ylabel('time (in seconds)')
+    pl.ylabel('Time (s)')
 
     scikit_classifier_results = []
     scikit_regressor_results = []
@@ -102,9 +102,9 @@ if __name__ == '__main__':
 
     dim = start_dim
     for i in range(0, n):
-        print '============================================'
-        print 'Entering iteration %s of %s' % (i, n)
-        print '============================================'
+        print('============================================')
+        print('Entering iteration %s of %s' % (i, n))
+        print('============================================')
         dim += step
         X = np.random.randn(100, dim)
         Y = np.random.randint(0, n_classes, (100,))
@@ -117,8 +117,8 @@ if __name__ == '__main__':
     pl.title('Learning in high dimensional spaces')
     pl.plot(xx, scikit_classifier_results, 'g-', label='classification')
     pl.plot(xx, scikit_regressor_results, 'r-', label='regression')
-    pl.legend()
+    pl.legend(loc='upper left')
     pl.xlabel('number of dimensions')
-    pl.ylabel('time (in seconds)')
+    pl.ylabel('Time (s)')
     pl.axis('tight')
     pl.show()

@@ -12,7 +12,7 @@ are generated, with different numbers of informative
 features and clusters per class.
 """
 
-print __doc__
+print(__doc__)
 
 import pylab as pl
 

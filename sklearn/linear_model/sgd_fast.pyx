@@ -5,7 +5,7 @@
 #
 # Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
 #
-# License: BSD Style.
+# Licence: BSD 3 clause
 
 
 import numpy as np
@@ -480,12 +480,12 @@ def plain_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
 
             update *= class_weight * sample_weight
 
+            if penalty_type >= L2:
+                w.scale(1.0 - (rho * eta * alpha))
             if update != 0.0:
                 w.add(x_data_ptr, x_ind_ptr, xnnz, update)
                 if fit_intercept == 1:
                     intercept += update * intercept_decay
-            if penalty_type >= L2:
-                w.scale(1.0 - (rho * eta * alpha))
 
             if penalty_type == L1 or penalty_type == ELASTICNET:
                 u += ((1.0 - rho) * eta * alpha)
@@ -505,7 +505,7 @@ def plain_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
         # floating-point under-/overflow check.
         if np.any(np.isinf(weights)) or np.any(np.isnan(weights)) \
            or np.isnan(intercept) or np.isinf(intercept):
-            raise ValueError("floating-point under-/overflow occured.")
+            raise ValueError("floating-point under-/overflow occurred.")
 
     w.reset_wscale()
 

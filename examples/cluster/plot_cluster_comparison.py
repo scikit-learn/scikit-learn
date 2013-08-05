@@ -20,7 +20,7 @@ create many clusters. Thus in this example its two parameters
 (damping and per-point preference) were set to to mitigate this
 behavior.
 """
-print __doc__
+print(__doc__)
 
 import time
 

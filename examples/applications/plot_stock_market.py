@@ -1,7 +1,4 @@
 """
-
-.. _stock_market:
-
 =======================================
 Visualizing the stock market structure
 =======================================
@@ -12,6 +9,7 @@ the stock market structure from variations in historical quotes.
 The quantity that we use is the daily variation in quote price: quotes
 that are linked tend to cofluctuate during a day.
 
+.. _stock_market:
 
 Learning a graph structure
 --------------------------
@@ -19,7 +17,7 @@ Learning a graph structure
 We use sparse inverse covariance estimation to find which quotes are
 correlated conditionally on the others. Specifically, sparse inverse
 covariance gives us a graph, that is a list of connection. For each
-symbol, the symbols that it is connected too are those useful to expain
+symbol, the symbols that it is connected too are those useful to explain
 its fluctuations.
 
 Clustering
@@ -61,10 +59,10 @@ is to position the labels minimizing overlap. For this we use an
 heuristic based on the direction of the nearest neighbor along each
 axis.
 """
-print __doc__
+print(__doc__)
 
 # Author: Gael Varoquaux gael.varoquaux@normalesup.org
-# License: BSD
+# License: BSD 3 clause
 
 import datetime
 
@@ -83,6 +81,7 @@ from sklearn import cluster, covariance, manifold
 d1 = datetime.datetime(2003, 01, 01)
 d2 = datetime.datetime(2008, 01, 01)
 
+# kraft symbol has now changed from KFT to MDLZ in yahoo
 symbol_dict = {
     'TOT': 'Total',
     'XOM': 'Exxon',
@@ -111,7 +110,7 @@ symbol_dict = {
     'MMM': '3M',
     'MCD': 'Mc Donalds',
     'PEP': 'Pepsi',
-    'KFT': 'Kraft Foods',
+    'MDLZ': 'Kraft Foods',
     'K': 'Kellogg',
     'UN': 'Unilever',
     'MAR': 'Marriott',
@@ -174,7 +173,7 @@ _, labels = cluster.affinity_propagation(edge_model.covariance_)
 n_labels = labels.max()
 
 for i in range(n_labels + 1):
-    print 'Cluster %i: %s' % ((i + 1), ', '.join(names[labels == i]))
+    print('Cluster %i: %s' % ((i + 1), ', '.join(names[labels == i])))
 
 ###############################################################################
 # Find a low-dimension embedding for visualization: find the best position of

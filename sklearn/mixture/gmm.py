@@ -12,9 +12,11 @@ of Gaussian Mixture Models.
 import numpy as np
 
 from ..base import BaseEstimator
-from ..utils import check_random_state
+from ..utils import check_random_state, deprecated
 from ..utils.extmath import logsumexp, pinvh
 from .. import cluster
+
+from sklearn.externals.six.moves import zip
 
 EPS = np.finfo(float).eps
 
@@ -271,8 +273,13 @@ class GMM(BaseEstimator):
         _validate_covars(covars, self.covariance_type, self.n_components)
         self.covars_ = covars
 
+    @deprecated("GMM.eval was renamed to GMM.score_samples in 0.14 and will be"
+                " removed in 0.16.")
     def eval(self, X):
-        """Evaluate the model on data
+        return self.score_samples(X)
+
+    def score_samples(self, X):
+        """Return the per-sample likelihood of the data under the model.
 
         Compute the log probability of X under the model and
         return the posterior distribution (responsibilities) of each
@@ -281,14 +288,15 @@ class GMM(BaseEstimator):
         Parameters
         ----------
         X: array_like, shape (n_samples, n_features)
-            List of n_features-dimensional data points.  Each row
+            List of n_features-dimensional data points. Each row
             corresponds to a single data point.
 
         Returns
         -------
-        logprob: array_like, shape (n_samples,)
-            Log probabilities of each data point in X
-        responsibilities: array_like, shape (n_samples, n_components)
+        logprob : array_like, shape (n_samples,)
+            Log probabilities of each data point in X.
+
+        responsibilities : array_like, shape (n_samples, n_components)
             Posterior probabilities of each mixture component for each
             observation
         """
@@ -298,7 +306,7 @@ class GMM(BaseEstimator):
         if X.size == 0:
             return np.array([]), np.empty((0, self.n_components))
         if X.shape[1] != self.means_.shape[1]:
-            raise ValueError('the shape of X  is not compatible with self')
+            raise ValueError('The shape of X  is not compatible with self')
 
         lpr = (log_multivariate_normal_density(X, self.means_, self.covars_,
                                                self.covariance_type)
@@ -321,7 +329,7 @@ class GMM(BaseEstimator):
         logprob : array_like, shape (n_samples,)
             Log probabilities of each data point in X
         """
-        logprob, _ = self.eval(X)
+        logprob, _ = self.score_samples(X)
         return logprob
 
     def predict(self, X):
@@ -335,7 +343,7 @@ class GMM(BaseEstimator):
         -------
         C : array, shape = (n_samples,)
         """
-        logprob, responsibilities = self.eval(X)
+        logprob, responsibilities = self.score_samples(X)
         return responsibilities.argmax(axis=1)
 
     def predict_proba(self, X):
@@ -352,7 +360,7 @@ class GMM(BaseEstimator):
             Returns the probability of the sample for each Gaussian
             (state) in the model.
         """
-        logprob, responsibilities = self.eval(X)
+        logprob, responsibilities = self.score_samples(X)
         return responsibilities
 
     def sample(self, n_samples=1, random_state=None):
@@ -378,7 +386,7 @@ class GMM(BaseEstimator):
         # decide which component to use for each sample
         comps = weight_cdf.searchsorted(rand)
         # for each component, generate all needed samples
-        for comp in xrange(self.n_components):
+        for comp in range(self.n_components):
             # occurrences of current component in X
             comp_in_X = (comp == comps)
             # number of those occurrences
@@ -444,9 +452,9 @@ class GMM(BaseEstimator):
             log_likelihood = []
             # reset self.converged_ to False
             self.converged_ = False
-            for i in xrange(self.n_iter):
+            for i in range(self.n_iter):
                 # Expectation step
-                curr_log_likelihood, responsibilities = self.eval(X)
+                curr_log_likelihood, responsibilities = self.score_samples(X)
                 log_likelihood.append(curr_log_likelihood.sum())
 
                 # Check for convergence.
@@ -583,7 +591,6 @@ def _log_multivariate_normal_density_full(X, means, covars, min_covar=1.e-7):
     """Log probability for full covariance matrices.
     """
     from scipy import linalg
-    import itertools
     if hasattr(linalg, 'solve_triangular'):
         # only in scipy since 0.9
         solve_triangular = linalg.solve_triangular
@@ -593,7 +600,7 @@ def _log_multivariate_normal_density_full(X, means, covars, min_covar=1.e-7):
     n_samples, n_dim = X.shape
     nmix = len(means)
     log_prob = np.empty((n_samples, nmix))
-    for c, (mu, cv) in enumerate(itertools.izip(means, covars)):
+    for c, (mu, cv) in enumerate(zip(means, covars)):
         try:
             cv_chol = linalg.cholesky(cv, lower=True)
         except linalg.LinAlgError:
@@ -689,7 +696,7 @@ def _covar_mstep_full(gmm, X, responsibilities, weighted_X_sum, norm,
     # Distribution"
     n_features = X.shape[1]
     cv = np.empty((gmm.n_components, n_features, n_features))
-    for c in xrange(gmm.n_components):
+    for c in range(gmm.n_components):
         post = responsibilities[:, c]
         # Underflow Errors in doing post * X.T are  not important
         np.seterr(under='ignore')

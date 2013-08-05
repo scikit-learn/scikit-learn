@@ -14,11 +14,14 @@ def configuration(parent_package='', top_path=None):
 
     # Section LibSVM
 
-    # we compile both libsvm and lisvm_sparse
+    # we compile both libsvm and libsvm_sparse
     config.add_library('libsvm-skl',
                        sources=[join('src', 'libsvm', 'libsvm_template.cpp')],
                        depends=[join('src', 'libsvm', 'svm.cpp'),
                                 join('src', 'libsvm', 'svm.h')],
+                       # Force C++ linking in case gcc is picked up instead
+                       # of g++ under windows with some versions of MinGW
+                       extra_link_args=['-lstdc++'],
                        )
 
     libsvm_sources = ['libsvm.c']
@@ -47,7 +50,7 @@ def configuration(parent_package='', top_path=None):
     liblinear_depends = [join('src', 'liblinear', '*.h'),
                          join('src', 'liblinear', 'liblinear_helper.c')]
 
-    # we try to link agains system-wide blas
+    # we try to link against system-wide blas
     blas_info = get_info('blas_opt', 0)
 
     if not blas_info:
@@ -75,8 +78,6 @@ def configuration(parent_package='', top_path=None):
                          depends=[join("src", "libsvm", "svm.h"),
                                   join("src", "libsvm",
                                        "libsvm_sparse_helper.c")])
-
-    config.add_subpackage('sparse')
 
     return config
 

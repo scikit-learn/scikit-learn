@@ -33,14 +33,14 @@ quality of the clustering by quite a lot as measured against the "ground truth"
 provided by the class label assignments of the 20 newsgroups dataset.
 
 This improvement is not visible in the Silhouette Coefficient which is small
-for both as this measure seem to suffer from the phenomenom called
+for both as this measure seem to suffer from the phenomenon called
 "Concentration of Measure" or "Curse of Dimensionality" for high dimensional
 datasets such as text data. Other measures such as V-measure and Adjusted Rand
 Index are information theoretic based evaluation scores: as they are only based
-on cluster assignements rather than distances, hence not affected by the curse
+on cluster assignments rather than distances, hence not affected by the curse
 of dimensionality.
 
-Note: as k-means is optimizing a non convex objective function, it will likely
+Note: as k-means is optimizing a non-convex objective function, it will likely
 end up in a local optimum. Several runs with independent random init might be
 necessary to get a good convergence.
 
@@ -48,13 +48,17 @@ necessary to get a good convergence.
 
 # Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
 #         Lars Buitinck <L.J.Buitinck@uva.nl>
-# License: Simplified BSD
+# License: BSD 3 clause
+
+from __future__ import print_function
 
 from sklearn.datasets import fetch_20newsgroups
+from sklearn.decomposition import TruncatedSVD
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.feature_extraction.text import HashingVectorizer
 from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import Normalizer
 from sklearn import metrics
 
 from sklearn.cluster import KMeans, MiniBatchKMeans
@@ -73,6 +77,9 @@ logging.basicConfig(level=logging.INFO,
 
 # parse commandline arguments
 op = OptionParser()
+op.add_option("--lsa",
+              dest="n_components", type="int",
+              help="Preprocess documents with latent semantic analysis.")
 op.add_option("--no-minibatch",
               action="store_false", dest="minibatch", default=True,
               help="Use ordinary k-means algorithm (in batch mode).")
@@ -85,8 +92,11 @@ op.add_option("--use-hashing",
 op.add_option("--n-features", type=int, default=10000,
               help="Maximum number of features (dimensions)"
                    "to extract from text.")
+op.add_option("--verbose",
+              action="store_true", dest="verbose", default=False,
+              help="Print progress reports inside k-means algorithm.")
 
-print __doc__
+print(__doc__)
 op.print_help()
 
 (opts, args) = op.parse_args()
@@ -106,20 +116,20 @@ categories = [
 # Uncomment the following to do the analysis on all the categories
 #categories = None
 
-print "Loading 20 newsgroups dataset for categories:"
-print categories
+print("Loading 20 newsgroups dataset for categories:")
+print(categories)
 
 dataset = fetch_20newsgroups(subset='all', categories=categories,
                              shuffle=True, random_state=42)
 
-print "%d documents" % len(dataset.data)
-print "%d categories" % len(dataset.target_names)
-print
+print("%d documents" % len(dataset.data))
+print("%d categories" % len(dataset.target_names))
+print()
 
 labels = dataset.target
 true_k = np.unique(labels).shape[0]
 
-print "Extracting features from the training dataset using a sparse vectorizer"
+print("Extracting features from the training dataset using a sparse vectorizer")
 t0 = time()
 if opts.use_hashing:
     if opts.use_idf:
@@ -141,9 +151,22 @@ else:
                                  stop_words='english', use_idf=opts.use_idf)
 X = vectorizer.fit_transform(dataset.data)
 
-print "done in %fs" % (time() - t0)
-print "n_samples: %d, n_features: %d" % X.shape
-print
+print("done in %fs" % (time() - t0))
+print("n_samples: %d, n_features: %d" % X.shape)
+print()
+
+if opts.n_components:
+    print("Performing dimensionality reduction using LSA")
+    t0 = time()
+    lsa = TruncatedSVD(opts.n_components)
+    X = lsa.fit_transform(X)
+    # Vectorizer results are normalized, which makes KMeans behave as
+    # spherical k-means for better results. Since LSA/SVD results are
+    # not normalized, we have to redo the normalization.
+    X = Normalizer(copy=False).fit_transform(X)
+
+    print("done in %fs" % (time() - t0))
+    print()
 
 
 ###############################################################################
@@ -151,24 +174,23 @@ print
 
 if opts.minibatch:
     km = MiniBatchKMeans(n_clusters=true_k, init='k-means++', n_init=1,
-                         init_size=1000,
-                         batch_size=1000, verbose=1)
+                         init_size=1000, batch_size=1000, verbose=opts.verbose)
 else:
     km = KMeans(n_clusters=true_k, init='k-means++', max_iter=100, n_init=1,
-                verbose=1)
+                verbose=opts.verbose)
 
-print "Clustering sparse data with %s" % km
+print("Clustering sparse data with %s" % km)
 t0 = time()
 km.fit(X)
-print "done in %0.3fs" % (time() - t0)
-print
+print("done in %0.3fs" % (time() - t0))
+print()
 
-print "Homogeneity: %0.3f" % metrics.homogeneity_score(labels, km.labels_)
-print "Completeness: %0.3f" % metrics.completeness_score(labels, km.labels_)
-print "V-measure: %0.3f" % metrics.v_measure_score(labels, km.labels_)
-print "Adjusted Rand-Index: %.3f" % \
-    metrics.adjusted_rand_score(labels, km.labels_)
-print "Silhouette Coefficient: %0.3f" % metrics.silhouette_score(
-    X, labels, sample_size=1000)
+print("Homogeneity: %0.3f" % metrics.homogeneity_score(labels, km.labels_))
+print("Completeness: %0.3f" % metrics.completeness_score(labels, km.labels_))
+print("V-measure: %0.3f" % metrics.v_measure_score(labels, km.labels_))
+print("Adjusted Rand-Index: %.3f"
+      % metrics.adjusted_rand_score(labels, km.labels_))
+print("Silhouette Coefficient: %0.3f"
+      % metrics.silhouette_score(X, labels, sample_size=1000))
 
-print
+print()

@@ -3,14 +3,16 @@
 Plot the decision surface of a decision tree on the iris dataset
 ================================================================
 
-Plot the decision surface of a :ref:`decision tree <tree>` trained on pairs
+Plot the decision surface of a decision tree trained on pairs
 of features of the iris dataset.
+
+See :ref:`decision tree <tree>` for more information on the estimator.
 
 For each pair of iris features, the decision tree learns decision
 boundaries made of combinations of simple thresholding rules inferred from
 the training samples.
 """
-print __doc__
+print(__doc__)
 
 import numpy as np
 import pylab as pl
@@ -64,7 +66,7 @@ for pairidx, pair in enumerate([[0, 1], [0, 2], [0, 3],
     pl.axis("tight")
 
     # Plot the training points
-    for i, color in zip(xrange(n_classes), plot_colors):
+    for i, color in zip(range(n_classes), plot_colors):
         idx = np.where(y == i)
         pl.scatter(X[idx, 0], X[idx, 1], c=color, label=iris.target_names[i],
                    cmap=pl.cm.Paired)

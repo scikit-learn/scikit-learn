@@ -5,7 +5,7 @@ Segmenting the picture of Lena in regions
 
 This example uses :ref:`spectral_clustering` on a graph created from
 voxel-to-voxel difference on an image to break this image into multiple
-partly-homogenous regions.
+partly-homogeneous regions.
 
 This procedure (spectral clustering on an image) is an efficient
 approximate solution for finding normalized graph cuts.
@@ -17,10 +17,10 @@ There are two options to assign labels:
 * whereas 'discrete' will iteratively search for the closest partition
   space to the embedding space.
 """
-print __doc__
+print(__doc__)
 
 # Author: Gael Varoquaux <gael.varoquaux@normalesup.org>, Brian Cheung
-# License: BSD
+# License: BSD 3 clause
 
 import time
 

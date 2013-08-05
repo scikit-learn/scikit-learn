@@ -5,20 +5,21 @@
 # Author: Chih-Jen Lin, National Taiwan University (original projected gradient
 #     NMF implementation)
 # Author: Anthony Di Franco (original Python and NumPy port)
-# License: BSD
+# License: BSD 3 clause
 
 
 from __future__ import division
 
+from math import sqrt
 import warnings
 import numbers
 
 import numpy as np
-from scipy.optimize import nnls
 import scipy.sparse as sp
+from scipy.optimize import nnls
 
 from ..base import BaseEstimator, TransformerMixin
-from ..utils import atleast2d_or_csr, check_random_state
+from ..utils import atleast2d_or_csr, check_random_state, check_arrays
 from ..utils.extmath import randomized_svd, safe_sparse_dot
 
 
@@ -27,18 +28,6 @@ def safe_vstack(Xs):
         return sp.vstack(Xs)
     else:
         return np.vstack(Xs)
-
-
-def _pos(x):
-    """Positive part of a vector / matrix"""
-    return (x >= 0) * x
-
-
-def _neg(x):
-    """Negative part of a vector / matrix"""
-    neg_x = -x
-    neg_x *= x < 0
-    return neg_x
 
 
 def norm(x):
@@ -72,13 +61,13 @@ def _initialize_nmf(X, n_components, variant=None, eps=1e-6,
     Parameters
     ----------
 
-    X: array, [n_samples, n_features]
+    X : array, [n_samples, n_features]
         The data matrix to be decomposed.
 
-    n_components: array, [n_components, n_features]
+    n_components : array, [n_components, n_features]
         The number of components desired in the approximation.
 
-    variant: None | 'a' | 'ar'
+    variant : None | 'a' | 'ar'
         The variant of the NNDSVD algorithm.
         Accepts None, 'a', 'ar'
         None: leaves the zero entries as zero
@@ -89,14 +78,14 @@ def _initialize_nmf(X, n_components, variant=None, eps=1e-6,
     eps: float
         Truncate all values less then this in output to zero.
 
-    random_state: numpy.RandomState | int, optional
+    random_state : numpy.RandomState | int, optional
         The generator used to fill in the zeros, when using variant='ar'
         Default: numpy.random
 
     Returns
     -------
 
-    (W, H):
+    (W, H) :
         Initial guesses for solving X ~= WH such that
         the number of columns in W is n_components.
 
@@ -108,7 +97,7 @@ def _initialize_nmf(X, n_components, variant=None, eps=1e-6,
     initialization: A head start for nonnegative
     matrix factorization - Pattern Recognition, 2008
 
-    http://scgroup.hpclab.ceid.upatras.gr/faculty/stratis/Papers/HPCLAB020107.pdf
+    http://tinyurl.com/nndsvd
     """
     check_non_negative(X, "NMF initialization")
     if variant not in (None, 'a', 'ar'):
@@ -122,12 +111,12 @@ def _initialize_nmf(X, n_components, variant=None, eps=1e-6,
     W[:, 0] = np.sqrt(S[0]) * np.abs(U[:, 0])
     H[0, :] = np.sqrt(S[0]) * np.abs(V[0, :])
 
-    for j in xrange(1, n_components):
+    for j in range(1, n_components):
         x, y = U[:, j], V[j, :]
 
         # extract positive and negative parts of column vectors
-        x_p, y_p = _pos(x), _pos(y)
-        x_n, y_n = _neg(x), _neg(y)
+        x_p, y_p = np.maximum(x, 0), np.maximum(y, 0)
+        x_n, y_n = np.abs(np.minimum(x, 0)), np.abs(np.minimum(y, 0))
 
         # and their norms
         x_p_nrm, y_p_nrm = norm(x_p), norm(y_p)
@@ -165,7 +154,7 @@ def _initialize_nmf(X, n_components, variant=None, eps=1e-6,
     return W, H
 
 
-def _nls_subproblem(V, W, H_init, tol, max_iter):
+def _nls_subproblem(V, W, H_init, tol, max_iter, sigma=0.01, beta=0.1):
     """Non-negative least square solver
 
     Solves a non-negative least squares subproblem using the
@@ -186,6 +175,20 @@ def _nls_subproblem(V, W, H_init, tol, max_iter):
     max_iter : int
         Maximum number of iterations before timing out.
 
+    sigma : float
+        Constant used in the sufficient decrease condition checked by the line
+        search.  Smaller values lead to a looser sufficient decrease condition,
+        thus reducing the time taken by the line search, but potentially
+        increasing the number of iterations of the projected gradient
+        procedure. 0.01 is a commonly used value in the optimization
+        literature.
+
+    beta : float
+        Factor by which the step size is decreased (resp. increased) until
+        (resp. as long as) the sufficient decrease condition is satisfied.
+        Larger values allow to find a better step size but lead to longer line
+        search. 0.1 is a commonly used value in the optimization literature.
+
     Returns
     -------
     H : array-like
@@ -197,6 +200,14 @@ def _nls_subproblem(V, W, H_init, tol, max_iter):
     n_iter : int
         The number of iterations done by the algorithm.
 
+    Reference
+    ---------
+
+    C.-J. Lin. Projected gradient methods
+    for non-negative matrix factorization. Neural
+    Computation, 19(2007), 2756-2779.
+    http://www.csie.ntu.edu.tw/~cjlin/nmf/
+
     """
     if (H_init < 0).any():
         raise ValueError("Negative values in H_init passed to NLS solver.")
@@ -207,22 +218,21 @@ def _nls_subproblem(V, W, H_init, tol, max_iter):
 
     # values justified in the paper
     alpha = 1
-    beta = 0.1
-    for n_iter in xrange(1, max_iter + 1):
+    for n_iter in range(1, max_iter + 1):
         grad = np.dot(WtW, H) - WtV
         proj_gradient = norm(grad[np.logical_or(grad < 0, H > 0)])
         if proj_gradient < tol:
             break
 
-        for inner_iter in xrange(1, 20):
+        for inner_iter in range(1, 20):
+            # Gradient step.
             Hn = H - alpha * grad
-            # Hn = np.where(Hn > 0, Hn, 0)
-            Hn = _pos(Hn)
+            # Projection step.
+            Hn = np.maximum(Hn, 0)
             d = Hn - H
             gradd = np.sum(grad * d)
             dQd = np.sum(np.dot(WtW, d) * d)
-            # magic numbers whoa
-            suff_decr = 0.99 * gradd + 0.5 * dQd < 0
+            suff_decr = (1 - sigma) * gradd + 0.5 * dQd < 0
             if inner_iter == 1:
                 decr_alpha = not suff_decr
                 Hp = H
@@ -251,11 +261,11 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
 
     Parameters
     ----------
-    n_components: int or None
+    n_components : int or None
         Number of components, if n_components is not set all components
         are kept
 
-    init:  'nndsvd' |  'nndsvda' | 'nndsvdar' | 'random'
+    init :  'nndsvd' |  'nndsvda' | 'nndsvdar' | 'random'
         Method used to initialize the procedure.
         Default: 'nndsvdar' if n_components < n_features, otherwise random.
         Valid options::
@@ -269,24 +279,24 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
                 for when sparsity is not desired)
             'random': non-negative random matrices
 
-    sparseness: 'data' | 'components' | None, default: None
+    sparseness : 'data' | 'components' | None, default: None
         Where to enforce sparsity in the model.
 
-    beta: double, default: 1
+    beta : double, default: 1
         Degree of sparseness, if sparseness is not None. Larger values mean
         more sparseness.
 
-    eta: double, default: 0.1
-        Degree of correctness to mantain, if sparsity is not None. Smaller
+    eta : double, default: 0.1
+        Degree of correctness to maintain, if sparsity is not None. Smaller
         values mean larger error.
 
-    tol: double, default: 1e-4
+    tol : double, default: 1e-4
         Tolerance value used in stopping conditions.
 
-    max_iter: int, default: 200
+    max_iter : int, default: 200
         Number of iterations to compute.
 
-    nls_max_iter: int, default: 2000
+    nls_max_iter : int, default: 2000
         Number of iterations in NLS subproblem.
 
     random_state : int or RandomState
@@ -295,14 +305,12 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
     Attributes
     ----------
     `components_` : array, [n_components, n_features]
-        Non-negative components of the data
+        Non-negative components of the data.
 
     `reconstruction_err_` : number
-        Frobenius norm of the matrix difference between the
-        training data and the reconstructed data from the
-        fit produced by the model. ``|| X - WH ||_2``
-        Not computed for sparse input matrices because it is
-        too expensive in terms of memory.
+        Frobenius norm of the matrix difference between
+        the training data and the reconstructed data from
+        the fit produced by the model. ``|| X - WH ||_2``
 
     Examples
     --------
@@ -329,12 +337,12 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
                 sparseness='components', tol=0.0001)
     >>> model.components_
     array([[ 1.67481991,  0.29614922],
-           [-0.        ,  0.4681982 ]])
+           [ 0.        ,  0.4681982 ]])
     >>> model.reconstruction_err_ #doctest: +ELLIPSIS
     0.513...
 
-    Notes
-    -----
+    References
+    ----------
     This implements
 
     C.-J. Lin. Projected gradient methods
@@ -351,8 +359,7 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
     C. Boutsidis, E. Gallopoulos: SVD based
     initialization: A head start for nonnegative
     matrix factorization - Pattern Recognition, 2008
-    http://scgroup.hpclab.ceid.upatras.gr/faculty/stratis/Papers/HPCLAB020107.pdf
-
+    http://tinyurl.com/nndsvd
     """
 
     def __init__(self, n_components=None, init=None, sparseness=None, beta=1,
@@ -492,7 +499,7 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
         tolW = max(0.001, self.tol) * init_grad  # why max?
         tolH = tolW
 
-        for n_iter in xrange(1, self.max_iter + 1):
+        for n_iter in range(1, self.max_iter + 1):
             # stopping condition
             # as discussed in paper
             proj_norm = norm(np.r_[gradW[np.logical_or(gradW < 0, W > 0)],
@@ -519,6 +526,12 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
 
             if not sp.issparse(X):
                 self.reconstruction_err_ = norm(X - np.dot(W, H))
+            else:
+                norm2X = np.sum(X.data ** 2)  # Ok because X is CSR
+                normWHT = np.trace(np.dot(np.dot(H.T, np.dot(W.T, W)), H))
+                cross_prod = np.trace(np.dot((X * H.T).T, W))
+                self.reconstruction_err_ = sqrt(norm2X + normWHT
+                                                - 2. * cross_prod)
 
             self.components_ = H
 
@@ -557,11 +570,16 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
         data: array, [n_samples, n_components]
             Transformed data
         """
-        X = atleast2d_or_csr(X)
-        W = np.zeros((X.shape[0], self.n_components_))
-        for j in xrange(0, X.shape[0]):
-            W[j, :], _ = nnls(self.components_.T, X[j, :])
-        return W
+        X, = check_arrays(X, sparse_format='csc')
+        Wt = np.zeros((self.n_components_, X.shape[0]))
+        if sp.issparse(X):
+            Wt, _, _ = _nls_subproblem(X.T, self.components_.T, Wt,
+                                       tol=self.tol,
+                                       max_iter=self.nls_max_iter)
+        else:
+            for j in range(0, X.shape[0]):
+                Wt[:, j], _ = nnls(self.components_.T, X[j, :])
+        return Wt.T
 
 
 class NMF(ProjectedGradientNMF):

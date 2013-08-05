@@ -209,8 +209,8 @@ Backports
   independent back-ports in ``sklearn.mixture.gmm`` and
   :mod:`sklearn.gaussian_process`.
 
-- :func:`sparsetools.cs_graph_components`
-  (backported from ``scipy.sparse.cs_graph_components`` in scipy 0.9).
+- :func:`sparsetools.connected_components`
+  (backported from ``scipy.sparse.connected_components`` in scipy 0.12).
   Used in ``sklearn.cluster.hierarchical``, as well as in tests for
   :mod:`sklearn.feature_extraction`.
 
@@ -253,11 +253,23 @@ Testing Functions
 - :func:`testing.assert_raise_message`: Assertions for checking the
   error raise message.
 
-- :class:`mock_urllib2`: Object which mocks the urllib2 module to fake
-  requests of mldata.  Used in tests of :mod:`sklearn.datasets`.
+- :func:`testing.mock_mldata_urlopen`: Mocks the urlopen function to fake
+  requests to mldata.org. Used in tests of :mod:`sklearn.datasets`.
 
 - :func:`testing.all_estimators` : returns a list of all estimators in
   sklearn to test for consistent behavior and interfaces.
+
+Multiclass and multilabel utility function
+==========================================
+
+- :func:`multiclass.is_multilabel`: Helper function to check if the task
+  is a multi-label classification one.
+
+- :func:`multiclass.is_label_indicator_matrix`: Helper function to check if
+  a classification output is in label indicator matrix format.
+
+- :func:`multiclass.unique_labels`: Helper function to extract an ordered
+  array of unique labels from a list of labels.
 
 
 Helper Functions
@@ -290,11 +302,11 @@ Hash Functions
   random projections::
 
     >>> from sklearn.utils import murmurhash3_32
-    >>> murmurhash3_32("some feature", seed=0)
-    -384616559
+    >>> murmurhash3_32("some feature", seed=0) == -384616559
+    True
 
-    >>> murmurhash3_32("some feature", seed=0, positive=True)
-    3910350737L
+    >>> murmurhash3_32("some feature", seed=0, positive=True) == 3910350737
+    True
 
   The ``sklearn.utils.murmurhash`` module can also be "cimported" from
   other cython modules so as to benefit from the high performance of

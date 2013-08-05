@@ -40,12 +40,12 @@ The same task has been used in a number of papers including:
 [1] http://archive.ics.uci.edu/ml/datasets/Covertype
 
 """
-from __future__ import division
+from __future__ import division, print_function
 
-print __doc__
+print(__doc__)
 
 # Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
-# License: BSD Style.
+# License: BSD 3 clause
 
 import logging
 import os
@@ -61,6 +61,7 @@ from sklearn.linear_model import SGDClassifier
 from sklearn.naive_bayes import GaussianNB
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier
+from sklearn.ensemble import GradientBoostingClassifier
 from sklearn import metrics
 from sklearn.externals.joblib import Memory
 
@@ -103,13 +104,15 @@ m = Memory(joblib_cache_folder, mmap_mode='r')
 
 # Load the data, then cache and memmap the train/test split
 @m.cache
-def load_data(dtype=np.float32, order='F'):
+def load_data(dtype=np.float32, order='C'):
     ######################################################################
     ## Load dataset
     print("Loading dataset...")
     data = fetch_covtype(download_if_missing=True, shuffle=True,
                          random_state=opts.random_seed)
-    X, y = data.data, data.target
+    X, y = data['data'], data['target']
+    X = np.asarray(X, dtype=dtype)
+    
     if order.lower() == 'f':
         X = np.asfortranarray(X)
 
@@ -149,12 +152,14 @@ print("%s %d" % ("number of features:".ljust(25),
 print("%s %d" % ("number of classes:".ljust(25),
                  np.unique(y_train).shape[0]))
 print("%s %s" % ("data type:".ljust(25), X_train.dtype))
-print("%s %d (pos=%d, neg=%d, size=%dMB)" % ("number of train samples:".ljust(25),
-                          X_train.shape[0], np.sum(y_train == 1),
-                          np.sum(y_train == -1), int(X_train.nbytes / 1e6)))
-print("%s %d (pos=%d, neg=%d, size=%dMB)" % ("number of test samples:".ljust(25),
-                          X_test.shape[0], np.sum(y_test == 1),
-                          np.sum(y_test == -1), int(X_test.nbytes / 1e6)))
+print("%s %d (pos=%d, neg=%d, size=%dMB)"
+      % ("number of train samples:".ljust(25),
+         X_train.shape[0], np.sum(y_train == 1),
+         np.sum(y_train == -1), int(X_train.nbytes / 1e6)))
+print("%s %d (pos=%d, neg=%d, size=%dMB)"
+      % ("number of test samples:".ljust(25),
+      X_test.shape[0], np.sum(y_test == 1),
+      np.sum(y_test == -1), int(X_test.nbytes / 1e6)))
 
 
 classifiers = dict()
@@ -208,9 +213,6 @@ classifiers['CART'] = DecisionTreeClassifier(min_samples_split=5,
 ## Train RandomForest model
 rf_parameters = {
     "n_estimators": 20,
-    "min_samples_split": 5,
-    "max_features": None,
-    "max_depth": None,
     "n_jobs": opts.n_jobs,
     "random_state": opts.random_seed,
 }
@@ -219,10 +221,12 @@ classifiers['RandomForest'] = RandomForestClassifier(**rf_parameters)
 ######################################################################
 ## Train Extra-Trees model
 classifiers['ExtraTrees'] = ExtraTreesClassifier(n_estimators=20,
-                                                 min_samples_split=5,
-                                                 max_features=None,
-                                                 max_depth=None,
                                                  n_jobs=opts.n_jobs,
+                                                 random_state=opts.random_seed)
+
+######################################################################
+## Train GBRT model
+classifiers['GBRT'] = GradientBoostingClassifier(n_estimators=250,
                                                  random_state=opts.random_seed)
 
 
@@ -232,10 +236,10 @@ for name in selected_classifiers:
         op.error('classifier %r unknown' % name)
         sys.exit(1)
 
-print("")
+print()
 print("Training Classifiers")
 print("====================")
-print("")
+print()
 err, train_time, test_time = {}, {}, {}
 for name in sorted(selected_classifiers):
     print("Training %s ..." % name)
@@ -243,10 +247,10 @@ for name in sorted(selected_classifiers):
 
 ######################################################################
 ## Print classification performance
-print("")
+print()
 print("Classification performance:")
 print("===========================")
-print("")
+print()
 
 
 def print_row(clf_type, train_time, test_time, err):
@@ -261,5 +265,5 @@ print("-" * 44)
 
 for name in sorted(selected_classifiers, key=lambda name: err[name]):
     print_row(name, train_time[name], test_time[name], err[name])
-print("")
-print("")
+print()
+print()

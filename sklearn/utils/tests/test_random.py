@@ -60,7 +60,7 @@ def check_sample_int(sample_without_replacement):
     # the sample is of the correct length and contains only unique items
     n_population = 100
 
-    for n_samples in xrange(n_population + 1):
+    for n_samples in range(n_population + 1):
         s = sample_without_replacement(n_population, n_samples)
         assert_equal(len(s), n_samples)
         unique = np.unique(s)
@@ -82,14 +82,14 @@ def check_sample_int_distribution(sample_without_replacement):
     # case
     n_trials = 10000
 
-    for n_samples in xrange(n_population):
+    for n_samples in range(n_population):
         # Counting the number of combinations is not as good as counting the
         # the number of permutations. However, it works with sampling algorithm
         # that does not provide a random permutation of the subset of integer.
         n_expected = combinations(n_population, n_samples, exact=True)
 
         output = {}
-        for i in xrange(n_trials):
+        for i in range(n_trials):
             output[frozenset(sample_without_replacement(n_population,
                                                         n_samples))] = None
 

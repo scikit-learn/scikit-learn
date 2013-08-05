@@ -3,7 +3,7 @@ Smoke Test the check_build module
 """
 
 # Author: G Varoquaux
-# License: BSD style
+# Licence: BSD 3 clause
 
 from sklearn.__check_build import raise_build_error
 
