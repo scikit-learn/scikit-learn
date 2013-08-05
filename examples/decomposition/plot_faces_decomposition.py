@@ -9,10 +9,10 @@ matrix decomposition (dimension reduction) methods from the module
 :ref:`decompositions`) .
 
 """
-print __doc__
+print(__doc__)
 
 # Authors: Vlad Niculae, Alexandre Gramfort
-# License: BSD
+# License: BSD 3 clause
 
 import logging
 from time import time
@@ -45,7 +45,7 @@ faces_centered = faces - faces.mean(axis=0)
 # local centering
 faces_centered -= faces_centered.mean(axis=1).reshape(n_samples, -1)
 
-print "Dataset consists of %d faces" % n_samples
+print("Dataset consists of %d faces" % n_samples)
 
 
 ###############################################################################
@@ -76,8 +76,7 @@ estimators = [
      False),
 
     ('Independent components - FastICA',
-     decomposition.FastICA(n_components=n_components, whiten=True,
-                           max_iter=10),
+     decomposition.FastICA(n_components=n_components, whiten=True),
      True),
 
     ('Sparse comp. - MiniBatchSparsePCA',
@@ -112,14 +111,14 @@ plot_gallery("First centered Olivetti faces", faces_centered[:n_components])
 # Do the estimation and plot it
 
 for name, estimator, center in estimators:
-    print "Extracting the top %d %s..." % (n_components, name)
+    print("Extracting the top %d %s..." % (n_components, name))
     t0 = time()
     data = faces
     if center:
         data = faces_centered
     estimator.fit(data)
     train_time = (time() - t0)
-    print "done in %0.3fs" % train_time
+    print("done in %0.3fs" % train_time)
     if hasattr(estimator, 'cluster_centers_'):
         components_ = estimator.cluster_centers_
     else:

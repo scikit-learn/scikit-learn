@@ -1,5 +1,5 @@
 # Author: Gael Varoquaux <gael.varoquaux@normalesup.org>
-# License: BSD
+# License: BSD 3 clause
 
 import numpy as np
 from scipy import sparse

@@ -36,7 +36,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
    - Support for dense data by Ming-Fang Weng
 
-   - Return indicies for support vectors, Fabian Pedregosa
+   - Return indices for support vectors, Fabian Pedregosa
      <fabian.pedregosa@inria.fr>
 
    - Fixes to avoid name collision, Fabian Pedregosa
@@ -1895,7 +1895,7 @@ static decision_function svm_train_one(
 	return f;
 }
 
-// Platt's binary SVM Probablistic Output: an improvement from Lin et al.
+// Platt's binary SVM Probabilistic Output: an improvement from Lin et al.
 static void sigmoid_train(
 	int l, const double *dec_values, const double *labels, 
 	double& A, double& B)
@@ -2192,6 +2192,8 @@ static double svm_svr_probability(
 
 	svm_parameter newparam = *param;
 	newparam.probability = 0;
+    newparam.random_seed = -1; // This is called from train, which already sets
+                               // the seed.
 	PREFIX(cross_validation)(prob,&newparam,nr_fold,ymv);
 	for(i=0;i<prob->l;i++)
 	{
@@ -2346,6 +2348,11 @@ PREFIX(model) *PREFIX(train)(const PREFIX(problem) *prob, const svm_parameter *p
 	PREFIX(model) *model = Malloc(PREFIX(model),1);
 	model->param = *param;
 	model->free_sv = 0;	// XXX
+
+    if(param->random_seed > 0)
+    {
+        srand(param->random_seed);
+    }
 
 	if(param->svm_type == ONE_CLASS ||
 	   param->svm_type == EPSILON_SVR ||
@@ -2622,6 +2629,10 @@ void PREFIX(cross_validation)(const PREFIX(problem) *prob, const svm_parameter *
 	int l = prob->l;
 	int *perm = Malloc(int,l);
 	int nr_class;
+    if(param->random_seed > 0)
+    {
+        srand(param->random_seed);
+    }
 
 	// stratified cv may not give leave-one-out rate
 	// Each class to l folds -> some folds may have zero elements

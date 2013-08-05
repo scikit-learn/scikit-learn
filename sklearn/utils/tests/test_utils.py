@@ -4,13 +4,14 @@ import numpy as np
 import scipy.sparse as sp
 from scipy.linalg import pinv2
 
-from nose.tools import assert_equal, assert_raises, assert_true
-from numpy.testing import assert_almost_equal
+from sklearn.utils.testing import (assert_equal, assert_raises, assert_true,
+                                   assert_almost_equal, assert_array_equal)
 
 from sklearn.utils import check_random_state
 from sklearn.utils import deprecated
 from sklearn.utils import resample
 from sklearn.utils import safe_mask
+from sklearn.utils import column_or_1d
 from sklearn.utils.extmath import pinvh
 
 
@@ -117,3 +118,26 @@ def test_pinvh_simple_complex():
     a = np.dot(a, a.conj().T)
     a_pinv = pinvh(a)
     assert_almost_equal(np.dot(a, a_pinv), np.eye(3))
+
+
+def test_column_or_1d():
+    EXAMPLES = [
+        ("binary", ["spam", "egg", "spam"]),
+        ("binary", [0, 1, 0, 1]),
+        ("continuous", np.arange(10) / 20.),
+        ("multiclass", [1, 2, 3]),
+        ("multiclass", [0, 1, 2, 2, 0]),
+        ("multiclass", [[1], [2], [3]]),
+        ("multilabel-indicator", [[0, 1, 0], [0, 0, 1]]),
+        ("multiclass-multioutput", [[1, 2, 3]]),
+        ("multiclass-multioutput", [[1, 1], [2, 2], [3, 1]]),
+        ("multiclass-multioutput", [[5, 1], [4, 2], [3, 1]]),
+        ("multiclass-multioutput", [[1, 2, 3]]),
+        ("continuous-multioutput", np.arange(30).reshape((-1, 3))),
+    ]
+
+    for y_type, y in EXAMPLES:
+        if y_type in ["binary", 'multiclass', "continuous"]:
+            assert_array_equal(column_or_1d(y), np.ravel(y))
+        else:
+            assert_raises(ValueError, column_or_1d, y)

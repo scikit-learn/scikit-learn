@@ -7,7 +7,7 @@ Comparison of different linear SVM classifiers on the iris dataset. It
 will plot the decision surface for four different SVM classifiers.
 
 """
-print __doc__
+print(__doc__)
 
 import numpy as np
 import pylab as pl
@@ -43,7 +43,7 @@ titles = ['SVC with linear kernel',
 
 
 for i, clf in enumerate((svc, rbf_svc, poly_svc, lin_svc)):
-    # Plot the decision boundary. For that, we will asign a color to each
+    # Plot the decision boundary. For that, we will assign a color to each
     # point in the mesh [x_min, m_max]x[y_min, y_max].
     pl.subplot(2, 2, i + 1)
     Z = clf.predict(np.c_[xx.ravel(), yy.ravel()])

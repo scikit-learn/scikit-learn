@@ -48,9 +48,9 @@ set by internal cross-validation in the GraphLassoCV. As can be
 seen on figure 2, the grid to compute the cross-validation score is
 iteratively refined in the neighborhood of the maximum.
 """
-print __doc__
+print(__doc__)
 # author: Gael Varoquaux <gael.varoquaux@inria.fr>
-# License: BSD Style
+# License: BSD 3 clause
 # Copyright: INRIA
 
 import numpy as np
@@ -126,7 +126,7 @@ for i, (name, this_prec) in enumerate(precs):
 # plot the model selection metric
 pl.figure(figsize=(4, 3))
 pl.axes([.2, .15, .75, .7])
-pl.plot(model.cv_alphas_, np.mean(model.cv_scores, axis=1), 'o-')
+pl.plot(model.cv_alphas_, np.mean(model.grid_scores, axis=1), 'o-')
 pl.axvline(model.alpha_, color='.5')
 pl.title('Model selection')
 pl.ylabel('Cross-validation score')

@@ -7,7 +7,7 @@ extract features from images.
 #          Gael Varoquaux <gael.varoquaux@normalesup.org>
 #          Olivier Grisel
 #          Vlad Niculae
-# License: BSD
+# License: BSD 3 clause
 
 from itertools import product
 import numbers
@@ -181,6 +181,41 @@ def grid_to_graph(n_x, n_y, n_z=1, mask=None, return_as=sparse.coo_matrix,
 ###############################################################################
 # From an image to a set of small image patches
 
+def _compute_n_patches(i_h, i_w, p_h, p_w, max_patches=None):
+    """Compute the number of patches that will be extracted in an image.
+
+    Parameters
+    ===========
+    i_h: int
+        The image height
+    i_w: int
+        The image with
+    p_h: int
+        The height of a patch
+    p_w: int
+        The width of a patch
+    max_patches: integer or float, optional default is None
+        The maximum number of patches to extract. If max_patches is a float
+        between 0 and 1, it is taken to be a proportion of the total number
+        of patches.
+    """
+    n_h = i_h - p_h + 1
+    n_w = i_w - p_w + 1
+    all_patches = n_h * n_w
+
+    if max_patches:
+        if (isinstance(max_patches, (numbers.Integral))
+                and max_patches < all_patches):
+            return max_patches
+        elif (isinstance(max_patches, (numbers.Real))
+                and 0 < max_patches < 1):
+            return int(max_patches * all_patches)
+        else:
+            raise ValueError("Invalid value for max_patches: %r" % max_patches)
+    else:
+        return all_patches
+
+
 def extract_patches(arr, patch_shape=8, extraction_step=1):
     """Extracts patches of any n-dimensional array in place using strides.
 
@@ -280,7 +315,7 @@ def extract_patches_2d(image, patch_size, max_patches=None, random_state=None):
            [ 8,  9, 10, 11],
            [12, 13, 14, 15]])
     >>> patches = image.extract_patches_2d(one_image, (2, 2))
-    >>> print patches.shape
+    >>> print(patches.shape)
     (9, 2, 2)
     >>> patches[0]
     array([[0, 1],
@@ -296,34 +331,20 @@ def extract_patches_2d(image, patch_size, max_patches=None, random_state=None):
     p_h, p_w = patch_size
 
     image = array2d(image)
-
     image = image.reshape((i_h, i_w, -1))
     n_colors = image.shape[-1]
-
-    # compute the dimensions of the patches array
-    n_h = i_h - p_h + 1
-    n_w = i_w - p_w + 1
-    all_patches = n_h * n_w
 
     extracted_patches = extract_patches(image,
                                         patch_shape=(p_h, p_w, n_colors),
                                         extraction_step=1)
-    if max_patches:
-        if (isinstance(max_patches, (numbers.Integral))
-                and max_patches < all_patches):
-            n_patches = max_patches
-        elif (isinstance(max_patches, (numbers.Real))
-                and 0 < max_patches < 1):
-            n_patches = int(max_patches * all_patches)
-        else:
-            raise ValueError("Invalid value for max_patches: %r" % max_patches)
 
+    n_patches = _compute_n_patches(i_h, i_w, p_h, p_w, max_patches)
+    if max_patches:
         rng = check_random_state(random_state)
-        i_s = rng.randint(n_h, size=n_patches)
-        j_s = rng.randint(n_w, size=n_patches)
+        i_s = rng.randint(i_h - p_h + 1, size=n_patches)
+        j_s = rng.randint(i_w - p_w + 1, size=n_patches)
         patches = extracted_patches[i_s, j_s, 0]
     else:
-        n_patches = all_patches
         patches = extracted_patches
 
     patches = patches.reshape(-1, p_h, p_w, n_colors)
@@ -365,11 +386,11 @@ def reconstruct_from_patches_2d(patches, image_size):
     # compute the dimensions of the patches array
     n_h = i_h - p_h + 1
     n_w = i_w - p_w + 1
-    for p, (i, j) in zip(patches, product(xrange(n_h), xrange(n_w))):
+    for p, (i, j) in zip(patches, product(range(n_h), range(n_w))):
         img[i:i + p_h, j:j + p_w] += p
 
-    for i in xrange(i_h):
-        for j in xrange(i_w):
+    for i in range(i_h):
+        for j in range(i_w):
             # divide by the amount of overlap
             # XXX: is this the most efficient way? memory-wise yes, cpu wise?
             img[i, j] /= float(min(i + 1, p_h, i_h - i) *
@@ -436,14 +457,14 @@ class PatchExtractor(BaseEstimator):
         else:
             patch_size = self.patch_size
 
-        if self.max_patches:
-            n_patches = self.max_patches
-        else:
-            p_h, p_w = patch_size
-            n_patches = (i_h - p_h + 1) * (i_w - p_w + 1)
+        # compute the dimensions of the patches array
+        p_h, p_w = patch_size
+        n_patches = _compute_n_patches(i_h, i_w, p_h, p_w, self.max_patches)
         patches_shape = (n_images * n_patches,) + patch_size
         if n_channels > 1:
             patches_shape += (n_channels,)
+
+        # extract the patches
         patches = np.empty(patches_shape)
         for ii, image in enumerate(X):
             patches[ii * n_patches:(ii + 1) * n_patches] = extract_patches_2d(

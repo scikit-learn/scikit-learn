@@ -9,7 +9,7 @@ labeled "red" and the inner circle "blue". Because both label groups
 lie inside their own distinct shape, we can see that the labels
 propagate correctly around the circle.
 """
-print __doc__
+print(__doc__)
 
 # Authors: Clay Woolam <clay@woolam.org>
 #          Andreas Mueller <amueller@ais.uni-bonn.de>

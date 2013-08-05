@@ -13,11 +13,10 @@ make it more stable, this module will be removed in version 0.11.
 """
 
 import string
-import warnings
 
 import numpy as np
 
-from .utils import check_random_state
+from .utils import check_random_state, deprecated
 from .utils.extmath import logsumexp
 from .base import BaseEstimator
 from .mixture import (
@@ -131,7 +130,7 @@ class _BaseHMM(BaseEstimator):
     # which depend on the specific emission distribution.
     #
     # Subclasses will probably also want to implement properties for
-    # the emission distribution parameters to expose them publically.
+    # the emission distribution parameters to expose them publicly.
 
     def __init__(self, n_components=1, startprob=None, transmat=None,
                  startprob_prior=None, transmat_prior=None,
@@ -151,23 +150,26 @@ class _BaseHMM(BaseEstimator):
         self._algorithm = algorithm
         self.random_state = random_state
 
-    def eval(self, obs):
-        """Compute the log probability under the model and compute posteriors
+    @deprecated("HMM.eval was renamed to HMM.score_samples in 0.14 and will be"
+                " removed in 0.16.")
+    def eval(self, X):
+        return self.score_samples(X)
 
-        Implements rank and beam pruning in the forward-backward
-        algorithm to speed up inference in large models.
+    def score_samples(self, obs):
+        """Compute the log probability under the model and compute posteriors.
 
         Parameters
         ----------
         obs : array_like, shape (n, n_features)
-            Sequence of n_features-dimensional data points.  Each row
+            Sequence of n_features-dimensional data points. Each row
             corresponds to a single point in the sequence.
 
         Returns
         -------
         logprob : float
-            Log likelihood of the sequence `obs`
-        posteriors: array_like, shape (n, n_components)
+            Log likelihood of the sequence ``obs``.
+
+        posteriors : array_like, shape (n, n_components)
             Posterior probabilities of each state for each
             observation
 
@@ -202,11 +204,13 @@ class _BaseHMM(BaseEstimator):
         Returns
         -------
         logprob : float
-            Log likelihood of the `obs`
+            Log likelihood of the ``obs``.
 
         See Also
         --------
-        eval : Compute the log probability under the model and posteriors
+        score_samples : Compute the log probability under the model and
+            posteriors
+
         decode : Find most likely state sequence corresponding to a `obs`
         """
         obs = np.asarray(obs)
@@ -215,7 +219,7 @@ class _BaseHMM(BaseEstimator):
         return logprob
 
     def _decode_viterbi(self, obs):
-        """Find most likely state sequence corresponding to `obs`.
+        """Find most likely state sequence corresponding to ``obs``.
 
         Uses the Viterbi algorithm.
 
@@ -228,13 +232,16 @@ class _BaseHMM(BaseEstimator):
         Returns
         -------
         viterbi_logprob : float
-            Log probability of the maximum likelihood path through the HMM
+            Log probability of the maximum likelihood path through the HMM.
+
         state_sequence : array_like, shape (n,)
-            Index of the most likely states for each observation
+            Index of the most likely states for each observation.
 
         See Also
         --------
-        eval : Compute the log probability under the model and posteriors
+        score_samples : Compute the log probability under the model and
+            posteriors.
+
         score : Compute the log probability under the model
         """
         obs = np.asarray(obs)
@@ -262,16 +269,17 @@ class _BaseHMM(BaseEstimator):
 
         See Also
         --------
-        eval : Compute the log probability under the model and posteriors
-        score : Compute the log probability under the model
+        score_samples : Compute the log probability under the model and
+            posteriors.
+        score : Compute the log probability under the model.
         """
-        _, posteriors = self.eval(obs)
+        _, posteriors = self.score_samples(obs)
         state_sequence = np.argmax(posteriors, axis=1)
         map_logprob = np.max(posteriors, axis=1).sum()
         return map_logprob, state_sequence
 
     def decode(self, obs, algorithm="viterbi"):
-        """Find most likely state sequence corresponding to `obs`.
+        """Find most likely state sequence corresponding to ``obs``.
         Uses the selected algorithm for decoding.
 
         Parameters
@@ -287,13 +295,16 @@ class _BaseHMM(BaseEstimator):
         -------
         logprob : float
             Log probability of the maximum likelihood path through the HMM
+
         state_sequence : array_like, shape (n,)
             Index of the most likely states for each observation
 
         See Also
         --------
-        eval : Compute the log probability under the model and posteriors
-        score : Compute the log probability under the model
+        score_samples : Compute the log probability under the model and
+            posteriors.
+
+        score : Compute the log probability under the model.
         """
         if self._algorithm in decoder_algorithms:
             algorithm = self._algorithm
@@ -335,7 +346,7 @@ class _BaseHMM(BaseEstimator):
         T : array-like, shape (n, n_components)
             Returns the probability of the sample for each state in the model.
         """
-        _, posteriors = self.eval(obs)
+        _, posteriors = self.score_samples(obs)
         return posteriors
 
     def sample(self, n=1, random_state=None):
@@ -372,7 +383,7 @@ class _BaseHMM(BaseEstimator):
         obs = [self._generate_sample_from_state(
             currstate, random_state=random_state)]
 
-        for _ in xrange(n - 1):
+        for _ in range(n - 1):
             rand = random_state.rand()
             currstate = (transmat_cdf[currstate] > rand).argmax()
             hidden_states.append(currstate)
@@ -381,14 +392,12 @@ class _BaseHMM(BaseEstimator):
 
         return np.array(obs), np.array(hidden_states, dtype=int)
 
-    def fit(self, obs, **kwargs):
+    def fit(self, obs):
         """Estimate model parameters.
 
         An initialization step is performed before entering the EM
-        algorithm. If you want to avoid this step, set the keyword
-        argument init_params to the empty string ''. Likewise, if you
-        would like just to do an initialization, call this method with
-        n_iter=0.
+        algorithm. If you want to avoid this step, pass proper
+        ``init_params`` keyword argument to estimator's constructor.
 
         Parameters
         ----------
@@ -402,22 +411,7 @@ class _BaseHMM(BaseEstimator):
         a sign of overfitting (e.g. a covariance parameter getting too
         small).  You can fix this by getting more training data, or
         decreasing `covars_prior`.
-
-        **Please note that setting parameters in the `fit` method is
-        deprecated and will be removed in the next release.
-        Set it on initialization instead.**
         """
-
-        if kwargs:
-            warnings.warn("Setting parameters in the 'fit' method is"
-                          "deprecated and will be removed in 0.14. Set it on "
-                          "initialization instead.", DeprecationWarning,
-                          stacklevel=2)
-            # initialisations for in case the user still adds parameters to fit
-            # so things don't break
-            for name in ('n_iter', 'thresh', 'params', 'init_params'):
-                if name in kwargs:
-                    setattr(self, name, kwargs[name])
 
         if self.algorithm not in decoder_algorithms:
             self._algorithm = "viterbi"
@@ -425,7 +419,7 @@ class _BaseHMM(BaseEstimator):
         self._init(obs, self.init_params)
 
         logprob = []
-        for i in xrange(self.n_iter):
+        for i in range(self.n_iter):
             # Expectation step
             stats = self._initialize_sufficient_statistics()
             curr_logprob = 0
@@ -797,7 +791,7 @@ class GaussianHMM(_BaseHMM):
             elif self._covariance_type in ('tied', 'full'):
                 for t, o in enumerate(obs):
                     obsobsT = np.outer(o, o)
-                    for c in xrange(self.n_components):
+                    for c in range(self.n_components):
                         stats['obs*obs.T'][c] += posteriors[t, c] * obsobsT
 
     def _do_mstep(self, stats, params):
@@ -842,7 +836,7 @@ class GaussianHMM(_BaseHMM):
             elif self._covariance_type in ('tied', 'full'):
                 cvnum = np.empty((self.n_components, self.n_features,
                                   self.n_features))
-                for c in xrange(self.n_components):
+                for c in range(self.n_components):
                     obsmean = np.outer(stats['obs'][c], self._means_[c])
 
                     cvnum[c] = (means_weight * np.outer(meandiff[c],
@@ -1009,7 +1003,7 @@ class MultinomialHMM(_BaseHMM):
         e.g. x = [0, 0, 2, 1, 3, 1, 1] is OK and y = [0, 0, 3, 5, 10] not
         """
 
-        symbols = np.asanyarray(obs).flatten()
+        symbols = np.asarray(obs).flatten()
 
         if symbols.dtype.kind != 'i':
             # input symbols must be integer
@@ -1020,7 +1014,7 @@ class MultinomialHMM(_BaseHMM):
             return False
 
         if np.any(symbols < 0):
-            # input containes negative intiger
+            # input contains negative intiger
             return False
 
         symbols.sort()
@@ -1119,7 +1113,7 @@ class GMMHMM(_BaseHMM):
         self.gmms = gmms
         if gmms is None:
             gmms = []
-            for x in xrange(self.n_components):
+            for x in range(self.n_components):
                 if covariance_type is None:
                     g = GMM(n_mix)
                 else:
@@ -1165,7 +1159,7 @@ class GMMHMM(_BaseHMM):
             params)
 
         for state, g in enumerate(self.gmms_):
-            _, lgmm_posteriors = g.eval(obs)
+            _, lgmm_posteriors = g.score_samples(obs)
             lgmm_posteriors += np.log(posteriors[:, state][:, np.newaxis]
                                       + np.finfo(np.float).eps)
             gmm_posteriors = np.exp(lgmm_posteriors)

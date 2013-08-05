@@ -18,14 +18,13 @@ The module structure is the following:
 
 # Authors: Peter Prettenhofer, Scott White, Gilles Louppe, Emanuele Olivetti,
 #          Arnaud Joly
-# License: BSD Style.
+# License: BSD 3 clause
 
 from __future__ import print_function
 from __future__ import division
 from abc import ABCMeta, abstractmethod
-
-import sys
-import warnings
+from warnings import warn
+from time import time
 
 import numpy as np
 
@@ -35,15 +34,17 @@ from .base import BaseEnsemble
 from ..base import BaseEstimator
 from ..base import ClassifierMixin
 from ..base import RegressorMixin
-from ..utils import check_random_state, array2d, check_arrays
+from ..utils import check_random_state, array2d, check_arrays, column_or_1d
 from ..utils.extmath import logsumexp
+from ..utils.fixes import unique
+from ..externals import six
 
 from ..tree.tree import DecisionTreeRegressor
-from ..tree._tree import _random_sample_mask
 from ..tree._tree import DTYPE, TREE_LEAF
 
 from ._gradient_boosting import predict_stages
 from ._gradient_boosting import predict_stage
+from ._gradient_boosting import _random_sample_mask
 
 
 class QuantileEstimator(BaseEstimator):
@@ -102,7 +103,7 @@ class PriorProbabilityEstimator(BaseEstimator):
         return y
 
 
-class LossFunction(object):
+class LossFunction(six.with_metaclass(ABCMeta, object)):
     """Abstract base class for various loss functions.
 
     Attributes
@@ -112,7 +113,6 @@ class LossFunction(object):
         1 for regression and binary classification;
         ``n_classes`` for multi-class classification.
     """
-    __metaclass__ = ABCMeta
 
     is_multi_class = False
 
@@ -181,9 +181,8 @@ class LossFunction(object):
         """Template method for updating terminal regions (=leaves). """
 
 
-class RegressionLossFunction(LossFunction):
+class RegressionLossFunction(six.with_metaclass(ABCMeta, LossFunction)):
     """Base class for regression loss functions. """
-    __metaclass__ = ABCMeta
 
     def __init__(self, n_classes):
         if n_classes != 1:
@@ -331,8 +330,8 @@ class BinomialDeviance(LossFunction):
     """
     def __init__(self, n_classes):
         if n_classes != 2:
-            raise ValueError("%s requires 2 classes." %
-                             self.__class__.__name__)
+            raise ValueError("{0:s} requires 2 classes.".format(
+                self.__class__.__name__))
         # we only need to fit one tree for binary clf.
         super(BinomialDeviance, self).__init__(1)
 
@@ -340,7 +339,7 @@ class BinomialDeviance(LossFunction):
         return LogOddsEstimator()
 
     def __call__(self, y, pred):
-        """Compute the deviance (= negative log-likelihood). """
+        """Compute the deviance (= 2 * negative log-likelihood). """
         # logaddexp(0, v) == log(1.0 + exp(v))
         pred = pred.ravel()
         return -2.0 * np.mean((y * pred) - np.logaddexp(0.0, pred))
@@ -383,8 +382,8 @@ class MultinomialDeviance(LossFunction):
 
     def __init__(self, n_classes):
         if n_classes < 3:
-            raise ValueError("%s requires more than 2 classes."
-                             % self.__class__.__name__)
+            raise ValueError("{0:s} requires more than 2 classes.".format(
+                self.__class__.__name__))
         super(MultinomialDeviance, self).__init__(n_classes)
 
     def init_estimator(self):
@@ -432,21 +431,13 @@ LOSS_FUNCTIONS = {'ls': LeastSquaresError,
                   'deviance': None}  # for both, multinomial and binomial
 
 
-class BaseGradientBoosting(BaseEnsemble):
+class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
     """Abstract base class for Gradient Boosting. """
-    __metaclass__ = ABCMeta
 
     @abstractmethod
     def __init__(self, loss, learning_rate, n_estimators, min_samples_split,
                  min_samples_leaf, max_depth, init, subsample, max_features,
-                 random_state, alpha=0.9, verbose=0, learn_rate=None):
-
-        if not learn_rate is None:
-            learning_rate = learn_rate
-            warnings.warn(
-                "Parameter learn_rate has been renamed to "
-                'learning_rate'" and will be removed in release 0.14.",
-                DeprecationWarning, stacklevel=2)
+                 random_state, alpha=0.9, verbose=0):
 
         self.n_estimators = n_estimators
         self.learning_rate = learning_rate
@@ -462,7 +453,7 @@ class BaseGradientBoosting(BaseEnsemble):
         self.verbose = verbose
         self.estimators_ = np.empty((0, 0), dtype=np.object)
 
-    def _fit_stage(self, i, X, X_argsorted, y, y_pred, sample_mask,
+    def _fit_stage(self, i, X, y, y_pred, sample_mask,
                    random_state):
         """Fit another stage of ``n_classes_`` trees to the boosting model. """
         loss = self.loss_
@@ -480,12 +471,15 @@ class BaseGradientBoosting(BaseEnsemble):
                 max_depth=self.max_depth,
                 min_samples_split=self.min_samples_split,
                 min_samples_leaf=self.min_samples_leaf,
-                min_density=self.min_density,
                 max_features=self.max_features,
-                compute_importances=False,
                 random_state=random_state)
 
-            tree.fit(X, residual, sample_mask, X_argsorted, check_input=False)
+            sample_weight = None
+            if self.subsample < 1.0:
+                sample_weight = sample_mask.astype(np.float64)
+
+            tree.fit(X, residual,
+                     sample_weight=sample_weight, check_input=False)
 
             # update tree leaves
             loss.update_terminal_regions(tree.tree_, X, y, residual, y_pred,
@@ -496,36 +490,8 @@ class BaseGradientBoosting(BaseEnsemble):
 
         return y_pred
 
-    def fit(self, X, y):
-        """Fit the gradient boosting model.
-
-        Parameters
-        ----------
-        X : array-like, shape = [n_samples, n_features]
-            Training vectors, where n_samples is the number of samples
-            and n_features is the number of features. Use fortran-style
-            to avoid memory copies.
-
-        y : array-like, shape = [n_samples]
-            Target values (integers in classification, real numbers in
-            regression)
-            For classification, labels must correspond to classes
-            ``0, 1, ..., n_classes_-1``
-
-        Returns
-        -------
-        self : object
-            Returns self.
-        """
-        # Check input
-        X, y = check_arrays(X, y, sparse_format='dense')
-        X = np.asfortranarray(X, dtype=DTYPE)
-        y = np.ravel(y, order='C')
-
-        # Check parameters
-        n_samples, n_features = X.shape
-        self.n_features = n_features
-
+    def _check_params(self):
+        """Check validity of parameters and raise ValueError if not valid. """
         if self.n_estimators <= 0:
             raise ValueError("n_estimators must be greater than 0")
 
@@ -533,7 +499,7 @@ class BaseGradientBoosting(BaseEnsemble):
             raise ValueError("learning_rate must be greater than 0")
 
         if self.loss not in LOSS_FUNCTIONS:
-            raise ValueError("Loss '%s' not supported. " % self.loss)
+            raise ValueError("Loss '{0:s}' not supported. ".format(self.loss))
 
         if self.loss == 'deviance':
             loss_class = (MultinomialDeviance
@@ -547,25 +513,8 @@ class BaseGradientBoosting(BaseEnsemble):
         else:
             self.loss_ = loss_class(self.n_classes_)
 
-        if self.min_samples_split <= 0:
-            raise ValueError("min_samples_split must be larger than 0")
-
-        if self.min_samples_leaf <= 0:
-            raise ValueError("min_samples_leaf must be larger than 0")
-
         if self.subsample <= 0.0 or self.subsample > 1:
             raise ValueError("subsample must be in (0,1]")
-
-        if self.max_features is None:
-            max_features = n_features
-        else:
-            max_features = self.max_features
-
-        if not (0 < max_features <= n_features):
-            raise ValueError("max_features must be in (0, n_features]")
-
-        if self.max_depth <= 0:
-            raise ValueError("max_depth must be larger than 0")
 
         if self.init is not None:
             if (not hasattr(self.init, 'fit')
@@ -578,14 +527,69 @@ class BaseGradientBoosting(BaseEnsemble):
         if not (0.0 < self.alpha and self.alpha < 1.0):
             raise ValueError("alpha must be in (0.0, 1.0)")
 
+    def fit(self, X, y):
+        """Fit the gradient boosting model.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+            Training vectors, where n_samples is the number of samples
+            and n_features is the number of features.
+
+        y : array-like, shape = [n_samples]
+            Target values (integers in classification, real numbers in
+            regression)
+            For classification, labels must correspond to classes
+            ``0, 1, ..., n_classes_-1``
+
+        Returns
+        -------
+        self : object
+            Returns self.
+        """
+        self._check_params()
+
+        # Check input
+        X, = check_arrays(X, dtype=DTYPE, sparse_format="dense",
+                          check_ccontiguous=True)
+        y = column_or_1d(y, warn=True)
+        n_samples, n_features = X.shape
+        self.n_features = n_features
         random_state = check_random_state(self.random_state)
 
-        # use default min_density (0.1) only for deep trees
-        self.min_density = 0.0 if self.max_depth < 6 else 0.1
+        # pull freq used parameters into local scope
+        subsample = self.subsample
+        loss_ = self.loss_
+        do_oob = subsample < 1.0
 
-        # create argsorted X for fast tree induction
-        X_argsorted = np.asfortranarray(
-            np.argsort(X.T, axis=1).astype(np.int32).T)
+        # allocate model state data structures
+        self.estimators_ = np.empty((self.n_estimators, self.loss_.K),
+                                    dtype=np.object)
+        self.train_score_ = np.zeros((self.n_estimators,), dtype=np.float64)
+        if do_oob:
+            self._oob_score_ = np.zeros((self.n_estimators), dtype=np.float64)
+            self.oob_improvement_ = np.zeros((self.n_estimators),
+                                             dtype=np.float64)
+
+        sample_mask = np.ones((n_samples,), dtype=np.bool)
+        n_inbag = max(1, int(subsample * n_samples))
+
+        if self.verbose:
+            # header fields and line format str
+            header_fields = ['Iter', 'Train Loss']
+            verbose_fmt = ['{iter:>10d}', '{train_score:>16.4f}']
+            if do_oob:
+                header_fields.append('OOB Improve')
+                verbose_fmt.append('{oob_impr:>16.4f}')
+            header_fields.append('Remaining Time')
+            verbose_fmt.append('{remaining_time:>16s}')
+            verbose_fmt = ' '.join(verbose_fmt)
+            # print the header line
+            print(('%10s ' + '%16s ' *
+                   (len(header_fields) - 1)) % tuple(header_fields))
+            # plot verbose info each time i % verbose_mod == 0
+            verbose_mod = 1
+            start_time = time()
 
         # fit initial model
         self.init_.fit(X, y)
@@ -593,47 +597,48 @@ class BaseGradientBoosting(BaseEnsemble):
         # init predictions
         y_pred = self.init_.predict(X)
 
-        self.estimators_ = np.empty((self.n_estimators, self.loss_.K),
-                                    dtype=np.object)
-
-        self.train_score_ = np.zeros((self.n_estimators,), dtype=np.float64)
-        self.oob_score_ = np.zeros((self.n_estimators), dtype=np.float64)
-
-        sample_mask = np.ones((n_samples,), dtype=np.bool)
-        n_inbag = max(1, int(self.subsample * n_samples))
         # perform boosting iterations
         for i in range(self.n_estimators):
 
             # subsampling
-            if self.subsample < 1.0:
-                # TODO replace with ``np.choice`` if possible.
+            if do_oob:
                 sample_mask = _random_sample_mask(n_samples, n_inbag,
                                                   random_state)
+                # OOB score before adding this stage
+                old_oob_score = loss_(y[~sample_mask],
+                                      y_pred[~sample_mask])
+
             # fit next stage of trees
-            y_pred = self._fit_stage(i, X, X_argsorted, y, y_pred, sample_mask,
+            y_pred = self._fit_stage(i, X, y, y_pred, sample_mask,
                                      random_state)
 
             # track deviance (= loss)
-            if self.subsample < 1.0:
-                self.train_score_[i] = self.loss_(y[sample_mask],
-                                                  y_pred[sample_mask])
-                self.oob_score_[i] = self.loss_(y[~sample_mask],
-                                                y_pred[~sample_mask])
-                if self.verbose > 1:
-                    print("built tree %d of %d, train score = %.6e, "
-                          "oob score = %.6e" % (i + 1, self.n_estimators,
-                                                self.train_score_[i],
-                                                self.oob_score_[i]))
-
+            if do_oob:
+                self.train_score_[i] = loss_(y[sample_mask],
+                                             y_pred[sample_mask])
+                self._oob_score_[i] = loss_(y[~sample_mask],
+                                            y_pred[~sample_mask])
+                self.oob_improvement_[i] = old_oob_score - self._oob_score_[i]
             else:
                 # no need to fancy index w/ no subsampling
                 self.train_score_[i] = self.loss_(y, y_pred)
-                if self.verbose > 1:
-                    print("built tree %d of %d, train score = %.6e" %
-                          (i + 1, self.n_estimators, self.train_score_[i]))
-            if self.verbose == 1:
-                print(end='.')
-                sys.stdout.flush()
+
+            if self.verbose > 0:
+                if (i + 1) % verbose_mod == 0:
+                    oob_impr = self.oob_improvement_[i] if do_oob else 0
+                    remaining_time = ((self.n_estimators - (i + 1)) *
+                                      (time() - start_time) / float(i + 1))
+                    if remaining_time > 60:
+                        remaining_time = '{0:.2f}m'.format(remaining_time / 60.0)
+                    else:
+                        remaining_time = '{0:.2f}s'.format(remaining_time)
+                    print(verbose_fmt.format(iter=i + 1,
+                                             train_score=self.train_score_[i],
+                                             oob_impr=oob_impr,
+                                             remaining_time=remaining_time))
+                if self.verbose == 1 and ((i + 1) // (verbose_mod * 10) > 0):
+                    # adjust verbose frequency (powers of 10)
+                    verbose_mod *= 10
 
         return self
 
@@ -647,8 +652,8 @@ class BaseGradientBoosting(BaseEnsemble):
             raise ValueError("Estimator not fitted, call `fit` "
                              "before making predictions`.")
         if X.shape[1] != self.n_features:
-            raise ValueError("X.shape[1] should be %d, not %d." %
-                             (self.n_features, X.shape[1]))
+            raise ValueError("X.shape[1] should be {0:d}, not {1:d}.".format(
+                self.n_features, X.shape[1]))
         score = self.init_.predict(X).astype(np.float64)
         return score
 
@@ -668,7 +673,7 @@ class BaseGradientBoosting(BaseEnsemble):
             classification are special cases with ``k == 1``,
             otherwise ``k==n_classes``.
         """
-        X = array2d(X, dtype=DTYPE, order='C')
+        X = array2d(X, dtype=DTYPE, order="C")
         score = self._init_decision_function(X)
         predict_stages(self.estimators_, X, self.learning_rate, score)
         return score
@@ -692,7 +697,7 @@ class BaseGradientBoosting(BaseEnsemble):
             classification are special cases with ``k == 1``,
             otherwise ``k==n_classes``.
         """
-        X = array2d(X, dtype=DTYPE, order='C')
+        X = array2d(X, dtype=DTYPE, order="C")
         score = self._init_decision_function(X)
         for i in range(self.n_estimators):
             predict_stage(self.estimators_, i, X, self.learning_rate, score)
@@ -700,18 +705,36 @@ class BaseGradientBoosting(BaseEnsemble):
 
     @property
     def feature_importances_(self):
+        """Return the feature importances (the higher, the more important the
+           feature).
+
+        Returns
+        -------
+        feature_importances_ : array, shape = [n_features]
+        """
         if self.estimators_ is None or len(self.estimators_) == 0:
             raise ValueError("Estimator not fitted, "
                              "call `fit` before `feature_importances_`.")
+
         total_sum = np.zeros((self.n_features, ), dtype=np.float64)
         for stage in self.estimators_:
-            stage_sum = sum(
-                tree.tree_.compute_feature_importances(method='gini')
-                for tree in stage) / len(stage)
+            stage_sum = sum(tree.feature_importances_
+                            for tree in stage) / len(stage)
             total_sum += stage_sum
 
         importances = total_sum / len(self.estimators_)
         return importances
+
+    @property
+    def oob_score_(self):
+        warn("The oob_score_ argument is replaced by oob_improvement_"
+             "as of version 0.14 and will be removed in 0.16.",
+             DeprecationWarning)
+        try:
+            return self._oob_score_
+        except AttributeError:
+            raise ValueError("Estimator not fitted, "
+                             "call `fit` before `oob_score_`.")
 
 
 class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
@@ -759,11 +782,18 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         Choosing `subsample < 1.0` leads to a reduction of variance
         and an increase in bias.
 
-    max_features : int, None, optional (default=None)
-        The number of features to consider when looking for the best split.
-        Features are choosen randomly at each split point.
-        If None, then `max_features=n_features`. Choosing
-        `max_features < n_features` leads to a reduction of variance
+    max_features : int, float, string or None, optional (default="auto")
+        The number of features to consider when looking for the best split:
+          - If int, then consider `max_features` features at each split.
+          - If float, then `max_features` is a percentage and
+            `int(max_features * n_features)` features are considered at each
+            split.
+          - If "auto", then `max_features=sqrt(n_features)`.
+          - If "sqrt", then `max_features=sqrt(n_features)`.
+          - If "log2", then `max_features=log2(n_features)`.
+          - If None, then `max_features=n_features`.
+
+        Choosing `max_features < n_features` leads to a reduction of variance
         and an increase in bias.
 
     init : BaseEstimator, None, optional (default=None)
@@ -772,18 +802,26 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         If None it uses ``loss.init_estimator``.
 
     verbose : int, default: 0
-        Enable verbose output. If 1 then it prints '.' for every tree built.
-        If greater than 1 then it prints the score for every tree.
+        Enable verbose output. If 1 then it prints progress and performance
+        once in a while (the more trees the lower the frequency).
+        If greater than 1 then it prints progress and performance for every tree.
 
     Attributes
     ----------
     `feature_importances_` : array, shape = [n_features]
         The feature importances (the higher, the more important the feature).
 
+    `oob_improvement_` : array, shape = [n_estimators]
+        The improvement in loss (= deviance) on the out-of-bag samples
+        relative to the previous iteration.
+        ``oob_improvement_[0]`` is the improvement in
+        loss of the first stage over the ``init`` estimator.
+
     `oob_score_` : array, shape = [n_estimators]
         Score of the training dataset obtained using an out-of-bag estimate.
         The i-th score ``oob_score_[i]`` is the deviance (= loss) of the
         model at iteration ``i`` on the out-of-bag sample.
+        Deprecated: use `oob_improvement_` instead.
 
     `train_score_` : array, shape = [n_estimators]
         The i-th score ``train_score_[i]`` is the deviance (= loss) of the
@@ -799,15 +837,6 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
 
     `estimators_`: list of DecisionTreeRegressor
         The collection of fitted sub-estimators.
-
-    Examples
-    --------
-    >>> samples = [[0, 0, 2], [1, 0, 0]]
-    >>> labels = [0, 1]
-    >>> from sklearn.ensemble import GradientBoostingClassifier
-    >>> gb = GradientBoostingClassifier().fit(samples, labels)
-    >>> print(gb.predict([[0.5, 0, 0]]))
-    [0]
 
     See also
     --------
@@ -827,12 +856,12 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
     def __init__(self, loss='deviance', learning_rate=0.1, n_estimators=100,
                  subsample=1.0, min_samples_split=2, min_samples_leaf=1,
                  max_depth=3, init=None, random_state=None,
-                 max_features=None, verbose=0, learn_rate=None):
+                 max_features=None, verbose=0):
 
         super(GradientBoostingClassifier, self).__init__(
             loss, learning_rate, n_estimators, min_samples_split,
             min_samples_leaf, max_depth, init, subsample, max_features,
-            random_state, verbose=verbose, learn_rate=learn_rate)
+            random_state, verbose=verbose)
 
     def fit(self, X, y):
         """Fit the gradient boosting model.
@@ -841,8 +870,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         ----------
         X : array-like, shape = [n_samples, n_features]
             Training vectors, where n_samples is the number of samples
-            and n_features is the number of features. Use fortran-style
-            to avoid memory copies.
+            and n_features is the number of features.
 
         y : array-like, shape = [n_samples]
             Target values (integers in classification, real numbers in
@@ -855,9 +883,9 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         self : object
             Returns self.
         """
-        self.classes_ = np.unique(y)
+        y = column_or_1d(y, warn=True)
+        self.classes_, y = unique(y, return_inverse=True)
         self.n_classes_ = len(self.classes_)
-        y = np.searchsorted(self.classes_, y)
 
         return super(GradientBoostingClassifier, self).fit(X, y)
 
@@ -957,7 +985,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
     loss : {'ls', 'lad', 'huber', 'quantile'}, optional (default='ls')
         loss function to be optimized. 'ls' refers to least squares
         regression. 'lad' (least absolute deviation) is a highly robust
-        loss function soley based on order information of the input
+        loss function solely based on order information of the input
         variables. 'huber' is a combination of the two. 'quantile'
         allows quantile regression (use `alpha` to specify the quantile).
 
@@ -989,11 +1017,18 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         Choosing `subsample < 1.0` leads to a reduction of variance
         and an increase in bias.
 
-    max_features : int, None, optional (default=None)
-        The number of features to consider when looking for the best split.
-        Features are choosen randomly at each split point.
-        If None, then `max_features=n_features`. Choosing
-        `max_features < n_features` leads to a reduction of variance
+    max_features : int, float, string or None, optional (default=None)
+        The number of features to consider when looking for the best split:
+          - If int, then consider `max_features` features at each split.
+          - If float, then `max_features` is a percentage and
+            `int(max_features * n_features)` features are considered at each
+            split.
+          - If "auto", then `max_features=n_features`.
+          - If "sqrt", then `max_features=sqrt(n_features)`.
+          - If "log2", then `max_features=log2(n_features)`.
+          - If None, then `max_features=n_features`.
+
+        Choosing `max_features < n_features` leads to a reduction of variance
         and an increase in bias.
 
     alpha : float (default=0.9)
@@ -1006,18 +1041,26 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         If None it uses ``loss.init_estimator``.
 
     verbose : int, default: 0
-        Enable verbose output. If 1 then it prints '.' for every tree built.
-        If greater than 1 then it prints the score for every tree.
+        Enable verbose output. If 1 then it prints progress and performance
+        once in a while (the more trees the lower the frequency).
+        If greater than 1 then it prints progress and performance for every tree.
 
     Attributes
     ----------
     `feature_importances_` : array, shape = [n_features]
         The feature importances (the higher, the more important the feature).
 
+    `oob_improvement_` : array, shape = [n_estimators]
+        The improvement in loss (= deviance) on the out-of-bag samples
+        relative to the previous iteration.
+        ``oob_improvement_[0]`` is the improvement in
+        loss of the first stage over the ``init`` estimator.
+
     `oob_score_` : array, shape = [n_estimators]
         Score of the training dataset obtained using an out-of-bag estimate.
         The i-th score ``oob_score_[i]`` is the deviance (= loss) of the
         model at iteration ``i`` on the out-of-bag sample.
+        Deprecated: use `oob_improvement_` instead.
 
     `train_score_` : array, shape = [n_estimators]
         The i-th score ``train_score_[i]`` is the deviance (= loss) of the
@@ -1033,16 +1076,6 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
 
     `estimators_`: list of DecisionTreeRegressor
         The collection of fitted sub-estimators.
-
-    Examples
-    --------
-    >>> samples = [[0, 0, 2], [1, 0, 0]]
-    >>> labels = [0, 1]
-    >>> from sklearn.ensemble import GradientBoostingRegressor
-    >>> gb = GradientBoostingRegressor().fit(samples, labels)
-    >>> print(gb.predict([[0, 0, 0]]))
-    ... # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-    [  1.32806...
 
     See also
     --------
@@ -1062,12 +1095,12 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
     def __init__(self, loss='ls', learning_rate=0.1, n_estimators=100,
                  subsample=1.0, min_samples_split=2, min_samples_leaf=1,
                  max_depth=3, init=None, random_state=None,
-                 max_features=None, alpha=0.9, verbose=0, learn_rate=None):
+                 max_features=None, alpha=0.9, verbose=0):
 
         super(GradientBoostingRegressor, self).__init__(
             loss, learning_rate, n_estimators, min_samples_split,
             min_samples_leaf, max_depth, init, subsample, max_features,
-            random_state, alpha, verbose, learn_rate=learn_rate)
+            random_state, alpha, verbose)
 
     def fit(self, X, y):
         """Fit the gradient boosting model.
@@ -1076,8 +1109,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         ----------
         X : array-like, shape = [n_samples, n_features]
             Training vectors, where n_samples is the number of samples
-            and n_features is the number of features. Use fortran-style
-            to avoid memory copies.
+            and n_features is the number of features.
 
         y : array-like, shape = [n_samples]
             Target values (integers in classification, real numbers in

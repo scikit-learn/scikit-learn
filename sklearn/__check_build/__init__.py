@@ -28,8 +28,7 @@ def raise_build_error(e):
             dir_content.append(filename.ljust(26))
         else:
             dir_content.append(filename + '\n')
-    raise ImportError(
-"""%s
+    raise ImportError("""%s
 ___________________________________________________________________________
 Contents of %s:
 %s

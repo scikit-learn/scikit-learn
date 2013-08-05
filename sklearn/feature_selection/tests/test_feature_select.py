@@ -11,6 +11,7 @@ from nose.tools import assert_equal, assert_raises, assert_true
 from numpy.testing import assert_array_equal, assert_array_almost_equal
 from sklearn.utils.testing import assert_not_in
 
+from sklearn.utils import safe_mask
 from sklearn.datasets.samples_generator import (make_classification,
                                                 make_regression)
 from sklearn.feature_selection import (chi2, f_classif, f_oneway, f_regression,
@@ -162,6 +163,14 @@ def test_select_percentile_classif_sparse():
     gtruth[:5] = 1
     assert_array_equal(support, gtruth)
 
+    X_r2inv = univariate_filter.inverse_transform(X_r2)
+    assert_true(sparse.issparse(X_r2inv))
+    support_mask = safe_mask(X_r2inv, support)
+    assert_equal(X_r2inv.shape, X.shape)
+    assert_array_equal(X_r2inv[:, support_mask].toarray(), X_r.toarray())
+    # Check other columns are empty
+    assert_equal(X_r2inv.getnnz(), X_r.getnnz())
+
 
 ##############################################################################
 # Test univariate selection in classification settings
@@ -187,6 +196,18 @@ def test_select_kbest_classif():
     gtruth = np.zeros(20)
     gtruth[:5] = 1
     assert_array_equal(support, gtruth)
+
+
+def test_select_kbest_all():
+    """
+    Test whether k="all" correctly returns all features.
+    """
+    X, y = make_classification(n_samples=20, n_features=10,
+                               shuffle=False, random_state=0)
+
+    univariate_filter = SelectKBest(f_classif, k='all')
+    X_r = univariate_filter.fit(X, y).transform(X)
+    assert_array_equal(X, X_r)
 
 
 def test_select_fpr_classif():
@@ -261,6 +282,14 @@ def test_select_fwe_classif():
 ##############################################################################
 # Test univariate selection in regression settings
 
+
+def assert_best_scores_kept(score_filter):
+    scores = score_filter.scores_
+    support = score_filter.get_support()
+    assert_array_equal(np.sort(scores[support]),
+                       np.sort(scores)[-support.sum():])
+
+
 def test_select_percentile_regression():
     """
     Test whether the relative univariate feature selection
@@ -272,6 +301,7 @@ def test_select_percentile_regression():
 
     univariate_filter = SelectPercentile(f_regression, percentile=25)
     X_r = univariate_filter.fit(X, y).transform(X)
+    assert_best_scores_kept(univariate_filter)
     X_r2 = GenericUnivariateSelect(
         f_regression, mode='percentile', param=25).fit(X, y).transform(X)
     assert_array_equal(X_r, X_r2)
@@ -282,6 +312,9 @@ def test_select_percentile_regression():
     X_2 = X.copy()
     X_2[:, np.logical_not(support)] = 0
     assert_array_equal(X_2, univariate_filter.inverse_transform(X_r))
+    # Check inverse_transform respects dtype
+    assert_array_equal(X_2.astype(bool),
+                       univariate_filter.inverse_transform(X_r.astype(bool)))
 
 
 def test_select_percentile_regression_full():
@@ -294,6 +327,7 @@ def test_select_percentile_regression_full():
 
     univariate_filter = SelectPercentile(f_regression, percentile=100)
     X_r = univariate_filter.fit(X, y).transform(X)
+    assert_best_scores_kept(univariate_filter)
     X_r2 = GenericUnivariateSelect(
         f_regression, mode='percentile', param=100).fit(X, y).transform(X)
     assert_array_equal(X_r, X_r2)
@@ -317,6 +351,7 @@ def test_select_kbest_regression():
 
     univariate_filter = SelectKBest(f_regression, k=5)
     X_r = univariate_filter.fit(X, y).transform(X)
+    assert_best_scores_kept(univariate_filter)
     X_r2 = GenericUnivariateSelect(
         f_regression, mode='k_best', param=5).fit(X, y).transform(X)
     assert_array_equal(X_r, X_r2)
@@ -393,28 +428,39 @@ def test_selectkbest_tiebreaking():
 
     Prior to 0.11, SelectKBest would return more features than requested.
     """
-    X = [[1, 0, 0], [0, 1, 1]]
-    y = [0, 1]
-    with warnings.catch_warnings(record=True):
-        X1 = SelectKBest(chi2, k=1).fit_transform(X, y)
-        assert_equal(X1.shape[1], 1)
+    Xs = [[0, 1, 1], [0, 0, 1], [1, 0, 0], [1, 1, 0]]
+    y = [1]
+    dummy_score = lambda X, y: (X[0], X[0])
+    for X in Xs:
+        with warnings.catch_warnings(record=True):
+            sel = SelectKBest(dummy_score, k=1)
+            X1 = sel.fit_transform([X], y)
+            assert_equal(X1.shape[1], 1)
+            assert_best_scores_kept(sel)
 
-        X2 = SelectKBest(chi2, k=2).fit_transform(X, y)
-        assert_equal(X2.shape[1], 2)
+            sel = SelectKBest(dummy_score, k=2)
+            X2 = sel.fit_transform([X], y)
+            assert_equal(X2.shape[1], 2)
+            assert_best_scores_kept(sel)
 
 
 def test_selectpercentile_tiebreaking():
     """Test if SelectPercentile selects the right n_features in case of ties.
     """
-    X = [[1, 0, 0], [0, 1, 1]]
-    y = [0, 1]
+    Xs = [[0, 1, 1], [0, 0, 1], [1, 0, 0], [1, 1, 0]]
+    y = [1]
+    dummy_score = lambda X, y: (X[0], X[0])
+    for X in Xs:
+        with warnings.catch_warnings(record=True):
+            sel = SelectPercentile(dummy_score, percentile=34)
+            X1 = sel.fit_transform([X], y)
+            assert_equal(X1.shape[1], 1)
+            assert_best_scores_kept(sel)
 
-    with warnings.catch_warnings(record=True):
-        X1 = SelectPercentile(chi2, percentile=34).fit_transform(X, y)
-        assert_equal(X1.shape[1], 1)
-
-        X2 = SelectPercentile(chi2, percentile=67).fit_transform(X, y)
-        assert_equal(X2.shape[1], 2)
+            sel = SelectPercentile(dummy_score, percentile=67)
+            X2 = sel.fit_transform([X], y)
+            assert_equal(X2.shape[1], 2)
+            assert_best_scores_kept(sel)
 
 
 def test_tied_pvalues():

@@ -108,7 +108,7 @@ I see mainly two big problems:
           we want to avoid loading all the data in memory ? Can we use memory
           mapped arrays ?
         - Missing data: I thought about subclassing both record arrays and
-          masked arrays classes, but I don't know if this is feasable, or even
+          masked arrays classes, but I don't know if this is feasible, or even
           makes sense. I have the feeling that some Data mining software use
           Nan (for example, weka seems to use float internally), but this
           prevents them from representing integer data.

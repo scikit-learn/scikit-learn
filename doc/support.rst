@@ -27,7 +27,7 @@ User questions
   the `[scikit-learn] <http://stackoverflow.com/questions/tagged/scikit-learn>`_
   tag.
 
-- For general theoretical or methodoligocal Machine Learning questions
+- For general theoretical or methodological Machine Learning questions
   `metaoptimize.com/qa <http://metaoptimize.com/qa>`_ is probably a more
   suitable venue.
 
@@ -52,7 +52,7 @@ or continuous variable regression.
 Bug tracker
 ===========
 
-If you think you've encoutered a bug, please report it to the issue tracker:
+If you think you've encountered a bug, please report it to the issue tracker:
 
 https://github.com/scikit-learn/scikit-learn/issues
 

@@ -13,7 +13,7 @@ machine-learning as a versatile tool for science and engineering.
 See http://scikit-learn.org for complete documentation.
 """
 import sys
-__version__ = '0.13.1'
+__version__ = '0.14a1'
 
 try:
     # This variable is injected in the __builtins__ by the build
@@ -69,8 +69,9 @@ else:
                'feature_selection', 'semi_supervised',
                'gaussian_process', 'grid_search', 'hmm', 'lda', 'linear_model',
                'metrics', 'mixture', 'naive_bayes', 'neighbors', 'pipeline',
-               'preprocessing', 'qda', 'svm', 'test', 'clone', 'pls',
-               'isotonic']
+               'preprocessing', 'qda', 'svm', 'test', 'clone',
+               'cross_decomposition',
+               'isotonic', 'pls']
 
 
 def setup_module(module):

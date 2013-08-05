@@ -1,25 +1,25 @@
 # Author: Lars Buitinck <L.J.Buitinck@uva.nl>
-# License: BSD-style.
+# License: BSD 3 clause
 
 from array import array
-from collections import Mapping, Sequence
+from collections import Mapping
 from operator import itemgetter
 
 import numpy as np
 import scipy.sparse as sp
 
 from ..base import BaseEstimator, TransformerMixin
-from ..utils import atleast2d_or_csr
+from ..externals import six
+from ..externals.six.moves import xrange
+from ..utils import atleast2d_or_csr, tosequence
 
 
 def _tosequence(X):
     """Turn X into a sequence or ndarray, avoiding a copy if possible."""
-    if isinstance(X, Mapping):
+    if isinstance(X, Mapping):  # single sample
         return [X]
-    elif isinstance(X, (Sequence, np.ndarray)):
-        return X
     else:
-        return list(X)
+        return tosequence(X)
 
 
 class DictVectorizer(BaseEstimator, TransformerMixin):
@@ -50,6 +50,15 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         Whether transform should produce scipy.sparse matrices.
         True by default.
 
+    Attributes
+    ----------
+    `feature_names_` : list
+        A list of length n_features containing the feature names (e.g., "f=ham"
+        and "f=spam").
+
+    `vocabulary_` : dict
+        A dictionary mapping feature names to feature indices.
+
     Examples
     --------
     >>> from sklearn.feature_extraction import DictVectorizer
@@ -64,6 +73,13 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
     True
     >>> v.transform({'foo': 4, 'unseen_feature': 3})
     array([[ 0.,  0.,  4.]])
+
+    See also
+    --------
+    DictVectorizer : performs vectorization in a similar as this class,
+      but using a hash table instead of only a hash function.
+    sklearn.preprocessing.OneHotEncoder : handles nominal/categorical features
+      encoded as columns of integers.
     """
 
     def __init__(self, dtype=np.float64, separator="=", sparse=True):
@@ -85,13 +101,11 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         -------
         self
         """
-        X = _tosequence(X)
-
         # collect all the possible feature names
         feature_names = set()
         for x in X:
-            for f, v in x.iteritems():
-                if isinstance(v, basestring):
+            for f, v in six.iteritems(x):
+                if isinstance(v, six.string_types):
                     f = "%s%s%s" % (f, self.separator, v)
                 feature_names.add(f)
 
@@ -118,6 +132,11 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         -------
         Xa : {array, sparse matrix}
             Feature vectors; always 2-d.
+
+        Notes
+        -----
+        Because this method requires two passes over X, it materializes X in
+        memory.
         """
         X = _tosequence(X)
         self.fit(X)
@@ -147,21 +166,21 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
             Feature mappings for the samples in X.
         """
         X = atleast2d_or_csr(X)     # COO matrix is not subscriptable
+        n_samples = X.shape[0]
 
         names = self.feature_names_
-        Xd = [dict_type() for _ in xrange(X.shape[0])]
+        dicts = [dict_type() for _ in xrange(n_samples)]
 
         if sp.issparse(X):
             for i, j in zip(*X.nonzero()):
-                Xd[i][names[j]] = X[i, j]
+                dicts[i][names[j]] = X[i, j]
         else:
-            for i in xrange(X.shape[0]):
-                d = Xd[i]
+            for i, d in enumerate(dicts):
                 for j, v in enumerate(X[i, :]):
                     if v != 0:
                         d[names[j]] = X[i, j]
 
-        return Xd
+        return dicts
 
     def transform(self, X, y=None):
         """Transform feature->value dicts to array or sparse matrix.
@@ -203,8 +222,8 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
             values = []
 
             for x in X:
-                for f, v in x.iteritems():
-                    if isinstance(v, basestring):
+                for f, v in six.iteritems(x):
+                    if isinstance(v, six.string_types):
                         f = "%s%s%s" % (f, self.separator, v)
                         v = 1
                     try:
@@ -215,8 +234,14 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
 
                 indptr.append(len(indices))
 
-            indices = np.frombuffer(indices, dtype=np.int32)
-            indptr = np.frombuffer(indptr, dtype=np.int32)
+            if len(indptr) == 0:
+                raise ValueError("Sample sequence X is empty.")
+
+            if len(indices) > 0:
+                # workaround for bug in older NumPy:
+                # http://projects.scipy.org/numpy/ticket/1943
+                indices = np.frombuffer(indices, dtype=np.intc)
+            indptr = np.frombuffer(indptr, dtype=np.intc)
             shape = (len(indptr) - 1, len(vocab))
             return sp.csr_matrix((values, indices, indptr),
                                  shape=shape, dtype=dtype)
@@ -226,8 +251,8 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
             Xa = np.zeros((len(X), len(vocab)), dtype=dtype)
 
             for i, x in enumerate(X):
-                for f, v in x.iteritems():
-                    if isinstance(v, basestring):
+                for f, v in six.iteritems(x):
+                    if isinstance(v, six.string_types):
                         f = "%s%s%s" % (f, self.separator, v)
                         v = 1
                     try:
@@ -265,7 +290,7 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
             new_vocab[names[i]] = len(new_vocab)
 
         self.vocabulary_ = new_vocab
-        self.feature_names_ = [f for f, i in sorted(new_vocab.iteritems(),
+        self.feature_names_ = [f for f, i in sorted(six.iteritems(new_vocab),
                                                     key=itemgetter(1))]
 
         return self

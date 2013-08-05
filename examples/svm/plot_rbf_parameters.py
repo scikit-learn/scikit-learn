@@ -19,7 +19,7 @@ decision function for a variety of parameter values, and the second
 is a heatmap of the classifier's cross-validation accuracy as
 a function of `C` and `gamma`.
 '''
-print __doc__
+print(__doc__)
 
 import numpy as np
 import pylab as pl

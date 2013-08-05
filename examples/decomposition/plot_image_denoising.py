@@ -4,7 +4,8 @@ Image denoising using dictionary learning
 =========================================
 
 An example comparing the effect of reconstructing noisy fragments
-of Lena using online :ref:`DictionaryLearning` and various transform methods.
+of the Lena image using firstly online :ref:`DictionaryLearning` and
+various transform methods.
 
 The dictionary is fitted on the distorted left half of the image, and
 subsequently used to reconstruct the right half. Note that even better
@@ -30,7 +31,7 @@ for other tasks such as object classification, where performance is not
 necessarily related to visualisation.
 
 """
-print __doc__
+print(__doc__)
 
 from time import time
 
@@ -54,29 +55,29 @@ lena /= 4.0
 height, width = lena.shape
 
 # Distort the right half of the image
-print 'Distorting image...'
+print('Distorting image...')
 distorted = lena.copy()
 distorted[:, height / 2:] += 0.075 * np.random.randn(width, height / 2)
 
 # Extract all reference patches from the left half of the image
-print 'Extracting reference patches...'
+print('Extracting reference patches...')
 t0 = time()
 patch_size = (7, 7)
 data = extract_patches_2d(distorted[:, :height / 2], patch_size)
 data = data.reshape(data.shape[0], -1)
 data -= np.mean(data, axis=0)
 data /= np.std(data, axis=0)
-print 'done in %.2fs.' % (time() - t0)
+print('done in %.2fs.' % (time() - t0))
 
 ###############################################################################
 # Learn the dictionary from reference patches
 
-print 'Learning the dictionary... '
+print('Learning the dictionary...')
 t0 = time()
 dico = MiniBatchDictionaryLearning(n_components=100, alpha=1, n_iter=500)
 V = dico.fit(data).components_
 dt = time() - t0
-print 'done in %.2fs.' % dt
+print('done in %.2fs.' % dt)
 
 pl.figure(figsize=(4.2, 4))
 for i, comp in enumerate(V[:100]):
@@ -118,13 +119,13 @@ show_with_diff(distorted, lena, 'Distorted image')
 ###############################################################################
 # Extract noisy patches and reconstruct them using the dictionary
 
-print 'Extracting noisy patches... '
+print('Extracting noisy patches... ')
 t0 = time()
 data = extract_patches_2d(distorted[:, height / 2:], patch_size)
 data = data.reshape(data.shape[0], -1)
 intercept = np.mean(data, axis=0)
 data -= intercept
-print 'done in %.2fs.' % (time() - t0)
+print('done in %.2fs.' % (time() - t0))
 
 transform_algorithms = [
     ('Orthogonal Matching Pursuit\n1 atom', 'omp',
@@ -137,7 +138,7 @@ transform_algorithms = [
 
 reconstructions = {}
 for title, transform_algorithm, kwargs in transform_algorithms:
-    print title, '... '
+    print(title + '...')
     reconstructions[title] = lena.copy()
     t0 = time()
     dico.set_params(transform_algorithm=transform_algorithm, **kwargs)
@@ -156,7 +157,7 @@ for title, transform_algorithm, kwargs in transform_algorithms:
     reconstructions[title][:, height / 2:] = reconstruct_from_patches_2d(
         patches, (width, height / 2))
     dt = time() - t0
-    print 'done in %.2fs.' % dt
+    print('done in %.2fs.' % dt)
     show_with_diff(reconstructions[title], lena,
                    title + ' (time: %.1fs)' % dt)
 

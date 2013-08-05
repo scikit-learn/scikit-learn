@@ -10,10 +10,10 @@ well as L1 and L2 penalized logistic regression.
 The logistic regression is not a multiclass classifier out of the box. As
 a result it can identify only the first class.
 """
-print __doc__
+print(__doc__)
 
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-# License: BSD Style.
+# License: BSD 3 clause
 
 import pylab as pl
 import numpy as np
@@ -34,7 +34,8 @@ C = 1.0
 # multiclass out of the box.
 classifiers = {'L1 logistic': LogisticRegression(C=C, penalty='l1'),
                'L2 logistic': LogisticRegression(C=C, penalty='l2'),
-               'Linear SVC': SVC(kernel='linear', C=C, probability=True)}
+               'Linear SVC': SVC(kernel='linear', C=C, probability=True,
+                                 random_state=0)}
 
 n_classifiers = len(classifiers)
 

@@ -86,12 +86,12 @@ L1-based feature selection
 Selecting non-zero coefficients
 ---------------------------------
 
-:ref:`Linear models <linear_model>` penalized with the L1 norm have 
+:ref:`Linear models <linear_model>` penalized with the L1 norm have
 sparse solutions: many of their estimated coefficients are zero. When the goal
-is to reduce the dimensionality of the data to use with another classifier, 
+is to reduce the dimensionality of the data to use with another classifier,
 they expose a `transform` method to select the non-zero coefficient. In
 particular, sparse estimators useful for this purpose are the
-:class:`linear_model.Lasso` for regression, and 
+:class:`linear_model.Lasso` for regression, and
 of :class:`linear_model.LogisticRegression` and :class:`svm.LinearSVC`
 for classification::
 
@@ -105,7 +105,7 @@ for classification::
   >>> X_new.shape
   (150, 3)
 
-With SVMs and logistic-regression, the parameter C controls the sparsity: 
+With SVMs and logistic-regression, the parameter C controls the sparsity:
 the smaller C the fewer features selected. With Lasso, the higher the
 alpha parameter, the fewer features selected.
 
@@ -121,7 +121,7 @@ alpha parameter, the fewer features selected.
 
    For a good choice of alpha, the :ref:`lasso` can fully recover the
    exact set of non-zero variables using only few observations, provided
-   certain specific conditions are met. In paraticular, the number of
+   certain specific conditions are met. In particular, the number of
    samples should be "sufficiently large", or L1 models will perform at
    random, where "sufficiently large" depends on the number of non-zero
    coefficients, the logarithm of the number of features, the amount of
@@ -139,7 +139,7 @@ alpha parameter, the fewer features selected.
 
    **Reference** Richard G. Baraniuk `Compressive Sensing`, IEEE Signal
    Processing Magazine [120] July 2007
-   http://dsp.rice.edu/files/cs/baraniukCSlecture07.pdf 
+   http://dsp.rice.edu/files/cs/baraniukCSlecture07.pdf
 
 .. _randomized_l1:
 
@@ -167,7 +167,7 @@ path of stability scores you can use :func:`lasso_stability_path`.
 Note that for randomized sparse models to be more powerful than standard
 F statistics at detecting non-zero features, the ground truth model
 should be sparse, in other words, there should be only a small fraction
-of features non zero. 
+of features non zero.
 
 .. topic:: Examples:
 
@@ -177,7 +177,7 @@ of features non zero.
 
 .. topic:: References:
 
-   * N. Meinshausen, P. Buhlmann, "Stability selection", 
+   * N. Meinshausen, P. Buhlmann, "Stability selection",
      Journal of the Royal Statistical Society, 72 (2010)
      http://arxiv.org/pdf/0809.2932
 
@@ -198,9 +198,11 @@ features::
   >>> X, y = iris.data, iris.target
   >>> X.shape
   (150, 4)
-  >>> clf = ExtraTreesClassifier(compute_importances=True, random_state=0)
+  >>> clf = ExtraTreesClassifier()
   >>> X_new = clf.fit(X, y).transform(X)
-  >>> X_new.shape
+  >>> clf.feature_importances_  # doctest: +SKIP
+  array([ 0.04...,  0.05...,  0.4...,  0.4...])
+  >>> X_new.shape               # doctest: +SKIP
   (150, 2)
 
 .. topic:: Examples:
@@ -212,4 +214,23 @@ features::
     * :ref:`example_ensemble_plot_forest_importances_faces.py`: example
       on face recognition data.
 
+Feature selection as part of a pipeline
+=======================================
 
+Feature selection is usually used as a pre-processing step before doing 
+the actual learning. The recommended way to do this in scikit-learn is
+to use a :class:`sklearn.pipeline.Pipeline`::
+
+  clf = Pipeline([
+    ('feature_selection', LinearSVC(penalty="l1")),
+    ('classification', RandomForestClassifier())
+  ])
+  clf.fit(X, y)
+
+In this snippet we make use of a :class:`sklearn.svm.LinearSVC` 
+to evaluate feature importances and select the most relevant features.
+Then, a class:`sklearn.ensemble.GradientBoostingClassifier` is trained on the 
+transformed output, i.e. using only relevant features. You can perform 
+similar operations with the other feature selection methods and also
+classifiers that provide a way to evaluate feature importances of course. 
+See the :class:`sklearn.pipeline.Pipeline` examples for more details.

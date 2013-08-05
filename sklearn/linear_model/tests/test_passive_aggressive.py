@@ -3,7 +3,7 @@ import scipy.sparse as sp
 
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_greater
-from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_array_almost_equal, assert_array_equal
 from sklearn.utils.testing import assert_raises
 
 from sklearn.base import ClassifierMixin
@@ -82,10 +82,19 @@ def test_classifier_partial_fit():
             clf = PassiveAggressiveClassifier(C=1.0,
                                               fit_intercept=True,
                                               random_state=0)
-            for t in xrange(30):
+            for t in range(30):
                 clf.partial_fit(data, y, classes)
             score = clf.score(data, y)
             assert_greater(score, 0.79)
+
+
+def test_classifier_refit():
+    """Classifier can be retrained on different labels and features."""
+    clf = PassiveAggressiveClassifier().fit(X, y)
+    assert_array_equal(clf.classes_, np.unique(y))
+
+    clf.fit(X[:, :-1], iris.target_names[y])
+    assert_array_equal(clf.classes_, iris.target_names)
 
 
 def test_classifier_correctness():
@@ -138,7 +147,7 @@ def test_regressor_partial_fit():
             reg = PassiveAggressiveRegressor(C=1.0,
                                              fit_intercept=True,
                                              random_state=0)
-            for t in xrange(50):
+            for t in range(50):
                 reg.partial_fit(data, y_bin)
             pred = reg.predict(data)
             assert_less(np.mean((pred - y_bin) ** 2), 1.7)

@@ -96,7 +96,7 @@ The chi squared kernel is given by
 
 .. math::
 
-        k(x, y) = exp(-\gamma * \sum_i (x[i] - y[i]) ** 2 / (x[i] + y[i]))
+        k(x, y) = \exp \left (-\gamma \sum_i \frac{(x[i] - y[i]) ^ 2}{x[i] + y[i]} \right )
 
 The data is assumed to be non-negative, and is often normalized to have an L1-norm of one.
 The normalization is rationalized with the connection to the chi squared distance,

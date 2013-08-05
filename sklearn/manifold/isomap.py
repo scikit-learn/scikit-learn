@@ -1,7 +1,7 @@
 """Isomap for manifold learning"""
 
 # Author: Jake Vanderplas  -- <vanderplas@astro.washington.edu>
-# License: BSD, (C) 2011
+# License: BSD 3 clause (C) 2011
 
 import numpy as np
 from ..base import BaseEstimator, TransformerMixin
@@ -139,7 +139,7 @@ class Isomap(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix, BallTree, cKDTree, NearestNeighbors}
+        X : {array-like, sparse matrix, BallTree, KDTree, NearestNeighbors}
             Sample data, shape = (n_samples, n_features), in the form of a
             numpy array, precomputed tree, or NearestNeighbors
             object.
@@ -156,7 +156,7 @@ class Isomap(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X: {array-like, sparse matrix, BallTree, cKDTree}
+        X: {array-like, sparse matrix, BallTree, KDTree}
             Training vector, where n_samples in the number of samples
             and n_features is the number of features.
 

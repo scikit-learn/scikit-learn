@@ -27,11 +27,11 @@ to a normalized variance:  That is
    \mathrm{nugget}_i = \left[\frac{\sigma_i}{y_i}\right]^2
 
 """
-print __doc__
+print(__doc__)
 
 # Author: Vincent Dubourg <vincent.dubourg@gmail.com>
 #         Jake Vanderplas <vanderplas@astro.washington.edu>
-# License: BSD style
+# Licence: BSD 3 clause
 
 import numpy as np
 from sklearn.gaussian_process import GaussianProcess

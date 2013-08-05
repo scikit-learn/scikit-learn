@@ -29,7 +29,7 @@ import numpy as np
 
 from sklearn.datasets import make_circles
 from sklearn.ensemble import RandomTreesEmbedding, ExtraTreesClassifier
-from sklearn.decomposition import RandomizedPCA
+from sklearn.decomposition import TruncatedSVD
 from sklearn.naive_bayes import BernoulliNB
 
 # make a synthetic dataset
@@ -40,7 +40,7 @@ hasher = RandomTreesEmbedding(n_estimators=10, random_state=0, max_depth=3)
 X_transformed = hasher.fit_transform(X)
 
 # Visualize result using PCA
-pca = RandomizedPCA(n_components=2)
+pca = TruncatedSVD(n_components=2)
 X_reduced = pca.fit_transform(X_transformed)
 
 # Learn a Naive Bayes classifier on the transformed data
@@ -69,7 +69,7 @@ ax.set_title("PCA reduction (2d) of transformed data (%dd)" %
 ax.set_xticks(())
 ax.set_yticks(())
 
-# Plot the decision in original space. For that, we will asign a color to each
+# Plot the decision in original space. For that, we will assign a color to each
 # point in the mesh [x_min, m_max] x [y_min, y_max].
 h = .01
 x_min, x_max = X[:, 0].min() - .5, X[:, 0].max() + .5

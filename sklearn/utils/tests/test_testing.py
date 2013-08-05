@@ -1,8 +1,14 @@
+import warnings
+import unittest
+import sys
+
 from nose.tools import assert_raises
 
 from sklearn.utils.testing import (
     _assert_less,
     _assert_greater,
+    assert_warns,
+    assert_no_warnings,
     assert_equal,
     set_random_state,
     assert_raise_message)
@@ -62,3 +68,41 @@ def test_assert_raise_message():
     assert_raises(ValueError,
                   assert_raise_message, TypeError, "something else",
                   _raise_ValueError, "test")
+
+
+# This class is taken from numpy 1.7
+class TestWarns(unittest.TestCase):
+    def test_warn(self):
+        def f():
+            warnings.warn("yo")
+            return 3
+
+        before_filters = sys.modules['warnings'].filters[:]
+        assert_equal(assert_warns(UserWarning, f), 3)
+        after_filters = sys.modules['warnings'].filters
+
+        assert_raises(AssertionError, assert_no_warnings, f)
+        assert_equal(assert_no_warnings(lambda x: x, 1), 1)
+
+        # Check that the warnings state is unchanged
+        assert_equal(before_filters, after_filters,
+                     "assert_warns does not preserver warnings state")
+
+    def test_warn_wrong_warning(self):
+        def f():
+            warnings.warn("yo", DeprecationWarning)
+
+        failed = False
+        filters = sys.modules['warnings'].filters[:]
+        try:
+            try:
+                # Should raise an AssertionError
+                assert_warns(UserWarning, f)
+                failed = True
+            except AssertionError:
+                pass
+        finally:
+            sys.modules['warnings'].filters = filters
+
+        if failed:
+            raise AssertionError("wrong warning caught by assert_warn")
