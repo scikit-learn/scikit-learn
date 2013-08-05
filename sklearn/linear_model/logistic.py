@@ -39,7 +39,7 @@ def _logistic_loss_and_grad(w, X, y, alpha):
     # the logistic loss and its gradient
     z = X.dot(w)
     yz = y * z
-    out = np.empty(yz.shape, yz.dtype)
+    out = np.empty_like(yz)
     idx = yz > 0
     out[idx] = np.log(1 + np.exp(-yz[idx]))
     out[~idx] = (-yz[~idx] + np.log(1 + np.exp(yz[~idx])))
@@ -55,7 +55,7 @@ def _logistic_loss(w, X, y, alpha):
     # the logistic loss and
     z = X.dot(w)
     yz = y * z
-    out = np.empty(yz.shape, yz.dtype)
+    out = np.empty_like(yz)
     idx = yz > 0
     out[idx] = np.log(1 + np.exp(-yz[idx]))
     out[~idx] = (-yz[~idx] + np.log(1 + np.exp(yz[~idx])))
@@ -69,7 +69,7 @@ def _logistic_loss_grad_hess(w, X, y, alpha):
     # Hessian
     z = X.dot(w)
     yz = y * z
-    out = np.empty(yz.shape, yz.dtype)
+    out = np.empty_like(yz)
     idx = yz > 0
     out[idx] = np.log(1 + np.exp(-yz[idx]))
     out[~idx] = (-yz[~idx] + np.log(1 + np.exp(yz[~idx])))
@@ -81,19 +81,17 @@ def _logistic_loss_grad_hess(w, X, y, alpha):
 
     # The mat-vec product of the Hessian
     d = z * (1 - z)
+    d = np.sqrt(d, out=d)
     if sparse.issparse(X):
-        def Hs(s):
-            ret = d * X.dot(s)
-            return X.T.dot(ret) + alpha * s
+        dX = sparse.dia_matrix((d, 0), shape=(d.size, d.size)).dot(X)
     else:
         # Precompute as much as possible
-        d = np.sqrt(d, d)
-        # XXX: how to do this with sparse matrices?
         dX = d[:, np.newaxis] * X
-        def Hs(s):
-            ret = dX.T.dot(dX.dot(s))
-            ret += alpha * s
-            return ret
+
+    def Hs(s):
+        ret = dX.T.dot(dX.dot(s))
+        ret += alpha * s
+        return ret
     #print 'Loss/grad/hess %r, %r' % (out, grad.dot(grad))
     return out, grad, Hs
 
@@ -105,7 +103,7 @@ def _logistic_loss_and_grad_intercept(w_c, X, y, alpha):
     z = X.dot(w)
     z += c
     yz = y * z
-    out = np.empty(yz.shape, yz.dtype)
+    out = np.empty_like(yz)
     idx = yz > 0
     out[idx] = np.log(1 + np.exp(-yz[idx]))
     out[~idx] = (-yz[~idx] + np.log(1 + np.exp(yz[~idx])))
@@ -126,7 +124,7 @@ def _logistic_loss_intercept(w_c, X, y, alpha):
     z = X.dot(w)
     z += c
     yz = y * z
-    out = np.empty(yz.shape, yz.dtype)
+    out = np.empty_like(yz)
     idx = yz > 0
     out[idx] = np.log(1 + np.exp(-yz[idx]))
     out[~idx] = (-yz[~idx] + np.log(1 + np.exp(yz[~idx])))
@@ -143,7 +141,7 @@ def _logistic_loss_grad_hess_intercept(w_c, X, y, alpha):
     z = X.dot(w)
     z += c
     yz = y * z
-    out = np.empty(yz.shape, yz.dtype)
+    out = np.empty_like(yz)
     idx = yz > 0
     out[idx] = np.log(1 + np.exp(-yz[idx]))
     out[~idx] = (-yz[~idx] + np.log(1 + np.exp(yz[~idx])))
@@ -157,26 +155,20 @@ def _logistic_loss_grad_hess_intercept(w_c, X, y, alpha):
     grad[-1] = z0_sum
     # The mat-vec product of the Hessian
     d = z * (1 - z)
+    d = np.sqrt(d, out=d)
     if sparse.issparse(X):
-        def Hs(s):
-            ret = np.empty_like(s)
-            ret[:-1] = d * X.dot(s[:-1])
-            ret[:-1] += X.T.dot(ret[:-1]) + alpha * s
-            ret[-1] = z0_sum * s[-1]
-            return
+        dX = sparse.dia_matrix((d, 0), shape=(d.size, d.size)).dot(X)
     else:
         # Precompute as much as possible
-        d = np.sqrt(d, d)
         dX = d[:, np.newaxis] * X
-        #print 'Loss/grad/hess %r, %r' % (out, grad.dot(grad))
-        def Hs(s):
-            ret = np.empty_like(s)
-            ret[:-1] = dX.T.dot(dX.dot(s[:-1]))
-            ret[:-1] += alpha * s[:-1]
-            # XXX: I am not sure that this last line of the Hessian is right
-            # Without the intercept the Hessian is right, though
-            ret[-1] = z0_sum * s[-1]
-            return ret
+    def Hs(s):
+        ret = np.empty_like(s)
+        ret[:-1] = dX.T.dot(dX.dot(s[:-1]))
+        ret[:-1] += alpha * s[:-1]
+        # XXX: I am not sure that this last line of the Hessian is right
+        # Without the intercept the Hessian is right, though
+        ret[-1] = z0_sum * s[-1]
+        return ret
 
     return out, grad, Hs
 
@@ -494,7 +486,6 @@ class LogisticRegressionCV(BaseEstimator, LinearClassifierMixin,
     LogisticRegression
 
     """
-
 
     def __init__(self, Cs=10, fit_intercept=True, cv=None, scoring=None,
                  solver='newton', tol=1e-4, gtol=1e-4, max_iter=100,
