@@ -112,9 +112,8 @@
         <div class="span6">
             <div class="row-fluid">
                 <div class="offset2 span8"><div id="index_carousel_tn" class="thumbnail">
-		  <a href="{{ pathto('auto_examples/index') }}">
 		    <div id="examples_carousel" class="carousel slide" data-interval="false">
-		      <ol class="carousel-indicators">
+		      <ol id="scikit_learn_index_indicators" class="carousel-indicators">
 			<li data-target="#examples_carousel" data-slide-to="0" class="active"></li>
 			<li data-target="#examples_carousel" data-slide-to="1"></li>
 			<li data-target="#examples_carousel" data-slide-to="2"></li>
@@ -126,17 +125,42 @@
 		      </ol>
 		      <!-- Carousel items -->
 		      <div class="carousel-inner">
-			<div class="active item"><img src="_static/banner_example1.png" alt></div>
-			<div class="item"><img src="_static/banner_example2.png" alt></div>
-			<div class="item"><img src="_static/banner_example3.png" alt></div>
-			<div class="item"><img src="_static/banner_example4.png" alt></div>
-			<div class="item"><img src="_static/banner_example5.png" alt></div>
-			<div class="item"><img src="_static/banner_example6.png" alt></div>
-			<div class="item"><img src="_static/banner_example7.png" alt></div>
-			<div class="item"><img src="_static/banner_example8.png" alt></div>
+
+			  <div class="active item">
+			    <a href="{{ pathto('auto_examples/plot_classifier_comparison') }}">
+			      <img src="_static/banner_example1.png"></a>
+			  </div>
+			  <div class="item">
+			    <a href="{{ pathto('auto_examples/cluster/plot_lena_ward_segmentation') }}">
+			      <img src="_static/banner_example2.png"></a>
+			  </div>
+			  <div class="item">
+			    <a href="{{ pathto('auto_examples/svm/plot_oneclass') }}">
+			      <img src="_static/banner_example3.png"></a>
+			  </div>
+			  <div class="item">
+			    <a href="{{ pathto('auto_examples/applications/plot_species_distribution_modeling') }}">
+			      <img src="_static/banner_example4.png"></a>
+			  </div>
+			  <div class="item">
+			    <a href="{{ pathto('auto_examples/decomposition/plot_faces_decomposition') }}">
+			      <img src="_static/banner_example5.png"></a>
+			  </div>
+			  <div class="item">
+			    <a href="{{ pathto('auto_examples/cluster/plot_kmeans_digits') }}">
+			      <img src="_static/banner_example6.png"></a>
+			  </div>
+			  <div class="item">
+			    <a href="{{ pathto('auto_examples/cluster/plot_cluster_comparison') }}">
+			      <img src="_static/banner_example7.png"></a>
+			  </div>
+			  <div class="item">
+			    <a href="{{ pathto('auto_examples/plot_lda_qda') }}">
+			      <img src="_static/banner_example8.png"></a>
+			  </div>
+
 		      </div>
 		    </div>
-		  </a>
 		</div></div>
             </div>
         </div>
