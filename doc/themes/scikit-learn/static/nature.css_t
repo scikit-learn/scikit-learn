@@ -877,6 +877,21 @@ div#examples_carousel .carousel-indicators li {
     background-color: rgba(52, 147, 235, 0.25);
 }
 
+div#examples_carousel .carousel-control {
+    top: 203px;
+    left: 1px;
+    width: 25px;
+    height: 25px;
+    font-size: 37px;
+    line-height: 19px;
+    background: rgba(28, 140, 245, 0.38);
+}
+
+div#examples_carousel .carousel-control.right {
+    left: auto;
+    right: 2px;
+}
+
 div#intro_to_sklearn_p li {
     line-height: 30px;
 }
