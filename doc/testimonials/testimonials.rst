@@ -85,7 +85,7 @@ Mark Ayzenshtat, VP, Augmented Intelligence
    </span>
 
 `Télécom ParisTech <http://www.telecom-paristech.fr>`_
-------------------------
+--------------------------------------------------------
 
 .. raw:: html
 
@@ -110,6 +110,45 @@ interesting and motivating problems.
    <span class="testimonial-author">
 
 Alexandre Gramfort, Assistant Professor
+
+.. raw:: html
+
+   </span>
+
+
+`AWeber <http://aweber.com/>`_
+------------------------------------------
+
+.. raw:: html
+
+  <div class="logo">
+
+.. image:: images/aweber.png
+   :target: http://aweber.com/
+
+.. raw:: html
+
+  </div>
+
+
+The scikit-learn toolkit is indispensable for the Data Analysis and Management
+team at AWeber.  It allows us to do AWesome stuff we would not otherwise have
+the time or resources to accomplish. The documentation is excellent, allowing
+new engineers to quickly evaluate and apply many different algorithms to our
+data. The text feature extraction utilities are useful when working with the
+large volume of email content we have at AWeber. The RandomizedPCA
+implementation, along with Pipelining and FeatureUnions, allows us to develop
+complex machine learning algorithms efficiently and reliably.
+
+Anyone interested in learning more about how AWeber deploys scikit-learn in a
+production environment should check out talks from PyData Boston by AWeber's
+Michael Becker available at https://github.com/mdbecker/pydata_2013
+
+.. raw:: html
+
+   <span class="testimonial-author">
+
+Michael Becker, Software Engineer, Data Analysis and Management Ninjas
 
 .. raw:: html
 
