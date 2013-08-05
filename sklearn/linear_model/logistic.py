@@ -17,8 +17,10 @@ from scipy import optimize, sparse
 
 from .base import LinearClassifierMixin, SparseCoefMixin, BaseEstimator
 from ..feature_selection.from_model import _LearntSelectorMixin
+from ..preprocessing import LabelEncoder
 from ..svm.base import BaseLibLinear
 from ..utils import as_float_array
+from ..externals.joblib import Parallel, delayed
 from ..cross_validation import check_cv
 from ..utils.optimize import newton_cg
 
@@ -174,7 +176,7 @@ def _logistic_loss_grad_hess_intercept(w_c, X, y, alpha):
 
 def logistic_regression_path(X, y, Cs=10, fit_intercept=True,
                              max_iter=100, gtol=1e-4, verbose=0,
-                             method='trust-ncg', callback=None):
+                             method='liblinear', callback=None):
     """
     Compute a Logistic Regression model for a list of regularization
     parameters.
@@ -277,8 +279,8 @@ def logistic_regression_path(X, y, Cs=10, fit_intercept=True,
             else:
                 w0 = lr.coef_.ravel()
         else:
-            raise ValueError("method must be one of {'trust-ncg', 'lbfgs', "
-                             "'newton-cg'}")
+            raise ValueError("method must be one of {'liblinear', 'lbfgs', "
+                             "'newton-cg'}, got '%s' instead" % method)
         if callback is not None:
             callback(w0, X, y, 1. / C)
         coefs.append(w0)
@@ -289,16 +291,16 @@ def logistic_regression_path(X, y, Cs=10, fit_intercept=True,
 def _log_reg_scoring_path(X, y, train, test, Cs=10, scoring=None,
                           fit_intercept=False,
                           max_iter=100, gtol=1e-4,
-                          tol=1e-4, verbose=0):
+                          tol=1e-4, verbose=0, method='liblinear'):
     log_reg = LogisticRegression(fit_intercept=fit_intercept)
     log_reg._enc = LabelEncoder()
     log_reg._enc.fit_transform([-1, 1])
 
     coefs, Cs = logistic_regression_path(X[train], y[train], Cs=Cs,
                                          fit_intercept=fit_intercept,
-                                         solver=solver,
+                                         method=method,
                                          max_iter=max_iter,
-                                         gtol=gtol, tol=tol, verbose=verbose)
+                                         gtol=gtol, verbose=verbose)
     scores = list()
     X_test = X[test]
     y_test = y[test]
@@ -488,7 +490,7 @@ class LogisticRegressionCV(BaseEstimator, LinearClassifierMixin,
     """
 
     def __init__(self, Cs=10, fit_intercept=True, cv=None, scoring=None,
-                 solver='newton', tol=1e-4, gtol=1e-4, max_iter=100,
+                 solver='newton-cg', tol=1e-4, gtol=1e-4, max_iter=100,
                  n_jobs=1, verbose=False):
         self.Cs = Cs
         self.fit_intercept = fit_intercept
@@ -519,6 +521,7 @@ class LogisticRegressionCV(BaseEstimator, LinearClassifierMixin,
             Returns self.
         """
         self._enc = LabelEncoder()
+        X = as_float_array(X, copy=False)
         y = self._enc.fit_transform(y)
         if len(self.classes_) != 2:
             raise ValueError("LogisticRegressionCV works only on 2 "
@@ -542,7 +545,7 @@ class LogisticRegressionCV(BaseEstimator, LinearClassifierMixin,
                             delayed(_log_reg_scoring_path)(X, y, train, test,
                                         Cs=self.Cs,
                                         fit_intercept=self.fit_intercept,
-                                        solver=self.solver,
+                                        method=self.solver,
                                         max_iter=self.max_iter,
                                         gtol=self.gtol, tol=self.tol,
                                         verbose=max(0, self.verbose - 1),
@@ -560,9 +563,9 @@ class LogisticRegressionCV(BaseEstimator, LinearClassifierMixin,
         w = logistic_regression_path(X, y, C=[self.C_],
                                 fit_intercept=self.fit_intercept,
                                 w0=coef_init,
-                                solver=self.solver,
+                                method=self.solver,
                                 max_iter=self.max_iter,
-                                gtol=self.gtol, tol=self.tol,
+                                gtol=self.gtol,
                                 verbose=max(0, self.verbose-1),
                                )
         w = w[0]

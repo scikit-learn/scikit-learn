@@ -272,3 +272,14 @@ def test__logistic_loss_grad_hess():
                                                     X, y, alpha=1.)
         assert_array_almost_equal(loss_interp, loss_interp_2)
         assert_array_almost_equal(grad_interp, grad_interp_2)
+
+def test_logistic_cv():
+    # test for LogisticRegressionCV object
+    n_samples, n_features = 100, 5
+    X_ref = np.random.randn(n_samples, n_features)
+    y = np.sign(X_ref.dot(5 * np.random.randn(n_features)))
+    X_ref -= X_ref.mean()
+    X_ref /= X_ref.std()
+    lr_cv = logistic.LogisticRegressionCV()
+    lr_cv.fit(X_ref, y)
+    # TODO: do something
