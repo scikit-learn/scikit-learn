@@ -865,8 +865,8 @@ div#examples_carousel img {
 
 div#examples_carousel .carousel-indicators {
     position: absolute;
-    top: 217px;
-    right: 30%;
+    top: 200px;
+    right: 17%; # Should be adjusted as the number of elements grows
 }
 
 div#examples_carousel .carousel-indicators .active {
@@ -882,9 +882,11 @@ div#intro_to_sklearn_p li {
 }
 
 div#index_carousel_tn {
-    height: 226px;
+    height: 216px;
     width: 380px;
+    max-width: 130%;
     background: white;
+    padding: 0px;
 }
 
 p.doc-version {
