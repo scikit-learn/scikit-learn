@@ -293,21 +293,27 @@
             </div>
 
             <!-- who using -->
-            <!--
             <div class="span4">
                 <h4>Who is using scikit-learn?</h4>
 
                 </h4>
                 <div id="myCarousel" class="carousel slide">
                     <div class="carousel-inner">
-                        <div class="active item"><img src="_images/inria.jpg" class="thumbnail" /><br /> <em>-- Great stuff!</em></div>
-                        <div class="item"><img src="_static/img/google.png" class="thumbnail" /><br /> <em>-- So good!</em></div>
+                        <div class="active item">
+                          <img src="_images/inria.jpg" class="thumbnail" /><br />
+                        <div class="item">
+                          <img src="_images/evernote.png" class="thumbnail" /><br />
+                        <div class="item">
+                          <img src="_images/telecomparistech.jpg" class="thumbnail" /><br />
+                        </div>
+                        <div class="item">
+                          <img src="_images/aweber.png" class="thumbnail" /><br />
+                        </div>
                     </div>
                     <div style="margin-top: 5px"><a href="#">More testimonials</a></div>
                 </div>
                 <script>$('#myCarousel').carousel()</script>
             </div>
-            -->
 
         </div>
     </div>
