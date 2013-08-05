@@ -1,5 +1,5 @@
 # Copyright (c) 2010 Olivier Grisel <olivier.grisel@ensta.org>
-# License: Simplified BSD
+# License: BSD 3 clause
 """Glue code to load http://mlcomp.org data as a scikit.learn dataset"""
 
 import os
@@ -28,7 +28,7 @@ def load_mlcomp(name_or_id, set_="raw", mlcomp_root=None, **kwargs):
     name_or_id : the integer id or the string name metadata of the MLComp
                  dataset to load
 
-    set_ : select the portion to load: 'train', 'test' or 'raw'
+    `set_` : select the portion to load: 'train', 'test' or 'raw'
 
     mlcomp_root : the filesystem path to the root folder where MLComp datasets
                   are stored, if mlcomp_root is None, the MLCOMP_DATASETS_HOME

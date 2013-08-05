@@ -2237,7 +2237,7 @@ static void train_one(const problem *prob, const parameter *param, double *w, do
 			tron_obj.set_print_string(liblinear_print_string);
 			tron_obj.tron(w);
 			delete fun_obj;
-			delete C;
+			delete [] C;
 			break;
 		}
 		case L2R_L2LOSS_SVC:
@@ -2255,7 +2255,7 @@ static void train_one(const problem *prob, const parameter *param, double *w, do
 			tron_obj.set_print_string(liblinear_print_string);
 			tron_obj.tron(w);
 			delete fun_obj;
-			delete C;
+			delete [] C;
 			break;
 		}
 		case L2R_L2LOSS_SVC_DUAL:
@@ -2300,7 +2300,7 @@ static void train_one(const problem *prob, const parameter *param, double *w, do
 			tron_obj.set_print_string(liblinear_print_string);
 			tron_obj.tron(w);
 			delete fun_obj;
-			delete C;
+			delete [] C;
 			break;
 
 		}

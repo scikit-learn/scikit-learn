@@ -6,7 +6,7 @@ Precision-Recall
 Example of Precision-Recall metric to evaluate the quality
 of the output of a classifier.
 """
-print __doc__
+print(__doc__)
 
 import random
 import pylab as pl
@@ -32,13 +32,13 @@ np.random.seed(0)
 X = np.c_[X, np.random.randn(n_samples, 200 * n_features)]
 
 # Run classifier
-classifier = svm.SVC(kernel='linear', probability=True)
+classifier = svm.SVC(kernel='linear', probability=True, random_state=0)
 probas_ = classifier.fit(X[:half], y[:half]).predict_proba(X[half:])
 
 # Compute Precision-Recall and plot curve
 precision, recall, thresholds = precision_recall_curve(y[half:], probas_[:, 1])
 area = auc(recall, precision)
-print "Area Under Curve: %0.2f" % area
+print("Area Under Curve: %0.2f" % area)
 
 pl.clf()
 pl.plot(recall, precision, label='Precision-Recall curve')

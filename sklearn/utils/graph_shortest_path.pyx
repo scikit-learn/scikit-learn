@@ -7,7 +7,7 @@ the Floyd-Warshall algorithm, or Dykstra's algorithm with Fibonacci Heaps.
 """
 
 # Author: Jake Vanderplas  -- <vanderplas@astro.washington.edu>
-# License: BSD, (C) 2011
+# License: BSD 3 clause, (C) 2011
 
 import numpy as np
 cimport numpy as np

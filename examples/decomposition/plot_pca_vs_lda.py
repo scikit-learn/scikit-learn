@@ -14,9 +14,9 @@ plot the different samples on the 2 first principal components.
 
 Linear Discriminant Analysis (LDA) tries to identify attributes that
 account for the most variance *between classes*. In particular,
-LDA, in constrast to PCA, is a supervised method, using known class labels.
+LDA, in contrast to PCA, is a supervised method, using known class labels.
 """
-print __doc__
+print(__doc__)
 
 import pylab as pl
 
@@ -37,8 +37,8 @@ lda = LDA(n_components=2)
 X_r2 = lda.fit(X, y).transform(X)
 
 # Percentage of variance explained for each components
-print 'explained variance ratio (first two components):', \
-    pca.explained_variance_ratio_
+print('explained variance ratio (first two components): %s'
+      % str(pca.explained_variance_ratio_))
 
 pl.figure()
 for c, i, target_name in zip("rgb", [0, 1, 2], target_names):

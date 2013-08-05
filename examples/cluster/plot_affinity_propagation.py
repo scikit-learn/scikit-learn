@@ -8,7 +8,7 @@ Brendan J. Frey and Delbert Dueck, "Clustering by Passing Messages
 Between Data Points", Science Feb. 2007
 
 """
-print __doc__
+print(__doc__)
 
 from sklearn.cluster import AffinityPropagation
 from sklearn import metrics
@@ -28,16 +28,16 @@ labels = af.labels_
 
 n_clusters_ = len(cluster_centers_indices)
 
-print 'Estimated number of clusters: %d' % n_clusters_
-print "Homogeneity: %0.3f" % metrics.homogeneity_score(labels_true, labels)
-print "Completeness: %0.3f" % metrics.completeness_score(labels_true, labels)
-print "V-measure: %0.3f" % metrics.v_measure_score(labels_true, labels)
-print "Adjusted Rand Index: %0.3f" % \
-    metrics.adjusted_rand_score(labels_true, labels)
-print("Adjusted Mutual Information: %0.3f" %
-      metrics.adjusted_mutual_info_score(labels_true, labels))
-print("Silhouette Coefficient: %0.3f" %
-      metrics.silhouette_score(X, labels, metric='sqeuclidean'))
+print('Estimated number of clusters: %d' % n_clusters_)
+print("Homogeneity: %0.3f" % metrics.homogeneity_score(labels_true, labels))
+print("Completeness: %0.3f" % metrics.completeness_score(labels_true, labels))
+print("V-measure: %0.3f" % metrics.v_measure_score(labels_true, labels))
+print("Adjusted Rand Index: %0.3f"
+      % metrics.adjusted_rand_score(labels_true, labels))
+print("Adjusted Mutual Information: %0.3f"
+      % metrics.adjusted_mutual_info_score(labels_true, labels))
+print("Silhouette Coefficient: %0.3f"
+      % metrics.silhouette_score(X, labels, metric='sqeuclidean'))
 
 ##############################################################################
 # Plot result

@@ -2,6 +2,8 @@
 Benchmarks of Non-Negative Matrix Factorization
 """
 
+from __future__ import print_function
+
 import gc
 from time import time
 import numpy as np
@@ -9,6 +11,7 @@ from collections import defaultdict
 
 from sklearn.decomposition.nmf import NMF, _initialize_nmf
 from sklearn.datasets.samples_generator import make_low_rank_matrix
+from sklearn.externals.six.moves import xrange
 
 
 def alt_nnmf(V, r, max_iter=1000, tol=1e-3, R=None):
@@ -49,7 +52,7 @@ def alt_nnmf(V, r, max_iter=1000, tol=1e-3, R=None):
     n, m = V.shape
     if R == "svd":
         W, H = _initialize_nmf(V, r)
-    elif R == None:
+    elif R is None:
         R = np.random.mtrand._rand
         W = np.abs(R.standard_normal((n, r)))
         H = np.abs(R.standard_normal((r, m)))
@@ -75,65 +78,66 @@ def compute_bench(samples_range, features_range, rank=50, tolerance=1e-7):
     for n_samples in samples_range:
         for n_features in features_range:
             it += 1
-            print '===================='
-            print 'Iteration %03d of %03d' % (it, max_it)
-            print '===================='
+            print('====================')
+            print('Iteration %03d of %03d' % (it, max_it))
+            print('====================')
             X = np.abs(make_low_rank_matrix(n_samples, n_features,
                        effective_rank=rank,  tail_strength=0.2))
 
             gc.collect()
-            print "benching nndsvd-nmf: "
+            print("benchmarking nndsvd-nmf: ")
             tstart = time()
             m = NMF(n_components=30, tol=tolerance, init='nndsvd').fit(X)
             tend = time() - tstart
             timeset['nndsvd-nmf'].append(tend)
             err['nndsvd-nmf'].append(m.reconstruction_err_)
-            print m.reconstruction_err_, tend
+            print(m.reconstruction_err_, tend)
 
             gc.collect()
-            print "benching nndsvda-nmf: "
+            print("benchmarking nndsvda-nmf: ")
             tstart = time()
             m = NMF(n_components=30, init='nndsvda',
                     tol=tolerance).fit(X)
             tend = time() - tstart
             timeset['nndsvda-nmf'].append(tend)
             err['nndsvda-nmf'].append(m.reconstruction_err_)
-            print m.reconstruction_err_, tend
+            print(m.reconstruction_err_, tend)
 
             gc.collect()
-            print "benching nndsvdar-nmf: "
+            print("benchmarking nndsvdar-nmf: ")
             tstart = time()
             m = NMF(n_components=30, init='nndsvdar',
                     tol=tolerance).fit(X)
             tend = time() - tstart
             timeset['nndsvdar-nmf'].append(tend)
             err['nndsvdar-nmf'].append(m.reconstruction_err_)
-            print m.reconstruction_err_, tend
+            print(m.reconstruction_err_, tend)
 
             gc.collect()
-            print "benching random-nmf"
+            print("benchmarking random-nmf")
             tstart = time()
             m = NMF(n_components=30, init=None, max_iter=1000,
                     tol=tolerance).fit(X)
             tend = time() - tstart
             timeset['random-nmf'].append(tend)
             err['random-nmf'].append(m.reconstruction_err_)
-            print m.reconstruction_err_, tend
+            print(m.reconstruction_err_, tend)
 
             gc.collect()
-            print "benching alt-random-nmf"
+            print("benchmarking alt-random-nmf")
             tstart = time()
             W, H = alt_nnmf(X, r=30, R=None, tol=tolerance)
             tend = time() - tstart
             timeset['alt-random-nmf'].append(tend)
             err['alt-random-nmf'].append(np.linalg.norm(X - np.dot(W, H)))
-            print np.linalg.norm(X - np.dot(W, H)), tend
+            print(np.linalg.norm(X - np.dot(W, H)), tend)
 
     return timeset, err
 
 
 if __name__ == '__main__':
     from mpl_toolkits.mplot3d import axes3d  # register the 3d projection
+    axes3d
     import matplotlib.pyplot as plt
 
     samples_range = np.linspace(50, 500, 3).astype(np.int)
@@ -141,7 +145,7 @@ if __name__ == '__main__':
     timeset, err = compute_bench(samples_range, features_range)
 
     for i, results in enumerate((timeset, err)):
-        fig = plt.figure()
+        fig = plt.figure('scikit-learn Non-Negative Matrix Factorization benchmkar results')
         ax = fig.gca(projection='3d')
         for c, (label, timings) in zip('rbgcm', sorted(results.iteritems())):
             X, Y = np.meshgrid(samples_range, features_range)
@@ -156,7 +160,7 @@ if __name__ == '__main__':
 
         ax.set_xlabel('n_samples')
         ax.set_ylabel('n_features')
-        zlabel = 'time (s)' if i == 0 else 'reconstruction error'
+        zlabel = 'Time (s)' if i == 0 else 'reconstruction error'
         ax.set_zlabel(zlabel)
         ax.legend()
         plt.show()

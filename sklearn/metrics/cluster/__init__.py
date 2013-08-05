@@ -18,9 +18,11 @@ from .supervised import v_measure_score
 from .supervised import entropy
 from .unsupervised import silhouette_samples
 from .unsupervised import silhouette_score
+from .bicluster import consensus_score
 
 __all__ = ["adjusted_mutual_info_score", "normalized_mutual_info_score",
            "adjusted_rand_score", "completeness_score", "contingency_matrix",
            "expected_mutual_information", "homogeneity_completeness_v_measure",
            "homogeneity_score", "mutual_info_score", "v_measure_score",
-           "entropy", "silhouette_samples", "silhouette_score"]
+           "entropy", "silhouette_samples", "silhouette_score",
+           "consensus_score"]

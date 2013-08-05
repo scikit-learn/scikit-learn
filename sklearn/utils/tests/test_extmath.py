@@ -1,6 +1,6 @@
 # Authors: Olivier Grisel <olivier.grisel@ensta.org>
 #          Mathieu Blondel <mathieu@mblondel.org>
-# License: BSD
+# License: BSD 3 clause
 import numpy as np
 from scipy import sparse
 from scipy import linalg
@@ -18,6 +18,7 @@ from sklearn.utils.extmath import logsumexp
 from sklearn.utils.extmath import randomized_svd
 from sklearn.utils.extmath import weighted_mode
 from sklearn.utils.extmath import cartesian
+from sklearn.utils.extmath import logistic_sigmoid
 from sklearn.datasets.samples_generator import make_low_rank_matrix
 
 
@@ -218,7 +219,7 @@ def test_randomized_svd_transpose_consistency():
 def test_randomized_svd_sign_flip():
     a = np.array([[2.0, 0.0], [0.0, 1.0]])
     u1, s1, v1 = randomized_svd(a, 2, flip_sign=True, random_state=41)
-    for seed in xrange(10):
+    for seed in range(10):
         u2, s2, v2 = randomized_svd(a, 2, flip_sign=True, random_state=seed)
         assert_almost_equal(u1, u2)
         assert_almost_equal(v1, v2)
@@ -251,3 +252,33 @@ def test_cartesian():
     # check single axis
     x = np.arange(3)
     assert_array_equal(x[:, np.newaxis], cartesian((x,)))
+
+
+def test_logistic_sigmoid():
+    """Check correctness and robustness of logistic sigmoid implementation"""
+    naive_logsig = lambda x: 1 / (1 + np.exp(-x))
+    naive_log_logsig = lambda x: np.log(naive_logsig(x))
+
+    # Simulate the previous Cython implementations of logistic_sigmoid based on
+    #http://fa.bianp.net/blog/2013/numerical-optimizers-for-logistic-regression
+    def stable_logsig(x):
+        out = np.zeros_like(x)
+        positive = x > 0
+        negative = x <= 0
+        out[positive] = 1. / (1 + np.exp(-x[positive]))
+        out[negative] = np.exp(x[negative]) / (1. + np.exp(x[negative]))
+        return out
+
+    x = np.linspace(-2, 2, 50)
+    assert_array_almost_equal(logistic_sigmoid(x), naive_logsig(x))
+    assert_array_almost_equal(logistic_sigmoid(x, log=True),
+                              naive_log_logsig(x))
+    assert_array_almost_equal(logistic_sigmoid(x), stable_logsig(x),
+                              decimal=16)
+
+    extreme_x = np.array([-100, 100], dtype=np.float)
+    assert_array_almost_equal(logistic_sigmoid(extreme_x), [0, 1])
+    assert_array_almost_equal(logistic_sigmoid(extreme_x, log=True), [-100, 0])
+    assert_array_almost_equal(logistic_sigmoid(extreme_x),
+                              stable_logsig(extreme_x),
+                              decimal=16)

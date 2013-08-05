@@ -6,14 +6,21 @@
 #          Mathieu Blondel
 #          Olivier Grisel
 #          Arnaud Joly
-# License: BSD
+# License: BSD 3 clause
 import inspect
 import pkgutil
+import warnings
 
-import urllib2
 import scipy as sp
-from StringIO import StringIO
 from functools import wraps
+try:
+    # Python 2
+    from urllib2 import urlopen
+    from urllib2 import HTTPError
+except ImportError:
+    # Python 3+
+    from urllib.request import urlopen
+    from urllib.error import HTTPError
 
 import sklearn
 from sklearn.base import BaseEstimator
@@ -33,6 +40,7 @@ from numpy.testing import assert_almost_equal
 from numpy.testing import assert_array_equal
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_less
+import numpy as np
 
 from sklearn.base import (ClassifierMixin, RegressorMixin, TransformerMixin,
                           ClusterMixin)
@@ -69,6 +77,41 @@ def _assert_greater(a, b, msg=None):
     assert a > b, message
 
 
+# To remove when we support numpy 1.7
+def assert_warns(warning_class, func, *args, **kw):
+    with warnings.catch_warnings(record=True) as w:
+        # Cause all warnings to always be triggered.
+        warnings.simplefilter("always")
+
+        # Trigger a warning.
+        result = func(*args, **kw)
+
+        # Verify some things
+        if not len(w) > 0:
+            raise AssertionError("No warning raised when calling %s"
+                                 % func.__name__)
+
+        if not w[0].category is warning_class:
+            raise AssertionError("First warning for %s is not a "
+                                 "%s( is %s)"
+                                 % (func.__name__, warning_class, w[0]))
+
+    return result
+
+
+# To remove when we support numpy 1.7
+def assert_no_warnings(func, *args, **kw):
+    # XXX: once we may depend on python >= 2.6, this can be replaced by the
+    # warnings module context manager.
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter('always')
+
+        result = func(*args, **kw)
+        if len(w) > 0:
+            raise AssertionError("Got warnings when calling %s: %s"
+                                 % (func.__name__, w))
+    return result
+
 try:
     from nose.tools import assert_less
 except ImportError:
@@ -78,6 +121,22 @@ try:
     from nose.tools import assert_greater
 except ImportError:
     assert_greater = _assert_greater
+
+
+def _assert_allclose(actual, desired, rtol=1e-7, atol=0,
+                     err_msg='', verbose=True):
+    actual, desired = np.asanyarray(actual), np.asanyarray(desired)
+    if np.allclose(actual, desired, rtol=rtol, atol=atol):
+        return
+    msg = ('Array not equal to tolerance rtol=%g, atol=%g:'
+           'actual %s, desired %s') % (rtol, atol, actual, desired)
+    raise AssertionError(msg)
+
+
+if hasattr(np.testing, 'assert_allclose'):
+    assert_allclose = np.testing.assert_allclose
+else:
+    assert_allclose = _assert_allclose
 
 
 def assert_raise_message(exception, message, function, *args, **kwargs):
@@ -91,8 +150,8 @@ def assert_raise_message(exception, message, function, *args, **kwargs):
         assert_in(message, error_message)
 
 
-def fake_mldata_cache(columns_dict, dataname, matfile, ordering=None):
-    """Create a fake mldata data set in the cache_path.
+def fake_mldata(columns_dict, dataname, matfile, ordering=None):
+    """Create a fake mldata data set.
 
     Parameters
     ----------
@@ -123,52 +182,61 @@ def fake_mldata_cache(columns_dict, dataname, matfile, ordering=None):
     savemat(matfile, datasets, oned_as='column')
 
 
-class mock_urllib2(object):
+class mock_mldata_urlopen(object):
 
     def __init__(self, mock_datasets):
-        """Object that mocks the urllib2 module to fake requests to mldata.
+        """Object that mocks the urlopen function to fake requests to mldata.
 
         `mock_datasets` is a dictionary of {dataset_name: data_dict}, or
         {dataset_name: (data_dict, ordering).
         `data_dict` itself is a dictionary of {column_name: data_array},
         and `ordering` is a list of column_names to determine the ordering
-        in the data set (see `fake_mldata_cache` for details).
+        in the data set (see `fake_mldata` for details).
 
         When requesting a dataset with a name that is in mock_datasets,
         this object creates a fake dataset in a StringIO object and
-        returns it. Otherwise, it raises an URLError.
+        returns it. Otherwise, it raises an HTTPError.
         """
         self.mock_datasets = mock_datasets
 
-    class HTTPError(urllib2.URLError):
-        code = 404
-
-    def urlopen(self, urlname):
+    def __call__(self, urlname):
         dataset_name = urlname.split('/')[-1]
         if dataset_name in self.mock_datasets:
             resource_name = '_' + dataset_name
-            matfile = StringIO()
+            from io import BytesIO
+            matfile = BytesIO()
 
             dataset = self.mock_datasets[dataset_name]
             ordering = None
             if isinstance(dataset, tuple):
                 dataset, ordering = dataset
-            fake_mldata_cache(dataset, resource_name, matfile, ordering)
+            fake_mldata(dataset, resource_name, matfile, ordering)
 
             matfile.seek(0)
             return matfile
         else:
-            raise mock_urllib2.HTTPError('%s not found.' % urlname)
+            raise HTTPError(urlname, 404, dataset_name + " is not available",
+                            [], None)
 
-    def quote(self, string, safe='/'):
-        return urllib2.quote(string, safe)
+
+def install_mldata_mock(mock_datasets):
+    # Lazy import to avoid mutually recursive imports
+    from sklearn import datasets
+    datasets.mldata.urlopen = mock_mldata_urlopen(mock_datasets)
+
+
+def uninstall_mldata_mock():
+    # Lazy import to avoid mutually recursive imports
+    from sklearn import datasets
+    datasets.mldata.urlopen = urlopen
+
 
 # Meta estimators need another estimator to be instantiated.
 meta_estimators = ["OneVsOneClassifier",
                    "OutputCodeClassifier", "OneVsRestClassifier", "RFE",
                    "RFECV", "BaseEnsemble"]
 # estimators that there is no way to default-construct sensibly
-other = ["Pipeline", "FeatureUnion", "GridSearchCV"]
+other = ["Pipeline", "FeatureUnion", "GridSearchCV", "RandomizedSearchCV"]
 
 
 def all_estimators(include_meta_estimators=False, include_other=False,
@@ -250,7 +318,7 @@ def all_estimators(include_meta_estimators=False, include_other=False,
         estimators = [est for est in estimators
                       if issubclass(est[1], ClusterMixin)]
     elif type_filter is not None:
-        raise ValueError("Parmeter type_filter must be 'classifier', "
+        raise ValueError("Parameter type_filter must be 'classifier', "
                          "'regressor', 'transformer', 'cluster' or None, got"
                          " %s." % repr(type_filter))
 

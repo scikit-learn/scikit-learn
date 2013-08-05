@@ -15,7 +15,7 @@ A plot will appear showing the top 5 most uncertain digits for each iteration
 of training. These may or may not contain mistakes, but we will train the next
 model with their true labels.
 """
-print __doc__
+print(__doc__)
 
 # Authors: Clay Woolam <clay@woolam.org>
 # Licence: BSD
@@ -56,14 +56,14 @@ for i in range(5):
     cm = confusion_matrix(true_labels, predicted_labels,
                           labels=lp_model.classes_)
 
-    print ('Iteration %i ' + 70 * '_') % i
-    print "Label Spreading model: %d labeled & %d unlabeled (%d total)" %\
-        (n_labeled_points, n_total_samples - n_labeled_points, n_total_samples)
+    print('Iteration %i %s' % (i, 70 * '_'))
+    print("Label Spreading model: %d labeled & %d unlabeled (%d total)"
+          % (n_labeled_points, n_total_samples - n_labeled_points, n_total_samples))
 
-    print classification_report(true_labels, predicted_labels)
+    print(classification_report(true_labels, predicted_labels))
 
-    print "Confusion matrix"
-    print cm
+    print("Confusion matrix")
+    print(cm)
 
     # compute the entropies of transduced label distributions
     pred_entropies = stats.distributions.entropy(
@@ -72,7 +72,7 @@ for i in range(5):
     # select five digit examples that the classifier is most uncertain about
     uncertainty_index = uncertainty_index = np.argsort(pred_entropies)[-5:]
 
-    # keep track of indicies that we get labels for
+    # keep track of indices that we get labels for
     delete_indices = np.array([])
 
     f.text(.05, (1 - (i + 1) * .183),

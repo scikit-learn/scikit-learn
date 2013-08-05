@@ -1,6 +1,6 @@
 # Authors: Olivier Grisel <olivier.grisel@ensta.org>
 #          Alexandre Gramfort <alexandre.gramfort@inria.fr>
-# License: BSD Style.
+# License: BSD 3 clause
 
 import warnings
 from sys import version_info
@@ -16,8 +16,9 @@ from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_greater
 
 from sklearn.linear_model.coordinate_descent import Lasso, \
-    LassoCV, ElasticNet, ElasticNetCV, MultiTaskLasso, MultiTaskElasticNet
-from sklearn.linear_model import LassoLarsCV
+    LassoCV, ElasticNet, ElasticNetCV, MultiTaskLasso, MultiTaskElasticNet, \
+    lasso_path
+from sklearn.linear_model import LassoLarsCV, lars_path
 
 
 def check_warnings():
@@ -82,7 +83,7 @@ def test_enet_toy():
     """
     Test ElasticNet for various parameters of alpha and l1_ratio.
 
-    Actualy, the parameters alpha = 0 should not be alowed. However,
+    Actually, the parameters alpha = 0 should not be allowed. However,
     we test it as a border case.
 
     ElasticNet is tested with and without precomputed Gram matrix
@@ -149,15 +150,15 @@ def build_dataset(n_samples=50, n_features=200, n_informative_features=10,
     return X, y, X_test, y_test
 
 
-def test_lasso_path():
+def test_lasso_cv():
     X, y, X_test, y_test = build_dataset()
     max_iter = 150
     clf = LassoCV(n_alphas=10, eps=1e-3, max_iter=max_iter).fit(X, y)
-    assert_almost_equal(clf.alpha_, 0.026, 2)
+    assert_almost_equal(clf.alpha_, 0.056, 2)
 
     clf = LassoCV(n_alphas=10, eps=1e-3, max_iter=max_iter, precompute=True)
     clf.fit(X, y)
-    assert_almost_equal(clf.alpha_, 0.026, 2)
+    assert_almost_equal(clf.alpha_, 0.056, 2)
 
     # Check that the lars and the coordinate descent implementation
     # select a similar alpha
@@ -176,27 +177,72 @@ def test_lasso_path():
     assert_greater(clf.score(X_test, y_test), 0.99)
 
 
+def test_lasso_path_return_models_vs_new_return_gives_same_coefficients():
+    # Test that lasso_path with lars_path style output gives the
+    # same result
+
+    # Some toy data
+    X = np.array([[1, 2, 3.1], [2.3, 5.4, 4.3]]).T
+    y = np.array([1, 2, 3.1])
+    alphas = [5., 1., .5]
+    # Compute the lasso_path
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", DeprecationWarning)
+        coef_path = [e.coef_ for e in lasso_path(X, y, alphas=alphas,
+                                                 fit_intercept=False)]
+
+    # Use lars_path and lasso_path(new output) with 1D linear interpolation
+    # to compute the the same path
+    alphas_lars, _, coef_path_lars = lars_path(X, y, method='lasso')
+    coef_path_cont_lars = interpolate.interp1d(alphas_lars[::-1],
+                                               coef_path_lars[:, ::-1])
+    alphas_lasso2, coef_path_lasso2, _ = lasso_path(X, y, alphas=alphas,
+                                                 fit_intercept=False,
+                                                 return_models=False)
+    coef_path_cont_lasso = interpolate.interp1d(alphas_lasso2[::-1],
+                                                coef_path_lasso2[:, ::-1])
+
+    np.testing.assert_array_almost_equal(coef_path_cont_lasso(alphas),
+                                         np.asarray(coef_path).T, decimal=1)
+    np.testing.assert_array_almost_equal(coef_path_cont_lasso(alphas),
+                                         coef_path_cont_lars(alphas),
+                                         decimal=1)
+
+
 def test_enet_path():
-    X, y, X_test, y_test = build_dataset()
+    # We use a large number of samples and of informative features so that
+    # the l1_ratio selected is more toward ridge than lasso
+    X, y, X_test, y_test = build_dataset(n_samples=200, n_features=100,
+                                         n_informative_features=100)
     max_iter = 150
 
     with warnings.catch_warnings():
         # Here we have a small number of iterations, and thus the
         # ElasticNet might not converge. This is to speed up tests
         warnings.simplefilter("ignore", UserWarning)
-        clf = ElasticNetCV(n_alphas=5, eps=2e-3, l1_ratio=[0.9, 0.95], cv=3,
+        clf = ElasticNetCV(n_alphas=5, eps=2e-3, l1_ratio=[0.5, 0.7], cv=3,
                            max_iter=max_iter)
         clf.fit(X, y)
-        assert_almost_equal(clf.alpha_, 0.002, 2)
-        assert_equal(clf.l1_ratio_, 0.95)
+        # Well-conditionned settings, we should have selected our
+        # smallest penalty
+        assert_almost_equal(clf.alpha_, min(clf.alphas_))
+        # Non-sparse ground truth: we should have seleted an elastic-net
+        # that is closer to ridge than to lasso
+        assert_equal(clf.l1_ratio_, min(clf.l1_ratio))
 
-        clf = ElasticNetCV(n_alphas=5, eps=2e-3, l1_ratio=[0.9, 0.95], cv=3,
+        clf = ElasticNetCV(n_alphas=5, eps=2e-3, l1_ratio=[0.5, 0.7], cv=3,
                            max_iter=max_iter, precompute=True)
         clf.fit(X, y)
-    assert_almost_equal(clf.alpha_, 0.002, 2)
-    assert_equal(clf.l1_ratio_, 0.95)
 
-    # test set
+    # Well-conditionned settings, we should have selected our
+    # smallest penalty
+    assert_almost_equal(clf.alpha_, min(clf.alphas_))
+    # Non-sparse ground truth: we should have seleted an elastic-net
+    # that is closer to ridge than to lasso
+    assert_equal(clf.l1_ratio_, min(clf.l1_ratio))
+
+    # We are in well-conditionned settings with low noise: we should
+    # have a good test-set performance
     assert_greater(clf.score(X_test, y_test), 0.99)
 
 
@@ -214,23 +260,14 @@ def test_path_parameters():
 
 def test_warm_start():
     X, y, _, _ = build_dataset()
-    # Test that explicit warm restart...
-    clf = ElasticNet(alpha=1.0, max_iter=50)
+    clf = ElasticNet(alpha=1.0, max_iter=50, warm_start=True)
+    clf.fit(X, y)
+    clf.set_params(alpha=0.1)
     clf.fit(X, y)
 
-    clf2 = ElasticNet(alpha=0.1, max_iter=50)
-    clf2.fit(X, y, coef_init=clf.coef_.copy())
-
-    #... and implicit warm restart are equivalent.
-    clf3 = ElasticNet(alpha=1.0, max_iter=50, warm_start=True)
-    clf3.fit(X, y)
-
-    assert_array_almost_equal(clf3.coef_, clf.coef_)
-
-    clf3.set_params(alpha=0.1)
-    clf3.fit(X, y)
-
-    assert_array_almost_equal(clf3.coef_, clf2.coef_)
+    clf2 = ElasticNet(alpha=0.1, max_iter=500)
+    clf2.fit(X, y)
+    assert_array_almost_equal(clf2.coef_, clf.coef_)
 
 
 def test_lasso_alpha_warning():
@@ -287,15 +324,14 @@ def test_enet_multitarget():
                                n_informative_features=10, n_targets=n_targets)
     estimator = ElasticNet(alpha=0.01, fit_intercept=True)
     estimator.fit(X, y)
-    coef, intercept, dual_gap, eps = (estimator.coef_, estimator.intercept_,
-                                      estimator.dual_gap_, estimator.eps_)
+    coef, intercept, dual_gap = (estimator.coef_, estimator.intercept_,
+                                 estimator.dual_gap_)
 
-    for k in xrange(n_targets):
+    for k in range(n_targets):
         estimator.fit(X, y[:, k])
         assert_array_almost_equal(coef[k, :], estimator.coef_)
         assert_array_almost_equal(intercept[k], estimator.intercept_)
         assert_array_almost_equal(dual_gap[k], estimator.dual_gap_)
-        assert_array_almost_equal(eps[k], estimator.eps_)
 
 
 if __name__ == '__main__':

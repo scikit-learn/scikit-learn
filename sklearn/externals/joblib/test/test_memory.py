@@ -241,13 +241,13 @@ def test_memory_warning_lambda_collisions():
     with warnings.catch_warnings(record=True) as w:
         # Cause all warnings to always be triggered.
         warnings.simplefilter("always")
-        a(0)
-        b(1)
-        a(1)
+        nose.tools.assert_equal(0, a(0))
+        nose.tools.assert_equal(2, b(1))
+        nose.tools.assert_equal(1, a(1))
 
     # In recent Python versions, we can retrieve the code of lambdas,
     # thus nothing is raised
-    yield nose.tools.assert_equal, len(w), 0
+    nose.tools.assert_equal(len(w), 4)
 
 
 def test_memory_warning_collision_detection():

@@ -145,7 +145,7 @@ class PrintTime(object):
             except:
                 """ Multiprocessing writing to files can create race
                     conditions. Rather fail silently than crash the
-                    caculation.
+                    calculation.
                 """
                 # XXX: We actually need a debug flag to disable this
                 # silent failure.

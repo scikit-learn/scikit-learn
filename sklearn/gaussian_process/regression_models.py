@@ -3,7 +3,7 @@
 
 # Author: Vincent Dubourg <vincent.dubourg@gmail.com>
 #         (mostly translation, see implementation details)
-# License: BSD style
+# Licence: BSD 3 clause
 
 """
 The built-in regression models submodule for the gaussian_process module.

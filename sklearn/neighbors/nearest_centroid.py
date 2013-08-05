@@ -6,14 +6,15 @@ Nearest Centroid Classification
 # Author: Robert Layton <robertlayton@gmail.com>
 #         Olivier Grisel <olivier.grisel@ensta.org>
 #
-# License: BSD Style.
+# License: BSD 3 clause
 
 import numpy as np
 from scipy import sparse as sp
 
 from ..base import BaseEstimator, ClassifierMixin
-from ..utils.validation import check_arrays, atleast2d_or_csr
+from ..externals.six.moves import xrange
 from ..metrics.pairwise import pairwise_distances
+from ..utils.validation import check_arrays, atleast2d_or_csr, column_or_1d
 
 
 class NearestCentroid(BaseEstimator, ClassifierMixin):
@@ -46,7 +47,7 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
     >>> clf = NearestCentroid()
     >>> clf.fit(X, y)
     NearestCentroid(metric='euclidean', shrink_threshold=None)
-    >>> print clf.predict([[-0.8, -1]])
+    >>> print(clf.predict([[-0.8, -1]]))
     [1]
 
     See also
@@ -88,6 +89,7 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
         if sp.issparse(X) and self.shrink_threshold:
             raise ValueError("threshold shrinking not supported"
                              " for sparse input")
+        y = column_or_1d(y, warn=True)
 
         n_samples, n_features = X.shape
         classes = np.unique(y)

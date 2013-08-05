@@ -161,7 +161,7 @@ def test_error_capture():
                     [delayed(division)(x, y) for x, y in zip((0, 1), (1, 0))],
                         )
     try:
-        ex = JoblibException
+        ex = JoblibException()
         Parallel(n_jobs=1)(
                     delayed(division)(x, y) for x, y in zip((0, 1), (1, 0)))
     except Exception:
@@ -211,7 +211,7 @@ def test_dispatch_multiprocessing():
         lazily.
     """
     if multiprocessing is None:
-        return
+        raise nose.SkipTest()
     manager = multiprocessing.Manager()
     queue = manager.list()
 

@@ -31,7 +31,7 @@ class _ConsistentSet(object):
 
 
 class _MyHash(object):
-    """ Class used to hash objects that won't normaly pickle """
+    """ Class used to hash objects that won't normally pickle """
 
     def __init__(self, *args):
         self.args = args

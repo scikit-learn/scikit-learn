@@ -22,8 +22,11 @@ def configuration(parent_package='', top_path=None):
     config.add_subpackage('feature_extraction/tests')
     config.add_subpackage('cluster')
     config.add_subpackage('cluster/tests')
+    config.add_subpackage('cluster/bicluster')
+    config.add_subpackage('cluster/bicluster/tests')
     config.add_subpackage('covariance')
     config.add_subpackage('covariance/tests')
+    config.add_subpackage('cross_decomposition')
     config.add_subpackage('decomposition')
     config.add_subpackage('decomposition/tests')
     config.add_subpackage("ensemble")
@@ -38,6 +41,8 @@ def configuration(parent_package='', top_path=None):
     config.add_subpackage('gaussian_process')
     config.add_subpackage('gaussian_process/tests')
     config.add_subpackage('neighbors')
+    config.add_subpackage('neural_network')
+    config.add_subpackage('preprocessing')
     config.add_subpackage('manifold')
     config.add_subpackage('metrics')
     config.add_subpackage('semi_supervised')
@@ -46,11 +51,19 @@ def configuration(parent_package='', top_path=None):
     config.add_subpackage('metrics/tests')
     config.add_subpackage('metrics/cluster')
     config.add_subpackage('metrics/cluster/tests')
+    config.add_subpackage('metrics/cluster/bicluster')
+    config.add_subpackage('metrics/cluster/bicluster/tests')
 
     # add cython extension module for hmm
     config.add_extension(
         '_hmmc',
         sources=['_hmmc.c'],
+        include_dirs=[numpy.get_include()],
+        libraries=libraries,
+    )
+    config.add_extension(
+        '_isotonic',
+        sources=['_isotonic.c'],
         include_dirs=[numpy.get_include()],
         libraries=libraries,
     )

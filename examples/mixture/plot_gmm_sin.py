@@ -22,6 +22,7 @@ import pylab as pl
 import matplotlib as mpl
 
 from sklearn import mixture
+from sklearn.externals.six.moves import xrange
 
 # Number of samples per component
 n_samples = 100

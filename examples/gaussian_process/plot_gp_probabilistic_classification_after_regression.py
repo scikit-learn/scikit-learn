@@ -14,10 +14,10 @@ respect to the remaining uncertainty in the prediction. The red and blue lines
 corresponds to the 95% confidence interval on the prediction of the zero level
 set.
 """
-print __doc__
+print(__doc__)
 
 # Author: Vincent Dubourg <vincent.dubourg@gmail.com>
-# License: BSD style
+# Licence: BSD 3 clause
 
 import numpy as np
 from scipy import stats

@@ -31,8 +31,8 @@ The disadvantages of support vector machines include:
       samples, the method is likely to give poor performances.
 
     - SVMs do not directly provide probability estimates, these are
-      calculated using five-fold cross-validation, and thus
-      performance can suffer.
+      calculated using an expensive five-fold cross-validation
+      (see :ref:`Scores and probabilities <scores_probabilities>`, below).
 
 The support vector machines in scikit-learn support both dens
 (``numpy.ndarray`` and convertible to that by ``numpy.asarray``) and
@@ -41,12 +41,6 @@ an SVM to make predictions for sparse data, it must have been fit on such
 data. For optimal performance, use C-ordered ``numpy.ndarray`` (dense) or
 ``scipy.sparse.csr_matrix`` (sparse) with ``dtype=float64``.
 
-In previous versions of scikit-learn, sparse input support existed only
-in the ``sklearn.svm.sparse`` module which duplicated the ``sklearn.svm``
-interface. This module still exists for backward compatibility, but is
-deprecated and will be removed in scikit-learn 0.12.
-
-.. TODO: add reference to probability estimates
 
 .. _svm_classification:
 
@@ -83,8 +77,8 @@ size ``[n_samples]``, holding the class labels for the training samples::
     >>> clf = svm.SVC()
     >>> clf.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
     SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0, degree=3,
-    gamma=0.0, kernel='rbf', max_iter=-1, probability=False, shrinking=True,
-    tol=0.001, verbose=False)
+    gamma=0.0, kernel='rbf', max_iter=-1, probability=False, random_state=None,
+    shrinking=True, tol=0.001, verbose=False)
 
 After being fitted, the model can then be used to predict new values::
 
@@ -122,8 +116,8 @@ classifiers are constructed and each one trains data from two classes::
     >>> clf = svm.SVC()
     >>> clf.fit(X, Y) # doctest: +NORMALIZE_WHITESPACE
     SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0, degree=3,
-    gamma=0.0, kernel='rbf', max_iter=-1, probability=False, shrinking=True,
-    tol=0.001, verbose=False)
+    gamma=0.0, kernel='rbf', max_iter=-1, probability=False, random_state=None,
+    shrinking=True, tol=0.001, verbose=False)
     >>> dec = clf.decision_function([[1]])
     >>> dec.shape[1] # 4 classes: 4*3/2 = 6
     6
@@ -154,7 +148,7 @@ are mostly similar, but the runtime is significantly less.
 For "one-vs-rest" :class:`LinearSVC` the attributes ``coef_`` and ``intercept_``
 have the shape ``[n_class, n_features]`` and ``[n_class]`` respectively.
 Each row of the coefficients corresponds to one of the ``n_class`` many
-"one-vs-rest" classifiers and simliar for the interecepts, in the
+"one-vs-rest" classifiers and similar for the intercepts, in the
 order of the "one" class.
 
 In the case of "one-vs-one" :class:`SVC`, the layout of the attributes
@@ -201,6 +195,42 @@ this:
 +------------------------+------------------------+------------------+
 
 
+.. _scores_probabilities:
+
+Scores and probabilities
+------------------------
+
+The :class:`SVC` method ``decision_function`` gives per-class scores 
+for each sample (or a single score per sample in the binary case).
+When the constructor option ``probability`` is set to ``True``,
+class membership probability estimates
+(from the methods ``predict_proba`` and ``predict_log_proba``) are enabled.
+In the binary case, the probabilities are calibrated using Platt scaling:
+logistic regression on the SVM's scores,
+fit by an additional cross-validation on the training data.
+In the multiclass case, this is extended as per Wu et al. (2004).
+
+Needless to say, the cross-validation involved in Platt scaling
+is an expensive operation for large datasets.
+In addition, the probability estimates may be inconsistent with the scores,
+in the sense that the "argmax" of the scores
+may not be the argmax of the probabilities.
+(E.g., in binary classification,
+a sample may be labeled by ``predict`` as belonging to a class
+that has probability <½ according to ``predict_proba``.)
+Platt's method is also known to have theoretical issues.
+If confidence scores are required, but these do not have to be probabilities,
+then it is advisable to set ``probability=False``
+and use ``decision_function`` instead of ``predict_proba``.
+
+.. topic:: References:
+
+ * Wu, Lin and Weng,
+   `"Probability estimates for multi-class classification by pairwise coupling"
+   <http://www.csie.ntu.edu.tw/~cjlin/papers/svmprob/svmprob.pdf>`_.
+   JMLR 5:975-1005, 2004.
+
+
 Unbalanced problems
 --------------------
 
@@ -221,7 +251,8 @@ that sets the parameter ``C`` of class ``class_label`` to ``C * value``.
 
 :class:`SVC`, :class:`NuSVC`, :class:`SVR`, :class:`NuSVR` and
 :class:`OneClassSVM` implement also weights for individual samples in method
-``fit`` through keyword ``sample_weight``.
+``fit`` through keyword ``sample_weight``. Similar to ``class_weight``, these
+set the parameter ``C`` for the i-th example to ``C * sample_weight[i]``.
 
 
 .. figure:: ../auto_examples/svm/images/plot_weighted_samples_1.png
@@ -270,7 +301,7 @@ floating point values instead of integer values::
     >>> clf.fit(X, y) # doctest: +NORMALIZE_WHITESPACE
     SVR(C=1.0, cache_size=200, coef0=0.0, degree=3,
     epsilon=0.1, gamma=0.0, kernel='rbf', max_iter=-1, probability=False,
-    shrinking=True, tol=0.001, verbose=False)
+    random_state=None, shrinking=True, tol=0.001, verbose=False)
     >>> clf.predict([[1, 1]])
     array([ 1.5])
 
@@ -391,15 +422,15 @@ Kernel functions
 
 The *kernel function* can be any of the following:
 
-  * linear: :math:`<x_i, x_j'>`.
+  * linear: :math:`\langle x, x'\rangle`.
 
-  * polynomial: :math:`(\gamma <x, x'> + r)^d`. `d` is specified by
+  * polynomial: :math:`(\gamma \langle x, x'\rangle + r)^d`. `d` is specified by
     keyword ``degree``, `r` by ``coef0``.
 
-  * rbf (:math:`\exp(-\gamma |x-x'|^2), \gamma > 0`). :math:`\gamma` is
-    specified by keyword ``gamma``.
+  * rbf: :math:`\exp(-\gamma |x-x'|^2)`. :math:`\gamma` is
+    specified by keyword ``gamma``, must be greater than 0.
 
-  * sigmoid (:math:`\tanh(<x_i,x_j> + r)`), where `r` is specified by
+  * sigmoid (:math:`\tanh(\gamma \langle x,x'\rangle + r)`), where `r` is specified by
     ``coef0``.
 
 Different kernels are specified by keyword kernel at initialization::
@@ -468,7 +499,7 @@ test vectors must be provided.
     >>> clf.fit(gram, y) # doctest: +NORMALIZE_WHITESPACE
     SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0, degree=3,
     gamma=0.0, kernel='precomputed', max_iter=-1, probability=False,
-    shrinking=True, tol=0.001, verbose=False)
+    random_state=None, shrinking=True, tol=0.001, verbose=False)
     >>> # predict on training examples
     >>> clf.predict(gram)
     array([0, 1])

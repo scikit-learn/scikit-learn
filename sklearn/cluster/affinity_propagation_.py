@@ -5,7 +5,7 @@ clustering.
 # Author: Alexandre Gramfort alexandre.gramfort@inria.fr
 #        Gael Varoquaux gael.varoquaux@normalesup.org
 
-# License: BSD
+# License: BSD 3 clause
 
 import numpy as np
 import warnings
@@ -15,9 +15,8 @@ from ..utils import as_float_array
 from ..metrics import euclidean_distances
 
 
-def affinity_propagation(S, preference=None, p=None, convergence_iter=15,
-                         convit=None, max_iter=200, damping=0.5, copy=True,
-                         verbose=False):
+def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
+                         damping=0.5, copy=True, verbose=False):
     """Perform Affinity Propagation Clustering of data
 
     Parameters
@@ -42,7 +41,7 @@ def affinity_propagation(S, preference=None, p=None, convergence_iter=15,
     max_iter: int, optional, default: 200
         Maximum number of iterations
 
-    damping: float, optional, default: 200
+    damping: float, optional, default: 0.5
         Damping factor between 0.5 and 1.
 
     copy: boolean, optional, default: True
@@ -63,7 +62,7 @@ def affinity_propagation(S, preference=None, p=None, convergence_iter=15,
 
     Notes
     -----
-    See examples/plot_affinity_propagation.py for an example.
+    See examples/cluster/plot_affinity_propagation.py for an example.
 
     References
     ----------
@@ -71,21 +70,10 @@ def affinity_propagation(S, preference=None, p=None, convergence_iter=15,
     Between Data Points", Science Feb. 2007
     """
     S = as_float_array(S, copy=copy)
-    if convit is not None:
-        warnings.warn("``convit`` is deprecated and will be removed in"
-                      "version 0.14. Use ``convergence_iter`` instead",
-                      DeprecationWarning)
-        convergence_iter = convit
-
     n_samples = S.shape[0]
 
     if S.shape[0] != S.shape[1]:
         raise ValueError("S must be a square array (shape=%s)" % repr(S.shape))
-
-    if not p is None:
-        warnings.warn("p is deprecated and will be removed in version 0.14."
-                      "Use ``preference`` instead.", DeprecationWarning)
-        preference = p
 
     if preference is None:
         preference = np.median(S)
@@ -151,11 +139,11 @@ def affinity_propagation(S, preference=None, p=None, convergence_iter=15,
                            != n_samples)
             if (not unconverged and (K > 0)) or (it == max_iter):
                 if verbose:
-                    print "Converged after %d iterations." % it
+                    print("Converged after %d iterations." % it)
                 break
     else:
         if verbose:
-            print "Did not converge"
+            print("Did not converge")
 
     I = np.where(np.diag(A + R) > 0)[0]
     K = I.size  # Identify exemplars
@@ -232,7 +220,7 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
 
     Notes
     -----
-    See examples/plot_affinity_propagation.py for an example.
+    See examples/cluster/plot_affinity_propagation.py for an example.
 
     The algorithmic complexity of affinity propagation is quadratic
     in the number of points.
@@ -245,25 +233,14 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
     """
 
     def __init__(self, damping=.5, max_iter=200, convergence_iter=15,
-                 convit=None, copy=True, preference=None, p=None,
-                 affinity='euclidean', verbose=False):
-
-        if convit is not None:
-            warnings.warn("``convit`` is deprectaed and will be removed in "
-                          "version 0.14. Use ``convergence_iter`` "
-                          "instead", DeprecationWarning)
-            convergence_iter = convit
+                 copy=True, preference=None, affinity='euclidean',
+                 verbose=False):
 
         self.damping = damping
         self.max_iter = max_iter
         self.convergence_iter = convergence_iter
         self.copy = copy
         self.verbose = verbose
-        if not p is None:
-            warnings.warn("p is deprecated and will be removed in version 0.14"
-                          ". Use ``preference`` instead.", DeprecationWarning)
-            preference = p
-
         self.preference = preference
         self.affinity = affinity
 

@@ -7,11 +7,12 @@ at which the fixe is no longer needed.
 #          Gael Varoquaux <gael.varoquaux@normalesup.org>
 #          Fabian Pedregosa <fpedregosa@acm.org>
 #          Lars Buitinck <L.J.Buitinck@uva.nl>
-# License: BSD
+# License: BSD 3 clause
 
 import collections
 from operator import itemgetter
 import inspect
+from sklearn.externals import six
 
 import numpy as np
 
@@ -25,12 +26,12 @@ except AttributeError:
             self.update(iterable)
 
         def most_common(self):
-            return sorted(self.iteritems(), key=itemgetter(1), reverse=True)
+            return sorted(six.iteritems(self), key=itemgetter(1), reverse=True)
 
         def update(self, other):
             """Adds counts for elements in other"""
             if isinstance(other, self.__class__):
-                for x, n in other.iteritems():
+                for x, n in six.iteritems(other):
                     self[x] += n
             else:
                 for x in other:
@@ -210,3 +211,29 @@ else:
     # Before an 'order' argument was introduced, numpy wouldn't muck with
     # the ordering
     safe_copy = np.copy
+
+try:
+    if (not np.allclose(np.divide(.4, 1), np.divide(.4, 1, dtype=np.float))
+            or not np.allclose(np.divide(.4, 1), .4)):
+        raise TypeError('Divide not working with dtype: '
+                        'https://github.com/numpy/numpy/issues/3484')
+    divide = np.divide
+
+except TypeError:
+    # Compat for old versions of np.divide that do not provide support for
+    # the dtype args
+    def divide(x1, x2, out=None, dtype=None):
+        out_orig = out
+        if out is None:
+            out = np.asarray(x1, dtype=dtype)
+            if out is x1:
+                out = x1.copy()
+        else:
+            if out is not x1:
+                out[:] = x1
+        if dtype is not None and out.dtype != dtype:
+            out = out.astype(dtype)
+        out /= x2
+        if out_orig is None and np.isscalar(x1):
+            out = np.asscalar(out)
+        return out

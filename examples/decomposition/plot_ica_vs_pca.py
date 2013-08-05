@@ -3,8 +3,10 @@
 FastICA on 2D point clouds
 ==========================
 
-Illustrate visually the results of :ref:`ICA` vs :ref:`PCA` in the
-feature space.
+This example illustrates visually in the feature space a comparison by
+results using two different component analysis techniques.
+
+:ref:`ICA` vs :ref:`PCA`.
 
 Representing ICA in the feature space gives the view of 'geometric ICA':
 ICA is an algorithm that finds directions in the feature space
@@ -25,10 +27,10 @@ after whitening by the variance corresponding to the PCA vectors (lower
 left). Running ICA corresponds to finding a rotation in this space to
 identify the directions of largest non-Gaussianity (lower right).
 """
-print __doc__
+print(__doc__)
 
 # Authors: Alexandre Gramfort, Gael Varoquaux
-# License: BSD
+# License: BSD 3 clause
 
 import numpy as np
 import pylab as pl
@@ -82,7 +84,7 @@ pl.subplot(2, 2, 1)
 plot_samples(S / S.std())
 pl.title('True Independent Sources')
 
-axis_list = [pca.components_.T, ica.get_mixing_matrix()]
+axis_list = [pca.components_.T, ica.mixing_]
 pl.subplot(2, 2, 2)
 plot_samples(X / np.std(X), axis_list=axis_list)
 pl.legend(['PCA', 'ICA'], loc='upper left')

@@ -23,7 +23,7 @@ class NearestNeighbors(NeighborsBase, KNeighborsMixin,
         Algorithm used to compute the nearest neighbors:
 
         - 'ball_tree' will use :class:`BallTree`
-        - 'kd_tree' will use :class:`scipy.spatial.cKDtree`
+        - 'kd_tree' will use :class:`KDtree`
         - 'brute' will use a brute-force search.
         - 'auto' will attempt to decide the most appropriate algorithm
           based on the values passed to :meth:`fit` method.
@@ -32,18 +32,10 @@ class NearestNeighbors(NeighborsBase, KNeighborsMixin,
         this parameter, using brute force.
 
     leaf_size : int, optional (default = 30)
-        Leaf size passed to BallTree or cKDTree.  This can affect the
+        Leaf size passed to BallTree or KDTree.  This can affect the
         speed of the construction and query, as well as the memory
         required to store the tree.  The optimal value depends on the
         nature of the problem.
-
-    warn_on_equidistant : boolean, optional.  Defaults to True.
-        Generate a warning if equidistant neighbors are discarded.
-        For classification or regression based on k-neighbors, if
-        neighbor k and neighbor k+1 have identical distances but
-        different labels, then the result will be dependent on the
-        ordering of the training data.
-        If the fit method is ``'kd_tree'``, no warnings will be generated.
 
     p: integer, optional (default = 2)
         Parameter for the Minkowski metric from
@@ -84,11 +76,8 @@ class NearestNeighbors(NeighborsBase, KNeighborsMixin,
     """
 
     def __init__(self, n_neighbors=5, radius=1.0,
-                 algorithm='auto', leaf_size=30,
-                 warn_on_equidistant=True, p=2):
+                 algorithm='auto', leaf_size=30, metric='minkowski', **kwargs):
         self._init_params(n_neighbors=n_neighbors,
                           radius=radius,
                           algorithm=algorithm,
-                          leaf_size=leaf_size,
-                          warn_on_equidistant=warn_on_equidistant,
-                          p=p)
+                          leaf_size=leaf_size, metric=metric, **kwargs)

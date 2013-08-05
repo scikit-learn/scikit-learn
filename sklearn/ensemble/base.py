@@ -3,7 +3,7 @@ Base class for ensemble-based estimators.
 """
 
 # Authors: Gilles Louppe
-# License: BSD 3
+# License: BSD 3 clause
 
 from ..base import clone
 from ..base import BaseEstimator

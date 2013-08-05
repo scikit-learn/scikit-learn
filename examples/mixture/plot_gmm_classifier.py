@@ -3,7 +3,9 @@
 GMM classification
 ==================
 
-Demonstration of :ref:`gmm` for classification.
+Demonstration of Gaussian mixture models for classification.
+
+See :ref:`gmm` for more information on the estimator.
 
 Plots predicted labels on both training and held out test data using a
 variety of GMM classifiers on the iris dataset.
@@ -19,10 +21,10 @@ crosses. The iris dataset is four-dimensional. Only the first two
 dimensions are shown here, and thus some points are separated in other
 dimensions.
 """
-print __doc__
+print(__doc__)
 
 # Author: Ron Weiss <ronweiss@gmail.com>, Gael Varoquaux
-# License: BSD Style.
+# License: BSD 3 clause
 
 # $Id$
 
@@ -32,6 +34,7 @@ import numpy as np
 
 from sklearn import datasets
 from sklearn.cross_validation import StratifiedKFold
+from sklearn.externals.six.moves import xrange
 from sklearn.mixture import GMM
 
 

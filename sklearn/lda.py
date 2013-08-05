@@ -1,6 +1,7 @@
 """
 The :mod:`sklearn.lda` module implements Linear Discriminant Analysis (LDA).
 """
+from __future__ import print_function
 # Authors: Matthieu Perrot
 #          Mathieu Blondel
 
@@ -12,7 +13,7 @@ from scipy import linalg
 from .base import BaseEstimator, ClassifierMixin, TransformerMixin
 from .utils.extmath import logsumexp
 from .utils.fixes import unique
-from .utils import check_arrays, array2d
+from .utils import check_arrays, array2d, column_or_1d
 
 __all__ = ['LDA']
 
@@ -90,7 +91,7 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
             if (self.priors < 0).any():
                 raise ValueError('priors must be non-negative')
             if self.priors.sum() != 1:
-                print 'warning: the priors do not sum to 1. Renormalizing'
+                print('warning: the priors do not sum to 1. Renormalizing')
                 self.priors = self.priors / self.priors.sum()
 
     def fit(self, X, y, store_covariance=False, tol=1.0e-4):
@@ -111,6 +112,7 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
             and stored in `self.covariance_` attribute.
         """
         X, y = check_arrays(X, y, sparse_format='dense')
+        y = column_or_1d(y, warn=True)
         self.classes_, y = unique(y, return_inverse=True)
         n_samples, n_features = X.shape
         n_classes = len(self.classes_)
@@ -127,7 +129,7 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
         cov = None
         if store_covariance:
             cov = np.zeros((n_features, n_features))
-        for ind in xrange(n_classes):
+        for ind in range(n_classes):
             Xg = X[y == ind, :]
             meang = Xg.mean(0)
             means.append(meang)
@@ -141,19 +143,19 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
             self.covariance_ = cov
 
         self.means_ = np.asarray(means)
-        Xc = np.concatenate(Xc, 0)
+        Xc = np.concatenate(Xc, axis=0)
 
         # ----------------------------
         # 1) within (univariate) scaling by with classes std-dev
         std = Xc.std(axis=0)
         # avoid division by zero in normalization
         std[std == 0] = 1.
-        fac = float(1) / (n_samples - n_classes)
+        fac = 1. / (n_samples - n_classes)
         # ----------------------------
         # 2) Within variance scaling
         X = np.sqrt(fac) * (Xc / std)
         # SVD of centered (within)scaled data
-        U, S, V = linalg.svd(X, full_matrices=0)
+        U, S, V = linalg.svd(X, full_matrices=False)
 
         rank = np.sum(S > tol)
         if rank < n_features:
@@ -184,13 +186,6 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
         return self
 
     @property
-    def classes(self):
-        warnings.warn("LDA.classes is deprecated and will be removed in 0.14. "
-                      "Use LDA.classes_ instead.", DeprecationWarning,
-                      stacklevel=2)
-        return self.classes_
-
-    @property
     def scaling(self):  # pragma: no cover
         warnings.warn("LDA.scaling is deprecated and will be removed in 0.15."
                       " Use LDA.scalings_ instead.", DeprecationWarning,
@@ -205,7 +200,7 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
 
     def decision_function(self, X):
         """
-        This function return the decision function values related to each
+        This function returns the decision function values related to each
         class on an array of test vectors X.
 
         Parameters
@@ -263,7 +258,7 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
 
     def predict_proba(self, X):
         """
-        This function return posterior probabilities of classification
+        This function returns posterior probabilities of classification
         according to each class on an array of test vectors X.
 
         Parameters
@@ -283,7 +278,7 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
 
     def predict_log_proba(self, X):
         """
-        This function return posterior log-probabilities of classification
+        This function returns posterior log-probabilities of classification
         according to each class on an array of test vectors X.
 
         Parameters

@@ -18,7 +18,7 @@ partial-fit. This is because the number of patches that they represent
 has become too low, and it is better to choose a random new
 cluster.
 """
-print __doc__
+print(__doc__)
 
 import time
 
@@ -35,7 +35,7 @@ faces = datasets.fetch_olivetti_faces()
 ###############################################################################
 # Learn the dictionary of images
 
-print 'Learning the dictionary... '
+print('Learning the dictionary... ')
 rng = np.random.RandomState(0)
 kmeans = MiniBatchKMeans(n_clusters=81, random_state=rng, verbose=True)
 patch_size = (20, 20)
@@ -60,11 +60,11 @@ for _ in range(6):
             kmeans.partial_fit(data)
             buffer = []
         if index % 100 == 0:
-            print 'Partial fit of %4i out of %i' % (index,
-                                                    6 * len(faces.images))
+            print('Partial fit of %4i out of %i'
+                  % (index, 6 * len(faces.images)))
 
 dt = time.time() - t0
-print 'done in %.2fs.' % dt
+print('done in %.2fs.' % dt)
 
 ###############################################################################
 # Plot the results

@@ -21,10 +21,10 @@ This example shows that you can do non-linear regression with a linear model,
 by manually adding non-linear features. Kernel methods extend this idea and can
 induce very high (even infinite) dimensional feature spaces.
 """
-print __doc__
+print(__doc__)
 
 # Author: Mathieu Blondel
-# License: BSD Style.
+# License: BSD 3 clause
 
 import numpy as np
 import pylab as pl

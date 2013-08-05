@@ -1499,7 +1499,7 @@ static CYTHON_UNUSED int __pyx_pw_5numpy_7ndarray_1__getbuffer__(PyObject *__pyx
  *         # -- the details of this may change.
  *         def __getbuffer__(ndarray self, Py_buffer* info, int flags):             # <<<<<<<<<<<<<<
  *             # This implementation of getbuffer is geared towards Cython
- *             # requirements, and does not yet fullfill the PEP.
+ *             # requirements, and does not yet fulfill the PEP.
  */
 
 static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, Py_buffer *__pyx_v_info, int __pyx_v_flags) {
@@ -3938,7 +3938,7 @@ PyMODINIT_FUNC PyInit_arraybuilder(void)
 
   /* "sklearn/utils/arraybuilder.pyx":1
  * # Author: Lars Buitinck <L.J.Buitinck@uva.nl>             # <<<<<<<<<<<<<<
- * # License: BSD-style
+ * # Licence: BSD 3 clause
  * 
  */
   __pyx_t_1 = PyDict_New(); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1; __pyx_clineno = __LINE__; goto __pyx_L1_error;}

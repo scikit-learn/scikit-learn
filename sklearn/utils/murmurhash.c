@@ -1707,7 +1707,7 @@ static PyArrayObject *__pyx_f_7sklearn_5utils_10murmurhash_murmurhash3_bytes_arr
 
   /* "sklearn/utils/murmurhash.pyx":62
  *     """Compute 32bit murmurhash3 hashes of a key int array at seed."""
- *     # TODO make it possible to pass preallocated ouput array
+ *     # TODO make it possible to pass preallocated output array
  *     cdef np.ndarray[np.uint32_t, ndim=1] out = np.zeros(key.size, np.uint32)             # <<<<<<<<<<<<<<
  *     cdef Py_ssize_t i
  *     for i in range(key.shape[0]):
@@ -1974,7 +1974,7 @@ static PyArrayObject *__pyx_f_7sklearn_5utils_10murmurhash_murmurhash3_bytes_arr
 
   /* "sklearn/utils/murmurhash.pyx":74
  *     """Compute 32bit murmurhash3 hashes of a key int array at seed."""
- *     # TODO make it possible to pass preallocated ouput array
+ *     # TODO make it possible to pass preallocated output array
  *     cdef np.ndarray[np.int32_t, ndim=1] out = np.zeros(key.size, np.int32)             # <<<<<<<<<<<<<<
  *     cdef Py_ssize_t i
  *     for i in range(key.shape[0]):
@@ -2764,7 +2764,7 @@ static CYTHON_UNUSED int __pyx_pw_5numpy_7ndarray_1__getbuffer__(PyObject *__pyx
  *         # -- the details of this may change.
  *         def __getbuffer__(ndarray self, Py_buffer* info, int flags):             # <<<<<<<<<<<<<<
  *             # This implementation of getbuffer is geared towards Cython
- *             # requirements, and does not yet fullfill the PEP.
+ *             # requirements, and does not yet fulfill the PEP.
  */
 
 static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, Py_buffer *__pyx_v_info, int __pyx_v_flags) {
