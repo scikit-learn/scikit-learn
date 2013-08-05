@@ -108,73 +108,71 @@
 {%- if pagename == 'index' %}
 <!-- Banner -->
 <div class="container banner-container">
-    <div class="row-fluid banner-inner">
-        <div class="span6">
-            <div class="row-fluid">
-                <div class="offset2 span8"><div id="index_carousel_tn" class="thumbnail">
-		    <div id="examples_carousel" class="carousel slide" data-interval="false">
-		      <ol id="scikit_learn_index_indicators" class="carousel-indicators">
-			<li data-target="#examples_carousel" data-slide-to="0" class="active"></li>
-			<li data-target="#examples_carousel" data-slide-to="1"></li>
-			<li data-target="#examples_carousel" data-slide-to="2"></li>
-			<li data-target="#examples_carousel" data-slide-to="3"></li>
-			<li data-target="#examples_carousel" data-slide-to="4"></li>
-			<li data-target="#examples_carousel" data-slide-to="5"></li>
-			<li data-target="#examples_carousel" data-slide-to="6"></li>
-			<li data-target="#examples_carousel" data-slide-to="7"></li>
-		      </ol>
-		      <!-- Carousel items -->
-		      <div class="carousel-inner">
-
-			  <div class="active item">
-			    <a href="{{ pathto('auto_examples/plot_classifier_comparison') }}">
-			      <img src="_images/plot_classifier_comparison_1.png"></a>
-			  </div>
-			  <div class="item">
-			    <a href="{{ pathto('auto_examples/cluster/plot_lena_ward_segmentation') }}">
-			      <img src="_images/plot_lena_ward_segmentation_1.png"></a>
-			  </div>
-			  <div class="item">
-			    <a href="{{ pathto('auto_examples/svm/plot_oneclass') }}">
-			      <img src="_images/plot_oneclass_1.png"></a>
-			  </div>
-			  <div class="item">
-			    <a href="{{ pathto('auto_examples/applications/plot_species_distribution_modeling') }}">
-			      <img src="_images/plot_species_distribution_modeling_1.png"></a>
-			  </div>
-			  <div class="item">
-			    <a href="{{ pathto('auto_examples/decomposition/plot_faces_decomposition') }}">
-			      <img src="_images/plot_faces_decomposition_4.png"></a>
-			  </div>
-			  <div class="item">
-			    <a href="{{ pathto('auto_examples/cluster/plot_kmeans_digits') }}">
-			      <img src="_images/plot_kmeans_digits_1.png"></a>
-			  </div>
-			  <div class="item">
-			    <a href="{{ pathto('auto_examples/cluster/plot_cluster_comparison') }}">
-			      <img src="_images/plot_cluster_comparison_1.png"></a>
-			  </div>
-			  <div class="item">
-			    <a href="{{ pathto('auto_examples/plot_lda_qda') }}">
-			      <img src="_images/plot_lda_qda_1.png"></a>
-			  </div>
-
-		      </div>
-		    </div>
-		</div></div>
-            </div>
-        </div>
-        <div id="intro_to_sklearn_p" class="span6">
-            <h1>scikit-learn</h1>
-            <h2>Machine Learning in Python</h2>
-            <ul>
-                <li>Simple and efficient tools for data mining and data analysis</li>
-                <li>Accessible to everybody, and reusable in various contexts</li>
-                <li>Built on NumPy, SciPy, and matplotlib</li>
-                <li>Open source, commercially usable - BSD license</li>
-            </ul>
-        </div>
+  <div class="row-fluid banner-inner">
+    <div class="span6">
+      <div class="row-fluid">
+        <div class="offset2 span8"><div id="index_carousel_tn" class="thumbnail">
+	    <div id="examples_carousel" class="carousel slide" data-interval="false">
+	      <ol id="scikit_learn_index_indicators" class="carousel-indicators">
+		<li data-target="#examples_carousel" data-slide-to="0" class="active"></li>
+		<li data-target="#examples_carousel" data-slide-to="1"></li>
+		<li data-target="#examples_carousel" data-slide-to="2"></li>
+		<li data-target="#examples_carousel" data-slide-to="3"></li>
+		<li data-target="#examples_carousel" data-slide-to="4"></li>
+		<li data-target="#examples_carousel" data-slide-to="5"></li>
+		<li data-target="#examples_carousel" data-slide-to="6"></li>
+		<li data-target="#examples_carousel" data-slide-to="7"></li>
+	      </ol>
+	      <!-- Carousel items -->
+	      <div class="carousel-inner">
+		<div class="active item">
+		  <a href="{{ pathto('auto_examples/plot_classifier_comparison') }}">
+		    <img src="_images/plot_classifier_comparison_1.png"></a>
+		</div>
+		<div class="item">
+		  <a href="{{ pathto('auto_examples/cluster/plot_lena_ward_segmentation') }}">
+		    <img src="_images/plot_lena_ward_segmentation_1.png"></a>
+		</div>
+		<div class="item">
+		  <a href="{{ pathto('auto_examples/svm/plot_oneclass') }}">
+		    <img src="_images/plot_oneclass_1.png"></a>
+		</div>
+		<div class="item">
+		  <a href="{{ pathto('auto_examples/applications/plot_species_distribution_modeling') }}">
+		    <img src="_images/plot_species_distribution_modeling_1.png"></a>
+		</div>
+		<div class="item">
+		  <a href="{{ pathto('auto_examples/decomposition/plot_faces_decomposition') }}">
+		    <img src="_images/plot_faces_decomposition_4.png"></a>
+		</div>
+		<div class="item">
+		  <a href="{{ pathto('auto_examples/cluster/plot_kmeans_digits') }}">
+		    <img src="_images/plot_kmeans_digits_1.png"></a>
+		</div>
+		<div class="item">
+		  <a href="{{ pathto('auto_examples/cluster/plot_cluster_comparison') }}">
+		    <img src="_images/plot_cluster_comparison_1.png"></a>
+		</div>
+		<div class="item">
+		  <a href="{{ pathto('auto_examples/plot_lda_qda') }}">
+		    <img src="_images/plot_lda_qda_1.png"></a>
+		</div>
+	      </div>
+	    </div>
+	</div></div>
+      </div>
     </div>
+    <div id="intro_to_sklearn_p" class="span6">
+      <h1>scikit-learn</h1>
+      <h2>Machine Learning in Python</h2>
+      <ul>
+        <li>Simple and efficient tools for data mining and data analysis</li>
+        <li>Accessible to everybody, and reusable in various contexts</li>
+        <li>Built on NumPy, SciPy, and matplotlib</li>
+        <li>Open source, commercially usable - BSD license</li>
+      </ul>
+    </div>
+  </div>
 </div>
 {%- endif %}
 
