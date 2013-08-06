@@ -45,6 +45,9 @@ source directory (you will need to have nosetests installed)::
 
 See the web page http://scikit-learn.org/stable/install.html#testing
 for more information.
+
+This function, `sklearn.test()` does not do anything. It does not run
+the tests and will be deprecated in release 0.16.
 """, stacklevel=2)
 
     __all__ = ['cross_validation', 'cluster', 'covariance',
