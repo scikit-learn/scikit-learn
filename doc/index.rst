@@ -246,7 +246,7 @@
     <div class="container index-lower">
         <div class="row-fluid">
             <!-- News -->
-            <div class="span6">
+            <div class="span4">
                 <h4>News</h4>
                 <ul>
                 <li><em>On-going development:</em>
@@ -277,10 +277,10 @@
             </div>
 
             <!-- Community -->
-            <div class="span6">
+            <div class="span4">
                 <h4>Community</h4>
                 <ul>
-                <li><em>Questions?</em> See <a href="http://stackoverflow.com/questions/tagged/scikit-learn">stackoverflow</a> # scikit-learn for usage questions</li>
+                <li><em>Questions?</em> See <a href="http://stackoverflow.com/questions/tagged/scikit-learn">stackoverflow</a> # scikit-learn</li>
                 <li><em>Mailing list:</em> scikit-learn-general@lists.sourceforge.net</li>
                 <li><em>IRC:</em> #scikit-learn @ <a href="http://webchat.freenode.net/">freenode</a></li>
                 <li><em>Help us:</em>
@@ -297,24 +297,39 @@
                 <h4>Who is using scikit-learn?</h4>
 
                 </h4>
-                <div id="myCarousel" class="carousel slide">
+                <div id="testimonials_carousel" class="carousel slide">
                     <div class="carousel-inner">
                         <div class="active item">
                           <img src="_images/inria.jpg" class="thumbnail" /><br />
+                        </div>
                         <div class="item">
                           <img src="_images/evernote.png" class="thumbnail" /><br />
+                        </div>
                         <div class="item">
-                          <img src="_images/telecomparistech.jpg" class="thumbnail" /><br />
+                          <img src="_images/telecomparistech.jpg"
+                               class="thumbnail" /><br />
                         </div>
                         <div class="item">
                           <img src="_images/aweber.png" class="thumbnail" /><br />
                         </div>
                     </div>
-                    <div style="margin-top: 5px"><a href="#">More testimonials</a></div>
+                    <div style="margin-top: 5px">
+                      <a class="testimonials" href="testimonials/testminonials.html">
+                        More testimonials</a></div>
                 </div>
-                <script>$('#myCarousel').carousel()</script>
-            </div>
 
+               <a class="btn btn-warning btn-big cite-us"
+                  href="./about.html#citing-scikit-learn">
+                  <b>Cite us!</b>
+              </a>
+            </div>
         </div>
     </div>
     </div>
+
+
+    <script>
+      $('#testimonials_carousel').carousel()
+    </script>
+
+
