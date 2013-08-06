@@ -252,7 +252,7 @@
                 <li><em>On-going development:</em>
                 <a href="whats_new.html"><em>What's new</em> (changelog)</a>
                 </li>
-                <li><em>July 22th - 28th, 2013: internal sprint</em>
+                <li><em>July 22th - 28th, 2013: international sprint.</em>
                 During this week-long sprint, we gathered most of the core
                 developers in Paris.
                 <!--
@@ -300,22 +300,35 @@
                 <div id="testimonials_carousel" class="carousel slide">
                     <div class="carousel-inner">
                         <div class="active item">
-                          <img src="_images/inria.jpg" class="thumbnail" /><br />
+                          <img src="_images/inria.jpg" class="thumbnail" />
+                          <p align="center">
+                          <em>"We use scikit-learn to support leading-edge basic research [...]"</em>
+                          <a href="testimonials/testimonials.html">More testimonials</a>
+                          </p>
                         </div>
                         <div class="item">
-                          <img src="_images/evernote.png" class="thumbnail" /><br />
+                          <img src="_images/evernote.png" class="thumbnail" />
+                          <p align="center">
+                          <em>"For these tasks, we relied on the excellent scikit-learn package for Python."</em>
+                          <a href="testimonials/testimonials.html">More testimonials</a>
+                          </p>
                         </div>
                         <div class="item">
                           <img src="_images/telecomparistech.jpg"
-                               class="thumbnail" /><br />
+                               class="thumbnail" />
+                          <p align="center">
+                          <em>"The great benefit of scikit-learn is its fast learning curve [...]"</em>
+                          <a href="testimonials/testimonials.html">More testimonials</a>
+                          </p>
                         </div>
                         <div class="item">
-                          <img src="_images/aweber.png" class="thumbnail" /><br />
+                          <img src="_images/aweber.png" class="thumbnail" />
+                          <p align="center">
+                          <em>"It allows us to do AWesome stuff we would not otherwise accomplish"</em>
+                          <a href="testimonials/testimonials.html">More testimonials</a>
+                          </p>
                         </div>
                     </div>
-                    <div style="margin-top: 5px">
-                      <a class="testimonials" href="testimonials/testminonials.html">
-                        More testimonials</a></div>
                 </div>
 
                <a class="btn btn-warning btn-big cite-us"

@@ -858,8 +858,8 @@ div.carousel>.carousel-inner>.item {
 
 
 div.carousel img {
-    max-height: 50px;
-    height: 50px;
+    max-height: 70px;
+    height: 70px;
     background-color: #fff;
     margin: auto;
 }
@@ -1005,7 +1005,7 @@ div.testimonial p {
 
 div.testimonial span.testimonial-author {
     width: 100%;
-    text-align: right; 
+    text-align: right;
     margin-bottom: 30px;
 }
 
@@ -1143,7 +1143,6 @@ div.container-index {
 
 .cite-us {
   margin: auto;
-  margin-top: 30px;
   display: block;
   max-width: 100px;
 }
@@ -1170,10 +1169,4 @@ div.container-index {
     margin-left: 0;
   }
 
-}
-
-a.testimonials {
-  font-size: 0.9em;
-  float: right;
-  padding-right: 5px;
 }
