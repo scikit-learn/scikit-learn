@@ -846,10 +846,62 @@ div.box-links p {
     display: inline;
 }
 
+div#examples_carousel {
+    margin-bottom: 0px;
+}
+
 div.carousel img {
     max-height: 80px;
     height: 80px;
     background-color: #fff;
+}
+
+div#examples_carousel img {
+    max-height: 201px;
+    height: 186px;
+    background-color: #fff;
+    margin: 10px auto;
+}
+
+div#examples_carousel .carousel-indicators {
+    position: absolute;
+    top: 200px;
+    right: 17%; # Should be adjusted as the number of elements grows
+}
+
+div#examples_carousel .carousel-indicators .active {
+    background-color: #0F72F0;
+}
+
+div#examples_carousel .carousel-indicators li {
+    background-color: rgba(52, 147, 235, 0.25);
+}
+
+div#examples_carousel .carousel-control {
+    top: 203px;
+    left: 1px;
+    width: 25px;
+    height: 25px;
+    font-size: 37px;
+    line-height: 19px;
+    background: rgba(28, 140, 245, 0.38);
+}
+
+div#examples_carousel .carousel-control.right {
+    left: auto;
+    right: 2px;
+}
+
+div#intro_to_sklearn_p li {
+    line-height: 30px;
+}
+
+div#index_carousel_tn {
+    height: 216px;
+    width: 380px;
+    max-width: 130%;
+    background: white;
+    padding: 0px;
 }
 
 p.doc-version {
