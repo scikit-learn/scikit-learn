@@ -800,7 +800,8 @@ div.container.index-lower ul {
 }
 
 div.container.index-lower ul li {
-    margin-bottom: 5px;
+    margin-bottom: 8px;
+    line-height: 1.3em;
 }
 
 div.container.index-lower ul li em {
@@ -850,10 +851,17 @@ div#examples_carousel {
     margin-bottom: 0px;
 }
 
+div.carousel>.carousel-inner>.item {
+  width: 100%;
+  margin: auto;
+}
+
+
 div.carousel img {
-    max-height: 80px;
-    height: 80px;
+    max-height: 50px;
+    height: 50px;
     background-color: #fff;
+    margin: auto;
 }
 
 div#examples_carousel img {
@@ -893,7 +901,7 @@ div#examples_carousel .carousel-control.right {
 }
 
 div#intro_to_sklearn_p li {
-    line-height: 30px;
+    line-height: 22px;
 }
 
 div#index_carousel_tn {
@@ -977,22 +985,36 @@ div.testimonial h2 {
     text-align: center;
 }
 
-div.testimonial img {
+
+div.logo {
     float: left;
-    padding-right: 30px;
+    width: 200px;
+}
+
+div.logo img {
+  max-width: 150px;
+  max-height: 150px;
 }
 
 div.testimonial p {
     line-height: 1.5em;
-    padding-left: 30px;
     font-size: 1.1em;
+    color: #1c1c1c;
+    padding-left: 230px;
 }
 
-div.testimonial-website {
+div.testimonial span.testimonial-author {
     width: 100%;
-    text-align: right;
-    font-size: 0.8em;
+    text-align: right; 
+    margin-bottom: 30px;
 }
+
+div.testimonial span.testimonial-author p{
+    font-size: 0.8em;
+    font-style: italic;
+    color: #808080;
+}
+
 
 .no-display {
   display: none;
@@ -1119,6 +1141,13 @@ div.container-index {
   margin-left: -210px;
 }
 
+.cite-us {
+  margin: auto;
+  margin-top: 30px;
+  display: block;
+  max-width: 100px;
+}
+
 @media all and (max-width: 780px) {
   .fork-me {
       display: none;
@@ -1141,4 +1170,10 @@ div.container-index {
     margin-left: 0;
   }
 
+}
+
+a.testimonials {
+  font-size: 0.9em;
+  float: right;
+  padding-right: 5px;
 }
