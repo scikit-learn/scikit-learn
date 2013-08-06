@@ -866,7 +866,7 @@ div#examples_carousel img {
 div#examples_carousel .carousel-indicators {
     position: absolute;
     top: 200px;
-    right: 17%; # Should be adjusted as the number of elements grows
+    right: 26%; # Should be adjusted as the number of elements grows
 }
 
 div#examples_carousel .carousel-indicators .active {
