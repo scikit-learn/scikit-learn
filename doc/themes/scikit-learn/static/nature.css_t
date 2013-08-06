@@ -851,7 +851,7 @@ div#examples_carousel {
     margin-bottom: 0px;
 }
 
-div.carousel item {
+div.carousel>.carousel-inner>.item {
   width: 100%;
   margin: auto;
 }
@@ -861,6 +861,7 @@ div.carousel img {
     max-height: 50px;
     height: 50px;
     background-color: #fff;
+    margin: auto;
 }
 
 div#examples_carousel img {
@@ -1142,7 +1143,7 @@ div.container-index {
 
 .cite-us {
   margin: auto;
-  margin-top: 10px;
+  margin-top: 30px;
   display: block;
   max-width: 100px;
 }
@@ -1173,4 +1174,6 @@ div.container-index {
 
 a.testimonials {
   font-size: 0.9em;
+  float: right;
+  padding-right: 5px;
 }
