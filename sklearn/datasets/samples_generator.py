@@ -1589,16 +1589,15 @@ def make_msr(shape, n_clusters, noise=0.0, constant=False,
     def make_bicluster(n_rows, n_cols):
         if constant:
             val = generator.uniform(vector_minval, vector_maxval)
-            vec = np.zeros(n_cols) + val
+            row = np.zeros(n_cols) + val
         else:
-            vec = generator.uniform(vector_minval, vector_maxval, n_cols)
+            row = generator.uniform(vector_minval, vector_maxval, n_cols)
         if identical:
             shift = np.zeros(n_rows)[:, np.newaxis]
         else:
             shift = generator.uniform(shift_minval, shift_maxval, n_rows)
             shift = shift[:, np.newaxis]
-        result = np.vstack([vec] * n_rows)
-        result += shift
+        result = row + shift
         return result
 
     for i in range(n_clusters):
