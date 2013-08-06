@@ -1,4 +1,4 @@
-scikit-learn (0.14~a1+git20-gc9ba2c3-1) UNRELEASED; urgency=low
+scikit-learn (0.14~a1+git20-gc9ba2c3-1) experimental; urgency=low
 
   * Fresh pre-release snapshot
   * debian/control
