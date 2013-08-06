@@ -893,7 +893,7 @@ div#examples_carousel .carousel-control.right {
 }
 
 div#intro_to_sklearn_p li {
-    line-height: 30px;
+    line-height: 22px;
 }
 
 div#index_carousel_tn {
