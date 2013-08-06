@@ -800,7 +800,8 @@ div.container.index-lower ul {
 }
 
 div.container.index-lower ul li {
-    margin-bottom: 5px;
+    margin-bottom: 8px;
+    line-height: 1.3em;
 }
 
 div.container.index-lower ul li em {
@@ -850,9 +851,15 @@ div#examples_carousel {
     margin-bottom: 0px;
 }
 
+div.carousel item {
+  width: 100%;
+  margin: auto;
+}
+
+
 div.carousel img {
-    max-height: 80px;
-    height: 80px;
+    max-height: 50px;
+    height: 50px;
     background-color: #fff;
 }
 
@@ -976,6 +983,7 @@ div.testimonial h2 {
     font-weight: bold;
     text-align: center;
 }
+
 
 div.logo {
     float: left;
@@ -1134,6 +1142,7 @@ div.container-index {
 
 .cite-us {
   margin: auto;
+  margin-top: 10px;
   display: block;
   max-width: 100px;
 }
@@ -1160,4 +1169,8 @@ div.container-index {
     margin-left: 0;
   }
 
+}
+
+a.testimonials {
+  font-size: 0.9em;
 }
