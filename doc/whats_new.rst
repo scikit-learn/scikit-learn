@@ -212,6 +212,9 @@ Changelog
 API changes summary
 -------------------
 
+   - Testing scikit-learn with `sklearn.test()` is deprecated. Use
+     `nosetest sklearn` from the command line.
+
    - Feature importances in :class:`tree.DecisionTreeClassifier`,
      :class:`tree.DecisionTreeRegressor` and all derived ensemble estimators
      are now computed on the fly when accessing  the ``feature_importances_``
