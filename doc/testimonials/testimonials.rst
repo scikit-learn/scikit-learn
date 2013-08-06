@@ -99,7 +99,7 @@ Mark Ayzenshtat, VP, Augmented Intelligence
   </div>
 
 
-At Telecom ParisTech, scikit-learn is used for hands on sessions and home
+At Telecom ParisTech, scikit-learn is used for hands-on sessions and home
 assignments in introductory and advanced machine learning courses. The classes
 are for undergrads and masters students. The great benefit of scikit-learn is
 its fast learning curve that allows students to quickly start working on
