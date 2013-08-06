@@ -90,11 +90,13 @@ Cheng and Church
 ================
 
 :class:`ChengChurch` tries to find biclusters with a low mean squared
-residue (MSR). For a matrix :math:`A` with shape :math:`m \times n`, the
-mean squared residue is computed as:
+residue (MSR). For a matrix :math:`A` with shape :math:`m \times n`,
+the residue of an entry is the difference between its actual value and
+its value as predicted by the row, column, and overall mean of the
+matrix:
 
 .. math::
-    \frac{1}{mn} \sum \left (a_{ij} - a_{iJ} - a_{Ij} + a_{IJ} \right)^2
+    a_{ij} - a_{iJ} - a_{Ij} + a_{IJ} \right
 
 where
 
@@ -105,18 +107,25 @@ where
 
    a_{IJ} = \frac{1}{mn} \sum_{i, j} a_{ij}
 
-are the row, column, and overall means of :math:`A`.
+are the row, column, and overall means of :math:`A`. Then the mean
+squared residue of :math:`A` is:
+
+.. math::
+    \frac{1}{mn} \sum \left (a_{ij} - a_{iJ} - a_{Ij} + a_{IJ} \right)^2
 
 The mean squared residue achieves its minimum of 0 when all the rows
-or all the columns of a bicluster are shifted versions of each other.
-Constant biclusters and biclusters with identical rows or identical
-columns are special cases of this condition, all of which have an MSR
-of 0. As a corollary, additive scaling of the entire bicluster does
-not affect the MSR score of any of its biclusters: :math:`A` and
-:math:`A+c`, where :math:`c` is any constant, have the same MSR.
-Therefore, for some datasets, it may be beneficial to apply a log
-transformation, because it transforms multiplicative scaling into
-additive scaling.
+and all the columns of a bicluster are additive shifted versions of
+each other. Constant biclusters, biclusters with constant rows or
+columns, or biclusters with identical rows or columns are special
+cases of this condition, all of which have an MSR of 0. As a
+corollary, additive scaling of the entire bicluster does not affect
+the MSR score of any of its biclusters: :math:`A` and :math:`A+c`,
+where :math:`c` is any constant, have the same MSR.
+
+For some datasets, it may be beneficial to apply a log transformation,
+because it transforms multiplicative scaling into additive scaling. In
+other words, if :math:`a` is any column vector the MSR of :math:`a
+a^\top` may be large, but the MSR of :math:`\log(a a^\top)` is 0.
 
 Cheng and Church finds biclusters that are as large as possible, with
 the constraint that a bicluster's MSR must be less than the theshold

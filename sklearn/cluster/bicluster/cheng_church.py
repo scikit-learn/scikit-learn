@@ -139,10 +139,9 @@ class ChengChurch(six.with_metaclass(ABCMeta, BaseEstimator,
     """Algorithm that finds biclusters with small mean squared residue (MSR).
 
     The residue of an array ``X`` is calculated as ``X -
-    X.mean(axis=1, keepdims=True) - X.mean(axis=0) + X.mean()``. It
-    measures an element's coherence with the overall array, other
-    elements in the same row, and other elements in the same column.
-    To get the mean squared residue, the residues are squaredd and their
+    X.mean(axis=1, keepdims=True) - X.mean(axis=0) + X.mean()``. It measures
+    each element's coherence with the overall mean, row mean, and column
+    mean. To get the mean squared residue, the residues are squared and their
     mean is calculated.
 
     ChengChurch tries to maximize bicluser size with the constraint
