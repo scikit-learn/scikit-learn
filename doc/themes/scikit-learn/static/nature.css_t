@@ -870,9 +870,12 @@ div.carousel>.carousel-inner>.item {
 
 div.carousel img {
     max-height: 70px;
-    max-width: 50%;
     background-color: #fff;
     margin: auto;
+}
+
+div#testimonials_carousel img {
+    max-width: 50%;
 }
 
 div#testimonials_carousel {
