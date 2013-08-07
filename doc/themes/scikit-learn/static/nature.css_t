@@ -785,28 +785,6 @@ div.container.index-lower h4,  div.container.index-lower h4 a{
     color: #FF9C34;
 }
 
-div.container.index-lower div.bottom-button {
-    float: right;
-    padding-right: 17%;
-}
-
-form#paypal-from {
-    margin-bottom: 10px;
-}
-
-div.container.index-lower div.bottom-button button.btn{
-    padding-left: 30px;
-    padding-right: 30px;
-    margin-left: 10px;
-    margin-right: 5px;
-}
-
-div.container.index-lower div.bottom-button a.btn{
-    padding-left: 30px;
-    padding-right: 30px;
-    margin-left: 70px;
-}
-
 div.container.index-lower h4 {
     margin-bottom: 10px;
     margin-left: 0px;
@@ -829,6 +807,11 @@ div.container.index-lower ul li {
 div.container.index-lower ul li em {
     font-style: normal;
     font-weight: bold;
+}
+
+#paypal-form {
+    margin: 0;
+    padding: 0;
 }
 
 div.box h2 {
@@ -1048,7 +1031,7 @@ div.testimonial span.testimonial-author p{
 }
 
 .btn-group {
-  height: 100%	height: 100%;
+    height: 100%;
 }
 
 .btn-group .dropdown-menu {

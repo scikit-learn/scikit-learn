@@ -273,7 +273,18 @@
                 <li><em>Mailing list:</em> <a href="https://lists.sourceforge.net/lists/listinfo/scikit-learn-general">scikit-learn-general@lists.sourceforge.net</a></li>
                 <li><em>IRC:</em> #scikit-learn @ <a href="http://webchat.freenode.net/">freenode</a></li>
                 </ul>
+
+                <form target="_top" id="paypal-form" method="post" action="https://www.paypal.com/cgi-bin/webscr">
+                    <input type="hidden" value="_s-xclick" name="cmd">
+                    <input type="hidden" value="74EYUMF3FTSW8" name="hosted_button_id">
+                </form>
+
+                <a class="btn btn-warning btn-big" onclick="document.getElementById('paypal-form').submit(); return false;">Help us, <strong>donate!</strong></a>
+                <a class="btn btn-warning btn-big" href="./about.html#citing-scikit-learn"><strong>Cite us!</strong></a>
+
+                <small style="display: block; margin-top: 10px"><a href="about.html#funding">Read more about donations</a></small>
             </div>
+
             <!-- who using -->
             <div class="span4">
                 <h4>Who uses scikit-learn?</h4>
@@ -312,21 +323,7 @@
                 <a href="testimonials/testimonials.html">More testimonials</a>
                 </small>
                 </p>
-           </div>
-
-            <!-- help us -->
-           <div class="bottom-button">
-               <form target="_top" id="paypal-form" method="post" action="https://www.paypal.com/cgi-bin/webscr">
-               <input type="hidden" value="_s-xclick" name="cmd">
-               <input type="hidden" value="74EYUMF3FTSW8" name="hosted_button_id">
-               </form>
-           <strong>Help us:</strong>
-             <button class="btn btn-warning btn-big" onclick="document.getElementById('paypal-form').submit(); return false;"><b>Donate!</b></button> (<a href="about.html#funding">read more</a>)
-           <a class="btn btn-warning btn-big"
-             href="./about.html#citing-scikit-learn">
-             <b>Cite us!</b>
-           </a>
-           </div>
+            </div>
 
         </div>
     </div>
