@@ -810,8 +810,14 @@ div.container.index-lower ul li em {
 }
 
 #paypal-form {
-    margin: 0;
+    margin: 30px 0;
     padding: 0;
+}
+
+div.container.index-lower a.cite-us {
+    margin-left: 60px;
+    padding-right: 20px;
+    padding-left: 20px;
 }
 
 div.box h2 {

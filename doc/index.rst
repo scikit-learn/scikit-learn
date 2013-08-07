@@ -280,7 +280,7 @@
                 </form>
 
                 <a class="btn btn-warning btn-big" onclick="document.getElementById('paypal-form').submit(); return false;">Help us, <strong>donate!</strong></a>
-                <a class="btn btn-warning btn-big" href="./about.html#citing-scikit-learn"><strong>Cite us!</strong></a>
+                <a class="btn btn-warning btn-big cite-us" href="./about.html#citing-scikit-learn"><strong>Cite us!</strong></a>
 
                 <small style="display: block; margin-top: 10px"><a href="about.html#funding">Read more about donations</a></small>
             </div>
