@@ -336,7 +336,7 @@
 	        Generous funding provided by INRIA, Google and others.
 	      </div>
 	      <div class="span4">
-   	         <a class="reference internal" href="about.html#funding">
+   	         <a class="reference internal" href="about.html#funding" style="text-decoration: none" >
     	           <img id="index-funding-logo-big" src="_images/inria-small.jpg" title="INRIA">
 	           <img id="index-funding-logo-small" src="_images/google-logo.png" title="Google">
 	           <!--Due to Télécom ParisTech's logo text being smaller, a style has been added to improve readability-->
