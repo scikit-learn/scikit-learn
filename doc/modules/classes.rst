@@ -715,7 +715,6 @@ details.
 
    metrics.accuracy_score
    metrics.auc
-   metrics.auc_score
    metrics.average_precision_score
    metrics.classification_report
    metrics.confusion_matrix
@@ -730,6 +729,7 @@ details.
    metrics.precision_recall_fscore_support
    metrics.precision_score
    metrics.recall_score
+   metrics.roc_auc_score
    metrics.roc_curve
    metrics.zero_one_loss
 

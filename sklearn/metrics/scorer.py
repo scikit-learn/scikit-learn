@@ -23,7 +23,7 @@ from warnings import warn
 import numpy as np
 
 from . import (r2_score, mean_squared_error, accuracy_score, f1_score,
-               auc_score, average_precision_score, precision_score,
+               roc_auc_score, average_precision_score, precision_score,
                recall_score, log_loss)
 
 from .cluster import adjusted_rand_score
@@ -253,8 +253,8 @@ accuracy_scorer = make_scorer(accuracy_score)
 f1_scorer = make_scorer(f1_score)
 
 # Score functions that need decision values
-auc_scorer = make_scorer(auc_score, greater_is_better=True,
-                         needs_threshold=True)
+roc_auc_scorer = make_scorer(roc_auc_score, greater_is_better=True,
+                             needs_threshold=True)
 average_precision_scorer = make_scorer(average_precision_score,
                                        needs_threshold=True)
 precision_scorer = make_scorer(precision_score)
@@ -269,7 +269,7 @@ adjusted_rand_scorer = make_scorer(adjusted_rand_score)
 
 SCORERS = dict(r2=r2_scorer,
                mean_squared_error=mean_squared_error_scorer,
-               accuracy=accuracy_scorer, f1=f1_scorer, roc_auc=auc_scorer,
+               accuracy=accuracy_scorer, f1=f1_scorer, roc_auc=roc_auc_scorer,
                average_precision=average_precision_scorer,
                precision=precision_scorer, recall=recall_scorer,
                log_loss=log_loss_scorer,

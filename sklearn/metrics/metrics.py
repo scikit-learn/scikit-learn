@@ -133,7 +133,7 @@ def auc(x, y, reorder=False):
     """Compute Area Under the Curve (AUC) using the trapezoidal rule
 
     This is a general function, given points on a curve.  For computing the
-    area under the ROC-curve, see :func:`auc_score`.
+    area under the ROC-curve, see :func:`roc_auc_score`.
 
     Parameters
     ----------
@@ -163,7 +163,10 @@ def auc(x, y, reorder=False):
 
     See also
     --------
-    auc_score : Computes the area under the ROC curve
+    roc_auc_score : Computes the area under the ROC curve
+
+    precision_recall_curve :
+        Compute precision-recall pairs for different probability thresholds
 
     """
     x, y = check_arrays(x, y)
@@ -292,7 +295,7 @@ def average_precision_score(y_true, y_score):
 
     See also
     --------
-    auc_score : Area under the ROC curve
+    roc_auc_score : Area under the ROC curve
 
     precision_recall_curve :
         Compute precision-recall pairs for different probability thresholds
@@ -310,7 +313,8 @@ def average_precision_score(y_true, y_score):
     precision, recall, thresholds = precision_recall_curve(y_true, y_score)
     return auc(recall, precision)
 
-
+@deprecated("Function 'auc_score' has been renamed to "
+            "'roc_auc_score' and will be removed in release 0.16.")
 def auc_score(y_true, y_score):
     """Compute Area Under the Curve (AUC) from prediction scores
 
@@ -344,10 +348,53 @@ def auc_score(y_true, y_score):
     Examples
     --------
     >>> import numpy as np
-    >>> from sklearn.metrics import auc_score
+    >>> from sklearn.metrics import roc_auc_score
     >>> y_true = np.array([0, 0, 1, 1])
     >>> y_scores = np.array([0.1, 0.4, 0.35, 0.8])
-    >>> auc_score(y_true, y_scores)
+    >>> roc_auc_score(y_true, y_scores)
+    0.75
+
+    """
+    return roc_auc_score(y_true, y_score)
+
+
+def roc_auc_score(y_true, y_score):
+    """Compute Area Under the Curve (AUC) from prediction scores
+
+    Note: this implementation is restricted to the binary classification task.
+
+    Parameters
+    ----------
+
+    y_true : array, shape = [n_samples]
+        True binary labels.
+
+    y_score : array, shape = [n_samples]
+        Target scores, can either be probability estimates of the positive
+        class, confidence values, or binary decisions.
+
+    Returns
+    -------
+    auc : float
+
+    References
+    ----------
+    .. [1] `Wikipedia entry for the Receiver operating characteristic
+            <http://en.wikipedia.org/wiki/Receiver_operating_characteristic>`_
+
+    See also
+    --------
+    average_precision_score : Area under the precision-recall curve
+
+    roc_curve : Compute Receiver operating characteristic (ROC)
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.metrics import roc_auc_score
+    >>> y_true = np.array([0, 0, 1, 1])
+    >>> y_scores = np.array([0.1, 0.4, 0.35, 0.8])
+    >>> roc_auc_score(y_true, y_scores)
     0.75
 
     """
@@ -593,7 +640,7 @@ def roc_curve(y_true, y_score, pos_label=None):
 
     See also
     --------
-    auc_score : Compute Area Under the Curve (AUC) from prediction scores
+    roc_auc_score : Compute Area Under the Curve (AUC) from prediction scores
 
     Notes
     -----

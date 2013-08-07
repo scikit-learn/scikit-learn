@@ -56,7 +56,7 @@ Scoring                    Function
 'f1'                       :func:`sklearn.metrics.f1_score`
 'precision'                :func:`sklearn.metrics.precision_score`
 'recall'                   :func:`sklearn.metrics.recall_score`
-'roc_auc'                  :func:`sklearn.metrics.auc_score`
+'roc_auc'                  :func:`sklearn.metrics.roc_auc_score`
 
 **Clustering**
 'adjusted_rand_score'      :func:`sklearn.metrics.adjusted_rand_score`
@@ -182,11 +182,11 @@ Some of these are restricted to the binary classification case:
 .. autosummary::
    :template: function.rst
 
-   auc_score
    average_precision_score
    hinge_loss
    matthews_corrcoef
    precision_recall_curve
+   roc_auc_score
    roc_curve
 
 
@@ -268,21 +268,21 @@ and with a list of labels format:
     for an example of accuracy score usage using permutations of
     the dataset.
 
-Area under the curve (AUC)
-...........................
+Area under the ROC curve
+.........................
 
-The :func:`auc_score` function computes the 'area under the curve' (AUC) which
-is the area under the receiver operating characteristic (ROC) curve.
+The :func:`roc_auc_score` function computes the area under the receiver
+operating characteristic (ROC) curve.
 
-This function requires  the true binary value and the target scores, which can
+This function requires the true binary value and the target scores, which can
 either be probability estimates of the positive class, confidence values, or
 binary decisions.
 
   >>> import numpy as np
-  >>> from sklearn.metrics import auc_score
+  >>> from sklearn.metrics import roc_auc_score
   >>> y_true = np.array([0, 0, 1, 1])
   >>> y_scores = np.array([0.1, 0.4, 0.35, 0.8])
-  >>> auc_score(y_true, y_scores)
+  >>> roc_auc_score(y_true, y_scores)
   0.75
 
 For more information see the
@@ -812,12 +812,16 @@ Wikipedia) <http://en.wikipedia.org/wiki/Receiver_operating_characteristic>`_:
 Here a small example of how to use the :func:`roc_curve` function::
 
     >>> import numpy as np
-    >>> from sklearn import metrics
+    >>> from sklearn.metrics import roc_curve
     >>> y = np.array([1, 1, 2, 2])
     >>> scores = np.array([0.1, 0.4, 0.35, 0.8])
-    >>> fpr, tpr, thresholds = metrics.roc_curve(y, scores, pos_label=2)
+    >>> fpr, tpr, thresholds = roc_curve(y, scores, pos_label=2)
     >>> fpr
     array([ 0. ,  0.5,  0.5,  1. ])
+    >>> tpr
+    array([ 0.5,  0.5,  1. ,  1. ])
+    >>> thresholds
+    array([ 0.8 ,  0.4 ,  0.35,  0.1 ])
 
 
 The following figure shows an example of such ROC curve.

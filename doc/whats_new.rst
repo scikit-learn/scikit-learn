@@ -212,6 +212,8 @@ Changelog
 API changes summary
 -------------------
 
+   - The :func:`auc_score` was renamed :func:`roc_auc_score`.
+
    - Testing scikit-learn with `sklearn.test()` is deprecated. Use
      `nosetest sklearn` from the command line.
 
