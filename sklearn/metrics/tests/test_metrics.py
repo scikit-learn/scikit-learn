@@ -46,6 +46,7 @@ from sklearn.metrics import (accuracy_score,
                              precision_score,
                              recall_score,
                              r2_score,
+                             roc_auc_score,
                              roc_curve,
                              zero_one,
                              zero_one_score,
@@ -106,7 +107,7 @@ CLASSIFICATION_METRICS = {
 }
 
 THRESHOLDED_METRICS = {
-    "auc_score": auc_score,
+    "roc_auc_score": roc_auc_score,
     "average_precision_score": average_precision_score,
 }
 
@@ -300,8 +301,6 @@ def make_prediction(dataset=None, binary=False):
 
 
 def _auc(y_true, y_score):
-    n_samples = y_true.shape[0]
-    ind = np.arange(n_samples)
     pos_label = np.unique(y_true)[1]
 
     # Count the number of times positive samples are correctly ranked above
@@ -322,7 +321,12 @@ def test_roc_curve():
     roc_auc = auc(fpr, tpr)
     expected_auc = _auc(y_true, probas_pred)
     assert_array_almost_equal(roc_auc, expected_auc, decimal=2)
-    assert_almost_equal(roc_auc, auc_score(y_true, probas_pred))
+    assert_almost_equal(roc_auc, roc_auc_score(y_true, probas_pred))
+
+    with warnings.catch_warnings(record=True):
+        assert_almost_equal(roc_auc, auc_score(y_true, probas_pred))
+
+
     assert_equal(fpr.shape, tpr.shape)
     assert_equal(fpr.shape, thresholds.shape)
 
@@ -477,7 +481,7 @@ def test_auc_errors():
 
 
 def test_auc_score_non_binary_class():
-    """Test that auc_score function returns an error when trying to compute AUC
+    """Test that roc_auc_score function returns an error when trying to compute AUC
     for non-binary class values.
     """
     rng = check_random_state(404)
@@ -485,18 +489,39 @@ def test_auc_score_non_binary_class():
     # y_true contains only one class value
     y_true = np.zeros(10, dtype="int")
     assert_raise_message(ValueError, "AUC is defined for binary "
-                         "classification only", auc_score, y_true, y_pred)
+                         "classification only", roc_auc_score, y_true, y_pred)
     y_true = np.ones(10, dtype="int")
     assert_raise_message(ValueError, "AUC is defined for binary "
-                         "classification only", auc_score, y_true, y_pred)
+                         "classification only", roc_auc_score, y_true, y_pred)
     y_true = -np.ones(10, dtype="int")
     assert_raise_message(ValueError, "AUC is defined for binary "
-                         "classification only", auc_score, y_true, y_pred)
+                         "classification only", roc_auc_score, y_true, y_pred)
     # y_true contains three different class values
     y_true = rng.randint(0, 3, size=10)
     assert_raise_message(ValueError, "AUC is defined for binary "
-                         "classification only", auc_score, y_true, y_pred)
+                         "classification only", roc_auc_score, y_true, y_pred)
 
+    with warnings.catch_warnings(record=True):
+        rng = check_random_state(404)
+        y_pred = rng.rand(10)
+        # y_true contains only one class value
+        y_true = np.zeros(10, dtype="int")
+        assert_raise_message(ValueError, "AUC is defined for binary "
+                             "classification only", auc_score,
+                             y_true, y_pred)
+        y_true = np.ones(10, dtype="int")
+        assert_raise_message(ValueError, "AUC is defined for binary "
+                             "classification only", auc_score, y_true,
+                             y_pred)
+        y_true = -np.ones(10, dtype="int")
+        assert_raise_message(ValueError, "AUC is defined for binary "
+                             "classification only", auc_score, y_true,
+                             y_pred)
+        # y_true contains three different class values
+        y_true = rng.randint(0, 3, size=10)
+        assert_raise_message(ValueError, "AUC is defined for binary "
+                             "classification only", auc_score, y_true,
+                             y_pred)
 
 def test_precision_recall_f1_score_binary():
     """Test Precision Recall and F1 Score for binary classification task"""
@@ -887,15 +912,22 @@ def test_precision_recall_curve_errors():
 
 
 def test_score_scale_invariance():
-    # Test that average_precision_score and auc_score are invariant by
+    # Test that average_precision_score and roc_auc_score are invariant by
     # the scaling or shifting of probabilities
     y_true, _, probas_pred = make_prediction(binary=True)
 
-    roc_auc = auc_score(y_true, probas_pred)
-    roc_auc_scaled = auc_score(y_true, 100 * probas_pred)
-    roc_auc_shifted = auc_score(y_true, probas_pred - 10)
+    roc_auc = roc_auc_score(y_true, probas_pred)
+    roc_auc_scaled = roc_auc_score(y_true, 100 * probas_pred)
+    roc_auc_shifted = roc_auc_score(y_true, probas_pred - 10)
     assert_equal(roc_auc, roc_auc_scaled)
     assert_equal(roc_auc, roc_auc_shifted)
+
+    with warnings.catch_warnings():
+        roc_auc = auc_score(y_true, probas_pred)
+        roc_auc_scaled = auc_score(y_true, 100 * probas_pred)
+        roc_auc_shifted = auc_score(y_true, probas_pred - 10)
+        assert_equal(roc_auc, roc_auc_scaled)
+        assert_equal(roc_auc, roc_auc_shifted)
 
     pr_auc = average_precision_score(y_true, probas_pred)
     pr_auc_scaled = average_precision_score(y_true, 100 * probas_pred)
@@ -928,7 +960,7 @@ def test_losses():
                  1 - zero_one_loss(y_true, y_pred))
 
     with warnings.catch_warnings(record=True):
-    # Throw deprecated warning
+        # Throw deprecated warning
         assert_equal(zero_one_score(y_true, y_pred),
                      1 - zero_one_loss(y_true, y_pred))
 
