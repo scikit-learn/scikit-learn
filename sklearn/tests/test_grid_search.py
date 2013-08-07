@@ -36,7 +36,7 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.cluster import KMeans, MeanShift
 from sklearn.metrics import f1_score
 from sklearn.metrics import make_scorer
-from sklearn.metrics import auc_score
+from sklearn.metrics import roc_auc_score
 from sklearn.cross_validation import KFold, StratifiedKFold
 
 
@@ -572,7 +572,7 @@ def test_grid_search_score_consistency():
                 if score == "f1":
                     correct_score = f1_score(y[test], clf.predict(X[test]))
                 elif score == "roc_auc":
-                    correct_score = auc_score(y[test],
+                    correct_score = roc_auc_score(y[test],
                                               clf.decision_function(X[test]))
                 assert_almost_equal(correct_score, scores[i])
                 i += 1
