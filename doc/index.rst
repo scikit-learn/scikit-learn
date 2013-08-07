@@ -252,6 +252,8 @@
                 <li><em>On-going development:</em>
                 <a href="whats_new.html"><em>What's new</em> (changelog)</a>
                 </li>
+                <li><em>August 2013.</em> scikit-learn 0.14 is available for download (<a href="whats_new.html">Changelog</a>).
+                </li>
                 <li><em>July 22-28th, 2013: international sprint.</em>
                 During this week-long sprint, we gathered most of the core
                 developers in Paris.
@@ -260,8 +262,6 @@
                 and <a href="http://www.tinyclues.com/">tinyclues</a>, and
                 donations that helped fund this event.
 
-                <li><em>February 2013.</em> scikit-learn 0.13.1 is available for download (<a href="whats_new.html">Changelog</a>).
-                </li>
                 </ul>
             </div>
 

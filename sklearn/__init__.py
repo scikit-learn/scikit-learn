@@ -13,7 +13,7 @@ machine-learning as a versatile tool for science and engineering.
 See http://scikit-learn.org for complete documentation.
 """
 import sys
-__version__ = '0.14-git'
+__version__ = '0.15-git'
 
 try:
     # This variable is injected in the __builtins__ by the build
