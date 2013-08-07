@@ -12,11 +12,14 @@ from sklearn.utils.testing import assert_greater
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.multiclass import OneVsOneClassifier
 from sklearn.multiclass import OutputCodeClassifier
+from sklearn.dummy import DummyClassifier
 
 from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
 
 from sklearn.svm import LinearSVC
+from sklearn.svm import SVC
+from sklearn.cross_validation import cross_val_score
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.linear_model import (LinearRegression, Lasso, ElasticNet, Ridge,
                                   Perceptron)
@@ -25,6 +28,7 @@ from sklearn.grid_search import GridSearchCV
 from sklearn.pipeline import Pipeline
 from sklearn import svm
 from sklearn import datasets
+from sklearn import preprocessing
 
 iris = datasets.load_iris()
 rng = np.random.RandomState(0)
@@ -32,6 +36,87 @@ perm = rng.permutation(iris.target.size)
 iris.data = iris.data[perm]
 iris.target = iris.target[perm]
 n_classes = 3
+
+
+def test_ovr_identical_results_seq_of_seqs():
+    # Test that ovr works the same when
+    # samples are differently binarized
+    lbNeg = preprocessing.LabelBinarizer(neg_label=-1)
+    lbZero = preprocessing.LabelBinarizer(neg_label=0)
+
+    lbNeg.fit(iris.target)
+    lbZero.fit(iris.target)
+
+    ovr = OneVsRestClassifier(LinearSVC(random_state=0))
+    predictorNeg = ovr.fit(iris.data, lbNeg.transform(iris.target))
+    predictorZero = ovr.fit(iris.data, lbZero.transform(iris.target))
+
+    predictionNeg = predictorNeg.predict(iris.data)
+    predictionZero = predictorZero.predict(iris.data)
+
+    assert_array_equal(predictionNeg, predictionZero)
+
+
+def test_ovo_identical_results_seq_of_seqs():
+    # Test that ovr works the same when
+    # samples are differently binarized
+    lbNeg = preprocessing.LabelBinarizer(neg_label=-1)
+    lbZero = preprocessing.LabelBinarizer(neg_label=0)
+
+    lbNeg.fit(iris.target)
+    lbZero.fit(iris.target)
+
+    assert_equal(lbNeg.classes_.size, lbZero.classes_.size)
+
+    for cls in range(0, lbNeg.classes_.size):
+        ovo = OneVsOneClassifier(LinearSVC(random_state=0))
+        predictorNeg = ovo.fit(iris.data,
+                               lbNeg.transform(iris.target)[:, cls])
+
+        predictorZero = ovo.fit(iris.data,
+                                lbZero.transform(iris.target)[:, cls])
+
+        predictionNeg = predictorNeg.predict(iris.data)
+        predictionZero = predictorZero.predict(iris.data)
+
+    assert_array_equal(predictionNeg, predictionZero)
+
+
+def test_ovr_no_class_disjoint_data():
+    X = np.array([[1, 1, 0, 0], [1, 0, 1, 0], [1, 0, 0, 1],
+                  [0, 1, 1, 0], [0, 1, 0, 1], [0, 0, 1, 1],
+                  [2, 2, 0, 0], [2, 0, 2, 0], [2, 0, 0, 2],
+                  [0, 2, 2, 0], [0, 2, 0, 2], [0, 0, 2, 2]])
+    Y = [["left", "right"], ["left", "up"], ["left", "down"],
+         ["right", "up"], ["right", "down"], ["up", "down"],
+         ["left", "right"], ["left", "up"], ["left", "down"],
+         ["right", "up"], ["right", "down"], ["up", "down"]]
+
+    classes = set("left right up down".split())
+
+    ovr = OneVsRestClassifier(SVC(kernel='linear'))
+    ovr.fit(X, Y)
+    assert_equal(set(ovr.classes_), classes)
+
+    x = np.array([[1, 1, 1, 1], [0, 1, 1, 1], [1, 0, 1, 1],
+                  [1, 1, 0, 1], [1, 1, 1, 0]])
+    y = ovr.predict(x)
+
+    expected_predictions = np.array([('down', 'left', 'right', 'up'),
+                                     ('down', 'right', 'up'),
+                                     ('down', 'left', 'up'),
+                                     ('down', 'left', 'right'),
+                                     ('left', 'right', 'up')])
+
+    y.sort()
+    expected_predictions.sort()
+    assert_array_equal(y, expected_predictions)
+
+
+def test_ovr_cross_val_score():
+    ovr = OneVsRestClassifier(LinearSVC(random_state=0))
+    scores = cross_val_score(ovr, iris.data, iris.target)
+    assert_greater(scores.mean(), 0.90)
 
 
 def test_ovr_exceptions():
@@ -312,6 +397,12 @@ def test_ovo_ties2():
         assert_equal(ovo_prediction[0], (1 + i) % 3)
 
 
+def test_ovo_cross_val_score():
+    ovo = OneVsOneClassifier(LinearSVC(random_state=0))
+    scores = cross_val_score(ovo, iris.data, iris.target)
+    assert_greater(scores.mean(), 0.90)
+
+
 def test_ecoc_exceptions():
     ecoc = OutputCodeClassifier(LinearSVC(random_state=0))
     assert_raises(ValueError, ecoc.predict, [])
@@ -338,3 +429,25 @@ def test_ecoc_gridsearch():
     cv.fit(iris.data, iris.target)
     best_C = cv.best_estimator_.estimators_[0].C
     assert_true(best_C in Cs)
+
+
+def test_ovr_intercept():
+    X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
+    Y = [1, 1, 1, 2, 2, 2]
+
+    ovr = OneVsRestClassifier(SVC(kernel='linear'))
+    ovr.fit(X, Y)
+
+    assert_array_equal(ovr.intercept_, [[-0.]])
+
+
+def test_ovr_missing_intercept_exception():
+    def retrieve_intercept(ovr):
+        return ovr.intercept_
+    X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
+    Y = [1, 1, 1, 2, 2, 2]
+
+    ovr = OneVsRestClassifier(DummyClassifier())
+    ovr.fit(X, Y)
+
+    assert_raises(AttributeError, retrieve_intercept, ovr)
