@@ -327,6 +327,29 @@
 
         </div>
     </div>
+
+    <!--Bottom of index page contributions logos-->
+    <div class="container index-upper" >
+	<div class="row-fluid">
+	  <div class="footer">
+	      <div class="span4">
+	        Generous funding provided by INRIA, Google and others.
+	      </div>
+	      <div class="span4">
+    	        <img id="index-funding-logo-big" src="_images/inria-small.jpg" title="INRIA">
+	        <img id="index-funding-logo-small" src="_images/google-logo.png" title="Google">
+	        <!--Due to Télécom ParisTech's logo text being smaller, a style has been added to improve readability-->
+	        <img id="index-funding-logo-small" src="_images/telecomparistech.jpg" title="Télécom ParisTech" style="max-height: 36px">
+	        <img id="index-funding-logo-small" src="_images/FNRS-logo.png" title="FNRS">
+	     </div>
+	     <div class="span4">
+	        <a class="reference internal" href="about.html">
+	           More information on our contributors
+	        </a>
+	     </div>
+	  </div>
+	</div>
+      </div>
     </div>
 
 
