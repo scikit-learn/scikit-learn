@@ -1,4 +1,10 @@
-scikit-learn (0.14~a1+git20-gc9ba2c3-1) experimental; urgency=low
+scikit-learn (0.14-1) unstable; urgency=low
+
+  * The fresh upstream release
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Wed, 07 Aug 2013 19:30:19 -0400
+
+scikit-learn (0.14~a1+git20-gc9ba2c3-1) UNRELEASED; urgency=low
 
   * Fresh pre-release snapshot
   * debian/control
