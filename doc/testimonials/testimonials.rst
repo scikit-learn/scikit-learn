@@ -52,7 +52,7 @@ Gaël Varoquaux, research at Parietal
 
 
 `Evernote <http://evernote.com>`_
--------------------------------
+----------------------------------
 
 .. raw:: html
 

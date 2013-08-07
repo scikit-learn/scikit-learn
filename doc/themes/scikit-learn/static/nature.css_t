@@ -785,6 +785,28 @@ div.container.index-lower h4,  div.container.index-lower h4 a{
     color: #FF9C34;
 }
 
+div.container.index-lower div.bottom-button {
+    float: right;
+    padding-right: 17%;
+}
+
+form#paypal-from {
+    margin-bottom: 10px;
+}
+
+div.container.index-lower div.bottom-button button.btn{
+    padding-left: 30px;
+    padding-right: 30px;
+    margin-left: 10px;
+    margin-right: 5px;
+}
+
+div.container.index-lower div.bottom-button a.btn{
+    padding-left: 30px;
+    padding-right: 30px;
+    margin-left: 70px;
+}
+
 div.container.index-lower h4 {
     margin-bottom: 10px;
     margin-left: 0px;
@@ -859,10 +881,15 @@ div.carousel>.carousel-inner>.item {
 
 div.carousel img {
     max-height: 70px;
-    height: 70px;
+    max-width: 50%;
     background-color: #fff;
     margin: auto;
 }
+
+div#testimonials_carousel {
+    height: 120px;
+}
+
 
 div#examples_carousel img {
     max-height: 201px;
@@ -1141,11 +1168,6 @@ div.container-index {
   margin-left: -210px;
 }
 
-.cite-us {
-  margin: auto;
-  display: block;
-  max-width: 100px;
-}
 
 @media all and (max-width: 780px) {
   .fork-me {
