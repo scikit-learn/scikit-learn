@@ -3,7 +3,7 @@ import pickle
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_raises
 
-from sklearn.metrics import (f1_score, r2_score, auc_score, fbeta_score,
+from sklearn.metrics import (f1_score, r2_score, roc_auc_score, fbeta_score,
                              log_loss)
 from sklearn.metrics.cluster import adjusted_rand_score
 from sklearn.metrics import make_scorer, SCORERS
@@ -67,8 +67,8 @@ def test_thresholded_scorers():
     clf = LogisticRegression(random_state=0)
     clf.fit(X_train, y_train)
     score1 = SCORERS['roc_auc'](clf, X_test, y_test)
-    score2 = auc_score(y_test, clf.decision_function(X_test))
-    score3 = auc_score(y_test, clf.predict_proba(X_test)[:, 1])
+    score2 = roc_auc_score(y_test, clf.decision_function(X_test))
+    score3 = roc_auc_score(y_test, clf.predict_proba(X_test)[:, 1])
     assert_almost_equal(score1, score2)
     assert_almost_equal(score1, score3)
 
@@ -80,7 +80,7 @@ def test_thresholded_scorers():
     clf = DecisionTreeClassifier()
     clf.fit(X_train, y_train)
     score1 = SCORERS['roc_auc'](clf, X_test, y_test)
-    score2 = auc_score(y_test, clf.predict_proba(X_test)[:, 1])
+    score2 = roc_auc_score(y_test, clf.predict_proba(X_test)[:, 1])
     assert_almost_equal(score1, score2)
 
     # Test that an exception is raised on more than two classes

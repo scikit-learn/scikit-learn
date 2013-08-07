@@ -6,7 +6,7 @@ and pairwise metrics and distance computations.
 from .metrics import (accuracy_score,
                       average_precision_score,
                       auc,
-                      auc_score,
+                      roc_auc_score,
                       classification_report,
                       confusion_matrix,
                       explained_variance_score,
@@ -31,6 +31,9 @@ from .metrics import (accuracy_score,
 from .metrics import zero_one
 from .metrics import zero_one_score
 
+# Deprecated in 0.16
+from .metrics import auc_score
+
 from .scorer import make_scorer, SCORERS
 
 from . import cluster
@@ -54,7 +57,7 @@ __all__ = ['accuracy_score',
            'adjusted_mutual_info_score',
            'adjusted_rand_score',
            'auc',
-           'auc_score',
+           'roc_auc_score',
            'average_precision_score',
            'classification_report',
            'cluster',
