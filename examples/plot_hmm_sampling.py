@@ -9,7 +9,9 @@ we use a 4-components with specified mean and covariance.
 The plot show the sequence of observations generated with the transitions
 between them. We can see that, as specified by our transition matrix,
 there are no transition between component 1 and 3.
+
 """
+print(__doc__)
 
 import numpy as np
 import matplotlib.pyplot as plt

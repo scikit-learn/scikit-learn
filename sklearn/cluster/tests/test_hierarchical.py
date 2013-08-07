@@ -14,6 +14,7 @@ from scipy.cluster import hierarchy
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_array_almost_equal
 
 from sklearn.cluster import Ward, WardAgglomeration, ward_tree
 from sklearn.cluster.hierarchical import _hc_cut
@@ -47,6 +48,7 @@ def test_unstructured_ward_tree():
     for this_X in (X, X[0]):
         with warnings.catch_warnings(record=True) as warning_list:
             warnings.simplefilter("always", UserWarning)
+            warnings.simplefilter("ignore", DeprecationWarning)
             # With specified a number of clusters just for the sake of
             # raising a warning and testing the warning code
             children, n_nodes, n_leaves, parent = ward_tree(this_X.T,
@@ -119,6 +121,7 @@ def test_ward_agglomeration():
     assert_true(Xred.shape[1] == 5)
     Xfull = ward.inverse_transform(Xred)
     assert_true(np.unique(Xfull[0]).size == 5)
+    assert_array_almost_equal(ward.transform(Xfull), Xred)
 
 
 def assess_same_labelling(cut1, cut2):

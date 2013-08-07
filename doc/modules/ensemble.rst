@@ -99,7 +99,7 @@ in bias::
     ...     random_state=0)
     >>> scores = cross_val_score(clf, X, y)
     >>> scores.mean()                             # doctest: +ELLIPSIS
-    0.97...
+    0.98...
 
     >>> clf = RandomForestClassifier(n_estimators=10, max_depth=None,
     ...     min_samples_split=1, random_state=0)
@@ -139,11 +139,6 @@ validated. In addition, note that bootstrap samples are used by default
 in random forests (``bootstrap=True``) while the default strategy is to
 use the original dataset for building extra-trees (``bootstrap=False``).
 
-When training on large datasets, where runtime and memory requirements
-are important, it might also be beneficial to adjust the ``min_density``
-parameter, that controls a heuristic for speeding up computations in
-each tree.  See :ref:`Complexity of trees<tree_complexity>` for details.
-
 Parallelization
 ---------------
 
@@ -162,7 +157,7 @@ amount of time (e.g., on large datasets).
 
  * :ref:`example_ensemble_plot_forest_iris.py`
  * :ref:`example_ensemble_plot_forest_importances_faces.py`
- * :ref:`example_ensemble_plot_forest_multioutput.py`
+ * :ref:`example_plot_multioutput_face_completion.py`
 
 .. topic:: References
 
@@ -199,10 +194,10 @@ a :class:`ExtraTreesClassifier` model.
    :align: center
    :scale: 75
 
-In practice those estimates are stored as an attribute named 
-``feature_importances_`` on the fitted model. This is an array with shape 
-``(n_features,)`` whose values are positive and sum to 1.0. The higher 
-the value, the more important is the contribution of the matching feature 
+In practice those estimates are stored as an attribute named
+``feature_importances_`` on the fitted model. This is an array with shape
+``(n_features,)`` whose values are positive and sum to 1.0. The higher
+the value, the more important is the contribution of the matching feature
 to the prediction function.
 
 .. topic:: Examples:
@@ -235,7 +230,7 @@ the transformation performs an implicit, non-parametric density estimation.
  * :ref:`example_ensemble_plot_random_forest_embedding.py`
 
  * :ref:`example_manifold_plot_lle_digits.py` compares non-linear
-   dimensionality reduction technics on handwritten digits.
+   dimensionality reduction techniques on handwritten digits.
 
 .. seealso::
 
@@ -268,7 +263,7 @@ whereas the weights are decreased for those that were predicted correctly. As
 iterations proceed, examples that are difficult to predict receive
 ever-increasing influence. Each subsequent weak learner is thereby forced to
 concentrate on the examples that are missed by the previous ones in the sequence
-[HTF2009]_.
+[HTF]_.
 
 .. figure:: ../auto_examples/ensemble/images/plot_adaboost_hastie_10_2_1.png
    :target: ../auto_examples/ensemble/plot_adaboost_hastie_10_2.html
@@ -333,7 +328,7 @@ decision trees).
 
  .. [D1997] H. Drucker. "Improving Regressors using Boosting Techniques", 1997.
 
- .. [HTF2009] T. Hastie, R. Tibshirani and J. Friedman, "Elements of
+ .. [HTF] T. Hastie, R. Tibshirani and J. Friedman, "Elements of
               Statistical Learning Ed. 2", Springer, 2009.
 
 
@@ -430,7 +425,7 @@ with least squares loss and 500 base learners to the Boston house price dataset
 The plot on the left shows the train and test error at each iteration.
 The train error at each iteration is stored in the
 :attr:`~GradientBoostingRegressor.train_score_` attribute
-of the gradient boosting model. The test error at each iterations can be optained
+of the gradient boosting model. The test error at each iterations can be obtained
 via the :meth:`~GradientBoostingRegressor.staged_predict` method which returns a
 generator that yields the predictions at each stage. Plots like these can be used
 to determine the optimal number of trees (i.e. ``n_estimators``) by early stopping.
@@ -445,6 +440,7 @@ the ``feature_importances_`` property.
 .. topic:: Examples:
 
  * :ref:`example_ensemble_plot_gradient_boosting_regression.py`
+ * :ref:`example_ensemble_plot_gradient_boosting_oob.py`
 
 
 Mathematical formulation
@@ -594,17 +590,29 @@ does poorly.
    :align: center
    :scale: 75
 
-For ``subsample < 1``, the deviance on the out-of-bag samples in the i-the iteration
-is stored in the attribute ``oob_score_[i]``. Out-of-bag estimates can be
-used for model selection (e.g. to determine the optimal number of iterations).
-
 Another strategy to reduce the variance is by subsampling the features
-analogous to the random splits in Random Forests. The size of the subsample
-can be controlled via the ``max_features`` parameter.
+analogous to the random splits in :class:`RandomForestClassifier` .
+The number of subsampled features can be controlled via the ``max_features``
+parameter.
+
+.. note:: Using a small ``max_features`` value can significantly decrease the runtime.
+
+Stochastic gradient boosting allows to compute out-of-bag estimates of the
+test deviance by computing the improvement in deviance on the examples that are
+not included in the bootstrap sample (i.e. the out-of-bag examples).
+The improvements are stored in the attribute
+:attr:`~GradientBoostingRegressor.oob_improvement_`. ``oob_improvement_[i]`` holds
+the improvement in terms of the loss on the OOB samples if you add the i-th stage
+to the current predictions.
+Out-of-bag estimates can be used for model selection, for example to determine
+the optimal number of iterations. OOB estimates are usually very pessimistic thus
+we recommend to use cross-validation instead and only use OOB if cross-validation
+is too time consuming.
 
 .. topic:: Examples:
 
  * :ref:`example_ensemble_plot_gradient_boosting_regularization.py`
+ * :ref:`example_ensemble_plot_gradient_boosting_oob.py`
 
 Interpretation
 --------------
@@ -684,7 +692,7 @@ interactions among the two features. For example, the two-variable PDP in the
 above Figure shows the dependence of median house price on joint
 values of house age and avg. occupants per household. We can clearly
 see an interaction between the two features:
-For an avg. occupancy greather than two, the house price is nearly independent
+For an avg. occupancy greater than two, the house price is nearly independent
 of the house age, whereas for values less than two there is a strong dependence
 on age.
 

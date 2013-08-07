@@ -11,7 +11,7 @@ Algorithm 21.1
 #         Alexandre Gramfort <alexandre.gramfort@inria.fr>
 # Licence: BSD3
 
-from math import sqrt
+from math import sqrt, log
 import numpy as np
 from scipy import linalg
 
@@ -86,7 +86,7 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
 
     See also
     --------
-    PCA: Principal component analysis, a simliar non-probabilistic
+    PCA: Principal component analysis, a similar non-probabilistic
         model model that can be computed in closed form.
     ProbabilisticPCA: probabilistic PCA.
     FastICA: Independent component analysis, a latent variable model with
@@ -125,7 +125,7 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
 
         # some constant terms
         nsqrt = sqrt(n_samples)
-        llconst = n_features * np.log(2 * np.pi) + n_components
+        llconst = n_features * log(2. * np.pi) + n_components
         var = np.var(X, axis=0)
 
         if self.noise_variance_init is None:
@@ -148,7 +148,7 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
             V = V[:n_components]
             s **= 2
             # Use 'maximum' here to avoid sqrt problems.
-            W = np.sqrt(np.maximum(s[:n_components] - 1, 0))[:, np.newaxis] * V
+            W = np.sqrt(np.maximum(s[:n_components] - 1., 0.))[:, np.newaxis] * V
             W *= sqrt_psi
 
             # loglikelihood
@@ -208,11 +208,11 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         cov : array, shape=(n_features, n_features)
             Estimated covariance of data.
         """
-        cov = (np.dot(self.components_.T, self.components_)
-               + np.diag(self.noise_variance_))
+        cov = np.dot(self.components_.T, self.components_)
+        cov.flat[::len(cov) + 1] += self.noise_variance_  # modify diag inplace
         return cov
 
-    def score(self, X):
+    def score(self, X, y=None):
         """Compute score of X under FactorAnalysis model.
 
         Parameters
@@ -231,5 +231,5 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         log_like = np.zeros(X.shape[0])
         self.precision_ = linalg.inv(cov)
         log_like = -.5 * (Xr * (np.dot(Xr, self.precision_))).sum(axis=1)
-        log_like -= .5 * (fast_logdet(cov) + n_features * np.log(2 * np.pi))
+        log_like -= .5 * (fast_logdet(cov) + n_features * log(2. * np.pi))
         return log_like

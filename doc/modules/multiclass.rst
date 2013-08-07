@@ -7,38 +7,110 @@ Multiclass and multilabel algorithms
 
 .. currentmodule:: sklearn.multiclass
 
-This module implements multiclass and multilabel learning algorithms:
-    - one-vs-the-rest / one-vs-all
-    - one-vs-one
-    - error correcting output codes
+The :mod:`sklearn.multiclass` module implements *meta-estimators* to perform
+``multiclass`` and ``multilabel`` classification. Those meta-estimators are
+meant to turn a binary classifier or a regressor into a multi-class/label
+classifier.
 
-Multiclass classification means classification with more than two classes.
-Multilabel classification is a different task, where a classifier is used to
-predict a set of target labels for each instance; i.e., the set of target
-classes is not assumed to be disjoint as in ordinary (binary or multiclass)
-classification. This is also called any-of classification.
+  - **Multiclass classification** means a classification task with more than
+    two classes; e.g., classify a set of images of fruits which may be oranges,
+    apples, or pears. Multiclass classification makes the assumption that each
+    sample is assigned to one and only one label: a fruit can be either an
+    apple or a pear but not both at the same time.
 
-The estimators provided in this module are meta-estimators: they require a base
-estimator to be provided in their constructor. For example, it is possible to
+  - **Multilabel classification** assigns to each sample a set of target
+    labels. This can be thought as predicting properties of a data-point
+    that are not mutually exclusive, such as topics that are relevant for a
+    document. A text might be about any of religion, politics, finance or
+    education at the same time or none of these.
+
+  - **Multioutput-multiclass classification** and **multi-task classification**
+    means that an estimators have to handle
+    jointly several classification tasks. This is a generalization
+    of the multi-label classification task, where the set of classification
+    problem is restricted to binary classification, and of the multi-class
+    classification task. *The output format is a 2d numpy array.*
+
+    The set of labels can be different for each output variable.
+    For instance a sample could be assigned "pear" for an output variable that
+    takes possible values in a finite set of species such as "pear", "apple",
+    "orange" and "green" for a second output variable that takes possible values
+    in a finite set of colors such as "green", "red", "orange", "yellow"...
+
+    This means that any classifiers handling multi-output
+    multiclass or multi-task classification task
+    supports the multi-label classification task as a special case.
+    Multi-task classification is similar to the multi-output
+    classification task with different model formulations. For
+    more information, see the relevant estimator documentation.
+
+Estimators in this module are meta-estimators. For example, it is possible to
 use these estimators to turn a binary classifier or a regressor into a
 multiclass classifier. It is also possible to use these estimators with
-multiclass estimators in the hope that their accuracy or runtime performance
-improves.
+multiclass estimators in the hope that their generalization error or runtime
+performance improves.
 
-.. note::
+You don't need to use these estimators unless you want to experiment with
+different multiclass strategies: all classifiers in scikit-learn support
+multiclass classification out-of-the-box. Below is a summary of the
+classifiers supported by scikit-learn grouped by strategy:
 
-    You don't need to use these estimators unless you want to experiment with
-    different multiclass strategies: all classifiers in scikit-learn support
-    multiclass classification out-of-the-box. Below is a summary of the
-    classifiers supported in scikit-learn grouped by the strategy used.
+  - Inherently multiclass: :ref:`Naive Bayes <naive_bayes>`,
+    :class:`sklearn.lda.LDA`,
+    :ref:`Decision Trees <tree>`, :ref:`Random Forests <forest>`,
+    :ref:`Nearest Neighbors <neighbors>`.
+  - One-Vs-One: :class:`sklearn.svm.SVC`.
+  - One-Vs-All: all linear models except :class:`sklearn.svm.SVC`.
 
-    - Inherently multiclass: :ref:`Naive Bayes <naive_bayes>`, :class:`sklearn.lda.LDA`,
-      :ref:`Decision Trees <tree>`, :ref:`Random Forests <forest>`
-    - One-Vs-One: :class:`sklearn.svm.SVC`.
-    - One-Vs-All: :class:`sklearn.svm.LinearSVC`,
-      :class:`sklearn.linear_model.LogisticRegression`,
-      :class:`sklearn.linear_model.SGDClassifier`,
-      :class:`sklearn.linear_model.RidgeClassifier`.
+Some estimators also support multioutput-multiclass classification
+tasks :ref:`Decision Trees <tree>`, :ref:`Random Forests <forest>`,
+:ref:`Nearest Neighbors <neighbors>`.
+
+
+.. warning::
+
+    For the moment, no metric supports the multioutput-multiclass
+    classification task.
+
+Multilabel classification format
+================================
+
+In multilabel learning, the joint set of binary classification task
+is expressed with either a sequence of sequences or a label binary indicator
+array.
+
+In the sequence of sequences format, each set of labels is represented as
+a sequence of integer, e.g. ``[0]``, ``[1, 2]``. An empty set of labels is
+then expressed as ``[]``, and a set of samples as ``[[0], [1, 2], []]``.
+In the label indicator format, each sample is one row of a 2d array of
+shape (n_samples, n_classes) with binary values: the one, i.e. the non zero
+elements, corresponds to the subset of labels. Our previous example is
+therefore expressed as ``np.array([[1, 0, 0], [0, 1, 1], [0, 0, 0])``
+and an empty set of labels would be represented by a row of zero elements.
+
+
+In the preprocessing module, the transformer
+:class:`sklearn.preprocessing.label_binarize` and the function
+:func:`sklearn.preprocessing.LabelBinarizer`
+can help you to convert the sequence of sequences format to the label
+indicator format.
+
+  >>> from sklearn.datasets import make_multilabel_classification
+  >>> from sklearn.preprocessing import LabelBinarizer
+  >>> X, Y = make_multilabel_classification(n_samples=5, random_state=0)
+  >>> Y
+  ([0, 1, 2], [4, 1, 0, 2], [4, 0, 1], [1, 0], [3, 2])
+  >>> LabelBinarizer().fit_transform(Y)
+  array([[1, 1, 1, 0, 0],
+         [1, 1, 1, 0, 1],
+         [1, 1, 0, 0, 1],
+         [1, 1, 0, 0, 0],
+         [0, 0, 1, 1, 0]])
+
+.. warning::
+
+    - The sequence of sequences format will disappear in a near future.
+    - All estimators or functions support both multilabel format.
 
 
 One-Vs-The-Rest
@@ -52,7 +124,12 @@ classifiers are needed), one advantage of this approach is its
 interpretability. Since each class is represented by one and one classifier
 only, it is possible to gain knowledge about the class by inspecting its
 corresponding classifier. This is the most commonly used strategy and is a fair
-default choice. Below is an example::
+default choice.
+
+Multiclass learning
+-------------------
+
+Below is an example of multiclass learning using OvR::
 
   >>> from sklearn import datasets
   >>> from sklearn.multiclass import OneVsRestClassifier
@@ -68,8 +145,8 @@ default choice. Below is an example::
          2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 1, 2, 2, 2, 2,
          2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2])
 
-Multilabel learning with OvR
-----------------------------
+Multilabel learning
+-------------------
 
 :class:`OneVsRestClassifier` also supports multilabel classification.
 To use this feature, feed the classifier a list of tuples containing
@@ -98,7 +175,12 @@ O(n_classes^2) complexity. However, this method may be advantageous for
 algorithms such as kernel algorithms which don't scale well with
 `n_samples`. This is because each individual learning problem only involves
 a small subset of the data whereas, with one-vs-the-rest, the complete
-dataset is used `n_classes` times. Below is an example::
+dataset is used `n_classes` times.
+
+Multiclass learning
+-------------------
+
+Below is an example of multiclass learning using OvO::
 
   >>> from sklearn import datasets
   >>> from sklearn.multiclass import OneVsOneClassifier
@@ -150,7 +232,11 @@ In practice, however, this may not happen as classifier mistakes will
 typically be correlated. The error-correcting output codes have a similar
 effect to bagging.
 
-Example::
+
+Multiclass learning
+-------------------
+
+Below is an example of multiclass learning using Output-Codes::
 
   >>> from sklearn import datasets
   >>> from sklearn.multiclass import OutputCodeClassifier
@@ -170,7 +256,7 @@ Example::
 
 .. topic:: References:
 
-    .. [1] "Solving multiclass learning problems via error-correcting ouput codes",
+    .. [1] "Solving multiclass learning problems via error-correcting output codes",
         Dietterich T., Bakiri G.,
         Journal of Artificial Intelligence Research 2,
         1995.

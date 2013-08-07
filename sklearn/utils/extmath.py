@@ -7,10 +7,13 @@ Extended math utilities.
 import warnings
 import numpy as np
 from scipy import linalg
+from scipy.sparse import issparse
 
 from . import check_random_state
 from .fixes import qr_economic
+from ._logistic_sigmoid import _log_logistic_sigmoid
 from ..externals.six.moves import xrange
+from .validation import array2d
 
 
 def norm(v):
@@ -212,7 +215,7 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter=0,
     U = np.dot(Q, Uhat)
 
     if flip_sign:
-        U, s, V = svd_flip(U, s, V)
+        U, V = svd_flip(U, V)
 
     if transpose:
         # transpose back the results according to the input convention
@@ -414,7 +417,7 @@ def cartesian(arrays, out=None):
 
     References
     ----------
-    http://stackoverflow.com/questions/1208118/using-numpy-to-build-an-array-of-all-combinations-of-two-arrays
+    http://stackoverflow.com/q/1208118
 
     """
     arrays = [np.asarray(x).ravel() for x in arrays]
@@ -433,7 +436,7 @@ def cartesian(arrays, out=None):
     return out
 
 
-def svd_flip(u, s, v):
+def svd_flip(u, v):
     """Sign correction to ensure deterministic output from SVD
 
     Adjusts the columns of u and the rows of v such that the loadings in the
@@ -441,7 +444,7 @@ def svd_flip(u, s, v):
 
     Parameters
     ----------
-    u, s, v: arrays,
+    u, v: arrays
         The output of `linalg.svd` or `sklearn.utils.extmath.randomized_svd`,
         with matching inner dimensions so one can compute `np.dot(u * s, v)`.
 
@@ -454,4 +457,91 @@ def svd_flip(u, s, v):
     signs = np.sign(u[max_abs_cols, xrange(u.shape[1])])
     u *= signs
     v *= signs[:, np.newaxis]
-    return u, s, v
+    return u, v
+
+
+def logistic_sigmoid(X, log=False, out=None):
+    """
+    Implements the logistic function, ``1 / (1 + e ** -x)`` and its log.
+
+    This implementation is more stable by splitting on positive and negative
+    values and computing::
+
+        1 / (1 + exp(-x_i)) if x_i > 0
+        exp(x_i) / (1 + exp(x_i)) if x_i <= 0
+
+    The log is computed using::
+
+        -log(1 + exp(-x_i)) if x_i > 0
+        x_i - log(1 + exp(x_i)) if x_i <= 0
+
+    Parameters
+    ----------
+    X: array-like, shape (M, N)
+        Argument to the logistic function
+
+    log: boolean, default: False
+        Whether to compute the logarithm of the logistic function.
+
+    out: array-like, shape: (M, N), optional:
+        Preallocated output array.
+
+    Returns
+    -------
+    out: array, shape (M, N)
+        Value of the logistic function evaluated at every point in x
+
+    Notes
+    -----
+    See the blog post describing this implementation:
+    http://fa.bianp.net/blog/2013/numerical-optimizers-for-logistic-regression/
+    """
+    is_1d = X.ndim == 1
+    X = array2d(X, dtype=np.float)
+
+    n_samples, n_features = X.shape
+
+    if out is None:
+        out = np.empty_like(X)
+
+    if log:
+        _log_logistic_sigmoid(n_samples, n_features, X, out)
+    else:
+        # logistic(x) = (1 + tanh(x / 2)) / 2
+        out[:] = X
+        out *= .5
+        np.tanh(out, out)
+        out += 1
+        out *= .5
+
+    if is_1d:
+        return np.squeeze(out)
+    return out
+
+
+def safe_min(X):
+    """Returns the minimum value of a dense or a CSR/CSC matrix.
+
+    Adapated from http://stackoverflow.com/q/13426580
+
+    """
+    if issparse(X):
+        if len(X.data) == 0:
+            return 0
+        m = X.data.min()
+        return m if X.getnnz() == X.size else min(m, 0)
+    else:
+        return X.min()
+
+
+def make_nonnegative(X, min_value=0):
+    """Ensure `X.min()` >= `min_value`."""
+    min_ = safe_min(X)
+    if min_ < min_value:
+        if issparse(X):
+            raise ValueError("Cannot make the data matrix"
+                             " nonnegative because it is sparse."
+                             " Adding a value to every entry would"
+                             " make it no longer sparse.")
+        X = X + (min_value - min_)
+    return X

@@ -85,7 +85,7 @@ def compute_bench(samples_range, features_range, rank=50, tolerance=1e-7):
                        effective_rank=rank,  tail_strength=0.2))
 
             gc.collect()
-            print("benching nndsvd-nmf: ")
+            print("benchmarking nndsvd-nmf: ")
             tstart = time()
             m = NMF(n_components=30, tol=tolerance, init='nndsvd').fit(X)
             tend = time() - tstart
@@ -94,7 +94,7 @@ def compute_bench(samples_range, features_range, rank=50, tolerance=1e-7):
             print(m.reconstruction_err_, tend)
 
             gc.collect()
-            print("benching nndsvda-nmf: ")
+            print("benchmarking nndsvda-nmf: ")
             tstart = time()
             m = NMF(n_components=30, init='nndsvda',
                     tol=tolerance).fit(X)
@@ -104,7 +104,7 @@ def compute_bench(samples_range, features_range, rank=50, tolerance=1e-7):
             print(m.reconstruction_err_, tend)
 
             gc.collect()
-            print("benching nndsvdar-nmf: ")
+            print("benchmarking nndsvdar-nmf: ")
             tstart = time()
             m = NMF(n_components=30, init='nndsvdar',
                     tol=tolerance).fit(X)
@@ -114,7 +114,7 @@ def compute_bench(samples_range, features_range, rank=50, tolerance=1e-7):
             print(m.reconstruction_err_, tend)
 
             gc.collect()
-            print("benching random-nmf")
+            print("benchmarking random-nmf")
             tstart = time()
             m = NMF(n_components=30, init=None, max_iter=1000,
                     tol=tolerance).fit(X)
@@ -124,7 +124,7 @@ def compute_bench(samples_range, features_range, rank=50, tolerance=1e-7):
             print(m.reconstruction_err_, tend)
 
             gc.collect()
-            print("benching alt-random-nmf")
+            print("benchmarking alt-random-nmf")
             tstart = time()
             W, H = alt_nnmf(X, r=30, R=None, tol=tolerance)
             tend = time() - tstart
@@ -145,7 +145,7 @@ if __name__ == '__main__':
     timeset, err = compute_bench(samples_range, features_range)
 
     for i, results in enumerate((timeset, err)):
-        fig = plt.figure()
+        fig = plt.figure('scikit-learn Non-Negative Matrix Factorization benchmkar results')
         ax = fig.gca(projection='3d')
         for c, (label, timings) in zip('rbgcm', sorted(results.iteritems())):
             X, Y = np.meshgrid(samples_range, features_range)
@@ -160,7 +160,7 @@ if __name__ == '__main__':
 
         ax.set_xlabel('n_samples')
         ax.set_ylabel('n_features')
-        zlabel = 'time (s)' if i == 0 else 'reconstruction error'
+        zlabel = 'Time (s)' if i == 0 else 'reconstruction error'
         ax.set_zlabel(zlabel)
         ax.legend()
         plt.show()

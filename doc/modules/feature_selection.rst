@@ -121,7 +121,7 @@ alpha parameter, the fewer features selected.
 
    For a good choice of alpha, the :ref:`lasso` can fully recover the
    exact set of non-zero variables using only few observations, provided
-   certain specific conditions are met. In paraticular, the number of
+   certain specific conditions are met. In particular, the number of
    samples should be "sufficiently large", or L1 models will perform at
    random, where "sufficiently large" depends on the number of non-zero
    coefficients, the logarithm of the number of features, the amount of
@@ -198,11 +198,11 @@ features::
   >>> X, y = iris.data, iris.target
   >>> X.shape
   (150, 4)
-  >>> clf = ExtraTreesClassifier(random_state=0)
+  >>> clf = ExtraTreesClassifier()
   >>> X_new = clf.fit(X, y).transform(X)
-  >>> clf.feature_importances_  # doctest: +ELLIPSIS
-  array([ 0.12...,  0.07...,  0.38...,  0.41...])
-  >>> X_new.shape
+  >>> clf.feature_importances_  # doctest: +SKIP
+  array([ 0.04...,  0.05...,  0.4...,  0.4...])
+  >>> X_new.shape               # doctest: +SKIP
   (150, 2)
 
 .. topic:: Examples:
@@ -213,3 +213,24 @@ features::
 
     * :ref:`example_ensemble_plot_forest_importances_faces.py`: example
       on face recognition data.
+
+Feature selection as part of a pipeline
+=======================================
+
+Feature selection is usually used as a pre-processing step before doing 
+the actual learning. The recommended way to do this in scikit-learn is
+to use a :class:`sklearn.pipeline.Pipeline`::
+
+  clf = Pipeline([
+    ('feature_selection', LinearSVC(penalty="l1")),
+    ('classification', RandomForestClassifier())
+  ])
+  clf.fit(X, y)
+
+In this snippet we make use of a :class:`sklearn.svm.LinearSVC` 
+to evaluate feature importances and select the most relevant features.
+Then, a class:`sklearn.ensemble.GradientBoostingClassifier` is trained on the 
+transformed output, i.e. using only relevant features. You can perform 
+similar operations with the other feature selection methods and also
+classifiers that provide a way to evaluate feature importances of course. 
+See the :class:`sklearn.pipeline.Pipeline` examples for more details.

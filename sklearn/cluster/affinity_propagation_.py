@@ -41,7 +41,7 @@ def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
     max_iter: int, optional, default: 200
         Maximum number of iterations
 
-    damping: float, optional, default: 200
+    damping: float, optional, default: 0.5
         Damping factor between 0.5 and 1.
 
     copy: boolean, optional, default: True
@@ -220,7 +220,7 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
 
     Notes
     -----
-    See examples/plot_affinity_propagation.py for an example.
+    See examples/cluster/plot_affinity_propagation.py for an example.
 
     The algorithmic complexity of affinity propagation is quadratic
     in the number of points.

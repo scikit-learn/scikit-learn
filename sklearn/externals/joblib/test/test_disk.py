@@ -5,7 +5,7 @@ Unit tests for the disk utilities.
 # Authors: Gael Varoquaux <gael dot varoquaux at normalesup dot org>
 #          Lars Buitinck <L.J.Buitinck@uva.nl>
 # Copyright (c) 2010 Gael Varoquaux
-# License: BSD 3 clause
+# License: BSD Style, 3 clauses.
 
 from __future__ import with_statement
 

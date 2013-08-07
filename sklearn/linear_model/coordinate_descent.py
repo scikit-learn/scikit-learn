@@ -14,9 +14,9 @@ from abc import ABCMeta, abstractmethod
 import numpy as np
 from scipy import sparse
 
-from .base import LinearModel
+from .base import LinearModel, _pre_fit
 from ..base import RegressorMixin
-from .base import sparse_center_data, center_data
+from .base import center_data
 from ..utils import array2d, atleast2d_or_csc, deprecated
 from ..cross_validation import check_cv
 from ..externals.joblib import Parallel, delayed
@@ -25,6 +25,425 @@ from ..externals.six.moves import xrange
 from ..utils.extmath import safe_sparse_dot
 
 from . import cd_fast
+
+
+###############################################################################
+# Paths functions
+
+def _alpha_grid(X, y, Xy=None, l1_ratio=1.0, fit_intercept=True,
+                eps=1e-3, n_alphas=100, normalize=False, copy_X=True):
+    """ Compute the grid of alpha values for elastic net parameter search
+
+    Parameters
+    ----------
+    X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        Training data. Pass directly as Fortran-contiguous data to avoid
+        unnecessary memory duplication
+
+    y : ndarray, shape = (n_samples,)
+        Target values
+
+    Xy : array-like, optional
+        Xy = np.dot(X.T, y) that can be precomputed.
+
+    l1_ratio : float
+        The ElasticNet mixing parameter, with ``0 <= l1_ratio <= 1``.
+        For ``l1_ratio = 0`` the penalty is an L2 penalty. ``For
+        l1_ratio = 1`` it is an L1 penalty.  For ``0 < l1_ratio <
+        1``, the penalty is a combination of L1 and L2.
+
+    eps : float, optional
+        Length of the path. ``eps=1e-3`` means that
+        ``alpha_min / alpha_max = 1e-3``
+
+    n_alphas : int, optional
+        Number of alphas along the regularization path
+
+    fit_intercept : bool
+        Fit or not an intercept
+
+    normalize : boolean, optional, default False
+        If ``True``, the regressors X will be normalized before regression.
+
+    copy_X : boolean, optional, default True
+        If ``True``, X will be copied; else, it may be overwritten.
+    """
+    if Xy is None:
+        X = atleast2d_or_csc(X, copy=(copy_X and fit_intercept and not
+                                      sparse.isspmatrix(X)))
+        if not sparse.isspmatrix(X):
+            # X can be touched inplace thanks to the above line
+            X, y, _, _, _ = center_data(X, y, fit_intercept,
+                                        normalize, copy=False)
+
+        Xy = safe_sparse_dot(X.T, y, dense_output=True)
+        n_samples = X.shape[0]
+    else:
+        n_samples = len(y)
+
+    alpha_max = np.abs(Xy).max() / (n_samples * l1_ratio)
+    alphas = np.logspace(np.log10(alpha_max * eps), np.log10(alpha_max),
+                         num=n_alphas)[::-1]
+    return alphas
+
+
+def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
+               precompute='auto', Xy=None, fit_intercept=None,
+               normalize=None, copy_X=True, verbose=False, return_models=True,
+               **params):
+    """Compute Lasso path with coordinate descent
+
+    The optimization objective for Lasso is::
+
+        (1 / (2 * n_samples)) * ||y - Xw||^2_2 + alpha * ||w||_1
+
+    Parameters
+    ----------
+    X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        Training data. Pass directly as Fortran-contiguous data to avoid
+        unnecessary memory duplication
+
+    y : ndarray, shape = (n_samples,)
+        Target values
+
+    eps : float, optional
+        Length of the path. ``eps=1e-3`` means that
+        ``alpha_min / alpha_max = 1e-3``
+
+    n_alphas : int, optional
+        Number of alphas along the regularization path
+
+    alphas : ndarray, optional
+        List of alphas where to compute the models.
+        If ``None`` alphas are set automatically
+
+    precompute : True | False | 'auto' | array-like
+        Whether to use a precomputed Gram matrix to speed up
+        calculations. If set to ``'auto'`` let us decide. The Gram
+        matrix can also be passed as argument.
+
+    Xy : array-like, optional
+        Xy = np.dot(X.T, y) that can be precomputed. It is useful
+        only when the Gram matrix is precomputed.
+
+    fit_intercept : bool
+        Fit or not an intercept.
+        WARNING : will be deprecated in 0.15
+
+    normalize : boolean, optional, default False
+        If ``True``, the regressors X will be normalized before regression.
+        WARNING : will be deprecated in 0.15
+
+    copy_X : boolean, optional, default True
+        If ``True``, X will be copied; else, it may be overwritten.
+
+    verbose : bool or integer
+        Amount of verbosity
+
+    return_models : boolean, optional, default True
+        If ``True``, the function will return list of models. Setting it
+        to ``False`` will change the function output returning the values
+        of the alphas and the coefficients along the path. Returning the
+        model list will be removed in version 0.15.
+
+    params : kwargs
+        keyword arguments passed to the Lasso objects
+
+    Returns
+    -------
+    models : a list of models along the regularization path
+        (Is returned if ``return_models`` is set ``True`` (default).
+
+    alphas : array, shape: [n_alphas + 1]
+        The alphas along the path where models are computed.
+        (Is returned, along with ``coefs``, when ``return_models`` is set
+        to ``False``)
+
+    coefs : shape (n_features, n_alphas + 1)
+        Coefficients along the path.
+        (Is returned, along with ``alphas``, when ``return_models`` is set
+        to ``False``).
+
+    dual_gaps : shape (n_alphas + 1)
+        The dual gaps and the end of the optimization for each alpha.
+        (Is returned, along with ``alphas``, when ``return_models`` is set
+        to ``False``).
+
+    Notes
+    -----
+    See examples/linear_model/plot_lasso_coordinate_descent_path.py
+    for an example.
+
+    To avoid unnecessary memory duplication the X argument of the fit method
+    should be directly passed as a Fortran-contiguous numpy array.
+
+    Note that in certain cases, the Lars solver may be significantly
+    faster to implement this functionality. In particular, linear
+    interpolation can be used to retrieve model coefficents between the
+    values output by lars_path
+
+    Deprecation Notice: Setting ``return_models`` to ``False`` will make
+    the Lasso Path return an output in the style used by :func:`lars_path`.
+    This will be become the norm as of version 0.15. Leaving ``return_models``
+    set to `True` will let the function return a list of models as before.
+
+    Examples
+    ---------
+
+    Comparing lasso_path and lars_path with interpolation:
+
+    >>> X = np.array([[1, 2, 3.1], [2.3, 5.4, 4.3]]).T
+    >>> y = np.array([1, 2, 3.1])
+    >>> # Use lasso_path to compute a coefficient path
+    >>> _, coef_path, _ = lasso_path(X, y, alphas=[5., 1., .5],
+    ...                              return_models=False, fit_intercept=False)
+    >>> print(coef_path)
+    [[ 0.          0.          0.46874778]
+     [ 0.2159048   0.4425765   0.23689075]]
+
+    >>> # Now use lars_path and 1D linear interpolation to compute the
+    >>> # same path
+    >>> from sklearn.linear_model import lars_path
+    >>> alphas, active, coef_path_lars = lars_path(X, y, method='lasso')
+    >>> from scipy import interpolate
+    >>> coef_path_continuous = interpolate.interp1d(alphas[::-1],
+    ...                                             coef_path_lars[:, ::-1])
+    >>> print(coef_path_continuous([5., 1., .5]))
+    [[ 0.          0.          0.46915237]
+     [ 0.2159048   0.4425765   0.23668876]]
+
+
+    See also
+    --------
+    lars_path
+    Lasso
+    LassoLars
+    LassoCV
+    LassoLarsCV
+    sklearn.decomposition.sparse_encode
+    """
+    return enet_path(X, y, l1_ratio=1., eps=eps, n_alphas=n_alphas,
+                     alphas=alphas, precompute=precompute, Xy=Xy,
+                     fit_intercept=fit_intercept, normalize=normalize,
+                     copy_X=copy_X, verbose=verbose,
+                     return_models=return_models, **params)
+
+
+def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
+              precompute='auto', Xy=None, fit_intercept=True,
+              normalize=False, copy_X=True, verbose=False, rho=None,
+              return_models=True, **params):
+    """Compute Elastic-Net path with coordinate descent
+
+    The Elastic Net optimization function is::
+
+        1 / (2 * n_samples) * ||y - Xw||^2_2 +
+        + alpha * l1_ratio * ||w||_1
+        + 0.5 * alpha * (1 - l1_ratio) * ||w||^2_2
+
+    Parameters
+    ----------
+    X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        Training data. Pass directly as Fortran-contiguous data to avoid
+        unnecessary memory duplication
+
+    y : ndarray, shape = (n_samples,)
+        Target values
+
+    l1_ratio : float, optional
+        float between 0 and 1 passed to ElasticNet (scaling between
+        l1 and l2 penalties). ``l1_ratio=1`` corresponds to the Lasso
+
+    eps : float
+        Length of the path. ``eps=1e-3`` means that
+        ``alpha_min / alpha_max = 1e-3``
+
+    n_alphas : int, optional
+        Number of alphas along the regularization path
+
+    alphas : ndarray, optional
+        List of alphas where to compute the models.
+        If None alphas are set automatically
+
+    precompute : True | False | 'auto' | array-like
+        Whether to use a precomputed Gram matrix to speed up
+        calculations. If set to ``'auto'`` let us decide. The Gram
+        matrix can also be passed as argument.
+
+    Xy : array-like, optional
+        Xy = np.dot(X.T, y) that can be precomputed. It is useful
+        only when the Gram matrix is precomputed.
+
+    fit_intercept : bool
+        Fit or not an intercept.
+        WARNING : will be deprecated in 0.15
+
+    normalize : boolean, optional, default False
+        If ``True``, the regressors X will be normalized before regression.
+        WARNING : will be deprecated in 0.15
+
+    copy_X : boolean, optional, default True
+        If ``True``, X will be copied; else, it may be overwritten.
+
+    verbose : bool or integer
+        Amount of verbosity
+
+    return_models : boolean, optional, default True
+        If ``True``, the function will return list of models. Setting it
+        to ``False`` will change the function output returning the values
+        of the alphas and the coefficients along the path. Returning the
+        model list will be removed in version 0.15.
+
+    params : kwargs
+        keyword arguments passed to the Lasso objects
+
+    Returns
+    -------
+    models : a list of models along the regularization path
+        (Is returned if ``return_models`` is set ``True`` (default).
+
+    alphas : array, shape: [n_alphas + 1]
+        The alphas along the path where models are computed.
+        (Is returned, along with ``coefs``, when ``return_models`` is set
+        to ``False``)
+
+    coefs : shape (n_features, n_alphas + 1)
+        Coefficients along the path.
+        (Is returned, along with ``alphas``, when ``return_models`` is set
+        to ``False``).
+
+    dual_gaps : shape (n_alphas + 1)
+        The dual gaps and the end of the optimization for each alpha.
+        (Is returned, along with ``alphas``, when ``return_models`` is set
+        to ``False``).
+
+    Notes
+    -----
+    See examples/plot_lasso_coordinate_descent_path.py for an example.
+
+    Deprecation Notice: Setting ``return_models`` to ``False`` will make
+    the Lasso Path return an output in the style used by :func:`lars_path`.
+    This will be become the norm as of version 0.15. Leaving ``return_models``
+    set to `True` will let the function return a list of models as before.
+
+    See also
+    --------
+    ElasticNet
+    ElasticNetCV
+    """
+    if return_models:
+        warnings.warn("Use enet_path(return_models=False), as it returns the"
+                      " coefficients and alphas instead of just a list of"
+                      " models as previously `lasso_path`/`enet_path` did."
+                      " `return_models` will eventually be removed in 0.15,"
+                      " after which, returning alphas and coefs"
+                      " will become the norm.",
+                      DeprecationWarning, stacklevel=2)
+
+    if normalize is True:
+        warnings.warn("normalize param will be removed in 0.15."
+                      " Intercept fitting and feature normalization will be"
+                      " done in estimators.",
+                      DeprecationWarning, stacklevel=2)
+    else:
+        normalize = False
+
+    if fit_intercept is True or fit_intercept is None:
+        warnings.warn("fit_intercept param will be removed in 0.15."
+                      " Intercept fitting and feature normalization will be"
+                      " done in estimators.",
+                      DeprecationWarning, stacklevel=2)
+
+    if fit_intercept is None:
+        fit_intercept = True
+
+    if rho is not None:
+        l1_ratio = rho
+        warnings.warn("rho was renamed to l1_ratio and will be removed "
+                      "in 0.15", DeprecationWarning)
+
+    X = atleast2d_or_csc(X, dtype=np.float64, order='F',
+                         copy=copy_X and fit_intercept)
+
+    n_samples, n_features = X.shape
+
+    if sparse.isspmatrix(X):
+        if 'X_mean' in params:
+            # As sparse matrices are not actually centered we need this
+            # to be passed to the CD solver.
+            X_sparse_scaling = params['X_mean'] / params['X_std']
+        else:
+            X_sparse_scaling = np.ones(n_features)
+
+    X, y, X_mean, y_mean, X_std, precompute, Xy = \
+        _pre_fit(X, y, Xy, precompute, normalize, fit_intercept, copy=False)
+
+    n_samples = X.shape[0]
+    if alphas is None:
+        # No need to normalize of fit_intercept: it has been done
+        # above
+        alphas = _alpha_grid(X, y, Xy=Xy, l1_ratio=l1_ratio,
+                             fit_intercept=False, eps=eps, n_alphas=n_alphas,
+                             normalize=False, copy_X=False)
+    else:
+        alphas = np.sort(alphas)[::-1]  # make sure alphas are properly ordered
+
+    n_alphas = len(alphas)
+
+    coef_ = np.zeros(n_features, dtype=np.float64)
+    models = []
+    coefs = np.empty((n_features, n_alphas), dtype=np.float64)
+    dual_gaps = np.empty(n_alphas)
+
+    tol = params.get('tol', 1e-4)
+    positive = params.get('positive', False)
+    max_iter = params.get('max_iter', 1000)
+
+    for i, alpha in enumerate(alphas):
+        l1_reg = alpha * l1_ratio * n_samples
+        l2_reg = alpha * (1.0 - l1_ratio) * n_samples
+
+        if sparse.isspmatrix(X):
+            coef_, dual_gap_, eps_ = cd_fast.sparse_enet_coordinate_descent(
+                coef_, l1_reg, l2_reg, X.data, X.indices,
+                X.indptr, y, X_sparse_scaling,
+                max_iter, tol, positive)
+        else:
+            coef_, dual_gap_, eps_ = cd_fast.enet_coordinate_descent(
+                coef_, l1_reg, l2_reg, X, y, max_iter, tol, positive)
+
+        if dual_gap_ > eps_:
+            warnings.warn('Objective did not converge.' +
+                          ' You might want' +
+                          ' to increase the number of iterations')
+
+        coefs[:, i] = coef_
+        dual_gaps[i] = dual_gap_
+
+        if return_models:
+            model = ElasticNet(
+                alpha=alpha, l1_ratio=l1_ratio,
+                fit_intercept=fit_intercept if sparse.isspmatrix(X) else False,
+                precompute=precompute)
+            model.coef_ = coefs[:, i]
+            model.dual_gap_ = dual_gaps[-1]
+            if fit_intercept and not sparse.isspmatrix(X):
+                model.fit_intercept = True
+                model._set_intercept(X_mean, y_mean, X_std)
+            models.append(model)
+
+        if verbose:
+            if verbose > 2:
+                print(model)
+            elif verbose > 1:
+                print('Path: %03i out of %03i' % (i, n_alphas))
+            else:
+                sys.stderr.write('.')
+
+    if return_models:
+        return models
+    else:
+        return alphas, coefs, dual_gaps
 
 
 ###############################################################################
@@ -115,19 +534,13 @@ class ElasticNet(LinearModel, RegressorMixin):
     ``intercept_`` : float | array, shape = (n_targets,)
         independent term in decision function.
 
-    ``dual_gap_`` : float | array, shape = (n_targets,)
-        the current fit is guaranteed to be epsilon-suboptimal with
-        epsilon := ``dual_gap_``
-
-    ``eps_`` : float | array, shape = (n_targets,)
-        ``eps_`` is used to check if the fit converged to the requested
-        ``tol``
-
     Notes
     -----
     To avoid unnecessary memory duplication the X argument of the fit method
     should be directly passed as a Fortran-contiguous numpy array.
     """
+    path = staticmethod(enet_path)
+
     def __init__(self, alpha=1.0, l1_ratio=0.5, fit_intercept=True,
                  normalize=False, precompute='auto', max_iter=1000,
                  copy_X=True, tol=1e-4, warm_start=False, positive=False,
@@ -150,19 +563,24 @@ class ElasticNet(LinearModel, RegressorMixin):
         self.intercept_ = 0.0
 
     def fit(self, X, y, Xy=None, coef_init=None):
-        """Fit model with coordinate descent
+        """Fit model with coordinate descent.
 
         Parameters
         -----------
-        X: ndarray or scipy.sparse matrix, (n_samples, n_features)
+        X : ndarray or scipy.sparse matrix, (n_samples, n_features)
             Data
-        y: ndarray, shape = (n_samples,) or (n_samples, n_targets)
+
+        y : ndarray, shape = (n_samples,) or (n_samples, n_targets)
             Target
+
         Xy : array-like, optional
             Xy = np.dot(X.T, y) that can be precomputed. It is useful
             only when the Gram matrix is precomputed.
-        coef_init: ndarray of shape n_features or (n_targets, n_features)
+            WARNING : ignored and will be deprecated in 0.15
+
+        coef_init : ndarray of shape n_features or (n_targets, n_features)
             The initial coeffients to warm-start the optimization
+            WARNING : ignored and will be deprecated in 0.15
 
         Notes
         -----
@@ -174,6 +592,16 @@ class ElasticNet(LinearModel, RegressorMixin):
         To avoid memory re-allocation it is advised to allocate the
         initial data in memory directly using that format.
         """
+        if Xy is not None:
+            warnings.warn("Xy param is now ignored and will be removed in "
+                          "0.15. See enet_path function.",
+                          DeprecationWarning, stacklevel=2)
+
+        if coef_init is not None:
+            warnings.warn("coef_init is now ignored and will be removed in "
+                          "0.15. See enet_path function.",
+                          DeprecationWarning, stacklevel=2)
+
         if self.alpha == 0:
             warnings.warn("With alpha=0, this algorithm does not converge "
                           "well. You are advised to use the LinearRegression "
@@ -182,16 +610,10 @@ class ElasticNet(LinearModel, RegressorMixin):
                              copy=self.copy_X and self.fit_intercept)
         # From now on X can be touched inplace
         y = np.asarray(y, dtype=np.float64)
-        # now all computation with X can be done inplace
-        fit = self._sparse_fit if sparse.isspmatrix(X) else self._dense_fit
-        fit(X, y, Xy, coef_init)
-        return self
 
-    def _dense_fit(self, X, y, Xy=None, coef_init=None):
-
-        # copy was done in fit if necessary
-        X, y, X_mean, y_mean, X_std = center_data(
-            X, y, self.fit_intercept, self.normalize, copy=False)
+        X, y, X_mean, y_mean, X_std, precompute, Xy = \
+            _pre_fit(X, y, Xy, self.precompute, self.normalize,
+            self.fit_intercept, copy=True)
 
         if y.ndim == 1:
             y = y[:, np.newaxis]
@@ -201,122 +623,29 @@ class ElasticNet(LinearModel, RegressorMixin):
         n_samples, n_features = X.shape
         n_targets = y.shape[1]
 
-        precompute = self.precompute
-        if hasattr(precompute, '__array__') \
-                and not np.allclose(X_mean, np.zeros(n_features)) \
-                and not np.allclose(X_std, np.ones(n_features)):
-            # recompute Gram
-            precompute = 'auto'
-            Xy = None
-
-        coef_ = self._init_coef(coef_init, n_features, n_targets)
-        dual_gap_ = np.empty(n_targets)
-        eps_ = np.empty(n_targets)
-
-        l1_reg = self.alpha * self.l1_ratio * n_samples
-        l2_reg = self.alpha * (1.0 - self.l1_ratio) * n_samples
-
-        # precompute if n_samples > n_features
-        if precompute == 'auto':
-            precompute = (n_samples > n_features)
-
-        if hasattr(precompute, '__array__'):
-            Gram = precompute
-        elif precompute:
-            Gram = np.dot(X.T, X)
-        else:
-            Gram = None
+        coef_ = np.zeros((n_targets, n_features), dtype=np.float64)
+        dual_gaps_ = np.zeros(n_targets, dtype=np.float64)
 
         for k in xrange(n_targets):
-            if Gram is None:
-                coef_[k, :], dual_gap_[k], eps_[k] = \
-                    cd_fast.enet_coordinate_descent(
-                        coef_[k, :], l1_reg, l2_reg, X, y[:, k], self.max_iter,
-                        self.tol, self.positive)
+            if Xy is not None:
+                this_Xy = Xy[:, k]
             else:
-                Gram = Gram.copy()
-                if Xy is None:
-                    this_Xy = np.dot(X.T, y[:, k])
-                else:
-                    this_Xy = Xy[:, k]
-                coef_[k, :], dual_gap_[k], eps_[k] = \
-                    cd_fast.enet_coordinate_descent_gram(
-                        coef_[k, :], l1_reg, l2_reg, Gram, this_Xy, y[:, k],
-                        self.max_iter, self.tol, self.positive)
+                this_Xy = None
+            _, this_coef, this_dual_gap = self.path(X, y[:, k],
+                          l1_ratio=self.l1_ratio, eps=None,
+                          n_alphas=None, alphas=[self.alpha],
+                          precompute=precompute, Xy=this_Xy,
+                          fit_intercept=False, normalize=False, copy_X=True,
+                          verbose=False, tol=self.tol, positive=self.positive,
+                          return_models=False, X_mean=X_mean, X_std=X_std)
+            coef_[k] = this_coef[:, 0]
+            dual_gaps_[k] = this_dual_gap[0]
 
-            if dual_gap_[k] > eps_[k]:
-                warnings.warn('Objective did not converge for ' +
-                              'target %d, you might want' % k +
-                              ' to increase the number of iterations')
-
-        self.coef_, self.dual_gap_, self.eps_ = (np.squeeze(a) for a in
-                                                 (coef_, dual_gap_, eps_))
+        self.coef_, self.dual_gap_ = map(np.squeeze, [coef_, dual_gaps_])
         self._set_intercept(X_mean, y_mean, X_std)
 
         # return self for chaining fit and predict calls
         return self
-
-    def _sparse_fit(self, X, y, Xy=None, coef_init=None):
-
-        if X.shape[0] != y.shape[0]:
-            raise ValueError("X and y have incompatible shapes.\n" +
-                             "Note: Sparse matrices cannot be indexed w/" +
-                             "boolean masks (use `indices=True` in CV).")
-
-        # NOTE: we are explicitly not centering the data the naive way to
-        # avoid breaking the sparsity of X
-        X_data, y, X_mean, y_mean, X_std = sparse_center_data(
-            X, y, self.fit_intercept, self.normalize)
-
-        if y.ndim == 1:
-            y = y[:, np.newaxis]
-
-        n_samples, n_features = X.shape[0], X.shape[1]
-        n_targets = y.shape[1]
-
-        coef_ = self._init_coef(coef_init, n_features, n_targets)
-        dual_gap_ = np.empty(n_targets)
-        eps_ = np.empty(n_targets)
-
-        l1_reg = self.alpha * self.l1_ratio * n_samples
-        l2_reg = self.alpha * (1.0 - self.l1_ratio) * n_samples
-
-        for k in xrange(n_targets):
-            coef_[k, :], dual_gap_[k], eps_[k] = \
-                cd_fast.sparse_enet_coordinate_descent(
-                    coef_[k, :], l1_reg, l2_reg, X_data, X.indices,
-                    X.indptr, y[:, k], X_mean / X_std,
-                    self.max_iter, self.tol, self.positive)
-
-            if dual_gap_[k] > eps_[k]:
-                warnings.warn('Objective did not converge for ' +
-                              'target %d, you might want' % k +
-                              ' to increase the number of iterations')
-
-        self.coef_, self.dual_gap_, self.eps_ = (np.squeeze(a) for a in
-                                                 (coef_, dual_gap_, eps_))
-        self._set_intercept(X_mean, y_mean, X_std)
-
-        # return self for chaining fit and predict calls
-        return self
-
-    def _init_coef(self, coef_init, n_features, n_targets):
-        if coef_init is None:
-            if not self.warm_start or self.coef_ is None:
-                coef_ = np.zeros((n_targets, n_features), dtype=np.float64)
-            else:
-                coef_ = self.coef_
-        else:
-            coef_ = coef_init
-
-        if coef_.ndim == 1:
-            coef_ = coef_[np.newaxis, :]
-        if coef_.shape != (n_targets, n_features):
-            raise ValueError("X and coef_init have incompatible "
-                             "shapes (%s != %s)."
-                             % (coef_.shape, (n_targets, n_features)))
-
-        return coef_
 
     @property
     def sparse_coef_(self):
@@ -397,7 +726,6 @@ class Lasso(ElasticNet):
     positive : bool, optional
         When set to ``True``, forces the coefficients to be positive.
 
-
     Attributes
     ----------
     ``coef_`` : array, shape = (n_features,) | (n_targets, n_features)
@@ -409,14 +737,6 @@ class Lasso(ElasticNet):
 
     ``intercept_`` : float | array, shape = (n_targets,)
         independent term in decision function.
-
-    ``dual_gap_`` : float | array, shape = (n_targets,)
-        the current fit is guaranteed to be epsilon-suboptimal with
-        epsilon := ``dual_gap_``
-
-    ``eps_`` : float | array, shape = (n_targets,)
-        ``eps_`` is used to check if the fit converged to the requested
-        ``tol``
 
     Examples
     --------
@@ -447,6 +767,7 @@ class Lasso(ElasticNet):
     To avoid unnecessary memory duplication the X argument of the fit method
     should be directly passed as a Fortran-contiguous numpy array.
     """
+    path = staticmethod(enet_path)
 
     def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
                  precompute='auto', copy_X=True, max_iter=1000,
@@ -459,328 +780,11 @@ class Lasso(ElasticNet):
 
 
 ###############################################################################
-# Classes to store linear models along a regularization path
-
-def _alpha_grid(X, y, Xy=None, l1_ratio=1.0, fit_intercept=True,
-                eps=1e-3, n_alphas=100, normalize=False, copy_X=True):
-    """ Compute the grid of alpha values for elastic net parameter search
-
-    Parameters
-    ----------
-    X : {array-like, sparse matrix}, shape (n_samples, n_features)
-        Training data. Pass directly as Fortran-contiguous data to avoid
-        unnecessary memory duplication
-
-    y : ndarray, shape = (n_samples,)
-        Target values
-
-    Xy : array-like, optional
-        Xy = np.dot(X.T, y) that can be precomputed.
-
-    l1_ratio : float
-        The ElasticNet mixing parameter, with ``0 <= l1_ratio <= 1``.
-        For ``l1_ratio = 0`` the penalty is an L2 penalty. ``For
-        l1_ratio = 1`` it is an L1 penalty.  For ``0 < l1_ratio <
-        1``, the penalty is a combination of L1 and L2.
-
-    eps : float, optional
-        Length of the path. ``eps=1e-3`` means that
-        ``alpha_min / alpha_max = 1e-3``
-
-    n_alphas : int, optional
-        Number of alphas along the regularization path
-
-    fit_intercept : bool
-        Fit or not an intercept
-
-    normalize : boolean, optional, default False
-        If ``True``, the regressors X will be normalized before regression.
-
-    copy_X : boolean, optional, default True
-        If ``True``, X will be copied; else, it may be overwritten.
-    """
-    if Xy is None:
-        X = atleast2d_or_csc(X, copy=(copy_X and fit_intercept and not
-                                      sparse.isspmatrix(X)))
-        if not sparse.isspmatrix(X):
-            # X can be touched inplace thanks to the above line
-            X, y, _, _, _ = center_data(X, y, fit_intercept,
-                                        normalize, copy=False)
-
-        Xy = safe_sparse_dot(X.T, y, dense_output=True)
-        n_samples = X.shape[0]
-    else:
-        n_samples = len(y)
-
-    alpha_max = np.abs(Xy).max() / (n_samples * l1_ratio)
-    alphas = np.logspace(np.log10(alpha_max * eps), np.log10(alpha_max),
-                         num=n_alphas)[::-1]
-    return alphas
-
-
-def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
-               precompute='auto', Xy=None, fit_intercept=True,
-               normalize=False, copy_X=True, verbose=False,
-               **params):
-    """Compute Lasso path with coordinate descent
-
-    The optimization objective for Lasso is::
-
-        (1 / (2 * n_samples)) * ||y - Xw||^2_2 + alpha * ||w||_1
-
-    Parameters
-    ----------
-    X : {array-like, sparse matrix}, shape (n_samples, n_features)
-        Training data. Pass directly as Fortran-contiguous data to avoid
-        unnecessary memory duplication
-
-    y : ndarray, shape = (n_samples,)
-        Target values
-
-    eps : float, optional
-        Length of the path. ``eps=1e-3`` means that
-        ``alpha_min / alpha_max = 1e-3``
-
-    n_alphas : int, optional
-        Number of alphas along the regularization path
-
-    alphas : ndarray, optional
-        List of alphas where to compute the models.
-        If ``None`` alphas are set automatically
-
-    precompute : True | False | 'auto' | array-like
-        Whether to use a precomputed Gram matrix to speed up
-        calculations. If set to ``'auto'`` let us decide. The Gram
-        matrix can also be passed as argument.
-
-    Xy : array-like, optional
-        Xy = np.dot(X.T, y) that can be precomputed. It is useful
-        only when the Gram matrix is precomputed.
-
-    fit_intercept : bool
-        Fit or not an intercept
-
-    normalize : boolean, optional, default False
-        If ``True``, the regressors X will be normalized before regression.
-
-    copy_X : boolean, optional, default True
-        If ``True``, X will be copied; else, it may be overwritten.
-
-    verbose : bool or integer
-        Amount of verbosity
-
-    params : kwargs
-        keyword arguments passed to the Lasso objects
-
-    Returns
-    -------
-    models : a list of models along the regularization path
-
-    Notes
-    -----
-    See examples/linear_model/plot_lasso_coordinate_descent_path.py
-    for an example.
-
-    To avoid unnecessary memory duplication the X argument of the fit method
-    should be directly passed as a Fortran-contiguous numpy array.
-
-    Note that in certain cases, the Lars solver may be significantly
-    faster to implement this functionality. In particular, linear
-    interpolation can be used to retrieve model coefficents between the
-    values output by lars_path
-
-    Examples
-    ---------
-
-    Comparing lasso_path and lars_path with interpolation:
-
-    >>> X = np.array([[1, 2, 3.1], [2.3, 5.4, 4.3]]).T
-    >>> y = np.array([1, 2, 3.1])
-    >>> # Use lasso_path to compute a coefficient path
-    >>> coef_path = [e.coef_ for e in lasso_path(X, y, alphas=[5., 1., .5], \
-fit_intercept=False)]
-    >>> print(np.array(coef_path).T)
-    [[ 0.          0.          0.46874778]
-     [ 0.2159048   0.4425765   0.23689075]]
-
-    >>> # Now use lars_path and 1D linear interpolation to compute the
-    >>> # same path
-    >>> from sklearn.linear_model import lars_path
-    >>> alphas, active, coef_path_lars = lars_path(X, y, method='lasso')
-    >>> from scipy import interpolate
-    >>> coef_path_continuous = interpolate.interp1d(alphas[::-1],
-    ...     coef_path_lars[:, ::-1])
-    >>> print(coef_path_continuous([5., 1., .5]))
-    [[ 0.          0.          0.46915237]
-     [ 0.2159048   0.4425765   0.23668876]]
-
-
-    See also
-    --------
-    lars_path
-    Lasso
-    LassoLars
-    LassoCV
-    LassoLarsCV
-    sklearn.decomposition.sparse_encode
-    """
-    return enet_path(X, y, l1_ratio=1., eps=eps, n_alphas=n_alphas,
-                     alphas=alphas, precompute=precompute, Xy=Xy,
-                     fit_intercept=fit_intercept, normalize=normalize,
-                     copy_X=copy_X, verbose=verbose, **params)
-
-
-def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
-              precompute='auto', Xy=None, fit_intercept=True,
-              normalize=False, copy_X=True, verbose=False, rho=None,
-              **params):
-    """Compute Elastic-Net path with coordinate descent
-
-    The Elastic Net optimization function is::
-
-        1 / (2 * n_samples) * ||y - Xw||^2_2 +
-        + alpha * l1_ratio * ||w||_1
-        + 0.5 * alpha * (1 - l1_ratio) * ||w||^2_2
-
-    Parameters
-    ----------
-    X : {array-like, sparse matrix}, shape (n_samples, n_features)
-        Training data. Pass directly as Fortran-contiguous data to avoid
-        unnecessary memory duplication
-
-    y : ndarray, shape = (n_samples,)
-        Target values
-
-    l1_ratio : float, optional
-        float between 0 and 1 passed to ElasticNet (scaling between
-        l1 and l2 penalties). ``l1_ratio=1`` corresponds to the Lasso
-
-    eps : float
-        Length of the path. ``eps=1e-3`` means that
-        ``alpha_min / alpha_max = 1e-3``
-
-    n_alphas : int, optional
-        Number of alphas along the regularization path
-
-    alphas : ndarray, optional
-        List of alphas where to compute the models.
-        If None alphas are set automatically
-
-    precompute : True | False | 'auto' | array-like
-        Whether to use a precomputed Gram matrix to speed up
-        calculations. If set to ``'auto'`` let us decide. The Gram
-        matrix can also be passed as argument.
-
-    Xy : array-like, optional
-        Xy = np.dot(X.T, y) that can be precomputed. It is useful
-        only when the Gram matrix is precomputed.
-
-    fit_intercept : bool
-        Fit or not an intercept
-
-    normalize : boolean, optional, default False
-        If ``True``, the regressors X will be normalized before regression.
-
-    copy_X : boolean, optional, default True
-        If ``True``, X will be copied; else, it may be overwritten.
-
-    verbose : bool or integer
-        Amount of verbosity
-
-    params : kwargs
-        keyword arguments passed to the Lasso objects
-
-    Returns
-    -------
-    models : a list of models along the regularization path
-
-    Notes
-    -----
-    See examples/plot_lasso_coordinate_descent_path.py for an example.
-
-    See also
-    --------
-    ElasticNet
-    ElasticNetCV
-    """
-
-    if rho is not None:
-        l1_ratio = rho
-        warnings.warn("rho was renamed to l1_ratio and will be removed "
-                      "in 0.15", DeprecationWarning)
-
-    X = atleast2d_or_csc(X, dtype=np.float64, order='F',
-                         copy=copy_X and fit_intercept)
-    # From now on X can be touched inplace
-    if not sparse.isspmatrix(X):
-        X, y, X_mean, y_mean, X_std = center_data(X, y, fit_intercept,
-                                                  normalize, copy=False)
-        # XXX : in the sparse case the data will be centered
-        # at each fit...
-
-    n_samples, n_features = X.shape
-
-    if Xy is None:
-        Xy = safe_sparse_dot(X.T, y, dense_output=True)
-
-    n_samples = X.shape[0]
-    if alphas is None:
-        # No need to normalize of fit_intercept: it has been done
-        # above
-        alphas = _alpha_grid(X, y, Xy=Xy, l1_ratio=l1_ratio,
-                             fit_intercept=False, eps=1e-3, n_alphas=100,
-                             normalize=False, copy_X=False)
-    else:
-        alphas = np.sort(alphas)[::-1]  # make sure alphas are properly ordered
-
-    if (hasattr(precompute, '__array__')
-            and not np.allclose(X_mean, np.zeros(n_features))
-            and not np.allclose(X_std, np.ones(n_features))):
-        # recompute Gram
-        precompute = 'auto'
-        Xy = None
-
-    # precompute if n_samples > n_features
-    if precompute == 'auto':
-        precompute = (n_samples > n_features)
-
-    if precompute:
-        if sparse.isspmatrix(X):
-            warnings.warn("precompute is ignored for sparse data")
-            precompute = False
-        else:
-            precompute = np.dot(X.T, X)
-
-    coef_ = None  # init coef_
-    models = []
-
-    n_alphas = len(alphas)
-    for i, alpha in enumerate(alphas):
-        model = ElasticNet(
-            alpha=alpha, l1_ratio=l1_ratio,
-            fit_intercept=fit_intercept if sparse.isspmatrix(X) else False,
-            precompute=precompute)
-        model.set_params(**params)
-        model.copy_X = False
-        model.fit(X, y, coef_init=coef_, Xy=Xy)
-        if fit_intercept and not sparse.isspmatrix(X):
-            model.fit_intercept = True
-            model._set_intercept(X_mean, y_mean, X_std)
-        if verbose:
-            if verbose > 2:
-                print(model)
-            elif verbose > 1:
-                print('Path: %03i out of %03i' % (i, n_alphas))
-            else:
-                sys.stderr.write('.')
-        coef_ = model.coef_.copy()
-        models.append(model)
-    return models
-
+# Functions for CV with paths functions
 
 def _path_residuals(X, y, train, test, path, path_params, l1_ratio=1,
                     X_order=None, dtype=None):
-    """ Returns the MSE for the models computed by 'path'
+    """Returns the MSE for the models computed by 'path'
 
     Parameters
     ----------
@@ -817,19 +821,47 @@ def _path_residuals(X, y, train, test, path, path_params, l1_ratio=1,
         The dtype of the arrays expected by the path function to
         avoid memory copies
     """
-    this_mses = list()
+    X_train = X[train]
+    y_train = y[train]
+    X_test = X[test]
+    y_test = y[test]
+    fit_intercept = path_params['fit_intercept']
+    normalize = path_params['normalize']
+    precompute = path_params['precompute']
+    Xy = None
+
+    X_train, y_train, X_mean, y_mean, X_std, precompute, Xy = \
+        _pre_fit(X_train, y_train, Xy, precompute, normalize, fit_intercept,
+        copy=False)
+
+    # del path_params['precompute']
+    path_params = path_params.copy()
+    path_params['return_models'] = False
+    path_params['fit_intercept'] = False
+    path_params['normalize'] = False
+    path_params['Xy'] = Xy
+    path_params['X_mean'] = X_mean
+    path_params['X_std'] = X_std
+    path_params['precompute'] = precompute
+    path_params['copy_X'] = False
+
     if 'l1_ratio' in path_params:
         path_params['l1_ratio'] = l1_ratio
-    X_train = X[train]
+
     # Do the ordering and type casting here, as if it is done in the path,
     # X is copied and a reference is kept here
     X_train = atleast2d_or_csc(X_train, dtype=dtype, order=X_order)
-    models_train = path(X_train, y[train], **path_params)
+    alphas, coefs, _ = path(X_train, y[train], **path_params)
     del X_train
-    this_mses = np.empty(len(models_train))
-    for i_model, model in enumerate(models_train):
-        y_ = model.predict(X[test])
-        this_mses[i_model] = ((y_ - y[test]) ** 2).mean()
+
+    if normalize:
+        nonzeros = np.flatnonzero(X_std)
+        coefs[nonzeros] /= X_std[nonzeros][:, np.newaxis]
+
+    intercepts = y_mean - np.dot(X_mean, coefs)
+    residues = safe_sparse_dot(X_test, coefs) - y_test[:, np.newaxis]
+    residues += intercepts[np.newaxis, :]
+    this_mses = (residues ** 2).mean(axis=0)
     return this_mses, l1_ratio
 
 
@@ -949,6 +981,7 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
 
             mse_alphas = [m[0] for m in mse_alphas]
             mse_alphas = np.array(mse_alphas)
+
             mse = np.mean(mse_alphas, axis=0)
             i_best_alpha = np.argmin(mse)
             this_best_mse = mse[i_best_alpha]
@@ -976,7 +1009,6 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
         self.coef_ = model.coef_
         self.intercept_ = model.intercept_
         self.dual_gap_ = model.dual_gap_
-        self.eps_ = model.eps_
         return self
 
     @property

@@ -8,7 +8,7 @@ number of samples on various clustering performance evaluation metrics.
 
 Non-adjusted measures such as the V-Measure show a dependency between
 the number of clusters and the number of samples: the mean V-Measure
-of random labeling increases signicantly as the number of clusters is
+of random labeling increases significantly as the number of clusters is
 closer to the total number of samples used to compute the measure.
 
 Adjusted for chance measure such as ARI display some random variations

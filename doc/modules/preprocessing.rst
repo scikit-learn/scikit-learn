@@ -12,8 +12,8 @@ into a representation that is more suitable for the downstream estimators.
 
 .. _preprocessing_scaler:
 
-Standardization or Mean Removal and Variance Scaling
-====================================================
+Standardization, or mean removal and variance scaling
+=====================================================
 
 **Standardization** of datasets is a **common requirement for many
 machine learning estimators** implemented in the scikit: they might behave
@@ -98,7 +98,7 @@ passing ``with_mean=False`` or ``with_std=False`` to the constructor
 of :class:`StandardScaler`.
 
 
-Scaling Features to a Range
+Scaling features to a range
 ---------------------------
 An alternative standardization is scaling features to
 lie between a given minimum and maximum value, often between zero and one.
@@ -184,6 +184,17 @@ full formula is::
     This is very useful for scaling the target / response variables used
     for regression.
 
+
+Centering kernel matrices
+-------------------------
+
+If you have a kernel matrix of a kernel :math:`K` that computes a dot product
+in a feature space defined by function :math:`phi`,
+a :class:`KernelCenterer` can transform the kernel matrix
+so that it contains inner products in the feature space
+defined by :math:`phi` followed by removal of the mean in that space.
+
+
 Normalization
 =============
 
@@ -252,7 +263,7 @@ Feature binarization
 --------------------
 
 **Feature binarization** is the process of **thresholding numerical
-features to get boolean values**. This can be useful for downsteam
+features to get boolean values**. This can be useful for downstream
 probabilistic estimators that make assumption that the input data
 is distributed according to a multi-variate `Bernoulli distribution
 <http://en.wikipedia.org/wiki/Bernoulli_distribution>`_. For instance,
@@ -260,7 +271,7 @@ this is the case for the most common class of `(Restricted) Boltzmann
 Machines <http://en.wikipedia.org/wiki/Boltzmann_machine>`_
 (not yet implemented in the scikit).
 
-It is also commmon among the text processing community to use binary
+It is also common among the text processing community to use binary
 feature values (probably to simplify the probabilistic reasoning) even
 if normalized counts (a.k.a. term frequencies) or TF-IDF valued features
 often perform slightly better in practice.
@@ -332,16 +343,17 @@ only one active.
 Continuing the example above::
 
   >>> enc = preprocessing.OneHotEncoder()
-  >>> enc.fit([[0, 0, 3], [1, 1, 0], [0, 2, 1], [1, 0, 2]])
-  OneHotEncoder(dtype=<type 'float'>, n_values='auto')
+  >>> enc.fit([[0, 0, 3], [1, 1, 0], [0, 2, 1], [1, 0, 2]])  # doctest: +ELLIPSIS
+  OneHotEncoder(categorical_features='all', dtype=<... 'float'>,
+         n_values='auto')
   >>> enc.transform([[0, 1, 3]]).toarray()
   array([[ 1.,  0.,  0.,  1.,  0.,  0.,  0.,  0.,  1.]])
 
 By default, how many values each feature can take is inferred automatically from the dataset.
-It is possible to specify this explicitly using the parameter ``n_values``. 
+It is possible to specify this explicitly using the parameter ``n_values``.
 There are two genders, three possible continents and four web browsers in our
 dataset.
-Then we fit the estimator, and transform a data point. 
+Then we fit the estimator, and transform a data point.
 In the result, the first two numbers encode the gender, the next set of three
 numbers the continent and the last four the web browser.
 
@@ -408,9 +420,54 @@ hashable and comparable) to numerical labels::
     ['tokyo', 'tokyo', 'paris']
 
 
-.. TODO
+Imputation of missing values
+============================
 
-  Kernel centering
-  ================
+For various reasons, many real world datasets contain missing values, often
+encoded as blanks, NaNs or other placeholders. Such datasets however are
+incompatible with scikit-learn estimators which assume that all values in an
+array are numerical, and that all have and hold meaning. A basic strategy to use
+incomplete datasets is to discard entire rows and/or columns containing missing
+values. However, this comes at the price of losing data which may be valuable
+(even though incomplete). A better strategy is to impute the missing values,
+i.e., to infer them from the known part of the data.
 
-  Please @mblondel or someone else write me!
+The :class:`Imputer` class provides basic strategies for imputing missing
+values, either using the mean, the median or the most frequent value of
+the row or column in which the missing values are located. This class
+also allows for different missing values encodings.
+
+The following snippet demonstrates how to replace missing values,
+encoded as ``np.nan``, using the mean value of the columns (axis 0)
+that contain the missing values::
+
+    >>> import numpy as np
+    >>> from sklearn.preprocessing import Imputer
+    >>> imp = Imputer(missing_values='NaN', strategy='mean', axis=0)
+    >>> imp.fit([[1, 2], [np.nan, 3], [7, 6]])
+    Imputer(axis=0, copy=True, missing_values='NaN', strategy='mean', verbose=0)
+    >>> X = [[np.nan, 2], [6, np.nan], [7, 6]]
+    >>> print(imp.transform(X))
+    [[ 4.          2.        ]
+     [ 6.          3.66666667]
+     [ 7.          6.        ]]
+
+The :class:`Imputer` class also supports sparse matrices::
+
+    >>> import scipy.sparse as sp
+    >>> X = sp.csc_matrix([[1, 2], [0, 3], [7, 6]])
+    >>> imp = Imputer(missing_values=0, strategy='mean', axis=0)
+    >>> imp.fit(X)
+    Imputer(axis=0, copy=True, missing_values=0, strategy='mean', verbose=0)
+    >>> X_test = sp.csc_matrix([[0, 2], [6, 0], [7, 6]])
+    >>> print(imp.transform(X_test))
+    [[ 4.          2.        ]
+     [ 6.          3.66666667]
+     [ 7.          6.        ]]
+
+Note that, here, missing values are encoded by 0 and are thus implicitly stored
+in the matrix. This format is thus suitable when there are many more missing
+values than observed values.
+
+:class:`Imputer` can be used in a Pipeline as a way to build a composite
+estimator that supports imputation. See :ref:`example_imputation.py`

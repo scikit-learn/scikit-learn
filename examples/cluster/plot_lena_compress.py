@@ -5,6 +5,7 @@
 =========================================================
 Vector Quantization Example
 =========================================================
+
 The classic image processing example, Lena, an 8-bit grayscale
 bit-depth, 512 x 512 sized image, is used here to illustrate
 how `k`-means is used for vector quantization.
@@ -13,8 +14,8 @@ how `k`-means is used for vector quantization.
 print(__doc__)
 
 
-# Code source: Gael Varoqueux
-# Modified for Documentation merge by Jaques Grobler
+# Code source: Gaël Varoquaux
+# Modified for documentation by Jaques Grobler
 # License: BSD 3 clause
 
 import numpy as np

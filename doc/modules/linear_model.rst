@@ -70,6 +70,7 @@ This method computes the least squares solution using a singular value
 decomposition of X. If X is a matrix of size (n, p) this method has a
 cost of :math:`O(n p^2)`, assuming that :math:`n \geq p`.
 
+.. _ridge_regression:
 
 Ridge Regression
 ================
@@ -139,8 +140,8 @@ as GridSearchCV except that it defaults to Generalized Cross-Validation
     >>> from sklearn import linear_model
     >>> clf = linear_model.RidgeCV(alphas=[0.1, 1.0, 10.0])
     >>> clf.fit([[0, 0], [0, 0], [1, 1]], [0, .1, 1])       # doctest: +SKIP
-    RidgeCV(alphas=[0.1, 1.0, 10.0], cv=None, fit_intercept=True, loss_func=None,
-        normalize=False, score_func=None)
+    RidgeCV(alphas=[0.1, 1.0, 10.0], cv=None, fit_intercept=True, scoring=None,
+        normalize=False)
     >>> clf.alpha_                                      # doctest: +SKIP
     0.1
 
@@ -224,7 +225,7 @@ cross-validation: :class:`LassoCV` and :class:`LassoLarsCV`.
 explained below.
 
 For high-dimensional datasets with many collinear regressors,
-:class:`LassoCV` is most often preferrable. How, :class:`LassoLarsCV` has
+:class:`LassoCV` is most often preferable. How, :class:`LassoLarsCV` has
 the advantage of exploring more relevant values of `alpha` parameter, and
 if the number of samples is very small compared to the number of
 observations, it is often faster than :class:`LassoCV`.
@@ -432,7 +433,7 @@ the residual.
 
 Instead of giving a vector result, the LARS solution consists of a
 curve denoting the solution for each value of the L1 norm of the
-parameter vector. The full coeffients path is stored in the array
+parameter vector. The full coefficients path is stored in the array
 ``coef_path_``, which has size (n_features, max_features+1). The first
 column is always zero.
 
@@ -617,7 +618,7 @@ centered on zero and with a precision :math:`\lambda_{i}`:
 
 with :math:`diag \; (A) = \lambda = \{\lambda_{1},...,\lambda_{p}\}`.
 
-In constrast to `Bayesian Ridge Regression`_, each coordinate of :math:`w_{i}`
+In contrast to `Bayesian Ridge Regression`_, each coordinate of :math:`w_{i}`
 has its own standard deviation :math:`\lambda_i`. The prior over all
 :math:`\lambda_i` is chosen to be the same gamma distribution given by
 hyperparameters :math:`\lambda_1` and :math:`\lambda_2`.

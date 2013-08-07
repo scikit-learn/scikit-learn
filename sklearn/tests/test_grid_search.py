@@ -25,13 +25,18 @@ from sklearn.utils.testing import assert_array_almost_equal
 from scipy.stats import distributions
 
 from sklearn.base import BaseEstimator
-from sklearn.datasets.samples_generator import make_classification, make_blobs
+from sklearn.datasets import make_classification
+from sklearn.datasets import make_blobs
+from sklearn.datasets import make_multilabel_classification
 from sklearn.grid_search import (GridSearchCV, RandomizedSearchCV,
                                  ParameterGrid, ParameterSampler)
 from sklearn.svm import LinearSVC, SVC
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.tree import DecisionTreeClassifier
 from sklearn.cluster import KMeans, MeanShift
 from sklearn.metrics import f1_score
-from sklearn.metrics import Scorer
+from sklearn.metrics import make_scorer
+from sklearn.metrics import auc_score
 from sklearn.cross_validation import KFold, StratifiedKFold
 
 
@@ -125,10 +130,19 @@ def test_parameter_grid():
     # loop to assert we can iterate over the grid multiple times
     for i in xrange(2):
         # tuple + chain transforms {"a": 1, "b": 2} to ("a", 1, "b", 2)
-        points = set(tuple(chain(*p.items())) for p in grid2)
+        points = set(tuple(chain(*(sorted(p.items())))) for p in grid2)
         assert_equal(points,
-                     set(("foo", x, "bar", y)
-                         for x, y in product(params2["foo"], params2["bar"])))
+                     set(("bar", x, "foo", y)
+                         for x, y in product(params2["bar"], params2["foo"])))
+
+    # Special case: empty grid (useful to get default estimator settings)
+    empty = ParameterGrid({})
+    assert_equal(len(empty), 1)
+    assert_equal(list(empty), [{}])
+
+    has_empty = ParameterGrid([{'C': [1, 10]}, {}])
+    assert_equal(len(has_empty), 3)
+    assert_equal(list(has_empty), [{'C': 1}, {'C': 10}, {}])
 
 
 def test_grid_search():
@@ -143,13 +157,17 @@ def test_grid_search():
     assert_equal(grid_search.best_estimator_.foo_param, 2)
 
     for i, foo_i in enumerate([1, 2, 3]):
-        assert_true(grid_search.cv_scores_[i][0]
+        assert_true(grid_search.grid_scores_[i][0]
                     == {'foo_param': foo_i})
     # Smoke test the score etc:
     grid_search.score(X, y)
     grid_search.predict_proba(X)
     grid_search.decision_function(X)
     grid_search.transform(X)
+
+    # Test exception handling on scoring
+    grid_search.scoring = 'sklearn'
+    assert_raises(ValueError, grid_search.fit, X, y)
 
 
 def test_grid_search_no_score():
@@ -176,19 +194,19 @@ def test_grid_search_no_score():
                          GridSearchCV, clf_no_score, {'C': Cs})
 
 
-def test_trivial_cv_scores():
+def test_trivial_grid_scores():
     """Test search over a "grid" with only one point.
 
-    Non-regression test: cv_scores_ wouldn't be set by GridSearchCV.
+    Non-regression test: grid_scores_ wouldn't be set by GridSearchCV.
     """
     clf = MockClassifier()
     grid_search = GridSearchCV(clf, {'foo_param': [1]})
     grid_search.fit(X, y)
-    assert_true(hasattr(grid_search, "cv_scores_"))
+    assert_true(hasattr(grid_search, "grid_scores_"))
 
     random_search = RandomizedSearchCV(clf, {'foo_param': [0]})
     random_search.fit(X, y)
-    assert_true(hasattr(random_search, "cv_scores_"))
+    assert_true(hasattr(random_search, "grid_scores_"))
 
 
 def test_no_refit():
@@ -227,21 +245,25 @@ def test_grid_search_iid():
     # once with iid=True (default)
     grid_search = GridSearchCV(svm, param_grid={'C': [1, 10]}, cv=cv)
     grid_search.fit(X, y)
-    _, average_score, scores = grid_search.cv_scores_[0]
-    assert_array_almost_equal(scores, [1, 1. / 3.])
+    first = grid_search.grid_scores_[0]
+    assert_equal(first.parameters['C'], 1)
+    assert_array_almost_equal(first.cv_validation_scores, [1, 1. / 3.])
     # for first split, 1/4 of dataset is in test, for second 3/4.
     # take weighted average
-    assert_almost_equal(average_score, 1 * 1. / 4. + 1. / 3. * 3. / 4.)
+    assert_almost_equal(first.mean_validation_score,
+                        1 * 1. / 4. + 1. / 3. * 3. / 4.)
 
-    # once with iid=False (default)
+    # once with iid=False
     grid_search = GridSearchCV(svm, param_grid={'C': [1, 10]}, cv=cv,
                                iid=False)
     grid_search.fit(X, y)
-    _, average_score, scores = grid_search.cv_scores_[0]
+    first = grid_search.grid_scores_[0]
+    assert_equal(first.parameters['C'], 1)
     # scores are the same as above
-    assert_array_almost_equal(scores, [1, 1. / 3.])
+    assert_array_almost_equal(first.cv_validation_scores, [1, 1. / 3.])
     # averaged score is just mean of scores
-    assert_almost_equal(average_score, np.mean(scores))
+    assert_almost_equal(first.mean_validation_score,
+                        np.mean(first.cv_validation_scores))
 
 
 def test_grid_search_one_grid_point():
@@ -318,7 +340,7 @@ def test_grid_search_sparse_scoring():
     # test loss where greater is worse
     def f1_loss(y_true_, y_pred_):
         return -f1_score(y_true_, y_pred_)
-    F1Loss = Scorer(f1_loss, greater_is_better=False)
+    F1Loss = make_scorer(f1_loss, greater_is_better=False)
     cv = GridSearchCV(clf, {'C': [0.1, 1.0]}, scoring=F1Loss)
     cv.fit(X_[:180], y_[:180])
     y_pred3 = cv.predict(X_[180:])
@@ -441,8 +463,7 @@ def test_refit():
 
 
 def test_X_as_list():
-    """Pass X as list in GridSearchCV
-    """
+    """Pass X as list in GridSearchCV"""
     X = np.arange(100).reshape(10, 10)
     y = np.array([0] * 5 + [1] * 5)
 
@@ -450,7 +471,7 @@ def test_X_as_list():
     cv = KFold(n=len(X), n_folds=3)
     grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]}, cv=cv)
     grid_search.fit(X.tolist(), y).score(X, y)
-    assert_true(hasattr(grid_search, "cv_scores_"))
+    assert_true(hasattr(grid_search, "grid_scores_"))
 
 
 def test_unsupervised_grid_search():
@@ -458,7 +479,7 @@ def test_unsupervised_grid_search():
     X, y = make_blobs(random_state=0)
     km = KMeans(random_state=0)
     grid_search = GridSearchCV(km, param_grid=dict(n_clusters=[2, 3, 4]),
-                               scoring='ari')
+                               scoring='adjusted_rand_score')
     grid_search.fit(X, y)
     # ARI can find the right number :)
     assert_equal(grid_search.best_params_["n_clusters"], 3)
@@ -490,19 +511,51 @@ def test_param_sampler():
         assert_true(0 <= sample["C"] <= 1)
 
 
-def test_randomized_search():
-    # very basic smoke test
-    X, y = make_classification(n_samples=200, n_features=100, random_state=0)
+def test_randomized_search_grid_scores():
+    # Make a dataset with a lot of noise to get various kind of prediction
+    # errors across CV folds and parameter settings
+    X, y = make_classification(n_samples=200, n_features=100, n_informative=3,
+                               random_state=0)
 
-    params = dict(C=distributions.expon())
-    search = RandomizedSearchCV(LinearSVC(), param_distributions=params)
+    # XXX: as of today (scipy 0.12) it's not possible to set the random seed
+    # of scipy.stats distributions: the assertions in this test should thus
+    # not depend on the randomization
+    params = dict(C=distributions.expon(scale=10),
+                  gamma=distributions.expon(scale=0.1))
+    n_cv_iter = 3
+    n_search_iter = 30
+    search = RandomizedSearchCV(SVC(), n_iter=n_search_iter, cv=n_cv_iter,
+                                param_distributions=params, iid=False)
     search.fit(X, y)
-    assert_equal(len(search.cv_scores_), 10)
+    assert_equal(len(search.grid_scores_), n_search_iter)
+
+    # Check consistency of the structure of each cv_score item
+    for cv_score in search.grid_scores_:
+        assert_equal(len(cv_score.cv_validation_scores), n_cv_iter)
+        # Because we set iid to False, the mean_validation score is the
+        # mean of the fold mean scores instead of the aggregate sample-wise
+        # mean score
+        assert_almost_equal(np.mean(cv_score.cv_validation_scores),
+                            cv_score.mean_validation_score)
+        assert_equal(list(sorted(cv_score.parameters.keys())),
+                     list(sorted(params.keys())))
+
+    # Check the consistency with the best_score_ and best_params_ attributes
+    sorted_grid_scores = list(sorted(search.grid_scores_,
+                            key=lambda x: x.mean_validation_score))
+    best_score = sorted_grid_scores[-1].mean_validation_score
+    assert_equal(search.best_score_, best_score)
+
+    tied_best_params = [s.parameters for s in sorted_grid_scores
+                        if s.mean_validation_score == best_score]
+    assert_true(search.best_params_ in tied_best_params,
+                "best_params_={0} is not part of the"
+                " tied best models: {1}".format(
+                    search.best_params_, tied_best_params))
 
 
 def test_grid_search_score_consistency():
     # test that correct scores are used
-    from sklearn.metrics import auc_score
     clf = LinearSVC(random_state=0)
     X, y = make_blobs(random_state=0, centers=2)
     Cs = [.1, 1, 10]
@@ -510,7 +563,7 @@ def test_grid_search_score_consistency():
         grid_search = GridSearchCV(clf, {'C': Cs}, scoring=score)
         grid_search.fit(X, y)
         cv = StratifiedKFold(n_folds=3, y=y)
-        for C, scores in zip(Cs, grid_search.cv_scores_):
+        for C, scores in zip(Cs, grid_search.grid_scores_):
             clf.set_params(C=C)
             scores = scores[2]  # get the separate runs from grid scores
             i = 0
@@ -536,3 +589,55 @@ def test_pickle():
                                        refit=True)
     random_search.fit(X, y)
     pickle.dumps(random_search)  # smoke test
+
+
+def test_grid_search_with_multioutput_data():
+    """ Test search with multi-output estimator"""
+
+    X, y = make_multilabel_classification(return_indicator=True,
+                                          random_state=0)
+
+    est_parameters = {"max_depth": [1, 2, 3, 4]}
+    cv = KFold(y.shape[0], random_state=0)
+
+    estimators = [DecisionTreeRegressor(random_state=0),
+                  DecisionTreeClassifier(random_state=0)]
+
+    # Test with grid search cv
+    for est in estimators:
+        grid_search = GridSearchCV(est, est_parameters, cv=cv)
+        grid_search.fit(X, y)
+        for parameters, _, cv_validation_scores in grid_search.grid_scores_:
+            est.set_params(**parameters)
+
+            for i, (train, test) in enumerate(cv):
+                est.fit(X[train], y[train])
+                correct_score = est.score(X[test], y[test])
+                assert_almost_equal(correct_score,
+                                    cv_validation_scores[i])
+
+    # Test with a randomized search
+    for est in estimators:
+        random_search = RandomizedSearchCV(est, est_parameters, cv=cv)
+        random_search.fit(X, y)
+        for parameters, _, cv_validation_scores in random_search.grid_scores_:
+            est.set_params(**parameters)
+
+            for i, (train, test) in enumerate(cv):
+                est.fit(X[train], y[train])
+                correct_score = est.score(X[test], y[test])
+                assert_almost_equal(correct_score,
+                                    cv_validation_scores[i])
+
+    # Test with a randomized search
+    for est in estimators:
+        random_search = RandomizedSearchCV(est, est_parameters, cv=cv)
+        random_search.fit(X, y)
+        for parameters, _, cv_validation_scores in random_search.grid_scores_:
+            est.set_params(**parameters)
+
+            for i, (train, test) in enumerate(cv):
+                est.fit(X[train], y[train])
+                correct_score = est.score(X[test], y[test])
+                assert_almost_equal(correct_score,
+                                    cv_validation_scores[i])

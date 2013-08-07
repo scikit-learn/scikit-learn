@@ -341,8 +341,8 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
                 del coef, alpha, prev_alpha, prev_coef
                 # resize the coefs and alphas array
                 add_features = 2 * max(1, (max_features - n_active))
-                coefs.resize((n_iter + add_features, n_features))
-                alphas.resize(n_iter + add_features)
+                coefs = np.resize(coefs, (n_iter + add_features, n_features))
+                alphas = np.resize(alphas, n_iter + add_features)
             coef = coefs[n_iter]
             prev_coef = coefs[n_iter - 1]
             alpha = alphas[n_iter, np.newaxis]
@@ -458,23 +458,23 @@ class Lars(LinearModel, RegressorMixin):
 
     Attributes
     ----------
-    ``alphas_`` : array, shape = [n_alphas + 1] | list of n_targets such arrays
+    ``alphas_`` : array, shape (n_alphas + 1,) | list of n_targets such arrays
         Maximum of covariances (in absolute value) at each iteration. \
         ``n_alphas`` is either ``n_nonzero_coefs`` or ``n_features``, \
         whichever is smaller.
 
-    ``active_`` : list, length: [n_alphas] | list of n_targets such lists
+    ``active_`` : list, length = n_alphas | list of n_targets such lists
         Indices of active variables at the end of the path.
 
-    ``coef_path_`` : array, shape = [n_features, n_alphas + 1] \
+    ``coef_path_`` : array, shape (n_features, n_alphas + 1) \
         | list of n_targets such arrays
         The varying values of the coefficients along the path. It is not
         present if the ``fit_path`` parameter is ``False``.
 
-    ``coef_`` : array, shape = [n_features] | [n_targets, n_features]
-        Parameter vector (w in the fomulation formula).
+    ``coef_`` : array, shape (n_features,) or (n_targets, n_features)
+        Parameter vector (w in the formulation formula).
 
-    ``intercept_`` : float | array of shape [n_targets]
+    ``intercept_`` : float | array, shape (n_targets,)
         Independent term in decision function.
 
     Examples
@@ -523,13 +523,13 @@ class Lars(LinearModel, RegressorMixin):
 
         parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like, shape (n_samples, n_features)
             Training data.
 
-        y : array-like, shape = [n_samples] | [n_samples, n_targets]
+        y : array-like, shape (n_samples,) or (n_samples, n_targets)
             Target values.
 
-        Xy : array-like, shape = [n_samples] | [n_samples, n_targets], \
+        Xy : array-like, shape (n_samples,) or (n_samples, n_targets), \
                 optional
             Xy = np.dot(X.T, y) that can be precomputed. It is useful
             only when the Gram matrix is precomputed.
@@ -644,10 +644,10 @@ class LassoLars(Lars):
         calculations. If set to ``'auto'`` let us decide. The Gram
         matrix can also be passed as argument.
 
-    max_iter: integer, optional
+    max_iter : integer, optional
         Maximum number of iterations to perform.
 
-    eps: float, optional
+    eps : float, optional
         The machine-precision regularization in the computation of the
         Cholesky diagonal factors. Increase this for very ill-conditioned
         systems. Unlike the ``tol`` parameter in some iterative
@@ -662,24 +662,24 @@ class LassoLars(Lars):
 
     Attributes
     ----------
-    ``alphas_`` : array, shape = [n_alphas + 1] | list of n_targets such arrays
+    ``alphas_`` : array, shape (n_alphas + 1,) | list of n_targets such arrays
         Maximum of covariances (in absolute value) at each iteration. \
         ``n_alphas`` is either ``max_iter``, ``n_features``, or the number of \
         nodes in the path with correlation greater than ``alpha``, whichever \
         is smaller.
 
-    ``active_`` : list, length = [n_alphas] | list of n_targets such lists
+    ``active_`` : list, length = n_alphas | list of n_targets such lists
         Indices of active variables at the end of the path.
 
-    ``coef_path_`` : array, shape = [n_features, n_alphas + 1] or list
+    ``coef_path_`` : array, shape (n_features, n_alphas + 1) or list
         If a list is passed it's expected to be one of n_targets such arrays.
         The varying values of the coefficients along the path. It is not
         present if the ``fit_path`` parameter is ``False``.
 
-    ``coef_`` : array, shape = n_features or n_targets, n_features
-        Parameter vector (w in the fomulation formula).
+    ``coef_`` : array, shape (n_features,) or (n_targets, n_features)
+        Parameter vector (w in the formulation formula).
 
-    ``intercept_`` : float or array of shape [n_targets]
+    ``intercept_`` : float | array, shape (n_targets,)
         Independent term in decision function.
 
     Examples
@@ -731,25 +731,25 @@ def _lars_path_residues(X_train, y_train, X_test, y_test, Gram=None,
 
     Parameters
     -----------
-    X_train: array, shape (n_samples, n_features)
+    X_train : array, shape (n_samples, n_features)
         The data to fit the LARS on
-    y_train: array, shape (n_samples)
+    y_train : array, shape (n_samples)
         The target variable to fit LARS on
-    X_test: array, shape (n_samples, n_features)
+    X_test : array, shape (n_samples, n_features)
         The data to compute the residues on
-    y_test: array, shape (n_samples)
+    y_test : array, shape (n_samples)
         The target variable to compute the residues on
-    Gram: None, 'auto', array, shape: (n_features, n_features), optional
+    Gram : None, 'auto', array, shape: (n_features, n_features), optional
         Precomputed Gram matrix (X' * X), if ``'auto'``, the Gram
         matrix is precomputed from the given X, if there are more samples
         than features
-    copy: boolean, optional
+    copy : boolean, optional
         Whether X_train, X_test, y_train and y_test should be copied;
         if False, they may be overwritten.
-    method: 'lar' | 'lasso'
+    method : 'lar' | 'lasso'
         Specifies the returned model. Select ``'lar'`` for Least Angle
         Regression, ``'lasso'`` for the Lasso.
-    verbose: integer, optional
+    verbose : integer, optional
         Sets the amount of verbosity
     fit_intercept : boolean
         whether to calculate the intercept for this model. If set
@@ -757,10 +757,10 @@ def _lars_path_residues(X_train, y_train, X_test, y_test, Gram=None,
         (e.g. data is expected to be already centered).
     normalize : boolean, optional, default False
         If True, the regressors X will be normalized before regression.
-    max_iter: integer, optional
+    max_iter : integer, optional
         Maximum number of iterations to perform.
-    eps: float, optional
-            The machine-precision regularization in the computation of the
+    eps : float, optional
+        The machine-precision regularization in the computation of the
         Cholesky diagonal factors. Increase this for very ill-conditioned
         systems. Unlike the ``tol`` parameter in some iterative
         optimization-based algorithms, this parameter does not control
@@ -769,18 +769,18 @@ def _lars_path_residues(X_train, y_train, X_test, y_test, Gram=None,
 
     Returns
     --------
-    alphas: array, shape: [n_alphas + 1]
+    alphas : array, shape (n_alphas,)
         Maximum of covariances (in absolute value) at each iteration.
         ``n_alphas`` is either ``max_iter`` or ``n_features``, whichever
         is smaller.
 
-    active: array, shape [n_alphas]
+    active : list
         Indices of active variables at the end of the path.
 
-    coefs: array, shape [n_features, n_alphas + 1)
+    coefs : array, shape (n_features, n_alphas)
         Coefficients along the path
 
-    residues: array, shape [n_features, n_alphas + 1]
+    residues : array, shape (n_alphas, n_samples)
         Residues of the prediction on the test data
     """
     if copy:
@@ -809,9 +809,8 @@ def _lars_path_residues(X_train, y_train, X_test, y_test, Gram=None,
         method=method, verbose=max(0, verbose - 1), max_iter=max_iter, eps=eps)
     if normalize:
         coefs[nonzeros] /= norms[nonzeros][:, np.newaxis]
-    residues = np.array([(np.dot(X_test, coef) - y_test)
-                         for coef in coefs.T])
-    return alphas, active, coefs, residues
+    residues = np.dot(X_test, coefs) - y_test[:, np.newaxis]
+    return alphas, active, coefs, residues.T
 
 
 class LarsCV(Lars):
@@ -841,7 +840,7 @@ class LarsCV(Lars):
     max_iter: integer, optional
         Maximum number of iterations to perform.
 
-    cv : crossvalidation generator, optional
+    cv : cross-validation generator, optional
         see :mod:`sklearn.cross_validation`. If ``None`` is passed, default to
         a 5-fold strategy
 
@@ -861,25 +860,25 @@ class LarsCV(Lars):
 
     Attributes
     ----------
-    ``coef_`` : array, shape = [n_features]
-        parameter vector (w in the fomulation formula)
+    ``coef_`` : array, shape (n_features,)
+        parameter vector (w in the formulation formula)
 
     ``intercept_`` : float
         independent term in decision function
 
-    ``coef_path_`` : array, shape = [n_features, n_alphas]
+    ``coef_path_`` : array, shape (n_features, n_alphas)
         the varying values of the coefficients along the path
 
     ``alpha_`` : float
         the estimated regularization parameter alpha
 
-    ``alphas_`` : array, shape = [n_alphas]
+    ``alphas_`` : array, shape (n_alphas,)
         the different values of alpha along the path
 
-    ``cv_alphas_`` : array, shape = [n_cv_alphas]
+    ``cv_alphas_`` : array, shape (n_cv_alphas,)
         all the values of alpha along the path for the different folds
 
-    ``cv_mse_path_`` : array, shape = [n_folds, n_cv_alphas]
+    ``cv_mse_path_`` : array, shape (n_folds, n_cv_alphas)
         the mean square error on left-out for each fold along the path
         (alpha values given by ``cv_alphas``)
 
@@ -910,10 +909,10 @@ class LarsCV(Lars):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like, shape (n_samples, n_features)
             Training data.
 
-        y : array-like, shape = [n_samples]
+        y : array-like, shape (n_samples,)
             Target values.
 
         Returns
@@ -1011,7 +1010,7 @@ class LassoLarsCV(LarsCV):
     max_iter: integer, optional
         Maximum number of iterations to perform.
 
-    cv : crossvalidation generator, optional
+    cv : cross-validation generator, optional
         see sklearn.cross_validation module. If None is passed, default to
         a 5-fold strategy
 
@@ -1033,25 +1032,25 @@ class LassoLarsCV(LarsCV):
 
     Attributes
     ----------
-    ``coef_`` : array, shape = [n_features]
-        parameter vector (w in the fomulation formula)
+    ``coef_`` : array, shape (n_features,)
+        parameter vector (w in the formulation formula)
 
     ``intercept_`` : float
         independent term in decision function.
 
-    ``coef_path_`` : array, shape = [n_features, n_alphas]
+    ``coef_path_`` : array, shape (n_features, n_alphas)
         the varying values of the coefficients along the path
 
     ``alpha_`` : float
         the estimated regularization parameter alpha
 
-    ``alphas_`` : array, shape = [n_alphas]
+    ``alphas_`` : array, shape (n_alphas,)
         the different values of alpha along the path
 
-    ``cv_alphas_`` : array, shape = [n_cv_alphas]
+    ``cv_alphas_`` : array, shape (n_cv_alphas,)
         all the values of alpha along the path for the different folds
 
-    ``cv_mse_path_`` : array, shape = [n_folds, n_cv_alphas]
+    ``cv_mse_path_`` : array, shape (n_folds, n_cv_alphas)
         the mean square error on left-out for each fold along the path
         (alpha values given by ``cv_alphas``)
 
@@ -1126,8 +1125,8 @@ class LassoLarsIC(LassoLars):
 
     Attributes
     ----------
-    ``coef_`` : array, shape = [n_features]
-        parameter vector (w in the fomulation formula)
+    ``coef_`` : array, shape (n_features,)
+        parameter vector (w in the formulation formula)
 
     ``intercept_`` : float
         independent term in decision function.
@@ -1179,10 +1178,10 @@ class LassoLarsIC(LassoLars):
 
         parameters
         ----------
-        x : array-like, shape = [n_samples, n_features]
+        x : array-like, shape (n_samples, n_features)
             training data.
 
-        y : array-like, shape = [n_samples]
+        y : array-like, shape (n_samples,)
             target values.
 
         returns

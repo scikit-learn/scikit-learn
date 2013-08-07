@@ -23,13 +23,13 @@ from ..utils.extmath import fast_logdet, pinvh
 def log_likelihood(emp_cov, precision):
     """Computes the log_likelihood of the data
 
-    Params
-    ------
-    emp_cov: 2D ndarray (n_features, n_features)
-      Maximum Likelihood Estimator of covariance
-    precision: 2D ndarray (n_features, n_features)
-      The precision matrix of the covariance model to be tested
+    Parameters
+    ----------
+    emp_cov : 2D ndarray (n_features, n_features)
+        Maximum Likelihood Estimator of covariance
 
+    precision : 2D ndarray (n_features, n_features)
+        The precision matrix of the covariance model to be tested
     """
     return -np.sum(emp_cov * precision) + fast_logdet(precision)
 
@@ -39,10 +39,10 @@ def empirical_covariance(X, assume_centered=False):
 
     Parameters
     ----------
-    X: 2D ndarray, shape (n_samples, n_features)
+    X : 2D ndarray, shape (n_samples, n_features)
         Data from which to compute the covariance estimate
 
-    assume_centered: Boolean
+    assume_centered : Boolean
         If True, data are not centered before computation.
         Useful when working with data whose mean is almost, but not exactly
         zero.
@@ -50,8 +50,8 @@ def empirical_covariance(X, assume_centered=False):
 
     Returns
     -------
-    covariance: 2D ndarray, shape (n_features, n_features)
-        Empirical covariance (Maximum Likelihood Estimator)
+    covariance : 2D ndarray, shape (n_features, n_features)
+        Empirical covariance (Maximum Likelihood Estimator).
 
     """
     X = np.asarray(X)
@@ -74,8 +74,9 @@ class EmpiricalCovariance(BaseEstimator):
     Parameters
     ----------
     store_precision : bool
-        Specifies if the estimated precision is stored
-    assume_centered: bool
+        Specifies if the estimated precision is stored.
+
+    assume_centered : bool
         If True, data are not centered before computation.
         Useful when working with data whose mean is almost, but not exactly
         zero.
@@ -101,11 +102,11 @@ class EmpiricalCovariance(BaseEstimator):
         Storage is done accordingly to `self.store_precision`.
         Precision stored only if invertible.
 
-        Params
-        ------
-        covariance: 2D ndarray, shape (n_features, n_features)
-          Estimated covariance matrix to be stored, and from which precision
-          is computed.
+        Parameters
+        ----------
+        covariance : 2D ndarray, shape (n_features, n_features)
+            Estimated covariance matrix to be stored, and from which precision
+            is computed.
 
         """
         covariance = array2d(covariance)
@@ -122,8 +123,8 @@ class EmpiricalCovariance(BaseEstimator):
 
         Returns
         -------
-        precision_: array-like,
-          The precision matrix associated to the current covariance object.
+        `precision_` : array-like,
+            The precision matrix associated to the current covariance object.
 
         """
         if self.store_precision:
@@ -138,10 +139,11 @@ class EmpiricalCovariance(BaseEstimator):
 
         Parameters
         ----------
-        X: array-like, shape = [n_samples, n_features]
+        X : array-like, shape = [n_samples, n_features]
           Training data, where n_samples is the number of samples and
           n_features is the number of features.
-        y: not used, present for API consistence purpose.
+
+        y : not used, present for API consistence purpose.
 
         Returns
         -------
@@ -160,23 +162,24 @@ class EmpiricalCovariance(BaseEstimator):
         return self
 
     def score(self, X_test, y=None):
-        """Computes the log-likelihood of a gaussian data set with
+        """Computes the log-likelihood of a Gaussian data set with
         `self.covariance_` as an estimator of its covariance matrix.
 
         Parameters
         ----------
-        X_test: array-like, shape = [n_samples, n_features]
-          Test data of which we compute the likelihood, where n_samples is
-          the number of samples and n_features is the number of features.
-          X_test is assumed to be drawn from the same distribution than
-          tha data used in fit (including centering).
-        y: not used, present for API consistence purpose.
+        X_test : array-like, shape = [n_samples, n_features]
+            Test data of which we compute the likelihood, where n_samples is
+            the number of samples and n_features is the number of features.
+            X_test is assumed to be drawn from the same distribution than
+            the data used in fit (including centering).
+
+        y : not used, present for API consistence purpose.
 
         Returns
         -------
         res : float
-          The likelihood of the data set with `self.covariance_` as an
-          estimator of its covariance matrix.
+            The likelihood of the data set with `self.covariance_` as an
+            estimator of its covariance matrix.
 
         """
         # compute empirical covariance of the test set
@@ -190,21 +193,24 @@ class EmpiricalCovariance(BaseEstimator):
     def error_norm(self, comp_cov, norm='frobenius', scaling=True,
                    squared=True):
         """Computes the Mean Squared Error between two covariance estimators.
-        (In the sense of the Frobenius norm)
+        (In the sense of the Frobenius norm).
 
         Parameters
         ----------
-        comp_cov: array-like, shape = [n_features, n_features]
+        comp_cov : array-like, shape = [n_features, n_features]
             The covariance to compare with.
-        norm: str
+
+        norm : str
             The type of norm used to compute the error. Available error types:
             - 'frobenius' (default): sqrt(tr(A^t.A))
             - 'spectral': sqrt(max(eigenvalues(A^t.A))
             where A is the error ``(comp_cov - self.covariance_)``.
-        scaling: bool
+
+        scaling : bool
             If True (default), the squared error norm is divided by n_features.
             If False, the squared error norm is not rescaled.
-        squared: bool
+
+        squared : bool
             Whether to compute the squared error norm or the error norm.
             If True (default), the squared error norm is returned.
             If False, the error norm is returned.
@@ -237,21 +243,21 @@ class EmpiricalCovariance(BaseEstimator):
         return result
 
     def mahalanobis(self, observations):
-        """Computes the mahalanobis distances of given observations.
+        """Computes the Mahalanobis distances of given observations.
 
         The provided observations are assumed to be centered. One may want to
         center them using a location estimate first.
 
         Parameters
         ----------
-        observations: array-like, shape = [n_observations, n_features]
-          The observations, the Mahalanobis distances of the which we compute.
-          Observations are assumed to be drawn from the same distribution than
-          tha data used in fit (including centering).
+        observations : array-like, shape = [n_observations, n_features]
+            The observations, the Mahalanobis distances of the which we
+            compute. Observations are assumed to be drawn from the same
+            distribution than the data used in fit (including centering).
 
         Returns
         -------
-        mahalanobis_distance: array, shape = [n_observations,]
+        mahalanobis_distance : array, shape = [n_observations,]
             Mahalanobis distances of the observations.
 
         """

@@ -5,16 +5,17 @@
 =========================================================
 SVM-Kernels
 =========================================================
+
 Three different types of SVM-Kernels are displayed below.
 The polynomial and RBF are especially useful when the
-data-points are not linearly seperable.
+data-points are not linearly separable.
 
 
 """
 print(__doc__)
 
 
-# Code source: Gael Varoqueux
+# Code source: Gaël Varoquaux
 # License: BSD 3 clause
 
 import numpy as np

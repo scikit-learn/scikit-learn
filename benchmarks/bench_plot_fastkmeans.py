@@ -40,8 +40,8 @@ def compute_bench(samples_range, features_range):
             print('Fast K-Means')
             # let's prepare the data in small chunks
             mbkmeans = MiniBatchKMeans(init='k-means++',
-                                      k=10,
-                                      batch_size=chunk)
+                                       n_clusters=10,
+                                       batch_size=chunk)
             tstart = time()
             mbkmeans.fit(data)
             delta = time() - tstart
@@ -50,8 +50,8 @@ def compute_bench(samples_range, features_range):
             print()
             print()
 
-            results['minibatchkmeans_speed'].append(delta)
-            results['minibatchkmeans_quality'].append(mbkmeans.inertia_)
+            results['MiniBatchKMeans Speed'].append(delta)
+            results['MiniBatchKMeans Quality'].append(mbkmeans.inertia_)
 
     return results
 
@@ -85,8 +85,8 @@ def compute_bench_2(chunks):
         print("Inertia: %0.3fs" % mbkmeans.inertia_)
         print()
 
-        results['minibatchkmeans_speed'].append(delta)
-        results['minibatchkmeans_quality'].append(mbkmeans.inertia_)
+        results['MiniBatchKMeans Speed'].append(delta)
+        results['MiniBatchKMeans Quality'].append(mbkmeans.inertia_)
 
     return results
 
@@ -108,7 +108,7 @@ if __name__ == '__main__':
                         t for (label, t) in results.iteritems()
                             if "speed" not in label]])
 
-    fig = plt.figure()
+    fig = plt.figure('scikit-learn K-Means benchmark results')
     for c, (label, timings) in zip('brcy',
                                     sorted(results.iteritems())):
         if 'speed' in label:
@@ -132,7 +132,7 @@ if __name__ == '__main__':
         ax = fig.add_subplot(2, 2, i + 2)
         y = np.asarray(timings)
         ax.plot(chunks, y, color=c, alpha=0.8)
-        ax.set_xlabel('chunks')
+        ax.set_xlabel('Chunks')
         ax.set_ylabel(label)
 
     plt.show()

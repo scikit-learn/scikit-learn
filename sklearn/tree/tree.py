@@ -3,16 +3,12 @@ This module gathers tree-based methods, including decision, regression and
 randomized trees. Single and multi-output problems are both handled.
 """
 
-# Code is originally adapted from MILK: Machine Learning Toolkit
-# Copyright (C) 2008-2011, Luis Pedro Coelho <luis@luispedro.org>
-# License: MIT. See COPYING.MIT file in the milk distribution
-
-# Authors: Brian Holt,
-#          Peter Prettenhofer,
-#          Satrajit Ghosh,
-#          Gilles Louppe,
-#          Noel Dawe
-# License: BSD 3 clause
+# Authors: Gilles Louppe <g.louppe@gmail.com>
+#          Peter Prettenhofer <peter.prettenhofer@gmail.com>
+#          Brian Holt <bdholt1@gmail.com>
+#          Noel Dawe <noel@dawe.me>
+#          Satrajit Gosh <satrajit.ghosh@gmail.com>
+# Licence: BSD 3 clause
 
 from __future__ import division
 
@@ -24,10 +20,12 @@ from warnings import warn
 from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
 from ..externals import six
 from ..externals.six.moves import xrange
-from ..feature_selection.selector_mixin import SelectorMixin
+from ..feature_selection.from_model import _LearntSelectorMixin
 from ..utils import array2d, check_random_state
+from ..utils.fixes import unique
 from ..utils.validation import check_arrays
 
+from ._tree import Criterion, Splitter, Tree
 from . import _tree
 
 
@@ -36,21 +34,25 @@ __all__ = ["DecisionTreeClassifier",
            "ExtraTreeClassifier",
            "ExtraTreeRegressor"]
 
+
+# =============================================================================
+# Types and constants
+# =============================================================================
+
 DTYPE = _tree.DTYPE
 DOUBLE = _tree.DOUBLE
 
-CLASSIFICATION = {
-    "gini": _tree.Gini,
-    "entropy": _tree.Entropy,
-}
+CRITERIA_CLF = {"gini": _tree.Gini, "entropy": _tree.Entropy}
+CRITERIA_REG = {"mse": _tree.MSE}
+SPLITTERS = {"best": _tree.BestSplitter, "random": _tree.RandomSplitter}
 
-REGRESSION = {
-    "mse": _tree.MSE,
-}
 
+# =============================================================================
+# Base decision tree
+# =============================================================================
 
 class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
-                                          SelectorMixin)):
+                                          _LearntSelectorMixin)):
     """Base class for decision trees.
 
     Warning: This class should not be used directly.
@@ -60,70 +62,43 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
     @abstractmethod
     def __init__(self,
                  criterion,
+                 splitter,
                  max_depth,
                  min_samples_split,
                  min_samples_leaf,
-                 min_density,
                  max_features,
-                 compute_importances,
                  random_state):
         self.criterion = criterion
+        self.splitter = splitter
         self.max_depth = max_depth
         self.min_samples_split = min_samples_split
         self.min_samples_leaf = min_samples_leaf
-        self.min_density = min_density
         self.max_features = max_features
-
-        if compute_importances:
-            warn("Setting compute_importances=True is no longer "
-                 "required. Variable importances are now computed on the fly "
-                 "when accessing the feature_importances_ attribute. This "
-                 "parameter will be removed in 0.15.", DeprecationWarning)
-
-        self.compute_importances = compute_importances
         self.random_state = random_state
 
         self.n_features_ = None
         self.n_outputs_ = None
         self.classes_ = None
         self.n_classes_ = None
-        self.find_split_ = _tree.TREE_SPLIT_BEST
 
+        self.splitter_ = None
         self.tree_ = None
 
-    def fit(self, X, y,
-            sample_mask=None, X_argsorted=None,
-            check_input=True, sample_weight=None):
+    def fit(self, X, y, sample_mask=None, X_argsorted=None, check_input=True,
+            sample_weight=None):
         """Build a decision tree from the training set (X, y).
 
         Parameters
         ----------
         X : array-like, shape = [n_samples, n_features]
-            The training input samples. Use ``dtype=np.float32``
-            and ``order='F'`` for maximum efficiency.
+            The training input samples. Use ``dtype=np.float32`` for maximum
+            efficiency.
 
         y : array-like, shape = [n_samples] or [n_samples, n_outputs]
             The target values (integers that correspond to classes in
             classification, real numbers in regression).
             Use ``dtype=np.float64`` and ``order='C'`` for maximum
             efficiency.
-
-        sample_mask : array-like, shape = [n_samples], dtype = bool or None
-            A bit mask that encodes the rows of ``X`` that should be
-            used to build the decision tree. It can be used for bagging
-            without the need to create of copy of ``X``.
-            If None a mask will be created that includes all samples.
-
-        X_argsorted : array-like, shape = [n_samples, n_features] or None
-            Each column of ``X_argsorted`` holds the row indices of ``X``
-            sorted according to the value of the corresponding feature
-            in ascending order.
-            I.e. ``X[X_argsorted[i, k], k] <= X[X_argsorted[j, k], k]``
-            for each j > i.
-            If None, ``X_argsorted`` is computed internally.
-            The argument is supported to enable multiple decision trees
-            to share the data structure and to avoid re-computation in
-            tree ensembles. For maximum efficiency use dtype np.int32.
 
         sample_weight : array-like, shape = [n_samples] or None
             Sample weights. If None, then samples are equally weighted. Splits
@@ -141,20 +116,28 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         self : object
             Returns self.
         """
-        if check_input:
-            X, y = check_arrays(X, y)
         random_state = check_random_state(self.random_state)
 
-        # Convert data
-        if (getattr(X, "dtype", None) != DTYPE or
-                X.ndim != 2 or
-                not X.flags.fortran):
-            X = array2d(X, dtype=DTYPE, order="F")
+        # Deprecations
+        if sample_mask is not None:
+            warn("The sample_mask parameter is deprecated as of version 0.14 "
+                 "and will be removed in 0.16.", DeprecationWarning)
 
+        if X_argsorted is not None:
+            warn("The X_argsorted parameter is deprecated as of version 0.14 "
+                 "and will be removed in 0.16.", DeprecationWarning)
+
+        # Convert data
+        if check_input:
+            X, = check_arrays(X, dtype=DTYPE, sparse_format="dense",
+                              check_ccontiguous=True)
+
+        # Determine output settings
         n_samples, self.n_features_ = X.shape
         is_classification = isinstance(self, ClassifierMixin)
 
         y = np.atleast_1d(y)
+
         if y.ndim == 1:
             # reshape is necessary to preserve the data contiguity against vs
             # [:, np.newaxis] that does not.
@@ -169,26 +152,21 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
             self.n_classes_ = []
 
             for k in xrange(self.n_outputs_):
-                unique = np.unique(y[:, k])
-                self.classes_.append(unique)
-                self.n_classes_.append(unique.shape[0])
-                y[:, k] = np.searchsorted(unique, y[:, k])
+                classes_k, y[:, k] = unique(y[:, k], return_inverse=True)
+                self.classes_.append(classes_k)
+                self.n_classes_.append(classes_k.shape[0])
 
         else:
             self.classes_ = [None] * self.n_outputs_
             self.n_classes_ = [1] * self.n_outputs_
 
+        self.n_classes_ = np.array(self.n_classes_, dtype=np.intp)
+
         if getattr(y, "dtype", None) != DOUBLE or not y.flags.contiguous:
             y = np.ascontiguousarray(y, dtype=DOUBLE)
 
-        if is_classification:
-            criterion = CLASSIFICATION[self.criterion](self.n_outputs_,
-                                                       self.n_classes_)
-        else:
-            criterion = REGRESSION[self.criterion](self.n_outputs_)
-
         # Check parameters
-        max_depth = np.inf if self.max_depth is None else self.max_depth
+        max_depth = (2 ** 31) - 1 if self.max_depth is None else self.max_depth
 
         if isinstance(self.max_features, six.string_types):
             if self.max_features == "auto":
@@ -220,18 +198,8 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
             raise ValueError("min_samples_leaf must be greater than zero.")
         if max_depth <= 0:
             raise ValueError("max_depth must be greater than zero. ")
-        if self.min_density < 0.0 or self.min_density > 1.0:
-            raise ValueError("min_density must be in [0, 1]")
         if not (0 < max_features <= self.n_features_):
             raise ValueError("max_features must be in (0, n_features]")
-
-        if sample_mask is not None:
-            sample_mask = np.asarray(sample_mask, dtype=np.bool)
-
-            if sample_mask.shape[0] != n_samples:
-                raise ValueError("Length of sample_mask=%d does not match "
-                                 "number of samples=%d"
-                                 % (sample_mask.shape[0], n_samples))
 
         if sample_weight is not None:
             if (getattr(sample_weight, "dtype", None) != DOUBLE or
@@ -247,28 +215,34 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
                                  "number of samples=%d" %
                                  (len(sample_weight), n_samples))
 
-        if X_argsorted is not None:
-            X_argsorted = np.asarray(X_argsorted, dtype=np.int32,
-                                     order='F')
-            if X_argsorted.shape != X.shape:
-                raise ValueError("Shape of X_argsorted does not match "
-                                 "the shape of X")
-
         # Set min_samples_split sensibly
         min_samples_split = max(self.min_samples_split,
                                 2 * self.min_samples_leaf)
 
         # Build tree
-        self.tree_ = _tree.Tree(self.n_features_, self.n_classes_,
-                                self.n_outputs_, criterion, max_depth,
-                                min_samples_split, self.min_samples_leaf,
-                                self.min_density, max_features,
-                                self.find_split_, random_state)
+        criterion = self.criterion
+        if not isinstance(criterion, Criterion):
+            if is_classification:
+                criterion = CRITERIA_CLF[self.criterion](self.n_outputs_,
+                                                         self.n_classes_)
+            else:
+                criterion = CRITERIA_REG[self.criterion](self.n_outputs_)
 
-        self.tree_.build(X, y,
-                         sample_weight=sample_weight,
-                         sample_mask=sample_mask,
-                         X_argsorted=X_argsorted)
+        splitter = self.splitter
+        if not isinstance(self.splitter, Splitter):
+            splitter = SPLITTERS[self.splitter](criterion,
+                                                max_features,
+                                                self.min_samples_leaf,
+                                                random_state)
+
+        self.criterion_ = criterion
+        self.splitter_ = splitter
+        self.tree_ = Tree(self.n_features_, self.n_classes_,
+                          self.n_outputs_, splitter, max_depth,
+                          min_samples_split, self.min_samples_leaf,
+                          random_state)
+
+        self.tree_.build(X, y, sample_weight=sample_weight)
 
         if self.n_outputs_ == 1:
             self.n_classes_ = self.n_classes_[0]
@@ -294,7 +268,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
             The predicted classes, or the predict values.
         """
         if getattr(X, "dtype", None) != DTYPE or X.ndim != 2:
-            X = array2d(X, dtype=DTYPE, order="F")
+            X = array2d(X, dtype=DTYPE)
 
         n_samples, n_features = X.shape
 
@@ -312,8 +286,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         # Classification
         if isinstance(self, ClassifierMixin):
             if self.n_outputs_ == 1:
-                return self.classes_.take(np.argmax(proba[:, 0], axis=1),
-                                          axis=0)
+                return self.classes_.take(np.argmax(proba, axis=1), axis=0)
 
             else:
                 predictions = np.zeros((n_samples, self.n_outputs_))
@@ -328,7 +301,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         # Regression
         else:
             if self.n_outputs_ == 1:
-                return proba[:, 0, 0]
+                return proba[:, 0]
 
             else:
                 return proba[:, :, 0]
@@ -339,7 +312,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
 
         The importance of a feature is computed as the (normalized) total
         reduction of the criterion brought by that feature.
-        It is also known as the Gini importance [4]_.
+        It is also known as the Gini importance.
 
         Returns
         -------
@@ -351,6 +324,10 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
 
         return self.tree_.compute_feature_importances()
 
+
+# =============================================================================
+# Public estimators
+# =============================================================================
 
 class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
     """A decision tree classifier.
@@ -382,16 +359,6 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
 
     min_samples_leaf : integer, optional (default=1)
         The minimum number of samples required to be at a leaf node.
-
-    min_density : float, optional (default=0.1)
-        This parameter controls a trade-off in an optimization heuristic. It
-        controls the minimum density of the `sample_mask` (i.e. the
-        fraction of samples in the mask). If the density falls below this
-        threshold the mask is recomputed and the input data is packed
-        which results in data copying.  If `min_density` equals to one,
-        the partitions are always represented as copies of the original
-        data. Otherwise, partitions are represented as bit masks (aka
-        sample masks).
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
@@ -442,10 +409,8 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
     >>> from sklearn.datasets import load_iris
     >>> from sklearn.cross_validation import cross_val_score
     >>> from sklearn.tree import DecisionTreeClassifier
-
     >>> clf = DecisionTreeClassifier(random_state=0)
     >>> iris = load_iris()
-
     >>> cross_val_score(clf, iris.data, iris.target, cv=10)
     ...                             # doctest: +SKIP
     ...
@@ -454,21 +419,31 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
     """
     def __init__(self,
                  criterion="gini",
+                 splitter="best",
                  max_depth=None,
                  min_samples_split=2,
                  min_samples_leaf=1,
-                 min_density=0.1,
                  max_features=None,
-                 compute_importances=False,
-                 random_state=None):
+                 random_state=None,
+                 min_density=None,
+                 compute_importances=None):
         super(DecisionTreeClassifier, self).__init__(criterion,
+                                                     splitter,
                                                      max_depth,
                                                      min_samples_split,
                                                      min_samples_leaf,
-                                                     min_density,
                                                      max_features,
-                                                     compute_importances,
                                                      random_state)
+        if min_density is not None:
+            warn("The min_density parameter is deprecated as of version 0.14 "
+                 "and will be removed in 0.16.", DeprecationWarning)
+
+        if compute_importances is not None:
+            warn("Setting compute_importances is no longer required as "
+                 "version 0.14. Variable importances are now computed on the "
+                 "fly when accessing the feature_importances_ attribute. "
+                 "This parameter will be removed in 0.16.",
+                 DeprecationWarning)
 
     def predict_proba(self, X):
         """Predict class probabilities of the input samples X.
@@ -486,7 +461,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
             by arithmetical order.
         """
         if getattr(X, "dtype", None) != DTYPE or X.ndim != 2:
-            X = array2d(X, dtype=DTYPE, order="F")
+            X = array2d(X, dtype=DTYPE)
 
         n_samples, n_features = X.shape
 
@@ -502,7 +477,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         proba = self.tree_.predict(X)
 
         if self.n_outputs_ == 1:
-            proba = proba[:, 0, :self.n_classes_]
+            proba = proba[:, :self.n_classes_]
             normalizer = proba.sum(axis=1)[:, np.newaxis]
             normalizer[normalizer == 0.0] = 1.0
             proba /= normalizer
@@ -579,16 +554,6 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
     min_samples_leaf : integer, optional (default=1)
         The minimum number of samples required to be at a leaf node.
 
-    min_density : float, optional (default=0.1)
-        This parameter controls a trade-off in an optimization heuristic. It
-        controls the minimum density of the `sample_mask` (i.e. the
-        fraction of samples in the mask). If the density falls below this
-        threshold the mask is recomputed and the input data is packed
-        which results in data copying.  If `min_density` equals to one,
-        the partitions are always represented as copies of the original
-        data. Otherwise, partitions are represented as bit masks (aka
-        sample masks).
-
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
@@ -604,7 +569,7 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
         The feature importances.
         The higher, the more important the feature.
         The importance of a feature is computed as the
-        (normalized)total reduction of the criterion brought
+        (normalized) total reduction of the criterion brought
         by that feature. It is also known as the Gini importance [4]_.
 
     See also
@@ -630,12 +595,8 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
     >>> from sklearn.datasets import load_boston
     >>> from sklearn.cross_validation import cross_val_score
     >>> from sklearn.tree import DecisionTreeRegressor
-
     >>> boston = load_boston()
     >>> regressor = DecisionTreeRegressor(random_state=0)
-
-    R2 scores (a.k.a. coefficient of determination) over 10-folds CV:
-
     >>> cross_val_score(regressor, boston.data, boston.target, cv=10)
     ...                    # doctest: +SKIP
     ...
@@ -644,21 +605,31 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
     """
     def __init__(self,
                  criterion="mse",
+                 splitter="best",
                  max_depth=None,
                  min_samples_split=2,
                  min_samples_leaf=1,
-                 min_density=0.1,
                  max_features=None,
-                 compute_importances=False,
-                 random_state=None):
+                 random_state=None,
+                 min_density=None,
+                 compute_importances=None):
         super(DecisionTreeRegressor, self).__init__(criterion,
+                                                    splitter,
                                                     max_depth,
                                                     min_samples_split,
                                                     min_samples_leaf,
-                                                    min_density,
                                                     max_features,
-                                                    compute_importances,
                                                     random_state)
+        if min_density is not None:
+            warn("The min_density parameter is deprecated as of version 0.14 "
+                 "and will be removed in 0.16.", DeprecationWarning)
+
+        if compute_importances is not None:
+            warn("Setting compute_importances is no longer required as "
+                 "version 0.14. Variable importances are now computed on the "
+                 "fly when accessing the feature_importances_ attribute. "
+                 "This parameter will be removed in 0.16.",
+                 DeprecationWarning)
 
 
 class ExtraTreeClassifier(DecisionTreeClassifier):
@@ -685,23 +656,31 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
     """
     def __init__(self,
                  criterion="gini",
+                 splitter="random",
                  max_depth=None,
                  min_samples_split=2,
                  min_samples_leaf=1,
-                 min_density=0.1,
                  max_features="auto",
-                 compute_importances=False,
-                 random_state=None):
+                 random_state=None,
+                 min_density=None,
+                 compute_importances=None):
         super(ExtraTreeClassifier, self).__init__(criterion,
+                                                  splitter,
                                                   max_depth,
                                                   min_samples_split,
                                                   min_samples_leaf,
-                                                  min_density,
                                                   max_features,
-                                                  compute_importances,
                                                   random_state)
+        if min_density is not None:
+            warn("The min_density parameter is deprecated as of version 0.14 "
+                 "and will be removed in 0.16.", DeprecationWarning)
 
-        self.find_split_ = _tree.TREE_SPLIT_RANDOM
+        if compute_importances is not None:
+            warn("Setting compute_importances is no longer required as "
+                 "version 0.14. Variable importances are now computed on the "
+                 "fly when accessing the feature_importances_ attribute. "
+                 "This parameter will be removed in 0.16.",
+                 DeprecationWarning)
 
 
 class ExtraTreeRegressor(DecisionTreeRegressor):
@@ -718,11 +697,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
 
     See also
     --------
-    ExtraTreeClassifier : A classifier base on extremely randomized trees
-    sklearn.ensemble.ExtraTreesClassifier : An ensemble of extra-trees for
-        classification
-    sklearn.ensemble.ExtraTreesRegressor : An ensemble of extra-trees for
-        regression
+    ExtraTreeClassifier, ExtraTreesClassifier, ExtraTreesRegressor
 
     References
     ----------
@@ -732,20 +707,28 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
     """
     def __init__(self,
                  criterion="mse",
+                 splitter="random",
                  max_depth=None,
                  min_samples_split=2,
                  min_samples_leaf=1,
-                 min_density=0.1,
                  max_features="auto",
-                 compute_importances=False,
-                 random_state=None):
+                 random_state=None,
+                 min_density=None,
+                 compute_importances=None):
         super(ExtraTreeRegressor, self).__init__(criterion,
+                                                 splitter,
                                                  max_depth,
                                                  min_samples_split,
                                                  min_samples_leaf,
-                                                 min_density,
                                                  max_features,
-                                                 compute_importances,
                                                  random_state)
+        if min_density is not None:
+            warn("The min_density parameter is deprecated as of version 0.14 "
+                 "and will be removed in 0.16.", DeprecationWarning)
 
-        self.find_split_ = _tree.TREE_SPLIT_RANDOM
+        if compute_importances is not None:
+            warn("Setting compute_importances is no longer required as "
+                 "version 0.14. Variable importances are now computed on the "
+                 "fly when accessing the feature_importances_ attribute. "
+                 "This parameter will be removed in 0.16.",
+                 DeprecationWarning)

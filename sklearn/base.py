@@ -172,9 +172,11 @@ class BaseEstimator(object):
             # to represent
             args, varargs, kw, default = inspect.getargspec(init)
             if not varargs is None:
-                raise RuntimeError('scikit learn estimators should always '
-                                   'specify their parameters in the signature'
-                                   ' of their init (no varargs).')
+                raise RuntimeError("scikit-learn estimators should always "
+                                   "specify their parameters in the signature"
+                                   " of their __init__ (no varargs)."
+                                   " %s doesn't follow this convention."
+                                   % (cls, ))
             # Remove 'self'
             # XXX: This is going to fail if the init is a staticmethod, but
             # who would do this?
@@ -186,7 +188,7 @@ class BaseEstimator(object):
         return args
 
     def get_params(self, deep=True):
-        """Get parameters for the estimator
+        """Get parameters for this estimator.
 
         Parameters
         ----------
@@ -201,12 +203,19 @@ class BaseEstimator(object):
         """
         out = dict()
         for key in self._get_param_names():
-            # catch deprecation warnings
-            with warnings.catch_warnings(record=True) as w:
-                value = getattr(self, key, None)
-            if len(w) and w[0].category == DeprecationWarning:
+            # We need deprecation warnings to always be on in order to
+            # catch deprecated param values.
+            # This is set in utils/__init__.py but it gets overwritten
+            # when running under python3 somehow.
+            warnings.simplefilter("always", DeprecationWarning)
+            try:
+                with warnings.catch_warnings(record=True) as w:
+                    value = getattr(self, key, None)
+                if len(w) and w[0].category == DeprecationWarning:
                 # if the parameter is deprecated, don't show it
-                continue
+                    continue
+            finally:
+                warnings.filters.pop(0)
 
             # XXX: should we rather test if instance of estimator?
             if deep and hasattr(value, 'get_params'):
@@ -216,7 +225,7 @@ class BaseEstimator(object):
         return out
 
     def set_params(self, **params):
-        """Set the parameters of the estimator.
+        """Set the parameters of this estimator.
 
         The method works on simple estimators as well as on nested objects
         (such as pipelines). The former have parameters of the form
@@ -263,22 +272,23 @@ class BaseEstimator(object):
 
 ###############################################################################
 class ClassifierMixin(object):
-    """Mixin class for all classifiers in scikit-learn"""
+    """Mixin class for all classifiers in scikit-learn."""
 
     def score(self, X, y):
         """Returns the mean accuracy on the given test data and labels.
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
-            Training set.
+        X : array-like, shape = (n_samples, n_features)
+            Test samples.
 
-        y : array-like, shape = [n_samples]
-            Labels for X.
+        y : array-like, shape = (n_samples,)
+            True labels for X.
 
         Returns
         -------
-        z : float
+        score : float
+            Mean accuracy of self.predict(X) wrt. y.
 
         """
         from .metrics import accuracy_score
@@ -287,7 +297,7 @@ class ClassifierMixin(object):
 
 ###############################################################################
 class RegressorMixin(object):
-    """Mixin class for all regression estimators in scikit-learn"""
+    """Mixin class for all regression estimators in scikit-learn."""
 
     def score(self, X, y):
         """Returns the coefficient of determination R^2 of the prediction.
@@ -297,17 +307,18 @@ class RegressorMixin(object):
         sum of squares ((y_true - y_true.mean()) ** 2).sum().
         Best possible score is 1.0, lower values are worse.
 
-
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
-            Training set.
+        X : array-like, shape = (n_samples, n_features)
+            Test samples.
 
-        y : array-like, shape = [n_samples]
+        y : array-like, shape = (n_samples,)
+            True values for X.
 
         Returns
         -------
-        z : float
+        score : float
+            R^2 of self.predict(X) wrt. y.
         """
 
         from .metrics import r2_score
@@ -316,7 +327,7 @@ class RegressorMixin(object):
 
 ###############################################################################
 class ClusterMixin(object):
-    """Mixin class for all cluster estimators in scikit-learn"""
+    """Mixin class for all cluster estimators in scikit-learn."""
     def fit_predict(self, X, y=None):
         """Performs clustering on X and returns cluster labels.
 
@@ -336,12 +347,45 @@ class ClusterMixin(object):
         return self.labels_
 
 
+class BiclusterMixin(object):
+    """Mixin class for all bicluster estimators in scikit-learn"""
+
+    @property
+    def biclusters_(self):
+        """Convenient way to get row and column indicators together."""
+        return self.rows_, self.columns_
+
+    def get_indices(self, i):
+        """Returns the row and column indices of bicluster `i`.
+
+        Only works if ``rows_`` and ``columns`` attributes exist.
+
+        """
+        from .cluster.bicluster.utils import get_indices
+        return get_indices(self.rows_[i], self.columns_[i])
+
+    def get_shape(self, i):
+        """Returns shape of bicluster `i`."""
+        from .cluster.bicluster.utils import get_shape
+        return get_shape(self.rows_[i], self.columns_[i])
+
+    def get_submatrix(self, i, data):
+        """Returns the submatrix corresponding to bicluster `i`.
+
+        Works with sparse matrices. Only works if ``rows_`` and
+        ``columns`` attributes exist.
+
+        """
+        from .cluster.bicluster.utils import get_submatrix
+        return get_submatrix(self.rows_[i], self.columns_[i], data)
+
+
 ###############################################################################
 class TransformerMixin(object):
-    """Mixin class for all transformers in scikit-learn"""
+    """Mixin class for all transformers in scikit-learn."""
 
     def fit_transform(self, X, y=None, **fit_params):
-        """Fit to data, then transform it
+        """Fit to data, then transform it.
 
         Fits transformer to X and y with optional parameters fit_params
         and returns a transformed version of X.
@@ -372,7 +416,7 @@ class TransformerMixin(object):
 
 ###############################################################################
 class MetaEstimatorMixin(object):
-    """Mixin class for all meta estimators in scikit-learn"""
+    """Mixin class for all meta estimators in scikit-learn."""
     # this is just a tag for the moment
 
 

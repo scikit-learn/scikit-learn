@@ -18,8 +18,8 @@ the margins to be calculated using all the data in the area.
 print(__doc__)
 
 
-# Code source: Gael Varoqueux
-# Modified for Documentation merge by Jaques Grobler
+# Code source: Gaël Varoquaux
+# Modified for documentation by Jaques Grobler
 # License: BSD 3 clause
 
 import numpy as np
@@ -35,9 +35,9 @@ Y = [0] * 20 + [1] * 20
 fignum = 1
 
 # fit the model
-for name, penality in (('unreg', 1), ('reg', 0.05)):
+for name, penalty in (('unreg', 1), ('reg', 0.05)):
 
-    clf = svm.SVC(kernel='linear', C=penality)
+    clf = svm.SVC(kernel='linear', C=penalty)
     clf.fit(X, Y)
 
     # get the separating hyperplane

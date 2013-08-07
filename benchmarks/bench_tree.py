@@ -26,7 +26,7 @@ mu_second = 0.0 + 10 ** 6  # number of microseconds in a second
 
 
 def bench_scikit_tree_classifier(X, Y):
-    """Bench with scikit-learn decision tree classifier"""
+    """Benchmark with scikit-learn decision tree classifier"""
 
     from sklearn.tree import DecisionTreeClassifier
 
@@ -44,7 +44,7 @@ def bench_scikit_tree_classifier(X, Y):
 
 
 def bench_scikit_tree_regressor(X, Y):
-    """Bench with scikit-learn decision tree regressor"""
+    """Benchmark with scikit-learn decision tree regressor"""
 
     from sklearn.tree import DecisionTreeRegressor
 
@@ -84,14 +84,14 @@ if __name__ == '__main__':
         bench_scikit_tree_regressor(X, Y)
 
     xx = range(0, n * step, step)
-    pl.figure(1)
+    pl.figure('scikit-learn tree benchmark results')
     pl.subplot(211)
     pl.title('Learning with varying number of samples')
     pl.plot(xx, scikit_classifier_results, 'g-', label='classification')
     pl.plot(xx, scikit_regressor_results, 'r-', label='regression')
-    pl.legend()
+    pl.legend(loc='upper left')
     pl.xlabel('number of samples')
-    pl.ylabel('time (in seconds)')
+    pl.ylabel('Time (s)')
 
     scikit_classifier_results = []
     scikit_regressor_results = []
@@ -117,8 +117,8 @@ if __name__ == '__main__':
     pl.title('Learning in high dimensional spaces')
     pl.plot(xx, scikit_classifier_results, 'g-', label='classification')
     pl.plot(xx, scikit_regressor_results, 'r-', label='regression')
-    pl.legend()
+    pl.legend(loc='upper left')
     pl.xlabel('number of dimensions')
-    pl.ylabel('time (in seconds)')
+    pl.ylabel('Time (s)')
     pl.axis('tight')
     pl.show()

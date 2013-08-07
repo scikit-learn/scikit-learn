@@ -3,7 +3,7 @@
 Gaussian Mixture Model Selection
 =================================
 
-This example shows that model selection can be perfomed with
+This example shows that model selection can be performed with
 Gaussian Mixture Models using information-theoretic criteria (BIC).
 Model selection concerns both the covariance type
 and the number of components in the model.

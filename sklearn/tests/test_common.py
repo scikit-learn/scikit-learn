@@ -13,10 +13,12 @@ import sys
 import traceback
 import inspect
 import pickle
+import pkgutil
 
 import numpy as np
 from scipy import sparse
 
+from sklearn.externals.six import PY3
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_true
@@ -41,12 +43,13 @@ from sklearn.lda import LDA
 from sklearn.svm.base import BaseLibSVM
 
 from sklearn.cross_validation import train_test_split
+from sklearn.utils.validation import DataConversionWarning
 
 dont_test = ['SparseCoder', 'EllipticEnvelope', 'EllipticEnvelop',
              'DictVectorizer', 'LabelBinarizer', 'LabelEncoder',
              'TfidfTransformer', 'IsotonicRegression', 'OneHotEncoder',
              'RandomTreesEmbedding', 'FeatureHasher', 'DummyClassifier',
-             'DummyRegressor']
+             'DummyRegressor', 'TruncatedSVD']
 
 
 def test_all_estimators():
@@ -108,6 +111,13 @@ def test_all_estimators():
                     assert_array_equal(params[arg], default)
                 else:
                     assert_equal(params[arg], default)
+
+
+def test_all_estimator_no_base_class():
+    for name, Estimator in all_estimators():
+        msg = ("Base estimators such as {0} should not be included"
+               " in all_estimators").format(name)
+        assert_false(name.lower().startswith('base'), msg=msg)
 
 
 def test_estimators_sparse_data():
@@ -187,10 +197,9 @@ def test_transformers():
 
         # fit
 
-        if name in ('_PLS', 'PLSCanonical', 'PLSRegression', 'CCA', 'PLSSVD'):
-            random_state = np.random.RandomState(seed=12345)
-            y_ = np.vstack([y, 2 * y + random_state.randint(2, size=len(y))])
-            y_ = y_.T
+        if name in ('PLSCanonical', 'PLSRegression', 'CCA', 'PLSSVD'):
+            y_ = np.c_[y, y]
+            y_[::2, 1] *= 2
         else:
             y_ = y
 
@@ -210,7 +219,7 @@ def test_transformers():
             continue
 
         if hasattr(transformer, 'transform'):
-            if name in ('_PLS', 'PLSCanonical', 'PLSRegression', 'CCA',
+            if name in ('PLSCanonical', 'PLSRegression', 'CCA',
                         'PLSSVD'):
                 X_pred2 = transformer.transform(X, y_)
                 X_pred3 = transformer.fit_transform(X, y=y_)
@@ -304,8 +313,8 @@ def test_estimators_nan_inf():
         for name, Estimator in estimators:
             if name in dont_test:
                 continue
-            if name in ('_PLS', 'PLSCanonical', 'PLSRegression', 'CCA',
-                        'PLSSVD'):
+            if name in ('PLSCanonical', 'PLSRegression', 'CCA',
+                        'PLSSVD', 'Imputer'):  # Imputer accepts nan
                 continue
 
             # catch deprecation warnings
@@ -413,7 +422,8 @@ def test_transformers_pickle():
             transformer.n_components = 1
 
         # fit
-        if name in ('_PLS', 'PLSCanonical', 'PLSRegression', 'CCA', 'PLSSVD'):
+        if name in ('PLSCanonical', 'PLSRegression', 'CCA',
+                    'PLSSVD'):
             random_state = np.random.RandomState(seed=12345)
             y_ = np.vstack([y, 2 * y + random_state.randint(2, size=len(y))])
             y_ = y_.T
@@ -598,7 +608,6 @@ def test_classifiers_classes():
     X, y = shuffle(X, y, random_state=1)
     X = StandardScaler().fit_transform(X)
     y_names = iris.target_names[y]
-    y_str_numbers = (2 * y + 1).astype(np.str)
     for name, Classifier in classifiers:
         if name in dont_test:
             continue
@@ -608,9 +617,6 @@ def test_classifiers_classes():
         if name in ["LabelPropagation", "LabelSpreading"]:
             # TODO some complication with -1 label
             y_ = y
-        elif name in ["RandomForestClassifier", "ExtraTreesClassifier"]:
-            # TODO not so easy because of multi-output
-            y_ = y_str_numbers
         else:
             y_ = y_names
 
@@ -637,6 +643,46 @@ def test_classifiers_classes():
         if np.any(classifier.classes_ != classes):
             print("Unexpected classes_ attribute for %r: expected %s, got %s" %
                   (classifier, classes, classifier.classes_))
+
+
+def test_classifiers_input_shapes():
+    # test if classifiers can cope with y.shape = (n_samples, 1)
+    classifiers = all_estimators(type_filter='classifier')
+    iris = load_iris()
+    X, y = iris.data, iris.target
+    X, y = shuffle(X, y, random_state=1)
+    X = StandardScaler().fit_transform(X)
+    for name, Classifier in classifiers:
+        if name in dont_test:
+            continue
+        if name in ["MultinomialNB", "LabelPropagation", "LabelSpreading"]:
+            # TODO some complication with -1 label
+            continue
+        if name in ["DecisionTreeClassifier", "ExtraTreeClassifier"]:
+            # We don't raise a warning in these classifiers, as
+            # the column y interface is used by the forests.
+            continue
+
+        # catch deprecation warnings
+        with warnings.catch_warnings(record=True):
+            classifier = Classifier()
+        set_random_state(classifier)
+        # fit
+        classifier.fit(X, y)
+        y_pred = classifier.predict(X)
+
+        set_random_state(classifier)
+        # Check that when a 2D y is given, a DataConversionWarning is
+        # raised
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always", DataConversionWarning)
+            classifier.fit(X, y[:, np.newaxis])
+        try:
+            assert_equal(len(w), 1)
+            assert_array_equal(y_pred, classifier.predict(X))
+        except Exception:
+            print(classifier)
+            raise
 
 
 def test_classifiers_pickle():
@@ -706,7 +752,7 @@ def test_regressors_int():
     rnd = np.random.RandomState(0)
     y = rnd.randint(2, size=X.shape[0])
     for name, Regressor in regressors:
-        if name in dont_test or name in ('CCA',):
+        if name in dont_test or name in ('CCA'):
             continue
         # catch deprecation warnings
         with warnings.catch_warnings(record=True):
@@ -752,7 +798,7 @@ def test_regressors_train():
         assert_raises(ValueError, regressor.fit, X, y[:-1])
         # fit
         try:
-            if name in ('_PLS', 'PLSCanonical', 'PLSRegression', 'CCA'):
+            if name in ('PLSCanonical', 'PLSRegression', 'CCA'):
                 y_ = np.vstack([y, 2 * y + rnd.randint(2, size=len(y))])
                 y_ = y_.T
             else:
@@ -791,7 +837,7 @@ def test_regressor_pickle():
             # linear regressors need to set alpha, but not generalized CV ones
             regressor.alpha = 0.01
 
-        if name in ('_PLS', 'PLSCanonical', 'PLSRegression', 'CCA'):
+        if name in ('PLSCanonical', 'PLSRegression', 'CCA'):
             y_ = np.vstack([y, 2 * y + rnd.randint(2, size=len(y))])
             y_ = y_.T
         else:
@@ -829,7 +875,10 @@ def test_configure():
             # The configuration spits out warnings when not finding
             # Blas/Atlas development headers
             warnings.simplefilter('ignore', UserWarning)
-            execfile('setup.py', dict(__name__='__main__'))
+            if PY3:
+                exec(open('setup.py').read(), dict(__name__='__main__'))
+            else:
+                execfile('setup.py', dict(__name__='__main__'))
     finally:
         sys.argv = old_argv
         os.chdir(cwd)
@@ -928,7 +977,8 @@ def test_estimators_overwrite_params():
         X -= X.min()
         for name, Estimator in estimators:
             if (name in dont_test
-                    or name in ['CCA', 'PLSCanonical', 'PLSRegression',
+                    or name in ['CCA', '_CCA', 'PLSCanonical',
+                                'PLSRegression',
                                 'PLSSVD', 'GaussianProcess']):
                 # FIXME!
                 # in particular GaussianProcess!
@@ -981,3 +1031,19 @@ def test_cluster_overwrite_params():
                          "Estimator %s changes its parameter %s"
                          " from %s to %s during fit."
                          % (name, k, v, new_params[k]))
+
+
+def test_import_all_consistency():
+    # Smoke test to check that any name in a __all__ list is actually defined
+    # in the namespace of the module or package.
+    pkgs = pkgutil.walk_packages(path=sklearn.__path__, prefix='sklearn.',
+                                 onerror=lambda _: None)
+    for importer, modname, ispkg in pkgs:
+        if ".tests." in modname:
+            continue
+        package = __import__(modname, fromlist="dummy")
+        for name in getattr(package, '__all__', ()):
+            if getattr(package, name, None) is None:
+                raise AttributeError(
+                    "Module '{}' has no attribute '{}'".format(
+                        modname, name))

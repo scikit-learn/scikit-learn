@@ -241,7 +241,7 @@ Next, one or two small code examples to show its use can be added.
 Finally, any math and equations, followed by references,
 can be added to further the documentation. Not starting the
 documentation with the maths makes it more friendly towards
-users that are just intersted in what the feature will do, as
+users that are just interested in what the feature will do, as
 opposed to how it works `under the hood`.
 
 
@@ -454,7 +454,7 @@ in an attribute ``random_state``.
 ``fit`` can call ``check_random_state`` on that attribute
 to get an actual random number generator.
 If, for some reason, randomness is needed after ``fit``,
-the RNG should be stored in an attibute ``random_state_``.
+the RNG should be stored in an attribute ``random_state_``.
 The following example should make this clear::
 
     class GaussianNoise(BaseEstimator, TransformerMixin):
@@ -526,6 +526,24 @@ In following example, k is deprecated and renamed to n_clusters::
 
 
 .. currentmodule:: sklearn
+
+Python 3.x support
+------------------
+
+All scikit-learn code should work unchanged in both Python 2.[67]
+and 3.2 or newer. Since Python 3.x is not backwards compatible,
+that may require changes to code and it certainly requires testing
+on both 2.6 or 2.7, and 3.2 or newer.
+
+For most numerical algorithms, Python 3.x support is easy:
+just remember that ``print`` is a function and
+integer division is written ``//``.
+String handling has been overhauled, though, as have parts of
+the Python standard library.
+The `six <http://pythonhosted.org/six/>`_ package helps with
+cross-compatibility and is included in scikit-learn as
+``sklearn.externals.six``.
+
 
 Python 3.x support
 ------------------
@@ -745,6 +763,29 @@ interface might be that you want to use it together with model assessment and
 selection tools such as :class:`grid_search.GridSearchCV`.
 
 For this to work, you need to implement the following interface.
+If a dependency on scikit-learn is okay for your code,
+you can prevent a lot of boilerplate code
+by deriving a class from ``BaseEstimator``
+and optionally the mixin classes in ``sklearn.base``.
+E.g., here's a custom classifier::
+
+  >>> import numpy as np
+  >>> from sklearn.base import BaseEstimator, ClassifierMixin
+  >>> class MajorityClassifier(BaseEstimator, ClassifierMixin):
+  ...     """Predicts the majority class of its training data."""
+  ...     def __init__(self):
+  ...         pass
+  ...     def fit(self, X, y):
+  ...         self.classes_, indices = np.unique(["foo", "bar", "foo"],
+  ...                                            return_inverse=True)
+  ...         self.majority_ = np.argmax(np.bincount(indices))
+  ...         return self
+  ...     def predict(self, X):
+  ...         return np.repeat(self.classes_[self.majority_], len(X))
+  ...     # doctest: +SKIP
+
+.. We don't run the above "doctest" because it requires a recent NumPy and we
+   don't want users to import from sklearn.utils.fixes.
 
 get_params and set_params
 -------------------------

@@ -8,6 +8,7 @@ from .nmf import NMF, ProjectedGradientNMF
 from .pca import PCA, RandomizedPCA, ProbabilisticPCA
 from .kernel_pca import KernelPCA
 from .sparse_pca import SparsePCA, MiniBatchSparsePCA
+from .truncated_svd import TruncatedSVD
 from .fastica_ import FastICA, fastica
 from .dict_learning import (dict_learning, dict_learning_online, sparse_encode,
                             DictionaryLearning, MiniBatchDictionaryLearning,
@@ -30,4 +31,5 @@ __all__ = ['DictionaryLearning',
            'dict_learning_online',
            'fastica',
            'sparse_encode',
-           'FactorAnalysis']
+           'FactorAnalysis',
+           'TruncatedSVD']

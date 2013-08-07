@@ -75,6 +75,10 @@ you can install all these requirements by issuing::
         sudo apt-get remove libatlas3gf-base libatlas-dev
         sudo apt-get install libopenblas-dev
 
+On Red Hat and clones (e.g. CentOS), install the dependencies using::
+
+    sudo yum -y install gcc gcc-c++ numpy python-devel scipy
+
 Easy install
 ~~~~~~~~~~~~
 

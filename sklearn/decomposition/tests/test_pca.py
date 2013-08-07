@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 from scipy.sparse import csr_matrix
 
@@ -58,26 +60,29 @@ def test_whitening():
     # the component-wise variance is thus highly varying:
     assert_almost_equal(X.std(axis=0).std(), 43.9, 1)
 
-    # whiten the data while projecting to the lower dim subspace
-    pca = PCA(n_components=n_components, whiten=True)
+    for this_PCA, copy in [(x, y) for x in (PCA, RandomizedPCA)
+                           for y in (True, False)]:
+        # whiten the data while projecting to the lower dim subspace
+        X_ = X.copy()  # make sure we keep an original across iterations.
+        pca = this_PCA(n_components=n_components, whiten=True, copy=copy)
+        # test fit_transform
+        X_whitened = pca.fit_transform(X_.copy())
+        assert_equal(X_whitened.shape, (n_samples, n_components))
+        X_whitened2 = pca.transform(X_)
+        assert_array_almost_equal(X_whitened, X_whitened2)
 
-    # test fit_transform
-    X_whitened = pca.fit_transform(X)
-    assert_equal(X_whitened.shape, (n_samples, n_components))
-    X_whitened2 = pca.transform(X)
-    assert_array_almost_equal(X_whitened, X_whitened2)
+        assert_almost_equal(X_whitened.std(axis=0), np.ones(n_components))
+        assert_almost_equal(X_whitened.mean(axis=0), np.zeros(n_components))
 
-    # all output component have unit variances
-    assert_almost_equal(X_whitened.std(axis=0), np.ones(n_components))
+        X_ = X.copy()
+        pca = this_PCA(n_components=n_components, whiten=False,
+                       copy=copy).fit(X_)
+        X_unwhitened = pca.transform(X_)
+        assert_equal(X_unwhitened.shape, (n_samples, n_components))
 
-    # is possible to project on the low dim space without scaling by the
-    # singular values
-    pca = PCA(n_components=n_components, whiten=False).fit(X)
-    X_unwhitened = pca.transform(X)
-    assert_equal(X_unwhitened.shape, (n_samples, n_components))
-
-    # in that case the output components still have varying variances
-    assert_almost_equal(X_unwhitened.std(axis=0).std(), 74.1, 1)
+        # in that case the output components still have varying variances
+        assert_almost_equal(X_unwhitened.std(axis=0).std(), 74.1, 1)
+        # we always center, so no test for non-centering.
 
 
 def test_pca_check_projection():
@@ -176,7 +181,12 @@ def test_sparse_randomized_pca_check_projection():
     Xt = 0.1 * rng.randn(1, p) + np.array([3, 4, 5])
     Xt = csr_matrix(Xt)
 
-    Yt = RandomizedPCA(n_components=2, random_state=0).fit(X).transform(Xt)
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter('always', DeprecationWarning)
+        Yt = RandomizedPCA(n_components=2, random_state=0).fit(X).transform(Xt)
+        assert_equal(len(w), 1)
+        assert_equal(w[0].category, DeprecationWarning)
+
     Yt /= np.sqrt((Yt ** 2).sum())
 
     np.testing.assert_almost_equal(np.abs(Yt[0][0]), 1., 1)
@@ -194,14 +204,25 @@ def test_sparse_randomized_pca_inverse():
 
     # same check that we can find the original data from the transformed signal
     # (since the data is almost of rank n_components)
-    pca = RandomizedPCA(n_components=2, random_state=0).fit(X)
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter('always', DeprecationWarning)
+        pca = RandomizedPCA(n_components=2, random_state=0).fit(X)
+        assert_equal(len(w), 1)
+        assert_equal(w[0].category, DeprecationWarning)
+
     Y = pca.transform(X)
+
     Y_inverse = pca.inverse_transform(Y)
     assert_almost_equal(X.todense(), Y_inverse, decimal=2)
 
     # same as above with whitening (approximate reconstruction)
-    pca = RandomizedPCA(n_components=2, whiten=True,
-                        random_state=0).fit(X)
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter('always', DeprecationWarning)
+        pca = RandomizedPCA(n_components=2, whiten=True,
+                            random_state=0).fit(X)
+        assert_equal(len(w), 1)
+        assert_equal(w[0].category, DeprecationWarning)
+
     Y = pca.transform(X)
     Y_inverse = pca.inverse_transform(Y)
     relative_max_delta = (np.abs(X.todense() - Y_inverse)
@@ -217,7 +238,8 @@ def test_pca_dim():
     X = rng.randn(n, p) * .1
     X[:10] += np.array([3, 4, 5, 1, 2])
     pca = PCA(n_components='mle').fit(X)
-    assert_equal(pca.n_components, 1)
+    assert_equal(pca.n_components, 'mle')
+    assert_equal(pca.n_components_, 1)
 
 
 def test_infer_dim_1():
@@ -274,17 +296,20 @@ def test_infer_dim_by_explained_variance():
     X = iris.data
     pca = PCA(n_components=0.95)
     pca.fit(X)
-    assert_equal(pca.n_components, 2)
+    assert_equal(pca.n_components, 0.95)
+    assert_equal(pca.n_components_, 2)
 
     pca = PCA(n_components=0.01)
     pca.fit(X)
-    assert_equal(pca.n_components, 1)
+    assert_equal(pca.n_components, 0.01)
+    assert_equal(pca.n_components_, 1)
 
     rng = np.random.RandomState(0)
     # more features than samples
     X = rng.rand(5, 20)
     pca = PCA(n_components=.5).fit(X)
-    assert_equal(pca.n_components, 2)
+    assert_equal(pca.n_components, 0.5)
+    assert_equal(pca.n_components_, 2)
 
 
 def test_probabilistic_pca_1():

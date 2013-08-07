@@ -29,7 +29,7 @@ import numpy as np
 
 from sklearn.datasets import make_circles
 from sklearn.ensemble import RandomTreesEmbedding, ExtraTreesClassifier
-from sklearn.decomposition import RandomizedPCA
+from sklearn.decomposition import TruncatedSVD
 from sklearn.naive_bayes import BernoulliNB
 
 # make a synthetic dataset
@@ -40,7 +40,7 @@ hasher = RandomTreesEmbedding(n_estimators=10, random_state=0, max_depth=3)
 X_transformed = hasher.fit_transform(X)
 
 # Visualize result using PCA
-pca = RandomizedPCA(n_components=2)
+pca = TruncatedSVD(n_components=2)
 X_reduced = pca.fit_transform(X_transformed)
 
 # Learn a Naive Bayes classifier on the transformed data

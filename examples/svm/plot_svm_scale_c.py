@@ -131,7 +131,7 @@ for fignum, (clf, cs, X, y) in enumerate(clf_sets):
                             cv=ShuffleSplit(n=n_samples, train_size=train_size,
                                             n_iter=250, random_state=1))
         grid.fit(X, y)
-        scores = [x[1] for x in grid.cv_scores_]
+        scores = [x[1] for x in grid.grid_scores_]
 
         scales = [(1, 'No scaling'),
                   ((n_samples * train_size), '1/n_samples'),

@@ -9,7 +9,7 @@ from . import libsvm, liblinear
 from . import libsvm_sparse
 from ..base import BaseEstimator, ClassifierMixin
 from ..preprocessing import LabelEncoder
-from ..utils import atleast2d_or_csr, array2d, check_random_state
+from ..utils import atleast2d_or_csr, array2d, check_random_state, column_or_1d
 from ..utils import ConvergenceWarning, compute_class_weight, deprecated
 from ..utils.fixes import unique
 from ..utils.extmath import safe_sparse_dot
@@ -59,14 +59,16 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
 
     Parameter documentation is in the derived `SVC` class.
     """
-    # see ./classes.py for SVC class.
 
+    # The order of these must match the integer values in LibSVM.
+    # XXX These are actually the same in the dense case. Need to factor
+    # this out.
     _sparse_kernels = ["linear", "poly", "rbf", "sigmoid", "precomputed"]
 
     @abstractmethod
     def __init__(self, impl, kernel, degree, gamma, coef0,
                  tol, C, nu, epsilon, shrinking, probability, cache_size,
-                 class_weight, verbose, max_iter):
+                 class_weight, verbose, max_iter, random_state):
 
         if not impl in LIBSVM_IMPL:  # pragma: no cover
             raise ValueError("impl should be one of %s, %s was given" % (
@@ -87,6 +89,7 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         self.class_weight = class_weight
         self.verbose = verbose
         self.max_iter = max_iter
+        self.random_state = random_state
 
     @property
     def _pairwise(self):
@@ -98,16 +101,17 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
             Training vectors, where n_samples is the number of samples
             and n_features is the number of features.
 
-        y : array-like, shape = [n_samples]
+        y : array-like, shape (n_samples,)
             Target values (class labels in classification, real numbers in
             regression)
 
-        sample_weight : array-like, shape = [n_samples], optional
-            Weights applied to individual samples (1. for unweighted).
+        sample_weight : array-like, shape (n_samples,)
+            Per-sample weights. Rescale C per sample. Higher weights
+            force the classifier to put more emphasis on these points.
 
         Returns
         -------
@@ -122,6 +126,8 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         If X is a dense array, then the other methods will not support sparse
         matrices as input.
         """
+
+        rnd = check_random_state(self.random_state)
 
         self._sparse = sp.isspmatrix(X) and not self._pairwise
 
@@ -167,7 +173,10 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         fit = self._sparse_fit if self._sparse else self._dense_fit
         if self.verbose:  # pragma: no cover
             print('[LibSVM]', end='')
-        fit(X, y, sample_weight, solver_type, kernel)
+
+        seed = rnd.randint(np.iinfo('i').max)
+        fit(X, y, sample_weight, solver_type, kernel, random_seed=seed)
+        # see comment on the other call to np.iinfo in this file
 
         self.shape_fit_ = X.shape
 
@@ -196,7 +205,8 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
                           ' StandardScaler or MinMaxScaler.'
                           % self.max_iter, ConvergenceWarning)
 
-    def _dense_fit(self, X, y, sample_weight, solver_type, kernel):
+    def _dense_fit(self, X, y, sample_weight, solver_type, kernel,
+                   random_seed):
         if callable(self.kernel):
             # you must store a reference to X to compute the kernel in predict
             # TODO: add keyword copy to copy on demand
@@ -220,11 +230,12 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
                 shrinking=self.shrinking, tol=self.tol,
                 cache_size=self.cache_size, coef0=self.coef0,
                 gamma=self._gamma, epsilon=self.epsilon,
-                max_iter=self.max_iter)
+                max_iter=self.max_iter, random_seed=random_seed)
 
         self._warn_from_fit_status()
 
-    def _sparse_fit(self, X, y, sample_weight, solver_type, kernel):
+    def _sparse_fit(self, X, y, sample_weight, solver_type, kernel,
+                    random_seed):
         X.data = np.asarray(X.data, dtype=np.float64, order='C')
         X.sort_indices()
 
@@ -240,7 +251,8 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
                 kernel_type, self.degree, self._gamma, self.coef0, self.tol,
                 self.C, self.class_weight_,
                 sample_weight, self.nu, self.cache_size, self.epsilon,
-                int(self.shrinking), int(self.probability), self.max_iter)
+                int(self.shrinking), int(self.probability), self.max_iter,
+                random_seed)
 
         self._warn_from_fit_status()
 
@@ -261,11 +273,11 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
 
         Returns
         -------
-        y_pred : array, shape = [n_samples]
+        y_pred : array, shape (n_samples,)
         """
         X = self._validate_for_predict(X)
         predict = self._sparse_predict if self._sparse else self._dense_predict
@@ -285,19 +297,14 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
                                  "the number of samples at training time" %
                                  (X.shape[1], self.shape_fit_[0]))
 
-        C = 0.0  # C is not useful here
-
         svm_type = LIBSVM_IMPL.index(self._impl)
 
         return libsvm.predict(
             X, self.support_, self.support_vectors_, self.n_support_,
-            self.dual_coef_, self._intercept_,
-            self._label, self.probA_, self.probB_,
-            svm_type=svm_type,
-            kernel=kernel, C=C, nu=self.nu,
-            probability=self.probability, degree=self.degree,
-            shrinking=self.shrinking, tol=self.tol, cache_size=self.cache_size,
-            coef0=self.coef0, gamma=self._gamma, epsilon=self.epsilon)
+            self.dual_coef_, self._intercept_, self._label,
+            self.probA_, self.probB_, svm_type=svm_type, kernel=kernel,
+            degree=self.degree, coef0=self.coef0, gamma=self._gamma,
+            cache_size=self.cache_size)
 
     def _sparse_predict(self, X):
         X = sp.csr_matrix(X, dtype=np.float64)
@@ -354,8 +361,6 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         X = self._validate_for_predict(X)
         X = self._compute_kernel(X)
 
-        C = 0.0  # C is not useful here
-
         kernel = self.kernel
         if callable(kernel):
             kernel = 'precomputed'
@@ -365,10 +370,8 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
             self.dual_coef_, self._intercept_, self._label,
             self.probA_, self.probB_,
             svm_type=LIBSVM_IMPL.index(self._impl),
-            kernel=kernel, C=C, nu=self.nu,
-            probability=self.probability, degree=self.degree,
-            shrinking=self.shrinking, tol=self.tol, cache_size=self.cache_size,
-            coef0=self.coef0, gamma=self._gamma, epsilon=self.epsilon)
+            kernel=kernel, degree=self.degree, cache_size=self.cache_size,
+            coef0=self.coef0, gamma=self._gamma)
 
         # In binary case, we need to flip the sign of coef, intercept and
         # decision function.
@@ -434,6 +437,7 @@ class BaseSVC(BaseLibSVM, ClassifierMixin):
     """ABC for LibSVM-based classifiers."""
 
     def _validate_targets(self, y):
+        y = column_or_1d(y, warn=True)
         cls, y = unique(y, return_inverse=True)
         self.class_weight_ = compute_class_weight(self.class_weight, cls, y)
         if len(cls) < 2:
@@ -528,8 +532,6 @@ class BaseSVC(BaseLibSVM, ClassifierMixin):
     def _dense_predict_proba(self, X):
         X = self._compute_kernel(X)
 
-        C = 0.0  # C is not useful here
-
         kernel = self.kernel
         if callable(kernel):
             kernel = 'precomputed'
@@ -539,10 +541,8 @@ class BaseSVC(BaseLibSVM, ClassifierMixin):
             X, self.support_, self.support_vectors_, self.n_support_,
             self.dual_coef_, self._intercept_, self._label,
             self.probA_, self.probB_,
-            svm_type=svm_type, kernel=kernel, C=C, nu=self.nu,
-            probability=self.probability, degree=self.degree,
-            shrinking=self.shrinking, tol=self.tol, cache_size=self.cache_size,
-            coef0=self.coef0, gamma=self._gamma, epsilon=self.epsilon)
+            svm_type=svm_type, kernel=kernel, degree=self.degree,
+            cache_size=self.cache_size, coef0=self.coef0, gamma=self._gamma)
 
         return pprob
 
@@ -575,7 +575,7 @@ class BaseSVC(BaseLibSVM, ClassifierMixin):
         return self.classes_
 
 
-class BaseLibLinear(BaseEstimator):
+class BaseLibLinear(six.with_metaclass(ABCMeta, BaseEstimator)):
     """Base for classes binding liblinear (dense and sparse versions)"""
 
     _solver_type_dict = {
@@ -589,6 +589,7 @@ class BaseLibLinear(BaseEstimator):
         'PL2_LLR_D1': 7,  # L2 penalty, logistic regression, dual form
     }
 
+    @abstractmethod
     def __init__(self, penalty='l2', loss='l2', dual=True, tol=1e-4, C=1.0,
                  multi_class='ovr', fit_intercept=True, intercept_scaling=1,
                  class_weight=None, verbose=0, random_state=None):
@@ -653,10 +654,6 @@ class BaseLibLinear(BaseEstimator):
         y : array-like, shape = [n_samples]
             Target vector relative to X
 
-        class_weight : {dict, 'auto'}, optional
-            Weights associated with classes. If not given, all classes
-            are supposed to have weight one.
-
         Returns
         -------
         self : object
@@ -704,6 +701,12 @@ class BaseLibLinear(BaseEstimator):
         else:
             self.coef_ = self.raw_coef_
             self.intercept_ = 0.
+
+        if self.multi_class == "crammer_singer" and len(self.classes_) == 2:
+            self.coef_ = (self.coef_[1] - self.coef_[0]).reshape(1, -1)
+            if self.fit_intercept:
+                intercept = self.intercept_[1] - self.intercept_[0]
+                self.intercept_ = np.array([intercept])
 
         return self
 

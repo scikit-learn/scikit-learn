@@ -3,7 +3,8 @@
 Parameter estimation using grid search with a nested cross-validation
 =====================================================================
 
-The classifier is optimized by "nested" cross-validation using the
+This examples shows how a classifier is optimized by "nested"
+cross-validation, which is done using the
 :class:`sklearn.grid_search.GridSearchCV` object on a development set
 that comprises only half of the available labeled data.
 
@@ -59,7 +60,7 @@ for score in scores:
     print()
     print("Grid scores on development set:")
     print()
-    for params, mean_score, scores in clf.cv_scores_:
+    for params, mean_score, scores in clf.grid_scores_:
         print("%0.3f (+/-%0.03f) for %r"
               % (mean_score, scores.std() / 2, params))
     print()

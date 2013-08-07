@@ -16,9 +16,9 @@ code for the scikit-learn project.
   implementation optimization.
 
   Times and times, hours of efforts invested in optimizing complicated
-  implementation details have been rended irrelevant by the late discovery
-  of simple **algorithmic tricks**, or by using another algorithm altogether
-  that is better suited to the problem.
+  implementation details have been rendered irrelevant by the subsequent
+  discovery of simple **algorithmic tricks**, or by using another algorithm
+  altogether that is better suited to the problem.
 
   The section :ref:`warm-restarts` gives an example of such a trick.
 
@@ -359,7 +359,7 @@ important in practice on the existing cython codebase in the scikit-learn
 project.
 
 TODO: html report, type declarations, bound checks, division by zero checks,
-memory alignement, direct blas calls...
+memory alignment, direct blas calls...
 
 - http://www.euroscipy.org/file/3696?vid=download
 - http://conference.scipy.org/proceedings/SciPy2009/paper_1/
@@ -373,7 +373,7 @@ Profiling compiled extensions
 
 When working with compiled extensions (written in C/C++ with a wrapper or
 directly as Cython extension), the default Python profiler is useless:
-we need a dedicated tool to instrospect what's happening inside the
+we need a dedicated tool to introspect what's happening inside the
 compiled extension it-self.
 
 Using yep and google-perftools

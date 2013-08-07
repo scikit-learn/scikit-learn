@@ -68,10 +68,10 @@ def single_source_shortest_path_length(graph, source, cutoff=None):
     return seen  # return all path lengths as dictionary
 
 
-if hasattr(sparse, 'cs_graph_components'):
-    cs_graph_components = sparse.cs_graph_components
+if hasattr(sparse, 'connected_components'):
+    connected_components = sparse.connected_components
 else:
-    from ._csgraph import cs_graph_components
+    from .sparsetools import connected_components
 
 
 ###############################################################################
@@ -173,9 +173,9 @@ def _laplacian_dense(graph, normed=False, return_diag=False):
         w[w_zeros] = 1
         lap /= w
         lap /= w[:, np.newaxis]
-        lap.flat[::n_nodes + 1] = 1 - w_zeros
+        lap.flat[::n_nodes + 1] = (1 - w_zeros).astype(lap.dtype)
     else:
-        lap.flat[::n_nodes + 1] = w
+        lap.flat[::n_nodes + 1] = w.astype(lap.dtype)
 
     if return_diag:
         return lap, w

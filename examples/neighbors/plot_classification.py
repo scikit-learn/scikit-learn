@@ -47,8 +47,9 @@ for weights in ['uniform', 'distance']:
 
     # Plot also the training points
     pl.scatter(X[:, 0], X[:, 1], c=y, cmap=cmap_bold)
+    pl.xlim(xx.min(), xx.max())
+    pl.ylim(yy.min(), yy.max())
     pl.title("3-Class classification (k = %i, weights = '%s')"
              % (n_neighbors, weights))
-    pl.axis('tight')
 
 pl.show()

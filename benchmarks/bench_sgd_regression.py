@@ -2,7 +2,7 @@
 Benchmark for SGD regression
 
 Compares SGD regression against coordinate descent and Ridge
-on synthetik data.
+on synthetic data.
 """
 
 print(__doc__)
@@ -64,7 +64,7 @@ if __name__ == "__main__":
             y_test = (y_test - mean) / std
 
             gc.collect()
-            print("- benching ElasticNet")
+            print("- benchmarking ElasticNet")
             clf = ElasticNet(alpha=alpha, rho=0.5, fit_intercept=False)
             tstart = time()
             clf.fit(X_train, y_train)
@@ -73,7 +73,7 @@ if __name__ == "__main__":
             elnet_results[i, j, 1] = time() - tstart
 
             gc.collect()
-            print("- benching SGD")
+            print("- benchmarking SGD")
             n_iter = np.ceil(10 ** 4.0 / n_train)
             clf = SGDRegressor(alpha=alpha, fit_intercept=False,
                                n_iter=n_iter, learning_rate="invscaling",
@@ -86,7 +86,7 @@ if __name__ == "__main__":
             sgd_results[i, j, 1] = time() - tstart
 
             gc.collect()
-            print("- benching RidgeRegression")
+            print("- benchmarking RidgeRegression")
             clf = Ridge(alpha=alpha, fit_intercept=False)
             tstart = time()
             clf.fit(X_train, y_train)
@@ -97,7 +97,8 @@ if __name__ == "__main__":
     # Plot results
     i = 0
     m = len(list_n_features)
-    pl.figure(figsize=(5 * 2, 4 * m))
+    pl.figure('scikit-learn SGD regression benchmark results',
+              figsize=(5 * 2, 4 * m))
     for j in range(m):
         pl.subplot(m, 2, i + 1)
         pl.plot(list_n_samples, np.sqrt(elnet_results[:, j, 0]),

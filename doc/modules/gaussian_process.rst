@@ -19,7 +19,7 @@ The advantages of Gaussian Processes for Machine Learning are:
       correlation models).
 
     - The prediction is probabilistic (Gaussian) so that one can compute
-      empirical confidence intervals and exceedence probabilities that might be
+      empirical confidence intervals and exceedance probabilities that might be
       used to refit (online fitting, adaptive fitting) the prediction in some
       region of interest.
 

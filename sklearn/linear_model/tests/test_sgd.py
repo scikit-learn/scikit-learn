@@ -157,8 +157,8 @@ class CommonTest(object):
         """Input format tests. """
         clf = self.factory(alpha=0.01, n_iter=5,
                            shuffle=False)
+        clf.fit(X, Y)
         Y_ = np.array(Y)[:, np.newaxis]
-        clf.fit(X, Y_)
 
         Y_ = np.c_[Y_, Y_]
         assert_raises(ValueError, clf.fit, X, Y_)
@@ -384,7 +384,7 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         rng.shuffle(idx)
 
         X = X4[idx, :]
-        Y = Y4[idx, :]
+        Y = Y4[idx]
 
         clf = self.factory(penalty='l1', alpha=.2, fit_intercept=False,
                            n_iter=2000)
@@ -725,7 +725,7 @@ class DenseSGDRegressorTestCase(unittest.TestCase):
         assert_greater(score, 0.5)
 
     def test_elasticnet_convergence(self):
-        """Check that the SGD ouput is consistent with coordinate descent"""
+        """Check that the SGD output is consistent with coordinate descent"""
 
         n_samples, n_features = 1000, 5
         rng = np.random.RandomState(0)

@@ -8,6 +8,7 @@ descr = """A set of python modules for machine learning and data mining"""
 import sys
 import os
 import shutil
+from distutils.core import Command
 
 if sys.version_info[0] < 3:
     import __builtin__ as builtins
@@ -43,6 +44,7 @@ VERSION = sklearn.__version__
 if len(set(('develop', 'release', 'bdist_egg', 'bdist_rpm',
            'bdist_wininst', 'install_egg_info', 'build_sphinx',
            'egg_info', 'easy_install', 'upload',
+           '--single-version-externally-managed',
             )).intersection(sys.argv)) > 0:
     import setuptools
     extra_setuptools_args = dict(
@@ -52,7 +54,32 @@ if len(set(('develop', 'release', 'bdist_egg', 'bdist_rpm',
 else:
     extra_setuptools_args = dict()
 
+###############################################################################
 
+class CleanCommand(Command):
+    description = "Remove build directories, and compiled file in the source tree"
+    user_options = []
+
+    def initialize_options(self):
+        self.cwd = None
+
+    def finalize_options(self):
+        self.cwd = os.getcwd()
+
+    def run(self):
+        assert os.getcwd() == self.cwd, 'Must be in package root: %s' % self.cwd
+        if os.path.exists('build'):
+            shutil.rmtree('build')
+        for dirpath, dirnames, filenames in os.walk('sklearn'):
+            for filename in filenames:
+                if (filename.endswith('.so') or filename.endswith('.pyd')
+                             or filename.endswith('.dll')
+                             or filename.endswith('.pyc')):
+                    os.unlink(os.path.join(dirpath, filename))
+
+
+
+###############################################################################
 def configuration(parent_package='', top_path=None):
     if os.path.exists('MANIFEST'):
         os.remove('MANIFEST')
@@ -92,11 +119,19 @@ def setup_package():
                                  'Operating System :: Microsoft :: Windows',
                                  'Operating System :: POSIX',
                                  'Operating System :: Unix',
-                                 'Operating System :: MacOS'],
+                                 'Operating System :: MacOS',
+                                 'Programming Language :: Python :: 2',
+                                 'Programming Language :: Python :: 2.6',
+                                 'Programming Language :: Python :: 2.7',
+                                 'Programming Language :: Python :: 3',
+                                 'Programming Language :: Python :: 3.3',
+                                 ],
+                    cmdclass={'clean': CleanCommand},
                     **extra_setuptools_args)
 
-    if len(sys.argv) >= 2 and ('--help' in sys.argv[1:] or sys.argv[1]
-       in ('--help-commands', 'egg_info', '--version', 'clean')):
+    if (len(sys.argv) >= 2
+            and ('--help' in sys.argv[1:] or sys.argv[1]
+                 in ('--help-commands', 'egg_info', '--version', 'clean'))):
 
         # For these actions, NumPy is not required.
         #

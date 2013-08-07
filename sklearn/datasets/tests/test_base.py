@@ -7,7 +7,6 @@ import numpy
 
 from sklearn.datasets import get_data_home
 from sklearn.datasets import clear_data_home
-from sklearn.datasets import load_filenames
 from sklearn.datasets import load_files
 from sklearn.datasets import load_sample_images
 from sklearn.datasets import load_sample_image
@@ -80,13 +79,6 @@ def test_default_empty_load_files():
     assert_equal(res.DESCR, None)
 
 
-def test_deprecated_load_filenames():
-    with warnings.catch_warnings(record=True):
-        # catch deprecation warning
-        res = load_filenames(LOAD_FILES_ROOT)
-    assert_true(res)
-
-
 @nose.tools.with_setup(setup_load_files, teardown_load_files)
 def test_default_load_files():
     res = load_files(LOAD_FILES_ROOT)
@@ -97,10 +89,10 @@ def test_default_load_files():
 
 
 @nose.tools.with_setup(setup_load_files, teardown_load_files)
-def test_load_files_w_categories_desc_and_charset():
+def test_load_files_w_categories_desc_and_encoding():
     category = os.path.abspath(TEST_CATEGORY_DIR1).split('/').pop()
     res = load_files(LOAD_FILES_ROOT, description="test",
-                     categories=category, charset="utf-8")
+                     categories=category, encoding="utf-8")
     assert_equal(len(res.filenames), 1)
     assert_equal(len(res.target_names), 1)
     assert_equal(res.DESCR, "test")

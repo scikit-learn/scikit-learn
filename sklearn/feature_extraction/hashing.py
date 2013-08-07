@@ -56,6 +56,11 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
         When True, output values can be interpreted as frequencies.
         When False, output values will have expected value zero.
 
+    See also
+    --------
+    DictVectorizer : vectorizes string-valued features using a hash table.
+    sklearn.preprocessing.OneHotEncoder : handles nominal/categorical features
+      encoded as columns of integers.
     """
 
     def __init__(self, n_features=(2 ** 20), input_type="dict",

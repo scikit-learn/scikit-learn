@@ -45,6 +45,7 @@ Uses ARPACK: http://www.caam.rice.edu/software/ARPACK/
 __docformat__ = "restructuredtext en"
 
 __all__ = ['eigs', 'eigsh', 'svds', 'ArpackError', 'ArpackNoConvergence']
+import warnings
 
 from scipy.sparse.linalg.eigen.arpack import _arpack
 import numpy as np
@@ -1187,7 +1188,6 @@ def _eigs(A, k=6, M=None, sigma=None, which='LM', v0=None, ncv=None,
             raise ValueError('wrong M dimensions %s, should be %s'
                              % (M.shape, A.shape))
         if np.dtype(M.dtype).char.lower() != np.dtype(A.dtype).char.lower():
-            import warnings
             warnings.warn('M does not have the same type precision as A. '
                           'This may adversely affect ARPACK convergence')
     n = A.shape[0]
@@ -1446,7 +1446,6 @@ def _eigsh(A, k=6, M=None, sigma=None, which='LM', v0=None, ncv=None,
             raise ValueError('wrong M dimensions %s, should be %s'
                              % (M.shape, A.shape))
         if np.dtype(M.dtype).char.lower() != np.dtype(A.dtype).char.lower():
-            import warnings
             warnings.warn('M does not have the same type precision as A. '
                           'This may adversely affect ARPACK convergence')
     n = A.shape[0]
@@ -1579,22 +1578,36 @@ def _svds(A, k=6, ncv=None, tol=0):
         XH = A
         X = herm(A)
 
-    def matvec_XH_X(x):
-        return XH.dot(X.dot(x))
+    if hasattr(XH, 'dot'):
+        def matvec_XH_X(x):
+            return XH.dot(X.dot(x))
+    else:
+        def matvec_XH_X(x):
+            return np.dot(XH, np.dot(X, x))
 
     XH_X = LinearOperator(matvec=matvec_XH_X, dtype=X.dtype,
                           shape=(X.shape[1], X.shape[1]))
 
-    eigvals, eigvec = eigensolver(XH_X, k=k, tol=tol ** 2)
+    # Ignore deprecation warnings here: dot on matrices is deprecated,
+    # but this code is a backport anyhow
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore', DeprecationWarning)
+        eigvals, eigvec = eigensolver(XH_X, k=k, tol=tol ** 2)
     s = np.sqrt(eigvals)
 
     if n > m:
         v = eigvec
-        u = X.dot(v) / s
+        if hasattr(X, 'dot'):
+            u = X.dot(v) / s
+        else:
+            u = np.dot(X, v) / s
         vh = herm(v)
     else:
         u = eigvec
-        vh = herm(X.dot(u) / s)
+        if hasattr(X, 'dot'):
+            vh = herm(X.dot(u) / s)
+        else:
+            vh = herm(np.dot(X, u) / s)
 
     return u, s, vh
 

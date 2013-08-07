@@ -12,16 +12,16 @@ relevant.
 As detailed in :ref:`the compressive sensing notes
 <compressive_sensing>`, the ability of L1-based approach to identify the
 relevant variables depends on the sparsity of the ground truth, the
-number of samples, the number of features, the conditionning of the
+number of samples, the number of features, the conditioning of the
 design matrix on the signal subspace, the amount of noise, and the
 absolute value of the smallest non-zero coefficient [Wainwright2006]
 (http://statistics.berkeley.edu/tech-reports/709.pdf).
 
-Here we keep all parameters constant and vary the conditionning of the
-design matrix. For a well-conditionned design matrix (small mutual
+Here we keep all parameters constant and vary the conditioning of the
+design matrix. For a well-conditioned design matrix (small mutual
 incoherence) we are exactly in compressive sensing conditions (i.i.d
 Gaussian sensing matrix), and L1-recovery with the Lasso performs very
-well. For an ill-conditionned matrix (high mutual incoherence),
+well. For an ill-conditioned matrix (high mutual incoherence),
 regressors are very correlated, and the Lasso randomly selects one.
 However, randomized-Lasso can recover the ground truth well.
 
@@ -66,7 +66,7 @@ def mutual_incoherence(X_relevant, X_irelevant):
     return np.max(np.abs(projector).sum(axis=1))
 
 
-for conditionning in (1, 1e-4):
+for conditioning in (1, 1e-4):
     ###########################################################################
     # Simulate regression data with a correlated design
     n_features = 501
@@ -74,7 +74,7 @@ for conditionning in (1, 1e-4):
     noise_level = .2
     coef_min = .2
     # The Donoho-Tanner phase transition is around n_samples=25: below we
-    # will completely fail to recover in the well-conditionned case
+    # will completely fail to recover in the well-conditioned case
     n_samples = 25
     block_size = n_relevant_features
 
@@ -87,7 +87,7 @@ for conditionning in (1, 1e-4):
     # The correlation of our design: variables correlated by blocs of 3
     corr = np.zeros((n_features, n_features))
     for i in range(0, n_features, block_size):
-        corr[i:i + block_size, i:i + block_size] = 1 - conditionning
+        corr[i:i + block_size, i:i + block_size] = 1 - conditioning
     corr.flat[::n_features + 1] = 1
     corr = linalg.cholesky(corr)
 

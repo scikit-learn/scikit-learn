@@ -32,7 +32,7 @@ The disadvantages of support vector machines include:
 
     - SVMs do not directly provide probability estimates, these are
       calculated using an expensive five-fold cross-validation
-      (see :ref:`Scores and probabilities <_scores_probabilities>`, below).
+      (see :ref:`Scores and probabilities <scores_probabilities>`, below).
 
 The support vector machines in scikit-learn support both dens
 (``numpy.ndarray`` and convertible to that by ``numpy.asarray``) and
@@ -77,8 +77,8 @@ size ``[n_samples]``, holding the class labels for the training samples::
     >>> clf = svm.SVC()
     >>> clf.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
     SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0, degree=3,
-    gamma=0.0, kernel='rbf', max_iter=-1, probability=False, shrinking=True,
-    tol=0.001, verbose=False)
+    gamma=0.0, kernel='rbf', max_iter=-1, probability=False, random_state=None,
+    shrinking=True, tol=0.001, verbose=False)
 
 After being fitted, the model can then be used to predict new values::
 
@@ -116,8 +116,8 @@ classifiers are constructed and each one trains data from two classes::
     >>> clf = svm.SVC()
     >>> clf.fit(X, Y) # doctest: +NORMALIZE_WHITESPACE
     SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0, degree=3,
-    gamma=0.0, kernel='rbf', max_iter=-1, probability=False, shrinking=True,
-    tol=0.001, verbose=False)
+    gamma=0.0, kernel='rbf', max_iter=-1, probability=False, random_state=None,
+    shrinking=True, tol=0.001, verbose=False)
     >>> dec = clf.decision_function([[1]])
     >>> dec.shape[1] # 4 classes: 4*3/2 = 6
     6
@@ -148,7 +148,7 @@ are mostly similar, but the runtime is significantly less.
 For "one-vs-rest" :class:`LinearSVC` the attributes ``coef_`` and ``intercept_``
 have the shape ``[n_class, n_features]`` and ``[n_class]`` respectively.
 Each row of the coefficients corresponds to one of the ``n_class`` many
-"one-vs-rest" classifiers and simliar for the interecepts, in the
+"one-vs-rest" classifiers and similar for the intercepts, in the
 order of the "one" class.
 
 In the case of "one-vs-one" :class:`SVC`, the layout of the attributes
@@ -251,7 +251,8 @@ that sets the parameter ``C`` of class ``class_label`` to ``C * value``.
 
 :class:`SVC`, :class:`NuSVC`, :class:`SVR`, :class:`NuSVR` and
 :class:`OneClassSVM` implement also weights for individual samples in method
-``fit`` through keyword ``sample_weight``.
+``fit`` through keyword ``sample_weight``. Similar to ``class_weight``, these
+set the parameter ``C`` for the i-th example to ``C * sample_weight[i]``.
 
 
 .. figure:: ../auto_examples/svm/images/plot_weighted_samples_1.png
@@ -300,7 +301,7 @@ floating point values instead of integer values::
     >>> clf.fit(X, y) # doctest: +NORMALIZE_WHITESPACE
     SVR(C=1.0, cache_size=200, coef0=0.0, degree=3,
     epsilon=0.1, gamma=0.0, kernel='rbf', max_iter=-1, probability=False,
-    shrinking=True, tol=0.001, verbose=False)
+    random_state=None, shrinking=True, tol=0.001, verbose=False)
     >>> clf.predict([[1, 1]])
     array([ 1.5])
 
@@ -498,7 +499,7 @@ test vectors must be provided.
     >>> clf.fit(gram, y) # doctest: +NORMALIZE_WHITESPACE
     SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0, degree=3,
     gamma=0.0, kernel='precomputed', max_iter=-1, probability=False,
-    shrinking=True, tol=0.001, verbose=False)
+    random_state=None, shrinking=True, tol=0.001, verbose=False)
     >>> # predict on training examples
     >>> clf.predict(gram)
     array([0, 1])

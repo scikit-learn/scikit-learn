@@ -7,13 +7,17 @@ import numpy as np
 from nose.tools import assert_equal
 from numpy.testing import assert_array_equal
 
-from ..fixes import _in1d, _copysign
+from ..fixes import _in1d, _copysign, divide
 
 
 def test_in1d():
     a = np.arange(10)
     b = a[a % 2 == 0]
     assert_equal(_in1d(a, b).sum(), 5)
+
+
+def test_divide():
+    assert_equal(divide(.6, 1), .600000000000)
 
 
 def test_copysign():

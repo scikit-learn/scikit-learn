@@ -27,12 +27,6 @@ class BayesianRidge(LinearModel, RegressorMixin):
 
     Parameters
     ----------
-    X : array, shape = (n_samples, n_features)
-        Training vectors.
-
-    y : array, shape = (length)
-        Target values for training vectors
-
     n_iter : int, optional
         Maximum number of iterations.  Default is 300.
 
@@ -62,7 +56,7 @@ class BayesianRidge(LinearModel, RegressorMixin):
         Default is False
 
     fit_intercept : boolean, optional
-        wether to calculate the intercept for this model. If set
+        whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
         Default is True.
@@ -234,12 +228,6 @@ class ARDRegression(LinearModel, RegressorMixin):
 
     Parameters
     ----------
-    X : array, shape = (n_samples, n_features)
-        Training vectors.
-
-    y : array, shape = (n_samples)
-        Target values for training vectors
-
     n_iter : int, optional
         Maximum number of iterations. Default is 300
 
@@ -271,7 +259,7 @@ class ARDRegression(LinearModel, RegressorMixin):
         the computation. Default is 1.e+4.
 
     fit_intercept : boolean, optional
-        wether to calculate the intercept for this model. If set
+        whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
         Default is True.

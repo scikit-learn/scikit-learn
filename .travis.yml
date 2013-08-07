@@ -1,11 +1,10 @@
 language: python
 python:
     - "2.7"
+virtualenv:
+    system_site_packages: true
 before_install:
-    - deactivate
     - sudo apt-get update -qq
     - sudo apt-get install -qq python-scipy python-nose
-    - virtualenv --system-site-packages ~/virtualenv/this
-    - source ~/virtualenv/this/bin/activate
 install: python setup.py build_ext --inplace
 script: make test

@@ -5,8 +5,7 @@ Testing for mean shift clustering methods
 
 import numpy as np
 
-from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_equal, assert_false, assert_true
 
 from sklearn.cluster import MeanShift
 from sklearn.cluster import mean_shift
@@ -39,6 +38,13 @@ def test_mean_shift():
     labels_unique = np.unique(labels)
     n_clusters_ = len(labels_unique)
     assert_equal(n_clusters_, n_clusters)
+
+
+def test_unfitted():
+    """Non-regression: before fit, there should be not fitted attributes."""
+    ms = MeanShift()
+    assert_false(hasattr(ms, "cluster_centers_"))
+    assert_false(hasattr(ms, "labels_"))
 
 
 def test_bin_seeds():

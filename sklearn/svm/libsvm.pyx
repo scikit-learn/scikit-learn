@@ -2,7 +2,7 @@
 Binding for libsvm_skl
 ----------------------
 
-These are the bindings for libsvm_skl, which is a fork o libsvm[1]
+These are the bindings for libsvm_skl, which is a fork of libsvm[1]
 that adds to libsvm some capabilities, like index of support vectors
 and efficient representation of dense matrices.
 
@@ -37,7 +37,8 @@ cimport libsvm
 from libc.stdlib cimport free
 
 cdef extern from *:
-    ctypedef char* const_char_p "const char *"
+    ctypedef struct svm_parameter:
+        pass
 
 np.import_array()
 
@@ -62,51 +63,72 @@ def fit(
         sample_weight=np.empty(0),
     int shrinking=1, int probability=0,
     double cache_size=100.,
-    int max_iter=-1):
+    int max_iter=-1,
+    int random_seed=0):
     """
     Train the model using libsvm (low-level method)
 
     Parameters
     ----------
-    X: array-like, dtype=float64, size=[n_samples, n_features]
+    X : array-like, dtype=float64, size=[n_samples, n_features]
 
-    Y: array, dtype=float64, size=[n_samples]
+    Y : array, dtype=float64, size=[n_samples]
         target vector
 
-    svm_type : {0, 1, 2, 3, 4}
+    svm_type : {0, 1, 2, 3, 4}, optional
         Type of SVM: C_SVC, NuSVC, OneClassSVM, EpsilonSVR or NuSVR
-        respectevely.
+        respectively. 0 by default.
 
-    kernel : {'linear', 'rbf', 'poly', 'sigmoid', 'precomputed'}
+    kernel : {'linear', 'rbf', 'poly', 'sigmoid', 'precomputed'}, optional
         Kernel to use in the model: linear, polynomial, RBF, sigmoid
-        or precomputed.
+        or precomputed. 'rbf' by default.
 
-    degree : int32
+    degree : int32, optional
         Degree of the polynomial kernel (only relevant if kernel is
-        set to polynomial)
+        set to polynomial), 3 by default.
 
-    gamma : float64
+    gamma : float64, optional
         Gamma parameter in RBF kernel (only relevant if kernel is set
-        to RBF)
+        to RBF). 0.1 by default.
 
-    coef0 : float64
-        Independent parameter in poly/sigmoid kernel.
+    coef0 : float64, optional
+        Independent parameter in poly/sigmoid kernel. 0 by default.
 
-    tol : float64
-        Numeric stopping criterion (WRITEME).
+    tol : float64, optional
+        Numeric stopping criterion (WRITEME). 1e-3 by default.
 
-    C : float64
-        C parameter in C-Support Vector Classification
+    C : float64, optional
+        C parameter in C-Support Vector Classification. 1 by default.
 
-    nu : float64
+    nu : float64, optional
+        0.5 by default.
 
-    cache_size : float64
-        Cache size for gram matrix columns (in megabytes)
+    epsilon : double, optional
+        0.1 by default.
 
-    max_iter: int (-1 for no limit)
+    class_weight : array, dtype float64, shape (n_classes,), optional
+        np.empty(0) by default.
+
+    sample_weight : array, dtype float64, shape (n_samples,), optional
+        np.empty(0) by default.
+
+    shrinking : int, optional
+        1 by default.
+
+    probability : int, optional
+        0 by default.
+
+    cache_size : float64, optional
+        Cache size for gram matrix columns (in megabytes). 100 by default.
+
+    max_iter : int (-1 for no limit), optional.
         Stop solver after this many iterations regardless of accuracy
         (XXX Currently there is no API to know whether this kicked in.)
+        -1 by default.
 
+    random_seed : int, optional
+        Seed for the random number generator used for probability estimates.
+        0 by default.
 
     Returns
     -------
@@ -135,7 +157,7 @@ def fit(
     cdef svm_parameter param
     cdef svm_problem problem
     cdef svm_model *model
-    cdef const_char_p error_msg
+    cdef const char *error_msg
     cdef np.npy_intp SV_len
     cdef np.npy_intp nr
 
@@ -148,7 +170,6 @@ def fit(
                "sample_weight has %s samples while X has %s" % \
                (sample_weight.shape[0], X.shape[0])
 
-    # set problem
     kernel_index = LIBSVM_KERNEL_TYPES.index(kernel)
     set_problem(
         &problem, X.data, Y.data, sample_weight.data, X.shape, kernel_index)
@@ -156,14 +177,11 @@ def fit(
         raise MemoryError("Seems we've run out of memory")
     cdef np.ndarray[np.int32_t, ndim=1, mode='c'] \
         class_weight_label = np.arange(class_weight.shape[0], dtype=np.int32)
-
-    # set parameters
     set_parameter(
         &param, svm_type, kernel_index, degree, gamma, coef0, nu, cache_size,
         C, tol, epsilon, shrinking, probability, <int> class_weight.shape[0],
-        class_weight_label.data, class_weight.data, max_iter)
+        class_weight_label.data, class_weight.data, max_iter, random_seed)
 
-    # check parameters
     error_msg = svm_check_parameter(&problem, &param)
     if error_msg:
         # for SVR: epsilon is called p in libsvm
@@ -180,12 +198,10 @@ def fit(
     SV_len  = get_l(model)
     n_class = get_nr(model)
 
-    # copy model.sv_coef
     cdef np.ndarray[np.float64_t, ndim=2, mode='c'] sv_coef
     sv_coef = np.empty((n_class-1, SV_len), dtype=np.float64)
     copy_sv_coef (sv_coef.data, model)
 
-    # copy model.rho into the intercept
     # the intercept is just model.rho but with sign changed
     cdef np.ndarray[np.float64_t, ndim=1, mode='c'] intercept
     intercept = np.empty(n_class*(n_class-1)/2, dtype=np.float64)
@@ -204,18 +220,15 @@ def fit(
         support_vectors = np.empty((SV_len, X.shape[1]), dtype=np.float64)
         copy_SV(support_vectors.data, model, support_vectors.shape)
 
-    # copy model.nSV
     # TODO: do only in classification
     cdef np.ndarray[np.int32_t, ndim=1, mode='c'] n_class_SV
     n_class_SV = np.empty(n_class, dtype=np.int32)
     copy_nSV(n_class_SV.data, model)
 
-    # copy label
     cdef np.ndarray[np.int32_t, ndim=1, mode='c'] label
     label = np.empty((n_class), dtype=np.int32)
     copy_label(label.data, model)
 
-    # copy probabilities
     cdef np.ndarray[np.float64_t, ndim=1, mode='c'] probA
     cdef np.ndarray[np.float64_t, ndim=1, mode='c'] probB
     if probability != 0:
@@ -231,11 +244,33 @@ def fit(
         probA = np.empty(0, dtype=np.float64)
         probB = np.empty(0, dtype=np.float64)
 
-    # memory deallocation
     svm_free_and_destroy_model(&model)
     free(problem.x)
+
     return (support, support_vectors, n_class_SV, sv_coef, intercept, label,
            probA, probB, fit_status)
+
+
+cdef void set_predict_params(
+    svm_parameter *param, int svm_type, kernel, int degree, double gamma,
+    double coef0, double cache_size, int probability, int nr_weight,
+    char *weight_label, char *weight) except *:
+    """Fill param with prediction time-only parameters."""
+
+    # training-time only parameters
+    cdef double C = .0
+    cdef double epsilon = .1
+    cdef int max_iter = 0
+    cdef double nu = .5
+    cdef int shrinking = 0
+    cdef double tol = .1
+    cdef int random_seed = -1
+
+    kernel_index = LIBSVM_KERNEL_TYPES.index(kernel)
+
+    set_parameter(param, svm_type, kernel_index, degree, gamma, coef0, nu,
+                         cache_size, C, tol, epsilon, shrinking, probability,
+                         nr_weight, weight_label, weight, max_iter, random_seed)
 
 
 def predict(np.ndarray[np.float64_t, ndim=2, mode='c'] X,
@@ -247,56 +282,34 @@ def predict(np.ndarray[np.float64_t, ndim=2, mode='c'] X,
             np.ndarray[np.int32_t, ndim=1, mode='c'] label,
             np.ndarray[np.float64_t, ndim=1, mode='c'] probA=np.empty(0),
             np.ndarray[np.float64_t, ndim=1, mode='c'] probB=np.empty(0),
-            int svm_type=0, str kernel='rbf', int degree=3,
-            double gamma=0.1, double coef0=0., double tol=1e-3,
-            double C=1., double nu=0.5, double epsilon=0.1,
+            int svm_type=0, kernel='rbf', int degree=3,
+            double gamma=0.1, double coef0=0.,
             np.ndarray[np.float64_t, ndim=1, mode='c']
                 class_weight=np.empty(0),
             np.ndarray[np.float64_t, ndim=1, mode='c']
                 sample_weight=np.empty(0),
-            int shrinking=0, int probability=0,
-            double cache_size=100.,
-            int max_iter=-1):
+            double cache_size=100.):
     """
     Predict target values of X given a model (low-level method)
 
     Parameters
     ----------
     X: array-like, dtype=float, size=[n_samples, n_features]
-
     svm_type : {0, 1, 2, 3, 4}
         Type of SVM: C SVC, nu SVC, one class, epsilon SVR, nu SVR
-
     kernel : {'linear', 'rbf', 'poly', 'sigmoid', 'precomputed'}
-        Kernel to use in the model: linear, polynomial, RBF, sigmoid
-        or precomputed.
-
+        Type of kernel.
     degree : int
-        Degree of the polynomial kernel (only relevant if kernel is
-        set to polynomial)
-
+        Degree of the polynomial kernel.
     gamma : float
-        Gamma parameter in RBF kernel (only relevant if kernel is set
-        to RBF)
-
+        Gamma parameter in RBF kernel.
     coef0 : float
         Independent parameter in poly/sigmoid kernel.
-
-    eps : float
-        Stopping criteria.
-
-    C : float
-        C parameter in C-Support Vector Classification
-
 
     Returns
     -------
     dec_values : array
         predicted values.
-
-
-    TODO: probably there's no point in setting some parameters, like
-    cache_size or weights.
     """
     cdef np.ndarray[np.float64_t, ndim=1, mode='c'] dec_values
     cdef svm_parameter param
@@ -305,25 +318,25 @@ def predict(np.ndarray[np.float64_t, ndim=2, mode='c'] X,
 
     cdef np.ndarray[np.int32_t, ndim=1, mode='c'] \
         class_weight_label = np.arange(class_weight.shape[0], dtype=np.int32)
-    kernel_index = LIBSVM_KERNEL_TYPES.index(kernel)
-    set_parameter(&param, svm_type, kernel_index, degree, gamma, coef0,
-                          nu, cache_size, C, tol, epsilon, shrinking,
-                          probability, <int> class_weight.shape[0],
-                          class_weight_label.data, class_weight.data,
-                          max_iter)
 
+    set_predict_params(&param, svm_type, kernel, degree, gamma, coef0,
+                       cache_size, 0, <int>class_weight.shape[0],
+                       class_weight_label.data, class_weight.data)
     model = set_model(&param, <int> nSV.shape[0], SV.data, SV.shape,
                       support.data, support.shape, sv_coef.strides,
                       sv_coef.data, intercept.data, nSV.data,
                       label.data, probA.data, probB.data)
 
     #TODO: use check_model
-    dec_values = np.empty(X.shape[0])
-    with nogil:
-        rv = copy_predict(X.data, model, X.shape, dec_values.data)
-    if rv < 0:
-        raise MemoryError("We've run out of memory")
-    free_model(model)
+    try:
+        dec_values = np.empty(X.shape[0])
+        with nogil:
+            rv = copy_predict(X.data, model, X.shape, dec_values.data)
+        if rv < 0:
+            raise MemoryError("We've run out of memory")
+    finally:
+        free_model(model)
+
     return dec_values
 
 
@@ -338,15 +351,12 @@ def predict_proba(
     np.ndarray[np.float64_t, ndim=1, mode='c'] probA=np.empty(0),
     np.ndarray[np.float64_t, ndim=1, mode='c'] probB=np.empty(0),
     int svm_type=0, str kernel='rbf', int degree=3,
-    double gamma=0.1, double coef0=0., double tol=1e-3,
-    double C=1., double nu=0.5, double epsilon=0.1,
+    double gamma=0.1, double coef0=0.,
     np.ndarray[np.float64_t, ndim=1, mode='c']
         class_weight=np.empty(0),
     np.ndarray[np.float64_t, ndim=1, mode='c']
         sample_weight=np.empty(0),
-    int shrinking=0, int probability=0,
-    double cache_size=100.,
-    int max_iter=-1):
+    double cache_size=100.):
     """
     Predict probabilities
 
@@ -363,11 +373,7 @@ def predict_proba(
     Parameters
     ----------
     X: array-like, dtype=float
-    Y: array
-        target vector
-
     kernel : {'linear', 'rbf', 'poly', 'sigmoid', 'precomputed'}
-
 
     Returns
     -------
@@ -381,25 +387,24 @@ def predict_proba(
         class_weight_label = np.arange(class_weight.shape[0], dtype=np.int32)
     cdef int rv
 
-    kernel_index = LIBSVM_KERNEL_TYPES.index(kernel)
-    set_parameter(&param, svm_type, kernel_index, degree, gamma,
-                          coef0, nu, cache_size, C, tol, epsilon, shrinking,
-                          probability, <int> class_weight.shape[0], class_weight_label.data,
-                          class_weight.data, max_iter)
-
+    set_predict_params(&param, svm_type, kernel, degree, gamma, coef0,
+                       cache_size, 1, <int>class_weight.shape[0],
+                       class_weight_label.data, class_weight.data)
     model = set_model(&param, <int> nSV.shape[0], SV.data, SV.shape,
                       support.data, support.shape, sv_coef.strides,
                       sv_coef.data, intercept.data, nSV.data,
                       label.data, probA.data, probB.data)
 
     cdef np.npy_intp n_class = get_nr(model)
-    dec_values = np.empty((X.shape[0], n_class), dtype=np.float64)
-    with nogil:
-        rv = copy_predict_proba(X.data, model, X.shape, dec_values.data)
-    if rv < 0:
-        raise MemoryError("We've run out of memory")
-    # free model and param
-    free_model(model)
+    try:
+        dec_values = np.empty((X.shape[0], n_class), dtype=np.float64)
+        with nogil:
+            rv = copy_predict_proba(X.data, model, X.shape, dec_values.data)
+        if rv < 0:
+            raise MemoryError("We've run out of memory")
+    finally:
+        free_model(model)
+
     return dec_values
 
 
@@ -413,16 +418,13 @@ def decision_function(
     np.ndarray[np.int32_t, ndim=1, mode='c'] label,
     np.ndarray[np.float64_t, ndim=1, mode='c'] probA=np.empty(0),
     np.ndarray[np.float64_t, ndim=1, mode='c'] probB=np.empty(0),
-    int svm_type=0, str kernel='rbf', int degree=3,
-    double gamma=0.1, double coef0=0., double tol=1e-3,
-    double C=1., double nu=0.5, double epsilon=0.1,
+    int svm_type=0, kernel='rbf', int degree=3,
+    double gamma=0.1, double coef0=0.,
     np.ndarray[np.float64_t, ndim=1, mode='c']
         class_weight=np.empty(0),
     np.ndarray[np.float64_t, ndim=1, mode='c']
          sample_weight=np.empty(0),
-    int shrinking=0, int probability=0,
-    double cache_size=100.,
-    int max_iter=-1):
+    double cache_size=100.):
     """
     Predict margin (libsvm name for this is predict_values)
 
@@ -439,11 +441,9 @@ def decision_function(
 
     cdef int rv
 
-    kernel_index = LIBSVM_KERNEL_TYPES.index(kernel)
-    set_parameter(&param, svm_type, kernel_index, degree, gamma,
-                          coef0, nu, cache_size, C, tol, epsilon, shrinking,
-                          probability, <int> class_weight.shape[0], class_weight_label.data,
-                          class_weight.data, max_iter)
+    set_predict_params(&param, svm_type, kernel, degree, gamma, coef0,
+                       cache_size, 0, <int>class_weight.shape[0],
+                       class_weight_label.data, class_weight.data)
 
     model = set_model(&param, <int> nSV.shape[0], SV.data, SV.shape,
                       support.data, support.shape, sv_coef.strides,
@@ -456,13 +456,15 @@ def decision_function(
         n_class = get_nr(model)
         n_class = n_class * (n_class - 1) / 2
 
-    dec_values = np.empty((X.shape[0], n_class), dtype=np.float64)
-    with nogil:
-        rv = copy_predict_values(X.data, model, X.shape, dec_values.data, n_class)
-    if rv < 0:
-        raise MemoryError("We've run out of memory")
-    # free model and param
-    free_model(model)
+    try:
+        dec_values = np.empty((X.shape[0], n_class), dtype=np.float64)
+        with nogil:
+            rv = copy_predict_values(X.data, model, X.shape, dec_values.data, n_class)
+        if rv < 0:
+            raise MemoryError("We've run out of memory")
+    finally:
+        free_model(model)
+
     return dec_values
 
 
@@ -477,7 +479,8 @@ def cross_validation(
     np.ndarray[np.float64_t, ndim=1, mode='c']
         sample_weight=np.empty(0),
     int shrinking=0, int probability=0, double cache_size=100.,
-    int max_iter=-1):
+    int max_iter=-1,
+    int random_seed=0):
     """
     Binding of the cross-validation routine (low-level routine)
 
@@ -517,6 +520,10 @@ def cross_validation(
 
     cache_size : float
 
+    random_seed : int, optional
+        Seed for the random number generator used for probability estimates.
+        0 by default.
+
     Returns
     -------
     target : array, float
@@ -526,7 +533,7 @@ def cross_validation(
     cdef svm_parameter param
     cdef svm_problem problem
     cdef svm_model *model
-    cdef const_char_p error_msg
+    cdef const char *error_msg
     cdef np.npy_intp SV_len
     cdef np.npy_intp nr
 
@@ -555,18 +562,20 @@ def cross_validation(
         &param, svm_type, kernel_index, degree, gamma, coef0, nu, cache_size,
         C, tol, tol, shrinking, probability, <int>
         class_weight.shape[0], class_weight_label.data,
-        class_weight.data, max_iter)
+        class_weight.data, max_iter, random_seed)
 
     error_msg = svm_check_parameter(&problem, &param);
     if error_msg:
         raise ValueError(error_msg)
 
     cdef np.ndarray[np.float64_t, ndim=1, mode='c'] target
-    target = np.empty((X.shape[0]), dtype=np.float64)
-    with nogil:
-        svm_cross_validation(&problem, &param, n_fold, <double *> target.data)
+    try:
+        target = np.empty((X.shape[0]), dtype=np.float64)
+        with nogil:
+            svm_cross_validation(&problem, &param, n_fold, <double *> target.data)
+    finally:
+        free(problem.x)
 
-    free(problem.x)
     return target
 
 

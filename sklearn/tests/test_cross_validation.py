@@ -24,7 +24,7 @@ from sklearn.metrics import accuracy_score
 from sklearn.metrics import f1_score
 from sklearn.metrics import explained_variance_score
 from sklearn.metrics import fbeta_score
-from sklearn.metrics import Scorer
+from sklearn.metrics import make_scorer
 
 from sklearn.externals import six
 from sklearn.linear_model import Ridge
@@ -83,7 +83,7 @@ class MockClassifier(BaseEstimator):
 
 X = np.ones((10, 2))
 X_sparse = coo_matrix(X)
-y = np.arange(10) / 2
+y = np.arange(10) // 2
 
 ##############################################################################
 # Tests
@@ -107,14 +107,18 @@ def test_kfold_valueerrors():
         # a characteristic of the code and not a behavior
         assert_true("The least populated class" in str(w[0]))
 
-    # Error when number of folds is <= 0
+    # Error when number of folds is <= 1
     assert_raises(ValueError, cval.KFold, 2, 0)
+    assert_raises(ValueError, cval.KFold, 2, 1)
+    assert_raises(ValueError, cval.StratifiedKFold, y, 0)
+    assert_raises(ValueError, cval.StratifiedKFold, y, 1)
 
     # When n is not integer:
-    assert_raises(ValueError, cval.KFold, 2.5, 1)
+    assert_raises(ValueError, cval.KFold, 2.5, 2)
 
     # When n_folds is not integer:
     assert_raises(ValueError, cval.KFold, 5, 1.5)
+    assert_raises(ValueError, cval.StratifiedKFold, y, 1.5)
 
 
 def test_kfold_indices():
@@ -263,12 +267,23 @@ def test_cross_val_score():
         scores = cval.cross_val_score(clf, X, y)
         assert_array_equal(scores, clf.score(X, y))
 
+        # test with multioutput y
+        scores = cval.cross_val_score(clf, X_sparse, X)
+        assert_array_equal(scores, clf.score(X_sparse, X))
+
         scores = cval.cross_val_score(clf, X_sparse, y)
         assert_array_equal(scores, clf.score(X_sparse, y))
+
+        # test with multioutput y
+        scores = cval.cross_val_score(clf, X_sparse, X)
+        assert_array_equal(scores, clf.score(X_sparse, X))
 
     # test with X as list
     clf = MockListClassifier()
     scores = cval.cross_val_score(clf, X.tolist(), y)
+
+    assert_raises(ValueError, cval.cross_val_score, clf, X, y,
+                  scoring="sklearn")
 
 
 def test_cross_val_score_precomputed():
@@ -393,9 +408,10 @@ def test_cross_val_score_with_score_func_regression():
     r2_scores = cval.cross_val_score(reg, X, y, scoring="r2", cv=5)
     assert_array_almost_equal(r2_scores, [0.94, 0.97, 0.97, 0.99, 0.92], 2)
 
-    # Mean squared error
-    mse_scores = cval.cross_val_score(reg, X, y, cv=5, scoring="mse")
-    expected_mse = np.array([763.07, 553.16, 274.38, 273.26, 1681.99])
+    # Mean squared error; this is a loss function, so "scores" are negative
+    mse_scores = cval.cross_val_score(reg, X, y, cv=5,
+                                      scoring="mean_squared_error")
+    expected_mse = np.array([-763.07, -553.16, -274.38, -273.26, -1681.99])
     assert_array_almost_equal(mse_scores, expected_mse, 2)
 
     # Explained variance
@@ -414,17 +430,18 @@ def test_permutation_score():
     cv = cval.StratifiedKFold(y, 2)
 
     score, scores, pvalue = cval.permutation_test_score(
-        svm, X, y, "accuracy", cv)
+        svm, X, y, cv=cv, scoring="accuracy")
     assert_greater(score, 0.9)
     assert_almost_equal(pvalue, 0.0, 1)
 
     score_label, _, pvalue_label = cval.permutation_test_score(
-        svm, X, y, "accuracy", cv, labels=np.ones(y.size), random_state=0)
+        svm, X, y, cv=cv, scoring="accuracy", labels=np.ones(y.size),
+        random_state=0)
     assert_true(score_label == score)
     assert_true(pvalue_label == pvalue)
 
     # test with custom scoring object
-    scorer = Scorer(fbeta_score, beta=2)
+    scorer = make_scorer(fbeta_score, beta=2)
     score_label, _, pvalue_label = cval.permutation_test_score(
         svm, X, y, scoring=scorer, cv=cv, labels=np.ones(y.size),
         random_state=0)
@@ -435,8 +452,8 @@ def test_permutation_score():
     svm_sparse = SVC(kernel='linear')
     cv_sparse = cval.StratifiedKFold(y, 2, indices=True)
     score_label, _, pvalue_label = cval.permutation_test_score(
-        svm_sparse, X_sparse, y, "accuracy", cv_sparse,
-        labels=np.ones(y.size), random_state=0)
+        svm_sparse, X_sparse, y, cv=cv_sparse,
+        scoring="accuracy", labels=np.ones(y.size), random_state=0)
 
     assert_true(score_label == score)
     assert_true(pvalue_label == pvalue)
@@ -444,8 +461,8 @@ def test_permutation_score():
     # set random y
     y = np.mod(np.arange(len(y)), 3)
 
-    score, scores, pvalue = cval.permutation_test_score(svm, X, y,
-                                                        "accuracy", cv)
+    score, scores, pvalue = cval.permutation_test_score(svm, X, y, cv=cv,
+                                                        scoring="accuracy")
 
     assert_less(score, 0.5)
     assert_greater(pvalue, 0.4)

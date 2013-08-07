@@ -8,7 +8,7 @@ Ordinary Least Squares and Ridge Regression Variance
 Due to the few points in each dimension and the straight
 line that linear regression uses to follow these points
 as well as it can, noise on the observations will cause
-great variace as shown in the first plot. Every line's slope
+great variance as shown in the first plot. Every line's slope
 can vary quite a bit for each prediction due to the noise
 induced in the observations.
 
@@ -23,8 +23,8 @@ of the standard linear regression
 print(__doc__)
 
 
-# Code source: Gael Varoqueux
-# Modified for Documentation merge by Jaques Grobler
+# Code source: Gaël Varoquaux
+# Modified for documentation by Jaques Grobler
 # License: BSD 3 clause
 
 

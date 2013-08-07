@@ -84,7 +84,7 @@ to evaluate a parameter setting. These are the
 scoring functions are better suited (for example in unbalanced classification,
 the accuracy score is often uninformative). An alternative scoring function
 can be specified via the ``scoring`` parameter to :class:`GridSearchCV`.  See
-:ref:`score_func_objects` for more details.
+:ref:`scoring_parameter` for more details.
 
 .. topic:: Examples:
 
@@ -134,7 +134,7 @@ provide independent random samples from possible parameter values on
 consecutive calls.
 
     .. warning::
-        
+
         The distributions in ``scipy.stats`` do not allow specifying a random
         state. Instead, they use the global numpy random state, that can be seeded
         via ``np.random.seed`` or set using ``np.random.set_state``.
@@ -217,7 +217,7 @@ of the training set is left out.
 
 This left out portion can be used to estimate the generalization error
 without having to rely on a separate validation set.  This estimate
-comes "for free" as no addictional data is needed and can be used for
+comes "for free" as no additional data is needed and can be used for
 model selection.
 
 This is currently implemented in the following classes:

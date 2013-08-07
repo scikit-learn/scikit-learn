@@ -22,10 +22,12 @@ from scipy.sparse import issparse
 import warnings
 
 from .base import BaseEstimator, ClassifierMixin
-from .preprocessing import binarize, LabelBinarizer
-from .utils import array2d, atleast2d_or_csr
+from .preprocessing import binarize
+from .preprocessing import LabelBinarizer
+from .preprocessing import label_binarize
+from .utils import array2d, atleast2d_or_csr, column_or_1d, check_arrays
 from .utils.extmath import safe_sparse_dot, logsumexp
-from .utils import check_arrays
+from .utils.multiclass import _check_partial_fit_first_call
 from .externals import six
 
 __all__ = ['BernoulliNB', 'GaussianNB', 'MultinomialNB']
@@ -153,11 +155,9 @@ class GaussianNB(BaseNB):
         """
 
         X, y = check_arrays(X, y, sparse_format='dense')
+        y = column_or_1d(y, warn=True)
 
         n_samples, n_features = X.shape
-
-        if n_samples != y.shape[0]:
-            raise ValueError("X and y have incompatible shapes")
 
         self.classes_ = unique_y = np.unique(y)
         n_classes = unique_y.shape[0]
@@ -195,6 +195,95 @@ class BaseDiscreteNB(BaseNB):
     _joint_log_likelihood(X) as per BaseNB
     """
 
+    def _update_class_log_prior(self, class_prior=None):
+        n_classes = len(self.classes_)
+        if class_prior is not None:
+            if len(class_prior) != n_classes:
+                raise ValueError("Number of priors must match number of"
+                                 " classes.")
+            self.class_log_prior_ = np.log(class_prior)
+        elif self.fit_prior:
+            # empirical prior, with sample_weight taken into account
+            self.class_log_prior_ = (np.log(self.class_count_)
+                                     - np.log(self.class_count_.sum()))
+        else:
+            self.class_log_prior_ = np.zeros(n_classes) - np.log(n_classes)
+
+    def partial_fit(self, X, y, classes=None, sample_weight=None):
+        """Incremental fit on a batch of samples.
+
+        This method is expected to be called several times consecutively
+        on different chunks of a dataset so as to implement out-of-core
+        or online learning.
+
+        This is especially useful when the whole dataset is too big to fit in
+        memory at once.
+
+        This method has some performance overhead hence it is better to call
+        partial_fit on chunks of data that are as large as possible
+        (as long as fitting in the memory budget) to hide the overhead.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+            Training vectors, where n_samples is the number of samples and
+            n_features is the number of features.
+
+        y : array-like, shape = [n_samples]
+            Target values.
+
+        classes : array-like, shape = [n_classes]
+            List of all the classes that can possibly appear in the y vector.
+
+            Must be provided at the first call to partial_fit, can be omitted
+            in subsequent calls.
+
+        sample_weight : array-like, shape = [n_samples], optional
+            Weights applied to individual samples (1. for unweighted).
+
+        Returns
+        -------
+        self : object
+            Returns self.
+        """
+        X = atleast2d_or_csr(X).astype(np.float64)
+        _, n_features = X.shape
+
+        if _check_partial_fit_first_call(self, classes):
+            # This is the first call to partial_fit:
+            # initialize various cumulative counters
+            n_effective_classes = len(classes) if len(classes) > 1 else 2
+            self.class_count_ = np.zeros(n_effective_classes, dtype=np.float64)
+            self.feature_count_ = np.zeros((n_effective_classes, n_features),
+                                           dtype=np.float64)
+
+        Y = label_binarize(y, classes=self.classes_)
+        if Y.shape[1] == 1:
+            Y = np.concatenate((1 - Y, Y), axis=1)
+
+        n_samples, n_classes = Y.shape
+
+        if X.shape[0] != Y.shape[0]:
+            msg = "X.shape[0]=%d and y.shape[0]=%d are incompatible."
+            raise ValueError(msg % (X.shape[0], y.shape[0]))
+
+        # convert to float to support sample weight consistently
+        Y = Y.astype(np.float64)
+        if sample_weight is not None:
+            Y *= array2d(sample_weight).T
+
+        # Count raw events from data before updating the class log prior
+        # and feature log probas
+        self._count(X, Y)
+
+        # XXX: OPTIM: we could introduce a public finalization method to
+        # be called by the user explicitly just once after several consecutive
+        # calls to partial_fit and prior any call to predict[_[log_]proba]
+        # to avoid computing the smooth log probas at each call to partial fit
+        self._update_feature_log_prob()
+        self._update_class_log_prior()
+        return self
+
     def fit(self, X, y, sample_weight=None, class_prior=None):
         """Fit Naive Bayes classifier according to X, y
 
@@ -215,22 +304,23 @@ class BaseDiscreteNB(BaseNB):
         self : object
             Returns self.
         """
-        X = atleast2d_or_csr(X)
+        X, y = check_arrays(X, y, sparse_format='csr')
+        X = X.astype(np.float)
+        y = column_or_1d(y, warn=True)
+        _, n_features = X.shape
 
         labelbin = LabelBinarizer()
         Y = labelbin.fit_transform(y)
         self.classes_ = labelbin.classes_
-        n_classes = len(self.classes_)
         if Y.shape[1] == 1:
             Y = np.concatenate((1 - Y, Y), axis=1)
 
         if X.shape[0] != Y.shape[0]:
-            msg = "X and y have incompatible shapes."
-            if issparse(X):
-                msg += "\nNote: Sparse matrices cannot be indexed w/ boolean \
-                masks (use `indices=True` in CV)."
-            raise ValueError(msg)
+            msg = "X.shape[0]=%d and y.shape[0]=%d are incompatible."
+            raise ValueError(msg % (X.shape[0], y.shape[0]))
 
+        # convert to float to support sample weight consistently
+        Y = Y.astype(np.float64)
         if sample_weight is not None:
             Y *= array2d(sample_weight).T
 
@@ -241,34 +331,25 @@ class BaseDiscreteNB(BaseNB):
         else:
             class_prior = self.class_prior
 
-        if class_prior:
-            if len(class_prior) != n_classes:
-                raise ValueError("Number of priors must match number of"
-                                 " classes.")
-            self.class_log_prior_ = np.log(class_prior)
-        elif self.fit_prior:
-            # empirical prior, with sample_weight taken into account
-            y_freq = Y.sum(axis=0)
-            self.class_log_prior_ = np.log(y_freq) - np.log(y_freq.sum())
-        else:
-            self.class_log_prior_ = np.zeros(n_classes) - np.log(n_classes)
-
-        # N_c_i is the count of feature i in all samples of class c.
-        # N_c is the denominator.
-        N_c, N_c_i = self._count(X, Y)
-
-        self.feature_log_prob_ = np.log(N_c_i) - np.log(N_c.reshape(-1, 1))
-
+        # Count raw events from data before updating the class log prior
+        # and feature log probas
+        n_effective_classes = Y.shape[1]
+        self.class_count_ = np.zeros(n_effective_classes, dtype=np.float64)
+        self.feature_count_ = np.zeros((n_effective_classes, n_features),
+                                       dtype=np.float64)
+        self._count(X, Y)
+        self._update_feature_log_prob()
+        self._update_class_log_prior(class_prior=class_prior)
         return self
 
     # XXX The following is a stopgap measure; we need to set the dimensions
     # of class_log_prior_ and feature_log_prob_ correctly.
     def _get_coef(self):
-        return (self.feature_log_prob_[1]
+        return (self.feature_log_prob_[1:]
                 if len(self.classes_) == 2 else self.feature_log_prob_)
 
     def _get_intercept(self):
-        return (self.class_log_prior_[1]
+        return (self.class_log_prior_[1:]
                 if len(self.classes_) == 2 else self.class_log_prior_)
 
     coef_ = property(_get_coef)
@@ -294,31 +375,44 @@ class MultinomialNB(BaseDiscreteNB):
         Whether to learn class prior probabilities or not.
         If false, a uniform prior will be used.
 
-    class_prior : array-like, size=[n_classes,]
+    class_prior : array-like, size (n_classes,)
         Prior probabilities of the classes. If specified the priors are not
         adjusted according to the data.
 
     Attributes
     ----------
-    `intercept_`, `class_log_prior_` : array, shape = [n_classes]
+    `class_log_prior_` : array, shape (n_classes, )
         Smoothed empirical log probability for each class.
 
-    `feature_log_prob_`, `coef_` : array, shape = [n_classes, n_features]
-        Empirical log probability of features
-        given a class, P(x_i|y).
+    `intercept_` : property
+        Mirrors ``class_log_prior_`` for interpreting MultinomialNB
+        as a linear model.
 
-        (`intercept_` and `coef_` are properties
-        referring to `class_log_prior_` and
-        `feature_log_prob_`, respectively.)
+    `feature_log_prob_`: array, shape (n_classes, n_features)
+        Empirical log probability of features
+        given a class, ``P(x_i|y)``.
+
+    `coef_` : property
+        Mirrors ``feature_log_prob_`` for interpreting MultinomialNB
+        as a linear model.
+
+    `class_count_` : array, shape (n_classes,)
+        Number of samples encountered for each class during fitting. This
+        value is weighted by the sample weight when provided.
+
+    `feature_count_` : array, shape (n_classes, n_features)
+        Number of samples encountered for each (class, feature)
+        during fitting. This value is weighted by the sample weight when
+        provided.
 
     Examples
     --------
     >>> import numpy as np
     >>> X = np.random.randint(5, size=(6, 100))
-    >>> Y = np.array([1, 2, 3, 4, 5, 6])
+    >>> y = np.array([1, 2, 3, 4, 5, 6])
     >>> from sklearn.naive_bayes import MultinomialNB
     >>> clf = MultinomialNB()
-    >>> clf.fit(X, Y)
+    >>> clf.fit(X, y)
     MultinomialNB(alpha=1.0, class_prior=None, fit_prior=True)
     >>> print(clf.predict(X[2]))
     [3]
@@ -328,6 +422,13 @@ class MultinomialNB(BaseDiscreteNB):
     For the rationale behind the names `coef_` and `intercept_`, i.e.
     naive Bayes as a linear classifier, see J. Rennie et al. (2003),
     Tackling the poor assumptions of naive Bayes text classifiers, ICML.
+
+    References
+    ----------
+    C.D. Manning, P. Raghavan and H. Schütze (2008). Introduction to
+    Information Retrieval. Cambridge University Press, pp. 234–265.
+    http://nlp.stanford.edu/IR-book/html/htmledition/
+        naive-bayes-text-classification-1.html
     """
 
     def __init__(self, alpha=1.0, fit_prior=True, class_prior=None):
@@ -338,11 +439,17 @@ class MultinomialNB(BaseDiscreteNB):
     def _count(self, X, Y):
         """Count and smooth feature occurrences."""
         if np.any((X.data if issparse(X) else X) < 0):
-            raise ValueError("Input X must be non-negative.")
-        N_c_i = safe_sparse_dot(Y.T, X) + self.alpha
-        N_c = np.sum(N_c_i, axis=1)
+            raise ValueError("Input X must be non-negative")
+        self.feature_count_ += safe_sparse_dot(Y.T, X)
+        self.class_count_ += Y.sum(axis=0)
 
-        return N_c, N_c_i
+    def _update_feature_log_prob(self):
+        """Apply smoothing to raw counts and recompute log probabilities"""
+        smoothed_fc = self.feature_count_ + self.alpha
+        smoothed_cc = smoothed_fc.sum(axis=1)
+
+        self.feature_log_prob_ = (np.log(smoothed_fc)
+                                  - np.log(smoothed_cc.reshape(-1, 1)))
 
     def _joint_log_likelihood(self, X):
         """Calculate the posterior log probability of the samples X"""
@@ -384,6 +491,15 @@ class BernoulliNB(BaseDiscreteNB):
     `feature_log_prob_` : array, shape = [n_classes, n_features]
         Empirical log probability of features given a class, P(x_i|y).
 
+    `class_count_` : array, shape = [n_classes]
+        Number of samples encountered for each class during fitting. This
+        value is weighted by the sample weight when provided.
+
+    `feature_count_` : array, shape = [n_classes, n_features]
+        Number of samples encountered for each (class, feature)
+        during fitting. This value is weighted by the sample weight when
+        provided.
+
     Examples
     --------
     >>> import numpy as np
@@ -401,6 +517,7 @@ class BernoulliNB(BaseDiscreteNB):
 
     C.D. Manning, P. Raghavan and H. Schütze (2008). Introduction to
     Information Retrieval. Cambridge University Press, pp. 234–265.
+    http://nlp.stanford.edu/IR-book/html/htmledition/the-bernoulli-model-1.html
 
     A. McCallum and K. Nigam (1998). A comparison of event models for naive
     Bayes text classification. Proc. AAAI/ICML-98 Workshop on Learning for
@@ -421,9 +538,17 @@ class BernoulliNB(BaseDiscreteNB):
         """Count and smooth feature occurrences."""
         if self.binarize is not None:
             X = binarize(X, threshold=self.binarize)
-        N_c_i = safe_sparse_dot(Y.T, X) + self.alpha
-        N_c = Y.sum(axis=0) + self.alpha * Y.shape[1]
-        return N_c, N_c_i
+        self.feature_count_ += safe_sparse_dot(Y.T, X)
+        self.class_count_ += Y.sum(axis=0)
+
+    def _update_feature_log_prob(self):
+        """Apply smoothing to raw counts and recompute log probabilities"""
+        n_classes = len(self.classes_)
+        smoothed_fc = self.feature_count_ + self.alpha
+        smoothed_cc = self.class_count_ + self.alpha * n_classes
+
+        self.feature_log_prob_ = (np.log(smoothed_fc)
+                                  - np.log(smoothed_cc.reshape(-1, 1)))
 
     def _joint_log_likelihood(self, X):
         """Calculate the posterior log probability of the samples X"""
@@ -442,8 +567,7 @@ class BernoulliNB(BaseDiscreteNB):
 
         neg_prob = np.log(1 - np.exp(self.feature_log_prob_))
         # Compute  neg_prob · (1 - X).T  as  ∑neg_prob - X · neg_prob
-        X_neg_prob = (neg_prob.sum(axis=1)
-                      - safe_sparse_dot(X, neg_prob.T))
-        jll = safe_sparse_dot(X, self.feature_log_prob_.T) + X_neg_prob
+        jll = safe_sparse_dot(X, (self.feature_log_prob_ - neg_prob).T)
+        jll += self.class_log_prior_ + neg_prob.sum(axis=1)
 
-        return jll + self.class_log_prior_
+        return jll

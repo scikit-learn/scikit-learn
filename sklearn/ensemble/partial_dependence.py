@@ -89,7 +89,7 @@ def partial_dependence(gbrt, target_variables, grid=None, X=None,
         computed (size should be smaller than 3 for visual renderings).
     grid : array-like, shape=(n_points, len(target_variables))
         The grid of ``target_variables`` values for which the
-        partial dependecy should be evaluted (either ``grid`` or ``X``
+        partial dependecy should be evaluated (either ``grid`` or ``X``
         must be specified).
     X : array-like, shape=(n_samples, n_features)
         The data on which ``gbrt`` was trained. It is used to generate
@@ -116,10 +116,10 @@ def partial_dependence(gbrt, target_variables, grid=None, X=None,
     >>> samples = [[0, 0, 2], [1, 0, 0]]
     >>> labels = [0, 1]
     >>> from sklearn.ensemble import GradientBoostingClassifier
-    >>> gb = GradientBoostingClassifier().fit(samples, labels)
+    >>> gb = GradientBoostingClassifier(random_state=0).fit(samples, labels)
     >>> kwargs = dict(X=samples, percentiles=(0, 1), grid_resolution=2)
-    >>> partial_dependence(gb, [0], **kwargs)
-    (array([[-10.72892297,  10.72892297]]), [array([ 0.,  1.])])
+    >>> partial_dependence(gb, [0], **kwargs) # doctest: +ELLIPSIS
+    (array([[-4.52...,  4.52...]]), [array([ 0.,  1.])])
     """
     if not isinstance(gbrt, BaseGradientBoosting):
         raise ValueError('gbrt has to be an instance of BaseGradientBoosting')

@@ -3,30 +3,31 @@
 Robust vs Empirical covariance estimate
 =======================================
 
-The usual covariance maximum likelihood estimate is very sensitive to
-the presence of outliers in the data set. In such a case, one would
-have better to use a robust estimator of covariance to garanty that
-the estimation is resistant to "errorneous" observations in the data
-set.
+The usual covariance maximum likelihood estimate is very sensitive to the
+presence of outliers in the data set. In such a case, it would be better to
+use a robust estimator of covariance to guarantee that the estimation is
+resistant to "erroneous" observations in the data set.
 
-The Minimum Covariance Determinant estimator is a robust,
-high-breakdown point (i.e. it can be used to estimate the covariance
-matrix of highly contaminated datasets, up to
-:math:`\frac{n_samples-n_features-1}{2}` outliers) estimator of
-covariance. The idea is to find :math:`\frac{n_samples+n_features+1}{2}`
-observations whose empirical covariance has the smallest determinant,
-yielding a "pure" subset of observations from which to compute
-standards estimates of location and covariance. After a correction
-step aiming at compensating the fact the the estimates were learnt
-from only a portion of the initial data, we end up with robust
-estimates of the data set location and covariance.
+Minimum Covariance Determinant Estimator
+----------------------------------------
+The Minimum Covariance Determinant estimator is a robust, high-breakdown point
+(i.e. it can be used to estimate the covariance matrix of highly contaminated
+datasets, up to :math:`\\frac{n_samples - n_features-1}{2}` outliers) estimator of
+covariance. The idea is to find :math:`\\frac{n_samples+n_features+1}{2}`
+observations whose empirical covariance has the smallest determinant, yielding
+a "pure" subset of observations from which to compute standards estimates of
+location and covariance. After a correction step aiming at compensating the
+fact that the estimates were learned from only a portion of the initial data,
+we end up with robust estimates of the data set location and covariance.
 
-The Minimum Covariance Determinant estimator (MCD) has been introduced
-by P.J.Rousseuw in [1].
+The Minimum Covariance Determinant estimator (MCD) has been introduced by
+P.J.Rousseuw in [1]_.
 
-In this example, we compare the estimation errors that are made when
-using three types of location and covariance estimates on contaminated
-gaussian distributed data sets:
+Evaluation
+----------
+In this example, we compare the estimation errors that are made when using
+various types of location and covariance estimates on contaminated Gaussian
+distributed data sets:
 
 - The mean and the empirical covariance of the full dataset, which break
   down as soon as there are outliers in the data set
@@ -35,10 +36,16 @@ gaussian distributed data sets:
   to be good ones. This can be considered as a "perfect" MCD estimation,
   so one can trust our implementation by comparing to this case.
 
-[1] P. J. Rousseeuw. Least median of squares regression. J. Am
+
+References
+----------
+.. [1] P. J. Rousseeuw. Least median of squares regression. J. Am
     Stat Ass, 79:871, 1984.
-[2] Johanna Hardin, David M Rocke. Journal of Computational and
+.. [2] Johanna Hardin, David M Rocke. Journal of Computational and
     Graphical Statistics. December 1, 2005, 14(4): 928-946.
+.. [3] Zoubir A., Koivunen V., Chakhchoukh Y. and Muma M. (2012). Robust
+    estimation in signal processing: A tutorial-style treatment of
+    fundamental concepts. IEEE Signal Processing Magazine 29(4), 61-80.
 
 """
 print(__doc__)
@@ -69,10 +76,13 @@ err_cov_emp_pure = np.zeros((range_n_outliers.size, repeat))
 # computation
 for i, n_outliers in enumerate(range_n_outliers):
     for j in range(repeat):
+
+        rng = np.random.RandomState(i * j)
+
         # generate data
-        X = np.random.randn(n_samples, n_features)
+        X = rng.randn(n_samples, n_features)
         # add some outliers
-        outliers_index = np.random.permutation(n_samples)[:n_outliers]
+        outliers_index = rng.permutation(n_samples)[:n_outliers]
         outliers_offset = 10. * \
             (np.random.randint(2, size=(n_outliers, n_features)) - 0.5)
         X[outliers_index] += outliers_offset
@@ -80,16 +90,19 @@ for i, n_outliers in enumerate(range_n_outliers):
         inliers_mask[outliers_index] = False
 
         # fit a Minimum Covariance Determinant (MCD) robust estimator to data
-        S = MinCovDet().fit(X)
+        mcd = MinCovDet().fit(X)
         # compare raw robust estimates with the true location and covariance
-        err_loc_mcd[i, j] = np.sum(S.location_ ** 2)
-        err_cov_mcd[i, j] = S.error_norm(np.eye(n_features))
-        # compare estimators learnt from the full data set with true parameters
+        err_loc_mcd[i, j] = np.sum(mcd.location_ ** 2)
+        err_cov_mcd[i, j] = mcd.error_norm(np.eye(n_features))
+
+        # compare estimators learned from the full data set with true
+        # parameters
         err_loc_emp_full[i, j] = np.sum(X.mean(0) ** 2)
         err_cov_emp_full[i, j] = EmpiricalCovariance().fit(X).error_norm(
             np.eye(n_features))
-        # compare with an empirical covariance learnt from a pure data set
-        # (i.e. "perfect" MCD)
+
+        # compare with an empirical covariance learned from a pure data set
+        # (i.e. "perfect" mcd)
         pure_X = X[inliers_mask]
         pure_location = pure_X.mean(0)
         pure_emp_cov = EmpiricalCovariance().fit(pure_X)
@@ -116,7 +129,7 @@ pl.subplot(2, 1, 2)
 x_size = range_n_outliers.size
 pl.errorbar(range_n_outliers, err_cov_mcd.mean(1),
             yerr=err_cov_mcd.std(1),
-            label="Robust covariance (MCD)", color='m')
+            label="Robust covariance (mcd)", color='m')
 pl.errorbar(range_n_outliers[:(x_size / 5 + 1)],
             err_cov_emp_full.mean(1)[:(x_size / 5 + 1)],
             yerr=err_cov_emp_full.std(1)[:(x_size / 5 + 1)],

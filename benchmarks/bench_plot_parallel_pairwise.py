@@ -25,11 +25,11 @@ def plot(func):
         func(X, n_jobs=-1)
         multi_core.append(time.time() - start)
 
-    pl.figure()
+    pl.figure('scikit-learn parallel %s benchmark results' % func.__name__)
     pl.plot(sample_sizes, one_core, label="one core")
     pl.plot(sample_sizes, multi_core, label="multi core")
     pl.xlabel('n_samples')
-    pl.ylabel('time')
+    pl.ylabel('Time (s)')
     pl.title('Parallel %s' % func.__name__)
     pl.legend()
 

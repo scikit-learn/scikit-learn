@@ -1,5 +1,5 @@
 """
-The :mod:`sklearn.utils` module includes various utilites.
+The :mod:`sklearn.utils` module includes various utilities.
 """
 
 from collections import Sequence
@@ -12,13 +12,15 @@ from .murmurhash import murmurhash3_32
 from .validation import (as_float_array, check_arrays, safe_asarray,
                          assert_all_finite, array2d, atleast2d_or_csc,
                          atleast2d_or_csr, warn_if_not_float,
-                         check_random_state)
+                         check_random_state, column_or_1d)
 from .class_weight import compute_class_weight
+from sklearn.utils.sparsetools import minimum_spanning_tree
+
 
 __all__ = ["murmurhash3_32", "as_float_array", "check_arrays", "safe_asarray",
            "assert_all_finite", "array2d", "atleast2d_or_csc",
            "atleast2d_or_csr", "warn_if_not_float", "check_random_state",
-           "compute_class_weight"]
+           "compute_class_weight",  "minimum_spanning_tree", "column_or_1d"]
 
 # Make sure that DeprecationWarning get printed
 warnings.simplefilter("always", DeprecationWarning)
@@ -121,7 +123,7 @@ def safe_mask(X, mask):
     -------
         mask
     """
-    mask = np.asanyarray(mask)
+    mask = np.asarray(mask)
     if np.issubdtype(mask.dtype, np.int):
         return mask
 

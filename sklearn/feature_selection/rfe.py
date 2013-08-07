@@ -7,15 +7,17 @@
 """Recursive feature elimination for feature ranking"""
 
 import numpy as np
-from ..utils import check_arrays, safe_sqr, safe_mask, atleast2d_or_csc
+from ..utils import check_arrays, safe_sqr
 from ..base import BaseEstimator
 from ..base import MetaEstimatorMixin
 from ..base import clone
 from ..base import is_classifier
 from ..cross_validation import check_cv
+from .base import SelectorMixin
+from ..metrics.scorer import _deprecate_loss_and_score_funcs
 
 
-class RFE(BaseEstimator, MetaEstimatorMixin):
+class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
     """Feature ranking with recursive feature elimination.
 
     Given an external estimator that assigns weights to features (e.g., the
@@ -196,21 +198,8 @@ class RFE(BaseEstimator, MetaEstimatorMixin):
         """
         return self.estimator_.score(self.transform(X), y)
 
-    def transform(self, X):
-        """Reduce X to the selected features during the elimination.
-
-        Parameters
-        ----------
-        X : array of shape [n_samples, n_features]
-            The input samples.
-
-        Returns
-        -------
-        X_r : array of shape [n_samples, n_selected_features]
-            The input samples with only the features selected during the \
-            elimination.
-        """
-        return atleast2d_or_csc(X)[:, safe_mask(X, self.support_)]
+    def _get_support_mask(self):
+        return self.support_
 
     def decision_function(self, X):
         return self.estimator_.decision_function(self.transform(X))
@@ -246,9 +235,10 @@ class RFECV(RFE, MetaEstimatorMixin):
         Specific cross-validation objects can also be passed, see
         `sklearn.cross_validation module` for details.
 
-    loss_function : function, optional (default=None)
-        The loss function to minimize by cross-validation. If None, then the
-        score function of the estimator is maximized.
+    scoring : string, callable or None, optional, default: None
+        A string (see model evaluation documentation) or
+        a scorer callable object / function with signature
+        ``scorer(estimator, X, y)``.
 
     estimator_params : dict
         Parameters for the external estimator.
@@ -271,9 +261,9 @@ class RFECV(RFE, MetaEstimatorMixin):
         Selected (i.e., estimated best)
         features are assigned rank 1.
 
-    `cv_scores_` : array of shape [n_subsets_of_features]
+    `grid_scores_` : array of shape [n_subsets_of_features]
         The cross-validation scores such that
-        `cv_scores_[i]` corresponds to
+        `grid_scores_[i]` corresponds to
         the CV score of the i-th subset of features.
 
     `estimator_` : object
@@ -304,11 +294,12 @@ class RFECV(RFE, MetaEstimatorMixin):
            for cancer classification using support vector machines",
            Mach. Learn., 46(1-3), 389--422, 2002.
     """
-    def __init__(self, estimator, step=1, cv=None, loss_func=None,
-                 estimator_params={}, verbose=0):
+    def __init__(self, estimator, step=1, cv=None, scoring=None,
+                 loss_func=None, estimator_params={}, verbose=0):
         self.estimator = estimator
         self.step = step
         self.cv = cv
+        self.scoring = scoring
         self.loss_func = loss_func
         self.estimator_params = estimator_params
         self.verbose = verbose
@@ -337,42 +328,39 @@ class RFECV(RFE, MetaEstimatorMixin):
         scores = np.zeros(X.shape[1])
 
         # Cross-validation
-        n = 0
+        for n, (train, test) in enumerate(cv):
+            X_train, X_test = X[train], X[test]
+            y_train, y_test = y[train], y[test]
 
-        for train, test in cv:
             # Compute a full ranking of the features
-            ranking_ = rfe.fit(X[train], y[train]).ranking_
+            ranking_ = rfe.fit(X_train, y_train).ranking_
             # Score each subset of features
             for k in range(0, max(ranking_)):
                 mask = np.where(ranking_ <= k + 1)[0]
                 estimator = clone(self.estimator)
-                estimator.fit(X[train][:, mask], y[train])
+                estimator.fit(X_train[:, mask], y_train)
 
-                if self.loss_func is None:
-                    loss_k = 1.0 - estimator.score(X[test][:, mask], y[test])
+                if self.loss_func is None and self.scoring is None:
+                    score = estimator.score(X_test[:, mask], y_test)
                 else:
-                    loss_k = self.loss_func(
-                        y[test], estimator.predict(X[test][:, mask]))
+                    scorer = _deprecate_loss_and_score_funcs(
+                        loss_func=self.loss_func,
+                        scoring=self.scoring
+                    )
+                    score = scorer(estimator, X_test[:, mask], y_test)
 
                 if self.verbose > 0:
-                    print("Finished fold with %d / %d feature ranks, loss=%f"
-                          % (k, max(ranking_), loss_k))
-                scores[k] += loss_k
-
-            n += 1
+                    print("Finished fold with %d / %d feature ranks, score=%f"
+                          % (k, max(ranking_), score))
+                scores[k] += score
 
         # Pick the best number of features on average
-        best_score = np.inf
-        best_k = None
-
-        for k, score in enumerate(scores):
-            if score < best_score:
-                best_score = score
-                best_k = k + 1
+        k = np.argmax(scores)
+        best_score = scores[k]
 
         # Re-execute an elimination with best_k over the whole set
         rfe = RFE(estimator=self.estimator,
-                  n_features_to_select=best_k,
+                  n_features_to_select=k+1,
                   step=self.step, estimator_params=self.estimator_params)
 
         rfe.fit(X, y)
@@ -385,5 +373,5 @@ class RFECV(RFE, MetaEstimatorMixin):
         self.estimator_.set_params(**self.estimator_params)
         self.estimator_.fit(self.transform(X), y)
 
-        self.cv_scores_ = scores / n
+        self.grid_scores_ = scores / n
         return self

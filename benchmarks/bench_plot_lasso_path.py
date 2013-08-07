@@ -42,7 +42,7 @@ def compute_bench(samples_range, features_range):
             X, y = make_regression(**dataset_kwargs)
 
             gc.collect()
-            print("benching lars_path (with Gram):", end='')
+            print("benchmarking lars_path (with Gram):", end='')
             sys.stdout.flush()
             tstart = time()
             G = np.dot(X.T, X)  # precomputed Gram matrix
@@ -53,7 +53,7 @@ def compute_bench(samples_range, features_range):
             results['lars_path (with Gram)'].append(delta)
 
             gc.collect()
-            print("benching lars_path (without Gram):", end='')
+            print("benchmarking lars_path (without Gram):", end='')
             sys.stdout.flush()
             tstart = time()
             lars_path(X, y, method='lasso')
@@ -62,7 +62,7 @@ def compute_bench(samples_range, features_range):
             results['lars_path (without Gram)'].append(delta)
 
             gc.collect()
-            print("benching lasso_path (with Gram):", end='')
+            print("benchmarking lasso_path (with Gram):", end='')
             sys.stdout.flush()
             tstart = time()
             lasso_path(X, y, precompute=True)
@@ -71,7 +71,7 @@ def compute_bench(samples_range, features_range):
             results['lasso_path (with Gram)'].append(delta)
 
             gc.collect()
-            print("benching lasso_path (without Gram):", end='')
+            print("benchmarking lasso_path (without Gram):", end='')
             sys.stdout.flush()
             tstart = time()
             lasso_path(X, y, precompute=False)
@@ -92,7 +92,7 @@ if __name__ == '__main__':
 
     max_time = max(max(t) for t in results.values())
 
-    fig = plt.figure()
+    fig = plt.figure('scikit-learn Lasso path benchmark results')
     i = 1
     for c, (label, timings) in zip('bcry', sorted(results.items())):
         ax = fig.add_subplot(2, 2, i, projection='3d')
@@ -109,7 +109,7 @@ if __name__ == '__main__':
 
         ax.set_xlabel('n_samples')
         ax.set_ylabel('n_features')
-        ax.set_zlabel('time (s)')
+        ax.set_zlabel('Time (s)')
         ax.set_zlim3d(0.0, max_time * 1.1)
         ax.set_title(label)
         #ax.legend()

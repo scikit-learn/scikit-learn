@@ -6,11 +6,16 @@
 PCA example with Iris Data-set
 =========================================================
 
+Principal Component Analysis applied to the Iris dataset.
+
+See `here <http://en.wikipedia.org/wiki/Iris_flower_data_set>`_ for more
+information on this dataset.
+
 """
 print(__doc__)
 
 
-# Code source: Gael Varoqueux
+# Code source: Gaël Varoquaux
 # License: BSD 3 clause
 
 import numpy as np
