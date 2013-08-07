@@ -1071,7 +1071,7 @@ div.navbar ul.dropdown-menu li{
 }
 
 div.navbar ul.dropdown-menu li a {
-  font-size: 88%;
+  font-size: 100%;
   color: #2878A2;
   padding: 0;
   font-weight: normal;
@@ -1156,7 +1156,7 @@ div.navbar ul.dropdown-menu li a.btn {
 
 .navbar ul.dropdown-menu li {
   font-weight: bold;
-  font-size: 11px;
+  font-size: 12px;
   color: #000;
 }
 
