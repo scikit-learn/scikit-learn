@@ -252,20 +252,9 @@
                 <li><em>On-going development:</em>
                 <a href="whats_new.html"><em>What's new</em> (changelog)</a>
                 </li>
-                <li><em>July 22th - 28th, 2013: international sprint.</em>
+                <li><em>July 22-28th, 2013: international sprint.</em>
                 During this week-long sprint, we gathered most of the core
                 developers in Paris.
-                <!--
-                Here are some of the biggest changes in the upcoming version:
-                <ul>
-                <li>Python 3 support</li>
-                <li>Ensembles of Randomized Trees speed improvements</li>
-                <li>Restricted Boltzman Machines</li>
-                <li>Missing data imputation</li>
-                <li>Bi-clustering</li>
-                </ul>
-                -->
-
                 We want to thank our sponsors, our
                 hosts <a href="http://www.telecom-paristech.fr/">Télécom ParisTech</a>
                 and <a href="http://www.tinyclues.com/">tinyclues</a>, and
@@ -281,61 +270,64 @@
                 <h4>Community</h4>
                 <ul>
                 <li><em>Questions?</em> See <a href="http://stackoverflow.com/questions/tagged/scikit-learn">stackoverflow</a> # scikit-learn</li>
-                <li><em>Mailing list:</em> scikit-learn-general@lists.sourceforge.net</li>
+                <li><em>Mailing list:</em> <a href="https://lists.sourceforge.net/lists/listinfo/scikit-learn-general">scikit-learn-general@lists.sourceforge.net</a></li>
                 <li><em>IRC:</em> #scikit-learn @ <a href="http://webchat.freenode.net/">freenode</a></li>
-                <li><em>Help us:</em>
-                  <button class="btn btn-warning btn-big" onclick="document.getElementById('paypal-form').submit(); return false;"><b>Donate!</b></button> (<a href="about.html#funding">read more</a>)</li>
-                    <form target="_top" id="paypal-form" method="post" action="https://www.paypal.com/cgi-bin/webscr">
-                    <input type="hidden" value="_s-xclick" name="cmd">
-                    <input type="hidden" value="74EYUMF3FTSW8" name="hosted_button_id">
-                    </form>
                 </ul>
             </div>
-
             <!-- who using -->
             <div class="span4">
-                <h4>Who is using scikit-learn?</h4>
+                <h4>Who uses scikit-learn?</h4>
 
-                </h4>
                 <div id="testimonials_carousel" class="carousel slide">
                     <div class="carousel-inner">
                         <div class="active item">
                           <img src="_images/inria.jpg" class="thumbnail" />
-                          <p align="center">
+                          <p>
                           <em>"We use scikit-learn to support leading-edge basic research [...]"</em>
-                          <a href="testimonials/testimonials.html">More testimonials</a>
                           </p>
                         </div>
                         <div class="item">
                           <img src="_images/evernote.png" class="thumbnail" />
-                          <p align="center">
+                          <p>
                           <em>"For these tasks, we relied on the excellent scikit-learn package for Python."</em>
-                          <a href="testimonials/testimonials.html">More testimonials</a>
                           </p>
                         </div>
                         <div class="item">
                           <img src="_images/telecomparistech.jpg"
                                class="thumbnail" />
-                          <p align="center">
+                          <p>
                           <em>"The great benefit of scikit-learn is its fast learning curve [...]"</em>
-                          <a href="testimonials/testimonials.html">More testimonials</a>
                           </p>
                         </div>
                         <div class="item">
                           <img src="_images/aweber.png" class="thumbnail" />
-                          <p align="center">
+                          <p>
                           <em>"It allows us to do AWesome stuff we would not otherwise accomplish"</em>
-                          <a href="testimonials/testimonials.html">More testimonials</a>
                           </p>
                         </div>
                     </div>
                 </div>
+                <p align="right">
+                <small class="example-link">
+                <a href="testimonials/testimonials.html">More testimonials</a>
+                </small>
+                </p>
+           </div>
 
-               <a class="btn btn-warning btn-big cite-us"
-                  href="./about.html#citing-scikit-learn">
-                  <b>Cite us!</b>
-              </a>
-            </div>
+            <!-- help us -->
+           <div class="bottom-button">
+               <form target="_top" id="paypal-form" method="post" action="https://www.paypal.com/cgi-bin/webscr">
+               <input type="hidden" value="_s-xclick" name="cmd">
+               <input type="hidden" value="74EYUMF3FTSW8" name="hosted_button_id">
+               </form>
+           <strong>Help us:</strong>
+             <button class="btn btn-warning btn-big" onclick="document.getElementById('paypal-form').submit(); return false;"><b>Donate!</b></button> (<a href="about.html#funding">read more</a>)
+           <a class="btn btn-warning btn-big"
+             href="./about.html#citing-scikit-learn">
+             <b>Cite us!</b>
+           </a>
+           </div>
+
         </div>
     </div>
     </div>
