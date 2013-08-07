@@ -87,6 +87,8 @@ def test_ward_clustering():
     clustering.fit(X)
     labels = clustering.labels_
     assert_true(np.size(np.unique(labels)) == 10)
+    # Turn caching off now
+    clustering = Ward(n_clusters=10, connectivity=connectivity)
     # Check that we obtain the same solution with early-stopping of the
     # tree building
     clustering.compute_full_tree = False

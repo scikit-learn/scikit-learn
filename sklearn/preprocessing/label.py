@@ -66,7 +66,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
 
     def _check_fitted(self):
         if not hasattr(self, "classes_"):
-            raise ValueError("LabelNormalizer was not fitted yet.")
+            raise ValueError("LabelEncoder was not fitted yet.")
 
     def fit(self, y):
         """Fit label encoder

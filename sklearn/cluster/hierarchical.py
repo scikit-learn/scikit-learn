@@ -95,7 +95,7 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True,
                           'structured Ward clustering (i.e. with '
                           'explicit connectivity.', stacklevel=2)
         out = hierarchy.ward(X)
-        children_ = out[:, :2].astype(np.int)
+        children_ = out[:, :2].astype(np.intp)
         return children_, 1, n_samples, None
 
     # Compute the number of nodes
@@ -140,27 +140,27 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True,
         coord_row.extend(len(row) * [ind, ])
         coord_col.extend(row)
 
-    coord_row = np.array(coord_row, dtype=np.int)
-    coord_col = np.array(coord_col, dtype=np.int)
+    coord_row = np.array(coord_row, dtype=np.intp, order='C')
+    coord_col = np.array(coord_col, dtype=np.intp, order='C')
 
     # build moments as a list
-    moments_1 = np.zeros(n_nodes)
+    moments_1 = np.zeros(n_nodes, order='C')
     moments_1[:n_samples] = 1
-    moments_2 = np.zeros((n_nodes, n_features))
+    moments_2 = np.zeros((n_nodes, n_features), order='C')
     moments_2[:n_samples] = X
-    inertia = np.empty(len(coord_row), dtype=np.float)
+    inertia = np.empty(len(coord_row), dtype=np.float, order='C')
     _hierarchical.compute_ward_dist(moments_1, moments_2, coord_row, coord_col,
                                     inertia)
     inertia = list(six.moves.zip(inertia, coord_row, coord_col))
     heapify(inertia)
 
     # prepare the main fields
-    parent = np.arange(n_nodes, dtype=np.int)
+    parent = np.arange(n_nodes, dtype=np.intp)
     heights = np.zeros(n_nodes)
     used_node = np.ones(n_nodes, dtype=bool)
     children = []
 
-    not_visited = np.empty(n_nodes, dtype=np.int8)
+    not_visited = np.empty(n_nodes, dtype=np.int8, order='C')
 
     # recursive merge loop
     for k in range(n_samples, n_nodes):
@@ -186,11 +186,11 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True,
         # List comprehension is faster than a for loop
         [A[l].append(k) for l in coord_col]
         A.append(coord_col)
-        coord_col = np.array(coord_col, dtype=np.int)
-        coord_row = np.empty_like(coord_col)
+        coord_col = np.array(coord_col, dtype=np.intp, order='C')
+        coord_row = np.empty(coord_col.shape, dtype=np.intp, order='C')
         coord_row.fill(k)
         n_additions = len(coord_row)
-        ini = np.empty(n_additions, dtype=np.float)
+        ini = np.empty(n_additions, dtype=np.float, order='C')
 
         _hierarchical.compute_ward_dist(moments_1, moments_2,
                                         coord_row, coord_col, ini)
@@ -268,7 +268,7 @@ def _hc_cut(n_clusters, children, n_leaves):
         # Insert the 2 children and remove the largest node
         heappush(nodes, -these_children[0])
         heappushpop(nodes, -these_children[1])
-    label = np.zeros(n_leaves, dtype=np.int)
+    label = np.zeros(n_leaves, dtype=np.intp)
     for i, node in enumerate(nodes):
         label[_hierarchical._hc_get_descendent(-node, children, n_leaves)] = i
     return label

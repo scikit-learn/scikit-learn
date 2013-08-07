@@ -53,7 +53,7 @@ def densify(matrix):
 
 
 n_samples, n_features = (10, 1000)
-n_nonzeros = n_samples * n_features / 100.
+n_nonzeros = int(n_samples * n_features / 100.)
 data, data_csr = make_sparse_random_data(n_samples, n_features, n_nonzeros)
 
 
