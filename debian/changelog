@@ -1,8 +1,11 @@
 scikit-learn (0.14-1) unstable; urgency=low
 
   * The fresh upstream release
+  * debian/rules
+    - overload dh_auto_clean to call "clean" without -a
+      (see https://github.com/scikit-learn/scikit-learn/issues/2351)
 
- -- Yaroslav Halchenko <debian@onerussian.com>  Wed, 07 Aug 2013 19:30:19 -0400
+ -- Yaroslav Halchenko <debian@onerussian.com>  Wed, 07 Aug 2013 20:02:44 -0400
 
 scikit-learn (0.14~a1+git20-gc9ba2c3-1) UNRELEASED; urgency=low
 

@@ -21,6 +21,12 @@ override_dh_clean:
 	rm -rf build doc/_build doc/auto_examples *-stamp *.egg-info sklearn/datasets/__config__.py
 	dh_clean
 
+# overload call to setup.py due to custom clean action:
+# https://github.com/scikit-learn/scikit-learn/issues/2351
+override_dh_auto_clean:
+	: # still call a standard cleaner if there is more to it
+	-dh_auto_clean
+	python setup.py clean
 
 override_dh_auto_install: ${PYVERS:%=python-install%} ${PYVERS:%=python-test%}
 # Per Python version logic -- install, test, move .so into -lib
