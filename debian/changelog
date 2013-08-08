@@ -7,8 +7,9 @@ scikit-learn (0.14-1) unstable; urgency=low
   * debian/control
     - require sphinx 1.1.3 due to problems with unicode in earlier
       present on older Debian/Ubuntu's versions
+    - multilined Build-Depends
 
- -- Yaroslav Halchenko <debian@onerussian.com>  Wed, 07 Aug 2013 20:06:18 -0400
+ -- Yaroslav Halchenko <debian@onerussian.com>  Wed, 07 Aug 2013 20:13:12 -0400
 
 scikit-learn (0.14~a1+git20-gc9ba2c3-1) UNRELEASED; urgency=low
 
