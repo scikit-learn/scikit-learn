@@ -19,7 +19,6 @@ from sklearn.metrics import recall_score
 
 from sklearn.svm import LinearSVC
 from sklearn.svm import SVC
-from sklearn.cross_validation import cross_val_score
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.linear_model import (LinearRegression, Lasso, ElasticNet, Ridge,
                                   Perceptron)
@@ -28,6 +27,7 @@ from sklearn.grid_search import GridSearchCV
 from sklearn.pipeline import Pipeline
 from sklearn import svm
 from sklearn import datasets
+from sklearn.datasets import make_multilabel_classification
 from sklearn import preprocessing
 
 iris = datasets.load_iris()
@@ -41,45 +41,27 @@ n_classes = 3
 def test_ovr_identical_results_seq_of_seqs():
     # Test that ovr works the same when
     # samples are differently binarized
+    X, Y = make_multilabel_classification(n_samples=100, n_features=4,
+                                          n_classes=4, n_labels=1,
+                                          allow_unlabeled=False)
+
     lbNeg = preprocessing.LabelBinarizer(neg_label=-1)
     lbZero = preprocessing.LabelBinarizer(neg_label=0)
 
-    lbNeg.fit(iris.target)
-    lbZero.fit(iris.target)
+    lbNeg.fit(Y)
+    lbZero.fit(Y)
 
     ovr = OneVsRestClassifier(LinearSVC(random_state=0))
-    predictorNeg = ovr.fit(iris.data, lbNeg.transform(iris.target))
-    predictorZero = ovr.fit(iris.data, lbZero.transform(iris.target))
+    predictorNeg = ovr.fit(X, lbNeg.transform(Y))
+    predictorZero = ovr.fit(X, lbZero.transform(Y))
+    predictorNone = ovr.fit(X, Y)
 
-    predictionNeg = predictorNeg.predict(iris.data)
-    predictionZero = predictorZero.predict(iris.data)
-
-    assert_array_equal(predictionNeg, predictionZero)
-
-
-def test_ovo_identical_results_seq_of_seqs():
-    # Test that ovr works the same when
-    # samples are differently binarized
-    lbNeg = preprocessing.LabelBinarizer(neg_label=-1)
-    lbZero = preprocessing.LabelBinarizer(neg_label=0)
-
-    lbNeg.fit(iris.target)
-    lbZero.fit(iris.target)
-
-    assert_equal(lbNeg.classes_.size, lbZero.classes_.size)
-
-    for cls in range(0, lbNeg.classes_.size):
-        ovo = OneVsOneClassifier(LinearSVC(random_state=0))
-        predictorNeg = ovo.fit(iris.data,
-                               lbNeg.transform(iris.target)[:, cls])
-
-        predictorZero = ovo.fit(iris.data,
-                                lbZero.transform(iris.target)[:, cls])
-
-        predictionNeg = predictorNeg.predict(iris.data)
-        predictionZero = predictorZero.predict(iris.data)
+    predictionNeg = predictorNeg.predict(X)
+    predictionZero = predictorZero.predict(X)
+    predictionNone = predictorNone.predict(X)
 
     assert_array_equal(predictionNeg, predictionZero)
+    assert_array_equal(predictionNeg, predictionNone)
 
 
 def test_ovr_no_class_disjoint_data():
@@ -113,10 +95,33 @@ def test_ovr_no_class_disjoint_data():
     assert_array_equal(y, expected_predictions)
 
 
-def test_ovr_cross_val_score():
-    ovr = OneVsRestClassifier(LinearSVC(random_state=0))
-    scores = cross_val_score(ovr, iris.data, iris.target)
-    assert_greater(scores.mean(), 0.90)
+def test_ovr_no_class_disjoint_data_integer_label():
+    X = np.array([[1, 1, 0, 0], [1, 0, 1, 0], [1, 0, 0, 1],
+                  [0, 1, 1, 0], [0, 1, 0, 1], [0, 0, 1, 1],
+                  [2, 2, 0, 0], [2, 0, 2, 0], [2, 0, 0, 2],
+                  [0, 2, 2, 0], [0, 2, 0, 2], [0, 0, 2, 2]])
+    Y = [[1, 2], [1, 3], [1, 4],
+         [2, 3], [2, 4], [3, 4],
+         [1, 2], [1, 3], [1, 4],
+         [2, 3], [2, 4], [3, 4]]
+
+    classes = set([1, 2, 3, 4])
+
+    ovr = OneVsRestClassifier(SVC(kernel='linear'))
+    ovr.fit(X, Y)
+    assert_equal(set(ovr.classes_), classes)
+
+    x = np.array([[1, 1, 1, 1], [0, 1, 1, 1], [1, 0, 1, 1],
+                  [1, 1, 0, 1], [1, 1, 1, 0]])
+    y = ovr.predict(x)
+
+    expected_predictions = np.array([(1, 2, 3, 4),
+                                     (2, 3, 4),
+                                     (1, 3, 4),
+                                     (1, 2, 4),
+                                     (1, 2, 3)])
+
+    assert_array_equal(y, expected_predictions)
 
 
 def test_ovr_exceptions():
@@ -395,12 +400,6 @@ def test_ovo_ties2():
         multi_clf = OneVsOneClassifier(Perceptron())
         ovo_prediction = multi_clf.fit(X, y).predict(X)
         assert_equal(ovo_prediction[0], (1 + i) % 3)
-
-
-def test_ovo_cross_val_score():
-    ovo = OneVsOneClassifier(LinearSVC(random_state=0))
-    scores = cross_val_score(ovo, iris.data, iris.target)
-    assert_greater(scores.mean(), 0.90)
 
 
 def test_ecoc_exceptions():

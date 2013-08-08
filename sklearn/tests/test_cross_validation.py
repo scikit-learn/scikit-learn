@@ -29,6 +29,11 @@ from sklearn.metrics import make_scorer
 from sklearn.externals import six
 from sklearn.linear_model import Ridge
 from sklearn.svm import SVC
+from sklearn.svm import LinearSVC
+from sklearn.multiclass import OneVsRestClassifier
+from sklearn.multiclass import OneVsOneClassifier
+from sklearn import preprocessing
+from sklearn import datasets
 
 
 class MockListClassifier(BaseEstimator):
@@ -588,3 +593,36 @@ def test_cross_indices_exception():
     assert_raises(ValueError, cval.check_cv, skf, X, y)
     assert_raises(ValueError, cval.check_cv, lolo, X, y)
     assert_raises(ValueError, cval.check_cv, lopo, X, y)
+
+
+def test_ovr_cross_val_score():
+    iris = datasets.load_iris()
+
+    ovr = OneVsRestClassifier(LinearSVC(random_state=0))
+    scores = cval.cross_val_score(ovr, iris.data, iris.target)
+    assert_greater(scores.mean(), 0.90)
+
+
+def test_ovo_cross_val_score():
+    iris = datasets.load_iris()
+
+    ovo = OneVsOneClassifier(LinearSVC(random_state=0))
+    scores = cval.cross_val_score(ovo, iris.data, iris.target)
+    assert_greater(scores.mean(), 0.90)
+
+
+def test_ovr_cross_val_score_num_folds_eq_num_samples():
+    iris = datasets.load_iris()
+
+    ovr = OneVsRestClassifier(LinearSVC(random_state=0))
+
+    lb = preprocessing.LabelBinarizer(neg_label=0)
+    lb.fit(iris.target)
+    numSamples = 100
+    X_train, X_test, y_train, y_test = cval.train_test_split(
+        iris.data[0:numSamples, ], iris.target[0:numSamples, ],
+        test_size=0.99, random_state=0)
+
+    clf = ovr.fit(X_train, y_train)
+    score = clf.score(X_test, y_test)
+    assert_greater(score, 0.30)
