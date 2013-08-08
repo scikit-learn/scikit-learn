@@ -124,11 +124,12 @@ where :math:`c` is any constant, have the same MSR.
 
 For some datasets, it may be beneficial to apply a log transformation,
 because it transforms multiplicative scaling into additive scaling. In
-other words, if :math:`a` is any column vector the MSR of :math:`a
-a^\top` may be large, but the MSR of :math:`\log(a a^\top)` is 0.
+other words, if :math:`u` and :math:`v` are any column vectors, the
+MSR of :math:`u v^\top` may be large, but the MSR of :math:`\log(u
+v^\top)` is 0.
 
 Cheng and Church finds biclusters that are as large as possible, with
-the constraint that a bicluster's MSR must be less than the theshold
+the constraint that a bicluster's MSR must be less than the threshold
 :math:`\delta`. The algorithm proceeds in an iterative greedy fashion.
 It starts with the whole dataset, greedily removes rows and columns
 until :math:`\text{MSR} < \delta`, then greedily adds rows and columns
@@ -199,7 +200,7 @@ are used to form the matrix :math:`Z`:
                         C^{-1/2} V
           \end{bmatrix}
 
-where the the columns of :math:`U` are :math:`u_2, \dots, u_{\ell +
+where the columns of :math:`U` are :math:`u_2, \dots, u_{\ell +
 1}`, and similarly for :math:`V`.
 
 Then the rows of :math:`Z` are clustered using :ref:`k-means
