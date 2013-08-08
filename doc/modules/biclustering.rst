@@ -30,8 +30,11 @@ common types include:
 
 * constant values, constant rows, or constant columns
 * unusually high or low values
+* shift and scale pattern
 * submatrices with low variance
-* correlated rows or columns
+* shift pattern: rows or columns are shifted versions of each other
+* scale pattern: rows or columns are scaled versions of each other
+* correlated rows or columns (includes shift, scale, and shift + scale patterns)
 
 Algorithms also differ in how rows and columns may be assigned to
 biclusters, which leads to different bicluster structures. Block
@@ -96,7 +99,7 @@ its value as predicted by the row, column, and overall mean of the
 matrix:
 
 .. math::
-    a_{ij} - a_{iJ} - a_{Ij} + a_{IJ} \right
+    a_{ij} - a_{iJ} - a_{Ij} + a_{I J}
 
 where
 
@@ -105,37 +108,48 @@ where
 
    a_{Ij} = \frac{1}{m} \sum_{i} a_{ij}
 
-   a_{IJ} = \frac{1}{mn} \sum_{i, j} a_{ij}
+   a_{I J} = \frac{1}{mn} \sum_{i, j} a_{ij}
 
 are the row, column, and overall means of :math:`A`. Then the mean
 squared residue of :math:`A` is:
 
 .. math::
-    \frac{1}{mn} \sum \left (a_{ij} - a_{iJ} - a_{Ij} + a_{IJ} \right)^2
+    \frac{1}{mn} \sum \left (a_{ij} - a_{iJ} - a_{Ij} + a_{I J} \right)^2
 
 The mean squared residue achieves its minimum of 0 when all the rows
-and all the columns of a bicluster are additive shifted versions of
-each other. Constant biclusters, biclusters with constant rows or
-columns, or biclusters with identical rows or columns are special
-cases of this condition, all of which have an MSR of 0. As a
-corollary, additive scaling of the entire bicluster does not affect
-the MSR score of any of its biclusters: :math:`A` and :math:`A+c`,
-where :math:`c` is any constant, have the same MSR.
+and all the columns of a bicluster are shifted versions of each other.
+Constant biclusters, biclusters with constant rows or columns, or
+biclusters with identical rows or columns are special cases of this
+condition, all of which have an MSR of 0. As a corollary, additive
+scaling of the entire bicluster does not affect the MSR score of any
+of its biclusters: :math:`A` and :math:`A+c`, where :math:`c` is any
+constant, have the same MSR.
 
-For some datasets, it may be beneficial to apply a log transformation,
-because it transforms multiplicative scaling into additive scaling. In
-other words, if :math:`u` and :math:`v` are any column vectors, the
-MSR of :math:`u v^\top` may be large, but the MSR of :math:`\log(u
-v^\top)` is 0.
+For this reason, Cheng and Church may be useful to find shift-pattern
+biclusters. It may instead find scale-pattern biclusters after
+applying a log transformation to the data, which converts
+multiplicative scaling into additive scaling. In other words, if
+:math:`u` and :math:`v` are any column vectors, the MSR of :math:`u
+v^\top` may be large, but the MSR of :math:`\log(u v^\top)` is 0.
 
 Cheng and Church finds biclusters that are as large as possible, with
 the constraint that a bicluster's MSR must be less than the threshold
 :math:`\delta`. The algorithm proceeds in an iterative greedy fashion.
 It starts with the whole dataset, greedily removes rows and columns
 until :math:`\text{MSR} < \delta`, then greedily adds rows and columns
-while maintaining the MSR threshold. Once a bicluster has been found,
-Cheng and Church masks those elements with uniform random values, then
-iterates to find the next bicluster.
+while maintaining the bicluster's score. Once a bicluster has been
+found, Cheng and Church masks those elements with uniform random
+values, then iterates to find the next bicluster.
+
+
+.. topic:: Examples:
+
+ * :ref:`example_bicluster_plot_cheng_church.py`: A simple example
+   showing how to generate a dataset with shifted biclusters and
+   analyze it with Cheng and Church.
+
+ * :ref:`example_bicluster_cheng_church_microarray.py`: An example of
+   biclustering a gene microarray dataset with Cheng and Church.
 
 
 .. topic:: References:
