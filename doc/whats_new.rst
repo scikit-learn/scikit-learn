@@ -2129,7 +2129,7 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 
 .. _Fabian Pedregosa: http://fseoane.net/blog/
 
-.. _Mathieu Blondel: http://www.mblondel.org/journal/
+.. _Mathieu Blondel: http://www.mblondel.org
 
 .. _James Bergstra: http://www-etud.iro.umontreal.ca/~bergstrj/
 
