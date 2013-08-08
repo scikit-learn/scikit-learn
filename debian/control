@@ -13,7 +13,6 @@ Build-Depends: debhelper (>= 7.0.50),
                python-nose,
                python-matplotlib,
                python-joblib (>= 0.4.5),
-               swig,
 Standards-Version: 3.9.3
 XS-Python-Version: >= 2.6
 Homepage: http://scikit-learn.sourceforge.net
