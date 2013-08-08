@@ -48,11 +48,11 @@ def test_cheng_church():
             for deletion_threshold in (1.5, 2):
                 data, rows, cols = make_msr(shape, 3, noise=noise,
                                             random_state=0)
-                model = ChengChurch(n_clusters=3, max_msr=max(noise * 2, 1),
+                model = ChengChurch(n_clusters=3, max_msr=10,
                                     deletion_threshold=deletion_threshold,
                                     random_state=0)
                 model.fit(data)
-                assert(consensus_score((rows, cols), model.biclusters_) > 0.8)
+                assert(consensus_score((rows, cols), model.biclusters_) > 0.7)
 
 
 def test_inverse_rows():
