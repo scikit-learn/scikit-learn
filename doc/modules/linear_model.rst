@@ -294,8 +294,8 @@ The objective function to minimize is in this case
    :align: center
    :scale: 50%
 
-The class :class:`ElasticNetCV` can be used to set the parameters `alpha`
-and `rho` by cross-validation.
+The class :class:`ElasticNetCV` can be used to set the parameters
+``alpha`` (:math:`\alpha`) and ``l1_ratio`` (:math:`\rho`) by cross-validation.
 
 .. topic:: Examples:
 
