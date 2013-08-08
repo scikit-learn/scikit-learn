@@ -568,12 +568,6 @@ class BaseSVC(BaseLibSVM, ClassifierMixin):
             self.probability, self.n_support_, self._label,
             self.probA_, self.probB_)
 
-    @property
-    @deprecated("The ``label_`` attribute has been renamed to ``classes_`` "
-                "for consistency and will be removed in 0.15.")
-    def label_(self):
-        return self.classes_
-
 
 class BaseLibLinear(six.with_metaclass(ABCMeta, BaseEstimator)):
     """Base for classes binding liblinear (dense and sparse versions)"""
@@ -712,12 +706,6 @@ class BaseLibLinear(six.with_metaclass(ABCMeta, BaseEstimator)):
 
     @property
     def classes_(self):
-        return self._enc.classes_
-
-    @property
-    @deprecated("The ``label_`` attribute has been renamed to ``classes_`` "
-                "for consistency and will be removed in 0.15.")
-    def label_(self):
         return self._enc.classes_
 
     def _get_bias(self):

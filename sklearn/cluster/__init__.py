@@ -11,16 +11,6 @@ from .hierarchical import ward_tree, Ward, WardAgglomeration
 from .k_means_ import k_means, KMeans, MiniBatchKMeans
 from .dbscan_ import dbscan, DBSCAN
 from .bicluster import SpectralBiclustering, SpectralCoclustering
-from ..utils import deprecated
-
-
-# backward compatibility
-@deprecated("to be removed in 0.15;"
-            " use sklearn.manifold.spectral_embedding instead")
-def spectral_embedding(*args, **kwargs):
-    """Deprecated, use ``sklearn.manifold.spectral_embedding`` instead"""
-    from ..manifold.spectral_embedding_ import spectral_embedding
-    return spectral_embedding(*args, **kwargs)
 
 
 __all__ = ['AffinityPropagation',

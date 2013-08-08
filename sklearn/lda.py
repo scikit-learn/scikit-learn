@@ -185,13 +185,6 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
                            np.log(self.priors_))
         return self
 
-    @property
-    def scaling(self):  # pragma: no cover
-        warnings.warn("LDA.scaling is deprecated and will be removed in 0.15."
-                      " Use LDA.scalings_ instead.", DeprecationWarning,
-                      stacklevel=2)
-        return self.scalings_
-
     def _decision_function(self, X):
         X = array2d(X)
         # center and scale data

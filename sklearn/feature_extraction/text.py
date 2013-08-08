@@ -863,13 +863,6 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         return [t for t, i in sorted(six.iteritems(self.vocabulary_),
                                      key=itemgetter(1))]
 
-    @property
-    def max_df_stop_words_(self):
-        warnings.warn(
-            "The 'stop_words_ attribute was renamed to 'max_df_stop_words'. "
-            "The old attribute will be removed in 0.15.", DeprecationWarning)
-        return self.stop_words_
-
 
 def _make_int_array():
     """Construct an array.array of a type suitable for scipy.sparse indices."""

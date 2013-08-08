@@ -110,45 +110,6 @@ class ParameterGrid(object):
                    for p in self.param_grid)
 
 
-class IterGrid(ParameterGrid):
-    """Generators on the combination of the various parameter lists given.
-
-    This class is DEPRECATED. It was renamed to ``ParameterGrid``. The name
-    ``IterGrid`` will be removed in 0.15.
-
-    Parameters
-    ----------
-    param_grid : dict of string to sequence
-        The parameter grid to explore, as a dictionary mapping estimator
-        parameters to sequences of allowed values.
-
-    Returns
-    -------
-    params : dict of string to any
-        **Yields** dictionaries mapping each estimator parameter to one of its
-        allowed values.
-
-    Examples
-    --------
-    >>> from sklearn.grid_search import IterGrid
-    >>> param_grid = {'a':[1, 2], 'b':[True, False]}
-    >>> list(IterGrid(param_grid)) == (
-    ...    [{'a': 1, 'b': True}, {'a': 1, 'b': False},
-    ...     {'a': 2, 'b': True}, {'a': 2, 'b': False}])
-    True
-
-    See also
-    --------
-    :class:`GridSearchCV`:
-        uses ``IterGrid`` to perform a full parallelized parameter search.
-    """
-
-    def __init__(self, param_grid):
-        warnings.warn("IterGrid was renamed to ParameterGrid and will be"
-                      " removed in 0.15.", DeprecationWarning)
-        super(IterGrid, self).__init__(param_grid)
-
-
 class ParameterSampler(object):
     """Generator on parameters sampled from given distributions.
 

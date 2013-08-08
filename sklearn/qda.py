@@ -137,20 +137,6 @@ class QDA(BaseEstimator, ClassifierMixin):
         self.rotations_ = rotations
         return self
 
-    @property
-    def scalings(self):  # pragma: no cover
-        warnings.warn("QDA.scalings is deprecated and will be removed in 0.15."
-                      " Use QDA.scalings_ instead.", DeprecationWarning,
-                      stacklevel=2)
-        return self.scalings_
-
-    @property
-    def rotations(self):  # pragma: no cover
-        warnings.warn("QDA.rotations is deprecated and will be removed in "
-                      "0.15. Use QDA.rotations_ instead.", DeprecationWarning,
-                      stacklevel=2)
-        return self.rotations_
-
     def _decision_function(self, X):
         X = array2d(X)
         norm2 = []

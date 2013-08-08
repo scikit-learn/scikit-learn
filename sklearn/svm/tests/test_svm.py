@@ -55,11 +55,6 @@ def test_libsvm_iris():
         clf = svm.SVC(kernel=k).fit(iris.data, iris.target)
         assert_greater(np.mean(clf.predict(iris.data) == iris.target), 0.9)
 
-    # check deprecated ``label_`` attribute:
-    with warnings.catch_warnings(record=True):
-        # catch deprecation warning
-        assert_array_equal(clf.label_, np.sort(clf.label_))
-
     assert_array_equal(clf.classes_, np.sort(clf.classes_))
 
     # check also the low-level API

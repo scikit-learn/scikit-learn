@@ -233,12 +233,8 @@ class _BaseKFold(with_metaclass(ABCMeta, _PartitionIterator)):
     """Base class to validate KFold approaches"""
 
     @abstractmethod
-    def __init__(self, n, n_folds, indices, k=None):
+    def __init__(self, n, n_folds, indices):
         super(_BaseKFold, self).__init__(n, indices)
-        if k is not None:  # pragma: no cover
-            warnings.warn("The parameter k was renamed to n_folds and will be"
-                          " removed in 0.15.", DeprecationWarning)
-            n_folds = k
 
         if abs(n_folds - int(n_folds)) >= np.finfo('f').eps:
             raise ValueError("n_folds must be an integer")
@@ -313,8 +309,8 @@ class KFold(_BaseKFold):
     """
 
     def __init__(self, n, n_folds=3, indices=True, shuffle=False,
-                 random_state=None, k=None):
-        super(KFold, self).__init__(n, n_folds, indices, k)
+                 random_state=None):
+        super(KFold, self).__init__(n, n_folds, indices)
         random_state = check_random_state(random_state)
         self.idxs = np.arange(n)
         if shuffle:
@@ -388,8 +384,8 @@ class StratifiedKFold(_BaseKFold):
     complementary.
     """
 
-    def __init__(self, y, n_folds=3, indices=True, k=None):
-        super(StratifiedKFold, self).__init__(len(y), n_folds, indices, k)
+    def __init__(self, y, n_folds=3, indices=True):
+        super(StratifiedKFold, self).__init__(len(y), n_folds, indices)
         y = np.asarray(y)
         _, y_sorted = unique(y, return_inverse=True)
         min_labels = np.min(np.bincount(y_sorted))
