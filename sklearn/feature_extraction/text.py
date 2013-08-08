@@ -736,7 +736,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         values = np.ones(len(j_indices))
 
         X = sp.csr_matrix((values, j_indices, indptr),
-                          shape=(len(indptr) - 1, len(vocabulary)),
+                          shape=(len(indptr) - 1, max(vocabulary.itervalues()) + 1),
                           dtype=self.dtype)
         X.sum_duplicates()
         return vocabulary, X
