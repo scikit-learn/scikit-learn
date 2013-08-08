@@ -64,9 +64,7 @@ def test_isotonic_sample_weight_parameter_default_value():
 
 def test_isotonic_min_max_boundaries():
     # check if min value is used correctly
-    ir = IsotonicRegression()
-    ir.y_min = 2
-    ir.y_max = 4
+    ir = IsotonicRegression(y_min = 2, y_max = 4)
     n = 6
     x = np.arange(n)
     y = np.arange(n)
