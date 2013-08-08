@@ -74,25 +74,6 @@ def test_inverse_rows():
     assert(new_score > old_score)
 
 
-def test_inverse_cols():
-    data = np.zeros((10, 15))
-    data[:, :10] = np.arange(100).reshape(10, 10).T
-    data[:, 10:15] = -np.arange(100, 150).reshape(5, 10).T
-    rows = np.ones(10, dtype=np.bool)
-    cols = np.ones(15, dtype=np.bool)
-
-    model = ChengChurch(n_clusters=1, max_msr=1, random_state=0,
-                        inverse_columns=False)
-    model.fit(data)
-    old_score = consensus_score((rows, cols), model.biclusters_)
-
-    model = ChengChurch(n_clusters=1, max_msr=1, random_state=0,
-                        inverse_columns=True)
-    model.fit(data)
-    new_score = consensus_score((rows, cols), model.biclusters_)
-    assert(new_score > old_score)
-
-
 def test_empty_biclusters():
     """Cheng and Church should always find at least one bicluster.
 

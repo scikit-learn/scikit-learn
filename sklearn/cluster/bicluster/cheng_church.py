@@ -286,8 +286,7 @@ class ChengChurch(six.with_metaclass(ABCMeta, BaseEstimator,
                                            inc.msr)
                 inc.remove_cols(inc.col_idxs[to_remove])
 
-            if (n_rows == len(inc.row_idxs) and
-                n_cols == len(inc.col_idxs)):
+            if (n_rows == len(inc.row_idxs) and n_cols == len(inc.col_idxs)):
                 break
         return inc.rows, inc.cols
 
