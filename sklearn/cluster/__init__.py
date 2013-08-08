@@ -28,7 +28,6 @@ __all__ = ['AffinityPropagation',
            'k_means',
            'mean_shift',
            'spectral_clustering',
-           'spectral_embedding',
            'ward_tree',
            'SpectralBiclustering',
            'SpectralCoclustering']
