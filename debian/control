@@ -13,7 +13,7 @@ Build-Depends: debhelper (>= 7.0.50),
                python-matplotlib,
                python-joblib (>= 0.4.5), python-support
 Build-Depends-Indep:
-               python-sphinx (>= 1.1.3~), python-imaging, graphviz,
+               python-sphinx (>= 1.0), python-imaging, graphviz,
 Standards-Version: 3.9.4
 XS-Python-Version: >= 2.6
 Homepage: http://scikit-learn.sourceforge.net

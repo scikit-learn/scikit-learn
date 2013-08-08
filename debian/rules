@@ -7,6 +7,10 @@ PACKAGE_ROOT_DIR = debian/${PACKAGE_NAME}
 PYVERS = $(shell pyversions -vr)
 PYVER = $(shell pyversions  -vd)
 
+SPHINX_VER := $(shell python -c 'from sphinx import __version__; print __version__')
+NODOC = $(shell dpkg --compare-versions $(SPHINX_VER) lt 10.1.3 && echo "nodoc" || echo "")
+export DEB_BUILD_OPTIONS += $(NODOC)
+
 # Some tests are known to fail randomly so need to be excluded ATM
 NOSEARGS := 
 # --exclude='test_(sparse_svc_clone_with_callable_kernel|spectral_clustering_sparse|ovr_fit_predict)'
@@ -56,6 +60,9 @@ else
 	export MPLCONFIGDIR=$(CURDIR)/build HOME=$(CURDIR)/build; \
 	 cd doc; $(MAKE) html
 endif
+else
+	mkdir -p doc/_build/html
+	echo "<HTML><BODY><P>sklearn documentation was not built.<P>Please visit <A HREF='http://scikit-learn.org'>http://scikit-learn.org</A></BODY></HTML>" >| doc/_build/html/index.html
 endif
 	: # Use jquery from Debian package, so prune shipped one
 	-rm doc/_build/html/_static/jquery.js

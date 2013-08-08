@@ -10,8 +10,8 @@ scikit-learn (0.14-1) unstable; urgency=low
       - dropped swig (not needed since awhile)
       - moved sphinx, PIL, and graphviz to Build-Depends-Indep since
         needed only for -doc package
-      - require sphinx 1.1.3 due to problems with unicode in earlier
-        present on older Debian/Ubuntu's versions
+      - do not build documentation when sphinx < 1.1.3 due to problems
+        with unicode in earlier present on older Debian/Ubuntu's versions
     - boosted policy to 3.9.4 (no further changes)
     - migrate from python-support to dh_python2
 
