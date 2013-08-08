@@ -259,6 +259,22 @@ def test_countvectorizer_custom_vocabulary_pipeline():
     assert_equal(X.shape[1], len(what_we_like))
 
 
+def test_countvectorizer_custom_vocabulary_repeated_indeces():
+    vocab = {"pizza": 0, "beer": 0}
+    try:
+        vect = CountVectorizer(vocabulary=vocab)
+    except ValueError as e:
+        assert_in("vocabulary contains repeated indices", str(e).lower())
+
+
+def test_countvectorizer_custom_vocabulary_gap_index():
+    vocab = {"pizza": 1, "beer": 2}
+    try:
+        vect = CountVectorizer(vocabulary=vocab)
+    except ValueError as e:
+        assert_in("doesn't contain index", str(e).lower())
+
+
 def test_countvectorizer_stop_words():
     cv = CountVectorizer()
     cv.set_params(stop_words='english')

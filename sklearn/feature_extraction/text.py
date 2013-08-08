@@ -565,7 +565,9 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
     vocabulary : Mapping or iterable, optional
         Either a Mapping (e.g., a dict) where keys are terms and values are
         indices in the feature matrix, or an iterable over terms. If not
-        given, a vocabulary is determined from the input documents.
+        given, a vocabulary is determined from the input documents. Indices
+        in the mapping should not be repeated and should not have any gap
+        between 0 and the largest index.
 
     binary : boolean, False by default.
         If True, all non zero counts are set to 1. This is useful for discrete
@@ -639,6 +641,13 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
                 vocabulary = dict((t, i) for i, t in enumerate(vocabulary))
             if not vocabulary:
                 raise ValueError("empty vocabulary passed to fit")
+            indices = set(six.itervalues(vocabulary))
+            if len(indices) != len(vocabulary):
+                raise ValueError("Vocabulary contains repeated indices.")
+            for i in xrange(len(vocabulary)):
+                if i not in indices:
+                    msg = "Vocabulary of size %d doesn't contain index %d."
+                    raise ValueError(msg % (len(vocabulary), i))
             self.fixed_vocabulary = True
             self.vocabulary_ = dict(vocabulary)
         else:
