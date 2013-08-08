@@ -1,5 +1,11 @@
 .. currentmodule:: sklearn
 
+0.14.1
+=======
+
+0.14.1 is a minor bug-fix release that fixed a small regression in the
+setup.py
+
 .. _changes_0_14:
 
 0.14
