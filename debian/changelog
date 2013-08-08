@@ -10,8 +10,10 @@ scikit-learn (0.14-1) unstable; urgency=low
     - Build-Depends:
       - multilined
       - dropped swig (not needed since awhile)
+      - moved sphinx, PIL, and graphviz to Build-Depends-Indep since
+        needed only for -doc package
 
- -- Yaroslav Halchenko <debian@onerussian.com>  Wed, 07 Aug 2013 20:14:16 -0400
+ -- Yaroslav Halchenko <debian@onerussian.com>  Wed, 07 Aug 2013 20:16:04 -0400
 
 scikit-learn (0.14~a1+git20-gc9ba2c3-1) UNRELEASED; urgency=low
 
