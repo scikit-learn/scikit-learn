@@ -8,7 +8,7 @@ descr = """A set of python modules for machine learning and data mining"""
 import sys
 import os
 import shutil
-from distutils.core import Command
+from distutils.command.clean import clean as Clean
 
 if sys.version_info[0] < 3:
     import __builtin__ as builtins
@@ -56,18 +56,11 @@ else:
 
 ###############################################################################
 
-class CleanCommand(Command):
+class CleanCommand(Clean):
     description = "Remove build directories, and compiled file in the source tree"
-    user_options = []
-
-    def initialize_options(self):
-        self.cwd = None
-
-    def finalize_options(self):
-        self.cwd = os.getcwd()
 
     def run(self):
-        assert os.getcwd() == self.cwd, 'Must be in package root: %s' % self.cwd
+        Clean.run(self)
         if os.path.exists('build'):
             shutil.rmtree('build')
         for dirpath, dirnames, filenames in os.walk('sklearn'):
