@@ -13,6 +13,7 @@ scikit-learn (0.14-1) unstable; urgency=low
       - require sphinx 1.1.3 due to problems with unicode in earlier
         present on older Debian/Ubuntu's versions
     - boosted policy to 3.9.4 (no further changes)
+    - migrate from python-support to dh_python2
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Wed, 07 Aug 2013 20:16:04 -0400
 

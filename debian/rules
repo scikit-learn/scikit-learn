@@ -14,7 +14,7 @@ NOSEARGS :=
 # Mega rule
 %:
 	: # Explicit build system to avoid use of all-in-1 Makefile
-	dh $@ --buildsystem=python_distutils
+	dh $@ --buildsystem=python_distutils --with python2
 
 
 override_dh_clean:
@@ -65,7 +65,7 @@ override_dh_installchangelogs:
 	dh_installchangelogs doc/whats_new.rst
 
 ## move binary libraries into -lib
-override_dh_pysupport:
+override_dh_python2:
 	: # Move platform-specific libraries into -lib
 	set -e; \
 	for lib in $$(find $(PACKAGE_ROOT_DIR)/usr -name '*.so'); do \
@@ -86,7 +86,7 @@ override_dh_pysupport:
 		mkdir -p $$skbd_; \
 		mv $$skd $$skbd_; \
 	done
-	dh_pysupport
+	dh_python2
 
 ## immediately useable documentation and exemplar scripts/data
 override_dh_compress:
