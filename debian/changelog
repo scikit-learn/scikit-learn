@@ -1,4 +1,11 @@
-scikit-learn (0.14-1) unstable; urgency=low
+scikit-learn (0.14.1-1) unstable; urgency=low
+
+  * The freshiest upstream release
+    - addressed 'clean -a' issue, thus removing the dh_auto_clean override
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Thu, 08 Aug 2013 14:06:48 -0400
+
+scikit-learn (0.14-1) UNRELEASED; urgency=low
 
   * The fresh upstream release
   * debian/rules
