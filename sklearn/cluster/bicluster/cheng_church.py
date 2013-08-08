@@ -167,12 +167,7 @@ class ChengChurch(six.with_metaclass(ABCMeta, BaseEstimator,
         Number of columns at which to switch to single node deletion.
 
     inverse_rows : bool, optional, default: False
-        If the inverse of a row has a low MSR, add it to the bicluster
-        during node addition.
-
-    inverse_columns : bool, optional, default: False
-        If the inverse of a column has a low MSR, add it to the bicluster
-        during node addition.
+        During node addition, add rows if their inverse has a low MSR.
 
     random_state : int seed, RandomState instance, or None (default)
         A pseudo random number generator used by the K-Means
@@ -199,14 +194,13 @@ class ChengChurch(six.with_metaclass(ABCMeta, BaseEstimator,
     def __init__(self, n_clusters=100, max_msr=1.0,
                  deletion_threshold=1.5, row_deletion_cutoff=100,
                  column_deletion_cutoff=100, inverse_rows=False,
-                 inverse_columns=False, random_state=None):
+                 random_state=None):
         self.n_clusters = n_clusters
         self.max_msr = max_msr
         self.deletion_threshold = deletion_threshold
         self.row_deletion_cutoff = row_deletion_cutoff
         self.column_deletion_cutoff = column_deletion_cutoff
         self.inverse_rows = inverse_rows
-        self.inverse_columns = inverse_columns
         self.random_state = random_state
 
     def _check_parameters(self):
@@ -281,8 +275,8 @@ class ChengChurch(six.with_metaclass(ABCMeta, BaseEstimator,
         """Iteratively remove multiple rows and columns at once."""
         inc = IncrementalMSR(rows, cols, X)
         while inc.msr > self.max_msr:
-            n_rows = np.count_nonzero(rows)
-            n_cols = np.count_nonzero(cols)
+            n_rows = len(inc.row_idxs)
+            n_cols = len(inc.col_idxs)
             if n_rows >= self.row_deletion_cutoff:
                 to_remove = inc.row_msr > (self.deletion_threshold * inc.msr)
                 inc.remove_rows(inc.row_idxs[to_remove])
@@ -292,8 +286,8 @@ class ChengChurch(six.with_metaclass(ABCMeta, BaseEstimator,
                                            inc.msr)
                 inc.remove_cols(inc.col_idxs[to_remove])
 
-            if (n_rows == np.count_nonzero(rows)) and \
-               (n_cols == np.count_nonzero(cols)):
+            if (n_rows == len(inc.row_idxs) and
+                n_cols == len(inc.col_idxs)):
                 break
         return inc.rows, inc.cols
 
@@ -303,19 +297,12 @@ class ChengChurch(six.with_metaclass(ABCMeta, BaseEstimator,
             n_rows = np.count_nonzero(rows)
             n_cols = np.count_nonzero(cols)
 
-            old_cols = cols.copy()  # save for inverse
             msr = self._msr(rows, cols, X)
             col_msr = self._col_msr(rows, cols, X)
             to_add = col_msr < msr
             cols = cols + to_add
 
-            if self.inverse_columns:
-                col_msr = self._col_msr(rows, old_cols, X,
-                                        inverse=True)
-                to_add = col_msr < msr
-                cols = cols + to_add
-
-            old_rows = rows.copy()  # save for inverse
+            old_rows = rows.copy()  # save for row inverse
             msr = self._msr(rows, cols, X)
             row_msr = self._row_msr(rows, cols, X)
             to_add = row_msr < msr
