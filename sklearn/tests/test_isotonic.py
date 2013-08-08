@@ -48,7 +48,6 @@ def test_assert_raises_exceptions():
 def test_isotonic_sample_weight_parameter_default_value():
     # check if default value of sample_weight parameter is one
     ir = IsotonicRegression()
-    sample_weight_default_value = 1
     # random test data
     rng = np.random.RandomState(42)
     n = 100
@@ -64,7 +63,7 @@ def test_isotonic_sample_weight_parameter_default_value():
 
 def test_isotonic_min_max_boundaries():
     # check if min value is used correctly
-    ir = IsotonicRegression(y_min = 2, y_max = 4)
+    ir = IsotonicRegression(y_min=2, y_max=4)
     n = 6
     x = np.arange(n)
     y = np.arange(n)
