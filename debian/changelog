@@ -2,6 +2,9 @@ scikit-learn (0.14.1-1) unstable; urgency=low
 
   * The freshiest upstream release
     - addressed 'clean -a' issue, thus removing the dh_auto_clean override
+  * debian/rules
+    - if available cython >= 0.19 -- re-build Cythonized sources while
+      monitoring for changes using dh_autoreconf
 
  -- Yaroslav Halchenko <debian@onerussian.com>  Thu, 08 Aug 2013 14:06:48 -0400
 
