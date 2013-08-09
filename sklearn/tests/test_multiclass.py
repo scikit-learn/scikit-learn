@@ -42,8 +42,7 @@ def test_ovr_identical_results_seq_of_seqs():
     # Test that ovr works the same when
     # samples are differently binarized
     X, Y = make_multilabel_classification(n_samples=100, n_features=4,
-                                          n_classes=4, n_labels=1,
-                                          allow_unlabeled=False)
+                                          n_classes=4, n_labels=2)
 
     lbNeg = preprocessing.LabelBinarizer(neg_label=-1)
     lbZero = preprocessing.LabelBinarizer(neg_label=0)
@@ -64,64 +63,43 @@ def test_ovr_identical_results_seq_of_seqs():
     assert_array_equal(predictionNeg, predictionNone)
 
 
-def test_ovr_no_class_disjoint_data():
+def test_ovr_no_class_disjoint():
     X = np.array([[1, 1, 0, 0], [1, 0, 1, 0], [1, 0, 0, 1],
                   [0, 1, 1, 0], [0, 1, 0, 1], [0, 0, 1, 1],
                   [2, 2, 0, 0], [2, 0, 2, 0], [2, 0, 0, 2],
                   [0, 2, 2, 0], [0, 2, 0, 2], [0, 0, 2, 2]])
-    Y = [["left", "right"], ["left", "up"], ["left", "down"],
-         ["right", "up"], ["right", "down"], ["up", "down"],
-         ["left", "right"], ["left", "up"], ["left", "down"],
-         ["right", "up"], ["right", "down"], ["up", "down"]]
 
-    classes = set("left right up down".split())
+    Y_integers = [[1, 2], [1, 3], [1, 4],
+                  [2, 3], [2, 4], [3, 4],
+                  [1, 2], [1, 3], [1, 4],
+                  [2, 3], [2, 4], [3, 4]]
+
+    Y_strings = [["left", "right"], ["left", "up"], ["left", "down"],
+                 ["right", "up"], ["right", "down"], ["up", "down"],
+                 ["left", "right"], ["left", "up"], ["left", "down"],
+                 ["right", "up"], ["right", "down"], ["up", "down"]]
 
     ovr = OneVsRestClassifier(SVC(kernel='linear'))
-    ovr.fit(X, Y)
-    assert_equal(set(ovr.classes_), classes)
 
     x = np.array([[1, 1, 1, 1], [0, 1, 1, 1], [1, 0, 1, 1],
                   [1, 1, 0, 1], [1, 1, 1, 0]])
-    y = ovr.predict(x)
+    y_integers = ovr.fit(X, Y_integers).predict(x)
+    y_strings = ovr.fit(X, Y_strings).predict(x)
 
-    expected_predictions = np.array([('down', 'left', 'right', 'up'),
-                                     ('down', 'right', 'up'),
-                                     ('down', 'left', 'up'),
-                                     ('down', 'left', 'right'),
-                                     ('left', 'right', 'up')])
+    expected_predictions_integers = np.array([(1, 2, 3, 4),
+                                              (2, 3, 4),
+                                              (1, 3, 4),
+                                              (1, 2, 4),
+                                              (1, 2, 3)])
 
-    y.sort()
-    expected_predictions.sort()
-    assert_array_equal(y, expected_predictions)
+    expected_predictions_strings = np.array([('down', 'left', 'right', 'up'),
+                                             ('down', 'right', 'up'),
+                                             ('down', 'left', 'up'),
+                                             ('down', 'left', 'right'),
+                                             ('left', 'right', 'up')])
 
-
-def test_ovr_no_class_disjoint_data_integer_label():
-    X = np.array([[1, 1, 0, 0], [1, 0, 1, 0], [1, 0, 0, 1],
-                  [0, 1, 1, 0], [0, 1, 0, 1], [0, 0, 1, 1],
-                  [2, 2, 0, 0], [2, 0, 2, 0], [2, 0, 0, 2],
-                  [0, 2, 2, 0], [0, 2, 0, 2], [0, 0, 2, 2]])
-    Y = [[1, 2], [1, 3], [1, 4],
-         [2, 3], [2, 4], [3, 4],
-         [1, 2], [1, 3], [1, 4],
-         [2, 3], [2, 4], [3, 4]]
-
-    classes = set([1, 2, 3, 4])
-
-    ovr = OneVsRestClassifier(SVC(kernel='linear'))
-    ovr.fit(X, Y)
-    assert_equal(set(ovr.classes_), classes)
-
-    x = np.array([[1, 1, 1, 1], [0, 1, 1, 1], [1, 0, 1, 1],
-                  [1, 1, 0, 1], [1, 1, 1, 0]])
-    y = ovr.predict(x)
-
-    expected_predictions = np.array([(1, 2, 3, 4),
-                                     (2, 3, 4),
-                                     (1, 3, 4),
-                                     (1, 2, 4),
-                                     (1, 2, 3)])
-
-    assert_array_equal(y, expected_predictions)
+    assert_array_equal(y_integers, expected_predictions_integers)
+    assert_array_equal(y_strings, expected_predictions_strings)
 
 
 def test_ovr_exceptions():
