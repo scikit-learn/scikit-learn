@@ -246,17 +246,13 @@ class ChengChurch(six.with_metaclass(ABCMeta, BaseEstimator,
                    X[rows][:, cols].mean())
         return np.power(arr, 2).mean(axis=1)
 
-    def _col_msr(self, rows, cols, X, inverse=False):
+    def _col_msr(self, rows, cols, X):
         """Compute MSR of all columns for adding them to the bicluster."""
         if not rows.size or not cols.size:
             raise EmptyBiclusterException()
         row_mean = X[rows][:, cols].mean(axis=1, keepdims=True)
         col_mean = X[rows, :].mean(axis=0)
-        if inverse:
-            arr = (-X[rows, :] - row_mean + col_mean +
-                   X[rows][:, cols].mean())
-        else:
-            arr = X[rows, :] - row_mean - col_mean + X[rows][:, cols].mean()
+        arr = X[rows, :] - row_mean - col_mean + X[rows][:, cols].mean()
         return np.power(arr, 2).mean(axis=0)
 
     def _single_node_deletion(self, rows, cols, X):
