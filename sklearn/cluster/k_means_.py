@@ -860,10 +860,16 @@ def _mini_batch_step(X, x_squared_norms, centers, counts,
             # Flip the ordering of the distances.
             distances -= distances.max()
             distances *= -1
-            rand_vals = random_state.rand(n_reassigns)
-            rand_vals *= distances.sum()
-            new_centers = np.searchsorted(distances.cumsum(),
-                                          rand_vals)
+
+            labels = np.array(range(0, number_of_reassignments))
+
+            # picking number_of_reassingments centers
+            # with probability to their
+            new_centers = pick_unique_labels(distances,
+                                             labels,
+                                             number_of_reassignments,
+                                             random_state)
+
             if verbose:
                 print("[MiniBatchKMeans] Reassigning %i cluster centers."
                       % n_reassigns)
@@ -1270,3 +1276,27 @@ class MiniBatchKMeans(KMeans):
                 X, x_squared_norms, self.cluster_centers_)
 
         return self
+
+
+def pick_unique_labels(relative_probabilties, labels, no_picks, random_state):
+    # array of labels randomly picked
+    picks = np.zeros(no_picks, dtype=np.int)
+
+    # making sure we do not exceed any array
+    iterations = min(len(relative_probabilties), len(labels))
+    iterations = min(iterations, no_picks)
+    for p in range(0, iterations):
+        # picking one value from set of elements
+        # with their relative probabilties
+        rand_val = random_state.rand()*relative_probabilties.sum()
+        new_pick = np.searchsorted(relative_probabilties.cumsum(), rand_val)
+
+        # taking note of pick
+        picks[p] = labels[new_pick]
+
+        # label has been picked
+        # it should not be picked next time
+        relative_probabilties = np.delete(relative_probabilties, new_pick)
+        labels = np.delete(labels, new_pick)
+
+    return picks
