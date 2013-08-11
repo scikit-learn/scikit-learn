@@ -639,6 +639,12 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
                 vocabulary = dict((t, i) for i, t in enumerate(vocabulary))
             if not vocabulary:
                 raise ValueError("empty vocabulary passed to fit")
+            indices = set(vocabulary.values())
+            if len(indices) != len(vocabulary):
+                raise ValueError("the vocabulary contains repeated indices")
+            for i in xrange(len(vocabulary)):
+                if i not in indices:
+                    raise ValueError("the vocabulary of size %d, doesn't contain index %d" % (len(vocabulary),i))
             self.fixed_vocabulary = True
             self.vocabulary_ = dict(vocabulary)
         else:
@@ -736,7 +742,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         values = np.ones(len(j_indices))
 
         X = sp.csr_matrix((values, j_indices, indptr),
-                          shape=(len(indptr) - 1, max(vocabulary.itervalues()) + 1),
+                          shape=(len(indptr) - 1, len(vocabulary)),
                           dtype=self.dtype)
         X.sum_duplicates()
         return vocabulary, X
