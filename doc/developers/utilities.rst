@@ -181,9 +181,6 @@ Graph Routines
 Backports
 =========
 
-- :class:`fixes.Counter` (partial backport of ``collections.Counter`` from
-  Python 2.7) Used in ``sklearn.feature_extraction.text``.
-
 - :func:`fixes.unique`: (backport of ``np.unique`` from numpy 1.4).  Find the
   unique entries in an array.  In numpy versions < 1.4, ``np.unique`` is less
   flexible.  Used in :mod:`sklearn.cross_validation`.

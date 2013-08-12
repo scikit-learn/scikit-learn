@@ -6,36 +6,13 @@ at which the fixe is no longer needed.
 # Authors: Emmanuelle Gouillart <emmanuelle.gouillart@normalesup.org>
 #          Gael Varoquaux <gael.varoquaux@normalesup.org>
 #          Fabian Pedregosa <fpedregosa@acm.org>
-#          Lars Buitinck <L.J.Buitinck@uva.nl>
 # License: BSD 3 clause
 
-import collections
 from operator import itemgetter
 import inspect
 from sklearn.externals import six
 
 import numpy as np
-
-try:
-    Counter = collections.Counter
-except AttributeError:
-    class Counter(collections.defaultdict):
-        """Partial replacement for Python 2.7 collections.Counter."""
-        def __init__(self, iterable=(), **kwargs):
-            super(Counter, self).__init__(int, **kwargs)
-            self.update(iterable)
-
-        def most_common(self):
-            return sorted(six.iteritems(self), key=itemgetter(1), reverse=True)
-
-        def update(self, other):
-            """Adds counts for elements in other"""
-            if isinstance(other, self.__class__):
-                for x, n in six.iteritems(other):
-                    self[x] += n
-            else:
-                for x in other:
-                    self[x] += 1
 
 
 def lsqr(X, y, tol=1e-3):
