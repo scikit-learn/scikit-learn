@@ -70,7 +70,6 @@ cdef class Splitter:
     cdef SIZE_t start                    # Start position for the current node
     cdef SIZE_t end                      # End position for the current ndoe
 
-
     cdef np.ndarray X
     cdef DOUBLE_t* y
     cdef SIZE_t y_stride
