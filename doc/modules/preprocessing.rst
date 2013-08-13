@@ -268,8 +268,7 @@ probabilistic estimators that make assumption that the input data
 is distributed according to a multi-variate `Bernoulli distribution
 <http://en.wikipedia.org/wiki/Bernoulli_distribution>`_. For instance,
 this is the case for the most common class of `(Restricted) Boltzmann
-Machines <http://en.wikipedia.org/wiki/Boltzmann_machine>`_
-(not yet implemented in the scikit).
+Machines <http://en.wikipedia.org/wiki/Boltzmann_machine>`_.
 
 It is also common among the text processing community to use binary
 feature values (probably to simplify the probabilistic reasoning) even
