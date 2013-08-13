@@ -94,7 +94,7 @@ plot_embedding(X_projected, "Random Projection of the digits")
 
 print("Computing PCA projection")
 t0 = time()
-X_pca = decomposition.RandomizedPCA(n_components=2).fit_transform(X)
+X_pca = decomposition.TruncatedSVD(n_components=2).fit_transform(X)
 plot_embedding(X_pca,
                "Principal Components projection of the digits (time %.2fs)" %
                (time() - t0))
@@ -192,7 +192,7 @@ hasher = ensemble.RandomTreesEmbedding(n_estimators=200, random_state=0,
                                        max_depth=5)
 t0 = time()
 X_transformed = hasher.fit_transform(X)
-pca = decomposition.RandomizedPCA(n_components=2)
+pca = decomposition.TruncatedSVD(n_components=2)
 X_reduced = pca.fit_transform(X_transformed)
 
 plot_embedding(X_reduced,

@@ -24,7 +24,7 @@ from .utils import check_arrays, check_random_state, safe_mask
 from .utils.fixes import unique
 from .externals.joblib import Parallel, delayed
 from .externals.six import string_types, with_metaclass
-from .metrics import SCORERS, Scorer
+from .metrics.scorer import _deprecate_loss_and_score_funcs
 
 __all__ = ['Bootstrap',
            'KFold',
@@ -1083,17 +1083,16 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
     X : array-like of shape at least 2D
         The data to fit.
 
-    y : array-like, optional
+    y : array-like, optional, default: None
         The target variable to try to predict in the case of
         supervised learning.
 
-    scoring : string or callable, optional
-        Either one of either a string ("zero_one", "f1", "roc_auc", ... for
-        classification, "mse", "r2", ... for regression) or a callable.
-        See 'Scoring objects' in the model evaluation section of the user guide
-        for details.
+    scoring : string, callable or None, optional, default: None
+        A string (see model evaluation documentation) or
+        a scorer callable object / function with signature
+        ``scorer(estimator, X, y)``.
 
-    cv : cross-validation generator, optional
+    cv : cross-validation generator, optional, default: None
         A cross-validation generator. If None, a 3-fold cross
         validation is used or 3-fold stratified cross-validation
         when y is supplied and estimator is a classifier.
@@ -1132,15 +1131,11 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
     """
     X, y = check_arrays(X, y, sparse_format='csr', allow_lists=True)
     cv = check_cv(cv, X, y, classifier=is_classifier(estimator))
-    if score_func is not None:
-        warnings.warn("Passing function as ``score_func`` is "
-                      "deprecated and will be removed in 0.15. "
-                      "Either use strings or score objects.", stacklevel=2)
-        scorer = Scorer(score_func)
-    elif isinstance(scoring, string_types):
-        scorer = SCORERS[scoring]
-    else:
-        scorer = scoring
+    scorer = _deprecate_loss_and_score_funcs(
+        loss_func=None,
+        score_func=score_func,
+        scoring=scoring
+    )
     if scorer is None and not hasattr(estimator, 'score'):
         raise TypeError(
             "If no scoring is specified, the estimator passed "
@@ -1199,6 +1194,12 @@ def check_cv(cv, X=None, y=None, classifier=False):
     classifier : boolean optional
         Whether the task is a classification task, in which case
         stratified KFold will be used.
+
+    Returns
+    -------
+    checked_cv: a cross-validation generator instance.
+        The return value is guaranteed to be a cv generator instance, whatever
+        the input type.
     """
     is_sparse = sp.issparse(X)
     needs_indices = is_sparse or not hasattr(X, "shape")
@@ -1219,9 +1220,9 @@ def check_cv(cv, X=None, y=None, classifier=False):
     return cv
 
 
-def permutation_test_score(estimator, X, y, scoring=None, cv=None,
+def permutation_test_score(estimator, X, y, score_func=None, cv=None,
                            n_permutations=100, n_jobs=1, labels=None,
-                           random_state=0, verbose=0, score_func=None):
+                           random_state=0, verbose=0, scoring=None):
     """Evaluate the significance of a cross-validated score with permutations
 
     Parameters
@@ -1236,11 +1237,10 @@ def permutation_test_score(estimator, X, y, scoring=None, cv=None,
         The target variable to try to predict in the case of
         supervised learning.
 
-    scoring : string or object, optional
-        Either one of either a string ("zero_one", "f1", "roc_auc", ... for
-        classification, "mse", "r2", ... for regression) or a callable.
-        See 'Scoring objects' in the model evaluation section of the user guide
-        for details.
+    scoring : string, callable or None, optional, default: None
+        A string (see model evaluation documentation) or
+        a scorer callable object / function with signature
+        ``scorer(estimator, X, y)``.
 
     cv : integer or cross-validation generator, optional
         If an integer is passed, it is the number of fold (default 3).
@@ -1288,20 +1288,11 @@ def permutation_test_score(estimator, X, y, scoring=None, cv=None,
     """
     X, y = check_arrays(X, y, sparse_format='csr')
     cv = check_cv(cv, X, y, classifier=is_classifier(estimator))
-
-    if score_func is not None:
-        warnings.warn("Passing function as ``score_func`` is "
-                      "deprecated and will be removed in 0.15. "
-                      "Either use strings or score objects.")
-        scorer = Scorer(score_func)
-    elif isinstance(scoring, string_types):
-        scorer = SCORERS[scoring]
-    else:
-        scorer = scoring
-
-    if scorer is None:
-        raise ValueError("No valid scoring provided.")
-
+    scorer = _deprecate_loss_and_score_funcs(
+        loss_func=None,
+        score_func=score_func,
+        scoring=scoring
+    )
     random_state = check_random_state(random_state)
 
     # We clone the estimator to make sure that all the folds are

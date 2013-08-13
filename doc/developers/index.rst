@@ -763,6 +763,29 @@ interface might be that you want to use it together with model assessment and
 selection tools such as :class:`grid_search.GridSearchCV`.
 
 For this to work, you need to implement the following interface.
+If a dependency on scikit-learn is okay for your code,
+you can prevent a lot of boilerplate code
+by deriving a class from ``BaseEstimator``
+and optionally the mixin classes in ``sklearn.base``.
+E.g., here's a custom classifier::
+
+  >>> import numpy as np
+  >>> from sklearn.base import BaseEstimator, ClassifierMixin
+  >>> class MajorityClassifier(BaseEstimator, ClassifierMixin):
+  ...     """Predicts the majority class of its training data."""
+  ...     def __init__(self):
+  ...         pass
+  ...     def fit(self, X, y):
+  ...         self.classes_, indices = np.unique(["foo", "bar", "foo"],
+  ...                                            return_inverse=True)
+  ...         self.majority_ = np.argmax(np.bincount(indices))
+  ...         return self
+  ...     def predict(self, X):
+  ...         return np.repeat(self.classes_[self.majority_], len(X))
+  ...     # doctest: +SKIP
+
+.. We don't run the above "doctest" because it requires a recent NumPy and we
+   don't want users to import from sklearn.utils.fixes.
 
 get_params and set_params
 -------------------------

@@ -209,8 +209,8 @@ Backports
   independent back-ports in ``sklearn.mixture.gmm`` and
   :mod:`sklearn.gaussian_process`.
 
-- :func:`sparsetools.cs_graph_components`
-  (backported from ``scipy.sparse.cs_graph_components`` in scipy 0.9).
+- :func:`sparsetools.connected_components`
+  (backported from ``scipy.sparse.connected_components`` in scipy 0.12).
   Used in ``sklearn.cluster.hierarchical``, as well as in tests for
   :mod:`sklearn.feature_extraction`.
 

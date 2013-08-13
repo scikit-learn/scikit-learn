@@ -69,7 +69,7 @@ print("%d categories" % len(news_train.target_names))
 
 print("Extracting features from the dataset using a sparse vectorizer")
 t0 = time()
-vectorizer = TfidfVectorizer(charset='latin1')
+vectorizer = TfidfVectorizer(encoding='latin1')
 X_train = vectorizer.fit_transform((open(f).read()
                                     for f in news_train.filenames))
 print("done in %fs" % (time() - t0))

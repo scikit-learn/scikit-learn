@@ -4,11 +4,12 @@ My own variation on function-specific inspect-like features.
 
 # Author: Gael Varoquaux <gael dot varoquaux at normalesup dot org>
 # Copyright (c) 2009 Gael Varoquaux
-# License: BSD 3 clause
+# License: BSD Style, 3 clauses.
 
 from itertools import islice
 import inspect
 import warnings
+import re
 import os
 
 from ._compat import _basestring
@@ -37,13 +38,21 @@ def get_func_code(func):
     """
     source_file = None
     try:
-        if func.__name__ == '<lambda>':
-            # On recent Python version, inspect is reliable with lambda
-            source_file = func.__code__.co_filename
-            return ''.join(inspect.getsourcelines(func)[0]), source_file, 1
-        # Try to retrieve the source code.
         code = func.__code__
         source_file = code.co_filename
+        if not os.path.exists(source_file):
+            # Use inspect for lambda functions and functions defined in an
+            # interactive shell, or in doctests
+            source_code = ''.join(inspect.getsourcelines(func)[0])
+            line_no = 1
+            if source_file.startswith('<doctest '):
+                source_file, line_no = re.match(
+                            '\<doctest (.*\.rst)\[(.*)\]\>',
+                            source_file).groups()
+                line_no = int(line_no)
+                source_file = '<doctest %s>' % source_file
+            return source_code, source_file, line_no
+        # Try to retrieve the source code.
         with open(source_file) as source_file_obj:
             first_line = code.co_firstlineno
             # All the lines after the function definition:
@@ -110,8 +119,13 @@ def get_func_name(func, resolv_alias=True, win_characters=True):
             filename = None
         if filename is not None:
             # mangling of full path to filename
-            filename = filename.replace(os.sep, '-')
-            filename = filename.replace(":", "-")
+            parts = filename.split(os.sep)
+            if parts[-1].startswith('<ipython-input'):
+                # function is defined in an IPython session. The filename
+                # will change with every new kernel instance. This hack
+                # always returns the same filename
+                parts[-1] = '__ipython-input__'
+            filename = '-'.join(parts)
             if filename.endswith('.py'):
                 filename = filename[:-3]
             module = module + '-' + filename

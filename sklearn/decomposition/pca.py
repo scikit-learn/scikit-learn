@@ -6,10 +6,12 @@
 #         Mathieu Blondel <mathieu@mblondel.org>
 # License: BSD 3 clause
 
+from math import log, sqrt
+import warnings
+
 import numpy as np
 from scipy import linalg
-from math import log
-import warnings
+from scipy.special import gammaln
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import array2d, check_random_state, as_float_array
@@ -49,36 +51,34 @@ def _assess_dimension_(spectrum, rank, n_samples, n_features):
     if rank > len(spectrum):
         raise ValueError("The tested rank cannot exceed the rank of the"
                          " dataset")
-    from scipy.special import gammaln
 
-    pu = -rank * np.log(2)
+    pu = -rank * log(2.)
     for i in range(rank):
-        pu += (gammaln((n_features - i) / 2)
-               - np.log(np.pi) * (n_features - i) / 2)
+        pu += (gammaln((n_features - i) / 2.)
+               - log(np.pi) * (n_features - i) / 2.)
 
     pl = np.sum(np.log(spectrum[:rank]))
-    pl = -pl * n_samples / 2
+    pl = -pl * n_samples / 2.
 
     if rank == n_features:
         pv = 0
         v = 1
     else:
         v = np.sum(spectrum[rank:]) / (n_features - rank)
-        pv = -np.log(v) * n_samples * (n_features - rank) / 2
+        pv = -np.log(v) * n_samples * (n_features - rank) / 2.
 
-    m = n_features * rank - rank * (rank + 1) / 2
-    pp = np.log(2 * np.pi) * (m + rank + 1) / 2
+    m = n_features * rank - rank * (rank + 1.) / 2.
+    pp = log(2. * np.pi) * (m + rank + 1.) / 2.
 
-    pa = 0
+    pa = 0.
     spectrum_ = spectrum.copy()
     spectrum_[rank:n_features] = v
     for i in range(rank):
         for j in range(i + 1, len(spectrum)):
-            pa += (np.log((spectrum[i] - spectrum[j])
-                          * (1. / spectrum_[j] - 1. / spectrum_[i]))
-                   + np.log(n_samples))
+            pa += log((spectrum[i] - spectrum[j]) *
+                       (1. / spectrum_[j] - 1. / spectrum_[i])) + log(n_samples)
 
-    ll = pu + pl + pv + pp - pa / 2 - rank * np.log(n_samples) / 2
+    ll = pu + pl + pv + pp - pa / 2. - rank * log(n_samples) / 2.
 
     return ll
 
@@ -88,10 +88,10 @@ def _infer_dimension_(spectrum, n_samples, n_features):
 
     The dataset is described by its spectrum `spectrum`.
     """
-    ll = []
-    for rank in range(len(spectrum)):
-        ll.append(_assess_dimension_(spectrum, rank, n_samples, n_features))
-    ll = np.array(ll)
+    n_spectrum = len(spectrum)
+    ll = np.empty(n_spectrum)
+    for rank in range(n_spectrum):
+        ll[rank] = _assess_dimension_(spectrum, rank, n_samples, n_features)
     return ll.argmax()
 
 
@@ -123,7 +123,9 @@ class PCA(BaseEstimator, TransformerMixin):
         percentage specified by n_components
 
     copy : bool
-        If False, data passed to fit are overwritten
+        If False, data passed to fit are overwritten and running
+        fit(X).transform(X) will not yield the expected results,
+        use fit_transform(X) instead.
 
     whiten : bool, optional
         When True (False by default) the `components_` vectors are divided
@@ -144,6 +146,11 @@ class PCA(BaseEstimator, TransformerMixin):
         Percentage of variance explained by each of the selected components. \
         k is not set then all components are stored and the sum of explained \
         variances is equal to 1.0
+
+    `n_components_` : int
+        The estimated number of components. Relevant when n_components is set
+        to 'mle' or a number between 0 and 1 to select using explained
+        variance.
 
     Notes
     -----
@@ -181,7 +188,7 @@ class PCA(BaseEstimator, TransformerMixin):
         self.copy = copy
         self.whiten = whiten
 
-    def fit(self, X, y=None, **params):
+    def fit(self, X, y=None):
         """Fit the model with X.
 
         Parameters
@@ -195,16 +202,16 @@ class PCA(BaseEstimator, TransformerMixin):
         self : object
             Returns the instance itself.
         """
-        self._fit(X, **params)
+        self._fit(X)
         return self
 
-    def fit_transform(self, X, y=None, **params):
+    def fit_transform(self, X, y=None):
         """Fit the model with X and apply the dimensionality reduction on X.
 
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
-            Training data, where n_samples in the number of samples
+            Training data, where n_samples is the number of samples
             and n_features is the number of features.
 
         Returns
@@ -212,19 +219,32 @@ class PCA(BaseEstimator, TransformerMixin):
         X_new : array-like, shape (n_samples, n_components)
 
         """
-        U, S, V = self._fit(X, **params)
-        U = U[:, :self.n_components]
+        U, S, V = self._fit(X)
+        U = U[:, :self.n_components_]
 
         if self.whiten:
             # X_new = X * V / S * sqrt(n_samples) = U * sqrt(n_samples)
-            U *= np.sqrt(X.shape[0])
+            U *= sqrt(X.shape[0])
         else:
             # X_new = X * V = U * S * V^T * V = U * S
-            U *= S[:self.n_components]
+            U *= S[:self.n_components_]
 
         return U
 
     def _fit(self, X):
+        """ Fit the model on X
+        Parameters
+        ----------
+        X: array-like, shape (n_samples, n_features)
+            Training vector, where n_samples in the number of samples and
+            n_features is the number of features.
+
+        Returns
+        -------
+        U, s, V : ndarrays
+            The SVD of the input data, copied and centered when
+            requested.
+        """
         X = array2d(X)
         n_samples, n_features = X.shape
         X = as_float_array(X, copy=self.copy)
@@ -237,32 +257,33 @@ class PCA(BaseEstimator, TransformerMixin):
                                           self.explained_variance_.sum())
 
         if self.whiten:
-            self.components_ = V / S[:, np.newaxis] * np.sqrt(n_samples)
+            self.components_ = V / S[:, np.newaxis] * sqrt(n_samples)
         else:
             self.components_ = V
 
-        if self.n_components == 'mle':
+        n_components = self.n_components
+        if n_components is None:
+            n_components = n_features
+        elif n_components == 'mle':
             if n_samples < n_features:
                 raise ValueError("n_components='mle' is only supported "
                                  "if n_samples >= n_features")
-            self.n_components = _infer_dimension_(self.explained_variance_,
+            n_components = _infer_dimension_(self.explained_variance_,
                                                   n_samples, n_features)
 
-        elif (self.n_components is not None
-              and 0 < self.n_components
-              and self.n_components < 1.0):
+        if 0 < n_components < 1.0:
             # number of components for which the cumulated explained variance
             # percentage is superior to the desired threshold
             ratio_cumsum = self.explained_variance_ratio_.cumsum()
-            self.n_components = np.sum(ratio_cumsum < self.n_components) + 1
+            n_components = np.sum(ratio_cumsum < n_components) + 1
 
-        if self.n_components is not None:
-            self.components_ = self.components_[:self.n_components, :]
-            self.explained_variance_ = \
-                self.explained_variance_[:self.n_components]
-            self.explained_variance_ratio_ = \
-                self.explained_variance_ratio_[:self.n_components]
+        self.components_ = self.components_[:n_components, :]
+        self.explained_variance_ = \
+            self.explained_variance_[:n_components]
+        self.explained_variance_ratio_ = \
+            self.explained_variance_ratio_[:n_components]
 
+        self.n_components_ = n_components
         return (U, S, V)
 
     def transform(self, X):
@@ -271,7 +292,7 @@ class PCA(BaseEstimator, TransformerMixin):
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
-            New data, where n_samples in the number of samples
+            New data, where n_samples is the number of samples
             and n_features is the number of features.
 
         Returns
@@ -280,8 +301,9 @@ class PCA(BaseEstimator, TransformerMixin):
 
         """
         X = array2d(X)
-        X_transformed = X - self.mean_
-        X_transformed = np.dot(X_transformed, self.components_.T)
+        if self.mean_ is not None:
+            X = X - self.mean_
+        X_transformed = np.dot(X, self.components_.T)
         return X_transformed
 
     def inverse_transform(self, X):
@@ -291,7 +313,7 @@ class PCA(BaseEstimator, TransformerMixin):
         Parameters
         ----------
         X : array-like, shape (n_samples, n_components)
-            New data, where n_samples in the number of samples
+            New data, where n_samples is the number of samples
             and n_components is the number of components.
 
         Returns
@@ -322,25 +344,30 @@ class ProbabilisticPCA(PCA):
             If True, average variance across remaining dimensions
         """
         PCA.fit(self, X)
-        n_features = X.shape[1]
+        n_samples, n_features = X.shape
         self._dim = n_features
         Xr = X - self.mean_
         Xr -= np.dot(np.dot(Xr, self.components_.T), self.components_)
-        n_samples = X.shape[0]
-        if self.n_components is None or n_features <= self.n_components:
-            delta = np.zeros(n_features)
-        elif homoscedastic:
-            delta = ((Xr ** 2).sum() * np.ones(n_features)
-                     / (n_samples * n_features))
-        else:
-            delta = (Xr ** 2).mean(0) / (n_features - self.n_components)
-        self.covariance_ = np.diag(delta)
+
         n_components = self.n_components
         if n_components is None:
             n_components = n_features
-        for k in range(n_components):
-            add_cov = np.outer(self.components_[k], self.components_[k])
-            self.covariance_ += self.explained_variance_[k] * add_cov
+
+        # Make the low rank part of the estimated covariance
+        self.covariance_ = np.dot(self.components_[:n_components].T *
+                                  self.explained_variance_[:n_components],
+                                  self.components_[:n_components])
+
+        if n_features == n_components:
+            delta = 0.
+        elif homoscedastic:
+            delta = (Xr ** 2).sum() / (n_samples * n_features)
+        else:
+            delta = (Xr ** 2).mean(axis=0) / (n_features - n_components)
+
+        # Add delta to the diagonal without extra allocation
+        self.covariance_.flat[::n_features + 1] += delta
+
         return self
 
     def score(self, X, y=None):
@@ -362,7 +389,7 @@ class ProbabilisticPCA(PCA):
         self.precision_ = linalg.inv(self.covariance_)
         log_like = -.5 * (Xr * (np.dot(Xr, self.precision_))).sum(axis=1)
         log_like -= .5 * (fast_logdet(self.covariance_)
-                          + n_features * log(2 * np.pi))
+                          + n_features * log(2. * np.pi))
         return log_like
 
 
@@ -380,7 +407,9 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         is set to n_features (the second dimension of the training data).
 
     copy : bool
-        If False, data passed to fit are overwritten
+        If False, data passed to fit are overwritten and running
+        fit(X).transform(X) will not yield the expected results,
+        use fit_transform(X) instead.
 
     iterated_power : int, optional
         Number of iterations for the power method. 3 by default.
@@ -456,6 +485,23 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         self.random_state = random_state
 
     def fit(self, X, y=None):
+        """Fit the model with X.
+
+        Parameters
+        ----------
+        X: array-like, shape (n_samples, n_features)
+            Training data, where n_samples in the number of samples
+            and n_features is the number of features.
+
+        Returns
+        -------
+        self : object
+            Returns the instance itself.
+        """
+        self._fit(X)
+        return self
+
+    def _fit(self, X):
         """Fit the model to the data X.
 
         Parameters
@@ -466,8 +512,8 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
 
         Returns
         -------
-        self : object
-            Returns the instance itself.
+        X : ndarray, shape (n_samples, n_features)
+            The input data, copied, centered and whitened when requested.
         """
         random_state = check_random_state(self.random_state)
         if hasattr(X, 'todense'):
@@ -498,14 +544,13 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         self.explained_variance_ratio_ = exp_var / exp_var.sum()
 
         if self.whiten:
-            n = X.shape[0]
-            self.components_ = V / S[:, np.newaxis] * np.sqrt(n)
+            self.components_ = V / S[:, np.newaxis] * sqrt(n_samples)
         else:
             self.components_ = V
 
-        return self
+        return X
 
-    def transform(self, X):
+    def transform(self, X, y=None):
         """Apply dimensionality reduction on X.
 
         Parameters
@@ -527,7 +572,25 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         X = safe_sparse_dot(X, self.components_.T)
         return X
 
-    def inverse_transform(self, X):
+    def fit_transform(self, X, y=None):
+        """Apply dimensionality reduction on X.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            New data, where n_samples in the number of samples
+            and n_features is the number of features.
+
+        Returns
+        -------
+        X_new : array-like, shape (n_samples, n_components)
+
+        """
+        X = self._fit(atleast2d_or_csr(X))
+        X = safe_sparse_dot(X, self.components_.T)
+        return X
+
+    def inverse_transform(self, X, y=None):
         """Transform data back to its original space.
 
         Returns an array X_original whose transform would be X.

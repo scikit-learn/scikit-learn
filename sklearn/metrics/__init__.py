@@ -6,7 +6,7 @@ and pairwise metrics and distance computations.
 from .metrics import (accuracy_score,
                       average_precision_score,
                       auc,
-                      auc_score,
+                      roc_auc_score,
                       classification_report,
                       confusion_matrix,
                       explained_variance_score,
@@ -15,6 +15,7 @@ from .metrics import (accuracy_score,
                       hamming_loss,
                       hinge_loss,
                       jaccard_similarity_score,
+                      log_loss,
                       matthews_corrcoef,
                       mean_squared_error,
                       mean_absolute_error,
@@ -30,7 +31,10 @@ from .metrics import (accuracy_score,
 from .metrics import zero_one
 from .metrics import zero_one_score
 
-from .scorer import Scorer, SCORERS
+# Deprecated in 0.16
+from .metrics import auc_score
+
+from .scorer import make_scorer, SCORERS
 
 from . import cluster
 from .cluster import (adjusted_rand_score,
@@ -42,8 +46,8 @@ from .cluster import (adjusted_rand_score,
                       normalized_mutual_info_score,
                       silhouette_score,
                       silhouette_samples,
-                      v_measure_score)
-
+                      v_measure_score,
+                      consensus_score)
 
 from .pairwise import (euclidean_distances,
                        pairwise_distances,
@@ -53,7 +57,7 @@ __all__ = ['accuracy_score',
            'adjusted_mutual_info_score',
            'adjusted_rand_score',
            'auc',
-           'auc_score',
+           'roc_auc_score',
            'average_precision_score',
            'classification_report',
            'cluster',
@@ -68,6 +72,7 @@ __all__ = ['accuracy_score',
            'homogeneity_completeness_v_measure',
            'homogeneity_score',
            'jaccard_similarity_score',
+           'log_loss',
            'matthews_corrcoef',
            'mean_squared_error',
            'mean_absolute_error',
@@ -84,6 +89,7 @@ __all__ = ['accuracy_score',
            'silhouette_score',
            'silhouette_samples',
            'v_measure_score',
+           'consensus_score',
            'zero_one_loss',
-           'Scorer',
+           'make_scorer',
            'SCORERS']

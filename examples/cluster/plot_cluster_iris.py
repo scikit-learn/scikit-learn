@@ -19,8 +19,8 @@ and finally the ground truth.
 print(__doc__)
 
 
-# Code source: Gael Varoqueux
-# Modified for Documentation merge by Jaques Grobler
+# Code source: Gaël Varoquaux
+# Modified for documentation by Jaques Grobler
 # License: BSD 3 clause
 
 import numpy as np

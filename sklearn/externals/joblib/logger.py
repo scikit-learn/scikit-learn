@@ -6,7 +6,7 @@ This module needs much love to become useful.
 
 # Author: Gael Varoquaux <gael dot varoquaux at normalesup dot org>
 # Copyright (c) 2008 Gael Varoquaux
-# License: BSD 3 clause
+# License: BSD Style, 3 clauses.
 
 from __future__ import print_function
 
@@ -145,7 +145,7 @@ class PrintTime(object):
             except:
                 """ Multiprocessing writing to files can create race
                     conditions. Rather fail silently than crash the
-                    caculation.
+                    calculation.
                 """
                 # XXX: We actually need a debug flag to disable this
                 # silent failure.

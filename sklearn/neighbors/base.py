@@ -3,6 +3,7 @@
 #          Fabian Pedregosa <fabian.pedregosa@inria.fr>
 #          Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #          Sparseness support by Lars Buitinck <L.J.Buitinck@uva.nl>
+#          Multi-output support by Arnaud Joly <a.joly@ulg.ac.be>
 #
 # License: BSD 3 clause (C) INRIA, University of Amsterdam
 import warnings
@@ -17,6 +18,7 @@ from ..base import BaseEstimator
 from ..metrics import pairwise_distances
 from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
 from ..utils import safe_asarray, atleast2d_or_csr, check_arrays
+from ..utils.validation import DataConversionWarning
 from ..utils.fixes import unique
 from ..externals import six
 
@@ -114,13 +116,15 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
         else:
             alg_check = algorithm
 
-        if metric not in VALID_METRICS[alg_check]:
-            # callable metric is valid for brute force, kd_tree, and ball_tree
-            if callable(metric):
-                pass
-            else:
-                raise ValueError("metric '%s' not valid for algorithm '%s'"
-                                 % (metric, algorithm))
+        if callable(metric):
+            if algorithm == 'kd_tree':
+                # callable metric is only valid for brute force and ball_tree
+                raise ValueError(
+                    "kd_tree algorithm does not support callable metric '%s'"
+                    % metric)
+        elif metric not in VALID_METRICS[alg_check]:
+            raise ValueError("Metric '%s' not valid for algorithm '%s'"
+                             % (metric, algorithm))
 
         if self.metric in ['wminkowski', 'minkowski']:
             self.metric_kwds['p'] = p
@@ -199,8 +203,7 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
             # and KDTree is generally faster when available
             if (self.n_neighbors is None
                     or self.n_neighbors < self._fit_X.shape[0] // 2):
-                if (callable(self.effective_metric_)
-                        or self.effective_metric_ in VALID_METRICS['kd_tree']):
+                if self.effective_metric_ in VALID_METRICS['kd_tree']:
                     self._fit_method = 'kd_tree'
                 else:
                     self._fit_method = 'ball_tree'
@@ -578,6 +581,7 @@ class SupervisedFloatMixin(object):
 
         y : {array-like, sparse matrix}
             Target values, array of float values, shape = [n_samples]
+             or [n_samples, n_outputs]
         """
         if not isinstance(X, (KDTree, BallTree)):
             X, y = check_arrays(X, y, sparse_format="csr")
@@ -595,11 +599,34 @@ class SupervisedIntegerMixin(object):
             Training data. If array or matrix, shape = [n_samples, n_features]
 
         y : {array-like, sparse matrix}
-            Target values, array of integer values, shape = [n_samples]
+            Target values of shape = [n_samples] or [n_samples, n_outputs]
+
         """
         if not isinstance(X, (KDTree, BallTree)):
             X, y = check_arrays(X, y, sparse_format="csr")
-        self.classes_, self._y = unique(y, return_inverse=True)
+
+        if y.ndim == 1 or y.ndim == 2 and y.shape[1] == 1:
+            if y.ndim != 1:
+                warnings.warn("A column-vector y was passed when a 1d array"
+                              "was expected. Please change the shape of y to"
+                              "(n_samples, ), for example using ravel().",
+                              DataConversionWarning, stacklevel=2)
+
+            self.outputs_2d_ = False
+            y = y.reshape((-1, 1))
+        else:
+            self.outputs_2d_ = True
+
+        self.classes_ = []
+        self._y = np.empty(y.shape, dtype=np.int)
+        for k in range(self._y.shape[1]):
+            classes, self._y[:, k] = unique(y[:, k], return_inverse=True)
+            self.classes_.append(classes)
+
+        if not self.outputs_2d_:
+            self.classes_ = self.classes_[0]
+            self._y = self._y.ravel()
+
         return self._fit(X)
 
 

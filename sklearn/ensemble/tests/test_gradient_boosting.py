@@ -3,14 +3,18 @@ Testing for the gradient boosting module (sklearn.ensemble.gradient_boosting).
 """
 
 import numpy as np
-from numpy.testing import assert_array_equal
-from numpy.testing import assert_array_almost_equal
-from numpy.testing import assert_equal
+import warnings
 
-from nose.tools import assert_raises, assert_true
+from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_true
+
 
 from sklearn.metrics import mean_squared_error
 from sklearn.utils import check_random_state, tosequence
+from sklearn.utils.validation import DataConversionWarning
 
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.ensemble import GradientBoostingRegressor
@@ -440,7 +444,12 @@ def test_shape_y():
     y_ = np.asarray(y, dtype=np.int32)
     y_ = y_[:, np.newaxis]
 
-    clf.fit(X, y_)
+    with warnings.catch_warnings(record=True):
+        # This will raise a DataConversionWarning that we want to
+        # "always" raise, elsewhere the warnings gets ignored in the
+        # later tests, and the tests that check for this warning fail
+        warnings.simplefilter("always", DataConversionWarning)
+        clf.fit(X, y_)
     assert_array_equal(clf.predict(T), true_result)
     assert_equal(100, len(clf.estimators_))
 
@@ -460,7 +469,6 @@ def test_mem_layout():
     assert_equal(100, len(clf.estimators_))
 
     y_ = np.asarray(y, dtype=np.int32)
-    y_ = y_[:, np.newaxis]
     y_ = np.ascontiguousarray(y_)
     clf = GradientBoostingClassifier(n_estimators=100, random_state=1)
     clf.fit(X, y_)
@@ -468,7 +476,6 @@ def test_mem_layout():
     assert_equal(100, len(clf.estimators_))
 
     y_ = np.asarray(y, dtype=np.int32)
-    y_ = y_[:, np.newaxis]
     y_ = np.asfortranarray(y_)
     clf = GradientBoostingClassifier(n_estimators=100, random_state=1)
     clf.fit(X, y_)
@@ -476,12 +483,99 @@ def test_mem_layout():
     assert_equal(100, len(clf.estimators_))
 
 
-def test_min_density():
-    """Check if min_density is properly set when growing deep trees."""
-    clf = GradientBoostingClassifier(max_depth=6)
+def test_oob_score():
+    """Test if oob_score is deprecated. """
+    clf = GradientBoostingClassifier(n_estimators=100, random_state=1,
+                                     subsample=0.5)
     clf.fit(X, y)
-    assert clf.min_density == 0.1
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")
+        assert_true(hasattr(clf, 'oob_score_'))
+        assert_equal(len(w), 1)
 
-    clf = GradientBoostingClassifier(max_depth=5)
+
+def test_oob_improvement():
+    """Test if oob improvement has correct shape and regression test. """
+    clf = GradientBoostingClassifier(n_estimators=100, random_state=1,
+                                     subsample=0.5)
     clf.fit(X, y)
-    assert clf.min_density == 0.0
+    assert clf.oob_improvement_.shape[0] == 100
+    # hard-coded regression test - change if modification in OOB computation
+    assert_array_almost_equal(clf.oob_improvement_[:5],
+                              np.array([0.19, 0.15, 0.12, -0.12, -0.11]),
+                              decimal=2)
+
+
+def test_oob_improvement_raise():
+    """Test if oob improvement has correct shape. """
+    clf = GradientBoostingClassifier(n_estimators=100, random_state=1,
+                                     subsample=1.0)
+    clf.fit(X, y)
+    assert_raises(AttributeError, lambda: clf.oob_improvement_)
+
+
+def test_oob_multilcass_iris():
+    """Check OOB improvement on multi-class dataset."""
+    clf = GradientBoostingClassifier(n_estimators=100, loss='deviance',
+                                     random_state=1, subsample=0.5)
+    clf.fit(iris.data, iris.target)
+    score = clf.score(iris.data, iris.target)
+    assert score > 0.9, "Failed with subsample %.1f " \
+           "and score = %f" % (0.5, score)
+
+    assert clf.oob_improvement_.shape[0] == clf.n_estimators
+    # hard-coded regression test - change if modification in OOB computation
+    # FIXME: the following snippet does not yield the same results on 32 bits
+    # assert_array_almost_equal(clf.oob_improvement_[:5],
+    #                           np.array([12.68, 10.45, 8.18, 6.43, 5.13]),
+    #                           decimal=2)
+
+
+def test_verbose_output():
+    """Check verbose=1 does not cause error. """
+    from sklearn.externals.six.moves import cStringIO as StringIO
+    import sys
+    old_stdout = sys.stdout
+    sys.stdout = StringIO()
+    clf = GradientBoostingClassifier(n_estimators=100, random_state=1,
+                                     verbose=1, subsample=0.8)
+    clf.fit(X, y)
+    verbose_output = sys.stdout
+    sys.stdout = old_stdout
+
+    # check output
+    verbose_output.seek(0)
+    header = verbose_output.readline().rstrip()
+    # with OOB
+    true_header = ' '.join(['%10s'] + ['%16s'] * 3) % (
+        'Iter', 'Train Loss', 'OOB Improve', 'Remaining Time')
+    assert_equal(true_header, header)
+
+    n_lines = sum(1 for l in verbose_output.readlines())
+    # one for 1-10 and then 9 for 20-100
+    assert_equal(10 + 9, n_lines)
+
+
+def test_more_verbose_output():
+    """Check verbose=2 does not cause error. """
+    from sklearn.externals.six.moves import cStringIO as StringIO
+    import sys
+    old_stdout = sys.stdout
+    sys.stdout = StringIO()
+    clf = GradientBoostingClassifier(n_estimators=100, random_state=1,
+                                     verbose=2)
+    clf.fit(X, y)
+    verbose_output = sys.stdout
+    sys.stdout = old_stdout
+
+    # check output
+    verbose_output.seek(0)
+    header = verbose_output.readline().rstrip()
+    # no OOB
+    true_header = ' '.join(['%10s'] + ['%16s'] * 2) % (
+        'Iter', 'Train Loss', 'Remaining Time')
+    assert_equal(true_header, header)
+
+    n_lines = sum(1 for l in verbose_output.readlines())
+    # 100 lines for n_estimators==100
+    assert_equal(100, n_lines)

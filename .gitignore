@@ -1,5 +1,6 @@
 *.pyc
 *.so
+*.pyd
 *~
 .#*
 *.lprof
@@ -11,6 +12,7 @@ sklearn/datasets/__config__.py
 sklearn/**/*.html
 
 dist/
+MANIFEST
 doc/_build/
 doc/auto_examples/
 doc/modules/generated/
@@ -32,6 +34,7 @@ coverages
 samples
 doc/coverages
 doc/samples
+*.prof
 
 lfw_preprocessed/
 nips2010_pdf/
@@ -46,3 +49,4 @@ benchmarks/bench_covertype_data/
 
 *.prefs
 .pydevproject
+.idea

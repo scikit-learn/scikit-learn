@@ -45,14 +45,13 @@ not as clean as a histogram, but the fact that the data drive the block
 locations mean that it is a much better representation of the underlying
 data.
 
-This visualization is an example of a
- *kernel density estimation*, in this case with a
-top-hat kernel (i.e. a square block at each point).  We can recover a smoother
-distribution by using a smoother kernel.  The bottom-right plot shows a Gaussian
-kernel density estimate, in which each point contributes a Gaussian curve to
-the total.  The result is a smooth density estimate which is derived from the
-data, and functions as a powerful non-parametric model of the distribution
-of points.
+This visualization is an example of a *kernel density estimation*, in this case
+with a top-hat kernel (i.e. a square block at each point).  We can recover a
+smoother distribution by using a smoother kernel.  The bottom-right plot shows
+a Gaussian kernel density estimate, in which each point contributes a Gaussian
+curve to the total.  The result is a smooth density estimate which is derived
+from the data, and functions as a powerful non-parametric model of the
+distribution of points.
 
 .. _kernel_density:
 
@@ -83,7 +82,7 @@ follows:
    >>> import numpy as np
    >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
    >>> kde = KernelDensity(kernel='gaussian', bandwidth=0.2).fit(X)
-   >>> kde.eval(X)
+   >>> kde.score_samples(X)
    array([-0.41075698, -0.41075698, -0.41076071, -0.41075698, -0.41075698,
           -0.41076071])
 

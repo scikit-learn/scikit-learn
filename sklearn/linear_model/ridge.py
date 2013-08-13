@@ -22,10 +22,12 @@ from ..base import RegressorMixin
 from ..utils.extmath import safe_sparse_dot
 from ..utils import safe_asarray
 from ..utils import compute_class_weight
+from ..utils import column_or_1d
 from ..preprocessing import LabelBinarizer
 from ..grid_search import GridSearchCV
 from ..externals import six
 from ..metrics.pairwise import pairwise_kernels
+from ..metrics.scorer import _deprecate_loss_and_score_funcs
 
 
 # All solvers assume y is a 2d array.
@@ -138,7 +140,6 @@ def _solve_dense_cholesky_kernel(K, y, alpha, sample_weight=None):
         return dual_coef
     else:
         # One penalty per target. We need to solve each target separately.
-        coef = np.empty([n_targets, n_features])
         dual_coefs = np.empty([n_targets, n_samples])
 
         for dual_coef, target, current_alpha in zip(dual_coefs, y.T, alpha):
@@ -616,7 +617,7 @@ class RidgeClassifier(_BaseRidgeClassifier, _BaseRidge):
 
     class_weight : dict, optional
         Weights associated with classes in the form
-        {class_label : weight}. If not given, all classes are
+        ``{class_label : weight}``. If not given, all classes are
         supposed to have weight one.
 
     copy_X : boolean, optional, default True
@@ -712,6 +713,8 @@ class RidgeClassifier(_BaseRidgeClassifier, _BaseRidge):
         """
         self._label_binarizer = LabelBinarizer(pos_label=1, neg_label=-1)
         Y = self._label_binarizer.fit_transform(y)
+        if not self._label_binarizer.multilabel_:
+            y = column_or_1d(y, warn=True)
 
         if self.class_weight:
             cw = compute_class_weight(self.class_weight,
@@ -769,13 +772,14 @@ class _RidgeGCV(_BaseRidge):
     """
 
     def __init__(self, alphas=[0.1, 1.0, 10.0], fit_intercept=True,
-                 normalize=False, score_func=None, loss_func=None,
+                 normalize=False, scoring=None, score_func=None, loss_func=None,
                  copy_X=True, gcv_mode=None, store_cv_values=False,
                  kernel="linear", gamma=None, degree=3, coef0=1,
                  kernel_params=None):
         self.alphas = np.asarray(alphas)
         self.fit_intercept = fit_intercept
         self.normalize = normalize
+        self.scoring = scoring
         self.score_func = score_func
         self.loss_func = loss_func
         self.copy_X = copy_X
@@ -828,7 +832,7 @@ class _RidgeGCV(_BaseRidge):
     def _pre_compute_svd(self, X, y):
         if sparse.issparse(X):
             raise TypeError("SVD not supported for sparse matrices")
-        U, s, _ = np.linalg.svd(X, full_matrices=0)
+        U, s, _ = linalg.svd(X, full_matrices=0)
         v = s ** 2
         UT_y = np.dot(U.T, y)
         return v, U, UT_y
@@ -913,7 +917,12 @@ class _RidgeGCV(_BaseRidge):
         cv_values = np.zeros((n_samples * n_y, len(self.alphas)))
         C = []
 
-        error = self.score_func is None and self.loss_func is None
+        scorer = _deprecate_loss_and_score_funcs(
+            self.loss_func, self.score_func, self.scoring,
+            score_overrides_loss=True
+        )
+        error = scorer is None
+        #error = self.score_func is None and self.loss_func is None
 
         for i, alpha in enumerate(self.alphas):
             if error:
@@ -926,10 +935,17 @@ class _RidgeGCV(_BaseRidge):
         if error:
             best = cv_values.mean(axis=0).argmin()
         else:
-            func = self.score_func if self.score_func else self.loss_func
-            out = [func(y.ravel(), cv_values[:, i])
+            # The scorer want an object that will make the predictions but
+            # they are already computed efficiently by _RidgeGCV. This
+            # identity_estimator will just return them
+            def identity_estimator():
+                pass
+            identity_estimator.decision_function = lambda y_predict: y_predict
+            identity_estimator.predict = lambda y_predict: y_predict
+
+            out = [scorer(identity_estimator, y.ravel(), cv_values[:, i])
                    for i in range(len(self.alphas))]
-            best = np.argmax(out) if self.score_func else np.argmin(out)
+            best = np.argmax(out)
 
         self.alpha_ = self.alphas[best]
         if self.kernel == "linear":
@@ -951,13 +967,14 @@ class _RidgeGCV(_BaseRidge):
 
 class _BaseRidgeCV(_BaseRidge):
     def __init__(self, alphas=np.array([0.1, 1.0, 10.0]),
-                 fit_intercept="auto", normalize=False, score_func=None,
-                 loss_func=None, cv=None, gcv_mode=None,
+                 fit_intercept="auto", normalize=False, scoring=None,
+                 score_func=None, loss_func=None, cv=None, gcv_mode=None,
                  store_cv_values=False, kernel="linear", gamma=None, degree=3,
                  coef0=1, kernel_params=None):
         self.alphas = alphas
         self.fit_intercept = fit_intercept
         self.normalize = normalize
+        self.scoring = scoring
         self.score_func = score_func
         self.loss_func = loss_func
         self.cv = cv
@@ -991,6 +1008,7 @@ class _BaseRidgeCV(_BaseRidge):
             estimator = _RidgeGCV(self.alphas,
                                   fit_intercept=self.fit_intercept,
                                   normalize=self.normalize,
+                                  scoring=self.scoring,
                                   score_func=self.score_func,
                                   loss_func=self.loss_func,
                                   gcv_mode=self.gcv_mode,
@@ -1059,15 +1077,10 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
     normalize : boolean, optional, default False
         If True, the regressors X will be normalized before regression.
 
-    score_func: callable, optional
-        function that takes 2 arguments and compares them in
-        order to evaluate the performance of prediction (big is good)
-        if None is passed, the score of the estimator is maximized
-
-    loss_func: callable, optional
-        function that takes 2 arguments and compares them in
-        order to evaluate the performance of prediction (small is good)
-        if None is passed, the score of the estimator is maximized
+    scoring : string, callable or None, optional, default: None
+        A string (see model evaluation documentation) or
+        a scorer callable object / function with signature
+        ``scorer(estimator, X, y)``.
 
     cv : cross-validation generator, optional
         If None, Generalized Cross-Validation (efficient Leave-One-Out)
@@ -1130,7 +1143,7 @@ class RidgeClassifierCV(_BaseRidgeClassifier, _BaseRidgeCV):
         Array of alpha values to try.
         Small positive values of alpha improve the conditioning of the
         problem and reduce the variance of the estimates.
-        Alpha corresponds to (2*C)^-1 in other linear models such as
+        Alpha corresponds to ``(2*C)^-1`` in other linear models such as
         LogisticRegression or LinearSVC.
 
     fit_intercept : boolean
@@ -1141,15 +1154,10 @@ class RidgeClassifierCV(_BaseRidgeClassifier, _BaseRidgeCV):
     normalize : boolean, optional, default False
         If True, the regressors X will be normalized before regression.
 
-    score_func: callable, optional
-        function that takes 2 arguments and compares them in
-        order to evaluate the performance of prediction (big is good)
-        if None is passed, the score of the estimator is maximized
-
-    loss_func: callable, optional
-        function that takes 2 arguments and compares them in
-        order to evaluate the performance of prediction (small is good)
-        if None is passed, the score of the estimator is maximized
+    scoring : string, callable or None, optional, default: None
+        A string (see model evaluation documentation) or
+        a scorer callable object / function with signature
+        ``scorer(estimator, X, y)``.
 
     cv : cross-validation generator, optional
         If None, Generalized Cross-Validation (efficient Leave-One-Out)
@@ -1157,7 +1165,7 @@ class RidgeClassifierCV(_BaseRidgeClassifier, _BaseRidgeCV):
 
     class_weight : dict, optional
         Weights associated with classes in the form
-        {class_label : weight}. If not given, all classes are
+        ``{class_label : weight}``. If not given, all classes are
         supposed to have weight one.
 
     Attributes
@@ -1203,19 +1211,19 @@ class RidgeClassifierCV(_BaseRidgeClassifier, _BaseRidgeCV):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like, shape (n_samples, n_features)
             Training vectors, where n_samples is the number of samples
             and n_features is the number of features.
 
-        y : array-like, shape = [n_samples]
+        y : array-like, shape (n_samples,)
             Target values.
 
-        sample_weight : float or numpy array of shape [n_samples]
-            Sample weight
+        sample_weight : float or numpy array of shape (n_samples,)
+            Sample weight.
 
         class_weight : dict, optional
-             Weights associated with classes in the form
-            {class_label : weight}. If not given, all classes are
+            Weights associated with classes in the form
+            ``{class_label : weight}``. If not given, all classes are
             supposed to have weight one. This is parameter is
             deprecated.
 
@@ -1234,6 +1242,8 @@ class RidgeClassifierCV(_BaseRidgeClassifier, _BaseRidgeCV):
 
         self._label_binarizer = LabelBinarizer(pos_label=1, neg_label=-1)
         Y = self._label_binarizer.fit_transform(y)
+        if not self._label_binarizer.multilabel_:
+            y = column_or_1d(y, warn=True)
         cw = compute_class_weight(class_weight,
                                   self.classes_, Y)
         # modify the sample weights with the corresponding class weight

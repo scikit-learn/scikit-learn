@@ -394,7 +394,7 @@ class Nystroem(BaseEstimator, TransformerMixin):
     References
     ----------
     * Williams, C.K.I. and Seeger, M.
-      "Using the Nystrom method to speed up kernel machines",
+      "Using the Nyström method to speed up kernel machines",
       Advances in neural information processing systems 2001
 
     * T. Yang, Y. Li, M. Mahdavi, R. Jin and Z. Zhou

@@ -105,7 +105,7 @@ for code sprints, as well as towards the organization budget of the project [#f1
 
 
 The 2013' Paris international sprint
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 |center-div|   |telecom|   |tinyclues|   |afpy| |FNRS|
 

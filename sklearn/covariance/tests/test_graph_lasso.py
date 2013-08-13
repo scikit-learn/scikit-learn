@@ -56,6 +56,9 @@ def test_graph_lasso_cv(random_state=1):
     try:
         sys.stdout = StringIO()
         # We need verbose very high so that Parallel prints on stdout
-        GraphLassoCV(verbose=100, alphas=3).fit(X)
+        GraphLassoCV(verbose=100, alphas=3, tol=1e-1).fit(X)
     finally:
         sys.stdout = orig_stdout
+
+    # Smoke test with specified alphas
+    GraphLassoCV(alphas=[0.8, 0.5], tol=1e-1, n_jobs=1).fit(X)
