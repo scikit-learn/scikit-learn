@@ -267,8 +267,7 @@ features to get boolean values**. This can be useful for downstream
 probabilistic estimators that make assumption that the input data
 is distributed according to a multi-variate `Bernoulli distribution
 <http://en.wikipedia.org/wiki/Bernoulli_distribution>`_. For instance,
-this is the case for the most common class of `(Restricted) Boltzmann
-Machines <http://en.wikipedia.org/wiki/Boltzmann_machine>`_.
+this is the case for the :class:`sklearn.neural_network.BernoulliRBM`.
 
 It is also common among the text processing community to use binary
 feature values (probably to simplify the probabilistic reasoning) even
