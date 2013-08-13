@@ -1579,6 +1579,7 @@ cdef class Tree:
                 stack_n_values += 5
 
         self._resize(self.node_count)
+        splitter.X = None # Release reference
         free(stack)
 
     cpdef predict(self, np.ndarray[DTYPE_t, ndim=2] X):
