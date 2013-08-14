@@ -5,8 +5,11 @@ Testing for Clustering methods
 
 import numpy as np
 
-from sklearn.utils.testing import (assert_equal, assert_array_equal,
-                                   assert_raises)
+from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_array_equal
+
 from sklearn.cluster.affinity_propagation_ import AffinityPropagation
 from sklearn.cluster.affinity_propagation_ import affinity_propagation
 from sklearn.datasets.samples_generator import make_blobs
@@ -56,3 +59,15 @@ def test_affinity_propagation():
     assert_raises(ValueError, affinity_propagation, S, damping=0)
     af = AffinityPropagation(affinity="unknown")
     assert_raises(ValueError, af.fit, X)
+
+
+def test_affinity_propagation_predict():
+    af = AffinityPropagation(affinity="euclidean")
+    labels = af.fit_predict(X)
+    labels2 = af.predict(X)
+    assert_array_equal(labels, labels2)
+
+
+def test_affinity_propagation_predict_error():
+    af = AffinityPropagation(affinity="euclidean")
+    assert_raises(ValueError, af.predict, X)

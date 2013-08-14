@@ -212,6 +212,9 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
     `cluster_centers_indices_` : array, [n_clusters]
         Indices of cluster centers
 
+    `cluster_centers_` : array, [n_clusters, n_features]
+        Cluster centers (if affinity != ``precomputed'').
+
     `labels_` : array, [n_samples]
         Labels of each point
 
@@ -278,4 +281,28 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
             self.affinity_matrix_, self.preference, max_iter=self.max_iter,
             convergence_iter=self.convergence_iter, damping=self.damping,
             copy=self.copy, verbose=self.verbose)
+
+        if self.affinity != "precomputed":
+            self.cluster_centers_ = X[self.cluster_centers_indices_].copy()
+
         return self
+
+    def predict(self, X):
+        """Predict the closest cluster each sample in X belongs to.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+            New data to predict.
+
+        Returns
+        -------
+        labels : array, shape [n_samples,]
+            Index of the cluster each sample belongs to.
+        """
+        if not hasattr(self, "cluster_centers_"):
+            raise ValueError("Error: estimator not fitted or "
+                             "affinity='precomputed'.")
+
+        # FIXME: can use pairwise_distances_argmin when ready.
+        return euclidean_distances(X, self.cluster_centers_).argmin(axis=1)
