@@ -33,7 +33,7 @@ from sklearn.grid_search import (GridSearchCV, RandomizedSearchCV,
 from sklearn.svm import LinearSVC, SVC
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.cluster import KMeans, MeanShift
+from sklearn.cluster import KMeans, SpectralClustering
 from sklearn.metrics import f1_score
 from sklearn.metrics import make_scorer
 from sklearn.metrics import roc_auc_score
@@ -491,8 +491,9 @@ def test_unsupervised_grid_search():
 
 
 def test_bad_estimator():
-    # test grid-search with unsupervised estimator
-    ms = MeanShift()
+    # test grid-search with clustering algorithm which doesn't support
+    # "predict"
+    ms = SpectralClustering()
     assert_raises(TypeError, GridSearchCV, ms,
                   param_grid=dict(gamma=[.1, 1, 10]),
                   scoring='ari')
