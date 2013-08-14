@@ -263,11 +263,6 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
             similarities / affinities.
         """
 
-        if X.shape[0] == X.shape[1] and not self._pairwise:
-            warnings.warn("The API of AffinityPropagation has changed."
-                          "Now ``fit`` constructs an affinity matrix from the"
-                          " data. To use a custom affinity matrix, set "
-                          "``affinity=precomputed``.")
         if self.affinity is "precomputed":
             self.affinity_matrix_ = X
         elif self.affinity is "euclidean":
