@@ -19,13 +19,15 @@ X, _ = make_blobs(n_samples=500, n_features=2, centers=centers,
                   cluster_std=0.4, shuffle=True, random_state=0)
 
 
+def test_estimate_bandwidth():
+    bandwidth = estimate_bandwidth(X, n_samples=300)
+    assert_true(0.9 <= bandwidth <= 1.5)
+
+
 def test_mean_shift():
     """ Test MeanShift algorithm
     """
     bandwidth = 1.2
-
-    bandwidth_ = estimate_bandwidth(X, n_samples=300)
-    assert_true(0.9 <= bandwidth_ <= 1.5)
 
     ms = MeanShift(bandwidth=bandwidth)
     labels = ms.fit(X).labels_
