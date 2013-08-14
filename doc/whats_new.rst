@@ -1,5 +1,13 @@
 .. currentmodule:: sklearn
 
+.. _changes_0_15:
+
+0.15
+=====
+
+   - Add predict method to :class:`cluster.AffinityPropagation` and
+     :class:`cluster.MeanShift`, by `Mathieu Blondel`_.
+
 .. _changes_0_14:
 
 0.14
