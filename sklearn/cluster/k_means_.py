@@ -768,8 +768,8 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
 
         Returns
         -------
-        Y : array, shape [n_samples,]
-            Index of the closest center each sample belongs to.
+        labels : array, shape [n_samples,]
+            Index of the cluster each sample belongs to.
         """
         self._check_fitted()
         X = self._check_test_data(X)
