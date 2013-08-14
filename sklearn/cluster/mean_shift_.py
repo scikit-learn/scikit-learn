@@ -11,6 +11,7 @@ from ..externals import six
 from ..utils import extmath, check_random_state
 from ..base import BaseEstimator, ClusterMixin
 from ..neighbors import NearestNeighbors
+from ..metrics.pairwise import euclidean_distances
 
 
 def estimate_bandwidth(X, quantile=0.3, n_samples=None, random_state=0):
@@ -279,3 +280,19 @@ class MeanShift(BaseEstimator, ClusterMixin):
                        bin_seeding=self.bin_seeding,
                        cluster_all=self.cluster_all)
         return self
+
+    def predict(self, X):
+        """Predict the closest cluster each sample in X belongs to.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+            New data to predict.
+
+        Returns
+        -------
+        labels : array, shape [n_samples,]
+            Index of the cluster each sample belongs to.
+        """
+        # FIXME: can use pairwise_distances_argmin when ready.
+        return euclidean_distances(X, self.cluster_centers_).argmin(axis=1)

@@ -5,7 +5,10 @@ Testing for mean shift clustering methods
 
 import numpy as np
 
-from sklearn.utils.testing import assert_equal, assert_false, assert_true
+from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_false
+from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_array_equal
 
 from sklearn.cluster import MeanShift
 from sklearn.cluster import mean_shift
@@ -40,6 +43,13 @@ def test_mean_shift():
     labels_unique = np.unique(labels)
     n_clusters_ = len(labels_unique)
     assert_equal(n_clusters_, n_clusters)
+
+
+def test_meanshift_predict():
+    ms = MeanShift(bandwidth=1.2)
+    labels = ms.fit_predict(X)
+    labels2 = ms.predict(X)
+    assert_array_equal(labels, labels2)
 
 
 def test_unfitted():
