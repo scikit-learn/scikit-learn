@@ -493,8 +493,8 @@ def test_unsupervised_grid_search():
 def test_bad_estimator():
     # test grid-search with clustering algorithm which doesn't support
     # "predict"
-    ms = SpectralClustering()
-    assert_raises(TypeError, GridSearchCV, ms,
+    sc = SpectralClustering()
+    assert_raises(TypeError, GridSearchCV, sc,
                   param_grid=dict(gamma=[.1, 1, 10]),
                   scoring='ari')
 
