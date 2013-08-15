@@ -295,8 +295,11 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
         labels : array, shape [n_samples,]
             Index of the cluster each sample belongs to.
         """
+        if not hasattr(self, "cluster_centers_indices_"):
+            raise ValueError("Estimator is not fitted.")
+
         if not hasattr(self, "cluster_centers_"):
-            raise ValueError("Error: estimator not fitted or "
+            raise ValueError("Predict method is not supported when "
                              "affinity='precomputed'.")
 
         # FIXME: can use pairwise_distances_argmin when ready.
