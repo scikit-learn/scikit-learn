@@ -70,5 +70,12 @@ def test_affinity_propagation_predict():
 
 def test_affinity_propagation_predict_error():
     """Test exception in AffinityPropagation.predict"""
+    # Not fitted.
     af = AffinityPropagation(affinity="euclidean")
+    assert_raises(ValueError, af.predict, X)
+
+    # Predict not supported when affinity="precomputed".
+    S = np.dot(X, X.T)
+    af = AffinityPropagation(affinity="precomputed")
+    af.fit(S)
     assert_raises(ValueError, af.predict, X)
