@@ -17,6 +17,7 @@ from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
 
 from sklearn.svm import LinearSVC
+from sklearn.svm import SVC
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.linear_model import (LinearRegression, Lasso, ElasticNet, Ridge,
                                   Perceptron)
@@ -328,6 +329,16 @@ def test_ecoc_fit_predict():
     ecoc = OutputCodeClassifier(MultinomialNB(), code_size=2, random_state=0)
     ecoc.fit(iris.data, iris.target).predict(iris.data)
     assert_equal(len(ecoc.estimators_), n_classes * 2)
+
+
+def test_ecoc_fit_predict_decoc():
+    # A classifier which implements decision_function.
+    ecoc = OutputCodeClassifier(SVC(kernel='linear', C=1.0, probability=False),
+                                code_size=2, random_state=0,
+                                ecoc_type='decoc')
+
+    ecoc.fit(iris.data, iris.target).predict(iris.data)
+    assert_equal(len(ecoc.estimators_), n_classes - 1)
 
 
 def test_ecoc_gridsearch():

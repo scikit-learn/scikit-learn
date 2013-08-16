@@ -42,6 +42,8 @@ from .metrics.pairwise import euclidean_distances
 from .utils import check_random_state
 from .externals.joblib import Parallel
 from .externals.joblib import delayed
+from .ecoc_utils import create_random_codebook
+from .ecoc_utils import create_decoc_codebook
 
 
 def _fit_binary(estimator, X, y, classes=None):
@@ -56,6 +58,12 @@ def _fit_binary(estimator, X, y, classes=None):
             warnings.warn("Label %s is present in all training examples." %
                           str(classes[c]))
         estimator = _ConstantPredictor().fit(X, unique_y)
+    elif len(unique_y) == 3:
+        estimator = clone(estimator)
+        X_filtered = X[(y == 1) | (y == -1)]
+        y_filtered = y[(y == 1) | (y == -1)]
+        estimator = clone(estimator)
+        estimator.fit(X_filtered, y_filtered)
     else:
         estimator = clone(estimator)
         estimator.fit(X, y)
@@ -427,7 +435,8 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         return predict_ovo(self.estimators_, self.classes_, X)
 
 
-def fit_ecoc(estimator, X, y, code_size=1.5, random_state=None, n_jobs=1):
+def fit_ecoc(estimator, X, y, code_size=1.5, random_state=None,
+             n_jobs=1, ecoc_type='random'):
     """
     Fit an error-correcting output-code strategy.
 
@@ -465,13 +474,11 @@ def fit_ecoc(estimator, X, y, code_size=1.5, random_state=None, n_jobs=1):
 
     # FIXME: there are more elaborate methods than generating the codebook
     # randomly.
-    code_book = random_state.random_sample((n_classes, code_size))
-    code_book[code_book > 0.5] = 1
-
-    if hasattr(estimator, "decision_function"):
-        code_book[code_book != 1] = -1
+    if ecoc_type == 'decoc':
+        code_book = create_decoc_codebook(n_classes, X, y, random_state)
     else:
-        code_book[code_book != 1] = 0
+        code_book = create_random_codebook(n_classes, code_size,
+                                           random_state, estimator)
 
     cls_idx = dict((c, i) for i, c in enumerate(classes))
 
@@ -556,7 +563,8 @@ class OutputCodeClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
        2008.
     """
 
-    def __init__(self, estimator, code_size=1.5, random_state=None, n_jobs=1):
+    def __init__(self, estimator, code_size=1.5, random_state=None, n_jobs=1,
+                 ecoc_type='random'):
         if (code_size <= 0):
             raise ValueError("code_size should be greater than 0!")
 
@@ -564,6 +572,7 @@ class OutputCodeClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         self.code_size = code_size
         self.random_state = random_state
         self.n_jobs = n_jobs
+        self.ecoc_type = ecoc_type
 
     def fit(self, X, y):
         """Fit underlying estimators.
@@ -582,7 +591,7 @@ class OutputCodeClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         """
         self.estimators_, self.classes_, self.code_book_ = \
             fit_ecoc(self.estimator, X, y, self.code_size, self.random_state,
-                     self.n_jobs)
+                     self.n_jobs, self.ecoc_type)
         return self
 
     def predict(self, X):
