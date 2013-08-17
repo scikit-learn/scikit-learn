@@ -423,8 +423,7 @@ Currently, ``algorithm = 'auto'`` selects ``'kd_tree'`` if :math:`k < N/2`
 and the ``'effective_metric_'`` is in the ``'VALID_METRICS'`` list of 
 ``'kd_tree'``. It selects ``'ball_tree'`` if :math:`k < N/2` and the 
 ``'effective_metric_'`` is not in the ``'VALID_METRICS'`` list of 
-``'kd_tree'``. It selects ``'brute'`` if :math:`k >= N/2`. This choice is i
-based on the assumption that the number of query points is at least the 
+``'kd_tree'``. It selects ``'brute'`` if :math:`k >= N/2`. This choice is based on the assumption that the number of query points is at least the 
 same order as the number of training points, and that ``leaf_size`` is 
 close to its default value of ``30``.
 
