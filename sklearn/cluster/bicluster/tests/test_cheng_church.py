@@ -57,9 +57,8 @@ def test_cheng_church():
 
 
 def test_inverse_rows():
-    data = np.zeros((15, 10))
-    data[:10] = np.arange(100).reshape(10, 10)
-    data[10:15] = -np.arange(100, 150).reshape(5, 10)
+    data = np.arange(150).reshape(15, 10)
+    data[10:15] = -data[10:15]
     rows = np.ones(15, dtype=np.bool)
     cols = np.ones(10, dtype=np.bool)
 
@@ -67,12 +66,20 @@ def test_inverse_rows():
                         inverse_rows=False)
     model.fit(data)
     old_score = consensus_score((rows, cols), model.biclusters_)
+    old_rows = model.rows_[0]
 
-    model = ChengChurch(n_clusters=1, max_msr=1, random_state=0,
-                        inverse_rows=True)
+    model.inverse_rows = True
     model.fit(data)
     new_score = consensus_score((rows, cols), model.biclusters_)
     assert(new_score > old_score)
+
+    # check that all the new rows are inverted rows
+    expected_inv_rows = np.zeros(15, dtype=np.bool)
+    expected_inv_rows[10:15] = True
+    new_rows = np.logical_and(model.rows_[0],
+                              np.logical_not(old_rows))
+    assert not np.any(np.logical_or(expected_inv_rows, new_rows)[:10])
+    assert np.any(new_rows[10:])
 
 
 def test_empty_biclusters():
@@ -158,7 +165,7 @@ def test_node_addition():
     expected_rows = np.ones(20, dtype=np.bool)
     expected_cols = np.ones(20, dtype=np.bool)
 
-    rows, cols = model._node_addition(rows, cols, arr)
+    rows, cols, _ = model._node_addition(rows, cols, arr)
     assert_array_equal(rows, expected_rows)
     assert_array_equal(cols, expected_cols)
 

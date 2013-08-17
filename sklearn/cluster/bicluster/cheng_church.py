@@ -182,6 +182,10 @@ class ChengChurch(six.with_metaclass(ABCMeta, BaseEstimator,
     `columns_` : array-like, shape (n_column_clusters, n_columns)
         Results of the clustering, like `rows`.
 
+    `inverted_rows` : array-like, shape (n_row_clusters, n_rows)
+        `inverted_rows[i, r` is True if row `r` was inverted to match
+        the pattern of cluster `i`.
+
 
     References
     ----------
@@ -288,31 +292,33 @@ class ChengChurch(six.with_metaclass(ABCMeta, BaseEstimator,
 
     def _node_addition(self, rows, cols, X):
         """Add rows and columns with MSR smaller than the bicluster's."""
+        inverse_rows = np.zeros(len(rows), dtype=np.bool)
         while True:
             n_rows = np.count_nonzero(rows)
             n_cols = np.count_nonzero(cols)
 
             msr = self._msr(rows, cols, X)
             col_msr = self._col_msr(rows, cols, X)
-            to_add = col_msr < msr
-            cols = cols + to_add
+            cols = np.logical_or(cols, col_msr < msr)
 
             old_rows = rows.copy()  # save for row inverse
             msr = self._msr(rows, cols, X)
             row_msr = self._row_msr(rows, cols, X)
-            to_add = row_msr < msr
-            rows = rows + to_add
+            rows = np.logical_or(rows, row_msr < msr)
 
             if self.inverse_rows:
                 row_msr = self._row_msr(old_rows, cols, X,
                                         inverse=True)
                 to_add = row_msr < msr
-                rows = rows + to_add
+                new_inverse_rows = np.logical_and(to_add, np.logical_not(rows))
+                inverse_rows = np.logical_or(inverse_rows,
+                                             new_inverse_rows)
+                rows = np.logical_or(rows, to_add)
 
             if (n_rows == np.count_nonzero(rows)) and \
                (n_cols == np.count_nonzero(cols)):
                 break
-        return rows, cols
+        return rows, cols, inverse_rows
 
     def _mask(self, X, rows, cols, generator, minval, maxval):
         """Mask a bicluster in the data with random values."""
@@ -340,16 +346,19 @@ class ChengChurch(six.with_metaclass(ABCMeta, BaseEstimator,
         generator = check_random_state(self.random_state)
         result_rows = []
         result_cols = []
+        inverse_rows = []
 
         for i in range(self.n_clusters):
             rows = np.ones(n_rows, dtype=np.bool)
             cols = np.ones(n_cols, dtype=np.bool)
             rows, cols = self._multiple_node_deletion(rows, cols, X)
             rows, cols = self._single_node_deletion(rows, cols, X)
-            rows, cols = self._node_addition(rows, cols, X)
+            rows, cols, irows = self._node_addition(rows, cols, X)
             self._mask(X, rows, cols, generator, minval, maxval)
             result_rows.append(rows)
             result_cols.append(cols)
+            inverse_rows.append(irows)
 
         self.rows_ = np.vstack(result_rows)
         self.columns_ = np.vstack(result_cols)
+        self.inverted_rows = np.vstack(inverse_rows)
