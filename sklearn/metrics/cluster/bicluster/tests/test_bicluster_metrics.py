@@ -3,7 +3,6 @@
 import numpy as np
 
 from sklearn.utils.testing import assert_equal
-from sklearn.utils.validation import array2d
 
 from ..bicluster_metrics import _jaccard
 from ..bicluster_metrics import consensus_score
@@ -37,8 +36,8 @@ def test_consensus_score():
     assert_equal(consensus_score((b, b), (b, a)), 0)
 
     # ensure single biclusters get reshaped correctly
-    rows = [True, False]
-    cols = [True, False]
+    rows = np.array([True, False])
+    cols = np.array([True, False])
     assert_equal(consensus_score((rows, cols),
-                                 (array2d(rows), array2d(cols))),
+                                 (rows[np.newaxis, :], cols[np.newaxis, :])),
                  1.0)

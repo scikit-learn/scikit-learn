@@ -9,9 +9,9 @@ from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_raises
 
 from sklearn.metrics import consensus_score
-from sklearn.datasets import make_msr
+from sklearn.datasets import make_msr_biclusters
 
-from sklearn.cluster.bicluster.cheng_church import IncrementalMSR
+from sklearn.cluster.bicluster.cheng_church import _IncrementalMSR
 from sklearn.cluster.bicluster.cheng_church import ChengChurch
 from sklearn.cluster.bicluster.cheng_church import EmptyBiclusterException
 
@@ -21,7 +21,7 @@ def test_incremental_msr():
     data = generator.uniform(1, 100, (20, 20))
     rows = np.ones(20, dtype=np.bool)
     cols = np.ones(20, dtype=np.bool)
-    inc = IncrementalMSR(rows, cols, data)
+    inc = _IncrementalMSR(rows, cols, data)
 
     new_rows = rows.copy()
     new_rows[0] = False
@@ -46,8 +46,9 @@ def test_cheng_church():
     for shape in ((150, 150), (50, 50)):
         for noise in (0, 1):
             for deletion_threshold in (1.5, 2):
-                data, rows, cols = make_msr(shape, 3, noise=noise,
-                                            random_state=0)
+                data, rows, cols = make_msr_biclusters(shape, 3,
+                                                       noise=noise,
+                                                       random_state=0)
                 model = ChengChurch(n_clusters=3, max_msr=10,
                                     deletion_threshold=deletion_threshold,
                                     random_state=0)
@@ -214,14 +215,14 @@ def test_incremental_msr_errors():
     rows[0] = True
     cols[0] = True
 
-    inc = IncrementalMSR(rows, cols, data)
+    inc = _IncrementalMSR(rows, cols, data)
     assert_raises(EmptyBiclusterException, inc.remove_row, 0)
 
-    inc = IncrementalMSR(rows, cols, data)
+    inc = _IncrementalMSR(rows, cols, data)
     assert_raises(EmptyBiclusterException, inc.remove_col, 0)
 
-    inc = IncrementalMSR(rows, cols, data)
+    inc = _IncrementalMSR(rows, cols, data)
     assert_raises(ValueError, inc.remove_row, 1)
 
-    inc = IncrementalMSR(rows, cols, data)
+    inc = _IncrementalMSR(rows, cols, data)
     assert_raises(ValueError, inc.remove_col, 1)

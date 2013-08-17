@@ -23,7 +23,7 @@ from sklearn.datasets import make_swiss_roll
 from sklearn.datasets import make_s_curve
 from sklearn.datasets import make_biclusters
 from sklearn.datasets import make_checkerboard
-from sklearn.datasets import make_msr
+from sklearn.datasets import make_msr_biclusters
 
 from sklearn.utils.validation import assert_all_finite
 
@@ -245,9 +245,10 @@ def test_make_checkerboard():
     assert_array_equal(X1, X2)
 
 
-def test_make_msr():
-    X, rows, cols = make_msr(shape=(100, 100), n_clusters=5,
-                             shuffle=True, random_state=0)
+def test_make_msr_biclusters():
+    X, rows, cols = make_msr_biclusters(shape=(100, 100),
+                                        n_clusters=5, shuffle=True,
+                                        random_state=0)
     assert_equal(X.shape, (100, 100), "X shape mismatch")
     assert_equal(rows.shape, (5, 100), "rows shape mismatch")
     assert_equal(cols.shape, (5, 100,), "columns shape mismatch")
@@ -256,13 +257,14 @@ def test_make_msr():
     assert_all_finite(rows)
     assert_all_finite(cols)
 
-    X2, _, _ = make_msr(shape=(100, 100), n_clusters=5,
-                        shuffle=True, random_state=0)
+    X2, _, _ = make_msr_biclusters(shape=(100, 100), n_clusters=5,
+                                   shuffle=True, random_state=0)
     assert_array_equal(X, X2)
 
-    X, rows, cols = make_msr(shape=(100, 100), n_clusters=5,
-                             identical=True, constant=True,
-                             shuffle=True, random_state=0)
+    X, rows, cols = make_msr_biclusters(shape=(100, 100),
+                                        n_clusters=5, identical=True,
+                                        constant=True, shuffle=True,
+                                        random_state=0)
     for i in range(5):
         bicluster = X[rows[i]][:, cols[i]]
         assert(np.all(bicluster == bicluster[0, 0]))

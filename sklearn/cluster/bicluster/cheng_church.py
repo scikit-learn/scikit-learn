@@ -22,7 +22,7 @@ class EmptyBiclusterException(Exception):
     pass
 
 
-class IncrementalMSR(object):
+class _IncrementalMSR(object):
     """Incrementally calculates MSR during node deletion."""
     def __init__(self, rows, cols, arr, tol=1e-5):
         assert rows.dtype == np.bool
@@ -257,7 +257,7 @@ class ChengChurch(six.with_metaclass(ABCMeta, BaseEstimator,
 
     def _single_node_deletion(self, rows, cols, X):
         """Iteratively remove single rows and columns."""
-        inc = IncrementalMSR(rows, cols, X)
+        inc = _IncrementalMSR(rows, cols, X)
         while inc.msr > self.max_msr:
             row_idx = np.argmax(inc.row_msr)
             col_idx = np.argmax(inc.col_msr)
@@ -269,7 +269,7 @@ class ChengChurch(six.with_metaclass(ABCMeta, BaseEstimator,
 
     def _multiple_node_deletion(self, rows, cols, X):
         """Iteratively remove multiple rows and columns at once."""
-        inc = IncrementalMSR(rows, cols, X)
+        inc = _IncrementalMSR(rows, cols, X)
         while inc.msr > self.max_msr:
             n_rows = len(inc.row_idxs)
             n_cols = len(inc.col_idxs)

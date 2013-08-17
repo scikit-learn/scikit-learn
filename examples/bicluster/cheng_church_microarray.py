@@ -53,4 +53,4 @@ print("Done in {:.2f}s.".format(time() - start_time))
 msr = lambda a: (np.power(a - a.mean(axis=1, keepdims=True) -
                           a.mean(axis=0) + a.mean(), 2).mean())
 min_msr = min(msr(model.get_submatrix(i, data)) for i in range(100))
-print ("MSR of best bicluster: {:.2f}".format(min_msr))
+print("MSR of best bicluster: {:.2f}".format(min_msr))
