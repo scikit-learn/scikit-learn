@@ -83,6 +83,7 @@ def test_pairwise_distances():
     Y_sparse = csr_matrix(Y)
     S = pairwise_distances(X_sparse, Y_sparse, metric="euclidean")
     S2 = euclidean_distances(X_sparse, Y_sparse)
+    assert_array_almost_equal(S, S2)
     S = pairwise_distances(X_sparse, Y_sparse, metric="cosine")
     S2 = cosine_distances(X_sparse, Y_sparse)
     assert_array_almost_equal(S, S2)
