@@ -13,7 +13,7 @@ from . import check_random_state
 from .fixes import qr_economic
 from ._logistic_sigmoid import _log_logistic_sigmoid
 from ..externals.six.moves import xrange
-from .validation import array2d, DataConversionWarning
+from .validation import array2d, NonBLASDotWarning
 
 
 def norm(v):
@@ -80,23 +80,35 @@ def _fast_dot(A, B):
     Parameters
     ----------
     A, B: instance of np.ndarray
-        input matrices.
+        input matrices. Matrices are supposed to be of the same types
+        and to have exactly 2 dimensions. Currently only floats are supported.
+        In case these requirements aren't met np.dot(A, B) is returned
+        instead. To activate the related warning issued in this case
+        execute the following lines of code:
+
+        >> import warnings
+        >> from sklearn.utils.validation import NonBLASDotWarning
+        >> warnings.simplefilter('always', NonBLASDotWarning)
     """
 
     if B.shape[0] != A.shape[A.ndim - 1]:  # check adopted from '_dotblas.c'
-        raise ValueError('matrices are not aligned')
+        msg = ('Invalid array shapes: A.shape[%d] should be the same as '
+               'B.shape[0]. Got A.shape=%r B.shape=%r' % (A.ndim - 1,
+                A.shape, B.shape))
+        raise ValueError(msg)
 
     if A.dtype != B.dtype or any(x.dtype not in (np.float32, np.float64)
-        for x in [A, B]):
+                                 for x in [A, B]):
         warnings.warn('Data must be of same type. Supported types '
                       'are 32 and 64 bit float. '
-                      'Falling back to np.dot.', DataConversionWarning)
+                      'Falling back to np.dot.', NonBLASDotWarning)
         return np.dot(A, B)
+
     if ((A.ndim == 1 or B.ndim == 1) or
         (min(A.shape) == 1) or (min(B.shape) == 1) or
         (A.ndim != 2) or (B.ndim != 2)):
         warnings.warn('Data must be 2D with more than one colum / row.'
-                      'Falling back to np.dot', DataConversionWarning)
+                      'Falling back to np.dot', NonBLASDotWarning)
         return np.dot(A, B)
 
     dot = linalg.get_blas_funcs('gemm', (A, B))
@@ -110,8 +122,7 @@ try:
     fast_dot = _fast_dot
 except (ImportError, AttributeError):
     fast_dot = np.dot
-    warnings.warn('Could not import BLAS, falling back to np.dot',
-                   DataConversionWarning)
+    warnings.warn('Could not import BLAS, falling back to np.dot')
 
 
 def density(w, **kwargs):

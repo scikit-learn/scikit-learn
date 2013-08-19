@@ -24,7 +24,7 @@ from sklearn.utils.extmath import weighted_mode
 from sklearn.utils.extmath import cartesian
 from sklearn.utils.extmath import logistic_sigmoid
 from sklearn.utils.extmath import fast_dot
-from sklearn.utils.validation import DataConversionWarning
+from sklearn.utils.validation import NonBLASDotWarning
 from sklearn.datasets.samples_generator import make_low_rank_matrix
 
 
@@ -303,11 +303,29 @@ def test_fast_dot():
         has_blas = False
 
     if has_blas:
-        for dt1, dt2 in [['f8', 'f4'], ['i4', 'i4']]:
-            with warnings.catch_warnings(record=True) as w:
-                warnings.simplefilter("always", DataConversionWarning)
+        # test dispatch to np.dot
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter('always', NonBLASDotWarning)
+            # maltyped data
+            for dt1, dt2 in [['f8', 'f4'], ['i4', 'i4']]:
                 fast_dot(A.astype(dt1), B.astype(dt2).T)
-                assert_true(len(w) == 1)
+                assert_true(type(w.pop(-1)) == NonBLASDotWarning)
+            # malformed data
+            # ndim == 0
+            E = np.empty(0)
+            fast_dot(E, E)
+            assert_true(type(w.pop(-1)) == NonBLASDotWarning)
+            ## ndim == 1
+            fast_dot(A, A[0])
+            assert_true(type(w.pop(-1)) == NonBLASDotWarning)
+            ## ndim > 2
+            fast_dot(A.T, np.array([A, A]))
+            assert_true(type(w.pop(-1)) == NonBLASDotWarning)
+            ## min(shape) == 1
+            fast_dot(A, A[0, :][None, :])
+            assert_true(type(w.pop(-1)) == NonBLASDotWarning)
+        # test for matrix mismatch error
+        assert_raises(ValueError, fast_dot, A, A)
 
     # test cov-like use case + dtypes
     for dtype in ['f8', 'f4']:
