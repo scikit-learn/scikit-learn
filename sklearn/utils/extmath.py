@@ -93,7 +93,8 @@ def _fast_dot(A, B):
                       'Falling back to np.dot.', DataConversionWarning)
         return np.dot(A, B)
     if ((A.ndim == 1 or B.ndim == 1) or
-        (min(A.shape) == 1) or (min(B.shape) == 1)):
+        (min(A.shape) == 1) or (min(B.shape) == 1) or
+        (A.ndim != 2) or (B.ndim != 2)):
         warnings.warn('Data must be 2D with more than one colum / row.'
                       'Falling back to np.dot', DataConversionWarning)
         return np.dot(A, B)
