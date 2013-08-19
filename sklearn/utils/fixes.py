@@ -7,7 +7,6 @@ at which the fixe is no longer needed.
 #          Gael Varoquaux <gael.varoquaux@normalesup.org>
 #          Fabian Pedregosa <fpedregosa@acm.org>
 #          Lars Buitinck <L.J.Buitinck@uva.nl>
-#          Denis Engemann <d.engemann@fz-juelich.de>
 #
 # License: BSD 3 clause
 
