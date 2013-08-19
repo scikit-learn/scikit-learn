@@ -82,6 +82,10 @@ def _fast_dot(A, B):
     A, B: instance of np.ndarray
         input matrices.
     """
+
+    if B.shape[0] != A.shape[A.ndim - 1]:  # check adopted from '_dotblas.c'
+        raise ValueError('matrices are not aligned')
+
     if A.dtype != B.dtype or any(x.dtype not in (np.float32, np.float64)
         for x in [A, B]):
         warnings.warn('Data must be of same type. Supported types '
