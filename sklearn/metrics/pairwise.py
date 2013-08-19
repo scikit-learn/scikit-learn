@@ -287,7 +287,7 @@ def cosine_distances(X, Y=None):
 
     Returns
     -------
-    kernel matrix : array_like
+    distance matrix : array_like
         An array with shape (n_samples_X, n_samples_Y).
         
     See also
@@ -295,7 +295,11 @@ def cosine_distances(X, Y=None):
     sklearn.metrics.pairwise.cosine_similarity
     scipy.spatial.distance.cosine (dense matrices only)
     """
-    return 1.0 - cosine_similarity(X, Y)
+    # 1.0 - cosine_similarity(X, Y) without copy
+    S = cosine_similarity(X, Y)
+    S *= -1
+    S += 1
+    return S    
 
 
 # Kernels
