@@ -9,8 +9,13 @@ from .forest import RandomForestRegressor
 from .forest import RandomTreesEmbedding
 from .forest import ExtraTreesClassifier
 from .forest import ExtraTreesRegressor
+<<<<<<< HEAD
 from .bagging import BaggingClassifier
 from .bagging import BaggingRegressor
+=======
+from .random_patches import RandomPatchesClassifier
+from .random_patches import RandomPatchesRegressor
+>>>>>>> c7690c6c689642c00086f9924be50585941d3eda
 from .weight_boosting import AdaBoostClassifier
 from .weight_boosting import AdaBoostRegressor
 from .gradient_boosting import GradientBoostingClassifier
