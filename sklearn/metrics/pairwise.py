@@ -271,6 +271,37 @@ def manhattan_distances(X, Y=None, sum_over_features=True,
     return D
 
 
+def cosine_distances(X, Y=None):
+    """
+    Compute cosine distance between samples in X and Y.
+
+    Cosine distance is defined as 1.0 minus the cosine similarity.
+
+    Parameters
+    ----------
+    X : array_like, sparse matrix
+        with shape (n_samples_X, n_features).
+
+    Y : array_like, sparse matrix (optional)
+        with shape (n_samples_Y, n_features).
+
+    Returns
+    -------
+    distance matrix : array_like
+        An array with shape (n_samples_X, n_samples_Y).
+        
+    See also
+    --------
+    sklearn.metrics.pairwise.cosine_similarity
+    scipy.spatial.distance.cosine (dense matrices only)
+    """
+    # 1.0 - cosine_similarity(X, Y) without copy
+    S = cosine_similarity(X, Y)
+    S *= -1
+    S += 1
+    return S    
+
+
 # Kernels
 def linear_kernel(X, Y=None):
     """
@@ -525,11 +556,12 @@ def chi2_kernel(X, Y=None, gamma=1.):
 PAIRWISE_DISTANCE_FUNCTIONS = {
     # If updating this dictionary, update the doc in both distance_metrics()
     # and also in pairwise_distances()!
+    'cityblock': manhattan_distances,
+    'cosine': cosine_distances,
     'euclidean': euclidean_distances,
     'l2': euclidean_distances,
     'l1': manhattan_distances,
-    'manhattan': manhattan_distances,
-    'cityblock': manhattan_distances, }
+    'manhattan': manhattan_distances, }
 
 
 def distance_metrics():
@@ -545,6 +577,7 @@ def distance_metrics():
     metric           Function
     ============     ====================================
     'cityblock'      metrics.pairwise.manhattan_distances
+    'cosine'         metrics.pairwise.cosine_distances
     'euclidean'      metrics.pairwise.euclidean_distances
     'l1'             metrics.pairwise.manhattan_distances
     'l2'             metrics.pairwise.euclidean_distances
@@ -585,25 +618,27 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
     If Y is given (default is None), then the returned matrix is the pairwise
     distance between the arrays from both X and Y.
 
-    Please note that support for sparse matrices is currently limited to those
-    metrics listed in pairwise.PAIRWISE_DISTANCE_FUNCTIONS.
+    Please note that support for sparse matrices is currently limited to 
+    'euclidean', 'l2' and 'cosine'.
 
     Valid values for metric are:
 
-    - from scikit-learn: ['euclidean', 'l2', 'l1', 'manhattan', 'cityblock']
+    - from scikit-learn: ['cityblock', 'cosine', 'euclidean', 'l1', 'l2', 
+      'manhattan'] 
 
     - from scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
-      'correlation', 'cosine', 'dice', 'hamming', 'jaccard', 'kulsinski',
-      'mahalanobis', 'matching', 'minkowski', 'rogerstanimoto', 'russellrao',
-      'seuclidean', 'sokalmichener', 'sokalsneath', 'sqeuclidean', 'yule']
+      'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski', 'mahalanobis',
+      'matching', 'minkowski', 'rogerstanimoto', 'russellrao', 'seuclidean',
+      'sokalmichener', 'sokalsneath', 'sqeuclidean', 'yule']      
       See the documentation for scipy.spatial.distance for details on these
       metrics.
 
-    Note in the case of 'euclidean' and 'cityblock' (which are valid
-    scipy.spatial.distance metrics), the values will use the scikit-learn
-    implementation, which is faster and has support for sparse matrices.
-    For a verbose description of the metrics from scikit-learn, see the
-    __doc__ of the sklearn.pairwise.distance_metrics function.
+    Note that in the case of 'cityblock', 'cosine' and 'euclidean' (which are
+    valid scipy.spatial.distance metrics), the scikit-learn implementation
+    will be used, which is faster and has support for sparse matrices (except
+    for 'cityblock'). For a verbose description of the metrics from
+    scikit-learn, see the __doc__ of the sklearn.pairwise.distance_metrics
+    function.
 
     Parameters
     ----------

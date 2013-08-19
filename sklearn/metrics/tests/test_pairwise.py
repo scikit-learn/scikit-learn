@@ -20,6 +20,7 @@ from sklearn.metrics.pairwise import polynomial_kernel
 from sklearn.metrics.pairwise import rbf_kernel
 from sklearn.metrics.pairwise import sigmoid_kernel
 from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.metrics.pairwise import cosine_distances
 from sklearn.metrics.pairwise import pairwise_distances
 from sklearn.metrics.pairwise import pairwise_kernels
 from sklearn.metrics.pairwise import PAIRWISE_KERNEL_FUNCTIONS
@@ -66,6 +67,7 @@ def test_pairwise_distances():
     S3 = manhattan_distances(X, Y, size_threshold=10)
     assert_array_almost_equal(S, S3)
     # Test cosine as a string metric versus cosine callable
+    # "cosine" uses sklearn metric, cosine (function) is scipy.spatial
     S = pairwise_distances(X, Y, metric="cosine")
     S2 = pairwise_distances(X, Y, metric=cosine)
     assert_equal(S.shape[0], X.shape[0])
@@ -75,11 +77,15 @@ def test_pairwise_distances():
     S = np.dot(X, X.T)
     S2 = pairwise_distances(S, metric="precomputed")
     assert_true(S is S2)
-    # Test with sparse X and Y
+    # Test with sparse X and Y,
+    # currently only supported for euclidean and cosine
     X_sparse = csr_matrix(X)
     Y_sparse = csr_matrix(Y)
     S = pairwise_distances(X_sparse, Y_sparse, metric="euclidean")
     S2 = euclidean_distances(X_sparse, Y_sparse)
+    assert_array_almost_equal(S, S2)
+    S = pairwise_distances(X_sparse, Y_sparse, metric="cosine")
+    S2 = cosine_distances(X_sparse, Y_sparse)
     assert_array_almost_equal(S, S2)
     # Test with scipy.spatial.distance metric, with a kwd
     kwds = {"p": 2.0}
