@@ -137,7 +137,11 @@ def density(w, **kwargs):
 
 
 def safe_sparse_dot(a, b, dense_output=False):
-    """Dot product that handle the sparse matrix case correctly"""
+    """Dot product that handle the sparse matrix case correctly
+
+    Uses BLAS GEMM as replacement for numpy.dot where possible
+    to avoid unnecessary copies.
+    """
     from scipy import sparse
     if sparse.issparse(a) or sparse.issparse(b):
         ret = a * b

@@ -296,8 +296,6 @@ def test_minibatch_init_with_large_k():
     with warnings.catch_warnings(record=True) as warn_queue:
         mb_k_means.fit(X)
 
-    # filter expected warning
-    warn_queue = [w for w in warn_queue if 'init_size' in '%s' % w.message]
     assert_equal(len(warn_queue), 1)
 
 

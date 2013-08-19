@@ -15,7 +15,7 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_greater
-from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_raises, assert_raise_message
 
 from sklearn.utils.extmath import density
 from sklearn.utils.extmath import logsumexp
@@ -325,7 +325,10 @@ def test_fast_dot():
             fast_dot(A, A[0, :][None, :])
             assert_true(type(w.pop(-1)) == NonBLASDotWarning)
         # test for matrix mismatch error
-        assert_raises(ValueError, fast_dot, A, A)
+        msg = ('Invalid array shapes: A.shape[%d] should be the same as '
++              'B.shape[0]. Got A.shape=%r B.shape=%r' % (A.ndim - 1,
++               A.shape, A.shape))
+        assert_raise_message(msg, fast_dot, A, A)
 
     # test cov-like use case + dtypes
     for dtype in ['f8', 'f4']:
