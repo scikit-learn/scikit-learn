@@ -5,8 +5,14 @@
 0.15
 =====
 
+Changelog
+---------
+
    - Add predict method to :class:`cluster.AffinityPropagation` and
      :class:`cluster.MeanShift`, by `Mathieu Blondel`_.
+
+   - New unsupervised feature selection algorithm
+     :class:`feature_selection.VarianceThreshold`, by `Lars Buitinck`_.
 
 .. _changes_0_14:
 
