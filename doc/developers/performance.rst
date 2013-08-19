@@ -81,13 +81,14 @@ Memory and implicit copies
 
 Some of the numpy and scipy core functions are optimized for Fortran contiguous
 data. In the case of the dot product this often leads to implicit copies
-performed to adjust data to the needs of the underlying Fortran routines
-called. Also see section `Linear Algebra on large Arrays` on
-http://wiki.scipy.org/PerformanceTips. This not only consumes memory but also take time.
+performed to adjust data to the needs of the underlying Fortran routines (See section
+`Linear Algebra on large Arrays` on http://wiki.scipy.org/PerformanceTips).
+This not only consumes memory but also takes additional time.
 
 For convenience, we internally use an alternative `numpy.dot` function that
-saves additional copies and speed by directly calling the Fortran routines with the appropriate data input while preserving the nunpy.dot call signature. This
-means it can be used as a replacement for numpy.dot example::
+saves additional copies and speed by directly calling the Fortran routines with the
+appropriate data input while preserving the nunpy.dot call signature. This
+means it can be used as a replacement for `numpy.dot`. example::
 
   In [1]: import numpy as np
 
@@ -100,11 +101,12 @@ means it can be used as a replacement for numpy.dot example::
   Out[1]: True
 
 
-However this requires data to be exactly 2 dimensional and of the same type, either single or double precision float. If these requirements aren't met or
+However this requires data to be exactly 2 dimensional and of the same type,
+either single or double precision float. If these requirements aren't met or
 the BLAS package is not available, the call is silently dispatched to
-`numpy.dot`. If you want to be sure when the original numpy.dot has been
+`numpy.dot`. If you want to be sure when the original `numpy.dot` has been
 invoked and when our `fast_dot` function has been used you can activate the
-related warning which is silenced by default example::
+related warning which is silenced by default. example::
 
   In [1]: import warnings
 
