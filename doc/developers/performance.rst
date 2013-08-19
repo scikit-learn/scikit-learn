@@ -90,16 +90,14 @@ saves additional copies and speed by directly calling the Fortran routines with 
 appropriate data input while preserving the nunpy.dot call signature. This
 means it can be used as a replacement for `numpy.dot`. example::
 
-  In [1]: import numpy as np
+  >>> import numpy as np
 
-  In [2]: from sklearn.utils.extmath import fast_dot
+  >>> from sklearn.utils.extmath import fast_dot
 
-  In [3]: X = rng.random_sample([2, 10])
+  >>> X = np.random.random_sample([2, 10])
 
-  In [4]: (np.dot(X, X.T) == fast_dot(X, X.T)).all()
-
-  Out[1]: True # doctest: +SKIP
-
+  >>> (np.dot(X, X.T) == fast_dot(X, X.T)).all()
+  True
 
 However this requires data to be exactly 2 dimensional and of the same type,
 either single or double precision float. If these requirements aren't met or
@@ -108,11 +106,11 @@ the BLAS package is not available, the call is silently dispatched to
 invoked and when our `fast_dot` function has been used you can activate the
 related warning which is silenced by default. example::
 
-  In [1]: import warnings
+  >>> import warnings
 
-  In [2]: from sklearn.utils.validation import NotBLASDotWarning
+  >>> from sklearn.utils.validation import NonBLASDotWarning
 
-  In [3]: warnings.simplefilter('always', NotBLASDotWarning) # doctest: +SKIP
+  >>> warnings.simplefilter('always', NonBLASDotWarning) # doctest: +SKIP
 
 
 .. _profiling-python-code:

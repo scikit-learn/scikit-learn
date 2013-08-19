@@ -23,7 +23,8 @@ class NonBLASDotWarning(UserWarning):
     "A warning on implicit dispatch to numpy.dot"
     pass
 
-# silenced to reduce tests' verbosity. Turn on at runtime for
+
+# Silenced by default to reduce verbosity. Turn on at runtime for
 # performance profiling.
 warnings.simplefilter('ignore', NonBLASDotWarning)
 
