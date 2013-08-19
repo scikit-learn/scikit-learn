@@ -98,7 +98,7 @@ means it can be used as a replacement for `numpy.dot`. example::
 
   In [4]: (np.dot(X, X.T) == fast_dot(X, X.T)).all()
 
-  Out[1]: True
+  Out[1]: True # doctest: +SKIP
 
 
 However this requires data to be exactly 2 dimensional and of the same type,
@@ -112,7 +112,7 @@ related warning which is silenced by default. example::
 
   In [2]: from sklearn.utils.validation import NotBLASDotWarning
 
-  In [3]: warnings.simplefilter('always', NotBLASDotWarning)
+  In [3]: warnings.simplefilter('always', NotBLASDotWarning) # doctest: +SKIP
 
 
 .. _profiling-python-code:

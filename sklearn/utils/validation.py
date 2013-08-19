@@ -16,6 +16,8 @@ class DataConversionWarning(UserWarning):
     "A warning on implicit data conversions happening in the code"
     pass
 
+# silenced to reduce tests' verbosity. Turn on at runtime for
+# performance profiling.
 warnings.simplefilter("always", DataConversionWarning)
 
 
