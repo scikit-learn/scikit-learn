@@ -12,6 +12,39 @@ for feature selection/dimensionality reduction on sample sets, either to
 improve estimators' accuracy scores or to boost their performance on very
 high-dimensional datasets.
 
+
+Removing features with low variance
+===================================
+
+:class:`VarianceThreshold` is a simple baseline approach to feature selection.
+It removes all features whose variance doesn't meet some threshold.
+By default, it removes all zero-variance features,
+i.e. features that have the same value in all samples.
+
+As an example, suppose that we have a dataset with boolean features,
+and we want to remove all features that are either one or zero (on or off)
+in more than 80% of the samples.
+Boolean features are Bernoulli random variables,
+and the variance of such variables is given by
+
+.. math:: \mathrm{Var}[X] = p(1 - p)
+
+so we can select using the threshold ``.8 * (1 - .8)``::
+
+  >>> from sklearn.feature_selection import VarianceThreshold
+  >>> X = [[0, 0, 1], [0, 1, 0], [1, 0, 0], [0, 1, 1], [0, 1, 0], [0, 1, 1]]
+  >>> sel = VarianceThreshold(threshold=(.8 * (1 - .8)))
+  >>> sel.fit_transform(X)
+  array([[0, 1],
+         [1, 0],
+         [0, 0],
+         [1, 1],
+         [1, 0],
+         [1, 1]])
+
+As expected, ``VarianceThreshold`` has removed the first column,
+which has a probability :math:`p = 5/6 > .8` of containing a one.
+
 Univariate feature selection
 ============================
 
