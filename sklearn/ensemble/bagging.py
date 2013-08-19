@@ -1,4 +1,4 @@
-"""RandomPatches meta-estimator."""
+"""Bagging meta-estimator."""
 
 # Author: Gilles Louppe <g.louppe@gmail.com>
 # License: BSD 3 clause
@@ -22,8 +22,8 @@ from ..utils.validation import check_arrays
 
 from .base import BaseEnsemble
 
-__all__ = ["RandomPatchesClassifier",
-           "RandomPatchesRegressor"]
+__all__ = ["BaggingClassifier",
+           "BaggingRegressor"]
 
 MAX_INT = np.iinfo(np.int32).max
 
@@ -144,8 +144,8 @@ def _partition_estimators(ensemble):
     return n_jobs, n_estimators, starts
 
 
-class BaseRandomPatches(six.with_metaclass(ABCMeta, BaseEnsemble)):
-    """Base class for Random Patches meta-estimator.
+class BaseBagging(six.with_metaclass(ABCMeta, BaseEnsemble)):
+    """Base class for Bagging meta-estimator.
 
     Warning: This class should not be used directly. Use derived classes
     instead.
@@ -160,7 +160,7 @@ class BaseRandomPatches(six.with_metaclass(ABCMeta, BaseEnsemble)):
                  n_jobs=1,
                  random_state=None,
                  verbose=0):
-        super(BaseRandomPatches, self).__init__(
+        super(BaseBagging, self).__init__(
             base_estimator=base_estimator,
             n_estimators=n_estimators)
 
@@ -176,7 +176,7 @@ class BaseRandomPatches(six.with_metaclass(ABCMeta, BaseEnsemble)):
         self.verbose = verbose
 
     def fit(self, X, y, sample_weight=None):
-        """Build a Random Patches ensemble of estimators from the training
+        """Build a Bagging ensemble of estimators from the training
            set (X, y).
 
         Parameters
@@ -248,8 +248,8 @@ class BaseRandomPatches(six.with_metaclass(ABCMeta, BaseEnsemble)):
         return y
 
 
-class RandomPatchesClassifier(BaseRandomPatches, ClassifierMixin):
-    """RandomPatches Classifier."""
+class BaggingClassifier(BaseBagging, ClassifierMixin):
+    """Bagging Classifier."""
 
     def __init__(self,
                  base_estimator,
@@ -260,7 +260,7 @@ class RandomPatchesClassifier(BaseRandomPatches, ClassifierMixin):
                  random_state=None,
                  verbose=0):
 
-        super(RandomPatchesClassifier, self).__init__(
+        super(BaggingClassifier, self).__init__(
             base_estimator,
             n_estimators=n_estimators,
             bootstrap=bootstrap,
@@ -413,8 +413,8 @@ class RandomPatchesClassifier(BaseRandomPatches, ClassifierMixin):
         return np.log(self.predict_proba(X))
 
 
-class RandomPatchesRegressor(BaseRandomPatches, RegressorMixin):
-    """RandomPatches Regressor."""
+class BaggingRegressor(BaseBagging, RegressorMixin):
+    """Bagging Regressor."""
 
     def __init__(self,
                  base_estimator,
@@ -424,7 +424,7 @@ class RandomPatchesRegressor(BaseRandomPatches, RegressorMixin):
                  n_jobs=1,
                  random_state=None,
                  verbose=0):
-        super(RandomPatchesRegressor, self).__init__(
+        super(BaggingRegressor, self).__init__(
             base_estimator,
             n_estimators=n_estimators,
             bootstrap=bootstrap,
