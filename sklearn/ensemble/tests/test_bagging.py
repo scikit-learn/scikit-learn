@@ -15,7 +15,7 @@ from nose.tools import assert_false, assert_true
 from sklearn.utils.testing import assert_less, assert_greater
 
 from sklearn.dummy import DummyClassifier, DummyRegressor
-from sklearn.grid_search import GridSearchCV
+from sklearn.grid_search import GridSearchCV, ParameterGrid
 from sklearn.ensemble import BaggingClassifier, BaggingRegressor
 from sklearn.linear_model import SGDClassifier, Perceptron
 from sklearn.neighbors import KNeighborsClassifier, KNeighborsRegressor
@@ -30,42 +30,54 @@ rng = check_random_state(0)
 
 
 def test_classification():
-    """Check classification."""
+    """Check classificationfor various parameter settings."""
     X, y = make_circles(n_samples=100, noise=0.1, random_state=rng)
-    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=rng)
+    X_train, X_test, y_train, y_test = train_test_split(X,
+                                                        y,
+                                                        random_state=rng)
+    grid = ParameterGrid({"max_samples": [0.5, 1.0],
+                          "max_features": [1, 2],
+                          "bootstrap": [True, False],
+                          "bootstrap_features": [True, False]})
 
-    for base_estimator_class in [DummyClassifier,
-                                 Perceptron,
-                                 DecisionTreeClassifier,
-                                 KNeighborsClassifier,
-                                 SVC]:
-        base_estimator = base_estimator_class()
-        base_estimator.fit(X_train, y_train)
+    for base_estimator in [DummyClassifier(),
+                           Perceptron(),
+                           DecisionTreeClassifier(),
+                           KNeighborsClassifier(),
+                           SVC()]:
+        for params in grid:
+            base_estimator.fit(X_train, y_train)
+            ensemble = BaggingClassifier(base_estimator=base_estimator,
+                                         random_state=rng,
+                                         **params).fit(X_train, y_train)
 
-        ensemble = BaggingClassifier(base_estimator=base_estimator_class(), max_features=0.5, bootstrap=False, n_estimators=20, random_state=rng)
-        ensemble.fit(X_train, y_train)
-
-        score_base = base_estimator.score(X_test, y_test)
-        score_ensemble = ensemble.score(X_test, y_test)
+            score_base = base_estimator.score(X_test, y_test)
+            score_ensemble = ensemble.score(X_test, y_test)
 
 
 def test_regression():
-    """Check regression."""
+    """Check regression for various parameter settings."""
     boston = load_boston()
-    X_train, X_test, y_train, y_test = train_test_split(boston.data, boston.target, random_state=rng)
+    X_train, X_test, y_train, y_test = train_test_split(boston.data,
+                                                        boston.target,
+                                                        random_state=rng)
+    grid = ParameterGrid({"max_samples": [0.5, 1.0],
+                          "max_features": [0.5, 1.0],
+                          "bootstrap": [True, False],
+                          "bootstrap_features": [True, False]})
 
-    for base_estimator_class in [DummyRegressor,
-                                 DecisionTreeRegressor,
-                                 KNeighborsRegressor,
-                                 SVR]:
-        base_estimator = base_estimator_class()
-        base_estimator.fit(X_train, y_train)
+    for base_estimator in [DummyRegressor(),
+                           DecisionTreeRegressor(),
+                           KNeighborsRegressor(),
+                           SVR()]:
+        for params in grid:
+            base_estimator.fit(X_train, y_train)
+            ensemble = BaggingRegressor(base_estimator=base_estimator,
+                                        random_state=rng,
+                                        **params).fit(X_train, y_train)
 
-        ensemble = BaggingRegressor(base_estimator=base_estimator_class(), max_features=0.5, n_estimators=20, random_state=rng)
-        ensemble.fit(X_train, y_train)
-
-        score_base = base_estimator.score(X_test, y_test)
-        score_ensemble = ensemble.score(X_test, y_test)
+            score_base = base_estimator.score(X_test, y_test)
+            score_ensemble = ensemble.score(X_test, y_test)
 
 
 if __name__ == "__main__":

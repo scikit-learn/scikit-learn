@@ -1,4 +1,9 @@
-"""Bagging meta-estimator."""
+"""Bagging meta-estimator.
+
+# TODO: documentation
+# TODO: add references
+
+"""
 
 # Author: Gilles Louppe <g.louppe@gmail.com>
 # License: BSD 3 clause
