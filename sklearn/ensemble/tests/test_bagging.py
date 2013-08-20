@@ -2,7 +2,7 @@
 Testing for the ensemble module (sklearn.ensemble.ensemble).
 """
 
-# Authors: Gilles Louppe
+# Author: Gilles Louppe
 # License: BSD 3 clause
 
 import numpy as np
