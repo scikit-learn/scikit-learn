@@ -155,3 +155,35 @@ Michael Becker, Software Engineer, Data Analysis and Management Ninjas
    </span>
 
 
+`Yhat <http://yhathq.com/>`_
+------------------------------------------
+
+.. raw:: html
+
+  <div class="logo">
+
+.. image:: images/yhat.png
+   :target: http://yhathq.com/
+
+.. raw:: html
+
+  </div>
+
+The combination of consistent APIs, thorough documentation, and top notch
+implementation make scikit-learn our favorite machine learning package in
+Python. scikit-learn makes doing advanced analysis in Python accessible to
+anyone. At Yhat, we make it easy to integrate these models into your production
+applications. Thus eliminating the unnecessary dev time encountered
+productionizing analytical work.
+
+
+.. raw:: html
+
+   <span class="testimonial-author">
+
+Greg Lamp, Co-founder Yhat
+
+.. raw:: html
+
+   </span>
+

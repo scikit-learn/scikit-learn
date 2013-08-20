@@ -316,6 +316,12 @@
                           <em>"It allows us to do AWesome stuff we would not otherwise accomplish"</em>
                           </p>
                         </div>
+                        <div class="item">
+                          <img src="_images/yhat.png" class="thumbnail" />
+                          <p>
+                          <em>"scikit-learn makes doing advanced analysis in Python accessible to anyone."</em>
+                          </p>
+                        </div>
                     </div>
                 </div>
                 <p align="right">
