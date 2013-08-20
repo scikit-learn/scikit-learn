@@ -159,7 +159,7 @@ def test_oob_score_classification():
                                                         iris.target,
                                                         random_state=rng)
 
-    clf = BaggingClassifier(base_estimator=DecisionTreeClassifier(),
+    clf = BaggingClassifier(base_estimator=DecisionTreeClassifier(random_state=rng),
                             n_estimators=50,
                             bootstrap=True,
                             oob_score=True,
@@ -177,7 +177,7 @@ def test_oob_score_regression():
                                                         boston.target,
                                                         random_state=rng)
 
-    clf = BaggingRegressor(base_estimator=DecisionTreeRegressor(),
+    clf = BaggingRegressor(base_estimator=DecisionTreeRegressor(random_state=rng),
                            n_estimators=50,
                            bootstrap=True,
                            oob_score=True,

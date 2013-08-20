@@ -1,9 +1,4 @@
-"""Bagging meta-estimator.
-
-# TODO: documentation
-# TODO: add references
-
-"""
+"""Bagging meta-estimator."""
 
 # Author: Gilles Louppe <g.louppe@gmail.com>
 # License: BSD 3 clause
@@ -298,8 +293,100 @@ class BaseBagging(six.with_metaclass(ABCMeta, BaseEnsemble)):
 
 
 class BaggingClassifier(BaseBagging, ClassifierMixin):
-    """Bagging Classifier."""
+    """A Bagging classifier.
 
+    A Bagging classifier is an ensemble meta-estimator that fits base
+    classifiers each on random subsets of the original dataset and then
+    aggregate their individual predictions (either by voting or by averaging) to
+    form a final prediction. Such a meta-estimator can typically be used
+    as a way to introduce randomization into a black-box estimator (e.g., a
+    decision tree) and then making an ensemble out of it.
+
+    When random subsets of the dataset are drawn as random subsets of the
+    instances, then the method is known as Pasting [1]. If those are drawn with
+    replacement, then the method is know as Bagging [2]. When random subsets
+    of the dataset are drawn as random subsets of the features, then the method
+    is known as Random Subspaces [3]. Finally, when base estimators are built
+    on subsets of both instances and features, then the method is known as
+    Random Patches [4].
+
+    Parameters
+    ----------
+    base_estimator : object
+        The base estimator to fit on random subsets of the dataset.
+
+    n_estimators : int, optional (default=10)
+        The number of trees in the forest.
+
+    max_samples : int or float, optional (default=1.0)
+        The number of instances to draw from X to train each base estimator.
+            - If int, then draw `max_samples` instances.
+            - If float, then draw `max_samples * X.shape[0]` instances.
+
+    max_features : int or float, optional (default=1.0)
+        The number of features to draw from X to train each base estimator.
+            - If int, then draw `max_features` features.
+            - If float, then draw `max_features * X.shape[1]` instances.
+
+    bootstrap : boolean, optional (default=False)
+        Whether instances are drawn with replacement.
+
+    bootstrap_features : boolean, optional (default=False)
+        Whether features are drawn with replacement.
+
+    oob_score : bool
+        Whether to use out-of-bag samples to estimate
+        the generalization error.
+
+    n_jobs : int, optional (default=1)
+        The number of jobs to run in parallel for both `fit` and `predict`.
+        If -1, then the number of jobs is set to the number of cores.
+
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
+
+    verbose : int, optional (default=0)
+        Controls the verbosity of the building process.
+
+    Attributes
+    ----------
+    `estimators_`: list of estimators
+        The collection of fitted sub-estimators.
+
+    `classes_`: array of shape = [n_classes] or a list of such arrays
+        The classes labels (single output problem), or a list of arrays of
+        class labels (multi-output problem).
+
+    `n_classes_`: int or list
+        The number of classes (single output problem), or a list containing the
+        number of classes for each output (multi-output problem).
+
+    `oob_score_` : float
+        Score of the training dataset obtained using an out-of-bag estimate.
+
+    `oob_decision_function_` : array of shape = [n_samples, n_classes]
+        Decision function computed with out-of-bag estimate on the training
+        set. If n_estimators is small it might be possible that a data point
+        was never left out during the bootstrap. In this case,
+        `oob_decision_function_` might contain NaN.
+
+    References
+    ----------
+
+    .. [1] L. Breiman, "Pasting small votes for classification in large
+           databases and on-line", Machine Learning, 36(1), 85-103, 1999.
+
+    .. [2] L. Breiman, "Bagging predictors", Machine Learning, 24(2), 123-140,
+           1996.
+
+    .. [3] T. Ho, "The random subspace method for constructing decision
+           forests", 1998.
+
+    .. [4] G. Louppe and P. Geurts, "Ensembles on Random Patches", 2012.
+    """
     def __init__(self,
                  base_estimator,
                  n_estimators=10,
@@ -473,7 +560,92 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
 
 
 class BaggingRegressor(BaseBagging, RegressorMixin):
-    """Bagging Regressor."""
+    """A Bagging regressor.
+
+    A Bagging regressor is an ensemble meta-estimator that fits base
+    regressors each on random subsets of the original dataset and then
+    aggregate their individual predictions (by averaging) to
+    form a final prediction. Such a meta-estimator can typically be used
+    as a way to introduce randomization into a black-box estimator (e.g., a
+    decision tree) and then making an ensemble out of it.
+
+    When random subsets of the dataset are drawn as random subsets of the
+    instances, then the method is known as Pasting [1]. If those are drawn with
+    replacement, then the method is know as Bagging [2]. When random subsets
+    of the dataset are drawn as random subsets of the features, then the method
+    is known as Random Subspaces [3]. Finally, when base estimators are built
+    on subsets of both instances and features, then the method is known as
+    Random Patches [4].
+
+    Parameters
+    ----------
+    base_estimator : object
+        The base estimator to fit on random subsets of the dataset.
+
+    n_estimators : int, optional (default=10)
+        The number of trees in the forest.
+
+    max_samples : int or float, optional (default=1.0)
+        The number of instances to draw from X to train each base estimator.
+            - If int, then draw `max_samples` instances.
+            - If float, then draw `max_samples * X.shape[0]` instances.
+
+    max_features : int or float, optional (default=1.0)
+        The number of features to draw from X to train each base estimator.
+            - If int, then draw `max_features` features.
+            - If float, then draw `max_features * X.shape[1]` instances.
+
+    bootstrap : boolean, optional (default=False)
+        Whether instances are drawn with replacement.
+
+    bootstrap_features : boolean, optional (default=False)
+        Whether features are drawn with replacement.
+
+    oob_score : bool
+        Whether to use out-of-bag samples to estimate
+        the generalization error.
+
+    n_jobs : int, optional (default=1)
+        The number of jobs to run in parallel for both `fit` and `predict`.
+        If -1, then the number of jobs is set to the number of cores.
+
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
+
+    verbose : int, optional (default=0)
+        Controls the verbosity of the building process.
+
+    Attributes
+    ----------
+    `estimators_`: list of estimators
+        The collection of fitted sub-estimators.
+
+    `oob_score_` : float
+        Score of the training dataset obtained using an out-of-bag estimate.
+
+    `oob_decision_function_` : array of shape = [n_samples, n_classes]
+        Decision function computed with out-of-bag estimate on the training
+        set. If n_estimators is small it might be possible that a data point
+        was never left out during the bootstrap. In this case,
+        `oob_decision_function_` might contain NaN.
+
+    References
+    ----------
+
+    .. [1] L. Breiman, "Pasting small votes for classification in large
+           databases and on-line", Machine Learning, 36(1), 85-103, 1999.
+
+    .. [2] L. Breiman, "Bagging predictors", Machine Learning, 24(2), 123-140,
+           1996.
+
+    .. [3] T. Ho, "The random subspace method for constructing decision
+           forests", 1998.
+
+    .. [4] G. Louppe and P. Geurts, "Ensembles on Random Patches", 2012.
+    """
 
     def __init__(self,
                  base_estimator,
