@@ -331,14 +331,15 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
 
         predictions = np.zeros((n_samples, n_classes_))
 
-        for estimator in self.estimators_:
+        for estimator, features in zip(self.estimators_, self.estimators_features_):
             mask = np.ones(n_samples, dtype=np.bool)
             mask[estimator.indices_] = False
 
             try:
-                predictions[mask, :] += estimator.predict_proba(X[mask, :])
+                predictions[mask, :] += estimator.predict_proba((X[mask, :])[:, features])
+
             except:
-                p = estimator.predict(X[mask, :])
+                p = estimator.predict((X[mask, :])[:, features])
                 j = 0
 
                 for i in xrange(n_samples):
@@ -537,12 +538,12 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
         predictions = np.zeros((n_samples,))
         n_predictions = np.zeros((n_samples,))
 
-        for estimator in self.estimators_:
+        for estimator, features in zip(self.estimators_, self.estimators_features_):
             mask = np.ones(n_samples, dtype=np.bool)
             mask[estimator.indices_] = False
 
-            predictions[mask] = estimator.predict(X[mask, :])
-            n_predictions[mask, :] += 1
+            predictions[mask] += estimator.predict((X[mask, :])[:, features])
+            n_predictions[mask] += 1
 
         if (n_predictions == 0).any():
             warn("Some inputs do not have OOB scores. "
