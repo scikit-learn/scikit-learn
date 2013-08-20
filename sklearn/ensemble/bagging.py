@@ -304,7 +304,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
 
     When random subsets of the dataset are drawn as random subsets of the
     instances, then the method is known as Pasting [1]. If those are drawn with
-    replacement, then the method is know as Bagging [2]. When random subsets
+    replacement, then the method is known as Bagging [2]. When random subsets
     of the dataset are drawn as random subsets of the features, then the method
     is known as Random Subspaces [3]. Finally, when base estimators are built
     on subsets of both instances and features, then the method is known as
@@ -571,7 +571,7 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
 
     When random subsets of the dataset are drawn as random subsets of the
     instances, then the method is known as Pasting [1]. If those are drawn with
-    replacement, then the method is know as Bagging [2]. When random subsets
+    replacement, then the method is known as Bagging [2]. When random subsets
     of the dataset are drawn as random subsets of the features, then the method
     is known as Random Subspaces [3]. Finally, when base estimators are built
     on subsets of both instances and features, then the method is known as
