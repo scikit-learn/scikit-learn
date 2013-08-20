@@ -160,7 +160,7 @@ def test_oob_score_classification():
                                                         random_state=rng)
 
     clf = BaggingClassifier(base_estimator=DecisionTreeClassifier(),
-                            n_estimators=50,
+                            n_estimators=100,
                             bootstrap=True,
                             oob_score=True,
                             random_state=rng).fit(X_train, y_train)
@@ -171,8 +171,8 @@ def test_oob_score_classification():
 
 
 def test_oob_score_regression():
-    """Check that oob prediction is pessimistic estimate.
-    Not really a good test that prediction is independent."""
+    """Check that oob prediction is a good estimation of the generalization
+    error."""
     X_train, X_test, y_train, y_test = train_test_split(boston.data,
                                                         boston.target,
                                                         random_state=rng)
@@ -184,8 +184,8 @@ def test_oob_score_regression():
                            random_state=rng).fit(X_train, y_train)
 
     test_score = clf.score(X_test, y_test)
-    assert_greater(test_score, clf.oob_score_)
-    assert_greater(clf.oob_score_, .75)
+
+    assert_less(abs(test_score - clf.oob_score_), 0.1)
 
 
 
