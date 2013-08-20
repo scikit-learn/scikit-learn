@@ -29,8 +29,19 @@ from sklearn.utils import check_random_state
 
 rng = check_random_state(0)
 
-boston = load_boston()
+# also load the iris dataset
+# and randomly permute it
 iris = load_iris()
+perm = rng.permutation(iris.target.size)
+iris.data = iris.data[perm]
+iris.target = iris.target[perm]
+
+# also load the boston dataset
+# and randomly permute it
+boston = load_boston()
+perm = rng.permutation(boston.target.size)
+boston.data = boston.data[perm]
+boston.target = boston.target[perm]
 
 
 def test_classification():
@@ -139,6 +150,43 @@ def test_probability():
                               np.exp(ensemble.predict_log_proba(iris.data)))
 
     np.seterr(**olderr)
+
+
+def test_oob_score_classification():
+    """Check that oob prediction is a good estimation of the generalization
+    error."""
+    X_train, X_test, y_train, y_test = train_test_split(iris.data,
+                                                        iris.target,
+                                                        random_state=rng)
+
+    clf = BaggingClassifier(base_estimator=DecisionTreeClassifier(),
+                            n_estimators=50,
+                            bootstrap=True,
+                            oob_score=True,
+                            random_state=rng).fit(X_train, y_train)
+
+    test_score = clf.score(X_test, y_test)
+
+    assert_less(abs(test_score - clf.oob_score_), 0.1)
+
+
+def test_oob_score_regression():
+    """Check that oob prediction is pessimistic estimate.
+    Not really a good test that prediction is independent."""
+    X_train, X_test, y_train, y_test = train_test_split(boston.data,
+                                                        boston.target,
+                                                        random_state=rng)
+
+    clf = BaggingRegressor(base_estimator=DecisionTreeRegressor(),
+                           n_estimators=50,
+                           bootstrap=True,
+                           oob_score=True,
+                           random_state=rng).fit(X_train, y_train)
+
+    test_score = clf.score(X_test, y_test)
+    assert_greater(test_score, clf.oob_score_)
+    assert_greater(clf.oob_score_, .8)
+
 
 
 def test_error():
