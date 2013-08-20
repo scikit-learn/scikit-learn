@@ -326,7 +326,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
     max_features : int or float, optional (default=1.0)
         The number of features to draw from X to train each base estimator.
             - If int, then draw `max_features` features.
-            - If float, then draw `max_features * X.shape[1]` instances.
+            - If float, then draw `max_features * X.shape[1]` features.
 
     bootstrap : boolean, optional (default=False)
         Whether instances are drawn with replacement.
@@ -593,7 +593,7 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
     max_features : int or float, optional (default=1.0)
         The number of features to draw from X to train each base estimator.
             - If int, then draw `max_features` features.
-            - If float, then draw `max_features * X.shape[1]` instances.
+            - If float, then draw `max_features * X.shape[1]` features.
 
     bootstrap : boolean, optional (default=False)
         Whether instances are drawn with replacement.
