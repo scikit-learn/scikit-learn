@@ -302,13 +302,14 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
     as a way to introduce randomization into a black-box estimator (e.g., a
     decision tree) and then making an ensemble out of it.
 
-    When random subsets of the dataset are drawn as random subsets of the
-    instances, then the method is known as Pasting [1]. If those are drawn with
-    replacement, then the method is known as Bagging [2]. When random subsets
-    of the dataset are drawn as random subsets of the features, then the method
-    is known as Random Subspaces [3]. Finally, when base estimators are built
-    on subsets of both instances and features, then the method is known as
-    Random Patches [4].
+    This algorithm encompasses several works from the literature. When random
+    subsets of the dataset are drawn as random subsets of the instances, then
+    this algorithm is known as Pasting [1]. If subsets are drawn with
+    replacement, then the method is known as Bagging [2]. When random subsets of
+    the dataset are drawn as random subsets of the features, then the method is
+    known as Random Subspaces [3]. Finally, when base estimators are built on
+    subsets of both instances and features, then the method is known as Random
+    Patches [4].
 
     Parameters
     ----------
@@ -316,7 +317,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
         The base estimator to fit on random subsets of the dataset.
 
     n_estimators : int, optional (default=10)
-        The number of trees in the forest.
+        The number of base estimators in the ensemble.
 
     max_samples : int or float, optional (default=1.0)
         The number of instances to draw from X to train each base estimator.
@@ -356,13 +357,11 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
     `estimators_`: list of estimators
         The collection of fitted sub-estimators.
 
-    `classes_`: array of shape = [n_classes] or a list of such arrays
-        The classes labels (single output problem), or a list of arrays of
-        class labels (multi-output problem).
+    `classes_`: array of shape = [n_classes]
+        The classes labels.
 
     `n_classes_`: int or list
-        The number of classes (single output problem), or a list containing the
-        number of classes for each output (multi-output problem).
+        The number of classes.
 
     `oob_score_` : float
         Score of the training dataset obtained using an out-of-bag estimate.
@@ -569,13 +568,14 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
     as a way to introduce randomization into a black-box estimator (e.g., a
     decision tree) and then making an ensemble out of it.
 
-    When random subsets of the dataset are drawn as random subsets of the
-    instances, then the method is known as Pasting [1]. If those are drawn with
-    replacement, then the method is known as Bagging [2]. When random subsets
-    of the dataset are drawn as random subsets of the features, then the method
-    is known as Random Subspaces [3]. Finally, when base estimators are built
-    on subsets of both instances and features, then the method is known as
-    Random Patches [4].
+    This algorithm encompasses several works from the literature. When random
+    subsets of the dataset are drawn as random subsets of the instances, then
+    this algorithm is known as Pasting [1]. If subsets are drawn with
+    replacement, then the method is known as Bagging [2]. When random subsets of
+    the dataset are drawn as random subsets of the features, then the method is
+    known as Random Subspaces [3]. Finally, when base estimators are built on
+    subsets of both instances and features, then the method is known as Random
+    Patches [4].
 
     Parameters
     ----------
@@ -583,7 +583,7 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
         The base estimator to fit on random subsets of the dataset.
 
     n_estimators : int, optional (default=10)
-        The number of trees in the forest.
+        The number of base estimators in the ensemble.
 
     max_samples : int or float, optional (default=1.0)
         The number of instances to draw from X to train each base estimator.
