@@ -247,7 +247,7 @@ class BaseBagging(six.with_metaclass(ABCMeta, BaseEnsemble)):
         if isinstance(self.max_samples, (numbers.Integral, np.integer)):
             max_samples = self.max_samples
         else:  # float
-            max_samples = int(self.max_samples * self.n_features_)
+            max_samples = int(self.max_samples * X.shape[0])
 
         if not (0 < max_samples <= X.shape[0]):
             raise ValueError("max_samples must be in (0, n_samples]")
