@@ -28,68 +28,93 @@ __all__ = ["BaggingClassifier",
 MAX_INT = np.iinfo(np.int32).max
 
 
-def _parallel_build_estimators(n_estimators, ensemble, X, y,
-                               support_sample_weight, sample_weight, seeds,
-                               verbose):
+def _parallel_build_estimators(n_estimators, ensemble, X, y, sample_weight,
+                               seeds, verbose):
     """Private function used to build a batch of estimators within a job."""
+    # Retrieve settings
     n_samples = X.shape[0]
+    n_features = X.shape[1]
+
+    max_samples = ensemble.max_samples
+    max_features = ensemble.max_features
+
+    if 0.0 < max_samples <= 1.0:
+        max_samples = max(1, int(max_samples * n_samples))
+
+    if 0.0 < max_features <= 1.0:
+        max_features = max(1, int(max_features * n_features))
+
+    bootstrap = ensemble.bootstrap
+    bootstrap_features = ensemble.bootstrap_features
+    support_sample_weight = "sample_weight" in inspect.getargspec(ensemble.base_estimator.fit)[0]
+
+    # Build estimators
     estimators = []
+    estimators_features = []
 
     for i in range(n_estimators):
         if verbose > 1:
             print("building estimator %d of %d" % (i + 1, n_estimators))
 
         random_state = check_random_state(seeds[i])
-        seed = random_state.randint(MAX_INT)
-
+        seed = check_random_state(random_state.randint(MAX_INT))
         estimator = ensemble._make_estimator(append=False)
 
         try: # Not all estimator accept a random_state
-            estimator.set_params(random_state=check_random_state(seed))
+            estimator.set_params(random_state=seed)
         except ValueError:
             pass
 
+        # Draw features
+        if bootstrap_features:
+            features = random_state.randint(0, n_features, max_features)
+        else:
+            features = random_state.permutation(n_features)[:max_features]
+
+        # Draw samples, using sample weights, and then fit
         if support_sample_weight:
-            if ensemble.bootstrap:
-                indices = random_state.randint(0, n_samples, n_samples)
+            if sample_weight is None:
+                curr_sample_weight = np.ones((n_samples,))
+            else:
+                curr_sample_weight = sample_weight.copy()
+
+            if bootstrap:
+                indices = random_state.randint(0, n_samples, max_samples)
                 sample_counts = bincount(indices, minlength=n_samples)
-
-                if sample_weight is None:
-                    curr_sample_weight = np.ones((n_samples,))
-                else:
-                    curr_sample_weight = sample_weight.copy()
-
                 curr_sample_weight *= sample_counts
 
-                estimator.fit(X, y, sample_weight=curr_sample_weight)
-                estimator.indices_ = sample_counts > 0.
-
             else:
-                estimator.fit(X, y, sample_weight=sample_weight)
+                indices = random_state.permutation(n_samples)[max_samples:]
+                curr_sample_weight[indices] = 0
 
+            estimator.fit(X[:, features], y, sample_weight=curr_sample_weight)
+            estimator.indices_ = curr_sample_weight > 0.
+
+        # Draw samples, using a mask, and then fit
         else:
-            if ensemble.bootstrap:
-                indices = random_state.randint(0, n_samples, n_samples)
-                sample_counts = bincount(indices, minlength=n_samples)
-
-                estimator.fit(X[indices], y[indices])
-                estimator.indices_ = sample_counts > 0.
-
+            if bootstrap:
+                indices = random_state.randint(0, n_samples, max_samples)
             else:
-                estimator.fit(X, y)
+                indices = random_state.permutation(n_samples)[:max_samples]
+
+            sample_counts = bincount(indices, minlength=n_samples)
+
+            estimator.fit((X[indices])[:, features], y[indices])
+            estimator.indices_ = sample_counts > 0.
 
         estimators.append(estimator)
+        estimators_features.append(features)
 
-    return estimators
+    return estimators, estimators_features
 
 
-def _parallel_predict(estimators, X, n_classes):
+def _parallel_predict(estimators, estimators_features, X, n_classes):
     """Private function used to compute a batch of predictions within a job."""
     n_samples = X.shape[0]
     counts = np.zeros((n_samples, n_classes))
 
-    for estimator in estimators:
-        predictions = estimator.predict(X)
+    for estimator, features in zip(estimators, estimators_features):
+        predictions = estimator.predict(X[:, features])
 
         for i in xrange(n_samples):
             counts[i, predictions[i]] += 1
@@ -97,14 +122,14 @@ def _parallel_predict(estimators, X, n_classes):
     return counts
 
 
-def _parallel_predict_proba(estimators, X, n_classes):
+def _parallel_predict_proba(estimators, estimators_features, X, n_classes):
     """Private function used to compute a batch of (proba-)predictions within
        a job."""
     n_samples = X.shape[0]
     proba = np.zeros((n_samples, n_classes))
 
-    for estimator in estimators:
-        proba_estimator = estimator.predict_proba(X)
+    for estimator, features in zip(estimators, estimators_features):
+        proba_estimator = estimator.predict_proba(X[:, features])
 
         if n_classes == len(estimator.classes_):
             proba += proba_estimator
@@ -116,9 +141,9 @@ def _parallel_predict_proba(estimators, X, n_classes):
     return proba
 
 
-def _parallel_predict_regression(estimators, X):
+def _parallel_predict_regression(estimators, estimators_features, X):
     """Private function used to compute a batch of predictions within a job."""
-    return sum(estimator.predict(X) for estimator in estimators)
+    return sum(estimator.predict(X[:, features]) for estimator, features in zip(estimators, estimators_features))
 
 
 def _partition_estimators(ensemble):
@@ -155,8 +180,11 @@ class BaseBagging(six.with_metaclass(ABCMeta, BaseEnsemble)):
     def __init__(self,
                  base_estimator,
                  n_estimators=10,
+                 max_samples=1.0,
+                 max_features=1.0,
                  bootstrap=True,
-                 oob_score=True,
+                 bootstrap_features=False,
+                 oob_score=False,
                  n_jobs=1,
                  random_state=None,
                  verbose=0):
@@ -164,7 +192,10 @@ class BaseBagging(six.with_metaclass(ABCMeta, BaseEnsemble)):
             base_estimator=base_estimator,
             n_estimators=n_estimators)
 
+        self.max_samples = max_samples
+        self.max_features = max_features
         self.bootstrap = bootstrap
+        self.bootstrap_features = bootstrap_features
         self.oob_score = oob_score
         self.n_jobs = n_jobs
         self.random_state = random_state
@@ -206,18 +237,16 @@ class BaseBagging(six.with_metaclass(ABCMeta, BaseEnsemble)):
         y = self._validate_y(y)
 
         # Check parameters
+        # TODO: check max_samples
+        # TODO: check max_features
+
         if not self.bootstrap and self.oob_score:
             raise ValueError("Out of bag estimation only available"
                              " if bootstrap=True")
 
-        # Assign chunk of estimators to jobs
-        n_jobs, n_estimators, _ = _partition_estimators(self)
-
-        # Precalculate the random states
-        seeds = [random_state.randint(MAX_INT, size=i) for i in n_estimators]
-
         # Parallel loop
-        support_sample_weight = "sample_weight" in inspect.getargspec(self.base_estimator.fit)[0]
+        n_jobs, n_estimators, _ = _partition_estimators(self)
+        seeds = [random_state.randint(MAX_INT, size=i) for i in n_estimators]
 
         all_estimators = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
             delayed(_parallel_build_estimators)(
@@ -225,14 +254,14 @@ class BaseBagging(six.with_metaclass(ABCMeta, BaseEnsemble)):
                 self,
                 X,
                 y,
-                support_sample_weight,
                 sample_weight,
                 seeds[i],
                 verbose=self.verbose)
             for i in range(n_jobs))
 
         # Reduce
-        self.estimators_ = list(itertools.chain(*all_estimators))
+        self.estimators_ = list(itertools.chain(*(t[0] for t in all_estimators)))
+        self.estimators_features_ = list(itertools.chain(*(t[1] for t in all_estimators)))
 
         if self.oob_score:
             self._set_oob_score(X, y)
@@ -254,8 +283,11 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
     def __init__(self,
                  base_estimator,
                  n_estimators=10,
+                 max_samples=1.0,
+                 max_features=1.0,
                  bootstrap=True,
-                 oob_score=True,
+                 bootstrap_features=False,
+                 oob_score=False,
                  n_jobs=1,
                  random_state=None,
                  verbose=0):
@@ -263,7 +295,10 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
         super(BaggingClassifier, self).__init__(
             base_estimator,
             n_estimators=n_estimators,
+            max_samples=max_samples,
+            max_features=max_features,
             bootstrap=bootstrap,
+            bootstrap_features=bootstrap_features,
             oob_score=oob_score,
             n_jobs=n_jobs,
             random_state=random_state,
@@ -333,13 +368,13 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
             # Check data
             X, = check_arrays(X)
 
-            # Assign chunk of estimators to jobs
+            # Parallel loop
             n_jobs, n_estimators, starts = _partition_estimators(self)
 
-            # Parallel loop
             all_counts = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
                 delayed(_parallel_predict)(
                     self.estimators_[starts[i]:starts[i + 1]],
+                    self.estimators_features_[starts[i]:starts[i + 1]],
                     X,
                     self.n_classes_)
                 for i in range(n_jobs))
@@ -372,13 +407,13 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
         # Check data
         X, = check_arrays(X)
 
-        # Assign chunk of estimators to jobs
+        # Parallel loop
         n_jobs, n_estimators, starts = _partition_estimators(self)
 
-        # Parallel loop
         all_proba = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
             delayed(_parallel_predict_proba)(
                 self.estimators_[starts[i]:starts[i + 1]],
+                self.estimators_features_[starts[i]:starts[i + 1]],
                 X,
                 self.n_classes_)
             for i in range(n_jobs))
@@ -419,15 +454,21 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
     def __init__(self,
                  base_estimator,
                  n_estimators=10,
+                 max_samples=1.0,
+                 max_features=1.0,
                  bootstrap=True,
-                 oob_score=True,
+                 bootstrap_features=False,
+                 oob_score=False,
                  n_jobs=1,
                  random_state=None,
                  verbose=0):
         super(BaggingRegressor, self).__init__(
             base_estimator,
             n_estimators=n_estimators,
+            max_samples=max_samples,
+            max_features=max_features,
             bootstrap=bootstrap,
+            bootstrap_features=bootstrap_features,
             oob_score=oob_score,
             n_jobs=n_jobs,
             random_state=random_state,
@@ -452,13 +493,14 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
         # Check data
         X, = check_arrays(X)
 
-        # Assign chunk of estimators to jobs
+        # Parallel loop
         n_jobs, n_estimators, starts = _partition_estimators(self)
 
-        # Parallel loop
         all_y_hat = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
             delayed(_parallel_predict_regression)(
-                self.estimators_[starts[i]:starts[i + 1]], X)
+                self.estimators_[starts[i]:starts[i + 1]],
+                self.estimators_features_[starts[i]:starts[i + 1]],
+                X)
             for i in range(n_jobs))
 
         # Reduce
