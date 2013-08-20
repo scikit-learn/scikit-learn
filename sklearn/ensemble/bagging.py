@@ -6,6 +6,7 @@
 from __future__ import division
 
 import itertools
+import numbers
 import numpy as np
 from warnings import warn
 from abc import ABCMeta, abstractmethod
@@ -38,10 +39,10 @@ def _parallel_build_estimators(n_estimators, ensemble, X, y, sample_weight,
     max_features = ensemble.max_features
 
     if 0.0 < max_samples <= 1.0:
-        max_samples = max(1, int(max_samples * n_samples))
+        max_samples = int(max_samples * n_samples)
 
     if 0.0 < max_features <= 1.0:
-        max_features = max(1, int(max_features * n_features))
+        max_features = int(max_features * n_features)
 
     bootstrap = ensemble.bootstrap
     bootstrap_features = ensemble.bootstrap_features
@@ -238,8 +239,21 @@ class BaseBagging(six.with_metaclass(ABCMeta, BaseEnsemble)):
         y = self._validate_y(y)
 
         # Check parameters
-        # TODO: check max_samples
-        # TODO: check max_features
+        if isinstance(self.max_samples, (numbers.Integral, np.integer)):
+            max_samples = self.max_samples
+        else:  # float
+            max_samples = int(self.max_samples * self.n_features_)
+
+        if not (0 < max_samples <= X.shape[0]):
+            raise ValueError("max_samples must be in (0, n_samples]")
+
+        if isinstance(self.max_features, (numbers.Integral, np.integer)):
+            max_features = self.max_features
+        else:  # float
+            max_features = int(self.max_features * self.n_features_)
+
+        if not (0 < max_features <= self.n_features_):
+            raise ValueError("max_features must be in (0, n_features]")
 
         if not self.bootstrap and self.oob_score:
             raise ValueError("Out of bag estimation only available"
