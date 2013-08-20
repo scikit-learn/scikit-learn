@@ -8,6 +8,7 @@ import warnings
 import numpy as np
 from scipy import linalg
 from scipy.sparse import issparse
+from distutils.version import LooseVersion
 
 from . import check_random_state
 from .fixes import qr_economic
@@ -115,13 +116,18 @@ def _fast_dot(A, B):
     B, trans_b = _impose_f_order(B)
     return dot(alpha=1.0, a=A, b=B, trans_a=trans_a, trans_b=trans_b)
 
-
-try:
-    linalg.get_blas_funcs('gemm')
-    fast_dot = _fast_dot
-except (ImportError, AttributeError):
+#  only try to use fast_dot for older numpy versions.
+#  the related issue has been tackled meanwhile. Also, depending on the build
+#  the current numpy master's dot can about 3 times faster.
+if LooseVersion(np.__version__) < '1.8':
+    try:
+        linalg.get_blas_funcs('gemm')
+        fast_dot = _fast_dot
+    except (ImportError, AttributeError):
+        fast_dot = np.dot
+        warnings.warn('Could not import BLAS, falling back to np.dot')
+else:
     fast_dot = np.dot
-    warnings.warn('Could not import BLAS, falling back to np.dot')
 
 
 def density(w, **kwargs):

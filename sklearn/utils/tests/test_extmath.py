@@ -326,11 +326,12 @@ def test_fast_dot():
             assert_true(type(w.pop(-1)) == NonBLASDotWarning)
         # test for matrix mismatch error
         msg = ('Invalid array shapes: A.shape[%d] should be the same as '
-+              'B.shape[0]. Got A.shape=%r B.shape=%r' % (A.ndim - 1,
-+               A.shape, A.shape))
+               'B.shape[0]. Got A.shape=%r B.shape=%r' % (A.ndim - 1,
+                A.shape, A.shape))
         assert_raise_message(msg, fast_dot, A, A)
 
     # test cov-like use case + dtypes
+    my_assert = assert_array_almost_equal
     for dtype in ['f8', 'f4']:
         A = A.astype(dtype)
         B = B.astype(dtype)
@@ -338,15 +339,15 @@ def test_fast_dot():
         #  col < row
         C = np.dot(A.T, A)
         C_ = fast_dot(A.T, A)
-        assert_array_equal(C, C_)
+        my_assert(C, C_)
 
         C = np.dot(A.T, B)
         C_ = fast_dot(A.T, B)
-        assert_array_equal(C, C_)
+        my_assert(C, C_)
 
         C = np.dot(A, B.T)
         C_ = fast_dot(A, B.T)
-        assert_array_equal(C, C_)
+        my_assert(C, C_)
 
     # test square matrix * rectangular use case
     A = rng.random_sample([2, 2])
@@ -356,11 +357,11 @@ def test_fast_dot():
 
         C = np.dot(A, B)
         C_ = fast_dot(A, B)
-        assert_array_equal(C, C_)
+        my_assert(C, C_)
 
         C = np.dot(A.T, B)
         C_ = fast_dot(A.T, B)
-        assert_array_equal(C, C_)
+        my_assert(C, C_)
 
     if has_blas:
         for x in [np.array([[d] * 10] * 2) for d in [np.inf, np.nan]]:

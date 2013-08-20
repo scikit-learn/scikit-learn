@@ -80,15 +80,17 @@ Memory and implicit copies
 ==========================
 
 Some of the numpy and scipy core functions are optimized for Fortran contiguous
-data. In the case of the dot product this often leads to implicit copies
-performed to adjust data to the needs of the underlying Fortran routines (See section
-`Linear Algebra on large Arrays` on http://wiki.scipy.org/PerformanceTips).
-This not only consumes memory but also takes additional time.
+data. In the case of the dot product, for numpy vetsions < 1.8, this leads to
+implicit copies performed to adjust data to the needs of the underlying
+Fortran routines (See section `Linear Algebra on large Arrays`
+on http://wiki.scipy.org/PerformanceTips). This not only consumes memory
+but also takes additional time.
 
-For convenience, we internally use an alternative `numpy.dot` function that
-saves additional copies and speed by directly calling the Fortran routines with the
-appropriate data input while preserving the nunpy.dot call signature. This
-means it can be used as a replacement for `numpy.dot`. example::
+For convenience, if the numpy version available is older than 1.8, we internally
+use an optimized `numpy.dot` function that saves additional copies and improves
+speed by directly calling the Fortran routines with the appropriate data input
+while preserving the `numpy.dot` call signature. This means it can be used as a
+replacement for `numpy.dot`. example::
 
   >>> import numpy as np
 
@@ -112,6 +114,7 @@ related warning which is silenced by default. example::
 
   >>> warnings.simplefilter('always', NonBLASDotWarning) # doctest: +SKIP
 
+If numpy > 1.8 is available the `fast_dot` is not necessary.
 
 .. _profiling-python-code:
 
