@@ -8,6 +8,10 @@
    - Add predict method to :class:`cluster.AffinityPropagation` and
      :class:`cluster.MeanShift`, by `Mathieu Blondel`_.
 
+   - Precision-recall and ROC examples now use train_test_split, and have more
+     explanation of why these metrics are useful. By `Kyle Kastner`_
+
+
 .. _changes_0_14:
 
 0.14
@@ -210,9 +214,6 @@ Changelog
 
    - Better input and error handling in the :mod:`metrics` module by
      `Arnaud Joly`_ and `Joel Nothman`_.
-
-   - Precision-recall and ROC examples now use train_test_split, and have more
-     explanation of why these metrics are useful. By `Kyle Kastner`_
 
    - Speed optimization of the :mod:`hmm` module by `Mikhail Korobov`_
 

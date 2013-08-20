@@ -16,7 +16,7 @@ all positive results (high recall).
 A system with high recall but low precision returns many results, but most of
 its predicted labels are incorrect when compared to the training labels. A
 system with high precision but low recall is just the opposite, returning very
-few results, but most its predicted labels are correct when compared to the
+few results, but most of its predicted labels are correct when compared to the
 training labels. An ideal system with high precision and high recall will
 return many results, with all results labeled correctly.
 
