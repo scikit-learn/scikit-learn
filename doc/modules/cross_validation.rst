@@ -183,7 +183,7 @@ called folds (if :math:`k = n`, this is equivalent to the *Leave One
 Out* strategy), of equal sizes (if possible). The prediction function is
 learned using :math:`k - 1` folds, and the fold left out is used for test.
 
-Example of 2-fold on a dataset with 4 samples::
+Example of 2-fold cross-validation on a dataset with 4 samples::
 
   >>> import numpy as np
   >>> from sklearn.cross_validation import KFold
@@ -221,8 +221,8 @@ Stratified k-fold
 *stratified* folds: each set contains the same percentage of samples
 of each target class as the complete set.
 
-Example of stratified 2-fold on a dataset with 7 samples from two unbalanced
-classes::
+Example of stratified 2-fold cross-validation on a dataset with 7 samples from
+two unbalanced classes::
 
   >>> from sklearn.cross_validation import StratifiedKFold
   >>> labels = [0, 0, 0, 1, 1, 1, 0]
