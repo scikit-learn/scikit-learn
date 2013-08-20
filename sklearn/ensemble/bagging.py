@@ -80,13 +80,13 @@ def _parallel_build_estimators(n_estimators, ensemble, X, y, sample_weight,
                 curr_sample_weight = sample_weight.copy()
 
             if bootstrap:
-                indices = random_state.randint(0, n_samples, max_samples)
-                sample_counts = bincount(indices, minlength=n_samples)
+                samples = random_state.randint(0, n_samples, max_samples)
+                sample_counts = bincount(samples, minlength=n_samples)
                 curr_sample_weight *= sample_counts
 
             else:
-                indices = random_state.permutation(n_samples)[max_samples:]
-                curr_sample_weight[indices] = 0
+                samples = random_state.permutation(n_samples)[max_samples:]
+                curr_sample_weight[samples] = 0
 
             estimator.fit(X[:, features], y, sample_weight=curr_sample_weight)
             estimator.indices_ = curr_sample_weight > 0.
@@ -94,13 +94,13 @@ def _parallel_build_estimators(n_estimators, ensemble, X, y, sample_weight,
         # Draw samples, using a mask, and then fit
         else:
             if bootstrap:
-                indices = random_state.randint(0, n_samples, max_samples)
+                samples = random_state.randint(0, n_samples, max_samples)
             else:
-                indices = random_state.permutation(n_samples)[:max_samples]
+                samples = random_state.permutation(n_samples)[:max_samples]
 
-            sample_counts = bincount(indices, minlength=n_samples)
+            sample_counts = bincount(samples, minlength=n_samples)
 
-            estimator.fit((X[indices])[:, features], y[indices])
+            estimator.fit((X[samples])[:, features], y[samples])
             estimator.indices_ = sample_counts > 0.
 
         estimators.append(estimator)
