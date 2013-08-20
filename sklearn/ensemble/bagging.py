@@ -5,20 +5,19 @@
 
 from __future__ import division
 
-import inspect
 import itertools
 import numpy as np
 from warnings import warn
 from abc import ABCMeta, abstractmethod
+from inspect import getargspec
 
 from ..base import ClassifierMixin, RegressorMixin
 from ..externals.joblib import Parallel, delayed, cpu_count
 from ..externals import six
 from ..externals.six.moves import xrange
 from ..metrics import r2_score
-from ..utils import array2d, check_random_state, check_arrays, safe_asarray
+from ..utils import check_random_state, check_arrays
 from ..utils.fixes import bincount, unique
-from ..utils.validation import check_arrays
 
 from .base import BaseEnsemble
 
@@ -46,7 +45,8 @@ def _parallel_build_estimators(n_estimators, ensemble, X, y, sample_weight,
 
     bootstrap = ensemble.bootstrap
     bootstrap_features = ensemble.bootstrap_features
-    support_sample_weight = "sample_weight" in inspect.getargspec(ensemble.base_estimator.fit)[0]
+    support_sample_weight = ("sample_weight" in
+                             getargspec(ensemble.base_estimator.fit)[0])
 
     # Build estimators
     estimators = []
@@ -60,7 +60,7 @@ def _parallel_build_estimators(n_estimators, ensemble, X, y, sample_weight,
         seed = check_random_state(random_state.randint(MAX_INT))
         estimator = ensemble._make_estimator(append=False)
 
-        try: # Not all estimator accept a random_state
+        try:  # Not all estimator accept a random_state
             estimator.set_params(random_state=seed)
         except ValueError:
             pass
@@ -109,7 +109,7 @@ def _parallel_build_estimators(n_estimators, ensemble, X, y, sample_weight,
 
 
 def _parallel_predict(estimators, estimators_features, X, n_classes):
-    """Private function used to compute a batch of predictions within a job."""
+    """Private function used to compute predictions within a job."""
     n_samples = X.shape[0]
     counts = np.zeros((n_samples, n_classes))
 
@@ -123,8 +123,7 @@ def _parallel_predict(estimators, estimators_features, X, n_classes):
 
 
 def _parallel_predict_proba(estimators, estimators_features, X, n_classes):
-    """Private function used to compute a batch of (proba-)predictions within
-       a job."""
+    """Private function used to compute (proba-)predictions within a job."""
     n_samples = X.shape[0]
     proba = np.zeros((n_samples, n_classes))
 
@@ -142,8 +141,10 @@ def _parallel_predict_proba(estimators, estimators_features, X, n_classes):
 
 
 def _parallel_predict_regression(estimators, estimators_features, X):
-    """Private function used to compute a batch of predictions within a job."""
-    return sum(estimator.predict(X[:, features]) for estimator, features in zip(estimators, estimators_features))
+    """Private function used to compute predictions within a job."""
+    return sum(estimator.predict(X[:, features])
+               for estimator, features in zip(estimators,
+                                              estimators_features))
 
 
 def _partition_estimators(ensemble):
@@ -248,7 +249,7 @@ class BaseBagging(six.with_metaclass(ABCMeta, BaseEnsemble)):
         n_jobs, n_estimators, _ = _partition_estimators(self)
         seeds = [random_state.randint(MAX_INT, size=i) for i in n_estimators]
 
-        all_estimators = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
+        all_results = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
             delayed(_parallel_build_estimators)(
                 n_estimators[i],
                 self,
@@ -260,8 +261,8 @@ class BaseBagging(six.with_metaclass(ABCMeta, BaseEnsemble)):
             for i in range(n_jobs))
 
         # Reduce
-        self.estimators_ = list(itertools.chain(*(t[0] for t in all_estimators)))
-        self.estimators_features_ = list(itertools.chain(*(t[1] for t in all_estimators)))
+        self.estimators_ = list(itertools.chain(*(t[0] for t in all_results)))
+        self.estimators_features_ = list(itertools.chain(*(t[1] for t in all_results)))
 
         if self.oob_score:
             self._set_oob_score(X, y)
@@ -309,7 +310,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
         classes_ = self.classes_
         n_samples = y.shape[0]
 
-        predictions = np.zeros((n_samples, self.n_classes_))
+        predictions = np.zeros((n_samples, n_classes_))
 
         for estimator in self.estimators_:
             mask = np.ones(n_samples, dtype=np.bool)
@@ -331,10 +332,10 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
                  "This probably means too few estimators were used "
                  "to compute any reliable oob estimates.")
 
-        oob_decision_function = (predictions / predictions.sum(axis=1)[:, np.newaxis])
-        oob_score = np.mean((y == classes_.take(
-                np.argmax(predictions, axis=1),
-                axis=0)))
+        oob_decision_function = (predictions /
+                                 predictions.sum(axis=1)[:, np.newaxis])
+        oob_score = np.mean((y == classes_.take(np.argmax(predictions, axis=1),
+                                                axis=0)))
 
         self.oob_decision_function_ = oob_decision_function
         self.oob_score_ = oob_score
@@ -362,7 +363,8 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
             The predicted classes.
         """
         try:
-            return self.classes_.take(np.argmax(self.predict_proba(X), axis=1), axis=0)
+            return self.classes_.take(np.argmax(self.predict_proba(X), axis=1),
+                                      axis=0)
 
         except:
             # Check data
@@ -391,7 +393,8 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
         """Predict class probabilities for X.
 
         The predicted class probabilities of an input sample is computed as
-        the mean predicted class probabilities of the estimators in the ensemble.
+        the mean predicted class probabilities of the estimators in the
+        ensemble.
 
         Parameters
         ----------
@@ -432,7 +435,8 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
         """Predict class log-probabilities for X.
 
         The predicted class log-probabilities of an input sample is computed as
-        the mean predicted class log-probabilities of the estimators in the ensemble.
+        the mean predicted class log-probabilities of the estimators in the
+        ensemble.
 
         Parameters
         ----------
