@@ -38,10 +38,12 @@ def _parallel_build_estimators(n_estimators, ensemble, X, y, sample_weight,
     max_samples = ensemble.max_samples
     max_features = ensemble.max_features
 
-    if 0.0 < max_samples <= 1.0:
+    if (not isinstance(max_samples, (numbers.Integral, np.integer)) and
+        (0.0 < max_samples <= 1.0)):
         max_samples = int(max_samples * n_samples)
 
-    if 0.0 < max_features <= 1.0:
+    if (not isinstance(max_features, (numbers.Integral, np.integer)) and
+        (0.0 < max_features <= 1.0)):
         max_features = int(max_features * n_features)
 
     bootstrap = ensemble.bootstrap
