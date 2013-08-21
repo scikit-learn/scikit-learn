@@ -205,9 +205,6 @@ Thus, one can create the training/test sets using numpy indexing::
 It is also possible to get boolean masks instead of integer indices::
 
   >>> kf = KFold(4, n_folds=2, indices=False)
-  >>> print(kf)
-  sklearn.cross_validation.KFold(n=4, n_folds=2)
-
   >>> for train, test in kf:
   ...      print("%s %s" % (train, test))
   [False False  True  True] [ True  True False False]
@@ -228,9 +225,6 @@ two unbalanced classes::
   >>> labels = [0, 0, 0, 1, 1, 1, 0]
 
   >>> skf = StratifiedKFold(labels, 2)
-  >>> print(skf)
-  sklearn.cross_validation.StratifiedKFold(labels=[0 0 0 1 1 1 0], n_folds=2)
-
   >>> for train, test in skf:
   ...     print("%s %s" % (train, test))
   [1 4 6] [0 2 3 5]
@@ -249,9 +243,6 @@ not waste much data as only one sample is removed from the learning set::
   >>> from sklearn.cross_validation import LeaveOneOut
 
   >>> loo = LeaveOneOut(4)
-  >>> print(loo)
-  sklearn.cross_validation.LeaveOneOut(n=4)
-
   >>> for train, test in loo:
   ...     print("%s %s" % (train, test))
   [1 2 3] [0]
@@ -273,10 +264,7 @@ Example of Leave-2-Out on a dataset with 4 samples::
 
   >>> from sklearn.cross_validation import LeavePOut
 
-  >>> lpo = LeavePOut(4, 2)
-  >>> print(lpo)
-  sklearn.cross_validation.LeavePOut(n=4, p=2)
-
+  >>> lpo = LeavePOut(4, p=2)
   >>> for train, test in lpo:
   ...     print("%s %s" % (train, test))
   [2 3] [0 1]
@@ -307,9 +295,6 @@ a training set using the samples of all the experiments except one::
   >>> labels = [1, 1, 2, 2]
 
   >>> lolo = LeaveOneLabelOut(labels)
-  >>> print(lolo)
-  sklearn.cross_validation.LeaveOneLabelOut(labels=[1 1 2 2])
-
   >>> for train, test in lolo:
   ...     print("%s %s" % (train, test))
   [2 3] [0 1]
@@ -341,10 +326,7 @@ Example of Leave-2-Label Out::
   >>> from sklearn.cross_validation import LeavePLabelOut
   >>> labels = [1, 1, 2, 2, 3, 3]
 
-  >>> lplo = LeavePLabelOut(labels, 2)
-  >>> print(lplo)
-  sklearn.cross_validation.LeavePLabelOut(labels=[1 1 2 2 3 3], p=2)
-
+  >>> lplo = LeavePLabelOut(labels, p=2)
   >>> for train, test in lplo:
   ...     print("%s %s" % (train, test))
   [4 5] [0 1 2 3]
@@ -370,11 +352,6 @@ Here is a usage example::
 
   >>> ss = cross_validation.ShuffleSplit(5, n_iter=3, test_size=0.25,
   ...     random_state=0)
-  >>> len(ss)
-  3
-  >>> print(ss)                                           # doctest: +ELLIPSIS
-  ShuffleSplit(5, n_iter=3, test_size=0.25, indices=True, ...)
-
   >>> for train_index, test_index in ss:
   ...     print("%s %s" % (train_index, test_index))
   ...
@@ -415,12 +392,7 @@ smaller than the total dataset if it is very large.
 
 .. _Bootstrapping: http://en.wikipedia.org/wiki/Bootstrapping_%28statistics%29
 
-  >>> bs = cross_validation.Bootstrap(9, random_state=0)
-  >>> len(bs)
-  3
-  >>> print(bs)
-  Bootstrap(9, n_iter=3, train_size=5, test_size=4, random_state=0)
-
+  >>> bs = cross_validation.Bootstrap(9, n_iter=3, random_state=0)
   >>> for train_index, test_index in bs:
   ...     print("%s %s" % (train_index, test_index))
   ...
