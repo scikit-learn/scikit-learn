@@ -10,7 +10,7 @@ from .affinity_propagation_ import affinity_propagation, AffinityPropagation
 from .hierarchical import ward_tree, Ward, WardAgglomeration
 from .k_means_ import k_means, KMeans, MiniBatchKMeans
 from .dbscan_ import dbscan, DBSCAN
-from .bicluster import SpectralBiclustering, SpectralCoclustering
+from .bicluster import SpectralBiclustering, SpectralCoclustering, BiMax
 
 
 __all__ = ['AffinityPropagation',
@@ -30,4 +30,5 @@ __all__ = ['AffinityPropagation',
            'spectral_clustering',
            'ward_tree',
            'SpectralBiclustering',
-           'SpectralCoclustering']
+           'SpectralCoclustering',
+           'BiMax']
