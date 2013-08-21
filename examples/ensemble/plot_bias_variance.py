@@ -57,19 +57,21 @@ for i in xrange(n_repeat):
     y_predict_bagging[:, i] = bagging.predict(X_test)
 
 # Bias^2 + Variance decomposition of the mean squared error
+X_test = X_test[:, 0]
+
 y_error_estimator = np.zeros(n_test)
 y_error_bagging = np.zeros(n_test)
 
 for i in range(n_repeat):
-    y_error_estimator += (f(X_test)[:, 0] - y_predict_estimator[:, i]) ** 2
-    y_error_bagging += (f(X_test)[:, 0] - y_predict_bagging[:, i]) ** 2
+    y_error_estimator += (f(X_test) - y_predict_estimator[:, i]) ** 2
+    y_error_bagging += (f(X_test) - y_predict_bagging[:, i]) ** 2
 
 y_error_estimator /= n_repeat
 y_error_bagging /= n_repeat
 
-y_bias_estimator = (f(X_test)[:, 0] - np.mean(y_predict_estimator, axis=1)) ** 2
+y_bias_estimator = (f(X_test) - np.mean(y_predict_estimator, axis=1)) ** 2
 y_var_estimator = np.var(y_predict_estimator, axis=1)
-y_bias_bagging = (f(X_test)[:, 0] - np.mean(y_predict_bagging, axis=1)) ** 2
+y_bias_bagging = (f(X_test) - np.mean(y_predict_bagging, axis=1)) ** 2
 y_var_bagging = np.var(y_predict_bagging, axis=1)
 
 print "Single estimator: %f (mse) = %f (bias^2) + %f (var)" % (np.mean(y_error_estimator), np.mean(y_bias_estimator), np.mean(y_var_estimator))
