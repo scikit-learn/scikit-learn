@@ -1,6 +1,6 @@
-.. _grid_search:
-
 .. currentmodule:: sklearn.grid_search
+
+.. _grid_search:
 
 ===============================================
 Grid Search: Searching for estimator parameters
