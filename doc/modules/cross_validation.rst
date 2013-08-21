@@ -199,8 +199,8 @@ Each fold is constituted by two arrays: the first one is related to the
 Thus, one can create the training/test sets using numpy indexing::
 
   >>> X = np.array([[0., 0.], [1., 1.], [-1., -1.], [2., 2.]])
-  >>> Y = np.array([0, 1, 0, 1])
-  >>> X_train, X_test, y_train, y_test = X[train], X[test], Y[train], Y[test]
+  >>> y = np.array([0, 1, 0, 1])
+  >>> X_train, X_test, y_train, y_test = X[train], X[test], y[train], y[test]
 
 It is also possible to get boolean masks instead of integer indices::
 
@@ -222,8 +222,8 @@ Example of stratified 2-fold cross-validation on a dataset with 7 samples from
 two unbalanced classes::
 
   >>> from sklearn.cross_validation import StratifiedKFold
-  >>> labels = [0, 0, 0, 1, 1, 1, 0]
 
+  >>> labels = [0, 0, 0, 1, 1, 1, 0]
   >>> skf = StratifiedKFold(labels, 2)
   >>> for train, test in skf:
   ...     print("%s %s" % (train, test))
@@ -293,7 +293,6 @@ a training set using the samples of all the experiments except one::
   >>> from sklearn.cross_validation import LeaveOneLabelOut
 
   >>> labels = [1, 1, 2, 2]
-
   >>> lolo = LeaveOneLabelOut(labels)
   >>> for train, test in lolo:
   ...     print("%s %s" % (train, test))
@@ -324,8 +323,8 @@ samples related to :math:`P` labels for each training/test set.
 Example of Leave-2-Label Out::
 
   >>> from sklearn.cross_validation import LeavePLabelOut
-  >>> labels = [1, 1, 2, 2, 3, 3]
 
+  >>> labels = [1, 1, 2, 2, 3, 3]
   >>> lplo = LeavePLabelOut(labels, p=2)
   >>> for train, test in lplo:
   ...     print("%s %s" % (train, test))
