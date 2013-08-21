@@ -9,22 +9,21 @@ import numpy as np
 
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_less
 
 from sklearn.dummy import DummyClassifier, DummyRegressor
-from sklearn.grid_search import GridSearchCV, ParameterGrid
+from sklearn.grid_search import ParameterGrid
 from sklearn.ensemble import BaggingClassifier, BaggingRegressor
-from sklearn.linear_model import SGDClassifier, Perceptron
+from sklearn.linear_model import Perceptron
 from sklearn.neighbors import KNeighborsClassifier, KNeighborsRegressor
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.svm import SVC, SVR
 
 from sklearn.cross_validation import train_test_split
-from sklearn.datasets import make_circles, load_boston, load_iris
+from sklearn.datasets import load_boston, load_iris
 from sklearn.utils import check_random_state
 
 rng = check_random_state(0)
@@ -60,10 +59,9 @@ def test_classification():
                            KNeighborsClassifier(),
                            SVC()]:
         for params in grid:
-            base_estimator.fit(X_train, y_train)
-            ensemble = BaggingClassifier(base_estimator=base_estimator,
-                                         random_state=rng,
-                                         **params).fit(X_train, y_train)
+            BaggingClassifier(base_estimator=base_estimator,
+                              random_state=rng,
+                              **params).fit(X_train, y_train)
 
 
 def test_regression():
@@ -81,10 +79,9 @@ def test_regression():
                            KNeighborsRegressor(),
                            SVR()]:
         for params in grid:
-            base_estimator.fit(X_train, y_train)
-            ensemble = BaggingRegressor(base_estimator=base_estimator,
-                                        random_state=rng,
-                                        **params).fit(X_train, y_train)
+            BaggingRegressor(base_estimator=base_estimator,
+                             random_state=rng,
+                             **params).fit(X_train, y_train)
 
 
 def test_bootstrap_samples():
