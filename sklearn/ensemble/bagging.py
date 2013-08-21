@@ -275,8 +275,10 @@ class BaseBagging(six.with_metaclass(ABCMeta, BaseEnsemble)):
             for i in range(n_jobs))
 
         # Reduce
-        self.estimators_ = list(itertools.chain(*(t[0] for t in all_results)))
-        self.estimators_features_ = list(itertools.chain(*(t[1] for t in all_results)))
+        self.estimators_ = list(itertools.chain(
+            *(t[0] for t in all_results)))
+        self.estimators_features_ = list(itertools.chain(
+            *(t[1] for t in all_results)))
 
         if self.oob_score:
             self._set_oob_score(X, y)
@@ -306,11 +308,11 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
     This algorithm encompasses several works from the literature. When random
     subsets of the dataset are drawn as random subsets of the instances, then
     this algorithm is known as Pasting [1]. If subsets are drawn with
-    replacement, then the method is known as Bagging [2]. When random subsets of
-    the dataset are drawn as random subsets of the features, then the method is
-    known as Random Subspaces [3]. Finally, when base estimators are built on
-    subsets of both instances and features, then the method is known as Random
-    Patches [4].
+    replacement, then the method is known as Bagging [2]. When random subsets
+    of the dataset are drawn as random subsets of the features, then the method
+    is known as Random Subspaces [3]. Finally, when base estimators are built
+    on subsets of both instances and features, then the method is known as
+    Random Patches [4].
 
     Parameters
     ----------
@@ -418,12 +420,14 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
 
         predictions = np.zeros((n_samples, n_classes_))
 
-        for estimator, features in zip(self.estimators_, self.estimators_features_):
+        for estimator, features in zip(self.estimators_,
+                                       self.estimators_features_):
             mask = np.ones(n_samples, dtype=np.bool)
             mask[estimator.indices_] = False
 
             try:
-                predictions[mask, :] += estimator.predict_proba((X[mask, :])[:, features])
+                predictions[mask, :] += estimator.predict_proba(
+                    (X[mask, :])[:, features])
 
             except:
                 p = estimator.predict((X[mask, :])[:, features])
@@ -601,11 +605,11 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
     This algorithm encompasses several works from the literature. When random
     subsets of the dataset are drawn as random subsets of the instances, then
     this algorithm is known as Pasting [1]. If subsets are drawn with
-    replacement, then the method is known as Bagging [2]. When random subsets of
-    the dataset are drawn as random subsets of the features, then the method is
-    known as Random Subspaces [3]. Finally, when base estimators are built on
-    subsets of both instances and features, then the method is known as Random
-    Patches [4].
+    replacement, then the method is known as Bagging [2]. When random subsets
+    of the dataset are drawn as random subsets of the features, then the method
+    is known as Random Subspaces [3]. Finally, when base estimators are built
+    on subsets of both instances and features, then the method is known as
+    Random Patches [4].
 
     Parameters
     ----------
@@ -740,7 +744,8 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
         predictions = np.zeros((n_samples,))
         n_predictions = np.zeros((n_samples,))
 
-        for estimator, features in zip(self.estimators_, self.estimators_features_):
+        for estimator, features in zip(self.estimators_,
+                                       self.estimators_features_):
             mask = np.ones(n_samples, dtype=np.bool)
             mask[estimator.indices_] = False
 
