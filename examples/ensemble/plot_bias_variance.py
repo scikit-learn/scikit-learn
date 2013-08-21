@@ -23,10 +23,7 @@ np.random.seed(0)
 
 estimators = [("Tree", DecisionTreeRegressor()),
               ("Bagging(Tree)", BaggingRegressor(DecisionTreeRegressor(),
-                                                 n_estimators=50)),
-              ("KNN", KNeighborsRegressor()),
-              ("Bagging(KNN)", BaggingRegressor(KNeighborsRegressor(),
-                                                n_estimators=50))]
+                                                 n_estimators=50))]
 
 n_estimators = len(estimators)
 
