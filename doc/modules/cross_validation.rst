@@ -217,9 +217,9 @@ It is also possible to get boolean masks instead of integer indices::
 Stratified k-fold
 -----------------
 
-:class:`StratifiedKFold` is a variation of *k-fold* which returns
-*stratified* folds: each set contains the same percentage of samples
-of each target class as the complete set.
+:class:`StratifiedKFold` is a variation of *k-fold* which returns *stratified*
+folds: each set contains approximately the same percentage of samples of each
+target class as the complete set.
 
 Example of stratified 2-fold cross-validation on a dataset with 7 samples from
 two unbalanced classes::
