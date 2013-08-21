@@ -558,6 +558,34 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
         """
         return np.log(self.predict_proba(X))
 
+    def decision_function(self, X):
+        """Compute the decision function of X, as the average of the decision
+        functions of the base classifiers.
+
+        Parameters
+        ----------
+        X : array-like of shape = [n_samples, n_features]
+            The input samples.
+
+        Returns
+        -------
+        score : array, shape = [n_samples, k]
+            The decision function of the input samples. Classes are
+            ordered by arithmetical order. Regression and binary
+            classification are special cases with ``k == 1``,
+            otherwise ``k==n_classes``.
+        """
+        decisions = self.estimators_[0].decision_function(
+            X[:, self.estimators_features_[0]])
+
+        for estimator, features in zip(self.estimators_[1:],
+                                       self.estimators_features_[1:]):
+            decisions += estimator.decision_function(X[:, features])
+
+        decisions /= self.n_estimators
+
+        return decisions
+
 
 class BaggingRegressor(BaseBagging, RegressorMixin):
     """A Bagging regressor.

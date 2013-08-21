@@ -1,5 +1,5 @@
 """
-Testing for the ensemble module (sklearn.ensemble.ensemble).
+Testing for the bagging ensemble module (sklearn.ensemble.bagging).
 """
 
 # Author: Gilles Louppe
