@@ -188,7 +188,6 @@ def test_oob_score_regression():
     assert_less(abs(test_score - clf.oob_score_), 0.1)
 
 
-
 def test_error():
     """Test that it gives proper exception on deficient input."""
     X, y = iris.data, iris.target
@@ -205,6 +204,54 @@ def test_error():
     assert_raises(ValueError, BaggingClassifier(base, max_features=2.0).fit, X, y)
     assert_raises(ValueError, BaggingClassifier(base, max_features=5).fit, X, y)
     assert_raises(ValueError, BaggingClassifier(base, max_features="foobar").fit, X, y)
+
+
+def test_parallel():
+    """Check parallel computations."""
+    # Classification
+    X_train, X_test, y_train, y_test = train_test_split(iris.data,
+                                                        iris.target,
+                                                        random_state=rng)
+
+    ensemble = BaggingClassifier(DecisionTreeClassifier(),
+                                 n_jobs=3,
+                                 random_state=0).fit(X_train, y_train)
+
+    ensemble.set_params(n_jobs=1)
+    y1 = ensemble.predict_proba(X_test)
+    ensemble.set_params(n_jobs=2)
+    y2 = ensemble.predict_proba(X_test)
+    assert_array_equal(y1, y2)
+
+    ensemble = BaggingClassifier(DecisionTreeClassifier(),
+                                 n_jobs=1,
+                                 random_state=0).fit(X_train, y_train)
+
+    y3 = ensemble.predict_proba(X_test)
+    assert_array_equal(y1, y3)
+
+    # Regression
+    X_train, X_test, y_train, y_test = train_test_split(boston.data,
+                                                        boston.target,
+                                                        random_state=rng)
+
+    ensemble = BaggingRegressor(DecisionTreeRegressor(),
+                                n_jobs=3,
+                                random_state=0).fit(X_train, y_train)
+
+    ensemble.set_params(n_jobs=1)
+    y1 = ensemble.predict(X_test)
+    ensemble.set_params(n_jobs=2)
+    y2 = ensemble.predict(X_test)
+    assert_array_almost_equal(y1, y2)
+
+    ensemble = BaggingRegressor(DecisionTreeRegressor(),
+                                n_jobs=1,
+                                random_state=0).fit(X_train, y_train)
+
+    y3 = ensemble.predict(X_test)
+    assert_array_almost_equal(y1, y3)
+
 
 
 if __name__ == "__main__":

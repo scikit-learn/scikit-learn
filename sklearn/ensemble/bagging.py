@@ -260,8 +260,8 @@ class BaseBagging(six.with_metaclass(ABCMeta, BaseEnsemble)):
                              " if bootstrap=True")
 
         # Parallel loop
-        n_jobs, n_estimators, _ = _partition_estimators(self)
-        seeds = [random_state.randint(MAX_INT, size=i) for i in n_estimators]
+        n_jobs, n_estimators, starts = _partition_estimators(self)
+        seeds = random_state.randint(MAX_INT, size=self.n_estimators)
 
         all_results = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
             delayed(_parallel_build_estimators)(
@@ -270,7 +270,7 @@ class BaseBagging(six.with_metaclass(ABCMeta, BaseEnsemble)):
                 X,
                 y,
                 sample_weight,
-                seeds[i],
+                seeds[starts[i]:starts[i + 1]],
                 verbose=self.verbose)
             for i in range(n_jobs))
 
@@ -297,10 +297,11 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
 
     A Bagging classifier is an ensemble meta-estimator that fits base
     classifiers each on random subsets of the original dataset and then
-    aggregate their individual predictions (either by voting or by averaging) to
-    form a final prediction. Such a meta-estimator can typically be used
-    as a way to introduce randomization into a black-box estimator (e.g., a
-    decision tree) and then making an ensemble out of it.
+    aggregate their individual predictions (either by voting or by averaging)
+    to form a final prediction. Such a meta-estimator can typically be used as
+    a way to reduce the variance of a black-box estimator (e.g., a decision
+    tree), by introducing randomization into its construction proceudre and
+    then making an ensemble out of it.
 
     This algorithm encompasses several works from the literature. When random
     subsets of the dataset are drawn as random subsets of the instances, then
@@ -563,10 +564,11 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
 
     A Bagging regressor is an ensemble meta-estimator that fits base
     regressors each on random subsets of the original dataset and then
-    aggregate their individual predictions (by averaging) to
-    form a final prediction. Such a meta-estimator can typically be used
-    as a way to introduce randomization into a black-box estimator (e.g., a
-    decision tree) and then making an ensemble out of it.
+    aggregate their individual predictions (either by voting or by averaging)
+    to form a final prediction. Such a meta-estimator can typically be used as
+    a way to reduce the variance of a black-box estimator (e.g., a decision
+    tree), by introducing randomization into its construction proceudre and
+    then making an ensemble out of it.
 
     This algorithm encompasses several works from the literature. When random
     subsets of the dataset are drawn as random subsets of the instances, then
