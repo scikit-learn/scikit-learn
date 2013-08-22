@@ -32,9 +32,7 @@ def _parallel_build_estimators(n_estimators, ensemble, X, y, sample_weight,
                                seeds, verbose):
     """Private function used to build a batch of estimators within a job."""
     # Retrieve settings
-    n_samples = X.shape[0]
-    n_features = X.shape[1]
-
+    n_samples, n_features = X.shape
     max_samples = ensemble.max_samples
     max_features = ensemble.max_features
 
@@ -565,8 +563,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
         return np.log(self.predict_proba(X))
 
     def decision_function(self, X):
-        """Compute the decision function of X, as the average of the decision
-        functions of the base classifiers.
+        """Average of the decision functions of the base classifiers.
 
         Parameters
         ----------

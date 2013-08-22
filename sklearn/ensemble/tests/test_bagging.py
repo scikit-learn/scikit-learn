@@ -144,7 +144,7 @@ def test_probability():
     assert_array_almost_equal(np.sum(ensemble.predict_proba(iris.data), axis=1),
                               np.ones(iris.data.shape[0]))
     assert_array_almost_equal(ensemble.predict_proba(iris.data),
-                              np.exp(ensemble.predict_log_proba(iris.data)))
+                              np.exp(ensemble.predict_log_proba(iris.data)), 2)
 
     np.seterr(**olderr)
 
