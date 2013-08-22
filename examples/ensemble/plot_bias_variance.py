@@ -1,11 +1,17 @@
 """
-=========================================================
-Single estimator VS. Bagging: bias-variance decomposition
-=========================================================
+============================================================
+Single estimator versus bagging: bias-variance decomposition
+============================================================
 
-TODO
+This example illustrates and compares the bias-variance decomposition of the
+expected mean squared error of a single estimator against a bagging ensemble.
+
+# todo:
+# explain the bias-variance decomposition
+# compare bias-var of a single estimator vs bagging (higher bias but lower variance => better tradeoff)
 
 """
+print(__doc__)
 
 import numpy as np
 from matplotlib import pyplot as plt
@@ -22,14 +28,14 @@ noise = 0.1         # Standard deviation of the noise
 np.random.seed(0)
 
 estimators = [("Tree", DecisionTreeRegressor()),
-              ("Bagging(Tree)", BaggingRegressor(DecisionTreeRegressor(),
-                                                 n_estimators=50))]
+              ("Bagging(Tree)", BaggingRegressor(DecisionTreeRegressor()))]
 
 n_estimators = len(estimators)
 
 # Generate data
 def f(x):
     x = x.reshape((-1,))
+
     return np.exp(-x ** 2) + 1.5 * np.exp(-(x - 2) ** 2)
 
 def generate(n_samples, noise, n_repeat=1):
@@ -87,31 +93,36 @@ for n, (name, estimator) in enumerate(estimators):
         np.mean(y_var),
         np.mean(y_noise))
 
-    # Plot
+    # Plot figures
     plt.subplot(2, n_estimators, n + 1)
-    plt.plot(X_test, f(X_test), "b", label="mean(f(x))")
+    plt.plot(X_test, f(X_test), "b", label="$f(x)$")
+    plt.plot(X_train[0], y_train[0], ".b", label="LS ~ $f(x)+noise$")
 
     for i in range(n_repeat):
-        plt.plot(X_test, y_predict[:, i], "r", alpha=0.05)
+        if i == 0:
+            plt.plot(X_test, y_predict[:, i], "g",
+                     label="$\^y(x)$")
+        else:
+            plt.plot(X_test, y_predict[:, i], "r", alpha=0.05)
 
-    plt.plot(X_test, np.mean(y_predict, axis=1), "r", label="mean prediction")
+    plt.plot(X_test, np.mean(y_predict, axis=1), "r", label="$\mathbb{E}_{LS} \^y(x)$")
 
     plt.xlim([-5, 5])
     plt.title(name)
 
     if n == 0:
-        plt.legend(loc="upper left", prop={"size": 9})
+        plt.legend(loc="upper left", prop={"size": 11})
 
     plt.subplot(2, n_estimators, n_estimators + n + 1)
-    plt.plot(X_test, y_error, "r", label="mean squared error")
-    plt.plot(X_test, y_bias, "b", label="bias^2"),
-    plt.plot(X_test, y_var, "g", label="variance"),
-    plt.plot(X_test, y_noise, "c", label="noise")
+    plt.plot(X_test, y_error, "r", label="$mse(x)$")
+    plt.plot(X_test, y_bias, "b", label="$bias^2(x)$"),
+    plt.plot(X_test, y_var, "g", label="$variance(x)$"),
+    plt.plot(X_test, y_noise, "c", label="$noise(x)$")
 
     plt.xlim([-5, 5])
     plt.ylim([0, 0.1])
 
     if n == 0:
-        plt.legend(loc="upper left", prop={"size": 9})
+        plt.legend(loc="upper left", prop={"size": 11})
 
 plt.show()
