@@ -190,7 +190,7 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         """
         pass
 
-    def staged_score(self, X, y):
+    def staged_score(self, X, y, sample_weight=None):
         """Return staged scores for X, y.
 
         This generator method yields the ensemble score after each iteration of
@@ -205,15 +205,18 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         y : array-like, shape = [n_samples]
             Labels for X.
 
+        sample_weight : array-like, shape = [n_samples], optional
+            Sample weights.
+
         Returns
         -------
         z : float
         """
         for y_pred in self.staged_predict(X):
             if isinstance(self, ClassifierMixin):
-                yield accuracy_score(y, y_pred)
+                yield accuracy_score(y, y_pred, sample_weight=sample_weight)
             else:
-                yield r2_score(y, y_pred)
+                yield r2_score(y, y_pred, sample_weight=sample_weight)
 
     @property
     def feature_importances_(self):
