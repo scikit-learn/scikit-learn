@@ -55,6 +55,9 @@ variance.
 """
 print(__doc__)
 
+# Author: Gilles Louppe <g.louppe@gmail.com>
+# License: BSD 3 clause
+
 import numpy as np
 from matplotlib import pyplot as plt
 
