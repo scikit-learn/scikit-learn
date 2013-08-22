@@ -79,7 +79,10 @@ n_test = 1000       # Size of the test set
 noise = 0.1         # Standard deviation of the noise
 np.random.seed(0)
 
-# Change this for exploring the bias-variance decomposition of other estimators
+# Change this for exploring the bias-variance decomposition of other
+# estimators. This should work well for estimators with high variance (e.g.,
+# decision trees or KNN), but poorly for estimators with low variance (e.g.,
+# linear models).
 estimators = [("Tree", DecisionTreeRegressor()),
               ("Bagging(Tree)", BaggingRegressor(DecisionTreeRegressor()))]
 
