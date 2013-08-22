@@ -3,8 +3,10 @@
 SGD: Penalties
 ==============
 
-Plot the contours of the three penalties supported by
-`sklearn.linear_model.stochastic_gradient`.
+Plot the contours of the three penalties.
+
+All of the above are supported by
+:class:`sklearn.linear_model.stochastic_gradient`.
 
 """
 from __future__ import division

@@ -41,7 +41,7 @@ def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
     max_iter: int, optional, default: 200
         Maximum number of iterations
 
-    damping: float, optional, default: 200
+    damping: float, optional, default: 0.5
         Damping factor between 0.5 and 1.
 
     copy: boolean, optional, default: True
@@ -212,6 +212,9 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
     `cluster_centers_indices_` : array, [n_clusters]
         Indices of cluster centers
 
+    `cluster_centers_` : array, [n_clusters, n_features]
+        Cluster centers (if affinity != ``precomputed'').
+
     `labels_` : array, [n_samples]
         Labels of each point
 
@@ -260,11 +263,6 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
             similarities / affinities.
         """
 
-        if X.shape[0] == X.shape[1] and not self._pairwise:
-            warnings.warn("The API of AffinityPropagation has changed."
-                          "Now ``fit`` constructs an affinity matrix from the"
-                          " data. To use a custom affinity matrix, set "
-                          "``affinity=precomputed``.")
         if self.affinity is "precomputed":
             self.affinity_matrix_ = X
         elif self.affinity is "euclidean":
@@ -278,4 +276,31 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
             self.affinity_matrix_, self.preference, max_iter=self.max_iter,
             convergence_iter=self.convergence_iter, damping=self.damping,
             copy=self.copy, verbose=self.verbose)
+
+        if self.affinity != "precomputed":
+            self.cluster_centers_ = X[self.cluster_centers_indices_].copy()
+
         return self
+
+    def predict(self, X):
+        """Predict the closest cluster each sample in X belongs to.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+            New data to predict.
+
+        Returns
+        -------
+        labels : array, shape [n_samples,]
+            Index of the cluster each sample belongs to.
+        """
+        if not hasattr(self, "cluster_centers_indices_"):
+            raise ValueError("Estimator is not fitted.")
+
+        if not hasattr(self, "cluster_centers_"):
+            raise ValueError("Predict method is not supported when "
+                             "affinity='precomputed'.")
+
+        # FIXME: can use pairwise_distances_argmin when ready.
+        return euclidean_distances(X, self.cluster_centers_).argmin(axis=1)

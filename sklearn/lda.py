@@ -13,7 +13,7 @@ from scipy import linalg
 from .base import BaseEstimator, ClassifierMixin, TransformerMixin
 from .utils.extmath import logsumexp
 from .utils.fixes import unique
-from .utils import check_arrays, array2d
+from .utils import check_arrays, array2d, column_or_1d
 
 __all__ = ['LDA']
 
@@ -112,6 +112,7 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
             and stored in `self.covariance_` attribute.
         """
         X, y = check_arrays(X, y, sparse_format='dense')
+        y = column_or_1d(y, warn=True)
         self.classes_, y = unique(y, return_inverse=True)
         n_samples, n_features = X.shape
         n_classes = len(self.classes_)
@@ -183,13 +184,6 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
         self.intercept_ = (-0.5 * np.sum(self.coef_ ** 2, axis=1) +
                            np.log(self.priors_))
         return self
-
-    @property
-    def scaling(self):  # pragma: no cover
-        warnings.warn("LDA.scaling is deprecated and will be removed in 0.15."
-                      " Use LDA.scalings_ instead.", DeprecationWarning,
-                      stacklevel=2)
-        return self.scalings_
 
     def _decision_function(self, X):
         X = array2d(X)

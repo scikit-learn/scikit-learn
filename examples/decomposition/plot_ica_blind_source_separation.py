@@ -3,6 +3,8 @@
 Blind source separation using FastICA
 =====================================
 
+An example of estimating sources from noisy data.
+
 :ref:`ICA` is used to estimate sources given noisy measurements.
 Imagine 2 instruments playing simultaneously and 2 microphones
 recording the mixed signals. ICA is used to recover the sources
@@ -32,8 +34,8 @@ X = np.dot(S, A.T)  # Generate observations
 # Compute ICA
 ica = FastICA()
 S_ = ica.fit(X).transform(X)  # Get the estimated sources
-A_ = ica.get_mixing_matrix()  # Get estimated mixing matrix
-assert np.allclose(X, np.dot(S_, A_.T))
+A_ = ica.mixing_  # Get estimated mixing matrix
+assert np.allclose(X, np.dot(S_, A_.T) + ica.mean_)
 
 ###############################################################################
 # Plot results

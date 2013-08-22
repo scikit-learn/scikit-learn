@@ -221,7 +221,7 @@ def test_rank_deficient_design():
 def test_lasso_lars_vs_lasso_cd(verbose=False):
     """
     Test that LassoLars and Lasso using coordinate descent give the
-    same results
+    same results.
     """
     X = 3 * diabetes.data
 
@@ -301,6 +301,9 @@ def test_lasso_lars_vs_lasso_cd_ill_conditioned():
     # Test lasso lars on a very ill-conditioned design, and check that
     # it does not blow up, and stays somewhat close to a solution given
     # by the coordinate descent solver
+    # Also test that lasso_path (using lars_path output style) gives
+    # the same result as lars_path and previous lasso output style
+    # under these conditions.
     rng = np.random.RandomState(42)
 
     # Generate data
@@ -321,15 +324,24 @@ def test_lasso_lars_vs_lasso_cd_ill_conditioned():
         warnings.simplefilter("always", UserWarning)
         lars_alphas, _, lars_coef = linear_model.lars_path(X, y,
                                                            method='lasso')
+
     assert_true(len(warning_list) > 0)
     assert_true(('Dropping a regressor' in warning_list[0].message.args[0])
                 or ('Early stopping' in warning_list[0].message.args[0]))
 
+    _, lasso_coef2, _ = linear_model.lasso_path(X, y,
+                                                alphas=lars_alphas, tol=1e-6,
+                                                return_models=False,
+                                                fit_intercept=False)
+
     lasso_coef = np.zeros((w.shape[0], len(lars_alphas)))
     for i, model in enumerate(linear_model.lasso_path(X, y, alphas=lars_alphas,
-                                                      tol=1e-6)):
+                                               tol=1e-6, fit_intercept=False)):
         lasso_coef[:, i] = model.coef_
+
     np.testing.assert_array_almost_equal(lars_coef, lasso_coef, decimal=1)
+    np.testing.assert_array_almost_equal(lars_coef, lasso_coef2, decimal=1)
+    np.testing.assert_array_almost_equal(lasso_coef, lasso_coef2, decimal=1)
 
 
 def test_lars_drop_for_good():

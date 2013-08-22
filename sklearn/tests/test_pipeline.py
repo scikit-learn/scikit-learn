@@ -141,7 +141,7 @@ def test_pipeline_methods_pca_svm():
     X = iris.data
     y = iris.target
     # Test with PCA + SVC
-    clf = SVC(probability=True)
+    clf = SVC(probability=True, random_state=0)
     pca = PCA(n_components='mle', whiten=True)
     pipe = Pipeline([('pca', pca), ('svc', clf)])
     pipe.fit(X, y)
@@ -160,7 +160,7 @@ def test_pipeline_methods_preprocessing_svm():
     n_classes = len(np.unique(y))
     scaler = StandardScaler()
     pca = RandomizedPCA(n_components=2, whiten=True)
-    clf = SVC(probability=True)
+    clf = SVC(probability=True, random_state=0)
 
     for preprocessing in [scaler, pca]:
         pipe = Pipeline([('preprocess', preprocessing), ('svc', clf)])

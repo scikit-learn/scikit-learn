@@ -22,7 +22,6 @@ import numpy as np
 import scipy as sp
 from scipy import io
 from shutil import copyfileobj
-from shutil import rmtree
 
 from .base import get_data_home, Bunch
 

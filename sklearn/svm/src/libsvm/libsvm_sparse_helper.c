@@ -44,7 +44,7 @@ struct svm_csr_node **csr_to_libsvm (double *values, int* indices, int* indptr, 
 struct svm_parameter * set_parameter(int svm_type, int kernel_type, int degree,
 		double gamma, double coef0, double nu, double cache_size, double C,
 		double eps, double p, int shrinking, int probability, int nr_weight,
-		char *weight_label, char *weight, int max_iter)
+		char *weight_label, char *weight, int max_iter, int random_seed)
 {
     struct svm_parameter *param;
     param = malloc(sizeof(struct svm_parameter));
@@ -65,6 +65,7 @@ struct svm_parameter * set_parameter(int svm_type, int kernel_type, int degree,
     param->weight = (double *) weight;
     param->gamma = gamma;
     param->max_iter = max_iter;
+    param->random_seed = random_seed;
     return param;
 }
 

@@ -13,7 +13,7 @@ machine-learning as a versatile tool for science and engineering.
 See http://scikit-learn.org for complete documentation.
 """
 import sys
-__version__ = '0.14-git'
+__version__ = '0.15-git'
 
 try:
     # This variable is injected in the __builtins__ by the build
@@ -31,46 +31,37 @@ else:
     from . import __check_build
     from .base import clone
 
-    try:
-        from numpy.testing import nosetester
+    def test(*args, **kwargs):
+        import warnings
+        # Not using a DeprecationWarning, as they are turned off by
+        # default
+        warnings.warn("""sklearn.test() is no longer supported to run the
+scikit-learn test suite.
 
-        class _NoseTester(nosetester.NoseTester):
-            """ Subclass numpy's NoseTester to add doctests by default
-            """
+After installation, you can launch the test suite from outside the
+source directory (you will need to have nosetests installed)::
 
-            def test(self, label='fast', verbose=1, extra_argv=['--exe'],
-                     doctests=True, coverage=False):
-                """Run the full test suite
+   $ nosetests --exe sklearn
 
-                Examples
-                --------
-                This will run the test suite and stop at the first failing
-                example
-                >>> from sklearn import test
-                >>> test(extra_argv=['--exe', '-sx']) #doctest: +SKIP
-                """
-                return super(_NoseTester, self).test(label=label,
-                                                     verbose=verbose,
-                                                     extra_argv=extra_argv,
-                                                     doctests=doctests,
-                                                     coverage=coverage)
+See the web page http://scikit-learn.org/stable/install.html#testing
+for more information.
 
-        try:
-            test = _NoseTester(raise_warnings="release").test
-        except TypeError:
-            # Older versions of numpy do not have a raise_warnings argument
-            test = _NoseTester().test
-        del nosetester
-    except:
-        pass
+This function, `sklearn.test()` does not do anything. It does not run
+the tests and will be removed in release 0.16.
+""", stacklevel=2)
+
+    # The following line is useful so that nosetests doesn't consider
+    # "test" as a test function
+    test.__test__ = False
 
     __all__ = ['cross_validation', 'cluster', 'covariance',
                'datasets', 'decomposition', 'feature_extraction',
                'feature_selection', 'semi_supervised',
                'gaussian_process', 'grid_search', 'hmm', 'lda', 'linear_model',
                'metrics', 'mixture', 'naive_bayes', 'neighbors', 'pipeline',
-               'preprocessing', 'qda', 'svm', 'test', 'clone', 'pls',
-               'isotonic']
+               'preprocessing', 'qda', 'svm', 'clone',
+               'cross_decomposition',
+               'isotonic', 'pls']
 
 
 def setup_module(module):

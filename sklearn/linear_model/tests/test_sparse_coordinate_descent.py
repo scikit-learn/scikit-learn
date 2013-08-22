@@ -180,18 +180,6 @@ def _test_sparse_enet_not_as_toy_dataset(alpha, fit_intercept, positive):
     # check that the coefs are sparse
     assert_less(np.sum(s_clf.coef_ != 0.0), 2 * n_informative)
 
-    # check that warm restart leads to the same result with
-    # sparse and dense versions
-
-    rng = np.random.RandomState(seed=0)
-    coef_init = rng.randn(n_features)
-
-    d_clf.fit(X_train.todense(), y_train, coef_init=coef_init)
-    s_clf.fit(X_train, y_train, coef_init=coef_init)
-
-    assert_almost_equal(s_clf.coef_, d_clf.coef_, 5)
-    assert_almost_equal(s_clf.intercept_, d_clf.intercept_, 5)
-
 
 def test_sparse_enet_not_as_toy_dataset():
     _test_sparse_enet_not_as_toy_dataset(alpha=0.1, fit_intercept=False,
@@ -235,15 +223,14 @@ def test_enet_multitarget():
     estimator = ElasticNet(alpha=0.01, fit_intercept=True, precompute=None)
     # XXX: There is a bug when precompute is not None!
     estimator.fit(X, y)
-    coef, intercept, dual_gap, eps = (estimator.coef_, estimator.intercept_,
-                                      estimator.dual_gap_, estimator.eps_)
+    coef, intercept, dual_gap = (estimator.coef_, estimator.intercept_,
+                                      estimator.dual_gap_)
 
     for k in range(n_targets):
         estimator.fit(X, y[:, k])
         assert_array_almost_equal(coef[k, :], estimator.coef_)
         assert_array_almost_equal(intercept[k], estimator.intercept_)
         assert_array_almost_equal(dual_gap[k], estimator.dual_gap_)
-        assert_array_almost_equal(eps[k], estimator.eps_)
 
 
 def test_path_parameters():
@@ -256,3 +243,6 @@ def test_path_parameters():
     assert_almost_equal(0.5, clf.l1_ratio)
     assert_equal(n_alphas, clf.n_alphas)
     assert_equal(n_alphas, len(clf.alphas_))
+    sparse_mse_path = clf.mse_path_
+    clf.fit(X.toarray(), y)  # compare with dense data
+    assert_almost_equal(clf.mse_path_, sparse_mse_path)

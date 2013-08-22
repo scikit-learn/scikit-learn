@@ -108,7 +108,7 @@ class VectorizerMixin(object):
             doc = doc.read()
 
         if isinstance(doc, bytes):
-            doc = doc.decode(self.charset, self.charset_error)
+            doc = doc.decode(self.encoding, self.decode_error)
         return doc
 
     def _word_ngrams(self, tokens, stop_words=None):
@@ -149,7 +149,7 @@ class VectorizerMixin(object):
         Tokenize text_document into a sequence of character n-grams
         excluding any whitespace (operating only inside word boundaries)"""
         # normalize white spaces
-        text_document = self._white_spaces.sub(u" ", text_document)
+        text_document = self._white_spaces.sub(" ", text_document)
 
         min_n, max_n = self.ngram_range
         ngrams = []
@@ -284,13 +284,13 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
         Otherwise the input is expected to be the sequence strings or
         bytes items are expected to be analyzed directly.
 
-    charset: string, 'utf-8' by default.
-        If bytes or files are given to analyze, this charset is used to
+    encoding : string, 'utf-8' by default.
+        If bytes or files are given to analyze, this encoding is used to
         decode.
 
-    charset_error: {'strict', 'ignore', 'replace'}
+    decode_error : {'strict', 'ignore', 'replace'}
         Instruction on what to do if a byte sequence is given to analyze that
-        contains characters not of the given `charset`. By default, it is
+        contains characters not of the given `encoding`. By default, it is
         'strict', meaning that a UnicodeDecodeError will be raised. Other
         values are 'ignore' and 'replace'.
 
@@ -366,16 +366,30 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
     CountVectorizer, TfidfVectorizer
 
     """
-    def __init__(self, input='content', charset='utf-8',
-                 charset_error='strict', strip_accents=None,
+    def __init__(self, input='content', charset=None, encoding='utf-8',
+                 decode_error='strict', charset_error=None,
+                 strip_accents=None,
                  lowercase=True, preprocessor=None, tokenizer=None,
                  stop_words=None, token_pattern=r"(?u)\b\w\w+\b",
                  ngram_range=(1, 1), analyzer='word', n_features=(2 ** 20),
                  binary=False, norm='l2', non_negative=False,
                  dtype=np.float64):
         self.input = input
-        self.charset = charset
-        self.charset_error = charset_error
+        self.encoding = encoding
+        self.decode_error = decode_error
+        if charset is not None:
+            warnings.warn("The charset parameter is deprecated as of version "
+                          "0.14 and will be removed in 0.16. Use encoding "
+                          "instead.",
+                          DeprecationWarning)
+            self.encoding = charset
+        if charset_error is not None:
+            warnings.warn("The charset_error parameter is deprecated as of "
+                          "version 0.14 and will be removed in 0.16. Use "
+                          "decode_error instead.",
+                          DeprecationWarning)
+            self.decode_error = charset_error
+
         self.strip_accents = strip_accents
         self.preprocessor = preprocessor
         self.tokenizer = tokenizer
@@ -468,13 +482,13 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         Otherwise the input is expected to be the sequence strings or
         bytes items are expected to be analyzed directly.
 
-    charset : string, 'utf-8' by default.
-        If bytes or files are given to analyze, this charset is used to
+    encoding : string, 'utf-8' by default.
+        If bytes or files are given to analyze, this encoding is used to
         decode.
 
-    charset_error : {'strict', 'ignore', 'replace'}
+    decode_error : {'strict', 'ignore', 'replace'}
         Instruction on what to do if a byte sequence is given to analyze that
-        contains characters not of the given `charset`. By default, it is
+        contains characters not of the given `encoding`. By default, it is
         'strict', meaning that a UnicodeDecodeError will be raised. Other
         values are 'ignore' and 'replace'.
 
@@ -551,7 +565,9 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
     vocabulary : Mapping or iterable, optional
         Either a Mapping (e.g., a dict) where keys are terms and values are
         indices in the feature matrix, or an iterable over terms. If not
-        given, a vocabulary is determined from the input documents.
+        given, a vocabulary is determined from the input documents. Indices
+        in the mapping should not be repeated and should not have any gap
+        between 0 and the largest index.
 
     binary : boolean, False by default.
         If True, all non zero counts are set to 1. This is useful for discrete
@@ -577,16 +593,30 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
     HashingVectorizer, TfidfVectorizer
     """
 
-    def __init__(self, input='content', charset='utf-8',
-                 charset_error='strict', strip_accents=None,
+    def __init__(self, input='content', encoding='utf-8', charset=None,
+                 decode_error='strict', charset_error=None,
+                 strip_accents=None,
                  lowercase=True, preprocessor=None, tokenizer=None,
                  stop_words=None, token_pattern=r"(?u)\b\w\w+\b",
                  ngram_range=(1, 1), analyzer='word',
                  max_df=1.0, min_df=1, max_features=None,
                  vocabulary=None, binary=False, dtype=np.int64):
         self.input = input
-        self.charset = charset
-        self.charset_error = charset_error
+        self.encoding = encoding
+        self.decode_error = decode_error
+        if charset is not None:
+            warnings.warn("The charset parameter is deprecated as of version "
+                          "0.14 and will be removed in 0.16. Use encoding "
+                          "instead.",
+                          DeprecationWarning)
+            self.encoding = charset
+        if charset_error is not None:
+            warnings.warn("The charset_error parameter is deprecated as of "
+                          "version 0.14 and will be removed in 0.16. Use "
+                          "decode_error instead.",
+                          DeprecationWarning)
+            self.decode_error = charset_error
+
         self.strip_accents = strip_accents
         self.preprocessor = preprocessor
         self.tokenizer = tokenizer
@@ -601,7 +631,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         self.max_features = max_features
         if max_features is not None:
             if (not isinstance(max_features, numbers.Integral) or
-                max_features <= 0):
+                    max_features <= 0):
                 raise ValueError(
                     "max_features=%r, neither a positive integer nor None"
                     % max_features)
@@ -611,6 +641,13 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
                 vocabulary = dict((t, i) for i, t in enumerate(vocabulary))
             if not vocabulary:
                 raise ValueError("empty vocabulary passed to fit")
+            indices = set(six.itervalues(vocabulary))
+            if len(indices) != len(vocabulary):
+                raise ValueError("Vocabulary contains repeated indices.")
+            for i in xrange(len(vocabulary)):
+                if i not in indices:
+                    msg = "Vocabulary of size %d doesn't contain index %d."
+                    raise ValueError(msg % (len(vocabulary), i))
             self.fixed_vocabulary = True
             self.vocabulary_ = dict(vocabulary)
         else:
@@ -835,13 +872,6 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         return [t for t, i in sorted(six.iteritems(self.vocabulary_),
                                      key=itemgetter(1))]
 
-    @property
-    def max_df_stop_words_(self):
-        warnings.warn(
-            "The 'stop_words_ attribute was renamed to 'max_df_stop_words'. "
-            "The old attribute will be removed in 0.15.", DeprecationWarning)
-        return self.stop_words_
-
 
 def _make_int_array():
     """Construct an array.array of a type suitable for scipy.sparse indices."""
@@ -994,13 +1024,13 @@ class TfidfVectorizer(CountVectorizer):
         Otherwise the input is expected to be the sequence strings or
         bytes items are expected to be analyzed directly.
 
-    charset : string, 'utf-8' by default.
-        If bytes or files are given to analyze, this charset is used to
+    encoding : string, 'utf-8' by default.
+        If bytes or files are given to analyze, this encoding is used to
         decode.
 
-    charset_error : {'strict', 'ignore', 'replace'}
+    decode_error : {'strict', 'ignore', 'replace'}
         Instruction on what to do if a byte sequence is given to analyze that
-        contains characters not of the given `charset`. By default, it is
+        contains characters not of the given `encoding`. By default, it is
         'strict', meaning that a UnicodeDecodeError will be raised. Other
         values are 'ignore' and 'replace'.
 
@@ -1111,8 +1141,9 @@ class TfidfVectorizer(CountVectorizer):
 
     """
 
-    def __init__(self, input='content', charset='utf-8',
-                 charset_error='strict', strip_accents=None, lowercase=True,
+    def __init__(self, input='content', encoding='utf-8', charset=None,
+                 decode_error='strict', charset_error=None,
+                 strip_accents=None, lowercase=True,
                  preprocessor=None, tokenizer=None, analyzer='word',
                  stop_words=None, token_pattern=r"(?u)\b\w\w+\b",
                  ngram_range=(1, 1), max_df=1.0, min_df=1,
@@ -1122,6 +1153,7 @@ class TfidfVectorizer(CountVectorizer):
 
         super(TfidfVectorizer, self).__init__(
             input=input, charset=charset, charset_error=charset_error,
+            encoding=encoding, decode_error=decode_error,
             strip_accents=strip_accents, lowercase=lowercase,
             preprocessor=preprocessor, tokenizer=tokenizer, analyzer=analyzer,
             stop_words=stop_words, token_pattern=token_pattern,

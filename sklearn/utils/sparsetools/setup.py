@@ -4,7 +4,7 @@ import numpy
 def configuration(parent_package='', top_path=None):
     from numpy.distutils.misc_util import Configuration
 
-    config = Configuration('mst', parent_package, top_path)
+    config = Configuration('sparsetools', parent_package, top_path)
 
     config.add_extension('_min_spanning_tree',
                          sources=['_min_spanning_tree.c'],

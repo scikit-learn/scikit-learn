@@ -4,46 +4,41 @@
 #          Andreas Mueller <amueller@ais.uni-bonn.de>
 # License: BSD 3 clause
 
-import warnings
 import numbers
+import warnings
 
 import numpy as np
-import scipy.sparse as sp
+from scipy import sparse
+from ..base import BaseEstimator, TransformerMixin
+from ..utils import check_arrays
+from ..utils import atleast2d_or_csc
+from ..utils import array2d
+from ..utils import atleast2d_or_csr
+from ..utils import safe_asarray
+from ..utils import warn_if_not_float
 
-from .base import BaseEstimator, TransformerMixin
-from .externals.six import string_types
-from .utils import check_arrays
-from .utils import array2d
-from .utils import atleast2d_or_csr
-from .utils import atleast2d_or_csc
-from .utils import safe_asarray
-from .utils import warn_if_not_float
-from .utils.fixes import unique
-
-from .utils.multiclass import unique_labels
-from .utils.multiclass import is_multilabel
-from .utils.multiclass import type_of_target
-
-from .utils.sparsefuncs import inplace_csr_row_normalize_l1
-from .utils.sparsefuncs import inplace_csr_row_normalize_l2
-from .utils.sparsefuncs import inplace_csr_column_scale
-from .utils.sparsefuncs import mean_variance_axis0
-from .externals import six
+from ..utils.sparsefuncs import inplace_csr_row_normalize_l1
+from ..utils.sparsefuncs import inplace_csr_row_normalize_l2
+from ..utils.sparsefuncs import inplace_csr_column_scale
+from ..utils.sparsefuncs import mean_variance_axis0
+from ..externals import six
 
 zip = six.moves.zip
 map = six.moves.map
 
-__all__ = ['Binarizer',
-           'KernelCenterer',
-           'LabelBinarizer',
-           'LabelEncoder',
-           'MinMaxScaler',
-           'Normalizer',
-           'OneHotEncoder',
-           'StandardScaler',
-           'binarize',
-           'normalize',
-           'scale']
+__all__ = [
+    'Binarizer',
+    'KernelCenterer',
+    'MinMaxScaler',
+    'Normalizer',
+    'OneHotEncoder',
+    'Scaler',
+    'StandardScaler',
+    'add_dummy_feature',
+    'binarize',
+    'normalize',
+    'scale',
+]
 
 
 def _mean_and_std(X, axis=0, with_mean=True, with_std=True):
@@ -117,7 +112,7 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
     scaling using the ``Transformer`` API (e.g. as part of a preprocessing
     :class:`sklearn.pipeline.Pipeline`)
     """
-    if sp.issparse(X):
+    if sparse.issparse(X):
         if with_mean:
             raise ValueError(
                 "Cannot center sparse matrices: pass `with_mean=False` instead"
@@ -126,7 +121,7 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
             raise ValueError("Can only scale sparse matrix on axis=0, "
                              " got axis=%d" % axis)
         warn_if_not_float(X, estimator='The scale function')
-        if not sp.isspmatrix_csr(X):
+        if not sparse.isspmatrix_csr(X):
             X = X.tocsr()
             copy = False
         if copy:
@@ -313,12 +308,13 @@ class StandardScaler(BaseEstimator, TransformerMixin):
             used for later scaling along the features axis.
         """
         X = check_arrays(X, copy=self.copy, sparse_format="csr")[0]
-        if sp.issparse(X):
+        if warn_if_not_float(X, estimator=self):
+            X = X.astype(np.float)
+        if sparse.issparse(X):
             if self.with_mean:
                 raise ValueError(
                     "Cannot center sparse matrices: pass `with_mean=False` "
                     "instead. See docstring for motivation and alternatives.")
-            warn_if_not_float(X, estimator=self)
             self.mean_ = None
 
             if self.with_std:
@@ -329,7 +325,6 @@ class StandardScaler(BaseEstimator, TransformerMixin):
                 self.std_ = None
             return self
         else:
-            warn_if_not_float(X, estimator=self)
             self.mean_, self.std_ = _mean_and_std(
                 X, axis=0, with_mean=self.with_mean, with_std=self.with_std)
             return self
@@ -344,16 +339,16 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         """
         copy = copy if copy is not None else self.copy
         X = check_arrays(X, copy=copy, sparse_format="csr")[0]
-        if sp.issparse(X):
+        if warn_if_not_float(X, estimator=self):
+            X = X.astype(np.float)
+        if sparse.issparse(X):
             if self.with_mean:
                 raise ValueError(
                     "Cannot center sparse matrices: pass `with_mean=False` "
-                    "instead See docstring for motivation and alternatives.")
+                    "instead. See docstring for motivation and alternatives.")
             if self.std_ is not None:
-                warn_if_not_float(X, estimator=self)
                 inplace_csr_column_scale(X, 1 / self.std_)
         else:
-            warn_if_not_float(X, estimator=self)
             if self.with_mean:
                 X -= self.mean_
             if self.with_std:
@@ -369,12 +364,12 @@ class StandardScaler(BaseEstimator, TransformerMixin):
             The data used to scale along the features axis.
         """
         copy = copy if copy is not None else self.copy
-        if sp.issparse(X):
+        if sparse.issparse(X):
             if self.with_mean:
                 raise ValueError(
                     "Cannot uncenter sparse matrices: pass `with_mean=False` "
                     "instead See docstring for motivation and alternatives.")
-            if not sp.isspmatrix_csr(X):
+            if not sparse.isspmatrix_csr(X):
                 X = X.tocsr()
                 copy = False
             if copy:
@@ -443,7 +438,7 @@ def normalize(X, norm='l2', axis=1, copy=True):
     if axis == 0:
         X = X.T
 
-    if sp.issparse(X):
+    if sparse.issparse(X):
         if norm == 'l1':
             inplace_csr_row_normalize_l1(X)
         elif norm == 'l2':
@@ -539,7 +534,7 @@ def binarize(X, threshold=0.0, copy=True):
         un-necessary copy.
 
     threshold : float, optional (0.0 by default)
-        Feature values below this are replaced by 1, above it by 0.
+        Feature values below or equal to this are replaced by 0, above it by 1.
         Threshold may not be less than 0 for operations on sparse matrices.
 
     copy : boolean, optional, default is True
@@ -559,7 +554,7 @@ def binarize(X, threshold=0.0, copy=True):
             sparse_format = X.format
 
     X = check_arrays(X, sparse_format=sparse_format, copy=copy)[0]
-    if sp.issparse(X):
+    if sparse.issparse(X):
         if threshold < 0:
             raise ValueError('Cannot binarize a sparse matrix with threshold '
                              '< 0')
@@ -594,7 +589,7 @@ class Binarizer(BaseEstimator, TransformerMixin):
     Parameters
     ----------
     threshold : float, optional (0.0 by default)
-        Feature values below this are replaced by 1, above it by 0.
+        Feature values below or equal to this are replaced by 0, above it by 1.
         Threshold may not be less than 0 for operations on sparse matrices.
 
     copy : boolean, optional, default is True
@@ -635,6 +630,119 @@ class Binarizer(BaseEstimator, TransformerMixin):
         """
         copy = copy if copy is not None else self.copy
         return binarize(X, threshold=self.threshold, copy=copy)
+
+
+class KernelCenterer(BaseEstimator, TransformerMixin):
+    """Center a kernel matrix
+
+    Let K(x, z) be a kernel defined by phi(x)^T phi(z), where phi is a
+    function mapping x to a Hilbert space. KernelCenterer centers (i.e.,
+    normalize to have zero mean) the data without explicitly computing phi(x).
+    It is equivalent to centering phi(x) with
+    sklearn.preprocessing.StandardScaler(with_std=False).
+    """
+
+    def fit(self, K, y=None):
+        """Fit KernelCenterer
+
+        Parameters
+        ----------
+        K : numpy array of shape [n_samples, n_samples]
+            Kernel matrix.
+
+        Returns
+        -------
+        self : returns an instance of self.
+        """
+        K = array2d(K)
+        n_samples = K.shape[0]
+        self.K_fit_rows_ = np.sum(K, axis=0) / n_samples
+        self.K_fit_all_ = self.K_fit_rows_.sum() / n_samples
+        return self
+
+    def transform(self, K, y=None, copy=True):
+        """Center kernel matrix.
+
+        Parameters
+        ----------
+        K : numpy array of shape [n_samples1, n_samples2]
+            Kernel matrix.
+
+        Returns
+        -------
+        K_new : numpy array of shape [n_samples1, n_samples2]
+        """
+        K = array2d(K)
+        if copy:
+            K = K.copy()
+
+        K_pred_cols = (np.sum(K, axis=1) /
+                       self.K_fit_rows_.shape[0])[:, np.newaxis]
+
+        K -= self.K_fit_rows_
+        K -= K_pred_cols
+        K += self.K_fit_all_
+
+        return K
+
+
+def add_dummy_feature(X, value=1.0):
+    """Augment dataset with an additional dummy feature.
+
+    This is useful for fitting an intercept term with implementations which
+    cannot otherwise fit it directly.
+
+    Parameters
+    ----------
+    X : array or scipy.sparse matrix with shape [n_samples, n_features]
+        Data.
+
+    value : float
+        Value to use for the dummy feature.
+
+    Returns
+    -------
+
+    X : array or scipy.sparse matrix with shape [n_samples, n_features + 1]
+        Same data with dummy feature added as first column.
+
+    Examples
+    --------
+
+    >>> from sklearn.preprocessing import add_dummy_feature
+    >>> add_dummy_feature([[0, 1], [1, 0]])
+    array([[ 1.,  0.,  1.],
+           [ 1.,  1.,  0.]])
+    """
+    X = safe_asarray(X)
+    n_samples, n_features = X.shape
+    shape = (n_samples, n_features + 1)
+    if sparse.issparse(X):
+        if sparse.isspmatrix_coo(X):
+            # Shift columns to the right.
+            col = X.col + 1
+            # Column indices of dummy feature are 0 everywhere.
+            col = np.concatenate((np.zeros(n_samples), col))
+            # Row indices of dummy feature are 0, ..., n_samples-1.
+            row = np.concatenate((np.arange(n_samples), X.row))
+            # Prepend the dummy feature n_samples times.
+            data = np.concatenate((np.ones(n_samples) * value, X.data))
+            return sparse.coo_matrix((data, (row, col)), shape)
+        elif sparse.isspmatrix_csc(X):
+            # Shift index pointers since we need to add n_samples elements.
+            indptr = X.indptr + n_samples
+            # indptr[0] must be 0.
+            indptr = np.concatenate((np.array([0]), indptr))
+            # Row indices of dummy feature are 0, ..., n_samples-1.
+            indices = np.concatenate((np.arange(n_samples), X.indices))
+            # Prepend the dummy feature n_samples times.
+            data = np.concatenate((np.ones(n_samples) * value, X.data))
+            return sparse.csc_matrix((data, indices, indptr), shape)
+        else:
+            klass = X.__class__
+            return klass(add_dummy_feature(X.tocoo(), value))
+    else:
+        return np.hstack((np.ones((n_samples, 1)) * value, X))
 
 
 def _transform_selected(X, transform, selected="all", copy=True):
@@ -683,8 +791,8 @@ def _transform_selected(X, transform, selected="all", copy=True):
         X_sel = transform(X[:, ind[sel]])
         X_not_sel = X[:, ind[not_sel]]
 
-        if sp.issparse(X_sel) or sp.issparse(X_not_sel):
-            return sp.hstack((X_sel, X_not_sel))
+        if sparse.issparse(X_sel) or sparse.issparse(X_not_sel):
+            return sparse.hstack((X_sel, X_not_sel))
         else:
             return np.hstack((X_sel, X_not_sel))
 
@@ -814,9 +922,9 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         row_indices = np.repeat(np.arange(n_samples, dtype=np.int32),
                                 n_features)
         data = np.ones(n_samples * n_features)
-        out = sp.coo_matrix((data, (row_indices, column_indices)),
-                            shape=(n_samples, indices[-1]),
-                            dtype=self.dtype).tocsr()
+        out = sparse.coo_matrix((data, (row_indices, column_indices)),
+                                shape=(n_samples, indices[-1]),
+                                dtype=self.dtype).tocsr()
 
         if self.n_values == 'auto':
             mask = np.array(out.sum(axis=0)).ravel() != 0
@@ -856,9 +964,9 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         row_indices = np.repeat(np.arange(n_samples, dtype=np.int32),
                                 n_features)
         data = np.ones(n_samples * n_features)
-        out = sp.coo_matrix((data, (row_indices, column_indices)),
-                            shape=(n_samples, indices[-1]),
-                            dtype=self.dtype).tocsr()
+        out = sparse.coo_matrix((data, (row_indices, column_indices)),
+                                shape=(n_samples, indices[-1]),
+                                dtype=self.dtype).tocsr()
         if self.n_values == 'auto':
             out = out[:, self.active_features_]
         return out
@@ -878,437 +986,3 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         """
         return _transform_selected(X, self._transform,
                                    self.categorical_features, copy=True)
-
-
-class LabelEncoder(BaseEstimator, TransformerMixin):
-    """Encode labels with value between 0 and n_classes-1.
-
-    Attributes
-    ----------
-    `classes_`: array of shape [n_class]
-        Holds the label for each class.
-
-    Examples
-    --------
-    `LabelEncoder` can be used to normalize labels.
-
-    >>> from sklearn import preprocessing
-    >>> le = preprocessing.LabelEncoder()
-    >>> le.fit([1, 2, 2, 6])
-    LabelEncoder()
-    >>> le.classes_
-    array([1, 2, 6])
-    >>> le.transform([1, 1, 2, 6]) #doctest: +ELLIPSIS
-    array([0, 0, 1, 2]...)
-    >>> le.inverse_transform([0, 0, 1, 2])
-    array([1, 1, 2, 6])
-
-    It can also be used to transform non-numerical labels (as long as they are
-    hashable and comparable) to numerical labels.
-
-    >>> le = preprocessing.LabelEncoder()
-    >>> le.fit(["paris", "paris", "tokyo", "amsterdam"])
-    LabelEncoder()
-    >>> list(le.classes_)
-    ['amsterdam', 'paris', 'tokyo']
-    >>> le.transform(["tokyo", "tokyo", "paris"]) #doctest: +ELLIPSIS
-    array([2, 2, 1]...)
-    >>> list(le.inverse_transform([2, 2, 1]))
-    ['tokyo', 'tokyo', 'paris']
-
-    """
-
-    def _check_fitted(self):
-        if not hasattr(self, "classes_"):
-            raise ValueError("LabelNormalizer was not fitted yet.")
-
-    def fit(self, y):
-        """Fit label encoder
-
-        Parameters
-        ----------
-        y : array-like of shape [n_samples]
-            Target values.
-
-        Returns
-        -------
-        self : returns an instance of self.
-        """
-        self.classes_ = np.unique(y)
-        return self
-
-    def fit_transform(self, y):
-        """Fit label encoder and return encoded labels
-
-        Parameters
-        ----------
-        y : array-like of shape [n_samples]
-            Target values.
-
-        Returns
-        -------
-        y : array-like of shape [n_samples]
-        """
-        self.classes_, y = unique(y, return_inverse=True)
-        return y
-
-    def transform(self, y):
-        """Transform labels to normalized encoding.
-
-        Parameters
-        ----------
-        y : array-like of shape [n_samples]
-            Target values.
-
-        Returns
-        -------
-        y : array-like of shape [n_samples]
-        """
-        self._check_fitted()
-
-        classes = np.unique(y)
-        if len(np.intersect1d(classes, self.classes_)) < len(classes):
-            diff = np.setdiff1d(classes, self.classes_)
-            raise ValueError("y contains new labels: %s" % str(diff))
-
-        return np.searchsorted(self.classes_, y)
-
-    def inverse_transform(self, y):
-        """Transform labels back to original encoding.
-
-        Parameters
-        ----------
-        y : numpy array of shape [n_samples]
-            Target values.
-
-        Returns
-        -------
-        y : numpy array of shape [n_samples]
-        """
-        self._check_fitted()
-
-        y = np.asarray(y)
-        return self.classes_[y]
-
-
-class LabelBinarizer(BaseEstimator, TransformerMixin):
-    """Binarize labels in a one-vs-all fashion
-
-    Several regression and binary classification algorithms are
-    available in the scikit. A simple way to extend these algorithms
-    to the multi-class classification case is to use the so-called
-    one-vs-all scheme.
-
-    At learning time, this simply consists in learning one regressor
-    or binary classifier per class. In doing so, one needs to convert
-    multi-class labels to binary labels (belong or does not belong
-    to the class). LabelBinarizer makes this process easy with the
-    transform method.
-
-    At prediction time, one assigns the class for which the corresponding
-    model gave the greatest confidence. LabelBinarizer makes this easy
-    with the inverse_transform method.
-
-    Parameters
-    ----------
-
-    neg_label: int (default: 0)
-        Value with which negative labels must be encoded.
-
-    pos_label: int (default: 1)
-        Value with which positive labels must be encoded.
-
-    Attributes
-    ----------
-    `classes_`: array of shape [n_class]
-        Holds the label for each class.
-
-    Examples
-    --------
-    >>> from sklearn import preprocessing
-    >>> lb = preprocessing.LabelBinarizer()
-    >>> lb.fit([1, 2, 6, 4, 2])
-    LabelBinarizer(neg_label=0, pos_label=1)
-    >>> lb.classes_
-    array([1, 2, 4, 6])
-    >>> lb.transform([1, 6])
-    array([[1, 0, 0, 0],
-           [0, 0, 0, 1]])
-
-    >>> lb.fit_transform([(1, 2), (3,)])
-    array([[1, 1, 0],
-           [0, 0, 1]])
-    >>> lb.classes_
-    array([1, 2, 3])
-    """
-
-    def __init__(self, neg_label=0, pos_label=1):
-        if neg_label >= pos_label:
-            raise ValueError("neg_label must be strictly less than pos_label.")
-
-        self.neg_label = neg_label
-        self.pos_label = pos_label
-
-    def _check_fitted(self):
-        if not hasattr(self, "classes_"):
-            raise ValueError("LabelBinarizer was not fitted yet.")
-
-    def fit(self, y):
-        """Fit label binarizer
-
-        Parameters
-        ----------
-        y : numpy array of shape [n_samples] or sequence of sequences
-            Target values. In the multilabel case the nested sequences can
-            have variable lengths.
-
-        Returns
-        -------
-        self : returns an instance of self.
-        """
-        y_type = type_of_target(y)
-        self.multilabel = y_type.startswith('multilabel')
-        if self.multilabel:
-            self.indicator_matrix_ = y_type == 'multilabel-indicator'
-
-        self.classes_ = unique_labels(y)
-
-        return self
-
-    def transform(self, y):
-        """Transform multi-class labels to binary labels
-
-        The output of transform is sometimes referred to by some authors as the
-        1-of-K coding scheme.
-
-        Parameters
-        ----------
-        y : numpy array of shape [n_samples] or sequence of sequences
-            Target values. In the multilabel case the nested sequences can
-            have variable lengths.
-
-        Returns
-        -------
-        Y : numpy array of shape [n_samples, n_classes]
-        """
-        self._check_fitted()
-
-        y_type = type_of_target(y)
-
-        if self.multilabel or len(self.classes_) > 2:
-            if y_type == 'multilabel-indicator':
-                # nothing to do as y is already a label indicator matrix
-                return y
-
-            Y = np.zeros((len(y), len(self.classes_)), dtype=np.int)
-        else:
-            Y = np.zeros((len(y), 1), dtype=np.int)
-
-        Y += self.neg_label
-
-        y_is_multilabel = y_type.startswith('multilabel')
-
-        if y_is_multilabel and not self.multilabel:
-            raise ValueError("The object was not fitted with multilabel"
-                             " input!")
-
-        elif self.multilabel:
-            if not y_is_multilabel:
-                raise ValueError("y should be a list of label lists/tuples,"
-                                 "got %r" % (y,))
-
-            # inverse map: label => column index
-            imap = dict((v, k) for k, v in enumerate(self.classes_))
-
-            for i, label_tuple in enumerate(y):
-                for label in label_tuple:
-                    Y[i, imap[label]] = self.pos_label
-
-            return Y
-
-        else:
-            y = np.asarray(y)
-
-            if len(self.classes_) == 2:
-                Y[y == self.classes_[1], 0] = self.pos_label
-                return Y
-
-            elif len(self.classes_) >= 2:
-                for i, k in enumerate(self.classes_):
-                    Y[y == k, i] = self.pos_label
-                return Y
-
-            else:
-                # Only one class, returns a matrix with all negative labels.
-                return Y
-
-    def inverse_transform(self, Y, threshold=None):
-        """Transform binary labels back to multi-class labels
-
-        Parameters
-        ----------
-        Y : numpy array of shape [n_samples, n_classes]
-            Target values.
-
-        threshold : float or None
-            Threshold used in the binary and multi-label cases.
-
-            Use 0 when:
-                - Y contains the output of decision_function (classifier)
-            Use 0.5 when:
-                - Y contains the output of predict_proba
-
-            If None, the threshold is assumed to be half way between
-            neg_label and pos_label.
-
-        Returns
-        -------
-        y : numpy array of shape [n_samples] or sequence of sequences
-            Target values. In the multilabel case the nested sequences can
-            have variable lengths.
-
-        Notes
-        -----
-        In the case when the binary labels are fractional
-        (probabilistic), inverse_transform chooses the class with the
-        greatest value. Typically, this allows to use the output of a
-        linear model's decision_function method directly as the input
-        of inverse_transform.
-        """
-        self._check_fitted()
-
-        if threshold is None:
-            half = (self.pos_label - self.neg_label) / 2.0
-            threshold = self.neg_label + half
-
-        if self.multilabel:
-            Y = np.array(Y > threshold, dtype=int)
-            # Return the predictions in the same format as in fit
-            if self.indicator_matrix_:
-                # Label indicator matrix format
-                return Y
-            else:
-                # Lists of tuples format
-                return [tuple(self.classes_[np.flatnonzero(Y[i])])
-                        for i in range(Y.shape[0])]
-
-        if len(Y.shape) == 1 or Y.shape[1] == 1:
-            y = np.array(Y.ravel() > threshold, dtype=int)
-
-        else:
-            y = Y.argmax(axis=1)
-
-        return self.classes_[y]
-
-
-class KernelCenterer(BaseEstimator, TransformerMixin):
-    """Center a kernel matrix
-
-    Let K(x_i, x_j) be a kernel defined by K(x_i, x_j) = phi(x_i)^T phi(x_j),
-    where phi(x) is a function mapping x to a hilbert space. KernelCenterer is
-    a class to center (i.e., normalize to have zero-mean) the data without
-    explicitly computing phi(x). It is equivalent equivalent to centering
-    phi(x) with sklearn.preprocessing.StandardScaler(with_std=False).
-    """
-
-    def fit(self, K, y=None):
-        """Fit KernelCenterer
-
-        Parameters
-        ----------
-        K : numpy array of shape [n_samples, n_samples]
-            Kernel matrix.
-
-        Returns
-        -------
-        self : returns an instance of self.
-        """
-        K = array2d(K)
-        n_samples = K.shape[0]
-        self.K_fit_rows_ = np.sum(K, axis=0) / n_samples
-        self.K_fit_all_ = self.K_fit_rows_.sum() / n_samples
-        return self
-
-    def transform(self, K, y=None, copy=True):
-        """Center kernel
-
-        Parameters
-        ----------
-        K : numpy array of shape [n_samples1, n_samples2]
-            Kernel matrix.
-
-        Returns
-        -------
-        K_new : numpy array of shape [n_samples1, n_samples2]
-        """
-        K = array2d(K)
-        if copy:
-            K = K.copy()
-
-        K_pred_cols = (np.sum(K, axis=1) /
-                       self.K_fit_rows_.shape[0])[:, np.newaxis]
-
-        K -= self.K_fit_rows_
-        K -= K_pred_cols
-        K += self.K_fit_all_
-
-        return K
-
-
-def add_dummy_feature(X, value=1.0):
-    """Augment dataset with an additional dummy feature.
-
-    This is useful for fitting an intercept term with implementations which
-    cannot otherwise fit it directly.
-
-    Parameters
-    ----------
-    X : array or scipy.sparse matrix with shape [n_samples, n_features]
-        Data.
-
-    value : float
-        Value to use for the dummy feature.
-
-    Returns
-    -------
-
-    X : array or scipy.sparse matrix with shape [n_samples, n_features + 1]
-        Same data with dummy feature added as first column.
-
-    Examples
-    --------
-
-    >>> from sklearn.preprocessing import add_dummy_feature
-    >>> add_dummy_feature([[0, 1], [1, 0]])
-    array([[ 1.,  0.,  1.],
-           [ 1.,  1.,  0.]])
-    """
-    X = safe_asarray(X)
-    n_samples, n_features = X.shape
-    shape = (n_samples, n_features + 1)
-    if sp.issparse(X):
-        if sp.isspmatrix_coo(X):
-            # Shift columns to the right.
-            col = X.col + 1
-            # Column indices of dummy feature are 0 everywhere.
-            col = np.concatenate((np.zeros(n_samples), col))
-            # Row indices of dummy feature are 0, ..., n_samples-1.
-            row = np.concatenate((np.arange(n_samples), X.row))
-            # Prepend the dummy feature n_samples times.
-            data = np.concatenate((np.ones(n_samples) * value, X.data))
-            return sp.coo_matrix((data, (row, col)), shape)
-        elif sp.isspmatrix_csc(X):
-            # Shift index pointers since we need to add n_samples elements.
-            indptr = X.indptr + n_samples
-            # indptr[0] must be 0.
-            indptr = np.concatenate((np.array([0]), indptr))
-            # Row indices of dummy feature are 0, ..., n_samples-1.
-            indices = np.concatenate((np.arange(n_samples), X.indices))
-            # Prepend the dummy feature n_samples times.
-            data = np.concatenate((np.ones(n_samples) * value, X.data))
-            return sp.csc_matrix((data, indices, indptr), shape)
-        else:
-            klass = X.__class__
-            return klass(add_dummy_feature(X.tocoo(), value))
-    else:
-        return np.hstack((np.ones((n_samples, 1)) * value, X))

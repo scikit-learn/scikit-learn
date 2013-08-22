@@ -70,6 +70,7 @@ This method computes the least squares solution using a singular value
 decomposition of X. If X is a matrix of size (n, p) this method has a
 cost of :math:`O(n p^2)`, assuming that :math:`n \geq p`.
 
+.. _ridge_regression:
 
 Ridge Regression
 ================
@@ -139,8 +140,8 @@ as GridSearchCV except that it defaults to Generalized Cross-Validation
     >>> from sklearn import linear_model
     >>> clf = linear_model.RidgeCV(alphas=[0.1, 1.0, 10.0])
     >>> clf.fit([[0, 0], [0, 0], [1, 1]], [0, .1, 1])       # doctest: +SKIP
-    RidgeCV(alphas=[0.1, 1.0, 10.0], cv=None, fit_intercept=True, loss_func=None,
-        normalize=False, score_func=None)
+    RidgeCV(alphas=[0.1, 1.0, 10.0], cv=None, fit_intercept=True, scoring=None,
+        normalize=False)
     >>> clf.alpha_                                      # doctest: +SKIP
     0.1
 
@@ -293,8 +294,8 @@ The objective function to minimize is in this case
    :align: center
    :scale: 50%
 
-The class :class:`ElasticNetCV` can be used to set the parameters `alpha`
-and `rho` by cross-validation.
+The class :class:`ElasticNetCV` can be used to set the parameters
+``alpha`` (:math:`\alpha`) and ``l1_ratio`` (:math:`\rho`) by cross-validation.
 
 .. topic:: Examples:
 

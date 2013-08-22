@@ -168,13 +168,25 @@ def test_unicode_decode_error():
     text_bytes = text.encode('utf-8')
 
     # Then let the Analyzer try to decode it as ascii. It should fail,
-    # because we have given it an incorrect charset.
-    wa = CountVectorizer(ngram_range=(1, 2), charset='ascii').build_analyzer()
+    # because we have given it an incorrect encoding.
+    wa = CountVectorizer(ngram_range=(1, 2), encoding='ascii').build_analyzer()
     assert_raises(UnicodeDecodeError, wa, text_bytes)
 
     ca = CountVectorizer(analyzer='char', ngram_range=(3, 6),
-                         charset='ascii').build_analyzer()
+                         encoding='ascii').build_analyzer()
     assert_raises(UnicodeDecodeError, ca, text_bytes)
+
+    # Check the old interface
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")
+
+        ca = CountVectorizer(analyzer='char', ngram_range=(3, 6),
+                             charset='ascii').build_analyzer()
+        assert_raises(UnicodeDecodeError, ca, text_bytes)
+
+        assert_equal(len(w), 1)
+        assert_true(issubclass(w[0].category, DeprecationWarning))
+        assert_true("charset" in str(w[0].message).lower())
 
 
 def test_char_ngram_analyzer():
@@ -245,6 +257,22 @@ def test_countvectorizer_custom_vocabulary_pipeline():
     assert_equal(set(pipe.named_steps['count'].vocabulary_),
                  set(what_we_like))
     assert_equal(X.shape[1], len(what_we_like))
+
+
+def test_countvectorizer_custom_vocabulary_repeated_indeces():
+    vocab = {"pizza": 0, "beer": 0}
+    try:
+        vect = CountVectorizer(vocabulary=vocab)
+    except ValueError as e:
+        assert_in("vocabulary contains repeated indices", str(e).lower())
+
+
+def test_countvectorizer_custom_vocabulary_gap_index():
+    vocab = {"pizza": 1, "beer": 2}
+    try:
+        vect = CountVectorizer(vocabulary=vocab)
+    except ValueError as e:
+        assert_in("doesn't contain index", str(e).lower())
 
 
 def test_countvectorizer_stop_words():

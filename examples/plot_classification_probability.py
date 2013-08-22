@@ -34,7 +34,8 @@ C = 1.0
 # multiclass out of the box.
 classifiers = {'L1 logistic': LogisticRegression(C=C, penalty='l1'),
                'L2 logistic': LogisticRegression(C=C, penalty='l2'),
-               'Linear SVC': SVC(kernel='linear', C=C, probability=True)}
+               'Linear SVC': SVC(kernel='linear', C=C, probability=True,
+                                 random_state=0)}
 
 n_classifiers = len(classifiers)
 

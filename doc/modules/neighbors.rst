@@ -232,11 +232,24 @@ which will be used to compute the weights.
    :align: center
    :scale: 75
 
+The use of multi-output nearest neighbors for regression is demonstrated in
+:ref:`example_plot_multioutput_face_completion.py`. In this example, the inputs
+X are the pixels of the upper half of faces and the outputs Y are the pixels of
+the lower half of those faces.
+
+.. figure:: ../auto_examples/images/plot_multioutput_face_completion_1.png
+   :target: ../auto_examples/plot_multioutput_face_completion.html
+   :scale: 75
+   :align: center
+
 
 .. topic:: Examples:
 
   * :ref:`example_neighbors_plot_regression.py`: an example of regression
     using nearest neighbors.
+
+  * :ref:`example_plot_multioutput_face_completion.py`: an example of
+    multi-output regression using nearest neighbors.
 
 
 Nearest Neighbor Algorithms
@@ -369,7 +382,7 @@ depends on a number of factors:
 * data structure: *intrinsic dimensionality* of the data and/or *sparsity*
   of the data. Intrinsic dimensionality refers to the dimension
   :math:`d \le D` of a manifold on which the data lies, which can be linearly
-  or nonlinearly embedded in the parameter space. Sparsity refers to the
+  or non-linearly embedded in the parameter space. Sparsity refers to the
   degree to which the data fills the parameter space (this is to be
   distinguished from the concept as used in "sparse" matrices.  The data
   matrix may have no zero entries, but the **structure** can still be
@@ -406,11 +419,13 @@ depends on a number of factors:
   a significant fraction of the total cost.  If very few query points
   will be required, brute force is better than a tree-based method.
 
-Currently, ``algorithm = 'auto'`` selects ``'ball_tree'`` if
-:math:`k < N/2`, and ``'brute'`` otherwise.  This choice is based on
-the assumption that the number of query points is at least the same order
-as the number of training points, and that ``leaf_size`` is close to its
-default value of ``30``.
+Currently, ``algorithm = 'auto'`` selects ``'kd_tree'`` if :math:`k < N/2` 
+and the ``'effective_metric_'`` is in the ``'VALID_METRICS'`` list of 
+``'kd_tree'``. It selects ``'ball_tree'`` if :math:`k < N/2` and the 
+``'effective_metric_'`` is not in the ``'VALID_METRICS'`` list of 
+``'kd_tree'``. It selects ``'brute'`` if :math:`k >= N/2`. This choice is based on the assumption that the number of query points is at least the 
+same order as the number of training points, and that ``leaf_size`` is 
+close to its default value of ``30``.
 
 Effect of ``leaf_size``
 -----------------------

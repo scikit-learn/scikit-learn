@@ -76,8 +76,7 @@ estimators = [
      False),
 
     ('Independent components - FastICA',
-     decomposition.FastICA(n_components=n_components, whiten=True,
-                           max_iter=10),
+     decomposition.FastICA(n_components=n_components, whiten=True),
      True),
 
     ('Sparse comp. - MiniBatchSparsePCA',

@@ -48,6 +48,7 @@ def test_unstructured_ward_tree():
     for this_X in (X, X[0]):
         with warnings.catch_warnings(record=True) as warning_list:
             warnings.simplefilter("always", UserWarning)
+            warnings.simplefilter("ignore", DeprecationWarning)
             # With specified a number of clusters just for the sake of
             # raising a warning and testing the warning code
             children, n_nodes, n_leaves, parent = ward_tree(this_X.T,
@@ -86,6 +87,8 @@ def test_ward_clustering():
     clustering.fit(X)
     labels = clustering.labels_
     assert_true(np.size(np.unique(labels)) == 10)
+    # Turn caching off now
+    clustering = Ward(n_clusters=10, connectivity=connectivity)
     # Check that we obtain the same solution with early-stopping of the
     # tree building
     clustering.compute_full_tree = False
