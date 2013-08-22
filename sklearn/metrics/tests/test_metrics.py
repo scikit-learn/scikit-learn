@@ -103,12 +103,12 @@ REGRESSION_METRICS = {
 
 CLASSIFICATION_METRICS = {
     "accuracy_score": accuracy_score,
-    "unormalized_accuracy_score": partial(accuracy_score, normalize=False),
+    "unnormalized_accuracy_score": partial(accuracy_score, normalize=False),
     "confusion_matrix": confusion_matrix,
     "hamming_loss": hamming_loss,
 
     "jaccard_similarity_score": jaccard_similarity_score,
-    "unormalized_jaccard_similarity_score":
+    "unnormalized_jaccard_similarity_score":
     partial(jaccard_similarity_score, normalize=False),
 
     "zero_one_loss": zero_one_loss,
@@ -250,9 +250,9 @@ THRESHOLDED_MULTILABEL_METRICS = [
 # Classification metrics with  "multilabel-indicator" and
 # "multilabel-sequence" format support
 MULTILABELS_METRICS = [
-    "accuracy_score", "unormalized_accuracy_score",
+    "accuracy_score", "unnormalized_accuracy_score",
     "hamming_loss",
-    "jaccard_similarity_score", "unormalized_jaccard_similarity_score",
+    "jaccard_similarity_score", "unnormalized_jaccard_similarity_score",
     "zero_one_loss", "unnormalized_zero_one_loss",
 
     "precision_score", "recall_score", "f1_score", "f2_score", "f0.5_score",
@@ -278,9 +278,9 @@ MULTIOUTPUT_METRICS = [
 # Symmetric with respect to their input arguments y_true and y_pred
 # metric(y_true, y_pred) == metric(y_pred, y_true).
 SYMMETRIC_METRICS = [
-    "accuracy_score", "unormalized_accuracy_score",
+    "accuracy_score", "unnormalized_accuracy_score",
     "hamming_loss",
-    "jaccard_similarity_score", "unormalized_jaccard_similarity_score",
+    "jaccard_similarity_score", "unnormalized_jaccard_similarity_score",
     "zero_one_loss", "unnormalized_zero_one_loss",
 
     "f1_score", "weighted_f1_score", "micro_f1_score", "macro_f1_score",
@@ -306,6 +306,57 @@ NOT_SYMMETRIC_METRICS = [
 
     "macro_f0.5_score", "macro_f2_score", "macro_precision_score",
     "macro_recall_score", "log_loss", "hinge_loss"
+]
+
+# Metrics that support weighted samples
+METRICS_WITH_SAMPLE_WEIGHT = [
+    "accuracy_score", "unnormalized_accuracy_score",
+    "zero_one_loss", "unnormalized_zero_one_loss",
+
+    "precision_score", "weighted_precision_score",
+
+    "average_precision_score", "weighted_average_precision_score",
+
+    "f1_score", "f2_score", "f0.5_score",
+    "weighted_f0.5_score", "weighted_f1_score", "weighted_f2_score",
+
+    "recall_score", "weighted_recall_score",
+
+    "roc_auc_score", "weighted_roc_auc",
+
+    "explained_variance_score",
+    "mean_squared_error",
+    "mean_absolute_error",
+    "r2_score",
+]
+
+# Classification metrics that support multilabel and weighted samples
+MULTILABEL_METRICS_WITH_SAMPLE_WEIGHT = [
+    "accuracy_score", "unnormalized_accuracy_score",
+    "zero_one_loss", "unnormalized_zero_one_loss",
+
+    "precision_score", "weighted_precision_score",
+
+    "f1_score", "f2_score", "f0.5_score",
+    "weighted_f0.5_score", "weighted_f1_score", "weighted_f2_score",
+
+    "recall_score", "weighted_recall_score",
+
+    "micro_f0.5_score", "micro_f1_score", "micro_f2_score",
+    "micro_precision_score", "micro_recall_score",
+
+    "macro_f0.5_score", "macro_f1_score", "macro_f2_score",
+    "macro_precision_score", "macro_recall_score",
+
+    "samples_f0.5_score", "samples_f1_score", "samples_f2_score",
+    "samples_precision_score", "samples_recall_score",
+]
+
+# Regression metrics that support multioutput and weighted samples
+MULTIOUTPUT_METRICS_WITH_SAMPLE_WEIGHT = [
+    "mean_squared_error",
+    "mean_absolute_error",
+    "r2_score",
 ]
 
 ###############################################################################
@@ -2493,8 +2544,8 @@ def test_averaging_multilabel_all_zeroes():
 
     # Test _average_binary_score for weight.sum() == 0
     binary_metric = (lambda y_true, y_score, average="macro":
-                     _average_binary_score(precision_score,
-                     y_true, y_score, average))
+                     _average_binary_score(
+                         precision_score, y_true, y_score, average))
     _check_averaging(binary_metric, y_true, y_pred, y_true_binarize,
                      y_pred_binarize, is_multilabel=True)
 
@@ -2509,3 +2560,85 @@ def test_averaging_multilabel_all_ones():
     for name in METRICS_WITH_AVERAGING:
         yield (check_averaging, name, y_true, y_true_binarize, y_pred,
                y_pred_binarize, y_score)
+
+
+@ignore_warnings
+def check_sample_weight_invariance(name, metric, y1, y2):
+    rng = np.random.RandomState(0)
+    sample_weight = rng.randint(10, size=len(y1))
+
+    # check that unit weights gives the same score as no weight
+    unweighted_score = metric(y1, y2, sample_weight=None)
+    assert_equal(
+        unweighted_score,
+        metric(y1, y2, sample_weight=np.ones(shape=len(y1))),
+        msg="For %s sample_weight=None is not equivalent to "
+            "sample_weight=ones" % name)
+
+    # check that the weighted and unweighted scores are unequal
+    weighted_score = metric(y1, y2, sample_weight=sample_weight)
+    assert_not_equal(
+        unweighted_score, weighted_score,
+        msg="Unweighted and weighted scores are unexpectedly "
+            "equal (%f) for %s" % (weighted_score, name))
+
+    # check that sample_weight can be a list
+    weighted_score_list = metric(y1, y2,
+                                 sample_weight=sample_weight.tolist())
+    assert_equal(
+        weighted_score, weighted_score_list,
+        msg="Weighted scores for array and list sample_weight input are "
+            "not equal (%f != %f) for %s" % (
+                weighted_score, weighted_score_list, name))
+
+    if not name.startswith('samples'):
+        # check that integer weights is the same as repeated samples
+        repeat_weighted_score = metric(
+            np.repeat(y1, sample_weight, axis=0),
+            np.repeat(y2, sample_weight, axis=0), sample_weight=None)
+        assert_almost_equal(
+            weighted_score, repeat_weighted_score,
+            err_msg="Weighting %s is not equal to repeating samples" % name)
+
+    if not name.startswith('unnormalized'):
+        # check that the score is invariant under scaling of the weights by a
+        # common factor
+        for scaling in [2, 0.3]:
+            assert_almost_equal(
+                weighted_score,
+                metric(y1, y2, sample_weight=sample_weight * scaling),
+                err_msg="%s sample_weight is not invariant "
+                        "under scaling" % name)
+
+
+def test_sample_weight_invariance():
+    # generate some data
+    y1, y2, _ = make_prediction(binary=True)
+
+    for name in METRICS_WITH_SAMPLE_WEIGHT:
+        metric = ALL_METRICS[name]
+        yield check_sample_weight_invariance, name, metric, y1, y2
+
+    # multilabel
+    n_classes = 3
+    n_samples = 10
+    _, y1_multilabel = make_multilabel_classification(
+        n_features=1, n_classes=n_classes,
+        random_state=0, n_samples=n_samples)
+    _, y2_multilabel = make_multilabel_classification(
+        n_features=1, n_classes=n_classes,
+        random_state=1, n_samples=n_samples)
+
+    for name in MULTILABEL_METRICS_WITH_SAMPLE_WEIGHT:
+        metric = ALL_METRICS[name]
+        yield (check_sample_weight_invariance,
+               name, metric, y1_multilabel, y2_multilabel)
+
+    # multioutput
+    y1_multioutput = np.array([[1, 0, 0, 1], [0, 1, 1, 1], [1, 1, 0, 1]])
+    y2_multioutput = np.array([[0, 0, 1, 1], [1, 0, 1, 1], [1, 1, 0, 1]])
+
+    for name in MULTIOUTPUT_METRICS_WITH_SAMPLE_WEIGHT:
+        metric = ALL_METRICS[name]
+        yield (check_sample_weight_invariance,
+               name, metric, y1_multioutput, y2_multioutput)
