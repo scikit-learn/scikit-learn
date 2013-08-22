@@ -67,7 +67,7 @@ subsets of 50% of the instances and 50% of the features.
 
     >>> from sklearn.ensemble import BaggingClassifier
     >>> from sklearn.neighbors import KNeighborsClassifier
-    >>> bagging = BaggingClassifier(KNeighborsClassifier,
+    >>> bagging = BaggingClassifier(KNeighborsClassifier(),
     ...                             max_samples=0.5, max_features=0.5)
 
 .. topic:: Examples:
