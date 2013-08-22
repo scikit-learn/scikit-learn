@@ -8,11 +8,11 @@ expected mean squared error of a single estimator against a bagging ensemble.
 
 In regression, the expected mean squared error of an estimator can be
 decomposed in terms of bias, variance and noise. On average over dataset
-instances LS of the regression problem, the bias term measures the difference
-between the predictions of the estimator and the predictions of the best
-possible estimator for the problem (i.e., the Bayes model). The variance term
-measures the variability of the predictions of the estimator when fit over
-different instances LS of the problem. Finally, the noise measures the
+instances LS of the regression problem, the bias term measures the average
+amount by which the predictions of the estimator differ from the predictions of
+the best possible estimator for the problem (i.e., the Bayes model). The
+variance term measures the variability of the predictions of the estimator when
+fit over different instances LS of the problem. Finally, the noise measures the
 irreducible part of the error which is due the variability in the data.
 
 The upper left figure illustrates the predictions (in dark red) of a single
@@ -24,7 +24,7 @@ the width of the beam of predictions (in light red) of the individual
 estimators. The larger the variance, the more sensitive are the predictions for
 `x` to small changes in the training set. The bias term corresponds to the
 difference between the average prediction of the estimator (in cyan) and the
-best possible model (in dark blue). On this problem, we can thus observe than
+best possible model (in dark blue). On this problem, we can thus observe that
 the bias is quite low (both the cyan and the blue curves are close to each
 other) while the variance is large (the red beam is rather wide).
 
@@ -51,6 +51,14 @@ red curves the lower figures). The script output also confirms this intuition.
 The total error of the bagging ensemble is lower than the total error of a
 single decision tree, and this difference indeed mainly stems from a reduced
 variance.
+
+For further details on bias-variance decomposition, see section 7.3 of [1].
+
+References
+----------
+
+.. [1] T. Hastie, R. Tibshirani and J. Friedman,
+       "Elements of Statistical Learning", Springer, 2009.
 
 """
 print(__doc__)
@@ -131,12 +139,12 @@ for n, (name, estimator) in enumerate(estimators):
     y_bias = (f(X_test) - np.mean(y_predict, axis=1)) ** 2
     y_var = np.var(y_predict, axis=1)
 
-    print "%s: %f (error) = %f (bias^2) + %f (var) + %f (noise)" % (
-        name,
-        np.mean(y_error),
-        np.mean(y_bias),
-        np.mean(y_var),
-        np.mean(y_noise))
+    print("{0}: {1} (error) = {2} (bias^2) + {3} (var) + {4} (noise)".format(
+          name,
+          np.mean(y_error),
+          np.mean(y_bias),
+          np.mean(y_var),
+          np.mean(y_noise)))
 
     # Plot figures
     plt.subplot(2, n_estimators, n + 1)
