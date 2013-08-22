@@ -501,8 +501,6 @@ def test_clustering():
             set_random_state(alg)
             if name == 'AffinityPropagation':
                 alg.set_params(preference=-100)
-            if name == "EAC":
-                alg.set_params(final_clusterer=MSTCluster(threshold=0.5))
             # fit
             alg.fit(X)
 

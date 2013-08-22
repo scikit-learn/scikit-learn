@@ -16,7 +16,7 @@ from ..utils import check_random_state, atleast2d_or_csr
 from .mst import MSTCluster
 
 
-def eac(X, initial_clusterers=None, final_clusterer=None, #use_distance=False,
+def eac(X, initial_clusterers=None, final_clusterer=None,
         random_state=None):
     """Perform EAC clustering from vector array or distance matrix.
 
@@ -82,12 +82,6 @@ def eac(X, initial_clusterers=None, final_clusterer=None, #use_distance=False,
         # Calculate new coassociation matrix and add that to the tally
         C = update_coassociation_matrix(C, model.labels_)
     C /= num_initial_clusterers
-    #if use_distance:
-    #    if use_distance is True:
-    #        # Turn into a distance matrix
-    #        C = 1. - C
-    #    elif callable(use_distance):  # If a callable
-    #        C = use_distance(C)
     final_clusterer.fit(C)
     return final_clusterer
 
@@ -201,10 +195,9 @@ class EAC(BaseEstimator, ClusterMixin):
     """
 
     def __init__(self, initial_clusterers=None, final_clusterer=None,
-                 use_distance=False, random_state=None):
+                 random_state=None):
         self.initial_clusterers = initial_clusterers
         self.final_clusterer = final_clusterer
-        self.use_distance = use_distance
         self.random_state = random_state
 
     def fit(self, X):
@@ -217,6 +210,8 @@ class EAC(BaseEstimator, ClusterMixin):
             The array is treated as a feature array unless the metric is
             given as 'precomputed'.
         """
-        final_clusterer = eac(X, final_clusterer=self.final_clusterer)
+        final_clusterer = eac(X, initial_clusterers=self.initial_clusterers,
+                              final_clusterer=self.final_clusterer,
+                              random_state=self.random_state)
         self.labels_ = final_clusterer.labels_
         return self
