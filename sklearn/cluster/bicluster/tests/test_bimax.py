@@ -19,7 +19,7 @@ def test_neighbors():
 def test_bimax():
     data = np.zeros((20, 20), dtype=np.bool)
     data[0:10, 0:10] = 1
-    model = BiMax(random_state=0)
+    model = BiMax()
     model.fit(data)
     assert len(model.rows_) == 1
     assert len(model.columns_) == 1
