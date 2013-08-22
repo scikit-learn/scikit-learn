@@ -16,16 +16,17 @@ different instances LS of the problem. Finally, the noise measures the
 irreducible part of the error which is due the variability in the data.
 
 The upper left figure illustrates the predictions (in dark red) of a single
-decision tree trained over a random instance LS (the blue dots) of a toy
+decision tree trained over a random dataset LS (the blue dots) of a toy
 regression problem. It also illustrates the predictions (in light red) of other
-single decision trees trained over other random instances of the problem.
-Intuitively, the variance term here corresponds to the width of the beam of
-predictions (in light red) of the individual estimators. The larger the
-variance, the more variable are the predictions for `x`. The bias term
-corresponds to the difference between the average prediction of the estimator
-(in cyan) and the best possible model (in dark blue). On this problem, we can
-thus observe than the bias is quite low (both the cyan and the blue curves are
-close to each other) while the variance is large (the red beam is rather wide).
+single decision trees trained over other (and different) randomly drawn
+instances LS of the problem. Intuitively, the variance term here corresponds to
+the width of the beam of predictions (in light red) of the individual
+estimators. The larger the variance, the more sensitive are the predictions for
+`x` to small changes in the training set. The bias term corresponds to the
+difference between the average prediction of the estimator (in cyan) and the
+best possible model (in dark blue). On this problem, we can thus observe than
+the bias is quite low (both the cyan and the blue curves are close to each
+other) while the variance is large (the red beam is rather wide).
 
 The lower left figure plots the pointwise decomposition of the expected mean
 squared error of a single decision tree. It confirms that the bias term (in
@@ -33,7 +34,7 @@ blue) is low while the variance is large (in green). It also illustrates the
 noise part of the error which, as expected, appears to be constant and around
 `0.01`.
 
-The right figures corespond to the same plots but using instead a bagging
+The right figures correspond to the same plots but using instead a bagging
 ensemble of decision trees. In both figures, we can observe that the bias term
 is larger than in the previous case. In the upper right figure, the difference
 between the average prediction (in cyan) and the best possible model is larger
@@ -47,8 +48,9 @@ for bagging: averaging several decision trees fit on bootstrap copies of the
 dataset slightly increases the bias term but allows for a larger reduction of
 the variance, which results in a lower overall mean squared error (compare the
 red curves the lower figures). The script output also confirms this intuition.
-The error of the bagging ensemble is lower than the error of a single decision
-tree and this difference indeed mainly stems from a reduced variance.
+The total error of the bagging ensemble is lower than the total error of a
+single decision tree, and this difference indeed mainly stems from a reduced
+variance.
 
 """
 print(__doc__)
@@ -57,7 +59,6 @@ import numpy as np
 from matplotlib import pyplot as plt
 
 from sklearn.ensemble import BaggingRegressor
-from sklearn.neighbors import KNeighborsRegressor
 from sklearn.tree import DecisionTreeRegressor
 
 # Settings
