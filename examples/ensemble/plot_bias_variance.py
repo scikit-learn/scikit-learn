@@ -7,16 +7,16 @@ This example illustrates and compares the bias-variance decomposition of the
 expected mean squared error of a single estimator against a bagging ensemble.
 
 In regression, the expected mean squared error of an estimator can be
-decomposed in terms of bias, variance and noise. On average over dataset
-instances LS of the regression problem, the bias term measures the average
-amount by which the predictions of the estimator differ from the predictions of
-the best possible estimator for the problem (i.e., the Bayes model). The
-variance term measures the variability of the predictions of the estimator when
-fit over different instances LS of the problem. Finally, the noise measures the
-irreducible part of the error which is due the variability in the data.
+decomposed in terms of bias, variance and noise. On average over datasets of
+the regression problem, the bias term measures the average amount by which the
+predictions of the estimator differ from the predictions of the best possible
+estimator for the problem (i.e., the Bayes model). The variance term measures
+the variability of the predictions of the estimator when fit over different
+instances LS of the problem. Finally, the noise measures the irreducible part
+of the error which is due the variability in the data.
 
 The upper left figure illustrates the predictions (in dark red) of a single
-decision tree trained over a random dataset LS (the blue dots) of a toy
+decision tree trained over a random dataset LS (the blue dots) of a toy 1d
 regression problem. It also illustrates the predictions (in light red) of other
 single decision trees trained over other (and different) randomly drawn
 instances LS of the problem. Intuitively, the variance term here corresponds to
