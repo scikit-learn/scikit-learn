@@ -338,6 +338,11 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         The function to measure the quality of a split. Supported criteria are
         "gini" for the Gini impurity and "entropy" for the information gain.
 
+    splitter : string, optional (default="best")
+        The strategy used to choose the split at each node. Supported
+        strategies are "best" to choose the best split and "random" to choose
+        the best random split.
+
     max_features : int, float, string or None, optional (default=None)
         The number of features to consider when looking for the best split:
           - If int, then consider `max_features` features at each split.
@@ -531,6 +536,11 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
     criterion : string, optional (default="mse")
         The function to measure the quality of a split. The only supported
         criterion is "mse" for the mean squared error.
+
+    splitter : string, optional (default="best")
+        The strategy used to choose the split at each node. Supported
+        strategies are "best" to choose the best split and "random" to choose
+        the best random split.
 
     max_features : int, float, string or None, optional (default=None)
         The number of features to consider when looking for the best split:
