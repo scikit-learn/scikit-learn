@@ -15,7 +15,6 @@ from inspect import getargspec
 from ..base import ClassifierMixin, RegressorMixin
 from ..externals.joblib import Parallel, delayed, cpu_count
 from ..externals import six
-from ..externals.six.moves import xrange
 from ..metrics import r2_score
 from ..utils import check_random_state, check_arrays
 from ..utils.fixes import bincount, unique
@@ -117,7 +116,7 @@ def _parallel_predict(estimators, estimators_features, X, n_classes):
     for estimator, features in zip(estimators, estimators_features):
         predictions = estimator.predict(X[:, features])
 
-        for i in xrange(n_samples):
+        for i in range(n_samples):
             counts[i, predictions[i]] += 1
 
     return counts
@@ -139,6 +138,38 @@ def _parallel_predict_proba(estimators, estimators_features, X, n_classes):
                 proba[:, c] += proba_estimator[:, j]
 
     return proba
+
+
+def _parallel_predict_log_proba(estimators, estimators_features, X, n_classes):
+    """Private function used to compute the log proba within a job."""
+    if hasattr(estimators[0], "predict_log_proba"):
+        log_proba = estimators[0].predict_log_proba(
+            X[:, estimators_features[0]])
+
+        for estimator, features in zip(estimators[1:],
+                                       estimators_features[1:]):
+            log_proba += estimator.predict_log_proba(X[:, features])
+
+    else:
+        log_proba = np.log(estimators[0].predict_proba(
+            X[:, estimators_features[0]]))
+
+        for estimator, features in zip(estimators[1:],
+                                       estimators_features[1:]):
+            log_proba += np.log(estimator.predict_proba(X[:, features]))
+
+    return log_proba
+
+
+def _parallel_decision_function(estimators, estimators_features, X, n_classes):
+    """Private function used to compute (proba-)predictions within a job."""
+    decisions = estimators[0].decision_function(X[:, estimators_features[0]])
+
+    for estimator, features in zip(estimators[1:],
+                                   estimators_features[1:]):
+        decisions += estimator.decision_function(X[:, features])
+
+    return decisions
 
 
 def _parallel_predict_regression(estimators, estimators_features, X):
@@ -433,7 +464,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
                 p = estimator.predict((X[mask, :])[:, features])
                 j = 0
 
-                for i in xrange(n_samples):
+                for i in range(n_samples):
                     if mask[i]:
                         predictions[i, p[j]] += 1
                         j += 1
@@ -495,7 +526,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
             # Reduce
             counts = all_counts[0]
 
-            for j in xrange(1, len(all_counts)):
+            for j in range(1, len(all_counts)):
                 counts += all_counts[j]
 
             return self.classes_.take(np.argmax(counts, axis=1), axis=0)
@@ -535,7 +566,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
         # Reduce
         proba = all_proba[0]
 
-        for j in xrange(1, len(all_proba)):
+        for j in range(1, len(all_proba)):
             proba += all_proba[j]
 
         proba /= self.n_estimators
@@ -560,26 +591,29 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
             The class log-probabilities of the input samples. Classes are
             ordered by arithmetical order.
         """
-        if hasattr(self.base_estimator, "predict_log_proba"):
-            log_proba = self.estimators_[0].predict_log_proba(
-                X[:, self.estimators_features_[0]])
+        # Check data
+        X, = check_arrays(X)
 
-            for estimator, features in zip(self.estimators_[1:],
-                                           self.estimators_features_[1:]):
-                log_proba += estimator.predict_log_proba(X[:, features])
+        # Parallel loop
+        n_jobs, n_estimators, starts = _partition_estimators(self)
 
-        else:
-            log_proba = np.log(self.estimators_[0].predict_proba(
-                X[:, self.estimators_features_[0]]))
+        all_log_proba = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
+            delayed(_parallel_predict_log_proba)(
+                self.estimators_[starts[i]:starts[i + 1]],
+                self.estimators_features_[starts[i]:starts[i + 1]],
+                X,
+                self.n_classes_)
+            for i in range(n_jobs))
 
-            for estimator, features in zip(self.estimators_[1:],
-                                           self.estimators_features_[1:]):
-                log_proba += np.log(estimator.predict_proba(X[:, features]))
+        # Reduce
+        log_proba = all_log_proba[0]
+
+        for j in range(1, len(all_log_proba)):
+            log_proba += all_log_proba[j]
 
         log_proba /= self.n_estimators
 
         return log_proba
-
 
     def decision_function(self, X):
         """Average of the decision functions of the base classifiers.
@@ -597,12 +631,25 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
             classification are special cases with ``k == 1``,
             otherwise ``k==n_classes``.
         """
-        decisions = self.estimators_[0].decision_function(
-            X[:, self.estimators_features_[0]])
+        # Check data
+        X, = check_arrays(X)
 
-        for estimator, features in zip(self.estimators_[1:],
-                                       self.estimators_features_[1:]):
-            decisions += estimator.decision_function(X[:, features])
+        # Parallel loop
+        n_jobs, n_estimators, starts = _partition_estimators(self)
+
+        all_decisions = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
+            delayed(_parallel_decision_function)(
+                self.estimators_[starts[i]:starts[i + 1]],
+                self.estimators_features_[starts[i]:starts[i + 1]],
+                X,
+                self.n_classes_)
+            for i in range(n_jobs))
+
+        # Reduce
+        decisions = all_decisions[0]
+
+        for j in range(1, len(all_decisions)):
+            decisions += all_decisions[j]
 
         decisions /= self.n_estimators
 
