@@ -50,6 +50,7 @@ def _parallel_build_estimators(n_estimators, ensemble, X, y, sample_weight,
 
     # Build estimators
     estimators = []
+    estimators_samples = []
     estimators_features = []
 
     for i in range(n_estimators):
@@ -79,33 +80,34 @@ def _parallel_build_estimators(n_estimators, ensemble, X, y, sample_weight,
                 curr_sample_weight = sample_weight.copy()
 
             if bootstrap:
-                samples = random_state.randint(0, n_samples, max_samples)
-                sample_counts = bincount(samples, minlength=n_samples)
+                indices = random_state.randint(0, n_samples, max_samples)
+                sample_counts = bincount(indices, minlength=n_samples)
                 curr_sample_weight *= sample_counts
 
             else:
-                samples = random_state.permutation(n_samples)[max_samples:]
-                curr_sample_weight[samples] = 0
+                indices = random_state.permutation(n_samples)[max_samples:]
+                curr_sample_weight[indices] = 0
 
             estimator.fit(X[:, features], y, sample_weight=curr_sample_weight)
-            estimator.indices_ = curr_sample_weight > 0.
+            samples = curr_sample_weight > 0.
 
         # Draw samples, using a mask, and then fit
         else:
             if bootstrap:
-                samples = random_state.randint(0, n_samples, max_samples)
+                indices = random_state.randint(0, n_samples, max_samples)
             else:
-                samples = random_state.permutation(n_samples)[:max_samples]
+                indices = random_state.permutation(n_samples)[:max_samples]
 
-            sample_counts = bincount(samples, minlength=n_samples)
+            sample_counts = bincount(indices, minlength=n_samples)
 
-            estimator.fit((X[samples])[:, features], y[samples])
-            estimator.indices_ = sample_counts > 0.
+            estimator.fit((X[indices])[:, features], y[indices])
+            samples = sample_counts > 0.
 
         estimators.append(estimator)
+        estimators_samples.append(samples)
         estimators_features.append(features)
 
-    return estimators, estimators_features
+    return estimators, estimators_samples, estimators_features
 
 
 def _parallel_predict_proba(estimators, estimators_features, X, n_classes):
@@ -113,8 +115,8 @@ def _parallel_predict_proba(estimators, estimators_features, X, n_classes):
     n_samples = X.shape[0]
     proba = np.zeros((n_samples, n_classes))
 
-    try:
-        for estimator, features in zip(estimators, estimators_features):
+    for estimator, features in zip(estimators, estimators_features):
+        try:
             proba_estimator = estimator.predict_proba(X[:, features])
 
             if n_classes == len(estimator.classes_):
@@ -124,9 +126,8 @@ def _parallel_predict_proba(estimators, estimators_features, X, n_classes):
                 for j, c in enumerate(estimator.classes_):
                     proba[:, c] += proba_estimator[:, j]
 
-    except AttributeError, NotImplementedError:
-        # Resort to voting
-        for estimator, features in zip(estimators, estimators_features):
+        except AttributeError, NotImplementedError:
+            # Resort to voting
             predictions = estimator.predict(X[:, features])
 
             for i in range(n_samples):
@@ -303,8 +304,10 @@ class BaseBagging(six.with_metaclass(ABCMeta, BaseEnsemble)):
         # Reduce
         self.estimators_ = list(itertools.chain(
             *(t[0] for t in all_results)))
-        self.estimators_features_ = list(itertools.chain(
+        self.estimators_samples_ = list(itertools.chain(
             *(t[1] for t in all_results)))
+        self.estimators_features_ = list(itertools.chain(
+            *(t[2] for t in all_results)))
 
         if self.oob_score:
             self._set_oob_score(X, y)
@@ -446,10 +449,11 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
 
         predictions = np.zeros((n_samples, n_classes_))
 
-        for estimator, features in zip(self.estimators_,
-                                       self.estimators_features_):
+        for estimator, samples, features in zip(self.estimators_,
+                                                self.estimators_samples_,
+                                                self.estimators_features_):
             mask = np.ones(n_samples, dtype=np.bool)
-            mask[estimator.indices_] = False
+            mask[samples] = False
 
             try:
                 predictions[mask, :] += estimator.predict_proba(
@@ -784,10 +788,11 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
         predictions = np.zeros((n_samples,))
         n_predictions = np.zeros((n_samples,))
 
-        for estimator, features in zip(self.estimators_,
-                                       self.estimators_features_):
+        for estimator, samples, features in zip(self.estimators_,
+                                                self.estimators_samples_,
+                                                self.estimators_features_):
             mask = np.ones(n_samples, dtype=np.bool)
-            mask[estimator.indices_] = False
+            mask[samples] = False
 
             predictions[mask] += estimator.predict((X[mask, :])[:, features])
             n_predictions[mask] += 1
