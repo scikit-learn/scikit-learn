@@ -10,6 +10,7 @@ from scipy import sparse
 from scipy import stats
 
 from ..base import BaseEstimator, TransformerMixin
+from ..decomposition.mf import MatrixFactorization, _rmse
 from ..utils import array2d
 from ..utils import atleast2d_or_csr
 from ..utils import atleast2d_or_csc
@@ -404,3 +405,59 @@ class Imputer(BaseEstimator, TransformerMixin):
             X[coordinates] = values
 
         return X
+
+class FactorizationImputer(BaseEstimator, TransformerMixin):
+
+    def __init__(self, n_components=None, n_iter=100, missing_values=np.nan,
+                 learning_rate=1e-3, regularization=1e-4,
+                 bias_learning_rate=0, bias_regularization=0,
+                 random_state=None, verbose=0):
+
+        self.n_components = n_components
+        self.n_iter = n_iter
+
+        self.learning_rate = learning_rate
+        self.regularization = regularization
+        self.missing_values = missing_values
+        self.bias_learning_rate = bias_learning_rate
+        self.bias_regularization = bias_regularization
+
+        self.random_state = random_state
+        self.verbose = verbose
+
+    def fit_transform(self, X, y=None):
+
+        mf = MatrixFactorization(
+            n_components=self.n_components,
+            n_iter=self.n_iter,
+            missing_values=self.missing_values,
+            learning_rate=self.learning_rate,
+            regularization=self.regularization,
+            bias_learning_rate=self.bias_learning_rate,
+            bias_regularization=self.bias_regularization,
+            random_state=self.random_state,
+            verbose=self.verbose
+        )
+
+        L = mf.fit_transform(X)
+        R = mf.components_
+
+        return np.dot(L, R)
+
+    def score(self, X):
+        # TODO: It's probably not how score should be used. But some version
+        # of this code should be kept to allow a user to have
+        # the score of the estimator on a test matrix
+        if sparse.issparse(X):
+            X = X.tocoo()
+            X_content = np.vstack((X.data, X.row, X.col)).T
+        else:
+            X = array2d(X, force_all_finite=False)
+            mask = np.logical_not(_get_mask(X, self.missing_values))
+            X_content = np.vstack([X[mask]] + list(np.where(mask))).T
+
+        return _rmse(
+            X_content[:, 0],
+            X_content[:, 1].astype(np.int32),
+            X_content[:, 2].astype(np.int32),
+            self.L, self.R)

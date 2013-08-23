@@ -49,6 +49,7 @@ from .svmlight_format import dump_svmlight_file
 from .olivetti_faces import fetch_olivetti_faces
 from .species_distributions import fetch_species_distributions
 from .california_housing import fetch_california_housing
+from .movielens import fetch_movielens
 
 __all__ = ['clear_data_home',
            'dump_svmlight_file',

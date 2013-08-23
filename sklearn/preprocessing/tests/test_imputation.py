@@ -3,9 +3,9 @@ from scipy import sparse
 
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_false
+from sklearn.utils.testing import assert_false, assert_true
 
-from sklearn.preprocessing.imputation import Imputer
+from sklearn.preprocessing.imputation import Imputer, FactorizationImputer
 from sklearn.pipeline import Pipeline
 from sklearn import grid_search
 from sklearn import tree
@@ -259,3 +259,28 @@ def test_imputation_copy():
         # Check that the objects are different and that they don't use
         # the same buffer
         assert_false(np.all(X == Xt))
+
+def test_factorization():
+
+    random_state = np.random.RandomState(0)
+
+    n_samples = 10
+    n_features = 15
+    rank = 5
+
+    L = random_state.rand(n_samples, rank)
+    R = random_state.rand(rank, n_features)
+
+    # Keep 20% of X to train and test
+    X = np.dot(L, R)
+    mfi = FactorizationImputer(
+        n_iter=2000,
+        n_components=rank,
+        random_state=random_state)
+    X_imputed = mfi.fit_transform(X)
+
+    assert_true(X.shape == X_imputed.shape)
+    assert_false(sparse.issparse(X_imputed))
+    #assert_array_equal(X, X_imputed)
+
+
