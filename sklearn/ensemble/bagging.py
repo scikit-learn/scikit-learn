@@ -387,7 +387,14 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
     Attributes
     ----------
     `estimators_`: list of estimators
-        The collection of fitted sub-estimators.
+        The collection of fitted base estimators.
+
+    `estimators_samples_`: list of arrays
+        The subset of drawn samples (i.e., the in-bag samples) for each base
+        estimator.
+
+    `estimators_features_`: list of arrays
+        The subset of drawn features for each base estimator.
 
     `classes_`: array of shape = [n_classes]
         The classes labels.
@@ -700,6 +707,13 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
     ----------
     `estimators_`: list of estimators
         The collection of fitted sub-estimators.
+
+    `estimators_samples_`: list of arrays
+        The subset of drawn samples (i.e., the in-bag samples) for each base
+        estimator.
+
+    `estimators_features_`: list of arrays
+        The subset of drawn features for each base estimator.
 
     `oob_score_` : float
         Score of the training dataset obtained using an out-of-bag estimate.
