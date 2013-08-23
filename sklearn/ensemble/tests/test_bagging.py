@@ -136,17 +136,13 @@ def test_bootstrap_features():
 
 def test_probability():
     """Predict probabilities."""
-    olderr = np.seterr(divide="ignore")
+    with np.errstate(divide="ignore"):
+        ensemble = BaggingClassifier(base_estimator=DecisionTreeClassifier())
+        ensemble.fit(iris.data, iris.target)
 
-    ensemble = BaggingClassifier(base_estimator=DecisionTreeClassifier())
-    ensemble.fit(iris.data, iris.target)
-
-    assert_array_almost_equal(np.sum(ensemble.predict_proba(iris.data), axis=1),
-                              np.ones(iris.data.shape[0]))
-    assert_array_almost_equal(ensemble.predict_proba(iris.data),
-                              np.exp(ensemble.predict_log_proba(iris.data)), 2)
-
-    np.seterr(**olderr)
+        assert_array_almost_equal(np.sum(ensemble.predict_proba(iris.data),
+                                         axis=1),
+                                  np.ones(iris.data.shape[0]))
 
 
 def test_oob_score_classification():

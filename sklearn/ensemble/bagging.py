@@ -560,7 +560,30 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
             The class log-probabilities of the input samples. Classes are
             ordered by arithmetical order.
         """
-        return np.log(self.predict_proba(X))
+        if hasattr(self.base_estimator, "predict_log_proba"):
+            log_proba = self.estimators_[0].predict_log_proba(
+                X[:, self.estimators_features_[0]])
+
+            for estimator, features in zip(self.estimators_[1:],
+                                           self.estimators_features_[1:]):
+                log_proba += estimator.predict_log_proba(X[:, features])
+
+            log_proba /= self.n_estimators
+
+            return log_proba
+
+        else:
+            log_proba = np.log(self.estimators_[0].predict_proba(
+                X[:, self.estimators_features_[0]]))
+
+            for estimator, features in zip(self.estimators_[1:],
+                                           self.estimators_features_[1:]):
+                log_proba += np.log(estimator.predict_proba(X[:, features]))
+
+            log_proba /= self.n_estimators
+
+            return log_proba
+
 
     def decision_function(self, X):
         """Average of the decision functions of the base classifiers.
