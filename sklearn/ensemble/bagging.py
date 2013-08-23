@@ -108,34 +108,29 @@ def _parallel_build_estimators(n_estimators, ensemble, X, y, sample_weight,
     return estimators, estimators_features
 
 
-def _parallel_predict(estimators, estimators_features, X, n_classes):
-    """Private function used to compute predictions within a job."""
-    n_samples = X.shape[0]
-    counts = np.zeros((n_samples, n_classes))
-
-    for estimator, features in zip(estimators, estimators_features):
-        predictions = estimator.predict(X[:, features])
-
-        for i in range(n_samples):
-            counts[i, predictions[i]] += 1
-
-    return counts
-
-
 def _parallel_predict_proba(estimators, estimators_features, X, n_classes):
     """Private function used to compute (proba-)predictions within a job."""
     n_samples = X.shape[0]
     proba = np.zeros((n_samples, n_classes))
 
-    for estimator, features in zip(estimators, estimators_features):
-        proba_estimator = estimator.predict_proba(X[:, features])
+    try:
+        for estimator, features in zip(estimators, estimators_features):
+            proba_estimator = estimator.predict_proba(X[:, features])
 
-        if n_classes == len(estimator.classes_):
-            proba += proba_estimator
+            if n_classes == len(estimator.classes_):
+                proba += proba_estimator
 
-        else:
-            for j, c in enumerate(estimator.classes_):
-                proba[:, c] += proba_estimator[:, j]
+            else:
+                for j, c in enumerate(estimator.classes_):
+                    proba[:, c] += proba_estimator[:, j]
+
+    except AttributeError, NotImplementedError:
+        # Resort to voting
+        for estimator, features in zip(estimators, estimators_features):
+            predictions = estimator.predict(X[:, features])
+
+            for i in range(n_samples):
+                proba[i, predictions[i]] += 1
 
     return proba
 
@@ -460,7 +455,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
                 predictions[mask, :] += estimator.predict_proba(
                     (X[mask, :])[:, features])
 
-            except:
+            except AttributeError, NotImplementedError:
                 p = estimator.predict((X[mask, :])[:, features])
                 j = 0
 
@@ -491,8 +486,9 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
     def predict(self, X):
         """Predict class for X.
 
-        The predicted class of an input sample is computed as the majority
-        prediction of the estimators in the ensemble.
+        The predicted class of an input sample is computed as the class with
+        the highest mean predicted probability. If base estimators do no
+        implement a ``predict_proba`` method, then it resorts to voting.
 
         Parameters
         ----------
@@ -504,39 +500,18 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
         y : array of shape = [n_samples]
             The predicted classes.
         """
-        try:
-            return self.classes_.take(np.argmax(self.predict_proba(X), axis=1),
-                                      axis=0)
-
-        except:
-            # Check data
-            X, = check_arrays(X)
-
-            # Parallel loop
-            n_jobs, n_estimators, starts = _partition_estimators(self)
-
-            all_counts = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
-                delayed(_parallel_predict)(
-                    self.estimators_[starts[i]:starts[i + 1]],
-                    self.estimators_features_[starts[i]:starts[i + 1]],
-                    X,
-                    self.n_classes_)
-                for i in range(n_jobs))
-
-            # Reduce
-            counts = all_counts[0]
-
-            for j in range(1, len(all_counts)):
-                counts += all_counts[j]
-
-            return self.classes_.take(np.argmax(counts, axis=1), axis=0)
+        return self.classes_.take(np.argmax(self.predict_proba(X), axis=1),
+                                  axis=0)
 
     def predict_proba(self, X):
         """Predict class probabilities for X.
 
         The predicted class probabilities of an input sample is computed as
-        the mean predicted class probabilities of the estimators in the
-        ensemble.
+        the mean predicted class probabilities of the base estimators in the
+        ensemble. If base estimators do not implement a ``predict_proba``
+        method, then it resorts to voting and the predicted class probabilities
+        of a an input sample represents the proportion of estimators predicting
+        each class.
 
         Parameters
         ----------
