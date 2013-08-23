@@ -1023,7 +1023,8 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
 
 ##############################################################################
 
-def _cross_val_score(estimator, X, y, scorer, train, test, verbose,
+def _cross_val_score(estimator, X, y, sample_weight,
+                     scorer, train, test, verbose,
                      fit_params):
     """Inner loop for cross validation"""
     n_samples = X.shape[0] if sp.issparse(X) else len(X)
@@ -1053,11 +1054,20 @@ def _cross_val_score(estimator, X, y, scorer, train, test, verbose,
     else:
         y_train = y[train]
         y_test = y[test]
+
+    score_params = dict()
+    if sample_weight is not None:
+        sample_weight_train = sample_weight[train]
+        sample_weight_test = sample_weight[test]
+        fit_params = fit_params.copy()
+        fit_params['sample_weight'] = sample_weight_train
+        score_params['sample_weight'] = sample_weight_test
+
     estimator.fit(X_train, y_train, **fit_params)
     if scorer is None:
-        score = estimator.score(X_test, y_test)
+        score = estimator.score(X_test, y_test, **score_params)
     else:
-        score = scorer(estimator, X_test, y_test)
+        score = scorer(estimator, X_test, y_test, **score_params)
         if not isinstance(score, numbers.Number):
             raise ValueError("scoring must return a number, got %s (%s)"
                              " instead." % (str(score), type(score)))
@@ -1066,7 +1076,8 @@ def _cross_val_score(estimator, X, y, scorer, train, test, verbose,
     return score
 
 
-def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
+def cross_val_score(estimator, X, y=None, sample_weight=None,
+                    scoring=None, cv=None, n_jobs=1,
                     verbose=0, fit_params=None, score_func=None,
                     pre_dispatch='2*n_jobs'):
     """Evaluate a score by cross-validation
@@ -1082,6 +1093,9 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
     y : array-like, optional, default: None
         The target variable to try to predict in the case of
         supervised learning.
+
+    sample_weight : array-like, optional, default: None
+        Sample weights.
 
     scoring : string, callable or None, optional, default: None
         A string (see model evaluation documentation) or
@@ -1125,7 +1139,8 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
     scores : array of float, shape=(len(list(cv)),)
         Array of scores of the estimator for each run of the cross validation.
     """
-    X, y = check_arrays(X, y, sparse_format='csr', allow_lists=True)
+    X, y, sample_weight = check_arrays(X, y, sample_weight,
+                                       sparse_format='csr', allow_lists=True)
     cv = check_cv(cv, X, y, classifier=is_classifier(estimator))
     scorer = _deprecate_loss_and_score_funcs(
         loss_func=None,
@@ -1143,7 +1158,8 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
     parallel = Parallel(n_jobs=n_jobs, verbose=verbose,
                         pre_dispatch=pre_dispatch)
     scores = parallel(
-        delayed(_cross_val_score)(clone(estimator), X, y, scorer, train, test,
+        delayed(_cross_val_score)(clone(estimator), X, y, sample_weight,
+                                  scorer, train, test,
                                   verbose, fit_params)
         for train, test in cv)
     return np.array(scores)
