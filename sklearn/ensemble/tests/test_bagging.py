@@ -45,6 +45,7 @@ boston.target = boston.target[perm]
 
 def test_classification():
     """Check classificationfor various parameter settings."""
+    rng = check_random_state(0)
     X_train, X_test, y_train, y_test = train_test_split(iris.data,
                                                         iris.target,
                                                         random_state=rng)
@@ -66,6 +67,7 @@ def test_classification():
 
 def test_regression():
     """Check regression for various parameter settings."""
+    rng = check_random_state(0)
     X_train, X_test, y_train, y_test = train_test_split(boston.data,
                                                         boston.target,
                                                         random_state=rng)
@@ -86,6 +88,7 @@ def test_regression():
 
 def test_bootstrap_samples():
     """Test that bootstraping samples generate non-perfect base estimators."""
+    rng = check_random_state(0)
     X_train, X_test, y_train, y_test = train_test_split(boston.data,
                                                         boston.target,
                                                         random_state=rng)
@@ -113,6 +116,7 @@ def test_bootstrap_samples():
 
 def test_bootstrap_features():
     """Test that bootstraping features may generate dupplicate features."""
+    rng = check_random_state(0)
     X_train, X_test, y_train, y_test = train_test_split(boston.data,
                                                         boston.target,
                                                         random_state=rng)
@@ -148,6 +152,7 @@ def test_probability():
 def test_oob_score_classification():
     """Check that oob prediction is a good estimation of the generalization
     error."""
+    rng = check_random_state(0)
     X_train, X_test, y_train, y_test = train_test_split(iris.data,
                                                         iris.target,
                                                         random_state=rng)
@@ -166,6 +171,7 @@ def test_oob_score_classification():
 def test_oob_score_regression():
     """Check that oob prediction is a good estimation of the generalization
     error."""
+    rng = check_random_state(0)
     X_train, X_test, y_train, y_test = train_test_split(boston.data,
                                                         boston.target,
                                                         random_state=rng)
@@ -201,6 +207,8 @@ def test_error():
 
 def test_parallel():
     """Check parallel computations."""
+    rng = check_random_state(0)
+
     # Classification
     X_train, X_test, y_train, y_test = train_test_split(iris.data,
                                                         iris.target,
