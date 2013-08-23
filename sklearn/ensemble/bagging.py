@@ -306,12 +306,12 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
     then making an ensemble out of it.
 
     This algorithm encompasses several works from the literature. When random
-    subsets of the dataset are drawn as random subsets of the instances, then
-    this algorithm is known as Pasting [1]. If subsets are drawn with
+    subsets of the dataset are drawn as random subsets of the samples, then
+    this algorithm is known as Pasting [1]. If samples are drawn with
     replacement, then the method is known as Bagging [2]. When random subsets
     of the dataset are drawn as random subsets of the features, then the method
     is known as Random Subspaces [3]. Finally, when base estimators are built
-    on subsets of both instances and features, then the method is known as
+    on subsets of both samples and features, then the method is known as
     Random Patches [4].
 
     Parameters
@@ -323,9 +323,9 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
         The number of base estimators in the ensemble.
 
     max_samples : int or float, optional (default=1.0)
-        The number of instances to draw from X to train each base estimator.
-            - If int, then draw `max_samples` instances.
-            - If float, then draw `max_samples * X.shape[0]` instances.
+        The number of samples to draw from X to train each base estimator.
+            - If int, then draw `max_samples` samples.
+            - If float, then draw `max_samples * X.shape[0]` samples.
 
     max_features : int or float, optional (default=1.0)
         The number of features to draw from X to train each base estimator.
@@ -333,7 +333,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
             - If float, then draw `max_features * X.shape[1]` features.
 
     bootstrap : boolean, optional (default=False)
-        Whether instances are drawn with replacement.
+        Whether samples are drawn with replacement.
 
     bootstrap_features : boolean, optional (default=False)
         Whether features are drawn with replacement.
@@ -568,10 +568,6 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
                                            self.estimators_features_[1:]):
                 log_proba += estimator.predict_log_proba(X[:, features])
 
-            log_proba /= self.n_estimators
-
-            return log_proba
-
         else:
             log_proba = np.log(self.estimators_[0].predict_proba(
                 X[:, self.estimators_features_[0]]))
@@ -580,9 +576,9 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
                                            self.estimators_features_[1:]):
                 log_proba += np.log(estimator.predict_proba(X[:, features]))
 
-            log_proba /= self.n_estimators
+        log_proba /= self.n_estimators
 
-            return log_proba
+        return log_proba
 
 
     def decision_function(self, X):
@@ -625,12 +621,12 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
     then making an ensemble out of it.
 
     This algorithm encompasses several works from the literature. When random
-    subsets of the dataset are drawn as random subsets of the instances, then
-    this algorithm is known as Pasting [1]. If subsets are drawn with
+    subsets of the dataset are drawn as random subsets of the samples, then
+    this algorithm is known as Pasting [1]. If samples are drawn with
     replacement, then the method is known as Bagging [2]. When random subsets
     of the dataset are drawn as random subsets of the features, then the method
     is known as Random Subspaces [3]. Finally, when base estimators are built
-    on subsets of both instances and features, then the method is known as
+    on subsets of both samples and features, then the method is known as
     Random Patches [4].
 
     Parameters
@@ -642,9 +638,9 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
         The number of base estimators in the ensemble.
 
     max_samples : int or float, optional (default=1.0)
-        The number of instances to draw from X to train each base estimator.
-            - If int, then draw `max_samples` instances.
-            - If float, then draw `max_samples * X.shape[0]` instances.
+        The number of samples to draw from X to train each base estimator.
+            - If int, then draw `max_samples` samples.
+            - If float, then draw `max_samples * X.shape[0]` samples.
 
     max_features : int or float, optional (default=1.0)
         The number of features to draw from X to train each base estimator.
@@ -652,7 +648,7 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
             - If float, then draw `max_features * X.shape[1]` features.
 
     bootstrap : boolean, optional (default=False)
-        Whether instances are drawn with replacement.
+        Whether samples are drawn with replacement.
 
     bootstrap_features : boolean, optional (default=False)
         Whether features are drawn with replacement.

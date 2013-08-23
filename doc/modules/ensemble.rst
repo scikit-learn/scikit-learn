@@ -45,25 +45,27 @@ Bagging methods come in many flavours but mostly differ from each other by the
 way they draw random subsets of the training set:
 
   * When random subsets of the dataset are drawn as random subsets of the
-    instances, then this algorithm is known as Pasting [B1999]_.
+    samples, then this algorithm is known as Pasting [B1999]_.
 
-  * When subsets are drawn with replacement, then the method is known as
+  * When samples are drawn with replacement, then the method is known as
     Bagging [B1996]_.
 
   * When random subsets of the dataset are drawn as random subsets of
     the features, then the method is known as Random Subspaces [H1998]_.
 
-  * Finally, when base estimators are built on subsets of both instances and
+  * Finally, when base estimators are built on subsets of both samples and
     features, then the method is known as Random Patches [LG2012]_.
 
 In scikit-learn, bagging methods are offered as a unified
 :class:`BaggingClassifier` meta-estimator  (resp. :class:`BaggingRegressor`),
 taking as input a user-specified base estimator along with parameters
-specifying the strategy to draw random subsets (see ``max_samples``,
-``max_features``, ``bootstrap`` and ``bootstrap_features`` hyper-parameters).
-For example, the snippet below illustrates how to instantiate a bagging
-ensemble of :class:`KNeighborsClassifier` base estimators, each built random
-subsets of 50% of the instances and 50% of the features.
+specifying the strategy to draw random subsets. In particular, ``max_samples``
+and ``max_features`` control the size of the subsets (in terms of samples and
+features), while ``bootstrap`` and ``bootstrap_features`` control whether
+samples and features are drawn with or without replacement. As an example, the
+snippet below illustrates how to instantiate a bagging ensemble of
+:class:`KNeighborsClassifier` base estimators, each built random subsets of 50%
+of the samples and 50% of the features.
 
     >>> from sklearn.ensemble import BaggingClassifier
     >>> from sklearn.neighbors import KNeighborsClassifier
