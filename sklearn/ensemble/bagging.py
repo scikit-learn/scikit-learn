@@ -126,7 +126,7 @@ def _parallel_predict_proba(estimators, estimators_features, X, n_classes):
                 for j, c in enumerate(estimator.classes_):
                     proba[:, c] += proba_estimator[:, j]
 
-        except AttributeError, NotImplementedError:
+        except (AttributeError, NotImplementedError):
             # Resort to voting
             predictions = estimator.predict(X[:, features])
 
@@ -134,27 +134,6 @@ def _parallel_predict_proba(estimators, estimators_features, X, n_classes):
                 proba[i, predictions[i]] += 1
 
     return proba
-
-
-def _parallel_predict_log_proba(estimators, estimators_features, X, n_classes):
-    """Private function used to compute the log proba within a job."""
-    if hasattr(estimators[0], "predict_log_proba"):
-        log_proba = estimators[0].predict_log_proba(
-            X[:, estimators_features[0]])
-
-        for estimator, features in zip(estimators[1:],
-                                       estimators_features[1:]):
-            log_proba += estimator.predict_log_proba(X[:, features])
-
-    else:
-        log_proba = np.log(estimators[0].predict_proba(
-            X[:, estimators_features[0]]))
-
-        for estimator, features in zip(estimators[1:],
-                                       estimators_features[1:]):
-            log_proba += np.log(estimator.predict_proba(X[:, features]))
-
-    return log_proba
 
 
 def _parallel_decision_function(estimators, estimators_features, X, n_classes):
@@ -466,7 +445,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
                 predictions[mask, :] += estimator.predict_proba(
                     (X[mask, :])[:, features])
 
-            except AttributeError, NotImplementedError:
+            except (AttributeError, NotImplementedError):
                 p = estimator.predict((X[mask, :])[:, features])
                 j = 0
 
@@ -558,48 +537,6 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
         proba /= self.n_estimators
 
         return proba
-
-    def predict_log_proba(self, X):
-        """Predict class log-probabilities for X.
-
-        The predicted class log-probabilities of an input sample is computed as
-        the mean predicted class log-probabilities of the estimators in the
-        ensemble.
-
-        Parameters
-        ----------
-        X : array-like of shape = [n_samples, n_features]
-            The input samples.
-
-        Returns
-        -------
-        p : array of shape = [n_samples, n_classes]
-            The class log-probabilities of the input samples. Classes are
-            ordered by arithmetical order.
-        """
-        # Check data
-        X, = check_arrays(X)
-
-        # Parallel loop
-        n_jobs, n_estimators, starts = _partition_estimators(self)
-
-        all_log_proba = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
-            delayed(_parallel_predict_log_proba)(
-                self.estimators_[starts[i]:starts[i + 1]],
-                self.estimators_features_[starts[i]:starts[i + 1]],
-                X,
-                self.n_classes_)
-            for i in range(n_jobs))
-
-        # Reduce
-        log_proba = all_log_proba[0]
-
-        for j in range(1, len(all_log_proba)):
-            log_proba += all_log_proba[j]
-
-        log_proba /= self.n_estimators
-
-        return log_proba
 
     def decision_function(self, X):
         """Average of the decision functions of the base classifiers.

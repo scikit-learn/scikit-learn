@@ -15,7 +15,7 @@ from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_less
 
 from sklearn.dummy import DummyClassifier, DummyRegressor
-from sklearn.grid_search import ParameterGrid
+from sklearn.grid_search import GridSearchCV, ParameterGrid
 from sklearn.ensemble import BaggingClassifier, BaggingRegressor
 from sklearn.linear_model import Perceptron
 from sklearn.neighbors import KNeighborsClassifier, KNeighborsRegressor
@@ -62,7 +62,7 @@ def test_classification():
         for params in grid:
             BaggingClassifier(base_estimator=base_estimator,
                               random_state=rng,
-                              **params).fit(X_train, y_train)
+                              **params).fit(X_train, y_train).predict(X_test)
 
 
 def test_regression():
@@ -83,7 +83,7 @@ def test_regression():
         for params in grid:
             BaggingRegressor(base_estimator=base_estimator,
                              random_state=rng,
-                             **params).fit(X_train, y_train)
+                             **params).fit(X_train, y_train).predict(X_test)
 
 
 def test_bootstrap_samples():
@@ -140,13 +140,18 @@ def test_bootstrap_features():
 
 def test_probability():
     """Predict probabilities."""
-    with np.errstate(divide="ignore"):
-        ensemble = BaggingClassifier(base_estimator=DecisionTreeClassifier())
-        ensemble.fit(iris.data, iris.target)
+    rng = check_random_state(0)
+    X_train, X_test, y_train, y_test = train_test_split(iris.data,
+                                                        iris.target,
+                                                        random_state=rng)
 
-        assert_array_almost_equal(np.sum(ensemble.predict_proba(iris.data),
+    with np.errstate(divide="ignore"):
+        ensemble = BaggingClassifier(base_estimator=DecisionTreeClassifier(),
+                                     random_state=rng).fit(X_train, y_train)
+
+        assert_array_almost_equal(np.sum(ensemble.predict_proba(X_test),
                                          axis=1),
-                                  np.ones(iris.data.shape[0]))
+                                  np.ones(len(X_test)))
 
 
 def test_oob_score_classification():
@@ -252,6 +257,21 @@ def test_parallel():
 
     y3 = ensemble.predict(X_test)
     assert_array_almost_equal(y1, y3)
+
+
+def test_gridsearch():
+    """Check that bagging ensembles can be grid-searched."""
+    # Transform iris into a binary classification task
+    X, y = iris.data, iris.target
+    y[y == 2] = 1
+
+    # Grid search with scoring based on decision_function
+    parameters = {'n_estimators': (1, 2),
+                  'base_estimator__C': (1, 2)}
+
+    GridSearchCV(BaggingClassifier(SVC()),
+                 parameters,
+                 scoring="roc_auc").fit(X, y)
 
 
 
