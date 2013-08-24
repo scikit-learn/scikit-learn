@@ -150,7 +150,14 @@ def _parallel_predict_log_proba(estimators, estimators_features, X, n_classes):
 
         else:
             for j, c in enumerate(estimator.classes_):
-                log_proba[:, c] = np.logaddexp(log_proba_estimator[:, j])
+                log_proba[:, c] = np.logaddexp(log_proba[:, c],
+                                               log_proba_estimator[:, j])
+
+            missing = [c for c in range(n_classes)
+                if c not in estimator.classes_]
+
+            for c in missing:
+                log_proba[:, c] = np.logaddexp(log_proba[:, c], 0)
 
     return log_proba
 
@@ -592,11 +599,10 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
 
             # Reduce
             log_proba = all_log_proba[0]
-
             for j in range(1, len(all_log_proba)):
                 log_proba = np.logaddexp(log_proba, all_log_proba[j])
 
-            log_proba -= np.log(n_estimators)
+            log_proba -= np.log(self.n_estimators)
 
             return log_proba
 
