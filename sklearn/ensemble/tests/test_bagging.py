@@ -145,7 +145,7 @@ def test_probability():
                                                         iris.target,
                                                         random_state=rng)
 
-    with np.errstate(divide="ignore"):
+    with np.errstate(divide="ignore", invalid="ignore"):
         ensemble = BaggingClassifier(base_estimator=DecisionTreeClassifier(),
                                      random_state=rng).fit(X_train, y_train)
 

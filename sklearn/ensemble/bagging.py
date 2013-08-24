@@ -136,6 +136,25 @@ def _parallel_predict_proba(estimators, estimators_features, X, n_classes):
     return proba
 
 
+def _parallel_predict_log_proba(estimators, estimators_features, X, n_classes):
+    """Private function used to compute log probabilities within a job."""
+    n_samples = X.shape[0]
+    log_proba = np.zeros((n_samples, n_classes))
+    log_proba[:] = -np.inf
+
+    for estimator, features in zip(estimators, estimators_features):
+        log_proba_estimator = estimator.predict_log_proba(X[:, features])
+
+        if n_classes == len(estimator.classes_):
+            log_proba = np.logaddexp(log_proba, log_proba_estimator)
+
+        else:
+            for j, c in enumerate(estimator.classes_):
+                log_proba[:, c] = np.logaddexp(log_proba_estimator[:, j])
+
+    return log_proba
+
+
 def _parallel_decision_function(estimators, estimators_features, X, n_classes):
     """Private function used to compute (proba-)predictions within a job."""
     decisions = estimators[0].decision_function(X[:, estimators_features[0]])
@@ -556,7 +575,33 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
             The class log-probabilities of the input samples. Classes are
             ordered by arithmetical order.
         """
-        return np.log(self.predict_proba(X))
+        if hasattr(self.base_estimator, "predict_log_proba"):
+            # Check data
+            X, = check_arrays(X)
+
+            # Parallel loop
+            n_jobs, n_estimators, starts = _partition_estimators(self)
+
+            all_log_proba = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
+                delayed(_parallel_predict_log_proba)(
+                    self.estimators_[starts[i]:starts[i + 1]],
+                    self.estimators_features_[starts[i]:starts[i + 1]],
+                    X,
+                    self.n_classes_)
+                for i in range(n_jobs))
+
+            # Reduce
+            log_proba = all_log_proba[0]
+
+            for j in range(1, len(all_log_proba)):
+                log_proba = np.logaddexp(log_proba, all_log_proba[j])
+
+            log_proba -= np.log(n_estimators)
+
+            return log_proba
+
+        else:
+            return np.log(self.predict_proba(X))
 
     def decision_function(self, X):
         """Average of the decision functions of the base classifiers.
