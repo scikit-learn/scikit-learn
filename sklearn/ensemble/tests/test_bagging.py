@@ -153,6 +153,9 @@ def test_probability():
                                          axis=1),
                                   np.ones(len(X_test)))
 
+        assert_array_almost_equal(ensemble.predict_proba(X_test),
+                           np.exp(ensemble.predict_log_proba(X_test)))
+
 
 def test_oob_score_classification():
     """Check that oob prediction is a good estimation of the generalization

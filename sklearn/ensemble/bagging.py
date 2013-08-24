@@ -538,6 +538,26 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
 
         return proba
 
+    def predict_log_proba(self, X):
+        """Predict class log-probabilities for X.
+
+        The predicted class log-probabilities of an input sample is computed as
+        the log of the mean predicted class probabilities of the base
+        estimators in the ensemble.
+
+        Parameters
+        ----------
+        X : array-like of shape = [n_samples, n_features]
+            The input samples.
+
+        Returns
+        -------
+        p : array of shape = [n_samples, n_classes]
+            The class log-probabilities of the input samples. Classes are
+            ordered by arithmetical order.
+        """
+        return np.log(self.predict_proba(X))
+
     def decision_function(self, X):
         """Average of the decision functions of the base classifiers.
 
