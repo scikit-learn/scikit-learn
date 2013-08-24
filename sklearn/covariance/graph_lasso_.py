@@ -211,7 +211,7 @@ def graph_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
                                          'too ill-conditioned for this solver')
         else:
             warnings.warn('graph_lasso: did not converge after %i iteration:'
-                          'dual gap: %.3e' % (max_iter, d_gap),
+                          ' dual gap: %.3e' % (max_iter, d_gap),
                           ConvergenceWarning)
     except FloatingPointError as e:
         e.args = (e.args[0]

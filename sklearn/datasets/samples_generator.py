@@ -119,7 +119,7 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
                          " features")
     if 2 ** n_informative < n_classes * n_clusters_per_class:
         raise ValueError("n_classes * n_clusters_per_class must"
-                         "be smaller or equal 2 ** n_informative")
+                         " be smaller or equal 2 ** n_informative")
     if weights and len(weights) not in [n_classes, n_classes - 1]:
         raise ValueError("Weights specified but incompatible with number "
                          "of classes.")

@@ -1236,7 +1236,7 @@ def test_multioutput_regression_invariance_to_dimension_shuffling():
             perm = rng.permutation(n_dims)
             assert_almost_equal(metric(y_true[:, perm], y_pred[:, perm]),
                                 error,
-                                err_msg="%s is not dimension shuffling"
+                                err_msg="%s is not dimension shuffling "
                                         "invariant" % name)
 
 

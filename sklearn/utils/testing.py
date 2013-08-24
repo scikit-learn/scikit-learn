@@ -128,7 +128,7 @@ def _assert_allclose(actual, desired, rtol=1e-7, atol=0,
     actual, desired = np.asanyarray(actual), np.asanyarray(desired)
     if np.allclose(actual, desired, rtol=rtol, atol=atol):
         return
-    msg = ('Array not equal to tolerance rtol=%g, atol=%g:'
+    msg = ('Array not equal to tolerance rtol=%g, atol=%g: '
            'actual %s, desired %s') % (rtol, atol, actual, desired)
     raise AssertionError(msg)
 
