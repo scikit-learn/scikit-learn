@@ -81,12 +81,21 @@ class LogOddsEstimator(BaseEstimator):
         n_neg = y.shape[0] - n_pos
         if n_neg == 0 or n_pos == 0:
             raise ValueError('y contains non binary labels.')
-        self.prior = np.log(n_pos / n_neg)
+        self.prior = np.log(np.float64(n_pos) / np.float64(n_neg))
 
     def predict(self, X):
         y = np.empty((X.shape[0], 1), dtype=np.float64)
         y.fill(self.prior)
         return y
+
+
+class ZeroEstimator(BaseEstimator):
+    """An estimator predicting zero."""
+    def fit(self, X, y):
+        pass
+
+    def predict(self, X):
+        return np.zeros((X.shape[0], 1), dtype=np.float64)
 
 
 class PriorProbabilityEstimator(BaseEstimator):
@@ -172,8 +181,8 @@ class LossFunction(six.with_metaclass(ABCMeta, object)):
                                          y_pred[:, k])
 
         # update predictions (both in-bag and out-of-bag)
-        y_pred[:, k] += (learning_rate
-                         * tree.value[:, 0, 0].take(terminal_regions, axis=0))
+        y_pred[:, k] += (learning_rate *
+                         tree.value[:, 0, 0].take(terminal_regions, axis=0))
 
     @abstractmethod
     def _update_terminal_region(self, tree, terminal_regions, leaf, X, y,
