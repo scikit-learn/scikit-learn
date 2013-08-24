@@ -43,7 +43,7 @@ def test_graphviz_toy():
 
     # Test with feature_names
     out = StringIO()
-    out = export_graphviz(clf, out_file=out, feature_names=["feature0", "feature1"])
+    export_graphviz(clf, out_file=out, feature_names=["feature0", "feature1"])
     contents1 = out.getvalue()
     contents2 = "digraph Tree {\n" \
                 "0 [label=\"feature0 <= 0.0000\\ngini = 0.5\\n" \
