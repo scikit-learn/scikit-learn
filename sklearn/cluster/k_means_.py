@@ -554,6 +554,31 @@ def _init_centroids(X, k, init, random_state=None, x_squared_norms=None,
     return centers
 
 
+def _pick_unique_labels(relative_probabilities, labels,
+                        no_picks, random_state):
+    # array of labels randomly picked
+    picks = np.zeros(no_picks, dtype=np.int)
+
+    # making sure we do not exceed any array
+    iterations = min(len(relative_probabilities), len(labels))
+    iterations = min(iterations, no_picks)
+    for p in range(iterations):
+        # picking one value from set of elements
+        # with their relative probabilities
+        rand_val = random_state.rand()*relative_probabilities.sum()
+        new_pick = np.searchsorted(relative_probabilities.cumsum(), rand_val)
+
+        # taking note of pick
+        picks[p] = labels[new_pick]
+
+        # label has been picked
+        # it should not be picked next time
+        relative_probabilities = np.delete(relative_probabilities, new_pick)
+        labels = np.delete(labels, new_pick)
+
+    return picks
+
+
 class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
     """K-Means clustering
 
@@ -865,10 +890,10 @@ def _mini_batch_step(X, x_squared_norms, centers, counts,
 
             # picking number_of_reassingments centers
             # with probability to their
-            new_centers = pick_unique_labels(distances,
-                                             labels,
-                                             number_of_reassignments,
-                                             random_state)
+            new_centers = _pick_unique_labels(distances,
+                                              labels,
+                                              number_of_reassignments,
+                                              random_state)
 
             if verbose:
                 print("[MiniBatchKMeans] Reassigning %i cluster centers."
@@ -1276,27 +1301,3 @@ class MiniBatchKMeans(KMeans):
                 X, x_squared_norms, self.cluster_centers_)
 
         return self
-
-
-def pick_unique_labels(relative_probabilties, labels, no_picks, random_state):
-    # array of labels randomly picked
-    picks = np.zeros(no_picks, dtype=np.int)
-
-    # making sure we do not exceed any array
-    iterations = min(len(relative_probabilties), len(labels))
-    iterations = min(iterations, no_picks)
-    for p in range(0, iterations):
-        # picking one value from set of elements
-        # with their relative probabilties
-        rand_val = random_state.rand()*relative_probabilties.sum()
-        new_pick = np.searchsorted(relative_probabilties.cumsum(), rand_val)
-
-        # taking note of pick
-        picks[p] = labels[new_pick]
-
-        # label has been picked
-        # it should not be picked next time
-        relative_probabilties = np.delete(relative_probabilties, new_pick)
-        labels = np.delete(labels, new_pick)
-
-    return picks
