@@ -85,9 +85,11 @@ of the samples and 50% of the features.
          123-140, 1996.
 
   .. [H1998] T. Ho, "The random subspace method for constructing decision
-         forests", 1998.
+         forests", Pattern Analysis and Machine Intelligence, 20(8), 832-844,
+         1998.
 
-  .. [LG2012] G. Louppe and P. Geurts, "Ensembles on Random Patches", 2012.
+  .. [LG2012] G. Louppe and P. Geurts, "Ensembles on Random Patches",
+         Machine Learning and Knowledge Discovery in Databases, 346-361, 2012.
 
 .. _forest:
 

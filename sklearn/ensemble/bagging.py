@@ -426,9 +426,11 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
            1996.
 
     .. [3] T. Ho, "The random subspace method for constructing decision
-           forests", 1998.
+           forests", Pattern Analysis and Machine Intelligence, 20(8), 832-844,
+           1998.
 
-    .. [4] G. Louppe and P. Geurts, "Ensembles on Random Patches", 2012.
+    .. [4] G. Louppe and P. Geurts, "Ensembles on Random Patches", Machine
+           Learning and Knowledge Discovery in Databases, 346-361, 2012.
     """
     def __init__(self,
                  base_estimator,
@@ -742,9 +744,11 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
            1996.
 
     .. [3] T. Ho, "The random subspace method for constructing decision
-           forests", 1998.
+           forests", Pattern Analysis and Machine Intelligence, 20(8), 832-844,
+           1998.
 
-    .. [4] G. Louppe and P. Geurts, "Ensembles on Random Patches", 2012.
+    .. [4] G. Louppe and P. Geurts, "Ensembles on Random Patches", Machine
+           Learning and Knowledge Discovery in Databases, 346-361, 2012.
     """
 
     def __init__(self,
