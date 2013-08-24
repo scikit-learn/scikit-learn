@@ -103,23 +103,24 @@ def test_parameter_checks():
     assert_raises(ValueError,
                   lambda: GradientBoostingClassifier().feature_importances_)
 
-    # binomial deviance requires ``n_classes == 2``.
-    assert_raises(ValueError,
-                  lambda X, y: GradientBoostingClassifier(
-                      loss='bdeviance').fit(X, y),
-                  X, [0, 0, 1, 1, 2, 2])
-
-    # multinomial deviance requires ``n_classes > 2``.
-    assert_raises(ValueError,
-                  lambda X, y: GradientBoostingClassifier(
-                      loss='mdeviance').fit(X, y),
-                  X, [0, 0, 1, 1, 1, 0])
-
     # deviance requires ``n_classes >= 2``.
     assert_raises(ValueError,
                   lambda X, y: GradientBoostingClassifier(
                       loss='deviance').fit(X, y),
                   X, [0, 0, 0, 0])
+
+
+def test_loss_function():
+    assert_raises(ValueError,
+                  GradientBoostingClassifier(loss='ls').fit, X, y)
+    assert_raises(ValueError,
+                  GradientBoostingClassifier(loss='lad').fit, X, y)
+    assert_raises(ValueError,
+                  GradientBoostingClassifier(loss='quantile').fit, X, y)
+    assert_raises(ValueError,
+                  GradientBoostingClassifier(loss='huber').fit, X, y)
+    assert_raises(ValueError,
+                  GradientBoostingRegressor(loss='deviance').fit, X, y)
 
 
 def test_classification_synthetic():
@@ -579,3 +580,21 @@ def test_more_verbose_output():
     n_lines = sum(1 for l in verbose_output.readlines())
     # 100 lines for n_estimators==100
     assert_equal(100, n_lines)
+
+
+def test_warn_deviance():
+    """Test if mdeviance and bdeviance give deprecated warning. """
+    for loss in ('bdeviance', 'mdeviance'):
+        with warnings.catch_warnings(record=True) as w:
+            # This will raise a DataConversionWarning that we want to
+            # "always" raise, elsewhere the warnings gets ignored in the
+            # later tests, and the tests that check for this warning fail
+            warnings.simplefilter("always", DataConversionWarning)
+            clf = GradientBoostingClassifier(loss=loss)
+            try:
+                clf.fit(X, y)
+            except:
+                # mdeviance will raise ValueError because only 2 classes
+                pass
+            # deprecated warning for bdeviance and mdeviance
+            assert len(w) == 1
