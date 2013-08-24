@@ -17,7 +17,7 @@ from sklearn.utils.testing import assert_less
 from sklearn.dummy import DummyClassifier, DummyRegressor
 from sklearn.grid_search import GridSearchCV, ParameterGrid
 from sklearn.ensemble import BaggingClassifier, BaggingRegressor
-from sklearn.linear_model import Perceptron
+from sklearn.linear_model import Perceptron, LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier, KNeighborsRegressor
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.svm import SVC, SVR
@@ -146,8 +146,21 @@ def test_probability():
                                                         random_state=rng)
 
     with np.errstate(divide="ignore", invalid="ignore"):
+        # Normal case
         ensemble = BaggingClassifier(base_estimator=DecisionTreeClassifier(),
                                      random_state=rng).fit(X_train, y_train)
+
+        assert_array_almost_equal(np.sum(ensemble.predict_proba(X_test),
+                                         axis=1),
+                                  np.ones(len(X_test)))
+
+        assert_array_almost_equal(ensemble.predict_proba(X_test),
+                           np.exp(ensemble.predict_log_proba(X_test)))
+
+        # Degenerate case, where some classes are missing
+        ensemble = BaggingClassifier(base_estimator=LogisticRegression(),
+                                     random_state=rng,
+                                     max_samples=5).fit(X_train, y_train)
 
         assert_array_almost_equal(np.sum(ensemble.predict_proba(X_test),
                                          axis=1),

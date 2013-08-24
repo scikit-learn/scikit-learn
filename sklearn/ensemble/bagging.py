@@ -157,7 +157,7 @@ def _parallel_predict_log_proba(estimators, estimators_features, X, n_classes):
                 if c not in estimator.classes_]
 
             for c in missing:
-                log_proba[:, c] = np.logaddexp(log_proba[:, c], 0)
+                log_proba[:, c] = np.logaddexp(log_proba[:, c], -np.inf)
 
     return log_proba
 
