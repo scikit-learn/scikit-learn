@@ -513,7 +513,8 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
         """Predict class log-probabilities for X.
 
         The predicted class log-probabilities of an input sample is computed as
-        the mean predicted class log-probabilities of the trees in the forest.
+        the log of mean predicted class probabilities of the trees in the 
+        forest.
 
         Parameters
         ----------
