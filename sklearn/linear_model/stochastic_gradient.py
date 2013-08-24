@@ -384,7 +384,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
 
         if class_weight is not None:
             warnings.warn("Using 'class_weight' as a parameter to the 'fit'"
-                          "method is deprecated and will be removed in 0.13. "
+                          " method is deprecated and will be removed in 0.13. "
                           "Set it on initialization instead.",
                           DeprecationWarning, stacklevel=2)
 

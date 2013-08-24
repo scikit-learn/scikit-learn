@@ -733,7 +733,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
     @property
     def oob_score_(self):
         warn("The oob_score_ argument is replaced by oob_improvement_"
-             "as of version 0.14 and will be removed in 0.16.",
+             " as of version 0.14 and will be removed in 0.16.",
              DeprecationWarning)
         try:
             return self._oob_score_

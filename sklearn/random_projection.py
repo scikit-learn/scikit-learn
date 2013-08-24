@@ -408,7 +408,7 @@ class BaseRandomProjection(six.with_metaclass(ABCMeta, BaseEstimator,
         if X.shape[1] != self.components_.shape[1]:
             raise ValueError(
                 'Impossible to perform projection:'
-                'X at fit stage had a different number of features.'
+                'X at fit stage had a different number of features. '
                 '(%s != %s)' % (X.shape[1], self.components_.shape[1]))
 
         if not sp.issparse(X):

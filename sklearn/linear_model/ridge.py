@@ -1018,7 +1018,7 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
             class_weight = self.class_weight
         else:
             warnings.warn("'class_weight' is now an initialization parameter."
-                          "Using it in the 'fit' method is deprecated and "
+                          " Using it in the 'fit' method is deprecated and "
                           "will be removed in 0.15.", DeprecationWarning,
                           stacklevel=2)
 

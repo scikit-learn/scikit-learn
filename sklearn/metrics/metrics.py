@@ -841,7 +841,7 @@ def zero_one_loss(y_true, y_pred, normalize=True):
 
 @deprecated("Function 'zero_one' has been renamed to "
             "'zero_one_loss' and will be removed in release 0.15."
-            "Default behavior is changed from 'normalize=False' to "
+            " Default behavior is changed from 'normalize=False' to "
             "'normalize=True'")
 def zero_one(y_true, y_pred, normalize=False):
     """Zero-One classification loss
@@ -1494,7 +1494,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
         else:
             raise ValueError("Example-based precision, recall, fscore is "
                              "not meaningful outside of multilabel"
-                             "classification. Use accuracy_score instead.")
+                             " classification. Use accuracy_score instead.")
 
         warning_msg = ""
         if np.any(size_pred == 0):

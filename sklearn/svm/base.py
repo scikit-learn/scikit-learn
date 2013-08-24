@@ -154,7 +154,7 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
             raise ValueError("X.shape[0] should be equal to X.shape[1]")
 
         if sample_weight.shape[0] > 0 and sample_weight.shape[0] != X.shape[0]:
-            raise ValueError("sample_weight and X have incompatible shapes:"
+            raise ValueError("sample_weight and X have incompatible shapes: "
                              "%r vs %r\n"
                              "Note: Sparse matrices cannot be indexed w/"
                              "boolean masks (use `indices=True` in CV)."

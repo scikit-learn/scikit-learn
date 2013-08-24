@@ -401,7 +401,7 @@ def label_binarize(y, classes, multilabel=False, neg_label=0, pos_label=1):
 
     if multilabel:
         if not y_is_multilabel:
-            raise ValueError("y should be a list of label lists/tuples,"
+            raise ValueError("y should be a list of label lists/tuples, "
                              "got %r" % (y,))
 
         # inverse map: label => column index

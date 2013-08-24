@@ -248,7 +248,7 @@ class _BaseKFold(with_metaclass(ABCMeta, _PartitionIterator)):
         if n_folds > self.n:
             raise ValueError(
                 ("Cannot have number of folds n_folds={0} greater"
-                 "than the number of samples: {1}.").format(n_folds, n))
+                 " than the number of samples: {1}.").format(n_folds, n))
 
 
 class KFold(_BaseKFold):

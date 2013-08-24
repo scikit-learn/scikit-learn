@@ -68,7 +68,7 @@ def read_zfile(file_handle):
     data = zlib.decompress(file_handle.read(), 15, length)
     assert len(data) == length, (
         "Incorrect data length while decompressing %s."
-        "The file could be corrupted." % file_handle)
+        " The file could be corrupted." % file_handle)
     return data
 
 

@@ -941,7 +941,7 @@ def _mini_batch_convergence(model, iteration_idx, n_iter, tol,
     if verbose:
         progress_msg = (
             'Minibatch iteration %d/%d:'
-            'mean batch inertia: %f, ewa inertia: %f ' % (
+            ' mean batch inertia: %f, ewa inertia: %f ' % (
                 iteration_idx + 1, n_iter, batch_inertia,
                 ewa_inertia))
         print(progress_msg)

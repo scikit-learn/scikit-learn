@@ -138,7 +138,7 @@ def c_step(X, n_support, remaining_iterations=30, initial_estimates=None,
         # c_step procedure converged
         if verbose:
             print("Optimal couple (location, covariance) found before"
-                  "ending iterations (%d left)" % (remaining_iterations))
+                  " ending iterations (%d left)" % (remaining_iterations))
         results = location, covariance, det, support, dist
     elif det > previous_det:
         # determinant has increased (should not happen)

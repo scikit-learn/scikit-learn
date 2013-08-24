@@ -154,14 +154,14 @@ def _deprecate_loss_and_score_funcs(
         if loss_func is not None:
             warn("Passing a loss function is "
                  "deprecated and will be removed in 0.15. "
-                 "Either use strings or score objects."
+                 "Either use strings or score objects. "
                  "The relevant new parameter is called ''scoring''. ",
                  category=DeprecationWarning, stacklevel=2)
             scorer = make_scorer(loss_func, greater_is_better=False)
         if score_func is not None:
             warn("Passing function as ``score_func`` is "
                  "deprecated and will be removed in 0.15. "
-                 "Either use strings or score objects."
+                 "Either use strings or score objects. "
                  "The relevant new parameter is called ''scoring''.",
                  category=DeprecationWarning, stacklevel=2)
             if loss_func is None or score_overrides_loss:
