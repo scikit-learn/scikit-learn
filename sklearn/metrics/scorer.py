@@ -39,7 +39,7 @@ class _BaseScorer(six.with_metaclass(ABCMeta, object)):
         self._sign = sign
 
     @abstractmethod
-    def __call__(self, estimator, X, y):
+    def __call__(self, estimator, X, y, sample_weight=None):
         pass
 
     def __repr__(self):
@@ -56,7 +56,7 @@ class _BaseScorer(six.with_metaclass(ABCMeta, object)):
 
 
 class _PredictScorer(_BaseScorer):
-    def __call__(self, estimator, X, y_true):
+    def __call__(self, estimator, X, y_true, sample_weight=None):
         """Evaluate predicted target values for X relative to y_true.
 
         Parameters
@@ -71,17 +71,24 @@ class _PredictScorer(_BaseScorer):
         y_true : array-like
             Gold standard target values for X.
 
+        sample_weight : array-like, optional (default=None)
+            Sample weights.
+
         Returns
         -------
         score : float
             Score function applied to prediction of estimator on X.
         """
         y_pred = estimator.predict(X)
+        if sample_weight is not None:
+            return self._sign * self._score_func(y_true, y_pred,
+                                                 sample_weight=sample_weight,
+                                                 **self._kwargs)
         return self._sign * self._score_func(y_true, y_pred, **self._kwargs)
 
 
 class _ProbaScorer(_BaseScorer):
-    def __call__(self, clf, X, y):
+    def __call__(self, clf, X, y, sample_weight=None):
         """Evaluate predicted probabilities for X relative to y_true.
 
         Parameters
@@ -97,12 +104,19 @@ class _ProbaScorer(_BaseScorer):
             Gold standard target values for X. These must be class labels,
             not probabilities.
 
+        sample_weight : array-like, optional (default=None)
+            Sample weights.
+
         Returns
         -------
         score : float
             Score function applied to prediction of estimator on X.
         """
         y_pred = clf.predict_proba(X)
+        if sample_weight is not None:
+            return self._sign * self._score_func(y, y_pred,
+                                                 sample_weight=sample_weight,
+                                                 **self._kwargs)
         return self._sign * self._score_func(y, y_pred, **self._kwargs)
 
     def _factory_args(self):
@@ -110,7 +124,7 @@ class _ProbaScorer(_BaseScorer):
 
 
 class _ThresholdScorer(_BaseScorer):
-    def __call__(self, clf, X, y):
+    def __call__(self, clf, X, y, sample_weight=None):
         """Evaluate decision function output for X relative to y_true.
 
         Parameters
@@ -127,6 +141,9 @@ class _ThresholdScorer(_BaseScorer):
         y : array-like
             Gold standard target values for X. These must be class labels,
             not decision function values.
+
+        sample_weight : array-like, optional (default=None)
+            Sample weights.
 
         Returns
         -------
@@ -152,6 +169,10 @@ class _ThresholdScorer(_BaseScorer):
             elif isinstance(y_pred, list):
                 y_pred = np.vstack([p[:, -1] for p in y_pred]).T
 
+        if sample_weight is not None:
+            return self._sign * self._score_func(y, y_pred,
+                                                 sample_weight=sample_weight,
+                                                 **self._kwargs)
         return self._sign * self._score_func(y, y_pred, **self._kwargs)
 
     def _factory_args(self):
