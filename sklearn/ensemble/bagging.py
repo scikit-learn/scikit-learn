@@ -16,7 +16,7 @@ from ..base import ClassifierMixin, RegressorMixin
 from ..externals.joblib import Parallel, delayed, cpu_count
 from ..externals import six
 from ..metrics import r2_score
-from ..utils import check_random_state, check_arrays
+from ..utils import check_random_state, check_arrays, column_or_1d
 from ..utils.fixes import bincount, unique
 
 from .base import BaseEnsemble
@@ -325,7 +325,7 @@ class BaseBagging(six.with_metaclass(ABCMeta, BaseEnsemble)):
 
     def _validate_y(self, y):
         # Default implementation
-        return y
+        return column_or_1d(y)
 
 
 class BaggingClassifier(BaseBagging, ClassifierMixin):
@@ -496,6 +496,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
         self.oob_score_ = oob_score
 
     def _validate_y(self, y):
+        y = column_or_1d(y)
         self.classes_, y = unique(y, return_inverse=True)
         self.n_classes_ = len(self.classes_)
 
