@@ -47,10 +47,10 @@ variance decomposition is therefore no longer the same. The tradeoff is better
 for bagging: averaging several decision trees fit on bootstrap copies of the
 dataset slightly increases the bias term but allows for a larger reduction of
 the variance, which results in a lower overall mean squared error (compare the
-red curves the lower figures). The script output also confirms this intuition.
-The total error of the bagging ensemble is lower than the total error of a
-single decision tree, and this difference indeed mainly stems from a reduced
-variance.
+red curves int the lower figures). The script output also confirms this
+intuition. The total error of the bagging ensemble is lower than the total
+error of a single decision tree, and this difference indeed mainly stems from a
+reduced variance.
 
 For further details on bias-variance decomposition, see section 7.3 of [1].
 

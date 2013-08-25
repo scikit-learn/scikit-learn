@@ -64,8 +64,8 @@ and ``max_features`` control the size of the subsets (in terms of samples and
 features), while ``bootstrap`` and ``bootstrap_features`` control whether
 samples and features are drawn with or without replacement. As an example, the
 snippet below illustrates how to instantiate a bagging ensemble of
-:class:`KNeighborsClassifier` base estimators, each built random subsets of 50%
-of the samples and 50% of the features.
+:class:`KNeighborsClassifier` base estimators, each built on random subsets of
+50% of the samples and 50% of the features.
 
     >>> from sklearn.ensemble import BaggingClassifier
     >>> from sklearn.neighbors import KNeighborsClassifier
