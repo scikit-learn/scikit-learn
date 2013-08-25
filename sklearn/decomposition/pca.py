@@ -4,6 +4,8 @@
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #         Olivier Grisel <olivier.grisel@ensta.org>
 #         Mathieu Blondel <mathieu@mblondel.org>
+#         Denis A. Engemann <d.engemann@fz-juelich.de>
+#
 # License: BSD 3 clause
 
 from math import log, sqrt
@@ -16,9 +18,8 @@ from scipy.special import gammaln
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import array2d, check_random_state, as_float_array
 from ..utils import atleast2d_or_csr
-from ..utils.extmath import fast_logdet
-from ..utils.extmath import safe_sparse_dot
-from ..utils.extmath import randomized_svd
+from ..utils.extmath import fast_logdet, safe_sparse_dot, randomized_svd, \
+                            fast_dot
 
 
 def _assess_dimension_(spectrum, rank, n_samples, n_features):
@@ -303,7 +304,7 @@ class PCA(BaseEstimator, TransformerMixin):
         X = array2d(X)
         if self.mean_ is not None:
             X = X - self.mean_
-        X_transformed = np.dot(X, self.components_.T)
+        X_transformed = fast_dot(X, self.components_.T)
         return X_transformed
 
     def inverse_transform(self, X):
@@ -325,7 +326,7 @@ class PCA(BaseEstimator, TransformerMixin):
         If whitening is enabled, inverse_transform does not compute the
         exact inverse operation as transform.
         """
-        return np.dot(X, self.components_) + self.mean_
+        return fast_dot(X, self.components_) + self.mean_
 
 
 class ProbabilisticPCA(PCA):

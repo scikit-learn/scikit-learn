@@ -16,6 +16,7 @@ from ..base import BaseEstimator, TransformerMixin
 from ..externals import six
 from ..externals.six import moves
 from ..utils import array2d, as_float_array, check_random_state, deprecated
+from ..utils.extmath import fast_dot
 
 __all__ = ['fastica', 'FastICA']
 
@@ -66,7 +67,7 @@ def _ica_def(X, tol, g, fun_args, max_iter, w_init):
         w /= np.sqrt((w ** 2).sum())
 
         for _ in moves.xrange(max_iter):
-            gwtx, g_wtx = g(np.dot(w.T, X), fun_args)
+            gwtx, g_wtx = g(fast_dot(w.T, X), fun_args)
 
             w1 = (X * gwtx).mean(axis=1) - g_wtx.mean() * w
 
@@ -94,12 +95,12 @@ def _ica_par(X, tol, g, fun_args, max_iter, w_init):
     del w_init
     p_ = float(X.shape[1])
     for ii in moves.xrange(max_iter):
-        gwtx, g_wtx = g(np.dot(W, X), fun_args)
-        W1 = _sym_decorrelation(np.dot(gwtx, X.T) / p_
+        gwtx, g_wtx = g(fast_dot(W, X), fun_args)
+        W1 = _sym_decorrelation(fast_dot(gwtx, X.T) / p_
                                 - g_wtx[:, np.newaxis] * W)
         del gwtx, g_wtx
         # builtin max, abs are faster than numpy counter parts.
-        lim = max(abs(abs(np.diag(np.dot(W1, W.T))) - 1))
+        lim = max(abs(abs(np.diag(fast_dot(W1, W.T))) - 1))
         W = W1
         if lim < tol:
             break
@@ -322,7 +323,7 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
 
     if whiten:
         if compute_sources:
-            S = np.dot(np.dot(W, K), X).T
+            S = fast_dot(fast_dot(W, K), X).T
         else:
             S = None
         if return_X_mean:
@@ -331,7 +332,7 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
             return K, W, S
     else:
         if compute_sources:
-            S = np.dot(W, X).T
+            S = fast_dot(W, X).T
         else:
             S = None
         if return_X_mean:
@@ -508,7 +509,7 @@ class FastICA(BaseEstimator, TransformerMixin):
         if self.whiten:
             X -= self.mean_
 
-        return np.dot(X, self.components_.T)
+        return fast_dot(X, self.components_.T)
 
     @deprecated('To be removed in 0.16. Use the `mixing_` attribute.')
     def get_mixing_matrix(self):
@@ -543,7 +544,7 @@ class FastICA(BaseEstimator, TransformerMixin):
         """
         if copy:
             X = X.copy()
-        X = np.dot(X, self.mixing_.T)
+        X = fast_dot(X, self.mixing_.T)
         if self.whiten:
             X += self.mean_
 
