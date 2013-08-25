@@ -190,17 +190,12 @@ def _partition_estimators(ensemble):
         n_jobs = min(ensemble.n_jobs, ensemble.n_estimators)
 
     # Partition estimators between jobs
-    n_estimators = [ensemble.n_estimators // n_jobs] * n_jobs
+    n_estimators = (ensemble.n_estimators // n_jobs) * np.ones(n_jobs,
+                                                               dtype=np.int)
+    n_estimators[:ensemble.n_estimators % n_jobs] += 1
+    starts = np.cumsum(n_estimators)
 
-    for i in range(ensemble.n_estimators % n_jobs):
-        n_estimators[i] += 1
-
-    starts = [0] * (n_jobs + 1)
-
-    for i in range(1, n_jobs + 1):
-        starts[i] = starts[i - 1] + n_estimators[i - 1]
-
-    return n_jobs, n_estimators, starts
+    return n_jobs, list(n_estimators), [0] + list(starts)
 
 
 class BaseBagging(six.with_metaclass(ABCMeta, BaseEnsemble)):
@@ -341,12 +336,12 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
 
     This algorithm encompasses several works from the literature. When random
     subsets of the dataset are drawn as random subsets of the samples, then
-    this algorithm is known as Pasting [1]. If samples are drawn with
-    replacement, then the method is known as Bagging [2]. When random subsets
+    this algorithm is known as Pasting [1]_. If samples are drawn with
+    replacement, then the method is known as Bagging [2]_. When random subsets
     of the dataset are drawn as random subsets of the features, then the method
-    is known as Random Subspaces [3]. Finally, when base estimators are built
+    is known as Random Subspaces [3]_. Finally, when base estimators are built
     on subsets of both samples and features, then the method is known as
-    Random Patches [4].
+    Random Patches [4]_.
 
     Parameters
     ----------
@@ -506,7 +501,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
         """Predict class for X.
 
         The predicted class of an input sample is computed as the class with
-        the highest mean predicted probability. If base estimators do no
+        the highest mean predicted probability. If base estimators do not
         implement a ``predict_proba`` method, then it resorts to voting.
 
         Parameters
@@ -666,12 +661,12 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
 
     This algorithm encompasses several works from the literature. When random
     subsets of the dataset are drawn as random subsets of the samples, then
-    this algorithm is known as Pasting [1]. If samples are drawn with
-    replacement, then the method is known as Bagging [2]. When random subsets
+    this algorithm is known as Pasting [1]_. If samples are drawn with
+    replacement, then the method is known as Bagging [2]_. When random subsets
     of the dataset are drawn as random subsets of the features, then the method
-    is known as Random Subspaces [3]. Finally, when base estimators are built
+    is known as Random Subspaces [3]_. Finally, when base estimators are built
     on subsets of both samples and features, then the method is known as
-    Random Patches [4].
+    Random Patches [4]_.
 
     Parameters
     ----------
