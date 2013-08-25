@@ -98,7 +98,7 @@ replacement for `numpy.dot`. example::
 
   >>> X = np.random.random_sample([2, 10])
 
-  >>> (np.dot(X, X.T) == fast_dot(X, X.T)).all()
+  >>> np.allclose(np.dot(X, X.T), fast_dot(X, X.T))
   True
 
 However this requires data to be exactly 2 dimensional and of the same type,
