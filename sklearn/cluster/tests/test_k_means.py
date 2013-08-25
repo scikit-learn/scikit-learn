@@ -628,7 +628,7 @@ def test_k_means_function():
 
 def test_pick_unique_labels():
     all_random_states = np.array([check_random_state(i) for i in range(500)])
-    relative_probabilities = np.array([(i+1)*(i+2) for i in range(10)])
+    relative_probabilities = np.array([(i + 1) * (i + 2) for i in range(10)])
     labels = range(10)
     no_single_picks = 1
     no_multiple_picks = 4
