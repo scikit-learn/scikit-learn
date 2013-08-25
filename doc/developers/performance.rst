@@ -114,7 +114,8 @@ related warning which is silenced by default. example::
 
   >>> warnings.simplefilter('always', NonBLASDotWarning) # doctest: +SKIP
 
-If numpy > 1.8 is available the `fast_dot` is not necessary.
+If numpy > 1.8 is available the `fast_dot` is not necessary. In that case
+the `numpy.dot` is being used.
 
 .. _profiling-python-code:
 
