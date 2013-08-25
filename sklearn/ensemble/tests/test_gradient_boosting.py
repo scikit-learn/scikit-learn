@@ -18,7 +18,6 @@ from sklearn.utils.validation import DataConversionWarning
 
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.ensemble import GradientBoostingRegressor
-from sklearn.ensemble.gradient_boosting import ZeroEstimator
 
 from sklearn import datasets
 
@@ -527,7 +526,6 @@ def test_oob_multilcass_iris():
 
     assert clf.oob_improvement_.shape[0] == clf.n_estimators
     # hard-coded regression test - change if modification in OOB computation
-    # FIXME: the following snippet does not yield the same results on 32 bits
     assert_array_almost_equal(clf.oob_improvement_[:5],
                               np.array([12.61875849, 10.42615433, 7.97229658, 6.24819282, 4.94196775]),
                               decimal=6)
