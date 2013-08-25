@@ -8,7 +8,6 @@ clustering.
 # License: BSD 3 clause
 
 import numpy as np
-import warnings
 
 from ..base import BaseEstimator, ClusterMixin
 from ..utils import as_float_array
@@ -22,10 +21,10 @@ def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
     Parameters
     ----------
 
-    S: array [n_samples, n_samples]
+    S : array [n_samples, n_samples]
         Matrix of similarities between points
 
-    preference: array [n_samples,] or float, optional, default: None
+    preference : array [n_samples,] or float, optional, default: None
         Preferences for each point - points with larger values of
         preferences are more likely to be chosen as exemplars. The number of
         exemplars, i.e. of clusters, is influenced by the input preferences
@@ -34,27 +33,27 @@ def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
         number of clusters). For a smaller amount of clusters, this can be set
         to the minimum value of the similarities.
 
-    convergence_iter: int, optional, default: 15
+    convergence_iter : int, optional, default: 15
         Number of iterations with no change in the number
         of estimated clusters that stops the convergence.
 
-    max_iter: int, optional, default: 200
+    max_iter : int, optional, default: 200
         Maximum number of iterations
 
-    damping: float, optional, default: 0.5
+    damping : float, optional, default: 0.5
         Damping factor between 0.5 and 1.
 
-    copy: boolean, optional, default: True
+    copy : boolean, optional, default: True
         If copy is False, the affinity matrix is modified inplace by the
         algorithm, for memory efficiency
 
-    verbose: boolean, optional, default: False
+    verbose : boolean, optional, default: False
         The verbosity level
 
     Returns
     -------
 
-    cluster_centers_indices: array [n_clusters]
+    cluster_centers_indices : array [n_clusters]
         index of clusters centers
 
     labels : array [n_samples]
@@ -178,32 +177,32 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
 
     Parameters
     ----------
-    damping: float, optional, default: 0.5
+    damping : float, optional, default: 0.5
         Damping factor between 0.5 and 1.
 
-    convergence_iter: int, optional, default: 15
+    convergence_iter : int, optional, default: 15
         Number of iterations with no change in the number
         of estimated clusters that stops the convergence.
 
-    max_iter: int, optional, default: 200
+    max_iter : int, optional, default: 200
         Maximum number of iterations
 
-    copy: boolean, optional, default: True
+    copy : boolean, optional, default: True
         Make a copy of input data.
 
-    preference: array [n_samples,] or float, optional, default: None
+    preference : array [n_samples,] or float, optional, default: None
         Preferences for each point - points with larger values of
         preferences are more likely to be chosen as exemplars. The number
         of exemplars, ie of clusters, is influenced by the input
         preferences value. If the preferences are not passed as arguments,
         they will be set to the median of the input similarities.
 
-    affinity: string, optional, default=``euclidean``
+    affinity : string, optional, default=``euclidean``
         Which affinity to use. At the moment ``precomputed`` and
         ``euclidean`` are supported. ``euclidean`` uses the
         negative squared euclidean distance between points.
 
-    verbose: boolean, optional, default: False
+    verbose : boolean, optional, default: False
         Whether to be verbose.
 
 
