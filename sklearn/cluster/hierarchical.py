@@ -149,9 +149,13 @@ def ward_tree(X, connectivity=None, n_components=None, copy=None,
 
     if connectivity is None:
         if n_clusters is not None:
-            warnings.warn('Early stopping is implemented only for '
-                          'structured Ward clustering (i.e. with '
-                          'explicit connectivity.', stacklevel=2)
+            warnings.warn('Partial build of the tree is implemented '
+                          'only for structured clustering (i.e. with '
+                          'explicit connectivity). The algorithm '
+                          'will build the full tree and only '
+                          'retain the lower branches required '
+                          'for the specified number of clusters',
+                          stacklevel=2)
         out = hierarchy.ward(X)
         children_ = out[:, :2].astype(np.intp)
         return children_, 1, n_samples, None
@@ -324,9 +328,13 @@ def linkage_tree(X, connectivity=None, n_components=None,
 
     if connectivity is None:
         if n_clusters is not None:
-            warnings.warn('Early stopping is implemented only for '
-                          'structured clustering (i.e. with '
-                          'explicit connectivity.', stacklevel=2)
+            warnings.warn('Partial build of the tree is implemented '
+                          'only for structured clustering (i.e. with '
+                          'explicit connectivity). The algorithm '
+                          'will build the full tree and only '
+                          'retain the lower branches required '
+                          'for the specified number of clusters',
+                          stacklevel=2)
         out = scipy_func(X)
         children_ = out[:, :2].astype(np.int)
         return children_, 1, n_samples, None
