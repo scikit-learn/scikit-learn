@@ -316,11 +316,11 @@ def linkage_tree(X, connectivity=None, n_components=None,
         X = np.reshape(X, (-1, 1))
     n_samples, n_features = X.shape
 
-    linkage_choices = {'complete': (hierarchy.complete, max_merge),
-                       'average': (hierarchy.weighted, average_merge),
+    linkage_choices = {'complete': max_merge,
+                       'average': average_merge,
                        }
     try:
-        scipy_func, join_func = linkage_choices[linkage]
+        join_func = linkage_choices[linkage]
     except KeyError:
         raise ValueError(
             'Unknown linkage option, linkage should be one '
@@ -335,7 +335,9 @@ def linkage_tree(X, connectivity=None, n_components=None,
                           'retain the lower branches required '
                           'for the specified number of clusters',
                           stacklevel=2)
-        out = scipy_func(X)
+        # XXX: if affinity is precomputed or callable, the following will
+        # not work
+        out = hierarchy.linkage(X, method=linkage, metric=affinity)
         children_ = out[:, :2].astype(np.int)
         return children_, 1, n_samples, None
 
@@ -510,8 +512,7 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
 
     affinity : string or callable, default: "euclidean"
         Metric used to compute the linkage. Can be "euclidean", "l1", "l2",
-        "manhattan", "hamming", "jaccard", ... See the metrics.pairwise module
-        for the full list.
+        "manhattan", or "cosine".
         If linkage is "ward", only "euclidean" is accepted.
 
     memory : Instance of joblib.Memory or string (optional)
@@ -600,10 +601,6 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         tree_builder = _TREE_BUILDERS[self.linkage]
 
         if not self.connectivity is None:
-            if not sparse.issparse(self.connectivity):
-                raise TypeError("`connectivity` should be a sparse matrix or "
-                                "None, got: %r" % type(self.connectivity))
-
             if (self.connectivity.shape[0] != X.shape[0] or
                     self.connectivity.shape[1] != X.shape[0]):
                 raise ValueError("`connectivity` does not have shape "
@@ -623,10 +620,14 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
             n_clusters = None
 
         # Construct the tree
+        kwargs = {}
+        if self.linkage != 'ward':
+            kwargs['linkage'] = self.linkage
         self.children_, self.n_components_, self.n_leaves_, parents = \
             memory.cache(tree_builder)(X, self.connectivity,
                                        n_components=self.n_components,
-                                       n_clusters=n_clusters)
+                                       n_clusters=n_clusters,
+                                       **kwargs)
         # Cut the tree
         if compute_full_tree:
             self.labels_ = _hc_cut(self.n_clusters, self.children_,

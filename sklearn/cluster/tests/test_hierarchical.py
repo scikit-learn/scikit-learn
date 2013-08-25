@@ -22,6 +22,7 @@ from sklearn.cluster.hierarchical import (_hc_cut, _TREE_BUILDERS,
                                           linkage_tree)
 from sklearn.feature_extraction.image import grid_to_graph
 from sklearn.metrics.pairwise import PAIRED_DISTANCES
+from sklearn.metrics.cluster import normalized_mutual_info_score
 
 
 def test_linkage_misc():
@@ -116,7 +117,8 @@ def test_agglomerative_clustering():
     """
     rnd = np.random.RandomState(0)
     mask = np.ones([10, 10], dtype=np.bool)
-    X = rnd.randn(100, 50)
+    n_samples = 100
+    X = rnd.randn(n_samples, 50)
     connectivity = grid_to_graph(*mask.shape)
     for linkage in ("ward", "complete", "average"):
         clustering = AgglomerativeClustering(n_clusters=10,
@@ -145,11 +147,6 @@ def test_agglomerative_clustering():
         # Check that we raise a TypeError on dense matrices
         clustering = AgglomerativeClustering(
             n_clusters=10,
-            connectivity=connectivity.todense(),
-            linkage=linkage)
-        assert_raises(TypeError, clustering.fit, X)
-        clustering = AgglomerativeClustering(
-            n_clusters=10,
             connectivity=sparse.lil_matrix(
                 connectivity.todense()[:10, :10]),
             linkage=linkage)
@@ -166,11 +163,23 @@ def test_agglomerative_clustering():
 
     # Test using another metric than euclidean works with linkage complete
     for affinity in PAIRED_DISTANCES.keys():
+        # Compare our (structured) implementation to scipy
         clustering = AgglomerativeClustering(
             n_clusters=10,
-            connectivity=connectivity.todense(),
+            connectivity=np.ones((n_samples, n_samples)),
             affinity=affinity,
             linkage="complete")
+        clustering.fit(X)
+        clustering2 = AgglomerativeClustering(
+            n_clusters=10,
+            connectivity=None,
+            affinity=affinity,
+            linkage="complete")
+        clustering2.fit(X)
+        assert_equal(normalized_mutual_info_score(
+                        clustering2.labels_,
+                        clustering.labels_), 1)
+
 
 
 def test_ward_agglomeration():
