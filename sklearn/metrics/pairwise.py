@@ -437,6 +437,8 @@ def paired_distances(X, Y, metric="euclidean", **kwds):
         for i in range(len(X)):
             distances[i] = metric(X[i], Y[i])
         return distances
+    else:
+        raise ValueError('Unknown distance %s' % metric)
 
 
 # Kernels
