@@ -560,8 +560,7 @@ def _pick_unique_labels(relative_probabilities, labels,
     picks = np.zeros(no_picks, dtype=np.int)
 
     # making sure we do not exceed any array
-    iterations = min(len(relative_probabilities), len(labels))
-    iterations = min(iterations, no_picks)
+    iterations = min(len(relative_probabilities), len(labels), no_picks)
     for p in range(iterations):
         # picking one value from set of elements
         # with their relative probabilities
