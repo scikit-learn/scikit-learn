@@ -10,6 +10,8 @@ Changelog
 
    - Add predict method to :class:`cluster.AffinityPropagation` and
      :class:`cluster.MeanShift`, by `Mathieu Blondel`_.
+   - Add :func:`utils.extmath.fast_dot` -- a memory efficient replacement for
+   `numpy.dot` by `Denis Engemann`_, and `Alexandre Gramfort`_.
 
    - New unsupervised feature selection algorithm
      :class:`feature_selection.VarianceThreshold`, by `Lars Buitinck`_.
