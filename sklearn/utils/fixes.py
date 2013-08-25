@@ -6,6 +6,7 @@ at which the fixe is no longer needed.
 # Authors: Emmanuelle Gouillart <emmanuelle.gouillart@normalesup.org>
 #          Gael Varoquaux <gael.varoquaux@normalesup.org>
 #          Fabian Pedregosa <fpedregosa@acm.org>
+#
 # License: BSD 3 clause
 
 from operator import itemgetter

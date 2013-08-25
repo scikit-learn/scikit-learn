@@ -39,7 +39,8 @@ looping code using the vectorized idioms of those libraries. In practice
 this means trying to **replace any nested for loops by calls to equivalent
 Numpy array methods**. The goal is to avoid the CPU wasting time in the
 Python interpreter rather than crunching numbers to fit your statistical
-model.
+model. It's generally a good idea to consider NumPy and SciPy performance tips:
+http://wiki.scipy.org/PerformanceTips
 
 Sometimes however an algorithm cannot be expressed efficiently in simple
 vectorized Numpy code. In this case, the recommended strategy is the
@@ -75,6 +76,47 @@ When using Cython, include the generated C source code alongside with
 the Cython source code. The goal is to make it possible to install the
 scikit on any machine with Python, Numpy, Scipy and C/C++ compiler.
 
+Memory and implicit copies
+==========================
+
+Some of the numpy and scipy core functions are optimized for Fortran contiguous
+data. In the case of the dot product, for numpy vetsions < 1.8, this leads to
+implicit copies performed to adjust data to the needs of the underlying
+Fortran routines (See section `Linear Algebra on large Arrays`
+on http://wiki.scipy.org/PerformanceTips). This not only consumes memory
+but also takes additional time.
+
+For convenience, if the numpy version available is older than 1.8, we internally
+use an optimized `numpy.dot` function that saves additional copies and improves
+speed by directly calling the Fortran routines with the appropriate data input
+while preserving the `numpy.dot` call signature. This means it can be used as a
+replacement for `numpy.dot`. example::
+
+  >>> import numpy as np
+
+  >>> from sklearn.utils.extmath import fast_dot
+
+  >>> X = np.random.random_sample([2, 10])
+
+  >>> (np.dot(X, X.T) == fast_dot(X, X.T)).all()
+  True
+
+However this requires data to be exactly 2 dimensional and of the same type,
+either single or double precision float. If these requirements aren't met or
+the BLAS package is not available, the call is silently dispatched to
+`numpy.dot`. If you want to be sure when the original `numpy.dot` has been
+invoked and when our `fast_dot` function has been used you can activate the
+related warning which is silenced by default. example::
+
+  >>> import warnings
+
+  >>> from sklearn.utils.validation import NonBLASDotWarning
+
+  >>> warnings.simplefilter('always', NonBLASDotWarning) # doctest: +SKIP
+
+If numpy > 1.8 is available the `fast_dot` is not necessary. In that case
+the `numpy.dot` is being used. The issue has also been fixed in the 1.7.2
+maintenance branch.
 
 .. _profiling-python-code:
 

@@ -16,8 +16,17 @@ class DataConversionWarning(UserWarning):
     "A warning on implicit data conversions happening in the code"
     pass
 
-
 warnings.simplefilter("always", DataConversionWarning)
+
+
+class NonBLASDotWarning(UserWarning):
+    "A warning on implicit dispatch to numpy.dot"
+    pass
+
+
+# Silenced by default to reduce verbosity. Turn on at runtime for
+# performance profiling.
+warnings.simplefilter('ignore', NonBLASDotWarning)
 
 
 def _assert_all_finite(X):
