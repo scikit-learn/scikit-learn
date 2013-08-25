@@ -52,7 +52,7 @@ intuition. The total error of the bagging ensemble is lower than the total
 error of a single decision tree, and this difference indeed mainly stems from a
 reduced variance.
 
-For further details on bias-variance decomposition, see section 7.3 of [1].
+For further details on bias-variance decomposition, see section 7.3 of [1]_.
 
 References
 ----------
@@ -90,7 +90,7 @@ n_estimators = len(estimators)
 
 # Generate data
 def f(x):
-    x = x.reshape((-1,))
+    x = x.ravel()
 
     return np.exp(-x ** 2) + 1.5 * np.exp(-(x - 2) ** 2)
 

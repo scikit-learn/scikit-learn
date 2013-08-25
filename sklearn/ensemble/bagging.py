@@ -36,11 +36,11 @@ def _parallel_build_estimators(n_estimators, ensemble, X, y, sample_weight,
     max_features = ensemble.max_features
 
     if (not isinstance(max_samples, (numbers.Integral, np.integer)) and
-        (0.0 < max_samples <= 1.0)):
+            (0.0 < max_samples <= 1.0)):
         max_samples = int(max_samples * n_samples)
 
     if (not isinstance(max_features, (numbers.Integral, np.integer)) and
-        (0.0 < max_features <= 1.0)):
+            (0.0 < max_features <= 1.0)):
         max_features = int(max_features * n_features)
 
     bootstrap = ensemble.bootstrap
@@ -154,7 +154,7 @@ def _parallel_predict_log_proba(estimators, estimators_features, X, n_classes):
                                                log_proba_estimator[:, j])
 
             missing = [c for c in range(n_classes)
-                if c not in estimator.classes_]
+                       if c not in estimator.classes_]
 
             for c in missing:
                 log_proba[:, c] = np.logaddexp(log_proba[:, c], -np.inf)
