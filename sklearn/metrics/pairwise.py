@@ -381,7 +381,34 @@ def paired_manhattan_distances(X, Y):
     return np.abs(X - Y).sum(axis=-1)
 
 
+def paired_cosine_distances(X, Y):
+    """
+    Computes the paired cosine distances between X and Y
+
+    Parameters
+    ----------
+    X : array-like, shape = [n_samples, n_features]
+
+    Y : array-like, shape = [n_samples, n_features]
+
+    Returns
+    -------
+    distances : ndarray (n_samples, )
+
+    Notes
+    ------
+    The cosine distance is equivalent to the half the squared
+    euclidean distance if each sample is normalized to unit norm
+    """
+    X, Y = check_paired_arrays(X, Y)
+
+    X_normalized = normalize(X, copy=True)
+    X_normalized -= normalize(Y, copy=True)
+    return .5 * (X_normalized ** 2).sum(axis=-1)
+
+
 PAIRED_DISTANCES = {
+    'cosine': paired_cosine_distances,
     'euclidean': paired_euclidean_distances,
     'l2': paired_euclidean_distances,
     'l1': paired_manhattan_distances,

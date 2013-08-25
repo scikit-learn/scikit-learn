@@ -71,7 +71,7 @@ def _fix_connectivity(X, connectivity, n_components=None,
             for j in xrange(i):
                 idx_j = np.where(labels == j)[0]
                 Xj = X[idx_j]
-                D = pairwise_distances(Xi, Xj)
+                D = pairwise_distances(Xi, Xj, metric=affinity)
                 ii, jj = np.where(D == np.min(D))
                 ii = ii[0]
                 jj = jj[0]
@@ -287,8 +287,8 @@ def linkage_tree(X, connectivity=None, n_components=None,
               all observations of the two sets.
 
     affinity : string, optional, default: "euclidean".
-        which metric to use. Can be "euclidean", "manhattan", or any of the
-        scikits known paired distance (see metric.pairwise)
+        which metric to use. Can be "euclidean", "manhattan", or any
+        distance know to paired distance (see metric.pairwise)
 
     Returns
     -------
@@ -353,7 +353,8 @@ def linkage_tree(X, connectivity=None, n_components=None,
     # FIXME We compute all the distances, while we could have only computed
     # the "interesting" distances
     distances = paired_distances(X[connectivity.row],
-                                 X[connectivity.col])
+                                 X[connectivity.col],
+                                 metric=affinity)
     connectivity.data = distances
 
     if n_clusters is None:

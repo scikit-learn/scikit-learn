@@ -24,6 +24,7 @@ from sklearn.metrics.pairwise import cosine_distances
 from sklearn.metrics.pairwise import pairwise_distances
 from sklearn.metrics.pairwise import pairwise_kernels
 from sklearn.metrics.pairwise import PAIRWISE_KERNEL_FUNCTIONS
+from sklearn.metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
 from sklearn.metrics.pairwise import PAIRED_DISTANCES
 from sklearn.metrics.pairwise import check_pairwise_arrays
 from sklearn.metrics.pairwise import check_paired_arrays
@@ -203,6 +204,12 @@ def test_paired_distances():
         S = paired_distances(X, Y, metric=metric)
         S2 = func(X, Y)
         assert_array_almost_equal(S, S2)
+        if metric in PAIRWISE_DISTANCE_FUNCTIONS:
+            # Check the the pairwise_distances implementation
+            # gives the same value
+            distances = PAIRWISE_DISTANCE_FUNCTIONS[metric](X, Y)
+            distances = np.diag(distances)
+            assert_array_almost_equal(distances, S)
 
     # Test that a value error is raised when the lengths of X and Y should not
     # differ
