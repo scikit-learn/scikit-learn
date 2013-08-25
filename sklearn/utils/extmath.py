@@ -119,7 +119,7 @@ def _fast_dot(A, B):
 #  only try to use fast_dot for older numpy versions.
 #  the related issue has been tackled meanwhile. Also, depending on the build
 #  the current numpy master's dot can about 3 times faster.
-if LooseVersion(np.__version__) < '1.8':
+if LooseVersion(np.__version__) < '1.7.2':  # backported
     try:
         linalg.get_blas_funcs('gemm')
         fast_dot = _fast_dot
