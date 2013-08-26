@@ -332,7 +332,7 @@ class BaseBagging(six.with_metaclass(ABCMeta, BaseEnsemble)):
 
     def _validate_y(self, y):
         # Default implementation
-        return column_or_1d(y)
+        return column_or_1d(y, warn=True)
 
 
 class BaggingClassifier(BaseBagging, ClassifierMixin):
@@ -509,7 +509,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
         self.oob_score_ = oob_score
 
     def _validate_y(self, y):
-        y = column_or_1d(y)
+        y = column_or_1d(y, warn=True)
         self.classes_, y = unique(y, return_inverse=True)
         self.n_classes_ = len(self.classes_)
 
