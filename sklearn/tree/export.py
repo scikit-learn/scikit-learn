@@ -9,12 +9,14 @@ This module defines export functions for decision trees.
 #          Satrajit Gosh <satrajit.ghosh@gmail.com>
 # Licence: BSD 3 clause
 
+from warnings import warn
+
 from ..externals import six
 from . import _tree
 
 
 def export_graphviz(decision_tree, out_file="tree.dot", feature_names=None,
-                    max_depth=None, close=True):
+                    max_depth=None, close=None):
     """Export a decision tree in DOT format.
 
     This function generates a GraphViz representation of the decision tree,
@@ -39,12 +41,6 @@ def export_graphviz(decision_tree, out_file="tree.dot", feature_names=None,
         The maximum depth of the representation. If None, the tree is fully
         generated.
 
-    Returns
-    -------
-    out_file : file object
-        The file object to which the tree was exported.  The user is
-        expected to `close()` this object when done with it.
-
     Examples
     --------
     >>> import os
@@ -55,9 +51,12 @@ def export_graphviz(decision_tree, out_file="tree.dot", feature_names=None,
     >>> iris = load_iris()
 
     >>> clf = clf.fit(iris.data, iris.target)
-    >>> export_file = tree.export_graphviz(clf,
+    >>> tree.export_graphviz(clf,
     ...     out_file='tree.dot')                # doctest: +SKIP
     """
+    if close is not None:
+        warn("The close parameter is deprecated as of version 0.14 "
+             "and will be removed in 0.16.", DeprecationWarning)
     def node_to_str(tree, node_id):
         value = tree.value[node_id]
         if tree.n_outputs == 1:
@@ -118,11 +117,13 @@ def export_graphviz(decision_tree, out_file="tree.dot", feature_names=None,
                 # Add edge to parent
                 out_file.write('%d -> %d ;\n' % (parent, node_id))
 
+    own_file = False
     if isinstance(out_file, six.string_types):
         if six.PY3:
             out_file = open(out_file, "w", encoding="utf-8")
         else:
             out_file = open(out_file, "wb")
+        own_file = True
 
     out_file.write("digraph Tree {\n")
     if isinstance(decision_tree, _tree.Tree):
@@ -131,4 +132,5 @@ def export_graphviz(decision_tree, out_file="tree.dot", feature_names=None,
         recurse(decision_tree.tree_, 0)
     out_file.write("}")
 
-    return out_file
+    if own_file:
+        out_file.close()
