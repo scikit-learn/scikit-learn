@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """Truncated SVD for sparse matrices, aka latent semantic analysis (LSA).
 """
 
@@ -29,7 +27,7 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
     but operates on sample vectors directly, instead of on a covariance matrix.
     This means it can work with scipy.sparse matrices efficiently.
 
-    In particular, truncated SVD works on term count/tf–idf matrices as
+    In particular, truncated SVD works on term count/tf-idf matrices as
     returned by the vectorizers in sklearn.feature_extraction.text. In that
     context, it is known as latent semantic analysis (LSA).
 
