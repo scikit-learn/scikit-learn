@@ -16,6 +16,7 @@ from ..base import ClassifierMixin, RegressorMixin
 from ..externals.joblib import Parallel, delayed, cpu_count
 from ..externals import six
 from ..metrics import r2_score
+from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
 from ..utils import check_random_state, check_arrays, column_or_1d
 from ..utils.fixes import bincount, unique
 from ..utils.random import sample_without_replacement
@@ -47,7 +48,7 @@ def _parallel_build_estimators(n_estimators, ensemble, X, y, sample_weight,
     bootstrap = ensemble.bootstrap
     bootstrap_features = ensemble.bootstrap_features
     support_sample_weight = ("sample_weight" in
-                             getargspec(ensemble.base_estimator.fit)[0])
+                             getargspec(ensemble.base_estimator_.fit)[0])
 
     # Build estimators
     estimators = []
@@ -216,7 +217,7 @@ class BaseBagging(six.with_metaclass(ABCMeta, BaseEnsemble)):
 
     @abstractmethod
     def __init__(self,
-                 base_estimator,
+                 base_estimator=None,
                  n_estimators=10,
                  max_samples=1.0,
                  max_features=1.0,
@@ -275,6 +276,8 @@ class BaseBagging(six.with_metaclass(ABCMeta, BaseEnsemble)):
         y = self._validate_y(y)
 
         # Check parameters
+        self._validate_estimator()
+
         if isinstance(self.max_samples, (numbers.Integral, np.integer)):
             max_samples = self.max_samples
         else:  # float
@@ -437,7 +440,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
            Learning and Knowledge Discovery in Databases, 346-361, 2012.
     """
     def __init__(self,
-                 base_estimator,
+                 base_estimator=None,
                  n_estimators=10,
                  max_samples=1.0,
                  max_features=1.0,
@@ -459,6 +462,11 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
             n_jobs=n_jobs,
             random_state=random_state,
             verbose=verbose)
+
+    def _validate_estimator(self):
+        """Check the estimator and set the base_estimator_ attribute."""
+        super(BaggingClassifier, self)._validate_estimator(
+            default=DecisionTreeClassifier())
 
     def _set_oob_score(self, X, y):
         n_classes_ = self.n_classes_
@@ -589,7 +597,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
             The class log-probabilities of the input samples. Classes are
             ordered by arithmetical order.
         """
-        if hasattr(self.base_estimator, "predict_log_proba"):
+        if hasattr(self.base_estimator_, "predict_log_proba"):
             # Check data
             X, = check_arrays(X)
 
@@ -757,7 +765,7 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
     """
 
     def __init__(self,
-                 base_estimator,
+                 base_estimator=None,
                  n_estimators=10,
                  max_samples=1.0,
                  max_features=1.0,
@@ -812,6 +820,11 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
         y_hat = sum(all_y_hat) / self.n_estimators
 
         return y_hat
+
+    def _validate_estimator(self):
+        """Check the estimator and set the base_estimator_ attribute."""
+        super(BaggingRegressor, self)._validate_estimator(
+            default=DecisionTreeRegressor())
 
     def _set_oob_score(self, X, y):
         n_samples = y.shape[0]

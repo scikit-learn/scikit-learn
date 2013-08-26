@@ -54,7 +54,8 @@ def test_classification():
                           "bootstrap": [True, False],
                           "bootstrap_features": [True, False]})
 
-    for base_estimator in [DummyClassifier(),
+    for base_estimator in [None,
+                           DummyClassifier(),
                            Perceptron(),
                            DecisionTreeClassifier(),
                            KNeighborsClassifier(),
@@ -76,7 +77,8 @@ def test_regression():
                           "bootstrap": [True, False],
                           "bootstrap_features": [True, False]})
 
-    for base_estimator in [DummyRegressor(),
+    for base_estimator in [None,
+                           DummyRegressor(),
                            DecisionTreeRegressor(),
                            KNeighborsRegressor(),
                            SVR()]:

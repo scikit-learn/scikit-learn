@@ -279,6 +279,8 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
             y = np.ascontiguousarray(y, dtype=DOUBLE)
 
         # Check parameters
+        self._validate_estimator()
+
         if not self.bootstrap and self.oob_score:
             raise ValueError("Out of bag estimation only available"
                              " if bootstrap=True")
