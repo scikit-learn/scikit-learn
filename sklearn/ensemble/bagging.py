@@ -18,6 +18,7 @@ from ..externals import six
 from ..metrics import r2_score
 from ..utils import check_random_state, check_arrays, column_or_1d
 from ..utils.fixes import bincount, unique
+from ..utils.random import sample_without_replacement
 
 from .base import BaseEnsemble
 
@@ -70,7 +71,9 @@ def _parallel_build_estimators(n_estimators, ensemble, X, y, sample_weight,
         if bootstrap_features:
             features = random_state.randint(0, n_features, max_features)
         else:
-            features = random_state.permutation(n_features)[:max_features]
+            features = sample_without_replacement(n_features,
+                                                  max_features,
+                                                  random_state=random_state)
 
         # Draw samples, using sample weights, and then fit
         if support_sample_weight:
@@ -85,8 +88,12 @@ def _parallel_build_estimators(n_estimators, ensemble, X, y, sample_weight,
                 curr_sample_weight *= sample_counts
 
             else:
-                indices = random_state.permutation(n_samples)[max_samples:]
-                curr_sample_weight[indices] = 0
+                not_indices = sample_without_replacement(
+                    n_samples,
+                    n_samples - max_samples,
+                    random_state=random_state)
+
+                curr_sample_weight[not_indices] = 0
 
             estimator.fit(X[:, features], y, sample_weight=curr_sample_weight)
             samples = curr_sample_weight > 0.
@@ -96,7 +103,9 @@ def _parallel_build_estimators(n_estimators, ensemble, X, y, sample_weight,
             if bootstrap:
                 indices = random_state.randint(0, n_samples, max_samples)
             else:
-                indices = random_state.permutation(n_samples)[:max_samples]
+                indices = sample_without_replacement(n_samples,
+                                                     max_samples,
+                                                     random_state=random_state)
 
             sample_counts = bincount(indices, minlength=n_samples)
 
@@ -139,8 +148,8 @@ def _parallel_predict_proba(estimators, estimators_features, X, n_classes):
 def _parallel_predict_log_proba(estimators, estimators_features, X, n_classes):
     """Private function used to compute log probabilities within a job."""
     n_samples = X.shape[0]
-    log_proba = np.zeros((n_samples, n_classes))
-    log_proba[:] = -np.inf
+    log_proba = np.empty((n_samples, n_classes))
+    log_proba.fill(-np.inf)
 
     for estimator, features in zip(estimators, estimators_features):
         log_proba_estimator = estimator.predict_log_proba(X[:, features])
@@ -153,8 +162,8 @@ def _parallel_predict_log_proba(estimators, estimators_features, X, n_classes):
                 log_proba[:, c] = np.logaddexp(log_proba[:, c],
                                                log_proba_estimator[:, j])
 
-            missing = [c for c in range(n_classes)
-                       if c not in estimator.classes_]
+            missing = np.setdiff1d(np.arange(n_classes, dtype=np.int),
+                                   estimator.classes_)
 
             for c in missing:
                 log_proba[:, c] = np.logaddexp(log_proba[:, c], -np.inf)
@@ -195,7 +204,7 @@ def _partition_estimators(ensemble):
     n_estimators[:ensemble.n_estimators % n_jobs] += 1
     starts = np.cumsum(n_estimators)
 
-    return n_jobs, list(n_estimators), [0] + list(starts)
+    return n_jobs, n_estimators.tolist(), [0] + starts.tolist()
 
 
 class BaseBagging(six.with_metaclass(ABCMeta, BaseEnsemble)):
@@ -302,12 +311,12 @@ class BaseBagging(six.with_metaclass(ABCMeta, BaseEnsemble)):
             for i in range(n_jobs))
 
         # Reduce
-        self.estimators_ = list(itertools.chain(
-            *(t[0] for t in all_results)))
-        self.estimators_samples_ = list(itertools.chain(
-            *(t[1] for t in all_results)))
-        self.estimators_features_ = list(itertools.chain(
-            *(t[2] for t in all_results)))
+        self.estimators_ = list(itertools.chain.from_iterable(
+            t[0] for t in all_results))
+        self.estimators_samples_ = list(itertools.chain.from_iterable(
+            t[1] for t in all_results))
+        self.estimators_features_ = list(itertools.chain.from_iterable(
+            t[2] for t in all_results))
 
         if self.oob_score:
             self._set_oob_score(X, y)

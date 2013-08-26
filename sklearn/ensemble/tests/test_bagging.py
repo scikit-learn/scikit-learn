@@ -44,7 +44,7 @@ boston.target = boston.target[perm]
 
 
 def test_classification():
-    """Check classificationfor various parameter settings."""
+    """Check classification for various parameter settings."""
     rng = check_random_state(0)
     X_train, X_test, y_train, y_test = train_test_split(iris.data,
                                                         iris.target,
@@ -178,15 +178,16 @@ def test_oob_score_classification():
                                                         iris.target,
                                                         random_state=rng)
 
-    clf = BaggingClassifier(base_estimator=DecisionTreeClassifier(),
-                            n_estimators=100,
-                            bootstrap=True,
-                            oob_score=True,
-                            random_state=rng).fit(X_train, y_train)
+    for base_estimator in [DecisionTreeClassifier(), SVC()]:
+        clf = BaggingClassifier(base_estimator=base_estimator,
+                                n_estimators=100,
+                                bootstrap=True,
+                                oob_score=True,
+                                random_state=rng).fit(X_train, y_train)
 
-    test_score = clf.score(X_test, y_test)
+        test_score = clf.score(X_test, y_test)
 
-    assert_less(abs(test_score - clf.oob_score_), 0.1)
+        assert_less(abs(test_score - clf.oob_score_), 0.1)
 
 
 def test_oob_score_regression():
