@@ -210,15 +210,6 @@ def test_error():
                   AdaBoostClassifier(algorithm="foo").fit,
                   X, y_class)
 
-    assert_raises(TypeError,
-                  AdaBoostClassifier(base_estimator=DummyRegressor()).fit,
-                  X, y_class)
-
-    assert_raises(TypeError,
-                  AdaBoostRegressor(base_estimator=DummyClassifier(),
-                                    random_state=0).fit,
-                  X, y_regr)
-
 
 def test_base_estimator():
     """Test different base estimators."""

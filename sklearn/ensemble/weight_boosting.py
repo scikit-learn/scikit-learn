@@ -382,10 +382,6 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         super(AdaBoostClassifier, self)._validate_estimator(
             default=DecisionTreeClassifier(max_depth=1))
 
-        if not isinstance(self.base_estimator_, ClassifierMixin):
-            raise TypeError("base_estimator must be a "
-                            "subclass of ClassifierMixin")
-
         #  SAMME-R requires predict_proba-enabled base estimators
         if self.algorithm == 'SAMME.R':
             if not hasattr(self.base_estimator_, 'predict_proba'):
@@ -913,10 +909,6 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
         """Check the estimator and set the base_estimator_ attribute."""
         super(AdaBoostRegressor, self)._validate_estimator(
             default=DecisionTreeRegressor(max_depth=3))
-
-        if not isinstance(self.base_estimator_, RegressorMixin):
-            raise TypeError("base_estimator must be a "
-                            "subclass of RegressorMixin")
 
     def _boost(self, iboost, X, y, sample_weight):
         """Implement a single boost for regression
