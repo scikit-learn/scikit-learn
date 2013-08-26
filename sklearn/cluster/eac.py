@@ -93,6 +93,7 @@ def update_coassociation_matrix(C, labels):
     for i in range(len(labels)):
         indices = np.where(labels[i:] == labels[i])[0] + i
         C[i, indices] += 1.
+        C[indices, i] += 1.
     return C
 
 
@@ -135,7 +136,8 @@ def _kmeans_random_k(n_samples, random_state=None, **kmeans_args):
         k_high = n_samples
         k_low = min(k_low, int(k_high / 2))
     k_values = random_state.randint(k_low, high=k_high, size=num_iterations)
-    return (KMeans(n_clusters=k, **kmeans_args) for k in k_values)
+    return (KMeans(n_clusters=k, random_state=random_state, **kmeans_args)
+            for k in k_values)
 
 
 class EAC(BaseEstimator, ClusterMixin):

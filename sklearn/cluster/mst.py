@@ -50,7 +50,7 @@ class MSTCluster(BaseEstimator):
     Conference on. Vol. 4. IEEE, 2002.
     """
 
-    def __init__(self, threshold=0.15):
+    def __init__(self, threshold=0.2):
         self.threshold = threshold
 
     def fit(self, X):
