@@ -357,8 +357,9 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
 
     Parameters
     ----------
-    base_estimator : object
+    base_estimator : object or None, optional (default=None)
         The base estimator to fit on random subsets of the dataset.
+        If None, then the base estimator is a decision tree.
 
     n_estimators : int, optional (default=10)
         The number of base estimators in the ensemble.
@@ -687,8 +688,9 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
 
     Parameters
     ----------
-    base_estimator : object
+    base_estimator : object or None, optional (default=None)
         The base estimator to fit on random subsets of the dataset.
+        If None, then the base estimator is a decision tree.
 
     n_estimators : int, optional (default=10)
         The number of base estimators in the ensemble.
