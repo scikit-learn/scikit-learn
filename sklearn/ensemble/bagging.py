@@ -653,8 +653,18 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
             classification are special cases with ``k == 1``,
             otherwise ``k==n_classes``.
         """
+        # Trigger an exception if not supported
+        if not hasattr(self.base_estimator_, "decision_function"):
+            raise NotImplementedError
+
         # Check data
         X, = check_arrays(X)
+
+        if self.n_features_ != X.shape[1]:
+            raise ValueError("Number of features of the model must "
+                             "match the input. Model n_features is {1} and "
+                             "input n_features is {2} "
+                             "".format(self.n_features_, X.shape[1]))
 
         # Parallel loop
         n_jobs, n_estimators, starts = _partition_estimators(self)
