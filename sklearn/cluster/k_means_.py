@@ -446,7 +446,8 @@ def _labels_inertia(X, x_squared_norms, centers,
         The cluster centers.
 
     distances: float64 array, shape (n_samples,)
-        Distances for each sample to its closest center.
+        Pre-allocated array to be filled in with each sample's distance
+        to the closest center.
 
     Returns
     -------
