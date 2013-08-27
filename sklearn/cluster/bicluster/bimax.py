@@ -40,11 +40,11 @@ def _precompute_neighbors(X):
     return all_neighbors
 
 
-def _find_pivot(nodes, degrees, lim):
+def _find_pivot(nodes, new_candidates, neighbors, lim):
     pivot = -1
     pivot_degree = -1
     for n in nodes:
-        degree = degrees[n]
+        degree = len(new_candidates & neighbors[n])
         if degree > pivot_degree:
             pivot = n
             pivot_degree = degree
@@ -103,13 +103,17 @@ def _find_bicliques(X):
             continue
 
         n_new_candidates = len(new_candidates)
-        pivot_done, degree_done = _find_pivot(new_done, degrees,
+        pivot_done, degree_done = _find_pivot(new_done,
+                                              new_candidates,
+                                              neighbors,
                                               n_new_candidates)
         if degree_done == n_new_candidates:
             # shortcut: this part of tree already searched
             biclique_so_far.pop()
             continue
-        pivot_cand, degree_cand = _find_pivot(new_candidates, degrees,
+        pivot_cand, degree_cand = _find_pivot(new_candidates,
+                                              new_candidates,
+                                              neighbors,
                                               n_new_candidates - 1)
         if degree_cand > degree_done:
             pivot = pivot_cand
@@ -120,7 +124,7 @@ def _find_bicliques(X):
         stack.append((candidates, done, small_candidates))
         candidates = new_candidates
         done = new_done
-        small_candidates = candidates - neighbors[pivot]
+        small_candidates = new_candidates - neighbors[pivot]
 
 
 class BiMax(six.with_metaclass(ABCMeta, BaseEstimator,
