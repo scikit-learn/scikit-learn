@@ -66,6 +66,13 @@ class RANSAC(BaseEstimator):
     stop_score : float, optional
         Stop iteration if score is greater equal than this threshold.
 
+    residual_metric : callable, optional
+        Metric to reduce the dimensionality of the residuals to 1 for
+        multi-dimensional target values ``y.shape[1] > 1``. By default the sum
+        of absolute differences is used::
+
+            lambda dy: np.sum(np.abs(dx), axis=1)
+
     random_state : integer or numpy.RandomState, optional
         The generator used to initialize the centers. If an integer is
         given, it fixes the seed. Defaults to the global numpy random
@@ -97,7 +104,7 @@ class RANSAC(BaseEstimator):
                  residual_threshold=None, is_data_valid=None,
                  is_model_valid=None, max_trials=100,
                  stop_n_inliers=np.inf, stop_score=np.inf,
-                 random_state=None):
+                 residual_metric=None, random_state=None):
 
         self.base_estimator = base_estimator
         self.min_n_samples = min_n_samples
@@ -107,6 +114,7 @@ class RANSAC(BaseEstimator):
         self.max_trials = max_trials
         self.stop_n_inliers = stop_n_inliers
         self.stop_score = stop_score
+        self.residual_metric = residual_metric
         self.random_state = random_state
 
     def fit(self, X, y):
@@ -134,7 +142,6 @@ class RANSAC(BaseEstimator):
         if self.min_n_samples is None:
             # assume linear model by default
             min_n_samples = X.shape[1] + 1
-            print min_n_samples
         elif 0 < self.min_n_samples < 1:
             min_n_samples = np.ceil(self.min_n_samples * X.shape[0])
         elif self.min_n_samples >= 1:
@@ -145,6 +152,13 @@ class RANSAC(BaseEstimator):
 
         if self.residual_threshold is None:
             residual_threshold = y.std()
+        else:
+            residual_threshold = self.residual_threshold
+
+        if self.residual_metric is None:
+            residual_metric = lambda dy: np.sum(np.abs(dy), axis=1)
+        else:
+            residual_metric = self.residual_metric
 
         random_state = check_random_state(self.random_state)
 
@@ -160,6 +174,9 @@ class RANSAC(BaseEstimator):
 
         X = atleast2d_or_csr(X)
         y = np.asarray(y)
+
+        if y.ndim == 1:
+            y = y[:, None]
 
         for n_trials in range(self.max_trials):
 
@@ -181,7 +198,7 @@ class RANSAC(BaseEstimator):
                 continue
 
             # residuals of all data for current random sample model
-            rsample_residuals = np.abs(base_estimator.predict(X) - y)
+            rsample_residuals = residual_metric(base_estimator.predict(X) - y)
 
             # classify data into inliers and outliers
             rsample_inlier_mask = rsample_residuals < residual_threshold

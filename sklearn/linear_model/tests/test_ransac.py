@@ -122,7 +122,7 @@ def test_ransac_predict():
                                            random_state=0)
     ransac_estimator.fit(X, y)
 
-    assert_equal(ransac_estimator.predict(X), np.zeros((100, )))
+    assert_equal(ransac_estimator.predict(X), np.zeros((100, 1)))
 
 
 def test_ransac_sparse():
@@ -169,6 +169,26 @@ def test_ransac_min_n_samples():
 
     assert_equal(ransac_estimator1.predict(X), ransac_estimator2.predict(X))
     assert_raises(ValueError, ransac_estimator3.fit, X, y)
+
+
+def test_ransac_multi_dimensional_targets():
+
+    base_estimator = linear_model.LinearRegression()
+    ransac_estimator = linear_model.RANSAC(base_estimator, 2, 5,
+                                           random_state=0)
+
+    # 3-D target values
+    yyy = np.column_stack([y, y, y])
+
+    # Estimate parameters of corrupted data
+    ransac_estimator.fit(X, yyy)
+
+    # Ground truth / reference inlier mask
+    ref_inlier_mask = np.ones_like(ransac_estimator.inlier_mask_,
+                                   dtype=np.bool_)
+    ref_inlier_mask[outliers] = False
+
+    assert_equal(ransac_estimator.inlier_mask_, ref_inlier_mask)
 
 
 if __name__ == "__main__":
