@@ -14,6 +14,8 @@ from sklearn.externals import six
 
 from .utils import get_indicators
 
+from ._biclique import find_pivot
+
 
 def _precompute_neighbors(X):
     n_rows, n_cols = X.shape
@@ -38,19 +40,6 @@ def _precompute_neighbors(X):
         all_neighbors[node] = neighbors[node] | second_neighbors[node]
         all_neighbors[node].discard(node)
     return all_neighbors
-
-
-def _find_pivot(nodes, new_candidates, neighbors, lim):
-    pivot = -1
-    pivot_degree = -1
-    for n in nodes:
-        degree = len(new_candidates & neighbors[n])
-        if degree > pivot_degree:
-            pivot = n
-            pivot_degree = degree
-        if degree == lim:
-            break
-    return pivot, pivot_degree
 
 
 def _find_bicliques(X):
@@ -103,18 +92,18 @@ def _find_bicliques(X):
             continue
 
         n_new_candidates = len(new_candidates)
-        pivot_done, degree_done = _find_pivot(new_done,
-                                              new_candidates,
-                                              neighbors,
-                                              n_new_candidates)
+        pivot_done, degree_done = find_pivot(new_done,
+                                             new_candidates,
+                                             neighbors,
+                                             n_new_candidates)
         if degree_done == n_new_candidates:
             # shortcut: this part of tree already searched
             biclique_so_far.pop()
             continue
-        pivot_cand, degree_cand = _find_pivot(new_candidates,
-                                              new_candidates,
-                                              neighbors,
-                                              n_new_candidates - 1)
+        pivot_cand, degree_cand = find_pivot(new_candidates,
+                                             new_candidates,
+                                             neighbors,
+                                             n_new_candidates - 1)
         if degree_cand > degree_done:
             pivot = pivot_cand
         else:
