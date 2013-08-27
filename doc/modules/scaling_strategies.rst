@@ -6,7 +6,7 @@ Scaling Strategies
 
 For some applications the amount of examples, features (or both) and/or the 
 speed at which they need to be processed are challenging for traditional 
-approaches. In these cases Scikit-learn has a number of options you can 
+approaches. In these cases scikit-learn has a number of options you can 
 consider to make your system scale. 
 
 Scaling with instances using out-of-core learning
@@ -31,19 +31,19 @@ Extracting features
 -------------------
 \2. could be any relevant way to extract features among the 
 different :ref:`feature extraction <feature_extraction>` methods supported by
-Scikit-learn. However, when working with data that needs vectorization and 
+scikit-learn. However, when working with data that needs vectorization and 
 where the set of features or values is not known in advance one should take 
 explicit care. A good example is text classification where unknown terms are
 likely to be found during training. It is possible to use a statefull 
 vectorizer if making multiple passes over the data is reasonable from an
 application point of view. Otherwise, one can turn up the difficulty by using
-a stateless feature extractor.  Currently the preferred way to do this is to
+a stateless feature extractor. Currently the preferred way to do this is to
 use the so-called :ref:`hashing trick<feature_hashing>` as implemented by 
-:class:`sklearn.feature_extraction.FeatureHasher`. 
+:class:`sklearn.feature_extraction.FeatureHasher`.
 
 Incremental learning
 --------------------
-Finally, for 3. we have a number of options inside Scikit-learn. Although all
+Finally, for 3. we have a number of options inside scikit-learn. Although all
 algorithms can not learn incrementally (i.e. without seeing all the instances
 at once), all estimators implementing the ``partial_fit`` API are candidates.
 Actually, the ability to learn incrementally from a mini-batch of instances 
@@ -65,7 +65,7 @@ Here is a list of incremental estimators for different tasks:
       + :class:`sklearn.linear_model.PassiveAggressiveRegressor`
   - Clustering
       + :class:`sklearn.cluster.MiniBatchKMeans`
-  - Decomposition / feature Extraction
+  - Decomposition / Feature Extraction
       + :class:`sklearn.decomposition.MiniBatchDictionaryLearning`
       + :class:`sklearn.cluster.MiniBatchKMeans`
 
@@ -74,6 +74,14 @@ stateless feature extraction routine may be able to cope with new/unseen
 attributes, the incremental learner itself may be unable to cope with 
 new/unseen targets classes. In this case you have to pass all the possible
 classes to the first ``partial_fit`` call using the ``classes=`` parameter.
+
+Another aspect to consider when choosing a proper algorithm is that all of them
+don't put the same importance on each example over time. Namely, the
+`Perceptron` is still sensitive to badly labeled examples even after many 
+examples whereas the `SGD*` and `PassiveAggressive*` families are more robust 
+to this kind of artifacts. Conversely, the later also tend to give less 
+importance to remarkably different, yet properly labeled examples when they 
+come late in the stream as their learning rate decreases over time. 
 
 Examples
 --------
