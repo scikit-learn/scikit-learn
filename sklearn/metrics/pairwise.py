@@ -210,24 +210,25 @@ def pairwise_distances_argmin_min(X, Y, axis=1, metric="euclidean",
     Parameters
     ==========
     X, Y : array-like
-        arrays containing points. Shape must be (n_samples, n_features)
-        for both. Sample numbers can be different, but feature number must be
-        identical for both X and Y.
+        Arrays containing points. Respective shapes (n_samples1, n_features)
+        and (n_samples2, n_features)
 
-    batch_size : int
+    batch_size : integer
         To reduce memory consumption over the naive solution, data are
         processed in batches, comprising batch_size rows of X and
         batch_size rows of Y. The default value is quite conservative, but
         can be changed for fine-tuning. The larger the number, the larger the
         memory usage.
 
-    metric : str or callable
+    metric : string or callable
         metric to use for distance computation. Any metric from scikit-learn
         or scipy.spatial.distance can be used.
+
         If metric is a callable function, it is called on each
         pair of instances (rows) and the resulting value recorded. The callable
-        should take two arrays from X as input and return a value indicating
-        the distance between them.
+        should take two arrays as input and return one value indicating the
+        distance between them. This works for Scipy's metrics, but is less
+        efficient than passing the metric name as a string.
 
         Distance matrices are not supported.
 
@@ -242,7 +243,6 @@ def pairwise_distances_argmin_min(X, Y, axis=1, metric="euclidean",
         'seuclidean', 'sokalmichener', 'sokalsneath', 'sqeuclidean', 'yule']
         See the documentation for scipy.spatial.distance for details on these
         metrics.
-
 
     squared : boolean
         if True, return squared distances instead of distances. This has only
@@ -270,7 +270,7 @@ def pairwise_distances_argmin_min(X, Y, axis=1, metric="euclidean",
     dist_func = None
     if metric in PAIRWISE_DISTANCE_FUNCTIONS:
         dist_func = PAIRWISE_DISTANCE_FUNCTIONS[metric]
-    elif not callable(metric):
+    elif not callable(metric) and not isinstance(metric, str):
         raise ValueError("'metric' must be a string or a callable")
 
     X, Y = check_pairwise_arrays(X, Y)
@@ -301,14 +301,8 @@ def pairwise_distances_argmin_min(X, Y, axis=1, metric="euclidean",
                 else:
                     dist_chunk = dist_func(X_chunk, Y_chunk, **kwargs)
             else:
-                dist_chunk = np.empty((X_chunk.shape[0], Y_chunk.shape[0]),
-                                dtype='float')
-                for n_x in range(X_chunk.shape[0]):
-                    start = 0
-                    for n_y in range(start, Y_chunk.shape[0]):
-                        dist_chunk[n_x, n_y] = metric(X_chunk[n_x],
-                                                      Y_chunk[n_y],
-                                                      **kwargs)
+                dist_chunk = pairwise_distances(X_chunk, Y_chunk,
+                                                metric=metric, **kwargs)
 
             # Update indices and minimum values using chunk
             min_indices = dist_chunk.argmin(axis=1)

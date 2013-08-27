@@ -197,8 +197,12 @@ def test_pairwise_distances_argmin_min():
     D, E = pairwise_distances_argmin_min(X, Y, metric="manhattan")
     assert_array_almost_equal(D, [0, 1])
     assert_array_almost_equal(E, [1., 1.])
-    # Non-euclidean scipy distance
-    D, E = pairwise_distances_argmin_min(X, Y, metric=cityblock)
+    # Non-euclidean Scipy distance (callable)
+    D, E = pairwise_distances_argmin_min(X, Y, metric=minkowski, p=2)
+    assert_array_almost_equal(D, [0, 1])
+    assert_array_almost_equal(E, [1., 1.])
+    # Non-euclidean Scipy distance (string)
+    D, E = pairwise_distances_argmin_min(X, Y, metric="minkowski", p=2)
     assert_array_almost_equal(D, [0, 1])
     assert_array_almost_equal(E, [1., 1.])
 
