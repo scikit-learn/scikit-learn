@@ -72,7 +72,7 @@ def eac(X, initial_clusterers=None, final_clusterer=None,
     if final_clusterer is None:
         final_clusterer = MSTCluster()
     # Co-association matrix, originally zeros everywhere
-    C = np.zeros((n_samples, n_samples), dtype='float')
+    C = np.eye(n_samples, dtype='float')
     num_initial_clusterers = 0
     for model in initial_clusterers:
         num_initial_clusterers += 1
@@ -82,7 +82,8 @@ def eac(X, initial_clusterers=None, final_clusterer=None,
         # Calculate new coassociation matrix and add that to the tally
         C = update_coassociation_matrix(C, model.labels_)
     C /= num_initial_clusterers
-    final_clusterer.fit(C)
+    D = 1 - C  # Create a distance matrix
+    final_clusterer.fit(D)
     return final_clusterer
 
 
@@ -93,7 +94,6 @@ def update_coassociation_matrix(C, labels):
     for i in range(len(labels)):
         indices = np.where(labels[i:] == labels[i])[0] + i
         C[i, indices] += 1.
-        C[indices, i] += 1.
     return C
 
 

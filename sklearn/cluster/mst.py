@@ -50,7 +50,7 @@ class MSTCluster(BaseEstimator):
     Conference on. Vol. 4. IEEE, 2002.
     """
 
-    def __init__(self, threshold=0.2):
+    def __init__(self, threshold=0.85):
         self.threshold = threshold
 
     def fit(self, X):
@@ -63,11 +63,12 @@ class MSTCluster(BaseEstimator):
         """
         X = atleast2d_or_csr(X)
         assert X.shape[0] == X.shape[1]
-        X = csr_matrix(X)
-        X.data[X.data <= self.threshold] = 0
-        X.eliminate_zeros()
-        # Compute spanning tree from X
-        self.span_tree = minimum_spanning_tree(X)
-        # Compute clusters by finding connected subgraphs in self.span_tree
-        n_components, self.labels_ = connected_components(self.span_tree, directed=False)
+        span_tree = minimum_spanning_tree(X)
+        idx = span_tree.data < self.threshold
+        data = span_tree.data[idx]
+        rows, cols = span_tree.nonzero()
+        rows = rows[idx]
+        cols = cols[idx]
+        self.span_tree = csr_matrix( (data, (rows, cols)), shape=span_tree.shape)  # Compute clusters by finding connected subgraphs in self.span_tree
+        n_components, self.labels_ = connected_components(self.span_tree, directed=True)
         return self
