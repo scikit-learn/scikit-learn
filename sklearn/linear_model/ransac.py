@@ -37,10 +37,15 @@ class RANSAC(BaseEstimator):
         Minimum number of samples chosen randomly from original data. Treated
         as an absolute number of samples for `min_n_samples >= 1`, treated as a
         relative number `ceil(min_n_samples * X.shape[0]`) for
-        `min_n_samples < 1`.
+        `min_n_samples < 1`. By default a
+        ``sklearn.linear_model.LinearRegression`` estimator is assumed and
+        `min_n_samples` is chosen as ``X.shape[1] + 1``.
+
 
     residual_threshold : float, optional
         Maximum residual for a data sample to be classified as an inlier.
+        By default the threshold is chosen as the standard deviation of the
+        target values `y`.
 
     is_data_valid : callable, optional
         This function is called with the randomly selected data before the
@@ -88,8 +93,8 @@ class RANSAC(BaseEstimator):
     .. [3] http://www.bmva.org/bmvc/2009/Papers/Paper355/Paper355.pdf
     """
 
-    def __init__(self, base_estimator=None, min_n_samples=0.5,
-                 residual_threshold=np.inf, is_data_valid=None,
+    def __init__(self, base_estimator=None, min_n_samples=None,
+                 residual_threshold=None, is_data_valid=None,
                  is_model_valid=None, max_trials=100,
                  stop_n_inliers=np.inf, stop_score=np.inf,
                  random_state=None):
@@ -126,13 +131,20 @@ class RANSAC(BaseEstimator):
         else:
             raise ValueError("`base_estimator` not specified.")
 
-        if 0 < self.min_n_samples < 1:
+        if self.min_n_samples is None:
+            # assume linear model by default
+            min_n_samples = X.shape[1] + 1
+            print min_n_samples
+        elif 0 < self.min_n_samples < 1:
             min_n_samples = np.ceil(self.min_n_samples * X.shape[0])
         elif self.min_n_samples >= 1:
             min_n_samples = self.min_n_samples
         else:
             raise ValueError("Value for `min_n_samples` must be scalar and "
                              "positive.")
+
+        if self.residual_threshold is None:
+            residual_threshold = y.std()
 
         random_state = check_random_state(self.random_state)
 
@@ -172,7 +184,7 @@ class RANSAC(BaseEstimator):
             rsample_residuals = np.abs(base_estimator.predict(X) - y)
 
             # classify data into inliers and outliers
-            rsample_inlier_mask = rsample_residuals < self.residual_threshold
+            rsample_inlier_mask = rsample_residuals < residual_threshold
             rsample_n_inliers = np.sum(rsample_inlier_mask)
 
             # less inliers -> skip current random sample

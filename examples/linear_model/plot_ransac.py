@@ -40,8 +40,7 @@ model = linear_model.LinearRegression()
 model.fit(X, y)
 
 # Robustly fit linear model with RANSAC algorithm
-model_robust = linear_model.RANSAC(linear_model.LinearRegression(),
-                                   min_n_samples=2, residual_threshold=2)
+model_robust = linear_model.RANSAC(linear_model.LinearRegression())
 model_robust.fit(X, y)
 inlier_mask = model_robust.inlier_mask_
 outlier_mask = ~inlier_mask
