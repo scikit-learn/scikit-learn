@@ -239,19 +239,33 @@ def test_error():
     X, y = iris.data, iris.target
     base = DecisionTreeClassifier()
 
-    assert_raises(ValueError, BaggingClassifier(base, max_samples=-1).fit, X, y)
-    assert_raises(ValueError, BaggingClassifier(base, max_samples=0.0).fit, X, y)
-    assert_raises(ValueError, BaggingClassifier(base, max_samples=2.0).fit, X, y)
-    assert_raises(ValueError, BaggingClassifier(base, max_samples=1000).fit, X, y)
-    assert_raises(ValueError, BaggingClassifier(base, max_samples="foobar").fit, X, y)
+    # Test max_samples
+    assert_raises(ValueError,
+                  BaggingClassifier(base, max_samples=-1).fit, X, y)
+    assert_raises(ValueError,
+                  BaggingClassifier(base, max_samples=0.0).fit, X, y)
+    assert_raises(ValueError,
+                  BaggingClassifier(base, max_samples=2.0).fit, X, y)
+    assert_raises(ValueError,
+                  BaggingClassifier(base, max_samples=1000).fit, X, y)
+    assert_raises(ValueError,
+                  BaggingClassifier(base, max_samples="foobar").fit, X, y)
 
-    assert_raises(ValueError, BaggingClassifier(base, max_features=-1).fit, X, y)
-    assert_raises(ValueError, BaggingClassifier(base, max_features=0.0).fit, X, y)
-    assert_raises(ValueError, BaggingClassifier(base, max_features=2.0).fit, X, y)
-    assert_raises(ValueError, BaggingClassifier(base, max_features=5).fit, X, y)
-    assert_raises(ValueError, BaggingClassifier(base, max_features="foobar").fit, X, y)
+    # Test max_features
+    assert_raises(ValueError,
+                  BaggingClassifier(base, max_features=-1).fit, X, y)
+    assert_raises(ValueError,
+                  BaggingClassifier(base, max_features=0.0).fit, X, y)
+    assert_raises(ValueError,
+                  BaggingClassifier(base, max_features=2.0).fit, X, y)
+    assert_raises(ValueError,
+                  BaggingClassifier(base, max_features=5).fit, X, y)
+    assert_raises(ValueError,
+                  BaggingClassifier(base, max_features="foobar").fit, X, y)
 
-    assert_raises(NotImplementedError, BaggingClassifier(base).fit(X, y).decision_function, X)
+    # Test support of decision_function
+    assert_raises(NotImplementedError,
+                  BaggingClassifier(base).fit(X, y).decision_function, X)
 
 
 def test_parallel():
