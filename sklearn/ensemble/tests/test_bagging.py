@@ -14,6 +14,7 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import SkipTest
 
 from sklearn.dummy import DummyClassifier, DummyRegressor
@@ -193,6 +194,16 @@ def test_oob_score_classification():
 
         assert_less(abs(test_score - clf.oob_score_), 0.1)
 
+        # Test with few estimators
+        assert_warns(UserWarning,
+                     BaggingClassifier(base_estimator=base_estimator,
+                                       n_estimators=1,
+                                       bootstrap=True,
+                                       oob_score=True,
+                                       random_state=rng).fit,
+                     X_train,
+                     y_train)
+
 
 def test_oob_score_regression():
     """Check that oob prediction is a good estimation of the generalization
@@ -212,6 +223,16 @@ def test_oob_score_regression():
 
     assert_less(abs(test_score - clf.oob_score_), 0.1)
 
+    # Test with few estimators
+    assert_warns(UserWarning,
+                 BaggingRegressor(base_estimator=DecisionTreeRegressor(),
+                                  n_estimators=1,
+                                  bootstrap=True,
+                                  oob_score=True,
+                                  random_state=rng).fit,
+                 X_train,
+                 y_train)
+
 
 def test_error():
     """Test that it gives proper exception on deficient input."""
@@ -230,6 +251,8 @@ def test_error():
     assert_raises(ValueError, BaggingClassifier(base, max_features=5).fit, X, y)
     assert_raises(ValueError, BaggingClassifier(base, max_features="foobar").fit, X, y)
 
+    assert_raises(NotImplementedError, BaggingClassifier(base).fit(X, y).decision_function, X)
+
 
 def test_parallel():
     """Check parallel computations."""
@@ -245,18 +268,37 @@ def test_parallel():
                                      n_jobs=n_jobs,
                                      random_state=0).fit(X_train, y_train)
 
+        # predict_proba
         ensemble.set_params(n_jobs=1)
         y1 = ensemble.predict_proba(X_test)
         ensemble.set_params(n_jobs=2)
         y2 = ensemble.predict_proba(X_test)
-        assert_array_equal(y1, y2)
+        assert_array_almost_equal(y1, y2)
 
         ensemble = BaggingClassifier(DecisionTreeClassifier(),
                                      n_jobs=1,
                                      random_state=0).fit(X_train, y_train)
 
         y3 = ensemble.predict_proba(X_test)
-        assert_array_equal(y1, y3)
+        assert_array_almost_equal(y1, y3)
+
+        # decision_function
+        ensemble = BaggingClassifier(SVC(),
+                                     n_jobs=n_jobs,
+                                     random_state=0).fit(X_train, y_train)
+
+        ensemble.set_params(n_jobs=1)
+        decisions1 = ensemble.decision_function(X_test)
+        ensemble.set_params(n_jobs=2)
+        decisions2 = ensemble.decision_function(X_test)
+        assert_array_almost_equal(decisions1, decisions2)
+
+        ensemble = BaggingClassifier(SVC(),
+                                     n_jobs=1,
+                                     random_state=0).fit(X_train, y_train)
+
+        decisions3 = ensemble.decision_function(X_test)
+        assert_array_almost_equal(decisions1, decisions3)
 
     # Regression
     X_train, X_test, y_train, y_test = train_test_split(boston.data,

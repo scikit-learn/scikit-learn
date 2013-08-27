@@ -238,11 +238,6 @@ class BaseBagging(six.with_metaclass(ABCMeta, BaseEnsemble)):
         self.oob_score = oob_score
         self.n_jobs = n_jobs
         self.random_state = random_state
-
-        #self.n_features_ = None
-        #self.classes_ = None
-        #self.n_classes_ = None
-
         self.verbose = verbose
 
     def fit(self, X, y, sample_weight=None):
