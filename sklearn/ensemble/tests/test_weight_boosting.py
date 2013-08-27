@@ -43,7 +43,7 @@ boston.data, boston.target = shuffle(boston.data, boston.target,
 def test_classification_toy():
     """Check classification on a toy dataset."""
     for alg in ['SAMME', 'SAMME.R']:
-        clf = AdaBoostClassifier(algorithm=alg)
+        clf = AdaBoostClassifier(algorithm=alg, random_state=0)
         clf.fit(X, y_class)
         assert_array_equal(clf.predict(T), y_t_class)
         assert_array_equal(np.unique(np.asarray(y_t_class)), clf.classes_)
