@@ -68,7 +68,7 @@ def _check_reg_targets(y_true, y_pred):
 
     if y_true.shape[1] != y_pred.shape[1]:
         raise ValueError("y_true and y_pred have different number of output "
-                         "({0}!={1})".format(y_true.shape[1], y_true.shape[1]))
+                         "({0}!={1})".format(y_true.shape[1], y_pred.shape[1]))
 
     y_type = 'continuous' if y_true.shape[1] == 1 else 'continuous-multioutput'
 
