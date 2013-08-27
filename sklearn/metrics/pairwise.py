@@ -190,9 +190,8 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
     return distances if squared else np.sqrt(distances)
 
 
-def pairwise_distances_argmin(X, Y=None, axis=1, metric="euclidean",
-                              batch_size_x=500, batch_size_y=500,
-                              **kwargs):
+def pairwise_distances_argmin_min(X, Y=None, axis=1, metric="euclidean",
+                                  batch_size=500, **kwargs):
     """Compute minimum distances between one point and a set of points.
 
     This function computes for each row in X, the index of the row of Y which
@@ -214,10 +213,10 @@ def pairwise_distances_argmin(X, Y=None, axis=1, metric="euclidean",
         for both. Sample numbers can be different, but feature number must be
         identical for both X and Y.
 
-    batch_size_x, batch_size_y : integers
+    batch_size : integers
         To reduce memory consumption over the naive solution, data are
-        processed in batches, comprising batch_size_x rows of X and
-        batch_size_y rows of Y. The default values are quite conservative, but
+        processed in batches, comprising batch_size rows of X and
+        batch_size rows of Y. The default value is quite conservative, but
         can be changed for fine-tuning. The larger the number, the larger the
         memory usage.
 
@@ -251,17 +250,16 @@ def pairwise_distances_argmin(X, Y=None, axis=1, metric="euclidean",
 
     if axis == 0:
         X, Y = Y, X
-        batch_size_x, batch_size_y = batch_size_y, batch_size_x
 
     # Allocate output arrays
     indices = np.empty(X.shape[0], dtype='int32')
     values = np.empty(X.shape[0])
     values.fill(np.infty)
 
-    for chunk_x in gen_batches(X.shape[0], batch_size_x):
+    for chunk_x in gen_batches(X.shape[0], batch_size):
         X_chunk = X[chunk_x, :]
 
-        for chunk_y in gen_batches(Y.shape[0], batch_size_y):
+        for chunk_y in gen_batches(Y.shape[0], batch_size):
             Y_chunk = Y[chunk_y, :]
 
             if dist_func is not None:
