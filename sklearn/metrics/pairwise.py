@@ -209,30 +209,37 @@ def pairwise_distances_argmin(X, Y=None, axis=1, metric="euclidean",
 
     Parameters
     ==========
-    X, Y: array-like
+    X, Y : array-like
         arrays containing points. Shape must be (sample number, feature number)
         for both. Sample numbers can be different, but feature number must be
         identical for both X and Y.
 
-    batch_size_x, batch_size_y: integers
+    batch_size_x, batch_size_y : integers
         To reduce memory consumption over the naive solution, data are
         processed in batches, comprising batch_size_x rows of X and
         batch_size_y rows of Y. The default values are quite conservative, but
         can be changed for fine-tuning. The larger the number, the larger the
         memory usage.
 
+    metric : str or callable
+        metric to use for distance computation. Any metric from scikit-learn
+        or Scipy can be used. It is assumed to be symmetric though. See
+        also sklearn.metrics.pairwise_distances. Distance matrices are not
+        supported.
+
+    squared : boolean
+        if True, return squared distances instead of distances. This has only
+        an effect if metric == "euclidean". Returning squared distances is
+        slightly faster than returning non-squared distances.
+
     Returns
     =======
-    indices: numpy.ndarray
+    indices : numpy.ndarray
         indices[i] is the row in Y that is closest to the i-th row in X.
 
-    distances: numpy.ndarray
+    distances : numpy.ndarray
         distances[i] is the distance between the i-th row in X and the
         indices[i]-th row in Y.
-
-    Notes
-    =====
-    provided metric is assumed to be symmetric.
     """
     dist_func = None
     if metric in PAIRWISE_DISTANCE_FUNCTIONS:
