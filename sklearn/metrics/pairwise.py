@@ -190,7 +190,7 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
     return distances if squared else np.sqrt(distances)
 
 
-def pairwise_distances_argmin_min(X, Y=None, axis=1, metric="euclidean",
+def pairwise_distances_argmin_min(X, Y, axis=1, metric="euclidean",
                                   batch_size=500, **kwargs):
     """Compute minimum distances between one point and a set of points.
 
@@ -202,18 +202,19 @@ def pairwise_distances_argmin_min(X, Y=None, axis=1, metric="euclidean",
 
         pairwise_distances(X, Y=Y, metric=metric).argmin(axis=axis)
 
-    but uses much less memory, and is faster for large arrays.
+    but uses much less memory, and is faster for large arrays. It also returns
+    the minimum values at the same time.
 
-    This function works with dense matrices only.
+    This function works with dense 2D arrays only.
 
     Parameters
     ==========
     X, Y : array-like
-        arrays containing points. Shape must be (sample number, feature number)
+        arrays containing points. Shape must be (n_samples, n_features)
         for both. Sample numbers can be different, but feature number must be
         identical for both X and Y.
 
-    batch_size : integers
+    batch_size : int
         To reduce memory consumption over the naive solution, data are
         processed in batches, comprising batch_size rows of X and
         batch_size rows of Y. The default value is quite conservative, but
@@ -222,9 +223,26 @@ def pairwise_distances_argmin_min(X, Y=None, axis=1, metric="euclidean",
 
     metric : str or callable
         metric to use for distance computation. Any metric from scikit-learn
-        or Scipy can be used. It is assumed to be symmetric though. See
-        also sklearn.metrics.pairwise_distances. Distance matrices are not
-        supported.
+        or scipy.spatial.distance can be used.
+        If metric is a callable function, it is called on each
+        pair of instances (rows) and the resulting value recorded. The callable
+        should take two arrays from X as input and return a value indicating
+        the distance between them.
+
+        Distance matrices are not supported.
+
+        Valid values for metric are:
+
+        - from scikit-learn: ['cityblock', 'cosine', 'euclidean', 'l1', 'l2',
+        'manhattan']
+
+        - from scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
+        'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski',
+        'mahalanobis', 'matching', 'minkowski', 'rogerstanimoto', 'russellrao',
+        'seuclidean', 'sokalmichener', 'sokalsneath', 'sqeuclidean', 'yule']
+        See the documentation for scipy.spatial.distance for details on these
+        metrics.
+
 
     squared : boolean
         if True, return squared distances instead of distances. This has only
@@ -239,6 +257,15 @@ def pairwise_distances_argmin_min(X, Y=None, axis=1, metric="euclidean",
     distances : numpy.ndarray
         distances[i] is the distance between the i-th row in X and the
         indices[i]-th row in Y.
+
+    See also
+    ========
+    sklearn.metrics.pairwise_distances
+
+    Notes
+    =====
+    All remaining keyword arguments are passed to the specified metric
+    function.
     """
     dist_func = None
     if metric in PAIRWISE_DISTANCE_FUNCTIONS:
@@ -278,15 +305,10 @@ def pairwise_distances_argmin_min(X, Y=None, axis=1, metric="euclidean",
                                 dtype='float')
                 for n_x in range(X_chunk.shape[0]):
                     start = 0
-                    if X is Y:
-                        start = n_x
                     for n_y in range(start, Y_chunk.shape[0]):
-                        # distance assumed to be symmetric.
                         dist_chunk[n_x, n_y] = metric(X_chunk[n_x],
                                                       Y_chunk[n_y],
                                                       **kwargs)
-                        if X is Y:
-                            dist_chunk[n_y, n_x] = dist_chunk[n_x, n_y]
 
             # Update indices and minimum values using chunk
             min_indices = dist_chunk.argmin(axis=1)
@@ -407,7 +429,7 @@ def cosine_distances(X, Y=None):
     -------
     distance matrix : array_like
         An array with shape (n_samples_X, n_samples_Y).
-        
+
     See also
     --------
     sklearn.metrics.pairwise.cosine_similarity
@@ -417,7 +439,7 @@ def cosine_distances(X, Y=None):
     S = cosine_similarity(X, Y)
     S *= -1
     S += 1
-    return S    
+    return S
 
 
 # Kernels
@@ -736,18 +758,18 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
     If Y is given (default is None), then the returned matrix is the pairwise
     distance between the arrays from both X and Y.
 
-    Please note that support for sparse matrices is currently limited to 
+    Please note that support for sparse matrices is currently limited to
     'euclidean', 'l2' and 'cosine'.
 
     Valid values for metric are:
 
-    - from scikit-learn: ['cityblock', 'cosine', 'euclidean', 'l1', 'l2', 
-      'manhattan'] 
+    - from scikit-learn: ['cityblock', 'cosine', 'euclidean', 'l1', 'l2',
+      'manhattan']
 
     - from scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
       'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski', 'mahalanobis',
       'matching', 'minkowski', 'rogerstanimoto', 'russellrao', 'seuclidean',
-      'sokalmichener', 'sokalsneath', 'sqeuclidean', 'yule']      
+      'sokalmichener', 'sokalsneath', 'sqeuclidean', 'yule']
       See the documentation for scipy.spatial.distance for details on these
       metrics.
 
