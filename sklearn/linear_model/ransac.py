@@ -18,6 +18,9 @@ class RANSAC(BaseEstimator):
     from a subset of inliers from the complete data set. More information can
     be found in the general documentation of linear models.
 
+    A detailed description of the algorithm can be found in the documentation
+    of the ``linear_model`` sub-package.
+
     Parameters
     ----------
     base_estimator : object, optional
