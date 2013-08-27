@@ -14,6 +14,7 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import SkipTest
 
 from sklearn.dummy import DummyClassifier, DummyRegressor
 from sklearn.grid_search import GridSearchCV, ParameterGrid
@@ -239,44 +240,46 @@ def test_parallel():
                                                         iris.target,
                                                         random_state=rng)
 
-    ensemble = BaggingClassifier(DecisionTreeClassifier(),
-                                 n_jobs=3,
-                                 random_state=0).fit(X_train, y_train)
+    for n_jobs in [-1, 3]:
+        ensemble = BaggingClassifier(DecisionTreeClassifier(),
+                                     n_jobs=n_jobs,
+                                     random_state=0).fit(X_train, y_train)
 
-    ensemble.set_params(n_jobs=1)
-    y1 = ensemble.predict_proba(X_test)
-    ensemble.set_params(n_jobs=2)
-    y2 = ensemble.predict_proba(X_test)
-    assert_array_equal(y1, y2)
+        ensemble.set_params(n_jobs=1)
+        y1 = ensemble.predict_proba(X_test)
+        ensemble.set_params(n_jobs=2)
+        y2 = ensemble.predict_proba(X_test)
+        assert_array_equal(y1, y2)
 
-    ensemble = BaggingClassifier(DecisionTreeClassifier(),
-                                 n_jobs=1,
-                                 random_state=0).fit(X_train, y_train)
+        ensemble = BaggingClassifier(DecisionTreeClassifier(),
+                                     n_jobs=1,
+                                     random_state=0).fit(X_train, y_train)
 
-    y3 = ensemble.predict_proba(X_test)
-    assert_array_equal(y1, y3)
+        y3 = ensemble.predict_proba(X_test)
+        assert_array_equal(y1, y3)
 
     # Regression
     X_train, X_test, y_train, y_test = train_test_split(boston.data,
                                                         boston.target,
                                                         random_state=rng)
 
-    ensemble = BaggingRegressor(DecisionTreeRegressor(),
-                                n_jobs=3,
-                                random_state=0).fit(X_train, y_train)
+    for n_jobs in [-1, 3]:
+        ensemble = BaggingRegressor(DecisionTreeRegressor(),
+                                    n_jobs=3,
+                                    random_state=0).fit(X_train, y_train)
 
-    ensemble.set_params(n_jobs=1)
-    y1 = ensemble.predict(X_test)
-    ensemble.set_params(n_jobs=2)
-    y2 = ensemble.predict(X_test)
-    assert_array_almost_equal(y1, y2)
+        ensemble.set_params(n_jobs=1)
+        y1 = ensemble.predict(X_test)
+        ensemble.set_params(n_jobs=2)
+        y2 = ensemble.predict(X_test)
+        assert_array_almost_equal(y1, y2)
 
-    ensemble = BaggingRegressor(DecisionTreeRegressor(),
-                                n_jobs=1,
-                                random_state=0).fit(X_train, y_train)
+        ensemble = BaggingRegressor(DecisionTreeRegressor(),
+                                    n_jobs=1,
+                                    random_state=0).fit(X_train, y_train)
 
-    y3 = ensemble.predict(X_test)
-    assert_array_almost_equal(y1, y3)
+        y3 = ensemble.predict(X_test)
+        assert_array_almost_equal(y1, y3)
 
 
 def test_gridsearch():
