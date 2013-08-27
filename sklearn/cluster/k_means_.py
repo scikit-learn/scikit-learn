@@ -554,26 +554,25 @@ def _init_centroids(X, k, init, random_state=None, x_squared_norms=None,
     return centers
 
 
-def _pick_unique_labels(relative_probabilities, labels,
-                        no_picks, random_state):
+def _pick_unique_labels(distances, n_reassigns, random_state):
     # array of labels randomly picked
-    picks = np.zeros(no_picks, dtype=np.int)
+    picks = np.zeros(n_reassigns, dtype=np.int)
+    distances = np.ma.masked_array(distances)
 
     # making sure we do not exceed any array
-    iterations = min(len(relative_probabilities), len(labels), no_picks)
+    iterations = min(len(distances), n_reassigns)
     for p in range(iterations):
         # picking one value from set of elements
         # with their relative probabilities
-        rand_val = random_state.rand()*relative_probabilities.sum()
-        new_pick = np.searchsorted(relative_probabilities.cumsum(), rand_val)
+        rand_val = random_state.rand() * distances.sum()
+        new_pick = np.searchsorted(distances.cumsum(), rand_val)
 
         # taking note of pick
-        picks[p] = labels[new_pick]
+        picks[p] = new_pick
 
         # label has been picked
         # it should not be picked next time
-        relative_probabilities = np.delete(relative_probabilities, new_pick)
-        labels = np.delete(labels, new_pick)
+        distances[new_pick] = np.ma.masked
 
     return picks
 
@@ -885,13 +884,10 @@ def _mini_batch_step(X, x_squared_norms, centers, counts,
             distances -= distances.max()
             distances *= -1
 
-            labels = np.array(range(0, number_of_reassignments))
-
             # picking number_of_reassingments centers
             # with probability to their
             new_centers = _pick_unique_labels(distances,
-                                              labels,
-                                              number_of_reassignments,
+                                              n_reassigns,
                                               random_state)
 
             if verbose:
