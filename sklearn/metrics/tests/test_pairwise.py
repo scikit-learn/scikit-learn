@@ -189,14 +189,18 @@ def test_pairwise_distances_argmin():
     """ Check the pairwise distances computation for any metrics"""
     X = [[0], [1]]
     Y = [[-1], [2]]
+    # euclidean metric
+    D, E = pairwise_distances_argmin(X, Y, metric="euclidean")
+    assert_array_almost_equal(D, [0, 1])
+    assert_array_almost_equal(E, [1., 1.])
     # Non-euclidean sklearn metric
     D, E = pairwise_distances_argmin(X, Y, metric="manhattan")
     assert_array_almost_equal(D, [0, 1])
-    assert_array_almost_equal(E, [1, 1])
+    assert_array_almost_equal(E, [1., 1.])
     # Non-euclidean scipy distance
     D, E = pairwise_distances_argmin(X, Y, metric=cityblock)
     assert_array_almost_equal(D, [0, 1])
-    assert_array_almost_equal(E, [1, 1])
+    assert_array_almost_equal(E, [1., 1.])
 
     # Compare with naive implementation
     np.random.seed(1)

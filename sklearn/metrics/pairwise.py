@@ -259,15 +259,17 @@ def pairwise_distances_argmin(X, Y=None, axis=1, metric="euclidean",
 
             if dist_func is not None:
                 if metric == 'euclidean':  # special case, for speed
-                    tvar = np.dot(X_chunk, Y_chunk.T)
-                    tvar *= -2
-                    tvar += (X_chunk * X_chunk).sum(axis=1)[:, np.newaxis]
-                    tvar += (Y_chunk * Y_chunk).sum(axis=1)[np.newaxis, :]
-                    np.maximum(tvar, 0, tvar)
+                    dist_chunk = np.dot(X_chunk, Y_chunk.T)
+                    dist_chunk *= -2
+                    dist_chunk += (X_chunk * X_chunk
+                                   ).sum(axis=1)[:, np.newaxis]
+                    dist_chunk += (Y_chunk * Y_chunk
+                                   ).sum(axis=1)[np.newaxis, :]
+                    np.maximum(dist_chunk, 0, dist_chunk)
                 else:
-                    tvar = dist_func(X_chunk, Y_chunk, **kwargs)
+                    dist_chunk = dist_func(X_chunk, Y_chunk, **kwargs)
             else:
-                tvar = np.empty((X_chunk.shape[0], Y_chunk.shape[0]),
+                dist_chunk = np.empty((X_chunk.shape[0], Y_chunk.shape[0]),
                                 dtype='float')
                 for n_x in range(X_chunk.shape[0]):
                     start = 0
@@ -275,14 +277,16 @@ def pairwise_distances_argmin(X, Y=None, axis=1, metric="euclidean",
                         start = n_x
                     for n_y in range(start, Y_chunk.shape[0]):
                         # distance assumed to be symmetric.
-                        tvar[n_x, n_y] = metric(X_chunk[n_x], Y_chunk[n_y],
-                                                **kwargs)
+                        dist_chunk[n_x, n_y] = metric(X_chunk[n_x],
+                                                      Y_chunk[n_y],
+                                                      **kwargs)
                         if X is Y:
-                            tvar[n_y, n_x] = tvar[n_x, n_y]
+                            dist_chunk[n_y, n_x] = dist_chunk[n_x, n_y]
 
             # Update indices and minimum values using chunk
-            min_indices = tvar.argmin(axis=1)
-            min_values = tvar[range(chunk_x.stop - chunk_x.start), min_indices]
+            min_indices = dist_chunk.argmin(axis=1)
+            min_values = dist_chunk[range(chunk_x.stop - chunk_x.start),
+                                    min_indices]
 
             flags = values[chunk_x] > min_values
             indices[chunk_x] = np.where(
