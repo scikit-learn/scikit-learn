@@ -153,6 +153,11 @@ class PCA(BaseEstimator, TransformerMixin):
         to 'mle' or a number between 0 and 1 to select using explained
         variance.
 
+    `covariance_` : array, [n_features, n_features]
+        The estimated data covariance following the Probabilistic PCA model
+        from Tipping and Bishop 1999. See. "Pattern Recognition and
+        Machine Learning" by C. Bishop, 12.2.1 p. 574
+
     Notes
     -----
     For n_components='mle', this class uses the method of `Thomas P. Minka:
@@ -253,14 +258,14 @@ class PCA(BaseEstimator, TransformerMixin):
         self.mean_ = np.mean(X, axis=0)
         X -= self.mean_
         U, S, V = linalg.svd(X, full_matrices=False)
-        self.explained_variance_ = (S ** 2) / n_samples
-        self.explained_variance_ratio_ = (self.explained_variance_ /
-                                          self.explained_variance_.sum())
+        explained_variance_ = (S ** 2) / n_samples
+        explained_variance_ratio_ = (explained_variance_ /
+                                     explained_variance_.sum())
 
         if self.whiten:
-            self.components_ = V / S[:, np.newaxis] * sqrt(n_samples)
+            components_ = V / S[:, np.newaxis] * sqrt(n_samples)
         else:
-            self.components_ = V
+            components_ = V
 
         n_components = self.n_components
         if n_components is None:
@@ -269,20 +274,27 @@ class PCA(BaseEstimator, TransformerMixin):
             if n_samples < n_features:
                 raise ValueError("n_components='mle' is only supported "
                                  "if n_samples >= n_features")
-            n_components = _infer_dimension_(self.explained_variance_,
+
+            n_components = _infer_dimension_(explained_variance_,
                                              n_samples, n_features)
 
         if 0 < n_components < 1.0:
             # number of components for which the cumulated explained variance
             # percentage is superior to the desired threshold
-            ratio_cumsum = self.explained_variance_ratio_.cumsum()
+            ratio_cumsum = explained_variance_ratio_.cumsum()
             n_components = np.sum(ratio_cumsum < n_components) + 1
 
-        self.components_ = self.components_[:n_components, :]
-        self.explained_variance_ = \
-            self.explained_variance_[:n_components]
+        # Compute noise covariance using Probabilistic PCA model
+        # The sigma2 maximum likely out (cf. eq. 12.46)
+        sigma2_ml = explained_variance_[n_components:].mean()
+        exp_var = explained_variance_.copy()
+        exp_var[n_components:] = sigma2_ml
+        self.covariance_ = np.dot(components_.T * exp_var, components_)
+
+        self.components_ = components_[:n_components, :]
+        self.explained_variance_ = explained_variance_[:n_components]
         self.explained_variance_ratio_ = \
-            self.explained_variance_ratio_[:n_components]
+                                   explained_variance_ratio_[:n_components]
 
         self.n_components_ = n_components
         return (U, S, V)
@@ -327,6 +339,31 @@ class PCA(BaseEstimator, TransformerMixin):
         exact inverse operation as transform.
         """
         return fast_dot(X, self.components_) + self.mean_
+
+    def score(self, X, y=None):
+        """Return a score associated to new data
+
+        See. "Pattern Recognition and Machine Learning"
+        by C. Bishop, 12.2.1 p. 574
+
+        Parameters
+        ----------
+        X: array of shape(n_samples, n_features)
+            The data to test
+
+        Returns
+        -------
+        ll: array of shape (n_samples),
+            log-likelihood of each row of X under the current model
+        """
+        Xr = X - self.mean_
+        n_features = X.shape[1]
+        log_like = np.zeros(X.shape[0])
+        self.precision_ = linalg.inv(self.covariance_)
+        log_like = -.5 * (Xr * (np.dot(Xr, self.precision_))).sum(axis=1)
+        log_like -= .5 * (fast_logdet(self.covariance_)
+                          + n_features * log(2. * np.pi))
+        return log_like
 
 
 class ProbabilisticPCA(PCA):
