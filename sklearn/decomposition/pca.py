@@ -18,6 +18,7 @@ from scipy.special import gammaln
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import array2d, check_random_state, as_float_array
 from ..utils import atleast2d_or_csr
+from ..utils import deprecated
 from ..utils.extmath import fast_logdet, safe_sparse_dot, randomized_svd, \
                             fast_dot
 
@@ -366,6 +367,10 @@ class PCA(BaseEstimator, TransformerMixin):
         return log_like
 
 
+@deprecated("ProbabilisticPCA will be removed in 0.16. WARNING: The covariance"
+            " estimation is NOT correct and is now moved and corrected in PCA"
+            " object. To work with homoscedastic=False, you should use"
+            " FactorAnalysis.")
 class ProbabilisticPCA(PCA):
     """Additional layer on top of PCA that adds a probabilistic evaluation"""
     __doc__ += PCA.__doc__
