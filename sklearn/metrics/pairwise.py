@@ -428,7 +428,6 @@ def paired_distances(X, Y, metric="euclidean", **kwds):
     X, Y : ndarray (n_samples, n_features]
 
     metric : string or callable
-        XXX
         The metric to use when calculating distance between instances in a
         feature array. If metric is a string, it must be one of the options
         specified in PAIRED_DISTANCES

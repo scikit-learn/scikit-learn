@@ -337,6 +337,11 @@ def linkage_tree(X, connectivity=None, n_components=None,
                           stacklevel=2)
         # XXX: if affinity is precomputed or callable, the following will
         # not work
+        if affinity == 'precomputed':
+            # Put X in the 'pdist format that scipy likes
+            i, j = np.tril_indices(X.shape[0], k=-1)
+            X = X[i, j]
+            affinity = 'euclidean'
         out = hierarchy.linkage(X, method=linkage, metric=affinity)
         children_ = out[:, :2].astype(np.int)
         return children_, 1, n_samples, None
