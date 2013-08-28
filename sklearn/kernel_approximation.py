@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 The :mod:`sklearn.kernel_approximation` module implements several
 approximate kernel feature maps base on Fourier transforms.
@@ -29,7 +28,7 @@ class RBFSampler(BaseEstimator, TransformerMixin):
     Parameters
     ----------
     gamma : float
-        Parameter of RBF kernel: exp(-γ × x²)
+        Parameter of RBF kernel: exp(-gamma * x^2)
 
     n_components : int
         Number of Monte Carlo samples per original feature.
@@ -190,14 +189,14 @@ class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
 
 
 class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
-    """Approximate feature map for additive chi² kernel.
+    """Approximate feature map for additive chi2 kernel.
 
     Uses sampling the fourier transform of the kernel characteristic
     at regular intervals.
 
     Since the kernel that is to be approximated is additive, the components of
     the input vectors can be treated separately.  Each entry in the original
-    space is transformed into 2×sample_steps+1 features, where sample_steps is
+    space is transformed into 2*sample_steps+1 features, where sample_steps is
     a parameter of the method. Typical values of sample_steps include 1, 2 and
     3.
 
@@ -266,7 +265,7 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
         Returns
         -------
         X_new : {array, sparse matrix}, \
-               shape = (n_samples, n_features × (2×sample_steps + 1))
+               shape = (n_samples, n_features * (2*sample_steps + 1))
             Whether the return value is an array of sparse matrix depends on
             the type of the input X.
         """
@@ -357,7 +356,7 @@ class Nystroem(BaseEstimator, TransformerMixin):
         How many data points will be used to construct the mapping.
 
     gamma : float, default=None
-        Gamma parameter for the RBF, polynomial, exponential chi² and
+        Gamma parameter for the RBF, polynomial, exponential chi2 and
         sigmoid kernels. Interpretation of the default value is left to
         the kernel; see the documentation for sklearn.metrics.pairwise.
         Ignored by other kernels.
@@ -394,7 +393,7 @@ class Nystroem(BaseEstimator, TransformerMixin):
     References
     ----------
     * Williams, C.K.I. and Seeger, M.
-      "Using the Nyström method to speed up kernel machines",
+      "Using the Nystroem method to speed up kernel machines",
       Advances in neural information processing systems 2001
 
     * T. Yang, Y. Li, M. Mahdavi, R. Jin and Z. Zhou

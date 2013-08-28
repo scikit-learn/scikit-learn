@@ -2138,7 +2138,7 @@ def explained_variance_score(y_true, y_pred):
 
 
 def r2_score(y_true, y_pred):
-    """R² (coefficient of determination) regression score function.
+    """R^2 (coefficient of determination) regression score function.
 
     Best possible score is 1.0, lower values are worse.
 
@@ -2153,13 +2153,13 @@ def r2_score(y_true, y_pred):
     Returns
     -------
     z : float
-        The R² score.
+        The R^2 score.
 
     Notes
     -----
     This is not a symmetric function.
 
-    Unlike most other scores, R² score may be negative (it need not actually
+    Unlike most other scores, R^2 score may be negative (it need not actually
     be the square of a quantity R).
 
     References

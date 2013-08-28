@@ -74,10 +74,10 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski',
 
     References
     ----------
-    Ester, M., H. P. Kriegel, J. Sander, and X. Xu, “A Density-Based
-    Algorithm for Discovering Clusters in Large Spatial Databases with Noise”.
+    Ester, M., H. P. Kriegel, J. Sander, and X. Xu, "A Density-Based
+    Algorithm for Discovering Clusters in Large Spatial Databases with Noise".
     In: Proceedings of the 2nd International Conference on Knowledge Discovery
-    and Data Mining, Portland, OR, AAAI Press, pp. 226–231. 1996
+    and Data Mining, Portland, OR, AAAI Press, pp. 226-231. 1996
     """
     if not eps > 0.0:
 	    raise ValueError("eps must be positive.")
@@ -218,10 +218,10 @@ class DBSCAN(BaseEstimator, ClusterMixin):
 
     References
     ----------
-    Ester, M., H. P. Kriegel, J. Sander, and X. Xu, “A Density-Based
-    Algorithm for Discovering Clusters in Large Spatial Databases with Noise”.
+    Ester, M., H. P. Kriegel, J. Sander, and X. Xu, "A Density-Based
+    Algorithm for Discovering Clusters in Large Spatial Databases with Noise".
     In: Proceedings of the 2nd International Conference on Knowledge Discovery
-    and Data Mining, Portland, OR, AAAI Press, pp. 226–231. 1996
+    and Data Mining, Portland, OR, AAAI Press, pp. 226-231. 1996
     """
 
     def __init__(self, eps=0.5, min_samples=5, metric='euclidean',

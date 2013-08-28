@@ -53,7 +53,7 @@ def johnson_lindenstrauss_min_dim(n_samples, eps=0.1):
     """Find a 'safe' number of components to randomly project to
 
     The distortion introduced by a random projection `p` only changes the
-    distance between two points by a factor (1 ± eps) in an euclidean space
+    distance between two points by a factor (1 +- eps) in an euclidean space
     with good probability. The projection `p` is an eps-embedding as defined
     by:
 

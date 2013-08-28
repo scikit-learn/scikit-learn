@@ -362,7 +362,7 @@ class LabelSpreading(BaseLabelPropagation):
     References
     ----------
     Dengyong Zhou, Olivier Bousquet, Thomas Navin Lal, Jason Weston,
-    Bernhard Schölkopf. Learning with local and global consistency (2004)
+    Bernhard Schoelkopf. Learning with local and global consistency (2004)
     http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.115.3219
 
     See Also

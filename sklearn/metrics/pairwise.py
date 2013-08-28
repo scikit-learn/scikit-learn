@@ -383,7 +383,7 @@ def rbf_kernel(X, Y=None, gamma=None):
     """
     Compute the rbf (gaussian) kernel between X and Y::
 
-        K(x, y) = exp(-γ ||x-y||²)
+        K(x, y) = exp(-gamma ||x-y||^2)
 
     for each pair of rows x in X and y in Y.
 
@@ -456,7 +456,7 @@ def additive_chi2_kernel(X, Y=None):
 
     The chi-squared kernel is given by::
 
-        k(x, y) = -∑ᵢ [(xᵢ - yᵢ)² / (xᵢ + yᵢ)]
+        k(x, y) = -Sum [(x - y)^2 / (x + y)]
 
     It can be interpreted as a weighted difference per entry.
 
@@ -515,7 +515,7 @@ def chi2_kernel(X, Y=None, gamma=1.):
 
     The chi-squared kernel is given by::
 
-        k(x, y) = exp(-γ ∑ᵢ [(xᵢ - yᵢ)² / (xᵢ + yᵢ)])
+        k(x, y) = exp(-gamma Sum [(x - y)^2 / (x + y)])
 
     It can be interpreted as a weighted difference per entry.
 

@@ -425,8 +425,8 @@ class MultinomialNB(BaseDiscreteNB):
 
     References
     ----------
-    C.D. Manning, P. Raghavan and H. Schütze (2008). Introduction to
-    Information Retrieval. Cambridge University Press, pp. 234–265.
+    C.D. Manning, P. Raghavan and H. Schuetze (2008). Introduction to
+    Information Retrieval. Cambridge University Press, pp. 234-265.
     http://nlp.stanford.edu/IR-book/html/htmledition/
         naive-bayes-text-classification-1.html
     """
@@ -515,13 +515,13 @@ class BernoulliNB(BaseDiscreteNB):
     References
     ----------
 
-    C.D. Manning, P. Raghavan and H. Schütze (2008). Introduction to
-    Information Retrieval. Cambridge University Press, pp. 234–265.
+    C.D. Manning, P. Raghavan and H. Schuetze (2008). Introduction to
+    Information Retrieval. Cambridge University Press, pp. 234-265.
     http://nlp.stanford.edu/IR-book/html/htmledition/the-bernoulli-model-1.html
 
     A. McCallum and K. Nigam (1998). A comparison of event models for naive
     Bayes text classification. Proc. AAAI/ICML-98 Workshop on Learning for
-    Text Categorization, pp. 41–48.
+    Text Categorization, pp. 41-48.
 
     V. Metsis, I. Androutsopoulos and G. Paliouras (2006). Spam filtering with
     naive Bayes -- Which naive Bayes? 3rd Conf. on Email and Anti-Spam (CEAS).
