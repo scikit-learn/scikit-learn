@@ -212,8 +212,8 @@ class EAC(BaseEstimator, ClusterMixin):
             The array is treated as a feature array unless the metric is
             given as 'precomputed'.
         """
-        final_clusterer = eac(X, initial_clusterers=self.initial_clusterers,
-                              final_clusterer=self.final_clusterer,
-                              random_state=self.random_state)
-        self.labels_ = final_clusterer.labels_
+        self.final_clusterer = eac(X, initial_clusterers=self.initial_clusterers,
+                                  final_clusterer=self.final_clusterer,
+                                  random_state=self.random_state)
+        self.labels_ = self.final_clusterer.labels_
         return self
