@@ -368,8 +368,8 @@ class PCA(BaseEstimator, TransformerMixin):
 
 
 @deprecated("ProbabilisticPCA will be removed in 0.16. WARNING: The covariance"
-            " estimation is NOT correct and is now moved and corrected in PCA"
-            " object. To work with homoscedastic=False, you should use"
+            " estimation is NOT correct and is now moved to and corrected in"
+            " PCA. To work with homoscedastic=False, you should use"
             " FactorAnalysis.")
 class ProbabilisticPCA(PCA):
     """Additional layer on top of PCA that adds a probabilistic evaluation"""
