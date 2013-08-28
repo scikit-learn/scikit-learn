@@ -251,8 +251,8 @@ def pairwise_distances_argmin_min(X, Y, axis=1, metric="euclidean",
 
     Returns
     =======
-    indices : numpy.ndarray
-        indices[i] is the row in Y that is closest to the i-th row in X.
+    argmin : numpy.ndarray
+        argmin[i] is the row in Y that is closest to the i-th row in X.
 
     distances : numpy.ndarray
         distances[i] is the distance between the i-th row in X and the

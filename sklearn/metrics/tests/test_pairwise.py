@@ -207,16 +207,16 @@ def test_pairwise_distances_argmin_min():
     assert_array_almost_equal(E, [1., 1.])
 
     # Compare with naive implementation
-    np.random.seed(1)
-    X = np.random.randn(3, 4)
-    Y = np.random.randn(5, 4)
+    rng = np.random.RandomState(0)
+    X = rng.randn(97, 149)
+    Y = rng.randn(111, 149)
 
-    dist = pairwise_distances(X, Y=Y, metric="manhattan")
+    dist = pairwise_distances(X, Y, metric="manhattan")
     dist_orig_ind = dist.argmin(axis=0)
     dist_orig_val = dist[dist_orig_ind, range(len(dist_orig_ind))]
 
     dist_chunked_ind, dist_chunked_val = pairwise_distances_argmin_min(
-        X, Y=Y, axis=0, metric="manhattan")
+        X, Y, axis=0, metric="manhattan", batch_size=50)
     np.testing.assert_almost_equal(dist_orig_ind, dist_chunked_ind, decimal=7)
     np.testing.assert_almost_equal(dist_orig_val, dist_chunked_val, decimal=7)
 
