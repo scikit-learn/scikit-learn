@@ -44,7 +44,6 @@ class RANSAC(BaseEstimator):
         ``sklearn.linear_model.LinearRegression`` estimator is assumed and
         `min_n_samples` is chosen as ``X.shape[1] + 1``.
 
-
     residual_threshold : float, optional
         Maximum residual for a data sample to be classified as an inlier.
         By default the threshold is chosen as the standard deviation of the
