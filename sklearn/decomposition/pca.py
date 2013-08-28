@@ -286,7 +286,7 @@ class PCA(BaseEstimator, TransformerMixin):
             n_components = np.sum(ratio_cumsum < n_components) + 1
 
         # Compute noise covariance using Probabilistic PCA model
-        # The sigma2 maximum likely out (cf. eq. 12.46)
+        # The sigma2 maximum likelihood (cf. eq. 12.46)
         sigma2_ml = explained_variance_[n_components:].mean()
         exp_var = explained_variance_.copy()
         exp_var[n_components:] = sigma2_ml
