@@ -29,7 +29,7 @@ def test_factor_analysis():
     # wlog, mean is 0
     X = np.dot(h, W) + noise
 
-    fa = FactorAnalysis(n_components=n_components)
+    fa = FactorAnalysis(n_components=n_components, use_randomized_svd=True)
     fa.fit(X)
     X_t = fa.transform(X)
     assert_true(X_t.shape == (n_samples, n_components))

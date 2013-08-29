@@ -93,7 +93,8 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         non-Gaussian latent variables.
     """
     def __init__(self, n_components=None, tol=1e-2, copy=True, max_iter=1000,
-                 verbose=0, use_randomized_svd=False, noise_variance_init=None):
+                 verbose=0, use_randomized_svd=False,
+                 noise_variance_init=None):
         self.n_components = n_components
         self.copy = copy
         self.tol = tol
@@ -143,10 +144,10 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         SMALL = 1e-12
 
         if self.use_randomized_svd:
-            my_svd = lambda X: use_randomized_svd(X, n_components)
+            my_svd = lambda X: randomized_svd(X, n_components)
         else:
             def my_svd(X):
-                U, s, V = linalg.svd(X)
+                U, s, V = linalg.svd(X, full_matrices=False)
                 V = V[:n_components]
                 return U, s, V
 
