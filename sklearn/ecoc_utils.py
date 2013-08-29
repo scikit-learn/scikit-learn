@@ -51,7 +51,7 @@ def calculate_mutual_information_matrix(X, y, sigma):
     mutualInformationMatrix = np.zeros((n_classes, n_classes))
 
     for clsLeftIdx in range(n_classes):
-        for clsRightIdx in range(n_classes):
+        for clsRightIdx in range(clsLeftIdx + 1):
             class_left = classes[clsLeftIdx]
             class_right = classes[clsRightIdx]
 
@@ -60,6 +60,11 @@ def calculate_mutual_information_matrix(X, y, sigma):
 
             mutInfAt = calculate_mutual_information_atom(X_left, X_right, sigma)
             mutualInformationMatrix[clsLeftIdx, clsRightIdx] = mutInfAt
+
+    for clsLeftIdx in range(n_classes):
+        for clsRightIdx in range(clsLeftIdx+1, n_classes):
+            mt_atom = mutualInformationMatrix[clsRightIdx, clsLeftIdx]
+            mutualInformationMatrix[clsLeftIdx, clsRightIdx] = mt_atom
 
     return mutualInformationMatrix
 
