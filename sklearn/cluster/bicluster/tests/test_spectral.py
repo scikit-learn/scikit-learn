@@ -54,7 +54,7 @@ def test_spectral_biclustering():
     """Test Kluger methods on a checkerboard dataset."""
     param_grid = {'method': ['scale', 'bistochastic', 'log'],
                   'svd_method': ['randomized', 'arpack'],
-                  'n_svd_vecs': [None, 20],
+                  'n_svd_vecs': [20],
                   'mini_batch': [False, True],
                   'init': ['k-means++'],
                   'n_init': [3],
