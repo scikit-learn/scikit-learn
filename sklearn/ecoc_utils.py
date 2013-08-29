@@ -1,6 +1,7 @@
 import numpy as np
 import collections
-from scipy import stats
+from .externals.joblib import Parallel
+from .externals.joblib import delayed
 
 
 def create_random_codebook(n_classes, code_size, random_state, estimator=None):
@@ -15,14 +16,16 @@ def create_random_codebook(n_classes, code_size, random_state, estimator=None):
     return code_book
 
 
-def create_decoc_codebook(n_classes, X, y, random_state):
+def create_decoc_codebook(n_classes, X, y, random_state, n_jobs=1):
     code_book = np.ones(shape=(n_classes, n_classes-1), dtype=np.int)
 
     class_from = 0
     class_to = n_classes-1
 
     sigma = calculate_sigma(X)
-    mutualInformationMatrix = calculate_mutual_information_matrix(X, y, sigma)
+    mutualInformationMatrix = calculate_mutual_information_matrix(X, y,
+                                                                  sigma,
+                                                                  n_jobs)
     classFrequencies = calculate_class_frequencies(y)
 
     parse_decoc(np.unique(y), code_book, class_from,
@@ -35,7 +38,7 @@ def create_decoc_codebook(n_classes, X, y, random_state):
 def calculate_class_frequencies(y):
     classes = np.unique(y)
     n_classes = len(classes)
-    classFrequencies = np.zeros((n_classes,), dtype=np.int)
+    classFrequencies = np.zeros((n_classes,), dtype='d')
 
     for clsIdx in range(n_classes):
         cls = classes[clsIdx]
@@ -45,21 +48,24 @@ def calculate_class_frequencies(y):
     return classFrequencies
 
 
-def calculate_mutual_information_matrix(X, y, sigma):
+def calculate_mutual_information_matrix(X, y, sigma, n_jobs=1):
     classes = np.unique(y)
     n_classes = len(classes)
     mutualInformationMatrix = np.zeros((n_classes, n_classes))
 
-    for clsLeftIdx in range(n_classes):
-        for clsRightIdx in range(clsLeftIdx + 1):
-            class_left = classes[clsLeftIdx]
-            class_right = classes[clsRightIdx]
+    X = np.matrix(X.astype(np.double) / np.sqrt(sigma))
+    X_classes = [X[y == classes[clsIdx]] for clsIdx in range(n_classes)]
 
-            X_left = X[y == class_left]
-            X_right = X[y == class_right]
+    mutualInformationMatrix = np.array(Parallel(n_jobs=n_jobs)(
+        delayed(calculate_mi_matrix_entry)(
+            clsLeftIdx, clsRightIdx,
+            X_classes[int(classes[clsLeftIdx])],
+            X_classes[int(classes[clsRightIdx])])
+        for clsLeftIdx in range(n_classes)
+        for clsRightIdx in range(n_classes)))
 
-            mutInfAt = calculate_mutual_information_atom(X_left, X_right, sigma)
-            mutualInformationMatrix[clsLeftIdx, clsRightIdx] = mutInfAt
+    mutualInformationMatrix = mutualInformationMatrix.reshape((n_classes,
+                                                               n_classes)).T
 
     for clsLeftIdx in range(n_classes):
         for clsRightIdx in range(clsLeftIdx+1, n_classes):
@@ -69,19 +75,29 @@ def calculate_mutual_information_matrix(X, y, sigma):
     return mutualInformationMatrix
 
 
-def calculate_mutual_information_atom(X_left, X_right, sigma):
-    mutInfAt = sum([calculate_parzen_estimate(x_l, x_r, sigma)
+def calculate_mi_matrix_entry(clsLeftIdx, clsRightIdx,
+                              X_left, X_right):
+    if clsLeftIdx > clsRightIdx:
+        return 0
+
+    entry = calculate_mutual_information_atom(X_left, X_right)
+
+    return entry
+
+
+def calculate_mutual_information_atom(X_left, X_right):
+    mutInfAt = sum([calculate_parzen_estimate(x_l, x_r)
                     for x_l in X_left
                     for x_r in X_right])
     return mutInfAt
 
 
-def calculate_parzen_estimate(x, y, sigma):
+def calculate_parzen_estimate(x, y):
     if x.shape != y.shape:
         raise ValueError('X and Y vectors should have the same length!')
 
-    estimate = np.sqrt(np.matrix(x)*np.matrix(y).T)
-    parzen_estimate = stats.norm.pdf(estimate, sigma)
+    estimate = (-1.0) * np.square(x - y).sum()
+    parzen_estimate = np.exp(estimate)
     return parzen_estimate
 
 
@@ -97,8 +113,8 @@ def parse_decoc(current_classes, code_book, class_from,
                                          classFrequencies)
 
     code_book[:, class_from] = 0
-    code_book[y_left_unique, class_from] = 1
-    code_book[y_right_unique, class_from] = -1
+    code_book[y_left_unique.astype(int), class_from] = 1
+    code_book[y_right_unique.astype(int), class_from] = -1
 
     left_count = y_left_unique.size
 
@@ -238,7 +254,8 @@ def calculate_qm_information(y_left, y_right,
 
 
 def count_frequencies(y, classFrequencies):
-    return sum(classFrequencies[y])
+    return sum(classFrequencies[y.astype(int)])
+
 
 def calculate_vin(y_left, y_right, mutualInformationMatrix, classFrequencies):
 
@@ -256,6 +273,7 @@ def calculate_vin(y_left, y_right, mutualInformationMatrix, classFrequencies):
 
     vin = vin_left + vin_right
     vin /= np.square(total)
+
     return vin
 
 
@@ -272,7 +290,7 @@ def calculate_vall(y_left, y_right,
     J_right = count_frequencies(y_right, classFrequencies)
     total = J_left + J_right
 
-    vall_classes = float(np.square(J_left) + np.square(J_right))
+    vall_classes = (np.square(J_left) + np.square(J_right))
     vall_classes /= float(np.square(total))
 
     vall_all = vall_estimates*vall_classes
@@ -306,20 +324,6 @@ def calculate_vbtw(y_left, y_right,
 
 
 def calculate_sigma(X):
-    """
-    Finds the sigma uses for calculating Quadratic Mutual Information
-
-    Parameters
-    ----------
-    X : nump array
-        Array containing input daya
-
-    Returns
-    --------
-    sigma : float
-        uses for calculating Quadratic Mutual Information
-    """
-
     sigma = max([np.square(X-x).sum(axis=1).max() for x in X])
     sigma = float(sigma)*0.5
     return sigma

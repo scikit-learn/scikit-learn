@@ -19,30 +19,18 @@ iris.target = iris.target[perm]
 
 def test_calculate_parzen_estimate():
     x = np.array([1, 1, 1, 1])
-    y = np.array([1, 2, 3, 4])
-    sigma = 4
+    y = np.array([1.05, 1.05, 1.05, 1.05])
 
-    parzen_estimate = ecoc_utils.calculate_parzen_estimate(x, y, sigma)
-    assert_almost_equal(parzen_estimate, 0.280, 3)
+    parzen_estimate = ecoc_utils.calculate_parzen_estimate(x, y)
+    assert_almost_equal(parzen_estimate, 0.990, 3)
 
 
 def test_calculate_parzen_estimate_different_sizes():
     x = np.array([1, 1, 1, 1])
     y = np.array([1, 2, 3])
-    sigma = 4
 
     assert_raises(ValueError,
-                  ecoc_utils.calculate_parzen_estimate,
-                  x, y, sigma)
-
-
-def test_calculate_sigma():
-    X = np.array([[1, 1, 1, 1],
-                  [2, 2, 2, 2],
-                  [4, 4, 4, 4]])
-
-    sigma = ecoc_utils.calculate_sigma(X)
-    assert_equal(sigma, 0.5*36)
+                  ecoc_utils.calculate_parzen_estimate, x, y)
 
 
 def test_calculate_vbtw():
@@ -53,17 +41,17 @@ def test_calculate_vbtw():
 
     y = np.array([0, 1, 2, 3])
 
-    y_left = np.array([0, 2])
+    y_left = np.array([2])
     y_right = np.array([1, 3])
 
-    sigma = 6
+    sigma = 1.0
 
     mtInfMat = ecoc_utils.calculate_mutual_information_matrix(X, y, sigma)
     classFrequencies = ecoc_utils.calculate_class_frequencies(y)
 
     vbtw = ecoc_utils.calculate_vbtw(y_left, y_right,
                                      mtInfMat, classFrequencies)
-    assert_almost_equal(vbtw, 0.0737, 4)
+    assert_almost_equal(vbtw, 0.1893, 4)
 
 
 def test_calculate_vall():
@@ -77,14 +65,14 @@ def test_calculate_vall():
     y_left = np.array([0, 2])
     y_right = np.array([1, 3])
 
-    sigma = 6
+    sigma = 1.0
 
     mtInfMat = ecoc_utils.calculate_mutual_information_matrix(X, y, sigma)
     classFrequencies = ecoc_utils.calculate_class_frequencies(y)
 
     vall = ecoc_utils.calculate_vall(y_left, y_right,
                                      mtInfMat, classFrequencies)
-    assert_almost_equal(vall, 0.0737, 4)
+    assert_almost_equal(vall, 0.1284, 4)
 
 
 def test_calculate_vin():
@@ -98,14 +86,14 @@ def test_calculate_vin():
     y_left = np.array([0, 2])
     y_right = np.array([1, 3])
 
-    sigma = 6
+    sigma = 1.0
 
     mtInfMat = ecoc_utils.calculate_mutual_information_matrix(X, y, sigma)
     classFrequencies = ecoc_utils.calculate_class_frequencies(y)
 
     vin = ecoc_utils.calculate_vin(y_left, y_right,
                                    mtInfMat, classFrequencies)
-    assert_almost_equal(vin, 0.0807, 4)
+    assert_almost_equal(vin, 0.25, 4)
 
 
 def test_calculate_qm_information():
@@ -119,7 +107,7 @@ def test_calculate_qm_information():
     y_left = np.array([0, 2])
     y_right = np.array([1, 3])
 
-    sigma = 6
+    sigma = 1.0
 
     mtInfMat = ecoc_utils.calculate_mutual_information_matrix(X, y, sigma)
     classFrequencies = ecoc_utils.calculate_class_frequencies(y)
@@ -127,9 +115,7 @@ def test_calculate_qm_information():
     qmi = ecoc_utils.calculate_qm_information(y_left, y_right,
                                               mtInfMat, classFrequencies)
 
-    qmi_expected = 0.0807 + 0.0737 - 2*0.0737
-
-    assert_almost_equal(qmi, qmi_expected, 4)
+    assert_almost_equal(qmi, 0.1216, 4)
 
 
 def test_random_split():
@@ -153,7 +139,8 @@ def test_add_class_to_binary_partition():
     y_left = np.array([0, 2])
     y_right = np.array([1, 3])
 
-    sigma = ecoc_utils.calculate_sigma(X)
+    sigma = 1.0
+
     mtInfMat = ecoc_utils.calculate_mutual_information_matrix(X, y, sigma)
     classFrequencies = ecoc_utils.calculate_class_frequencies(y)
 
@@ -161,23 +148,20 @@ def test_add_class_to_binary_partition():
                                                       mtInfMat,
                                                       classFrequencies)
 
-    assert_almost_equal(sigma, 18.0, 1)
-
     # Binary-partition parameters
     bp_params = collections.namedtuple('BinaryPartitionParams',
                                        ['y_left', 'y_right',
-                                        'qmi', 'sigma'], verbose=False)
+                                        'qmi'], verbose=False)
 
     bp_params.y_left = y_left
     bp_params.y_right = y_right
-    bp_params.sigma = sigma
     bp_params.qmi = current_qmi
 
     ecoc_utils.add_class_to_binary_partition(bp_params, rng,
                                              mtInfMat, classFrequencies)
 
-    assert_array_equal(bp_params.y_left, np.array([0, 2, 3]))
-    assert_array_equal(bp_params.y_right, np.array([1]))
+    assert_array_equal(bp_params.y_left, np.array([0, 2]))
+    assert_array_equal(bp_params.y_right, np.array([3, 1]))
 
 
 def test_remove_class_to_binary_partition():
@@ -193,7 +177,8 @@ def test_remove_class_to_binary_partition():
     y_left = np.array([0, 2])
     y_right = np.array([1, 3])
 
-    sigma = ecoc_utils.calculate_sigma(X)
+    sigma = 1.0
+
     mtInfMat = ecoc_utils.calculate_mutual_information_matrix(X, y, sigma)
     classFrequencies = ecoc_utils.calculate_class_frequencies(y)
 
@@ -201,23 +186,20 @@ def test_remove_class_to_binary_partition():
                                                       mtInfMat,
                                                       classFrequencies)
 
-    assert_almost_equal(sigma, 18.0, 1)
-
     # Binary-partition parameters
     bp_params = collections.namedtuple('BinaryPartitionParams',
                                        ['y_left', 'y_right',
-                                        'qmi', 'sigma'], verbose=False)
+                                        'qmi'], verbose=False)
 
     bp_params.y_left = y_left
     bp_params.y_right = y_right
-    bp_params.sigma = sigma
     bp_params.qmi = current_qmi
 
     ecoc_utils.remove_class_to_binary_partition(bp_params, rng,
                                                 mtInfMat, classFrequencies)
 
-    assert_array_equal(bp_params.y_left, np.array([2]))
-    assert_array_equal(bp_params.y_right, np.array([1, 3, 0]))
+    assert_array_equal(bp_params.y_left, np.array([0, 2]))
+    assert_array_equal(bp_params.y_right, np.array([1, 3]))
 
 
 def test_sffs():
@@ -234,13 +216,14 @@ def test_sffs():
 
     y = np.array([0, 1, 1, 2, 2, 2, 3, 3, 3, 3])
 
-    sigma = ecoc_utils.calculate_sigma(X)
+    sigma = 1.0
+
     mtInfMat = ecoc_utils.calculate_mutual_information_matrix(X, y, sigma)
     classFrequencies = ecoc_utils.calculate_class_frequencies(y)
     y_left, y_right = ecoc_utils.sffs(np.unique(y),
                                       rng, mtInfMat, classFrequencies)
 
-    assert_array_equal(y_left, np.array([1, 0, 2]))
+    assert_array_equal(y_left, np.array([2, 0, 1]))
     assert_array_equal(y_right, np.array([3]))
 
 
@@ -264,7 +247,8 @@ def test_parse_decoc():
     class_from = 0
     class_to = n_classes-1
 
-    sigma = ecoc_utils.calculate_sigma(X)
+    sigma = 1.0
+
     mtInfMat = ecoc_utils.calculate_mutual_information_matrix(X, y, sigma)
     classFrequencies = ecoc_utils.calculate_class_frequencies(y)
 
@@ -293,9 +277,9 @@ def test_create_decoc_codebook():
     n_classes = 4
 
     code_book = ecoc_utils.create_decoc_codebook(n_classes, X, y, rng)
-    assert_array_equal(code_book, np.array([[1, 1, -1],
+    assert_array_equal(code_book, np.array([[1, 1, 1],
+                                            [1, 1, -1],
                                             [1, -1, 0],
-                                            [1, 1, 1],
                                             [-1, 0, 0]]))
 
 
@@ -303,10 +287,10 @@ def test_create_random_codebook():
     n_classes = 4
     code_book = ecoc_utils.create_random_codebook(n_classes, n_classes, rng)
     assert_array_almost_equal(code_book,
-                              np.array([[1., 0., 1., 1.],
-                                        [1., 1., 1., 1.],
-                                        [1., 1., 0., 1.],
-                                        [0., 0., 1., 0.]]), 2)
+                              np.array([[0.,  1.,  1.,  1.],
+                                        [1.,  0.,  0.,  1.],
+                                        [0.,  0.,  1.,  0.],
+                                        [0.,  1.,  1.,  0.]]), 2)
 
 
 def test_calculate_class_frequencies():
@@ -322,16 +306,64 @@ def test_calculate_mutual_information_matrix():
                   [2, 2, 2, 2],
                   [3, 3, 3, 3]])
 
-    y = np.array([1, 2, 3])
+    y = np.array([0, 1, 2])
 
-    sigma = 1
+    sigma = 1.0
+
     mtInfMat = ecoc_utils.calculate_mutual_information_matrix(X, y, sigma)
 
-    expected_mtInfMat = np.array([[2.420e-01, 7.500e-02, 1.916e-02],
-                                  [7.498e-02, 4.432e-03, 1.994e-04],
-                                  [1.916e-02, 1.994e-04, 1.487e-06]])
+    expected_mtInfMat = np.array([[1., 1.83e-02, 1.13e-07],
+                                  [1.83e-02, 1.e+00, 1.83e-02],
+                                  [1.13e-07, 1.83e-02, 1.]])
 
-    assert_array_almost_equal(mtInfMat, expected_mtInfMat, 3)
+    assert_array_almost_equal(mtInfMat, expected_mtInfMat, 2)
+
+
+def test_calculate_mutual_information_matrix_nonone():
+    X = np.array([[1, 1, 1, 1],
+                  [2, 2, 2, 2],
+                  [3, 3, 3, 3]])
+
+    y = np.array([0, 1, 2])
+
+    sigma = 5.0
+
+    mtInfMat = ecoc_utils.calculate_mutual_information_matrix(X, y, sigma)
+
+    expected_mtInfMat = np.array([[1., 0.45, 0.04],
+                                  [0.45, 1., 0.45],
+                                  [0.04, 0.45, 1.]])
+
+    assert_array_almost_equal(mtInfMat, expected_mtInfMat, 2)
+
+
+def test_calculate_mi_entry():
+    X_left = np.array([[1, 1, 1, 1],
+                       [3, 3, 3, 3],
+                       [3, 3, 3, 3]])
+
+    X_right = np.array([[2, 2, 2, 2],
+                        [4, 4, 4, 4],
+                        [4, 4, 4, 4]])
+
+    mutInfAt = ecoc_utils.calculate_mi_matrix_entry(1, 1, X_left, X_right)
+
+    assert_almost_equal(mutInfAt, 0.128, 3)
+
+
+def test_calculate_mi_matrix_entry():
+    X_left = np.array([[1, 1, 1, 1],
+                       [3, 3, 3, 3],
+                       [3, 3, 3, 3]])
+
+    X_right = np.array([[2, 2, 2, 2],
+                        [4, 4, 4, 4],
+                        [4, 4, 4, 4]])
+
+    mutInfAt = ecoc_utils.calculate_mi_matrix_entry(2, 1, X_left, X_right)
+
+    assert_equal(mutInfAt, 0, 4)
+
 
 def test_calculate_mutual_information_atom():
     X_left = np.array([[1, 1, 1, 1],
@@ -342,9 +374,15 @@ def test_calculate_mutual_information_atom():
                         [4, 4, 4, 4],
                         [4, 4, 4, 4]])
 
-    sigma = 0.05
+    mutInfAt = ecoc_utils.calculate_mutual_information_atom(X_left, X_right)
 
-    mutInfAt = ecoc_utils.calculate_mutual_information_atom(X_left,
-                                                            X_right, sigma)
+    assert_almost_equal(mutInfAt, 0.128, 3)
 
-    assert_almost_equal(mutInfAt, 0.0087, 4)
+
+def test_calculate_sigma():
+    X = np.array([[1, 1, 1, 1],
+                  [2, 2, 2, 2],
+                  [4, 4, 4, 4]])
+
+    sigma = ecoc_utils.calculate_sigma(X)
+    assert_equal(sigma, 0.5*36)
