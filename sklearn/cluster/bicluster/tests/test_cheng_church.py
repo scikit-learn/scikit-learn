@@ -83,18 +83,18 @@ def test_inverse_rows():
 
 
 def test_empty_biclusters():
-    """Cheng and Church should always find at least one bicluster.
+    """Cheng and Church should filter away certain biclusters.
 
-    The MSR of a bicluster with one row or one column is zero.
+    The MSR of a bicluster with one row or one column is always
+    zero.
 
     """
-    for i in range(10):
-        generator = np.random.RandomState(i)
-        data = generator.uniform(0, 1000, (50, 50))
-        model = ChengChurch(n_clusters=1, max_msr=0)
-        model.fit(data)
-        assert_equal(len(model.rows_), 1)
-        assert_equal(len(model.columns_), 1)
+    generator = np.random.RandomState(0)
+    data = generator.uniform(0, 1000, (50, 50))
+    model = ChengChurch(n_clusters=1, max_msr=0)
+    model.fit(data)
+    assert_equal(model.rows_.shape, (0, 50))
+    assert_equal(model.columns_.shape, (0, 50))
 
 
 def test_single_node_deletion():

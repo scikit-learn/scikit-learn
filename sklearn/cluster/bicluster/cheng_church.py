@@ -354,11 +354,18 @@ class ChengChurch(six.with_metaclass(ABCMeta, BaseEstimator,
             rows, cols = self._multiple_node_deletion(rows, cols, X)
             rows, cols = self._single_node_deletion(rows, cols, X)
             rows, cols, irows = self._node_addition(rows, cols, X)
+            if rows.sum() == 1 or cols.sum() == 1:
+                break  # trivial bicluster
             self._mask(X, rows, cols, generator, minval, maxval)
             result_rows.append(rows)
             result_cols.append(cols)
             inverse_rows.append(irows)
 
-        self.rows_ = np.vstack(result_rows)
-        self.columns_ = np.vstack(result_cols)
-        self.inverted_rows = np.vstack(inverse_rows)
+        if len(result_rows) > 0:
+            self.rows_ = np.vstack(result_rows)
+            self.columns_ = np.vstack(result_cols)
+            self.inverted_rows = np.vstack(inverse_rows)
+        else:
+            self.rows_ = np.zeros((0, n_rows))
+            self.columns_ = np.zeros((0, n_cols))
+            self.inverted_rows = np.zeros((0, n_rows))
