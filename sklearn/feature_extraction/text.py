@@ -881,7 +881,7 @@ def _make_int_array():
 class TfidfTransformer(BaseEstimator, TransformerMixin):
     """Transform a count matrix to a normalized tf or tf-idf representation
 
-    Tf means term-frequency while tf–idf means term-frequency times inverse
+    Tf means term-frequency while tf-idf means term-frequency times inverse
     document-frequency. This is a common term weighting scheme in information
     retrieval, that has also found good use in document classification.
 
