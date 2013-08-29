@@ -9,6 +9,8 @@ Algorithm 21.1
 
 # Author: Christian Osendorfer <osendorf@gmail.com>
 #         Alexandre Gramfort <alexandre.gramfort@inria.fr>
+#         Denis A. Engemsnn <d.engemann@fz-juelich.de>
+
 # Licence: BSD3
 
 from math import sqrt, log
