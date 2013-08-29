@@ -69,6 +69,6 @@ class MSTCluster(BaseEstimator):
         rows, cols = span_tree.nonzero()
         rows = rows[idx]
         cols = cols[idx]
-        self.span_tree = csr_matrix( (data, (rows, cols)), shape=span_tree.shape)  # Compute clusters by finding connected subgraphs in self.span_tree
+        self.span_tree = csr_matrix((data, (rows, cols)), shape=span_tree.shape)  # Compute clusters by finding connected subgraphs in self.span_tree
         n_components, self.labels_ = connected_components(self.span_tree, directed=True)
         return self

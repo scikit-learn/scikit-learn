@@ -196,10 +196,11 @@ class EAC(BaseEstimator, ClusterMixin):
     Conference on. Vol. 4. IEEE, 2002.
     """
 
-    def __init__(self, initial_clusterers=None, final_clusterer=None,
+    def __init__(self, default_initial_clusterers=None,
+                 default_final_clusterer=None,
                  random_state=None):
-        self.initial_clusterers = initial_clusterers
-        self.final_clusterer = final_clusterer
+        self.default_initial_clusterers = default_initial_clusterers
+        self.default_final_clusterer = default_final_clusterer
         self.random_state = random_state
 
     def fit(self, X):
@@ -212,8 +213,9 @@ class EAC(BaseEstimator, ClusterMixin):
             The array is treated as a feature array unless the metric is
             given as 'precomputed'.
         """
-        self.final_clusterer = eac(X, initial_clusterers=self.initial_clusterers,
-                                  final_clusterer=self.final_clusterer,
-                                  random_state=self.random_state)
+        self.final_clusterer = eac(X,
+                initial_clusterers=self.default_initial_clusterers,
+                final_clusterer=self.default_final_clusterer,
+                random_state=self.random_state)
         self.labels_ = self.final_clusterer.labels_
         return self
