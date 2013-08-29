@@ -19,7 +19,7 @@ from scipy import linalg
 from ..base import BaseEstimator, TransformerMixin
 from ..externals.six.moves import xrange
 from ..utils import array2d, check_arrays
-from ..utils.extmath import fast_logdet, fast_dot
+from ..utils.extmath import fast_logdet, fast_dot, randomized_svd
 
 
 class FactorAnalysis(BaseEstimator, TransformerMixin):
@@ -93,11 +93,12 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         non-Gaussian latent variables.
     """
     def __init__(self, n_components=None, tol=1e-2, copy=True, max_iter=1000,
-                 verbose=0, noise_variance_init=None):
+                 verbose=0, use_randomized_svd=False, noise_variance_init=None):
         self.n_components = n_components
         self.copy = copy
         self.tol = tol
         self.max_iter = max_iter
+        self.use_randomized_svd = use_randomized_svd
         self.verbose = verbose
         self.noise_variance_init = noise_variance_init
 
@@ -140,15 +141,24 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         loglike = []
         old_ll = -np.inf
         SMALL = 1e-12
+
+        if self.use_randomized_svd:
+            my_svd = lambda X: use_randomized_svd(X, n_components)
+        else:
+            def my_svd(X):
+                U, s, V = linalg.svd(X)
+                V = V[:n_components]
+                return U, s, V
+
         for i in xrange(self.max_iter):
             # SMALL helps numerics
             sqrt_psi = np.sqrt(psi) + SMALL
-            Xtilde = X / (sqrt_psi * nsqrt)
-            _, s, V = linalg.svd(Xtilde, full_matrices=False)
-            V = V[:n_components]
+            _, s, V = my_svd(X / (sqrt_psi * nsqrt))
+            del _
             s **= 2
             # Use 'maximum' here to avoid sqrt problems.
             W = np.sqrt(np.maximum(s[:n_components] - 1., 0.))[:, np.newaxis] * V
+            del V
             W *= sqrt_psi
 
             # loglikelihood
