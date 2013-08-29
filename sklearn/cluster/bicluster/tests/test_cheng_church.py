@@ -6,6 +6,7 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raises
 
 from sklearn.metrics import consensus_score
@@ -43,17 +44,36 @@ def test_incremental_msr():
 
 def test_cheng_church():
     """Test Cheng and Church algorithm on a simple problem."""
-    for shape in ((150, 150), (50, 50)):
-        for noise in (0, 1):
-            for deletion_threshold in (1.5, 2):
+    # test easy problem
+    model = ChengChurch(n_clusters=1, max_msr=1, random_state=0)
+    data = np.arange(50 * 50).reshape(50, 50)
+    model.fit(data)
+    assert_equal(model.rows_.shape, (1, 50))
+    assert_equal(model.columns_.shape, (1, 50))
+
+    # test some harder problems
+    shape = (100, 100)
+    for cutoff in (50, 100):
+        for deletion_threshold in (1.5, 2):
+            with_noise = 0.0
+            without_noise = 0.0
+            for noise in (0, 3):
                 data, rows, cols = make_msr_biclusters(shape, 3,
                                                        noise=noise,
                                                        random_state=0)
-                model = ChengChurch(n_clusters=3, max_msr=10,
+                model = ChengChurch(n_clusters=3, max_msr=5,
                                     deletion_threshold=deletion_threshold,
+                                    row_deletion_cutoff=cutoff,
+                                    column_deletion_cutoff=cutoff,
                                     random_state=0)
                 model.fit(data)
-                assert(consensus_score((rows, cols), model.biclusters_) > 0.7)
+                score = consensus_score((rows, cols), model.biclusters_)
+                if noise:
+                    with_noise = score
+                else:
+                    assert_greater(score, 0.7)
+                    without_noise = score
+            assert(without_noise >= with_noise)
 
 
 def test_inverse_rows():
