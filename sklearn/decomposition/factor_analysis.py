@@ -9,7 +9,7 @@ Algorithm 21.1
 
 # Author: Christian Osendorfer <osendorf@gmail.com>
 #         Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#         Denis A. Engemsnn <d.engemann@fz-juelich.de>
+#         Denis A. Engemann <d.engemann@fz-juelich.de>
 
 # Licence: BSD3
 
@@ -67,6 +67,9 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         The initial guess of the noise variance for each feature.
         If None, it defaults to np.ones(n_features)
 
+    use_randomized_svd : int | bool
+        Whether to use randomized SVD or not. Defaults to False.
+
     Attributes
     ----------
     `components_` : array, [n_components, n_features]
@@ -95,8 +98,8 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         non-Gaussian latent variables.
     """
     def __init__(self, n_components=None, tol=1e-2, copy=True, max_iter=1000,
-                 verbose=0, use_randomized_svd=False,
-                 noise_variance_init=None):
+                 verbose=0, noise_variance_init=None,
+                 use_randomized_svd=False):
         self.n_components = n_components
         self.copy = copy
         self.tol = tol
@@ -160,7 +163,8 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
             del _
             s **= 2
             # Use 'maximum' here to avoid sqrt problems.
-            W = np.sqrt(np.maximum(s[:n_components] - 1., 0.))[:, np.newaxis] * V
+            W = np.sqrt(np.maximum(s[:n_components] - 1., 0.)
+                        )[:, np.newaxis] * V
             del V
             W *= sqrt_psi
 
