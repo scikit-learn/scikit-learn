@@ -32,12 +32,19 @@ data, rows, columns = make_msr_biclusters(shape=(100, 100),
 
 plt.matshow(data, cmap=plt.cm.Blues)
 plt.title("Original dataset")
-plt.show()
 
 data, row_idx, col_idx = sg._shuffle(data, random_state=0)
+
 plt.matshow(data, cmap=plt.cm.Blues)
 plt.title("Shuffled dataset")
-plt.show()
+
+plt.figure()
+n_cols = data.shape[1]
+for row in data:
+    plt.plot(range(n_cols), row)
+plt.title('Parallel coordinates of shuffled data')
+plt.xlabel('column numbers')
+plt.ylabel('value')
 
 model = ChengChurch(n_clusters=3, max_msr=100, random_state=0)
 model.fit(data)
@@ -45,3 +52,16 @@ score = consensus_score(model.biclusters_,
                         (rows[:, row_idx], columns[:, col_idx]))
 
 print "consensus score: {:.1f}".format(score)
+
+
+plt.figure()
+bicluster = model.get_submatrix(0, data)
+n_cols = bicluster.shape[1]
+for row in bicluster:
+    plt.plot(range(n_cols), row)
+plt.title('Parallel coordinates of first bicluster')
+plt.xlabel('column numbers')
+plt.ylabel('value')
+plt.xlim(0, n_cols)
+
+plt.show()

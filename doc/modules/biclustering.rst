@@ -148,7 +148,7 @@ values, then iterates to find the next bicluster.
    showing how to generate a dataset with shifted biclusters and
    analyze it with Cheng and Church.
 
- * :ref:`example_bicluster_cheng_church_microarray.py`: An example of
+ * :ref:`example_bicluster_plot_cheng_church_microarray.py`: An example of
    biclustering a gene microarray dataset with Cheng and Church.
 
 
