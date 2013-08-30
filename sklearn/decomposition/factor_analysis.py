@@ -67,8 +67,9 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         The initial guess of the noise variance for each feature.
         If None, it defaults to np.ones(n_features)
 
-    use_randomized_svd : int | bool
-        Whether to use randomized SVD or not. Defaults to False.
+    algorithm : str
+        Which algorithm to use. If 'svd' use standard SVD from scipy.linalg.
+        If 'randomized-svd' use fast ``randomized_svd`` function.
 
     Attributes
     ----------
@@ -98,13 +99,12 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         non-Gaussian latent variables.
     """
     def __init__(self, n_components=None, tol=1e-2, copy=True, max_iter=1000,
-                 verbose=0, noise_variance_init=None,
-                 use_randomized_svd=False):
+                 verbose=0, noise_variance_init=None, algorithm='svd'):
         self.n_components = n_components
         self.copy = copy
         self.tol = tol
         self.max_iter = max_iter
-        self.use_randomized_svd = use_randomized_svd
+        self.algorithm = algorithm
         self.verbose = verbose
         self.noise_variance_init = noise_variance_init
 
@@ -148,13 +148,13 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         old_ll = -np.inf
         SMALL = 1e-12
 
-        if self.use_randomized_svd:
-            my_svd = lambda X: randomized_svd(X, n_components)
-        else:
+        if self.algorithm == 'svd':
             def my_svd(X):
                 U, s, V = linalg.svd(X, full_matrices=False)
                 V = V[:n_components]
                 return U, s, V
+        elif self.algorithm == 'randomized-svd':
+            my_svd = lambda X: randomized_svd(X, n_components)
 
         for i in xrange(self.max_iter):
             # SMALL helps numerics
