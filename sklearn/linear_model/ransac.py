@@ -130,8 +130,8 @@ class RANSAC(BaseEstimator):
         ------
         ValueError
             If no valid consensus set could be found. This occurs if
-            `is_data_valid` and `is_model_valid` return False for all randomly
-            chosen samples.
+            `is_data_valid` and `is_model_valid` return False for all
+            `max_trials` randomly chosen sub-samples.
 
         """
         if self.base_estimator is not None:
@@ -242,8 +242,9 @@ class RANSAC(BaseEstimator):
         if best_inlier_mask is None:
             raise ValueError("RANSAC could not find valid consensus set, "
                              "because `is_data_valid` and `is_model_valid` "
-                             "returned False for all random samples. Consider "
-                             "relaxing the constraints.")
+                             "returned False for all `max_trials` randomly "
+                             "chosen sub-samples. Consider relaxing the "
+                             "constraints.")
 
         # estimate final model using all inliers
         base_estimator.fit(best_inlier_X, best_inlier_y)
