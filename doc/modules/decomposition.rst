@@ -31,7 +31,7 @@ the case for Support Vector Machines with the RBF kernel and the K-Means
 clustering algorithm. However in that case the inverse transform is no
 longer exact since some information is lost while forward transforming.
 
-In addition, the :class:`ProbabilisticPCA` object provides a
+The :class:`PCA` object also provides a
 probabilistic interpretation of the PCA that can give a likelihood of
 data based on the amount of variance it explains. As such it implements a
 `score` method that can be used in cross-validation.
@@ -509,7 +509,7 @@ of these two parameters. A simple additional assumption regards the
 structure of the error covariance :math:`\Psi`:
 
 * :math:`\Psi = \sigma^2 \mathbf{I}`: This assumption leads to
-  :class:`ProbabilisticPCA`.
+  the probabilistic model of :class:`PCA`.
 
 * :math:`\Psi = diag(\psi_1, \psi_2, \dots, \psi_n)`: This model is called Factor
   Analysis, a classical statistical model. The matrix W is sometimes called
@@ -534,7 +534,7 @@ about these components (e.g. whether they are orthogonal):
 
 .. centered:: |pca_img3| |fa_img3|
 
-The main advantage for Factor Analysis (over :class:`ProbabilisticPCA` is that
+The main advantage for Factor Analysis (over :class:`PCA` is that
 it can model the variance in every direction of the input space independently:
 
 .. figure:: ../auto_examples/decomposition/images/plot_faces_decomposition_8.png

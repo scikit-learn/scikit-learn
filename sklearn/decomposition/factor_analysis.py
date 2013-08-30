@@ -1,5 +1,6 @@
 """Factor Analysis.
-A latent linear variable model, similar to ProbabilisticPCA.
+A latent linear variable model, similar to probabilistic PCA
+implemented by PCA.score
 
 This implementation is based on David Barber's Book,
 Bayesian Reasoning and Machine Learning,
@@ -107,9 +108,8 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
 
     See also
     --------
-    PCA: Principal component analysis, a similar non-probabilistic
-        model model that can be computed in closed form.
-    ProbabilisticPCA: probabilistic PCA.
+    PCA: Principal component analysis that also implements a probabilistic
+        model via a score method but that can be computed in closed form.
     FastICA: Independent component analysis, a latent variable model with
         non-Gaussian latent variables.
     """

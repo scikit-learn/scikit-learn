@@ -235,7 +235,6 @@ Samples generator
    :template: class.rst
 
    decomposition.PCA
-   decomposition.ProbabilisticPCA
    decomposition.ProjectedGradientNMF
    decomposition.RandomizedPCA
    decomposition.KernelPCA
