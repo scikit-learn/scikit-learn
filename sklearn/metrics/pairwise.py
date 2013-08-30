@@ -252,11 +252,11 @@ def pairwise_distances_argmin_min(X, Y, axis=1, metric="euclidean",
     Returns
     =======
     argmin : numpy.ndarray
-        argmin[i] is the row in Y that is closest to the i-th row in X.
+        Y[argmin[i], :] is the row in Y that is closest to X[i, :].
 
     distances : numpy.ndarray
         distances[i] is the distance between the i-th row in X and the
-        indices[i]-th row in Y.
+        argmin[i]-th row in Y.
 
     See also
     ========
@@ -293,10 +293,18 @@ def pairwise_distances_argmin_min(X, Y, axis=1, metric="euclidean",
                 if metric == 'euclidean':  # special case, for speed
                     dist_chunk = np.dot(X_chunk, Y_chunk.T)
                     dist_chunk *= -2
-                    dist_chunk += (X_chunk * X_chunk
-                                   ).sum(axis=1)[:, np.newaxis]
-                    dist_chunk += (Y_chunk * Y_chunk
-                                   ).sum(axis=1)[np.newaxis, :]
+                    if issparse(X_chunk):
+                        dist_chunk = dist_chunk + (X_chunk.multiply(X_chunk)
+                                                   ).sum(axis=1)
+                    else:
+                        dist_chunk += (X_chunk * X_chunk
+                                       ).sum(axis=1)[:, np.newaxis]
+                    if issparse(Y_chunk):
+                        dist_chunk += (Y_chunk.multiply(Y_chunk)
+                                       ).sum(axis=1).T
+                    else:
+                        dist_chunk += (Y_chunk * Y_chunk
+                                       ).sum(axis=1)[np.newaxis, :]
                     np.maximum(dist_chunk, 0, dist_chunk)
                 else:
                     dist_chunk = dist_func(X_chunk, Y_chunk, **kwargs)
@@ -305,7 +313,8 @@ def pairwise_distances_argmin_min(X, Y, axis=1, metric="euclidean",
                                                 metric=metric, **kwargs)
 
             # Update indices and minimum values using chunk
-            min_indices = dist_chunk.argmin(axis=1)
+            # dist_chunk can be a matrix (X_chunk or Y_chunk can be matrices)
+            min_indices = np.asarray(dist_chunk).argmin(axis=1)
             min_values = dist_chunk[range(chunk_x.stop - chunk_x.start),
                                     min_indices]
 

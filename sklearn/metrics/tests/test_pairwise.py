@@ -186,7 +186,7 @@ def test_pairwise_kernels_filter_param():
 
 
 def test_pairwise_distances_argmin_min():
-    """ Check the pairwise distances computation for any metrics"""
+    """ Check pairwise minimum distances computation for any metric"""
     X = [[0], [1]]
     Y = [[-1], [2]]
     # euclidean metric
@@ -217,6 +217,21 @@ def test_pairwise_distances_argmin_min():
 
     dist_chunked_ind, dist_chunked_val = pairwise_distances_argmin_min(
         X, Y, axis=0, metric="manhattan", batch_size=50)
+
+    np.testing.assert_almost_equal(dist_orig_ind, dist_chunked_ind, decimal=7)
+    np.testing.assert_almost_equal(dist_orig_val, dist_chunked_val, decimal=7)
+
+    # Test with sparse X and Y
+    X_sparse = csr_matrix(X)
+    Y_sparse = csr_matrix(Y)
+
+    dist = pairwise_distances(X_sparse, Y=Y_sparse, metric="cosine")
+    dist_orig_ind = dist.argmin(axis=0)
+    dist_orig_val = dist[dist_orig_ind, range(len(dist_orig_ind))]
+
+    dist_chunked_ind, dist_chunked_val = pairwise_distances_argmin_min(
+        X_sparse, Y_sparse, metric="cosine", batch_size=100, axis=0)
+
     np.testing.assert_almost_equal(dist_orig_ind, dist_chunked_ind, decimal=7)
     np.testing.assert_almost_equal(dist_orig_val, dist_chunked_val, decimal=7)
 
