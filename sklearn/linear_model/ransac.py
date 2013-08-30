@@ -91,10 +91,6 @@ class RANSAC(BaseEstimator):
     inlier_mask_ : bool array of shape [n_samples]
         Boolean mask of inliers classified as ``True``.
 
-    Raises
-    ------
-    ValueError: If no valid consensus set could be found.
-
     References
     ----------
     .. [1] http://en.wikipedia.org/wiki/RANSAC
@@ -132,7 +128,11 @@ class RANSAC(BaseEstimator):
 
         Raises
         ------
-        ValueError: If no valid consensus set could be found.
+        ValueError
+            If no valid consensus set could be found. This occurs if
+            `is_data_valid` and `is_model_valid` return False for all randomly
+            chosen samples.
+
         """
         if self.base_estimator is not None:
             base_estimator = clone(self.base_estimator)
@@ -239,7 +239,10 @@ class RANSAC(BaseEstimator):
 
         # if none of the iterations met the required criteria
         if best_inlier_mask is None:
-            raise ValueError("RANSAC could not find valid consensus set.")
+            raise ValueError("RANSAC could not find valid consensus set, "
+                             "because `is_data_valid` and `is_model_valid` "
+                             "returned False for all random samples. Consider "
+                             "relaxing the constraints.")
 
         # estimate final model using all inliers
         base_estimator.fit(best_inlier_X, best_inlier_y)
