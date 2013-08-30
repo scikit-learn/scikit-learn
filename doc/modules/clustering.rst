@@ -571,6 +571,64 @@ by black points below.
    In Proceedings of the 2nd International Conference on Knowledge Discovery
    and Data Mining, Portland, OR, AAAI Press, pp. 226–231. 1996
 
+
+Evidence Accumulation Clustering (EAC)
+======================================
+
+The :class:`EAC` algorithm is an ensemble clusteirng framework that is able to
+discover clusters of an arbitrary shape. This occurs through a remapping of the
+new points into a kernel-like space through the notion of a co-association
+matrix. There are three steps; the initial clustering, the creation of the
+co-association matrix and the final clustering step.
+
+In the initial clustering step, a low level clustering algorithm is used with
+random parameter values to cluster the data many times. In the default version
+of the algorithm implemented in scikit-learn, the K-means algorithm is run with
+`n_clusters` varying randomly from 10 to 30 inclusive. This can be changed by
+the user by setting the `default_initial_clusterers` parameters to be a list of
+clustering algorithms.
+
+The next step is to create a co-association matrix, `C`. This matrix has shape
+`n_samples` by `n_samples`, and `C[i][j]` is the frequency that samples `i` and
+`j` were clustered together in the initial clustering step. This creates a
+remapping of the data onto a new space. Intuitively, samples have a low
+distance to each other will have a high value in `C`.
+
+The final step is to apply a final clustering algorithm onto `C` to form the
+final "definitive" labels of the dataset. This step can use any clustering
+algorithm, but works best on algorithms that take a distance or similarity
+matrix as input. The default clustering algorithm is the :class:`MSTCluster`
+algorithm.
+
+
+In the figure below, we use the rings dataset to show the utility of this
+framework. While the initial clustering algorithms (K-means) are not able to
+find appropriate clusters in this dataset, by combining their outputs into the
+co-association matrix, the final clustering is able to. In addition, the
+V-measure score is significantly higher than K-means.
+
+.. |eac_results| image:: ../auto_examples/cluster/images/plot_eac.png
+        :target: ../auto_examples/cluster/plot_eac.html
+        :scale: 50
+
+.. centered:: |eac_results|
+
+.. topic:: Examples:
+
+    * :ref:`example_cluster_plot_eac.py`
+
+.. topic:: Implementation
+
+    Information about the implementation, if needed
+
+.. topic:: References:
+
+ * "Data clustering using evidence accumulation." Fred, A., and Anil J.
+    Pattern Recognition, 2002. Proceedings. 16th International Conference on.
+    Vol. 4. IEEE, 2002.
+
+
+
 .. _clustering_evaluation:
 
 Clustering performance evaluation

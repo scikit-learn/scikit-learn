@@ -13,47 +13,95 @@ co-association matrix to form the final clusters.
 print(__doc__)
 
 import numpy as np
+import pylab as pl
 from scipy.cluster.hierarchy import dendrogram
-from sklearn.cluster import EAC, MSTCluster
+from sklearn.cluster import EAC, KMeans, MSTCluster
 from sklearn import metrics
-from sklearn.datasets.samples_generator import make_blobs
+from sklearn import datasets
 from sklearn.preprocessing import StandardScaler
 
 
 ##############################################################################
 # Generate sample data
-centers = [[1, 1], [-1, -1], [1, -1]]
-X, labels_true = make_blobs(n_samples=750, centers=centers, cluster_std=0.3,
-                            random_state=0)
+n_samples = 150
+noisy_circles = datasets.make_circles(n_samples=n_samples, factor=.5,
+                                      noise=.05)
+X, y_true = noisy_circles
+main_metric = metrics.adjusted_mutual_info_score
 
-X = StandardScaler().fit_transform(X)
+
+##############################################################################
+# Run K-Means many times with random k-values and record the distribution
+# of adjusted mutual information scores.
+
+print("Plotting many runs of k-means")
+num_iterations = 50
+ami_means = []
+ami_std = []
+k_values = list(range(2, 30))
+for k in k_values:
+    predictions = (KMeans(n_clusters=k).fit(X).labels_
+                   for i in range(num_iterations))
+    ami_scores = [main_metric(y_true, labels)
+                  for labels in predictions]
+    ami_means.append(np.mean(ami_scores))
+    ami_std.append(np.std(ami_scores))
+
+
+# Example k-means
+km_labels = (KMeans(n_clusters=i+2).fit(X).labels_
+             for i in range(4))
+
+
 
 ##############################################################################
 # Compute EAC
-final_clusterer = MSTCluster(threshold=0.5)
+print("Running EAC Algorithm")
+final_clusterer = MSTCluster(threshold=0.9)
 model = EAC(final_clusterer=final_clusterer).fit(X)
-labels = model.labels_
+eac_labels = model.labels_
 
 # Number of clusters in labels, ignoring noise if present.
-n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
-
+n_clusters_ = len(set(eac_labels)) - (1 if -1 in eac_labels else 0)
 print('Estimated number of clusters: %d' % n_clusters_)
-print("Homogeneity: %0.3f" % metrics.homogeneity_score(labels_true, labels))
-print("Completeness: %0.3f" % metrics.completeness_score(labels_true, labels))
-print("V-measure: %0.3f" % metrics.v_measure_score(labels_true, labels))
+print("Homogeneity: %0.3f" % metrics.homogeneity_score(y_true, eac_labels))
+print("Completeness: %0.3f" % metrics.completeness_score(y_true, eac_labels))
+print("V-measure: %0.3f" % metrics.v_measure_score(y_true, eac_labels))
 print("Adjusted Rand Index: %0.3f"
-      % metrics.adjusted_rand_score(labels_true, labels))
+      % metrics.adjusted_rand_score(y_true, eac_labels))
 print("Adjusted Mutual Information: %0.3f"
-      % metrics.adjusted_mutual_info_score(labels_true, labels))
+      % metrics.adjusted_mutual_info_score(y_true, eac_labels))
 
 
 ##############################################################################
-# Plot resulting dendrogram with colored labels representing the final clusters
-import pylab as pl
-ax = pl.subplot(111)
-s = 40
-ax.scatter(X[:, 0], X[:, 1], c=labels_true, s=s*4)
-ax.scatter(X[:, 0], X[:, 1], c=labels, s=s)
+# Plot results
 
-pl.title('Estimated number of clusters: %d' % n_clusters_)
+pl.title('EAC comparison with K-means')
+colors = np.array([x for x in 'bgrcmykbgrcmykbgrcmykbgrcmyk'])
+colors = np.hstack([colors] * 20)
+
+# Subplot showing distribution of scores
+
+# Plot two examples of k-means
+for i, cur_km_labels in enumerate(km_labels):
+    ax = pl.subplot(2, 4, i+1)
+    ax.scatter(X[:, 0], X[:,1], color=colors[cur_km_labels].tolist(), s=10)
+
+
+# Plot distribution of scores (from main_metric)
+ax = pl.subplot(2, 4, 5)
+ax.plot(k_values, ami_means)
+ax.errorbar(k_values, ami_means, yerr=ami_std, fmt='ro', label='k-means')
+score = main_metric(y_true, eac_labels)
+print("Score: {:.4f}, n_clusters={}".format(score, n_clusters_))
+ax.scatter([n_clusters_,], [score,], label='EAC')
+ax.legend()
+
+
+# Plot EAC labels
+ax = pl.subplot(2, 4, 6)
+ax.scatter(X[:, 0], X[:,1], color=colors[eac_labels].tolist(), s=10)
+
+
+
 pl.show()
