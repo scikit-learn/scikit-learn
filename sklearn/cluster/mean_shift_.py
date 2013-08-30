@@ -12,6 +12,7 @@ from ..utils import extmath, check_random_state
 from ..base import BaseEstimator, ClusterMixin
 from ..neighbors import NearestNeighbors
 from ..metrics.pairwise import euclidean_distances
+from ..metrics.pairwise import pairwise_distances_argmin_min
 
 
 def estimate_bandwidth(X, quantile=0.3, n_samples=None, random_state=0):
@@ -294,5 +295,4 @@ class MeanShift(BaseEstimator, ClusterMixin):
         labels : array, shape [n_samples,]
             Index of the cluster each sample belongs to.
         """
-        # FIXME: can use pairwise_distances_argmin when ready.
-        return euclidean_distances(X, self.cluster_centers_).argmin(axis=1)
+        return pairwise_distances_argmin_min(X, self.cluster_centers_)[0]
