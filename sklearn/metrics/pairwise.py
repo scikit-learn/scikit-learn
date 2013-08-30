@@ -191,7 +191,7 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
 
 
 def pairwise_distances_argmin_min(X, Y, axis=1, metric="euclidean",
-                                  batch_size=500, **kwargs):
+                                  batch_size=500, metric_kwargs={}):
     """Compute minimum distances between one point and a set of points.
 
     This function computes for each row in X, the index of the row of Y which
@@ -244,10 +244,8 @@ def pairwise_distances_argmin_min(X, Y, axis=1, metric="euclidean",
         See the documentation for scipy.spatial.distance for details on these
         metrics.
 
-    squared : boolean
-        if True, return squared distances instead of distances. This has only
-        an effect if metric == "euclidean". Returning squared distances is
-        slightly faster than returning non-squared distances.
+    metric_kwargs : dict
+        keyword arguments to pass to specified metric function.
 
     Returns
     =======
@@ -264,8 +262,6 @@ def pairwise_distances_argmin_min(X, Y, axis=1, metric="euclidean",
 
     Notes
     =====
-    All remaining keyword arguments are passed to the specified metric
-    function.
     """
     dist_func = None
     if metric in PAIRWISE_DISTANCE_FUNCTIONS:
@@ -307,10 +303,10 @@ def pairwise_distances_argmin_min(X, Y, axis=1, metric="euclidean",
                                        ).sum(axis=1)[np.newaxis, :]
                     np.maximum(dist_chunk, 0, dist_chunk)
                 else:
-                    dist_chunk = dist_func(X_chunk, Y_chunk, **kwargs)
+                    dist_chunk = dist_func(X_chunk, Y_chunk, **metric_kwargs)
             else:
                 dist_chunk = pairwise_distances(X_chunk, Y_chunk,
-                                                metric=metric, **kwargs)
+                                                metric=metric, **metric_kwargs)
 
             # Update indices and minimum values using chunk
             # dist_chunk can be a matrix (X_chunk or Y_chunk can be matrices)
@@ -325,7 +321,7 @@ def pairwise_distances_argmin_min(X, Y, axis=1, metric="euclidean",
             values[chunk_x] = np.where(
                 flags, min_values, values[chunk_x])
 
-    if metric == "euclidean" and not kwargs.get("squared", False):
+    if metric == "euclidean" and not metric_kwargs.get("squared", False):
         values = np.sqrt(values)
     return indices, values
 
