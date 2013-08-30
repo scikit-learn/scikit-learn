@@ -381,8 +381,8 @@ class PCA(BaseEstimator, TransformerMixin):
         n_features = X.shape[1]
         log_like = np.zeros(X.shape[0])
         covariance = self.get_covariance()
-        self.precision_ = linalg.inv(covariance)
-        log_like = -.5 * (Xr * (np.dot(Xr, self.precision_))).sum(axis=1)
+        precision = linalg.inv(covariance)
+        log_like = -.5 * (Xr * (np.dot(Xr, precision))).sum(axis=1)
         log_like -= .5 * (fast_logdet(covariance)
                           + n_features * log(2. * np.pi))
         return log_like
