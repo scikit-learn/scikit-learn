@@ -375,10 +375,6 @@ def pairwise_distances_argmin(X, Y, axis=1, metric="euclidean",
     argmin : numpy.ndarray
         Y[argmin[i], :] is the row in Y that is closest to X[i, :].
 
-    distances : numpy.ndarray
-        distances[i] is the distance between the i-th row in X and the
-        argmin[i]-th row in Y.
-
     See also
     ========
     sklearn.metrics.pairwise_distances

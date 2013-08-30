@@ -23,6 +23,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.metrics.pairwise import cosine_distances
 from sklearn.metrics.pairwise import pairwise_distances
 from sklearn.metrics.pairwise import pairwise_distances_argmin_min
+from sklearn.metrics.pairwise import pairwise_distances_argmin
 from sklearn.metrics.pairwise import pairwise_kernels
 from sklearn.metrics.pairwise import PAIRWISE_KERNEL_FUNCTIONS
 from sklearn.metrics.pairwise import check_pairwise_arrays
@@ -189,19 +190,28 @@ def test_pairwise_distances_argmin_min():
     """ Check pairwise minimum distances computation for any metric"""
     X = [[0], [1]]
     Y = [[-1], [2]]
+
     # euclidean metric
     D, E = pairwise_distances_argmin_min(X, Y, metric="euclidean")
+    D2 = pairwise_distances_argmin(X, Y, metric="euclidean")
+    assert_array_almost_equal(D, [0, 1])
+    assert_array_almost_equal(D2, [0, 1])
     assert_array_almost_equal(D, [0, 1])
     assert_array_almost_equal(E, [1., 1.])
+
     # Non-euclidean sklearn metric
     D, E = pairwise_distances_argmin_min(X, Y, metric="manhattan")
+    D2 = pairwise_distances_argmin(X, Y, metric="manhattan")
     assert_array_almost_equal(D, [0, 1])
+    assert_array_almost_equal(D2, [0, 1])
     assert_array_almost_equal(E, [1., 1.])
+
     # Non-euclidean Scipy distance (callable)
     D, E = pairwise_distances_argmin_min(X, Y, metric=minkowski,
                                          metric_kwargs={"p": 2})
     assert_array_almost_equal(D, [0, 1])
     assert_array_almost_equal(E, [1., 1.])
+
     # Non-euclidean Scipy distance (string)
     D, E = pairwise_distances_argmin_min(X, Y, metric="minkowski",
                                          metric_kwargs={"p": 2})
