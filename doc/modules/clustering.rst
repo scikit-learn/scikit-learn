@@ -619,7 +619,14 @@ V-measure score is significantly higher than K-means.
 
 .. topic:: Implementation
 
-    Information about the implementation, if needed
+    The EAC algorithm has been designed for scikit-learn to be very modular.
+    The parameters allow for the selection of both the initial clustering
+    algorithms and the final clusterer, which can be any clustering model
+    following scikit-learn's API. Meanwhile, the default parameters match the
+    design originally proposed by Fred and Anil (2002). This allows the
+    algorithm to be run without parameters, which should achieve reasonable
+    results on a wide variety of datasets. See the example listed above for
+    usage information on changing the final clustering step.
 
 .. topic:: References:
 

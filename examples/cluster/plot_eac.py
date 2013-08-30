@@ -12,6 +12,9 @@ co-association matrix to form the final clusters.
 """
 print(__doc__)
 
+from collections import defaultdict
+from operator import itemgetter
+
 import numpy as np
 import pylab as pl
 from scipy.cluster.hierarchy import dendrogram
@@ -19,6 +22,7 @@ from sklearn.cluster import EAC, KMeans, MSTCluster
 from sklearn import metrics
 from sklearn import datasets
 from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import pairwise_distances
 
 
 ##############################################################################
@@ -31,21 +35,21 @@ main_metric = metrics.adjusted_mutual_info_score
 
 
 ##############################################################################
-# Run K-Means many times with random k-values and record the distribution
+# Run K-Means many times with different k-values and record the distribution
 # of adjusted mutual information scores.
 
 print("Plotting many runs of k-means")
 num_iterations = 50
-ami_means = []
-ami_std = []
+km_ami_means = []
+km_ami_std = []
 k_values = list(range(2, 30))
 for k in k_values:
     predictions = (KMeans(n_clusters=k).fit(X).labels_
                    for i in range(num_iterations))
     ami_scores = [main_metric(y_true, labels)
                   for labels in predictions]
-    ami_means.append(np.mean(ami_scores))
-    ami_std.append(np.std(ami_scores))
+    km_ami_means.append(np.mean(ami_scores))
+    km_ami_std.append(np.std(ami_scores))
 
 
 # Example k-means
@@ -53,12 +57,36 @@ km_labels = (KMeans(n_clusters=i+2).fit(X).labels_
              for i in range(4))
 
 
+##############################################################################
+# Run MSTCluster many times with different threshold values
+
+print("Plotting many runs of MSTCluster")
+num_iterations = 50
+mst_scores = defaultdict(list)
+D = pairwise_distances(X, metric="euclidean", n_jobs=1)
+d_min = np.min(D)
+d_max = np.max(D)
+for threshold in np.arange(d_min, d_max, (d_max - d_min) / 100.):
+    predictions = MSTCluster(threshold=threshold).fit(D).labels_
+    ami_score = main_metric(y_true, predictions)
+    n_clusters = len(set(predictions))
+    mst_scores[n_clusters].append(ami_score)
+for key in mst_scores:
+    mst_scores[key] = np.mean(mst_scores[key])
+xx = sorted(mst_scores.items(), key=itemgetter(0))
+mst_values, mst_ami_means = zip(*xx)
+
+
+# Example k-means
+mst_labels = (MSTCluster(threshold=threshold).fit(D).labels_
+             for i in np.arange(d_min, d_max, (d_max - d_min) / 100.))
+
 
 ##############################################################################
 # Compute EAC
 print("Running EAC Algorithm")
 final_clusterer = MSTCluster(threshold=0.9)
-model = EAC(final_clusterer=final_clusterer).fit(X)
+model = EAC(final_clusterer=final_clusterer, random_state=42).fit(X)
 eac_labels = model.labels_
 
 # Number of clusters in labels, ignoring noise if present.
@@ -90,10 +118,13 @@ for i, cur_km_labels in enumerate(km_labels):
 
 # Plot distribution of scores (from main_metric)
 ax = pl.subplot(2, 4, 5)
-ax.plot(k_values, ami_means)
-ax.errorbar(k_values, ami_means, yerr=ami_std, fmt='ro', label='k-means')
+# k-means
+ax.plot(k_values, km_ami_means)
+ax.errorbar(k_values, km_ami_means, yerr=km_ami_std, fmt='ro', label='k-means')
+# MST
+ax.plot(mst_values, mst_ami_means)
+ax.errorbar(mst_values, mst_ami_means, fmt='g*', label='MST')
 score = main_metric(y_true, eac_labels)
-print("Score: {:.4f}, n_clusters={}".format(score, n_clusters_))
 ax.scatter([n_clusters_,], [score,], label='EAC')
 ax.legend()
 
@@ -101,7 +132,6 @@ ax.legend()
 # Plot EAC labels
 ax = pl.subplot(2, 4, 6)
 ax.scatter(X[:, 0], X[:,1], color=colors[eac_labels].tolist(), s=10)
-
 
 
 pl.show()
