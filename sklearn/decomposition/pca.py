@@ -154,10 +154,11 @@ class PCA(BaseEstimator, TransformerMixin):
         to 'mle' or a number between 0 and 1 to select using explained
         variance.
 
-    `covariance_` : array, [n_features, n_features]
-        The estimated data covariance following the Probabilistic PCA model
+    `noise_variance_` : float
+        The estimated noise covariance following the Probabilistic PCA model
         from Tipping and Bishop 1999. See. "Pattern Recognition and
-        Machine Learning" by C. Bishop, 12.2.1 p. 574
+        Machine Learning" by C. Bishop, 12.2.1 p. 574. Required to
+        computed the estimated data covariance and score samples.
 
     Notes
     -----
@@ -264,7 +265,7 @@ class PCA(BaseEstimator, TransformerMixin):
                                      explained_variance_.sum())
 
         if self.whiten:
-            components_ = V / S[:, np.newaxis] * sqrt(n_samples)
+            components_ = V / (S[:, np.newaxis] / sqrt(n_samples))
         else:
             components_ = V
 
@@ -287,18 +288,37 @@ class PCA(BaseEstimator, TransformerMixin):
 
         # Compute noise covariance using Probabilistic PCA model
         # The sigma2 maximum likelihood (cf. eq. 12.46)
-        sigma2_ml = explained_variance_[n_components:].mean()
-        exp_var = explained_variance_.copy()
-        exp_var[n_components:] = sigma2_ml
-        self.covariance_ = np.dot(components_.T * exp_var, components_)
+        self.noise_variance_ = explained_variance_[n_components:].mean()
+        # store n_samples to revert whitening when gettting covariance
+        self.n_samples_ = n_samples
 
-        self.components_ = components_[:n_components, :]
+        self.components_ = components_[:n_components]
         self.explained_variance_ = explained_variance_[:n_components]
         self.explained_variance_ratio_ = \
                                    explained_variance_ratio_[:n_components]
-
         self.n_components_ = n_components
+
         return (U, S, V)
+
+    def get_covariance(self):
+        """Compute data covariance with the generative model.
+
+        ``cov = components_.T * S**2 * components_ + sigma2 * eye(n_features)``
+        where  S**2 contains the explained variances.
+
+        Returns
+        -------
+        cov : array, shape=(n_features, n_features)
+            Estimated covariance of data.
+        """
+        components_ = self.components_
+        exp_var = self.explained_variance_
+        if self.whiten:
+            components_ = components_ * np.sqrt(exp_var[:, np.newaxis])
+        exp_var_diff = np.maximum(exp_var - self.noise_variance_, 0.)
+        cov = np.dot(components_.T * exp_var_diff, components_)
+        cov.flat[::len(cov) + 1] += self.noise_variance_  # modify diag inplace
+        return cov
 
     def transform(self, X):
         """Apply the dimensionality reduction on X.
@@ -360,9 +380,10 @@ class PCA(BaseEstimator, TransformerMixin):
         Xr = X - self.mean_
         n_features = X.shape[1]
         log_like = np.zeros(X.shape[0])
-        self.precision_ = linalg.inv(self.covariance_)
+        covariance = self.get_covariance()
+        self.precision_ = linalg.inv(covariance)
         log_like = -.5 * (Xr * (np.dot(Xr, self.precision_))).sum(axis=1)
-        log_like -= .5 * (fast_logdet(self.covariance_)
+        log_like -= .5 * (fast_logdet(covariance)
                           + n_features * log(2. * np.pi))
         return log_like
 

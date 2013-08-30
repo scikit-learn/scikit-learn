@@ -335,6 +335,12 @@ def test_pca_score2():
     ll2 = pca.score(rng.randn(n, p) * .2 + np.array([3, 4, 5]))
     assert_greater(ll1.mean(), ll2.mean())
 
+    # Test that it gives the same scores if whiten=True
+    pca = PCA(n_components=2, whiten=True)
+    pca.fit(X)
+    ll2 = pca.score(X)
+    assert_array_almost_equal(ll1, ll2)
+
 
 def test_pca_score3():
     """Check that probabilistic PCA selects the right model"""
