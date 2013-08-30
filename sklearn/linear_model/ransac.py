@@ -188,7 +188,8 @@ class RANSAC(BaseEstimator):
             rsample_y = y[random_idxs]
 
             # check if random sample set is valid
-            if self.is_data_valid is not None and not self.is_data_valid(X, y):
+            if self.is_data_valid is not None and not \
+                    self.is_data_valid(rsample_X, rsample_y):
                 continue
 
             # fit model for current random sample set
