@@ -12,7 +12,7 @@ import numpy as np
 from ..base import BaseEstimator, ClusterMixin
 from ..utils import as_float_array
 from ..metrics import euclidean_distances
-from ..metrics import pairwise_distances_argmin_min
+from ..metrics import pairwise_distances_argmin
 
 
 def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
@@ -302,4 +302,4 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
             raise ValueError("Predict method is not supported when "
                              "affinity='precomputed'.")
 
-        return pairwise_distances_argmin_min(X, self.cluster_centers_)[0]
+        return pairwise_distances_argmin(X, self.cluster_centers_)
