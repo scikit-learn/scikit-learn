@@ -85,6 +85,7 @@ mst_labels = (MSTCluster(threshold=threshold).fit(D).labels_
 ##############################################################################
 # Compute EAC
 print("Running EAC Algorithm")
+# Create a final clustering, allowing us to set the threshold value ourselves.
 final_clusterer = MSTCluster(threshold=0.9)
 model = EAC(final_clusterer=final_clusterer, random_state=42).fit(X)
 eac_labels = model.labels_

@@ -600,6 +600,14 @@ algorithm, but works best on algorithms that take a distance or similarity
 matrix as input. The default clustering algorithm is the :class:`MSTCluster`
 algorithm.
 
+The algorithm needs no parameters, but works better if the threshold for the
+final clustering step is given (see the example for how to do this). This
+parameter is more intuitive than many others, and can be summarised as
+"put items in the same cluster if they are clustered together (1-t)% of the
+time", where t is the threshold parameter. Given the randomness of the k-means
+clustering, this allows us to approximately say that k-means considers the
+items to be (1-t)% similar. This is opposed to saying "these items have a
+distance of x", which may not be as intuitive.
 
 In the figure below, we use the rings dataset to show the utility of this
 framework. While the initial clustering algorithms (K-means) are not able to
