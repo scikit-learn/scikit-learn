@@ -39,6 +39,7 @@ def test_ransac_inliers_outliers():
 
 def test_ransac_is_data_valid():
     def is_data_valid(X, y):
+        assert X.shape[0] == y.shape[0] == 2
         return False
 
     X = np.random.rand(10, 2)
@@ -54,6 +55,7 @@ def test_ransac_is_data_valid():
 
 def test_ransac_is_model_valid():
     def is_model_valid(estimator, X, y):
+        assert X.shape[0] == y.shape[0] == 2
         return False
 
     base_estimator = linear_model.LinearRegression()
