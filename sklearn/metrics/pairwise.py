@@ -289,18 +289,10 @@ def pairwise_distances_argmin_min(X, Y, axis=1, metric="euclidean",
                 if metric == 'euclidean':  # special case, for speed
                     dist_chunk = np.dot(X_chunk, Y_chunk.T)
                     dist_chunk *= -2
-                    if issparse(X_chunk):
-                        dist_chunk = dist_chunk + (X_chunk.multiply(X_chunk)
-                                                   ).sum(axis=1)
-                    else:
-                        dist_chunk += (X_chunk * X_chunk
-                                       ).sum(axis=1)[:, np.newaxis]
-                    if issparse(Y_chunk):
-                        dist_chunk += (Y_chunk.multiply(Y_chunk)
-                                       ).sum(axis=1).T
-                    else:
-                        dist_chunk += (Y_chunk * Y_chunk
-                                       ).sum(axis=1)[np.newaxis, :]
+                    dist_chunk += (X_chunk * X_chunk
+                                   ).sum(axis=1)[:, np.newaxis]
+                    dist_chunk += (Y_chunk * Y_chunk
+                                   ).sum(axis=1)[np.newaxis, :]
                     np.maximum(dist_chunk, 0, dist_chunk)
                 else:
                     dist_chunk = dist_func(X_chunk, Y_chunk, **metric_kwargs)
@@ -309,8 +301,7 @@ def pairwise_distances_argmin_min(X, Y, axis=1, metric="euclidean",
                                                 metric=metric, **metric_kwargs)
 
             # Update indices and minimum values using chunk
-            # dist_chunk can be a matrix (X_chunk or Y_chunk can be matrices)
-            min_indices = np.asarray(dist_chunk).argmin(axis=1)
+            min_indices = dist_chunk.argmin(axis=1)
             min_values = dist_chunk[range(chunk_x.stop - chunk_x.start),
                                     min_indices]
 
