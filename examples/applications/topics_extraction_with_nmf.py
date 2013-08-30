@@ -63,7 +63,7 @@ tfidf = text.TfidfTransformer().fit_transform(counts)
 print("done in %0.3fs." % (time() - t0))
 
 # Fit the NMF model
-print("Fitting the NMF model on with n_samples=%d and n_features=%d..."
+print("Fitting the NMF model with n_samples=%d and n_features=%d..."
       % (n_samples, n_features))
 nmf = decomposition.NMF(n_components=n_topics).fit(tfidf)
 print("done in %0.3fs." % (time() - t0))

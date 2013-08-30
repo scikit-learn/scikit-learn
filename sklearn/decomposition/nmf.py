@@ -39,6 +39,11 @@ def norm(x):
     return np.sqrt(np.dot(x.T, x))
 
 
+def trace_dot(X, Y):
+    """Trace of np.dot(X, Y)."""
+    return np.dot(X.ravel(), Y.ravel())
+
+
 def _sparseness(x):
     """Hoyer's measure of sparsity for a vector"""
     sqrt_n = np.sqrt(len(x))
@@ -220,9 +225,14 @@ def _nls_subproblem(V, W, H_init, tol, max_iter, sigma=0.01, beta=0.1):
     alpha = 1
     for n_iter in range(1, max_iter + 1):
         grad = np.dot(WtW, H) - WtV
-        proj_gradient = norm(grad[np.logical_or(grad < 0, H > 0)])
+
+        # The following multiplication with a boolean array is more than twice
+        # as fast as indexing into grad.
+        proj_gradient = norm(grad * np.logical_or(grad < 0, H > 0))
         if proj_gradient < tol:
             break
+
+        Hp = H
 
         for inner_iter in range(1, 20):
             # Gradient step.
@@ -230,12 +240,11 @@ def _nls_subproblem(V, W, H_init, tol, max_iter, sigma=0.01, beta=0.1):
             # Projection step.
             Hn = np.maximum(Hn, 0)
             d = Hn - H
-            gradd = np.sum(grad * d)
-            dQd = np.sum(np.dot(WtW, d) * d)
+            gradd = np.dot(grad.ravel(), d.ravel())
+            dQd = np.dot(np.dot(WtW, d).ravel(), d.ravel())
             suff_decr = (1 - sigma) * gradd + 0.5 * dQd < 0
             if inner_iter == 1:
                 decr_alpha = not suff_decr
-                Hp = H
 
             if decr_alpha:
                 if suff_decr:
@@ -439,7 +448,7 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
                              np.sqrt(self.eta) * np.eye(self.n_components_)]),
                 W.T, tolW, self.nls_max_iter)
 
-        return W, gradW, iterW
+        return W.T, gradW.T, iterW
 
     def _update_H(self, X, H, W, tolH):
         n_samples, n_features = X.shape
@@ -499,41 +508,40 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
         tolW = max(0.001, self.tol) * init_grad  # why max?
         tolH = tolW
 
+        tol = self.tol * init_grad
+
         for n_iter in range(1, self.max_iter + 1):
             # stopping condition
             # as discussed in paper
             proj_norm = norm(np.r_[gradW[np.logical_or(gradW < 0, W > 0)],
                                    gradH[np.logical_or(gradH < 0, H > 0)]])
-            if proj_norm < self.tol * init_grad:
+            if proj_norm < tol:
                 break
 
             # update W
             W, gradW, iterW = self._update_W(X, H, W, tolW)
-
-            W = W.T
-            gradW = gradW.T
             if iterW == 1:
                 tolW = 0.1 * tolW
 
             # update H
             H, gradH, iterH = self._update_H(X, H, W, tolH)
-
             if iterH == 1:
                 tolH = 0.1 * tolH
 
-            self.comp_sparseness_ = _sparseness(H.ravel())
-            self.data_sparseness_ = _sparseness(W.ravel())
-
             if not sp.issparse(X):
-                self.reconstruction_err_ = norm(X - np.dot(W, H))
+                error = norm(X - np.dot(W, H))
             else:
-                norm2X = np.sum(X.data ** 2)  # Ok because X is CSR
-                normWHT = np.trace(np.dot(np.dot(H.T, np.dot(W.T, W)), H))
-                cross_prod = np.trace(np.dot((X * H.T).T, W))
-                self.reconstruction_err_ = sqrt(norm2X + normWHT
-                                                - 2. * cross_prod)
+                sqnorm_X = np.dot(X.data, X.data)
+                norm_WHT = trace_dot(np.dot(H.T, np.dot(W.T, W)).T, H)
+                cross_prod = trace_dot((X * H.T), W)
+                error = sqrt(sqnorm_X + norm_WHT - 2. * cross_prod)
 
-            self.components_ = H
+        self.reconstruction_err_ = error
+
+        self.comp_sparseness_ = _sparseness(H.ravel())
+        self.data_sparseness_ = _sparseness(W.ravel())
+
+        self.components_ = H
 
         if n_iter == self.max_iter:
             warnings.warn("Iteration limit reached during fit")
