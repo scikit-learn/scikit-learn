@@ -38,6 +38,25 @@ def test_pca():
 
     assert_array_almost_equal(X_r, X_r2)
 
+    # Test get_covariance and get_precision with n_components == n_features
+    covariance = pca.get_covariance()
+    precision = pca.get_precision()
+    assert_array_almost_equal(np.dot(covariance, precision), np.eye(X.shape[1]), 12)
+
+    # Test get_covariance and get_precision with n_components < n_features
+    pca.n_components = 2
+    pca.fit(X)
+    covariance = pca.get_covariance()
+    precision = pca.get_precision()
+    assert_array_almost_equal(np.dot(covariance, precision), np.eye(X.shape[1]), 12)
+
+    # Test get_covariance and get_precision with n_components == 0
+    pca.n_components = 0
+    pca.fit(X)
+    covariance = pca.get_covariance()
+    precision = pca.get_precision()
+    assert_array_almost_equal(np.dot(covariance, precision), np.eye(X.shape[1]), 12)
+
 
 def test_whitening():
     """Check that PCA output has unit-variance"""

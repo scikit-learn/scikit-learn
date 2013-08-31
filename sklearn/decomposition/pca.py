@@ -288,7 +288,11 @@ class PCA(BaseEstimator, TransformerMixin):
 
         # Compute noise covariance using Probabilistic PCA model
         # The sigma2 maximum likelihood (cf. eq. 12.46)
-        self.noise_variance_ = explained_variance_[n_components:].mean()
+        if n_components < n_features:
+            self.noise_variance_ = explained_variance_[n_components:].mean()
+        else:
+            self.noise_variance_ = 0.
+
         # store n_samples to revert whitening when gettting covariance
         self.n_samples_ = n_samples
 
@@ -331,8 +335,15 @@ class PCA(BaseEstimator, TransformerMixin):
         precision : array, shape=(n_features, n_features)
             Estimated precision of data.
         """
+        n_features = self.components_.shape[1]
+
+        # handle corner cases first
         if self.n_components_ == 0:
-            return np.eye(self.components_.shape[1]) / self.noise_variance_
+            return np.eye(n_features) / self.noise_variance_
+        if self.n_components_ == n_features:
+            return linalg.inv(self.get_covariance())
+
+        # Get precision using matrix inversion lemma
         components_ = self.components_
         exp_var = self.explained_variance_
         if self.whiten:
