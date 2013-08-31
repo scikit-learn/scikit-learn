@@ -57,6 +57,7 @@ def export_graphviz(decision_tree, out_file="tree.dot", feature_names=None,
     if close is not None:
         warn("The close parameter is deprecated as of version 0.14 "
              "and will be removed in 0.16.", DeprecationWarning)
+
     def node_to_str(tree, node_id):
         value = tree.value[node_id]
         if tree.n_outputs == 1:
