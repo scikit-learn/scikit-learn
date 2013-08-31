@@ -607,7 +607,7 @@ class SupervisedIntegerMixin(object):
 
         if y.ndim == 1 or y.ndim == 2 and y.shape[1] == 1:
             if y.ndim != 1:
-		    warnings.warn("A column-vector y was passed when a 1d array "
+                warnings.warn("A column-vector y was passed when a 1d array "
                               "was expected. Please change the shape of y to "
                               "(n_samples, ), for example using ravel().",
                               DataConversionWarning, stacklevel=2)
