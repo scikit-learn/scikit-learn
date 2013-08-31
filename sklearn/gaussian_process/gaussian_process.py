@@ -411,7 +411,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
         Returns
         -------
-        y : array_like
+        y : array_like, shape (n_samples, ) or (n_samples, n_targets)
             An array with shape (n_eval, ) if the Gaussian Process was trained 
             on an array of shape (n_samples, ) or and array with shape
             (n_eval, n_outputs) if the Gaussian Process was trained on an array
