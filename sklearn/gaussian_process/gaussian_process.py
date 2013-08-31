@@ -697,9 +697,9 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         best_optimal_par = []
 
         if self.verbose:
-            print "The chosen optimizer is: " + str(self.optimizer)
+            print("The chosen optimizer is: " + str(self.optimizer))
             if self.random_start > 1:
-                print str(self.random_start) + " random starts are required."
+                print(str(self.random_start) + " random starts are required.")
 
         percent_completed = 0.
 
@@ -761,7 +761,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                 if self.verbose and self.random_start > 1:
                     if (20 * k) / self.random_start > percent_completed:
                         percent_completed = (20 * k) / self.random_start
-                        print "%s completed" % (5 * percent_completed)
+                        print("%s completed" % (5 * percent_completed))
 
             optimal_rlf_value = best_optimal_rlf_value
             optimal_par = best_optimal_par
@@ -793,7 +793,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                 print("Now improving allowing for anisotropy...")
             for i in self.random_state.permutation(theta0.size):
                 if verbose:
-                    print "Proceeding along dimension %d..." % (i + 1)
+                    print("Proceeding along dimension %d..." % (i + 1))
                 self.theta0 = array2d(theta_iso)
                 self.thetaL = array2d(thetaL[0, i])
                 self.thetaU = array2d(thetaU[0, i])
