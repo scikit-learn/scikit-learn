@@ -320,6 +320,32 @@ class PCA(BaseEstimator, TransformerMixin):
         cov.flat[::len(cov) + 1] += self.noise_variance_  # modify diag inplace
         return cov
 
+    def get_precision(self):
+        """Compute data precision matrix with the generative model.
+
+        Equals the inverse of the covariance but computed with
+        the matrix inversion lemma for efficiency.
+
+        Returns
+        -------
+        precision : array, shape=(n_features, n_features)
+            Estimated precision of data.
+        """
+        if self.n_components_ == 0:
+            return np.eye(self.components_.shape[1]) / self.noise_variance_
+        components_ = self.components_
+        exp_var = self.explained_variance_
+        if self.whiten:
+            components_ = components_ * np.sqrt(exp_var[:, np.newaxis])
+        exp_var_diff = np.maximum(exp_var - self.noise_variance_, 0.)
+        precision = np.dot(components_, components_.T) / self.noise_variance_
+        precision.flat[::len(precision) + 1] += 1. / exp_var_diff
+        precision = np.dot(components_.T,
+                           np.dot(linalg.inv(precision), components_))
+        precision /=  -(self.noise_variance_ ** 2)
+        precision.flat[::len(precision) + 1] += 1. / self.noise_variance_
+        return precision
+
     def transform(self, X):
         """Apply the dimensionality reduction on X.
 
@@ -380,11 +406,9 @@ class PCA(BaseEstimator, TransformerMixin):
         Xr = X - self.mean_
         n_features = X.shape[1]
         log_like = np.zeros(X.shape[0])
-        covariance = self.get_covariance()
-        precision = linalg.inv(covariance)
+        precision = self.get_precision()
         log_like = -.5 * (Xr * (np.dot(Xr, precision))).sum(axis=1)
-        log_like -= .5 * (fast_logdet(covariance)
-                          + n_features * log(2. * np.pi))
+        log_like -= .5 * (n_features * log(2. * np.pi) - fast_logdet(precision))
         return log_like
 
 
