@@ -43,7 +43,6 @@ def export_graphviz(decision_tree, out_file="tree.dot", feature_names=None,
 
     Examples
     --------
-    >>> import os
     >>> from sklearn.datasets import load_iris
     >>> from sklearn import tree
 
