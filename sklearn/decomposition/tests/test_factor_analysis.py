@@ -11,8 +11,8 @@ from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_almost_equal
+from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils import ConvergenceWarning
-
 from sklearn.decomposition import FactorAnalysis
 
 
@@ -62,6 +62,7 @@ def test_factor_analysis():
                             noise_variance_init=np.ones(n_features))
         assert_raises(ValueError, fa.fit, X[:, :2])
 
+
     f = lambda x, y: np.abs(getattr(x, y))  # sign will not be equal
     fa1, fa2 = fas
     for attr in ['loglike_', 'components_', 'noise_variance_']:
@@ -76,3 +77,26 @@ def test_factor_analysis():
         warnings.simplefilter('always', DeprecationWarning)
         FactorAnalysis(verbose=1)
         assert_true(w[-1].category == DeprecationWarning)
+
+    fa2 = FactorAnalysis(n_components=n_components,
+                         noise_variance_init=np.ones(n_features))
+    assert_raises(ValueError, fa2.fit, X[:, :2])
+
+    # Test get_covariance and get_precision with n_components < n_features
+    cov = fa.get_covariance()
+    precision = fa.get_precision()
+    assert_array_almost_equal(np.dot(cov, precision), np.eye(X.shape[1]), 12)
+
+    # Test get_covariance and get_precision with n_components == n_features
+    fa.n_components = n_features
+    fa.fit(X)
+    cov = fa.get_covariance()
+    precision = fa.get_precision()
+    assert_array_almost_equal(np.dot(cov, precision), np.eye(X.shape[1]), 12)
+
+    # Test get_covariance and get_precision with n_components == 0
+    fa.n_components = 0
+    fa.fit(X)
+    cov = fa.get_covariance()
+    precision = fa.get_precision()
+    assert_array_almost_equal(np.dot(cov, precision), np.eye(X.shape[1]), 12)

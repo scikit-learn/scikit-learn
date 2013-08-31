@@ -267,6 +267,33 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         cov.flat[::len(cov) + 1] += self.noise_variance_  # modify diag inplace
         return cov
 
+    def get_precision(self):
+        """Compute data precision matrix with the FactorAnalysis model.
+
+        Returns
+        -------
+        precision : array, shape=(n_features, n_features)
+            Estimated precision of data.
+        """
+        n_features = self.components_.shape[1]
+
+        # handle corner cases first
+        if self.n_components == 0:
+            return np.diag(1. / self.noise_variance_)
+        if self.n_components == n_features:
+            return linalg.inv(self.get_covariance())
+
+        # Get precision using matrix inversion lemma
+        components_ = self.components_
+        precision = np.dot(components_ / self.noise_variance_, components_.T)
+        precision.flat[::len(precision) + 1] += 1.
+        precision = np.dot(components_.T,
+                           np.dot(linalg.inv(precision), components_))
+        precision /=  self.noise_variance_[:, np.newaxis]
+        precision /=  -self.noise_variance_[np.newaxis, :]
+        precision.flat[::len(precision) + 1] += 1. / self.noise_variance_
+        return precision
+
     def score(self, X, y=None):
         """Compute score of X under FactorAnalysis model.
 
@@ -281,10 +308,10 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
             log-likelihood of each row of X under the current model
         """
         Xr = X - self.mean_
-        cov = self.get_covariance()
+        precision = self.get_precision()
         n_features = X.shape[1]
         log_like = np.zeros(X.shape[0])
-        self.precision_ = linalg.inv(cov)
-        log_like = -.5 * (Xr * (fast_dot(Xr, self.precision_))).sum(axis=1)
-        log_like -= .5 * (fast_logdet(cov) + n_features * log(2. * np.pi))
+        self.precision_ = precision  # should not store it I guess...
+        log_like = -.5 * (Xr * (np.dot(Xr, precision))).sum(axis=1)
+        log_like -= .5 * (-fast_logdet(precision) + n_features * log(2. * np.pi))
         return log_like
