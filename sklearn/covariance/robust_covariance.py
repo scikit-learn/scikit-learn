@@ -42,8 +42,9 @@ def c_step(X, n_support, remaining_iterations=30, initial_estimates=None,
 
     remaining_iterations : int, optional
         Number of iterations to perform.
-        According to [Rouseeuw1999]_, two iterations are sufficient to get close
-        to the minimum, and we never need more than 30 to reach convergence.
+        According to [Rouseeuw1999]_, two iterations are sufficient to get
+        close to the minimum, and we never need more than 30 to reach
+        convergence.
 
     initial_estimates : 2-tuple, optional
         Initial estimates of location and shape from which to run the c_step
