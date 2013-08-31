@@ -271,7 +271,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
         # Force data to 2D numpy.array
         X = array2d(X)
-        self.y_shape = np.array(y).shape
+        self.y_shape_ = np.array(y).shape
         y = array2d(y)
 
         # If the y values are given to fit() as a list:
@@ -463,9 +463,9 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             # Predictor
             y = (self.y_mean + self.y_std * y_).reshape(n_eval, self.y.shape[1])
 
-            if len(self.y_shape) == 1:
+            if len(self.y_shape_) == 1:
                 y = y.ravel()
-            elif self.y_shape[0] == 1 and self.y_shape[1] == X.shape[0]:
+            elif self.y_shape_ == (1, X.shape[0]):
                 y = y.T
 
             # Mean Squared Error
@@ -501,9 +501,9 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                 # machine precision: force to zero!
                 MSE[MSE < 0.] = 0.
 
-                if len(self.y_shape) == 1:
+                if len(self.y_shape_) == 1:
                     MSE = MSE.ravel()
-                elif self.y_shape[0] == 1 and self.y_shape[1] == X.shape[0]:
+                elif self.y_shape_ == (1, X.shape[0]):
                     MSE = MSE.T
 
                 return y, MSE
