@@ -490,7 +490,6 @@ def test_linearsvc_crammer_singer():
     assert_array_almost_equal(dec_func, cs_clf.decision_function(iris.data))
 
 
-
 def test_crammer_singer_binary():
     """Test Crammer-Singer formulation in the binary case"""
     X, y = make_classification(n_classes=2, random_state=0)
@@ -500,7 +499,6 @@ def test_crammer_singer_binary():
                             multi_class="crammer_singer",
                             random_state=0).fit(X, y).score(X, y)
         assert_almost_equal(acc, 0.68)
-
 
 
 def test_linearsvc_iris():
