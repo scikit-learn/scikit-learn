@@ -476,14 +476,15 @@ def fit_ecoc(estimator, X, y, code_size=1.5, random_state=None,
 
     # FIXME: there are more elaborate methods than generating the codebook
     # randomly.
+    cls_idx = dict((c, i) for i, c in enumerate(classes))
+    Y_idx = np.array([cls_idx[y_id] for y_id in y])
+
     if ecoc_type == 'decoc':
-        code_book = create_decoc_codebook(n_classes, X, y,
+        code_book = create_decoc_codebook(n_classes, X, Y_idx,
                                           random_state, n_jobs)
     else:
         code_book = create_random_codebook(n_classes, code_size,
                                            random_state, estimator)
-
-    cls_idx = dict((c, i) for i, c in enumerate(classes))
 
     Y = np.array([code_book[cls_idx[y[i]]] for i in range(X.shape[0])],
                  dtype=np.int)
