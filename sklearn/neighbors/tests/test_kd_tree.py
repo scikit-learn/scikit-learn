@@ -123,7 +123,7 @@ def test_kd_tree_kde(n_samples=100, n_features=3):
                                           kernel=kernel,
                                           breadth_first=breadth_first)
                 assert_allclose(dens, dens_true, atol=atol,
-                                          rtol=max(rtol, 1e-7))
+                                rtol=max(rtol, 1e-7))
 
             for rtol in [0, 1E-5]:
                 for atol in [1E-6, 1E-2]:

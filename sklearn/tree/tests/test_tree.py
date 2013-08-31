@@ -598,8 +598,9 @@ def test_sample_weight():
 def test_32bit_equality():
     """Check if 32bit and 64bit get the same result. """
     from sklearn.cross_validation import train_test_split
-    X_train, X_test, y_train, y_test = train_test_split(boston.data, boston.target,
-                                                    random_state=1)
+    X_train, X_test, y_train, y_test = train_test_split(boston.data,
+                                                        boston.target,
+                                                        random_state=1)
     est = DecisionTreeRegressor(random_state=1)
 
     est.fit(X_train, y_train)

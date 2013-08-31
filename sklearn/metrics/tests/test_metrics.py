@@ -326,7 +326,6 @@ def test_roc_curve():
     with warnings.catch_warnings(record=True):
         assert_almost_equal(roc_auc, auc_score(y_true, probas_pred))
 
-
     assert_equal(fpr.shape, tpr.shape)
     assert_equal(fpr.shape, thresholds.shape)
 
@@ -481,8 +480,8 @@ def test_auc_errors():
 
 
 def test_auc_score_non_binary_class():
-    """Test that roc_auc_score function returns an error when trying to compute AUC
-    for non-binary class values.
+    """Test that roc_auc_score function returns an error when trying
+    to compute AUC for non-binary class values.
     """
     rng = check_random_state(404)
     y_pred = rng.rand(10)
@@ -522,6 +521,7 @@ def test_auc_score_non_binary_class():
         assert_raise_message(ValueError, "AUC is defined for binary "
                              "classification only", auc_score, y_true,
                              y_pred)
+
 
 def test_precision_recall_f1_score_binary():
     """Test Precision Recall and F1 Score for binary classification task"""
@@ -633,7 +633,8 @@ def test_matthews_corrcoef_nan():
         warnings.simplefilter("ignore")
         assert_equal(matthews_corrcoef([0], [1]), 0.0)
         warnings.simplefilter("error")
-        assert_equal(matthews_corrcoef([0,0],[0,1]), 0.0)
+        assert_equal(matthews_corrcoef([0, 0], [0, 1]), 0.0)
+
 
 def test_precision_recall_f1_score_multiclass():
     """Test Precision Recall and F1 Score for multiclass classification task"""

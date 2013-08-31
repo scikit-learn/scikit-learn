@@ -335,8 +335,10 @@ def test_lasso_lars_vs_lasso_cd_ill_conditioned():
                                                 fit_intercept=False)
 
     lasso_coef = np.zeros((w.shape[0], len(lars_alphas)))
-    for i, model in enumerate(linear_model.lasso_path(X, y, alphas=lars_alphas,
-                                               tol=1e-6, fit_intercept=False)):
+    for i, model in enumerate(linear_model.lasso_path(X, y,
+                                                      alphas=lars_alphas,
+                                                      tol=1e-6,
+                                                      fit_intercept=False)):
         lasso_coef[:, i] = model.coef_
 
     np.testing.assert_array_almost_equal(lars_coef, lasso_coef, decimal=1)
