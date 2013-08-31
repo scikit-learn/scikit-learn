@@ -556,8 +556,8 @@ class GraphLassoCV(GraphLasso):
         # Finally, compute the score with alpha = 0
         alphas.append(0)
         grid_scores.append(cross_val_score(EmpiricalCovariance(), X,
-                                         cv=cv, n_jobs=self.n_jobs,
-                                         verbose=inner_verbose))
+                                           cv=cv, n_jobs=self.n_jobs,
+                                           verbose=inner_verbose))
         self.grid_scores = np.array(grid_scores)
         best_alpha = alphas[best_index]
         self.alpha_ = best_alpha

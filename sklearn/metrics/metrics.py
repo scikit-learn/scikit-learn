@@ -313,6 +313,7 @@ def average_precision_score(y_true, y_score):
     precision, recall, thresholds = precision_recall_curve(y_true, y_score)
     return auc(recall, precision)
 
+
 @deprecated("Function 'auc_score' has been renamed to "
             "'roc_auc_score' and will be removed in release 0.16.")
 def auc_score(y_true, y_score):

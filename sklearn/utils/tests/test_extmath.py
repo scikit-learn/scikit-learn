@@ -327,7 +327,8 @@ def test_fast_dot():
         # test for matrix mismatch error
         msg = ('Invalid array shapes: A.shape[%d] should be the same as '
                'B.shape[0]. Got A.shape=%r B.shape=%r' % (A.ndim - 1,
-                A.shape, A.shape))
+                                                          A.shape,
+                                                          A.shape))
         assert_raise_message(msg, fast_dot, A, A)
 
     # test cov-like use case + dtypes

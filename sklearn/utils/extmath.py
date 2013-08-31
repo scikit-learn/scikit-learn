@@ -95,7 +95,8 @@ def _fast_dot(A, B):
     if B.shape[0] != A.shape[A.ndim - 1]:  # check adopted from '_dotblas.c'
         msg = ('Invalid array shapes: A.shape[%d] should be the same as '
                'B.shape[0]. Got A.shape=%r B.shape=%r' % (A.ndim - 1,
-                A.shape, B.shape))
+                                                          A.shape,
+                                                          B.shape))
         raise ValueError(msg)
 
     if A.dtype != B.dtype or any(x.dtype not in (np.float32, np.float64)

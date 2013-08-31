@@ -77,7 +77,7 @@ def _assess_dimension_(spectrum, rank, n_samples, n_features):
     for i in range(rank):
         for j in range(i + 1, len(spectrum)):
             pa += log((spectrum[i] - spectrum[j]) *
-                       (1. / spectrum_[j] - 1. / spectrum_[i])) + log(n_samples)
+                      (1. / spectrum_[j] - 1. / spectrum_[i])) + log(n_samples)
 
     ll = pu + pl + pv + pp - pa / 2. - rank * log(n_samples) / 2.
 
@@ -270,7 +270,7 @@ class PCA(BaseEstimator, TransformerMixin):
                 raise ValueError("n_components='mle' is only supported "
                                  "if n_samples >= n_features")
             n_components = _infer_dimension_(self.explained_variance_,
-                                                  n_samples, n_features)
+                                             n_samples, n_features)
 
         if 0 < n_components < 1.0:
             # number of components for which the cumulated explained variance

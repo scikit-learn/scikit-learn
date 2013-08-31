@@ -80,7 +80,7 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski',
     and Data Mining, Portland, OR, AAAI Press, pp. 226-231. 1996
     """
     if not eps > 0.0:
-	    raise ValueError("eps must be positive.")
+        raise ValueError("eps must be positive.")
 
     X = np.asarray(X)
     n = X.shape[0]
