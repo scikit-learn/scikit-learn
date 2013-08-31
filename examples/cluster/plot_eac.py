@@ -38,7 +38,7 @@ main_metric = metrics.adjusted_mutual_info_score
 # Run K-Means many times with different k-values and record the distribution
 # of adjusted mutual information scores.
 
-print("Plotting many runs of k-means")
+print("Running k-means many times")
 num_iterations = 50
 km_ami_means = []
 km_ami_std = []
@@ -53,14 +53,13 @@ for k in k_values:
 
 
 # Example k-means
-km_labels = (KMeans(n_clusters=i+2).fit(X).labels_
-             for i in range(4))
+km_labels = KMeans(n_clusters=2).fit(X).labels_
 
 
 ##############################################################################
 # Run MSTCluster many times with different threshold values
 
-print("Plotting many runs of MSTCluster")
+print("Running MSTCluster many times")
 num_iterations = 50
 mst_scores = defaultdict(list)
 D = pairwise_distances(X, metric="euclidean", n_jobs=1)
@@ -76,10 +75,6 @@ for key in mst_scores:
 xx = sorted(mst_scores.items(), key=itemgetter(0))
 mst_values, mst_ami_means = zip(*xx)
 
-
-# Example k-means
-mst_labels = (MSTCluster(threshold=threshold).fit(D).labels_
-             for i in np.arange(d_min, d_max, (d_max - d_min) / 100.))
 
 
 ##############################################################################
@@ -112,27 +107,28 @@ colors = np.hstack([colors] * 20)
 # Subplot showing distribution of scores
 
 # Plot two examples of k-means
-for i, cur_km_labels in enumerate(km_labels):
-    ax = pl.subplot(2, 4, i+1)
-    ax.scatter(X[:, 0], X[:,1], color=colors[cur_km_labels].tolist(), s=10)
+ax = pl.subplot(3, 1, 1)
+ax.scatter(X[:, 0], X[:,1], color=colors[km_labels].tolist(), s=10)
 
+
+# Plot EAC labels
+ax = pl.subplot(3, 1, 2)
+ax.scatter(X[:, 0], X[:,1], color=colors[eac_labels].tolist(), s=10)
 
 # Plot distribution of scores (from main_metric)
-ax = pl.subplot(2, 4, 5)
+ax = pl.subplot(3, 1, 3)
 # k-means
 ax.plot(k_values, km_ami_means)
 ax.errorbar(k_values, km_ami_means, yerr=km_ami_std, fmt='ro', label='k-means')
+
 # MST
 ax.plot(mst_values, mst_ami_means)
 ax.errorbar(mst_values, mst_ami_means, fmt='g*', label='MST')
 score = main_metric(y_true, eac_labels)
-ax.scatter([n_clusters_,], [score,], label='EAC')
+ax.scatter([n_clusters_,], [score,], label='EAC', s=40)
 ax.legend()
 
 
-# Plot EAC labels
-ax = pl.subplot(2, 4, 6)
-ax.scatter(X[:, 0], X[:,1], color=colors[eac_labels].tolist(), s=10)
 
 
 pl.show()
