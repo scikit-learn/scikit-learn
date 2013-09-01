@@ -19,8 +19,8 @@ from ..base import BaseEstimator, TransformerMixin
 from ..utils import array2d, check_random_state, as_float_array
 from ..utils import atleast2d_or_csr
 from ..utils import deprecated
-from ..utils.extmath import fast_logdet, safe_sparse_dot, randomized_svd, \
-                            fast_dot
+from ..utils.extmath import (fast_logdet, safe_sparse_dot, randomized_svd,
+                             fast_dot)
 
 
 def _assess_dimension_(spectrum, rank, n_samples, n_features):
@@ -156,7 +156,7 @@ class PCA(BaseEstimator, TransformerMixin):
 
     `noise_variance_` : float
         The estimated noise covariance following the Probabilistic PCA model
-        from Tipping and Bishop 1999. See. "Pattern Recognition and
+        from Tipping and Bishop 1999. See "Pattern Recognition and
         Machine Learning" by C. Bishop, 12.2.1 p. 574. Required to
         computed the estimated data covariance and score samples.
 
@@ -298,8 +298,8 @@ class PCA(BaseEstimator, TransformerMixin):
 
         self.components_ = components_[:n_components]
         self.explained_variance_ = explained_variance_[:n_components]
-        self.explained_variance_ratio_ = \
-                                   explained_variance_ratio_[:n_components]
+        explained_variance_ratio_ = explained_variance_ratio_[:n_components]
+        self.explained_variance_ratio_ = explained_variance_ratio_
         self.n_components_ = n_components
 
         return (U, S, V)
@@ -353,7 +353,7 @@ class PCA(BaseEstimator, TransformerMixin):
         precision.flat[::len(precision) + 1] += 1. / exp_var_diff
         precision = np.dot(components_.T,
                            np.dot(linalg.inv(precision), components_))
-        precision /=  -(self.noise_variance_ ** 2)
+        precision /= -(self.noise_variance_ ** 2)
         precision.flat[::len(precision) + 1] += 1. / self.noise_variance_
         return precision
 
@@ -419,7 +419,8 @@ class PCA(BaseEstimator, TransformerMixin):
         log_like = np.zeros(X.shape[0])
         precision = self.get_precision()
         log_like = -.5 * (Xr * (np.dot(Xr, precision))).sum(axis=1)
-        log_like -= .5 * (n_features * log(2. * np.pi) - fast_logdet(precision))
+        log_like -= .5 * (n_features * log(2. * np.pi)
+                          - fast_logdet(precision))
         return log_like
 
 

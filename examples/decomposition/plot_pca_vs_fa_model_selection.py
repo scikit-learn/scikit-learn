@@ -15,7 +15,7 @@ is the different for each feature).
 
 One can observe that with homoscedastic noise both FA and PCA succeed
 in recovering the size of the low rank subspace. The likelihood with PCA
-is higher than FA in this case. However PCA fails and over estimates
+is higher than FA in this case. However PCA fails and overestimates
 the rank when heteroscedastic noise is present. The automatic estimation from
 Automatic Choice of Dimensionality for PCA. NIPS 2000: 598-604
 by Thomas P. Minka is also compared.

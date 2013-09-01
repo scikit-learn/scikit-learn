@@ -109,7 +109,8 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
     See also
     --------
     PCA: Principal component analysis that also implements a probabilistic
-        model via a score method but that can be computed in closed form.
+        model via a score method. PCA is faster as it can be computed
+        in closed form.
     FastICA: Independent component analysis, a latent variable model with
         non-Gaussian latent variables.
     """
@@ -289,8 +290,8 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         precision.flat[::len(precision) + 1] += 1.
         precision = np.dot(components_.T,
                            np.dot(linalg.inv(precision), components_))
-        precision /=  self.noise_variance_[:, np.newaxis]
-        precision /=  -self.noise_variance_[np.newaxis, :]
+        precision /= self.noise_variance_[:, np.newaxis]
+        precision /= -self.noise_variance_[np.newaxis, :]
         precision.flat[::len(precision) + 1] += 1. / self.noise_variance_
         return precision
 
@@ -311,7 +312,7 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         precision = self.get_precision()
         n_features = X.shape[1]
         log_like = np.zeros(X.shape[0])
-        self.precision_ = precision  # should not store it I guess...
         log_like = -.5 * (Xr * (np.dot(Xr, precision))).sum(axis=1)
-        log_like -= .5 * (-fast_logdet(precision) + n_features * log(2. * np.pi))
+        log_like -= .5 * (n_features * log(2. * np.pi)
+                          - fast_logdet(precision))
         return log_like
