@@ -46,7 +46,7 @@ from .ecoc_utils import create_random_codebook
 from .ecoc_utils import create_decoc_codebook
 
 
-def _fit_binary(estimator, X, y, classes=None, idx = -1):
+def _fit_binary(estimator, X, y, classes=None):
     """Fit a single binary estimator."""
     unique_y = np.unique(y)
 
@@ -490,7 +490,7 @@ def fit_ecoc(estimator, X, y, code_size=1.5, random_state=None,
                  dtype=np.int)
 
     estimators = Parallel(n_jobs=n_jobs)(
-        delayed(_fit_binary)(estimator, X, Y[:, i], None, i)
+        delayed(_fit_binary)(estimator, X, Y[:, i], None)
         for i in range(Y.shape[1]))
 
     return estimators, classes, code_book
