@@ -324,6 +324,7 @@ def calculate_vbtw(y_left, y_right,
 
 
 def calculate_sigma(X):
-    sigma = max([np.square(X-x).sum(axis=1).max() for x in X])
-    sigma = float(sigma)*0.5
+    minVal = np.array([np.min(X[:,idx]) for idx in range(X.shape[1])])
+    maxVal = np.array([np.max(X[:,idx]) for idx in range(X.shape[1])])
+    sigma = np.sqrt(float(np.square(minVal - maxVal).sum()))*0.5;
     return sigma

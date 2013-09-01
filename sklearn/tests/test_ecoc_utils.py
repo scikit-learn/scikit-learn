@@ -385,4 +385,4 @@ def test_calculate_sigma():
                   [4, 4, 4, 4]])
 
     sigma = ecoc_utils.calculate_sigma(X)
-    assert_equal(sigma, 0.5*36)
+    assert_equal(sigma, 3.0)
