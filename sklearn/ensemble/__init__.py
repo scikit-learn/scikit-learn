@@ -13,10 +13,11 @@ from .weight_boosting import AdaBoostClassifier
 from .weight_boosting import AdaBoostRegressor
 from .gradient_boosting import GradientBoostingClassifier
 from .gradient_boosting import GradientBoostingRegressor
-#from .bagging import BaseBagging
+from .bagging import BaseBagging
 from .bagging import BaggingClassifier
 from .bagging import BaggingRegressor
 from .bagging import _partition_estimators
+from .bagging import _parallel_build_estimators
 
 from . import forest
 from . import weight_boosting
@@ -28,4 +29,21 @@ __all__ = ["BaseEnsemble", "RandomForestClassifier", "RandomForestRegressor",
            "ExtraTreesRegressor", "GradientBoostingClassifier",
            "GradientBoostingRegressor", "AdaBoostClassifier",
            "AdaBoostRegressor", "forest", "gradient_boosting",
-           "partial_dependence", "weight_boosting","BaseBagging", "BaggingClassifier", "BaggingRegressor","_partition_estimators"]
+           "partial_dependence", "weight_boosting","BaseBagging", "BaggingClassifier", "BaggingRegressor","_partition_estimators", "_parallel_build_estimators"]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

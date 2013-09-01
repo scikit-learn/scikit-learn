@@ -23,12 +23,15 @@ from ..externals.six.moves import xrange
 from ..metrics import r2_score
 from ..utils import check_random_state, check_arrays
 from ..utils.fixes import bincount, unique
+from ..utils.random import sample_without_replacement
 
 from .base import BaseEnsemble
 
 __all__ = ["BaggingClassifier", "BaggingRegressor", "BaseBagging"]
 
 MAX_INT = np.iinfo(np.int32).max
+
+#Bootstrap features function is not implemented here
 
 """ There will be many estimators with different samples for the estimator that user would want to use for bagging. Those estimators have to be distributed among jobs."""
 def _partition_estimators(ensemble):
@@ -47,13 +50,91 @@ def _partition_estimators(ensemble):
     
     return n_jobs, n_estimators.tolist(), [0] + starts.tolist()
 
+def _parallel_build_estimators(n_estimators, ensemble, X, y, sample_weight, seeds, verbose):
+    """Private function used to build a batch of estimators within a job."""
+    
+    # Retrieve settings
+    n_samples, n_features = X.shape
+    max_samples = ensemble.max_samples
+    
+    if (not isinstance(max_samples, (np.integer, numbers.Integral)) and (0.0 < max_samples <= 1.0)):
+        max_samples = int(max_samples * n_samples)
+
+
+    bootstrap = ensemble.bootstrap
+    support_sample_weight = ("sample_weight" in getargspec(ensemble.base_estimator.fit)[0])
+
+    # Build estimators
+    estimators = []
+    estimators_samples = []
+    estimators_features = []
+
+    for i in range(n_estimators):
+        if verbose > 1:
+            print("building estimator %d of %d" % (i + 1, n_estimators))
+
+        random_state = check_random_state(seeds[i])
+        seed = check_random_state(random_state.randint(MAX_INT))
+        estimator = ensemble._make_estimator(append=False)
+
+        try:  # Not all estimators accept a random_state
+            estimator.set_params(random_state=seed)
+        except ValueError:
+            pass
+        
+        features = sample_without_replacement(n_features, n_features, random_state=random_state)      
+            
+
+        # Draw samples, using sample weights, and then fit
+        if support_sample_weight:
+            if sample_weight is None:
+                curr_sample_weight = np.ones((n_samples,))
+            else:
+                curr_sample_weight = sample_weight.copy()
+
+            if bootstrap:
+                indices = random_state.randint(0, n_samples, max_samples)
+                sample_counts = bincount(indices, minlength=n_samples)
+                curr_sample_weight *= sample_counts
+
+            else:
+                not_indices = sample_without_replacement(
+                    n_samples,
+                    n_samples - max_samples,
+                    random_state=random_state)
+
+                curr_sample_weight[not_indices] = 0
+
+            estimator.fit(X[:, features], y, sample_weight=curr_sample_weight)
+            samples = curr_sample_weight > 0.
+
+        # Draw samples, using a mask, and then fit
+        else:
+            if bootstrap:
+                indices = random_state.randint(0, n_samples, max_samples)
+            else:
+                indices = sample_without_replacement(n_samples,
+                                                     max_samples,
+                                                     random_state=random_state)
+
+            sample_counts = bincount(indices, minlength=n_samples)
+
+            estimator.fit((X[indices])[:, features], y[indices])
+            samples = sample_counts > 0.
+
+        estimators.append(estimator)
+        estimators_samples.append(samples)
+        estimators_features.append(features)
+
+    return estimators, estimators_samples, estimators_features
+
 class BaseBagging(six.with_metaclass(ABCMeta, BaseEnsemble)):
     """Base class for Bagging
      Warning: This class should not be used directly. Use derived classes instead"""  
     
     @abstractmethod
     def __init__(self, base_estimator=None, n_estimators=10, max_samples=1.0, bootstrap=True, oob_score=False, n_jobs=1, random_state=None, verbose=0):
-        super(BaseBagging,self).__init(base_estimator=base_estimator,n_estimators = n_estimators)
+        super(BaseBagging,self).__init__(base_estimator=base_estimator,n_estimators = n_estimators)
         self.max_samples = max_samples
         self.bootstrap = bootstrap
         self.oob_score = oob_score
@@ -125,37 +206,25 @@ class BaseBagging(six.with_metaclass(ABCMeta, BaseEnsemble)):
             self._set_oob_score(X, y)
 
         return self
+
+
+class BaggingRegressor(BaseBagging, RegressorMixin):    
+    """ A bagged regressor"""
+    def __init__(self, base_estimator, n_estimators=10, max_samples=1.0, bootstrap=True, oob_score=False, n_jobs=1, random_state=None, verbose=0):
+            super(BaggingRegressor, self).__init__(base_estimator, n_estimators=n_estimators, max_samples=max_samples, bootstrap=bootstrap, oob_score=oob_score, n_jobs=n_jobs, random_state=random_state, verbose=verbose)
+            
+    def _set_oob_score(self, X, y):
+        pass
+
+
         
             
         
-  
-        
-    
-
-
-
-
-
-        
-            
-        
-  
-        
-    
-
-
-
-
-
+ 
 
 class BaggingClassifier(BaseBagging, ClassifierMixin):
     """ A bagged classifier"""    
     pass
-
-class BaggingRegressor(BaseBagging, RegressorMixin):
-    """ A bagged regressor"""
-    pass
-
 
 
 
