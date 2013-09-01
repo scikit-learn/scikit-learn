@@ -470,8 +470,13 @@ def fit_ecoc(estimator, X, y, code_size=1.5, random_state=None,
     _check_estimator(estimator)
     random_state = check_random_state(random_state)
 
-    classes = np.unique(y)
-    n_classes = classes.shape[0]
+    if len(y.shape) > 1:
+        y = [tuple(y_id) for y_id in y]
+        classes = [tuple(y_id) for y_id in np.unique(y)]
+    else:
+        classes = np.unique(y)
+
+    n_classes = len(classes)
     code_size = int(n_classes * code_size)
 
     # FIXME: there are more elaborate methods than generating the codebook
