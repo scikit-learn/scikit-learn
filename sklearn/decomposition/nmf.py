@@ -159,7 +159,6 @@ def _initialize_nmf(X, n_components, variant=None, eps=1e-6,
     return W, H
 
 
-@profile
 def _nls_subproblem(V, W, H_init, tol, max_iter, sigma=0.01, beta=0.1):
     """Non-negative least square solver
 
@@ -220,7 +219,7 @@ def _nls_subproblem(V, W, H_init, tol, max_iter, sigma=0.01, beta=0.1):
 
     H = H_init
     WtV = safe_sparse_dot(W.T, V, dense_output=True)
-    WtW = safe_sparse_dot(W.T, W, dense_output=True)
+    WtW = np.dot(W.T, W)
 
     # values justified in the paper
     alpha = 1
@@ -239,7 +238,7 @@ def _nls_subproblem(V, W, H_init, tol, max_iter, sigma=0.01, beta=0.1):
             # Gradient step.
             Hn = H - alpha * grad
             # Projection step.
-            Hn = np.maximum(Hn, 0)
+            Hn *= Hn > 0
             d = Hn - H
             gradd = np.dot(grad.ravel(), d.ravel())
             dQd = np.dot(np.dot(WtW, d).ravel(), d.ravel())
@@ -473,7 +472,6 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
 
         return H, gradH, iterH
 
-    @profile
     def fit_transform(self, X, y=None):
         """Learn a NMF model for the data X and returns the transformed data.
 
