@@ -36,7 +36,7 @@ def norm(x):
     See: http://fseoane.net/blog/2011/computing-the-vector-norm/
     """
     x = x.ravel()
-    return np.sqrt(np.dot(x.T, x))
+    return np.sqrt(np.dot(x, x))
 
 
 def trace_dot(X, Y):
@@ -159,6 +159,7 @@ def _initialize_nmf(X, n_components, variant=None, eps=1e-6,
     return W, H
 
 
+@profile
 def _nls_subproblem(V, W, H_init, tol, max_iter, sigma=0.01, beta=0.1):
     """Non-negative least square solver
 
@@ -472,6 +473,7 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
 
         return H, gradH, iterH
 
+    @profile
     def fit_transform(self, X, y=None):
         """Learn a NMF model for the data X and returns the transformed data.
 
@@ -528,13 +530,13 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
             if iterH == 1:
                 tolH = 0.1 * tolH
 
-            if not sp.issparse(X):
-                error = norm(X - np.dot(W, H))
-            else:
-                sqnorm_X = np.dot(X.data, X.data)
-                norm_WHT = trace_dot(np.dot(H.T, np.dot(W.T, W)).T, H)
-                cross_prod = trace_dot((X * H.T), W)
-                error = sqrt(sqnorm_X + norm_WHT - 2. * cross_prod)
+        if not sp.issparse(X):
+            error = norm(X - np.dot(W, H))
+        else:
+            sqnorm_X = np.dot(X.data, X.data)
+            norm_WHT = trace_dot(np.dot(H.T, np.dot(W.T, W)).T, H)
+            cross_prod = trace_dot((X * H.T), W)
+            error = sqrt(sqnorm_X + norm_WHT - 2. * cross_prod)
 
         self.reconstruction_err_ = error
 

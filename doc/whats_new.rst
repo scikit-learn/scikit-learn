@@ -19,6 +19,10 @@ Changelog
    - Precision-recall and ROC examples now use train_test_split, and have more
      explanation of why these metrics are useful. By `Kyle Kastner`_
 
+   - The training algorithm for :class:`decomposition.NMF` is faster for
+     sparse matrices and has much lower memory complexity, meaning it will
+     scale up gracefully to large datasets. By `Lars Buitinck`_.
+
 
 .. _changes_0_14:
 
