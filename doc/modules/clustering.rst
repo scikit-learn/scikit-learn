@@ -154,7 +154,7 @@ initializations of the centroids. One method to help address this issue is the
 k-means++ initialization scheme, which has been implemented in scikit-learn
 (use the ``init='kmeans++'`` parameter). This initializes the centroids to be
 (generally) distant from each other, leading to provably better results than
-random initialization.
+random initialization, as shown in the reference.
 
 A parameter can be given to allow K-means to be run in parallel, called
 `n_jobs`. Giving this parameter a positive value uses that many processors
@@ -177,6 +177,13 @@ transform method of a trained model of :class:`KMeans`.
 
  * :ref:`example_cluster_plot_kmeans_digits.py`: Clustering handwritten digits
 
+.. topic:: References:
+
+ * `"k-means++: The advantages of careful seeding"
+   <http://ilpubs.stanford.edu:8090/778/1/2006-13.pdf>`_
+   Arthur, David, and Sergei Vassilvitskii,
+   *Proceedings of the eighteenth annual ACM-SIAM symposium on Discrete
+   algorithms*, Society for Industrial and Applied Mathematics (2007)
 
 .. _mini_batch_kmeans:
 
