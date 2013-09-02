@@ -11,6 +11,7 @@ import numpy as np
 from scipy.sparse import csr_matrix
 
 from ..base import BaseEstimator, ClusterMixin
+from ..metrics import pairwise_distances
 from ..utils import check_random_state, atleast2d_or_csr
 from ..utils.sparsetools import minimum_spanning_tree
 from ..utils import connected_components
@@ -32,6 +33,14 @@ class MSTCluster(BaseEstimator):
         The threshold to cut weak links. This algorithm is based on similarity,
         and therefore any links with distance lower than this values are cut.
 
+    metric: string, or callable
+        The metric to use when calculating distance between instances in a
+        feature array. If metric is a string or callable, it must be one of
+        the options allowed by metrics.pairwise.calculate_distance for its
+        metric parameter.
+        If metric is "precomputed", X is assumed to be a distance matrix and
+        must be square.
+
     Attributes
     ----------
     `labels_` : array, shape = [n_samples]
@@ -50,7 +59,7 @@ class MSTCluster(BaseEstimator):
     Conference on. Vol. 4. IEEE, 2002.
     """
 
-    def __init__(self, threshold=0.85):
+    def __init__(self, threshold=0.85, metric='precomputed'):
         self.threshold = threshold
 
     def fit(self, X):
@@ -62,6 +71,7 @@ class MSTCluster(BaseEstimator):
             Array of similarities between samples.
         """
         X = atleast2d_or_csr(X)
+        X = pairwise_distances(X, metric=self.metric)
         assert X.shape[0] == X.shape[1]
         span_tree = minimum_spanning_tree(X)
         idx = span_tree.data < self.threshold

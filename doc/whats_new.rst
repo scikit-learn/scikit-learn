@@ -15,8 +15,20 @@ Changelog
      :class:`feature_selection.VarianceThreshold`, by `Lars Buitinck`_.
 
    - Precision-recall and ROC examples now use train_test_split, and have more
-     explanation of why these metrics are useful. By `Kyle Kastner`_
+     explanation of why these metrics are useful. By `Kyle Kastner`_.
 
+   - Minimum Spanning Tree Clustering, which uses a threshold based parameter
+     to cut edges, forming clusters from the connected components. By
+     `Robert Layton`_.
+
+    - Evidence Accumulation Clustering (EAC), which runs K-means many times to
+      form a co-association matrix, then using MSTCluster to form final
+      clusters. By `Robert Layton`_.
+
+    - Upgrading the sparsetools utility functions (which are backported from
+      scipy). This was done to give access to the minimum spanning tree function
+      which was used for the MSTCluster algorithm. By `Robert Layton`_.
+      
 
 .. _changes_0_14:
 

@@ -572,25 +572,69 @@ by black points below.
    and Data Mining, Portland, OR, AAAI Press, pp. 226–231. 1996
 
 
+
+Minimum Spanning Tree Clustering
+================================
+The :class:`MSTCluster` algorithm forms a minimum spann tree over the data, and
+then cuts any edges that have a weight higher than some predefined threshold.
+This separates the data into connected components, each representing a separate
+cluster.
+
+In graph theory, a minimum spanning tree is a set of connections between nodes
+that link all nodes together with the minimum sum of weights. In the
+implementation in scikit-learn, a graph is formed by taking the samples to be
+nodes and the edge weight to be the distance between them. Therefore, the
+clusters are formed through maintaining a linkage of samples with a low distance
+to each other.
+
+The :class:`MSTCluster` takes a distance matrix as input, rather than a feature
+matrix. A feature matrix can be used by setting the `metric` parameter, in
+which case the `pairwise_distances` function in the `metrics` module will be
+called to create the distance matrix. By default, this parameter is
+`precomputed`, meaning the matrix will be interpreted as being a precomputed
+distance matrix. If running batch jobs, precomputing the distance matrix can
+dramatically speed up computation.
+
+The example below uses :class:`MSTCluster` to cluster a small dataset, showing
+also the edges that compose the minimum spanning tree. Red edges are cut while
+green edges are maintained, forming the final clusters which are color coded.
+
+.. |mst_results| image:: ../auto_examples/cluster/images/plot_mst.png
+        :target: ../auto_examples/cluster/plot_mst.html
+        :scale: 50
+
+.. centered:: |mst_results|
+
+.. topic:: Examples:
+
+    * :ref:`example_cluster_plot_mst.py`
+
+.. topic:: References:
+
+ * "Data clustering using evidence accumulation." Fred, A., and Anil J.
+    Pattern Recognition, 2002. Proceedings. 16th International Conference on.
+    Vol. 4. IEEE, 2002.
+
+
 Evidence Accumulation Clustering (EAC)
 ======================================
 
-The :class:`EAC` algorithm is an ensemble clusteirng framework that is able to
+The :class:`EAC` algorithm is an ensemble clustering framework that is able to
 discover clusters of an arbitrary shape. This occurs through a remapping of the
-new points into a kernel-like space through the notion of a co-association
-matrix. There are three steps; the initial clustering, the creation of the
+new points into a kernel-like space through the notion of a *co-association
+matrix*. There are three steps; the initial clustering, the creation of the
 co-association matrix and the final clustering step.
 
-In the initial clustering step, a low level clustering algorithm is used with
-random parameter values to cluster the data many times. In the default version
-of the algorithm implemented in scikit-learn, the K-means algorithm is run with
+In the initial clustering step, a low-level clustering algorithm is used, with
+random parameter values, to cluster the data many times. In the default
+parameters implemented in scikit-learn, the :class:`KMeans` algorithm is run with
 `n_clusters` varying randomly from 10 to 30 inclusive. This can be changed by
 the user by setting the `default_initial_clusterers` parameters to be a list of
 clustering algorithms.
 
 The next step is to create a co-association matrix, `C`. This matrix has shape
-`n_samples` by `n_samples`, and `C[i][j]` is the frequency that samples `i` and
-`j` were clustered together in the initial clustering step. This creates a
+`n_samples` by `n_samples`, where `C[i][j]` is the frequency that samples `i`
+and `j` were clustered together in the initial clustering step. This creates a
 remapping of the data onto a new space. Intuitively, samples have a low
 distance to each other will have a high value in `C`.
 
@@ -607,7 +651,7 @@ parameter is more intuitive than many others, and can be summarised as
 time", where t is the threshold parameter. Given the randomness of the k-means
 clustering, this allows us to approximately say that k-means considers the
 items to be (1-t)% similar. This is opposed to saying "these items have a
-distance of x", which may not be as intuitive.
+distance of x", which may not be as intuitive in high dimension contexts.
 
 In the figure below, we use the rings dataset to show the utility of this
 framework. While the initial clustering algorithms (K-means) are not able to
@@ -641,7 +685,6 @@ V-measure score is significantly higher than K-means.
  * "Data clustering using evidence accumulation." Fred, A., and Anil J.
     Pattern Recognition, 2002. Proceedings. 16th International Conference on.
     Vol. 4. IEEE, 2002.
-
 
 
 .. _clustering_evaluation:
