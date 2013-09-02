@@ -590,7 +590,7 @@ to each other.
 The :class:`MSTCluster` takes a distance matrix as input, rather than a feature
 matrix. A feature matrix can be used by setting the `metric` parameter, in
 which case the `pairwise_distances` function in the `metrics` module will be
-called to create the distance matrix. By default, this parameter is
+called to create the distance matrix. This parameter can be set to the string
 `precomputed`, meaning the matrix will be interpreted as being a precomputed
 distance matrix. If running batch jobs, precomputing the distance matrix can
 dramatically speed up computation.

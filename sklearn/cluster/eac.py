@@ -9,11 +9,10 @@ EAC: Evidence Accumulation Clustering
 
 import numpy as np
 
-from sklearn.cluster import KMeans, SpectralClustering
-
+# Imports .cluster.MSTCluster if final_clusterer = None in any EAC call
+# Imports .cluster.Kmeans if initial_clusterers = None in any EAC call.
 from ..base import BaseEstimator, ClusterMixin
 from ..utils import check_random_state, atleast2d_or_csr
-from .mst import MSTCluster
 
 
 def eac(X, initial_clusterers=None, final_clusterer=None,
@@ -70,13 +69,14 @@ def eac(X, initial_clusterers=None, final_clusterer=None,
         initial_clusterers = _kmeans_random_k(n_samples, random_state)
     # If the final_clusterer is None, create the default model
     if final_clusterer is None:
-        final_clusterer = MSTCluster()
+        from ..cluster import MSTCluster
+        final_clusterer = MSTCluster(metric='precomputed')
     # Co-association matrix, originally zeros everywhere
     C = np.eye(n_samples, dtype='float')
     num_initial_clusterers = 0
     for model in initial_clusterers:
         num_initial_clusterers += 1
-        # Update random state 
+        # Update random state
         # Fit model to X
         model.fit(X)
         # Calculate new coassociation matrix and add that to the tally
@@ -99,7 +99,7 @@ def update_coassociation_matrix(C, labels):
 
 def _kmeans_random_k(n_samples, random_state=None, **kmeans_args):
     """Returns a generator for the default initial clustering for EAC
-    
+
     This initial clustering is k-means, initialised randomly with k values
     chosen randomly between 10 and 30 inclusive.
     Parameters
@@ -107,25 +107,26 @@ def _kmeans_random_k(n_samples, random_state=None, **kmeans_args):
     random_state: numpy.RandomState, optional
         The generator used to initialize the initial_clusterers.
         Defaults to numpy.random.
-    
+
     kmeans_args: other keywords
         Any additional arguments to this function are passed onto the
         initialiser for `sklearn.cluster.KMeans` with the exception of the
         `n_clusters` argument, which cannot be given (an error is raised if
         it is).
-    
+
     Returns
     -------
     models: generator of KMeans instances
         Length will be 150, each instance initialised randomly using the
         supplied random_state.
-    
+
     References
     ----------
     Fred, Ana LN, and Anil K. Jain. "Data clustering using evidence
     accumulation." Pattern Recognition, 2002. Proceedings. 16th International
     Conference on. Vol. 4. IEEE, 2002.
     """
+    from ..cluster import KMeans
     if 'n_clusters' in kmeans_args:
         error_msg = "n_clusters cannot be assigned for the default clusterers."
         raise ValueError(error_msg)
@@ -213,9 +214,9 @@ class EAC(BaseEstimator, ClusterMixin):
             The array is treated as a feature array unless the metric is
             given as 'precomputed'.
         """
-        self.final_clusterer = eac(X,
-                initial_clusterers=self.default_initial_clusterers,
-                final_clusterer=self.default_final_clusterer,
-                random_state=self.random_state)
+        model = eac(X, initial_clusterers=self.default_initial_clusterers,
+                    final_clusterer=self.default_final_clusterer,
+                    random_state=self.random_state)
+        self.final_clusterer = model
         self.labels_ = self.final_clusterer.labels_
         return self

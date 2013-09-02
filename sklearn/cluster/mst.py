@@ -7,17 +7,16 @@ MST Cluster: Compute Minimum Spanning Tree, cut weak links using a threshold.
 #
 # License: 3-clause BSD.
 
-import numpy as np
 from scipy.sparse import csr_matrix
 
 from ..base import BaseEstimator, ClusterMixin
 from ..metrics import pairwise_distances
-from ..utils import check_random_state, atleast2d_or_csr
+from ..utils import atleast2d_or_csr
 from ..utils.sparsetools import minimum_spanning_tree
 from ..utils import connected_components
 
 
-class MSTCluster(BaseEstimator):
+class MSTCluster(BaseEstimator, ClusterMixin):
     """Perform clustering using the minimum spanning tree and a threshold cut.
 
     A minimum spanning tree is created from the input data (interpreted as a
@@ -59,7 +58,7 @@ class MSTCluster(BaseEstimator):
     Conference on. Vol. 4. IEEE, 2002.
     """
 
-    def __init__(self, threshold=0.85, metric='precomputed'):
+    def __init__(self, threshold=0.85, metric='euclidean'):
         self.threshold = threshold
         self.metric = metric
 
@@ -80,6 +79,9 @@ class MSTCluster(BaseEstimator):
         rows, cols = span_tree.nonzero()
         rows = rows[idx]
         cols = cols[idx]
-        self.span_tree = csr_matrix((data, (rows, cols)), shape=span_tree.shape)  # Compute clusters by finding connected subgraphs in self.span_tree
-        n_components, self.labels_ = connected_components(self.span_tree, directed=True)
+        # Compute clusters by finding connected subgraphs in self.span_tree
+        new_data = (data, (rows, cols))
+        self.span_tree = csr_matrix(new_data, shape=span_tree.shape)
+        n_components, self.labels_ = connected_components(self.span_tree,
+                                                          directed=True)
         return self
