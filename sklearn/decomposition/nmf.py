@@ -238,7 +238,7 @@ def _nls_subproblem(V, W, H_init, tol, max_iter, sigma=0.01, beta=0.1):
             # Gradient step.
             Hn = H - alpha * grad
             # Projection step.
-            Hn *= Hn > 0
+            Hn = np.maximum(Hn, 0)
             d = Hn - H
             gradd = np.dot(grad.ravel(), d.ravel())
             dQd = np.dot(np.dot(WtW, d).ravel(), d.ravel())
