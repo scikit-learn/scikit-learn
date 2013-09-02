@@ -58,14 +58,30 @@ def test__partition_estimators():
 
 def test__parallel_build_estimators():
     """test for _parallel_build_estimators() function"""
-    ensemble = BaggingRegressor(base_estimator = RandomForestClassifier())
+    ensemble_1 = BaggingRegressor(base_estimator = RandomForestClassifier())
+    #ensemble_2 = BaggingRegressor(None)
     seeds = np.arange(5)
     try:
-        res = _parallel_build_estimators(5, ensemble, iris.data, iris.target, sample_weight = None, seeds = seeds, verbose = True)
-        print res
+        res = _parallel_build_estimators(5, ensemble_1, iris.data, iris.target, sample_weight = None, seeds = seeds, verbose = True)
         assert_true(isinstance(res,tuple))
     except ValueError:
-        print "Error Occured"
+        print ValueError
+
+def test_regression():
+    """Check regression for various parameter settings."""
+    rng = check_random_state(0)
+    X_train, X_test, y_train, y_test = train_test_split(boston.data,
+                                                        boston.target,
+                                                        random_state=rng)
+    grid = ParameterGrid({"max_samples": [0.5, 1.0,15],                   
+                          "bootstrap": [True, False]})
+
+    for base_estimator in [DummyRegressor(),
+                           DecisionTreeRegressor(),
+                           KNeighborsRegressor(),
+                           SVR()]:
+        for params in grid:
+            BaggingRegressor(base_estimator=base_estimator, random_state=rng, **params).fit(X_train, y_train).predict(X_test)
 
 
 

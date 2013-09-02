@@ -1,4 +1,5 @@
-"""Bagging meta-estimator"""
+"""Bagging meta-estimator
+   This module is adopted from Random forests module in Scikit-learn"""
 
 #Author: Maheshakya Wijewardena <pmaheshakya4@gmail.com>
 #License: BSD 3 clause
@@ -82,7 +83,9 @@ def _parallel_build_estimators(n_estimators, ensemble, X, y, sample_weight, seed
         except ValueError:
             pass
         
-        features = sample_without_replacement(n_features, n_features, random_state=random_state)      
+        #Feature bootstraping is not implemented, therefore all features are drawed
+        #For scalability purposes(add feature bootstrapping), the functionality can be addad here
+        features = np.array([i for i in range(n_features)])
             
 
         # Draw samples, using sample weights, and then fit
@@ -127,6 +130,11 @@ def _parallel_build_estimators(n_estimators, ensemble, X, y, sample_weight, seed
         estimators_features.append(features)
 
     return estimators, estimators_samples, estimators_features
+
+def _parallel_predict_regression(estimators, estimators_features, X):
+    """Private funtion which predicts with in a job in regression"""
+    return sum(estimator.predict(X[:, features]) for estimator, features in zip(estimators, estimators_features))
+
 
 class BaseBagging(six.with_metaclass(ABCMeta, BaseEnsemble)):
     """Base class for Bagging
@@ -209,12 +217,115 @@ class BaseBagging(six.with_metaclass(ABCMeta, BaseEnsemble)):
 
 
 class BaggingRegressor(BaseBagging, RegressorMixin):    
-    """ A bagged regressor"""
-    def __init__(self, base_estimator, n_estimators=10, max_samples=1.0, bootstrap=True, oob_score=False, n_jobs=1, random_state=None, verbose=0):
-            super(BaggingRegressor, self).__init__(base_estimator, n_estimators=n_estimators, max_samples=max_samples, bootstrap=bootstrap, oob_score=oob_score, n_jobs=n_jobs, random_state=random_state, verbose=verbose)
+    """ A bagged regressor
+        
+        Bagged regressor is an ensemble method which applys same estimator on random subsets of data to build
+        a new estimator. Original data set is sampled randomly and they are subjected into  regression 
+        seperately, then aggregated(by averaging)to form the final estimator. This ensembled estimator can be
+        used to reduce the variance of other non-linear black box estimators.(eg: Decistion Tree, KNN, ect.)
+        
+        Parameters
+        ----------
+        
+        base_estimator : object or None, This is Compulsory (default=None)
+            The base estimator to fit on random subsets of the dataset.
+            If None, a value error is raised.
+
+        n_estimators : int, optional (default=10)
+            The number of base estimators in the ensemble.
+    
+        max_samples : int or float, optional (default=1.0)
+            The number of samples to draw from X to train each base estimator.
+                - If int, then draw `max_samples` samples.
+                - If float, then draw `max_samples * X.shape[0]` samples.  
+    
+        bootstrap : boolean, optional (default=False)
+            Whether samples are drawn with replacement.
+    
+        oob_score : bool
+            Whether to use out-of-bag samples to estimate
+            the generalization error.
+    
+        n_jobs : int, optional (default=1)
+            The number of jobs to run in parallel for both `fit` and `predict`.
+            If -1, then the number of jobs is set to the number of cores.
+    
+        random_state : int, RandomState instance or None, optional (default=None)
+            If int, random_state is the seed used by the random number generator;
+            If RandomState instance, random_state is the random number generator;
+            If None, the random number generator is the RandomState instance used
+            by `np.random`.
+    
+        verbose : int, optional (default=0)
+            Controls the verbosity of the building process.
+    
+        Attributes
+        ----------
+        `estimators_`: list of estimators
+            The collection of fitted sub-estimators.
+    
+        `estimators_samples_`: list of arrays
+            The subset of drawn samples (i.e., the in-bag samples) for each base
+            estimator.
+    
+        `estimators_features_`: list of arrays
+            The subset of drawn features for each base estimator.
+    
+        `oob_score_` : float
+            Score of the training dataset obtained using an out-of-bag estimate.
+    
+        `oob_decision_function_` : array of shape = [n_samples, n_classes]
+            Decision function computed with out-of-bag estimate on the training
+            set. If n_estimators is small it might be possible that a data point
+            was never left out during the bootstrap. In this case,
+            `oob_decision_function_` might contain NaN. """
+    
+    
+    def __init__(self, base_estimator, n_estimators=10, max_samples=1.0, bootstrap=True, oob_score=False, n_jobs=1, random_state=None, verbose=0): 
+        if base_estimator == None:
+            raise ValueError("BaseEstimator should be defined")
+        super(BaggingRegressor, self).__init__(base_estimator, n_estimators=n_estimators, max_samples=max_samples, bootstrap=bootstrap, oob_score=oob_score, n_jobs=n_jobs, random_state=random_state, verbose=verbose)
+           
             
     def _set_oob_score(self, X, y):
         pass
+    
+    def predict(self, X):
+        """Predicts regression target for X.
+
+        The predicted regression target of an input sample is computed as the
+        average predicted regression targets of the estimators in the ensemble.
+
+        Parameters
+        ----------
+        X : array-like of shape = [n_samples, n_features]
+            The input samples.
+
+        Returns
+        -------
+        y: array of shape = [n_samples]
+            The predicted values.
+        """
+        # Check data
+        X, = check_arrays(X)
+
+        # Parallel loop
+        n_jobs, n_estimators, starts = _partition_estimators(self)
+
+        all_y = Parallel(n_jobs=n_jobs, verbose=self.verbose)(delayed(_parallel_predict_regression)(self.estimators_[starts[i]:starts[i + 1]], self.estimators_features_[starts[i]:starts[i + 1]], X) for i in range(n_jobs))
+
+        # Reduce
+        y = sum(all_y) / self.n_estimators
+
+        return y
+    
+        
+        
+        
+        
+            
+        
+    
 
 
         
