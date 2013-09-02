@@ -83,5 +83,5 @@ class MSTCluster(BaseEstimator, ClusterMixin):
         new_data = (data, (rows, cols))
         self.span_tree = csr_matrix(new_data, shape=span_tree.shape)
         n_components, self.labels_ = connected_components(self.span_tree,
-                                                          directed=True)
+                                                          directed=False)
         return self

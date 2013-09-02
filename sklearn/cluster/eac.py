@@ -8,6 +8,8 @@ EAC: Evidence Accumulation Clustering
 # License: 3-clause BSD.
 
 import numpy as np
+from scipy import sparse
+from collections import defaultdict
 
 # Imports .cluster.MSTCluster if final_clusterer = None in any EAC call
 # Imports .cluster.Kmeans if initial_clusterers = None in any EAC call.
@@ -72,7 +74,9 @@ def eac(X, initial_clusterers=None, final_clusterer=None,
         from ..cluster import MSTCluster
         final_clusterer = MSTCluster(metric='precomputed')
     # Co-association matrix, originally zeros everywhere
-    C = np.eye(n_samples, dtype='float')
+    C = defaultdict(float)
+    # initial_clusterers could be a generator, so we do not know in advance
+    # how many clusterers there will be.
     num_initial_clusterers = 0
     for model in initial_clusterers:
         num_initial_clusterers += 1
@@ -80,20 +84,29 @@ def eac(X, initial_clusterers=None, final_clusterer=None,
         # Fit model to X
         model.fit(X)
         # Calculate new coassociation matrix and add that to the tally
-        C = update_coassociation_matrix(C, model.labels_)
-    C /= num_initial_clusterers
-    D = 1 - C  # Create a distance matrix
+        C = _update_coassociation_matrix(C, model.labels_)
+    # Convert the defaultdict C into a sparse distance matrix
+    row, col = list(), list()
+    data = list()
+    for key in C.keys():
+        row.append(key[0])
+        col.append(key[1])
+        data.append(C[key])
+    # Normalise data, and turn into a distance matrix
+    data = 1.0 - (np.array(data, dtype='float') / (num_initial_clusterers + 1))
+    D = sparse.csr_matrix((data, (row, col)), shape=(n_samples, n_samples))
     final_clusterer.fit(D)
     return final_clusterer
 
 
-def update_coassociation_matrix(C, labels):
-    """Updates a co-association matrix from an array of labels.
+def _update_coassociation_matrix(C, labels):
+    """Updates a co-association defaultdict from an array of labels.
     """
     labels = np.asarray(labels)
     for i in range(len(labels)):
         indices = np.where(labels[i:] == labels[i])[0] + i
-        C[i, indices] += 1.
+        for idx in indices:
+            C[(i, idx)] += 1.
     return C
 
 
@@ -218,5 +231,5 @@ class EAC(BaseEstimator, ClusterMixin):
                     final_clusterer=self.default_final_clusterer,
                     random_state=self.random_state)
         self.final_clusterer = model
-        self.labels_ = self.final_clusterer.labels_
+        self.labels_ = model.labels_
         return self
