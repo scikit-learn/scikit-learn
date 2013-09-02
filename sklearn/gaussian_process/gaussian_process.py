@@ -34,30 +34,30 @@ def l1_cross_distances(X):
     ----------
 
     X: array_like
-        An array with shape (n_samples, n_features)
+        An array with shape (n_samples_, n_features_)
 
     Returns
     -------
 
-    D: array with shape (n_samples * (n_samples - 1) / 2, n_features)
+    D: array with shape (n_samples_ * (n_samples_ - 1) / 2, n_features_)
         The array of componentwise L1 cross-distances.
 
-    ij: arrays with shape (n_samples * (n_samples - 1) / 2, 2)
+    ij: arrays with shape (n_samples_ * (n_samples_ - 1) / 2, 2)
         The indices i and j of the vectors in X associated to the cross-
         distances in D: D[k] = np.abs(X[ij[k, 0]] - Y[ij[k, 1]]).
     """
     X = array2d(X)
-    n_samples, n_features = X.shape
-    n_nonzero_cross_dist = n_samples * (n_samples - 1) / 2
+    n_samples_, n_features_ = X.shape
+    n_nonzero_cross_dist = n_samples_ * (n_samples_ - 1) / 2
     ij = np.zeros((n_nonzero_cross_dist, 2), dtype=np.int)
-    D = np.zeros((n_nonzero_cross_dist, n_features))
+    D = np.zeros((n_nonzero_cross_dist, n_features_))
     ll_1 = 0
-    for k in range(n_samples - 1):
+    for k in range(n_samples_ - 1):
         ll_0 = ll_1
-        ll_1 = ll_0 + n_samples - k - 1
+        ll_1 = ll_0 + n_samples_ - k - 1
         ij[ll_0:ll_1, 0] = k
-        ij[ll_0:ll_1, 1] = np.arange(k + 1, n_samples)
-        D[ll_0:ll_1] = np.abs(X[k] - X[(k + 1):n_samples])
+        ij[ll_0:ll_1, 1] = np.arange(k + 1, n_samples_)
+        D[ll_0:ll_1] = np.abs(X[k] - X[(k + 1):n_samples_])
 
     return D, ij.astype(np.int)
 
@@ -69,7 +69,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
     ----------
     regr : string or callable, optional
         A regression function returning an array of outputs of the linear
-        regression functional basis. The number of observations n_samples
+        regression functional basis. The number of observations n_samples_
         should be greater than the size p of this basis.
         Default assumes a simple constant regression trend.
         Available built-in regression models are::
@@ -106,7 +106,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         Default is verbose = False.
 
     theta0 : double array_like, optional
-        An array with shape (n_features, ) or (1, ).
+        An array with shape (n_features_, ) or (1, ).
         The parameters in the autocorrelation model.
         If thetaL and thetaU are also specified, theta0 is considered as
         the starting point for the maximum likelihood rstimation of the
@@ -129,7 +129,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
     normalize : boolean, optional
         Input X and observations y are centered and reduced wrt
-        means and standard deviations estimated from the n_samples
+        means and standard deviations estimated from the n_samples_
         observations provided.
         Default is normalize = True so that data is normalized to ease
         maximum likelihood estimation.
@@ -251,11 +251,11 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         Parameters
         ----------
         X : double array_like
-            An array with shape (n_samples, n_features) with the input at which
+            An array with shape (n_samples_, n_features_) with the input at which
             observations were made.
 
         y : double array_like
-            An array with shape (n_samples, ) or shape (n_samples, n_targets) 
+            An array with shape (n_samples_, ) or shape (n_samples_, n_targets) 
             with the observations of the output to be predicted.
 
         Returns
@@ -279,16 +279,16 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             y = y.T
 
         # Check shapes of DOE & observations
-        n_samples_X, n_features = X.shape
-        n_samples_y, n_targets = y.shape
+        n_samples_X_, n_features_ = X.shape
+        n_samples_y_, n_targets = y.shape
 
-        if n_samples_X != n_samples_y:
+        if n_samples_X_ != n_samples_y_:
             raise ValueError("X and y must have the same number of rows.")
         else:
-            n_samples = n_samples_X
+            n_samples_ = n_samples_X_
 
         # Run input checks
-        self._check_params(n_samples)
+        self._check_params(n_samples_)
 
         # Normalize data or don't
         if self.normalize:
@@ -321,14 +321,14 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             p = F.shape[1]
         else:
             p = 1
-        if n_samples_F != n_samples:
+        if n_samples_F != n_samples_:
             raise Exception("Number of rows in F and X do not match. Most "
                             "likely something is going wrong with the "
                             "regression model.")
         if p > n_samples_F:
             raise Exception(("Ordinary least squares problem is undetermined "
-                             "n_samples=%d must be greater than the "
-                             "regression model size p=%d.") % (n_samples, p))
+                             "n_samples_=%d must be greater than the "
+                             "regression model size p=%d.") % (n_samples_, p))
         if self.beta0 is not None:
             if self.beta0.shape[0] != p:
                 raise Exception("Shapes of beta0 and F do not match.")
@@ -394,7 +394,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         Parameters
         ----------
         X : array_like
-            An array with shape (n_eval, n_features) giving the point(s) at
+            An array with shape (n_eval_, n_features_) giving the point(s) at
             which the prediction(s) should be made.
 
         eval_MSE : boolean, optional
@@ -411,31 +411,31 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
         Returns
         -------
-        y : array_like, shape (n_samples, ) or (n_samples, n_targets)
-            An array with shape (n_eval, ) if the Gaussian Process was trained 
-            on an array of shape (n_samples, ) or and array with shape
-            (n_eval, n_targets) if the Gaussian Process was trained on an array
-            of shape (n_samples, n_targets) with the Best Linear Unbiased 
+        y : array_like, shape (n_samples_, ) or (n_samples_, n_targets)
+            An array with shape (n_eval_, ) if the Gaussian Process was trained 
+            on an array of shape (n_samples_, ) or and array with shape
+            (n_eval_, n_targets) if the Gaussian Process was trained on an array
+            of shape (n_samples_, n_targets) with the Best Linear Unbiased 
             Prediction at x.
 
         MSE : array_like, optional (if eval_MSE == True)
-            An array with shape (n_eval, ) or (n_eval, n_targets) as with y, 
+            An array with shape (n_eval_, ) or (n_eval_, n_targets) as with y, 
             with the Mean Squared Error at x.
         """
 
         # Check input shapes
         X = array2d(X)
-        n_eval, n_features_X = X.shape
-        n_samples, n_features = self.X.shape
+        n_eval_, n_features_X = X.shape
+        n_samples_, n_features_ = self.X.shape
         n_samples_y_, n_targets_ = self.y.shape
 
         # Run input checks
-        self._check_params(n_samples)
+        self._check_params(n_samples_)
 
-        if n_features_X != n_features:
+        if n_features_X != n_features_:
             raise ValueError(("The number of features in X (X.shape[1] = %d) "
                              "should match the sample size used for fit() "
-                             "which is %d.") % (n_features_X, n_features))
+                             "which is %d.") % (n_features_X, n_features_))
 
         if batch_size is None:
             # No memory management
@@ -445,21 +445,21 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             X = (X - self.X_mean) / self.X_std
 
             # Initialize output
-            y = np.zeros(n_eval)
+            y = np.zeros(n_eval_)
             if eval_MSE:
-                MSE = np.zeros(n_eval)
+                MSE = np.zeros(n_eval_)
 
             # Get pairwise componentwise L1-distances to the input training set
             dx = manhattan_distances(X, Y=self.X, sum_over_features=False)
             # Get regression function and correlation
             f = self.regr(X)
-            r = self.corr(self.theta_, dx).reshape(n_eval, n_samples)
+            r = self.corr(self.theta_, dx).reshape(n_eval_, n_samples_)
 
             # Scaled predictor
             y_ = np.dot(f, self.beta) + np.dot(r, self.gamma)
 
             # Predictor
-            y = (self.y_mean + self.y_std * y_).reshape(n_eval, n_targets_)
+            y = (self.y_mean + self.y_std * y_).reshape(n_eval_, n_targets_)
 
             if len(self.y_shape_) == 1:
                 y = y.ravel()
@@ -492,8 +492,8 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                     u = np.zeros(y.shape)
 
                 MSE = (self.sigma2.reshape(n_targets_, 1) * (1. - (rt ** 2.).sum(axis=0)
-                                      + (u.T ** 2.).sum(axis=0)).reshape(1, n_eval)
-                                      ).sum(axis=0)/ n_features
+                                      + (u.T ** 2.).sum(axis=0)).reshape(1, n_eval_)
+                                      ).sum(axis=0)/ n_features_
 
                 # Mean Squared Error might be slightly negative depending on
                 # machine precision: force to zero!
@@ -518,10 +518,10 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
             if eval_MSE:
 
-                y, MSE = np.zeros(n_eval), np.zeros(n_eval)
-                for k in range(max(1, n_eval / batch_size)):
+                y, MSE = np.zeros(n_eval_), np.zeros(n_eval_)
+                for k in range(max(1, n_eval_ / batch_size)):
                     batch_from = k * batch_size
-                    batch_to = min([(k + 1) * batch_size + 1, n_eval + 1])
+                    batch_to = min([(k + 1) * batch_size + 1, n_eval_ + 1])
                     y[batch_from:batch_to], MSE[batch_from:batch_to] = \
                         self.predict(X[batch_from:batch_to],
                                      eval_MSE=eval_MSE, batch_size=None)
@@ -530,10 +530,10 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
             else:
 
-                y = np.zeros(n_eval)
-                for k in range(max(1, n_eval / batch_size)):
+                y = np.zeros(n_eval_)
+                for k in range(max(1, n_eval_ / batch_size)):
                     batch_from = k * batch_size
-                    batch_to = min([(k + 1) * batch_size + 1, n_eval + 1])
+                    batch_to = min([(k + 1) * batch_size + 1, n_eval_ + 1])
                     y[batch_from:batch_to] = \
                         self.predict(X[batch_from:batch_to],
                                      eval_MSE=eval_MSE, batch_size=None)
@@ -593,7 +593,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         par = {}
 
         # Retrieve data
-        n_samples = self.X.shape[0]
+        n_samples_ = self.X.shape[0]
         D = self.D
         ij = self.ij
         F = self.F
@@ -608,7 +608,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
         # Set up R
         r = self.corr(theta, D)
-        R = np.eye(n_samples) * (1. + self.nugget)
+        R = np.eye(n_samples_) * (1. + self.nugget)
         R[ij[:, 0], ij[:, 1]] = r
         R[ij[:, 1], ij[:, 0]] = r
 
@@ -652,10 +652,10 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             beta = np.array(self.beta0)
 
         rho = Yt - np.dot(Ft, beta)
-        sigma2 = (rho ** 2.).sum(axis=0) / n_samples
+        sigma2 = (rho ** 2.).sum(axis=0) / n_samples_
         # The determinant of R is equal to the squared product of the diagonal
         # elements of its Cholesky decomposition C
-        detR = (np.diag(C) ** (2. / n_samples)).prod()
+        detR = (np.diag(C) ** (2. / n_samples_)).prod()
 
         # Compute/Organize output
         reduced_likelihood_function_value = - sigma2.sum() * detR
@@ -823,7 +823,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
         return optimal_theta, optimal_rlf_value, optimal_par
 
-    def _check_params(self, n_samples=None):
+    def _check_params(self, n_samples_=None):
 
         # Check regression model
         if not callable(self.regr):
@@ -887,10 +887,10 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         self.nugget = np.asarray(self.nugget)
         if np.any(self.nugget) < 0.:
             raise ValueError("nugget must be positive or zero.")
-        if (n_samples is not None
-                and self.nugget.shape not in [(), (n_samples,)]):
+        if (n_samples_ is not None
+                and self.nugget.shape not in [(), (n_samples_,)]):
             raise ValueError("nugget must be either a scalar "
-                             "or array of length n_samples.")
+                             "or array of length n_samples_.")
 
         # Check optimizer
         if not self.optimizer in self._optimizer_types:
