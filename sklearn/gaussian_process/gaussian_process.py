@@ -427,6 +427,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         X = array2d(X)
         n_eval, n_features_X = X.shape
         n_samples, n_features = self.X.shape
+        n_samples_y_, n_outputs_ = self.y.shape
 
         # Run input checks
         self._check_params(n_samples)
@@ -458,7 +459,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             y_ = np.dot(f, self.beta) + np.dot(r, self.gamma)
 
             # Predictor
-            y = (self.y_mean + self.y_std * y_).reshape(n_eval, self.y.shape[1])
+            y = (self.y_mean + self.y_std * y_).reshape(n_eval, n_outputs_)
 
             if len(self.y_shape_) == 1:
                 y = y.ravel()
