@@ -27,7 +27,7 @@ from sklearn.metrics import pairwise_distances
 
 ##############################################################################
 # Generate sample data
-n_samples = 150
+n_samples = 750
 noisy_circles = datasets.make_circles(n_samples=n_samples, factor=.5,
                                       noise=.05)
 X, y_true = noisy_circles
@@ -39,7 +39,7 @@ main_metric = metrics.adjusted_mutual_info_score
 # of adjusted mutual information scores.
 
 print("Running k-means many times")
-num_iterations = 50
+num_iterations = 10
 km_ami_means = []
 km_ami_std = []
 k_values = list(range(2, 30))
@@ -100,23 +100,25 @@ print("Adjusted Mutual Information: %0.3f"
 ##############################################################################
 # Plot results
 
-pl.title('EAC comparison with K-means')
+fig = pl.figure(figsize=(8, 12))
+fig.suptitle('EAC comparison with K-means')
+
 colors = np.array([x for x in 'bgrcmykbgrcmykbgrcmykbgrcmyk'])
 colors = np.hstack([colors] * 20)
-
 # Subplot showing distribution of scores
 
 # Plot two examples of k-means
-ax = pl.subplot(3, 1, 1)
+ax = fig.add_subplot(3, 1, 1)
 ax.scatter(X[:, 0], X[:,1], color=colors[km_labels].tolist(), s=10)
-
+ax.set_title("K-means")
 
 # Plot EAC labels
-ax = pl.subplot(3, 1, 2)
+ax = fig.add_subplot(3, 1, 2)
 ax.scatter(X[:, 0], X[:,1], color=colors[eac_labels].tolist(), s=10)
+ax.set_title("EAC")
 
 # Plot distribution of scores (from main_metric)
-ax = pl.subplot(3, 1, 3)
+ax = fig.add_subplot(3, 1, 3)
 # k-means
 ax.plot(k_values, km_ami_means)
 ax.errorbar(k_values, km_ami_means, yerr=km_ami_std, fmt='ro', label='k-means')
@@ -127,7 +129,7 @@ ax.errorbar(mst_values, mst_ami_means, fmt='g*', label='MST')
 score = main_metric(y_true, eac_labels)
 ax.scatter([n_clusters_,], [score,], label='EAC', s=40)
 ax.legend()
-
+ax.set_title("V-measure comparison")
 
 
 
