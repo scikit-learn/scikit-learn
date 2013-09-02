@@ -61,6 +61,7 @@ class MSTCluster(BaseEstimator):
 
     def __init__(self, threshold=0.85, metric='precomputed'):
         self.threshold = threshold
+        self.metric = metric
 
     def fit(self, X):
         """Perform MST clustering from a similarity matrix.
