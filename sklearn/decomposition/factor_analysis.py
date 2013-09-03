@@ -151,26 +151,24 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         if self.algorithm == 'svd':
             def my_svd(X):
                 U, s, V = linalg.svd(X, full_matrices=False)
-                V = V[:n_components]
-                return U, s, V
+                return s, V[:n_components], np.sum(s[n_components:] ** 2)
         elif self.algorithm == 'randomized-svd':
-            my_svd = lambda X: randomized_svd(X, n_components)
-
+            def my_svd(X):
+                U, s, V = randomized_svd(X, n_components)
+                return s, V, (X ** 2).sum() - np.sum(s ** 2)
         for i in xrange(self.max_iter):
             # SMALL helps numerics
             sqrt_psi = np.sqrt(psi) + SMALL
-            _, s, V = my_svd(X / (sqrt_psi * nsqrt))
-            del _
+            s, V, unexp_var = my_svd(X / (sqrt_psi * nsqrt))
             s **= 2
             # Use 'maximum' here to avoid sqrt problems.
-            W = np.sqrt(np.maximum(s[:n_components] - 1., 0.)
-                        )[:, np.newaxis] * V
+            W = np.sqrt(np.maximum(s - 1., 0.))[:, np.newaxis] * V
             del V
             W *= sqrt_psi
 
             # loglikelihood
-            ll = llconst + np.sum(np.log(s[:n_components]))
-            ll += np.sum(s[n_components:]) + np.sum(np.log(psi))
+            ll = llconst + np.sum(np.log(s))
+            ll += unexp_var + np.sum(np.log(psi))
             ll *= -n_samples / 2.
             loglike.append(ll)
             if (ll - old_ll) < self.tol:
