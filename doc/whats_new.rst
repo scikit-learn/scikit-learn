@@ -24,8 +24,8 @@ Changelog
      scale up gracefully to large datasets. By `Lars Buitinck`_.
 
   - Add `randomized_svd` option to :class:`decomposition.factor_analysis.FactorAnalysis`
-    to save memory by factor 2 and speedup computation by factor 9
-    by `Denis Engemann`_, and `Alexandre Gramfort`_.
+    to save memory and significantly speedup computation by `Denis Engemann`_, and
+    `Alexandre Gramfort`_.
 
 .. _changes_0_14:
 

@@ -28,9 +28,9 @@ def test_factor_analysis():
     # generate observations
     # wlog, mean is 0
     X = np.dot(h, W) + noise
-
-    for algo in ['randomized-svd', 'svd']:
-        fa = FactorAnalysis(n_components=n_components, algorithm=algo)
+    assert_raises(ValueError, FactorAnalysis, svd_method='foo')
+    for method in ['randomized', 'svd']:
+        fa = FactorAnalysis(n_components=n_components, svd_method=method)
         fa.fit(X)
         X_t = fa.transform(X)
         assert_true(X_t.shape == (n_samples, n_components))

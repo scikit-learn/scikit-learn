@@ -20,7 +20,7 @@ from scipy import linalg
 
 from ..base import BaseEstimator, TransformerMixin
 from ..externals.six.moves import xrange
-from ..utils import array2d, check_arrays
+from ..utils import array2d, check_arrays, check_random_state
 from ..utils.extmath import fast_logdet, fast_dot, randomized_svd
 
 
@@ -67,9 +67,13 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         The initial guess of the noise variance for each feature.
         If None, it defaults to np.ones(n_features)
 
-    algorithm : str
-        Which algorithm to use. If 'svd' use standard SVD from scipy.linalg.
+    svd_method : str
+        Which SVD method to use. If 'svd' use standard SVD from scipy.linalg.
         If 'randomized-svd' use fast ``randomized_svd`` function.
+
+    random_state : int or RandomState
+        Pseudo number generator state used for random sampling. Only used
+        if ``svd_method`` equals 'randomized'
 
     Attributes
     ----------
@@ -99,14 +103,19 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         non-Gaussian latent variables.
     """
     def __init__(self, n_components=None, tol=1e-2, copy=True, max_iter=1000,
-                 verbose=0, noise_variance_init=None, algorithm='svd'):
+                 verbose=0, noise_variance_init=None, svd_method='svd',
+                 random_state=0):
         self.n_components = n_components
         self.copy = copy
         self.tol = tol
         self.max_iter = max_iter
-        self.algorithm = algorithm
+        if svd_method not in ['svd', 'randomized']:
+            raise ValueError('SVD method %s is not supported. Please consider'
+                             ' the documentation' % svd_method)
+        self.svd_method = svd_method
         self.verbose = verbose
         self.noise_variance_init = noise_variance_init
+        self.random_state = random_state
 
     def fit(self, X, y=None):
         """Fit the FactorAnalysis model to X using EM
@@ -150,15 +159,19 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
 
         # we'll modify svd outputs to return unexplained variance
         # to allow for unified computation of loglikelihood
-        if self.algorithm == 'svd':
+        if self.svd_method == 'svd':
             def my_svd(X):
-                U, s, V = linalg.svd(X, full_matrices=False)
+                _, s, V = linalg.svd(X, full_matrices=False)
                 return (s[:n_components], V[:n_components],
                         np.sum(s[n_components:] ** 2))
-        elif self.algorithm == 'randomized-svd':
+        elif self.svd_method == 'randomized':
+            random_state = check_random_state(self.random_state)
+
             def my_svd(X):
-                U, s, V = randomized_svd(X, n_components)
+                _, s, V = randomized_svd(X, n_components,
+                                         random_state=random_state)
                 return s, V, (X ** 2).sum() - np.sum(s ** 2)
+
         for i in xrange(self.max_iter):
             # SMALL helps numerics
             sqrt_psi = np.sqrt(psi) + SMALL
