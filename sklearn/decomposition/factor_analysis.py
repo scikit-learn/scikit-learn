@@ -69,10 +69,10 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
 
     svd_method : {'svd', 'randomized'}
         Which SVD method to use. If 'svd' use standard SVD from scipy.linalg,
-        if 'randomized' use fast ``randomized`` function. Defaults to 'svd'.
-        For maximum precision you should choose 'svd'. For most applications
-        'randomized' will be sufficiently precise while providing significant
-        speed gains.
+        if 'randomized' use fast ``randomized_svd`` function. Defaults to
+        'randomized'. For maximum precision you should choose 'svd'. For most
+        applications 'randomized' will be sufficiently precise while providing
+        significant speed gains.
 
     random_state : int or RandomState
         Pseudo number generator state used for random sampling. Only used
@@ -112,6 +112,9 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         self.copy = copy
         self.tol = tol
         self.max_iter = max_iter
+        if svd_method not in ['svd', 'randomized']:
+            raise ValueError('SVD method %s is not supported. Please consider'
+                             ' the documentation' % svd_method)
         self.svd_method = svd_method
         self.verbose = verbose
         self.noise_variance_init = noise_variance_init

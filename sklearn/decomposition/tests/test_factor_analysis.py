@@ -29,7 +29,10 @@ def test_factor_analysis():
     # generate observations
     # wlog, mean is 0
     X = np.dot(h, W) + noise
-    assert_raises(ValueError, FactorAnalysis(svd_method='foo').fit, X)
+    assert_raises(ValueError, FactorAnalysis, svd_method='foo')
+    fa_fail = FactorAnalysis()
+    fa_fail.svd_method = 'foo'
+    assert_raises(ValueError, fa_fail.fit, X)
     fas = []
     for method in ['randomized', 'svd']:
         fa = FactorAnalysis(n_components=n_components, svd_method=method)
