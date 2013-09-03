@@ -183,7 +183,7 @@ class EAC(BaseEstimator, ClusterMixin):
     use_distance: boolean, or callable
         If True, convert the coassociation matrix to distance using
         `D=1./(C + 1)`. If callable, the function is called with the
-        coassication matrix as input. If False (default), then the matrix is
+        coassociation matrix as input. If False (default), then the matrix is
         given as input to the `final_clusterer`.
     random_state: numpy.RandomState, optional
         The generator used to initialize the initial_clusterers.
