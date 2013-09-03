@@ -71,8 +71,8 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         Which SVD method to use. If 'svd' use standard SVD from scipy.linalg,
         if 'randomized' use fast ``randomized`` function. Defaults to 'svd'.
         For maximum precision you should choose 'svd'. For most applications
-        'randomized' be sufficiently precise while providing significant
-        speed gains, up to a factor of 8.
+        'randomized' will be sufficiently precise while providing significant
+        speed gains.
 
     random_state : int or RandomState
         Pseudo number generator state used for random sampling. Only used
