@@ -300,7 +300,7 @@ def pairwise_distances_argmin_min(X, Y, axis=1, metric="euclidean",
 
             # Update indices and minimum values using chunk
             min_indices = dist_chunk.argmin(axis=1)
-            min_values = dist_chunk[range(chunk_x.stop - chunk_x.start),
+            min_values = dist_chunk[np.arange(chunk_x.stop - chunk_x.start),
                                     min_indices]
 
             flags = values[chunk_x] > min_values
