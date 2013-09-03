@@ -67,9 +67,12 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         The initial guess of the noise variance for each feature.
         If None, it defaults to np.ones(n_features)
 
-    svd_method : str
+    svd_method : {'svd', 'randomized'}
         Which SVD method to use. If 'svd' use standard SVD from scipy.linalg,
-        if 'randomized' use fast ``randomized`` function.
+        if 'randomized' use fast ``randomized`` function. Defaults to 'svd'.
+        For maximum precision you should choose 'svd'. For most applications
+        'randomized' be sufficiently precise while providing significant
+        speed gains, up to a factor of 8.
 
     random_state : int or RandomState
         Pseudo number generator state used for random sampling. Only used
@@ -109,9 +112,6 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         self.copy = copy
         self.tol = tol
         self.max_iter = max_iter
-        if svd_method not in ['svd', 'randomized']:
-            raise ValueError('SVD method %s is not supported. Please consider'
-                             ' the documentation' % svd_method)
         self.svd_method = svd_method
         self.verbose = verbose
         self.noise_variance_init = noise_variance_init
@@ -171,6 +171,9 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
                 _, s, V = randomized_svd(X, n_components,
                                          random_state=random_state)
                 return s, V, (X ** 2).sum() - np.sum(s ** 2)
+        else:
+            raise ValueError('SVD method %s is not supported. Please consider'
+                             ' the documentation' % self.svd_method)
 
         for i in xrange(self.max_iter):
             # SMALL helps numerics

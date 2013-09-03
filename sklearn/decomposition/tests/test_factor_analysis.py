@@ -5,6 +5,7 @@
 import numpy as np
 
 from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_almost_equal
 
@@ -28,7 +29,7 @@ def test_factor_analysis():
     # generate observations
     # wlog, mean is 0
     X = np.dot(h, W) + noise
-    assert_raises(ValueError, FactorAnalysis, svd_method='foo')
+    assert_raises(ValueError, FactorAnalysis(svd_method='foo').fit, X)
     fas = []
     for method in ['randomized', 'svd']:
         fa = FactorAnalysis(n_components=n_components, svd_method=method)
@@ -36,7 +37,7 @@ def test_factor_analysis():
         fas.append(fa)
 
         X_t = fa.transform(X)
-        assert_true(X_t.shape == (n_samples, n_components))
+        assert_equal(X_t.shape, (n_samples, n_components))
 
         assert_almost_equal(fa.loglike_[-1], fa.score(X).sum())
 
@@ -57,5 +58,4 @@ def test_factor_analysis():
     f = lambda x, y: np.abs(getattr(x, y))  # sign will not be equal
     fa1, fa2 = fas
     for attr in ['loglike_', 'components_', 'noise_variance_']:
-
         assert_almost_equal(f(fa1, attr), f(fa2, attr))
