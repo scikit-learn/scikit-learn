@@ -120,8 +120,6 @@ def _atleast2d_or_sparse(X, dtype, order, copy, sparse_class, convmethod,
     else:
         X = array2d(X, dtype=dtype, order=order, copy=copy,
                     force_all_finite=force_all_finite)
-        if force_all_finite:
-            _assert_all_finite(X)
     return X
 
 
