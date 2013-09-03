@@ -68,8 +68,8 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         If None, it defaults to np.ones(n_features)
 
     svd_method : str
-        Which SVD method to use. If 'svd' use standard SVD from scipy.linalg.
-        If 'randomized-svd' use fast ``randomized`` function.
+        Which SVD method to use. If 'svd' use standard SVD from scipy.linalg,
+        if 'randomized' use fast ``randomized`` function.
 
     random_state : int or RandomState
         Pseudo number generator state used for random sampling. Only used

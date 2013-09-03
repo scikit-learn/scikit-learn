@@ -29,9 +29,12 @@ def test_factor_analysis():
     # wlog, mean is 0
     X = np.dot(h, W) + noise
     assert_raises(ValueError, FactorAnalysis, svd_method='foo')
+    fas = []
     for method in ['randomized', 'svd']:
         fa = FactorAnalysis(n_components=n_components, svd_method=method)
         fa.fit(X)
+        fas.append(fa)
+
         X_t = fa.transform(X)
         assert_true(X_t.shape == (n_samples, n_components))
 
@@ -47,7 +50,12 @@ def test_factor_analysis():
         mcov = fa.get_covariance()
         diff = np.sum(np.abs(scov - mcov)) / W.size
         assert_true(diff < 0.1, "Mean absolute difference is %f" % diff)
-
         fa = FactorAnalysis(n_components=n_components,
                             noise_variance_init=np.ones(n_features))
         assert_raises(ValueError, fa.fit, X[:, :2])
+
+    f = lambda x, y: np.abs(getattr(x, y))  # sign will not be equal
+    fa1, fa2 = fas
+    for attr in ['loglike_', 'components_', 'noise_variance_']:
+
+        assert_almost_equal(f(fa1, attr), f(fa2, attr))
