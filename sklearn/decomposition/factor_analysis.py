@@ -69,7 +69,7 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
 
     svd_method : str
         Which SVD method to use. If 'svd' use standard SVD from scipy.linalg.
-        If 'randomized-svd' use fast ``randomized_svd`` function.
+        If 'randomized-svd' use fast ``randomized`` function.
 
     random_state : int or RandomState
         Pseudo number generator state used for random sampling. Only used
