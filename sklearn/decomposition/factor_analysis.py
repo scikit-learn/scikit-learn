@@ -148,10 +148,13 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         old_ll = -np.inf
         SMALL = 1e-12
 
+        # we'll modify svd outputs to return unexplained variance
+        # to allow for unified computation of loglikelihood
         if self.algorithm == 'svd':
             def my_svd(X):
                 U, s, V = linalg.svd(X, full_matrices=False)
-                return s, V[:n_components], np.sum(s[n_components:] ** 2)
+                return (s[:n_components], V[:n_components],
+                        np.sum(s[n_components:] ** 2))
         elif self.algorithm == 'randomized-svd':
             def my_svd(X):
                 U, s, V = randomized_svd(X, n_components)

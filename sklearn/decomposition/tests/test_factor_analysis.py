@@ -29,24 +29,25 @@ def test_factor_analysis():
     # wlog, mean is 0
     X = np.dot(h, W) + noise
 
-    fa = FactorAnalysis(n_components=n_components, algorithm='randomized-svd')
-    fa.fit(X)
-    X_t = fa.transform(X)
-    assert_true(X_t.shape == (n_samples, n_components))
+    for algo in ['randomized-svd', 'svd']:
+        fa = FactorAnalysis(n_components=n_components, algorithm=algo)
+        fa.fit(X)
+        X_t = fa.transform(X)
+        assert_true(X_t.shape == (n_samples, n_components))
 
-    assert_almost_equal(fa.loglike_[-1], fa.score(X).sum())
+        assert_almost_equal(fa.loglike_[-1], fa.score(X).sum())
 
-    # Make log likelihood increases at each iteration
-    assert_true(np.all(np.diff(fa.loglike_) > 0.))
+        # Make log likelihood increases at each iteration
+        assert_true(np.all(np.diff(fa.loglike_) > 0.))
 
-    # Sample Covariance
-    scov = np.cov(X, rowvar=0., bias=1.)
+        # Sample Covariance
+        scov = np.cov(X, rowvar=0., bias=1.)
 
-    # Model Covariance
-    mcov = fa.get_covariance()
-    diff = np.sum(np.abs(scov - mcov)) / W.size
-    assert_true(diff < 0.1, "Mean absolute difference is %f" % diff)
+        # Model Covariance
+        mcov = fa.get_covariance()
+        diff = np.sum(np.abs(scov - mcov)) / W.size
+        assert_true(diff < 0.1, "Mean absolute difference is %f" % diff)
 
-    fa = FactorAnalysis(n_components=n_components,
-                        noise_variance_init=np.ones(n_features))
-    assert_raises(ValueError, fa.fit, X[:, :2])
+        fa = FactorAnalysis(n_components=n_components,
+                            noise_variance_init=np.ones(n_features))
+        assert_raises(ValueError, fa.fit, X[:, :2])

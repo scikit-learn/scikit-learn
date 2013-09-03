@@ -23,6 +23,9 @@ Changelog
      sparse matrices and has much lower memory complexity, meaning it will
      scale up gracefully to large datasets. By `Lars Buitinck`_.
 
+  - Add `randomized_svd` option to :class:`decomposition.factor_analysis.FactorAnalysis`
+    to save memory by factor 2 and speedup computation by factor of 9
+    by `Denis Engemann`_, and `Alexandre Gramfort`_.
 
 .. _changes_0_14:
 
