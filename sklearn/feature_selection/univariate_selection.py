@@ -160,14 +160,14 @@ def _chisquare(f_obs, f_exp):
 
 
 def chi2(X, y):
-    """Compute χ² (chi-squared) statistic for each class/feature combination.
+    """Compute chi-squared statistic for each class/feature combination.
 
     This score can be used to select the n_features features with the
-    highest values for the χ² (chi-square) statistic from X, which must
+    highest values for the test chi-squared statistic from X, which must
     contain booleans or frequencies (e.g., term counts in document
     classification), relative to the classes.
 
-    Recall that the χ² statistic measures dependence between stochastic
+    Recall that the chi-square test measures dependence between stochastic
     variables, so using this function "weeds out" the features that are the
     most likely to be independent of class and therefore irrelevant for
     classification.

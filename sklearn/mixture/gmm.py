@@ -634,7 +634,7 @@ def _validate_covars(covars, covariance_type, n_components):
                              "positive-definite")
     elif covariance_type == 'diag':
         if len(covars.shape) != 2:
-            raise ValueError("'diag' covars must have shape"
+            raise ValueError("'diag' covars must have shape "
                              "(n_components, n_dim)")
         elif np.any(covars <= 0):
             raise ValueError("'diag' covars must be non-negative")

@@ -10,7 +10,7 @@ from .affinity_propagation_ import affinity_propagation, AffinityPropagation
 from .hierarchical import ward_tree, Ward, WardAgglomeration
 from .k_means_ import k_means, KMeans, MiniBatchKMeans
 from .dbscan_ import dbscan, DBSCAN
-from .eac import EAC
+from .eac import eac, EAC
 from .mst import MSTCluster
 from .bicluster import SpectralBiclustering, SpectralCoclustering
 
@@ -25,6 +25,7 @@ __all__ = ['AffinityPropagation',
            'WardAgglomeration',
            'affinity_propagation',
            'MSTCluster',
+           'eac',
            'EAC',
            'dbscan',
            'estimate_bandwidth',

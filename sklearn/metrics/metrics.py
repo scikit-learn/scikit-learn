@@ -68,7 +68,7 @@ def _check_reg_targets(y_true, y_pred):
 
     if y_true.shape[1] != y_pred.shape[1]:
         raise ValueError("y_true and y_pred have different number of output "
-                         "({0}!={1})".format(y_true.shape[1], y_true.shape[1]))
+                         "({0}!={1})".format(y_true.shape[1], y_pred.shape[1]))
 
     y_type = 'continuous' if y_true.shape[1] == 1 else 'continuous-multioutput'
 
@@ -312,6 +312,7 @@ def average_precision_score(y_true, y_score):
     """
     precision, recall, thresholds = precision_recall_curve(y_true, y_score)
     return auc(recall, precision)
+
 
 @deprecated("Function 'auc_score' has been renamed to "
             "'roc_auc_score' and will be removed in release 0.16.")
@@ -841,7 +842,7 @@ def zero_one_loss(y_true, y_pred, normalize=True):
 
 @deprecated("Function 'zero_one' has been renamed to "
             "'zero_one_loss' and will be removed in release 0.15."
-            "Default behavior is changed from 'normalize=False' to "
+            " Default behavior is changed from 'normalize=False' to "
             "'normalize=True'")
 def zero_one(y_true, y_pred, normalize=False):
     """Zero-One classification loss
@@ -1494,7 +1495,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
         else:
             raise ValueError("Example-based precision, recall, fscore is "
                              "not meaningful outside of multilabel"
-                             "classification. Use accuracy_score instead.")
+                             " classification. Use accuracy_score instead.")
 
         warning_msg = ""
         if np.any(size_pred == 0):
@@ -2138,7 +2139,7 @@ def explained_variance_score(y_true, y_pred):
 
 
 def r2_score(y_true, y_pred):
-    """R² (coefficient of determination) regression score function.
+    """R^2 (coefficient of determination) regression score function.
 
     Best possible score is 1.0, lower values are worse.
 
@@ -2153,13 +2154,13 @@ def r2_score(y_true, y_pred):
     Returns
     -------
     z : float
-        The R² score.
+        The R^2 score.
 
     Notes
     -----
     This is not a symmetric function.
 
-    Unlike most other scores, R² score may be negative (it need not actually
+    Unlike most other scores, R^2 score may be negative (it need not actually
     be the square of a quantity R).
 
     References

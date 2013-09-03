@@ -29,9 +29,11 @@ Classes
 
    cluster.AffinityPropagation
    cluster.DBSCAN
+   cluster.EAC
    cluster.KMeans
    cluster.MiniBatchKMeans
    cluster.MeanShift
+   cluster.MSTCluster
    cluster.SpectralClustering
    cluster.Ward
 
@@ -41,13 +43,14 @@ Functions
    :toctree: generated/
    :template: function.rst
 
-   cluster.estimate_bandwidth
-   cluster.k_means
-   cluster.ward_tree
    cluster.affinity_propagation
    cluster.dbscan
+   cluster.eac
+   cluster.estimate_bandwidth
+   cluster.k_means
    cluster.mean_shift
    cluster.spectral_clustering
+   cluster.ward_tree
 
 .. _bicluster_ref:
 

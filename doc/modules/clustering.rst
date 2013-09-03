@@ -599,7 +599,8 @@ The example below uses :class:`MSTCluster` to cluster a small dataset, showing
 also the edges that compose the minimum spanning tree. Red edges are cut while
 green edges are maintained, forming the final clusters which are color coded.
 
-.. |mst_results| image:: ../auto_examples/cluster/images/plot_mst.png
+
+.. |mst_results| image:: ../auto_examples/cluster/images/plot_mst_1.png
         :target: ../auto_examples/cluster/plot_mst.html
         :scale: 50
 
@@ -659,7 +660,7 @@ find appropriate clusters in this dataset, by combining their outputs into the
 co-association matrix, the final clustering is able to. In addition, the
 V-measure score is significantly higher than K-means.
 
-.. |eac_results| image:: ../auto_examples/cluster/images/plot_eac.png
+.. |eac_results| image:: ../auto_examples/cluster/images/plot_eac_1.png
         :target: ../auto_examples/cluster/plot_eac.html
         :scale: 50
 

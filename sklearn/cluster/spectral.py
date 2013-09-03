@@ -10,7 +10,7 @@ import warnings
 import numpy as np
 
 from ..base import BaseEstimator, ClusterMixin
-from ..utils import check_random_state, as_float_array, deprecated
+from ..utils import check_random_state, as_float_array
 from ..utils.extmath import norm
 from ..metrics.pairwise import pairwise_kernels
 from ..neighbors import kneighbors_graph
@@ -301,7 +301,7 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
         by the clustering algorithm.
 
     gamma: float
-        Scaling factor of RBF, polynomial, exponential chi² and
+        Scaling factor of RBF, polynomial, exponential chi^2 and
         sigmoid affinity kernel. Ignored for
         ``affinity='nearest_neighbors'``.
 

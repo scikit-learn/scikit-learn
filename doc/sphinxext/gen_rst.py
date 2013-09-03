@@ -203,7 +203,7 @@ class SphinxDocLinkResolver(object):
         if os.name.lower() == 'nt' and not doc_url.startswith('http://'):
             if not relative:
                 raise ValueError('You have to use relative=True for the local'
-                                 'package on a Windows system.')
+                                 ' package on a Windows system.')
             self._is_windows = True
         else:
             self._is_windows = False

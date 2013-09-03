@@ -16,8 +16,17 @@ class DataConversionWarning(UserWarning):
     "A warning on implicit data conversions happening in the code"
     pass
 
-
 warnings.simplefilter("always", DataConversionWarning)
+
+
+class NonBLASDotWarning(UserWarning):
+    "A warning on implicit dispatch to numpy.dot"
+    pass
+
+
+# Silenced by default to reduce verbosity. Turn on at runtime for
+# performance profiling.
+warnings.simplefilter('ignore', NonBLASDotWarning)
 
 
 def _assert_all_finite(X):
@@ -46,6 +55,8 @@ def safe_asarray(X, dtype=None, order=None, copy=False):
         if copy:
             X = X.copy()
         assert_all_finite(X.data)
+        # enforces dtype on data array (order should be kept the same).
+        X.data = np.asarray(X.data, dtype=dtype)
     else:
         X = np.array(X, dtype=dtype, order=order, copy=copy)
         assert_all_finite(X)

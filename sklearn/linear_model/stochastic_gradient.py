@@ -384,7 +384,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
 
         if class_weight is not None:
             warnings.warn("Using 'class_weight' as a parameter to the 'fit'"
-                          "method is deprecated and will be removed in 0.13. "
+                          " method is deprecated and will be removed in 0.13. "
                           "Set it on initialization instead.",
                           DeprecationWarning, stacklevel=2)
 
@@ -1064,13 +1064,12 @@ class SGDRegressor(BaseSGDRegressor, _LearntSelectorMixin):
                  learning_rate="invscaling", eta0=0.01, power_t=0.25,
                  warm_start=False):
         super(SGDRegressor, self).__init__(loss=loss, penalty=penalty,
-                                               alpha=alpha, l1_ratio=l1_ratio,
-                                               fit_intercept=fit_intercept,
-                                               n_iter=n_iter, shuffle=shuffle,
-                                               verbose=verbose,
-                                               epsilon=epsilon,
-                                               random_state=random_state,
-                                               learning_rate=learning_rate,
-                                               eta0=eta0, power_t=power_t,
-                                               warm_start=False)
-
+                                           alpha=alpha, l1_ratio=l1_ratio,
+                                           fit_intercept=fit_intercept,
+                                           n_iter=n_iter, shuffle=shuffle,
+                                           verbose=verbose,
+                                           epsilon=epsilon,
+                                           random_state=random_state,
+                                           learning_rate=learning_rate,
+                                           eta0=eta0, power_t=power_t,
+                                           warm_start=False)

@@ -223,8 +223,9 @@ def test_enet_multitarget():
     estimator = ElasticNet(alpha=0.01, fit_intercept=True, precompute=None)
     # XXX: There is a bug when precompute is not None!
     estimator.fit(X, y)
-    coef, intercept, dual_gap = (estimator.coef_, estimator.intercept_,
-                                      estimator.dual_gap_)
+    coef, intercept, dual_gap = (estimator.coef_,
+                                 estimator.intercept_,
+                                 estimator.dual_gap_)
 
     for k in range(n_targets):
         estimator.fit(X, y[:, k])

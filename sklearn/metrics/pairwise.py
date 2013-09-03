@@ -34,6 +34,7 @@ kernel:
 #          Mathieu Blondel <mathieu@mblondel.org>
 #          Robert Layton <robertlayton@gmail.com>
 #          Andreas Mueller <amueller@ais.uni-bonn.de>
+#          Philippe Gervais <philippe.gervais@inria.fr>
 # License: BSD 3 clause
 
 import numpy as np
@@ -43,6 +44,8 @@ from scipy.sparse import issparse
 
 from ..utils import atleast2d_or_csr
 from ..utils import gen_even_slices
+from ..utils import gen_batches
+from ..utils import safe_asarray
 from ..utils.extmath import safe_sparse_dot
 from ..preprocessing import normalize
 from ..externals.joblib import Parallel
@@ -94,10 +97,10 @@ def check_pairwise_arrays(X, Y):
 
     if not (X.dtype == Y.dtype == np.float32):
         if Y is X:
-            X = Y = X.astype(np.float)
+            X = Y = safe_asarray(X, dtype=np.float)
         else:
-            X = X.astype(np.float)
-            Y = Y.astype(np.float)
+            X = safe_asarray(X, dtype=np.float)
+            Y = safe_asarray(Y, dtype=np.float)
     return X, Y
 
 
@@ -185,6 +188,200 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
         distances.flat[::distances.shape[0] + 1] = 0.0
 
     return distances if squared else np.sqrt(distances)
+
+
+def pairwise_distances_argmin_min(X, Y, axis=1, metric="euclidean",
+                                  batch_size=500, metric_kwargs={}):
+    """Compute minimum distances between one point and a set of points.
+
+    This function computes for each row in X, the index of the row of Y which
+    is closest (according to the specified distance). The minimal distances are
+    also returned.
+
+    This is mostly equivalent to calling:
+
+        (pairwise_distances(X, Y=Y, metric=metric).argmin(axis=axis),
+         pairwise_distances(X, Y=Y, metric=metric).min(axis=axis))
+
+    but uses much less memory, and is faster for large arrays.
+
+    This function works with dense 2D arrays only.
+
+    Parameters
+    ==========
+    X, Y : array-like
+        Arrays containing points. Respective shapes (n_samples1, n_features)
+        and (n_samples2, n_features)
+
+    batch_size : integer
+        To reduce memory consumption over the naive solution, data are
+        processed in batches, comprising batch_size rows of X and
+        batch_size rows of Y. The default value is quite conservative, but
+        can be changed for fine-tuning. The larger the number, the larger the
+        memory usage.
+
+    metric : string or callable
+        metric to use for distance computation. Any metric from scikit-learn
+        or scipy.spatial.distance can be used.
+
+        If metric is a callable function, it is called on each
+        pair of instances (rows) and the resulting value recorded. The callable
+        should take two arrays as input and return one value indicating the
+        distance between them. This works for Scipy's metrics, but is less
+        efficient than passing the metric name as a string.
+
+        Distance matrices are not supported.
+
+        Valid values for metric are:
+
+        - from scikit-learn: ['cityblock', 'cosine', 'euclidean', 'l1', 'l2',
+        'manhattan']
+
+        - from scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
+        'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski',
+        'mahalanobis', 'matching', 'minkowski', 'rogerstanimoto', 'russellrao',
+        'seuclidean', 'sokalmichener', 'sokalsneath', 'sqeuclidean', 'yule']
+        See the documentation for scipy.spatial.distance for details on these
+        metrics.
+
+    metric_kwargs : dict
+        keyword arguments to pass to specified metric function.
+
+    Returns
+    =======
+    argmin : numpy.ndarray
+        Y[argmin[i], :] is the row in Y that is closest to X[i, :].
+
+    distances : numpy.ndarray
+        distances[i] is the distance between the i-th row in X and the
+        argmin[i]-th row in Y.
+
+    See also
+    ========
+    sklearn.metrics.pairwise_distances
+    sklearn.metrics.pairwise_distances_argmin
+    """
+    dist_func = None
+    if metric in PAIRWISE_DISTANCE_FUNCTIONS:
+        dist_func = PAIRWISE_DISTANCE_FUNCTIONS[metric]
+    elif not callable(metric) and not isinstance(metric, str):
+        raise ValueError("'metric' must be a string or a callable")
+
+    X, Y = check_pairwise_arrays(X, Y)
+
+    if axis == 0:
+        X, Y = Y, X
+
+    # Allocate output arrays
+    indices = np.empty(X.shape[0], dtype='int32')
+    values = np.empty(X.shape[0])
+    values.fill(np.infty)
+
+    for chunk_x in gen_batches(X.shape[0], batch_size):
+        X_chunk = X[chunk_x, :]
+
+        for chunk_y in gen_batches(Y.shape[0], batch_size):
+            Y_chunk = Y[chunk_y, :]
+
+            if dist_func is not None:
+                if metric == 'euclidean':  # special case, for speed
+                    dist_chunk = np.dot(X_chunk, Y_chunk.T)
+                    dist_chunk *= -2
+                    dist_chunk += (X_chunk * X_chunk
+                                   ).sum(axis=1)[:, np.newaxis]
+                    dist_chunk += (Y_chunk * Y_chunk
+                                   ).sum(axis=1)[np.newaxis, :]
+                    np.maximum(dist_chunk, 0, dist_chunk)
+                else:
+                    dist_chunk = dist_func(X_chunk, Y_chunk, **metric_kwargs)
+            else:
+                dist_chunk = pairwise_distances(X_chunk, Y_chunk,
+                                                metric=metric, **metric_kwargs)
+
+            # Update indices and minimum values using chunk
+            min_indices = dist_chunk.argmin(axis=1)
+            min_values = dist_chunk[range(chunk_x.stop - chunk_x.start),
+                                    min_indices]
+
+            flags = values[chunk_x] > min_values
+            indices[chunk_x] = np.where(
+                flags, min_indices + chunk_y.start, indices[chunk_x])
+
+            values[chunk_x] = np.where(
+                flags, min_values, values[chunk_x])
+
+    if metric == "euclidean" and not metric_kwargs.get("squared", False):
+        values = np.sqrt(values)
+    return indices, values
+
+
+def pairwise_distances_argmin(X, Y, axis=1, metric="euclidean",
+                              batch_size=500, metric_kwargs={}):
+    """Compute minimum distances between one point and a set of points.
+
+    This function computes for each row in X, the index of the row of Y which
+    is closest (according to the specified distance).
+
+    This is mostly equivalent to calling:
+
+        pairwise_distances(X, Y=Y, metric=metric).argmin(axis=axis)
+
+    but uses much less memory, and is faster for large arrays.
+
+    This function works with dense 2D arrays only.
+
+    Parameters
+    ==========
+    X, Y : array-like
+        Arrays containing points. Respective shapes (n_samples1, n_features)
+        and (n_samples2, n_features)
+
+    batch_size : integer
+        To reduce memory consumption over the naive solution, data are
+        processed in batches, comprising batch_size rows of X and
+        batch_size rows of Y. The default value is quite conservative, but
+        can be changed for fine-tuning. The larger the number, the larger the
+        memory usage.
+
+    metric : string or callable
+        metric to use for distance computation. Any metric from scikit-learn
+        or scipy.spatial.distance can be used.
+
+        If metric is a callable function, it is called on each
+        pair of instances (rows) and the resulting value recorded. The callable
+        should take two arrays as input and return one value indicating the
+        distance between them. This works for Scipy's metrics, but is less
+        efficient than passing the metric name as a string.
+
+        Distance matrices are not supported.
+
+        Valid values for metric are:
+
+        - from scikit-learn: ['cityblock', 'cosine', 'euclidean', 'l1', 'l2',
+        'manhattan']
+
+        - from scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
+        'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski',
+        'mahalanobis', 'matching', 'minkowski', 'rogerstanimoto', 'russellrao',
+        'seuclidean', 'sokalmichener', 'sokalsneath', 'sqeuclidean', 'yule']
+        See the documentation for scipy.spatial.distance for details on these
+        metrics.
+
+    metric_kwargs : dict
+        keyword arguments to pass to specified metric function.
+
+    Returns
+    =======
+    argmin : numpy.ndarray
+        Y[argmin[i], :] is the row in Y that is closest to X[i, :].
+
+    See also
+    ========
+    sklearn.metrics.pairwise_distances
+    sklearn.metrics.pairwise_distances_argmin_min
+    """
+    return pairwise_distances_argmin_min(X, Y, axis, metric, batch_size,
+                                         metric_kwargs)[0]
 
 
 def manhattan_distances(X, Y=None, sum_over_features=True,
@@ -289,7 +486,7 @@ def cosine_distances(X, Y=None):
     -------
     distance matrix : array_like
         An array with shape (n_samples_X, n_samples_Y).
-        
+
     See also
     --------
     sklearn.metrics.pairwise.cosine_similarity
@@ -299,7 +496,7 @@ def cosine_distances(X, Y=None):
     S = cosine_similarity(X, Y)
     S *= -1
     S += 1
-    return S    
+    return S
 
 
 # Kernels
@@ -383,7 +580,7 @@ def rbf_kernel(X, Y=None, gamma=None):
     """
     Compute the rbf (gaussian) kernel between X and Y::
 
-        K(x, y) = exp(-γ ||x-y||²)
+        K(x, y) = exp(-gamma ||x-y||^2)
 
     for each pair of rows x in X and y in Y.
 
@@ -456,7 +653,7 @@ def additive_chi2_kernel(X, Y=None):
 
     The chi-squared kernel is given by::
 
-        k(x, y) = -∑ᵢ [(xᵢ - yᵢ)² / (xᵢ + yᵢ)]
+        k(x, y) = -Sum [(x - y)^2 / (x + y)]
 
     It can be interpreted as a weighted difference per entry.
 
@@ -515,7 +712,7 @@ def chi2_kernel(X, Y=None, gamma=1.):
 
     The chi-squared kernel is given by::
 
-        k(x, y) = exp(-γ ∑ᵢ [(xᵢ - yᵢ)² / (xᵢ + yᵢ)])
+        k(x, y) = exp(-gamma Sum [(x - y)^2 / (x + y)])
 
     It can be interpreted as a weighted difference per entry.
 
@@ -618,18 +815,18 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
     If Y is given (default is None), then the returned matrix is the pairwise
     distance between the arrays from both X and Y.
 
-    Please note that support for sparse matrices is currently limited to 
+    Please note that support for sparse matrices is currently limited to
     'euclidean', 'l2' and 'cosine'.
 
     Valid values for metric are:
 
-    - from scikit-learn: ['cityblock', 'cosine', 'euclidean', 'l1', 'l2', 
-      'manhattan'] 
+    - from scikit-learn: ['cityblock', 'cosine', 'euclidean', 'l1', 'l2',
+      'manhattan']
 
     - from scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
       'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski', 'mahalanobis',
       'matching', 'minkowski', 'rogerstanimoto', 'russellrao', 'seuclidean',
-      'sokalmichener', 'sokalsneath', 'sqeuclidean', 'yule']      
+      'sokalmichener', 'sokalsneath', 'sqeuclidean', 'yule']
       See the documentation for scipy.spatial.distance for details on these
       metrics.
 
@@ -698,6 +895,7 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
         n_x, n_y = X.shape[0], Y.shape[0]
         # Calculate distance for each element in X and Y.
         # FIXME: can use n_jobs here too
+        # FIXME: np.zeros can be replaced by np.empty
         D = np.zeros((n_x, n_y), dtype='float')
         for i in range(n_x):
             start = 0

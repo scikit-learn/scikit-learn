@@ -613,7 +613,7 @@ class ElasticNet(LinearModel, RegressorMixin):
 
         X, y, X_mean, y_mean, X_std, precompute, Xy = \
             _pre_fit(X, y, Xy, self.precompute, self.normalize,
-            self.fit_intercept, copy=True)
+                     self.fit_intercept, copy=True)
 
         if y.ndim == 1:
             y = y[:, np.newaxis]
@@ -631,7 +631,8 @@ class ElasticNet(LinearModel, RegressorMixin):
                 this_Xy = Xy[:, k]
             else:
                 this_Xy = None
-            _, this_coef, this_dual_gap = self.path(X, y[:, k],
+            _, this_coef, this_dual_gap = \
+                self.path(X, y[:, k],
                           l1_ratio=self.l1_ratio, eps=None,
                           n_alphas=None, alphas=[self.alpha],
                           precompute=precompute, Xy=this_Xy,
@@ -831,8 +832,9 @@ def _path_residuals(X, y, train, test, path, path_params, l1_ratio=1,
     Xy = None
 
     X_train, y_train, X_mean, y_mean, X_std, precompute, Xy = \
-        _pre_fit(X_train, y_train, Xy, precompute, normalize, fit_intercept,
-        copy=False)
+        _pre_fit(X_train, y_train,
+                 Xy, precompute, normalize,
+                 fit_intercept, copy=False)
 
     # del path_params['precompute']
     path_params = path_params.copy()

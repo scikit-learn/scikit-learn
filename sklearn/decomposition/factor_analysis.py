@@ -19,7 +19,7 @@ from scipy import linalg
 from ..base import BaseEstimator, TransformerMixin
 from ..externals.six.moves import xrange
 from ..utils import array2d, check_arrays
-from ..utils.extmath import fast_logdet
+from ..utils.extmath import fast_logdet, fast_dot
 
 
 class FactorAnalysis(BaseEstimator, TransformerMixin):
@@ -193,8 +193,8 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
 
         Wpsi = self.components_ / self.noise_variance_
         cov_z = linalg.inv(Ih + np.dot(Wpsi, self.components_.T))
-        tmp = np.dot(X_transformed, Wpsi.T)
-        X_transformed = np.dot(tmp, cov_z)
+        tmp = fast_dot(X_transformed, Wpsi.T)
+        X_transformed = fast_dot(tmp, cov_z)
 
         return X_transformed
 

@@ -39,7 +39,7 @@ main_metric = metrics.adjusted_mutual_info_score
 # Compute EAC
 print("Running EAC Algorithm")
 # Create a final clustering, allowing us to set the threshold value ourselves.
-threshold = 0.5
+threshold = 0.8
 final_clusterer = MSTCluster(threshold=threshold, metric='precomputed')
 model = EAC(default_final_clusterer=final_clusterer, random_state=42).fit(X)
 y_pred = model.labels_

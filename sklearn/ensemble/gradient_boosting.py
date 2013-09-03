@@ -498,8 +498,13 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         if self.learning_rate <= 0.0:
             raise ValueError("learning_rate must be greater than 0")
 
-        if self.loss not in LOSS_FUNCTIONS:
+        if (self.loss not in self._SUPPORTED_LOSS or
+            self.loss not in LOSS_FUNCTIONS):
             raise ValueError("Loss '{0:s}' not supported. ".format(self.loss))
+
+        if self.loss in ('mdeviance', 'bdeviance'):
+            warn(("Loss '{0:s}' is deprecated as of version 0.14. "
+                 "Use 'deviance' instead. ").format(self.loss))
 
         if self.loss == 'deviance':
             loss_class = (MultinomialDeviance
@@ -728,7 +733,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
     @property
     def oob_score_(self):
         warn("The oob_score_ argument is replaced by oob_improvement_"
-             "as of version 0.14 and will be removed in 0.16.",
+             " as of version 0.14 and will be removed in 0.16.",
              DeprecationWarning)
         try:
             return self._oob_score_
@@ -852,6 +857,8 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
     T. Hastie, R. Tibshirani and J. Friedman.
     Elements of Statistical Learning Ed. 2, Springer, 2009.
     """
+
+    _SUPPORTED_LOSS = ('deviance', 'mdeviance', 'bdeviance')
 
     def __init__(self, loss='deviance', learning_rate=0.1, n_estimators=100,
                  subsample=1.0, min_samples_split=2, min_samples_leaf=1,
@@ -1091,6 +1098,8 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
     T. Hastie, R. Tibshirani and J. Friedman.
     Elements of Statistical Learning Ed. 2, Springer, 2009.
     """
+
+    _SUPPORTED_LOSS = ('ls', 'lad', 'huber', 'quantile')
 
     def __init__(self, loss='ls', learning_rate=0.1, n_estimators=100,
                  subsample=1.0, min_samples_split=2, min_samples_leaf=1,

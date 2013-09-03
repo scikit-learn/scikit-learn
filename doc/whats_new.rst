@@ -10,12 +10,18 @@ Changelog
 
    - Add predict method to :class:`cluster.AffinityPropagation` and
      :class:`cluster.MeanShift`, by `Mathieu Blondel`_.
+   - Add :func:`utils.extmath.fast_dot` -- a memory efficient replacement for
+   `numpy.dot` by `Denis Engemann`_, and `Alexandre Gramfort`_.
 
    - New unsupervised feature selection algorithm
      :class:`feature_selection.VarianceThreshold`, by `Lars Buitinck`_.
 
    - Precision-recall and ROC examples now use train_test_split, and have more
      explanation of why these metrics are useful. By `Kyle Kastner`_.
+      
+   - The training algorithm for :class:`decomposition.NMF` is faster for
+     sparse matrices and has much lower memory complexity, meaning it will
+     scale up gracefully to large datasets. By `Lars Buitinck`_.
 
    - Minimum Spanning Tree Clustering, which uses a threshold based parameter
      to cut edges, forming clusters from the connected components. By
@@ -28,7 +34,7 @@ Changelog
     - Upgrading the sparsetools utility functions (which are backported from
       scipy). This was done to give access to the minimum spanning tree function
       which was used for the MSTCluster algorithm. By `Robert Layton`_.
-      
+
 
 .. _changes_0_14:
 

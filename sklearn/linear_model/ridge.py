@@ -591,9 +591,11 @@ class _RidgeGCV(LinearModel):
     http://www.mit.edu/~9.520/spring07/Classes/rlsslides.pdf
     """
 
-    def __init__(self, alphas=[0.1, 1.0, 10.0], fit_intercept=True,
-                 normalize=False, scoring=None, score_func=None, loss_func=None,
-                 copy_X=True, gcv_mode=None, store_cv_values=False):
+    def __init__(self, alphas=[0.1, 1.0, 10.0],
+                 fit_intercept=True, normalize=False,
+                 scoring=None, score_func=None,
+                 loss_func=None, copy_X=True,
+                 gcv_mode=None, store_cv_values=False):
         self.alphas = np.asarray(alphas)
         self.fit_intercept = fit_intercept
         self.normalize = normalize
@@ -1018,7 +1020,7 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
             class_weight = self.class_weight
         else:
             warnings.warn("'class_weight' is now an initialization parameter."
-                          "Using it in the 'fit' method is deprecated and "
+                          " Using it in the 'fit' method is deprecated and "
                           "will be removed in 0.15.", DeprecationWarning,
                           stacklevel=2)
 
