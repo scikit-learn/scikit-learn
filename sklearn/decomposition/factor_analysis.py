@@ -261,7 +261,7 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
 
         Returns
         -------
-        cov : array, shape=(n_features, n_features)
+        cov : array, shape (n_features, n_features)
             Estimated covariance of data.
         """
         cov = np.dot(self.components_.T, self.components_)
@@ -273,7 +273,7 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
 
         Returns
         -------
-        precision : array, shape=(n_features, n_features)
+        precision : array, shape (n_features, n_features)
             Estimated precision of data.
         """
         n_features = self.components_.shape[1]
@@ -295,18 +295,18 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         precision.flat[::len(precision) + 1] += 1. / self.noise_variance_
         return precision
 
-    def score(self, X, y=None):
-        """Compute score of X under FactorAnalysis model.
+    def score_samples(self, X):
+        """Compute the log-likelihood of each sample
 
         Parameters
         ----------
-        X: array of shape(n_samples, n_features)
-            The data to test
+        X: array, shape (n_samples, n_features)
+            The data
 
         Returns
         -------
-        ll: array of shape (n_samples),
-            log-likelihood of each row of X under the current model
+        ll: array, shape (n_samples,)
+            Log-likelihood of each sample under the current model
         """
         Xr = X - self.mean_
         precision = self.get_precision()
@@ -316,3 +316,18 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         log_like -= .5 * (n_features * log(2. * np.pi)
                           - fast_logdet(precision))
         return log_like
+
+    def score(self, X, y=None):
+        """Compute the average log-likelihood of the samples
+
+        Parameters
+        ----------
+        X: array, shape (n_samples, n_features)
+            The data
+
+        Returns
+        -------
+        ll: float
+            Average log-likelihood of the samples under the current model
+        """
+        return np.mean(self.score_samples(X))

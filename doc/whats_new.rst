@@ -38,6 +38,9 @@ API changes summary
      score implementation is not correct. The computation now also exploits the
      matrix inversion lemma for faster computation. By `Alexandre Gramfort`_.
 
+   - The score method of :class:`FactorAnalysis <decomposition.FactorAnalysis>`
+     now returns the average log-likelihood of the samples. Use score_samples
+     to get log-likelihood of each sample. By `Alexandre Gramfort`_.
 
 .. _changes_0_14:
 

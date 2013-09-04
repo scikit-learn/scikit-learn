@@ -63,8 +63,8 @@ def compute_scores(X):
     for n in n_components:
         pca.n_components = n
         fa.n_components = n
-        pca_scores.append(np.mean(np.concatenate(cross_val_score(pca, X))))
-        fa_scores.append(np.mean(np.concatenate(cross_val_score(fa, X))))
+        pca_scores.append(np.mean(cross_val_score(pca, X)))
+        fa_scores.append(np.mean(cross_val_score(fa, X)))
 
     return pca_scores, fa_scores
 
