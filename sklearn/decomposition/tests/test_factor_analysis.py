@@ -34,7 +34,7 @@ def test_factor_analysis():
     fa_fail.svd_method = 'foo'
     assert_raises(ValueError, fa_fail.fit, X)
     fas = []
-    for method in ['randomized', 'svd']:
+    for method in ['randomized', 'lapack']:
         fa = FactorAnalysis(n_components=n_components, svd_method=method)
         fa.fit(X)
         fas.append(fa)
@@ -44,7 +44,7 @@ def test_factor_analysis():
 
         assert_almost_equal(fa.loglike_[-1], fa.score(X).sum())
 
-        # Make log likelihood increases at each iteration
+        # Make sure log likelihood increases at each iteration
         assert_true(np.all(np.diff(fa.loglike_) > 0.))
 
         # Sample Covariance

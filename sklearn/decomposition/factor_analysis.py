@@ -67,10 +67,10 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         The initial guess of the noise variance for each feature.
         If None, it defaults to np.ones(n_features)
 
-    svd_method : {'svd', 'randomized'}
-        Which SVD method to use. If 'svd' use standard SVD from scipy.linalg,
+    svd_method : {'lapack', 'randomized'}
+        Which SVD method to use. If 'lapack' use standard SVD from scipy.linalg,
         if 'randomized' use fast ``randomized_svd`` function. Defaults to
-        'randomized'. For maximum precision you should choose 'svd'. For most
+        'randomized'. For maximum precision you should choose 'lapack'. For most
         applications 'randomized' will be sufficiently precise while providing
         significant speed gains.
 
@@ -106,13 +106,13 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         non-Gaussian latent variables.
     """
     def __init__(self, n_components=None, tol=1e-2, copy=True, max_iter=1000,
-                 verbose=0, noise_variance_init=None, svd_method='svd',
+                 verbose=0, noise_variance_init=None, svd_method='randomized',
                  random_state=0):
         self.n_components = n_components
         self.copy = copy
         self.tol = tol
         self.max_iter = max_iter
-        if svd_method not in ['svd', 'randomized']:
+        if svd_method not in ['lapack', 'randomized']:
             raise ValueError('SVD method %s is not supported. Please consider'
                              ' the documentation' % svd_method)
         self.svd_method = svd_method
@@ -162,7 +162,7 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
 
         # we'll modify svd outputs to return unexplained variance
         # to allow for unified computation of loglikelihood
-        if self.svd_method == 'svd':
+        if self.svd_method == 'lapack':
             def my_svd(X):
                 _, s, V = linalg.svd(X, full_matrices=False)
                 return (s[:n_components], V[:n_components],
@@ -172,7 +172,8 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
 
             def my_svd(X):
                 _, s, V = randomized_svd(X, n_components,
-                                         random_state=random_state)
+                                         random_state=random_state,
+                                         n_iter=0, n_oversamples=10)
                 return s, V, (X ** 2).sum() - np.sum(s ** 2)
         else:
             raise ValueError('SVD method %s is not supported. Please consider'
