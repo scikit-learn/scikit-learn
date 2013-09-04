@@ -72,3 +72,7 @@ def test_factor_analysis():
         fa1.verbose = True
         fa1.fit(X)
         assert_true(w[-1].category == ConvergenceWarning)
+
+        warnings.simplefilter('always', DeprecationWarning)
+        FactorAnalysis(verbose=1)
+        assert_true(w[-1].category == DeprecationWarning)

@@ -124,6 +124,12 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
             raise ValueError('SVD method %s is not supported. Please consider'
                              ' the documentation' % svd_method)
         self.svd_method = svd_method
+        if verbose:
+            warnings.warn('The `verbose` parameter has been deprecated and '
+                          'will be removed in 0.16. To reduce verbosity '
+                          'silence Python warnings instead.',
+                          DeprecationWarning)
+
         self.verbose = verbose
         self.noise_variance_init = noise_variance_init
         self.iterated_power = iterated_power
@@ -209,11 +215,10 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
 
             psi = np.maximum(var - np.sum(W ** 2, axis=0), SMALL)
         else:
-            if self.verbose:
-                warnings.warn('FactorAnalysis did not converge.' +
-                              ' You might want' +
-                              ' to increase the number of iterations.',
-                              ConvergenceWarning)
+            warnings.warn('FactorAnalysis did not converge.' +
+                          ' You might want' +
+                          ' to increase the number of iterations.',
+                          ConvergenceWarning)
 
         self.components_ = W
         self.noise_variance_ = psi
