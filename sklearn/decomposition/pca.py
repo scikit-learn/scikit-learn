@@ -157,13 +157,20 @@ class PCA(BaseEstimator, TransformerMixin):
     `noise_variance_` : float
         The estimated noise covariance following the Probabilistic PCA model
         from Tipping and Bishop 1999. See "Pattern Recognition and
-        Machine Learning" by C. Bishop, 12.2.1 p. 574. Required to
+        Machine Learning" by C. Bishop, 12.2.1 p. 574 or
+        http://www.miketipping.com/papers/met-mppca.pdf. It is required to
         computed the estimated data covariance and score samples.
 
     Notes
     -----
     For n_components='mle', this class uses the method of `Thomas P. Minka:
     Automatic Choice of Dimensionality for PCA. NIPS 2000: 598-604`
+
+    Implements the probabilistic PCA model from:
+    M. Tipping and C. Bishop, Probabilistic Principal Component Analysis,
+    Journal of the Royal Statistical Society, Series B, 61, Part 3, pp. 611–622
+    via the score and score_samples methods.
+    See http://www.miketipping.com/papers/met-mppca.pdf
 
     Due to implementation subtleties of the Singular Value Decomposition (SVD),
     which is used in this implementation, running fit twice on the same matrix
@@ -403,6 +410,7 @@ class PCA(BaseEstimator, TransformerMixin):
 
         See. "Pattern Recognition and Machine Learning"
         by C. Bishop, 12.2.1 p. 574
+        or http://www.miketipping.com/papers/met-mppca.pdf
 
         Parameters
         ----------
@@ -428,6 +436,7 @@ class PCA(BaseEstimator, TransformerMixin):
 
         See. "Pattern Recognition and Machine Learning"
         by C. Bishop, 12.2.1 p. 574
+        or http://www.miketipping.com/papers/met-mppca.pdf
 
         Parameters
         ----------
