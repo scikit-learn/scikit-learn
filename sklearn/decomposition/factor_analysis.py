@@ -3,7 +3,7 @@
 A latent linear variable model.
 
 FactorAnalysis is similar to probabilistic PCA implemented by PCA.score
-While PCA assumes Gaussion noise with the same variance for each
+While PCA assumes Gaussian noise with the same variance for each
 feature, the FactorAnalysis model assumes different variances for
 each of them.
 
