@@ -84,8 +84,6 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         Pseudo number generator state used for random sampling. Only used
         if ``svd_method`` equals 'randomized'
 
-
-
     Attributes
     ----------
     `components_` : array, [n_components, n_features]
