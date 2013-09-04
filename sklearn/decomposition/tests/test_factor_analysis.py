@@ -2,12 +2,16 @@
 #         Alexandre Gramfort <alexandre.gramfort@inria.fr>
 # Licence: BSD3
 
+import warnings
 import numpy as np
 
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_greater
+from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_almost_equal
+from sklearn.utils import ConvergenceWarning
 
 from sklearn.decomposition import FactorAnalysis
 
@@ -44,8 +48,8 @@ def test_factor_analysis():
 
         assert_almost_equal(fa.loglike_[-1], fa.score(X).sum())
 
-        # Make sure log likelihood increases at each iteration
-        assert_true(np.all(np.diff(fa.loglike_) > 0.))
+        diff = np.all(np.diff(fa.loglike_))
+        assert_greater(diff, 0., 'Log likelihood dif not increase')
 
         # Sample Covariance
         scov = np.cov(X, rowvar=0., bias=1.)
@@ -53,7 +57,7 @@ def test_factor_analysis():
         # Model Covariance
         mcov = fa.get_covariance()
         diff = np.sum(np.abs(scov - mcov)) / W.size
-        assert_true(diff < 0.1, "Mean absolute difference is %f" % diff)
+        assert_less(diff, 0.1, "Mean absolute difference is %f" % diff)
         fa = FactorAnalysis(n_components=n_components,
                             noise_variance_init=np.ones(n_features))
         assert_raises(ValueError, fa.fit, X[:, :2])
@@ -62,3 +66,9 @@ def test_factor_analysis():
     fa1, fa2 = fas
     for attr in ['loglike_', 'components_', 'noise_variance_']:
         assert_almost_equal(f(fa1, attr), f(fa2, attr))
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter('always', ConvergenceWarning)
+        fa1.max_iter = 1
+        fa1.verbose = True
+        fa1.fit(X)
+        assert_true(w[-1].category == ConvergenceWarning)

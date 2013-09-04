@@ -13,6 +13,7 @@ Algorithm 21.1
 
 # Licence: BSD3
 
+import warnings
 from math import sqrt, log
 import numpy as np
 from scipy import linalg
@@ -22,6 +23,7 @@ from ..base import BaseEstimator, TransformerMixin
 from ..externals.six.moves import xrange
 from ..utils import array2d, check_arrays, check_random_state
 from ..utils.extmath import fast_logdet, fast_dot, randomized_svd
+from ..utils import ConvergenceWarning
 
 
 class FactorAnalysis(BaseEstimator, TransformerMixin):
@@ -208,7 +210,10 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
             psi = np.maximum(var - np.sum(W ** 2, axis=0), SMALL)
         else:
             if self.verbose:
-                print("Did not converge")
+                warnings.warn('FactorAnalysis did not converge.' +
+                              ' You might want' +
+                              ' to increase the number of iterations.',
+                              ConvergenceWarning)
 
         self.components_ = W
         self.noise_variance_ = psi
