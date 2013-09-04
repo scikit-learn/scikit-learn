@@ -300,7 +300,7 @@ class PCA(BaseEstimator, TransformerMixin):
         else:
             self.noise_variance_ = 0.
 
-        # store n_samples to revert whitening when gettting covariance
+        # store n_samples to revert whitening when getting covariance
         self.n_samples_ = n_samples
 
         self.components_ = components_[:n_components]
