@@ -70,10 +70,11 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
     svd_method : {'lapack', 'randomized'}
         Which SVD method to use. If 'lapack' use standard SVD from
         scipy.linalg, if 'randomized' use fast ``randomized_svd`` function.
-        Defaults to 'randomized'. For maximum precision you should choose
-        'lapack'. For most applications 'randomized' will be sufficiently
-        precise while providing significant speed gains. Accuracy can also
-        be improved by setting higher values for `iterated_power`.
+        Defaults to 'randomized'. For most applications 'randomized' will
+        be sufficiently precise while providing significant speed gains.
+        Accuracy can also be improved by setting higher values for
+        `iterated_power`. If this is not sufficient, for maximum precision
+        you should choose 'lapack'.
 
     iterated_power : int, optional
         Number of iterations for the power method. 3 by default. Only used
