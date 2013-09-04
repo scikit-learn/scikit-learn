@@ -425,17 +425,17 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
         # Check input shapes
         X = array2d(X)
-        n_eval, n_featuresX = X.shape
+        n_eval, n_features_X = X.shape
         n_samples, n_features = self.X.shape
         n_samples_y, n_targets = self.y.shape
 
         # Run input checks
         self._check_params(n_samples)
 
-        if n_featuresX != n_features:
+        if n_features_X != n_features:
             raise ValueError(("The number of features in X (X.shape[1] = %d) "
                              "should match the sample size used for fit() "
-                             "which is %d.") % (n_featuresX, n_features))
+                             "which is %d.") % (n_features_X, n_features))
 
         if batch_size is None:
             # No memory management
