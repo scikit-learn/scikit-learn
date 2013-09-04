@@ -68,15 +68,22 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         If None, it defaults to np.ones(n_features)
 
     svd_method : {'lapack', 'randomized'}
-        Which SVD method to use. If 'lapack' use standard SVD from scipy.linalg,
-        if 'randomized' use fast ``randomized_svd`` function. Defaults to
-        'randomized'. For maximum precision you should choose 'lapack'. For most
-        applications 'randomized' will be sufficiently precise while providing
-        significant speed gains.
+        Which SVD method to use. If 'lapack' use standard SVD from
+        scipy.linalg, if 'randomized' use fast ``randomized_svd`` function.
+        Defaults to 'randomized'. For maximum precision you should choose
+        'lapack'. For most applications 'randomized' will be sufficiently
+        precise while providing significant speed gains. Accuracy can also
+        be improved by setting higher values for `iterated_power`.
+
+    iterated_power : int, optional
+        Number of iterations for the power method. 3 by default. Only used
+        if ``svd_method`` equals 'randomized'
 
     random_state : int or RandomState
         Pseudo number generator state used for random sampling. Only used
         if ``svd_method`` equals 'randomized'
+
+
 
     Attributes
     ----------
@@ -107,7 +114,7 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
     """
     def __init__(self, n_components=None, tol=1e-2, copy=True, max_iter=1000,
                  verbose=0, noise_variance_init=None, svd_method='randomized',
-                 random_state=0):
+                 iterated_power=3, random_state=0):
         self.n_components = n_components
         self.copy = copy
         self.tol = tol
@@ -118,6 +125,7 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         self.svd_method = svd_method
         self.verbose = verbose
         self.noise_variance_init = noise_variance_init
+        self.iterated_power = iterated_power
         self.random_state = random_state
 
     def fit(self, X, y=None):
@@ -173,7 +181,7 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
             def my_svd(X):
                 _, s, V = randomized_svd(X, n_components,
                                          random_state=random_state,
-                                         n_iter=0, n_oversamples=10)
+                                         n_iter=self.iterated_power)
                 return s, V, (X ** 2).sum() - np.sum(s ** 2)
         else:
             raise ValueError('SVD method %s is not supported. Please consider'
@@ -268,6 +276,6 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         n_features = X.shape[1]
         log_like = np.zeros(X.shape[0])
         self.precision_ = linalg.inv(cov)
-        log_like = -.5 * (Xr * (np.dot(Xr, self.precision_))).sum(axis=1)
+        log_like = -.5 * (Xr * (fast_dot(Xr, self.precision_))).sum(axis=1)
         log_like -= .5 * (fast_logdet(cov) + n_features * log(2. * np.pi))
         return log_like
