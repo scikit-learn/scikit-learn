@@ -340,7 +340,7 @@ def test_pca_score():
     pca.fit(X)
     ll1 = pca.score(X)
     h = -0.5 * np.log(2 * np.pi * np.exp(1) * 0.1 ** 2) * p
-    np.testing.assert_almost_equal(ll1.mean() / h, 1, 0)
+    np.testing.assert_almost_equal(ll1 / h, 1, 0)
 
 
 def test_pca_score2():
@@ -352,13 +352,13 @@ def test_pca_score2():
     pca.fit(X)
     ll1 = pca.score(X)
     ll2 = pca.score(rng.randn(n, p) * .2 + np.array([3, 4, 5]))
-    assert_greater(ll1.mean(), ll2.mean())
+    assert_greater(ll1, ll2)
 
     # Test that it gives the same scores if whiten=True
     pca = PCA(n_components=2, whiten=True)
     pca.fit(X)
     ll2 = pca.score(X)
-    assert_array_almost_equal(ll1, ll2)
+    assert_almost_equal(ll1, ll2)
 
 
 def test_pca_score3():
@@ -373,7 +373,7 @@ def test_pca_score3():
     for k in range(p):
         pca = PCA(n_components=k)
         pca.fit(Xl)
-        ll[k] = pca.score(Xt).mean()
+        ll[k] = pca.score(Xt)
 
     assert_true(ll.argmax() == 1)
 

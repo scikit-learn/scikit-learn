@@ -398,21 +398,21 @@ class PCA(BaseEstimator, TransformerMixin):
         """
         return fast_dot(X, self.components_) + self.mean_
 
-    def score(self, X, y=None):
-        """Return a score associated to new data
+    def score_samples(self, X):
+        """Return the log-likelihood of each sample
 
         See. "Pattern Recognition and Machine Learning"
         by C. Bishop, 12.2.1 p. 574
 
         Parameters
         ----------
-        X: array of shape(n_samples, n_features)
-            The data to test
+        X: array, shape(n_samples, n_features)
+            The data.
 
         Returns
         -------
-        ll: array of shape (n_samples),
-            log-likelihood of each row of X under the current model
+        ll: array, shape (n_samples,)
+            Log-likelihood of each sample under the current model
         """
         Xr = X - self.mean_
         n_features = X.shape[1]
@@ -422,6 +422,24 @@ class PCA(BaseEstimator, TransformerMixin):
         log_like -= .5 * (n_features * log(2. * np.pi)
                           - fast_logdet(precision))
         return log_like
+
+    def score(self, X, y=None):
+        """Return the average log-likelihood of all samples
+
+        See. "Pattern Recognition and Machine Learning"
+        by C. Bishop, 12.2.1 p. 574
+
+        Parameters
+        ----------
+        X: array, shape(n_samples, n_features)
+            The data.
+
+        Returns
+        -------
+        ll: float
+            Average log-likelihood of the samples under the current model
+        """
+        return np.mean(self.score_samples(X))
 
 
 @deprecated("ProbabilisticPCA will be removed in 0.16. WARNING: The covariance"

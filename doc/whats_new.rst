@@ -32,10 +32,11 @@ Changelog
 API changes summary
 -------------------
 
-   - Add score method to PCA following the model of probabilistic PCA and
-     deprecate ProbabilisticPCA model whose score implementation is not
-     correct. The computation now also exploits the matrix inversion
-     lemma for faster computation. By `Alexandre Gramfort`_.
+   - Add score method to :class:`PCA <decomposition.PCA>` following the model of
+     probabilistic PCA and deprecate
+     :class:`ProbabilisticPCA <decomposition.ProbabilisticPCA>` model whose
+     score implementation is not correct. The computation now also exploits the
+     matrix inversion lemma for faster computation. By `Alexandre Gramfort`_.
 
 
 .. _changes_0_14:
