@@ -115,8 +115,8 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
     --------
     PCA: Principal component analysis is also a latent linear variable model
         which however assumes equal noise variance for each feature.
-        This extra assumption makes PCA faster as it can be computed
-        in closed form.
+        This extra assumption makes probabilistic PCA faster as it can be
+        computed in closed form.
     FastICA: Independent component analysis, a latent variable model with
         non-Gaussian latent variables.
     """
