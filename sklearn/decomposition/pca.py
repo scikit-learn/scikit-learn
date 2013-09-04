@@ -168,7 +168,7 @@ class PCA(BaseEstimator, TransformerMixin):
 
     Implements the probabilistic PCA model from:
     M. Tipping and C. Bishop, Probabilistic Principal Component Analysis,
-    Journal of the Royal Statistical Society, Series B, 61, Part 3, pp. 611–622
+    Journal of the Royal Statistical Society, Series B, 61, Part 3, pp. 611-622
     via the score and score_samples methods.
     See http://www.miketipping.com/papers/met-mppca.pdf
 
@@ -451,9 +451,10 @@ class PCA(BaseEstimator, TransformerMixin):
         return np.mean(self.score_samples(X))
 
 
-@deprecated("ProbabilisticPCA will be removed in 0.16. WARNING: The covariance"
-            " estimation is NOT correct and is now moved to and corrected in"
-            " PCA. To work with homoscedastic=False, you should use"
+@deprecated("ProbabilisticPCA will be removed in 0.16. WARNING: the covariance"
+            " estimation was previously incorrect, your output might be different "
+            " than under the previous versions. Use PCA that implements score"
+            " and score_samples. To work with homoscedastic=False, you should use"
             " FactorAnalysis.")
 class ProbabilisticPCA(PCA):
     """Additional layer on top of PCA that adds a probabilistic evaluation"""
@@ -471,25 +472,28 @@ class ProbabilisticPCA(PCA):
             If True, average variance across remaining dimensions
         """
         PCA.fit(self, X)
-        n_samples, n_features = X.shape
-        self._dim = n_features
-        Xr = X - self.mean_
-        Xr -= np.dot(np.dot(Xr, self.components_.T), self.components_)
 
+        n_samples, n_features = X.shape
         n_components = self.n_components
         if n_components is None:
             n_components = n_features
 
+        explained_variance = self.explained_variance_.copy()
+        if homoscedastic:
+            explained_variance -= self.noise_variance_
+
         # Make the low rank part of the estimated covariance
         self.covariance_ = np.dot(self.components_[:n_components].T *
-                                  self.explained_variance_[:n_components],
+                                  explained_variance,
                                   self.components_[:n_components])
 
         if n_features == n_components:
             delta = 0.
         elif homoscedastic:
-            delta = (Xr ** 2).sum() / (n_samples * n_features)
+            delta = self.noise_variance_
         else:
+            Xr = X - self.mean_
+            Xr -= np.dot(np.dot(Xr, self.components_.T), self.components_)
             delta = (Xr ** 2).mean(axis=0) / (n_features - n_components)
 
         # Add delta to the diagonal without extra allocation
