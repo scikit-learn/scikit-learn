@@ -1,6 +1,6 @@
 # coding: utf-8
 
-# Author: Johannes Schönberger <jschoenberger@demuc.de>
+# Author: Johannes Schönberger
 #
 # License: BSD 3 clause
 
