@@ -1,4 +1,3 @@
-
 .. _feature_extraction:
 
 ==================
@@ -263,7 +262,7 @@ of the words in the document.
 Sparsity
 --------
 
-As most documents will typically use a very subset of a the words used in
+As most documents will typically use a very small subset of the words used in
 the corpus, the resulting matrix will have many feature values that are
 zeros (typically more than 99% of them).
 
