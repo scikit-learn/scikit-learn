@@ -181,7 +181,7 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
             def my_svd(X):
                 _, s, V = linalg.svd(X, full_matrices=False)
                 return (s[:n_components], V[:n_components],
-                        np.sum(s[n_components:] ** 2))
+                        np.dot(s[n_components:].flat, s[n_components:].flat))
         elif self.svd_method == 'randomized':
             random_state = check_random_state(self.random_state)
 
@@ -189,7 +189,7 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
                 _, s, V = randomized_svd(X, n_components,
                                          random_state=random_state,
                                          n_iter=self.iterated_power)
-                return s, V, (X ** 2).sum() - np.sum(s ** 2)
+                return s, V, np.dot(X.flat, X.flat) - np.dot(s, s)
         else:
             raise ValueError('SVD method %s is not supported. Please consider'
                              ' the documentation' % self.svd_method)
