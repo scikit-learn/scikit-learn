@@ -39,23 +39,13 @@ def test_pca():
     assert_array_almost_equal(X_r, X_r2)
 
     # Test get_covariance and get_precision with n_components == n_features
-    cov = pca.get_covariance()
-    precision = pca.get_precision()
-    assert_array_almost_equal(np.dot(cov, precision), np.eye(X.shape[1]), 12)
-
-    # Test get_covariance and get_precision with n_components < n_features
-    pca.n_components = 2
-    pca.fit(X)
-    cov = pca.get_covariance()
-    precision = pca.get_precision()
-    assert_array_almost_equal(np.dot(cov, precision), np.eye(X.shape[1]), 12)
-
-    # Test get_covariance and get_precision with n_components == 0
-    pca.n_components = 0
-    pca.fit(X)
-    cov = pca.get_covariance()
-    precision = pca.get_precision()
-    assert_array_almost_equal(np.dot(cov, precision), np.eye(X.shape[1]), 12)
+    # with n_components < n_features and with n_components == 0
+    for n_components in [0, 2, X.shape[1]]:
+        pca.n_components = n_components
+        pca.fit(X)
+        cov = pca.get_covariance()
+        precision = pca.get_precision()
+        assert_array_almost_equal(np.dot(cov, precision), np.eye(X.shape[1]), 12)
 
 
 def test_whitening():

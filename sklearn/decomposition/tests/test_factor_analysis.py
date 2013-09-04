@@ -102,21 +102,11 @@ def test_factor_analysis():
                          noise_variance_init=np.ones(n_features))
     assert_raises(ValueError, fa2.fit, X[:, :2])
 
-    # Test get_covariance and get_precision with n_components < n_features
-    cov = fa.get_covariance()
-    precision = fa.get_precision()
-    assert_array_almost_equal(np.dot(cov, precision), np.eye(X.shape[1]), 12)
-
     # Test get_covariance and get_precision with n_components == n_features
-    fa.n_components = n_features
-    fa.fit(X)
-    cov = fa.get_covariance()
-    precision = fa.get_precision()
-    assert_array_almost_equal(np.dot(cov, precision), np.eye(X.shape[1]), 12)
-
-    # Test get_covariance and get_precision with n_components == 0
-    fa.n_components = 0
-    fa.fit(X)
-    cov = fa.get_covariance()
-    precision = fa.get_precision()
-    assert_array_almost_equal(np.dot(cov, precision), np.eye(X.shape[1]), 12)
+    # with n_components < n_features and with n_components == 0
+    for n_components in [0, 2, X.shape[1]]:
+        fa.n_components = n_components
+        fa.fit(X)
+        cov = fa.get_covariance()
+        precision = fa.get_precision()
+        assert_array_almost_equal(np.dot(cov, precision), np.eye(X.shape[1]), 12)
