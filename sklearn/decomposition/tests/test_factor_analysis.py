@@ -47,7 +47,8 @@ def test_factor_analysis():
         X_t = fa.transform(X)
         assert_equal(X_t.shape, (n_samples, n_components))
 
-        assert_almost_equal(fa.loglike_[-1], fa.score(X).sum())
+        assert_almost_equal(fa.loglike_[-1], fa.score_samples(X).sum())
+        assert_almost_equal(fa.score_samples(X).mean(), fa.score(X))
 
         diff = np.all(np.diff(fa.loglike_))
         assert_greater(diff, 0., 'Log likelihood dif not increase')
@@ -78,29 +79,6 @@ def test_factor_analysis():
         warnings.simplefilter('always', DeprecationWarning)
         FactorAnalysis(verbose=1)
         assert_true(w[-1].category == DeprecationWarning)
-
-    fa = FactorAnalysis(n_components=n_components)
-    fa.fit(X)
-    X_t = fa.transform(X)
-    assert_true(X_t.shape == (n_samples, n_components))
-
-    assert_almost_equal(fa.loglike_[-1], fa.score_samples(X).sum())
-    assert_almost_equal(fa.score_samples(X).mean(), fa.score(X))
-
-    # Make log likelihood increases at each iteration
-    assert_true(np.all(np.diff(fa.loglike_) > 0.))
-
-    # Sample Covariance
-    scov = np.cov(X, rowvar=0., bias=1.)
-
-    # Model Covariance
-    mcov = fa.get_covariance()
-    diff = np.sum(np.abs(scov - mcov)) / W.size
-    assert_true(diff < 0.1, "Mean absolute difference is %f" % diff)
-
-    fa2 = FactorAnalysis(n_components=n_components,
-                         noise_variance_init=np.ones(n_features))
-    assert_raises(ValueError, fa2.fit, X[:, :2])
 
     # Test get_covariance and get_precision with n_components == n_features
     # with n_components < n_features and with n_components == 0
