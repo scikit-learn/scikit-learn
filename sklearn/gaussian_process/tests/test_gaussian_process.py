@@ -17,6 +17,7 @@ from sklearn.gaussian_process import correlation_models as correlation
 
 f = lambda x: x * np.sin(x)
 X = np.atleast_2d([1., 3., 5., 6., 7., 8.]).T
+X2 = np.atleast_2d([2., 4., 5.5, 6.5, 7.5]).T
 y = f(X).ravel()
 
 
@@ -32,8 +33,9 @@ def test_1d(regr=regression.constant, corr=correlation.squared_exponential,
                          theta0=1e-2, thetaL=1e-4, thetaU=1e-1,
                          random_start=random_start, verbose=False).fit(X, y)
     y_pred, MSE = gp.predict(X, eval_MSE=True)
+    y2_pred, MSE2 = gp.predict(X2, eval_MSE=True)
 
-    assert_true(np.allclose(y_pred, y) and np.allclose(MSE, 0.))
+    assert_true(np.allclose(y_pred, y) and np.allclose(MSE, 0.) and np.allclose(MSE2, 0., atol = 10))
 
 
 def test_2d(regr=regression.constant, corr=correlation.squared_exponential,
