@@ -67,6 +67,7 @@ def test__parallel_build_estimators():
     except ValueError:
         print ValueError
 
+#Fit and Predict functions in the BaggingRegressor class will be tested here.
 def test_regression():
     """Check regression for various parameter settings."""
     rng = check_random_state(0)
