@@ -11,9 +11,11 @@ import numpy as np
 import sys
 from time import time
 
+cimport cython
 from libc.math cimport exp, log, sqrt, pow, fabs
 cimport numpy as np
-cimport cython
+cdef extern from "numpy.h":     # missing from Cython's numpy.pxd
+    bint npy_isfinite(double) nogil
 
 from sklearn.utils.weight_vector cimport WeightVector
 from sklearn.utils.seq_dataset cimport SequentialDataset
@@ -502,8 +504,8 @@ def plain_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
             print("Total training time: %.2f seconds." % (time() - t_start))
 
         # floating-point under-/overflow check.
-        if np.any(np.isinf(weights)) or np.any(np.isnan(weights)) \
-           or np.isnan(intercept) or np.isinf(intercept):
+        if (any_nonfinite(<np.float64_t *>weights.data, weights.shape[0])
+            or not npy_isfinite(intercept)):
             raise ValueError("floating-point under-/overflow occurred.")
 
     w.reset_wscale()
@@ -511,14 +513,23 @@ def plain_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
     return weights, intercept
 
 
-cdef inline double max(double a, double b):
+cdef int any_nonfinite(np.float64_t *w, np.npy_intp n) nogil:
+    cdef np.npy_intp i
+    for i in range(n):
+        if not npy_isfinite(w[i]):
+            return 1
+    return 0
+
+
+cdef inline double max(double a, double b) nogil:
     return a if a >= b else b
 
 
-cdef inline double min(double a, double b):
+cdef inline double min(double a, double b) nogil:
     return a if a <= b else b
 
-cdef double sqnorm(DOUBLE * x_data_ptr, INTEGER * x_ind_ptr, int xnnz):
+
+cdef double sqnorm(DOUBLE * x_data_ptr, INTEGER * x_ind_ptr, int xnnz) nogil:
     cdef double x_norm = 0.0
     cdef int j
     cdef double z
@@ -526,6 +537,7 @@ cdef double sqnorm(DOUBLE * x_data_ptr, INTEGER * x_ind_ptr, int xnnz):
         z = x_data_ptr[j]
         x_norm += z * z
     return x_norm
+
 
 cdef void l1penalty(WeightVector w, DOUBLE * q_data_ptr,
                     INTEGER * x_ind_ptr, int xnnz, double u):
