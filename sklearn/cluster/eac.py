@@ -36,7 +36,7 @@ def eac(X, initial_clusterers=None, final_clusterer=None,
         be able to take a coassociation matrix as input, which is an array of
         size [n_samples, n_samples].
         If None, the default model is used, which is MST.
-    random_state: numpy.RandomState, optional
+    random_state: numpy.RandomState or int, optional
         The generator used to initialize the initial_clusterers.
         Defaults to numpy.random.
 
@@ -175,7 +175,7 @@ class EAC(BaseEstimator, ClusterMixin):
         be able to take a coassociation matrix as input, which is an array of
         size [n_samples, n_samples].
         If None, the default model is used, which is MST.
-    random_state: numpy.RandomState, optional
+    random_state: numpy.RandomState or int, optional
         The generator used to initialize the initial_clusterers.
         Defaults to numpy.random.
 
