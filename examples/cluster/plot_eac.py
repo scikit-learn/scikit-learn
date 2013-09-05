@@ -104,36 +104,36 @@ mst_values, mst_ami_means = zip(*xx)
 ##############################################################################
 # Plot results
 
-fig = pl.figure(figsize=(8, 12))
-fig.suptitle('EAC comparison with K-means')
+#fig = pl.figure(figsize=(8, 12))
+#fig.suptitle('EAC comparison with K-means')
 
 colors = np.array([x for x in 'bgrcmykbgrcmykbgrcmykbgrcmyk'])
 colors = np.hstack([colors] * 100)
 # Subplot showing distribution of scores
 
 # Plot two examples of k-means
-ax = fig.add_subplot(3, 1, 1)
-ax.scatter(X[:, 0], X[:,1], color=colors[km_labels].tolist(), s=10)
-ax.set_title("K-means")
+pl.figure()
+pl.scatter(X[:, 0], X[:,1], color=colors[km_labels].tolist(), s=10)
+pl.title("K-means")
 
 # Plot EAC labels
-ax = fig.add_subplot(3, 1, 2)
-ax.scatter(X[:, 0], X[:,1], color=colors[y_pred].tolist(), s=10)
-ax.set_title("EAC")
+pl.figure()
+pl.scatter(X[:, 0], X[:,1], color=colors[y_pred].tolist(), s=10)
+pl.title("EAC")
 
 # Plot distribution of scores (from main_metric)
-ax = fig.add_subplot(3, 1, 3)
+pl.figure()
 # k-means
-ax.plot(k_values, km_ami_means)
-ax.errorbar(k_values, km_ami_means, yerr=km_ami_std, fmt='ro', label='k-means')
+pl.plot(k_values, km_ami_means)
+pl.errorbar(k_values, km_ami_means, yerr=km_ami_std, fmt='ro', label='k-means')
 
 # MST
-ax.plot(mst_values, mst_ami_means)
-ax.errorbar(mst_values, mst_ami_means, fmt='g*', label='MST')
+pl.plot(mst_values, mst_ami_means)
+pl.errorbar(mst_values, mst_ami_means, fmt='g*', label='MST')
 score = main_metric(y_true, y_pred)
-ax.scatter([n_clusters_,], [score,], label='EAC', s=40)
-ax.legend()
-ax.set_title("V-measure comparison")
+pl.scatter([n_clusters_,], [score,], label='EAC', s=40)
+pl.legend()
+pl.title("V-measure comparison")
 
 
 

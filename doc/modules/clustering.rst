@@ -660,11 +660,22 @@ find appropriate clusters in this dataset, by combining their outputs into the
 co-association matrix, the final clustering is able to. In addition, the
 V-measure score is significantly higher than K-means.
 
-.. |eac_results| image:: ../auto_examples/cluster/images/plot_eac_1.png
+.. |eac_results1| image:: ../auto_examples/cluster/images/plot_eac_1.png
         :target: ../auto_examples/cluster/plot_eac.html
         :scale: 50
 
-.. centered:: |eac_results|
+.. |eac_results2| image:: ../auto_examples/cluster/images/plot_eac_2.png
+        :target: ../auto_examples/cluster/plot_eac.html
+        :scale: 50
+
+.. |eac_results3| image:: ../auto_examples/cluster/images/plot_eac_3.png
+        :target: ../auto_examples/cluster/plot_eac.html
+        :scale: 50
+
+.. centered:: |eac_results1| |eac_results2|
+
+.. centered:: |eac_results3|
+
 
 .. topic:: Examples:
 
