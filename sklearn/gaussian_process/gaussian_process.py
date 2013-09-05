@@ -413,7 +413,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         -------
         y : array_like, shape (n_samples, ) or (n_samples, n_targets)
             An array with shape (n_eval, ) if the Gaussian Process was trained
-            on an array of shape (n_samples, ) or and array with shape
+            on an array of shape (n_samples, ) or an array with shape
             (n_eval, n_targets) if the Gaussian Process was trained on an array
             of shape (n_samples, n_targets) with the Best Linear Unbiased
             Prediction at x.
