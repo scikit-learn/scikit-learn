@@ -575,10 +575,10 @@ by black points below.
 
 Minimum Spanning Tree Clustering
 ================================
-The :class:`MSTCluster` algorithm forms a minimum spann tree over the data, and
-then cuts any edges that have a weight higher than some predefined threshold.
-This separates the data into connected components, each representing a separate
-cluster.
+The :class:`MSTCluster` algorithm forms a minimum spanning tree over the data,
+and then cuts any edges that have a weight higher than some predefined
+threshold. This separates the data into connected components, each representing
+a separate cluster.
 
 In graph theory, a minimum spanning tree is a set of connections between nodes
 that link all nodes together with the minimum sum of weights. In the
