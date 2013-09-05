@@ -31,11 +31,6 @@ the case for Support Vector Machines with the RBF kernel and the K-Means
 clustering algorithm. However in that case the inverse transform is no
 longer exact since some information is lost while forward transforming.
 
-The :class:`PCA` object also provides a
-probabilistic interpretation of the PCA that can give a likelihood of
-data based on the amount of variance it explains. As such it implements a
-`score` method that can be used in cross-validation.
-
 Below is an example of the iris dataset, which is comprised of 4
 features, projected on the 2 dimensions that explain most variance:
 
@@ -48,6 +43,15 @@ features, projected on the 2 dimensions that explain most variance:
 
     * :ref:`example_decomposition_plot_pca_vs_lda.py`
 
+The :class:`PCA` object also provides a
+probabilistic interpretation of the PCA that can give a likelihood of
+data based on the amount of variance it explains. As such it implements a
+`score` method that can be used in cross-validation:
+
+.. figure:: ../auto_examples/decomposition/images/plot_pca_vs_fa_model_selection_1.png
+    :target: ../auto_examples/decomposition/plot_pca_vs_fa_model_selection.html
+    :align: center
+    :scale: 75%
 
 .. _RandomizedPCA:
 
@@ -535,10 +539,19 @@ about these components (e.g. whether they are orthogonal):
 .. centered:: |pca_img3| |fa_img3|
 
 The main advantage for Factor Analysis (over :class:`PCA` is that
-it can model the variance in every direction of the input space independently:
+it can model the variance in every direction of the input space independently
+(heteroscedastic noise):
 
 .. figure:: ../auto_examples/decomposition/images/plot_faces_decomposition_8.png
     :target: ../auto_examples/decomposition/plot_faces_decomposition.html
+    :align: center
+    :scale: 75%
+
+This allows better model selection than probabilistic PCA in the presence
+of heteroscedastic noise:
+
+.. figure:: ../auto_examples/decomposition/images/plot_pca_vs_fa_model_selection_2.png
+    :target: ../auto_examples/decomposition/plot_pca_vs_fa_model_selection.html
     :align: center
     :scale: 75%
 
