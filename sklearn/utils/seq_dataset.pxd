@@ -10,7 +10,7 @@ cdef class SequentialDataset:
     cdef Py_ssize_t n_samples
 
     cdef void next(self, DOUBLE **x_data_ptr, INTEGER **x_ind_ptr,
-                   int *nnz, DOUBLE *y, DOUBLE *sample_weight)
+                   int *nnz, DOUBLE *y, DOUBLE *sample_weight) nogil
     cdef void shuffle(self, seed)
 
 
@@ -27,7 +27,7 @@ cdef class ArrayDataset(SequentialDataset):
     cdef DOUBLE *sample_weight_data
 
     cdef void next(self, DOUBLE **x_data_ptr, INTEGER **x_ind_ptr,
-                   int *nnz, DOUBLE *y, DOUBLE *sample_weight)
+                   int *nnz, DOUBLE *y, DOUBLE *sample_weight) nogil
     cdef void shuffle(self, seed)
 
 
@@ -45,5 +45,5 @@ cdef class CSRDataset(SequentialDataset):
     cdef DOUBLE *sample_weight_data
 
     cdef void next(self, DOUBLE **x_data_ptr, INTEGER **x_ind_ptr,
-                   int *nnz, DOUBLE *y, DOUBLE *sample_weight)
+                   int *nnz, DOUBLE *y, DOUBLE *sample_weight) nogil
     cdef void shuffle(self, seed)
