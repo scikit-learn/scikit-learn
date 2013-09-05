@@ -35,7 +35,8 @@ def test_1d(regr=regression.constant, corr=correlation.squared_exponential,
     y_pred, MSE = gp.predict(X, eval_MSE=True)
     y2_pred, MSE2 = gp.predict(X2, eval_MSE=True)
 
-    assert_true(np.allclose(y_pred, y) and np.allclose(MSE, 0.) and np.allclose(MSE2, 0., atol = 10))
+    assert_true(np.allclose(y_pred, y) and np.allclose(MSE, 0.)
+        and np.allclose(MSE2, 0., atol=10))
 
 
 def test_2d(regr=regression.constant, corr=correlation.squared_exponential,
