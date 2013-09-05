@@ -489,11 +489,12 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                                          np.dot(self.Ft.T, rt) - f.T)
                 else:
                     # Ordinary Kriging
-                    u = np.zeros(y.shape)
+                    u = np.zeros(y.shape).T
 
-                MSE = (self.sigma2.reshape(n_targets, 1) * (1. -
-                    (rt ** 2.).sum(axis=0) + (u.T ** 2.).sum(axis=0)
-                    ).reshape(1, n_eval)).sum(axis=0) / n_features
+                MSE = np.dot(self.sigma2.reshape(n_targets, 1), (1. -
+                    (rt ** 2.).sum(axis=0) + (u ** 2.).sum(axis=0)
+                    ).reshape(1, n_eval))
+                MSE = np.sqrt((MSE ** 2.).sum(axis=0) / n_targets)
 
                 # Mean Squared Error might be slightly negative depending on
                 # machine precision: force to zero!
