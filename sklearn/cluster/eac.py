@@ -36,11 +36,6 @@ def eac(X, initial_clusterers=None, final_clusterer=None,
         be able to take a coassociation matrix as input, which is an array of
         size [n_samples, n_samples].
         If None, the default model is used, which is MST.
-    use_distance: boolean, or callable TODO: default should be false
-        If True, convert the coassociation matrix to distance using
-        `D=1./(C + 1)`. If callable, the function is called with the
-        coassociation matrix as input. If False (default), then the matrix is
-        given as input to the `final_clusterer`.
     random_state: numpy.RandomState, optional
         The generator used to initialize the initial_clusterers.
         Defaults to numpy.random.
@@ -180,11 +175,6 @@ class EAC(BaseEstimator, ClusterMixin):
         be able to take a coassociation matrix as input, which is an array of
         size [n_samples, n_samples].
         If None, the default model is used, which is MST.
-    use_distance: boolean, or callable
-        If True, convert the coassociation matrix to distance using
-        `D=1./(C + 1)`. If callable, the function is called with the
-        coassociation matrix as input. If False (default), then the matrix is
-        given as input to the `final_clusterer`.
     random_state: numpy.RandomState, optional
         The generator used to initialize the initial_clusterers.
         Defaults to numpy.random.
