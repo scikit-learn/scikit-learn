@@ -14,7 +14,7 @@ from time import time
 cimport cython
 from libc.math cimport exp, log, sqrt, pow, fabs
 cimport numpy as np
-cdef extern from "numpy.h":     # missing from Cython's numpy.pxd
+cdef extern from "numpy/npy_math.h":    # missing from Cython's numpy.pxd
     bint npy_isfinite(double) nogil
 
 from sklearn.utils.weight_vector cimport WeightVector
