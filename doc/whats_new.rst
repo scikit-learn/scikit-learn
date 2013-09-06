@@ -23,10 +23,24 @@ Changelog
      sparse matrices and has much lower memory complexity, meaning it will
      scale up gracefully to large datasets. By `Lars Buitinck`_.
 
-  - Add svd_method option with default value to "randomized" to
-    :class:`decomposition.factor_analysis.FactorAnalysis` to save memory and
-    significantly speedup computation by `Denis Engemann`_, and
-    `Alexandre Gramfort`_.
+   - Add svd_method option with default value to "randomized" to
+     :class:`decomposition.factor_analysis.FactorAnalysis` to save memory and
+     significantly speedup computation by `Denis Engemann`_, and
+     `Alexandre Gramfort`_.
+
+
+API changes summary
+-------------------
+
+   - Add score method to :class:`PCA <decomposition.PCA>` following the model of
+     probabilistic PCA and deprecate
+     :class:`ProbabilisticPCA <decomposition.ProbabilisticPCA>` model whose
+     score implementation is not correct. The computation now also exploits the
+     matrix inversion lemma for faster computation. By `Alexandre Gramfort`_.
+
+   - The score method of :class:`FactorAnalysis <decomposition.FactorAnalysis>`
+     now returns the average log-likelihood of the samples. Use score_samples
+     to get log-likelihood of each sample. By `Alexandre Gramfort`_.
 
 .. _changes_0_14:
 
