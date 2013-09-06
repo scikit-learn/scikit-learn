@@ -194,7 +194,7 @@ Greg Lamp, Co-founder Yhat
   <div class="logo">
 
 .. image:: images/rangespan.png
-   :target: https://rangespan.com/
+   :target: https://www.rangespan.com
 
 .. raw:: html
 
