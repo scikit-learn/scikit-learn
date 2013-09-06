@@ -115,7 +115,10 @@ def _load_imgs(file_paths, slice_, color, resize):
             from scipy.misc import imread
         except ImportError:
             from scipy.misc.pilutil import imread
-        from scipy.misc import imresize
+        try:
+            from scipy.misc import imresize
+        except ImportError:
+            from scipy.misc.pilutil import imresize
     except ImportError:
         raise ImportError("The Python Imaging Library (PIL)"
                           " is required to load data from jpeg files")
