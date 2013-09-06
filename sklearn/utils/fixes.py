@@ -150,15 +150,15 @@ def qr_economic(A, **kwargs):
 
     Scipy 0.9 changed the keyword econ=True to mode='economic'
     """
-    import scipy.linalg
+    import scipy.linalg as sp_linalg
     # trick: triangular solve has introduced in 0.9
-    if hasattr(scipy.linalg, 'solve_triangular'):
-        return scipy.linalg.qr(A, mode='economic', **kwargs)
+    if hasattr(sp_linalg, 'solve_triangular'):
+        return sp_linalg.qr(A, mode='economic', **kwargs)
     else:
         import warnings
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", DeprecationWarning)
-            return scipy.linalg.qr(A, econ=True, **kwargs)
+            return sp_linalg.qr(A, econ=True, **kwargs)
 
 
 def savemat(file_name, mdict, oned_as="column", **kwargs):
