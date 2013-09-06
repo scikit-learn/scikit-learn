@@ -139,6 +139,7 @@ def stream_reuters_documents(data_path=None):
 
     Documents are represented as dictionaries with 'body' (str),
     'title' (str), 'topics' (list(str)) keys.
+
     """
 
     DOWNLOAD_URL = ('http://archive.ics.uci.edu/ml/machine-learning-databases/'
@@ -202,10 +203,12 @@ partial_fit_classifiers = {
     'Passive-Aggressive': PassiveAggressiveClassifier(),
 }
 
+
 def get_minibatch(doc_iter, size, pos_class=positive_class):
     """Extract a minibatch of examples, return a tuple X_text, y.
 
     Note: size is before excluding invalid docs with no topics assigned.
+
     """
     data = [('{title}\n\n{body}'.format(**doc), pos_class in doc['topics'])
             for doc in itertools.islice(doc_iter, size)
@@ -303,43 +306,39 @@ for i, (X_train_text, y_train) in enumerate(minibatch_iterators):
 ###############################################################################
 
 
-def plot_accuracy(x, y, plot_placement, x_legend):
+def plot_accuracy(x, y, x_legend):
     """Plot accuracy as a function of x."""
     x = np.array(x)
     y = np.array(y)
-    plt.subplots_adjust(hspace=0.5)
-    plt.subplot(plot_placement)
     plt.title('Classification accuracy as a function of %s' % x_legend)
     plt.xlabel('%s' % x_legend)
     plt.ylabel('Accuracy')
     plt.grid(True)
     plt.plot(x, y)
 
-plt.figure(1)
-
 rcParams['legend.fontsize'] = 10
 cls_names = list(sorted(cls_stats.keys()))
 
+plt.figure()
 for _, stats in sorted(cls_stats.items()):
     # Plot accuracy evolution with #examples
     accuracy, n_examples = zip(*stats['accuracy_history'])
-    plot_accuracy(n_examples, accuracy, 311, "training examples (#)")
+    plot_accuracy(n_examples, accuracy, "training examples (#)")
     ax = plt.gca()
     ax.set_ylim((0.8, 1))
+plt.legend(cls_names, loc='best')
 
+plt.figure()
+for _, stats in sorted(cls_stats.items()):
     # Plot accuracy evolution with runtime
     accuracy, runtime = zip(*stats['runtime_history'])
-    plot_accuracy(runtime, accuracy, 312, 'runtime (s)')
+    plot_accuracy(runtime, accuracy, 'runtime (s)')
     ax = plt.gca()
     ax.set_ylim((0.8, 1))
+plt.legend(cls_names, loc='best')
 
+plt.figure()
 fig = plt.gcf()
-plt.subplot(311)
-plt.legend(cls_names, loc='best')
-plt.subplot(312)
-plt.legend(cls_names, loc='best')
-
-
 cls_runtime = []
 for cls_name, stats in sorted(cls_stats.items()):
     cls_runtime.append(stats['total_fit_time'])
@@ -348,7 +347,7 @@ cls_runtime.append(total_vect_time)
 cls_names.append('Vectorization')
 bar_colors = rcParams['axes.color_cycle'][:len(cls_names)]
 
-ax = plt.subplot(313)
+ax = plt.subplot(111)
 rectangles = plt.bar(range(len(cls_names)), cls_runtime, width=0.5,
                      color=bar_colors)
 
