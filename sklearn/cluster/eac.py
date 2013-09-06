@@ -226,9 +226,11 @@ class EvidenceAccumulationClustering(BaseEstimator, ClusterMixin):
             The array is treated as a feature array unless the metric is
             given as 'precomputed'.
         """
-        model = eac(X, initial_clusterers=self.default_initial_clusterers,
-                    final_clusterer=self.default_final_clusterer,
-                    random_state=self.random_state)
+        model = evidence_accumulation_clustering(
+            X,
+            initial_clusterers=self.default_initial_clusterers,
+            final_clusterer=self.default_final_clusterer,
+            random_state=self.random_state)
         self.final_clusterer = model
         self.labels_ = model.labels_
         return self
