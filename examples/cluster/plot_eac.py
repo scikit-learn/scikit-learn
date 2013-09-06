@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-================================
-Demo of EAC clustering algorithm
-================================
+===========================================================
+Demo of EvidenceAccumulationClustering clustering algorithm
+===========================================================
 
 Uses many iterations of k-means with random values for k to create a
 "co-association matrix", where C[i][j] is the frequency of times that instances
@@ -18,7 +18,7 @@ from operator import itemgetter
 import numpy as np
 import pylab as pl
 from scipy.cluster.hierarchy import dendrogram
-from sklearn.cluster import eac, EAC, KMeans, MSTCluster
+from sklearn.cluster import EvidenceAccumulationClustering, KMeans, MSTCluster
 from sklearn import metrics
 from sklearn import datasets
 from sklearn.preprocessing import StandardScaler
@@ -37,11 +37,12 @@ main_metric = metrics.adjusted_mutual_info_score
 
 ##############################################################################
 # Compute EAC
-print("Running EAC Algorithm")
+print("Running Evidence Accumulation Clustering Algorithm")
 # Create a final clustering, allowing us to set the threshold value ourselves.
 threshold = 0.8
 final_clusterer = MSTCluster(threshold=threshold, metric='precomputed')
-model = EAC(default_final_clusterer=final_clusterer, random_state=42).fit(X)
+model = EvidenceAccumulationClustering(default_final_clusterer=final_clusterer,
+                                       random_state=42).fit(X)
 y_pred = model.labels_
 span_tree = model.final_clusterer.span_tree
 
@@ -104,9 +105,6 @@ mst_values, mst_ami_means = zip(*xx)
 ##############################################################################
 # Plot results
 
-#fig = pl.figure(figsize=(8, 12))
-#fig.suptitle('EAC comparison with K-means')
-
 colors = np.array([x for x in 'bgrcmykbgrcmykbgrcmykbgrcmyk'])
 colors = np.hstack([colors] * 100)
 # Subplot showing distribution of scores
@@ -116,10 +114,10 @@ pl.figure()
 pl.scatter(X[:, 0], X[:,1], color=colors[km_labels].tolist(), s=10)
 pl.title("K-means")
 
-# Plot EAC labels
+# Plot EvidenceAccumulationClustering labels
 pl.figure()
 pl.scatter(X[:, 0], X[:,1], color=colors[y_pred].tolist(), s=10)
-pl.title("EAC")
+pl.title("Evidence Accumulation Clustering")
 
 # Plot distribution of scores (from main_metric)
 pl.figure()

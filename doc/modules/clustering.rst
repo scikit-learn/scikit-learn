@@ -620,11 +620,12 @@ green edges are maintained, forming the final clusters which are color coded.
 Evidence Accumulation Clustering (EAC)
 ======================================
 
-The :class:`EAC` algorithm is an ensemble clustering framework that is able to
-discover clusters of an arbitrary shape. This occurs through a remapping of the
-new points into a kernel-like space through the notion of a *co-association
-matrix*. There are three steps; the initial clustering, the creation of the
-co-association matrix and the final clustering step.
+The :class:`EvidenceAccumulationClustering` algorithm is an ensemble clustering
+framework that is able to discover clusters of an arbitrary shape. This occurs
+through a remapping of the new points into a kernel-like space through the
+notion of a *co-association matrix*. There are three steps; the initial
+clustering, the creation of the co-association matrix and the final clustering
+step.
 
 In the initial clustering step, a low-level clustering algorithm is used, with
 random parameter values, to cluster the data many times. In the default
@@ -683,14 +684,15 @@ V-measure score is significantly higher than K-means.
 
 .. topic:: Implementation
 
-    The EAC algorithm has been designed for scikit-learn to be very modular.
-    The parameters allow for the selection of both the initial clustering
-    algorithms and the final clusterer, which can be any clustering model
-    following scikit-learn's API. Meanwhile, the default parameters match the
-    design originally proposed by Fred and Anil (2002). This allows the
-    algorithm to be run without parameters, which should achieve reasonable
-    results on a wide variety of datasets. See the example listed above for
-    usage information on changing the final clustering step.
+    The Evidence Accumulation Clustering algorithm has been designed for
+    scikit-learn to be very modular. The parameters allow for the selection
+    of both the initial clustering algorithms and the final clusterer, which
+    can be any clustering model following scikit-learn's API. Meanwhile, the
+    default parameters match the design originally proposed by Fred and Anil
+    (2002). This allows the algorithm to be run without parameters, which
+    should achieve reasonable results on a wide variety of datasets. See the
+    example listed above for usage information on changing the final clustering
+    step.
 
 .. topic:: References:
 

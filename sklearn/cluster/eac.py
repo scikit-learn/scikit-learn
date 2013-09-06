@@ -17,9 +17,17 @@ from ..base import BaseEstimator, ClusterMixin
 from ..utils import check_random_state, atleast2d_or_csr
 
 
-def eac(X, initial_clusterers=None, final_clusterer=None,
-        random_state=None):
-    """Perform EAC clustering from vector array or distance matrix.
+def evidence_accumulation_clustering(X, initial_clusterers=None,
+                                     final_clusterer=None,
+                                     random_state=None):
+    """Perform Evidence Accumulation Clustering clustering on a dataset.
+
+    Evidence Accumulation Clustering (EAC) is an ensemble cluster that uses
+    many iterations of k-means with randomly chosen k values (``n_clusters``)
+    each time. The number of times two instances are clustered together is
+    given in a co-association matrix, which is then clustered a final time to
+    produce the 'final clustering'. In practice, this gives a more easily
+    separable set of attributes that the original attributes.
 
     Parameters
     ----------
@@ -110,6 +118,7 @@ def _kmeans_random_k(n_samples, random_state=None, **kmeans_args):
 
     This initial clustering is k-means, initialised randomly with k values
     chosen randomly between 10 and 30 inclusive.
+
     Parameters
     ----------
     random_state: numpy.RandomState, optional
@@ -149,8 +158,8 @@ def _kmeans_random_k(n_samples, random_state=None, **kmeans_args):
             for k in k_values)
 
 
-class EAC(BaseEstimator, ClusterMixin):
-    """Perform EAC clustering from vector array or distance matrix.
+class EvidenceAccumulationClustering(BaseEstimator, ClusterMixin):
+    """Perform Evidence Accumulation Clustering clustering on a dataset.
 
     Evidence Accumulation Clustering (EAC) is an ensemble cluster that uses
     many iterations of k-means with randomly chosen k values (``n_clusters``)
