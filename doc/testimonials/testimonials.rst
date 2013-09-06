@@ -252,3 +252,36 @@ Thierry Bertin-Mahieux, Birchbox, Data Scientist
    </span>
 
 
+`Bestofmedia Group <http://www.bestofmedia.com>`_
+------------------------------------------
+
+.. raw:: html
+
+  <div class="logo">
+
+.. image:: images/bestofmedia-logo.gif
+   :target: http://www.bestofmedia.com
+
+.. raw:: html
+
+  </div>
+
+Scikit-learn is our #1 toolkit for all things machine learning
+at Bestofmedia. We use it for a variety of tasks (e.g. spam fighting,
+ad click prediction, various ranking models) thanks to the varied,
+state-of-the-art algorithm implementations packaged into it. <br/>
+In the lab it accelerates prototyping of complex pipelines. In 
+production I can say it has proven to be robust and efficient enough 
+to be deployed for business critical components.
+
+.. raw:: html
+
+   <span class="testimonial-author">
+
+Eustache Diemert, Lead Scientist Bestofmedia Group
+
+.. raw:: html
+
+   </span>
+
+
