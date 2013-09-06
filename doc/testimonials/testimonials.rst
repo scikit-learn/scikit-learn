@@ -220,7 +220,7 @@ Jurgen Van Gael, Data Science Director at Rangespan Ltd
 
 
 `Bestofmedia Group <http://www.bestofmedia.com>`_
-------------------------------------------
+------------------------------------------------
 
 .. raw:: html
 
