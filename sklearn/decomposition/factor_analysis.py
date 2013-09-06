@@ -1,5 +1,11 @@
 """Factor Analysis.
-A latent linear variable model, similar to ProbabilisticPCA.
+
+A latent linear variable model.
+
+FactorAnalysis is similar to probabilistic PCA implemented by PCA.score
+While PCA assumes Gaussian noise with the same variance for each
+feature, the FactorAnalysis model assumes different variances for
+each of them.
 
 This implementation is based on David Barber's Book,
 Bayesian Reasoning and Machine Learning,
@@ -107,9 +113,10 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
 
     See also
     --------
-    PCA: Principal component analysis, a similar non-probabilistic
-        model model that can be computed in closed form.
-    ProbabilisticPCA: probabilistic PCA.
+    PCA: Principal component analysis is also a latent linear variable model
+        which however assumes equal noise variance for each feature.
+        This extra assumption makes probabilistic PCA faster as it can be
+        computed in closed form.
     FastICA: Independent component analysis, a latent variable model with
         non-Gaussian latent variables.
     """
@@ -260,31 +267,73 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
 
         Returns
         -------
-        cov : array, shape=(n_features, n_features)
+        cov : array, shape (n_features, n_features)
             Estimated covariance of data.
         """
         cov = np.dot(self.components_.T, self.components_)
         cov.flat[::len(cov) + 1] += self.noise_variance_  # modify diag inplace
         return cov
 
-    def score(self, X, y=None):
-        """Compute score of X under FactorAnalysis model.
-
-        Parameters
-        ----------
-        X: array of shape(n_samples, n_features)
-            The data to test
+    def get_precision(self):
+        """Compute data precision matrix with the FactorAnalysis model.
 
         Returns
         -------
-        ll: array of shape (n_samples),
-            log-likelihood of each row of X under the current model
+        precision : array, shape (n_features, n_features)
+            Estimated precision of data.
+        """
+        n_features = self.components_.shape[1]
+
+        # handle corner cases first
+        if self.n_components == 0:
+            return np.diag(1. / self.noise_variance_)
+        if self.n_components == n_features:
+            return linalg.inv(self.get_covariance())
+
+        # Get precision using matrix inversion lemma
+        components_ = self.components_
+        precision = np.dot(components_ / self.noise_variance_, components_.T)
+        precision.flat[::len(precision) + 1] += 1.
+        precision = np.dot(components_.T,
+                           np.dot(linalg.inv(precision), components_))
+        precision /= self.noise_variance_[:, np.newaxis]
+        precision /= -self.noise_variance_[np.newaxis, :]
+        precision.flat[::len(precision) + 1] += 1. / self.noise_variance_
+        return precision
+
+    def score_samples(self, X):
+        """Compute the log-likelihood of each sample
+
+        Parameters
+        ----------
+        X: array, shape (n_samples, n_features)
+            The data
+
+        Returns
+        -------
+        ll: array, shape (n_samples,)
+            Log-likelihood of each sample under the current model
         """
         Xr = X - self.mean_
-        cov = self.get_covariance()
+        precision = self.get_precision()
         n_features = X.shape[1]
         log_like = np.zeros(X.shape[0])
-        self.precision_ = linalg.inv(cov)
-        log_like = -.5 * (Xr * (fast_dot(Xr, self.precision_))).sum(axis=1)
-        log_like -= .5 * (fast_logdet(cov) + n_features * log(2. * np.pi))
+        log_like = -.5 * (Xr * (np.dot(Xr, precision))).sum(axis=1)
+        log_like -= .5 * (n_features * log(2. * np.pi)
+                          - fast_logdet(precision))
         return log_like
+
+    def score(self, X, y=None):
+        """Compute the average log-likelihood of the samples
+
+        Parameters
+        ----------
+        X: array, shape (n_samples, n_features)
+            The data
+
+        Returns
+        -------
+        ll: float
+            Average log-likelihood of the samples under the current model
+        """
+        return np.mean(self.score_samples(X))
