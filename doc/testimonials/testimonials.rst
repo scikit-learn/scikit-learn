@@ -253,7 +253,7 @@ Thierry Bertin-Mahieux, Birchbox, Data Scientist
 
 
 `Bestofmedia Group <http://www.bestofmedia.com>`_
-------------------------------------------
+------------------------------------------------
 
 .. raw:: html
 
