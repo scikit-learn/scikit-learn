@@ -86,11 +86,31 @@ come late in the stream as their learning rate decreases over time.
 Examples
 --------
 Finally, we have a full-fledged example of
-:ref:`example_applications_plot_out_of_core_classification.py` comparing the
-performance of different algorithms with the number of processed examples.
-It is aimed at providing a starting point for people wanting to build 
-out-of-core learning systems and demonstrates most of the notions discussed
-above.
+:ref:`example_applications_plot_out_of_core_classification.py`. It is aimed at
+providing a starting point for people wanting to build out-of-core learning
+systems and demonstrates most of the notions discussed above.
+
+Furthermore, it also shows the evolution of the performance of different
+algorithms with the number of processed examples.
+
+.. |accuracy_over_time| image::  ../auto_examples/applications/images/plot_out_of_core_classification_1.png
+    :target: ../auto_examples/applications/plot_out_of_core_classification.html
+    :scale: 80
+
+.. centered:: |accuracy_over_time|
+
+Now looking at the computation time of the different parts, we see that the
+vectorization is much more expensive than learning itself. From the different
+algorithms, `MultinomialNB` is the most expensive, but its overhead can be 
+mitigated by increasing the size of the mini-batches (exercise: change 
+`minibatch_size` to 100 and 10000 in the program and compare). 
+
+.. |computation_time| image::  ../auto_examples/applications/images/plot_out_of_core_classification_3.png
+    :target: ../auto_examples/applications/plot_out_of_core_classification.html
+    :scale: 80
+
+.. centered:: |computation_time|
+
 
 Notes
 -----
