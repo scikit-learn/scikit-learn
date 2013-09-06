@@ -1,9 +1,10 @@
-from __future__ import print_function
 # -*- coding: utf-8 -*-
 
 # Author: Vincent Dubourg <vincent.dubourg@gmail.com>
 #         (mostly translation, see implementation details)
 # Licence: BSD 3 clause
+
+from __future__ import print_function
 
 import numpy as np
 from scipy import linalg, optimize, rand
