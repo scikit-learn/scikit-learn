@@ -862,7 +862,8 @@ cdef class Splitter:
         self.y_stride = <SIZE_t> y.strides[0] / <SIZE_t> y.itemsize
         self.sample_weight = sample_weight
 
-    cdef void node_reset(self, SIZE_t start, SIZE_t end, double* impurity):
+    cdef void node_reset(self, SIZE_t start, SIZE_t end,
+                         double *impurity):
         """Reset splitter on node samples[start:end]."""
         cdef Criterion criterion = self.criterion
 
@@ -883,7 +884,7 @@ cdef class Splitter:
         """Find a split on node samples[start:end]."""
         pass
 
-    cdef void node_value(self, double* dest):
+    cdef void node_value(self, double* dest) nogil:
         """Copy the value of node samples[start:end] into dest."""
         self.criterion.node_value(dest)
 
@@ -928,88 +929,90 @@ cdef class BestSplitter(Splitter):
         cdef SIZE_t partition_start
         cdef SIZE_t partition_end
 
-        for f_idx from 0 <= f_idx < n_features:
-            # Draw a feature at random
-            f_i = n_features - f_idx - 1
-            f_j = rand_int(n_features - f_idx, random_state)
+        with nogil:
+            for f_idx from 0 <= f_idx < n_features:
+                # Draw a feature at random
+                f_i = n_features - f_idx - 1
+                f_j = rand_int(n_features - f_idx, random_state)
 
-            tmp = features[f_i]
-            features[f_i] = features[f_j]
-            features[f_j] = tmp
+                tmp = features[f_i]
+                features[f_i] = features[f_j]
+                features[f_j] = tmp
 
-            current_feature = features[f_i]
+                current_feature = features[f_i]
 
-            # Sort samples along that feature
-            sort(X, current_feature, samples+start, end-start)
+                # Sort samples along that feature
+                sort(X, current_feature, samples+start, end-start)
 
-            # Evaluate all splits
-            criterion.reset()
-            p = start
+                # Evaluate all splits
+                criterion.reset()
+                p = start
 
-            while p < end:
-                while ((p + 1 < end) and
-                       (X[samples[p + 1], current_feature] <= X[samples[p], current_feature] + 1e-7)):
+                while p < end:
+                    while ((p + 1 < end) and
+                           (X[samples[p + 1], current_feature] <= X[samples[p], current_feature] + 1e-7)):
+                        p += 1
+
+                    # p + 1 >= end or X[samples[p + 1], current_feature] > X[samples[p], current_feature]
                     p += 1
+                    # p >= end or X[samples[p], current_feature] > X[samples[p - 1], current_feature]
 
-                # p + 1 >= end or X[samples[p + 1], current_feature] > X[samples[p], current_feature]
-                p += 1
-                # p >= end or X[samples[p], current_feature] > X[samples[p - 1], current_feature]
+                    if p < end:
+                        current_pos = p
 
-                if p < end:
-                    current_pos = p
+                        # Reject if min_samples_leaf is not guaranteed
+                        if (((current_pos - start) < min_samples_leaf) or
+                            ((end - current_pos) < min_samples_leaf)):
+                           continue
 
-                    # Reject if min_samples_leaf is not guaranteed
-                    if (((current_pos - start) < min_samples_leaf) or
-                        ((end - current_pos) < min_samples_leaf)):
-                       continue
+                        criterion.update(current_pos)
+                        current_impurity = criterion.children_impurity()
 
-                    criterion.update(current_pos)
-                    current_impurity = criterion.children_impurity()
+                        if current_impurity < (best_impurity - 1e-7):
+                            best_impurity = current_impurity
+                            best_pos = current_pos
+                            best_feature = current_feature
 
-                    if current_impurity < (best_impurity - 1e-7):
-                        best_impurity = current_impurity
-                        best_pos = current_pos
-                        best_feature = current_feature
+                            current_threshold = (X[samples[p - 1], current_feature] + X[samples[p], current_feature]) / 2.0
+                            if current_threshold == X[samples[p], current_feature]:
+                                current_threshold = X[samples[p - 1], current_feature]
 
-                        current_threshold = (X[samples[p - 1], current_feature] + X[samples[p], current_feature]) / 2.0
-                        if current_threshold == X[samples[p], current_feature]:
-                            current_threshold = X[samples[p - 1], current_feature]
+                            best_threshold = current_threshold
 
-                        best_threshold = current_threshold
+                if best_pos == end: # No valid split was ever found
+                    continue
 
-            if best_pos == end: # No valid split was ever found
-                continue
+                # Count one more visited feature
+                visited_features += 1
 
-            # Count one more visited feature
-            visited_features += 1
+                if visited_features >= max_features:
+                    break
 
-            if visited_features >= max_features:
-                break
+            # Reorganize samples into samples[start:best_pos] + samples[best_pos:end]
+            if best_pos < end:
+                partition_start = start
+                partition_end = end
+                p = start
 
-        # Reorganize samples into samples[start:best_pos] + samples[best_pos:end]
-        if best_pos < end:
-            partition_start = start
-            partition_end = end
-            p = start
+                while p < partition_end:
+                    if X[samples[p], best_feature] <= best_threshold:
+                        p += 1
 
-            while p < partition_end:
-                if X[samples[p], best_feature] <= best_threshold:
-                    p += 1
+                    else:
+                        partition_end -= 1
 
-                else:
-                    partition_end -= 1
+                        tmp = samples[partition_end]
+                        samples[partition_end] = samples[p]
+                        samples[p] = tmp
 
-                    tmp = samples[partition_end]
-                    samples[partition_end] = samples[p]
-                    samples[p] = tmp
+            # Return values
+            pos[0] = best_pos
+            feature[0] = best_feature
+            threshold[0] = best_threshold
 
-        # Return values
-        pos[0] = best_pos
-        feature[0] = best_feature
-        threshold[0] = best_threshold
 
-cdef void sort(np.ndarray[DTYPE_t, ndim=2, mode="c"] X, SIZE_t current_feature,
-               SIZE_t* samples, SIZE_t length):
+cdef void sort(DTYPE_t[:, :] X, SIZE_t current_feature,
+               SIZE_t* samples, SIZE_t length) nogil:
     """In-place sorting of samples[start:end] using
       X[sample[i], current_feature] as key."""
     # Heapsort, adapted from Numerical Recipes in C
@@ -1093,99 +1096,100 @@ cdef class RandomSplitter(Splitter):
         cdef SIZE_t partition_start
         cdef SIZE_t partition_end
 
-        for f_idx from 0 <= f_idx < n_features:
-            # Draw a feature at random
-            f_i = n_features - f_idx - 1
-            f_j = rand_int(n_features - f_idx, random_state)
+        with nogil:
+            for f_idx from 0 <= f_idx < n_features:
+                # Draw a feature at random
+                f_i = n_features - f_idx - 1
+                f_j = rand_int(n_features - f_idx, random_state)
 
-            tmp = features[f_i]
-            features[f_i] = features[f_j]
-            features[f_j] = tmp
+                tmp = features[f_i]
+                features[f_i] = features[f_j]
+                features[f_j] = tmp
 
-            current_feature = features[f_i]
+                current_feature = features[f_i]
 
-            # Find min, max
-            min_feature_value = max_feature_value = X[samples[start], current_feature]
+                # Find min, max
+                min_feature_value = max_feature_value = X[samples[start], current_feature]
 
-            for p from start < p < end:
-                current_feature_value = X[samples[p], current_feature]
+                for p from start < p < end:
+                    current_feature_value = X[samples[p], current_feature]
 
-                if current_feature_value < min_feature_value:
-                    min_feature_value = current_feature_value
-                elif current_feature_value > max_feature_value:
-                    max_feature_value = current_feature_value
+                    if current_feature_value < min_feature_value:
+                        min_feature_value = current_feature_value
+                    elif current_feature_value > max_feature_value:
+                        max_feature_value = current_feature_value
 
-            if min_feature_value == max_feature_value:
-                continue
+                if min_feature_value == max_feature_value:
+                    continue
 
-            # Draw a random threshold
-            current_threshold = (min_feature_value +
-                                 rand_double(random_state) * (max_feature_value - min_feature_value))
+                # Draw a random threshold
+                current_threshold = (min_feature_value +
+                                     rand_double(random_state) * (max_feature_value - min_feature_value))
 
-            if current_threshold == max_feature_value:
-                current_threshold = min_feature_value
+                if current_threshold == max_feature_value:
+                    current_threshold = min_feature_value
 
-            # Partition
-            partition_start = start
-            partition_end = end
-            p = start
+                # Partition
+                partition_start = start
+                partition_end = end
+                p = start
 
-            while p < partition_end:
-                if X[samples[p], current_feature] <= current_threshold:
-                    p += 1
+                while p < partition_end:
+                    if X[samples[p], current_feature] <= current_threshold:
+                        p += 1
 
-                else:
-                    partition_end -= 1
+                    else:
+                        partition_end -= 1
 
-                    tmp = samples[partition_end]
-                    samples[partition_end] = samples[p]
-                    samples[p] = tmp
+                        tmp = samples[partition_end]
+                        samples[partition_end] = samples[p]
+                        samples[p] = tmp
 
-            current_pos = partition_end
+                current_pos = partition_end
 
-            # Reject if min_samples_leaf is not guaranteed
-            if (((current_pos - start) < min_samples_leaf) or
-                ((end - current_pos) < min_samples_leaf)):
-               continue
+                # Reject if min_samples_leaf is not guaranteed
+                if (((current_pos - start) < min_samples_leaf) or
+                    ((end - current_pos) < min_samples_leaf)):
+                   continue
 
-            # Evaluate split
-            criterion.reset()
-            criterion.update(current_pos)
-            current_impurity = criterion.children_impurity()
+                # Evaluate split
+                criterion.reset()
+                criterion.update(current_pos)
+                current_impurity = criterion.children_impurity()
 
-            if current_impurity < best_impurity:
-                best_impurity = current_impurity
-                best_pos = current_pos
-                best_feature = current_feature
-                best_threshold = current_threshold
+                if current_impurity < best_impurity:
+                    best_impurity = current_impurity
+                    best_pos = current_pos
+                    best_feature = current_feature
+                    best_threshold = current_threshold
 
-            # Count one more visited feature
-            visited_features += 1
+                # Count one more visited feature
+                visited_features += 1
 
-            if visited_features >= max_features:
-                break
+                if visited_features >= max_features:
+                    break
 
-        # Reorganize samples into samples[start:best_pos] + samples[best_pos:end]
-        if best_pos < end and current_feature != best_feature:
-            partition_start = start
-            partition_end = end
-            p = start
+            # Reorganize samples into samples[start:best_pos] + samples[best_pos:end]
+            if best_pos < end and current_feature != best_feature:
+                partition_start = start
+                partition_end = end
+                p = start
 
-            while p < partition_end:
-                if X[samples[p], best_feature] <= best_threshold:
-                    p += 1
+                while p < partition_end:
+                    if X[samples[p], best_feature] <= best_threshold:
+                        p += 1
 
-                else:
-                    partition_end -= 1
+                    else:
+                        partition_end -= 1
 
-                    tmp = samples[partition_end]
-                    samples[partition_end] = samples[p]
-                    samples[p] = tmp
+                        tmp = samples[partition_end]
+                        samples[partition_end] = samples[p]
+                        samples[p] = tmp
 
-        # Return values
-        pos[0] = best_pos
-        feature[0] = best_feature
-        threshold[0] = best_threshold
+            # Return values
+            pos[0] = best_pos
+            feature[0] = best_feature
+            threshold[0] = best_threshold
 
 
 # =============================================================================
@@ -1377,7 +1381,7 @@ cdef class Tree:
         memcpy(self.impurity, impurity, self.capacity * sizeof(double))
         memcpy(self.n_node_samples, n_node_samples, self.capacity * sizeof(SIZE_t))
 
-    cdef void _resize(self, int capacity=-1):
+    cdef void _resize(self, int capacity=-1) nogil:
         """Resize all inner arrays to `capacity`, if `capacity` < 0, then
            double the size of the inner arrays."""
         if capacity == self.capacity:
@@ -1426,7 +1430,8 @@ cdef class Tree:
             (tmp_value == NULL) or
             (tmp_impurity == NULL) or
             (tmp_n_node_samples == NULL)):
-            raise MemoryError()
+            with gil:
+                raise MemoryError()
 
         # if capacity smaller than node_count, adjust the counter
         if capacity < self.node_count:
@@ -1438,7 +1443,7 @@ cdef class Tree:
                                 SIZE_t feature,
                                 double threshold,
                                 double impurity,
-                                SIZE_t n_node_samples):
+                                SIZE_t n_node_samples) nogil:
         """Add a node to the tree. The new node registers itself as
            the child of its parent. """
         cdef SIZE_t node_id = self.node_count
@@ -1506,6 +1511,8 @@ cdef class Tree:
         cdef SIZE_t stack_n_values = 5
         cdef SIZE_t stack_capacity = 50
         cdef SIZE_t* stack = <SIZE_t*> malloc(stack_capacity * sizeof(SIZE_t))
+        if stack == None:
+            raise MemoryError()
 
         stack[0] = 0                    # start
         stack[1] = splitter.n_samples   # end
@@ -1559,7 +1566,11 @@ cdef class Tree:
             else:
                 if stack_n_values + 10 > stack_capacity:
                     stack_capacity *= 2
-                    stack = <SIZE_t*> realloc(stack, stack_capacity * sizeof(SIZE_t))
+                    new_stack = <SIZE_t*> realloc(stack, stack_capacity
+                                                         * sizeof(SIZE_t))
+                    if new_stack == None:
+                        free(stack)
+                        raise MemoryError()
 
                 # Stack right child
                 stack[stack_n_values] = pos
