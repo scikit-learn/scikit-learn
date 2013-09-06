@@ -218,4 +218,37 @@ Jurgen Van Gael, Data Science Director at Rangespan Ltd
 
    </span>
 
+`Birchbox <https://www.birchbox.com>`_
+------------------------------------------
+
+.. raw:: html
+
+  <div class="logo">
+
+.. image:: images/birchbox.jpg
+   :target: https://www.birchbox.com
+
+.. raw:: html
+
+  </div>
+
+At Birchbox, we face a range of machine learning problems typical to
+E-commerce: product recommendation, user clustering, inventory prediction,
+trends detection, etc. Scikit-learn lets us experiment with many models,
+especially in the exploration phase of a new project: the data can be passed
+around in a consistent way; models are easy to save and reuse; updates keep us
+informed of new developments from the pattern discovery research community.
+Scikit-learn is an important tool for our team, built the right way in the
+right language.
+
+.. raw:: html
+
+   <span class="testimonial-author">
+
+Thierry Bertin-Mahieux, Birchbox, Data Scientist
+
+.. raw:: html
+
+   </span>
+
 
