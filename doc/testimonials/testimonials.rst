@@ -154,7 +154,6 @@ Michael Becker, Software Engineer, Data Analysis and Management Ninjas
 
    </span>
 
-
 `Yhat <http://yhathq.com/>`_
 ------------------------------------------
 
@@ -186,4 +185,37 @@ Greg Lamp, Co-founder Yhat
 .. raw:: html
 
    </span>
+
+`Rangespan <https://www.rangespan.com>`_
+------------------------------------------
+
+.. raw:: html
+
+  <div class="logo">
+
+.. image:: images/rangespan.png
+   :target: https://rangespan.com/
+
+.. raw:: html
+
+  </div>
+
+The Python scikit-learn toolkit is a core tool in the data science
+group at Rangespan. Its large collection of well documented models and
+algorithms allow our team of data scientists to prototype fast and
+quickly iterate to find the right solution to our learning problems.
+We find that scikit-learn is not only the right tool for prototyping,
+but its careful and well tested implementation give us the confidence
+to run scikit-learn models in production.
+
+.. raw:: html
+
+   <span class="testimonial-author">
+
+Jurgen Van Gael, Data Science Director at Rangespan Ltd
+
+.. raw:: html
+
+   </span>
+
 
