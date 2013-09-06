@@ -39,9 +39,6 @@ features, projected on the 2 dimensions that explain most variance:
     :align: center
     :scale: 75%
 
-.. topic:: Examples:
-
-    * :ref:`example_decomposition_plot_pca_vs_lda.py`
 
 The :class:`PCA` object also provides a
 probabilistic interpretation of the PCA that can give a likelihood of
@@ -52,6 +49,13 @@ data based on the amount of variance it explains. As such it implements a
     :target: ../auto_examples/decomposition/plot_pca_vs_fa_model_selection.html
     :align: center
     :scale: 75%
+
+
+.. topic:: Examples:
+
+    * :ref:`example_decomposition_plot_pca_vs_lda.py`
+    * :ref:`example_decomposition_plot_pca_vs_fa_model_selection.py`
+
 
 .. _RandomizedPCA:
 
@@ -554,6 +558,11 @@ of heteroscedastic noise:
     :target: ../auto_examples/decomposition/plot_pca_vs_fa_model_selection.html
     :align: center
     :scale: 75%
+
+
+.. topic:: Examples:
+
+    * :ref:`example_decomposition_plot_pca_vs_fa_model_selection.py`
 
 .. _ICA:
 
