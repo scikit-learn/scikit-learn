@@ -12,6 +12,10 @@ def configuration(parent_package='', top_path=None):
     config.add_subpackage('sparsetools')
 
     cblas_libs, blas_info = get_blas_info()
+    cblas_compile_args = blas_info.pop('extra_compile_args', [])
+    cblas_includes = [join('..', 'src', 'cblas'),
+                      numpy.get_include(),
+                      blas_info.pop('include_dirs', [])]
 
     libraries = []
     if os.name == 'posix':
@@ -27,11 +31,8 @@ def configuration(parent_package='', top_path=None):
                          sources=['arrayfuncs.c'],
                          depends=[join('src', 'cholesky_delete.h')],
                          libraries=cblas_libs,
-                         include_dirs=[join('..', 'src', 'cblas'),
-                                       numpy.get_include(),
-                                       blas_info.pop('include_dirs', [])],
-                         extra_compile_args=blas_info.pop('extra_compile_args',
-                                                          []),
+                         include_dirs=cblas_includes,
+                         extra_compile_args=cblas_compile_args,
                          **blas_info
                          )
 
@@ -55,8 +56,9 @@ def configuration(parent_package='', top_path=None):
 
     config.add_extension('weight_vector',
                          sources=['weight_vector.c'],
-                         include_dirs=[numpy.get_include()],
-                         libraries=libraries)
+                         include_dirs=cblas_includes,
+                         libraries=cblas_libs,
+                         **blas_info)
 
     config.add_extension("random",
                          sources=["random.c"],
