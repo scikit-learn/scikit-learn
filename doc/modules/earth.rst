@@ -46,11 +46,6 @@ generalize well.
 .. image:: ../images/piecewise_linear.png
 
 
-
-
-
-
-
 A Simple Earth Example
 ----------------------
 
@@ -112,5 +107,3 @@ A Simple Earth Example
 
 	References 7, 2, 1, 3, and 4 contain discussions likely to be useful to users.  References 1, 2, 6, 5, 
 	8, 3, and 4 are useful in understanding the implementation.
-
-
