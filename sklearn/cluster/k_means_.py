@@ -554,6 +554,29 @@ def _init_centroids(X, k, init, random_state=None, x_squared_norms=None,
     return centers
 
 
+def _pick_unique_labels(distances, n_reassigns, random_state):
+    # array of labels randomly picked
+    picks = np.zeros(n_reassigns, dtype=np.int)
+    distances = np.ma.masked_array(distances)
+
+    # making sure we do not exceed any array
+    iterations = min(len(distances), n_reassigns)
+    for p in range(iterations):
+        # picking one value from set of elements
+        # with their relative probabilities
+        rand_val = random_state.rand() * distances.sum()
+        new_pick = np.searchsorted(distances.cumsum(), rand_val)
+
+        # taking note of pick
+        picks[p] = new_pick
+
+        # label has been picked
+        # it should not be picked next time
+        distances[new_pick] = np.ma.masked
+
+    return picks
+
+
 class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
     """K-Means clustering
 
@@ -860,10 +883,13 @@ def _mini_batch_step(X, x_squared_norms, centers, counts,
             # Flip the ordering of the distances.
             distances -= distances.max()
             distances *= -1
-            rand_vals = random_state.rand(n_reassigns)
-            rand_vals *= distances.sum()
-            new_centers = np.searchsorted(distances.cumsum(),
-                                          rand_vals)
+
+            # picking number_of_reassingments centers
+            # with probability to their
+            new_centers = _pick_unique_labels(distances,
+                                              n_reassigns,
+                                              random_state)
+
             if verbose:
                 print("[MiniBatchKMeans] Reassigning %i cluster centers."
                       % n_reassigns)

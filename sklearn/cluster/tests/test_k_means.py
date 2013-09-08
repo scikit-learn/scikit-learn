@@ -21,9 +21,11 @@ from sklearn.cluster import KMeans, k_means
 from sklearn.cluster import MiniBatchKMeans
 from sklearn.cluster.k_means_ import _labels_inertia
 from sklearn.cluster.k_means_ import _mini_batch_step
+from sklearn.cluster.k_means_ import _pick_unique_labels
 from sklearn.cluster._k_means import csr_row_norm_l2
 from sklearn.datasets.samples_generator import make_blobs
 from sklearn.externals.six.moves import cStringIO as StringIO
+from sklearn.utils import check_random_state
 
 
 # non centered, sparse centers to check the
@@ -623,3 +625,33 @@ def test_k_means_function():
 
     # to many clusters desired
     assert_raises(ValueError, k_means, X, n_clusters=X.shape[0] + 1)
+
+
+def test_pick_unique_labels():
+    all_random_states = np.array([check_random_state(i) for i in range(500)])
+    relative_probabilities = np.array([(i + 1) * (i + 2) for i in range(10)])
+    labels = range(10, 20)
+    no_single_picks = 1
+    no_multiple_picks = 4
+
+    counts_single = np.zeros((len(labels), 1), dtype=np.int)
+    counts_multiple = np.zeros((len(labels), 1), dtype=np.int)
+
+    for random_state in all_random_states:
+        single_pick = _pick_unique_labels(relative_probabilities,
+                                          no_single_picks, random_state)
+        counts_single[single_pick] = counts_single[single_pick] + 1
+
+        multiple_pick = _pick_unique_labels(relative_probabilities,
+                                            no_multiple_picks, random_state)
+        counts_multiple[multiple_pick] = counts_multiple[multiple_pick] + 1
+
+    assert_array_equal(counts_single, np.array([[0], [9], [8],
+                                                [25], [47], [47],
+                                                [68], [76], [97],
+                                                [123]]))
+
+    assert_array_equal(counts_multiple, np.array([[14], [37], [68],
+                                                 [114], [160], [217],
+                                                 [297], [325], [366],
+                                                 [402]]))
