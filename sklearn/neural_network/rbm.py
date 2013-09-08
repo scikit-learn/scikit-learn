@@ -208,7 +208,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
 
         return v_
 
-    def _fit(self, v_pos, rng):
+    def partial_fit(self, v_pos, rng):
         """Inner fit for one mini-batch.
 
         Adjust the parameters to maximize the likelihood of v using
@@ -303,7 +303,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
                 begin = time.time()
 
             for batch_slice in batch_slices:
-                pl_batch = self._fit(X[batch_slice], rng)
+                pl_batch = self.partial_fit(X[batch_slice], rng)
 
                 if verbose:
                     pl += pl_batch.sum()
