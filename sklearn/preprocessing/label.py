@@ -344,9 +344,9 @@ def label_binarize(y, classes, multilabel=False, neg_label=0, pos_label=1):
     Parameters
     ----------
     y : array-like
-        Sequence of integer labels to encode.
+        Sequence of integer labels or multilabel data to encode.
 
-    classes : array of shape [n_classes]
+    classes : array-like of shape [n_classes]
         Uniquely holds the label for each class.
 
     multilabel : boolean
@@ -359,6 +359,10 @@ def label_binarize(y, classes, multilabel=False, neg_label=0, pos_label=1):
 
     pos_label: int (default: 1)
         Value with which positive labels must be encoded.
+
+    Returns
+    -------
+    Y : numpy array of shape [n_samples, n_classes]
 
     Examples
     --------
