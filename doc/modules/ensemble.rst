@@ -39,7 +39,10 @@ estimator (e.g., a decision tree), by introducing randomization into its
 construction procedure and then making an ensemble out of it. In many cases,
 bagging methods constitute a very simple way to improve with respect to a
 single model, without making it necessary to adapt the underlying base
-algorithm.
+algorithm. As they provide a way to reduce overfitting, bagging methods work
+best with strong and complex models (e.g., fully developed decision trees), in
+contrast with boosting methods which usually work best with weak models (e.g.,
+shallow decision trees).
 
 Bagging methods come in many flavours but mostly differ from each other by the
 way they draw random subsets of the training set:

@@ -581,12 +581,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
             for i in range(n_jobs))
 
         # Reduce
-        proba = all_proba[0]
-
-        for j in range(1, len(all_proba)):
-            proba += all_proba[j]
-
-        proba /= self.n_estimators
+        proba = sum(all_proba) / self.n_estimators
 
         return proba
 
@@ -631,6 +626,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
 
             # Reduce
             log_proba = all_log_proba[0]
+
             for j in range(1, len(all_log_proba)):
                 log_proba = np.logaddexp(log_proba, all_log_proba[j])
 
@@ -683,12 +679,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
             for i in range(n_jobs))
 
         # Reduce
-        decisions = all_decisions[0]
-
-        for j in range(1, len(all_decisions)):
-            decisions += all_decisions[j]
-
-        decisions /= self.n_estimators
+        decisions = sum(all_decisions) / self.n_estimators
 
         return decisions
 
