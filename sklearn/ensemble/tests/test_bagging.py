@@ -234,6 +234,24 @@ def test_oob_score_regression():
                  y_train)
 
 
+def test_single_estimator():
+    """Check singleton ensembles."""
+    rng = check_random_state(0)
+    X_train, X_test, y_train, y_test = train_test_split(boston.data,
+                                                        boston.target,
+                                                        random_state=rng)
+
+    clf1 = BaggingRegressor(base_estimator=KNeighborsRegressor(),
+                            n_estimators=1,
+                            bootstrap=False,
+                            bootstrap_features=False,
+                            random_state=rng).fit(X_train, y_train)
+
+    clf2 = KNeighborsRegressor().fit(X_train, y_train)
+
+    assert_array_equal(clf1.predict(X_test), clf2.predict(X_test))
+
+
 def test_error():
     """Test that it gives proper exception on deficient input."""
     X, y = iris.data, iris.target

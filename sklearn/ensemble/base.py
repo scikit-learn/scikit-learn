@@ -27,6 +27,7 @@ class BaseEnsemble(BaseEstimator, MetaEstimatorMixin):
     estimator_params : list of strings
         The list of attributes to use as parameters when instantiating a
         new base estimator. If none are given, default parameters are used.
+
     """
 
     def __init__(self, base_estimator, n_estimators=10,
@@ -42,7 +43,7 @@ class BaseEnsemble(BaseEstimator, MetaEstimatorMixin):
         self.estimators_ = []
 
     def _validate_estimator(self, default=None):
-        """Check the estimator and set the base_estimator_ attribute."""
+        """Check the estimator and set the `base_estimator_` attribute."""
         if self.base_estimator is not None:
             self.base_estimator_ = self.base_estimator
         else:
@@ -52,7 +53,7 @@ class BaseEnsemble(BaseEstimator, MetaEstimatorMixin):
             raise ValueError("base_estimator cannot be None")
 
     def _make_estimator(self, append=True):
-        """Makes, configures and returns a copy of the base estimator.
+        """Make and configure a copy of the `base_estimator_` attribute.
 
         Warning: This method should be used to properly instantiate new
         sub-estimators.

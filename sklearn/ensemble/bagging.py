@@ -14,8 +14,9 @@ from inspect import getargspec
 
 from ..base import ClassifierMixin, RegressorMixin
 from ..externals.joblib import Parallel, delayed, cpu_count
-from ..externals import six
-from ..metrics import r2_score
+from ..externals.six import with_metaclass
+from ..externals.six.moves import zip
+from ..metrics import r2_score, accuracy_score
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
 from ..utils import check_random_state, check_arrays, column_or_1d
 from ..utils.fixes import bincount, unique
@@ -151,6 +152,7 @@ def _parallel_predict_log_proba(estimators, estimators_features, X, n_classes):
     n_samples = X.shape[0]
     log_proba = np.empty((n_samples, n_classes))
     log_proba.fill(-np.inf)
+    all_classes = np.arange(n_classes, dtype=np.int)
 
     for estimator, features in zip(estimators, estimators_features):
         log_proba_estimator = estimator.predict_log_proba(X[:, features])
@@ -163,8 +165,7 @@ def _parallel_predict_log_proba(estimators, estimators_features, X, n_classes):
                 log_proba[:, c] = np.logaddexp(log_proba[:, c],
                                                log_proba_estimator[:, j])
 
-            missing = np.setdiff1d(np.arange(n_classes, dtype=np.int),
-                                   estimator.classes_)
+            missing = np.setdiff1d(all_classes, estimator.classes_)
 
             for c in missing:
                 log_proba[:, c] = np.logaddexp(log_proba[:, c], -np.inf)
@@ -208,7 +209,7 @@ def _partition_estimators(ensemble):
     return n_jobs, n_estimators.tolist(), [0] + starts.tolist()
 
 
-class BaseBagging(six.with_metaclass(ABCMeta, BaseEnsemble)):
+class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
     """Base class for Bagging meta-estimator.
 
     Warning: This class should not be used directly. Use derived classes
@@ -255,6 +256,8 @@ class BaseBagging(six.with_metaclass(ABCMeta, BaseEnsemble)):
 
         sample_weight : array-like, shape = [n_samples] or None
             Sample weights. If None, then samples are equally weighted.
+            Note that this is supported only if the base estimator supports
+            sample weighting.
 
         Returns
         -------
@@ -292,6 +295,9 @@ class BaseBagging(six.with_metaclass(ABCMeta, BaseEnsemble)):
         if not self.bootstrap and self.oob_score:
             raise ValueError("Out of bag estimation only available"
                              " if bootstrap=True")
+
+        # Free allocated memory, if any
+        self.estimators_ = None
 
         # Parallel loop
         n_jobs, n_estimators, starts = _partition_estimators(self)
@@ -394,6 +400,9 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
 
     Attributes
     ----------
+    `base_estimator_`: list of estimators
+        The base estimator from which the ensemble is grown.
+
     `estimators_`: list of estimators
         The collection of fitted base estimators.
 
@@ -497,8 +506,8 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
 
         oob_decision_function = (predictions /
                                  predictions.sum(axis=1)[:, np.newaxis])
-        oob_score = np.mean((y == classes_.take(np.argmax(predictions, axis=1),
-                                                axis=0)))
+        oob_score = accuracy_score(y, classes_.take(np.argmax(predictions,
+                                                              axis=1)))
 
         self.oob_decision_function_ = oob_decision_function
         self.oob_score_ = oob_score
@@ -557,7 +566,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
         if self.n_features_ != X.shape[1]:
             raise ValueError("Number of features of the model must "
                              "match the input. Model n_features is {0} and "
-                             "input n_features is {1} "
+                             "input n_features is {1}."
                              "".format(self.n_features_, X.shape[1]))
 
         # Parallel loop
@@ -643,10 +652,11 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
         Returns
         -------
         score : array, shape = [n_samples, k]
-            The decision function of the input samples. Classes are
-            ordered by arithmetical order. Regression and binary
-            classification are special cases with ``k == 1``,
-            otherwise ``k==n_classes``.
+            The decision function of the input samples. The columns correspond
+            to the classes in sorted order, as they appear in the attribute
+            ``classes_``. Regression and binary classification are special
+            cases with ``k == 1``, otherwise ``k==n_classes``.
+
         """
         # Trigger an exception if not supported
         if not hasattr(self.base_estimator_, "decision_function"):
@@ -819,7 +829,7 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
 
         Returns
         -------
-        y: array of shape = [n_samples]
+        y : array of shape = [n_samples]
             The predicted values.
         """
         # Check data
