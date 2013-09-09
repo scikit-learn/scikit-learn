@@ -26,7 +26,7 @@ from scipy.sparse import coo_matrix
 from scipy.spatial.distance import hamming as sp_hamming
 
 from ..externals.six.moves import zip
-from ..preprocessing import LabelBinarizer
+from ..preprocessing import LabelBinarizer, label_binarize
 from ..preprocessing import LabelEncoder
 from ..utils import check_arrays
 from ..utils import deprecated
@@ -1416,10 +1416,8 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
 
     if y_type.startswith('multilabel'):
         if y_type == 'multilabel-sequences':
-            lb = LabelBinarizer()
-            lb.fit([labels.tolist()])
-            y_true = lb.transform(y_true)
-            y_pred = lb.transform(y_pred)
+            y_true = label_binarize(y_true, labels, multilabel=True)
+            y_pred = label_binarize(y_pred, labels, multilabel=True)
         else:
             # set negative labels to zero
             y_true = y_true == 1
