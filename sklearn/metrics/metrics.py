@@ -195,6 +195,10 @@ def auc(x, y, reorder=False):
     return area
 
 
+class UndefinedMetricWarning(UserWarning):
+    pass
+
+
 ###############################################################################
 # Binary classification loss
 ###############################################################################
@@ -681,14 +685,16 @@ def roc_curve(y_true, y_score, pos_label=None):
 
     if fps[-1] == 0:
         warnings.warn("No negative samples in y_true, "
-                      "false positive value should be meaningless")
+                      "false positive value should be meaningless",
+                      UndefinedMetricWarning)
         fpr = np.repeat(np.nan, fps.shape)
     else:
         fpr = fps / fps[-1]
 
     if tps[-1] == 0:
         warnings.warn("No positive samples in y_true, "
-                      "true positive value should be meaningless")
+                      "true positive value should be meaningless",
+                      UndefinedMetricWarning)
         tpr = np.repeat(np.nan, tps.shape)
     else:
         tpr = tps / tps[-1]
@@ -1283,7 +1289,7 @@ def _prf_divide(numerator, denominator, metric, modifier, average):
         msg = msg.format('due to')
     else:
         msg = msg.format('in {}s with'.format(axis1))
-    warnings.warn(msg, stacklevel=2)
+    warnings.warn(msg, UndefinedMetricWarning, stacklevel=2)
     return result
 
 

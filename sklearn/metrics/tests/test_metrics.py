@@ -53,6 +53,7 @@ from sklearn.metrics import (accuracy_score,
                              zero_one_loss)
 from sklearn.metrics.metrics import _check_clf_targets
 from sklearn.metrics.metrics import _check_reg_targets
+from sklearn.metrics.metrics import UndefinedMetricWarning
 
 
 from sklearn.externals.six.moves import xrange
@@ -1746,7 +1747,7 @@ def test_precision_recall_f1_no_labels():
         warnings.simplefilter("always")
 
         for beta in [1]:
-            p, r, f, s = assert_warns(UserWarning,
+            p, r, f, s = assert_warns(UndefinedMetricWarning,
                                       precision_recall_fscore_support,
                                       y_true, y_pred, average=None, beta=beta)
             assert_array_almost_equal(p, [0, 0, 0], 2)
@@ -1754,12 +1755,12 @@ def test_precision_recall_f1_no_labels():
             assert_array_almost_equal(f, [0, 0, 0], 2)
             assert_array_almost_equal(s, [0, 0, 0], 2)
 
-            fbeta = assert_warns(UserWarning, fbeta_score, y_true, y_pred,
-                                 beta=beta, average=None)
+            fbeta = assert_warns(UndefinedMetricWarning, fbeta_score,
+                                 y_true, y_pred, beta=beta, average=None)
             assert_array_almost_equal(fbeta, [0, 0, 0], 2)
 
             for average in ["macro", "micro", "weighted", "samples"]:
-                p, r, f, s = assert_warns(UserWarning,
+                p, r, f, s = assert_warns(UndefinedMetricWarning,
                                           precision_recall_fscore_support,
                                           y_true, y_pred, average=average,
                                           beta=beta)
@@ -1768,7 +1769,8 @@ def test_precision_recall_f1_no_labels():
                 assert_almost_equal(f, 0)
                 assert_equal(s, None)
 
-                fbeta = assert_warns(UserWarning, fbeta_score, y_true, y_pred,
+                fbeta = assert_warns(UndefinedMetricWarning, fbeta_score,
+                                     y_true, y_pred,
                                      beta=beta, average=average)
                 assert_almost_equal(fbeta, 0)
 
