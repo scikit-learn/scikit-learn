@@ -37,14 +37,16 @@ explicit care. A good example is text classification where unknown terms are
 likely to be found during training. It is possible to use a statefull 
 vectorizer if making multiple passes over the data is reasonable from an
 application point of view. Otherwise, one can turn up the difficulty by using
-a stateless feature extractor.  Currently the preferred way to do this is to
+a stateless feature extractor. Currently the preferred way to do this is to
 use the so-called :ref:`hashing trick<feature_hashing>` as implemented by 
-:class:`sklearn.feature_extraction.FeatureHasher`. 
+:class:`sklearn.feature_extraction.FeatureHasher` for datasets with categorical
+variables represented as list of Python dicts or
+:class:`sklearn.feature_extraction.text.HashingVectorizer` for text documents.
 
 Incremental learning
 --------------------
 Finally, for 3. we have a number of options inside scikit-learn. Although all
-algorithms can not learn incrementally (i.e. without seeing all the instances
+algorithms cannot learn incrementally (i.e. without seeing all the instances
 at once), all estimators implementing the ``partial_fit`` API are candidates.
 Actually, the ability to learn incrementally from a mini-batch of instances 
 (sometimes called "online learning") is key to out-of-core learning as it
