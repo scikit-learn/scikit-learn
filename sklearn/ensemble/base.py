@@ -31,6 +31,13 @@ class BaseEnsemble(BaseEstimator, MetaEstimatorMixin):
         The list of attributes to use as parameters when instantiating a
         new base estimator. If none are given, default parameters are used.
 
+    Attributes
+    ----------
+    `base_estimator_`: list of estimators
+        The base estimator from which the ensemble is grown.
+
+    `estimators_`: list of estimators
+        The collection of fitted base estimators.
     """
 
     def __init__(self, base_estimator, n_estimators=10,
