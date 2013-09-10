@@ -22,7 +22,8 @@ from sklearn.utils.testing import (assert_true,
                                    assert_array_equal,
                                    assert_array_almost_equal,
                                    assert_warns,
-                                   assert_greater)
+                                   assert_greater,
+                                   ignore_warnings)
 
 
 from sklearn.metrics import (accuracy_score,
@@ -53,6 +54,7 @@ from sklearn.metrics import (accuracy_score,
                              zero_one_loss)
 from sklearn.metrics.metrics import _check_clf_targets
 from sklearn.metrics.metrics import _check_reg_targets
+from sklearn.metrics.metrics import UndefinedMetricWarning
 
 
 from sklearn.externals.six.moves import xrange
@@ -550,13 +552,12 @@ def test_precision_recall_f1_score_binary():
                         (1 + 2 ** 2) * ps * rs / (2 ** 2 * ps + rs), 2)
 
 
+@ignore_warnings
 def test_precision_recall_f_binary_single_class():
     """Test precision, recall and F1 score behave with a single positive or
     negative class
 
     Such a case may occur with non-stratified cross-validation"""
-    warnings.simplefilter("ignore")
-
     assert_equal(1., precision_score([1, 1], [1, 1]))
     assert_equal(1., recall_score([1, 1], [1, 1]))
     assert_equal(1., f1_score([1, 1], [1, 1]))
@@ -630,7 +631,7 @@ def test_confusion_matrix_binary():
 
 def test_matthews_corrcoef_nan():
     with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
+        warnings.simplefilter("always")
         assert_equal(matthews_corrcoef([0], [1]), 0.0)
         warnings.simplefilter("error")
         assert_equal(matthews_corrcoef([0, 0], [0, 1]), 0.0)
@@ -1504,6 +1505,7 @@ def test_normalize_option_multilabel_classification():
                             err_msg="Failed with %s" % name)
 
 
+@ignore_warnings
 def test_precision_recall_f1_score_multilabel_1():
     """ Test precision_recall_f1_score on a crafted multilabel example
     """
@@ -1514,8 +1516,6 @@ def test_precision_recall_f1_score_multilabel_1():
     lb.fit([range(4)])
     y_true_bi = lb.transform(y_true_ll)
     y_pred_bi = lb.transform(y_pred_ll)
-
-    warnings.simplefilter("ignore")
 
     for y_true, y_pred in [(y_true_ll, y_pred_ll), (y_true_bi, y_pred_bi)]:
 
@@ -1582,6 +1582,7 @@ def test_precision_recall_f1_score_multilabel_1():
                             0.5)
 
 
+@ignore_warnings
 def test_precision_recall_f1_score_multilabel_2():
     """ Test precision_recall_f1_score on a crafted multilabel example 2
     """
@@ -1592,8 +1593,6 @@ def test_precision_recall_f1_score_multilabel_2():
     lb.fit([range(1, 5)])
     y_true_bi = lb.transform(y_true_ll)
     y_pred_bi = lb.transform(y_pred_ll)
-
-    warnings.simplefilter("ignore")
 
     for y_true, y_pred in [(y_true_ll, y_pred_ll), (y_true_bi, y_pred_bi)]:
         # tp = [ 0.  1.  0.  0.]
@@ -1657,6 +1656,7 @@ def test_precision_recall_f1_score_multilabel_2():
                             0.1666, 2)
 
 
+@ignore_warnings
 def test_precision_recall_f1_score_with_an_empty_prediction():
     y_true_ll = [(1,), (0,), (2, 1,)]
     y_pred_ll = [tuple(), (3,), (2, 1)]
@@ -1665,8 +1665,6 @@ def test_precision_recall_f1_score_with_an_empty_prediction():
     lb.fit([range(4)])
     y_true_bi = lb.transform(y_true_ll)
     y_pred_bi = lb.transform(y_pred_ll)
-
-    warnings.simplefilter("ignore")
 
     for y_true, y_pred in [(y_true_ll, y_pred_ll), (y_true_bi, y_pred_bi)]:
         # true_pos = [ 0.  1.  1.  0.]
@@ -1742,7 +1740,7 @@ def test_precision_recall_f1_no_labels():
         warnings.simplefilter("always")
 
         for beta in [1]:
-            p, r, f, s = assert_warns(UserWarning,
+            p, r, f, s = assert_warns(UndefinedMetricWarning,
                                       precision_recall_fscore_support,
                                       y_true, y_pred, average=None, beta=beta)
             assert_array_almost_equal(p, [0, 0, 0], 2)
@@ -1750,12 +1748,12 @@ def test_precision_recall_f1_no_labels():
             assert_array_almost_equal(f, [0, 0, 0], 2)
             assert_array_almost_equal(s, [0, 0, 0], 2)
 
-            fbeta = assert_warns(UserWarning, fbeta_score, y_true, y_pred,
-                                 beta=beta, average=None)
+            fbeta = assert_warns(UndefinedMetricWarning, fbeta_score,
+                                 y_true, y_pred, beta=beta, average=None)
             assert_array_almost_equal(fbeta, [0, 0, 0], 2)
 
             for average in ["macro", "micro", "weighted", "samples"]:
-                p, r, f, s = assert_warns(UserWarning,
+                p, r, f, s = assert_warns(UndefinedMetricWarning,
                                           precision_recall_fscore_support,
                                           y_true, y_pred, average=average,
                                           beta=beta)
@@ -1764,9 +1762,68 @@ def test_precision_recall_f1_no_labels():
                 assert_almost_equal(f, 0)
                 assert_equal(s, None)
 
-                fbeta = assert_warns(UserWarning, fbeta_score, y_true, y_pred,
+                fbeta = assert_warns(UndefinedMetricWarning, fbeta_score,
+                                     y_true, y_pred,
                                      beta=beta, average=average)
                 assert_almost_equal(fbeta, 0)
+
+
+def test_prf_warnings():
+    with warnings.catch_warnings(record=True) as record:
+        warnings.simplefilter('always')
+
+        # average of per-label scores
+        for average in [None, 'weighted', 'macro']:
+            precision_recall_fscore_support([0, 1, 2], [1, 1, 2],
+                                            average=average)
+            assert_equal(str(record.pop().message),
+                         'Precision and F-score are ill-defined and being '
+                         'set to 0.0 in labels with no predicted samples.')
+            precision_recall_fscore_support([1, 1, 2], [0, 1, 2],
+                                            average=average)
+            assert_equal(str(record.pop().message),
+                         'Recall and F-score are ill-defined and '
+                         'being set to 0.0 in labels with no true samples.')
+
+        # average of per-sample scores
+        precision_recall_fscore_support(np.array([[1, 0], [1, 0]]),
+                                        np.array([[1, 0], [0, 0]]),
+                                        average='samples')
+        assert_equal(str(record.pop().message),
+                     'Precision and F-score are ill-defined and '
+                     'being set to 0.0 in samples with no predicted labels.')
+        precision_recall_fscore_support(np.array([[1, 0], [0, 0]]),
+                                        np.array([[1, 0], [1, 0]]),
+                                        average='samples')
+        assert_equal(str(record.pop().message),
+                     'Recall and F-score are ill-defined and '
+                     'being set to 0.0 in samples with no true labels.')
+
+        # single score: micro-average
+        precision_recall_fscore_support(np.array([[1, 1], [1, 1]]),
+                                        np.array([[0, 0], [0, 0]]),
+                                        average='micro')
+        assert_equal(str(record.pop().message),
+                     'Precision and F-score are ill-defined and '
+                     'being set to 0.0 due to no predicted samples.')
+        precision_recall_fscore_support(np.array([[0, 0], [0, 0]]),
+                                        np.array([[1, 1], [1, 1]]),
+                                        average='micro')
+        assert_equal(str(record.pop().message),
+                     'Recall and F-score are ill-defined and '
+                     'being set to 0.0 due to no true samples.')
+
+        # single postive label
+        precision_recall_fscore_support([1, 1], [-1, -1],
+                                        average='macro')
+        assert_equal(str(record.pop().message),
+                     'Precision and F-score are ill-defined and '
+                     'being set to 0.0 due to no predicted samples.')
+        precision_recall_fscore_support([-1, -1], [1, 1],
+                                        average='macro')
+        assert_equal(str(record.pop().message),
+                     'Recall and F-score are ill-defined and '
+                     'being set to 0.0 due to no true samples.')
 
 
 def test__check_clf_targets():

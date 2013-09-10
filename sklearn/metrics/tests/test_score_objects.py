@@ -2,6 +2,7 @@ import pickle
 
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import ignore_warnings
 
 from sklearn.metrics import (f1_score, r2_score, roc_auc_score, fbeta_score,
                              log_loss)
@@ -102,6 +103,7 @@ def test_unsupervised_scorers():
     assert_almost_equal(score1, score2)
 
 
+@ignore_warnings
 def test_raises_on_score_list():
     """Test that when a list of scores is returned, we raise proper errors."""
     X, y = make_blobs(random_state=0)
