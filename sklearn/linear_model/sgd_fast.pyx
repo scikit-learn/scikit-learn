@@ -11,9 +11,11 @@ import numpy as np
 import sys
 from time import time
 
+cimport cython
 from libc.math cimport exp, log, sqrt, pow, fabs
 cimport numpy as np
-cimport cython
+cdef extern from "numpy/npy_math.h":    # missing from Cython's numpy.pxd
+    bint npy_isfinite(double) nogil
 
 from sklearn.utils.weight_vector cimport WeightVector
 from sklearn.utils.seq_dataset cimport SequentialDataset
@@ -247,7 +249,7 @@ cdef class Huber(Regression):
 
     cpdef double loss(self, double p, double y):
         cdef double r = p - y
-        cdef double abs_r = abs(r)
+        cdef double abs_r = fabs(r)
         if abs_r <= self.c:
             return 0.5 * r * r
         else:
@@ -255,8 +257,7 @@ cdef class Huber(Regression):
 
     cpdef double dloss(self, double p, double y):
         cdef double r = p - y
-        cdef double abs_r = abs(r)
-        if abs_r <= self.c:
+        if fabs(r) <= self.c:
             return r
         elif r > 0.0:
             return self.c
@@ -279,7 +280,7 @@ cdef class EpsilonInsensitive(Regression):
         self.epsilon = epsilon
 
     cpdef double loss(self, double p, double y):
-        cdef double ret = abs(y - p) - self.epsilon
+        cdef double ret = fabs(y - p) - self.epsilon
         return ret if ret > 0 else 0
 
     cpdef double dloss(self, double p, double y):
@@ -306,7 +307,7 @@ cdef class SquaredEpsilonInsensitive(Regression):
         self.epsilon = epsilon
 
     cpdef double loss(self, double p, double y):
-        cdef double ret = abs(y - p) - self.epsilon
+        cdef double ret = fabs(y - p) - self.epsilon
         return ret * ret if ret > 0 else 0
 
     cpdef double dloss(self, double p, double y):
@@ -439,7 +440,8 @@ def plain_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
             print("-- Epoch %d" % (epoch + 1))
         if shuffle:
             dataset.shuffle(seed)
-        for i in range(n_samples):
+        with nogil:
+          for i in range(n_samples):
             dataset.next( & x_data_ptr, & x_ind_ptr, & xnnz, & y,
                          & sample_weight)
 
@@ -451,7 +453,8 @@ def plain_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
                 eta = eta0 / pow(t, power_t)
 
             if verbose > 0:
-                sumloss += loss.loss(p, y)
+                with gil:
+                    sumloss += loss.loss(p, y)
 
             if y > 0.0:
                 class_weight = weight_pos
@@ -462,12 +465,15 @@ def plain_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
                 update = sqnorm(x_data_ptr, x_ind_ptr, xnnz)
                 if update == 0:
                     continue
-                update = min(C, loss.loss(p, y) / update)
+                with gil:
+                    update = min(C, loss.loss(p, y) / update)
             elif learning_rate == PA2:
                 update = sqnorm(x_data_ptr, x_ind_ptr, xnnz)
-                update = loss.loss(p, y) / (update + 0.5 / C)
+                with gil:
+                    update = loss.loss(p, y) / (update + 0.5 / C)
             else:
-                update = -eta * loss.dloss(p, y)
+                with gil:
+                    update = -eta * loss.dloss(p, y)
 
             if learning_rate >= PA1:
                 if is_hinge:
@@ -502,8 +508,8 @@ def plain_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
             print("Total training time: %.2f seconds." % (time() - t_start))
 
         # floating-point under-/overflow check.
-        if np.any(np.isinf(weights)) or np.any(np.isnan(weights)) \
-           or np.isnan(intercept) or np.isinf(intercept):
+        if (any_nonfinite(<np.float64_t *>weights.data, weights.shape[0])
+            or not npy_isfinite(intercept)):
             raise ValueError("floating-point under-/overflow occurred.")
 
     w.reset_wscale()
@@ -511,14 +517,23 @@ def plain_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
     return weights, intercept
 
 
-cdef inline double max(double a, double b):
+cdef int any_nonfinite(np.float64_t *w, np.npy_intp n) nogil:
+    cdef np.npy_intp i
+    for i in range(n):
+        if not npy_isfinite(w[i]):
+            return 1
+    return 0
+
+
+cdef inline double max(double a, double b) nogil:
     return a if a >= b else b
 
 
-cdef inline double min(double a, double b):
+cdef inline double min(double a, double b) nogil:
     return a if a <= b else b
 
-cdef double sqnorm(DOUBLE * x_data_ptr, INTEGER * x_ind_ptr, int xnnz):
+
+cdef double sqnorm(DOUBLE * x_data_ptr, INTEGER * x_ind_ptr, int xnnz) nogil:
     cdef double x_norm = 0.0
     cdef int j
     cdef double z
@@ -527,8 +542,9 @@ cdef double sqnorm(DOUBLE * x_data_ptr, INTEGER * x_ind_ptr, int xnnz):
         x_norm += z * z
     return x_norm
 
+
 cdef void l1penalty(WeightVector w, DOUBLE * q_data_ptr,
-                    INTEGER * x_ind_ptr, int xnnz, double u):
+                    INTEGER * x_ind_ptr, int xnnz, double u) nogil:
     """Apply the L1 penalty to each updated feature
 
     This implements the truncated gradient approach by

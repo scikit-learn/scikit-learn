@@ -18,7 +18,7 @@ cdef class SequentialDataset:
     """Base class for datasets with sequential data access. """
 
     cdef void next(self, DOUBLE **x_data_ptr, INTEGER **x_ind_ptr,
-                   int *nnz, DOUBLE *y, DOUBLE *sample_weight):
+                   int *nnz, DOUBLE *y, DOUBLE *sample_weight) nogil:
         """Get the next example ``x`` from the dataset.
 
         Parameters
@@ -37,7 +37,8 @@ cdef class SequentialDataset:
         sample_weight : np.float64*
             The weight of the next example.
         """
-        raise NotImplementedError()
+        with gil:
+            raise NotImplementedError()
 
     cdef void shuffle(self, seed):
         """Permutes the ordering of examples.  """
@@ -89,7 +90,7 @@ cdef class ArrayDataset(SequentialDataset):
         self.index_data_ptr = <INTEGER *> index.data
 
     cdef void next(self, DOUBLE **x_data_ptr, INTEGER **x_ind_ptr,
-                   int *nnz, DOUBLE *y, DOUBLE *sample_weight):
+                   int *nnz, DOUBLE *y, DOUBLE *sample_weight) nogil:
         cdef int current_index = self.current_index
         if current_index >= (self.n_samples - 1):
             current_index = -1
@@ -157,7 +158,7 @@ cdef class CSRDataset(SequentialDataset):
         self.index_data_ptr = <INTEGER *> index.data
 
     cdef void next(self, DOUBLE **x_data_ptr, INTEGER **x_ind_ptr,
-                   int *nnz, DOUBLE *y, DOUBLE *sample_weight):
+                   int *nnz, DOUBLE *y, DOUBLE *sample_weight) nogil:
         cdef int current_index = self.current_index
         if current_index >= (self.n_samples - 1):
             current_index = -1

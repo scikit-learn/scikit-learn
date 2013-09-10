@@ -6,11 +6,16 @@
 #
 # Licence: BSD 3 clause
 
+cimport cython
+from libc.limits cimport INT_MAX
+from libc.math cimport sqrt
 import numpy as np
 cimport numpy as np
-cimport cython
 
 np.import_array()
+
+cdef extern from "cblas.h":
+    void dscal "cblas_dscal"(int, double, double *, int) nogil
 
 
 cdef class WeightVector(object):
@@ -36,6 +41,8 @@ cdef class WeightVector(object):
     """
 
     def __cinit__(self, np.ndarray[DOUBLE, ndim=1, mode='c'] w):
+        if w.shape[0] > INT_MAX:
+            raise ValueError("more than %d features not supported" % INT_MAX)
         self.w = w
         self.w_data_ptr = <DOUBLE *>w.data
         self.wscale = 1.0
@@ -43,7 +50,7 @@ cdef class WeightVector(object):
         self.sq_norm = np.dot(w, w)
 
     cdef void add(self, DOUBLE *x_data_ptr, INTEGER *x_ind_ptr,
-                  int xnnz, double c):
+                  int xnnz, double c) nogil:
         """Scales example x by constant c and adds it to the weight vector.
 
         This operation updates ``sq_norm``.
@@ -78,7 +85,7 @@ cdef class WeightVector(object):
 
         self.sq_norm += (xsqnorm * c * c) + (2.0 * innerprod * wscale * c)
 
-    cdef double dot(self, DOUBLE *x_data_ptr, INTEGER *x_ind_ptr, int xnnz):
+    cdef double dot(self, DOUBLE *x_data_ptr, INTEGER *x_ind_ptr, int xnnz) nogil:
         """Computes the dot product of a sample x and the weight vector.
 
         Parameters
@@ -105,7 +112,7 @@ cdef class WeightVector(object):
         innerprod *= self.wscale
         return innerprod
 
-    cdef void scale(self, double c):
+    cdef void scale(self, double c) nogil:
         """Scales the weight vector by a constant ``c``.
 
         It updates ``wscale`` and ``sq_norm``. If ``wscale`` gets too
@@ -113,13 +120,15 @@ cdef class WeightVector(object):
         self.wscale *= c
         self.sq_norm *= (c * c)
         if self.wscale < 1e-9:
-            self.reset_wscale()
+            with gil:
+                self.reset_wscale()
 
-    cdef void reset_wscale(self):
+    cdef void reset_wscale(self) nogil:
         """Scales each coef of ``w`` by ``wscale`` and resets it to 1. """
-        self.w *= self.wscale
+        # self.w *= self.wscale, but without the GIL.
+        dscal(<int>self.w.shape[0], self.wscale, <double *>self.w.data, 1)
         self.wscale = 1.0
 
-    cdef double norm(self):
+    cdef double norm(self) nogil:
         """The L2 norm of the weight vector. """
         return sqrt(self.sq_norm)

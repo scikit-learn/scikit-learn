@@ -91,7 +91,7 @@ cdef class Splitter:
                                SIZE_t* feature,
                                double* threshold)
 
-    cdef void node_value(self, double* dest)
+    cdef void node_value(self, double* dest) nogil
 
 
 # =============================================================================
@@ -131,8 +131,8 @@ cdef class Tree:
                                 SIZE_t feature,
                                 double threshold,
                                 double impurity,
-                                SIZE_t n_node_samples)
-    cdef void _resize(self, SIZE_t capacity=*)
+                                SIZE_t n_node_samples) nogil
+    cdef void _resize(self, SIZE_t capacity=*) nogil
 
     cpdef build(self, np.ndarray X,
                       np.ndarray y,

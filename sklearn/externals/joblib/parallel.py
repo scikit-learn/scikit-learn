@@ -26,6 +26,7 @@ multiprocessing = int(os.environ.get('JOBLIB_MULTIPROCESSING', 1)) or None
 if multiprocessing:
     try:
         import multiprocessing
+        from multiprocessing.pool import ThreadPool
     except ImportError:
         multiprocessing = None
 
@@ -488,7 +489,7 @@ class Parallel(Logger):
 
                 # Set an environment variable to avoid infinite loops
                 os.environ['__JOBLIB_SPAWNED_PARALLEL__'] = '1'
-                self._pool = multiprocessing.Pool(n_jobs)
+                self._pool = ThreadPool(n_jobs)
                 self._lock = threading.Lock()
                 # We are using multiprocessing, we also want to capture
                 # KeyboardInterrupts
