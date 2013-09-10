@@ -10,8 +10,11 @@ Changelog
 
    - Add predict method to :class:`cluster.AffinityPropagation` and
      :class:`cluster.MeanShift`, by `Mathieu Blondel`_.
-   - Add :func:`utils.extmath.fast_dot` -- a memory efficient replacement for
-   `numpy.dot` by `Denis Engemann`_, and `Alexandre Gramfort`_.
+
+   - Vector and matrix multiplications have been optimised throughout the
+     library by `Denis Engemann`_, and `Alexandre Gramfort`_.
+     In particular, they should take less memory with older NumPy versions
+     (prior to 1.7.2).
 
    - New unsupervised feature selection algorithm
      :class:`feature_selection.VarianceThreshold`, by `Lars Buitinck`_.
