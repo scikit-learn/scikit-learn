@@ -13,7 +13,7 @@ from abc import ABCMeta, abstractmethod
 from inspect import getargspec
 
 from ..base import ClassifierMixin, RegressorMixin
-from ..externals.joblib import Parallel, delayed, cpu_count
+from ..externals.joblib import Parallel, delayed
 from ..externals.six import with_metaclass
 from ..externals.six.moves import zip
 from ..metrics import r2_score, accuracy_score
@@ -22,7 +22,7 @@ from ..utils import check_random_state, check_arrays, column_or_1d
 from ..utils.fixes import bincount, unique
 from ..utils.random import sample_without_replacement
 
-from .base import BaseEnsemble
+from .base import BaseEnsemble, _partition_estimators
 
 __all__ = ["BaggingClassifier",
            "BaggingRegressor"]
@@ -184,24 +184,6 @@ def _parallel_predict_regression(estimators, estimators_features, X):
     return sum(estimator.predict(X[:, features])
                for estimator, features in zip(estimators,
                                               estimators_features))
-
-
-def _partition_estimators(ensemble):
-    """Private function used to partition estimators between jobs."""
-    # Compute the number of jobs
-    if ensemble.n_jobs == -1:
-        n_jobs = min(cpu_count(), ensemble.n_estimators)
-
-    else:
-        n_jobs = min(ensemble.n_jobs, ensemble.n_estimators)
-
-    # Partition estimators between jobs
-    n_estimators = (ensemble.n_estimators // n_jobs) * np.ones(n_jobs,
-                                                               dtype=np.int)
-    n_estimators[:ensemble.n_estimators % n_jobs] += 1
-    starts = np.cumsum(n_estimators)
-
-    return n_jobs, n_estimators.tolist(), [0] + starts.tolist()
 
 
 class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
