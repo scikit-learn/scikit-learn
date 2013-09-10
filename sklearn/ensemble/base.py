@@ -5,9 +5,12 @@ Base class for ensemble-based estimators.
 # Authors: Gilles Louppe
 # License: BSD 3 clause
 
+import numpy as np
+
 from ..base import clone
 from ..base import BaseEstimator
 from ..base import MetaEstimatorMixin
+from ..externals.joblib import cpu_count
 
 
 class BaseEnsemble(BaseEstimator, MetaEstimatorMixin):
@@ -78,3 +81,21 @@ class BaseEnsemble(BaseEstimator, MetaEstimatorMixin):
     def __iter__(self):
         """Returns iterator over estimators in the ensemble."""
         return iter(self.estimators_)
+
+
+def _partition_estimators(ensemble):
+    """Private function used to partition estimators between jobs."""
+    # Compute the number of jobs
+    if ensemble.n_jobs == -1:
+        n_jobs = min(cpu_count(), ensemble.n_estimators)
+
+    else:
+        n_jobs = min(ensemble.n_jobs, ensemble.n_estimators)
+
+    # Partition estimators between jobs
+    n_estimators = (ensemble.n_estimators // n_jobs) * np.ones(n_jobs,
+                                                               dtype=np.int)
+    n_estimators[:ensemble.n_estimators % n_jobs] += 1
+    starts = np.cumsum(n_estimators)
+
+    return n_jobs, n_estimators.tolist(), [0] + starts.tolist()
