@@ -122,8 +122,8 @@ def _parallel_predict_proba(trees, X, n_classes, n_outputs):
                 proba += proba_tree
 
             else:
-                for j, c in enumerate(tree.classes_):
-                    proba[:, c] += proba_tree[:, j]
+                proba[:, tree.classes_] += \
+                    proba_tree[:, range(len(tree.classes_))]
 
     else:
         proba = []
@@ -139,8 +139,8 @@ def _parallel_predict_proba(trees, X, n_classes, n_outputs):
                     proba[k] += proba_tree[k]
 
                 else:
-                    for j, c in enumerate(tree.classes_[k]):
-                        proba[k][:, c] += proba_tree[k][:, j]
+                    proba[k][:, tree.classes_] += \
+                        proba_tree[k][:, range(len(tree.classes_))]
 
     return proba
 
@@ -177,12 +177,6 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
         self.oob_score = oob_score
         self.n_jobs = n_jobs
         self.random_state = random_state
-
-        #self.n_features_ = None
-        #self.n_outputs_ = None
-        #self.classes_ = None
-        #self.n_classes_ = None
-
         self.verbose = verbose
 
     def apply(self, X):
@@ -491,7 +485,7 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
         """Predict class log-probabilities for X.
 
         The predicted class log-probabilities of an input sample is computed as
-        the log of the mean predicted class probabilities of the trees in the 
+        the log of the mean predicted class probabilities of the trees in the
         forest.
 
         Parameters
