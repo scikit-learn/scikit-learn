@@ -134,8 +134,8 @@ def _parallel_predict_proba(estimators, estimators_features, X, n_classes):
                 proba += proba_estimator
 
             else:
-                for j, c in enumerate(estimator.classes_):
-                    proba[:, c] += proba_estimator[:, j]
+                proba[:, estimator.classes_] += \
+                    proba_estimator[:, range(len(estimator.classes_))]
 
         except (AttributeError, NotImplementedError):
             # Resort to voting
@@ -161,27 +161,22 @@ def _parallel_predict_log_proba(estimators, estimators_features, X, n_classes):
             log_proba = np.logaddexp(log_proba, log_proba_estimator)
 
         else:
-            for j, c in enumerate(estimator.classes_):
-                log_proba[:, c] = np.logaddexp(log_proba[:, c],
-                                               log_proba_estimator[:, j])
+            log_proba[:, estimator.classes_] = np.logaddexp(
+                log_proba[:, estimator.classes_],
+                log_proba_estimator[:, range(len(estimator.classes_))])
 
             missing = np.setdiff1d(all_classes, estimator.classes_)
-
-            for c in missing:
-                log_proba[:, c] = np.logaddexp(log_proba[:, c], -np.inf)
+            log_proba[:, missing] = np.logaddexp(log_proba[:, missing],
+                                                 -np.inf)
 
     return log_proba
 
 
-def _parallel_decision_function(estimators, estimators_features, X, n_classes):
-    """Private function used to compute (proba-)predictions within a job."""
-    decisions = estimators[0].decision_function(X[:, estimators_features[0]])
-
-    for estimator, features in zip(estimators[1:],
-                                   estimators_features[1:]):
-        decisions += estimator.decision_function(X[:, features])
-
-    return decisions
+def _parallel_decision_function(estimators, estimators_features, X):
+    """Private function used to compute decisions within a job."""
+    return sum(estimator.decision_function(X[:, features])
+               for estimator, features in zip(estimators,
+                                              estimators_features))
 
 
 def _parallel_predict_regression(estimators, estimators_features, X):
@@ -674,8 +669,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
             delayed(_parallel_decision_function)(
                 self.estimators_[starts[i]:starts[i + 1]],
                 self.estimators_features_[starts[i]:starts[i + 1]],
-                X,
-                self.n_classes_)
+                X)
             for i in range(n_jobs))
 
         # Reduce
