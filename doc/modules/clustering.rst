@@ -328,15 +328,15 @@ Spectral clustering
 :class:`SpectralClustering` does a low-dimension embedding of the
 affinity matrix between samples, followed by a KMeans in the low
 dimensional space. It is especially efficient if the affinity matrix is
-sparse and the `pyamg <http://code.google.com/p/pyamg/>`_ module is
-installed. SpectralClustering requires the number of clusters to be
-specified. It works well for a small number of clusters but is not
-advised when using many clusters.
+sparse and the `pyamg <http://pyamg.org/>`_ module is installed.
+SpectralClustering requires the number of clusters to be specified. It
+works well for a small number of clusters but is not advised when using
+many clusters.
 
 For two clusters, it solves a convex relaxation of the `normalised
 cuts <http://www.cs.berkeley.edu/~malik/papers/SM-ncut.pdf>`_ problem on
 the similarity graph: cutting the graph in two so that the weight of the
-edges cut is small compared to the weights in of edges inside each
+edges cut is small compared to the weights of the edges inside each
 cluster. This criteria is especially interesting when working on images:
 graph vertices are pixels, and edges of the similarity graph are a
 function of the gradient of the image.
