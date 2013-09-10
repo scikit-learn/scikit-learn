@@ -42,6 +42,12 @@ API changes summary
      now returns the average log-likelihood of the samples. Use score_samples
      to get log-likelihood of each sample. By `Alexandre Gramfort`_.
 
+   - Generating boolean masks (the setting ``indices=False``)
+     from cross-validation generators is deprecated.
+     Support for masks will be removed in 0.17.
+     The generators have produced arrays of indices by default since 0.10.
+     By `Joel Nothman`_.
+
 .. _changes_0_14:
 
 0.14

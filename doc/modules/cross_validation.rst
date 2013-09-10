@@ -157,22 +157,9 @@ The available cross validation iterators are introduced in the following.
 Cross validation iterators
 ==========================
 
-The following sections list utilities to generate boolean masks or indices
+The following sections list utilities to generate indices
 that can be used to generate dataset splits according to different cross
 validation strategies.
-
-
-.. topic:: Boolean mask vs integer indices
-
-   Most cross validators support generating both boolean masks or integer
-   indices to select the samples from a given fold.
-
-   When the data matrix is sparse, only the integer indices will work as
-   expected. Integer indexing is hence the default behavior (since version
-   0.10).
-
-   You can explicitly pass ``indices=False`` to the constructor of the
-   CV object (when supported) to use the boolean mask method instead.
 
 
 K-fold
@@ -201,14 +188,6 @@ Thus, one can create the training/test sets using numpy indexing::
   >>> X = np.array([[0., 0.], [1., 1.], [-1., -1.], [2., 2.]])
   >>> y = np.array([0, 1, 0, 1])
   >>> X_train, X_test, y_train, y_test = X[train], X[test], y[train], y[test]
-
-It is also possible to get boolean masks instead of integer indices::
-
-  >>> kf = KFold(4, n_folds=2, indices=False)
-  >>> for train, test in kf:
-  ...      print("%s %s" % (train, test))
-  [False False  True  True] [ True  True False False]
-  [ True  True False False] [False False  True  True]
 
 
 Stratified k-fold
