@@ -183,66 +183,48 @@ called folds (if :math:`k = n`, this is equivalent to the *Leave One
 Out* strategy), of equal sizes (if possible). The prediction function is
 learned using :math:`k - 1` folds, and the fold left out is used for test.
 
-Example of 2-fold::
+Example of 2-fold cross-validation on a dataset with 4 samples::
 
   >>> import numpy as np
   >>> from sklearn.cross_validation import KFold
-  >>> X = np.array([[0., 0.], [1., 1.], [-1., -1.], [2., 2.]])
-  >>> Y = np.array([0, 1, 0, 1])
 
-  >>> kf = KFold(len(Y), n_folds=2, indices=False)
-  >>> print(kf)
-  sklearn.cross_validation.KFold(n=4, n_folds=2)
-
-  >>> for train, test in kf:
-  ...      print("%s %s" % (train, test))
-  [False False  True  True] [ True  True False False]
-  [ True  True False False] [False False  True  True]
-
-Each fold is constituted by two arrays: the first one is related to the
-*training set*, and the second one to the *test set*.
-Thus, one can create the training/test sets using::
-
-  >>> X_train, X_test, y_train, y_test = X[train], X[test], Y[train], Y[test]
-
-If X or Y are `scipy.sparse` matrices, train and test need to be integer
-indices. It can be obtained by setting the parameter indices to True
-when creating the cross-validation procedure::
-
-  >>> X = np.array([[0., 0.], [1., 1.], [-1., -1.], [2., 2.]])
-  >>> Y = np.array([0, 1, 0, 1])
-
-  >>> kf = KFold(len(Y), n_folds=2, indices=True)
+  >>> kf = KFold(4, n_folds=2)
   >>> for train, test in kf:
   ...     print("%s %s" % (train, test))
   [2 3] [0 1]
   [0 1] [2 3]
 
+Each fold is constituted by two arrays: the first one is related to the
+*training set*, and the second one to the *test set*.
+Thus, one can create the training/test sets using numpy indexing::
+
+  >>> X = np.array([[0., 0.], [1., 1.], [-1., -1.], [2., 2.]])
+  >>> y = np.array([0, 1, 0, 1])
+  >>> X_train, X_test, y_train, y_test = X[train], X[test], y[train], y[test]
+
+It is also possible to get boolean masks instead of integer indices::
+
+  >>> kf = KFold(4, n_folds=2, indices=False)
+  >>> for train, test in kf:
+  ...      print("%s %s" % (train, test))
+  [False False  True  True] [ True  True False False]
+  [ True  True False False] [False False  True  True]
+
 
 Stratified k-fold
 -----------------
 
-:class:`StratifiedKFold` is a variation of *k-fold* which returns
-*stratified* folds:
-each set contains the same percentage of samples
-of each target class as the complete set.
+:class:`StratifiedKFold` is a variation of *k-fold* which returns *stratified*
+folds: each set contains approximately the same percentage of samples of each
+target class as the complete set.
 
-Example of stratified 2-fold::
+Example of stratified 2-fold cross-validation on a dataset with 7 samples from
+two unbalanced classes::
 
   >>> from sklearn.cross_validation import StratifiedKFold
-  >>> X = [[0., 0.],
-  ...      [1., 1.],
-  ...      [-1., -1.],
-  ...      [2., 2.],
-  ...      [3., 3.],
-  ...      [4., 4.],
-  ...      [0., 1.]]
-  >>> Y = [0, 0, 0, 1, 1, 1, 0]
 
-  >>> skf = StratifiedKFold(Y, 2)
-  >>> print(skf)
-  sklearn.cross_validation.StratifiedKFold(labels=[0 0 0 1 1 1 0], n_folds=2)
-
+  >>> labels = [0, 0, 0, 1, 1, 1, 0]
+  >>> skf = StratifiedKFold(labels, 2)
   >>> for train, test in skf:
   ...     print("%s %s" % (train, test))
   [1 4 6] [0 2 3 5]
@@ -259,13 +241,8 @@ sets and `n` different tests set. This cross-validation procedure does
 not waste much data as only one sample is removed from the learning set::
 
   >>> from sklearn.cross_validation import LeaveOneOut
-  >>> X = np.array([[0., 0.], [1., 1.], [-1., -1.], [2., 2.]])
-  >>> Y = np.array([0, 1, 0, 1])
 
-  >>> loo = LeaveOneOut(len(Y))
-  >>> print(loo)
-  sklearn.cross_validation.LeaveOneOut(n=4)
-
+  >>> loo = LeaveOneOut(4)
   >>> for train, test in loo:
   ...     print("%s %s" % (train, test))
   [1 2 3] [0]
@@ -283,16 +260,11 @@ set. For :math:`n` samples, this produces :math:`{n \choose p}` train-test
 pairs. Unlike :class:`LeaveOneOut` and :class:`KFold`, the test sets will
 overlap for :math:`p > 1`.
 
-Example of Leave-2-Out::
+Example of Leave-2-Out on a dataset with 4 samples::
 
   >>> from sklearn.cross_validation import LeavePOut
-  >>> X = [[0., 0.], [1., 1.], [-1., -1.], [2., 2.]]
-  >>> Y = [0, 1, 0, 1]
 
-  >>> lpo = LeavePOut(len(Y), 2)
-  >>> print(lpo)
-  sklearn.cross_validation.LeavePOut(n=4, p=2)
-
+  >>> lpo = LeavePOut(4, p=2)
   >>> for train, test in lpo:
   ...     print("%s %s" % (train, test))
   [2 3] [0 1]
@@ -306,10 +278,10 @@ Example of Leave-2-Out::
 Leave-One-Label-Out - LOLO
 --------------------------
 
-:class:`LeaveOneLabelOut` (LOLO) is a cross-validation scheme which
-holds out the samples according to a third-party provided label. This
-label information can be used to encode arbitrary domain specific
-stratifications of the samples as integers.
+:class:`LeaveOneLabelOut` (LOLO) is a cross-validation scheme which holds out
+the samples according to a third-party provided array of integer labels. This
+label information can be used to encode arbitrary domain specific pre-defined
+cross-validation folds.
 
 Each training set is thus constituted by all the samples except the ones
 related to a specific label.
@@ -319,14 +291,9 @@ create a cross-validation based on the different experiments: we create
 a training set using the samples of all the experiments except one::
 
   >>> from sklearn.cross_validation import LeaveOneLabelOut
-  >>> X = [[0., 0.], [1., 1.], [-1., -1.], [2., 2.]]
-  >>> Y = [0, 1, 0, 1]
+
   >>> labels = [1, 1, 2, 2]
-
   >>> lolo = LeaveOneLabelOut(labels)
-  >>> print(lolo)
-  sklearn.cross_validation.LeaveOneLabelOut(labels=[1 1 2 2])
-
   >>> for train, test in lolo:
   ...     print("%s %s" % (train, test))
   [2 3] [0 1]
@@ -335,6 +302,16 @@ a training set using the samples of all the experiments except one::
 Another common application is to use time information: for instance the
 labels could be the year of collection of the samples and thus allow
 for cross-validation against time-based splits.
+
+.. warning::
+
+  Contrary to :class:`StratifiedKFold`, **the `labels` of
+  :class:`LeaveOneLabelOut` should not encode the target class to predict**:
+  the goal of :class:`StratifiedKFold` is to rebalance dataset classes across
+  the train / test split to ensure that the train and test folds have
+  approximately the same percentage of samples of each class while
+  :class:`LeaveOneLabelOut` will do the opposite by ensuring that the samples
+  of the train and test fold will not share the same label value.
 
 
 Leave-P-Label-Out
@@ -346,14 +323,9 @@ samples related to :math:`P` labels for each training/test set.
 Example of Leave-2-Label Out::
 
   >>> from sklearn.cross_validation import LeavePLabelOut
-  >>> X = [[0., 0.], [1., 1.], [-1., -1.], [2., 2.], [3., 3.], [4., 4.]]
-  >>> Y = [0, 1, 0, 1, 0, 1]
+
   >>> labels = [1, 1, 2, 2, 3, 3]
-
-  >>> lplo = LeavePLabelOut(labels, 2)
-  >>> print(lplo)
-  sklearn.cross_validation.LeavePLabelOut(labels=[1 1 2 2 3 3], p=2)
-
+  >>> lplo = LeavePLabelOut(labels, p=2)
   >>> for train, test in lplo:
   ...     print("%s %s" % (train, test))
   [4 5] [0 1 2 3]
@@ -379,11 +351,6 @@ Here is a usage example::
 
   >>> ss = cross_validation.ShuffleSplit(5, n_iter=3, test_size=0.25,
   ...     random_state=0)
-  >>> len(ss)
-  3
-  >>> print(ss)                                           # doctest: +ELLIPSIS
-  ShuffleSplit(5, n_iter=3, test_size=0.25, indices=True, ...)
-
   >>> for train_index, test_index in ss:
   ...     print("%s %s" % (train_index, test_index))
   ...
@@ -424,12 +391,7 @@ smaller than the total dataset if it is very large.
 
 .. _Bootstrapping: http://en.wikipedia.org/wiki/Bootstrapping_%28statistics%29
 
-  >>> bs = cross_validation.Bootstrap(9, random_state=0)
-  >>> len(bs)
-  3
-  >>> print(bs)
-  Bootstrap(9, n_iter=3, train_size=5, test_size=4, random_state=0)
-
+  >>> bs = cross_validation.Bootstrap(9, n_iter=3, random_state=0)
   >>> for train_index, test_index in bs:
   ...     print("%s %s" % (train_index, test_index))
   ...
