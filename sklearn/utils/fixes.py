@@ -95,6 +95,7 @@ else:
 
 
 def _logaddexp(x1, x2, out=None):
+    """Fix np.logaddexp in numpy < 1.4 when x1 == x2 == -np.inf."""
     if out is not None:
         result = np.logaddexp(x1, x2, out=out)
     else:
