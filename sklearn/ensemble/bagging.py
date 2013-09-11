@@ -26,6 +26,7 @@ from ..utils import check_random_state, check_arrays
 from ..utils.fixes import bincount, unique
 from ..utils.random import sample_without_replacement
 
+
 from .base import BaseEnsemble
 
 __all__ = ["BaggingClassifier", "BaggingRegressor", "BaseBagging"]
@@ -319,6 +320,36 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
 
         return y
     
+    def _set_oob_score(self, X, y):
+        n_samples = y.shape[0]
+
+        predictions = np.zeros((n_samples,))
+        n_predictions = np.zeros((n_samples,))
+        
+        for estimator, samples, features in zip(self.estimators_,
+                                                self.estimators_samples_,
+                                                self.estimators_features_):
+            mask = np.ones(n_samples, dtype=np.bool)
+            mask[samples] = False
+
+            predictions[mask] += estimator.predict((X[mask, :])[:, features])
+            n_predictions[mask] += 1
+
+        if (n_predictions == 0).any():
+            warn("Some inputs do not have OOB scores. "
+                 "This probably means too few estimators were used "
+                 "to compute any reliable oob estimates.")
+            n_predictions[n_predictions == 0] = 1
+
+        predictions /= n_predictions
+
+        self.oob_prediction_ = predictions
+        self.oob_score_ = r2_score(y, predictions)
+        print self.oob_score_
+
+        
+        
+    
         
         
         
@@ -326,9 +357,6 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
             
         
     
-
-
-        
             
         
  

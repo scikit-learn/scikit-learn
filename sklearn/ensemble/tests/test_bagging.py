@@ -21,7 +21,7 @@ from sklearn.dummy import DummyClassifier, DummyRegressor
 from sklearn.grid_search import GridSearchCV, ParameterGrid
 from sklearn.ensemble import BaggingClassifier, BaggingRegressor
 from sklearn.ensemble import _partition_estimators
-from sklearn.ensemble import _parallel_build_estimators
+from sklearn.ensemble import _parallel_build_estimators	
 from sklearn.linear_model import Perceptron, LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier, KNeighborsRegressor
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
@@ -83,6 +83,24 @@ def test_regression():
                            SVR()]:
         for params in grid:
             BaggingRegressor(base_estimator=base_estimator, random_state=rng, **params).fit(X_train, y_train).predict(X_test)
+
+def test__set_oob_score_regression():
+    """Evaluate out of bag prediction accuracy for regression for various parameter settings."""
+    rng = check_random_state(0)
+    X_train, X_test, y_train, y_test = train_test_split(boston.data,
+                                                        boston.target,
+                                                        random_state=rng)
+    grid = ParameterGrid({"max_samples": [0.5, 1.0,100,300]                       
+                          })
+
+    for base_estimator in [DummyRegressor(),
+                           DecisionTreeRegressor(),
+                           KNeighborsRegressor(),
+                           SVR()]:
+        for params in grid:
+            #print base_estimator, params
+            BaggingRegressor(base_estimator=base_estimator, random_state=rng,oob_score=True, **params).fit(X_train, y_train).predict(X_test)
+            #print
 
 
 
