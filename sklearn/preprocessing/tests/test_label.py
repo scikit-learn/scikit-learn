@@ -9,6 +9,8 @@ from sklearn.utils.testing import assert_false
 
 from sklearn.preprocessing.label import LabelBinarizer
 from sklearn.preprocessing.label import LabelEncoder
+from sklearn.preprocessing.label import label_binarize
+
 
 from sklearn import datasets
 from sklearn.linear_model.stochastic_gradient import SGDClassifier
@@ -227,3 +229,27 @@ def test_label_binarizer_multilabel_unlabeled():
                   [1, 0],
                   [0, 0]])
     assert_array_equal(lb.fit_transform(y), Y)
+
+
+def test_label_binarize_with_multilabel_indicator():
+    """Check that passing a binary indicator matrix is not noop"""
+
+    classes = np.arange(3)
+    neg_label = -1
+    pos_label = 2
+
+    y = np.array([[0, 1, 0], [1, 1, 1]])
+    expected = np.array([[-1, 2, -1], [2, 2, 2]])
+
+    # With label binarize
+    output = label_binarize(y, classes, multilabel=True, neg_label=neg_label,
+                            pos_label=pos_label)
+    assert_array_equal(output, expected)
+
+    # With the transformer
+    lb = LabelBinarizer(pos_label=pos_label, neg_label=neg_label)
+    output = lb.fit_transform(y)
+    assert_array_equal(output, expected)
+
+    output = lb.fit(y).transform(y)
+    assert_array_equal(output, expected)
