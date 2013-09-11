@@ -44,7 +44,7 @@ from warnings import warn
 from abc import ABCMeta, abstractmethod
 
 from ..base import ClassifierMixin, RegressorMixin
-from ..externals.joblib import Parallel, delayed, cpu_count
+from ..externals.joblib import Parallel, delayed
 from ..externals import six
 from ..externals.six.moves import xrange
 from ..feature_selection.from_model import _LearntSelectorMixin
@@ -57,8 +57,7 @@ from ..utils import array2d, check_random_state, check_arrays, safe_asarray
 from ..utils.validation import DataConversionWarning
 from ..utils.fixes import bincount, unique
 
-
-from .base import BaseEnsemble
+from .base import BaseEnsemble, _partition_estimators
 
 __all__ = ["RandomForestClassifier",
            "RandomForestRegressor",
@@ -123,8 +122,8 @@ def _parallel_predict_proba(trees, X, n_classes, n_outputs):
                 proba += proba_tree
 
             else:
-                for j, c in enumerate(tree.classes_):
-                    proba[:, c] += proba_tree[:, j]
+                proba[:, tree.classes_] += \
+                    proba_tree[:, range(len(tree.classes_))]
 
     else:
         proba = []
@@ -140,8 +139,8 @@ def _parallel_predict_proba(trees, X, n_classes, n_outputs):
                     proba[k] += proba_tree[k]
 
                 else:
-                    for j, c in enumerate(tree.classes_[k]):
-                        proba[k][:, c] += proba_tree[k][:, j]
+                    proba[k][:, tree.classes_] += \
+                        proba_tree[k][:, range(len(tree.classes_))]
 
     return proba
 
@@ -149,29 +148,6 @@ def _parallel_predict_proba(trees, X, n_classes, n_outputs):
 def _parallel_predict_regression(trees, X):
     """Private function used to compute a batch of predictions within a job."""
     return sum(tree.predict(X) for tree in trees)
-
-
-def _partition_trees(forest):
-    """Private function used to partition trees between jobs."""
-    # Compute the number of jobs
-    if forest.n_jobs == -1:
-        n_jobs = min(cpu_count(), forest.n_estimators)
-
-    else:
-        n_jobs = min(forest.n_jobs, forest.n_estimators)
-
-    # Partition trees between jobs
-    n_trees = [forest.n_estimators // n_jobs] * n_jobs
-
-    for i in range(forest.n_estimators % n_jobs):
-        n_trees[i] += 1
-
-    starts = [0] * (n_jobs + 1)
-
-    for i in range(1, n_jobs + 1):
-        starts[i] = starts[i - 1] + n_trees[i - 1]
-
-    return n_jobs, n_trees, starts
 
 
 class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
@@ -201,12 +177,6 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
         self.oob_score = oob_score
         self.n_jobs = n_jobs
         self.random_state = random_state
-
-        #self.n_features_ = None
-        #self.n_outputs_ = None
-        #self.classes_ = None
-        #self.n_classes_ = None
-
         self.verbose = verbose
 
     def apply(self, X):
@@ -279,12 +249,14 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
             y = np.ascontiguousarray(y, dtype=DOUBLE)
 
         # Check parameters
+        self._validate_estimator()
+
         if not self.bootstrap and self.oob_score:
             raise ValueError("Out of bag estimation only available"
                              " if bootstrap=True")
 
         # Assign chunk of trees to jobs
-        n_jobs, n_trees, _ = _partition_trees(self)
+        n_jobs, n_trees, _ = _partition_estimators(self)
 
         # Precalculate the random states
         seeds = [random_state.randint(MAX_INT, size=i) for i in n_trees]
@@ -482,7 +454,7 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
             X = array2d(X, dtype=DTYPE)
 
         # Assign chunk of trees to jobs
-        n_jobs, n_trees, starts = _partition_trees(self)
+        n_jobs, n_trees, starts = _partition_estimators(self)
 
         # Parallel loop
         all_proba = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
@@ -591,7 +563,7 @@ class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
             X = array2d(X, dtype=DTYPE)
 
         # Assign chunk of trees to jobs
-        n_jobs, n_trees, starts = _partition_trees(self)
+        n_jobs, n_trees, starts = _partition_estimators(self)
 
         # Parallel loop
         all_y_hat = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
