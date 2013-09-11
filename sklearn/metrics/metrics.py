@@ -33,6 +33,7 @@ from ..utils import deprecated
 from ..utils import column_or_1d
 from ..utils.multiclass import unique_labels
 from ..utils.multiclass import type_of_target
+from ..utils.fixes import bincount
 
 
 ###############################################################################
@@ -1448,14 +1449,14 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
         # labels are now from 0 to len(labels) - 1 -> use bincount
         tp_bins = y_true[y_true == y_pred]
         if len(tp_bins):
-            tp_sum = np.bincount(tp_bins, minlength=len(labels))
+            tp_sum = bincount(tp_bins, minlength=len(labels))
         else:
             # Pathological case
             true_sum = pred_sum = tp_sum = np.zeros(len(labels))
         if len(y_pred):
-            pred_sum = np.bincount(y_pred, minlength=len(labels))
+            pred_sum = bincount(y_pred, minlength=len(labels))
         if len(y_true):
-            true_sum = np.bincount(y_true, minlength=len(labels))
+            true_sum = bincount(y_true, minlength=len(labels))
 
     ### Select labels to keep ###
 
