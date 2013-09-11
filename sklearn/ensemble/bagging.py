@@ -19,7 +19,7 @@ from ..externals.six.moves import zip
 from ..metrics import r2_score, accuracy_score
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
 from ..utils import check_random_state, check_arrays, column_or_1d
-from ..utils.fixes import bincount, unique
+from ..utils.fixes import bincount, unique, logaddexp
 from ..utils.random import sample_without_replacement
 
 from .base import BaseEnsemble, _partition_estimators
@@ -158,16 +158,16 @@ def _parallel_predict_log_proba(estimators, estimators_features, X, n_classes):
         log_proba_estimator = estimator.predict_log_proba(X[:, features])
 
         if n_classes == len(estimator.classes_):
-            log_proba = np.logaddexp(log_proba, log_proba_estimator)
+            log_proba = logaddexp(log_proba, log_proba_estimator)
 
         else:
-            log_proba[:, estimator.classes_] = np.logaddexp(
+            log_proba[:, estimator.classes_] = logaddexp(
                 log_proba[:, estimator.classes_],
                 log_proba_estimator[:, range(len(estimator.classes_))])
 
             missing = np.setdiff1d(all_classes, estimator.classes_)
-            log_proba[:, missing] = np.logaddexp(log_proba[:, missing],
-                                                 -np.inf)
+            log_proba[:, missing] = logaddexp(log_proba[:, missing],
+                                              -np.inf)
 
     return log_proba
 
@@ -605,7 +605,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
             log_proba = all_log_proba[0]
 
             for j in range(1, len(all_log_proba)):
-                log_proba = np.logaddexp(log_proba, all_log_proba[j])
+                log_proba = logaddexp(log_proba, all_log_proba[j])
 
             log_proba -= np.log(self.n_estimators)
 

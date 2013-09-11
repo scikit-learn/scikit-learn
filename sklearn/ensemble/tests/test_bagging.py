@@ -160,7 +160,7 @@ def test_probability():
                                   np.ones(len(X_test)))
 
         assert_array_almost_equal(ensemble.predict_proba(X_test),
-                           np.exp(ensemble.predict_log_proba(X_test)))
+                                  np.exp(ensemble.predict_log_proba(X_test)))
 
         # Degenerate case, where some classes are missing
         ensemble = BaggingClassifier(base_estimator=LogisticRegression(),
@@ -172,7 +172,7 @@ def test_probability():
                                   np.ones(len(X_test)))
 
         assert_array_almost_equal(ensemble.predict_proba(X_test),
-                           np.exp(ensemble.predict_log_proba(X_test)))
+                                  np.exp(ensemble.predict_log_proba(X_test)))
 
 
 def test_oob_score_classification():
