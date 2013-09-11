@@ -1284,12 +1284,12 @@ def _prf_divide(numerator, denominator, metric, modifier, average):
     if average == 'samples':
         axis0, axis1 = axis1, axis0
 
-    msg = ('{} and F-score are ill-defined and being set to 0.0 {{}} '
-           'no {} {}s.'.format(metric.title(), modifier, axis0))
+    msg = ('{0} and F-score are ill-defined and being set to 0.0 {{0}} '
+           'no {1} {2}s.'.format(metric.title(), modifier, axis0))
     if len(mask) == 1:
         msg = msg.format('due to')
     else:
-        msg = msg.format('in {}s with'.format(axis1))
+        msg = msg.format('in {0}s with'.format(axis1))
     warnings.warn(msg, UndefinedMetricWarning, stacklevel=2)
     return result
 
