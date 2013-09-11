@@ -391,31 +391,28 @@ def label_binarize(y, classes, multilabel=False, neg_label=0, pos_label=1):
     y_type = type_of_target(y)
 
     if multilabel or len(classes) > 2:
-        if y_type == 'multilabel-indicator':
-            # nothing to do as y is already a label indicator matrix
-            return y
-
         Y = np.zeros((len(y), len(classes)), dtype=np.int)
     else:
         Y = np.zeros((len(y), 1), dtype=np.int)
 
     Y += neg_label
 
-    y_is_multilabel = y_type.startswith('multilabel')
-
     if multilabel:
-        if not y_is_multilabel:
-            raise ValueError("y should be a list of label lists/tuples, "
+        if y_type == "multilabel-indicator":
+            Y[y == 1] = pos_label
+            return Y
+        elif y_type == "multilabel-sequences":
+            # inverse map: label => column index
+            imap = dict((v, k) for k, v in enumerate(classes))
+
+            for i, label_tuple in enumerate(y):
+                for label in label_tuple:
+                    Y[i, imap[label]] = pos_label
+
+            return Y
+        else:
+            raise ValueError("y should be in a multilabel format, "
                              "got %r" % (y,))
-
-        # inverse map: label => column index
-        imap = dict((v, k) for k, v in enumerate(classes))
-
-        for i, label_tuple in enumerate(y):
-            for label in label_tuple:
-                Y[i, imap[label]] = pos_label
-
-        return Y
 
     else:
         y = column_or_1d(y)
