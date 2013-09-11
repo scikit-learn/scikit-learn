@@ -526,10 +526,9 @@ def test_oob_multilcass_iris():
 
     assert clf.oob_improvement_.shape[0] == clf.n_estimators
     # hard-coded regression test - change if modification in OOB computation
-    # FIXME: the following snippet does not yield the same results on 32 bits
-    # assert_array_almost_equal(clf.oob_improvement_[:5],
-    #                           np.array([12.68, 10.45, 8.18, 6.43, 5.13]),
-    #                           decimal=2)
+    assert_array_almost_equal(clf.oob_improvement_[:5],
+                              np.array([12.61875849, 10.42615433, 7.97229658, 6.24819282, 4.94196775]),
+                              decimal=6)
 
 
 def test_verbose_output():
@@ -598,3 +597,44 @@ def test_warn_deviance():
                 pass
             # deprecated warning for bdeviance and mdeviance
             assert len(w) == 1
+
+
+def test_boston_stability():
+    """Stability of regression on different architectures"""
+    clf = GradientBoostingRegressor(n_estimators=100, loss='ls',
+                                    max_depth=4,
+                                    min_samples_split=1, random_state=1)
+    _ = clf.fit(boston.data, boston.target)
+    y_pred = clf.predict(boston.data)
+    y_true = np.array([22.97554029, 49.38223126, 23.23733727, 9.01829255,
+                       21.12510564, 20.32594896, 21.07090751])
+    assert_array_almost_equal(y_pred[:7], y_true, decimal=4)
+
+
+def test_iris_binay_stability():
+    """Stability of classification on different architectures"""
+
+    clf = GradientBoostingClassifier(n_estimators=100, loss='deviance',
+                                     random_state=1, subsample=0.5,
+                                     max_depth=1)
+    y = np.array(iris.target, dtype=np.int64)
+    y[y==2] = 0
+    clf.fit(iris.data, y)
+    y_pred = clf.decision_function(iris.data).ravel()
+    y_true = np.array([ 3.08630685,  3.23127551, -2.34969055, -3.84946307])
+    assert_array_almost_equal(y_pred[:4], y_true, decimal=6)
+
+
+def test_iris_stability():
+    """Stability of classification on different architectures"""
+
+    clf = GradientBoostingClassifier(n_estimators=100, loss='deviance',
+                                     random_state=1, subsample=0.5,
+                                     max_depth=1)
+    clf.fit(iris.data, iris.target)
+    y_pred = clf.decision_function(iris.data)
+    y_true = np.array([[-6.68747657,  2.34295911, -3.7480776 ],
+                       [-6.68747657,  1.930238  , -3.56114767],
+                       [-6.68747657, -0.95144496,  3.8888391 ],
+                       [ 7.87720207, -0.33872765, -4.01817875]])
+    assert_array_almost_equal(y_pred[:4], y_true, decimal=6)
