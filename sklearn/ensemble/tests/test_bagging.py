@@ -102,6 +102,52 @@ def test__set_oob_score_regression():
             BaggingRegressor(base_estimator=base_estimator, random_state=rng,oob_score=True, **params).fit(X_train, y_train).predict(X_test)
             #print
 
+def test_bootstrap_samples():
+    """Test that bootstraping samples generate non-perfect base estimators."""
+    rng = check_random_state(0)
+    X_train, X_test, y_train, y_test = train_test_split(boston.data,
+                                                        boston.target,
+                                                        random_state=rng)
+
+    base_estimator = DecisionTreeRegressor().fit(X_train, y_train)
+
+    # without bootstrap, all trees are perfect on the training set
+    ensemble = BaggingRegressor(base_estimator=DecisionTreeRegressor(),
+                                max_samples=1.0,
+                                bootstrap=False,
+                                random_state=rng).fit(X_train, y_train)
+
+    assert_equal(base_estimator.score(X_train, y_train),
+                 ensemble.score(X_train, y_train))
+
+    # with bootstrap, trees are no longer perfect on the training set
+    ensemble = BaggingRegressor(base_estimator=DecisionTreeRegressor(),
+                                max_samples=1.0,
+                                bootstrap=True,
+                                random_state=rng).fit(X_train, y_train)
+
+    assert_greater(base_estimator.score(X_train, y_train),
+                   ensemble.score(X_train, y_train))
+
+
+def test_oob_score_regression():
+    """Check that oob prediction is a good estimation of the generalization error."""
+    rng = check_random_state(0)
+    X_train, X_test, y_train, y_test = train_test_split(boston.data,
+                                                        boston.target,
+                                                        random_state=rng)
+
+    clf = BaggingRegressor(base_estimator=DecisionTreeRegressor(),
+                           n_estimators=50,
+                           bootstrap=True,
+                           oob_score=True,
+                           random_state=rng).fit(X_train, y_train)
+
+    test_score = clf.score(X_test, y_test)
+
+    assert_less(abs(test_score - clf.oob_score_), 0.1)
+
+
 
 
 if __name__ == "__main__":
