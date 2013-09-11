@@ -8,7 +8,12 @@
 Changelog
 ---------
 
-   - Add predict method to :class:`cluster.AffinityPropagation` and
+   - Added :class:`ensemble.BaggingClassifier` and
+     :class:`ensemble.BaggingRegressor` meta-estimators for ensembling 
+     any kind of base estimator. See the :ref:`Bagging <bagging>` section of 
+     the user guide for details and examples. By Gilles Louppe`_. 
+
+   - Added predict method to :class:`cluster.AffinityPropagation` and
      :class:`cluster.MeanShift`, by `Mathieu Blondel`_.
 
    - Vector and matrix multiplications have been optimised throughout the
@@ -26,7 +31,7 @@ Changelog
      sparse matrices and has much lower memory complexity, meaning it will
      scale up gracefully to large datasets. By `Lars Buitinck`_.
 
-   - Add svd_method option with default value to "randomized" to
+   - Added svd_method option with default value to "randomized" to
      :class:`decomposition.factor_analysis.FactorAnalysis` to save memory and
      significantly speedup computation by `Denis Engemann`_, and
      `Alexandre Gramfort`_.
