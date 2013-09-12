@@ -9,9 +9,9 @@ Changelog
 ---------
 
    - Added :class:`ensemble.BaggingClassifier` and
-     :class:`ensemble.BaggingRegressor` meta-estimators for ensembling 
-     any kind of base estimator. See the :ref:`Bagging <bagging>` section of 
-     the user guide for details and examples. By Gilles Louppe`_. 
+     :class:`ensemble.BaggingRegressor` meta-estimators for ensembling
+     any kind of base estimator. See the :ref:`Bagging <bagging>` section of
+     the user guide for details and examples. By Gilles Louppe`_.
 
    - Added predict method to :class:`cluster.AffinityPropagation` and
      :class:`cluster.MeanShift`, by `Mathieu Blondel`_.
@@ -35,6 +35,9 @@ Changelog
      :class:`decomposition.factor_analysis.FactorAnalysis` to save memory and
      significantly speedup computation by `Denis Engemann`_, and
      `Alexandre Gramfort`_.
+
+   - Memory improvements of extra trees and random forest by
+     `Arnaud Joly`_.
 
 
 API changes summary
