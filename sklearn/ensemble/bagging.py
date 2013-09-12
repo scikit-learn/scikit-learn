@@ -352,7 +352,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
             - If int, then draw `max_features` features.
             - If float, then draw `max_features * X.shape[1]` features.
 
-    bootstrap : boolean, optional (default=False)
+    bootstrap : boolean, optional (default=True)
         Whether samples are drawn with replacement.
 
     bootstrap_features : boolean, optional (default=False)
@@ -699,7 +699,7 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
             - If int, then draw `max_features` features.
             - If float, then draw `max_features * X.shape[1]` features.
 
-    bootstrap : boolean, optional (default=False)
+    bootstrap : boolean, optional (default=True)
         Whether samples are drawn with replacement.
 
     bootstrap_features : boolean, optional (default=False)
