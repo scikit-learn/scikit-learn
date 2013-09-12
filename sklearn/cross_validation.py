@@ -52,10 +52,13 @@ class _PartitionIterator(with_metaclass(ABCMeta)):
         Total number of elements in dataset.
     """
 
-    def __init__(self, n, indices=True):
-        if not indices:
+    def __init__(self, n, indices=None):
+        if indices is None:
+            indices = True
+        else:
             warnings.warn("The indices parameter is deprecated and will be "
-                          "removed (assumed True) in 0.17", DeprecationWarning)
+                          "removed (assumed True) in 0.17", DeprecationWarning,
+                          stacklevel=1)
         if abs(n - int(n)) >= np.finfo('f').eps:
             raise ValueError("n must be an integer")
         self.n = int(n)
@@ -196,7 +199,7 @@ class LeavePOut(_PartitionIterator):
     TRAIN: [0 1] TEST: [2 3]
     """
 
-    def __init__(self, n, p, indices=True):
+    def __init__(self, n, p, indices=None):
         super(LeavePOut, self).__init__(n, indices)
         self.p = p
 
@@ -291,7 +294,7 @@ class KFold(_BaseKFold):
     classification tasks).
     """
 
-    def __init__(self, n, n_folds=3, indices=True, shuffle=False,
+    def __init__(self, n, n_folds=3, indices=None, shuffle=False,
                  random_state=None):
         super(KFold, self).__init__(n, n_folds, indices)
         random_state = check_random_state(random_state)
@@ -362,7 +365,7 @@ class StratifiedKFold(_BaseKFold):
     complementary.
     """
 
-    def __init__(self, y, n_folds=3, indices=True):
+    def __init__(self, y, n_folds=3, indices=None):
         super(StratifiedKFold, self).__init__(len(y), n_folds, indices)
         y = np.asarray(y)
         _, y_sorted = unique(y, return_inverse=True)
@@ -436,7 +439,7 @@ class LeaveOneLabelOut(_PartitionIterator):
 
     """
 
-    def __init__(self, labels, indices=True):
+    def __init__(self, labels, indices=None):
         super(LeaveOneLabelOut, self).__init__(len(labels), indices)
         # We make a copy of labels to avoid side-effects during iteration
         self.labels = np.array(labels, copy=True)
@@ -509,7 +512,7 @@ class LeavePLabelOut(_PartitionIterator):
      [5 6]] [1] [2 1]
     """
 
-    def __init__(self, labels, p, indices=True):
+    def __init__(self, labels, p, indices=None):
         # We make a copy of labels to avoid side-effects during iteration
         super(LeavePLabelOut, self).__init__(len(labels), indices)
         self.labels = np.array(labels, copy=True)
@@ -678,8 +681,10 @@ class BaseShuffleSplit(with_metaclass(ABCMeta)):
     """Base class for ShuffleSplit and StratifiedShuffleSplit"""
 
     def __init__(self, n, n_iter=10, test_size=0.1, train_size=None,
-                 indices=True, random_state=None, n_iterations=None):
-        if not indices:
+                 indices=None, random_state=None, n_iterations=None):
+        if indices is None:
+            indices = True
+        else:
             warnings.warn("The indices parameter is deprecated and will be "
                           "removed (assumed True) in 0.17", DeprecationWarning)
         self.n = n
@@ -754,7 +759,7 @@ class ShuffleSplit(BaseShuffleSplit):
     3
     >>> print(rs)
     ... # doctest: +ELLIPSIS
-    ShuffleSplit(4, n_iter=3, test_size=0.25, indices=True, ...)
+    ShuffleSplit(4, n_iter=3, test_size=0.25, ...)
     >>> for train_index, test_index in rs:
     ...    print("TRAIN:", train_index, "TEST:", test_index)
     ...
@@ -786,13 +791,12 @@ class ShuffleSplit(BaseShuffleSplit):
             yield ind_train, ind_test
 
     def __repr__(self):
-        return ('%s(%d, n_iter=%d, test_size=%s, indices=%s, '
+        return ('%s(%d, n_iter=%d, test_size=%s, '
                 'random_state=%s)' % (
                     self.__class__.__name__,
                     self.n,
                     self.n_iter,
                     str(self.test_size),
-                    self.indices,
                     self.random_state,
                 ))
 
@@ -919,7 +923,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
     """
 
     def __init__(self, y, n_iter=10, test_size=0.1, train_size=None,
-                 indices=True, random_state=None, n_iterations=None):
+                 indices=None, random_state=None, n_iterations=None):
 
         super(StratifiedShuffleSplit, self).__init__(
             len(y), n_iter, test_size, train_size, indices, random_state,
@@ -968,13 +972,12 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
             yield train, test
 
     def __repr__(self):
-        return ('%s(labels=%s, n_iter=%d, test_size=%s, indices=%s, '
+        return ('%s(labels=%s, n_iter=%d, test_size=%s, '
                 'random_state=%s)' % (
                     self.__class__.__name__,
                     self.y,
                     self.n_iter,
                     str(self.test_size),
-                    self.indices,
                     self.random_state,
                 ))
 
@@ -1172,7 +1175,7 @@ def _check_cv(cv, X=None, y=None, classifier=False, warn_mask=False):
             warnings.warn('check_cv will return indices instead of boolean '
                           'masks from 0.17', DeprecationWarning)
         else:
-            needs_indices = True
+            needs_indices = None
         if classifier:
             cv = StratifiedKFold(y, cv, indices=needs_indices)
         else:
@@ -1362,8 +1365,7 @@ def train_test_split(*arrays, **options):
     n_samples = arrays[0].shape[0]
     cv = ShuffleSplit(n_samples, test_size=test_size,
                       train_size=train_size,
-                      random_state=random_state,
-                      indices=True)
+                      random_state=random_state)
     train, test = next(iter(cv))
     splitted = []
     for a in arrays:
