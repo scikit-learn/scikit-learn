@@ -11,6 +11,7 @@ from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_less
+from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_warns
@@ -221,7 +222,7 @@ def test_stratified_shuffle_split_iter():
 
     for y in ys:
         sss = cval.StratifiedShuffleSplit(y, 6, test_size=0.33,
-                                          random_state=0, indices=True)
+                                          random_state=0)
         for train, test in sss:
             assert_array_equal(unique(y[train]), unique(y[test]))
             # Checks if folds keep classes proportions
@@ -454,7 +455,7 @@ def test_permutation_score():
 
     # check that we obtain the same results with a sparse representation
     svm_sparse = SVC(kernel='linear')
-    cv_sparse = cval.StratifiedKFold(y, 2, indices=True)
+    cv_sparse = cval.StratifiedKFold(y, 2)
     score_label, _, pvalue_label = cval.permutation_test_score(
         svm_sparse, X_sparse, y, cv=cv_sparse,
         scoring="accuracy", labels=np.ones(y.size), random_state=0)
@@ -499,6 +500,8 @@ def test_cross_val_generator_with_mask():
                       4, indices=False)
     for cv in [loo, lpo, kf, skf, lolo, lopo, ss]:
         for train, test in cv:
+            assert_equal(np.asarray(train).dtype.kind, 'b')
+            assert_equal(np.asarray(train).dtype.kind, 'b')
             X_train, X_test = X[train], X[test]
             y_train, y_test = y[train], y[test]
 
@@ -507,16 +510,46 @@ def test_cross_val_generator_with_indices():
     X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
     y = np.array([1, 1, 2, 2])
     labels = np.array([1, 2, 3, 4])
-    loo = cval.LeaveOneOut(4, indices=True)
-    lpo = cval.LeavePOut(4, 2, indices=True)
-    kf = cval.KFold(4, 2, indices=True)
-    skf = cval.StratifiedKFold(y, 2, indices=True)
-    lolo = cval.LeaveOneLabelOut(labels, indices=True)
-    lopo = cval.LeavePLabelOut(labels, 2, indices=True)
+    # explicitly passing indices value is deprecated
+    loo = assert_warns(DeprecationWarning, cval.LeaveOneOut,
+                       4, indices=True)
+    lpo = assert_warns(DeprecationWarning, cval.LeavePOut,
+                       4, 2, indices=True)
+    kf = assert_warns(DeprecationWarning, cval.KFold,
+                      4, 2, indices=True)
+    skf = assert_warns(DeprecationWarning, cval.StratifiedKFold,
+                       y, 2, indices=True)
+    lolo = assert_warns(DeprecationWarning, cval.LeaveOneLabelOut,
+                        labels, indices=True)
+    lopo = assert_warns(DeprecationWarning, cval.LeavePLabelOut,
+                        labels, 2, indices=True)
     b = cval.Bootstrap(2)  # only in index mode
-    ss = cval.ShuffleSplit(2, indices=True)
+    ss = assert_warns(DeprecationWarning, cval.ShuffleSplit,
+                      2, indices=True)
     for cv in [loo, lpo, kf, skf, lolo, lopo, b, ss]:
         for train, test in cv:
+            assert_not_equal(np.asarray(train).dtype.kind, 'b')
+            assert_not_equal(np.asarray(train).dtype.kind, 'b')
+            X_train, X_test = X[train], X[test]
+            y_train, y_test = y[train], y[test]
+
+
+def test_cross_val_generator_with_default_indices():
+    X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
+    y = np.array([1, 1, 2, 2])
+    labels = np.array([1, 2, 3, 4])
+    loo = cval.LeaveOneOut(4)
+    lpo = cval.LeavePOut(4, 2)
+    kf = cval.KFold(4, 2)
+    skf = cval.StratifiedKFold(y, 2)
+    lolo = cval.LeaveOneLabelOut(labels)
+    lopo = cval.LeavePLabelOut(labels, 2)
+    b = cval.Bootstrap(2)  # only in index mode
+    ss = cval.ShuffleSplit(2)
+    for cv in [loo, lpo, kf, skf, lolo, lopo, b, ss]:
+        for train, test in cv:
+            assert_not_equal(np.asarray(train).dtype.kind, 'b')
+            assert_not_equal(np.asarray(train).dtype.kind, 'b')
             X_train, X_test = X[train], X[test]
             y_train, y_test = y[train], y[test]
 
