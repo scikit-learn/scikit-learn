@@ -62,10 +62,17 @@ class _PartitionIterator(with_metaclass(ABCMeta)):
         if abs(n - int(n)) >= np.finfo('f').eps:
             raise ValueError("n must be an integer")
         self.n = int(n)
-        self.indices = indices
+        self._indices = indices
+
+    @property
+    def indices(self):
+        warnings.warn("The indices attribute is deprecated and will be "
+                      "removed (assumed True) in 0.17", DeprecationWarning,
+                      stacklevel=1)
+        return self._indices
 
     def __iter__(self):
-        indices = self.indices
+        indices = self._indices
         if indices:
             ind = np.arange(self.n)
         for test_index in self._iter_test_masks():
@@ -696,13 +703,20 @@ class BaseShuffleSplit(with_metaclass(ABCMeta)):
         self.test_size = test_size
         self.train_size = train_size
         self.random_state = random_state
-        self.indices = indices
+        self._indices = indices
         self.n_train, self.n_test = _validate_shuffle_split(n,
                                                             test_size,
                                                             train_size)
 
+    @property
+    def indices(self):
+        warnings.warn("The indices attribute is deprecated and will be "
+                      "removed (assumed True) in 0.17", DeprecationWarning,
+                      stacklevel=1)
+        return self._indices
+
     def __iter__(self):
-        if self.indices:
+        if self._indices:
             for train, test in self._iter_indices():
                 yield train, test
             return
@@ -1184,7 +1198,7 @@ def _check_cv(cv, X=None, y=None, classifier=False, warn_mask=False):
             else:
                 n_samples = X.shape[0]
             cv = KFold(n_samples, cv, indices=needs_indices)
-    if needs_indices and not getattr(cv, "indices", True):
+    if needs_indices and not getattr(cv, "_indices", True):
         raise ValueError("Sparse data and lists require indices-based cross"
                          " validation generator, got: %r", cv)
     return cv
