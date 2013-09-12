@@ -8,6 +8,7 @@
 #          Noel Dawe <noel@dawe.me>
 #          Satrajit Gosh <satrajit.ghosh@gmail.com>
 #          Lars Buitinck <L.J.Buitinck@uva.nl>
+#          Arnaud Joly <arnaud.v.joly@gmail.com>
 #
 # rand_r function taken from the 4.4BSD C library:
 # Copyright (c) 1990 The Regents of the University of California.
@@ -809,8 +810,11 @@ cdef class Splitter:
 
     def __dealloc__(self):
         """Destructor."""
-        free(self.samples)
-        free(self.features)
+        if self.samples != NULL:
+            free(self.samples)
+
+        if self.features != NULL:
+            free(self.features)
 
     def __getstate__(self):
         return {}
@@ -861,6 +865,21 @@ cdef class Splitter:
         self.y = <DOUBLE_t*> y.data
         self.y_stride = <SIZE_t> y.strides[0] / <SIZE_t> y.itemsize
         self.sample_weight = sample_weight
+
+    cdef void finalize(self):
+        """Finalize the splitter - release memory"""
+        if self.features != NULL:
+            free(self.features)
+            self.features = NULL
+
+        if self.samples != NULL:
+            free(self.samples)
+            self.samples = NULL
+
+        self.X = None
+        self.y = NULL
+        self.sample_weight = NULL
+
 
     cdef void node_reset(self, SIZE_t start, SIZE_t end, double* impurity):
         """Reset splitter on node samples[start:end]."""
@@ -1578,7 +1597,7 @@ cdef class Tree:
                 stack_n_values += 5
 
         self._resize(self.node_count)
-        splitter.X = None # Release reference
+        splitter.finalize()
         free(stack)
 
     cpdef predict(self, np.ndarray[DTYPE_t, ndim=2] X):
