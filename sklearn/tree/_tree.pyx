@@ -8,6 +8,7 @@
 #          Noel Dawe <noel@dawe.me>
 #          Satrajit Gosh <satrajit.ghosh@gmail.com>
 #          Lars Buitinck <L.J.Buitinck@uva.nl>
+#          Arnaud Joly <arnaud.v.joly@gmail.com>
 #
 # rand_r function taken from the 4.4BSD C library:
 # Copyright (c) 1990 The Regents of the University of California.
@@ -59,6 +60,10 @@ cdef class Criterion:
                          SIZE_t end) nogil:
         """Initialize the criterion at node samples[start:end] and
            children samples[start:start] and samples[start:end]."""
+        pass
+
+    cdef void finalize(self) nogil:
+        """Finalize the criterion - release the memory"""
         pass
 
     cdef void reset(self) nogil:
@@ -144,9 +149,13 @@ cdef class ClassificationCriterion(Criterion):
     def __dealloc__(self):
         """Destructor."""
         free(self.n_classes)
-        free(self.label_count_left)
-        free(self.label_count_right)
-        free(self.label_count_total)
+
+        if self.label_count_left != NULL:
+            free(self.label_count_left)
+        if self.label_count_right != NULL:
+            free(self.label_count_right)
+        if self.label_count_total != NULL:
+            free(self.label_count_total)
 
     def __reduce__(self):
         return (ClassificationCriterion,
@@ -212,6 +221,21 @@ cdef class ClassificationCriterion(Criterion):
 
         # Reset to pos=start
         self.reset()
+
+    cdef void finalize(self) nogil:
+        """Finalize the criterion - release the memory"""
+
+        if self.label_count_left != NULL:
+            free(self.label_count_left)
+            self.label_count_left = NULL
+
+        if self.label_count_right != NULL:
+            free(self.label_count_right)
+            self.label_count_right = NULL
+
+        if self.label_count_total != NULL:
+            free(self.label_count_total)
+            self.label_count_total = NULL
 
     cdef void reset(self) nogil:
         """Reset the criterion at pos=start."""
@@ -554,14 +578,29 @@ cdef class RegressionCriterion(Criterion):
 
     def __dealloc__(self):
         """Destructor."""
-        free(self.mean_left)
-        free(self.mean_right)
-        free(self.mean_total)
-        free(self.sq_sum_left)
-        free(self.sq_sum_right)
-        free(self.sq_sum_total)
-        free(self.var_left)
-        free(self.var_right)
+        if self.mean_left != NULL:
+            free(self.mean_left)
+
+        if self.mean_right != NULL:
+            free(self.mean_right)
+
+        if self.mean_total != NULL:
+            free(self.mean_total)
+
+        if self.sq_sum_left != NULL:
+            free(self.sq_sum_left)
+
+        if self.sq_sum_right != NULL:
+            free(self.sq_sum_right)
+
+        if self.sq_sum_total != NULL:
+            free(self.sq_sum_total)
+
+        if self.var_left != NULL:
+            free(self.var_left)
+
+        if self.var_right != NULL:
+            free(self.var_right)
 
     def __reduce__(self):
         return (RegressionCriterion, (self.n_outputs,), self.__getstate__())
@@ -637,6 +676,41 @@ cdef class RegressionCriterion(Criterion):
 
         # Reset to pos=start
         self.reset()
+
+    cdef void finalize(self) nogil:
+        """Finalize the criterion - release the memory"""
+
+        if self.mean_left != NULL:
+            free(self.mean_left)
+            self.mean_left = NULL
+
+        if self.mean_right != NULL:
+            free(self.mean_right)
+            self.mean_right = NULL
+
+        if self.mean_total != NULL:
+            free(self.mean_total)
+            self.mean_total = NULL
+
+        if self.sq_sum_left != NULL:
+            free(self.sq_sum_left)
+            self.sq_sum_left = NULL
+
+        if self.sq_sum_right != NULL:
+            free(self.sq_sum_right)
+            self.sq_sum_right = NULL
+
+        if self.sq_sum_total != NULL:
+            free(self.sq_sum_total)
+            self.sq_sum_total = NULL
+
+        if self.var_left != NULL:
+            free(self.var_left)
+            self.var_left = NULL
+
+        if self.var_right != NULL:
+            free(self.var_right)
+            self.var_right = NULL
 
     cdef void reset(self) nogil:
         """Reset the criterion at pos=start."""
@@ -809,8 +883,11 @@ cdef class Splitter:
 
     def __dealloc__(self):
         """Destructor."""
-        free(self.samples)
-        free(self.features)
+        if self.samples != NULL:
+            free(self.samples)
+
+        if self.features != NULL:
+            free(self.features)
 
     def __getstate__(self):
         return {}
@@ -861,6 +938,22 @@ cdef class Splitter:
         self.y = <DOUBLE_t*> y.data
         self.y_stride = <SIZE_t> y.strides[0] / <SIZE_t> y.itemsize
         self.sample_weight = sample_weight
+
+    cdef void finalize(self):
+        """Finalize the splitter - release memory"""
+        if self.features != NULL:
+            free(self.features)
+            self.features = NULL
+
+        if self.samples != NULL:
+            free(self.samples)
+            self.samples = NULL
+
+        self.X = None
+        self.y = NULL
+        self.sample_weight = NULL
+        self.criterion.finalize()
+
 
     cdef void node_reset(self, SIZE_t start, SIZE_t end, double* impurity):
         """Reset splitter on node samples[start:end]."""
@@ -1578,7 +1671,7 @@ cdef class Tree:
                 stack_n_values += 5
 
         self._resize(self.node_count)
-        splitter.X = None # Release reference
+        splitter.finalize()
         free(stack)
 
     cpdef predict(self, np.ndarray[DTYPE_t, ndim=2] X):

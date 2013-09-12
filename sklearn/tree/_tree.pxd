@@ -1,6 +1,7 @@
 # Authors: Gilles Louppe <g.louppe@gmail.com>
 #          Peter Prettenhofer <peter.prettenhofer@gmail.com>
 #          Brian Holt <bdholt1@gmail.com>
+#          Joly Arnaud <arnaud.v.joly@gmail.com>
 # Licence: BSD 3 clause
 
 # See _tree.pyx for details.
@@ -44,6 +45,7 @@ cdef class Criterion:
                          SIZE_t* samples,
                          SIZE_t start,
                          SIZE_t end) nogil
+    cdef void finalize(self) nogil
     cdef void reset(self) nogil
     cdef void update(self, SIZE_t new_pos) nogil
     cdef double node_impurity(self) nogil
@@ -84,6 +86,7 @@ cdef class Splitter:
     cdef void init(self, np.ndarray X,
                          np.ndarray y,
                          DOUBLE_t* sample_weight)
+    cdef void finalize(self)
 
     cdef void node_reset(self, SIZE_t start, SIZE_t end, double* impurity)
 
@@ -92,7 +95,6 @@ cdef class Splitter:
                                double* threshold)
 
     cdef void node_value(self, double* dest)
-
 
 # =============================================================================
 # Tree
