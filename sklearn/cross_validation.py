@@ -50,11 +50,6 @@ class _PartitionIterator(with_metaclass(ABCMeta)):
     ----------
     n : int
         Total number of elements in dataset.
-
-    indices : boolean, optional (default True)
-        Return train/test split as arrays of indices, rather than a boolean
-        mask array. Integer indices are required when dealing with sparse
-        matrices, since those cannot be indexed by boolean masks.
     """
 
     def __init__(self, n, indices=True):
@@ -117,11 +112,6 @@ class LeaveOneOut(_PartitionIterator):
     n : int
         Total number of elements in dataset.
 
-    indices : boolean, optional (default True)
-        Return train/test split as arrays of indices, rather than a boolean
-        mask array. Integer indices are required when dealing with sparse
-        matrices, since those cannot be indexed by boolean masks.
-
     Examples
     --------
     >>> from sklearn import cross_validation
@@ -183,11 +173,6 @@ class LeavePOut(_PartitionIterator):
 
     p : int
         Size of the test sets.
-
-    indices : boolean, optional (default True)
-        Return train/test split as arrays of indices, rather than a boolean
-        mask array. Integer indices are required when dealing with sparse
-        matrices, since those cannot be indexed by boolean masks.
 
     Examples
     --------
@@ -270,11 +255,6 @@ class KFold(_BaseKFold):
 
     n_folds : int, default=3
         Number of folds. Must be at least 2.
-
-    indices : boolean, optional (default True)
-        Return train/test split as arrays of indices, rather than a boolean
-        mask array. Integer indices are required when dealing with sparse
-        matrices, since those cannot be indexed by boolean masks.
 
     shuffle : boolean, optional
         Whether to shuffle the data before splitting into batches.
@@ -359,11 +339,6 @@ class StratifiedKFold(_BaseKFold):
     n_folds : int, default=3
         Number of folds. Must be at least 2.
 
-    indices : boolean, optional (default True)
-        Return train/test split as arrays of indices, rather than a boolean
-        mask array. Integer indices are required when dealing with sparse
-        matrices, since those cannot be indexed by boolean masks.
-
     Examples
     --------
     >>> from sklearn import cross_validation
@@ -433,11 +408,6 @@ class LeaveOneLabelOut(_PartitionIterator):
     labels : array-like of int with shape (n_samples,)
         Arbitrary domain-specific stratification of the data to be used
         to draw the splits.
-
-    indices : boolean, optional (default True)
-        Return train/test split as arrays of indices, rather than a boolean
-        mask array. Integer indices are required when dealing with sparse
-        matrices, since those cannot be indexed by boolean masks.
 
     Examples
     --------
@@ -511,11 +481,6 @@ class LeavePLabelOut(_PartitionIterator):
 
     p : int
         Number of samples to leave out in the test split.
-
-    indices : boolean, optional (default True)
-        Return train/test split as arrays of indices, rather than a boolean
-        mask array. Integer indices are required when dealing with sparse
-        matrices, since those cannot be indexed by boolean masks.
 
     Examples
     --------
@@ -777,11 +742,6 @@ class ShuffleSplit(BaseShuffleSplit):
         int, represents the absolute number of train samples. If None,
         the value is automatically set to the complement of the test size.
 
-    indices : boolean, optional (default True)
-        Return train/test split as arrays of indices, rather than a boolean
-        mask array. Integer indices are required when dealing with sparse
-        matrices, since those cannot be indexed by boolean masks.
-
     random_state : int or RandomState
         Pseudo-random number generator state used for random sampling.
 
@@ -935,11 +895,6 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
         proportion of the dataset to include in the train split. If
         int, represents the absolute number of train samples. If None,
         the value is automatically set to the complement of the test size.
-
-    indices : boolean, optional (default True)
-        Return train/test split as arrays of indices, rather than a boolean
-        mask array. Integer indices are required when dealing with sparse
-        matrices, since those cannot be indexed by boolean masks.
 
     random_state : int or RandomState
         Pseudo-random number generator state used for random sampling.
