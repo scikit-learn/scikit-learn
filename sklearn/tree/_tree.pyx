@@ -928,6 +928,7 @@ cdef class BestSplitter(Splitter):
         cdef SIZE_t partition_start
         cdef SIZE_t partition_end
 
+        # Shuffle all features, using Fisher-Yates algorithm
         for f_idx from 0 <= f_idx < n_features:
             # Draw a feature at random
             f_i = n_features - f_idx - 1
@@ -937,7 +938,9 @@ cdef class BestSplitter(Splitter):
             features[f_i] = features[f_j]
             features[f_j] = tmp
 
-            current_feature = features[f_i]
+        for f_idx from 0 <= f_idx < n_features:
+            # Draw a feature at random
+            current_feature = features[f_idx]
 
             # Sort samples along that feature
             sort(X, current_feature, samples+start, end-start)
@@ -1098,6 +1101,7 @@ cdef class RandomSplitter(Splitter):
         cdef SIZE_t partition_start
         cdef SIZE_t partition_end
 
+        # Shuffle all features, using Fisher-Yates algorithm
         for f_idx from 0 <= f_idx < n_features:
             # Draw a feature at random
             f_i = n_features - f_idx - 1
@@ -1107,7 +1111,9 @@ cdef class RandomSplitter(Splitter):
             features[f_i] = features[f_j]
             features[f_j] = tmp
 
-            current_feature = features[f_i]
+        for f_idx from 0 <= f_idx < n_features:
+            # Draw a feature at random
+            current_feature = features[f_idx]
 
             # Find min, max
             min_feature_value = max_feature_value = X[samples[start], current_feature]
