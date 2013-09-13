@@ -162,7 +162,8 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
             else:
                 mode, _ = weighted_mode(_y[neigh_ind, k], weights, axis=1)
 
-            y_pred[:, k] = classes_k.take(mode.flatten().astype(np.int))
+            mode = np.asarray(mode.ravel(), dtype=np.intp)
+            y_pred[:, k] = classes_k.take(mode)
 
         if not self.outputs_2d_:
             y_pred = y_pred.ravel()

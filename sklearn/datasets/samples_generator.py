@@ -195,7 +195,7 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
     # Repeat some features
     if n_repeated > 0:
         n = n_informative + n_redundant
-        indices = ((n - 1) * generator.rand(n_repeated) + 0.5).astype(np.int)
+        indices = ((n - 1) * generator.rand(n_repeated) + 0.5).astype(np.intp)
         X[:, n:n + n_repeated] = X[:, indices]
 
     # Fill useless features
@@ -545,14 +545,15 @@ def make_circles(n_samples=100, shuffle=True, noise=None, random_state=None,
 
     X = np.vstack((np.append(outer_circ_x, inner_circ_x),
                    np.append(outer_circ_y, inner_circ_y))).T
-    y = np.hstack([np.zeros(n_samples / 2), np.ones(n_samples / 2)])
+    y = np.hstack([np.zeros(n_samples / 2, dtype=np.intp),
+                   np.ones(n_samples / 2, dtype=np.intp)])
     if shuffle:
         X, y = util_shuffle(X, y, random_state=generator)
 
     if not noise is None:
         X += generator.normal(scale=noise, size=X.shape)
 
-    return X, y.astype(np.int)
+    return X, y
 
 
 def make_moons(n_samples=100, shuffle=True, noise=None, random_state=None):
@@ -593,7 +594,8 @@ def make_moons(n_samples=100, shuffle=True, noise=None, random_state=None):
 
     X = np.vstack((np.append(outer_circ_x, inner_circ_x),
                    np.append(outer_circ_y, inner_circ_y))).T
-    y = np.hstack([np.zeros(n_samples_in), np.ones(n_samples_out)])
+    y = np.hstack([np.zeros(n_samples_in, dtype=np.intp),
+                   np.ones(n_samples_out, dtype=np.intp)])
 
     if shuffle:
         X, y = util_shuffle(X, y, random_state=generator)
@@ -601,7 +603,7 @@ def make_moons(n_samples=100, shuffle=True, noise=None, random_state=None):
     if not noise is None:
         X += generator.normal(scale=noise, size=X.shape)
 
-    return X, y.astype(np.int)
+    return X, y
 
 
 def make_blobs(n_samples=100, n_features=2, centers=3, cluster_std=1.0,
