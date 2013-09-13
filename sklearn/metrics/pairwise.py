@@ -484,7 +484,7 @@ def cosine_distances(X, Y=None):
 
     Returns
     -------
-    distance matrix : array_like
+    distance matrix : array
         An array with shape (n_samples_X, n_samples_Y).
 
     See also
@@ -626,7 +626,7 @@ def cosine_similarity(X, Y=None):
 
     Returns
     -------
-    kernel matrix : array_like
+    kernel matrix : array
         An array with shape (n_samples_X, n_samples_Y).
     """
     # to avoid recursive import
