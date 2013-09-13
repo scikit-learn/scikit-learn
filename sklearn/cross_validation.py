@@ -11,7 +11,7 @@ validation and performance evaluation.
 from __future__ import print_function
 
 import warnings
-from itertools import combinations
+from itertools import chain, combinations
 from math import ceil, floor, factorial
 import numbers
 from abc import ABCMeta, abstractmethod
@@ -1409,11 +1409,9 @@ def train_test_split(*arrays, **options):
                       train_size=train_size,
                       random_state=random_state,
                       indices=True)
+
     train, test = next(iter(cv))
-    splitted = []
-    for a in arrays:
-        splitted.append(a[train])
-        splitted.append(a[test])
-    return splitted
+    return list(chain.from_iterable((a[train], a[test]) for a in arrays))
+
 
 train_test_split.__test__ = False  # to avoid a pb with nosetests

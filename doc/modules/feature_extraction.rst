@@ -353,7 +353,7 @@ Note that in the previous corpus, the first and the last documents have
 exactly the same words hence are encoded in equal vectors. In particular
 we lose the information that the last document is an interrogative form. To
 preserve some of the local ordering information we can extract 2-grams
-of words in addition to the 1-grams (the word themselvs)::
+of words in addition to the 1-grams (individual words)::
 
   >>> bigram_vectorizer = CountVectorizer(ngram_range=(1, 2),
   ...                                     token_pattern=r'\b\w+\b', min_df=1)

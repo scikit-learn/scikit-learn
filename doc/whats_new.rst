@@ -1858,7 +1858,7 @@ Changelog
   - Refactoring of :class:`neighbors.NeighborsClassifier` and
     :func:`neighbors.kneighbors_graph`: added different algorithms for
     the k-Nearest Neighbor Search and implemented a more stable
-    algorithm for finding barycenter weigths. Also added some
+    algorithm for finding barycenter weights. Also added some
     developer documentation for this module, see
     `notes_neighbors
     <https://github.com/scikit-learn/scikit-learn/wiki/Neighbors-working-notes>`_ for more information [`Fabian Pedregosa`_].

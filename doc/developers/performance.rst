@@ -388,7 +388,7 @@ Performance tips for the Cython developer
 If profiling of the Python code reveals that the Python interpreter
 overhead is larger by one order of magnitude or more than the cost of the
 actual numerical computation (e.g. ``for`` loops over vector components,
-nested evaluation of conditional expression, scalar arithmetics...), it
+nested evaluation of conditional expression, scalar arithmetic...), it
 is probably adequate to extract the hotspot portion of the code as a
 standalone function in a ``.pyx`` file, add static type declarations and
 then use Cython to generate a C program suitable to be compiled as a

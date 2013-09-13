@@ -223,7 +223,7 @@ def test_enet_path():
         clf = ElasticNetCV(n_alphas=5, eps=2e-3, l1_ratio=[0.5, 0.7], cv=3,
                            max_iter=max_iter)
         clf.fit(X, y)
-        # Well-conditionned settings, we should have selected our
+        # Well-conditioned settings, we should have selected our
         # smallest penalty
         assert_almost_equal(clf.alpha_, min(clf.alphas_))
         # Non-sparse ground truth: we should have seleted an elastic-net
@@ -234,14 +234,14 @@ def test_enet_path():
                            max_iter=max_iter, precompute=True)
         clf.fit(X, y)
 
-    # Well-conditionned settings, we should have selected our
+    # Well-conditioned settings, we should have selected our
     # smallest penalty
     assert_almost_equal(clf.alpha_, min(clf.alphas_))
     # Non-sparse ground truth: we should have seleted an elastic-net
     # that is closer to ridge than to lasso
     assert_equal(clf.l1_ratio_, min(clf.l1_ratio))
 
-    # We are in well-conditionned settings with low noise: we should
+    # We are in well-conditioned settings with low noise: we should
     # have a good test-set performance
     assert_greater(clf.score(X_test, y_test), 0.99)
 

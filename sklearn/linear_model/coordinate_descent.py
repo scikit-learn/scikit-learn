@@ -179,7 +179,7 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
 
     Note that in certain cases, the Lars solver may be significantly
     faster to implement this functionality. In particular, linear
-    interpolation can be used to retrieve model coefficents between the
+    interpolation can be used to retrieve model coefficients between the
     values output by lars_path
 
     Deprecation Notice: Setting ``return_models`` to ``False`` will make
@@ -579,7 +579,7 @@ class ElasticNet(LinearModel, RegressorMixin):
             WARNING : ignored and will be deprecated in 0.15
 
         coef_init : ndarray of shape n_features or (n_targets, n_features)
-            The initial coeffients to warm-start the optimization
+            The initial coefficients to warm-start the optimization
             WARNING : ignored and will be deprecated in 0.15
 
         Notes
@@ -792,7 +792,7 @@ def _path_residuals(X, y, train, test, path, path_params, l1_ratio=1,
     X : {array-like, sparse matrix}, shape (n_samples, n_features)
         Training data.
 
-    y : narray, shape (n_samples,) or (n_samples, n_targets)
+    y : array-like, shape (n_samples,) or (n_samples, n_targets)
         Target values
 
     train : list of indices
@@ -898,7 +898,7 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
             Training data. Pass directly as float64, Fortran-contiguous data
             to avoid unnecessary memory duplication
 
-        y : narray, shape (n_samples,) or (n_samples, n_targets)
+        y : array-like, shape (n_samples,) or (n_samples, n_targets)
             Target values
 
         """
@@ -1056,9 +1056,9 @@ class LassoCV(LinearModelCV, RegressorMixin):
         dual gap for optimality and continues until it is smaller
         than ``tol``.
 
-    cv : integer or crossvalidation generator, optional
+    cv : integer or cross-validation generator, optional
         If an integer is passed, it is the number of fold (default 3).
-        Specific crossvalidation objects can be passed, see the
+        Specific cross-validation objects can be passed, see the
         :mod:`sklearn.cross_validation` module for the list of possible
         objects.
 
@@ -1155,9 +1155,9 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
         dual gap for optimality and continues until it is smaller
         than ``tol``.
 
-    cv : integer or crossvalidation generator, optional
+    cv : integer or cross-validation generator, optional
         If an integer is passed, it is the number of fold (default 3).
-        Specific crossvalidation objects can be passed, see the
+        Specific cross-validation objects can be passed, see the
         :mod:`sklearn.cross_validation` module for the list of possible
         objects.
 
@@ -1365,7 +1365,7 @@ class MultiTaskElasticNet(Lasso):
         y: ndarray, shape = (n_samples, n_tasks)
             Target
         coef_init: ndarray of shape n_features
-            The initial coeffients to warm-start the optimization
+            The initial coefficients to warm-start the optimization
 
         Notes
         -----
