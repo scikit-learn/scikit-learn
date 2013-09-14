@@ -11,7 +11,9 @@ Changelog
    - Added :class:`ensemble.BaggingClassifier` and
      :class:`ensemble.BaggingRegressor` meta-estimators for ensembling
      any kind of base estimator. See the :ref:`Bagging <bagging>` section of
-     the user guide for details and examples. By Gilles Louppe`_.
+     the user guide for details and examples. By `Gilles Louppe`_.
+
+    - Added :func:`metrics.pairwise_distances_argmin_min`, by Philippe Gervais.
 
    - Added predict method to :class:`cluster.AffinityPropagation` and
      :class:`cluster.MeanShift`, by `Mathieu Blondel`_.
