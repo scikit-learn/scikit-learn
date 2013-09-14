@@ -6,8 +6,8 @@ Demo of EAC clustering algorithm
 
 Uses many iterations of k-means with random values for k to create a
 "co-association matrix", where C[i][j] is the frequency of times that instances
-i and j are clustered together. The MSTCluster algorithm is run on this 
-co-association matrix to form the final clusters.
+i and j are clustered together. The SingleLinkageCluster algorithm is run on
+this co-association matrix to form the final clusters.
 
 """
 print(__doc__)
@@ -18,7 +18,7 @@ from operator import itemgetter
 import numpy as np
 import pylab as pl
 from scipy.cluster.hierarchy import dendrogram
-from sklearn.cluster import eac, EAC, KMeans, MSTCluster
+from sklearn.cluster import eac, EAC, KMeans, SingleLinkageCluster
 from sklearn import metrics
 from sklearn import datasets
 from sklearn.preprocessing import StandardScaler
@@ -40,7 +40,8 @@ main_metric = metrics.adjusted_mutual_info_score
 print("Running EAC Algorithm")
 # Create a final clustering, allowing us to set the threshold value ourselves.
 threshold = 0.8
-final_clusterer = MSTCluster(threshold=threshold, metric='precomputed')
+final_clusterer = SingleLinkageCluster(threshold=threshold,
+                                       metric='precomputed')
 model = EAC(default_final_clusterer=final_clusterer, random_state=42).fit(X)
 y_pred = model.labels_
 span_tree = model.final_clusterer.span_tree
@@ -81,24 +82,24 @@ km_labels = KMeans(n_clusters=2).fit(X).labels_
 
 
 ##############################################################################
-# Run MSTCluster many times with different threshold values
+# Run SingleLinkageCluster many times with different threshold values
 
-print("Running MSTCluster many times")
+print("Running SingleLinkageCluster many times")
 num_iterations = 50
-mst_scores = defaultdict(list)
+sl_scores = defaultdict(list)
 D = pairwise_distances(X, metric="euclidean", n_jobs=1)
 d_min = np.min(D)
 d_max = np.max(D)
 for threshold in np.arange(d_min, d_max, (d_max - d_min) / 100.):
-    model = MSTCluster(threshold=threshold, metric='euclidean')
+    model = SingleLinkageCluster(threshold=threshold, metric='euclidean')
     predictions = model.fit(D).labels_
     score = main_metric(y_true, predictions)
     n_clusters = len(set(predictions))
-    mst_scores[n_clusters].append(score)
-for key in mst_scores:
-    mst_scores[key] = np.mean(mst_scores[key])
-xx = sorted(mst_scores.items(), key=itemgetter(0))
-mst_values, mst_ami_means = zip(*xx)
+    sl_scores[n_clusters].append(score)
+for key in sl_scores:
+    sl_scores[key] = np.mean(sl_scores[key])
+xx = sorted(sl_scores.items(), key=itemgetter(0))
+sl_values, sl_ami_means = zip(*xx)
 
 
 ##############################################################################
@@ -127,9 +128,9 @@ ax = fig.add_subplot(3, 1, 3)
 ax.plot(k_values, km_ami_means)
 ax.errorbar(k_values, km_ami_means, yerr=km_ami_std, fmt='ro', label='k-means')
 
-# MST
-ax.plot(mst_values, mst_ami_means)
-ax.errorbar(mst_values, mst_ami_means, fmt='g*', label='MST')
+# SingleLinkageCluster
+ax.plot(sl_values, sl_ami_means)
+ax.errorbar(sl_values, sl_ami_means, fmt='g*', label='Single Linkage')
 score = main_metric(y_true, y_pred)
 ax.scatter([n_clusters_,], [score,], label='EAC', s=40)
 ax.legend()

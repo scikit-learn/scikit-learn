@@ -11,7 +11,7 @@ from .hierarchical import ward_tree, Ward, WardAgglomeration
 from .k_means_ import k_means, KMeans, MiniBatchKMeans
 from .dbscan_ import dbscan, DBSCAN
 from .eac import eac, EAC
-from .mst import MSTCluster
+from .single_linkage import SingleLinkageCluster
 from .bicluster import SpectralBiclustering, SpectralCoclustering
 
 
@@ -24,7 +24,7 @@ __all__ = ['AffinityPropagation',
            'Ward',
            'WardAgglomeration',
            'affinity_propagation',
-           'MSTCluster',
+           'SingleLinkageCluster',
            'eac',
            'EAC',
            'dbscan',

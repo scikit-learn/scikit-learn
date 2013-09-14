@@ -11,8 +11,8 @@ import numpy as np
 from scipy import sparse
 from collections import defaultdict
 
-# Imports .cluster.MSTCluster if final_clusterer = None in any EAC call
-# Imports .cluster.Kmeans if initial_clusterers = None in any EAC call.
+# Import .cluster.SingleLinkageCluster if final_clusterer = None in an EAC call
+# Import .cluster.Kmeans if initial_clusterers = None in any EAC call.
 from ..base import BaseEstimator, ClusterMixin
 from ..utils import check_random_state, atleast2d_or_csr
 
@@ -71,8 +71,8 @@ def eac(X, initial_clusterers=None, final_clusterer=None,
         initial_clusterers = _kmeans_random_k(n_samples, random_state)
     # If the final_clusterer is None, create the default model
     if final_clusterer is None:
-        from ..cluster import MSTCluster
-        final_clusterer = MSTCluster(metric='precomputed')
+        from ..cluster import SingleLinkageCluster
+        final_clusterer = SingleLinkageCluster(metric='precomputed')
     # Co-association matrix, originally zeros everywhere
     C = defaultdict(float)
     # initial_clusterers could be a generator, so we do not know in advance

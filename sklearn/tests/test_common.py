@@ -41,7 +41,6 @@ from sklearn.metrics import accuracy_score, adjusted_rand_score, f1_score
 
 from sklearn.lda import LDA
 from sklearn.svm.base import BaseLibSVM
-from sklearn.cluster import MSTCluster
 
 from sklearn.cross_validation import train_test_split
 from sklearn.utils.validation import DataConversionWarning
