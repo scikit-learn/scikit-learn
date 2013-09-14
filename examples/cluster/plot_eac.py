@@ -34,7 +34,6 @@ X, y_true = noisy_circles
 main_metric = metrics.adjusted_mutual_info_score
 
 
-
 ##############################################################################
 # Compute EAC
 print("Running EAC Algorithm")
