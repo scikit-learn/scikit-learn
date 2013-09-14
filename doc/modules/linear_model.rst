@@ -774,7 +774,7 @@ previously determined best model.
 .. topic:: References:
 
  * http://en.wikipedia.org/wiki/RANSAC
- * `"Random Sample Consensus: A Paradigm for Model Fitting with Apphcatlons to
+ * `"Random Sample Consensus: A Paradigm for Model Fitting with Applications to
    Image Analysis and Automated Cartography"
    <http://www.cs.columbia.edu/~belhumeur/courses/compPhoto/ransac.pdf>`_
    Martin A. Fischler and Robert C. Bolles - SRI International (1981)
