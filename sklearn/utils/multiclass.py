@@ -11,6 +11,8 @@ from itertools import chain
 
 import numpy as np
 
+from scipy.sparse import csc_matrix
+
 from ..externals.six import string_types
 
 
@@ -277,7 +279,7 @@ def type_of_target(y):
     'multilabel-indicator'
     """
     # XXX: is there a way to duck-type this condition?
-    valid = (isinstance(y, (np.ndarray, Sequence))
+    valid = (isinstance(y, (np.ndarray, Sequence, csc_matrix))
              and not isinstance(y, string_types))
     if not valid:
         raise ValueError('Expected array-like (array or non-string sequence), '
