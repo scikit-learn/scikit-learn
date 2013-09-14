@@ -573,12 +573,22 @@ by black points below.
 
 
 
-Minimum Spanning Tree Clustering
-================================
-The :class:`MSTCluster` algorithm forms a minimum spann tree over the data, and
+Single Linkage Clustering
+=========================
+In single linkage hierarchical clustering, each sample begins in its own
+cluster. At each step, the two nearest clusters are merged (aglomerative
+clustering). The distance between two clusters is determined by finding the
+minimum distance between sample in each cluster. This makes it different
+from other forms of hierarchical clustering, such as complete linkage which
+uses the maximum distance between a pair of points, one from each cluster.
+
+The :class:`SingleLinkageCluster` algorithm forms a minimum spann tree over
+the data, and
 then cuts any edges that have a weight higher than some predefined threshold.
 This separates the data into connected components, each representing a separate
 cluster.
+This algorithm is equivalent to performing single linkage clustering in the way
+outlined above.
 
 In graph theory, a minimum spanning tree is a set of connections between nodes
 that link all nodes together with the minimum sum of weights. In the
@@ -587,7 +597,8 @@ nodes and the edge weight to be the distance between them. Therefore, the
 clusters are formed through maintaining a linkage of samples with a low distance
 to each other.
 
-The :class:`MSTCluster` takes a distance matrix as input, rather than a feature
+The :class:`SingleLinkageCluster` takes a distance matrix as input, rather
+than a feature
 matrix. A feature matrix can be used by setting the `metric` parameter, in
 which case the `pairwise_distances` function in the `metrics` module will be
 called to create the distance matrix. This parameter can be set to the string
@@ -595,20 +606,21 @@ called to create the distance matrix. This parameter can be set to the string
 distance matrix. If running batch jobs, precomputing the distance matrix can
 dramatically speed up computation.
 
-The example below uses :class:`MSTCluster` to cluster a small dataset, showing
+The example below uses :class:`SingleLinkageCluster` to cluster a small
+dataset, showing
 also the edges that compose the minimum spanning tree. Red edges are cut while
 green edges are maintained, forming the final clusters which are color coded.
 
 
-.. |mst_results| image:: ../auto_examples/cluster/images/plot_mst_1.png
-        :target: ../auto_examples/cluster/plot_mst.html
+.. |sl_results| image:: ../auto_examples/cluster/images/plot_single_linkage_1.png
+        :target: ../auto_examples/cluster/plot_single_linkage.html
         :scale: 50
 
-.. centered:: |mst_results|
+.. centered:: |sl_results|
 
 .. topic:: Examples:
 
-    * :ref:`example_cluster_plot_mst.py`
+    * :ref:`example_cluster_plot_single_linkage.py`
 
 .. topic:: References:
 
@@ -642,8 +654,8 @@ distance to each other will have a high value in `C`.
 The final step is to apply a final clustering algorithm onto `C` to form the
 final "definitive" labels of the dataset. This step can use any clustering
 algorithm, but works best on algorithms that take a distance or similarity
-matrix as input. The default clustering algorithm is the :class:`MSTCluster`
-algorithm.
+matrix as input. The default clustering algorithm is the
+:class:`SingleLinkageCluster` algorithm.
 
 The algorithm needs no parameters, but works better if the threshold for the
 final clustering step is given (see the example for how to do this). This

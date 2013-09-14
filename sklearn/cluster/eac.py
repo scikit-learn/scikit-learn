@@ -35,7 +35,7 @@ def eac(X, initial_clusterers=None, final_clusterer=None,
         The clusterer to apply to the final clustering matrix. The method must
         be able to take a coassociation matrix as input, which is an array of
         size [n_samples, n_samples].
-        If None, the default model is used, which is MST.
+        If None, the default model is used, which is SingleLinkageCluster.
     use_distance: boolean, or callable TODO: default should be false
         If True, convert the coassociation matrix to distance using
         `D=1./(C + 1)`. If callable, the function is called with the
@@ -179,7 +179,7 @@ class EAC(BaseEstimator, ClusterMixin):
         The clusterer to apply to the final clustering matrix. The method must
         be able to take a coassociation matrix as input, which is an array of
         size [n_samples, n_samples].
-        If None, the default model is used, which is MST.
+        If None, the default model is used, which is SingleLinkageCluster.
     use_distance: boolean, or callable
         If True, convert the coassociation matrix to distance using
         `D=1./(C + 1)`. If callable, the function is called with the

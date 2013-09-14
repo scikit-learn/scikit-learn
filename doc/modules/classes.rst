@@ -29,11 +29,11 @@ Classes
 
    cluster.AffinityPropagation
    cluster.DBSCAN
-   cluster.EvidenceAccumulationClustering
+   cluster.EAC
    cluster.KMeans
    cluster.MiniBatchKMeans
    cluster.MeanShift
-   cluster.MSTCluster
+   cluster.SingleLinkageCluster
    cluster.SpectralClustering
    cluster.Ward
 

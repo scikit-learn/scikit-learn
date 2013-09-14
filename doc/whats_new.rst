@@ -23,17 +23,18 @@ Changelog
      sparse matrices and has much lower memory complexity, meaning it will
      scale up gracefully to large datasets. By `Lars Buitinck`_.
 
-   - Minimum Spanning Tree Clustering, which uses a threshold based parameter
+   - Single Linkage Clustering, which uses a threshold based parameter
      to cut edges, forming clusters from the connected components. By
      `Robert Layton`_.
 
     - Evidence Accumulation Clustering (EAC), which runs K-means many times to
-      form a co-association matrix, then using MSTCluster to form final
-      clusters. By `Robert Layton`_.
+      form a co-association matrix, then using Single Linkage Clustering to
+      form final clusters. By `Robert Layton`_.
 
     - Upgrading the sparsetools utility functions (which are backported from
       scipy). This was done to give access to the minimum spanning tree function
-      which was used for the MSTCluster algorithm. By `Robert Layton`_.
+      which was used for the SingleLinkageCluster algorithm.
+      By `Robert Layton`_.
 
 
 .. _changes_0_14:
