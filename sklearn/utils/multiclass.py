@@ -145,10 +145,12 @@ def is_label_indicator_matrix(y):
     """
     if not (hasattr(y, "shape") and y.ndim == 2 and y.shape[1] > 1):
         return False
-    try:
-        labels = np.unique(y)
-    except TypeError:
+
+    if isinstance(y, csc_matrix):
         labels = np.setxor1d(y.data, [0])
+    else:
+        labels = np.unique(y)
+
     return len(labels) <= 2 and (y.dtype.kind in 'biu'  # bool, int, uint
                                  or _is_integral_float(labels))
 
