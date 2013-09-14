@@ -394,7 +394,10 @@ def label_binarize(y, classes, multilabel=False, neg_label=0, pos_label=1):
         if y_type == 'multilabel-indicator':
             # nothing to do as y is already a label indicator matrix
             return y
-
+        if neg_label != 0:
+            # neg_label not zero eliminates possibility of a sparse matrix 
+            Y = np.zeros((len(y), len(classes)
+            Y += neg_label
     else:
         Y = np.zeros((len(y), 1), dtype=np.int)
         Y += neg_label
@@ -409,13 +412,19 @@ def label_binarize(y, classes, multilabel=False, neg_label=0, pos_label=1):
         # inverse map: label => column index
         imap = dict((v, k) for k, v in enumerate(classes))
 
-        for i, label_tuple in enumerate(y):
-            for label in label_tuple:
-                row.append(i)
-                col.append(imap[label])
-                data.append(1)
+        if neg_label == 0:
+            for i, label_tuple in enumerate(y):
+                for label in label_tuple:
+                    row.append(i)
+                    col.append(imap[label])
+                    data.append(pos_label)
 
-        Y = csc_matrix((data, (row, col)), shape = (len(y), len(classes))) 
+            Y = csc_matrix((data, (row, col)), shape = (len(y), len(classes))) 
+
+        else:
+            for i, label_tuple in enumerate(y):
+                for label in label_tuple:
+                    Y[i, imap[label]] = pos_label
 
         return Y
 
