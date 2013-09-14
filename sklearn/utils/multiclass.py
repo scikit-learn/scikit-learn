@@ -143,8 +143,11 @@ def is_label_indicator_matrix(y):
     """
     if not (hasattr(y, "shape") and y.ndim == 2 and y.shape[1] > 1):
         return False
-    labels = np.unique(y)
-    return len(labels) <= 2 and (y.dtype.kind in 'biu'  # bool, int, uint
+    try:
+        n_labels = len(np.unique(y))
+    except TypeError:
+        n_labels = len(np.unique(y.data)) + 1
+    return n_labels <= 2 and (y.dtype.kind in 'biu'  # bool, int, uint
                                  or _is_integral_float(labels))
 
 
