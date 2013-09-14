@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-================================
-Demo of EAC clustering algorithm
-================================
+===========================================================
+Demo of EvidenceAccumulationClustering clustering algorithm
+===========================================================
 
 Uses many iterations of k-means with random values for k to create a
 "co-association matrix", where C[i][j] is the frequency of times that instances
@@ -18,7 +18,9 @@ from operator import itemgetter
 import numpy as np
 import pylab as pl
 from scipy.cluster.hierarchy import dendrogram
-from sklearn.cluster import eac, EAC, KMeans, SingleLinkageCluster
+from sklearn.cluster import EvidenceAccumulationClustering
+from sklearn.cluster import KMeans
+from sklearn.cluster import SingleLinkageCluster
 from sklearn import metrics
 from sklearn import datasets
 from sklearn.preprocessing import StandardScaler
@@ -36,12 +38,13 @@ main_metric = metrics.adjusted_mutual_info_score
 
 ##############################################################################
 # Compute EAC
-print("Running EAC Algorithm")
+print("Running Evidence Accumulation Clustering Algorithm")
 # Create a final clustering, allowing us to set the threshold value ourselves.
 threshold = 0.8
 final_clusterer = SingleLinkageCluster(threshold=threshold,
                                        metric='precomputed')
-model = EAC(default_final_clusterer=final_clusterer, random_state=42).fit(X)
+model = EvidenceAccumulationClustering(default_final_clusterer=final_clusterer,
+                                       random_state=42).fit(X)
 y_pred = model.labels_
 span_tree = model.final_clusterer.span_tree
 
@@ -104,36 +107,33 @@ sl_values, sl_ami_means = zip(*xx)
 ##############################################################################
 # Plot results
 
-fig = pl.figure(figsize=(8, 12))
-fig.suptitle('EAC comparison with K-means')
-
 colors = np.array([x for x in 'bgrcmykbgrcmykbgrcmykbgrcmyk'])
 colors = np.hstack([colors] * 100)
 # Subplot showing distribution of scores
 
 # Plot two examples of k-means
-ax = fig.add_subplot(3, 1, 1)
-ax.scatter(X[:, 0], X[:,1], color=colors[km_labels].tolist(), s=10)
-ax.set_title("K-means")
+pl.figure()
+pl.scatter(X[:, 0], X[:,1], color=colors[km_labels].tolist(), s=10)
+pl.title("K-means")
 
-# Plot EAC labels
-ax = fig.add_subplot(3, 1, 2)
-ax.scatter(X[:, 0], X[:,1], color=colors[y_pred].tolist(), s=10)
-ax.set_title("EAC")
+# Plot EvidenceAccumulationClustering labels
+pl.figure()
+pl.scatter(X[:, 0], X[:,1], color=colors[y_pred].tolist(), s=10)
+pl.title("Evidence Accumulation Clustering")
 
 # Plot distribution of scores (from main_metric)
-ax = fig.add_subplot(3, 1, 3)
+pl.figure()
 # k-means
-ax.plot(k_values, km_ami_means)
-ax.errorbar(k_values, km_ami_means, yerr=km_ami_std, fmt='ro', label='k-means')
+pl.plot(k_values, km_ami_means)
+pl.errorbar(k_values, km_ami_means, yerr=km_ami_std, fmt='ro', label='k-means')
 
 # SingleLinkageCluster
-ax.plot(sl_values, sl_ami_means)
-ax.errorbar(sl_values, sl_ami_means, fmt='g*', label='Single Linkage')
+pl.plot(sl_values, sl_ami_means)
+pl.errorbar(sl_values, sl_ami_means, fmt='g*', label='Single Linkage')
 score = main_metric(y_true, y_pred)
-ax.scatter([n_clusters_,], [score,], label='EAC', s=40)
-ax.legend()
-ax.set_title("V-measure comparison")
+pl.scatter([n_clusters_,], [score,], label='EAC', s=40)
+pl.legend()
+pl.title("V-measure comparison")
 
 
 

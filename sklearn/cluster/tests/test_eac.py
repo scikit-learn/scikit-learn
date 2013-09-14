@@ -1,5 +1,8 @@
 """
-Tests for EAC clustering algorithm
+Tests components of the EvidenceAccumulationClustering
+
+The algorithm is quite expensive, even on smaller datasets, so a full
+run is not performed as a unit test.
 """
 
 import pickle

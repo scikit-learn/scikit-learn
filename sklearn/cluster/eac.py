@@ -17,9 +17,17 @@ from ..base import BaseEstimator, ClusterMixin
 from ..utils import check_random_state, atleast2d_or_csr
 
 
-def eac(X, initial_clusterers=None, final_clusterer=None,
-        random_state=None):
-    """Perform EAC clustering from vector array or distance matrix.
+def evidence_accumulation_clustering(X, initial_clusterers=None,
+                                     final_clusterer=None,
+                                     random_state=None):
+    """Perform Evidence Accumulation Clustering clustering on a dataset.
+
+    Evidence Accumulation Clustering (EAC) is an ensemble cluster that uses
+    many iterations of k-means with randomly chosen k values (``n_clusters``)
+    each time. The number of times two instances are clustered together is
+    given in a co-association matrix, which is then clustered a final time to
+    produce the 'final clustering'. In practice, this gives a more easily
+    separable set of attributes that the original attributes.
 
     Parameters
     ----------
@@ -36,12 +44,7 @@ def eac(X, initial_clusterers=None, final_clusterer=None,
         be able to take a coassociation matrix as input, which is an array of
         size [n_samples, n_samples].
         If None, the default model is used, which is SingleLinkageCluster.
-    use_distance: boolean, or callable TODO: default should be false
-        If True, convert the coassociation matrix to distance using
-        `D=1./(C + 1)`. If callable, the function is called with the
-        coassociation matrix as input. If False (default), then the matrix is
-        given as input to the `final_clusterer`.
-    random_state: numpy.RandomState, optional
+    random_state: numpy.RandomState or int, optional
         The generator used to initialize the initial_clusterers.
         Defaults to numpy.random.
 
@@ -115,6 +118,7 @@ def _kmeans_random_k(n_samples, random_state=None, **kmeans_args):
 
     This initial clustering is k-means, initialised randomly with k values
     chosen randomly between 10 and 30 inclusive.
+
     Parameters
     ----------
     random_state: numpy.RandomState, optional
@@ -154,8 +158,8 @@ def _kmeans_random_k(n_samples, random_state=None, **kmeans_args):
             for k in k_values)
 
 
-class EAC(BaseEstimator, ClusterMixin):
-    """Perform EAC clustering from vector array or distance matrix.
+class EvidenceAccumulationClustering(BaseEstimator, ClusterMixin):
+    """Perform Evidence Accumulation Clustering clustering on a dataset.
 
     Evidence Accumulation Clustering (EAC) is an ensemble cluster that uses
     many iterations of k-means with randomly chosen k values (``n_clusters``)
@@ -180,12 +184,7 @@ class EAC(BaseEstimator, ClusterMixin):
         be able to take a coassociation matrix as input, which is an array of
         size [n_samples, n_samples].
         If None, the default model is used, which is SingleLinkageCluster.
-    use_distance: boolean, or callable
-        If True, convert the coassociation matrix to distance using
-        `D=1./(C + 1)`. If callable, the function is called with the
-        coassociation matrix as input. If False (default), then the matrix is
-        given as input to the `final_clusterer`.
-    random_state: numpy.RandomState, optional
+    random_state: numpy.RandomState or int, optional
         The generator used to initialize the initial_clusterers.
         Defaults to numpy.random.
 
@@ -227,9 +226,11 @@ class EAC(BaseEstimator, ClusterMixin):
             The array is treated as a feature array unless the metric is
             given as 'precomputed'.
         """
-        model = eac(X, initial_clusterers=self.default_initial_clusterers,
-                    final_clusterer=self.default_final_clusterer,
-                    random_state=self.random_state)
+        model = evidence_accumulation_clustering(
+            X,
+            initial_clusterers=self.default_initial_clusterers,
+            final_clusterer=self.default_final_clusterer,
+            random_state=self.random_state)
         self.final_clusterer = model
         self.labels_ = model.labels_
         return self

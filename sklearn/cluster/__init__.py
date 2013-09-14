@@ -10,8 +10,9 @@ from .affinity_propagation_ import affinity_propagation, AffinityPropagation
 from .hierarchical import ward_tree, Ward, WardAgglomeration
 from .k_means_ import k_means, KMeans, MiniBatchKMeans
 from .dbscan_ import dbscan, DBSCAN
-from .eac import eac, EAC
-from .single_linkage import SingleLinkageCluster
+from .eac import evidence_accumulation_clustering
+from .eac import EvidenceAccumulationClustering
+from .mst import SingleLinkageCluster
 from .bicluster import SpectralBiclustering, SpectralCoclustering
 
 
@@ -25,8 +26,8 @@ __all__ = ['AffinityPropagation',
            'WardAgglomeration',
            'affinity_propagation',
            'SingleLinkageCluster',
-           'eac',
-           'EAC',
+           'evidence_accumulation_clustering',
+           'EvidenceAccumulationClustering',
            'dbscan',
            'estimate_bandwidth',
            'get_bin_seeds',
