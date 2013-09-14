@@ -395,11 +395,9 @@ def label_binarize(y, classes, multilabel=False, neg_label=0, pos_label=1):
             # nothing to do as y is already a label indicator matrix
             return y
 
-        Y = np.zeros((len(y), len(classes)), dtype=np.int)
     else:
         Y = np.zeros((len(y), 1), dtype=np.int)
-
-    Y += neg_label
+        Y += neg_label
 
     y_is_multilabel = y_type.startswith('multilabel')
 
@@ -413,7 +411,11 @@ def label_binarize(y, classes, multilabel=False, neg_label=0, pos_label=1):
 
         for i, label_tuple in enumerate(y):
             for label in label_tuple:
-                Y[i, imap[label]] = pos_label
+                row.append(i)
+                col.append(imap[label])
+                data.append(1)
+
+        Y = csc_matrix((data, (row, col)), shape = (len(y), len(classes))) 
 
         return Y
 
