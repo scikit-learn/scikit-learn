@@ -397,7 +397,7 @@ def label_binarize(y, classes, multilabel=False, neg_label=0, pos_label=1):
             # nothing to do as y is already a label indicator matrix
             return y
         if neg_label != 0:
-            # neg_label not zero eliminates possibility of a sparse matrix 
+            # neg_label not zero eliminates possibility of a sparse matrix
             Y = np.zeros((len(y), len(classes)), dtype=np.int)
             Y += neg_label
     else:
@@ -422,7 +422,7 @@ def label_binarize(y, classes, multilabel=False, neg_label=0, pos_label=1):
                     col.append(imap[label])
                     data.append(pos_label)
 
-            Y = csc_matrix((data, (row, col)), shape = (len(y), len(classes))) 
+            Y = csc_matrix((data, (row, col)), shape=(len(y), len(classes)))
 
         else:
             for i, label_tuple in enumerate(y):
