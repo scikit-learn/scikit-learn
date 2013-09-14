@@ -12,7 +12,7 @@ from .k_means_ import k_means, KMeans, MiniBatchKMeans
 from .dbscan_ import dbscan, DBSCAN
 from .eac import evidence_accumulation_clustering
 from .eac import EvidenceAccumulationClustering
-from .mst import SingleLinkageCluster
+from .single_linkage import SingleLinkageCluster
 from .bicluster import SpectralBiclustering, SpectralCoclustering
 
 
