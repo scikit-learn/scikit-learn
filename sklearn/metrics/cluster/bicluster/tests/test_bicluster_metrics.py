@@ -25,12 +25,13 @@ def test_consensus_score():
          [False, False, True, True]]
     b = a[::-1]
 
-    assert_equal(consensus_score((a, a), (a, a)), 1)
-    assert_equal(consensus_score((a, a), (b, b)), 1)
-    assert_equal(consensus_score((a, b), (a, b)), 1)
-    assert_equal(consensus_score((a, b), (b, a)), 1)
+    for method in ('jaccard', 'goodness', 'dice'):
+        assert_equal(consensus_score((a, a), (a, a), method), 1)
+        assert_equal(consensus_score((a, a), (b, b), method), 1)
+        assert_equal(consensus_score((a, b), (a, b), method), 1)
+        assert_equal(consensus_score((a, b), (b, a), method), 1)
 
-    assert_equal(consensus_score((a, a), (b, a)), 0)
-    assert_equal(consensus_score((a, a), (a, b)), 0)
-    assert_equal(consensus_score((b, b), (a, b)), 0)
-    assert_equal(consensus_score((b, b), (b, a)), 0)
+        assert_equal(consensus_score((a, a), (b, a), method), 0)
+        assert_equal(consensus_score((a, a), (a, b), method), 0)
+        assert_equal(consensus_score((b, b), (a, b), method), 0)
+        assert_equal(consensus_score((b, b), (b, a), method), 0)
