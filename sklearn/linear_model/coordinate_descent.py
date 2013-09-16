@@ -552,7 +552,7 @@ class ElasticNet(LinearModel, RegressorMixin):
         self.positive = positive
         self.intercept_ = 0.0
 
-    def fit(self, X, y, coef_init=None):
+    def fit(self, X, y):
         """Fit model with coordinate descent.
 
         Parameters
@@ -562,10 +562,6 @@ class ElasticNet(LinearModel, RegressorMixin):
 
         y : ndarray, shape = (n_samples,) or (n_samples, n_targets)
             Target
-
-        coef_init : ndarray of shape n_features or (n_targets, n_features)
-            The initial coefficients to warm-start the optimization
-            WARNING : ignored and will be deprecated in 0.15
 
         Notes
         -----
