@@ -628,24 +628,6 @@ class ElasticNet(LinearModel, RegressorMixin):
         """ sparse representation of the fitted coef """
         return sparse.csr_matrix(self.coef_)
 
-    def decision_function(self, X):
-        """Decision function of the linear model
-
-        Parameters
-        ----------
-        X : numpy array or scipy.sparse matrix of shape (n_samples, n_features)
-
-        Returns
-        -------
-        T : array, shape = (n_samples,)
-            The predicted decision function
-        """
-        if sparse.isspmatrix(X):
-            return np.ravel(safe_sparse_dot(self.coef_, X.T, dense_output=True)
-                            + self.intercept_)
-        else:
-            return super(ElasticNet, self).decision_function(X)
-
 
 ###############################################################################
 # Lasso model

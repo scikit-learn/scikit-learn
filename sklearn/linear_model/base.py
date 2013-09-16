@@ -126,8 +126,8 @@ class LinearModel(six.with_metaclass(ABCMeta, BaseEstimator)):
     def fit(self, X, y):
         """Fit model."""
 
-    def decision_function(self, X):
-        """Decision function of the linear model.
+    def predict(self, X):
+        """Predict using the linear model.
 
         Parameters
         ----------
@@ -142,21 +142,6 @@ class LinearModel(six.with_metaclass(ABCMeta, BaseEstimator)):
         X = safe_asarray(X)
         return safe_sparse_dot(X, self.coef_.T,
                                dense_output=True) + self.intercept_
-
-    def predict(self, X):
-        """Predict using the linear model
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix}, shape = (n_samples, n_features)
-            Samples.
-
-        Returns
-        -------
-        C : array, shape = (n_samples,)
-            Returns predicted values.
-        """
-        return self.decision_function(X)
 
     _center_data = staticmethod(center_data)
 
