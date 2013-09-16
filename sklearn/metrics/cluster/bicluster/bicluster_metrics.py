@@ -128,7 +128,9 @@ def consensus_score(a, b, similarity="jaccard", correction=None):
 
     correction : int or None, optional, default: None
         If provided, this should be data.size. Used to correct for
-        size bias.
+        bicluster size bias, as described in Hanczar, et. al. If this
+        is used, bicluster similarities may be less than 0, to
+        indicate that they are worse than random chance.
 
     References
     ----------
@@ -136,6 +138,11 @@ def consensus_score(a, b, similarity="jaccard", correction=None):
     * Hochreiter, Bodenhofer, et. al., 2010. `FABIA: factor analysis
       for bicluster acquisition
       <https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2881408/>`__.
+
+    * Hanczar, B., & Nadif, M., 2013. `Precision-recall space to
+      correct external indices for biclustering.
+      <http://jmlr.csail.mit.edu/proceedings/papers/v28/hanczar13.pdf>`__
+      136-144).
 
     """
     if isinstance(similarity, str):

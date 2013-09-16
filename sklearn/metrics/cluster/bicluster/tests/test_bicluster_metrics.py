@@ -3,6 +3,7 @@
 import numpy as np
 
 from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_true
 
 from ..bicluster_metrics import _jaccard
 from ..bicluster_metrics import _make_similarity
@@ -29,12 +30,21 @@ def test_consensus_score():
     b = a[::-1]
 
     for method in ('jaccard', 'goodness', 'dice'):
-        assert_equal(consensus_score((a, a), (a, a), method), 1)
-        assert_equal(consensus_score((a, a), (b, b), method), 1)
-        assert_equal(consensus_score((a, b), (a, b), method), 1)
-        assert_equal(consensus_score((a, b), (b, a), method), 1)
+        for correction in (None, 16):
+            assert_equal(consensus_score((a, a), (a, a),
+                                         method, correction), 1)
+            assert_equal(consensus_score((a, a), (b, b),
+                                         method, correction), 1)
+            assert_equal(consensus_score((a, b), (a, b),
+                                         method, correction), 1)
+            assert_equal(consensus_score((a, b), (b, a),
+                                         method, correction), 1)
 
-        assert_equal(consensus_score((a, a), (b, a), method), 0)
-        assert_equal(consensus_score((a, a), (a, b), method), 0)
-        assert_equal(consensus_score((b, b), (a, b), method), 0)
-        assert_equal(consensus_score((b, b), (b, a), method), 0)
+            assert_true(consensus_score((a, a), (b, a),
+                                        method, correction) <= 0)
+            assert_true(consensus_score((a, a), (a, b),
+                                        method, correction) <= 0)
+            assert_true(consensus_score((b, b), (a, b),
+                                        method, correction) <= 0)
+            assert_true(consensus_score((b, b), (b, a),
+                                        method, correction) <= 0)
