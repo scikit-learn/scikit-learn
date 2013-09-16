@@ -5,6 +5,7 @@ import numpy as np
 from sklearn.utils.testing import assert_equal
 
 from ..bicluster_metrics import _jaccard
+from ..bicluster_metrics import _make_similarity
 from ..bicluster_metrics import consensus_score
 
 
@@ -14,10 +15,12 @@ def test_jaccard():
     a3 = np.array([False, True, True, False])
     a4 = np.array([False, False, True, True])
 
-    assert_equal(_jaccard(a1, a1, a1, a1), 1)
-    assert_equal(_jaccard(a1, a1, a2, a2), 0.25)
-    assert_equal(_jaccard(a1, a1, a3, a3), 1.0 / 7)
-    assert_equal(_jaccard(a1, a1, a4, a4), 0)
+    f = _make_similarity(_jaccard, None)
+
+    assert_equal(f(a1, a1, a1, a1), 1)
+    assert_equal(f(a1, a1, a2, a2), 0.25)
+    assert_equal(f(a1, a1, a3, a3), 1.0 / 7)
+    assert_equal(f(a1, a1, a4, a4), 0)
 
 
 def test_consensus_score():
