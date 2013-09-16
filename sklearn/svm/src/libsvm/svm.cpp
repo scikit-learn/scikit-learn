@@ -60,7 +60,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "svm.h"
 
 #ifndef _LIBSVM_CPP
-int libsvm_version = LIBSVM_VERSION;
 typedef float Qfloat;
 typedef signed char schar;
 #ifndef min
@@ -96,7 +95,7 @@ static void print_string_stdout(const char *s)
 	fflush(stdout);
 }
 static void (*svm_print_string) (const char *) = &print_string_stdout;
-#if 1
+
 static void info(const char *fmt,...)
 {
 	char buf[BUFSIZ];
@@ -106,9 +105,6 @@ static void info(const char *fmt,...)
 	va_end(ap);
 	(*svm_print_string)(buf);
 }
-#else
-static void info(const char *fmt,...) {}
-#endif
 #endif
 #define _LIBSVM_CPP
 
@@ -2961,12 +2957,6 @@ void PREFIX(free_and_destroy_model)(PREFIX(model)** model_ptr_ptr)
 	}
 }
 
-void PREFIX(destroy_model)(PREFIX(model)* model_ptr)
-{
-	fprintf(stderr,"warning: svm_destroy_model is deprecated and should not be used. Please use svm_free_and_destroy_model(PREFIX(model) **model_ptr_ptr)\n");
-	PREFIX(free_and_destroy_model)(&model_ptr);
-}
-
 void PREFIX(destroy_param)(svm_parameter* param)
 {
 	free(param->weight_label);
@@ -3093,14 +3083,6 @@ const char *PREFIX(check_parameter)(const PREFIX(problem) *prob, const svm_param
 	}
 
 	return NULL;
-}
-
-int PREFIX(check_probability_model)(const PREFIX(model) *model)
-{
-	return ((model->param.svm_type == C_SVC || model->param.svm_type == NU_SVC) &&
-		model->probA!=NULL && model->probB!=NULL) ||
-		((model->param.svm_type == EPSILON_SVR || model->param.svm_type == NU_SVR) &&
-		 model->probA!=NULL);
 }
 
 void PREFIX(set_print_string_function)(void (*print_func)(const char *))
