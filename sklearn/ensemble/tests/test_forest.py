@@ -5,6 +5,8 @@ Testing for the forest module (sklearn.ensemble.forest).
 # Authors: Gilles Louppe, Brian Holt, Andreas Mueller
 # License: BSD 3 clause
 
+from collections import defaultdict
+
 import numpy as np
 from numpy.testing import assert_array_equal
 from numpy.testing import assert_array_almost_equal
@@ -452,6 +454,31 @@ def test_parallel_train():
     for proba1, proba2 in zip(probas, probas[1:]):
         assert_true(np.allclose(proba1, proba2))
 
+
+def test_distribution():
+    rng = np.random.RandomState(12321)
+    X = rng.randint(0, 4, size=(1000, 1))
+    y = rng.rand(1000)
+
+    clf = ExtraTreesRegressor(n_estimators=100, random_state=1).fit(X, y)
+
+    uniques = defaultdict(int)
+    for tree in clf.estimators_:
+        tree = "".join(("%d,%d/" % (f, int(t)) if f >= 0 else "-")
+                       for f, t in zip(tree.tree_.feature,
+                                       tree.tree_.threshold))
+
+        uniques[tree] += 1
+
+    uniques = [(count, tree) for tree, count in uniques.items()]
+
+    # On a single variable problem where X_0 has 4 equiprobable values, there
+    # are 5 ways to build a random tree. The more compact (0,1/0,0/--0,2/--) of
+    # them has probability 1/3 while the 4 others have probability 1/6.
+
+    assert_equal(len(uniques), 5)
+    assert_greater(max(uniques)[0], 30)
+    assert_equal(max(uniques)[1], "0,1/0,0/--0,2/--")
 
 if __name__ == "__main__":
     import nose
