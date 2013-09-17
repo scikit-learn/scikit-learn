@@ -472,15 +472,18 @@ class LogisticRegressionCV(BaseEstimator, LinearClassifierMixin,
 
     Parameters
     ----------
-    Cs : list of floats, integer
+    Cs: list of floats, integer
         Each of the values in Cs describes the inverse of regularization
         strength and must be a positive float.
         Like in support vector machines, smaller values specify stronger
         regularization.
 
-    fit_intercept : bool, default: True
+    fit_intercept: bool, default: True
         Specifies if a constant (a.k.a. bias or intercept) should be
         added the decision function.
+
+    max_iter: integer, optional
+        Maximum number of iterations of the optimization algorithm.
 
     tol: float, optional
         Tolerance for stopping criteria.
@@ -583,7 +586,7 @@ class LogisticRegressionCV(BaseEstimator, LinearClassifierMixin,
         w = logistic_regression_path(
             X, y, Cs=[self.C_], fit_intercept=self.fit_intercept,
             coef=coef_init, solver=self.solver, max_iter=self.max_iter,
-            gtol=self.gtol, verbose=max(0, self.verbose-1))
+            gtol=self.gtol, verbose=max(0, self.verbose - 1))
         w = w[0]
         if self.fit_intercept:
             self.coef_ = w[:-1]
