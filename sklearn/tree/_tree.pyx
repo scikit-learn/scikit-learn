@@ -1928,10 +1928,14 @@ cdef class Tree:
 # Utils
 # =============================================================================
 
-# rand_r replacement taken from 4.4BSD C library.
+# rand_r replacement using a 32bit XorShift generator
+# See http://www.jstatsoft.org/v08/i14/paper for details
 cdef inline UINT32_t our_rand_r(UINT32_t* seed) nogil:
-    seed[0] = seed[0] * <UINT32_t>1103515245 + <UINT32_t>12345
-    return seed[0] % <UINT32_t>RAND_R_MAX
+    seed[0] ^= <UINT32_t>(seed[0] << 13)
+    seed[0] ^= <UINT32_t>(seed[0] >> 17)
+    seed[0] ^= <UINT32_t>(seed[0] << 5)
+
+    return seed[0] % <UINT32_t>(RAND_R_MAX + 1)
 
 cdef inline np.ndarray int_ptr_to_ndarray(int* data, SIZE_t size):
     """Encapsulate data into a 1D numpy array of int's."""
