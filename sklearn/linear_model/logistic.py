@@ -588,7 +588,7 @@ class LogisticRegressionCV(BaseEstimator, LinearClassifierMixin,
             X, y, Cs=[self.C_], fit_intercept=self.fit_intercept,
             coef=coef_init, solver=self.solver, max_iter=self.max_iter,
             gtol=self.gtol, verbose=max(0, self.verbose - 1))
-        w = w[0]
+        w = w[0][0]
         if self.fit_intercept:
             self.coef_ = w[:-1]
             self.intercept_ = w[-1]
