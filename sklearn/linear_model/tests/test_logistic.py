@@ -281,6 +281,8 @@ def test_logistic_cv():
     y = np.sign(X_ref.dot(5 * np.random.randn(n_features)))
     X_ref -= X_ref.mean()
     X_ref /= X_ref.std()
-    lr_cv = logistic.LogisticRegressionCV()
+    lr_cv = logistic.LogisticRegressionCV(Cs=[.1])
     lr_cv.fit(X_ref, y)
-    # TODO: do something
+    lr = logistic.LogisticRegression(C=.1)
+    lr.fit(X_ref, y)
+    assert_array_almost_equal(lr.coef_, lr_cv.coef_, decimal=2)
