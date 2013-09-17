@@ -129,6 +129,64 @@ def _parallel_build_estimators(n_estimators, ensemble, X, y, sample_weight, seed
 
     return estimators, estimators_samples, estimators_features
 
+def _parallel_predict_proba(estimators, estimators_features, X, n_classes):
+    """Private function used to compute (proba-)predictions within a job."""
+    
+    n_samples = X.shape[0]
+    proba = np.zeros((n_samples, n_classes))
+
+    for estimator, features in zip(estimators, estimators_features):
+        try:
+            proba_estimator = estimator.predict_proba(X[:, features])
+
+            if n_classes == len(estimator.classes_):
+                proba += proba_estimator
+
+            else:
+                proba[:, estimator.classes_] += \
+                    proba_estimator[:, range(len(estimator.classes_))]
+
+        except (AttributeError, NotImplementedError):
+            # Resort to voting
+            predictions = estimator.predict(X[:, features])
+
+            for i in range(n_samples):
+                proba[i, predictions[i]] += 1
+
+    return proba
+
+
+def _parallel_predict_log_proba(estimators, estimators_features, X, n_classes):
+    """Private function used to compute log probabilities within a job."""
+    n_samples = X.shape[0]
+    log_proba = np.empty((n_samples, n_classes))
+    log_proba.fill(-np.inf)
+    all_classes = np.arange(n_classes, dtype=np.int)
+
+    for estimator, features in zip(estimators, estimators_features):
+        log_proba_estimator = estimator.predict_log_proba(X[:, features])
+
+        if n_classes == len(estimator.classes_):
+            log_proba = np.logaddexp(log_proba, log_proba_estimator)
+
+        else:
+            log_proba[:, estimator.classes_] = np.logaddexp(log_proba[:, estimator.classes_], log_proba_estimator[:, range(len(estimator.classes_))])
+
+            missing = np.setdiff1d(all_classes, estimator.classes_)
+            log_proba[:, missing] = np.logaddexp(log_proba[:, missing],
+                                                 -np.inf)
+
+    return log_proba
+
+
+def _parallel_decision_function(estimators, estimators_features, X):
+    """Private function used to compute decisions within a job."""
+    return sum(estimator.decision_function(X[:, features])
+               for estimator, features in zip(estimators,
+                                              estimators_features))
+
+
+
 def _parallel_predict_regression(estimators, estimators_features, X):
     """Private funtion which predicts with in a job in regression"""
     return sum(estimator.predict(X[:, features]) for estimator, features in zip(estimators, estimators_features))
