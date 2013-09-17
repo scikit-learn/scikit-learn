@@ -24,6 +24,7 @@ from ..externals.joblib import Parallel, delayed
 from ..cross_validation import check_cv
 from ..utils.optimize import newton_cg
 from ..externals import six
+from ..metrics import SCORERS
 
 
 # .. some helper functions for logistic_regression_path ..
