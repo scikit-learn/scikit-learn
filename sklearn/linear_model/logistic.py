@@ -23,6 +23,7 @@ from ..utils import as_float_array
 from ..externals.joblib import Parallel, delayed
 from ..cross_validation import check_cv
 from ..utils.optimize import newton_cg
+from ..externals import six
 
 
 # .. some helper functions for logistic_regression_path ..
@@ -176,7 +177,8 @@ def _logistic_loss_grad_hess_intercept(w_c, X, y, alpha):
 
 def logistic_regression_path(X, y, Cs=10, fit_intercept=True,
                              max_iter=100, gtol=1e-4, verbose=0,
-                             method='liblinear', callback=None):
+                             solver='liblinear', callback=None,
+                             coef=None):
     """
     Compute a Logistic Regression model for a list of regularization
     parameters.
@@ -215,13 +217,15 @@ def logistic_regression_path(X, y, Cs=10, fit_intercept=True,
     verbose: int
         Print convergence message if True.
 
-    method : {'lbfgs', 'newton-cg', 'liblinear'}
+    solver : {'lbfgs', 'newton-cg', 'liblinear'}
         Numerical solver to use.
 
     callback : callable
         Function to be called before and after the fit of each regularization
         parameter. Must have the signature callback(w, X, y, alpha).
 
+    coef: array-lime, shape (n_features,)
+        Initialization value for coefficients of logistic regression.
 
     Returns
     -------
@@ -250,18 +254,24 @@ def logistic_regression_path(X, y, Cs=10, fit_intercept=True,
     else:
         w0 = np.zeros(X.shape[1])
         func = _logistic_loss_and_grad
+
+    if coef is not None:
+        # it must work both giving the bias term and not
+        if not coef.size in (X.shape[1], w0.size):
+            raise ValueError('Initialization coef is not of correct shape')
+        w0[:coef.size] = coef
     coefs = list()
 
     for C in Cs:
         if callback is not None:
             callback(w0, X, y, 1. / C)
-        if method == 'lbfgs':
+        if solver == 'lbfgs':
             out = optimize.fmin_l_bfgs_b(
                 func, w0, fprime=None,
-                args=(X, y, 1./C),
+                args=(X, y, 1. / C),
                 iprint=verbose > 0, pgtol=gtol, maxiter=max_iter)
             w0 = out[0]
-        elif method == 'newton-cg':
+        elif solver == 'newton-cg':
             if fit_intercept:
                 func_grad_hess = _logistic_loss_grad_hess_intercept
                 func = _logistic_loss_intercept
@@ -271,7 +281,7 @@ def logistic_regression_path(X, y, Cs=10, fit_intercept=True,
 
             w0 = newton_cg(func_grad_hess, func, w0, args=(X, y, 1./C),
                         maxiter=max_iter)
-        elif method == 'liblinear':
+        elif solver == 'liblinear':
             lr = LogisticRegression(C=C, fit_intercept=fit_intercept, tol=gtol)
             lr.fit(X, y)
             if fit_intercept:
@@ -279,8 +289,8 @@ def logistic_regression_path(X, y, Cs=10, fit_intercept=True,
             else:
                 w0 = lr.coef_.ravel()
         else:
-            raise ValueError("method must be one of {'liblinear', 'lbfgs', "
-                             "'newton-cg'}, got '%s' instead" % method)
+            raise ValueError("solver must be one of {'liblinear', 'lbfgs', "
+                             "'newton-cg'}, got '%s' instead" % solver)
         if callback is not None:
             callback(w0, X, y, 1. / C)
         coefs.append(w0)
@@ -298,7 +308,7 @@ def _log_reg_scoring_path(X, y, train, test, Cs=10, scoring=None,
 
     coefs, Cs = logistic_regression_path(X[train], y[train], Cs=Cs,
                                          fit_intercept=fit_intercept,
-                                         method=method,
+                                         solver=method,
                                          max_iter=max_iter,
                                          gtol=gtol, verbose=verbose)
     scores = list()
@@ -478,6 +488,9 @@ class LogisticRegressionCV(BaseEstimator, LinearClassifierMixin,
     scoring: callabale
         Scoring function to use as cross-validation criteria.
 
+    solver: {'newton-cg', 'lbfgs', 'liblinear'}
+        Algorithm to use in the optimization problem.
+
     Attributes
     ----------
     `coef_` : array, shape = [n_classes-1, n_features]
@@ -541,7 +554,7 @@ class LogisticRegressionCV(BaseEstimator, LinearClassifierMixin,
                              (X.shape[0], y.shape[0]))
 
         # Transform to [-1, 1] classes, as y is [0, 1]
-        y = 2 * y
+        y *= 2
         y -= 1
 
         # init cross-validation generator
@@ -567,20 +580,16 @@ class LogisticRegressionCV(BaseEstimator, LinearClassifierMixin,
         best_index = self.scores_.sum(axis=0).argmax()
         self.C_ = self.Cs_[best_index]
         coef_init = np.mean([c[best_index] for c in coefs_paths], axis=0)
-        w = logistic_regression_path(X, y, C=[self.C_],
-                                fit_intercept=self.fit_intercept,
-                                w0=coef_init,
-                                method=self.solver,
-                                max_iter=self.max_iter,
-                                gtol=self.gtol,
-                                verbose=max(0, self.verbose-1),
-                               )
+        w = logistic_regression_path(
+            X, y, Cs=[self.C_], fit_intercept=self.fit_intercept,
+            coef=coef_init, solver=self.solver, max_iter=self.max_iter,
+            gtol=self.gtol, verbose=max(0, self.verbose-1))
         w = w[0]
         if self.fit_intercept:
-            self.coef_ = w[np.newaxis, :-1]
+            self.coef_ = w[:-1]
             self.intercept_ = w[-1]
         else:
-            self.coef_ = w[np.newaxis, :]
+            self.coef_ = w
             self.intercept_ = 0
         return self
 

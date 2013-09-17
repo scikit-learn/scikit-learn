@@ -156,7 +156,7 @@ def test_consistency_path():
     # penalizes the intercept
     for method in ('lbfgs', 'newton-cg', 'liblinear'):
         coefs, Cs = logistic.logistic_regression_path(
-            X, Y1, Cs=Cs, fit_intercept=False, gtol=1e-16, method=method)
+            X, Y1, Cs=Cs, fit_intercept=False, gtol=1e-16, solver=method)
         for i, C in enumerate(Cs):
             lr = logistic.LogisticRegression(
                 C=C,fit_intercept=False, tol=1e-16)
@@ -168,7 +168,7 @@ def test_consistency_path():
     for method in ('lbfgs', 'newton-cg', 'liblinear'):
         Cs = [1e3]
         coefs, Cs = logistic.logistic_regression_path(
-            X, Y1, Cs=Cs, fit_intercept=True, gtol=1e-16, method=method)
+            X, Y1, Cs=Cs, fit_intercept=True, gtol=1e-16, solver=method)
         lr = logistic.LogisticRegression(
             C=Cs[0], fit_intercept=True, tol=1e-16)
         lr.fit(X, Y1)
