@@ -23,7 +23,7 @@ def single_linkage_cluster(X, threshold=0.85, metric='euclidean'):
     """Perform clustering using the single linkage, with a threshold cut.
 
     In single linkage hierarchical clustering, each sample begins in its own
-    cluster. At each step, the two nearest clusters are merged (aglomerative
+    cluster. At each step, the two nearest clusters are merged (agglomerative
     clustering). The distance between two clusters is determined by finding the
     minimum distance between sample in each cluster. This makes it different
     from other forms of hierarchical clustering, such as complete linkage which
@@ -95,7 +95,7 @@ class SingleLinkageCluster(BaseEstimator, ClusterMixin):
     """Perform clustering using the single linkage, with a threshold cut.
 
     In single linkage hierarchical clustering, each sample begins in its own
-    cluster. At each step, the two nearest clusters are merged (aglomerative
+    cluster. At each step, the two nearest clusters are merged (agglomerative
     clustering). The distance between two clusters is determined by finding the
     minimum distance between sample in each cluster. This makes it different
     from other forms of hierarchical clustering, such as complete linkage which

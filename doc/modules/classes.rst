@@ -29,7 +29,7 @@ Classes
 
    cluster.AffinityPropagation
    cluster.DBSCAN
-   cluster.EAC
+   cluster.EvidenceAccumulationClustering
    cluster.KMeans
    cluster.MiniBatchKMeans
    cluster.MeanShift
