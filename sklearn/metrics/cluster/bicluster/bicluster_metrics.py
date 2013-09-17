@@ -172,4 +172,4 @@ def consensus_score(a, b, similarity="jaccard", correction=None):
         raise ValueError("'similarity' argument is not callable")
     matrix = _pairwise_similarity(a, b, similarity)
     indices = linear_assignment(1.0 - matrix)
-    return matrix[list(indices.T)].sum() / max(matrix.shape)
+    return matrix[indices[:, 0], indices[:, 1]].sum() / max(matrix.shape)
