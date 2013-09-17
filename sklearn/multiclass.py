@@ -91,12 +91,15 @@ def fit_ovr(estimator, X, y, n_jobs=1):
 
     if isinstance(Y, coo_matrix):
         estimators = Parallel(n_jobs=n_jobs)(
-           delayed(_fit_binary)(estimator, X, np.ravel(Y.getcol(i).todense()), 
-               classes=["not %s" % i, i]) for i in range(Y.shape[1]))
+            delayed(_fit_binary)(estimator, X,
+                                 np.ravel(Y.getcol(i).todense()),
+                                 classes=["not %s" % i, i])
+            for i in range(Y.shape[1]))
     else:
         estimators = Parallel(n_jobs=n_jobs)(
-            delayed(_fit_binary)(estimator, X, Y[:, i], 
-                classes=["not %s" % i, i]) for i in range(Y.shape[1]))
+            delayed(_fit_binary)(estimator, X, Y[:, i],
+                                 classes=["not %s" % i, i])
+            for i in range(Y.shape[1]))
     return estimators, lb
 
 
