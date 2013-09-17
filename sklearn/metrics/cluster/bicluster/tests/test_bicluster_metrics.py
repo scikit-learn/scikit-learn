@@ -48,3 +48,26 @@ def test_consensus_score():
                                         method, correction) <= 0)
             assert_true(consensus_score((b, b), (b, a),
                                         method, correction) <= 0)
+
+
+def test_consensus_score_mismatched():
+    """Test consensus score with differing number of biclusters."""
+    a = [[True, True, False, False],
+         [False, False, True, True]]
+    b = [[True, True, False, False],
+         [True, True, True, False],
+         [True, False, True, False],
+         [False, False, True, True]]
+    assert_equal(consensus_score((a, a), (b, b)), 0.5)
+
+
+def test_consensus_score_missing():
+    """Test consensus score with empty biclusters"""
+    a = [[True, True, False, False],
+         [False, False, True, True],
+         [False, False, False, False]]
+    b = [[True, True, False, False],
+         [True, True, True, False],
+         [True, False, True, False],
+         [False, False, True, True]]
+    assert_equal(consensus_score((a, a), (b, b)), 0.5)

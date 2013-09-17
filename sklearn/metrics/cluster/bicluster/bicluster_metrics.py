@@ -6,6 +6,16 @@ from sklearn.utils.linear_assignment_ import linear_assignment
 from sklearn.utils.validation import check_arrays
 
 
+def replace_nan(f):
+    """Transforms nan return value to 0."""
+    # ensures that biclusters with no rows/columns have 0 similarity
+    # with everything.
+    def new_f(*args, **kwargs):
+        result = f(*args, **kwargs)
+        return 0 if np.isnan(result) else result
+    return new_f
+
+
 def _check_rows_and_columns(a, b):
     """Unpacks the row and column arrays. Checks shape and dtype."""
     a_rows, a_cols = check_arrays(*a)
@@ -27,6 +37,7 @@ def _size(rows, cols):
     return rows.sum() * cols.sum()
 
 
+@replace_nan
 def _precision(a_rows, a_cols, b_rows, b_cols):
     """Precision, assuming 'a' is expected bicluster."""
     num = _intersection(a_rows, a_cols, b_rows, b_cols)
@@ -34,6 +45,7 @@ def _precision(a_rows, a_cols, b_rows, b_cols):
     return num / denom
 
 
+@replace_nan
 def _recall(a_rows, a_cols, b_rows, b_cols):
     """Recall, assuming 'a' is expected bicluster."""
     num = _intersection(a_rows, a_cols, b_rows, b_cols)
@@ -41,6 +53,7 @@ def _recall(a_rows, a_cols, b_rows, b_cols):
     return num / denom
 
 
+@replace_nan
 def _precision_corrected(a_rows, a_cols, b_rows, b_cols, dsize):
     """Precision corrected for size bias."""
     p = _precision(a_rows, a_cols, b_rows, b_cols)
@@ -48,6 +61,7 @@ def _precision_corrected(a_rows, a_cols, b_rows, b_cols, dsize):
     return (dsize * p - asize) / (dsize - asize)
 
 
+@replace_nan
 def _recall_corrected(a_rows, a_cols, b_rows, b_cols, dsize):
     """Recall corrected for size bias."""
     r = _recall(a_rows, a_cols, b_rows, b_cols)
@@ -55,20 +69,19 @@ def _recall_corrected(a_rows, a_cols, b_rows, b_cols, dsize):
     return (dsize * r - bsize) / (dsize - bsize)
 
 
+@replace_nan
 def _jaccard(precision, recall):
     """Jaccard coefficient"""
-    if precision == recall == 0:
-        return 0
     return (precision * recall) / (precision + recall - precision * recall)
 
 
+@replace_nan
 def _dice(precision, recall):
     """Dice measure. Same as the traditional balanced F-score."""
-    if precision == recall == 0:
-        return 0
     return 2 * precision * recall / (precision + recall)
 
 
+@replace_nan
 def _goodness(precision, recall):
     """Goodness measure. Mean of precision and recall."""
     return (precision + recall) / 2.0
@@ -93,6 +106,7 @@ def _pairwise_similarity(a, b, similarity):
 
 
 def _make_similarity(f, dsize):
+    @replace_nan
     def result(a_rows, a_cols, b_rows, b_cols):
         if dsize is None:
             p = _precision(a_rows, a_cols, b_rows, b_cols)
@@ -157,7 +171,5 @@ def consensus_score(a, b, similarity="jaccard", correction=None):
     if not callable(similarity):
         raise ValueError("'similarity' argument is not callable")
     matrix = _pairwise_similarity(a, b, similarity)
-    indices = linear_assignment(1. - matrix)
-    n_a = len(a[0])
-    n_b = len(b[0])
-    return np.trace(matrix[:, indices[:, 1]]) / max(n_a, n_b)
+    indices = linear_assignment(1.0 - matrix)
+    return matrix[list(indices.T)].sum() / max(matrix.shape)
