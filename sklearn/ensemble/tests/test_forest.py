@@ -461,8 +461,9 @@ def test_distribution():
     # Single variable with 4 values
     X = rng.randint(0, 4, size=(1000, 1))
     y = rng.rand(1000)
+    n_trees = 100
 
-    clf = ExtraTreesRegressor(n_estimators=100, random_state=1).fit(X, y)
+    clf = ExtraTreesRegressor(n_estimators=n_trees, random_state=1).fit(X, y)
 
     uniques = defaultdict(int)
     for tree in clf.estimators_:
@@ -472,15 +473,20 @@ def test_distribution():
 
         uniques[tree] += 1
 
-    uniques = [(count, tree) for tree, count in uniques.items()]
+    uniques = sorted([(1. * count / n_trees, tree)
+                      for tree, count in uniques.items()])
 
     # On a single variable problem where X_0 has 4 equiprobable values, there
     # are 5 ways to build a random tree. The more compact (0,1/0,0/--0,2/--) of
     # them has probability 1/3 while the 4 others have probability 1/6.
 
     assert_equal(len(uniques), 5)
-    assert_greater(max(uniques)[0], 30)
-    assert_equal(max(uniques)[1], "0,1/0,0/--0,2/--")
+    assert_greater(0.20, uniques[0][0]) # Rough approximation of 1/6.
+    assert_greater(0.20, uniques[1][0])
+    assert_greater(0.20, uniques[2][0])
+    assert_greater(0.20, uniques[3][0])
+    assert_greater(uniques[4][0], 0.3)
+    assert_equal(uniques[4][1], "0,1/0,0/--0,2/--")
 
     # Two variables, one with 2 values, one with 3 values
     X = np.empty((1000, 2))
