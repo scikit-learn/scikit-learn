@@ -463,6 +463,10 @@ class LogisticRegressionCV(BaseEstimator, LinearClassifierMixin,
     Parameters
     ----------
     Cs : list of floats, integer
+        Each of the values in Cs describes the inverse of regularization
+        strength and must be a positive float.
+        Like in support vector machines, smaller values specify stronger
+        regularization.
 
     fit_intercept : bool, default: True
         Specifies if a constant (a.k.a. bias or intercept) should be
