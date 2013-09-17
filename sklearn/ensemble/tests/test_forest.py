@@ -457,6 +457,8 @@ def test_parallel_train():
 
 def test_distribution():
     rng = np.random.RandomState(12321)
+
+    # Single variable with 4 values
     X = rng.randint(0, 4, size=(1000, 1))
     y = rng.rand(1000)
 
@@ -479,6 +481,28 @@ def test_distribution():
     assert_equal(len(uniques), 5)
     assert_greater(max(uniques)[0], 30)
     assert_equal(max(uniques)[1], "0,1/0,0/--0,2/--")
+
+    # Two variables, one with 2 values, one with 3 values
+    X = np.empty((1000, 2))
+    X[:, 0] = np.random.randint(0, 2, 1000)
+    X[:, 1] = np.random.randint(0, 3, 1000)
+    y = rng.rand(1000)
+
+    clf = ExtraTreesRegressor(n_estimators=100,
+                              max_features=1,
+                              random_state=1).fit(X, y)
+
+    uniques = defaultdict(int)
+    for tree in clf.estimators_:
+        tree = "".join(("%d,%d/" % (f, int(t)) if f >= 0 else "-")
+                       for f, t in zip(tree.tree_.feature,
+                                       tree.tree_.threshold))
+
+        uniques[tree] += 1
+
+    uniques = [(count, tree) for tree, count in uniques.items()]
+    assert_equal(len(uniques), 8)
+
 
 if __name__ == "__main__":
     import nose
