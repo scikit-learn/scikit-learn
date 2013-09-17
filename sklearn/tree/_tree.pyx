@@ -9,9 +9,6 @@
 #          Satrajit Gosh <satrajit.ghosh@gmail.com>
 #          Lars Buitinck <L.J.Buitinck@uva.nl>
 #
-# rand_r function taken from the 4.4BSD C library:
-# Copyright (c) 1990 The Regents of the University of California.
-#
 # Licence: BSD 3 clause
 
 
