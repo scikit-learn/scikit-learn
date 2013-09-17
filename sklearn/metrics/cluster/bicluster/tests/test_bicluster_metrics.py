@@ -8,6 +8,7 @@ from sklearn.utils.testing import assert_true
 from ..bicluster_metrics import _jaccard
 from ..bicluster_metrics import _make_similarity
 from ..bicluster_metrics import consensus_score
+from ..bicluster_metrics import match_score
 
 
 def test_jaccard():
@@ -71,3 +72,19 @@ def test_consensus_score_missing():
          [True, False, True, False],
          [False, False, True, True]]
     assert_equal(consensus_score((a, a), (b, b)), 0.5)
+
+
+def test_match_score():
+    a_rows = [[True, False],
+              [False, True]]
+    a_cols = [[True, False],
+              [False, True]]
+    b_rows = [[True, False]]
+    b_cols = [[True, False]]
+    rec, rel = match_score((a_rows, a_cols), (b_rows, b_cols))
+    assert_equal(rec, 0.5)
+    assert_equal(rel, 1.0)
+
+    rec, rel = match_score((b_rows, b_cols), (a_rows, a_cols))
+    assert_equal(rec, 1.0)
+    assert_equal(rel, 0.5)

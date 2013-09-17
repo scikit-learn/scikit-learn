@@ -790,6 +790,7 @@ further details.
    :template: function.rst
 
    metrics.consensus_score
+   metrics.match_score
 
 
 Pairwise metrics
