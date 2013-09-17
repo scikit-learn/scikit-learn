@@ -471,6 +471,9 @@ class LogisticRegressionCV(BaseEstimator, LinearClassifierMixin,
     tol: float, optional
         Tolerance for stopping criteria.
 
+    scoring: callabale
+        Scoring function to use as cross-validation criteria.
+
     Attributes
     ----------
     `coef_` : array, shape = [n_classes-1, n_features]
