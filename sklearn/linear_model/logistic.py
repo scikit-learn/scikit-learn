@@ -594,7 +594,7 @@ class LogisticRegressionCV(BaseEstimator, LinearClassifierMixin,
             self.intercept_ = w[:, -1]
         else:
             self.coef_ = w
-            self.intercept_ = 0
+            self.intercept_ = 0.
         return self
 
     @property
