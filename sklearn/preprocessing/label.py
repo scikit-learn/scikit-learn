@@ -6,7 +6,7 @@
 
 import numpy as np
 
-from scipy.sparse import csc_matrix
+from scipy.sparse import coo_matrix
 
 from ..base import BaseEstimator, TransformerMixin
 
@@ -313,11 +313,19 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
             threshold = self.neg_label + half
 
         if self.multilabel_:
-            Y = np.array(Y > threshold, dtype=int)
+            if not(isinstance(Y, coo_matrix)):
+                Y = np.array(Y > threshold, dtype=int)
             # Return the predictions in the same format as in fit
             if self.indicator_matrix_:
                 # Label indicator matrix format
                 return Y
+            elif isinstance(Y, coo_matrix):
+                # Splitting and processing sparse matrix
+                y = []
+                for i in range(Y.shape[0]):
+                    r_split = np.array(Y.getrow(i).todense())
+                    y.append(tuple(self.classes_[np.flatnonzero(r_split)]))
+                return y
             else:
                 # Lists of tuples format
                 return [tuple(self.classes_[np.flatnonzero(Y[i])])
@@ -422,7 +430,7 @@ def label_binarize(y, classes, multilabel=False, neg_label=0, pos_label=1):
                     col.append(imap[label])
                     data.append(pos_label)
 
-            Y = csc_matrix((data, (row, col)), shape=(len(y), len(classes)))
+            Y = coo_matrix((data, (row, col)), shape=(len(y), len(classes)))
 
         else:
             for i, label_tuple in enumerate(y):

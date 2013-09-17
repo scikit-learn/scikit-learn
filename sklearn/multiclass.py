@@ -33,7 +33,7 @@ case.
 # License: BSD 3 clause
 
 import numpy as np
-from scipy.sparse import coo_matrix, hstack
+from scipy.sparse import coo_matrix, vstack
 
 import warnings
 
@@ -91,8 +91,8 @@ def fit_ovr(estimator, X, y, n_jobs=1):
 
     if isinstance(Y, coo_matrix):
         estimators = Parallel(n_jobs=n_jobs)(
-            delayed(_fit_binary)(estimator, X, Y.getcol(i).todense(), 
-                classes=["not %s" % i, i]) for i in range(Y.shape[1]))
+           delayed(_fit_binary)(estimator, X, np.ravel(Y.getcol(i).todense()), 
+               classes=["not %s" % i, i]) for i in range(Y.shape[1]))
     else:
         estimators = Parallel(n_jobs=n_jobs)(
             delayed(_fit_binary)(estimator, X, Y[:, i], 
@@ -102,11 +102,11 @@ def fit_ovr(estimator, X, y, n_jobs=1):
 
 def predict_ovr(estimators, label_binarizer, X):
     """Make predictions using the one-vs-the-rest strategy."""
-    e = estimator[0]
+    e = estimators[0]
     thresh = 0 if hasattr(e, "decision_function") and is_classifier(e) else .5
     Y = coo_matrix(_predict_binary(e, X))
     for e in estimators[1:]:
-        row_pred = coo_matrix(_predict_binary(e, X))
+        row_pred = coo_matrix(_predict_binary(e, X) > thresh)
         Y = vstack([Y, row_pred])
     return label_binarizer.inverse_transform(Y.T, threshold=thresh)
 

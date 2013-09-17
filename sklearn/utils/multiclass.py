@@ -11,7 +11,7 @@ from itertools import chain
 
 import numpy as np
 
-from scipy.sparse import csc_matrix
+from scipy.sparse import coo_matrix
 
 from ..externals.six import string_types
 
@@ -146,7 +146,7 @@ def is_label_indicator_matrix(y):
     if not (hasattr(y, "shape") and y.ndim == 2 and y.shape[1] > 1):
         return False
 
-    if isinstance(y, csc_matrix):
+    if isinstance(y, coo_matrix):
         labels = np.setxor1d(y.data, [0])
     else:
         labels = np.unique(y)
@@ -186,6 +186,8 @@ def is_sequence_of_sequences(y):
     """
     # the explicit check for ndarray is for forward compatibility; future
     # versions of Numpy might want to register ndarray as a Sequence
+    if isinstance(y, coo_matrix):
+        return False
     try:
         return (not isinstance(y[0], np.ndarray) and isinstance(y[0], Sequence)
                 and not isinstance(y[0], string_types))
@@ -281,7 +283,7 @@ def type_of_target(y):
     'multilabel-indicator'
     """
     # XXX: is there a way to duck-type this condition?
-    valid = (isinstance(y, (np.ndarray, Sequence, csc_matrix))
+    valid = (isinstance(y, (np.ndarray, Sequence, coo_matrix))
              and not isinstance(y, string_types))
     if not valid:
         raise ValueError('Expected array-like (array or non-string sequence), '
