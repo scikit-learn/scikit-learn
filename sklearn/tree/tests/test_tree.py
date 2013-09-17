@@ -605,4 +605,4 @@ def test_32bit_equality():
 
     est.fit(X_train, y_train)
     score = est.score(X_test, y_test)
-    assert_almost_equal(0.76624433012786297, score)
+    assert_almost_equal(0.78662424216893756, score)

@@ -1931,7 +1931,7 @@ cdef class Tree:
 # rand_r replacement taken from 4.4BSD C library.
 cdef inline UINT32_t our_rand_r(UINT32_t* seed) nogil:
     seed[0] = seed[0] * <UINT32_t>1103515245 + <UINT32_t>12345
-    return seed[0] % <UINT32_t>(RAND_R_MAX + 1)
+    return seed[0] % <UINT32_t>RAND_R_MAX
 
 cdef inline np.ndarray int_ptr_to_ndarray(int* data, SIZE_t size):
     """Encapsulate data into a 1D numpy array of int's."""
