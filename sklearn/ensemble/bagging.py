@@ -13,10 +13,7 @@ from warnings import warn
 from abc import ABCMeta, abstractmethod
 from inspect import getargspec
 
-"""
-if __name__ == "__main__" and __package__ is None:
-    __package__ = "sklearn.ensemble"
-"""
+
 from ..base import ClassifierMixin, RegressorMixin
 from ..externals.joblib import Parallel, delayed, cpu_count
 from ..externals import six
@@ -25,6 +22,7 @@ from ..metrics import r2_score
 from ..utils import check_random_state, check_arrays
 from ..utils.fixes import bincount, unique
 from ..utils.random import sample_without_replacement
+from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
 
 
 from .base import BaseEnsemble
@@ -132,6 +130,64 @@ def _parallel_build_estimators(n_estimators, ensemble, X, y, sample_weight, seed
 
     return estimators, estimators_samples, estimators_features
 
+def _parallel_predict_proba(estimators, estimators_features, X, n_classes):
+    """Private function used to compute (proba-)predictions within a job."""
+    
+    n_samples = X.shape[0]
+    proba = np.zeros((n_samples, n_classes))
+
+    for estimator, features in zip(estimators, estimators_features):
+        try:
+            proba_estimator = estimator.predict_proba(X[:, features])
+
+            if n_classes == len(estimator.classes_):
+                proba += proba_estimator
+
+            else:
+                proba[:, estimator.classes_] += \
+                    proba_estimator[:, range(len(estimator.classes_))]
+
+        except (AttributeError, NotImplementedError):
+            # Resort to voting
+            predictions = estimator.predict(X[:, features])
+
+            for i in range(n_samples):
+                proba[i, predictions[i]] += 1
+
+    return proba
+
+
+def _parallel_predict_log_proba(estimators, estimators_features, X, n_classes):
+    """Private function used to compute log probabilities within a job."""
+    n_samples = X.shape[0]
+    log_proba = np.empty((n_samples, n_classes))
+    log_proba.fill(-np.inf)
+    all_classes = np.arange(n_classes, dtype=np.int)
+
+    for estimator, features in zip(estimators, estimators_features):
+        log_proba_estimator = estimator.predict_log_proba(X[:, features])
+
+        if n_classes == len(estimator.classes_):
+            log_proba = np.logaddexp(log_proba, log_proba_estimator)
+
+        else:
+            log_proba[:, estimator.classes_] = np.logaddexp(log_proba[:, estimator.classes_], log_proba_estimator[:, range(len(estimator.classes_))])
+
+            missing = np.setdiff1d(all_classes, estimator.classes_)
+            log_proba[:, missing] = np.logaddexp(log_proba[:, missing],
+                                                 -np.inf)
+
+    return log_proba
+
+
+def _parallel_decision_function(estimators, estimators_features, X):
+    """Private function used to compute decisions within a job."""
+    return sum(estimator.decision_function(X[:, features])
+               for estimator, features in zip(estimators,
+                                              estimators_features))
+
+
+
 def _parallel_predict_regression(estimators, estimators_features, X):
     """Private funtion which predicts with in a job in regression"""
     return sum(estimator.predict(X[:, features]) for estimator, features in zip(estimators, estimators_features))
@@ -230,7 +286,7 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
         
         base_estimator : object or None, This is Compulsory (default=None)
             The base estimator to fit on random subsets of the dataset.
-            If None, a value error is raised.
+            If None, default is set to Decision tree Regressor .
 
         n_estimators : int, optional (default=10)
             The number of base estimators in the ensemble.
@@ -282,14 +338,20 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
             `oob_decision_function_` might contain NaN. """
     
     
-    def __init__(self, base_estimator, n_estimators=10, max_samples=1.0, bootstrap=True, oob_score=False, n_jobs=1, random_state=None, verbose=0): 
-        if base_estimator == None:
-            raise ValueError("BaseEstimator should be defined")
-        super(BaggingRegressor, self).__init__(base_estimator, n_estimators=n_estimators, max_samples=max_samples, bootstrap=bootstrap, oob_score=oob_score, n_jobs=n_jobs, random_state=random_state, verbose=verbose)
-           
+    def __init__(self, base_estimator=DecisionTreeRegressor(), n_estimators=10, max_samples=1.0, bootstrap=True, oob_score=False, n_jobs=1, random_state=None, verbose=0): 
+
             
-    def _set_oob_score(self, X, y):
-        pass
+        super(BaggingRegressor, self).__init__(base_estimator, n_estimators=n_estimators, max_samples=max_samples, bootstrap=bootstrap, oob_score=oob_score, n_jobs=n_jobs, random_state=random_state, verbose=verbose)
+        
+    def _validate_estimator(self):
+        """Check the estimator and set the base_estimator_ attribute."""
+        super(BaggingRegressor, self)._validate_estimator(
+            default=DecisionTreeRegressor())
+        
+        
+   
+           
+
     
     def predict(self, X):
         """Predicts regression target for X.
@@ -345,7 +407,7 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
 
         self.oob_prediction_ = predictions
         self.oob_score_ = r2_score(y, predictions)
-        print self.oob_score_
+        #print self.oob_score_
 
         
         
@@ -356,18 +418,102 @@ class BaggingRegressor(BaseBagging, RegressorMixin):
         
             
         
+    
     
             
         
  
 
 class BaggingClassifier(BaseBagging, ClassifierMixin):
-    """ A bagged classifier"""    
-    pass
+    """A Bagged classifier.
+
+    A Bagging classifier is an ensemble method that fits base
+    classifiers each on random subsets of the original dataset and then
+    aggregate their individual predictions by voting to form a final prediction. 
+    Such a meta-estimator can typically be used as
+    a way to reduce the variance of a black-box estimator (e.g: Decision
+    tree, KNN, etc.), by introducing randomization into its construction procedure and
+    then making an ensemble out of it.
 
 
+    Parameters
+    ----------
+    base_estimator : object or None, This is Compulsory (default=None)
+            The base estimator to fit on random subsets of the dataset.
+            If None, default is set to Decision tree classifier .
 
+    n_estimators : int, optional (default=10)
+        The number of base estimators in the ensemble.
 
+    max_samples : int or float, optional (default=1.0)
+        The number of samples to draw from X to train each base estimator.
+            - If int, then draw `max_samples` samples.
+            - If float, then draw `max_samples * X.shape[0]` samples.
+
+    bootstrap : boolean, optional (default=False)
+        Whether samples are drawn with replacement.
+
+    oob_score : bool
+        Whether to use out-of-bag samples to estimate
+        the generalization error.
+
+    n_jobs : int, optional (default=1)
+        The number of jobs to run in parallel for both `fit` and `predict`.
+        If -1, then the number of jobs is set to the number of cores.
+
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
+
+    verbose : int, optional (default=0)
+        Controls the verbosity of the building process.
+
+    Attributes
+    ----------
+    `base_estimator_`: list of estimators
+        The base estimator from which the ensemble is grown.
+
+    `estimators_`: list of estimators
+        The collection of fitted base estimators.
+
+    `estimators_samples_`: list of arrays
+        The subset of drawn samples (i.e., the in-bag samples) for each base
+        estimator.
+
+    `estimators_features_`: list of arrays
+        The subset of drawn features for each base estimator.
+
+    `classes_`: array of shape = [n_classes]
+        The classes labels.
+
+    `n_classes_`: int or list
+        The number of classes.
+
+    `oob_score_` : float
+        Score of the training dataset obtained using an out-of-bag estimate.
+
+    `oob_decision_function_` : array of shape = [n_samples, n_classes]
+        Decision function computed with out-of-bag estimate on the training
+        set. If n_estimators is small it might be possible that a data point
+        was never left out during the bootstrap. In this case,
+        `oob_decision_function_` might contain NaN.
+    """
+    
+    def __init__(self, base_estimator=DecisionTreeClassifier(), n_estimators=10, max_samples=1.0, bootstrap=True, oob_score=False, n_jobs=1, random_state=None, verbose=0):
+    
+
+        super(BaggingClassifier, self).__init__(base_estimator, n_estimators=n_estimators, max_samples=max_samples, bootstrap=bootstrap, oob_score=oob_score, n_jobs=n_jobs, random_state=random_state, verbose=verbose)
+        
+    def _validate_estimator(self):
+        """Check the estimator and set the base_estimator_ attribute."""
+        super(BaggingClassifier, self)._validate_estimator(
+            default=DecisionTreeClassifier())
+        
+        
+
+    
 
 
 
