@@ -338,21 +338,21 @@ def test_check_accuracy_on_digits():
 
     # Multinomial NB
     scores = cross_val_score(MultinomialNB(alpha=10), X, y, cv=10)
-    assert_greater(scores.mean(), 0.90)
+    assert_greater(scores.mean(), 0.88)
 
     scores = cross_val_score(MultinomialNB(alpha=10), X_3v8, y_3v8, cv=10)
     assert_greater(scores.mean(), 0.95)
 
     # Bernoulli NB
     scores = cross_val_score(BernoulliNB(alpha=10), X > 4, y, cv=10)
-    assert_greater(scores.mean(), 0.85)
+    assert_greater(scores.mean(), 0.84)
 
     scores = cross_val_score(BernoulliNB(alpha=10), X_3v8 > 4, y_3v8, cv=10)
-    assert_greater(scores.mean(), 0.94)
+    assert_greater(scores.mean(), 0.93)
 
     # Gaussian NB
     scores = cross_val_score(GaussianNB(), X, y, cv=10)
-    assert_greater(scores.mean(), 0.81)
+    assert_greater(scores.mean(), 0.78)
 
     scores = cross_val_score(GaussianNB(), X_3v8, y_3v8, cv=10)
     assert_greater(scores.mean(), 0.86)
