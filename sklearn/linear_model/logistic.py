@@ -323,6 +323,7 @@ def _log_reg_scoring_path(X, y, train, test, Cs=10, scoring=None,
             log_reg.intercept_ = w[-1]
         else:
             log_reg.coef_ = w[np.newaxis, :]
+            log_reg.intercept_ = 0.
         if scoring is None:
             scores.append(log_reg.score(X_test, y_test))
         else:

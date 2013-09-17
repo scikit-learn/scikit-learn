@@ -74,9 +74,9 @@ def newton_cg(func_grad_hess, func, x0, args=(), xtol=1e-5, eps=1e-4,
 
         if old_fval is None:
             old_fval = fval
+
         alphak, fc, gc, old_fval = line_search_BFGS(func, xk, xsupi, grad,
                                                     old_fval, args=args)
-
         update = alphak * xsupi
         xk = xk + update        # upcast if necessary
         k += 1
