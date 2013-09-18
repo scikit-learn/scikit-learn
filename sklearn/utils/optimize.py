@@ -105,10 +105,6 @@ def newton_cg(func_grad_hess, func, grad, x0, args=(), xtol=1e-5, eps=1e-4,
             i = i + 1
             dri0 = dri1          # update np.dot(ri,ri) for next time.
 
-        if old_fval is None:
-            old_fval = fval
-
-
         try:
             alphak, fc, gc, old_fval, old_old_fval, gfkp1 = \
                 _line_search_wolfe12(func, grad, xk, xsupi, fgrad,
