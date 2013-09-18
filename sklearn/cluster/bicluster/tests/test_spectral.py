@@ -57,7 +57,7 @@ def test_spectral_biclustering():
                   'n_svd_vecs': [None, 20],
                   'mini_batch': [False, True],
                   'init': ['k-means++'],
-                  'n_init': [10],
+                  'n_init': [3],
                   'n_jobs': [1]}
     random_state = 0
     S, rows, cols = make_checkerboard((30, 30), 3, noise=0.5,

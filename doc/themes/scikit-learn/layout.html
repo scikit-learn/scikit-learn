@@ -302,18 +302,20 @@
 
 {%- block footer %}
     <div class="footer">
-    {%- if show_copyright %}
+    {%- if pagename != 'index' %}
+     {%- if show_copyright %}
       {%- if hasdoc('copyright') %}
         {% trans path=pathto('copyright'), copyright=copyright|e %}&copy; {{ copyright }}.{% endtrans %}
       {%- else %}
         {% trans copyright=copyright|e %}&copy; {{ copyright }}.{% endtrans %}
       {%- endif %}
-    {%- endif %}
-    {%- if last_updated %}
+     {%- endif %}
+     {%- if last_updated %}
       {% trans last_updated=last_updated|e %}Last updated on {{ last_updated }}.{% endtrans %}
-    {%- endif %}
-    {%- if show_source and has_source and sourcename %}
+     {%- endif %}
+     {%- if show_source and has_source and sourcename %}
       <a href="{{ pathto('_sources/' + sourcename, true)|e }}" rel="nofollow">{{ _('Show this page source') }}</a>
+     {%- endif %}
     {%- endif %}
     </div>
 
