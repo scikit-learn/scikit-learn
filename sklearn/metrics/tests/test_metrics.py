@@ -57,6 +57,7 @@ from sklearn.metrics.metrics import _check_clf_targets
 from sklearn.metrics.metrics import _check_reg_targets
 from sklearn.metrics.metrics import UndefinedMetricWarning
 
+from sklearn.utils.fixes import bincount
 
 from sklearn.externals.six.moves import xrange
 from sklearn.externals.six import u
@@ -119,6 +120,10 @@ ALL_METRICS = dict()
 ALL_METRICS.update(THRESHOLDED_METRICS)
 ALL_METRICS.update(CLASSIFICATION_METRICS)
 ALL_METRICS.update(REGRESSION_METRICS)
+
+METRICS_WITH_AVERAGING = [
+    "precision_score", "recall_score", "f1_score", "f2_score", "f0.5_score"
+]
 
 METRICS_WITH_POS_LABEL = [
     "roc_curve",
@@ -2005,3 +2010,68 @@ def test_log_loss():
     y_pred = np.asarray(y_pred) > .5
     loss = log_loss(y_true, y_pred, normalize=True, eps=.1)
     assert_almost_equal(loss, log_loss(y_true, np.clip(y_pred, .1, .9)))
+
+
+@ignore_warnings
+def check_averaging(metric, y_true, y_pred, y_true_binarize, y_pred_binarize,
+                    is_multilabel=False):
+    n_samples, n_classes = y_true_binarize.shape
+
+    # No averaging
+    label_measure = metric(y_true, y_pred, average=None)
+    assert_array_almost_equal(label_measure,
+                              [metric(y_true_binarize[:, i],
+                                      y_pred_binarize[:, i])
+                               for i in range(n_classes)])
+
+    # Micro measure
+    micro_measure = metric(y_true, y_pred, average="micro")
+    assert_almost_equal(micro_measure, metric(y_true_binarize.ravel(),
+                                              y_pred_binarize.ravel()))
+
+    # Macro measure
+    macro_measure =  metric(y_true, y_pred, average="macro")
+    assert_almost_equal(macro_measure, np.mean(label_measure))
+
+    # Weighted measure
+    weighted_measure = metric(y_true, y_pred, average="weighted")
+    weights = np.sum(y_true_binarize, axis=0, dtype=np.int)
+    assert_almost_equal(weighted_measure, np.average(label_measure,
+                                                     weights=weights))
+
+    # Sample measure
+    if is_multilabel:
+        sample_measure = metric(y_true, y_pred, average="samples")
+        assert_almost_equal(sample_measure,
+                            np.mean([metric(y_true_binarize[i], y_pred_binarize[i])
+                                     for i in range(n_samples)]))
+
+def test_averaging_multiclass():
+    y_true, y_pred, y_proba = make_prediction(binary=False)
+
+    lb = LabelBinarizer().fit(y_true)
+    y_true_binarize = lb.transform(y_true)
+    y_pred_binarize = lb.transform(y_pred)
+
+    for name in METRICS_WITH_AVERAGING:
+        metric = ALL_METRICS[name]
+        yield (check_averaging, metric, y_true, y_pred, y_true_binarize,
+               y_pred_binarize)
+
+
+def test_averaging_multilabel():
+    n_classes = 4
+    n_samples = 100
+    _, y = make_multilabel_classification(n_features=1, n_classes=n_classes,
+                                          random_state=0, n_samples=n_samples,
+                                          return_indicator=True)
+
+    y_true = y[:50]
+    y_pred = y[50:]
+    y_true_binarize = y_true
+    y_pred_binarize = y_pred
+
+    for name in METRICS_WITH_AVERAGING:
+        metric = ALL_METRICS[name]
+        yield (check_averaging, metric, y_true, y_pred, y_true_binarize,
+               y_pred_binarize, True)
