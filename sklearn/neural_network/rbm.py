@@ -112,7 +112,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         h : array, shape (n_samples, n_components)
             Latent representations of the data.
         """
-        X, = check_arrays(X, sparse_format='csc', dtype=np.float)
+        X, = check_arrays(X, sparse_format='csr', dtype=np.float)
         return self._mean_hiddens(X)
 
     def _mean_hiddens(self, v):
@@ -285,7 +285,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         self : BernoulliRBM
             The fitted model.
         """
-        X, = check_arrays(X, sparse_format='csc', dtype=np.float)
+        X, = check_arrays(X, sparse_format='csr', dtype=np.float)
         n_samples = X.shape[0]
         rng = check_random_state(self.random_state)
 
