@@ -84,9 +84,6 @@ def newton_cg(func_grad_hess, func, x0, args=(), xtol=1e-5, eps=1e-4,
                 lambda x: func(x, *args),
                 lambda x: func_grad_hess(x, *args)[1], xk, xsupi)
             alphak, fc, gc = out[0], out[1], out[2]
-            warnings.warn(
-                'Failed to find a suitable descent direction, the algorithm' +
-                'will now terminate')
         update = alphak * xsupi
         xk = xk + update        # upcast if necessary
         k += 1
