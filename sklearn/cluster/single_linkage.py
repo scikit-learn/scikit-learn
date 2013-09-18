@@ -15,7 +15,7 @@ from scipy.sparse import csr_matrix
 from ..base import BaseEstimator, ClusterMixin
 from ..metrics import pairwise_distances
 from ..utils import atleast2d_or_csr
-from ..utils.sparsetools import minimum_spanning_tree
+from ..utils import minimum_spanning_tree
 from ..utils import connected_components
 
 

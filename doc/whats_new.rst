@@ -28,7 +28,7 @@ Changelog
 
    - Precision-recall and ROC examples now use train_test_split, and have more
      explanation of why these metrics are useful. By `Kyle Kastner`_.
-      
+
    - The training algorithm for :class:`decomposition.NMF` is faster for
      sparse matrices and has much lower memory complexity, meaning it will
      scale up gracefully to large datasets. By `Lars Buitinck`_.
@@ -39,14 +39,14 @@ Changelog
      `Robert Layton`_.
 
    - :class:`cluster.EvidenceAccumulationClustering`, which runs K-means many
-      times to
-      form a co-association matrix, then using :class:`SingleLinkageCluster`
-      to form final clusters. By `Robert Layton`_.
+     times to form a co-association matrix, then using
+     :class:`cluster.SingleLinkageCluster`
+     to form final clusters. By `Robert Layton`_.
 
    - Upgrading the sparsetools utility functions (which are backported from
-      scipy). This was done to give access to the minimum spanning tree function
-      which was used for the SingleLinkageCluster algorithm.
-      By `Robert Layton`_.
+     scipy). This was done to give access to the minimum spanning tree function
+     which was used for the SingleLinkageCluster algorithm.
+     By `Robert Layton`_.
 
    - Added svd_method option with default value to "randomized" to
      :class:`decomposition.factor_analysis.FactorAnalysis` to save memory and
