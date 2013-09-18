@@ -154,7 +154,7 @@ initializations of the centroids. One method to help address this issue is the
 k-means++ initialization scheme, which has been implemented in scikit-learn
 (use the ``init='kmeans++'`` parameter). This initializes the centroids to be
 (generally) distant from each other, leading to provably better results than
-random initialization.
+random initialization, as shown in the reference.
 
 A parameter can be given to allow K-means to be run in parallel, called
 `n_jobs`. Giving this parameter a positive value uses that many processors
@@ -177,6 +177,13 @@ transform method of a trained model of :class:`KMeans`.
 
  * :ref:`example_cluster_plot_kmeans_digits.py`: Clustering handwritten digits
 
+.. topic:: References:
+
+ * `"k-means++: The advantages of careful seeding"
+   <http://ilpubs.stanford.edu:8090/778/1/2006-13.pdf>`_
+   Arthur, David, and Sergei Vassilvitskii,
+   *Proceedings of the eighteenth annual ACM-SIAM symposium on Discrete
+   algorithms*, Society for Industrial and Applied Mathematics (2007)
 
 .. _mini_batch_kmeans:
 
@@ -328,15 +335,15 @@ Spectral clustering
 :class:`SpectralClustering` does a low-dimension embedding of the
 affinity matrix between samples, followed by a KMeans in the low
 dimensional space. It is especially efficient if the affinity matrix is
-sparse and the `pyamg <http://code.google.com/p/pyamg/>`_ module is
-installed. SpectralClustering requires the number of clusters to be
-specified. It works well for a small number of clusters but is not
-advised when using many clusters.
+sparse and the `pyamg <http://pyamg.org/>`_ module is installed.
+SpectralClustering requires the number of clusters to be specified. It
+works well for a small number of clusters but is not advised when using
+many clusters.
 
 For two clusters, it solves a convex relaxation of the `normalised
 cuts <http://www.cs.berkeley.edu/~malik/papers/SM-ncut.pdf>`_ problem on
 the similarity graph: cutting the graph in two so that the weight of the
-edges cut is small compared to the weights in of edges inside each
+edges cut is small compared to the weights of the edges inside each
 cluster. This criteria is especially interesting when working on images:
 graph vertices are pixels, and edges of the similarity graph are a
 function of the gradient of the image.
@@ -544,24 +551,24 @@ by black points below.
 
 .. topic:: Implementation
 
-    The algorithm is non-deterministic, however the core samples themselves will
-    always belong to the same clusters (although the labels themselves may be
-    different). The non-determinism comes from deciding on which cluster a
-    non-core sample belongs to. A non-core sample can have a distance lower
-    than `eps` to two core samples in different classes. Following from the
-    triangular inequality, those two core samples would be more distant than
-    `eps` from each other -- else they would be in the same class. The non-core
-    sample is simply assigned to which ever cluster is generated first, where
-    the order is determined randomly within the code. Other than the ordering of,
+    The algorithm is non-deterministic, but the core samples will
+    always belong to the same clusters (although the labels may be
+    different). The non-determinism comes from deciding to which cluster a
+    non-core sample belongs. A non-core sample can have a distance lower
+    than `eps` to two core samples in different clusters. By the
+    triangular inequality, those two core samples must be more distant than
+    `eps` from each other, or they would be in the same cluster. The non-core
+    sample is assigned to whichever cluster is generated first, where
+    the order is determined randomly. Other than the ordering of
     the dataset, the algorithm is deterministic, making the results relatively
-    stable between iterations on the same data.
+    stable between runs on the same data.
 
-    The current implementation relies heavily on :class:`NearestNeighbors` 
-    to determine the number of samples within distance eps. This is to take
-    advantage of the ball tree and kd-tree methods of speeding up neighbor
-    searching and to avoid calculating the full distance matrix.
-    We also retain the flexibility of custom metrics -- for details, 
-    see :class:`NearestNeighbors`.
+    The current implementation uses ball trees and kd-trees
+    to determine the neighborhood of points,
+    which avoids calculating the full distance matrix
+    (as was done in scikit-learn versions before 0.14).
+    The possibility to use custom metrics is retained;
+    for details, see :class:`NearestNeighbors`.
 
 .. topic:: References:
 

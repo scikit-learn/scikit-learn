@@ -4,6 +4,8 @@
 # Author: Lars Buitinck <L.J.Buitinck@uva.nl>
 # License: 3-clause BSD.
 
+import warnings
+
 import numpy as np
 
 try:
@@ -13,7 +15,7 @@ except ImportError:
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import (array2d, as_float_array, atleast2d_or_csr,
-                     check_random_state)
+                     check_random_state, deprecated)
 from ..utils.extmath import randomized_svd, safe_sparse_dot, svd_flip
 
 __all__ = ["TruncatedSVD"]
@@ -42,7 +44,7 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
         SVD solver to use. Either "arpack" for the ARPACK wrapper in SciPy
         (scipy.sparse.linalg.svds), or "randomized" for the randomized
         algorithm due to Halko (2009).
-    n_iterations : int, optional
+    n_iter : int, optional
         Number of iterations for randomized SVD solver. Not used by ARPACK.
     random_state : int or RandomState, optional
         (Seed for) pseudo-random number generator. If not given, the
@@ -75,10 +77,14 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
 
     """
     def __init__(self, n_components=2, algorithm="randomized",
-                 n_iterations=5, random_state=None, tol=0.):
+                 n_iter=5, random_state=None, tol=0., n_iterations=None):
+        if n_iterations is not None:
+            warnings.warn("n_iterations was renamed to n_iter for consistency "
+                          "and will be removed in 0.16.", DeprecationWarning)
+            n_iter = n_iterations
         self.algorithm = algorithm
         self.n_components = n_components
-        self.n_iterations = n_iterations
+        self.n_iter = n_iter
         self.random_state = random_state
         self.tol = tol
 
@@ -135,7 +141,7 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
                 raise ValueError("n_components must be < n_features;"
                                  " got %d >= %d" % (k, n_features))
             U, Sigma, VT = randomized_svd(X, self.n_components,
-                                          n_iter=self.n_iterations,
+                                          n_iter=self.n_iter,
                                           random_state=random_state)
         else:
             raise ValueError("unknown algorithm %r" % self.algorithm)
@@ -176,3 +182,9 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
         """
         X = array2d(X)
         return np.dot(X, self.components_)
+
+    @property
+    def n_iterations(self):
+        warnings.warn("n_iterations was renamed to n_iter for consistency "
+                      "and will be removed in 0.16.", DeprecationWarning)
+        return self.n_iter

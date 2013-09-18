@@ -204,24 +204,25 @@ def test_k_means_new_centers():
         np.testing.assert_array_equal(this_labels, labels)
 
 
-def _is_mac_os_version_ge(version):
+def _is_mac_os_version(version):
     """Returns True iff Mac OS X and newer than specified version."""
     import platform
     mac_version, _, _ = platform.mac_ver()
-    if mac_version:
-        my_major, my_minor = version.split('.')
-        # keep only major and minor system version
-        sys_major, sys_minor = mac_version.split('.')[:2]
-        if int(sys_major) > int(my_major):
-            return True
-        else:
-            return int(sys_minor) >= int(my_minor)
-    return False
+    return mac_version.split('.')[:2] == version.split('.')[:2]
+
+
+def _has_blas_lib(libname):
+    from numpy.distutils.system_info import get_info
+    return libname in get_info('blas_opt').get('libraries', [])
 
 
 def test_k_means_plus_plus_init_2_jobs():
-    if _is_mac_os_version_ge('10.7'):
+    if _is_mac_os_version('10.7'):
         raise SkipTest('Multi-process bug in Mac OS X Lion (see issue #636)')
+
+    if _has_blas_lib('openblas'):
+        raise SkipTest('Multi-process bug with OpenBLAS (see issue #636)')
+
     km = KMeans(init="k-means++", n_clusters=n_clusters, n_jobs=2,
                      random_state=42).fit(X)
     _check_fitted_model(km)

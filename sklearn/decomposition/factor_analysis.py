@@ -1,5 +1,11 @@
 """Factor Analysis.
-A latent linear variable model, similar to ProbabilisticPCA.
+
+A latent linear variable model.
+
+FactorAnalysis is similar to probabilistic PCA implemented by PCA.score
+While PCA assumes Gaussian noise with the same variance for each
+feature, the FactorAnalysis model assumes different variances for
+each of them.
 
 This implementation is based on David Barber's Book,
 Bayesian Reasoning and Machine Learning,
@@ -9,8 +15,11 @@ Algorithm 21.1
 
 # Author: Christian Osendorfer <osendorf@gmail.com>
 #         Alexandre Gramfort <alexandre.gramfort@inria.fr>
+#         Denis A. Engemann <d.engemann@fz-juelich.de>
+
 # Licence: BSD3
 
+import warnings
 from math import sqrt, log
 import numpy as np
 from scipy import linalg
@@ -18,8 +27,9 @@ from scipy import linalg
 
 from ..base import BaseEstimator, TransformerMixin
 from ..externals.six.moves import xrange
-from ..utils import array2d, check_arrays
-from ..utils.extmath import fast_logdet, fast_dot
+from ..utils import array2d, check_arrays, check_random_state
+from ..utils.extmath import fast_logdet, fast_dot, randomized_svd
+from ..utils import ConvergenceWarning
 
 
 class FactorAnalysis(BaseEstimator, TransformerMixin):
@@ -65,6 +75,23 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         The initial guess of the noise variance for each feature.
         If None, it defaults to np.ones(n_features)
 
+    svd_method : {'lapack', 'randomized'}
+        Which SVD method to use. If 'lapack' use standard SVD from
+        scipy.linalg, if 'randomized' use fast ``randomized_svd`` function.
+        Defaults to 'randomized'. For most applications 'randomized' will
+        be sufficiently precise while providing significant speed gains.
+        Accuracy can also be improved by setting higher values for
+        `iterated_power`. If this is not sufficient, for maximum precision
+        you should choose 'lapack'.
+
+    iterated_power : int, optional
+        Number of iterations for the power method. 3 by default. Only used
+        if ``svd_method`` equals 'randomized'
+
+    random_state : int or RandomState
+        Pseudo number generator state used for random sampling. Only used
+        if ``svd_method`` equals 'randomized'
+
     Attributes
     ----------
     `components_` : array, [n_components, n_features]
@@ -86,20 +113,34 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
 
     See also
     --------
-    PCA: Principal component analysis, a similar non-probabilistic
-        model model that can be computed in closed form.
-    ProbabilisticPCA: probabilistic PCA.
+    PCA: Principal component analysis is also a latent linear variable model
+        which however assumes equal noise variance for each feature.
+        This extra assumption makes probabilistic PCA faster as it can be
+        computed in closed form.
     FastICA: Independent component analysis, a latent variable model with
         non-Gaussian latent variables.
     """
     def __init__(self, n_components=None, tol=1e-2, copy=True, max_iter=1000,
-                 verbose=0, noise_variance_init=None):
+                 verbose=0, noise_variance_init=None, svd_method='randomized',
+                 iterated_power=3, random_state=0):
         self.n_components = n_components
         self.copy = copy
         self.tol = tol
         self.max_iter = max_iter
+        if svd_method not in ['lapack', 'randomized']:
+            raise ValueError('SVD method %s is not supported. Please consider'
+                             ' the documentation' % svd_method)
+        self.svd_method = svd_method
+        if verbose:
+            warnings.warn('The `verbose` parameter has been deprecated and '
+                          'will be removed in 0.16. To reduce verbosity '
+                          'silence Python warnings instead.',
+                          DeprecationWarning)
+
         self.verbose = verbose
         self.noise_variance_init = noise_variance_init
+        self.iterated_power = iterated_power
+        self.random_state = random_state
 
     def fit(self, X, y=None):
         """Fit the FactorAnalysis model to X using EM
@@ -140,20 +181,39 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         loglike = []
         old_ll = -np.inf
         SMALL = 1e-12
+
+        # we'll modify svd outputs to return unexplained variance
+        # to allow for unified computation of loglikelihood
+        if self.svd_method == 'lapack':
+            def my_svd(X):
+                _, s, V = linalg.svd(X, full_matrices=False)
+                return (s[:n_components], V[:n_components],
+                        np.dot(s[n_components:].flat, s[n_components:].flat))
+        elif self.svd_method == 'randomized':
+            random_state = check_random_state(self.random_state)
+
+            def my_svd(X):
+                _, s, V = randomized_svd(X, n_components,
+                                         random_state=random_state,
+                                         n_iter=self.iterated_power)
+                return s, V, np.dot(X.flat, X.flat) - np.dot(s, s)
+        else:
+            raise ValueError('SVD method %s is not supported. Please consider'
+                             ' the documentation' % self.svd_method)
+
         for i in xrange(self.max_iter):
             # SMALL helps numerics
             sqrt_psi = np.sqrt(psi) + SMALL
-            Xtilde = X / (sqrt_psi * nsqrt)
-            _, s, V = linalg.svd(Xtilde, full_matrices=False)
-            V = V[:n_components]
+            s, V, unexp_var = my_svd(X / (sqrt_psi * nsqrt))
             s **= 2
             # Use 'maximum' here to avoid sqrt problems.
-            W = np.sqrt(np.maximum(s[:n_components] - 1., 0.))[:, np.newaxis] * V
+            W = np.sqrt(np.maximum(s - 1., 0.))[:, np.newaxis] * V
+            del V
             W *= sqrt_psi
 
             # loglikelihood
-            ll = llconst + np.sum(np.log(s[:n_components]))
-            ll += np.sum(s[n_components:]) + np.sum(np.log(psi))
+            ll = llconst + np.sum(np.log(s))
+            ll += unexp_var + np.sum(np.log(psi))
             ll *= -n_samples / 2.
             loglike.append(ll)
             if (ll - old_ll) < self.tol:
@@ -162,8 +222,10 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
 
             psi = np.maximum(var - np.sum(W ** 2, axis=0), SMALL)
         else:
-            if self.verbose:
-                print("Did not converge")
+            warnings.warn('FactorAnalysis did not converge.' +
+                          ' You might want' +
+                          ' to increase the number of iterations.',
+                          ConvergenceWarning)
 
         self.components_ = W
         self.noise_variance_ = psi
@@ -205,31 +267,73 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
 
         Returns
         -------
-        cov : array, shape=(n_features, n_features)
+        cov : array, shape (n_features, n_features)
             Estimated covariance of data.
         """
         cov = np.dot(self.components_.T, self.components_)
         cov.flat[::len(cov) + 1] += self.noise_variance_  # modify diag inplace
         return cov
 
-    def score(self, X, y=None):
-        """Compute score of X under FactorAnalysis model.
-
-        Parameters
-        ----------
-        X: array of shape(n_samples, n_features)
-            The data to test
+    def get_precision(self):
+        """Compute data precision matrix with the FactorAnalysis model.
 
         Returns
         -------
-        ll: array of shape (n_samples),
-            log-likelihood of each row of X under the current model
+        precision : array, shape (n_features, n_features)
+            Estimated precision of data.
+        """
+        n_features = self.components_.shape[1]
+
+        # handle corner cases first
+        if self.n_components == 0:
+            return np.diag(1. / self.noise_variance_)
+        if self.n_components == n_features:
+            return linalg.inv(self.get_covariance())
+
+        # Get precision using matrix inversion lemma
+        components_ = self.components_
+        precision = np.dot(components_ / self.noise_variance_, components_.T)
+        precision.flat[::len(precision) + 1] += 1.
+        precision = np.dot(components_.T,
+                           np.dot(linalg.inv(precision), components_))
+        precision /= self.noise_variance_[:, np.newaxis]
+        precision /= -self.noise_variance_[np.newaxis, :]
+        precision.flat[::len(precision) + 1] += 1. / self.noise_variance_
+        return precision
+
+    def score_samples(self, X):
+        """Compute the log-likelihood of each sample
+
+        Parameters
+        ----------
+        X: array, shape (n_samples, n_features)
+            The data
+
+        Returns
+        -------
+        ll: array, shape (n_samples,)
+            Log-likelihood of each sample under the current model
         """
         Xr = X - self.mean_
-        cov = self.get_covariance()
+        precision = self.get_precision()
         n_features = X.shape[1]
         log_like = np.zeros(X.shape[0])
-        self.precision_ = linalg.inv(cov)
-        log_like = -.5 * (Xr * (np.dot(Xr, self.precision_))).sum(axis=1)
-        log_like -= .5 * (fast_logdet(cov) + n_features * log(2. * np.pi))
+        log_like = -.5 * (Xr * (np.dot(Xr, precision))).sum(axis=1)
+        log_like -= .5 * (n_features * log(2. * np.pi)
+                          - fast_logdet(precision))
         return log_like
+
+    def score(self, X, y=None):
+        """Compute the average log-likelihood of the samples
+
+        Parameters
+        ----------
+        X: array, shape (n_samples, n_features)
+            The data
+
+        Returns
+        -------
+        ll: float
+            Average log-likelihood of the samples under the current model
+        """
+        return np.mean(self.score_samples(X))

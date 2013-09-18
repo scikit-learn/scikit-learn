@@ -18,7 +18,7 @@ from .base import LinearModel, _pre_fit
 from ..base import RegressorMixin
 from .base import center_data
 from ..utils import array2d, atleast2d_or_csc, deprecated
-from ..cross_validation import check_cv
+from ..cross_validation import _check_cv as check_cv
 from ..externals.joblib import Parallel, delayed
 from ..externals import six
 from ..externals.six.moves import xrange
@@ -179,7 +179,7 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
 
     Note that in certain cases, the Lars solver may be significantly
     faster to implement this functionality. In particular, linear
-    interpolation can be used to retrieve model coefficents between the
+    interpolation can be used to retrieve model coefficients between the
     values output by lars_path
 
     Deprecation Notice: Setting ``return_models`` to ``False`` will make
@@ -231,8 +231,8 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
 
 def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
               precompute='auto', Xy=None, fit_intercept=True,
-              normalize=False, copy_X=True, verbose=False, rho=None,
-              return_models=True, **params):
+              normalize=False, copy_X=True, verbose=False, return_models=True,
+              **params):
     """Compute Elastic-Net path with coordinate descent
 
     The Elastic Net optimization function is::
@@ -356,11 +356,6 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
 
     if fit_intercept is None:
         fit_intercept = True
-
-    if rho is not None:
-        l1_ratio = rho
-        warnings.warn("rho was renamed to l1_ratio and will be removed "
-                      "in 0.15", DeprecationWarning)
 
     X = atleast2d_or_csc(X, dtype=np.float64, order='F',
                          copy=copy_X and fit_intercept)
@@ -543,14 +538,9 @@ class ElasticNet(LinearModel, RegressorMixin):
 
     def __init__(self, alpha=1.0, l1_ratio=0.5, fit_intercept=True,
                  normalize=False, precompute='auto', max_iter=1000,
-                 copy_X=True, tol=1e-4, warm_start=False, positive=False,
-                 rho=None):
+                 copy_X=True, tol=1e-4, warm_start=False, positive=False):
         self.alpha = alpha
         self.l1_ratio = l1_ratio
-        if rho is not None:
-            self.l1_ratio = rho
-            warnings.warn("rho was renamed to l1_ratio and will be removed "
-                          "in 0.15", DeprecationWarning)
         self.coef_ = None
         self.fit_intercept = fit_intercept
         self.normalize = normalize
@@ -562,7 +552,7 @@ class ElasticNet(LinearModel, RegressorMixin):
         self.positive = positive
         self.intercept_ = 0.0
 
-    def fit(self, X, y, Xy=None, coef_init=None):
+    def fit(self, X, y):
         """Fit model with coordinate descent.
 
         Parameters
@@ -572,15 +562,6 @@ class ElasticNet(LinearModel, RegressorMixin):
 
         y : ndarray, shape = (n_samples,) or (n_samples, n_targets)
             Target
-
-        Xy : array-like, optional
-            Xy = np.dot(X.T, y) that can be precomputed. It is useful
-            only when the Gram matrix is precomputed.
-            WARNING : ignored and will be deprecated in 0.15
-
-        coef_init : ndarray of shape n_features or (n_targets, n_features)
-            The initial coeffients to warm-start the optimization
-            WARNING : ignored and will be deprecated in 0.15
 
         Notes
         -----
@@ -592,16 +573,6 @@ class ElasticNet(LinearModel, RegressorMixin):
         To avoid memory re-allocation it is advised to allocate the
         initial data in memory directly using that format.
         """
-        if Xy is not None:
-            warnings.warn("Xy param is now ignored and will be removed in "
-                          "0.15. See enet_path function.",
-                          DeprecationWarning, stacklevel=2)
-
-        if coef_init is not None:
-            warnings.warn("coef_init is now ignored and will be removed in "
-                          "0.15. See enet_path function.",
-                          DeprecationWarning, stacklevel=2)
-
         if self.alpha == 0:
             warnings.warn("With alpha=0, this algorithm does not converge "
                           "well. You are advised to use the LinearRegression "
@@ -612,7 +583,7 @@ class ElasticNet(LinearModel, RegressorMixin):
         y = np.asarray(y, dtype=np.float64)
 
         X, y, X_mean, y_mean, X_std, precompute, Xy = \
-            _pre_fit(X, y, Xy, self.precompute, self.normalize,
+            _pre_fit(X, y, None, self.precompute, self.normalize,
                      self.fit_intercept, copy=True)
 
         if y.ndim == 1:
@@ -792,7 +763,7 @@ def _path_residuals(X, y, train, test, path, path_params, l1_ratio=1,
     X : {array-like, sparse matrix}, shape (n_samples, n_features)
         Training data.
 
-    y : narray, shape (n_samples,) or (n_samples, n_targets)
+    y : array-like, shape (n_samples,) or (n_samples, n_targets)
         Target values
 
     train : list of indices
@@ -829,12 +800,10 @@ def _path_residuals(X, y, train, test, path, path_params, l1_ratio=1,
     fit_intercept = path_params['fit_intercept']
     normalize = path_params['normalize']
     precompute = path_params['precompute']
-    Xy = None
 
     X_train, y_train, X_mean, y_mean, X_std, precompute, Xy = \
-        _pre_fit(X_train, y_train,
-                 Xy, precompute, normalize,
-                 fit_intercept, copy=False)
+        _pre_fit(X_train, y_train, None, precompute, normalize, fit_intercept,
+                 copy=False)
 
     # del path_params['precompute']
     path_params = path_params.copy()
@@ -898,7 +867,7 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
             Training data. Pass directly as float64, Fortran-contiguous data
             to avoid unnecessary memory duplication
 
-        y : narray, shape (n_samples,) or (n_samples, n_targets)
+        y : array-like, shape (n_samples,) or (n_samples, n_targets)
             Target values
 
         """
@@ -1013,12 +982,6 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
         self.dual_gap_ = model.dual_gap_
         return self
 
-    @property
-    def rho_(self):
-        warnings.warn("rho was renamed to ``l1_ratio_`` and will be removed "
-                      "in 0.15", DeprecationWarning)
-        return self.l1_ratio_
-
 
 class LassoCV(LinearModelCV, RegressorMixin):
     """Lasso linear model with iterative fitting along a regularization path
@@ -1056,9 +1019,9 @@ class LassoCV(LinearModelCV, RegressorMixin):
         dual gap for optimality and continues until it is smaller
         than ``tol``.
 
-    cv : integer or crossvalidation generator, optional
+    cv : integer or cross-validation generator, optional
         If an integer is passed, it is the number of fold (default 3).
-        Specific crossvalidation objects can be passed, see the
+        Specific cross-validation objects can be passed, see the
         :mod:`sklearn.cross_validation` module for the list of possible
         objects.
 
@@ -1155,9 +1118,9 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
         dual gap for optimality and continues until it is smaller
         than ``tol``.
 
-    cv : integer or crossvalidation generator, optional
+    cv : integer or cross-validation generator, optional
         If an integer is passed, it is the number of fold (default 3).
-        Specific crossvalidation objects can be passed, see the
+        Specific cross-validation objects can be passed, see the
         :mod:`sklearn.cross_validation` module for the list of possible
         objects.
 
@@ -1224,12 +1187,8 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
     def __init__(self, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
                  fit_intercept=True, normalize=False, precompute='auto',
                  max_iter=1000, tol=1e-4, cv=None, copy_X=True,
-                 verbose=0, n_jobs=1, rho=None):
+                 verbose=0, n_jobs=1):
         self.l1_ratio = l1_ratio
-        if rho is not None:
-            self.l1_ratio = rho
-            warnings.warn("rho was renamed to l1_ratio and will be removed "
-                          "in 0.15", DeprecationWarning)
         self.eps = eps
         self.n_alphas = n_alphas
         self.alphas = alphas
@@ -1242,12 +1201,6 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
         self.copy_X = copy_X
         self.verbose = verbose
         self.n_jobs = n_jobs
-
-    @property
-    @deprecated("rho was renamed to ``l1_ratio_`` and will be removed "
-                "in 0.15")
-    def rho(self):
-        return self.l1_ratio_
 
 
 ###############################################################################
@@ -1319,7 +1272,7 @@ class MultiTaskElasticNet(Lasso):
     >>> clf.fit([[0,0], [1, 1], [2, 2]], [[0, 0], [1, 1], [2, 2]])
     ... #doctest: +NORMALIZE_WHITESPACE
     MultiTaskElasticNet(alpha=0.1, copy_X=True, fit_intercept=True,
-            l1_ratio=0.5, max_iter=1000, normalize=False, rho=None, tol=0.0001,
+            l1_ratio=0.5, max_iter=1000, normalize=False, tol=0.0001,
             warm_start=False)
     >>> print(clf.coef_)
     [[ 0.45663524  0.45612256]
@@ -1340,12 +1293,8 @@ class MultiTaskElasticNet(Lasso):
     """
     def __init__(self, alpha=1.0, l1_ratio=0.5, fit_intercept=True,
                  normalize=False, copy_X=True, max_iter=1000, tol=1e-4,
-                 warm_start=False, rho=None):
+                 warm_start=False):
         self.l1_ratio = l1_ratio
-        if rho is not None:
-            self.l1_ratio = rho
-            warnings.warn("rho was renamed to l1_ratio and will be removed "
-                          "in 0.15", DeprecationWarning)
         self.alpha = alpha
         self.coef_ = None
         self.fit_intercept = fit_intercept
@@ -1355,7 +1304,7 @@ class MultiTaskElasticNet(Lasso):
         self.tol = tol
         self.warm_start = warm_start
 
-    def fit(self, X, y, Xy=None, coef_init=None):
+    def fit(self, X, y):
         """Fit MultiTaskLasso model with coordinate descent
 
         Parameters
@@ -1365,7 +1314,7 @@ class MultiTaskElasticNet(Lasso):
         y: ndarray, shape = (n_samples, n_tasks)
             Target
         coef_init: ndarray of shape n_features
-            The initial coeffients to warm-start the optimization
+            The initial coefficients to warm-start the optimization
 
         Notes
         -----
@@ -1393,10 +1342,9 @@ class MultiTaskElasticNet(Lasso):
         X, y, X_mean, y_mean, X_std = center_data(
             X, y, self.fit_intercept, self.normalize, copy=False)
 
-        if coef_init is None:
-            if not self.warm_start or self.coef_ is None:
-                self.coef_ = np.zeros((n_tasks, n_features), dtype=np.float64,
-                                      order='F')
+        if not self.warm_start or self.coef_ is None:
+            self.coef_ = np.zeros((n_tasks, n_features), dtype=np.float64,
+                                  order='F')
         else:
             self.coef_ = coef_init
 

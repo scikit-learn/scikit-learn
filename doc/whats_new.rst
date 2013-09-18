@@ -8,10 +8,20 @@
 Changelog
 ---------
 
-   - Add predict method to :class:`cluster.AffinityPropagation` and
+   - Added :class:`ensemble.BaggingClassifier` and
+     :class:`ensemble.BaggingRegressor` meta-estimators for ensembling
+     any kind of base estimator. See the :ref:`Bagging <bagging>` section of
+     the user guide for details and examples. By `Gilles Louppe`_.
+
+    - Added :func:`metrics.pairwise_distances_argmin_min`, by Philippe Gervais.
+
+   - Added predict method to :class:`cluster.AffinityPropagation` and
      :class:`cluster.MeanShift`, by `Mathieu Blondel`_.
-   - Add :func:`utils.extmath.fast_dot` -- a memory efficient replacement for
-   `numpy.dot` by `Denis Engemann`_, and `Alexandre Gramfort`_.
+
+   - Vector and matrix multiplications have been optimised throughout the
+     library by `Denis Engemann`_, and `Alexandre Gramfort`_.
+     In particular, they should take less memory with older NumPy versions
+     (prior to 1.7.2).
 
    - New unsupervised feature selection algorithm
      :class:`feature_selection.VarianceThreshold`, by `Lars Buitinck`_.
@@ -36,6 +46,33 @@ Changelog
       which was used for the SingleLinkageCluster algorithm.
       By `Robert Layton`_.
 
+   - Added svd_method option with default value to "randomized" to
+     :class:`decomposition.factor_analysis.FactorAnalysis` to save memory and
+     significantly speedup computation by `Denis Engemann`_, and
+     `Alexandre Gramfort`_.
+
+   - Memory improvements of extra trees and random forest by
+     `Arnaud Joly`_.
+
+
+API changes summary
+-------------------
+
+   - Add score method to :class:`PCA <decomposition.PCA>` following the model of
+     probabilistic PCA and deprecate
+     :class:`ProbabilisticPCA <decomposition.ProbabilisticPCA>` model whose
+     score implementation is not correct. The computation now also exploits the
+     matrix inversion lemma for faster computation. By `Alexandre Gramfort`_.
+
+   - The score method of :class:`FactorAnalysis <decomposition.FactorAnalysis>`
+     now returns the average log-likelihood of the samples. Use score_samples
+     to get log-likelihood of each sample. By `Alexandre Gramfort`_.
+
+   - Generating boolean masks (the setting ``indices=False``)
+     from cross-validation generators is deprecated.
+     Support for masks will be removed in 0.17.
+     The generators have produced arrays of indices by default since 0.10.
+     By `Joel Nothman`_.
 
 .. _changes_0_14:
 
@@ -1836,7 +1873,7 @@ Changelog
   - Refactoring of :class:`neighbors.NeighborsClassifier` and
     :func:`neighbors.kneighbors_graph`: added different algorithms for
     the k-Nearest Neighbor Search and implemented a more stable
-    algorithm for finding barycenter weigths. Also added some
+    algorithm for finding barycenter weights. Also added some
     developer documentation for this module, see
     `notes_neighbors
     <https://github.com/scikit-learn/scikit-learn/wiki/Neighbors-working-notes>`_ for more information [`Fabian Pedregosa`_].

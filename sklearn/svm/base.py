@@ -464,7 +464,7 @@ class BaseSVC(BaseLibSVM, ClassifierMixin):
             Class labels for samples in X.
         """
         y = super(BaseSVC, self).predict(X)
-        return self.classes_.take(y.astype(np.int))
+        return self.classes_.take(np.asarray(y, dtype=np.intp))
 
     def predict_proba(self, X):
         """Compute probabilities of possible outcomes for samples in X.

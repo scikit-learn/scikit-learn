@@ -300,7 +300,7 @@ def pairwise_distances_argmin_min(X, Y, axis=1, metric="euclidean",
 
             # Update indices and minimum values using chunk
             min_indices = dist_chunk.argmin(axis=1)
-            min_values = dist_chunk[range(chunk_x.stop - chunk_x.start),
+            min_values = dist_chunk[np.arange(chunk_x.stop - chunk_x.start),
                                     min_indices]
 
             flags = values[chunk_x] > min_values
@@ -484,7 +484,7 @@ def cosine_distances(X, Y=None):
 
     Returns
     -------
-    distance matrix : array_like
+    distance matrix : array
         An array with shape (n_samples_X, n_samples_Y).
 
     See also
@@ -626,7 +626,7 @@ def cosine_similarity(X, Y=None):
 
     Returns
     -------
-    kernel matrix : array_like
+    kernel matrix : array
         An array with shape (n_samples_X, n_samples_Y).
     """
     # to avoid recursive import

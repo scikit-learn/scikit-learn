@@ -13,6 +13,7 @@ from sklearn.dummy import DummyRegressor
 from sklearn.grid_search import GridSearchCV
 from sklearn.ensemble import AdaBoostClassifier
 from sklearn.ensemble import AdaBoostRegressor
+from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils import shuffle
 from sklearn import datasets
 
@@ -42,7 +43,7 @@ boston.data, boston.target = shuffle(boston.data, boston.target,
 def test_classification_toy():
     """Check classification on a toy dataset."""
     for alg in ['SAMME', 'SAMME.R']:
-        clf = AdaBoostClassifier(algorithm=alg)
+        clf = AdaBoostClassifier(algorithm=alg, random_state=0)
         clf.fit(X, y_class)
         assert_array_equal(clf.predict(T), y_t_class)
         assert_array_equal(np.unique(np.asarray(y_t_class)), clf.classes_)
@@ -134,7 +135,7 @@ def test_staged_predict():
 def test_gridsearch():
     """Check that base trees can be grid-searched."""
     # AdaBoost classification
-    boost = AdaBoostClassifier()
+    boost = AdaBoostClassifier(base_estimator=DecisionTreeClassifier())
     parameters = {'n_estimators': (1, 2),
                   'base_estimator__max_depth': (1, 2),
                   'algorithm': ('SAMME', 'SAMME.R')}
@@ -142,7 +143,8 @@ def test_gridsearch():
     clf.fit(iris.data, iris.target)
 
     # AdaBoost regression
-    boost = AdaBoostRegressor(random_state=0)
+    boost = AdaBoostRegressor(base_estimator=DecisionTreeRegressor(),
+                              random_state=0)
     parameters = {'n_estimators': (1, 2),
                   'base_estimator__max_depth': (1, 2)}
     clf = GridSearchCV(boost, parameters)
@@ -207,15 +209,6 @@ def test_error():
     assert_raises(ValueError,
                   AdaBoostClassifier(algorithm="foo").fit,
                   X, y_class)
-
-    assert_raises(TypeError,
-                  AdaBoostClassifier(base_estimator=DummyRegressor()).fit,
-                  X, y_class)
-
-    assert_raises(TypeError,
-                  AdaBoostRegressor(base_estimator=DummyClassifier(),
-                                    random_state=0).fit,
-                  X, y_regr)
 
 
 def test_base_estimator():

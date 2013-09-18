@@ -1,4 +1,3 @@
-
 .. _feature_extraction:
 
 ==================
@@ -263,7 +262,7 @@ of the words in the document.
 Sparsity
 --------
 
-As most documents will typically use a very subset of a the words used in
+As most documents will typically use a very small subset of the words used in
 the corpus, the resulting matrix will have many feature values that are
 zeros (typically more than 99% of them).
 
@@ -354,7 +353,7 @@ Note that in the previous corpus, the first and the last documents have
 exactly the same words hence are encoded in equal vectors. In particular
 we lose the information that the last document is an interrogative form. To
 preserve some of the local ordering information we can extract 2-grams
-of words in addition to the 1-grams (the word themselvs)::
+of words in addition to the 1-grams (individual words)::
 
   >>> bigram_vectorizer = CountVectorizer(ngram_range=(1, 2),
   ...                                     token_pattern=r'\b\w+\b', min_df=1)
@@ -477,28 +476,35 @@ feature extractor with a classifier:
 
 Decoding text files
 -------------------
-Text is made of characters, but files are made of bytes. In Unicode,
-there are many more possible characters than possible bytes. Every text
-file is *encoded* so that its characters can be represented as bytes.
+Text is made of characters, but files are made of bytes. These bytes represent
+characters according to some *encoding*. To work with text files in Python,
+their bytes must be *decoded* to a character set called Unicode.
+Common encodings are ASCII, Latin-1 (Western Europe), KOI8-R (Russian)
+and the universal encodings UTF-8 and UTF-16. Many others exist.
 
-When you work with text in Python, it should be Unicode. Most of the
-text feature extractors in scikit-learn will only work with Unicode. So
-to correctly load text from a file (or from the network), you need to
-decode it with the correct encoding.
+.. note::
+    An encoding can also be called a or 'character set',
+    but this term is less accurate: several encodings can exist
+    for a single character set.
 
-An encoding can also be called a 'charset' or 'character set', though
-this terminology is less accurate. The :class:`CountVectorizer` takes
-a ``encoding`` parameter to tell it what encoding to decode text from.
+The text feature extractors in scikit-learn know how to decode text files,
+but only if you tell them what encoding the files are in.
+The :class:`CountVectorizer` takes an ``encoding`` parameter for this purpose.
+For modern text files, the correct encoding is probably UTF-8,
+which is therefore the default (``encoding="utf-8"``).
 
-For modern text files, the correct encoding is probably UTF-8. The
-:class:`CountVectorizer` has ``encoding='utf-8'`` as the default. If the
-text you are loading is not actually encoded with UTF-8, however, you
-will get a ``UnicodeDecodeError``.
+If the text you are loading is not actually encoded with UTF-8, however,
+you will get a ``UnicodeDecodeError``.
+The vectorizers can be told to be silent about decoding errors
+by setting the ``decode_error`` parameter to either ``"ignore"``
+or ``"replace"``. See the documentation for the Python function
+``bytes.decode`` for more details
+(type ``help(bytes.decode)`` at the Python prompt).
 
 If you are having trouble decoding text, here are some things to try:
 
 - Find out what the actual encoding of the text is. The file might come
-  with a header that tells you the encoding, or there might be some
+  with a header or README that tells you the encoding, or there might be some
   standard encoding you can assume based on where the text comes from.
 
 - You may be able to find out what kind of encoding it is in general
@@ -524,6 +530,27 @@ If you are having trouble decoding text, here are some things to try:
   a simple single-byte encoding such as ``latin-1``. Some text may display
   incorrectly, but at least the same sequence of bytes will always represent
   the same feature.
+
+For example, the following snippet uses ``chardet``
+(not shipped with scikit-learn, must be installed separately)
+to figure out the encoding of three texts.
+It then vectorizes the texts and prints the learned vocabulary.
+The output is not shown here.
+
+  >>> import chardet    # doctest: +SKIP
+  >>> text1 = b"Sei mir gegr\xc3\xbc\xc3\x9ft mein Sauerkraut"
+  >>> text2 = b"holdselig sind deine Ger\xfcche"
+  >>> text3 = b"\xff\xfeA\x00u\x00f\x00 \x00F\x00l\x00\xfc\x00g\x00e\x00l\x00n\x00 \x00d\x00e\x00s\x00 \x00G\x00e\x00s\x00a\x00n\x00g\x00e\x00s\x00,\x00 \x00H\x00e\x00r\x00z\x00l\x00i\x00e\x00b\x00c\x00h\x00e\x00n\x00,\x00 \x00t\x00r\x00a\x00g\x00 \x00i\x00c\x00h\x00 \x00d\x00i\x00c\x00h\x00 \x00f\x00o\x00r\x00t\x00"
+  >>> decoded = [x.decode(chardet.detect(x)['encoding'])
+  ...            for x in (text1, text2, text3)]        # doctest: +SKIP
+  >>> v = CountVectorizer().fit(decoded).vocabulary_    # doctest: +SKIP
+  >>> for term in v: print(v)                           # doctest: +SKIP
+
+(Depending on the version of ``chardet``, it might get the first one wrong.)
+
+For an introduction to Unicode and character encodings in general,
+see Joel Spolsky's `Absolute Minimum Every Software Developer Must Know
+About Unicode <http://www.joelonsoftware.com/articles/Unicode.html>`_.
 
 .. _`ftfy`: http://github.com/LuminosoInsight/python-ftfy
 

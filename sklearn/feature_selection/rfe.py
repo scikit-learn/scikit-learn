@@ -12,7 +12,7 @@ from ..base import BaseEstimator
 from ..base import MetaEstimatorMixin
 from ..base import clone
 from ..base import is_classifier
-from ..cross_validation import check_cv
+from ..cross_validation import _check_cv as check_cv
 from .base import SelectorMixin
 from ..metrics.scorer import _deprecate_loss_and_score_funcs
 

@@ -246,7 +246,7 @@ class BaseDiscreteNB(BaseNB):
         self : object
             Returns self.
         """
-        X = atleast2d_or_csr(X).astype(np.float64)
+        X = atleast2d_or_csr(X, dtype=np.float64)
         _, n_features = X.shape
 
         if _check_partial_fit_first_call(self, classes):

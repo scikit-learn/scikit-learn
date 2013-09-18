@@ -159,8 +159,7 @@ def safe_sparse_dot(a, b, dense_output=False):
         return fast_dot(a, b)
 
 
-def randomized_range_finder(A, size, n_iter, random_state=None,
-                            n_iterations=None):
+def randomized_range_finder(A, size, n_iter, random_state=None):
     """Computes an orthonormal matrix whose range approximates the range of A.
 
     Parameters
@@ -188,10 +187,6 @@ def randomized_range_finder(A, size, n_iter, random_state=None,
     approximate matrix decompositions
     Halko, et al., 2009 (arXiv:909) http://arxiv.org/pdf/0909.4061
     """
-    if n_iterations is not None:
-        warnings.warn("n_iterations was renamed to n_iter for consistency "
-                      "and will be removed in 0.16.", DeprecationWarning)
-        n_iter = n_iterations
     random_state = check_random_state(random_state)
 
     # generating random gaussian vectors r with shape: (A.shape[1], size)

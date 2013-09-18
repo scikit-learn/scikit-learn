@@ -238,7 +238,6 @@ Samples generator
    :template: class.rst
 
    decomposition.PCA
-   decomposition.ProbabilisticPCA
    decomposition.ProjectedGradientNMF
    decomposition.RandomizedPCA
    decomposition.KernelPCA
@@ -302,15 +301,17 @@ Samples generator
    :toctree: generated/
    :template: class.rst
 
+   ensemble.AdaBoostClassifier
+   ensemble.AdaBoostRegressor
+   ensemble.BaggingClassifier
+   ensemble.BaggingRegressor
+   ensemble.ExtraTreesClassifier
+   ensemble.ExtraTreesRegressor
+   ensemble.GradientBoostingClassifier
+   ensemble.GradientBoostingRegressor
    ensemble.RandomForestClassifier
    ensemble.RandomTreesEmbedding
    ensemble.RandomForestRegressor
-   ensemble.ExtraTreesClassifier
-   ensemble.ExtraTreesRegressor
-   ensemble.AdaBoostClassifier
-   ensemble.AdaBoostRegressor
-   ensemble.GradientBoostingClassifier
-   ensemble.GradientBoostingRegressor
 
 .. autosummary::
    :toctree: generated/
