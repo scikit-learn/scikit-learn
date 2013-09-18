@@ -429,8 +429,8 @@ def label_binarize(y, classes, multilabel=False, neg_label=0, pos_label=1):
                     row.append(i)
                     col.append(imap[label])
                     data.append(pos_label)
-
-            Y = coo_matrix((data, (row, col)), shape=(len(y), len(classes)))
+            Y = coo_matrix((data, (row, col)), 
+                           shape=(len(y), len(classes)))
 
         else:
             for i, label_tuple in enumerate(y):
