@@ -11,7 +11,7 @@ Logistic Regression
 #         Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
 
 import numbers
->>>>>>> Implementation of logistic_regression_path.
+
 import numpy as np
 from scipy import optimize, sparse
 
