@@ -267,10 +267,17 @@ def logistic_regression_path(X, y, Cs=10, fit_intercept=True,
         if callback is not None:
             callback(w0, X, y, 1. / C)
         if solver == 'lbfgs':
-            out = optimize.fmin_l_bfgs_b(
-                func, w0, fprime=None,
-                args=(X, y, 1. / C),
-                iprint=verbose > 0, pgtol=gtol, maxiter=max_iter)
+            try:
+                out = optimize.fmin_l_bfgs_b(
+                    func, w0, fprime=None,
+                    args=(X, y, 1. / C),
+                    iprint=verbose > 0, pgtol=gtol, maxiter=max_iter)
+            except TypeError:
+                # old scipy doesn't have maxiter
+                out = optimize.fmin_l_bfgs_b(
+                    func, w0, fprime=None,
+                    args=(X, y, 1. / C),
+                    iprint=verbose > 0, pgtol=gtol)
             w0 = out[0]
         elif solver == 'newton-cg':
             if fit_intercept:
