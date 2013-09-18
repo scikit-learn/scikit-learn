@@ -14,7 +14,8 @@ significant speedups.
 # License: BSD
 
 import numpy as np
-from scipy.optimize.linesearch import line_search_BFGS
+import warnings
+from scipy.optimize.linesearch import line_search_BFGS, line_search_wolfe2
 
 def newton_cg(func_grad_hess, func, x0, args=(), xtol=1e-5, eps=1e-4,
               maxiter=100, disp=False):
@@ -77,6 +78,15 @@ def newton_cg(func_grad_hess, func, x0, args=(), xtol=1e-5, eps=1e-4,
 
         alphak, fc, gc, old_fval = line_search_BFGS(func, xk, xsupi, grad,
                                                     old_fval, args=args)
+        if alphak is None:
+            # line search failed
+            out = line_search_wolfe2(
+                lambda x: func(x, *args),
+                lambda x: func_grad_hess(x, *args)[1], xk, xsupi)
+            alphak, fc, gc = out[0], out[1], out[2]
+            warnings.warn(
+                'Failed to find a suitable descent direction, the algorithm' +
+                'will now terminate')
         update = alphak * xsupi
         xk = xk + update        # upcast if necessary
         k += 1
