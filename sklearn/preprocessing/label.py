@@ -401,11 +401,11 @@ def label_binarize(y, classes, multilabel=False, neg_label=0, pos_label=1):
     y_type = type_of_target(y)
 
     if multilabel or len(classes) > 2:
-       if neg_label != 0:
+        if neg_label != 0:
             # neg_label not zero eliminates possibility of a sparse matrix
             Y = np.zeros((len(y), len(classes)), dtype=np.int)
             Y += neg_label
-   else:
+    else:
         Y = np.zeros((len(y), 1), dtype=np.int)
         Y += neg_label
 
@@ -417,21 +417,21 @@ def label_binarize(y, classes, multilabel=False, neg_label=0, pos_label=1):
             # inverse map: label => column index
             imap = dict((v, k) for k, v in enumerate(classes))
 
-        if neg_label == 0:
-            row, col, data = ([] for i in range(3))
-            for i, label_tuple in enumerate(y):
-                for label in label_tuple:
-                    row.append(i)
-                    col.append(imap[label])
-                    data.append(pos_label)
-            Y = coo_matrix((data, (row, col)), 
-                           shape=(len(y), len(classes)))
+            if neg_label == 0:
+                row, col, data = ([] for i in range(3))
+                for i, label_tuple in enumerate(y):
+                    for label in label_tuple:
+                        row.append(i)
+                        col.append(imap[label])
+                        data.append(pos_label)
+                Y = coo_matrix((data, (row, col)),
+                               shape=(len(y), len(classes)))
 
-        else:
-            for i, label_tuple in enumerate(y):
-                for label in label_tuple:
-                    Y[i, imap[label]] = pos_label
-            return Y
+            else:
+                for i, label_tuple in enumerate(y):
+                    for label in label_tuple:
+                        Y[i, imap[label]] = pos_label
+                return Y
         else:
             raise ValueError("y should be in a multilabel format, "
                              "got %r" % (y,))
