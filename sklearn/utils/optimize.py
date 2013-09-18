@@ -15,9 +15,39 @@ significant speedups.
 
 import numpy as np
 import warnings
-from scipy.optimize.linesearch import line_search_BFGS, line_search_wolfe2
+from scipy.optimize.linesearch import line_search_wolfe2, line_search_wolfe1
 
-def newton_cg(func_grad_hess, func, x0, args=(), xtol=1e-5, eps=1e-4,
+class _LineSearchError(RuntimeError):
+    pass
+
+def _line_search_wolfe12(f, fprime, xk, pk, gfk, old_fval, old_old_fval,
+                         **kwargs):
+    """
+    Same as line_search_wolfe1, but fall back to line_search_wolfe2 if
+    suitable step length is not found, and raise an exception if a
+    suitable step length is not found.
+
+    Raises
+    ------
+    _LineSearchError
+        If no suitable step size is found
+
+    """
+    ret = line_search_wolfe1(f, fprime, xk, pk, gfk,
+                             old_fval, old_old_fval,
+                             **kwargs)
+
+    if ret[0] is None:
+        # line search failed: try different one.
+        ret = line_search_wolfe2(f, fprime, xk, pk, gfk,
+                                 old_fval, old_old_fval, **kwargs)
+
+    if ret[0] is None:
+        raise _LineSearchError()
+
+    return ret
+
+def newton_cg(func_grad_hess, func, grad, x0, args=(), xtol=1e-5, eps=1e-4,
               maxiter=100, disp=False):
     """
     Minimization of scalar function of one or more variables using the
@@ -30,22 +60,23 @@ def newton_cg(func_grad_hess, func, x0, args=(), xtol=1e-5, eps=1e-4,
     avextol = xtol
 
     x0 = np.asarray(x0).flatten()
-    xtol = len(x0)*avextol
-    update = [2*xtol]
+    xtol = len(x0) * avextol
+    update = [2 * xtol]
     xk = x0
     k = 0
-    old_fval = None
+    old_fval = func(x0, *args)
+    old_old_fval = None
 
     # Outer loop: our Newton iteration
     while (np.sum(np.abs(update)) > xtol) and (k < maxiter):
         # Compute a search direction pk by applying the CG method to
-        #  del2 f(xk) p = - grad f(xk) starting from 0.
-        fval, grad, fhess_p = func_grad_hess(xk, *args)
-        maggrad = np.sum(np.abs(grad))
+        #  del2 f(xk) p = - fgrad f(xk) starting from 0.
+        fval, fgrad, fhess_p = func_grad_hess(xk, *args)
+        maggrad = np.sum(np.abs(fgrad))
         eta = min([0.5, np.sqrt(maggrad)])
         termcond = eta * maggrad
         xsupi = np.zeros(len(x0), dtype=x0.dtype)
-        ri = grad
+        ri = fgrad
         psupi = -ri
         i = 0
         dri0 = np.dot(ri, ri)
@@ -62,6 +93,7 @@ def newton_cg(func_grad_hess, func, x0, args=(), xtol=1e-5, eps=1e-4,
                 if (i > 0):
                     break
                 else:
+                    # fall back to steepest descent direction
                     xsupi = xsupi + dri0 / curv * psupi
                     break
             alphai = dri0 / curv
@@ -76,14 +108,15 @@ def newton_cg(func_grad_hess, func, x0, args=(), xtol=1e-5, eps=1e-4,
         if old_fval is None:
             old_fval = fval
 
-        alphak, fc, gc, old_fval = line_search_BFGS(func, xk, xsupi, grad,
-                                                    old_fval, args=args)
-        if alphak is None:
-            # line search failed
-            out = line_search_wolfe2(
-                lambda x: func(x, *args),
-                lambda x: func_grad_hess(x, *args)[1], xk, xsupi)
-            alphak, fc, gc = out[0], out[1], out[2]
+
+        try:
+            alphak, fc, gc, old_fval, old_old_fval, gfkp1 = \
+                _line_search_wolfe12(func, grad, xk, xsupi, fgrad,
+                                     old_fval, old_old_fval, args=args)
+        except _LineSearchError:
+            warnings.warn('Line Search failed')
+            break
+
         update = alphak * xsupi
         xk = xk + update        # upcast if necessary
         k += 1

@@ -67,7 +67,6 @@ def _logistic_loss(w, X, y, alpha):
     #print 'Loss %r' % out
     return out
 
-
 def _logistic_loss_grad_hess(w, X, y, alpha):
     # the logistic loss, its gradient, and the matvec application of the
     # Hessian
@@ -283,11 +282,13 @@ def logistic_regression_path(X, y, Cs=10, fit_intercept=True,
             if fit_intercept:
                 func_grad_hess = _logistic_loss_grad_hess_intercept
                 func = _logistic_loss_intercept
+                grad = lambda x, *args: _logistic_loss_and_grad_intercept(x, *args)[1]
             else:
                 func_grad_hess = _logistic_loss_grad_hess
                 func = _logistic_loss
+                grad = lambda x, *args: _logistic_loss_and_grad(x, *args)[1]
 
-            w0 = newton_cg(func_grad_hess, func, w0, args=(X, y, 1./C),
+            w0 = newton_cg(func_grad_hess, func, grad, w0, args=(X, y, 1./C),
                         maxiter=max_iter)
         elif solver == 'liblinear':
             lr = LogisticRegression(C=C, fit_intercept=fit_intercept, tol=gtol)
