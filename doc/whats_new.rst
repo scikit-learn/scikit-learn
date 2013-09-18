@@ -2283,3 +2283,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Mikhail Korobov: http://kmike.ru/pages/about/
 
 .. _Kyle Kastner: http://kastnerkyle.github.io
+
+.. _@FedericoV: https://github.com/FedericoV/
