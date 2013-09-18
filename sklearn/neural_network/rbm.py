@@ -185,7 +185,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         free_energy : array-like, shape (n_samples,)
             The value of the free energy.
         """
-        return - np.dot(v, self.intercept_visible_) - np.log(1. + np.exp(
+        return - safe_sparse_dot(v, self.intercept_visible_) - np.log(1. + np.exp(
             safe_sparse_dot(v, self.components_.T) + self.intercept_hidden_)) \
             .sum(axis=1)
 
@@ -262,7 +262,10 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         rng = check_random_state(self.random_state)
         fe = self._free_energy(v)
 
-        v_ = v.copy()
+        if issparse(v):
+            v_ = v.toarray()
+        else:
+            v_ = v.copy()
         i_ = rng.randint(0, v.shape[1], v.shape[0])
         v_[np.arange(v.shape[0]), i_] = 1 - v_[np.arange(v.shape[0]), i_]
         fe_ = self._free_energy(v_)
