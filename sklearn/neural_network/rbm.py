@@ -16,6 +16,7 @@ from ..externals.six.moves import xrange
 from ..utils import check_arrays
 from ..utils import check_random_state
 from ..utils import gen_even_slices
+from ..utils import issparse
 from ..utils.extmath import safe_sparse_dot
 from ..utils.extmath import logistic_sigmoid
 
