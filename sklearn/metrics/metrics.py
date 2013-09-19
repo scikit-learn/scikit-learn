@@ -2105,9 +2105,6 @@ def r2_score(y_true, y_pred):
     """
     y_type, y_true, y_pred = _check_reg_targets(y_true, y_pred)
 
-    if len(y_true) == 1:
-        raise ValueError("r2_score can only be computed given more than one"
-                         " sample.")
     numerator = ((y_true - y_pred) ** 2).sum(dtype=np.float64)
     denominator = ((y_true - y_true.mean(axis=0)) ** 2).sum(dtype=np.float64)
 

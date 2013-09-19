@@ -12,6 +12,7 @@ from sklearn.datasets import make_multilabel_classification
 from sklearn.utils import check_random_state, shuffle
 from sklearn.utils.multiclass import unique_labels
 from sklearn.utils.fixes import np_version
+from sklearn.utils.multiclass import type_of_target
 from sklearn.utils.testing import (assert_true,
                                    assert_raises,
                                    assert_raise_message,
@@ -56,8 +57,6 @@ from sklearn.metrics import (accuracy_score,
 from sklearn.metrics.metrics import _check_clf_targets
 from sklearn.metrics.metrics import _check_reg_targets
 from sklearn.metrics.metrics import UndefinedMetricWarning
-
-from sklearn.utils.fixes import bincount
 
 from sklearn.externals.six.moves import xrange
 from sklearn.externals.six import u
@@ -124,6 +123,8 @@ ALL_METRICS.update(REGRESSION_METRICS)
 METRICS_WITH_AVERAGING = [
     "precision_score", "recall_score", "f1_score", "f2_score", "f0.5_score"
 ]
+
+METRICS_SCORE_WITH_AVERAGING = []
 
 METRICS_WITH_POS_LABEL = [
     "roc_curve",
@@ -1052,11 +1053,6 @@ def test_losses_at_limits():
     assert_almost_equal(r2_score([0., 1], [0., 1]), 1.00, 2)
 
 
-def test_r2_one_case_error():
-    # test whether r2_score raises error given one point
-    assert_raises(ValueError, r2_score, [0], [0])
-
-
 def test_symmetry():
     """Test the symmetry of score and loss functions"""
     y_true, y_pred, _ = make_prediction(binary=True)
@@ -1222,19 +1218,36 @@ def test_invariance_string_vs_numbers_labels():
         assert_raises(ValueError, metrics, y1_str, y2_str)
 
 
-def test_clf_single_sample():
+@ignore_warnings
+def check_clf_single_sample(metric):
     """Non-regression test: scores should work with a single sample.
 
     This is important for leave-one-out cross validation.
     Score functions tested are those that formerly called np.squeeze,
     which turns an array of size 1 into a 0-d array (!).
     """
+    # assert that no exception is thrown
+    for i, j in product([0, 1], repeat=2):
+        metric([i], [j])
 
-    f2_score = lambda t, p: fbeta_score(t, p, 2)
-    for metric in [accuracy_score, f1_score, f2_score, hamming_loss,
-                   jaccard_similarity_score, precision_recall_fscore_support]:
-        # assert that no exception is thrown
-        metric([True], [True])
+@ignore_warnings
+def check_clf_single_sample_multioutput(metric):
+    for i, j, k, l in product([0, 1], repeat=4):
+        metric(np.array([[i, j]]), np.array([[k, l]]))
+
+
+def test_clf_single_sample():
+    for name, metric in CLASSIFICATION_METRICS.items():
+        yield check_clf_single_sample, metric
+
+    for name, metric in REGRESSION_METRICS.items():
+        yield check_clf_single_sample, metric
+
+    for name, metric in MULTIOUTPUT_METRICS.items():
+        yield check_clf_single_sample_multioutput, metric
+
+    for name, metric in MULTILABELS_METRICS.items():
+        yield check_clf_single_sample_multioutput, metric
 
 
 def test_hinge_loss_binary():
@@ -2013,8 +2026,8 @@ def test_log_loss():
 
 
 @ignore_warnings
-def check_averaging(metric, y_true, y_pred, y_true_binarize, y_pred_binarize,
-                    is_multilabel=False):
+def _check_averaging(metric, y_true, y_pred, y_true_binarize, y_pred_binarize,
+                     is_multilabel):
     n_samples, n_classes = y_true_binarize.shape
 
     # No averaging
@@ -2034,30 +2047,48 @@ def check_averaging(metric, y_true, y_pred, y_true_binarize, y_pred_binarize,
     assert_almost_equal(macro_measure, np.mean(label_measure))
 
     # Weighted measure
-    weighted_measure = metric(y_true, y_pred, average="weighted")
-    weights = np.sum(y_true_binarize, axis=0, dtype=np.int)
-    assert_almost_equal(weighted_measure, np.average(label_measure,
-                                                     weights=weights))
+    weights = np.sum(y_true_binarize, axis=0, dtype=int)
+
+    if np.sum(weights) != 0:
+        weighted_measure = metric(y_true, y_pred, average="weighted")
+        assert_almost_equal(weighted_measure, np.average(label_measure,
+                                                         weights=weights))
+    else:
+        weighted_measure = metric(y_true, y_pred, average="weighted")
+        assert_almost_equal(weighted_measure, 0)
 
     # Sample measure
     if is_multilabel:
         sample_measure = metric(y_true, y_pred, average="samples")
         assert_almost_equal(sample_measure,
-                            np.mean([metric(y_true_binarize[i], y_pred_binarize[i])
+                            np.mean([metric(y_true_binarize[i],
+                                            y_pred_binarize[i])
                                      for i in range(n_samples)]))
 
-def test_averaging_multiclass():
-    y_true, y_pred, y_proba = make_prediction(binary=False)
 
+def check_averaging(name, y_true, y_true_binarize, y_pred, y_pred_binarize,
+                    y_score):
+    is_multilabel = type_of_target(y_true).startswith("multilabel")
+
+    metric = ALL_METRICS[name]
+    if name in METRICS_WITH_AVERAGING:
+        _check_averaging(metric, y_true, y_pred, y_true_binarize,
+                         y_pred_binarize, is_multilabel)
+    elif name in METRICS_SCORE_WITH_AVERAGING:
+        _check_averaging(metric, y_true, y_score, y_true_binarize,
+                         y_score, is_multilabel)
+    else:
+        ValueError("Metric is not recorded has having an average option")
+
+def test_averaging_multiclass():
+    y_true, y_pred, y_score = make_prediction(binary=False)
     lb = LabelBinarizer().fit(y_true)
     y_true_binarize = lb.transform(y_true)
     y_pred_binarize = lb.transform(y_pred)
 
-    for name in METRICS_WITH_AVERAGING:
-        metric = ALL_METRICS[name]
-        yield (check_averaging, metric, y_true, y_pred, y_true_binarize,
-               y_pred_binarize)
-
+    for name in METRICS_WITH_AVERAGING + METRICS_SCORE_WITH_AVERAGING:
+        yield (check_averaging, name, y_true, y_true_binarize, y_pred,
+               y_pred_binarize, y_score)
 
 def test_averaging_multilabel():
     n_classes = 4
@@ -2065,13 +2096,36 @@ def test_averaging_multilabel():
     _, y = make_multilabel_classification(n_features=1, n_classes=n_classes,
                                           random_state=0, n_samples=n_samples,
                                           return_indicator=True)
-
     y_true = y[:50]
     y_pred = y[50:]
+    y_score = check_random_state(0).normal(size=(50, 4))
     y_true_binarize = y_true
     y_pred_binarize = y_pred
 
-    for name in METRICS_WITH_AVERAGING:
-        metric = ALL_METRICS[name]
-        yield (check_averaging, metric, y_true, y_pred, y_true_binarize,
-               y_pred_binarize, True)
+    for name in METRICS_WITH_AVERAGING + METRICS_SCORE_WITH_AVERAGING:
+        yield (check_averaging, name, y_true, y_true_binarize, y_pred,
+               y_pred_binarize, y_score)
+
+
+def test_averaging_multilabel_all_zeroes():
+    y_true = np.zeros((20, 3))
+    y_pred = np.zeros((20, 3))
+    y_score = np.zeros((20, 3))
+    y_true_binarize = y_true
+    y_pred_binarize = y_pred
+
+    for name in METRICS_WITH_AVERAGING + METRICS_SCORE_WITH_AVERAGING:
+        yield (check_averaging, name, y_true, y_true_binarize, y_pred,
+               y_pred_binarize, y_score)
+
+
+def test_averaging_multilabel_all_ones():
+    y_true = np.ones((20, 3))
+    y_pred = np.ones((20, 3))
+    y_score = np.ones((20, 3))
+    y_true_binarize = y_true
+    y_pred_binarize = y_pred
+
+    for name in METRICS_WITH_AVERAGING + METRICS_SCORE_WITH_AVERAGING:
+        yield (check_averaging, name, y_true, y_true_binarize, y_pred,
+               y_pred_binarize, y_score)
