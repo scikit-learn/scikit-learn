@@ -3,6 +3,7 @@ from __future__ import division, print_function
 import numpy as np
 from functools import partial
 from itertools import product
+import warnings
 
 from sklearn import datasets
 from sklearn import svm
@@ -59,7 +60,6 @@ from sklearn.metrics.metrics import _check_reg_targets
 from sklearn.metrics.metrics import UndefinedMetricWarning
 
 from sklearn.externals.six.moves import xrange
-from sklearn.externals.six import u
 
 
 REGRESSION_METRICS = {
@@ -124,7 +124,9 @@ METRICS_WITH_AVERAGING = [
     "precision_score", "recall_score", "f1_score", "f2_score", "f0.5_score"
 ]
 
-METRICS_SCORE_WITH_AVERAGING = []
+METRICS_SCORE_WITH_AVERAGING = [
+    "roc_auc_score"
+]
 
 METRICS_WITH_POS_LABEL = [
     "roc_curve",
@@ -521,42 +523,37 @@ def test_auc_score_non_binary_class():
     y_pred = rng.rand(10)
     # y_true contains only one class value
     y_true = np.zeros(10, dtype="int")
-    assert_raise_message(ValueError, "AUC is defined for binary "
-                         "classification only", roc_auc_score, y_true, y_pred)
+    assert_raise_message(ValueError, "ROC AUC score is not defined",
+                         roc_auc_score, y_true, y_pred)
     y_true = np.ones(10, dtype="int")
-    assert_raise_message(ValueError, "AUC is defined for binary "
-                         "classification only", roc_auc_score, y_true, y_pred)
+    assert_raise_message(ValueError, "ROC AUC score is not defined",
+                         roc_auc_score, y_true, y_pred)
     y_true = -np.ones(10, dtype="int")
-    assert_raise_message(ValueError, "AUC is defined for binary "
-                         "classification only", roc_auc_score, y_true, y_pred)
+    assert_raise_message(ValueError, "ROC AUC score is not defined",
+                         roc_auc_score, y_true, y_pred)
     # y_true contains three different class values
     y_true = rng.randint(0, 3, size=10)
-    assert_raise_message(ValueError, "AUC is defined for binary "
-                         "classification only", roc_auc_score, y_true, y_pred)
+    assert_raise_message(ValueError, "multiclass format is not supported",
+                         roc_auc_score, y_true, y_pred)
 
-    rng = check_random_state(404)
-    y_pred = rng.rand(10)
-    # y_true contains only one class value
-    y_true = np.zeros(10, dtype="int")
+    with warnings.catch_warnings(record=True):
+        rng = check_random_state(404)
+        y_pred = rng.rand(10)
+        # y_true contains only one class value
+        y_true = np.zeros(10, dtype="int")
+        assert_raise_message(ValueError, "ROC AUC score is not defined",
+                             roc_auc_score, y_true, y_pred)
+        y_true = np.ones(10, dtype="int")
+        assert_raise_message(ValueError, "ROC AUC score is not defined",
+                                 roc_auc_score, y_true, y_pred)
+        y_true = -np.ones(10, dtype="int")
+        assert_raise_message(ValueError, "ROC AUC score is not defined",
+                             roc_auc_score, y_true, y_pred)
 
-    f = ignore_warnings(auc_score)
-    assert_raise_message(ValueError, "AUC is defined for binary "
-                         "classification only", f,
-                         y_true, y_pred)
-    y_true = np.ones(10, dtype="int")
-    assert_raise_message(ValueError, "AUC is defined for binary "
-                         "classification only", f, y_true,
-                         y_pred)
-    y_true = -np.ones(10, dtype="int")
-    assert_raise_message(ValueError, "AUC is defined for binary "
-                         "classification only", f, y_true,
-                         y_pred)
-    # y_true contains three different class values
-    y_true = rng.randint(0, 3, size=10)
-    assert_raise_message(ValueError, "AUC is defined for binary "
-                         "classification only", f, y_true,
-                         y_pred)
-
+        # y_true contains three different class values
+        y_true = rng.randint(0, 3, size=10)
+        assert_raise_message(ValueError, "multiclass format is not supported",
+                                 roc_auc_score, y_true, y_pred)
 
 def test_precision_recall_f1_score_binary():
     """Test Precision Recall and F1 Score for binary classification task"""
@@ -2071,6 +2068,7 @@ def check_averaging(name, y_true, y_true_binarize, y_pred, y_pred_binarize,
     is_multilabel = type_of_target(y_true).startswith("multilabel")
 
     metric = ALL_METRICS[name]
+
     if name in METRICS_WITH_AVERAGING:
         _check_averaging(metric, y_true, y_pred, y_true_binarize,
                          y_pred_binarize, is_multilabel)
@@ -2080,25 +2078,28 @@ def check_averaging(name, y_true, y_true_binarize, y_pred, y_pred_binarize,
     else:
         ValueError("Metric is not recorded has having an average option")
 
+
 def test_averaging_multiclass():
     y_true, y_pred, y_score = make_prediction(binary=False)
     lb = LabelBinarizer().fit(y_true)
     y_true_binarize = lb.transform(y_true)
     y_pred_binarize = lb.transform(y_pred)
 
-    for name in METRICS_WITH_AVERAGING + METRICS_SCORE_WITH_AVERAGING:
+    for name in METRICS_WITH_AVERAGING:
         yield (check_averaging, name, y_true, y_true_binarize, y_pred,
                y_pred_binarize, y_score)
 
+
 def test_averaging_multilabel():
-    n_classes = 4
-    n_samples = 100
+    n_classes = 5
+    n_samples = 40
     _, y = make_multilabel_classification(n_features=1, n_classes=n_classes,
-                                          random_state=0, n_samples=n_samples,
-                                          return_indicator=True)
-    y_true = y[:50]
-    y_pred = y[50:]
-    y_score = check_random_state(0).normal(size=(50, 4))
+                                          random_state=5, n_samples=n_samples,
+                                          return_indicator=True,
+                                          allow_unlabeled=False)
+    y_true = y[:20]
+    y_pred = y[20:]
+    y_score = check_random_state(0).normal(size=(20, n_classes))
     y_true_binarize = y_true
     y_pred_binarize = y_pred
 
@@ -2114,7 +2115,7 @@ def test_averaging_multilabel_all_zeroes():
     y_true_binarize = y_true
     y_pred_binarize = y_pred
 
-    for name in METRICS_WITH_AVERAGING + METRICS_SCORE_WITH_AVERAGING:
+    for name in METRICS_WITH_AVERAGING:
         yield (check_averaging, name, y_true, y_true_binarize, y_pred,
                y_pred_binarize, y_score)
 
@@ -2126,6 +2127,6 @@ def test_averaging_multilabel_all_ones():
     y_true_binarize = y_true
     y_pred_binarize = y_pred
 
-    for name in METRICS_WITH_AVERAGING + METRICS_SCORE_WITH_AVERAGING:
+    for name in METRICS_WITH_AVERAGING:
         yield (check_averaging, name, y_true, y_true_binarize, y_pred,
                y_pred_binarize, y_score)
