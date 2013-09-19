@@ -1,5 +1,7 @@
 import pickle
 
+import numpy as np
+
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import ignore_warnings
@@ -12,10 +14,12 @@ from sklearn.svm import LinearSVC
 from sklearn.cluster import KMeans
 from sklearn.linear_model import Ridge, LogisticRegression
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.datasets import make_blobs, load_diabetes
+from sklearn.datasets import make_blobs
+from sklearn.datasets import make_multilabel_classification
+from sklearn.datasets import load_diabetes
 from sklearn.cross_validation import train_test_split, cross_val_score
 from sklearn.grid_search import GridSearchCV
-
+from sklearn.multiclass import OneVsRestClassifier
 
 def test_make_scorer():
     """Sanity check on the make_scorer factory function."""
@@ -89,6 +93,41 @@ def test_thresholded_scorers():
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
     clf.fit(X_train, y_train)
     assert_raises(ValueError, SCORERS['roc_auc'], clf, X_test, y_test)
+
+
+def test_thresholded_scorers_multilabel_indicator_data():
+    """Test that the scorer work with multilabel-indicator format
+    for multilabel and multi-output multi-class classifier
+    """
+    X, y = make_multilabel_classification(return_indicator=True,
+                                          allow_unlabeled=False,
+                                          random_state=0)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+
+    # Multi-output multi-class predict_proba
+    clf = DecisionTreeClassifier()
+    clf.fit(X_train, y_train)
+    y_proba = clf.predict_proba(X_test)
+    score1 = SCORERS['roc_auc'](clf, X_test, y_test)
+    score2 = roc_auc_score(y_test, np.vstack(p[:, -1] for p in y_proba).T)
+    assert_almost_equal(score1, score2)
+
+    # Multi-output multi-class decision_function
+    # TODO Is there any yet?
+
+    # Multilabel predict_proba
+    clf = OneVsRestClassifier(DecisionTreeClassifier())
+    clf.fit(X_train, y_train)
+    score1 = SCORERS['roc_auc'](clf, X_test, y_test)
+    score2 = roc_auc_score(y_test, clf.predict_proba(X_test))
+    assert_almost_equal(score1, score2)
+
+    # Multilabel decision function
+    clf = OneVsRestClassifier(LinearSVC(random_state=0))
+    clf.fit(X_train, y_train)
+    score1 = SCORERS['roc_auc'](clf, X_test, y_test)
+    score2 = roc_auc_score(y_test, clf.decision_function(X_test))
+    assert_almost_equal(score1, score2)
 
 
 def test_unsupervised_scorers():
