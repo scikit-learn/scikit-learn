@@ -106,13 +106,24 @@ CLASSIFICATION_METRICS = {
     "macro_f2_score": partial(fbeta_score, average="macro", beta=2),
     "macro_precision_score": partial(precision_score, average="macro"),
     "macro_recall_score": partial(recall_score, average="macro"),
-
-    "confusion_matrix_with_labels": partial(confusion_matrix, labels=range(3)),
 }
 
 THRESHOLDED_METRICS = {
     "roc_auc_score": roc_auc_score,
+    "weighted_roc_auc": partial(roc_auc_score, average="weighted"),
+    "samples_roc_auc": partial(roc_auc_score, average="samples"),
+    "micro_roc_auc": partial(roc_auc_score, average="micro"),
+    "macro_roc_auc": partial(roc_auc_score, average="macro"),
+
     "average_precision_score": average_precision_score,
+    "weighted_average_precision_score":
+    partial(average_precision_score, average="weighted"),
+    "samples_average_precision_score":
+    partial(average_precision_score, average="samples"),
+    "micro_average_precision_score":
+    partial(average_precision_score, average="micro"),
+    "macro_average_precision_score":
+    partial(average_precision_score, average="macro"),
 }
 
 ALL_METRICS = dict()
@@ -125,7 +136,7 @@ METRICS_WITH_AVERAGING = [
 ]
 
 METRICS_SCORE_WITH_AVERAGING = [
-    "roc_auc_score"
+    "roc_auc_score", "average_precision_score",
 ]
 
 METRICS_WITH_POS_LABEL = [
@@ -164,108 +175,66 @@ METRICS_WITH_NORMALIZE_OPTION = {
     "zero_one_loss": zero_one_loss,
 }
 
-MULTILABELS_METRICS = {
-    "accuracy_score": accuracy_score,
-    "unormalized_accuracy_score": partial(accuracy_score, normalize=False),
+THRESHOLDED_MULTILABEL_METRICS = [
+    "roc_auc_score", "weighted_roc_auc", "samples_roc_auc",
+    "micro_roc_auc", "macro_roc_auc",
 
-    "hamming_loss": hamming_loss,
+    "average_precision_score", "weighted_average_precision_score",
+    "samples_average_precision_score", "micro_average_precision_score",
+    "macro_average_precision_score",
+]
 
-    "jaccard_similarity_score": jaccard_similarity_score,
-    "unormalized_jaccard_similarity_score":
-    partial(jaccard_similarity_score, normalize=False),
+MULTILABELS_METRICS = [
+    "accuracy_score", "unormalized_accuracy_score",
+    "hamming_loss",
+    "jaccard_similarity_score", "unormalized_jaccard_similarity_score",
+    "zero_one_loss", "unnormalized_zero_one_loss",
 
-    "zero_one_loss": zero_one_loss,
-    "unnormalized_zero_one_loss": partial(zero_one_loss, normalize=False),
+    "precision_score", "recall_score", "f1_score", "f2_score", "f0.5_score",
 
-    "precision_score": precision_score,
-    "recall_score": recall_score,
-    "f1_score": f1_score,
-    "f2_score": partial(fbeta_score, beta=2),
-    "f0.5_score": partial(fbeta_score, beta=0.5),
+    "weighted_f0.5_score", "weighted_f1_score", "weighted_f2_score",
+    "weighted_precision_score", "weighted_recall_score",
 
-    "weighted_f0.5_score": partial(fbeta_score, average="weighted", beta=0.5),
-    "weighted_f1_score": partial(f1_score, average="weighted"),
-    "weighted_f2_score": partial(fbeta_score, average="weighted", beta=2),
-    "weighted_precision_score": partial(precision_score, average="weighted"),
-    "weighted_recall_score": partial(recall_score, average="weighted"),
+    "micro_f0.5_score", "micro_f1_score", "micro_f2_score",
+    "micro_precision_score", "micro_recall_score",
 
-    "samples_f0.5_score": partial(fbeta_score, average="samples", beta=0.5),
-    "samples_f1_score": partial(f1_score, average="samples"),
-    "samples_f2_score": partial(fbeta_score, average="samples", beta=2),
-    "samples_precision_score": partial(precision_score, average="samples"),
-    "samples_recall_score": partial(recall_score, average="samples"),
+    "macro_f0.5_score", "macro_f1_score", "macro_f2_score",
+    "macro_precision_score", "macro_recall_score",
+]
 
-    "micro_f0.5_score": partial(fbeta_score, average="micro", beta=0.5),
-    "micro_f1_score": partial(f1_score, average="micro"),
-    "micro_f2_score": partial(fbeta_score, average="micro", beta=2),
-    "micro_precision_score": partial(precision_score, average="micro"),
-    "micro_recall_score": partial(recall_score, average="micro"),
+MULTIOUTPUT_METRICS = [
+    "mean_absolute_error", "mean_squared_error", "r2_score",
+]
 
-    "macro_f0.5_score": partial(fbeta_score, average="macro", beta=0.5),
-    "macro_f1_score": partial(f1_score, average="macro"),
-    "macro_f2_score": partial(fbeta_score, average="macro", beta=2),
-    "macro_precision_score": partial(precision_score, average="macro"),
-    "macro_recall_score": partial(recall_score, average="macro"),
-}
+SYMMETRIC_METRICS = [
+    "accuracy_score", "unormalized_accuracy_score",
+    "hamming_loss",
+    "jaccard_similarity_score", "unormalized_jaccard_similarity_score",
+    "zero_one_loss", "unnormalized_zero_one_loss",
 
-MULTIOUTPUT_METRICS = {
-    "mean_absolute_error": mean_absolute_error,
-    "mean_squared_error": mean_squared_error,
-    "r2_score": r2_score,
-}
+    "f1_score", "weighted_f1_score", "micro_f1_score", "macro_f1_score",
 
+    "matthews_corrcoef_score", "mean_absolute_error", "mean_squared_error"
 
-SYMMETRIC_METRICS = {
-    "accuracy_score": accuracy_score,
-    "unormalized_accuracy_score": partial(accuracy_score, normalize=False),
+]
 
-    "hamming_loss": hamming_loss,
+NOT_SYMMETRIC_METRICS = [
+    "explained_variance_score",
+    "r2_score",
+     "confusion_matrix",
 
-    "jaccard_similarity_score": jaccard_similarity_score,
-    "unormalized_jaccard_similarity_score":
-    partial(jaccard_similarity_score, normalize=False),
+    "precision_score", "recall_score", "f2_score", "f0.5_score",
 
-    "zero_one_loss": zero_one_loss,
-    "unnormalized_zero_one_loss": partial(zero_one_loss, normalize=False),
+    "weighted_f0.5_score", "weighted_f2_score", "weighted_precision_score",
+    "weighted_recall_score",
 
-    "f1_score": f1_score,
-    "weighted_f1_score": partial(f1_score, average="weighted"),
-    "micro_f1_score": partial(f1_score, average="micro"),
-    "macro_f1_score": partial(f1_score, average="macro"),
+    "micro_f0.5_score", "micro_f2_score", "micro_precision_score",
+    "micro_recall_score",
 
-    "matthews_corrcoef_score": matthews_corrcoef,
-    "mean_absolute_error": mean_absolute_error,
-    "mean_squared_error": mean_squared_error
-}
+    "macro_f0.5_score", "macro_f2_score", "macro_precision_score",
+    "macro_recall_score",
+]
 
-NOT_SYMMETRIC_METRICS = {
-    "explained_variance_score": explained_variance_score,
-    "r2_score": r2_score,
-
-    "confusion_matrix": confusion_matrix,
-
-    "precision_score": precision_score,
-    "recall_score": recall_score,
-    "f2_score": partial(fbeta_score, beta=2),
-    "f0.5_score": partial(fbeta_score, beta=0.5),
-
-    "weighted_f0.5_score": partial(fbeta_score, average="weighted", beta=0.5),
-    "weighted_f2_score": partial(fbeta_score, average="weighted", beta=2),
-    "weighted_precision_score": partial(precision_score, average="weighted"),
-    "weighted_recall_score": partial(recall_score, average="weighted"),
-
-    "micro_f0.5_score": partial(fbeta_score, average="micro", beta=0.5),
-    "micro_f2_score": partial(fbeta_score, average="micro", beta=2),
-    "micro_precision_score": partial(precision_score, average="micro"),
-    "micro_recall_score": partial(recall_score, average="micro"),
-
-    "macro_f0.5_score": partial(fbeta_score, average="macro", beta=0.5),
-    "macro_f2_score": partial(fbeta_score, average="macro", beta=2),
-    "macro_precision_score": partial(precision_score, average="macro"),
-    "macro_recall_score": partial(recall_score, average="macro"),
-
-    "confusion_matrix_with_labels": partial(confusion_matrix, labels=range(3)),
-}
 
 
 def make_prediction(dataset=None, binary=False):
@@ -595,6 +564,19 @@ def test_precision_recall_f_binary_single_class():
     assert_equal(0., precision_score([-1, -1], [-1, -1]))
     assert_equal(0., recall_score([-1, -1], [-1, -1]))
     assert_equal(0., f1_score([-1, -1], [-1, -1]))
+
+
+def test_average_precision_score_score_non_binary_class():
+    """Test that average_precision_score function returns an error when trying
+    to compute average_precision_score for multiclass task.
+    """
+    rng = check_random_state(404)
+    y_pred = rng.rand(10)
+
+    # y_true contains three different class values
+    y_true = rng.randint(0, 3, size=10)
+    assert_raise_message(ValueError, "multiclass format is not supported",
+                         average_precision_score, y_true, y_pred)
 
 
 def test_average_precision_score_duplicate_values():
@@ -1064,13 +1046,15 @@ def test_symmetry():
         set([]))
 
     # Symmetric metric
-    for name, metric in SYMMETRIC_METRICS.items():
+    for name in SYMMETRIC_METRICS:
+        metric = ALL_METRICS[name]
         assert_almost_equal(metric(y_true, y_pred),
                             metric(y_pred, y_true),
                             err_msg="%s is not symmetric" % name)
 
     # Not symmetric metrics
-    for name, metric in NOT_SYMMETRIC_METRICS.items():
+    for name in NOT_SYMMETRIC_METRICS:
+        metric = ALL_METRICS[name]
         assert_true(np.any(metric(y_true, y_pred) != metric(y_pred, y_true)),
                     msg="%s seems to be symmetric" % name)
 
@@ -1170,8 +1154,9 @@ def test_format_invariance_with_1d_vectors():
 
         # NB: We do not test for y1_row, y2_row as these may be
         # interpreted as multilabel or multioutput data.
-        if (name not in MULTIOUTPUT_METRICS and
-                name not in MULTILABELS_METRICS):
+        if (name not in (MULTIOUTPUT_METRICS + THRESHOLDED_MULTILABEL_METRICS +
+                 MULTILABELS_METRICS)):
+            print(name)
             assert_raises(ValueError, metric, y1_row, y2_row)
 
 
@@ -1234,17 +1219,14 @@ def check_clf_single_sample_multioutput(metric):
 
 
 def test_clf_single_sample():
-    for name, metric in CLASSIFICATION_METRICS.items():
+    for name, metric in (CLASSIFICATION_METRICS.items() +
+                         REGRESSION_METRICS.items()):
         yield check_clf_single_sample, metric
 
-    for name, metric in REGRESSION_METRICS.items():
-        yield check_clf_single_sample, metric
-
-    for name, metric in MULTIOUTPUT_METRICS.items():
+    for name  in MULTIOUTPUT_METRICS + MULTILABELS_METRICS:
+        metric = ALL_METRICS[name]
         yield check_clf_single_sample_multioutput, metric
 
-    for name, metric in MULTILABELS_METRICS.items():
-        yield check_clf_single_sample_multioutput, metric
 
 
 def test_hinge_loss_binary():
@@ -1283,8 +1265,9 @@ def test_multioutput_number_of_output_differ():
     y_true = np.array([[1, 0, 0, 1], [0, 1, 1, 1], [1, 1, 0, 1]])
     y_pred = np.array([[0, 0], [1, 0], [0, 0]])
 
-    for name, metrics in MULTIOUTPUT_METRICS.items():
-        assert_raises(ValueError, metrics, y_true, y_pred)
+    for name in MULTIOUTPUT_METRICS:
+        metric = ALL_METRICS[name]
+        assert_raises(ValueError, metric, y_true, y_pred)
 
 
 def test_multioutput_regression_invariance_to_dimension_shuffling():
@@ -1295,7 +1278,8 @@ def test_multioutput_regression_invariance_to_dimension_shuffling():
     y_pred = np.reshape(y_pred, (-1, n_dims))
 
     rng = check_random_state(314159)
-    for name, metric in MULTIOUTPUT_METRICS.items():
+    for name in MULTIOUTPUT_METRICS:
+        metric = ALL_METRICS[name]
         error = metric(y_true, y_pred)
 
         for _ in xrange(3):
@@ -1339,14 +1323,15 @@ def test_multilabel_representation_invariance():
     y1_shuffle_binary_indicator = lb.transform(y1_shuffle)
     y2_shuffle_binary_indicator = lb.transform(y2_shuffle)
 
-    for name, metric in MULTILABELS_METRICS.items():
+    for name in MULTILABELS_METRICS:
+        metric = ALL_METRICS[name]
+
         # XXX cruel hack to work with partial functions
         if isinstance(metric, partial):
             metric.__module__ = 'tmp'
-            metric.__name__ = 'foo'
+            metric.__name__ =  name
         metric = ignore_warnings(metric)
         measure = metric(y1, y2)
-
 
         # Check representation invariance
         assert_almost_equal(metric(y1_binary_indicator,
