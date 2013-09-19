@@ -431,7 +431,7 @@ def label_binarize(y, classes, multilabel=False, neg_label=0, pos_label=1):
                 for i, label_tuple in enumerate(y):
                     for label in label_tuple:
                         Y[i, imap[label]] = pos_label
-                return Y
+            return Y
         else:
             raise ValueError("y should be in a multilabel format, "
                              "got %r" % (y,))
