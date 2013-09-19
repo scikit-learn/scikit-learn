@@ -186,9 +186,9 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         free_energy : array-like, shape (n_samples,)
             The value of the free energy.
         """
-        return - safe_sparse_dot(v, self.intercept_visible_) - np.log(1. + np.exp(
-            safe_sparse_dot(v, self.components_.T) + self.intercept_hidden_)) \
-            .sum(axis=1)
+        return (- safe_sparse_dot(v, self.intercept_visible_)
+                - np.log(1. + np.exp(safe_sparse_dot(v, self.components_.T)
+                            + self.intercept_hidden_)).sum(axis=1))
 
     def gibbs(self, v):
         """Perform one Gibbs sampling step.
