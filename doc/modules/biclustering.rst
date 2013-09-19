@@ -269,20 +269,55 @@ two similarity measures are needed: a similarity measure for
 individual biclusters, and a way to combine these individual
 similarities into an overall score.
 
-To compare individual biclusters, several measures have been used. For
-now, only the Jaccard index is implemented:
+To compare individual biclusters, several measures have been proposed.
+Let :math:`a` and :math:`b` be biclusters. :math:`|a|` and :math:`|b|`
+are the number of elements in each, and :math:`|a \cap b|` is the
+number of elements in their intersection. We will also need to define
+precision and recall: if :math:`a` is a true bicluster, and :math:`b`
+is a found bicluster:
 
 .. math::
-    J(A, B) = \frac{|A \cap B|}{|A| + |B| - |A \cap B|}
+   pre = \frac{|a \cap b|}{|b|}
 
-where :math:`A` and :math:`B` are biclusters, :math:`|A \cap B|` is
-the number of elements in their intersection. The Jaccard index
-achieves its minimum of 0 when the biclusters to not overlap at all
-and its maximum of 1 when they are identical.
+   rec = \frac{|a \cap b|}{|a|}
+
+The similarity measures implemented in scikit-learn combine
+the precision and recall in various ways.
+
+The Jaccard measure :
+
+.. math::
+    s(a, b) = \frac{|a \cap b|}{|a| + |b| - |a \cap b|} = \frac{pre \cdot rec}{pre + rec - pre \cdot rec}
+
+The Dice measure, which corresponds to the standard F-measure:
+
+.. math::
+    s(a, b) = \frac{2 |a \cap b|}{|a| + |b|} = \frac{2 \cdot pre \cdot rec}{pre + rec}
+
+The Goodness measure, which is the mean of precision and recall:
+
+.. math::
+    s(a, b) = \frac{1}{2}(pre + rec)
+
+All of these measures achieve a minimum of 0 when the biclusters do
+not overlap at all and its maximum of 1 when they are identical.
+
+These measures are biased according to the size of the biclusters.
+Hanczar, et. al. (2013) introduced a correction for this bias. Let
+:math:`|D|` be the number of elements in the dataset. The corrected
+precision and recall are:
+
+.. math::
+    pre_{corrected} = \frac{|D| \cdot pre - |a|}{|D| - |a|}
+
+    rec_{corrected} = \frac{|D| \cdot rec - |b|}{|D| - |b|}
+
+Using these in place of the uncorrected measures in the Jaccard, Dice,
+and Goodness measures yields the corrected score.
 
 Several methods have been developed to compare two sets of biclusters.
-For now, only :func:`consensus_score` (Hochreiter et. al., 2010) is
-available:
+Two are available in scikit learn. The :func:`consensus_score`
+(Hochreiter et. al., 2010) works as follows:
 
 1. Compute bicluster similarities for pairs of biclusters, one in each
    set, using the Jaccard index or a similar measure.
@@ -294,13 +329,57 @@ available:
 3. The final sum of similarities is divided by the size of the larger
    set.
 
-The minimum consensus score, 0, occurs when all pairs of biclusters
-are totally dissimilar. The maximum score, 1, occurs when both sets
-are identical.
+The minimum consensus score, :math:`0`, occurs when all pairs of
+biclusters are totally dissimilar. The maximum score, :math:`1`,
+occurs when both sets are identical.
+
+The other score, the :func:`match_score`, (Prelic et. al., 2006),
+computes two measures of similarity: recovery and relevance.
+*Recovery* quantifies how well the found biclusters cover the expected
+biclusters. *Relevence* quantifies how many of the found biclusters
+are good.
+
+For sets of biclusters :math:`A` and :math:`B` and any bicluster
+similarity score :math:`s(a, b)`, the match score is defined as:
+
+.. math::
+   S(A, B) = \frac{1}{|A|} \sum_{a \in A} \max_{b \in B} s(a, b)
+
+Note that :math:`S(A, B) \neq S(B, A)`. If :math:`E` is a set of
+expected biclusters and :math:`F` is the set of found biclusters
+returned by an algorithm, :math:`S(E, F)` is the recovery score and
+:math:`S(F, E)` is the relevance score.
+
+Both recovery and relevance range between :math:`0` and :math:`1`. If
+:math:`\epsilon` is a small number close to zero, the *(recovery,
+relevance)* pair can be interpreted as follows:
+
+* :math:`(0, 0)`: found biclusters are totally dissimilar to all
+  expected biclusters.
+
+* :math:`(1, \epsilon)`: :math:`E \subset F`, but :math:`|F| \gg |E|`, and
+  most biclusters in :math:`F` are totally dissimilar to biclusters in
+  :math:`E`.
+
+* :math:`(\epsilon, 1)`: :math:`F \subset E`, but many expected biclusters
+  were not found.
+
+* :math:`(1, 1)`: :math:`F = E`.
 
 
 .. topic:: References:
 
+ * Hanczar, B., & Nadif, M., 2013. `Precision-recall space to
+   correct external indices for biclustering.
+   <http://jmlr.csail.mit.edu/proceedings/papers/v28/hanczar13.pdf>`__
+   136-144).
+
  * Hochreiter, Bodenhofer, et. al., 2010. `FABIA: factor analysis
    for bicluster acquisition
    <https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2881408/>`__.
+
+ * Prelic, A., Bleuler, S., Zimmermann, P., Wille, A., Buhlmann,
+   P., Gruissem, W., ... & Zitzler, E. (2006). `A systematic
+   comparison and evaluation of biclustering methods for gene
+   expression data
+   <http://ocw.metu.edu.tr/file.php/40/Schedule/reading8.pdf>`__.

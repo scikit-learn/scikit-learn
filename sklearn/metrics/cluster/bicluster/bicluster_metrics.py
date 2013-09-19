@@ -156,8 +156,8 @@ def consensus_score(a, b, similarity="jaccard", correction=None):
 
     correction : int or None, optional, default: None
         If provided, this should be data.size. Used to correct for
-        bicluster size bias, as described in Hanczar, et. al. If this
-        is used, bicluster similarities may be less than 0, to
+        bicluster size bias, as described in Hanczar, et. al (2013).
+        If this is used, bicluster similarities may be less than 0, to
         indicate that they are worse than random chance.
 
     References
@@ -211,8 +211,8 @@ def match_score(expected, found, similarity="jaccard", correction=None):
 
     correction : int or None, optional, default: None
         If provided, this should be data.size. Used to correct for
-        bicluster size bias, as described in Hanczar, et. al. If this
-        is used, bicluster similarities may be less than 0, to
+        bicluster size bias, as described in Hanczar, et. al (2013).
+        If this is used, bicluster similarities may be less than 0, to
         indicate that they are worse than random chance.
 
     Returns
