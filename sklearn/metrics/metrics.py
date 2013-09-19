@@ -202,7 +202,7 @@ class UndefinedMetricWarning(UserWarning):
 
 
 ###############################################################################
-# Binary classification loss
+# Classification metrics
 ###############################################################################
 def hinge_loss(y_true, pred_decision, pos_label=None, neg_label=None):
     """Average hinge loss (non-regularized)
@@ -272,24 +272,38 @@ def hinge_loss(y_true, pred_decision, pos_label=None, neg_label=None):
     return np.mean(losses)
 
 
-###############################################################################
-# Binary classification scores
-###############################################################################
-def average_precision_score(y_true, y_score):
+def average_precision_score(y_true, y_score, average="macro"):
     """Compute average precision (AP) from prediction scores
 
     This score corresponds to the area under the precision-recall curve.
 
-    Note: this implementation is restricted to the binary classification task.
+    Note: this implementation is restricted to the binary classification task
+    or multilabel classification task.
 
-    Parameters
     ----------
-    y_true : array, shape = [n_samples]
-        True binary labels.
+    y_true : array, shape = [n_samples] or [n_samples, n_classes]
+        True binary labels in binary indicator format.
 
-    y_score : array, shape = [n_samples]
+    y_score : array, shape = [n_samples] or [n_samples, n_classes]
         Target scores, can either be probability estimates of the positive
         class, confidence values, or binary decisions.
+
+    average : string, [None, 'micro', 'macro' (default), 'samples', 'weighted']
+        If ``None``, the scores for each class are returned. Otherwise,
+        this determines the type of averaging performed on the data:
+
+        ``'micro'``:
+            Calculate metrics globally by considering each element of the label
+            indicator matrix as a label.
+        ``'macro'``:
+            Calculate metrics for each label, and find their unweighted
+            mean.  This does not take label imbalance into account.
+        ``'weighted'``:
+            Calculate metrics for each label, and find their average, weighted
+            by support (the number of true instances for each label).
+        ``'samples'``:
+            Calculate metrics for each instance, and find their average.
+
 
     Returns
     -------
@@ -317,8 +331,12 @@ def average_precision_score(y_true, y_score):
     0.79...
 
     """
-    precision, recall, thresholds = precision_recall_curve(y_true, y_score)
-    return auc(recall, precision)
+    def _binary_average_precision(y_true, y_score):
+        precision, recall, thresholds = precision_recall_curve(y_true, y_score)
+        return auc(recall, precision)
+
+    return _average_binary_score(_binary_average_precision, y_true, y_score,
+                                 average)
 
 
 @deprecated("Function 'auc_score' has been renamed to "
@@ -393,6 +411,12 @@ def _average_binary_score(binary_metric, y_true, y_score, average):
             by support (the number of true instances for each label).
         ``'samples'``:
             Calculate metrics for each instance, and find their average.
+
+    Return
+    ------
+    score : float or array of shape [n_classes]
+        If not ``None``, average the score, else return the score for each
+        classes.
 
     """
     average_options = (None, 'micro', 'macro', 'weighted', 'samples')
@@ -802,9 +826,6 @@ def roc_curve(y_true, y_score, pos_label=None):
     return fpr, tpr, thresholds
 
 
-##############################################################################
-# Multiclass general function
-###############################################################################
 def confusion_matrix(y_true, y_pred, labels=None):
     """Compute confusion matrix to evaluate the accuracy of a classification
 
@@ -877,9 +898,6 @@ def confusion_matrix(y_true, y_pred, labels=None):
     return CM
 
 
-###############################################################################
-# Multiclass loss functions
-###############################################################################
 def zero_one_loss(y_true, y_pred, normalize=True):
     """Zero-one classification loss.
 
@@ -1048,10 +1066,6 @@ def log_loss(y_true, y_pred, eps=1e-15, normalize=True):
     loss = -(T * np.log(Y)).sum()
     return loss / T.shape[0] if normalize else loss
 
-
-###############################################################################
-# Multiclass score functions
-###############################################################################
 
 def jaccard_similarity_score(y_true, y_pred, normalize=True):
     """Jaccard similarity coefficient score
@@ -1855,9 +1869,6 @@ def zero_one_score(y_true, y_pred):
     return accuracy_score(y_true, y_pred)
 
 
-###############################################################################
-# Multiclass utility function
-###############################################################################
 def classification_report(y_true, y_pred, labels=None, target_names=None):
     """Build a text report showing the main classification metrics
 
@@ -1946,9 +1957,6 @@ def classification_report(y_true, y_pred, labels=None, target_names=None):
     return report
 
 
-###############################################################################
-# Multilabel loss function
-###############################################################################
 def hamming_loss(y_true, y_pred, classes=None):
     """Compute the average Hamming loss.
 
@@ -2040,7 +2048,7 @@ def hamming_loss(y_true, y_pred, classes=None):
 
 
 ###############################################################################
-# Regression loss functions
+# Regression metrics
 ###############################################################################
 def mean_absolute_error(y_true, y_pred):
     """Mean absolute error regression loss
