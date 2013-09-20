@@ -114,6 +114,16 @@ def test_thresholded_scorers_multilabel_indicator_data():
 
     # Multi-output multi-class decision_function
     # TODO Is there any yet?
+    clf = DecisionTreeClassifier()
+    clf.fit(X_train, y_train)
+    clf._predict_proba = clf.predict_proba
+    clf.predict_proba = None
+    clf.decision_function = clf._predict_proba
+
+    y_proba = clf.decision_function(X_test)
+    score1 = SCORERS['roc_auc'](clf, X_test, y_test)
+    score2 = roc_auc_score(y_test, np.vstack(p[:, -1] for p in y_proba).T)
+    assert_almost_equal(score1, score2)
 
     # Multilabel predict_proba
     clf = OneVsRestClassifier(DecisionTreeClassifier())
