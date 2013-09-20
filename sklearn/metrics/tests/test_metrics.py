@@ -710,9 +710,9 @@ def test_precision_recall_f1_score_multiclass_pos_label_none():
 def test_zero_precision_recall():
     """Check that pathological cases do not bring NaNs"""
 
-    try:
-        old_error_settings = np.seterr(all='raise')
+    old_error_settings = np.seterr(all='raise')
 
+    try:
         y_true = np.array([0, 1, 2, 0, 1, 2])
         y_pred = np.array([2, 0, 1, 1, 2, 0])
 
