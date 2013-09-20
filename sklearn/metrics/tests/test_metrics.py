@@ -61,6 +61,38 @@ from sklearn.metrics.metrics import UndefinedMetricWarning
 
 from sklearn.externals.six.moves import xrange
 
+# Note toward developer about metric testing
+# -------------------------------------------
+# It is often possible to write one general test for several metrics:
+#
+#   - invariance properties, e.g. invariance to sample order
+#   - common behavior for an argument, e.g. the "normalize" with value True
+#     will return the mean of the metrics and with value False will return
+#     the sum of the metrics.
+#
+# In order to improve the overall metric testing, it is a good idea to write
+# first a specific test for the given metric and then add a general test for
+# all metrics that have the same behavior.
+#
+# Two type of datastructures are used in order to implement this system:
+# dictionaries of metrics and lists of metrics wit common properties.
+#
+# Dictionaries of metrics
+# ------------------------
+# The goal of having those dictionary is to have an easy way to call a
+# particular metric and associate a name to each function:
+#
+#   - REGRESSION_METRICS: all regression metrics.
+#   - CLASSIFICATION_METRICS: all classification metrics
+#     which compare a ground truth and the estimated targets as returned by a
+#     classifier.
+#   - THRESHOLDED_METRICS: all classification metrics which
+#     which compare a ground truth and a score, e.g. estimated probabilities or
+#     decision function (format might vary)
+#
+# Those dictionaries will be use to test systematically some invariance
+# properties, e.g. invariance toward several input layout.
+#
 
 REGRESSION_METRICS = {
     "mean_absolute_error": mean_absolute_error,
@@ -131,14 +163,26 @@ ALL_METRICS.update(THRESHOLDED_METRICS)
 ALL_METRICS.update(CLASSIFICATION_METRICS)
 ALL_METRICS.update(REGRESSION_METRICS)
 
+# Lists of metrics wit common properties
+# --------------------------------------
+# Lists of metrics wit common properties are used to test systematically some
+# functionalities and invariance, e.g. SYMMETRIC_METRICS lists all metrics that
+# are symmetric with respect to their input argument y_true and y_pred.
+#
+# When you add a new metric or functionalities, check if a general test
+# is already written.
+
+# Metrics with "average" argument
 METRICS_WITH_AVERAGING = [
     "precision_score", "recall_score", "f1_score", "f2_score", "f0.5_score"
 ]
 
+# Treshold-based metrics with "average" argument
 THRESHOLDED_METRICS_WITH_AVERAGING = [
     "roc_auc_score", "average_precision_score",
 ]
 
+# Metrics with "pos_label" argument
 METRICS_WITH_POS_LABEL = [
     "roc_curve",
 
@@ -154,6 +198,7 @@ METRICS_WITH_POS_LABEL = [
     "macro_precision_score", "macro_recall_score",
 ]
 
+# Metrics with "labels" argument
 METRICS_WITH_LABELS = [
     "confusion_matrix",
 
@@ -169,12 +214,14 @@ METRICS_WITH_LABELS = [
     "macro_precision_score", "macro_recall_score",
 ]
 
+# Metrics with "normalize" option
 METRICS_WITH_NORMALIZE_OPTION = [
     "accuracy_score",
     "jaccard_similarity_score",
     "zero_one_loss",
 ]
 
+# Threshold-based metrics with "multilabel-indicator" format support
 THRESHOLDED_MULTILABEL_METRICS = [
     "roc_auc_score", "weighted_roc_auc", "samples_roc_auc",
     "micro_roc_auc", "macro_roc_auc",
@@ -184,6 +231,7 @@ THRESHOLDED_MULTILABEL_METRICS = [
     "macro_average_precision_score",
 ]
 
+# Classification metrics with multi-label format support
 MULTILABELS_METRICS = [
     "accuracy_score", "unormalized_accuracy_score",
     "hamming_loss",
@@ -202,10 +250,12 @@ MULTILABELS_METRICS = [
     "macro_precision_score", "macro_recall_score",
 ]
 
+# Regression metrics with "multioutput-continuous" format support
 MULTIOUTPUT_METRICS = [
     "mean_absolute_error", "mean_squared_error", "r2_score",
 ]
 
+# Symmetric with respect to their input arguments y_true and y_pred
 SYMMETRIC_METRICS = [
     "accuracy_score", "unormalized_accuracy_score",
     "hamming_loss",
@@ -218,6 +268,7 @@ SYMMETRIC_METRICS = [
 
 ]
 
+# Asymmetric with respect to their input arguments y_true and y_pred
 NOT_SYMMETRIC_METRICS = [
     "explained_variance_score",
     "r2_score",
@@ -235,6 +286,8 @@ NOT_SYMMETRIC_METRICS = [
     "macro_recall_score",
 ]
 
+###############################################################################
+# Utilities for testing
 
 
 def make_prediction(dataset=None, binary=False):
@@ -295,6 +348,8 @@ def _auc(y_true, y_score):
 
     return n_correct / float(len(pos) * len(neg))
 
+###############################################################################
+# Tests
 
 def _average_precision(y_true, y_score):
     """Alternative implementation to check for correctness of
