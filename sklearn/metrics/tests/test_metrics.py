@@ -2065,7 +2065,7 @@ def check_averaging(name, y_true, y_true_binarize, y_pred, y_pred_binarize,
         _check_averaging(metric, y_true, y_score, y_true_binarize,
                          y_score, is_multilabel)
     else:
-        ValueError("Metric is not recorded has having an average option")
+        raise ValueError("Metric is not recorded has having an average option")
 
 
 def test_averaging_multiclass():
