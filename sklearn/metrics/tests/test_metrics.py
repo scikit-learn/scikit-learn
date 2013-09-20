@@ -105,7 +105,7 @@ CLASSIFICATION_METRICS = {
     "macro_precision_score": partial(precision_score, average="macro"),
     "macro_recall_score": partial(recall_score, average="macro"),
 
-    "confusion_matrix": partial(confusion_matrix),
+    "confusion_matrix_with_labels": partial(confusion_matrix, labels=range(3)),
 }
 
 THRESHOLDED_METRICS = {
@@ -254,7 +254,7 @@ NOT_SYMMETRIC_METRICS = {
     "macro_precision_score": partial(precision_score, average="macro"),
     "macro_recall_score": partial(recall_score, average="macro"),
 
-    "confusion_matrix": partial(confusion_matrix, labels=range(3)),
+    "confusion_matrix_with_labels": partial(confusion_matrix, labels=range(3)),
 }
 
 
@@ -1138,6 +1138,10 @@ def test_invariance_string_vs_numbers_labels():
     labels_str = ["eggs", "spam"]
 
     for name, metric in CLASSIFICATION_METRICS.items():
+        if isinstance(metric, partial) and 'labels' in metric.keywords:
+            # don't test metric if "labels" are already set
+            continue
+
         measure_with_number = metric(y1, y2)
 
         # Ugly, but handle case with a pos_label and label
