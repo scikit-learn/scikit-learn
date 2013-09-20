@@ -1034,6 +1034,15 @@ div.testimonial span.testimonial-author p{
     color: #808080;
 }
 
+#index-funding-logo-big {
+    padding: 0 7px 7px 7px;
+    max-height: 40px
+}
+
+#index-funding-logo-small {
+    padding: 0 7px 7px 7px;
+    max-height: 24px
+}
 
 .no-display {
   display: none;

@@ -190,6 +190,9 @@ incrementally as done with other classifiers as demonstrated in
 Contrary to the ``fit`` method, the first call to ``partial_fit`` needs to be
 passed the list of all the expected class labels.
 
+For an overview of available strategies in scikit-learn, see also the
+:ref:`out-of-core learning <scaling_strategies>` documentation.
+
 note::
 
   The ``partial_fit`` method call of naive Bayes models introduces some
