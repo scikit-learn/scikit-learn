@@ -386,16 +386,10 @@ class StratifiedKFold(_BaseKFold):
         self.y = y
 
     def _iter_test_indices(self):
-        idx_cls = []
-        for cls in unique(self.y):
-            idx_cls.append(np.where(self.y == cls)[0])
-
-        for i in range(self.n_folds):
-            idxs = []
-            for idx in idx_cls:
-                len_idx = len(idx) / self.n_folds
-                idxs.extend(idx[i * len_idx:(i + 1) * len_idx])
-            yield sorted(idxs)
+        n_folds = self.n_folds
+        idx = np.argsort(self.y)
+        for i in range(n_folds):
+            yield idx[i::n_folds]
 
     def __repr__(self):
         return '%s.%s(labels=%s, n_folds=%i)' % (
