@@ -36,7 +36,7 @@ class _IncrementalMSR(object):
         self._row_idxs = None
         self._col_idxs = None
 
-        subarr = arr[self.row_idxs[:, np.newaxis], self.col_idxs]
+        subarr = arr[self.get_row_idxs()[:, np.newaxis], self.get_col_idxs()]
         self._sum = subarr.sum()
         self._row_sum = subarr.sum(axis=1)
         self._col_sum = subarr.sum(axis=0)
@@ -48,14 +48,12 @@ class _IncrementalMSR(object):
         self._row_msr = None
         self._col_msr = None
 
-    @property
-    def row_idxs(self):
+    def get_row_idxs(self):
         if self._row_idxs is None:
             self._row_idxs = np.nonzero(self.rows)[0]
         return self._row_idxs
 
-    @property
-    def col_idxs(self):
+    def get_col_idxs(self):
         if self._col_idxs is None:
             self._col_idxs = np.nonzero(self.cols)[0]
         return self._col_idxs
@@ -64,14 +62,14 @@ class _IncrementalMSR(object):
         if not self.rows[row]:
             raise ValueError('cannot remove row {}; it is not in the'
                              ' bicluster'.format(row))
-        if len(self.row_idxs) <= 1:
+        if len(self.get_row_idxs()) <= 1:
             raise EmptyBiclusterException()
         self._reset()
-        vec = self.arr[row, self.col_idxs].ravel()
+        vec = self.arr[row, self.get_col_idxs()].ravel()
         self._sum -= vec.sum()
         self._col_sum -= vec
 
-        idx = np.searchsorted(self.row_idxs, row)
+        idx = np.searchsorted(self.get_row_idxs(), row)
         self._row_sum = np.delete(self._row_sum, idx)
         self.rows[row] = False
         self._row_idxs = None
@@ -80,14 +78,14 @@ class _IncrementalMSR(object):
         if not self.cols[col]:
             raise ValueError('cannot remove col {}; it is not in the'
                              ' bicluster'.format(col))
-        if len(self.col_idxs) <= 1:
+        if len(self.get_col_idxs()) <= 1:
             raise EmptyBiclusterException()
         self._reset()
-        vec = self.arr[self.row_idxs, col].ravel()
+        vec = self.arr[self.get_row_idxs(), col].ravel()
         self._sum -= vec.sum()
         self._row_sum -= vec
 
-        idx = np.searchsorted(self.col_idxs, col)
+        idx = np.searchsorted(self.get_col_idxs(), col)
         self._col_sum = np.delete(self._col_sum, idx)
         self.cols[col] = False
         self._col_idxs = None
@@ -101,16 +99,16 @@ class _IncrementalMSR(object):
             self.remove_col(c)
 
     def _compute(self):
-        n_rows = len(self.row_idxs)
-        n_cols = len(self.col_idxs)
+        n_rows = len(self.get_row_idxs())
+        n_cols = len(self.get_col_idxs())
 
         row_mean = self._row_sum / n_cols
         col_mean = self._col_sum / n_rows
         mean = self._sum / (n_rows * n_cols)
 
         self._msr, self._row_msr, self._col_msr = \
-            compute_msr(self.row_idxs, self.col_idxs, row_mean,
-                        col_mean, mean, self.arr)
+            compute_msr(self.get_row_idxs(), self.get_col_idxs(),
+                        row_mean, col_mean, mean, self.arr)
         self._msr = 0 if self._msr < self.tol else self._msr
         self._row_msr[self._row_msr < self.tol] = 0
         self.col_msr[self._col_msr < self.tol] = 0
@@ -266,27 +264,28 @@ class ChengChurch(six.with_metaclass(ABCMeta, BaseEstimator,
             row_idx = np.argmax(inc.row_msr)
             col_idx = np.argmax(inc.col_msr)
             if inc.row_msr[row_idx] > inc.col_msr[col_idx]:
-                inc.remove_row(inc.row_idxs[row_idx])
+                inc.remove_row(inc.get_row_idxs()[row_idx])
             else:
-                inc.remove_col(inc.col_idxs[col_idx])
+                inc.remove_col(inc.get_col_idxs()[col_idx])
         return inc.rows, inc.cols
 
     def _multiple_node_deletion(self, rows, cols, X):
         """Iteratively remove multiple rows and columns at once."""
         inc = _IncrementalMSR(rows, cols, X)
         while inc.msr > self.max_msr:
-            n_rows = len(inc.row_idxs)
-            n_cols = len(inc.col_idxs)
+            n_rows = len(inc.get_row_idxs())
+            n_cols = len(inc.get_col_idxs())
             if n_rows >= self.row_deletion_cutoff:
                 to_remove = inc.row_msr > (self.deletion_threshold * inc.msr)
-                inc.remove_rows(inc.row_idxs[to_remove])
+                inc.remove_rows(inc.get_row_idxs()[to_remove])
 
             if n_cols >= self.column_deletion_cutoff:
                 to_remove = inc.col_msr > (self.deletion_threshold *
                                            inc.msr)
-                inc.remove_cols(inc.col_idxs[to_remove])
+                inc.remove_cols(inc.get_col_idxs()[to_remove])
 
-            if (n_rows == len(inc.row_idxs) and n_cols == len(inc.col_idxs)):
+            if (n_rows == len(inc.get_row_idxs()) and
+                n_cols == len(inc.get_col_idxs())):
                 break
         return inc.rows, inc.cols
 
