@@ -177,7 +177,7 @@ Classification metrics
 The :mod:`sklearn.metrics` implements several losses, scores and utility
 functions to measure classification performance.
 Some metrics might require probability estimates of the positive class,
-confidence values or binary decisions value.
+confidence values or binary decisions values.
 
 Some of these are restricted to the binary classification case:
 
@@ -222,8 +222,6 @@ And some work with binary and multilabel indicator format:
 
    average_precision_score
    roc_auc_score
-
-
 
 
 In the following sub-sections, we will describe each of those functions.
@@ -836,6 +834,10 @@ extended by averaging over the labels:
   weighted by the number of occurrences of the label in the true data.
 * ``None``: computes metrics for each label and do not average them.
 
+.. image:: ../auto_examples/images/plot_roc_2.png
+   :target: ../auto_examples/plot_roc.html
+   :scale: 75
+   :align: center
 
 .. topic:: Examples:
 
