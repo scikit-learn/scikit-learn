@@ -308,6 +308,11 @@ def test_feature_union_parallel():
         ("chars", CountVectorizer(analyzer='char')),
     ], n_jobs=-1)
 
+    fs_parallel2 = FeatureUnion([
+        ("words", CountVectorizer(analyzer='word')),
+        ("chars", CountVectorizer(analyzer='char')),
+    ], n_jobs=-1)
+
     fs.fit(X)
     X_transformed = fs.transform(X)
     assert_equal(X_transformed.shape[0], len(X))
@@ -321,12 +326,18 @@ def test_feature_union_parallel():
     )
 
     # fit_transform should behave the same
-    X_transformed_parallel2 = fs_parallel.fit_transform(X)
+    X_transformed_parallel2 = fs_parallel2.fit_transform(X)
     assert_array_equal(
         X_transformed.toarray(),
         X_transformed_parallel2.toarray()
     )
 
+    # transformers should stay fit after fit_transform
+    X_transformed_parallel2 = fs_parallel2.transform(X)
+    assert_array_equal(
+        X_transformed.toarray(),
+        X_transformed_parallel2.toarray()
+    )
 
 
 def test_feature_union_feature_names():
