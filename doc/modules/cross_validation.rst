@@ -105,24 +105,24 @@ time)::
   >>> scores = cross_validation.cross_val_score(
   ...    clf, iris.data, iris.target, cv=5)
   ...
-  >>> scores                                            # doctest: +ELLIPSIS
-  array([ 1.  ...,  0.96...,  0.9 ...,  0.96...,  1.        ])
+  >>> scores                                              # doctest: +ELLIPSIS
+  array([ 0.96...,  1.  ...,  0.96...,  0.96...,  1.        ])
 
 The mean score and the standard deviation of the score estimate are hence given
 by::
 
   >>> print("Accuracy: %0.2f (+/- %0.2f)" % (scores.mean(), scores.std() * 2))
-  Accuracy: 0.97 (+/- 0.07)
+  Accuracy: 0.98 (+/- 0.03)
 
 By default, the score computed at each CV iteration is the ``score``
 method of the estimator. It is possible to change this by using the
 scoring parameter::
 
   >>> from sklearn import metrics
-  >>> cross_validation.cross_val_score(clf, iris.data, iris.target, cv=5,
-  ...     scoring='f1')
-  ...                                                     # doctest: +ELLIPSIS
-  array([ 1.  ...,  0.96...,  0.89...,  0.96...,  1.        ])
+  >>> scores = cross_validation.cross_val_score(clf, iris.data, iris.target,
+  ...     cv=5, scoring='f1')
+  >>> scores                                              # doctest: +ELLIPSIS
+  array([ 0.96...,  1.  ...,  0.96...,  0.96...,  1.        ])
 
 See :ref:`scoring_parameter` for details.
 In the case of the Iris dataset, the samples are balanced across target
@@ -197,17 +197,18 @@ Stratified k-fold
 folds: each set contains approximately the same percentage of samples of each
 target class as the complete set.
 
-Example of stratified 2-fold cross-validation on a dataset with 7 samples from
-two unbalanced classes::
+Example of stratified 2-fold cross-validation on a dataset with 10 samples from
+two slightly unbalanced classes::
 
   >>> from sklearn.cross_validation import StratifiedKFold
 
-  >>> labels = [0, 0, 0, 1, 1, 1, 0]
-  >>> skf = StratifiedKFold(labels, 2)
+  >>> labels = [0, 0, 0, 0, 1, 1, 1, 1, 1, 1]
+  >>> skf = StratifiedKFold(labels, 3)
   >>> for train, test in skf:
   ...     print("%s %s" % (train, test))
-  [1 4 6] [0 2 3 5]
-  [0 2 3 5] [1 4 6]
+  [2 3 6 7 8 9] [0 1 4 5]
+  [0 1 3 4 5 8 9] [2 6 7]
+  [0 1 2 4 5 6 7] [3 8 9]
 
 
 Leave-One-Out - LOO
