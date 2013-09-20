@@ -648,36 +648,11 @@ def test_stratified_kfold_preserve_order():  # see #2372
 
 
 def test_stratified_kfold_preserve_order_with_digits():  # see #2372
-    # The digits samples are dependent as they are apparently grouped
-    # by authors although we don't have any information on the groups
-    # segment locations for this data. We can highlight this fact be
-    # computing k-fold cross-validation with and without shuffling: we
-    # observer that the shuffling case makes the IID assumption and is
-    # therefore too optimistic: it estimates a much higher accuracy
-    # (around 0.965) than than the non shuffling variant (around
-    # 0.905).
-
+    # A regression test, taken from
+    # http://nbviewer.ipython.org/urls/raw.github.com/ogrisel/notebooks/master/Non%2520IID%2520cross-validation.ipynb
     digits = load_digits()
-    X, y = digits.data[:800], digits.target[:800]
+    X, y = digits.data, digits.target
+
     model = SVC(C=10, gamma=0.005)
-    n = len(y)
-
-    cv = cval.KFold(n, 5, shuffle=False)
-    assert_greater(0.91, cval.cross_val_score(model, X, y, cv=cv).mean())
-
-    cv = cval.KFold(n, 5, shuffle=True, random_state=0)
-    assert_greater(cval.cross_val_score(model, X, y, cv=cv).mean(), 0.95)
-
-    cv = cval.KFold(n, 5, shuffle=True, random_state=1)
-    assert_greater(cval.cross_val_score(model, X, y, cv=cv).mean(), 0.95)
-
-    cv = cval.KFold(n, 5, shuffle=True, random_state=2)
-    assert_greater(cval.cross_val_score(model, X, y, cv=cv).mean(), 0.95)
-
-    # Similarly, StratifiedKFold should try to shuffle the data as few
-    # as possible (while respecting the balanced class constraints)
-    # and thus be able to detect the dependency by not overestimating
-    # the CV score either:
-
     cv = cval.StratifiedKFold(y, 5)
-    assert_greater(0.91, cval.cross_val_score(model, X, y, cv=cv).mean())
+    assert cval.cross_val_score(model, X, y, cv=cv, n_jobs=-1).mean() < 0.91
