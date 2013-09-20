@@ -616,6 +616,17 @@ Non-negative matrix factorization (NMF or NNMF)
 data and the components are non-negative. :class:`NMF` can be plugged in
 instead of :class:`PCA` or its variants, in the cases where the data matrix
 does not contain negative values.
+It finds a decomposition of samples :math:`X`
+into two matrices :math:`V` and :math:`H` of non-negative elements,
+by optimizing for the squared Frobenius norm::
+
+.. math::
+    \arg\min_{W,H} ||X - WH||^2 = \sum_{i,j} X_{ij} - {WH}_{ij}
+
+This norm is an obvious extension of the Euclidean norm to matrices.
+(Other optimization objectives have been suggested in the NMF literature,
+in particular Kullback-Leibler divergence,
+but these are not currently implemented.)
 
 Unlike :class:`PCA`, the representation of a vector is obtained in an additive
 fashion, by superimposing the components, without subtracting. Such additive
