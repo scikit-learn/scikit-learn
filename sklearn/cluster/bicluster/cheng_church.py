@@ -341,9 +341,8 @@ class ChengChurch(six.with_metaclass(ABCMeta, BaseEstimator,
         X : array-like, shape (n_samples, n_features)
 
         """
-        X = X.copy()  # need to modify it in-place
         self._check_parameters()
-        X, = check_arrays(X, dtype=np.float64)
+        X, = check_arrays(X, copy=True, dtype=np.float64)
         check_array_ndim(X)
         minval, maxval = X.min(), X.max()
         n_rows, n_cols = X.shape
