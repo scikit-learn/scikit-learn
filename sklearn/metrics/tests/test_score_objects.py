@@ -21,6 +21,7 @@ from sklearn.cross_validation import train_test_split, cross_val_score
 from sklearn.grid_search import GridSearchCV
 from sklearn.multiclass import OneVsRestClassifier
 
+
 def test_make_scorer():
     """Sanity check on the make_scorer factory function."""
     f = lambda *args: 0

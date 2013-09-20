@@ -529,7 +529,6 @@ def roc_auc_score(y_true, y_score, average="macro"):
         fpr, tpr, tresholds = roc_curve(y_true, y_score)
         return auc(fpr, tpr, reorder=True)
 
-
     return _average_binary_score(_binary_roc_auc_score, y_true, y_score,
                                  average)
 

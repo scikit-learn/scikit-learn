@@ -221,7 +221,7 @@ SYMMETRIC_METRICS = [
 NOT_SYMMETRIC_METRICS = [
     "explained_variance_score",
     "r2_score",
-     "confusion_matrix",
+    "confusion_matrix",
 
     "precision_score", "recall_score", "f2_score", "f0.5_score",
 
@@ -514,7 +514,7 @@ def test_auc_score_non_binary_class():
                              roc_auc_score, y_true, y_pred)
         y_true = np.ones(10, dtype="int")
         assert_raise_message(ValueError, "ROC AUC score is not defined",
-                                 roc_auc_score, y_true, y_pred)
+                             roc_auc_score, y_true, y_pred)
         y_true = -np.ones(10, dtype="int")
         assert_raise_message(ValueError, "ROC AUC score is not defined",
                              roc_auc_score, y_true, y_pred)
@@ -522,7 +522,7 @@ def test_auc_score_non_binary_class():
         # y_true contains three different class values
         y_true = rng.randint(0, 3, size=10)
         assert_raise_message(ValueError, "multiclass format is not supported",
-                                 roc_auc_score, y_true, y_pred)
+                             roc_auc_score, y_true, y_pred)
 
 def test_precision_recall_f1_score_binary():
     """Test Precision Recall and F1 Score for binary classification task"""
@@ -1155,7 +1155,7 @@ def test_format_invariance_with_1d_vectors():
         # NB: We do not test for y1_row, y2_row as these may be
         # interpreted as multilabel or multioutput data.
         if (name not in (MULTIOUTPUT_METRICS + THRESHOLDED_MULTILABEL_METRICS +
-                 MULTILABELS_METRICS)):
+                         MULTILABELS_METRICS)):
             print(name)
             assert_raises(ValueError, metric, y1_row, y2_row)
 
@@ -1212,6 +1212,7 @@ def check_clf_single_sample(metric):
     for i, j in product([0, 1], repeat=2):
         metric([i], [j])
 
+
 @ignore_warnings
 def check_clf_single_sample_multioutput(metric):
     for i, j, k, l in product([0, 1], repeat=4):
@@ -1223,10 +1224,9 @@ def test_clf_single_sample():
                          REGRESSION_METRICS.items()):
         yield check_clf_single_sample, metric
 
-    for name  in MULTIOUTPUT_METRICS + MULTILABELS_METRICS:
+    for name in MULTIOUTPUT_METRICS + MULTILABELS_METRICS:
         metric = ALL_METRICS[name]
         yield check_clf_single_sample_multioutput, metric
-
 
 
 def test_hinge_loss_binary():
@@ -2025,7 +2025,7 @@ def _check_averaging(metric, y_true, y_pred, y_true_binarize, y_pred_binarize,
                                               y_pred_binarize.ravel()))
 
     # Macro measure
-    macro_measure =  metric(y_true, y_pred, average="macro")
+    macro_measure = metric(y_true, y_pred, average="macro")
     assert_almost_equal(macro_measure, np.mean(label_measure))
 
     # Weighted measure
