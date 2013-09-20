@@ -4,6 +4,7 @@ import numpy as np
 
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_raises
 
 from ..bicluster_metrics import _jaccard
 from ..bicluster_metrics import _make_similarity
@@ -88,3 +89,12 @@ def test_match_score():
     rec, rel = match_score((b_rows, b_cols), (a_rows, a_cols))
     assert_equal(rec, 1.0)
     assert_equal(rel, 0.5)
+
+
+def test_bad_similarity():
+    a = [[True, True, False, False]]
+
+    assert_raises(ValueError, match_score, (a, a), (a, a),
+                  similarity="unknown")
+    assert_raises(ValueError, match_score, (a, a), (a, a),
+                  similarity=0)
