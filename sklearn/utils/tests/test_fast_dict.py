@@ -6,7 +6,7 @@ from sklearn.utils.fast_dict import IntFloatDict#, max_merge
 
 def test_int_float_dict():
     rng = np.random.RandomState(0)
-    keys = np.unique(rng.randint(100, size=10).astype(np.int32))
+    keys = np.unique(rng.randint(100, size=10).astype(np.intp))
     values = rng.rand(len(keys))
 
     d = IntFloatDict(keys, values)

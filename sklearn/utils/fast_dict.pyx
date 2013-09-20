@@ -26,15 +26,16 @@ np.import_array()
 DTYPE = np.float64
 ctypedef np.float64_t DTYPE_t
 
-ITYPE = np.int32
-ctypedef np.int32_t ITYPE_t
+ITYPE = np.intp
+ctypedef np.intp_t ITYPE_t
 
 ###############################################################################
 # An object to be used in Python
 
 # Lookup is faster than dict (up to 10 times), and so is full traversal
-# (up to 50 times), and assignement (up to 6 times), but creation is
-# slower (up to 3 times)
+# (up to 50 times), and assignment (up to 6 times), but creation is
+# slower (up to 3 times). Also, a large benefit is that memory
+# consumption is reduced a lot compared to a Python dict
 
 cdef class IntFloatDict:
     cdef cpp_map[ITYPE_t, DTYPE_t] my_map
@@ -43,14 +44,12 @@ cdef class IntFloatDict:
     @cython.wraparound(False)
     def __init__(self, np.ndarray[ITYPE_t, ndim=1] keys,
                        np.ndarray[DTYPE_t, ndim=1] values):
-        cdef cpp_map[ITYPE_t,DTYPE_t] my_map = self.my_map
         cdef int i
         cdef int size = values.size
         # Should check that sizes for keys and values are equal, and
         # after should boundcheck(False)
         for i in range(size):
-            my_map[keys[i]] = values[i]
-        self.my_map = my_map
+            self.my_map[keys[i]] = values[i]
 
     def __len__(self):
         return self.my_map.size()
