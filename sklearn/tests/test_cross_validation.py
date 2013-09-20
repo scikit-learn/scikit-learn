@@ -22,6 +22,7 @@ from sklearn.utils.fixes import unique
 from sklearn import cross_validation as cval
 from sklearn.base import BaseEstimator
 from sklearn.datasets import make_regression
+from sklearn.datasets import load_digits
 from sklearn.datasets import load_iris
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import f1_score
@@ -379,24 +380,24 @@ def test_cross_val_score_with_score_func_classification():
 
     # Default score (should be the accuracy score)
     scores = cval.cross_val_score(clf, iris.data, iris.target, cv=5)
-    assert_array_almost_equal(scores, [1., 0.97, 0.90, 0.97, 1.], 2)
+    assert_array_almost_equal(scores, [0.97, 1., 0.97, 0.97, 1.], 2)
 
     # Correct classification score (aka. zero / one score) - should be the
     # same as the default estimator score
     zo_scores = cval.cross_val_score(clf, iris.data, iris.target,
                                      scoring="accuracy", cv=5)
-    assert_array_almost_equal(zo_scores, [1., 0.97, 0.90, 0.97, 1.], 2)
+    assert_array_almost_equal(zo_scores, [0.97, 1., 0.97, 0.97, 1.], 2)
 
     # F1 score (class are balanced so f1_score should be equal to zero/one
     # score
     f1_scores = cval.cross_val_score(clf, iris.data, iris.target,
                                      scoring="f1", cv=5)
-    assert_array_almost_equal(f1_scores, [1., 0.97, 0.90, 0.97, 1.], 2)
+    assert_array_almost_equal(f1_scores, [0.97, 1., 0.97, 0.97, 1.], 2)
     # also test deprecated old way
     with warnings.catch_warnings(record=True):
         f1_scores = cval.cross_val_score(clf, iris.data, iris.target,
                                          score_func=f1_score, cv=5)
-    assert_array_almost_equal(f1_scores, [1., 0.97, 0.90, 0.97, 1.], 2)
+    assert_array_almost_equal(f1_scores, [0.97, 1., 0.97, 0.97, 1.], 2)
 
 
 def test_cross_val_score_with_score_func_regression():
@@ -450,7 +451,7 @@ def test_permutation_score():
     score_label, _, pvalue_label = cval.permutation_test_score(
         svm, X, y, scoring=scorer, cv=cv, labels=np.ones(y.size),
         random_state=0)
-    assert_almost_equal(score_label, .95, 2)
+    assert_almost_equal(score_label, .97, 2)
     assert_almost_equal(pvalue_label, 0.01, 3)
 
     # check that we obtain the same results with a sparse representation
@@ -470,14 +471,14 @@ def test_permutation_score():
                                                         scoring="accuracy")
 
     assert_less(score, 0.5)
-    assert_greater(pvalue, 0.4)
+    assert_greater(pvalue, 0.2)
 
     # test with deprecated interface
     with warnings.catch_warnings(record=True):
         score, scores, pvalue = cval.permutation_test_score(
             svm, X, y, score_func=accuracy_score, cv=cv)
     assert_less(score, 0.5)
-    assert_greater(pvalue, 0.4)
+    assert_greater(pvalue, 0.2)
 
 
 def test_cross_val_generator_with_mask():
@@ -634,3 +635,48 @@ def test_cross_indices_exception():
     assert_raises(ValueError, cval.check_cv, skf, X, y)
     assert_raises(ValueError, cval.check_cv, lolo, X, y)
     assert_raises(ValueError, cval.check_cv, lopo, X, y)
+
+
+def test_stratified_kfold_preserve_order():  # see #2372
+    y = np.array([3, 2, 1, 3, 2, 3] * 2)
+    skf = cval.StratifiedKFold(y, n_folds=2)
+    [(train0, test0), (train1, test1)] = tuple(skf)
+    assert_array_equal(train0, np.arange(6, 12))
+    assert_array_equal(test0, np.arange(0, 6))
+    assert_array_equal(train1, np.arange(0, 6))
+    assert_array_equal(test1, np.arange(6, 12))
+
+
+def test_stratified_kfold_preserve_order_with_digits():  # see #2372
+    # The digits samples are dependent as they are apparently grouped
+    # by authors although we don't have any information on the groups
+    # segment locations for this data. We can highlight this fact be
+    # computing k-fold cross-validation with and without shuffling: we
+    # observer that the shuffling case makes the IID assumption and is
+    # therefore too optimistic: it estimates a much higher accuracy
+    # (around 0.96) than than the non shuffling variant (around 0.86).
+
+    digits = load_digits()
+    X, y = digits.data[:800], digits.target[:800]
+    model = SVC(C=10, gamma=0.005)
+    n = len(y)
+
+    cv = cval.KFold(n, 5, shuffle=False)
+    assert_greater(0.91, cval.cross_val_score(model, X, y, cv=cv).mean())
+
+    cv = cval.KFold(n, 5, shuffle=True, random_state=0)
+    assert_greater(cval.cross_val_score(model, X, y, cv=cv).mean(), 0.95)
+
+    cv = cval.KFold(n, 5, shuffle=True, random_state=1)
+    assert_greater(cval.cross_val_score(model, X, y, cv=cv).mean(), 0.95)
+
+    cv = cval.KFold(n, 5, shuffle=True, random_state=2)
+    assert_greater(cval.cross_val_score(model, X, y, cv=cv).mean(), 0.95)
+
+    # Similarly, StratifiedKFold should try to shuffle the data as few
+    # as possible (while respecting the balanced class constraints)
+    # and thus be able to detect the dependency by not overestimating
+    # the CV score either:
+
+    cv = cval.StratifiedKFold(y, 5)
+    assert_greater(0.91, cval.cross_val_score(model, X, y, cv=cv).mean())

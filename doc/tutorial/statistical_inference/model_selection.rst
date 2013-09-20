@@ -146,7 +146,7 @@ estimator during the construction and exposes an estimator API::
     >>> clf.fit(X_digits[:1000], y_digits[:1000]) # doctest: +ELLIPSIS
     GridSearchCV(cv=None,...
     >>> clf.best_score_   # doctest: +ELLIPSIS
-    0.9889...
+    0.9272...
     >>> clf.best_estimator_.gamma
     9.9999999999999995e-07
 
@@ -164,7 +164,7 @@ a stratified 3-fold.
     ::
 
         >>> cross_validation.cross_val_score(clf, X_digits, y_digits)
-	array([ 0.97996661,  0.98163606,  0.98330551])
+        array([ 0.93456376,  0.95805369,  0.93624161])
 
     Two cross-validation loops are performed in parallel: one by the
     :class:`GridSearchCV` estimator to set `gamma` and the other one by

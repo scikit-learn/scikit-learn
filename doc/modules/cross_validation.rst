@@ -106,13 +106,13 @@ time)::
   ...    clf, iris.data, iris.target, cv=5)
   ...
   >>> scores                                            # doctest: +ELLIPSIS
-  array([ 1.  ...,  0.96...,  0.9 ...,  0.96...,  1.        ])
+  array([ 0.9666...,  1.        ,  0.9666...,  0.9666...,  1.        ])
 
 The mean score and the standard deviation of the score estimate are hence given
 by::
 
   >>> print("Accuracy: %0.2f (+/- %0.2f)" % (scores.mean(), scores.std() * 2))
-  Accuracy: 0.97 (+/- 0.07)
+  Accuracy: 0.98 (+/- 0.03)
 
 By default, the score computed at each CV iteration is the ``score``
 method of the estimator. It is possible to change this by using the
@@ -122,7 +122,7 @@ scoring parameter::
   >>> cross_validation.cross_val_score(clf, iris.data, iris.target, cv=5,
   ...     scoring='f1')
   ...                                                     # doctest: +ELLIPSIS
-  array([ 1.  ...,  0.96...,  0.89...,  0.96...,  1.        ])
+  array([ 0.9665...,  1.        ,  0.9665...,  0.9665...,  1.        ])
 
 See :ref:`scoring_parameter` for details.
 In the case of the Iris dataset, the samples are balanced across target
@@ -206,8 +206,8 @@ two unbalanced classes::
   >>> skf = StratifiedKFold(labels, 2)
   >>> for train, test in skf:
   ...     print("%s %s" % (train, test))
-  [1 4 6] [0 2 3 5]
-  [0 2 3 5] [1 4 6]
+  [2 4 5 6] [0 1 3]
+  [0 1 3 5] [2 4 6]
 
 
 Leave-One-Out - LOO
