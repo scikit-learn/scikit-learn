@@ -438,6 +438,80 @@ def test_roc_curve_one_label():
     assert_equal(fpr.shape, thresholds.shape)
 
 
+def test_roc_curve_toydata():
+    # Binary classification
+    y_true = [0, 1]
+    y_score = [0, 1]
+    tpr, fpr, _ = roc_curve(y_true, y_score)
+    roc_auc = roc_auc_score(y_true, y_score)
+    assert_array_almost_equal(tpr, [0, 1])
+    assert_array_almost_equal(fpr, [1, 1])
+    assert_almost_equal(roc_auc, 1.)
+
+    y_true = [0, 1]
+    y_score = [1, 0]
+    tpr, fpr, _ = roc_curve(y_true, y_score)
+    roc_auc = roc_auc_score(y_true, y_score)
+    assert_array_almost_equal(tpr, [0, 1, 1])
+    assert_array_almost_equal(fpr, [0, 0, 1])
+    assert_almost_equal(roc_auc, 0.)
+
+    y_true = [1, 0]
+    y_score = [1, 1]
+    tpr, fpr, _ = roc_curve(y_true, y_score)
+    roc_auc = roc_auc_score(y_true, y_score)
+    assert_array_almost_equal(tpr, [0, 1])
+    assert_array_almost_equal(fpr, [0, 1])
+    assert_almost_equal(roc_auc, 0.5)
+
+    y_true = [1, 0]
+    y_score = [1, 0]
+    tpr, fpr, _ = roc_curve(y_true, y_score)
+    roc_auc = roc_auc_score(y_true, y_score)
+    assert_array_almost_equal(tpr, [0, 1])
+    assert_array_almost_equal(fpr, [1, 1])
+    assert_almost_equal(roc_auc, 1.)
+
+    y_true = [1, 0]
+    y_score = [0.5, 0.5]
+    tpr, fpr, _ = roc_curve(y_true, y_score)
+    roc_auc = roc_auc_score(y_true, y_score)
+    assert_array_almost_equal(tpr, [0, 1])
+    assert_array_almost_equal(fpr, [0, 1])
+    assert_almost_equal(roc_auc, .5)
+
+    # Multi-label classification task
+    y_true = np.array([[0, 1], [0, 1]])
+    y_score = np.array([[0, 1], [0, 1]])
+    assert_raises(ValueError, roc_auc_score, y_true, y_score, average="macro")
+    assert_raises(ValueError, roc_auc_score, y_true, y_score,
+                  average="weighted")
+    assert_almost_equal(roc_auc_score(y_true, y_score, average="samples"), 1.)
+    assert_almost_equal(roc_auc_score(y_true, y_score, average="micro"), 1.)
+
+    y_true = np.array([[0, 1], [0, 1]])
+    y_score = np.array([[0, 1], [1, 0]])
+    assert_raises(ValueError, roc_auc_score, y_true, y_score, average="macro")
+    assert_raises(ValueError, roc_auc_score, y_true, y_score,
+                  average="weighted")
+    assert_almost_equal(roc_auc_score(y_true, y_score, average="samples"), 0.5)
+    assert_almost_equal(roc_auc_score(y_true, y_score, average="micro"), 0.5)
+
+    y_true = np.array([[1, 0], [0, 1]])
+    y_score = np.array([[0, 1], [1, 0]])
+    assert_almost_equal(roc_auc_score(y_true, y_score, average="macro"), 0)
+    assert_almost_equal(roc_auc_score(y_true, y_score, average="weighted"), 0)
+    assert_almost_equal(roc_auc_score(y_true, y_score, average="samples"), 0)
+    assert_almost_equal(roc_auc_score(y_true, y_score, average="micro"), 0)
+
+    y_true = np.array([[1, 0], [0, 1]])
+    y_score = np.array([[0.5, 0.5], [0.5, 0.5]])
+    assert_almost_equal(roc_auc_score(y_true, y_score, average="macro"), .5)
+    assert_almost_equal(roc_auc_score(y_true, y_score, average="weighted"), .5)
+    assert_almost_equal(roc_auc_score(y_true, y_score, average="samples"), .5)
+    assert_almost_equal(roc_auc_score(y_true, y_score, average="micro"), .5)
+
+
 def test_auc():
     """Test Area Under Curve (AUC) computation"""
     x = [0, 1]
@@ -949,6 +1023,97 @@ def test_precision_recall_curve_errors():
     assert_raises(ValueError, precision_recall_curve,
                   [0, 1, 2], [[0.0], [1.0], [1.0]])
 
+
+def test_precision_recall_curve_toydata():
+    # Binary classification
+    y_true = [0, 1]
+    y_score = [0, 1]
+    p, r, _ = precision_recall_curve(y_true, y_score)
+    auc_prc = average_precision_score(y_true, y_score)
+    assert_array_almost_equal(p, [1, 1])
+    assert_array_almost_equal(r, [1, 0])
+    assert_almost_equal(auc_prc, 1.)
+
+    y_true = [0, 1]
+    y_score = [1, 0]
+    p, r, _ = precision_recall_curve(y_true, y_score)
+    auc_prc = average_precision_score(y_true, y_score)
+    assert_array_almost_equal(p, [ 0.5,  0. ,  1. ])
+    assert_array_almost_equal(r, [ 1.,  0.,  0.])
+    assert_almost_equal(auc_prc, 0.25)
+
+    y_true = [1, 0]
+    y_score = [1, 1]
+    p, r, _ = precision_recall_curve(y_true, y_score)
+    auc_prc = average_precision_score(y_true, y_score)
+    assert_array_almost_equal(p, [0.5, 1])
+    assert_array_almost_equal(r, [1., 0])
+    assert_almost_equal(auc_prc, .75)
+
+    y_true = [1, 0]
+    y_score = [1, 0]
+    p, r, _ = precision_recall_curve(y_true, y_score)
+    auc_prc = average_precision_score(y_true, y_score)
+    assert_array_almost_equal(p, [1, 1])
+    assert_array_almost_equal(r, [1, 0])
+    assert_almost_equal(auc_prc, 1.)
+
+    y_true = [1, 0]
+    y_score = [0.5, 0.5]
+    p, r, _ = precision_recall_curve(y_true, y_score)
+    auc_prc = average_precision_score(y_true, y_score)
+    assert_array_almost_equal(p, [0.5, 1])
+    assert_array_almost_equal(r, [1, 0.])
+    assert_almost_equal(auc_prc, .75)
+
+    # Multi-label classification task
+    y_true = np.array([[0, 1], [0, 1]])
+    y_score = np.array([[0, 1], [0, 1]])
+    assert_raises(ValueError, average_precision_score, y_true, y_score,
+                  average="macro")
+    assert_raises(ValueError, average_precision_score, y_true, y_score,
+                  average="weighted")
+    assert_almost_equal(average_precision_score(y_true, y_score,
+                        average="samples"), 1.)
+    assert_almost_equal(average_precision_score(y_true, y_score,
+                        average="micro"), 1.)
+
+    y_true = np.array([[0, 1], [0, 1]])
+    y_score = np.array([[0, 1], [1, 0]])
+    assert_raises(ValueError, average_precision_score, y_true, y_score,
+                  average="macro")
+    assert_raises(ValueError, average_precision_score, y_true, y_score,
+                  average="weighted")
+    assert_almost_equal(average_precision_score(y_true, y_score,
+                        average="samples"), 0.625)
+    assert_almost_equal(average_precision_score(y_true, y_score,
+                        average="micro"), 0.625)
+
+    y_true = np.array([[1, 0], [0, 1]])
+    y_score = np.array([[0, 1], [1, 0]])
+    assert_almost_equal(average_precision_score(y_true, y_score,
+                        average="macro"), 0.25)
+    assert_almost_equal(average_precision_score(y_true, y_score,
+                        average="weighted"), 0.25)
+    assert_almost_equal(average_precision_score(y_true, y_score,
+                        average="samples"), 0.25)
+    assert_almost_equal(average_precision_score(y_true, y_score,
+                        average="micro"), 0.25)
+
+    y_true = np.array([[1, 0], [0, 1]])
+    y_score = np.array([[0.5, 0.5], [0.5, 0.5]])
+    assert_almost_equal(roc_auc_score(y_true, y_score, average="macro"), .5)
+    assert_almost_equal(roc_auc_score(y_true, y_score, average="weighted"), .5)
+    assert_almost_equal(roc_auc_score(y_true, y_score, average="samples"), .5)
+    assert_almost_equal(roc_auc_score(y_true, y_score, average="micro"), .5)
+    assert_almost_equal(average_precision_score(y_true, y_score,
+                        average="macro"), 0.75)
+    assert_almost_equal(average_precision_score(y_true, y_score,
+                        average="weighted"), 0.75)
+    assert_almost_equal(average_precision_score(y_true, y_score,
+                        average="samples"), 0.75)
+    assert_almost_equal(average_precision_score(y_true, y_score,
+                        average="micro"), 0.75)
 
 def test_score_scale_invariance():
     # Test that average_precision_score and roc_auc_score are invariant by
