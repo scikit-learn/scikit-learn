@@ -207,7 +207,7 @@ class Pipeline(BaseEstimator):
 
 
 def _fit_one_transformer(transformer, X, y):
-    transformer.fit(X, y)
+    return transformer.fit(X, y)
 
 
 def _transform_one(transformer, name, X, transformer_weights):
@@ -284,9 +284,13 @@ class FeatureUnion(BaseEstimator, TransformerMixin):
         X : array-like or sparse matrix, shape (n_samples, n_features)
             Input data, used to fit transformers.
         """
-        Parallel(n_jobs=self.n_jobs)(
+        new_list = Parallel(n_jobs=self.n_jobs)(
             delayed(_fit_one_transformer)(trans, X, y)
             for name, trans in self.transformer_list)
+        self.transformer_list[:] = [
+            (name, new)
+            for ((name, old), new) in zip(self.transformer_list, new_list)
+        ]
         return self
 
     def fit_transform(self, X, y=None, **fit_params):
