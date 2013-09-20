@@ -57,7 +57,7 @@ in the threshold considerably reduces precision, with only a minor gain in
 recall. See the corner at recall = .59, precision = .8 for an example of this
 phenomenon.
 
-Precision-recall curves are typically use in binary classification to study
+Precision-recall curves are typically used in binary classification to study
 the output of a classifier. In order to extend Precision-recall curve and
 average precision to multi-class or multi-label classification, it is necessary
 to binarize the output. One curve can be drawn per label, but one can also draw

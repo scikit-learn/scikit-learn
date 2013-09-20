@@ -15,7 +15,7 @@ curve (AUC) is usually better.
 The "steepness" of ROC curves is also important, since it is ideal to maximize
 the true positive rate while minimizing the false positive rate.
 
-ROC curves are typically use in binary classification to study the output of
+ROC curves are typically used in binary classification to study the output of
 a classifier. In order to extend ROC curve and ROC area to multi-class
 or multi-label classification, it is necessary to binarize the output. One ROC
 curve can be drawn per label, but one can also draw a ROC curve by considering
