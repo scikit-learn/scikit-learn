@@ -654,7 +654,8 @@ def test_stratified_kfold_preserve_order_with_digits():  # see #2372
     # computing k-fold cross-validation with and without shuffling: we
     # observer that the shuffling case makes the IID assumption and is
     # therefore too optimistic: it estimates a much higher accuracy
-    # (around 0.96) than than the non shuffling variant (around 0.86).
+    # (around 0.965) than than the non shuffling variant (around
+    # 0.905).
 
     digits = load_digits()
     X, y = digits.data[:800], digits.target[:800]
