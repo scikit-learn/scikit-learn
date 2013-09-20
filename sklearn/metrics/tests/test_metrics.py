@@ -1372,7 +1372,6 @@ def test_format_invariance_with_1d_vectors():
         # interpreted as multilabel or multioutput data.
         if (name not in (MULTIOUTPUT_METRICS + THRESHOLDED_MULTILABEL_METRICS +
                          MULTILABELS_METRICS)):
-            print(name)
             assert_raises(ValueError, metric, y1_row, y2_row)
 
 
