@@ -599,11 +599,13 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
     learning_rate : string, optional
         The learning rate:
         constant: eta = eta0
-        optimal: eta = 1.0/(t+t0) [default]
+        optimal: eta = 1.0 / (t + t0) [default]
         invscaling: eta = eta0 / pow(t, power_t)
 
     eta0 : double
-        The initial learning rate [default 0.01].
+        The initial learning rate for the 'constant' or 'invscaling'
+        schedules. The default value is 0.0 as eta0 is not used by the
+        default schedule 'optimal'.
 
     power_t : double
         The exponent for inverse scaling learning rate [default 0.5].
