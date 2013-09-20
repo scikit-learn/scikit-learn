@@ -17,6 +17,12 @@ from sklearn.utils.validation import check_random_state
 from .utils import check_array_ndim
 from ._squared_residue import compute_msr
 
+try:
+    from numpy import count_nonzero
+except ImportError:
+    def count_nonzero(x):
+        return (x != 0).sum()
+
 
 class EmptyBiclusterException(Exception):
     pass
@@ -236,7 +242,7 @@ class ChengChurch(six.with_metaclass(ABCMeta, BaseEstimator,
 
     def _row_msr(self, rows, cols, X, inverse=False):
         """Compute MSR of all rows for adding them to the bicluster."""
-        if not np.count_nonzero(rows) or not np.count_nonzero(cols):
+        if not count_nonzero(rows) or not count_nonzero(cols):
             raise EmptyBiclusterException()
         row_mean = X[:, cols].mean(axis=1, keepdims=True)
         col_mean = X[rows][:, cols].mean(axis=0)
@@ -293,8 +299,8 @@ class ChengChurch(six.with_metaclass(ABCMeta, BaseEstimator,
         """Add rows and columns with MSR smaller than the bicluster's."""
         inverse_rows = np.zeros(len(rows), dtype=np.bool)
         while True:
-            n_rows = np.count_nonzero(rows)
-            n_cols = np.count_nonzero(cols)
+            n_rows = count_nonzero(rows)
+            n_cols = count_nonzero(cols)
 
             msr = self._msr(rows, cols, X)
             col_msr = self._col_msr(rows, cols, X)
@@ -314,14 +320,14 @@ class ChengChurch(six.with_metaclass(ABCMeta, BaseEstimator,
                                              new_inverse_rows)
                 rows = np.logical_or(rows, to_add)
 
-            if (n_rows == np.count_nonzero(rows)) and \
-               (n_cols == np.count_nonzero(cols)):
+            if (n_rows == count_nonzero(rows)) and \
+               (n_cols == count_nonzero(cols)):
                 break
         return rows, cols, inverse_rows
 
     def _mask(self, X, rows, cols, generator, minval, maxval):
         """Mask a bicluster in the data with random values."""
-        shape = np.count_nonzero(rows), np.count_nonzero(cols)
+        shape = count_nonzero(rows), count_nonzero(cols)
         mask_vals = generator.uniform(minval, maxval, shape)
         r = rows.nonzero()[0][:, np.newaxis]
         c = cols.nonzero()[0]
