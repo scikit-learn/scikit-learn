@@ -135,7 +135,7 @@ METRICS_WITH_AVERAGING = [
     "precision_score", "recall_score", "f1_score", "f2_score", "f0.5_score"
 ]
 
-METRICS_SCORE_WITH_AVERAGING = [
+THRESHOLDED_METRICS_WITH_AVERAGING = [
     "roc_auc_score", "average_precision_score",
 ]
 
@@ -169,11 +169,11 @@ METRICS_WITH_LABELS = [
     "macro_precision_score", "macro_recall_score",
 ]
 
-METRICS_WITH_NORMALIZE_OPTION = {
-    "accuracy_score ": accuracy_score,
-    "jaccard_similarity_score": jaccard_similarity_score,
-    "zero_one_loss": zero_one_loss,
-}
+METRICS_WITH_NORMALIZE_OPTION = [
+    "accuracy_score",
+    "jaccard_similarity_score",
+    "zero_one_loss",
+]
 
 THRESHOLDED_MULTILABEL_METRICS = [
     "roc_auc_score", "weighted_roc_auc", "samples_roc_auc",
@@ -1494,7 +1494,8 @@ def test_normalize_option_binary_classification():
     y_true, y_pred, _ = make_prediction(binary=True)
     n_samples = y_true.shape[0]
 
-    for name, metrics in METRICS_WITH_NORMALIZE_OPTION.items():
+    for name in METRICS_WITH_NORMALIZE_OPTION:
+        metrics = ALL_METRICS[name]
         measure = metrics(y_true, y_pred, normalize=True)
         assert_greater(measure, 0,
                        msg="We failed to test correctly the normalize option")
@@ -1507,7 +1508,8 @@ def test_normalize_option_multiclasss_classification():
     y_true, y_pred, _ = make_prediction(binary=False)
     n_samples = y_true.shape[0]
 
-    for name, metrics in METRICS_WITH_NORMALIZE_OPTION.items():
+    for name in METRICS_WITH_NORMALIZE_OPTION:
+        metrics = ALL_METRICS[name]
         measure = metrics(y_true, y_pred, normalize=True)
         assert_greater(measure, 0,
                        msg="We failed to test correctly the normalize option")
@@ -1537,7 +1539,9 @@ def test_normalize_option_multilabel_classification():
     y_true_binary_indicator = lb.transform(y_true)
     y_pred_binary_indicator = lb.transform(y_pred)
 
-    for name, metrics in METRICS_WITH_NORMALIZE_OPTION.items():
+    for name in METRICS_WITH_NORMALIZE_OPTION:
+        metrics = ALL_METRICS[name]
+
         # List of list of labels
         measure = metrics(y_true, y_pred, normalize=True)
         assert_greater(measure, 0,
@@ -2057,7 +2061,7 @@ def check_averaging(name, y_true, y_true_binarize, y_pred, y_pred_binarize,
     if name in METRICS_WITH_AVERAGING:
         _check_averaging(metric, y_true, y_pred, y_true_binarize,
                          y_pred_binarize, is_multilabel)
-    elif name in METRICS_SCORE_WITH_AVERAGING:
+    elif name in THRESHOLDED_METRICS_WITH_AVERAGING:
         _check_averaging(metric, y_true, y_score, y_true_binarize,
                          y_score, is_multilabel)
     else:
@@ -2088,7 +2092,7 @@ def test_averaging_multilabel():
     y_true_binarize = y_true
     y_pred_binarize = y_pred
 
-    for name in METRICS_WITH_AVERAGING + METRICS_SCORE_WITH_AVERAGING:
+    for name in METRICS_WITH_AVERAGING + THRESHOLDED_METRICS_WITH_AVERAGING:
         yield (check_averaging, name, y_true, y_true_binarize, y_pred,
                y_pred_binarize, y_score)
 
