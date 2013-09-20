@@ -112,7 +112,7 @@ indicator format.
 .. warning::
 
     - The sequence of sequences format will disappear in a near future.
-    - All estimators or functions support both multilabel format.
+    - Most estimators and functions support both multilabel format.
 
 
 One-Vs-The-Rest
