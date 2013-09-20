@@ -800,7 +800,14 @@ Here a small example of how to use the :func:`roc_curve` function::
     >>> tpr
     array([ 0.5,  0.5,  1. ,  1. ])
     >>> thresholds
-    array([ 0.8 ,  0.4 ,  0.35,  0.1 ])
+    array([ 0.8 ,  0.4 ,  0.35,  0.1
+
+The following figure shows an example of such ROC curve.
+
+.. image:: ../auto_examples/images/plot_roc_1.png
+   :target: ../auto_examples/plot_roc.html
+   :scale: 75
+   :align: center
 
 The :func:`roc_auc_score` function computes the area under the receiver
 operating characteristic (ROC) curve, which is also denoted by
@@ -816,12 +823,18 @@ For more information see the `Wikipedia article on AUC
   >>> roc_auc_score(y_true, y_scores)
   0.75
 
-The following figure shows an example of such ROC curve.
+In multi-label classification, the :func:`roc_auc_score` function is
+extended by averaging over the labels:
 
-.. image:: ../auto_examples/images/plot_roc_1.png
-   :target: ../auto_examples/plot_roc.html
-   :scale: 75
-   :align: center
+* ``"micro"``: computes the ROC curve globally by considering each element of
+  the label indicator matrix as a label.
+* ``"samples"``: computes the ROC curve for each sample, comparing sets of
+  labels assigned to each, and find the mean across all samples.
+* ``"macro"``: computes the ROC curve for each label, and find their mean.
+* ``"weighted"``: computes the ROC curve for each label, and find their average
+  weighted by the number of occurrences of the label in the true data.
+* ``None``: computes metrics for each label and do not average them.
+
 
 .. topic:: Examples:
 
