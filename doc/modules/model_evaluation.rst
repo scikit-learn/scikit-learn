@@ -465,9 +465,9 @@ harmonic mean of the precision and recall. A
 With :math:`\beta = 1`, the :math:`F_\beta` measure leads to the
 :math:`F_1` measure, wheres the recall and the precision are equally important.
 
-The :func:`precision_recall_curve` computes from the ground truth label
-and the score, the probability or the decision value, given by a classifier
-the precision and recall by varying a decision treshold.
+The :func:`precision_recall_curve` computes a precision-recall curve
+from the ground truth label and a score given by the classifier
+by varying a decision threshold.
 
 The :func:`average_precision_score` function computes the average precision
 (AP) from prediction scores. This score corresponds to the area under the
