@@ -23,6 +23,7 @@ from .lfw import fetch_lfw_people
 from .twenty_newsgroups import fetch_20newsgroups
 from .twenty_newsgroups import fetch_20newsgroups_vectorized
 from .mldata import fetch_mldata, mldata_filename
+from .microarray import fetch_microarray
 from .samples_generator import make_classification
 from .samples_generator import make_multilabel_classification
 from .samples_generator import make_hastie_10_2
@@ -62,6 +63,7 @@ __all__ = ['clear_data_home',
            'fetch_species_distributions',
            'fetch_california_housing',
            'fetch_covtype',
+           'fetch_microarray',
            'get_data_home',
            'load_boston',
            'load_diabetes',

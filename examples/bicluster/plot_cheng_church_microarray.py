@@ -28,25 +28,16 @@ from __future__ import print_function
 print(__doc__)
 
 from time import time
-import urllib
 
 import numpy as np
 from matplotlib import pyplot as plt
 
+from sklearn.datasets import fetch_microarray
 from sklearn.cluster.bicluster import ChengChurch
 
-# get data
-url = "http://arep.med.harvard.edu/biclustering/lymphoma.matrix"
-lines = urllib.urlopen(url).read().strip().split('\n')
-# insert a space before all negative signs
-lines = list(' -'.join(line.split('-')).split(' ') for line in lines)
-lines = list(list(int(i) for i in line if i) for line in lines)
-data = np.array(lines)
 
-# replace missing values, just as in the paper
-generator = np.random.RandomState(0)
-idx = np.where(data == 999)
-data[idx] = generator.randint(-800, 801, len(idx[0]))
+# get data. replace missing values, just as in the paper
+data = fetch_microarray().data
 
 # cluster with similar parameters as original paper
 model = ChengChurch(n_clusters=1, max_msr=200,
