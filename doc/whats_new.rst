@@ -42,9 +42,7 @@ Changelog
      `Arnaud Joly`_.
 
    - Changed :class:`cross_validation.StratifiedKFold` to try and
-     preserve as much of the original ordering of samples as possible so as
-     to avoid hiding dependency issues between samples and be consistent
-     with the behavior of :class:`cross_validation.KFold`.
+     preserve as much of the original ordering of samples as possible.
      By `Daniel Nouri`_ and `Olivier Grisel`_.
 
 
