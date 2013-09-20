@@ -54,6 +54,10 @@ msr = lambda a: (np.power(a - a.mean(axis=1, keepdims=True) -
 
 print("Bicluster MSR: {}".format(msr(bicluster)))
 
+plt.matshow(model.get_submatrix(0, data))
+plt.title('Found bicluster')
+
+plt.figure()
 n_cols = bicluster.shape[1]
 for row in bicluster:
     plt.plot(np.arange(n_cols), row)
