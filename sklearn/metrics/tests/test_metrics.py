@@ -1157,10 +1157,6 @@ def test_precision_recall_curve_toydata():
 
     y_true = np.array([[1, 0], [0, 1]])
     y_score = np.array([[0.5, 0.5], [0.5, 0.5]])
-    assert_almost_equal(roc_auc_score(y_true, y_score, average="macro"), .5)
-    assert_almost_equal(roc_auc_score(y_true, y_score, average="weighted"), .5)
-    assert_almost_equal(roc_auc_score(y_true, y_score, average="samples"), .5)
-    assert_almost_equal(roc_auc_score(y_true, y_score, average="micro"), .5)
     assert_almost_equal(average_precision_score(y_true, y_score,
                         average="macro"), 0.75)
     assert_almost_equal(average_precision_score(y_true, y_score,
