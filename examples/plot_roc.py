@@ -75,10 +75,10 @@ roc_auc["micro"] = auc(fpr["micro"], tpr["micro"])
 
 # Plot of one ROC curve
 pl.clf()
-pl.plot(fpr[1], tpr[1], label='ROC curve (area = %0.2f)' % roc_auc[1])
+pl.plot(fpr[2], tpr[2], label='ROC curve (area = %0.2f)' % roc_auc[2])
 pl.plot([0, 1], [0, 1], 'k--')
 pl.xlim([0.0, 1.0])
-pl.ylim([0.0, 1.0])
+pl.ylim([0.0, 1.05])
 pl.xlabel('False Positive Rate')
 pl.ylabel('True Positive Rate')
 pl.title('Receiver operating characteristic example')
@@ -96,7 +96,7 @@ for i in range(n_classes):
 
 pl.plot([0, 1], [0, 1], 'k--')
 pl.xlim([0.0, 1.0])
-pl.ylim([0.0, 1.0])
+pl.ylim([0.0, 1.05])
 pl.xlabel('False Positive Rate')
 pl.ylabel('True Positive Rate')
 pl.title('Some extension of Receiver operating characteristic to multi-class')
