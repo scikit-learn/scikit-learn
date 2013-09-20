@@ -566,6 +566,7 @@ Here some small examples in binary classification::
 
   >>> import numpy as np
   >>> from sklearn.metrics import precision_recall_curve
+  >>> from sklearn.metrics import average_precision_score
   >>> y_true = np.array([0, 0, 1, 1])
   >>> y_scores = np.array([0.1, 0.4, 0.35, 0.8])
   >>> precision, recall, threshold = precision_recall_curve(y_true, y_scores)
@@ -800,7 +801,7 @@ Here a small example of how to use the :func:`roc_curve` function::
     >>> tpr
     array([ 0.5,  0.5,  1. ,  1. ])
     >>> thresholds
-    array([ 0.8 ,  0.4 ,  0.35,  0.1
+    array([ 0.8 ,  0.4 ,  0.35,  0.1 ])
 
 The following figure shows an example of such ROC curve.
 
