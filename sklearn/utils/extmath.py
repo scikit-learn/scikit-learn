@@ -13,6 +13,7 @@ from distutils.version import LooseVersion
 from . import check_random_state
 from .fixes import qr_economic
 from ._logistic_sigmoid import _log_logistic_sigmoid
+from .mean_squared_residue import mean_squared_residue
 from ..externals.six.moves import xrange
 from .validation import array2d, NonBLASDotWarning
 

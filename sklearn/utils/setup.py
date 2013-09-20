@@ -68,6 +68,11 @@ def configuration(parent_package='', top_path=None):
                          include_dirs=[numpy.get_include()],
                          libraries=libraries)
 
+    config.add_extension("mean_squared_residue",
+                         sources=["mean_squared_residue.c"],
+                         include_dirs=[numpy.get_include()],
+                         libraries=libraries)
+
     return config
 
 

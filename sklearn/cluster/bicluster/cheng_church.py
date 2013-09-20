@@ -13,9 +13,9 @@ from sklearn.externals import six
 
 from sklearn.utils.validation import check_arrays
 from sklearn.utils.validation import check_random_state
+from sklearn.utils.extmath import mean_squared_residue
 
 from .utils import check_array_ndim
-from ._squared_residue import compute_msr
 
 try:
     from numpy import count_nonzero
@@ -113,8 +113,9 @@ class _IncrementalMSR(object):
         mean = self._sum / (n_rows * n_cols)
 
         self._msr, self._row_msr, self._col_msr = \
-            compute_msr(self.get_row_idxs(), self.get_col_idxs(),
-                        row_mean, col_mean, mean, self.arr)
+            mean_squared_residue(self.get_row_idxs(),
+                                 self.get_col_idxs(), row_mean,
+                                 col_mean, mean, self.arr)
         self._msr = 0 if self._msr < self.tol else self._msr
         self._row_msr[self._row_msr < self.tol] = 0
         self.col_msr[self._col_msr < self.tol] = 0
