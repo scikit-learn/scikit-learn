@@ -46,8 +46,12 @@ from .externals.joblib import Parallel
 from .externals.joblib import delayed
 
 
-def _fit_binary(estimator, X, y, classes=None):
+def _fit_binary(estimator, X, Y, class_index=None, classes=None):
     """Fit a single binary estimator."""
+    if isinstance(Y, coo_matrix):
+        y = np.ravel(Y.getcol(class_index).todense())
+    else:
+        y = Y if class_index is None else Y[:, class_index]
     unique_y = np.unique(y)
     if len(unique_y) == 1:
         if classes is not None:
@@ -89,17 +93,9 @@ def fit_ovr(estimator, X, y, n_jobs=1):
     lb = LabelBinarizer()
     Y = lb.fit_transform(y)
 
-    if isinstance(Y, coo_matrix):
-        estimators = Parallel(n_jobs=n_jobs)(
-            delayed(_fit_binary)(estimator, X,
-                                 np.ravel(Y.getcol(i).todense()),
-                                 classes=["not %s" % i, i])
-            for i in range(Y.shape[1]))
-    else:
-        estimators = Parallel(n_jobs=n_jobs)(
-            delayed(_fit_binary)(estimator, X, Y[:, i],
-                                 classes=["not %s" % i, i])
-            for i in range(Y.shape[1]))
+    estimators = Parallel(n_jobs=n_jobs)(
+        delayed(_fit_binary)(estimator, X, Y, i, classes=["not %s" % i, i])
+        for i in range(Y.shape[1]))
     return estimators, lb
 
 
@@ -492,7 +488,7 @@ def fit_ecoc(estimator, X, y, code_size=1.5, random_state=None, n_jobs=1):
                  dtype=np.int)
 
     estimators = Parallel(n_jobs=n_jobs)(
-        delayed(_fit_binary)(estimator, X, Y[:, i])
+        delayed(_fit_binary)(estimator, X, Y, i)
         for i in range(Y.shape[1]))
 
     return estimators, classes, code_book
