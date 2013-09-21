@@ -91,6 +91,7 @@ def _check_stop_list(stop):
 
 
 class VectorizerMixin(object):
+
     """Provides common code for text vectorizers (tokenization logic)."""
 
     _white_spaces = re.compile(r"\s\s+")
@@ -234,6 +235,7 @@ class VectorizerMixin(object):
 
 
 class HashingVectorizer(BaseEstimator, VectorizerMixin):
+
     """Convert a collection of text documents to a matrix of token occurrences
 
     It turns a collection of text documents into a scipy.sparse matrix holding
@@ -336,8 +338,8 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
     token_pattern: string
         Regular expression denoting what constitutes a "token", only used
         if `tokenize == 'word'`. The default regexp select tokens of 2
-        or more letters characters (punctuation is completely ignored
-        and always treated as a token separator).
+        or more letters characters and the first letter is not numeric (punctuation 
+        is completely ignored and always treated as a token separator).
 
     n_features : integer, optional, (2 ** 20) by default
         The number of features (columns) in the output matrices. Small numbers
@@ -366,11 +368,12 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
     CountVectorizer, TfidfVectorizer
 
     """
+
     def __init__(self, input='content', charset=None, encoding='utf-8',
                  decode_error='strict', charset_error=None,
                  strip_accents=None,
                  lowercase=True, preprocessor=None, tokenizer=None,
-                 stop_words=None, token_pattern=r"(?u)\b\w\w+\b",
+                 stop_words=None, token_pattern=r"(?u)\b[A-Za-z]\w+\b",
                  ngram_range=(1, 1), analyzer='word', n_features=(2 ** 20),
                  binary=False, norm='l2', non_negative=False,
                  dtype=np.float64):
@@ -460,6 +463,7 @@ def _document_frequency(X):
 
 
 class CountVectorizer(BaseEstimator, VectorizerMixin):
+
     """Convert a collection of text documents to a matrix of token counts
 
     This implementation produces a sparse representation of the counts using
@@ -597,7 +601,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
                  decode_error='strict', charset_error=None,
                  strip_accents=None,
                  lowercase=True, preprocessor=None, tokenizer=None,
-                 stop_words=None, token_pattern=r"(?u)\b\w\w+\b",
+                 stop_words=None, token_pattern=r"(?u)\b[A-Za-z]\w+\b",
                  ngram_range=(1, 1), analyzer='word',
                  max_df=1.0, min_df=1, max_features=None,
                  vocabulary=None, binary=False, dtype=np.int64):
@@ -879,6 +883,7 @@ def _make_int_array():
 
 
 class TfidfTransformer(BaseEstimator, TransformerMixin):
+
     """Transform a count matrix to a normalized tf or tf-idf representation
 
     Tf means term-frequency while tf-idf means term-frequency times inverse
@@ -1007,6 +1012,7 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
 
 
 class TfidfVectorizer(CountVectorizer):
+
     """Convert a collection of raw documents to a matrix of TF-IDF features.
 
     Equivalent to CountVectorizer followed by TfidfTransformer.
@@ -1145,7 +1151,7 @@ class TfidfVectorizer(CountVectorizer):
                  decode_error='strict', charset_error=None,
                  strip_accents=None, lowercase=True,
                  preprocessor=None, tokenizer=None, analyzer='word',
-                 stop_words=None, token_pattern=r"(?u)\b\w\w+\b",
+                 stop_words=None, token_pattern=r"(?u)\b[A-Za-z]\w+\b",
                  ngram_range=(1, 1), max_df=1.0, min_df=1,
                  max_features=None, vocabulary=None, binary=False,
                  dtype=np.int64, norm='l2', use_idf=True, smooth_idf=True,
