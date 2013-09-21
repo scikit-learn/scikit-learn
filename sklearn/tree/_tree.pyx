@@ -1188,6 +1188,183 @@ cdef class RandomSplitter(Splitter):
         threshold[0] = best_threshold
 
 
+cdef class PresortBestSplitter(Splitter):
+    """Splitter for finding the best split, using presorting."""
+    cdef DTYPE_t* X_ptr
+    cdef np.ndarray X_argsorted
+    cdef SIZE_t n_total_samples
+    cdef SIZE_t* sample_mask
+
+    def __cinit__(self, Criterion criterion,
+                        SIZE_t max_features,
+                        SIZE_t min_samples_leaf,
+                        object random_state):
+        # Initialize pointers
+        self.X_ptr = NULL
+        self.sample_mask = NULL
+
+    def __dealloc__(self):
+        """Destructor."""
+        free(self.sample_mask)
+
+    def __reduce__(self):
+        return (PresortBestSplitter, (self.criterion,
+                                      self.max_features,
+                                      self.min_samples_leaf,
+                                      self.random_state), self.__getstate__())
+
+    cdef void init(self, np.ndarray[DTYPE_t, ndim=2] X,
+                         np.ndarray[DOUBLE_t, ndim=2, mode="c"] y,
+                         DOUBLE_t* sample_weight):
+        # Call parent initializer
+        Splitter.init(self, X, y, sample_weight)
+
+        # Pre-sort X
+        if self.X_ptr != <DTYPE_t*> X.data:
+            self.X_ptr = <DTYPE_t*> X.data
+            self.X_argsorted = np.asfortranarray(np.argsort(X, axis=0).astype(np.int32))
+
+            if self.sample_mask != NULL:
+                free(self.sample_mask)
+
+            self.n_total_samples = X.shape[0]
+            self.sample_mask = <SIZE_t*> malloc(self.n_total_samples * sizeof(SIZE_t))
+
+    cdef void node_split(self, SIZE_t* pos, SIZE_t* feature, double* threshold):
+        """Find the best split on node samples[start:end]."""
+        # Find the best split
+        cdef Criterion criterion = self.criterion
+        cdef SIZE_t* samples = self.samples
+        cdef SIZE_t start = self.start
+        cdef SIZE_t end = self.end
+
+        cdef SIZE_t* features = self.features
+        cdef SIZE_t n_features = self.n_features
+
+        cdef np.ndarray[DTYPE_t, ndim=2, mode="c"] X = self.X
+        cdef np.ndarray[np.int32_t, ndim=2, mode="fortran"] X_argsorted = self.X_argsorted
+        cdef SIZE_t n_total_samples = self.n_total_samples
+        cdef SIZE_t* sample_mask = self.sample_mask
+
+        cdef SIZE_t max_features = self.max_features
+        cdef SIZE_t min_samples_leaf = self.min_samples_leaf
+        cdef unsigned int* random_state = &self.rand_r_state
+
+        cdef double best_impurity = INFINITY
+        cdef SIZE_t best_pos = end
+        cdef SIZE_t best_feature
+        cdef double best_threshold
+
+        cdef double current_impurity
+        cdef SIZE_t current_pos
+        cdef SIZE_t current_feature
+        cdef double current_threshold
+
+        cdef SIZE_t f_idx, f_i, f_j, p, tmp
+        cdef SIZE_t visited_features = 0
+
+        cdef SIZE_t partition_start
+        cdef SIZE_t partition_end
+
+        cdef SIZE_t i, j
+
+        # Reset sample mask
+        for i from 0 <= i < n_total_samples:
+            sample_mask[i] = 0
+
+        for p from start <= p < end:
+            sample_mask[samples[p]] = 1
+
+        # Look for splits
+        for f_idx from 0 <= f_idx < n_features:
+            # Draw a feature at random
+            f_i = n_features - f_idx - 1
+            f_j = rand_int(n_features - f_idx, random_state)
+
+            tmp = features[f_i]
+            features[f_i] = features[f_j]
+            features[f_j] = tmp
+
+            current_feature = features[f_i]
+
+            # Extract ordering from X_argsorted
+            p = start
+
+            for i from 0 <= i < n_total_samples:
+                j = X_argsorted[i, current_feature]
+                if sample_mask[j] == 1:
+                    samples[p] = j
+                    p += 1
+
+            assert p == end
+
+            # Evaluate all splits
+            criterion.reset()
+            p = start
+
+            while p < end:
+                while ((p + 1 < end) and
+                       (X[samples[p + 1], current_feature] <= X[samples[p], current_feature] + 1e-7)):
+                    p += 1
+
+                # p + 1 >= end or X[samples[p + 1], current_feature] > X[samples[p], current_feature]
+                p += 1
+                # p >= end or X[samples[p], current_feature] > X[samples[p - 1], current_feature]
+
+                if p < end:
+                    current_pos = p
+
+                    # Reject if min_samples_leaf is not guaranteed
+                    if (((current_pos - start) < min_samples_leaf) or
+                        ((end - current_pos) < min_samples_leaf)):
+                       continue
+
+                    criterion.update(current_pos)
+                    current_impurity = criterion.children_impurity()
+
+                    if current_impurity < (best_impurity - 1e-7):
+                        best_impurity = current_impurity
+                        best_pos = current_pos
+                        best_feature = current_feature
+
+                        current_threshold = (X[samples[p - 1], current_feature] + X[samples[p], current_feature]) / 2.0
+                        if current_threshold == X[samples[p], current_feature]:
+                            current_threshold = X[samples[p - 1], current_feature]
+
+                        best_threshold = current_threshold
+
+            if best_pos == end: # No valid split was ever found
+                continue
+
+            # Count one more visited feature
+            visited_features += 1
+
+            if visited_features >= max_features:
+                break
+
+        # Reorganize samples into samples[start:best_pos] + samples[best_pos:end]
+        if best_pos < end:
+            partition_start = start
+            partition_end = end
+            p = start
+
+            while p < partition_end:
+                if X[samples[p], best_feature] <= best_threshold:
+                    p += 1
+
+                else:
+                    partition_end -= 1
+
+                    tmp = samples[partition_end]
+                    samples[partition_end] = samples[p]
+                    samples[p] = tmp
+
+        # Return values
+        pos[0] = best_pos
+        feature[0] = best_feature
+        threshold[0] = best_threshold
+
+
 # =============================================================================
 # Tree
 # =============================================================================
