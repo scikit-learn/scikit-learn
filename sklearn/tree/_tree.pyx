@@ -1296,8 +1296,6 @@ cdef class PresortBestSplitter(Splitter):
                     samples[p] = j
                     p += 1
 
-            assert p == end
-
             # Evaluate all splits
             criterion.reset()
             p = start
