@@ -401,7 +401,7 @@ def label_binarize(y, classes, multilabel=False, neg_label=0, pos_label=1):
     y_type = type_of_target(y)
 
     if multilabel or len(classes) > 2:
-        if neg_label != 0:
+        if neg_label != 0 or not(multilabel):
             # neg_label not zero eliminates possibility of a sparse matrix
             Y = np.zeros((len(y), len(classes)), dtype=np.int)
             Y += neg_label
