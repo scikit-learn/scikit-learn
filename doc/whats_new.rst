@@ -41,6 +41,11 @@ Changelog
    - Memory improvements of extra trees and random forest by
      `Arnaud Joly`_.
 
+   - Added new biclustering similarity measures (Dice measure and
+     Goodness measure) to :ref:`sklearn.metrics.cluster.bicluster` and
+     a new bicluster set similarity measure
+     (:func:`sklearn.metrics.match_score`). By `Kemal Eren`_.
+
 
 API changes summary
 -------------------
