@@ -61,6 +61,10 @@ API changes summary
      The generators have produced arrays of indices by default since 0.10.
      By `Joel Nothman`_.
 
+   - Added a new biclustering algorithm :class:`cluster.ChengChurch`.
+     by `Kemal Eren`_.
+
+
 .. _changes_0_14:
 
 0.14
