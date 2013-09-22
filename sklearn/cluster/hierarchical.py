@@ -391,7 +391,7 @@ def linkage_tree(X, connectivity=None, n_components=None,
 
     # prepare the main fields
     parent = np.arange(n_nodes, dtype=np.int)
-    used_node = np.ones(n_nodes, dtype=np.int32)
+    used_node = np.ones(n_nodes, dtype=np.intp)
     children = []
 
     # recursive merge loop

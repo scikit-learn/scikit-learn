@@ -178,8 +178,25 @@ def max_merge(IntFloatDict a, IntFloatDict b,
 def average_merge(IntFloatDict a, IntFloatDict b,
               np.ndarray[ITYPE_t, ndim=1] mask,
               ITYPE_t n_a, ITYPE_t n_b):
-    """ n_a and n_b are weights for a and b for the merge strategy, to
-        do a weighted average.
+    """Merge two IntFloatDicts with the average strategy: when the 
+    same key is present in the two dicts, the weighted average of the two 
+    values is used.
+
+    Parameters
+    ==========
+    a, b : IntFloatDict object
+        The IntFloatDicts to merge
+    mask : ndarray array of dtype integer and of dimension 1
+        a mask for keys to ignore: if not mask[key] the corresponding key
+        is skipped in the output dictionnary
+    n_a, n_b : float
+        n_a and n_b are weights for a and b for the merge strategy.
+        They are not used in the case of a max merge.
+
+    Returns
+    =======
+    out : IntFloatDict object
+        The IntFloatDict resulting from the merge
     """
     cdef IntFloatDict out_obj = IntFloatDict.__new__(IntFloatDict)
     cdef cpp_map[ITYPE_t, DTYPE_t].iterator a_it = a.my_map.begin()
