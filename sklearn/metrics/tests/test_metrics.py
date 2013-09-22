@@ -58,6 +58,7 @@ from sklearn.metrics.metrics import UndefinedMetricWarning
 
 
 from sklearn.externals.six.moves import xrange
+from sklearn.externals.six import u
 
 
 REGRESSION_METRICS = {
@@ -105,7 +106,7 @@ CLASSIFICATION_METRICS = {
     "macro_precision_score": partial(precision_score, average="macro"),
     "macro_recall_score": partial(recall_score, average="macro"),
 
-    "confusion_matrix": partial(confusion_matrix),
+    "confusion_matrix_with_labels": partial(confusion_matrix, labels=range(3)),
 }
 
 THRESHOLDED_METRICS = {
@@ -254,7 +255,7 @@ NOT_SYMMETRIC_METRICS = {
     "macro_precision_score": partial(precision_score, average="macro"),
     "macro_recall_score": partial(recall_score, average="macro"),
 
-    "confusion_matrix": partial(confusion_matrix, labels=range(3)),
+    "confusion_matrix_with_labels": partial(confusion_matrix, labels=range(3)),
 }
 
 
@@ -710,9 +711,9 @@ def test_precision_recall_f1_score_multiclass_pos_label_none():
 def test_zero_precision_recall():
     """Check that pathological cases do not bring NaNs"""
 
-    try:
-        old_error_settings = np.seterr(all='raise')
+    old_error_settings = np.seterr(all='raise')
 
+    try:
         y_true = np.array([0, 1, 2, 0, 1, 2])
         y_pred = np.array([2, 0, 1, 1, 2, 0])
 
@@ -832,6 +833,26 @@ avg / total       0.51      0.53      0.47        75
 """
     report = classification_report(y_true, y_pred,
                                    target_names=["a", "b", "c"])
+    assert_equal(report, expected_report)
+
+
+def test_classification_report_multiclass_with_unicode_label():
+    y_true, y_pred, _ = make_prediction(binary=False)
+
+    labels = np.array([u("blue\xa2"), u("green\xa2"), u("red\xa2")])
+    y_true = labels[y_true]
+    y_pred = labels[y_pred]
+
+    expected_report = u("""\
+             precision    recall  f1-score   support
+
+      blue\xa2       0.83      0.79      0.81        24
+     green\xa2       0.33      0.10      0.15        31
+       red\xa2       0.42      0.90      0.57        20
+
+avg / total       0.51      0.53      0.47        75
+""")
+    report = classification_report(y_true, y_pred)
     assert_equal(report, expected_report)
 
 
@@ -1138,6 +1159,10 @@ def test_invariance_string_vs_numbers_labels():
     labels_str = ["eggs", "spam"]
 
     for name, metric in CLASSIFICATION_METRICS.items():
+        if isinstance(metric, partial) and 'labels' in metric.keywords:
+            # don't test metric if "labels" are already set
+            continue
+
         measure_with_number = metric(y1, y2)
 
         # Ugly, but handle case with a pos_label and label

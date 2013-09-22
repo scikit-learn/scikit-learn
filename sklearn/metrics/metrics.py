@@ -1748,7 +1748,7 @@ def classification_report(y_true, y_pred, labels=None, target_names=None):
 
     if target_names is None:
         width = len(last_line_heading)
-        target_names = ['{0}'.format(l) for l in labels]
+        target_names = ['%s' % l for l in labels]
     else:
         width = max(len(cn) for cn in target_names)
         width = max(width, len(last_line_heading))
