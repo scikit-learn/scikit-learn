@@ -117,13 +117,8 @@ class _NormalApproximation(BaseEstimator):
             List of samples
         """
         rng = check_random_state(random_state)
-        
-        try:
-            n_samples = n_samples + (1,)
-        except TypeError:
-            n_samples = (n_samples, 1)
- 
-        return rng.normal(self.mean, self.std, size=n_samples)        
+        return rng.normal(self.mean, np.sqrt(self.var),
+                          size=(n_samples, len(self.mean)))        
  
  
 MODEL_TYPES = {'norm_approx': _NormalApproximation,
@@ -229,8 +224,10 @@ class GenerativeBayes(BaseNB):
         rand = random_state.rand(n_samples)
 
         # split samples by class
-        prior_cdf = np.cumsum(self.class_prior_.sum())
+        prior_cdf = np.cumsum(self.class_prior_)
         labels = prior_cdf.searchsorted(rand)
+
+        print prior_cdf
 
         # for each class, generate all needed samples
         for i, model in enumerate(self.estimators_):

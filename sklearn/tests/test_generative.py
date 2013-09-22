@@ -2,9 +2,10 @@
 import numpy as np
 from sklearn.generative import GenerativeBayes
 from sklearn.naive_bayes import GaussianNB
-from sklearn.utils.testing import assert_array_almost_equal, assert_greater
+from sklearn.utils.testing import\
+    assert_array_almost_equal, assert_greater, assert_allclose
 from sklearn.cross_validation import cross_val_score
-from sklearn.datasets import load_digits
+from sklearn.datasets import load_digits, make_blobs
 
 # Data is just 6 separable points in the plane
 X = np.array([[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]])
@@ -54,6 +55,7 @@ def test_generative_model_prior():
         clf.fit(X1, y1)
         assert_array_almost_equal(clf.class_prior_.sum(), 1)
 
+
 def test_check_accuracy_on_digits():
     digits = load_digits()
     X, y = digits.data, digits.target
@@ -73,6 +75,39 @@ def test_check_accuracy_on_digits():
         scores = cross_val_score(GenerativeBayes(model, **kwargs),
                                  X_3v8, y_3v8, cv=4)
         assert_greater(scores.mean(), scores_cmp[model][1])
+
+
+def test_generate_samples():
+    # create a simple unbalanced dataset with 4 classes
+    np.random.seed(0)
+    X1, y1 = make_blobs(50, 2, centers=2)
+    X2, y2 = make_blobs(100, 2, centers=2)
+    X = np.vstack([X1, X2])
+    y = np.concatenate([y1, y2 + 2])
+
+    # test with norm_approx; other models have their sample() method
+    # tested independently
+    clf = GenerativeBayes('norm_approx')
+    clf.fit(X, y)
+
+    X_new, y_new = clf.sample(2000)
+
+    for i in range(4):
+        Xnew_i = X_new[y_new == i]
+        X_i = X[y == i]
+
+        # check the means
+        assert_array_almost_equal(Xnew_i.mean(0),
+                                  X_i.mean(0), decimal=1)
+
+        # check the standard deviations
+        assert_array_almost_equal(Xnew_i.std(0),
+                                  X_i.std(0), decimal=1)
+
+        # check the number of points
+        assert_allclose(X_i.shape[0] * 1. / X.shape[0],
+                        Xnew_i.shape[0] * 1. / X_new.shape[0],
+                        rtol=0.1)
 
 
 if __name__ == '__main__':
