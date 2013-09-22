@@ -82,6 +82,9 @@ def test_pipeline_init():
     filter1 = SelectKBest(f_classif)
     pipe = Pipeline([('anova', filter1), ('svc', clf)])
 
+    # Check that we can't use the same stage name twice
+    assert_raises(ValueError, Pipeline, [('svc', SVC()), ('svc', SVC())])
+
     # Check that params are set
     pipe.set_params(svc__C=0.1)
     assert_equal(clf.C, 0.1)
