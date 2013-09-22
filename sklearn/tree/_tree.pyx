@@ -948,12 +948,15 @@ cdef class BestSplitter(Splitter):
 
             while p < end:
                 while ((p + 1 < end) and
-                       (X[samples[p + 1], current_feature] <= X[samples[p], current_feature] + 1e-7)):
+                       (X[samples[p + 1], current_feature] <=
+                        X[samples[p], current_feature] + 1e-7)):
                     p += 1
 
-                # p + 1 >= end or X[samples[p + 1], current_feature] > X[samples[p], current_feature]
+                # (p + 1 >= end) or (X[samples[p + 1], current_feature] >
+                #                    X[samples[p], current_feature])
                 p += 1
-                # p >= end or X[samples[p], current_feature] > X[samples[p - 1], current_feature]
+                # (p >= end) or (X[samples[p], current_feature] >
+                #                X[samples[p - 1], current_feature])
 
                 if p < end:
                     current_pos = p
@@ -971,7 +974,9 @@ cdef class BestSplitter(Splitter):
                         best_pos = current_pos
                         best_feature = current_feature
 
-                        current_threshold = (X[samples[p - 1], current_feature] + X[samples[p], current_feature]) / 2.0
+                        current_threshold = (X[samples[p - 1], current_feature] +
+                                             X[samples[p], current_feature]) / 2.0
+
                         if current_threshold == X[samples[p], current_feature]:
                             current_threshold = X[samples[p - 1], current_feature]
 
@@ -986,7 +991,7 @@ cdef class BestSplitter(Splitter):
             if visited_features >= max_features:
                 break
 
-        # Reorganize samples into samples[start:best_pos] + samples[best_pos:end]
+        # Reorganize into samples[start:best_pos] + samples[best_pos:end]
         if best_pos < end:
             partition_start = start
             partition_end = end
@@ -1165,7 +1170,7 @@ cdef class RandomSplitter(Splitter):
             if visited_features >= max_features:
                 break
 
-        # Reorganize samples into samples[start:best_pos] + samples[best_pos:end]
+        # Reorganize into samples[start:best_pos] + samples[best_pos:end]
         if best_pos < end and current_feature != best_feature:
             partition_start = start
             partition_end = end
@@ -1222,13 +1227,15 @@ cdef class PresortBestSplitter(Splitter):
         # Pre-sort X
         if self.X_ptr != <DTYPE_t*> X.data:
             self.X_ptr = <DTYPE_t*> X.data
-            self.X_argsorted = np.asfortranarray(np.argsort(X, axis=0).astype(np.int32))
+            self.X_argsorted = \
+                np.asfortranarray(np.argsort(X, axis=0).astype(np.int32))
 
             if self.sample_mask != NULL:
                 free(self.sample_mask)
 
             self.n_total_samples = X.shape[0]
-            self.sample_mask = <SIZE_t*> malloc(self.n_total_samples * sizeof(SIZE_t))
+            self.sample_mask = \
+                <SIZE_t*> malloc(self.n_total_samples * sizeof(SIZE_t))
 
     cdef void node_split(self, SIZE_t* pos, SIZE_t* feature, double* threshold):
         """Find the best split on node samples[start:end]."""
@@ -1302,12 +1309,15 @@ cdef class PresortBestSplitter(Splitter):
 
             while p < end:
                 while ((p + 1 < end) and
-                       (X[samples[p + 1], current_feature] <= X[samples[p], current_feature] + 1e-7)):
+                       (X[samples[p + 1], current_feature] <=
+                        X[samples[p], current_feature] + 1e-7)):
                     p += 1
 
-                # p + 1 >= end or X[samples[p + 1], current_feature] > X[samples[p], current_feature]
+                # (p + 1 >= end) or (X[samples[p + 1], current_feature] >
+                #                    X[samples[p], current_feature])
                 p += 1
-                # p >= end or X[samples[p], current_feature] > X[samples[p - 1], current_feature]
+                # (p >= end) or (X[samples[p], current_feature] >
+                #                X[samples[p - 1], current_feature])
 
                 if p < end:
                     current_pos = p
@@ -1325,7 +1335,9 @@ cdef class PresortBestSplitter(Splitter):
                         best_pos = current_pos
                         best_feature = current_feature
 
-                        current_threshold = (X[samples[p - 1], current_feature] + X[samples[p], current_feature]) / 2.0
+                        current_threshold = (X[samples[p - 1], current_feature] +
+                                             X[samples[p], current_feature]) / 2.0
+
                         if current_threshold == X[samples[p], current_feature]:
                             current_threshold = X[samples[p - 1], current_feature]
 
@@ -1340,7 +1352,7 @@ cdef class PresortBestSplitter(Splitter):
             if visited_features >= max_features:
                 break
 
-        # Reorganize samples into samples[start:best_pos] + samples[best_pos:end]
+        # Reorganize into samples[start:best_pos] + samples[best_pos:end]
         if best_pos < end:
             partition_start = start
             partition_end = end
@@ -1566,31 +1578,46 @@ cdef class Tree:
 
         self.capacity = capacity
 
-        cdef SIZE_t* tmp_children_left = <SIZE_t*> realloc(self.children_left, capacity * sizeof(SIZE_t))
+        cdef SIZE_t* tmp_children_left = \
+            <SIZE_t*> realloc(self.children_left, capacity * sizeof(SIZE_t))
+
         if tmp_children_left != NULL:
             self.children_left = tmp_children_left
 
-        cdef SIZE_t* tmp_children_right = <SIZE_t*> realloc(self.children_right, capacity * sizeof(SIZE_t))
+        cdef SIZE_t* tmp_children_right = \
+            <SIZE_t*> realloc(self.children_right, capacity * sizeof(SIZE_t))
+
         if tmp_children_right != NULL:
             self.children_right = tmp_children_right
 
-        cdef SIZE_t* tmp_feature = <SIZE_t*> realloc(self.feature, capacity * sizeof(SIZE_t))
+        cdef SIZE_t* tmp_feature = \
+            <SIZE_t*> realloc(self.feature, capacity * sizeof(SIZE_t))
+
         if tmp_feature != NULL:
             self.feature = tmp_feature
 
-        cdef double* tmp_threshold = <double*> realloc(self.threshold, capacity * sizeof(double))
+        cdef double* tmp_threshold = \
+            <double*> realloc(self.threshold, capacity * sizeof(double))
+
         if tmp_threshold != NULL:
             self.threshold = tmp_threshold
 
-        cdef double* tmp_value = <double*> realloc(self.value, capacity * self.value_stride * sizeof(double))
+        cdef double* tmp_value = \
+            <double*> realloc(self.value,
+                              capacity * self.value_stride * sizeof(double))
+
         if tmp_value != NULL:
             self.value = tmp_value
 
-        cdef double* tmp_impurity = <double*> realloc(self.impurity, capacity * sizeof(double))
+        cdef double* tmp_impurity = \
+            <double*> realloc(self.impurity, capacity * sizeof(double))
+
         if tmp_impurity != NULL:
             self.impurity = tmp_impurity
 
-        cdef SIZE_t* tmp_n_node_samples = <SIZE_t*> realloc(self.n_node_samples, capacity * sizeof(SIZE_t))
+        cdef SIZE_t* tmp_n_node_samples = \
+            <SIZE_t*> realloc(self.n_node_samples, capacity * sizeof(SIZE_t))
+
         if tmp_n_node_samples != NULL:
             self.n_node_samples = tmp_n_node_samples
 
@@ -1734,7 +1761,8 @@ cdef class Tree:
             else:
                 if stack_n_values + 10 > stack_capacity:
                     stack_capacity *= 2
-                    stack = <SIZE_t*> realloc(stack, stack_capacity * sizeof(SIZE_t))
+                    stack = <SIZE_t*> realloc(stack,
+                                              stack_capacity * sizeof(SIZE_t))
 
                 # Stack right child
                 stack[stack_n_values] = pos
