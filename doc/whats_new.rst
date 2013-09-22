@@ -13,7 +13,10 @@ Changelog
      any kind of base estimator. See the :ref:`Bagging <bagging>` section of
      the user guide for details and examples. By `Gilles Louppe`_.
 
-    - Added :func:`metrics.pairwise_distances_argmin_min`, by Philippe Gervais.
+   - Speed improvement of the :mod:`sklearn.ensemble.gradient_boosting` module.
+     By `Gilles Louppe`_ and `Peter Prettenhofer`_.
+
+   - Added :func:`metrics.pairwise_distances_argmin_min`, by Philippe Gervais.
 
    - Added predict method to :class:`cluster.AffinityPropagation` and
      :class:`cluster.MeanShift`, by `Mathieu Blondel`_.
