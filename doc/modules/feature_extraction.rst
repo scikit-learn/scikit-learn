@@ -295,7 +295,7 @@ reasonable (please see  the :ref:`reference documentation
           dtype=<... 'numpy.int64'>, encoding=...'utf-8', input=...'content',
           lowercase=True, max_df=1.0, max_features=None, min_df=1,
           ngram_range=(1, 1), preprocessor=None, stop_words=None,
-          strip_accents=None, token_pattern=...'(?u)\\b\\w\\w+\\b',
+          strip_accents=None, token_pattern=...'(?u)\\b[A-Za-z]\\w+\\b',
           tokenizer=None, vocabulary=None)
 
 Let's use it to tokenize and count the word occurrences of a minimalistic
