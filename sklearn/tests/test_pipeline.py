@@ -306,12 +306,12 @@ def test_feature_union_parallel():
     fs_parallel = FeatureUnion([
         ("words", CountVectorizer(analyzer='word')),
         ("chars", CountVectorizer(analyzer='char')),
-    ], n_jobs=-1)
+    ], n_jobs=2)
 
     fs_parallel2 = FeatureUnion([
         ("words", CountVectorizer(analyzer='word')),
         ("chars", CountVectorizer(analyzer='char')),
-    ], n_jobs=-1)
+    ], n_jobs=2)
 
     fs.fit(X)
     X_transformed = fs.transform(X)
