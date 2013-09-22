@@ -379,7 +379,7 @@ def linkage_tree(X, connectivity=None, n_components=None,
     # We are storing the graph in a list of IntFloatDict
     for ind, (data, row) in enumerate(zip(connectivity.data,
                                           connectivity.rows)):
-        A[ind] = IntFloatDict(np.asarray(row, dtype=np.int32),
+        A[ind] = IntFloatDict(np.asarray(row, dtype=np.intp),
                               np.asarray(data, dtype=np.float64))
         # We keep only the upper triangular for the heap
         # Generator expressions are faster than arrays on the following
