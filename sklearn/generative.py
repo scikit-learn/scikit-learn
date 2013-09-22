@@ -30,16 +30,19 @@ parameter.  The final classification is the class :math:`C` which gives the
 largest posterior probability :math:`P(D|C)`.
 """
 # Author: Jake Vanderplas <jakevdp@cs.washington.edu>
+
+__all__ = ['GenerativeBayes']
  
 import numpy as np
-from sklearn.neighbors import KernelDensity
-from sklearn.mixture import GMM
-from sklearn.base import BaseEstimator, clone
-from sklearn.utils import array2d, check_random_state
-from sklearn.naive_bayes import BaseNB
+from .neighbors import KernelDensity
+from .mixture import GMM
+from .base import BaseEstimator, clone
+from .utils import array2d, check_random_state
+from .utils.extmath import logsumexp
+from .naive_bayes import BaseNB
  
  
-class NormalApproximation(BaseEstimator):
+class _NormalApproximation(BaseEstimator):
     """Normal Approximation Density Estimator"""
     def __init__(self):
         pass
@@ -123,9 +126,9 @@ class NormalApproximation(BaseEstimator):
         return rng.normal(self.mean, self.std, size=n_samples)        
  
  
-DENSITY_ESTIMATORS = {'norm_approx':NormalApproximation,
-                      'gmm':GMM,
-                      'kde':KernelDensity}
+MODEL_TYPES = {'norm_approx': _NormalApproximation,
+               'gmm': GMM,
+               'kde': KernelDensity}
  
  
 class GenerativeBayes(BaseNB):
@@ -148,11 +151,10 @@ class GenerativeBayes(BaseNB):
     **kwargs :
         additional keyword arguments to be passed to the constructor
         specified by density_estimator.
-        
     """
     def __init__(self, density_estimator, **kwargs):
         if isinstance(density_estimator, str):
-            dclass = DENSITY_ESTIMATORS.get(density_estimator)
+            dclass = MODEL_TYPES.get(density_estimator)
             self.density_estimator = dclass(**kwargs)
         elif isinstance(density_estimator, type):
             self.density_estimator = density_estimator(**kwargs)
@@ -160,12 +162,14 @@ class GenerativeBayes(BaseNB):
             self.density_estimator = density_estimator
  
     def fit(self, X, y):
+        """Fit the model"""
         X = array2d(X)
         y = np.asarray(y)
         self.classes_ = np.sort(np.unique(y))
         n_classes = len(self.classes_)
         n_samples, n_features = X.shape
- 
+        
+        self.n_features_ = X.shape[1]
         self.class_prior_ = np.array([np.float(np.sum(y == y_i)) / n_samples
                                       for y_i in self.classes_])
         self.estimators_ = [clone(self.density_estimator).fit(X[y == c])
@@ -173,19 +177,67 @@ class GenerativeBayes(BaseNB):
         return self
  
     def _joint_log_likelihood(self, X):
+        """Compute the per-class log likelihood of each sample
+
+        Parameters
+        ----------
+        X : array_like
+            Array of samples on which to compute likelihoods.  Shape is
+            (n_samples, n_features)
+
+        Returns
+        -------
+        logL : array_like
+            The log likelihood under each class.
+            Shape is (n_samples, n_classes).  logL[i, j] gives the log
+            likelihood of X[i] within the model representing the class
+            self.classes_[j].
+        """
         X = array2d(X)
-        jll = np.array([np.log(prior) + dens.score_samples(X)
-                       for (prior, dens)
-                       in zip(self.class_prior_,
-                              self.estimators_)]).T
-        return jll
 
-    def predict(self, X):
-        jll = self._joint_log_likelihood(X)
-        return self.classes_[np.argmax(jll, 1)]
+        # GMM API, in particular score() and score_samples(), is
+        # not consistent with the rest of the package.  This needs
+        # to be addressed eventually...
+        if isinstance(self.density_estimator, GMM):
+            return np.array([np.log(prior) + dens.score(X)
+                             for (prior, dens)
+                             in zip(self.class_prior_,
+                                    self.estimators_)]).T
+        else:
+            return np.array([np.log(prior) + dens.score_samples(X)
+                             for (prior, dens)
+                             in zip(self.class_prior_,
+                                    self.estimators_)]).T
 
-    def predict_proba(self, X):
-        jll = self._joint_log_likelihood(X)
-        posterior = np.exp(jll)
-        posterior /= posterior.sum(1)[:, np.newaxis]
-        return posterior
+    def sample(self, n_samples=1, random_state=None):
+        """Generate random samples from the model.
+
+        Parameters
+        ----------
+        n_samples : int, optional
+            Number of samples to generate. Defaults to 1.
+
+        Returns
+        -------
+        X : array_like, shape (n_samples, n_features)
+            List of samples
+        y : array_like, shape (n_samples,)
+            List of class labels for the generated samples
+        """
+        random_state = check_random_state(random_state)
+        X = np.empty((n_samples, self.n_features_))
+        rand = random_state.rand(n_samples)
+
+        # split samples by class
+        prior_cdf = np.cumsum(self.class_prior_.sum())
+        labels = prior_cdf.searchsorted(rand)
+
+        # for each class, generate all needed samples
+        for i, model in enumerate(self.estimators_):
+            model_mask = (labels == i)
+            N_model = model_mask.sum()
+            if N_model > 0:
+                X[model_mask] = model.sample(N_model,
+                                             random_state=random_state)
+
+        return X, self.classes_[labels]
