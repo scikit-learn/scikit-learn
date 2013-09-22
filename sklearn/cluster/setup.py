@@ -20,7 +20,8 @@ def configuration(parent_package='', top_path=None):
 
     config = Configuration('cluster', parent_package, top_path)
     config.add_extension('_hierarchical',
-                         sources=['_hierarchical.c'],
+                         sources=['_hierarchical.cpp'],
+                         language="c++",
                          include_dirs=[numpy.get_include()],
                          libraries=libraries)
 

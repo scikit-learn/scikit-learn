@@ -8,8 +8,27 @@ ctypedef np.float64_t DOUBLE
 ctypedef np.npy_intp INTP
 ctypedef np.int8_t INT8
 
+# Numpy must be initialized. When using numpy from C or Cython you must
+# _always_ do that, or you will have segfaults
+
 np.import_array()
 
+from sklearn.utils.fast_dict cimport IntFloatDict
+
+# C++
+from cython.operator cimport dereference as deref, preincrement as inc
+from libcpp.map cimport map as cpp_map
+from libc.math cimport fmax
+
+DTYPE = np.float64
+ctypedef np.float64_t DTYPE_t
+
+ITYPE = np.intp
+ctypedef np.intp_t ITYPE_t
+
+
+###############################################################################
+# Utilities for computing the ward momentum
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
@@ -34,6 +53,9 @@ def compute_ward_dist(np.ndarray[DOUBLE, ndim=1, mode='c'] m_1,
         res[i] = pa * n
     return res
 
+
+###############################################################################
+# Utilities for cutting and exploring a hierarchical tree
 
 def _hc_get_descendent(INTP node, children, INTP n_leaves):
     """
@@ -142,3 +164,151 @@ def _get_parents(nodes, heads, np.ndarray[INTP, ndim=1] parents,
             not_visited[node] = 0
             heads.append(node)
     return heads
+
+
+###############################################################################
+# merge strategies implemented on IntFloatDicts
+
+# These are used in the hierarchical clustering code, to implement
+# merging between two clusters, defined as a dict containing node number
+# as keys and edge weights as values.
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+def max_merge(IntFloatDict a, IntFloatDict b,
+              np.ndarray[ITYPE_t, ndim=1] mask,
+              ITYPE_t n_a, ITYPE_t n_b):
+    """Merge two IntFloatDicts with the max strategy: when the same key is
+    present in the two dicts, the max of the two values is used.
+
+    Parameters
+    ==========
+    a, b : IntFloatDict object
+        The IntFloatDicts to merge
+    mask : ndarray array of dtype integer and of dimension 1
+        a mask for keys to ignore: if not mask[key] the corresponding key
+        is skipped in the output dictionnary
+    n_a, n_b : float
+        n_a and n_b are weights for a and b for the merge strategy.
+        They are not used in the case of a max merge.
+
+    Returns
+    =======
+    out : IntFloatDict object
+        The IntFloatDict resulting from the merge
+    """
+    cdef IntFloatDict out_obj = IntFloatDict.__new__(IntFloatDict)
+    cdef cpp_map[ITYPE_t, DTYPE_t].iterator a_it = a.my_map.begin()
+    cdef cpp_map[ITYPE_t, DTYPE_t].iterator a_end = a.my_map.end()
+    cdef ITYPE_t key
+    cdef DTYPE_t value
+    # First copy a into out
+    while a_it != a_end:
+        key = deref(a_it).first
+        if mask[key]:
+            out_obj.my_map[key] = deref(a_it).second
+        inc(a_it)
+
+    # Then merge b into out
+    cdef cpp_map[ITYPE_t, DTYPE_t].iterator out_it = out_obj.my_map.begin()
+    cdef cpp_map[ITYPE_t, DTYPE_t].iterator out_end = out_obj.my_map.end()
+    cdef cpp_map[ITYPE_t, DTYPE_t].iterator b_it = b.my_map.begin()
+    cdef cpp_map[ITYPE_t, DTYPE_t].iterator b_end = b.my_map.end()
+    while b_it != b_end:
+        key = deref(b_it).first
+        value = deref(b_it).second
+        if mask[key]:
+            out_it = out_obj.my_map.find(key)
+            if out_it == out_end:
+                # Key not found
+                out_obj.my_map[key] = value
+            else:
+                deref(out_it).second = fmax(deref(out_it).second, value)
+        inc(b_it)
+    return out_obj
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+def average_merge(IntFloatDict a, IntFloatDict b,
+              np.ndarray[ITYPE_t, ndim=1] mask,
+              ITYPE_t n_a, ITYPE_t n_b):
+    """Merge two IntFloatDicts with the average strategy: when the 
+    same key is present in the two dicts, the weighted average of the two 
+    values is used.
+
+    Parameters
+    ==========
+    a, b : IntFloatDict object
+        The IntFloatDicts to merge
+    mask : ndarray array of dtype integer and of dimension 1
+        a mask for keys to ignore: if not mask[key] the corresponding key
+        is skipped in the output dictionnary
+    n_a, n_b : float
+        n_a and n_b are weights for a and b for the merge strategy.
+        They are used for a weighted mean.
+
+    Returns
+    =======
+    out : IntFloatDict object
+        The IntFloatDict resulting from the merge
+    """
+    cdef IntFloatDict out_obj = IntFloatDict.__new__(IntFloatDict)
+    cdef cpp_map[ITYPE_t, DTYPE_t].iterator a_it = a.my_map.begin()
+    cdef cpp_map[ITYPE_t, DTYPE_t].iterator a_end = a.my_map.end()
+    cdef ITYPE_t key
+    cdef DTYPE_t value
+    cdef DTYPE_t n_out = <DTYPE_t> (n_a + n_b)
+    # First copy a into out
+    while a_it != a_end:
+        key = deref(a_it).first
+        if mask[key]:
+            out_obj.my_map[key] = deref(a_it).second
+        inc(a_it)
+
+    # Then merge b into out
+    cdef cpp_map[ITYPE_t, DTYPE_t].iterator out_it = out_obj.my_map.begin()
+    cdef cpp_map[ITYPE_t, DTYPE_t].iterator out_end = out_obj.my_map.end()
+    cdef cpp_map[ITYPE_t, DTYPE_t].iterator b_it = b.my_map.begin()
+    cdef cpp_map[ITYPE_t, DTYPE_t].iterator b_end = b.my_map.end()
+    while b_it != b_end:
+        key = deref(b_it).first
+        value = deref(b_it).second
+        if mask[key]:
+            out_it = out_obj.my_map.find(key)
+            if out_it == out_end:
+                # Key not found
+                out_obj.my_map[key] = value
+            else:
+                deref(out_it).second = (n_a * deref(out_it).second
+                                        + n_b * value) / n_out
+        inc(b_it)
+    return out_obj
+
+
+###############################################################################
+# An edge object for fast comparisons 
+
+cdef class WeightedEdge:
+    cdef public ITYPE_t a
+    cdef public ITYPE_t b
+    cdef public DTYPE_t weight
+    
+    def __init__(self, DTYPE_t weight, ITYPE_t a, ITYPE_t b):
+        self.weight = weight
+        self.a = a
+        self.b = b
+
+    @cython.nonecheck(False)
+    def __cmp__(self, WeightedEdge other):
+        """Return negative if self < other, zero if self == other,
+           positive if self > other.
+        """
+        return self.weight > other.weight
+        
+    def __repr__(self):
+        return "%s(weight=%f, a=%i, b=%i)" % (self.__class__.__name__,
+                                              self.weight,
+                                              self.a, self.b)
+

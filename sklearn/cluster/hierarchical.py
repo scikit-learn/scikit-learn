@@ -23,8 +23,7 @@ from ..utils.sparsetools import connected_components
 
 from . import _hierarchical
 from ._feature_agglomeration import AgglomerationTransform
-from ..utils.fast_dict import IntFloatDict, average_merge, max_merge,\
-    WeightedEdge
+from ..utils.fast_dict import IntFloatDict
 
 
 ###############################################################################
@@ -316,8 +315,8 @@ def linkage_tree(X, connectivity=None, n_components=None,
         X = np.reshape(X, (-1, 1))
     n_samples, n_features = X.shape
 
-    linkage_choices = {'complete': max_merge,
-                       'average': average_merge,
+    linkage_choices = {'complete': _hierarchical.max_merge,
+                       'average': _hierarchical.average_merge,
                        }
     try:
         join_func = linkage_choices[linkage]
@@ -383,7 +382,7 @@ def linkage_tree(X, connectivity=None, n_components=None,
                               np.asarray(data, dtype=np.float64))
         # We keep only the upper triangular for the heap
         # Generator expressions are faster than arrays on the following
-        [inertia.append(WeightedEdge(d, ind, r))
+        [inertia.append(_hierarchical.WeightedEdge(d, ind, r))
          for r, d in zip(row, data) if r < ind]
     del connectivity
 
@@ -418,7 +417,7 @@ def linkage_tree(X, connectivity=None, n_components=None,
             A[l].append(k, d)
             # Here we use the information from coord_col (containing the
             # distances) to update the heap
-            heappush(inertia, WeightedEdge(d, k, l))
+            heappush(inertia, _hierarchical.WeightedEdge(d, k, l))
         A[k] = coord_col
         # Clear A[i] and A[j] to save memory
         A[i] = A[j] = 0

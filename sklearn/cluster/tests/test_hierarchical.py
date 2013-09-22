@@ -23,6 +23,8 @@ from sklearn.cluster.hierarchical import (_hc_cut, _TREE_BUILDERS,
 from sklearn.feature_extraction.image import grid_to_graph
 from sklearn.metrics.pairwise import PAIRED_DISTANCES
 from sklearn.metrics.cluster import normalized_mutual_info_score
+from sklearn.cluster._hierarchical import average_merge, max_merge
+from sklearn.utils.fast_dict import IntFloatDict
 
 
 def test_linkage_misc():
@@ -274,6 +276,24 @@ def test_connectivity_fixing_non_lil():
     w = Ward(connectivity=c)
     with warnings.catch_warnings(record=True):
         w.fit(x)
+
+
+def test_int_float_dict():
+    rng = np.random.RandomState(0)
+    keys = np.unique(rng.randint(100, size=10).astype(np.intp))
+    values = rng.rand(len(keys))
+
+    d = IntFloatDict(keys, values)
+    for key, value in zip(keys, values):
+        assert d[key] == value
+
+    other_keys = np.arange(50).astype(np.intp)[::2]
+    other_values = 0.5*np.ones(50)[::2]
+    other = IntFloatDict(other_keys, other_values)
+    # Complete smoke test
+    max_merge(d, other, mask=np.ones(100, dtype=np.intp), n_a=1, n_b=1)
+    average_merge(d, other, mask=np.ones(100, dtype=np.intp), n_a=1, n_b=1)
+
 
 
 if __name__ == '__main__':

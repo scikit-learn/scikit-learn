@@ -3,8 +3,7 @@
 import numpy as np
 from nose.tools import assert_equal
 
-from sklearn.utils.fast_dict import IntFloatDict, max_merge,\
-            average_merge, argmin
+from sklearn.utils.fast_dict import IntFloatDict, argmin
 
 def test_int_float_dict():
     rng = np.random.RandomState(0)
@@ -14,13 +13,6 @@ def test_int_float_dict():
     d = IntFloatDict(keys, values)
     for key, value in zip(keys, values):
         assert d[key] == value
-
-    other_keys = np.arange(50).astype(np.intp)[::2]
-    other_values = 0.5*np.ones(50)[::2]
-    other = IntFloatDict(other_keys, other_values)
-    # Complete smoke test
-    max_merge(d, other, mask=np.ones(100, dtype=np.intp), n_a=1, n_b=1)
-    average_merge(d, other, mask=np.ones(100, dtype=np.intp), n_a=1, n_b=1)
 
     d.append(120, 3.)
     assert d[120] == 3.0
