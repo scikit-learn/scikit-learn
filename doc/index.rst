@@ -344,11 +344,11 @@
 	      </div>
 	      <div class="span4">
    	         <a class="reference internal" href="about.html#funding" style="text-decoration: none" >
-    	           <img id="index-funding-logo-big" src="_images/inria-small.jpg" title="INRIA">
-	           <img id="index-funding-logo-small" src="_images/google-logo.png" title="Google">
+    	           <img id="index-funding-logo-big" src="_static/img/inria-small.jpg" title="INRIA">
+	           <img id="index-funding-logo-small" src="_static/img/google.png" title="Google">
 	           <!--Due to Télécom ParisTech's logo text being smaller, a style has been added to improve readability-->
-	           <img id="index-funding-logo-small" src="_images/telecomparistech.jpg" title="Télécom ParisTech" style="max-height: 36px">
-	           <img id="index-funding-logo-small" src="_images/FNRS-logo.png" title="FNRS">
+	           <img id="index-funding-logo-small" src="_static/img/telecom.jpg" title="Télécom ParisTech" style="max-height: 36px">
+	           <img id="index-funding-logo-small" src="_static/img/FNRS-logo.png" title="FNRS">
 	         </a>
 	     </div>
 	     <div class="span4">
