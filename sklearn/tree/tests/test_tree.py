@@ -4,6 +4,7 @@ Testing for the tree module (sklearn.tree).
 import pickle
 import numpy as np
 
+from functools import partial
 from itertools import product
 
 from sklearn.metrics import accuracy_score
@@ -34,11 +35,15 @@ REG_CRITERIONS = ("mse", )
 
 CLF_TREES = {
     "DecisionTreeClassifier": DecisionTreeClassifier,
+    "Presort-DecisionTreeClassifier": partial(DecisionTreeClassifier,
+                                              splitter="presort-best"),
     "ExtraTreeClassifier": ExtraTreeClassifier,
 }
 
 REG_TREES = {
     "DecisionTreeRegressor": DecisionTreeRegressor,
+    "Presort-DecisionTreeRegressor": partial(DecisionTreeRegressor,
+                                             splitter="presort-best"),
     "ExtraTreeRegressor": ExtraTreeRegressor,
 }
 
