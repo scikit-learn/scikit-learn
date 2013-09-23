@@ -781,11 +781,11 @@ def test_vectorizer_unicode():
         "\xd0\xbe\xd0\xb1\xd1\x83\xd1\x87\xd0\xb0\xd1\x82\xd1\x8c\xd1\x81\xd1"
         "\x8f.")
 
-    vect = CountVectorizer(token_pattern=r"(?u)\b\w\w+\b")
+    vect = CountVectorizer()
     X_counted = vect.fit_transform([document])
     assert_equal(X_counted.shape, (1, 15))
 
-    vect = HashingVectorizer(norm=None, non_negative=True, token_pattern=r"(?u)\b\w\w+\b")
+    vect = HashingVectorizer(norm=None, non_negative=True)
     X_hashed = vect.transform([document])
     assert_equal(X_hashed.shape, (1, 2 ** 20))
 

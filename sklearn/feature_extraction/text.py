@@ -335,11 +335,13 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
     lowercase: boolean, default True
         Convert all characters to lowercase before tokenizing.
 
-    token_pattern: string
+    token_pattern: string, r"(?u)\b[^\d\W]\w+\b" by default.
         Regular expression denoting what constitutes a "token", only used
         if `tokenize == 'word'`. The default regexp select tokens of 2
-        or more letters characters and the first letter is not numeric (punctuation 
-        is completely ignored and always treated as a token separator).
+        or more characters with the first character being alphabet. This can help
+        filter out tokens start with digits while most of them are treated as noise
+        in text mining.
+        (punctuation is completely ignored and always treated as a token separator).
 
     n_features : integer, optional, (2 ** 20) by default
         The number of features (columns) in the output matrices. Small numbers
@@ -373,7 +375,7 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
                  decode_error='strict', charset_error=None,
                  strip_accents=None,
                  lowercase=True, preprocessor=None, tokenizer=None,
-                 stop_words=None, token_pattern=r"(?u)\b[A-Za-z]\w+\b",
+                 stop_words=None, token_pattern=r"(?u)\b[^\d\W]\w+\b",
                  ngram_range=(1, 1), analyzer='word', n_features=(2 ** 20),
                  binary=False, norm='l2', non_negative=False,
                  dtype=np.float64):
@@ -601,7 +603,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
                  decode_error='strict', charset_error=None,
                  strip_accents=None,
                  lowercase=True, preprocessor=None, tokenizer=None,
-                 stop_words=None, token_pattern=r"(?u)\b[A-Za-z]\w+\b",
+                 stop_words=None, token_pattern=r"(?u)\b[^\d\W]\w+\b",
                  ngram_range=(1, 1), analyzer='word',
                  max_df=1.0, min_df=1, max_features=None,
                  vocabulary=None, binary=False, dtype=np.int64):
@@ -1151,7 +1153,7 @@ class TfidfVectorizer(CountVectorizer):
                  decode_error='strict', charset_error=None,
                  strip_accents=None, lowercase=True,
                  preprocessor=None, tokenizer=None, analyzer='word',
-                 stop_words=None, token_pattern=r"(?u)\b[A-Za-z]\w+\b",
+                 stop_words=None, token_pattern=r"(?u)\b[^\d\W]\w+\b",
                  ngram_range=(1, 1), max_df=1.0, min_df=1,
                  max_features=None, vocabulary=None, binary=False,
                  dtype=np.int64, norm='l2', use_idf=True, smooth_idf=True,
