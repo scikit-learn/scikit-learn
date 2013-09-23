@@ -49,8 +49,10 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         Number of iterations/sweeps over the training dataset to perform
         during training.
 
-    verbose : bool, optional
-        The verbosity level.
+    verbose : int, optional
+        The verbosity level. Enabling it (with a non-zero value) will compute 
+        the log-likelihood of each mini-batch and hence cause a runtime overhead
+        in the order of 10%.
 
     random_state : integer or numpy.RandomState, optional
         A random number generator instance to define the state of the
