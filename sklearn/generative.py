@@ -37,7 +37,7 @@ import numpy as np
 from .neighbors import KernelDensity
 from .mixture import GMM
 from .base import BaseEstimator, clone
-from .utils import array2d, check_random_state
+from .utils import array2d, check_random_state, check_arrays
 from .utils.extmath import logsumexp
 from .naive_bayes import BaseNB
  
@@ -148,27 +148,47 @@ class GenerativeBayes(BaseNB):
         specified by density_estimator.
     """
     def __init__(self, density_estimator, **kwargs):
+        self.density_estimator = density_estimator
+        self.kwargs = kwargs
+
+        # run this here to check for any exceptions; we avoid assigning
+        # the result here so that the estimator can be cloned.
+        self._choose_estimator(density_estimator, **kwargs)
+
+    def _choose_estimator(self, density_estimator, **kwargs):
         if isinstance(density_estimator, str):
             dclass = MODEL_TYPES.get(density_estimator)
-            self.density_estimator = dclass(**kwargs)
+            return dclass(**kwargs)
         elif isinstance(density_estimator, type):
-            self.density_estimator = density_estimator(**kwargs)
+            return density_estimator(**kwargs)
         else:
-            self.density_estimator = density_estimator
+            return density_estimator
  
     def fit(self, X, y):
-        """Fit the model"""
-        X = array2d(X)
-        y = np.asarray(y)
+        """Fit the model using X as training data and y as target values
+
+        Parameters
+        ----------
+        X : array-like
+            Training data. shape = [n_samples, n_features]
+
+        y : array-like
+            Target values, array of float values, shape = [n_samples]
+        """
+        X, y = check_arrays(X, y, sparse_format='dense')
+        estimator = self._choose_estimator(self.density_estimator,
+                                           **self.kwargs)
+
         self.classes_ = np.sort(np.unique(y))
         n_classes = len(self.classes_)
-        n_samples, n_features = X.shape
-        
-        self.n_features_ = X.shape[1]
-        self.class_prior_ = np.array([np.float(np.sum(y == y_i)) / n_samples
-                                      for y_i in self.classes_])
-        self.estimators_ = [clone(self.density_estimator).fit(X[y == c])
-                            for c in self.classes_]
+        n_samples, self.n_features_ = X.shape
+
+        masks = [(y == c) for c in self.classes_]
+
+        self.class_prior_ = np.array([np.float(mask.sum()) / n_samples
+                                      for mask in masks])
+        self.estimators_ = [clone(estimator).fit(X[mask])
+                            for mask in masks]
         return self
  
     def _joint_log_likelihood(self, X):
@@ -226,8 +246,6 @@ class GenerativeBayes(BaseNB):
         # split samples by class
         prior_cdf = np.cumsum(self.class_prior_)
         labels = prior_cdf.searchsorted(rand)
-
-        print prior_cdf
 
         # for each class, generate all needed samples
         for i, model in enumerate(self.estimators_):
