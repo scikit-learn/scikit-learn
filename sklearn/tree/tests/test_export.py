@@ -21,7 +21,7 @@ def test_graphviz_toy():
     clf = DecisionTreeClassifier(max_depth=3,
                                  min_samples_split=1,
                                  criterion="gini",
-                                 random_state=1)
+                                 random_state=2)
     clf.fit(X, y)
 
     # Test export code

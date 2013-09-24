@@ -79,7 +79,7 @@ def _parallel_build_trees(n_trees, forest, X, y,
         seed = random_state.randint(MAX_INT)
 
         tree = forest._make_estimator(append=False)
-        tree.set_params(random_state=check_random_state(seed))
+        tree.set_params(random_state=seed)
 
         if forest.bootstrap:
             n_samples = X.shape[0]
