@@ -118,7 +118,7 @@ def partial_dependence(gbrt, target_variables, grid=None, X=None,
     >>> from sklearn.ensemble import GradientBoostingClassifier
     >>> gb = GradientBoostingClassifier(random_state=0).fit(samples, labels)
     >>> kwargs = dict(X=samples, percentiles=(0, 1), grid_resolution=2)
-    >>> partial_dependence(gb, [0], **kwargs) # doctest: +ELLIPSIS
+    >>> partial_dependence(gb, [0], **kwargs) # doctest: +SKIP
     (array([[-4.52...,  4.52...]]), [array([ 0.,  1.])])
     """
     if not isinstance(gbrt, BaseGradientBoosting):

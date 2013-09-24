@@ -9,9 +9,6 @@
 #          Satrajit Gosh <satrajit.ghosh@gmail.com>
 #          Lars Buitinck <L.J.Buitinck@uva.nl>
 #
-# rand_r function taken from the 4.4BSD C library:
-# Copyright (c) 1990 The Regents of the University of California.
-#
 # Licence: BSD 3 clause
 
 
@@ -910,7 +907,7 @@ cdef class BestSplitter(Splitter):
         cdef np.ndarray[DTYPE_t, ndim=2, mode="c"] X = self.X
         cdef SIZE_t max_features = self.max_features
         cdef SIZE_t min_samples_leaf = self.min_samples_leaf
-        cdef unsigned int* random_state = &self.rand_r_state
+        cdef UINT32_t* random_state = &self.rand_r_state
 
         cdef double best_impurity = INFINITY
         cdef SIZE_t best_pos = end
@@ -1077,7 +1074,7 @@ cdef class RandomSplitter(Splitter):
         cdef np.ndarray[DTYPE_t, ndim=2, mode="c"] X = self.X
         cdef SIZE_t max_features = self.max_features
         cdef SIZE_t min_samples_leaf = self.min_samples_leaf
-        cdef unsigned int* random_state = &self.rand_r_state
+        cdef UINT32_t* random_state = &self.rand_r_state
 
         cdef double best_impurity = INFINITY
         cdef SIZE_t best_pos = end
@@ -1928,10 +1925,14 @@ cdef class Tree:
 # Utils
 # =============================================================================
 
-# rand_r replacement taken from 4.4BSD C library.
-cdef inline int our_rand_r(unsigned *seed) nogil:
-    seed[0] = seed[0] * 1103515245 + 12345
-    return (seed[0] % (<unsigned>RAND_R_MAX + 1))
+# rand_r replacement using a 32bit XorShift generator
+# See http://www.jstatsoft.org/v08/i14/paper for details
+cdef inline UINT32_t our_rand_r(UINT32_t* seed) nogil:
+    seed[0] ^= <UINT32_t>(seed[0] << 13)
+    seed[0] ^= <UINT32_t>(seed[0] >> 17)
+    seed[0] ^= <UINT32_t>(seed[0] << 5)
+
+    return seed[0] % <UINT32_t>(RAND_R_MAX + 1)
 
 cdef inline np.ndarray int_ptr_to_ndarray(int* data, SIZE_t size):
     """Encapsulate data into a 1D numpy array of int's."""
@@ -1951,11 +1952,11 @@ cdef inline np.ndarray double_ptr_to_ndarray(double* data, SIZE_t size):
     shape[0] = <np.npy_intp> size
     return np.PyArray_SimpleNewFromData(1, shape, np.NPY_DOUBLE, data)
 
-cdef inline SIZE_t rand_int(SIZE_t end, unsigned int* random_state) nogil:
+cdef inline SIZE_t rand_int(SIZE_t end, UINT32_t* random_state) nogil:
     """Generate a random integer in [0; end)."""
     return our_rand_r(random_state) % end
 
-cdef inline double rand_double(unsigned int* random_state) nogil:
+cdef inline double rand_double(UINT32_t* random_state) nogil:
     """Generate a random double in [0; 1)."""
     return <double> our_rand_r(random_state) / <double> RAND_R_MAX
 

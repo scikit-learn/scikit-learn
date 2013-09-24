@@ -11,6 +11,7 @@ cimport numpy as np
 ctypedef np.npy_float32 DTYPE_t          # Type of X
 ctypedef np.npy_float64 DOUBLE_t         # Type of y, sample_weight
 ctypedef np.npy_intp SIZE_t              # Type for indices and counters
+ctypedef np.npy_uint32 UINT32_t          # Unsigned 32 bit integer
 
 
 # =============================================================================
@@ -61,7 +62,7 @@ cdef class Splitter:
     cdef public SIZE_t min_samples_leaf  # Min samples in a leaf
 
     cdef object random_state             # Random state
-    cdef unsigned int rand_r_state       # sklearn_rand_r random number state
+    cdef UINT32_t rand_r_state            # sklearn_rand_r random number state
 
     cdef SIZE_t* samples                 # Sample indices in X, y
     cdef SIZE_t n_samples                # X.shape[0]
