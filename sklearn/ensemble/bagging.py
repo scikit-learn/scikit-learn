@@ -19,7 +19,7 @@ from ..externals.joblib import Parallel, delayed, cpu_count
 from ..externals import six
 from ..externals.six.moves import xrange
 from ..metrics import r2_score
-from ..utils import check_random_state, check_arrays
+from ..utils import check_random_state, check_arrays, column_or_1d
 from ..utils.fixes import bincount, unique
 from ..utils.random import sample_without_replacement
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
@@ -511,7 +511,300 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
         super(BaggingClassifier, self)._validate_estimator(
             default=DecisionTreeClassifier())
         
+class BaggingClassifier(BaseBagging, ClassifierMixin):
+    """A Bagged classifier.
+
+    A Bagging classifier is an ensemble method that fits base
+    classifiers each on random subsets of the original dataset and then
+    aggregate their individual predictions by voting to form a final prediction. 
+    Such a meta-estimator can typically be used as
+    a way to reduce the variance of a black-box estimator (e.g: Decision
+    tree, KNN, etc.), by introducing randomization into its construction procedure and
+    then making an ensemble out of it.
+
+
+    Parameters
+    ----------
+    base_estimator : object or None, This is Compulsory (default=None)
+            The base estimator to fit on random subsets of the dataset.
+            If None, default is set to Decision tree classifier .
+
+    n_estimators : int, optional (default=10)
+        The number of base estimators in the ensemble.
+
+    max_samples : int or float, optional (default=1.0)
+        The number of samples to draw from X to train each base estimator.
+            - If int, then draw `max_samples` samples.
+            - If float, then draw `max_samples * X.shape[0]` samples.
+
+    bootstrap : boolean, optional (default=False)
+        Whether samples are drawn with replacement.
+
+    oob_score : bool
+        Whether to use out-of-bag samples to estimate
+        the generalization error.
+
+    n_jobs : int, optional (default=1)
+        The number of jobs to run in parallel for both `fit` and `predict`.
+        If -1, then the number of jobs is set to the number of cores.
+
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
+
+    verbose : int, optional (default=0)
+        Controls the verbosity of the building process.
+
+    Attributes
+    ----------
+    `base_estimator_`: list of estimators
+        The base estimator from which the ensemble is grown.
+
+    `estimators_`: list of estimators
+        The collection of fitted base estimators.
+
+    `estimators_samples_`: list of arrays
+        The subset of drawn samples (i.e., the in-bag samples) for each base
+        estimator.
+
+    `estimators_features_`: list of arrays
+        The subset of drawn features for each base estimator.
+
+    `classes_`: array of shape = [n_classes]
+        The classes labels.
+
+    `n_classes_`: int or list
+        The number of classes.
+
+    `oob_score_` : float
+        Score of the training dataset obtained using an out-of-bag estimate.
+
+    """
+    
+    def __init__(self, base_estimator=DecisionTreeClassifier(), n_estimators=10, max_samples=1.0, bootstrap=True, oob_score=False, n_jobs=1, random_state=None, verbose=0):
+    
+
+        super(BaggingClassifier, self).__init__(base_estimator, n_estimators=n_estimators, max_samples=max_samples, bootstrap=bootstrap, oob_score=oob_score, n_jobs=n_jobs, random_state=random_state, verbose=verbose)
         
+    def _validate_estimator(self):
+        """Check the estimator and set the base_estimator_ attribute."""
+        super(BaggingClassifier, self)._validate_estimator(
+            default=DecisionTreeClassifier())
+        
+    def _validate_y(self, y):
+        y = column_or_1d(y, warn=True)
+        self.classes_, y = unique(y, return_inverse=True)
+        self.n_classes_ = len(self.classes_)
+
+        return y
+        
+    def _set_oob_score(self, X, y):
+        n_classes_ = self.n_classes_
+        classes_ = self.classes_
+        n_samples = y.shape[0]
+
+        predictions = np.zeros((n_samples, n_classes_))
+
+        for estimator, samples, features in zip(self.estimators_, self.estimators_samples_, self.estimators_features_):
+            mask = np.ones(n_samples, dtype=np.bool)
+            mask[samples] = False
+
+            try:
+                predictions[mask, :] += estimator.predict_proba(
+                    (X[mask, :])[:, features])
+
+            except (AttributeError, NotImplementedError):
+                p = estimator.predict((X[mask, :])[:, features])
+                j = 0
+
+                for i in range(n_samples):
+                    if mask[i]:
+                        predictions[i, p[j]] += 1
+                        j += 1
+
+        if (predictions.sum(axis=1) == 0).any():
+            warn("Some inputs do not have OOB scores. "
+                 "This probably means too few estimators were used "
+                 "to compute any reliable oob estimates.")
+
+        oob_decision_function = (predictions /
+                                 predictions.sum(axis=1)[:, np.newaxis])
+        oob_score = accuracy_score(y, classes_.take(np.argmax(predictions,
+                                                              axis=1)))
+
+        self.oob_decision_function_ = oob_decision_function
+        self.oob_score_ = oob_score
+        
+        
+
+    
+    def predict(self, X):
+        """Predict class for X.
+
+        The predicted class of an input sample is computed as the class with
+        the highest mean predicted probability. If base estimators do not
+        implement a ``predict_proba`` method, then it resorts to voting.
+
+        Parameters
+        ----------
+        X : array-like of shape = [n_samples, n_features]
+            The input samples.
+
+        Returns
+        -------
+        y : array of shape = [n_samples]
+            The predicted classes.
+        """
+        return self.classes_.take(np.argmax(self.predict_proba(X), axis=1), axis=0)
+    
+    
+    def predict_proba(self, X):
+        """Predict class probabilities for X.
+
+        The predicted class probabilities of an input sample is computed as
+        the mean predicted class probabilities of the base estimators in the
+        ensemble. If base estimators do not implement a ``predict_proba``
+        method, then it resorts to voting and the predicted class probabilities
+        of a an input sample represents the proportion of estimators predicting
+        each class.
+
+        Parameters
+        ----------
+        X : array-like of shape = [n_samples, n_features]
+            The input samples.
+
+        Returns
+        -------
+        p : array of shape = [n_samples, n_classes]
+            The class probabilities of the input samples. Classes are
+            ordered by arithmetical order.
+        """
+        # Check data
+        X, = check_arrays(X)
+
+        if self.n_features_ != X.shape[1]:
+            raise ValueError("Number of features of the model must "
+                             "match the input. Model n_features is {0} and "
+                             "input n_features is {1}."
+                             "".format(self.n_features_, X.shape[1]))
+
+        # Parallel loop
+        n_jobs, n_estimators, starts = _partition_estimators(self)
+
+        all_proba = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
+            delayed(_parallel_predict_proba)(
+                self.estimators_[starts[i]:starts[i + 1]],
+                self.estimators_features_[starts[i]:starts[i + 1]],
+                X,
+                self.n_classes_)
+            for i in range(n_jobs))
+
+        # Reduce
+        proba = sum(all_proba) / self.n_estimators
+
+        return proba
+    
+    def predict_log_proba(self, X):
+        """Predict class log-probabilities for X.
+
+        The predicted class log-probabilities of an input sample is computed as
+        the log of the mean predicted class probabilities of the base
+        estimators in the ensemble.
+
+        Parameters
+        ----------
+        X : array-like of shape = [n_samples, n_features]
+            The input samples.
+
+        Returns
+        -------
+        p : array of shape = [n_samples, n_classes]
+            The class log-probabilities of the input samples. Classes are
+            ordered by arithmetical order.
+        """
+        if hasattr(self.base_estimator_, "predict_log_proba"):
+            # Check data
+            X, = check_arrays(X)
+
+            if self.n_features_ != X.shape[1]:
+                raise ValueError("Number of features of the model must "
+                                 "match the input. Model n_features is {0} "
+                                 "and input n_features is {1} "
+                                 "".format(self.n_features_, X.shape[1]))
+
+            # Parallel loop
+            n_jobs, n_estimators, starts = _partition_estimators(self)
+
+            all_log_proba = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
+                delayed(_parallel_predict_log_proba)(
+                    self.estimators_[starts[i]:starts[i + 1]],
+                    self.estimators_features_[starts[i]:starts[i + 1]],
+                    X,
+                    self.n_classes_)
+                for i in range(n_jobs))
+
+            # Reduce
+            log_proba = all_log_proba[0]
+
+            for j in range(1, len(all_log_proba)):
+                log_proba = np.logaddexp(log_proba, all_log_proba[j])
+
+            log_proba -= np.log(self.n_estimators)
+
+            return log_proba
+
+        else:
+            return np.log(self.predict_proba(X))
+        
+        
+    def decision_function(self, X):
+        """Average of the decision functions of the base classifiers.
+
+        Parameters
+        ----------
+        X : array-like of shape = [n_samples, n_features]
+            The input samples.
+
+        Returns
+        -------
+        score : array, shape = [n_samples, k]
+            The decision function of the input samples. The columns correspond
+            to the classes in sorted order, as they appear in the attribute
+            ``classes_``. Regression and binary classification are special
+            cases with ``k == 1``, otherwise ``k==n_classes``.
+
+        """
+        # Trigger an exception if not supported
+        if not hasattr(self.base_estimator, "decision_function"):
+            raise NotImplementedError
+
+        # Check data
+        X, = check_arrays(X)
+
+        if self.n_features_ != X.shape[1]:
+            raise ValueError("Number of features of the model must "
+                             "match the input. Model n_features is {1} and "
+                             "input n_features is {2} "
+                             "".format(self.n_features_, X.shape[1]))
+
+        # Parallel loop
+        n_jobs, n_estimators, starts = _partition_estimators(self)
+
+        all_decisions = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
+            delayed(_parallel_decision_function)(
+                self.estimators_[starts[i]:starts[i + 1]],
+                self.estimators_features_[starts[i]:starts[i + 1]],
+                X)
+            for i in range(n_jobs))
+
+        # Reduce
+        decisions = sum(all_decisions) / self.n_estimators
+
+        return decisions      
+
+            
 
     
 
