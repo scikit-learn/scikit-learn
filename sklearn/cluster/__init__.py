@@ -12,6 +12,7 @@ from .hierarchical import (ward_tree, AgglomerativeClustering, linkage_tree,
 from .k_means_ import k_means, KMeans, MiniBatchKMeans
 from .dbscan_ import dbscan, DBSCAN
 from .bicluster import SpectralBiclustering, SpectralCoclustering
+from .fabia import FabiaBiclustering
 from .birch import Birch
 
 __all__ = ['AffinityPropagation',
@@ -33,4 +34,5 @@ __all__ = ['AffinityPropagation',
            'spectral_clustering',
            'ward_tree',
            'SpectralBiclustering',
-           'SpectralCoclustering']
+           'SpectralCoclustering',
+           'FabiaBiclustering']
