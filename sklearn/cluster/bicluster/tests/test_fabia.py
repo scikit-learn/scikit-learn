@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Tests for FABIA.
-Created on Tue Sep 10 14:36:54 2013
+Tests for the FABIA biclustering algorithm.
 """
 
 import numpy as np

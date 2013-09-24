@@ -16,7 +16,6 @@ from sklearn.utils.validation import safe_asarray
 from sklearn.utils.extmath import safe_sparse_dot
 from sklearn.preprocessing import StandardScaler
 
-from scipy.stats.mstats import mquantiles
 from scipy.sparse import issparse
 
 
@@ -225,7 +224,6 @@ class FabiaBiclustering(BaseEstimator, BiclusterMixin):
         self.columns_ = [np.abs(L[i, :]) > thresL for i in range(k)]
         self.rows_ = []
         for i in range(k):
-            idx = np.where(np.abs(Z[:, i]) > self.thresZ)[0]
             sp = np.where(Z[:, i] > self.thresZ, Z[:, i], 0).sum()
             sn = -np.where(Z[:, i] < -self.thresZ, Z[:, i], 0).sum()
             if sp > sn:
