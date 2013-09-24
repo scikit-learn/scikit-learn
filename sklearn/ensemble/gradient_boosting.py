@@ -433,13 +433,65 @@ LOSS_FUNCTIONS = {'ls': LeastSquaresError,
                   'deviance': None}  # for both, multinomial and binomial
 
 
+class VerboseReporter(object):
+    """Reports verbose output to stdout.
+
+    If ``verbose==1`` output is printed once in a while (when iteration mod
+    verbose_mod is zero).; if larger than 1 then output is printed for
+    each update.
+    """
+
+    def __init__(self, verbose):
+        self.verbose = verbose
+
+    def init(self, est):
+        # header fields and line format str
+        header_fields = ['Iter', 'Train Loss']
+        verbose_fmt = ['{iter:>10d}', '{train_score:>16.4f}']
+        # do oob?
+        if est.subsample < 1:
+            header_fields.append('OOB Improve')
+            verbose_fmt.append('{oob_impr:>16.4f}')
+        header_fields.append('Remaining Time')
+        verbose_fmt.append('{remaining_time:>16s}')
+
+        # print the header line
+        print(('%10s ' + '%16s ' *
+               (len(header_fields) - 1)) % tuple(header_fields))
+
+        self.verbose_fmt = ' '.join(verbose_fmt)
+        # plot verbose info each time i % verbose_mod == 0
+        self.verbose_mod = 1
+        self.start_time = time()
+
+    def update(self, i, est):
+        """Update reporter with new iteration. """
+        do_oob = est.subsample < 1
+        if (i + 1) % self.verbose_mod == 0:
+            oob_impr = est.oob_improvement_[i] if do_oob else 0
+            remaining_time = ((est.n_estimators - (i + 1)) *
+                              (time() - self.start_time) / float(i + 1))
+            if remaining_time > 60:
+                remaining_time = '{0:.2f}m'.format(remaining_time / 60.0)
+            else:
+                remaining_time = '{0:.2f}s'.format(remaining_time)
+            print(self.verbose_fmt.format(iter=i + 1,
+                                          train_score=est.train_score_[i],
+                                          oob_impr=oob_impr,
+                                          remaining_time=remaining_time))
+            if self.verbose == 1 and ((i + 1) // (self.verbose_mod * 10) > 0):
+                # adjust verbose frequency (powers of 10)
+                self.verbose_mod *= 10
+
+
 class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
     """Abstract base class for Gradient Boosting. """
 
     @abstractmethod
     def __init__(self, loss, learning_rate, n_estimators, min_samples_split,
                  min_samples_leaf, max_depth, init, subsample, max_features,
-                 random_state, alpha=0.9, verbose=0):
+                 random_state, alpha=0.9, verbose=0,
+                 callback=None):
 
         self.n_estimators = n_estimators
         self.learning_rate = learning_rate
@@ -453,6 +505,8 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         self.random_state = random_state
         self.alpha = alpha
         self.verbose = verbose
+        self.callback = callback
+
         self.estimators_ = np.empty((0, 0), dtype=np.object)
 
     def _fit_stage(self, i, X, y, y_pred, sample_mask,
@@ -528,19 +582,18 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             if (not hasattr(self.init, 'fit')
                     or not hasattr(self.init, 'predict')):
                 raise ValueError("init must be valid estimator")
-            self.init_ = self.init
-        else:
-            self.init_ = self.loss_.init_estimator()
 
         if not (0.0 < self.alpha and self.alpha < 1.0):
             raise ValueError("alpha must be in (0.0, 1.0)")
 
         if isinstance(self.max_features, six.string_types):
             if self.max_features == "auto":
-                if is_classification:
+                # if is_classification
+                if self.n_classes_ > 1:
                     max_features = max(1, int(np.sqrt(self.n_features)))
                 else:
-                    max_features = self.n_features_
+                    # is regression
+                    max_features = self.n_features
             elif self.max_features == "sqrt":
                 max_features = max(1, int(np.sqrt(self.n_features)))
             elif self.max_features == "log2":
@@ -558,8 +611,86 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
 
         self.max_features_ = max_features
 
+    def _init_state(self):
+        """Initialize model state and allocate model state data structures. """
+
+        if self.init is not None:
+            self.init_ = self.init
+        else:
+            self.init_ = self.loss_.init_estimator()
+
+        self.estimators_ = np.empty((self.n_estimators, self.loss_.K),
+                                    dtype=np.object)
+        self.train_score_ = np.zeros((self.n_estimators,), dtype=np.float64)
+        # do oob?
+        if self.subsample < 1.0:
+            self._oob_score_ = np.zeros((self.n_estimators), dtype=np.float64)
+            self.oob_improvement_ = np.zeros((self.n_estimators),
+                                             dtype=np.float64)
+
+    def _clear_state(self):
+        if hasattr(self, 'estimators_'):
+            self.estimators_ = np.empty((0, 0), dtype=np.object)
+        if hasattr(self, 'train_score_'):
+            del self.train_score_
+        if hasattr(self, '_oob_score_'):
+            del self._oob_score_
+        if hasattr(self, 'oob_improvement_'):
+            del self.oob_improvement_
+        if hasattr(self, 'init_'):
+            del self.init_
+
+    def _resize_state(self):
+        # self.n_estimators is the number of additional est to fit
+        total_n_estimators = self.n_estimators + self.estimators_.shape[0]
+
+        self.estimators_.resize((total_n_estimators, self.loss_.K))
+        self.train_score_.resize(total_n_estimators)
+        if (self.subsample < 1 or hasattr(self, '_oob_score_')
+            or hasattr(self, 'oob_improvement_')):
+            # if do oob resize arrays or create new if not available
+            if hasattr(self, '_oob_score_'):
+                self._oob_score_.resize(total_n_estimators)
+            else:
+                self._oob_score_ = np.zeros((total_n_estimators),
+                                            dtype=np.float64)
+            if hasattr(self, 'oob_improvement_'):
+                self.oob_improvement_.resize(total_n_estimators)
+            else:
+                self.oob_improvement_ = np.zeros((total_n_estimators,),
+                                                 dtype=np.float64)
+
+    def _is_initialized(self):
+        return len(getattr(self, 'estimators_', [])) > 0
+
     def fit(self, X, y):
         """Fit the gradient boosting model.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+            Training vectors, where n_samples is the number of samples
+            and n_features is the number of features.
+
+        y : array-like, shape = [n_samples]
+            Target values (integers in classification, real numbers in
+            regression)
+            For classification, labels must correspond to classes
+            ``0, 1, ..., n_classes_-1``
+
+        Returns
+        -------
+        self : object
+            Returns self.
+        """
+        self._clear_state()
+        return self.partial_fit(X, y)
+
+    def partial_fit(self, X, y):
+        """Partial fit the gradient boosting model.
+
+        If the model has already been fitted it will add ``n_estimators``
+        more estimators to ``estimators_``.
 
         Parameters
         ----------
@@ -585,49 +716,36 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         n_samples, n_features = X.shape
         self.n_features = n_features
         random_state = check_random_state(self.random_state)
-
-        # Check parameters
         self._check_params()
 
-        # pull freq used parameters into local scope
-        subsample = self.subsample
-        loss_ = self.loss_
-        do_oob = subsample < 1.0
+        if not self._is_initialized():
+            # init state
+            self._init_state()
 
-        # allocate model state data structures
-        self.estimators_ = np.empty((self.n_estimators, self.loss_.K),
-                                    dtype=np.object)
-        self.train_score_ = np.zeros((self.n_estimators,), dtype=np.float64)
-        if do_oob:
-            self._oob_score_ = np.zeros((self.n_estimators), dtype=np.float64)
-            self.oob_improvement_ = np.zeros((self.n_estimators),
-                                             dtype=np.float64)
+            # fit initial model
+            self.init_.fit(X, y)
 
+            # init predictions
+            y_pred = self.init_.predict(X)
+            begin_at_stage = 0
+        else:
+            # add more estimators to fitted model
+            begin_at_stage = self.estimators_.shape[0]
+            y_pred = self.decision_function(X)
+            self._resize_state()
+
+        # fit the boosting stages
+        self._fit_stages(X, y, y_pred, random_state, begin_at_stage)
+        # change n_estimators after fit (early-stopping or additional ests)
+        self.n_estimators = self.estimators_.shape[0]
+        return self
+
+    def _fit_stages(self, X, y, y_pred, random_state, begin_at_stage=0):
+        n_samples = X.shape[0]
+        do_oob = self.subsample < 1.0
         sample_mask = np.ones((n_samples,), dtype=np.bool)
-        n_inbag = max(1, int(subsample * n_samples))
-
-        if self.verbose:
-            # header fields and line format str
-            header_fields = ['Iter', 'Train Loss']
-            verbose_fmt = ['{iter:>10d}', '{train_score:>16.4f}']
-            if do_oob:
-                header_fields.append('OOB Improve')
-                verbose_fmt.append('{oob_impr:>16.4f}')
-            header_fields.append('Remaining Time')
-            verbose_fmt.append('{remaining_time:>16s}')
-            verbose_fmt = ' '.join(verbose_fmt)
-            # print the header line
-            print(('%10s ' + '%16s ' *
-                   (len(header_fields) - 1)) % tuple(header_fields))
-            # plot verbose info each time i % verbose_mod == 0
-            verbose_mod = 1
-            start_time = time()
-
-        # fit initial model
-        self.init_.fit(X, y)
-
-        # init predictions
-        y_pred = self.init_.predict(X)
+        n_inbag = max(1, int(self.subsample * n_samples))
+        loss_ = self.loss_
 
         # init criterion and splitter
         criterion = MSE(1)
@@ -636,8 +754,12 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
                                        self.min_samples_leaf,
                                        random_state)
 
+        if self.verbose:
+            verbose_reporter = VerboseReporter(self.verbose)
+            verbose_reporter.init(self)
+
         # perform boosting iterations
-        for i in range(self.n_estimators):
+        for i in range(begin_at_stage, begin_at_stage + self.n_estimators):
 
             # subsampling
             if do_oob:
@@ -660,26 +782,10 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
                 self.oob_improvement_[i] = old_oob_score - self._oob_score_[i]
             else:
                 # no need to fancy index w/ no subsampling
-                self.train_score_[i] = self.loss_(y, y_pred)
+                self.train_score_[i] = loss_(y, y_pred)
 
             if self.verbose > 0:
-                if (i + 1) % verbose_mod == 0:
-                    oob_impr = self.oob_improvement_[i] if do_oob else 0
-                    remaining_time = ((self.n_estimators - (i + 1)) *
-                                      (time() - start_time) / float(i + 1))
-                    if remaining_time > 60:
-                        remaining_time = '{0:.2f}m'.format(remaining_time / 60.0)
-                    else:
-                        remaining_time = '{0:.2f}s'.format(remaining_time)
-                    print(verbose_fmt.format(iter=i + 1,
-                                             train_score=self.train_score_[i],
-                                             oob_impr=oob_impr,
-                                             remaining_time=remaining_time))
-                if self.verbose == 1 and ((i + 1) // (verbose_mod * 10) > 0):
-                    # adjust verbose frequency (powers of 10)
-                    verbose_mod *= 10
-
-        return self
+                verbose_reporter.update(i, self)
 
     def _make_estimator(self, append=True):
         # we don't need _make_estimator
@@ -924,11 +1030,36 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         self : object
             Returns self.
         """
+        return super(GradientBoostingClassifier, self).fit(X, y)
+
+    def partial_fit(self, X, y):
+        """Partial fit the gradient boosting model.
+
+        If the model has already been fitted it will add ``n_estimators``
+        more estimators to ``estimators_``.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+            Training vectors, where n_samples is the number of samples
+            and n_features is the number of features.
+
+        y : array-like, shape = [n_samples]
+            Target values (integers in classification, real numbers in
+            regression)
+            For classification, labels must correspond to classes
+            ``0, 1, ..., n_classes_-1``
+
+        Returns
+        -------
+        self : object
+            Returns self.
+        """
         y = column_or_1d(y, warn=True)
         self.classes_, y = unique(y, return_inverse=True)
         self.n_classes_ = len(self.classes_)
 
-        return super(GradientBoostingClassifier, self).fit(X, y)
+        return super(GradientBoostingClassifier, self).partial_fit(X, y)
 
     def _score_to_proba(self, score):
         """Compute class probability estimates from decision scores. """
@@ -1165,8 +1296,33 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         self : object
             Returns self.
         """
-        self.n_classes_ = 1
         return super(GradientBoostingRegressor, self).fit(X, y)
+
+    def partial_fit(self, X, y):
+        """Partial fit the gradient boosting model.
+
+        If the model has already been fitted it will add ``n_estimators``
+        more estimators to ``estimators_``.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+            Training vectors, where n_samples is the number of samples
+            and n_features is the number of features.
+
+        y : array-like, shape = [n_samples]
+            Target values (integers in classification, real numbers in
+            regression)
+            For classification, labels must correspond to classes
+            ``0, 1, ..., n_classes_-1``
+
+        Returns
+        -------
+        self : object
+            Returns self.
+        """
+        self.n_classes_ = 1
+        return super(GradientBoostingRegressor, self).partial_fit(X, y)
 
     def predict(self, X):
         """Predict regression target for X.

@@ -312,6 +312,35 @@ def test_max_feature_regression():
     assert_true(deviance < 0.5, "GB failed with deviance %.4f" % deviance)
 
 
+def test_max_feature_auto():
+    """Test if max features is set properly for floats and str. """
+    X, y = datasets.make_hastie_10_2(n_samples=12000, random_state=1)
+    _, n_features = X.shape
+
+    X_train, X_test = X[:2000], X[2000:]
+    y_train, y_test = y[:2000], y[2000:]
+
+    gbrt = GradientBoostingClassifier(n_estimators=1, max_features='auto')
+    gbrt.fit(X_train, y_train)
+    assert gbrt.max_features_ == int(np.sqrt(n_features))
+
+    gbrt = GradientBoostingRegressor(n_estimators=1, max_features='auto')
+    gbrt.fit(X_train, y_train)
+    assert gbrt.max_features_ == n_features
+
+    gbrt = GradientBoostingRegressor(n_estimators=1, max_features=0.3)
+    gbrt.fit(X_train, y_train)
+    assert gbrt.max_features_ == int(n_features * 0.3)
+
+    gbrt = GradientBoostingRegressor(n_estimators=1, max_features='sqrt')
+    gbrt.fit(X_train, y_train)
+    assert gbrt.max_features_ == int(np.sqrt(n_features))
+
+    gbrt = GradientBoostingRegressor(n_estimators=1, max_features='log2')
+    gbrt.fit(X_train, y_train)
+    assert gbrt.max_features_ == int(np.log2(n_features))
+
+
 def test_staged_predict():
     """Test whether staged decision function eventually gives
     the same prediction.
@@ -598,3 +627,99 @@ def test_warn_deviance():
                 pass
             # deprecated warning for bdeviance and mdeviance
             assert len(w) == 1
+
+
+def test_partial_fit():
+    """Test if partial fit equals fit. """
+    X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
+    for cls in [GradientBoostingRegressor, GradientBoostingClassifier]:
+        est = cls(n_estimators=200, max_depth=1)
+        est.fit(X, y)
+
+        est_partial = cls(n_estimators=100, max_depth=1)
+        est_partial.partial_fit(X, y)
+        est_partial.partial_fit(X, y)
+
+        assert_array_almost_equal(est_partial.predict(X), est.predict(X))
+
+
+def test_partial_fit_n_estimators():
+    """Test if partial fit equals fit - set n_estimators. """
+    X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
+    for cls in [GradientBoostingRegressor, GradientBoostingClassifier]:
+        est = cls(n_estimators=300, max_depth=1)
+        est.fit(X, y)
+
+        est_partial = cls(n_estimators=100, max_depth=1)
+        est_partial.partial_fit(X, y)
+        est_partial.set_params(n_estimators=200)
+        est_partial.partial_fit(X, y)
+
+    assert_array_almost_equal(est_partial.predict(X), est.predict(X))
+
+
+def test_partial_fit_max_depth():
+    """Test if possible to fit trees of differet depth in ensemble. """
+    X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
+    for cls in [GradientBoostingRegressor, GradientBoostingClassifier]:
+        est = cls(n_estimators=100, max_depth=1)
+        est.partial_fit(X, y)
+        est.set_params(n_estimators=10, max_depth=2)
+        est.partial_fit(X, y)
+
+        # last 10 trees have different depth
+        assert est.estimators_[0, 0].max_depth == 1
+        assert est.estimators_[-1, 0].max_depth == 2
+
+
+def test_partial_fit_clear():
+    """Test if fit clears state. """
+    X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
+    for cls in [GradientBoostingRegressor, GradientBoostingClassifier]:
+        est = cls(n_estimators=100, max_depth=1)
+        est.fit(X, y)
+
+        est_2 = cls(n_estimators=100, max_depth=1)
+        est_2.partial_fit(X, y)  # inits state
+        est_2.fit(X, y)  # clears old state and equals est
+
+        assert_array_almost_equal(est_2.predict(X), est.predict(X))
+
+
+def test_partial_fit_zero_n_estimators():
+    """Test if partial fit with zero n_estimators raises error """
+    X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
+    for cls in [GradientBoostingRegressor, GradientBoostingClassifier]:
+        est = cls(n_estimators=100, max_depth=1)
+        est.partial_fit(X, y)
+        est.set_params(n_estimators=0)
+        assert_raises(ValueError, est.partial_fit, X, y)
+
+
+def test_partial_fit_oob_switch():
+    """Test if oob can be turned on during partial fit. """
+    X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
+    for cls in [GradientBoostingRegressor, GradientBoostingClassifier]:
+        est = cls(n_estimators=100, max_depth=1)
+        est.partial_fit(X, y)
+        est.set_params(n_estimators=10, subsample=0.5)
+        est.partial_fit(X, y)
+
+        assert_array_equal(est.oob_improvement_[:10], np.zeros(10))
+
+
+def test_partial_fit_oob():
+    """Test if partial fit OOB equals fit. """
+    X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
+    for cls in [GradientBoostingRegressor, GradientBoostingClassifier]:
+        est = cls(n_estimators=200, max_depth=1, subsample=0.5,
+                  random_state=1)
+        est.fit(X, y)
+
+        est_partial = cls(n_estimators=100, max_depth=1, subsample=0.5,
+                          random_state=1)
+        est_partial.partial_fit(X, y)
+        est_partial.partial_fit(X, y)
+
+        assert_array_almost_equal(est_partial.oob_improvement_[:100],
+                                  est.oob_improvement_[:100])

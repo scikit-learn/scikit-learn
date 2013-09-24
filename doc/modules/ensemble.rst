@@ -419,7 +419,7 @@ The advantages of GBRT are:
 
   + Predictive power
 
-  + Robustness to outliers in input space (via robust loss functions)
+  + Robustness to outliers in output space (via robust loss functions)
 
 The disadvantages of GBRT are:
 
@@ -482,9 +482,9 @@ for regression which can be specified via the argument
     >>> X, y = make_friedman1(n_samples=1200, random_state=0, noise=1.0)
     >>> X_train, X_test = X[:200], X[200:]
     >>> y_train, y_test = y[:200], y[200:]
-    >>> clf = GradientBoostingRegressor(n_estimators=100, learning_rate=1.0,
+    >>> est = GradientBoostingRegressor(n_estimators=100, learning_rate=1.0,
     ...     max_depth=1, random_state=0, loss='ls').fit(X_train, y_train)
-    >>> mean_squared_error(y_test, clf.predict(X_test))    # doctest: +ELLIPSIS
+    >>> mean_squared_error(y_test, est.predict(X_test))    # doctest: +ELLIPSIS
     6.90...
 
 The figure below shows the results of applying :class:`GradientBoostingRegressor`
@@ -504,6 +504,17 @@ the ``feature_importances_`` property.
    :target: ../auto_examples/ensemble/plot_gradient_boosting_regression.html
    :align: center
    :scale: 75
+
+Both :class:`GradientBoostingRegressor` and :class:`GradientBoostingClassifier`
+support :meth:`~GradientBoostingRegressor.partial_fit` which allows you to add
+more estimators to an already fitted model
+
+::
+
+  >>> est.set_params(n_estimators=100)  # set additional nr of trees to fit
+  >>> est.partial_fit(X_train, y_train) # fit additional trees
+  >>> mean_squared_error(y_test, est.predict(X_test))    # doctest: +ELLIPSIS
+  5.90...
 
 .. topic:: Examples:
 
