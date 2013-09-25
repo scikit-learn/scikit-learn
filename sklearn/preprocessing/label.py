@@ -412,12 +412,12 @@ def label_binarize(y, classes, neg_label=0, pos_label=1,
     if y_type == "binary" and len(classes) > 2:
         y_type = "multiclass"
 
-    if  y_type == "binary":
+    if y_type == "binary":
         dense_output = True
 
     if multilabel is not None:
         warnings.warn("The multilabel parameter is deprecated as of version "
-                        "0.15 and will be removed in 0.17.", DeprecationWarning)
+                      "0.15 and will be removed in 0.17.", DeprecationWarning)
 
     if not dense_output and neg_label != 0:
         raise ValueError("Non-zero neg_label is not supported with "
@@ -443,7 +443,7 @@ def label_binarize(y, classes, neg_label=0, pos_label=1,
     elif y_type == "multilabel-sequences":
         row, col = [], []
         for i, label_sequence in enumerate(y):
-            c = np.searchsorted(sorted_class, label_sequence)
+            c = np.searchsorted(sorted_class, np.unique(label_sequence))
             col.extend(c)
 
             r = np.empty_like(c)
@@ -472,4 +472,3 @@ def label_binarize(y, classes, neg_label=0, pos_label=1,
         Y = Y[:, 1].reshape((-1, 1))
 
     return Y
-

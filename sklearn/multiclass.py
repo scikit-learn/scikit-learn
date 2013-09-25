@@ -46,21 +46,17 @@ from .externals.joblib import Parallel
 from .externals.joblib import delayed
 
 
-def _fit_binary(estimator, X, Y, class_index=None, classes=None):
+def _fit_binary(estimator, X, Y, class_index=None, target_name=None):
     """Fit a single binary estimator."""
     if isinstance(Y, coo_matrix):
-        y = np.ravel(Y.getcol(class_index).todense())
+        y = Y.getcol(class_index).toarray()
     else:
-        y = Y if class_index is None else Y[:, class_index]
+        y = Y[:, class_index]
     unique_y = np.unique(y)
     if len(unique_y) == 1:
-        if classes is not None:
-            if y[0] == -1:
-                c = 0
-            else:
-                c = y[0]
+        if target_name is not None:
             warnings.warn("Label %s is present in all training examples." %
-                          str(classes[c]))
+                          str(target_name))
         estimator = _ConstantPredictor().fit(X, unique_y)
     else:
         estimator = clone(estimator)
@@ -94,7 +90,7 @@ def fit_ovr(estimator, X, y, n_jobs=1):
     Y = lb.fit_transform(y)
 
     estimators = Parallel(n_jobs=n_jobs)(
-        delayed(_fit_binary)(estimator, X, Y, i, classes=["not %s" % i, i])
+        delayed(_fit_binary)(estimator, X, Y, i, target_name="not %s" % i)
         for i in range(Y.shape[1]))
     return estimators, lb
 
@@ -316,7 +312,8 @@ def _fit_ovo_binary(estimator, X, y, i, j):
     y[y == i] = 0
     y[y == j] = 1
     ind = np.arange(X.shape[0])
-    return _fit_binary(estimator, X[ind[cond]], y, classes=[i, j])
+    return _fit_binary(estimator, X[ind[cond]], y,
+                       target_name="%s(negative) vs. %s(positive)" % (i, j))
 
 
 def fit_ovo(estimator, X, y, n_jobs=1):
