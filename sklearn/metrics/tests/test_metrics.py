@@ -1275,7 +1275,8 @@ def test_symmetry():
 
     # We shouldn't forget any metrics
     assert_equal(set(SYMMETRIC_METRICS).union(NOT_SYMMETRIC_METRICS,
-                                              THRESHOLDED_METRICS),
+                                              THRESHOLDED_METRICS,
+                                              METRIC_UNDEFINED_MULTICLASS),
                  set(ALL_METRICS))
 
     assert_equal(
@@ -1306,6 +1307,7 @@ def test_symmetry():
 
     assert_almost_equal(f(zero_one_score)(y_true, y_pred),
                         f(zero_one_score)(y_pred, y_true))
+
 
 def test_sample_order_invariance():
     y_true, y_pred, _ = make_prediction(binary=True)
@@ -1475,32 +1477,37 @@ def test_invariance_string_vs_numbers_labels():
 
 
 @ignore_warnings
-def check_clf_single_sample(metric):
+def check_single_sample(name):
     """Non-regression test: scores should work with a single sample.
 
     This is important for leave-one-out cross validation.
     Score functions tested are those that formerly called np.squeeze,
     which turns an array of size 1 into a 0-d array (!).
     """
+    metric = ALL_METRICS[name]
+
     # assert that no exception is thrown
     for i, j in product([0, 1], repeat=2):
         metric([i], [j])
 
-
 @ignore_warnings
-def check_clf_single_sample_multioutput(metric):
+def check_single_sample_multioutput(name):
+    metric = ALL_METRICS[name]
     for i, j, k, l in product([0, 1], repeat=4):
         metric(np.array([[i, j]]), np.array([[k, l]]))
 
 
-def test_clf_single_sample():
-    for name, metric in (CLASSIFICATION_METRICS.items() +
-                         REGRESSION_METRICS.items()):
-        yield check_clf_single_sample, metric
+def test_single_sample():
+    for name in ALL_METRICS:
+        if name in METRIC_UNDEFINED_MULTICLASS + THRESHOLDED_METRICS.keys():
+            # Those metrics are not always defined with one sample
+            # or in multiclass classification
+            continue
+
+        yield check_single_sample, name
 
     for name in MULTIOUTPUT_METRICS + MULTILABELS_METRICS:
-        metric = ALL_METRICS[name]
-        yield check_clf_single_sample_multioutput, metric
+        yield check_single_sample_multioutput, name
 
 
 def test_hinge_loss_binary():
