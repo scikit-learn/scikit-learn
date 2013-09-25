@@ -16,6 +16,7 @@ from ..externals.six.moves import xrange
 from ..utils import check_arrays
 from ..utils import check_random_state
 from ..utils import gen_even_slices
+from ..utils import issparse
 from ..utils.extmath import safe_sparse_dot
 from ..utils.extmath import logistic_sigmoid
 
@@ -48,8 +49,10 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         Number of iterations/sweeps over the training dataset to perform
         during training.
 
-    verbose : bool, optional
-        The verbosity level.
+    verbose : int, optional
+        The verbosity level. Enabling it (with a non-zero value) will compute 
+        the log-likelihood of each mini-batch and hence cause a runtime overhead
+        in the order of 10%.
 
     random_state : integer or numpy.RandomState, optional
         A random number generator instance to define the state of the
@@ -112,7 +115,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         h : array, shape (n_samples, n_components)
             Latent representations of the data.
         """
-        X, = check_arrays(X, sparse_format='csc', dtype=np.float)
+        X, = check_arrays(X, sparse_format='csr', dtype=np.float)
         return self._mean_hiddens(X)
 
     def _mean_hiddens(self, v):
@@ -185,9 +188,9 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         free_energy : array-like, shape (n_samples,)
             The value of the free energy.
         """
-        return - np.dot(v, self.intercept_visible_) - np.log(1. + np.exp(
-            safe_sparse_dot(v, self.components_.T) + self.intercept_hidden_)) \
-            .sum(axis=1)
+        return (- safe_sparse_dot(v, self.intercept_visible_)
+                - np.log(1. + np.exp(safe_sparse_dot(v, self.components_.T)
+                            + self.intercept_hidden_)).sum(axis=1))
 
     def gibbs(self, v):
         """Perform one Gibbs sampling step.
@@ -262,7 +265,10 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         rng = check_random_state(self.random_state)
         fe = self._free_energy(v)
 
-        v_ = v.copy()
+        if issparse(v):
+            v_ = v.toarray()
+        else:
+            v_ = v.copy()
         i_ = rng.randint(0, v.shape[1], v.shape[0])
         v_[np.arange(v.shape[0]), i_] = 1 - v_[np.arange(v.shape[0]), i_]
         fe_ = self._free_energy(v_)
@@ -282,7 +288,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         self : BernoulliRBM
             The fitted model.
         """
-        X, = check_arrays(X, sparse_format='csc', dtype=np.float)
+        X, = check_arrays(X, sparse_format='csr', dtype=np.float)
         n_samples = X.shape[0]
         rng = check_random_state(self.random_state)
 
