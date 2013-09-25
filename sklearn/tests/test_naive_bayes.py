@@ -329,8 +329,8 @@ def test_coef_intercept_shape():
 
 def test_check_accuracy_on_digits():
     # Non regression test to make sure that any further refactoring / optim
-    # of the NB models do not harm the performance on a non linearly separable
-    # dataset
+    # of the NB models do not harm the performance on a slightly non-linearly
+    # separable dataset
     digits = load_digits()
     X, y = digits.data, digits.target
     binary_3v8 = np.logical_or(digits.target == 3, digits.target == 8)
@@ -338,21 +338,21 @@ def test_check_accuracy_on_digits():
 
     # Multinomial NB
     scores = cross_val_score(MultinomialNB(alpha=10), X, y, cv=10)
-    assert_greater(scores.mean(), 0.90)
+    assert_greater(scores.mean(), 0.86)
 
     scores = cross_val_score(MultinomialNB(alpha=10), X_3v8, y_3v8, cv=10)
-    assert_greater(scores.mean(), 0.95)
+    assert_greater(scores.mean(), 0.94)
 
     # Bernoulli NB
     scores = cross_val_score(BernoulliNB(alpha=10), X > 4, y, cv=10)
-    assert_greater(scores.mean(), 0.85)
+    assert_greater(scores.mean(), 0.83)
 
     scores = cross_val_score(BernoulliNB(alpha=10), X_3v8 > 4, y_3v8, cv=10)
-    assert_greater(scores.mean(), 0.94)
+    assert_greater(scores.mean(), 0.92)
 
     # Gaussian NB
     scores = cross_val_score(GaussianNB(), X, y, cv=10)
-    assert_greater(scores.mean(), 0.81)
+    assert_greater(scores.mean(), 0.77)
 
     scores = cross_val_score(GaussianNB(), X_3v8, y_3v8, cv=10)
     assert_greater(scores.mean(), 0.86)

@@ -44,6 +44,11 @@ Changelog
    - Memory improvements of extra trees and random forest by
      `Arnaud Joly`_.
 
+   - Changed :class:`cross_validation.StratifiedKFold` to try and
+     preserve as much of the original ordering of samples as possible so as
+     not to hide overfitting on datasets with a non-negligible level of
+     samples dependency.
+     By `Daniel Nouri`_ and `Olivier Grisel`_.
 
 API changes summary
 -------------------
@@ -781,7 +786,7 @@ List of contributors for release 0.13 by number of commits.
  *  17  `Fabian Pedregosa`_
  *  17  Nelle Varoquaux
  *  16  `Christian Osendorfer`_
- *  14  Daniel Nouri
+ *  14  `Daniel Nouri`_
  *  13  `Virgile Fritsch`_
  *  13  syhw
  *  12  `Satrajit Ghosh`_
@@ -2288,3 +2293,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Kyle Kastner: http://kastnerkyle.github.io
 
 .. _@FedericoV: https://github.com/FedericoV/
+
+.. _Daniel Nouri: http://danielnouri.org

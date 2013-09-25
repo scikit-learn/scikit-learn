@@ -1,5 +1,5 @@
 """Test the cross_validation module"""
-
+from __future__ import division
 import warnings
 
 import numpy as np
@@ -22,6 +22,7 @@ from sklearn.utils.fixes import unique
 from sklearn import cross_validation as cval
 from sklearn.base import BaseEstimator
 from sklearn.datasets import make_regression
+from sklearn.datasets import load_digits
 from sklearn.datasets import load_iris
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import f1_score
@@ -91,6 +92,37 @@ y = np.arange(10) // 2
 ##############################################################################
 # Tests
 
+def check_valid_split(train, test, n_samples=None):
+    # Use python sets to get more informative assertion failure messages
+    train, test = set(train), set(test)
+
+    # Train and test split should not overlap
+    assert_equal(train.intersection(test), set())
+
+    if n_samples is not None:
+        # Check that the union of train an test split cover all the indices
+        assert_equal(train.union(test), set(range(n_samples)))
+
+
+def check_cv_coverage(cv, expected_n_iter=None, n_samples=None):
+    # Check that a all the samples appear at least once in a test fold
+    if expected_n_iter is not None:
+        assert_equal(len(cv), expected_n_iter)
+    else:
+        expected_n_iter = len(cv)
+
+    collected_test_samples = set()
+    iterations = 0
+    for train, test in cv:
+        check_valid_split(train, test, n_samples=n_samples)
+        iterations += 1
+        collected_test_samples.update(test)
+
+    # Check that the accumulated test samples cover the whole dataset
+    assert_equal(iterations, expected_n_iter)
+    if n_samples is not None:
+        assert_equal(collected_test_samples, set(range(n_samples)))
+
 
 def test_kfold_valueerrors():
     # Check that errors are raised if there is not enough samples
@@ -100,8 +132,8 @@ def test_kfold_valueerrors():
     # members.
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter('always')
-        y = [0, 0, 1, 1, 2]
-        cval.StratifiedKFold(y, 3)
+        y = [3, 3, -1, -1, 2]
+        cv = cval.StratifiedKFold(y, 3)
         # checking there was only one warning.
         assert_equal(len(w), 1)
         # checking it has the right type
@@ -109,6 +141,11 @@ def test_kfold_valueerrors():
         # checking it's the right warning. This might be a bad test since it's
         # a characteristic of the code and not a behavior
         assert_true("The least populated class" in str(w[0]))
+
+        # Check that despite the warning the folds are still computed even
+        # though all the classes are not necessarily represented at on each
+        # side of the split at each split
+        check_cv_coverage(cv, expected_n_iter=3, n_samples=len(y))
 
     # Error when number of folds is <= 1
     assert_raises(ValueError, cval.KFold, 2, 0)
@@ -127,15 +164,72 @@ def test_kfold_valueerrors():
 def test_kfold_indices():
     # Check all indices are returned in the test folds
     kf = cval.KFold(300, 3)
-    all_folds = None
-    for train, test in kf:
-        if all_folds is None:
-            all_folds = test.copy()
-        else:
-            all_folds = np.concatenate((all_folds, test))
+    check_cv_coverage(kf, expected_n_iter=3, n_samples=300)
 
-    all_folds.sort()
-    assert_array_equal(all_folds, np.arange(300))
+    # Check all indices are returned in the test folds even when equal-sized
+    # folds are not possible
+    kf = cval.KFold(17, 3)
+    check_cv_coverage(kf, expected_n_iter=3, n_samples=17)
+
+
+def test_kfold_no_shuffle():
+    # Manually check that KFold preserves the data ordering on toy datasets
+    splits = iter(cval.KFold(4, 2))
+    train, test = splits.next()
+    assert_array_equal(test, [0, 1])
+    assert_array_equal(train, [2, 3])
+
+    train, test = splits.next()
+    assert_array_equal(test, [2, 3])
+    assert_array_equal(train, [0, 1])
+
+    splits = iter(cval.KFold(5, 2))
+    train, test = splits.next()
+    assert_array_equal(test, [0, 1, 2])
+    assert_array_equal(train, [3, 4])
+
+    train, test = splits.next()
+    assert_array_equal(test, [3, 4])
+    assert_array_equal(train, [0, 1, 2])
+
+
+def test_stratified_kfold_no_shuffle():
+    # Manually check that StratifiedKFold preserves the data ordering as much
+    # as possible on toy datasets in order to avoid hiding sample dependencies
+    # when possible
+    splits = iter(cval.StratifiedKFold([1, 1, 0, 0], 2))
+    train, test = splits.next()
+    assert_array_equal(test, [0, 2])
+    assert_array_equal(train, [1, 3])
+
+    train, test = splits.next()
+    assert_array_equal(test, [1, 3])
+    assert_array_equal(train, [0, 2])
+
+    splits = iter(cval.StratifiedKFold([1, 1, 1, 0, 0, 0, 0], 2))
+    train, test = splits.next()
+    assert_array_equal(test, [0, 1, 3, 4])
+    assert_array_equal(train, [2, 5, 6])
+
+    train, test = splits.next()
+    assert_array_equal(test, [2, 5, 6])
+    assert_array_equal(train, [0, 1, 3, 4])
+
+
+def test_stratified_kfold_ratios():
+    # Check that stratified kfold preserves label ratios in individual splits
+    n_samples = 1000
+    labels = np.array([4] * int(0.10 * n_samples) +
+                      [0] * int(0.89 * n_samples) +
+                      [1] * int(0.01 * n_samples))
+
+    for train, test in cval.StratifiedKFold(labels, 5):
+        assert_almost_equal(np.sum(labels[train] == 4) / len(train), 0.10, 2)
+        assert_almost_equal(np.sum(labels[train] == 0) / len(train), 0.89, 2)
+        assert_almost_equal(np.sum(labels[train] == 1) / len(train), 0.01, 2)
+        assert_almost_equal(np.sum(labels[test] == 4) / len(test), 0.10, 2)
+        assert_almost_equal(np.sum(labels[test] == 0) / len(test), 0.89, 2)
+        assert_almost_equal(np.sum(labels[test] == 1) / len(test), 0.01, 2)
 
 
 def test_kfold_balance():
@@ -149,30 +243,84 @@ def test_kfold_balance():
         assert_equal(np.sum(sizes), kf.n)
 
 
-@ignore_warnings
+def test_stratifiedkfold_balance():
+    # Check that KFold returns folds with balanced sizes (only when
+    # stratification is possible)
+    labels = [0] * 3 + [1] * 14
+    for skf in [cval.StratifiedKFold(labels[:i], 3) for i in range(11, 17)]:
+        sizes = []
+        for _, test in skf:
+            sizes.append(len(test))
+
+        assert_true((np.max(sizes) - np.min(sizes)) <= 1)
+        assert_equal(np.sum(sizes), skf.n)
+
+
 def test_shuffle_kfold():
     # Check the indices are shuffled properly, and that all indices are
     # returned in the different test folds
-    kf1 = cval.KFold(300, 3, shuffle=True, random_state=0, indices=True)
-    kf2 = cval.KFold(300, 3, shuffle=True, random_state=0, indices=False)
+    kf = cval.KFold(300, 3, shuffle=True, random_state=0)
     ind = np.arange(300)
 
-    for kf in (kf1, kf2):
-        all_folds = None
-        for train, test in kf:
-            sorted_array = np.arange(100)
-            assert_true(np.any(sorted_array != ind[train]))
-            sorted_array = np.arange(101, 200)
-            assert_true(np.any(sorted_array != ind[train]))
-            sorted_array = np.arange(201, 300)
-            assert_true(np.any(sorted_array != ind[train]))
-            if all_folds is None:
-                all_folds = ind[test].copy()
-            else:
-                all_folds = np.concatenate((all_folds, ind[test]))
+    all_folds = None
+    for train, test in kf:
+        sorted_array = np.arange(100)
+        assert_true(np.any(sorted_array != ind[train]))
+        sorted_array = np.arange(101, 200)
+        assert_true(np.any(sorted_array != ind[train]))
+        sorted_array = np.arange(201, 300)
+        assert_true(np.any(sorted_array != ind[train]))
+        if all_folds is None:
+            all_folds = ind[test].copy()
+        else:
+            all_folds = np.concatenate((all_folds, ind[test]))
 
-        all_folds.sort()
-        assert_array_equal(all_folds, ind)
+    all_folds.sort()
+    assert_array_equal(all_folds, ind)
+
+
+def test_kfold_can_detect_dependent_samples_on_digits():  # see #2372
+    # The digits samples are dependent: they are apparently grouped by authors
+    # although we don't have any information on the groups segment locations
+    # for this data. We can highlight this fact be computing k-fold cross-
+    # validation with and without shuffling: we observe that the shuffling case
+    # wrongly makes the IID assumption and is therefore too optimistic: it
+    # estimates a much higher accuracy (around 0.96) than than the non
+    # shuffling variant (around 0.86).
+
+    digits = load_digits()
+    X, y = digits.data[:800], digits.target[:800]
+    model = SVC(C=10, gamma=0.005)
+    n = len(y)
+
+    cv = cval.KFold(n, 5, shuffle=False)
+    mean_score = cval.cross_val_score(model, X, y, cv=cv).mean()
+    assert_greater(0.88, mean_score)
+    assert_greater(mean_score, 0.85)
+
+    # Shuffling the data artificially breaks the dependency and hides the
+    # overfitting of the model w.r.t. the writing style of the authors
+    # by yielding a seriously overestimated score:
+
+    cv = cval.KFold(n, 5, shuffle=True, random_state=0)
+    mean_score = cval.cross_val_score(model, X, y, cv=cv).mean()
+    assert_greater(mean_score, 0.95)
+
+    cv = cval.KFold(n, 5, shuffle=True, random_state=1)
+    mean_score = cval.cross_val_score(model, X, y, cv=cv).mean()
+    assert_greater(mean_score, 0.95)
+
+    # Similarly, StratifiedKFold should try to shuffle the data as little
+    # as possible (while respecting the balanced class constraints)
+    # and thus be able to detect the dependency by not overestimating
+    # the CV score either. As the digits dataset is approximately balanced
+    # the estimated mean score is close to the score measured with
+    # non-shuffled KFold
+
+    cv = cval.StratifiedKFold(y, 5)
+    mean_score = cval.cross_val_score(model, X, y, cv=cv).mean()
+    assert_greater(0.88, mean_score)
+    assert_greater(mean_score, 0.85)
 
 
 def test_shuffle_split():
@@ -379,24 +527,24 @@ def test_cross_val_score_with_score_func_classification():
 
     # Default score (should be the accuracy score)
     scores = cval.cross_val_score(clf, iris.data, iris.target, cv=5)
-    assert_array_almost_equal(scores, [1., 0.97, 0.90, 0.97, 1.], 2)
+    assert_array_almost_equal(scores, [0.97, 1., 0.97, 0.97, 1.], 2)
 
     # Correct classification score (aka. zero / one score) - should be the
     # same as the default estimator score
     zo_scores = cval.cross_val_score(clf, iris.data, iris.target,
                                      scoring="accuracy", cv=5)
-    assert_array_almost_equal(zo_scores, [1., 0.97, 0.90, 0.97, 1.], 2)
+    assert_array_almost_equal(zo_scores, [0.97, 1., 0.97, 0.97, 1.], 2)
 
     # F1 score (class are balanced so f1_score should be equal to zero/one
     # score
     f1_scores = cval.cross_val_score(clf, iris.data, iris.target,
                                      scoring="f1", cv=5)
-    assert_array_almost_equal(f1_scores, [1., 0.97, 0.90, 0.97, 1.], 2)
+    assert_array_almost_equal(f1_scores, [0.97, 1., 0.97, 0.97, 1.], 2)
     # also test deprecated old way
     with warnings.catch_warnings(record=True):
         f1_scores = cval.cross_val_score(clf, iris.data, iris.target,
                                          score_func=f1_score, cv=5)
-    assert_array_almost_equal(f1_scores, [1., 0.97, 0.90, 0.97, 1.], 2)
+    assert_array_almost_equal(f1_scores, [0.97, 1., 0.97, 0.97, 1.], 2)
 
 
 def test_cross_val_score_with_score_func_regression():
@@ -450,7 +598,7 @@ def test_permutation_score():
     score_label, _, pvalue_label = cval.permutation_test_score(
         svm, X, y, scoring=scorer, cv=cv, labels=np.ones(y.size),
         random_state=0)
-    assert_almost_equal(score_label, .95, 2)
+    assert_almost_equal(score_label, .97, 2)
     assert_almost_equal(pvalue_label, 0.01, 3)
 
     # check that we obtain the same results with a sparse representation
@@ -470,14 +618,14 @@ def test_permutation_score():
                                                         scoring="accuracy")
 
     assert_less(score, 0.5)
-    assert_greater(pvalue, 0.4)
+    assert_greater(pvalue, 0.2)
 
     # test with deprecated interface
     with warnings.catch_warnings(record=True):
         score, scores, pvalue = cval.permutation_test_score(
             svm, X, y, score_func=accuracy_score, cv=cv)
     assert_less(score, 0.5)
-    assert_greater(pvalue, 0.4)
+    assert_greater(pvalue, 0.2)
 
 
 def test_cross_val_generator_with_mask():
