@@ -1,7 +1,7 @@
 import sys
+import re
 
 import numpy as np
-
 from numpy.testing import assert_almost_equal, assert_array_equal
 
 from sklearn.datasets import load_digits
@@ -120,4 +120,25 @@ def test_rbm_verbose():
     try:
         rbm.fit(Xdigits)
     finally:
+        sys.stdout = old_stdout
+
+
+def test_sparse_and_verbose():
+    """
+    Make sure RBM works with sparse input when verbose=True
+    """
+    old_stdout = sys.stdout
+    sys.stdout = StringIO()
+    from scipy.sparse import csc_matrix
+    X = csc_matrix([[0.], [1.]])
+    rbm = BernoulliRBM(n_components=2, batch_size=2, n_iter=1,
+                       random_state=42, verbose=True)
+    try:
+        rbm.fit(X)
+        s = sys.stdout.getvalue()
+        # make sure output is sound
+        assert(re.match(r"Iteration 0, pseudo-likelihood = -?(\d)+(\.\d+)?",
+                        s))
+    finally:
+        sio = sys.stdout
         sys.stdout = old_stdout
