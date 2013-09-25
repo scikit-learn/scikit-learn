@@ -443,7 +443,7 @@ def label_binarize(y, classes, neg_label=0, pos_label=1,
     elif y_type == "multilabel-sequences":
         row, col = [], []
         for i, label_sequence in enumerate(y):
-            c = np.searchsorted(sorted_classes, label_sequence)
+            c = np.searchsorted(sorted_class, label_sequence)
             col.extend(c)
 
             r = np.empty_like(c)
