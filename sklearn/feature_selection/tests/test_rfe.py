@@ -69,39 +69,35 @@ def test_rfecv():
     y = list(iris.target)   # regression test: list should be supported
 
     # Test using the score function
-    rfecv = RFECV(estimator=SVC(kernel="linear"), step=1, cv=3)
+    rfecv = RFECV(estimator=SVC(kernel="linear"), step=1, cv=5)
     rfecv.fit(X, y)
     # non-regression test for missing worst feature:
     assert_equal(len(rfecv.grid_scores_), X.shape[1])
     assert_equal(len(rfecv.ranking_), X.shape[1])
     X_r = rfecv.transform(X)
 
+    # All the noisy variable were filtered out
+    assert_array_equal(X_r, iris.data)
+
     # same in sparse
-    rfecv_sparse = RFECV(estimator=SVC(kernel="linear"), step=1, cv=3)
+    rfecv_sparse = RFECV(estimator=SVC(kernel="linear"), step=1, cv=5)
     X_sparse = sparse.csr_matrix(X)
     rfecv_sparse.fit(X_sparse, y)
     X_r_sparse = rfecv_sparse.transform(X_sparse)
-
-    assert_equal(X_r.shape, iris.data.shape)
-    assert_array_almost_equal(X_r[:10], iris.data[:10])
-    assert_array_almost_equal(X_r_sparse.toarray(), X_r)
+    assert_array_equal(X_r_sparse.toarray(), iris.data)
 
     # Test using a customized loss function
-    rfecv = RFECV(estimator=SVC(kernel="linear"), step=1, cv=3,
+    rfecv = RFECV(estimator=SVC(kernel="linear"), step=1, cv=5,
                   loss_func=zero_one_loss)
     with warnings.catch_warnings(record=True):
         rfecv.fit(X, y)
     X_r = rfecv.transform(X)
-
-    assert_equal(X_r.shape, iris.data.shape)
-    assert_array_almost_equal(X_r[:10], iris.data[:10])
+    assert_array_equal(X_r, iris.data)
 
     # Test using a scorer
     scorer = SCORERS['accuracy']
-    rfecv = RFECV(estimator=SVC(kernel="linear"), step=1, cv=3,
+    rfecv = RFECV(estimator=SVC(kernel="linear"), step=1, cv=5,
                   scoring=scorer)
     rfecv.fit(X, y)
     X_r = rfecv.transform(X)
-
-    assert_equal(X_r.shape, iris.data.shape)
-    assert_array_almost_equal(X_r[:10], iris.data[:10])
+    assert_array_equal(X_r, iris.data)

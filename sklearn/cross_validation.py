@@ -9,6 +9,7 @@ validation and performance evaluation.
 # License: BSD 3 clause
 
 from __future__ import print_function
+from __future__ import division
 
 import warnings
 from itertools import chain, combinations
@@ -375,21 +376,42 @@ class StratifiedKFold(_BaseKFold):
     def __init__(self, y, n_folds=3, indices=None):
         super(StratifiedKFold, self).__init__(len(y), n_folds, indices)
         y = np.asarray(y)
-        _, y_sorted = unique(y, return_inverse=True)
-        min_labels = np.min(np.bincount(y_sorted))
+        n_samples = y.shape[0]
+        unique_labels, y_inversed = unique(y, return_inverse=True)
+        label_counts = np.bincount(y_inversed)
+        min_labels = np.min(label_counts)
         if self.n_folds > min_labels:
             warnings.warn(("The least populated class in y has only %d"
                           " members, which is too few. The minimum"
                           " number of labels for any class cannot"
                           " be less than n_folds=%d."
                           % (min_labels, self.n_folds)), Warning)
+
+        # pre-assign each sample to a test fold index using individual KFold
+        # splitting strategies for each label so as to respect the
+        # balance of labels
+        per_label_cvs = [KFold(max(c, self.n_folds), self.n_folds)
+                         for c in label_counts]
+        test_folds = np.zeros(n_samples, dtype=np.int)
+        for test_fold_idx, per_label_splits in enumerate(zip(*per_label_cvs)):
+            for label, (_, test_split) in zip(unique_labels, per_label_splits):
+                label_test_folds = test_folds[y == label]
+                # the test split can be too big because we used
+                # KFold(max(c, self.n_folds), self.n_folds) instead of
+                # KFold(c, self.n_folds) to make it possible to not crash even
+                # if the data is not 100% stratifiable for all the labels
+                # (we use a warning instead of raising an exception)
+                # If this is the case, let's trim it:
+                test_split = test_split[test_split < len(label_test_folds)]
+                label_test_folds[test_split] = test_fold_idx
+                test_folds[y == label] = label_test_folds
+
+        self.test_folds = test_folds
         self.y = y
 
-    def _iter_test_indices(self):
-        n_folds = self.n_folds
-        idx = np.argsort(self.y)
-        for i in range(n_folds):
-            yield idx[i::n_folds]
+    def _iter_test_masks(self):
+        for i in range(self.n_folds):
+            yield self.test_folds == i
 
     def __repr__(self):
         return '%s.%s(labels=%s, n_folds=%i)' % (
