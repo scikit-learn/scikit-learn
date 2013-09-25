@@ -11,7 +11,7 @@ from itertools import chain
 
 import numpy as np
 
-from scipy.sparse import coo_matrix
+from scipy.sparse import coo_matrix, issparse
 from scipy.sparse.base import spmatrix
 
 from ..externals.six import string_types
