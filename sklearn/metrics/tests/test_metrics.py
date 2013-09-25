@@ -75,7 +75,7 @@ from sklearn.externals.six.moves import xrange
 # first a specific test for the given metric and then add a general test for
 # all metrics that have the same behavior.
 #
-# Two type of datastructures are used in order to implement this system:
+# Two types of datastructures are used in order to implement this system:
 # dictionaries of metrics and lists of metrics wit common properties.
 #
 # Dictionaries of metrics
@@ -88,10 +88,10 @@ from sklearn.externals.six.moves import xrange
 #     which compare a ground truth and the estimated targets as returned by a
 #     classifier.
 #   - THRESHOLDED_METRICS: all classification metrics which
-#     which compare a ground truth and a score, e.g. estimated probabilities or
+#     compare a ground truth and a score, e.g. estimated probabilities or
 #     decision function (format might vary)
 #
-# Those dictionaries will be use to test systematically some invariance
+# Those dictionaries will be used to test systematically some invariance
 # properties, e.g. invariance toward several input layout.
 #
 
@@ -164,26 +164,26 @@ ALL_METRICS.update(THRESHOLDED_METRICS)
 ALL_METRICS.update(CLASSIFICATION_METRICS)
 ALL_METRICS.update(REGRESSION_METRICS)
 
-# Lists of metrics wit common properties
-# --------------------------------------
-# Lists of metrics wit common properties are used to test systematically some
+# Lists of metrics with common properties
+# ---------------------------------------
+# Lists of metrics with common properties are used to test systematically some
 # functionalities and invariance, e.g. SYMMETRIC_METRICS lists all metrics that
 # are symmetric with respect to their input argument y_true and y_pred.
 #
-# When you add a new metric or functionalities, check if a general test
+# When you add a new metric or functionality, check if a general test
 # is already written.
 
-# Metrics with "average" argument
+# Metrics with an "average" argument
 METRICS_WITH_AVERAGING = [
     "precision_score", "recall_score", "f1_score", "f2_score", "f0.5_score"
 ]
 
-# Treshold-based metrics with "average" argument
+# Treshold-based metrics with an "average" argument
 THRESHOLDED_METRICS_WITH_AVERAGING = [
     "roc_auc_score", "average_precision_score",
 ]
 
-# Metrics with "pos_label" argument
+# Metrics with a "pos_label" argument
 METRICS_WITH_POS_LABEL = [
     "roc_curve",
 
@@ -199,7 +199,7 @@ METRICS_WITH_POS_LABEL = [
     "macro_precision_score", "macro_recall_score",
 ]
 
-# Metrics with "labels" argument
+# Metrics with a "labels" argument
 METRICS_WITH_LABELS = [
     "confusion_matrix",
 
@@ -215,7 +215,7 @@ METRICS_WITH_LABELS = [
     "macro_precision_score", "macro_recall_score",
 ]
 
-# Metrics with "normalize" option
+# Metrics with a "normalize" option
 METRICS_WITH_NORMALIZE_OPTION = [
     "accuracy_score",
     "jaccard_similarity_score",
@@ -232,7 +232,8 @@ THRESHOLDED_MULTILABEL_METRICS = [
     "macro_average_precision_score",
 ]
 
-# Classification metrics with multi-label format support
+# Classification metrics with  "multilabel-indicator" and
+# "multilabel-sequence" format support
 MULTILABELS_METRICS = [
     "accuracy_score", "unormalized_accuracy_score",
     "hamming_loss",
@@ -257,6 +258,7 @@ MULTIOUTPUT_METRICS = [
 ]
 
 # Symmetric with respect to their input arguments y_true and y_pred
+# metric(y_true, y_pred) == metric(y_pred, y_true).
 SYMMETRIC_METRICS = [
     "accuracy_score", "unormalized_accuracy_score",
     "hamming_loss",
@@ -270,6 +272,7 @@ SYMMETRIC_METRICS = [
 ]
 
 # Asymmetric with respect to their input arguments y_true and y_pred
+# metric(y_true, y_pred) != metric(y_pred, y_true).
 NOT_SYMMETRIC_METRICS = [
     "explained_variance_score",
     "r2_score",
@@ -2324,7 +2327,7 @@ def test_averaging_multilabel_all_zeroes():
         yield (check_averaging, name, y_true, y_true_binarize, y_pred,
                y_pred_binarize, y_score)
 
-    # Test _average_binary_score
+    # Test _average_binary_score for weight.sum() == 0
     binary_metric = (lambda y_true, y_score, average="macro":
         _average_binary_score(precision_score, y_true, y_score, average))
     _check_averaging(binary_metric, y_true, y_pred, y_true_binarize,
