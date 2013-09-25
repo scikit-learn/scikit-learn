@@ -39,7 +39,7 @@ TREE_LEAF = -1
 TREE_UNDEFINED = -2
 cdef SIZE_t _TREE_LEAF = TREE_LEAF
 cdef SIZE_t _TREE_UNDEFINED = TREE_UNDEFINED
-cdef double EPSILON_DBL = 0.0
+cdef double EPSILON_DBL = 1e-12
 cdef float EPSILON_FLT = 1e-7
 
 # =============================================================================
