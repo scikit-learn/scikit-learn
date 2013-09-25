@@ -39,7 +39,8 @@ TREE_LEAF = -1
 TREE_UNDEFINED = -2
 cdef SIZE_t _TREE_LEAF = TREE_LEAF
 cdef SIZE_t _TREE_UNDEFINED = TREE_UNDEFINED
-
+cdef double EPSILON_DBL = 0.0
+cdef float EPSILON_FLT = 1e-7
 
 # =============================================================================
 # Criterion
@@ -932,7 +933,7 @@ cdef class BestSplitter(Splitter):
             while p < end:
                 while ((p + 1 < end) and
                        (X[X_stride * samples[p + 1] + current_feature] <=
-                        X[X_stride * samples[p] + current_feature] + 1e-7)):
+                        X[X_stride * samples[p] + current_feature] + EPSILON_FLT)):
                     p += 1
 
                 # (p + 1 >= end) or (X[samples[p + 1], current_feature] >
@@ -952,7 +953,7 @@ cdef class BestSplitter(Splitter):
                     self.criterion.update(current_pos)
                     current_impurity = self.criterion.children_impurity()
 
-                    if current_impurity < (best_impurity - 1e-7):
+                    if current_impurity < (best_impurity - EPSILON_DBL):
                         best_impurity = current_impurity
                         best_pos = current_pos
                         best_feature = current_feature
@@ -1299,7 +1300,7 @@ cdef class PresortBestSplitter(Splitter):
             while p < end:
                 while ((p + 1 < end) and
                        (X[X_stride * samples[p + 1] + current_feature] <=
-                        X[X_stride * samples[p] + current_feature] + 1e-7)):
+                        X[X_stride * samples[p] + current_feature] + EPSILON_FLT)):
                     p += 1
 
                 # (p + 1 >= end) or (X[samples[p + 1], current_feature] >
@@ -1319,7 +1320,7 @@ cdef class PresortBestSplitter(Splitter):
                     self.criterion.update(current_pos)
                     current_impurity = self.criterion.children_impurity()
 
-                    if current_impurity < (best_impurity - 1e-7):
+                    if current_impurity < (best_impurity - EPSILON_DBL):
                         best_impurity = current_impurity
                         best_pos = current_pos
                         best_feature = current_feature
@@ -1740,7 +1741,7 @@ cdef class Tree:
                            (n_node_samples < 2 * self.min_samples_leaf))
 
                 splitter.node_reset(start, end, &impurity)
-                is_leaf = is_leaf or (impurity < 1e-7)
+                is_leaf = is_leaf or (impurity < EPSILON_FLT)
 
                 if not is_leaf:
                     splitter.node_split(&pos, &feature, &threshold)
