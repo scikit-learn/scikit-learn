@@ -1252,7 +1252,7 @@ cdef class PresortBestSplitter(Splitter):
 
         cdef SIZE_t max_features = self.max_features
         cdef SIZE_t min_samples_leaf = self.min_samples_leaf
-        cdef unsigned int* random_state = &self.rand_r_state
+        cdef UINT32_t* random_state = &self.rand_r_state
 
         cdef double best_impurity = INFINITY
         cdef SIZE_t best_pos = end
