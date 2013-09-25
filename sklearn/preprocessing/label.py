@@ -6,7 +6,7 @@
 
 import numpy as np
 
-from scipy.sparse import coo_matrix
+from scipy.sparse import coo_matrix, issparse
 
 from ..base import BaseEstimator, TransformerMixin
 
@@ -170,6 +170,11 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
     pos_label : int (default: 1)
         Value with which positive labels must be encoded.
 
+    dense_output : boolean (default: False)
+        If True, ensure that the output of label_binarize is a
+        dense numpy array even if the binarize matrix is sparse.
+        If False, the binarized data use a sparse representation.
+
     Attributes
     ----------
     `classes_` : array of shape [n_class]
@@ -207,12 +212,13 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         LabelBinarizer with fixed classes.
     """
 
-    def __init__(self, neg_label=0, pos_label=1):
+    def __init__(self, neg_label=0, pos_label=1, dense_output=True):
         if neg_label >= pos_label:
             raise ValueError("neg_label must be strictly less than pos_label.")
 
         self.neg_label = neg_label
         self.pos_label = pos_label
+        self.dense_output = dense_output
 
     @property
     @deprecated("Attribute `multilabel` was renamed to `multilabel_` in "
@@ -260,7 +266,7 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
 
         Returns
         -------
-        Y : numpy array of shape [n_samples, n_classes]
+        Y : numpy array or COO matrix of shape [n_samples, n_classes]
         """
         self._check_fitted()
 
@@ -271,9 +277,9 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
                              " input.")
 
         return label_binarize(y, self.classes_,
-                              multilabel=self.multilabel_,
                               pos_label=self.pos_label,
-                              neg_label=self.neg_label)
+                              neg_label=self.neg_label,
+                              dense_output=self.dense_output)
 
     def inverse_transform(self, Y, threshold=None):
         """Transform binary labels back to multi-class labels
@@ -315,13 +321,13 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
             threshold = self.neg_label + half
 
         if self.multilabel_:
-            if not(isinstance(Y, coo_matrix)):
+            if not(issparse(Y)):
                 Y = np.array(Y > threshold, dtype=int)
             # Return the predictions in the same format as in fit
             if self.indicator_matrix_:
                 # Label indicator matrix format
                 return Y
-            elif isinstance(Y, coo_matrix):
+            elif issparse(Y):
                 # Splitting and processing sparse matrix
                 y = []
                 for i in range(Y.shape[0]):
@@ -404,7 +410,7 @@ def label_binarize(y, classes, neg_label=0, pos_label=1,
         raise ValueError("neg_label cannot equal pos_label")
 
     y_type = type_of_target(y)
-    n_samples = len(y)
+    n_samples = y.shape[0] if issparse(y) else len(y)
     n_classes = len(classes)
     classes = np.asarray(classes)
     sorted_class = np.sort(classes)
