@@ -179,7 +179,7 @@ ALL_METRICS.update(REGRESSION_METRICS)
 # When you add a new metric or functionality, check if a general test
 # is already written.
 
-# Metric undefine with "binary" or "multiclass" input
+# Metric undefined with "binary" or "multiclass" input
 METRIC_UNDEFINED_MULTICLASS = [
     "samples_f0.5_score", "samples_f1_score", "samples_f2_score",
     "samples_precision_score", "samples_recall_score",
@@ -1377,6 +1377,8 @@ def test_format_invariance_with_1d_vectors():
     y2_row = np.reshape(y2_1d, (1, -1))
 
     for name, metric in ALL_METRICS.items():
+        if name in METRIC_UNDEFINED_MULTICLASS:
+            continue
 
         measure = metric(y1, y2)
 
@@ -1447,8 +1449,7 @@ def test_invariance_string_vs_numbers_labels():
     labels_str = ["eggs", "spam"]
 
     for name, metric in CLASSIFICATION_METRICS.items():
-        if isinstance(metric, partial) and 'labels' in metric.keywords:
-            # don't test metric if "labels" are already set
+        if name in METRIC_UNDEFINED_MULTICLASS:
             continue
 
         measure_with_number = metric(y1, y2)
