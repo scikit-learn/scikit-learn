@@ -217,7 +217,7 @@ def _has_blas_lib(libname):
 
 
 def test_k_means_plus_plus_init_2_jobs():
-    if _is_mac_os_version('10.7'):
+    if _is_mac_os_version('10.7') or _is_mac_os_version('10.8'):
         raise SkipTest('Multi-process bug in Mac OS X Lion (see issue #636)')
 
     if _has_blas_lib('openblas'):
