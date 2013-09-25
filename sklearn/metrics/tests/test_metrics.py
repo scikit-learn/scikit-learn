@@ -55,6 +55,7 @@ from sklearn.metrics import (accuracy_score,
                              zero_one_score,
                              zero_one_loss)
 
+from sklearn.metrics.metrics import _average_binary_score
 from sklearn.metrics.metrics import _check_clf_targets
 from sklearn.metrics.metrics import _check_reg_targets
 from sklearn.metrics.metrics import UndefinedMetricWarning
@@ -2323,6 +2324,11 @@ def test_averaging_multilabel_all_zeroes():
         yield (check_averaging, name, y_true, y_true_binarize, y_pred,
                y_pred_binarize, y_score)
 
+    # Test _average_binary_score
+    binary_metric = (lambda y_true, y_score, average="macro":
+        _average_binary_score(precision_score, y_true, y_score, average))
+    _check_averaging(binary_metric, y_true, y_pred, y_true_binarize,
+                     y_pred_binarize, is_multilabel=True)
 
 def test_averaging_multilabel_all_ones():
     y_true = np.ones((20, 3))
