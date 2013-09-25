@@ -139,6 +139,12 @@ CLASSIFICATION_METRICS = {
     "macro_f2_score": partial(fbeta_score, average="macro", beta=2),
     "macro_precision_score": partial(precision_score, average="macro"),
     "macro_recall_score": partial(recall_score, average="macro"),
+
+    "samples_f0.5_score": partial(fbeta_score, average="samples", beta=0.5),
+    "samples_f1_score": partial(f1_score, average="samples"),
+    "samples_f2_score": partial(fbeta_score, average="samples", beta=2),
+    "samples_precision_score": partial(precision_score, average="samples"),
+    "samples_recall_score": partial(recall_score, average="samples"),
 }
 
 THRESHOLDED_METRICS = {
@@ -172,6 +178,14 @@ ALL_METRICS.update(REGRESSION_METRICS)
 #
 # When you add a new metric or functionality, check if a general test
 # is already written.
+
+# Metric undefine with "binary" or "multiclass" input
+METRIC_UNDEFINED_MULTICLASS = [
+    "samples_f0.5_score", "samples_f1_score", "samples_f2_score",
+    "samples_precision_score", "samples_recall_score",
+
+    "samples_average_precision_score",  "samples_roc_auc",
+]
 
 # Metrics with an "average" argument
 METRICS_WITH_AVERAGING = [
@@ -250,6 +264,9 @@ MULTILABELS_METRICS = [
 
     "macro_f0.5_score", "macro_f1_score", "macro_f2_score",
     "macro_precision_score", "macro_recall_score",
+
+    "samples_f0.5_score", "samples_f1_score", "samples_f2_score",
+    "samples_precision_score", "samples_recall_score",
 ]
 
 # Regression metrics with "multioutput-continuous" format support
@@ -1290,20 +1307,58 @@ def test_symmetry():
     assert_almost_equal(f(zero_one_score)(y_true, y_pred),
                         f(zero_one_score)(y_pred, y_true))
 
-
 def test_sample_order_invariance():
     y_true, y_pred, _ = make_prediction(binary=True)
-
-    y_true_shuffle, y_pred_shuffle = shuffle(y_true, y_pred,
-                                             random_state=0)
+    y_true_shuffle, y_pred_shuffle = shuffle(y_true, y_pred, random_state=0)
 
     for name, metric in ALL_METRICS.items():
+        if name in METRIC_UNDEFINED_MULTICLASS:
+            continue
 
         assert_almost_equal(metric(y_true, y_pred),
                             metric(y_true_shuffle, y_pred_shuffle),
                             err_msg="%s is not sample order invariant"
                                     % name)
 
+
+def test_sample_order_invariance_multilabel_and_multioutput():
+    random_state = check_random_state(0)
+
+    # Generate some data
+    y_true = random_state.randint(0, 2, size=(20, 25))
+    y_pred = random_state.randint(0, 2, size=(20, 25))
+    y_score =random_state.normal(size=y_true.shape)
+
+    y_true_shuffle, y_pred_shuffle, y_score_shuffle = shuffle(y_true,
+                                                              y_pred,
+                                                              y_score,
+                                                              random_state=0)
+
+    for name in MULTILABELS_METRICS:
+        metric = ALL_METRICS[name]
+        assert_almost_equal(metric(y_true, y_pred),
+                            metric(y_true_shuffle, y_pred_shuffle),
+                            err_msg="%s is not sample order invariant"
+                                    % name)
+
+    for name in THRESHOLDED_MULTILABEL_METRICS:
+        metric = ALL_METRICS[name]
+        assert_almost_equal(metric(y_true, y_score),
+                            metric(y_true_shuffle, y_score_shuffle),
+                            err_msg="%s is not sample order invariant"
+                                    % name)
+
+
+    for name in MULTIOUTPUT_METRICS:
+        metric = ALL_METRICS[name]
+        assert_almost_equal(metric(y_true, y_score),
+                            metric(y_true_shuffle, y_score_shuffle),
+                            err_msg="%s is not sample order invariant"
+                                    % name)
+        assert_almost_equal(metric(y_true, y_pred),
+                            metric(y_true_shuffle, y_pred_shuffle),
+                            err_msg="%s is not sample order invariant"
+                                    % name)
 
 def test_format_invariance_with_1d_vectors():
     y1, y2, _ = make_prediction(binary=True)
