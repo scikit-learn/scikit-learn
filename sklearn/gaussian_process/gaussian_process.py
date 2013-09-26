@@ -487,7 +487,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                                          np.dot(self.Ft.T, rt) - f.T)
                 else:
                     # Ordinary Kriging
-                    u = np.zeros(y.shape).T
+                    u = np.zeros((n_targets, n_eval))
 
                 MSE = np.dot(self.sigma2.reshape(n_targets, 1), (1. -
                     (rt ** 2.).sum(axis=0) + (u ** 2.).sum(axis=0)
