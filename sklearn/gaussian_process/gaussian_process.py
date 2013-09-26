@@ -500,8 +500,6 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
                 if len(self.y_shape_) == 1:
                     MSE = MSE.ravel()
-                elif self.y_shape_ == (1, X.shape[0]):
-                    MSE = MSE.T
 
                 return y, MSE
 
