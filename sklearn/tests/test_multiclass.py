@@ -93,7 +93,7 @@ def test_ovr_multilabel():
 
         # test input as label indicator matrix
         clf = OneVsRestClassifier(base_clf).fit(X, Y)
-        y_pred = clf.predict([[0, 4, 4]])[0]
+        y_pred = clf.predict([[0, 4, 4]]).toarray()[0]
         assert_array_equal(y_pred, [0, 1, 1])
         assert_true(clf.multilabel_)
 

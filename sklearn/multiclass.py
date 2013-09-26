@@ -99,9 +99,9 @@ def predict_ovr(estimators, label_binarizer, X):
     """Make predictions using the one-vs-the-rest strategy."""
     e = estimators[0]
     thresh = 0 if hasattr(e, "decision_function") and is_classifier(e) else .5
-    Y = coo_matrix(_predict_binary(e, X))
+    Y = coo_matrix(_predict_binary(e, X) > thresh, dtype=int)
     for e in estimators[1:]:
-        row_pred = coo_matrix(_predict_binary(e, X) > thresh)
+        row_pred = coo_matrix(_predict_binary(e, X) > thresh, dtype=int)
         Y = vstack([Y, row_pred])
     return label_binarizer.inverse_transform(Y.T, threshold=thresh)
 

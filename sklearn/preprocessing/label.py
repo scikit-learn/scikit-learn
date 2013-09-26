@@ -340,7 +340,10 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
                         for i in range(Y.shape[0])]
 
         if len(Y.shape) == 1 or Y.shape[1] == 1:
-            y = np.array(Y.ravel() > threshold, dtype=int)
+            if issparse(Y):
+                y = np.array(Y.toarray().ravel() > threshold, dtype=int)
+            else:
+                y = np.array(Y.ravel() > threshold, dtype=int)
 
         else:
             if issparse(Y):
