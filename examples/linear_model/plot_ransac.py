@@ -43,7 +43,7 @@ model.fit(X, y)
 model_robust = linear_model.RANSAC(linear_model.LinearRegression())
 model_robust.fit(X, y)
 inlier_mask = model_robust.inlier_mask_
-outlier_mask = ~inlier_mask
+outlier_mask = np.logical_not(inlier_mask)
 
 # Generate coordinates of estimated models
 line_X = np.arange(-250, 250)
