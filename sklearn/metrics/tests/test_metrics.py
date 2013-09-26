@@ -80,7 +80,7 @@ from sklearn.externals.six.moves import xrange
 #
 # Dictionaries of metrics
 # ------------------------
-# The goal of having those dictionary is to have an easy way to call a
+# The goal of having those dictionaries is to have an easy way to call a
 # particular metric and associate a name to each function:
 #
 #   - REGRESSION_METRICS: all regression metrics.
