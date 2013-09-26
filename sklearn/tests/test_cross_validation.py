@@ -175,20 +175,20 @@ def test_kfold_indices():
 def test_kfold_no_shuffle():
     # Manually check that KFold preserves the data ordering on toy datasets
     splits = iter(cval.KFold(4, 2))
-    train, test = splits.next()
+    train, test = next(splits)
     assert_array_equal(test, [0, 1])
     assert_array_equal(train, [2, 3])
 
-    train, test = splits.next()
+    train, test = next(splits)
     assert_array_equal(test, [2, 3])
     assert_array_equal(train, [0, 1])
 
     splits = iter(cval.KFold(5, 2))
-    train, test = splits.next()
+    train, test = next(splits)
     assert_array_equal(test, [0, 1, 2])
     assert_array_equal(train, [3, 4])
 
-    train, test = splits.next()
+    train, test = next(splits)
     assert_array_equal(test, [3, 4])
     assert_array_equal(train, [0, 1, 2])
 
@@ -198,20 +198,20 @@ def test_stratified_kfold_no_shuffle():
     # as possible on toy datasets in order to avoid hiding sample dependencies
     # when possible
     splits = iter(cval.StratifiedKFold([1, 1, 0, 0], 2))
-    train, test = splits.next()
+    train, test = next(splits)
     assert_array_equal(test, [0, 2])
     assert_array_equal(train, [1, 3])
 
-    train, test = splits.next()
+    train, test = next(splits)
     assert_array_equal(test, [1, 3])
     assert_array_equal(train, [0, 2])
 
     splits = iter(cval.StratifiedKFold([1, 1, 1, 0, 0, 0, 0], 2))
-    train, test = splits.next()
+    train, test = next(splits)
     assert_array_equal(test, [0, 1, 3, 4])
     assert_array_equal(train, [2, 5, 6])
 
-    train, test = splits.next()
+    train, test = next(splits)
     assert_array_equal(test, [2, 5, 6])
     assert_array_equal(train, [0, 1, 3, 4])
 
