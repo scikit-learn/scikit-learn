@@ -164,6 +164,11 @@ class RANSAC(BaseEstimator):
 
         random_state = check_random_state(self.random_state)
 
+        try:  # Not all estimator accept a random_state
+            base_estimator.set_params(random_state=random_state)
+        except ValueError:
+            pass
+
         best_n_inliers = 0
         best_score = np.inf
         best_inlier_mask = None
