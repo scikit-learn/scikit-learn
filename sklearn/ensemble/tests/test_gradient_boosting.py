@@ -723,3 +723,27 @@ def test_partial_fit_oob():
 
         assert_array_almost_equal(est_partial.oob_improvement_[:100],
                                   est.oob_improvement_[:100])
+
+
+def early_stopping_monitor(i, est, locals):
+    """Returns True on the 10th iteration. """
+    print 'i', i
+    if i == 9:
+        return True
+    else:
+        return False
+
+def test_monitor_early_stopping():
+    """Test if monitor return value works. """
+    X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
+
+    for cls in [GradientBoostingRegressor, GradientBoostingClassifier]:
+        est = cls(n_estimators=20, max_depth=1, random_state=1)
+        _ = est.fit(X, y, monitor=early_stopping_monitor)
+        assert_equal(est.n_estimators, 10)
+        assert_equal(est.estimators_.shape[0], 10)
+
+        est = cls(n_estimators=20, max_depth=1, random_state=1)
+        _ = est.partial_fit(X, y, monitor=early_stopping_monitor)
+        assert_equal(est.n_estimators, 10)
+        assert_equal(est.estimators_.shape[0], 10)

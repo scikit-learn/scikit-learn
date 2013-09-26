@@ -490,8 +490,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
     @abstractmethod
     def __init__(self, loss, learning_rate, n_estimators, min_samples_split,
                  min_samples_leaf, max_depth, init, subsample, max_features,
-                 random_state, alpha=0.9, verbose=0,
-                 callback=None):
+                 random_state, alpha=0.9, verbose=0):
 
         self.n_estimators = n_estimators
         self.learning_rate = learning_rate
@@ -505,7 +504,6 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         self.random_state = random_state
         self.alpha = alpha
         self.verbose = verbose
-        self.callback = callback
 
         self.estimators_ = np.empty((0, 0), dtype=np.object)
 
@@ -663,7 +661,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
     def _is_initialized(self):
         return len(getattr(self, 'estimators_', [])) > 0
 
-    def fit(self, X, y):
+    def fit(self, X, y, monitor=None):
         """Fit the gradient boosting model.
 
         Parameters
@@ -678,15 +676,24 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             For classification, labels must correspond to classes
             ``0, 1, ..., n_classes_-1``
 
+        monitor : callable, optional
+            The monitor is called after each iteration with the current
+            iteration, a reference to the estimator and the local variables
+            of xx as keyword arguments ``callable(i, self, locals())``.
+            If the callable returns ``True`` the fitting procedure is stopped.
+            The monitor can be used for various things such as computing
+            held-out estimates, early stopping, model introspect,
+            and snapshoting.
+
         Returns
         -------
         self : object
             Returns self.
         """
         self._clear_state()
-        return self.partial_fit(X, y)
+        return self.partial_fit(X, y, monitor)
 
-    def partial_fit(self, X, y):
+    def partial_fit(self, X, y, monitor=None):
         """Partial fit the gradient boosting model.
 
         If the model has already been fitted it will add ``n_estimators``
@@ -702,7 +709,16 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             Target values (integers in classification, real numbers in
             regression)
             For classification, labels must correspond to classes
-            ``0, 1, ..., n_classes_-1``
+            ``0, 1, ..., n_classes_-1``.
+
+        monitor : callable, optional
+            The monitor is called after each iteration with the current
+            iteration, a reference to the estimator and the local variables
+            of xx as keyword arguments ``callable(i, self, locals())``.
+            If the callable returns ``True`` the fitting procedure is stopped.
+            The monitor can be used for various things such as computing
+            held-out estimates, early stopping, model introspect,
+            and snapshoting.
 
         Returns
         -------
@@ -735,12 +751,23 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             self._resize_state()
 
         # fit the boosting stages
-        self._fit_stages(X, y, y_pred, random_state, begin_at_stage)
+        n_stages = self._fit_stages(X, y, y_pred, random_state,
+                                    begin_at_stage, monitor)
         # change n_estimators after fit (early-stopping or additional ests)
-        self.n_estimators = self.estimators_.shape[0]
+        if n_stages != self.n_estimators:
+            self.estimators_ = self.estimators_[:n_stages]
+            self.n_estimators = n_stages
         return self
 
-    def _fit_stages(self, X, y, y_pred, random_state, begin_at_stage=0):
+    def _fit_stages(self, X, y, y_pred, random_state, begin_at_stage=0,
+                    monitor=None):
+        """Iteratively fits the stages.
+
+        For each stage it computes the progress (OOB, train score)
+        and delegates to ``_fit_stage``.
+        Returns the number of stages fit; might differ from ``n_estimators``
+        due to early stopping.
+        """
         n_samples = X.shape[0]
         do_oob = self.subsample < 1.0
         sample_mask = np.ones((n_samples,), dtype=np.bool)
@@ -786,6 +813,12 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
 
             if self.verbose > 0:
                 verbose_reporter.update(i, self)
+
+            if monitor is not None:
+                early_stopping = monitor(i, self, locals())
+                if early_stopping:
+                    break
+        return i + 1
 
     def _make_estimator(self, append=True):
         # we don't need _make_estimator
@@ -1010,7 +1043,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
             min_samples_leaf, max_depth, init, subsample, max_features,
             random_state, verbose=verbose)
 
-    def fit(self, X, y):
+    def fit(self, X, y, monitor=None):
         """Fit the gradient boosting model.
 
         Parameters
@@ -1023,16 +1056,25 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
             Target values (integers in classification, real numbers in
             regression)
             For classification, labels must correspond to classes
-            ``0, 1, ..., n_classes_-1``
+            ``0, 1, ..., n_classes_-1``.
+
+        monitor : callable, optional
+            The monitor is called after each iteration with the current
+            iteration, a reference to the estimator and the local variables
+            of xx as keyword arguments ``callable(i, self, locals())``.
+            If the callable returns ``True`` the fitting procedure is stopped.
+            The monitor can be used for various things such as computing
+            held-out estimates, early stopping, model introspect,
+            and snapshoting.
 
         Returns
         -------
         self : object
             Returns self.
         """
-        return super(GradientBoostingClassifier, self).fit(X, y)
+        return super(GradientBoostingClassifier, self).fit(X, y, monitor)
 
-    def partial_fit(self, X, y):
+    def partial_fit(self, X, y, monitor=None):
         """Partial fit the gradient boosting model.
 
         If the model has already been fitted it will add ``n_estimators``
@@ -1048,7 +1090,16 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
             Target values (integers in classification, real numbers in
             regression)
             For classification, labels must correspond to classes
-            ``0, 1, ..., n_classes_-1``
+            ``0, 1, ..., n_classes_-1``.
+
+        monitor : callable, optional
+            The monitor is called after each iteration with the current
+            iteration, a reference to the estimator and the local variables
+            of xx as keyword arguments ``callable(i, self, locals())``.
+            If the callable returns ``True`` the fitting procedure is stopped.
+            The monitor can be used for various things such as computing
+            held-out estimates, early stopping, model introspect,
+            and snapshoting.
 
         Returns
         -------
@@ -1059,7 +1110,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         self.classes_, y = unique(y, return_inverse=True)
         self.n_classes_ = len(self.classes_)
 
-        return super(GradientBoostingClassifier, self).partial_fit(X, y)
+        return super(GradientBoostingClassifier, self).partial_fit(X, y, monitor)
 
     def _score_to_proba(self, score):
         """Compute class probability estimates from decision scores. """
@@ -1276,7 +1327,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
             min_samples_leaf, max_depth, init, subsample, max_features,
             random_state, alpha, verbose)
 
-    def fit(self, X, y):
+    def fit(self, X, y, monitor=None):
         """Fit the gradient boosting model.
 
         Parameters
@@ -1289,16 +1340,25 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
             Target values (integers in classification, real numbers in
             regression)
             For classification, labels must correspond to classes
-            ``0, 1, ..., n_classes_-1``
+            ``0, 1, ..., n_classes_-1``.
+
+        monitor : callable, optional
+            The monitor is called after each iteration with the current
+            iteration, a reference to the estimator and the local variables
+            of xx as keyword arguments ``callable(i, self, locals())``.
+            If the callable returns ``True`` the fitting procedure is stopped.
+            The monitor can be used for various things such as computing
+            held-out estimates, early stopping, model introspect,
+            and snapshoting.
 
         Returns
         -------
         self : object
             Returns self.
         """
-        return super(GradientBoostingRegressor, self).fit(X, y)
+        return super(GradientBoostingRegressor, self).fit(X, y, monitor)
 
-    def partial_fit(self, X, y):
+    def partial_fit(self, X, y, monitor=None):
         """Partial fit the gradient boosting model.
 
         If the model has already been fitted it will add ``n_estimators``
@@ -1314,7 +1374,16 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
             Target values (integers in classification, real numbers in
             regression)
             For classification, labels must correspond to classes
-            ``0, 1, ..., n_classes_-1``
+            ``0, 1, ..., n_classes_-1``.
+
+        monitor : callable, optional
+            The monitor is called after each iteration with the current
+            iteration, a reference to the estimator and the local variables
+            of xx as keyword arguments ``callable(i, self, locals())``.
+            If the callable returns ``True`` the fitting procedure is stopped.
+            The monitor can be used for various things such as computing
+            held-out estimates, early stopping, model introspect,
+            and snapshoting.
 
         Returns
         -------
@@ -1322,7 +1391,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
             Returns self.
         """
         self.n_classes_ = 1
-        return super(GradientBoostingRegressor, self).partial_fit(X, y)
+        return super(GradientBoostingRegressor, self).partial_fit(X, y, monitor)
 
     def predict(self, X):
         """Predict regression target for X.
