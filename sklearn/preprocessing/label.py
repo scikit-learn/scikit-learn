@@ -170,7 +170,7 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
     pos_label : int (default: 1)
         Value with which positive labels must be encoded.
 
-    dense_output : boolean (default: False)
+    dense_output : boolean (default: True)
         If True, ensure that the output of label_binarize is a
         dense numpy array even if the binarize matrix is sparse.
         If False, the binarized data use a sparse representation.
@@ -212,7 +212,7 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         LabelBinarizer with fixed classes.
     """
 
-    def __init__(self, neg_label=0, pos_label=1, dense_output=True):
+    def __init__(self, neg_label=0, pos_label=1, dense_output=False):
         if neg_label >= pos_label:
             raise ValueError("neg_label must be strictly less than pos_label.")
 
@@ -406,8 +406,14 @@ def label_binarize(y, classes, neg_label=0, pos_label=1,
     label_binarize : function to perform the transform operation of
         LabelBinarizer with fixed classes.
     """
+    # To account for pos_label==0
+    pos_switch = False
+
     if pos_label == neg_label:
         raise ValueError("neg_label cannot equal pos_label")
+    elif pos_label == 0:
+        pos_label = -neg_label 
+        pos_switch = True
 
     y_type = type_of_target(y)
     n_samples = y.shape[0] if issparse(y) else len(y)
@@ -468,6 +474,9 @@ def label_binarize(y, classes, neg_label=0, pos_label=1,
 
     if neg_label != 0:
         Y[Y == 0] = neg_label
+
+    if pos_switch:
+        Y[Y == pos_label] = 0
 
     # preserve label ordering
     if np.any(classes != sorted_class):
