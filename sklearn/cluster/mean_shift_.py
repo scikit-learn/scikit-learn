@@ -11,7 +11,6 @@ from ..externals import six
 from ..utils import extmath, check_random_state
 from ..base import BaseEstimator, ClusterMixin
 from ..neighbors import NearestNeighbors
-from ..metrics.pairwise import euclidean_distances
 from ..metrics.pairwise import pairwise_distances_argmin
 
 
