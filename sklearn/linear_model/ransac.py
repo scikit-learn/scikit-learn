@@ -46,8 +46,8 @@ class RANSAC(BaseEstimator):
 
     residual_threshold : float, optional
         Maximum residual for a data sample to be classified as an inlier.
-        By default the threshold is chosen as the standard deviation of the
-        target values `y`.
+        By default the threshold is chosen as the MAD (median absolute
+        deviation) of the target values `y`.
 
     is_data_valid : callable, optional
         This function is called with the randomly selected data before the
@@ -153,7 +153,8 @@ class RANSAC(BaseEstimator):
                              "positive.")
 
         if self.residual_threshold is None:
-            residual_threshold = y.std()
+            # MAD (median absolute deviation)
+            residual_threshold = np.median(np.abs(y - np.median(y)))
         else:
             residual_threshold = self.residual_threshold
 
