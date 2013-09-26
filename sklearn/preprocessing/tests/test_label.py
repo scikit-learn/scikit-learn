@@ -149,16 +149,21 @@ def test_label_binarizer_multilabel():
                  [set(x) for x in inp])
 
 def test_label_binarizer_sparse_rep():
-        # TODO !!!
+    # TODO !!!
+    y = ["spam", "eggs", "ham"]
+    pos_label = 2
+    neg_label = 0
+    dense_output = False
+    expected = np.array([[0, 0, 2],
+                        [2, 0, 0],
+                        [0, 2, 0]])
 
-
-        lb = LabelBinarizer(neg_label=neg_label, pos_label=pos_label,
-                            dense_output=dense_output)
-        output = lb.fit_transform(y)
-        assert_array_equal(toarray(output), expected)
-        inverse_output = lb.inverse_transform(output)
-        assert_array_equal(toarray(inverse_output), y)
-
+    lb = LabelBinarizer(neg_label=neg_label, pos_label=pos_label,
+                        dense_output=dense_output)
+    output = lb.fit_transform(y)
+    assert_array_equal(toarray(output), expected)
+    inverse_output = lb.inverse_transform(output)
+    assert_array_equal(toarray(inverse_output), y)
 
 def test_label_binarizer_errors():
     """Check that invalid arguments yield ValueError"""
@@ -268,8 +273,6 @@ def test_label_binarize_with_multilabel_indicator():
     output = lb.fit(y).transform(y)
     assert_array_equal(output, expected)
 
-############
-
 def test_label_binarize_with_class_order():
     out = label_binarize([1, 6], classes=[1, 2, 4, 6])
     expected = np.array([[1, 0, 0, 0], [0, 0, 0, 1]])
@@ -326,7 +329,8 @@ def test_label_binarize_dense_output_multilabel():
                   pos_label=pos_label, dense_output=False)
 
 def test_label_binarize_errors():
-    y = [1,2,3,1]
-    classes = [0,1,2,3]
+    y = [1, 2, 3, 1]
+    classes = [0, 1, 2, 3]
     assert_raises(ValueError, label_binarize, y, classes, neg_label=1,
                   pos_label=1)
+    

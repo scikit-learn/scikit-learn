@@ -212,7 +212,7 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         LabelBinarizer with fixed classes.
     """
 
-    def __init__(self, neg_label=0, pos_label=1, dense_output=False):
+    def __init__(self, neg_label=0, pos_label=1, dense_output=True):
         if neg_label >= pos_label:
             raise ValueError("neg_label must be strictly less than pos_label.")
 
@@ -343,6 +343,8 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
             y = np.array(Y.ravel() > threshold, dtype=int)
 
         else:
+            if issparse(Y):
+                Y = Y.toarray()
             y = Y.argmax(axis=1)
 
         return self.classes_[y]
