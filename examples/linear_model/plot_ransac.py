@@ -10,7 +10,7 @@ the RANSAC algorithm.
 import numpy as np
 from matplotlib import pyplot as plt
 
-from sklearn import linear_model
+from sklearn import linear_model, ensemble
 
 
 # Set random seed for both equal data noise and equal random sample selection
@@ -40,21 +40,27 @@ model = linear_model.LinearRegression()
 model.fit(X, y)
 
 # Robustly fit linear model with RANSAC algorithm
-model_robust = linear_model.RANSAC(linear_model.LinearRegression())
-model_robust.fit(X, y)
-inlier_mask = model_robust.inlier_mask_
+model_ransac = linear_model.RANSAC(linear_model.LinearRegression())
+model_ransac.fit(X, y)
+inlier_mask = model_ransac.inlier_mask_
 outlier_mask = np.logical_not(inlier_mask)
+
+# Robustly fit linear model with bagged linear regressor
+model_bagged = ensemble.BaggingRegressor(linear_model.LinearRegression())
+model_bagged.fit(X, y)
 
 # Generate coordinates of estimated models
 line_X = np.arange(-250, 250)
 line_y = model.predict(line_X[:, np.newaxis])
-line_y_robust = model_robust.predict(line_X[:, np.newaxis])
+line_y_ransac = model_ransac.predict(line_X[:, np.newaxis])
+line_y_bagged = model_bagged.predict(line_X[:, np.newaxis])
 
 plt.plot(data[inlier_mask, 0], data[inlier_mask, 1], '.g',
-         label='Inlier data')
+         label='RANSAC inliers')
 plt.plot(data[outlier_mask, 0], data[outlier_mask, 1], '.r',
-         label='Outlier data')
-plt.plot(line_X, line_y, '-k', label='Linear model from all data')
-plt.plot(line_X, line_y_robust, '-b', label='Robustly fitted linear model')
+         label='RANSAC outliers')
+plt.plot(line_X, line_y, '-k', label='Linear regressor')
+plt.plot(line_X, line_y_ransac, '-b', label='RANSAC regressor')
+plt.plot(line_X, line_y_bagged, '-y', label='Bagging regressor')
 plt.legend(loc='lower left')
 plt.show()
