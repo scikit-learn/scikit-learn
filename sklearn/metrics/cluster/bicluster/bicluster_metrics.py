@@ -1,19 +1,29 @@
 from __future__ import division
 
+import warnings
+
 import numpy as np
 
+from sklearn.metrics.metrics import UndefinedMetricWarning
 from sklearn.utils.linear_assignment_ import linear_assignment
 from sklearn.utils.validation import check_arrays
 
 
-def _replace_nan(f):
-    """Transforms function's nan return value to 0."""
-    # ensures that biclusters with no rows/columns have 0 similarity
-    # with everything.
-    def new_f(*args, **kwargs):
-        result = f(*args, **kwargs)
-        return 0 if np.isnan(result) else result
-    return new_f
+def _divide(numerator, denominator, metric):
+    """Performs division and handles divide-by-zero.
+
+    On zero-division, returns 0 and raises a warning.
+
+    The metric argument is used only for determining an appropriate
+    warning.
+
+    """
+    if denominator != 0:
+        return numerator / denominator
+
+    msg = '{0} is ill-defined and being set to 0.0'.format(metric)
+    warnings.warn(msg, UndefinedMetricWarning, stacklevel=2)
+    return 0
 
 
 def _check_rows_and_columns(a, b):
@@ -37,51 +47,52 @@ def _size(rows, cols):
     return rows.sum() * cols.sum()
 
 
-@_replace_nan
 def _precision(a_rows, a_cols, b_rows, b_cols):
     """Precision, assuming 'a' is expected bicluster."""
     num = _intersection(a_rows, a_cols, b_rows, b_cols)
     denom = _size(a_rows, a_cols)
-    return num / denom
+    return _divide(num, denom, 'precision')
 
 
-@_replace_nan
 def _recall(a_rows, a_cols, b_rows, b_cols):
     """Recall, assuming 'a' is expected bicluster."""
     num = _intersection(a_rows, a_cols, b_rows, b_cols)
     denom = _size(b_rows, b_cols)
-    return num / denom
+    return _divide(num, denom, 'recall')
 
 
-@_replace_nan
 def _precision_corrected(a_rows, a_cols, b_rows, b_cols, dsize):
     """Precision corrected for size bias."""
     p = _precision(a_rows, a_cols, b_rows, b_cols)
     asize = _size(a_rows, a_cols)
-    return (dsize * p - asize) / (dsize - asize)
+    num = dsize * p - asize
+    denom = dsize - asize
+    return _divide(num, denom, 'corrected precision')
 
 
-@_replace_nan
 def _recall_corrected(a_rows, a_cols, b_rows, b_cols, dsize):
     """Recall corrected for size bias."""
     r = _recall(a_rows, a_cols, b_rows, b_cols)
     bsize = _size(b_rows, b_cols)
-    return (dsize * r - bsize) / (dsize - bsize)
+    num = dsize * r - bsize
+    denom = dsize - bsize
+    return _divide(num, denom, 'corrected recall')
 
 
-@_replace_nan
 def _jaccard(precision, recall):
     """Jaccard coefficient"""
-    return (precision * recall) / (precision + recall - precision * recall)
+    num = precision * recall
+    denom = precision + recall - precision * recall
+    return _divide(num, denom, 'jaccard coefficient')
 
 
-@_replace_nan
 def _dice(precision, recall):
     """Dice measure. Same as the traditional balanced F-score."""
-    return 2 * precision * recall / (precision + recall)
+    num = 2 * precision * recall
+    denom = precision + recall
+    return _divide(num, denom, 'jaccard coefficient')
 
 
-@_replace_nan
 def _goodness(precision, recall):
     """Goodness measure. Mean of precision and recall."""
     return (precision + recall) / 2.0
