@@ -161,20 +161,21 @@ def consensus_score(a, b, similarity="jaccard", correction=None):
         Another set of biclusters like ``a``.
 
     similarity : string or function, optional, default: "jaccard"
-        May be the strings "jaccard", "dice", or "goodness", or
-        any function that takes four arguments, each of which is a 1d
-        indicator vector: (a_rows, a_columns, b_rows, b_columns).
+        May be the one of the strings "jaccard", "dice", or
+        "goodness", or any function that takes four arguments, each of
+        which is a 1d indicator vector: (a_rows, a_columns, b_rows,
+        b_columns).
 
     correction : int or None, optional, default: None
-        If provided, this should be data.size. Used to correct for
-        bicluster size bias, as described in Hanczar, et. al (2013).
+        If provided, this should be ``data.size``. Used to correct for
+        bicluster size bias, as described in Hanczar, et al. (2013).
         If this is used, bicluster similarities may be less than 0, to
         indicate that they are worse than random chance.
 
     References
     ----------
 
-    * Hochreiter, Bodenhofer, et. al., 2010. `FABIA: factor analysis
+    * Hochreiter, Bodenhofer, et al., 2010. `FABIA: factor analysis
       for bicluster acquisition
       <https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2881408/>`__.
 
@@ -193,7 +194,7 @@ def consensus_score(a, b, similarity="jaccard", correction=None):
 def match_score(expected, found, similarity="jaccard", correction=None):
     """The recovery and relevance scores for a set of biclusters.
 
-    Defined in Prelic, et. al. (2006) as the gene match score.
+    Defined in Prelic, et al. (2006) as the gene match score.
 
     For sets of biclusters :math:`A` and :math:`B` and any bicluster
     similarity score :math:`s(a, b)`, the match score is defined as:
@@ -221,15 +222,20 @@ def match_score(expected, found, similarity="jaccard", correction=None):
         indicator vector: (a_rows, a_columns, b_rows, b_columns).
 
     correction : int or None, optional, default: None
-        If provided, this should be data.size. Used to correct for
-        bicluster size bias, as described in Hanczar, et. al (2013).
+        If provided, this should be ``data.size``. Used to correct for
+        bicluster size bias, as described in Hanczar, et al. (2013).
         If this is used, bicluster similarities may be less than 0, to
         indicate that they are worse than random chance.
 
     Returns
     -------
-    (recovery, relevance): tuple
-        Tuple of floats between 0 and 1.
+    recovery: double
+        Recovery score, between 0 and 1. If ``correction == True``,
+        between -1 and 1.
+
+    relevance: double
+        Relevance score, between 0 and 1. If ``correction == True``,
+        between -1 and 1.
 
     References
     ----------
