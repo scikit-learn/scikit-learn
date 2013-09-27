@@ -127,8 +127,38 @@ def test_ransac_predict():
     assert_equal(ransac_estimator.predict(X), np.zeros((100, 1)))
 
 
-def test_ransac_sparse():
+def test_ransac_sparse_coo():
     X_sparse = sparse.coo_matrix(X)
+
+    base_estimator = linear_model.LinearRegression()
+    ransac_estimator = linear_model.RANSAC(base_estimator, 2, 5,
+                                           random_state=0)
+    ransac_estimator.fit(X_sparse, y)
+
+    ref_inlier_mask = np.ones_like(ransac_estimator.inlier_mask_,
+                                   dtype=np.bool_)
+    ref_inlier_mask[outliers] = False
+
+    assert_equal(ransac_estimator.inlier_mask_, ref_inlier_mask)
+
+
+def test_ransac_sparse_csr():
+    X_sparse = sparse.csr_matrix(X)
+
+    base_estimator = linear_model.LinearRegression()
+    ransac_estimator = linear_model.RANSAC(base_estimator, 2, 5,
+                                           random_state=0)
+    ransac_estimator.fit(X_sparse, y)
+
+    ref_inlier_mask = np.ones_like(ransac_estimator.inlier_mask_,
+                                   dtype=np.bool_)
+    ref_inlier_mask[outliers] = False
+
+    assert_equal(ransac_estimator.inlier_mask_, ref_inlier_mask)
+
+
+def test_ransac_sparse_csc():
+    X_sparse = sparse.csc_matrix(X)
 
     base_estimator = linear_model.LinearRegression()
     ransac_estimator = linear_model.RANSAC(base_estimator, 2, 5,
