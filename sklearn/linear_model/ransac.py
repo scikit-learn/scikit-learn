@@ -89,7 +89,8 @@ class RANSAC(BaseEstimator, MetaEstimatorMixin):
         Best fitted model (copy of the `base_estimator` object).
 
     n_trials_ : int
-        Number of random selection trials.
+        Number of random selection trials until one of the stop criteria is
+        met. It is always ``<= max_trials``.
 
     inlier_mask_ : bool array of shape [n_samples]
         Boolean mask of inliers classified as ``True``.
@@ -189,7 +190,7 @@ class RANSAC(BaseEstimator, MetaEstimatorMixin):
         if y.ndim == 1:
             y = y[:, None]
 
-        for n_trials in range(self.max_trials):
+        for self.n_trials_ in range(1, self.max_trials + 1):
 
             # choose random sample set
             random_idxs = random_state.randint(0, n_samples, min_n_samples)
@@ -259,7 +260,6 @@ class RANSAC(BaseEstimator, MetaEstimatorMixin):
         base_estimator.fit(best_inlier_X, best_inlier_y)
 
         self.estimator_ = base_estimator
-        self.n_trials_ = n_trials + 1
         self.inlier_mask_ = best_inlier_mask
 
     def predict(self, X):
