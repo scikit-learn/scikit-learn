@@ -761,10 +761,16 @@ Each iteration performs the following steps:
    maximal. In case the current estimated model has the same number of
    inliers, it is only considered as the best model if it has better score.
 
-These steps are performed either a maximum number of times (`max_trials`)
-or until one of the special stop criteria are met (see `stop_n_inliers` and
-`stop_score`). The final model is estimated using all inlier samples of the
-previously determined best model.
+These steps are performed either a maximum number of times (`max_trials`) or
+until one of the special stop criteria are met (see `stop_n_inliers` and
+`stop_score`). The final model is estimated using all inlier samples (consensus
+set) of the previously determined best model.
+
+The `is_data_valid` and `is_model_valid` functions allow to identify and reject
+degenerate random sub-samples. If the estimated model is not needed for
+identifying degenerate cases, `is_data_valid` should be used as it is called
+prior to fitting the model and thus leading to better computational
+performance.
 
 
 .. topic:: Examples:
