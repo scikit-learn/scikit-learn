@@ -189,7 +189,7 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
     >>> from sklearn import preprocessing
     >>> lb = preprocessing.LabelBinarizer()
     >>> lb.fit([1, 2, 6, 4, 2])
-    LabelBinarizer(neg_label=0, pos_label=1)
+    LabelBinarizer(dense_output=True, neg_label=0, pos_label=1)
     >>> lb.classes_
     array([1, 2, 4, 6])
     >>> lb.multilabel_
