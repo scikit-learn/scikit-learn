@@ -274,7 +274,7 @@ class RANSAC(BaseEstimator, MetaEstimatorMixin):
 
         Returns
         -------
-        C : array, shape = [n_samples]
+        y : array, shape = [n_samples] or [n_samples, n_targets]
             Returns predicted values.
         """
         return self.estimator_.predict(X)
