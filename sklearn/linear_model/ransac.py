@@ -27,7 +27,10 @@ class RANSAC(BaseEstimator):
         Base estimator object which implements the following methods:
 
          * `fit(X, y)`: Fit model to given training data and target values.
-         * `score(X)`: Returns the mean accuracy on the given test data.
+         * `score(X)`: Returns the mean accuracy on the given test data, which
+           is used for the stop criterion defined by `stop_score`.
+           Additionally, the score is used to decide which of two equally
+           large consensus sets is chosen as the better one.
 
         If no base estimator is specified, by default
         ``sklearn.linear_model.LinearRegression`` is used for target values of
