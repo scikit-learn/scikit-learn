@@ -26,7 +26,7 @@ class RANSAC(BaseEstimator):
     base_estimator : object, optional
         Base estimator object which implements the following methods:
 
-         * `fit(X, y)`: Fit model to given  training data and target values.
+         * `fit(X, y)`: Fit model to given training data and target values.
          * `score(X)`: Returns the mean accuracy on the given test data.
 
         If no base estimator is specified, by default
