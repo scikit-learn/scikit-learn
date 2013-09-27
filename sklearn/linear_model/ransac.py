@@ -289,7 +289,7 @@ class RANSAC(BaseEstimator, MetaEstimatorMixin):
         X : numpy array or sparse matrix of shape [n_samples, n_features]
             Training data.
 
-        y : numpy array of shape [n_samples, n_targets]
+        y : array, shape = [n_samples] or [n_samples, n_targets]
             Target values.
 
         Returns
