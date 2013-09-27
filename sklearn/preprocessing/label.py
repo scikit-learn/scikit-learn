@@ -323,21 +323,27 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         if self.multilabel_:
             if not(issparse(Y)):
                 Y = np.array(Y > threshold, dtype=int)
-            # Return the predictions in the same format as in fit
-            if self.indicator_matrix_:
+                # Return the predictions in the same format as in fit
+                if self.indicator_matrix_:
                 # Label indicator matrix format
-                return Y
-            elif issparse(Y):
+                    return Y
+                else:
+                    # Lists of tuples format
+                    return [tuple(self.classes_[np.flatnonzero(Y[i])])
+                            for i in range(Y.shape[0])]
+
+            if issparse(Y):
                 # Splitting and processing sparse matrix
-                y = []
-                for i in range(Y.shape[0]):
-                    r_split = np.array(Y.getrow(i).todense())
-                    y.append(tuple(self.classes_[np.flatnonzero(r_split)]))
-                return y
-            else:
-                # Lists of tuples format
-                return [tuple(self.classes_[np.flatnonzero(Y[i])])
-                        for i in range(Y.shape[0])]
+                if self.indicator_matrix_:
+                    y = np.array(Y.todense() > threshold, dtype=int)
+                    return y
+                else:
+                    y = []
+                    for i in range(Y.shape[0]):
+                        r_split = np.array(Y.getrow(i).todense() > threshold,
+                                           dtype=int)
+                        y.append(tuple(self.classes_[np.flatnonzero(r_split)]))
+                    return y
 
         if len(Y.shape) == 1 or Y.shape[1] == 1:
             if issparse(Y):
@@ -421,6 +427,10 @@ def label_binarize(y, classes, neg_label=0, pos_label=1,
         pos_switch = True
 
     y_type = type_of_target(y)
+
+    if y_type == "binary" and len(classes) == 1:
+        classes[0:0] = [neg_label]
+
     n_samples = y.shape[0] if issparse(y) else len(y)
     n_classes = len(classes)
     classes = np.asarray(classes)
@@ -431,6 +441,7 @@ def label_binarize(y, classes, neg_label=0, pos_label=1,
 
     if y_type == "binary":
         dense_output = True
+
 
     if multilabel is not None:
         warnings.warn("The multilabel parameter is deprecated as of version "
