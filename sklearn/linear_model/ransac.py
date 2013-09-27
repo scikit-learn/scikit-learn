@@ -174,11 +174,11 @@ class RANSAC(BaseEstimator, MetaEstimatorMixin):
         except ValueError:
             pass
 
-        best_n_inliers = 0
-        best_score = np.inf
-        best_inlier_mask = None
-        best_inlier_X = None
-        best_inlier_y = None
+        n_inliers_best = 0
+        score_best = np.inf
+        inlier_mask_best = None
+        X_inlier_best = None
+        y_inlier_best = None
 
         # number of data samples
         n_samples = X.shape[0]
@@ -194,62 +194,63 @@ class RANSAC(BaseEstimator, MetaEstimatorMixin):
 
             # choose random sample set
             random_idxs = random_state.randint(0, n_samples, min_n_samples)
-            rsample_X = X[random_idxs]
-            rsample_y = y[random_idxs]
+            X_subset = X[random_idxs]
+            y_subset = y[random_idxs]
 
             # check if random sample set is valid
             if (self.is_data_valid is not None
-                    and not self.is_data_valid(rsample_X, rsample_y)):
+                    and not self.is_data_valid(X_subset, y_subset)):
                 continue
 
             # fit model for current random sample set
-            base_estimator.fit(rsample_X, rsample_y)
+            base_estimator.fit(X_subset, y_subset)
 
             # check if estimated model is valid
             if (self.is_model_valid is not None and not
-                    self.is_model_valid(base_estimator, rsample_X, rsample_y)):
+                    self.is_model_valid(base_estimator, X_subset,
+                                        y_subset)):
                 continue
 
             # residuals of all data for current random sample model
-            rsample_residuals = residual_metric(base_estimator.predict(X) - y)
+            residuals_subset = residual_metric(base_estimator.predict(X) - y)
 
             # classify data into inliers and outliers
-            rsample_inlier_mask = rsample_residuals < residual_threshold
-            rsample_n_inliers = np.sum(rsample_inlier_mask)
+            inlier_mask_subset = residuals_subset < residual_threshold
+            n_inliers_subset = np.sum(inlier_mask_subset)
 
             # less inliers -> skip current random sample
-            if rsample_n_inliers < best_n_inliers:
+            if n_inliers_subset < n_inliers_best:
                 continue
 
             # extract inlier data set
-            rsample_inlier_idxs = sample_idxs[rsample_inlier_mask]
-            rsample_inlier_X = X[rsample_inlier_idxs]
-            rsample_inlier_y = y[rsample_inlier_idxs]
+            inlier_idxs_subset = sample_idxs[inlier_mask_subset]
+            X_inlier_subset = X[inlier_idxs_subset]
+            y_inlier_subset = y[inlier_idxs_subset]
 
             # score of inlier data set
-            rsample_score = base_estimator.score(rsample_inlier_X,
-                                                 rsample_inlier_y)
+            score_subset = base_estimator.score(X_inlier_subset,
+                                                y_inlier_subset)
 
             # same number of inliers but worse score -> skip current random
             # sample
-            if (rsample_n_inliers == best_n_inliers
-                    and rsample_score < best_score):
+            if (n_inliers_subset == n_inliers_best
+                    and score_subset < score_best):
                 continue
 
             # save current random sample as best sample
-            best_n_inliers = rsample_n_inliers
-            best_score = rsample_score
-            best_inlier_mask = rsample_inlier_mask
-            best_inlier_X = rsample_inlier_X
-            best_inlier_y = rsample_inlier_y
+            n_inliers_best = n_inliers_subset
+            score_best = score_subset
+            inlier_mask_best = inlier_mask_subset
+            X_inlier_best = X_inlier_subset
+            y_inlier_best = y_inlier_subset
 
             # break if sufficient number of inliers or score is reached
-            if (best_n_inliers >= self.stop_n_inliers
-                    or best_score >= self.stop_score):
+            if (n_inliers_best >= self.stop_n_inliers
+                    or score_best >= self.stop_score):
                 break
 
         # if none of the iterations met the required criteria
-        if best_inlier_mask is None:
+        if inlier_mask_best is None:
             raise ValueError("RANSAC could not find valid consensus set, "
                              "because `is_data_valid` and `is_model_valid` "
                              "returned False for all `max_trials` randomly "
@@ -257,10 +258,10 @@ class RANSAC(BaseEstimator, MetaEstimatorMixin):
                              "constraints.")
 
         # estimate final model using all inliers
-        base_estimator.fit(best_inlier_X, best_inlier_y)
+        base_estimator.fit(X_inlier_best, y_inlier_best)
 
         self.estimator_ = base_estimator
-        self.inlier_mask_ = best_inlier_mask
+        self.inlier_mask_ = inlier_mask_best
 
     def predict(self, X):
         """Predict using the estimated model.
