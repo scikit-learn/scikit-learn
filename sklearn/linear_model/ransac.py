@@ -6,12 +6,12 @@
 
 import numpy as np
 
-from ..base import BaseEstimator, clone
+from ..base import BaseEstimator, MetaEstimatorMixin, clone
 from ..utils import check_random_state, atleast2d_or_csr
 from .base import LinearRegression
 
 
-class RANSAC(BaseEstimator):
+class RANSAC(BaseEstimator, MetaEstimatorMixin):
     """RANSAC (RANdom SAmple Consensus) algorithm.
 
     RANSAC is an iterative algorithm for the robust estimation of parameters
