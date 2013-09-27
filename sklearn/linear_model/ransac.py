@@ -32,9 +32,9 @@ class RANSAC(BaseEstimator):
            Additionally, the score is used to decide which of two equally
            large consensus sets is chosen as the better one.
 
-        If no base estimator is specified, by default
-        ``sklearn.linear_model.LinearRegression`` is used for target values of
-        dtype float.
+        If base_estimator is None, then
+        ``base_estimator=sklearn.linear_model.LinearRegression`` is used for
+        target values of dtype float.
 
         Note that the current implementation only supports regression
         estimators.
