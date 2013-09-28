@@ -453,7 +453,7 @@ def test_classifiers_one_label():
     rnd = np.random.RandomState(0)
     X_train = rnd.uniform(size=(10, 3))
     X_test = rnd.uniform(size=(10, 3))
-    y = np.ones(10)
+    y = np.ones(10, dtype=int)
     classifiers = all_estimators(type_filter='classifier')
     error_string_fit = "Classifier can't train when only one class is present."
     error_string_predict = ("Classifier can't predict when only one class is "

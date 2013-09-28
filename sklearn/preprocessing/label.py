@@ -429,7 +429,7 @@ def label_binarize(y, classes, neg_label=0, pos_label=1,
     y_type = type_of_target(y)
 
     if y_type == "binary" and len(classes) == 1:
-        classes[0:0] = [neg_label]
+        classes = np.insert(classes, [0], 0)
 
     n_samples = y.shape[0] if issparse(y) else len(y)
     n_classes = len(classes)
