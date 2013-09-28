@@ -39,13 +39,13 @@ class RANSAC(BaseEstimator, MetaEstimatorMixin):
         Note that the current implementation only supports regression
         estimators.
 
-    min_n_samples : int (>= 1) or float ([0, 1]), optional
+    min_samples : int (>= 1) or float ([0, 1]), optional
         Minimum number of samples chosen randomly from original data. Treated
-        as an absolute number of samples for `min_n_samples >= 1`, treated as a
-        relative number `ceil(min_n_samples * X.shape[0]`) for
-        `min_n_samples < 1`. By default a
+        as an absolute number of samples for `min_samples >= 1`, treated as a
+        relative number `ceil(min_samples * X.shape[0]`) for
+        `min_samples < 1`. By default a
         ``sklearn.linear_model.LinearRegression`` estimator is assumed and
-        `min_n_samples` is chosen as ``X.shape[1] + 1``.
+        `min_samples` is chosen as ``X.shape[1] + 1``.
 
     residual_threshold : float, optional
         Maximum residual for a data sample to be classified as an inlier.
@@ -102,14 +102,14 @@ class RANSAC(BaseEstimator, MetaEstimatorMixin):
     .. [3] http://www.bmva.org/bmvc/2009/Papers/Paper355/Paper355.pdf
     """
 
-    def __init__(self, base_estimator=None, min_n_samples=None,
+    def __init__(self, base_estimator=None, min_samples=None,
                  residual_threshold=None, is_data_valid=None,
                  is_model_valid=None, max_trials=100,
                  stop_n_inliers=np.inf, stop_score=np.inf,
                  residual_metric=None, random_state=None):
 
         self.base_estimator = base_estimator
-        self.min_n_samples = min_n_samples
+        self.min_samples = min_samples
         self.residual_threshold = residual_threshold
         self.is_data_valid = is_data_valid
         self.is_model_valid = is_model_valid
@@ -145,18 +145,18 @@ class RANSAC(BaseEstimator, MetaEstimatorMixin):
         else:
             raise ValueError("`base_estimator` not specified.")
 
-        if self.min_n_samples is None:
+        if self.min_samples is None:
             # assume linear model by default
-            min_n_samples = X.shape[1] + 1
-        elif 0 < self.min_n_samples < 1:
-            min_n_samples = np.ceil(self.min_n_samples * X.shape[0])
-        elif self.min_n_samples >= 1:
-            min_n_samples = self.min_n_samples
+            min_samples = X.shape[1] + 1
+        elif 0 < self.min_samples < 1:
+            min_samples = np.ceil(self.min_samples * X.shape[0])
+        elif self.min_samples >= 1:
+            min_samples = self.min_samples
         else:
-            raise ValueError("Value for `min_n_samples` must be scalar and "
+            raise ValueError("Value for `min_samples` must be scalar and "
                              "positive.")
-        if min_n_samples > X.shape[0]:
-            raise ValueError("`min_n_samples` may not be larger than number "
+        if min_samples > X.shape[0]:
+            raise ValueError("`min_samples` may not be larger than number "
                              "of samples ``X.shape[0]``.")
 
         if self.residual_threshold is None:
@@ -196,7 +196,7 @@ class RANSAC(BaseEstimator, MetaEstimatorMixin):
         for self.n_trials_ in range(1, self.max_trials + 1):
 
             # choose random sample set
-            random_idxs = random_state.randint(0, n_samples, min_n_samples)
+            random_idxs = random_state.randint(0, n_samples, min_samples)
             X_subset = X[random_idxs]
             y_subset = y[random_idxs]
 
