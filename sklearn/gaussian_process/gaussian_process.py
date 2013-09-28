@@ -11,7 +11,7 @@ from scipy import linalg, optimize, rand
 
 from ..base import BaseEstimator, RegressorMixin
 from ..metrics.pairwise import manhattan_distances
-from ..utils import array2d, check_random_state
+from ..utils import array2d, check_random_state, check_arrays
 from . import regression_models as regression
 from . import correlation_models as correlation
 
@@ -271,21 +271,15 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
         # Force data to 2D numpy.array
         X = array2d(X)
-        self.y_shape_ = np.array(y).shape
-        y = array2d(y)
-
-        # If the y vales are given to fit() as an array, but transposed wrong
-        if len(self.y_shape_) == 1:
-            y = y.T
+        y = np.asarray(y)
+        self.y_ndim_ = y.ndim
+        if y.ndim == 1:
+            y = y[:, np.newaxis]
+        X, y = check_arrays(X, y)
 
         # Check shapes of DOE & observations
-        n_samples_X, n_features = X.shape
-        n_samples_y, n_targets = y.shape
-
-        if n_samples_X != n_samples_y:
-            raise ValueError("X and y must have the same number of rows.")
-        else:
-            n_samples = n_samples_X
+        n_samples, n_features = X.shape
+        _, n_targets = y.shape
 
         # Run input checks
         self._check_params(n_samples)
@@ -425,17 +419,17 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
         # Check input shapes
         X = array2d(X)
-        n_eval, n_features_X = X.shape
+        n_eval, _ = X.shape
         n_samples, n_features = self.X.shape
         n_samples_y, n_targets = self.y.shape
 
         # Run input checks
         self._check_params(n_samples)
 
-        if n_features_X != n_features:
+        if X.shape[1] != n_features:
             raise ValueError(("The number of features in X (X.shape[1] = %d) "
-                             "should match the sample size used for fit() "
-                             "which is %d.") % (n_features_X, n_features))
+                             "should match the number of features used for fit() "
+                             "which is %d.") % (X.shape[1], n_features))
 
         if batch_size is None:
             # No memory management
@@ -461,7 +455,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             # Predictor
             y = (self.y_mean + self.y_std * y_).reshape(n_eval, n_targets)
 
-            if len(self.y_shape_) == 1:
+            if self.y_ndim_ == 1:
                 y = y.ravel()
 
             # Mean Squared Error
@@ -489,16 +483,16 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                     # Ordinary Kriging
                     u = np.zeros((n_targets, n_eval))
 
-                MSE = np.dot(self.sigma2.reshape(n_targets, 1), (1. -
-                    (rt ** 2.).sum(axis=0) + (u ** 2.).sum(axis=0)
-                    ).reshape(1, n_eval))
+                MSE = np.dot(self.sigma2.reshape(n_targets, 1),
+                             (1. - (rt ** 2.).sum(axis=0)
+                              + (u ** 2.).sum(axis=0))[np.newaxis, :])
                 MSE = np.sqrt((MSE ** 2.).sum(axis=0) / n_targets)
 
                 # Mean Squared Error might be slightly negative depending on
                 # machine precision: force to zero!
                 MSE[MSE < 0.] = 0.
 
-                if len(self.y_shape_) == 1:
+                if self.y_ndim_ == 1:
                     MSE = MSE.ravel()
 
                 return y, MSE
