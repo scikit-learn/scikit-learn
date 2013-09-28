@@ -155,6 +155,9 @@ class RANSAC(BaseEstimator, MetaEstimatorMixin):
         else:
             raise ValueError("Value for `min_n_samples` must be scalar and "
                              "positive.")
+        if min_n_samples > X.shape[0]:
+            raise ValueError("`min_n_samples` may not be larger than number "
+                             "of samples ``X.shape[0]``.")
 
         if self.residual_threshold is None:
             # MAD (median absolute deviation)
