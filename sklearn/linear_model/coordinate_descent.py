@@ -17,7 +17,7 @@ from scipy import sparse
 from .base import LinearModel, _pre_fit
 from ..base import RegressorMixin
 from .base import center_data
-from ..utils import array2d, atleast2d_or_csc, deprecated
+from ..utils import array2d, atleast2d_or_csc
 from ..cross_validation import _check_cv as check_cv
 from ..externals.joblib import Parallel, delayed
 from ..externals import six
@@ -1313,8 +1313,6 @@ class MultiTaskElasticNet(Lasso):
             Data
         y: ndarray, shape = (n_samples, n_tasks)
             Target
-        coef_init: ndarray of shape n_features
-            The initial coefficients to warm-start the optimization
 
         Notes
         -----
@@ -1345,8 +1343,6 @@ class MultiTaskElasticNet(Lasso):
         if not self.warm_start or self.coef_ is None:
             self.coef_ = np.zeros((n_tasks, n_features), dtype=np.float64,
                                   order='F')
-        else:
-            self.coef_ = coef_init
 
         l1_reg = self.alpha * self.l1_ratio * n_samples
         l2_reg = self.alpha * (1.0 - self.l1_ratio) * n_samples
