@@ -50,10 +50,8 @@ line_X = np.arange(-250, 250)
 line_y = model.predict(line_X[:, np.newaxis])
 line_y_ransac = model_ransac.predict(line_X[:, np.newaxis])
 
-plt.plot(data[inlier_mask, 0], data[inlier_mask, 1], '.g',
-         label='Inliers')
-plt.plot(data[outlier_mask, 0], data[outlier_mask, 1], '.r',
-         label='Outliers')
+plt.plot(data[inlier_mask, 0], data[inlier_mask, 1], '.g', label='Inliers')
+plt.plot(data[outlier_mask, 0], data[outlier_mask, 1], '.r', label='Outliers')
 plt.plot(line_X, line_y, '-k', label='Linear regressor')
 plt.plot(line_X, line_y_ransac, '-b', label='RANSAC regressor')
 plt.legend(loc='lower left')
