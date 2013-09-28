@@ -255,8 +255,8 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             observations were made.
 
         y : double array_like
-            An array with shape (n_samples, ) with the observations of the
-            scalar output to be predicted.
+            An array with shape (n_samples, ) or shape (n_samples, n_targets)
+            with the observations of the output to be predicted.
 
         Returns
         -------
@@ -271,11 +271,16 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
         # Force data to 2D numpy.array
         X = array2d(X)
-        y = np.asarray(y).ravel()[:, np.newaxis]
+        self.y_shape_ = np.array(y).shape
+        y = array2d(y)
+
+        # If the y vales are given to fit() as an array, but transposed wrong
+        if len(self.y_shape_) == 1:
+            y = y.T
 
         # Check shapes of DOE & observations
         n_samples_X, n_features = X.shape
-        n_samples_y = y.shape[0]
+        n_samples_y, n_targets = y.shape
 
         if n_samples_X != n_samples_y:
             raise ValueError("X and y must have the same number of rows.")
@@ -406,18 +411,23 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
         Returns
         -------
-        y : array_like
-            An array with shape (n_eval, ) with the Best Linear Unbiased
+        y : array_like, shape (n_samples, ) or (n_samples, n_targets)
+            An array with shape (n_eval, ) if the Gaussian Process was trained
+            on an array of shape (n_samples, ) or an array with shape
+            (n_eval, n_targets) if the Gaussian Process was trained on an array
+            of shape (n_samples, n_targets) with the Best Linear Unbiased
             Prediction at x.
 
         MSE : array_like, optional (if eval_MSE == True)
-            An array with shape (n_eval, ) with the Mean Squared Error at x.
+            An array with shape (n_eval, ) or (n_eval, n_targets) as with y,
+            with the Mean Squared Error at x.
         """
 
         # Check input shapes
         X = array2d(X)
         n_eval, n_features_X = X.shape
         n_samples, n_features = self.X.shape
+        n_samples_y, n_targets = self.y.shape
 
         # Run input checks
         self._check_params(n_samples)
@@ -449,7 +459,10 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             y_ = np.dot(f, self.beta) + np.dot(r, self.gamma)
 
             # Predictor
-            y = (self.y_mean + self.y_std * y_).ravel()
+            y = (self.y_mean + self.y_std * y_).reshape(n_eval, n_targets)
+
+            if len(self.y_shape_) == 1:
+                y = y.ravel()
 
             # Mean Squared Error
             if eval_MSE:
@@ -474,14 +487,19 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                                          np.dot(self.Ft.T, rt) - f.T)
                 else:
                     # Ordinary Kriging
-                    u = np.zeros(y.shape)
+                    u = np.zeros((n_targets, n_eval))
 
-                MSE = self.sigma2 * (1. - (rt ** 2.).sum(axis=0)
-                                     + (u ** 2.).sum(axis=0))
+                MSE = np.dot(self.sigma2.reshape(n_targets, 1), (1. -
+                    (rt ** 2.).sum(axis=0) + (u ** 2.).sum(axis=0)
+                    ).reshape(1, n_eval))
+                MSE = np.sqrt((MSE ** 2.).sum(axis=0) / n_targets)
 
                 # Mean Squared Error might be slightly negative depending on
                 # machine precision: force to zero!
                 MSE[MSE < 0.] = 0.
+
+                if len(self.y_shape_) == 1:
+                    MSE = MSE.ravel()
 
                 return y, MSE
 
