@@ -768,9 +768,9 @@ until one of the special stop criteria are met (see `stop_n_inliers` and
 set) of the previously determined best model.
 
 The `is_data_valid` and `is_model_valid` functions allow to identify and reject
-degenerate random sub-samples. If the estimated model is not needed for
-identifying degenerate cases, `is_data_valid` should be used as it is called
-prior to fitting the model and thus leading to better computational
+degenerate combinations of random sub-samples. If the estimated model is not
+needed for identifying degenerate cases, `is_data_valid` should be used as it
+is called prior to fitting the model and thus leading to better computational
 performance.
 
 
