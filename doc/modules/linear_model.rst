@@ -733,9 +733,10 @@ estimation of parameters from a subset of inliers from the complete data set.
 
 It is an iterative method to estimate the parameters of a mathematical model.
 RANSAC is a non-deterministic algorithm producing only a reasonable result with
-a certain probability, which is dependent on the number of iterations. It is
-typically used for linear and non-linear regression problems and is especially
-popular in the fields of photogrammetric computer vision.
+a certain probability, which is dependent on the number of iterations (see
+`max_trials` parameter). It is typically used for linear and non-linear
+regression problems and is especially popular in the fields of photogrammetric
+computer vision.
 
 The algorithm splits the complete input sample data into a set of inliers,
 which may be subject to noise, and outliers, which are e.g. caused by erroneous
