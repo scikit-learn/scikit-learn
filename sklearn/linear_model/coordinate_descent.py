@@ -89,7 +89,8 @@ def _alpha_grid(X, y, Xy=None, l1_ratio=1.0, fit_intercept=True,
 
 def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
                precompute='auto', Xy=None, fit_intercept=None,
-               normalize=None, copy_X=True, verbose=False, return_models=True,
+               normalize=None, copy_X=True, coef_init=None,
+               verbose=False, return_models=True,
                **params):
     """Compute Lasso path with coordinate descent
 
@@ -137,6 +138,9 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
     copy_X : boolean, optional, default True
         If ``True``, X will be copied; else, it may be overwritten.
 
+    coef_init : array, shape (n_features, ) | None
+        The initial values of the coefficients.
+
     verbose : bool or integer
         Amount of verbosity
 
@@ -147,7 +151,7 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
         model list will be removed in version 0.15.
 
     params : kwargs
-        keyword arguments passed to the Lasso objects
+        keyword arguments passed to the coordinate descent solver.
 
     Returns
     -------
@@ -225,13 +229,14 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
     return enet_path(X, y, l1_ratio=1., eps=eps, n_alphas=n_alphas,
                      alphas=alphas, precompute=precompute, Xy=Xy,
                      fit_intercept=fit_intercept, normalize=normalize,
-                     copy_X=copy_X, verbose=verbose,
+                     copy_X=copy_X, coef_init=coef_init, verbose=verbose,
                      return_models=return_models, **params)
 
 
 def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
               precompute='auto', Xy=None, fit_intercept=True,
-              normalize=False, copy_X=True, verbose=False, return_models=True,
+              normalize=False, copy_X=True, coef_init=None,
+              verbose=False, return_models=True,
               **params):
     """Compute Elastic-Net path with coordinate descent
 
@@ -285,6 +290,9 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     copy_X : boolean, optional, default True
         If ``True``, X will be copied; else, it may be overwritten.
 
+    coef_init : array, shape (n_features, ) | None
+        The initial values of the coefficients.
+
     verbose : bool or integer
         Amount of verbosity
 
@@ -295,7 +303,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
         model list will be removed in version 0.15.
 
     params : kwargs
-        keyword arguments passed to the Lasso objects
+        keyword arguments passed to the coordinate descent solver.
 
     Returns
     -------
@@ -385,7 +393,11 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
 
     n_alphas = len(alphas)
 
-    coef_ = np.zeros(n_features, dtype=np.float64)
+    if coef_init is None:
+        coef_ = np.zeros(n_features, dtype=np.float64)
+    else:
+        coef_ = coef_init
+
     models = []
     coefs = np.empty((n_features, n_alphas), dtype=np.float64)
     dual_gaps = np.empty(n_alphas)
@@ -594,7 +606,14 @@ class ElasticNet(LinearModel, RegressorMixin):
         n_samples, n_features = X.shape
         n_targets = y.shape[1]
 
-        coef_ = np.zeros((n_targets, n_features), dtype=np.float64)
+        if not self.warm_start or self.coef_ is None:
+            coef_ = np.zeros((n_targets, n_features), dtype=np.float64,
+                                  order='F')
+        else:
+            coef_ = self.coef_
+            if coef_.ndim == 1:
+                coef_ = coef_[np.newaxis, :]
+
         dual_gaps_ = np.zeros(n_targets, dtype=np.float64)
 
         for k in xrange(n_targets):
@@ -609,7 +628,8 @@ class ElasticNet(LinearModel, RegressorMixin):
                           precompute=precompute, Xy=this_Xy,
                           fit_intercept=False, normalize=False, copy_X=True,
                           verbose=False, tol=self.tol, positive=self.positive,
-                          return_models=False, X_mean=X_mean, X_std=X_std)
+                          return_models=False, X_mean=X_mean, X_std=X_std,
+                          coef_init=coef_[k], max_iter=self.max_iter)
             coef_[k] = this_coef[:, 0]
             dual_gaps_[k] = this_dual_gap[0]
 

@@ -260,12 +260,11 @@ def test_path_parameters():
 
 def test_warm_start():
     X, y, _, _ = build_dataset()
-    clf = ElasticNet(alpha=1.0, max_iter=50, warm_start=True)
+    clf = ElasticNet(alpha=0.1, max_iter=5, warm_start=True)
     clf.fit(X, y)
-    clf.set_params(alpha=0.1)
-    clf.fit(X, y)
+    clf.fit(X, y)  # do a second round with 5 iterations
 
-    clf2 = ElasticNet(alpha=0.1, max_iter=500)
+    clf2 = ElasticNet(alpha=0.1, max_iter=10)
     clf2.fit(X, y)
     assert_array_almost_equal(clf2.coef_, clf.coef_)
 
