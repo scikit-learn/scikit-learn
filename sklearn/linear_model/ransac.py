@@ -77,7 +77,7 @@ class RANSAC(BaseEstimator, MetaEstimatorMixin):
         multi-dimensional target values ``y.shape[1] > 1``. By default the sum
         of absolute differences is used::
 
-            lambda dy: np.sum(np.abs(dx), axis=1)
+            lambda dy: np.sum(np.abs(dy), axis=1)
 
     random_state : integer or numpy.RandomState, optional
         The generator used to initialize the centers. If an integer is
