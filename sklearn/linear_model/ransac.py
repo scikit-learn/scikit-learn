@@ -8,6 +8,7 @@ import numpy as np
 
 from ..base import BaseEstimator, MetaEstimatorMixin, clone
 from ..utils import check_random_state, atleast2d_or_csr
+from ..utils.random import sample_without_replacement
 from .base import LinearRegression
 
 
@@ -196,9 +197,10 @@ class RANSAC(BaseEstimator, MetaEstimatorMixin):
         for self.n_trials_ in range(1, self.max_trials + 1):
 
             # choose random sample set
-            random_idxs = random_state.randint(0, n_samples, min_samples)
-            X_subset = X[random_idxs]
-            y_subset = y[random_idxs]
+            subset_idxs = sample_without_replacement(n_samples, min_samples,
+                                                     random_state=random_state)
+            X_subset = X[subset_idxs]
+            y_subset = y[subset_idxs]
 
             # check if random sample set is valid
             if (self.is_data_valid is not None
@@ -210,8 +212,7 @@ class RANSAC(BaseEstimator, MetaEstimatorMixin):
 
             # check if estimated model is valid
             if (self.is_model_valid is not None and not
-                    self.is_model_valid(base_estimator, X_subset,
-                                        y_subset)):
+                    self.is_model_valid(base_estimator, X_subset, y_subset)):
                 continue
 
             # residuals of all data for current random sample model
