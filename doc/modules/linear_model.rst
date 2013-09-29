@@ -750,7 +750,7 @@ estimated only from the determined inliers.
 
 Each iteration performs the following steps:
 
-1. Select `min_n_samples` random samples from the original data and check
+1. Select `min_samples` random samples from the original data and check
    whether the set of data is valid (see `is_data_valid`).
 2. Fit a model to the random subset (`base_estimator.fit`) and check
    whether the estimated model is valid (see `is_model_valid`).
