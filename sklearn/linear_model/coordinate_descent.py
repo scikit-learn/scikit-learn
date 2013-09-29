@@ -129,11 +129,11 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
 
     fit_intercept : bool
         Fit or not an intercept.
-        WARNING : will be deprecated in 0.15
+        WARNING : will be deprecated in 0.16
 
     normalize : boolean, optional, default False
         If ``True``, the regressors X will be normalized before regression.
-        WARNING : will be deprecated in 0.15
+        WARNING : will be deprecated in 0.16
 
     copy_X : boolean, optional, default True
         If ``True``, X will be copied; else, it may be overwritten.
@@ -148,7 +148,7 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
         If ``True``, the function will return list of models. Setting it
         to ``False`` will change the function output returning the values
         of the alphas and the coefficients along the path. Returning the
-        model list will be removed in version 0.15.
+        model list will be removed in version 0.16.
 
     params : kwargs
         keyword arguments passed to the coordinate descent solver.
@@ -188,7 +188,7 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
 
     Deprecation Notice: Setting ``return_models`` to ``False`` will make
     the Lasso Path return an output in the style used by :func:`lars_path`.
-    This will be become the norm as of version 0.15. Leaving ``return_models``
+    This will be become the norm as of version 0.16. Leaving ``return_models``
     set to `True` will let the function return a list of models as before.
 
     Examples
@@ -281,11 +281,11 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
 
     fit_intercept : bool
         Fit or not an intercept.
-        WARNING : will be deprecated in 0.15
+        WARNING : will be deprecated in 0.16
 
     normalize : boolean, optional, default False
         If ``True``, the regressors X will be normalized before regression.
-        WARNING : will be deprecated in 0.15
+        WARNING : will be deprecated in 0.16
 
     copy_X : boolean, optional, default True
         If ``True``, X will be copied; else, it may be overwritten.
@@ -300,7 +300,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
         If ``True``, the function will return list of models. Setting it
         to ``False`` will change the function output returning the values
         of the alphas and the coefficients along the path. Returning the
-        model list will be removed in version 0.15.
+        model list will be removed in version 0.16.
 
     params : kwargs
         keyword arguments passed to the coordinate descent solver.
@@ -343,13 +343,13 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
         warnings.warn("Use enet_path(return_models=False), as it returns the"
                       " coefficients and alphas instead of just a list of"
                       " models as previously `lasso_path`/`enet_path` did."
-                      " `return_models` will eventually be removed in 0.15,"
+                      " `return_models` will eventually be removed in 0.16,"
                       " after which, returning alphas and coefs"
                       " will become the norm.",
                       DeprecationWarning, stacklevel=2)
 
     if normalize is True:
-        warnings.warn("normalize param will be removed in 0.15."
+        warnings.warn("normalize param will be removed in 0.16."
                       " Intercept fitting and feature normalization will be"
                       " done in estimators.",
                       DeprecationWarning, stacklevel=2)
@@ -357,7 +357,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
         normalize = False
 
     if fit_intercept is True or fit_intercept is None:
-        warnings.warn("fit_intercept param will be removed in 0.15."
+        warnings.warn("fit_intercept param will be removed in 0.16."
                       " Intercept fitting and feature normalization will be"
                       " done in estimators.",
                       DeprecationWarning, stacklevel=2)
