@@ -249,10 +249,10 @@ def test_enet_path():
 
 def test_path_parameters():
     X, y, _, _ = build_dataset()
-    max_iter = 50
+    max_iter = 100
 
     clf = ElasticNetCV(n_alphas=50, eps=1e-3, max_iter=max_iter,
-                       l1_ratio=0.5)
+                       l1_ratio=0.5, tol=1e-3)
     clf.fit(X, y)  # new params
     assert_almost_equal(0.5, clf.l1_ratio)
     assert_equal(50, clf.n_alphas)
@@ -261,13 +261,15 @@ def test_path_parameters():
 
 def test_warm_start():
     X, y, _, _ = build_dataset()
-    clf = ElasticNet(alpha=0.1, max_iter=5, warm_start=True)
-    clf.fit(X, y)
-    clf.fit(X, y)  # do a second round with 5 iterations
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", UserWarning)
+        clf = ElasticNet(alpha=0.1, max_iter=5, warm_start=True)
+        clf.fit(X, y)
+        clf.fit(X, y)  # do a second round with 5 iterations
 
-    clf2 = ElasticNet(alpha=0.1, max_iter=10)
-    clf2.fit(X, y)
-    assert_array_almost_equal(clf2.coef_, clf.coef_)
+        clf2 = ElasticNet(alpha=0.1, max_iter=10)
+        clf2.fit(X, y)
+        assert_array_almost_equal(clf2.coef_, clf.coef_)
 
 
 def test_lasso_alpha_warning():
