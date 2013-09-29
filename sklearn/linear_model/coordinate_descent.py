@@ -90,7 +90,7 @@ def _alpha_grid(X, y, Xy=None, l1_ratio=1.0, fit_intercept=True,
 def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
                precompute='auto', Xy=None, fit_intercept=None,
                normalize=None, copy_X=True, coef_init=None,
-               verbose=False, return_models=True,
+               verbose=False, return_models=False,
                **params):
     """Compute Lasso path with coordinate descent
 
@@ -200,7 +200,7 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
     >>> y = np.array([1, 2, 3.1])
     >>> # Use lasso_path to compute a coefficient path
     >>> _, coef_path, _ = lasso_path(X, y, alphas=[5., 1., .5],
-    ...                              return_models=False, fit_intercept=False)
+    ...                              fit_intercept=False)
     >>> print(coef_path)
     [[ 0.          0.          0.46874778]
      [ 0.2159048   0.4425765   0.23689075]]
@@ -236,7 +236,7 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
 def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
               precompute='auto', Xy=None, fit_intercept=True,
               normalize=False, copy_X=True, coef_init=None,
-              verbose=False, return_models=True,
+              verbose=False, return_models=False,
               **params):
     """Compute Elastic-Net path with coordinate descent
 
@@ -296,7 +296,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     verbose : bool or integer
         Amount of verbosity
 
-    return_models : boolean, optional, default True
+    return_models : boolean, optional, default False
         If ``True``, the function will return list of models. Setting it
         to ``False`` will change the function output returning the values
         of the alphas and the coefficients along the path. Returning the
@@ -628,7 +628,7 @@ class ElasticNet(LinearModel, RegressorMixin):
                           precompute=precompute, Xy=this_Xy,
                           fit_intercept=False, normalize=False, copy_X=True,
                           verbose=False, tol=self.tol, positive=self.positive,
-                          return_models=False, X_mean=X_mean, X_std=X_std,
+                          X_mean=X_mean, X_std=X_std,
                           coef_init=coef_[k], max_iter=self.max_iter)
             coef_[k] = this_coef[:, 0]
             dual_gaps_[k] = this_dual_gap[0]
@@ -827,7 +827,6 @@ def _path_residuals(X, y, train, test, path, path_params, l1_ratio=1,
 
     # del path_params['precompute']
     path_params = path_params.copy()
-    path_params['return_models'] = False
     path_params['fit_intercept'] = False
     path_params['normalize'] = False
     path_params['Xy'] = Xy

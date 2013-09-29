@@ -189,6 +189,7 @@ def test_lasso_path_return_models_vs_new_return_gives_same_coefficients():
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", DeprecationWarning)
         coef_path = [e.coef_ for e in lasso_path(X, y, alphas=alphas,
+                                                 return_models=True,
                                                  fit_intercept=False)]
 
     # Use lars_path and lasso_path(new output) with 1D linear interpolation
