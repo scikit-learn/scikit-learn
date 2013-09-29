@@ -444,7 +444,7 @@ class VerboseReporter(object):
     def __init__(self, verbose):
         self.verbose = verbose
 
-    def init(self, est):
+    def init(self, est, begin_at_stage=0):
         # header fields and line format str
         header_fields = ['Iter', 'Train Loss']
         verbose_fmt = ['{iter:>10d}', '{train_score:>16.4f}']
@@ -463,20 +463,23 @@ class VerboseReporter(object):
         # plot verbose info each time i % verbose_mod == 0
         self.verbose_mod = 1
         self.start_time = time()
+        self.begin_at_stage = begin_at_stage
 
-    def update(self, i, est):
+    def update(self, j, est):
         """Update reporter with new iteration. """
         do_oob = est.subsample < 1
+        # we need to take into account if we fit additional estimators.
+        i = j - self.begin_at_stage  # iteration relative to the start iter
         if (i + 1) % self.verbose_mod == 0:
-            oob_impr = est.oob_improvement_[i] if do_oob else 0
+            oob_impr = est.oob_improvement_[j] if do_oob else 0
             remaining_time = ((est.n_estimators - (i + 1)) *
                               (time() - self.start_time) / float(i + 1))
             if remaining_time > 60:
                 remaining_time = '{0:.2f}m'.format(remaining_time / 60.0)
             else:
                 remaining_time = '{0:.2f}s'.format(remaining_time)
-            print(self.verbose_fmt.format(iter=i + 1,
-                                          train_score=est.train_score_[i],
+            print(self.verbose_fmt.format(iter=j + 1,
+                                          train_score=est.train_score_[j],
                                           oob_impr=oob_impr,
                                           remaining_time=remaining_time))
             if self.verbose == 1 and ((i + 1) // (self.verbose_mod * 10) > 0):
@@ -783,7 +786,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
 
         if self.verbose:
             verbose_reporter = VerboseReporter(self.verbose)
-            verbose_reporter.init(self)
+            verbose_reporter.init(self, begin_at_stage)
 
         # perform boosting iterations
         for i in range(begin_at_stage, begin_at_stage + self.n_estimators):
