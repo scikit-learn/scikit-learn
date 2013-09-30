@@ -1,7 +1,7 @@
 import numpy as np
 from numpy import linalg
 
-from scipy.sparse import csr_matrix
+from scipy.sparse import dok_matrix, csr_matrix
 from scipy.spatial.distance import cosine, cityblock, minkowski
 
 from sklearn.utils.testing import assert_greater
@@ -191,6 +191,9 @@ def test_pairwise_distances_argmin_min():
     X = [[0], [1]]
     Y = [[-1], [2]]
 
+    Xsp = dok_matrix(X)
+    Ysp = csr_matrix(Y)
+
     # euclidean metric
     D, E = pairwise_distances_argmin_min(X, Y, metric="euclidean")
     D2 = pairwise_distances_argmin(X, Y, metric="euclidean")
@@ -199,12 +202,24 @@ def test_pairwise_distances_argmin_min():
     assert_array_almost_equal(D, [0, 1])
     assert_array_almost_equal(E, [1., 1.])
 
+    # sparse matrix case
+    Dsp, Esp = pairwise_distances_argmin_min(Xsp, Ysp, metric="euclidean")
+    assert_array_equal(Dsp, D)
+    assert_array_equal(Esp, E)
+    # We don't want np.matrix here
+    assert_equal(type(Dsp), np.ndarray)
+    assert_equal(type(Esp), np.ndarray)
+
     # Non-euclidean sklearn metric
     D, E = pairwise_distances_argmin_min(X, Y, metric="manhattan")
     D2 = pairwise_distances_argmin(X, Y, metric="manhattan")
     assert_array_almost_equal(D, [0, 1])
     assert_array_almost_equal(D2, [0, 1])
     assert_array_almost_equal(E, [1., 1.])
+
+    # sparse matrix case
+    assert_raises(ValueError,
+                  pairwise_distances_argmin_min, Xsp, Ysp, metric="manhattan")
 
     # Non-euclidean Scipy distance (callable)
     D, E = pairwise_distances_argmin_min(X, Y, metric=minkowski,
