@@ -50,6 +50,9 @@ Changelog
      samples dependency.
      By `Daniel Nouri`_ and `Olivier Grisel`_.
 
+   - Add multi-output support to :class:`gaussian_process.GaussianProcess`
+     by John Novak.
+
 API changes summary
 -------------------
 
