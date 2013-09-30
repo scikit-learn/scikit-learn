@@ -10,30 +10,21 @@ the RANSAC algorithm.
 import numpy as np
 from matplotlib import pyplot as plt
 
-from sklearn import linear_model
+from sklearn import linear_model, datasets
 
 
-# Set random seed for both equal data noise and equal random sample selection
-np.random.seed(seed=1)
+n_samples = 1000
+n_outliers = 50
 
-# Generate coordinates of line
-X = np.arange(-200, 200)
-y = 0.2 * X + 20
-data = np.column_stack([X, y])
 
-# Add faulty data
-faulty = np.array(30 * [(180, -100)], dtype=np.double)
-faulty += 5 * np.random.normal(size=faulty.shape)
-data[:faulty.shape[0]] = faulty
+X, y, coef = datasets.make_regression(n_samples=n_samples, n_features=1,
+                                      n_informative=1, noise=10,
+                                      coef=True, random_state=0)
 
-# Add gaussian noise to coordinates
-noise = np.random.normal(size=data.shape)
-data += 0.5 * noise
-data[::2] += 5 * noise[::2]
-data[::4] += 20 * noise[::4]
-
-X = data[:, 0][:, np.newaxis]
-y = data[:, 1]
+# Add outlier data
+np.random.seed(0)
+X[:n_outliers] = 3 + 0.5 * np.random.normal(size=(n_outliers, 1))
+y[:n_outliers] = -3 + 10 * np.random.normal(size=n_outliers)
 
 # Fit line using all data
 model = linear_model.LinearRegression()
@@ -45,14 +36,18 @@ model_ransac.fit(X, y)
 inlier_mask = model_ransac.inlier_mask_
 outlier_mask = np.logical_not(inlier_mask)
 
-# Generate coordinates of estimated models
-line_X = np.arange(-250, 250)
+# Predict data of estimated models
+line_X = np.arange(-5, 5)
 line_y = model.predict(line_X[:, np.newaxis])
 line_y_ransac = model_ransac.predict(line_X[:, np.newaxis])
 
-plt.plot(data[inlier_mask, 0], data[inlier_mask, 1], '.g', label='Inliers')
-plt.plot(data[outlier_mask, 0], data[outlier_mask, 1], '.r', label='Outliers')
+# Compare estimated coefficients
+print "Estimated coefficients (true, normal, RANSAC):"
+print coef, model.coef_, model_ransac.estimator_.coef_
+
+plt.plot(X[inlier_mask], y[inlier_mask], '.g', label='Inliers')
+plt.plot(X[outlier_mask], y[outlier_mask], '.r', label='Outliers')
 plt.plot(line_X, line_y, '-k', label='Linear regressor')
 plt.plot(line_X, line_y_ransac, '-b', label='RANSAC regressor')
-plt.legend(loc='lower left')
+plt.legend(loc='lower right')
 plt.show()
