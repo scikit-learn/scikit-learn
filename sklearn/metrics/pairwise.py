@@ -104,6 +104,19 @@ def check_pairwise_arrays(X, Y):
     return X, Y
 
 
+def _square_sum_rows(X):
+    """Row-wise sum of element-wise (Hadamard) product X*X."""
+    if issparse(X):
+        XX = X.copy()
+        XX.data **= 2
+        return np.asarray(XX.sum(axis=1)).ravel()
+    else:
+        if hasattr(np, "einsum"):   # NumPy >= 1.6
+            return np.einsum('ij,ij->i', X, X)
+        else:
+            return (X * X).sum(axis=1)
+
+
 # Distances
 def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
     """
@@ -154,22 +167,12 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
     # well as Y, then you should just pre-compute the output and not even
     # call this function.
     X, Y = check_pairwise_arrays(X, Y)
-    if issparse(X):
-        XX = X.multiply(X).sum(axis=1)
-    else:
-        XX = np.sum(X * X, axis=1)[:, np.newaxis]
+    XX = _square_sum_rows(X)[:, np.newaxis]
 
     if X is Y:  # shortcut in the common case euclidean_distances(X, X)
         YY = XX.T
     elif Y_norm_squared is None:
-        if issparse(Y):
-            # scipy.sparse matrices don't have element-wise scalar
-            # exponentiation, and tocsr has a copy kwarg only on CSR matrices.
-            YY = Y.copy() if isinstance(Y, csr_matrix) else Y.tocsr()
-            YY.data **= 2
-            YY = np.asarray(YY.sum(axis=1)).T
-        else:
-            YY = np.sum(Y ** 2, axis=1)[np.newaxis, :]
+        YY = _square_sum_rows(Y)[np.newaxis, :]
     else:
         YY = atleast2d_or_csr(Y_norm_squared)
         if YY.shape != (1, Y.shape[0]):
@@ -191,7 +194,7 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
 
 
 def pairwise_distances_argmin_min(X, Y, axis=1, metric="euclidean",
-                                  batch_size=500, metric_kwargs={}):
+                                  batch_size=500, metric_kwargs=None):
     """Compute minimum distances between one point and a set of points.
 
     This function computes for each row in X, the index of the row of Y which
@@ -208,8 +211,8 @@ def pairwise_distances_argmin_min(X, Y, axis=1, metric="euclidean",
     This function works with dense 2D arrays only.
 
     Parameters
-    ==========
-    X, Y : array-like
+    ----------
+    X, Y : {array-like, sparse matrix}
         Arrays containing points. Respective shapes (n_samples1, n_features)
         and (n_samples2, n_features)
 
@@ -244,11 +247,11 @@ def pairwise_distances_argmin_min(X, Y, axis=1, metric="euclidean",
         See the documentation for scipy.spatial.distance for details on these
         metrics.
 
-    metric_kwargs : dict
+    metric_kwargs : dict, optional
         keyword arguments to pass to specified metric function.
 
     Returns
-    =======
+    -------
     argmin : numpy.ndarray
         Y[argmin[i], :] is the row in Y that is closest to X[i, :].
 
@@ -257,7 +260,7 @@ def pairwise_distances_argmin_min(X, Y, axis=1, metric="euclidean",
         argmin[i]-th row in Y.
 
     See also
-    ========
+    --------
     sklearn.metrics.pairwise_distances
     sklearn.metrics.pairwise_distances_argmin
     """
@@ -269,11 +272,14 @@ def pairwise_distances_argmin_min(X, Y, axis=1, metric="euclidean",
 
     X, Y = check_pairwise_arrays(X, Y)
 
+    if metric_kwargs is None:
+        metric_kwargs = {}
+
     if axis == 0:
         X, Y = Y, X
 
     # Allocate output arrays
-    indices = np.empty(X.shape[0], dtype='int32')
+    indices = np.empty(X.shape[0], dtype=np.intp)
     values = np.empty(X.shape[0])
     values.fill(np.infty)
 
@@ -285,12 +291,11 @@ def pairwise_distances_argmin_min(X, Y, axis=1, metric="euclidean",
 
             if dist_func is not None:
                 if metric == 'euclidean':  # special case, for speed
-                    dist_chunk = np.dot(X_chunk, Y_chunk.T)
+                    dist_chunk = safe_sparse_dot(X_chunk, Y_chunk.T,
+                                                 dense_output=True)
                     dist_chunk *= -2
-                    dist_chunk += (X_chunk * X_chunk
-                                   ).sum(axis=1)[:, np.newaxis]
-                    dist_chunk += (Y_chunk * Y_chunk
-                                   ).sum(axis=1)[np.newaxis, :]
+                    dist_chunk += _square_sum_rows(X_chunk)[:, np.newaxis]
+                    dist_chunk += _square_sum_rows(Y_chunk)[np.newaxis, :]
                     np.maximum(dist_chunk, 0, dist_chunk)
                 else:
                     dist_chunk = dist_func(X_chunk, Y_chunk, **metric_kwargs)
@@ -311,7 +316,7 @@ def pairwise_distances_argmin_min(X, Y, axis=1, metric="euclidean",
                 flags, min_values, values[chunk_x])
 
     if metric == "euclidean" and not metric_kwargs.get("squared", False):
-        values = np.sqrt(values)
+        np.sqrt(values, values)
     return indices, values
 
 
