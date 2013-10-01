@@ -238,7 +238,7 @@ def _nls_subproblem(V, W, H_init, tol, max_iter, sigma=0.01, beta=0.1):
             # Gradient step.
             Hn = H - alpha * grad
             # Projection step.
-            Hn = np.maximum(Hn, 0)
+            Hn *= Hn > 0
             d = Hn - H
             gradd = np.dot(grad.ravel(), d.ravel())
             dQd = np.dot(np.dot(WtW, d).ravel(), d.ravel())
@@ -541,6 +541,7 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
         self.comp_sparseness_ = _sparseness(H.ravel())
         self.data_sparseness_ = _sparseness(W.ravel())
 
+        H[H == 0] = 0   # fix up negative zeros
         self.components_ = H
 
         if n_iter == self.max_iter:
