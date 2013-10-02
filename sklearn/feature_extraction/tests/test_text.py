@@ -262,7 +262,7 @@ def test_countvectorizer_custom_vocabulary_pipeline():
 def test_countvectorizer_custom_vocabulary_repeated_indeces():
     vocab = {"pizza": 0, "beer": 0}
     try:
-        vect = CountVectorizer(vocabulary=vocab)
+        CountVectorizer(vocabulary=vocab)
     except ValueError as e:
         assert_in("vocabulary contains repeated indices", str(e).lower())
 
@@ -270,7 +270,7 @@ def test_countvectorizer_custom_vocabulary_repeated_indeces():
 def test_countvectorizer_custom_vocabulary_gap_index():
     vocab = {"pizza": 1, "beer": 2}
     try:
-        vect = CountVectorizer(vocabulary=vocab)
+        CountVectorizer(vocabulary=vocab)
     except ValueError as e:
         assert_in("doesn't contain index", str(e).lower())
 
