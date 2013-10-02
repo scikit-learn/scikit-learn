@@ -335,7 +335,7 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
 
     token_pattern: string
         Regular expression denoting what constitutes a "token", only used
-        if `tokenize == 'word'`. The default regexp select tokens of 2
+        if `analyzer == 'word'`. The default regexp select tokens of 2
         or more letters characters (punctuation is completely ignored
         and always treated as a token separator).
 
@@ -1076,7 +1076,7 @@ class TfidfVectorizer(CountVectorizer):
 
     token_pattern : string
         Regular expression denoting what constitutes a "token", only used
-        if `tokenize == 'word'`. The default regexp select tokens of 2
+        if `analyzer == 'word'`. The default regexp select tokens of 2
         or more letters characters (punctuation is completely ignored
         and always treated as a token separator).
 
