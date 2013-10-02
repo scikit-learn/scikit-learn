@@ -682,6 +682,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
 
         # Calculate a mask based on document frequencies
         dfs = _document_frequency(cscmatrix)
+        ffs = np.sum(cscmatrix.toarray(), 0)
         mask = np.ones(len(dfs), dtype=bool)
         if high is not None:
             mask &= dfs <= high
@@ -690,7 +691,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         if limit is not None and mask.sum() > limit:
             # backward compatibility requires us to keep lower indices in ties!
             # (and hence to reverse the sort by negating dfs)
-            mask_inds = (-dfs[mask]).argsort()[:limit]
+            mask_inds = (-ffs[mask]).argsort()[:limit]
             new_mask = np.zeros(len(dfs), dtype=bool)
             new_mask[np.where(mask)[0][mask_inds]] = True
             mask = new_mask

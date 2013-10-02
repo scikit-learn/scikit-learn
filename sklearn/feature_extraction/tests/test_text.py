@@ -569,6 +569,30 @@ def test_vectorizer_max_features():
         assert_equal(vectorizer.stop_words_, expected_stop_words)
 
 
+def test_count_vectorizer_max_features():
+    # test if top extracted features are the same no matter how many are extracted
+    text = "Machine learning is about learning some properties of a data set and applying them to new data. " \
+           "This is why a common practice in machine learning to evaluate an algorithm is to split the data " \
+           "at hand into two sets, one that we call the training set on which we learn data properties and " \
+           "one that we call the testing set on which we test these properties."
+
+    for data in (JUNK_FOOD_DOCS, [text]):
+        cv_1 = CountVectorizer(min_df=1, decode_error="ignore", stop_words="english", max_features=1)
+        cv_3 = CountVectorizer(min_df=1, decode_error="ignore", stop_words="english", max_features=3)
+        cv_None = CountVectorizer(min_df=1, decode_error="ignore", stop_words="english", max_features=None)
+        counts_1 = cv_1.fit_transform(data).toarray().sum(0)
+        counts_3 = cv_3.fit_transform(data).toarray().sum(0)
+        counts_None = cv_None.fit_transform(data).toarray().sum(0)
+        features_1 = np.array(cv_1.get_feature_names())
+        features_3 = np.array(cv_3.get_feature_names())
+        features_None = np.array(cv_None.get_feature_names())
+
+        # The most common feature count should be the same
+        assert_equal(np.max(counts_1), np.max(counts_3), np.max(counts_None))
+        # The most common feature should be the same
+        assert_equal(features_1[np.argmax(counts_1)], features_3[np.argmax(counts_3)], features_None[np.argmax(counts_None)])
+
+
 def test_vectorizer_max_df():
     test_data = ['abc', 'dea']  # the letter a occurs in both strings
     vect = CountVectorizer(analyzer='char', max_df=1.0)
