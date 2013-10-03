@@ -354,6 +354,16 @@ SINGLE_IMAGE = """
     :align: center
 """
 
+# The following dictionary contains the information used to create the
+# thumbnails for the front page of the scikit-learn home page.
+# key: first image in set
+# values: (number of plot in set, height of thumbnail)
+carousel_thumbs = {'plot_classifier_comparison_1.png': (1, 600),
+                   'plot_outlier_detection_1.png': (3, 372),
+                   'plot_gp_regression_1.png': (2, 250),
+                   'plot_adaboost_twoclass_1.png': (1, 372),
+                   'plot_compare_methods_1.png': (1, 349)}
+
 
 def extract_docstring(filename, ignore_heading=False):
     """ Extract a module-level docstring, if any
@@ -916,26 +926,16 @@ def generate_file_rst(fname, target_dir, src_dir, root_dir, plot_gallery):
         # as for some reason unknown to me, Sphinx refuses to copy my 'extra' thumbnails from the
         # auto examples gallery to the _build folder. This works fine as is, but it would be cleaner to
         # have it happen with the rest. Ideally the should be written to 'thumb_file' as well, and then
-        # copied to the _images folder during the `Copying Downloadable Files` step like the rest. 
+        # copied to the _images folder during the `Copying Downloadable Files` step like the rest.
         if not os.path.exists(car_thumb_path):
             os.makedirs(car_thumb_path)
         if os.path.exists(first_image_file):
             # We generate extra special thumbnails for the carousel
-            if (image_fname % 1) == 'plot_classifier_comparison_1.png':
-                car_tfile = os.path.join(car_thumb_path, fname[:-3] + '_car.png')
-                make_thumbnail(first_image_file, car_tfile, 600, 190)
-            elif (image_fname % 1) == 'plot_outlier_detection_1.png':
-                car_tfile = os.path.join(car_thumb_path, fname[:-3] + '_car.png')
-                make_thumbnail((first_image_file[:-5] + '3.png'), car_tfile, 372, 190)
-            elif (image_fname % 1) == 'plot_gp_regression_1.png':
-                car_tfile = os.path.join(car_thumb_path, fname[:-3] + '_car.png')
-                make_thumbnail((first_image_file[:-5] + '2.png'), car_tfile, 250, 190)
-            elif (image_fname % 1) == 'plot_adaboost_twoclass_1.png':
-                car_tfile = os.path.join(car_thumb_path, fname[:-3] + '_car.png')
-                make_thumbnail(first_image_file, car_tfile, 372, 190)
-            elif (image_fname % 1) == 'plot_compare_methods_1.png':
-                car_tfile = os.path.join(car_thumb_path, fname[:-3] + '_car.png')
-                make_thumbnail(first_image_file, car_tfile, 349, 190)
+            carousel_tfile = os.path.join(car_thumb_path, fname[:-3] + '_carousel.png')
+            first_img = image_fname % 1
+            if (first_img) in carousel_thumbs:
+                make_thumbnail((image_path % carousel_thumbs[first_img][0]),
+                               carousel_tfile, carousel_thumbs[first_img][1], 190)
             make_thumbnail(first_image_file, thumb_file, 400, 280)
 
     if not os.path.exists(thumb_file):
