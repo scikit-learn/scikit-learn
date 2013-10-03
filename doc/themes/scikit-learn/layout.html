@@ -24,10 +24,11 @@
 {% endblock %}
 
 {% block extrahead %}
+  {% if pagename != 'index' %}
    {% if theme_collapsiblesidebar|tobool %}
        <script type="text/javascript" src="{{ pathto('_static/sidebar.js', 1) }}"></script>
    {% endif %}
-
+  {% endif %}
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="{{ pathto('_static/js/bootstrap.min.js', 1)}}" type="text/javascript"></script>
   <link rel="canonical" href="http://scikit-learn.org/stable/{{pagename}}.html" />
@@ -131,12 +132,12 @@
 		  <div class="active item">
 		    <a href="{{ pathto('auto_examples/plot_classifier_comparison') }}">
 		      <div class="crop-wrapper" style="width: 380px; height: 190px; overflow: hidden">
-			<img src="_images/plot_classifier_comparison_1.png"
-			     style="max-height: 200px; max-width: 629px; width: 629px; height: 186px;"></div></a>
+			<img src="_images/plot_classifier_comparison_car.png"
+			     style="max-height: 200px; max-width: 629px; margin-left: -21px;"></div></a>
 		  </div>
 		  <div class="item">
 		    <a href="auto_examples/covariance/plot_outlier_detection.html">
-		      <img src="_images/plot_outlier_detection_3.png"></a>
+		      <img src="_images/plot_outlier_detection_car.png"></a>
 		  </div>
 		  <div class="item">
 		    <a href="{{pathto('auto_examples/neighbors/plot_species_kde') }}">
@@ -144,31 +145,31 @@
 		  </div>
 		  <div class="item">
 		    <a href="{{pathto('auto_examples/linear_model/plot_lasso_lars') }}">
-		      <img src="_images/plot_lasso_lars_1.png"></a>
+		      <img src="_images/plot_lasso_lars.png"></a>
 		  </div>
 		  <div class="item">
 		    <a href="{{ pathto('auto_examples/cluster/plot_cluster_comparison') }}">
-		      <img src="_images/plot_cluster_comparison_1.png"></a>
+		      <img src="_images/plot_cluster_comparison.png"></a>
 		  </div>
 		  <div class="item">
 		    <a href="{{ pathto('auto_examples/ensemble/plot_adaboost_twoclass') }}">
-		      <img src="_images/plot_adaboost_twoclass_1.png"></a>
+		      <img src="_images/plot_adaboost_twoclass_car.png"></a>
 		  </div>
 		  <div class="item">
 		    <a href="{{pathto('auto_examples/gaussian_process/plot_gp_regression') }}">
-		      <img src="_images/plot_gp_regression_2.png"></a>
+		      <img src="_images/plot_gp_regression_car.png"></a>
 		  </div>
 		  <div class="item">
 		    <a href="{{ pathto('auto_examples/manifold/plot_compare_methods') }}">
-		      <img src="_images/plot_compare_methods_1.png"></a>
+		      <img src="_images/plot_compare_methods_car.png"></a>
 		  </div>
 		  <div class="item">
 		    <a href="{{ pathto('auto_examples/mixture/plot_gmm_pdf') }}">
-		      <img src="_images/plot_gmm_pdf_1.png"></a>
+		      <img src="_images/plot_gmm_pdf.png"></a>
 		  </div>
 		  <div class="item">
 		    <a href="{{ pathto('auto_examples/cluster/plot_lena_ward_segmentation') }}">
-		      <img src="_images/plot_lena_ward_segmentation_1.png"></a>
+		      <img src="_images/plot_lena_ward_segmentation.png"></a>
 		  </div>
 		</div>
 		<!-- Carousel nav -->
