@@ -712,6 +712,14 @@ def make_thumbnail(in_fname, out_fname, width, height):
     thumb.paste(img, pos_insert)
 
     thumb.save(out_fname)
+    # Use optipng to perform lossless compression on the resized image if
+    # software is installed
+    if os.environ.get('SKLEARN_DOC_OPTIPNG', False):
+        try:
+            os.system("optipng -quiet -o 9 '{0}'".format(out_fname))
+        except Exception:
+            warnings.warn('Install optipng to reduce the size of the generated images')
+
 
 
 def get_short_module_name(module_name, obj_name):
