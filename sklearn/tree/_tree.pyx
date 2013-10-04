@@ -1231,8 +1231,8 @@ cdef class PresortBestSplitter(Splitter):
                 free(self.sample_mask)
 
             self.n_total_samples = X.shape[0]
-            self.sample_mask = \
-                <SIZE_t*> malloc(self.n_total_samples * sizeof(SIZE_t))
+            self.sample_mask = <SIZE_t*> calloc(self.n_total_samples,
+                                                sizeof(SIZE_t))
 
     cdef void node_split(self, SIZE_t* pos, SIZE_t* feature, double* threshold):
         """Find the best split on node samples[start:end]."""
@@ -1272,10 +1272,7 @@ cdef class PresortBestSplitter(Splitter):
 
         cdef SIZE_t i, j
 
-        # Reset sample mask
-        for i from 0 <= i < n_total_samples:
-            sample_mask[i] = 0
-
+        # Set sample mask
         for p from start <= p < end:
             sample_mask[samples[p]] = 1
 
@@ -1365,6 +1362,10 @@ cdef class PresortBestSplitter(Splitter):
                     tmp = samples[partition_end]
                     samples[partition_end] = samples[p]
                     samples[p] = tmp
+
+        # Reset sample mask
+        for p from start <= p < end:
+            sample_mask[samples[p]] = 0
 
         # Return values
         pos[0] = best_pos
