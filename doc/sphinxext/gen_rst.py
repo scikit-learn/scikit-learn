@@ -933,7 +933,7 @@ def generate_file_rst(fname, target_dir, src_dir, root_dir, plot_gallery):
             # We generate extra special thumbnails for the carousel
             carousel_tfile = os.path.join(car_thumb_path, fname[:-3] + '_carousel.png')
             first_img = image_fname % 1
-            if (first_img) in carousel_thumbs:
+            if first_img in carousel_thumbs:
                 make_thumbnail((image_path % carousel_thumbs[first_img][0]),
                                carousel_tfile, carousel_thumbs[first_img][1], 190)
             make_thumbnail(first_image_file, thumb_file, 400, 280)
