@@ -83,7 +83,7 @@ classification. The likelihood of the features is assumed to be Gaussian:
 
 .. math::
 
-   P(x_i \mid y) &= \frac{1}{\sqrt{2\pi\sigma^2_y}} \exp\left(-\frac{ (x_i - \mu_y)^2}{2\pi\sigma^2_y}\right)
+   P(x_i \mid y) &= \frac{1}{\sqrt{2\pi\sigma^2_y}} \exp\left(-\frac{(x_i - \mu_y)^2}{2\sigma^2_y}\right)
 
 The parameters :math:`\sigma_y` and :math:`\mu_y`
 are estimated using maximum likelihood.
