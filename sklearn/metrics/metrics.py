@@ -1883,7 +1883,7 @@ def hamming_loss(y_true, y_pred, classes=None):
 ###############################################################################
 # Regression loss functions
 ###############################################################################
-def mean_absolute_error(y_true, y_pred):
+def mean_absolute_error(y_true, y_pred, average=True):
     """Mean absolute error regression loss
 
     Parameters
@@ -1894,10 +1894,14 @@ def mean_absolute_error(y_true, y_pred):
     y_pred : array-like of shape = [n_samples] or [n_samples, n_outputs]
         Estimated target values.
 
+    average : True or False
+        Default value is True. If False, returns an array (multi-output)
+
     Returns
     -------
-    loss : float
-        A positive floating point value (the best value is 0.0).
+    loss : float or a numpy array of floats
+        If average is True, a positive floating point value (the best value is 0.0).
+        Else, a numpy array of positive floating points is returned.
 
     Examples
     --------
@@ -1910,13 +1914,18 @@ def mean_absolute_error(y_true, y_pred):
     >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
     >>> mean_absolute_error(y_true, y_pred)
     0.75
-
+    >>> mean_absolute_error(y_true, y_pred, average=False)
+    array([0.5,  1.])
     """
+    if not average:
+        axis = 0
+    else:
+        axis = None
     y_type, y_true, y_pred = _check_reg_targets(y_true, y_pred)
-    return np.mean(np.abs(y_pred - y_true))
+    return np.mean(np.abs(y_pred - y_true), axis=axis)
 
 
-def mean_squared_error(y_true, y_pred):
+def mean_squared_error(y_true, y_pred, average=True):
     """Mean squared error regression loss
 
     Parameters
@@ -1927,10 +1936,14 @@ def mean_squared_error(y_true, y_pred):
     y_pred : array-like of shape = [n_samples] or [n_samples, n_outputs]
         Estimated target values.
 
+    average : True or False
+        Default value is True. If False, returns an array (multi-output)
+
     Returns
     -------
-    loss : float
-        A positive floating point value (the best value is 0.0).
+    loss : float or a numpy array of floats
+        If average is True, a positive floating point value (the best value is 0.0).
+        Else, a numpy array of positive floating points is returned.
 
     Examples
     --------
@@ -1943,10 +1956,16 @@ def mean_squared_error(y_true, y_pred):
     >>> y_pred = [[0, 2],[-1, 2],[8, -5]]
     >>> mean_squared_error(y_true, y_pred)  # doctest: +ELLIPSIS
     0.708...
-
+    >>> mean_squared_error(y_true, y_pred, average=False)
+    0.708...
+    array([0.41666667, 1.])
     """
+    if not average:
+        axis = 0
+    else:
+        axis = None
     y_type, y_true, y_pred = _check_reg_targets(y_true, y_pred)
-    return np.mean((y_pred - y_true) ** 2)
+    return np.mean((y_pred - y_true) ** 2, axis=axis)
 
 
 ###############################################################################
@@ -2000,7 +2019,7 @@ def explained_variance_score(y_true, y_pred):
     return 1 - numerator / denominator
 
 
-def r2_score(y_true, y_pred):
+def r2_score(y_true, y_pred, average=True):
     """R^2 (coefficient of determination) regression score function.
 
     Best possible score is 1.0, lower values are worse.
@@ -2013,10 +2032,15 @@ def r2_score(y_true, y_pred):
     y_pred : array-like of shape = [n_samples] or [n_samples, n_outputs]
         Estimated target values.
 
+    average : True or False
+        Default value is True. If False, returns an array (multi-output)
+
     Returns
     -------
-    z : float
-        The R^2 score.
+    z : float or a numpy array of floats
+        If average is true, it returns the R^2 score, flattened across 1-D.
+        If average is False, it returns an array of floats corresponding to
+        the R^2 score of each dimension.
 
     Notes
     -----
@@ -2041,23 +2065,34 @@ def r2_score(y_true, y_pred):
     >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
     >>> r2_score(y_true, y_pred)  # doctest: +ELLIPSIS
     0.938...
-
+    >>> r2_score(y_true, y_pred, average=False)  # doctest: +ELLIPSIS
+    array([0.96543779, 0.90816327])
     """
-    y_type, y_true, y_pred = _check_reg_targets(y_true, y_pred)
 
+    y_type, y_true, y_pred = _check_reg_targets(y_true, y_pred)
     if len(y_true) == 1:
         raise ValueError("r2_score can only be computed given more than one"
                          " sample.")
-    numerator = ((y_true - y_pred) ** 2).sum(dtype=np.float64)
-    denominator = ((y_true - y_true.mean(axis=0)) ** 2).sum(dtype=np.float64)
 
-    if denominator == 0.0:
-        if numerator == 0.0:
-            return 1.0
+    if not average:
+        axis = 0
+    else:
+        axis = None
+    numerator = ((y_true - y_pred) ** 2).sum(dtype=np.float64, axis=axis)
+    denominator = ((y_true - y_true.mean(axis=0)) ** 2).sum(dtype=np.float64, axis=axis)
+    if denominator.sum() == 0.0:
+        if numerator.sum() == 0.0:
+            if average:
+                return 1.0
+            else:
+                return np.ones(y_true.shape[0], dtype=np.float64)
         else:
             # arbitrary set to zero to avoid -inf scores, having a constant
             # y_true is not interesting for scoring a regression anyway
-            return 0.0
+            if average:
+                return 0.0
+            else:
+                return np.zeros(y_true.shape[0], dtype=np.float64)
 
     return 1 - numerator / denominator
 
