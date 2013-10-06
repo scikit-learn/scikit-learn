@@ -216,7 +216,11 @@ class RANSAC(BaseEstimator, MetaEstimatorMixin):
                 continue
 
             # residuals of all data for current random sample model
-            residuals_subset = residual_metric(base_estimator.predict(X) - y)
+            y_pred = base_estimator.predict(X)
+            if y_pred.ndim == 1:
+                y_pred = y_pred[:, None]
+
+            residuals_subset = residual_metric(y_pred - y)
 
             # classify data into inliers and outliers
             inlier_mask_subset = residuals_subset < residual_threshold
