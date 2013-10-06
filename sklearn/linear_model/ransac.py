@@ -62,6 +62,9 @@ class RANSAC(BaseEstimator, MetaEstimatorMixin):
         This function is called with the estimated model and the randomly
         selected data: `is_model_valid(model, X, y)`. If its return value is
         False the current randomly chosen sub-sample is skipped.
+        Rejecting samples with this function is computationally costlier than
+        with `is_data_valid`. `is_model_valid` should therefore only be used if
+        the estimated model is needed for making the rejection decision.
 
     max_trials : int, optional
         Maximum number of iterations for random sample selection.
