@@ -1894,15 +1894,15 @@ def mean_absolute_error(y_true, y_pred, average='micro'):
     y_pred : array-like of shape = [n_samples] or [n_samples, n_outputs]
         Estimated target values.
 
-    average : 'micro' or False
+    average : 'micro' or None
         If 'micro' returns a float.
-        If False, returns an array (multi-output)
+        If None, returns an array (multi-output)
         (default: 'micro')
 
     Returns
     -------
     loss : float or a numpy array of shape[n_outputs]
-        If average is True, a positive floating point value (the best value is 0.0).
+        If average is 'micro', a positive floating point value (the best value is 0.0).
         Else, a numpy array of positive floating points is returned.
 
     Examples
@@ -1938,15 +1938,15 @@ def mean_squared_error(y_true, y_pred, average='micro'):
     y_pred : array-like of shape = [n_samples] or [n_samples, n_outputs]
         Estimated target values.
 
-    average : 'micro' or False
+    average : 'micro' or None
         If 'micro' returns a float.
-        If False, returns an array (multi-output)
+        If None, returns an array (multi-output)
         (default: 'micro')
 
     Returns
     -------
     loss : float or a numpy array of shape[n_outputs]
-        If average is "micro", a positive floating point value (the best value is 0.0).
+        If average is 'micro', a positive floating point value (the best value is 0.0).
         Else, a numpy array of positive floating points is returned.
 
     Examples
@@ -2035,16 +2035,16 @@ def r2_score(y_true, y_pred, average='micro'):
     y_pred : array-like of shape = [n_samples] or [n_samples, n_outputs]
         Estimated target values.
 
-    average : 'micro' or False
+    average : 'micro' or None
         If 'micro' returns a float.
-        If False, returns an array (multi-output)
+        If None, returns an array (multi-output)
         (default: 'micro')
 
     Returns
     -------
     z : float or a numpy array of shape[n_outputs]
         If average is 'micro', it returns the R^2 score, flattened across 1-D.
-        If average is False, it returns an array of floats corresponding to
+        If average is None, it returns an array of floats corresponding to
         the R^2 score of each dimension.
 
     Notes

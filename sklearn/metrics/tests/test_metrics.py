@@ -1997,20 +1997,20 @@ def test_regression_multioutput_array():
     y_true = [[1, 2], [2.5, -1], [4.5, 3], [5, 7]]
     y_pred = [[1, 1], [2, -1], [5, 4], [5, 6.5]]
 
-    mse = list(mean_squared_error(y_true, y_pred, average=False))
-    mae = list(mean_absolute_error(y_true, y_pred, average=False))
-    r =  list(r2_score(y_true, y_pred, average=False))
-    assert_equal(mse, [0.125, 0.5625])
-    assert_equal(mae, [0.25, 0.625])
-    assert_almost_equal(r, [0.95, 0.93], decimal=2)
+    mse = mean_squared_error(y_true, y_pred, average=False)
+    mae = mean_absolute_error(y_true, y_pred, average=False)
+    r =  r2_score(y_true, y_pred, average=False)
+    assert_array_equal(mse, np.array([0.125, 0.5625]))
+    assert_array_equal(mae, np.array([0.25, 0.625]))
+    assert_array_almost_equal(r, np.array([0.95, 0.93]), decimal=2)
 
     # mean_absolute_error and mean_squared_error are equal because
     # it is a binary problem.
     y_true = [[0, 0]]*4
     y_pred = [[1, 1]]*4
-    mse = list(mean_squared_error(y_true, y_pred, average=False))
-    mae = list(mean_absolute_error(y_true, y_pred, average=False))
-    r =  list(r2_score(y_true, y_pred, average=False))
-    assert_equal(mse, [1., 1.])
-    assert_equal(mae, [1., 1.])
-    assert_equal(r, [0., 0.])
+    mse = mean_squared_error(y_true, y_pred, average=False)
+    mae = mean_absolute_error(y_true, y_pred, average=False)
+    r =  r2_score(y_true, y_pred, average=False)
+    assert_array_equal(mse, np.array([1., 1.]))
+    assert_array_equal(mae, np.array([1., 1.]))
+    assert_array_almost_equal(r, np.array([0., 0.]))
