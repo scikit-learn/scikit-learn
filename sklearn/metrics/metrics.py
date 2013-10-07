@@ -1895,11 +1895,13 @@ def mean_absolute_error(y_true, y_pred, average=True):
         Estimated target values.
 
     average : True or False
-        Default value is True. If False, returns an array (multi-output)
+        If True returns a float.
+        If False, returns an array (multi-output)
+        (default: True)
 
     Returns
     -------
-    loss : float or a numpy array of floats
+    loss : float or a numpy array of shape[n_outputs]
         If average is True, a positive floating point value (the best value is 0.0).
         Else, a numpy array of positive floating points is returned.
 
@@ -1915,7 +1917,7 @@ def mean_absolute_error(y_true, y_pred, average=True):
     >>> mean_absolute_error(y_true, y_pred)
     0.75
     >>> mean_absolute_error(y_true, y_pred, average=False)
-    array([0.5,  1.])
+    array([ 0.5,  1. ])
     """
     if not average:
         axis = 0
@@ -1937,11 +1939,13 @@ def mean_squared_error(y_true, y_pred, average=True):
         Estimated target values.
 
     average : True or False
-        Default value is True. If False, returns an array (multi-output)
+        If True returns a float.
+        If False, returns an array (multi-output)
+        (default: True)
 
     Returns
     -------
-    loss : float or a numpy array of floats
+    loss : float or a numpy array of shape[n_outputs]
         If average is True, a positive floating point value (the best value is 0.0).
         Else, a numpy array of positive floating points is returned.
 
@@ -1957,8 +1961,7 @@ def mean_squared_error(y_true, y_pred, average=True):
     >>> mean_squared_error(y_true, y_pred)  # doctest: +ELLIPSIS
     0.708...
     >>> mean_squared_error(y_true, y_pred, average=False)
-    0.708...
-    array([0.41666667, 1.])
+    array([ 0.41666667,  1.        ])
     """
     if not average:
         axis = 0
@@ -2033,11 +2036,13 @@ def r2_score(y_true, y_pred, average=True):
         Estimated target values.
 
     average : True or False
-        Default value is True. If False, returns an array (multi-output)
+        If True returns a float.
+        If False, returns an array (multi-output)
+        (default: True)
 
     Returns
     -------
-    z : float or a numpy array of floats
+    z : float or a numpy array of shape[n_outputs]
         If average is true, it returns the R^2 score, flattened across 1-D.
         If average is False, it returns an array of floats corresponding to
         the R^2 score of each dimension.
@@ -2066,9 +2071,8 @@ def r2_score(y_true, y_pred, average=True):
     >>> r2_score(y_true, y_pred)  # doctest: +ELLIPSIS
     0.938...
     >>> r2_score(y_true, y_pred, average=False)  # doctest: +ELLIPSIS
-    array([0.96543779, 0.90816327])
+    array([ 0.96543779,  0.90816327])
     """
-
     y_type, y_true, y_pred = _check_reg_targets(y_true, y_pred)
     if len(y_true) == 1:
         raise ValueError("r2_score can only be computed given more than one"
@@ -2085,14 +2089,14 @@ def r2_score(y_true, y_pred, average=True):
             if average:
                 return 1.0
             else:
-                return np.ones(y_true.shape[0], dtype=np.float64)
+                return np.ones(y_true.shape[1], dtype=np.float64)
         else:
             # arbitrary set to zero to avoid -inf scores, having a constant
             # y_true is not interesting for scoring a regression anyway
             if average:
                 return 0.0
             else:
-                return np.zeros(y_true.shape[0], dtype=np.float64)
+                return np.zeros(y_true.shape[1], dtype=np.float64)
 
     return 1 - numerator / denominator
 
