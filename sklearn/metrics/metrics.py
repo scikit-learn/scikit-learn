@@ -1883,7 +1883,7 @@ def hamming_loss(y_true, y_pred, classes=None):
 ###############################################################################
 # Regression loss functions
 ###############################################################################
-def mean_absolute_error(y_true, y_pred, average=True):
+def mean_absolute_error(y_true, y_pred, average='micro'):
     """Mean absolute error regression loss
 
     Parameters
@@ -1894,10 +1894,10 @@ def mean_absolute_error(y_true, y_pred, average=True):
     y_pred : array-like of shape = [n_samples] or [n_samples, n_outputs]
         Estimated target values.
 
-    average : True or False
-        If True returns a float.
+    average : 'micro' or False
+        If 'micro' returns a float.
         If False, returns an array (multi-output)
-        (default: True)
+        (default: 'micro')
 
     Returns
     -------
@@ -1927,7 +1927,7 @@ def mean_absolute_error(y_true, y_pred, average=True):
     return np.mean(np.abs(y_pred - y_true), axis=axis)
 
 
-def mean_squared_error(y_true, y_pred, average=True):
+def mean_squared_error(y_true, y_pred, average='micro'):
     """Mean squared error regression loss
 
     Parameters
@@ -1938,15 +1938,15 @@ def mean_squared_error(y_true, y_pred, average=True):
     y_pred : array-like of shape = [n_samples] or [n_samples, n_outputs]
         Estimated target values.
 
-    average : True or False
-        If True returns a float.
+    average : 'micro' or False
+        If 'micro' returns a float.
         If False, returns an array (multi-output)
-        (default: True)
+        (default: 'micro')
 
     Returns
     -------
     loss : float or a numpy array of shape[n_outputs]
-        If average is True, a positive floating point value (the best value is 0.0).
+        If average is "micro", a positive floating point value (the best value is 0.0).
         Else, a numpy array of positive floating points is returned.
 
     Examples
@@ -2022,7 +2022,7 @@ def explained_variance_score(y_true, y_pred):
     return 1 - numerator / denominator
 
 
-def r2_score(y_true, y_pred, average=True):
+def r2_score(y_true, y_pred, average='micro'):
     """R^2 (coefficient of determination) regression score function.
 
     Best possible score is 1.0, lower values are worse.
@@ -2035,15 +2035,15 @@ def r2_score(y_true, y_pred, average=True):
     y_pred : array-like of shape = [n_samples] or [n_samples, n_outputs]
         Estimated target values.
 
-    average : True or False
-        If True returns a float.
+    average : 'micro' or False
+        If 'micro' returns a float.
         If False, returns an array (multi-output)
-        (default: True)
+        (default: 'micro')
 
     Returns
     -------
     z : float or a numpy array of shape[n_outputs]
-        If average is true, it returns the R^2 score, flattened across 1-D.
+        If average is 'micro', it returns the R^2 score, flattened across 1-D.
         If average is False, it returns an array of floats corresponding to
         the R^2 score of each dimension.
 

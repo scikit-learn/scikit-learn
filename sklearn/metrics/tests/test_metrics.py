@@ -1993,7 +1993,7 @@ def test_log_loss():
     loss = log_loss(y_true, y_pred, normalize=True, eps=.1)
     assert_almost_equal(loss, log_loss(y_true, np.clip(y_pred, .1, .9)))
 
-def test_issue_2200():
+def test_regression_multioutput_array():
     y_true = [[1, 2], [2.5, -1], [4.5, 3], [5, 7]]
     y_pred = [[1, 1], [2, -1], [5, 4], [5, 6.5]]
 
