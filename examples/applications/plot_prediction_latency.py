@@ -30,7 +30,7 @@ def _not_in_sphinx():
     return '__file__' in globals()
 
 
-def atomic_benchmark_estimator(estimator, X_test, percentile, verbose=False):
+def atomic_benchmark_estimator(estimator, X_test, verbose=False):
     n_instances = X_test.shape[0]
     runtimes = np.zeros(n_instances, dtype=np.float)
     for i in range(n_instances):
@@ -41,26 +41,24 @@ def atomic_benchmark_estimator(estimator, X_test, percentile, verbose=False):
     if verbose:
         print("atomic_benchmark runtimes:", min(runtimes), scoreatpercentile(
             runtimes, 50), max(runtimes))
-    return scoreatpercentile(runtimes, percentile)
+    return runtimes
 
 
-def bulk_benchmark_estimator(estimator, X_test, percentile, n_bulk_repeats,
-                             verbose):
+def bulk_benchmark_estimator(estimator, X_test, n_bulk_repeats, verbose):
     n_instances = X_test.shape[0]
     runtimes = np.zeros(n_bulk_repeats, dtype=np.float)
     for i in range(n_bulk_repeats):
         start = time.time()
         estimator.predict(X_test)
         runtimes[i] = time.time() - start
-    runtimes = map(lambda x: x/float(n_instances), runtimes)
+    runtimes = np.array(map(lambda x: x/float(n_instances), runtimes))
     if verbose:
         print("bulk_benchmark runtimes:", min(runtimes), scoreatpercentile(
             runtimes, 50), max(runtimes))
-    return scoreatpercentile(runtimes, percentile)
+    return runtimes
 
 
-def benchmark_estimator(estimator, X_test, percentile=90, n_bulk_repeats=30,
-                        verbose=False):
+def benchmark_estimator(estimator, X_test, n_bulk_repeats=30, verbose=False):
     """
 
     Parameters
@@ -68,17 +66,10 @@ def benchmark_estimator(estimator, X_test, percentile=90, n_bulk_repeats=30,
     n_samples : int, optional (default=100)
         The number of samples.
     """
-    atomic_latency = atomic_benchmark_estimator(estimator, X_test,
-                                                percentile, verbose)
-    bulk_latency = bulk_benchmark_estimator(estimator, X_test,
-                                            percentile, n_bulk_repeats,
-                                            verbose)
-    if verbose:
-        print("prediction time (atomic) <= %.3f us/instance at %d%%" % (
-            atomic_latency*1e6, percentile))
-        print("prediction time (bulk) <= %.3f us/instance at %d%%" % (
-            bulk_latency*1e6, percentile))
-    return atomic_latency, bulk_latency
+    atomic_runtimes = atomic_benchmark_estimator(estimator, X_test, verbose)
+    bulk_runtimes = bulk_benchmark_estimator(estimator, X_test, n_bulk_repeats,
+                                             verbose)
+    return atomic_runtimes, bulk_runtimes
 
 def generate_dataset(n_train, n_test, n_features, noise=0.1, verbose=False):
     """
@@ -113,48 +104,51 @@ def generate_dataset(n_train, n_test, n_features, noise=0.1, verbose=False):
         print("ok")
     return X_train, y_train, X_test, y_test
 
-n_train = int(1e4)
-n_test = int(1e3)
-n_feats = int(1e2)
-X_train, y_train, X_test, y_test = generate_dataset(n_train, n_test, n_feats,
-                                                    verbose=True)
+def boxplot_runtimes(runtimes, cls_names, pred_type):
+    fig, ax1 = plt.subplots(figsize=(10, 6))
+    bp = plt.boxplot(runtimes, )
 
-stats = {'settings': {'n_train': n_train, 'n_test': 'n_test',
-                      'n_feats': n_feats}}
-estimators = {'elasticnet': ElasticNet(), 'ridge': Ridge(),
-              'randomforest': RandomForestRegressor()}
-for clf_name, clf in estimators.iteritems():
-    print("Benchmarking", clf)
-    clf.fit(X_train, y_train)
-    gc.collect()
-    a, b = benchmark_estimator(clf, X_test)
-    stats[clf_name] = {'atomic': a, 'bulk': b}
+    xtick_names = plt.setp(ax1, xticklabels=cls_names)
+    plt.setp(xtick_names)
 
-plt.figure()
-ax = plt.subplot(111)
-cls_names = estimators.keys()
-runtimes = [1e6*stats[clf_name]['atomic'] for clf_name in cls_names]
-bar_colors = rcParams['axes.color_cycle'][:len(cls_names)]
-rectangles = plt.bar(range(len(stats)-1),
-                     runtimes,
-                     width=0.5,
-                     color=bar_colors)
+    plt.setp(bp['boxes'], color='black')
+    plt.setp(bp['whiskers'], color='black')
+    plt.setp(bp['fliers'], color='red', marker='+')
 
-ax.set_xticks(np.linspace(0.25, len(cls_names) - 0.75, len(cls_names)))
-ax.set_xticklabels(cls_names, fontsize=10)
-ymax = max(runtimes) * 1.2
-ax.set_ylim((0, ymax))
-ax.set_ylabel('runtime (micro-seconds) per instance')
-ax.set_title('Prediction Latency (atomic)')
+    ax1.yaxis.grid(True, linestyle='-', which='major', color='lightgrey',
+                  alpha=0.5)
+
+    ax1.set_axisbelow(True)
+    ax1.set_title('Prediction Time per Instance - %s' % pred_type.capitalize())
+    ax1.set_xlabel('Estimator')
+    ax1.set_ylabel('Prediction Time (us)')
+
+    plt.show()
 
 
-def autolabel(rectangles):
-    """attach some text vi autolabel on rectangles."""
-    for rect in rectangles:
-        height = rect.get_height()
-        ax.text(rect.get_x() + rect.get_width() / 2.,
-                1.05 * height, '%.4f' % height,
-                ha='center', va='bottom')
+def benchmark(n_train, n_test, n_feats):
+    X_train, y_train, X_test, y_test = generate_dataset(n_train, n_test, n_feats,
+                                                        verbose=True)
 
-autolabel(rectangles)
-plt.show()
+    stats = {'settings': {'n_train': n_train, 'n_test': 'n_test',
+                          'n_feats': n_feats}}
+    estimators = {'elasticnet': ElasticNet(), 'ridge': Ridge(),
+                  'randomforest': RandomForestRegressor()}
+    for clf_name, clf in estimators.iteritems():
+        print("Benchmarking", clf)
+        clf.fit(X_train, y_train)
+        gc.collect()
+        a, b = benchmark_estimator(clf, X_test)
+        stats[clf_name] = {'atomic': a, 'bulk': b}
+
+    cls_names = estimators.keys()
+    runtimes = [1e6*stats[clf_name]['atomic'] for clf_name in cls_names]
+    boxplot_runtimes(runtimes, cls_names, ('atomic'))
+    runtimes = [1e6*stats[clf_name]['bulk'] for clf_name in cls_names]
+    boxplot_runtimes(runtimes, cls_names, 'bulk (%d)' % n_test)
+
+if __name__ == '__main__':
+    n_train = int(1e3)
+    n_test = int(1e2)
+    n_feats = int(1e2)
+    benchmark(n_train, n_test, n_feats)
