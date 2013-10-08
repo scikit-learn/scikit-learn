@@ -123,7 +123,7 @@ def _fast_dot(A, B):
 #  the current numpy master's dot can about 3 times faster.
 if LooseVersion(np.__version__) < '1.7.2':  # backported
     try:
-        linalg.get_blas_funcs('gemm')
+        linalg.get_blas_funcs(['gemm'])
         fast_dot = _fast_dot
     except (ImportError, AttributeError):
         fast_dot = np.dot
