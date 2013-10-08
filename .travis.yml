@@ -11,6 +11,9 @@ before_install:
 install: python setup.py build_ext --inplace
 	 - if [ "${COVERAGE}" == "--with-coverage" ]; then
       	   sudo $PIP install coverage;
+	   sudo $PIP install coveralls;
       	   fi
 script: - make test
     	- if [ "${COVERAGE}" == "--with-coverage" ]; then make test-coverage; fi
+after_success:
+    - if [ "${COVERAGE}" == "--with-coverage" ]; then coveralls; fi
