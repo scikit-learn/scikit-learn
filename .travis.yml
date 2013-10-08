@@ -1,4 +1,6 @@
 language: python
+env:
+    - COVERAGE=--with-coverage
 python:
     - "2.7"
 virtualenv:
@@ -7,4 +9,8 @@ before_install:
     - sudo apt-get update -qq
     - sudo apt-get install -qq python-scipy python-nose
 install: python setup.py build_ext --inplace
-script: make test
+	 - if [ "${COVERAGE}" == "--with-coverage" ]; then
+      	   sudo $PIP install coverage;
+      	   fi
+script: - make test
+    	- if [ "${COVERAGE}" == "--with-coverage" ]; then make test-coverage; fi
