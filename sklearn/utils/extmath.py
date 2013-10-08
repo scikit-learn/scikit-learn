@@ -107,12 +107,13 @@ def _fast_dot(A, B):
         return np.dot(A, B)
 
     if ((min(A.shape) == 1) or (min(B.shape) == 1) or
-        (A.ndim != 2) or (B.ndim != 2)):
+            (A.ndim != 2) or (B.ndim != 2)):
         warnings.warn('Data must be 2D with more than one colum / row.'
                       'Falling back to np.dot', NonBLASDotWarning)
         return np.dot(A, B)
 
-    dot = linalg.get_blas_funcs('gemm', (A, B))
+    # scipy 0.9 compliant API
+    dot = linalg.get_blas_funcs(['gemm'], (A, B))[0]
     A, trans_a = _impose_f_order(A)
     B, trans_b = _impose_f_order(B)
     return dot(alpha=1.0, a=A, b=B, trans_a=trans_a, trans_b=trans_b)
@@ -122,7 +123,7 @@ def _fast_dot(A, B):
 #  the current numpy master's dot can about 3 times faster.
 if LooseVersion(np.__version__) < '1.7.2':  # backported
     try:
-        linalg.get_blas_funcs('gemm')
+        linalg.get_blas_funcs(['gemm'])
         fast_dot = _fast_dot
     except (ImportError, AttributeError):
         fast_dot = np.dot
