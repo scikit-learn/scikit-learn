@@ -18,6 +18,7 @@ from . import check_random_state
 from .fixes import qr_economic
 from ._logistic_sigmoid import _log_logistic_sigmoid
 from ..externals.six.moves import xrange
+from .sparsefuncs import csr_row_norms
 from .validation import array2d, NonBLASDotWarning
 
 
@@ -30,6 +31,28 @@ def norm(x):
     x = np.asarray(x)
     nrm2, = linalg.get_blas_funcs(['nrm2'], [x])
     return nrm2(x)
+
+
+def row_norms(X, squared=False):
+    """Row-wise (squared) Euclidean norm of X.
+
+    Equivalent to (X * X).sum(axis=1), but also supports CSR sparse matrices.
+    With newer NumPy versions, prevents an X.shape-sized temporary.
+
+    Performs no input validation.
+    """
+    if issparse(X):
+        norms = csr_row_norms(X)
+    elif hasattr(np, "einsum"):
+        # einsum avoids the creation of a temporary the size of X,
+        # but it's only available in NumPy >= 1.6.
+        norms = np.einsum('ij,ij->i', X, X)
+    else:
+        norms = (X * X).sum(axis=1)
+
+    if not squared:
+        np.sqrt(norms, norms)
+    return norms
 
 
 def _fast_logdet(A):

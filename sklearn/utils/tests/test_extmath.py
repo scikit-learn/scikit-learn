@@ -20,6 +20,7 @@ from sklearn.utils.testing import assert_raises, assert_raise_message
 from sklearn.utils.extmath import density
 from sklearn.utils.extmath import logsumexp
 from sklearn.utils.extmath import randomized_svd
+from sklearn.utils.extmath import row_norms
 from sklearn.utils.extmath import weighted_mode
 from sklearn.utils.extmath import cartesian
 from sklearn.utils.extmath import logistic_sigmoid
@@ -122,6 +123,18 @@ def test_randomized_svd_low_rank():
     # compute the singular values of X using the fast approximate method
     Ua, sa, Va = randomized_svd(X, k)
     assert_almost_equal(s[:rank], sa[:rank])
+
+
+def test_row_norms():
+    X = np.random.RandomState(42).randn(100, 100)
+    sq_norm = (X ** 2).sum(axis=1)
+
+    assert_array_almost_equal(sq_norm, row_norms(X, squared=True), 5)
+    assert_array_almost_equal(np.sqrt(sq_norm), row_norms(X))
+
+    Xcsr = sparse.csr_matrix(X, dtype=np.float32)
+    assert_array_almost_equal(sq_norm, row_norms(Xcsr, squared=True), 5)
+    assert_array_almost_equal(np.sqrt(sq_norm), row_norms(Xcsr))
 
 
 def test_randomized_svd_low_rank_with_noise():

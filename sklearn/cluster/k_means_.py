@@ -18,6 +18,7 @@ import scipy.sparse as sp
 
 from ..base import BaseEstimator, ClusterMixin, TransformerMixin
 from ..metrics.pairwise import euclidean_distances
+from ..utils.extmath import row_norms
 from ..utils.sparsefuncs import assign_rows_csr, mean_variance_axis0
 from ..utils import check_arrays
 from ..utils import check_random_state
@@ -92,7 +93,7 @@ def _k_init(X, n_clusters, n_local_trials=None, random_state=None,
 
     # Initialize list of closest distances and calculate current potential
     if x_squared_norms is None:
-        x_squared_norms = _squared_norms(X)
+        x_squared_norms = row_norms(X, squared=True)
     closest_dist_sq = euclidean_distances(
         centers[0], X, Y_norm_squared=x_squared_norms, squared=True)
     current_pot = closest_dist_sq.sum()
@@ -253,7 +254,7 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances=True,
             n_init = 1
 
     # precompute squared norms of data points
-    x_squared_norms = _squared_norms(X)
+    x_squared_norms = row_norms(X, squared=True)
 
     best_labels, best_inertia, best_centers = None, None, None
     if n_jobs == 1:
@@ -357,7 +358,7 @@ def _kmeans_single(X, n_clusters, max_iter=300, init='k-means++',
     """
     random_state = check_random_state(random_state)
     if x_squared_norms is None:
-        x_squared_norms = _squared_norms(X)
+        x_squared_norms = row_norms(X, squared=True)
     best_labels, best_inertia, best_centers = None, None, None
     # init
     centers = _init_centroids(X, n_clusters, init, random_state=random_state,
@@ -398,16 +399,6 @@ def _kmeans_single(X, n_clusters, max_iter=300, init='k-means++',
                 print("Converged at iteration %d" % i)
             break
     return best_labels, best_inertia, best_centers
-
-
-def _squared_norms(X):
-    """Compute the squared euclidean norms of the rows of X"""
-    if sp.issparse(X):
-        return _k_means.csr_row_norm_l2(X, squared=True)
-    else:
-        # TODO: implement a cython version to avoid the memory copy of the
-        # input data
-        return (X ** 2).sum(axis=1)
 
 
 def _labels_inertia_precompute_dense(X, x_squared_norms, centers):
@@ -774,7 +765,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         """
         self._check_fitted()
         X = self._check_test_data(X)
-        x_squared_norms = _squared_norms(X)
+        x_squared_norms = row_norms(X, squared=True)
         return _labels_inertia(X, x_squared_norms, self.cluster_centers_)[0]
 
     def score(self, X):
@@ -792,7 +783,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         """
         self._check_fitted()
         X = self._check_test_data(X)
-        x_squared_norms = _squared_norms(X)
+        x_squared_norms = row_norms(X, squared=True)
         return -_labels_inertia(X, x_squared_norms, self.cluster_centers_)[1]
 
 
@@ -1110,7 +1101,7 @@ class MiniBatchKMeans(KMeans):
         if hasattr(self.init, '__array__'):
             self.init = np.ascontiguousarray(self.init, dtype=np.float64)
 
-        x_squared_norms = _squared_norms(X)
+        x_squared_norms = row_norms(X, squared=True)
 
         if self.tol > 0.0:
             tol = _tolerance(X, self.tol)
@@ -1236,7 +1227,7 @@ class MiniBatchKMeans(KMeans):
         if n_samples == 0:
             return self
 
-        x_squared_norms = _squared_norms(X)
+        x_squared_norms = row_norms(X, squared=True)
         self.random_state_ = check_random_state(self.random_state)
         if (not hasattr(self, 'counts_')
                 or not hasattr(self, 'cluster_centers_')):
