@@ -1,7 +1,11 @@
 """
 Extended math utilities.
 """
-# Authors: G. Varoquaux, A. Gramfort, A. Passos, O. Grisel
+# Authors: Gael Varoquaux
+#          Alexandre Gramfort
+#          Alexandre T. Passos
+#          Olivier Grisel
+#          Lars Buitinck
 # License: BSD 3 clause
 
 import warnings
@@ -17,10 +21,15 @@ from ..externals.six.moves import xrange
 from .validation import array2d, NonBLASDotWarning
 
 
-def norm(v):
-    v = np.asarray(v)
-    __nrm2, = linalg.get_blas_funcs(['nrm2'], [v])
-    return __nrm2(v)
+def norm(x):
+    """Compute the Euclidean or Frobenius norm of x.
+
+    Returns the Euclidean norm when x is a vector, the Frobenius norm when x
+    is a matrix (2-d array).
+    """
+    x = np.asarray(x)
+    nrm2, = linalg.get_blas_funcs(['nrm2'], [x])
+    return nrm2(x)
 
 
 def _fast_logdet(A):
