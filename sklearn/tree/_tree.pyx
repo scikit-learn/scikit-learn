@@ -891,6 +891,7 @@ cdef class BestSplitter(Splitter):
         cdef SIZE_t n_features = self.n_features
 
         cdef np.ndarray[DTYPE_t, ndim=2, mode="c"] X = self.X
+        cdef SIZE_t X_stride = <SIZE_t> X.strides[0] / <SIZE_t> X.itemsize
         cdef SIZE_t max_features = self.max_features
         cdef SIZE_t min_samples_leaf = self.min_samples_leaf
         cdef UINT32_t* random_state = &self.rand_r_state
@@ -923,7 +924,7 @@ cdef class BestSplitter(Splitter):
             current_feature = features[f_i]
 
             # Sort samples along that feature
-            sort(X, current_feature, samples+start, end-start)
+            sort(<DTYPE_t*>X.data, X_stride, current_feature, samples+start, end-start)
 
             # Evaluate all splits
             criterion.reset()
@@ -996,8 +997,8 @@ cdef class BestSplitter(Splitter):
         feature[0] = best_feature
         threshold[0] = best_threshold
 
-cdef void sort(np.ndarray[DTYPE_t, ndim=2, mode="c"] X, SIZE_t current_feature,
-               SIZE_t* samples, SIZE_t length):
+cdef inline void sort(DTYPE_t* X, SIZE_t X_stride, SIZE_t current_feature,
+                      SIZE_t* samples, SIZE_t length) nogil:
     """In-place sorting of samples[start:end] using
       X[sample[i], current_feature] as key."""
     # Heapsort, adapted from Numerical Recipes in C
@@ -1018,16 +1019,16 @@ cdef void sort(np.ndarray[DTYPE_t, ndim=2, mode="c"] X, SIZE_t current_feature,
             tmp = samples[n]
             samples[n] = samples[0]
 
-        tmp_value = X[tmp, current_feature]
+        tmp_value = X[X_stride * tmp + current_feature]
         index = parent
         child = index * 2 + 1
 
         while child < n:
             if ((child + 1 < n) and
-                (X[samples[child + 1], current_feature] > X[samples[child], current_feature])):
+                (X[X_stride * samples[child + 1] + current_feature] > X[X_stride * samples[child] + current_feature])):
                 child += 1
 
-            if X[samples[child], current_feature] > tmp_value:
+            if X[X_stride * samples[child] + current_feature] > tmp_value:
                 samples[index] = samples[child]
                 index = child
                 child = index * 2 + 1
