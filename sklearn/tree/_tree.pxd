@@ -71,7 +71,8 @@ cdef class Splitter:
     cdef SIZE_t start                    # Start position for the current node
     cdef SIZE_t end                      # End position for the current ndoe
 
-    cdef np.ndarray X
+    cdef DTYPE_t* X
+    cdef SIZE_t X_stride
     cdef DOUBLE_t* y
     cdef SIZE_t y_stride
     cdef DOUBLE_t* sample_weight
@@ -86,13 +87,13 @@ cdef class Splitter:
                          np.ndarray y,
                          DOUBLE_t* sample_weight)
 
-    cdef void node_reset(self, SIZE_t start, SIZE_t end, double* impurity)
+    cdef void node_reset(self, SIZE_t start, SIZE_t end, double* impurity) nogil
 
     cdef void node_split(self, SIZE_t* pos, # Set to >= end if the node is a leaf
                                SIZE_t* feature,
-                               double* threshold)
+                               double* threshold) nogil
 
-    cdef void node_value(self, double* dest)
+    cdef void node_value(self, double* dest) nogil
 
 
 # =============================================================================
