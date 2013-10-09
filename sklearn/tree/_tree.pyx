@@ -1180,7 +1180,7 @@ cdef class PresortBestSplitter(Splitter):
     """Splitter for finding the best split, using presorting."""
     cdef DTYPE_t* X_old
     cdef np.ndarray X_argsorted
-    cdef int* X_argsorted_ptr
+    cdef INT32_t* X_argsorted_ptr
     cdef SIZE_t X_argsorted_stride
 
     cdef SIZE_t n_total_samples
@@ -1218,7 +1218,7 @@ cdef class PresortBestSplitter(Splitter):
             self.X_argsorted = \
                 np.asfortranarray(np.argsort(X, axis=0).astype(np.int32))
 
-            self.X_argsorted_ptr = <int*>self.X_argsorted.data
+            self.X_argsorted_ptr = <INT32_t*>self.X_argsorted.data
             self.X_argsorted_stride = <SIZE_t> self.X_argsorted.strides[1] / <SIZE_t> self.X_argsorted.itemsize
 
             if self.sample_mask != NULL:
@@ -1240,7 +1240,7 @@ cdef class PresortBestSplitter(Splitter):
 
         cdef DTYPE_t* X = self.X
         cdef SIZE_t X_stride = self.X_stride
-        cdef int* X_argsorted = self.X_argsorted_ptr
+        cdef INT32_t* X_argsorted = self.X_argsorted_ptr
         cdef SIZE_t X_argsorted_stride = self.X_argsorted_stride
         cdef SIZE_t n_total_samples = self.n_total_samples
         cdef SIZE_t* sample_mask = self.sample_mask
