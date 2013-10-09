@@ -226,15 +226,18 @@ cdef class ClassificationCriterion(Criterion):
 
         cdef SIZE_t k = 0
         cdef SIZE_t c = 0
-        cdef SIZE_t offset = 0
 
         for k from 0 <= k < n_outputs:
             for c from 0 <= c < n_classes[k]:
                 # Reset left label counts to 0
-                label_count_left[offset + c] = 0
+                label_count_left[c] = 0
+
                 # Reset right label counts to the initial counts
-                label_count_right[offset + c] = label_count_total[offset + c]
-            offset += label_count_stride
+                label_count_right[c] = label_count_total[c]
+
+            label_count_total += label_count_stride
+            label_count_left += label_count_stride
+            label_count_right += label_count_stride
 
     cdef void update(self, SIZE_t new_pos) nogil:
         """Update the collected statistics by moving samples[pos:new_pos] from
@@ -299,12 +302,13 @@ cdef class ClassificationCriterion(Criterion):
 
         cdef SIZE_t k
         cdef SIZE_t c
-        cdef SIZE_t offset = 0
 
         for k from 0 <= k < n_outputs:
             for c from 0 <= c < n_classes[k]:
-                dest[offset + c] = label_count_total[offset + c]
-            offset += label_count_stride
+                dest[c] = label_count_total[c]
+
+            dest += label_count_stride
+            label_count_total += label_count_stride
 
 
 cdef class Entropy(ClassificationCriterion):
@@ -336,19 +340,18 @@ cdef class Entropy(ClassificationCriterion):
         cdef double tmp
         cdef SIZE_t k
         cdef SIZE_t c
-        cdef SIZE_t offset = 0
 
         for k from 0 <= k < n_outputs:
             entropy = 0.0
 
             for c from 0 <= c < n_classes[k]:
-                tmp = label_count_total[offset + c]
+                tmp = label_count_total[c]
                 if tmp > 0.0:
                     tmp /= weighted_n_node_samples
                     entropy -= tmp * log(tmp)
 
             total += entropy
-            offset += label_count_stride
+            label_count_total += label_count_stride
 
         return total / n_outputs
 
@@ -371,26 +374,26 @@ cdef class Entropy(ClassificationCriterion):
         cdef double tmp
         cdef SIZE_t k
         cdef SIZE_t c
-        cdef SIZE_t offset = 0
 
         for k from 0 <= k < n_outputs:
             entropy_left = 0.0
             entropy_right = 0.0
 
             for c from 0 <= c < n_classes[k]:
-                tmp = label_count_left[offset + c]
+                tmp = label_count_left[c]
                 if tmp > 0.0:
                     tmp /= weighted_n_left
                     entropy_left -= tmp * log(tmp)
 
-                tmp = label_count_right[offset + c]
+                tmp = label_count_right[c]
                 if tmp > 0.0:
                     tmp /= weighted_n_right
                     entropy_right -= tmp * log(tmp)
 
             total += weighted_n_left * entropy_left
             total += weighted_n_right * entropy_right
-            offset += label_count_stride
+            label_count_left += label_count_stride
+            label_count_right += label_count_stride
 
         return total / (weighted_n_node_samples * n_outputs)
 
@@ -425,20 +428,19 @@ cdef class Gini(ClassificationCriterion):
         cdef double tmp
         cdef SIZE_t k
         cdef SIZE_t c
-        cdef SIZE_t offset = 0
 
         for k from 0 <= k < n_outputs:
             gini = 0.0
 
             for c from 0 <= c < n_classes[k]:
-                tmp = label_count_total[offset + c]
+                tmp = label_count_total[c]
                 gini += tmp * tmp
 
             gini = 1.0 - gini / (weighted_n_node_samples *
                                  weighted_n_node_samples)
 
             total += gini
-            offset += label_count_stride
+            label_count_total += label_count_stride
 
         return total / n_outputs
 
@@ -461,16 +463,15 @@ cdef class Gini(ClassificationCriterion):
         cdef double tmp
         cdef SIZE_t k
         cdef SIZE_t c
-        cdef SIZE_t offset = 0
 
         for k from 0 <= k < n_outputs:
             gini_left = 0.0
             gini_right = 0.0
 
             for c from 0 <= c < n_classes[k]:
-                tmp = label_count_left[offset + c]
+                tmp = label_count_left[c]
                 gini_left += tmp * tmp
-                tmp = label_count_right[offset + c]
+                tmp = label_count_right[c]
                 gini_right += tmp * tmp
 
             gini_left = 1.0 - gini_left / (weighted_n_left *
@@ -480,7 +481,8 @@ cdef class Gini(ClassificationCriterion):
 
             total += weighted_n_left * gini_left
             total += weighted_n_right * gini_right
-            offset += label_count_stride
+            label_count_left += label_count_stride
+            label_count_right += label_count_stride
 
         return total / (weighted_n_node_samples * n_outputs)
 
@@ -863,14 +865,13 @@ cdef class Splitter:
         """Reset splitter on node samples[start:end]."""
         cdef Criterion criterion = self.criterion
 
-        cdef SIZE_t* samples = self.samples
         self.start = start
         self.end = end
 
         criterion.init(self.y,
                        self.y_stride,
                        self.sample_weight,
-                       samples,
+                       self.samples,
                        start,
                        end)
 
@@ -1655,16 +1656,16 @@ cdef class Tree:
             else:
                 self.children_right[parent] = node_id
 
-        if not is_leaf:
-            # children_left and children_right will be set later
-            self.feature[node_id] = feature
-            self.threshold[node_id] = threshold
-
-        else:
+        if is_leaf:
             self.children_left[node_id] = _TREE_LEAF
             self.children_right[node_id] = _TREE_LEAF
             self.feature[node_id] = _TREE_UNDEFINED
             self.threshold[node_id] = _TREE_UNDEFINED
+
+        else:
+            # children_left and children_right will be set later
+            self.feature[node_id] = feature
+            self.threshold[node_id] = threshold
 
         self.node_count += 1
 
