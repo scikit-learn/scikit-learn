@@ -13,7 +13,7 @@
 
 
 from libc.stdlib cimport calloc, free, malloc, realloc
-from libc.string cimport memcpy
+from libc.string cimport memcpy, memset
 from libc.math cimport log as ln
 
 import numpy as np
@@ -189,8 +189,7 @@ cdef class ClassificationCriterion(Criterion):
         cdef SIZE_t offset = 0
 
         for k from 0 <= k < n_outputs:
-            for c from 0 <= c < n_classes[k]:
-                label_count_total[offset + c] = 0
+            memset(label_count_total + offset, 0, n_classes[k] * sizeof(double))
             offset += label_count_stride
 
         for p from start <= p < end:
@@ -225,15 +224,10 @@ cdef class ClassificationCriterion(Criterion):
         cdef double* label_count_right = self.label_count_right
 
         cdef SIZE_t k = 0
-        cdef SIZE_t c = 0
 
         for k from 0 <= k < n_outputs:
-            for c from 0 <= c < n_classes[k]:
-                # Reset left label counts to 0
-                label_count_left[c] = 0
-
-                # Reset right label counts to the initial counts
-                label_count_right[c] = label_count_total[c]
+            memset(label_count_left, 0, n_classes[k] * sizeof(double))
+            memcpy(label_count_right, label_count_total, n_classes[k] * sizeof(double))
 
             label_count_total += label_count_stride
             label_count_left += label_count_stride
@@ -299,14 +293,10 @@ cdef class ClassificationCriterion(Criterion):
         cdef SIZE_t* n_classes = self.n_classes
         cdef SIZE_t label_count_stride = self.label_count_stride
         cdef double* label_count_total = self.label_count_total
-
         cdef SIZE_t k
-        cdef SIZE_t c
 
         for k from 0 <= k < n_outputs:
-            for c from 0 <= c < n_classes[k]:
-                dest[c] = label_count_total[c]
-
+            memcpy(dest, label_count_total, n_classes[k] * sizeof(double))
             dest += label_count_stride
             label_count_total += label_count_stride
 
@@ -736,12 +726,7 @@ cdef class RegressionCriterion(Criterion):
 
     cdef void node_value(self, double* dest) nogil:
         """Compute the node value of samples[start:end] into dest."""
-        cdef SIZE_t n_outputs = self.n_outputs
-        cdef double* mean_total = self.mean_total
-        cdef SIZE_t k
-
-        for k from 0 <= k < n_outputs:
-            dest[k] = mean_total[k]
+        memcpy(dest, self.mean_total, self.n_outputs * sizeof(double))
 
 cdef class MSE(RegressionCriterion):
     """Mean squared error impurity criterion.
