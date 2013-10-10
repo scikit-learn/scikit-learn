@@ -28,7 +28,8 @@ X = StandardScaler().fit_transform(X)
 ##############################################################################
 # Compute DBSCAN
 db = DBSCAN(eps=0.3, min_samples=10).fit(X)
-core_samples = db.core_sample_indices_
+core_samples_mask = np.zeros_like(db.labels_, dtype=bool)
+core_samples_mask[db.core_sample_indices_] = True
 labels = db.labels_
 
 # Number of clusters in labels, ignoring noise if present.
@@ -56,18 +57,16 @@ for k, col in zip(unique_labels, colors):
     if k == -1:
         # Black used for noise.
         col = 'k'
-        markersize = 6
-    class_members = [index[0] for index in np.argwhere(labels == k)]
-    cluster_core_samples = [index for index in core_samples
-                            if labels[index] == k]
-    for index in class_members:
-        x = X[index]
-        if index in core_samples and k != -1:
-            markersize = 14
-        else:
-            markersize = 6
-        pl.plot(x[0], x[1], 'o', markerfacecolor=col,
-                markeredgecolor='k', markersize=markersize)
+
+    class_member_mask = (labels == k)
+
+    xy = X[class_member_mask & core_samples_mask]
+    pl.plot(xy[:, 0], xy[:, 1], 'o', markerfacecolor=col,
+            markeredgecolor='k', markersize=14)
+
+    xy = X[class_member_mask & ~core_samples_mask]
+    pl.plot(xy[:, 0], xy[:, 1], 'o', markerfacecolor=col,
+            markeredgecolor='k', markersize=6)
 
 pl.title('Estimated number of clusters: %d' % n_clusters_)
 pl.show()
