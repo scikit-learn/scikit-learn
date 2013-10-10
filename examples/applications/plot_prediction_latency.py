@@ -58,7 +58,7 @@ def bulk_benchmark_estimator(estimator, X_test, n_bulk_repeats, verbose):
         start = time.time()
         estimator.predict(X_test)
         runtimes[i] = time.time() - start
-    runtimes = np.array(map(lambda x: x/float(n_instances), runtimes))
+    runtimes = np.array(map(lambda x: x / float(n_instances), runtimes))
     if verbose:
         print("bulk_benchmark runtimes:", min(runtimes), scoreatpercentile(
             runtimes, 50), max(runtimes))
@@ -128,7 +128,7 @@ def boxplot_runtimes(runtimes, cls_names, pred_type):
     runtimes : list of `np.array` of latencies in micro-seconds
     cls_names : list of estimator class names that generated the runtimes
     pred_type : 'bulk' or 'atomic'
-    
+
     """
     fig, ax1 = plt.subplots(figsize=(10, 6))
     bp = plt.boxplot(runtimes, )
@@ -166,9 +166,9 @@ def benchmark(estimators, n_train, n_test, n_feats):
         stats[clf_name] = {'atomic': a, 'bulk': b}
 
     cls_names = estimators.keys()
-    runtimes = [1e6*stats[clf_name]['atomic'] for clf_name in cls_names]
+    runtimes = [1e6 * stats[clf_name]['atomic'] for clf_name in cls_names]
     boxplot_runtimes(runtimes, cls_names, 'atomic')
-    runtimes = [1e6*stats[clf_name]['bulk'] for clf_name in cls_names]
+    runtimes = [1e6 * stats[clf_name]['bulk'] for clf_name in cls_names]
     boxplot_runtimes(runtimes, cls_names, 'bulk (%d)' % n_test)
 
 if __name__ == '__main__':
