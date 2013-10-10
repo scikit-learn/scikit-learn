@@ -37,8 +37,10 @@ def log_likelihood(emp_cov, precision):
     log_likelihood_ /= 2.
     return log_likelihood_
 
+
 def empirical_covariance(X, assume_centered=False):
     """Computes the Maximum likelihood covariance estimator
+
 
     Parameters
     ----------

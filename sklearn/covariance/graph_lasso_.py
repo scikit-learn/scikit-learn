@@ -29,10 +29,10 @@ import collections
 # Helper functions to compute the objective and dual objective functions
 # of the l1-penalized estimator
 def _objective(mle, precision_, alpha):
-    # the objective function is made of a shifted scaled version of the 
+    # the objective function is made of a shifted scaled version of the
     # normalized log-likelihood (i.e. its empirical mean over the samples)
     p = precision_.shape[0]
-    cost = - 2. * log_likelihood(mle, precision_) - p * np.log(2 * np.pi)
+    cost = - 2. * log_likelihood(mle, precision_) + p * np.log(2 * np.pi)
     cost += alpha * (np.abs(precision_).sum()
                      - np.abs(np.diag(precision_)).sum())
     return cost
@@ -453,7 +453,7 @@ class GraphLassoCV(GraphLasso):
     """
 
     def __init__(self, alphas=4, n_refinements=4, cv=None, tol=1e-4,
-                 max_iter=100, mode='cd', n_jobs=1, verbose=False, 
+                 max_iter=100, mode='cd', n_jobs=1, verbose=False,
                  assume_centered=False):
         self.alphas = alphas
         self.n_refinements = n_refinements

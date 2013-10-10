@@ -29,7 +29,8 @@ def test_graph_lasso(random_state=0):
     for alpha in (.01, .1):
         covs = dict()
         for method in ('cd', 'lars'):
-            cov_, _, costs = graph_lasso(emp_cov, alpha=alpha, return_costs=True)
+            cov_, _, costs = graph_lasso(emp_cov, alpha=alpha,
+                                         return_costs=True)
             covs[method] = cov_
             costs, dual_gap = np.array(costs).T
             # Check that the costs always decrease
@@ -50,7 +51,8 @@ def test_graph_lasso(random_state=0):
         prec_ = GraphLasso(assume_centered=assume_centered).fit(Z).precision_
         precs.append(prec_)
     assert_array_almost_equal(precs[0], precs[1])
-        
+
+
 def test_graph_lasso_cv(random_state=1):
     # Sample data from a sparse multivariate normal
     dim = 5
