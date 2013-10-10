@@ -5,6 +5,12 @@ Prediction Latency
 
 This is an example showing the prediction latency of various scikit-learn
 estimators.
+
+The goal is to measure the latency one can expect when doing predictions
+either in bulk or atomic (i.e. one by one) mode.
+
+The plots represent the distribution of the prediction latency as a boxplot.
+
 """
 
 # Authors: Eustache Diemert <eustache@diemert.fr>
@@ -14,7 +20,6 @@ from __future__ import print_function
 
 import time
 import gc
-from matplotlib import rcParams
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -31,6 +36,7 @@ def _not_in_sphinx():
 
 
 def atomic_benchmark_estimator(estimator, X_test, verbose=False):
+    """Measure runtime prediction of each instance."""
     n_instances = X_test.shape[0]
     runtimes = np.zeros(n_instances, dtype=np.float)
     for i in range(n_instances):
@@ -45,6 +51,7 @@ def atomic_benchmark_estimator(estimator, X_test, verbose=False):
 
 
 def bulk_benchmark_estimator(estimator, X_test, n_bulk_repeats, verbose):
+    """Measure runtime prediction of the whole input."""
     n_instances = X_test.shape[0]
     runtimes = np.zeros(n_bulk_repeats, dtype=np.float)
     for i in range(n_bulk_repeats):
@@ -60,21 +67,28 @@ def bulk_benchmark_estimator(estimator, X_test, n_bulk_repeats, verbose):
 
 def benchmark_estimator(estimator, X_test, n_bulk_repeats=30, verbose=False):
     """
+    Measure runtimes of prediction in both atomic and bulk mode.
 
     Parameters
     ----------
-    n_samples : int, optional (default=100)
-        The number of samples.
+    estimator : already trained estimator supporting `predict()`
+    X_test : test input
+    n_bulk_repeats : how many times to repeat when evaluating bulk mode
+
+    Returns
+    -------
+    atomic_runtimes, bulk_runtimes : a pair of `np.array` which contain the
+    runtimes in seconds.
+
     """
     atomic_runtimes = atomic_benchmark_estimator(estimator, X_test, verbose)
     bulk_runtimes = bulk_benchmark_estimator(estimator, X_test, n_bulk_repeats,
                                              verbose)
     return atomic_runtimes, bulk_runtimes
 
+
 def generate_dataset(n_train, n_test, n_features, noise=0.1, verbose=False):
-    """
-    ...
-    """
+    """Generate a regression dataset with the given parameters."""
     if verbose:
         print("generating dataset...")
     X, y, coef = make_regression(n_samples=n_train + n_test,
@@ -104,7 +118,18 @@ def generate_dataset(n_train, n_test, n_features, noise=0.1, verbose=False):
         print("ok")
     return X_train, y_train, X_test, y_test
 
+
 def boxplot_runtimes(runtimes, cls_names, pred_type):
+    """
+    Plot a new `Figure` with boxplots of prediction runtimes.
+
+    Parameters
+    ----------
+    runtimes : list of `np.array` of latencies in micro-seconds
+    cls_names : list of estimator class names that generated the runtimes
+    pred_type : 'bulk' or 'atomic'
+    
+    """
     fig, ax1 = plt.subplots(figsize=(10, 6))
     bp = plt.boxplot(runtimes, )
 
@@ -116,7 +141,7 @@ def boxplot_runtimes(runtimes, cls_names, pred_type):
     plt.setp(bp['fliers'], color='red', marker='+')
 
     ax1.yaxis.grid(True, linestyle='-', which='major', color='lightgrey',
-                  alpha=0.5)
+                   alpha=0.5)
 
     ax1.set_axisbelow(True)
     ax1.set_title('Prediction Time per Instance - %s' % pred_type.capitalize())
@@ -126,14 +151,13 @@ def boxplot_runtimes(runtimes, cls_names, pred_type):
     plt.show()
 
 
-def benchmark(n_train, n_test, n_feats):
-    X_train, y_train, X_test, y_test = generate_dataset(n_train, n_test, n_feats,
-                                                        verbose=True)
+def benchmark(estimators, n_train, n_test, n_feats):
+    """Run the whole benchmark."""
+    X_train, y_train, X_test, y_test = generate_dataset(n_train, n_test,
+                                                        n_feats, verbose=True)
 
     stats = {'settings': {'n_train': n_train, 'n_test': 'n_test',
                           'n_feats': n_feats}}
-    estimators = {'elasticnet': ElasticNet(), 'ridge': Ridge(),
-                  'randomforest': RandomForestRegressor()}
     for clf_name, clf in estimators.iteritems():
         print("Benchmarking", clf)
         clf.fit(X_train, y_train)
@@ -143,7 +167,7 @@ def benchmark(n_train, n_test, n_feats):
 
     cls_names = estimators.keys()
     runtimes = [1e6*stats[clf_name]['atomic'] for clf_name in cls_names]
-    boxplot_runtimes(runtimes, cls_names, ('atomic'))
+    boxplot_runtimes(runtimes, cls_names, 'atomic')
     runtimes = [1e6*stats[clf_name]['bulk'] for clf_name in cls_names]
     boxplot_runtimes(runtimes, cls_names, 'bulk (%d)' % n_test)
 
@@ -151,4 +175,6 @@ if __name__ == '__main__':
     n_train = int(1e3)
     n_test = int(1e2)
     n_feats = int(1e2)
-    benchmark(n_train, n_test, n_feats)
+    estimators = {'elasticnet': ElasticNet(), 'ridge': Ridge(),
+                  'randomforest': RandomForestRegressor()}
+    benchmark(estimators, n_train, n_test, n_feats)
