@@ -1,5 +1,10 @@
 """Utilities for input validation"""
-# Authors: Olivier Grisel and Gael Varoquaux and others (please update me)
+# Authors: Olivier Grisel
+#          Gael Varoquaux
+#          Andreas Mueller
+#          Lars Buitinck
+#          Alexandre Gramfort
+#          Nicolas Tresegnie
 # License: BSD 3 clause
 
 import warnings
