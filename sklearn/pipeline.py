@@ -207,7 +207,7 @@ class Pipeline(BaseEstimator):
 
 
 def _fit_one_transformer(transformer, X, y):
-    transformer.fit(X, y)
+    return transformer.fit(X, y)
 
 
 def _transform_one(transformer, name, X, transformer_weights):
@@ -222,15 +222,17 @@ def _fit_transform_one(transformer, name, X, y, transformer_weights,
     if transformer_weights is not None and name in transformer_weights:
         # if we have a weight for this transformer, muliply output
         if hasattr(transformer, 'fit_transform'):
-            return (transformer.fit_transform(X, y, **fit_params)
-                    * transformer_weights[name])
+            X_transformed = transformer.fit_transform(X, y, **fit_params)
+            return X_transformed * transformer_weights[name], transformer
         else:
-            return (transformer.fit(X, y, **fit_params).transform(X)
-                    * transformer_weights[name])
+            X_transformed = transformer.fit(X, y, **fit_params).transform(X)
+            return X_transformed * transformer_weights[name], transformer
     if hasattr(transformer, 'fit_transform'):
-        return transformer.fit_transform(X, y, **fit_params)
+        X_transformed = transformer.fit_transform(X, y, **fit_params)
+        return X_transformed, transformer
     else:
-        return transformer.fit(X, y, **fit_params).transform(X)
+        X_transformed = transformer.fit(X, y, **fit_params).transform(X)
+        return X_transformed, transformer
 
 
 class FeatureUnion(BaseEstimator, TransformerMixin):
@@ -284,9 +286,10 @@ class FeatureUnion(BaseEstimator, TransformerMixin):
         X : array-like or sparse matrix, shape (n_samples, n_features)
             Input data, used to fit transformers.
         """
-        Parallel(n_jobs=self.n_jobs)(
+        transformers = Parallel(n_jobs=self.n_jobs)(
             delayed(_fit_one_transformer)(trans, X, y)
             for name, trans in self.transformer_list)
+        self._update_transformer_list(transformers)
         return self
 
     def fit_transform(self, X, y=None, **fit_params):
@@ -304,10 +307,13 @@ class FeatureUnion(BaseEstimator, TransformerMixin):
             hstack of results of transformers. sum_n_components is the
             sum of n_components (output dimension) over transformers.
         """
-        Xs = Parallel(n_jobs=self.n_jobs)(
+        result = Parallel(n_jobs=self.n_jobs)(
             delayed(_fit_transform_one)(trans, name, X, y,
                                         self.transformer_weights, **fit_params)
             for name, trans in self.transformer_list)
+
+        Xs, transformers = zip(*result)
+        self._update_transformer_list(transformers)
         if any(sparse.issparse(f) for f in Xs):
             Xs = sparse.hstack(Xs).tocsr()
         else:
@@ -346,3 +352,10 @@ class FeatureUnion(BaseEstimator, TransformerMixin):
                 for key, value in iteritems(trans.get_params(deep=True)):
                     out['%s__%s' % (name, key)] = value
             return out
+
+    def _update_transformer_list(self, transformers):
+        self.transformer_list[:] = [
+            (name, new)
+            for ((name, old), new) in zip(self.transformer_list, transformers)
+        ]
+
