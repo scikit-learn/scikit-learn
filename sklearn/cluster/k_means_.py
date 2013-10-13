@@ -34,8 +34,7 @@ from . import _k_means
 # Initialization heuristic
 
 
-def _k_init(X, n_clusters, n_local_trials=None, random_state=None,
-            x_squared_norms=None):
+def _k_init(X, n_clusters, x_squared_norms, random_state, n_local_trials=None):
     """Init n_clusters seeds according to k-means++
 
     Parameters
@@ -47,20 +46,17 @@ def _k_init(X, n_clusters, n_local_trials=None, random_state=None,
     n_clusters: integer
         The number of seeds to choose
 
+    x_squared_norms: array, shape (n_samples,)
+        Squared Euclidean norm of each data point.
+
+    random_state: numpy.RandomState
+        The generator used to initialize the centers.
+
     n_local_trials: integer, optional
         The number of seeding trials for each center (except the first),
         of which the one reducing inertia the most is greedily chosen.
         Set to None to make the number of trials depend logarithmically
         on the number of seeds (2+log(k)); this is the default.
-
-    random_state: integer or numpy.RandomState, optional
-        The generator used to initialize the centers. If an integer is
-        given, it fixes the seed. Defaults to the global numpy random
-        number generator.
-
-    x_squared_norms: array, shape (n_samples,), optional
-        Squared euclidean norm of each data point. Pass it if you have it at
-        hands already to avoid it being recomputed here. Default: None
 
     Notes
     -----
@@ -73,9 +69,10 @@ def _k_init(X, n_clusters, n_local_trials=None, random_state=None,
     which is the implementation used in the aforementioned paper.
     """
     n_samples, n_features = X.shape
-    random_state = check_random_state(random_state)
 
     centers = np.empty((n_clusters, n_features))
+
+    assert x_squared_norms is not None, 'x_squared_norms None in _k_init'
 
     # Set the number of local seeding trials if none is given
     if n_local_trials is None:
@@ -92,8 +89,6 @@ def _k_init(X, n_clusters, n_local_trials=None, random_state=None,
         centers[0] = X[center_id]
 
     # Initialize list of closest distances and calculate current potential
-    if x_squared_norms is None:
-        x_squared_norms = row_norms(X, squared=True)
     closest_dist_sq = euclidean_distances(
         centers[0], X, Y_norm_squared=x_squared_norms, squared=True)
     current_pot = closest_dist_sq.sum()
@@ -296,8 +291,8 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances=True,
     return best_centers, best_labels, best_inertia
 
 
-def _kmeans_single(X, n_clusters, max_iter=300, init='k-means++',
-                   verbose=False, x_squared_norms=None, random_state=None,
+def _kmeans_single(X, n_clusters, x_squared_norms, max_iter=300,
+                   init='k-means++', verbose=False, random_state=None,
                    tol=1e-4, precompute_distances=True):
     """A single run of k-means, assumes preparation completed prior.
 
@@ -335,8 +330,8 @@ def _kmeans_single(X, n_clusters, max_iter=300, init='k-means++',
     verbose: boolean, optional
         Verbosity mode
 
-    x_squared_norms: array, optional
-        Precomputed x_squared_norms. Calculated if not given.
+    x_squared_norms: array
+        Precomputed x_squared_norms.
 
     random_state: integer or numpy.RandomState, optional
         The generator used to initialize the centers. If an integer is
@@ -357,8 +352,7 @@ def _kmeans_single(X, n_clusters, max_iter=300, init='k-means++',
         the closest centroid for all observations in the training set).
     """
     random_state = check_random_state(random_state)
-    if x_squared_norms is None:
-        x_squared_norms = row_norms(X, squared=True)
+
     best_labels, best_inertia, best_centers = None, None, None
     # init
     centers = _init_centroids(X, n_clusters, init, random_state=random_state,
