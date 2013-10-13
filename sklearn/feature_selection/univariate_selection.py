@@ -19,7 +19,7 @@ from ..preprocessing import LabelBinarizer
 from ..utils import (array2d, as_float_array,
                      atleast2d_or_csr, check_arrays, safe_asarray, safe_sqr,
                      safe_mask)
-from ..utils.extmath import safe_sparse_dot
+from ..utils.extmath import norm, safe_sparse_dot
 from ..externals import six
 from .base import SelectorMixin
 
@@ -253,8 +253,9 @@ def f_regression(X, y, center=True):
 
     # compute the correlation
     corr = safe_sparse_dot(y, X)
+    # XXX could use corr /= row_norms(X.T) here, but the test doesn't pass
     corr /= np.asarray(np.sqrt(safe_sqr(X).sum(axis=0))).ravel()
-    corr /= np.asarray(np.sqrt(safe_sqr(y).sum())).ravel()
+    corr /= norm(y)
 
     # convert to p-value
     dof = y.size - 2
