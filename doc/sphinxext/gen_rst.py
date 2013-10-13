@@ -19,6 +19,7 @@ import cPickle
 import urllib2
 import gzip
 import posixpath
+import subprocess
 
 try:
     from PIL import Image
@@ -716,7 +717,7 @@ def make_thumbnail(in_fname, out_fname, width, height):
     # software is installed
     if os.environ.get('SKLEARN_DOC_OPTIPNG', False):
         try:
-            os.system("optipng -quiet -o 9 '{0}'".format(out_fname))
+            subprocess.call(["optipng", "-quiet", "-o", "9", out_fname])
         except Exception:
             warnings.warn('Install optipng to reduce the size of the generated images')
 
