@@ -161,15 +161,6 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
             raise ValueError("Shapes of X and sample_weight do not match.")
         return sample_weight
 
-    def _set_coef(self, coef_):
-        """Make sure that coef_ is fortran-style and 2d.
-
-        Fortran-style memory layout is needed to ensure that computing
-        the dot product between input ``X`` and ``coef_`` does not trigger
-        a memory copy.
-        """
-        self.coef_ = np.asfortranarray(array2d(coef_))
-
     def _allocate_parameter_mem(self, n_classes, n_features, coef_init=None,
                                 intercept_init=None):
         """Allocate mem for parameters; initialize if provided."""
@@ -411,10 +402,6 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
 
         self._partial_fit(X, y, alpha, C, loss, learning_rate, self.n_iter,
                           classes, sample_weight, coef_init, intercept_init)
-
-        # fitting is over, we can now transform coef_ to fortran order
-        # for faster predictions
-        self._set_coef(self.coef_)
 
         return self
 
