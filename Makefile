@@ -12,7 +12,7 @@ all: clean inplace test
 clean-ctags:
 	rm -f tags
 
-clean: clean-build clean-ctags
+clean: clean-ctags
 	$(PYTHON) setup.py clean
 	rm -rf dist
 
