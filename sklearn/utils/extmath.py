@@ -33,6 +33,9 @@ def norm(x):
     return nrm2(x)
 
 
+_have_einsum = hasattr(np, "einsum")
+
+
 def row_norms(X, squared=False):
     """Row-wise (squared) Euclidean norm of X.
 
@@ -43,7 +46,7 @@ def row_norms(X, squared=False):
     """
     if issparse(X):
         norms = csr_row_norms(X)
-    elif hasattr(np, "einsum"):
+    elif _have_einsum:
         # einsum avoids the creation of a temporary the size of X,
         # but it's only available in NumPy >= 1.6.
         norms = np.einsum('ij,ij->i', X, X)

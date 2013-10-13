@@ -43,7 +43,7 @@ from scipy.spatial import distance
 from scipy.sparse import csr_matrix
 from scipy.sparse import issparse
 
-from ..utils import atleast2d_or_csr
+from ..utils import array2d, atleast2d_or_csr
 from ..utils import gen_even_slices
 from ..utils import gen_batches
 from ..utils import safe_asarray
@@ -155,17 +155,19 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
     # well as Y, then you should just pre-compute the output and not even
     # call this function.
     X, Y = check_pairwise_arrays(X, Y)
-    XX = row_norms(X, squared=True)[:, np.newaxis]
 
-    if X is Y:  # shortcut in the common case euclidean_distances(X, X)
-        YY = XX.T
-    elif Y_norm_squared is None:
-        YY = row_norms(Y, squared=True)[np.newaxis, :]
-    else:
-        YY = atleast2d_or_csr(Y_norm_squared)
+    if Y_norm_squared is not None:
+        YY = array2d(Y_norm_squared)
         if YY.shape != (1, Y.shape[0]):
             raise ValueError(
                 "Incompatible dimensions for Y and Y_norm_squared")
+    else:
+        YY = row_norms(Y, squared=True)[np.newaxis, :]
+
+    if X is Y:  # shortcut in the common case euclidean_distances(X, X)
+        XX = YY.T
+    else:
+        XX = row_norms(X, squared=True)[:, np.newaxis]
 
     distances = safe_sparse_dot(X, Y.T, dense_output=True)
     distances *= -2
