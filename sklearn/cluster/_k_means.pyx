@@ -241,42 +241,6 @@ def _mini_batch_update_csr(X, np.ndarray[DOUBLE, ndim=1] x_squared_norms,
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-def csr_row_norm_l2(X, squared=True):
-    """Get L2 norm of each row in CSR matrix X.
-
-    TODO: refactor me in the sklearn.utils.sparsefuncs module once the CSR
-    sklearn.preprocessing.StandardScaler has been refactored as well.
-    """
-    cdef:
-        unsigned int n_samples = X.shape[0]
-        unsigned int n_features = X.shape[1]
-        np.ndarray[DOUBLE, ndim=1] norms = np.zeros((n_samples,),
-                                                    dtype=np.float64)
-        np.ndarray[DOUBLE, ndim=1] X_data = X.data
-        np.ndarray[int, ndim=1] X_indices = X.indices
-        np.ndarray[int, ndim=1] X_indptr = X.indptr
-
-        unsigned int i
-        unsigned int j
-        double sum_
-        int with_sqrt = not squared
-
-    for i in range(n_samples):
-        sum_ = 0.0
-
-        for j in range(X_indptr[i], X_indptr[i + 1]):
-            sum_ += X_data[j] * X_data[j]
-
-        if with_sqrt:
-            sum_ = sqrt(sum_)
-
-        norms[i] = sum_
-    return norms
-
-
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
 def _centers_dense(np.ndarray[DOUBLE, ndim=2] X,
         np.ndarray[INT, ndim=1] labels, int n_clusters,
         np.ndarray[DOUBLE, ndim=1] distances):
