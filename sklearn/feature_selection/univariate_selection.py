@@ -95,11 +95,10 @@ def f_oneway(*args):
     args = [safe_asarray(a) for a in args]
     n_samples_per_class = np.array([a.shape[0] for a in args])
     n_samples = np.sum(n_samples_per_class)
-    ss_alldata = reduce(lambda x, y: x + y,
-                        [safe_sqr(a).sum(axis=0) for a in args])
-    sums_args = [a.sum(axis=0) for a in args]
-    square_of_sums_alldata = safe_sqr(reduce(lambda x, y: x + y, sums_args))
-    square_of_sums_args = [safe_sqr(s) for s in sums_args]
+    ss_alldata = sum(safe_sqr(a).sum(axis=0) for a in args)
+    sums_args = [np.asarray(a.sum(axis=0)) for a in args]
+    square_of_sums_alldata = sum(sums_args) ** 2
+    square_of_sums_args = [s ** 2 for s in sums_args]
     sstot = ss_alldata - square_of_sums_alldata / float(n_samples)
     ssbn = 0.
     for k, _ in enumerate(args):
