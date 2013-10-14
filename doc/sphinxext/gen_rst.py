@@ -785,7 +785,8 @@ def generate_file_rst(fname, target_dir, src_dir, root_dir, plot_gallery):
         else:
             stdout = ''
         if os.path.exists(time_path):
-            time_elapsed, time_m, time_s = map(float, open(time_path).read().split())
+            time_elapsed = float(open(time_path).read())
+            time_m, time_s = divmod(time_elapsed, 60)
 
         if not os.path.exists(first_image_file) or \
            os.stat(first_image_file).st_mtime <= os.stat(src_file).st_mtime:
@@ -895,7 +896,7 @@ def generate_file_rst(fname, target_dir, src_dir, root_dir, plot_gallery):
                     stdout = '**Script output**::\n\n  %s\n\n' % (
                         '\n  '.join(my_stdout.split('\n')))
                 open(stdout_path, 'w').write(stdout)
-                open(time_path, 'w').write('%f %f %f' % (time_elapsed, time_m, time_s))
+                open(time_path, 'w').write('%f' % time_elapsed)
                 os.chdir(cwd)
 
                 # In order to save every figure we have two solutions :
