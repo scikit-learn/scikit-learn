@@ -46,15 +46,23 @@ for i, clf in enumerate((svc, rbf_svc, poly_svc, lin_svc)):
     # Plot the decision boundary. For that, we will assign a color to each
     # point in the mesh [x_min, m_max]x[y_min, y_max].
     pl.subplot(2, 2, i + 1)
+    pl.subplots_adjust(wspace=0.4, hspace=0.4)
+
     Z = clf.predict(np.c_[xx.ravel(), yy.ravel()])
 
     # Put the result into a color plot
     Z = Z.reshape(xx.shape)
     pl.contourf(xx, yy, Z, cmap=pl.cm.Paired)
-    pl.axis('off')
 
     # Plot also the training points
     pl.scatter(X[:, 0], X[:, 1], c=Y, cmap=pl.cm.Paired)
+    pl.xlabel('Sepal length')
+    pl.ylabel('Sepal width')
+
+    pl.xlim(xx.min(), xx.max())
+    pl.ylim(yy.min(), yy.max())
+    pl.xticks(())
+    pl.yticks(())
 
     pl.title(titles[i])
 
