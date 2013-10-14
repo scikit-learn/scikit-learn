@@ -332,7 +332,7 @@ plot_rst_template = """
 .. literalinclude:: %(fname)s
     :lines: %(end_row)s-
 
-**Total running time of the example:** %(time_elapsed) .2f seconds
+**Total running time of the example:** %(time_elapsed) .2f seconds (%(time_m) .0f minutes %(time_s) .2f seconds)
     """
 
 # The following strings are used when we have several pictures: we use
@@ -772,6 +772,8 @@ def generate_file_rst(fname, target_dir, src_dir, root_dir, plot_gallery):
                              'time_%s.txt' % base_image_name)
     thumb_file = os.path.join(thumb_dir, fname[:-3] + '.png')
     time_elapsed = 0
+    time_m = 0
+    time_s = 0
     if plot_gallery and fname.startswith('plot'):
         # generate the plot as png image if file name
         # starts with plot and if it is more recent than an
@@ -782,7 +784,7 @@ def generate_file_rst(fname, target_dir, src_dir, root_dir, plot_gallery):
         else:
             stdout = ''
         if os.path.exists(time_path):
-            time_elapsed = float(open(time_path).read())
+            time_elapsed, time_m, time_s = map(float, open(time_path).read().split())
 
         if not os.path.exists(first_image_file) or \
            os.stat(first_image_file).st_mtime <= os.stat(src_file).st_mtime:
@@ -803,6 +805,7 @@ def generate_file_rst(fname, target_dir, src_dir, root_dir, plot_gallery):
                 my_globals = {'pl': plt}
                 execfile(os.path.basename(src_file), my_globals)
                 time_elapsed = time() - t0
+                time_m, time_s = divmod(time_elapsed, 60)
                 sys.stdout = orig_stdout
                 my_stdout = my_buffer.getvalue()
 
@@ -891,7 +894,7 @@ def generate_file_rst(fname, target_dir, src_dir, root_dir, plot_gallery):
                     stdout = '**Script output**::\n\n  %s\n\n' % (
                         '\n  '.join(my_stdout.split('\n')))
                 open(stdout_path, 'w').write(stdout)
-                open(time_path, 'w').write('%f' % time_elapsed)
+                open(time_path, 'w').write('%f %f %f' % (time_elapsed, time_m, time_s))
                 os.chdir(cwd)
 
                 # In order to save every figure we have two solutions :
