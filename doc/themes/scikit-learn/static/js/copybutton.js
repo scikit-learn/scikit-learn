@@ -1,7 +1,9 @@
 $(document).ready(function() {
     /* Add a [>>>] button on the top-right corner of code samples to hide
      * the >>> and ... prompts and the output and thus make the code
-     * copyable. */
+     * copyable. 
+     * Note: This JS snippet was taken from the official python.org
+     * documentation site.*/
     var div = $('.highlight-python .highlight,' +
                 '.highlight-python3 .highlight,' + 
                 '.highlight-pycon .highlight')
