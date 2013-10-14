@@ -786,7 +786,6 @@ def generate_file_rst(fname, target_dir, src_dir, root_dir, plot_gallery):
             stdout = ''
         if os.path.exists(time_path):
             time_elapsed = float(open(time_path).read())
-            time_m, time_s = divmod(time_elapsed, 60)
 
         if not os.path.exists(first_image_file) or \
            os.stat(first_image_file).st_mtime <= os.stat(src_file).st_mtime:
@@ -807,7 +806,6 @@ def generate_file_rst(fname, target_dir, src_dir, root_dir, plot_gallery):
                 my_globals = {'pl': plt}
                 execfile(os.path.basename(src_file), my_globals)
                 time_elapsed = time() - t0
-                time_m, time_s = divmod(time_elapsed, 60)
                 sys.stdout = orig_stdout
                 my_stdout = my_buffer.getvalue()
 
@@ -968,6 +966,7 @@ def generate_file_rst(fname, target_dir, src_dir, root_dir, plot_gallery):
         for figure_name in figure_list:
             image_list += HLIST_IMAGE_TEMPLATE % figure_name.lstrip('/')
 
+    time_m, time_s = divmod(time_elapsed, 60)
     f = open(os.path.join(target_dir, fname[:-2] + 'rst'), 'w')
     f.write(this_template % locals())
     f.flush()
