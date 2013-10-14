@@ -159,8 +159,9 @@ further information.
 
  - :ref:`example_linear_model_plot_sgd_separating_hyperplane.py`,
  - :ref:`example_linear_model_plot_sgd_iris.py`
- - :ref:`example_linear_model_plot_sgd_weighted_classes.py`
  - :ref:`example_linear_model_plot_sgd_weighted_samples.py`
+ - :ref:`example_svm_plot_separating_hyperplane_unbalanced.py` (See the `Note`)
+
 
 Regression
 ==========
