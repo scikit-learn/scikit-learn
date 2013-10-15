@@ -4,11 +4,13 @@
 #          Andreas Mueller <amueller@ais.uni-bonn.de>
 # License: BSD 3 clause
 
+import warnings
+
 import numpy as np
 
 from ..base import BaseEstimator, TransformerMixin
 
-from ..utils.fixes import unique
+from ..utils.fixes import unique, np_version
 from ..utils import deprecated, column_or_1d
 
 from ..utils.multiclass import unique_labels
@@ -24,6 +26,20 @@ __all__ = [
     'LabelBinarizer',
     'LabelEncoder',
 ]
+
+def _warn_numpy_unicode_bug(labels):
+    """Check that user is not subject to an old numpy bug
+
+    Fixed in master before 1.7.0:
+
+      https://github.com/numpy/numpy/pull/243
+
+    and then backported to 1.6.1.
+    """
+    if np_version[:3] < (1, 6, 1) and labels.dtype.kind == 'U':
+        warnings.warn("NumPy < 1.6.1 does not implement searchsorted"
+                      " on unicode data correctly. Please upgrade"
+                      " NumPy to use LabelEncoder with unicode inputs.")
 
 
 class LabelEncoder(BaseEstimator, TransformerMixin):
@@ -81,6 +97,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         self : returns an instance of self.
         """
         y = column_or_1d(y, warn=True)
+        _warn_numpy_unicode_bug(y)
         self.classes_ = np.unique(y)
         return self
 
@@ -97,6 +114,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         y : array-like of shape [n_samples]
         """
         y = column_or_1d(y, warn=True)
+        _warn_numpy_unicode_bug(y)
         self.classes_, y = unique(y, return_inverse=True)
         return y
 
@@ -115,10 +133,10 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         self._check_fitted()
 
         classes = np.unique(y)
+        _warn_numpy_unicode_bug(classes)
         if len(np.intersect1d(classes, self.classes_)) < len(classes):
             diff = np.setdiff1d(classes, self.classes_)
             raise ValueError("y contains new labels: %s" % str(diff))
-
         return np.searchsorted(self.classes_, y)
 
     def inverse_transform(self, y):
