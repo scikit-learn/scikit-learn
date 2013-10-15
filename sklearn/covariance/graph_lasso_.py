@@ -29,8 +29,12 @@ import collections
 # Helper functions to compute the objective and dual objective functions
 # of the l1-penalized estimator
 def _objective(mle, precision_, alpha):
-    # the objective function is made of a shifted scaled version of the
-    # normalized log-likelihood (i.e. its empirical mean over the samples)
+    """Evaluation of the lasso objective function   
+    
+    the objective function is made of a shifted scaled version of the
+    normalized log-likelihood (i.e. its empirical mean over the samples) and a 
+    penslisation term to promote sparsity
+    """    
     p = precision_.shape[0]
     cost = - 2. * log_likelihood(mle, precision_) + p * np.log(2 * np.pi)
     cost += alpha * (np.abs(precision_).sum()
@@ -145,7 +149,14 @@ def graph_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
     """
     _, n_features = emp_cov.shape
     if alpha == 0:
-        return emp_cov, linalg.inv(emp_cov)
+        if return_costs:
+            precision_ = linalg.inv(emp_cov)
+            cost = - 2. * log_likelihood(emp_cov, precision_)
+            cost += n_features * np.log(2 * np.pi)
+            d_gap = np.sum(emp_cov * precision_) - n_features
+            return emp_cov, precision_, (cost, d_gap)
+        else:
+            return emp_cov, linalg.inv(emp_cov)
     if cov_init is None:
         covariance_ = emp_cov.copy()
     else:

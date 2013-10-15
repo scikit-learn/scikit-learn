@@ -22,6 +22,11 @@ from ..utils.extmath import fast_logdet, pinvh
 
 def log_likelihood(emp_cov, precision):
     """Computes the sample mean of the log_likelihood under a covariance model
+    
+    
+    computes the empirical expected log-likelihood (accounting for the 
+    normalization terms and scaling), allowing for universal comparison (beyond
+    this software package), methods such as 
 
     Parameters
     ----------
@@ -30,6 +35,10 @@ def log_likelihood(emp_cov, precision):
 
     precision : 2D ndarray (n_features, n_features)
         The precision matrix of the covariance model to be tested
+    
+    Returns
+    -------
+    sample mean of the log-likelihood
     """
     p = precision.shape[0]
     log_likelihood_ = - np.sum(emp_cov * precision) + fast_logdet(precision)
