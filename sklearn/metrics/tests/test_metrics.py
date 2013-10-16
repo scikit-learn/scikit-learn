@@ -853,7 +853,6 @@ def test_classification_report_multiclass_with_unicode_label():
 
 avg / total       0.51      0.53      0.47        75
 """
-    print(np_version)
     if np_version[:3] < (1, 6, 1):
         # check that we get a warning about a bug in numpy
         with warnings.catch_warnings(record=True) as record:
