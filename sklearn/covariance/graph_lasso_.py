@@ -29,7 +29,7 @@ import collections
 # Helper functions to compute the objective and dual objective functions
 # of the l1-penalized estimator
 def _objective(mle, precision_, alpha):
-    """Evaluation of the lasso objective function   
+    """Evaluation of the graph-lasso objective function   
     
     the objective function is made of a shifted scaled version of the
     normalized log-likelihood (i.e. its empirical mean over the samples) and a 
