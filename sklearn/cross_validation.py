@@ -1252,6 +1252,9 @@ def permutation_test_score(estimator, X, y, score_func=None, cv=None,
         If an integer is passed, it is the number of fold (default 3).
         Specific cross-validation objects can be passed, see
         sklearn.cross_validation module for the list of possible objects.
+        
+    n_permutations : integer, optional
+        Number of times to permute ``y``.
 
     n_jobs : integer, optional
         The number of CPUs to use to do the computation. -1 means
