@@ -19,6 +19,7 @@ import cPickle
 import urllib2
 import gzip
 import posixpath
+import subprocess
 
 try:
     from PIL import Image
@@ -331,7 +332,8 @@ plot_rst_template = """
 .. literalinclude:: %(fname)s
     :lines: %(end_row)s-
 
-**Total running time of the example:** %(time_elapsed) .2f seconds
+**Total running time of the example:** %(time_elapsed) .2f seconds 
+(%(time_m) .0f minutes %(time_s) .2f seconds)
     """
 
 # The following strings are used when we have several pictures: we use
@@ -353,6 +355,16 @@ SINGLE_IMAGE = """
 .. image:: images/%s
     :align: center
 """
+
+# The following dictionary contains the information used to create the
+# thumbnails for the front page of the scikit-learn home page.
+# key: first image in set
+# values: (number of plot in set, height of thumbnail)
+carousel_thumbs = {'plot_classifier_comparison_1.png': (1, 600),
+                   'plot_outlier_detection_1.png': (3, 372),
+                   'plot_gp_regression_1.png': (2, 250),
+                   'plot_adaboost_twoclass_1.png': (1, 372),
+                   'plot_compare_methods_1.png': (1, 349)}
 
 
 def extract_docstring(filename, ignore_heading=False):
@@ -625,7 +637,7 @@ def generate_dir_rst(dir, fhindex, example_dir, root_dir, plot_gallery):
                                      src_dir)
     for fname in sorted_listdir:
         if fname.endswith('py'):
-            generate_file_rst(fname, target_dir, src_dir, plot_gallery)
+            generate_file_rst(fname, target_dir, src_dir, root_dir, plot_gallery)
             new_fname = os.path.join(src_dir, fname)
             _, fdocstring, _ = extract_docstring(new_fname, True)
             thumb = os.path.join(dir, 'images', 'thumb', fname[:-3] + '.png')
@@ -702,6 +714,14 @@ def make_thumbnail(in_fname, out_fname, width, height):
     thumb.paste(img, pos_insert)
 
     thumb.save(out_fname)
+    # Use optipng to perform lossless compression on the resized image if
+    # software is installed
+    if os.environ.get('SKLEARN_DOC_OPTIPNG', False):
+        try:
+            subprocess.call(["optipng", "-quiet", "-o", "9", out_fname])
+        except Exception:
+            warnings.warn('Install optipng to reduce the size of the generated images')
+
 
 
 def get_short_module_name(module_name, obj_name):
@@ -719,7 +739,7 @@ def get_short_module_name(module_name, obj_name):
     return short_name
 
 
-def generate_file_rst(fname, target_dir, src_dir, plot_gallery):
+def generate_file_rst(fname, target_dir, src_dir, root_dir, plot_gallery):
     """ Generate the rst file for a given example.
     """
     base_image_name = os.path.splitext(fname)[0]
@@ -753,6 +773,8 @@ def generate_file_rst(fname, target_dir, src_dir, plot_gallery):
                              'time_%s.txt' % base_image_name)
     thumb_file = os.path.join(thumb_dir, fname[:-3] + '.png')
     time_elapsed = 0
+    time_m = 0
+    time_s = 0
     if plot_gallery and fname.startswith('plot'):
         # generate the plot as png image if file name
         # starts with plot and if it is more recent than an
@@ -905,7 +927,27 @@ def generate_file_rst(fname, target_dir, src_dir, plot_gallery):
 
         # generate thumb file
         this_template = plot_rst_template
+        car_thumb_path =  os.path.join(os.path.split(root_dir)[0], '_build/html/stable/_images/')
+        # Note: normaly, make_thumbnail is used to write to the path contained in `thumb_file`
+        # which is within `auto_examples/../images/thumbs` depending on the example.
+        # Because the carousel has different dimensions than those of the examples gallery,
+        # I did not simply reuse them all as some contained whitespace due to their default gallery
+        # thumbnail size. Below, for a few cases, seperate thumbnails are created (the originals can't
+        # just be overwritten with the carousel dimensions as it messes up the examples gallery layout).
+        # The special carousel thumbnails are written directly to _build/html/stable/_images/,
+        # as for some reason unknown to me, Sphinx refuses to copy my 'extra' thumbnails from the
+        # auto examples gallery to the _build folder. This works fine as is, but it would be cleaner to
+        # have it happen with the rest. Ideally the should be written to 'thumb_file' as well, and then
+        # copied to the _images folder during the `Copying Downloadable Files` step like the rest.
+        if not os.path.exists(car_thumb_path):
+            os.makedirs(car_thumb_path)
         if os.path.exists(first_image_file):
+            # We generate extra special thumbnails for the carousel
+            carousel_tfile = os.path.join(car_thumb_path, fname[:-3] + '_carousel.png')
+            first_img = image_fname % 1
+            if first_img in carousel_thumbs:
+                make_thumbnail((image_path % carousel_thumbs[first_img][0]),
+                               carousel_tfile, carousel_thumbs[first_img][1], 190)
             make_thumbnail(first_image_file, thumb_file, 400, 280)
 
     if not os.path.exists(thumb_file):
@@ -924,6 +966,7 @@ def generate_file_rst(fname, target_dir, src_dir, plot_gallery):
         for figure_name in figure_list:
             image_list += HLIST_IMAGE_TEMPLATE % figure_name.lstrip('/')
 
+    time_m, time_s = divmod(time_elapsed, 60)
     f = open(os.path.join(target_dir, fname[:-2] + 'rst'), 'w')
     f.write(this_template % locals())
     f.flush()

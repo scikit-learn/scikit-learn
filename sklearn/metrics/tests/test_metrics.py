@@ -13,6 +13,7 @@ from sklearn.preprocessing import LabelBinarizer
 from sklearn.datasets import make_multilabel_classification
 from sklearn.utils import check_random_state, shuffle
 from sklearn.utils.multiclass import unique_labels
+from sklearn.utils.fixes import np_version
 from sklearn.utils.testing import (assert_true,
                                    assert_raises,
                                    assert_raise_message,
@@ -839,11 +840,11 @@ avg / total       0.51      0.53      0.47        75
 def test_classification_report_multiclass_with_unicode_label():
     y_true, y_pred, _ = make_prediction(binary=False)
 
-    labels = np.array([u("blue\xa2"), u("green\xa2"), u("red\xa2")])
+    labels = np.array([u"blue\xa2", u"green\xa2", u"red\xa2"])
     y_true = labels[y_true]
     y_pred = labels[y_pred]
 
-    expected_report = u("""\
+    expected_report = u"""\
              precision    recall  f1-score   support
 
       blue\xa2       0.83      0.79      0.81        24
@@ -851,9 +852,15 @@ def test_classification_report_multiclass_with_unicode_label():
        red\xa2       0.42      0.90      0.57        20
 
 avg / total       0.51      0.53      0.47        75
-""")
-    report = classification_report(y_true, y_pred)
-    assert_equal(report, expected_report)
+"""
+    if np_version[:3] < (1, 6, 1):
+        expected_message = ("NumPy < 1.6.1 does not implement"
+                            " searchsorted on unicode data correctly.")
+        assert_raise_message(RuntimeError, expected_message,
+                             classification_report, y_true, y_pred)
+    else:
+        report = classification_report(y_true, y_pred)
+        assert_equal(report, expected_report)
 
 
 def test_multilabel_classification_report():

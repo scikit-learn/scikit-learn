@@ -15,13 +15,13 @@ from sklearn.utils.testing import assert_true
 
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_less
+from sklearn.utils.extmath import row_norms
 from sklearn.utils.fixes import unique
 from sklearn.metrics.cluster import v_measure_score
 from sklearn.cluster import KMeans, k_means
 from sklearn.cluster import MiniBatchKMeans
 from sklearn.cluster.k_means_ import _labels_inertia
 from sklearn.cluster.k_means_ import _mini_batch_step
-from sklearn.cluster._k_means import csr_row_norm_l2
 from sklearn.datasets.samples_generator import make_blobs
 from sklearn.externals.six.moves import cStringIO as StringIO
 
@@ -37,13 +37,6 @@ n_clusters, n_features = centers.shape
 X, true_labels = make_blobs(n_samples=n_samples, centers=centers,
                             cluster_std=1., random_state=42)
 X_csr = sp.csr_matrix(X)
-
-
-def test_square_norms():
-    x_squared_norms = (X ** 2).sum(axis=1)
-    x_squared_norms_from_csr = csr_row_norm_l2(X_csr)
-    assert_array_almost_equal(x_squared_norms,
-                              x_squared_norms_from_csr, 5)
 
 
 def test_kmeans_dtype():
@@ -80,7 +73,7 @@ def test_labels_assignment_and_inertia():
     assert_array_equal(labels_array, labels_gold)
 
     # perform label assignment using the sparse CSR input
-    x_squared_norms_from_csr = csr_row_norm_l2(X_csr)
+    x_squared_norms_from_csr = row_norms(X_csr, squared=True)
     labels_csr, inertia_csr = _labels_inertia(
         X_csr, x_squared_norms_from_csr, noisy_centers)
     assert_array_almost_equal(inertia_csr, inertia_gold)
@@ -99,7 +92,7 @@ def test_minibatch_update_consistency():
     counts_csr = np.zeros(new_centers.shape[0], dtype=np.int32)
 
     x_squared_norms = (X ** 2).sum(axis=1)
-    x_squared_norms_csr = csr_row_norm_l2(X_csr, squared=True)
+    x_squared_norms_csr = row_norms(X_csr, squared=True)
 
     buffer = np.zeros(centers.shape[1], dtype=np.double)
     buffer_csr = np.zeros(centers.shape[1], dtype=np.double)

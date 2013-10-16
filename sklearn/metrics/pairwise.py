@@ -35,6 +35,7 @@ kernel:
 #          Robert Layton <robertlayton@gmail.com>
 #          Andreas Mueller <amueller@ais.uni-bonn.de>
 #          Philippe Gervais <philippe.gervais@inria.fr>
+#          Lars Buitinck <larsmans@gmail.com>
 # License: BSD 3 clause
 
 import numpy as np
@@ -42,11 +43,11 @@ from scipy.spatial import distance
 from scipy.sparse import csr_matrix
 from scipy.sparse import issparse
 
-from ..utils import atleast2d_or_csr
+from ..utils import array2d, atleast2d_or_csr
 from ..utils import gen_even_slices
 from ..utils import gen_batches
 from ..utils import safe_asarray
-from ..utils.extmath import safe_sparse_dot
+from ..utils.extmath import row_norms, safe_sparse_dot
 from ..preprocessing import normalize
 from ..externals.joblib import Parallel
 from ..externals.joblib import delayed
@@ -104,27 +105,6 @@ def check_pairwise_arrays(X, Y):
     return X, Y
 
 
-def _square_sum_rows(X):
-    """Row-wise sum of element-wise (Hadamard) product X*X.
-
-    Equivalent to (X * X).sum(axis=1) for an ndarray X. Helper for Euclidean
-    distance computations.
-
-    The argument must be either an ndarray or a scipy.sparse.csr_matrix.
-    """
-    if issparse(X):
-        XX = csr_matrix((X.data.copy(), X.indices, X.indptr), shape=X.shape)
-        XX.data **= 2
-        return np.asarray(XX.sum(axis=1)).ravel()
-    else:
-        if hasattr(np, "einsum"):
-            # einsum skips the computation of a temporary, but it's only
-            # available in NumPy >= 1.6.
-            return np.einsum('ij,ij->i', X, X)
-        else:
-            return (X * X).sum(axis=1)
-
-
 # Distances
 def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
     """
@@ -175,17 +155,19 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
     # well as Y, then you should just pre-compute the output and not even
     # call this function.
     X, Y = check_pairwise_arrays(X, Y)
-    XX = _square_sum_rows(X)[:, np.newaxis]
 
-    if X is Y:  # shortcut in the common case euclidean_distances(X, X)
-        YY = XX.T
-    elif Y_norm_squared is None:
-        YY = _square_sum_rows(Y)[np.newaxis, :]
-    else:
-        YY = atleast2d_or_csr(Y_norm_squared)
+    if Y_norm_squared is not None:
+        YY = array2d(Y_norm_squared)
         if YY.shape != (1, Y.shape[0]):
             raise ValueError(
                 "Incompatible dimensions for Y and Y_norm_squared")
+    else:
+        YY = row_norms(Y, squared=True)[np.newaxis, :]
+
+    if X is Y:  # shortcut in the common case euclidean_distances(X, X)
+        XX = YY.T
+    else:
+        XX = row_norms(X, squared=True)[:, np.newaxis]
 
     distances = safe_sparse_dot(X, Y.T, dense_output=True)
     distances *= -2
@@ -297,22 +279,22 @@ def pairwise_distances_argmin_min(X, Y, axis=1, metric="euclidean",
 
             if dist_func is not None:
                 if metric == 'euclidean':  # special case, for speed
-                    dist_chunk = safe_sparse_dot(X_chunk, Y_chunk.T,
+                    d_chunk = safe_sparse_dot(X_chunk, Y_chunk.T,
                                                  dense_output=True)
-                    dist_chunk *= -2
-                    dist_chunk += _square_sum_rows(X_chunk)[:, np.newaxis]
-                    dist_chunk += _square_sum_rows(Y_chunk)[np.newaxis, :]
-                    np.maximum(dist_chunk, 0, dist_chunk)
+                    d_chunk *= -2
+                    d_chunk += row_norms(X_chunk, squared=True)[:, np.newaxis]
+                    d_chunk += row_norms(Y_chunk, squared=True)[np.newaxis, :]
+                    np.maximum(d_chunk, 0, d_chunk)
                 else:
-                    dist_chunk = dist_func(X_chunk, Y_chunk, **metric_kwargs)
+                    d_chunk = dist_func(X_chunk, Y_chunk, **metric_kwargs)
             else:
-                dist_chunk = pairwise_distances(X_chunk, Y_chunk,
-                                                metric=metric, **metric_kwargs)
+                d_chunk = pairwise_distances(X_chunk, Y_chunk,
+                                             metric=metric, **metric_kwargs)
 
             # Update indices and minimum values using chunk
-            min_indices = dist_chunk.argmin(axis=1)
-            min_values = dist_chunk[np.arange(chunk_x.stop - chunk_x.start),
-                                    min_indices]
+            min_indices = d_chunk.argmin(axis=1)
+            min_values = d_chunk[np.arange(chunk_x.stop - chunk_x.start),
+                                 min_indices]
 
             flags = values[chunk_x] > min_values
             indices[chunk_x] = np.where(

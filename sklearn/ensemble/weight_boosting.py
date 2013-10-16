@@ -972,7 +972,7 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
         error_max = error_vect.max()
 
         if error_max != 0.:
-            error_vect /= error_vect.max()
+            error_vect /= error_max
 
         if self.loss == 'square':
             error_vect **= 2

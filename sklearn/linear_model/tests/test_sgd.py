@@ -571,6 +571,16 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         # check that coef_ haven't been re-allocated
         assert_true(id1, id2)
 
+    def test_fit_then_partial_fit(self):
+        """Partial_fit should work after initial fit in the multiclass case.
+
+        Non-regression test for #2496; fit would previously produce a
+        Fortran-ordered coef_ that subsequent partial_fit couldn't handle.
+        """
+        clf = self.factory()
+        clf.fit(X2, Y2)
+        clf.partial_fit(X2, Y2)     # no exception here
+
     def _test_partial_fit_equal_fit(self, lr):
         for X_, Y_, T_ in ((X, Y, T), (X2, Y2, T2)):
             clf = self.factory(alpha=0.01, eta0=0.01, n_iter=2,

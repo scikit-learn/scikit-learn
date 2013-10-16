@@ -270,7 +270,7 @@ Elastic Net
 ===========
 :class:`ElasticNet` is a linear model trained with L1 and L2 prior as
 regularizer. This combination allows for learning a sparse model where
-few of the weights are non-zero like :class:`Lasso`, while still maintaining the
+few of the weights are non-zero like :class:`Lasso`, while still maintaining
 the regularization properties of :class:`Ridge`. We control this tradeoff
 using the `l1_ratio` parameter.
 
