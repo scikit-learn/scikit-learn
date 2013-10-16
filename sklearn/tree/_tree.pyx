@@ -1557,7 +1557,7 @@ cdef class Tree:
         memcpy(self.impurity, impurity, self.capacity * sizeof(double))
         memcpy(self.n_node_samples, n_node_samples, self.capacity * sizeof(SIZE_t))
 
-    cdef void _resize(self, int capacity=-1):
+    cdef void _resize(self, int capacity=-1) nogil:
         """Resize all inner arrays to `capacity`, if `capacity` < 0, then
            double the size of the inner arrays."""
         if capacity == self.capacity:
@@ -1621,7 +1621,8 @@ cdef class Tree:
             (tmp_value == NULL) or
             (tmp_impurity == NULL) or
             (tmp_n_node_samples == NULL)):
-            raise MemoryError()
+            with gil:
+                raise MemoryError()
 
         # if capacity smaller than node_count, adjust the counter
         if capacity < self.node_count:
@@ -1633,7 +1634,7 @@ cdef class Tree:
                                 SIZE_t feature,
                                 double threshold,
                                 double impurity,
-                                SIZE_t n_node_samples):
+                                SIZE_t n_node_samples) nogil:
         """Add a node to the tree. The new node registers itself as
            the child of its parent. """
         cdef SIZE_t node_id = self.node_count
@@ -1723,55 +1724,56 @@ cdef class Tree:
 
         cdef SIZE_t node_id
 
-        while stack_n_values > 0:
-            stack_n_values -= 5
+        with nogil:
+            while stack_n_values > 0:
+                stack_n_values -= 5
 
-            start = stack[stack_n_values]
-            end = stack[stack_n_values + 1]
-            depth = stack[stack_n_values + 2]
-            parent = stack[stack_n_values + 3]
-            is_left = stack[stack_n_values + 4]
+                start = stack[stack_n_values]
+                end = stack[stack_n_values + 1]
+                depth = stack[stack_n_values + 2]
+                parent = stack[stack_n_values + 3]
+                is_left = stack[stack_n_values + 4]
 
-            n_node_samples = end - start
-            is_leaf = ((depth >= self.max_depth) or
-                       (n_node_samples < self.min_samples_split) or
-                       (n_node_samples < 2 * self.min_samples_leaf))
+                n_node_samples = end - start
+                is_leaf = ((depth >= self.max_depth) or
+                           (n_node_samples < self.min_samples_split) or
+                           (n_node_samples < 2 * self.min_samples_leaf))
 
-            splitter.node_reset(start, end, &impurity)
-            is_leaf = is_leaf or (impurity < 1e-7)
+                splitter.node_reset(start, end, &impurity)
+                is_leaf = is_leaf or (impurity < 1e-7)
 
-            if not is_leaf:
-                splitter.node_split(&pos, &feature, &threshold)
-                is_leaf = is_leaf or (pos >= end)
+                if not is_leaf:
+                    splitter.node_split(&pos, &feature, &threshold)
+                    is_leaf = is_leaf or (pos >= end)
 
-            node_id = self._add_node(parent, is_left, is_leaf, feature,
-                                     threshold, impurity, n_node_samples)
+                node_id = self._add_node(parent, is_left, is_leaf, feature,
+                                         threshold, impurity, n_node_samples)
 
-            if is_leaf:
-                # Don't store value for internal nodes
-                splitter.node_value(self.value + node_id * self.value_stride)
+                if is_leaf:
+                    # Don't store value for internal nodes
+                    splitter.node_value(self.value + node_id * self.value_stride)
 
-            else:
-                if stack_n_values + 10 > stack_capacity:
-                    stack_capacity *= 2
-                    stack = <SIZE_t*> realloc(stack,
-                                              stack_capacity * sizeof(SIZE_t))
+                else:
+                    if stack_n_values + 10 > stack_capacity:
+                        stack_capacity *= 2
+                        stack = <SIZE_t*> realloc(stack,
+                                                  stack_capacity * sizeof(SIZE_t))
 
-                # Stack right child
-                stack[stack_n_values] = pos
-                stack[stack_n_values + 1] = end
-                stack[stack_n_values + 2] = depth + 1
-                stack[stack_n_values + 3] = node_id
-                stack[stack_n_values + 4] = 0
-                stack_n_values += 5
+                    # Stack right child
+                    stack[stack_n_values] = pos
+                    stack[stack_n_values + 1] = end
+                    stack[stack_n_values + 2] = depth + 1
+                    stack[stack_n_values + 3] = node_id
+                    stack[stack_n_values + 4] = 0
+                    stack_n_values += 5
 
-                # Stack left child
-                stack[stack_n_values] = start
-                stack[stack_n_values + 1] = pos
-                stack[stack_n_values + 2] = depth + 1
-                stack[stack_n_values + 3] = node_id
-                stack[stack_n_values + 4] = 1
-                stack_n_values += 5
+                    # Stack left child
+                    stack[stack_n_values] = start
+                    stack[stack_n_values + 1] = pos
+                    stack[stack_n_values + 2] = depth + 1
+                    stack[stack_n_values + 3] = node_id
+                    stack[stack_n_values + 4] = 1
+                    stack_n_values += 5
 
         self._resize(self.node_count)
         self.splitter = None # Release memory
