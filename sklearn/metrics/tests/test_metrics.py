@@ -854,11 +854,10 @@ def test_classification_report_multiclass_with_unicode_label():
 avg / total       0.51      0.53      0.47        75
 """
     if np_version[:3] < (1, 6, 1):
-        # check that we get a warning about a bug in numpy
-        with warnings.catch_warnings(record=True) as record:
-            warnings.simplefilter('always')
-            classification_report(y_true, y_pred)
-        assert_true(len(record) != 0)
+        expected_message = ("NumPy < 1.6.1 does not implement"
+                            " searchsorted on unicode data correctly.")
+        assert_raise_message(RuntimeError, expected_message,
+                             classification_report, y_true, y_pred)
     else:
         report = classification_report(y_true, y_pred)
         assert_equal(report, expected_report)

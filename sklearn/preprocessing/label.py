@@ -4,8 +4,6 @@
 #          Andreas Mueller <amueller@ais.uni-bonn.de>
 # License: BSD 3 clause
 
-import warnings
-
 import numpy as np
 
 from ..base import BaseEstimator, TransformerMixin
@@ -27,7 +25,7 @@ __all__ = [
     'LabelEncoder',
 ]
 
-def _warn_numpy_unicode_bug(labels):
+def _check_numpy_unicode_bug(labels):
     """Check that user is not subject to an old numpy bug
 
     Fixed in master before 1.7.0:
@@ -37,9 +35,9 @@ def _warn_numpy_unicode_bug(labels):
     and then backported to 1.6.1.
     """
     if np_version[:3] < (1, 6, 1) and labels.dtype.kind == 'U':
-        warnings.warn("NumPy < 1.6.1 does not implement searchsorted"
-                      " on unicode data correctly. Please upgrade"
-                      " NumPy to use LabelEncoder with unicode inputs.")
+        raise RuntimeError("NumPy < 1.6.1 does not implement searchsorted"
+                           " on unicode data correctly. Please upgrade"
+                           " NumPy to use LabelEncoder with unicode inputs.")
 
 
 class LabelEncoder(BaseEstimator, TransformerMixin):
@@ -97,7 +95,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         self : returns an instance of self.
         """
         y = column_or_1d(y, warn=True)
-        _warn_numpy_unicode_bug(y)
+        _check_numpy_unicode_bug(y)
         self.classes_ = np.unique(y)
         return self
 
@@ -114,7 +112,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         y : array-like of shape [n_samples]
         """
         y = column_or_1d(y, warn=True)
-        _warn_numpy_unicode_bug(y)
+        _check_numpy_unicode_bug(y)
         self.classes_, y = unique(y, return_inverse=True)
         return y
 
@@ -133,7 +131,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         self._check_fitted()
 
         classes = np.unique(y)
-        _warn_numpy_unicode_bug(classes)
+        _check_numpy_unicode_bug(classes)
         if len(np.intersect1d(classes, self.classes_)) < len(classes):
             diff = np.setdiff1d(classes, self.classes_)
             raise ValueError("y contains new labels: %s" % str(diff))
