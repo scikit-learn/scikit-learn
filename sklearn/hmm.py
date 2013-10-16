@@ -228,8 +228,8 @@ class _BaseHMM(BaseEstimator):
         Parameters
         ----------
         obs : array_like, shape (n, n_features)
-            List of n_features-dimensional data points.  Each row
-            corresponds to a single data point.
+            Sequence of n_features-dimensional data points. Each row
+            corresponds to a single point in the sequence.
 
         Returns
         -------
@@ -259,8 +259,8 @@ class _BaseHMM(BaseEstimator):
         Parameters
         ----------
         obs : array_like, shape (n, n_features)
-            List of n_features-dimensional data points.  Each row
-            corresponds to a single data point.
+            Sequence of n_features-dimensional data points. Each row
+            corresponds to a single point in the sequence.
 
         Returns
         -------
@@ -287,8 +287,8 @@ class _BaseHMM(BaseEstimator):
         Parameters
         ----------
         obs : array_like, shape (n, n_features)
-            List of n_features-dimensional data points.  Each row
-            corresponds to a single data point.
+            Sequence of n_features-dimensional data points. Each row
+            corresponds to a single point in the sequence.
 
         algorithm : string, one of the `decoder_algorithms`
             decoder algorithm to be used
@@ -323,8 +323,8 @@ class _BaseHMM(BaseEstimator):
         Parameters
         ----------
         obs : array_like, shape (n, n_features)
-            List of n_features-dimensional data points.  Each row
-            corresponds to a single data point.
+            Sequence of n_features-dimensional data points. Each row
+            corresponds to a single point in the sequence.
 
         Returns
         -------
@@ -340,8 +340,8 @@ class _BaseHMM(BaseEstimator):
         Parameters
         ----------
         obs : array_like, shape (n, n_features)
-            List of n_features-dimensional data points.  Each row
-            corresponds to a single data point.
+            Sequence of n_features-dimensional data points. Each row
+            corresponds to a single point in the sequence.
 
         Returns
         -------
@@ -405,7 +405,8 @@ class _BaseHMM(BaseEstimator):
         ----------
         obs : list
             List of array-like observation sequences, each of which
-            has shape (n, n_features)
+            has shape (n_i, n_features), where n_i is the length of
+            the i_th observation.
 
         Notes
         -----
@@ -868,7 +869,8 @@ class GaussianHMM(_BaseHMM):
         ----------
         obs : list
             List of array-like observation sequences, each of which
-            has shape (n, n_features)
+            has shape (n_i, n_features), where n_i is the length of
+            the i_th observation.
 
         Notes
         -----
@@ -1061,7 +1063,8 @@ class MultinomialHMM(_BaseHMM):
         ----------
         obs : list
             List of array-like observation sequences, each of which
-            has shape (n, n_features)
+            has shape (n_i, n_features), where n_i is the length of
+            the i_th observation.
         """
         err_msg = ("Input must be both positive integer array and "
                    "every element must be continuous, but %s was given.")
