@@ -23,9 +23,9 @@ from ..utils.extmath import fast_logdet, pinvh
 def log_likelihood(emp_cov, precision):
     """Computes the sample mean of the log_likelihood under a covariance model
     
-    computes the empirical expected log-likelihood (accounting for the 
+    computes the empirical expected log-likelihood (accounting for the
     normalization terms and scaling), allowing for universal comparison (beyond
-    this software package), methods such as 
+    this software package)
 
     Parameters
     ----------
