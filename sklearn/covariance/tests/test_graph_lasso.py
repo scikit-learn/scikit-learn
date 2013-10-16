@@ -26,20 +26,33 @@ def test_graph_lasso(random_state=0):
     X = random_state.multivariate_normal(np.zeros(dim), cov, size=n_samples)
     emp_cov = empirical_covariance(X)
 
-    for alpha in (.1, .01):
+    for alpha in (0., .01, .1):
         covs = dict()
         for method in ('cd', 'lars'):
-            cov_, _, costs = graph_lasso(emp_cov, alpha=.1, return_costs=True)
+            cov_, _, costs = graph_lasso(emp_cov, alpha=alpha,
+                                         return_costs=True)
             covs[method] = cov_
             costs, dual_gap = np.array(costs).T
-            # Check that the costs always decrease
-            assert_array_less(np.diff(costs), 0)
+            # Check that the costs always decrease (does not hold if alpha == 0)
+            if not alpha == 0:
+                assert_array_less(np.diff(costs), 0)
         # Check that the 2 approaches give similar results
         assert_array_almost_equal(covs['cd'], covs['lars'])
 
     # Smoke test the estimator
     model = GraphLasso(alpha=.1).fit(X)
+    model.score(X)
     assert_array_almost_equal(model.covariance_, covs['cd'])
+    assert_array_almost_equal(model.covariance_, covs['lars'])
+
+    # For a centered matrix, assume_centered could be chosen True or False
+    # Check that this returns indeed the same result for centered data
+    Z = X - X.mean(0)
+    precs = list()
+    for assume_centered in (False, True):
+        prec_ = GraphLasso(assume_centered=assume_centered).fit(Z).precision_
+        precs.append(prec_)
+    assert_array_almost_equal(precs[0], precs[1])
 
 
 def test_graph_lasso_cv(random_state=1):
