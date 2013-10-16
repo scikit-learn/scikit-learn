@@ -1954,15 +1954,16 @@ def mean_absolute_error(y_true, y_pred, average='micro'):
     y_pred : array-like of shape = [n_samples] or [n_samples, n_outputs]
         Estimated target values.
 
-    average : 'micro' or None
-        If 'micro' returns a float.
-        If None, returns an array (multi-output)
-        (default: 'micro')
+    output_weights : string, ['uniform' (default), None]
+        Assigns weight to each dimension of the given input.
+        If the option given is uniform, then a weight of unity is assigned
+        to each dimension during averaging. If the option given is None,
+        then no averaging is done.
 
-    Returns
+   Returns
     -------
     loss : float or a numpy array of shape[n_outputs]
-        If average is 'micro', a positive floating point value (the best value is 0.0).
+        If output_weights is 'uniform', a positive floating point value (the best value is 0.0).
         Else, a numpy array of positive floating points is returned.
 
     Examples
@@ -1976,18 +1977,22 @@ def mean_absolute_error(y_true, y_pred, average='micro'):
     >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
     >>> mean_absolute_error(y_true, y_pred)
     0.75
-    >>> mean_absolute_error(y_true, y_pred, average=False)
+    >>> mean_absolute_error(y_true, y_pred, output_weights=None)
     array([ 0.5,  1. ])
     """
-    if not average:
-        axis = 0
-    else:
+    output_weights_options = (None, 'uniform')
+    if output_weights not in output_weights_options:
+        raise ValueError('output_weights has to be one of ' +
+                         str(output_weights_options))
+    if output_weights == 'uniform':
         axis = None
+    else:
+        axis = 0
     y_type, y_true, y_pred = _check_reg_targets(y_true, y_pred)
     return np.mean(np.abs(y_pred - y_true), axis=axis)
 
 
-def mean_squared_error(y_true, y_pred, average='micro'):
+def mean_squared_error(y_true, y_pred, output_weights='uniform'):
     """Mean squared error regression loss
 
     Parameters
@@ -1998,15 +2003,16 @@ def mean_squared_error(y_true, y_pred, average='micro'):
     y_pred : array-like of shape = [n_samples] or [n_samples, n_outputs]
         Estimated target values.
 
-    average : 'micro' or None
-        If 'micro' returns a float.
-        If None, returns an array (multi-output)
-        (default: 'micro')
+    output_weights : string, ['uniform' (default), None]
+        Assigns weight to each dimension of the given input.
+        If the option given is uniform, then a weight of unity is assigned
+        to each dimension during averaging. If the option given is None,
+        then no averaging is done.
 
     Returns
     -------
     loss : float or a numpy array of shape[n_outputs]
-        If average is 'micro', a positive floating point value (the best value is 0.0).
+        If output_weights is 'ones', a positive floating point value (the best value is 0.0).
         Else, a numpy array of positive floating points is returned.
 
     Examples
@@ -2020,13 +2026,17 @@ def mean_squared_error(y_true, y_pred, average='micro'):
     >>> y_pred = [[0, 2],[-1, 2],[8, -5]]
     >>> mean_squared_error(y_true, y_pred)  # doctest: +ELLIPSIS
     0.708...
-    >>> mean_squared_error(y_true, y_pred, average=False)
-    array([ 0.41666667,  1.        ])
+    >>> mean_squared_error(y_true, y_pred, output_weights=None)
+    array([ 0.417...,  1.        ])
     """
-    if not average:
-        axis = 0
-    else:
+    output_weights_options = (None, 'uniform')
+    if output_weights not in output_weights_options:
+        raise ValueError('output_weights has to be one of ' +
+                         str(output_weights_options))
+    if output_weights == 'uniform':
         axis = None
+    else:
+        axis = 0
     y_type, y_true, y_pred = _check_reg_targets(y_true, y_pred)
     return np.mean((y_pred - y_true) ** 2, axis=axis)
 
@@ -2082,7 +2092,7 @@ def explained_variance_score(y_true, y_pred):
     return 1 - numerator / denominator
 
 
-def r2_score(y_true, y_pred, average='micro'):
+def r2_score(y_true, y_pred, output_weights='uniform'):
     """R^2 (coefficient of determination) regression score function.
 
     Best possible score is 1.0, lower values are worse.
@@ -2095,17 +2105,18 @@ def r2_score(y_true, y_pred, average='micro'):
     y_pred : array-like of shape = [n_samples] or [n_samples, n_outputs]
         Estimated target values.
 
-    average : 'micro' or None
-        If 'micro' returns a float.
-        If None, returns an array (multi-output)
-        (default: 'micro')
+    output_weights : string, ['uniform' (default), None]
+        Assigns weight to each dimension of the given input.
+        If the option given is uniform, then a weight of unity is assigned
+        to each dimension while averaging. If the option given is None, then
+        no averaging is done.
 
     Returns
     -------
-    z : float or a numpy array of shape[n_outputs]
-        If average is 'micro', it returns the R^2 score, flattened across 1-D.
-        If average is None, it returns an array of floats corresponding to
-        the R^2 score of each dimension.
+    z : float or a numpy array of shape [n_outputs]
+        If output_weights is 'uniform', it returns the macro-averaged R^2 score,
+        If output_weights is None, it returns a numpy array of floats corresponding
+        to the R^2 score of each dimension.
 
     Notes
     -----
@@ -2129,33 +2140,35 @@ def r2_score(y_true, y_pred, average='micro'):
     >>> y_true = [[0.5, 1], [-1, 1], [7, -6]]
     >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
     >>> r2_score(y_true, y_pred)  # doctest: +ELLIPSIS
-    0.938...
-    >>> r2_score(y_true, y_pred, average=False)  # doctest: +ELLIPSIS
-    array([ 0.96543779,  0.90816327])
+    0.937...
+    >>> r2_score(y_true, y_pred, output_weights=None)  # doctest: +ELLIPSIS
+    array([ 0.965...,  0.908...])
     """
     y_type, y_true, y_pred = _check_reg_targets(y_true, y_pred)
     if len(y_true) == 1:
         raise ValueError("r2_score can only be computed given more than one"
                          " sample.")
 
-    if not average:
-        axis = 0
-    else:
-        axis = None
-    numerator = ((y_true - y_pred) ** 2).sum(dtype=np.float64, axis=axis)
-    denominator = ((y_true - y_true.mean(axis=0)) ** 2).sum(dtype=np.float64, axis=axis)
-    if denominator.sum() == 0.0:
-        if numerator.sum() == 0.0:
-            if average:
-                return 1.0
-            else:
-                return np.ones(y_true.shape[1], dtype=np.float64)
-        else:
-            # arbitrary set to zero to avoid -inf scores, having a constant
-            # y_true is not interesting for scoring a regression anyway
-            if average:
-                return 0.0
-            else:
-                return np.zeros(y_true.shape[1], dtype=np.float64)
+    output_weights_options = (None, 'uniform')
+    if output_weights not in output_weights_options:
+        raise ValueError('output_weights has to be one of ' +
+                         str(output_weights_options))
 
-    return 1 - numerator / denominator
+    numerator = ((y_true - y_pred) ** 2).sum(dtype=np.float64, axis=0)
+    denominator = ((y_true - y_true.mean(axis=0)) ** 2).sum(dtype=np.float64, axis=0)
+
+    # Set an array of ones for the condition that both numerator
+    # and denominator are zero.
+    r2 = np.ones(y_true.shape[1])
+    nonzero_denominator = (denominator != 0.0)
+    nonzero_numerator = (numerator != 0.0)
+    valid_score = np.logical_and(nonzero_numerator, nonzero_denominator)
+    r2[valid_score] = 1 - numerator[valid_score]/denominator[valid_score]
+    # Denominator is zero and numerator is non-zero
+    # arbitrary set to zero to avoid -inf scores, having a constant
+    # y_true is not interesting for scoring a regression anyway
+    r2[np.logical_and(np.logical_not(nonzero_denominator),
+        nonzero_numerator)] = 0.0
+    if output_weights == 'uniform':
+        return np.mean(r2)
+    return r2

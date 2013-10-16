@@ -1244,7 +1244,7 @@ def test_multioutput_regression():
     assert_almost_equal(error, (1. / 3 + 2. / 3 + 2. / 3) / 4.)
 
     error = r2_score(y_true, y_pred)
-    assert_almost_equal(error, 1 - 5. / 2)
+    assert_almost_equal(error, -0.875)
 
 
 def test_multioutput_number_of_output_differ():
@@ -2004,9 +2004,9 @@ def test_regression_multioutput_array():
     y_true = [[1, 2], [2.5, -1], [4.5, 3], [5, 7]]
     y_pred = [[1, 1], [2, -1], [5, 4], [5, 6.5]]
 
-    mse = mean_squared_error(y_true, y_pred, average=False)
-    mae = mean_absolute_error(y_true, y_pred, average=False)
-    r =  r2_score(y_true, y_pred, average=False)
+    mse = mean_squared_error(y_true, y_pred, output_weights=None)
+    mae = mean_absolute_error(y_true, y_pred, output_weights=None)
+    r =  r2_score(y_true, y_pred, output_weights=None)
     assert_array_equal(mse, np.array([0.125, 0.5625]))
     assert_array_equal(mae, np.array([0.25, 0.625]))
     assert_array_almost_equal(r, np.array([0.95, 0.93]), decimal=2)
@@ -2015,9 +2015,21 @@ def test_regression_multioutput_array():
     # it is a binary problem.
     y_true = [[0, 0]]*4
     y_pred = [[1, 1]]*4
-    mse = mean_squared_error(y_true, y_pred, average=False)
-    mae = mean_absolute_error(y_true, y_pred, average=False)
-    r =  r2_score(y_true, y_pred, average=False)
+    mse = mean_squared_error(y_true, y_pred, output_weights=None)
+    mae = mean_absolute_error(y_true, y_pred, output_weights=None)
+    r =  r2_score(y_true, y_pred, output_weights=None)
     assert_array_equal(mse, np.array([1., 1.]))
     assert_array_equal(mae, np.array([1., 1.]))
     assert_array_almost_equal(r, np.array([0., 0.]))
+
+    r = r2_score([[0, -1], [0, 1]], [[2, 2], [1, 1]], output_weights=None)
+    assert_array_equal(r, np.array([0, -3.5]))
+    assert_equal(np.mean(r), r2_score([[0, -1], [0, 1]], [[2, 2], [1, 1]]))
+
+    # Checking for the condition in which both numerator and denominator is
+    # zero.
+    y_true = [[1, 3], [-1, 2]]
+    y_pred = [[1, 4], [-1, 1]]
+    r =  r2_score(y_true, y_pred, output_weights=None)
+    assert_array_equal(r, np.array([1., -3.]))
+    assert_equal(np.mean(r), r2_score(y_true, y_pred))
