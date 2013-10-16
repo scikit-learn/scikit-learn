@@ -1775,9 +1775,9 @@ cdef class Tree:
                     stack[stack_n_values + 4] = 1
                     stack_n_values += 5
 
-        self._resize(self.node_count)
+            self._resize(self.node_count)
+            free(stack)
         self.splitter = None # Release memory
-        free(stack)
 
     cpdef predict(self, np.ndarray[DTYPE_t, ndim=2] X):
         """Predict target for X."""
