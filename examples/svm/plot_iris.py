@@ -58,12 +58,10 @@ for i, clf in enumerate((svc, rbf_svc, poly_svc, lin_svc)):
     pl.scatter(X[:, 0], X[:, 1], c=Y, cmap=pl.cm.Paired)
     pl.xlabel('Sepal length')
     pl.ylabel('Sepal width')
-
     pl.xlim(xx.min(), xx.max())
     pl.ylim(yy.min(), yy.max())
     pl.xticks(())
     pl.yticks(())
-
     pl.title(titles[i])
 
 pl.show()
