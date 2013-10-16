@@ -107,14 +107,16 @@ class _BaseHMM(BaseEstimator):
     params : string, optional
         Controls which parameters are updated in the training
         process.  Can contain any combination of 's' for startprob,
-        't' for transmat, 'm' for means, and 'c' for covars, etc.
-        Defaults to all parameters.
+        't' for transmat, and other characters for subclass-specific
+        emmission parameters. Defaults to all parameters.
+
 
     init_params : string, optional
         Controls which parameters are initialized prior to
         training.  Can contain any combination of 's' for
-        startprob, 't' for transmat, 'm' for means, and 'c' for
-        covars, etc.  Defaults to all parameters.
+        startprob, 't' for transmat, and other characters for
+        subclass-specific emmission parameters. Defaults to all
+        parameters.
 
     See Also
     --------
@@ -226,8 +228,8 @@ class _BaseHMM(BaseEstimator):
         Parameters
         ----------
         obs : array_like, shape (n, n_features)
-            List of n_features-dimensional data points.  Each row
-            corresponds to a single data point.
+            Sequence of n_features-dimensional data points. Each row
+            corresponds to a single point in the sequence.
 
         Returns
         -------
@@ -257,8 +259,8 @@ class _BaseHMM(BaseEstimator):
         Parameters
         ----------
         obs : array_like, shape (n, n_features)
-            List of n_features-dimensional data points.  Each row
-            corresponds to a single data point.
+            Sequence of n_features-dimensional data points. Each row
+            corresponds to a single point in the sequence.
 
         Returns
         -------
@@ -285,8 +287,8 @@ class _BaseHMM(BaseEstimator):
         Parameters
         ----------
         obs : array_like, shape (n, n_features)
-            List of n_features-dimensional data points.  Each row
-            corresponds to a single data point.
+            Sequence of n_features-dimensional data points. Each row
+            corresponds to a single point in the sequence.
 
         algorithm : string, one of the `decoder_algorithms`
             decoder algorithm to be used
@@ -321,8 +323,8 @@ class _BaseHMM(BaseEstimator):
         Parameters
         ----------
         obs : array_like, shape (n, n_features)
-            List of n_features-dimensional data points.  Each row
-            corresponds to a single data point.
+            Sequence of n_features-dimensional data points. Each row
+            corresponds to a single point in the sequence.
 
         Returns
         -------
@@ -338,8 +340,8 @@ class _BaseHMM(BaseEstimator):
         Parameters
         ----------
         obs : array_like, shape (n, n_features)
-            List of n_features-dimensional data points.  Each row
-            corresponds to a single data point.
+            Sequence of n_features-dimensional data points. Each row
+            corresponds to a single point in the sequence.
 
         Returns
         -------
@@ -402,15 +404,18 @@ class _BaseHMM(BaseEstimator):
         Parameters
         ----------
         obs : list
-            List of array-like observation sequences (shape (n_i, n_features)).
+            List of array-like observation sequences, each of which
+            has shape (n_i, n_features), where n_i is the length of
+            the i_th observation.
 
         Notes
         -----
         In general, `logprob` should be non-decreasing unless
         aggressive pruning is used.  Decreasing `logprob` is generally
         a sign of overfitting (e.g. a covariance parameter getting too
-        small).  You can fix this by getting more training data, or
-        decreasing `covars_prior`.
+        small).  You can fix this by getting more training data,
+        or strengthening the appropriate subclass-specific regularization
+        parameter.
         """
 
         if self.algorithm not in decoder_algorithms:
@@ -644,14 +649,14 @@ class GaussianHMM(_BaseHMM):
     params : string, optional
         Controls which parameters are updated in the training
         process.  Can contain any combination of 's' for startprob,
-        't' for transmat, 'm' for means, and 'c' for covars, etc.
+        't' for transmat, 'm' for means, and 'c' for covars.
         Defaults to all parameters.
 
     init_params : string, optional
         Controls which parameters are initialized prior to
         training.  Can contain any combination of 's' for
         startprob, 't' for transmat, 'm' for means, and 'c' for
-        covars, etc.  Defaults to all parameters.
+        covars.  Defaults to all parameters.
 
 
     Examples
@@ -853,6 +858,29 @@ class GaussianHMM(_BaseHMM):
                     self._covars_ = ((covars_prior + cvnum) /
                                      (cvweight + stats['post'][:, None, None]))
 
+    def fit(self, obs):
+        """Estimate model parameters.
+
+        An initialization step is performed before entering the EM
+        algorithm. If you want to avoid this step, pass proper
+        ``init_params`` keyword argument to estimator's constructor.
+
+        Parameters
+        ----------
+        obs : list
+            List of array-like observation sequences, each of which
+            has shape (n_i, n_features), where n_i is the length of
+            the i_th observation.
+
+        Notes
+        -----
+        In general, `logprob` should be non-decreasing unless
+        aggressive pruning is used.  Decreasing `logprob` is generally
+        a sign of overfitting (e.g. the covariance parameter on one or
+        more components becomminging too small).  You can fix this by getting
+        more training data, or increasing covars_prior.
+        """
+        return super(GaussianHMM, self).fit(obs)
 
 class MultinomialHMM(_BaseHMM):
     """Hidden Markov Model with multinomial (discrete) emissions
@@ -886,14 +914,14 @@ class MultinomialHMM(_BaseHMM):
     params : string, optional
         Controls which parameters are updated in the training
         process.  Can contain any combination of 's' for startprob,
-        't' for transmat, 'm' for means, and 'c' for covars, etc.
+        't' for transmat, 'e' for emmissionprob.
         Defaults to all parameters.
 
     init_params : string, optional
         Controls which parameters are initialized prior to
         training.  Can contain any combination of 's' for
-        startprob, 't' for transmat, 'm' for means, and 'c' for
-        covars, etc.  Defaults to all parameters.
+        startprob, 't' for transmat, 'e' for emmissionprob.
+        Defaults to all parameters.
 
     Examples
     --------
@@ -1025,6 +1053,19 @@ class MultinomialHMM(_BaseHMM):
         return True
 
     def fit(self, obs, **kwargs):
+        """Estimate model parameters.
+
+        An initialization step is performed before entering the EM
+        algorithm. If you want to avoid this step, pass proper
+        ``init_params`` keyword argument to estimator's constructor.
+
+        Parameters
+        ----------
+        obs : list
+            List of array-like observation sequences, each of which
+            has shape (n_i, n_features), where n_i is the length of
+            the i_th observation.
+        """
         err_msg = ("Input must be both positive integer array and "
                    "every element must be continuous, but %s was given.")
 
@@ -1040,14 +1081,16 @@ class GMMHMM(_BaseHMM):
     Attributes
     ----------
     init_params : string, optional
-        Controls which parameters are initialized prior to training. Can \
-        contain any combination of 's' for startprob, 't' for transmat, 'm' \
-        for means, and 'c' for covars, etc.  Defaults to all parameters.
+        Controls which parameters are initialized prior to training. Can
+        contain any combination of 's' for startprob, 't' for transmat, 'm'
+        for means, 'c' for covars, and 'w' for GMM mixing weights.
+        Defaults to all parameters.
 
     params : string, optional
         Controls which parameters are updated in the training process.  Can
-        contain any combination of 's' for startprob, 't' for transmat,'m' for
-        means, and 'c' for covars, etc.  Defaults to all parameters.
+        contain any combination of 's' for startprob, 't' for transmat, 'm' for
+        means, and 'c' for covars, and 'w' for GMM mixing weights.
+        Defaults to all parameters.
 
     n_components : int
         Number of states in the model.
