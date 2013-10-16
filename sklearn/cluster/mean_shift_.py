@@ -216,6 +216,15 @@ class MeanShift(BaseEstimator, ClusterMixin):
         with bandwidth as the grid size and default values for
         other parameters.
 
+    bin_seeding : boolean, optional
+        If true, initial kernel locations are not locations of all
+        points, but rather the location of the discretized version of
+        points, where points are binned onto a grid whose coarseness
+        corresponds to the bandwidth. Setting this option to True will speed
+        up the algorithm because fewer seeds will be initialized.
+        default value: False
+        Ignored if seeds argument is not None.
+
     min_bin_freq : int, optional
        To speed up the algorithm, accept only those bins with at least
        min_bin_freq points as seeds. If not defined, set to 1.
