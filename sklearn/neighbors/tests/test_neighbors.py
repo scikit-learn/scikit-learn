@@ -5,6 +5,7 @@ import numpy as np
 from scipy.sparse import (bsr_matrix, coo_matrix, csc_matrix, csr_matrix,
                           dok_matrix, lil_matrix)
 
+from sklearn import metrics
 from sklearn.cross_validation import train_test_split
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
@@ -91,6 +92,22 @@ def test_unsupervised_inputs():
 
         assert_array_almost_equal(dist1, dist2)
         assert_array_almost_equal(ind1, ind2)
+
+
+def test_unsupervisd_knn_distance():
+    """Tests unsupervised NearestNeighbors with a distance matrix."""
+    X = rng.random_sample((10, 3))
+    D = metrics.pairwise_distances(X, metric='euclidean')
+    nbrs_X = neighbors.NearestNeighbors(n_neighbors=3)
+    nbrs_X.fit(X)
+    dist_X, ind_X = nbrs_X.kneighbors(X)
+    nbrs_D = neighbors.NearestNeighbors(n_neighbors=3, metric='precomputed')
+    nbrs_D.fit(D)
+    dist_D, ind_D = nbrs_D.kneighbors(X)
+    # Assert that they give the same neighbors
+    assert_array_almost_equal(dist_X, dist_D)
+    assert_array_almost_equal(ind_X, ind_D)
+    
 
 
 def test_unsupervised_radius_neighbors(n_samples=20, n_features=5,
