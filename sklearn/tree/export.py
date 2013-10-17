@@ -133,3 +133,80 @@ def export_graphviz(decision_tree, out_file="tree.dot", feature_names=None,
 
     if own_file:
         out_file.close()
+
+def export_dict(tree, feature_names=None, max_depth=None) :
+    """Export a decision tree in dict format.
+
+    Parameters
+    ----------
+    decision_tree : decision tree classifier
+        The decision tree to be exported
+
+    feature_names : list of strings, optional (default=None)
+        Names of each of the features.
+
+    max_depth : int, optional (default=None)
+        The maximum depth of the representation. If None, the tree is fully
+        generated.
+
+    Returns
+    -------
+    a dictionary of the format <tree> := {
+        'feature' <int> | <string>,
+        'threshold' : <float>,
+        'impurity' : <float>,
+        'n_node_samples' : <int>,
+        'left' : <tree>,
+        'right' : <tree>,
+        'value' : [<int>],
+    }
+    if feature_names is provided, it is used to map feature indicies
+    to feature names.  All types (including the value list) are native
+    python types as opposed to numpy types to make exporting to json
+    and other pythonic operations easier.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_iris
+    >>> from sklearn import tree
+    >>> import json
+
+    >>> clf = tree.DecisionTreeClassifier()
+    >>> iris = load_iris()
+
+    >>> clf = clf.fit(iris.data, iris.target)
+    >>> d = tree.export_dict(clf)
+
+    >>> j = json.dumps(d, indent=4)
+    """
+    tree_ = tree.tree_
+
+    # i is the element in the tree_ to create a dict for
+    def recur(i, depth=0) :
+        if max_depth is not None and depth > max_depth :
+            return None
+        if i == _tree.TREE_LEAF :
+            return None
+
+        feature = int(tree_.feature[i])
+        threshold = float(tree_.threshold[i])
+        if feature == _tree.TREE_UNDEFINED :
+            feature = None
+            threshold = None
+            value = [map(int, l) for l in tree_.value[i].tolist()]
+        else :
+            value = None
+            if feature_names :
+                feature = feature_names[feature]
+
+        return {
+            'feature' : feature,
+            'threshold' : threshold,
+            'impurity' : float(tree_.impurity[i]),
+            'n_node_samples' : int(tree_.n_node_samples[i]),
+            'left'  : recur(tree_.children_left[i],  depth + 1),
+            'right' : recur(tree_.children_right[i], depth + 1),
+            'value' : value,
+        }
+
+    return recur(0)

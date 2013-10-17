@@ -1,12 +1,13 @@
 """
 Testing for export functions of decision trees (sklearn.tree.export).
 """
+import json
 
 from numpy.testing import assert_equal
 from nose.tools import assert_raises
 
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.tree import export_graphviz
+from sklearn.tree import export_graphviz, export_dict
 from sklearn.externals.six import StringIO
 
 # toy sample
@@ -81,6 +82,72 @@ def test_graphviz_errors():
 
     out = StringIO()
     assert_raises(IndexError, export_graphviz, clf, out, feature_names=[])
+
+
+def test_dict_toy():
+    """Check correctness of export_dict"""
+    clf = DecisionTreeClassifier(max_depth=3,
+                                 min_samples_split=1,
+                                 criterion="gini",
+                                 random_state=2)
+    clf.fit(X, y)
+
+    # Test export code
+    actual = export_dict(clf)
+    expected = {
+        'right': {
+            'right': None,
+            'impurity': 0.0,
+            'feature': None,
+            'threshold': None,
+            'n_node_samples': 3,
+            'left': None,
+            'value': [[
+                0,
+                3,
+             ]],
+         },
+        'impurity': 0.5,
+        'feature': 0,
+        'value' : None,
+        'threshold': 0.0,
+        'n_node_samples': 6,
+        'left': {
+            'right': None,
+            'impurity': 0.0,
+            'feature': None,
+            'threshold': None,
+            'n_node_samples': 3,
+            'left': None,
+            'value': [[
+                3,
+                0,
+             ]],
+        }
+    }
+
+    assert_equal(expected, actual)
+    json.dumps(actual)
+
+    # ensure types are correct
+    assert_equal(type(actual['n_node_samples']), int)
+
+    # Test with feature_names
+    actual = export_dict(clf, feature_names=["feature0", "feature1"])
+    expected['feature'] = 'feature0'
+
+    assert_equal(expected, actual)
+    json.dumps(actual)
+
+    # Test max_depth
+    actual = export_dict(
+        clf, max_depth=0, feature_names=["feature0", "feature1"]
+    )
+    expected['right'] = None
+    expected['left']  = None
+
+    assert_equal(expected, actual)
+    json.dumps(actual)
 
 
 if __name__ == "__main__":
