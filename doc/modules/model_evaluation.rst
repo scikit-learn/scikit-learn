@@ -945,11 +945,12 @@ and :math:`y_i` is the corresponding true value, then the mean absolute error
 
   \text{MAE}(y, \hat{y}) = \frac{1}{n_{\text{samples}}} \sum_{i=0}^{n_{\text{samples}}-1} \left| y_i - \hat{y}_i \right|.
 
-Output_weights is a function argument that can take two values, None and uniform.
-If the value provided is None, then the mean absolute error is calculated
-for each dimension separately and a numpy array is returned. If the value given
-is uniform, then a weight of unity is assigned to each dimension during
-macro-averaging, and a float is returned.
+The :func:`mean_absolute_error` function has an `output_weights` keyword
+with two possible values `None` and 'uniform'. If the value provided is
+`None`, then the mean absolute error is calculated for each dimension
+separately and a numpy array is returned. If the value given is `uniform`,
+then a weight of unity is assigned to each dimension during macro-averaging,
+and a float is returned.
 
 Here a small example of usage of the :func:`mean_absolute_error` function::
 
@@ -982,11 +983,12 @@ and :math:`y_i` is the corresponding true value, then the mean squared error
 
   \text{MSE}(y, \hat{y}) = \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples} - 1} (y_i - \hat{y}_i)^2.
 
-Output_weights is a function argument that can take two values, None and uniform.
-If the value provided is None, then the mean squared error is calculated
-for each dimension separately and a numpy array is returned. If the value given
-is uniform, then a weight of unity is assigned to each dimension during
-macro-averaging, and a float is returned.
+The :func:`mean_squared_error` function has an `output_weights` keyword
+with two possible values `None` and 'uniform'. If the value provided is
+`None`, then the mean squared error is calculated for each dimension
+separately and a numpy array is returned. If the value given is `uniform`,
+then a weight of unity is assigned to each dimension during macro-averaging,
+and a float is returned.
 
 Here a small example of usage of the :func:`mean_squared_error`
 function::
@@ -1000,8 +1002,8 @@ function::
   >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
   >>> mean_squared_error(y_true, y_pred)  # doctest: +ELLIPSIS
   0.7083...
-  >>> mean_squared_error(y_true, y_pred, output_weights=None)
-  array([ 0.417...,  1.        ])
+  >>> mean_squared_error(y_true, y_pred, output_weights=None)  # doctest: +ELLIPSIS
+  array([ 0.416...,  1.        ])
 
 .. topic:: Examples:
 
@@ -1027,10 +1029,10 @@ over :math:`n_{\text{samples}}` is defined as
 
 where :math:`\bar{y} =  \frac{1}{n_{\text{samples}}} \sum_{i=0}^{n_{\text{samples}} - 1} y_i`.
 
-Output_weights is a function argument that can take two values, None and uniform.
-If the value provided is None, then the r2 score is calculated
-for each dimension separately and a numpy array is returned. If the value given
-is uniform, then a weight of unity is assigned to each dimension during
+The :func:`r2_score` function has an `output_weights` keyword with two possible
+values `None` and 'uniform'. If the value provided is `None`, then the r2 score
+is calculated for each dimension separately and a numpy array is returned. If the
+value given is `uniform`, then a weight of unity is assigned to each dimension during
 macro-averaging, and a float is returned.
 
 Here a small example of usage of the :func:`r2_score` function::
@@ -1043,7 +1045,7 @@ Here a small example of usage of the :func:`r2_score` function::
   >>> y_true = [[0.5, 1], [-1, 1], [7, -6]]
   >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
   >>> r2_score(y_true, y_pred)  # doctest: +ELLIPSIS
-  0.938...
+  0.936...
   >>> r2_score(y_true, y_pred, output_weights=None)  # doctest: +ELLIPSIS
   array([ 0.965...,  0.908...])
 

@@ -15,6 +15,7 @@ the lower the better
 #          Jochen Wersdörfer <jochen@wersdoerfer.de>
 #          Lars Buitinck <L.J.Buitinck@uva.nl>
 #          Joel Nothman <joel.nothman@gmail.com>
+#          Manoj Kumar <manojkumarsivaraj334@gmail.com>
 # License: BSD 3 clause
 
 from __future__ import division
@@ -1943,7 +1944,7 @@ def hamming_loss(y_true, y_pred, classes=None):
 ###############################################################################
 # Regression loss functions
 ###############################################################################
-def mean_absolute_error(y_true, y_pred, average='micro'):
+def mean_absolute_error(y_true, y_pred, output_weights='uniform'):
     """Mean absolute error regression loss
 
     Parameters
@@ -2011,8 +2012,8 @@ def mean_squared_error(y_true, y_pred, output_weights='uniform'):
 
     Returns
     -------
-    loss : float or a numpy array of shape[n_outputs]
-        If output_weights is 'ones', a positive floating point value (the best value is 0.0).
+    loss : float or a numpy array of shape [n_outputs]
+        If output_weights is 'uniform', a positive floating point value (the best value is 0.0).
         Else, a numpy array of positive floating points is returned.
 
     Examples
@@ -2026,8 +2027,8 @@ def mean_squared_error(y_true, y_pred, output_weights='uniform'):
     >>> y_pred = [[0, 2],[-1, 2],[8, -5]]
     >>> mean_squared_error(y_true, y_pred)  # doctest: +ELLIPSIS
     0.708...
-    >>> mean_squared_error(y_true, y_pred, output_weights=None)
-    array([ 0.417...,  1.        ])
+    >>> mean_squared_error(y_true, y_pred, output_weights=None)  # doctest: +ELLIPSIS
+    array([ 0.416...,  1.        ])
     """
     output_weights_options = (None, 'uniform')
     if output_weights not in output_weights_options:
@@ -2140,7 +2141,7 @@ def r2_score(y_true, y_pred, output_weights='uniform'):
     >>> y_true = [[0.5, 1], [-1, 1], [7, -6]]
     >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
     >>> r2_score(y_true, y_pred)  # doctest: +ELLIPSIS
-    0.937...
+    0.936...
     >>> r2_score(y_true, y_pred, output_weights=None)  # doctest: +ELLIPSIS
     array([ 0.965...,  0.908...])
     """
