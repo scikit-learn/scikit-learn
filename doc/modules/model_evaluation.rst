@@ -920,6 +920,13 @@ variance is  estimated  as follow:
 
 The best possible score is 1.0, lower values are worse.
 
+The :func:`explained_variance_score` function has an `output_weights` keyword
+with two possible values `None` and 'uniform'. If the value provided is `None`,
+then the explained variance score is calculated for each dimension separately
+and a numpy array is returned. If the value given is `uniform`, then a weight
+of unity is assigned to each dimension during macro-averaging, and a float
+is returned.
+
 Here a small example of usage of the :func:`explained_variance_score`
 function::
 
@@ -928,6 +935,11 @@ function::
     >>> y_pred = [2.5, 0.0, 2, 8]
     >>> explained_variance_score(y_true, y_pred)  # doctest: +ELLIPSIS
     0.957...
+    >>> y_true = [[0.5, 1], [-1, 1], [7, -6]]
+    >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
+    >>> explained_variance_score(y_true,
+    ... y_pred, output_weights=None)  # doctest: +ELLIPSIS
+    array([ 0.967...,  1.        ])
 
 Mean absolute error
 ...................

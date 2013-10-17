@@ -204,6 +204,7 @@ MULTIOUTPUT_METRICS = {
     "mean_absolute_error": mean_absolute_error,
     "mean_squared_error": mean_squared_error,
     "r2_score": r2_score,
+    "explained_variance_score": explained_variance_score
 }
 
 
@@ -2007,9 +2008,11 @@ def test_regression_multioutput_array():
     mse = mean_squared_error(y_true, y_pred, output_weights=None)
     mae = mean_absolute_error(y_true, y_pred, output_weights=None)
     r =  r2_score(y_true, y_pred, output_weights=None)
+    evs =  explained_variance_score(y_true, y_pred, output_weights=None)
     assert_array_equal(mse, np.array([0.125, 0.5625]))
     assert_array_equal(mae, np.array([0.25, 0.625]))
     assert_array_almost_equal(r, np.array([0.95, 0.93]), decimal=2)
+    assert_array_almost_equal(evs, np.array([0.95, 0.93]), decimal=2)
 
     # mean_absolute_error and mean_squared_error are equal because
     # it is a binary problem.
@@ -2025,6 +2028,9 @@ def test_regression_multioutput_array():
     r = r2_score([[0, -1], [0, 1]], [[2, 2], [1, 1]], output_weights=None)
     assert_array_equal(r, np.array([0, -3.5]))
     assert_equal(np.mean(r), r2_score([[0, -1], [0, 1]], [[2, 2], [1, 1]]))
+    evs = explained_variance_score([[0, -1], [0, 1]], [[2, 2], [1, 1]],
+        output_weights=None)
+    assert_array_equal(evs, np.array([0, -1.25]))
 
     # Checking for the condition in which both numerator and denominator is
     # zero.
@@ -2033,3 +2039,6 @@ def test_regression_multioutput_array():
     r =  r2_score(y_true, y_pred, output_weights=None)
     assert_array_equal(r, np.array([1., -3.]))
     assert_equal(np.mean(r), r2_score(y_true, y_pred))
+    evs =  explained_variance_score(y_true, y_pred, output_weights=None)
+    assert_array_equal(evs, np.array([1., -3.]))
+    assert_equal(np.mean(evs), explained_variance_score(y_true, y_pred))

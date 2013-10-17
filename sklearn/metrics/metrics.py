@@ -2045,7 +2045,7 @@ def mean_squared_error(y_true, y_pred, output_weights='uniform'):
 ###############################################################################
 # Regression score functions
 ###############################################################################
-def explained_variance_score(y_true, y_pred):
+def explained_variance_score(y_true, y_pred, output_weights='uniform'):
     """Explained variance regression score function
 
     Best possible score is 1.0, lower values are worse.
@@ -2058,10 +2058,19 @@ def explained_variance_score(y_true, y_pred):
     y_pred : array-like
         Estimated target values.
 
+    output_weights : string, ['uniform' (default), None]
+        Assigns weight to each dimension of the given input.
+        If the option given is uniform, then a weight of unity is assigned
+        to each dimension while averaging. If the option given is None, then
+        no averaging is done.
+
     Returns
     -------
-    score : float
-        The explained variance.
+    score : float or a numpy array of shape [n_outputs]
+        If output_weights is 'uniform', it returns the macro-averaged explained 
+        variance score.
+        If output_weights is None, it returns a numpy array of floats corresponding
+        to the explained variance score of each dimension.
 
     Notes
     -----
@@ -2074,24 +2083,38 @@ def explained_variance_score(y_true, y_pred):
     >>> y_pred = [2.5, 0.0, 2, 8]
     >>> explained_variance_score(y_true, y_pred)  # doctest: +ELLIPSIS
     0.957...
-
+    >>> y_true = [[0.5, 1], [-1, 1], [7, -6]]
+    >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
+    >>> explained_variance_score(y_true,
+    ... y_pred, output_weights=None)  # doctest: +ELLIPSIS
+    array([ 0.967...,  1.        ])
     """
     y_type, y_true, y_pred = _check_reg_targets(y_true, y_pred)
+    output_weights_options = (None, 'uniform')
+    if output_weights not in output_weights_options:
+        raise ValueError('output_weights has to be one of ' +
+                         str(output_weights_options))
 
-    if y_type != "continuous":
-        raise ValueError("{0} is not supported".format(y_type))
+    numerator = np.var(y_true - y_pred, axis=0)
+    denominator = np.var(y_true, axis=0)
 
-    numerator = np.var(y_true - y_pred)
-    denominator = np.var(y_true)
-    if denominator == 0.0:
-        if numerator == 0.0:
-            return 1.0
-        else:
-            # arbitrary set to zero to avoid -inf scores, having a constant
-            # y_true is not interesting for scoring a regression anyway
-            return 0.0
-    return 1 - numerator / denominator
+    # Setting an array of ones for the case in which both numerator
+    # and denominator are zero.
+    explained_variance = np.ones(y_true.shape[1])
+    nonzero_denominator = (denominator != 0.0)
+    nonzero_numerator = (numerator != 0.0)
+    valid_score = np.logical_and(nonzero_numerator,
+        nonzero_denominator)
+    explained_variance[valid_score] = (1 -
+        numerator[valid_score]/denominator[valid_score])
 
+    # arbitrary set to zero to avoid -inf scores, having a constant
+    # y_true is not interesting for scoring a regression anyway
+    explained_variance[np.logical_and(nonzero_numerator,
+        np.logical_not(nonzero_denominator))] = 0.0
+    if output_weights == 'uniform':
+        return np.mean(explained_variance)
+    return explained_variance
 
 def r2_score(y_true, y_pred, output_weights='uniform'):
     """R^2 (coefficient of determination) regression score function.
