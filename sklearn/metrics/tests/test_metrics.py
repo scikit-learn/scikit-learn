@@ -2333,6 +2333,9 @@ def _check_averaging(metric, y_true, y_pred, y_true_binarize, y_pred_binarize,
                                             y_pred_binarize[i])
                                      for i in range(n_samples)]))
 
+    assert_raises(ValueError, metric, y_true, y_pred, average="unknown")
+    assert_raises(ValueError, metric, y_true, y_pred, average="garbage")
+
 
 def check_averaging(name, y_true, y_true_binarize, y_pred, y_pred_binarize,
                     y_score):
