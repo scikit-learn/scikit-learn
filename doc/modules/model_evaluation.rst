@@ -948,9 +948,8 @@ and :math:`y_i` is the corresponding true value, then the mean absolute error
 The :func:`mean_absolute_error` function has an `output_weights` keyword
 with two possible values `None` and 'uniform'. If the value provided is
 `None`, then the mean absolute error is calculated for each dimension
-separately and a numpy array is returned. If the value given is `uniform`,
-then a weight of unity is assigned to each dimension during macro-averaging,
-and a float is returned.
+separately and a numpy array is returned. If the value given is `uniform`, the
+mean absolute error is averaged over each dimension with a weight of `1 / n_outputs`.
 
 Here a small example of usage of the :func:`mean_absolute_error` function::
 
@@ -986,9 +985,8 @@ and :math:`y_i` is the corresponding true value, then the mean squared error
 The :func:`mean_squared_error` function has an `output_weights` keyword
 with two possible values `None` and 'uniform'. If the value provided is
 `None`, then the mean squared error is calculated for each dimension
-separately and a numpy array is returned. If the value given is `uniform`,
-then a weight of unity is assigned to each dimension during macro-averaging,
-and a float is returned.
+separately and a numpy array is returned. If the value given is `uniform`, the
+mean squared error is averaged over each dimension with a weight of `1 / n_outputs`.
 
 Here a small example of usage of the :func:`mean_squared_error`
 function::
