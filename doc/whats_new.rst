@@ -54,7 +54,7 @@ Changelog
      by John Novak.
 
    - Added :class:`linear_model.RANSACRegressor` meta-estimator for the robust
-     fitting of regression models. By `Johannes Schönberger`_.
+     fitting of regression models. By Johannes Schönberger.
 
 API changes summary
 -------------------
