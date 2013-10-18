@@ -303,8 +303,8 @@ class KNeighborsMixin(object):
             else:
                 # Sparse matrices don't have argsort, so do it per-row
                 neigh_ind = np.array([dist[i].indices[
-                       dist[i].data.argsort()[:n_neighbors]]
-                                      for i in range(dist.shape[1])])
+                    dist[i].data.argsort()[:n_neighbors]]
+                    for i in range(dist.shape[1])])
             if return_distance:
                 j = np.arange(neigh_ind.shape[0])[:, None]
                 if self.effective_metric_ == 'euclidean':

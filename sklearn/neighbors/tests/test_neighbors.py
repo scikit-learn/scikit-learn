@@ -119,7 +119,6 @@ def test_unsupervisd_knn_distance():
     # Assert that they give the same neighbors
     #assert_array_almost_equal(dist_X, dist_Dsp)
     assert_array_almost_equal(ind_X, ind_Dsp)
-    
 
 
 def test_unsupervised_radius_neighbors(n_samples=20, n_features=5,
