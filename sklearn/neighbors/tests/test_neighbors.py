@@ -96,18 +96,29 @@ def test_unsupervised_inputs():
 
 def test_unsupervisd_knn_distance():
     """Tests unsupervised NearestNeighbors with a distance matrix."""
-    X = rng.random_sample((10, 3))
+    X = rng.random_sample((3, 3))
     D = metrics.pairwise_distances(X, metric='euclidean')
+    # As a feature matrix (n_samples by n_features)
     nbrs_X = neighbors.NearestNeighbors(n_neighbors=3)
     nbrs_X.fit(X)
     dist_X, ind_X = nbrs_X.kneighbors(X)
+    # As a dense distance matrix (n_samples by n_samples)
     nbrs_D = neighbors.NearestNeighbors(n_neighbors=3, algorithm='brute',
                                         metric='precomputed')
     nbrs_D.fit(D)
-    dist_D, ind_D = nbrs_D.kneighbors(X)
+    dist_D, ind_D = nbrs_D.kneighbors(D)
     # Assert that they give the same neighbors
     #assert_array_almost_equal(dist_X, dist_D)
     assert_array_almost_equal(ind_X, ind_D)
+    # As a sparse distance matrix (n_samples by n_samples)
+    Dsp = csr_matrix(D + 1e-5)
+    nbrs_Dsp = neighbors.NearestNeighbors(n_neighbors=3, algorithm='brute',
+                                          metric='precomputed')
+    nbrs_Dsp.fit(Dsp)
+    dist_Dsp, ind_Dsp = nbrs_Dsp.kneighbors(Dsp)
+    # Assert that they give the same neighbors
+    #assert_array_almost_equal(dist_X, dist_Dsp)
+    assert_array_almost_equal(ind_X, ind_Dsp)
     
 
 
