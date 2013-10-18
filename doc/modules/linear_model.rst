@@ -752,10 +752,10 @@ Each iteration performs the following steps:
 
 1. Select `min_samples` random samples from the original data and check
    whether the set of data is valid (see `is_data_valid`).
-2. Fit a model to the random subset (`estimator.fit`) and check
+2. Fit a model to the random subset (`base_estimator.fit`) and check
    whether the estimated model is valid (see `is_model_valid`).
 3. Classify all data as inliers or outliers by calculating the residuals
-   to the estimated model (`estimator.predict(X) - y`) - all data
+   to the estimated model (`base_estimator.predict(X) - y`) - all data
    samples with absolute residuals smaller than the `residual_threshold`
    are considered as inliers.
 4. Save fitted model as best model if number of inlier samples is

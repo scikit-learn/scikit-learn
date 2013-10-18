@@ -24,7 +24,7 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
 
     Parameters
     ----------
-    estimator : object, optional
+    base_estimator : object, optional
         Base estimator object which implements the following methods:
 
          * `fit(X, y)`: Fit model to given training data and target values.
@@ -33,8 +33,8 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
            Additionally, the score is used to decide which of two equally
            large consensus sets is chosen as the better one.
 
-        If estimator is None, then
-        ``estimator=sklearn.linear_model.LinearRegression()`` is used for
+        If `base_estimator` is None, then
+        ``base_estimator=sklearn.linear_model.LinearRegression()`` is used for
         target values of dtype float.
 
         Note that the current implementation only supports regression
@@ -90,7 +90,7 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
     Attributes
     ----------
     estimator_ : object
-        Best fitted model (copy of the `estimator` object).
+        Best fitted model (copy of the `base_estimator` object).
 
     n_trials_ : int
         Number of random selection trials until one of the stop criteria is
@@ -106,13 +106,13 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
     .. [3] http://www.bmva.org/bmvc/2009/Papers/Paper355/Paper355.pdf
     """
 
-    def __init__(self, estimator=None, min_samples=None,
+    def __init__(self, base_estimator=None, min_samples=None,
                  residual_threshold=None, is_data_valid=None,
                  is_model_valid=None, max_trials=100,
                  stop_n_inliers=np.inf, stop_score=np.inf,
                  residual_metric=None, random_state=None):
 
-        self.estimator = estimator
+        self.base_estimator = base_estimator
         self.min_samples = min_samples
         self.residual_threshold = residual_threshold
         self.is_data_valid = is_data_valid
@@ -142,10 +142,10 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
             `max_trials` randomly chosen sub-samples.
 
         """
-        if self.estimator is not None:
-            estimator = clone(self.estimator)
+        if self.base_estimator is not None:
+            base_estimator = clone(self.base_estimator)
         else:
-            estimator = LinearRegression()
+            base_estimator = LinearRegression()
 
         if self.min_samples is None:
             # assume linear model by default
@@ -178,7 +178,7 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
         random_state = check_random_state(self.random_state)
 
         try:  # Not all estimator accept a random_state
-            estimator.set_params(random_state=random_state)
+            base_estimator.set_params(random_state=random_state)
         except ValueError:
             pass
 
@@ -212,15 +212,15 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
                 continue
 
             # fit model for current random sample set
-            estimator.fit(X_subset, y_subset)
+            base_estimator.fit(X_subset, y_subset)
 
             # check if estimated model is valid
             if (self.is_model_valid is not None and not
-                    self.is_model_valid(estimator, X_subset, y_subset)):
+                    self.is_model_valid(base_estimator, X_subset, y_subset)):
                 continue
 
             # residuals of all data for current random sample model
-            y_pred = estimator.predict(X)
+            y_pred = base_estimator.predict(X)
             if y_pred.ndim == 1:
                 y_pred = y_pred[:, None]
 
@@ -240,7 +240,7 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
             y_inlier_subset = y[inlier_idxs_subset]
 
             # score of inlier data set
-            score_subset = estimator.score(X_inlier_subset,
+            score_subset = base_estimator.score(X_inlier_subset,
                                                 y_inlier_subset)
 
             # same number of inliers but worse score -> skip current random
@@ -270,9 +270,9 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
                              "constraints.")
 
         # estimate final model using all inliers
-        estimator.fit(X_inlier_best, y_inlier_best)
+        base_estimator.fit(X_inlier_best, y_inlier_best)
 
-        self.estimator_ = estimator
+        self.estimator_ = base_estimator
         self.inlier_mask_ = inlier_mask_best
 
     def predict(self, X):
