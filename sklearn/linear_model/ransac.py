@@ -34,7 +34,7 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
            large consensus sets is chosen as the better one.
 
         If estimator is None, then
-        ``estimator=sklearn.linear_model.LinearRegression`` is used for
+        ``estimator=sklearn.linear_model.LinearRegression()`` is used for
         target values of dtype float.
 
         Note that the current implementation only supports regression
@@ -45,7 +45,7 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
         as an absolute number of samples for `min_samples >= 1`, treated as a
         relative number `ceil(min_samples * X.shape[0]`) for
         `min_samples < 1`. By default a
-        ``sklearn.linear_model.LinearRegression`` estimator is assumed and
+        ``sklearn.linear_model.LinearRegression()`` estimator is assumed and
         `min_samples` is chosen as ``X.shape[1] + 1``.
 
     residual_threshold : float, optional
