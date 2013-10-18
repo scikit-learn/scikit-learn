@@ -153,6 +153,9 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
         elif 0 < self.min_samples < 1:
             min_samples = np.ceil(self.min_samples * X.shape[0])
         elif self.min_samples >= 1:
+            if self.min_samples % 1 != 0:
+                raise ValueError("Absolute number of samples must be an "
+                                 "integer value.")
             min_samples = self.min_samples
         else:
             raise ValueError("Value for `min_samples` must be scalar and "
