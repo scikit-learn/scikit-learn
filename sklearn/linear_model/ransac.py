@@ -144,10 +144,8 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin):
         """
         if self.estimator is not None:
             estimator = clone(self.estimator)
-        elif y.dtype.kind == 'f':
-            estimator = LinearRegression()
         else:
-            raise ValueError("`estimator` not specified.")
+            estimator = LinearRegression()
 
         if self.min_samples is None:
             # assume linear model by default
