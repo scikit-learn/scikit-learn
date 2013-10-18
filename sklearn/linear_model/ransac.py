@@ -12,7 +12,7 @@ from ..utils.random import sample_without_replacement
 from .base import LinearRegression
 
 
-class RANSAC(BaseEstimator, MetaEstimatorMixin):
+class RANSACRegressor(BaseEstimator, MetaEstimatorMixin):
     """RANSAC (RANdom SAmple Consensus) algorithm.
 
     RANSAC is an iterative algorithm for the robust estimation of parameters
