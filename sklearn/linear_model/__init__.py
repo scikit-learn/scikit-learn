@@ -29,7 +29,7 @@ from .passive_aggressive import PassiveAggressiveRegressor
 from .perceptron import Perceptron
 from .randomized_l1 import (RandomizedLasso, RandomizedLogisticRegression,
                             lasso_stability_path)
-from .ransac import RANSAC
+from .ransac import RANSACRegressor
 
 __all__ = ['ARDRegression',
            'BayesianRidge',
@@ -71,4 +71,4 @@ __all__ = ['ARDRegression',
            'orthogonal_mp',
            'orthogonal_mp_gram',
            'ridge_regression',
-           'RANSAC']
+           'RANSACRegressor']
