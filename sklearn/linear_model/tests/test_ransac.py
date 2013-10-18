@@ -247,5 +247,34 @@ def test_ransac_multi_dimensional_targets():
     assert_equal(ransac_estimator.inlier_mask_, ref_inlier_mask)
 
 
+def test_ransac_residual_metric():
+    residual_metric1 = lambda dy: np.sum(np.abs(dy), axis=1)
+    residual_metric2 = lambda dy: np.sum(dy ** 2, axis=1)
+
+    yyy = np.column_stack([y, y, y])
+
+    base_estimator = LinearRegression()
+    ransac_estimator0 = RANSACRegressor(base_estimator, min_samples=2,
+                                        residual_threshold=5, random_state=0)
+    ransac_estimator1 = RANSACRegressor(base_estimator, min_samples=2,
+                                        residual_threshold=5, random_state=0,
+                                        residual_metric=residual_metric1)
+    ransac_estimator2 = RANSACRegressor(base_estimator, min_samples=2,
+                                        residual_threshold=5, random_state=0,
+                                        residual_metric=residual_metric2)
+
+    # multi-dimensional
+    ransac_estimator0.fit(X, yyy)
+    ransac_estimator1.fit(X, yyy)
+    ransac_estimator2.fit(X, yyy)
+    assert_equal(ransac_estimator0.predict(X), ransac_estimator1.predict(X))
+    assert_equal(ransac_estimator0.predict(X), ransac_estimator2.predict(X))
+
+    # one-dimensional
+    ransac_estimator0.fit(X, y)
+    ransac_estimator2.fit(X, y)
+    assert_equal(ransac_estimator0.predict(X), ransac_estimator2.predict(X))
+
+
 if __name__ == "__main__":
     np.testing.run_module_suite()
