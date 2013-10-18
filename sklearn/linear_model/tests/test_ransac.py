@@ -276,5 +276,22 @@ def test_ransac_residual_metric():
     assert_equal(ransac_estimator0.predict(X), ransac_estimator2.predict(X))
 
 
+def test_ransac_default_residual_threshold():
+
+    base_estimator = LinearRegression()
+    ransac_estimator = RANSACRegressor(base_estimator, min_samples=2,
+                                       random_state=0)
+
+    # Estimate parameters of corrupted data
+    ransac_estimator.fit(X, y)
+
+    # Ground truth / reference inlier mask
+    ref_inlier_mask = np.ones_like(ransac_estimator.inlier_mask_,
+                                   dtype=np.bool_)
+    ref_inlier_mask[outliers] = False
+
+    assert_equal(ransac_estimator.inlier_mask_, ref_inlier_mask)
+
+
 if __name__ == "__main__":
     np.testing.run_module_suite()
