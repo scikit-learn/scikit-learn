@@ -2,6 +2,7 @@ import numpy as np
 from numpy.testing import assert_equal, assert_raises
 from scipy import sparse
 
+from sklearn.utils.testing import assert_less
 from sklearn.linear_model import LinearRegression, RANSACRegressor
 
 
@@ -39,7 +40,8 @@ def test_ransac_inliers_outliers():
 
 def test_ransac_is_data_valid():
     def is_data_valid(X, y):
-        assert X.shape[0] == y.shape[0] == 2
+        assert_equal(X.shape[0], 2)
+        assert_equal(y.shape[0], 2)
         return False
 
     X = np.random.rand(10, 2)
@@ -56,7 +58,8 @@ def test_ransac_is_data_valid():
 
 def test_ransac_is_model_valid():
     def is_model_valid(estimator, X, y):
-        assert X.shape[0] == y.shape[0] == 2
+        assert_equal(X.shape[0], 2)
+        assert_equal(y.shape[0], 2)
         return False
 
     base_estimator = LinearRegression()
@@ -81,7 +84,7 @@ def test_ransac_max_trials():
                               random_state=0)
     assert getattr(ransac_estimator, 'n_trials_', None) is None
     ransac_estimator.fit(X, y)
-    assert ransac_estimator.n_trials_ == 11
+    assert_equal(ransac_estimator.n_trials_, 11)
 
 
 def test_ransac_stop_n_inliers():
@@ -91,7 +94,7 @@ def test_ransac_stop_n_inliers():
                                        random_state=0)
     ransac_estimator.fit(X, y)
 
-    assert ransac_estimator.n_trials_ == 1
+    assert_equal(ransac_estimator.n_trials_, 1)
 
 
 def test_ransac_stop_score():
@@ -101,7 +104,7 @@ def test_ransac_stop_score():
                                        random_state=0)
     ransac_estimator.fit(X, y)
 
-    assert ransac_estimator.n_trials_ == 1
+    assert_equal(ransac_estimator.n_trials_, 1)
 
 
 def test_ransac_score():
@@ -115,8 +118,8 @@ def test_ransac_score():
                                        residual_threshold=0.5, random_state=0)
     ransac_estimator.fit(X, y)
 
-    assert ransac_estimator.score(X[2:], y[2:]) == 1
-    assert ransac_estimator.score(X[:2], y[:2]) < 1
+    assert_equal(ransac_estimator.score(X[2:], y[2:]), 1)
+    assert_less(ransac_estimator.score(X[:2], y[:2]), 1)
 
 
 def test_ransac_predict():
