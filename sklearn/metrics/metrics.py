@@ -1959,7 +1959,8 @@ def mean_absolute_error(y_true, y_pred, output_weights='uniform'):
         Assigns weight to each dimension of the given input.
         If the option given is uniform, then a weight of unity is assigned
         to each dimension during averaging. If the option given is None,
-        then no averaging is done.
+        then no averaging is done. This parameter is useful only for multi-output
+        tasks where both y_true and y_pred have shape [n_samples, n_outputs]
 
    Returns
     -------
@@ -2008,7 +2009,8 @@ def mean_squared_error(y_true, y_pred, output_weights='uniform'):
         Assigns weight to each dimension of the given input.
         If the option given is uniform, then a weight of unity is assigned
         to each dimension during averaging. If the option given is None,
-        then no averaging is done.
+        then no averaging is done. This parameter is useful only for multi-output
+        tasks where both y_true and y_pred have shape [n_samples, n_outputs]
 
     Returns
     -------
@@ -2027,7 +2029,8 @@ def mean_squared_error(y_true, y_pred, output_weights='uniform'):
     >>> y_pred = [[0, 2],[-1, 2],[8, -5]]
     >>> mean_squared_error(y_true, y_pred)  # doctest: +ELLIPSIS
     0.708...
-    >>> mean_squared_error(y_true, y_pred, output_weights=None)  # doctest: +ELLIPSIS
+    >>> mean_squared_error(y_true, y_pred,
+    ... output_weights=None)  # doctest: +ELLIPSIS
     array([ 0.416...,  1.        ])
     """
     output_weights_options = (None, 'uniform')
@@ -2062,7 +2065,8 @@ def explained_variance_score(y_true, y_pred, output_weights='uniform'):
         Assigns weight to each dimension of the given input.
         If the option given is uniform, then a weight of unity is assigned
         to each dimension while averaging. If the option given is None, then
-        no averaging is done.
+        no averaging is done. This parameter is useful only for multi-output
+        tasks where both y_true and y_pred have shape [n_samples, n_outputs]
 
     Returns
     -------
@@ -2085,8 +2089,8 @@ def explained_variance_score(y_true, y_pred, output_weights='uniform'):
     0.957...
     >>> y_true = [[0.5, 1], [-1, 1], [7, -6]]
     >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
-    >>> explained_variance_score(y_true,
-    ... y_pred, output_weights=None)  # doctest: +ELLIPSIS
+    >>> explained_variance_score(y_true, y_pred,
+    ... output_weights=None)  # doctest: +ELLIPSIS
     array([ 0.967...,  1.        ])
     """
     y_type, y_true, y_pred = _check_reg_targets(y_true, y_pred)
@@ -2133,7 +2137,8 @@ def r2_score(y_true, y_pred, output_weights='uniform'):
         Assigns weight to each dimension of the given input.
         If the option given is uniform, then a weight of unity is assigned
         to each dimension while averaging. If the option given is None, then
-        no averaging is done.
+        no averaging is done. This parameter is useful only for multi-output
+        tasks where both y_true and y_pred have shape [n_samples, n_outputs]
 
     Returns
     -------
@@ -2165,7 +2170,8 @@ def r2_score(y_true, y_pred, output_weights='uniform'):
     >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
     >>> r2_score(y_true, y_pred)  # doctest: +ELLIPSIS
     0.936...
-    >>> r2_score(y_true, y_pred, output_weights=None)  # doctest: +ELLIPSIS
+    >>> r2_score(y_true, y_pred,
+    ... output_weights=None)  # doctest: +ELLIPSIS
     array([ 0.965...,  0.908...])
     """
     y_type, y_true, y_pred = _check_reg_targets(y_true, y_pred)
