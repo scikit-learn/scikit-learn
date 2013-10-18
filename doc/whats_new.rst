@@ -58,7 +58,7 @@ Changelog
      needs a temporary data structure the size of its input.
 
    - Added :class:`linear_model.RANSACRegressor` meta-estimator for the robust
-     fitting of regression models. By `Johannes Schönberger`_.
+     fitting of regression models. By Johannes Schönberger.
 
 
 API changes summary
