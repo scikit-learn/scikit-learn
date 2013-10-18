@@ -208,13 +208,17 @@ def test_ransac_min_n_samples():
                                         residual_threshold=5, random_state=0)
     ransac_estimator5 = RANSACRegressor(base_estimator, min_samples=2.0,
                                         residual_threshold=5, random_state=0)
+    ransac_estimator6 = RANSACRegressor(base_estimator,
+                                        residual_threshold=5, random_state=0)
 
     ransac_estimator1.fit(X, y)
     ransac_estimator2.fit(X, y)
     ransac_estimator5.fit(X, y)
+    ransac_estimator6.fit(X, y)
 
     assert_equal(ransac_estimator1.predict(X), ransac_estimator2.predict(X))
     assert_equal(ransac_estimator1.predict(X), ransac_estimator5.predict(X))
+    assert_equal(ransac_estimator1.predict(X), ransac_estimator6.predict(X))
     assert_raises(ValueError, ransac_estimator3.fit, X, y)
     assert_raises(ValueError, ransac_estimator4.fit, X, y)
 
