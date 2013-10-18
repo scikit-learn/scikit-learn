@@ -57,6 +57,10 @@ Changelog
      `Lars Buitinck`_. In particular, the k-means algorithm no longer
      needs a temporary data structure the size of its input.
 
+   - Added :class:`linear_model.RANSACRegressor` meta-estimator for the robust
+     fitting of regression models. By `Johannes Schönberger`_.
+
+
 API changes summary
 -------------------
 
@@ -2302,3 +2306,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _@FedericoV: https://github.com/FedericoV/
 
 .. _Daniel Nouri: http://danielnouri.org
+
+.. _Johannes Schönberger: https://github.com/ahojnnes
