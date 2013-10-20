@@ -312,7 +312,7 @@ def test_fast_dot():
     try:
         linalg.get_blas_funcs('gemm')
         has_blas = True
-    except ValueError:
+    except AttributeError, ValueError:
         has_blas = False
 
     if has_blas:
