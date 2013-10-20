@@ -296,26 +296,15 @@ class KNeighborsMixin(object):
                 dist = pairwise_distances(X, self._fit_X,
                                           metric=self.effective_metric_,
                                           **self.effective_metric_kwds_)
-            if hasattr(dist, 'argsort'):
-                # XXX: should be implemented with a partial sort
-                neigh_ind = dist.argsort(axis=1)
-                neigh_ind = neigh_ind[:, :n_neighbors]
-            else:
-                # Sparse matrices don't have argsort, so do it per-row
-                neigh_ind = np.array([dist[i].indices[
-                    dist[i].data.argsort()[:n_neighbors]]
-                    for i in range(dist.shape[1])])
+            # XXX: should be implemented with a partial sort
+            neigh_ind = dist.argsort(axis=1)
+            neigh_ind = neigh_ind[:, :n_neighbors]
             if return_distance:
                 j = np.arange(neigh_ind.shape[0])[:, None]
                 if self.effective_metric_ == 'euclidean':
                     return np.sqrt(dist[j, neigh_ind]), neigh_ind
-                elif isinstance(dist, np.ndarray):
-                    return dist[j, neigh_ind], neigh_ind
                 else:
-                    j = np.arange(neigh_ind.shape[0])
-                    return (np.array([dist[i, neigh_ind[i]]
-                                     for row in range(dist.shape[0])]),
-                            neigh_ind)
+                    return dist[j, neigh_ind], neigh_ind
             else:
                 return neigh_ind
         elif self._fit_method in ['ball_tree', 'kd_tree']:
