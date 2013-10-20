@@ -1,4 +1,4 @@
-""" Non-negative matrix factorization
+"""Non-negative matrix factorization (NMF).
 """
 # Author: Vlad Niculae
 #         Lars Buitinck <L.J.Buitinck@uva.nl>
@@ -251,14 +251,258 @@ def _nls_subproblem(V, W, H, tol, max_iter, sigma=0.01, beta=0.1):
     return H, grad, n_iter
 
 
-class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
-    """Non-Negative matrix factorization by Projected Gradient (NMF)
+class _BaseNMF(BaseEstimator, TransformerMixin):
+    def _init(self, X):
+        n_samples, n_features = X.shape
+        init = self.init
+        if init is None:
+            if self.n_components_ < n_features:
+                init = 'nndsvd'
+            else:
+                init = 'random'
+
+        if isinstance(init, (numbers.Integral, np.random.RandomState)):
+            random_state = check_random_state(init)
+            init = "random"
+            warnings.warn("Passing a random seed or generator as init "
+                          "is deprecated and will be removed in 0.15. Use "
+                          "init='random' and random_state instead.",
+                          DeprecationWarning)
+        else:
+            random_state = self.random_state
+
+        if init == 'nndsvd':
+            W, H = _initialize_nmf(X, self.n_components_)
+        elif init == 'nndsvda':
+            W, H = _initialize_nmf(X, self.n_components_, variant='a')
+        elif init == 'nndsvdar':
+            W, H = _initialize_nmf(X, self.n_components_, variant='ar')
+        elif init == "random":
+            rng = check_random_state(random_state)
+            W = rng.randn(n_samples, self.n_components_)
+            # we do not write np.abs(W, out=W) to stay compatible with
+            # numpy 1.5 and earlier where the 'out' keyword is not
+            # supported as a kwarg on ufuncs
+            np.abs(W, W)
+            H = rng.randn(self.n_components_, n_features)
+            np.abs(H, H)
+        else:
+            raise ValueError(
+                'Invalid init parameter: got %r instead of one of %r' %
+                (init, (None, 'nndsvd', 'nndsvda', 'nndsvdar', 'random')))
+        return W, H
+
+    def fit(self, X, y=None, **params):
+        """Learn an NMF model for the data X.
+
+        Parameters
+        ----------
+
+        X: {array-like, sparse matrix}, shape = [n_samples, n_features]
+            Data matrix to be decomposed.
+
+        Returns
+        -------
+        self
+        """
+        self.fit_transform(X, **params)
+        return self
+
+    def fit_transform(self, X, y=None):
+        """Learn a NMF model for the data X and returns the transformed data.
+
+        This is more efficient than calling fit followed by transform.
+
+        Parameters
+        ----------
+
+        X: {array-like, sparse matrix}, shape = [n_samples, n_features]
+            Data matrix to be decomposed
+
+        Returns
+        -------
+        data: array, [n_samples, n_components]
+            Transformed data
+        """
+        X = atleast2d_or_csr(X)
+        check_non_negative(X, "%s.fit_transform" % type(self).__name__)
+
+        n_samples, n_features = X.shape
+
+        if self.n_components is None:
+            self.n_components_ = n_features
+        else:
+            self.n_components_ = self.n_components
+
+        W, H = self._init(X)
+        W, H = self._fit_nmf(X, W, H)
+
+        if not sp.issparse(X):
+            error = norm(X - np.dot(W, H))
+        else:
+            sqnorm_X = np.dot(X.data, X.data)
+            norm_WHT = trace_dot(np.dot(H.T, np.dot(W.T, W)).T, H)
+            cross_prod = trace_dot((X * H.T), W)
+            error = sqrt(sqnorm_X + norm_WHT - 2. * cross_prod)
+
+        self.reconstruction_err_ = error
+
+        self.components_ = H
+
+        return W
+
+    def transform(self, X):
+        """Transform the data X according to the fitted NMF model.
+
+        Parameters
+        ----------
+        X: {array-like, sparse matrix}, shape = [n_samples, n_features]
+            Data matrix to be transformed by the model.
+
+        Returns
+        -------
+        data: array, [n_samples, n_components]
+            Transformed data.
+        """
+        X, = check_arrays(X, sparse_format='csc')
+        Wt = np.zeros((self.n_components_, X.shape[0]))
+        check_non_negative(X, "%s.transform" % type(self).__name__)
+
+        if sp.issparse(X):
+            Wt, _, _ = _nls_subproblem(X.T, self.components_.T, Wt,
+                                       tol=self.tol,
+                                       max_iter=self.nls_max_iter)
+        else:
+            for j in range(0, X.shape[0]):
+                Wt[:, j], _ = nnls(self.components_.T, X[j, :])
+        return Wt.T
+
+
+class MultiplicativeNMF(_BaseNMF):
+    """Non-negative matrix factorization using the Lee-Seung algorithm.
+
+    Finds W and H that minimize the squared Frobenius loss
+
+        ||X - WH||^2
+        s.t. W, H >= 0
+
+    Uses a simple batch algorithm that alternates between updating W and H,
+    known as Lee and Seung's multiplicative update algorithm.
 
     Parameters
     ----------
     n_components : int or None
         Number of components, if n_components is not set all components
-        are kept
+        are kept.
+
+    max_iter : int, default: 200
+        Number of iterations to compute.
+
+    nls_max_iter : int, default: 2000
+        Number of iterations in NLS subproblem. Only used in transform.
+
+    init :  'nndsvd' |  'nndsvda' | 'nndsvdar' | 'random'
+        Method used to initialize the procedure.
+        Default: 'nndsvdar' if n_components < n_features, otherwise random.
+        Valid options::
+
+            'nndsvd': Nonnegative Double Singular Value Decomposition (NNDSVD)
+                initialization (better for sparseness).
+            'nndsvda': NNDSVD with zeros filled with the average of X
+                (better when sparsity is not desired).
+            'nndsvdar': NNDSVD with zeros filled with small random values
+                (generally faster, less accurate alternative to NNDSVDa
+                for when sparsity is not desired).
+            'random': non-negative random matrices.
+
+    random_state : int or RandomState
+        Random number generator seed control.
+
+    tol : double
+        Tolerance threshold for early stopping: when the update factor is
+        within tol of 1., fit exits.
+
+    verbose : integer, optional
+        Verbosity (progress reporting). Default is silent mode.
+
+    Attributes
+    ----------
+    `components_` : array, [n_components, n_features]
+        Non-negative components of the data.
+
+    `reconstruction_err_` : number
+        Frobenius norm of the matrix difference between
+        the training data and the reconstructed data from
+        the fit produced by the model. ``|| X - WH ||_2``
+
+    Examples
+    --------
+    >>> nmf = MultiplicativeNMF(n_components=2)
+    >>> nmf
+    MultiplicativeNMF(init='random', max_iter=200, n_components=2,
+             nls_max_iter=2000, random_state=None, tol=0.001, verbose=0)
+    >>> X = nmf.fit_transform([[2, 1, 0], [1, 0, 0], [0, 0, 1]])
+    >>> np.all(X >= 0)
+    True
+    >>> np.all(nmf.components_ >= 0)
+    True
+
+    References
+    ----------
+    "Algorithms for Non-negative Matrix Factorization"
+    by Daniel D. Lee, Sebastian H. Seung
+    (available at http://citeseer.ist.psu.edu/lee01algorithms.html)
+    """
+    def __init__(self, n_components=None, init="random", max_iter=200,
+                 nls_max_iter=2000, random_state=None, tol=1e-3, verbose=0):
+        self.n_components = n_components
+        self.init = init
+        self.tol = tol
+        self.max_iter = max_iter
+        self.nls_max_iter = nls_max_iter
+        self.random_state = random_state
+        self.verbose = verbose
+
+    def _fit_nmf(self, X, W, H):
+        eps = 1e-5
+        tol = self.tol
+        verbose = self.verbose
+
+        WT = W.T
+        HT = H.T
+
+        for i in xrange(1, self.max_iter + 1):
+            update = safe_sparse_dot(WT, X)
+            update /= (np.dot(np.dot(WT, W), H) + eps)
+            H *= update
+            maxH = np.max(update)
+
+            update = safe_sparse_dot(X, HT)
+            update /= (np.dot(W, np.dot(H, HT)) + eps)
+            W *= update
+            maxW = np.max(update)
+
+            if i % 10 == 0:
+                max_update = max(maxH, maxH)
+                if abs(1. - max_update) < tol:
+                    if verbose:
+                        print("NMF: converged after %d iterations" % i)
+                    break
+                if verbose:
+                    print("NMF: iteration %d, max update %g > tolerance %g"
+                          % (i, max_update, tol))
+
+        return W, H
+
+
+class ProjectedGradientNMF(_BaseNMF):
+    """Non-Negative matrix factorization by Projected Gradient (NMF).
+
+    Parameters
+    ----------
+    n_components : int or None
+        Number of components, if n_components is not set all components
+        are kept.
 
     init :  'nndsvd' |  'nndsvda' | 'nndsvdar' | 'random'
         Method used to initialize the procedure.
@@ -374,46 +618,6 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
         self.nls_max_iter = nls_max_iter
         self.random_state = random_state
 
-    def _init(self, X):
-        n_samples, n_features = X.shape
-        init = self.init
-        if init is None:
-            if self.n_components_ < n_features:
-                init = 'nndsvd'
-            else:
-                init = 'random'
-
-        if isinstance(init, (numbers.Integral, np.random.RandomState)):
-            random_state = check_random_state(init)
-            init = "random"
-            warnings.warn("Passing a random seed or generator as init "
-                          "is deprecated and will be removed in 0.15. Use "
-                          "init='random' and random_state instead.",
-                          DeprecationWarning)
-        else:
-            random_state = self.random_state
-
-        if init == 'nndsvd':
-            W, H = _initialize_nmf(X, self.n_components_)
-        elif init == 'nndsvda':
-            W, H = _initialize_nmf(X, self.n_components_, variant='a')
-        elif init == 'nndsvdar':
-            W, H = _initialize_nmf(X, self.n_components_, variant='ar')
-        elif init == "random":
-            rng = check_random_state(random_state)
-            W = rng.randn(n_samples, self.n_components_)
-            # we do not write np.abs(W, out=W) to stay compatible with
-            # numpy 1.5 and earlier where the 'out' keyword is not
-            # supported as a kwarg on ufuncs
-            np.abs(W, W)
-            H = rng.randn(self.n_components_, n_features)
-            np.abs(H, H)
-        else:
-            raise ValueError(
-                'Invalid init parameter: got %r instead of one of %r' %
-                (init, (None, 'nndsvd', 'nndsvda', 'nndsvdar', 'random')))
-        return W, H
-
     def _update_W(self, X, H, W, tolW):
         n_samples, n_features = X.shape
 
@@ -458,34 +662,7 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
 
         return H, gradH, iterH
 
-    def fit_transform(self, X, y=None):
-        """Learn a NMF model for the data X and returns the transformed data.
-
-        This is more efficient than calling fit followed by transform.
-
-        Parameters
-        ----------
-
-        X: {array-like, sparse matrix}, shape = [n_samples, n_features]
-            Data matrix to be decomposed
-
-        Returns
-        -------
-        data: array, [n_samples, n_components]
-            Transformed data
-        """
-        X = atleast2d_or_csr(X)
-        check_non_negative(X, "NMF.fit")
-
-        n_samples, n_features = X.shape
-
-        if not self.n_components:
-            self.n_components_ = n_features
-        else:
-            self.n_components_ = self.n_components
-
-        W, H = self._init(X)
-
+    def _fit_nmf(self, X, W, H):
         gradW = (np.dot(W, np.dot(H, H.T))
                  - safe_sparse_dot(X, H.T, dense_output=True))
         gradH = (np.dot(np.dot(W.T, W), H)
@@ -514,69 +691,15 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
             if iterH == 1:
                 tolH = 0.1 * tolH
 
-        if not sp.issparse(X):
-            error = norm(X - np.dot(W, H))
-        else:
-            sqnorm_X = np.dot(X.data, X.data)
-            norm_WHT = trace_dot(np.dot(H.T, np.dot(W.T, W)).T, H)
-            cross_prod = trace_dot((X * H.T), W)
-            error = sqrt(sqnorm_X + norm_WHT - 2. * cross_prod)
-
-        self.reconstruction_err_ = error
+        H[H == 0] = 0   # fix up negative zeros which break a doctest
 
         self.comp_sparseness_ = _sparseness(H.ravel())
         self.data_sparseness_ = _sparseness(W.ravel())
 
-        H[H == 0] = 0   # fix up negative zeros
-        self.components_ = H
-
         if n_iter == self.max_iter:
             warnings.warn("Iteration limit reached during fit")
 
-        return W
-
-    def fit(self, X, y=None, **params):
-        """Learn a NMF model for the data X.
-
-        Parameters
-        ----------
-
-        X: {array-like, sparse matrix}, shape = [n_samples, n_features]
-            Data matrix to be decomposed
-
-        Returns
-        -------
-        self
-        """
-        self.fit_transform(X, **params)
-        return self
-
-    def transform(self, X):
-        """Transform the data X according to the fitted NMF model
-
-        Parameters
-        ----------
-
-        X: {array-like, sparse matrix}, shape = [n_samples, n_features]
-            Data matrix to be transformed by the model
-
-        Returns
-        -------
-        data: array, [n_samples, n_components]
-            Transformed data
-        """
-        X, = check_arrays(X, sparse_format='csc')
-        Wt = np.zeros((self.n_components_, X.shape[0]))
-        check_non_negative(X, "ProjectedGradientNMF.transform")
-
-        if sp.issparse(X):
-            Wt, _, _ = _nls_subproblem(X.T, self.components_.T, Wt,
-                                       tol=self.tol,
-                                       max_iter=self.nls_max_iter)
-        else:
-            for j in range(0, X.shape[0]):
-                Wt[:, j], _ = nnls(self.components_.T, X[j, :])
-        return Wt.T
+        return W, H
 
 
 class NMF(ProjectedGradientNMF):

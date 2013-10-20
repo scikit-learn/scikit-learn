@@ -1,142 +1,80 @@
 """
-Benchmarks of Non-Negative Matrix Factorization
+Benchmarks of non-negative matrix factorization (NMF).
 """
 
 from __future__ import print_function
 
 from collections import defaultdict
-import gc
 from time import time
 
 import numpy as np
-from scipy.linalg import norm
 
-from sklearn.decomposition.nmf import NMF, _initialize_nmf
+from sklearn.decomposition.nmf import MultiplicativeNMF, ProjectedGradientNMF
 from sklearn.datasets.samples_generator import make_low_rank_matrix
-from sklearn.externals.six.moves import xrange
-
-
-def alt_nnmf(V, r, max_iter=1000, tol=1e-3, R=None):
-    '''
-    A, S = nnmf(X, r, tol=1e-3, R=None)
-
-    Implement Lee & Seung's algorithm
-
-    Parameters
-    ----------
-    V : 2-ndarray, [n_samples, n_features]
-        input matrix
-    r : integer
-        number of latent features
-    max_iter : integer, optional
-        maximum number of iterations (default: 1000)
-    tol : double
-        tolerance threshold for early exit (when the update factor is within
-        tol of 1., the function exits)
-    R : integer, optional
-        random seed
-
-    Returns
-    -------
-    A : 2-ndarray, [n_samples, r]
-        Component part of the factorization
-
-    S : 2-ndarray, [r, n_features]
-        Data part of the factorization
-    Reference
-    ---------
-    "Algorithms for Non-negative Matrix Factorization"
-    by Daniel D Lee, Sebastian H Seung
-    (available at http://citeseer.ist.psu.edu/lee01algorithms.html)
-    '''
-    # Nomenclature in the function follows Lee & Seung
-    eps = 1e-5
-    n, m = V.shape
-    if R == "svd":
-        W, H = _initialize_nmf(V, r)
-    elif R is None:
-        R = np.random.mtrand._rand
-        W = np.abs(R.standard_normal((n, r)))
-        H = np.abs(R.standard_normal((r, m)))
-
-    for i in xrange(max_iter):
-        updateH = np.dot(W.T, V) / (np.dot(np.dot(W.T, W), H) + eps)
-        H *= updateH
-        updateW = np.dot(V, H.T) / (np.dot(W, np.dot(H, H.T)) + eps)
-        W *= updateW
-        if i % 10 == 0:
-            max_update = max(updateW.max(), updateH.max())
-            if abs(1. - max_update) < tol:
-                break
-    return W, H
-
-
-def report(error, time):
-    print("Frobenius loss: %.5f" % error)
-    print("Took: %.2fs" % time)
-    print()
 
 
 def benchmark(samples_range, features_range, rank=50, tolerance=1e-5):
-    it = 0
     timeset = defaultdict(lambda: [])
     err = defaultdict(lambda: [])
 
-    max_it = len(samples_range) * len(features_range)
+    def record(model, name, time):
+        loss = model.reconstruction_err_
+
+        timeset[name].append(time)
+        err[name].append(loss)
+
+        print("Frobenius loss: %.5f" % loss)
+        print("Elapsed time: %.2fs" % time)
+        print()
+
     for n_samples in samples_range:
         for n_features in features_range:
             print("%2d samples, %2d features" % (n_samples, n_features))
             print('=======================')
             X = np.abs(make_low_rank_matrix(n_samples, n_features,
-                       effective_rank=rank,  tail_strength=0.2))
+                                            effective_rank=rank,
+                                            tail_strength=0.2))
 
-            gc.collect()
             print("benchmarking nndsvd-nmf: ")
             tstart = time()
-            m = NMF(n_components=30, tol=tolerance, init='nndsvd').fit(X)
-            tend = time() - tstart
-            timeset['nndsvd-nmf'].append(tend)
-            err['nndsvd-nmf'].append(m.reconstruction_err_)
-            report(m.reconstruction_err_, tend)
+            m = ProjectedGradientNMF(n_components=30, tol=tolerance,
+                                     init='nndsvd')
+            m.fit(X)
+            record(m, 'nndsvd-nmf', time() - tstart)
+            del m
 
-            gc.collect()
             print("benchmarking nndsvda-nmf: ")
             tstart = time()
-            m = NMF(n_components=30, init='nndsvda',
-                    tol=tolerance).fit(X)
-            tend = time() - tstart
-            timeset['nndsvda-nmf'].append(tend)
-            err['nndsvda-nmf'].append(m.reconstruction_err_)
-            report(m.reconstruction_err_, tend)
+            m = ProjectedGradientNMF(n_components=30, tol=tolerance,
+                                     init='nndsvda')
+            m.fit(X)
+            record(m, 'nndsvda-nmf', time() - tstart)
+            del m
 
-            gc.collect()
             print("benchmarking nndsvdar-nmf: ")
             tstart = time()
-            m = NMF(n_components=30, init='nndsvdar',
-                    tol=tolerance).fit(X)
-            tend = time() - tstart
-            timeset['nndsvdar-nmf'].append(tend)
-            err['nndsvdar-nmf'].append(m.reconstruction_err_)
-            report(m.reconstruction_err_, tend)
+            m = ProjectedGradientNMF(n_components=30, tol=tolerance,
+                                     init='nndsvdar')
+            m.fit(X)
+            record(m, 'nndsvdar-nmf', time() - tstart)
+            del m
 
-            gc.collect()
             print("benchmarking random-nmf")
             tstart = time()
-            m = NMF(n_components=30, init=None, max_iter=1000,
-                    tol=tolerance).fit(X)
-            tend = time() - tstart
-            timeset['random-nmf'].append(tend)
-            err['random-nmf'].append(m.reconstruction_err_)
-            report(m.reconstruction_err_, tend)
+            m = ProjectedGradientNMF(n_components=30, tol=tolerance,
+                                     init="random", random_state=31,
+                                     max_iter=1000)
+            m.fit(X)
+            record(m, 'random-nmf', time() - tstart)
+            del m
 
-            gc.collect()
             print("benchmarking alt-random-nmf")
             tstart = time()
-            W, H = alt_nnmf(X, r=30, R=None, tol=tolerance)
-            tend = time() - tstart
-            timeset['alt-random-nmf'].append(tend)
-            err['alt-random-nmf'].append(np.linalg.norm(X - np.dot(W, H)))
-            report(norm(X - np.dot(W, H)), tend)
+            m = MultiplicativeNMF(n_components=30, tol=tolerance,
+                                  init="random")
+            m.fit(X)
+            record(m, 'alt-random-nmf', time() - tstart)
+            del m
 
     return timeset, err
 
@@ -151,7 +89,7 @@ if __name__ == '__main__':
     timeset, err = benchmark(samples_range, features_range)
 
     for i, results in enumerate((timeset, err)):
-        fig = plt.figure('scikit-learn Non-Negative Matrix Factorization benchmark results')
+        fig = plt.figure('Non-negative matrix factorization benchmark')
         ax = fig.gca(projection='3d')
         for c, (label, timings) in zip('rbgcm', sorted(results.iteritems())):
             X, Y = np.meshgrid(samples_range, features_range)

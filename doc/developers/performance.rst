@@ -131,7 +131,7 @@ Suppose we want to profile the Non Negative Matrix Factorization module
 of the scikit. Let us setup a new IPython session and load the digits
 dataset and as in the :ref:`example_plot_digits_classification.py` example::
 
-  In [1]: from sklearn.decomposition import NMF
+  In [1]: from sklearn.decomposition import ProjectedGradientNMF as PGNMF
 
   In [2]: from sklearn.datasets import load_digits
 
@@ -142,13 +142,13 @@ optimization iterations, it is important to measure the total execution
 time of the function we want to optimize without any kind of profiler
 overhead and save it somewhere for later reference::
 
-  In [4]: %timeit NMF(n_components=16, tol=1e-2).fit(X)
+  In [4]: %timeit PGNMF(n_components=16, tol=1e-2).fit(X)
   1 loops, best of 3: 1.7 s per loop
 
 To have have a look at the overall performance profile using the ``%prun``
 magic command::
 
-  In [5]: %prun -l nmf.py NMF(n_components=16, tol=1e-2).fit(X)
+  In [5]: %prun -l nmf.py PGNMF(n_components=16, tol=1e-2).fit(X)
            14496 function calls in 1.682 CPU seconds
 
      Ordered by: internal time
@@ -177,7 +177,7 @@ of the nmf Python module it-self ignoring anything else.
 Here is the beginning of the output of the same command without the ``-l nmf.py``
 filter::
 
-  In [5] %prun NMF(n_components=16, tol=1e-2).fit(X)
+  In [5] %prun PGNMF(n_components=16, tol=1e-2).fit(X)
            16159 function calls in 1.840 CPU seconds
 
      Ordered by: internal time
@@ -256,11 +256,11 @@ Now restart IPython and let us use this new toy::
 
   In [1]: from sklearn.datasets import load_digits
 
-  In [2]: from sklearn.decomposition.nmf import _nls_subproblem, NMF
+  In [2]: from sklearn.decomposition.nmf import _nls_subproblem, PGNMF
 
   In [3]: X = load_digits().data
 
-  In [4]: %lprun -f _nls_subproblem NMF(n_components=16, tol=1e-2).fit(X)
+  In [4]: %lprun -f _nls_subproblem PGNMF(n_components=16, tol=1e-2).fit(X)
   Timer unit: 1e-06 s
 
   File: sklearn/decomposition/nmf.py
