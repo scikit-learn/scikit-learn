@@ -9,10 +9,12 @@ try:
         csgraph_to_dense, csgraph_from_dense
 except ImportError:
     # Oldish versions of scipy don't have that
-    raise SkipTest("Old version of scipy, doesn't have csgraph.")
+    csgraph_from_dense = None
 
 
 def test_graph_breadth_first():
+    if csgraph_from_dense is None:
+        raise SkipTest("Old version of scipy, doesn't have csgraph.")
     csgraph = np.array([[0, 1, 2, 0, 0],
                         [1, 0, 0, 0, 3],
                         [2, 0, 0, 7, 0],
@@ -33,6 +35,8 @@ def test_graph_breadth_first():
 
 
 def test_graph_depth_first():
+    if csgraph_from_dense is None:
+        raise SkipTest("Old version of scipy, doesn't have csgraph.")
     csgraph = np.array([[0, 1, 2, 0, 0],
                         [1, 0, 0, 0, 3],
                         [2, 0, 0, 7, 0],
