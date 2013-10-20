@@ -310,9 +310,9 @@ def test_fast_dot():
     B = rng.random_sample([2, 10])
 
     try:
-        linalg.get_blas('gemm')
+        linalg.get_blas_funcs('gemm')
         has_blas = True
-    except:
+    except ValueError:
         has_blas = False
 
     if has_blas:
@@ -322,27 +322,26 @@ def test_fast_dot():
             # maltyped data
             for dt1, dt2 in [['f8', 'f4'], ['i4', 'i4']]:
                 fast_dot(A.astype(dt1), B.astype(dt2).T)
-                assert_true(type(w.pop(-1)) == NonBLASDotWarning)
+                assert_true(isinstance(w.pop(-1).message, NonBLASDotWarning))
             # malformed data
             # ndim == 0
             E = np.empty(0)
             fast_dot(E, E)
-            assert_true(type(w.pop(-1)) == NonBLASDotWarning)
+            assert_true(isinstance(w.pop(-1).message, NonBLASDotWarning))
             ## ndim == 1
             fast_dot(A, A[0])
-            assert_true(type(w.pop(-1)) == NonBLASDotWarning)
+            assert_true(isinstance(w.pop(-1).message, NonBLASDotWarning))
             ## ndim > 2
             fast_dot(A.T, np.array([A, A]))
-            assert_true(type(w.pop(-1)) == NonBLASDotWarning)
+            assert_true(isinstance(w.pop(-1).message, NonBLASDotWarning))
             ## min(shape) == 1
-            fast_dot(A, A[0, :][None, :])
-            assert_true(type(w.pop(-1)) == NonBLASDotWarning)
+            assert_raises(ValueError, fast_dot, A, A[0, :][None, :])
         # test for matrix mismatch error
         msg = ('Invalid array shapes: A.shape[%d] should be the same as '
                'B.shape[0]. Got A.shape=%r B.shape=%r' % (A.ndim - 1,
                                                           A.shape,
                                                           A.shape))
-        assert_raise_message(msg, fast_dot, A, A)
+        assert_raise_message(ValueError, msg, fast_dot, A, A)
 
     # test cov-like use case + dtypes
     my_assert = assert_array_almost_equal
