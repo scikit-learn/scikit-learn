@@ -750,7 +750,7 @@ def test_regressors_int():
     X, _ = _boston_subset()
     X = X[:50]
     rnd = np.random.RandomState(0)
-    y = rnd.randint(2, size=X.shape[0])
+    y = rnd.randint(3, size=X.shape[0])
     for name, Regressor in regressors:
         if name in dont_test or name in ('CCA'):
             continue
@@ -806,7 +806,10 @@ def test_regressors_train():
             regressor.fit(X, y_)
             regressor.predict(X)
 
-            if name not in ('PLSCanonical', 'CCA'):  # TODO: find out why
+              # TODO: find out why PLS and CCA fail. RANSAC is random
+              # and furthermore assumes the presence of outliers, hence
+              # skipped
+            if name not in ('PLSCanonical', 'CCA', 'RANSACRegressor'):
                 assert_greater(regressor.score(X, y_), 0.5)
         except Exception as e:
             print(regressor)
