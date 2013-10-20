@@ -31,8 +31,8 @@ def test_ransac_inliers_outliers():
     ransac_estimator.fit(X, y)
 
     # Ground truth / reference inlier mask
-    ref_inlier_mask = np.ones_like(ransac_estimator.inlier_mask_,
-                                   dtype=np.bool_)
+    ref_inlier_mask = np.ones_like(ransac_estimator.inlier_mask_
+        ).astype(np.bool_)
     ref_inlier_mask[outliers] = False
 
     assert_equal(ransac_estimator.inlier_mask_, ref_inlier_mask)
@@ -144,8 +144,8 @@ def test_ransac_sparse_coo():
                                        residual_threshold=5, random_state=0)
     ransac_estimator.fit(X_sparse, y)
 
-    ref_inlier_mask = np.ones_like(ransac_estimator.inlier_mask_,
-                                   dtype=np.bool_)
+    ref_inlier_mask = np.ones_like(ransac_estimator.inlier_mask_
+        ).astype(np.bool_)
     ref_inlier_mask[outliers] = False
 
     assert_equal(ransac_estimator.inlier_mask_, ref_inlier_mask)
@@ -159,8 +159,8 @@ def test_ransac_sparse_csr():
                                        residual_threshold=5, random_state=0)
     ransac_estimator.fit(X_sparse, y)
 
-    ref_inlier_mask = np.ones_like(ransac_estimator.inlier_mask_,
-                                   dtype=np.bool_)
+    ref_inlier_mask = np.ones_like(ransac_estimator.inlier_mask_
+        ).astype(np.bool_)
     ref_inlier_mask[outliers] = False
 
     assert_equal(ransac_estimator.inlier_mask_, ref_inlier_mask)
@@ -174,8 +174,8 @@ def test_ransac_sparse_csc():
                                        residual_threshold=5, random_state=0)
     ransac_estimator.fit(X_sparse, y)
 
-    ref_inlier_mask = np.ones_like(ransac_estimator.inlier_mask_,
-                                   dtype=np.bool_)
+    ref_inlier_mask = np.ones_like(ransac_estimator.inlier_mask_
+        ).astype(np.bool_)
     ref_inlier_mask[outliers] = False
 
     assert_equal(ransac_estimator.inlier_mask_, ref_inlier_mask)
@@ -240,8 +240,8 @@ def test_ransac_multi_dimensional_targets():
     ransac_estimator.fit(X, yyy)
 
     # Ground truth / reference inlier mask
-    ref_inlier_mask = np.ones_like(ransac_estimator.inlier_mask_,
-                                   dtype=np.bool_)
+    ref_inlier_mask = np.ones_like(ransac_estimator.inlier_mask_
+        ).astype(np.bool_)
     ref_inlier_mask[outliers] = False
 
     assert_equal(ransac_estimator.inlier_mask_, ref_inlier_mask)
@@ -286,8 +286,8 @@ def test_ransac_default_residual_threshold():
     ransac_estimator.fit(X, y)
 
     # Ground truth / reference inlier mask
-    ref_inlier_mask = np.ones_like(ransac_estimator.inlier_mask_,
-                                   dtype=np.bool_)
+    ref_inlier_mask = np.ones_like(ransac_estimator.inlier_mask_
+        ).astype(np.bool_)
     ref_inlier_mask[outliers] = False
 
     assert_equal(ransac_estimator.inlier_mask_, ref_inlier_mask)
