@@ -50,7 +50,7 @@ print("done in %0.3fs." % (time() - t0))
 # Fit the NMF model
 print("Fitting the NMF model with n_samples=%d and n_features=%d..."
       % (n_samples, n_features))
-nmf = NMF(n_components=n_topics).fit(tfidf)
+nmf = NMF(n_components=n_topics, random_state=1).fit(tfidf)
 print("done in %0.3fs." % (time() - t0))
 
 feature_names = vectorizer.get_feature_names()
