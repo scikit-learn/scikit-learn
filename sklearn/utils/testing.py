@@ -297,9 +297,9 @@ def all_estimators(include_meta_estimators=False, include_other=False,
     path = sklearn.__path__
     for importer, modname, ispkg in pkgutil.walk_packages(
             path=path, prefix='sklearn.', onerror=lambda x: None):
-        module = __import__(modname, fromlist="dummy")
         if ".tests." in modname:
             continue
+        module = __import__(modname, fromlist="dummy")
         classes = inspect.getmembers(module, inspect.isclass)
         all_classes.extend(classes)
 
