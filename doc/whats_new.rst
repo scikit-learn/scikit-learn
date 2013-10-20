@@ -53,8 +53,8 @@ Changelog
    - Add multi-output support to :class:`gaussian_process.GaussianProcess`
      by John Novak.
 
-   - Support for sparse matrices and sparse distance matrices (i.e. n_samples by
-     n_samples) for NearestNeighbor with algorithm='brute' by `Robert Layton`_.
+   - Support for distance matrices (i.e. n_samples by n_samples) for
+     NearestNeighbor with algorithm='brute' by `Robert Layton`_.
 
 API changes summary
 -------------------
