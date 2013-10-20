@@ -211,7 +211,7 @@ def test_dispatch_multiprocessing():
         lazily.
     """
     if multiprocessing is None:
-        raise nose.SkipTest()
+        raise nose.SkipTest("No multiprocessing available.")
     manager = multiprocessing.Manager()
     queue = manager.list()
 
@@ -253,7 +253,7 @@ def test_multiple_spawning():
     # subprocesses will raise an error, to avoid infinite loops on
     # systems that do not support fork
     if not int(os.environ.get('JOBLIB_MULTIPROCESSING', 1)):
-        raise nose.SkipTest()
+        raise nose.SkipTest("No multiprocessing available.")
     nose.tools.assert_raises(ImportError, Parallel(n_jobs=2),
                     [delayed(_reload_joblib)() for i in range(10)])
 

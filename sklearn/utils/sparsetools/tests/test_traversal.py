@@ -9,7 +9,7 @@ try:
         csgraph_to_dense, csgraph_from_dense
 except ImportError:
     # Oldish versions of scipy don't have that
-    raise SkipTest
+    raise SkipTest("Old version of scipy, doesn't have csgraph")
 
 
 def test_graph_breadth_first():
