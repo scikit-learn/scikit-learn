@@ -20,7 +20,7 @@ from scipy.optimize import nnls
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import atleast2d_or_csr, check_random_state, check_arrays
-from ..utils.extmath import randomized_svd, safe_sparse_dot
+from ..utils.extmath import norm, randomized_svd, safe_sparse_dot
 
 
 def safe_vstack(Xs):
@@ -28,15 +28,6 @@ def safe_vstack(Xs):
         return sp.vstack(Xs)
     else:
         return np.vstack(Xs)
-
-
-def norm(x):
-    """Dot product-based Euclidean norm implementation
-
-    See: http://fseoane.net/blog/2011/computing-the-vector-norm/
-    """
-    x = x.ravel()
-    return np.sqrt(np.dot(x, x))
 
 
 def trace_dot(X, Y):
