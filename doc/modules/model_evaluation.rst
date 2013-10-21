@@ -937,9 +937,12 @@ function::
     0.957...
     >>> y_true = [[0.5, 1], [-1, 1], [7, -6]]
     >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
-    >>> explained_variance_score(y_true, y_pred,
-    ... output_weights=None)  # doctest: +ELLIPSIS
+    >>> explained_variance_score(y_true, y_pred, output_weights=None)
+    ... # doctest: +ELLIPSIS
     array([ 0.967...,  1.        ])
+    >>> explained_variance_score(y_true, y_pred, output_weights=[0.3, 0.7])
+    ... # doctest: +ELLIPSIS
+    0.990...
 
 Mean absolute error
 ...................
@@ -976,7 +979,9 @@ Here a small example of usage of the :func:`mean_absolute_error` function::
   0.75
   >>> mean_absolute_error(y_true, y_pred, output_weights=None)
   array([ 0.5,  1. ])
-
+  >>> mean_absolute_error(y_true, y_pred, output_weights=[0.3, 0.7])
+  ... # doctest: +ELLIPSIS
+  0.849...
 
 Mean squared error
 ...................
@@ -1012,9 +1017,12 @@ function::
   >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
   >>> mean_squared_error(y_true, y_pred)  # doctest: +ELLIPSIS
   0.7083...
-  >>> mean_squared_error(y_true, y_pred,
-  ... output_weights=None)  # doctest: +ELLIPSIS
+  >>> mean_squared_error(y_true, y_pred, output_weights=None)
+  ... # doctest: +ELLIPSIS
   array([ 0.416...,  1.        ])
+  >>> mean_squared_error(y_true, y_pred, output_weights=[0.3, 0.7])
+  ... # doctest: +ELLIPSIS
+  0.824...
 
 .. topic:: Examples:
 
@@ -1057,9 +1065,12 @@ Here a small example of usage of the :func:`r2_score` function::
   >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
   >>> r2_score(y_true, y_pred)  # doctest: +ELLIPSIS
   0.936...
-  >>> r2_score(y_true, y_pred,
-  ... output_weights=None)  # doctest: +ELLIPSIS
+  >>> r2_score(y_true, y_pred, output_weights=None)
+  ... # doctest: +ELLIPSIS
   array([ 0.965...,  0.908...])
+  >>> r2_score(y_true, y_pred, output_weights=[0.3, 0.7])
+  ... # doctest: +ELLIPSIS
+  0.925...
 
 .. topic:: Example:
 

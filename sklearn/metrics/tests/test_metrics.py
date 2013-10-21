@@ -2009,6 +2009,7 @@ def test_regression_multioutput_array():
     mae = mean_absolute_error(y_true, y_pred, output_weights=None)
     r =  r2_score(y_true, y_pred, output_weights=None)
     evs =  explained_variance_score(y_true, y_pred, output_weights=None)
+
     assert_array_equal(mse, np.array([0.125, 0.5625]))
     assert_array_equal(mae, np.array([0.25, 0.625]))
     assert_array_almost_equal(r, np.array([0.95, 0.93]), decimal=2)
@@ -2042,3 +2043,18 @@ def test_regression_multioutput_array():
     evs =  explained_variance_score(y_true, y_pred, output_weights=None)
     assert_array_equal(evs, np.array([1., -3.]))
     assert_equal(np.mean(evs), explained_variance_score(y_true, y_pred))
+
+
+def test_regression_custom_weights():
+    y_true = [[1, 2], [2.5, -1], [4.5, 3], [5, 7]]
+    y_pred = [[1, 1], [2, -1], [5, 4], [5, 6.5]]
+
+    msew = mean_squared_error(y_true, y_pred, output_weights=[0.4, 0.6])
+    maew = mean_absolute_error(y_true, y_pred, output_weights=[0.4, 0.6])
+    rw =  r2_score(y_true, y_pred, output_weights=[0.4, 0.6])
+    evsw =  explained_variance_score(y_true, y_pred, output_weights=[0.4, 0.6])
+
+    assert_almost_equal(msew, 0.39, decimal=2)
+    assert_almost_equal(maew, 0.475, decimal=3)
+    assert_almost_equal(rw, 0.94, decimal=2)
+    assert_almost_equal(evsw, 0.94, decimal=2)

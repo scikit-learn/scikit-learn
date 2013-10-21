@@ -32,6 +32,7 @@ from ..preprocessing import LabelEncoder
 from ..utils import check_arrays
 from ..utils import deprecated
 from ..utils import column_or_1d
+from ..utils import safe_asarray
 from ..utils.multiclass import unique_labels
 from ..utils.multiclass import type_of_target
 from ..utils.fixes import bincount
@@ -1955,18 +1956,29 @@ def mean_absolute_error(y_true, y_pred, output_weights='uniform'):
     y_pred : array-like of shape = [n_samples] or [n_samples, n_outputs]
         Estimated target values.
 
-    output_weights : string, ['uniform' (default), None]
-        Assigns weight to each dimension of the given input.
-        If the option given is uniform, then a weight of unity is assigned
-        to each dimension during averaging. If the option given is None,
-        then no averaging is done. This parameter is useful only for multi-output
+    output_weights : string, ['uniform' (default), None] or
+                     array-like of shape = [n_outputs]
+
+        This parameter is useful only for multi-output
         tasks where both y_true and y_pred have shape [n_samples, n_outputs]
+
+        ``'uniform'``:
+            A weight of unity is assigned to each dimension while averaging.
+
+        ``None``:
+           No averaging is done.
+
+        Apart from this custom_weights of shape [n_outputs] can be given that
+        assigns user-defined weight to each dimension of the given input.
 
    Returns
     -------
-    loss : float or a numpy array of shape[n_outputs]
-        If output_weights is 'uniform', a positive floating point value (the best value is 0.0).
-        Else, a numpy array of positive floating points is returned.
+    loss : float or a numpy array of shape [n_outputs]
+        If output_weights is None, it returns a numpy array of floats corresponding
+        to the R^2 score of each dimension.
+
+        If output_weights is 'uniform' or user-defined it returns the corresponding
+        weighted macro-averaged R^2 score.
 
     Examples
     --------
@@ -1981,17 +1993,30 @@ def mean_absolute_error(y_true, y_pred, output_weights='uniform'):
     0.75
     >>> mean_absolute_error(y_true, y_pred, output_weights=None)
     array([ 0.5,  1. ])
+    >>> mean_absolute_error(y_true, y_pred, output_weights=[0.3, 0.7])
+    ... # doctest: +ELLIPSIS
+    0.849...
     """
     output_weights_options = (None, 'uniform')
-    if output_weights not in output_weights_options:
-        raise ValueError('output_weights has to be one of ' +
-                         str(output_weights_options))
-    if output_weights == 'uniform':
-        axis = None
-    else:
-        axis = 0
     y_type, y_true, y_pred = _check_reg_targets(y_true, y_pred)
-    return np.mean(np.abs(y_pred - y_true), axis=axis)
+    output_shape = y_true.shape[1]
+    if output_weights not in output_weights_options:
+        # Check for custom weights.
+        output_weights = safe_asarray(output_weights)
+        if output_shape == 1:
+            raise ValueError("Custom weights are useful only in "
+                "multi output cases.")
+        elif output_shape != output_weights.shape[0]:
+            raise ValueError("Custom weights must have shape "
+                "(1, %d)." % output_shape)
+
+    y_type, y_true, y_pred = _check_reg_targets(y_true, y_pred)
+    mae_array = np.mean(np.abs(y_pred - y_true), axis=0)
+    if output_weights == 'uniform':
+        return np.mean(mae_array)
+    elif output_weights is None:
+        return mae_array
+    return np.average(mae_array, weights=output_weights)
 
 
 def mean_squared_error(y_true, y_pred, output_weights='uniform'):
@@ -2005,18 +2030,29 @@ def mean_squared_error(y_true, y_pred, output_weights='uniform'):
     y_pred : array-like of shape = [n_samples] or [n_samples, n_outputs]
         Estimated target values.
 
-    output_weights : string, ['uniform' (default), None]
-        Assigns weight to each dimension of the given input.
-        If the option given is uniform, then a weight of unity is assigned
-        to each dimension during averaging. If the option given is None,
-        then no averaging is done. This parameter is useful only for multi-output
+    output_weights : string, ['uniform' (default), None] or
+                     array-like of shape = [n_outputs]
+
+        This parameter is useful only for multi-output
         tasks where both y_true and y_pred have shape [n_samples, n_outputs]
+
+        ``'uniform'``:
+            A weight of unity is assigned to each dimension while averaging.
+
+        ``None``:
+           No averaging is done.
+
+        Apart from this custom_weights of shape [n_outputs] can be given that
+        assigns user-defined weight to each dimension of the given input.
 
     Returns
     -------
     loss : float or a numpy array of shape [n_outputs]
-        If output_weights is 'uniform', a positive floating point value (the best value is 0.0).
-        Else, a numpy array of positive floating points is returned.
+        If output_weights is None, it returns a numpy array of floats corresponding
+        to the R^2 score of each dimension.
+
+        If output_weights is 'uniform' or user-defined it returns the corresponding
+        weighted macro-averaged R^2 score.
 
     Examples
     --------
@@ -2029,20 +2065,33 @@ def mean_squared_error(y_true, y_pred, output_weights='uniform'):
     >>> y_pred = [[0, 2],[-1, 2],[8, -5]]
     >>> mean_squared_error(y_true, y_pred)  # doctest: +ELLIPSIS
     0.708...
-    >>> mean_squared_error(y_true, y_pred,
-    ... output_weights=None)  # doctest: +ELLIPSIS
+    >>> mean_squared_error(y_true, y_pred, output_weights=None)
+    ... # doctest: +ELLIPSIS
     array([ 0.416...,  1.        ])
+    >>> mean_squared_error(y_true, y_pred, output_weights=[0.3, 0.7])
+    ... # doctest: +ELLIPSIS
+    0.824...
     """
     output_weights_options = (None, 'uniform')
-    if output_weights not in output_weights_options:
-        raise ValueError('output_weights has to be one of ' +
-                         str(output_weights_options))
-    if output_weights == 'uniform':
-        axis = None
-    else:
-        axis = 0
     y_type, y_true, y_pred = _check_reg_targets(y_true, y_pred)
-    return np.mean((y_pred - y_true) ** 2, axis=axis)
+    output_shape = y_true.shape[1]
+    if output_weights not in output_weights_options:
+        # Check for custom weights.
+        output_weights = safe_asarray(output_weights)
+        if output_shape == 1:
+            raise ValueError("Custom weights are useful only in "
+                "multi output cases.")
+        elif output_shape != output_weights.shape[0]:
+            raise ValueError("Custom weights must have shape "
+                "(1, %d)." % output_shape)
+
+    mse_array = np.mean((y_pred - y_true)**2, axis=0)
+    if output_weights == 'uniform':
+        return np.mean(mse_array)
+    elif output_weights is None:
+        return mse_array
+    else:
+        return np.average(mse_array, weights=output_weights)
 
 
 ###############################################################################
@@ -2061,20 +2110,29 @@ def explained_variance_score(y_true, y_pred, output_weights='uniform'):
     y_pred : array-like
         Estimated target values.
 
-    output_weights : string, ['uniform' (default), None]
-        Assigns weight to each dimension of the given input.
-        If the option given is uniform, then a weight of unity is assigned
-        to each dimension while averaging. If the option given is None, then
-        no averaging is done. This parameter is useful only for multi-output
+    output_weights : string, ['uniform' (default), None] or
+                     array-like of shape = [n_outputs]
+
+        This parameter is useful only for multi-output
         tasks where both y_true and y_pred have shape [n_samples, n_outputs]
+
+        ``'uniform'``:
+            A weight of unity is assigned to each dimension while averaging.
+
+        ``None``:
+           No averaging is done.
+
+        Apart from this custom_weights of shape [n_outputs] can be given that
+        assigns user-defined weight to each dimension of the given input.
 
     Returns
     -------
     score : float or a numpy array of shape [n_outputs]
-        If output_weights is 'uniform', it returns the macro-averaged explained 
-        variance score.
         If output_weights is None, it returns a numpy array of floats corresponding
-        to the explained variance score of each dimension.
+        to the R^2 score of each dimension.
+
+        If output_weights is 'uniform' or user-defined it returns the corresponding
+        weighted macro-averaged R^2 score.
 
     Notes
     -----
@@ -2089,15 +2147,25 @@ def explained_variance_score(y_true, y_pred, output_weights='uniform'):
     0.957...
     >>> y_true = [[0.5, 1], [-1, 1], [7, -6]]
     >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
-    >>> explained_variance_score(y_true, y_pred,
-    ... output_weights=None)  # doctest: +ELLIPSIS
+    >>> explained_variance_score(y_true, y_pred, output_weights=None)
+    ... # doctest: +ELLIPSIS
     array([ 0.967...,  1.        ])
+    >>> explained_variance_score(y_true, y_pred, output_weights=[0.3, 0.7])
+    ... # doctest: +ELLIPSIS
+    0.990...
     """
     y_type, y_true, y_pred = _check_reg_targets(y_true, y_pred)
+    output_shape = y_true.shape[1]
     output_weights_options = (None, 'uniform')
     if output_weights not in output_weights_options:
-        raise ValueError('output_weights has to be one of ' +
-                         str(output_weights_options))
+        # Check for custom weights.
+        output_weights = safe_asarray(output_weights)
+        if output_shape == 1:
+            raise ValueError("Custom weights are useful only in "
+                "multi output cases.")
+        elif output_shape != output_weights.shape[0]:
+            raise ValueError("Custom weights must have shape "
+                "(1, %d)." % output_shape)
 
     numerator = np.var(y_true - y_pred, axis=0)
     denominator = np.var(y_true, axis=0)
@@ -2118,7 +2186,9 @@ def explained_variance_score(y_true, y_pred, output_weights='uniform'):
         np.logical_not(nonzero_denominator))] = 0.0
     if output_weights == 'uniform':
         return np.mean(explained_variance)
-    return explained_variance
+    elif output_weights is None:
+        return explained_variance
+    return np.average(explained_variance, weights=output_weights)
 
 def r2_score(y_true, y_pred, output_weights='uniform'):
     """R^2 (coefficient of determination) regression score function.
@@ -2133,19 +2203,30 @@ def r2_score(y_true, y_pred, output_weights='uniform'):
     y_pred : array-like of shape = [n_samples] or [n_samples, n_outputs]
         Estimated target values.
 
-    output_weights : string, ['uniform' (default), None]
-        Assigns weight to each dimension of the given input.
-        If the option given is uniform, then a weight of unity is assigned
-        to each dimension while averaging. If the option given is None, then
-        no averaging is done. This parameter is useful only for multi-output
+    output_weights : string, ['uniform' (default), None] or
+                     array-like of shape = [n_outputs]
+
+        This parameter is useful only for multi-output
         tasks where both y_true and y_pred have shape [n_samples, n_outputs]
+
+        ``'uniform'``:
+            A weight of unity is assigned to each dimension while averaging.
+
+        ``None``:
+           No averaging is done.
+
+        Apart from this custom_weights of shape [n_outputs] can be given that
+        assigns user-defined weight to each dimension of the given input.
+
 
     Returns
     -------
     z : float or a numpy array of shape [n_outputs]
-        If output_weights is 'uniform', it returns the macro-averaged R^2 score,
         If output_weights is None, it returns a numpy array of floats corresponding
         to the R^2 score of each dimension.
+
+        If output_weights is 'uniform' or user-defined it returns the corresponding
+        weighted macro-averaged R^2 score.
 
     Notes
     -----
@@ -2170,26 +2251,36 @@ def r2_score(y_true, y_pred, output_weights='uniform'):
     >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
     >>> r2_score(y_true, y_pred)  # doctest: +ELLIPSIS
     0.936...
-    >>> r2_score(y_true, y_pred,
-    ... output_weights=None)  # doctest: +ELLIPSIS
+    >>> r2_score(y_true, y_pred, output_weights=None)
+    ... # doctest: +ELLIPSIS
     array([ 0.965...,  0.908...])
+    >>> r2_score(y_true, y_pred, output_weights=[0.3, 0.7])
+    ... # doctest: +ELLIPSIS
+    0.925...
     """
     y_type, y_true, y_pred = _check_reg_targets(y_true, y_pred)
+    output_shape = y_true.shape[1]
     if len(y_true) == 1:
         raise ValueError("r2_score can only be computed given more than one"
                          " sample.")
 
     output_weights_options = (None, 'uniform')
     if output_weights not in output_weights_options:
-        raise ValueError('output_weights has to be one of ' +
-                         str(output_weights_options))
+        # Check for custom weights.
+        output_weights = safe_asarray(output_weights)
+        if output_shape == 1:
+            raise ValueError("Custom weights are useful only in "
+                "multi output cases.")
+        elif output_shape != output_weights.shape[0]:
+            raise ValueError("Custom weights must have shape "
+                "(1, %d)." % output_shape)
 
     numerator = ((y_true - y_pred) ** 2).sum(dtype=np.float64, axis=0)
     denominator = ((y_true - y_true.mean(axis=0)) ** 2).sum(dtype=np.float64, axis=0)
 
     # Set an array of ones for the condition that both numerator
     # and denominator are zero.
-    r2 = np.ones(y_true.shape[1])
+    r2 = np.ones(output_shape)
     nonzero_denominator = (denominator != 0.0)
     nonzero_numerator = (numerator != 0.0)
     valid_score = np.logical_and(nonzero_numerator, nonzero_denominator)
@@ -2201,4 +2292,6 @@ def r2_score(y_true, y_pred, output_weights='uniform'):
         nonzero_numerator)] = 0.0
     if output_weights == 'uniform':
         return np.mean(r2)
-    return r2
+    elif output_weights is None:
+        return r2
+    return np.average(r2, weights=output_weights)
