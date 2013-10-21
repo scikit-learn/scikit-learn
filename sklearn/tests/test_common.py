@@ -58,6 +58,10 @@ def test_all_estimators():
     estimators = all_estimators(include_meta_estimators=True)
     classifier = LDA()
 
+    # Meta sanity-check to make sure that the estimator introspection runs
+    # properly
+    assert_greater(len(estimators), 0)
+
     for name, Estimator in estimators:
         # some can just not be sensibly default constructed
         if name in dont_test:

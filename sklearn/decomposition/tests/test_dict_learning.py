@@ -133,7 +133,7 @@ def test_dict_learning_online_initialization():
 
 def test_dict_learning_online_partial_fit():
     # this test was not actually passing before!
-    raise SkipTest
+    raise SkipTest("Online dict-learning test fails.")
     n_components = 12
     rng = np.random.RandomState(0)
     V = rng.randn(n_components, n_features)  # random init
