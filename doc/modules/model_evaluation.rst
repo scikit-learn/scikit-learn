@@ -923,9 +923,9 @@ The best possible score is 1.0, lower values are worse.
 The :func:`explained_variance_score` function has an `output_weights` keyword
 with two possible values `None` and 'uniform'. If the value provided is `None`,
 then the explained variance score is calculated for each dimension separately
-and a numpy array is returned. If the value given is `uniform`, then a weight
-of unity is assigned to each dimension during macro-averaging, and a float
-is returned.
+and a numpy array is returned. If the value given is `uniform`, the
+explained variance error is averaged over each dimension with a weight of
+`1 / n_outputs`.
 
 Here a small example of usage of the :func:`explained_variance_score`
 function::
@@ -964,7 +964,8 @@ The :func:`mean_absolute_error` function has an `output_weights` keyword
 with two possible values `None` and 'uniform'. If the value provided is
 `None`, then the mean absolute error is calculated for each dimension
 separately and a numpy array is returned. If the value given is `uniform`, the
-mean absolute error is averaged over each dimension with a weight of `1 / n_outputs`.
+mean absolute error is averaged over each dimension with a weight of
+`1 / n_outputs`.
 
 Here a small example of usage of the :func:`mean_absolute_error` function::
 
@@ -1003,7 +1004,8 @@ The :func:`mean_squared_error` function has an `output_weights` keyword
 with two possible values `None` and 'uniform'. If the value provided is
 `None`, then the mean squared error is calculated for each dimension
 separately and a numpy array is returned. If the value given is `uniform`, the
-mean squared error is averaged over each dimension with a weight of `1 / n_outputs`.
+mean squared error is averaged over each dimension with a weight of
+`1 / n_outputs`.
 
 Here a small example of usage of the :func:`mean_squared_error`
 function::
@@ -1050,9 +1052,9 @@ where :math:`\bar{y} =  \frac{1}{n_{\text{samples}}} \sum_{i=0}^{n_{\text{sample
 
 The :func:`r2_score` function has an `output_weights` keyword with two possible
 values `None` and 'uniform'. If the value provided is `None`, then the r2 score
-is calculated for each dimension separately and a numpy array is returned. If the
-value given is `uniform`, then a weight of unity is assigned to each dimension during
-macro-averaging, and a float is returned.
+is calculated for each dimension separately and a numpy array is returned.
+ If the value given is `uniform`, the r2 score is averaged over each dimension
+ with a weight of `1 / n_outputs`.
 
 Here a small example of usage of the :func:`r2_score` function::
 
