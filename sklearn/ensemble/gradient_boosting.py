@@ -105,6 +105,18 @@ class PriorProbabilityEstimator(BaseEstimator):
         return y
 
 
+class ZeroEstimator(BaseEstimator):
+    """An estimator that simple predicts zero. """
+
+    def fit(self, X, y):
+        self.n_classes = 1 if y.ndim == 1 else y.shape[1]
+
+    def predict(self, X):
+        y = np.empty((X.shape[0], self.n_classes), dtype=np.float64)
+        y.fill(0.0)
+        return y
+
+
 class LossFunction(six.with_metaclass(ABCMeta, object)):
     """Abstract base class for various loss functions.
 
