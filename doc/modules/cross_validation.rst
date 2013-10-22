@@ -93,7 +93,7 @@ where the number of samples is very small.
 Computing cross-validated metrics
 =================================
 
-The simplest way to use perform cross-validation in to call the
+The simplest way to use cross-validation is to call the
 :func:`cross_val_score` helper function on the estimator and the dataset.
 
 The following example demonstrates how to estimate the accuracy of a linear
