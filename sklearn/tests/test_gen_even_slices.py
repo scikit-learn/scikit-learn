@@ -20,8 +20,8 @@ def test_gen_even_slices():
     even_slices = list(gen_even_slices(even_batches * batch_size,
                                             even_batches, even.shape[0]))
 
-    assert(test_bounds(even,even_slices)=="passes", "Fails on Even number of rows")
-    assert(test_bounds(odd,odd_slices)=="passes", "Fails on Odd number of rows")
+    assert test_bounds(even,even_slices)=="passes", "Fails on Even number of rows"
+    assert test_bounds(odd,odd_slices)=="passes", "Fails on Odd number of rows" 
 
     print("OK")
 
