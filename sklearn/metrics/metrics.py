@@ -51,7 +51,7 @@ def _check_reg_targets(y_true, y_pred, output_weights):
 
     y_pred : array-like,
 
-    output_weights : array-like
+    output_weights : array-like or string, ['uniform', None]
 
     Returns
     -------
@@ -66,7 +66,13 @@ def _check_reg_targets(y_true, y_pred, output_weights):
         Estimated target values.
 
     output_weights : array-like of shape = [n_outputs]
-        Custom weights.
+                     or string, ['uniform', None]
+
+        1] custom weights, if output_weights provided is
+           array-like
+        2] 'uniform' or None if output_weights provided is
+           'uniform' or None.
+
     """
     y_true, y_pred = check_arrays(y_true, y_pred)
 
@@ -91,7 +97,7 @@ def _check_reg_targets(y_true, y_pred, output_weights):
             raise ValueError("Custom weights must have shape "
                              "(1, %d)." % output_shape)
 
-    y_type = 'continuous' if y_true.shape[1] == 1 else 'continuous-multioutput'
+    y_type = 'continuous' if n_outputs == 1 else 'continuous-multioutput'
 
     return y_type, y_true, y_pred, output_weights
 
@@ -2018,12 +2024,12 @@ def mean_absolute_error(y_true, y_pred, output_weights='uniform'):
     y_type, y_true, y_pred, output_weights = \
         _check_reg_targets(y_true, y_pred, output_weights)
 
-    mae_array = np.mean(np.abs(y_pred - y_true), axis=0)
+    error = np.mean(np.abs(y_pred - y_true), axis=0)
     if output_weights == 'uniform':
-        return np.mean(mae_array)
+        return np.mean(error)
     elif output_weights is None:
-        return mae_array
-    return np.average(mae_array, weights=output_weights)
+        return error
+    return np.average(error, weights=output_weights)
 
 
 def mean_squared_error(y_true, y_pred, output_weights='uniform'):
@@ -2083,13 +2089,13 @@ def mean_squared_error(y_true, y_pred, output_weights='uniform'):
     y_type, y_true, y_pred, output_weights = \
         _check_reg_targets(y_true, y_pred, output_weights)
 
-    mse_array = np.mean((y_pred - y_true)**2, axis=0)
+    error = np.mean((y_pred - y_true)**2, axis=0)
     if output_weights == 'uniform':
-        return np.mean(mse_array)
+        return np.mean(error)
     elif output_weights is None:
-        return mse_array
+        return error
     else:
-        return np.average(mse_array, weights=output_weights)
+        return np.average(error, weights=output_weights)
 
 
 ###############################################################################
