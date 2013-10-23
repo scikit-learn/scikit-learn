@@ -295,7 +295,7 @@ class _BaseFilter(BaseEstimator, SelectorMixin):
     ----------
     score_func : callable
         Function taking two arrays X and y, and returning a pair of arrays
-        (scores, pvalues).
+        (scores, pvalues) or a single array scores.
     """
 
     def __init__(self, score_func):
@@ -326,10 +326,16 @@ class _BaseFilter(BaseEstimator, SelectorMixin):
                             % (self.score_func, type(self.score_func)))
 
         self._check_params(X, y)
+        score_func_ret = self.score_func(X, y)
+        if isinstance(score_func_ret, (list, tuple)):
+            self.scores_, self.pvalues_ = score_func_ret
+            self.pvalues_ = np.asarray(self.pvalues_)
+        else:
+            self.scores_ = score_func_ret
+            self.pvalues_ = None
 
-        self.scores_, self.pvalues_ = self.score_func(X, y)
         self.scores_ = np.asarray(self.scores_)
-        self.pvalues_ = np.asarray(self.pvalues_)
+
         return self
 
     def _check_params(self, X, y):
@@ -348,7 +354,7 @@ class SelectPercentile(_BaseFilter):
     ----------
     score_func : callable
         Function taking two arrays X and y, and returning a pair of arrays
-        (scores, pvalues).
+        (scores, pvalues) or a single array scores.
 
     percentile : int, optional, default=10
         Percent of features to keep.
@@ -359,7 +365,7 @@ class SelectPercentile(_BaseFilter):
         Scores of features.
 
     pvalues_ : array-like, shape=(n_features,)
-        p-values of feature scores.
+        p-values of feature scores, None if `score_func` returned scores only.
 
     Notes
     -----
@@ -371,6 +377,7 @@ class SelectPercentile(_BaseFilter):
     f_classif: ANOVA F-value between label/feature for classification tasks.
     chi2: Chi-squared stats of non-negative features for classification tasks.
     f_regression: F-value between label/feature for regression tasks.
+    mutual_info: Mutual information between features and the target.
     SelectKBest: Select features based on the k highest scores.
     SelectFpr: Select features based on a false positive rate test.
     SelectFdr: Select features based on an estimated false discovery rate.
@@ -429,7 +436,7 @@ class SelectKBest(_BaseFilter):
         Scores of features.
 
     pvalues_ : array-like, shape=(n_features,)
-        p-values of feature scores.
+        p-values of feature scores, None if `score_func` returned scores only.
 
     Notes
     -----
@@ -441,6 +448,7 @@ class SelectKBest(_BaseFilter):
     f_classif: ANOVA F-value between label/feature for classification tasks.
     chi2: Chi-squared stats of non-negative features for classification tasks.
     f_regression: F-value between label/feature for regression tasks.
+    mutual_info: Mutual information between features and the target.
     SelectPercentile: Select features based on percentile of the highest scores.
     SelectFpr: Select features based on a false positive rate test.
     SelectFdr: Select features based on an estimated false discovery rate.
@@ -505,6 +513,7 @@ class SelectFpr(_BaseFilter):
     f_classif: ANOVA F-value between label/feature for classification tasks.
     chi2: Chi-squared stats of non-negative features for classification tasks.
     f_regression: F-value between label/feature for regression tasks.
+    mutual_info: Mutual information between features and the target.
     SelectPercentile: Select features based on percentile of the highest scores.
     SelectKBest: Select features based on the k highest scores.
     SelectFdr: Select features based on an estimated false discovery rate.
@@ -557,6 +566,7 @@ class SelectFdr(_BaseFilter):
     f_classif: ANOVA F-value between label/feature for classification tasks.
     chi2: Chi-squared stats of non-negative features for classification tasks.
     f_regression: F-value between label/feature for regression tasks.
+    mutual_info: Mutual information between features and the target.
     SelectPercentile: Select features based on percentile of the highest scores.
     SelectKBest: Select features based on the k highest scores.
     SelectFpr: Select features based on a false positive rate test.
@@ -607,6 +617,7 @@ class SelectFwe(_BaseFilter):
     f_classif: ANOVA F-value between label/feature for classification tasks.
     chi2: Chi-squared stats of non-negative features for classification tasks.
     f_regression: F-value between label/feature for regression tasks.
+    mutual_info: Mutual information between features and the target.
     SelectPercentile: Select features based on percentile of the highest scores.
     SelectKBest: Select features based on the k highest scores.
     SelectFpr: Select features based on a false positive rate test.
@@ -639,7 +650,8 @@ class GenericUnivariateSelect(_BaseFilter):
     ----------
     score_func : callable
         Function taking two arrays X and y, and returning a pair of arrays
-        (scores, pvalues).
+        (scores, pvalues). For modes 'percentile' or 'kbest' it can return
+        a single array scores.
 
     mode : {'percentile', 'k_best', 'fpr', 'fdr', 'fwe'}
         Feature selection mode.
@@ -653,13 +665,14 @@ class GenericUnivariateSelect(_BaseFilter):
         Scores of features.
 
     pvalues_ : array-like, shape=(n_features,)
-        p-values of feature scores.
+        p-values of feature scores, None if `score_func` returned scores only.
 
     See also
     --------
     f_classif: ANOVA F-value between label/feature for classification tasks.
     chi2: Chi-squared stats of non-negative features for classification tasks.
     f_regression: F-value between label/feature for regression tasks.
+    mutual_info: Mutual information between features and the target.
     SelectPercentile: Select features based on percentile of the highest scores.
     SelectKBest: Select features based on the k highest scores.
     SelectFpr: Select features based on a false positive rate test.

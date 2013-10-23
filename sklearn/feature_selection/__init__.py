@@ -22,6 +22,9 @@ from .rfe import RFECV
 
 from .from_model import SelectFromModel
 
+from .mutual_info import mutual_info
+
+
 __all__ = ['GenericUnivariateSelect',
            'RFE',
            'RFECV',
@@ -29,10 +32,11 @@ __all__ = ['GenericUnivariateSelect',
            'SelectFpr',
            'SelectFwe',
            'SelectKBest',
+           'SelectFromModel'
            'SelectPercentile',
            'VarianceThreshold',
            'chi2',
            'f_classif',
            'f_oneway',
            'f_regression',
-           'SelectFromModel']
+           'mutual_info']

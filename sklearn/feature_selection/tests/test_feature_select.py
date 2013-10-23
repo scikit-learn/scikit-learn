@@ -24,10 +24,9 @@ from sklearn.utils import safe_mask
 
 from sklearn.datasets.samples_generator import (make_classification,
                                                 make_regression)
-from sklearn.feature_selection import (chi2, f_classif, f_oneway, f_regression,
-                                       SelectPercentile, SelectKBest,
-                                       SelectFpr, SelectFdr, SelectFwe,
-                                       GenericUnivariateSelect)
+from sklearn.feature_selection import (
+    chi2, mutual_info, f_classif, f_oneway, f_regression, SelectPercentile,
+    SelectKBest, SelectFpr, SelectFdr, SelectFwe, GenericUnivariateSelect)
 
 
 ##############################################################################
@@ -556,3 +555,63 @@ def test_no_feature_selected():
         X_selected = assert_warns_message(
             UserWarning, 'No features were selected', selector.transform, X)
         assert_equal(X_selected.shape, (40, 0))
+
+
+def test_mutual_info_classification():
+    X, y = make_classification(n_samples=200, n_features=20,
+                               n_informative=3, n_redundant=2,
+                               n_repeated=0, n_classes=8,
+                               n_clusters_per_class=1, flip_y=0.0,
+                               class_sep=10, shuffle=False, random_state=0)
+
+    score_func = lambda X, y: mutual_info(X, y, discrete_target=True)
+
+    # Test in KBest mode.
+    univariate_filter = SelectKBest(score_func, k=5)
+    X_r = univariate_filter.fit(X, y).transform(X)
+    X_r2 = GenericUnivariateSelect(
+        score_func, mode='k_best', param=5).fit(X, y).transform(X)
+    assert_array_equal(X_r, X_r2)
+    support = univariate_filter.get_support()
+    gtruth = np.zeros(20)
+    gtruth[:5] = 1
+    assert_array_equal(support, gtruth)
+
+    # Test in Percentile mode.
+    univariate_filter = SelectPercentile(score_func, percentile=25)
+    X_r = univariate_filter.fit(X, y).transform(X)
+    X_r2 = GenericUnivariateSelect(
+        score_func, mode='percentile', param=25).fit(X, y).transform(X)
+    assert_array_equal(X_r, X_r2)
+    support = univariate_filter.get_support()
+    gtruth = np.zeros(20)
+    gtruth[:5] = 1
+    assert_array_equal(support, gtruth)
+
+
+def test_mutual_info_regression():
+    X, y = make_regression(n_samples=200, n_features=20, n_informative=5,
+                           shuffle=False, random_state=0, noise=10)
+
+    # Test in KBest mode.
+    univariate_filter = SelectKBest(mutual_info, k=5)
+    X_r = univariate_filter.fit(X, y).transform(X)
+    assert_best_scores_kept(univariate_filter)
+    X_r2 = GenericUnivariateSelect(
+        mutual_info, mode='k_best', param=5).fit(X, y).transform(X)
+    assert_array_equal(X_r, X_r2)
+    support = univariate_filter.get_support()
+    gtruth = np.zeros(20)
+    gtruth[:5] = 1
+    assert_array_equal(support, gtruth)
+
+    # Test in Percentile mode.
+    univariate_filter = SelectPercentile(mutual_info, percentile=25)
+    X_r = univariate_filter.fit(X, y).transform(X)
+    X_r2 = GenericUnivariateSelect(
+        mutual_info, mode='percentile', param=25).fit(X, y).transform(X)
+    assert_array_equal(X_r, X_r2)
+    support = univariate_filter.get_support()
+    gtruth = np.zeros(20)
+    gtruth[:5] = 1
+    assert_array_equal(support, gtruth)
