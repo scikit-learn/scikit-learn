@@ -2,7 +2,7 @@
 
 # caution: testing won't work on windows, see README
 
-PYTHON ?= python
+PYTHON ?= /Users/dengemann/anaconda/bin/python
 CYTHON ?= cython
 NOSETESTS ?= nosetests
 CTAGS ?= ctags

@@ -82,7 +82,6 @@ def assert_warns(warning_class, func, *args, **kw):
     with warnings.catch_warnings(record=True) as w:
         # Cause all warnings to always be triggered.
         warnings.simplefilter("always")
-
         # Trigger a warning.
         result = func(*args, **kw)
 
@@ -95,7 +94,7 @@ def assert_warns(warning_class, func, *args, **kw):
             raise AssertionError("First warning for %s is not a "
                                  "%s( is %s)"
                                  % (func.__name__, warning_class, w[0]))
-
+    __warningregistry__ = {}
     return result
 
 

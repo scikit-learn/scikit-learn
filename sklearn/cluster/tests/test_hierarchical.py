@@ -4,7 +4,6 @@ Several basic tests for hierarchical clustering procedures
 """
 # Authors: Vincent Michel, 2010, Gael Varoquaux 2012
 # License: BSD 3 clause
-import warnings
 from tempfile import mkdtemp
 
 import numpy as np
@@ -19,6 +18,7 @@ from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.cluster import Ward, WardAgglomeration, ward_tree
 from sklearn.cluster.hierarchical import _hc_cut
 from sklearn.feature_extraction.image import grid_to_graph
+from sklearn.utils.testing import assert_warns
 
 
 def test_structured_ward_tree():
@@ -46,14 +46,12 @@ def test_unstructured_ward_tree():
     rnd = np.random.RandomState(0)
     X = rnd.randn(50, 100)
     for this_X in (X, X[0]):
-        with warnings.catch_warnings(record=True) as warning_list:
-            warnings.simplefilter("always", UserWarning)
-            warnings.simplefilter("ignore", DeprecationWarning)
-            # With specified a number of clusters just for the sake of
-            # raising a warning and testing the warning code
-            children, n_nodes, n_leaves, parent = ward_tree(this_X.T,
-                                                            n_clusters=10)
-        assert_equal(len(warning_list), 1)
+        # With specified a number of clusters just for the sake of
+        # raising a warning and testing the warning code
+        children, n_nodes, n_leaves, parent = assert_warns(UserWarning,
+                                                           ward_tree,
+                                                           this_X.T,
+                                                           n_clusters=10)
         n_nodes = 2 * X.shape[1] - 1
         assert_equal(len(children) + n_leaves, n_nodes)
 
@@ -196,8 +194,7 @@ def test_connectivity_fixing_non_lil():
     m = np.array([[True, False], [False, True]])
     c = grid_to_graph(n_x=2, n_y=2, mask=m)
     w = Ward(connectivity=c)
-    with warnings.catch_warnings(record=True):
-        w.fit(x)
+    assert_warns(UserWarning, w.fit, x)
 
 
 if __name__ == '__main__':

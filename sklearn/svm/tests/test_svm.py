@@ -18,6 +18,8 @@ from sklearn.utils import check_random_state
 from sklearn.utils import ConvergenceWarning
 from sklearn.utils.fixes import unique
 from sklearn.utils.testing import assert_greater, assert_less
+from sklearn.utils.testing import assert_warns
+
 
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
@@ -653,15 +655,11 @@ def test_svc_bad_kernel():
 def test_timeout():
     a = svm.SVC(kernel=lambda x, y: np.dot(x, y.T), probability=True,
                 random_state=0, max_iter=1)
-    with warnings.catch_warnings(record=True) as foo:
+    with warnings.catch_warnings(record=True):
         # Hackish way to reset the  warning counter
-        from sklearn.svm import base
-        base.__warningregistry__ = {}
         warnings.simplefilter("always")
         a.fit(X, Y)
-        assert_equal(len(foo), 1, msg=foo)
-        assert_equal(foo[0].category, ConvergenceWarning, msg=foo[0].category)
-
+        assert_warns(ConvergenceWarning, a.fit, X, Y)
 
 def test_consistent_proba():
     a = svm.SVC(probability=True, max_iter=1, random_state=0)

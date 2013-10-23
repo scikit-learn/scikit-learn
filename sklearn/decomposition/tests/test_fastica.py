@@ -1,7 +1,6 @@
 """
 Test the fastica algorithm.
 """
-import warnings
 import itertools
 
 import numpy as np
@@ -11,9 +10,9 @@ from nose.tools import assert_raises
 
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_warns
 
 from sklearn.decomposition import FastICA, fastica, PCA
 from sklearn.decomposition.fastica_ import _gs_decorrelation
@@ -137,16 +136,10 @@ def test_fastica_simple(add_noise=False):
 
 def test_fastica_nowhiten():
     m = [[0, 1], [1, 0]]
-    ica = FastICA(whiten=False, random_state=0)
-    ica.fit(m)
-    ica.mixing_
 
     # test for issue #697
-    with warnings.catch_warnings(record=True) as w:
-        warnings.simplefilter("always")
-        ica = FastICA(n_components=1, whiten=False, random_state=0)
-        ica.fit(m)  # should raise warning
-        assert_true(len(w) == 1)  # 1 warning should be raised
+    ica = FastICA(n_components=1, whiten=False, random_state=0)
+    assert_warns(UserWarning, ica.fit, m)
 
 
 def test_non_square_fastica(add_noise=False):

@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 import warnings
+
 from sklearn.feature_extraction.text import strip_tags
 from sklearn.feature_extraction.text import strip_accents_unicode
 from sklearn.feature_extraction.text import strip_accents_ascii
@@ -15,6 +16,7 @@ from sklearn.grid_search import GridSearchCV
 from sklearn.pipeline import Pipeline
 from sklearn.svm import LinearSVC
 
+
 import numpy as np
 from nose import SkipTest
 from nose.tools import assert_equal
@@ -25,7 +27,8 @@ from nose.tools import assert_almost_equal
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
 from numpy.testing import assert_raises
-from sklearn.utils.testing import assert_in, assert_less, assert_greater
+from sklearn.utils.testing import (assert_in, assert_less, assert_greater,
+                                   assert_warns)
 
 from collections import defaultdict, Mapping
 from functools import partial
@@ -177,16 +180,9 @@ def test_unicode_decode_error():
     assert_raises(UnicodeDecodeError, ca, text_bytes)
 
     # Check the old interface
-    with warnings.catch_warnings(record=True) as w:
-        warnings.simplefilter("always")
-
-        ca = CountVectorizer(analyzer='char', ngram_range=(3, 6),
-                             charset='ascii').build_analyzer()
-        assert_raises(UnicodeDecodeError, ca, text_bytes)
-
-        assert_equal(len(w), 1)
-        assert_true(issubclass(w[0].category, DeprecationWarning))
-        assert_true("charset" in str(w[0].message).lower())
+    ca = assert_warns(DeprecationWarning, CountVectorizer, analyzer='char',
+                      ngram_range=(3, 6), charset='ascii').build_analyzer()
+    assert_raises(UnicodeDecodeError, ca, text_bytes)
 
 
 def test_char_ngram_analyzer():
@@ -354,6 +350,7 @@ def test_tfidf_no_smoothing():
         1. / np.array([0.])
         numpy_provides_div0_warning = len(w) == 1
 
+    # leave this as is since Numpy warnings receive special treatment
     with warnings.catch_warnings(record=True) as w:
         tfidf = tr.fit_transform(X).toarray()
         if not numpy_provides_div0_warning:
