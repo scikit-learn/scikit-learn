@@ -146,6 +146,7 @@ def ignore_warnings(fn):
             warnings.simplefilter('always')
             return fn(*args, **kwargs)
             w[:] = []
+
     return wrapper
 
 

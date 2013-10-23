@@ -354,8 +354,8 @@ def test_roc_curve():
     assert_array_almost_equal(roc_auc, expected_auc, decimal=2)
     assert_almost_equal(roc_auc, roc_auc_score(y_true, probas_pred))
 
-    with warnings.catch_warnings(record=True):
-        assert_almost_equal(roc_auc, auc_score(y_true, probas_pred))
+    assert_almost_equal(roc_auc,
+                        ignore_warnings(auc_score)(y_true, probas_pred))
 
     assert_equal(fpr.shape, tpr.shape)
     assert_equal(fpr.shape, thresholds.shape)
@@ -443,9 +443,8 @@ def test_roc_curve_one_label():
     y_true = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
     y_pred = [0, 1, 0, 1, 0, 1, 0, 1, 0, 1]
     # assert there are warnings
-    with warnings.catch_warnings(record=True) as w:
-        fpr, tpr, thresholds = roc_curve(y_true, y_pred)
-        assert_equal(len(w), 1)
+    w =  UndefinedMetricWarning
+    fpr, tpr, thresholds = assert_warns(w, roc_curve, y_true, y_pred)
     # all true labels, all fpr should be nan
     assert_array_equal(fpr,
                        np.nan * np.ones(len(thresholds)))
@@ -453,10 +452,9 @@ def test_roc_curve_one_label():
     assert_equal(fpr.shape, thresholds.shape)
 
     # assert there are warnings
-    with warnings.catch_warnings(record=True) as w:
-        fpr, tpr, thresholds = roc_curve([1 - x for x in y_true],
-                                         y_pred)
-        assert_equal(len(w), 1)
+    fpr, tpr, thresholds = assert_warns(w, roc_curve,
+                                        [1 - x for x in y_true],
+                                        y_pred)
     # all negative labels, all tpr should be nan
     assert_array_equal(tpr,
                        np.nan * np.ones(len(thresholds)))
@@ -531,27 +529,28 @@ def test_auc_score_non_binary_class():
     assert_raise_message(ValueError, "AUC is defined for binary "
                          "classification only", roc_auc_score, y_true, y_pred)
 
-    with warnings.catch_warnings(record=True):
-        rng = check_random_state(404)
-        y_pred = rng.rand(10)
-        # y_true contains only one class value
-        y_true = np.zeros(10, dtype="int")
-        assert_raise_message(ValueError, "AUC is defined for binary "
-                             "classification only", auc_score,
-                             y_true, y_pred)
-        y_true = np.ones(10, dtype="int")
-        assert_raise_message(ValueError, "AUC is defined for binary "
-                             "classification only", auc_score, y_true,
-                             y_pred)
-        y_true = -np.ones(10, dtype="int")
-        assert_raise_message(ValueError, "AUC is defined for binary "
-                             "classification only", auc_score, y_true,
-                             y_pred)
-        # y_true contains three different class values
-        y_true = rng.randint(0, 3, size=10)
-        assert_raise_message(ValueError, "AUC is defined for binary "
-                             "classification only", auc_score, y_true,
-                             y_pred)
+    rng = check_random_state(404)
+    y_pred = rng.rand(10)
+    # y_true contains only one class value
+    y_true = np.zeros(10, dtype="int")
+
+    f = ignore_warnings(auc_score)
+    assert_raise_message(ValueError, "AUC is defined for binary "
+                         "classification only", f,
+                         y_true, y_pred)
+    y_true = np.ones(10, dtype="int")
+    assert_raise_message(ValueError, "AUC is defined for binary "
+                         "classification only", f, y_true,
+                         y_pred)
+    y_true = -np.ones(10, dtype="int")
+    assert_raise_message(ValueError, "AUC is defined for binary "
+                         "classification only", f, y_true,
+                         y_pred)
+    # y_true contains three different class values
+    y_true = rng.randint(0, 3, size=10)
+    assert_raise_message(ValueError, "AUC is defined for binary "
+                         "classification only", f, y_true,
+                         y_pred)
 
 
 def test_precision_recall_f1_score_binary():
@@ -657,13 +656,10 @@ def test_confusion_matrix_binary():
     test([str(y) for y in y_true],
          [str(y) for y in y_pred])
 
-
+@ignore_warnings
 def test_matthews_corrcoef_nan():
-    with warnings.catch_warnings():
-        warnings.simplefilter("always")
-        assert_equal(matthews_corrcoef([0], [1]), 0.0)
-        warnings.simplefilter("error")
-        assert_equal(matthews_corrcoef([0, 0], [0, 1]), 0.0)
+    assert_equal(matthews_corrcoef([0], [1]), 0.0)
+    assert_equal(matthews_corrcoef([0, 0], [0, 1]), 0.0)
 
 
 def test_precision_recall_f1_score_multiclass():
@@ -981,12 +977,12 @@ def test_score_scale_invariance():
     assert_equal(roc_auc, roc_auc_scaled)
     assert_equal(roc_auc, roc_auc_shifted)
 
-    with warnings.catch_warnings(record=True):
-        roc_auc = auc_score(y_true, probas_pred)
-        roc_auc_scaled = auc_score(y_true, 100 * probas_pred)
-        roc_auc_shifted = auc_score(y_true, probas_pred - 10)
-        assert_equal(roc_auc, roc_auc_scaled)
-        assert_equal(roc_auc, roc_auc_shifted)
+    f = ignore_warnings(auc_score)
+    roc_auc = f(y_true, probas_pred)
+    roc_auc_scaled = f(y_true, 100 * probas_pred)
+    roc_auc_shifted = f(y_true, probas_pred - 10)
+    assert_equal(roc_auc, roc_auc_scaled)
+    assert_equal(roc_auc, roc_auc_shifted)
 
     pr_auc = average_precision_score(y_true, probas_pred)
     pr_auc_scaled = average_precision_score(y_true, 100 * probas_pred)
@@ -1003,9 +999,9 @@ def test_losses():
 
     # Classification
     # --------------
-    with warnings.catch_warnings(record=True):
     # Throw deprecated warning
-        assert_equal(zero_one(y_true, y_pred), 11)
+    f = ignore_warnings
+    assert_equal(f(zero_one)(y_true, y_pred), 11)
 
     assert_almost_equal(zero_one_loss(y_true, y_pred),
                         11 / float(n_samples), 2)
@@ -1018,10 +1014,8 @@ def test_losses():
     assert_equal(accuracy_score(y_true, y_pred),
                  1 - zero_one_loss(y_true, y_pred))
 
-    with warnings.catch_warnings(record=True):
-        # Throw deprecated warning
-        assert_equal(zero_one_score(y_true, y_pred),
-                     1 - zero_one_loss(y_true, y_pred))
+    assert_equal(f(zero_one_score)(y_true, y_pred),
+                 1 - zero_one_loss(y_true, y_pred))
 
     # Regression
     # ----------
@@ -1084,16 +1078,16 @@ def test_symmetry():
                     msg="%s seems to be symmetric" % name)
 
     # Deprecated metrics
-    with warnings.catch_warnings(record=True):
-        # Throw deprecated warning
-        assert_almost_equal(zero_one(y_true, y_pred),
-                            zero_one(y_pred, y_true))
 
-        assert_almost_equal(zero_one(y_true, y_pred, normalize=False),
-                            zero_one(y_pred, y_true, normalize=False))
+    f = ignore_warnings
+    assert_almost_equal(f(zero_one)(y_true, y_pred),
+                        f(zero_one)(y_pred, y_true))
 
-        assert_almost_equal(zero_one_score(y_true, y_pred),
-                            zero_one_score(y_pred, y_true))
+    assert_almost_equal(f(zero_one)(y_true, y_pred, normalize=False),
+                        f(zero_one)(y_pred, y_true, normalize=False))
+
+    assert_almost_equal(f(zero_one_score)(y_true, y_pred),
+                        f(zero_one_score)(y_pred, y_true))
 
 
 def test_sample_order_invariance():
@@ -1244,20 +1238,15 @@ def test_hinge_loss_binary():
     pred_decision = np.array([-8.5, 0.5, 1.5, -0.3])
     assert_equal(hinge_loss(y_true, pred_decision), 1.2 / 4)
 
-    with warnings.catch_warnings(record=True):
-        # Test deprecated pos_label
-        assert_equal(
-            hinge_loss(-y_true, pred_decision),
-            hinge_loss(y_true, pred_decision, pos_label=-1, neg_label=1))
+    f = ignore_warnings(hinge_loss)
+    assert_equal(f(-y_true, pred_decision),
+                 f(y_true, pred_decision, pos_label=-1, neg_label=1))
 
     y_true = np.array([0, 2, 2, 0])
     pred_decision = np.array([-8.5, 0.5, 1.5, -0.3])
-
     assert_equal(hinge_loss(y_true, pred_decision), 1.2 / 4)
-    with warnings.catch_warnings(record=True):
-        # Test deprecated pos_label
-        assert_equal(hinge_loss(y_true, pred_decision, pos_label=2,
-                                neg_label=0), 1.2 / 4)
+
+    assert_equal(f(y_true, pred_decision, pos_label=2, neg_label=0), 1.2 / 4)
 
 
 def test_multioutput_regression():
@@ -1337,49 +1326,52 @@ def test_multilabel_representation_invariance():
     y2_shuffle_binary_indicator = lb.transform(y2_shuffle)
 
     for name, metric in MULTILABELS_METRICS.items():
-        with warnings.catch_warnings(record=True):
-            warnings.simplefilter("always")
+        # XXX cruel hack to work with partial functions
+        if isinstance(metric, partial):
+            metric.__module__ = 'tmp'
+            metric.__name__ = 'foo'
+        metric = ignore_warnings(metric)
+        measure = metric(y1, y2)
 
-            measure = metric(y1, y2)
 
-            # Check representation invariance
-            assert_almost_equal(metric(y1_binary_indicator,
-                                       y2_binary_indicator),
-                                measure,
-                                err_msg="%s failed representation invariance  "
-                                        "between list of list of labels "
-                                        "format and dense binary indicator "
-                                        "format." % name)
+        # Check representation invariance
+        assert_almost_equal(metric(y1_binary_indicator,
+                                   y2_binary_indicator),
+                            measure,
+                            err_msg="%s failed representation invariance  "
+                                    "between list of list of labels "
+                                    "format and dense binary indicator "
+                                    "format." % name)
 
-            # Check invariance with redundant labels with list of labels
-            assert_almost_equal(metric(y1, y2_redundant), measure,
-                                err_msg="%s failed rendundant label invariance"
-                                        % name)
+        # Check invariance with redundant labels with list of labels
+        assert_almost_equal(metric(y1, y2_redundant), measure,
+                            err_msg="%s failed rendundant label invariance"
+                                    % name)
 
-            assert_almost_equal(metric(y1_redundant, y2_redundant), measure,
-                                err_msg="%s failed rendundant label invariance"
-                                        % name)
+        assert_almost_equal(metric(y1_redundant, y2_redundant), measure,
+                            err_msg="%s failed rendundant label invariance"
+                                    % name)
 
-            assert_almost_equal(metric(y1_redundant, y2), measure,
-                                err_msg="%s failed rendundant label invariance"
-                                        % name)
+        assert_almost_equal(metric(y1_redundant, y2), measure,
+                            err_msg="%s failed rendundant label invariance"
+                                    % name)
 
-            # Check shuffling invariance with list of labels
-            assert_almost_equal(metric(y1_shuffle, y2_shuffle), measure,
-                                err_msg="%s failed shuffling invariance "
-                                        "with list of list of labels format."
-                                        % name)
+        # Check shuffling invariance with list of labels
+        assert_almost_equal(metric(y1_shuffle, y2_shuffle), measure,
+                            err_msg="%s failed shuffling invariance "
+                                    "with list of list of labels format."
+                                    % name)
 
-            # Check shuffling invariance with dense binary indicator matrix
-            assert_almost_equal(metric(y1_shuffle_binary_indicator,
-                                       y2_shuffle_binary_indicator), measure,
-                                err_msg="%s failed shuffling invariance "
-                                        " with dense binary indicator format."
-                                        % name)
+        # Check shuffling invariance with dense binary indicator matrix
+        assert_almost_equal(metric(y1_shuffle_binary_indicator,
+                                   y2_shuffle_binary_indicator), measure,
+                            err_msg="%s failed shuffling invariance "
+                                    " with dense binary indicator format."
+                                    % name)
 
-            # Check raises error with mix input representation
-            assert_raises(ValueError, metric, y1, y2_binary_indicator)
-            assert_raises(ValueError, metric, y1_binary_indicator, y2)
+        # Check raises error with mix input representation
+        assert_raises(ValueError, metric, y1, y2_binary_indicator)
+        assert_raises(ValueError, metric, y1_binary_indicator, y2)
 
 
 def test_multilabel_zero_one_loss_subset():
@@ -1797,36 +1789,34 @@ def test_precision_recall_f1_no_labels():
     # |y_hat_i inter y_i | = [0, 0, 0]
     # |y_i| = [0, 0, 0]
     # |y_hat_i| = [0, 0, 0]
-    with warnings.catch_warnings(record=True):
-        warnings.simplefilter("always")
 
-        for beta in [1]:
+    for beta in [1]:
+        p, r, f, s = assert_warns(UndefinedMetricWarning,
+                                  precision_recall_fscore_support,
+                                  y_true, y_pred, average=None, beta=beta)
+        assert_array_almost_equal(p, [0, 0, 0], 2)
+        assert_array_almost_equal(r, [0, 0, 0], 2)
+        assert_array_almost_equal(f, [0, 0, 0], 2)
+        assert_array_almost_equal(s, [0, 0, 0], 2)
+
+        fbeta = assert_warns(UndefinedMetricWarning, fbeta_score,
+                             y_true, y_pred, beta=beta, average=None)
+        assert_array_almost_equal(fbeta, [0, 0, 0], 2)
+
+        for average in ["macro", "micro", "weighted", "samples"]:
             p, r, f, s = assert_warns(UndefinedMetricWarning,
                                       precision_recall_fscore_support,
-                                      y_true, y_pred, average=None, beta=beta)
-            assert_array_almost_equal(p, [0, 0, 0], 2)
-            assert_array_almost_equal(r, [0, 0, 0], 2)
-            assert_array_almost_equal(f, [0, 0, 0], 2)
-            assert_array_almost_equal(s, [0, 0, 0], 2)
+                                      y_true, y_pred, average=average,
+                                      beta=beta)
+            assert_almost_equal(p, 0)
+            assert_almost_equal(r, 0)
+            assert_almost_equal(f, 0)
+            assert_equal(s, None)
 
             fbeta = assert_warns(UndefinedMetricWarning, fbeta_score,
-                                 y_true, y_pred, beta=beta, average=None)
-            assert_array_almost_equal(fbeta, [0, 0, 0], 2)
-
-            for average in ["macro", "micro", "weighted", "samples"]:
-                p, r, f, s = assert_warns(UndefinedMetricWarning,
-                                          precision_recall_fscore_support,
-                                          y_true, y_pred, average=average,
-                                          beta=beta)
-                assert_almost_equal(p, 0)
-                assert_almost_equal(r, 0)
-                assert_almost_equal(f, 0)
-                assert_equal(s, None)
-
-                fbeta = assert_warns(UndefinedMetricWarning, fbeta_score,
-                                     y_true, y_pred,
-                                     beta=beta, average=average)
-                assert_almost_equal(fbeta, 0)
+                                 y_true, y_pred,
+                                 beta=beta, average=average)
+            assert_almost_equal(fbeta, 0)
 
 
 def test_prf_warnings():
