@@ -135,7 +135,7 @@ def test_scaling_with_gram():
     omp3 = OrthogonalMatchingPursuit(n_nonzero_coefs=1,
                                      fit_intercept=False, normalize=True)
 
-    f, w = DeprecationWarning, assert_warns
+    f, w = assert_warns, DeprecationWarning
     f(w, omp1.fit, X, y, Gram=G)
     f(w, omp1.fit, X, y, Gram=G, Xy=Xy)
     f(w, omp2.fit, X, y, Gram=G)

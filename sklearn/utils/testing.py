@@ -6,6 +6,7 @@
 #          Mathieu Blondel
 #          Olivier Grisel
 #          Arnaud Joly
+#          Denis Engemann
 # License: BSD 3 clause
 import inspect
 import pkgutil
@@ -25,6 +26,7 @@ except ImportError:
 import sklearn
 from sklearn.base import BaseEstimator
 from .fixes import savemat
+from . import clean_warning_registry
 
 # Conveniently import all assertions in one place.
 from nose.tools import assert_equal
@@ -77,9 +79,11 @@ def _assert_greater(a, b, msg=None):
     assert a > b, message
 
 
+
 # To remove when we support numpy 1.7
 def assert_warns(warning_class, func, *args, **kw):
-    warnings.resetwarnings()
+    # very important to avoid uncontrolled state propagation
+    clean_warning_registry()
     with warnings.catch_warnings(record=True) as w:
         # Cause all warnings to always be triggered.
         warnings.simplefilter("always")
@@ -98,7 +102,8 @@ def assert_warns(warning_class, func, *args, **kw):
     return result
 
 def assert_warns_message(warning_class, func, message, *args, **kw):
-    warnings.resetwarnings()
+    # very important to avoid uncontrolled state propagation
+    clean_warning_registry()
     with warnings.catch_warnings(record=True) as w:
         # Cause all warnings to always be triggered.
         warnings.simplefilter("always")
@@ -119,7 +124,6 @@ def assert_warns_message(warning_class, func, message, *args, **kw):
                                  "not the one you expected ('%s')"
                                  % (msg, func.__name__,  message
                                  ))
-
     return result
 
 
@@ -127,7 +131,10 @@ def assert_warns_message(warning_class, func, message, *args, **kw):
 # To remove when we support numpy 1.7
 def assert_no_warnings(func, *args, **kw):
     # XXX: once we may depend on python >= 2.6, this can be replaced by the
+
     # warnings module context manager.
+    # very important to avoid uncontrolled state propagation
+    clean_warning_registry()
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter('always')
 
@@ -142,6 +149,8 @@ def ignore_warnings(fn):
     """Decorator to catch and hide warnings without visual nesting"""
     @wraps(fn)
     def wrapper(*args, **kwargs):
+        # very important to avoid uncontrolled state propagation
+        clean_warning_registry()
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter('always')
             return fn(*args, **kwargs)
