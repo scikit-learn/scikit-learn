@@ -385,7 +385,7 @@ def gen_even_slices(n, n_packs,n_max=None):
             this_n += 1
         if this_n > 0:
             end = start + this_n 
-            end= end if end<n_max else n_max
+            end = end if end<n_max else n_max
             yield slice(start, end, None)
             start = end
 
