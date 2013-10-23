@@ -4,7 +4,6 @@ Testing for Support Vector Machine module (sklearn.svm)
 TODO: remove hard coded numerical results when possible
 """
 
-import warnings
 import numpy as np
 from numpy.testing import (assert_array_equal, assert_array_almost_equal,
                            assert_almost_equal)
@@ -655,11 +654,8 @@ def test_svc_bad_kernel():
 def test_timeout():
     a = svm.SVC(kernel=lambda x, y: np.dot(x, y.T), probability=True,
                 random_state=0, max_iter=1)
-    with warnings.catch_warnings(record=True):
-        # Hackish way to reset the  warning counter
-        warnings.simplefilter("always")
-        a.fit(X, Y)
-        assert_warns(ConvergenceWarning, a.fit, X, Y)
+    assert_warns(ConvergenceWarning, a.fit, X, Y)
+
 
 def test_consistent_proba():
     a = svm.SVC(probability=True, max_iter=1, random_state=0)

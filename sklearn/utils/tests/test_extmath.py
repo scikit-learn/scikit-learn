@@ -3,7 +3,6 @@
 #          Denis Engemann <d.engemann@fz-juelich.de>
 #
 # License: BSD 3 clause
-import warnings
 import numpy as np
 from scipy import sparse
 from scipy import linalg
