@@ -8,7 +8,6 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_warns
 
-
 from sklearn import datasets
 from sklearn.decomposition import PCA
 from sklearn.decomposition import ProbabilisticPCA

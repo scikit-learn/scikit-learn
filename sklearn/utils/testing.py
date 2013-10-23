@@ -79,12 +79,12 @@ def _assert_greater(a, b, msg=None):
 
 # To remove when we support numpy 1.7
 def assert_warns(warning_class, func, *args, **kw):
+    warnings.resetwarnings()
     with warnings.catch_warnings(record=True) as w:
         # Cause all warnings to always be triggered.
         warnings.simplefilter("always")
         # Trigger a warning.
         result = func(*args, **kw)
-
         # Verify some things
         if not len(w) > 0:
             raise AssertionError("No warning raised when calling %s"
@@ -94,8 +94,34 @@ def assert_warns(warning_class, func, *args, **kw):
             raise AssertionError("First warning for %s is not a "
                                  "%s( is %s)"
                                  % (func.__name__, warning_class, w[0]))
-    __warningregistry__ = {}
+
     return result
+
+def assert_warns_message(warning_class, func, message, *args, **kw):
+    warnings.resetwarnings()
+    with warnings.catch_warnings(record=True) as w:
+        # Cause all warnings to always be triggered.
+        warnings.simplefilter("always")
+        # Trigger a warning.
+        result = func(*args, **kw)
+        # Verify some things
+        if not len(w) > 0:
+            raise AssertionError("No warning raised when calling %s"
+                                 % func.__name__)
+
+        if not w[0].category is warning_class:
+            raise AssertionError("First warning for %s is not a "
+                                 "%s( is %s)"
+                                 % (func.__name__, warning_class, w[0]))
+        msg = str(w[0].message)
+        if msg != message:
+            raise AssertionError("The message received ('%s') for <%s> is "
+                                 "not the one you expected ('%s')"
+                                 % (msg, func.__name__,  message
+                                 ))
+
+    return result
+
 
 
 # To remove when we support numpy 1.7

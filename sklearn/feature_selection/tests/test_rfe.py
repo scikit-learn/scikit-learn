@@ -2,8 +2,6 @@
 Testing Recursive feature elimination
 """
 
-import warnings
-
 import numpy as np
 from numpy.testing import assert_array_almost_equal, assert_array_equal
 from nose.tools import assert_equal
@@ -14,6 +12,8 @@ from sklearn.datasets import load_iris
 from sklearn.metrics import zero_one_loss
 from sklearn.svm import SVC
 from sklearn.utils import check_random_state
+from sklearn.utils.testing import ignore_warnings
+
 from sklearn.metrics.scorer import SCORERS
 
 def test_rfe_set_params():
@@ -89,8 +89,7 @@ def test_rfecv():
     # Test using a customized loss function
     rfecv = RFECV(estimator=SVC(kernel="linear"), step=1, cv=5,
                   loss_func=zero_one_loss)
-    with warnings.catch_warnings(record=True):
-        rfecv.fit(X, y)
+    ignore_warnings(rfecv.fit)(X, y)
     X_r = rfecv.transform(X)
     assert_array_equal(X_r, iris.data)
 

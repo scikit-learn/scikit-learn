@@ -253,7 +253,7 @@ def test_oas():
     # test with one sample
     X_1sample = np.arange(5)
     oa = OAS()
-    assert_warns(UserWarning, oa.fit(X_1sample))
+    assert_warns(UserWarning, oa.fit, X_1sample)
 
     # test shrinkage coeff on a simple data set (without saving precision)
     oa = OAS(store_precision=False)

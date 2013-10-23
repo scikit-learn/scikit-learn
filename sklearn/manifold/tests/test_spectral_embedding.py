@@ -1,5 +1,3 @@
-import warnings
-
 from nose.tools import assert_true
 from nose.tools import assert_equal
 
