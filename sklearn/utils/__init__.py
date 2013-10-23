@@ -350,8 +350,20 @@ def gen_batches(n, batch_size):
         yield slice(start, n)
 
 
-def gen_even_slices(n, n_packs):
+def gen_even_slices(n, n_packs,n_max=None):
     """Generator to create n_packs slices going up to n.
+
+    Args:
+
+        n : int
+            correct end_point if dimensions are even_slices
+        max_n: 
+            int
+            maximum dimension, correct is dimension are odd
+        n_pack:
+            number of packs to slice 
+
+
 
     Examples
     --------
@@ -366,12 +378,13 @@ def gen_even_slices(n, n_packs):
     [slice(0, 4, None), slice(4, 7, None), slice(7, 10, None)]
     """
     start = 0
+    n_max= n_max if n_max else n
     for pack_num in range(n_packs):
         this_n = n // n_packs
         if pack_num < n % n_packs:
             this_n += 1
         if this_n > 0:
-            end = start + this_n
+            end = start + this_n if end<n_max else n_max
             yield slice(start, end, None)
             start = end
 
