@@ -704,7 +704,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         # Force optimizer to fmin_cobyla if the model is meant to be isotropic
         # or if there are multiple hyperparameters
         if self.optimizer == 'Welch' and (self.theta0.size == 1 or 
-                                          len(self.theta0.shape) > 1)
+                                          len(self.theta0.shape) > 1):
             self.optimizer = 'fmin_cobyla'
 
         if self.optimizer == 'fmin_cobyla':
