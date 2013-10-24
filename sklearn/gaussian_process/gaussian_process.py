@@ -105,22 +105,22 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         A boolean specifying the verbose level.
         Default is verbose = False.
 
-    theta0 : double array_like, optional
-        An array with shape (n_features, ) or (1, ).
+    theta0 : double array_like or ndarray, optional
+        An array with shape (n_features, ), (n_features, n_params), or (1, ).
         The parameters in the autocorrelation model.
         If thetaL and thetaU are also specified, theta0 is considered as
         the starting point for the maximum likelihood estimation of the
         best set of parameters.
         Default assumes isotropic autocorrelation model with theta0 = 1e-1.
 
-    thetaL : double array_like, optional
+    thetaL : double array_like or ndarray, optional
         An array with shape matching theta0's.
         Lower bound on the autocorrelation parameters for maximum
         likelihood estimation.
         Default is None, so that it skips maximum likelihood estimation and
         it uses theta0.
 
-    thetaU : double array_like, optional
+    thetaU : double array_like or ndarray, optional
         An array with shape matching theta0's.
         Upper bound on the autocorrelation parameters for maximum
         likelihood estimation.
@@ -545,11 +545,11 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
         Parameters
         ----------
-        theta : array_like, optional
+        theta : array_like or ndarray, optional
             An array containing the autocorrelation parameters at which the
             Gaussian Process model parameters should be determined.
             Default uses the built-in autocorrelation parameters
-            (ie ``theta = self.theta_``).
+            (i.e. ``theta = self.theta_``).
 
         Returns
         -------
@@ -679,7 +679,8 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         -------
         optimal_theta : array_like
             The best set of autocorrelation parameters (the sought maximizer of
-            the reduced likelihood function).
+            the reduced likelihood function). Outputs a multidimensional theta
+            as an array.
 
         optimal_reduced_likelihood_function_value : double
             The optimal reduced likelihood function value.
