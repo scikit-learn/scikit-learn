@@ -445,9 +445,11 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
             # Get pairwise componentwise L1-distances to the input training set
             dx = manhattan_distances(X, Y=self.X, sum_over_features=False)
+            # Convert theta to correct shape
+            theta = self.theta_.reshape(self.theta0.shape)
             # Get regression function and correlation
             f = self.regr(X)
-            r = self.corr(self.theta_, dx).reshape(n_eval, n_samples)
+            r = self.corr(theta, dx).reshape(n_eval, n_samples)
 
             # Scaled predictor
             y_ = np.dot(f, self.beta) + np.dot(r, self.gamma)
@@ -579,6 +581,9 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             # Use built-in autocorrelation parameters
             theta = self.theta_
 
+        # Convert theta to original form
+        theta = theta.reshape(self.theta0.shape)
+
         # Initialize output
         reduced_likelihood_function_value = - np.inf
         par = {}
@@ -696,41 +701,49 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         percent_completed = 0.
 
         # Force optimizer to fmin_cobyla if the model is meant to be isotropic
-        if self.optimizer == 'Welch' and self.theta0.size == 1:
+        # or if there are multiple hyperparameters
+        if self.optimizer == 'Welch' and (self.theta0.size == 1 or 
+                                          len(self.theta0.shape) > 1)
             self.optimizer = 'fmin_cobyla'
 
         if self.optimizer == 'fmin_cobyla':
 
             def minus_reduced_likelihood_function(log10t):
-                return - self.reduced_likelihood_function(
+                return -self.reduced_likelihood_function(
                     theta=10. ** log10t)[0]
 
             constraints = []
-            for i in range(self.theta0.size):
+
+            # Convert theta to vector (in case it is a matrix)
+            thetaLVec = np.array(self.thetaL).flatten()
+            thetaUVec = np.array(self.thetaU).flatten()
+            theta0Vec = np.array(self.theta0).flatten()
+                
+            for i in range(theta0Vec.size):
                 constraints.append(lambda log10t:
-                                   log10t[i] - np.log10(self.thetaL[0, i]))
+                                   log10t[i] - np.log10(thetaLVec[i]))
                 constraints.append(lambda log10t:
-                                   np.log10(self.thetaU[0, i]) - log10t[i])
+                                   np.log10(thetaUVec[i]) - log10t[i])
 
             for k in range(self.random_start):
 
                 if k == 0:
                     # Use specified starting point as first guess
-                    theta0 = self.theta0
+                    theta0 = theta0Vec
                 else:
                     # Generate a random starting point log10-uniformly
                     # distributed between bounds
-                    log10theta0 = np.log10(self.thetaL) \
-                        + rand(self.theta0.size).reshape(self.theta0.shape) \
-                        * np.log10(self.thetaU / self.thetaL)
+                    log10theta0 = np.log10(thetaLVec) \
+                        + rand(theta0Vec.size).reshape(theta0Vec.shape) \
+                        * np.log10(thetaUVec / thetaLVec)
                     theta0 = 10. ** log10theta0
 
                 # Run Cobyla
                 try:
                     log10_optimal_theta = \
                         optimize.fmin_cobyla(minus_reduced_likelihood_function,
-                                             np.log10(theta0), constraints,
-                                             iprint=0)
+                                             np.log10(theta0Vec), constraints,
+                                             disp=0)
                 except ValueError as ve:
                     print("Optimization failed. Try increasing the ``nugget``")
                     raise ve
@@ -754,7 +767,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                     if (20 * k) / self.random_start > percent_completed:
                         percent_completed = (20 * k) / self.random_start
                         print("%s completed" % (5 * percent_completed))
-
+                
             optimal_rlf_value = best_optimal_rlf_value
             optimal_par = best_optimal_par
             optimal_theta = best_optimal_theta
@@ -811,6 +824,9 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             raise NotImplementedError("This optimizer ('%s') is not "
                                       "implemented yet. Please contribute!"
                                       % self.optimizer)
+
+        if self.verbose:
+            print("Optimal theta:\n", np.matrix(optimal_theta).reshape(self.theta0.shape))
 
         return optimal_theta, optimal_rlf_value, optimal_par
 
