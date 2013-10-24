@@ -447,6 +447,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             dx = manhattan_distances(X, Y=self.X, sum_over_features=False)
             # Convert theta to correct shape
             theta = self.theta_.reshape(self.theta0.shape)
+
             # Get regression function and correlation
             f = self.regr(X)
             r = self.corr(theta, dx).reshape(n_eval, n_samples)
@@ -585,7 +586,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         theta = theta.reshape(self.theta0.shape)
 
         # Initialize output
-        reduced_likelihood_function_value = - np.inf
+        reduced_likelihood_function_value = -np.inf
         par = {}
 
         # Retrieve data
@@ -743,7 +744,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                 try:
                     log10_optimal_theta = \
                         optimize.fmin_cobyla(minus_reduced_likelihood_function,
-                                             np.log10(theta0Vec), constraints,
+                                             np.log10(theta0), constraints,
                                              disp=0)
                 except ValueError as ve:
                     print("Optimization failed. Try increasing the ``nugget``")

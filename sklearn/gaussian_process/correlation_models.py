@@ -39,7 +39,7 @@ def absolute_exponential(theta, d):
         autocorrelation model.
     """
 
-    if len(theta.shape) > 1:
+    if theta.shape[0] > 1:
         raise ValueError("This correlation model only takes one hyperparameter. "
                          "Shape of theta should be (n, ).")
 
@@ -86,7 +86,7 @@ def squared_exponential(theta, d):
         autocorrelation model.
     """
 
-    if len(theta.shape) > 1:
+    if theta.shape[0] > 1:
         raise ValueError("This correlation model only takes one hyperparameter. "
                          "Shape of theta should be (n, ).")
 
@@ -134,7 +134,7 @@ def generalized_exponential(theta, d):
         model.
     """
 
-    if len(theta.shape) > 1:
+    if theta.shape[0] > 1:
         raise ValueError("This correlation model only takes one hyperparameter. "
                          "Shape of theta should be (n, ).")
 
@@ -224,7 +224,7 @@ def cubic(theta, d):
         model.
     """
 
-    if len(theta.shape) > 1:
+    if theta.shape[0] > 1:
         raise ValueError("This correlation model only takes one hyperparameter. "
                          "Shape of theta should be (n, ).")
 
@@ -278,7 +278,7 @@ def linear(theta, d):
         model.
     """
 
-    if len(theta.shape) > 1:
+    if theta.shape[0] > 1:
         raise ValueError("This correlation model only takes one hyperparameter. "
                          "Shape of theta should be (n, ).")
 
