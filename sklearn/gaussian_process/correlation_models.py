@@ -38,6 +38,11 @@ def absolute_exponential(theta, d):
         An array with shape (n_eval, ) containing the values of the
         autocorrelation model.
     """
+
+    if len(theta.shape) > 1:
+        raise ValueError("This correlation model only takes one hyperparameter. "
+                         "Shape of theta should be (n, ).")
+
     theta = np.asarray(theta, dtype=np.float)
     d = np.abs(np.asarray(d, dtype=np.float))
 
@@ -80,6 +85,10 @@ def squared_exponential(theta, d):
         An array with shape (n_eval, ) containing the values of the
         autocorrelation model.
     """
+
+    if len(theta.shape) > 1:
+        raise ValueError("This correlation model only takes one hyperparameter. "
+                         "Shape of theta should be (n, ).")
 
     theta = np.asarray(theta, dtype=np.float)
     d = np.asarray(d, dtype=np.float)
@@ -124,6 +133,10 @@ def generalized_exponential(theta, d):
         An array with shape (n_eval, ) with the values of the autocorrelation
         model.
     """
+
+    if len(theta.shape) > 1:
+        raise ValueError("This correlation model only takes one hyperparameter. "
+                         "Shape of theta should be (n, ).")
 
     theta = np.asarray(theta, dtype=np.float)
     d = np.asarray(d, dtype=np.float)
@@ -211,6 +224,10 @@ def cubic(theta, d):
         model.
     """
 
+    if len(theta.shape) > 1:
+        raise ValueError("This correlation model only takes one hyperparameter. "
+                         "Shape of theta should be (n, ).")
+
     theta = np.asarray(theta, dtype=np.float)
     d = np.asarray(d, dtype=np.float)
 
@@ -260,6 +277,10 @@ def linear(theta, d):
         An array with shape (n_eval, ) with the values of the autocorrelation
         model.
     """
+
+    if len(theta.shape) > 1:
+        raise ValueError("This correlation model only takes one hyperparameter. "
+                         "Shape of theta should be (n, ).")
 
     theta = np.asarray(theta, dtype=np.float)
     d = np.asarray(d, dtype=np.float)
