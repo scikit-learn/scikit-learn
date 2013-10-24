@@ -238,7 +238,7 @@ samples rather than *(k-1)n / k*. In both ways, assuming *k* is not too large
 and *k < n*, LOO is more computationally expensive than *k*-fold cross validation.
 
 In terms of accuracy, LOO often results in high variance as an estimator for the 
-test error, since it overfits to the training data. Intuitively, since *n - 1* of 
+test error. Intuitively, since *n - 1* of 
 the *n* samples are used to build each model, models constructed from folds are 
 virtually identical to each other and to the model built from the entire training 
 set. 
