@@ -1216,7 +1216,7 @@ cdef class PresortBestSplitter(Splitter):
         if self.X_old != self.X:
             self.X_old = self.X
             self.X_argsorted = \
-                np.asfortranarray(np.argsort(X, axis=0).astype(np.int32))
+                np.asfortranarray(np.argsort(X, axis=0), dtype=np.int32)
 
             self.X_argsorted_ptr = <INT32_t*>self.X_argsorted.data
             self.X_argsorted_stride = <SIZE_t> self.X_argsorted.strides[1] / <SIZE_t> self.X_argsorted.itemsize
