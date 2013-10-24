@@ -236,19 +236,18 @@ When compared with *k*-fold cross validation, one builds *n* models from *n*
 samples instead of *k* models, where *n > k*. Moreover, each is trained on *n - 1* 
 samples rather than *(k-1)n / k*. In both ways, assuming *k* is not too large 
 and *k < n*, LOO is more computationally expensive than *k*-fold cross validation.
-Typically *k* should be between 5 and 10.
 
-In terms of accuracy, LOO often results in poor estimation of the test error, 
-since it overfits to the training data. Intuitively, since *n - 1* of the *n* 
-samples are used to build each model, models constructed from folds are virtually 
-identical to each other and to the model built from the entire training set. 
+In terms of accuracy, LOO often results in high variance as an estimator for the 
+test error, since it overfits to the training data. Intuitively, since *n - 1* of 
+the *n* samples are used to build each model, models constructed from folds are 
+virtually identical to each other and to the model built from the entire training 
+set. 
 
-In contrast, it can also be shown that if the learning curve has a steep slope at 
-the training size in question, then 5- or 10- fold cross validation tends to 
-overestimate the generalization error.
+However, if the learning curve is steep for the training size in question, 
+then 5- or 10- fold cross validation can overestimate the generalization error.
 
-As a general rule, most authors and empirical evidence suggest that 5- or 10- 
-fold cross validation is preferred to LOO.
+As a general rule, most authors, and empirical evidence, suggest that 5- or 10- 
+fold cross validation should be preferred to LOO.
 
 
 .. topic:: References:
@@ -256,7 +255,7 @@ fold cross validation is preferred to LOO.
  * http://www.faqs.org/faqs/ai-faq/neural-nets/part3/section-12.html
  * T. Hastie, R. Tibshirani, J. Friedman,  `The Elements of Statistical Learning
    <http://www-stat.stanford.edu/~tibs/ElemStatLearn>`_, Springer 2009
- * L. Brieman, P. Spector `Submodel selection and evaluation in regression: The X-random case
+ * L. Breiman, P. Spector `Submodel selection and evaluation in regression: The X-random case
    <http://digitalassets.lib.berkeley.edu/sdtr/ucb/text/197.pdf>`_, International Statistical Review 1992
  * R. Kohavi, `A Study of Cross-Validation and Bootstrap for Accuracy Estimation and Model Selection
    <http://www.cs.iastate.edu/~jtian/cs573/Papers/Kohavi-IJCAI-95.pdf>`_, Intl. Jnt. Conf. AI   
