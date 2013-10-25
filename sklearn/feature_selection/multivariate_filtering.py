@@ -48,32 +48,6 @@ class MinRedundancyMaxRelevance(BaseEstimator, SelectorMixin):
        information: criteria of max-dependency, max-relevance, and
        min-redundancy", IEEE Transactions on Pattern Analysis and Machine
        Intelligence, Vol. 27, No. 8, pp.1226-1238, 2005.
-
-    Example
-    -------
-    Consider the following:
-
-    >>> X = np.array([[1, 3, 1],
-                     [3, 3, 3],
-                     [1, 3, 1],
-                     [1, 3, 3],
-                     [1, 3, 1]])
-    >>> y = np.array([3, 1, 3, 1, 3])
-
-    X has three features, the first is partially related to y, the second is
-    totally unrelated, and the third is the opposite of y.
-
-    If we run:
-
-    >>> MinRedundancyMaxRelevance(k=1).fit_transform(X, y)
-    array([[1],
-           [3],
-           [1],
-           [3],
-           [1]])
-
-    we have just selected the most important feature (k=1) of X and reduced its
-    dimensionality
     """
     def __init__(self, k=2, rule='diff'):
         """
