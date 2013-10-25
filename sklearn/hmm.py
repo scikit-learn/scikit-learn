@@ -565,12 +565,15 @@ class _BaseHMM(BaseEstimator):
             stats['start'] += posteriors[0]
         if 't' in params:
             n_observations, n_components = framelogprob.shape
-            lneta = np.zeros((n_observations - 1, n_components, n_components))
-            lnP = logsumexp(fwdlattice[-1])
-            _hmmc._compute_lneta(n_observations, n_components, fwdlattice,
-                                 self._log_transmat, bwdlattice, framelogprob,
-                                 lnP, lneta)
-            stats["trans"] += np.exp(logsumexp(lneta, 0))
+            # when the sample is of length 1, it contains no transitions
+            # so there is no reason to update our trans. matrix estimate
+            if n_observations > 1:
+                lneta = np.zeros((n_observations - 1, n_components, n_components))
+                lnP = logsumexp(fwdlattice[-1])
+                _hmmc._compute_lneta(n_observations, n_components, fwdlattice,
+                                     self._log_transmat, bwdlattice, framelogprob,
+                                     lnP, lneta)
+                stats["trans"] += np.exp(logsumexp(lneta, 0))
 
     def _do_mstep(self, stats, params):
         # Based on Huang, Acero, Hon, "Spoken Language Processing",
