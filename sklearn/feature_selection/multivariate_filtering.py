@@ -53,12 +53,12 @@ class MinRedundancyMaxRelevance(BaseEstimator, SelectorMixin):
     -------
     Consider the following:
 
-    >>>X = np.array([[1, 3, 1],
+    >>> X = np.array([[1, 3, 1],
                      [3, 3, 3],
                      [1, 3, 1],
                      [1, 3, 3],
                      [1, 3, 1]])
-    >>>y = np.array([3, 1, 3, 1, 3])
+    >>> y = np.array([3, 1, 3, 1, 3])
 
     X has three features, the first is partially related to y, the second is
     totally unrelated, and the third is the opposite of y.
