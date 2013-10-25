@@ -63,7 +63,6 @@ class MinRedundancyMaxRelevance(BaseEstimator, SelectorMixin):
         """
         self.k = k
         self.rule = rule
-        self._rule_function = self._get_rule_function(rule)
 
     def fit(self, X, y):
         """
@@ -136,32 +135,26 @@ class MinRedundancyMaxRelevance(BaseEstimator, SelectorMixin):
         mask.append(ind)
         search_space.pop(ind)
 
-        fun = self._rule_function
-        for m in range(0, self.k-1):
-            tmp_score = fun(relevance[search_space],
-                            np.mean(redundancy[:, search_space].
-                                    take(mask, axis=0), 0))
-            score.append(max(tmp_score))
-            ind = tmp_score.argmax(0)
-            mask.append(search_space[ind])
-            search_space.pop(ind)
+        if self.rule == 'diff':
+            for m in range(0, self.k-1):
+                tmp_score = relevance[search_space] - \
+                    np.mean(redundancy[:, search_space]
+                            .take(mask, axis=0), 0)
+                score.append(max(tmp_score))
+                ind = tmp_score.argmax(0)
+                mask.append(search_space[ind])
+                search_space.pop(ind)
 
-        return mask, score
-
-    def _get_rule_function(self, rule):
-        """
-        Returns
-        -------
-        fun : function
-              Function used to combine relevance (k) and redundancy (h) arrays
-        """
-        if rule == 'diff':
-            def fun(a, b):
-                return a+b
-        elif rule == 'prod':
-            def fun(a, b):
-                return a*b
+        elif self.rule == 'prod':
+            for m in range(0, self.k-1):
+                tmp_score = relevance[search_space] * \
+                    np.mean(redundancy[:, search_space]
+                            .take(mask, axis=0), 0)
+                score.append(max(tmp_score))
+                ind = tmp_score.argmax(0)
+                mask.append(search_space[ind])
+                search_space.pop(ind)
         else:
             raise ValueError("rule should be either 'diff' or 'prod'")
 
-        return fun
+        return mask, score
