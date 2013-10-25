@@ -5,7 +5,8 @@ import numpy as np
 from ..base import BaseEstimator
 from .base import SelectorMixin
 from ..metrics.cluster.supervised import mutual_info_score
-from ..utils import safe_asarray
+from ..utils.validation import array2d
+
 
 class MinRedundancyMaxRelevance(BaseEstimator, SelectorMixin):
     """
@@ -73,7 +74,8 @@ class MinRedundancyMaxRelevance(BaseEstimator, SelectorMixin):
         y : array, shape=[n_samples]
             Label vector, must be either integer or categorical
         """
-        X = safe_asarray(X)
+        X = array2d(X)
+
         self.X = X
         self.y = y
         self.mask, self.score = self._compute_mRMR(X, y)
@@ -154,9 +156,11 @@ class MinRedundancyMaxRelevance(BaseEstimator, SelectorMixin):
               Function used to combine relevance (k) and redundancy (h) arrays
         """
         if rule == 'diff':
-            fun = lambda k, h: k-h
+            def fun(a, b):
+                return a+b
         elif rule == 'prod':
-            fun = lambda k, h: k*h
+            def fun(a, b):
+                return a*b
         else:
             raise ValueError("rule should be either 'diff' or 'prod'")
 
