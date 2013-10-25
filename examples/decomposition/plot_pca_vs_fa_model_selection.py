@@ -75,19 +75,20 @@ def compute_scores(X):
         fa_scores.append(np.mean(cross_val_score(fa, X)))
 
     return pca_scores, fa_scores
-    
-    
+
+
 def shrunk_cov_score(X):
-    shrinkages = np.logspace(-100, 0, 30)
-    tuned_parameters = [{'shrinkage': shrinkages}]
-    cv = GridSearchCV(ShrunkCovariance(), tuned_parameters)
-    return np.mean(cross_val_score(cv.fit(X).best_estimator_, X, cv=3))
+    shrinkages = np.logspace(-2, 0, 30)
+    cv = GridSearchCV(ShrunkCovariance(), {'shrinkage': shrinkages})
+    a = cv.fit(X).best_estimator_
+    return np.mean(cross_val_score(cv.fit(X).best_estimator_, X))
 
 
 def lw_score(X):
-    return np.mean(cross_val_score(LedoitWolf(), X, cv=3))    
-    
-    
+    a = LedoitWolf().fit(X)
+    return np.mean(cross_val_score(LedoitWolf(), X))
+
+
 for X, title in [(X_homo, 'Homoscedastic Noise'),
                  (X_hetero, 'Heteroscedastic Noise')]:
     pca_scores, fa_scores = compute_scores(X)
@@ -97,7 +98,7 @@ for X, title in [(X_homo, 'Homoscedastic Noise'),
     pca = PCA(n_components='mle')
     pca.fit(X)
     n_components_pca_mle = pca.n_components_
-    
+
     print("best n_components by PCA CV = %d" % n_components_pca)
     print("best n_components by FactorAnalysis CV = %d" % n_components_fa)
     print("best n_components by PCA MLE = %d" % n_components_pca_mle)
@@ -115,10 +116,10 @@ for X, title in [(X_homo, 'Homoscedastic Noise'),
 
     # compare with other covariance estimators
     pl.axhline(shrunk_cov_score(X), color='violet',
-               label='Shrunk Covariance MLE', linestyle='--')
+               label='Shrunk Covariance MLE', linestyle='-.')
     pl.axhline(lw_score(X), color='orange',
-               label='LedoitWolf MLE' % n_components_pca_mle, linestyle='--')
-               
+               label='LedoitWolf MLE' % n_components_pca_mle, linestyle='-.')
+
     pl.xlabel('nb of components')
     pl.ylabel('CV scores')
     pl.legend(loc='lower right')
