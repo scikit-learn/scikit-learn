@@ -40,8 +40,9 @@ def absolute_exponential(theta, d):
     """
 
     if theta.shape[0] > 1:
-        raise ValueError("This correlation model only takes one hyperparameter. "
-                         "Shape of theta should be (n, ).")
+        raise ValueError("This correlation model only takes one "
+                         "hyperparameter. Shape of theta should be "
+                         "(n, ).")
 
     theta = np.asarray(theta, dtype=np.float)
     d = np.abs(np.asarray(d, dtype=np.float))
@@ -87,8 +88,9 @@ def squared_exponential(theta, d):
     """
 
     if theta.shape[0] > 1:
-        raise ValueError("This correlation model only takes one hyperparameter. "
-                         "Shape of theta should be (n, ).")
+        raise ValueError("This correlation model only takes one "
+                         "hyperparameter. Shape of theta should be "
+                         "(n, ).")
 
     theta = np.asarray(theta, dtype=np.float)
     d = np.asarray(d, dtype=np.float)
@@ -135,8 +137,9 @@ def generalized_exponential(theta, d):
     """
 
     if theta.shape[0] > 1:
-        raise ValueError("This correlation model only takes one hyperparameter. "
-                         "Shape of theta should be (n, ).")
+        raise ValueError("This correlation model only takes one "
+                         "hyperparameter. Shape of theta should be "
+                         "(n, ).")
 
     theta = np.asarray(theta, dtype=np.float)
     d = np.asarray(d, dtype=np.float)
@@ -225,8 +228,9 @@ def cubic(theta, d):
     """
 
     if theta.shape[0] > 1:
-        raise ValueError("This correlation model only takes one hyperparameter. "
-                         "Shape of theta should be (n, ).")
+        raise ValueError("This correlation model only takes one "
+                         "hyperparameter. Shape of theta should be "
+                         "(n, ).")
 
     theta = np.asarray(theta, dtype=np.float)
     d = np.asarray(d, dtype=np.float)
@@ -279,8 +283,9 @@ def linear(theta, d):
     """
 
     if theta.shape[0] > 1:
-        raise ValueError("This correlation model only takes one hyperparameter. "
-                         "Shape of theta should be (n, ).")
+        raise ValueError("This correlation model only takes one "
+                         "hyperparameter. Shape of theta should be "
+                         "(n, ).")
 
     theta = np.asarray(theta, dtype=np.float)
     d = np.asarray(d, dtype=np.float)

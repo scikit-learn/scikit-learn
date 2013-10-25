@@ -428,8 +428,8 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
         if X.shape[1] != n_features:
             raise ValueError(("The number of features in X (X.shape[1] = %d) "
-                             "should match the number of features used for fit() "
-                             "which is %d.") % (X.shape[1], n_features))
+                             "should match the number of features used for "
+                             "fit() which is %d.") % (X.shape[1], n_features))
 
         if batch_size is None:
             # No memory management
@@ -704,7 +704,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
         # Force optimizer to fmin_cobyla if the model is meant to be isotropic
         # or if there are multiple hyperparameters
-        if self.optimizer == 'Welch' and (self.theta0.size == 1 or 
+        if self.optimizer == 'Welch' and (self.theta0.size == 1 or
                                           len(self.theta0.shape) > 1):
             self.optimizer = 'fmin_cobyla'
 
@@ -720,7 +720,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             thetaLVec = np.array(self.thetaL).flatten()
             thetaUVec = np.array(self.thetaU).flatten()
             theta0Vec = np.array(self.theta0).flatten()
-                
+
             for i in range(theta0Vec.size):
                 constraints.append(lambda log10t:
                                    log10t[i] - np.log10(thetaLVec[i]))
@@ -769,7 +769,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                     if (20 * k) / self.random_start > percent_completed:
                         percent_completed = (20 * k) / self.random_start
                         print("%s completed" % (5 * percent_completed))
-                
+
             optimal_rlf_value = best_optimal_rlf_value
             optimal_par = best_optimal_par
             optimal_theta = best_optimal_theta
@@ -828,7 +828,8 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                                       % self.optimizer)
 
         if self.verbose:
-            print("Optimal theta:\n", np.matrix(optimal_theta).reshape(self.theta0.shape))
+            print("Optimal theta:\n",
+                  np.matrix(optimal_theta).reshape(self.theta0.shape))
 
         return optimal_theta, optimal_rlf_value, optimal_par
 
