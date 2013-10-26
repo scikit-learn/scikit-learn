@@ -11,6 +11,7 @@
 import inspect
 import pkgutil
 import warnings
+import sys
 
 import scipy as sp
 from functools import wraps
@@ -127,7 +128,6 @@ def assert_warns_message(warning_class, func, message, *args, **kw):
     return result
 
 
-
 # To remove when we support numpy 1.7
 def assert_no_warnings(func, *args, **kw):
     # XXX: once we may depend on python >= 2.6, this can be replaced by the
@@ -145,18 +145,97 @@ def assert_no_warnings(func, *args, **kw):
     return result
 
 
-def ignore_warnings(fn):
+def ignore_warnings(obj=None):
+    """ Context manager and decorator to ignore warnings
+
+    Examples
+    --------
+    >>> with ignore_warnings():
+    ...     warnings.warn('buhuhuhu')
+    >>>
+
+    >>>def nasty_warn():
+    ...    warnings.warn('buhuhuhu')
+    ...    print 42
+	>>>
+
+    >>> ignore_warnings(nasty_warn)()
+    42
+    """
+    if callable(obj):
+        return _ignore_warnings(obj)
+    else:
+        return _IgnoreWarnings()
+
+
+def _ignore_warnings(fn):
     """Decorator to catch and hide warnings without visual nesting"""
     @wraps(fn)
     def wrapper(*args, **kwargs):
         # very important to avoid uncontrolled state propagation
-        clean_warning_registry()
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter('always')
+            clean_warning_registry()
             return fn(*args, **kwargs)
             w[:] = []
 
     return wrapper
+
+
+class _IgnoreWarnings(object):
+
+    """Improved and simplified Python warnings context manager
+
+    Copied from Python 2.7.5 and modified as required.
+    """
+
+    def __init__(self):
+        """
+        Parameters
+        ==========
+        category : warning class
+            The category to filter. Defaults to Warning. If None,
+            all categories will be muted.
+        """
+        self._record = True
+        self._module = sys.modules['warnings']
+        self._entered = False
+        self.log = []
+
+    def __repr__(self):
+        args = []
+        if self._record:
+            args.append("record=True")
+        if self._module is not sys.modules['warnings']:
+            args.append("module=%r" % self._module)
+        name = type(self).__name__
+        return "%s(%s)" % (name, ", ".join(args))
+
+    def __enter__(self):
+        clean_warning_registry()  # be safe and not propagate state + chaos
+        warnings.simplefilter('always')
+        if self._entered:
+            raise RuntimeError("Cannot enter %r twice" % self)
+        self._entered = True
+        self._filters = self._module.filters
+        self._module.filters = self._filters[:]
+        self._showwarning = self._module.showwarning
+        if self._record:
+            self.log = []
+            def showwarning(*args, **kwargs):
+                self.log.append(warnings.WarningMessage(*args, **kwargs))
+            self._module.showwarning = showwarning
+            return self.log
+        else:
+            return None
+
+    def __exit__(self, *exc_info):
+        if not self._entered:
+            raise RuntimeError("Cannot exit %r without entering first" % self)
+        self._module.filters = self._filters
+        self._module.showwarning = self._showwarning
+        self.log[:] = []
+        clean_warning_registry() # be safe and not propagate state + chaos
 
 
 try:
