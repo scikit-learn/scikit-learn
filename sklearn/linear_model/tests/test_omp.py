@@ -150,8 +150,7 @@ def test_identical_regressors():
     gamma = np.zeros(n_features)
     gamma[0] = gamma[1] = 1.
     newy = np.dot(newX, gamma)
-    # XXX bug with old uncleaned warnings que
-    # assert_warns(RuntimeWarning, orthogonal_mp, newX, newy, 2)
+    assert_warns(RuntimeWarning, orthogonal_mp, newX, newy, 2)
 
 
 def test_swapped_regressors():
