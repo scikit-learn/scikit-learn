@@ -152,15 +152,14 @@ def ignore_warnings(obj=None):
     --------
     >>> with ignore_warnings():
     ...     warnings.warn('buhuhuhu')
-    >>>
 
-    >>>def nasty_warn():
+    >>> def nasty_warn():
     ...    warnings.warn('buhuhuhu')
     ...    print 42
-	>>>
 
     >>> ignore_warnings(nasty_warn)()
     42
+
     """
     if callable(obj):
         return _ignore_warnings(obj)
@@ -173,9 +172,9 @@ def _ignore_warnings(fn):
     @wraps(fn)
     def wrapper(*args, **kwargs):
         # very important to avoid uncontrolled state propagation
+        clean_warning_registry()
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter('always')
-            clean_warning_registry()
             return fn(*args, **kwargs)
             w[:] = []
 
