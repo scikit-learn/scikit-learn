@@ -645,8 +645,8 @@ class _RidgeGCV(LinearModel):
         return y - (c / G_diag), c
 
     def _pre_compute_svd(self, X, y):
-        if sparse.issparse(X):
-            raise TypeError("SVD not supported for sparse matrices")
+        if sparse.issparse(X) and hasattr(X, 'toarray'):
+            X = X.toarray()
         U, s, _ = linalg.svd(X, full_matrices=0)
         v = s ** 2
         UT_y = np.dot(U.T, y)
@@ -701,7 +701,7 @@ class _RidgeGCV(LinearModel):
         with_sw = len(np.shape(sample_weight))
 
         if gcv_mode is None or gcv_mode == 'auto':
-            if sparse.issparse(X) or n_features > n_samples or with_sw:
+            if n_features > n_samples or with_sw:
                 gcv_mode = 'eigen'
             else:
                 gcv_mode = 'svd'
