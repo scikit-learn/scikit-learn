@@ -28,7 +28,7 @@ from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
 from numpy.testing import assert_raises
 from sklearn.utils.testing import (assert_in, assert_less, assert_greater,
-                                   assert_warns)
+                                   assert_warns_message)
 
 from collections import defaultdict, Mapping
 from functools import partial
@@ -180,8 +180,11 @@ def test_unicode_decode_error():
     assert_raises(UnicodeDecodeError, ca, text_bytes)
 
     # Check the old interface
-    ca = assert_warns(DeprecationWarning, CountVectorizer, analyzer='char',
-                      ngram_range=(3, 6), charset='ascii').build_analyzer()
+    in_warning_message = 'charset'
+    ca = assert_warns_message(DeprecationWarning, in_warning_message,
+                              CountVectorizer, analyzer='char',
+                              ngram_range=(3, 6),
+                              charset='ascii').build_analyzer()
     assert_raises(UnicodeDecodeError, ca, text_bytes)
 
 
@@ -349,7 +352,9 @@ def test_tfidf_no_smoothing():
         1. / np.array([0.])
         numpy_provides_div0_warning = len(w) == 1
 
-    tfidf = assert_warns(RuntimeWarning,tr.fit_transform, X).toarray()
+    in_warning_message = 'divide by zero'
+    tfidf = assert_warns_message(RuntimeWarning, in_warning_message,
+                                 tr.fit_transform, X).toarray()
     if not numpy_provides_div0_warning:
         raise SkipTest("Numpy does not provide div 0 warnings.")
 

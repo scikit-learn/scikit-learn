@@ -83,6 +83,27 @@ def _assert_greater(a, b, msg=None):
 
 # To remove when we support numpy 1.7
 def assert_warns(warning_class, func, *args, **kw):
+    """Test that a certain warning occurs.
+
+    Parameters
+    ----------
+    warning_class : the warning class
+        The class to test for, e.g. UserWarning.
+
+    func : callable
+        Calable object to trigger warnings.
+
+    *args : the positional arguments to `func`.
+
+    **kw : the keyword arguments to `func`
+
+    Returns
+    -------
+
+    result : the return value of `func`
+
+    """
+
     # very important to avoid uncontrolled state propagation
     clean_warning_registry()
     with warnings.catch_warnings(record=True) as w:
@@ -102,8 +123,34 @@ def assert_warns(warning_class, func, *args, **kw):
 
     return result
 
-def assert_warns_message(warning_class, func, message, *args, **kw):
+
+def assert_warns_message(warning_class, message, func, *args, **kw):
     # very important to avoid uncontrolled state propagation
+    """Test that a certain warning occurs and with a certain message.
+
+    Parameters
+    ----------
+    warning_class : the warning class
+        The class to test for, e.g. UserWarning.
+
+    message : str | callable
+        The entire message or a substring to  test for. If callable,
+        it takes a string as argument and will trigger an assertion error
+        if it returns `False`.
+
+    func : callable
+        Calable object to trigger warnings.
+
+    *args : the positional arguments to `func`.
+
+    **kw : the keyword arguments to `func`.
+
+    Returns
+    -------
+
+    result : the return value of `func`
+
+    """
     clean_warning_registry()
     with warnings.catch_warnings(record=True) as w:
         # Cause all warnings to always be triggered.
@@ -119,8 +166,15 @@ def assert_warns_message(warning_class, func, message, *args, **kw):
             raise AssertionError("First warning for %s is not a "
                                  "%s( is %s)"
                                  % (func.__name__, warning_class, w[0]))
-        msg = str(w[0].message)
-        if msg != message:
+
+        # substring will match, the entire message with typo won't
+        msg = w[0].message  # For Python 3 compatibility
+        msg = str(msg.args[0] if hasattr(msg, 'args') else msg)
+        if callable(message):  # add support for certain tests
+            check_in_message = message
+        else:
+            check_in_message = lambda msg : message in msg
+        if not check_in_message(msg):
             raise AssertionError("The message received ('%s') for <%s> is "
                                  "not the one you expected ('%s')"
                                  % (msg, func.__name__,  message

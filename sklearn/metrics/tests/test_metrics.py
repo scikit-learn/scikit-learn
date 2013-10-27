@@ -1826,42 +1826,42 @@ def test_prf_warnings():
     for average in [None, 'weighted', 'macro']:
         msg = ('Precision and F-score are ill-defined and '
                'being set to 0.0 in labels with no predicted samples.')
-        my_assert(w, f, msg, [0, 1, 2], [1, 1, 2], average=average)
+        my_assert(w, msg, f, [0, 1, 2], [1, 1, 2], average=average)
 
         msg = ('Recall and F-score are ill-defined and '
                'being set to 0.0 in labels with no true samples.')
-        my_assert(w, f, msg, [1, 1, 2], [0, 1, 2], average=average)
+        my_assert(w, msg, f, [1, 1, 2], [0, 1, 2], average=average)
 
         # average of per-sample scores
         msg = ('Precision and F-score are ill-defined and '
                'being set to 0.0 in samples with no predicted labels.')
-        my_assert(w, f, msg, np.array([[1, 0], [1, 0]]),
+        my_assert(w, msg, f, np.array([[1, 0], [1, 0]]),
                   np.array([[1, 0], [0, 0]]), average='samples')
 
         msg = ('Recall and F-score are ill-defined and '
                'being set to 0.0 in samples with no true labels.')
-        my_assert(w, f, msg, np.array([[1, 0], [0, 0]]), np.array([[1, 0], [1, 0]]),
+        my_assert(w, msg, f, np.array([[1, 0], [0, 0]]), np.array([[1, 0], [1, 0]]),
                   average='samples')
 
         # single score: micro-average
         msg = ('Precision and F-score are ill-defined and '
                'being set to 0.0 due to no predicted samples.')
-        my_assert(w, f, msg, np.array([[1, 1], [1, 1]]),
+        my_assert(w, msg, f, np.array([[1, 1], [1, 1]]),
                   np.array([[0, 0], [0, 0]]), average='micro')
 
         msg =('Recall and F-score are ill-defined and '
               'being set to 0.0 due to no true samples.')
-        my_assert(w, f, msg, np.array([[0, 0], [0, 0]]),
+        my_assert(w, msg, f, np.array([[0, 0], [0, 0]]),
                   np.array([[1, 1], [1, 1]]), average='micro')
 
         # single postive label
         msg = ('Precision and F-score are ill-defined and '
                'being set to 0.0 due to no predicted samples.')
-        my_assert(w, f, msg, [1, 1], [-1, -1], average='macro')
+        my_assert(w, msg, f, [1, 1], [-1, -1], average='macro')
 
         msg = ('Recall and F-score are ill-defined and '
                'being set to 0.0 due to no true samples.')
-        my_assert(w, f, msg, [-1, -1], [1, 1], average='macro')
+        my_assert(w, msg, f, [-1, -1], [1, 1], average='macro')
 
 
 def test__check_clf_targets():
