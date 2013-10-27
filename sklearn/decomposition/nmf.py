@@ -494,6 +494,30 @@ class MultiplicativeNMF(_BaseNMF):
 
         return W, H
 
+    def transform(self, X):
+        X = atleast2d_or_csr(X)
+        check_non_negative(X, "%s.fit_transform" % type(self).__name__)
+
+        eps = 1e-5
+        tol = self.tol
+        H = self.components_
+        HT = H.T
+        HHT = np.dot(H, HT)
+
+        W = np.ones((X.shape[0], self.n_components_))
+
+        for i in xrange(self.max_iter):
+            update = safe_sparse_dot(X, HT)
+            update /= (np.dot(W, HHT) + eps)
+            W *= update
+            max_update = np.max(update)
+
+            if i % 10 == 0:
+                if abs(1. - max_update) < tol:
+                    break
+
+        return W
+
 
 class ProjectedGradientNMF(_BaseNMF):
     """Non-Negative matrix factorization by Projected Gradient (NMF).
