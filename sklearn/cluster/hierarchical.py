@@ -343,6 +343,10 @@ def linkage_tree(X, connectivity=None, n_components=None,
             # the distance matrix.
             i, j = np.triu_indices(X.shape[0], k=1)
             X = X[i, j]
+        elif callable(affinity):
+            X = affinity(X)
+            i, j = np.triu_indices(X.shape[0], k=1)
+            X = X[i, j]
         out = hierarchy.linkage(X, method=linkage, metric=affinity)
         children_ = out[:, :2].astype(np.int)
         return children_, 1, n_samples, None
