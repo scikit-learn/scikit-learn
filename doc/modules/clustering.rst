@@ -433,13 +433,13 @@ Hierarchical clustering
 
 Hierarchical clustering is a general family of clustering algorithms that
 build nested clusters by merging or splitting them successively. This
-hierarchy of clusters represented as a tree (or dendrogram). The root of the
+hierarchy of clusters is represented as a tree (or dendrogram). The root of the
 tree is the unique cluster that gathers all the samples, the leaves being the
 clusters with only one sample. See the `Wikipedia page
 <http://en.wikipedia.org/wiki/Hierarchical_clustering>`_ for more details.
 
 The :class:`AgglomerativeClustering` object performs a hierarchical clustering
-using a bottom up approach: each observations starts in its own clusters, and
+using a bottom up approach: each observation starts in its own cluster, and
 clusters are successively merged together. The linkage criteria determines the
 metric used for the merge strategy:
 
@@ -451,9 +451,9 @@ metric used for the merge strategy:
   observations of pairs of clusters.
 
 The :class:`AgglomerativeClustering` can also scale to large number of samples
-when it is used jointly with an connectivity matrix, but can be
-computationally expensive when no connectivity constraints are added between
-samples: it considers at each step all the possible merges.
+when it is used jointly with a connectivity matrix, but is computationally
+expensive when no connectivity constraints are added between samples: it
+considers at each step all the possible merges.
 
 It is also very efficient for large number of clusters.
 
@@ -462,7 +462,7 @@ Adding connectivity constraints
 
 An interesting aspect of the :class:`AgglomerativeClustering` object is that
 connectivity constraints can be added to this algorithm (only adjacent
-clusters can be merged together), through an connectivity matrix that defines
+clusters can be merged together), through a connectivity matrix that defines
 for each sample the neighboring samples following a given structure of the
 data. For instance, in the swiss-roll example below, the connectivity
 constraints forbid the merging of points that are not adjacent on the swiss
@@ -483,8 +483,8 @@ the roll.
 The connectivity constraints are imposed via an connectivity matrix: a
 scipy sparse matrix that has elements only at the intersection of a row
 and a column with indices of the dataset that should be connected. This
-matrix can be constructed from a-priori information, for instance if you
-wish to cluster web pages, but only merging pages with a link pointing
+matrix can be constructed from a-priori information: for instance, you
+may wish to cluster web pages by only merging pages with a link pointing
 from one to another. It can also be learned from the data, for instance
 using :func:`sklearn.neighbors.kneighbors_graph` to restrict
 merging to nearest neighbors as in the :ref:`swiss roll
