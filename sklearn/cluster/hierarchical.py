@@ -334,13 +334,15 @@ def linkage_tree(X, connectivity=None, n_components=None,
                           'retain the lower branches required '
                           'for the specified number of clusters',
                           stacklevel=2)
-        # XXX: if affinity is precomputed or callable, the following will
-        # not work
+
+        # XXX: if affinity is a callable, the following will not work
         if affinity == 'precomputed':
-            # Put X in the 'pdist format that scipy likes
-            i, j = np.tril_indices(X.shape[0], k=-1)
+            # for the linkage function of hierarchy to work on precomputed
+            # data, provide as first argument an ndarray of the shape returned
+            # by pdist: it is a flat array containing the upper triangular of
+            # the distance matrix.
+            i, j = np.triu_indices(X.shape[0], k=1)
             X = X[i, j]
-            affinity = 'euclidean'
         out = hierarchy.linkage(X, method=linkage, metric=affinity)
         children_ = out[:, :2].astype(np.int)
         return children_, 1, n_samples, None

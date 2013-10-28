@@ -11,6 +11,8 @@ import numpy as np
 from scipy import sparse
 from scipy.cluster import hierarchy
 
+from scipy.spatial import distance
+
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_equal
@@ -21,10 +23,11 @@ from sklearn.cluster import AgglomerativeClustering, FeatureAgglomeration
 from sklearn.cluster.hierarchical import (_hc_cut, _TREE_BUILDERS,
                                           linkage_tree)
 from sklearn.feature_extraction.image import grid_to_graph
-from sklearn.metrics.pairwise import PAIRED_DISTANCES
+from sklearn.metrics.pairwise import PAIRED_DISTANCES, cosine_distances
 from sklearn.metrics.cluster import normalized_mutual_info_score
 from sklearn.cluster._hierarchical import average_merge, max_merge
 from sklearn.utils.fast_dict import IntFloatDict
+from sklearn.utils.testing import assert_array_equal
 
 
 def test_linkage_misc():
@@ -53,6 +56,11 @@ def test_linkage_misc():
         ward_tree(X, copy=True)
     # We should be getting 1 warnings: for using the copy argument
     assert_equal(len(warning_list), 1)
+
+    # Let's test a hiearchical clustering on a precomputed distances matrix
+    dis = cosine_distances(X)
+    res = linkage_tree(dis, affinity="precomputed")
+    assert_array_equal(res[0], linkage_tree(X, affinity="cosine")[0])
 
 
 def test_structured_linkage_tree():
@@ -183,7 +191,6 @@ def test_agglomerative_clustering():
                         clustering.labels_), 1)
 
 
-
 def test_ward_agglomeration():
     """
     Check that we obtain the correct solution in a simplistic case
@@ -293,7 +300,6 @@ def test_int_float_dict():
     # Complete smoke test
     max_merge(d, other, mask=np.ones(100, dtype=np.intp), n_a=1, n_b=1)
     average_merge(d, other, mask=np.ones(100, dtype=np.intp), n_a=1, n_b=1)
-
 
 
 if __name__ == '__main__':
