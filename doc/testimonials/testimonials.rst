@@ -19,7 +19,7 @@ Who is using scikit-learn?
 
   <div class="logo">
 
-.. image:: images/inria.jpg
+.. image:: images/inria.png
    :target: http://www.inria.fr
 
 .. raw:: html
@@ -154,7 +154,6 @@ Michael Becker, Software Engineer, Data Analysis and Management Ninjas
 
    </span>
 
-
 `Yhat <http://yhathq.com/>`_
 ------------------------------------------
 
@@ -186,4 +185,103 @@ Greg Lamp, Co-founder Yhat
 .. raw:: html
 
    </span>
+
+`Rangespan <https://www.rangespan.com>`_
+------------------------------------------
+
+.. raw:: html
+
+  <div class="logo">
+
+.. image:: images/rangespan.png
+   :target: https://www.rangespan.com
+
+.. raw:: html
+
+  </div>
+
+The Python scikit-learn toolkit is a core tool in the data science
+group at Rangespan. Its large collection of well documented models and
+algorithms allow our team of data scientists to prototype fast and
+quickly iterate to find the right solution to our learning problems.
+We find that scikit-learn is not only the right tool for prototyping,
+but its careful and well tested implementation give us the confidence
+to run scikit-learn models in production.
+
+.. raw:: html
+
+   <span class="testimonial-author">
+
+Jurgen Van Gael, Data Science Director at Rangespan Ltd
+
+.. raw:: html
+
+   </span>
+
+`Birchbox <https://www.birchbox.com>`_
+------------------------------------------
+
+.. raw:: html
+
+  <div class="logo">
+
+.. image:: images/birchbox.jpg
+   :target: https://www.birchbox.com
+
+.. raw:: html
+
+  </div>
+
+At Birchbox, we face a range of machine learning problems typical to
+E-commerce: product recommendation, user clustering, inventory prediction,
+trends detection, etc. Scikit-learn lets us experiment with many models,
+especially in the exploration phase of a new project: the data can be passed
+around in a consistent way; models are easy to save and reuse; updates keep us
+informed of new developments from the pattern discovery research community.
+Scikit-learn is an important tool for our team, built the right way in the
+right language.
+
+.. raw:: html
+
+   <span class="testimonial-author">
+
+Thierry Bertin-Mahieux, Birchbox, Data Scientist
+
+.. raw:: html
+
+   </span>
+
+
+`Bestofmedia Group <http://www.bestofmedia.com>`_
+--------------------------------------------------
+
+.. raw:: html
+
+  <div class="logo">
+
+.. image:: images/bestofmedia-logo.gif
+   :target: http://www.bestofmedia.com
+
+.. raw:: html
+
+  </div>
+
+Scikit-learn is our #1 toolkit for all things machine learning
+at Bestofmedia. We use it for a variety of tasks (e.g. spam fighting,
+ad click prediction, various ranking models) thanks to the varied,
+state-of-the-art algorithm implementations packaged into it.
+In the lab it accelerates prototyping of complex pipelines. In 
+production I can say it has proven to be robust and efficient enough 
+to be deployed for business critical components.
+
+.. raw:: html
+
+   <span class="testimonial-author">
+
+Eustache Diemert, Lead Scientist Bestofmedia Group
+
+.. raw:: html
+
+   </span>
+
 

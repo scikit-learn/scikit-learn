@@ -6,6 +6,7 @@ at which the fixe is no longer needed.
 # Authors: Emmanuelle Gouillart <emmanuelle.gouillart@normalesup.org>
 #          Gael Varoquaux <gael.varoquaux@normalesup.org>
 #          Fabian Pedregosa <fpedregosa@acm.org>
+#
 # License: BSD 3 clause
 
 from operator import itemgetter
@@ -91,6 +92,23 @@ if np_version[:2] < (1, 5):
     unique = _unique
 else:
     unique = np.unique
+
+
+def _logaddexp(x1, x2, out=None):
+    """Fix np.logaddexp in numpy < 1.4 when x1 == x2 == -np.inf."""
+    if out is not None:
+        result = np.logaddexp(x1, x2, out=out)
+    else:
+        result = np.logaddexp(x1, x2)
+
+    result[np.logical_and(x1 == -np.inf, x2 == -np.inf)] = -np.inf
+
+    return result
+
+if np_version[:2] < (1, 4):
+    logaddexp = _logaddexp
+else:
+    logaddexp = np.logaddexp
 
 
 def _bincount(X, weights=None, minlength=None):

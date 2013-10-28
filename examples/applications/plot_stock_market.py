@@ -116,7 +116,6 @@ symbol_dict = {
     'MAR': 'Marriott',
     'PG': 'Procter Gamble',
     'CL': 'Colgate-Palmolive',
-    'NWS': 'News Corp',
     'GE': 'General Electrics',
     'WFC': 'Wells Fargo',
     'JPM': 'JPMorgan Chase',

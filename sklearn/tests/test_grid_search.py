@@ -543,7 +543,7 @@ def test_randomized_search_grid_scores():
 
     # Check the consistency with the best_score_ and best_params_ attributes
     sorted_grid_scores = list(sorted(search.grid_scores_,
-                            key=lambda x: x.mean_validation_score))
+                              key=lambda x: x.mean_validation_score))
     best_score = sorted_grid_scores[-1].mean_validation_score
     assert_equal(search.best_score_, best_score)
 

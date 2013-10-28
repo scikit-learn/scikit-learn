@@ -189,6 +189,7 @@ def test_lasso_path_return_models_vs_new_return_gives_same_coefficients():
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", DeprecationWarning)
         coef_path = [e.coef_ for e in lasso_path(X, y, alphas=alphas,
+                                                 return_models=True,
                                                  fit_intercept=False)]
 
     # Use lars_path and lasso_path(new output) with 1D linear interpolation
@@ -197,8 +198,8 @@ def test_lasso_path_return_models_vs_new_return_gives_same_coefficients():
     coef_path_cont_lars = interpolate.interp1d(alphas_lars[::-1],
                                                coef_path_lars[:, ::-1])
     alphas_lasso2, coef_path_lasso2, _ = lasso_path(X, y, alphas=alphas,
-                                                 fit_intercept=False,
-                                                 return_models=False)
+                                                    fit_intercept=False,
+                                                    return_models=False)
     coef_path_cont_lasso = interpolate.interp1d(alphas_lasso2[::-1],
                                                 coef_path_lasso2[:, ::-1])
 
@@ -223,7 +224,7 @@ def test_enet_path():
         clf = ElasticNetCV(n_alphas=5, eps=2e-3, l1_ratio=[0.5, 0.7], cv=3,
                            max_iter=max_iter)
         clf.fit(X, y)
-        # Well-conditionned settings, we should have selected our
+        # Well-conditioned settings, we should have selected our
         # smallest penalty
         assert_almost_equal(clf.alpha_, min(clf.alphas_))
         # Non-sparse ground truth: we should have seleted an elastic-net
@@ -234,24 +235,24 @@ def test_enet_path():
                            max_iter=max_iter, precompute=True)
         clf.fit(X, y)
 
-    # Well-conditionned settings, we should have selected our
+    # Well-conditioned settings, we should have selected our
     # smallest penalty
     assert_almost_equal(clf.alpha_, min(clf.alphas_))
     # Non-sparse ground truth: we should have seleted an elastic-net
     # that is closer to ridge than to lasso
     assert_equal(clf.l1_ratio_, min(clf.l1_ratio))
 
-    # We are in well-conditionned settings with low noise: we should
+    # We are in well-conditioned settings with low noise: we should
     # have a good test-set performance
     assert_greater(clf.score(X_test, y_test), 0.99)
 
 
 def test_path_parameters():
     X, y, _, _ = build_dataset()
-    max_iter = 50
+    max_iter = 100
 
     clf = ElasticNetCV(n_alphas=50, eps=1e-3, max_iter=max_iter,
-                       l1_ratio=0.5)
+                       l1_ratio=0.5, tol=1e-3)
     clf.fit(X, y)  # new params
     assert_almost_equal(0.5, clf.l1_ratio)
     assert_equal(50, clf.n_alphas)
@@ -260,14 +261,15 @@ def test_path_parameters():
 
 def test_warm_start():
     X, y, _, _ = build_dataset()
-    clf = ElasticNet(alpha=1.0, max_iter=50, warm_start=True)
-    clf.fit(X, y)
-    clf.set_params(alpha=0.1)
-    clf.fit(X, y)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", UserWarning)
+        clf = ElasticNet(alpha=0.1, max_iter=5, warm_start=True)
+        clf.fit(X, y)
+        clf.fit(X, y)  # do a second round with 5 iterations
 
-    clf2 = ElasticNet(alpha=0.1, max_iter=500)
-    clf2.fit(X, y)
-    assert_array_almost_equal(clf2.coef_, clf.coef_)
+        clf2 = ElasticNet(alpha=0.1, max_iter=10)
+        clf2.fit(X, y)
+        assert_array_almost_equal(clf2.coef_, clf.coef_)
 
 
 def test_lasso_alpha_warning():

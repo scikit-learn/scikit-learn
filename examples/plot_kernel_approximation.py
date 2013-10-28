@@ -9,7 +9,7 @@ of an RBF kernel.
 .. currentmodule:: sklearn.kernel_approximation
 
 It shows how to use :class:`RBFSampler` and :class:`Nystroem` to
-appoximate the feature map of an RBF kernel for classification with an SVM on
+approximate the feature map of an RBF kernel for classification with an SVM on
 the digits dataset. Results using a linear SVM in the original space, a linear
 SVM using the approximate mappings and using a kernelized SVM are compared.
 Timings and accuracy for varying amounts of Monte Carlo samplings (in the case

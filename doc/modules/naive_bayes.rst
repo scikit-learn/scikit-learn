@@ -83,7 +83,7 @@ classification. The likelihood of the features is assumed to be Gaussian:
 
 .. math::
 
-   P(x_i \mid y) &= \frac{1}{\sqrt{2\pi\sigma^2_y}} \exp\left(-\frac{ (x_i - \mu_y)^2}{2\pi\sigma^2_y}\right)
+   P(x_i \mid y) &= \frac{1}{\sqrt{2\pi\sigma^2_y}} \exp\left(-\frac{(x_i - \mu_y)^2}{2\sigma^2_y}\right)
 
 The parameters :math:`\sigma_y` and :math:`\mu_y`
 are estimated using maximum likelihood.
@@ -93,8 +93,9 @@ are estimated using maximum likelihood.
     >>> from sklearn.naive_bayes import GaussianNB
     >>> gnb = GaussianNB()
     >>> y_pred = gnb.fit(iris.data, iris.target).predict(iris.data)
-    >>> print("Number of mislabeled points : %d" % (iris.target != y_pred).sum())
-    Number of mislabeled points : 6
+    >>> print("Number of mislabeled points out of a total %d points : %d"
+    ...       % (iris.data.shape[0],(iris.target != y_pred).sum()))
+    Number of mislabeled points out of a total 150 points : 6
 
 .. _multinomial_naive_bayes:
 
@@ -189,6 +190,9 @@ incrementally as done with other classifiers as demonstrated in
 
 Contrary to the ``fit`` method, the first call to ``partial_fit`` needs to be
 passed the list of all the expected class labels.
+
+For an overview of available strategies in scikit-learn, see also the
+:ref:`out-of-core learning <scaling_strategies>` documentation.
 
 note::
 

@@ -17,8 +17,8 @@ from scipy import sparse
 from .base import LinearModel, _pre_fit
 from ..base import RegressorMixin
 from .base import center_data
-from ..utils import array2d, atleast2d_or_csc, deprecated
-from ..cross_validation import check_cv
+from ..utils import array2d, atleast2d_or_csc
+from ..cross_validation import _check_cv as check_cv
 from ..externals.joblib import Parallel, delayed
 from ..externals import six
 from ..externals.six.moves import xrange
@@ -89,7 +89,8 @@ def _alpha_grid(X, y, Xy=None, l1_ratio=1.0, fit_intercept=True,
 
 def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
                precompute='auto', Xy=None, fit_intercept=None,
-               normalize=None, copy_X=True, verbose=False, return_models=True,
+               normalize=None, copy_X=True, coef_init=None,
+               verbose=False, return_models=False,
                **params):
     """Compute Lasso path with coordinate descent
 
@@ -128,14 +129,17 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
 
     fit_intercept : bool
         Fit or not an intercept.
-        WARNING : will be deprecated in 0.15
+        WARNING : will be deprecated in 0.16
 
     normalize : boolean, optional, default False
         If ``True``, the regressors X will be normalized before regression.
-        WARNING : will be deprecated in 0.15
+        WARNING : will be deprecated in 0.16
 
     copy_X : boolean, optional, default True
         If ``True``, X will be copied; else, it may be overwritten.
+
+    coef_init : array, shape (n_features, ) | None
+        The initial values of the coefficients.
 
     verbose : bool or integer
         Amount of verbosity
@@ -144,10 +148,10 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
         If ``True``, the function will return list of models. Setting it
         to ``False`` will change the function output returning the values
         of the alphas and the coefficients along the path. Returning the
-        model list will be removed in version 0.15.
+        model list will be removed in version 0.16.
 
     params : kwargs
-        keyword arguments passed to the Lasso objects
+        keyword arguments passed to the coordinate descent solver.
 
     Returns
     -------
@@ -179,12 +183,12 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
 
     Note that in certain cases, the Lars solver may be significantly
     faster to implement this functionality. In particular, linear
-    interpolation can be used to retrieve model coefficents between the
+    interpolation can be used to retrieve model coefficients between the
     values output by lars_path
 
     Deprecation Notice: Setting ``return_models`` to ``False`` will make
     the Lasso Path return an output in the style used by :func:`lars_path`.
-    This will be become the norm as of version 0.15. Leaving ``return_models``
+    This will be become the norm as of version 0.16. Leaving ``return_models``
     set to `True` will let the function return a list of models as before.
 
     Examples
@@ -196,7 +200,7 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
     >>> y = np.array([1, 2, 3.1])
     >>> # Use lasso_path to compute a coefficient path
     >>> _, coef_path, _ = lasso_path(X, y, alphas=[5., 1., .5],
-    ...                              return_models=False, fit_intercept=False)
+    ...                              fit_intercept=False)
     >>> print(coef_path)
     [[ 0.          0.          0.46874778]
      [ 0.2159048   0.4425765   0.23689075]]
@@ -225,14 +229,15 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
     return enet_path(X, y, l1_ratio=1., eps=eps, n_alphas=n_alphas,
                      alphas=alphas, precompute=precompute, Xy=Xy,
                      fit_intercept=fit_intercept, normalize=normalize,
-                     copy_X=copy_X, verbose=verbose,
+                     copy_X=copy_X, coef_init=coef_init, verbose=verbose,
                      return_models=return_models, **params)
 
 
 def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
               precompute='auto', Xy=None, fit_intercept=True,
-              normalize=False, copy_X=True, verbose=False, rho=None,
-              return_models=True, **params):
+              normalize=False, copy_X=True, coef_init=None,
+              verbose=False, return_models=False,
+              **params):
     """Compute Elastic-Net path with coordinate descent
 
     The Elastic Net optimization function is::
@@ -276,26 +281,29 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
 
     fit_intercept : bool
         Fit or not an intercept.
-        WARNING : will be deprecated in 0.15
+        WARNING : will be deprecated in 0.16
 
     normalize : boolean, optional, default False
         If ``True``, the regressors X will be normalized before regression.
-        WARNING : will be deprecated in 0.15
+        WARNING : will be deprecated in 0.16
 
     copy_X : boolean, optional, default True
         If ``True``, X will be copied; else, it may be overwritten.
 
+    coef_init : array, shape (n_features, ) | None
+        The initial values of the coefficients.
+
     verbose : bool or integer
         Amount of verbosity
 
-    return_models : boolean, optional, default True
+    return_models : boolean, optional, default False
         If ``True``, the function will return list of models. Setting it
         to ``False`` will change the function output returning the values
         of the alphas and the coefficients along the path. Returning the
-        model list will be removed in version 0.15.
+        model list will be removed in version 0.16.
 
     params : kwargs
-        keyword arguments passed to the Lasso objects
+        keyword arguments passed to the coordinate descent solver.
 
     Returns
     -------
@@ -335,13 +343,13 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
         warnings.warn("Use enet_path(return_models=False), as it returns the"
                       " coefficients and alphas instead of just a list of"
                       " models as previously `lasso_path`/`enet_path` did."
-                      " `return_models` will eventually be removed in 0.15,"
+                      " `return_models` will eventually be removed in 0.16,"
                       " after which, returning alphas and coefs"
                       " will become the norm.",
                       DeprecationWarning, stacklevel=2)
 
     if normalize is True:
-        warnings.warn("normalize param will be removed in 0.15."
+        warnings.warn("normalize param will be removed in 0.16."
                       " Intercept fitting and feature normalization will be"
                       " done in estimators.",
                       DeprecationWarning, stacklevel=2)
@@ -349,18 +357,13 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
         normalize = False
 
     if fit_intercept is True or fit_intercept is None:
-        warnings.warn("fit_intercept param will be removed in 0.15."
+        warnings.warn("fit_intercept param will be removed in 0.16."
                       " Intercept fitting and feature normalization will be"
                       " done in estimators.",
                       DeprecationWarning, stacklevel=2)
 
     if fit_intercept is None:
         fit_intercept = True
-
-    if rho is not None:
-        l1_ratio = rho
-        warnings.warn("rho was renamed to l1_ratio and will be removed "
-                      "in 0.15", DeprecationWarning)
 
     X = atleast2d_or_csc(X, dtype=np.float64, order='F',
                          copy=copy_X and fit_intercept)
@@ -390,7 +393,11 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
 
     n_alphas = len(alphas)
 
-    coef_ = np.zeros(n_features, dtype=np.float64)
+    if coef_init is None:
+        coef_ = np.zeros(n_features, dtype=np.float64)
+    else:
+        coef_ = coef_init
+
     models = []
     coefs = np.empty((n_features, n_alphas), dtype=np.float64)
     dual_gaps = np.empty(n_alphas)
@@ -543,14 +550,9 @@ class ElasticNet(LinearModel, RegressorMixin):
 
     def __init__(self, alpha=1.0, l1_ratio=0.5, fit_intercept=True,
                  normalize=False, precompute='auto', max_iter=1000,
-                 copy_X=True, tol=1e-4, warm_start=False, positive=False,
-                 rho=None):
+                 copy_X=True, tol=1e-4, warm_start=False, positive=False):
         self.alpha = alpha
         self.l1_ratio = l1_ratio
-        if rho is not None:
-            self.l1_ratio = rho
-            warnings.warn("rho was renamed to l1_ratio and will be removed "
-                          "in 0.15", DeprecationWarning)
         self.coef_ = None
         self.fit_intercept = fit_intercept
         self.normalize = normalize
@@ -562,7 +564,7 @@ class ElasticNet(LinearModel, RegressorMixin):
         self.positive = positive
         self.intercept_ = 0.0
 
-    def fit(self, X, y, Xy=None, coef_init=None):
+    def fit(self, X, y):
         """Fit model with coordinate descent.
 
         Parameters
@@ -572,15 +574,6 @@ class ElasticNet(LinearModel, RegressorMixin):
 
         y : ndarray, shape = (n_samples,) or (n_samples, n_targets)
             Target
-
-        Xy : array-like, optional
-            Xy = np.dot(X.T, y) that can be precomputed. It is useful
-            only when the Gram matrix is precomputed.
-            WARNING : ignored and will be deprecated in 0.15
-
-        coef_init : ndarray of shape n_features or (n_targets, n_features)
-            The initial coeffients to warm-start the optimization
-            WARNING : ignored and will be deprecated in 0.15
 
         Notes
         -----
@@ -592,16 +585,6 @@ class ElasticNet(LinearModel, RegressorMixin):
         To avoid memory re-allocation it is advised to allocate the
         initial data in memory directly using that format.
         """
-        if Xy is not None:
-            warnings.warn("Xy param is now ignored and will be removed in "
-                          "0.15. See enet_path function.",
-                          DeprecationWarning, stacklevel=2)
-
-        if coef_init is not None:
-            warnings.warn("coef_init is now ignored and will be removed in "
-                          "0.15. See enet_path function.",
-                          DeprecationWarning, stacklevel=2)
-
         if self.alpha == 0:
             warnings.warn("With alpha=0, this algorithm does not converge "
                           "well. You are advised to use the LinearRegression "
@@ -612,8 +595,8 @@ class ElasticNet(LinearModel, RegressorMixin):
         y = np.asarray(y, dtype=np.float64)
 
         X, y, X_mean, y_mean, X_std, precompute, Xy = \
-            _pre_fit(X, y, Xy, self.precompute, self.normalize,
-            self.fit_intercept, copy=True)
+            _pre_fit(X, y, None, self.precompute, self.normalize,
+                     self.fit_intercept, copy=True)
 
         if y.ndim == 1:
             y = y[:, np.newaxis]
@@ -623,7 +606,14 @@ class ElasticNet(LinearModel, RegressorMixin):
         n_samples, n_features = X.shape
         n_targets = y.shape[1]
 
-        coef_ = np.zeros((n_targets, n_features), dtype=np.float64)
+        if not self.warm_start or self.coef_ is None:
+            coef_ = np.zeros((n_targets, n_features), dtype=np.float64,
+                                  order='F')
+        else:
+            coef_ = self.coef_
+            if coef_.ndim == 1:
+                coef_ = coef_[np.newaxis, :]
+
         dual_gaps_ = np.zeros(n_targets, dtype=np.float64)
 
         for k in xrange(n_targets):
@@ -631,13 +621,15 @@ class ElasticNet(LinearModel, RegressorMixin):
                 this_Xy = Xy[:, k]
             else:
                 this_Xy = None
-            _, this_coef, this_dual_gap = self.path(X, y[:, k],
+            _, this_coef, this_dual_gap = \
+                self.path(X, y[:, k],
                           l1_ratio=self.l1_ratio, eps=None,
                           n_alphas=None, alphas=[self.alpha],
                           precompute=precompute, Xy=this_Xy,
                           fit_intercept=False, normalize=False, copy_X=True,
                           verbose=False, tol=self.tol, positive=self.positive,
-                          return_models=False, X_mean=X_mean, X_std=X_std)
+                          X_mean=X_mean, X_std=X_std,
+                          coef_init=coef_[k], max_iter=self.max_iter)
             coef_[k] = this_coef[:, 0]
             dual_gaps_[k] = this_dual_gap[0]
 
@@ -791,7 +783,7 @@ def _path_residuals(X, y, train, test, path, path_params, l1_ratio=1,
     X : {array-like, sparse matrix}, shape (n_samples, n_features)
         Training data.
 
-    y : narray, shape (n_samples,) or (n_samples, n_targets)
+    y : array-like, shape (n_samples,) or (n_samples, n_targets)
         Target values
 
     train : list of indices
@@ -828,15 +820,13 @@ def _path_residuals(X, y, train, test, path, path_params, l1_ratio=1,
     fit_intercept = path_params['fit_intercept']
     normalize = path_params['normalize']
     precompute = path_params['precompute']
-    Xy = None
 
     X_train, y_train, X_mean, y_mean, X_std, precompute, Xy = \
-        _pre_fit(X_train, y_train, Xy, precompute, normalize, fit_intercept,
-        copy=False)
+        _pre_fit(X_train, y_train, None, precompute, normalize, fit_intercept,
+                 copy=False)
 
     # del path_params['precompute']
     path_params = path_params.copy()
-    path_params['return_models'] = False
     path_params['fit_intercept'] = False
     path_params['normalize'] = False
     path_params['Xy'] = Xy
@@ -896,7 +886,7 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
             Training data. Pass directly as float64, Fortran-contiguous data
             to avoid unnecessary memory duplication
 
-        y : narray, shape (n_samples,) or (n_samples, n_targets)
+        y : array-like, shape (n_samples,) or (n_samples, n_targets)
             Target values
 
         """
@@ -1011,12 +1001,6 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
         self.dual_gap_ = model.dual_gap_
         return self
 
-    @property
-    def rho_(self):
-        warnings.warn("rho was renamed to ``l1_ratio_`` and will be removed "
-                      "in 0.15", DeprecationWarning)
-        return self.l1_ratio_
-
 
 class LassoCV(LinearModelCV, RegressorMixin):
     """Lasso linear model with iterative fitting along a regularization path
@@ -1054,9 +1038,9 @@ class LassoCV(LinearModelCV, RegressorMixin):
         dual gap for optimality and continues until it is smaller
         than ``tol``.
 
-    cv : integer or crossvalidation generator, optional
+    cv : integer or cross-validation generator, optional
         If an integer is passed, it is the number of fold (default 3).
-        Specific crossvalidation objects can be passed, see the
+        Specific cross-validation objects can be passed, see the
         :mod:`sklearn.cross_validation` module for the list of possible
         objects.
 
@@ -1153,9 +1137,9 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
         dual gap for optimality and continues until it is smaller
         than ``tol``.
 
-    cv : integer or crossvalidation generator, optional
+    cv : integer or cross-validation generator, optional
         If an integer is passed, it is the number of fold (default 3).
-        Specific crossvalidation objects can be passed, see the
+        Specific cross-validation objects can be passed, see the
         :mod:`sklearn.cross_validation` module for the list of possible
         objects.
 
@@ -1222,12 +1206,8 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
     def __init__(self, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
                  fit_intercept=True, normalize=False, precompute='auto',
                  max_iter=1000, tol=1e-4, cv=None, copy_X=True,
-                 verbose=0, n_jobs=1, rho=None):
+                 verbose=0, n_jobs=1):
         self.l1_ratio = l1_ratio
-        if rho is not None:
-            self.l1_ratio = rho
-            warnings.warn("rho was renamed to l1_ratio and will be removed "
-                          "in 0.15", DeprecationWarning)
         self.eps = eps
         self.n_alphas = n_alphas
         self.alphas = alphas
@@ -1240,12 +1220,6 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
         self.copy_X = copy_X
         self.verbose = verbose
         self.n_jobs = n_jobs
-
-    @property
-    @deprecated("rho was renamed to ``l1_ratio_`` and will be removed "
-                "in 0.15")
-    def rho(self):
-        return self.l1_ratio_
 
 
 ###############################################################################
@@ -1317,7 +1291,7 @@ class MultiTaskElasticNet(Lasso):
     >>> clf.fit([[0,0], [1, 1], [2, 2]], [[0, 0], [1, 1], [2, 2]])
     ... #doctest: +NORMALIZE_WHITESPACE
     MultiTaskElasticNet(alpha=0.1, copy_X=True, fit_intercept=True,
-            l1_ratio=0.5, max_iter=1000, normalize=False, rho=None, tol=0.0001,
+            l1_ratio=0.5, max_iter=1000, normalize=False, tol=0.0001,
             warm_start=False)
     >>> print(clf.coef_)
     [[ 0.45663524  0.45612256]
@@ -1338,12 +1312,8 @@ class MultiTaskElasticNet(Lasso):
     """
     def __init__(self, alpha=1.0, l1_ratio=0.5, fit_intercept=True,
                  normalize=False, copy_X=True, max_iter=1000, tol=1e-4,
-                 warm_start=False, rho=None):
+                 warm_start=False):
         self.l1_ratio = l1_ratio
-        if rho is not None:
-            self.l1_ratio = rho
-            warnings.warn("rho was renamed to l1_ratio and will be removed "
-                          "in 0.15", DeprecationWarning)
         self.alpha = alpha
         self.coef_ = None
         self.fit_intercept = fit_intercept
@@ -1353,7 +1323,7 @@ class MultiTaskElasticNet(Lasso):
         self.tol = tol
         self.warm_start = warm_start
 
-    def fit(self, X, y, Xy=None, coef_init=None):
+    def fit(self, X, y):
         """Fit MultiTaskLasso model with coordinate descent
 
         Parameters
@@ -1362,8 +1332,6 @@ class MultiTaskElasticNet(Lasso):
             Data
         y: ndarray, shape = (n_samples, n_tasks)
             Target
-        coef_init: ndarray of shape n_features
-            The initial coeffients to warm-start the optimization
 
         Notes
         -----
@@ -1391,12 +1359,9 @@ class MultiTaskElasticNet(Lasso):
         X, y, X_mean, y_mean, X_std = center_data(
             X, y, self.fit_intercept, self.normalize, copy=False)
 
-        if coef_init is None:
-            if not self.warm_start or self.coef_ is None:
-                self.coef_ = np.zeros((n_tasks, n_features), dtype=np.float64,
-                                      order='F')
-        else:
-            self.coef_ = coef_init
+        if not self.warm_start or self.coef_ is None:
+            self.coef_ = np.zeros((n_tasks, n_features), dtype=np.float64,
+                                  order='F')
 
         l1_reg = self.alpha * self.l1_ratio * n_samples
         l2_reg = self.alpha * (1.0 - self.l1_ratio) * n_samples

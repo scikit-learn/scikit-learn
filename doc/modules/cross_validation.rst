@@ -93,7 +93,7 @@ where the number of samples is very small.
 Computing cross-validated metrics
 =================================
 
-The simplest way to use perform cross-validation in to call the
+The simplest way to use cross-validation is to call the
 :func:`cross_val_score` helper function on the estimator and the dataset.
 
 The following example demonstrates how to estimate the accuracy of a linear
@@ -105,24 +105,24 @@ time)::
   >>> scores = cross_validation.cross_val_score(
   ...    clf, iris.data, iris.target, cv=5)
   ...
-  >>> scores                                            # doctest: +ELLIPSIS
-  array([ 1.  ...,  0.96...,  0.9 ...,  0.96...,  1.        ])
+  >>> scores                                              # doctest: +ELLIPSIS
+  array([ 0.96...,  1.  ...,  0.96...,  0.96...,  1.        ])
 
 The mean score and the standard deviation of the score estimate are hence given
 by::
 
   >>> print("Accuracy: %0.2f (+/- %0.2f)" % (scores.mean(), scores.std() * 2))
-  Accuracy: 0.97 (+/- 0.07)
+  Accuracy: 0.98 (+/- 0.03)
 
 By default, the score computed at each CV iteration is the ``score``
 method of the estimator. It is possible to change this by using the
 scoring parameter::
 
   >>> from sklearn import metrics
-  >>> cross_validation.cross_val_score(clf, iris.data, iris.target, cv=5,
-  ...     scoring='f1')
-  ...                                                     # doctest: +ELLIPSIS
-  array([ 1.  ...,  0.96...,  0.89...,  0.96...,  1.        ])
+  >>> scores = cross_validation.cross_val_score(clf, iris.data, iris.target,
+  ...     cv=5, scoring='f1')
+  >>> scores                                              # doctest: +ELLIPSIS
+  array([ 0.96...,  1.  ...,  0.96...,  0.96...,  1.        ])
 
 See :ref:`scoring_parameter` for details.
 In the case of the Iris dataset, the samples are balanced across target
@@ -157,96 +157,58 @@ The available cross validation iterators are introduced in the following.
 Cross validation iterators
 ==========================
 
-The following sections list utilities to generate boolean masks or indices
+The following sections list utilities to generate indices
 that can be used to generate dataset splits according to different cross
 validation strategies.
-
-
-.. topic:: Boolean mask vs integer indices
-
-   Most cross validators support generating both boolean masks or integer
-   indices to select the samples from a given fold.
-
-   When the data matrix is sparse, only the integer indices will work as
-   expected. Integer indexing is hence the default behavior (since version
-   0.10).
-
-   You can explicitly pass ``indices=False`` to the constructor of the
-   CV object (when supported) to use the boolean mask method instead.
 
 
 K-fold
 ------
 
-:class:`KFold` divides all the samples in math:`k` groups of samples,
+:class:`KFold` divides all the samples in :math:`k` groups of samples,
 called folds (if :math:`k = n`, this is equivalent to the *Leave One
 Out* strategy), of equal sizes (if possible). The prediction function is
 learned using :math:`k - 1` folds, and the fold left out is used for test.
 
-Example of 2-fold::
+Example of 2-fold cross-validation on a dataset with 4 samples::
 
   >>> import numpy as np
   >>> from sklearn.cross_validation import KFold
-  >>> X = np.array([[0., 0.], [1., 1.], [-1., -1.], [2., 2.]])
-  >>> Y = np.array([0, 1, 0, 1])
 
-  >>> kf = KFold(len(Y), n_folds=2, indices=False)
-  >>> print(kf)
-  sklearn.cross_validation.KFold(n=4, n_folds=2)
-
-  >>> for train, test in kf:
-  ...      print("%s %s" % (train, test))
-  [False False  True  True] [ True  True False False]
-  [ True  True False False] [False False  True  True]
-
-Each fold is constituted by two arrays: the first one is related to the
-*training set*, and the second one to the *test set*.
-Thus, one can create the training/test sets using::
-
-  >>> X_train, X_test, y_train, y_test = X[train], X[test], Y[train], Y[test]
-
-If X or Y are `scipy.sparse` matrices, train and test need to be integer
-indices. It can be obtained by setting the parameter indices to True
-when creating the cross-validation procedure::
-
-  >>> X = np.array([[0., 0.], [1., 1.], [-1., -1.], [2., 2.]])
-  >>> Y = np.array([0, 1, 0, 1])
-
-  >>> kf = KFold(len(Y), n_folds=2, indices=True)
+  >>> kf = KFold(4, n_folds=2)
   >>> for train, test in kf:
   ...     print("%s %s" % (train, test))
   [2 3] [0 1]
   [0 1] [2 3]
 
+Each fold is constituted by two arrays: the first one is related to the
+*training set*, and the second one to the *test set*.
+Thus, one can create the training/test sets using numpy indexing::
+
+  >>> X = np.array([[0., 0.], [1., 1.], [-1., -1.], [2., 2.]])
+  >>> y = np.array([0, 1, 0, 1])
+  >>> X_train, X_test, y_train, y_test = X[train], X[test], y[train], y[test]
+
 
 Stratified k-fold
 -----------------
 
-:class:`StratifiedKFold` is a variation of *k-fold* which returns
-*stratified* folds:
-each set contains the same percentage of samples
-of each target class as the complete set.
+:class:`StratifiedKFold` is a variation of *k-fold* which returns *stratified*
+folds: each set contains approximately the same percentage of samples of each
+target class as the complete set.
 
-Example of stratified 2-fold::
+Example of stratified 2-fold cross-validation on a dataset with 10 samples from
+two slightly unbalanced classes::
 
   >>> from sklearn.cross_validation import StratifiedKFold
-  >>> X = [[0., 0.],
-  ...      [1., 1.],
-  ...      [-1., -1.],
-  ...      [2., 2.],
-  ...      [3., 3.],
-  ...      [4., 4.],
-  ...      [0., 1.]]
-  >>> Y = [0, 0, 0, 1, 1, 1, 0]
 
-  >>> skf = StratifiedKFold(Y, 2)
-  >>> print(skf)
-  sklearn.cross_validation.StratifiedKFold(labels=[0 0 0 1 1 1 0], n_folds=2)
-
+  >>> labels = [0, 0, 0, 0, 1, 1, 1, 1, 1, 1]
+  >>> skf = StratifiedKFold(labels, 3)
   >>> for train, test in skf:
   ...     print("%s %s" % (train, test))
-  [1 4 6] [0 2 3 5]
-  [0 2 3 5] [1 4 6]
+  [2 3 6 7 8 9] [0 1 4 5]
+  [0 1 3 4 5 8 9] [2 6 7]
+  [0 1 2 4 5 6 7] [3 8 9]
 
 
 Leave-One-Out - LOO
@@ -259,19 +221,48 @@ sets and `n` different tests set. This cross-validation procedure does
 not waste much data as only one sample is removed from the learning set::
 
   >>> from sklearn.cross_validation import LeaveOneOut
-  >>> X = np.array([[0., 0.], [1., 1.], [-1., -1.], [2., 2.]])
-  >>> Y = np.array([0, 1, 0, 1])
 
-  >>> loo = LeaveOneOut(len(Y))
-  >>> print(loo)
-  sklearn.cross_validation.LeaveOneOut(n=4)
-
+  >>> loo = LeaveOneOut(4)
   >>> for train, test in loo:
   ...     print("%s %s" % (train, test))
   [1 2 3] [0]
   [0 2 3] [1]
   [0 1 3] [2]
   [0 1 2] [3]
+
+
+Potential users of LOO for model selection should weigh a few known caveats. 
+When compared with *k*-fold cross validation, one builds *n* models from *n* 
+samples instead of *k* models, where *n > k*. Moreover, each is trained on *n - 1* 
+samples rather than *(k-1)n / k*. In both ways, assuming *k* is not too large 
+and *k < n*, LOO is more computationally expensive than *k*-fold cross validation.
+
+In terms of accuracy, LOO often results in high variance as an estimator for the 
+test error. Intuitively, since *n - 1* of 
+the *n* samples are used to build each model, models constructed from folds are 
+virtually identical to each other and to the model built from the entire training 
+set. 
+
+However, if the learning curve is steep for the training size in question, 
+then 5- or 10- fold cross validation can overestimate the generalization error.
+
+As a general rule, most authors, and empirical evidence, suggest that 5- or 10- 
+fold cross validation should be preferred to LOO.
+
+
+.. topic:: References:
+
+ * http://www.faqs.org/faqs/ai-faq/neural-nets/part3/section-12.html
+ * T. Hastie, R. Tibshirani, J. Friedman,  `The Elements of Statistical Learning
+   <http://www-stat.stanford.edu/~tibs/ElemStatLearn>`_, Springer 2009
+ * L. Breiman, P. Spector `Submodel selection and evaluation in regression: The X-random case
+   <http://digitalassets.lib.berkeley.edu/sdtr/ucb/text/197.pdf>`_, International Statistical Review 1992
+ * R. Kohavi, `A Study of Cross-Validation and Bootstrap for Accuracy Estimation and Model Selection
+   <http://www.cs.iastate.edu/~jtian/cs573/Papers/Kohavi-IJCAI-95.pdf>`_, Intl. Jnt. Conf. AI   
+ * R. Bharat Rao, G. Fung, R. Rosales, `On the Dangers of Cross-Validation. An Experimental Evaluation
+   <http://www.siam.org/proceedings/datamining/2008/dm08_54_Rao.pdf>`_, SIAM 2008
+ * G. James, D. Witten, T. Hastie, R Tibshirani, `An Introduction to Statitical Learning
+   <http://www-bcf.usc.edu/~gareth/ISL>`_, Springer 2013
 
 
 Leave-P-Out - LPO
@@ -283,16 +274,11 @@ set. For :math:`n` samples, this produces :math:`{n \choose p}` train-test
 pairs. Unlike :class:`LeaveOneOut` and :class:`KFold`, the test sets will
 overlap for :math:`p > 1`.
 
-Example of Leave-2-Out::
+Example of Leave-2-Out on a dataset with 4 samples::
 
   >>> from sklearn.cross_validation import LeavePOut
-  >>> X = [[0., 0.], [1., 1.], [-1., -1.], [2., 2.]]
-  >>> Y = [0, 1, 0, 1]
 
-  >>> lpo = LeavePOut(len(Y), 2)
-  >>> print(lpo)
-  sklearn.cross_validation.LeavePOut(n=4, p=2)
-
+  >>> lpo = LeavePOut(4, p=2)
   >>> for train, test in lpo:
   ...     print("%s %s" % (train, test))
   [2 3] [0 1]
@@ -306,10 +292,10 @@ Example of Leave-2-Out::
 Leave-One-Label-Out - LOLO
 --------------------------
 
-:class:`LeaveOneLabelOut` (LOLO) is a cross-validation scheme which
-holds out the samples according to a third-party provided label. This
-label information can be used to encode arbitrary domain specific
-stratifications of the samples as integers.
+:class:`LeaveOneLabelOut` (LOLO) is a cross-validation scheme which holds out
+the samples according to a third-party provided array of integer labels. This
+label information can be used to encode arbitrary domain specific pre-defined
+cross-validation folds.
 
 Each training set is thus constituted by all the samples except the ones
 related to a specific label.
@@ -319,14 +305,9 @@ create a cross-validation based on the different experiments: we create
 a training set using the samples of all the experiments except one::
 
   >>> from sklearn.cross_validation import LeaveOneLabelOut
-  >>> X = [[0., 0.], [1., 1.], [-1., -1.], [2., 2.]]
-  >>> Y = [0, 1, 0, 1]
+
   >>> labels = [1, 1, 2, 2]
-
   >>> lolo = LeaveOneLabelOut(labels)
-  >>> print(lolo)
-  sklearn.cross_validation.LeaveOneLabelOut(labels=[1 1 2 2])
-
   >>> for train, test in lolo:
   ...     print("%s %s" % (train, test))
   [2 3] [0 1]
@@ -335,6 +316,16 @@ a training set using the samples of all the experiments except one::
 Another common application is to use time information: for instance the
 labels could be the year of collection of the samples and thus allow
 for cross-validation against time-based splits.
+
+.. warning::
+
+  Contrary to :class:`StratifiedKFold`, **the `labels` of
+  :class:`LeaveOneLabelOut` should not encode the target class to predict**:
+  the goal of :class:`StratifiedKFold` is to rebalance dataset classes across
+  the train / test split to ensure that the train and test folds have
+  approximately the same percentage of samples of each class while
+  :class:`LeaveOneLabelOut` will do the opposite by ensuring that the samples
+  of the train and test fold will not share the same label value.
 
 
 Leave-P-Label-Out
@@ -346,14 +337,9 @@ samples related to :math:`P` labels for each training/test set.
 Example of Leave-2-Label Out::
 
   >>> from sklearn.cross_validation import LeavePLabelOut
-  >>> X = [[0., 0.], [1., 1.], [-1., -1.], [2., 2.], [3., 3.], [4., 4.]]
-  >>> Y = [0, 1, 0, 1, 0, 1]
+
   >>> labels = [1, 1, 2, 2, 3, 3]
-
-  >>> lplo = LeavePLabelOut(labels, 2)
-  >>> print(lplo)
-  sklearn.cross_validation.LeavePLabelOut(labels=[1 1 2 2 3 3], p=2)
-
+  >>> lplo = LeavePLabelOut(labels, p=2)
   >>> for train, test in lplo:
   ...     print("%s %s" % (train, test))
   [4 5] [0 1 2 3]
@@ -379,11 +365,6 @@ Here is a usage example::
 
   >>> ss = cross_validation.ShuffleSplit(5, n_iter=3, test_size=0.25,
   ...     random_state=0)
-  >>> len(ss)
-  3
-  >>> print(ss)                                           # doctest: +ELLIPSIS
-  ShuffleSplit(5, n_iter=3, test_size=0.25, indices=True, ...)
-
   >>> for train_index, test_index in ss:
   ...     print("%s %s" % (train_index, test_index))
   ...
@@ -424,12 +405,7 @@ smaller than the total dataset if it is very large.
 
 .. _Bootstrapping: http://en.wikipedia.org/wiki/Bootstrapping_%28statistics%29
 
-  >>> bs = cross_validation.Bootstrap(9, random_state=0)
-  >>> len(bs)
-  3
-  >>> print(bs)
-  Bootstrap(9, n_iter=3, train_size=5, test_size=4, random_state=0)
-
+  >>> bs = cross_validation.Bootstrap(9, n_iter=3, random_state=0)
   >>> for train_index, test_index in bs:
   ...     print("%s %s" % (train_index, test_index))
   ...

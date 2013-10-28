@@ -34,7 +34,7 @@ The disadvantages of support vector machines include:
       calculated using an expensive five-fold cross-validation
       (see :ref:`Scores and probabilities <scores_probabilities>`, below).
 
-The support vector machines in scikit-learn support both dens
+The support vector machines in scikit-learn support both dense
 (``numpy.ndarray`` and convertible to that by ``numpy.asarray``) and
 sparse (any ``scipy.sparse``) sample vectors as input. However, to use
 an SVM to make predictions for sparse data, it must have been fit on such

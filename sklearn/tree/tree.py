@@ -8,6 +8,7 @@ randomized trees. Single and multi-output problems are both handled.
 #          Brian Holt <bdholt1@gmail.com>
 #          Noel Dawe <noel@dawe.me>
 #          Satrajit Gosh <satrajit.ghosh@gmail.com>
+#          Joly Arnaud <arnaud.v.joly@gmail.com>
 # Licence: BSD 3 clause
 
 from __future__ import division
@@ -44,7 +45,9 @@ DOUBLE = _tree.DOUBLE
 
 CRITERIA_CLF = {"gini": _tree.Gini, "entropy": _tree.Entropy}
 CRITERIA_REG = {"mse": _tree.MSE}
-SPLITTERS = {"best": _tree.BestSplitter, "random": _tree.RandomSplitter}
+SPLITTERS = {"best": _tree.BestSplitter,
+             "presort-best": _tree.PresortBestSplitter,
+             "random": _tree.RandomSplitter}
 
 
 # =============================================================================
@@ -81,8 +84,8 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         self.classes_ = None
         self.n_classes_ = None
 
-        self.splitter_ = None
         self.tree_ = None
+        self.max_features_ = None
 
     def fit(self, X, y, sample_mask=None, X_argsorted=None, check_input=True,
             sample_weight=None):
@@ -189,6 +192,8 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         else:  # float
             max_features = int(self.max_features * self.n_features_)
 
+        self.max_features_ = max_features
+
         if len(y) != n_samples:
             raise ValueError("Number of labels=%d does not match "
                              "number of samples=%d" % (len(y), n_samples))
@@ -231,12 +236,10 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         splitter = self.splitter
         if not isinstance(self.splitter, Splitter):
             splitter = SPLITTERS[self.splitter](criterion,
-                                                max_features,
+                                                self.max_features_,
                                                 self.min_samples_leaf,
                                                 random_state)
 
-        self.criterion_ = criterion
-        self.splitter_ = splitter
         self.tree_ = Tree(self.n_features_, self.n_classes_,
                           self.n_outputs_, splitter, max_depth,
                           min_samples_split, self.min_samples_leaf,
@@ -375,6 +378,9 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
     ----------
     `tree_` : Tree object
         The underlying Tree object.
+
+    `max_features_` : int,
+        The infered value of max_features.
 
     `classes_` : array of shape = [n_classes] or a list of such arrays
         The classes labels (single output problem),
@@ -574,6 +580,9 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
     ----------
     `tree_` : Tree object
         The underlying Tree object.
+
+    `max_features_` : int,
+        The infered value of max_features.
 
     `feature_importances_` : array of shape = [n_features]
         The feature importances.

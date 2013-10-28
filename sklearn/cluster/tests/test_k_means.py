@@ -15,13 +15,13 @@ from sklearn.utils.testing import assert_true
 
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_less
+from sklearn.utils.extmath import row_norms
 from sklearn.utils.fixes import unique
 from sklearn.metrics.cluster import v_measure_score
 from sklearn.cluster import KMeans, k_means
 from sklearn.cluster import MiniBatchKMeans
 from sklearn.cluster.k_means_ import _labels_inertia
 from sklearn.cluster.k_means_ import _mini_batch_step
-from sklearn.cluster._k_means import csr_row_norm_l2
 from sklearn.datasets.samples_generator import make_blobs
 from sklearn.externals.six.moves import cStringIO as StringIO
 
@@ -37,13 +37,6 @@ n_clusters, n_features = centers.shape
 X, true_labels = make_blobs(n_samples=n_samples, centers=centers,
                             cluster_std=1., random_state=42)
 X_csr = sp.csr_matrix(X)
-
-
-def test_square_norms():
-    x_squared_norms = (X ** 2).sum(axis=1)
-    x_squared_norms_from_csr = csr_row_norm_l2(X_csr)
-    assert_array_almost_equal(x_squared_norms,
-                              x_squared_norms_from_csr, 5)
 
 
 def test_kmeans_dtype():
@@ -80,7 +73,7 @@ def test_labels_assignment_and_inertia():
     assert_array_equal(labels_array, labels_gold)
 
     # perform label assignment using the sparse CSR input
-    x_squared_norms_from_csr = csr_row_norm_l2(X_csr)
+    x_squared_norms_from_csr = row_norms(X_csr, squared=True)
     labels_csr, inertia_csr = _labels_inertia(
         X_csr, x_squared_norms_from_csr, noisy_centers)
     assert_array_almost_equal(inertia_csr, inertia_gold)
@@ -99,7 +92,7 @@ def test_minibatch_update_consistency():
     counts_csr = np.zeros(new_centers.shape[0], dtype=np.int32)
 
     x_squared_norms = (X ** 2).sum(axis=1)
-    x_squared_norms_csr = csr_row_norm_l2(X_csr, squared=True)
+    x_squared_norms_csr = row_norms(X_csr, squared=True)
 
     buffer = np.zeros(centers.shape[1], dtype=np.double)
     buffer_csr = np.zeros(centers.shape[1], dtype=np.double)
@@ -204,24 +197,25 @@ def test_k_means_new_centers():
         np.testing.assert_array_equal(this_labels, labels)
 
 
-def _is_mac_os_version_ge(version):
+def _is_mac_os_version(version):
     """Returns True iff Mac OS X and newer than specified version."""
     import platform
     mac_version, _, _ = platform.mac_ver()
-    if mac_version:
-        my_major, my_minor = version.split('.')
-        # keep only major and minor system version
-        sys_major, sys_minor = mac_version.split('.')[:2]
-        if int(sys_major) > int(my_major):
-            return True
-        else:
-            return int(sys_minor) >= int(my_minor)
-    return False
+    return mac_version.split('.')[:2] == version.split('.')[:2]
+
+
+def _has_blas_lib(libname):
+    from numpy.distutils.system_info import get_info
+    return libname in get_info('blas_opt').get('libraries', [])
 
 
 def test_k_means_plus_plus_init_2_jobs():
-    if _is_mac_os_version_ge('10.7'):
+    if _is_mac_os_version('10.7') or _is_mac_os_version('10.8'):
         raise SkipTest('Multi-process bug in Mac OS X Lion (see issue #636)')
+
+    if _has_blas_lib('openblas'):
+        raise SkipTest('Multi-process bug with OpenBLAS (see issue #636)')
+
     km = KMeans(init="k-means++", n_clusters=n_clusters, n_jobs=2,
                      random_state=42).fit(X)
     _check_fitted_model(km)

@@ -46,7 +46,7 @@ def sparse_center_data(X, y, fit_intercept, normalize=False):
     axis 0. Be aware that X will not be centered since it would break
     the sparsity, but will be normalized if asked so.
     """
-    X = X.astype(np.float64)
+    X = safe_asarray(X, dtype=np.float64)
 
     if fit_intercept:
         X_data = X.data

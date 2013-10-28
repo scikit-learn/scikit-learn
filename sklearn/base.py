@@ -352,20 +352,36 @@ class BiclusterMixin(object):
 
     @property
     def biclusters_(self):
-        """Convenient way to get row and column indicators together."""
+        """Convenient way to get row and column indicators together.
+
+        Returns the ``rows_`` and ``columns_`` members.
+        """
         return self.rows_, self.columns_
 
     def get_indices(self, i):
-        """Returns the row and column indices of bicluster `i`.
+        """Row and column indices of the i'th bicluster.
 
-        Only works if ``rows_`` and ``columns`` attributes exist.
+        Only works if ``rows_`` and ``columns_`` attributes exist.
+
+        Returns
+        -------
+        row_ind : np.array, dtype=np.intp
+            Indices of rows in the dataset that belong to the bicluster.
+        col_ind : np.array, dtype=np.intp
+            Indices of columns in the dataset that belong to the bicluster.
 
         """
         from .cluster.bicluster.utils import get_indices
         return get_indices(self.rows_[i], self.columns_[i])
 
     def get_shape(self, i):
-        """Returns shape of bicluster `i`."""
+        """Shape of the i'th bicluster.
+
+        Returns
+        -------
+        shape : (int, int)
+            Number of rows and columns (resp.) in the bicluster.
+        """
         from .cluster.bicluster.utils import get_shape
         return get_shape(self.rows_[i], self.columns_[i])
 
@@ -373,7 +389,7 @@ class BiclusterMixin(object):
         """Returns the submatrix corresponding to bicluster `i`.
 
         Works with sparse matrices. Only works if ``rows_`` and
-        ``columns`` attributes exist.
+        ``columns_`` attributes exist.
 
         """
         from .cluster.bicluster.utils import get_submatrix

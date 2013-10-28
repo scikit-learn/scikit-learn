@@ -335,7 +335,7 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
 
     token_pattern: string
         Regular expression denoting what constitutes a "token", only used
-        if `tokenize == 'word'`. The default regexp select tokens of 2
+        if `analyzer == 'word'`. The default regexp select tokens of 2
         or more letters characters (punctuation is completely ignored
         and always treated as a token separator).
 
@@ -682,15 +682,14 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
 
         # Calculate a mask based on document frequencies
         dfs = _document_frequency(cscmatrix)
+        tfs = np.asarray(cscmatrix.sum(axis=0)).ravel()
         mask = np.ones(len(dfs), dtype=bool)
         if high is not None:
             mask &= dfs <= high
         if low is not None:
             mask &= dfs >= low
         if limit is not None and mask.sum() > limit:
-            # backward compatibility requires us to keep lower indices in ties!
-            # (and hence to reverse the sort by negating dfs)
-            mask_inds = (-dfs[mask]).argsort()[:limit]
+            mask_inds = (-tfs[mask]).argsort()[:limit]
             new_mask = np.zeros(len(dfs), dtype=bool)
             new_mask[np.where(mask)[0][mask_inds]] = True
             mask = new_mask
@@ -879,19 +878,19 @@ def _make_int_array():
 
 
 class TfidfTransformer(BaseEstimator, TransformerMixin):
-    """Transform a count matrix to a normalized tf or tf–idf representation
+    """Transform a count matrix to a normalized tf or tf-idf representation
 
-    Tf means term-frequency while tf–idf means term-frequency times inverse
+    Tf means term-frequency while tf-idf means term-frequency times inverse
     document-frequency. This is a common term weighting scheme in information
     retrieval, that has also found good use in document classification.
 
-    The goal of using tf–idf instead of the raw frequencies of occurrence of a
+    The goal of using tf-idf instead of the raw frequencies of occurrence of a
     token in a given document is to scale down the impact of tokens that occur
     very frequently in a given corpus and that are hence empirically less
     informative than features that occur in a small fraction of the training
     corpus.
 
-    In the SMART notation used in IR, this class implements several tf–idf
+    In the SMART notation used in IR, this class implements several tf-idf
     variants:
 
     Tf is "n" (natural) by default, "l" (logarithmic) when sublinear_tf=True.
@@ -918,11 +917,11 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
     ----------
 
     .. [Yates2011] `R. Baeza-Yates and B. Ribeiro-Neto (2011). Modern
-                   Information Retrieval. Addison Wesley, pp. 68–74.`
+                   Information Retrieval. Addison Wesley, pp. 68-74.`
 
-    .. [MSR2008] `C.D. Manning, H. Schütze and P. Raghavan (2008). Introduction
-                 to Information Retrieval. Cambridge University Press,
-                 pp. 121–125.`
+    .. [MSR2008] `C.D. Manning, H. Schuetze and P. Raghavan (2008).
+                   Introduction to Information Retrieval. Cambridge University
+                   Press, pp. 121-125.`
     """
 
     def __init__(self, norm='l2', use_idf=True, smooth_idf=True,
@@ -958,7 +957,7 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X, copy=True):
-        """Transform a count matrix to a tf or tf–idf representation
+        """Transform a count matrix to a tf or tf-idf representation
 
         Parameters
         ----------
@@ -1077,7 +1076,7 @@ class TfidfVectorizer(CountVectorizer):
 
     token_pattern : string
         Regular expression denoting what constitutes a "token", only used
-        if `tokenize == 'word'`. The default regexp select tokens of 2
+        if `analyzer == 'word'`. The default regexp select tokens of 2
         or more letters characters (punctuation is completely ignored
         and always treated as a token separator).
 
@@ -1225,7 +1224,7 @@ class TfidfVectorizer(CountVectorizer):
         return self._tfidf.transform(X, copy=False)
 
     def transform(self, raw_documents, copy=True):
-        """Transform raw text documents to tf–idf vectors
+        """Transform raw text documents to tf-idf vectors
 
         Parameters
         ----------

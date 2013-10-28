@@ -106,8 +106,9 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
     elif algorithm == 'lasso_cd':
         alpha = float(regularization) / n_features  # account for scaling
         clf = Lasso(alpha=alpha, fit_intercept=False, precompute=gram,
-                    max_iter=max_iter)
-        clf.fit(dictionary.T, X.T, coef_init=init)
+                    max_iter=max_iter, warm_start=True)
+        clf.coef_ = init
+        clf.fit(dictionary.T, X.T)
         new_code = clf.coef_
 
     elif algorithm == 'lars':
@@ -622,7 +623,7 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
                        % (ii, dt, dt / 60))
 
         this_code = sparse_encode(this_X, dictionary.T, algorithm=method,
-                                  alpha=alpha).T
+                                  alpha=alpha, n_jobs=n_jobs).T
 
         # Update the auxiliary variables
         if ii < batch_size - 1:
