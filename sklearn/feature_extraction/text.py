@@ -11,9 +11,13 @@
 The :mod:`sklearn.feature_extraction.text` submodule gathers utilities to
 build feature vectors from text documents.
 
-@note: This module is originally from sklearn.feature_extraction. 
-I added an LdaVectorizer class and an LsiVectorizer class to extract topics from text. 
--Nan Li (nanli@odesk.com).
+The submodule is edited by Nan Li (nanli@odesk.com,
+nanli@alumni.cs.ucsb.edu).
+
+An LdaVectorizer class and an LsiVectorizer class are added
+to extract topics from text. The topic model implementation is
+based on the LdaModel and LsiModel classes in the gensim.models
+module.
 """
 from __future__ import unicode_literals
 
@@ -29,7 +33,7 @@ import numpy as np
 import scipy.sparse as sp
 
 from sklearn.base import BaseEstimator, TransformerMixin
-#from sklearn.externals.six.moves import xrange # This is the original import, but it doesn't work in PyDev!
+from sklearn.externals.six.moves import xrange
 from sklearn.preprocessing import normalize
 from sklearn.feature_extraction.hashing import FeatureHasher
 from sklearn.feature_extraction.stop_words import ENGLISH_STOP_WORDS
@@ -1250,102 +1254,114 @@ class TfidfVectorizer(CountVectorizer):
         return self._tfidf.transform(X, copy)
 
 
-
-
-
-
 """
 ===============
 Added by Nan Li
 ===============
 """
 
+
 def _generate_gensim_corpus(count_matrix):
-    """Convert a sparse-CSC word count matrix into a gensim corpus, which is a list of lists of tuples
-    
+    """Convert a sparse-CSC word count matrix into a gensim corpus,
+    which is a list of lists of tuples
+
     Parameters
     ----------
     count_matrix: sparse-CSC matrix
         A sparse word count matrix
-    
+
     Returns
     ------
     vectors: list of lists of tuples, [[(word_id, word_count)...]...]
-    
+
     See Also
     --------
     class gensim.matutils.Sparse2Corpus
-    
-    """       
-    
+
+    """
+
     # turn the sparse word count matrix into a gensim corpus (list of lists)
-    count_matrix_csr=count_matrix.tocsr()
-    indices = count_matrix_csr.indices;
-    indptr = count_matrix_csr.indptr;
+    count_matrix_csr = count_matrix.tocsr()
+    indices = count_matrix_csr.indices
+    indptr = count_matrix_csr.indptr
     nonzero_entries = count_matrix_csr.data
-    
+
     corpus = []
-    data_index = 0 # the index of the non-zero entries in count_matrix_csr
+    data_index = 0  # the index of the non-zero entries in count_matrix_csr
     for ptr in range(1, len(indptr)):
-        # get the number of non-empty elements in this row (doc)            
+        # get the number of non-empty elements in this row (doc)
         non_empty_num_inrow = indptr[ptr] - indptr[ptr-1]
         # list of (word_id, word_#) tuples for this row (doc)
         corpus_row = []
-        
+
         for i in range(non_empty_num_inrow):
             col_id = indices[data_index + i]
             corpus_row.append((col_id, nonzero_entries[data_index + i]))
-        
-        data_index += non_empty_num_inrow            
+
+        data_index += non_empty_num_inrow
         corpus.append(corpus_row)
-    
+
     return corpus
 
-# The following code is copied and modified from gensim.mathutils.corpus2csc method.
-def _convert_gensim_corpus2csr(corpus, num_topics=None, 
-                               dtype=np.float64, 
+
+def _convert_gensim_corpus2csr(corpus, num_topics=None,
+                               dtype=np.float64,
                                num_docs=None, num_nnz=None):
     """
-    Convert a gensim corpus into a scipy sparse-csr matrix, in scipy.sparse.csr_matrix format,
-    with documents as rows
-    
-    If the number of terms, documents and non-zero elements is known, you can pass
-    them here as parameters and a more memory efficient code path will be taken.
-    
+    Convert a gensim corpus into a sparse matrix,
+    in scipy.sparse.csr_matrix format, with documents as rows
+
+    If the number of terms, documents and non-zero elements is known,
+    you can pass them here as parameters and a more memory efficient
+    code path will be taken.
+
+    The code in this method is copied and modified from
+    gensim.mathutils.corpus2csc method.
+
     Parameters
     ----------
     corpus: list of lists of tuples
         [[(word_id, word_count)...]...]
-    
+
     num_topics: integer
         Number of topics
-    
+
     num_docs: integer
         Number of documents
-    
+
     num_nnz: integer
         Number of non-zero entries in the corpus
-    
+
     Returns
     ------
-    vectors: sparse matrix (scipy.sparse.csr_matrix), [n_docs, n_topics]   
-    
+    vectors: sparse matrix (scipy.sparse.csr_matrix), [n_docs, n_topics]
+
     """
-    if num_topics is not None and num_docs is not None and num_nnz is not None:
-        # faster and much more memory-friendly version of creating the sparse csc
+
+    if (num_topics is not None
+       and num_docs is not None
+       and num_nnz is not None):
+        # faster and much more memory-friendly version
+        # of creating the sparse csc
         posnow, indptr = 0, [0]
-        indices = np.empty((num_nnz,), dtype=np.int32) # HACK assume feature ids fit in 32bit integer
+        # HACK assume feature ids fit in 32bit integer
+        indices = np.empty((num_nnz,), dtype=np.int32)
         data = np.empty((num_nnz,), dtype=dtype)
         for _, doc in enumerate(corpus):
             posnext = posnow + len(doc)
             indices[posnow: posnext] = [feature_id for feature_id, _ in doc]
-            data[posnow: posnext] = [feature_weight for _, feature_weight in doc]
+            data[posnow: posnext] = [feature_weight
+                                     for _, feature_weight in doc]
             indptr.append(posnext)
             posnow = posnext
-        assert posnow == num_nnz, "mismatch between supplied and computed number of non-zeros"
-        result = sp.csr_matrix((data, indices, indptr), shape=(num_docs, num_topics), dtype=dtype)
+        assert posnow == num_nnz, '''mismatch between supplied
+                                     and computed number of non-zeros'''
+        result = sp.csr_matrix((data, indices, indptr),
+                               shape=(num_docs, num_topics),
+                               dtype=dtype)
     else:
-        # slower version; determine the sparse matrix parameters during iteration
+        # slower version
+        # determine the sparse matrix parameters during iteration
         num_nnz, data, indices, indptr = 0, [], [], [0]
         for _, doc in enumerate(corpus):
             indices.extend([feature_id for feature_id, _ in doc])
@@ -1358,18 +1374,20 @@ def _convert_gensim_corpus2csr(corpus, num_topics=None,
         # now num_docs, num_topics and num_nnz contain the correct values
         data = np.asarray(data, dtype=dtype)
         indices = np.asarray(indices)
-        result = sp.csr_matrix((data, indices, indptr), shape=(num_docs, num_topics), dtype=dtype)
+        result = sp.csr_matrix((data, indices, indptr),
+                               shape=(num_docs, num_topics),
+                               dtype=dtype)
     return result
-          
-    
+
+
 class LdaVectorizer(CountVectorizer):
     """Transform a count matrix to a LDA topic representation
 
     Latent dirichlet allocation (LDA) is a widely-used generative model to
-    extract latent topics from a collection of documents. Each document is modeled
-    as a distribution over a set of topics, and each topic is modeled as a
-    distribution over a set of keywords.
-    
+    extract latent topics from a collection of documents.
+    Each document is modeled as a distribution over a set of topics,
+    and each topic is modeled as a distribution over a set of keywords.
+
     The LdaModel from gensim is used as the LDA implementation.
 
     Parameters
@@ -1477,26 +1495,32 @@ class LdaVectorizer(CountVectorizer):
     dtype : type, optional
         Type of the matrix returned by fit_transform() or transform().
 
-    
-    == Parameters related to LdaVectorizer ==           
+
+    == Parameters related to LdaVectorizer ==
     num_topics : integer
         Number of requested latent topics.
-    
-    id2word : gensim.corpora.Dictionary 
+
+    id2word : gensim.corpora.Dictionary
         A mapping from word ids (integers) to words (strings). It is
-        used to determine the vocabulary size, as well as for debugging and topic printing.
+        used to determine the vocabulary size, as well as
+        for debugging and topic printing.
 
     alpha : float or vector, optional
-        Hyperpameter for the symmetric Dirichlet prior on the document-topic distribution,
-        or can be set to a vector for asymmetric prior.
-        
+        Hyperpameter for the symmetric Dirichlet prior on the
+        document-topic distribution, or can be set to a vector
+        for asymmetric prior.
+
     eta : float or vector, optional
-        Hyperparameter for the symmetric Dirichlet prior on the topic-word distribution,
-        or can be set to a vector for asymmetric prior.
-    
+        Hyperparameter for the symmetric Dirichlet prior on the
+        topic-word distribution, or can be set to a vector
+        for asymmetric prior.
+
     distributed :  boolean, optional
         Turned on to force distributed computing (see the web tutorial
         on how to set up a cluster of machines for gensim).
+
+    log_file : string, optional, 'lda_topics.log' by default
+        The log file used to record all learned topics
 
 
     See also
@@ -1504,18 +1528,19 @@ class LdaVectorizer(CountVectorizer):
     CountVectorizer
         Tokenize the documents and count the occurrences of token and return
         them as a sparse matrix
-    
+
     gensim.models.LdaModel
-        Encapsulate functionality for the Latent Dirichlet Allocation algorithm
-        
+        Encapsulate functionality for the
+        Latent Dirichlet Allocation algorithm
+
     References
     ----------
 
-    .. [HoffmanBB10] `Matthew D. Hoffman, David M. Blei, Francis R. Bach: 
+    .. [HoffmanBB10] `Matthew D. Hoffman, David M. Blei, Francis R. Bach:
     Online Learning for Latent Dirichlet Allocation. NIPS 2010: 856-864`
-                       
+
     """
-    
+
     def __init__(self, input='content', encoding='utf-8', charset=None,
                  decode_error='strict', charset_error=None,
                  strip_accents=None, lowercase=True,
@@ -1523,24 +1548,24 @@ class LdaVectorizer(CountVectorizer):
                  stop_words='english', token_pattern=r"(?u)\b\w\w+\b",
                  ngram_range=(1, 1), max_df=1.0, min_df=1,
                  max_features=None, vocabulary=None, binary=False,
-                 dtype=np.int64, 
+                 dtype=np.int64,
                  num_topics=100,
-                 distributed=False, chunksize=2000, passes=1, update_every=1, 
-                 alpha=None, eta=None, 
+                 distributed=False, chunksize=2000, passes=1, update_every=1,
+                 alpha=None, eta=None,
                  decay=0.5,
                  log_file='lda_topics.log'):
-        
+
         # initialize a CountVectorizer object
         super(LdaVectorizer, self).__init__(
-              input=input, charset=charset, charset_error=charset_error,
-              encoding=encoding, decode_error=decode_error,
-              strip_accents=strip_accents,lowercase=lowercase,
-              preprocessor=preprocessor, tokenizer=tokenizer, analyzer=analyzer,
-              stop_words=stop_words, token_pattern=token_pattern,
-              ngram_range=ngram_range, max_df=max_df, min_df=min_df,
-              max_features=max_features, vocabulary=vocabulary, binary=False,
-              dtype=dtype)
-        
+            input=input, charset=charset, charset_error=charset_error,
+            encoding=encoding, decode_error=decode_error,
+            strip_accents=strip_accents, lowercase=lowercase,
+            preprocessor=preprocessor, tokenizer=tokenizer, analyzer=analyzer,
+            stop_words=stop_words, token_pattern=token_pattern,
+            ngram_range=ngram_range, max_df=max_df, min_df=min_df,
+            max_features=max_features, vocabulary=vocabulary, binary=False,
+            dtype=dtype)
+
         self.num_topics = num_topics
         self.distributed = distributed
         self.chunksize = chunksize
@@ -1550,97 +1575,114 @@ class LdaVectorizer(CountVectorizer):
         self.eta = eta
         self.decay = decay
         self.log_file = log_file
-    
+
     def fit(self, raw_docs, y=None):
-        """Learn a conversion law from raw documents to array data (topic weights)"""
-        
-        # create word-count matrix (sparse csc) using the parent CountVectorizer
+        """Learn a conversion law from raw documents
+        to array data (topic weights)"""
+
+        # create word-count matrix (sparse csc) using
+        # the parent CountVectorizer
         count_matrix = super(LdaVectorizer, self).fit_transform(raw_docs)
         print '\nBuilding LDA model: sklearn word count matrix completed!\n'
-    
+
         # build a gensim dictionary
-        self._dictionary= corpora.Dictionary([super(LdaVectorizer, self).get_feature_names()])
+        self._dictionary = corpora.Dictionary([super(LdaVectorizer, self)
+                                              .get_feature_names()])
         print '\nBuilding LDA model: gensim Dictionary generated!\n'
-        
-        self._corpus = _generate_gensim_corpus(count_matrix)        
+
+        self._corpus = _generate_gensim_corpus(count_matrix)
         print '\nBuilding LDA model: gensim corpus generated!\n'
-            
+
+        # build a gensim tf-idf model
+        self._model_tfidf = models.TfidfModel(self._corpus)
+        # turn the word count into a normalized tfidf
+        self._corpus_tfidf = self._model_tfidf[self._corpus]
+        print '\nBuilding LDA model: gensim tf-idf corpus generated!\n'
+
         # build an LDA model
-        # Specifying dictionary is important if we want to output actual words, not IDs, into the topic log file
+        # Specifying dictionary is important if we want to output actual words,
+        # not IDs, into the topic log file
         self._model_lda = models.LdaModel(
-            corpus=self._corpus, id2word = self._dictionary, num_topics = self.num_topics,
-            distributed=self.distributed, chunksize=self.chunksize, passes=self.passes, 
+            corpus=self._corpus_tfidf, id2word=self._dictionary,
+            num_topics=self.num_topics,
+            distributed=self.distributed,
+            chunksize=self.chunksize, passes=self.passes,
             update_every=self.update_every,
-            alpha=self.alpha, eta=self.eta, 
+            alpha=self.alpha, eta=self.eta,
             decay=self.decay)
         print '\nBuilding LDA model: gensim LDA model generated!\n'
-        
+
         lda_log_file = codecs.open(self.log_file, 'a', 'utf-8')
-    
-        lda_log_file.write('\n\n======= ' + str(time.ctime()) + ' ======= \n');
+
+        lda_log_file.write('\n\n======= ' + str(time.ctime()) + ' ======= \n')
         topic_counter = 0
         for i in range(0, self.num_topics):
-            lda_log_file.write('\ntopic #' + str(topic_counter) + ': ' + self._model_lda.print_topic(i, 20) + '\n')
+            lda_log_file.write('\ntopic #' + str(topic_counter) + ': '
+                               + self._model_lda.print_topic(i, 20) + '\n')
             topic_counter += 1
             lda_log_file.flush()
         lda_log_file.flush()
-    
+
         print 'Finished logging!\n'
-        
+
         return self
-            
+
     def fit_transform(self, raw_docs, y=None):
-        """Learn the LDA model from the raw documents and 
+        """Learn the LDA model from the raw documents and
         return the LDA vector representation of the documents
-        
+
         Parameters
         ----------
         raw_docs : iterable
             A collection of documents, each is represented as a string
-            
+
         Returns
         -------
         vectors : array, [n_samples, n_topics]
         """
+
         self.fit(raw_docs)
         return _convert_gensim_corpus2csr(self._model_lda[self._corpus])
-    
+
     def transform(self, raw_docs):
         """Return the LDA vector representation of the new documents
         using the learned LDA model
-        
+
         Parameters
         ----------
         raw_docs : iterable
             A collection of documents, each is represented as a string
-            
+
         Returns
         -------
         vectors : array, [n_samples, n_topics]
         """
-        # create word-count matrix (sparse csc) using the parent CountVectorizer
+
+        # create word-count matrix (sparse csc) using the
+        # parent CountVectorizer
         count_matrix = super(LdaVectorizer, self).fit_transform(raw_docs)
         print '\nTransforming new docs: sklearn word count matrix completed!\n'
-    
-        corpus = _generate_gensim_corpus(count_matrix)        
+
+        corpus = _generate_gensim_corpus(count_matrix)
         print '\nTransforming new docs: gensim corpus generated!\n'
-        
+
         return _convert_gensim_corpus2csr(self._model_lda[corpus])
-    
-    
+
 
 class LsiVectorizer(CountVectorizer):
     """Transform a count matrix to a LSI topic representation
 
     Latent semantic analysis/indexing (LSA/LSI) is a widely-used technique to
-    analyze documents and find the unerlying meaning or concepts of those documents.
-    LSA assumes that words that are close in meaning will occur in similar pieces of text. 
-    A matrix containing word counts per document is constructed from a corpus of documents and 
-    a linear algebra technique called singular value decomposition (SVD) is used to reduce 
-    the number of words while preserving the similarity structure among documents.
+    analyze documents and find the unerlying meaning or concepts of
+    those documents. LSA assumes that words that are close in meaning
+    will occur in similar pieces of text. A matrix containing word counts
+    per document is constructed from a corpus of documents and a linear
+    algebra technique called singular value decomposition (SVD) is used to
+    reduce the number of words while preserving the similarity structure
+    among documents.
 
     The LsiModel from gensim is used as the LSI implementation.
-    
+
     Parameters
     ----------
     == Parameters related to CountVectorizer ==
@@ -1746,42 +1788,47 @@ class LsiVectorizer(CountVectorizer):
     dtype : type, optional
         Type of the matrix returned by fit_transform() or transform().
 
-    
-    == Parameters related to LsiVectorizer ==           
+
+    == Parameters related to LsiVectorizer ==
     num_topics : integer
         Number of requested latent topics.
-    
-    id2word : gensim.corpora.Dictionary 
+
+    id2word : gensim.corpora.Dictionary
         A mapping from word ids (integers) to words (strings). It is
-        used to determine the vocabulary size, as well as for debugging and topic printing.
+        used to determine the vocabulary size, as well as for debugging
+        and topic printing.
 
     distributed :  boolean, optional
         Turned on to force distributed computing (see the web tutorial
         on how to set up a cluster of machines for gensim).
-        
+
     onepass : boolean, optional
         Turned off to force a multi-pass stochastic algorithm.
 
     power_iters : integer, optional
-        Increasing the number of power iterations improves accuracy, but lowers performance.
-    
+        Increasing the number of power iterations improves accuracy,
+        but lowers performance.
+
     extra_samples : integer, optional
-    
+
     `power_iters` and `extra_samples` affect the accuracy of the stochastic
     multi-pass algorithm, which is used either internally (`onepass=True`) or
     as the front-end algorithm (`onepass=False`).
+
+    log_file : string, optional, 'lsi_topics.log' by default
+        The log file used to record all learned topics
 
     See also
     --------
     CountVectorizer
         Tokenize the documents and count the occurrences of token and return
         them as a sparse matrix
-    
+
     gensim.models.LsiModel
         Encapsulate functionality for the Latent Semantic Indexing algorithm
-          
+
     """
-    
+
     def __init__(self, input='content', encoding='utf-8', charset=None,
                  decode_error='strict', charset_error=None,
                  strip_accents=None, lowercase=True,
@@ -1789,24 +1836,25 @@ class LsiVectorizer(CountVectorizer):
                  stop_words='english', token_pattern=r"(?u)\b\w\w+\b",
                  ngram_range=(1, 1), max_df=1.0, min_df=1,
                  max_features=None, vocabulary=None, binary=False,
-                 dtype=np.int64, 
+                 dtype=np.int64,
                  num_topics=100,
-                 distributed=False, chunksize=20000, 
-                 onepass=True, power_iters=2, extra_samples=100, 
+                 distributed=False, chunksize=20000,
+                 onepass=True, power_iters=2, extra_samples=100,
                  decay=1.0,
                  log_file='lsi_topics.log'):
-        
+
         # initialize a CountVectorizer object
         super(LsiVectorizer, self).__init__(
-              input=input, charset=charset, charset_error=charset_error,
-              encoding=encoding, decode_error=decode_error,
-              strip_accents=strip_accents,lowercase=lowercase,
-              preprocessor=preprocessor, tokenizer=tokenizer, analyzer=analyzer,
-              stop_words=stop_words, token_pattern=token_pattern,
-              ngram_range=ngram_range, max_df=max_df, min_df=min_df,
-              max_features=max_features, vocabulary=vocabulary, binary=False,
-              dtype=dtype)
-        
+            input=input, charset=charset, charset_error=charset_error,
+            encoding=encoding, decode_error=decode_error,
+            strip_accents=strip_accents, lowercase=lowercase,
+            preprocessor=preprocessor, tokenizer=tokenizer,
+            analyzer=analyzer,
+            stop_words=stop_words, token_pattern=token_pattern,
+            ngram_range=ngram_range, max_df=max_df, min_df=min_df,
+            max_features=max_features, vocabulary=vocabulary,
+            binary=False, dtype=dtype)
+
         self.num_topics = num_topics
         self.distributed = distributed
         self.chunksize = chunksize
@@ -1815,78 +1863,96 @@ class LsiVectorizer(CountVectorizer):
         self.extra_samples = extra_samples
         self.decay = decay
         self.log_file = log_file
-    
+
     def fit(self, raw_docs, y=None):
-        """Learn a conversion law from raw documents to array data (topic weights)"""
-        
-        # create word-count matrix (sparse csc) using the parent CountVectorizer
+        """Learn a conversion law from raw documents
+        to array data (topic weights)"""
+
+        # create word-count matrix (sparse csc) using
+        # the parent CountVectorizer
         count_matrix = super(LsiVectorizer, self).fit_transform(raw_docs)
         print '\nBuilding LSI model: sklearn word count matrix completed!\n'
-    
+
         # build a gensim dictionary
-        self._dictionary= corpora.Dictionary([super(LsiVectorizer, self).get_feature_names()])
+        self._dictionary = corpora.Dictionary([super(LsiVectorizer, self)
+                                              .get_feature_names()])
         print '\nBuilding LSI model: gensim Dictionary generated!\n'
-        
-        self._corpus = _generate_gensim_corpus(count_matrix)        
+
+        self._corpus = _generate_gensim_corpus(count_matrix)
         print '\nBuilding LSI model: gensim corpus generated!\n'
-            
+
+        # build a gensim tf-idf model
+        self._model_tfidf = models.TfidfModel(self._corpus)
+        # turn the word count into a normalized tfidf
+        self._corpus_tfidf = self._model_tfidf[self._corpus]
+        print '\nBuilding LSI model: gensim tf-idf corpus generated!\n'
+
         # build an LSI model
-        # Specifying dictionary is important if we want to output actual words, not IDs, into the topic log file
+        # Specifying dictionary is important if we want to output actual words,
+        # not IDs, into the topic log file
         self._model_lsi = models.LsiModel(
-            corpus=self._corpus, id2word = self._dictionary, num_topics = self.num_topics,
-            distributed=self.distributed, chunksize=self.chunksize, 
-            onepass=self.onepass, power_iters=self.power_iters, extra_samples=self.extra_samples, 
+            corpus=self._corpus_tfidf, id2word=self._dictionary,
+            num_topics=self.num_topics,
+            distributed=self.distributed, chunksize=self.chunksize,
+            onepass=self.onepass, power_iters=self.power_iters,
+            extra_samples=self.extra_samples,
             decay=self.decay)
         print '\nBuilding LSI model: gensim LSI model generated!\n'
-        
+
         lsi_log_file = codecs.open(self.log_file, 'a', 'utf-8')
-    
-        lsi_log_file.write('\n\n======= ' + str(time.ctime()) + ' ======= \n');
+
+        lsi_log_file.write('\n\n======= ' + str(time.ctime())
+                           + ' ======= \n')
         topic_counter = 0
-        for topic in self._model_lsi.show_topics(-1, 20): # -1 means show all topics
-            lsi_log_file.write('\ntopic #' + str(topic_counter) + ': ' + topic + '\n')
+        # -1 means show all topics
+        for topic in self._model_lsi.show_topics(-1, 20):
+            lsi_log_file.write('\ntopic #' + str(topic_counter)
+                               + ': ' + topic + '\n')
             topic_counter += 1
             lsi_log_file.flush()
         lsi_log_file.flush()
-    
+
         print 'Finished logging!\n'
-        
+
         return self
-            
+
     def fit_transform(self, raw_docs, y=None):
-        """Learn the LSI model from the raw documents and 
+        """Learn the LSI model from the raw documents and
         return the LSI vector representation of the documents
-        
+
         Parameters
         ----------
         raw_docs : iterable
             A collection of documents, each is represented as a string
-            
+
         Returns
         -------
         vectors : array, [n_samples, n_topics]
         """
+
         self.fit(raw_docs)
         return _convert_gensim_corpus2csr(self._model_lsi[self._corpus])
-    
+
     def transform(self, raw_docs):
         """Return the LSI vector representation of the new documents
         using the learned LSI model
-        
+
         Parameters
         ----------
         raw_docs : iterable
             A collection of documents, each is represented as a string
-            
+
         Returns
         -------
         vectors : array, [n_samples, n_topics]
         """
-        # create word-count matrix (sparse csc) using the parent CountVectorizer
+
+        # create word-count matrix (sparse csc) using
+        # the parent CountVectorizer
         count_matrix = super(LsiVectorizer, self).fit_transform(raw_docs)
         print '\nTransforming new docs: sklearn word count matrix completed!\n'
-    
-        corpus = _generate_gensim_corpus(count_matrix)        
+
+        corpus = _generate_gensim_corpus(count_matrix)
         print '\nTransforming new docs: gensim corpus generated!\n'
-        
+
         return _convert_gensim_corpus2csr(self._model_lsi[corpus])
