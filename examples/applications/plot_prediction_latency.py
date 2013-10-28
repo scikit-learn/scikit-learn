@@ -17,6 +17,7 @@ The plots represent the distribution of the prediction latency as a boxplot.
 # License: BSD 3 clause
 
 from __future__ import print_function
+from collections import defaultdict
 
 import time
 import gc
@@ -119,7 +120,7 @@ def generate_dataset(n_train, n_test, n_features, noise=0.1, verbose=False):
     return X_train, y_train, X_test, y_test
 
 
-def boxplot_runtimes(runtimes, cls_names, pred_type):
+def boxplot_runtimes(runtimes, cls_names, pred_type, n_features):
     """
     Plot a new `Figure` with boxplots of prediction runtimes.
 
@@ -144,7 +145,9 @@ def boxplot_runtimes(runtimes, cls_names, pred_type):
                    alpha=0.5)
 
     ax1.set_axisbelow(True)
-    ax1.set_title('Prediction Time per Instance - %s' % pred_type.capitalize())
+    ax1.set_title('Prediction Time per Instance - %s, %d feats.' % (
+        pred_type.capitalize(),
+        n_features))
     ax1.set_xlabel('Estimator')
     ax1.set_ylabel('Prediction Time (us)')
 
@@ -154,7 +157,7 @@ def boxplot_runtimes(runtimes, cls_names, pred_type):
 def benchmark(estimators, n_train, n_test, n_feats):
     """Run the whole benchmark."""
     X_train, y_train, X_test, y_test = generate_dataset(n_train, n_test,
-                                                        n_feats, verbose=True)
+                                                        n_feats)
 
     stats = {'settings': {'n_train': n_train, 'n_test': 'n_test',
                           'n_feats': n_feats}}
@@ -167,9 +170,43 @@ def benchmark(estimators, n_train, n_test, n_feats):
 
     cls_names = estimators.keys()
     runtimes = [1e6 * stats[clf_name]['atomic'] for clf_name in cls_names]
-    boxplot_runtimes(runtimes, cls_names, 'atomic')
+    boxplot_runtimes(runtimes, cls_names, 'atomic', n_feats)
     runtimes = [1e6 * stats[clf_name]['bulk'] for clf_name in cls_names]
-    boxplot_runtimes(runtimes, cls_names, 'bulk (%d)' % n_test)
+    boxplot_runtimes(runtimes, cls_names, 'bulk (%d)' % n_test, n_feats)
+
+
+def n_feature_influence(estimators, n_train, n_test, n_feats, percentile=90):
+    """Estimate influence of the number of features on prediction time."""
+    percentiles = defaultdict(defaultdict)
+    for n in n_feats:
+        print("benchmarking with %d features" % n)
+        X_train, y_train, X_test, y_test = generate_dataset(n_train, n_test,
+                                                            n)
+        for cls_name, estimator in estimators.iteritems():
+            estimator.fit(X_train, y_train)
+            gc.collect()
+            runtimes = atomic_benchmark_estimator(estimator, X_test)
+            percentiles[cls_name][n] = 1e6 * scoreatpercentile(runtimes,
+                                                               percentile)
+    return percentiles
+
+
+def plot_n_features_influence(percentiles, percentile):
+    fig, ax1 = plt.subplots(figsize=(10, 6))
+    colors = ['r', 'g', 'b']
+    for i, cls_name in enumerate(percentiles.iterkeys()):
+        x = np.array(sorted([n for n in percentiles[cls_name].iterkeys()]))
+        y = np.array([percentiles[cls_name][n] for n in x])
+        plt.plot(x, y, color=colors[i], )
+    ax1.yaxis.grid(True, linestyle='-', which='major', color='lightgrey',
+                   alpha=0.5)
+    ax1.set_axisbelow(True)
+    ax1.set_title('Evolution of Prediction Time with #Features')
+    ax1.set_xlabel('#Features')
+    ax1.set_ylabel('Prediction Time at %d%%-ile (us)' % percentile)
+    ax1.legend()
+    plt.show()
+
 
 if __name__ == '__main__':
     n_train = int(1e3)
@@ -178,3 +215,9 @@ if __name__ == '__main__':
     estimators = {'elasticnet': ElasticNet(), 'ridge': Ridge(),
                   'randomforest': RandomForestRegressor()}
     benchmark(estimators, n_train, n_test, n_feats)
+
+    #percentile = 90
+    #percentiles = n_feature_influence(estimators, n_train, n_test,
+    #                                  map(lambda x: 10**x, range(1, 4)),
+    #                                  percentile)
+    #plot_n_features_influence(percentiles, percentile)
