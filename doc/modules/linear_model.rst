@@ -270,7 +270,7 @@ Elastic Net
 ===========
 :class:`ElasticNet` is a linear model trained with L1 and L2 prior as
 regularizer. This combination allows for learning a sparse model where
-few of the weights are non-zero like :class:`Lasso`, while still maintaining the
+few of the weights are non-zero like :class:`Lasso`, while still maintaining
 the regularization properties of :class:`Ridge`. We control this tradeoff
 using the `l1_ratio` parameter.
 
@@ -725,3 +725,66 @@ For classification, :class:`PassiveAggressiveClassifier` can be used with
    <http://jmlr.csail.mit.edu/papers/volume7/crammer06a/crammer06a.pdf>`_
    K. Crammer, O. Dekel, J. Keshat, S. Shalev-Shwartz, Y. Singer - JMLR 7 (2006)
 
+Robustness to outliers: RANSAC
+==============================
+
+The RANSAC (RANdom SAmple Consensus) is an iterative algorithm for the robust
+estimation of parameters from a subset of inliers from the complete data set.
+
+It is an iterative method to estimate the parameters of a mathematical model.
+RANSAC is a non-deterministic algorithm producing only a reasonable result with
+a certain probability, which is dependent on the number of iterations (see
+`max_trials` parameter). It is typically used for linear and non-linear
+regression problems and is especially popular in the fields of photogrammetric
+computer vision.
+
+The algorithm splits the complete input sample data into a set of inliers,
+which may be subject to noise, and outliers, which are e.g. caused by erroneous
+measurements or invalid hypotheses about the data. The resulting model is then
+estimated only from the determined inliers.
+
+.. figure:: ../auto_examples/linear_model/images/plot_ransac_1.png
+   :target: ../auto_examples/linear_model/plot_ransac.html
+   :align: center
+   :scale: 50%
+
+Each iteration performs the following steps:
+
+1. Select `min_samples` random samples from the original data and check
+   whether the set of data is valid (see `is_data_valid`).
+2. Fit a model to the random subset (`base_estimator.fit`) and check
+   whether the estimated model is valid (see `is_model_valid`).
+3. Classify all data as inliers or outliers by calculating the residuals
+   to the estimated model (`base_estimator.predict(X) - y`) - all data
+   samples with absolute residuals smaller than the `residual_threshold`
+   are considered as inliers.
+4. Save fitted model as best model if number of inlier samples is
+   maximal. In case the current estimated model has the same number of
+   inliers, it is only considered as the best model if it has better score.
+
+These steps are performed either a maximum number of times (`max_trials`) or
+until one of the special stop criteria are met (see `stop_n_inliers` and
+`stop_score`). The final model is estimated using all inlier samples (consensus
+set) of the previously determined best model.
+
+The `is_data_valid` and `is_model_valid` functions allow to identify and reject
+degenerate combinations of random sub-samples. If the estimated model is not
+needed for identifying degenerate cases, `is_data_valid` should be used as it
+is called prior to fitting the model and thus leading to better computational
+performance.
+
+
+.. topic:: Examples:
+
+  * :ref:`example_linear_model_plot_ransac.py`
+
+.. topic:: References:
+
+ * http://en.wikipedia.org/wiki/RANSAC
+ * `"Random Sample Consensus: A Paradigm for Model Fitting with Applications to
+   Image Analysis and Automated Cartography"
+   <http://www.cs.columbia.edu/~belhumeur/courses/compPhoto/ransac.pdf>`_
+   Martin A. Fischler and Robert C. Bolles - SRI International (1981)
+ * `"Performance Evaluation of RANSAC Family"
+   <http://www.bmva.org/bmvc/2009/Papers/Paper355/Paper355.pdf>`_
+   Sunglok Choi, Taemin Kim and Wonpil Yu - BMVC (2009)

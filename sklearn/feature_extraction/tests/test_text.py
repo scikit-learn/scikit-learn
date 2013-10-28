@@ -262,7 +262,7 @@ def test_countvectorizer_custom_vocabulary_pipeline():
 def test_countvectorizer_custom_vocabulary_repeated_indeces():
     vocab = {"pizza": 0, "beer": 0}
     try:
-        vect = CountVectorizer(vocabulary=vocab)
+        CountVectorizer(vocabulary=vocab)
     except ValueError as e:
         assert_in("vocabulary contains repeated indices", str(e).lower())
 
@@ -270,7 +270,7 @@ def test_countvectorizer_custom_vocabulary_repeated_indeces():
 def test_countvectorizer_custom_vocabulary_gap_index():
     vocab = {"pizza": 1, "beer": 2}
     try:
-        vect = CountVectorizer(vocabulary=vocab)
+        CountVectorizer(vocabulary=vocab)
     except ValueError as e:
         assert_in("doesn't contain index", str(e).lower())
 
@@ -567,6 +567,32 @@ def test_vectorizer_max_features():
         vectorizer.fit(ALL_FOOD_DOCS)
         assert_equal(set(vectorizer.vocabulary_), expected_vocabulary)
         assert_equal(vectorizer.stop_words_, expected_stop_words)
+
+
+def test_count_vectorizer_max_features():
+    """Regression test: max_features didn't work correctly in 0.14."""
+
+    cv_1 = CountVectorizer(max_features=1)
+    cv_3 = CountVectorizer(max_features=3)
+    cv_None = CountVectorizer(max_features=None)
+
+    counts_1 = cv_1.fit_transform(JUNK_FOOD_DOCS).sum(axis=0)
+    counts_3 = cv_3.fit_transform(JUNK_FOOD_DOCS).sum(axis=0)
+    counts_None = cv_None.fit_transform(JUNK_FOOD_DOCS).sum(axis=0)
+
+    features_1 = cv_1.get_feature_names()
+    features_3 = cv_3.get_feature_names()
+    features_None = cv_None.get_feature_names()
+
+    # The most common feature is "the", with frequency 7.
+    assert_equal(7, counts_1.max())
+    assert_equal(7, counts_3.max())
+    assert_equal(7, counts_None.max())
+
+    # The most common feature should be the same
+    assert_equal("the", features_1[np.argmax(counts_1)])
+    assert_equal("the", features_3[np.argmax(counts_3)])
+    assert_equal("the", features_None[np.argmax(counts_None)])
 
 
 def test_vectorizer_max_df():

@@ -1,5 +1,6 @@
 # Authors: Mathieu Blondel
 #          Olivier Grisel
+#          Peter Prettenhofer
 #          Lars Buitinck
 #
 # Licence: BSD 3 clause
@@ -14,6 +15,35 @@ np.import_array()
 
 
 ctypedef np.float64_t DOUBLE
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.cdivision(True)
+def csr_row_norms(X):
+    """L2 norm of each row in CSR matrix X."""
+    cdef:
+        unsigned int n_samples = X.shape[0]
+        unsigned int n_features = X.shape[1]
+        np.ndarray[DOUBLE, ndim=1, mode="c"] norms
+        np.ndarray[DOUBLE, ndim=1, mode="c"] data
+        np.ndarray[int, ndim=1, mode="c"] indices = X.indices
+        np.ndarray[int, ndim=1, mode="c"] indptr = X.indptr
+
+        np.npy_intp i, j
+        double sum_
+
+    norms = np.zeros(n_samples, dtype=np.float64)
+    data = np.asarray(X.data, dtype=np.float64)     # might copy!
+
+    for i in range(n_samples):
+        sum_ = 0.0
+        for j in range(indptr[i], indptr[i + 1]):
+            sum_ += data[j] * data[j]
+        norms[i] = sum_
+
+    return norms
+
 
 @cython.boundscheck(False)
 @cython.wraparound(False)

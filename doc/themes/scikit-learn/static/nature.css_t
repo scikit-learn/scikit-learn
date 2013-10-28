@@ -1106,6 +1106,10 @@ div.navbar ul.dropdown-menu li a.btn {
   box-shadow: inset 0 0px 0 rgba(255,255,255,.2), 0 0px 0px rgba(0,0,0,.05);
 }
 
+a.btn.dropdown-toggle {
+  vertical-align: baseline;
+}
+
 .navbar .btn, .navbar .open>.btn, .navbar .btn:hover{
   display: inline-block;
   padding: 4px 12px;

@@ -19,7 +19,7 @@ Who is using scikit-learn?
 
   <div class="logo">
 
-.. image:: images/inria.jpg
+.. image:: images/inria.png
    :target: http://www.inria.fr
 
 .. raw:: html

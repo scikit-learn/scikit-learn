@@ -159,7 +159,7 @@ def _initialize_nmf(X, n_components, variant=None, eps=1e-6,
     return W, H
 
 
-def _nls_subproblem(V, W, H_init, tol, max_iter, sigma=0.01, beta=0.1):
+def _nls_subproblem(V, W, H, tol, max_iter, sigma=0.01, beta=0.1):
     """Non-negative least square solver
 
     Solves a non-negative least squares subproblem using the
@@ -171,7 +171,7 @@ def _nls_subproblem(V, W, H_init, tol, max_iter, sigma=0.01, beta=0.1):
     V, W : array-like
         Constant matrices.
 
-    H_init : array-like
+    H : array-like
         Initial guess for the solution.
 
     tol : float
@@ -214,11 +214,7 @@ def _nls_subproblem(V, W, H_init, tol, max_iter, sigma=0.01, beta=0.1):
     http://www.csie.ntu.edu.tw/~cjlin/nmf/
 
     """
-    if (H_init < 0).any():
-        raise ValueError("Negative values in H_init passed to NLS solver.")
-
-    H = H_init
-    WtV = safe_sparse_dot(W.T, V, dense_output=True)
+    WtV = safe_sparse_dot(W.T, V)
     WtW = np.dot(W.T, W)
 
     # values justified in the paper
@@ -228,13 +224,12 @@ def _nls_subproblem(V, W, H_init, tol, max_iter, sigma=0.01, beta=0.1):
 
         # The following multiplication with a boolean array is more than twice
         # as fast as indexing into grad.
-        proj_gradient = norm(grad * np.logical_or(grad < 0, H > 0))
-        if proj_gradient < tol:
+        if norm(grad * np.logical_or(grad < 0, H > 0)) < tol:
             break
 
         Hp = H
 
-        for inner_iter in range(1, 20):
+        for inner_iter in range(19):
             # Gradient step.
             Hn = H - alpha * grad
             # Projection step.
@@ -243,7 +238,7 @@ def _nls_subproblem(V, W, H_init, tol, max_iter, sigma=0.01, beta=0.1):
             gradd = np.dot(grad.ravel(), d.ravel())
             dQd = np.dot(np.dot(WtW, d).ravel(), d.ravel())
             suff_decr = (1 - sigma) * gradd + 0.5 * dQd < 0
-            if inner_iter == 1:
+            if inner_iter == 0:
                 decr_alpha = not suff_decr
 
             if decr_alpha:
@@ -581,6 +576,8 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
         """
         X, = check_arrays(X, sparse_format='csc')
         Wt = np.zeros((self.n_components_, X.shape[0]))
+        check_non_negative(X, "ProjectedGradientNMF.transform")
+
         if sp.issparse(X):
             Wt, _, _ = _nls_subproblem(X.T, self.components_.T, Wt,
                                        tol=self.tol,

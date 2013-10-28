@@ -9,22 +9,12 @@ CTAGS ?= ctags
 
 all: clean inplace test
 
-clean-pyc:
-	find sklearn -name "*.pyc" | xargs rm -f
-
-clean-so:
-	find sklearn -name "*.so" | xargs rm -f
-	find sklearn -name "*.pyd" | xargs rm -f
-	find sklearn -name "__pycache__" | xargs rm -rf
-
-clean-build:
-	rm -rf build
-	rm -rf dist
-
 clean-ctags:
 	rm -f tags
 
-clean: clean-build clean-pyc clean-so clean-ctags
+clean: clean-ctags
+	$(PYTHON) setup.py clean
+	rm -rf dist
 
 in: inplace # just a shortcut
 inplace:
