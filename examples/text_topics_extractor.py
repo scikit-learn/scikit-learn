@@ -17,9 +17,9 @@ nanli@alumni.cs.ucsb.edu).
 """
 import sys
 from argparse import ArgumentParser
-sys.path.insert(0, '../sklearn/feature_extraction/')
+sys.path.insert(0, '..')
 
-from text import LdaVectorizer, LsiVectorizer
+from sklearn.feature_extraction.text import LdaVectorizer, LsiVectorizer
 from sklearn.datasets import fetch_20newsgroups
 
 # fetch the data

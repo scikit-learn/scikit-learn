@@ -28,21 +28,20 @@ from operator import itemgetter
 import re
 import unicodedata
 import warnings
+import time
+import codecs
 
 import numpy as np
 import scipy.sparse as sp
 
-from sklearn.base import BaseEstimator, TransformerMixin
-from sklearn.externals.six.moves import xrange
-from sklearn.preprocessing import normalize
-from sklearn.feature_extraction.hashing import FeatureHasher
-from sklearn.feature_extraction.stop_words import ENGLISH_STOP_WORDS
+from ..base import BaseEstimator, TransformerMixin
+from ..externals.six.moves import xrange
+from ..preprocessing import normalize
+from .hashing import FeatureHasher
+from .stop_words import ENGLISH_STOP_WORDS
 from sklearn.externals import six
 
-# for topic modeling
 from gensim import corpora, models
-import time
-import codecs
 
 
 __all__ = ['CountVectorizer',
