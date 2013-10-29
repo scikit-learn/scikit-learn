@@ -1460,8 +1460,7 @@ cdef class Tree:
 
     def __cinit__(self, int n_features, np.ndarray[SIZE_t, ndim=1] n_classes,
                         int n_outputs, Splitter splitter, SIZE_t max_depth,
-                        SIZE_t min_samples_split, SIZE_t min_samples_leaf,
-                        object random_state):
+                        SIZE_t min_samples_split, SIZE_t min_samples_leaf):
         """Constructor."""
         # Input/Output layout
         self.n_features = n_features
@@ -1484,7 +1483,6 @@ cdef class Tree:
         self.max_depth = max_depth
         self.min_samples_split = min_samples_split
         self.min_samples_leaf = min_samples_leaf
-        self.random_state = random_state
 
         # Inner structures
         self.node_count = 0
@@ -1517,8 +1515,7 @@ cdef class Tree:
                        self.splitter,
                        self.max_depth,
                        self.min_samples_split,
-                       self.min_samples_leaf,
-                       self.random_state), self.__getstate__())
+                       self.min_samples_leaf), self.__getstate__())
 
     def __getstate__(self):
         """Getstate re-implementation, for pickling."""
