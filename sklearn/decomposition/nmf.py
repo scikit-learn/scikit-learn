@@ -499,17 +499,18 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
                  - safe_sparse_dot(X, H.T, dense_output=True))
         gradH = (np.dot(np.dot(W.T, W), H)
                  - safe_sparse_dot(W.T, X, dense_output=True))
-        init_grad = norm(np.r_[gradW, gradH.T])
-        tolW = max(0.001, self.tol) * init_grad  # why max?
+        init_grad = (gradW ** 2).sum() + (gradH ** 2).sum()
+        tolW = max(0.001, self.tol) * np.sqrt(init_grad)  # why max?
         tolH = tolW
 
-        tol = self.tol * init_grad
+        tol = init_grad * self.tol ** 2
 
         for n_iter in range(1, self.max_iter + 1):
-            # stopping condition
-            # as discussed in paper
-            proj_norm = norm(np.r_[gradW[np.logical_or(gradW < 0, W > 0)],
-                                   gradH[np.logical_or(gradH < 0, H > 0)]])
+            # stopping condition on the norm of the projected gradient
+            proj_norm = (
+                ((gradW * np.logical_or(gradW < 0, W > 0)) ** 2).sum() +
+                ((gradH * np.logical_or(gradH < 0, H > 0)) ** 2).sum())
+
             if proj_norm < tol:
                 break
 
