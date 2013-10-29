@@ -37,12 +37,6 @@ class MinRedundancyMaxRelevance(BaseEstimator, SelectorMixin):
     y : array, shape=[n_samples]
         Label vector, must be either integer or categorical
 
-    Methods
-    -------
-    _compute_mRMR(X, y)
-        Computes the minimal relevance maximal redundancy of each feature
-        returning mask and score
-
     References
     ----------
     .. [1] H. Peng, F. Long, and C. Ding, "Feature selection based on mutual
@@ -89,7 +83,7 @@ class MinRedundancyMaxRelevance(BaseEstimator, SelectorMixin):
         """
 
         support = np.zeros(self.n_features, dtype=bool)
-        support[[self.mask]] = True
+        support[self.mask] = True
         return support
 
     def _compute_mRMR(self, X, y):
@@ -110,7 +104,6 @@ class MinRedundancyMaxRelevance(BaseEstimator, SelectorMixin):
                 mRMR score associated to each entry in mask
         """
         M = X.shape[1]  # Number of features
-        self.n_features = M
 
         # Computation of relevance and redundancy
         relevance = np.zeros(M)
@@ -121,9 +114,6 @@ class MinRedundancyMaxRelevance(BaseEstimator, SelectorMixin):
                 redundancy[m1, m2] = mutual_info_score(X[:, m1],
                                                        X[:, m2])
                 redundancy[m2, m1] = redundancy[m1, m2]
-
-        self.relevance = relevance
-        self.redundancy = redundancy
 
         # Sequential search optimization
         mask = []
@@ -156,5 +146,9 @@ class MinRedundancyMaxRelevance(BaseEstimator, SelectorMixin):
                 search_space.pop(ind)
         else:
             raise ValueError("rule should be either 'diff' or 'prod'")
+
+        self.n_features = M
+        self.relevance = relevance
+        self.redundancy = redundancy
 
         return mask, score
