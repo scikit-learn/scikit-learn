@@ -585,7 +585,7 @@ In multiclass and multilabel classification task, the notions of precision,
 recall and F-measures can be applied to each label independently.
 There are a few ways to combine results across labels,
 specified by the ``average`` argument to the
-:func:`average_precision_score`, :func:`f1_score`,
+:func:`average_precision_score` (multilabel only), :func:`f1_score`,
 :func:`fbeta_score`, :func:`precision_recall_fscore_support`,
 :func:`precision_score` and :func:`recall_score` functions:
 
@@ -837,6 +837,12 @@ extended by averaging over the labels:
   true data.
 * ``None``: this returns an array of scores with scores with shape (n_classes,)
   instead of an aggregate scalar score.
+
+Compared to metrics such as the subset accuracy, the hamming loss or the
+F1 score, ROC AUC doesn't require to optimize a threshold for each label. The
+:func:`roc_auc_score` function can also be used in multi-class classification
+if the predicted output have been binarized.
+
 
 .. image:: ../auto_examples/images/plot_roc_2.png
    :target: ../auto_examples/plot_roc.html
