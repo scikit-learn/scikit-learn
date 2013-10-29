@@ -30,7 +30,7 @@ iter  bf  terms  mse   gcv    rsq    grsq
 --------------------------------------------
 Selected iteration: 6
 
-Earth Model
+EarthRegressor Model
 -------------------------------------
 Basis Function  Pruned  Coefficient  
 -------------------------------------

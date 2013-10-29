@@ -1,16 +1,16 @@
 '''
 =====================================
-Fitting an Earth model to a sine wave
+Fitting an EarthRegressor model to a sine wave
 =====================================
 
 
-In this example, a simple sine model is used to generate an artificial data set.  An :class:`Earth` model
+In this example, a simple sine model is used to generate an artificial data set.  An :class:`EarthRegressor` model
 is then fitted to that data set and the resulting predictions are plotted against the original data.
 
 '''
 from __future__ import print_function
 import numpy
-from sklearn.earth import Earth
+from sklearn.earth import EarthRegressor
 from matplotlib import pyplot
 
 print(__doc__)
@@ -24,8 +24,8 @@ y = 100 * \
     numpy.abs(numpy.sin((X[:, 6]) / 10) - 4.0) + \
     20 * numpy.random.normal(size=m)
 
-# Fit an Earth model
-model = Earth(max_degree=3, minspan_alpha=.5)
+# Fit an EarthRegressor model
+model = EarthRegressor(max_degree=3, minspan_alpha=.5)
 model.fit(X, y)
 
 # Print the model

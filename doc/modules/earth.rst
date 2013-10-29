@@ -6,9 +6,9 @@ Multivariate Adaptive Regression Splines
 
 .. currentmodule:: sklearn.earth
 
-Multivariate adaptive regression splines, implemented by the :class:`Earth` class, is a method for supervised 
-learning that is most commonly used for feature extraction and selection.  ``Earth`` models can be thought of as linear models in a higher dimensional 
-basis space.  ``Earth`` automatically searches for interactions and non-linear relationships.  Each term in an ``Earth`` model is a 
+Multivariate adaptive regression splines, implemented by the :class:`EarthRegressor` class, is a method for supervised 
+learning that is most commonly used for feature extraction and selection.  ``EarthRegressor`` models can be thought of as linear models in a higher dimensional 
+basis space.  ``EarthRegressor`` automatically searches for interactions and non-linear relationships.  Each term in an ``EarthRegressor`` model is a 
 product of so called "hinge functions".  A hinge function is a function that's equal to its argument where that argument 
 is greater than zero and is zero everywhere else.
 
@@ -20,7 +20,7 @@ is greater than zero and is zero everywhere else.
 
 .. image:: ../images/hinge.png
 
-An ``Earth`` model is a linear combination of basis functions, each of which is a product of one 
+An ``EarthRegressor`` model is a linear combination of basis functions, each of which is a product of one 
 or more of the following:
 
 	1. A constant
@@ -28,7 +28,7 @@ or more of the following:
 	3. Hinge functions of input variables  
 
 For example, a simple piecewise linear function in one variable can be expressed 
-as a linear combination of two hinge functions and a constant (see below).  During fitting, the ``Earth`` class 
+as a linear combination of two hinge functions and a constant (see below).  During fitting, the ``EarthRegressor`` class 
 automatically determines which variables and basis functions to use.  
 The algorithm has two stages.  First, the 
 forward pass searches for terms that locally minimize squared error loss on the training set.  Next, a pruning pass selects a subset of those 
@@ -46,14 +46,14 @@ generalize well.
 .. image:: ../images/piecewise_linear.png
 
 
-A Simple Earth Example
+A Simple EarthRegressor Example
 ----------------------
 
 
 ::
 
 	import numpy
-	from pyearth import Earth
+	from sklearn.earth import EarthRegressor
 	from matplotlib import pyplot
     
 	#Create some fake data
@@ -63,8 +63,8 @@ A Simple Earth Example
 	X = 80*numpy.random.uniform(size=(m,n)) - 40
 	y = numpy.abs(X[:,6] - 4.0) + 1*numpy.random.normal(size=m)
     
-	#Fit an Earth model
-	model = Earth()
+	#Fit an EarthRegressor model
+	model = EarthRegressor()
 	model.fit(X,y)
     
 	#Print the model
@@ -78,7 +78,7 @@ A Simple Earth Example
 	pyplot.plot(X[:,6],y_hat,'b.')
 	pyplot.xlabel('x_6')
 	pyplot.ylabel('y')
-	pyplot.title('Simple Earth Example')
+	pyplot.title('Simple EarthRegressor Example')
 	pyplot.show()
 
 .. image:: ../images/simple_earth_example.png

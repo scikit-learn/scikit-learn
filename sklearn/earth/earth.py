@@ -7,15 +7,15 @@ import numpy as np
 from scipy import sparse
 
 
-class Earth(BaseEstimator, RegressorMixin, TransformerMixin):
+class EarthRegressor(BaseEstimator, RegressorMixin, TransformerMixin):
 
     '''
     Multivariate Adaptive Regression Splines
 
     A flexible regression method that automatically searches for interactions and non-linear
-    relationships.  Earth models can be thought of as linear models in a higher dimensional
+    relationships.  EarthRegressor models can be thought of as linear models in a higher dimensional
     basis space (specifically, a multivariate truncated power spline basis).  Each term in an
-    Earth model is a product of so called "hinge functions".  A hinge function is a function
+    EarthRegressor model is a product of so called "hinge functions".  A hinge function is a function
     that's equal to its argument where that argument is greater than zero and is zero everywhere
     else.
 
@@ -28,9 +28,9 @@ class Earth(BaseEstimator, RegressorMixin, TransformerMixin):
     that is nonlinear in the original feature space, may include interactions, and is likely to
     generalize well.
 
-    The Earth class supports dense input only.  Data structures from the pandas and patsy
+    The EarthRegressor class supports dense input only.  Data structures from the pandas and patsy
     modules are supported, but are copied into numpy arrays for computation.  No copy is
-    made if the inputs are numpy float64 arrays.  Earth objects can be serialized using the
+    made if the inputs are numpy float64 arrays.  EarthRegressor objects can be serialized using the
     pickle module and copied using the copy module.
 
 
@@ -284,7 +284,7 @@ class Earth(BaseEstimator, RegressorMixin, TransformerMixin):
 
     def fit(self, X, y=None, sample_weight=None, xlabels=None, linvars=[]):
         '''
-        Fit an Earth model to the input data X and y.
+        Fit an EarthRegressor model to the input data X and y.
 
 
         Parameters
@@ -454,18 +454,18 @@ class Earth(BaseEstimator, RegressorMixin, TransformerMixin):
 
     def trace(self):
         '''Return information about the forward and pruning passes.'''
-        return EarthTrace(self.forward_trace(), self.pruning_trace())
+        return EarthRegressorTrace(self.forward_trace(), self.pruning_trace())
 
     def summary(self):
         '''Return a string describing the model.'''
         result = ''
         if self.forward_trace() is None:
-            result += 'Untrained Earth Model'
+            result += 'Untrained EarthRegressor Model'
             return result
         elif self.pruning_trace() is None:
-            result += 'Unpruned Earth Model\n'
+            result += 'Unpruned EarthRegressor Model\n'
         else:
-            result += 'Earth Model\n'
+            result += 'EarthRegressor Model\n'
         header = ['Basis Function', 'Pruned', 'Coefficient']
         data = []
         i = 0
@@ -603,7 +603,7 @@ class Earth(BaseEstimator, RegressorMixin, TransformerMixin):
             return 3.0
 
     def __repr__(self):
-        result = 'Earth('
+        result = 'EarthRegressor('
         first = True
         for k, v in self.get_params().iteritems():
             if not first:
@@ -618,7 +618,7 @@ class Earth(BaseEstimator, RegressorMixin, TransformerMixin):
         return self.__repr__()
 
 
-class EarthTrace(object):
+class EarthRegressorTrace(object):
 
     def __init__(self, forward_trace, pruning_trace):
         self.forward_trace = forward_trace

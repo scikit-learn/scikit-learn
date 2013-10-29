@@ -26,7 +26,7 @@ print(__doc__)
 # Code source: Gael Varoqueux
 #              Andreas Mueller
 # Modified for Documentation merge by Jaques Grobler
-# Modified to include Earth by Jason Rudy
+# Modified to include EarthRegressor by Jason Rudy
 # License: BSD 3 clause
 
 import numpy as np
@@ -42,7 +42,7 @@ from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier
 from sklearn.naive_bayes import GaussianNB
 from sklearn.lda import LDA
 from sklearn.qda import QDA
-from sklearn.earth import Earth
+from sklearn.earth import EarthRegressor
 from sklearn.linear_model.logistic import LogisticRegression
 from sklearn.pipeline import Pipeline
 
@@ -60,7 +60,7 @@ classifiers = [
     GaussianNB(),
     LDA(),
     QDA(),
-    Pipeline([('earth', Earth(max_degree=3, penalty=1.5)),
+    Pipeline([('earth', EarthRegressor(max_degree=3, penalty=1.5)),
                              ('logistic', LogisticRegression())])]
 
 X, y = make_classification(n_features=2, n_redundant=0, n_informative=2,

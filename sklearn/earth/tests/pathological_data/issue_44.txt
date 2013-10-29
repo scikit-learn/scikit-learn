@@ -1,4 +1,4 @@
-Earth Model
+EarthRegressor Model
 -------------------------------------
 Basis Function  Pruned  Coefficient  
 -------------------------------------

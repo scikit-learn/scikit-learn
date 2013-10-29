@@ -1,6 +1,6 @@
 '''
 =============================================
-Fitting an Earth model to a v-shaped function
+Fitting an EarthRegressor model to a v-shaped function
 =============================================
 
 
@@ -10,7 +10,7 @@ is then fitted to that data set and the resulting predictions are plotted agains
 '''
 from __future__ import print_function
 import numpy
-from sklearn.earth import Earth
+from sklearn.earth import EarthRegressor
 from matplotlib import pyplot
 
 print(__doc__)
@@ -22,8 +22,8 @@ n = 10
 X = 80 * numpy.random.uniform(size=(m, n)) - 40
 y = numpy.abs(X[:, 6] - 4.0) + 5 * numpy.random.normal(size=m)
 
-# Fit an Earth model
-model = Earth(max_degree=1)
+# Fit an EarthRegressor model
+model = EarthRegressor(max_degree=1)
 model.fit(X, y)
 
 # Print the model

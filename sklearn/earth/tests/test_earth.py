@@ -5,7 +5,7 @@ Created on Feb 24, 2013
 '''
 import numpy
 from .._basis import Basis, ConstantBasisFunction, HingeBasisFunction, LinearBasisFunction
-from .. import Earth
+from .. import EarthRegressor
 import pickle
 import copy
 import os
@@ -35,18 +35,18 @@ class TestEarth(object):
         self.y[:] = numpy.dot(
             self.B,
             self.beta) + numpy.random.normal(size=100)
-        self.earth = Earth(penalty=1)
+        self.earth = EarthRegressor(penalty=1)
 
     def test_get_params(self):
         assert_equal(
-            Earth().get_params(), {'penalty': None, 'min_search_points': None,
+            EarthRegressor().get_params(), {'penalty': None, 'min_search_points': None,
                                    'endspan_alpha': None,
                                    'check_every': None,
                                    'max_terms': None, 'max_degree':
                                    None, 'minspan_alpha': None,
                                    'thresh': None, 'minspan': None, 'endspan': None})
         assert_equal(
-            Earth(
+            EarthRegressor(
                 max_degree=3).get_params(), {'penalty': None, 'min_search_points': None,
                                              'endspan_alpha': None,
                                              'check_every': None,
@@ -78,7 +78,7 @@ class TestEarth(object):
         y = numpy.abs(x)
         y[group] = numpy.abs(x[group] - 5)
         y += numpy.random.normal(0, 1, size=1000)
-        model = Earth().fit(x, y, sample_weight=sample_weight)
+        model = EarthRegressor().fit(x, y, sample_weight=sample_weight)
 
         # Check that the model fits better for the more heavily weighted group
         assert_true(
@@ -138,7 +138,7 @@ class TestEarth(object):
             y = data['y']
             del data['y']
             X = data
-            model = Earth(**settings).fit(X, y)
+            model = EarthRegressor(**settings).fit(X, y)
 #            with open(os.path.join('pathological_data', case + '.txt'), 'w') as outfile:
 #                outfile.write(model.summary())
             with open(os.path.join(directory, case + '.txt'), 'r') as infile:
