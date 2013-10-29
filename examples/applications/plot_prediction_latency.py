@@ -208,13 +208,12 @@ def plot_n_features_influence(percentiles, percentile):
     plt.show()
 
 
-if __name__ == '__main__':
-    n_train = int(1e3)
-    n_test = int(1e2)
-    n_feats = int(1e2)
-    estimators = {'elasticnet': ElasticNet(), 'ridge': Ridge(),
-                  'randomforest': RandomForestRegressor()}
-    benchmark(estimators, n_train, n_test, n_feats)
+n_train = int(1e3)
+n_test = int(1e2)
+n_feats = int(1e2)
+estimators = {'elasticnet': ElasticNet(), 'ridge': Ridge(),
+              'randomforest': RandomForestRegressor()}
+benchmark(estimators, n_train, n_test, n_feats)
 
     #percentile = 90
     #percentiles = n_feature_influence(estimators, n_train, n_test,
