@@ -1,7 +1,7 @@
 '''
-=============================================
+======================================================
 Fitting an EarthRegressor model to a v-shaped function
-=============================================
+======================================================
 
 
 In this example, a simple piecewise linear model is used to generate an artificial data set.  An :class:`Earth` model

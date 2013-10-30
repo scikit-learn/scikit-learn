@@ -1,7 +1,7 @@
 '''
-=====================================
+==============================================
 Fitting an EarthRegressor model to a sine wave
-=====================================
+==============================================
 
 
 In this example, a simple sine model is used to generate an artificial data set.  An :class:`EarthRegressor` model
