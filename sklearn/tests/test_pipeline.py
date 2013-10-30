@@ -235,19 +235,28 @@ def test_pipeline_transform():
     # Also test pipeline.transform and pipeline.inverse_transform
     iris = load_iris()
     X = iris.data
+    y = iris.target
     pca = PCA(n_components=2)
+    clf = SVC()
     pipeline = Pipeline([('pca', pca)])
+    pipeline2 = Pipeline([('pca', pca), ('clf', clf)])
 
     # test transform and fit_transform:
     X_trans = pipeline.fit(X).transform(X)
     X_trans2 = pipeline.fit_transform(X)
     X_trans3 = pca.fit_transform(X)
+    X_trans4 = pipeline2.fit(X, y).transform(X)
+    X_trans5 = pipeline2.fit_transform(X, y)
     assert_array_almost_equal(X_trans, X_trans2)
     assert_array_almost_equal(X_trans, X_trans3)
+    assert_array_almost_equal(X_trans, X_trans4)
+    assert_array_almost_equal(X_trans, X_trans5)
 
     X_back = pipeline.inverse_transform(X_trans)
     X_back2 = pca.inverse_transform(X_trans)
+    X_back3 = pipeline2.inverse_transform(X_trans)
     assert_array_almost_equal(X_back, X_back2)
+    assert_array_almost_equal(X_back, X_back3)
 
 
 def test_pipeline_fit_transform():

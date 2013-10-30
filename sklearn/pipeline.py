@@ -138,8 +138,10 @@ class Pipeline(BaseEstimator):
         Xt, fit_params = self._pre_transform(X, y, **fit_params)
         if hasattr(self.steps[-1][-1], 'fit_transform'):
             return self.steps[-1][-1].fit_transform(Xt, y, **fit_params)
-        else:
+        elif hasattr(self.steps[-1][-1], 'transform'):
             return self.steps[-1][-1].fit(Xt, y, **fit_params).transform(Xt)
+        else:
+            return Xt
 
     def predict(self, X):
         """Applies transforms to the data, and the predict method of the
@@ -175,11 +177,21 @@ class Pipeline(BaseEstimator):
         return self.steps[-1][-1].predict_log_proba(Xt)
 
     def transform(self, X):
-        """Applies transforms to the data, and the transform method of the
-        final estimator. Valid only if the final estimator implements
-        transform."""
+        """Applies transforms to the data.
+
+        All the estimators in the pipeline need to implement
+        a transform, except for the final one that is ignored
+        in the case it lacks the method.
+
+        Calling transform in that case can be useful to extract
+        the features before the last step for debugging purposes.
+        """
         Xt = X
-        for name, transform in self.steps:
+        # test if the last step implements a transform method
+        steps = self.steps
+        if not hasattr(self.steps[-1][-1], 'transform'):
+            steps = self.steps[:-1]
+        for name, transform in steps:
             Xt = transform.transform(Xt)
         return Xt
 
@@ -187,7 +199,11 @@ class Pipeline(BaseEstimator):
         if X.ndim == 1:
             X = X[None, :]
         Xt = X
-        for name, step in self.steps[::-1]:
+        # test the last step implements an inverse_transform method
+        inverse_steps = self.steps[::-1]
+        if not hasattr(self.steps[-1][-1], 'inverse_transform'):
+            inverse_steps = self.steps[:-1][::-1]
+        for name, step in inverse_steps:
             Xt = step.inverse_transform(Xt)
         return Xt
 
