@@ -11,8 +11,7 @@
 The :mod:`sklearn.feature_extraction.text` submodule gathers utilities to
 build feature vectors from text documents.
 
-The submodule is edited by Nan Li (nanli@odesk.com,
-nanli@alumni.cs.ucsb.edu).
+Edited by Nan Li (nanli@odesk.com, nanli@alumni.cs.ucsb.edu)
 
 An LdaVectorizer class and an LsiVectorizer class are added
 to extract topics from text. The topic model implementation is
@@ -30,6 +29,7 @@ import unicodedata
 import warnings
 import time
 import codecs
+import logging
 
 import numpy as np
 import scipy.sparse as sp
@@ -51,6 +51,11 @@ __all__ = ['CountVectorizer',
            'strip_accents_ascii',
            'strip_accents_unicode',
            'strip_tags']
+
+logging.basicConfig(level=logging.DEBUG,
+                    format='''%(asctime)s - %(name)s
+                            - %(levelname)s - %(message)s''')
+logger = logging.getLogger('sklearn.feature_extraction.text')
 
 
 def strip_accents_unicode(s):
@@ -1518,7 +1523,7 @@ class LdaVectorizer(CountVectorizer):
         Turned on to force distributed computing (see the web tutorial
         on how to set up a cluster of machines for gensim).
 
-    log_file : string, optional, 'lda_topics.log' by default
+    topic_file : string, optional, 'lda_topics.log' by default
         The log file used to record all learned topics
 
 
@@ -1552,7 +1557,8 @@ class LdaVectorizer(CountVectorizer):
                  distributed=False, chunksize=2000, passes=1, update_every=1,
                  alpha=None, eta=None,
                  decay=0.5,
-                 log_file='lda_topics.log'):
+                 writedown_topics=True,
+                 topic_file='lda_topics.txt'):
 
         # initialize a CountVectorizer object
         super(LdaVectorizer, self).__init__(
@@ -1573,7 +1579,8 @@ class LdaVectorizer(CountVectorizer):
         self.alpha = alpha
         self.eta = eta
         self.decay = decay
-        self.log_file = log_file
+        self.writedown_topics = writedown_topics
+        self.topic_file = topic_file
 
     def fit(self, raw_docs, y=None):
         """Learn a conversion law from raw documents
@@ -1582,21 +1589,21 @@ class LdaVectorizer(CountVectorizer):
         # create word-count matrix (sparse csc) using
         # the parent CountVectorizer
         count_matrix = super(LdaVectorizer, self).fit_transform(raw_docs)
-        print '\nBuilding LDA model: sklearn word count matrix completed!\n'
+        logger.info('Building LDA model: sklearn word count matrix completed!')
 
         # build a gensim dictionary
         self._dictionary = corpora.Dictionary([super(LdaVectorizer, self)
                                               .get_feature_names()])
-        print '\nBuilding LDA model: gensim Dictionary generated!\n'
+        logger.info('Building LDA model: gensim Dictionary generated!')
 
         self._corpus = _generate_gensim_corpus(count_matrix)
-        print '\nBuilding LDA model: gensim corpus generated!\n'
+        logger.info('Building LDA model: gensim corpus generated!')
 
         # build a gensim tf-idf model
         self._model_tfidf = models.TfidfModel(self._corpus)
         # turn the word count into a normalized tfidf
         self._corpus_tfidf = self._model_tfidf[self._corpus]
-        print '\nBuilding LDA model: gensim tf-idf corpus generated!\n'
+        logger.info('Building LDA model: gensim tf-idf corpus generated!')
 
         # build an LDA model
         # Specifying dictionary is important if we want to output actual words,
@@ -1609,20 +1616,20 @@ class LdaVectorizer(CountVectorizer):
             update_every=self.update_every,
             alpha=self.alpha, eta=self.eta,
             decay=self.decay)
-        print '\nBuilding LDA model: gensim LDA model generated!\n'
+        logger.info('Building LDA model: gensim LDA model generated!')
 
-        lda_log_file = codecs.open(self.log_file, 'a', 'utf-8')
-
-        lda_log_file.write('\n\n======= ' + str(time.ctime()) + ' ======= \n')
-        topic_counter = 0
-        for i in range(0, self.num_topics):
-            lda_log_file.write('\ntopic #' + str(topic_counter) + ': '
-                               + self._model_lda.print_topic(i, 20) + '\n')
-            topic_counter += 1
-            lda_log_file.flush()
-        lda_log_file.flush()
-
-        print 'Finished logging!\n'
+        if self.writedown_topics:
+            lda_topic_file = codecs.open(self.topic_file, 'a', 'utf-8')
+            lda_topic_file.write('\n\n======= '+str(time.ctime())+' =======\n')
+            topic_counter = 0
+            for i in range(0, self.num_topics):
+                lda_topic_file.write('\ntopic #'+str(topic_counter) + ': '
+                                     + self._model_lda.print_topic(i, 20)
+                                     + '\n')
+                topic_counter += 1
+                lda_topic_file.flush()
+            lda_topic_file.flush()
+            logger.info('Finished logging!')
 
         return self
 
@@ -1660,10 +1667,11 @@ class LdaVectorizer(CountVectorizer):
         # create word-count matrix (sparse csc) using the
         # parent CountVectorizer
         count_matrix = super(LdaVectorizer, self).fit_transform(raw_docs)
-        print '\nTransforming new docs: sklearn word count matrix completed!\n'
+        logger.info('''Transforming new docs:
+                     sklearn word count matrix completed!''')
 
         corpus = _generate_gensim_corpus(count_matrix)
-        print '\nTransforming new docs: gensim corpus generated!\n'
+        logger.info('Transforming new docs: gensim corpus generated!')
 
         return _convert_gensim_corpus2csr(self._model_lda[corpus])
 
@@ -1814,7 +1822,7 @@ class LsiVectorizer(CountVectorizer):
     multi-pass algorithm, which is used either internally (`onepass=True`) or
     as the front-end algorithm (`onepass=False`).
 
-    log_file : string, optional, 'lsi_topics.log' by default
+    topic_file : string, optional, 'lsi_topics.log' by default
         The log file used to record all learned topics
 
     See also
@@ -1840,7 +1848,8 @@ class LsiVectorizer(CountVectorizer):
                  distributed=False, chunksize=20000,
                  onepass=True, power_iters=2, extra_samples=100,
                  decay=1.0,
-                 log_file='lsi_topics.log'):
+                 writedown_topics=True,
+                 topic_file='lsi_topics.txt'):
 
         # initialize a CountVectorizer object
         super(LsiVectorizer, self).__init__(
@@ -1861,7 +1870,8 @@ class LsiVectorizer(CountVectorizer):
         self.power_iters = power_iters
         self.extra_samples = extra_samples
         self.decay = decay
-        self.log_file = log_file
+        self.writedown_topics = writedown_topics
+        self.topic_file = topic_file
 
     def fit(self, raw_docs, y=None):
         """Learn a conversion law from raw documents
@@ -1870,21 +1880,21 @@ class LsiVectorizer(CountVectorizer):
         # create word-count matrix (sparse csc) using
         # the parent CountVectorizer
         count_matrix = super(LsiVectorizer, self).fit_transform(raw_docs)
-        print '\nBuilding LSI model: sklearn word count matrix completed!\n'
+        logger.info('Building LSI model: sklearn word count matrix completed!')
 
         # build a gensim dictionary
         self._dictionary = corpora.Dictionary([super(LsiVectorizer, self)
                                               .get_feature_names()])
-        print '\nBuilding LSI model: gensim Dictionary generated!\n'
+        logger.info('Building LSI model: gensim Dictionary generated!')
 
         self._corpus = _generate_gensim_corpus(count_matrix)
-        print '\nBuilding LSI model: gensim corpus generated!\n'
+        logger.info('Building LSI model: gensim corpus generated!')
 
         # build a gensim tf-idf model
         self._model_tfidf = models.TfidfModel(self._corpus)
         # turn the word count into a normalized tfidf
         self._corpus_tfidf = self._model_tfidf[self._corpus]
-        print '\nBuilding LSI model: gensim tf-idf corpus generated!\n'
+        logger.info('Building LSI model: gensim tf-idf corpus generated!')
 
         # build an LSI model
         # Specifying dictionary is important if we want to output actual words,
@@ -1896,22 +1906,20 @@ class LsiVectorizer(CountVectorizer):
             onepass=self.onepass, power_iters=self.power_iters,
             extra_samples=self.extra_samples,
             decay=self.decay)
-        print '\nBuilding LSI model: gensim LSI model generated!\n'
+        logger.info('Building LSI model: gensim LSI model generated!')
 
-        lsi_log_file = codecs.open(self.log_file, 'a', 'utf-8')
-
-        lsi_log_file.write('\n\n======= ' + str(time.ctime())
-                           + ' ======= \n')
-        topic_counter = 0
-        # -1 means show all topics
-        for topic in self._model_lsi.show_topics(-1, 20):
-            lsi_log_file.write('\ntopic #' + str(topic_counter)
-                               + ': ' + topic + '\n')
-            topic_counter += 1
-            lsi_log_file.flush()
-        lsi_log_file.flush()
-
-        print 'Finished logging!\n'
+        if self.writedown_topics:
+            lsi_topic_file = codecs.open(self.topic_file, 'a', 'utf-8')
+            lsi_topic_file.write('\n\n======= '+str(time.ctime())+' =======\n')
+            topic_counter = 0
+            # -1 means show all topics
+            for topic in self._model_lsi.show_topics(-1, 20):
+                lsi_topic_file.write('\ntopic #' + str(topic_counter)
+                                     + ': ' + topic + '\n')
+                topic_counter += 1
+                lsi_topic_file.flush()
+            lsi_topic_file.flush()
+            logger.info('Finished logging!')
 
         return self
 
@@ -1949,9 +1957,10 @@ class LsiVectorizer(CountVectorizer):
         # create word-count matrix (sparse csc) using
         # the parent CountVectorizer
         count_matrix = super(LsiVectorizer, self).fit_transform(raw_docs)
-        print '\nTransforming new docs: sklearn word count matrix completed!\n'
+        logger.info('''Transforming new docs:
+                    sklearn word count matrix completed!''')
 
         corpus = _generate_gensim_corpus(count_matrix)
-        print '\nTransforming new docs: gensim corpus generated!\n'
+        logger.info('Transforming new docs: gensim corpus generated!')
 
         return _convert_gensim_corpus2csr(self._model_lsi[corpus])

@@ -53,6 +53,5 @@ benchmarks/bench_covertype_data/
 .pydevproject
 .idea
 
-examples/nannan.txt
-examples/lda_topics.log
-examples/lsi_topics.log
+examples/lda_topics.txt
+examples/lsi_topics.txt
