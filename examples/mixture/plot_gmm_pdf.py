@@ -45,6 +45,6 @@ CS = plt.contour(X, Y, Z, norm=LogNorm(vmin=1.0,vmax=1000.0),
 CB = plt.colorbar(CS, shrink=0.8, extend='both')
 plt.scatter(X_train[:, 0], X_train[:, 1], .8)
 
-plt.title('Predicted negative log-likelihood by a GMM')
+plt.title('Negative log-likelihood predicted by a GMM')
 plt.axis('tight')
 plt.show()
