@@ -612,13 +612,19 @@ components with some sparsity:
 Non-negative matrix factorization (NMF or NNMF)
 ===============================================
 
-:class:`NMF` is an alternative approach to decomposition that assumes that the
-data and the components are non-negative. :class:`NMF` can be plugged in
-instead of :class:`PCA` or its variants, in the cases where the data matrix
-does not contain negative values.
-It finds a decomposition of samples :math:`X`
+NMF is an alternative approach to decomposition that assumes that the
+data are non-negative, and finds non-negative component matrices.
+Two estimators are available that implement NMF:
+:class:`MultiplicativeNMF` uses the classic multiplicative update algorithm,
+while :class:`ProjectedGradientNMF` uses a newer projected gradient method.
+These estimators can be plugged in instead of :class:`PCA` or its variants,
+in cases where the data matrix does not contain negative values.
+Examples include images represented by pixel intensities
+and term-document matrices.
+
+NMF is a decomposition of samples :math:`X`
 into two matrices :math:`V` and :math:`H` of non-negative elements,
-by optimizing for the squared Frobenius norm::
+that optimizes for the squared Frobenius norm::
 
 .. math::
     \arg\min_{W,H} ||X - WH||^2 = \sum_{i,j} X_{ij} - {WH}_{ij}
@@ -633,10 +639,11 @@ fashion, by superimposing the components, without subtracting. Such additive
 models are efficient for representing images and text.
 
 It has been observed in [Hoyer, 04] that, when carefully constrained,
-:class:`NMF` can produce a parts-based representation of the dataset,
+NMF can produce a parts-based representation of the dataset,
 resulting in interpretable models. The following example displays 16
-sparse components found by :class:`NMF` from the images in the Olivetti
-faces dataset, in comparison with the PCA eigenfaces.
+sparse components found by :class:`ProjectedGradientNMF`
+from the images in the Olivetti faces dataset,
+in comparison with the PCA eigenfaces.
 
 .. |pca_img5| image:: ../auto_examples/decomposition/images/plot_faces_decomposition_2.png
     :target: ../auto_examples/decomposition/plot_faces_decomposition.html
@@ -650,20 +657,19 @@ faces dataset, in comparison with the PCA eigenfaces.
 
 
 The :attr:`init` attribute determines the initialization method applied, which
-has a great impact on the performance of the method. :class:`NMF` implements
-the method Nonnegative Double Singular Value Decomposition. NNDSVD is based on
-two SVD processes, one approximating the data matrix, the other approximating
-positive sections of the resulting partial SVD factors utilizing an algebraic
-property of unit rank matrices. The basic NNDSVD algorithm is better fit for
-sparse factorization. Its variants NNDSVDa (in which all zeros are set equal to
+has a great impact on the performance of the method.
+Both NMF estimators implement nonnegative double singular value decomposition.
+NNDSVD is based on two SVD processes, one approximating the data matrix,
+the other approximating positive sections of the resulting partial SVD factors
+using an algebraic property of unit rank matrices.
+The basic NNDSVD algorithm is a good fit for sparse factorization.
+Its variants NNDSVDa (in which all zeros are set equal to
 the mean of all elements of the data), and NNDSVDar (in which the zeros are set
 to random perturbations less than the mean of the data divided by 100) are
 recommended in the dense case.
 
-:class:`NMF` can also be initialized with random non-negative matrices, by
-passing an integer seed or a `RandomState` to :attr:`init`.
-
-In :class:`NMF`, sparseness can be enforced by setting the attribute
+In :class:`ProjectedGradientNMF`,
+sparsity can be enforced by setting the attribute
 :attr:`sparseness` to ``"data"`` or ``"components"``. Sparse components lead to
 localized features, and sparse data leads to a more efficient representation of
 the data.
@@ -677,7 +683,7 @@ the data.
 
     * `"Learning the parts of objects by non-negative matrix factorization"
       <http://www.seas.upenn.edu/~ddlee/Papers/nmf.pdf>`_
-      D. Lee, S. Seung, 1999
+      D. Lee, S. Seung, Nature 401(6755):788-791, 1999.
 
     * `"Non-negative Matrix Factorization with Sparseness Constraints"
       <http://www.cs.helsinki.fi/u/phoyer/papers/pdf/NMFscweb.pdf>`_
