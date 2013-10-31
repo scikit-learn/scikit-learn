@@ -196,6 +196,16 @@ class Pipeline(BaseEstimator):
         return Xt
 
     def inverse_transform(self, X):
+        """Applies inverse transforms to the data.
+
+        All the estimators in the pipeline need to implement
+        an inverse transform, except for the final one that
+        is ignored in the case it lacks the method.
+
+        As an example, calling inverse transform can be useful to
+        map back to the original space the `coef_` attribute
+        from a linear classifier.
+        """
         if X.ndim == 1:
             X = X[None, :]
         Xt = X
