@@ -28,9 +28,15 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
             * "most_frequent": always predicts the most frequent label in the
               training set.
             * "uniform": generates predictions uniformly at random.
+            * "constant": always predicts a constant label that is provided by
+              the user.
 
     random_state: int seed, RandomState instance, or None (default)
         The seed of the pseudo random number generator to use.
+
+    constant_param: int or array of shape = [n_outputs]
+        The explicit constant as predicted by the "constant" strategy. This
+        parameter is useful only for the "constant" strategy.
 
     Attributes
     ----------
@@ -50,9 +56,14 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
         True if the output at fit is 2d, else false.
     """
 
-    def __init__(self, strategy="stratified", random_state=None):
+    def __init__(self, strategy="stratified", random_state=None,
+                 constant_param=None):
         self.strategy = strategy
         self.random_state = random_state
+        self.constant_param = constant_param
+        if self.strategy == 'constant' and constant_param is None:
+            raise ValueError("constant_param has to be specified only when "
+                             "the constant strategy is used.")
 
     def fit(self, X, y):
         """Fit the random classifier.
@@ -71,7 +82,8 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
         self : object
             Returns self.
         """
-        if self.strategy not in ("most_frequent", "stratified", "uniform"):
+        if self.strategy not in ("most_frequent", "stratified", "uniform",
+                                 "constant"):
             raise ValueError("Unknown strategy type.")
 
         y = np.atleast_1d(y)
@@ -123,11 +135,13 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
         n_classes_ = self.n_classes_
         classes_ = self.classes_
         class_prior_ = self.class_prior_
+        constant_param = self.constant_param
         if self.n_outputs_ == 1:
             # Get same type even for self.n_outputs_ == 1
             n_classes_ = [n_classes_]
             classes_ = [classes_]
             class_prior_ = [class_prior_]
+            self.constant_param = [constant_param]
 
         # Compute probability only once
         if self.strategy == "stratified":
@@ -139,6 +153,7 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
         for k in xrange(self.n_outputs_):
             if self.strategy == "most_frequent":
                 ret = np.ones(n_samples, dtype=int) * class_prior_[k].argmax()
+                print ret
 
             elif self.strategy == "stratified":
                 ret = proba[k].argmax(axis=1)
@@ -146,6 +161,19 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
             elif self.strategy == "uniform":
                 ret = rs.randint(n_classes_[k], size=n_samples)
 
+            elif self.strategy == "constant":
+                try:
+                    param = self.constant_param[k]
+                except IndexError:
+                    raise ValueError("Constant_param should have shape "
+                                     "(%d, 1)."% n_outputs_)
+                else:
+                    ret = np.where(classes_[k] == param)
+                    if ret:
+                        ret *= np.ones(n_samples, dtype=int)
+                    else:
+                        raise ValueError("Constant_param values that are "
+                                         "not present in y are not useful.")
             y.append(classes_[k][ret])
 
         y = np.vstack(y).T
@@ -181,11 +209,13 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
         n_classes_ = self.n_classes_
         classes_ = self.classes_
         class_prior_ = self.class_prior_
+        constant_param = self.constant_param
         if self.n_outputs_ == 1 and not self.output_2d_:
             # Get same type even for self.n_outputs_ == 1
             n_classes_ = [n_classes_]
             classes_ = [classes_]
             class_prior_ = [class_prior_]
+            constant_param = [constant_param]
 
         P = []
         for k in xrange(self.n_outputs_):
@@ -201,6 +231,20 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
                 out = np.ones((n_samples, n_classes_[k]), dtype=np.float64)
                 out /= n_classes_[k]
 
+            elif self.strategy == "constant":
+                try:
+                    param = constant_param[k]
+                except IndexError:
+                    raise ValueError("Constant_param should have shape "
+                                     "(%d, 1)."% n_outputs_)
+                else:
+                    ind = np.where(classes_[k] == param)
+                    if ind:
+                        out = np.zeros((n_samples, n_classes_[k]), dtype=np.float64)
+                        out[:, ind] = 1.0
+                    else:
+                        raise ValueError("Constant_param values that are "
+                                         "not present in y are not useful.")
             P.append(out)
 
         if self.n_outputs_ == 1 and not self.output_2d_:

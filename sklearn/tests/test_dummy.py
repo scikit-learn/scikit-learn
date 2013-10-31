@@ -208,3 +208,33 @@ def test_multioutput_regressor():
 def test_regressor_exceptions():
     reg = DummyRegressor()
     assert_raises(ValueError, reg.predict, [])
+
+
+def test_constant_strategy():
+    X = [[0], [0], [0], [0]]  # ignored
+    y = [2, 1, 2, 2]
+
+    clf = DummyClassifier(strategy="constant", random_state=0,
+                          constant_param=1)
+    clf.fit(X, y)
+    assert_array_equal(clf.predict(X), np.ones(len(X)))
+    _check_predict_proba(clf, X, y)
+
+
+def test_constant_strategy_multioutput():
+    X = [[0], [0], [0], [0]]  # ignored
+    y = np.array([[2, 3],
+                  [1, 3],
+                  [2, 3],
+                  [2, 0]])
+
+    n_samples = len(X)
+
+    clf = DummyClassifier(strategy="constant", random_state=0,
+                          constant_param=[1,0])
+    clf.fit(X, y)
+    assert_array_equal(clf.predict(X),
+                       np.hstack([np.ones((n_samples, 1)),
+                                  np.zeros((n_samples, 1))]))
+    _check_predict_proba(clf, X, y)
+    _check_behavior_2d(clf)
