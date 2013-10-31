@@ -2040,6 +2040,8 @@ def mean_squared_error(y_true, y_pred, output_weights='uniform'):
     y_true : array-like of shape = [n_samples] or [n_samples, n_outputs]
         Ground truth (correct) target values.
 
+        It is recommended to normalize y_true, before using this function.
+
     y_pred : array-like of shape = [n_samples] or [n_samples, n_outputs]
         Estimated target values.
 
@@ -2110,6 +2112,8 @@ def explained_variance_score(y_true, y_pred, output_weights='uniform'):
     ----------
     y_true : array-like
         Ground truth (correct) target values.
+
+        It is recommended to normalize y_true before using this function.
 
     y_pred : array-like
         Estimated target values.
