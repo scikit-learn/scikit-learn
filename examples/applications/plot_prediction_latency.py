@@ -154,13 +154,13 @@ def boxplot_runtimes(runtimes, cls_names, pred_type, n_features):
     plt.show()
 
 
-def benchmark(estimators, n_train, n_test, n_feats):
+def benchmark(estimators, n_train, n_test, n_features):
     """Run the whole benchmark."""
     X_train, y_train, X_test, y_test = generate_dataset(n_train, n_test,
-                                                        n_feats)
+                                                        n_features)
 
     stats = {'settings': {'n_train': n_train, 'n_test': 'n_test',
-                          'n_feats': n_feats}}
+                          'n_features': n_features}}
     for clf_name, clf in estimators.iteritems():
         print("Benchmarking", clf)
         clf.fit(X_train, y_train)
@@ -170,22 +170,39 @@ def benchmark(estimators, n_train, n_test, n_feats):
 
     cls_names = estimators.keys()
     runtimes = [1e6 * stats[clf_name]['atomic'] for clf_name in cls_names]
-    boxplot_runtimes(runtimes, cls_names, 'atomic', n_feats)
+    boxplot_runtimes(runtimes, cls_names, 'atomic', n_features)
     runtimes = [1e6 * stats[clf_name]['bulk'] for clf_name in cls_names]
-    boxplot_runtimes(runtimes, cls_names, 'bulk (%d)' % n_test, n_feats)
+    boxplot_runtimes(runtimes, cls_names, 'bulk (%d)' % n_test, n_features)
 
 
-def n_feature_influence(estimators, n_train, n_test, n_feats, percentile=90):
-    """Estimate influence of the number of features on prediction time."""
+def n_feature_influence(estimators, n_train, n_test, n_features, percentile):
+    """
+    Estimate influence of the number of features on prediction time.
+
+    Parameters
+    ----------
+
+    estimators : dict of (name (str), estimator) to benchmark
+    n_train : nber of training instances (int)
+    n_test : nber of testing instances (int)
+    n_features : list of feature-space dimensionality to test (int)
+    percentile : percentile at which to measure the speed (int [0-100])
+
+    Returns:
+    --------
+
+    percentiles : dict(estimator_name,
+                       dict(n_features, percentile_perf_in_us))
+
+    """
     percentiles = defaultdict(defaultdict)
-    for n in n_feats:
+    for n in n_features:
         print("benchmarking with %d features" % n)
-        X_train, y_train, X_test, y_test = generate_dataset(n_train, n_test,
-                                                            n)
+        X_train, y_train, X_test, y_test = generate_dataset(n_train, n_test, n)
         for cls_name, estimator in estimators.iteritems():
             estimator.fit(X_train, y_train)
             gc.collect()
-            runtimes = atomic_benchmark_estimator(estimator, X_test)
+            runtimes = bulk_benchmark_estimator(estimator, X_test, 30, False)
             percentiles[cls_name][n] = 1e6 * scoreatpercentile(runtimes,
                                                                percentile)
     return percentiles
@@ -208,15 +225,60 @@ def plot_n_features_influence(percentiles, percentile):
     plt.show()
 
 
+def benchmark_throughputs(estimators, n_train, n_test, n_features,
+                          duration_secs=0.1):
+    """benchmark throughput for different estimators."""
+    X_train, y_train, X_test, y_test = generate_dataset(n_train, n_test,
+                                                        n_features)
+    throughputs = dict()
+    for estimator_name, estimator_instance in estimators.iteritems():
+        estimator_instance.fit(X_train, y_train)
+        start_time = time.time()
+        n_predictions = 0
+        while (time.time() - start_time) < duration_secs:
+            estimator_instance.predict(X_test[0])
+            n_predictions += 1
+        throughputs[estimator_name] = n_predictions / duration_secs
+    return throughputs
+
+
+def plot_benchmark_throughput(throughputs):
+    fig, ax = plt.subplots(figsize=(10, 6))
+    colors = ['r', 'g', 'b']
+    rectangles = plt.bar(range(len(throughputs.keys())), throughputs.values(),
+                         width=0.5, color=colors)
+
+    ax.set_xticks(np.linspace(0.25, len(throughputs) - 0.75, len(throughputs)))
+    ax.set_xticklabels(throughputs.keys(), fontsize=10)
+    ymax = max(throughputs.values()) * 1.2
+    ax.set_ylim((0, ymax))
+    ax.set_ylabel('Throughput (predictions/sec)')
+    ax.set_title('Prediction Throughput for different estimators')
+    ax.legend()
+    plt.show()
+
+###############################################################################
+# main code
+
+start_time = time.time()
+
+# benchmark bulk/atomic prediction speed for various regressors
 n_train = int(1e3)
 n_test = int(1e2)
-n_feats = int(1e2)
+n_features = int(1e2)
 estimators = {'elasticnet': ElasticNet(), 'ridge': Ridge(),
               'randomforest': RandomForestRegressor()}
-benchmark(estimators, n_train, n_test, n_feats)
+benchmark(estimators, n_train, n_test, n_features)
 
-    #percentile = 90
-    #percentiles = n_feature_influence(estimators, n_train, n_test,
-    #                                  map(lambda x: 10**x, range(1, 4)),
-    #                                  percentile)
-    #plot_n_features_influence(percentiles, percentile)
+# benchmark n_features influence on prediction speed
+percentile = 90
+percentiles = n_feature_influence({'ridge': Ridge()}, n_train, n_test,
+                                  [100, 250, 500], percentile)
+plot_n_features_influence(percentiles, percentile)
+
+# benchmark throughput
+throughputs = benchmark_throughputs(estimators, n_train, n_test, n_features)
+plot_benchmark_throughput(throughputs)
+
+stop_time = time.time()
+print("example run in %.2fs" % (stop_time - start_time))

@@ -18,13 +18,16 @@ production environment.
 
 The main factors that influence the prediction speed are:
   1. Number of features
-  2. Matrix type
+  2. Input data representation and sparsity
   3. Model complexity
+  4. Feature extraction
+
 A last major parameter is also the possibility to do predictions in bulk or
 one-at-a-time mode.
 
 Bulk versus Atomic mode
 -----------------------
+
 In general doing predictions in bulk (many instances at the same time) is
 more efficient for a number of reasons (branching predictability, CPU cache,
 linear algebra libraries optimizations etc.). Here we see on a setting
@@ -44,20 +47,57 @@ always faster by 2 orders of magnitude:
 .. centered:: |bulk_prediction_speed|
 
 To benchmark different estimators for your case you can simply change the
-`n_feats` parameter according to your case in this example:
+`n_features` parameter according to your case in this example:
 :ref:`example_applications_plot_prediction_latency.py`. This should give you
 an estimate of the order of magnitude of the prediction speed for your case.
 
 Influence of the number of Features
 -----------------------------------
-tbd
 
-Influence of Matrix Type
-------------------------
+Obviously when the number of features increases so does the memory
+consumption of each example. Indeed, for a matrix of `M` instances with `N`
+features, the space complexity is in `O(N.M)`. From a computing perspective
+it also means that the number of basic operations (e.g. multiplications for
+vector-matrix products in linear models) increases too. Here is a graph of
+the evolution of the prediction speed with the number of features:
+
+.. |influence_of_n_features_on_speed| image::  ../auto_examples/applications/images/plot_prediction_latency_3.png
+    :target: ../auto_examples/applications/plot_prediction_latency.html
+    :scale: 80
+
+.. centered:: |influence_of_n_features_on_speed|
+
+Overall you can expect the prediction time to increase at least linearly with
+the number of features (non-linear cases can happen depending on the global
+memory footprint and estimator).
+
+Influence of the Input Data Representation
+------------------------------------------
+
 tbd (CSR vs dense vs ...)
 
 Prediction Throughput
 =====================
+
+Another important metric to care about when sizing production systems is the
+throughput i.e. the number of predictions you can make in a given amount of
+time. Here is a benchmark from the
+:ref:`example_applications_plot_prediction_latency.py` example that measures
+this quantity for a number of estimators on synthetic data:
+
+.. |throughput_benchmark| image::  ../auto_examples/applications/images/plot_prediction_latency_4.png
+    :target: ../auto_examples/applications/plot_prediction_latency.html
+    :scale: 80
+
+.. centered:: |throughput_benchmark|
+
+These throughputs are achieved on a single process. An obvious way to
+increase the throughput of your application is to spawn additional instances
+(usually processes in Python because of the
+`GIL <https://wiki.python.org/moin/GlobalInterpreterLock>`_) that share the
+same model. One might also add machines to spread the load. A detailed
+explanation on how to achieve this is beyond the scope of this documentation
+though.
 
 Feature Extraction Speed
 ========================
@@ -91,9 +131,20 @@ Tips and Tricks
 
 Linear algebra libraries
 ------------------------
-Compile Atlas for your architecture etc.
+
+As scikit-learn relies heavily on Numpy/Scipy and linear algebra in general it
+makes sense to take explicit care of the versions of these libraries.
+Basically, you ought to make sure that Numpy is built using an optimized `BLAS
+<http://en.wikipedia.org/wiki/Basic_Linear_Algebra_Subprograms>`_ /
+`LAPCACK <http://en.wikipedia.org/wiki/LAPACK>`_ library. More information
+can be found on the `Scipy install page
+<http://docs.scipy.org/doc/numpy/user/install.html>`_ and in this
+`blog post <http://danielnouri.org/notes/2012/12/19/libblas-and-liblapack-issues-and-speed,-with-scipy-and-ubuntu/>`_
+from Daniel Nouri which has some nice step by step instructions.
 
 Model Compression
 -----------------
+
 `sparsify()` trick etc
+
 
