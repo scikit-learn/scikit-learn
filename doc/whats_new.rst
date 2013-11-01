@@ -60,6 +60,10 @@ Changelog
    - Added :class:`linear_model.RANSACRegressor` meta-estimator for the robust
      fitting of regression models. By Johannes Schönberger.
 
+   - Extended transform and inverse_transform methods from
+     :class:`pipeline.Pipeline` to ignore the last step if it does not
+     implement the corresponding methods, by `Yannick Schwartz`_.
+
 
 API changes summary
 -------------------
