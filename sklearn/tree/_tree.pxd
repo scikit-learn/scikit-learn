@@ -19,6 +19,12 @@ ctypedef np.npy_uint32 UINT32_t          # Unsigned 32 bit integer
 # Criterion
 # =============================================================================
 
+# Datatype that holds impurity information
+cdef struct Impurity:
+    double left
+    double right
+    double total
+
 cdef class Criterion:
     # Internal structures
     cdef DOUBLE_t* y                     # Values of y
@@ -49,7 +55,7 @@ cdef class Criterion:
     cdef void reset(self) nogil
     cdef void update(self, SIZE_t new_pos) nogil
     cdef double node_impurity(self) nogil
-    cdef double children_impurity(self) nogil
+    cdef void children_impurity(self, Impurity* impurity) nogil
     cdef void node_value(self, double* dest) nogil
 
 
@@ -88,11 +94,13 @@ cdef class Splitter:
                          np.ndarray y,
                          DOUBLE_t* sample_weight)
 
-    cdef void node_reset(self, SIZE_t start, SIZE_t end, double* impurity) nogil
+    cdef void node_reset(self, SIZE_t start, SIZE_t end) nogil
 
     cdef void node_split(self, SIZE_t* pos, # Set to >= end if the node is a leaf
                                SIZE_t* feature,
-                               double* threshold) nogil
+                               double* threshold,
+                               double* impurity_left,
+                               double* impurity_right) nogil
 
     cdef void node_value(self, double* dest) nogil
 
@@ -115,6 +123,7 @@ cdef class Tree:
     cdef public SIZE_t min_samples_split # Minimum number of samples in an internal node
     cdef public SIZE_t min_samples_leaf  # Minimum number of samples in a leaf
     cdef public object random_state      # Random state
+    cdef public bint complete            # Whether to grow a complete binary tree or a greedy one
 
     # Inner structures
     cdef public SIZE_t node_count        # Counter for node IDs

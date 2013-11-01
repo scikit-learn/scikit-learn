@@ -505,7 +505,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
     @abstractmethod
     def __init__(self, loss, learning_rate, n_estimators, min_samples_split,
                  min_samples_leaf, max_depth, init, subsample, max_features,
-                 random_state, alpha=0.9, verbose=0):
+                 random_state, alpha=0.9, verbose=0, complete=True):
 
         self.n_estimators = n_estimators
         self.learning_rate = learning_rate
@@ -519,6 +519,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         self.random_state = random_state
         self.alpha = alpha
         self.verbose = verbose
+        self.complete = complete
 
         self.estimators_ = np.empty((0, 0), dtype=np.object)
 
@@ -542,6 +543,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
                 min_samples_split=self.min_samples_split,
                 min_samples_leaf=self.min_samples_leaf,
                 max_features=self.max_features,
+                complete=self.complete,
                 random_state=random_state)
 
             sample_weight = None
@@ -1051,12 +1053,13 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
     def __init__(self, loss='deviance', learning_rate=0.1, n_estimators=100,
                  subsample=1.0, min_samples_split=2, min_samples_leaf=1,
                  max_depth=3, init=None, random_state=None,
-                 max_features=None, verbose=0):
+                 max_features=None, verbose=0,
+                 complete=True):
 
         super(GradientBoostingClassifier, self).__init__(
             loss, learning_rate, n_estimators, min_samples_split,
             min_samples_leaf, max_depth, init, subsample, max_features,
-            random_state, verbose=verbose)
+            random_state, verbose=verbose, complete=complete)
 
     def fit(self, X, y, monitor=None):
         """Fit the gradient boosting model.
@@ -1335,12 +1338,12 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
     def __init__(self, loss='ls', learning_rate=0.1, n_estimators=100,
                  subsample=1.0, min_samples_split=2, min_samples_leaf=1,
                  max_depth=3, init=None, random_state=None,
-                 max_features=None, alpha=0.9, verbose=0):
+                 max_features=None, alpha=0.9, verbose=0, complete=True):
 
         super(GradientBoostingRegressor, self).__init__(
             loss, learning_rate, n_estimators, min_samples_split,
             min_samples_leaf, max_depth, init, subsample, max_features,
-            random_state, alpha, verbose)
+            random_state, alpha, verbose, complete=complete)
 
     def fit(self, X, y, monitor=None):
         """Fit the gradient boosting model.
