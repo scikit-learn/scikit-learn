@@ -42,6 +42,13 @@ cdef SIZE_t _TREE_UNDEFINED = TREE_UNDEFINED
 cdef double EPSILON_DBL = 1e-12
 cdef float EPSILON_FLT = 1e-7
 
+cdef struct StackRecord:
+    SIZE_t start
+    SIZE_t end
+    SIZE_t depth
+    SIZE_t parent
+    SIZE_t is_left
+
 # =============================================================================
 # Criterion
 # =============================================================================
@@ -1700,15 +1707,15 @@ cdef class Tree:
         cdef Splitter splitter = self.splitter
         splitter.init(X, y, sample_weight_ptr)
 
-        cdef SIZE_t stack_n_values = 5
-        cdef SIZE_t stack_capacity = 50
-        cdef SIZE_t* stack = <SIZE_t*> malloc(stack_capacity * sizeof(SIZE_t))
+        cdef SIZE_t stack_n_values = 1
+        cdef SIZE_t stack_capacity = 10
+        cdef StackRecord* stack = <StackRecord*> malloc(stack_capacity * sizeof(StackRecord))
 
-        stack[0] = 0                    # start
-        stack[1] = splitter.n_samples   # end
-        stack[2] = 0                    # depth
-        stack[3] = _TREE_UNDEFINED      # parent
-        stack[4] = 0                    # is_left
+        stack[0].start = 0
+        stack[0].end = splitter.n_samples
+        stack[0].depth = 0
+        stack[0].parent = _TREE_UNDEFINED
+        stack[0].is_left = 0
 
         cdef SIZE_t start
         cdef SIZE_t end
@@ -1727,13 +1734,13 @@ cdef class Tree:
 
         with nogil:
             while stack_n_values > 0:
-                stack_n_values -= 5
+                stack_n_values -= 1
 
-                start = stack[stack_n_values]
-                end = stack[stack_n_values + 1]
-                depth = stack[stack_n_values + 2]
-                parent = stack[stack_n_values + 3]
-                is_left = stack[stack_n_values + 4]
+                start = stack[stack_n_values].start
+                end = stack[stack_n_values].end
+                depth = stack[stack_n_values].depth
+                parent = stack[stack_n_values].parent
+                is_left = stack[stack_n_values].is_left
 
                 n_node_samples = end - start
                 is_leaf = ((depth >= self.max_depth) or
@@ -1742,6 +1749,8 @@ cdef class Tree:
 
                 splitter.node_reset(start, end, &impurity)
                 is_leaf = is_leaf or (impurity < EPSILON_FLT)
+
+                #is_leaf = is_leaf or is_left  # FIXME make right child always leaf
 
                 if not is_leaf:
                     splitter.node_split(&pos, &feature, &threshold)
@@ -1755,26 +1764,26 @@ cdef class Tree:
                     splitter.node_value(self.value + node_id * self.value_stride)
 
                 else:
-                    if stack_n_values + 10 > stack_capacity:
+                    if stack_n_values + 2 > stack_capacity:
                         stack_capacity *= 2
-                        stack = <SIZE_t*> realloc(stack,
-                                                  stack_capacity * sizeof(SIZE_t))
+                        stack = <StackRecord*> realloc(stack,
+                                                  stack_capacity * sizeof(StackRecord))
 
                     # Stack right child
-                    stack[stack_n_values] = pos
-                    stack[stack_n_values + 1] = end
-                    stack[stack_n_values + 2] = depth + 1
-                    stack[stack_n_values + 3] = node_id
-                    stack[stack_n_values + 4] = 0
-                    stack_n_values += 5
+                    stack[stack_n_values].start = pos
+                    stack[stack_n_values].end = end
+                    stack[stack_n_values].depth = depth + 1
+                    stack[stack_n_values].parent = node_id
+                    stack[stack_n_values].is_left = 0
+                    stack_n_values += 1
 
                     # Stack left child
-                    stack[stack_n_values] = start
-                    stack[stack_n_values + 1] = pos
-                    stack[stack_n_values + 2] = depth + 1
-                    stack[stack_n_values + 3] = node_id
-                    stack[stack_n_values + 4] = 1
-                    stack_n_values += 5
+                    stack[stack_n_values].start = start
+                    stack[stack_n_values].end = pos
+                    stack[stack_n_values].depth = depth + 1
+                    stack[stack_n_values].parent = node_id
+                    stack[stack_n_values].is_left = 1
+                    stack_n_values += 1
 
             self._resize(self.node_count)
             free(stack)
