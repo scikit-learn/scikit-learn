@@ -14,6 +14,7 @@ from ..utils import ConvergenceWarning, compute_class_weight, deprecated
 from ..utils.fixes import unique
 from ..utils.extmath import safe_sparse_dot
 from ..externals import six
+from ..linear_model.base import center_data
 
 
 LIBSVM_IMPL = ['c_svc', 'nu_svc', 'one_class', 'epsilon_svr', 'nu_svr']
@@ -585,8 +586,9 @@ class BaseLibLinear(six.with_metaclass(ABCMeta, BaseEstimator)):
 
     @abstractmethod
     def __init__(self, penalty='l2', loss='l2', dual=True, tol=1e-4, C=1.0,
-                 multi_class='ovr', fit_intercept=True, intercept_scaling=1,
-                 class_weight=None, verbose=0, random_state=None):
+                 multi_class='ovr', fit_intercept=True, normalize=False,
+                 intercept_scaling=1, class_weight=None, verbose=0,
+                 random_state=None):
 
         self.penalty = penalty
         self.loss = loss
@@ -594,6 +596,7 @@ class BaseLibLinear(six.with_metaclass(ABCMeta, BaseEstimator)):
         self.tol = tol
         self.C = C
         self.fit_intercept = fit_intercept
+        self.normalize = normalize
         self.intercept_scaling = intercept_scaling
         self.multi_class = multi_class
         self.class_weight = class_weight
@@ -602,6 +605,8 @@ class BaseLibLinear(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         # Check that the arguments given are valid:
         self._get_solver_type()
+
+    _center_data = staticmethod(center_data)
 
     def _get_solver_type(self):
         """Find the liblinear magic number for the solver.
@@ -660,7 +665,6 @@ class BaseLibLinear(six.with_metaclass(ABCMeta, BaseEstimator)):
                              " one.")
 
         X = atleast2d_or_csr(X, dtype=np.float64, order="C")
-
         self.class_weight_ = compute_class_weight(self.class_weight,
                                                   self.classes_, y)
 
@@ -677,6 +681,12 @@ class BaseLibLinear(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         # LibLinear wants targets as doubles, even for classification
         y = np.asarray(y, dtype=np.float64).ravel()
+        
+        # Center data if self.normalize
+        X, y, X_mean, y_mean, X_std = self._center_data(X, y,
+                                                        self.fit_intercept,
+                                                        self.normalize)
+
         self.raw_coef_ = liblinear.train_wrap(X, y,
                                               sp.isspmatrix(X),
                                               self._get_solver_type(),

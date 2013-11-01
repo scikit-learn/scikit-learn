@@ -1,6 +1,6 @@
 import numpy as np
 
-from .base import LinearClassifierMixin, SparseCoefMixin
+from .base import LinearClassifierMixin, SparseCoefMixin, center_data
 from ..feature_selection.from_model import _LearntSelectorMixin
 from ..svm.base import BaseLibLinear
 
@@ -35,6 +35,9 @@ class LogisticRegression(BaseLibLinear, LinearClassifierMixin,
     fit_intercept : bool, default: True
         Specifies if a constant (a.k.a. bias or intercept) should be
         added the decision function.
+
+    normalize : boolean, optional, default False
+        If True, the regressors X will be normalized before logistic regression.
 
     intercept_scaling : float, default: 1
         when self.fit_intercept is True, instance vector x becomes
@@ -95,12 +98,13 @@ class LogisticRegression(BaseLibLinear, LinearClassifierMixin,
     """
 
     def __init__(self, penalty='l2', dual=False, tol=1e-4, C=1.0,
-                 fit_intercept=True, intercept_scaling=1, class_weight=None,
-                 random_state=None):
+                 fit_intercept=True, normalize=False, intercept_scaling=1, 
+                 class_weight=None, random_state=None):
 
         super(LogisticRegression, self).__init__(
             penalty=penalty, dual=dual, loss='lr', tol=tol, C=C,
-            fit_intercept=fit_intercept, intercept_scaling=intercept_scaling,
+            fit_intercept=fit_intercept, normalize=normalize, 
+            intercept_scaling=intercept_scaling, 
             class_weight=class_weight, random_state=random_state)
 
     def predict_proba(self, X):
@@ -138,3 +142,10 @@ class LogisticRegression(BaseLibLinear, LinearClassifierMixin,
             model, where classes are ordered as they are in ``self.classes_``.
         """
         return np.log(self.predict_proba(X))
+
+    def _center_data(self, X, y, fit_intercept, normalize=False):
+        """Center the data in X but not in y"""
+        X, _, X_mean, _, X_std = center_data(X, y, fit_intercept,
+                                            normalize=normalize)
+        return X, y, X_mean, y, X_std
+
