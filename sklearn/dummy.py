@@ -153,7 +153,6 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
         for k in xrange(self.n_outputs_):
             if self.strategy == "most_frequent":
                 ret = np.ones(n_samples, dtype=int) * class_prior_[k].argmax()
-                print ret
 
             elif self.strategy == "stratified":
                 ret = proba[k].argmax(axis=1)
