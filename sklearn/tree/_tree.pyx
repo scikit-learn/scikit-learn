@@ -1420,6 +1420,67 @@ cdef class PresortBestSplitter(Splitter):
 
 
 # =============================================================================
+# Stack data structures
+# =============================================================================
+
+cdef class Stack:
+    """A LIFO data structure. """
+
+    cdef SIZE_t capacity
+    cdef SIZE_t stack_ptr
+    cdef StackRecord* stack_
+
+
+    def __cinit__(self, SIZE_t capacity):
+        self.capacity = capacity
+        self.stack_ptr = 0
+        self.stack_ = <StackRecord*> malloc(capacity * sizeof(StackRecord))
+
+    def __dealloc__(self):
+        free(self.stack_)
+
+    cdef bint is_empty(self) nogil:
+        return self.stack_ptr <= 0
+
+    cdef void push(self, SIZE_t start, SIZE_t end, SIZE_t depth, SIZE_t parent, bint is_left,
+                   double impurity, bint is_leaf) nogil:
+        cdef SIZE_t stack_ptr = self.stack_ptr + 1
+        cdef StackRecord* stack = NULL
+
+        # Resize if capacity not sufficient
+        if stack_ptr >= self.capacity:
+            self.capacity *= 2
+            self.stack_ = <StackRecord*> realloc(self.stack_, self.capacity * sizeof(StackRecord))
+
+        stack = self.stack_
+        stack[stack_ptr].start = start
+        stack[stack_ptr].end = end
+        stack[stack_ptr].depth = depth
+        stack[stack_ptr].parent = parent
+        stack[stack_ptr].is_left = is_left
+        stack[stack_ptr].impurity = impurity
+        stack[stack_ptr].is_leaf = is_leaf
+        self.stack_ptr = stack_ptr
+
+    cdef int pop(self, StackRecord* res) nogil:
+        cdef SIZE_t stack_ptr = self.stack_ptr
+        cdef StackRecord* stack = self.stack_
+
+        if stack_ptr <= 0:
+            return 0
+
+        res.start = stack[stack_ptr].start
+        res.end = stack[stack_ptr].end
+        res.depth = stack[stack_ptr].depth
+        res.parent = stack[stack_ptr].parent
+        res.is_left = stack[stack_ptr].is_left
+        res.impurity = stack[stack_ptr].impurity
+        res.is_leaf = stack[stack_ptr].is_leaf
+        self.stack_ptr = stack_ptr - 1
+        return 1
+
+
+# =============================================================================
 # Tree
 # =============================================================================
 
@@ -1752,9 +1813,8 @@ cdef class Tree:
         cdef Splitter splitter = self.splitter
         splitter.init(X, y, sample_weight_ptr)
 
-        cdef SIZE_t stack_n_values = 1
-        cdef SIZE_t stack_capacity = 10
-        cdef StackRecord* stack = <StackRecord*> malloc(stack_capacity * sizeof(StackRecord))
+        cdef Stack stack = Stack(10)
+        cdef StackRecord stack_record
 
         cdef SIZE_t start
         cdef SIZE_t end
@@ -1773,29 +1833,23 @@ cdef class Tree:
         cdef bint is_leaf
         cdef bint complete = self.complete
         cdef bint first = 1
-        cdef bint is_left_impurity_smaller
-        cdef bint is_right_impurity_smaller
+        cdef bint is_left_impurity_smaller = 0
+        cdef bint is_right_impurity_smaller = 0
 
         with nogil:
+            # push root node onto stack
+            stack.push(0, n_node_samples, 0, _TREE_UNDEFINED, 0, INFINITY, 0)
 
-            stack[0].start = 0
-            stack[0].end = n_node_samples
-            stack[0].depth = 0
-            stack[0].parent = _TREE_UNDEFINED
-            stack[0].is_left = 0
-            stack[0].impurity = INFINITY
-            stack[0].is_leaf = 0
+            while not stack.is_empty():
 
-            while stack_n_values > 0:
-                stack_n_values -= 1
-
-                start = stack[stack_n_values].start
-                end = stack[stack_n_values].end
-                depth = stack[stack_n_values].depth
-                parent = stack[stack_n_values].parent
-                is_left = stack[stack_n_values].is_left
-                impurity = stack[stack_n_values].impurity
-                is_leaf = stack[stack_n_values].is_leaf
+                stack.pop(&stack_record)
+                start = stack_record.start
+                end = stack_record.end
+                depth = stack_record.depth
+                parent = stack_record.parent
+                is_left = stack_record.is_left
+                impurity = stack_record.impurity
+                is_leaf = stack_record.is_leaf
 
                 n_node_samples = end - start
                 is_leaf = (is_leaf or (depth >= self.max_depth) or
@@ -1822,11 +1876,6 @@ cdef class Tree:
                     splitter.node_value(self.value + node_id * self.value_stride)
 
                 else:
-                    if stack_n_values + 2 > stack_capacity:
-                        stack_capacity *= 2
-                        stack = <StackRecord*> realloc(stack,
-                                                       stack_capacity * sizeof(StackRecord))
-
                     if not complete:
                         if impurity_left < impurity_right:
                             is_left_impurity_smaller = 1
@@ -1836,34 +1885,15 @@ cdef class Tree:
                             is_right_impurity_smaller = 1
 
                     # Stack right child
-                    stack[stack_n_values].start = pos
-                    stack[stack_n_values].end = end
-                    stack[stack_n_values].depth = depth + 1
-                    stack[stack_n_values].parent = node_id
-                    stack[stack_n_values].is_left = 0
-                    stack[stack_n_values].impurity = impurity_right
-                    if complete:
-                        stack[stack_n_values].is_leaf = 0
-                    else:
-                        stack[stack_n_values].is_leaf = is_right_impurity_smaller
-                    stack_n_values += 1
+                    stack.push(pos, end, depth + 1, node_id, 0, impurity_right,
+                               is_right_impurity_smaller)
 
                     # Stack left child
-                    stack[stack_n_values].start = start
-                    stack[stack_n_values].end = pos
-                    stack[stack_n_values].depth = depth + 1
-                    stack[stack_n_values].parent = node_id
-                    stack[stack_n_values].is_left = 1
-                    stack[stack_n_values].impurity = impurity_left
-                    if complete:
-                        stack[stack_n_values].is_leaf = 0
-                    else:
-                        stack[stack_n_values].is_leaf = is_left_impurity_smaller
-                    stack_n_values += 1
+                    stack.push(start, pos, depth + 1, node_id, 1, impurity_left,
+                               is_left_impurity_smaller)
 
             self._resize(self.node_count)
-            free(stack)
-        self.splitter = None # Release memory
+        self.splitter = None  # Release memory
 
     cpdef predict(self, np.ndarray[DTYPE_t, ndim=2] X):
         """Predict target for X."""
