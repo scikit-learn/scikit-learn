@@ -6,6 +6,8 @@ from scipy import sparse
 
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_list_equal
+from sklearn.utils.testing import assert_is_instance
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_array_equal
@@ -262,6 +264,29 @@ def test_pipeline_fit_transform():
     X_trans = pipeline.fit_transform(X, y)
     X_trans2 = transft.fit(X, y).transform(X)
     assert_array_almost_equal(X_trans, X_trans2)
+
+
+def test_pipeline_slice():
+    pipe = Pipeline([('transf1', TransfT()),
+                     ('transf2', TransfT()),
+                     ('clf', FitParamT())])
+    pipe2 = pipe[:-1]
+    assert_is_instance(pipe2, Pipeline)
+    assert_list_equal(pipe2.steps, pipe.steps[:-1])
+    assert_equal(len(pipe2.named_steps), 2)
+    assert_raises(ValueError, lambda: pipe[::-1])
+
+
+def test_pipeline_index():
+    transf = TransfT()
+    clf = FitParamT()
+    pipe = Pipeline([('transf', transf), ('clf', clf)])
+    assert_equal(pipe[0], transf)
+    assert_equal(pipe['transf'], transf)
+    assert_equal(pipe[-1], clf)
+    assert_equal(pipe['clf'], clf)
+    assert_raises(IndexError, lambda: pipe[3])
+    assert_raises(KeyError, lambda: pipe['foobar'])
 
 
 def test_feature_union_weights():

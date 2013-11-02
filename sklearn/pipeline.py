@@ -97,6 +97,18 @@ class Pipeline(BaseEstimator):
                             "'%s' (type %s) doesn't)"
                             % (estimator, type(estimator)))
 
+    def __getitem__(self, ind):
+        if isinstance(ind, slice):
+            if ind.step not in (1, None):
+                raise ValueError('Pipeline slicing only supports a step of 1')
+            return self.__class__(self.steps[ind])
+        try:
+            name, est = self.steps[ind]
+        except TypeError:
+            # Not an int, try get step by name
+            return self.named_steps[ind]
+        return est
+
     def get_params(self, deep=True):
         if not deep:
             return super(Pipeline, self).get_params(deep=False)
@@ -358,4 +370,3 @@ class FeatureUnion(BaseEstimator, TransformerMixin):
             (name, new)
             for ((name, old), new) in zip(self.transformer_list, transformers)
         ]
-
