@@ -766,8 +766,8 @@ def test_complete_regression():
     """Test greedy trees with max_depth + 1 leafs. """
     from sklearn.tree._tree import TREE_LEAF
     k = 4
-    est = GradientBoostingClassifier(n_estimators=20, max_depth=k, random_state=1,
-                                     complete=False).fit(boston.data, boston.target)
+    est = GradientBoostingRegressor(n_estimators=20, max_depth=k, random_state=1,
+                                    complete=False).fit(boston.data, boston.target)
     tree = est.estimators_[0, 0].tree_
     assert_equal(tree.max_depth, k)
     assert_equal(tree.children_left[tree.children_left == TREE_LEAF].shape[0], k + 1)
