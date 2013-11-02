@@ -214,8 +214,7 @@ def test_constant_strategy():
     X = [[0], [0], [0], [0]]  # ignored
     y = [2, 1, 2, 2]
 
-    clf = DummyClassifier(strategy="constant", random_state=0,
-                          constant_param=1)
+    clf = DummyClassifier(strategy="constant", random_state=0, constant=1)
     clf.fit(X, y)
     assert_array_equal(clf.predict(X), np.ones(len(X)))
     _check_predict_proba(clf, X, y)
@@ -231,10 +230,20 @@ def test_constant_strategy_multioutput():
     n_samples = len(X)
 
     clf = DummyClassifier(strategy="constant", random_state=0,
-                          constant_param=[1,0])
+                          constant=[1, 0])
     clf.fit(X, y)
     assert_array_equal(clf.predict(X),
                        np.hstack([np.ones((n_samples, 1)),
                                   np.zeros((n_samples, 1))]))
     _check_predict_proba(clf, X, y)
-    _check_behavior_2d(clf)
+
+
+
+def test_constant_strategy_exceptions():
+    X = [[0], [0], [0], [0]]  # ignored
+    y = [2, 1, 2, 2]
+    clf = DummyClassifier(strategy="constant", random_state=0)
+    assert_raises(ValueError, clf.fit, X, y)
+    clf = DummyClassifier(strategy="constant", random_state=0,
+                          constant=[2,0])
+    assert_raises(ValueError, clf.fit, X, y)
