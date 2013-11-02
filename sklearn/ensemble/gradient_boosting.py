@@ -996,6 +996,11 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         predictions. ``init`` has to provide ``fit`` and ``predict``.
         If None it uses ``loss.init_estimator``.
 
+    complete : bool (default=True)
+        Whether to grow a complete binary tree (subject to stopping conditions
+        of max_depth, and minimum samples) or a greedy tree branch of
+        ``max_depth`` and with ``max_depth + 1`` leaf nodes.
+
     verbose : int, default: 0
         Enable verbose output. If 1 then it prints progress and performance
         once in a while (the more trees the lower the frequency).
@@ -1280,6 +1285,11 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         An estimator object that is used to compute the initial
         predictions. ``init`` has to provide ``fit`` and ``predict``.
         If None it uses ``loss.init_estimator``.
+
+    complete : bool (default=True)
+        Whether to grow a complete binary tree (subject to stopping conditions
+        of max_depth, and minimum samples) or a greedy tree branch of
+        ``max_depth`` and with ``max_depth + 1`` leaf nodes.
 
     verbose : int, default: 0
         Enable verbose output. If 1 then it prints progress and performance

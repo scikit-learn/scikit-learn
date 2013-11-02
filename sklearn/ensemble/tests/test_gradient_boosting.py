@@ -733,6 +733,7 @@ def early_stopping_monitor(i, est, locals):
     else:
         return False
 
+
 def test_monitor_early_stopping():
     """Test if monitor return value works. """
     X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
@@ -747,3 +748,26 @@ def test_monitor_early_stopping():
         _ = est.partial_fit(X, y, monitor=early_stopping_monitor)
         assert_equal(est.n_estimators, 10)
         assert_equal(est.estimators_.shape[0], 10)
+
+
+def test_complete_classification():
+    """Test greedy trees with max_depth + 1 leafs. """
+    from sklearn.tree._tree import TREE_LEAF
+    X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
+    k = 4
+    est = GradientBoostingClassifier(n_estimators=20, max_depth=k, random_state=1,
+                                     complete=False).fit(X, y)
+    tree = est.estimators_[0, 0].tree_
+    assert_equal(tree.max_depth, k)
+    assert_equal(tree.children_left[tree.children_left == TREE_LEAF].shape[0], k + 1)
+
+
+def test_complete_regression():
+    """Test greedy trees with max_depth + 1 leafs. """
+    from sklearn.tree._tree import TREE_LEAF
+    k = 4
+    est = GradientBoostingClassifier(n_estimators=20, max_depth=k, random_state=1,
+                                     complete=False).fit(boston.data, boston.target)
+    tree = est.estimators_[0, 0].tree_
+    assert_equal(tree.max_depth, k)
+    assert_equal(tree.children_left[tree.children_left == TREE_LEAF].shape[0], k + 1)

@@ -238,7 +238,7 @@ def test_numerical_stability():
         [120.91514587, 140.40744019, 129.75102234, 159.90493774]])
 
     y = np.array(
-        [1., 0.70209277, 0.53896582, 0., 0.90914464, 0.48026916,  0.49622521])
+        [1., 0.70209277, 0.53896582, 0., 0.90914464, 0.48026916, 0.49622521])
 
     with np.errstate(all="raise"):
         for name, Tree in REG_TREES.items():
@@ -611,3 +611,16 @@ def test_32bit_equality():
     est.fit(X_train, y_train)
     score = est.score(X_test, y_test)
     assert_almost_equal(0.84652100667116, score)
+
+
+def test_complete():
+    """Test greedy trees with max_depth + 1 leafs. """
+    from sklearn.tree._tree import TREE_LEAF
+    X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
+    k = 4
+    for name, TreeEstimator in ALL_TREES.items():
+        est = TreeEstimator(max_depth=k, complete=False).fit(X, y)
+        tree = est.tree_
+        assert_equal(tree.max_depth, k, '%s: max_depth does not match %d != %d' %
+                     (name, tree.max_depth, k))
+        assert_equal(tree.children_left[tree.children_left == TREE_LEAF].shape[0], k + 1)
