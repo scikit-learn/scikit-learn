@@ -32,6 +32,8 @@ from nose.tools import assert_not_equal
 from nose.tools import assert_true
 from nose.tools import assert_false
 from nose.tools import assert_raises
+from nose.tools import assert_list_equal
+from nose.tools import assert_is_instance
 from nose.tools import raises
 from nose import SkipTest
 from nose import with_setup
