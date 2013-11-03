@@ -223,8 +223,7 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
         random_state = check_random_state(self.random_state)
 
         # Convert data
-        X, = check_arrays(X, dtype=DTYPE, sparse_format="dense",
-                          check_ccontiguous=True)
+        X, = check_arrays(X, dtype=DTYPE, sparse_format="dense")
 
         # Remap output
         n_samples, self.n_features_ = X.shape

@@ -743,8 +743,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             Returns self.
         """
         # Check input
-        X, = check_arrays(X, dtype=DTYPE, sparse_format="dense",
-                          check_ccontiguous=True)
+        X, = check_arrays(X, dtype=DTYPE, sparse_format="dense")
         y = column_or_1d(y, warn=True)
         n_samples, n_features = X.shape
         self.n_features = n_features
