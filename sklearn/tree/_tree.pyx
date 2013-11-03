@@ -812,7 +812,8 @@ cdef class Splitter:
         self.n_features = 0
 
         self.X = NULL
-        self.X_stride = 0
+        self.X_sample_stride = 0
+        self.X_fx_stride = 0
         self.y = NULL
         self.y_stride = 0
         self.sample_weight = NULL
@@ -832,7 +833,7 @@ cdef class Splitter:
     def __setstate__(self, d):
         pass
 
-    cdef void init(self, np.ndarray[DTYPE_t, ndim=2, mode="c"] X,
+    cdef void init(self, np.ndarray[DTYPE_t, ndim=2] X,
                          np.ndarray[DOUBLE_t, ndim=2, mode="c"] y,
                          DOUBLE_t* sample_weight):
         """Initialize the splitter."""
@@ -872,7 +873,8 @@ cdef class Splitter:
 
         # Initialize X, y, sample_weight
         self.X = <DTYPE_t*> X.data
-        self.X_stride = <SIZE_t> X.strides[0] / <SIZE_t> X.itemsize
+        self.X_sample_stride = <SIZE_t> X.strides[0] / <SIZE_t> X.itemsize
+        self.X_fx_stride = <SIZE_t> X.strides[1] / <SIZE_t> X.itemsize
         self.y = <DOUBLE_t*> y.data
         self.y_stride = <SIZE_t> y.strides[0] / <SIZE_t> y.itemsize
         self.sample_weight = sample_weight
@@ -921,7 +923,8 @@ cdef class BestSplitter(Splitter):
         cdef SIZE_t n_features = self.n_features
 
         cdef DTYPE_t* X = self.X
-        cdef SIZE_t X_stride = self.X_stride
+        cdef SIZE_t X_sample_stride = self.X_sample_stride
+        cdef SIZE_t X_fx_stride = self.X_fx_stride
         cdef SIZE_t max_features = self.max_features
         cdef SIZE_t min_samples_leaf = self.min_samples_leaf
         cdef UINT32_t* random_state = &self.rand_r_state
@@ -956,7 +959,7 @@ cdef class BestSplitter(Splitter):
             current_feature = features[f_i]
 
             # Sort samples along that feature
-            sort(X, X_stride, current_feature, samples+start, end-start)
+            sort(X, X_sample_stride, X_fx_stride, current_feature, samples + start, end - start)
 
             # Evaluate all splits
             self.criterion.reset()
@@ -964,8 +967,8 @@ cdef class BestSplitter(Splitter):
 
             while p < end:
                 while ((p + 1 < end) and
-                       (X[X_stride * samples[p + 1] + current_feature] <=
-                        X[X_stride * samples[p] + current_feature] + EPSILON_FLT)):
+                       (X[X_sample_stride * samples[p + 1] + X_fx_stride * current_feature] <=
+                        X[X_sample_stride * samples[p] + X_fx_stride * current_feature] + EPSILON_FLT)):
                     p += 1
 
                 # (p + 1 >= end) or (X[samples[p + 1], current_feature] >
@@ -992,11 +995,11 @@ cdef class BestSplitter(Splitter):
                         best_pos = current_pos
                         best_feature = current_feature
 
-                        current_threshold = (X[X_stride * samples[p - 1] + current_feature] +
-                                             X[X_stride * samples[p] + current_feature]) / 2.0
+                        current_threshold = (X[X_sample_stride * samples[p - 1] + X_fx_stride * current_feature] +
+                                             X[X_sample_stride * samples[p] + X_fx_stride * current_feature]) / 2.0
 
-                        if current_threshold == X[X_stride * samples[p] + current_feature]:
-                            current_threshold = X[X_stride * samples[p - 1] + current_feature]
+                        if current_threshold == X[X_sample_stride * samples[p] + X_fx_stride * current_feature]:
+                            current_threshold = X[X_sample_stride * samples[p - 1] + X_fx_stride * current_feature]
 
                         best_threshold = current_threshold
 
@@ -1016,7 +1019,7 @@ cdef class BestSplitter(Splitter):
             p = start
 
             while p < partition_end:
-                if X[X_stride * samples[p] + best_feature] <= best_threshold:
+                if X[X_sample_stride * samples[p] + X_fx_stride * best_feature] <= best_threshold:
                     p += 1
 
                 else:
@@ -1033,7 +1036,7 @@ cdef class BestSplitter(Splitter):
         impurity_left[0] = best_impurity_left
         impurity_right[0] = best_impurity_right
 
-cdef inline void sort(DTYPE_t* X, SIZE_t X_stride, SIZE_t current_feature,
+cdef inline void sort(DTYPE_t* X, SIZE_t X_sample_stride, SIZE_t X_fx_stride, SIZE_t current_feature,
                       SIZE_t* samples, SIZE_t length) nogil:
     """In-place sorting of samples[start:end] using
       X[sample[i], current_feature] as key."""
@@ -1055,16 +1058,16 @@ cdef inline void sort(DTYPE_t* X, SIZE_t X_stride, SIZE_t current_feature,
             tmp = samples[n]
             samples[n] = samples[0]
 
-        tmp_value = X[X_stride * tmp + current_feature]
+        tmp_value = X[X_sample_stride * tmp + X_fx_stride * current_feature]
         index = parent
         child = index * 2 + 1
 
         while child < n:
             if ((child + 1 < n) and
-                (X[X_stride * samples[child + 1] + current_feature] > X[X_stride * samples[child] + current_feature])):
+                (X[X_sample_stride * samples[child + 1] + X_fx_stride * current_feature] > X[X_sample_stride * samples[child] + X_fx_stride * current_feature])):
                 child += 1
 
-            if X[X_stride * samples[child] + current_feature] > tmp_value:
+            if X[X_sample_stride * samples[child] + X_fx_stride * current_feature] > tmp_value:
                 samples[index] = samples[child]
                 index = child
                 child = index * 2 + 1
@@ -1095,7 +1098,8 @@ cdef class RandomSplitter(Splitter):
         cdef SIZE_t n_features = self.n_features
 
         cdef DTYPE_t* X = self.X
-        cdef SIZE_t X_stride = self.X_stride
+        cdef SIZE_t X_sample_stride = self.X_sample_stride
+        cdef SIZE_t X_fx_stride = self.X_fx_stride
         cdef SIZE_t max_features = self.max_features
         cdef SIZE_t min_samples_leaf = self.min_samples_leaf
         cdef UINT32_t* random_state = &self.rand_r_state
@@ -1133,10 +1137,10 @@ cdef class RandomSplitter(Splitter):
             current_feature = features[f_i]
 
             # Find min, max
-            min_feature_value = max_feature_value = X[X_stride * samples[start] + current_feature]
+            min_feature_value = max_feature_value = X[X_sample_stride * samples[start] + X_fx_stride * current_feature]
 
             for p from start < p < end:
-                current_feature_value = X[X_stride * samples[p] + current_feature]
+                current_feature_value = X[X_sample_stride * samples[p] + X_fx_stride * current_feature]
 
                 if current_feature_value < min_feature_value:
                     min_feature_value = current_feature_value
@@ -1159,7 +1163,7 @@ cdef class RandomSplitter(Splitter):
             p = start
 
             while p < partition_end:
-                if X[X_stride * samples[p] + current_feature] <= current_threshold:
+                if X[X_sample_stride * samples[p] + X_fx_stride * current_feature] <= current_threshold:
                     p += 1
 
                 else:
@@ -1202,7 +1206,7 @@ cdef class RandomSplitter(Splitter):
             p = start
 
             while p < partition_end:
-                if X[X_stride * samples[p] + best_feature] <= best_threshold:
+                if X[X_sample_stride * samples[p] + X_fx_stride * best_feature] <= best_threshold:
                     p += 1
 
                 else:
@@ -1284,7 +1288,8 @@ cdef class PresortBestSplitter(Splitter):
         cdef SIZE_t n_features = self.n_features
 
         cdef DTYPE_t* X = self.X
-        cdef SIZE_t X_stride = self.X_stride
+        cdef SIZE_t X_sample_stride = self.X_sample_stride
+        cdef SIZE_t X_fx_stride = self.X_fx_stride
         cdef INT32_t* X_argsorted = self.X_argsorted_ptr
         cdef SIZE_t X_argsorted_stride = self.X_argsorted_stride
         cdef SIZE_t n_total_samples = self.n_total_samples
@@ -1345,8 +1350,8 @@ cdef class PresortBestSplitter(Splitter):
 
             while p < end:
                 while ((p + 1 < end) and
-                       (X[X_stride * samples[p + 1] + current_feature] <=
-                        X[X_stride * samples[p] + current_feature] + EPSILON_FLT)):
+                       (X[X_sample_stride * samples[p + 1] + X_fx_stride * current_feature] <=
+                        X[X_sample_stride * samples[p] + X_fx_stride * current_feature] + EPSILON_FLT)):
                     p += 1
 
                 # (p + 1 >= end) or (X[samples[p + 1], current_feature] >
@@ -1373,11 +1378,11 @@ cdef class PresortBestSplitter(Splitter):
                         best_pos = current_pos
                         best_feature = current_feature
 
-                        current_threshold = (X[X_stride * samples[p - 1] + current_feature] +
-                                             X[X_stride * samples[p] + current_feature]) / 2.0
+                        current_threshold = (X[X_sample_stride * samples[p - 1] + X_fx_stride * current_feature] +
+                                             X[X_sample_stride * samples[p] + X_fx_stride * current_feature]) / 2.0
 
-                        if current_threshold == X[X_stride * samples[p] + current_feature]:
-                            current_threshold = X[X_stride * samples[p - 1] + current_feature]
+                        if current_threshold == X[X_sample_stride * samples[p] + X_fx_stride * current_feature]:
+                            current_threshold = X[X_sample_stride * samples[p - 1] + X_fx_stride * current_feature]
 
                         best_threshold = current_threshold
 
@@ -1397,7 +1402,7 @@ cdef class PresortBestSplitter(Splitter):
             p = start
 
             while p < partition_end:
-                if X[X_stride * samples[p] + best_feature] <= best_threshold:
+                if X[X_sample_stride * samples[p] + X_fx_stride * best_feature] <= best_threshold:
                     p += 1
 
                 else:
@@ -1890,9 +1895,11 @@ cdef class Tree:
                       np.ndarray y,
                       np.ndarray sample_weight=None):
         """Build a decision tree from the training set (X, y)."""
-        # Prepare data before recursive partitioning
+        # Prepare data before recursive partitioning - different dtype or not contiguous
         if X.dtype != DTYPE or not X.flags.contiguous:
-            X = np.asarray(X, dtype=DTYPE, order="C")
+            # preserve order
+            order = 'C' if X.flags.c_contiguous else 'F'
+            X = np.asarray(X, dtype=DTYPE, order=order)
 
         if y.dtype != DOUBLE or not y.flags.contiguous:
             y = np.asarray(y, dtype=DOUBLE, order="C")

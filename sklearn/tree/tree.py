@@ -134,8 +134,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
 
         # Convert data
         if check_input:
-            X, = check_arrays(X, dtype=DTYPE, sparse_format="dense",
-                              check_ccontiguous=True)
+            X, = check_arrays(X, dtype=DTYPE, sparse_format="dense")
 
         # Determine output settings
         n_samples, self.n_features_ = X.shape

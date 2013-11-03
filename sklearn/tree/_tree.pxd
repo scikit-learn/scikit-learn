@@ -79,7 +79,8 @@ cdef class Splitter:
     cdef SIZE_t end                      # End position for the current ndoe
 
     cdef DTYPE_t* X
-    cdef SIZE_t X_stride
+    cdef SIZE_t X_sample_stride
+    cdef SIZE_t X_fx_stride
     cdef DOUBLE_t* y
     cdef SIZE_t y_stride
     cdef DOUBLE_t* sample_weight
