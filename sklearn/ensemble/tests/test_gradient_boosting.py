@@ -322,23 +322,23 @@ def test_max_feature_auto():
 
     gbrt = GradientBoostingClassifier(n_estimators=1, max_features='auto')
     gbrt.fit(X_train, y_train)
-    assert gbrt.max_features_ == int(np.sqrt(n_features))
+    assert_equal(gbrt.max_features_, int(np.sqrt(n_features)))
 
     gbrt = GradientBoostingRegressor(n_estimators=1, max_features='auto')
     gbrt.fit(X_train, y_train)
-    assert gbrt.max_features_ == n_features
+    assert_equal(gbrt.max_features_, n_features)
 
     gbrt = GradientBoostingRegressor(n_estimators=1, max_features=0.3)
     gbrt.fit(X_train, y_train)
-    assert gbrt.max_features_ == int(n_features * 0.3)
+    assert_equal(gbrt.max_features_, int(n_features * 0.3))
 
     gbrt = GradientBoostingRegressor(n_estimators=1, max_features='sqrt')
     gbrt.fit(X_train, y_train)
-    assert gbrt.max_features_ == int(np.sqrt(n_features))
+    assert_equal(gbrt.max_features_, int(np.sqrt(n_features)))
 
     gbrt = GradientBoostingRegressor(n_estimators=1, max_features='log2')
     gbrt.fit(X_train, y_train)
-    assert gbrt.max_features_ == int(np.log2(n_features))
+    assert_equal(gbrt.max_features_, int(np.log2(n_features)))
 
 
 def test_staged_predict():
