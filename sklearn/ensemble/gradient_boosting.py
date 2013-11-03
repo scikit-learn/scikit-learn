@@ -505,7 +505,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
     @abstractmethod
     def __init__(self, loss, learning_rate, n_estimators, min_samples_split,
                  min_samples_leaf, max_depth, init, subsample, max_features,
-                 random_state, alpha=0.9, verbose=0, complete=True):
+                 random_state, alpha=0.9, verbose=0, max_leaf_nodes=-1):
 
         self.n_estimators = n_estimators
         self.learning_rate = learning_rate
@@ -519,7 +519,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         self.random_state = random_state
         self.alpha = alpha
         self.verbose = verbose
-        self.complete = complete
+        self.max_leaf_nodes = max_leaf_nodes
 
         self.estimators_ = np.empty((0, 0), dtype=np.object)
 
@@ -543,7 +543,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
                 min_samples_split=self.min_samples_split,
                 min_samples_leaf=self.min_samples_leaf,
                 max_features=self.max_features,
-                complete=self.complete,
+                max_leaf_nodes=self.max_leaf_nodes,
                 random_state=random_state)
 
             sample_weight = None
@@ -996,8 +996,8 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         predictions. ``init`` has to provide ``fit`` and ``predict``.
         If None it uses ``loss.init_estimator``.
 
-    complete : bool (default=True)
-        Whether to grow a complete binary tree (subject to stopping conditions
+    max_leaf_nodes : bool (default=True)
+        Whether to grow a max_leaf_nodes binary tree (subject to stopping conditions
         of max_depth, and minimum samples) or a greedy tree branch of
         ``max_depth`` and with ``max_depth + 1`` leaf nodes.
 
@@ -1059,12 +1059,12 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
                  subsample=1.0, min_samples_split=2, min_samples_leaf=1,
                  max_depth=3, init=None, random_state=None,
                  max_features=None, verbose=0,
-                 complete=True):
+                 max_leaf_nodes=-1):
 
         super(GradientBoostingClassifier, self).__init__(
             loss, learning_rate, n_estimators, min_samples_split,
             min_samples_leaf, max_depth, init, subsample, max_features,
-            random_state, verbose=verbose, complete=complete)
+            random_state, verbose=verbose, max_leaf_nodes=max_leaf_nodes)
 
     def fit(self, X, y, monitor=None):
         """Fit the gradient boosting model.
@@ -1286,8 +1286,8 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         predictions. ``init`` has to provide ``fit`` and ``predict``.
         If None it uses ``loss.init_estimator``.
 
-    complete : bool (default=True)
-        Whether to grow a complete binary tree (subject to stopping conditions
+    max_leaf_nodes : bool (default=True)
+        Whether to grow a max_leaf_nodes binary tree (subject to stopping conditions
         of max_depth, and minimum samples) or a greedy tree branch of
         ``max_depth`` and with ``max_depth + 1`` leaf nodes.
 
@@ -1348,12 +1348,12 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
     def __init__(self, loss='ls', learning_rate=0.1, n_estimators=100,
                  subsample=1.0, min_samples_split=2, min_samples_leaf=1,
                  max_depth=3, init=None, random_state=None,
-                 max_features=None, alpha=0.9, verbose=0, complete=True):
+                 max_features=None, alpha=0.9, verbose=0, max_leaf_nodes=-1):
 
         super(GradientBoostingRegressor, self).__init__(
             loss, learning_rate, n_estimators, min_samples_split,
             min_samples_leaf, max_depth, init, subsample, max_features,
-            random_state, alpha, verbose, complete=complete)
+            random_state, alpha, verbose, max_leaf_nodes=max_leaf_nodes)
 
     def fit(self, X, y, monitor=None):
         """Fit the gradient boosting model.

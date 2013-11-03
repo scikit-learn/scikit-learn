@@ -619,7 +619,7 @@ def test_complete():
     X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
     k = 4
     for name, TreeEstimator in ALL_TREES.items():
-        est = TreeEstimator(max_depth=k, complete=False).fit(X, y)
+        est = TreeEstimator(max_depth=None, max_leaf_nodes=k + 1).fit(X, y)
         tree = est.tree_
         assert_equal(tree.max_depth, k, '%s: max_depth does not match %d != %d' %
                      (name, tree.max_depth, k))

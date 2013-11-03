@@ -123,7 +123,7 @@ cdef class Tree:
     cdef public SIZE_t min_samples_split # Minimum number of samples in an internal node
     cdef public SIZE_t min_samples_leaf  # Minimum number of samples in a leaf
     cdef public object random_state      # Random state
-    cdef public bint complete            # Whether to grow a complete binary tree or a greedy one
+    cdef public int max_leaf_nodes       # Number of leafs to grow
 
     # Inner structures
     cdef public SIZE_t node_count        # Counter for node IDs

@@ -41,6 +41,7 @@ cdef SIZE_t _TREE_LEAF = TREE_LEAF
 cdef SIZE_t _TREE_UNDEFINED = TREE_UNDEFINED
 cdef double EPSILON_DBL = 1e-7
 cdef float EPSILON_FLT = 1e-7
+cdef SIZE_t INITIAL_STACK_SIZE = 10
 
 
 # A record on the stack for depth-first tree growing
@@ -51,7 +52,6 @@ cdef struct StackRecord:
     SIZE_t parent
     bint is_left
     double impurity
-    bint is_leaf
 
 
 # =============================================================================
@@ -1423,13 +1423,41 @@ cdef class PresortBestSplitter(Splitter):
 # Stack data structures
 # =============================================================================
 
+cdef inline void copy(StackRecord *a, StackRecord *b) nogil:
+    """Assigns ``a := b``. """
+    a.start = b.start
+    a.end = b.end
+    a.depth = b.depth
+    a.parent = b.parent
+    a.is_left = b.is_left
+    a.impurity = b.impurity
+
+
+cdef void swap(StackRecord* stack, SIZE_t a, SIZE_t b) nogil:
+    """Swap record ``a`` and ``b`` in ``stack``. """
+    cdef StackRecord tmp
+    copy(&tmp, stack + a)
+    copy(stack + a, stack + b)
+    copy(stack + b, &tmp)
+
+
 cdef class Stack:
-    """A LIFO data structure. """
+    """A LIFO data structure.
+
+    Attributes
+    ----------
+    capacity : SIZE_t
+        The elements the stack can hold; if more added then ``self.stack`` needs to be
+        resized.
+    stack_ptr : SIZE_t
+        The number of elements currently on the stack.
+    stack : StackRecord pointer
+        The stack of records (upward in the stack corresponds to the right).
+    """
 
     cdef SIZE_t capacity
     cdef SIZE_t stack_ptr
     cdef StackRecord* stack_
-
 
     def __cinit__(self, SIZE_t capacity):
         self.capacity = capacity
@@ -1443,7 +1471,8 @@ cdef class Stack:
         return self.stack_ptr <= 0
 
     cdef void push(self, SIZE_t start, SIZE_t end, SIZE_t depth, SIZE_t parent, bint is_left,
-                   double impurity, bint is_leaf) nogil:
+                   double impurity) nogil:
+        """Push a new element onto the stack. """
         cdef SIZE_t stack_ptr = self.stack_ptr + 1
         cdef StackRecord* stack = NULL
 
@@ -1459,25 +1488,102 @@ cdef class Stack:
         stack[stack_ptr].parent = parent
         stack[stack_ptr].is_left = is_left
         stack[stack_ptr].impurity = impurity
-        stack[stack_ptr].is_leaf = is_leaf
         self.stack_ptr = stack_ptr
 
     cdef int pop(self, StackRecord* res) nogil:
+        """Remove the top element from the stack. """
         cdef SIZE_t stack_ptr = self.stack_ptr
         cdef StackRecord* stack = self.stack_
 
         if stack_ptr <= 0:
             return 0
 
-        res.start = stack[stack_ptr].start
-        res.end = stack[stack_ptr].end
-        res.depth = stack[stack_ptr].depth
-        res.parent = stack[stack_ptr].parent
-        res.is_left = stack[stack_ptr].is_left
-        res.impurity = stack[stack_ptr].impurity
-        res.is_leaf = stack[stack_ptr].is_leaf
+        copy(res, stack + stack_ptr)
         self.stack_ptr = stack_ptr - 1
         return 1
+
+
+cdef void heapify_up(StackRecord* stack, SIZE_t pos) nogil:
+    """Restore heap invariant parent.impurity > child.impurity from ``pos`` upwards. """
+    if pos == 0:
+        return
+    cdef SIZE_t parent_pos = (pos - 1) / 2
+
+    if stack[parent_pos].impurity < stack[pos].impurity:
+        swap(stack, parent_pos, pos)
+        heapify_up(stack, parent_pos)
+
+
+cdef void heapify_down(StackRecord* stack, SIZE_t pos, SIZE_t stack_length) nogil:
+    """Restore heap invariant parent.impurity > children.impurity from ``pos`` downwards. """
+    cdef SIZE_t left_pos = 2 * (pos + 1) - 1
+    cdef SIZE_t right_pos = 2 * (pos + 1)
+    cdef SIZE_t largest = pos
+
+    if left_pos < stack_length and stack[left_pos].impurity > stack[largest].impurity:
+        largest = left_pos
+    if right_pos < stack_length and stack[right_pos].impurity > stack[largest].impurity:
+        largest = right_pos
+
+    if largest != pos:
+        swap(stack, pos, largest)
+        heapify_down(stack, largest, stack_length)
+
+
+cdef class PriorityHeap(Stack):
+    """A priority queue implemented as a binary heap.
+
+    The heap invariant is that the impurity of the parent record is larger then the impurity
+    of the children.
+    """
+
+    cdef void push(self, SIZE_t start, SIZE_t end, SIZE_t depth, SIZE_t parent, bint is_left,
+                   double impurity) nogil:
+        """Push record on the priority heap. """
+        # increment heap end index by one
+        cdef SIZE_t stack_ptr = self.stack_ptr
+        cdef StackRecord* stack = NULL
+
+        # resize if capacity not sufficient
+        if stack_ptr >= self.capacity:
+            self.capacity *= 2
+            self.stack_ = <StackRecord*> realloc(self.stack_, self.capacity * sizeof(StackRecord))
+
+        # put element as last element of heap
+        stack = self.stack_
+        stack[stack_ptr].start = start
+        stack[stack_ptr].end = end
+        stack[stack_ptr].depth = depth
+        stack[stack_ptr].parent = parent
+        stack[stack_ptr].is_left = is_left
+        stack[stack_ptr].impurity = impurity
+
+        # heapify up
+        heapify_up(stack, stack_ptr)
+
+        self.stack_ptr = stack_ptr + 1
+
+    cdef int pop(self, StackRecord* res) nogil:
+        """Remove max element from the heap. """
+        cdef SIZE_t stack_ptr = self.stack_ptr
+        cdef StackRecord* stack = self.stack_
+
+        if stack_ptr <= 0:
+            return 0
+
+        # take first element
+        copy(res, stack)
+
+        # put last element to the front
+        swap(stack, 0, stack_ptr - 1)
+
+        # restore heap invariant
+        if stack_ptr > 1:
+            heapify_down(stack, 0, stack_ptr - 1)
+
+        self.stack_ptr = stack_ptr - 1
+        return 1
+
 
 
 # =============================================================================
@@ -1573,7 +1679,7 @@ cdef class Tree:
     def __cinit__(self, int n_features, np.ndarray[SIZE_t, ndim=1] n_classes,
                   int n_outputs, Splitter splitter, SIZE_t max_depth,
                   SIZE_t min_samples_split, SIZE_t min_samples_leaf,
-                  object complete, object random_state):
+                  int max_leaf_nodes, object random_state):
         """Constructor."""
         # Input/Output layout
         self.n_features = n_features
@@ -1597,7 +1703,7 @@ cdef class Tree:
         self.min_samples_split = min_samples_split
         self.min_samples_leaf = min_samples_leaf
         self.random_state = random_state
-        self.complete = 1 if complete else 0
+        self.max_leaf_nodes = max_leaf_nodes
 
         # Inner structures
         self.node_count = 0
@@ -1631,7 +1737,7 @@ cdef class Tree:
                        self.max_depth,
                        self.min_samples_split,
                        self.min_samples_leaf,
-                       bool(self.complete),
+                       self.max_leaf_nodes,
                        self.random_state), self.__getstate__())
 
     def __getstate__(self):
@@ -1813,9 +1919,6 @@ cdef class Tree:
         cdef Splitter splitter = self.splitter
         splitter.init(X, y, sample_weight_ptr)
 
-        cdef Stack stack = Stack(10)
-        cdef StackRecord stack_record
-
         cdef SIZE_t start
         cdef SIZE_t end
         cdef SIZE_t depth
@@ -1826,19 +1929,30 @@ cdef class Tree:
         cdef SIZE_t pos
         cdef SIZE_t feature
         cdef SIZE_t node_id
+        cdef int max_leaf_nodes = self.max_leaf_nodes
+        cdef int max_split_nodes = max_leaf_nodes - 1
         cdef double threshold
         cdef double impurity = INFINITY
         cdef double impurity_left = INFINITY
         cdef double impurity_right = INFINITY
         cdef bint is_leaf
-        cdef bint complete = self.complete
         cdef bint first = 1
-        cdef bint is_left_impurity_smaller = 0
-        cdef bint is_right_impurity_smaller = 0
+
+        cdef Stack stack = None
+        cdef StackRecord stack_record
+
+        cdef SIZE_t max_depth_seen = 0  # needed to keep track of actual max depth of tree
+
+        if max_leaf_nodes < 0:
+            # we can do unlimited leafs
+            stack = Stack(INITIAL_STACK_SIZE)
+        else:
+            # we have a limited budget of leafs
+            stack = PriorityHeap(INITIAL_STACK_SIZE)
 
         with nogil:
             # push root node onto stack
-            stack.push(0, n_node_samples, 0, _TREE_UNDEFINED, 0, INFINITY, 0)
+            stack.push(0, n_node_samples, 0, _TREE_UNDEFINED, 0, INFINITY)
 
             while not stack.is_empty():
 
@@ -1849,12 +1963,12 @@ cdef class Tree:
                 parent = stack_record.parent
                 is_left = stack_record.is_left
                 impurity = stack_record.impurity
-                is_leaf = stack_record.is_leaf
 
                 n_node_samples = end - start
-                is_leaf = (is_leaf or (depth >= self.max_depth) or
+                is_leaf = ((depth >= self.max_depth) or
                            (n_node_samples < self.min_samples_split) or
-                           (n_node_samples < 2 * self.min_samples_leaf))
+                           (n_node_samples < 2 * self.min_samples_leaf) or
+                           (max_split_nodes == 0))
 
                 splitter.node_reset(start, end)  # calls criterion.init
 
@@ -1870,30 +1984,26 @@ cdef class Tree:
 
                 node_id = self._add_node(parent, is_left, is_leaf, feature,
                                          threshold, impurity, n_node_samples)
+                if depth > max_depth_seen:
+                    max_depth_seen = depth
 
                 if is_leaf:
                     # Don't store value for internal nodes
                     splitter.node_value(self.value + node_id * self.value_stride)
 
                 else:
-                    if not complete:
-                        if impurity_left < impurity_right:
-                            is_left_impurity_smaller = 1
-                            is_right_impurity_smaller = 0
-                        else:
-                            is_left_impurity_smaller = 0
-                            is_right_impurity_smaller = 1
+                    # we have one more split node
+                    max_split_nodes -= 1
 
-                    # Stack right child
-                    stack.push(pos, end, depth + 1, node_id, 0, impurity_right,
-                               is_right_impurity_smaller)
+                    # Push right child on stack
+                    stack.push(pos, end, depth + 1, node_id, 0, impurity_right)
 
-                    # Stack left child
-                    stack.push(start, pos, depth + 1, node_id, 1, impurity_left,
-                               is_left_impurity_smaller)
+                    # Push left child on stack
+                    stack.push(start, pos, depth + 1, node_id, 1, impurity_left)
 
             self._resize(self.node_count)
         self.splitter = None  # Release memory
+        self.max_depth = max_depth_seen  # store the max depth reached
 
     cpdef predict(self, np.ndarray[DTYPE_t, ndim=2] X):
         """Predict target for X."""
