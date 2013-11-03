@@ -29,6 +29,16 @@ def test_fit():
     assert_array_equal(X, Xdigits)
 
 
+def test_partial_fit():
+    X = Xdigits.copy()
+
+    rbm = BernoulliRBM(n_components=64, learning_rate=0.1,
+                       batch_size=10, n_iter=7, random_state=9)
+    rbm.partial_fit(X)
+
+    assert_almost_equal(rbm.score_samples(X).mean(), -21., decimal=0)
+    assert_array_equal(X, Xdigits)
+
 def test_transform():
     X = Xdigits[:100]
     rbm1 = BernoulliRBM(n_components=16, batch_size=5,

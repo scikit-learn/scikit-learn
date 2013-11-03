@@ -208,7 +208,8 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
 
         return v_
 
-    def partial_fit(self, v_pos, rng):
+    
+    def partial_fit(self, v_pos):
         """Inner fit for one mini-batch.
 
         Adjust the parameters to maximize the likelihood of v using
@@ -219,14 +220,18 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         v_pos : array-like, shape (n_samples, n_features)
             The data to use for training.
 
-        rng : RandomState
-            Random number generator to use for sampling.
-
         Returns
         -------
         pseudo_likelihood : array-like, shape (n_samples,)
             If verbose=True, pseudo-likelihood estimate for this batch.
         """
+        rng = check_random_state(self.random_state)
+        self.components_ = np.asarray(
+            rng.normal(0, 0.01, (self.n_components, X.shape[1])),
+            order='fortran')
+        self.intercept_hidden_ = np.zeros(self.n_components, )
+        self.intercept_visible_ = np.zeros(X.shape[1], )
+
         h_pos = self._mean_hiddens(v_pos)
         v_neg = self._sample_visibles(self.h_samples_, rng)
         h_neg = self._mean_hiddens(v_neg)
