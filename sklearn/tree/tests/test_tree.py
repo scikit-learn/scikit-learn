@@ -622,3 +622,9 @@ def test_max_leaf_nodes():
         est = TreeEstimator(max_depth=None, max_leaf_nodes=k + 1).fit(X, y)
         tree = est.tree_
         assert_equal(tree.children_left[tree.children_left == TREE_LEAF].shape[0], k + 1)
+
+        # max_leaf_nodes in (0, 1) should raise ValueError
+        est = TreeEstimator(max_depth=None, max_leaf_nodes=0)
+        assert_raises(ValueError, est.fit, X, y)
+        est = TreeEstimator(max_depth=None, max_leaf_nodes=1)
+        assert_raises(ValueError, est.fit, X, y)

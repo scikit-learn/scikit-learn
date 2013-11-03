@@ -206,6 +206,10 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
             raise ValueError("max_depth must be greater than zero. ")
         if not (0 < max_features <= self.n_features_):
             raise ValueError("max_features must be in (0, n_features]")
+        if not isinstance(self.max_leaf_nodes, (numbers.Integral, np.integer)):
+            raise ValueError("max_leaf_nodes must be integral number")
+        if -1 < self.max_leaf_nodes < 2:
+            raise ValueError("max_leaf_nodes must be either smaller than 0 or larger than 1")
 
         if sample_weight is not None:
             if (getattr(sample_weight, "dtype", None) != DOUBLE or
