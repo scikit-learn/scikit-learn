@@ -1074,6 +1074,8 @@ implements three such simple strategies for classification:
 - `most_frequent` always predicts the most frequent label in the training set,
 - `uniform` generates predictions uniformly at random.
 - `constant` always predicts a constant label that is provided by the user.
+   A major motivation of this method is F1-scoring when the positive class
+   is in the minority.
 
 Note that with all these strategies, the `predict` method completely ignores
 the input data!

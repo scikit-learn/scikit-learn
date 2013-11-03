@@ -219,6 +219,12 @@ def test_constant_strategy():
     assert_array_equal(clf.predict(X), np.ones(len(X)))
     _check_predict_proba(clf, X, y)
 
+    X = [[0], [0], [0], [0]]  # ignored
+    y = ['two', 'one', 'two', 'two']
+    clf = DummyClassifier(strategy="constant", random_state=0, constant='one')
+    clf.fit(X, y)
+    assert_array_equal(clf.predict(X), np.array(['one']*4))
+    _check_predict_proba(clf, X, y)
 
 def test_constant_strategy_multioutput():
     X = [[0], [0], [0], [0]]  # ignored
