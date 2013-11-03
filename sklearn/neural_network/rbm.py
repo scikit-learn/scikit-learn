@@ -208,8 +208,28 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
 
         return v_
 
-    
-    def partial_fit(self, v_pos):
+    def partial_fit(self, X):
+        """Fit the model to the data X which should contain a partial segment of the data.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            Training data.
+
+        Returns
+        -------
+        self : BernoulliRBM
+            The fitted model.
+        """
+        rng = check_random_state(self.random_state)
+        self.components_ = np.asarray(rng.normal(0, 0.01, (self.n_components, X.shape[1])),order='fortran')
+        self.intercept_hidden_ = np.zeros(self.n_components, )
+        self.intercept_visible_ = np.zeros(X.shape[1], )
+        self.h_samples_ = np.zeros((self.batch_size, self.n_components))
+        
+        self._fit(X,rng)
+
+    def _fit(self, v_pos, rng):
         """Inner fit for one mini-batch.
 
         Adjust the parameters to maximize the likelihood of v using
@@ -220,18 +240,14 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         v_pos : array-like, shape (n_samples, n_features)
             The data to use for training.
 
+        rng : RandomState
+            Random number generator to use for sampling.
+
         Returns
         -------
         pseudo_likelihood : array-like, shape (n_samples,)
             If verbose=True, pseudo-likelihood estimate for this batch.
         """
-        rng = check_random_state(self.random_state)
-        self.components_ = np.asarray(
-            rng.normal(0, 0.01, (self.n_components, X.shape[1])),
-            order='fortran')
-        self.intercept_hidden_ = np.zeros(self.n_components, )
-        self.intercept_visible_ = np.zeros(X.shape[1], )
-
         h_pos = self._mean_hiddens(v_pos)
         v_neg = self._sample_visibles(self.h_samples_, rng)
         h_neg = self._mean_hiddens(v_neg)
@@ -308,7 +324,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
                 begin = time.time()
 
             for batch_slice in batch_slices:
-                pl_batch = self.partial_fit(X[batch_slice], rng)
+                pl_batch = self._fit(X[batch_slice], rng)
 
                 if verbose:
                     pl += pl_batch.sum()

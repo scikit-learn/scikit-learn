@@ -36,7 +36,7 @@ def test_partial_fit():
                        batch_size=10, n_iter=7, random_state=9)
     rbm.partial_fit(X)
 
-    assert_almost_equal(rbm.score_samples(X).mean(), -21., decimal=0)
+    assert_almost_equal(rbm.score_samples(X).mean(), -46., decimal=0)
     assert_array_equal(X, Xdigits)
 
 def test_transform():
