@@ -35,7 +35,7 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
     random_state: int seed, RandomState instance, or None (default)
         The seed of the pseudo random number generator to use.
 
-    constant: int or array of shape = [n_outputs]
+    constant: int or str or array of shape = [n_outputs]
         The explicit constant as predicted by the "constant" strategy. This
         parameter is useful only for the "constant" strategy.
 
@@ -56,8 +56,6 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
     `outputs_2d_` : bool,
         True if the output at fit is 2d, else false.
 
-    `constant_` : int or str or array of shape = [n_outputs]
-        Explicit constant as predicted by the "constant" strategy.
     """
 
     def __init__(self, strategy="stratified", random_state=None,
@@ -103,8 +101,8 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
                 raise ValueError("Constant target value has to be specified "
                                  "when the constant strategy is used.")
             else:
-                self.constant_ = np.reshape(np.atleast_1d(self.constant), (-1, 1))
-                if self.constant_.shape[0] != self.n_outputs_:
+                constant = np.reshape(np.atleast_1d(self.constant), (-1, 1))
+                if constant.shape[0] != self.n_outputs_:
                     raise ValueError("Constant target value should have "
                                      "shape (%d, 1)." % self.n_outputs_)
 
@@ -117,7 +115,7 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
             # Checking in case of constant strategy if the constant provided
             # by the user is in y. 
             if self.strategy == "constant":
-                if self.constant_[k] not in self.classes_[k]:
+                if constant[k] not in self.classes_[k]:
                     raise ValueError("The constant target value must be "
                                      "present in training data")
 
