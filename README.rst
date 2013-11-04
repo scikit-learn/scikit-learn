@@ -102,8 +102,3 @@ for more information.
 
     Random number generation can be controlled during testing by setting
     the ``SKLEARN_SEED`` environment variable.
-
-
-
-
-
