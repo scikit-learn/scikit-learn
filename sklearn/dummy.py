@@ -56,7 +56,7 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
     `outputs_2d_` : bool,
         True if the output at fit is 2d, else false.
 
-    `constant_` : int or array of shape = [n_outputs]
+    `constant_` : int or str or array of shape = [n_outputs]
         Explicit constant as predicted by the "constant" strategy.
     """
 
@@ -98,7 +98,7 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
         self.n_classes_ = []
         self.class_prior_ = []
 
-        if self.strategy == 'constant':
+        if self.strategy == "constant":
             if self.constant is None:
                 raise ValueError("Constant target value has to be specified "
                                  "when the constant strategy is used.")
@@ -116,7 +116,7 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
 
             # Checking in case of constant strategy if the constant provided
             # by the user is in y. 
-            if self.strategy == 'constant':            
+            if self.strategy == "constant":
                 if self.constant_[k] not in self.classes_[k]:
                     raise ValueError("The constant target value must be "
                                      "present in training data")
@@ -178,8 +178,8 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
                 ret = rs.randint(n_classes_[k], size=n_samples)
 
             elif self.strategy == "constant":
-                ret = np.ones(n_samples, dtype=int)*(
-                              np.where(classes_[k]==constant[k]))
+                ret = np.ones(n_samples, dtype=int) * (
+                      np.where(classes_[k] == constant[k]))
 
             y.append(classes_[k][ret])
 

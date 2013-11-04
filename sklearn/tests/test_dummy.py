@@ -226,6 +226,7 @@ def test_constant_strategy():
     assert_array_equal(clf.predict(X), np.array(['one']*4))
     _check_predict_proba(clf, X, y)
 
+
 def test_constant_strategy_multioutput():
     X = [[0], [0], [0], [0]]  # ignored
     y = np.array([[2, 3],
@@ -242,7 +243,6 @@ def test_constant_strategy_multioutput():
                        np.hstack([np.ones((n_samples, 1)),
                                   np.zeros((n_samples, 1))]))
     _check_predict_proba(clf, X, y)
-
 
 
 def test_constant_strategy_exceptions():
