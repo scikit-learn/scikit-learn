@@ -71,11 +71,22 @@ GIT
 
 You can check the latest sources with the command::
 
-    git clone git://github.com/scikit-learn/scikit-learn.git
+    git clone https://github.com/scikit-learn/scikit-learn.git
 
 or if you have write privileges::
 
     git clone git@github.com:scikit-learn/scikit-learn.git
+
+
+Contributing
+~~~~~~~~~~~~
+
+Quick tutorial on how to go about setting up your environment to
+contribute to scikit-learn: https://github.com/scikit-learn/scikit-learn/blob/master/CONTRIBUTING.md
+
+Before opening a Pull Request, have a look at the 
+full Contributing page to make sure your code complies
+with our guidelines: http://scikit-learn.org/stable/developers/index.html
 
 
 Testing
@@ -91,3 +102,8 @@ for more information.
 
     Random number generation can be controlled during testing by setting
     the ``SKLEARN_SEED`` environment variable.
+
+
+
+
+

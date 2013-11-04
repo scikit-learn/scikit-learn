@@ -3,7 +3,7 @@ Contributing code
 =================
 
 **Note: This document is just to get started, visit [**Contributing
-page**](http://scikit-learn.org/stable/developers/index.html#coding-guidelines)
+page**](http://scikit-learn.org/stable/developers/index.html)
 for the full contributor's guide. Please be sure to read it carefully to make
 the code review process go as smoothly as possible and maximize the
 likelihood of your contribution being merged.**
