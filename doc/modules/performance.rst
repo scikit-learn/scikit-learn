@@ -77,7 +77,7 @@ Influence of the Input Data Representation
 Numpy / Scipy support sparse matrix formats which are optimized for storing
 sparse data. The main feature of sparse formats is that you don't store zeros
 so if your data is sparse then you use much less memory. A non-zero value in
-a sparse (`CSR or CSC<http://docs.scipy.org/doc/scipy/reference/sparse.html>`_)
+a sparse (`CSR or CSC <http://docs.scipy.org/doc/scipy/reference/sparse.html>`_)
 representation will only take on average one 32bit integer position + the 64
 bit floating point value. Using sparse input on a dense (or sparse) linear
 model can speedup prediction prediction by quite a bit as only the non zero
@@ -178,16 +178,17 @@ BLAS.
 You can display the BLAS / LAPACK implementation used by your NumPy / SciPy /
 scikit-learn install with the following commands:
 
+
     >>> from numpy.distutils.system_info import get_info
     >>> print(get_info('blas_opt'))
     >>> print(get_info('lapack_opt'))
 
 
 Optimized BLAS / LAPACK implementations include:
-  - Atlas (need hardware specific tuning by rebuilding on the target machine)
-  - OpenBLAS
-  - MKL
-  - Apple Accelerate and vecLib frameworks (OSX only)
+ - Atlas (need hardware specific tuning by rebuilding on the target machine)
+ - OpenBLAS
+ - MKL
+ - Apple Accelerate and vecLib frameworks (OSX only)
 
 More information can be found on the `Scipy install page <http://docs.scipy
 .org/doc/numpy/user/install.html>`_
@@ -219,5 +220,5 @@ model.
 Links
 -----
 
-  - `scikit-learn developer performance documentation<http://scikit-learn.org/stable/developers/performance.html>`_
-  - `Scipy sparse matrix formats documentation<http://docs.scipy.org/doc/scipy/reference/sparse.html>`_
+  - `scikit-learn developer performance documentation <http://scikit-learn.org/stable/developers/performance.html>`_
+  - `Scipy sparse matrix formats documentation <http://docs.scipy.org/doc/scipy/reference/sparse.html>`_
