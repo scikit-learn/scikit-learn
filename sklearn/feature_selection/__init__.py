@@ -17,10 +17,13 @@ from .univariate_selection import GenericUnivariateSelect
 
 from .variance_threshold import VarianceThreshold
 
+from .multivariate_filtering import MinRedundancyMaxRelevance
+
 from .rfe import RFE
 from .rfe import RFECV
 
 __all__ = ['GenericUnivariateSelect',
+           'MinRedundancyMaxRelevance',
            'RFE',
            'RFECV',
            'SelectFdr',
