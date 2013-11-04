@@ -472,7 +472,7 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
             for j in xrange(1, len(all_proba)):
                 proba += all_proba[j]
 
-            proba /= self.n_estimators
+            proba /= len(self.estimators_)
 
         else:
             for j in xrange(1, len(all_proba)):
@@ -572,7 +572,7 @@ class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
             for i in range(n_jobs))
 
         # Reduce
-        y_hat = sum(all_y_hat) / self.n_estimators
+        y_hat = sum(all_y_hat) / len(self.estimators_)
 
         return y_hat
 

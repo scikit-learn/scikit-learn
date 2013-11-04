@@ -242,8 +242,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
 
         self.tree_ = Tree(self.n_features_, self.n_classes_,
                           self.n_outputs_, splitter, max_depth,
-                          min_samples_split, self.min_samples_leaf,
-                          random_state)
+                          min_samples_split, self.min_samples_leaf)
 
         self.tree_.build(X, y, sample_weight=sample_weight)
 
