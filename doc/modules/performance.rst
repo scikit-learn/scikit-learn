@@ -16,7 +16,7 @@ One of the most straight-forward concerns one may have when using/choosing a
 machine learning toolkit is the speed at which predictions can be made in a
 production environment.
 
-The main factors that influence the prediction speed are:
+The main factors that influence the prediction speed are
   1. Number of features
   2. Input data representation and sparsity
   3. Model complexity
@@ -136,15 +136,64 @@ As scikit-learn relies heavily on Numpy/Scipy and linear algebra in general it
 makes sense to take explicit care of the versions of these libraries.
 Basically, you ought to make sure that Numpy is built using an optimized `BLAS
 <http://en.wikipedia.org/wiki/Basic_Linear_Algebra_Subprograms>`_ /
-`LAPCACK <http://en.wikipedia.org/wiki/LAPACK>`_ library. More information
-can be found on the `Scipy install page
-<http://docs.scipy.org/doc/numpy/user/install.html>`_ and in this
+`LAPACK <http://en.wikipedia.org/wiki/LAPACK>`_ library.
+
+Not all models benefit from optimized BLAS and Lapack implementations. For
+instance models based on (randomized) decision trees typically do not rely on
+BLAS calls in their inner loops. So do models implemented in third party C++
+library (like `LinearSVC`, `LogisticRegression` from `liblinear` and SVC / SVR
+from `libsvm`). On the other hand linear model implemented with a BLAS DGEMM
+call (via numpy.dot) will typically benefit hugely from a tuned BLAS
+implementation and lead to orders of magnitude speedup over a non-optimized
+BLAS.
+
+You can display the BLAS / LAPACK implementation used by your NumPy / SciPy /
+scikit-learn install with the following commands:
+
+    >>> from numpy.distutils.system_info import get_info
+    >>> print(get_info('blas_opt'))
+    >>> print(get_info('lapack_opt'))
+
+
+Optimized BLAS / LAPACK implementations include:
+  - Atlas (need hardware specific tuning by rebuilding on the target machine)
+  - OpenBLAS
+  - MKL
+  - Apple Accelerate and vecLib frameworks (OSX only)
+
+More information can be found on the `Scipy install page <http://docs.scipy
+.org/doc/numpy/user/install.html>`_
+and in this
 `blog post <http://danielnouri.org/notes/2012/12/19/libblas-and-liblapack-issues-and-speed,-with-scipy-and-ubuntu/>`_
-from Daniel Nouri which has some nice step by step instructions.
+from Daniel Nouri which has some nice step by step install instructions.
 
 Model Compression
 -----------------
 
-`sparsify()` trick etc
+Model compression in scikit-learn only concerns linear models for the moment.
+In this context it means that we want to control the model sparsity (i.e. the
+number of non-zero coordinates in the model vectors). Numpy / Scipy support
+sparse matrix formats which are optimized for storing sparse data. The main
+feature of sparse formats is that you don't store zeros so if your data is
+sparse then you use much less memory. A non-zero value in a sparse (CSR
+or CSC) representation will only take on average one 32bit integer position +
+the 64 bit floating point value. Using sparse input on a dense (or sparse)
+linear model can speedup prediction prediction by quite a bit as only the non
+zero valued features impact the dot product and thus the model predictions.
+Hence if you have 100 non zeros in 1e6 dimensional space, you only need 100
+multiply + add operation instead of 1e6.
+
+You can do micro benchmarks of safe_sparse_dot(data, coef.T) where data has
+shape (n_samples, n_features) and coef has shape (n_classes,
+n_features) for various level of sparsity and representations of data and
+coef to get a feeling on the impact of the performance prediction.
+
+Note that dense x dense operations benefit from both BLAS-provided SSE
+vectorized operations and multithreading and lower CPU cache misrates. Sparse
+dot product is more hit or miss and does not leverage the optimized BLAS
+benefit. So the sparsity should typically be quite high (10% non-zeros max,
+to be checked depending on the hardware) for the sparse input representation
+to be faster that the dense input representation on a machine with many CPU and
+an optimized BLAS implementation.
 
 
