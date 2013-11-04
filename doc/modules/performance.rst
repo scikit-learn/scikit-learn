@@ -74,7 +74,35 @@ memory footprint and estimator).
 Influence of the Input Data Representation
 ------------------------------------------
 
-tbd (CSR vs dense vs ...)
+Numpy / Scipy support sparse matrix formats which are optimized for storing
+sparse data. The main feature of sparse formats is that you don't store zeros
+so if your data is sparse then you use much less memory. A non-zero value in
+a sparse (`CSR or CSC<http://docs.scipy.org/doc/scipy/reference/sparse.html>`_)
+representation will only take on average one 32bit integer position + the 64
+bit floating point value. Using sparse input on a dense (or sparse) linear
+model can speedup prediction prediction by quite a bit as only the non zero
+valued features impact the dot product and thus the model predictions. Hence
+if you have 100 non zeros in 1e6 dimensional space, you only need 100 multiply
++ add operation instead of 1e6.
+
+Note that dense / dense operations benefit from both BLAS-provided SSE
+vectorized operations and multithreading and lower CPU cache miss rates. Sparse
+dot product is more hit or miss and does not leverage the optimized BLAS
+benefit. So the sparsity should typically be quite high (10% non-zeros max,
+to be checked depending on the hardware) for the sparse input representation
+to be faster that the dense input representation on a machine with many CPU and
+an optimized BLAS implementation.
+
+Here is a sample code to test the sparsity of your input:
+
+    >>> import numpy as np
+    >>> def sparsity_ratio(X):
+    >>>     return np.count_nonzero(X) / float(X.shape[0] * X.shape[1])
+    >>> print("input sparsity ratio:", sparsity_ratio(X))
+
+Now if you want to try to leverage sparsity for your input data you should
+either build your input matrix in the CSR or CSC or call the ``to_csr()``
+method or the ``csr_matrix()`` helper function from Scipy.
 
 Prediction Throughput
 =====================
@@ -172,28 +200,24 @@ Model Compression
 
 Model compression in scikit-learn only concerns linear models for the moment.
 In this context it means that we want to control the model sparsity (i.e. the
-number of non-zero coordinates in the model vectors). Numpy / Scipy support
-sparse matrix formats which are optimized for storing sparse data. The main
-feature of sparse formats is that you don't store zeros so if your data is
-sparse then you use much less memory. A non-zero value in a sparse (CSR
-or CSC) representation will only take on average one 32bit integer position +
-the 64 bit floating point value. Using sparse input on a dense (or sparse)
-linear model can speedup prediction prediction by quite a bit as only the non
-zero valued features impact the dot product and thus the model predictions.
-Hence if you have 100 non zeros in 1e6 dimensional space, you only need 100
-multiply + add operation instead of 1e6.
+number of non-zero coordinates in the model vectors). It is generally a good
+idea to combine model sparsity with sparse input data representation.
 
-You can do micro benchmarks of safe_sparse_dot(data, coef.T) where data has
-shape (n_samples, n_features) and coef has shape (n_classes,
-n_features) for various level of sparsity and representations of data and
-coef to get a feeling on the impact of the performance prediction.
+Here is a sample code that illustrates the use of the ``sparsify()`` method:
 
-Note that dense x dense operations benefit from both BLAS-provided SSE
-vectorized operations and multithreading and lower CPU cache misrates. Sparse
-dot product is more hit or miss and does not leverage the optimized BLAS
-benefit. So the sparsity should typically be quite high (10% non-zeros max,
-to be checked depending on the hardware) for the sparse input representation
-to be faster that the dense input representation on a machine with many CPU and
-an optimized BLAS implementation.
+    >>> clf = SGDRegressor(penalty='l1')
+    >>> clf.fit(X_train, y_train)
+    >>> clf.sparsify()
+    >>> clf.predict(X_test)
 
+A typical benchmark (:ref:`benchmarks_bench_sparsify.py`) on synthetic data
+yields a >30% decrease in latency when both the model and input are sparsed
+(with 0.000024 and 0.027400 non-zero coefficients ratio respectively).
+Your mileage may vary depending on the sparsity and size of your data and
+model.
 
+Links
+-----
+
+  - `scikit-learn developer performance documentation<http://scikit-learn.org/stable/developers/performance.html>`_
+  - `Scipy sparse matrix formats documentation<http://docs.scipy.org/doc/scipy/reference/sparse.html>`_
