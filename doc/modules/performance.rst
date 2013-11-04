@@ -194,7 +194,8 @@ More information can be found on the `Scipy install page <http://docs.scipy
 .org/doc/numpy/user/install.html>`_
 and in this
 `blog post <http://danielnouri.org/notes/2012/12/19/libblas-and-liblapack-issues-and-speed,-with-scipy-and-ubuntu/>`_
-from Daniel Nouri which has some nice step by step install instructions.
+from Daniel Nouri which has some nice step by step install instructions for
+Debian / Ubuntu.
 
 Model Compression
 -----------------
@@ -216,6 +217,8 @@ yields a >30% decrease in latency when both the model and input are sparsed
 (with 0.000024 and 0.027400 non-zero coefficients ratio respectively).
 Your mileage may vary depending on the sparsity and size of your data and
 model.
+Furthermore, sparsifying can be very useful to reduce the memory usage of
+predictive models deployed on production servers.
 
 Links
 -----
