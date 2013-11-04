@@ -47,7 +47,7 @@ always faster by 2 orders of magnitude:
 .. centered:: |bulk_prediction_speed|
 
 To benchmark different estimators for your case you can simply change the
-`n_features` parameter according to your case in this example:
+``n_features`` parameter according to your case in this example:
 :ref:`example_applications_plot_prediction_latency.py`. This should give you
 an estimate of the order of magnitude of the prediction speed for your case.
 
@@ -169,9 +169,9 @@ Basically, you ought to make sure that Numpy is built using an optimized `BLAS
 Not all models benefit from optimized BLAS and Lapack implementations. For
 instance models based on (randomized) decision trees typically do not rely on
 BLAS calls in their inner loops. So do models implemented in third party C++
-library (like `LinearSVC`, `LogisticRegression` from `liblinear` and SVC / SVR
-from `libsvm`). On the other hand linear model implemented with a BLAS DGEMM
-call (via numpy.dot) will typically benefit hugely from a tuned BLAS
+library (like ``LinearSVC``, ``LogisticRegression`` from ``liblinear`` and SVC /
+SVR from ``libsvm``). On the other hand linear model implemented with a BLAS
+DGEMM call (via ``numpy.dot``) will typically benefit hugely from a tuned BLAS
 implementation and lead to orders of magnitude speedup over a non-optimized
 BLAS.
 
