@@ -247,10 +247,38 @@ features::
     * :ref:`example_ensemble_plot_forest_importances_faces.py`: example
       on face recognition data.
 
+.. _mRMR:
+
+Minimum Redundancy Maximal Relevance (mRMR)
+===============================================
+
+This filter feature selector was proposed by Peng et al. in 2005. mRMR
+identifies a subset of features having maximal mutual information with the
+target (i.e. relevance), and minimal mutual information with each other (i.e.
+redundancy).
+
+The algorithm expects discretized features. Peng et al. suggest to use the mean
+and standard deviation of each feature for that purpose. For instance, divide
+a feature in three levels:
+
+    [-Inf, < mean - std]
+    [> mean - std, < mean + std]
+    [> mean + std, +Inf]
+
+:class:`MinRedundancyMaxRelevance`
+
+.. topic:: References:
+
+   * H. Peng, F. Long, C. Ding, "Feature selection based on Mutual Information:
+     Criteria of Max-Dependency, Max-Relevance, and Min-Redundancy",
+     IEEE Transactions on Pattern Analysis and Machine Intelligence, vol.27,
+     n.8 (2005)
+
+
 Feature selection as part of a pipeline
 =======================================
 
-Feature selection is usually used as a pre-processing step before doing 
+Feature selection is usually used as a pre-processing step before doing
 the actual learning. The recommended way to do this in scikit-learn is
 to use a :class:`sklearn.pipeline.Pipeline`::
 
@@ -260,10 +288,10 @@ to use a :class:`sklearn.pipeline.Pipeline`::
   ])
   clf.fit(X, y)
 
-In this snippet we make use of a :class:`sklearn.svm.LinearSVC` 
+In this snippet we make use of a :class:`sklearn.svm.LinearSVC`
 to evaluate feature importances and select the most relevant features.
-Then, a class:`sklearn.ensemble.GradientBoostingClassifier` is trained on the 
-transformed output, i.e. using only relevant features. You can perform 
+Then, a class:`sklearn.ensemble.GradientBoostingClassifier` is trained on the
+transformed output, i.e. using only relevant features. You can perform
 similar operations with the other feature selection methods and also
-classifiers that provide a way to evaluate feature importances of course. 
+classifiers that provide a way to evaluate feature importances of course.
 See the :class:`sklearn.pipeline.Pipeline` examples for more details.
