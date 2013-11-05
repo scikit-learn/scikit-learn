@@ -219,11 +219,11 @@ compromise between model compactness and prediction power. One can also
 further tune the ``l1_ratio`` parameter (in combination with the
 regularization strength ``alpha``) to control this tradeoff.
 
-A typical `benchmark <../../benchmarks/bench_sparsify.py>`_ on synthetic data
-yields a >30% decrease in latency when both the model and input are sparsed
-(with 0.000024 and 0.027400 non-zero coefficients ratio respectively).
-Your mileage may vary depending on the sparsity and size of your data and
-model.
+A typical `benchmark <https://github.com/scikit-learn/scikit-learn/tree/master/benchmarks/bench_sparsify.py>`_
+on synthetic data yields a >30% decrease in latency when both the model and
+input are sparsed (with 0.000024 and 0.027400 non-zero coefficients ratio
+respectively). Your mileage may vary depending on the sparsity and size of
+your data and model.
 Furthermore, sparsifying can be very useful to reduce the memory usage of
 predictive models deployed on production servers.
 
