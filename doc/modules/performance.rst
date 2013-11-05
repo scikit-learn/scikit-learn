@@ -79,11 +79,11 @@ sparse data. The main feature of sparse formats is that you don't store zeros
 so if your data is sparse then you use much less memory. A non-zero value in
 a sparse (`CSR or CSC <http://docs.scipy.org/doc/scipy/reference/sparse.html>`_)
 representation will only take on average one 32bit integer position + the 64
-bit floating point value. Using sparse input on a dense (or sparse) linear
-model can speedup prediction prediction by quite a bit as only the non zero
-valued features impact the dot product and thus the model predictions. Hence
-if you have 100 non zeros in 1e6 dimensional space, you only need 100 multiply
-+ add operation instead of 1e6.
+bit floating point value + an additional 32bit per row or column in the matrix.
+Using sparse input on a dense (or sparse) linear model can speedup prediction
+by quite a bit as only the non zero valued features impact the dot product
+and thus the model predictions. Hence if you have 100 non zeros in 1e6
+dimensional space, you only need 100 multiply + add operation instead of 1e6.
 
 Note that dense / dense operations benefit from both BLAS-provided SSE
 vectorized operations and multithreading and lower CPU cache miss rates. Sparse
@@ -97,12 +97,14 @@ Here is a sample code to test the sparsity of your input:
 
     >>> import numpy as np
     >>> def sparsity_ratio(X):
-    >>>     return np.count_nonzero(X) / float(X.shape[0] * X.shape[1])
+    >>>     return 1.0 - np.count_nonzero(X) / float(X.shape[0] * X.shape[1])
     >>> print("input sparsity ratio:", sparsity_ratio(X))
 
-Now if you want to try to leverage sparsity for your input data you should
-either build your input matrix in the CSR or CSC or call the ``to_csr()``
-method or the ``csr_matrix()`` helper function from Scipy.
+As a rule of thumb you can consider that if the sparsity ratio is greater
+than 90% you can probably benefit from sparse formats. Now if you want to try
+to leverage sparsity for your input data you should either build your input
+matrix in the CSR or CSC or call the ``to_csr()`` method or the ``csr_matrix()``
+helper function from Scipy.
 
 Prediction Throughput
 =====================
@@ -207,12 +209,17 @@ idea to combine model sparsity with sparse input data representation.
 
 Here is a sample code that illustrates the use of the ``sparsify()`` method:
 
-    >>> clf = SGDRegressor(penalty='l1')
+    >>> clf = SGDRegressor(penalty='elasticnet', l1_ratio=0.25)
     >>> clf.fit(X_train, y_train)
     >>> clf.sparsify()
     >>> clf.predict(X_test)
 
-A typical benchmark (:ref:`benchmarks_bench_sparsify.py`) on synthetic data
+In this example we prefer the ``elasticnet`` penalty as it is often a good
+compromise between model compactness and prediction power. One can also
+further tune the ``l1_ratio`` parameter (in combination with the
+regularization strength ``alpha``) to control this tradeoff.
+
+A typical `benchmark <../../benchmarks/bench_sparsify.py>`_ on synthetic data
 yields a >30% decrease in latency when both the model and input are sparsed
 (with 0.000024 and 0.027400 non-zero coefficients ratio respectively).
 Your mileage may vary depending on the sparsity and size of your data and
@@ -223,5 +230,5 @@ predictive models deployed on production servers.
 Links
 -----
 
-  - `scikit-learn developer performance documentation <http://scikit-learn.org/stable/developers/performance.html>`_
+  - `scikit-learn developer performance documentation <../developers/performance.html>`_
   - `Scipy sparse matrix formats documentation <http://docs.scipy.org/doc/scipy/reference/sparse.html>`_
