@@ -14,8 +14,11 @@ install:
     - if [ "${COVERAGE}" == "--with-coverage" ]; then sudo pip install coverage; fi
     - if [ "${COVERAGE}" == "--with-coverage" ]; then sudo pip install coveralls; fi
 script:
-    - make test
-    - if [ "${COVERAGE}" == "--with-coverage" ]; then make test-coverage; fi
+    - if [ "${COVERAGE}" == "--with-coverage" ]; then
+    -   make test-coverage;
+    - else
+    -   make test;
+    - fi
 after_success:
     - if [ "${COVERAGE}" == "--with-coverage" ]; then coveralls; fi
 
