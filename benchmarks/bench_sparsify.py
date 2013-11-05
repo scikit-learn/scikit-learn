@@ -45,6 +45,7 @@ Line #      Hits         Time  Per Hit   % Time  Line Contents
 
 from scipy.sparse.csr import csr_matrix
 import numpy as np
+from sklearn.utils.fixes import count_nonzero
 from sklearn.linear_model.stochastic_gradient import SGDRegressor
 from sklearn.metrics import r2_score
 
@@ -52,7 +53,7 @@ np.random.seed(42)
 
 
 def sparsity_ratio(X):
-    return np.count_nonzero(X) / float(n_samples * n_features)
+    return count_nonzero(X) / float(n_samples * n_features)
 
 n_samples, n_features = 5000, 300
 X = np.random.randn(n_samples, n_features)

@@ -95,9 +95,9 @@ an optimized BLAS implementation.
 
 Here is a sample code to test the sparsity of your input:
 
-    >>> import numpy as np
+    >>> from sklearn.utils.fixes import count_nonzero
     >>> def sparsity_ratio(X):
-    >>>     return 1.0 - np.count_nonzero(X) / float(X.shape[0] * X.shape[1])
+    >>>     return 1.0 - count_nonzero(X) / float(X.shape[0] * X.shape[1])
     >>> print("input sparsity ratio:", sparsity_ratio(X))
 
 As a rule of thumb you can consider that if the sparsity ratio is greater
@@ -219,7 +219,7 @@ compromise between model compactness and prediction power. One can also
 further tune the ``l1_ratio`` parameter (in combination with the
 regularization strength ``alpha``) to control this tradeoff.
 
-A typical `benchmark <https://github.com/scikit-learn/scikit-learn/tree/master/benchmarks/bench_sparsify.py>`_
+A typical `benchmark <https://github.com/scikit-learn/scikit-learn/tree/masternchmarks/bench_sparsify.py>`_
 on synthetic data yields a >30% decrease in latency when both the model and
 input are sparsed (with 0.000024 and 0.027400 non-zero coefficients ratio
 respectively). Your mileage may vary depending on the sparsity and size of
