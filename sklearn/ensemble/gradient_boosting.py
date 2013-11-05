@@ -109,7 +109,14 @@ class ZeroEstimator(BaseEstimator):
     """An estimator that simple predicts zero. """
 
     def fit(self, X, y):
-        self.n_classes = 1 if y.ndim == 1 else y.shape[1]
+        if np.issubdtype(y.dtype, int):
+            # classification
+            self.n_classes = np.unique(y).shape[0]
+            if self.n_classes == 2:
+                self.n_classes = 1
+        else:
+            # regression
+            self.n_classes = 1
 
     def predict(self, X):
         y = np.empty((X.shape[0], self.n_classes), dtype=np.float64)
@@ -445,6 +452,9 @@ LOSS_FUNCTIONS = {'ls': LeastSquaresError,
                   'deviance': None}  # for both, multinomial and binomial
 
 
+INIT_ESTIMATORS = {'zero': ZeroEstimator}
+
+
 class VerboseReporter(object):
     """Reports verbose output to stdout.
 
@@ -594,9 +604,13 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             raise ValueError("subsample must be in (0,1]")
 
         if self.init is not None:
-            if (not hasattr(self.init, 'fit')
+            if isinstance(self.init, basestring):
+                if self.init not in INIT_ESTIMATORS:
+                    raise ValueError('init="%s" is not supported' % self.init)
+            else:
+                if (not hasattr(self.init, 'fit')
                     or not hasattr(self.init, 'predict')):
-                raise ValueError("init must be valid estimator")
+                    raise ValueError("init must be valid estimator")
 
         if not (0.0 < self.alpha and self.alpha < 1.0):
             raise ValueError("alpha must be in (0.0, 1.0)")
@@ -629,10 +643,12 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
     def _init_state(self):
         """Initialize model state and allocate model state data structures. """
 
-        if self.init is not None:
-            self.init_ = self.init
-        else:
+        if self.init is None:
             self.init_ = self.loss_.init_estimator()
+        elif isinstance(self.init, basestring):
+            self.init_ = INIT_ESTIMATORS[self.init]()
+        else:
+            self.init_ = self.init
 
         self.estimators_ = np.empty((self.n_estimators, self.loss_.K),
                                     dtype=np.object)
