@@ -976,7 +976,7 @@ def test_score_scale_invariance():
     assert_equal(roc_auc, roc_auc_scaled)
     assert_equal(roc_auc, roc_auc_shifted)
 
-    with warnings.catch_warnings():
+    with warnings.catch_warnings(record=True):
         roc_auc = auc_score(y_true, probas_pred)
         roc_auc_scaled = auc_score(y_true, 100 * probas_pred)
         roc_auc_shifted = auc_score(y_true, probas_pred - 10)
