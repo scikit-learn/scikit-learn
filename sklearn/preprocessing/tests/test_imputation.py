@@ -1,6 +1,7 @@
 import numpy as np
 from scipy import sparse
 
+from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_false
@@ -84,9 +85,9 @@ def test_imputation_shape():
     for strategy in ['mean', 'median', 'most_frequent']:
         imputer = Imputer(strategy=strategy)
         X_imputed = imputer.fit_transform(X)
-        assert(X_imputed.shape == (10, 2))
+        assert_equal(X_imputed.shape, (10, 2))
         X_imputed = imputer.fit_transform(sparse.csr_matrix(X))
-        assert(X_imputed.shape == (10, 2))
+        assert_equal(X_imputed.shape, (10, 2))
 
 
 def test_imputation_mean_median_only_zero():
