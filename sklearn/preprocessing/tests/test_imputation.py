@@ -76,6 +76,19 @@ def _check_statistics(X, X_true,
                            err_msg.format(1, True))
 
 
+def test_imputation_shape():
+    """Verify the shapes of the imputed matrix for different strategies."""
+    X = np.random.randn(10, 2)
+    X[::2] = np.nan
+
+    for strategy in ['mean', 'median', 'most_frequent']:
+        imputer = Imputer(strategy=strategy)
+        X_imputed = imputer.fit_transform(X)
+        assert(X_imputed.shape == (10, 2))
+        X_imputed = imputer.fit_transform(sparse.csr_matrix(X))
+        assert(X_imputed.shape == (10, 2))
+
+
 def test_imputation_mean_median_only_zero():
     """Test imputation using the mean and median strategies, when
        missing_values == 0."""
