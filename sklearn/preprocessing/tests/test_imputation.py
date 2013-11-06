@@ -1,6 +1,7 @@
 import numpy as np
 from scipy import sparse
 
+from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_false
@@ -74,6 +75,19 @@ def _check_statistics(X, X_true,
                            err_msg.format(1, True))
         assert_array_equal(X_trans, X_true.transpose(),
                            err_msg.format(1, True))
+
+
+def test_imputation_shape():
+    """Verify the shapes of the imputed matrix for different strategies."""
+    X = np.random.randn(10, 2)
+    X[::2] = np.nan
+
+    for strategy in ['mean', 'median', 'most_frequent']:
+        imputer = Imputer(strategy=strategy)
+        X_imputed = imputer.fit_transform(X)
+        assert_equal(X_imputed.shape, (10, 2))
+        X_imputed = imputer.fit_transform(sparse.csr_matrix(X))
+        assert_equal(X_imputed.shape, (10, 2))
 
 
 def test_imputation_mean_median_only_zero():
