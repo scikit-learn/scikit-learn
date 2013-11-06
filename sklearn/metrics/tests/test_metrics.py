@@ -316,6 +316,28 @@ def _auc(y_true, y_score):
     return n_correct / float(len(pos) * len(neg))
 
 
+def _average_precision(y_true, y_score):
+    pos_label = np.unique(y_true)[1]
+    n_pos = np.sum(y_true == pos_label)
+    order = np.argsort(y_score)[::-1]
+    y_score = y_score[order]
+    y_true = y_true[order]
+
+    score = 0
+    for i in xrange(len(y_score)):
+        if y_true[i] == pos_label:
+            # Compute precision up to document i
+            # i.e, percentage of relevant documents up to document i.
+            prec = 0
+            for j in xrange(0, i + 1):
+                if y_true[j] == pos_label:
+                    prec += 1.0
+            prec /= (i + 1.0)
+            score += prec
+
+    return score / n_pos
+
+
 def test_roc_curve():
     """Test Area under Receiver Operating Characteristic (ROC) curve"""
     y_true, _, probas_pred = make_prediction(binary=True)
@@ -917,6 +939,8 @@ def _test_precision_recall_curve(y_true, probas_pred):
     assert_array_almost_equal(precision_recall_auc, 0.85, 2)
     assert_array_almost_equal(precision_recall_auc,
                               average_precision_score(y_true, probas_pred))
+    assert_almost_equal(_average_precision(y_true, probas_pred),
+                        precision_recall_auc, 1)
     assert_equal(p.size, r.size)
     assert_equal(p.size, thresholds.size + 1)
     # Smoke test in the case of proba having only one value
