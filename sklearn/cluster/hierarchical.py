@@ -637,6 +637,7 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
             memory.cache(tree_builder)(X, self.connectivity,
                                        n_components=self.n_components,
                                        n_clusters=n_clusters,
+                                       affinity=self.affinity,
                                        **kwargs)
         # Cut the tree
         if compute_full_tree:
