@@ -892,8 +892,8 @@ def _mini_batch_step(X, x_squared_norms, centers, counts,
 
             # update the squared diff if necessary
             if compute_squared_diff:
-                squared_diff += np.sum(
-                    (centers[center_idx] - old_center_buffer) ** 2)
+                diff = centers[center_idx].ravel() - old_center_buffer.ravel()
+                squared_diff += np.dot(diff, diff)
 
     return inertia, squared_diff
 

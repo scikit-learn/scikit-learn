@@ -635,6 +635,8 @@ def generate_dir_rst(dir, fhindex, example_dir, root_dir, plot_gallery):
         os.makedirs(target_dir)
     sorted_listdir = line_count_sort(os.listdir(src_dir),
                                      src_dir)
+    if not os.path.exists(os.path.join(dir, 'images', 'thumb')):
+        os.makedirs(os.path.join(dir, 'images', 'thumb'))
     for fname in sorted_listdir:
         if fname.endswith('py'):
             generate_file_rst(fname, target_dir, src_dir, root_dir, plot_gallery)

@@ -107,7 +107,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} shape (n_samples, n_features)
             The data to be transformed.
 
         Returns
@@ -254,7 +254,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        v : array-like, shape (n_samples, n_features)
+        v : {array-like, sparse matrix} shape (n_samples, n_features)
             Values of the visible layer.
 
         Returns
@@ -280,7 +280,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} shape (n_samples, n_features)
             Training data.
 
         Returns
@@ -301,7 +301,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
 
         n_batches = int(np.ceil(float(n_samples) / self.batch_size))
         batch_slices = list(gen_even_slices(n_batches * self.batch_size,
-                                            n_batches))
+                                            n_batches, n_samples))
         verbose = self.verbose
         for iteration in xrange(self.n_iter):
             pl = 0.

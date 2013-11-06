@@ -58,6 +58,10 @@ def test_all_estimators():
     estimators = all_estimators(include_meta_estimators=True)
     classifier = LDA()
 
+    # Meta sanity-check to make sure that the estimator introspection runs
+    # properly
+    assert_greater(len(estimators), 0)
+
     for name, Estimator in estimators:
         # some can just not be sensibly default constructed
         if name in dont_test:
@@ -750,7 +754,7 @@ def test_regressors_int():
     X, _ = _boston_subset()
     X = X[:50]
     rnd = np.random.RandomState(0)
-    y = rnd.randint(2, size=X.shape[0])
+    y = rnd.randint(3, size=X.shape[0])
     for name, Regressor in regressors:
         if name in dont_test or name in ('CCA'):
             continue
@@ -806,7 +810,10 @@ def test_regressors_train():
             regressor.fit(X, y_)
             regressor.predict(X)
 
-            if name not in ('PLSCanonical', 'CCA'):  # TODO: find out why
+              # TODO: find out why PLS and CCA fail. RANSAC is random
+              # and furthermore assumes the presence of outliers, hence
+              # skipped
+            if name not in ('PLSCanonical', 'CCA', 'RANSACRegressor'):
                 assert_greater(regressor.score(X, y_), 0.5)
         except Exception as e:
             print(regressor)
@@ -1047,3 +1054,63 @@ def test_import_all_consistency():
                 raise AttributeError(
                     "Module '{}' has no attribute '{}'".format(
                         modname, name))
+
+
+def test_sparsify_estimators():
+    """Test if predict with sparsified estimators works.
+
+    Tests regression, binary classification, and multi-class classification.
+    """
+    estimators = all_estimators()
+    X = np.array([[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]])
+    y = [1, 1, 1, 2, 2, 2]
+
+    # test regression and binary classification
+    for name, Estimator in estimators:
+        try:
+            Estimator.sparsify
+        except:
+            continue
+
+        est = Estimator()
+
+        est.fit(X, y)
+        pred_orig = est.predict(X)
+
+        # test sparsify with dense inputs
+        est.sparsify()
+        assert_true(sparse.issparse(est.coef_))
+        pred = est.predict(X)
+        assert_array_equal(pred, pred_orig)
+
+        # pickle and unpickle with sparse coef_
+        est = pickle.loads(pickle.dumps(est))
+        assert_true(sparse.issparse(est.coef_))
+        pred = est.predict(X)
+        assert_array_equal(pred, pred_orig)
+
+
+    # test multiclass classification
+    classifiers = all_estimators(type_filter='classifier')
+    y[-1] = 3  # make multi-class
+    for name, Classifier in classifiers:
+        try:
+            Classifier.sparsify
+        except:
+            continue
+        est = Classifier()
+
+        est.fit(X, y)
+        pred_orig = est.predict(X)
+
+        # test sparsify with dense inputs
+        est.sparsify()
+        assert_true(sparse.issparse(est.coef_))
+        pred = est.predict(X)
+        assert_array_equal(pred, pred_orig)
+
+        # pickle and unpickle with sparse coef_
+        est = pickle.loads(pickle.dumps(est))
+        assert_true(sparse.issparse(est.coef_))
+        pred = est.predict(X)
+        assert_array_equal(pred, pred_orig)

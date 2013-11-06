@@ -312,6 +312,16 @@ class GaussianHMMBaseTester(object):
         # ValueError: setting an array element with a sequence.
         h.fit(obs)
 
+    def test_fit_with_length_one_signal(self):
+        obs = [self.prng.rand(10, self.n_features),
+               self.prng.rand(8, self.n_features),
+               self.prng.rand(1, self.n_features)]
+        h = hmm.GaussianHMM(self.n_components, self.covariance_type)
+        # This shouldn't raise
+        # ValueError: zero-size array to reduction operation maximum which has no identity
+        h.fit(obs)
+
+
     def test_fit_with_priors(self, params='stmc', n_iter=5, verbose=False):
         startprob_prior = 10 * self.startprob + 2.0
         transmat_prior = 10 * self.transmat + 2.0

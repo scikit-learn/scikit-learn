@@ -270,8 +270,8 @@ Scikit-learn is our #1 toolkit for all things machine learning
 at Bestofmedia. We use it for a variety of tasks (e.g. spam fighting,
 ad click prediction, various ranking models) thanks to the varied,
 state-of-the-art algorithm implementations packaged into it.
-In the lab it accelerates prototyping of complex pipelines. In 
-production I can say it has proven to be robust and efficient enough 
+In the lab it accelerates prototyping of complex pipelines. In
+production I can say it has proven to be robust and efficient enough
 to be deployed for business critical components.
 
 .. raw:: html
@@ -284,4 +284,33 @@ Eustache Diemert, Lead Scientist Bestofmedia Group
 
    </span>
 
+`Change.org <http://www.change.org>`_
+--------------------------------------------------
+
+.. raw:: html
+
+  <div class="logo">
+
+.. image:: images/change-logo.png
+   :target: http://www.change.org
+
+.. raw:: html
+
+  </div>
+
+At change.org we automate the use of scikit-learn's RandomForestClassifier
+in our production systems to drive email targeting that reaches millions
+of users across the world each week. In the lab, scikit-learn's ease-of-use,
+performance, and overall variety of algorithms implemented has proved invaluable
+in giving us a single reliable source to turn to for our machine-learning needs.
+
+.. raw:: html
+
+   <span class="testimonial-author">
+
+Vijay Ramesh, Software Engineer in Data/science at Change.org
+
+.. raw:: html
+
+   </span>
 

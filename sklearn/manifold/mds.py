@@ -380,9 +380,9 @@ class MDS(BaseEstimator):
                           "dissimilarity matrix, set "
                           "``dissimilarity=precomputed``.")
 
-        if self.dissimilarity is "precomputed":
+        if self.dissimilarity == "precomputed":
             self.dissimilarity_matrix_ = X
-        elif self.dissimilarity is "euclidean":
+        elif self.dissimilarity == "euclidean":
             self.dissimilarity_matrix_ = euclidean_distances(X)
         else:
             raise ValueError("Proximity must be 'precomputed' or 'euclidean'."

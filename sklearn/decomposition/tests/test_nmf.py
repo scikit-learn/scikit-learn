@@ -82,13 +82,6 @@ def test_projgrad_nmf_fit_close():
     assert_less(pnmf.fit(X).reconstruction_err_, 0.05)
 
 
-@raises(ValueError)
-def test_nls_nn_input():
-    """Test NLS solver's behaviour on negative input"""
-    A = np.ones((2, 2))
-    nmf._nls_subproblem(A, A, -A, 0.001, 20)
-
-
 def test_nls_nn_output():
     """Test that NLS solver doesn't return negative values"""
     A = np.arange(1, 5).reshape(1, -1)
