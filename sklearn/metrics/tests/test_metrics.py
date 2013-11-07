@@ -305,6 +305,8 @@ def make_prediction(dataset=None, binary=False):
 
 
 def _auc(y_true, y_score):
+    """Alternative implementation to check for correctness of
+    `roc_auc_score`."""
     pos_label = np.unique(y_true)[1]
 
     # Count the number of times positive samples are correctly ranked above
@@ -318,6 +320,8 @@ def _auc(y_true, y_score):
 
 
 def _average_precision(y_true, y_score):
+    """Alternative implementation to check for correctness of
+    `average_precision_score`."""
     pos_label = np.unique(y_true)[1]
     n_pos = np.sum(y_true == pos_label)
     order = np.argsort(y_score)[::-1]
