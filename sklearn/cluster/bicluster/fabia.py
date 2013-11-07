@@ -156,6 +156,7 @@ class FabiaBiclustering(BaseEstimator, BiclusterMixin):
             XX.data **= 2
             XX = (XX.sum(0) / n)
             XX = np.ascontiguousarray(XX).reshape(-1)  # make sure it's 1D
+            XX.data[XX.data < self.eps] = self.eps
         else:
             #XX = X.var(0)
             XX = (X ** 2).sum(0) / n
