@@ -60,8 +60,9 @@ Changelog
    - Added :class:`linear_model.RANSACRegressor` meta-estimator for the robust
      fitting of regression models. By Johannes Schönberger.
 
-   - Added :ref:`performance <performance>`_ documentation with latency,
-     throughput and tips for building faster applications with scikit-learn.
+   - Added :ref:`computational performance <computational_performance>`_
+     documentation with latency,throughput and tips for building faster
+     applications with scikit-learn.
      By `Eustache Diemert`_.
 
 API changes summary

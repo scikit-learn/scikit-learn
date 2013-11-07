@@ -1,22 +1,30 @@
-.. _performance:
+.. _computational_performance:
 
-===========
-Performance
-===========
+=========================
+Computational Performance
+=========================
 
-For some applications the performance (mainly speed and throughput) of
+For some applications the performance (mainly latency and throughput) of
 estimators is crucial. We will review here the orders of magnitude you can
 expect from a number of scikit-learn estimators in different contexts and
 provide some tips and tricks for overcoming performance bottlenecks.
 
-Prediction Speed
-================
+Prediction latency is measured as the elapsed time necessary to make a
+prediction (e.g. in micro-seconds). Latency is often viewed as a distribution
+and operations engineers often focus on the latency at a given percentile of
+this distribution (e.g. the 90 percentile).
+
+Prediction throughput is defined as the number of predictions the software can
+deliver in a given amount of time (e.g. in predictions per second).
+
+Prediction Latency
+==================
 
 One of the most straight-forward concerns one may have when using/choosing a
-machine learning toolkit is the speed at which predictions can be made in a
+machine learning toolkit is the latency at which predictions can be made in a
 production environment.
 
-The main factors that influence the prediction speed are
+The main factors that influence the prediction latency are
   1. Number of features
   2. Input data representation and sparsity
   3. Model complexity
@@ -34,22 +42,22 @@ linear algebra libraries optimizations etc.). Here we see on a setting
 with few features that independently of estimator choice the bulk mode is
 always faster by 2 orders of magnitude:
 
-.. |atomic_prediction_speed| image::  ../auto_examples/applications/images/plot_prediction_latency_1.png
+.. |atomic_prediction_latency| image::  ../auto_examples/applications/images/plot_prediction_latency_1.png
     :target: ../auto_examples/applications/plot_prediction_latency.html
     :scale: 80
 
-.. centered:: |atomic_prediction_speed|
+.. centered:: |atomic_prediction_latency|
 
-.. |bulk_prediction_speed| image::  ../auto_examples/applications/images/plot_prediction_latency_2.png
+.. |bulk_prediction_latency| image::  ../auto_examples/applications/images/plot_prediction_latency_2.png
     :target: ../auto_examples/applications/plot_prediction_latency.html
     :scale: 80
 
-.. centered:: |bulk_prediction_speed|
+.. centered:: |bulk_prediction_latency|
 
 To benchmark different estimators for your case you can simply change the
 ``n_features`` parameter according to your case in this example:
 :ref:`example_applications_plot_prediction_latency.py`. This should give you
-an estimate of the order of magnitude of the prediction speed for your case.
+an estimate of the order of magnitude of the prediction latency for your case.
 
 Influence of the number of Features
 -----------------------------------
@@ -59,13 +67,13 @@ consumption of each example. Indeed, for a matrix of `M` instances with `N`
 features, the space complexity is in `O(N.M)`. From a computing perspective
 it also means that the number of basic operations (e.g. multiplications for
 vector-matrix products in linear models) increases too. Here is a graph of
-the evolution of the prediction speed with the number of features:
+the evolution of the prediction latency with the number of features:
 
-.. |influence_of_n_features_on_speed| image::  ../auto_examples/applications/images/plot_prediction_latency_3.png
+.. |influence_of_n_features_on_latency| image::  ../auto_examples/applications/images/plot_prediction_latency_3.png
     :target: ../auto_examples/applications/plot_prediction_latency.html
     :scale: 80
 
-.. centered:: |influence_of_n_features_on_speed|
+.. centered:: |influence_of_n_features_on_latency|
 
 Overall you can expect the prediction time to increase at least linearly with
 the number of features (non-linear cases can happen depending on the global
@@ -129,8 +137,8 @@ same model. One might also add machines to spread the load. A detailed
 explanation on how to achieve this is beyond the scope of this documentation
 though.
 
-Feature Extraction Speed
-========================
+Feature Extraction Latency
+==========================
 
 In many real world applications the feature extraction process (i.e. turning
 raw data like database rows or network packets into numpy arrays) governs the
@@ -147,7 +155,7 @@ than the actual prediction code, depending on the chosen model.
 
 In many cases it is thus recommended to carefully time and profile your
 feature extraction code as it may be a good place to start optimizing when
-your overall speed is too slow for your application. If needed,
+your overall latency is too slow for your application. If needed,
 you can consider rewriting the feature extraction part in a lower-level,
 compiled language to further speed up the overall process. The fact that
 most scikit-learn models are implemented using Cython and optimized,
