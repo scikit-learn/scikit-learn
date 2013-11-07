@@ -17,6 +17,11 @@ this distribution (e.g. the 90 percentile).
 Prediction throughput is defined as the number of predictions the software can
 deliver in a given amount of time (e.g. in predictions per second).
 
+An important aspect of performance optimization is also that it can hurt
+prediction accuracy. Indeed, simpler models (e.g. linear instead of
+non-linear, or with fewer parameters) often run faster but are not always able
+to take into account the same exact properties of the data as more complex ones.
+
 Prediction Latency
 ==================
 
@@ -113,6 +118,27 @@ than 90% you can probably benefit from sparse formats. Now if you want to try
 to leverage sparsity for your input data you should either build your input
 matrix in the CSR or CSC or call the ``to_csr()`` method or the ``csr_matrix()``
 helper function from Scipy.
+
+Model Complexity
+----------------
+
+For linear models (e.g. Lasso, ElasticNet, SGDClassifier/Regressor,
+Ridge & RidgeClassifier, PassiveAgressiveClassifier/Regressor, LinearSVC,
+LogisticRegression...) the decision function that is applied at prediction
+time is the same, so latency should be equivalent. Of course the particular
+values (and sparsity) will change depending on how the model was trained but
+the type of operation is the same (a dot product).
+
+For the SVM family of algorithms the latency is tied to the number of support
+vectors (the fewer the faster).
+
+For tree or forest algorithms (e.g. RandomForest, GBT, ExternalTrees etc) the
+number of trees and their depth play the most important role.
+
+In any case be warned that playing with model complexity can hurt accuracy as
+mentionned above. For instance a non-linearly separable problem can be dealt
+with a speedy linear model but prediction power will very likely suffer in
+the process.
 
 Prediction Throughput
 =====================
