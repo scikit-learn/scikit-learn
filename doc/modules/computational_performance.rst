@@ -130,10 +130,12 @@ values (and sparsity) will change depending on how the model was trained but
 the type of operation is the same (a dot product).
 
 For the SVM family of algorithms the latency is tied to the number of support
-vectors (the fewer the faster).
+vectors (the fewer the faster). Latency and throughput should (asymptotically)
+grow linearly with the number of support vectors in a SVC or SVR model.
 
 For tree or forest algorithms (e.g. RandomForest, GBT, ExternalTrees etc) the
-number of trees and their depth play the most important role.
+number of trees and their depth play the most important role. Latency and
+throughput should scale linearly with the number of trees.
 
 In any case be warned that playing with model complexity can hurt accuracy as
 mentionned above. For instance a non-linearly separable problem can be dealt

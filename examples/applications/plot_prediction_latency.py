@@ -29,6 +29,7 @@ from sklearn.datasets.samples_generator import make_regression
 from sklearn.ensemble.forest import RandomForestRegressor
 from sklearn.linear_model.coordinate_descent import ElasticNet
 from sklearn.linear_model.ridge import Ridge
+from sklearn.svm.classes import SVR
 
 
 def _not_in_sphinx():
@@ -266,8 +267,9 @@ start_time = time.time()
 n_train = int(1e3)
 n_test = int(1e2)
 n_features = int(1e2)
-estimators = {'elasticnet': ElasticNet(), 'ridge': Ridge(),
-              'randomforest': RandomForestRegressor()}
+estimators = {'Linear Model': ElasticNet(),
+              'SVR': SVR(kernel='rbf'),
+              'RandomForest': RandomForestRegressor()}
 benchmark(estimators, n_train, n_test, n_features)
 
 # benchmark n_features influence on prediction speed
