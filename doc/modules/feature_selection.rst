@@ -262,7 +262,7 @@ to use a :class:`sklearn.pipeline.Pipeline`::
 
 In this snippet we make use of a :class:`sklearn.svm.LinearSVC` 
 to evaluate feature importances and select the most relevant features.
-Then, a class:`sklearn.ensemble.GradientBoostingClassifier` is trained on the 
+Then, a :class:`sklearn.ensemble.RandomForestClassifier` is trained on the 
 transformed output, i.e. using only relevant features. You can perform 
 similar operations with the other feature selection methods and also
 classifiers that provide a way to evaluate feature importances of course. 

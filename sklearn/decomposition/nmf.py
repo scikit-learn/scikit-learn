@@ -40,7 +40,7 @@ def norm(x):
 
 
 def trace_dot(X, Y):
-    """Trace of np.dot(X, Y)."""
+    """Trace of np.dot(X, Y.T)."""
     return np.dot(X.ravel(), Y.ravel())
 
 
@@ -527,7 +527,7 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
             error = norm(X - np.dot(W, H))
         else:
             sqnorm_X = np.dot(X.data, X.data)
-            norm_WHT = trace_dot(np.dot(H.T, np.dot(W.T, W)).T, H)
+            norm_WHT = trace_dot(np.dot(np.dot(W.T, W), H), H)
             cross_prod = trace_dot((X * H.T), W)
             error = sqrt(sqnorm_X + norm_WHT - 2. * cross_prod)
 

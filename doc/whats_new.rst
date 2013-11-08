@@ -60,6 +60,12 @@ Changelog
    - Added :class:`linear_model.RANSACRegressor` meta-estimator for the robust
      fitting of regression models. By Johannes Schönberger.
 
+   - Fixed bug in :class:`gradient_boosting.GradientBoostingRegressor` with
+     ``loss='huber'``: ``gamma`` might have not been initialized.
+     
+   - :class:`dummy.DummyClassifier` can now be used to predict a constant
+     output value. By Manoj Kumar.
+
 
 API changes summary
 -------------------

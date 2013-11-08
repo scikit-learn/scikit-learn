@@ -3,6 +3,7 @@ import re
 
 import numpy as np
 from numpy.testing import assert_almost_equal, assert_array_equal
+from scipy.sparse import csr_matrix
 
 from sklearn.datasets import load_digits
 from sklearn.externals.six.moves import cStringIO as StringIO
@@ -39,6 +40,12 @@ def test_transform():
     Xt2 = rbm1._mean_hiddens(X)
 
     assert_array_equal(Xt1, Xt2)
+
+
+def test_small_sparse():
+    """BernoulliRBM should work on small sparse matrices."""
+    X = csr_matrix(Xdigits[:4])
+    BernoulliRBM().fit(X)       # no exception
 
 
 def test_sample_hiddens():

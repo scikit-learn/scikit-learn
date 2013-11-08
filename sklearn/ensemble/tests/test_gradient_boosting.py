@@ -155,14 +155,15 @@ def test_boston():
     """Check consistency on dataset boston house prices with least squares
     and least absolute deviation. """
     for loss in ("ls", "lad", "huber"):
-        clf = GradientBoostingRegressor(n_estimators=100, loss=loss,
-                                        max_depth=4,
-                                        min_samples_split=1, random_state=1)
-        assert_raises(ValueError, clf.predict, boston.data)
-        clf.fit(boston.data, boston.target)
-        y_pred = clf.predict(boston.data)
-        mse = mean_squared_error(boston.target, y_pred)
-        assert mse < 6.0, "Failed with loss %s and mse = %.4f" % (loss, mse)
+        for subsample in (1.0, 0.5):
+            clf = GradientBoostingRegressor(n_estimators=100, loss=loss,
+                                            max_depth=4, subsample=subsample,
+                                            min_samples_split=1, random_state=1)
+            assert_raises(ValueError, clf.predict, boston.data)
+            clf.fit(boston.data, boston.target)
+            y_pred = clf.predict(boston.data)
+            mse = mean_squared_error(boston.target, y_pred)
+            assert mse < 6.0, "Failed with loss %s and mse = %.4f" % (loss, mse)
 
 
 def test_iris():

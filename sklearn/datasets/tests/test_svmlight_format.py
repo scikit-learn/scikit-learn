@@ -4,7 +4,7 @@ from io import BytesIO
 import numpy as np
 import os
 import shutil
-import tempfile
+from tempfile import NamedTemporaryFile
 
 from sklearn.externals.six import b
 from sklearn.utils.testing import assert_equal
@@ -109,23 +109,17 @@ def test_load_svmlight_file_n_features():
 def test_load_compressed():
     X, y = load_svmlight_file(datafile)
 
-    try:
-        tempdir = tempfile.mkdtemp(prefix="sklearn-test")
-
-        tmpgz = os.path.join(tempdir, "datafile.gz")
-        shutil.copyfileobj(open(datafile, "rb"), gzip.open(tmpgz, "wb"))
-        Xgz, ygz = load_svmlight_file(tmpgz)
+    with NamedTemporaryFile(prefix="sklearn-test", suffix=".gz") as tmp:
+        shutil.copyfileobj(open(datafile, "rb"), gzip.open(tmp.name, "wb"))
+        Xgz, ygz = load_svmlight_file(tmp.name)
         assert_array_equal(X.toarray(), Xgz.toarray())
         assert_array_equal(y, ygz)
 
-        tmpbz = os.path.join(tempdir, "datafile.bz2")
-        shutil.copyfileobj(open(datafile, "rb"), BZ2File(tmpbz, "wb"))
-        Xbz, ybz = load_svmlight_file(tmpgz)
+    with NamedTemporaryFile(prefix="sklearn-test", suffix=".bz2") as tmp:
+        shutil.copyfileobj(open(datafile, "rb"), BZ2File(tmp.name, "wb"))
+        Xbz, ybz = load_svmlight_file(tmp.name)
         assert_array_equal(X.toarray(), Xbz.toarray())
         assert_array_equal(y, ybz)
-    except:
-        shutil.rmtree(tempdir)
-        raise
 
 
 @raises(ValueError)
