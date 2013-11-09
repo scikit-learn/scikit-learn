@@ -14,7 +14,6 @@ from ..utils import ConvergenceWarning, compute_class_weight, deprecated
 from ..utils.fixes import unique
 from ..utils.extmath import safe_sparse_dot
 from ..externals import six
-from ..linear_model.base import center_data
 
 
 LIBSVM_IMPL = ['c_svc', 'nu_svc', 'one_class', 'epsilon_svr', 'nu_svr']
@@ -606,8 +605,6 @@ class BaseLibLinear(six.with_metaclass(ABCMeta, BaseEstimator)):
         # Check that the arguments given are valid:
         self._get_solver_type()
 
-    _center_data = staticmethod(center_data)
-
     def _get_solver_type(self):
         """Find the liblinear magic number for the solver.
 
@@ -683,9 +680,9 @@ class BaseLibLinear(six.with_metaclass(ABCMeta, BaseEstimator)):
         y = np.asarray(y, dtype=np.float64).ravel()
         
         # Center data if self.normalize
-        X, y, X_mean, y_mean, X_std = self._center_data(X, y,
-                                                        self.fit_intercept,
-                                                        self.normalize)
+        if self.normalize:
+            X_mean, X_std = np.mean(X), np.std(X)
+            X = (X - X_mean) / X_std
 
         self.raw_coef_ = liblinear.train_wrap(X, y,
                                               sp.isspmatrix(X),
@@ -705,6 +702,10 @@ class BaseLibLinear(six.with_metaclass(ABCMeta, BaseEstimator)):
         else:
             self.coef_ = self.raw_coef_
             self.intercept_ = 0.
+
+        if self.normalize:
+            self.coef_ = self.coef_ / X_std
+            self.intercept_ = self.intercept_ - np.dot(X_mean, self.coef_.T)
 
         if self.multi_class == "crammer_singer" and len(self.classes_) == 2:
             self.coef_ = (self.coef_[1] - self.coef_[0]).reshape(1, -1)

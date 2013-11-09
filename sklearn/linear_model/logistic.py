@@ -1,6 +1,6 @@
 import numpy as np
 
-from .base import LinearClassifierMixin, SparseCoefMixin, center_data
+from .base import LinearClassifierMixin, SparseCoefMixin
 from ..feature_selection.from_model import _LearntSelectorMixin
 from ..svm.base import BaseLibLinear
 
@@ -142,10 +142,3 @@ class LogisticRegression(BaseLibLinear, LinearClassifierMixin,
             model, where classes are ordered as they are in ``self.classes_``.
         """
         return np.log(self.predict_proba(X))
-
-    def _center_data(self, X, y, fit_intercept, normalize=False):
-        """Center the data in X but not in y"""
-        X, _, X_mean, _, X_std = center_data(X, y, fit_intercept,
-                                            normalize=normalize)
-        return X, y, X_mean, y, X_std
-
