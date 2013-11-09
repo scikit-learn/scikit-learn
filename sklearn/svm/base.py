@@ -681,7 +681,7 @@ class BaseLibLinear(six.with_metaclass(ABCMeta, BaseEstimator)):
         
         # Center data if self.normalize
         if self.normalize:
-            X_mean, X_std = np.mean(X), np.std(X)
+            X_mean, X_std = np.mean(X, axis=0), np.std(X, axis=0)
             X = (X - X_mean) / X_std
 
         self.raw_coef_ = liblinear.train_wrap(X, y,

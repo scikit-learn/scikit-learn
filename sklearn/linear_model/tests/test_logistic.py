@@ -161,7 +161,7 @@ def test_normalize():
     to verify that prediction of array that already normalize is same as if normalize option is enabled
     """
     X, y = iris.data, iris.target
-    X_norm = (X - np.mean(X)) / np.std(X)
+    X_norm = (X - np.mean(X, axis=0)) / np.std(X, axis=0)
     lr1 = logistic.LogisticRegression(normalize=False)
     lr1.fit(X_norm, y)
     lr2 = logistic.LogisticRegression(normalize=True)
