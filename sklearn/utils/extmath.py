@@ -126,7 +126,6 @@ def _fast_dot(A, B):
         >> from sklearn.utils.validation import NonBLASDotWarning
         >> warnings.simplefilter('always', NonBLASDotWarning)
     """
-
     if B.shape[0] != A.shape[A.ndim - 1]:  # check adopted from '_dotblas.c'
         msg = ('Invalid array shapes: A.shape[%d] should be the same as '
                'B.shape[0]. Got A.shape=%r B.shape=%r' % (A.ndim - 1,
@@ -160,7 +159,7 @@ if LooseVersion(np.__version__) < '1.7.2':  # backported
     try:
         linalg.get_blas_funcs(['gemm'])
         fast_dot = _fast_dot
-    except (ImportError, AttributeError):
+    except (AttributeError, ValueError):
         fast_dot = np.dot
         warnings.warn('Could not import BLAS, falling back to np.dot')
 else:
