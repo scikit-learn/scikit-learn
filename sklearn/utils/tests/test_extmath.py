@@ -24,7 +24,7 @@ from sklearn.utils.extmath import row_norms
 from sklearn.utils.extmath import weighted_mode
 from sklearn.utils.extmath import cartesian
 from sklearn.utils.extmath import logistic_sigmoid
-from sklearn.utils.extmath import fast_dot
+from sklearn.utils.extmath import fast_dot, _fast_dot
 from sklearn.utils.validation import NonBLASDotWarning
 from sklearn.datasets.samples_generator import make_low_rank_matrix
 
@@ -316,35 +316,32 @@ def test_fast_dot():
         has_blas = False
 
     if has_blas:
-        # test dispatch to np.dot
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter('always', NonBLASDotWarning)
-            # maltyped data
-            for dt1, dt2 in [['f8', 'f4'], ['i4', 'i4']]:
-                fast_dot(A.astype(dt1), B.astype(dt2).T)
-                assert_true(isinstance(w.pop(-1).message, NonBLASDotWarning))
-            # malformed data
-            # ndim == 0
-            E = np.empty(0)
-            fast_dot(E, E)
-            assert_true(isinstance(w.pop(-1).message, NonBLASDotWarning))
-            ## ndim == 1
-            fast_dot(A, A[0])
-            assert_true(isinstance(w.pop(-1).message, NonBLASDotWarning))
-            ## ndim > 2
-            fast_dot(A.T, np.array([A, A]))
-            assert_true(isinstance(w.pop(-1).message, NonBLASDotWarning))
-            ## min(shape) == 1
-            assert_raises(ValueError, fast_dot, A, A[0, :][None, :])
-        # test for matrix mismatch error
-        msg = ('Invalid array shapes: A.shape[%d] should be the same as '
-               'B.shape[0]. Got A.shape=%r B.shape=%r' % (A.ndim - 1,
-                                                          A.shape,
-                                                          A.shape))
-        assert_raise_message(ValueError, msg, fast_dot, A, A)
+        # Test _fast_dot for invalid input.
 
-    # test cov-like use case + dtypes
-    my_assert = assert_array_almost_equal
+            # Maltyped data.
+            for dt1, dt2 in [['f8', 'f4'], ['i4', 'i4']]:
+                assert_raises(ValueError, _fast_dot, A.astype(dt1),
+                              B.astype(dt2).T)
+
+            # Malformed data.
+
+            ## ndim == 0
+            E = np.empty(0)
+            assert_raises(ValueError, _fast_dot, E, E)
+
+            ## ndim == 1
+            assert_raises(ValueError, _fast_dot, A, A[0])
+
+            ## ndim > 2
+            assert_raises(ValueError, _fast_dot, A.T, np.array([A, A]))
+
+            ## min(shape) == 1
+            assert_raises(ValueError, _fast_dot, A, A[0, :][None, :])
+
+            # test for matrix mismatch error
+            assert_raises(ValueError, _fast_dot, A, A)
+
+    # Test cov-like use case + dtypes.
     for dtype in ['f8', 'f4']:
         A = A.astype(dtype)
         B = B.astype(dtype)
@@ -352,17 +349,17 @@ def test_fast_dot():
         #  col < row
         C = np.dot(A.T, A)
         C_ = fast_dot(A.T, A)
-        my_assert(C, C_)
+        assert_almost_equal(C, C_)
 
         C = np.dot(A.T, B)
         C_ = fast_dot(A.T, B)
-        my_assert(C, C_)
+        assert_almost_equal(C, C_)
 
         C = np.dot(A, B.T)
         C_ = fast_dot(A, B.T)
-        my_assert(C, C_)
+        assert_almost_equal(C, C_)
 
-    # test square matrix * rectangular use case
+    # Test square matrix * rectangular use case.
     A = rng.random_sample([2, 2])
     for dtype in ['f8', 'f4']:
         A = A.astype(dtype)
@@ -370,12 +367,12 @@ def test_fast_dot():
 
         C = np.dot(A, B)
         C_ = fast_dot(A, B)
-        my_assert(C, C_)
+        assert_almost_equal(C, C_)
 
         C = np.dot(A.T, B)
         C_ = fast_dot(A.T, B)
-        my_assert(C, C_)
+        assert_almost_equal(C, C_)
 
     if has_blas:
         for x in [np.array([[d] * 10] * 2) for d in [np.inf, np.nan]]:
-            assert_raises(ValueError, fast_dot, x, x.T)
+            assert_raises(ValueError, _fast_dot, x, x.T)

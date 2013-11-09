@@ -127,23 +127,19 @@ def _fast_dot(A, B):
         >> warnings.simplefilter('always', NonBLASDotWarning)
     """
     if B.shape[0] != A.shape[A.ndim - 1]:  # check adopted from '_dotblas.c'
-        msg = ('Invalid array shapes: A.shape[%d] should be the same as '
-               'B.shape[0]. Got A.shape=%r B.shape=%r' % (A.ndim - 1,
-                                                          A.shape,
-                                                          B.shape))
-        raise ValueError(msg)
+        raise ValueError
 
     if A.dtype != B.dtype or any(x.dtype not in (np.float32, np.float64)
                                  for x in [A, B]):
         warnings.warn('Data must be of same type. Supported types '
                       'are 32 and 64 bit float. '
                       'Falling back to np.dot.', NonBLASDotWarning)
-        return np.dot(A, B)
+        raise ValueError
 
     if min(A.shape) == 1 or min(B.shape) == 1 or A.ndim != 2 or B.ndim != 2:
         warnings.warn('Data must be 2D with more than one colum / row.'
                       'Falling back to np.dot', NonBLASDotWarning)
-        return np.dot(A, B)
+        raise ValueError
 
     # scipy 0.9 compliant API
     dot = linalg.get_blas_funcs(['gemm'], (A, B))[0]
@@ -151,18 +147,23 @@ def _fast_dot(A, B):
     B, trans_b = _impose_f_order(B)
     return dot(alpha=1.0, a=A, b=B, trans_a=trans_a, trans_b=trans_b)
 
-#  only try to use fast_dot for older numpy versions.
-#  the related issue has been tackled meanwhile. Also, depending on the build
-#  the current numpy master's dot can about 3 times faster.
-if LooseVersion(np.__version__) < '1.7.2':  # backported
-    try:
-        linalg.get_blas_funcs(['gemm'])
-        fast_dot = _fast_dot
-    except (AttributeError, ValueError):
-        fast_dot = np.dot
-        warnings.warn('Could not import BLAS, falling back to np.dot')
-else:
-    fast_dot = np.dot
+
+def fast_dot(A, B):
+    #  only try to use fast_dot for older numpy versions.
+    #  the related issue has been tackled meanwhile. Also, depending on the build
+    #  the current numpy master's dot can about 3 times faster.
+    if LooseVersion(np.__version__) < '1.7.2':  # backported
+        try:
+            linalg.get_blas_funcs(['gemm'])
+            try:
+                return _fast_dot(A, B)
+            except ValueError:
+                return np.dot(A, B)
+        except (AttributeError, ValueError):
+            warnings.warn('Could not import BLAS, falling back to np.dot')
+            return np.dot(A, B)
+    else:
+        return np.dot(A, B)
 
 
 def density(w, **kwargs):
