@@ -155,3 +155,17 @@ def test_liblinear_random_state():
     lr2 = logistic.LogisticRegression(random_state=0)
     lr2.fit(X, y)
     assert_array_almost_equal(lr1.coef_, lr2.coef_)
+
+def test_normalize():
+    """Test for normalize option in LogisticRegression
+    to verify that prediction of array that already normalize is same as if normalize option is enabled
+    """
+    X, y = iris.data, iris.target
+    X_norm = (X - np.mean(X)) / np.std(X)
+    lr1 = logistic.LogisticRegression(normalize=False)
+    lr1.fit(X_norm, y)
+    lr2 = logistic.LogisticRegression(normalize=True)
+    lr2.fit(X, y)
+    pred1 = lr1.predict_proba(X_norm)
+    pred2 = lr2.predict_proba(X)
+    assert_array_almost_equal(pred1, pred2)
