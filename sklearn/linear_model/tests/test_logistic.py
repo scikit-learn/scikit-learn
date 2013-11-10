@@ -162,10 +162,14 @@ def test_normalize():
     """
     X, y = iris.data, iris.target
     X_norm = (X - np.mean(X, axis=0)) / np.std(X, axis=0)
-    lr1 = logistic.LogisticRegression(normalize=False)
-    lr1.fit(X_norm, y)
-    lr2 = logistic.LogisticRegression(normalize=True)
-    lr2.fit(X, y)
-    pred1 = lr1.predict_proba(X_norm)
-    pred2 = lr2.predict_proba(X)
-    assert_array_almost_equal(pred1, pred2)
+    for kwargs in (
+        {}, 
+        {'fit_intercept': False},
+        {'intercept_scaling': 0.01}):
+        lr1 = logistic.LogisticRegression(normalize=False, **kwargs)
+        lr1.fit(X_norm, y)
+        lr2 = logistic.LogisticRegression(normalize=True, **kwargs)
+        lr2.fit(X, y)
+        pred1 = lr1.predict_proba(X_norm)
+        pred2 = lr2.predict_proba(X)
+        assert_array_almost_equal(pred1, pred2)
