@@ -661,7 +661,8 @@ class BaseLibLinear(six.with_metaclass(ABCMeta, BaseEstimator)):
             raise ValueError("The number of classes has to be greater than"
                              " one.")
 
-        X = atleast2d_or_csr(X, dtype=np.float64, order="C")
+        X = atleast2d_or_csr(X, dtype=np.float64, order="C",
+                             copy=self.normalize)
         self.class_weight_ = compute_class_weight(self.class_weight,
                                                   self.classes_, y)
 
@@ -678,11 +679,16 @@ class BaseLibLinear(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         # LibLinear wants targets as doubles, even for classification
         y = np.asarray(y, dtype=np.float64).ravel()
-        
+
         # Center data if self.normalize
         if self.normalize:
-            X_mean, X_std = np.mean(X, axis=0), np.std(X, axis=0)
-            X = (X - X_mean) / X_std
+            if not sp.issparse(X):
+                X_mean, X_std = np.mean(X, axis=0), np.std(X, axis=0)
+                X -= X_mean
+                X /= X_std
+            else:
+                warnings.warn('Normalize option doens''t support'
+                              ' sparse matrix')
 
         self.raw_coef_ = liblinear.train_wrap(X, y,
                                               sp.isspmatrix(X),
@@ -703,7 +709,7 @@ class BaseLibLinear(six.with_metaclass(ABCMeta, BaseEstimator)):
             self.coef_ = self.raw_coef_
             self.intercept_ = 0.
 
-        if self.normalize:
+        if self.normalize and not sp.issparse(X):
             self.coef_ = self.coef_ / X_std
             self.intercept_ = self.intercept_ - np.dot(X_mean, self.coef_.T)
 
