@@ -13,6 +13,7 @@ try:
 except ImportError:
     from ..utils.arpack import svds
 
+from scipy.linalg import eigh
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import (array2d, as_float_array, atleast2d_or_csr,
                      check_random_state, deprecated)
@@ -117,11 +118,16 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
         X_new : array, shape (n_samples, n_components)
             Reduced version of X. This will always be a dense array.
         """
-        U, Sigma, VT = self._fit(X)
-        Sigma = np.diag(Sigma)
+        if self.algorithm == 'eigh':
+            VT = self._fit(X)
+            return np.dot(X, VT.T)
 
-        # or (X * VT.T).T, whichever takes fewer operations...
-        return np.dot(U, Sigma.T)
+        else:
+            U, Sigma, VT = self._fit(X)
+            Sigma = np.diag(Sigma)
+
+            # or (X * VT.T).T, whichever takes fewer operations...
+            return np.dot(U, Sigma.T)
 
     def _fit(self, X):
         X = as_float_array(X, copy=False)
@@ -143,6 +149,13 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
             U, Sigma, VT = randomized_svd(X, self.n_components,
                                           n_iter=self.n_iter,
                                           random_state=random_state)
+
+        elif self.algorithm == "eigh":
+            k = self.n_components
+            _, VT_ = eigh(np.dot(X.T, X))
+            self.components_ = VT_[:k]
+            return self.components_
+
         else:
             raise ValueError("unknown algorithm %r" % self.algorithm)
 
