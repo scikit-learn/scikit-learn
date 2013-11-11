@@ -138,7 +138,7 @@ def test_spectral_clustering_sparse():
 
     S = rbf_kernel(X, gamma=1)
     S = np.maximum(S - 1e-4, 0)
-    S = sparse.coo_matrix(rbf_kernel(X, gamma=1))
+    S = sparse.coo_matrix(S)
 
     labels = SpectralClustering(random_state=0, n_clusters=2,
                                 affinity='precomputed').fit(S).labels_
