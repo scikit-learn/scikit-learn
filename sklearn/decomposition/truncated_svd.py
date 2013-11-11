@@ -120,7 +120,6 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
         U, Sigma, VT = self._fit(X)
         Sigma = np.diag(Sigma)
 
-        # or (X * VT.T).T, whichever takes fewer operations...
         return np.dot(U, Sigma.T)
 
     def _fit(self, X):
