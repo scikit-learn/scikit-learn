@@ -18,6 +18,8 @@ from sklearn.cluster import SpectralClustering, spectral_clustering
 from sklearn.cluster.spectral import spectral_embedding
 from sklearn.cluster.spectral import discretize
 from sklearn.metrics import pairwise_distances, adjusted_rand_score
+from sklearn.metrics import adjusted_rand_score
+from sklearn.metrics.pairwise import rbf_kernel
 from sklearn.datasets.samples_generator import make_blobs
 
 
@@ -131,28 +133,16 @@ def test_spectral_unknown_assign_labels():
 
 
 def test_spectral_clustering_sparse():
-    # We need a large matrice, or the lobpcg solver will fallback to its
-    # non-sparse and buggy mode
-    S = np.array([[1, 5, 2, 2, 1, 0, 0, 0, 0, 0],
-                  [5, 1, 3, 2, 1, 0, 0, 0, 0, 0],
-                  [2, 3, 1, 1, 1, 0, 0, 0, 0, 0],
-                  [2, 2, 1, 1, 1, 0, 0, 0, 0, 0],
-                  [1, 1, 1, 1, 1, 1, 2, 1, 1, 1],
-                  [0, 0, 0, 0, 1, 2, 2, 3, 3, 2],
-                  [0, 0, 0, 0, 2, 2, 3, 3, 3, 4],
-                  [0, 0, 0, 0, 1, 3, 3, 1, 2, 4],
-                  [0, 0, 0, 0, 1, 3, 3, 2, 1, 4],
-                  [0, 0, 0, 0, 1, 2, 4, 4, 4, 1],
-                  ])
+    X, y = make_blobs(n_samples=20, random_state=0,
+                      centers=[[1, 1], [-1, -1]], cluster_std=0.01)
 
-    S = sparse.coo_matrix(S)
+    S = rbf_kernel(X, gamma=1)
+    S = np.maximum(S - 1e-4, 0)
+    S = sparse.coo_matrix(rbf_kernel(X, gamma=1))
 
     labels = SpectralClustering(random_state=0, n_clusters=2,
                                 affinity='precomputed').fit(S).labels_
-    if labels[0] == 0:
-        labels = 1 - labels
-
-    assert_greater(np.mean(labels == [1, 1, 1, 1, 1, 0, 0, 0, 0, 0]), .89)
+    assert_equal(adjusted_rand_score(y, labels), 1)
 
 
 def test_affinities():
