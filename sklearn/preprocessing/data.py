@@ -6,6 +6,7 @@
 
 import numbers
 import warnings
+import itertools
 
 import numpy as np
 from scipy import sparse
@@ -392,6 +393,113 @@ class Scaler(StandardScaler):
         warnings.warn("Scaler was renamed to StandardScaler. The old name "
                       " will be removed in 0.15.", DeprecationWarning)
         super(Scaler, self).__init__(copy, with_mean, with_std)
+
+
+def polynomial_features(X, degree=2, include_bias=True):
+    """Return polynomial features based on the input features
+
+    This creates a new feature matrix consisting of all polynomial combinations
+    of the features with degree less than or equal to the specified degree.
+    For example, if an input sample is two dimensional and of the form
+    [a, b], the degree-2 polynomial features are [1, b, b^2, a, ab, a^2].
+
+    Parameters
+    ----------
+    X : array_like
+        The input features, of shape (n_samples, n_features)
+    degree : integer
+        The degree of the polynomial features
+    include_bias : integer
+        Whether to include the bias term, where all polynomial powers are
+        zero (i.e. a column of ones).
+
+    Returns
+    -------
+    P : np.ndarray
+        The polynomial feature matrix.
+
+    Examples
+    --------
+    >>> X = np.arange(6).reshape((3, 2))
+    >>> X
+    array([[0, 1],
+           [2, 3],
+           [4, 5]])
+    >>> polynomial_features(X, 2)
+    array([[ 1  1  1  0  0  0]
+           [ 1  3  9  2  6  4]
+           [ 1  5 25  4 20 16]])
+
+    See also
+    --------
+    :func:`sklearn.preprocessing.PolynomialFeatures` to perform normalization
+    using the ``Transformer`` API (e.g. as part of a preprocessing
+    :class:`sklearn.pipeline.Pipeline`)
+    """
+    # TODO: make this work with sparse data
+    X = array2d(X)
+    n_samples, n_features = X.shape
+
+    # Find permutations/combinations which add to degree or less
+    deg_min = 0 if include_bias else 1
+    combs = itertools.product(*(xrange(degree + 1) for i in range(n_features)))
+    combs = np.array([c for c in combs if deg_min <= sum(c) <= degree])
+
+    return (X[:, np.newaxis, :] ** combs).prod(-1).reshape(n_samples, -1)
+
+
+class PolynomialFeatures(BaseEstimator, TransformerMixin):
+    """Transform to Polynomial Features
+
+    Generate a new feature matrix consisting of all polynomial combinations
+    of the features with degree less than or equal to the specified degree.
+    For example, if an input sample is two dimensional and of the form
+    [a, b], the degree-2 polynomial features are [1, b, b^2, a, ab, a^2].
+
+    Parameters
+    ----------
+    degree : integer
+        The degree of the polynomial features
+    include_bias : integer
+        Whether to include the bias term, where all polynomial powers are
+        zero (i.e. a column of ones).  
+
+    Notes
+    -----
+    This estimator is stateless (besides constructor parameters), the
+    fit method does nothing but is useful when used in a pipeline.
+    Be aware that the number of features in the output array scales
+    ass approximately (n_features ** degree), so this is not suitable for
+    higher-dimensional data.
+
+    See also
+    --------
+    :func:`sklearn.preprocessing.polynomial_features` equivalent function
+    without the object oriented API  
+    """
+    def __init__(self, degree=2, include_bias=True):
+        self.degree = degree
+        self.include_bias = include_bias
+
+    def fit(self, X, y=None):
+        """Do nothing and return the estimator unchanged
+
+        This method is just there to implement the usual API and hence
+        work in pipelines.
+        """
+        array2d(X)
+        return self
+
+    def transform(self, X, y=None):
+        """Transform data to polynomial features
+
+        Parameters
+        ----------
+        X : array with shape [n_samples, n_features]
+            The data to transform, row by row.
+        """
+        return polynomial_features(X, degree=self.degree,
+                                   include_bias=self.include_bias)
 
 
 def normalize(X, norm='l2', axis=1, copy=True):

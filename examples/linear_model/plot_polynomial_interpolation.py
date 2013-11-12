@@ -18,18 +18,21 @@ points raised to some power). The matrix is akin to (but different from) the
 matrix induced by a polynomial kernel.
 
 This example shows that you can do non-linear regression with a linear model,
-by manually adding non-linear features. Kernel methods extend this idea and can
-induce very high (even infinite) dimensional feature spaces.
+using a pipeline to add non-linear features. Kernel methods extend this idea
+and can induce very high (even infinite) dimensional feature spaces.
 """
 print(__doc__)
 
 # Author: Mathieu Blondel
+#         Jake Vanderplas
 # License: BSD 3 clause
 
 import numpy as np
-import pylab as pl
+import pylab as plt
 
 from sklearn.linear_model import Ridge
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.pipeline import Pipeline
 
 
 def f(x):
@@ -46,15 +49,20 @@ rng.shuffle(x)
 x = np.sort(x[:20])
 y = f(x)
 
-pl.plot(x_plot, f(x_plot), label="ground truth")
-pl.scatter(x, y, label="training points")
+# create matrix versions of these arrays
+X = x[:, np.newaxis]
+X_plot = x_plot[:, np.newaxis]
+
+plt.plot(x_plot, f(x_plot), label="ground truth")
+plt.scatter(x, y, label="training points")
 
 for degree in [3, 4, 5]:
-    ridge = Ridge()
-    ridge.fit(np.vander(x, degree + 1), y)
-    pl.plot(x_plot, ridge.predict(np.vander(x_plot, degree + 1)),
-            label="degree %d" % degree)
+    model = Pipeline([('poly', PolynomialFeatures(degree)),
+                      ('ridge', Ridge())])
+    model.fit(X, y)
+    y_plot = model.predict(X_plot)
+    plt.plot(x_plot, y_plot, label="degree %d" % degree)
 
-pl.legend(loc='lower left')
+plt.legend(loc='lower left')
 
-pl.show()
+plt.show()
