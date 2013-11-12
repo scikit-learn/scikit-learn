@@ -408,10 +408,11 @@ def polynomial_features(X, degree=2, include_bias=True):
     X : array_like
         The input features, of shape (n_samples, n_features)
     degree : integer
-        The degree of the polynomial features
+        The degree of the polynomial features. Default = 2.
     include_bias : integer
-        Whether to include the bias term, where all polynomial powers are
-        zero (i.e. a column of ones).
+        If True (default), then include a bias column, the feature in which
+        all polynomial powers are zero (i.e. a column of ones - acts as an
+        intercept term in a linear model).
 
     Returns
     -------
@@ -459,17 +460,18 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
     Parameters
     ----------
     degree : integer
-        The degree of the polynomial features
+        The degree of the polynomial features. Default = 2.
     include_bias : integer
-        Whether to include the bias term, where all polynomial powers are
-        zero (i.e. a column of ones).  
+        If True (default), then include a bias column, the feature in which
+        all polynomial powers are zero (i.e. a column of ones - acts as an
+        intercept term in a linear model).
 
     Notes
     -----
     This estimator is stateless (besides constructor parameters), the
     fit method does nothing but is useful when used in a pipeline.
     Be aware that the number of features in the output array scales
-    ass approximately (n_features ** degree), so this is not suitable for
+    as approximately (n_features ** degree), so this is not suitable for
     higher-dimensional data.
 
     See also
@@ -497,6 +499,12 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
         ----------
         X : array with shape [n_samples, n_features]
             The data to transform, row by row.
+
+        Returns
+        -------
+        XP : np.ndarray shape [n_samples, NP]
+            The matrix of features, where NP is the number of polynomial
+            features generated from the combination of inputs.
         """
         return polynomial_features(X, degree=self.degree,
                                    include_bias=self.include_bias)
