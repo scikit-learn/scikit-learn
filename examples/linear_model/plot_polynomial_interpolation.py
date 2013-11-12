@@ -28,7 +28,7 @@ print(__doc__)
 # License: BSD 3 clause
 
 import numpy as np
-import pylab as plt
+import matplotlib.pyplot as plt
 
 from sklearn.linear_model import Ridge
 from sklearn.preprocessing import PolynomialFeatures
