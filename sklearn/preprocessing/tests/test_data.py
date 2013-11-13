@@ -61,7 +61,7 @@ def test_polynomial_features():
 
         P_test = PolynomialFeatures(deg, include_bias=False).fit_transform(X)
         assert_array_almost_equal(P_test, P[:, 1:])
-                               
+
 
 def test_scaler_1d():
     """Test scaling of dataset along single axis"""

@@ -427,9 +427,9 @@ def polynomial_features(X, degree=2, include_bias=True):
            [2, 3],
            [4, 5]])
     >>> polynomial_features(X, 2)
-    array([[ 1  1  1  0  0  0]
-           [ 1  3  9  2  6  4]
-           [ 1  5 25  4 20 16]])
+    array([[ 1,  1,  1,  0,  0,  0],
+           [ 1,  3,  9,  2,  6,  4],
+           [ 1,  5, 25,  4, 20, 16]])
 
     See also
     --------
@@ -466,6 +466,19 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
         all polynomial powers are zero (i.e. a column of ones - acts as an
         intercept term in a linear model).
 
+    Examples
+    --------
+    >>> X = np.arange(6).reshape(3, 2)
+    >>> X
+    array([[0, 1],
+           [2, 3],
+           [4, 5]])
+    >>> poly = PolynomialFeatures(2)
+    >>> poly.fit_transform(X)
+    array([[ 1,  1,  1,  0,  0,  0],
+           [ 1,  3,  9,  2,  6,  4],
+           [ 1,  5, 25,  4, 20, 16]])
+
     Notes
     -----
     This estimator is stateless (besides constructor parameters), the
@@ -477,7 +490,7 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
     See also
     --------
     :func:`sklearn.preprocessing.polynomial_features` equivalent function
-    without the object oriented API  
+    without the object oriented API.
     """
     def __init__(self, degree=2, include_bias=True):
         self.degree = degree
