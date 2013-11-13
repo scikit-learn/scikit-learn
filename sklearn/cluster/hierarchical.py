@@ -633,11 +633,11 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         kwargs = {}
         if self.linkage != 'ward':
             kwargs['linkage'] = self.linkage
+            kwargs['affinity'] = self.affinity
         self.children_, self.n_components_, self.n_leaves_, parents = \
             memory.cache(tree_builder)(X, self.connectivity,
                                        n_components=self.n_components,
                                        n_clusters=n_clusters,
-                                       affinity=self.affinity,
                                        **kwargs)
         # Cut the tree
         if compute_full_tree:
