@@ -642,3 +642,79 @@ def test_grid_search_with_multioutput_data():
                 correct_score = est.score(X[test], y[test])
                 assert_almost_equal(correct_score,
                                     cv_validation_scores[i])
+
+
+class FailingClassifier(BaseEstimator):
+    """ Classifier that raises a ValueError on fit() """
+
+    def __init__(self, parameter=None):
+        self.parameter = parameter
+
+    def fit(self, X, y=None):
+        raise ValueError("Failing classifier failed as requiered")
+
+    def predict(self, X):
+        return np.zeros(X.shape[0])
+
+
+def test_grid_search_failing_classifier():
+    """ GridSearchCV with a failing classifier catches the error, sets the
+        score to zero and raises a warning """
+
+    with warnings.catch_warnings(record=True) as w:
+
+        # Cause all warnings to always be triggered.
+        warnings.simplefilter("always")
+
+        X, y = make_classification(n_samples=20, n_features=10, random_state=0)
+
+        clf = FailingClassifier()
+
+        # refit=False because we only want to check that errors caused by fits
+        # to individual folds will be caught and warnings raised instead. If
+        # refit was done, then an exception would be raised on refit and not
+        # caught by grid_search (expected behavior), and this would cause an
+        # error in this test.
+        gs = GridSearchCV(clf, [{'parameter': [0, 1, 2]}],
+                          scoring='accuracy', refit=False)
+        gs.fit(X, y)
+
+        # Ensure that grid scores were set to zero as required
+        assert all(np.all(this_score.cv_validation_scores == 0.)
+                   for this_score in gs.grid_scores_)
+
+        # Ensure that a warning was raised
+        assert len(w) > 0
+
+
+def test_grid_search_failing_classifier_no_y():
+    """ GridSearchCV with a failing classifier catches the error, sets the
+        score to zero and raises a warning
+
+        This test is for the additional case when no y is given to grid_search.
+    """
+
+    with warnings.catch_warnings(record=True) as w:
+
+        # Cause all warnings to always be triggered.
+        warnings.simplefilter("always")
+
+        X, _ = make_classification(n_samples=20, n_features=10, random_state=0)
+
+        clf = FailingClassifier()
+
+        # refit=False because we only want to check that errors caused by fits
+        # to individual folds will be caught and warnings raised instead. If
+        # refit was done, then an exception would be raised on refit and not
+        # caught by grid_search (expected behavior), and this would cause an
+        # error in this test.
+        gs = GridSearchCV(clf, [{'parameter': [0, 1, 2]}],
+                          scoring='accuracy', refit=False)
+        gs.fit(X)
+
+        # Ensure that grid scores were set to zero as required
+        assert all(np.all(this_score.cv_validation_scores == 0.)
+                   for this_score in gs.grid_scores_)
+
+        # Ensure that a warning was raised
+        assert len(w) > 0
