@@ -79,7 +79,7 @@ class _NormalApproximation(BaseEstimator):
         X = array2d(X)
         if X.shape[-1] != self.mean.shape[0]:
             raise ValueError("dimension of X must match that of training data")
-        norm = 1. / np.sqrt(2 ** X.shape[-1] * np.sum(self.var))
+        norm = 1. / np.sqrt((2 * np.pi) ** X.shape[-1] * np.sum(self.var))
         res = np.log(norm * np.exp(-0.5 * ((X - self.mean) ** 2
                                                  / self.var).sum(1)))
         return res
@@ -98,7 +98,7 @@ class _NormalApproximation(BaseEstimator):
         logprob : array_like, shape (n_samples,)
             Log probabilities of each data point in X
         """
-        return np.sum(np.log(self.eval(X)))
+        return np.sum(self.score_samples(X))
  
     def sample(self, n_samples=1, random_state=None):
         """Generate random samples from the model.
@@ -213,7 +213,7 @@ class GenerativeBayes(BaseNB):
         # GMM API, in particular score() and score_samples(), is
         # not consistent with the rest of the package.  This needs
         # to be addressed eventually...
-        if isinstance(self.density_estimator, GMM):
+        if isinstance(self.estimators_[0], GMM):
             return np.array([np.log(prior) + dens.score(X)
                              for (prior, dens)
                              in zip(self.class_prior_,
