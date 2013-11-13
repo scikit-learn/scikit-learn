@@ -484,8 +484,8 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
     This estimator is stateless (besides constructor parameters), the
     fit method does nothing but is useful when used in a pipeline.
     Be aware that the number of features in the output array scales
-    as approximately (n_features ** degree), so this is not suitable for
-    higher-dimensional data.
+    exponentially in the number of features of the input array, so this
+    is not suitable for higher-dimensional data.
 
     See also
     --------
