@@ -443,7 +443,7 @@ def polynomial_features(X, degree=2, include_bias=True):
 
     # Find permutations/combinations which add to degree or less
     deg_min = 0 if include_bias else 1
-    combs = itertools.product(*(xrange(degree + 1) for i in range(n_features)))
+    combs = itertools.product(*(range(degree + 1) for i in range(n_features)))
     combs = np.array([c for c in combs if deg_min <= sum(c) <= degree])
 
     return (X[:, np.newaxis, :] ** combs).prod(-1).reshape(n_samples, -1)
