@@ -4,10 +4,14 @@
 Computational Performance
 =========================
 
-For some applications the performance (mainly latency and throughput) of
-estimators is crucial. We will review here the orders of magnitude you can
-expect from a number of scikit-learn estimators in different contexts and
-provide some tips and tricks for overcoming performance bottlenecks.
+For some applications the performance (mainly latency and throughput at
+prediction time) of estimators is crucial. It may also be of interest to
+consider the training throughput but this is often less important in a
+production setup (where it often takes place offline).
+
+We will review here the orders of magnitude you can expect from a number of
+scikit-learn estimators in different contexts and provide some tips and
+tricks for overcoming performance bottlenecks.
 
 Prediction latency is measured as the elapsed time necessary to make a
 prediction (e.g. in micro-seconds). Latency is often viewed as a distribution
