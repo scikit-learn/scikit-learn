@@ -1003,6 +1003,8 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
                     best_l1_ratio = l1_ratio
                     best_mse = this_best_mse
 
+        if output_target == 1:
+            alphas = alphas[0]
         self.l1_ratio_ = best_l1_ratio
         self.alpha_ = best_alpha
         self.alphas_ = np.asarray(alphas)
