@@ -1886,6 +1886,57 @@ def test_prf_warnings():
                      'being set to 0.0 due to no true samples.')
 
 
+def test_recall_warnings():
+    with warnings.catch_warnings(record=True) as record:
+        warnings.simplefilter('always')
+
+        recall_score(np.array([[1, 1], [1, 1]]),
+                     np.array([[0, 0], [0, 0]]),
+                     average='micro')
+        assert_equal(len(record), 0)
+        recall_score(np.array([[0, 0], [0, 0]]),
+                     np.array([[1, 1], [1, 1]]),
+                     average='micro')
+        assert_equal(str(record.pop().message),
+                     'Recall is ill-defined and '
+                     'being set to 0.0 due to no true samples.')
+
+
+def test_precision_warnings():
+    with warnings.catch_warnings(record=True) as record:
+        warnings.simplefilter('always')
+
+        precision_score(np.array([[1, 1], [1, 1]]),
+                        np.array([[0, 0], [0, 0]]),
+                        average='micro')
+        assert_equal(str(record.pop().message),
+                     'Precision is ill-defined and '
+                     'being set to 0.0 due to no predicted samples.')
+        precision_score(np.array([[0, 0], [0, 0]]),
+                        np.array([[1, 1], [1, 1]]),
+                        average='micro')
+        assert_equal(len(record), 0)
+
+
+def test_fscore_warnings():
+    with warnings.catch_warnings(record=True) as record:
+        warnings.simplefilter('always')
+
+        for score in [f1_score, partial(fbeta_score, beta=2)]:
+            score(np.array([[1, 1], [1, 1]]),
+                  np.array([[0, 0], [0, 0]]),
+                  average='micro')
+            assert_equal(str(record.pop().message),
+                         'F-score is ill-defined and '
+                         'being set to 0.0 due to no predicted samples.')
+            score(np.array([[0, 0], [0, 0]]),
+                  np.array([[1, 1], [1, 1]]),
+                  average='micro')
+            assert_equal(str(record.pop().message),
+                         'F-score is ill-defined and '
+                         'being set to 0.0 due to no true samples.')
+
+
 def test__check_clf_targets():
     """Check that _check_clf_targets correctly merges target types, squeezes
     output and fails if input lengths differ."""
