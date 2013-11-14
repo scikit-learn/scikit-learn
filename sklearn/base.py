@@ -262,12 +262,22 @@ class BaseEstimator(object):
         class_name = self.__class__.__name__
         return '%s(%s)' % (class_name, _pprint(self.get_params(deep=False),
                                                offset=len(class_name),),)
-
     def __str__(self):
         class_name = self.__class__.__name__
         return '%s(%s)' % (class_name,
                            _pprint(self.get_params(deep=True),
                                    offset=len(class_name), printer=str,),)
+
+    def __or__(self, estimator):
+        from sklearn.pipeline import Pipeline
+        if isinstance(self, Pipeline):
+            name = estimator.__class__.__name__
+            steps = self.steps + [(name, estimator)]
+        else:
+            name1 = self.__class__.__name__
+            name2 = estimator.__class__.__name__
+            steps = [(name1, self), (name2, estimator)]
+        return Pipeline(steps)
 
 
 ###############################################################################

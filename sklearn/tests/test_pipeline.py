@@ -195,6 +195,26 @@ def test_pipeline_methods_preprocessing_svm():
         pipe.score(X, y)
 
 
+def test_pipeline_syntactic_sugar():
+    iris = load_iris()
+    X = iris.data
+    y = iris.target
+    pipeline = StandardScaler() | PCA(n_components=2) | SVC(random_state=0)
+    assert_true(isinstance(pipeline, Pipeline))
+
+    assert_equal(pipeline.steps[0][0], "StandardScaler")
+    assert_true(isinstance(pipeline.steps[0][1], StandardScaler))
+
+    assert_equal(pipeline.steps[1][0], "PCA")
+    assert_true(isinstance(pipeline.steps[1][1], PCA))
+
+    assert_equal(pipeline.steps[2][0], "SVC")
+    assert_true(isinstance(pipeline.steps[2][1], SVC))
+
+    y_pred = pipeline.fit(X, y).predict(X)
+    assert_equal(np.mean(y == y_pred), 0.92)
+
+
 def test_feature_union():
     # basic sanity check for feature union
     iris = load_iris()
