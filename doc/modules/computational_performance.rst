@@ -129,11 +129,14 @@ time is the same, so latency should be equivalent. Of course the particular
 values (and sparsity) will change depending on how the model was trained but
 the type of operation is the same (a dot product).
 
-For the SVM family of algorithms the latency is tied to the number of support
-vectors (the fewer the faster). Latency and throughput should (asymptotically)
-grow linearly with the number of support vectors in a SVC or SVR model.
+For the SVM family of algorithms with a non-linear kernel, the latency is tied
+to the number of support vectors (the fewer the faster). Latency and
+throughput should (asymptotically) grow linearly with the number of support
+vectors in a SVC or SVR model. The kernel will also influence the latency as
+it is used to compute the projection of the input vector once per support
+vector.
 
-For tree or forest algorithms (e.g. RandomForest, GBT, ExternalTrees etc) the
+For ensemble of trees (e.g. RandomForest, GBT, ExternalTrees etc) the
 number of trees and their depth play the most important role. Latency and
 throughput should scale linearly with the number of trees.
 
@@ -141,6 +144,38 @@ In any case be warned that playing with model complexity can hurt accuracy as
 mentionned above. For instance a non-linearly separable problem can be dealt
 with a speedy linear model but prediction power will very likely suffer in
 the process.
+
+Here is a set of figures that depict this idea : when model complexity
+increases, accuracy (resp. latency) is supposed to decrease (resp. increase).
+
+In the first graph the ``nu`` parameter of
+:class:`sklearn.svm.classes.NuSVR` was used to influence the number of
+support vectors.
+
+.. |nusvr_model_complexity| image::  ../auto_examples/applications/images/plot_model_complexity_influence_1.png
+    :target: ../auto_examples/applications/plot_model_complexity_influence.html
+    :scale: 80
+
+.. centered:: |nusvr_model_complexity|
+
+In the second case we used directly the ``n_estimators`` parameter of
+:class:`sklearn.ensemble.gradient_boosting.GradientBoostingRegressor`.
+
+.. |gbt_model_complexity| image::  ../auto_examples/applications/images/plot_model_complexity_influence_2.png
+    :target: ../auto_examples/applications/plot_model_complexity_influence.html
+    :scale: 80
+
+.. centered:: |gbt_model_complexity|
+
+The idea is the same with
+:class:`sklearn.ensemble.forest.ExtraTreesRegressor`:
+
+.. |et_model_complexity| image::  ../auto_examples/applications/images/plot_model_complexity_influence_3.png
+    :target: ../auto_examples/applications/plot_model_complexity_influence.html
+    :scale: 80
+
+.. centered:: |et_model_complexity|
+
 
 Prediction Throughput
 =====================
