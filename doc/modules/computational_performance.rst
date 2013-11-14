@@ -179,7 +179,10 @@ The idea is the same with :class:`ExtraTreesRegressor`:
 .. centered:: |et_model_complexity|
 
 For :class:`ElasticNet`, the regularization power is controlled by the
-``alpha`` parameter and globally we see the same behavior.
+``alpha`` parameter. The influence on predictive power is clear,
+however the small size of the data and the prediction speed inherent to
+linear models mask the influence on latency (if you read carefully the
+latency scale you'll see that prediction times are quite constant).
 
 .. |en_model_complexity| image::  ../auto_examples/applications/images/plot_model_complexity_influence_4.png
     :target: ../auto_examples/applications/plot_model_complexity_influence.html
