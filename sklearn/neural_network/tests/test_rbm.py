@@ -8,7 +8,7 @@ from sklearn.datasets import load_digits
 from sklearn.externals.six.moves import cStringIO as StringIO
 from sklearn.neural_network import BernoulliRBM
 from sklearn.utils.validation import assert_all_finite
-
+from sklearn.utils import gen_even_slices
 np.seterr(all='warn')
 
 Xdigits = load_digits().data
@@ -31,12 +31,18 @@ def test_fit():
 
 def test_partial_fit():
     X = Xdigits.copy()
-
+    n = 7 
     rbm = BernoulliRBM(n_components=64, learning_rate=0.1,
-                       batch_size=10, n_iter=7, random_state=9)
-    rbm.partial_fit(X)
+                       batch_size=10, random_state=9)
+    n_samples = X.shape[0]
+    n_batches = int(np.ceil(float(n_samples) / rbm.batch_size))
+    batch_slices = list(gen_even_slices(n_batches * rbm.batch_size,
+                                            n_batches))
+    for i in xrange(n):
+        for batch in batch_slices:
+            rbm.partial_fit(X[batch])
 
-    assert_almost_equal(rbm.score_samples(X).mean(), -46., decimal=0)
+    assert_almost_equal(rbm.score_samples(X).mean(), -21., decimal=0)
     assert_array_equal(X, Xdigits)
 
 def test_transform():
