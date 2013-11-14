@@ -123,8 +123,8 @@ to leverage sparsity for your input data you should either build your input
 matrix in the CSR or CSC or call the ``to_csr()`` method or the ``csr_matrix()``
 helper function from Scipy.
 
-Model Complexity
-----------------
+Influence of the Model Complexity
+---------------------------------
 
 For linear models (e.g. Lasso, ElasticNet, SGDClassifier/Regressor,
 Ridge & RidgeClassifier, PassiveAgressiveClassifier/Regressor, LinearSVC,
@@ -152,9 +152,8 @@ the process.
 Here is a set of figures that depict this idea : when model complexity
 increases, accuracy (resp. latency) is supposed to decrease (resp. increase).
 
-In the first graph the ``nu`` parameter of
-:class:`sklearn.svm.classes.NuSVR` was used to influence the number of
-support vectors.
+In the first graph the ``nu`` parameter of :class:`NuSVR` was used to
+influence the number of support vectors.
 
 .. |nusvr_model_complexity| image::  ../auto_examples/applications/images/plot_model_complexity_influence_1.png
     :target: ../auto_examples/applications/plot_model_complexity_influence.html
@@ -163,7 +162,7 @@ support vectors.
 .. centered:: |nusvr_model_complexity|
 
 In the second case we used directly the ``n_estimators`` parameter of
-:class:`sklearn.ensemble.gradient_boosting.GradientBoostingRegressor`.
+:class:`GradientBoostingRegressor`.
 
 .. |gbt_model_complexity| image::  ../auto_examples/applications/images/plot_model_complexity_influence_2.png
     :target: ../auto_examples/applications/plot_model_complexity_influence.html
@@ -171,8 +170,7 @@ In the second case we used directly the ``n_estimators`` parameter of
 
 .. centered:: |gbt_model_complexity|
 
-The idea is the same with
-:class:`sklearn.ensemble.forest.ExtraTreesRegressor`:
+The idea is the same with :class:`ExtraTreesRegressor`:
 
 .. |et_model_complexity| image::  ../auto_examples/applications/images/plot_model_complexity_influence_3.png
     :target: ../auto_examples/applications/plot_model_complexity_influence.html
@@ -180,6 +178,14 @@ The idea is the same with
 
 .. centered:: |et_model_complexity|
 
+For :class:`ElasticNet`, the regularization power is controlled by the
+``alpha`` parameter and globally we see the same behavior.
+
+.. |en_model_complexity| image::  ../auto_examples/applications/images/plot_model_complexity_influence_4.png
+    :target: ../auto_examples/applications/plot_model_complexity_influence.html
+    :scale: 80
+
+.. centered:: |en_model_complexity|
 
 Prediction Throughput
 =====================

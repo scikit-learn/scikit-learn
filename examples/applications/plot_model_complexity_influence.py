@@ -22,7 +22,6 @@ print(__doc__)
 
 import time
 import numpy as np
-from numpy.core.multiarray import count_nonzero
 from scipy.sparse import csr_matrix
 import pylab as pl
 from mpl_toolkits.axes_grid1.parasite_axes import host_subplot
@@ -36,7 +35,7 @@ from sklearn.svm.classes import NuSVR
 from sklearn.ensemble.gradient_boosting import GradientBoostingRegressor
 from sklearn.linear_model.coordinate_descent import ElasticNet
 from sklearn.preprocessing.data import Normalizer
-
+from sklearn.utils.fixes import count_nonzero
 
 ###############################################################################
 # Load data
@@ -67,10 +66,8 @@ def benchmark_influence(conf):
         estimator = conf['estimator'](**conf['tuned_params'])
         print("Benchmarking %s" % estimator)
         if isinstance(estimator, NuSVR):
-            print('using normalized data')
             estimator.fit(X_train_normed, y_train)
         elif isinstance(estimator, ElasticNet):
-            print('using sparse data')
             estimator.fit(X_train_normed_sparse, y_train)
         else:
             estimator.fit(X_train, y_train)
@@ -87,7 +84,7 @@ def benchmark_influence(conf):
                 y_pred = estimator.predict(X_test_normed_sparse)
             else:
                 y_pred = estimator.predict(X_test)
-        elapsed_time = (time.time() - start_time) / 10.0
+        elapsed_time = (time.time() - start_time) / 30.0
         prediction_times.append(elapsed_time)
         mse = mean_squared_error(y_test, y_pred)
         mse_values.append(mse)
@@ -120,14 +117,7 @@ def plot_influence(conf, mse_values, prediction_times, complexities):
 
 ###############################################################################
 # main code
-configurations = [{'estimator': ElasticNet,
-                   'tuned_params': {'fit_intercept': True},
-                   'changing_param': 'alpha',
-                   'changing_param_values': [1e-3, 1e-2, 1e-1, 0.5],
-                   'complexity_label': 'non_zero coefficients',
-                   'complexity_computer': lambda x: count_nonzero(x.coef_)
-                   },
-                  {'estimator': NuSVR,
+configurations = [{'estimator': NuSVR,
                    'tuned_params': {'C': 1e3, 'gamma': 2**-15},
                    'changing_param': 'nu',
                    'changing_param_values': [0.1, 0.25, 0.5, 0.75, 0.9],
@@ -147,8 +137,14 @@ configurations = [{'estimator': ElasticNet,
                    'changing_param_values': [10, 50, 100, 200, 500],
                    'complexity_label': 'n_trees',
                    'complexity_computer': lambda x: x.n_estimators
+                   },
+                  {'estimator': ElasticNet,
+                   'tuned_params': {'fit_intercept': True},
+                   'changing_param': 'alpha',
+                   'changing_param_values': [1e-3, 1e-2, 1e-1, 0.5],
+                   'complexity_label': 'non_zero coefficients',
+                   'complexity_computer': lambda x: count_nonzero(x.coef_)
                    }]
-
 for conf in configurations:
     mse_values, prediction_times, complexities = benchmark_influence(conf)
     plot_influence(conf, mse_values, prediction_times, complexities)
