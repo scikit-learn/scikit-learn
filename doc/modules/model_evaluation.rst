@@ -841,7 +841,7 @@ extended by averaging over the labels:
 Compared to metrics such as the subset accuracy, the hamming loss or the
 F1 score, ROC AUC doesn't require to optimize a threshold for each label. The
 :func:`roc_auc_score` function can also be used in multi-class classification
-if the predicted output have been binarized.
+if predicted outputs have been binarized.
 
 
 .. image:: ../auto_examples/images/plot_roc_2.png
