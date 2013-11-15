@@ -62,7 +62,7 @@ Scoring                    Function
 'adjusted_rand_score'      :func:`sklearn.metrics.adjusted_rand_score`
 
 **Regression**
-'mean_squared_error'       :func:`sklearn.metrics.mean_squared_error`
+'mse'                      :func:`sklearn.metrics.mean_squared_error`
 'r2'                       :func:`sklearn.metrics.r2_score`
 ======================     =================================================
 
