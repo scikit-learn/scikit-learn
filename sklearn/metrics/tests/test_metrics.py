@@ -305,6 +305,8 @@ def make_prediction(dataset=None, binary=False):
 
 
 def _auc(y_true, y_score):
+    """Alternative implementation to check for correctness of
+    `roc_auc_score`."""
     pos_label = np.unique(y_true)[1]
 
     # Count the number of times positive samples are correctly ranked above
@@ -315,6 +317,30 @@ def _auc(y_true, y_score):
     n_correct = np.sum(diff_matrix > 0)
 
     return n_correct / float(len(pos) * len(neg))
+
+
+def _average_precision(y_true, y_score):
+    """Alternative implementation to check for correctness of
+    `average_precision_score`."""
+    pos_label = np.unique(y_true)[1]
+    n_pos = np.sum(y_true == pos_label)
+    order = np.argsort(y_score)[::-1]
+    y_score = y_score[order]
+    y_true = y_true[order]
+
+    score = 0
+    for i in xrange(len(y_score)):
+        if y_true[i] == pos_label:
+            # Compute precision up to document i
+            # i.e, percentage of relevant documents up to document i.
+            prec = 0
+            for j in xrange(0, i + 1):
+                if y_true[j] == pos_label:
+                    prec += 1.0
+            prec /= (i + 1.0)
+            score += prec
+
+    return score / n_pos
 
 
 def test_roc_curve():
@@ -924,6 +950,8 @@ def _test_precision_recall_curve(y_true, probas_pred):
     assert_array_almost_equal(precision_recall_auc, 0.85, 2)
     assert_array_almost_equal(precision_recall_auc,
                               average_precision_score(y_true, probas_pred))
+    assert_almost_equal(_average_precision(y_true, probas_pred),
+                        precision_recall_auc, 1)
     assert_equal(p.size, r.size)
     assert_equal(p.size, thresholds.size + 1)
     # Smoke test in the case of proba having only one value
@@ -952,7 +980,7 @@ def test_score_scale_invariance():
     assert_equal(roc_auc, roc_auc_scaled)
     assert_equal(roc_auc, roc_auc_shifted)
 
-    with warnings.catch_warnings():
+    with warnings.catch_warnings(record=True):
         roc_auc = auc_score(y_true, probas_pred)
         roc_auc_scaled = auc_score(y_true, 100 * probas_pred)
         roc_auc_shifted = auc_score(y_true, probas_pred - 10)

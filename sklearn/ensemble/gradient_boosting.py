@@ -245,6 +245,7 @@ class HuberLossFunction(RegressionLossFunction):
     def __init__(self, n_classes, alpha=0.9):
         super(HuberLossFunction, self).__init__(n_classes)
         self.alpha = alpha
+        self.gamma = None
 
     def init_estimator(self):
         return QuantileEstimator(alpha=0.5)
@@ -253,6 +254,8 @@ class HuberLossFunction(RegressionLossFunction):
         pred = pred.ravel()
         diff = y - pred
         gamma = self.gamma
+        if gamma is None:
+            gamma = stats.scoreatpercentile(np.abs(diff), self.alpha * 100)
         gamma_mask = np.abs(diff) <= gamma
         sq_loss = np.sum(0.5 * diff[gamma_mask] ** 2.0)
         lin_loss = np.sum(gamma * (np.abs(diff[~gamma_mask]) - gamma / 2.0))

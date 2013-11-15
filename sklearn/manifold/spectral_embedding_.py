@@ -216,7 +216,7 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
     if ((not sparse.isspmatrix(adjacency) and
          not np.all((adjacency - adjacency.T) < 1e-10)) or
         (sparse.isspmatrix(adjacency) and
-         (adjacency - adjacency.T).nnz > 0)):
+         not np.all((adjacency - adjacency.T).data < 1e-10))):
         warnings.warn("Graph adjacency matrix should be symmetric. "
                       "Converted to be symmetric by average with its "
                       "transpose.")

@@ -186,7 +186,7 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None,
     n_components: integer, optional, default is k
         Number of eigen vectors to use for the spectral embedding
 
-    eigen_solver: {None, 'arpack' or 'amg'}
+    eigen_solver: {None, 'arpack', 'lobpcg', or 'amg'}
         The eigenvalue decomposition strategy to use. AMG requires pyamg
         to be installed. It can be faster on very large, sparse problems,
         but may also lead to instabilities
@@ -316,7 +316,7 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
         Number of neighbors to use when constructing the affinity matrix using
         the nearest neighbors method. Ignored for ``affinity='rbf'``.
 
-    eigen_solver: {None, 'arpack' or 'amg'}
+    eigen_solver: {None, 'arpack', 'lobpcg', or 'amg'}
         The eigenvalue decomposition strategy to use. AMG requires pyamg
         to be installed. It can be faster on very large, sparse problems,
         but may also lead to instabilities

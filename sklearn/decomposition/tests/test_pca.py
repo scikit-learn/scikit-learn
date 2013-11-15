@@ -373,11 +373,13 @@ def test_probabilistic_pca_1():
     n, p = 1000, 3
     rng = np.random.RandomState(0)
     X = rng.randn(n, p) * .1 + np.array([3, 4, 5])
-    ppca = ProbabilisticPCA(n_components=2)
-    ppca.fit(X)
-    ll1 = ppca.score(X)
-    h = -0.5 * np.log(2 * np.pi * np.exp(1) * 0.1 ** 2) * p
-    np.testing.assert_almost_equal(ll1.mean() / h, 1, 0)
+
+    with warnings.catch_warnings(record=True) as w:
+        ppca = ProbabilisticPCA(n_components=2)
+        ppca.fit(X)
+        ll1 = ppca.score(X)
+        h = -0.5 * np.log(2 * np.pi * np.exp(1) * 0.1 ** 2) * p
+        np.testing.assert_almost_equal(ll1.mean() / h, 1, 0)
 
 
 def test_probabilistic_pca_2():
@@ -385,11 +387,12 @@ def test_probabilistic_pca_2():
     n, p = 100, 3
     rng = np.random.RandomState(0)
     X = rng.randn(n, p) * .1 + np.array([3, 4, 5])
-    ppca = ProbabilisticPCA(n_components=2)
-    ppca.fit(X)
-    ll1 = ppca.score(X)
-    ll2 = ppca.score(rng.randn(n, p) * .2 + np.array([3, 4, 5]))
-    assert_greater(ll1.mean(), ll2.mean())
+    with warnings.catch_warnings(record=True) as w:
+        ppca = ProbabilisticPCA(n_components=2)
+        ppca.fit(X)
+        ll1 = ppca.score(X)
+        ll2 = ppca.score(rng.randn(n, p) * .2 + np.array([3, 4, 5]))
+        assert_greater(ll1.mean(), ll2.mean())
 
 
 def test_probabilistic_pca_3():
@@ -399,13 +402,14 @@ def test_probabilistic_pca_3():
     n, p = 100, 3
     rng = np.random.RandomState(0)
     X = rng.randn(n, p) * .1 + np.array([3, 4, 5])
-    ppca = ProbabilisticPCA(n_components=2)
-    ppca.fit(X)
-    ll1 = ppca.score(X)
-    ppca.fit(X, homoscedastic=False)
-    ll2 = ppca.score(X)
-    # XXX : Don't test as homoscedastic=False is buggy
-    # Comment to be removed with ProbabilisticPCA is removed
+    with warnings.catch_warnings(record=True) as w:
+        ppca = ProbabilisticPCA(n_components=2)
+        ppca.fit(X)
+        ll1 = ppca.score(X)
+        ppca.fit(X, homoscedastic=False)
+        ll2 = ppca.score(X)
+        # XXX : Don't test as homoscedastic=False is buggy
+        # Comment to be removed with ProbabilisticPCA is removed
 
 
 def test_probabilistic_pca_4():
@@ -417,12 +421,13 @@ def test_probabilistic_pca_4():
     Xt = (rng.randn(n, p) + rng.randn(n, 1) * np.array([3, 4, 5])
           + np.array([1, 0, 7]))
     ll = np.zeros(p)
-    for k in range(p):
-        ppca = ProbabilisticPCA(n_components=k)
-        ppca.fit(Xl)
-        ll[k] = ppca.score(Xt).mean()
+    with warnings.catch_warnings(record=True) as w:
+        for k in range(p):
+            ppca = ProbabilisticPCA(n_components=k)
+            ppca.fit(Xl)
+            ll[k] = ppca.score(Xt).mean()
 
-    assert_true(ll.argmax() == 1)
+        assert_true(ll.argmax() == 1)
 
 
 def test_probabilistic_pca_vs_pca():
@@ -432,8 +437,9 @@ def test_probabilistic_pca_vs_pca():
     rng = np.random.RandomState(0)
     X = rng.randn(n, p) * .1 + np.array([3, 4, 5])
     pca = PCA(n_components=2).fit(X)
-    ppca = ProbabilisticPCA(n_components=2).fit(X)
-    assert_array_almost_equal(pca.score_samples(X), ppca.score(X))
+    with warnings.catch_warnings(record=True) as w:
+        ppca = ProbabilisticPCA(n_components=2).fit(X)
+        assert_array_almost_equal(pca.score_samples(X), ppca.score(X))
 
 
 if __name__ == '__main__':

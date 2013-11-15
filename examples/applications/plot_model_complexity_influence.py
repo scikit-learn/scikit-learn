@@ -12,6 +12,7 @@ For each class of models we make the model complexity vary through the choice
 of relevant model parameters and measure the influence on both computational
 performance (latency) and predictive power (MSE).
 """
+from sklearn.linear_model.stochastic_gradient import SGDRegressor
 
 print(__doc__)
 
@@ -34,25 +35,48 @@ from sklearn.ensemble.forest import ExtraTreesRegressor
 from sklearn.svm.classes import NuSVR
 from sklearn.ensemble.gradient_boosting import GradientBoostingRegressor
 from sklearn.linear_model.coordinate_descent import ElasticNet
-from sklearn.preprocessing.data import Normalizer
+from sklearn import preprocessing
 from sklearn.utils.fixes import count_nonzero
 
 ###############################################################################
-# Load data
+# load data
+
 boston = datasets.load_boston()
 np.random.seed(0)
-X, y = shuffle(boston.data, boston.target)
-X = X.astype(np.float32)
-offset = int(X.shape[0] * 0.9)
-X_train, y_train = X[:offset], y[:offset]
-X_test, y_test = X[offset:], y[offset:]
-X_test = np.array(X_test)
-X_train_normed = Normalizer().fit_transform(X_train)
-X_test_normed = Normalizer().fit_transform(X_test)
-X_train_sparse = csr_matrix(X_train)
-X_test_sparse = csr_matrix(X_test)
-X_train_normed_sparse = csr_matrix(X_train_normed)
-X_test_normed_sparse = csr_matrix(X_test_normed)
+
+
+def generate_dataset_versions(normalized=False, sparse=False,
+                              enlarge_factor=1, noise=0):
+    """Generate sparse/normed/noisy versions of the dataset."""
+    X, y = shuffle(boston.data, boston.target)
+    #X = X.astype(np.float32)
+    #y = y.astype(np.float32)
+    if enlarge_factor > 1:
+        X = np.repeat(X, repeats=int(enlarge_factor), axis=0)
+        y = np.repeat(y, repeats=int(enlarge_factor), axis=0)
+    if noise > 0:
+        for _ in range(int(noise)):
+            y += np.random.rand(*y.shape)
+    offset = int(X.shape[0] * 0.8)
+    X_train, y_train = X[:offset], y[:offset]
+    X_test, y_test = X[offset:], y[offset:]
+    X_test = np.array(X_test)
+    X_train = np.array(X_train)
+    y_test = np.array(y_test)
+    y_train = np.array(y_train)
+    if normalized:
+        min_max_scaler = preprocessing.MinMaxScaler(feature_range=(0, 1))
+        min_max_scaler.fit(X_train)
+        X_train = min_max_scaler.transform(X_train)
+        X_test = min_max_scaler.transform(X_test)
+    if sparse:
+        X_train = csr_matrix(X_train)
+        X_test = csr_matrix(X_test)
+    data = {'X_train': X_train, 'X_test': X_test, 'y_train': y_train,
+            'y_test': y_test}
+    print(data)
+    return data
+
 
 def benchmark_influence(conf):
     """
@@ -65,28 +89,16 @@ def benchmark_influence(conf):
         conf['tuned_params'][conf['changing_param']] = param_value
         estimator = conf['estimator'](**conf['tuned_params'])
         print("Benchmarking %s" % estimator)
-        if isinstance(estimator, NuSVR):
-            estimator.fit(X_train_normed, y_train)
-        elif isinstance(estimator, ElasticNet):
-            estimator.fit(X_train_normed_sparse, y_train)
-        else:
-            estimator.fit(X_train, y_train)
+        estimator.fit(conf['data']['X_train'], conf['data']['y_train'])
+        conf['post_fit_hook'](estimator)
         complexity = conf['complexity_computer'](estimator)
         complexities.append(complexity)
-        #if isinstance(estimator, ElasticNet):
-        #    estimator.sparsify()
         start_time = time.time()
-        y_pred = None
-        for _ in range(30):
-            if isinstance(estimator, NuSVR):
-                y_pred = estimator.predict(X_test_normed)
-            elif isinstance(estimator, ElasticNet):
-                y_pred = estimator.predict(X_test_normed_sparse)
-            else:
-                y_pred = estimator.predict(X_test)
-        elapsed_time = (time.time() - start_time) / 30.0
+        for _ in range(conf['n_samples']):
+            y_pred = estimator.predict(conf['data']['X_test'])
+        elapsed_time = (time.time() - start_time) / float(conf['n_samples'])
         prediction_times.append(elapsed_time)
-        mse = mean_squared_error(y_test, y_pred)
+        mse = mean_squared_error(conf['data']['y_test'], y_pred)
         mse_values.append(mse)
         print("Complexity: %d | MSE: %.4f | Pred. Time: %fs\n" % (
             complexity, mse, elapsed_time))
@@ -117,34 +129,50 @@ def plot_influence(conf, mse_values, prediction_times, complexities):
 
 ###############################################################################
 # main code
-configurations = [{'estimator': NuSVR,
-                   'tuned_params': {'C': 1e3, 'gamma': 2**-15},
-                   'changing_param': 'nu',
+configurations = [
+                  #{'estimator': NuSVR,
+                  # 'tuned_params': {'C': 1e3, 'gamma': 2**-15},
+                  # 'changing_param': 'nu',
+                  # 'changing_param_values': [0.1, 0.25, 0.5, 0.75, 0.9],
+                  # 'complexity_label': 'n_support_vectors',
+                  # 'complexity_computer': lambda x: len(x.support_vectors_)
+                  # },
+                  #{'estimator': GradientBoostingRegressor,
+                  # 'tuned_params': {'loss': 'ls'},
+                  # 'changing_param': 'n_estimators',
+                  # 'changing_param_values': [10, 50, 100, 200, 500],
+                  # 'complexity_label': 'n_trees',
+                  # 'complexity_computer': lambda x: x.n_estimators
+                  # },
+                  #{'estimator': ExtraTreesRegressor,
+                  # 'tuned_params': {},
+                  # 'changing_param': 'n_estimators',
+                  # 'changing_param_values': [10, 50, 100, 200, 500],
+                  # 'complexity_label': 'n_trees',
+                  # 'complexity_computer': lambda x: x.n_estimators
+                  # },
+                  {'estimator': SGDRegressor,
+                   'tuned_params': {'penalty': 'elasticnet',
+                                    'alpha': 0.01,
+                                    'loss': 'squared_epsilon_insensitive'},
+                   'changing_param': 'l1_ratio',
                    'changing_param_values': [0.1, 0.25, 0.5, 0.75, 0.9],
-                   'complexity_label': 'n_support_vectors',
-                   'complexity_computer': lambda x: len(x.support_vectors_)
-                   },
-                  {'estimator': GradientBoostingRegressor,
-                   'tuned_params': {'loss': 'ls'},
-                   'changing_param': 'n_estimators',
-                   'changing_param_values': [10, 50, 100, 200, 500],
-                   'complexity_label': 'n_trees',
-                   'complexity_computer': lambda x: x.n_estimators
-                   },
-                  {'estimator': ExtraTreesRegressor,
-                   'tuned_params': {},
-                   'changing_param': 'n_estimators',
-                   'changing_param_values': [10, 50, 100, 200, 500],
-                   'complexity_label': 'n_trees',
-                   'complexity_computer': lambda x: x.n_estimators
-                   },
-                  {'estimator': ElasticNet,
-                   'tuned_params': {'fit_intercept': True},
-                   'changing_param': 'alpha',
-                   'changing_param_values': [1e-3, 1e-2, 1e-1, 0.5],
+                   'post_fit_hook': lambda x: x.sparsify(),
                    'complexity_label': 'non_zero coefficients',
-                   'complexity_computer': lambda x: count_nonzero(x.coef_)
-                   }]
+                   'complexity_computer': lambda x: count_nonzero(x.coef_),
+                   'data': generate_dataset_versions(normalized=True,
+                                                     sparse=False,
+                                                     noise=0),
+                   'n_samples': 30
+                   },
+                  #{'estimator': ElasticNet,
+                  # 'tuned_params': {'fit_intercept': True, 'alpha': 0.5},
+                  # 'changing_param': 'l1_ratio',
+                  # 'changing_param_values': [0.1, 0.25, 0.5, 0.75, 0.9],
+                  # 'complexity_label': 'non_zero coefficients',
+                  # 'complexity_computer': lambda x: count_nonzero(x.coef_)
+                  # }
+                ]
 for conf in configurations:
     mse_values, prediction_times, complexities = benchmark_influence(conf)
     plot_influence(conf, mse_values, prediction_times, complexities)
