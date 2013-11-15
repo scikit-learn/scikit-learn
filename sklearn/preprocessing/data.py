@@ -395,6 +395,20 @@ class Scaler(StandardScaler):
         super(Scaler, self).__init__(copy, with_mean, with_std)
 
 
+def _polynomial_powers(n_features, degree, include_bias):
+    """
+    Private function used by ``polynomial_features`` to compute
+    the array of feature powers for producing polynomial features.
+    """
+    # Find permutations/combinations which add to degree or less
+    deg_min = 0 if include_bias else 1
+    powers = itertools.product(*(range(degree + 1) for i in range(n_features)))
+    powers = np.array([c for c in powers if deg_min <= sum(c) <= degree])
+
+    # switch the order so degree=1 yields an identity matrix
+    return powers[:, ::-1]
+
+
 def polynomial_features(X, degree=2, include_bias=True):
     """Return polynomial features based on the input features
 
@@ -427,9 +441,9 @@ def polynomial_features(X, degree=2, include_bias=True):
            [2, 3],
            [4, 5]])
     >>> polynomial_features(X, 2)
-    array([[ 1,  1,  1,  0,  0,  0],
-           [ 1,  3,  9,  2,  6,  4],
-           [ 1,  5, 25,  4, 20, 16]])
+    array([[ 1,  0,  0,  1,  0,  1],
+           [ 1,  2,  4,  3,  6,  9],
+           [ 1,  4, 16,  5, 20, 25]])
 
     See also
     --------
@@ -440,13 +454,8 @@ def polynomial_features(X, degree=2, include_bias=True):
     # TODO: make this work with sparse data
     X = array2d(X)
     n_samples, n_features = X.shape
-
-    # Find permutations/combinations which add to degree or less
-    deg_min = 0 if include_bias else 1
-    combs = itertools.product(*(range(degree + 1) for i in range(n_features)))
-    combs = np.array([c for c in combs if deg_min <= sum(c) <= degree])
-
-    return (X[:, np.newaxis, :] ** combs).prod(-1).reshape(n_samples, -1)
+    powers = _polynomial_powers(n_features, degree, include_bias)
+    return (X[:, np.newaxis, :] ** powers).prod(-1).reshape(n_samples, -1)
 
 
 class PolynomialFeatures(BaseEstimator, TransformerMixin):
@@ -475,9 +484,16 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
            [4, 5]])
     >>> poly = PolynomialFeatures(2)
     >>> poly.fit_transform(X)
-    array([[ 1,  1,  1,  0,  0,  0],
-           [ 1,  3,  9,  2,  6,  4],
-           [ 1,  5, 25,  4, 20, 16]])
+    array([[ 1,  0,  0,  1,  0,  1],
+           [ 1,  2,  4,  3,  6,  9],
+           [ 1,  4, 16,  5, 20, 25]])
+
+    Attributes
+    ----------
+    `powers_` : np.ndarray, shape = (Np, n_features)
+         This is the matrix of powers used to construct the polynomial
+         features.  powers_[i, j] is the contribution of the j^th input
+         feature to the i^th output feature.
 
     Notes
     -----
@@ -497,12 +513,13 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
         self.include_bias = include_bias
 
     def fit(self, X, y=None):
-        """Do nothing and return the estimator unchanged
-
-        This method is just there to implement the usual API and hence
-        work in pipelines.
         """
-        array2d(X)
+        Compute the polynomial feature combinations
+        """
+        n_samples, n_features = array2d(X).shape
+        self.powers_ = _polynomial_powers(n_features,
+                                          self.degree,
+                                          self.include_bias)
         return self
 
     def transform(self, X, y=None):
@@ -519,8 +536,13 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
             The matrix of features, where NP is the number of polynomial
             features generated from the combination of inputs.
         """
-        return polynomial_features(X, degree=self.degree,
-                                   include_bias=self.include_bias)
+        X = array2d(X)
+        n_samples, n_features = X.shape
+
+        if n_features != self.powers_.shape[1]:
+            raise ValueError("X shape does not match training shape")
+
+        return (X[:, None, :] ** self.powers_).prod(-1).reshape(n_samples, -1)
 
 
 def normalize(X, norm='l2', axis=1, copy=True):
