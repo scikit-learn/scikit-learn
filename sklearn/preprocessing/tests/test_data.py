@@ -23,7 +23,7 @@ from sklearn.preprocessing.data import StandardScaler
 from sklearn.preprocessing.data import scale
 from sklearn.preprocessing.data import MinMaxScaler
 from sklearn.preprocessing.data import add_dummy_feature
-from sklearn.preprocessing.data import PolynomialFeatures, polynomial_features
+from sklearn.preprocessing.data import PolynomialFeatures
 
 from sklearn import datasets
 
@@ -48,8 +48,8 @@ def test_polynomial_features():
     x2 = X2[:, 1:]
     P2 = np.hstack([x1 ** 0 * x2 ** 0,
                     x1 ** 1 * x2 ** 0,
-                    x1 ** 2 * x2 ** 0,
                     x1 ** 0 * x2 ** 1,
+                    x1 ** 2 * x2 ** 0,
                     x1 ** 1 * x2 ** 1,
                     x1 ** 0 * x2 ** 2])
     deg2 = 2
@@ -58,12 +58,8 @@ def test_polynomial_features():
         print deg, X.shape, P.shape
         P_test = PolynomialFeatures(deg, include_bias=True).fit_transform(X)
         assert_array_almost_equal(P_test, P)
-        P_test = polynomial_features(X, deg, include_bias=True)
-        assert_array_almost_equal(P_test, P)
 
         P_test = PolynomialFeatures(deg, include_bias=False).fit_transform(X)
-        assert_array_almost_equal(P_test, P[:, 1:])
-        P_test = polynomial_features(X, deg, include_bias=False)
         assert_array_almost_equal(P_test, P[:, 1:])
 
 

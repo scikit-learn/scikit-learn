@@ -15,7 +15,6 @@ from .data import normalize
 from .data import scale
 from .data import OneHotEncoder
 
-from .data import polynomial_features
 from .data import PolynomialFeatures
 
 from .label import label_binarize
@@ -37,7 +36,6 @@ __all__ = [
     'Scaler',
     'StandardScaler',
     'add_dummy_feature',
-    'polynomial_features',
     'PolynomialFeatures',
     'binarize',
     'normalize',

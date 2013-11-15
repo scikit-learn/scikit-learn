@@ -395,76 +395,13 @@ class Scaler(StandardScaler):
         super(Scaler, self).__init__(copy, with_mean, with_std)
 
 
-def _polynomial_powers(n_features, degree, include_bias):
-    """
-    Private function used by ``polynomial_features`` to compute
-    the array of feature powers for producing polynomial features.
-    """
-    # Find permutations/combinations which add to degree or less
-    deg_min = 0 if include_bias else 1
-    powers = itertools.product(*(range(degree + 1) for i in range(n_features)))
-    powers = np.array([c for c in powers if deg_min <= sum(c) <= degree])
-
-    # switch the order so degree=1 yields an identity matrix
-    return powers[:, ::-1]
-
-
-def polynomial_features(X, degree=2, include_bias=True):
-    """Return polynomial features based on the input features
-
-    This creates a new feature matrix consisting of all polynomial combinations
-    of the features with degree less than or equal to the specified degree.
-    For example, if an input sample is two dimensional and of the form
-    [a, b], the degree-2 polynomial features are [1, b, b^2, a, ab, a^2].
-
-    Parameters
-    ----------
-    X : array_like
-        The input features, of shape (n_samples, n_features)
-    degree : integer
-        The degree of the polynomial features. Default = 2.
-    include_bias : integer
-        If True (default), then include a bias column, the feature in which
-        all polynomial powers are zero (i.e. a column of ones - acts as an
-        intercept term in a linear model).
-
-    Returns
-    -------
-    P : np.ndarray
-        The polynomial feature matrix.
-
-    Examples
-    --------
-    >>> X = np.arange(6).reshape((3, 2))
-    >>> X
-    array([[0, 1],
-           [2, 3],
-           [4, 5]])
-    >>> polynomial_features(X, 2)
-    array([[ 1,  0,  0,  1,  0,  1],
-           [ 1,  2,  4,  3,  6,  9],
-           [ 1,  4, 16,  5, 20, 25]])
-
-    See also
-    --------
-    :func:`sklearn.preprocessing.PolynomialFeatures` to perform normalization
-    using the ``Transformer`` API (e.g. as part of a preprocessing
-    :class:`sklearn.pipeline.Pipeline`)
-    """
-    # TODO: make this work with sparse data
-    X = array2d(X)
-    n_samples, n_features = X.shape
-    powers = _polynomial_powers(n_features, degree, include_bias)
-    return (X[:, np.newaxis, :] ** powers).prod(-1).reshape(n_samples, -1)
-
-
 class PolynomialFeatures(BaseEstimator, TransformerMixin):
     """Transform to Polynomial Features
 
     Generate a new feature matrix consisting of all polynomial combinations
     of the features with degree less than or equal to the specified degree.
     For example, if an input sample is two dimensional and of the form
-    [a, b], the degree-2 polynomial features are [1, b, b^2, a, ab, a^2].
+    [a, b], the degree-2 polynomial features are [1, a, b, a^2, ab, b^2].
 
     Parameters
     ----------
@@ -484,40 +421,46 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
            [4, 5]])
     >>> poly = PolynomialFeatures(2)
     >>> poly.fit_transform(X)
-    array([[ 1,  0,  0,  1,  0,  1],
-           [ 1,  2,  4,  3,  6,  9],
-           [ 1,  4, 16,  5, 20, 25]])
+    array([[ 1,  0,  1,  0,  0,  1],
+           [ 1,  2,  3,  4,  6,  9],
+           [ 1,  4,  5, 16, 20, 25]])
 
     Attributes
     ----------
     `powers_` : np.ndarray, shape = (Np, n_features)
          This is the matrix of powers used to construct the polynomial
-         features.  powers_[i, j] is the contribution of the j^th input
-         feature to the i^th output feature.
+         features.  powers_[i, j] is the exponent of the j^th input
+         feature in the i^th output feature.
 
     Notes
     -----
-    This estimator is stateless (besides constructor parameters), the
-    fit method does nothing but is useful when used in a pipeline.
     Be aware that the number of features in the output array scales
     exponentially in the number of features of the input array, so this
     is not suitable for higher-dimensional data.
-
-    See also
-    --------
-    :func:`sklearn.preprocessing.polynomial_features` equivalent function
-    without the object oriented API.
     """
     def __init__(self, degree=2, include_bias=True):
         self.degree = degree
         self.include_bias = include_bias
+
+    @staticmethod
+    def _power_matrix(n_features, degree, include_bias):
+        """Compute the matrix of polynomial powers"""
+        # Find permutations/combinations which add to degree or less
+        deg_min = 0 if include_bias else 1
+        powers = itertools.product(*(range(degree + 1)
+                                     for i in range(n_features)))
+        powers = np.array([c for c in powers if deg_min <= sum(c) <= degree])
+
+        # sort so that the order of the powers makes sense
+        i = np.lexsort(np.vstack([powers.T, powers.sum(1)]))
+        return powers[i]
 
     def fit(self, X, y=None):
         """
         Compute the polynomial feature combinations
         """
         n_samples, n_features = array2d(X).shape
-        self.powers_ = _polynomial_powers(n_features,
+        self.powers_ = self._power_matrix(n_features,
                                           self.degree,
                                           self.include_bias)
         return self
@@ -542,7 +485,7 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
         if n_features != self.powers_.shape[1]:
             raise ValueError("X shape does not match training shape")
 
-        return (X[:, None, :] ** self.powers_).prod(-1).reshape(n_samples, -1)
+        return (X[:, None, :] ** self.powers_).prod(-1)
 
 
 def normalize(X, norm='l2', axis=1, copy=True):
