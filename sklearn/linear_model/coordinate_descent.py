@@ -916,10 +916,10 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
             copy_X = False
 
         y = np.asarray(y, dtype=np.float64)
-        if len(y.shape) == 1:  # Single target
-            y = np.reshape(np.atleast_2d(y), (-1, 1))
 
-        output_target = y.shape[1]
+        if y.ndim > 1:
+            raise ValueError("For multi-task outputs, fit the linear model "
+                             "per output/task")
         if X.shape[0] != y.shape[0]:
             raise ValueError("X and y have inconsistent dimensions (%d != %d)"
                              % (X.shape[0], y.shape[0]))
@@ -945,14 +945,8 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
                                  eps=self.eps, n_alphas=self.n_alphas,
                                  normalize=self.normalize,
                                  copy_X=self.copy_X)
-            alphas = np.tile(alphas, (output_target, 1))
-
-        else:
-            alphas = np.asarray(alphas)
-            if output_target == 1:
-                alphas = np.atleast_2d(alphas)
-            if (alphas.shape[0]) != output_target:
-                raise ValueError("alphas should have shape (%d, )" % output_target)
+        n_alphas = len(alphas)
+        path_params.update({'alphas': alphas, 'n_alphas': n_alphas})
 
         path_params['copy_X'] = copy_X
         # We are not computing in parallel, we can modify X
@@ -962,49 +956,35 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
 
         # init cross-validation generator
         cv = check_cv(self.cv, X)
+
+        # Compute path for all folds and compute MSE to get the best alpha
         folds = list(cv)
-
-        # XXX: For multi-task outputs, for now the alpha that gives the lowest MSE
-        # for a given task is chosen. It is unlikely that this alpha would give the
-        # lowest MSE for error.
         best_mse = np.inf
-        for task in xrange(output_target):
-            # Compute path for all folds and compute MSE to get the best alpha
-            all_mse_paths = list()
+        all_mse_paths = list()
 
-            # Parameters needed for this specific task.
-            y_task = y[:, task]
-            alphas_task = alphas[task]
-            n_alphas = len(alphas_task)
-            path_params_task = path_params.copy()
-            path_params_task.update({'alphas': alphas_task,
-                                    'n_alphas': n_alphas})
+        # We do a double for loop folded in one, in order to be able to
+        # iterate in parallel on l1_ratio and folds
+        for l1_ratio, mse_alphas in itertools.groupby(
+                Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
+                    delayed(_path_residuals)(
+                        X, y, train, test, self.path, path_params,
+                        l1_ratio=l1_ratio, X_order='F',
+                        dtype=np.float64)
+                    for l1_ratio in l1_ratios for train, test in folds
+                ), operator.itemgetter(1)):
 
-            # We do a double for loop folded in one, in order to be able to
-            # iterate in parallel on l1_ratio and folds
-            for l1_ratio, mse_alphas in itertools.groupby(
-                    Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
-                        delayed(_path_residuals)(
-                            X, y_task, train, test, self.path, path_params_task,
-                            l1_ratio=l1_ratio, X_order='F',
-                            dtype=np.float64)
-                        for l1_ratio in l1_ratios for train, test in folds
-                    ), operator.itemgetter(1)):
+            mse_alphas = [m[0] for m in mse_alphas]
+            mse_alphas = np.array(mse_alphas)
 
-                mse_alphas = [m[0] for m in mse_alphas]
-                mse_alphas = np.array(mse_alphas)
+            mse = np.mean(mse_alphas, axis=0)
+            i_best_alpha = np.argmin(mse)
+            this_best_mse = mse[i_best_alpha]
+            all_mse_paths.append(mse_alphas.T)
+            if this_best_mse < best_mse:
+                best_alpha = alphas[i_best_alpha]
+                best_l1_ratio = l1_ratio
+                best_mse = this_best_mse
 
-                mse = np.mean(mse_alphas, axis=0)
-                i_best_alpha = np.argmin(mse)
-                this_best_mse = mse[i_best_alpha]
-                all_mse_paths.append(mse_alphas.T)
-                if this_best_mse < best_mse:
-                    best_alpha = alphas_task[i_best_alpha]
-                    best_l1_ratio = l1_ratio
-                    best_mse = this_best_mse
-
-        if output_target == 1:
-            alphas = alphas[0]
         self.l1_ratio_ = best_l1_ratio
         self.alpha_ = best_alpha
         self.alphas_ = np.asarray(alphas)
