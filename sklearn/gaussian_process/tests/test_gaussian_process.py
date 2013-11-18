@@ -135,3 +135,30 @@ def test_no_normalize():
     gp = GaussianProcess(normalize=False).fit(X, y)
     y_pred = gp.predict(X)
     assert_true(np.allclose(y_pred, y))
+
+
+def test_multiple_hyperparams(regr=regression.constant, random_start=10, 
+                              beta0=None):
+    """
+    Test the model on a correlation function which requires two 
+    hyperparameters, implying theta will be multidimensional.
+    """
+    def kernel(t, d):
+        d = np.asarray(d, dtype=np.float)
+        alpha = np.array(t[0,:]).flatten()
+        beta = np.array(t[1,:]).flatten()
+        return np.exp(-np.sum(alpha * d**2, axis=1) - np.sum(beta * np.sin(d)**2, axis=1))
+
+    theta = np.matrix([1e-2]*2).T
+    thetaL = np.matrix([1e-4]*2).T
+    thetaU = np.matrix([1e1]*2).T
+    gp = GaussianProcess(regr=regr, corr=kernel, beta0=beta0,
+                         theta0=theta, thetaL=thetaL, thetaU=thetaU,
+                         random_start=random_start, verbose=False,
+                         nugget=1e-14).fit(X, y)
+    y_pred, MSE = gp.predict(X, eval_MSE=True)
+    y2_pred, MSE2 = gp.predict(X2, eval_MSE=True)
+
+    assert_true(np.allclose(y_pred, y) and np.allclose(MSE, 0.)
+        and np.allclose(MSE2, 0., atol=10))
+    
