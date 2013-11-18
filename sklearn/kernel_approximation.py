@@ -21,6 +21,7 @@ from .utils.extmath import safe_sparse_dot
 from .metrics.pairwise import pairwise_kernels
 from .cluster import KMeans
 
+
 class RBFSampler(BaseEstimator, TransformerMixin):
     """Approximates feature map of an RBF kernel by Monte Carlo approximation
     of its Fourier transform.
@@ -376,6 +377,9 @@ class Nystroem(BaseEstimator, TransformerMixin):
         If int, random_state is the seed used by the random number generator;
         if RandomState instance, random_state is the random number generator.
 
+    basis_method : string "k_means" or "random"
+        Use k_means centers or random sampled columns to construct Nystrom
+        Approximation
 
     Attributes
     ----------
@@ -401,6 +405,9 @@ class Nystroem(BaseEstimator, TransformerMixin):
       Comparison",
       Advances in Neural Information Processing Systems 2012
 
+    * K. Zhang, Ivor W. Tsang, James T. Kwok
+      "Improved Nystrom Low-Rank Approximation and Error Analysis"
+      International Conference of Machine Learning (ICML) 2008
 
     See also
     --------
@@ -410,7 +417,8 @@ class Nystroem(BaseEstimator, TransformerMixin):
     sklearn.metric.pairwise.kernel_metrics : List of built-in kernels.
     """
     def __init__(self, kernel="rbf", gamma=None, coef0=1, degree=3,
-                 kernel_params=None, n_components=100, random_state=None,opts="k_means"):
+                 kernel_params=None, n_components=100, random_state=None,
+                 basis_method="k_means"):
         self.kernel = kernel
         self.gamma = gamma
         self.coef0 = coef0
@@ -418,7 +426,7 @@ class Nystroem(BaseEstimator, TransformerMixin):
         self.kernel_params = kernel_params
         self.n_components = n_components
         self.random_state = random_state
-        self.opts = opts
+        self.basis_method = basis_method
 
     def fit(self, X, y=None):
         """Fit estimator to data.
@@ -432,10 +440,7 @@ class Nystroem(BaseEstimator, TransformerMixin):
             Training data.
         """
 
-              
         n_samples = X.shape[0]
-
-
 
         # get basis vectors
         if self.n_components > n_samples:
@@ -448,34 +453,33 @@ class Nystroem(BaseEstimator, TransformerMixin):
         else:
             n_components = self.n_components
 
-
         n_components = min(n_samples, n_components)
-        
 
-        if (self.opts=="random"):
+        if (self.basis_method == "random"):
             rnd = check_random_state(self.random_state)
             inds = rnd.permutation(n_samples)
             basis_inds = inds[:n_components]
             basis = X[basis_inds]
             self.component_indices_ = inds
 
-        elif (self.opts=="k_means"):
+        elif (self.basis_method == "k_means"):
 
-            km = KMeans(n_clusters=n_components, init='k-means++', max_iter=1000, n_init=5)
+            km = KMeans(n_clusters=n_components, init='k-means++',
+                        max_iter=1000, n_init=5)
             km.fit(X)
             centers = km.cluster_centers_
-            basis = centers[centers[:,0].argsort()]
+            basis = centers[centers[:, 0].argsort()]
             #If we are using k_means centers as input, cannot record basis_inds
-            
+
             self.component_indices_ = -1
-   
+
         if False:
             basis_kernel = self.kernel(basis, basis)
         else:
             basis_kernel = pairwise_kernels(basis, metric=self.kernel,
                                             filter_params=True,
                                             **self._get_kernel_params())
-            
+
         # sqrt of kernel matrix on basis vectors
         U, S, V = svd(basis_kernel)
         self.normalization_ = np.dot(U * 1. / np.sqrt(S), V)

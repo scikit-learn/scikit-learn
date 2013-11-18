@@ -127,20 +127,20 @@ def test_nystroem_approximation():
     K = rbf_kernel(X)
     assert_array_almost_equal(np.dot(X_transformed, X_transformed.T), K)
 
-    trans = Nystroem(n_components=2, random_state=rnd)
+    trans = Nystroem(n_components=2, random_state=rnd,basis_method="k_means")
     X_transformed = trans.fit(X).transform(X)
     assert_equal(X_transformed.shape, (X.shape[0], 2))
 
     # test callable kernel
     linear_kernel = lambda X, Y: np.dot(X, Y.T)
-    trans = Nystroem(n_components=2, kernel=linear_kernel, random_state=rnd)
+    trans = Nystroem(n_components=2, kernel=linear_kernel, random_state=rnd,basis_method="k_means")
     X_transformed = trans.fit(X).transform(X)
     assert_equal(X_transformed.shape, (X.shape[0], 2))
 
     # test that available kernels fit and transform
     kernels_available = kernel_metrics()
     for kern in kernels_available:
-        trans = Nystroem(n_components=2, kernel=kern, random_state=rnd)
+        trans = Nystroem(n_components=2, kernel=kern, random_state=rnd,basis_method="k_means")
         X_transformed = trans.fit(X).transform(X)
         assert_equal(X_transformed.shape, (X.shape[0], 2))
 
@@ -152,7 +152,7 @@ def test_nystroem_poly_kernel_params():
 
     K = polynomial_kernel(X, degree=3.1, coef0=.1)
     nystroem = Nystroem(kernel="polynomial", n_components=X.shape[0],
-                        degree=3.1, coef0=.1)
+                        degree=3.1, coef0=.1,basis_method="random")
     X_transformed = nystroem.fit_transform(X)
     assert_array_almost_equal(np.dot(X_transformed, X_transformed.T), K)
 
