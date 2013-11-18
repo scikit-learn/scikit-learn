@@ -14,6 +14,7 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import SkipTest
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_greater
+from sklearn.utils.testing import assert_raises
 
 from sklearn.linear_model.coordinate_descent import Lasso, \
     LassoCV, ElasticNet, ElasticNetCV, MultiTaskLasso, MultiTaskElasticNet, \
@@ -334,6 +335,13 @@ def test_enet_multitarget():
         assert_array_almost_equal(coef[k, :], estimator.coef_)
         assert_array_almost_equal(intercept[k], estimator.intercept_)
         assert_array_almost_equal(dual_gap[k], estimator.dual_gap_)
+
+
+def test_multioutput_enetcv_error():
+    X = np.random.randn(10, 2)
+    y = np.random.randn(10, 2)
+    clf = ElasticNetCV()
+    assert_raises(ValueError, clf.fit, X, y)
 
 
 if __name__ == '__main__':
