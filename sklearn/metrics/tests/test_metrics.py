@@ -23,6 +23,7 @@ from sklearn.utils.testing import (assert_true,
                                    assert_array_equal,
                                    assert_array_almost_equal,
                                    assert_warns,
+                                   assert_no_warnings,
                                    assert_greater,
                                    ignore_warnings)
 
@@ -1887,13 +1888,13 @@ def test_prf_warnings():
 
 
 def test_recall_warnings():
+    assert_no_warnings(recall_score,
+                       np.array([[1, 1], [1, 1]]),
+                       np.array([[0, 0], [0, 0]]),
+                       average='micro')
+
     with warnings.catch_warnings(record=True) as record:
         warnings.simplefilter('always')
-
-        recall_score(np.array([[1, 1], [1, 1]]),
-                     np.array([[0, 0], [0, 0]]),
-                     average='micro')
-        assert_equal(len(record), 0)
         recall_score(np.array([[0, 0], [0, 0]]),
                      np.array([[1, 1], [1, 1]]),
                      average='micro')
@@ -1912,10 +1913,11 @@ def test_precision_warnings():
         assert_equal(str(record.pop().message),
                      'Precision is ill-defined and '
                      'being set to 0.0 due to no predicted samples.')
-        precision_score(np.array([[0, 0], [0, 0]]),
-                        np.array([[1, 1], [1, 1]]),
-                        average='micro')
-        assert_equal(len(record), 0)
+
+    assert_no_warnings(precision_score,
+                       np.array([[0, 0], [0, 0]]),
+                       np.array([[1, 1], [1, 1]]),
+                       average='micro')
 
 
 def test_fscore_warnings():
