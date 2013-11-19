@@ -127,22 +127,37 @@ def test_nystroem_approximation():
     K = rbf_kernel(X)
     assert_array_almost_equal(np.dot(X_transformed, X_transformed.T), K)
 
-    trans = Nystroem(n_components=2, random_state=rnd,basis_method="k_means")
-    X_transformed = trans.fit(X).transform(X)
-    assert_equal(X_transformed.shape, (X.shape[0], 2))
+    trans_k_means = Nystroem(n_components=2, random_state=rnd,
+                             basis_method="k_means")
+    trans_random = Nystroem(n_components=2, random_state=rnd,
+                            basis_method="random")
+    X_transformed_k_means = trans_k_means.fit(X).transform(X)
+    X_transformed_random = trans_random.fit(X).transform(X)
+    assert_equal(X_transformed_k_means.shape, (X.shape[0], 2))
+    assert_equal(X_transformed_random.shape, (X.shape[0], 2))
 
     # test callable kernel
     linear_kernel = lambda X, Y: np.dot(X, Y.T)
-    trans = Nystroem(n_components=2, kernel=linear_kernel, random_state=rnd,basis_method="k_means")
-    X_transformed = trans.fit(X).transform(X)
-    assert_equal(X_transformed.shape, (X.shape[0], 2))
+    trans_k_means = Nystroem(n_components=2, kernel=linear_kernel,
+                             random_state=rnd, basis_method="k_means")
+    trans_random = Nystroem(n_components=2, kernel=linear_kernel,
+                            random_state=rnd, basis_method="random")
+    X_transformed_k_means = trans_k_means.fit(X).transform(X)
+    X_transformed_random = trans_random.fit(X).transform(X)
+    assert_equal(X_transformed_k_means.shape, (X.shape[0], 2))
+    assert_equal(X_transformed_random.shape, (X.shape[0], 2))
 
     # test that available kernels fit and transform
     kernels_available = kernel_metrics()
     for kern in kernels_available:
-        trans = Nystroem(n_components=2, kernel=kern, random_state=rnd,basis_method="k_means")
-        X_transformed = trans.fit(X).transform(X)
-        assert_equal(X_transformed.shape, (X.shape[0], 2))
+        trans_k_means = Nystroem(n_components=2, kernel=kern,
+                                 random_state=rnd, basis_method="k_means")
+        trans_random = Nystroem(n_components=2, kernel=kern,
+                                random_state=rnd, basis_method="random")
+        X_transformed_k_means = trans_k_means.fit(X).transform(X)
+        X_transformed_random = trans_random.fit(X).transform(X)
+        assert_equal(X_transformed_k_means.shape, (X.shape[0], 2))
+        assert_equal(X_transformed_random.shape, (X.shape[0], 2))
 
 
 def test_nystroem_poly_kernel_params():
@@ -151,10 +166,18 @@ def test_nystroem_poly_kernel_params():
     X = rnd.uniform(size=(10, 4))
 
     K = polynomial_kernel(X, degree=3.1, coef0=.1)
-    nystroem = Nystroem(kernel="polynomial", n_components=X.shape[0],
-                        degree=3.1, coef0=.1,basis_method="random")
-    X_transformed = nystroem.fit_transform(X)
-    assert_array_almost_equal(np.dot(X_transformed, X_transformed.T), K)
+    nystroem_random = Nystroem(kernel="polynomial", n_components=X.shape[0],
+                               degree=3.1, coef0=.1, basis_method="random")
+    nystroem_k_means = Nystroem(kernel="polynomial", n_components=X.shape[0],
+                                degree=3.1, coef0=.1, basis_method="k_means")
+
+    X_transformed_k_means = nystroem_k_means.fit_transform(X)
+    X_transformed_random = nystroem_random.fit_transform(X)
+
+    assert_array_almost_equal(np.dot(X_transformed_k_means,
+                                     X_transformed_k_means.T), K)
+    assert_array_almost_equal(np.dot(X_transformed_random,
+                                     X_transformed_random.T), K)
 
 
 def test_nystroem_callable():
@@ -171,5 +194,13 @@ def test_nystroem_callable():
     kernel_log = []
     Nystroem(kernel=logging_histogram_kernel,
              n_components=(n_samples - 1),
-             kernel_params={'log': kernel_log}).fit(X)
+             kernel_params={'log': kernel_log}, basis_method="k_means").fit(X)
+
+    assert_equal(len(kernel_log), n_samples * (n_samples - 1) / 2)
+
+    kernel_log = []
+    Nystroem(kernel=logging_histogram_kernel,
+             n_components=(n_samples - 1),
+             kernel_params={'log': kernel_log}, basis_method="random").fit(X)
+
     assert_equal(len(kernel_log), n_samples * (n_samples - 1) / 2)

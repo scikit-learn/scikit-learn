@@ -473,12 +473,12 @@ class Nystroem(BaseEstimator, TransformerMixin):
 
             self.component_indices_ = -1
 
-        if False:
-            basis_kernel = self.kernel(basis, basis)
         else:
-            basis_kernel = pairwise_kernels(basis, metric=self.kernel,
-                                            filter_params=True,
-                                            **self._get_kernel_params())
+            raise ValueError("No basis_method: %s.", self.basis_method)
+
+        basis_kernel = pairwise_kernels(basis, metric=self.kernel,
+                                        filter_params=True,
+                                        **self._get_kernel_params())
 
         # sqrt of kernel matrix on basis vectors
         U, S, V = svd(basis_kernel)
@@ -502,14 +502,11 @@ class Nystroem(BaseEstimator, TransformerMixin):
         X_transformed : array, shape=(n_samples, n_components)
             Transformed data.
         """
+        embedded = pairwise_kernels(X, self.components_,
+                                    metric=self.kernel,
+                                    filter_params=True,
+                                    **self._get_kernel_params())
 
-        if False:
-            embedded = self.kernel(X, self.components_)
-        else:
-            embedded = pairwise_kernels(X, self.components_,
-                                        metric=self.kernel,
-                                        filter_params=True,
-                                        **self._get_kernel_params())
         return np.dot(embedded, self.normalization_.T)
 
     def _get_kernel_params(self):
