@@ -1523,7 +1523,7 @@ class LdaVectorizer(CountVectorizer):
         Turned on to force distributed computing (see the web tutorial
         on how to set up a cluster of machines for gensim).
 
-    topic_file : string, optional, 'lda_topics.log' by default
+    topic_file : string, optional, 'lda_topics.txt' by default
         The log file used to record all learned topics
 
 
@@ -1822,7 +1822,7 @@ class LsiVectorizer(CountVectorizer):
     multi-pass algorithm, which is used either internally (`onepass=True`) or
     as the front-end algorithm (`onepass=False`).
 
-    topic_file : string, optional, 'lsi_topics.log' by default
+    topic_file : string, optional, 'lsi_topics.txt' by default
         The log file used to record all learned topics
 
     See also
