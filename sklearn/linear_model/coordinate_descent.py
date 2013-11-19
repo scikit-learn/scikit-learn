@@ -877,25 +877,14 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
         self.n_jobs = n_jobs
         self.positive = positive
 
-    def fit(self, X, y):
-        """Fit linear model with coordinate descent
 
-        Fit is on grid of alphas and best alpha estimated by cross-validation.
-
-        Parameters
-        ----------
-
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
-            Training data. Pass directly as float64, Fortran-contiguous data
-            to avoid unnecessary memory duplication
-
-        y : array-like, shape (n_samples,) or (n_samples, n_targets)
-            Target values
-
+    def _check_copy_X(self, X):
+        r"""
+        This makes sure that there is no duplication in memory. 
+        Dealing right with copy_X is important in the following:
+        Multiple functions touch X and subsamples of X and can induce a
+        lot of duplication of memory
         """
-        # Dealing right with copy_X is important in the following:
-        # multiple functions touch X and subsamples of X and can induce a
-        # lot of duplication of memory
         copy_X = self.copy_X and self.fit_intercept
 
         if isinstance(X, np.ndarray) or sparse.isspmatrix(X):
@@ -917,7 +906,26 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
             X = atleast2d_or_csc(X, dtype=np.float64, order='F',
                                  copy=copy_X)
             copy_X = False
+        return X, copy_X
 
+    def fit(self, X, y):
+        """Fit linear model with coordinate descent
+
+        Fit is on grid of alphas and best alpha estimated by cross-validation.
+
+        Parameters
+        ----------
+
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            Training data. Pass directly as float64, Fortran-contiguous data
+            to avoid unnecessary memory duplication
+
+        y : array-like, shape (n_samples,) or (n_samples, n_targets)
+            Target values
+
+        """
+
+        X, copy_X = self._check_copy_X(X)
         y = np.asarray(y, dtype=np.float64)
 
         if y.ndim > 1:
@@ -1259,7 +1267,7 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
 class MultiTaskElasticNet(Lasso):
     """Multi-task ElasticNet model trained with L1/L2 mixed-norm as regularizer
 
-    The optimization objective for Lasso is::
+    The optimization objective for MultiTaskElasticNet is::
 
         (1 / (2 * n_samples)) * ||Y - XW||^Fro_2
         + alpha * l1_ratio * ||W||_21
@@ -1503,3 +1511,337 @@ class MultiTaskLasso(MultiTaskElasticNet):
         self.tol = tol
         self.warm_start = warm_start
         self.l1_ratio = 1.0
+
+
+class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
+    """Multi-task ElasticNet model trained with L1/L2 mixed-norm as regularizer
+    The model is chosen by cross-validating across all tasks.
+
+    The optimization objective for MultiTaskElasticNet is::
+
+        (1 / (2 * n_samples)) * ||Y - XW||^Fro_2
+        + alpha * l1_ratio * ||W||_21
+        + 0.5 * alpha * (1 - l1_ratio) * ||W||_Fro^2
+
+    Where::
+
+        ||W||_21 = \sum_i \sqrt{\sum_j w_{ij}^2}
+
+    i.e. the sum of norm of each row.
+
+    Parameters
+    ----------
+    alpha : float, optional
+        Constant that multiplies the L1/L2 term. Defaults to 1.0
+
+    l1_ratio : float or array of floats
+        The ElasticNet mixing parameter, with 0 < l1_ratio <= 1.
+        For l1_ratio = 0 the penalty is an L1/L2 penalty. For l1_ratio = 1 it
+        is an L1 penalty.
+        For ``0 < l1_ratio < 1``, the penalty is a combination of L1/L2 and L2.
+
+    fit_intercept : boolean
+        whether to calculate the intercept for this model. If set
+        to false, no intercept will be used in calculations
+        (e.g. data is expected to be already centered).
+
+    normalize : boolean, optional, default False
+        If ``True``, the regressors X will be normalized before regression.
+
+    copy_X : boolean, optional, default True
+        If ``True``, X will be copied; else, it may be overwritten.
+
+    max_iter : int, optional
+        The maximum number of iterations
+
+    tol : float, optional
+        The tolerance for the optimization: if the updates are
+        smaller than ``tol``, the optimization code checks the
+        dual gap for optimality and continues until it is smaller
+        than ``tol``.
+
+    warm_start : bool, optional
+        When set to ``True``, reuse the solution of the previous call to fit as
+        initialization, otherwise, just erase the previous solution.
+
+    Attributes
+    ----------
+    ``intercept_`` : array, shape = (n_tasks,)
+        Independent term in decision function.
+
+    ``coef_`` : array, shape = (n_tasks, n_features)
+        Parameter vector (W in the cost function formula).
+
+    ``alpha_`` : float
+        The amount of penalization chosen by cross validation
+
+    ``mse_path_`` : array, shape = (n_alphas, n_folds)
+        mean square error for the test set on each fold, varying alpha
+
+    ``alphas_`` : numpy array
+        The grid of alphas used for fitting.
+
+    ``l1_ratio_`` : float
+        best l1_ratio obtained by cross-validation.
+
+    Examples
+    --------
+    >>> from sklearn import linear_model
+    >>> clf = linear_model.MultiTaskElasticNetCV()
+    >>> clf.fit([[0,0], [1, 1], [2, 2]], [[0, 0], [1, 1], [2, 2]])
+    ... #doctest: +NORMALIZE_WHITESPACE
+    MultiTaskElasticNetCV(alphas=None, copy_X=True, cv=None, eps=0.001,
+           fit_intercept=True, l1_ratio=0.5, max_iter=1000, n_alphas=100,
+           n_jobs=1, normalize=False, precompute='auto', tol=0.0001,
+           verbose=0)
+    >>> print(clf.coef_)
+    [[ 0.56711798  0.43174317]
+     [ 0.56711798  0.43174317]]
+    >>> print(clf.intercept_)
+    [ 0.00113885  0.0872422]
+
+    See also
+    --------
+    MultiTaskElasticNet
+    ElasticNetCV
+    MultiTaskLassoCV
+
+    Notes
+    -----
+    The algorithm used to fit the model is coordinate descent.
+
+    To avoid unnecessary memory duplication the X argument of the fit method
+    should be directly passed as a Fortran-contiguous numpy array.
+    """
+    path = staticmethod(enet_path)
+    def __init__(self, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
+                 fit_intercept=True, normalize=False, precompute='auto',
+                 max_iter=1000, tol=1e-4, cv=None, copy_X=True,
+                 verbose=0, n_jobs=1):
+        self.l1_ratio = l1_ratio
+        self.eps = eps
+        self.n_alphas = n_alphas
+        self.alphas = alphas
+        self.fit_intercept = fit_intercept
+        self.normalize = normalize
+        self.precompute = precompute
+        self.max_iter = max_iter
+        self.tol = tol
+        self.cv = cv
+        self.copy_X = copy_X
+        self.verbose = verbose
+        self.n_jobs = n_jobs
+
+
+    def fit(self, X, y):
+        """Fit linear model with coordinate descent
+
+        Fit is on grid of alphas and best alpha estimated by cross-validation.
+
+        Parameters
+        ----------
+
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            Training data. Pass directly as float64, Fortran-contiguous data
+            to avoid unnecessary memory duplication
+
+        y : array-like, shape (n_samples,) or (n_samples, n_targets)
+            Target values
+
+        """
+        X, copy_X = self._check_copy_X(X)
+        y = np.asarray(y, dtype=np.float64)
+
+        n_samples, n_features = X.shape
+        if y.ndim == 1:
+            raise ValueError("For tasks with single output, use ElasticNetCV "
+                             "instead.")
+        if X.shape[0] != y.shape[0]:
+            raise ValueError("X and y have inconsistent dimensions (%d != %d)"
+                             % (X.shape[0], y.shape[0]))
+
+        n_outputs = y.shape[1]
+
+        # All LinearModelCV parameters except 'cv' are acceptable
+        path_params = self.get_params()
+        if 'l1_ratio' in path_params:
+            l1_ratios = np.atleast_1d(path_params['l1_ratio'])
+            # For the first path, we need to set l1_ratio
+            path_params['l1_ratio'] = l1_ratios[0]
+        else:
+            l1_ratios = [1, ]
+
+        path_params.pop('cv', None)
+        path_params.pop('n_jobs', None)
+        path_params['copy_X'] = copy_X
+        # We are not computing in parallel, we can modify X
+        # inplace in the folds
+        if not (self.n_jobs == 1 or self.n_jobs is None):
+            path_params['copy_X'] = False
+
+
+        # init cross-validation generator
+        cv = check_cv(self.cv, X)
+        folds = list(cv)
+
+        alphas = self.alphas
+        if alphas is None:
+            mean_l1_ratio = 1.
+            if hasattr(self, 'l1_ratio'):
+                mean_l1_ratio = np.mean(self.l1_ratio)
+            # A list of alpha scores used across all tasks.
+            alpha_task = []
+
+        else:
+            alpha_task = np.tile(alphas, (n_outputs, 1))
+
+        # For now the alpha that gives the lowest MSE, across all tasks
+        # is chosen. It is unlikely that this alpha would give the
+        # lowest MSE across all tasks.
+        for task in xrange(n_outputs):
+            if alphas is None:
+                # Preparing a grid of alpha values for each task.
+                alpha_task.append(_alpha_grid(X, y[:, task],
+                              l1_ratio=mean_l1_ratio,
+                              fit_intercept=self.fit_intercept,
+                              eps=self.eps, n_alphas=self.n_alphas,
+                              normalize=self.normalize,
+                              copy_X=self.copy_X))
+
+            n_alphas = len(alpha_task[task])
+            path_params.update({'alphas': alpha_task[task], 'n_alphas': n_alphas})
+
+            # compute MSE to get the best alpha
+            best_mse = np.inf
+            all_mse_paths = list()
+
+            # We do a double for loop folded in one, in order to be able to
+            # iterate in parallel on l1_ratio and folds
+            for l1_ratio, mse_alphas in itertools.groupby(
+                Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
+                    delayed(_path_residuals)(
+                        X, y[:, task], train, test, self.path, path_params,
+                        l1_ratio=l1_ratio, X_order='F',
+                        dtype=np.float64)
+                    for l1_ratio in l1_ratios for train, test in folds
+                ), operator.itemgetter(1)):
+
+                mse_alphas = [m[0] for m in mse_alphas]
+                mse_alphas = np.array(mse_alphas)
+
+                mse = np.mean(mse_alphas, axis=0)
+                i_best_alpha = np.argmin(mse)
+                this_best_mse = mse[i_best_alpha]
+                all_mse_paths.append(mse_alphas.T)
+                if this_best_mse < best_mse:
+                    best_alpha = alpha_task[task][i_best_alpha]
+                    best_l1_ratio = l1_ratio
+                    best_mse = this_best_mse
+
+        self.l1_ratio_ = best_l1_ratio
+        self.alpha_ = best_alpha
+        self.alphas_ = np.asarray(alpha_task)
+        self.mse_path_ = np.squeeze(all_mse_paths)
+        X, y, X_mean, y_mean, X_std = center_data(
+            X, y, self.fit_intercept, self.normalize, copy=False)
+
+        self.coef_ = np.zeros((n_outputs, n_features), dtype=np.float64,
+                               order='F')
+        self.coef_ = np.asfortranarray(self.coef_)  # coef contiguous in memory
+        X = np.asfortranarray(X)
+
+        l1_reg = self.alpha_ * self.l1_ratio_ * n_samples
+        l2_reg = self.alpha_ * (1.0 - self.l1_ratio_) * n_samples
+        self.coef_, self.dual_gap_, self.eps_ = \
+            cd_fast.enet_coordinate_descent_multi_task(
+                self.coef_, l1_reg, l2_reg, X, y, self.max_iter, self.tol)
+
+        self._set_intercept(X_mean, y_mean, X_std)
+        return self
+
+
+class MultiTaskLassoCV(MultiTaskElasticNetCV):
+    """Multi-task Lasso model trained with L1/L2 mixed-norm as regularizer
+    The model is chosen by cross-validating across all tasks.
+
+    The optimization objective for MultiTaskElasticNet is::
+
+        (1 / (2 * n_samples)) * ||Y - XW||^Fro_2
+        + alpha * l1_ratio * ||W||_21
+
+    Where::
+
+        ||W||_21 = \sum_i \sqrt{\sum_j w_{ij}^2}
+
+    i.e. the sum of norm of each row.
+
+    Parameters
+    ----------
+    alpha : float, optional
+        Constant that multiplies the L1/L2 term. Defaults to 1.0
+
+    fit_intercept : boolean
+        whether to calculate the intercept for this model. If set
+        to false, no intercept will be used in calculations
+        (e.g. data is expected to be already centered).
+
+    normalize : boolean, optional, default False
+        If ``True``, the regressors X will be normalized before regression.
+
+    copy_X : boolean, optional, default True
+        If ``True``, X will be copied; else, it may be overwritten.
+
+    max_iter : int, optional
+        The maximum number of iterations
+
+    tol : float, optional
+        The tolerance for the optimization: if the updates are
+        smaller than ``tol``, the optimization code checks the
+        dual gap for optimality and continues until it is smaller
+        than ``tol``.
+
+    warm_start : bool, optional
+        When set to ``True``, reuse the solution of the previous call to fit as
+        initialization, otherwise, just erase the previous solution.
+
+    Attributes
+    ----------
+    ``intercept_`` : array, shape = (n_tasks,)
+        Independent term in decision function.
+
+    ``coef_`` : array, shape = (n_tasks, n_features)
+        Parameter vector (W in the cost function formula).
+
+    ``alpha_`` : float
+        The amount of penalization chosen by cross validation
+
+    ``mse_path_`` : array, shape = (n_alphas, n_folds)
+        mean square error for the test set on each fold, varying alpha
+
+    ``alphas_`` : numpy array
+        The grid of alphas used for fitting.
+
+    See also
+    --------
+    MultiTaskElasticNet
+    ElasticNetCV
+    MultiTaskElasticNetCV
+
+    Notes
+    -----
+    The algorithm used to fit the model is coordinate descent.
+
+    To avoid unnecessary memory duplication the X argument of the fit method
+    should be directly passed as a Fortran-contiguous numpy array.
+    """
+    path = staticmethod(lasso_path)
+    n_jobs = 1
+
+    def __init__(self, eps=1e-3, n_alphas=100, alphas=None, fit_intercept=True,
+                 normalize=False, precompute='auto', max_iter=1000, tol=1e-4,
+                 copy_X=True, cv=None, verbose=False):
+        super(MultiTaskLassoCV, self).__init__(
+            eps=eps, n_alphas=n_alphas, alphas=alphas,
+            fit_intercept=fit_intercept, normalize=normalize,
+            precompute=precompute, max_iter=max_iter, tol=tol, copy_X=copy_X,
+            cv=cv, verbose=verbose)
