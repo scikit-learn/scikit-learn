@@ -75,13 +75,15 @@ def _alpha_grid(X, y, Xy=None, l1_ratio=1.0, fit_intercept=True,
             # X can be touched inplace thanks to the above line
             X, y, _, _, _ = center_data(X, y, fit_intercept,
                                         normalize, copy=False)
-
         Xy = safe_sparse_dot(X.T, y, dense_output=True)
         n_samples = X.shape[0]
     else:
         n_samples = len(y)
 
-    alpha_max = np.abs(Xy).max() / (n_samples * l1_ratio)
+    if Xy.ndim == 1:
+        Xy = Xy[:, np.newaxis]
+    alpha_max = np.sqrt(np.sum(Xy ** 2, axis=1)).max() / (
+                            n_samples * l1_ratio)
     alphas = np.logspace(np.log10(alpha_max * eps), np.log10(alpha_max),
                          num=n_alphas)[::-1]
     return alphas
@@ -94,17 +96,30 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
                **params):
     """Compute Lasso path with coordinate descent
 
-    The optimization objective for Lasso is::
+    The Lasso optimization function varies for mono and multi-outputs.
+
+    For mono-output tasks it is::
 
         (1 / (2 * n_samples)) * ||y - Xw||^2_2 + alpha * ||w||_1
+
+    For multi-output tasks it is::
+
+        (1 / (2 * n_samples)) * ||Y - XW||^2_Fro + alpha * ||W||_21
+
+    Where::
+
+        ||W||_21 = \sum_i \sqrt{\sum_j w_{ij}^2}
+
+    i.e. the sum of norm of each row.
 
     Parameters
     ----------
     X : {array-like, sparse matrix}, shape (n_samples, n_features)
         Training data. Pass directly as Fortran-contiguous data to avoid
-        unnecessary memory duplication
+        unnecessary memory duplication. If ``y`` is mono-output then ``X``
+        can be sparse.
 
-    y : ndarray, shape = (n_samples,)
+    y : ndarray, shape = (n_samples,), (n_samples, n_outputs)
         Target values
 
     eps : float, optional
@@ -142,7 +157,7 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
         The initial values of the coefficients.
 
     verbose : bool or integer
-        Amount of verbosity
+        Amount of verbosity.
 
     return_models : boolean, optional, default True
         If ``True``, the function will return list of models. Setting it
@@ -158,17 +173,18 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
     models : a list of models along the regularization path
         (Is returned if ``return_models`` is set ``True`` (default).
 
-    alphas : array, shape: [n_alphas + 1]
+    alphas : array, shape (n_alphas,)
         The alphas along the path where models are computed.
         (Is returned, along with ``coefs``, when ``return_models`` is set
         to ``False``)
 
-    coefs : shape (n_features, n_alphas + 1)
+    coefs : array, shape (n_features, n_alphas) or
+            (n_outputs, n_features, n_alphas)
         Coefficients along the path.
         (Is returned, along with ``alphas``, when ``return_models`` is set
         to ``False``).
 
-    dual_gaps : shape (n_alphas + 1)
+    dual_gaps : array, shape (n_alphas,)
         The dual gaps at the end of the optimization for each alpha.
         (Is returned, along with ``alphas``, when ``return_models`` is set
         to ``False``).
@@ -240,19 +256,34 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
               **params):
     """Compute Elastic-Net path with coordinate descent
 
-    The Elastic Net optimization function is::
+    The Elastic Net optimization function varies for mono and multi-outputs.
+
+    For mono-output tasks it is::
 
         1 / (2 * n_samples) * ||y - Xw||^2_2 +
         + alpha * l1_ratio * ||w||_1
         + 0.5 * alpha * (1 - l1_ratio) * ||w||^2_2
 
+    For multi-output tasks it is::
+
+        (1 / (2 * n_samples)) * ||Y - XW||^Fro_2
+        + alpha * l1_ratio * ||W||_21
+        + 0.5 * alpha * (1 - l1_ratio) * ||W||_Fro^2
+
+    Where::
+
+        ||W||_21 = \sum_i \sqrt{\sum_j w_{ij}^2}
+
+    i.e. the sum of norm of each row.
+
     Parameters
     ----------
-    X : {array-like, sparse matrix}, shape (n_samples, n_features)
+    X : {array-like}, shape (n_samples, n_features)
         Training data. Pass directly as Fortran-contiguous data to avoid
-        unnecessary memory duplication
+        unnecessary memory duplication. If ``y`` is mono-output then ``X``
+        can be sparse.
 
-    y : ndarray, shape = (n_samples,)
+    y : ndarray, shape = (n_samples,) or (n_samples, n_outputs)
         Target values
 
     l1_ratio : float, optional
@@ -294,7 +325,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
         The initial values of the coefficients.
 
     verbose : bool or integer
-        Amount of verbosity
+        Amount of verbosity.
 
     return_models : boolean, optional, default False
         If ``True``, the function will return list of models. Setting it
@@ -310,17 +341,18 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     models : a list of models along the regularization path
         (Is returned if ``return_models`` is set ``True`` (default).
 
-    alphas : array, shape: [n_alphas + 1]
+    alphas : array, shape (n_alphas,)
         The alphas along the path where models are computed.
         (Is returned, along with ``coefs``, when ``return_models`` is set
         to ``False``)
 
-    coefs : shape (n_features, n_alphas + 1)
+    coefs : array, shape (n_features, n_alphas) or
+            (n_outputs, n_features, n_alphas)
         Coefficients along the path.
         (Is returned, along with ``alphas``, when ``return_models`` is set
         to ``False``).
 
-    dual_gaps : shape (n_alphas + 1)
+    dual_gaps : array, shape (n_alphas,)
         The dual gaps at the end of the optimization for each alpha.
         (Is returned, along with ``alphas``, when ``return_models`` is set
         to ``False``).
@@ -336,6 +368,8 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
 
     See also
     --------
+    MultiTaskElasticNet
+    MultiTaskElasticNetCV
     ElasticNet
     ElasticNetCV
     """
@@ -367,10 +401,15 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
 
     X = atleast2d_or_csc(X, dtype=np.float64, order='F',
                          copy=copy_X and fit_intercept)
-
     n_samples, n_features = X.shape
 
-    if sparse.isspmatrix(X):
+    multi_output = False
+    if y.ndim != 1:
+        multi_output = True
+        _, n_outputs = y.shape
+
+    # MultiTaskElasticNet does not support sparse matrices
+    if not multi_output and sparse.isspmatrix(X):
         if 'X_mean' in params:
             # As sparse matrices are not actually centered we need this
             # to be passed to the CD solver.
@@ -380,8 +419,6 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
 
     X, y, X_mean, y_mean, X_std, precompute, Xy = \
         _pre_fit(X, y, Xy, precompute, normalize, fit_intercept, copy=False)
-
-    n_samples = X.shape[0]
     if alphas is None:
         # No need to normalize of fit_intercept: it has been done
         # above
@@ -392,49 +429,61 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
         alphas = np.sort(alphas)[::-1]  # make sure alphas are properly ordered
 
     n_alphas = len(alphas)
-
-    if coef_init is None:
-        coef_ = np.zeros(n_features, dtype=np.float64)
-    else:
-        coef_ = coef_init
-
-    models = []
-    coefs = np.empty((n_features, n_alphas), dtype=np.float64)
-    dual_gaps = np.empty(n_alphas)
-
     tol = params.get('tol', 1e-4)
     positive = params.get('positive', False)
     max_iter = params.get('max_iter', 1000)
+    dual_gaps = np.empty(n_alphas)
+    models = []
+
+    if not multi_output:
+        coefs = np.empty((n_features, n_alphas), dtype=np.float64)
+    else:
+        coefs = np.empty((n_outputs, n_features, n_alphas),
+                          dtype=np.float64)
+
+    if coef_init is None:
+        coef_ = np.asfortranarray(np.zeros(coefs.shape[:-1]))
+    else:
+        coef_ = np.asfortranarray(coef_init)
 
     for i, alpha in enumerate(alphas):
         l1_reg = alpha * l1_ratio * n_samples
         l2_reg = alpha * (1.0 - l1_ratio) * n_samples
-
-        if sparse.isspmatrix(X):
-            coef_, dual_gap_, eps_ = cd_fast.sparse_enet_coordinate_descent(
+        if not multi_output and sparse.isspmatrix(X):
+            coef_, dual_gap_, eps_ = (
+                cd_fast.sparse_enet_coordinate_descent(
                 coef_, l1_reg, l2_reg, X.data, X.indices,
                 X.indptr, y, X_sparse_scaling,
                 max_iter, tol, positive)
-        else:
+                )
+        elif not multi_output:
             coef_, dual_gap_, eps_ = cd_fast.enet_coordinate_descent(
                 coef_, l1_reg, l2_reg, X, y, max_iter, tol, positive)
-
+        else:
+            coef_, dual_gap_, eps_ = (
+                cd_fast.enet_coordinate_descent_multi_task(
+                coef_, l1_reg, l2_reg, X, y, max_iter, tol)
+                )
+        coefs[..., i] = coef_
+        dual_gaps[i] = dual_gap_
         if dual_gap_ > eps_:
             warnings.warn('Objective did not converge.' +
                           ' You might want' +
                           ' to increase the number of iterations')
 
-        coefs[:, i] = coef_
-        dual_gaps[i] = dual_gap_
-
         if return_models:
-            model = ElasticNet(
-                alpha=alpha, l1_ratio=l1_ratio,
-                fit_intercept=fit_intercept if sparse.isspmatrix(X) else False,
-                precompute=precompute)
-            model.coef_ = coefs[:, i]
-            model.dual_gap_ = dual_gaps[-1]
-            if fit_intercept and not sparse.isspmatrix(X):
+            if not multi_output:
+                model = ElasticNet(
+                    alpha=alpha, l1_ratio=l1_ratio,
+                    fit_intercept=fit_intercept
+                    if sparse.isspmatrix(X) else False,
+                    precompute=precompute)
+            else:
+                model = MultiTaskElasticNet(
+                    alpha=alpha, l1_ratio=l1_ratio, fit_intercept=False)
+            model.dual_gap_ = dual_gaps[i]
+            model.coef_ = coefs[..., i]
+            if (fit_intercept and not sparse.isspmatrix(X)) or multi_output:
                 model.fit_intercept = True
                 model._set_intercept(X_mean, y_mean, X_std)
             models.append(model)
@@ -774,8 +823,8 @@ class Lasso(ElasticNet):
 ###############################################################################
 # Functions for CV with paths functions
 
-def _path_residuals(X, y, train, test, path, path_params, l1_ratio=1,
-                    X_order=None, dtype=None):
+def _path_residuals(X, y, train, test, path, path_params, alphas=None,
+                    l1_ratio=1, X_order=None, dtype=None):
     """Returns the MSE for the models computed by 'path'
 
     Parameters
@@ -798,6 +847,10 @@ def _path_residuals(X, y, train, test, path, path_params, l1_ratio=1,
 
     path_params : dictionary
         Parameters passed to the path function
+
+    alphas: array-like, optional
+        Array of float that is used for cross-validation. If not
+        provided, computed using 'path'
 
     l1_ratio : float, optional
         float between 0 and 1 passed to ElasticNet (scaling between
@@ -834,6 +887,7 @@ def _path_residuals(X, y, train, test, path, path_params, l1_ratio=1,
     path_params['X_std'] = X_std
     path_params['precompute'] = precompute
     path_params['copy_X'] = False
+    path_params['alphas'] = alphas
 
     if 'l1_ratio' in path_params:
         path_params['l1_ratio'] = l1_ratio
@@ -844,15 +898,31 @@ def _path_residuals(X, y, train, test, path, path_params, l1_ratio=1,
     alphas, coefs, _ = path(X_train, y[train], **path_params)
     del X_train
 
+    if y.ndim == 1:
+        # Doing this so that it becomes coherent with multioutput.
+        coefs = coefs[np.newaxis, :, :]
+        y_mean = np.atleast_1d(y_mean)
+        y_test = y_test[:, np.newaxis]
+
     if normalize:
         nonzeros = np.flatnonzero(X_std)
-        coefs[nonzeros] /= X_std[nonzeros][:, np.newaxis]
+        coefs[:, nonzeros] /= X_std[nonzeros][:, np.newaxis]
 
-    intercepts = y_mean - np.dot(X_mean, coefs)
-    residues = safe_sparse_dot(X_test, coefs) - y_test[:, np.newaxis]
-    residues += intercepts[np.newaxis, :]
-    this_mses = (residues ** 2).mean(axis=0)
-    return this_mses, l1_ratio
+    intercepts = y_mean[:, np.newaxis] - np.dot(X_mean, coefs)
+    if sparse.issparse(X_test):
+        n_order, n_features, n_alphas = coefs.shape
+        # Work around for sparse matices since coefs is a 3-D numpy array.
+        coefs_feature_major = np.rollaxis(coefs, 1)
+        feature_2d = np.reshape(coefs_feature_major, (n_features, -1))
+        X_test_coefs = safe_sparse_dot(X_test, feature_2d).reshape(
+                                     X_test.shape[0], n_order, -1)
+    else:
+        X_test_coefs = safe_sparse_dot(X_test, coefs)
+    residues = X_test_coefs - y_test[:, :, np.newaxis]
+    residues += intercepts
+    this_mses = ((residues ** 2).mean(axis=0)).mean(axis=0)
+
+    return this_mses
 
 
 class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
@@ -884,17 +954,44 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
 
         Parameters
         ----------
-
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like}, shape (n_samples, n_features)
             Training data. Pass directly as float64, Fortran-contiguous data
-            to avoid unnecessary memory duplication
+            to avoid unnecessary memory duplication. If y is mono-output,
+            X can be sparse.
 
         y : array-like, shape (n_samples,) or (n_samples, n_targets)
             Target values
-
         """
+        y = np.asarray(y, dtype=np.float64)
+
+        if hasattr(self, 'l1_ratio'):
+            model_str = 'ElasticNet'
+        else:
+            model_str = 'Lasso'
+
+        if isinstance(self, ElasticNetCV) or isinstance(self, LassoCV):
+            if model_str == 'ElasticNet':
+                model = ElasticNet()
+            else:
+                model = Lasso()
+            if y.ndim > 1:
+                raise ValueError("For multi-task outputs, use "
+                                 "MultiTask%sCV" % (model_str))
+        else:
+            if sparse.isspmatrix(X):
+                raise TypeError("X should be dense but a sparse matrix was"
+                                "passed")
+            elif y.ndim == 1:
+                raise ValueError("For mono-task outputs, use "
+                                 "%sCV" % (model_str))
+            if model_str == 'ElasticNet':
+                model = MultiTaskElasticNet()
+            else:
+                model = MultiTaskLasso()
+
+        # This makes sure that there is no duplication in memory.
         # Dealing right with copy_X is important in the following:
-        # multiple functions touch X and subsamples of X and can induce a
+        # Multiple functions touch X and subsamples of X and can induce a
         # lot of duplication of memory
         copy_X = self.copy_X and self.fit_intercept
 
@@ -918,11 +1015,6 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
                                  copy=copy_X)
             copy_X = False
 
-        y = np.asarray(y, dtype=np.float64)
-
-        if y.ndim > 1:
-            raise ValueError("For multi-task outputs, fit the linear model "
-                             "per output/task")
         if X.shape[0] != y.shape[0]:
             raise ValueError("X and y have inconsistent dimensions (%d != %d)"
                              % (X.shape[0], y.shape[0]))
@@ -939,17 +1031,24 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
         path_params.pop('n_jobs', None)
 
         alphas = self.alphas
+        n_l1_ratio = len(l1_ratios)
         if alphas is None:
-            mean_l1_ratio = 1.
-            if hasattr(self, 'l1_ratio'):
-                mean_l1_ratio = np.mean(self.l1_ratio)
-            alphas = _alpha_grid(X, y, l1_ratio=mean_l1_ratio,
-                                 fit_intercept=self.fit_intercept,
-                                 eps=self.eps, n_alphas=self.n_alphas,
-                                 normalize=self.normalize,
-                                 copy_X=self.copy_X)
-        n_alphas = len(alphas)
-        path_params.update({'alphas': alphas, 'n_alphas': n_alphas})
+            alphas = []
+            for l1_ratio in l1_ratios:
+                alphas.append(
+                    _alpha_grid(
+                        X, y, l1_ratio=l1_ratio,
+                        fit_intercept=self.fit_intercept,
+                        eps=self.eps, n_alphas=self.n_alphas,
+                        normalize=self.normalize,
+                        copy_X=self.copy_X)
+                    )
+        else:
+            # Making sure alphas is properly ordered.
+            alphas = np.tile(np.sort(alphas)[::-1], (n_l1_ratio, 1))
+        # We want n_alphas to be the number of alphas used for each l1_ratio.
+        n_alphas = len(alphas[0])
+        path_params.update({'n_alphas': n_alphas})
 
         path_params['copy_X'] = copy_X
         # We are not computing in parallel, we can modify X
@@ -967,34 +1066,36 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
 
         # We do a double for loop folded in one, in order to be able to
         # iterate in parallel on l1_ratio and folds
-        for l1_ratio, mse_alphas in itertools.groupby(
-                Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
-                    delayed(_path_residuals)(
-                        X, y, train, test, self.path, path_params,
-                        l1_ratio=l1_ratio, X_order='F',
-                        dtype=np.float64)
-                    for l1_ratio in l1_ratios for train, test in folds
-                ), operator.itemgetter(1)):
-
-            mse_alphas = [m[0] for m in mse_alphas]
-            mse_alphas = np.array(mse_alphas)
-
-            mse = np.mean(mse_alphas, axis=0)
-            i_best_alpha = np.argmin(mse)
-            this_best_mse = mse[i_best_alpha]
-            all_mse_paths.append(mse_alphas.T)
+        jobs = (delayed(_path_residuals)(X, y, train, test, self.path,
+                                         path_params, alphas=this_alphas,
+                                         l1_ratio=this_l1_ratio, X_order='F',
+                                         dtype=np.float64)
+                for this_l1_ratio, this_alphas in zip(l1_ratios, alphas)
+                for train, test in folds)
+        mse_paths = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(jobs)
+        mse_paths = np.reshape(mse_paths, (n_l1_ratio, len(folds), -1))
+        mean_mse = np.mean(mse_paths, axis=1)
+        self.mse_path_ = np.squeeze(np.rollaxis(mse_paths, 2, 1))
+        for l1_ratio, l1_alphas, mse_alphas in zip(
+            l1_ratios, alphas, mean_mse):
+            i_best_alpha = np.argmin(mse_alphas)
+            this_best_mse = mse_alphas[i_best_alpha]
             if this_best_mse < best_mse:
-                best_alpha = alphas[i_best_alpha]
+                best_alpha = l1_alphas[i_best_alpha]
                 best_l1_ratio = l1_ratio
                 best_mse = this_best_mse
 
         self.l1_ratio_ = best_l1_ratio
         self.alpha_ = best_alpha
-        self.alphas_ = np.asarray(alphas)
-        self.mse_path_ = np.squeeze(all_mse_paths)
+        if self.alphas is None:
+            self.alphas_ = np.asarray(alphas)
+            if n_l1_ratio == 1:
+                self.alphas_ = self.alphas_[0]
+        # Remove duplicate alphas in case alphas is provided.
+        else:
+            self.alphas_ = np.asarray(alphas[0])
 
         # Refit the model with the parameters selected
-        model = ElasticNet()
         common_params = dict((name, value)
                              for name, value in self.get_params().items()
                              if name in model.get_params())
@@ -1003,6 +1104,8 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
         model.l1_ratio = best_l1_ratio
         model.copy_X = copy_X
         model.fit(X, y)
+        if not hasattr(self, 'l1_ratio'):
+            del self.l1_ratio_
         self.coef_ = model.coef_
         self.intercept_ = model.intercept_
         self.dual_gap_ = model.dual_gap_
@@ -1052,7 +1155,7 @@ class LassoCV(LinearModelCV, RegressorMixin):
         objects.
 
     verbose : bool or integer
-        amount of verbosity
+        Amount of verbosity.
 
     n_jobs : integer, optional
         Number of CPUs to use during the cross validation. If ``-1``, use
@@ -1076,18 +1179,10 @@ class LassoCV(LinearModelCV, RegressorMixin):
     ``mse_path_`` : array, shape = (n_alphas, n_folds)
         mean square error for the test set on each fold, varying alpha
 
-    ``alphas_`` : numpy array
+    ``alphas_`` : numpy array, shape = (n_alphas,)
         The grid of alphas used for fitting
 
-    ``l1_ratio_`` : int
-        An artifact of the super class LinearModelCV. In this case,
-        ``l1_ratio_ = 1`` because the Lasso estimator uses an L1 penalty
-        by definition.
-        Typically it is a float between 0 and 1 passed to an estimator such as
-        ElasticNet (scaling between l1 and l2 penalties). For ``l1_ratio = 0``
-        the penalty is an L2 penalty. For ``l1_ratio = 1`` it is an L1 penalty.
-
-    ``dual_gap_`` : numpy array
+    ``dual_gap_`` : numpy array, shape = (n_alphas,)
         The dual gap at the end of the optimization for the optimal alpha
         (``alpha_``).
 
@@ -1144,7 +1239,7 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
         ``alpha_min / alpha_max = 1e-3``.
 
     n_alphas : int, optional
-        Number of alphas along the regularization path
+        Number of alphas along the regularization path, used for each l1_ratio.
 
     alphas : numpy array, optional
         List of alphas where to compute the models.
@@ -1171,7 +1266,7 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
         objects.
 
     verbose : bool or integer
-        amount of verbosity
+        Amount of verbosity.
 
     n_jobs : integer, optional
         Number of CPUs to use during the cross validation. If ``-1``, use
@@ -1199,6 +1294,9 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
     ``mse_path_`` : array, shape = (n_l1_ratio, n_alpha, n_folds)
         Mean square error for the test set on each fold, varying l1_ratio and
         alpha.
+
+    ``alphas_`` : numpy array, shape = (n_alphas,) or (n_l1_ratio, n_alphas)
+        The grid of alphas used for fitting, for each l1_ratio.
 
     Notes
     -----
@@ -1259,7 +1357,7 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
 class MultiTaskElasticNet(Lasso):
     """Multi-task ElasticNet model trained with L1/L2 mixed-norm as regularizer
 
-    The optimization objective for Lasso is::
+    The optimization objective for MultiTaskElasticNet is::
 
         (1 / (2 * n_samples)) * ||Y - XW||^Fro_2
         + alpha * l1_ratio * ||W||_21
@@ -1269,7 +1367,7 @@ class MultiTaskElasticNet(Lasso):
 
         ||W||_21 = \sum_i \sqrt{\sum_j w_{ij}^2}
 
-    i.e. the sum of norm of earch row.
+    i.e. the sum of norm of each row.
 
     Parameters
     ----------
@@ -1379,10 +1477,12 @@ class MultiTaskElasticNet(Lasso):
                     copy=self.copy_X and self.fit_intercept)
         y = np.asarray(y, dtype=np.float64)
 
-        squeeze_me = False
+        if hasattr(self, 'l1_ratio'):
+            model_str = 'ElasticNet'
+        else:
+            model_str = 'Lasso'
         if y.ndim == 1:
-            squeeze_me = True
-            y = y[:, np.newaxis]
+            raise ValueError("For mono-task outputs, use %s" % model_str)
 
         n_samples, n_features = X.shape
         _, n_tasks = y.shape
@@ -1404,11 +1504,6 @@ class MultiTaskElasticNet(Lasso):
                 self.coef_, l1_reg, l2_reg, X, y, self.max_iter, self.tol)
 
         self._set_intercept(X_mean, y_mean, X_std)
-
-        # Make sure that the coef_ have the same shape as the given 'y',
-        # to predict with the same shape
-        if squeeze_me:
-            self.coef_ = self.coef_.squeeze()
 
         if self.dual_gap_ > self.eps_:
             warnings.warn('Objective did not converge, you might want'
@@ -1503,3 +1598,255 @@ class MultiTaskLasso(MultiTaskElasticNet):
         self.tol = tol
         self.warm_start = warm_start
         self.l1_ratio = 1.0
+
+
+class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
+    """Multi-task L1/L2 ElasticNet with built-in cross-validation.
+
+    The optimization objective for MultiTaskElasticNet is::
+
+        (1 / (2 * n_samples)) * ||Y - XW||^Fro_2
+        + alpha * l1_ratio * ||W||_21
+        + 0.5 * alpha * (1 - l1_ratio) * ||W||_Fro^2
+
+    Where::
+
+        ||W||_21 = \sum_i \sqrt{\sum_j w_{ij}^2}
+
+    i.e. the sum of norm of each row.
+
+    Parameters
+    ----------
+    eps : float, optional
+        Length of the path. ``eps=1e-3`` means that
+        ``alpha_min / alpha_max = 1e-3``.
+
+    alphas : array-like, optional
+        List of alphas where to compute the models.
+        If not provided, set automatically.
+
+    precompute : True | False | 'auto' | array-like
+        Whether to use a precomputed Gram matrix to speed up
+        calculations. If set to ``'auto'`` let us decide. The Gram
+        matrix can also be passed as argument.
+
+    n_alphas : int, optional
+        Number of alphas along the regularization path
+
+    l1_ratio : float or array of floats
+        The ElasticNet mixing parameter, with 0 < l1_ratio <= 1.
+        For l1_ratio = 0 the penalty is an L1/L2 penalty. For l1_ratio = 1 it
+        is an L1 penalty.
+        For ``0 < l1_ratio < 1``, the penalty is a combination of L1/L2 and L2.
+
+    fit_intercept : boolean
+        whether to calculate the intercept for this model. If set
+        to false, no intercept will be used in calculations
+        (e.g. data is expected to be already centered).
+
+    normalize : boolean, optional, default False
+        If ``True``, the regressors X will be normalized before regression.
+
+    copy_X : boolean, optional, default True
+        If ``True``, X will be copied; else, it may be overwritten.
+
+    max_iter : int, optional
+        The maximum number of iterations
+
+    tol : float, optional
+        The tolerance for the optimization: if the updates are
+        smaller than ``tol``, the optimization code checks the
+        dual gap for optimality and continues until it is smaller
+        than ``tol``.
+
+    cv : integer or cross-validation generator, optional
+        If an integer is passed, it is the number of fold (default 3).
+        Specific cross-validation objects can be passed, see the
+        :mod:`sklearn.cross_validation` module for the list of possible
+        objects.
+
+    verbose : bool or integer
+        Amount of verbosity.
+
+    n_jobs : integer, optional
+        Number of CPUs to use during the cross validation. If ``-1``, use
+        all the CPUs. Note that this is used only if multiple values for
+        l1_ratio are given.
+
+    Attributes
+    ----------
+    ``intercept_`` : array, shape (n_tasks,)
+        Independent term in decision function.
+
+    ``coef_`` : array, shape (n_tasks, n_features)
+        Parameter vector (W in the cost function formula).
+
+    ``alpha_`` : float
+        The amount of penalization chosen by cross validation
+
+    ``mse_path_`` : array, shape (n_alphas, n_folds) or
+                    (n_l1_ratio, n_alphas, n_folds)
+        mean square error for the test set on each fold, varying alpha
+
+    ``alphas_`` : numpy array, shape (n_alphas,) or (n_l1_ratio, n_alphas)
+        The grid of alphas used for fitting, for each l1_ratio
+
+    ``l1_ratio_`` : float
+        best l1_ratio obtained by cross-validation.
+
+    Examples
+    --------
+    >>> from sklearn import linear_model
+    >>> clf = linear_model.MultiTaskElasticNetCV()
+    >>> clf.fit([[0,0], [1, 1], [2, 2]],
+    ...         [[0, 0], [1, 1], [2, 2]])
+    ... #doctest: +NORMALIZE_WHITESPACE
+    MultiTaskElasticNetCV(alphas=None, copy_X=True, cv=None, eps=0.001,
+           fit_intercept=True, l1_ratio=0.5, max_iter=1000, n_alphas=100,
+           n_jobs=1, normalize=False, precompute='auto', tol=0.0001,
+           verbose=0)
+    >>> print(clf.coef_)
+    [[ 0.52875032  0.46958558]
+     [ 0.52875032  0.46958558]]
+    >>> print(clf.intercept_)
+    [ 0.00166409  0.00166409]
+
+    See also
+    --------
+    MultiTaskElasticNet
+    ElasticNetCV
+    MultiTaskLassoCV
+
+    Notes
+    -----
+    The algorithm used to fit the model is coordinate descent.
+
+    To avoid unnecessary memory duplication the X argument of the fit method
+    should be directly passed as a Fortran-contiguous numpy array.
+    """
+    path = staticmethod(enet_path)
+
+    def __init__(self, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
+                 fit_intercept=True, normalize=False, precompute='auto',
+                 max_iter=1000, tol=1e-4, cv=None, copy_X=True,
+                 verbose=0, n_jobs=1):
+        self.l1_ratio = l1_ratio
+        self.eps = eps
+        self.n_alphas = n_alphas
+        self.alphas = alphas
+        self.fit_intercept = fit_intercept
+        self.normalize = normalize
+        self.precompute = precompute
+        self.max_iter = max_iter
+        self.tol = tol
+        self.cv = cv
+        self.copy_X = copy_X
+        self.verbose = verbose
+        self.n_jobs = n_jobs
+
+
+class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
+    """Multi-task L1/L2 Lasso with built-in cross-validation.
+
+    The optimization objective for MultiTaskLasso is::
+
+        (1 / (2 * n_samples)) * ||Y - XW||^Fro_2 + alpha * ||W||_21
+
+    Where::
+
+        ||W||_21 = \sum_i \sqrt{\sum_j w_{ij}^2}
+
+    i.e. the sum of norm of each row.
+
+    Parameters
+    ----------
+    eps : float, optional
+        Length of the path. ``eps=1e-3`` means that
+        ``alpha_min / alpha_max = 1e-3``.
+
+    alphas : array-like, optional
+        List of alphas where to compute the models.
+        If not provided, set automaticlly.
+
+    precompute : True | False | 'auto' | array-like
+        Whether to use a precomputed Gram matrix to speed up
+        calculations. If set to ``'auto'`` let us decide. The Gram
+        matrix can also be passed as argument.
+
+    n_alphas : int, optional
+        Number of alphas along the regularization path
+
+    fit_intercept : boolean
+        whether to calculate the intercept for this model. If set
+        to false, no intercept will be used in calculations
+        (e.g. data is expected to be already centered).
+
+    normalize : boolean, optional, default False
+        If ``True``, the regressors X will be normalized before regression.
+
+    copy_X : boolean, optional, default True
+        If ``True``, X will be copied; else, it may be overwritten.
+
+    max_iter : int, optional
+        The maximum number of iterations.
+
+    tol : float, optional
+        The tolerance for the optimization: if the updates are
+        smaller than ``tol``, the optimization code checks the
+        dual gap for optimality and continues until it is smaller
+        than ``tol``.
+
+    cv : integer or cross-validation generator, optional
+        If an integer is passed, it is the number of fold (default 3).
+        Specific cross-validation objects can be passed, see the
+        :mod:`sklearn.cross_validation` module for the list of possible
+        objects.
+
+    verbose : bool or integer
+        Amount of verbosity.
+
+    n_jobs : integer, optional
+        Number of CPUs to use during the cross validation. If ``-1``, use
+        all the CPUs. Note that this is used only if multiple values for
+        l1_ratio are given.
+
+    Attributes
+    ----------
+    ``intercept_`` : array, shape (n_tasks,)
+        Independent term in decision function.
+
+    ``coef_`` : array, shape (n_tasks, n_features)
+        Parameter vector (W in the cost function formula).
+
+    ``alpha_`` : float
+        The amount of penalization chosen by cross validation
+
+    ``mse_path_`` : array, shape (n_alphas, n_folds)
+        mean square error for the test set on each fold, varying alpha
+
+    ``alphas_`` : numpy array, shape (n_alphas,)
+        The grid of alphas used for fitting.
+
+    See also
+    --------
+    MultiTaskElasticNet
+    ElasticNetCV
+    MultiTaskElasticNetCV
+
+    Notes
+    -----
+    The algorithm used to fit the model is coordinate descent.
+
+    To avoid unnecessary memory duplication the X argument of the fit method
+    should be directly passed as a Fortran-contiguous numpy array.
+    """
+    path = staticmethod(lasso_path)
+
+    def __init__(self, eps=1e-3, n_alphas=100, alphas=None, fit_intercept=True,
+                 normalize=False, precompute='auto', max_iter=1000, tol=1e-4,
+                 copy_X=True, cv=None, verbose=False, n_jobs=1):
+        super(MultiTaskLassoCV, self).__init__(
+            eps=eps, n_alphas=n_alphas, alphas=alphas,
+            fit_intercept=fit_intercept, normalize=normalize,
+            precompute=precompute, max_iter=max_iter, tol=tol, copy_X=copy_X,
+            cv=cv, verbose=verbose, n_jobs=n_jobs)

@@ -86,7 +86,7 @@ Changelog
      ``loss='huber'``: ``gamma`` might have not been initialized.
 
    - :class:`dummy.DummyClassifier` can now be used to predict a constant
-     output value. By Manoj Kumar.
+     output value. By `Manoj Kumar`_.
 
    - Fixed bug in :class:`decomposition.MiniBatchDictionaryLearning` :
      partial_fit was not working properly.
@@ -147,6 +147,8 @@ Changelog
      ``pre_dispatch != "all"`` (for instance in ``cross_val_score``).
      By `Olivier Grisel`_.
 
+   - Added :class:`linear_model.MultiTaskElasticNetCV` and
+     :class:`linear_model.MultiTaskLassoCV`. By `Manoj Kumar`_.
 
 
 API changes summary
@@ -175,6 +177,13 @@ API changes summary
    - Fix wrong `explained_variance_ratio_` attribute in
      :class:`RandomizedPCA <decomposition.RandomizedPCA>`.
      By `Alexandre Gramfort`_.
+
+   - Fit alphas for each l1_ratio instead of mean_l1_ratio in
+     :class: `linear_model.ElasticNetCV` and :class: `linear_model.LassoCV`.
+     This changes the shape of alphas_ from (n_alphas,) to
+     (n_l1_ratio, n_alphas) if the l1_ratio provided is a 1-D array like object
+     of length greater than one.
+     By `Manoj Kumar`_.
 
 .. _changes_0_14:
 
@@ -2404,3 +2413,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Daniel Nouri: http://danielnouri.org
 
 .. _Johannes Schönberger: https://github.com/ahojnnes
+
+.. _Manoj Kumar: https://github.com/Manoj-Kumar-S
