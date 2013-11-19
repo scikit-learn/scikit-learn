@@ -1115,7 +1115,7 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
         self : object
             Returns the instance itself.
         """
-        if not hasattr(self.random_state_):
+        if not hasattr(self, 'random_state_'):
             self.random_state_ = check_random_state(self.random_state)
         X = array2d(X)
         if hasattr(self, 'components_'):
