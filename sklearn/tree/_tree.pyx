@@ -2409,8 +2409,8 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                                     IS_NOT_FIRST, IS_NOT_LEFT, node_id,
                                     record.depth + 1, &split_node_right)
 
-                    assert split_node_left.improvement >= 0.0
-                    assert split_node_right.improvement >= 0.0
+                    #assert split_node_left.improvement >= 0.0
+                    #assert split_node_right.improvement >= 0.0
 
                     # only expand one of them
                     split_node_left.is_leaf = (split_node_left.is_leaf or
@@ -2421,7 +2421,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                                                 split_node_left.improvement))
 
                     # we don't allow both to be splits on same level
-                    assert (split_node_left.is_leaf + split_node_right.is_leaf) > 0
+                    #assert (split_node_left.is_leaf + split_node_right.is_leaf) > 0
 
                     _add_to_frontier(&split_node_left, frontier)
                     _add_to_frontier(&split_node_right, frontier)
