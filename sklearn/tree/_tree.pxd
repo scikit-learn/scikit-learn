@@ -100,6 +100,7 @@ cdef class Splitter:
     cdef void node_split(self, SIZE_t* pos, # Set to >= end if the node is a leaf
                                SIZE_t* feature,
                                double* threshold,
+                               double* impurity,
                                double* impurity_left,
                                double* impurity_right) nogil
 
@@ -147,10 +148,24 @@ cdef class Tree:
                                 SIZE_t n_node_samples) nogil
     cdef void _resize(self, SIZE_t capacity=*) nogil
 
-    cpdef build(self, np.ndarray X,
-                      np.ndarray y,
-                      np.ndarray sample_weight=*)
-
     cpdef predict(self, np.ndarray[DTYPE_t, ndim=2] X)
     cpdef apply(self, np.ndarray[DTYPE_t, ndim=2] X)
     cpdef compute_feature_importances(self, normalize=*)
+
+
+cdef class TreeBuilder:
+
+     cpdef build(self, Tree tree, np.ndarray X, np.ndarray y,
+                 np.ndarray sample_weight=*)
+
+
+cdef class DepthFirstTreeBuilder(TreeBuilder):
+
+     cpdef build(self, Tree tree, np.ndarray X, np.ndarray y,
+                 np.ndarray sample_weight=*)
+
+
+cdef class BestFirstTreeBuilder(TreeBuilder):
+
+     cpdef build(self, Tree tree, np.ndarray X, np.ndarray y,
+                 np.ndarray sample_weight=*)

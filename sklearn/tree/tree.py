@@ -26,7 +26,8 @@ from ..utils import array2d, check_random_state
 from ..utils.fixes import unique
 from ..utils.validation import check_arrays
 
-from ._tree import Criterion, Splitter, Tree
+from ._tree import Criterion, Splitter, Tree, DepthFirstTreeBuilder
+from ._tree import BestFirstTreeBuilder
 from . import _tree
 
 
@@ -250,7 +251,17 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
                           min_samples_split, self.min_samples_leaf,
                           self.max_leaf_nodes, random_state)
 
-        self.tree_.build(X, y, sample_weight=sample_weight)
+        if self.max_leaf_nodes < 0:
+            #print('*** Create DepthFirstTreeBuilder()')
+            tree_builder = DepthFirstTreeBuilder()
+        else:
+            #print('*** Create BestFirstTreeBuilder()')
+            tree_builder = BestFirstTreeBuilder()
+        #print('*** call build')
+        tree_builder.build(self.tree_, X, y, sample_weight)
+        #self.tree_.build(X, y, sample_weight=sample_weight)
+        #n_leafs = (self.tree_.children_left == -1).sum()
+        #print('depth:%d n_leafs:%d' % (self.tree_.max_depth, n_leafs))
 
         if self.n_outputs_ == 1:
             self.n_classes_ = self.n_classes_[0]

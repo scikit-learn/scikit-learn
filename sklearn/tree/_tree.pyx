@@ -54,6 +54,18 @@ cdef struct StackRecord:
     double impurity
 
 
+# A record on the frontier for best-first tree growing
+cdef struct PriorityHeapRecord:
+    SIZE_t node_id
+    SIZE_t start
+    SIZE_t end
+    SIZE_t pos
+    SIZE_t depth
+    bint is_leaf
+    double impurity
+    double improvement
+
+
 # =============================================================================
 # Criterion
 # =============================================================================
@@ -520,6 +532,9 @@ cdef class RegressionCriterion(Criterion):
     cdef double* sq_sum_total
     cdef double* var_left
     cdef double* var_right
+    cdef double* sum_left
+    cdef double* sum_right
+    cdef double* sum_total
 
     def __cinit__(self, SIZE_t n_outputs):
         # Default values
@@ -547,6 +562,9 @@ cdef class RegressionCriterion(Criterion):
         self.sq_sum_total = <double*> calloc(n_outputs, sizeof(double))
         self.var_left = <double*> calloc(n_outputs, sizeof(double))
         self.var_right = <double*> calloc(n_outputs, sizeof(double))
+        self.sum_left = <double*> calloc(n_outputs, sizeof(double))
+        self.sum_right = <double*> calloc(n_outputs, sizeof(double))
+        self.sum_total = <double*> calloc(n_outputs, sizeof(double))
 
         # Check for allocation errors
         if ((self.mean_left == NULL) or
@@ -565,6 +583,9 @@ cdef class RegressionCriterion(Criterion):
             free(self.sq_sum_total)
             free(self.var_left)
             free(self.var_right)
+            free(self.sum_left)
+            free(self.sum_right)
+            free(self.sum_total)
             raise MemoryError()
 
     def __dealloc__(self):
@@ -577,6 +598,9 @@ cdef class RegressionCriterion(Criterion):
         free(self.sq_sum_total)
         free(self.var_left)
         free(self.var_right)
+        free(self.sum_left)
+        free(self.sum_right)
+        free(self.sum_total)
 
     def __reduce__(self):
         return (RegressionCriterion, (self.n_outputs,), self.__getstate__())
@@ -631,6 +655,9 @@ cdef class RegressionCriterion(Criterion):
             sq_sum_total[k] = 0.0
             var_left[k] = 0.0
             var_right[k] = 0.0
+            self.sum_left[k] = 0.0
+            self.sum_right[k] = 0.0
+            self.sum_total[k] = 0.0
 
         for p from start <= p < end:
             i = samples[p]
@@ -642,6 +669,7 @@ cdef class RegressionCriterion(Criterion):
                 y_ik = y[i * y_stride + k]
                 sq_sum_total[k] += w * y_ik * y_ik
                 mean_total[k] += w * y_ik
+                self.sum_total[k] += w * y_ik
 
             weighted_n_node_samples += w
 
@@ -670,6 +698,9 @@ cdef class RegressionCriterion(Criterion):
         cdef double* var_left = self.var_left
         cdef double* var_right = self.var_right
         cdef double weighted_n_node_samples = self.weighted_n_node_samples
+        cdef double* sum_left = self.sum_left
+        cdef double* sum_right = self.sum_right
+        cdef double* sum_total = self.sum_total
 
         cdef SIZE_t k = 0
 
@@ -682,6 +713,8 @@ cdef class RegressionCriterion(Criterion):
             var_right[k] = (sq_sum_right[k] -
                             weighted_n_node_samples * (mean_right[k] *
                                                        mean_right[k]))
+            sum_right[k] = sum_total[k]
+            sum_left[k] = 0.0
 
     cdef void update(self, SIZE_t new_pos) nogil:
         """Update the collected statistics by moving samples[pos:new_pos] from
@@ -700,6 +733,8 @@ cdef class RegressionCriterion(Criterion):
         cdef double* sq_sum_right = self.sq_sum_right
         cdef double* var_left = self.var_left
         cdef double* var_right = self.var_right
+        cdef double* sum_left = self.sum_left
+        cdef double* sum_right = self.sum_right
 
         cdef double weighted_n_left = self.weighted_n_left
         cdef double weighted_n_right = self.weighted_n_right
@@ -724,6 +759,9 @@ cdef class RegressionCriterion(Criterion):
 
                 sq_sum_left[k] += w_y_ik * y_ik
                 sq_sum_right[k] -= w_y_ik * y_ik
+
+                sum_left[k] += w_y_ik
+                sum_right[k] -= w_y_ik
 
                 mean_left[k] = ((weighted_n_left * mean_left[k] + w_y_ik) /
                                 (weighted_n_left + w))
@@ -753,6 +791,7 @@ cdef class RegressionCriterion(Criterion):
     cdef void node_value(self, double* dest) nogil:
         """Compute the node value of samples[start:end] into dest."""
         memcpy(dest, self.mean_total, self.n_outputs * sizeof(double))
+
 
 cdef class MSE(RegressionCriterion):
     """Mean squared error impurity criterion.
@@ -784,14 +823,22 @@ cdef class MSE(RegressionCriterion):
         cdef double* var_right = self.var_right
         cdef double total_left = 0.0
         cdef double total_right = 0.0
+        cdef double* sum_left = self.sum_left
+        cdef double* sum_right = self.sum_right
+        cdef double total_sum_left = 0.0
+        cdef double total_sum_right = 0.0
         cdef SIZE_t k
 
         for k from 0 <= k < n_outputs:
             total_left += var_left[k]
             total_right += var_right[k]
+            total_sum_left += sum_left[k]
+            total_sum_right += sum_right[k]
 
-        impurity.left = total_left / n_outputs
-        impurity.right = total_right / n_outputs
+        #impurity.left = total_left / n_outputs
+        #impurity.right = total_right / n_outputs
+        impurity.left = total_sum_left / n_outputs
+        impurity.right = total_sum_right / n_outputs
         impurity.total = (total_left + total_right) / n_outputs
 
 
@@ -894,6 +941,7 @@ cdef class Splitter:
         #FIXME impurity[0] =  self.criterion.node_impurity()
 
     cdef void node_split(self, SIZE_t* pos, SIZE_t* feature, double* threshold,
+                         double* impurity,
                          double* impurity_left, double* impurity_right) nogil:
         """Find a split on node samples[start:end]."""
         pass
@@ -912,6 +960,7 @@ cdef class BestSplitter(Splitter):
                                self.random_state), self.__getstate__())
 
     cdef void node_split(self, SIZE_t* pos, SIZE_t* feature, double* threshold,
+                         double* impurity,
                          double* impurity_left, double* impurity_right) nogil:
         """Find the best split on node samples[start:end]."""
         # Find the best split
@@ -1033,6 +1082,7 @@ cdef class BestSplitter(Splitter):
         pos[0] = best_pos
         feature[0] = best_feature
         threshold[0] = best_threshold
+        impurity[0] = best_impurity
         impurity_left[0] = best_impurity_left
         impurity_right[0] = best_impurity_right
 
@@ -1087,6 +1137,7 @@ cdef class RandomSplitter(Splitter):
                                  self.random_state), self.__getstate__())
 
     cdef void node_split(self, SIZE_t* pos, SIZE_t* feature, double* threshold,
+                         double* impurity,
                          double* impurity_left, double* impurity_right) nogil:
         """Find the best random split on node samples[start:end]."""
         # Draw random splits and pick the best
@@ -1220,6 +1271,7 @@ cdef class RandomSplitter(Splitter):
         pos[0] = best_pos
         feature[0] = best_feature
         threshold[0] = best_threshold
+        impurity[0] = best_impurity
         impurity_left[0] = best_impurity_left
         impurity_right[0] = best_impurity_right
 
@@ -1277,6 +1329,7 @@ cdef class PresortBestSplitter(Splitter):
                                                 sizeof(SIZE_t))
 
     cdef void node_split(self, SIZE_t* pos, SIZE_t* feature, double* threshold,
+                         double* impurity,
                          double* impurity_left, double* impurity_right) nogil:
         """Find the best split on node samples[start:end]."""
         # Find the best split
@@ -1420,6 +1473,7 @@ cdef class PresortBestSplitter(Splitter):
         pos[0] = best_pos
         feature[0] = best_feature
         threshold[0] = best_threshold
+        impurity[0] = best_impurity
         impurity_left[0] = best_impurity_left
         impurity_right[0] = best_impurity_right
 
@@ -1428,22 +1482,14 @@ cdef class PresortBestSplitter(Splitter):
 # Stack data structures
 # =============================================================================
 
-cdef inline void copy(StackRecord *a, StackRecord *b) nogil:
-    """Assigns ``a := b``. """
+cdef inline void copy_stack(StackRecord *a, StackRecord *b) nogil:
+    """Assigns ``a := b`` for StackRecord. """
     a.start = b.start
     a.end = b.end
     a.depth = b.depth
     a.parent = b.parent
     a.is_left = b.is_left
     a.impurity = b.impurity
-
-
-cdef void swap(StackRecord* stack, SIZE_t a, SIZE_t b) nogil:
-    """Swap record ``a`` and ``b`` in ``stack``. """
-    cdef StackRecord tmp
-    copy(&tmp, stack + a)
-    copy(stack + a, stack + b)
-    copy(stack + b, &tmp)
 
 
 cdef class Stack:
@@ -1503,92 +1549,131 @@ cdef class Stack:
         if stack_ptr <= 0:
             return 0
 
-        copy(res, stack + stack_ptr)
+        copy_stack(res, stack + stack_ptr)
         self.stack_ptr = stack_ptr - 1
         return 1
 
 
-cdef void heapify_up(StackRecord* stack, SIZE_t pos) nogil:
+cdef inline void copy_heap(PriorityHeapRecord *a, PriorityHeapRecord *b) nogil:
+    """Assigns ``a := b``. """
+    a.node_id = b.node_id
+    a.start = b.start
+    a.end = b.end
+    a.pos = b.pos
+    a.depth = b.depth
+    a.is_leaf = b.is_leaf
+    a.impurity = b.impurity
+    a.improvement = b.improvement
+
+
+cdef void swap_heap(PriorityHeapRecord* stack, SIZE_t a, SIZE_t b) nogil:
+    """Swap record ``a`` and ``b`` in ``stack``. """
+    cdef PriorityHeapRecord tmp
+    copy_heap(&tmp, stack + a)
+    copy_heap(stack + a, stack + b)
+    copy_heap(stack + b, &tmp)
+
+
+cdef void heapify_up(PriorityHeapRecord *heap, SIZE_t pos) nogil:
     """Restore heap invariant parent.impurity > child.impurity from ``pos`` upwards. """
     if pos == 0:
         return
     cdef SIZE_t parent_pos = (pos - 1) / 2
 
-    if stack[parent_pos].impurity < stack[pos].impurity:
-        swap(stack, parent_pos, pos)
-        heapify_up(stack, parent_pos)
+    if heap[parent_pos].improvement < heap[pos].improvement:
+        swap_heap(heap, parent_pos, pos)
+        heapify_up(heap, parent_pos)
 
 
-cdef void heapify_down(StackRecord* stack, SIZE_t pos, SIZE_t stack_length) nogil:
+cdef void heapify_down(PriorityHeapRecord *heap, SIZE_t pos, SIZE_t heap_length) nogil:
     """Restore heap invariant parent.impurity > children.impurity from ``pos`` downwards. """
     cdef SIZE_t left_pos = 2 * (pos + 1) - 1
     cdef SIZE_t right_pos = 2 * (pos + 1)
     cdef SIZE_t largest = pos
 
-    if left_pos < stack_length and stack[left_pos].impurity > stack[largest].impurity:
+    if left_pos < heap_length and heap[left_pos].improvement > heap[largest].improvement:
         largest = left_pos
-    if right_pos < stack_length and stack[right_pos].impurity > stack[largest].impurity:
+    if right_pos < heap_length and heap[right_pos].improvement > heap[largest].improvement:
         largest = right_pos
 
     if largest != pos:
-        swap(stack, pos, largest)
-        heapify_down(stack, largest, stack_length)
+        swap_heap(heap, pos, largest)
+        heapify_down(heap, largest, heap_length)
 
 
-cdef class PriorityHeap(Stack):
+cdef class PriorityHeap:
     """A priority queue implemented as a binary heap.
 
     The heap invariant is that the impurity of the parent record is larger then the impurity
     of the children.
     """
 
-    cdef void push(self, SIZE_t start, SIZE_t end, SIZE_t depth, SIZE_t parent, bint is_left,
+    cdef SIZE_t capacity
+    cdef SIZE_t heap_ptr
+    cdef PriorityHeapRecord* heap_
+
+    def __cinit__(self, SIZE_t capacity):
+        self.capacity = capacity
+        self.heap_ptr = 0
+        self.heap_ = <PriorityHeapRecord*> malloc(capacity * sizeof(PriorityHeapRecord))
+
+    def __dealloc__(self):
+        free(self.heap_)
+
+    cdef bint is_empty(self) nogil:
+        return self.heap_ptr <= 0
+
+    cdef void push(self, SIZE_t node_id, SIZE_t start, SIZE_t end, SIZE_t pos,
+                   SIZE_t depth, bint is_leaf, double improvement,
                    double impurity) nogil:
         """Push record on the priority heap. """
         # increment heap end index by one
-        cdef SIZE_t stack_ptr = self.stack_ptr
-        cdef StackRecord* stack = NULL
+        cdef SIZE_t heap_ptr = self.heap_ptr
+        cdef PriorityHeapRecord* heap = NULL
 
         # resize if capacity not sufficient
-        if stack_ptr >= self.capacity:
+        if heap_ptr >= self.capacity:
             self.capacity *= 2
-            self.stack_ = <StackRecord*> realloc(self.stack_, self.capacity * sizeof(StackRecord))
+            self.heap_ = <PriorityHeapRecord*> realloc(self.heap_,
+                                                        self.capacity *
+                                                        sizeof(PriorityHeapRecord))
 
         # put element as last element of heap
-        stack = self.stack_
-        stack[stack_ptr].start = start
-        stack[stack_ptr].end = end
-        stack[stack_ptr].depth = depth
-        stack[stack_ptr].parent = parent
-        stack[stack_ptr].is_left = is_left
-        stack[stack_ptr].impurity = impurity
+        heap = self.heap_
+        heap[heap_ptr].node_id = node_id
+        heap[heap_ptr].start = start
+        heap[heap_ptr].end = end
+        heap[heap_ptr].pos = pos
+        heap[heap_ptr].depth = depth
+        heap[heap_ptr].is_leaf = is_leaf
+        heap[heap_ptr].impurity = impurity
+        heap[heap_ptr].improvement = improvement
 
         # heapify up
-        heapify_up(stack, stack_ptr)
+        heapify_up(heap, heap_ptr)
 
-        self.stack_ptr = stack_ptr + 1
+        self.heap_ptr = heap_ptr + 1
 
-    cdef int pop(self, StackRecord* res) nogil:
+    cdef int pop(self, PriorityHeapRecord* res) nogil:
         """Remove max element from the heap. """
-        cdef SIZE_t stack_ptr = self.stack_ptr
-        cdef StackRecord* stack = self.stack_
+        cdef SIZE_t heap_ptr = self.heap_ptr
+        cdef PriorityHeapRecord* heap = self.heap_
 
-        if stack_ptr <= 0:
+        if heap_ptr <= 0:
             return 0
 
         # take first element
-        copy(res, stack)
+        copy_heap(res, heap)
 
         # put last element to the front
-        swap(stack, 0, stack_ptr - 1)
+        swap_heap(heap, 0, heap_ptr - 1)
 
         # restore heap invariant
-        if stack_ptr > 1:
-            heapify_down(stack, 0, stack_ptr - 1)
+        if heap_ptr > 1:
+            heapify_down(heap, 0, heap_ptr - 1)
 
-        self.stack_ptr = stack_ptr - 1
+        self.heap_ptr = heap_ptr - 1
         return 1
-
 
 
 # =============================================================================
@@ -1891,127 +1976,6 @@ cdef class Tree:
 
         return node_id
 
-    cpdef build(self, np.ndarray X,
-                      np.ndarray y,
-                      np.ndarray sample_weight=None):
-        """Build a decision tree from the training set (X, y)."""
-        # Prepare data before recursive partitioning - different dtype or not contiguous
-        if X.dtype != DTYPE or not X.flags.contiguous:
-            # preserve order
-            order = 'C' if X.flags.c_contiguous else 'F'
-            X = np.asarray(X, dtype=DTYPE, order=order)
-
-        if y.dtype != DOUBLE or not y.flags.contiguous:
-            y = np.asarray(y, dtype=DOUBLE, order="C")
-
-        cdef DOUBLE_t* sample_weight_ptr = NULL
-        if sample_weight is not None:
-            if ((sample_weight.dtype != DOUBLE) or
-                (not sample_weight.flags.contiguous)):
-                sample_weight = np.asarray(sample_weight,
-                                           dtype=DOUBLE, order="C")
-            sample_weight_ptr = <DOUBLE_t*> sample_weight.data
-
-        # Initial capacity
-        cdef int init_capacity
-
-        if self.max_depth <= 10:
-            init_capacity = (2 ** (self.max_depth + 1)) - 1
-        else:
-            init_capacity = 2047
-
-        self._resize(init_capacity)
-
-        # Recursive partition (without actual recursion)
-        cdef Splitter splitter = self.splitter
-        splitter.init(X, y, sample_weight_ptr)
-
-        cdef SIZE_t start
-        cdef SIZE_t end
-        cdef SIZE_t depth
-        cdef SIZE_t parent
-        cdef bint is_left
-
-        cdef SIZE_t n_node_samples = splitter.n_samples
-        cdef SIZE_t pos
-        cdef SIZE_t feature
-        cdef SIZE_t node_id
-        cdef int max_leaf_nodes = self.max_leaf_nodes
-        cdef int max_split_nodes = max_leaf_nodes - 1
-        cdef double threshold
-        cdef double impurity = INFINITY
-        cdef double impurity_left = INFINITY
-        cdef double impurity_right = INFINITY
-        cdef bint is_leaf
-        cdef bint first = 1
-
-        cdef Stack stack = None
-        cdef StackRecord stack_record
-
-        cdef SIZE_t max_depth_seen = 0  # needed to keep track of actual max depth of tree
-
-        if max_leaf_nodes < 0:
-            # we can do unlimited leafs
-            stack = Stack(INITIAL_STACK_SIZE)
-        else:
-            # we have a limited budget of leafs
-            stack = PriorityHeap(INITIAL_STACK_SIZE)
-
-        with nogil:
-            # push root node onto stack
-            stack.push(0, n_node_samples, 0, _TREE_UNDEFINED, 0, INFINITY)
-
-            while not stack.is_empty():
-
-                stack.pop(&stack_record)
-                start = stack_record.start
-                end = stack_record.end
-                depth = stack_record.depth
-                parent = stack_record.parent
-                is_left = stack_record.is_left
-                impurity = stack_record.impurity
-
-                n_node_samples = end - start
-                is_leaf = ((depth >= self.max_depth) or
-                           (n_node_samples < self.min_samples_split) or
-                           (n_node_samples < 2 * self.min_samples_leaf) or
-                           (max_split_nodes == 0))
-
-                splitter.node_reset(start, end)  # calls criterion.init
-
-                if first:
-                    impurity = splitter.criterion.node_impurity()
-                    first = 0
-
-                is_leaf = is_leaf or (impurity < EPSILON_FLT)
-
-                if not is_leaf:
-                    splitter.node_split(&pos, &feature, &threshold, &impurity_left, &impurity_right)
-                    is_leaf = is_leaf or (pos >= end)
-
-                node_id = self._add_node(parent, is_left, is_leaf, feature,
-                                         threshold, impurity, n_node_samples)
-                if depth > max_depth_seen:
-                    max_depth_seen = depth
-
-                if is_leaf:
-                    # Don't store value for internal nodes
-                    splitter.node_value(self.value + node_id * self.value_stride)
-
-                else:
-                    # we have one more split node
-                    max_split_nodes -= 1
-
-                    # Push right child on stack
-                    stack.push(pos, end, depth + 1, node_id, 0, impurity_right)
-
-                    # Push left child on stack
-                    stack.push(start, pos, depth + 1, node_id, 1, impurity_left)
-
-            self._resize(self.node_count)
-        self.splitter = None  # Release memory
-        self.max_depth = max_depth_seen  # store the max depth reached
-
     cpdef predict(self, np.ndarray[DTYPE_t, ndim=2] X):
         """Predict target for X."""
         cdef SIZE_t* children_left = self.children_left
@@ -2150,6 +2114,323 @@ cdef class Tree:
                 importances /= normalizer
 
         return importances
+
+
+# =============================================================================
+# Tree builders
+# =============================================================================
+
+cdef class TreeBuilder:
+    """Interface for different tree building strategies. """
+
+    cpdef build(self, Tree tree, np.ndarray X, np.ndarray y,
+                np.ndarray sample_weight=None):
+        """Build a decision tree from the training set (X, y)."""
+        pass
+
+
+cdef class DepthFirstTreeBuilder(TreeBuilder):
+    """Build a decision tree in depth-first fashion."""
+
+    cpdef build(self, Tree tree, np.ndarray X, np.ndarray y,
+                np.ndarray sample_weight=None):
+        """Build a decision tree from the training set (X, y)."""
+        # Prepare data before recursive partitioning - different dtype or not contiguous
+        if X.dtype != DTYPE or not X.flags.contiguous:
+            # preserve order
+            order = 'C' if X.flags.c_contiguous else 'F'
+            X = np.asarray(X, dtype=DTYPE, order=order)
+
+        if y.dtype != DOUBLE or not y.flags.contiguous:
+            y = np.asarray(y, dtype=DOUBLE, order="C")
+
+        cdef DOUBLE_t* sample_weight_ptr = NULL
+        if sample_weight is not None:
+            if ((sample_weight.dtype != DOUBLE) or
+                (not sample_weight.flags.contiguous)):
+                sample_weight = np.asarray(sample_weight,
+                                           dtype=DOUBLE, order="C")
+            sample_weight_ptr = <DOUBLE_t*> sample_weight.data
+
+        # Initial capacity
+        cdef int init_capacity
+
+        if tree.max_depth <= 10:
+            init_capacity = (2 ** (tree.max_depth + 1)) - 1
+        else:
+            init_capacity = 2047
+
+        tree._resize(init_capacity)
+
+        # Recursive partition (without actual recursion)
+        cdef Splitter splitter = tree.splitter
+        splitter.init(X, y, sample_weight_ptr)
+
+        cdef SIZE_t start
+        cdef SIZE_t end
+        cdef SIZE_t depth
+        cdef SIZE_t parent
+        cdef bint is_left
+
+        cdef SIZE_t n_node_samples = splitter.n_samples
+        cdef SIZE_t pos
+        cdef SIZE_t feature
+        cdef SIZE_t node_id
+        # FIXME assert that this must not be set
+        cdef int max_leaf_nodes = tree.max_leaf_nodes
+        cdef double threshold
+        cdef double impurity = INFINITY
+        cdef double split_impurity = INFINITY
+        cdef double split_impurity_left = INFINITY
+        cdef double split_impurity_right = INFINITY
+        cdef bint is_leaf
+        cdef bint first = 1
+
+        cdef Stack stack = Stack(INITIAL_STACK_SIZE)
+        cdef StackRecord stack_record
+
+        with nogil:
+            # push root node onto stack
+            stack.push(0, n_node_samples, 0, _TREE_UNDEFINED, 0, INFINITY)
+
+            while not stack.is_empty():
+
+                stack.pop(&stack_record)
+                start = stack_record.start
+                end = stack_record.end
+                depth = stack_record.depth
+                parent = stack_record.parent
+                is_left = stack_record.is_left
+                impurity = stack_record.impurity
+
+                n_node_samples = end - start
+                is_leaf = ((depth >= tree.max_depth) or
+                           (n_node_samples < tree.min_samples_split) or
+                           (n_node_samples < 2 * tree.min_samples_leaf))
+
+                splitter.node_reset(start, end)  # calls criterion.init
+
+                if first:
+                    impurity = splitter.criterion.node_impurity()
+                    first = 0
+
+                is_leaf = is_leaf or (impurity < EPSILON_FLT)
+
+                if not is_leaf:
+                    splitter.node_split(&pos, &feature, &threshold, &split_impurity,
+                                        &split_impurity_left, &split_impurity_right)
+                    is_leaf = is_leaf or (pos >= end)
+
+                node_id = tree._add_node(parent, is_left, is_leaf, feature,
+                                         threshold, impurity, n_node_samples)
+
+                if is_leaf:
+                    # Don't store value for internal nodes
+                    splitter.node_value(tree.value + node_id * tree.value_stride)
+
+                else:
+                    # Push right child on stack
+                    stack.push(pos, end, depth + 1, node_id, 0, split_impurity_right)
+
+                    # Push left child on stack
+                    stack.push(start, pos, depth + 1, node_id, 1, split_impurity_left)
+
+            tree._resize(tree.node_count)
+        tree.splitter = None  # Release memory
+
+
+cdef void _add_split_node(Splitter splitter, Tree tree,
+                          SIZE_t start, SIZE_t end, double impurity,
+                          bint is_first, bint is_left, SIZE_t parent_id,
+                          SIZE_t depth,
+                          PriorityHeapRecord* res) nogil:
+        """Adds node w/ partition ``[start, end)`` to the frontier. """
+        cdef SIZE_t pos
+        cdef SIZE_t feature
+        cdef SIZE_t node_id
+        cdef double threshold
+        cdef double split_impurity
+        cdef double split_impurity_left
+        cdef double split_impurity_right
+        cdef double improvement
+        cdef SIZE_t n_node_samples
+        cdef bint is_leaf
+        cdef SIZE_t n_left, n_right
+        cdef double imp_diff
+
+        splitter.node_reset(start, end)  # calls criterion.init
+        if is_first:
+            impurity = splitter.criterion.node_impurity()
+
+        n_node_samples = end - start
+        is_leaf = ((depth > tree.max_depth) or
+                   (n_node_samples < tree.min_samples_split) or
+                   (n_node_samples < 2 * tree.min_samples_leaf))
+
+        if not is_leaf:
+            splitter.node_split(&pos, &feature, &threshold, &split_impurity,
+                                &split_impurity_left, &split_impurity_right)
+
+        node_id = tree._add_node(parent_id, is_left, is_leaf, feature,
+                                 threshold, impurity, n_node_samples)
+        # compute values also for split nodes (might become leafs later).
+        splitter.node_value(tree.value + node_id * tree.value_stride)
+
+        is_leaf = is_leaf or (pos >= end)
+
+        res.node_id = node_id
+        res.start = start
+        res.end = end
+        res.depth = depth
+        res.impurity = split_impurity
+
+        if not is_leaf:
+            # valid split - FIXME end-start not working if we dont use re-ordering
+
+            ## Impurity improvement (Gilles formula)
+            # improvement = ((end - start) * impurity -
+            #                (pos - start) * split_impurity_left -
+            #                (end - pos) * split_impurity_right)
+
+            ## GBMs impurity improvement
+            n_left = pos - start
+            n_right = end - pos
+            imp_diff = (split_impurity_left / n_left) - (split_impurity_right / n_right)
+            improvement = (n_left * n_right * imp_diff * imp_diff) / (n_left + n_right)
+
+            res.pos = pos
+            res.is_leaf = 0
+            res.improvement = improvement
+        else:
+            # is leaf - 0 improvement
+            res.pos = end
+            res.is_leaf = 1
+            res.improvement = 0.0
+
+
+cdef void _add_to_frontier(PriorityHeapRecord* rec, PriorityHeap frontier) nogil:
+    """Adds record ``rec`` to the priority queue ``frontier``. """
+    frontier.push(rec.node_id, rec.start, rec.end, rec.pos, rec.depth,
+                  rec.is_leaf, rec.improvement, rec.impurity)
+
+
+# Some handy constants
+cdef int IS_FIRST = 1
+cdef int IS_NOT_FIRST = 0
+cdef int IS_LEFT = 1
+cdef int IS_NOT_LEFT = 0
+
+
+cdef class BestFirstTreeBuilder(TreeBuilder):
+    """Build a decision tree in best-first fashion.
+
+    The best node to expand is given by the node at the frontier that has the
+    highest impurity improvement.
+    """
+
+    cpdef build(self, Tree tree, np.ndarray X, np.ndarray y,
+                np.ndarray sample_weight=None):
+        """Build a decision tree from the training set (X, y)."""
+        # Prepare data before recursive partitioning - different dtype or not contiguous
+        if X.dtype != DTYPE or not X.flags.contiguous:
+            # preserve order
+            order = 'C' if X.flags.c_contiguous else 'F'
+            X = np.asarray(X, dtype=DTYPE, order=order)
+
+        if y.dtype != DOUBLE or not y.flags.contiguous:
+            y = np.asarray(y, dtype=DOUBLE, order="C")
+
+        cdef DOUBLE_t* sample_weight_ptr = NULL
+        if sample_weight is not None:
+            if ((sample_weight.dtype != DOUBLE) or
+                (not sample_weight.flags.contiguous)):
+                sample_weight = np.asarray(sample_weight,
+                                           dtype=DOUBLE, order="C")
+            sample_weight_ptr = <DOUBLE_t*> sample_weight.data
+
+        # Recursive partition (without actual recursion)
+        cdef Splitter splitter = tree.splitter
+        splitter.init(X, y, sample_weight_ptr)
+
+        cdef PriorityHeap frontier = PriorityHeap(INITIAL_STACK_SIZE)
+        cdef PriorityHeapRecord record
+        cdef PriorityHeapRecord split_node_left
+        cdef PriorityHeapRecord split_node_right
+
+        cdef SIZE_t n_node_samples = splitter.n_samples
+        cdef int max_leaf_nodes = tree.max_leaf_nodes
+        cdef int max_split_nodes = max_leaf_nodes - 1
+        cdef bint is_leaf
+        cdef SIZE_t max_depth_seen = -1
+
+        # Initial capacity
+        cdef int init_capacity = max_split_nodes + max_leaf_nodes
+        tree._resize(init_capacity)
+
+        with nogil:
+            # add root to frontier
+            _add_split_node(splitter, tree,
+                            0, n_node_samples, INFINITY, IS_FIRST, IS_LEFT,
+                            _TREE_UNDEFINED, 0, &split_node_left)
+            _add_to_frontier(&split_node_left, frontier)
+
+            while not frontier.is_empty():
+                frontier.pop(&record)
+                # if not record.is_leaf:
+                #     print('v:%d t:%f i:%f ms:%d' % (tree.feature[record.node_id],
+                #                                     tree.threshold[record.node_id],
+                #                                     record.improvement,
+                #                                     max_split_nodes))
+                node_id = record.node_id
+
+                is_leaf = (record.is_leaf or max_split_nodes <= 0)
+
+                if is_leaf:
+                    # node is not expandable; set node as leaf
+                    tree.children_left[node_id] = _TREE_LEAF
+                    tree.children_right[node_id] = _TREE_LEAF
+                    tree.feature[node_id] = _TREE_UNDEFINED
+                    tree.threshold[node_id] = _TREE_UNDEFINED
+                else:
+                    # node is expandable
+
+                    # decrement number of split nodes available
+                    max_split_nodes -= 1
+
+                    # compute left split node
+                    _add_split_node(splitter, tree,
+                                    record.start, record.pos, record.impurity,
+                                    IS_NOT_FIRST, IS_LEFT, node_id,
+                                    record.depth + 1, &split_node_left)
+
+                    # compute right split node
+                    _add_split_node(splitter, tree, record.pos,
+                                    record.end, record.impurity,
+                                    IS_NOT_FIRST, IS_NOT_LEFT, node_id,
+                                    record.depth + 1, &split_node_right)
+
+                    assert split_node_left.improvement >= 0.0
+                    assert split_node_right.improvement >= 0.0
+
+                    # only expand one of them
+                    split_node_left.is_leaf = (split_node_left.is_leaf or
+                                               (split_node_right.improvement >
+                                                split_node_left.improvement))
+                    split_node_right.is_leaf = (split_node_right.is_leaf or
+                                                (split_node_right.improvement <=
+                                                split_node_left.improvement))
+
+                    # we don't allow both to be splits on same level
+                    assert (split_node_left.is_leaf + split_node_right.is_leaf) > 0
+
+                    _add_to_frontier(&split_node_left, frontier)
+                    _add_to_frontier(&split_node_right, frontier)
+
+                if record.depth > max_depth_seen:
+                    max_depth_seen = record.depth
+
+            tree._resize(tree.node_count)
+        tree.max_depth = max_depth_seen
 
 
 # =============================================================================
