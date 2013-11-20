@@ -66,6 +66,8 @@ Changelog
    - :class:`dummy.DummyClassifier` can now be used to predict a constant
      output value. By Manoj Kumar.
 
+   - Fixed bug in :class:`decomposition.MiniBatchDictionaryLearning` :
+     partial_fit was not working properly.
 
 API changes summary
 -------------------
