@@ -503,7 +503,9 @@ identify patterns and relationships among keywords and topics. For more on LSI, 
 
 The LDA/LSI topic extaction process is implemented by the :class:`text.LdaVectorizer`
 and :class:`text.LsiVectorizer` classes. These two classes perform directly on text documents, 
-and each combines text vectorization and topic modeling in a single model.
+and each combines text vectorization and topic modeling in a single model. Both classes are built
+upon the `gensim Python libaray <http://radimrehurek.com/gensim/>`_, so installation of gensim is
+required.
 
 Let's take an example using the 20 newsgroups text dataset included in scikit-learn::
   
