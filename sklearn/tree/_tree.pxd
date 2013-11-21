@@ -57,6 +57,7 @@ cdef class Criterion:
     cdef double node_impurity(self) nogil
     cdef void children_impurity(self, Impurity* impurity) nogil
     cdef void node_value(self, double* dest) nogil
+    cdef double impurity_improvement(self) nogil
 
 
 # =============================================================================
@@ -102,7 +103,8 @@ cdef class Splitter:
                                double* threshold,
                                double* impurity,
                                double* impurity_left,
-                               double* impurity_right) nogil
+                               double* impurity_right,
+                               double* impurity_improvement) nogil
 
     cdef void node_value(self, double* dest) nogil
 

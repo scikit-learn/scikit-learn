@@ -27,7 +27,7 @@ from ..utils.fixes import unique
 from ..utils.validation import check_arrays
 
 from ._tree import Criterion, Splitter, Tree, DepthFirstTreeBuilder
-from ._tree import BestFirstTreeBuilder
+from ._tree import BestFirstTreeBuilder, BranchBuilder
 from . import _tree
 
 
@@ -256,6 +256,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
             tree_builder = DepthFirstTreeBuilder()
         else:
             #print('*** Create BestFirstTreeBuilder()')
+            #tree_builder = BranchBuilder()
             tree_builder = BestFirstTreeBuilder()
         #print('*** call build')
         tree_builder.build(self.tree_, X, y, sample_weight)

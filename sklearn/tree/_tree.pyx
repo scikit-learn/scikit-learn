@@ -106,6 +106,12 @@ cdef class Criterion:
         """Compute the node value of samples[start:end] into dest."""
         pass
 
+    cdef double impurity_improvement(self) nogil:
+        """Impurity improvement total impurity - (left impurity + right impurity) """
+        cdef Impurity impurity
+        self.children_impurity(&impurity)
+        return impurity.total - impurity.left - impurity.right
+
 
 cdef class ClassificationCriterion(Criterion):
     """Abstract criterion for classification."""
@@ -823,23 +829,47 @@ cdef class MSE(RegressionCriterion):
         cdef double* var_right = self.var_right
         cdef double total_left = 0.0
         cdef double total_right = 0.0
-        cdef double* sum_left = self.sum_left
-        cdef double* sum_right = self.sum_right
-        cdef double total_sum_left = 0.0
-        cdef double total_sum_right = 0.0
         cdef SIZE_t k
 
         for k from 0 <= k < n_outputs:
             total_left += var_left[k]
             total_right += var_right[k]
+
+
+        impurity.left = total_left / n_outputs
+        impurity.right = total_right / n_outputs
+
+        impurity.total = (total_left + total_right) / n_outputs
+
+
+cdef class GBM_MSE(MSE):
+    """Mean squared error impurity criterion with improvement score from R's GBM package.
+
+    Uses the following formula for impurity improvement:
+
+        diff = mean_left - mean_right
+        improvement = n_left * n_right * diff^2 / (n_left + n_right)
+    """
+
+    cdef double impurity_improvement(self) nogil:
+        cdef SIZE_t n_outputs = self.n_outputs
+        cdef SIZE_t k
+        cdef double* sum_left = self.sum_left
+        cdef double* sum_right = self.sum_right
+        cdef double total_sum_left = 0.0
+        cdef double total_sum_right = 0.0
+        cdef double weighted_n_left = self.weighted_n_left
+        cdef double weighted_n_right = self.weighted_n_right
+        cdef double diff = 0.0
+
+        for k from 0 <= k < n_outputs:
             total_sum_left += sum_left[k]
             total_sum_right += sum_right[k]
 
-        #impurity.left = total_left / n_outputs
-        #impurity.right = total_right / n_outputs
-        impurity.left = total_sum_left / n_outputs
-        impurity.right = total_sum_right / n_outputs
-        impurity.total = (total_left + total_right) / n_outputs
+        total_sum_left = total_sum_left / n_outputs
+        total_sum_right = total_sum_right / n_outputs
+        diff = (total_sum_left / weighted_n_left) - (total_sum_right / weighted_n_right)
+        return (weighted_n_left * weighted_n_right * diff * diff) / (weighted_n_left + weighted_n_right)
 
 
 # =============================================================================
@@ -938,11 +968,13 @@ cdef class Splitter:
                             start,
                             end)
 
-        #FIXME impurity[0] =  self.criterion.node_impurity()
+        #FIXME not necessary anymore
+        # impurity[0] =  self.criterion.node_impurity()
 
     cdef void node_split(self, SIZE_t* pos, SIZE_t* feature, double* threshold,
                          double* impurity,
-                         double* impurity_left, double* impurity_right) nogil:
+                         double* impurity_left, double* impurity_right,
+                         double* impurity_improvement) nogil:
         """Find a split on node samples[start:end]."""
         pass
 
@@ -961,7 +993,8 @@ cdef class BestSplitter(Splitter):
 
     cdef void node_split(self, SIZE_t* pos, SIZE_t* feature, double* threshold,
                          double* impurity,
-                         double* impurity_left, double* impurity_right) nogil:
+                         double* impurity_left, double* impurity_right,
+                         double* impurity_improvement) nogil:
         """Find the best split on node samples[start:end]."""
         # Find the best split
         cdef SIZE_t* samples = self.samples
@@ -984,6 +1017,7 @@ cdef class BestSplitter(Splitter):
         cdef SIZE_t best_pos = end
         cdef SIZE_t best_feature
         cdef double best_threshold
+        cdef double best_improvement
 
         cdef Impurity current_impurity
         cdef SIZE_t current_pos
@@ -1051,6 +1085,7 @@ cdef class BestSplitter(Splitter):
                             current_threshold = X[X_sample_stride * samples[p - 1] + X_fx_stride * current_feature]
 
                         best_threshold = current_threshold
+                        best_improvement = self.criterion.impurity_improvement()
 
             if best_pos == end: # No valid split was ever found
                 continue
@@ -1085,6 +1120,7 @@ cdef class BestSplitter(Splitter):
         impurity[0] = best_impurity
         impurity_left[0] = best_impurity_left
         impurity_right[0] = best_impurity_right
+        impurity_improvement[0] = best_improvement
 
 cdef inline void sort(DTYPE_t* X, SIZE_t X_sample_stride, SIZE_t X_fx_stride, SIZE_t current_feature,
                       SIZE_t* samples, SIZE_t length) nogil:
@@ -1138,7 +1174,8 @@ cdef class RandomSplitter(Splitter):
 
     cdef void node_split(self, SIZE_t* pos, SIZE_t* feature, double* threshold,
                          double* impurity,
-                         double* impurity_left, double* impurity_right) nogil:
+                         double* impurity_left, double* impurity_right,
+                         double* impurity_improvement) nogil:
         """Find the best random split on node samples[start:end]."""
         # Draw random splits and pick the best
         cdef SIZE_t* samples = self.samples
@@ -1161,6 +1198,7 @@ cdef class RandomSplitter(Splitter):
         cdef SIZE_t best_pos = end
         cdef SIZE_t best_feature
         cdef double best_threshold
+        cdef double best_improvement
 
         cdef Impurity current_impurity
         cdef SIZE_t current_pos
@@ -1243,6 +1281,7 @@ cdef class RandomSplitter(Splitter):
                 best_pos = current_pos
                 best_feature = current_feature
                 best_threshold = current_threshold
+                best_improvement = self.criterion.impurity_improvement()
 
             # Count one more visited feature
             visited_features += 1
@@ -1274,6 +1313,7 @@ cdef class RandomSplitter(Splitter):
         impurity[0] = best_impurity
         impurity_left[0] = best_impurity_left
         impurity_right[0] = best_impurity_right
+        impurity_improvement[0] = best_improvement
 
 
 cdef class PresortBestSplitter(Splitter):
@@ -1330,7 +1370,8 @@ cdef class PresortBestSplitter(Splitter):
 
     cdef void node_split(self, SIZE_t* pos, SIZE_t* feature, double* threshold,
                          double* impurity,
-                         double* impurity_left, double* impurity_right) nogil:
+                         double* impurity_left, double* impurity_right,
+                         double* impurity_improvement) nogil:
         """Find the best split on node samples[start:end]."""
         # Find the best split
         cdef SIZE_t* samples = self.samples
@@ -1358,6 +1399,7 @@ cdef class PresortBestSplitter(Splitter):
         cdef SIZE_t best_pos = end
         cdef SIZE_t best_feature
         cdef double best_threshold
+        cdef double best_improvement
 
         cdef Impurity current_impurity
         cdef SIZE_t current_pos
@@ -1438,6 +1480,7 @@ cdef class PresortBestSplitter(Splitter):
                             current_threshold = X[X_sample_stride * samples[p - 1] + X_fx_stride * current_feature]
 
                         best_threshold = current_threshold
+                        best_improvement = self.criterion.impurity_improvement()
 
             if best_pos == end: # No valid split was ever found
                 continue
@@ -1476,6 +1519,7 @@ cdef class PresortBestSplitter(Splitter):
         impurity[0] = best_impurity
         impurity_left[0] = best_impurity_left
         impurity_right[0] = best_impurity_right
+        impurity_improvement[0] = best_improvement
 
 
 # =============================================================================
@@ -2183,6 +2227,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         cdef double split_impurity = INFINITY
         cdef double split_impurity_left = INFINITY
         cdef double split_impurity_right = INFINITY
+        cdef double split_improvement = INFINITY
         cdef bint is_leaf
         cdef bint first = 1
 
@@ -2218,7 +2263,8 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
 
                 if not is_leaf:
                     splitter.node_split(&pos, &feature, &threshold, &split_impurity,
-                                        &split_impurity_left, &split_impurity_right)
+                                        &split_impurity_left, &split_impurity_right,
+                                        &split_improvement)
                     is_leaf = is_leaf or (pos >= end)
 
                 node_id = tree._add_node(parent, is_left, is_leaf, feature,
@@ -2252,7 +2298,7 @@ cdef void _add_split_node(Splitter splitter, Tree tree,
         cdef double split_impurity
         cdef double split_impurity_left
         cdef double split_impurity_right
-        cdef double improvement
+        cdef double split_improvement
         cdef SIZE_t n_node_samples
         cdef bint is_leaf
         cdef SIZE_t n_left, n_right
@@ -2269,7 +2315,8 @@ cdef void _add_split_node(Splitter splitter, Tree tree,
 
         if not is_leaf:
             splitter.node_split(&pos, &feature, &threshold, &split_impurity,
-                                &split_impurity_left, &split_impurity_right)
+                                &split_impurity_left, &split_impurity_right,
+                                &split_improvement)
 
         node_id = tree._add_node(parent_id, is_left, is_leaf, feature,
                                  threshold, impurity, n_node_samples)
@@ -2285,22 +2332,10 @@ cdef void _add_split_node(Splitter splitter, Tree tree,
         res.impurity = split_impurity
 
         if not is_leaf:
-            # valid split - FIXME end-start not working if we dont use re-ordering
-
-            ## Impurity improvement (Gilles formula)
-            # improvement = ((end - start) * impurity -
-            #                (pos - start) * split_impurity_left -
-            #                (end - pos) * split_impurity_right)
-
-            ## GBMs impurity improvement
-            n_left = pos - start
-            n_right = end - pos
-            imp_diff = (split_impurity_left / n_left) - (split_impurity_right / n_right)
-            improvement = (n_left * n_right * imp_diff * imp_diff) / (n_left + n_right)
-
+            # is split node
             res.pos = pos
             res.is_leaf = 0
-            res.improvement = improvement
+            res.improvement = split_improvement
         else:
             # is leaf - 0 improvement
             res.pos = end
@@ -2368,6 +2403,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         tree._resize(init_capacity)
 
         with nogil:
+        #if True:
             # add root to frontier
             _add_split_node(splitter, tree,
                             0, n_node_samples, INFINITY, IS_FIRST, IS_LEFT,
@@ -2412,14 +2448,6 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                     #assert split_node_left.improvement >= 0.0
                     #assert split_node_right.improvement >= 0.0
 
-                    # only expand one of them
-                    split_node_left.is_leaf = (split_node_left.is_leaf or
-                                               (split_node_right.improvement >
-                                                split_node_left.improvement))
-                    split_node_right.is_leaf = (split_node_right.is_leaf or
-                                                (split_node_right.improvement <=
-                                                split_node_left.improvement))
-
                     # we don't allow both to be splits on same level
                     #assert (split_node_left.is_leaf + split_node_right.is_leaf) > 0
 
@@ -2431,6 +2459,124 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
 
             tree._resize(tree.node_count)
         tree.max_depth = max_depth_seen
+
+
+cdef void _set_split_to_leaf(Tree tree, int node_id) nogil:
+    tree.children_left[node_id] = _TREE_LEAF
+    tree.children_right[node_id] = _TREE_LEAF
+    tree.feature[node_id] = _TREE_UNDEFINED
+    tree.threshold[node_id] = _TREE_UNDEFINED
+
+
+cdef class BranchBuilder(TreeBuilder):
+    """Build a narrow decision tree - just a branch.
+
+    The branch is built depth-first, at each level either the left or right
+    child nodes are expanded based on the higher impurity improvement score.
+    """
+
+    cpdef build(self, Tree tree, np.ndarray X, np.ndarray y,
+                np.ndarray sample_weight=None):
+        """Build a decision tree from the training set (X, y)."""
+        # Prepare data before recursive partitioning - different dtype or not contiguous
+        if X.dtype != DTYPE or not X.flags.contiguous:
+            # preserve order
+            order = 'C' if X.flags.c_contiguous else 'F'
+            X = np.asarray(X, dtype=DTYPE, order=order)
+
+        if y.dtype != DOUBLE or not y.flags.contiguous:
+            y = np.asarray(y, dtype=DOUBLE, order="C")
+
+        cdef DOUBLE_t* sample_weight_ptr = NULL
+        if sample_weight is not None:
+            if ((sample_weight.dtype != DOUBLE) or
+                (not sample_weight.flags.contiguous)):
+                sample_weight = np.asarray(sample_weight,
+                                           dtype=DOUBLE, order="C")
+            sample_weight_ptr = <DOUBLE_t*> sample_weight.data
+
+        # Recursive partition (without actual recursion)
+        cdef Splitter splitter = tree.splitter
+        splitter.init(X, y, sample_weight_ptr)
+
+        cdef SIZE_t n_node_samples = splitter.n_samples
+        cdef int max_leaf_nodes = tree.max_leaf_nodes
+        cdef SIZE_t max_depth = max_leaf_nodes - 1
+        cdef SIZE_t depth = 0
+
+        cdef PriorityHeapRecord split_node
+        cdef PriorityHeapRecord split_node_left
+        cdef PriorityHeapRecord split_node_right
+
+        # Initial capacity
+        cdef int init_capacity = max_depth + max_leaf_nodes
+        tree._resize(init_capacity)
+
+        #with nogil:
+        if True:
+            start = 0
+            end = n_node_samples
+            is_left = True
+
+            _add_split_node(splitter, tree,
+                            start, end, INFINITY, IS_FIRST, IS_LEFT,
+                            _TREE_UNDEFINED, 0, &split_node)
+
+            for depth in range(1, max_depth + 1):
+
+                print('v:%d t:%f i:%f l:%d r:%d' % (tree.feature[split_node.node_id],
+                                                    tree.threshold[split_node.node_id],
+                                                    split_node.improvement,
+                                                    split_node.pos - split_node.start,
+                                                    split_node.end - split_node.pos))
+
+                # left child
+                _add_split_node(splitter, tree,
+                                split_node.start, split_node.pos, split_node.impurity,
+                                IS_NOT_FIRST, IS_LEFT, split_node.node_id,
+                                split_node.depth + 1, &split_node_left)
+
+                # right child
+                _add_split_node(splitter, tree,
+                                split_node.pos, split_node.end, split_node.impurity,
+                                IS_NOT_FIRST, IS_NOT_LEFT, split_node.node_id,
+                                split_node.depth + 1, &split_node_right)
+
+                split_node_left.is_leaf = (split_node_left.is_leaf or
+                                           (split_node_right.improvement >
+                                            split_node_left.improvement))
+                split_node_right.is_leaf = (split_node_right.is_leaf or
+                                            (split_node_right.improvement <=
+                                             split_node_left.improvement))
+
+                print('l:%f r:%f' % (split_node_left.improvement, split_node_right.improvement))
+
+                if split_node_left.is_leaf:
+                    # set left to leaf
+                    _set_split_to_leaf(tree, split_node_left.node_id)
+
+                if split_node_right.is_leaf:
+                    # set right to leaf
+                    _set_split_to_leaf(tree, split_node_right.node_id)
+
+                if not split_node_left.is_leaf and split_node_right.is_leaf:
+                    # expand left node
+                    copy_heap(&split_node, &split_node_left)
+                elif split_node_left.is_leaf and not split_node_right.is_leaf:
+                    # expand right node
+                    copy_heap(&split_node, &split_node_right)
+
+                elif split_node_left.is_leaf and split_node_right.is_leaf:
+                    # dead end - both are leafs
+                    break
+                else:
+                    # both are splits -- should not happen!
+                    #with gil:
+                    assert False
+
+            tree._resize(tree.node_count)
+        tree.max_depth = depth
+
 
 
 # =============================================================================
