@@ -772,7 +772,6 @@ def test_complete_regression():
     est = GradientBoostingRegressor(n_estimators=20, max_depth=None, random_state=1,
                                     max_leaf_nodes=k+1).fit(boston.data, boston.target)
     tree = est.estimators_[-1, 0].tree_
-    assert_equal(tree.max_depth, k)  # some trees might have max_depth smaller than this
     assert_equal(tree.children_left[tree.children_left == TREE_LEAF].shape[0], k + 1)
 
 
