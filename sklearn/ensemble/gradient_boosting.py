@@ -43,7 +43,6 @@ from ..externals import six
 from ..tree.tree import DecisionTreeRegressor
 from ..tree._tree import DTYPE, TREE_LEAF
 from ..tree._tree import PresortBestSplitter
-from ..tree._tree import MSE
 from ..tree._tree import GBM_MSE
 
 from ._gradient_boosting import predict_stages
