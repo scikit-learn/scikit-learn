@@ -498,7 +498,6 @@ cdef class Gini(ClassificationCriterion):
         impurity.total = total / (weighted_n_node_samples * n_outputs)
 
 
-
 cdef class RegressionCriterion(Criterion):
     """Abstract criterion for regression.
 
