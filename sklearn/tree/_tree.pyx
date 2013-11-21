@@ -44,28 +44,6 @@ cdef float EPSILON_FLT = 1e-7
 cdef SIZE_t INITIAL_STACK_SIZE = 10
 
 
-# A record on the stack for depth-first tree growing
-cdef struct StackRecord:
-    SIZE_t start
-    SIZE_t end
-    SIZE_t depth
-    SIZE_t parent
-    bint is_left
-    double impurity
-
-
-# A record on the frontier for best-first tree growing
-cdef struct PriorityHeapRecord:
-    SIZE_t node_id
-    SIZE_t start
-    SIZE_t end
-    SIZE_t pos
-    SIZE_t depth
-    bint is_leaf
-    double impurity
-    double improvement
-
-
 # =============================================================================
 # Criterion
 # =============================================================================
@@ -1526,6 +1504,16 @@ cdef class PresortBestSplitter(Splitter):
 # Stack data structures
 # =============================================================================
 
+# A record on the stack for depth-first tree growing
+cdef struct StackRecord:
+    SIZE_t start
+    SIZE_t end
+    SIZE_t depth
+    SIZE_t parent
+    bint is_left
+    double impurity
+
+
 cdef inline void copy_stack(StackRecord *a, StackRecord *b) nogil:
     """Assigns ``a := b`` for StackRecord. """
     a.start = b.start
@@ -1598,6 +1586,18 @@ cdef class Stack:
         return 1
 
 
+# A record on the frontier for best-first tree growing
+cdef struct PriorityHeapRecord:
+    SIZE_t node_id
+    SIZE_t start
+    SIZE_t end
+    SIZE_t pos
+    SIZE_t depth
+    bint is_leaf
+    double impurity
+    double improvement
+
+
 cdef inline void copy_heap(PriorityHeapRecord *a, PriorityHeapRecord *b) nogil:
     """Assigns ``a := b``. """
     a.node_id = b.node_id
@@ -1619,7 +1619,7 @@ cdef void swap_heap(PriorityHeapRecord* stack, SIZE_t a, SIZE_t b) nogil:
 
 
 cdef void heapify_up(PriorityHeapRecord *heap, SIZE_t pos) nogil:
-    """Restore heap invariant parent.impurity > child.impurity from ``pos`` upwards. """
+    """Restore heap invariant parent.improvement > child.improvement from ``pos`` upwards. """
     if pos == 0:
         return
     cdef SIZE_t parent_pos = (pos - 1) / 2
@@ -1630,7 +1630,7 @@ cdef void heapify_up(PriorityHeapRecord *heap, SIZE_t pos) nogil:
 
 
 cdef void heapify_down(PriorityHeapRecord *heap, SIZE_t pos, SIZE_t heap_length) nogil:
-    """Restore heap invariant parent.impurity > children.impurity from ``pos`` downwards. """
+    """Restore heap invariant parent.improvement > children.improvement from ``pos`` downwards. """
     cdef SIZE_t left_pos = 2 * (pos + 1) - 1
     cdef SIZE_t right_pos = 2 * (pos + 1)
     cdef SIZE_t largest = pos
@@ -1648,8 +1648,19 @@ cdef void heapify_down(PriorityHeapRecord *heap, SIZE_t pos, SIZE_t heap_length)
 cdef class PriorityHeap:
     """A priority queue implemented as a binary heap.
 
-    The heap invariant is that the impurity of the parent record is larger then the impurity
-    of the children.
+    The heap invariant is that the impurity improvement of the parent record
+    is larger then the impurity improvement of the children.
+
+    Attributes
+    ----------
+    capacity : SIZE_t
+        The capacity of the heap
+    heap_ptr : SIZE_t
+        The water mark of the heap; the heap grows from left to right in the
+        array ``heap_``. The following invariant holds ``heap_ptr < capacity``.
+    heap_ : PriorityHeapRecord*
+        The array of heap records. The maximum element is on the left;
+        the heap grows from left to right
     """
 
     cdef SIZE_t capacity
@@ -2215,13 +2226,11 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         cdef SIZE_t depth
         cdef SIZE_t parent
         cdef bint is_left
-
         cdef SIZE_t n_node_samples = splitter.n_samples
         cdef SIZE_t pos
         cdef SIZE_t feature
         cdef SIZE_t node_id
-        # FIXME assert that this must not be set
-        cdef int max_leaf_nodes = tree.max_leaf_nodes
+
         cdef double threshold
         cdef double impurity = INFINITY
         cdef double split_impurity = INFINITY
@@ -2403,7 +2412,6 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         tree._resize(init_capacity)
 
         with nogil:
-        #if True:
             # add root to frontier
             _add_split_node(splitter, tree,
                             0, n_node_samples, INFINITY, IS_FIRST, IS_LEFT,
@@ -2412,11 +2420,6 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
 
             while not frontier.is_empty():
                 frontier.pop(&record)
-                # if not record.is_leaf:
-                #     print('v:%d t:%f i:%f ms:%d' % (tree.feature[record.node_id],
-                #                                     tree.threshold[record.node_id],
-                #                                     record.improvement,
-                #                                     max_split_nodes))
                 node_id = record.node_id
 
                 is_leaf = (record.is_leaf or max_split_nodes <= 0)
@@ -2459,124 +2462,6 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
 
             tree._resize(tree.node_count)
         tree.max_depth = max_depth_seen
-
-
-cdef void _set_split_to_leaf(Tree tree, int node_id) nogil:
-    tree.children_left[node_id] = _TREE_LEAF
-    tree.children_right[node_id] = _TREE_LEAF
-    tree.feature[node_id] = _TREE_UNDEFINED
-    tree.threshold[node_id] = _TREE_UNDEFINED
-
-
-cdef class BranchBuilder(TreeBuilder):
-    """Build a narrow decision tree - just a branch.
-
-    The branch is built depth-first, at each level either the left or right
-    child nodes are expanded based on the higher impurity improvement score.
-    """
-
-    cpdef build(self, Tree tree, np.ndarray X, np.ndarray y,
-                np.ndarray sample_weight=None):
-        """Build a decision tree from the training set (X, y)."""
-        # Prepare data before recursive partitioning - different dtype or not contiguous
-        if X.dtype != DTYPE or not X.flags.contiguous:
-            # preserve order
-            order = 'C' if X.flags.c_contiguous else 'F'
-            X = np.asarray(X, dtype=DTYPE, order=order)
-
-        if y.dtype != DOUBLE or not y.flags.contiguous:
-            y = np.asarray(y, dtype=DOUBLE, order="C")
-
-        cdef DOUBLE_t* sample_weight_ptr = NULL
-        if sample_weight is not None:
-            if ((sample_weight.dtype != DOUBLE) or
-                (not sample_weight.flags.contiguous)):
-                sample_weight = np.asarray(sample_weight,
-                                           dtype=DOUBLE, order="C")
-            sample_weight_ptr = <DOUBLE_t*> sample_weight.data
-
-        # Recursive partition (without actual recursion)
-        cdef Splitter splitter = tree.splitter
-        splitter.init(X, y, sample_weight_ptr)
-
-        cdef SIZE_t n_node_samples = splitter.n_samples
-        cdef int max_leaf_nodes = tree.max_leaf_nodes
-        cdef SIZE_t max_depth = max_leaf_nodes - 1
-        cdef SIZE_t depth = 0
-
-        cdef PriorityHeapRecord split_node
-        cdef PriorityHeapRecord split_node_left
-        cdef PriorityHeapRecord split_node_right
-
-        # Initial capacity
-        cdef int init_capacity = max_depth + max_leaf_nodes
-        tree._resize(init_capacity)
-
-        #with nogil:
-        if True:
-            start = 0
-            end = n_node_samples
-            is_left = True
-
-            _add_split_node(splitter, tree,
-                            start, end, INFINITY, IS_FIRST, IS_LEFT,
-                            _TREE_UNDEFINED, 0, &split_node)
-
-            for depth in range(1, max_depth + 1):
-
-                print('v:%d t:%f i:%f l:%d r:%d' % (tree.feature[split_node.node_id],
-                                                    tree.threshold[split_node.node_id],
-                                                    split_node.improvement,
-                                                    split_node.pos - split_node.start,
-                                                    split_node.end - split_node.pos))
-
-                # left child
-                _add_split_node(splitter, tree,
-                                split_node.start, split_node.pos, split_node.impurity,
-                                IS_NOT_FIRST, IS_LEFT, split_node.node_id,
-                                split_node.depth + 1, &split_node_left)
-
-                # right child
-                _add_split_node(splitter, tree,
-                                split_node.pos, split_node.end, split_node.impurity,
-                                IS_NOT_FIRST, IS_NOT_LEFT, split_node.node_id,
-                                split_node.depth + 1, &split_node_right)
-
-                split_node_left.is_leaf = (split_node_left.is_leaf or
-                                           (split_node_right.improvement >
-                                            split_node_left.improvement))
-                split_node_right.is_leaf = (split_node_right.is_leaf or
-                                            (split_node_right.improvement <=
-                                             split_node_left.improvement))
-
-                print('l:%f r:%f' % (split_node_left.improvement, split_node_right.improvement))
-
-                if split_node_left.is_leaf:
-                    # set left to leaf
-                    _set_split_to_leaf(tree, split_node_left.node_id)
-
-                if split_node_right.is_leaf:
-                    # set right to leaf
-                    _set_split_to_leaf(tree, split_node_right.node_id)
-
-                if not split_node_left.is_leaf and split_node_right.is_leaf:
-                    # expand left node
-                    copy_heap(&split_node, &split_node_left)
-                elif split_node_left.is_leaf and not split_node_right.is_leaf:
-                    # expand right node
-                    copy_heap(&split_node, &split_node_right)
-
-                elif split_node_left.is_leaf and split_node_right.is_leaf:
-                    # dead end - both are leafs
-                    break
-                else:
-                    # both are splits -- should not happen!
-                    #with gil:
-                    assert False
-
-            tree._resize(tree.node_count)
-        tree.max_depth = depth
-
 
 
 # =============================================================================
