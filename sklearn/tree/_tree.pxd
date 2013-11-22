@@ -19,12 +19,6 @@ ctypedef np.npy_uint32 UINT32_t          # Unsigned 32 bit integer
 # Criterion
 # =============================================================================
 
-# Datatype that holds impurity information
-cdef struct Impurity:
-    double left
-    double right
-    double total
-
 cdef class Criterion:
     # Internal structures
     cdef DOUBLE_t* y                     # Values of y
@@ -55,7 +49,7 @@ cdef class Criterion:
     cdef void reset(self) nogil
     cdef void update(self, SIZE_t new_pos) nogil
     cdef double node_impurity(self) nogil
-    cdef void children_impurity(self, Impurity* impurity) nogil
+    cdef void children_impurity(self, double* impurity_left, double* impurity_right) nogil
     cdef void node_value(self, double* dest) nogil
     cdef double impurity_improvement(self) nogil
 

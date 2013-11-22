@@ -75,7 +75,7 @@ cdef class Criterion:
            samples[start:end]."""
         pass
 
-    cdef void children_impurity(self, Impurity* impurity) nogil:
+    cdef void children_impurity(self, double* impurity_left, double* impurity_right) nogil:
         """Evaluate the impurity in children nodes, i.e. the impurity of
            samples[start:pos] + the impurity of samples[pos:end]."""
         pass
@@ -86,9 +86,12 @@ cdef class Criterion:
 
     cdef double impurity_improvement(self) nogil:
         """Impurity improvement total impurity - (left impurity + right impurity) """
-        cdef Impurity impurity
-        self.children_impurity(&impurity)
-        return impurity.total - impurity.left - impurity.right
+        # cdef double impurity_left
+        # cdef double impurity_right
+        # self.children_impurity(&impurity_left, &impurity_right)
+        # return impurity.total - impurity.left - impurity.right
+        cdef double improvement = 0.0
+        return improvement
 
 
 cdef class ClassificationCriterion(Criterion):
@@ -293,7 +296,7 @@ cdef class ClassificationCriterion(Criterion):
     cdef double node_impurity(self) nogil:
         pass
 
-    cdef void children_impurity(self, Impurity* impurity) nogil:
+    cdef void children_impurity(self, double* impurity_left, double* impurity_right) nogil:
         pass
 
     cdef void node_value(self, double* dest) nogil:
@@ -354,7 +357,7 @@ cdef class Entropy(ClassificationCriterion):
 
         return total / n_outputs
 
-    cdef void children_impurity(self, Impurity* impurity) nogil:
+    cdef void children_impurity(self, double* impurity_left, double* impurity_right) nogil:
         """Evaluate the impurity in children nodes, i.e. the impurity of
            samples[start:pos] + the impurity of samples[pos:end]."""
         cdef double weighted_n_node_samples = self.weighted_n_node_samples
@@ -398,9 +401,8 @@ cdef class Entropy(ClassificationCriterion):
             label_count_left += label_count_stride
             label_count_right += label_count_stride
 
-        impurity.left = total_left / (weighted_n_left * n_outputs)
-        impurity.right = total_right / (weighted_n_right * n_outputs)
-        impurity.total = total / (weighted_n_node_samples * n_outputs)
+        impurity_left[0] = total_left / (weighted_n_left * n_outputs)
+        impurity_right[0] = total_right / (weighted_n_right * n_outputs)
 
 
 cdef class Gini(ClassificationCriterion):
@@ -449,7 +451,7 @@ cdef class Gini(ClassificationCriterion):
 
         return total / n_outputs
 
-    cdef void children_impurity(self, Impurity* impurity) nogil:
+    cdef void children_impurity(self, double* impurity_left, double* impurity_right) nogil:
         """Evaluate the impurity in children nodes, i.e. the impurity of
            samples[start:pos] + the impurity of samples[pos:end]."""
         cdef double weighted_n_node_samples = self.weighted_n_node_samples
@@ -486,16 +488,13 @@ cdef class Gini(ClassificationCriterion):
             gini_right = 1.0 - gini_right / (weighted_n_right *
                                              weighted_n_right)
 
-            total += weighted_n_left * gini_left
-            total += weighted_n_right * gini_right
             total_left += weighted_n_left * gini_left
             total_right += weighted_n_right * gini_right
             label_count_left += label_count_stride
             label_count_right += label_count_stride
 
-        impurity.left = total_left / (weighted_n_left * n_outputs)
-        impurity.right = total_right / (weighted_n_right * n_outputs)
-        impurity.total = total / (weighted_n_node_samples * n_outputs)
+        impurity_left[0] = total_left / (weighted_n_left * n_outputs)
+        impurity_right[0] = total_right / (weighted_n_right * n_outputs)
 
 
 cdef class RegressionCriterion(Criterion):
@@ -768,7 +767,7 @@ cdef class RegressionCriterion(Criterion):
     cdef double node_impurity(self) nogil:
         pass
 
-    cdef void children_impurity(self, Impurity* impurity) nogil:
+    cdef void children_impurity(self, double* impurity_left, double* impurity_right) nogil:
         pass
 
     cdef void node_value(self, double* dest) nogil:
@@ -798,7 +797,7 @@ cdef class MSE(RegressionCriterion):
 
         return total / n_outputs
 
-    cdef void children_impurity(self, Impurity* impurity) nogil:
+    cdef void children_impurity(self, double* impurity_left, double* impurity_right) nogil:
         """Evaluate the impurity in children nodes, i.e. the impurity of
            samples[start:pos] + the impurity of samples[pos:end]."""
         cdef SIZE_t n_outputs = self.n_outputs
@@ -812,11 +811,8 @@ cdef class MSE(RegressionCriterion):
             total_left += var_left[k]
             total_right += var_right[k]
 
-
-        impurity.left = total_left / n_outputs
-        impurity.right = total_right / n_outputs
-
-        impurity.total = (total_left + total_right) / n_outputs
+        impurity_left[0] = total_left / n_outputs
+        impurity_right[0] = total_right / n_outputs
 
 
 cdef class GBM_MSE(MSE):
@@ -996,7 +992,9 @@ cdef class BestSplitter(Splitter):
         cdef double best_threshold
         cdef double best_improvement
 
-        cdef Impurity current_impurity
+        cdef double current_impurity
+        cdef double current_impurity_left
+        cdef double current_impurity_right
         cdef SIZE_t current_pos
         cdef SIZE_t current_feature
         cdef double current_threshold
@@ -1046,12 +1044,12 @@ cdef class BestSplitter(Splitter):
                        continue
 
                     self.criterion.update(current_pos)
-                    self.criterion.children_impurity(&current_impurity)
-
-                    if current_impurity.total < (best_impurity - EPSILON_DBL):
-                        best_impurity = current_impurity.total
-                        best_impurity_left = current_impurity.left
-                        best_impurity_right = current_impurity.right
+                    self.criterion.children_impurity(&current_impurity_left, &current_impurity_right)
+                    current_impurity = current_impurity_left + current_impurity_right
+                    if current_impurity < (best_impurity - EPSILON_DBL):
+                        best_impurity = current_impurity
+                        best_impurity_left = current_impurity_left
+                        best_impurity_right = current_impurity_right
                         best_pos = current_pos
                         best_feature = current_feature
 
@@ -1177,7 +1175,9 @@ cdef class RandomSplitter(Splitter):
         cdef double best_threshold
         cdef double best_improvement
 
-        cdef Impurity current_impurity
+        cdef double current_impurity
+        cdef double current_impurity_left
+        cdef double current_impurity_right
         cdef SIZE_t current_pos
         cdef SIZE_t current_feature
         cdef double current_threshold
@@ -1249,12 +1249,13 @@ cdef class RandomSplitter(Splitter):
             # Evaluate split
             self.criterion.reset()
             self.criterion.update(current_pos)
-            self.criterion.children_impurity(&current_impurity)
+            self.criterion.children_impurity(&current_impurity_left, &current_impurity_right)
+            current_impurity = current_impurity_left + current_impurity_right
 
-            if current_impurity.total < best_impurity:
-                best_impurity = current_impurity.total
-                best_impurity_left = current_impurity.left
-                best_impurity_right = current_impurity.right
+            if current_impurity < best_impurity:
+                best_impurity = current_impurity
+                best_impurity_left = current_impurity_left
+                best_impurity_right = current_impurity_right
                 best_pos = current_pos
                 best_feature = current_feature
                 best_threshold = current_threshold
@@ -1378,7 +1379,9 @@ cdef class PresortBestSplitter(Splitter):
         cdef double best_threshold
         cdef double best_improvement
 
-        cdef Impurity current_impurity
+        cdef double current_impurity
+        cdef double current_impurity_left
+        cdef double current_impurity_right
         cdef SIZE_t current_pos
         cdef SIZE_t current_feature
         cdef double current_threshold
@@ -1441,12 +1444,13 @@ cdef class PresortBestSplitter(Splitter):
                        continue
 
                     self.criterion.update(current_pos)
-                    self.criterion.children_impurity(&current_impurity)
+                    self.criterion.children_impurity(&current_impurity_left, &current_impurity_right)
+                    current_impurity = current_impurity_left + current_impurity_right
 
-                    if current_impurity.total < (best_impurity - EPSILON_DBL):
-                        best_impurity = current_impurity.total
-                        best_impurity_left = current_impurity.left
-                        best_impurity_right = current_impurity.right
+                    if current_impurity < (best_impurity - EPSILON_DBL):
+                        best_impurity = current_impurity
+                        best_impurity_left = current_impurity_left
+                        best_impurity_right = current_impurity_right
                         best_pos = current_pos
                         best_feature = current_feature
 
@@ -2325,13 +2329,12 @@ cdef void _add_split_node(Splitter splitter, Tree tree,
             splitter.node_split(&pos, &feature, &threshold, &split_impurity,
                                 &split_impurity_left, &split_impurity_right,
                                 &split_improvement)
+            is_leaf = is_leaf or (pos >= end)
 
         node_id = tree._add_node(parent_id, is_left, is_leaf, feature,
                                  threshold, impurity, n_node_samples)
         # compute values also for split nodes (might become leafs later).
         splitter.node_value(tree.value + node_id * tree.value_stride)
-
-        is_leaf = is_leaf or (pos >= end)
 
         res.node_id = node_id
         res.start = start
