@@ -16,6 +16,12 @@ from libc.stdlib cimport calloc, free, malloc, realloc
 from libc.string cimport memcpy, memset
 from libc.math cimport log as ln
 
+from sklearn.tree._utils cimport Stack
+from sklearn.tree._utils cimport StackRecord
+from sklearn.tree._utils cimport PriorityHeap
+from sklearn.tree._utils cimport PriorityHeapRecord
+
+
 import numpy as np
 cimport numpy as np
 np.import_array()
@@ -86,12 +92,13 @@ cdef class Criterion:
 
     cdef double impurity_improvement(self) nogil:
         """Impurity improvement total impurity - (left impurity + right impurity) """
-        # cdef double impurity_left
-        # cdef double impurity_right
-        # self.children_impurity(&impurity_left, &impurity_right)
-        # return impurity.total - impurity.left - impurity.right
-        cdef double improvement = 0.0
-        return improvement
+        # FIXME should subtract form impurity.total
+        cdef double impurity_left
+        cdef double impurity_right
+        self.children_impurity(&impurity_left, &impurity_right)
+        return -impurity_left - impurity_right
+        #cdef double improvement = 0.0
+        #return improvement
 
 
 cdef class ClassificationCriterion(Criterion):
@@ -818,7 +825,7 @@ cdef class MSE(RegressionCriterion):
 cdef class GBM_MSE(MSE):
     """Mean squared error impurity criterion with improvement score from R's GBM package.
 
-    Uses the following formula for impurity improvement:
+    Uses the formula (35) in Friedmans original Gradient Boosting paper:
 
         diff = mean_left - mean_right
         improvement = n_left * n_right * diff^2 / (n_left + n_right)
@@ -990,8 +997,9 @@ cdef class BestSplitter(Splitter):
         cdef SIZE_t best_pos = end
         cdef SIZE_t best_feature
         cdef double best_threshold
-        cdef double best_improvement
+        cdef double best_improvement = -INFINITY
 
+        cdef double current_improvement
         cdef double current_impurity
         cdef double current_impurity_left
         cdef double current_impurity_right
@@ -1044,12 +1052,14 @@ cdef class BestSplitter(Splitter):
                        continue
 
                     self.criterion.update(current_pos)
-                    self.criterion.children_impurity(&current_impurity_left, &current_impurity_right)
-                    current_impurity = current_impurity_left + current_impurity_right
-                    if current_impurity < (best_impurity - EPSILON_DBL):
-                        best_impurity = current_impurity
+                    #self.criterion.children_impurity(&current_impurity_left, &current_impurity_right)
+                    current_improvement = self.criterion.impurity_improvement()
+                    if current_improvement > best_improvement:
+                        self.criterion.children_impurity(&current_impurity_left, &current_impurity_right)
+                        best_impurity = current_impurity_left + current_impurity_right
                         best_impurity_left = current_impurity_left
                         best_impurity_right = current_impurity_right
+                        best_improvement = current_improvement
                         best_pos = current_pos
                         best_feature = current_feature
 
@@ -1060,7 +1070,6 @@ cdef class BestSplitter(Splitter):
                             current_threshold = X[X_sample_stride * samples[p - 1] + X_fx_stride * current_feature]
 
                         best_threshold = current_threshold
-                        best_improvement = self.criterion.impurity_improvement()
 
             if best_pos == end: # No valid split was ever found
                 continue
@@ -1173,8 +1182,9 @@ cdef class RandomSplitter(Splitter):
         cdef SIZE_t best_pos = end
         cdef SIZE_t best_feature
         cdef double best_threshold
-        cdef double best_improvement
+        cdef double best_improvement = -INFINITY
 
+        cdef double current_improvement
         cdef double current_impurity
         cdef double current_impurity_left
         cdef double current_impurity_right
@@ -1249,17 +1259,17 @@ cdef class RandomSplitter(Splitter):
             # Evaluate split
             self.criterion.reset()
             self.criterion.update(current_pos)
-            self.criterion.children_impurity(&current_impurity_left, &current_impurity_right)
-            current_impurity = current_impurity_left + current_impurity_right
-
-            if current_impurity < best_impurity:
-                best_impurity = current_impurity
+            #self.criterion.children_impurity(&current_impurity_left, &current_impurity_right)
+            current_improvement = self.criterion.impurity_improvement()
+            if current_improvement > best_improvement:
+                self.criterion.children_impurity(&current_impurity_left, &current_impurity_right)
+                best_impurity = current_impurity_left + current_impurity_right
                 best_impurity_left = current_impurity_left
                 best_impurity_right = current_impurity_right
+                best_improvement = current_improvement
                 best_pos = current_pos
                 best_feature = current_feature
                 best_threshold = current_threshold
-                best_improvement = self.criterion.impurity_improvement()
 
             # Count one more visited feature
             visited_features += 1
@@ -1337,7 +1347,8 @@ cdef class PresortBestSplitter(Splitter):
                 np.asfortranarray(np.argsort(X, axis=0), dtype=np.int32)
 
             self.X_argsorted_ptr = <INT32_t*>self.X_argsorted.data
-            self.X_argsorted_stride = <SIZE_t> self.X_argsorted.strides[1] / <SIZE_t> self.X_argsorted.itemsize
+            self.X_argsorted_stride = (<SIZE_t> self.X_argsorted.strides[1] /
+                                       <SIZE_t> self.X_argsorted.itemsize)
 
             if self.sample_mask != NULL:
                 free(self.sample_mask)
@@ -1377,8 +1388,9 @@ cdef class PresortBestSplitter(Splitter):
         cdef SIZE_t best_pos = end
         cdef SIZE_t best_feature
         cdef double best_threshold
-        cdef double best_improvement
+        cdef double best_improvement = -INFINITY
 
+        cdef double current_improvement
         cdef double current_impurity
         cdef double current_impurity_left
         cdef double current_impurity_right
@@ -1441,16 +1453,17 @@ cdef class PresortBestSplitter(Splitter):
                     # Reject if min_samples_leaf is not guaranteed
                     if (((current_pos - start) < min_samples_leaf) or
                         ((end - current_pos) < min_samples_leaf)):
-                       continue
+                        continue
 
                     self.criterion.update(current_pos)
-                    self.criterion.children_impurity(&current_impurity_left, &current_impurity_right)
-                    current_impurity = current_impurity_left + current_impurity_right
-
-                    if current_impurity < (best_impurity - EPSILON_DBL):
-                        best_impurity = current_impurity
+                    #self.criterion.children_impurity(&current_impurity_left, &current_impurity_right)
+                    current_improvement = self.criterion.impurity_improvement()
+                    if current_improvement > best_improvement:
+                        self.criterion.children_impurity(&current_impurity_left, &current_impurity_right)
+                        best_impurity = current_impurity_left + current_impurity_right
                         best_impurity_left = current_impurity_left
                         best_impurity_right = current_impurity_right
+                        best_improvement = current_improvement
                         best_pos = current_pos
                         best_feature = current_feature
 
@@ -1461,7 +1474,6 @@ cdef class PresortBestSplitter(Splitter):
                             current_threshold = X[X_sample_stride * samples[p - 1] + X_fx_stride * current_feature]
 
                         best_threshold = current_threshold
-                        best_improvement = self.criterion.impurity_improvement()
 
             if best_pos == end: # No valid split was ever found
                 continue
@@ -1501,237 +1513,6 @@ cdef class PresortBestSplitter(Splitter):
         impurity_left[0] = best_impurity_left
         impurity_right[0] = best_impurity_right
         impurity_improvement[0] = best_improvement
-
-
-# =============================================================================
-# Stack data structures
-# =============================================================================
-
-# A record on the stack for depth-first tree growing
-cdef struct StackRecord:
-    SIZE_t start
-    SIZE_t end
-    SIZE_t depth
-    SIZE_t parent
-    bint is_left
-    double impurity
-
-
-cdef inline void copy_stack(StackRecord *a, StackRecord *b) nogil:
-    """Assigns ``a := b`` for StackRecord. """
-    a.start = b.start
-    a.end = b.end
-    a.depth = b.depth
-    a.parent = b.parent
-    a.is_left = b.is_left
-    a.impurity = b.impurity
-
-
-cdef class Stack:
-    """A LIFO data structure.
-
-    Attributes
-    ----------
-    capacity : SIZE_t
-        The elements the stack can hold; if more added then ``self.stack`` needs to be
-        resized.
-    stack_ptr : SIZE_t
-        The number of elements currently on the stack.
-    stack : StackRecord pointer
-        The stack of records (upward in the stack corresponds to the right).
-    """
-
-    cdef SIZE_t capacity
-    cdef SIZE_t stack_ptr
-    cdef StackRecord* stack_
-
-    def __cinit__(self, SIZE_t capacity):
-        self.capacity = capacity
-        self.stack_ptr = 0
-        self.stack_ = <StackRecord*> malloc(capacity * sizeof(StackRecord))
-
-    def __dealloc__(self):
-        free(self.stack_)
-
-    cdef bint is_empty(self) nogil:
-        return self.stack_ptr <= 0
-
-    cdef void push(self, SIZE_t start, SIZE_t end, SIZE_t depth, SIZE_t parent, bint is_left,
-                   double impurity) nogil:
-        """Push a new element onto the stack. """
-        cdef SIZE_t stack_ptr = self.stack_ptr + 1
-        cdef StackRecord* stack = NULL
-
-        # Resize if capacity not sufficient
-        if stack_ptr >= self.capacity:
-            self.capacity *= 2
-            self.stack_ = <StackRecord*> realloc(self.stack_, self.capacity * sizeof(StackRecord))
-
-        stack = self.stack_
-        stack[stack_ptr].start = start
-        stack[stack_ptr].end = end
-        stack[stack_ptr].depth = depth
-        stack[stack_ptr].parent = parent
-        stack[stack_ptr].is_left = is_left
-        stack[stack_ptr].impurity = impurity
-        self.stack_ptr = stack_ptr
-
-    cdef int pop(self, StackRecord* res) nogil:
-        """Remove the top element from the stack. """
-        cdef SIZE_t stack_ptr = self.stack_ptr
-        cdef StackRecord* stack = self.stack_
-
-        if stack_ptr <= 0:
-            return 0
-
-        copy_stack(res, stack + stack_ptr)
-        self.stack_ptr = stack_ptr - 1
-        return 1
-
-
-# A record on the frontier for best-first tree growing
-cdef struct PriorityHeapRecord:
-    SIZE_t node_id
-    SIZE_t start
-    SIZE_t end
-    SIZE_t pos
-    SIZE_t depth
-    bint is_leaf
-    double impurity
-    double improvement
-
-
-cdef inline void copy_heap(PriorityHeapRecord *a, PriorityHeapRecord *b) nogil:
-    """Assigns ``a := b``. """
-    a.node_id = b.node_id
-    a.start = b.start
-    a.end = b.end
-    a.pos = b.pos
-    a.depth = b.depth
-    a.is_leaf = b.is_leaf
-    a.impurity = b.impurity
-    a.improvement = b.improvement
-
-
-cdef void swap_heap(PriorityHeapRecord* stack, SIZE_t a, SIZE_t b) nogil:
-    """Swap record ``a`` and ``b`` in ``stack``. """
-    cdef PriorityHeapRecord tmp
-    copy_heap(&tmp, stack + a)
-    copy_heap(stack + a, stack + b)
-    copy_heap(stack + b, &tmp)
-
-
-cdef void heapify_up(PriorityHeapRecord *heap, SIZE_t pos) nogil:
-    """Restore heap invariant parent.improvement > child.improvement from ``pos`` upwards. """
-    if pos == 0:
-        return
-    cdef SIZE_t parent_pos = (pos - 1) / 2
-
-    if heap[parent_pos].improvement < heap[pos].improvement:
-        swap_heap(heap, parent_pos, pos)
-        heapify_up(heap, parent_pos)
-
-
-cdef void heapify_down(PriorityHeapRecord *heap, SIZE_t pos, SIZE_t heap_length) nogil:
-    """Restore heap invariant parent.improvement > children.improvement from ``pos`` downwards. """
-    cdef SIZE_t left_pos = 2 * (pos + 1) - 1
-    cdef SIZE_t right_pos = 2 * (pos + 1)
-    cdef SIZE_t largest = pos
-
-    if left_pos < heap_length and heap[left_pos].improvement > heap[largest].improvement:
-        largest = left_pos
-    if right_pos < heap_length and heap[right_pos].improvement > heap[largest].improvement:
-        largest = right_pos
-
-    if largest != pos:
-        swap_heap(heap, pos, largest)
-        heapify_down(heap, largest, heap_length)
-
-
-cdef class PriorityHeap:
-    """A priority queue implemented as a binary heap.
-
-    The heap invariant is that the impurity improvement of the parent record
-    is larger then the impurity improvement of the children.
-
-    Attributes
-    ----------
-    capacity : SIZE_t
-        The capacity of the heap
-    heap_ptr : SIZE_t
-        The water mark of the heap; the heap grows from left to right in the
-        array ``heap_``. The following invariant holds ``heap_ptr < capacity``.
-    heap_ : PriorityHeapRecord*
-        The array of heap records. The maximum element is on the left;
-        the heap grows from left to right
-    """
-
-    cdef SIZE_t capacity
-    cdef SIZE_t heap_ptr
-    cdef PriorityHeapRecord* heap_
-
-    def __cinit__(self, SIZE_t capacity):
-        self.capacity = capacity
-        self.heap_ptr = 0
-        self.heap_ = <PriorityHeapRecord*> malloc(capacity * sizeof(PriorityHeapRecord))
-
-    def __dealloc__(self):
-        free(self.heap_)
-
-    cdef bint is_empty(self) nogil:
-        return self.heap_ptr <= 0
-
-    cdef void push(self, SIZE_t node_id, SIZE_t start, SIZE_t end, SIZE_t pos,
-                   SIZE_t depth, bint is_leaf, double improvement,
-                   double impurity) nogil:
-        """Push record on the priority heap. """
-        # increment heap end index by one
-        cdef SIZE_t heap_ptr = self.heap_ptr
-        cdef PriorityHeapRecord* heap = NULL
-
-        # resize if capacity not sufficient
-        if heap_ptr >= self.capacity:
-            self.capacity *= 2
-            self.heap_ = <PriorityHeapRecord*> realloc(self.heap_,
-                                                        self.capacity *
-                                                        sizeof(PriorityHeapRecord))
-
-        # put element as last element of heap
-        heap = self.heap_
-        heap[heap_ptr].node_id = node_id
-        heap[heap_ptr].start = start
-        heap[heap_ptr].end = end
-        heap[heap_ptr].pos = pos
-        heap[heap_ptr].depth = depth
-        heap[heap_ptr].is_leaf = is_leaf
-        heap[heap_ptr].impurity = impurity
-        heap[heap_ptr].improvement = improvement
-
-        # heapify up
-        heapify_up(heap, heap_ptr)
-
-        self.heap_ptr = heap_ptr + 1
-
-    cdef int pop(self, PriorityHeapRecord* res) nogil:
-        """Remove max element from the heap. """
-        cdef SIZE_t heap_ptr = self.heap_ptr
-        cdef PriorityHeapRecord* heap = self.heap_
-
-        if heap_ptr <= 0:
-            return 0
-
-        # take first element
-        copy_heap(res, heap)
-
-        # put last element to the front
-        swap_heap(heap, 0, heap_ptr - 1)
-
-        # restore heap invariant
-        if heap_ptr > 1:
-            heapify_down(heap, 0, heap_ptr - 1)
-
-        self.heap_ptr = heap_ptr - 1
-        return 1
 
 
 # =============================================================================
