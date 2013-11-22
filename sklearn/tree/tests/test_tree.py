@@ -610,7 +610,7 @@ def test_32bit_equality():
 
     est.fit(X_train, y_train)
     score = est.score(X_test, y_test)
-    assert_almost_equal(0.84652100667116, score)
+    assert_almost_equal(score, 0.86908506408880637)
 
 
 def test_max_leaf_nodes():
