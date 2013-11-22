@@ -536,8 +536,13 @@ class BernoulliNB(BaseDiscreteNB):
 
     def _count(self, X, Y):
         """Count and smooth feature occurrences."""
-        if self.binarize is not None:
+        if self.binarize is None:
+            #ensure data is binary
+            if not set(np.unique(X)).issubset({0, 1}):
+                raise ValueError("Expected binary input, got non-binary input")
+        else:
             X = binarize(X, threshold=self.binarize)
+
         self.feature_count_ += safe_sparse_dot(Y.T, X)
         self.class_count_ += Y.sum(axis=0)
 
@@ -555,9 +560,12 @@ class BernoulliNB(BaseDiscreteNB):
 
         X = atleast2d_or_csr(X)
 
-        if self.binarize is not None:
+        if self.binarize is None:
+            #ensure data is binary
+            if not set(np.unique(X)).issubset({0, 1}):
+                raise ValueError("Expected binary input, got non-binary input")
+        else:
             X = binarize(X, threshold=self.binarize)
-
         n_classes, n_features = self.feature_log_prob_.shape
         n_samples, n_features_X = X.shape
 
