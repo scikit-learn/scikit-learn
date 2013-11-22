@@ -57,6 +57,7 @@ cdef class Criterion:
 # =============================================================================
 # Splitter
 # =============================================================================
+
 cdef class Splitter:
     # Internal structures
     cdef public Criterion criterion      # Impurity criterion
@@ -95,7 +96,6 @@ cdef class Splitter:
     cdef void node_split(self, SIZE_t* pos, # Set to >= end if the node is a leaf
                                SIZE_t* feature,
                                double* threshold,
-                               double* impurity,
                                double* impurity_left,
                                double* impurity_right,
                                double* impurity_improvement) nogil
@@ -148,6 +148,10 @@ cdef class Tree:
     cpdef apply(self, np.ndarray[DTYPE_t, ndim=2] X)
     cpdef compute_feature_importances(self, normalize=*)
 
+
+# =============================================================================
+# Tree builder
+# =============================================================================
 
 cdef class TreeBuilder:
 

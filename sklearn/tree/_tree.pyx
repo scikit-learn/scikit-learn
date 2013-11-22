@@ -953,7 +953,6 @@ cdef class Splitter:
         # impurity[0] =  self.criterion.node_impurity()
 
     cdef void node_split(self, SIZE_t* pos, SIZE_t* feature, double* threshold,
-                         double* impurity,
                          double* impurity_left, double* impurity_right,
                          double* impurity_improvement) nogil:
         """Find a split on node samples[start:end]."""
@@ -973,7 +972,6 @@ cdef class BestSplitter(Splitter):
                                self.random_state), self.__getstate__())
 
     cdef void node_split(self, SIZE_t* pos, SIZE_t* feature, double* threshold,
-                         double* impurity,
                          double* impurity_left, double* impurity_right,
                          double* impurity_improvement) nogil:
         """Find the best split on node samples[start:end]."""
@@ -992,7 +990,6 @@ cdef class BestSplitter(Splitter):
         cdef SIZE_t min_samples_leaf = self.min_samples_leaf
         cdef UINT32_t* random_state = &self.rand_r_state
 
-        cdef double best_impurity = INFINITY
         cdef double best_impurity_left = INFINITY
         cdef double best_impurity_right = INFINITY
         cdef SIZE_t best_pos = end
@@ -1053,11 +1050,9 @@ cdef class BestSplitter(Splitter):
                        continue
 
                     self.criterion.update(current_pos)
-                    #self.criterion.children_impurity(&current_impurity_left, &current_impurity_right)
                     current_improvement = self.criterion.impurity_improvement()
                     if current_improvement > best_improvement:
                         self.criterion.children_impurity(&current_impurity_left, &current_impurity_right)
-                        best_impurity = current_impurity_left + current_impurity_right
                         best_impurity_left = current_impurity_left
                         best_impurity_right = current_impurity_right
                         best_improvement = current_improvement
@@ -1102,7 +1097,6 @@ cdef class BestSplitter(Splitter):
         pos[0] = best_pos
         feature[0] = best_feature
         threshold[0] = best_threshold
-        impurity[0] = best_impurity
         impurity_left[0] = best_impurity_left
         impurity_right[0] = best_impurity_right
         impurity_improvement[0] = best_improvement
@@ -1158,7 +1152,6 @@ cdef class RandomSplitter(Splitter):
                                  self.random_state), self.__getstate__())
 
     cdef void node_split(self, SIZE_t* pos, SIZE_t* feature, double* threshold,
-                         double* impurity,
                          double* impurity_left, double* impurity_right,
                          double* impurity_improvement) nogil:
         """Find the best random split on node samples[start:end]."""
@@ -1177,7 +1170,6 @@ cdef class RandomSplitter(Splitter):
         cdef SIZE_t min_samples_leaf = self.min_samples_leaf
         cdef UINT32_t* random_state = &self.rand_r_state
 
-        cdef double best_impurity = INFINITY
         cdef double best_impurity_left = INFINITY
         cdef double best_impurity_right = INFINITY
         cdef SIZE_t best_pos = end
@@ -1260,11 +1252,9 @@ cdef class RandomSplitter(Splitter):
             # Evaluate split
             self.criterion.reset()
             self.criterion.update(current_pos)
-            #self.criterion.children_impurity(&current_impurity_left, &current_impurity_right)
             current_improvement = self.criterion.impurity_improvement()
             if current_improvement > best_improvement:
                 self.criterion.children_impurity(&current_impurity_left, &current_impurity_right)
-                best_impurity = current_impurity_left + current_impurity_right  # FIXME wrong
                 best_impurity_left = current_impurity_left
                 best_impurity_right = current_impurity_right
                 best_improvement = current_improvement
@@ -1299,7 +1289,6 @@ cdef class RandomSplitter(Splitter):
         pos[0] = best_pos
         feature[0] = best_feature
         threshold[0] = best_threshold
-        impurity[0] = best_impurity
         impurity_left[0] = best_impurity_left
         impurity_right[0] = best_impurity_right
         impurity_improvement[0] = best_improvement
@@ -1359,7 +1348,6 @@ cdef class PresortBestSplitter(Splitter):
                                                 sizeof(SIZE_t))
 
     cdef void node_split(self, SIZE_t* pos, SIZE_t* feature, double* threshold,
-                         double* impurity,
                          double* impurity_left, double* impurity_right,
                          double* impurity_improvement) nogil:
         """Find the best split on node samples[start:end]."""
@@ -1383,7 +1371,6 @@ cdef class PresortBestSplitter(Splitter):
         cdef SIZE_t min_samples_leaf = self.min_samples_leaf
         cdef UINT32_t* random_state = &self.rand_r_state
 
-        cdef double best_impurity = INFINITY
         cdef double best_impurity_left = INFINITY
         cdef double best_impurity_right = INFINITY
         cdef SIZE_t best_pos = end
@@ -1457,11 +1444,9 @@ cdef class PresortBestSplitter(Splitter):
                         continue
 
                     self.criterion.update(current_pos)
-                    #self.criterion.children_impurity(&current_impurity_left, &current_impurity_right)
                     current_improvement = self.criterion.impurity_improvement()
                     if current_improvement > best_improvement:
                         self.criterion.children_impurity(&current_impurity_left, &current_impurity_right)
-                        best_impurity = current_impurity_left + current_impurity_right
                         best_impurity_left = current_impurity_left
                         best_impurity_right = current_impurity_right
                         best_improvement = current_improvement
@@ -1510,7 +1495,6 @@ cdef class PresortBestSplitter(Splitter):
         pos[0] = best_pos
         feature[0] = best_feature
         threshold[0] = best_threshold
-        impurity[0] = best_impurity
         impurity_left[0] = best_impurity_left
         impurity_right[0] = best_impurity_right
         impurity_improvement[0] = best_improvement
@@ -2018,7 +2002,6 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
 
         cdef double threshold
         cdef double impurity = INFINITY
-        cdef double split_impurity = INFINITY
         cdef double split_impurity_left = INFINITY
         cdef double split_impurity_right = INFINITY
         cdef double split_improvement = INFINITY
@@ -2056,7 +2039,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                 is_leaf = is_leaf or (impurity < EPSILON_FLT)
 
                 if not is_leaf:
-                    splitter.node_split(&pos, &feature, &threshold, &split_impurity,
+                    splitter.node_split(&pos, &feature, &threshold,
                                         &split_impurity_left, &split_impurity_right,
                                         &split_improvement)
                     is_leaf = is_leaf or (pos >= end)
@@ -2089,7 +2072,6 @@ cdef void _add_split_node(Splitter splitter, Tree tree,
         cdef SIZE_t feature
         cdef SIZE_t node_id
         cdef double threshold
-        cdef double split_impurity
         cdef double split_impurity_left
         cdef double split_impurity_right
         cdef double split_improvement
@@ -2108,7 +2090,7 @@ cdef void _add_split_node(Splitter splitter, Tree tree,
                    (n_node_samples < 2 * tree.min_samples_leaf))
 
         if not is_leaf:
-            splitter.node_split(&pos, &feature, &threshold, &split_impurity,
+            splitter.node_split(&pos, &feature, &threshold,
                                 &split_impurity_left, &split_impurity_right,
                                 &split_improvement)
             is_leaf = is_leaf or (pos >= end)
@@ -2122,7 +2104,7 @@ cdef void _add_split_node(Splitter splitter, Tree tree,
         res.start = start
         res.end = end
         res.depth = depth
-        res.impurity = split_impurity
+        res.impurity = impurity
 
         if not is_leaf:
             # is split node
