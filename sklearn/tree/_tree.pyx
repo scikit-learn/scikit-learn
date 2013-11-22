@@ -92,13 +92,14 @@ cdef class Criterion:
 
     cdef double impurity_improvement(self) nogil:
         """Impurity improvement total impurity - (left impurity + right impurity) """
-        # FIXME should subtract form impurity.total
+        # FIXME should subtract from total impurity but not relevant for splits and costly
         cdef double impurity_left
         cdef double impurity_right
         self.children_impurity(&impurity_left, &impurity_right)
-        return -impurity_left - impurity_right
-        #cdef double improvement = 0.0
-        #return improvement
+
+        cdef double impurity_total = (self.weighted_n_right * self.n_outputs * impurity_right +
+                                      self.weighted_n_left * self.n_outputs * impurity_left)
+        return -impurity_total
 
 
 cdef class ClassificationCriterion(Criterion):
@@ -1263,7 +1264,7 @@ cdef class RandomSplitter(Splitter):
             current_improvement = self.criterion.impurity_improvement()
             if current_improvement > best_improvement:
                 self.criterion.children_impurity(&current_impurity_left, &current_impurity_right)
-                best_impurity = current_impurity_left + current_impurity_right
+                best_impurity = current_impurity_left + current_impurity_right  # FIXME wrong
                 best_impurity_left = current_impurity_left
                 best_impurity_right = current_impurity_right
                 best_improvement = current_improvement
