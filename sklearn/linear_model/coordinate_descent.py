@@ -453,6 +453,62 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
         return alphas, coefs, dual_gaps
 
 
+def enet_multitask_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100,
+              alphas=None, precompute='auto', Xy=None,
+              copy_X=True, coef_init=None, **params):
+
+    """
+    TODO: Add docstring.
+    """
+    X = atleast2d_or_csc(X, dtype=np.float64, order='F',
+                         copy=copy_X and fit_intercept)
+
+    n_samples, n_features = X.shape
+    _, n_outputs = y.shape
+
+    X, y, X_mean, y_mean, X_std, precompute, Xy = \
+        _pre_fit(X, y, Xy, precompute, normalize=False,
+                 fit_intercept=True, copy=False)
+
+    n_samples = X.shape[0]
+    if alphas is None:
+        # No need to normalize of fit_intercept: it has been done
+        # above
+        alphas = _alpha_grid(X, y, Xy=Xy, l1_ratio=l1_ratio,
+                             fit_intercept=False, eps=eps, n_alphas=n_alphas,
+                             normalize=False, copy_X=False)
+    else:
+        alphas = np.sort(alphas)[::-1]  # make sure alphas are properly ordered
+
+    n_alphas = len(alphas)
+    tol = params.get('tol', 1e-4)
+    max_iter = params.get('max_iter', 1000)
+
+    coefs = np.zeros([n_outputs, n_features, n_alphas])
+    dual_gaps = []
+    if coef_init is None:
+        coef_ = np.zeros([n_outputs, n_features], dtype=np.float64)
+    else:
+        coef_ = coef_init
+    coef_ = np.asfortranarray(coef_)
+
+    for i, alpha in enumerate(alphas):
+        l1_reg = alphas[i] * l1_ratio * n_samples
+        l2_reg = alphas[i] * (1.0 - l1_ratio) * n_samples
+        coef_, dual_gap_, eps_ = cd_fast.enet_coordinate_descent_multi_task(
+                coef_, l1_reg, l2_reg, X, y, max_iter, tol)
+        coefs[:,:,i] = coef_
+        dual_gaps.append(dual_gap_)
+
+        if dual_gap_ > eps_:
+            warnings.warn('Objective did not converge.' +
+                          ' You might want' +
+                          ' to increase the number of iterations')
+
+    alphas = np.asarray(alphas)
+    coefs = np.asarray(coefs)
+    return alphas, coefs, dual_gaps
+
 ###############################################################################
 # ElasticNet model
 
@@ -820,6 +876,7 @@ def _path_residuals(X, y, train, test, path, path_params, l1_ratio=1,
     fit_intercept = path_params['fit_intercept']
     normalize = path_params['normalize']
     precompute = path_params['precompute']
+    n_outputs = path_params.get('multi-task', 1)
 
     X_train, y_train, X_mean, y_mean, X_std, precompute, Xy = \
         _pre_fit(X_train, y_train, None, precompute, normalize, fit_intercept,
@@ -844,16 +901,29 @@ def _path_residuals(X, y, train, test, path, path_params, l1_ratio=1,
     alphas, coefs, _ = path(X_train, y[train], **path_params)
     del X_train
 
+    n_samples, n_features = X_test.shape
+    n_alphas = len(alphas)
+
+    if n_outputs == 1:
+        coefs = coefs[np.newaxis, : , :]
+        y_mean = np.atleast_1d(y_mean)
+        y_test = y_test[np.newaxis, :]
+
     if normalize:
         nonzeros = np.flatnonzero(X_std)
-        coefs[nonzeros] /= X_std[nonzeros][:, np.newaxis]
+        for i, in xrange(n_outputs):
+            coefs[i][nonzeros] /= X_std[nonzeros][:, np.newaxis]
 
-    intercepts = y_mean - np.dot(X_mean, coefs)
-    residues = safe_sparse_dot(X_test, coefs) - y_test[:, np.newaxis]
-    residues += intercepts[np.newaxis, :]
+    residues = np.zeros([n_samples, n_alphas])
+    for i in xrange(n_outputs):
+        # Macroaveraging in case of multitask outputs.
+        intercepts = y_mean[i] - np.dot(X_mean, coefs[i])
+        residues += safe_sparse_dot(X_test, coefs[i]) - \
+                                   y_test[:, i][:, np.newaxis]
+        residues += intercepts[np.newaxis, :]
     this_mses = (residues ** 2).mean(axis=0)
-    return this_mses, l1_ratio
 
+    return this_mses, l1_ratio
 
 class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
     """Base class for iterative model fitting along a regularization path"""
@@ -1613,7 +1683,7 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
     To avoid unnecessary memory duplication the X argument of the fit method
     should be directly passed as a Fortran-contiguous numpy array.
     """
-    path = staticmethod(enet_path)
+    path = staticmethod(enet_multitask_path)
     def __init__(self, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
                  fit_intercept=True, normalize=False, precompute='auto',
                  max_iter=1000, tol=1e-4, cv=None, copy_X=True,
@@ -1649,8 +1719,11 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
             Target values
 
         """
-        X, copy_X = self._check_copy_X(X)
+        # X and y must be of type float64
+        X = array2d(X, dtype=np.float64, order='F',
+                    copy=self.copy_X and self.fit_intercept)
         y = np.asarray(y, dtype=np.float64)
+        X, copy_X = self._check_copy_X(X)
 
         n_samples, n_features = X.shape
         if y.ndim == 1:
@@ -1662,8 +1735,11 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
 
         n_outputs = y.shape[1]
 
-        # All LinearModelCV parameters except 'cv' are acceptable
-        path_params = self.get_params()
+        # Needed for _path_residual function.
+        path_params = {'multi-task': n_outputs}
+
+        # All LinearModelCV parameters except 'cv' are acceptable.
+        path_params.update(self.get_params())
         if 'l1_ratio' in path_params:
             l1_ratios = np.atleast_1d(path_params['l1_ratio'])
             # For the first path, we need to set l1_ratio
@@ -1671,92 +1747,75 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
         else:
             l1_ratios = [1, ]
 
-        path_params.pop('cv', None)
-        path_params.pop('n_jobs', None)
+        alphas = self.alphas
+        if alphas is None:
+            mean_l1_ratio = 1.
+            if hasattr(self, 'l1_ratio'):
+                mean_l1_ratio = np.mean(self.l1_ratio)
+            alphas = _alpha_grid(X, y, l1_ratio=mean_l1_ratio,
+                                 fit_intercept=self.fit_intercept,
+                                 eps=self.eps, n_alphas=self.n_alphas,
+                                 normalize=self.normalize,
+                                 copy_X=self.copy_X)
+        n_alphas = len(alphas)
+        path_params.update({'alphas': alphas, 'n_alphas': n_alphas})
+
         path_params['copy_X'] = copy_X
         # We are not computing in parallel, we can modify X
         # inplace in the folds
         if not (self.n_jobs == 1 or self.n_jobs is None):
             path_params['copy_X'] = False
 
-
         # init cross-validation generator
         cv = check_cv(self.cv, X)
+
+        # Compute path for all folds and compute MSE to get the best alpha
         folds = list(cv)
+        best_mse = np.inf
+        all_mse_paths = list()
 
-        alphas = self.alphas
-        if alphas is None:
-            mean_l1_ratio = 1.
-            if hasattr(self, 'l1_ratio'):
-                mean_l1_ratio = np.mean(self.l1_ratio)
-            # A list of alpha scores used across all tasks.
-            alpha_task = []
-
-        else:
-            alpha_task = np.tile(alphas, (n_outputs, 1))
-
-        # For now the alpha that gives the lowest MSE, across all tasks
-        # is chosen. It is unlikely that this alpha would give the
-        # lowest MSE across all tasks.
-        for task in xrange(n_outputs):
-            if alphas is None:
-                # Preparing a grid of alpha values for each task.
-                alpha_task.append(_alpha_grid(X, y[:, task],
-                              l1_ratio=mean_l1_ratio,
-                              fit_intercept=self.fit_intercept,
-                              eps=self.eps, n_alphas=self.n_alphas,
-                              normalize=self.normalize,
-                              copy_X=self.copy_X))
-
-            n_alphas = len(alpha_task[task])
-            path_params.update({'alphas': alpha_task[task], 'n_alphas': n_alphas})
-
-            # compute MSE to get the best alpha
-            best_mse = np.inf
-            all_mse_paths = list()
-
-            # We do a double for loop folded in one, in order to be able to
-            # iterate in parallel on l1_ratio and folds
-            for l1_ratio, mse_alphas in itertools.groupby(
+        # We do a double for loop folded in one, in order to be able to
+        # iterate in parallel on l1_ratio and folds
+        for l1_ratio, mse_alphas in itertools.groupby(
                 Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
                     delayed(_path_residuals)(
-                        X, y[:, task], train, test, self.path, path_params,
+                        X, y, train, test, self.path, path_params,
                         l1_ratio=l1_ratio, X_order='F',
                         dtype=np.float64)
                     for l1_ratio in l1_ratios for train, test in folds
                 ), operator.itemgetter(1)):
 
-                mse_alphas = [m[0] for m in mse_alphas]
-                mse_alphas = np.array(mse_alphas)
+            mse_alphas = [m[0] for m in mse_alphas]
+            mse_alphas = np.array(mse_alphas)
 
-                mse = np.mean(mse_alphas, axis=0)
-                i_best_alpha = np.argmin(mse)
-                this_best_mse = mse[i_best_alpha]
-                all_mse_paths.append(mse_alphas.T)
-                if this_best_mse < best_mse:
-                    best_alpha = alpha_task[task][i_best_alpha]
-                    best_l1_ratio = l1_ratio
-                    best_mse = this_best_mse
+            mse = np.mean(mse_alphas, axis=0)
+            i_best_alpha = np.argmin(mse)
+            this_best_mse = mse[i_best_alpha]
+            all_mse_paths.append(mse_alphas.T)
+            if this_best_mse < best_mse:
+                best_alpha = alphas[i_best_alpha]
+                best_l1_ratio = l1_ratio
+                best_mse = this_best_mse
+
 
         self.l1_ratio_ = best_l1_ratio
         self.alpha_ = best_alpha
-        self.alphas_ = np.asarray(alpha_task)
+        self.alphas_ = np.asarray(alphas)
         self.mse_path_ = np.squeeze(all_mse_paths)
-        X, y, X_mean, y_mean, X_std = center_data(
-            X, y, self.fit_intercept, self.normalize, copy=False)
 
-        self.coef_ = np.zeros((n_outputs, n_features), dtype=np.float64,
-                               order='F')
-        self.coef_ = np.asfortranarray(self.coef_)  # coef contiguous in memory
-        X = np.asfortranarray(X)
-
-        l1_reg = self.alpha_ * self.l1_ratio_ * n_samples
-        l2_reg = self.alpha_ * (1.0 - self.l1_ratio_) * n_samples
-        self.coef_, self.dual_gap_, self.eps_ = \
-            cd_fast.enet_coordinate_descent_multi_task(
-                self.coef_, l1_reg, l2_reg, X, y, self.max_iter, self.tol)
-
-        self._set_intercept(X_mean, y_mean, X_std)
+        # Refit the model with the parameters selected
+        model = MultiTaskElasticNet()
+        common_params = dict((name, value)
+                             for name, value in self.get_params().items()
+                             if name in model.get_params())
+        model.set_params(**common_params)
+        model.alpha = best_alpha
+        model.l1_ratio = best_l1_ratio
+        model.copy_X = copy_X
+        model.fit(X, y)
+        self.coef_ = model.coef_
+        self.intercept_ = model.intercept_
+        self.dual_gap_ = model.dual_gap_
         return self
 
 
@@ -1834,7 +1893,7 @@ class MultiTaskLassoCV(MultiTaskElasticNetCV):
     To avoid unnecessary memory duplication the X argument of the fit method
     should be directly passed as a Fortran-contiguous numpy array.
     """
-    path = staticmethod(lasso_path)
+    path = staticmethod(enet_multitask_path)
     n_jobs = 1
 
     def __init__(self, eps=1e-3, n_alphas=100, alphas=None, fit_intercept=True,
