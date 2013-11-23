@@ -585,8 +585,8 @@ class BernoulliNB(BaseDiscreteNB):
  
 class _NormalApproximation(BaseEstimator):
     """Normal Approximation Density Estimator"""
-    def __init__(self):
-        pass
+    def __init__(self, epsilon=1E-9):
+        self.epsilon = epsilon
  
     def fit(self, X):
         """Fit the Normal Approximation to data
@@ -598,9 +598,8 @@ class _NormalApproximation(BaseEstimator):
             corresponds to a single data point.
         """
         X = array2d(X)
-        epsilon = 1e-9
         self.mean = X.mean(0)
-        self.var = X.var(0) + epsilon
+        self.var = X.var(0) + self.epsilon
         return self
  
     def score_samples(self, X):
@@ -621,8 +620,10 @@ class _NormalApproximation(BaseEstimator):
         if X.shape[-1] != self.mean.shape[0]:
             raise ValueError("dimension of X must match that of training data")
         norm = 1. / np.sqrt((2 * np.pi) ** X.shape[-1] * np.sum(self.var))
-        res = np.log(norm * np.exp(-0.5 * ((X - self.mean) ** 2
-                                                 / self.var).sum(1)))
+        #res = np.log(norm * np.exp(-0.5 * ((X - self.mean) ** 2
+        #                                         / self.var).sum(1)))
+        #log_norm = -0.5 * 
+        res = np.log(norm) - 0.5 * ((X - self.mean) ** 2 / self.var).sum(1)
         return res
  
     def score(self, X):
@@ -686,19 +687,23 @@ class GenerativeBayes(BaseNB):
         instantiated class should be a sklearn estimator, and contain a
         ``score_samples`` method with semantics similar to those in
         :class:`sklearn.neighbors.KDE`.
-    **kwargs :
-        additional keyword arguments to be passed to the constructor
-        specified by density_estimator.
+    model_kwds : dict or None
+        Additional keyword arguments to be passed to the constructor
+        specified by density_estimator.  Default=None.
     """
-    def __init__(self, density_estimator='norm_approx', **kwargs):
+    def __init__(self, density_estimator='norm_approx',
+                 model_kwds=None):
         self.density_estimator = density_estimator
-        self.kwargs = kwargs
+        self.model_kwds = model_kwds
 
         # run this here to check for any exceptions; we avoid assigning
         # the result here so that the estimator can be cloned.
-        self._choose_estimator(density_estimator, **kwargs)
+        self._choose_estimator(density_estimator, self.model_kwds)
 
-    def _choose_estimator(self, density_estimator, **kwargs):
+    def _choose_estimator(self, density_estimator, kwargs=None):
+        if kwargs is None:
+            kwargs = {}
+
         if isinstance(density_estimator, str):
             dclass = DENSITY_MODELS.get(density_estimator)
             if dclass is None:
@@ -723,7 +728,7 @@ class GenerativeBayes(BaseNB):
         """
         X, y = check_arrays(X, y, sparse_format='dense')
         estimator = self._choose_estimator(self.density_estimator,
-                                           **self.kwargs)
+                                           self.model_kwds)
 
         self.classes_ = np.sort(np.unique(y))
         n_classes = len(self.classes_)

@@ -373,12 +373,12 @@ def test_check_accuracy_on_digits():
                   'gmm': (0.92, 0.93)}
 
     for model, kwargs in MODEL_KWARGS.iteritems():
-        scores = cross_val_score(GenerativeBayes(model, **kwargs),
-                                 X, y, cv=10)
+        scores = cross_val_score(GenerativeBayes(model, kwargs),
+                                 X, y, cv=3)
         assert_greater(scores.mean(), scores_cmp[model][0])
 
-        scores = cross_val_score(GenerativeBayes(model, **kwargs),
-                                 X_3v8, y_3v8, cv=10)
+        scores = cross_val_score(GenerativeBayes(model, kwargs),
+                                 X_3v8, y_3v8, cv=3)
         assert_greater(scores.mean(), scores_cmp[model][1])
 
 
@@ -398,7 +398,7 @@ def test_generative_model_prior():
     """Test whether class priors are properly set."""
     # class priors should sum to 1.
     for model, kwargs in MODEL_KWARGS.iteritems():
-        clf = GenerativeBayes(model, **kwargs)
+        clf = GenerativeBayes(model, kwargs)
 
         clf.fit(X, y)
         assert_array_almost_equal(np.array([3, 3]) / 6.0,
