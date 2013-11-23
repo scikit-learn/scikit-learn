@@ -619,12 +619,9 @@ class _NormalApproximation(BaseEstimator):
         X = array2d(X)
         if X.shape[-1] != self.mean.shape[0]:
             raise ValueError("dimension of X must match that of training data")
-        norm = 1. / np.sqrt((2 * np.pi) ** X.shape[-1] * np.sum(self.var))
-        #res = np.log(norm * np.exp(-0.5 * ((X - self.mean) ** 2
-        #                                         / self.var).sum(1)))
-        #log_norm = -0.5 * 
-        res = np.log(norm) - 0.5 * ((X - self.mean) ** 2 / self.var).sum(1)
-        return res
+        log_norm = -0.5 * (X.shape[-1] * np.log(2 * np.pi)
+                           + np.log(self.var).sum())
+        return log_norm - 0.5 * ((X - self.mean) ** 2 / self.var).sum(1)
  
     def score(self, X):
         """Compute the log probability under the model.
