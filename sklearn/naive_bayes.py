@@ -4,6 +4,9 @@
 The :mod:`sklearn.naive_bayes` module implements Naive Bayes algorithms. These
 are supervised learning methods based on applying Bayes' theorem with strong
 (naive) feature independence assumptions.
+
+It also implements routines for generative classification with fewer
+assumptions, i.e. non-naive Bayesian classification.
 """
 
 # Author: Vincent Michel <vincent.michel@inria.fr>
@@ -12,6 +15,8 @@ are supervised learning methods based on applying Bayes' theorem with strong
 #         Yehuda Finkelstein <yehudaf@tx.technion.ac.il>
 #         Lars Buitinck <L.J.Buitinck@uva.nl>
 #         (parts based on earlier work by Mathieu Blondel)
+#         Generative Classification by
+#         Jake Vanderplas <jakevdp@cs.washington.edu>
 #
 # License: BSD 3 clause
 
@@ -21,16 +26,19 @@ import numpy as np
 from scipy.sparse import issparse
 import warnings
 
-from .base import BaseEstimator, ClassifierMixin
+from .base import BaseEstimator, ClassifierMixin, clone
 from .preprocessing import binarize
 from .preprocessing import LabelBinarizer
 from .preprocessing import label_binarize
-from .utils import array2d, atleast2d_or_csr, column_or_1d, check_arrays
+from .utils import (array2d, atleast2d_or_csr, column_or_1d, check_arrays,
+                    check_random_state, check_arrays)
 from .utils.extmath import safe_sparse_dot, logsumexp
 from .utils.multiclass import _check_partial_fit_first_call
 from .externals import six
+from .neighbors import KernelDensity
+from .mixture import GMM
 
-__all__ = ['BernoulliNB', 'GaussianNB', 'MultinomialNB']
+__all__ = ['BernoulliNB', 'GaussianNB', 'MultinomialNB', 'GenerativeBayes']
 
 
 class BaseNB(six.with_metaclass(ABCMeta, BaseEstimator, ClassifierMixin)):
@@ -571,3 +579,226 @@ class BernoulliNB(BaseDiscreteNB):
         jll += self.class_log_prior_ + neg_prob.sum(axis=1)
 
         return jll
+
+
+ 
+ 
+class _NormalApproximation(BaseEstimator):
+    """Normal Approximation Density Estimator"""
+    def __init__(self):
+        pass
+ 
+    def fit(self, X):
+        """Fit the Normal Approximation to data
+ 
+        Parameters
+        ----------
+        X: array_like, shape (n_samples, n_features)
+            List of n_features-dimensional data points.  Each row
+            corresponds to a single data point.
+        """
+        X = array2d(X)
+        epsilon = 1e-9
+        self.mean = X.mean(0)
+        self.var = X.var(0) + epsilon
+        return self
+ 
+    def score_samples(self, X):
+        """Evaluate the model on the data
+ 
+        Parameters
+        ----------
+        X : array_like
+            An array of points to query.  Last dimension should match dimension
+            of training data (n_features)
+ 
+        Returns
+        -------
+        density : ndarray
+            The array of density evaluations.  This has shape X.shape[:-1]
+        """
+        X = array2d(X)
+        if X.shape[-1] != self.mean.shape[0]:
+            raise ValueError("dimension of X must match that of training data")
+        norm = 1. / np.sqrt((2 * np.pi) ** X.shape[-1] * np.sum(self.var))
+        res = np.log(norm * np.exp(-0.5 * ((X - self.mean) ** 2
+                                                 / self.var).sum(1)))
+        return res
+ 
+    def score(self, X):
+        """Compute the log probability under the model.
+ 
+        Parameters
+        ----------
+        X : array_like, shape (n_samples, n_features)
+            List of n_features-dimensional data points.  Each row
+            corresponds to a single data point.
+ 
+        Returns
+        -------
+        logprob : array_like, shape (n_samples,)
+            Log probabilities of each data point in X
+        """
+        return np.sum(self.score_samples(X))
+ 
+    def sample(self, n_samples=1, random_state=None):
+        """Generate random samples from the model.
+ 
+        Parameters
+        ----------
+        n_samples : int, optional
+            Number of samples to generate. Defaults to 1.
+ 
+        random_state: RandomState or an int seed (0 by default)
+            A random number generator instance
+ 
+        Returns
+        -------
+        X : array_like, shape (n_samples, n_features)
+            List of samples
+        """
+        rng = check_random_state(random_state)
+        return rng.normal(self.mean, np.sqrt(self.var),
+                          size=(n_samples, len(self.mean)))        
+ 
+ 
+DENSITY_MODELS = {'norm_approx': _NormalApproximation,
+                  'gmm': GMM,
+                  'kde': KernelDensity}
+ 
+ 
+class GenerativeBayes(BaseNB):
+    """
+    Generative Bayes Classifier
+
+    This is a meta-estimator which performs generative Bayesian classification
+    using flexible underlying density models.
+
+    Parameters
+    ----------
+    density_estimator : str, class, or instance
+        The density estimator to use for each class.  Options are
+            'norm_approx' : Normal Approximation (i.e. naive Bayes)
+            'gmm' : Gaussian Mixture Model
+            'kde' : Kernel Density Estimate
+        The default is 'norm_approx'.
+        Alternatively, a class or class instance can be specified.  The
+        instantiated class should be a sklearn estimator, and contain a
+        ``score_samples`` method with semantics similar to those in
+        :class:`sklearn.neighbors.KDE`.
+    **kwargs :
+        additional keyword arguments to be passed to the constructor
+        specified by density_estimator.
+    """
+    def __init__(self, density_estimator='norm_approx', **kwargs):
+        self.density_estimator = density_estimator
+        self.kwargs = kwargs
+
+        # run this here to check for any exceptions; we avoid assigning
+        # the result here so that the estimator can be cloned.
+        self._choose_estimator(density_estimator, **kwargs)
+
+    def _choose_estimator(self, density_estimator, **kwargs):
+        if isinstance(density_estimator, str):
+            dclass = DENSITY_MODELS.get(density_estimator)
+            if dclass is None:
+                raise ValueError("Unrecognized model: %s" % density_estimator)
+            else:
+                return dclass(**kwargs)
+        elif isinstance(density_estimator, type):
+            return density_estimator(**kwargs)
+        else:
+            return density_estimator
+ 
+    def fit(self, X, y):
+        """Fit the model using X as training data and y as target values
+
+        Parameters
+        ----------
+        X : array-like
+            Training data. shape = [n_samples, n_features]
+
+        y : array-like
+            Target values, array of float values, shape = [n_samples]
+        """
+        X, y = check_arrays(X, y, sparse_format='dense')
+        estimator = self._choose_estimator(self.density_estimator,
+                                           **self.kwargs)
+
+        self.classes_ = np.sort(np.unique(y))
+        n_classes = len(self.classes_)
+        n_samples, self.n_features_ = X.shape
+
+        masks = [(y == c) for c in self.classes_]
+
+        self.class_prior_ = np.array([np.float(mask.sum()) / n_samples
+                                      for mask in masks])
+        self.estimators_ = [clone(estimator).fit(X[mask])
+                            for mask in masks]
+        return self
+ 
+    def _joint_log_likelihood(self, X):
+        """Compute the per-class log likelihood of each sample
+
+        Parameters
+        ----------
+        X : array_like
+            Array of samples on which to compute likelihoods.  Shape is
+            (n_samples, n_features)
+
+        Returns
+        -------
+        logL : array_like
+            The log likelihood under each class.
+            Shape is (n_samples, n_classes).  logL[i, j] gives the log
+            likelihood of X[i] within the model representing the class
+            self.classes_[j].
+        """
+        X = array2d(X)
+
+        # GMM API, in particular score() and score_samples(), is
+        # not consistent with the rest of the package.  This needs
+        # to be addressed eventually...
+        if isinstance(self.estimators_[0], GMM):
+            return np.array([np.log(prior) + dens.score(X)
+                             for (prior, dens)
+                             in zip(self.class_prior_,
+                                    self.estimators_)]).T
+        else:
+            return np.array([np.log(prior) + dens.score_samples(X)
+                             for (prior, dens)
+                             in zip(self.class_prior_,
+                                    self.estimators_)]).T
+
+    def sample(self, n_samples=1, random_state=None):
+        """Generate random samples from the model.
+
+        Parameters
+        ----------
+        n_samples : int, optional
+            Number of samples to generate. Defaults to 1.
+
+        Returns
+        -------
+        X : array_like, shape (n_samples, n_features)
+            List of samples
+        y : array_like, shape (n_samples,)
+            List of class labels for the generated samples
+        """
+        random_state = check_random_state(random_state)
+        X = np.empty((n_samples, self.n_features_))
+        rand = random_state.rand(n_samples)
+
+        # split samples by class
+        prior_cdf = np.cumsum(self.class_prior_)
+        labels = prior_cdf.searchsorted(rand)
+
+        # for each class, generate all needed samples
+        for i, model in enumerate(self.estimators_):
+            model_mask = (labels == i)
+            N_model = model_mask.sum()
+            if N_model > 0:
+                X[model_mask] = model.sample(N_model,
+                                             random_state=random_state)
+
+        return X, self.classes_[labels]
