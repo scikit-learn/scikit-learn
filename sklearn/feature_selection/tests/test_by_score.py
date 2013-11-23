@@ -1,10 +1,9 @@
-import warnings
-
 import numpy as np
 
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_warns
 
 from sklearn.feature_selection.by_score import mask_by_score
 from sklearn.feature_selection.by_score import SelectByScore
@@ -70,17 +69,14 @@ def test_limit_int():
     assert_array_equal(mask_by_score(SCORES, limit=10), [1, 1, 1, 1, 1])
 
     # Tie-breaking
-    with warnings.catch_warnings(record=True) as w:
-        warnings.simplefilter('always')
-        top3 = mask_by_score(SCORES, limit=3)
-        assert_equal(top3.sum(), 3)
-        assert_equal((SCORES[top3] == 1).sum(), 1)
-        assert_equal(len(w), 1)
-        del w[:]
-        bottom1 = mask_by_score(SCORES, limit=-1)
-        assert_equal(bottom1.sum(), 1)
-        assert_equal((SCORES[bottom1] == 1).sum(), 1)
-        assert_equal(len(w), 1)
+    top3 = assert_warns(UserWarning, mask_by_score,
+                        SCORES, limit=3)
+    assert_equal(top3.sum(), 3)
+    assert_equal((SCORES[top3] == 1).sum(), 1)
+    bottom1 = assert_warns(UserWarning, mask_by_score,
+                           SCORES, limit=-1)
+    assert_equal(bottom1.sum(), 1)
+    assert_equal((SCORES[bottom1] == 1).sum(), 1)
 
     # Combination with min/maximum
     assert_array_equal(mask_by_score(SCORES, limit=1, maximum=3),
@@ -90,11 +86,8 @@ def test_limit_int():
 
     # Checking nan support
     assert_array_equal(mask_by_score(SCORES, limit=4), [1, 1, 0, 1, 1])
-    with warnings.catch_warnings(record=True) as w:
-        warnings.simplefilter('always')
-        assert_equal(mask_by_score([np.nan, np.nan], limit=1).sum(), 1)
-        assert_equal(len(w), 1)
-        del w[:]
+    mask = assert_warns(UserWarning, mask_by_score, [np.nan, np.nan], limit=1)
+    assert_equal(mask.sum(), 1)
 
 
 def test_limit_float():
@@ -112,17 +105,13 @@ def test_limit_float():
     assert_array_equal(mask_by_score(SCORES, limit=1.0), [1, 1, 1, 1, 1])
 
     # Tie-breaking
-    with warnings.catch_warnings(record=True) as w:
-        warnings.simplefilter('always')
-        top3 = mask_by_score(SCORES, limit=0.6)
-        assert_equal(top3.sum(), 3)
-        assert_equal((SCORES[top3] == 1).sum(), 1)
-        assert_equal(len(w), 1)
-        del w[:]
-        bottom1 = mask_by_score(SCORES, limit=-0.2)
-        assert_equal(bottom1.sum(), 1)
-        assert_equal((SCORES[bottom1] == 1).sum(), 1)
-        assert_equal(len(w), 1)
+    top3 = assert_warns(UserWarning, mask_by_score, SCORES, limit=0.6)
+    assert_equal(top3.sum(), 3)
+    assert_equal((SCORES[top3] == 1).sum(), 1)
+
+    bottom1 = assert_warns(UserWarning, mask_by_score, SCORES, limit=-0.2)
+    assert_equal(bottom1.sum(), 1)
+    assert_equal((SCORES[bottom1] == 1).sum(), 1)
 
     # Combination with min/maximum
     assert_array_equal(mask_by_score(SCORES, limit=0.2, maximum=3),
@@ -132,11 +121,8 @@ def test_limit_float():
 
     # Checking nan support
     assert_array_equal(mask_by_score(SCORES, limit=0.8), [1, 1, 0, 1, 1])
-    with warnings.catch_warnings(record=True) as w:
-        warnings.simplefilter('always')
-        assert_equal(mask_by_score([np.nan, np.nan], limit=0.5).sum(), 1)
-        assert_equal(len(w), 1)
-        del w[:]
+    m = assert_warns(UserWarning, mask_by_score, [np.nan, np.nan], limit=0.5)
+    assert_equal(m.sum(), 1)
 
 
 def test_transformer():
