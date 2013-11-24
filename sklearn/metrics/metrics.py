@@ -1541,7 +1541,7 @@ def _prf_divide(numerator, denominator, metric, modifier, average, warn_for):
 
 
 def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
-                                    pos_label=1, average=None,
+                                    pos_label='!deprecated', average=None,
                                     warn_for=('precision', 'recall',
                                               'f-score'),
                                     sample_weight=None):
@@ -1580,17 +1580,15 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     beta : float, 1.0 by default
         The strength of recall versus precision in the F-score.
 
-    labels : array
-        Integer array of labels.
-
-    pos_label : str or int, 1 by default
-        If ``average`` is not ``None`` and the classification target is binary,
-        only this class's scores will be returned.
+    labels : array-like of integers or strings (optional)
+        Specifies the order of results returned if `average` is `None`, and
+        otherwise the set of labels to take into account when averaging.
+        By default, all labels in `y_true` and `y_pred` are used in sorted
+        order.
 
     average : string, [None (default), 'micro', 'macro', 'samples', 'weighted']
         If ``None``, the scores for each class are returned. Otherwise,
-        unless ``pos_label`` is given in binary classification, this
-        determines the type of averaging performed on the data:
+        this determines the type of averaging performed on the data:
 
         ``'micro'``:
             Calculate metrics globally by counting the total true positives,
@@ -1618,16 +1616,16 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     Returns
     -------
     precision: float (if average is not None) or array of float, shape =\
-        [n_unique_labels]
+        len(labels)
 
     recall: float (if average is not None) or array of float, , shape =\
-        [n_unique_labels]
+        len(labels)
 
     fbeta_score: float (if average is not None) or array of float, shape =\
-        [n_unique_labels]
+        len(labels)
 
     support: int (if average is not None) or array of int, shape =\
-        [n_unique_labels]
+        len(labels)
         The number of occurrences of each label in ``y_true``.
 
     References
