@@ -1,3 +1,11 @@
+scikit-learn (0.14.1-2) unstable; urgency=low
+
+  * Disable reporting to google analytics -- we haven't got any permission from
+    the users allowing to report back to 3rd party services
+    (thanks Ambrose Andrews, Closes: #730259)
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Sun, 24 Nov 2013 10:17:29 -0500
+
 scikit-learn (0.14.1-1) unstable; urgency=low
 
   * The freshiest upstream release
