@@ -1313,8 +1313,8 @@ def accuracy_score(y_true, y_pred, normalize=True, sample_weight=None):
         return np.sum(score)
 
 
-def f1_score(y_true, y_pred, labels=None, pos_label=1, average='weighted',
-             sample_weight=None):
+def f1_score(y_true, y_pred, labels='compat', pos_label='!deprecated',
+             average='weighted', sample_weight=None):
     """Compute the F1 score, also known as balanced F-score or F-measure
 
     The F1 score can be interpreted as a weighted average of the precision and
@@ -1398,7 +1398,7 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='weighted',
                        sample_weight=sample_weight)
 
 
-def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
+def fbeta_score(y_true, y_pred, beta, labels='compat', pos_label='!deprecated',
                 average='weighted', sample_weight=None):
     """Compute the F-beta score
 
@@ -1540,7 +1540,7 @@ def _prf_divide(numerator, denominator, metric, modifier, average, warn_for):
     return result
 
 
-def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
+def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels='compat',
                                     pos_label='!deprecated', average=None,
                                     warn_for=('precision', 'recall',
                                               'f-score'),
@@ -1565,10 +1565,6 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
 
     The support is the number of occurrences of each class in ``y_true``.
 
-    If ``pos_label is None`` and in binary classification, this function
-    returns the average precision, recall and F-measure if ``average``
-    is one of ``'micro'``, ``'macro'``, ``'weighted'`` or ``'samples'``.
-
     Parameters
     ----------
     y_true : array-like or label indicator matrix
@@ -1583,8 +1579,10 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     labels : array-like of integers or strings (optional)
         Specifies the order of results returned if `average` is `None`, and
         otherwise the set of labels to take into account when averaging.
-        By default, all labels in `y_true` and `y_pred` are used in sorted
-        order.
+        When `labels` is None, all labels in `y_true` and `y_pred` are used in
+        sorted order. By default, binary classification is handled specially
+        for backwards compatibility, but this feature will be removed in
+        version 0.16.
 
     average : string, [None (default), 'micro', 'macro', 'samples', 'weighted']
         If ``None``, the scores for each class are returned. Otherwise,
@@ -1665,12 +1663,28 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
         raise ValueError("beta should be >0 in the F-beta score")
 
     y_type, y_true, y_pred = _check_clf_targets(y_true, y_pred)
+    present_labels = unique_labels(y_true, y_pred)
 
-    label_order = labels  # save this for later
+    if not isinstance(labels, np.ndarray) and labels == 'compat':
+        if y_type == 'binary' and (average is not None and
+                                   pos_label is not None):
+
+            if pos_label == '!deprecated':
+                pos_label = 1
+            labels = [pos_label]
+
+            if len(present_labels) == 2 and pos_label not in present_labels:
+                raise ValueError("pos_label=%r is not a valid label: %r" %
+                                 (pos_label, present_labels))
+        else:
+            labels = None
+
     if labels is None:
-        labels = unique_labels(y_true, y_pred)
+        labels = present_labels
+        n_labels = None
     else:
-        labels = np.asarray(labels)
+        n_labels = len(labels)
+        labels = np.hstack([labels, np.setdiff1d(present_labels, labels)])
 
     ### Calculate tp_sum, pred_sum, true_sum ###
 
@@ -1679,9 +1693,17 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
             y_true = label_binarize(y_true, labels, multilabel=True)
             y_pred = label_binarize(y_pred, labels, multilabel=True)
         else:
-            # set negative labels to zero
-            y_true = y_true == 1
-            y_pred = y_pred == 1
+            # set negative labels to zero, and reorder if necessary
+            y_true = (y_true == 1)
+            y_pred = (y_pred == 1)
+            if not np.all(labels == present_labels):
+                y_true = y_true[:, labels]
+                y_pred = y_pred[:, labels]
+
+        if n_labels is not None:
+            # trim away unwanted labels
+            y_true = y_true[:, :n_labels]
+            y_pred = y_pred[:, :n_labels]
 
         if sample_weight is None:
             sum_weight = 1
@@ -1707,7 +1729,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
         lb.fit(labels)
         y_true = lb.transform(y_true)
         y_pred = lb.transform(y_pred)
-        labels = lb.classes_
+        sorted_labels = lb.classes_
 
         # labels are now from 0 to len(labels) - 1 -> use bincount
         tp = y_true == y_pred
@@ -1730,29 +1752,13 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
             true_sum = np.bincount(y_true, weights=sample_weight,
                                    minlength=len(labels))
 
-    ### Select labels to keep ###
+        # Retain only selected labels
+        indices = np.searchsorted(sorted_labels, labels[:n_labels])
+        tp_sum = tp_sum[indices]
+        true_sum = true_sum[indices]
+        pred_sum = pred_sum[indices]
 
-    if y_type == 'binary' and average is not None and pos_label is not None:
-        if label_order is not None and len(label_order) == 2:
-            warnings.warn('In the future, providing two `labels` values, as '
-                          'well as `average` will average over those '
-                          'labels. For now, please use `labels=None` with '
-                          '`pos_label` to evaluate precision, recall and '
-                          'F-score for the positive label only.',
-                          FutureWarning)
-        if pos_label not in labels:
-            if len(labels) == 1:
-                # Only negative labels
-                return (0., 0., 0., 0)
-            else:
-                raise ValueError("pos_label=%r is not a valid label: %r" %
-                                 (pos_label, labels))
-        pos_label_idx = labels == pos_label
-        tp_sum = tp_sum[pos_label_idx]
-        pred_sum = pred_sum[pos_label_idx]
-        true_sum = true_sum[pos_label_idx]
-
-    elif average == 'micro':
+    if average == 'micro':
         tp_sum = np.array([tp_sum.sum()])
         pred_sum = np.array([pred_sum.sum()])
         true_sum = np.array([true_sum.sum()])
@@ -1791,17 +1797,11 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
         recall = np.average(recall, weights=weights)
         f_score = np.average(f_score, weights=weights)
         true_sum = None  # return no support
-    elif label_order is not None:
-        indices = np.searchsorted(labels, label_order)
-        precision = precision[indices]
-        recall = recall[indices]
-        f_score = f_score[indices]
-        true_sum = true_sum[indices]
 
     return precision, recall, f_score, true_sum
 
 
-def precision_score(y_true, y_pred, labels=None, pos_label=1,
+def precision_score(y_true, y_pred, labels='compat', pos_label='!deprecated',
                     average='weighted', sample_weight=None):
     """Compute the precision
 
@@ -1884,8 +1884,8 @@ def precision_score(y_true, y_pred, labels=None, pos_label=1,
     return p
 
 
-def recall_score(y_true, y_pred, labels=None, pos_label=1, average='weighted',
-                 sample_weight=None):
+def recall_score(y_true, y_pred, labels='compat', pos_label='!deprecated',
+                 average='weighted', sample_weight=None):
     """Compute the recall
 
     The recall is the ratio ``tp / (tp + fn)`` where ``tp`` is the number of

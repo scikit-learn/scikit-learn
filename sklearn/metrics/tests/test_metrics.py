@@ -9,7 +9,8 @@ from sklearn import datasets
 from sklearn import svm
 from sklearn import ensemble
 
-from sklearn.preprocessing import LabelBinarizer, MultiLabelBinarizer
+from sklearn.preprocessing import LabelBinarizer, label_binarize
+from sklearn.preprocessing import MultiLabelBinarizer
 from sklearn.datasets import make_multilabel_classification
 from sklearn.utils import check_random_state, shuffle
 from sklearn.utils.multiclass import unique_labels
@@ -778,6 +779,66 @@ def test_precision_recall_f_binary_single_class():
     assert_equal(0., f1_score([-1, -1], [-1, -1]))
 
 
+@ignore_warnings
+def test_precision_recall_f_extra_labels():
+    """Test handling of explicit additional (not in input) labels to PRF
+    """
+    y_true = [1, 3, 3]
+    y_pred = [1, 1, 3]
+    binarize = partial(label_binarize, classes=range(5), multilabel=True)
+    data = [(y_true, y_pred),
+            ([(l,) for l in y_true], [(l,) for l in y_pred]),
+            (binarize([(l,) for l in y_true]),
+             binarize([(l,) for l in y_pred]))]
+
+    for i, (y_true, y_pred) in enumerate(data):
+        # No average: zeros in array
+        actual = recall_score(y_true, y_pred, labels=[0, 1, 2, 3, 4],
+                              average=None)
+        assert_array_equal([0., 1., 0., .5, 0.], actual)
+
+        # Macro average is changed
+        actual = recall_score(y_true, y_pred, labels=[0, 1, 2, 3, 4],
+                              average='macro')
+        assert_array_equal(np.mean([0., 1., 0., .5, 0.]), actual)
+
+        # No effect otheriwse
+        for average in ['micro', 'weighted', 'samples']:
+            if average == 'samples' and i == 0:
+                continue
+            assert_equal(recall_score(y_true, y_pred, labels=[0, 1, 2, 3, 4],
+                                      average=average),
+                         recall_score(y_true, y_pred, labels=None,
+                                      average=average))
+
+
+@ignore_warnings
+def test_precision_recall_f_ignored_labels():
+    """Test a subset of labels may be requested for PRF"""
+    y_true = [1, 1, 2, 3]
+    y_pred = [1, 3, 3, 3]
+
+    binarize = partial(label_binarize, classes=range(4), multilabel=True)
+    data = [(y_true, y_pred),
+            ([(l,) for l in y_true], [(l,) for l in y_pred]),
+            (binarize([(l,) for l in y_true]),
+             binarize([(l,) for l in y_pred]))]
+
+    for i, (y_true, y_pred) in enumerate(data):
+        recall_13 = partial(recall_score, y_true, y_pred, labels=[1, 3])
+        recall_all = partial(recall_score, y_true, y_pred, labels=None)
+
+        assert_array_equal([.5, 1.], recall_13(average=None))
+        assert_equal((.5 + 1.) / 2, recall_13(average='macro'))
+        assert_equal((.5 * 2 + 1. * 1) / 3, recall_13(average='weighted'))
+        assert_equal(2. / 3, recall_13(average='micro'))
+
+        # ensure the above were meaningful tests:
+        for average in ['macro', 'weighted', 'micro']:
+            assert_not_equal(recall_13(average=average),
+                             recall_all(average=average))
+
+
 def test_average_precision_score_score_non_binary_class():
     """Test that average_precision_score function returns an error when trying
     to compute average_precision_score for multiclass task.
@@ -1520,6 +1581,7 @@ def test_invariance_string_vs_numbers_labels():
 
     pos_label_str = "spam"
     labels_str = ["eggs", "spam"]
+    labels = [0, 1]
 
     for name, metric in CLASSIFICATION_METRICS.items():
         if name in METRIC_UNDEFINED_MULTICLASS:
@@ -1546,6 +1608,7 @@ def test_invariance_string_vs_numbers_labels():
 
         if name in METRICS_WITH_LABELS:
             metric_str = partial(metric_str, labels=labels_str)
+            measure_with_number = metric(y1, y2, labels=labels)
             measure_with_str = metric_str(y1_str, y2_str)
             assert_array_equal(measure_with_number, measure_with_str,
                                err_msg="{0} failed string vs number  "
