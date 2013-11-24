@@ -1540,7 +1540,6 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels='compat',
             true_sum = bincount(y_true, minlength=len(labels))
 
         indices = np.searchsorted(sorted_labels, labels[:n_labels])
-        print(sorted_labels, indices, tp_sum, average)
         tp_sum = tp_sum[indices]
         true_sum = true_sum[indices]
         pred_sum = pred_sum[indices]
