@@ -394,8 +394,10 @@ def test_probabilistic_pca_3():
     # XXX : Don't test as homoscedastic=False is buggy
     # Comment to be removed with ProbabilisticPCA is removed
 
+
 def test_probabilistic_pca_4():
     """Check that ppca select the right model"""
+
     n, p = 200, 3
     rng = np.random.RandomState(0)
     Xl = (rng.randn(n, p) + rng.randn(n, 1) * np.array([3, 4, 5])
@@ -406,10 +408,11 @@ def test_probabilistic_pca_4():
     for k in range(p):
         ppca = assert_warns(DeprecationWarning, ProbabilisticPCA,
                             n_components=k)
+        ppca = ProbabilisticPCA(n_components=k)
         ppca.fit(Xl)
         ll[k] = ppca.score(Xt).mean()
 
-        assert_true(ll.argmax() == 1)
+    assert_true(ll.argmax() == 1)
 
 
 def test_probabilistic_pca_vs_pca():
