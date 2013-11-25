@@ -41,16 +41,6 @@ is an estimator object::
         probability=False, random_state=None, shrinking=True, tol=0.001,
         verbose=False))])
 
-The estimators of the pipeline are stored as a list in the ``steps`` attribute::
-
-    >>> clf.steps[0]
-    ('reduce_dim', PCA(copy=True, n_components=None, whiten=False))
-
-and as a ``dict`` in ``named_steps``::
-
-    >>> clf.named_steps['reduce_dim']
-    PCA(copy=True, n_components=None, whiten=False)
-
 Parameters of the estimators in the pipeline can be accessed using the
 ``<estimator>__<parameter>`` syntax::
 
@@ -68,6 +58,22 @@ This is particularly important for doing grid searches::
     ...               svm__C=[0.1, 10, 100])
     >>> grid_search = GridSearchCV(clf, param_grid=params)
 
+The estimators of the pipeline can be retrieved by index:
+
+    >>> clf[0]
+    PCA(copy=True, n_components=None, whiten=False)
+
+or by name::
+
+    >>> clf['reduce_dim']
+    PCA(copy=True, n_components=None, whiten=False)
+
+A sub-pipeline can also be extracted, which is convenient for performing
+only some of the transformations (or their inverse):
+
+    >>> clf[:1] # doctest: +NORMALIZE_WHITESPACE
+    Pipeline(steps=[('reduce_dim', PCA(copy=True, n_components=None,
+                                       whiten=False))])
 
 .. topic:: Examples:
 

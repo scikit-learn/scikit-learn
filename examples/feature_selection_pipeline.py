@@ -4,7 +4,10 @@ Pipeline Anova SVM
 ==================
 
 Simple usage of Pipeline that runs successively a univariate
-feature selection with anova and then a C-SVM of the selected features.
+feature selection with anova and then a SVM of the selected features.
+
+Using a sub-pipeline, the fitted coefficients can be mapped back into
+the original feature space.
 """
 print(__doc__)
 
@@ -22,8 +25,10 @@ X, y = samples_generator.make_classification(
 # 1) anova filter, take 3 best ranked features
 anova_filter = SelectKBest(f_regression, k=3)
 # 2) svm
-clf = svm.SVC(kernel='linear')
+clf = svm.LinearSVC()
 
 anova_svm = Pipeline([('anova', anova_filter), ('svm', clf)])
 anova_svm.fit(X, y)
 anova_svm.predict(X)
+
+coef = anova_svm[:-1].inverse_transform(anova_svm['svm'].coef_)

@@ -57,7 +57,7 @@ class Pipeline(BaseEstimator):
 
     >>> # ANOVA SVM-C
     >>> anova_filter = SelectKBest(f_regression, k=5)
-    >>> clf = svm.SVC(kernel='linear')
+    >>> clf = svm.LinearSVC()
     >>> anova_svm = Pipeline([('anova', anova_filter), ('svc', clf)])
 
     >>> # You can set the parameters using the names issued
@@ -68,8 +68,20 @@ class Pipeline(BaseEstimator):
     Pipeline(steps=[...])
 
     >>> prediction = anova_svm.predict(X)
-    >>> anova_svm.score(X, y)
-    0.75
+    >>> anova_svm.score(X, y)  # doctest: +ELLIPSIS
+    0.78...
+
+    Slicing can also be used to extract a single estimator, or a sub-pipeline.
+    >>> sub_pipeline = anova_svm[:1]
+    >>> sub_pipeline  # doctest: +ELLIPSIS
+    Pipeline(steps=[('anova', ...)])
+    >>> coef = anova_svm[-1].coef_
+    (1, 5)
+    >>> anova_svm['clf'] is anova_svm[-1]
+    True
+    >>> coef.shape
+    >>> sub_pipeline.inverse_transform(coef).shape
+    (1, 20)
     """
 
     # BaseEstimator interface
@@ -98,6 +110,14 @@ class Pipeline(BaseEstimator):
                             % (estimator, type(estimator)))
 
     def __getitem__(self, ind):
+        """Returns a sub-pipeline or a single esimtator in the pipeline
+
+        Indexing with an integer will return an estimator; using a slice
+        returns another Pipeline instance which copies a slice of this
+        Pipeline. This copy is shallow: modifying (or fitting) estimators in
+        the sub-pipeline will affect the larger pipeline and vice-versa.
+        However, replacing a value in `step` will not affect a copy.
+        """
         if isinstance(ind, slice):
             if ind.step not in (1, None):
                 raise ValueError('Pipeline slicing only supports a step of 1')
