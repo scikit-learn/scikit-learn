@@ -13,7 +13,7 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import SkipTest
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_greater
-
+from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import ignore_warnings
 
