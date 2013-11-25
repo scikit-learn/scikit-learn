@@ -44,7 +44,8 @@ def test_pca():
         pca.fit(X)
         cov = pca.get_covariance()
         precision = pca.get_precision()
-        assert_array_almost_equal(np.dot(cov, precision), np.eye(X.shape[1]), 12)
+        assert_array_almost_equal(np.dot(cov, precision),
+                                  np.eye(X.shape[1]), 12)
 
 
 def test_whitening():
