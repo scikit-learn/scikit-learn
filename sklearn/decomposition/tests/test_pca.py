@@ -408,7 +408,6 @@ def test_probabilistic_pca_4():
     for k in range(p):
         ppca = assert_warns(DeprecationWarning, ProbabilisticPCA,
                             n_components=k)
-        ppca = ProbabilisticPCA(n_components=k)
         ppca.fit(Xl)
         ll[k] = ppca.score(Xt).mean()
 
