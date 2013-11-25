@@ -8,7 +8,7 @@ from collections import defaultdict
 import numpy as np
 
 from ..externals import six
-from ..utils import extmath, check_random_state
+from ..utils import extmath, check_random_state, gen_batches
 from ..base import BaseEstimator, ClusterMixin
 from ..neighbors import NearestNeighbors
 from ..metrics.pairwise import pairwise_distances_argmin
@@ -30,7 +30,7 @@ def estimate_bandwidth(X, quantile=0.3, n_samples=None, random_state=0):
         The number of samples to use. If None, all samples are used.
 
     random_state : int or RandomState
-        Pseudo number generator state used for random sampling.
+        Pseudo-random number generator state used for random sampling.
 
     Returns
     -------
@@ -43,10 +43,13 @@ def estimate_bandwidth(X, quantile=0.3, n_samples=None, random_state=0):
         X = X[idx]
     nbrs = NearestNeighbors(n_neighbors=int(X.shape[0] * quantile))
     nbrs.fit(X)
-    d, _ = nbrs.kneighbors(X, return_distance=True)
 
-    bandwidth = np.mean(np.max(d, axis=1))
-    return bandwidth
+    bandwidth = 0.
+    for batch in gen_batches(len(X), 500):
+        d, _ = nbrs.kneighbors(X[batch, :], return_distance=True)
+        bandwidth += np.max(d, axis=1).sum()
+
+    return bandwidth / X.shape[0]
 
 
 def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
