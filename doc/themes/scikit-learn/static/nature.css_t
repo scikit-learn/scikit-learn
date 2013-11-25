@@ -785,28 +785,6 @@ div.container.index-lower h4,  div.container.index-lower h4 a{
     color: #FF9C34;
 }
 
-div.container.index-lower div.bottom-button {
-    float: right;
-    padding-right: 17%;
-}
-
-form#paypal-from {
-    margin-bottom: 10px;
-}
-
-div.container.index-lower div.bottom-button button.btn{
-    padding-left: 30px;
-    padding-right: 30px;
-    margin-left: 10px;
-    margin-right: 5px;
-}
-
-div.container.index-lower div.bottom-button a.btn{
-    padding-left: 30px;
-    padding-right: 30px;
-    margin-left: 70px;
-}
-
 div.container.index-lower h4 {
     margin-bottom: 10px;
     margin-left: 0px;
@@ -829,6 +807,17 @@ div.container.index-lower ul li {
 div.container.index-lower ul li em {
     font-style: normal;
     font-weight: bold;
+}
+
+#paypal-form {
+    margin: 30px 0;
+    padding: 0;
+}
+
+div.container.index-lower a.cite-us {
+    margin-left: 60px;
+    padding-right: 20px;
+    padding-left: 20px;
 }
 
 div.box h2 {
@@ -881,9 +870,12 @@ div.carousel>.carousel-inner>.item {
 
 div.carousel img {
     max-height: 70px;
-    max-width: 50%;
     background-color: #fff;
     margin: auto;
+}
+
+div#testimonials_carousel img {
+    max-width: 50%;
 }
 
 div#testimonials_carousel {
@@ -1042,13 +1034,22 @@ div.testimonial span.testimonial-author p{
     color: #808080;
 }
 
+#index-funding-logo-big {
+    padding: 0 7px 7px 7px;
+    max-height: 40px
+}
+
+#index-funding-logo-small {
+    padding: 0 7px 7px 7px;
+    max-height: 24px
+}
 
 .no-display {
   display: none;
 }
 
 .btn-group {
-  height: 100%	height: 100%;
+    height: 100%;
 }
 
 .btn-group .dropdown-menu {
@@ -1103,6 +1104,10 @@ div.navbar ul.dropdown-menu li a.btn {
 .navbar .btn-group.open .btn.dropdown-toggle {
   background-color: transparent;
   box-shadow: inset 0 0px 0 rgba(255,255,255,.2), 0 0px 0px rgba(0,0,0,.05);
+}
+
+a.btn.dropdown-toggle,  a.btn.dropdown-toggle:hover{
+  vertical-align: baseline;
 }
 
 .navbar .btn, .navbar .open>.btn, .navbar .btn:hover{

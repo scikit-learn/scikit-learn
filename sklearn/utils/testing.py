@@ -112,6 +112,18 @@ def assert_no_warnings(func, *args, **kw):
                                  % (func.__name__, w))
     return result
 
+
+def ignore_warnings(fn):
+    """Decorator to catch and hide warnings without visual nesting"""
+    @wraps(fn)
+    def wrapper(*args, **kwargs):
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter('always')
+            return fn(*args, **kwargs)
+            w[:] = []
+    return wrapper
+
+
 try:
     from nose.tools import assert_less
 except ImportError:
@@ -128,7 +140,7 @@ def _assert_allclose(actual, desired, rtol=1e-7, atol=0,
     actual, desired = np.asanyarray(actual), np.asanyarray(desired)
     if np.allclose(actual, desired, rtol=rtol, atol=atol):
         return
-    msg = ('Array not equal to tolerance rtol=%g, atol=%g:'
+    msg = ('Array not equal to tolerance rtol=%g, atol=%g: '
            'actual %s, desired %s') % (rtol, atol, actual, desired)
     raise AssertionError(msg)
 
@@ -285,9 +297,9 @@ def all_estimators(include_meta_estimators=False, include_other=False,
     path = sklearn.__path__
     for importer, modname, ispkg in pkgutil.walk_packages(
             path=path, prefix='sklearn.', onerror=lambda x: None):
-        module = __import__(modname, fromlist="dummy")
         if ".tests." in modname:
             continue
+        module = __import__(modname, fromlist="dummy")
         classes = inspect.getmembers(module, inspect.isclass)
         all_classes.extend(classes)
 

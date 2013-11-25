@@ -20,8 +20,8 @@ from scipy.linalg.lapack import get_lapack_funcs
 
 from .base import LinearModel
 from ..base import RegressorMixin
-from ..utils import array2d, arrayfuncs, as_float_array
-from ..cross_validation import check_cv
+from ..utils import array2d, arrayfuncs, as_float_array, check_arrays
+from ..cross_validation import _check_cv as check_cv
 from ..externals.joblib import Parallel, delayed
 from ..externals.six.moves import xrange
 
@@ -922,6 +922,7 @@ class LarsCV(Lars):
         """
         self.fit_path = True
         X = array2d(X)
+        X, y = check_arrays(X, y)
 
         # init cross-validation generator
         cv = check_cv(self.cv, X, y, classifier=False)

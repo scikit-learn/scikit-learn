@@ -11,6 +11,7 @@ from ..externals import six
 from ..utils import extmath, check_random_state
 from ..base import BaseEstimator, ClusterMixin
 from ..neighbors import NearestNeighbors
+from ..metrics.pairwise import pairwise_distances_argmin
 
 
 def estimate_bandwidth(X, quantile=0.3, n_samples=None, random_state=0):
@@ -215,6 +216,15 @@ class MeanShift(BaseEstimator, ClusterMixin):
         with bandwidth as the grid size and default values for
         other parameters.
 
+    bin_seeding : boolean, optional
+        If true, initial kernel locations are not locations of all
+        points, but rather the location of the discretized version of
+        points, where points are binned onto a grid whose coarseness
+        corresponds to the bandwidth. Setting this option to True will speed
+        up the algorithm because fewer seeds will be initialized.
+        default value: False
+        Ignored if seeds argument is not None.
+
     min_bin_freq : int, optional
        To speed up the algorithm, accept only those bins with at least
        min_bin_freq points as seeds. If not defined, set to 1.
@@ -279,3 +289,18 @@ class MeanShift(BaseEstimator, ClusterMixin):
                        bin_seeding=self.bin_seeding,
                        cluster_all=self.cluster_all)
         return self
+
+    def predict(self, X):
+        """Predict the closest cluster each sample in X belongs to.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+            New data to predict.
+
+        Returns
+        -------
+        labels : array, shape [n_samples,]
+            Index of the cluster each sample belongs to.
+        """
+        return pairwise_distances_argmin(X, self.cluster_centers_)

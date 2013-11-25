@@ -259,6 +259,22 @@ def test_countvectorizer_custom_vocabulary_pipeline():
     assert_equal(X.shape[1], len(what_we_like))
 
 
+def test_countvectorizer_custom_vocabulary_repeated_indeces():
+    vocab = {"pizza": 0, "beer": 0}
+    try:
+        CountVectorizer(vocabulary=vocab)
+    except ValueError as e:
+        assert_in("vocabulary contains repeated indices", str(e).lower())
+
+
+def test_countvectorizer_custom_vocabulary_gap_index():
+    vocab = {"pizza": 1, "beer": 2}
+    try:
+        CountVectorizer(vocabulary=vocab)
+    except ValueError as e:
+        assert_in("doesn't contain index", str(e).lower())
+
+
 def test_countvectorizer_stop_words():
     cv = CountVectorizer()
     cv.set_params(stop_words='english')
@@ -553,33 +569,58 @@ def test_vectorizer_max_features():
         assert_equal(vectorizer.stop_words_, expected_stop_words)
 
 
+def test_count_vectorizer_max_features():
+    """Regression test: max_features didn't work correctly in 0.14."""
+
+    cv_1 = CountVectorizer(max_features=1)
+    cv_3 = CountVectorizer(max_features=3)
+    cv_None = CountVectorizer(max_features=None)
+
+    counts_1 = cv_1.fit_transform(JUNK_FOOD_DOCS).sum(axis=0)
+    counts_3 = cv_3.fit_transform(JUNK_FOOD_DOCS).sum(axis=0)
+    counts_None = cv_None.fit_transform(JUNK_FOOD_DOCS).sum(axis=0)
+
+    features_1 = cv_1.get_feature_names()
+    features_3 = cv_3.get_feature_names()
+    features_None = cv_None.get_feature_names()
+
+    # The most common feature is "the", with frequency 7.
+    assert_equal(7, counts_1.max())
+    assert_equal(7, counts_3.max())
+    assert_equal(7, counts_None.max())
+
+    # The most common feature should be the same
+    assert_equal("the", features_1[np.argmax(counts_1)])
+    assert_equal("the", features_3[np.argmax(counts_3)])
+    assert_equal("the", features_None[np.argmax(counts_None)])
+
+
 def test_vectorizer_max_df():
-    test_data = ['abc', 'dea']  # the letter a occurs in both strings
+    test_data = ['abc', 'dea', 'eat']
     vect = CountVectorizer(analyzer='char', max_df=1.0)
     vect.fit(test_data)
     assert_true('a' in vect.vocabulary_.keys())
-    assert_equal(len(vect.vocabulary_.keys()), 5)
+    assert_equal(len(vect.vocabulary_.keys()), 6)
     assert_equal(len(vect.stop_words_), 0)
 
-    vect.max_df = 0.5
+    vect.max_df = 0.5  # 0.5 * 3 documents -> max_doc_count == 1.5
     vect.fit(test_data)
-    assert_true('a' not in vect.vocabulary_.keys())  # 'a' is ignored
-    assert_equal(len(vect.vocabulary_.keys()), 4)  # the others remain
+    assert_true('a' not in vect.vocabulary_.keys())  # {ae} ignored
+    assert_equal(len(vect.vocabulary_.keys()), 4)    # {bcdt} remain
     assert_true('a' in vect.stop_words_)
-    assert_equal(len(vect.stop_words_), 1)
+    assert_equal(len(vect.stop_words_), 2)
 
-    # absolute count: if in more than one
     vect.max_df = 1
     vect.fit(test_data)
-    assert_true('a' not in vect.vocabulary_.keys())  # 'a' is ignored
-    assert_equal(len(vect.vocabulary_.keys()), 4)  # the others remain
+    assert_true('a' not in vect.vocabulary_.keys())  # {ae} ignored
+    assert_equal(len(vect.vocabulary_.keys()), 4)    # {bcdt} remain
     assert_true('a' in vect.stop_words_)
-    assert_equal(len(vect.stop_words_), 1)
+    assert_equal(len(vect.stop_words_), 2)
 
 
 def test_vectorizer_min_df():
-    test_data = ['abc', 'dea', 'eat']  # the letter a occurs in both strings
-    vect = CountVectorizer(analyzer='char', max_df=1.0, min_df=1)
+    test_data = ['abc', 'dea', 'eat']
+    vect = CountVectorizer(analyzer='char', min_df=1)
     vect.fit(test_data)
     assert_true('a' in vect.vocabulary_.keys())
     assert_equal(len(vect.vocabulary_.keys()), 6)
@@ -587,17 +628,17 @@ def test_vectorizer_min_df():
 
     vect.min_df = 2
     vect.fit(test_data)
-    assert_true('c' not in vect.vocabulary_.keys())  # 'c' is ignored
-    assert_equal(len(vect.vocabulary_.keys()), 2)  # only e, a remain
+    assert_true('c' not in vect.vocabulary_.keys())  # {bcdt} ignored
+    assert_equal(len(vect.vocabulary_.keys()), 2)    # {ae} remain
     assert_true('c' in vect.stop_words_)
     assert_equal(len(vect.stop_words_), 4)
 
-    vect.min_df = .5
+    vect.min_df = 0.8  # 0.8 * 3 documents -> min_doc_count == 2.4
     vect.fit(test_data)
-    assert_true('c' not in vect.vocabulary_.keys())  # 'c' is ignored
-    assert_equal(len(vect.vocabulary_.keys()), 2)  # only e, a remain
+    assert_true('c' not in vect.vocabulary_.keys())  # {bcdet} ignored
+    assert_equal(len(vect.vocabulary_.keys()), 1)    # {a} remains
     assert_true('c' in vect.stop_words_)
-    assert_equal(len(vect.stop_words_), 4)
+    assert_equal(len(vect.stop_words_), 5)
 
 
 def test_count_binary_occurrences():

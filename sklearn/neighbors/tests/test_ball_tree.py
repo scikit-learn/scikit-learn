@@ -166,8 +166,8 @@ def test_ball_tree_kde(n_samples=100, n_features=3):
                 dens = bt.kernel_density(Y, h, atol=atol, rtol=rtol,
                                          kernel=kernel,
                                          breadth_first=breadth_first)
-                assert_allclose(dens, dens_true, atol=atol,
-                                          rtol=max(rtol, 1e-7))
+                assert_allclose(dens, dens_true,
+                                atol=atol, rtol=max(rtol, 1e-7))
 
             for rtol in [0, 1E-5]:
                 for atol in [1E-6, 1E-2]:
@@ -188,8 +188,7 @@ def test_gaussian_kde(n_samples=1000):
         try:
             gkde = gaussian_kde(x_in, bw_method=h / np.std(x_in))
         except TypeError:
-            # older versions of scipy don't accept explicit bandwidth
-            raise SkipTest
+            raise SkipTest("Old version of scipy, doesn't accept explicit bandwidth.")
 
         dens_bt = bt.kernel_density(x_out[:, None], h) / n_samples
         dens_gkde = gkde.evaluate(x_out)

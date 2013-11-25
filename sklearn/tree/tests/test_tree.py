@@ -4,6 +4,7 @@ Testing for the tree module (sklearn.tree).
 import pickle
 import numpy as np
 
+from functools import partial
 from itertools import product
 
 from sklearn.metrics import accuracy_score
@@ -34,11 +35,15 @@ REG_CRITERIONS = ("mse", )
 
 CLF_TREES = {
     "DecisionTreeClassifier": DecisionTreeClassifier,
+    "Presort-DecisionTreeClassifier": partial(DecisionTreeClassifier,
+                                              splitter="presort-best"),
     "ExtraTreeClassifier": ExtraTreeClassifier,
 }
 
 REG_TREES = {
     "DecisionTreeRegressor": DecisionTreeRegressor,
+    "Presort-DecisionTreeRegressor": partial(DecisionTreeRegressor,
+                                             splitter="presort-best"),
     "ExtraTreeRegressor": ExtraTreeRegressor,
 }
 
@@ -246,7 +251,7 @@ def test_numerical_stability():
 
 def test_importances():
     """Check variable importances."""
-    X, y = datasets.make_classification(n_samples=1000,
+    X, y = datasets.make_classification(n_samples=2000,
                                         n_features=10,
                                         n_informative=3,
                                         n_redundant=0,
@@ -273,44 +278,44 @@ def test_max_features():
     for name, TreeRegressor in REG_TREES.items():
         reg = TreeRegressor(max_features="auto")
         reg.fit(boston.data, boston.target)
-        assert_equal(reg.splitter_.max_features, boston.data.shape[1])
+        assert_equal(reg.max_features_, boston.data.shape[1])
 
     for name, TreeClassifier in CLF_TREES.items():
         clf = TreeClassifier(max_features="auto")
         clf.fit(iris.data, iris.target)
-        assert_equal(clf.splitter_.max_features, 2)
+        assert_equal(clf.max_features_, 2)
 
     for name, TreeEstimator in ALL_TREES.items():
         est = TreeEstimator(max_features="sqrt")
         est.fit(iris.data, iris.target)
-        assert_equal(est.splitter_.max_features,
+        assert_equal(est.max_features_,
                      int(np.sqrt(iris.data.shape[1])))
 
         est = TreeEstimator(max_features="log2")
         est.fit(iris.data, iris.target)
-        assert_equal(est.splitter_.max_features,
+        assert_equal(est.max_features_,
                      int(np.log2(iris.data.shape[1])))
 
         est = TreeEstimator(max_features=1)
         est.fit(iris.data, iris.target)
-        assert_equal(est.splitter_.max_features, 1)
+        assert_equal(est.max_features_, 1)
 
         est = TreeEstimator(max_features=3)
         est.fit(iris.data, iris.target)
-        assert_equal(est.splitter_.max_features, 3)
+        assert_equal(est.max_features_, 3)
 
         est = TreeEstimator(max_features=0.5)
         est.fit(iris.data, iris.target)
-        assert_equal(est.splitter_.max_features,
+        assert_equal(est.max_features_,
                      int(0.5 * iris.data.shape[1]))
 
         est = TreeEstimator(max_features=1.0)
         est.fit(iris.data, iris.target)
-        assert_equal(est.splitter_.max_features, iris.data.shape[1])
+        assert_equal(est.max_features_, iris.data.shape[1])
 
         est = TreeEstimator(max_features=None)
         est.fit(iris.data, iris.target)
-        assert_equal(est.splitter_.max_features, iris.data.shape[1])
+        assert_equal(est.max_features_, iris.data.shape[1])
 
         # use values of max_features that are invalid
         est = TreeEstimator(max_features=10)
@@ -598,10 +603,11 @@ def test_sample_weight():
 def test_32bit_equality():
     """Check if 32bit and 64bit get the same result. """
     from sklearn.cross_validation import train_test_split
-    X_train, X_test, y_train, y_test = train_test_split(boston.data, boston.target,
-                                                    random_state=1)
+    X_train, X_test, y_train, y_test = train_test_split(boston.data,
+                                                        boston.target,
+                                                        random_state=1)
     est = DecisionTreeRegressor(random_state=1)
 
     est.fit(X_train, y_train)
     score = est.score(X_test, y_test)
-    assert_almost_equal(0.76624433012786, score)
+    assert_almost_equal(0.84652100667116, score)

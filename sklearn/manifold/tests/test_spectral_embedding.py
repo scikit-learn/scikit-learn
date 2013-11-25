@@ -76,17 +76,6 @@ def test_spectral_embedding_two_components(seed=36):
     label_ = np.array(embedded_coordinate.ravel() < 0, dtype="float")
     assert_equal(normalized_mutual_info_score(true_label, label_), 1.0)
 
-    # test that we can still import spectral embedding
-    from sklearn.cluster import spectral_embedding as se_deprecated
-    warnings.simplefilter("always", DeprecationWarning)
-    with warnings.catch_warnings(record=True) as warning_list:
-        embedded_depr = se_deprecated(affinity, n_components=1,
-                                      random_state=np.random.RandomState(seed))
-    assert_equal(len(warning_list), 1)
-    warnings.filters.pop(0)
-    assert_true(_check_with_col_sign_flipping(embedded_coordinate,
-                                              embedded_depr, 0.05))
-
 
 def test_spectral_embedding_precomputed_affinity(seed=36):
     """Test spectral embedding with precomputed kernel"""
@@ -131,7 +120,7 @@ def test_spectral_embedding_amg_solver(seed=36):
     try:
         from pyamg import smoothed_aggregation_solver
     except ImportError:
-        raise SkipTest
+        raise SkipTest("pyagm not available.")
 
     se_amg = SpectralEmbedding(n_components=2, affinity="nearest_neighbors",
                                eigen_solver="amg", n_neighbors=5,

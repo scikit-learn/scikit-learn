@@ -23,7 +23,7 @@ import numpy as np
 
 from .base import BaseEstimator, is_classifier, clone
 from .base import MetaEstimatorMixin
-from .cross_validation import check_cv
+from .cross_validation import _check_cv as check_cv
 from .externals.joblib import Parallel, delayed, logger
 from .externals import six
 from .utils import safe_mask, check_random_state
@@ -108,45 +108,6 @@ class ParameterGrid(object):
         product = partial(reduce, operator.mul)
         return sum(product(len(v) for v in p.values()) if p else 1
                    for p in self.param_grid)
-
-
-class IterGrid(ParameterGrid):
-    """Generators on the combination of the various parameter lists given.
-
-    This class is DEPRECATED. It was renamed to ``ParameterGrid``. The name
-    ``IterGrid`` will be removed in 0.15.
-
-    Parameters
-    ----------
-    param_grid : dict of string to sequence
-        The parameter grid to explore, as a dictionary mapping estimator
-        parameters to sequences of allowed values.
-
-    Returns
-    -------
-    params : dict of string to any
-        **Yields** dictionaries mapping each estimator parameter to one of its
-        allowed values.
-
-    Examples
-    --------
-    >>> from sklearn.grid_search import IterGrid
-    >>> param_grid = {'a':[1, 2], 'b':[True, False]}
-    >>> list(IterGrid(param_grid)) == (
-    ...    [{'a': 1, 'b': True}, {'a': 1, 'b': False},
-    ...     {'a': 2, 'b': True}, {'a': 2, 'b': False}])
-    True
-
-    See also
-    --------
-    :class:`GridSearchCV`:
-        uses ``IterGrid`` to perform a full parallelized parameter search.
-    """
-
-    def __init__(self, param_grid):
-        warnings.warn("IterGrid was renamed to ParameterGrid and will be"
-                      " removed in 0.15.", DeprecationWarning)
-        super(IterGrid, self).__init__(param_grid)
 
 
 class ParameterSampler(object):
@@ -620,9 +581,10 @@ class GridSearchCV(BaseSearchCV):
     >>> clf.fit(iris.data, iris.target)
     ...                             # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
     GridSearchCV(cv=None,
-           estimator=SVC(C=1.0, cache_size=..., class_weight=..., coef0=..., degree=..., gamma=...,
-       kernel='rbf', max_iter=-1, probability=False, random_state=None,
-       shrinking=True, tol=..., verbose=False),
+           estimator=SVC(C=1.0, cache_size=..., class_weight=..., coef0=...,
+                         degree=..., gamma=..., kernel='rbf', max_iter=-1,
+                         probability=False, random_state=None, shrinking=True,
+                         tol=..., verbose=False),
            fit_params={}, iid=..., loss_func=..., n_jobs=1,
            param_grid=..., pre_dispatch=..., refit=..., score_func=...,
            scoring=..., verbose=...)

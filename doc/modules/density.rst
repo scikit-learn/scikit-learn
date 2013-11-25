@@ -129,14 +129,14 @@ The form of these kernels is as follows:
 
 * Linear kernel (``kernel = 'linear'``)
 
-  :math:`K(x; h) \propto 1 - dist/h` if :math:`x < h`
+  :math:`K(x; h) \propto 1 - x/h` if :math:`x < h`
 
 * Cosine kernel (``kernel = 'cosine'``)
 
   :math:`K(x; h) \propto \cos(\frac{\pi x}{2h})` if :math:`x < h`
 
 The kernel density estimator can be used with any of the valid distance
-metrics (see :class:`DistanceMetric` for a list of available metrics), though
+metrics (see :class:`sklearn.neighbors.DistanceMetric` for a list of available metrics), though
 the results are properly normalized only for the Euclidean metric.  One
 particularly useful metric is the
 `Haversine distance <http://en.wikipedia.org/wiki/Haversine_formula>`_

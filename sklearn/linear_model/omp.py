@@ -13,8 +13,8 @@ from scipy.linalg.lapack import get_lapack_funcs
 
 from .base import LinearModel, _pre_fit
 from ..base import RegressorMixin
-from ..utils import array2d, as_float_array
-from ..cross_validation import check_cv
+from ..utils import array2d, as_float_array, check_arrays
+from ..cross_validation import _check_cv as check_cv
 from ..externals.joblib import Parallel, delayed
 from ..utils.arrayfuncs import solve_triangular
 
@@ -524,7 +524,7 @@ class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
     Attributes
     ----------
     `coef_` : array, shape (n_features,) or (n_features, n_targets)
-        parameter vector (w in the fomulation formula)
+        parameter vector (w in the formula)
 
     `intercept_` : float or array, shape (n_targets,)
         independent term in decision function.
@@ -840,6 +840,7 @@ class OrthogonalMatchingPursuitCV(LinearModel, RegressorMixin):
             returns an instance of self.
         """
         X = array2d(X)
+        X, y = check_arrays(X, y)
         cv = check_cv(self.cv, X, y, classifier=False)
         max_iter = (min(max(int(0.1 * X.shape[1]), 5), X.shape[1])
                     if not self.max_iter

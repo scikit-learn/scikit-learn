@@ -35,7 +35,7 @@ Making a release
 
        $ python setup.py sdist register upload
 
-   - Upload manually the tarbal on sourceforge:
+   - Upload manually the tarball on SourceForge:
      https://sourceforge.net/projects/scikit-learn/files/
 
 5. Push the documentation to the website (see README in doc folder)

@@ -17,7 +17,9 @@ all training examples correctly.
 Two plots are generated.  The first is a visualization of the
 decision function for a variety of parameter values, and the second
 is a heatmap of the classifier's cross-validation accuracy as
-a function of `C` and `gamma`.
+a function of `C` and `gamma`. For this example we explore a relatively
+large grid for illustration purposes. In practice, a logarithmic
+grid from `10**-3` to `10**3` is usually sufficient.
 '''
 print(__doc__)
 

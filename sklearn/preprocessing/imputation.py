@@ -104,7 +104,7 @@ class Imputer(BaseEstimator, TransformerMixin):
     Parameters
     ----------
     missing_values : integer or string, optional (default="NaN")
-        The placeholder for the missing values. All occurences of
+        The placeholder for the missing values. All occurrences of
         `missing_values` will be imputed. For missing values encoded as np.nan,
         use the string value "NaN".
 
@@ -304,7 +304,7 @@ class Imputer(BaseEstimator, TransformerMixin):
             median_masked = np.ma.median(masked_X, axis=axis)
             # Avoid the warning "Warning: converting a masked element to nan."
             median = np.ma.getdata(median_masked)
-            median[np.ma.getmask(median_masked)] = np.nan
+            median[np.ma.getmaskarray(median_masked)] = np.nan
 
             return median
 

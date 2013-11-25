@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # Author: Vincent Dubourg <vincent.dubourg@gmail.com>

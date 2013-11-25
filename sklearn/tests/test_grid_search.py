@@ -33,10 +33,10 @@ from sklearn.grid_search import (GridSearchCV, RandomizedSearchCV,
 from sklearn.svm import LinearSVC, SVC
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.cluster import KMeans, MeanShift
+from sklearn.cluster import KMeans, SpectralClustering
 from sklearn.metrics import f1_score
 from sklearn.metrics import make_scorer
-from sklearn.metrics import auc_score
+from sklearn.metrics import roc_auc_score
 from sklearn.cross_validation import KFold, StratifiedKFold
 
 
@@ -491,9 +491,10 @@ def test_unsupervised_grid_search():
 
 
 def test_bad_estimator():
-    # test grid-search with unsupervised estimator
-    ms = MeanShift()
-    assert_raises(TypeError, GridSearchCV, ms,
+    # test grid-search with clustering algorithm which doesn't support
+    # "predict"
+    sc = SpectralClustering()
+    assert_raises(TypeError, GridSearchCV, sc,
                   param_grid=dict(gamma=[.1, 1, 10]),
                   scoring='ari')
 
@@ -542,7 +543,7 @@ def test_randomized_search_grid_scores():
 
     # Check the consistency with the best_score_ and best_params_ attributes
     sorted_grid_scores = list(sorted(search.grid_scores_,
-                            key=lambda x: x.mean_validation_score))
+                              key=lambda x: x.mean_validation_score))
     best_score = sorted_grid_scores[-1].mean_validation_score
     assert_equal(search.best_score_, best_score)
 
@@ -572,7 +573,7 @@ def test_grid_search_score_consistency():
                 if score == "f1":
                     correct_score = f1_score(y[test], clf.predict(X[test]))
                 elif score == "roc_auc":
-                    correct_score = auc_score(y[test],
+                    correct_score = roc_auc_score(y[test],
                                               clf.decision_function(X[test]))
                 assert_almost_equal(correct_score, scores[i])
                 i += 1

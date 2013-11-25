@@ -8,11 +8,11 @@ clustering.
 # License: BSD 3 clause
 
 import numpy as np
-import warnings
 
 from ..base import BaseEstimator, ClusterMixin
 from ..utils import as_float_array
 from ..metrics import euclidean_distances
+from ..metrics import pairwise_distances_argmin
 
 
 def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
@@ -22,10 +22,10 @@ def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
     Parameters
     ----------
 
-    S: array [n_samples, n_samples]
+    S : array [n_samples, n_samples]
         Matrix of similarities between points
 
-    preference: array [n_samples,] or float, optional, default: None
+    preference : array [n_samples,] or float, optional, default: None
         Preferences for each point - points with larger values of
         preferences are more likely to be chosen as exemplars. The number of
         exemplars, i.e. of clusters, is influenced by the input preferences
@@ -34,27 +34,27 @@ def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
         number of clusters). For a smaller amount of clusters, this can be set
         to the minimum value of the similarities.
 
-    convergence_iter: int, optional, default: 15
+    convergence_iter : int, optional, default: 15
         Number of iterations with no change in the number
         of estimated clusters that stops the convergence.
 
-    max_iter: int, optional, default: 200
+    max_iter : int, optional, default: 200
         Maximum number of iterations
 
-    damping: float, optional, default: 0.5
+    damping : float, optional, default: 0.5
         Damping factor between 0.5 and 1.
 
-    copy: boolean, optional, default: True
+    copy : boolean, optional, default: True
         If copy is False, the affinity matrix is modified inplace by the
         algorithm, for memory efficiency
 
-    verbose: boolean, optional, default: False
+    verbose : boolean, optional, default: False
         The verbosity level
 
     Returns
     -------
 
-    cluster_centers_indices: array [n_clusters]
+    cluster_centers_indices : array [n_clusters]
         index of clusters centers
 
     labels : array [n_samples]
@@ -178,32 +178,32 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
 
     Parameters
     ----------
-    damping: float, optional, default: 0.5
+    damping : float, optional, default: 0.5
         Damping factor between 0.5 and 1.
 
-    convergence_iter: int, optional, default: 15
+    convergence_iter : int, optional, default: 15
         Number of iterations with no change in the number
         of estimated clusters that stops the convergence.
 
-    max_iter: int, optional, default: 200
+    max_iter : int, optional, default: 200
         Maximum number of iterations
 
-    copy: boolean, optional, default: True
+    copy : boolean, optional, default: True
         Make a copy of input data.
 
-    preference: array [n_samples,] or float, optional, default: None
+    preference : array [n_samples,] or float, optional, default: None
         Preferences for each point - points with larger values of
         preferences are more likely to be chosen as exemplars. The number
         of exemplars, ie of clusters, is influenced by the input
         preferences value. If the preferences are not passed as arguments,
         they will be set to the median of the input similarities.
 
-    affinity: string, optional, default=``euclidean``
+    affinity : string, optional, default=``euclidean``
         Which affinity to use. At the moment ``precomputed`` and
         ``euclidean`` are supported. ``euclidean`` uses the
         negative squared euclidean distance between points.
 
-    verbose: boolean, optional, default: False
+    verbose : boolean, optional, default: False
         Whether to be verbose.
 
 
@@ -211,6 +211,9 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
     ----------
     `cluster_centers_indices_` : array, [n_clusters]
         Indices of cluster centers
+
+    `cluster_centers_` : array, [n_clusters, n_features]
+        Cluster centers (if affinity != ``precomputed'').
 
     `labels_` : array, [n_samples]
         Labels of each point
@@ -260,11 +263,6 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
             similarities / affinities.
         """
 
-        if X.shape[0] == X.shape[1] and not self._pairwise:
-            warnings.warn("The API of AffinityPropagation has changed."
-                          "Now ``fit`` constructs an affinity matrix from the"
-                          " data. To use a custom affinity matrix, set "
-                          "``affinity=precomputed``.")
         if self.affinity is "precomputed":
             self.affinity_matrix_ = X
         elif self.affinity is "euclidean":
@@ -278,4 +276,30 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
             self.affinity_matrix_, self.preference, max_iter=self.max_iter,
             convergence_iter=self.convergence_iter, damping=self.damping,
             copy=self.copy, verbose=self.verbose)
+
+        if self.affinity != "precomputed":
+            self.cluster_centers_ = X[self.cluster_centers_indices_].copy()
+
         return self
+
+    def predict(self, X):
+        """Predict the closest cluster each sample in X belongs to.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+            New data to predict.
+
+        Returns
+        -------
+        labels : array, shape [n_samples,]
+            Index of the cluster each sample belongs to.
+        """
+        if not hasattr(self, "cluster_centers_indices_"):
+            raise ValueError("Estimator is not fitted.")
+
+        if not hasattr(self, "cluster_centers_"):
+            raise ValueError("Predict method is not supported when "
+                             "affinity='precomputed'.")
+
+        return pairwise_distances_argmin(X, self.cluster_centers_)

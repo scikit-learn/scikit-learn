@@ -154,7 +154,7 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
             raise ValueError("X.shape[0] should be equal to X.shape[1]")
 
         if sample_weight.shape[0] > 0 and sample_weight.shape[0] != X.shape[0]:
-            raise ValueError("sample_weight and X have incompatible shapes:"
+            raise ValueError("sample_weight and X have incompatible shapes: "
                              "%r vs %r\n"
                              "Note: Sparse matrices cannot be indexed w/"
                              "boolean masks (use `indices=True` in CV)."
@@ -464,7 +464,7 @@ class BaseSVC(BaseLibSVM, ClassifierMixin):
             Class labels for samples in X.
         """
         y = super(BaseSVC, self).predict(X)
-        return self.classes_.take(y.astype(np.int))
+        return self.classes_.take(np.asarray(y, dtype=np.intp))
 
     def predict_proba(self, X):
         """Compute probabilities of possible outcomes for samples in X.
@@ -567,12 +567,6 @@ class BaseSVC(BaseLibSVM, ClassifierMixin):
             self.nu, self.epsilon, self.shrinking,
             self.probability, self.n_support_, self._label,
             self.probA_, self.probB_)
-
-    @property
-    @deprecated("The ``label_`` attribute has been renamed to ``classes_`` "
-                "for consistency and will be removed in 0.15.")
-    def label_(self):
-        return self.classes_
 
 
 class BaseLibLinear(six.with_metaclass(ABCMeta, BaseEstimator)):
@@ -712,12 +706,6 @@ class BaseLibLinear(six.with_metaclass(ABCMeta, BaseEstimator)):
 
     @property
     def classes_(self):
-        return self._enc.classes_
-
-    @property
-    @deprecated("The ``label_`` attribute has been renamed to ``classes_`` "
-                "for consistency and will be removed in 0.15.")
-    def label_(self):
         return self._enc.classes_
 
     def _get_bias(self):

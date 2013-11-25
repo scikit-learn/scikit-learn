@@ -20,7 +20,7 @@ import numpy as np
 import pylab as pl
 
 from sklearn.cluster import MiniBatchKMeans, KMeans
-from sklearn.metrics.pairwise import euclidean_distances
+from sklearn.metrics.pairwise import pairwise_distances_argmin
 from sklearn.datasets.samples_generator import make_blobs
 
 ##############################################################################
@@ -66,10 +66,8 @@ colors = ['#4EACC5', '#FF9C34', '#4E9A06']
 # MiniBatchKMeans and the KMeans algorithm. Let's pair the cluster centers per
 # closest one.
 
-distance = euclidean_distances(k_means_cluster_centers,
-                               mbk_means_cluster_centers,
-                               squared=True)
-order = distance.argmin(axis=1)
+order = pairwise_distances_argmin(k_means_cluster_centers,
+                                  mbk_means_cluster_centers)
 
 # KMeans
 ax = fig.add_subplot(1, 3, 1)

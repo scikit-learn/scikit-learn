@@ -76,8 +76,7 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
 
     See also
     --------
-    DictVectorizer : performs vectorization in a similar as this class,
-      but using a hash table instead of only a hash function.
+    FeatureHasher : performs vectorization using only a hash function.
     sklearn.preprocessing.OneHotEncoder : handles nominal/categorical features
       encoded as columns of integers.
     """

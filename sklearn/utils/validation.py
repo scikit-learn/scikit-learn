@@ -1,5 +1,10 @@
 """Utilities for input validation"""
-# Authors: Olivier Grisel and Gael Varoquaux and others (please update me)
+# Authors: Olivier Grisel
+#          Gael Varoquaux
+#          Andreas Mueller
+#          Lars Buitinck
+#          Alexandre Gramfort
+#          Nicolas Tresegnie
 # License: BSD 3 clause
 
 import warnings
@@ -16,8 +21,17 @@ class DataConversionWarning(UserWarning):
     "A warning on implicit data conversions happening in the code"
     pass
 
-
 warnings.simplefilter("always", DataConversionWarning)
+
+
+class NonBLASDotWarning(UserWarning):
+    "A warning on implicit dispatch to numpy.dot"
+    pass
+
+
+# Silenced by default to reduce verbosity. Turn on at runtime for
+# performance profiling.
+warnings.simplefilter('ignore', NonBLASDotWarning)
 
 
 def _assert_all_finite(X):
@@ -46,6 +60,8 @@ def safe_asarray(X, dtype=None, order=None, copy=False):
         if copy:
             X = X.copy()
         assert_all_finite(X.data)
+        # enforces dtype on data array (order should be kept the same).
+        X.data = np.asarray(X.data, dtype=dtype)
     else:
         X = np.array(X, dtype=dtype, order=order, copy=copy)
         assert_all_finite(X)
@@ -109,8 +125,6 @@ def _atleast2d_or_sparse(X, dtype, order, copy, sparse_class, convmethod,
     else:
         X = array2d(X, dtype=dtype, order=order, copy=copy,
                     force_all_finite=force_all_finite)
-        if force_all_finite:
-            _assert_all_finite(X)
     return X
 
 

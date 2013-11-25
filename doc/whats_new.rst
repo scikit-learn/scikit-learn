@@ -1,8 +1,96 @@
 .. currentmodule:: sklearn
 
-.. _changes_0_14_rc:
+.. _changes_0_15:
 
-0.14-rc
+0.15
+=====
+
+Changelog
+---------
+
+   - Added :class:`ensemble.BaggingClassifier` and
+     :class:`ensemble.BaggingRegressor` meta-estimators for ensembling
+     any kind of base estimator. See the :ref:`Bagging <bagging>` section of
+     the user guide for details and examples. By `Gilles Louppe`_.
+
+   - Speed improvement of the :mod:`sklearn.ensemble.gradient_boosting` module.
+     By `Gilles Louppe`_ and `Peter Prettenhofer`_.
+
+   - Added :func:`metrics.pairwise_distances_argmin_min`, by Philippe Gervais.
+
+   - Added predict method to :class:`cluster.AffinityPropagation` and
+     :class:`cluster.MeanShift`, by `Mathieu Blondel`_.
+
+   - Vector and matrix multiplications have been optimised throughout the
+     library by `Denis Engemann`_, and `Alexandre Gramfort`_.
+     In particular, they should take less memory with older NumPy versions
+     (prior to 1.7.2).
+
+   - New unsupervised feature selection algorithm
+     :class:`feature_selection.VarianceThreshold`, by `Lars Buitinck`_.
+
+   - Precision-recall and ROC examples now use train_test_split, and have more
+     explanation of why these metrics are useful. By `Kyle Kastner`_
+
+   - The training algorithm for :class:`decomposition.NMF` is faster for
+     sparse matrices and has much lower memory complexity, meaning it will
+     scale up gracefully to large datasets. By `Lars Buitinck`_.
+
+   - Added svd_method option with default value to "randomized" to
+     :class:`decomposition.factor_analysis.FactorAnalysis` to save memory and
+     significantly speedup computation by `Denis Engemann`_, and
+     `Alexandre Gramfort`_.
+
+   - Memory improvements of extra trees and random forest by
+     `Arnaud Joly`_.
+
+   - Changed :class:`cross_validation.StratifiedKFold` to try and
+     preserve as much of the original ordering of samples as possible so as
+     not to hide overfitting on datasets with a non-negligible level of
+     samples dependency.
+     By `Daniel Nouri`_ and `Olivier Grisel`_.
+
+   - Add multi-output support to :class:`gaussian_process.GaussianProcess`
+     by John Novak.
+
+   - Norm computations optimized for NumPy 1.6 and later versions by
+     `Lars Buitinck`_. In particular, the k-means algorithm no longer
+     needs a temporary data structure the size of its input.
+
+   - Added :class:`linear_model.RANSACRegressor` meta-estimator for the robust
+     fitting of regression models. By Johannes Schönberger.
+
+   - Fixed bug in :class:`gradient_boosting.GradientBoostingRegressor` with
+     ``loss='huber'``: ``gamma`` might have not been initialized.
+     
+   - :class:`dummy.DummyClassifier` can now be used to predict a constant
+     output value. By Manoj Kumar.
+
+   - Fixed bug in :class:`decomposition.MiniBatchDictionaryLearning` :
+     partial_fit was not working properly.
+
+API changes summary
+-------------------
+
+   - Add score method to :class:`PCA <decomposition.PCA>` following the model of
+     probabilistic PCA and deprecate
+     :class:`ProbabilisticPCA <decomposition.ProbabilisticPCA>` model whose
+     score implementation is not correct. The computation now also exploits the
+     matrix inversion lemma for faster computation. By `Alexandre Gramfort`_.
+
+   - The score method of :class:`FactorAnalysis <decomposition.FactorAnalysis>`
+     now returns the average log-likelihood of the samples. Use score_samples
+     to get log-likelihood of each sample. By `Alexandre Gramfort`_.
+
+   - Generating boolean masks (the setting ``indices=False``)
+     from cross-validation generators is deprecated.
+     Support for masks will be removed in 0.17.
+     The generators have produced arrays of indices by default since 0.10.
+     By `Joel Nothman`_.
+
+.. _changes_0_14:
+
+0.14
 =======
 
 Changelog
@@ -212,6 +300,8 @@ Changelog
 API changes summary
 -------------------
 
+   - The :func:`auc_score` was renamed :func:`roc_auc_score`.
+
    - Testing scikit-learn with `sklearn.test()` is deprecated. Use
      `nosetest sklearn` from the command line.
 
@@ -280,7 +370,106 @@ API changes summary
      to float, and raises a warning. Previously it rounded for dense integer
      input.
 
+   - :class:`sklearn.multiclass.OneVsRestClassifier` now has a
+     ``decision_function`` method. This will return the distance of each
+     sample from the decision boundary for each class, as long as the
+     underlying estimators implement the ``decision_function`` method.
+     By `Kyle Kastner`_.
+
    - Better input validation, warning on unexpected shapes for y.
+
+People
+------
+List of contributors for release 0.14 by number of commits.
+
+ * 277  Gilles Louppe
+ * 245  Lars Buitinck
+ * 187  Andreas Mueller
+ * 124  Arnaud Joly
+ * 112  Jaques Grobler
+ * 109  Gael Varoquaux
+ * 107  Olivier Grisel
+ * 102  Noel Dawe
+ *  99  Kemal Eren
+ *  79  Joel Nothman
+ *  75  Jake VanderPlas
+ *  73  Nelle Varoquaux
+ *  71  Vlad Niculae
+ *  65  Peter Prettenhofer
+ *  64  Alexandre Gramfort
+ *  54  Mathieu Blondel
+ *  38  Nicolas Trésegnie
+ *  35  eustache
+ *  27  Denis Engemann
+ *  25  Yann N. Dauphin
+ *  19  Justin Vincent
+ *  17  Robert Layton
+ *  15  Doug Coleman
+ *  14  Michael Eickenberg
+ *  13  Robert Marchman
+ *  11  Fabian Pedregosa
+ *  11  Philippe Gervais
+ *  10  Jim Holmström
+ *  10  Tadej Janež
+ *  10  syhw
+ *   9  Mikhail Korobov
+ *   9  Steven De Gryze
+ *   8  sergeyf
+ *   7  Ben Root
+ *   7  Hrishikesh Huilgolkar
+ *   6  Kyle Kastner
+ *   6  Martin Luessi
+ *   6  Rob Speer
+ *   5  Federico Vaggi
+ *   5  Raul Garreta
+ *   5  Rob Zinkov
+ *   4  Ken Geis
+ *   3  A. Flaxman
+ *   3  Denton Cockburn
+ *   3  Dougal Sutherland
+ *   3  Ian Ozsvald
+ *   3  Johannes Schönberger
+ *   3  Robert McGibbon
+ *   3  Roman Sinayev
+ *   3  Szabo Roland
+ *   2  Diego Molla
+ *   2  Imran Haque
+ *   2  Jochen Wersdörfer
+ *   2  Sergey Karayev
+ *   2  Yannick Schwartz
+ *   2  jamestwebber
+ *   1  Abhijeet Kolhe
+ *   1  Alexander Fabisch
+ *   1  Bastiaan van den Berg
+ *   1  Benjamin Peterson
+ *   1  Daniel Velkov
+ *   1  Fazlul Shahriar
+ *   1  Felix Brockherde
+ *   1  Félix-Antoine Fortin
+ *   1  Harikrishnan S
+ *   1  Jack Hale
+ *   1  JakeMick
+ *   1  James McDermott
+ *   1  John Benediktsson
+ *   1  John Zwinck
+ *   1  Joshua Vredevoogd
+ *   1  Justin Pati
+ *   1  Kevin Hughes
+ *   1  Kyle Kelley
+ *   1  Matthias Ekman
+ *   1  Miroslav Shubernetskiy
+ *   1  Naoki Orii
+ *   1  Norbert Crombach
+ *   1  Rafael Cunha de Almeida
+ *   1  Rolando Espinoza La fuente
+ *   1  Seamus Abshere
+ *   1  Sergey Feldman
+ *   1  Sergio Medina
+ *   1  Stefano Lattarini
+ *   1  Steve Koch
+ *   1  Sturla Molden
+ *   1  Thomas Jarosch
+ *   1  Yaroslav Halchenko
 
 .. _changes_0_13_1:
 
@@ -616,7 +805,7 @@ List of contributors for release 0.13 by number of commits.
  *  17  `Fabian Pedregosa`_
  *  17  Nelle Varoquaux
  *  16  `Christian Osendorfer`_
- *  14  Daniel Nouri
+ *  14  `Daniel Nouri`_
  *  13  `Virgile Fritsch`_
  *  13  syhw
  *  12  `Satrajit Ghosh`_
@@ -1698,7 +1887,7 @@ Changelog
   - Refactoring of :class:`neighbors.NeighborsClassifier` and
     :func:`neighbors.kneighbors_graph`: added different algorithms for
     the k-Nearest Neighbor Search and implemented a more stable
-    algorithm for finding barycenter weigths. Also added some
+    algorithm for finding barycenter weights. Also added some
     developer documentation for this module, see
     `notes_neighbors
     <https://github.com/scikit-learn/scikit-learn/wiki/Neighbors-working-notes>`_ for more information [`Fabian Pedregosa`_].
@@ -2034,7 +2223,7 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 
 .. _Fabian Pedregosa: http://fseoane.net/blog/
 
-.. _Mathieu Blondel: http://www.mblondel.org/journal/
+.. _Mathieu Blondel: http://www.mblondel.org
 
 .. _James Bergstra: http://www-etud.iro.umontreal.ca/~bergstrj/
 
@@ -2119,3 +2308,11 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Yannick Schwartz: https://team.inria.fr/parietal/schwarty/
 
 .. _Mikhail Korobov: http://kmike.ru/pages/about/
+
+.. _Kyle Kastner: http://kastnerkyle.github.io
+
+.. _@FedericoV: https://github.com/FedericoV/
+
+.. _Daniel Nouri: http://danielnouri.org
+
+.. _Johannes Schönberger: https://github.com/ahojnnes

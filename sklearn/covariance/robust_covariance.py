@@ -42,8 +42,9 @@ def c_step(X, n_support, remaining_iterations=30, initial_estimates=None,
 
     remaining_iterations : int, optional
         Number of iterations to perform.
-        According to [Rouseeuw1999]_, two iterations are sufficient to get close
-        to the minimum, and we never need more than 30 to reach convergence.
+        According to [Rouseeuw1999]_, two iterations are sufficient to get
+        close to the minimum, and we never need more than 30 to reach
+        convergence.
 
     initial_estimates : 2-tuple, optional
         Initial estimates of location and shape from which to run the c_step
@@ -138,7 +139,7 @@ def c_step(X, n_support, remaining_iterations=30, initial_estimates=None,
         # c_step procedure converged
         if verbose:
             print("Optimal couple (location, covariance) found before"
-                  "ending iterations (%d left)" % (remaining_iterations))
+                  " ending iterations (%d left)" % (remaining_iterations))
         results = location, covariance, det, support, dist
     elif det > previous_det:
         # determinant has increased (should not happen)
@@ -305,7 +306,7 @@ def fast_mcd(X, support_fraction=None,
     Depending on the size of the initial sample, we have one, two or three
     such computation levels.
 
-    Note that only raw estimates are returned. If one is intersted in
+    Note that only raw estimates are returned. If one is interested in
     the correction and reweighting steps described in [Rouseeuw1999]_,
     see the MinCovDet object.
 

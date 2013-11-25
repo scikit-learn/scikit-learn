@@ -68,7 +68,7 @@ copyright = u('2010 - 2013, scikit-learn developers (BSD License)')
 # built documents.
 #
 # The short X.Y version.
-version = '0.14-git'
+version = '0.15-git'
 # The full version, including alpha/beta/rc tags.
 import sklearn
 release = sklearn.__version__
@@ -224,3 +224,8 @@ latex_preamble = r"""
 #latex_use_modindex = True
 
 trim_doctests_flags = True
+
+# Add the 'copybutton' javascript, to hide/show the prompt in code
+# examples
+def setup(app):
+    app.add_javascript('js/copybutton.js')

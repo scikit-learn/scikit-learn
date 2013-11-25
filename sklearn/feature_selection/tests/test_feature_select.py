@@ -481,6 +481,17 @@ def test_tied_pvalues():
         assert_not_in(9998, Xt)
 
 
+def test_tied_scores():
+    """Test for stable sorting in k-best with tied scores."""
+    X_train = np.array([[0, 0, 0], [1, 1, 1]])
+    y_train = [0, 1]
+
+    for n_features in [1, 2, 3]:
+        sel = SelectKBest(chi2, k=n_features).fit(X_train, y_train)
+        X_test = sel.transform([0, 1, 2])
+        assert_array_equal(X_test[0], np.arange(3)[-n_features:])
+
+
 def test_nans():
     """Assert that SelectKBest and SelectPercentile can handle NaNs."""
     # First feature has zero variance to confuse f_classif (ANOVA) and

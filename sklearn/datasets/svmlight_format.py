@@ -25,8 +25,9 @@ import scipy.sparse as sp
 from ._svmlight_format import _load_svmlight_file
 from .. import __version__
 from ..externals import six
-from ..utils import atleast2d_or_csr
 from ..externals.six import u, b
+from ..externals.six.moves import range, zip
+from ..utils import atleast2d_or_csr
 
 
 def load_svmlight_file(f, n_features=None, dtype=np.float64,
@@ -253,8 +254,14 @@ def _dump_svmlight(X, y, f, one_based, comment, query_id):
         f.writelines(b("# %s\n" % line) for line in comment.splitlines())
 
     for i in range(X.shape[0]):
-        s = " ".join([value_pattern % (j + one_based, X[i, j])
-                      for j in X[i].nonzero()[is_sp]])
+        if is_sp:
+            span = slice(X.indptr[i], X.indptr[i + 1])
+            row = zip(X.indices[span], X.data[span])
+        else:
+            nz = X[i] != 0
+            row = zip(np.where(nz)[0], X[i, nz])
+
+        s = " ".join(value_pattern % (j + one_based, x) for j, x in row)
         if query_id is not None:
             feat = (y[i], query_id[i], s)
         else:

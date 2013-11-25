@@ -56,16 +56,18 @@ from __future__ import print_function
 
 print(__doc__)
 
-from time import time
+from collections import defaultdict
+import operator
 import re
-from collections import Counter
+from time import time
 
 import numpy as np
 
-from sklearn.datasets.twenty_newsgroups import fetch_20newsgroups
-from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.cluster.bicluster import SpectralCoclustering
 from sklearn.cluster import MiniBatchKMeans
+from sklearn.externals import six
+from sklearn.datasets.twenty_newsgroups import fetch_20newsgroups
+from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.cluster import v_measure_score
 
 
@@ -136,6 +138,14 @@ def bicluster_ncut(i):
     return cut / weight
 
 
+def most_common(d):
+    """Items of a defaultdict(int) with the highest values.
+
+    Like Counter.most_common in Python >=2.7.
+    """
+    return sorted(six.iteritems(d), key=operator.itemgetter(1), reverse=True)
+
+
 bicluster_ncuts = list(bicluster_ncut(i)
                        for i in xrange(len(newsgroups.target_names)))
 best_idx = np.argsort(bicluster_ncuts)[:5]
@@ -150,11 +160,11 @@ for idx, cluster in enumerate(best_idx):
         continue
 
     # categories
-    cluster_categories = list(document_names[i] for i in cluster_docs)
-    counter = Counter(cluster_categories)
-    cat_string = ", ".join("{:.0f}% {}".format(float(c) / n_rows * 100,
-                                               name)
-                           for name, c in counter.most_common()[:3])
+    counter = defaultdict(int)
+    for i in cluster_docs:
+        counter[document_names[i]] += 1
+    cat_string = ", ".join("{:.0f}% {}".format(float(c) / n_rows * 100, name)
+                           for name, c in most_common(counter)[:3])
 
     # words
     out_of_cluster_docs = cocluster.row_labels_ != cluster

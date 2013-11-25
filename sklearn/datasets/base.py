@@ -44,7 +44,7 @@ def get_data_home(data_home=None):
     in the user home folder.
 
     Alternatively, it can be set by the 'SCIKIT_LEARN_DATA' environment
-    variable or programatically by giving an explit folder path. The
+    variable or programmatically by giving an explit folder path. The
     '~' symbol is expanded to the user home folder.
 
     If the folder does not already exist, it is automatically created.

@@ -13,6 +13,7 @@ from sklearn.preprocessing import LabelBinarizer
 from sklearn.datasets import make_multilabel_classification
 from sklearn.utils import check_random_state, shuffle
 from sklearn.utils.multiclass import unique_labels
+from sklearn.utils.fixes import np_version
 from sklearn.utils.testing import (assert_true,
                                    assert_raises,
                                    assert_raise_message,
@@ -22,7 +23,8 @@ from sklearn.utils.testing import (assert_true,
                                    assert_array_equal,
                                    assert_array_almost_equal,
                                    assert_warns,
-                                   assert_greater)
+                                   assert_greater,
+                                   ignore_warnings)
 
 
 from sklearn.metrics import (accuracy_score,
@@ -46,15 +48,18 @@ from sklearn.metrics import (accuracy_score,
                              precision_score,
                              recall_score,
                              r2_score,
+                             roc_auc_score,
                              roc_curve,
                              zero_one,
                              zero_one_score,
                              zero_one_loss)
 from sklearn.metrics.metrics import _check_clf_targets
 from sklearn.metrics.metrics import _check_reg_targets
+from sklearn.metrics.metrics import UndefinedMetricWarning
 
 
 from sklearn.externals.six.moves import xrange
+from sklearn.externals.six import u
 
 
 REGRESSION_METRICS = {
@@ -102,11 +107,11 @@ CLASSIFICATION_METRICS = {
     "macro_precision_score": partial(precision_score, average="macro"),
     "macro_recall_score": partial(recall_score, average="macro"),
 
-    "confusion_matrix": partial(confusion_matrix),
+    "confusion_matrix_with_labels": partial(confusion_matrix, labels=range(3)),
 }
 
 THRESHOLDED_METRICS = {
-    "auc_score": auc_score,
+    "roc_auc_score": roc_auc_score,
     "average_precision_score": average_precision_score,
 }
 
@@ -251,7 +256,7 @@ NOT_SYMMETRIC_METRICS = {
     "macro_precision_score": partial(precision_score, average="macro"),
     "macro_recall_score": partial(recall_score, average="macro"),
 
-    "confusion_matrix": partial(confusion_matrix, labels=range(3)),
+    "confusion_matrix_with_labels": partial(confusion_matrix, labels=range(3)),
 }
 
 
@@ -300,8 +305,8 @@ def make_prediction(dataset=None, binary=False):
 
 
 def _auc(y_true, y_score):
-    n_samples = y_true.shape[0]
-    ind = np.arange(n_samples)
+    """Alternative implementation to check for correctness of
+    `roc_auc_score`."""
     pos_label = np.unique(y_true)[1]
 
     # Count the number of times positive samples are correctly ranked above
@@ -314,6 +319,30 @@ def _auc(y_true, y_score):
     return n_correct / float(len(pos) * len(neg))
 
 
+def _average_precision(y_true, y_score):
+    """Alternative implementation to check for correctness of
+    `average_precision_score`."""
+    pos_label = np.unique(y_true)[1]
+    n_pos = np.sum(y_true == pos_label)
+    order = np.argsort(y_score)[::-1]
+    y_score = y_score[order]
+    y_true = y_true[order]
+
+    score = 0
+    for i in xrange(len(y_score)):
+        if y_true[i] == pos_label:
+            # Compute precision up to document i
+            # i.e, percentage of relevant documents up to document i.
+            prec = 0
+            for j in xrange(0, i + 1):
+                if y_true[j] == pos_label:
+                    prec += 1.0
+            prec /= (i + 1.0)
+            score += prec
+
+    return score / n_pos
+
+
 def test_roc_curve():
     """Test Area under Receiver Operating Characteristic (ROC) curve"""
     y_true, _, probas_pred = make_prediction(binary=True)
@@ -322,7 +351,11 @@ def test_roc_curve():
     roc_auc = auc(fpr, tpr)
     expected_auc = _auc(y_true, probas_pred)
     assert_array_almost_equal(roc_auc, expected_auc, decimal=2)
-    assert_almost_equal(roc_auc, auc_score(y_true, probas_pred))
+    assert_almost_equal(roc_auc, roc_auc_score(y_true, probas_pred))
+
+    with warnings.catch_warnings(record=True):
+        assert_almost_equal(roc_auc, auc_score(y_true, probas_pred))
+
     assert_equal(fpr.shape, tpr.shape)
     assert_equal(fpr.shape, thresholds.shape)
 
@@ -477,25 +510,47 @@ def test_auc_errors():
 
 
 def test_auc_score_non_binary_class():
-    """Test that auc_score function returns an error when trying to compute AUC
-    for non-binary class values.
+    """Test that roc_auc_score function returns an error when trying
+    to compute AUC for non-binary class values.
     """
     rng = check_random_state(404)
     y_pred = rng.rand(10)
     # y_true contains only one class value
     y_true = np.zeros(10, dtype="int")
     assert_raise_message(ValueError, "AUC is defined for binary "
-                         "classification only", auc_score, y_true, y_pred)
+                         "classification only", roc_auc_score, y_true, y_pred)
     y_true = np.ones(10, dtype="int")
     assert_raise_message(ValueError, "AUC is defined for binary "
-                         "classification only", auc_score, y_true, y_pred)
+                         "classification only", roc_auc_score, y_true, y_pred)
     y_true = -np.ones(10, dtype="int")
     assert_raise_message(ValueError, "AUC is defined for binary "
-                         "classification only", auc_score, y_true, y_pred)
+                         "classification only", roc_auc_score, y_true, y_pred)
     # y_true contains three different class values
     y_true = rng.randint(0, 3, size=10)
     assert_raise_message(ValueError, "AUC is defined for binary "
-                         "classification only", auc_score, y_true, y_pred)
+                         "classification only", roc_auc_score, y_true, y_pred)
+
+    with warnings.catch_warnings(record=True):
+        rng = check_random_state(404)
+        y_pred = rng.rand(10)
+        # y_true contains only one class value
+        y_true = np.zeros(10, dtype="int")
+        assert_raise_message(ValueError, "AUC is defined for binary "
+                             "classification only", auc_score,
+                             y_true, y_pred)
+        y_true = np.ones(10, dtype="int")
+        assert_raise_message(ValueError, "AUC is defined for binary "
+                             "classification only", auc_score, y_true,
+                             y_pred)
+        y_true = -np.ones(10, dtype="int")
+        assert_raise_message(ValueError, "AUC is defined for binary "
+                             "classification only", auc_score, y_true,
+                             y_pred)
+        # y_true contains three different class values
+        y_true = rng.randint(0, 3, size=10)
+        assert_raise_message(ValueError, "AUC is defined for binary "
+                             "classification only", auc_score, y_true,
+                             y_pred)
 
 
 def test_precision_recall_f1_score_binary():
@@ -525,13 +580,12 @@ def test_precision_recall_f1_score_binary():
                         (1 + 2 ** 2) * ps * rs / (2 ** 2 * ps + rs), 2)
 
 
+@ignore_warnings
 def test_precision_recall_f_binary_single_class():
     """Test precision, recall and F1 score behave with a single positive or
     negative class
 
     Such a case may occur with non-stratified cross-validation"""
-    warnings.simplefilter("ignore")
-
     assert_equal(1., precision_score([1, 1], [1, 1]))
     assert_equal(1., recall_score([1, 1], [1, 1]))
     assert_equal(1., f1_score([1, 1], [1, 1]))
@@ -605,10 +659,11 @@ def test_confusion_matrix_binary():
 
 def test_matthews_corrcoef_nan():
     with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
+        warnings.simplefilter("always")
         assert_equal(matthews_corrcoef([0], [1]), 0.0)
         warnings.simplefilter("error")
-        assert_equal(matthews_corrcoef([0,0],[0,1]), 0.0)
+        assert_equal(matthews_corrcoef([0, 0], [0, 1]), 0.0)
+
 
 def test_precision_recall_f1_score_multiclass():
     """Test Precision Recall and F1 Score for multiclass classification task"""
@@ -683,9 +738,9 @@ def test_precision_recall_f1_score_multiclass_pos_label_none():
 def test_zero_precision_recall():
     """Check that pathological cases do not bring NaNs"""
 
-    try:
-        old_error_settings = np.seterr(all='raise')
+    old_error_settings = np.seterr(all='raise')
 
+    try:
         y_true = np.array([0, 1, 2, 0, 1, 2])
         y_pred = np.array([2, 0, 1, 1, 2, 0])
 
@@ -808,6 +863,32 @@ avg / total       0.51      0.53      0.47        75
     assert_equal(report, expected_report)
 
 
+def test_classification_report_multiclass_with_unicode_label():
+    y_true, y_pred, _ = make_prediction(binary=False)
+
+    labels = np.array([u"blue\xa2", u"green\xa2", u"red\xa2"])
+    y_true = labels[y_true]
+    y_pred = labels[y_pred]
+
+    expected_report = u"""\
+             precision    recall  f1-score   support
+
+      blue\xa2       0.83      0.79      0.81        24
+     green\xa2       0.33      0.10      0.15        31
+       red\xa2       0.42      0.90      0.57        20
+
+avg / total       0.51      0.53      0.47        75
+"""
+    if np_version[:3] < (1, 6, 1):
+        expected_message = ("NumPy < 1.6.1 does not implement"
+                            " searchsorted on unicode data correctly.")
+        assert_raise_message(RuntimeError, expected_message,
+                             classification_report, y_true, y_pred)
+    else:
+        report = classification_report(y_true, y_pred)
+        assert_equal(report, expected_report)
+
+
 def test_multilabel_classification_report():
 
     n_classes = 4
@@ -869,6 +950,8 @@ def _test_precision_recall_curve(y_true, probas_pred):
     assert_array_almost_equal(precision_recall_auc, 0.85, 2)
     assert_array_almost_equal(precision_recall_auc,
                               average_precision_score(y_true, probas_pred))
+    assert_almost_equal(_average_precision(y_true, probas_pred),
+                        precision_recall_auc, 1)
     assert_equal(p.size, r.size)
     assert_equal(p.size, thresholds.size + 1)
     # Smoke test in the case of proba having only one value
@@ -887,15 +970,22 @@ def test_precision_recall_curve_errors():
 
 
 def test_score_scale_invariance():
-    # Test that average_precision_score and auc_score are invariant by
+    # Test that average_precision_score and roc_auc_score are invariant by
     # the scaling or shifting of probabilities
     y_true, _, probas_pred = make_prediction(binary=True)
 
-    roc_auc = auc_score(y_true, probas_pred)
-    roc_auc_scaled = auc_score(y_true, 100 * probas_pred)
-    roc_auc_shifted = auc_score(y_true, probas_pred - 10)
+    roc_auc = roc_auc_score(y_true, probas_pred)
+    roc_auc_scaled = roc_auc_score(y_true, 100 * probas_pred)
+    roc_auc_shifted = roc_auc_score(y_true, probas_pred - 10)
     assert_equal(roc_auc, roc_auc_scaled)
     assert_equal(roc_auc, roc_auc_shifted)
+
+    with warnings.catch_warnings(record=True):
+        roc_auc = auc_score(y_true, probas_pred)
+        roc_auc_scaled = auc_score(y_true, 100 * probas_pred)
+        roc_auc_shifted = auc_score(y_true, probas_pred - 10)
+        assert_equal(roc_auc, roc_auc_scaled)
+        assert_equal(roc_auc, roc_auc_shifted)
 
     pr_auc = average_precision_score(y_true, probas_pred)
     pr_auc_scaled = average_precision_score(y_true, 100 * probas_pred)
@@ -928,7 +1018,7 @@ def test_losses():
                  1 - zero_one_loss(y_true, y_pred))
 
     with warnings.catch_warnings(record=True):
-    # Throw deprecated warning
+        # Throw deprecated warning
         assert_equal(zero_one_score(y_true, y_pred),
                      1 - zero_one_loss(y_true, y_pred))
 
@@ -1104,6 +1194,10 @@ def test_invariance_string_vs_numbers_labels():
     labels_str = ["eggs", "spam"]
 
     for name, metric in CLASSIFICATION_METRICS.items():
+        if isinstance(metric, partial) and 'labels' in metric.keywords:
+            # don't test metric if "labels" are already set
+            continue
+
         measure_with_number = metric(y1, y2)
 
         # Ugly, but handle case with a pos_label and label
@@ -1204,7 +1298,7 @@ def test_multioutput_regression_invariance_to_dimension_shuffling():
             perm = rng.permutation(n_dims)
             assert_almost_equal(metric(y_true[:, perm], y_pred[:, perm]),
                                 error,
-                                err_msg="%s is not dimension shuffling"
+                                err_msg="%s is not dimension shuffling "
                                         "invariant" % name)
 
 
@@ -1471,6 +1565,7 @@ def test_normalize_option_multilabel_classification():
                             err_msg="Failed with %s" % name)
 
 
+@ignore_warnings
 def test_precision_recall_f1_score_multilabel_1():
     """ Test precision_recall_f1_score on a crafted multilabel example
     """
@@ -1481,8 +1576,6 @@ def test_precision_recall_f1_score_multilabel_1():
     lb.fit([range(4)])
     y_true_bi = lb.transform(y_true_ll)
     y_pred_bi = lb.transform(y_pred_ll)
-
-    warnings.simplefilter("ignore")
 
     for y_true, y_pred in [(y_true_ll, y_pred_ll), (y_true_bi, y_pred_bi)]:
 
@@ -1549,6 +1642,7 @@ def test_precision_recall_f1_score_multilabel_1():
                             0.5)
 
 
+@ignore_warnings
 def test_precision_recall_f1_score_multilabel_2():
     """ Test precision_recall_f1_score on a crafted multilabel example 2
     """
@@ -1559,8 +1653,6 @@ def test_precision_recall_f1_score_multilabel_2():
     lb.fit([range(1, 5)])
     y_true_bi = lb.transform(y_true_ll)
     y_pred_bi = lb.transform(y_pred_ll)
-
-    warnings.simplefilter("ignore")
 
     for y_true, y_pred in [(y_true_ll, y_pred_ll), (y_true_bi, y_pred_bi)]:
         # tp = [ 0.  1.  0.  0.]
@@ -1624,6 +1716,7 @@ def test_precision_recall_f1_score_multilabel_2():
                             0.1666, 2)
 
 
+@ignore_warnings
 def test_precision_recall_f1_score_with_an_empty_prediction():
     y_true_ll = [(1,), (0,), (2, 1,)]
     y_pred_ll = [tuple(), (3,), (2, 1)]
@@ -1632,8 +1725,6 @@ def test_precision_recall_f1_score_with_an_empty_prediction():
     lb.fit([range(4)])
     y_true_bi = lb.transform(y_true_ll)
     y_pred_bi = lb.transform(y_pred_ll)
-
-    warnings.simplefilter("ignore")
 
     for y_true, y_pred in [(y_true_ll, y_pred_ll), (y_true_bi, y_pred_bi)]:
         # true_pos = [ 0.  1.  1.  0.]
@@ -1709,7 +1800,7 @@ def test_precision_recall_f1_no_labels():
         warnings.simplefilter("always")
 
         for beta in [1]:
-            p, r, f, s = assert_warns(UserWarning,
+            p, r, f, s = assert_warns(UndefinedMetricWarning,
                                       precision_recall_fscore_support,
                                       y_true, y_pred, average=None, beta=beta)
             assert_array_almost_equal(p, [0, 0, 0], 2)
@@ -1717,12 +1808,12 @@ def test_precision_recall_f1_no_labels():
             assert_array_almost_equal(f, [0, 0, 0], 2)
             assert_array_almost_equal(s, [0, 0, 0], 2)
 
-            fbeta = assert_warns(UserWarning, fbeta_score, y_true, y_pred,
-                                 beta=beta, average=None)
+            fbeta = assert_warns(UndefinedMetricWarning, fbeta_score,
+                                 y_true, y_pred, beta=beta, average=None)
             assert_array_almost_equal(fbeta, [0, 0, 0], 2)
 
             for average in ["macro", "micro", "weighted", "samples"]:
-                p, r, f, s = assert_warns(UserWarning,
+                p, r, f, s = assert_warns(UndefinedMetricWarning,
                                           precision_recall_fscore_support,
                                           y_true, y_pred, average=average,
                                           beta=beta)
@@ -1731,9 +1822,68 @@ def test_precision_recall_f1_no_labels():
                 assert_almost_equal(f, 0)
                 assert_equal(s, None)
 
-                fbeta = assert_warns(UserWarning, fbeta_score, y_true, y_pred,
+                fbeta = assert_warns(UndefinedMetricWarning, fbeta_score,
+                                     y_true, y_pred,
                                      beta=beta, average=average)
                 assert_almost_equal(fbeta, 0)
+
+
+def test_prf_warnings():
+    with warnings.catch_warnings(record=True) as record:
+        warnings.simplefilter('always')
+
+        # average of per-label scores
+        for average in [None, 'weighted', 'macro']:
+            precision_recall_fscore_support([0, 1, 2], [1, 1, 2],
+                                            average=average)
+            assert_equal(str(record.pop().message),
+                         'Precision and F-score are ill-defined and being '
+                         'set to 0.0 in labels with no predicted samples.')
+            precision_recall_fscore_support([1, 1, 2], [0, 1, 2],
+                                            average=average)
+            assert_equal(str(record.pop().message),
+                         'Recall and F-score are ill-defined and '
+                         'being set to 0.0 in labels with no true samples.')
+
+        # average of per-sample scores
+        precision_recall_fscore_support(np.array([[1, 0], [1, 0]]),
+                                        np.array([[1, 0], [0, 0]]),
+                                        average='samples')
+        assert_equal(str(record.pop().message),
+                     'Precision and F-score are ill-defined and '
+                     'being set to 0.0 in samples with no predicted labels.')
+        precision_recall_fscore_support(np.array([[1, 0], [0, 0]]),
+                                        np.array([[1, 0], [1, 0]]),
+                                        average='samples')
+        assert_equal(str(record.pop().message),
+                     'Recall and F-score are ill-defined and '
+                     'being set to 0.0 in samples with no true labels.')
+
+        # single score: micro-average
+        precision_recall_fscore_support(np.array([[1, 1], [1, 1]]),
+                                        np.array([[0, 0], [0, 0]]),
+                                        average='micro')
+        assert_equal(str(record.pop().message),
+                     'Precision and F-score are ill-defined and '
+                     'being set to 0.0 due to no predicted samples.')
+        precision_recall_fscore_support(np.array([[0, 0], [0, 0]]),
+                                        np.array([[1, 1], [1, 1]]),
+                                        average='micro')
+        assert_equal(str(record.pop().message),
+                     'Recall and F-score are ill-defined and '
+                     'being set to 0.0 due to no true samples.')
+
+        # single postive label
+        precision_recall_fscore_support([1, 1], [-1, -1],
+                                        average='macro')
+        assert_equal(str(record.pop().message),
+                     'Precision and F-score are ill-defined and '
+                     'being set to 0.0 due to no predicted samples.')
+        precision_recall_fscore_support([-1, -1], [1, 1],
+                                        average='macro')
+        assert_equal(str(record.pop().message),
+                     'Recall and F-score are ill-defined and '
+                     'being set to 0.0 due to no true samples.')
 
 
 def test__check_clf_targets():

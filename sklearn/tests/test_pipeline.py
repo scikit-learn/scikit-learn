@@ -22,6 +22,16 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.feature_extraction.text import CountVectorizer
 
 
+JUNK_FOOD_DOCS = (
+    "the pizza pizza beer copyright",
+    "the pizza burger beer copyright",
+    "the the pizza beer beer copyright",
+    "the burger beer beer copyright",
+    "the coke burger coke copyright",
+    "the coke burger burger",
+)
+
+
 class IncorrectT(BaseEstimator):
     """Small class to test parameter dispatching.
     """
@@ -81,6 +91,9 @@ def test_pipeline_init():
     clf = SVC()
     filter1 = SelectKBest(f_classif)
     pipe = Pipeline([('anova', filter1), ('svc', clf)])
+
+    # Check that we can't use the same stage name twice
+    assert_raises(ValueError, Pipeline, [('svc', SVC()), ('svc', SVC())])
 
     # Check that params are set
     pipe.set_params(svc__C=0.1)
@@ -284,15 +297,53 @@ def test_feature_union_weights():
     assert_equal(X_fit_transformed_wo_method.shape, (X.shape[0], 7))
 
 
-def test_feature_union_feature_names():
-    JUNK_FOOD_DOCS = (
-        "the pizza pizza beer copyright",
-        "the pizza burger beer copyright",
-        "the the pizza beer beer copyright",
-        "the burger beer beer copyright",
-        "the coke burger coke copyright",
-        "the coke burger burger",
+def test_feature_union_parallel():
+    # test that n_jobs work for FeatureUnion
+    X = JUNK_FOOD_DOCS
+
+    fs = FeatureUnion([
+        ("words", CountVectorizer(analyzer='word')),
+        ("chars", CountVectorizer(analyzer='char')),
+    ])
+
+    fs_parallel = FeatureUnion([
+        ("words", CountVectorizer(analyzer='word')),
+        ("chars", CountVectorizer(analyzer='char')),
+    ], n_jobs=2)
+
+    fs_parallel2 = FeatureUnion([
+        ("words", CountVectorizer(analyzer='word')),
+        ("chars", CountVectorizer(analyzer='char')),
+    ], n_jobs=2)
+
+    fs.fit(X)
+    X_transformed = fs.transform(X)
+    assert_equal(X_transformed.shape[0], len(X))
+
+    fs_parallel.fit(X)
+    X_transformed_parallel = fs_parallel.transform(X)
+    assert_equal(X_transformed.shape, X_transformed_parallel.shape)
+    assert_array_equal(
+        X_transformed.toarray(),
+        X_transformed_parallel.toarray()
     )
+
+    # fit_transform should behave the same
+    X_transformed_parallel2 = fs_parallel2.fit_transform(X)
+    assert_array_equal(
+        X_transformed.toarray(),
+        X_transformed_parallel2.toarray()
+    )
+
+    # transformers should stay fit after fit_transform
+    X_transformed_parallel2 = fs_parallel2.transform(X)
+    assert_array_equal(
+        X_transformed.toarray(),
+        X_transformed_parallel2.toarray()
+    )
+
+
+def test_feature_union_feature_names():
     word_vect = CountVectorizer(analyzer="word")
     char_vect = CountVectorizer(analyzer="char_wb", ngram_range=(3, 3))
     ft = FeatureUnion([("chars", char_vect), ("words", word_vect)])

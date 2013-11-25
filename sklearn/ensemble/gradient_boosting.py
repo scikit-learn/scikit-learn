@@ -26,6 +26,7 @@ from abc import ABCMeta, abstractmethod
 from warnings import warn
 from time import time
 
+import numbers
 import numpy as np
 
 from scipy import stats
@@ -41,6 +42,7 @@ from ..externals import six
 
 from ..tree.tree import DecisionTreeRegressor
 from ..tree._tree import DTYPE, TREE_LEAF
+from ..tree._tree import MSE, PresortBestSplitter
 
 from ._gradient_boosting import predict_stages
 from ._gradient_boosting import predict_stage
@@ -243,6 +245,7 @@ class HuberLossFunction(RegressionLossFunction):
     def __init__(self, n_classes, alpha=0.9):
         super(HuberLossFunction, self).__init__(n_classes)
         self.alpha = alpha
+        self.gamma = None
 
     def init_estimator(self):
         return QuantileEstimator(alpha=0.5)
@@ -251,6 +254,8 @@ class HuberLossFunction(RegressionLossFunction):
         pred = pred.ravel()
         diff = y - pred
         gamma = self.gamma
+        if gamma is None:
+            gamma = stats.scoreatpercentile(np.abs(diff), self.alpha * 100)
         gamma_mask = np.abs(diff) <= gamma
         sq_loss = np.sum(0.5 * diff[gamma_mask] ** 2.0)
         lin_loss = np.sum(gamma * (np.abs(diff[~gamma_mask]) - gamma / 2.0))
@@ -454,7 +459,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         self.estimators_ = np.empty((0, 0), dtype=np.object)
 
     def _fit_stage(self, i, X, y, y_pred, sample_mask,
-                   random_state):
+                   criterion, splitter, random_state):
         """Fit another stage of ``n_classes_`` trees to the boosting model. """
         loss = self.loss_
         original_y = y
@@ -467,7 +472,8 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
 
             # induce regression tree on residuals
             tree = DecisionTreeRegressor(
-                criterion="mse",
+                criterion=criterion,
+                splitter=splitter,
                 max_depth=self.max_depth,
                 min_samples_split=self.min_samples_split,
                 min_samples_leaf=self.min_samples_leaf,
@@ -498,8 +504,13 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         if self.learning_rate <= 0.0:
             raise ValueError("learning_rate must be greater than 0")
 
-        if self.loss not in LOSS_FUNCTIONS:
+        if (self.loss not in self._SUPPORTED_LOSS or
+            self.loss not in LOSS_FUNCTIONS):
             raise ValueError("Loss '{0:s}' not supported. ".format(self.loss))
+
+        if self.loss in ('mdeviance', 'bdeviance'):
+            warn(("Loss '{0:s}' is deprecated as of version 0.14. "
+                 "Use 'deviance' instead. ").format(self.loss))
 
         if self.loss == 'deviance':
             loss_class = (MultinomialDeviance
@@ -527,6 +538,29 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         if not (0.0 < self.alpha and self.alpha < 1.0):
             raise ValueError("alpha must be in (0.0, 1.0)")
 
+        if isinstance(self.max_features, six.string_types):
+            if self.max_features == "auto":
+                if is_classification:
+                    max_features = max(1, int(np.sqrt(self.n_features)))
+                else:
+                    max_features = self.n_features_
+            elif self.max_features == "sqrt":
+                max_features = max(1, int(np.sqrt(self.n_features)))
+            elif self.max_features == "log2":
+                max_features = max(1, int(np.log2(self.n_features)))
+            else:
+                raise ValueError(
+                    'Invalid value for max_features. Allowed string '
+                    'values are "auto", "sqrt" or "log2".')
+        elif self.max_features is None:
+            max_features = self.n_features
+        elif isinstance(self.max_features, (numbers.Integral, np.integer)):
+            max_features = self.max_features
+        else:  # float
+            max_features = int(self.max_features * self.n_features)
+
+        self.max_features_ = max_features
+
     def fit(self, X, y):
         """Fit the gradient boosting model.
 
@@ -547,8 +581,6 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         self : object
             Returns self.
         """
-        self._check_params()
-
         # Check input
         X, = check_arrays(X, dtype=DTYPE, sparse_format="dense",
                           check_ccontiguous=True)
@@ -556,6 +588,9 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         n_samples, n_features = X.shape
         self.n_features = n_features
         random_state = check_random_state(self.random_state)
+
+        # Check parameters
+        self._check_params()
 
         # pull freq used parameters into local scope
         subsample = self.subsample
@@ -597,6 +632,13 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         # init predictions
         y_pred = self.init_.predict(X)
 
+        # init criterion and splitter
+        criterion = MSE(1)
+        splitter = PresortBestSplitter(criterion,
+                                       self.max_features_,
+                                       self.min_samples_leaf,
+                                       random_state)
+
         # perform boosting iterations
         for i in range(self.n_estimators):
 
@@ -610,7 +652,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
 
             # fit next stage of trees
             y_pred = self._fit_stage(i, X, y, y_pred, sample_mask,
-                                     random_state)
+                                     criterion, splitter, random_state)
 
             # track deviance (= loss)
             if do_oob:
@@ -728,7 +770,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
     @property
     def oob_score_(self):
         warn("The oob_score_ argument is replaced by oob_improvement_"
-             "as of version 0.14 and will be removed in 0.16.",
+             " as of version 0.14 and will be removed in 0.16.",
              DeprecationWarning)
         try:
             return self._oob_score_
@@ -852,6 +894,8 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
     T. Hastie, R. Tibshirani and J. Friedman.
     Elements of Statistical Learning Ed. 2, Springer, 2009.
     """
+
+    _SUPPORTED_LOSS = ('deviance', 'mdeviance', 'bdeviance')
 
     def __init__(self, loss='deviance', learning_rate=0.1, n_estimators=100,
                  subsample=1.0, min_samples_split=2, min_samples_leaf=1,
@@ -1091,6 +1135,8 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
     T. Hastie, R. Tibshirani and J. Friedman.
     Elements of Statistical Learning Ed. 2, Springer, 2009.
     """
+
+    _SUPPORTED_LOSS = ('ls', 'lad', 'huber', 'quantile')
 
     def __init__(self, loss='ls', learning_rate=0.1, n_estimators=100,
                  subsample=1.0, min_samples_split=2, min_samples_leaf=1,

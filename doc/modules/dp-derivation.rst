@@ -49,7 +49,7 @@ proportion :math:`\phi_k`, the mean parameters :math:`\mu_k`, the
 covariance parameters :math:`\Sigma_k`, which is characterized by
 variational Wishart density, :math:`Wishart(a_k, \mathbf{B_k})`, where
 :math:`a` is the degrees of freedom, and :math:`B` is the
-scale matrix. Depending on the covariance parameterization,
+scale matrix. Depending on the covariance parametrization,
 :math:`B_k` can be a positive scalar, a positive vector or a Symmetric
 Positive Definite matrix.
 

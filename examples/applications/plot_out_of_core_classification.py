@@ -4,59 +4,50 @@ Out-of-core classification of text documents
 ======================================================
 
 This is an example showing how scikit-learn can be used for classification
-using an out-of-core approach.
-
-Out-of-core learning means that we can learn from data that would not fit into
-the computer main memory. To achieve this goal we make use of an online
-classifier (i.e. that supports the `partial_fit` method) that will be fed with
-batches of examples. Moreover, to guarantee that the features space remains the
-same over time we leverage the `HashingVectorizer` class that will project each
-example into the same input space. This is especially useful in the case of
-text classification where new features (e.g. words) are discovered on the fly.
+using an out-of-core approach: learning from data that doesn't fit into main
+memory. We make use of an online classifier, i.e., one that supports the
+partial_fit method, that will be fed with batches of examples. To guarantee
+that the features space remains the same over time we leverage a
+HashingVectorizer that will project each example into the same feature space.
+This is especially useful in the case of text classification where new
+features (words) may appear in each batch.
 
 The dataset used in this example is Reuters-21578 as provided by the UCI ML
-repository. It will be automatically downloaded and uncompressed in the current
-directory on first run.
+repository. It will be automatically downloaded and uncompressed on first run.
 
-The plot represents is the learning curve of the classifier i.e. the evolution
-of classification accuracy with the number of mini-batches fed to the
-classifier.
+The plot represents is the learning curve of the classifier: the evolution
+of classification accuracy over the course of the mini-batches. Accuracy is
+measured on the first 1000 samples, held out as a validation set.
 
-`ReutersParser` and `ReutersStreamReader` classes are utility classes to parse
-and stream examples to the main learning loop.
-
-To limit the amount of consumed memory at any time we enqueue examples up to a
-fixed amount before calling the features transformation and learning routines.
-We then clear the examples queue and proceed with enqueuing again and so on.
-
-To study the performance of the method we sample the first 1000 examples of the
-dataset and hold them out as separate testing data. We then use it to estimate
-accuracy after each mini-batch.
+To limit the memory consumption, we queue examples up to a fixed amount before
+feeding them to the learner.
 """
 
-# Author: Eustache Diemert <eustache@diemert.fr>
+# Authors: Eustache Diemert <eustache@diemert.fr>
+#          @FedericoV <https://github.com/FedericoV/>
 # License: BSD 3 clause
 
 from __future__ import print_function
 
-import time
-import re
+from glob import glob
+import itertools
 import os.path
-import fnmatch
+import re
 import sgmllib
-import urllib
 import tarfile
+import time
+import urllib
 
 import numpy as np
-import pylab as pl
+import matplotlib.pyplot as plt
+from matplotlib import rcParams
 
+from sklearn.datasets import get_data_home
 from sklearn.feature_extraction.text import HashingVectorizer
 from sklearn.linear_model.stochastic_gradient import SGDClassifier
-import itertools
-
-###############################################################################
-# Reuters Dataset related routines
-###############################################################################
+from sklearn.linear_model import PassiveAggressiveClassifier
+from sklearn.linear_model import Perceptron
+from sklearn.naive_bayes import MultinomialNB
 
 
 def _not_in_sphinx():
@@ -64,8 +55,14 @@ def _not_in_sphinx():
     return '__file__' in globals()
 
 
+###############################################################################
+# Reuters Dataset related routines
+###############################################################################
+
 class ReutersParser(sgmllib.SGMLParser):
+
     """Utility class to parse a SGML file and yield documents one at a time."""
+
     def __init__(self, verbose=0):
         sgmllib.SGMLParser.__init__(self, verbose)
         self._reset()
@@ -134,8 +131,7 @@ class ReutersParser(sgmllib.SGMLParser):
         self.topic_d = ""
 
 
-class ReutersStreamReader():
-
+def stream_reuters_documents(data_path=None):
     """Iterate over documents of the Reuters dataset.
 
     The Reuters archive will automatically be downloaded and uncompressed if
@@ -150,16 +146,13 @@ class ReutersStreamReader():
                     'reuters21578-mld/reuters21578.tar.gz')
     ARCHIVE_FILENAME = 'reuters21578.tar.gz'
 
-    def __init__(self, data_path):
-        self.data_path = data_path
-        if not os.path.exists(self.data_path):
-            self.download_dataset()
-
-    def download_dataset(self):
+    if data_path is None:
+        data_path = os.path.join(get_data_home(), "reuters")
+    if not os.path.exists(data_path):
         """Download the dataset."""
         print("downloading dataset (once and for all) into %s" %
-              self.data_path)
-        os.mkdir(self.data_path)
+              data_path)
+        os.mkdir(data_path)
 
         def progress(blocknum, bs, size):
             total_sz_mb = '%.2f MB' % (size / 1e6)
@@ -167,54 +160,52 @@ class ReutersStreamReader():
             if _not_in_sphinx():
                 print('\rdownloaded %s / %s' % (current_sz_mb, total_sz_mb),
                       end='')
-        urllib.urlretrieve(self.DOWNLOAD_URL,
-                           filename=os.path.join(self.data_path,
-                                                 self.ARCHIVE_FILENAME),
+
+        archive_path = os.path.join(data_path, ARCHIVE_FILENAME)
+        urllib.urlretrieve(DOWNLOAD_URL, filename=archive_path,
                            reporthook=progress)
         if _not_in_sphinx():
             print('\r', end='')
-        print("untaring data ...")
-        tfile = tarfile.open(os.path.join(self.data_path,
-                                          self.ARCHIVE_FILENAME),
-                             'r:gz')
-        tfile.extractall(self.data_path)
-        print("done !")
+        print("untarring Reuters dataset...")
+        tarfile.open(archive_path, 'r:gz').extractall(data_path)
+        print("done.")
 
-    def iterdocs(self):
-        """Iterate doc by doc, yield a dict."""
-        for root, _dirnames, filenames in os.walk(self.data_path):
-            for filename in fnmatch.filter(filenames, '*.sgm'):
-                path = os.path.join(root, filename)
-                parser = ReutersParser()
-                for doc in parser.parse(open(path)):
-                    yield doc
+    parser = ReutersParser()
+    for filename in glob(os.path.join(data_path, "*.sgm")):
+        for doc in parser.parse(open(filename)):
+            yield doc
 
 
 ###############################################################################
 # Main
 ###############################################################################
-# Create the hasher and limit the number of features to a reasonable maximum
-hasher = HashingVectorizer(decode_error='ignore', n_features=2 ** 18)
+# Create the vectorizer and limit the number of features to a reasonable
+# maximum
+vectorizer = HashingVectorizer(decode_error='ignore', n_features=2 ** 18,
+                               non_negative=True)
 
-# Create an online classifier i.e. supporting `partial_fit()`
-classifier = SGDClassifier()
 
-# Create the data_streamer that parses Reuters SGML files and iterates on
-# documents as a stream
-data_streamer = ReutersStreamReader('reuters').iterdocs()
+# Iterator over parsed Reuters SGML files.
+data_stream = stream_reuters_documents()
 
-# Here we propose to learn a binary classification between the positive class
-# and all other documents."""
+# We learn a binary classification between the "acq" class and all the others.
+# "acq" was chosen as it is more or less evenly distributed in the Reuters
+# files. For other datasets, one should take care of creating a test set with
+# a realistic portion of positive instances.
 all_classes = np.array([0, 1])
-# NB: the 'acq' class was chosen as it is more or less evenly distributed in
-# the Reuters files. For other datasets, one should take care of creating a
-# test set with a realistic portion of positive instances.
 positive_class = 'acq'
 
+# Here are some classifiers that support the `partial_fit` method
+partial_fit_classifiers = {
+    'SGD': SGDClassifier(),
+    'Perceptron': Perceptron(),
+    'NB Multinomial': MultinomialNB(alpha=0.01),
+    'Passive-Aggressive': PassiveAggressiveClassifier(),
+}
 
-def get_minibatch(doc_iter, size, transformer=hasher,
-                  pos_class=positive_class):
-    """Extract a minibatch of examples, return a tuple X, y.
+
+def get_minibatch(doc_iter, size, pos_class=positive_class):
+    """Extract a minibatch of examples, return a tuple X_text, y.
 
     Note: size is before excluding invalid docs with no topics assigned.
 
@@ -224,84 +215,157 @@ def get_minibatch(doc_iter, size, transformer=hasher,
             if doc['topics']]
     if not len(data):
         return np.asarray([], dtype=int), np.asarray([], dtype=int)
-    X, y = zip(*data)
-    return transformer.transform(X), np.asarray(y, dtype=int)
+    X_text, y = zip(*data)
+    return X_text, np.asarray(y, dtype=int)
 
 
-def iter_minibatchs(doc_iter, minibatch_size):
-    """Generator of minibatchs."""
-    X, y = get_minibatch(doc_iter, minibatch_size)
-    while X.shape[0]:
-        yield X, y
-        X, y = get_minibatch(doc_iter, minibatch_size)
+def iter_minibatches(doc_iter, minibatch_size):
+    """Generator of minibatches."""
+    X_text, y = get_minibatch(doc_iter, minibatch_size)
+    while len(X_text):
+        yield X_text, y
+        X_text, y = get_minibatch(doc_iter, minibatch_size)
 
 
-# structure to track accuracy history
-stats = {'n_train': 0, 'n_test': 0, 'n_train_pos': 0, 'n_test_pos': 0,
-         'accuracy': 0.0, 'accuracy_history': [(0, 0)], 't0': time.time(),
-         'runtime_history': [(0, 0)]}
+# test data statistics
+test_stats = {'n_test': 0, 'n_test_pos': 0}
 
 # First we hold out a number of examples to estimate accuracy
 n_test_documents = 1000
-X_test, y_test = get_minibatch(data_streamer, 1000)
-stats['n_test'] += len(y_test)
-stats['n_test_pos'] += sum(y_test)
+X_test_text, y_test = get_minibatch(data_stream, 1000)
+X_test = vectorizer.transform(X_test_text)
+test_stats['n_test'] += len(y_test)
+test_stats['n_test_pos'] += sum(y_test)
 print("Test set is %d documents (%d positive)" % (len(y_test), sum(y_test)))
 
 
-def progress(stats):
+def progress(cls_name, stats):
     """Report progress information, return a string."""
     duration = time.time() - stats['t0']
-    s = "%(n_train)6d train docs (%(n_train_pos)6d positive) " % stats
-    s += "%(n_test)6d test docs (%(n_test_pos)6d positive) " % stats
+    s = "%20s classifier : \t" % cls_name
+    s += "%(n_train)6d train docs (%(n_train_pos)6d positive) " % stats
+    s += "%(n_test)6d test docs (%(n_test_pos)6d positive) " % test_stats
     s += "accuracy: %(accuracy).3f " % stats
     s += "in %.2fs (%5d docs/s)" % (duration, stats['n_train'] / duration)
     return s
 
-# We will feed the classifier with mini-batches of 100 documents; this means
-# we have at most 100 docs in memory at any time.
-minibatch_size = 100
+
+cls_stats = {}
+
+for cls_name in partial_fit_classifiers:
+    stats = {'n_train': 0, 'n_train_pos': 0,
+             'accuracy': 0.0, 'accuracy_history': [(0, 0)], 't0': time.time(),
+             'runtime_history': [(0, 0)], 'total_fit_time': 0.0}
+    cls_stats[cls_name] = stats
+
+get_minibatch(data_stream, n_test_documents)
+# Discard test set
+
+# We will feed the classifier with mini-batches of 1000 documents; this means
+# we have at most 1000 docs in memory at any time.  The smaller the document
+# batch, the bigger the relative overhead of the partial fit methods.
+minibatch_size = 1000
+
+# Create the data_stream that parses Reuters SGML files and iterates on
+# documents as a stream.
+minibatch_iterators = iter_minibatches(data_stream, minibatch_size)
+total_vect_time = 0.0
 
 # Main loop : iterate on mini-batchs of examples
-minibatch_iterators = iter_minibatchs(data_streamer, minibatch_size)
-for i, (X_train, y_train) in enumerate(minibatch_iterators):
-    # update estimator with examples in the current mini-batch
-    classifier.partial_fit(X_train, y_train, classes=all_classes)
-    # accumulate test accuracy stats
-    stats['n_train'] += X_train.shape[0]
-    stats['n_train_pos'] += sum(y_train)
-    stats['accuracy'] = classifier.score(X_test, y_test)
-    stats['accuracy_history'].append((stats['accuracy'], stats['n_train']))
-    stats['runtime_history'].append((stats['accuracy'],
-                                     time.time() - stats['t0']))
-    if i % 10 == 0:
-        print(progress(stats))
+for i, (X_train_text, y_train) in enumerate(minibatch_iterators):
+
+    tick = time.time()
+    X_train = vectorizer.transform(X_train_text)
+    total_vect_time += time.time() - tick
+
+    for cls_name, cls in partial_fit_classifiers.items():
+        tick = time.time()
+        # update estimator with examples in the current mini-batch
+        cls.partial_fit(X_train, y_train, classes=all_classes)
+
+        # accumulate test accuracy stats
+        cls_stats[cls_name]['n_train'] += X_train.shape[0]
+        cls_stats[cls_name]['n_train_pos'] += sum(y_train)
+        cls_stats[cls_name]['accuracy'] = cls.score(X_test, y_test)
+        acc_history = (cls_stats[cls_name]['accuracy'],
+                       cls_stats[cls_name]['n_train'])
+        cls_stats[cls_name]['accuracy_history'].append(acc_history)
+        cls_stats[cls_name]['total_fit_time'] += time.time() - tick
+        run_history = (cls_stats[cls_name]['accuracy'],
+                       total_vect_time + cls_stats[cls_name]['total_fit_time'])
+        cls_stats[cls_name]['runtime_history'].append(run_history)
+
+        if i % 3 == 0:
+            print(progress(cls_name, cls_stats[cls_name]))
+    if i % 3 == 0:
+        print('\n')
+
 
 ###############################################################################
 # Plot results
 ###############################################################################
 
 
-def plot_accuracy(x, y, plot_placement, x_legend):
+def plot_accuracy(x, y, x_legend):
     """Plot accuracy as a function of x."""
     x = np.array(x)
     y = np.array(y)
-    pl.subplots_adjust(hspace=0.5)
-    pl.subplot(plot_placement)
-    pl.title('Classification accuracy as a function of %s' % x_legend)
-    pl.xlabel('%s' % x_legend)
-    pl.ylabel('Accuracy')
-    pl.grid(True)
-    pl.plot(x, y)
+    plt.title('Classification accuracy as a function of %s' % x_legend)
+    plt.xlabel('%s' % x_legend)
+    plt.ylabel('Accuracy')
+    plt.grid(True)
+    plt.plot(x, y)
 
-pl.figure(1)
+rcParams['legend.fontsize'] = 10
+cls_names = list(sorted(cls_stats.keys()))
 
-# Plot accuracy evolution with #examples
-accuracy, n_examples = zip(*stats['accuracy_history'])
-plot_accuracy(n_examples, accuracy, 211, "training examples (#)")
+plt.figure()
+for _, stats in sorted(cls_stats.items()):
+    # Plot accuracy evolution with #examples
+    accuracy, n_examples = zip(*stats['accuracy_history'])
+    plot_accuracy(n_examples, accuracy, "training examples (#)")
+    ax = plt.gca()
+    ax.set_ylim((0.8, 1))
+plt.legend(cls_names, loc='best')
 
-# Plot accuracy evolution with runtime
-accuracy, runtime = zip(*stats['runtime_history'])
-plot_accuracy(runtime, accuracy, 212, 'runtime (s)')
+plt.figure()
+for _, stats in sorted(cls_stats.items()):
+    # Plot accuracy evolution with runtime
+    accuracy, runtime = zip(*stats['runtime_history'])
+    plot_accuracy(runtime, accuracy, 'runtime (s)')
+    ax = plt.gca()
+    ax.set_ylim((0.8, 1))
+plt.legend(cls_names, loc='best')
 
-pl.show()
+plt.figure()
+fig = plt.gcf()
+cls_runtime = []
+for cls_name, stats in sorted(cls_stats.items()):
+    cls_runtime.append(stats['total_fit_time'])
+
+cls_runtime.append(total_vect_time)
+cls_names.append('Vectorization')
+bar_colors = rcParams['axes.color_cycle'][:len(cls_names)]
+
+ax = plt.subplot(111)
+rectangles = plt.bar(range(len(cls_names)), cls_runtime, width=0.5,
+                     color=bar_colors)
+
+ax.set_xticks(np.linspace(0.25, len(cls_names) - 0.75, len(cls_names)))
+ax.set_xticklabels(cls_names, fontsize=10)
+ymax = max(cls_runtime) * 1.2
+ax.set_ylim((0, ymax))
+ax.set_ylabel('runtime (s)')
+ax.set_title('Time in Process')
+
+
+def autolabel(rectangles):
+    """attach some text vi autolabel on rectangles."""
+    for rect in rectangles:
+        height = rect.get_height()
+        ax.text(rect.get_x() + rect.get_width() / 2.,
+                1.05 * height, '%.4f' % height,
+                ha='center', va='bottom')
+
+autolabel(rectangles)
+plt.show()

@@ -10,7 +10,7 @@ import warnings
 import numpy as np
 
 from ..base import BaseEstimator, ClusterMixin
-from ..utils import check_random_state, as_float_array, deprecated
+from ..utils import check_random_state, as_float_array
 from ..utils.extmath import norm
 from ..metrics.pairwise import pairwise_kernels
 from ..neighbors import kneighbors_graph
@@ -157,9 +157,7 @@ def discretize(vectors, copy=True, max_svd_restarts=30, n_iter_max=20,
 
 def spectral_clustering(affinity, n_clusters=8, n_components=None,
                         eigen_solver=None, random_state=None, n_init=10,
-                        k=None, eigen_tol=0.0,
-                        assign_labels='kmeans',
-                        mode=None):
+                        eigen_tol=0.0, assign_labels='kmeans'):
     """Apply clustering to a projection to the normalized laplacian.
 
     In practice Spectral Clustering is very useful when the structure of
@@ -188,7 +186,7 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None,
     n_components: integer, optional, default is k
         Number of eigen vectors to use for the spectral embedding
 
-    eigen_solver: {None, 'arpack' or 'amg'}
+    eigen_solver: {None, 'arpack', 'lobpcg', or 'amg'}
         The eigenvalue decomposition strategy to use. AMG requires pyamg
         to be installed. It can be faster on very large, sparse problems,
         but may also lead to instabilities
@@ -249,17 +247,6 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None,
                          "'kmeans' or 'discretize', but '%s' was given"
                          % assign_labels)
 
-    if not k is None:
-        warnings.warn("'k' was renamed to n_clusters and will "
-                      "be removed in 0.15.",
-                      DeprecationWarning)
-        n_clusters = k
-    if not mode is None:
-        warnings.warn("'mode' was renamed to eigen_solver "
-                      "and will be removed in 0.15.",
-                      DeprecationWarning)
-        eigen_solver = mode
-
     random_state = check_random_state(random_state)
     n_components = n_clusters if n_components is None else n_components
     maps = spectral_embedding(affinity, n_components=n_components,
@@ -314,7 +301,7 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
         by the clustering algorithm.
 
     gamma: float
-        Scaling factor of RBF, polynomial, exponential chi² and
+        Scaling factor of RBF, polynomial, exponential chi^2 and
         sigmoid affinity kernel. Ignored for
         ``affinity='nearest_neighbors'``.
 
@@ -329,7 +316,7 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
         Number of neighbors to use when constructing the affinity matrix using
         the nearest neighbors method. Ignored for ``affinity='rbf'``.
 
-    eigen_solver: {None, 'arpack' or 'amg'}
+    eigen_solver: {None, 'arpack', 'lobpcg', or 'amg'}
         The eigenvalue decomposition strategy to use. AMG requires pyamg
         to be installed. It can be faster on very large, sparse problems,
         but may also lead to instabilities
@@ -401,20 +388,9 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
     """
 
     def __init__(self, n_clusters=8, eigen_solver=None, random_state=None,
-                 n_init=10, gamma=1., affinity='rbf', n_neighbors=10, k=None,
-                 eigen_tol=0.0, assign_labels='kmeans', mode=None,
-                 degree=3, coef0=1, kernel_params=None):
-        if k is not None:
-            warnings.warn("'k' was renamed to n_clusters and "
-                          "will be removed in 0.15.",
-                          DeprecationWarning)
-            n_clusters = k
-        if mode is not None:
-            warnings.warn("'mode' was renamed to eigen_solver and "
-                          "will be removed in 0.15.",
-                          DeprecationWarning)
-            eigen_solver = mode
-
+                 n_init=10, gamma=1., affinity='rbf', n_neighbors=10,
+                 eigen_tol=0.0, assign_labels='kmeans', degree=3, coef0=1,
+                 kernel_params=None):
         self.n_clusters = n_clusters
         self.eigen_solver = eigen_solver
         self.random_state = random_state
@@ -474,15 +450,3 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
     @property
     def _pairwise(self):
         return self.affinity == "precomputed"
-
-    @property
-    @deprecated("'mode' was renamed to eigen_solver and will be removed in"
-                " 0.15.")
-    def mode(self):
-        return self.eigen_solver
-
-    @property
-    @deprecated("'k' was renamed to n_clusters and will be removed in"
-                " 0.15.")
-    def k(self):
-        return self.n_clusters

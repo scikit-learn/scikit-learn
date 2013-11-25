@@ -40,4 +40,6 @@ def test_get_submatrix():
                                        [6, 7],
                                        [18, 19]])
         submatrix[:] = -1
+        if issparse(X):
+            X = X.todense()
         assert_true(np.all(X != -1))

@@ -54,7 +54,7 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
                  l1_ratio=0.15, fit_intercept=True, n_iter=5, shuffle=False,
                  verbose=0, epsilon=0.1, random_state=None,
                  learning_rate="optimal", eta0=0.0, power_t=0.5,
-                 warm_start=False, rho=None):
+                 warm_start=False):
         self.loss = loss
         self.penalty = penalty
         self.learning_rate = learning_rate
@@ -62,10 +62,6 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
         self.alpha = alpha
         self.C = C
         self.l1_ratio = l1_ratio
-        if rho is not None:
-            self.l1_ratio = 1 - rho
-            warnings.warn("rho was replaced by l1_ratio and will be removed "
-                          "in 0.15", DeprecationWarning)
         self.fit_intercept = fit_intercept
         self.n_iter = n_iter
         self.shuffle = shuffle
@@ -164,15 +160,6 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
         if sample_weight.shape[0] != n_samples:
             raise ValueError("Shapes of X and sample_weight do not match.")
         return sample_weight
-
-    def _set_coef(self, coef_):
-        """Make sure that coef_ is fortran-style and 2d.
-
-        Fortran-style memory layout is needed to ensure that computing
-        the dot product between input ``X`` and ``coef_`` does not trigger
-        a memory copy.
-        """
-        self.coef_ = np.asfortranarray(array2d(coef_))
 
     def _allocate_parameter_mem(self, n_classes, n_features, coef_init=None,
                                 intercept_init=None):
@@ -305,7 +292,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
                  fit_intercept=True, n_iter=5, shuffle=False, verbose=0,
                  epsilon=DEFAULT_EPSILON, n_jobs=1, random_state=None,
                  learning_rate="optimal", eta0=0.0, power_t=0.5,
-                 class_weight=None, warm_start=False, rho=None, seed=None):
+                 class_weight=None, warm_start=False, seed=None):
 
         if seed is not None:
             warnings.warn("Parameter 'seed' was renamed to 'random_state' for"
@@ -320,7 +307,6 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
                                                 verbose=verbose,
                                                 epsilon=epsilon,
                                                 random_state=random_state,
-                                                rho=rho,
                                                 learning_rate=learning_rate,
                                                 eta0=eta0, power_t=power_t,
                                                 warm_start=warm_start)
@@ -389,7 +375,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
 
         if class_weight is not None:
             warnings.warn("Using 'class_weight' as a parameter to the 'fit'"
-                          "method is deprecated and will be removed in 0.13. "
+                          " method is deprecated and will be removed in 0.13. "
                           "Set it on initialization instead.",
                           DeprecationWarning, stacklevel=2)
 
@@ -416,10 +402,6 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
 
         self._partial_fit(X, y, alpha, C, loss, learning_rate, self.n_iter,
                           classes, sample_weight, coef_init, intercept_init)
-
-        # fitting is over, we can now transform coef_ to fortran order
-        # for faster predictions
-        self._set_coef(self.coef_)
 
         return self
 
@@ -604,11 +586,13 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
     learning_rate : string, optional
         The learning rate:
         constant: eta = eta0
-        optimal: eta = 1.0/(t+t0) [default]
+        optimal: eta = 1.0 / (t + t0) [default]
         invscaling: eta = eta0 / pow(t, power_t)
 
     eta0 : double
-        The initial learning rate [default 0.01].
+        The initial learning rate for the 'constant' or 'invscaling'
+        schedules. The default value is 0.0 as eta0 is not used by the
+        default schedule 'optimal'.
 
     power_t : double
         The exponent for inverse scaling learning rate [default 0.5].
@@ -647,7 +631,7 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
     SGDClassifier(alpha=0.0001, class_weight=None, epsilon=0.1, eta0=0.0,
             fit_intercept=True, l1_ratio=0.15, learning_rate='optimal',
             loss='hinge', n_iter=5, n_jobs=1, penalty='l2', power_t=0.5,
-            random_state=None, rho=None, shuffle=False,
+            random_state=None, shuffle=False,
             verbose=0, warm_start=False)
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
@@ -662,14 +646,14 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
                  fit_intercept=True, n_iter=5, shuffle=False, verbose=0,
                  epsilon=DEFAULT_EPSILON, n_jobs=1, random_state=None,
                  learning_rate="optimal", eta0=0.0, power_t=0.5,
-                 class_weight=None, warm_start=False, rho=None, seed=None):
+                 class_weight=None, warm_start=False, seed=None):
         super(SGDClassifier, self).__init__(
             loss=loss, penalty=penalty, alpha=alpha, l1_ratio=l1_ratio,
             fit_intercept=fit_intercept, n_iter=n_iter, shuffle=shuffle,
             verbose=verbose, epsilon=epsilon, n_jobs=n_jobs,
             random_state=random_state, learning_rate=learning_rate, eta0=eta0,
             power_t=power_t, class_weight=class_weight, warm_start=warm_start,
-            rho=rho, seed=seed)
+            seed=seed)
 
     def predict_proba(self, X):
         """Probability estimates.
@@ -776,7 +760,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
                  l1_ratio=0.15, fit_intercept=True, n_iter=5, shuffle=False,
                  verbose=0, epsilon=DEFAULT_EPSILON, random_state=None,
                  learning_rate="invscaling", eta0=0.01, power_t=0.25,
-                 warm_start=False, rho=None):
+                 warm_start=False):
         super(BaseSGDRegressor, self).__init__(loss=loss, penalty=penalty,
                                                alpha=alpha, l1_ratio=l1_ratio,
                                                fit_intercept=fit_intercept,
@@ -784,7 +768,6 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
                                                verbose=verbose,
                                                epsilon=epsilon,
                                                random_state=random_state,
-                                               rho=rho,
                                                learning_rate=learning_rate,
                                                eta0=eta0, power_t=power_t,
                                                warm_start=False)
@@ -902,7 +885,8 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
            Predicted target values per element in X.
         """
         X = atleast2d_or_csr(X)
-        scores = safe_sparse_dot(X, self.coef_) + self.intercept_
+        scores = safe_sparse_dot(X, self.coef_.T,
+                                 dense_output=True) + self.intercept_
         return scores.ravel()
 
     def predict(self, X):
@@ -1056,7 +1040,7 @@ class SGDRegressor(BaseSGDRegressor, _LearntSelectorMixin):
     >>> clf.fit(X, y)
     SGDRegressor(alpha=0.0001, epsilon=0.1, eta0=0.01, fit_intercept=True,
            l1_ratio=0.15, learning_rate='invscaling', loss='squared_loss',
-           n_iter=5, penalty='l2', power_t=0.25, random_state=None, rho=None,
+           n_iter=5, penalty='l2', power_t=0.25, random_state=None,
            shuffle=False, verbose=0, warm_start=False)
 
     See also
@@ -1068,16 +1052,14 @@ class SGDRegressor(BaseSGDRegressor, _LearntSelectorMixin):
                  l1_ratio=0.15, fit_intercept=True, n_iter=5, shuffle=False,
                  verbose=0, epsilon=DEFAULT_EPSILON, random_state=None,
                  learning_rate="invscaling", eta0=0.01, power_t=0.25,
-                 warm_start=False, rho=None):
+                 warm_start=False):
         super(SGDRegressor, self).__init__(loss=loss, penalty=penalty,
-                                               alpha=alpha, l1_ratio=l1_ratio,
-                                               fit_intercept=fit_intercept,
-                                               n_iter=n_iter, shuffle=shuffle,
-                                               verbose=verbose,
-                                               epsilon=epsilon,
-                                               random_state=random_state,
-                                               rho=rho,
-                                               learning_rate=learning_rate,
-                                               eta0=eta0, power_t=power_t,
-                                               warm_start=False)
-
+                                           alpha=alpha, l1_ratio=l1_ratio,
+                                           fit_intercept=fit_intercept,
+                                           n_iter=n_iter, shuffle=shuffle,
+                                           verbose=verbose,
+                                           epsilon=epsilon,
+                                           random_state=random_state,
+                                           learning_rate=learning_rate,
+                                           eta0=eta0, power_t=power_t,
+                                           warm_start=False)

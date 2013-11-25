@@ -55,11 +55,6 @@ def test_libsvm_iris():
         clf = svm.SVC(kernel=k).fit(iris.data, iris.target)
         assert_greater(np.mean(clf.predict(iris.data) == iris.target), 0.9)
 
-    # check deprecated ``label_`` attribute:
-    with warnings.catch_warnings(record=True):
-        # catch deprecation warning
-        assert_array_equal(clf.label_, np.sort(clf.label_))
-
     assert_array_equal(clf.classes_, np.sort(clf.classes_))
 
     # check also the low-level API
@@ -495,7 +490,6 @@ def test_linearsvc_crammer_singer():
     assert_array_almost_equal(dec_func, cs_clf.decision_function(iris.data))
 
 
-
 def test_crammer_singer_binary():
     """Test Crammer-Singer formulation in the binary case"""
     X, y = make_classification(n_classes=2, random_state=0)
@@ -505,7 +499,6 @@ def test_crammer_singer_binary():
                             multi_class="crammer_singer",
                             random_state=0).fit(X, y).score(X, y)
         assert_almost_equal(acc, 0.68)
-
 
 
 def test_linearsvc_iris():

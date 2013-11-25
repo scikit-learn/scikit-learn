@@ -376,13 +376,13 @@ class MDS(BaseEstimator):
         """
         if X.shape[0] == X.shape[1] and self.dissimilarity != "precomputed":
             warnings.warn("The MDS API has changed. ``fit`` now constructs an"
-                          "dissimilarity matrix from data. To use a custom "
+                          " dissimilarity matrix from data. To use a custom "
                           "dissimilarity matrix, set "
                           "``dissimilarity=precomputed``.")
 
-        if self.dissimilarity is "precomputed":
+        if self.dissimilarity == "precomputed":
             self.dissimilarity_matrix_ = X
-        elif self.dissimilarity is "euclidean":
+        elif self.dissimilarity == "euclidean":
             self.dissimilarity_matrix_ = euclidean_distances(X)
         else:
             raise ValueError("Proximity must be 'precomputed' or 'euclidean'."

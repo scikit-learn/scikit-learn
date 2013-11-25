@@ -65,7 +65,7 @@ if __name__ == "__main__":
 
             gc.collect()
             print("- benchmarking ElasticNet")
-            clf = ElasticNet(alpha=alpha, rho=0.5, fit_intercept=False)
+            clf = ElasticNet(alpha=alpha, l1_ratio=0.5, fit_intercept=False)
             tstart = time()
             clf.fit(X_train, y_train)
             elnet_results[i, j, 0] = mean_squared_error(clf.predict(X_test),

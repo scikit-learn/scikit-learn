@@ -252,6 +252,8 @@
                 <li><em>On-going development:</em>
                 <a href="whats_new.html"><em>What's new</em> (changelog)</a>
                 </li>
+                <li><em>August 2013.</em> scikit-learn 0.14 is available for download (<a href="whats_new.html">Changelog</a>).
+                </li>
                 <li><em>July 22-28th, 2013: international sprint.</em>
                 During this week-long sprint, we gathered most of the core
                 developers in Paris.
@@ -260,8 +262,6 @@
                 and <a href="http://www.tinyclues.com/">tinyclues</a>, and
                 donations that helped fund this event.
 
-                <li><em>February 2013.</em> scikit-learn 0.13.1 is available for download (<a href="whats_new.html">Changelog</a>).
-                </li>
                 </ul>
             </div>
 
@@ -269,11 +269,23 @@
             <div class="span4">
                 <h4>Community</h4>
                 <ul>
+		<li><em>About us</em> See <a href="about.html">authors</a> # scikit-learn</li>
                 <li><em>Questions?</em> See <a href="http://stackoverflow.com/questions/tagged/scikit-learn">stackoverflow</a> # scikit-learn</li>
                 <li><em>Mailing list:</em> <a href="https://lists.sourceforge.net/lists/listinfo/scikit-learn-general">scikit-learn-general@lists.sourceforge.net</a></li>
                 <li><em>IRC:</em> #scikit-learn @ <a href="http://webchat.freenode.net/">freenode</a></li>
                 </ul>
+
+                <form target="_top" id="paypal-form" method="post" action="https://www.paypal.com/cgi-bin/webscr">
+                    <input type="hidden" value="_s-xclick" name="cmd">
+                    <input type="hidden" value="74EYUMF3FTSW8" name="hosted_button_id">
+                </form>
+
+                <a class="btn btn-warning btn-big" onclick="document.getElementById('paypal-form').submit(); return false;">Help us, <strong>donate!</strong></a>
+                <a class="btn btn-warning btn-big cite-us" href="./about.html#citing-scikit-learn"><strong>Cite us!</strong></a>
+
+                <small style="display: block; margin-top: 10px"><a href="about.html#funding">Read more about donations</a></small>
             </div>
+
             <!-- who using -->
             <div class="span4">
                 <h4>Who uses scikit-learn?</h4>
@@ -281,7 +293,7 @@
                 <div id="testimonials_carousel" class="carousel slide">
                     <div class="carousel-inner">
                         <div class="active item">
-                          <img src="_images/inria.jpg" class="thumbnail" />
+                          <img src="_images/inria.png" class="thumbnail" />
                           <p>
                           <em>"We use scikit-learn to support leading-edge basic research [...]"</em>
                           </p>
@@ -305,6 +317,12 @@
                           <em>"It allows us to do AWesome stuff we would not otherwise accomplish"</em>
                           </p>
                         </div>
+                        <div class="item">
+                          <img src="_images/yhat.png" class="thumbnail" />
+                          <p>
+                          <em>"scikit-learn makes doing advanced analysis in Python accessible to anyone."</em>
+                          </p>
+                        </div>
                     </div>
                 </div>
                 <p align="right">
@@ -312,24 +330,35 @@
                 <a href="testimonials/testimonials.html">More testimonials</a>
                 </small>
                 </p>
-           </div>
-
-            <!-- help us -->
-           <div class="bottom-button">
-               <form target="_top" id="paypal-form" method="post" action="https://www.paypal.com/cgi-bin/webscr">
-               <input type="hidden" value="_s-xclick" name="cmd">
-               <input type="hidden" value="74EYUMF3FTSW8" name="hosted_button_id">
-               </form>
-           <strong>Help us:</strong>
-             <button class="btn btn-warning btn-big" onclick="document.getElementById('paypal-form').submit(); return false;"><b>Donate!</b></button> (<a href="about.html#funding">read more</a>)
-           <a class="btn btn-warning btn-big"
-             href="./about.html#citing-scikit-learn">
-             <b>Cite us!</b>
-           </a>
-           </div>
+            </div>
 
         </div>
     </div>
+
+    <!--Bottom of index page contributions logos-->
+    <div class="container index-upper" >
+	<div class="row-fluid">
+	  <div class="footer">
+	      <div class="span4">
+	        Generous funding provided by INRIA, Google and others.
+	      </div>
+	      <div class="span4">
+   	         <a class="reference internal" href="about.html#funding" style="text-decoration: none" >
+    	           <img id="index-funding-logo-big" src="_static/img/inria-small.png" title="INRIA">
+	           <img id="index-funding-logo-small" src="_static/img/google.png" title="Google">
+	           <!--Due to Télécom ParisTech's logo text being smaller, a style has been added to improve readability-->
+	           <img id="index-funding-logo-small" src="_static/img/telecom.png" title="Télécom ParisTech" style="max-height: 36px">
+	           <img id="index-funding-logo-small" src="_static/img/FNRS-logo.png" title="FNRS">
+	         </a>
+	     </div>
+	     <div class="span4">
+	        <a class="reference internal" href="about.html#funding">
+	           More information on our contributors
+	        </a>
+	     </div>
+	  </div>
+	</div>
+      </div>
     </div>
 
 

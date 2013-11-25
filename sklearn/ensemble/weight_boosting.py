@@ -50,7 +50,7 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
 
     @abstractmethod
     def __init__(self,
-                 base_estimator,
+                 base_estimator=None,
                  n_estimators=50,
                  estimator_params=tuple(),
                  learning_rate=1.,
@@ -111,6 +111,9 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
                 raise ValueError(
                     "Attempting to fit with a non-positive "
                     "weighted number of samples.")
+
+        # Check parameters
+        self._validate_estimator()
 
         # Clear any previous fit results
         self.estimators_ = []
@@ -332,7 +335,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
 
     """
     def __init__(self,
-                 base_estimator=DecisionTreeClassifier(max_depth=1),
+                 base_estimator=None,
                  n_estimators=50,
                  learning_rate=1.,
                  algorithm='SAMME.R',
@@ -366,27 +369,28 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         self : object
             Returns self.
         """
-        # Check that the base estimator is a classifier
-        if not isinstance(self.base_estimator, ClassifierMixin):
-            raise TypeError("base_estimator must be a "
-                            "subclass of ClassifierMixin")
-
         # Check that algorithm is supported
         if self.algorithm not in ('SAMME', 'SAMME.R'):
             raise ValueError("algorithm %s is not supported"
                              % self.algorithm)
 
+        # Fit
+        return super(AdaBoostClassifier, self).fit(X, y, sample_weight)
+
+    def _validate_estimator(self):
+        """Check the estimator and set the base_estimator_ attribute."""
+        super(AdaBoostClassifier, self)._validate_estimator(
+            default=DecisionTreeClassifier(max_depth=1))
+
         #  SAMME-R requires predict_proba-enabled base estimators
         if self.algorithm == 'SAMME.R':
-            if not hasattr(self.base_estimator, 'predict_proba'):
+            if not hasattr(self.base_estimator_, 'predict_proba'):
                 raise TypeError(
                     "AdaBoostClassifier with algorithm='SAMME.R' requires "
                     "that the weak learner supports the calculation of class "
                     "probabilities with a predict_proba method.\n"
                     "Please change the base estimator or set "
                     "algorithm='SAMME' instead.")
-
-        return super(AdaBoostClassifier, self).fit(X, y, sample_weight)
 
     def _boost(self, iboost, X, y, sample_weight):
         """Implement a single boost.
@@ -858,7 +862,7 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
 
     """
     def __init__(self,
-                 base_estimator=DecisionTreeRegressor(max_depth=3),
+                 base_estimator=None,
                  n_estimators=50,
                  learning_rate=1.,
                  loss='linear',
@@ -893,17 +897,18 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
         self : object
             Returns self.
         """
-        # Check that the base estimator is a regressor
-        if not isinstance(self.base_estimator, RegressorMixin):
-            raise TypeError("base_estimator must be a "
-                            "subclass of RegressorMixin")
-
+        # Check loss
         if self.loss not in ('linear', 'square', 'exponential'):
             raise ValueError(
                 "loss must be 'linear', 'square', or 'exponential'")
 
         # Fit
         return super(AdaBoostRegressor, self).fit(X, y, sample_weight)
+
+    def _validate_estimator(self):
+        """Check the estimator and set the base_estimator_ attribute."""
+        super(AdaBoostRegressor, self)._validate_estimator(
+            default=DecisionTreeRegressor(max_depth=3))
 
     def _boost(self, iboost, X, y, sample_weight):
         """Implement a single boost for regression
@@ -967,7 +972,7 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
         error_max = error_vect.max()
 
         if error_max != 0.:
-            error_vect /= error_vect.max()
+            error_vect /= error_max
 
         if self.loss == 'square':
             error_vect **= 2

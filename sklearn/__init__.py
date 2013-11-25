@@ -13,7 +13,7 @@ machine-learning as a versatile tool for science and engineering.
 See http://scikit-learn.org for complete documentation.
 """
 import sys
-__version__ = '0.14-git'
+__version__ = '0.15-git'
 
 try:
     # This variable is injected in the __builtins__ by the build
@@ -47,8 +47,12 @@ See the web page http://scikit-learn.org/stable/install.html#testing
 for more information.
 
 This function, `sklearn.test()` does not do anything. It does not run
-the tests and will be deprecated in release 0.16.
+the tests and will be removed in release 0.16.
 """, stacklevel=2)
+
+    # The following line is useful so that nosetests doesn't consider
+    # "test" as a test function
+    test.__test__ = False
 
     __all__ = ['cross_validation', 'cluster', 'covariance',
                'datasets', 'decomposition', 'feature_extraction',

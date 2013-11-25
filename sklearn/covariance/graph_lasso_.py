@@ -20,7 +20,7 @@ from ..utils import ConvergenceWarning
 from ..utils.extmath import pinvh
 from ..linear_model import lars_path
 from ..linear_model import cd_fast
-from ..cross_validation import check_cv, cross_val_score
+from ..cross_validation import _check_cv as check_cv, cross_val_score
 from ..externals.joblib import Parallel, delayed
 import collections
 
@@ -29,7 +29,14 @@ import collections
 # Helper functions to compute the objective and dual objective functions
 # of the l1-penalized estimator
 def _objective(mle, precision_, alpha):
-    cost = -log_likelihood(mle, precision_)
+    """Evaluation of the graph-lasso objective function   
+    
+    the objective function is made of a shifted scaled version of the
+    normalized log-likelihood (i.e. its empirical mean over the samples) and a 
+    penalisation term to promote sparsity
+    """    
+    p = precision_.shape[0]
+    cost = - 2. * log_likelihood(mle, precision_) + p * np.log(2 * np.pi)
     cost += alpha * (np.abs(precision_).sum()
                      - np.abs(np.diag(precision_)).sum())
     return cost
@@ -142,7 +149,14 @@ def graph_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
     """
     _, n_features = emp_cov.shape
     if alpha == 0:
-        return emp_cov, linalg.inv(emp_cov)
+        if return_costs:
+            precision_ = linalg.inv(emp_cov)
+            cost = - 2. * log_likelihood(emp_cov, precision_)
+            cost += n_features * np.log(2 * np.pi)
+            d_gap = np.sum(emp_cov * precision_) - n_features
+            return emp_cov, precision_, (cost, d_gap)
+        else:
+            return emp_cov, linalg.inv(emp_cov)
     if cov_init is None:
         covariance_ = emp_cov.copy()
     else:
@@ -211,7 +225,7 @@ def graph_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
                                          'too ill-conditioned for this solver')
         else:
             warnings.warn('graph_lasso: did not converge after %i iteration:'
-                          'dual gap: %.3e' % (max_iter, d_gap),
+                          ' dual gap: %.3e' % (max_iter, d_gap),
                           ConvergenceWarning)
     except FloatingPointError as e:
         e.args = (e.args[0]
@@ -264,17 +278,24 @@ class GraphLasso(EmpiricalCovariance):
     """
 
     def __init__(self, alpha=.01, mode='cd', tol=1e-4, max_iter=100,
-                 verbose=False):
+                 verbose=False, assume_centered=False):
         self.alpha = alpha
         self.mode = mode
         self.tol = tol
         self.max_iter = max_iter
         self.verbose = verbose
+        self.assume_centered = assume_centered
         # The base class needs this for the score method
         self.store_precision = True
 
     def fit(self, X, y=None):
-        emp_cov = empirical_covariance(X)
+        X = np.asarray(X)
+        if self.assume_centered:
+            self.location_ = np.zeros(X.shape[1])
+        else:
+            self.location_ = X.mean(0)
+        emp_cov = empirical_covariance(
+            X, assume_centered=self.assume_centered)
         self.covariance_, self.precision_ = graph_lasso(
             emp_cov, alpha=self.alpha, mode=self.mode, tol=self.tol,
             max_iter=self.max_iter, verbose=self.verbose,)
@@ -443,7 +464,8 @@ class GraphLassoCV(GraphLasso):
     """
 
     def __init__(self, alphas=4, n_refinements=4, cv=None, tol=1e-4,
-                 max_iter=100, mode='cd', n_jobs=1, verbose=False):
+                 max_iter=100, mode='cd', n_jobs=1, verbose=False,
+                 assume_centered=False):
         self.alphas = alphas
         self.n_refinements = n_refinements
         self.mode = mode
@@ -452,12 +474,18 @@ class GraphLassoCV(GraphLasso):
         self.verbose = verbose
         self.cv = cv
         self.n_jobs = n_jobs
+        self.assume_centered = assume_centered
         # The base class needs this for the score method
         self.store_precision = True
 
     def fit(self, X, y=None):
         X = np.asarray(X)
-        emp_cov = empirical_covariance(X)
+        if self.assume_centered:
+            self.location_ = np.zeros(X.shape[1])
+        else:
+            self.location_ = X.mean(0)
+        emp_cov = empirical_covariance(
+            X, assume_centered=self.assume_centered)
 
         cv = check_cv(self.cv, X, y, classifier=False)
 
@@ -556,8 +584,8 @@ class GraphLassoCV(GraphLasso):
         # Finally, compute the score with alpha = 0
         alphas.append(0)
         grid_scores.append(cross_val_score(EmpiricalCovariance(), X,
-                                         cv=cv, n_jobs=self.n_jobs,
-                                         verbose=inner_verbose))
+                                           cv=cv, n_jobs=self.n_jobs,
+                                           verbose=inner_verbose))
         self.grid_scores = np.array(grid_scores)
         best_alpha = alphas[best_index]
         self.alpha_ = best_alpha
