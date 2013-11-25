@@ -310,7 +310,7 @@ def test_fast_dot():
     B = rng.random_sample([2, 10])
 
     try:
-        linalg.get_blas_funcs('gemm')
+        linalg.get_blas_funcs(['gemm'])[0]
         has_blas = True
     except (AttributeError, ValueError):
         has_blas = False
