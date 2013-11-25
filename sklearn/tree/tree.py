@@ -48,7 +48,7 @@ DTYPE = _tree.DTYPE
 DOUBLE = _tree.DOUBLE
 
 CRITERIA_CLF = {"gini": _tree.Gini, "entropy": _tree.Entropy}
-CRITERIA_REG = {"mse": _tree.MSE}
+CRITERIA_REG = {"mse": _tree.MSE, "friedman_mse": _tree.FriedmanMSE}
 SPLITTERS = {"best": _tree.BestSplitter,
              "presort-best": _tree.PresortBestSplitter,
              "random": _tree.RandomSplitter}

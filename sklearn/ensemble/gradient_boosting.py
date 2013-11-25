@@ -43,7 +43,7 @@ from ..externals import six
 from ..tree.tree import DecisionTreeRegressor
 from ..tree._tree import DTYPE, TREE_LEAF
 from ..tree._tree import PresortBestSplitter
-from ..tree._tree import GBM_MSE
+from ..tree._tree import FriedmanMSE
 
 from ._gradient_boosting import predict_stages
 from ._gradient_boosting import predict_stage
@@ -811,7 +811,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         loss_ = self.loss_
 
         # init criterion and splitter
-        criterion = GBM_MSE(1)
+        criterion = FriedmanMSE(1)
         splitter = PresortBestSplitter(criterion,
                                        self.max_features_,
                                        self.min_samples_leaf,

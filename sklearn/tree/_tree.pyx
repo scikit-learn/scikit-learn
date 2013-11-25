@@ -823,8 +823,8 @@ cdef class MSE(RegressionCriterion):
         impurity_right[0] = total_right / n_outputs
 
 
-cdef class GBM_MSE(MSE):
-    """Mean squared error impurity criterion with improvement score from R's GBM package.
+cdef class FriedmanMSE(MSE):
+    """Mean squared error impurity criterion with improvement score by Friedman.
 
     Uses the formula (35) in Friedmans original Gradient Boosting paper:
 
