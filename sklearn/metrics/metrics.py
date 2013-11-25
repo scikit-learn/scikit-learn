@@ -1582,7 +1582,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels='compat',
         When `labels` is None, all labels in `y_true` and `y_pred` are used in
         sorted order. By default, binary classification is handled specially
         for backwards compatibility, but this feature will be removed in
-        version 0.16.
+        release 0.16.
 
     average : string, [None (default), 'micro', 'macro', 'samples', 'weighted']
         If ``None``, the scores for each class are returned. Otherwise,
@@ -1665,9 +1665,19 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels='compat',
     y_type, y_true, y_pred = _check_clf_targets(y_true, y_pred)
     present_labels = unique_labels(y_true, y_pred)
 
+    if pos_label != '!deprecated':
+        warnings.warn('The `pos_label` parameter to precision, recall and '
+                      'F-score is deprecated, and will be removed in release '
+                      '0.16. The `labels` parameter may be used instead.',
+                      DeprecationWarning)
+
     if not isinstance(labels, np.ndarray) and labels == 'compat':
         if y_type == 'binary' and (average is not None and
                                    pos_label is not None):
+            warnings.warn('From release 0.16, binary classification will not '
+                          'be handled specially for precision, recall and '
+                          'F-score. Instead, specify a single positive label '
+                          'with the `labels` parameter.', FutureWarning)
 
             if pos_label == '!deprecated':
                 pos_label = 1
@@ -1685,6 +1695,14 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels='compat',
     else:
         n_labels = len(labels)
         labels = np.hstack([labels, np.setdiff1d(present_labels, labels)])
+        if n_labels == 2 and len(labels) == 2 and (pos_label is not None and
+                                                   average is not None):
+            warnings.warn('Precision, recall and F-score behaviour has '
+                          'changed: providing two classes to the `labels` '
+                          'parameter no longer returns results only for the '
+                          'positive label. Use `labels=[positive_label]` for '
+                          'former behaviour, or `labels=None` for all labels '
+                          'present in the data to be considered equally.')
 
     ### Calculate tp_sum, pred_sum, true_sum ###
 

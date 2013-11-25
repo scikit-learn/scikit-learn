@@ -737,6 +737,7 @@ def test_auc_score_non_binary_class():
                              roc_auc_score, y_true, y_pred)
 
 
+@ignore_warnings
 def test_precision_recall_f1_score_binary():
     """Test Precision Recall and F1 Score for binary classification task"""
     y_true, y_pred, _ = make_prediction(binary=True)
@@ -876,6 +877,7 @@ def test_average_precision_score_tied_values():
     assert_not_equal(average_precision_score(y_true, y_score), 1.)
 
 
+@ignore_warnings
 def test_precision_recall_fscore_support_errors():
     y_true, y_pred, _ = make_prediction(binary=True)
 
@@ -932,7 +934,8 @@ def test_precision_recall_f1_score_multiclass():
     assert_array_equal(s, [24, 31, 20])
 
     # averaging tests
-    ps = precision_score(y_true, y_pred, pos_label=1, average='micro')
+    ps = assert_warns(DeprecationWarning, precision_score,
+                      y_true, y_pred, pos_label=1, average='micro')
     assert_array_almost_equal(ps, 0.53, 2)
 
     rs = recall_score(y_true, y_pred, average='micro')
@@ -975,6 +978,7 @@ def test_precision_recall_f1_score_multiclass():
     assert_array_equal(s, [24, 20, 31])
 
 
+@ignore_warnings
 def test_precision_recall_f1_score_multiclass_pos_label_none():
     """Test Precision Recall and F1 Score for multiclass classification task
 
@@ -1415,6 +1419,12 @@ def test_losses_at_limits():
     assert_almost_equal(r2_score([0., 1], [0., 1]), 1.00, 2)
 
 
+def test_r2_one_case_error():
+    # test whether r2_score raises error given one point
+    assert_raises(ValueError, r2_score, [0], [0])
+
+
+@ignore_warnings
 def test_symmetry():
     """Test the symmetry of score and loss functions"""
     y_true, y_pred, _ = make_prediction(binary=True)
@@ -1496,6 +1506,7 @@ def test_sample_order_invariance_multilabel_and_multioutput():
                                     % name)
 
 
+@ignore_warnings
 def test_format_invariance_with_1d_vectors():
     y1, y2, _ = make_prediction(binary=True)
 
@@ -1572,6 +1583,7 @@ def test_format_invariance_with_1d_vectors():
             assert_raises(ValueError, metric, y1_row, y2_row)
 
 
+@ignore_warnings
 def test_invariance_string_vs_numbers_labels():
     """Ensure that classification metrics with string labels"""
     y1, y2, _ = make_prediction(binary=True)
@@ -2359,6 +2371,47 @@ def test_fscore_warnings():
             assert_equal(str(record.pop().message),
                          'F-score is ill-defined and '
                          'being set to 0.0 due to no true samples.')
+
+
+def test_prf_pos_label_deprecation_warnings():
+    with warnings.catch_warnings(record=True) as record:
+        warnings.simplefilter('always')
+        # need deprecation warning as long as pos_label is explicitly set
+        recall_score([1, 2, 3, 2], [2, 2, 1, 3], pos_label=None)
+        assert_equal(str(record.pop().message),
+                     'The `pos_label` parameter to precision, recall and '
+                     'F-score is deprecated, and will be removed in release '
+                     '0.16. The `labels` parameter may be used instead.')
+        recall_score([1, 2, 3, 2], [2, 2, 1, 3], pos_label=1)
+        assert_equal(str(record.pop().message),
+                     'The `pos_label` parameter to precision, recall and '
+                     'F-score is deprecated, and will be removed in release '
+                     '0.16. The `labels` parameter may be used instead.')
+
+        # warning that default binary behaviour will be removed in the future
+        recall_score([1, 2, 1], [2, 2, 1], average='macro')
+        assert_equal(str(record.pop().message),
+                     'From release 0.16, binary classification will not be '
+                     'handled specially for precision, recall and F-score. '
+                     'Instead, specify a single positive label with the '
+                     '`labels` parameter.')
+
+        # but no warning for the follwing
+        recall_score([1, 2, 1], [2, 2, 1], average=None)
+        assert_equal(len(record), 0)
+        recall_score([1, 2, 1], [2, 2, 1], labels=[2], average='macro')
+        assert_equal(len(record), 0)
+
+        # warning that behaviour has changed when labels is specified as binary
+        # for binary data, with pos_label non-None and average non-None
+        recall_score([1, 2, 1], [2, 2, 1], labels=[1, 2], average='macro')
+        assert_equal(str(record.pop().message),
+                     'Precision, recall and F-score behaviour has changed: '
+                     'providing two classes to the `labels` parameter no '
+                     'longer returns results only for the positive label. '
+                     'Use `labels=[positive_label]` for former behaviour, '
+                     'or `labels=None` for all labels present in the data '
+                     'to be considered equally.')
 
 
 def test__check_clf_targets():
