@@ -115,22 +115,24 @@ def test_mnnb():
         assert_array_almost_equal(y_pred_proba3, y_pred_proba)
         assert_array_almost_equal(y_pred_log_proba3, y_pred_log_proba)
 
+
 def test_bnb():
     """Test Bernoulli Naive Bayes classification.
     """
     clf = BernoulliNB(binarize=None)
 
-    #fit should raise an error when using 
+    #fit should raise an error when using
     # non-binary data with binarize=None
-    assert_raises(ValueError,clf.fit, [[0, 0], [0, 1], [0, 2]], [0, 1, 1])
+    assert_raises(ValueError, clf.fit, [[0, 0], [0, 1], [0, 2]], [0, 1, 1])
 
     clf.fit([[0, 0], [0, 1], [0, 1]], [0, 1, 1])
 
-    #predict should raise an error when using 
+    #predict should raise an error when using
     # non-binary data with binarize=None
-    assert_raises(ValueError,clf.predict,[0,2])
+    assert_raises(ValueError, clf.predict, [0, 2])
 
-    assert_equal(clf.predict([0,1]),1)
+    assert_equal(clf.predict([0, 1]), 1)
+
 
 def check_partial_fit(cls):
     clf1 = cls()
