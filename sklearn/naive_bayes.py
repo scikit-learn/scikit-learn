@@ -315,10 +315,6 @@ class BaseDiscreteNB(BaseNB):
         if Y.shape[1] == 1:
             Y = np.concatenate((1 - Y, Y), axis=1)
 
-        if X.shape[0] != Y.shape[0]:
-            msg = "X.shape[0]=%d and y.shape[0]=%d are incompatible."
-            raise ValueError(msg % (X.shape[0], y.shape[0]))
-
         # convert to float to support sample weight consistently
         Y = Y.astype(np.float64)
         if sample_weight is not None:
