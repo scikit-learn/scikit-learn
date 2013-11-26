@@ -534,8 +534,14 @@ class BernoulliNB(BaseDiscreteNB):
         """Count and smooth feature occurrences."""
         if self.binarize is None:
             #ensure data is binary
-            if not set(np.unique(X)).issubset({0, 1}):
-                raise ValueError("Expected binary input, got non-binary input")
+            if issparse(X):
+                if not (X.data == 1).all():
+                    raise ValueError("Expected binary input, \
+                                    got non-binary input")
+            else:
+                if not np.logical_or(X == 1, X == 0).all():
+                    raise ValueError("Expected binary input, \
+                                    got non-binary input")
         else:
             X = binarize(X, threshold=self.binarize)
 
