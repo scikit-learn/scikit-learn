@@ -76,10 +76,10 @@ class Pipeline(BaseEstimator):
     >>> sub_pipeline  # doctest: +ELLIPSIS
     Pipeline(steps=[('anova', ...)])
     >>> coef = anova_svm[-1].coef_
-    (1, 5)
-    >>> anova_svm['clf'] is anova_svm[-1]
+    >>> anova_svm['svc'] is anova_svm[-1]
     True
     >>> coef.shape
+    (1, 10)
     >>> sub_pipeline.inverse_transform(coef).shape
     (1, 20)
     """
