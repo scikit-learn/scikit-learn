@@ -37,7 +37,7 @@ class LogisticRegression(BaseLibLinear, LinearClassifierMixin,
         added the decision function.
 
     normalize : boolean, optional, default False
-        If True, the regressors X will be normalized before
+        If True, the training data X will be normalized before
         logistic regression.
 
     intercept_scaling : float, default: 1
