@@ -42,7 +42,6 @@ for lang, page in pages.iteritems():
     if not os.path.exists(short_text_lang_folder):
         os.makedirs(short_text_lang_folder)
 
-
     opener = urllib2.build_opener()
     html_filename = os.path.join(html_folder, lang + '.html')
     if not os.path.exists(html_filename):
@@ -54,7 +53,7 @@ for lang, page in pages.iteritems():
         html_content = opener.open(request).read()
         open(html_filename, 'wb').write(html_content)
 
-    # decode the payload explictly as UTF-8 since lxml is confused for some
+    # decode the payload explicitly as UTF-8 since lxml is confused for some
     # reason
     html_content = open(html_filename).read().decode('utf-8')
     tree = ElementTree(lxml.html.document_fromstring(html_content))
@@ -63,10 +62,9 @@ for lang, page in pages.iteritems():
     for p in tree.findall('//p'):
         content = p.text_content()
         if len(content) < 100:
-            # skip paragraphs that are too short probably too noisy and not
+            # skip paragraphs that are too short - probably too noisy and not
             # representative of the actual language
             continue
-
 
         text_filename = os.path.join(text_lang_folder,
                                      '%s_%04d.txt' % (lang, i))
