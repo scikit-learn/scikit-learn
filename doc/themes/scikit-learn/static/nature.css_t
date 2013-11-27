@@ -294,7 +294,7 @@ div.buttonPrevious, div.buttonNext {
 
 div.buttonPrevious {
     border-top-right-radius: .8em;
-    right: 1;
+    left: 0;
 }
 
 div.buttonNext {
