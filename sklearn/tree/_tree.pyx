@@ -949,9 +949,6 @@ cdef class Splitter:
                             start,
                             end)
 
-        #FIXME not necessary anymore
-        # impurity[0] =  self.criterion.node_impurity()
-
     cdef void node_split(self, SIZE_t* pos, SIZE_t* feature, double* threshold,
                          double* impurity_left, double* impurity_right,
                          double* impurity_improvement) nogil:
@@ -1360,6 +1357,7 @@ cdef class PresortBestSplitter(Splitter):
         cdef SIZE_t n_features = self.n_features
 
         cdef DTYPE_t* X = self.X
+        cdef DTYPE_t* X_fx
         cdef SIZE_t X_sample_stride = self.X_sample_stride
         cdef SIZE_t X_fx_stride = self.X_fx_stride
         cdef INT32_t* X_argsorted = self.X_argsorted_ptr
@@ -1410,6 +1408,8 @@ cdef class PresortBestSplitter(Splitter):
 
             current_feature = features[f_i]
 
+            X_fx = X + (X_fx_stride * current_feature)
+
             # Extract ordering from X_argsorted
             p = start
 
@@ -1425,8 +1425,8 @@ cdef class PresortBestSplitter(Splitter):
 
             while p < end:
                 while ((p + 1 < end) and
-                       (X[X_sample_stride * samples[p + 1] + X_fx_stride * current_feature] <=
-                        X[X_sample_stride * samples[p] + X_fx_stride * current_feature] + EPSILON_FLT)):
+                       (X_fx[X_sample_stride * samples[p + 1]] <=
+                        X_fx[X_sample_stride * samples[p]] + EPSILON_FLT)):
                     p += 1
 
                 # (p + 1 >= end) or (X[samples[p + 1], current_feature] >
@@ -1453,11 +1453,11 @@ cdef class PresortBestSplitter(Splitter):
                         best_pos = current_pos
                         best_feature = current_feature
 
-                        current_threshold = (X[X_sample_stride * samples[p - 1] + X_fx_stride * current_feature] +
-                                             X[X_sample_stride * samples[p] + X_fx_stride * current_feature]) / 2.0
+                        current_threshold = (X_fx[X_sample_stride * samples[p - 1]] +
+                                             X_fx[X_sample_stride * samples[p]]) / 2.0
 
-                        if current_threshold == X[X_sample_stride * samples[p] + X_fx_stride * current_feature]:
-                            current_threshold = X[X_sample_stride * samples[p - 1] + X_fx_stride * current_feature]
+                        if current_threshold == X_fx[X_sample_stride * samples[p]]:
+                            current_threshold = X_fx[X_sample_stride * samples[p - 1]]
 
                         best_threshold = current_threshold
 
@@ -1961,12 +1961,11 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         """Build a decision tree from the training set (X, y)."""
         # Prepare data before recursive partitioning - different dtype or not contiguous
         if X.dtype != DTYPE or not X.flags.contiguous:
-            # preserve order
-            order = 'C' if X.flags.c_contiguous else 'F'
-            X = np.asarray(X, dtype=DTYPE, order=order)
+            # since we have to copy we will make it fortran for efficiency
+            X = np.asfortranarray(X, dtype=DTYPE)
 
         if y.dtype != DOUBLE or not y.flags.contiguous:
-            y = np.asarray(y, dtype=DOUBLE, order="C")
+            y = np.ascontiguousarray(y, dtype=DOUBLE)
 
         cdef DOUBLE_t* sample_weight_ptr = NULL
         if sample_weight is not None:
@@ -2141,14 +2140,13 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
     cpdef build(self, Tree tree, np.ndarray X, np.ndarray y,
                 np.ndarray sample_weight=None):
         """Build a decision tree from the training set (X, y)."""
-        # Prepare data before recursive partitioning - different dtype or not contiguous
+        # Prepare data - different dtype or not contiguous
         if X.dtype != DTYPE or not X.flags.contiguous:
-            # preserve order
-            order = 'C' if X.flags.c_contiguous else 'F'
-            X = np.asarray(X, dtype=DTYPE, order=order)
+            # since we have to copy we will make it fortran for efficiency
+            X = np.asfortranarray(X, dtype=DTYPE)
 
         if y.dtype != DOUBLE or not y.flags.contiguous:
-            y = np.asarray(y, dtype=DOUBLE, order="C")
+            y = np.ascontiguousarray(y, dtype=DOUBLE)
 
         cdef DOUBLE_t* sample_weight_ptr = NULL
         if sample_weight is not None:
