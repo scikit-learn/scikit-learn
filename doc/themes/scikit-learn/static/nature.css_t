@@ -1110,6 +1110,35 @@ a.btn.dropdown-toggle,  a.btn.dropdown-toggle:hover{
   vertical-align: baseline;
 }
 
+li#other-versions {
+  position: absolute;
+  left: inherit;
+  right: inherit;
+  top: inherit;
+}
+
+#other-versions a.btn.dropdown-toggle {
+  margin-left: 0.5em;
+  padding: 4px 6px 4px 11px;
+}
+
+#other-versions .caret {
+  border-left: 5px solid transparent;
+  border-right: 6px solid transparent;
+  border-bottom: 8px solid black;
+  border-top: 0px;
+  margin-right: 5px;
+  margin-top: 0px;
+  vertical-align: middle;
+}
+
+#other-versions .dropdown-menu {
+  position: absolute;
+  right: -60%;
+  top: -805%;
+  left: initial;
+}
+
 .navbar .btn, .navbar .open>.btn, .navbar .btn:hover{
   display: inline-block;
   padding: 4px 12px;

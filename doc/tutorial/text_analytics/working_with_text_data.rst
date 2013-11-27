@@ -357,18 +357,20 @@ analysis of the results::
   ...     target_names=twenty_test.target_names)
   ...                                         # doctest: +NORMALIZE_WHITESPACE
                           precision    recall  f1-score   support
-             alt.atheism       0.93      0.82      0.87       319
-           comp.graphics       0.88      0.98      0.93       389
+  <BLANKLINE>
+             alt.atheism       0.94      0.82      0.87       319
+           comp.graphics       0.88      0.98      0.92       389
                  sci.med       0.95      0.89      0.92       396
   soc.religion.christian       0.90      0.95      0.92       398
-             avg / total       0.91      0.91      0.91      1502
-
+  <BLANKLINE>
+             avg / total       0.92      0.91      0.91      1502
+  <BLANKLINE>
 
   >>> metrics.confusion_matrix(twenty_test.target, predicted)
   array([[261,  10,  12,  36],
          [  5, 380,   2,   2],
-         [  7,  33, 352,   4],
-         [  7,   9,   4, 378]])
+         [  7,  32, 353,   4],
+         [  6,  11,   4, 377]])
 
 As expected the confusion matrix shows that posts from the newsgroups
 on atheism and christian are more often confused for one another than
@@ -448,7 +450,7 @@ we can do::
   vect__ngram_range: (1, 1)
 
   >>> score                                              # doctest: +ELLIPSIS
-  0.910...
+  0.902...
 
 .. note:
 

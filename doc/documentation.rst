@@ -8,6 +8,7 @@ Documentation of scikit-learn 0.15
 .. raw:: html
 
         <!-- Block section -->
+          <!-- row -->
             <div class="row-fluid">
                 <div class="span4 box">
                     <h2><a href="tutorial/basic/tutorial.html">Quick Start</a></h2>
@@ -17,10 +18,10 @@ Documentation of scikit-learn 0.15
                     </blockquote>
                 </div>
                 <div class="span4 box">
-                    <h2><a href="user_guide.html">User Guide</a></h2>
-                    <blockquote>The main documentation. This contains an
-                        in-depth description of all algorithms and how
-                        to apply them.
+		    <h2><a href="developers/index.html">Contributing</a></h2>
+                    <blockquote>Information on how to contribute. This also
+                    contains useful information for advanced users, for example
+                    how to build their own estimators.
                     </blockquote>
                 </div>
                 <div class="span4 box">
@@ -32,69 +33,72 @@ Documentation of scikit-learn 0.15
                 </div>
             </div>
 
+          <!-- row -->
             <div class="row-fluid">
-                <div class="span8">
-                    <!-- Documentation overview -->
+                <!-- Documentation overview -->
                     <div class="row-fluid">
-                        <div class="span6 box">
+                        <div class="span4 box">
                             <h2><a href="tutorial/index.html">Tutorial</a></h2>
                             <blockquote>A tutorial on statistical learning for
                             data analysis. Contains a more in-depth discussion
                             of important concepts.
                             </blockquote>
                         </div>
-                        <div class="span6 box">
-                            <h2><a href="modules/classes.html">API</a></h2>
-                            <blockquote>The exact API of all functions and classes, as given by the docstrings.
-                                The API documents expected types and allowed features for all functions,
-                                and all parameters available for the algorithms.
-                            </blockquote>
+                        <div class="span4 box">
+			    <h2><a href="user_guide.html">User Guide</a></h2>
+                    	    <blockquote>The main documentation. This contains an
+                                in-depth description of all algorithms and how
+                        	to apply them.
+                    	    </blockquote>
                         </div>
-
-                        <!-- row -->
-                    </div>
-
-                    <div class="row-fluid">
-                        <div class="span6 box">
-                            <h2><a href="developers/index.html">Contributing</a></h2>
-                            <blockquote>Information on how to contribute. This also
-                            contains useful information for advanced users, for example
-                            how to build their own estimators.
-                            </blockquote>
-                        </div>
-                        <div class="span6 box">
-                            <h2><a href="presentations.html">Additional Resources</a></h2>
+			<div class="span4 box">
+			    <h2><a href="presentations.html">Additional Resources</a></h2>
                             <blockquote>Talks given, slide-sets and other information relevant to scikit-learn.
                             </blockquote>
-                        </div>
+			</div>
                         <!-- row -->
                     </div>
+	    </div>
 
-                    <!-- doc overview -->
+          <!-- row -->
+            <div class="row-fluid">
+                <div class="span4 box">
+                    <h2><a href="tutorial/text_analytics/working_with_text_data.html">Text Analysis Tutorial</a></h2>
+                    <blockquote>This tutorial explores an application of machine learning, namely, Text-analysis.
+		    The goal of this guide is to utilize some of the main scikit-learn tools in order to analyze
+		    a collection of text documents.
+                    </blockquote>
                 </div>
-
-                <!-- doc versions -->
-
+                <div class="span4 box">
+		    <h2><a href="modules/classes.html">API</a></h2>
+                    <blockquote>The exact API of all functions and classes, as given by the docstrings.
+                    The API documents expected types and allowed features for all functions,
+                    and all parameters available for the algorithms.
+                    </blockquote>
+                </div>
+		<!-- doc versions -->
                 <div class="span4 box">
                     <h2>Other Versions</h2>
                     <ul>
                         <li><a href="http://scikit-learn.org/0.14/user_guide.html">scikit-learn 0.14 (stable)</a></li>
                         <li>scikit-learn 0.15 (development)</li>
-
                         <li><a href="http://scikit-learn.org/0.13/user_guide.html">scikit-learn 0.13</a></li>
                         <li><a href="http://scikit-learn.org/0.12/user_guide.html">scikit-learn 0.12</a></li>
                         <li><a href="http://scikit-learn.org/0.11/user_guide.html">scikit-learn 0.11</a></li>
-                        <li><a href="http://scikit-learn.org/0.10/user_guide.html">scikit-learn 0.10</a></li>
-                        <li><a href="http://scikit-learn.org/0.9/user_guide.html">scikit-learn 0.9</a></li>
-                        <li><a href="http://scikit-learn.org/0.8/user_guide.html">scikit-learn 0.8</a></li>
-                        <li><a href="http://scikit-learn.org/0.7/user_guide.html">scikit-learn 0.7</a></li>
-                        <li><a href="http://scikit-learn.org/0.6/user_guide.html">scikit-learn 0.6</a></li>
-                        <li><a href="http://scikit-learn.org/0.5/user_guide.html">scikit-learn 0.5</a></li>
+			<li id="other-versions">Older versions
+			    <a class="btn dropdown-toggle" data-toggle="dropdown">
+			        <span class="caret"></span>
+			    </a>
+		      	    <ul class="dropdown-menu">
+			        <li><a href="http://scikit-learn.org/0.10/user_guide.html">scikit-learn 0.10</a></li>
+                            	<li><a href="http://scikit-learn.org/0.9/user_guide.html">scikit-learn 0.9</a></li>
+				<li><a href="http://scikit-learn.org/0.8/user_guide.html">scikit-learn 0.8</a></li>
+                        	<li><a href="http://scikit-learn.org/0.7/user_guide.html">scikit-learn 0.7</a></li>
+                        	<li><a href="http://scikit-learn.org/0.6/user_guide.html">scikit-learn 0.6</a></li>
+                        	<li><a href="http://scikit-learn.org/0.5/user_guide.html">scikit-learn 0.5</a></li>
+		      	    </ul>
+			</li>
                     </ul>
-
                 </div>
-
-
-                <!-- row -->
             </div>
-    </div>
+
