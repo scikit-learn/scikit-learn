@@ -23,10 +23,6 @@ __all__ = ["murmurhash3_32", "as_float_array", "check_arrays", "safe_asarray",
            "compute_class_weight", "minimum_spanning_tree", "column_or_1d"]
 
 
-# Make sure that DeprecationWarning get printed
-warnings.simplefilter("always", DeprecationWarning)
-
-
 class deprecated(object):
     """Decorator to mark a function or class as deprecated.
 
