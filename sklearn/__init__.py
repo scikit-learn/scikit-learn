@@ -13,7 +13,13 @@ machine-learning as a versatile tool for science and engineering.
 See http://scikit-learn.org for complete documentation.
 """
 import sys
+import re
+import warnings
 __version__ = '0.15-git'
+
+# Make sure that DeprecationWarning within this package always gets printed
+warnings.filterwarnings('always', category=DeprecationWarning,
+                        module='^{}\.'.format(re.escape(__name__)))
 
 try:
     # This variable is injected in the __builtins__ by the build
