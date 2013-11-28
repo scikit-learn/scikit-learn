@@ -202,7 +202,7 @@ def ignore_warnings(obj=None):
     """ Context manager and decorator to ignore warnings
 
     Note. Using this (in both variants) will clear all warnings
-    from all sklearn modules. In case you need to test
+    from all python modules loaded. In case you need to test
     cross-module-warning-logging this is not your tool of choice.
 
     Examples
