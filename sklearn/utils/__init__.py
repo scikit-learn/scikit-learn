@@ -389,12 +389,3 @@ def tosequence(x):
 
 class ConvergenceWarning(Warning):
     "Custom warning to capture convergence problems"
-
-
-def clean_warning_registry():
-    """Safe way to reset warniings """
-    warnings.resetwarnings()
-    reg = "__warningregistry__"
-    for mod in sys.modules.values():
-        if hasattr(mod, reg):
-            getattr(mod, reg).clear()

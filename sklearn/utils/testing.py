@@ -202,6 +202,10 @@ def assert_no_warnings(func, *args, **kw):
 def ignore_warnings(obj=None):
     """ Context manager and decorator to ignore warnings
 
+    Note. Using this (in both variants) will clear all warnings
+    from all sklearn modules. In case you need to test
+    cross-module-warning-logging this is not your tool of choice.
+
     Examples
     --------
     >>> with ignore_warnings():
@@ -525,3 +529,12 @@ def if_matplotlib(func):
         else:
             return func(*args, **kwargs)
     return run_test
+
+
+def clean_warning_registry():
+    """Safe way to reset warniings """
+    warnings.resetwarnings()
+    reg = "__warningregistry__"
+    for mod in sys.modules.values():
+        if hasattr(mod, reg):
+            getattr(mod, reg).clear()
