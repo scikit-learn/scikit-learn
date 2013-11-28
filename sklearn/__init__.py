@@ -19,7 +19,7 @@ __version__ = '0.15-git'
 
 # Make sure that DeprecationWarning within this package always gets printed
 warnings.filterwarnings('always', category=DeprecationWarning,
-                        module='^{}\.'.format(re.escape(__name__)))
+                        module='^{0}\.'.format(re.escape(__name__)))
 
 try:
     # This variable is injected in the __builtins__ by the build
