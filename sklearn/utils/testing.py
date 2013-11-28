@@ -27,7 +27,6 @@ except ImportError:
 import sklearn
 from sklearn.base import BaseEstimator
 from .fixes import savemat
-from . import clean_warning_registry
 
 # Conveniently import all assertions in one place.
 from nose.tools import assert_equal
