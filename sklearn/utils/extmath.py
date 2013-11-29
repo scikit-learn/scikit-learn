@@ -33,6 +33,17 @@ def norm(x):
     return nrm2(x)
 
 
+def sqnorm(x):
+    """Compute the squared Euclidean or Frobenius norm of x.
+
+    This function is equivalent to but faster than norm(x) ** 2 (and probably
+    sqrt(sqnorm(x)) is faster than norm(x) as well, though the latter may be
+    more stable).
+    """
+    x = np.ravel(x, order='A')
+    return np.dot(x, x)
+
+
 _have_einsum = hasattr(np, "einsum")
 
 
