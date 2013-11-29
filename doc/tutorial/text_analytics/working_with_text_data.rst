@@ -529,13 +529,3 @@ English.
 Bonus point if the utility is able to give a confidence level for its
 predictions.
 
-
-Exercise 4: Face recognition
-----------------------------
-
-Build a classifier that recognizes persons on face pictures from the
-Labeled Faces in the Wild dataset.
-
-ipython command line::
-
-  %run workspace/exercise_04_face_recognition.py data/data/labeled_faces_wild/lfw_preprocessed/
