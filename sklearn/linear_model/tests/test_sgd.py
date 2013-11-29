@@ -139,20 +139,6 @@ class CommonTest(object):
     def test_warm_start_optimal(self):
         self._test_warm_start(X, Y, "optimal")
 
-    def test_warm_start_multiclass(self):
-        self._test_warm_start(X2, Y2, "optimal")
-
-    def test_multiple_fit(self):
-        """Test multiple calls of fit w/ different shaped inputs."""
-        clf = self.factory(alpha=0.01, n_iter=5,
-                           shuffle=False)
-        clf.fit(X, Y)
-        assert_true(hasattr(clf, "coef_"))
-
-        # Non-regression test: try fitting with a different label set.
-        y = [["ham", "spam"][i] for i in LabelEncoder().fit_transform(Y)]
-        clf.fit(X[:, :-1], y)
-
     def test_input_format(self):
         """Input format tests. """
         clf = self.factory(alpha=0.01, n_iter=5,
@@ -628,6 +614,20 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         clf.fit(X, Y)
         assert_equal(1.0, np.mean(clf.predict(X) == Y))
 
+    def test_warm_start_multiclass(self):
+        self._test_warm_start(X2, Y2, "optimal")
+
+    def test_multiple_fit(self):
+        """Test multiple calls of fit w/ different shaped inputs."""
+        clf = self.factory(alpha=0.01, n_iter=5,
+                           shuffle=False)
+        clf.fit(X, Y)
+        assert_true(hasattr(clf, "coef_"))
+
+        # Non-regression test: try fitting with a different label set.
+        y = [["ham", "spam"][i] for i in LabelEncoder().fit_transform(Y)]
+        clf.fit(X[:, :-1], y)
+
 
 class SparseSGDClassifierTestCase(DenseSGDClassifierTestCase):
     """Run exactly the same tests using the sparse representation variant"""
@@ -638,7 +638,7 @@ class SparseSGDClassifierTestCase(DenseSGDClassifierTestCase):
 ###############################################################################
 # Regression Test Case
 
-class DenseSGDRegressorTestCase(unittest.TestCase):
+class DenseSGDRegressorTestCase(unittest.TestCase, CommonTest):
     """Test suite for the dense representation variant of SGD"""
 
     factory = SGDRegressor

@@ -80,7 +80,7 @@ Documentation of scikit-learn 0.15
                 <div class="span4 box">
                     <h2>Other Versions</h2>
                     <ul>
-                        <li><a href="http://scikit-learn.org/0.14/user_guide.html">scikit-learn 0.14 (stable)</a></li>
+                        <li><a href="http://scikit-learn.org/stable/user_guide.html">scikit-learn 0.14 (stable)</a></li>
                         <li>scikit-learn 0.15 (development)</li>
                         <li><a href="http://scikit-learn.org/0.13/user_guide.html">scikit-learn 0.13</a></li>
                         <li><a href="http://scikit-learn.org/0.12/user_guide.html">scikit-learn 0.12</a></li>
