@@ -76,7 +76,7 @@ def _get_data(url):
 
     return data
 
-mem = joblib.Memory(cachedir='build/cache')
+mem = joblib.Memory(cachedir='_build')
 get_data = mem.cache(_get_data)
 
 
