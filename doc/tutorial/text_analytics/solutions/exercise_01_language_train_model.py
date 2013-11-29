@@ -1,6 +1,6 @@
 """Build a language detector model
 
-The goal of this exercice is to train a linear classifier on text features
+The goal of this exercise is to train a linear classifier on text features
 that represent sequences of up to 3 consecutive characters so as to be
 recognize natural languages by using the frequencies of short character
 sequences as 'fingerprints'.
