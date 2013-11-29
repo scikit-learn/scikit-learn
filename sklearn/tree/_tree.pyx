@@ -1527,8 +1527,8 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
     cpdef build(self, Tree tree, np.ndarray X, np.ndarray y,
                 np.ndarray sample_weight=None):
         """Build a decision tree from the training set (X, y)."""
-        # Prepare data before recursive partitioning - different dtype or not contiguous
-        if X.dtype != DTYPE or not X.flags.contiguous:
+        # check if dtype is correct
+        if X.dtype != DTYPE:
             # since we have to copy we will make it fortran for efficiency
             X = np.asfortranarray(X, dtype=DTYPE)
 
@@ -1710,8 +1710,8 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
     cpdef build(self, Tree tree, np.ndarray X, np.ndarray y,
                 np.ndarray sample_weight=None):
         """Build a decision tree from the training set (X, y)."""
-        # Prepare data - different dtype or not contiguous
-        if X.dtype != DTYPE or not X.flags.contiguous:
+        # Check if dtype is correct
+        if X.dtype != DTYPE:
             # since we have to copy we will make it fortran for efficiency
             X = np.asfortranarray(X, dtype=DTYPE)
 
