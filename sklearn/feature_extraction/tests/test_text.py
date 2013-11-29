@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 import warnings
+
 from sklearn.feature_extraction.text import strip_tags
 from sklearn.feature_extraction.text import strip_accents_unicode
 from sklearn.feature_extraction.text import strip_accents_ascii
@@ -15,6 +16,7 @@ from sklearn.grid_search import GridSearchCV
 from sklearn.pipeline import Pipeline
 from sklearn.svm import LinearSVC
 
+
 import numpy as np
 from nose import SkipTest
 from nose.tools import assert_equal
@@ -25,7 +27,8 @@ from nose.tools import assert_almost_equal
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
 from numpy.testing import assert_raises
-from sklearn.utils.testing import assert_in, assert_less, assert_greater
+from sklearn.utils.testing import (assert_in, assert_less, assert_greater,
+                                   assert_warns_message)
 
 from collections import defaultdict, Mapping
 from functools import partial
@@ -177,16 +180,12 @@ def test_unicode_decode_error():
     assert_raises(UnicodeDecodeError, ca, text_bytes)
 
     # Check the old interface
-    with warnings.catch_warnings(record=True) as w:
-        warnings.simplefilter("always")
-
-        ca = CountVectorizer(analyzer='char', ngram_range=(3, 6),
-                             charset='ascii').build_analyzer()
-        assert_raises(UnicodeDecodeError, ca, text_bytes)
-
-        assert_equal(len(w), 1)
-        assert_true(issubclass(w[0].category, DeprecationWarning))
-        assert_true("charset" in str(w[0].message).lower())
+    in_warning_message = 'charset'
+    ca = assert_warns_message(DeprecationWarning, in_warning_message,
+                              CountVectorizer, analyzer='char',
+                              ngram_range=(3, 6),
+                              charset='ascii').build_analyzer()
+    assert_raises(UnicodeDecodeError, ca, text_bytes)
 
 
 def test_char_ngram_analyzer():
@@ -349,22 +348,15 @@ def test_tfidf_no_smoothing():
          [1, 0, 0]]
     tr = TfidfTransformer(smooth_idf=False, norm='l2')
 
-    # First we need to verify that numpy here provides div 0 warnings
     with warnings.catch_warnings(record=True) as w:
         1. / np.array([0.])
         numpy_provides_div0_warning = len(w) == 1
 
-    with warnings.catch_warnings(record=True) as w:
-        tfidf = tr.fit_transform(X).toarray()
-        if not numpy_provides_div0_warning:
-            raise SkipTest("Numpy does not provide div 0 warnings.")
-        assert_equal(len(w), 1)
-        # For Python 3 compatibility
-        if hasattr(w[0].message, 'args'):
-            assert_true("divide by zero" in w[0].message.args[0])
-        else:
-            assert_true("divide by zero" in w[0].message)
-
+    in_warning_message = 'divide by zero'
+    tfidf = assert_warns_message(RuntimeWarning, in_warning_message,
+                                 tr.fit_transform, X).toarray()
+    if not numpy_provides_div0_warning:
+        raise SkipTest("Numpy does not provide div 0 warnings.")
 
 def test_sublinear_tf():
     X = [[1], [2], [3]]

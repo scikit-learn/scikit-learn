@@ -1,4 +1,3 @@
-import warnings
 from nose.tools import assert_raises, assert_true, assert_false
 
 import numpy as np
@@ -281,10 +280,8 @@ def test_sparse_svc_clone_with_callable_kernel():
 def test_timeout():
     sp = svm.SVC(C=1, kernel=lambda x, y: x * y.T, probability=True,
                  random_state=0, max_iter=1)
-    with warnings.catch_warnings(record=True):
-        warnings.simplefilter("always")
 
-        assert_warns(ConvergenceWarning, sp.fit, X_sp, Y)
+    assert_warns(ConvergenceWarning, sp.fit, X_sp, Y)
 
 
 def test_consistent_proba():

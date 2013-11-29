@@ -1,5 +1,3 @@
-import warnings
-
 import numpy as np
 from scipy.sparse import csr_matrix
 
@@ -7,7 +5,8 @@ from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_less, assert_greater
+from sklearn.utils.testing import assert_greater
+from sklearn.utils.testing import assert_warns
 
 from sklearn import datasets
 from sklearn.decomposition import PCA
@@ -45,7 +44,8 @@ def test_pca():
         pca.fit(X)
         cov = pca.get_covariance()
         precision = pca.get_precision()
-        assert_array_almost_equal(np.dot(cov, precision), np.eye(X.shape[1]), 12)
+        assert_array_almost_equal(np.dot(cov, precision),
+                                  np.eye(X.shape[1]), 12)
 
 
 def test_whitening():
@@ -190,11 +190,8 @@ def test_sparse_randomized_pca_check_projection():
     Xt = 0.1 * rng.randn(1, p) + np.array([3, 4, 5])
     Xt = csr_matrix(Xt)
 
-    with warnings.catch_warnings(record=True) as w:
-        warnings.simplefilter('always', DeprecationWarning)
-        Yt = RandomizedPCA(n_components=2, random_state=0).fit(X).transform(Xt)
-        assert_equal(len(w), 1)
-        assert_equal(w[0].category, DeprecationWarning)
+    pca = RandomizedPCA(n_components=2, random_state=0)
+    Yt = assert_warns(DeprecationWarning, pca.fit, X).transform(Xt)
 
     Yt /= np.sqrt((Yt ** 2).sum())
 
@@ -213,25 +210,16 @@ def test_sparse_randomized_pca_inverse():
 
     # same check that we can find the original data from the transformed signal
     # (since the data is almost of rank n_components)
-    with warnings.catch_warnings(record=True) as w:
-        warnings.simplefilter('always', DeprecationWarning)
-        pca = RandomizedPCA(n_components=2, random_state=0).fit(X)
-        assert_equal(len(w), 1)
-        assert_equal(w[0].category, DeprecationWarning)
-
+    pca = RandomizedPCA(n_components=2, random_state=0)
+    assert_warns(DeprecationWarning, pca.fit, X)
     Y = pca.transform(X)
 
     Y_inverse = pca.inverse_transform(Y)
     assert_almost_equal(X.todense(), Y_inverse, decimal=2)
 
     # same as above with whitening (approximate reconstruction)
-    with warnings.catch_warnings(record=True) as w:
-        warnings.simplefilter('always', DeprecationWarning)
-        pca = RandomizedPCA(n_components=2, whiten=True,
-                            random_state=0).fit(X)
-        assert_equal(len(w), 1)
-        assert_equal(w[0].category, DeprecationWarning)
-
+    pca = assert_warns(DeprecationWarning, RandomizedPCA(n_components=2,
+                       whiten=True, random_state=0).fit, X)
     Y = pca.transform(X)
     Y_inverse = pca.inverse_transform(Y)
     relative_max_delta = (np.abs(X.todense() - Y_inverse)
@@ -374,12 +362,11 @@ def test_probabilistic_pca_1():
     rng = np.random.RandomState(0)
     X = rng.randn(n, p) * .1 + np.array([3, 4, 5])
 
-    with warnings.catch_warnings(record=True) as w:
-        ppca = ProbabilisticPCA(n_components=2)
-        ppca.fit(X)
-        ll1 = ppca.score(X)
-        h = -0.5 * np.log(2 * np.pi * np.exp(1) * 0.1 ** 2) * p
-        np.testing.assert_almost_equal(ll1.mean() / h, 1, 0)
+    ppca = assert_warns(DeprecationWarning, ProbabilisticPCA, n_components=2)
+    ppca.fit(X)
+    ll1 = ppca.score(X)
+    h = -0.5 * np.log(2 * np.pi * np.exp(1) * 0.1 ** 2) * p
+    np.testing.assert_almost_equal(ll1.mean() / h, 1, 0)
 
 
 def test_probabilistic_pca_2():
@@ -387,12 +374,11 @@ def test_probabilistic_pca_2():
     n, p = 100, 3
     rng = np.random.RandomState(0)
     X = rng.randn(n, p) * .1 + np.array([3, 4, 5])
-    with warnings.catch_warnings(record=True) as w:
-        ppca = ProbabilisticPCA(n_components=2)
-        ppca.fit(X)
-        ll1 = ppca.score(X)
-        ll2 = ppca.score(rng.randn(n, p) * .2 + np.array([3, 4, 5]))
-        assert_greater(ll1.mean(), ll2.mean())
+    ppca = assert_warns(DeprecationWarning, ProbabilisticPCA, n_components=2)
+    ppca.fit(X)
+    ll1 = ppca.score(X)
+    ll2 = ppca.score(rng.randn(n, p) * .2 + np.array([3, 4, 5]))
+    assert_greater(ll1.mean(), ll2.mean())
 
 
 def test_probabilistic_pca_3():
@@ -402,18 +388,16 @@ def test_probabilistic_pca_3():
     n, p = 100, 3
     rng = np.random.RandomState(0)
     X = rng.randn(n, p) * .1 + np.array([3, 4, 5])
-    with warnings.catch_warnings(record=True) as w:
-        ppca = ProbabilisticPCA(n_components=2)
-        ppca.fit(X)
-        ll1 = ppca.score(X)
-        ppca.fit(X, homoscedastic=False)
-        ll2 = ppca.score(X)
-        # XXX : Don't test as homoscedastic=False is buggy
-        # Comment to be removed with ProbabilisticPCA is removed
+    ppca = assert_warns(DeprecationWarning, ProbabilisticPCA, n_components=2)
+    ppca.fit(X).score(X)
+    ppca.fit(X, homoscedastic=False).score(X)
+    # XXX : Don't test as homoscedastic=False is buggy
+    # Comment to be removed with ProbabilisticPCA is removed
 
 
 def test_probabilistic_pca_4():
     """Check that ppca select the right model"""
+
     n, p = 200, 3
     rng = np.random.RandomState(0)
     Xl = (rng.randn(n, p) + rng.randn(n, 1) * np.array([3, 4, 5])
@@ -421,13 +405,13 @@ def test_probabilistic_pca_4():
     Xt = (rng.randn(n, p) + rng.randn(n, 1) * np.array([3, 4, 5])
           + np.array([1, 0, 7]))
     ll = np.zeros(p)
-    with warnings.catch_warnings(record=True) as w:
-        for k in range(p):
-            ppca = ProbabilisticPCA(n_components=k)
-            ppca.fit(Xl)
-            ll[k] = ppca.score(Xt).mean()
+    for k in range(p):
+        ppca = assert_warns(DeprecationWarning, ProbabilisticPCA,
+                            n_components=k)
+        ppca.fit(Xl)
+        ll[k] = ppca.score(Xt).mean()
 
-        assert_true(ll.argmax() == 1)
+    assert_true(ll.argmax() == 1)
 
 
 def test_probabilistic_pca_vs_pca():
@@ -437,9 +421,9 @@ def test_probabilistic_pca_vs_pca():
     rng = np.random.RandomState(0)
     X = rng.randn(n, p) * .1 + np.array([3, 4, 5])
     pca = PCA(n_components=2).fit(X)
-    with warnings.catch_warnings(record=True) as w:
-        ppca = ProbabilisticPCA(n_components=2).fit(X)
-        assert_array_almost_equal(pca.score_samples(X), ppca.score(X))
+    ppca = assert_warns(DeprecationWarning, ProbabilisticPCA,
+                        n_components=2).fit(X)
+    assert_array_almost_equal(pca.score_samples(X), ppca.score(X))
 
 
 if __name__ == '__main__':
