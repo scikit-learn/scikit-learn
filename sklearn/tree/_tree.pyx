@@ -1574,6 +1574,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         cdef double split_improvement = INFINITY
         cdef bint is_leaf
         cdef bint first = 1
+        cdef SIZE_t max_depth_seen = -1
 
         cdef Stack stack = Stack(INITIAL_STACK_SIZE)
         cdef StackRecord stack_record
@@ -1625,7 +1626,12 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                     # Push left child on stack
                     stack.push(start, pos, depth + 1, node_id, 1, split_impurity_left)
 
+                if depth > max_depth_seen:
+                    max_depth_seen = depth
+
             tree._resize(tree.node_count)
+            tree.max_depth = max_depth_seen
+
         tree.splitter = None  # Release memory
 
 
@@ -1785,6 +1791,8 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
 
             tree._resize(tree.node_count)
             tree.max_depth = max_depth_seen
+
+        tree.splitter = None  # Release memory
 
 
 # =============================================================================
