@@ -1,5 +1,9 @@
+======================
+Working With Text Data
+======================
+
 Tutorial setup
-==============
+--------------
 
 To get started with this tutorial, you firstly must have the
 *scikit-learn* and all of its requiered dependencies installed.
@@ -46,8 +50,8 @@ For instance::
     % less fetch_data.py
     % python fetch_data.py
 
-Working with text data
-======================
+Tutorial introduction
+----------------------
 
 The goal of this guide is to explore some of the main ``scikit-learn``
 tools on a single practical task: analysing a collection of text
