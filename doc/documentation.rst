@@ -38,7 +38,7 @@ Documentation of scikit-learn 0.15
                 <!-- Documentation overview -->
                     <div class="row-fluid">
                         <div class="span4 box">
-                            <h2><a href="tutorial/index.html">Statistical Learning Tutorial</a></h2>
+                            <h2><a href="tutorial/statistical_inference/index.html">Statistical Learning Tutorial</a></h2>
                             <blockquote>A tutorial on statistical learning for
                             data analysis. Contains a more in-depth discussion
                             of important concepts.
@@ -50,8 +50,6 @@ Documentation of scikit-learn 0.15
                     	    The API documents expected types and allowed features for all functions,
                     	    and all parameters available for the algorithms.
                     	    </blockquote>
-
-			    
                         </div>
 			<div class="span4 box">
 			    <h2><a href="presentations.html">Additional Resources</a></h2>
@@ -77,8 +75,6 @@ Documentation of scikit-learn 0.15
                     contains useful information for advanced users, for example
                     how to build their own estimators.
                     </blockquote>
-
-		    
                 </div>
 		<!-- doc versions -->
                 <div class="span4 box">
