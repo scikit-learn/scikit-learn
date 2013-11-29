@@ -7,14 +7,12 @@
 import numpy as np
 cimport numpy as np
 
-
 ctypedef np.npy_intp SIZE_t              # Type for indices and counters
 
 
 # =============================================================================
 # Stack data structure
 # =============================================================================
-
 
 # A record on the stack for depth-first tree growing
 cdef struct StackRecord:
@@ -25,22 +23,20 @@ cdef struct StackRecord:
     bint is_left
     double impurity
 
-
 cdef class Stack:
     cdef SIZE_t capacity
-    cdef SIZE_t stack_ptr
+    cdef SIZE_t top
     cdef StackRecord* stack_
 
     cdef bint is_empty(self) nogil
-    cdef void push(self, SIZE_t start, SIZE_t end, SIZE_t depth, SIZE_t parent, bint is_left,
-                   double impurity) nogil
+    cdef void push(self, SIZE_t start, SIZE_t end, SIZE_t depth, SIZE_t parent,
+                   bint is_left, double impurity) nogil
     cdef int pop(self, StackRecord* res) nogil
 
 
 # =============================================================================
 # PriorityHeap data structure
 # =============================================================================
-
 
 # A record on the frontier for best-first tree growing
 cdef struct PriorityHeapRecord:
@@ -52,7 +48,6 @@ cdef struct PriorityHeapRecord:
     bint is_leaf
     double impurity
     double improvement
-
 
 cdef class PriorityHeap:
     cdef SIZE_t capacity

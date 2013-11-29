@@ -11,26 +11,16 @@
 #
 # Licence: BSD 3 clause
 
-
 from libc.stdlib cimport calloc, free, malloc, realloc
 from libc.string cimport memcpy, memset
 from libc.math cimport log as ln
 
-from sklearn.tree._utils cimport Stack
-from sklearn.tree._utils cimport StackRecord
-from sklearn.tree._utils cimport PriorityHeap
-from sklearn.tree._utils cimport PriorityHeapRecord
-
+from sklearn.tree._utils cimport Stack, StackRecord
+from sklearn.tree._utils cimport PriorityHeap, PriorityHeapRecord
 
 import numpy as np
 cimport numpy as np
 np.import_array()
-
-cdef enum:
-    # Max value for our rand_r replacement (near the bottom).
-    # We don't use RAND_MAX because it's different across platforms and
-    # particularly tiny on Windows/MSVC.
-    RAND_R_MAX = 0x7FFFFFFF
 
 
 # =============================================================================
@@ -48,6 +38,18 @@ cdef SIZE_t _TREE_UNDEFINED = TREE_UNDEFINED
 cdef double EPSILON_DBL = 1e-7
 cdef float EPSILON_FLT = 1e-7
 cdef SIZE_t INITIAL_STACK_SIZE = 10
+
+# Some handy constants (BestFirstTreeBuilder)
+cdef int IS_FIRST = 1
+cdef int IS_NOT_FIRST = 0
+cdef int IS_LEFT = 1
+cdef int IS_NOT_LEFT = 0
+
+cdef enum:
+    # Max value for our rand_r replacement (near the bottom).
+    # We don't use RAND_MAX because it's different across platforms and
+    # particularly tiny on Windows/MSVC.
+    RAND_R_MAX = 0x7FFFFFFF
 
 
 # =============================================================================
@@ -94,11 +96,12 @@ cdef class Criterion:
         """Impurity improvement impurity - (left impurity + right impurity) """
         cdef double impurity_left
         cdef double impurity_right
+
         self.children_impurity(&impurity_left, &impurity_right)
 
-        cdef double impurity_total = (self.weighted_n_right * self.n_outputs * impurity_right +
-                                      self.weighted_n_left * self.n_outputs * impurity_left)
-        return impurity - impurity_total
+        return  impurity \
+                  - (self.weighted_n_right / self.weighted_n_node_samples * impurity_right) \
+                  - (self.weighted_n_left / self.weighted_n_node_samples * impurity_left)
 
 
 cdef class ClassificationCriterion(Criterion):
@@ -460,7 +463,7 @@ cdef class Gini(ClassificationCriterion):
 
     cdef void children_impurity(self, double* impurity_left, double* impurity_right) nogil:
         """Evaluate the impurity in children nodes, i.e. the impurity of
-           samples[start:pos] + the impurity of samples[pos:end]."""
+           samples[start:pos] and the impurity of samples[pos:end]."""
         cdef double weighted_n_node_samples = self.weighted_n_node_samples
         cdef double weighted_n_left = self.weighted_n_left
         cdef double weighted_n_right = self.weighted_n_right
@@ -806,7 +809,7 @@ cdef class MSE(RegressionCriterion):
 
     cdef void children_impurity(self, double* impurity_left, double* impurity_right) nogil:
         """Evaluate the impurity in children nodes, i.e. the impurity of
-           samples[start:pos] + the impurity of samples[pos:end]."""
+           samples[start:pos] and the impurity of samples[pos:end]."""
         cdef SIZE_t n_outputs = self.n_outputs
         cdef double* var_left = self.var_left
         cdef double* var_right = self.var_right
@@ -849,6 +852,7 @@ cdef class FriedmanMSE(MSE):
         total_sum_left = total_sum_left / n_outputs
         total_sum_right = total_sum_right / n_outputs
         diff = (total_sum_left / weighted_n_left) - (total_sum_right / weighted_n_right)
+
         return (weighted_n_left * weighted_n_right * diff * diff) / (weighted_n_left + weighted_n_right)
 
 
@@ -1047,6 +1051,7 @@ cdef class BestSplitter(Splitter):
 
                     self.criterion.update(current_pos)
                     current_improvement = self.criterion.impurity_improvement(impurity)
+
                     if current_improvement > best_improvement:
                         self.criterion.children_impurity(&current_impurity_left, &current_impurity_right)
                         best_impurity_left = current_impurity_left
@@ -1249,6 +1254,7 @@ cdef class RandomSplitter(Splitter):
             self.criterion.reset()
             self.criterion.update(current_pos)
             current_improvement = self.criterion.impurity_improvement(impurity)
+
             if current_improvement > best_improvement:
                 self.criterion.children_impurity(&current_impurity_left, &current_impurity_right)
                 best_impurity_left = current_impurity_left
@@ -1444,6 +1450,7 @@ cdef class PresortBestSplitter(Splitter):
 
                     self.criterion.update(current_pos)
                     current_improvement = self.criterion.impurity_improvement(impurity)
+
                     if current_improvement > best_improvement:
                         self.criterion.children_impurity(&current_impurity_left, &current_impurity_right)
                         best_impurity_left = current_impurity_left
@@ -1497,6 +1504,295 @@ cdef class PresortBestSplitter(Splitter):
         impurity_left[0] = best_impurity_left
         impurity_right[0] = best_impurity_right
         impurity_improvement[0] = best_improvement
+
+
+# =============================================================================
+# Tree builders
+# =============================================================================
+
+cdef class TreeBuilder:
+    """Interface for different tree building strategies. """
+
+    cpdef build(self, Tree tree, np.ndarray X, np.ndarray y,
+                np.ndarray sample_weight=None):
+        """Build a decision tree from the training set (X, y)."""
+        pass
+
+
+# Depth first builder ---------------------------------------------------------
+
+cdef class DepthFirstTreeBuilder(TreeBuilder):
+    """Build a decision tree in depth-first fashion."""
+
+    cpdef build(self, Tree tree, np.ndarray X, np.ndarray y,
+                np.ndarray sample_weight=None):
+        """Build a decision tree from the training set (X, y)."""
+        # Prepare data before recursive partitioning - different dtype or not contiguous
+        if X.dtype != DTYPE or not X.flags.contiguous:
+            # since we have to copy we will make it fortran for efficiency
+            X = np.asfortranarray(X, dtype=DTYPE)
+
+        if y.dtype != DOUBLE or not y.flags.contiguous:
+            y = np.ascontiguousarray(y, dtype=DOUBLE)
+
+        cdef DOUBLE_t* sample_weight_ptr = NULL
+        if sample_weight is not None:
+            if ((sample_weight.dtype != DOUBLE) or
+                (not sample_weight.flags.contiguous)):
+                sample_weight = np.asarray(sample_weight,
+                                           dtype=DOUBLE, order="C")
+            sample_weight_ptr = <DOUBLE_t*> sample_weight.data
+
+        # Initial capacity
+        cdef int init_capacity
+
+        if tree.max_depth <= 10:
+            init_capacity = (2 ** (tree.max_depth + 1)) - 1
+        else:
+            init_capacity = 2047
+
+        tree._resize(init_capacity)
+
+        # Recursive partition (without actual recursion)
+        cdef Splitter splitter = tree.splitter
+        splitter.init(X, y, sample_weight_ptr)
+
+        cdef SIZE_t start
+        cdef SIZE_t end
+        cdef SIZE_t depth
+        cdef SIZE_t parent
+        cdef bint is_left
+        cdef SIZE_t n_node_samples = splitter.n_samples
+        cdef SIZE_t pos
+        cdef SIZE_t feature
+        cdef SIZE_t node_id
+
+        cdef double threshold
+        cdef double impurity = INFINITY
+        cdef double split_impurity_left = INFINITY
+        cdef double split_impurity_right = INFINITY
+        cdef double split_improvement = INFINITY
+        cdef bint is_leaf
+        cdef bint first = 1
+        cdef SIZE_t max_depth_seen = -1
+
+        cdef Stack stack = Stack(INITIAL_STACK_SIZE)
+        cdef StackRecord stack_record
+
+        with nogil:
+            # push root node onto stack
+            stack.push(0, n_node_samples, 0, _TREE_UNDEFINED, 0, INFINITY)
+
+            while not stack.is_empty():
+                stack.pop(&stack_record)
+
+                start = stack_record.start
+                end = stack_record.end
+                depth = stack_record.depth
+                parent = stack_record.parent
+                is_left = stack_record.is_left
+                impurity = stack_record.impurity
+
+                n_node_samples = end - start
+                is_leaf = ((depth >= tree.max_depth) or
+                           (n_node_samples < tree.min_samples_split) or
+                           (n_node_samples < 2 * tree.min_samples_leaf))
+
+                splitter.node_reset(start, end)  # calls criterion.init
+
+                if first:
+                    impurity = splitter.criterion.node_impurity()
+                    first = 0
+
+                is_leaf = is_leaf or (impurity < EPSILON_FLT)
+
+                if not is_leaf:
+                    splitter.node_split(impurity, &pos, &feature, &threshold,
+                                        &split_impurity_left, &split_impurity_right,
+                                        &split_improvement)
+                    is_leaf = is_leaf or (pos >= end)
+
+                node_id = tree._add_node(parent, is_left, is_leaf, feature,
+                                         threshold, impurity, n_node_samples)
+
+                if is_leaf:
+                    # Don't store value for internal nodes
+                    splitter.node_value(tree.value + node_id * tree.value_stride)
+
+                else:
+                    # Push right child on stack
+                    stack.push(pos, end, depth + 1, node_id, 0, split_impurity_right)
+
+                    # Push left child on stack
+                    stack.push(start, pos, depth + 1, node_id, 1, split_impurity_left)
+
+                if depth > max_depth_seen:
+                    max_depth_seen = depth
+
+            tree._resize(tree.node_count)
+            tree.max_depth = max_depth_seen
+
+        tree.splitter = None  # Release memory
+
+
+# Best first builder ----------------------------------------------------------
+
+cdef void _add_split_node(Splitter splitter, Tree tree,
+                          SIZE_t start, SIZE_t end, double impurity,
+                          bint is_first, bint is_left, SIZE_t parent_id,
+                          SIZE_t depth,
+                          PriorityHeapRecord* res) nogil:
+        """Adds node w/ partition ``[start, end)`` to the frontier. """
+        cdef SIZE_t pos
+        cdef SIZE_t feature
+        cdef SIZE_t node_id
+        cdef double threshold
+        cdef double split_impurity_left
+        cdef double split_impurity_right
+        cdef double split_improvement
+        cdef SIZE_t n_node_samples
+        cdef bint is_leaf
+        cdef SIZE_t n_left, n_right
+        cdef double imp_diff
+
+        splitter.node_reset(start, end)  # calls criterion.init
+        if is_first:
+            impurity = splitter.criterion.node_impurity()
+
+        n_node_samples = end - start
+        is_leaf = ((depth > tree.max_depth) or
+                   (n_node_samples < tree.min_samples_split) or
+                   (n_node_samples < 2 * tree.min_samples_leaf))
+
+        if not is_leaf:
+            splitter.node_split(impurity, &pos, &feature, &threshold,
+                                &split_impurity_left, &split_impurity_right,
+                                &split_improvement)
+            is_leaf = is_leaf or (pos >= end)
+
+        node_id = tree._add_node(parent_id, is_left, is_leaf, feature,
+                                 threshold, impurity, n_node_samples)
+
+        # compute values also for split nodes (might become leafs later).
+        splitter.node_value(tree.value + node_id * tree.value_stride)
+
+        res.node_id = node_id
+        res.start = start
+        res.end = end
+        res.depth = depth
+        res.impurity = impurity
+
+        if not is_leaf:
+            # is split node
+            res.pos = pos
+            res.is_leaf = 0
+            res.improvement = split_improvement
+        else:
+            # is leaf => 0 improvement
+            res.pos = end
+            res.is_leaf = 1
+            res.improvement = 0.0
+
+
+cdef void _add_to_frontier(PriorityHeapRecord* rec, PriorityHeap frontier) nogil:
+    """Adds record ``rec`` to the priority queue ``frontier``. """
+    frontier.push(rec.node_id, rec.start, rec.end, rec.pos, rec.depth,
+                  rec.is_leaf, rec.improvement, rec.impurity)
+
+
+cdef class BestFirstTreeBuilder(TreeBuilder):
+    """Build a decision tree in best-first fashion.
+
+    The best node to expand is given by the node at the frontier that has the
+    highest impurity improvement.
+    """
+
+    cpdef build(self, Tree tree, np.ndarray X, np.ndarray y,
+                np.ndarray sample_weight=None):
+        """Build a decision tree from the training set (X, y)."""
+        # Prepare data - different dtype or not contiguous
+        if X.dtype != DTYPE or not X.flags.contiguous:
+            # since we have to copy we will make it fortran for efficiency
+            X = np.asfortranarray(X, dtype=DTYPE)
+
+        if y.dtype != DOUBLE or not y.flags.contiguous:
+            y = np.ascontiguousarray(y, dtype=DOUBLE)
+
+        cdef DOUBLE_t* sample_weight_ptr = NULL
+        if sample_weight is not None:
+            if ((sample_weight.dtype != DOUBLE) or
+                (not sample_weight.flags.contiguous)):
+                sample_weight = np.asarray(sample_weight,
+                                           dtype=DOUBLE, order="C")
+            sample_weight_ptr = <DOUBLE_t*> sample_weight.data
+
+        # Recursive partition (without actual recursion)
+        cdef Splitter splitter = tree.splitter
+        splitter.init(X, y, sample_weight_ptr)
+
+        cdef PriorityHeap frontier = PriorityHeap(INITIAL_STACK_SIZE)
+        cdef PriorityHeapRecord record
+        cdef PriorityHeapRecord split_node_left
+        cdef PriorityHeapRecord split_node_right
+
+        cdef SIZE_t n_node_samples = splitter.n_samples
+        cdef int max_leaf_nodes = tree.max_leaf_nodes
+        cdef int max_split_nodes = max_leaf_nodes - 1
+        cdef bint is_leaf
+        cdef SIZE_t max_depth_seen = -1
+
+        # Initial capacity
+        cdef int init_capacity = max_split_nodes + max_leaf_nodes
+        tree._resize(init_capacity)
+
+        with nogil:
+            # add root to frontier
+            _add_split_node(splitter, tree,
+                            0, n_node_samples, INFINITY, IS_FIRST, IS_LEFT,
+                            _TREE_UNDEFINED, 0, &split_node_left)
+            _add_to_frontier(&split_node_left, frontier)
+
+            while not frontier.is_empty():
+                frontier.pop(&record)
+
+                node_id = record.node_id
+                is_leaf = (record.is_leaf or max_split_nodes <= 0)
+
+                if is_leaf:
+                    # node is not expandable; set node as leaf
+                    tree.children_left[node_id] = _TREE_LEAF
+                    tree.children_right[node_id] = _TREE_LEAF
+                    tree.feature[node_id] = _TREE_UNDEFINED
+                    tree.threshold[node_id] = _TREE_UNDEFINED
+                else:
+                    # node is expandable
+
+                    # decrement number of split nodes available
+                    max_split_nodes -= 1
+
+                    # compute left split node
+                    _add_split_node(splitter, tree,
+                                    record.start, record.pos, record.impurity,
+                                    IS_NOT_FIRST, IS_LEFT, node_id,
+                                    record.depth + 1, &split_node_left)
+
+                    # compute right split node
+                    _add_split_node(splitter, tree, record.pos,
+                                    record.end, record.impurity,
+                                    IS_NOT_FIRST, IS_NOT_LEFT, node_id,
+                                    record.depth + 1, &split_node_right)
+
+                    # add nodes to queue
+                    _add_to_frontier(&split_node_left, frontier)
+                    _add_to_frontier(&split_node_right, frontier)
+
+                if record.depth > max_depth_seen:
+                    max_depth_seen = record.depth
+
+            tree._resize(tree.node_count)
+            tree.max_depth = max_depth_seen
+
+        tree.splitter = None  # Release memory
 
 
 # =============================================================================
@@ -1937,294 +2233,6 @@ cdef class Tree:
                 importances /= normalizer
 
         return importances
-
-
-# =============================================================================
-# Tree builders
-# =============================================================================
-
-cdef class TreeBuilder:
-    """Interface for different tree building strategies. """
-
-    cpdef build(self, Tree tree, np.ndarray X, np.ndarray y,
-                np.ndarray sample_weight=None):
-        """Build a decision tree from the training set (X, y)."""
-        pass
-
-
-cdef class DepthFirstTreeBuilder(TreeBuilder):
-    """Build a decision tree in depth-first fashion."""
-
-    cpdef build(self, Tree tree, np.ndarray X, np.ndarray y,
-                np.ndarray sample_weight=None):
-        """Build a decision tree from the training set (X, y)."""
-        # Prepare data before recursive partitioning - different dtype or not contiguous
-        if X.dtype != DTYPE or not X.flags.contiguous:
-            # since we have to copy we will make it fortran for efficiency
-            X = np.asfortranarray(X, dtype=DTYPE)
-
-        if y.dtype != DOUBLE or not y.flags.contiguous:
-            y = np.ascontiguousarray(y, dtype=DOUBLE)
-
-        cdef DOUBLE_t* sample_weight_ptr = NULL
-        if sample_weight is not None:
-            if ((sample_weight.dtype != DOUBLE) or
-                (not sample_weight.flags.contiguous)):
-                sample_weight = np.asarray(sample_weight,
-                                           dtype=DOUBLE, order="C")
-            sample_weight_ptr = <DOUBLE_t*> sample_weight.data
-
-        # Initial capacity
-        cdef int init_capacity
-
-        if tree.max_depth <= 10:
-            init_capacity = (2 ** (tree.max_depth + 1)) - 1
-        else:
-            init_capacity = 2047
-
-        tree._resize(init_capacity)
-
-        # Recursive partition (without actual recursion)
-        cdef Splitter splitter = tree.splitter
-        splitter.init(X, y, sample_weight_ptr)
-
-        cdef SIZE_t start
-        cdef SIZE_t end
-        cdef SIZE_t depth
-        cdef SIZE_t parent
-        cdef bint is_left
-        cdef SIZE_t n_node_samples = splitter.n_samples
-        cdef SIZE_t pos
-        cdef SIZE_t feature
-        cdef SIZE_t node_id
-
-        cdef double threshold
-        cdef double impurity = INFINITY
-        cdef double split_impurity_left = INFINITY
-        cdef double split_impurity_right = INFINITY
-        cdef double split_improvement = INFINITY
-        cdef bint is_leaf
-        cdef bint first = 1
-
-        cdef Stack stack = Stack(INITIAL_STACK_SIZE)
-        cdef StackRecord stack_record
-
-        with nogil:
-            # push root node onto stack
-            stack.push(0, n_node_samples, 0, _TREE_UNDEFINED, 0, INFINITY)
-
-            while not stack.is_empty():
-
-                stack.pop(&stack_record)
-                start = stack_record.start
-                end = stack_record.end
-                depth = stack_record.depth
-                parent = stack_record.parent
-                is_left = stack_record.is_left
-                impurity = stack_record.impurity
-
-                n_node_samples = end - start
-                is_leaf = ((depth >= tree.max_depth) or
-                           (n_node_samples < tree.min_samples_split) or
-                           (n_node_samples < 2 * tree.min_samples_leaf))
-
-                splitter.node_reset(start, end)  # calls criterion.init
-
-                if first:
-                    impurity = splitter.criterion.node_impurity()
-                    first = 0
-
-                is_leaf = is_leaf or (impurity < EPSILON_FLT)
-
-                if not is_leaf:
-                    splitter.node_split(impurity, &pos, &feature, &threshold,
-                                        &split_impurity_left, &split_impurity_right,
-                                        &split_improvement)
-                    is_leaf = is_leaf or (pos >= end)
-
-                node_id = tree._add_node(parent, is_left, is_leaf, feature,
-                                         threshold, impurity, n_node_samples)
-
-                if is_leaf:
-                    # Don't store value for internal nodes
-                    splitter.node_value(tree.value + node_id * tree.value_stride)
-
-                else:
-                    # Push right child on stack
-                    stack.push(pos, end, depth + 1, node_id, 0, split_impurity_right)
-
-                    # Push left child on stack
-                    stack.push(start, pos, depth + 1, node_id, 1, split_impurity_left)
-
-            tree._resize(tree.node_count)
-        tree.splitter = None  # Release memory
-
-
-cdef void _add_split_node(Splitter splitter, Tree tree,
-                          SIZE_t start, SIZE_t end, double impurity,
-                          bint is_first, bint is_left, SIZE_t parent_id,
-                          SIZE_t depth,
-                          PriorityHeapRecord* res) nogil:
-        """Adds node w/ partition ``[start, end)`` to the frontier. """
-        cdef SIZE_t pos
-        cdef SIZE_t feature
-        cdef SIZE_t node_id
-        cdef double threshold
-        cdef double split_impurity_left
-        cdef double split_impurity_right
-        cdef double split_improvement
-        cdef SIZE_t n_node_samples
-        cdef bint is_leaf
-        cdef SIZE_t n_left, n_right
-        cdef double imp_diff
-
-        splitter.node_reset(start, end)  # calls criterion.init
-        if is_first:
-            impurity = splitter.criterion.node_impurity()
-
-        n_node_samples = end - start
-        is_leaf = ((depth > tree.max_depth) or
-                   (n_node_samples < tree.min_samples_split) or
-                   (n_node_samples < 2 * tree.min_samples_leaf))
-
-        if not is_leaf:
-            splitter.node_split(impurity, &pos, &feature, &threshold,
-                                &split_impurity_left, &split_impurity_right,
-                                &split_improvement)
-            is_leaf = is_leaf or (pos >= end)
-
-        node_id = tree._add_node(parent_id, is_left, is_leaf, feature,
-                                 threshold, impurity, n_node_samples)
-        # compute values also for split nodes (might become leafs later).
-        splitter.node_value(tree.value + node_id * tree.value_stride)
-
-        res.node_id = node_id
-        res.start = start
-        res.end = end
-        res.depth = depth
-        res.impurity = impurity
-
-        if not is_leaf:
-            # is split node
-            res.pos = pos
-            res.is_leaf = 0
-            res.improvement = split_improvement
-        else:
-            # is leaf - 0 improvement
-            res.pos = end
-            res.is_leaf = 1
-            res.improvement = 0.0
-
-
-cdef void _add_to_frontier(PriorityHeapRecord* rec, PriorityHeap frontier) nogil:
-    """Adds record ``rec`` to the priority queue ``frontier``. """
-    frontier.push(rec.node_id, rec.start, rec.end, rec.pos, rec.depth,
-                  rec.is_leaf, rec.improvement, rec.impurity)
-
-
-# Some handy constants
-cdef int IS_FIRST = 1
-cdef int IS_NOT_FIRST = 0
-cdef int IS_LEFT = 1
-cdef int IS_NOT_LEFT = 0
-
-
-cdef class BestFirstTreeBuilder(TreeBuilder):
-    """Build a decision tree in best-first fashion.
-
-    The best node to expand is given by the node at the frontier that has the
-    highest impurity improvement.
-    """
-
-    cpdef build(self, Tree tree, np.ndarray X, np.ndarray y,
-                np.ndarray sample_weight=None):
-        """Build a decision tree from the training set (X, y)."""
-        # Prepare data - different dtype or not contiguous
-        if X.dtype != DTYPE or not X.flags.contiguous:
-            # since we have to copy we will make it fortran for efficiency
-            X = np.asfortranarray(X, dtype=DTYPE)
-
-        if y.dtype != DOUBLE or not y.flags.contiguous:
-            y = np.ascontiguousarray(y, dtype=DOUBLE)
-
-        cdef DOUBLE_t* sample_weight_ptr = NULL
-        if sample_weight is not None:
-            if ((sample_weight.dtype != DOUBLE) or
-                (not sample_weight.flags.contiguous)):
-                sample_weight = np.asarray(sample_weight,
-                                           dtype=DOUBLE, order="C")
-            sample_weight_ptr = <DOUBLE_t*> sample_weight.data
-
-        # Recursive partition (without actual recursion)
-        cdef Splitter splitter = tree.splitter
-        splitter.init(X, y, sample_weight_ptr)
-
-        cdef PriorityHeap frontier = PriorityHeap(INITIAL_STACK_SIZE)
-        cdef PriorityHeapRecord record
-        cdef PriorityHeapRecord split_node_left
-        cdef PriorityHeapRecord split_node_right
-
-        cdef SIZE_t n_node_samples = splitter.n_samples
-        cdef int max_leaf_nodes = tree.max_leaf_nodes
-        cdef int max_split_nodes = max_leaf_nodes - 1
-        cdef bint is_leaf
-        cdef SIZE_t max_depth_seen = -1
-
-        # Initial capacity
-        cdef int init_capacity = max_split_nodes + max_leaf_nodes
-        tree._resize(init_capacity)
-
-        with nogil:
-            # add root to frontier
-            _add_split_node(splitter, tree,
-                            0, n_node_samples, INFINITY, IS_FIRST, IS_LEFT,
-                            _TREE_UNDEFINED, 0, &split_node_left)
-            _add_to_frontier(&split_node_left, frontier)
-
-            while not frontier.is_empty():
-                frontier.pop(&record)
-                node_id = record.node_id
-
-                is_leaf = (record.is_leaf or max_split_nodes <= 0)
-
-                if is_leaf:
-                    # node is not expandable; set node as leaf
-                    tree.children_left[node_id] = _TREE_LEAF
-                    tree.children_right[node_id] = _TREE_LEAF
-                    tree.feature[node_id] = _TREE_UNDEFINED
-                    tree.threshold[node_id] = _TREE_UNDEFINED
-                else:
-                    # node is expandable
-
-                    # decrement number of split nodes available
-                    max_split_nodes -= 1
-
-                    # compute left split node
-                    _add_split_node(splitter, tree,
-                                    record.start, record.pos, record.impurity,
-                                    IS_NOT_FIRST, IS_LEFT, node_id,
-                                    record.depth + 1, &split_node_left)
-
-                    # compute right split node
-                    _add_split_node(splitter, tree, record.pos,
-                                    record.end, record.impurity,
-                                    IS_NOT_FIRST, IS_NOT_LEFT, node_id,
-                                    record.depth + 1, &split_node_right)
-
-                    #assert split_node_left.improvement >= 0.0
-                    #assert split_node_right.improvement >= 0.0
-
-                    # we don't allow both to be splits on same level
-                    #assert (split_node_left.is_leaf + split_node_right.is_leaf) > 0
-
-                    _add_to_frontier(&split_node_left, frontier)
-                    _add_to_frontier(&split_node_right, frontier)
-
-                if record.depth > max_depth_seen:
-                    max_depth_seen = record.depth
-
-            tree._resize(tree.node_count)
-        tree.max_depth = max_depth_seen
 
 
 # =============================================================================
