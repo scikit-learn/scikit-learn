@@ -25,7 +25,7 @@ The tutorial folder, should contain the following folders:
   * ``solutions`` - solutions of the exercices
 
 
-You can aleardy copy the skeletons into a new folder somewhere
+You can already copy the skeletons into a new folder somewhere
 on your hard-drive named ``sklearn_tut_workspace`` where you
 will edit your own files for the exercices while keeping
 the original skeletons intact::
