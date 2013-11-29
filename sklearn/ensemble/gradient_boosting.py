@@ -664,6 +664,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
                                              dtype=np.float64)
 
     def _clear_state(self):
+        """Clear the state of the gradient boosting model. """
         if hasattr(self, 'estimators_'):
             self.estimators_ = np.empty((0, 0), dtype=np.object)
         if hasattr(self, 'train_score_'):
@@ -676,6 +677,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             del self.init_
 
     def _resize_state(self):
+        """Add additional ``n_estimators`` entries to all attributes. """
         # self.n_estimators is the number of additional est to fit
         total_n_estimators = self.n_estimators + self.estimators_.shape[0]
 
