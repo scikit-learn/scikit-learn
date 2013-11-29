@@ -51,7 +51,7 @@ cdef class Criterion:
     cdef double node_impurity(self) nogil
     cdef void children_impurity(self, double* impurity_left, double* impurity_right) nogil
     cdef void node_value(self, double* dest) nogil
-    cdef double impurity_improvement(self) nogil
+    cdef double impurity_improvement(self, double impurity) nogil
 
 
 # =============================================================================
@@ -93,7 +93,8 @@ cdef class Splitter:
 
     cdef void node_reset(self, SIZE_t start, SIZE_t end) nogil
 
-    cdef void node_split(self, SIZE_t* pos, # Set to >= end if the node is a leaf
+    cdef void node_split(self, double impurity,  # the impurity of the total partition
+                               SIZE_t* pos, # Set to >= end if the node is a leaf
                                SIZE_t* feature,
                                double* threshold,
                                double* impurity_left,
