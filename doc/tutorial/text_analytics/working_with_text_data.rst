@@ -2,6 +2,23 @@
 Working With Text Data
 ======================
 
+The goal of this guide is to explore some of the main ``scikit-learn``
+tools on a single practical task: analysing a collection of text
+documents (newsgroups posts) on twenty different topics.
+
+In this section we will see how to:
+
+  - load the file contents and the categories
+
+  - extract feature vectors suitable for machine learning
+
+  - train a linear model to perform categorization
+
+  - use a grid search strategy to find a good configuration of both
+    the feature extraction components and the classifier
+
+
+
 Tutorial setup
 --------------
 
@@ -36,10 +53,6 @@ the original skeletons intact::
 
     % cp -r skeletons work_directory/sklearn_tut_workspace
 
-
-Download the datasets
----------------------
-
 Machine Learning algorithms need data. Go to each ``$TUTORIAL_HOME/data``
 sub-folder and run the ``fetch_data.py`` script from there (after
 having read them first).
@@ -50,27 +63,9 @@ For instance::
     % less fetch_data.py
     % python fetch_data.py
 
-Tutorial introduction
-----------------------
 
-The goal of this guide is to explore some of the main ``scikit-learn``
-tools on a single practical task: analysing a collection of text
-documents (newsgroups posts) on twenty different topics.
-
-In this section we will see how to:
-
-  - load the file contents and the categories
-
-  - extract feature vectors suitable for machine learning
-
-  - train a linear model to perform categorization
-
-  - use a grid search strategy to find a good configuration of both
-    the feature extraction components and the classifier
-
-
-Downloading the data and loading it from Python
------------------------------------------------
+Loading the 20 newgroups dataset
+--------------------------------
 
 The dataset is called "Twenty Newsgroups". Here is the official
 description, quoted from the `website
