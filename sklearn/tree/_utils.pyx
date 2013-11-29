@@ -10,7 +10,11 @@
 from libc.stdlib cimport free, malloc, realloc
 
 
-cdef inline void copy_stack(StackRecord *a, StackRecord *b) nogil:
+# =============================================================================
+# Stack data structure
+# =============================================================================
+
+cdef inline void copy_stack(StackRecord* a, StackRecord* b) nogil:
     """Assigns ``a := b`` for StackRecord. """
     a.start = b.start
     a.end = b.end
@@ -26,59 +30,68 @@ cdef class Stack:
     Attributes
     ----------
     capacity : SIZE_t
-        The elements the stack can hold; if more added then ``self.stack`` needs to be
-        resized.
-    stack_ptr : SIZE_t
+        The elements the stack can hold; if more added then ``self.stack_``
+        needs to be resized.
+
+    top : SIZE_t
         The number of elements currently on the stack.
+
     stack : StackRecord pointer
         The stack of records (upward in the stack corresponds to the right).
     """
 
     def __cinit__(self, SIZE_t capacity):
         self.capacity = capacity
-        self.stack_ptr = 0
+        self.top = 0
         self.stack_ = <StackRecord*> malloc(capacity * sizeof(StackRecord))
 
     def __dealloc__(self):
         free(self.stack_)
 
     cdef bint is_empty(self) nogil:
-        return self.stack_ptr <= 0
+        return self.top <= 0
 
-    cdef void push(self, SIZE_t start, SIZE_t end, SIZE_t depth, SIZE_t parent, bint is_left,
-                   double impurity) nogil:
+    cdef void push(self, SIZE_t start, SIZE_t end, SIZE_t depth, SIZE_t parent,
+                   bint is_left, double impurity) nogil:
         """Push a new element onto the stack. """
-        cdef SIZE_t stack_ptr = self.stack_ptr + 1
+        cdef SIZE_t top = self.top
         cdef StackRecord* stack = NULL
 
         # Resize if capacity not sufficient
-        if stack_ptr >= self.capacity:
+        if top >= self.capacity:
             self.capacity *= 2
             self.stack_ = <StackRecord*> realloc(self.stack_, self.capacity * sizeof(StackRecord))
 
         stack = self.stack_
-        stack[stack_ptr].start = start
-        stack[stack_ptr].end = end
-        stack[stack_ptr].depth = depth
-        stack[stack_ptr].parent = parent
-        stack[stack_ptr].is_left = is_left
-        stack[stack_ptr].impurity = impurity
-        self.stack_ptr = stack_ptr
+        stack[top].start = start
+        stack[top].end = end
+        stack[top].depth = depth
+        stack[top].parent = parent
+        stack[top].is_left = is_left
+        stack[top].impurity = impurity
+
+        # Increment stack pointer
+        self.top = top + 1
 
     cdef int pop(self, StackRecord* res) nogil:
         """Remove the top element from the stack. """
-        cdef SIZE_t stack_ptr = self.stack_ptr
+        cdef SIZE_t top = self.top
         cdef StackRecord* stack = self.stack_
 
-        if stack_ptr <= 0:
+        if top <= 0:
             return 0
 
-        copy_stack(res, stack + stack_ptr)
-        self.stack_ptr = stack_ptr - 1
+        copy_stack(res, stack + top - 1)
+        self.top = top - 1
+
         return 1
 
 
-cdef inline void copy_heap(PriorityHeapRecord *a, PriorityHeapRecord *b) nogil:
+# =============================================================================
+# PriorityHeap data structure
+# =============================================================================
+
+cdef inline void copy_heap(PriorityHeapRecord* a, PriorityHeapRecord* b) nogil:
     """Assigns ``a := b``. """
     a.node_id = b.node_id
     a.start = b.start
@@ -90,18 +103,19 @@ cdef inline void copy_heap(PriorityHeapRecord *a, PriorityHeapRecord *b) nogil:
     a.improvement = b.improvement
 
 
-cdef void swap_heap(PriorityHeapRecord* stack, SIZE_t a, SIZE_t b) nogil:
-    """Swap record ``a`` and ``b`` in ``stack``. """
+cdef void swap_heap(PriorityHeapRecord* heap, SIZE_t a, SIZE_t b) nogil:
+    """Swap record ``a`` and ``b`` in ``heap``. """
     cdef PriorityHeapRecord tmp
-    copy_heap(&tmp, stack + a)
-    copy_heap(stack + a, stack + b)
-    copy_heap(stack + b, &tmp)
+    copy_heap(&tmp, heap + a)
+    copy_heap(heap + a, heap + b)
+    copy_heap(heap + b, &tmp)
 
 
-cdef void heapify_up(PriorityHeapRecord *heap, SIZE_t pos) nogil:
+cdef void heapify_up(PriorityHeapRecord* heap, SIZE_t pos) nogil:
     """Restore heap invariant parent.improvement > child.improvement from ``pos`` upwards. """
     if pos == 0:
         return
+
     cdef SIZE_t parent_pos = (pos - 1) / 2
 
     if heap[parent_pos].improvement < heap[pos].improvement:
@@ -109,7 +123,7 @@ cdef void heapify_up(PriorityHeapRecord *heap, SIZE_t pos) nogil:
         heapify_up(heap, parent_pos)
 
 
-cdef void heapify_down(PriorityHeapRecord *heap, SIZE_t pos, SIZE_t heap_length) nogil:
+cdef void heapify_down(PriorityHeapRecord* heap, SIZE_t pos, SIZE_t heap_length) nogil:
     """Restore heap invariant parent.improvement > children.improvement from ``pos`` downwards. """
     cdef SIZE_t left_pos = 2 * (pos + 1) - 1
     cdef SIZE_t right_pos = 2 * (pos + 1)
@@ -135,9 +149,11 @@ cdef class PriorityHeap:
     ----------
     capacity : SIZE_t
         The capacity of the heap
+
     heap_ptr : SIZE_t
         The water mark of the heap; the heap grows from left to right in the
         array ``heap_``. The following invariant holds ``heap_ptr < capacity``.
+
     heap_ : PriorityHeapRecord*
         The array of heap records. The maximum element is on the left;
         the heap grows from left to right
@@ -166,8 +182,8 @@ cdef class PriorityHeap:
         if heap_ptr >= self.capacity:
             self.capacity *= 2
             self.heap_ = <PriorityHeapRecord*> realloc(self.heap_,
-                                                        self.capacity *
-                                                        sizeof(PriorityHeapRecord))
+                                                       self.capacity *
+                                                       sizeof(PriorityHeapRecord))
 
         # put element as last element of heap
         heap = self.heap_
