@@ -79,7 +79,7 @@ Documentation of scikit-learn 0.14
                     <h2>Other Versions</h2>
                     <ul>
                         <li>scikit-learn 0.14 (stable)</li>
-                        <li><a href="http://scikit-learn.org/0.15/user_guide.html">scikit-learn 0.15 (development)</a></li>
+                        <li><a href="http://scikit-learn.org/dev/user_guide.html">scikit-learn 0.15 (development)</a></li>
 
                         <li><a href="http://scikit-learn.org/0.13/user_guide.html">scikit-learn 0.13</a></li>
                         <li><a href="http://scikit-learn.org/0.12/user_guide.html">scikit-learn 0.12</a></li>
