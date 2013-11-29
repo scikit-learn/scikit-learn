@@ -99,7 +99,7 @@ cdef class Criterion:
 
         self.children_impurity(&impurity_left, &impurity_right)
 
-        return  self.n_outputs * impurity \
+        return  impurity \
                   - (self.weighted_n_right / self.weighted_n_node_samples * impurity_right) \
                   - (self.weighted_n_left / self.weighted_n_node_samples * impurity_left)
 
