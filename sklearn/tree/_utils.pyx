@@ -174,18 +174,17 @@ cdef class PriorityHeap:
                    SIZE_t depth, bint is_leaf, double improvement,
                    double impurity) nogil:
         """Push record on the priority heap. """
-        # increment heap end index by one
         cdef SIZE_t heap_ptr = self.heap_ptr
         cdef PriorityHeapRecord* heap = NULL
 
-        # resize if capacity not sufficient
+        # Resize if capacity not sufficient
         if heap_ptr >= self.capacity:
             self.capacity *= 2
             self.heap_ = <PriorityHeapRecord*> realloc(self.heap_,
                                                        self.capacity *
                                                        sizeof(PriorityHeapRecord))
 
-        # put element as last element of heap
+        # Put element as last element of heap
         heap = self.heap_
         heap[heap_ptr].node_id = node_id
         heap[heap_ptr].start = start
@@ -196,9 +195,10 @@ cdef class PriorityHeap:
         heap[heap_ptr].impurity = impurity
         heap[heap_ptr].improvement = improvement
 
-        # heapify up
+        # Heapify up
         heapify_up(heap, heap_ptr)
 
+        # Increase element count
         self.heap_ptr = heap_ptr + 1
 
     cdef int pop(self, PriorityHeapRecord* res) nogil:
@@ -209,15 +209,16 @@ cdef class PriorityHeap:
         if heap_ptr <= 0:
             return 0
 
-        # take first element
+        # Take first element
         copy_heap(res, heap)
 
-        # put last element to the front
+        # Put last element to the front
         swap_heap(heap, 0, heap_ptr - 1)
 
-        # restore heap invariant
+        # Restore heap invariant
         if heap_ptr > 1:
             heapify_down(heap, 0, heap_ptr - 1)
 
         self.heap_ptr = heap_ptr - 1
+
         return 1

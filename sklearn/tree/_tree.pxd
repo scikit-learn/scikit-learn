@@ -93,7 +93,7 @@ cdef class Splitter:
 
     cdef void node_reset(self, SIZE_t start, SIZE_t end) nogil
 
-    cdef void node_split(self, double impurity,  # the impurity of the total partition
+    cdef void node_split(self, double impurity,  # Impurity of the node
                                SIZE_t* pos, # Set to >= end if the node is a leaf
                                SIZE_t* feature,
                                double* threshold,
@@ -155,18 +155,15 @@ cdef class Tree:
 # =============================================================================
 
 cdef class TreeBuilder:
-
      cpdef build(self, Tree tree, np.ndarray X, np.ndarray y,
                  np.ndarray sample_weight=*)
 
 
 cdef class DepthFirstTreeBuilder(TreeBuilder):
-
      cpdef build(self, Tree tree, np.ndarray X, np.ndarray y,
                  np.ndarray sample_weight=*)
 
 
 cdef class BestFirstTreeBuilder(TreeBuilder):
-
      cpdef build(self, Tree tree, np.ndarray X, np.ndarray y,
                  np.ndarray sample_weight=*)
