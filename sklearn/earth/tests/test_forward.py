@@ -1,8 +1,3 @@
-'''
-Created on Feb 16, 2013
-
-@author: jasonrudy
-'''
 from .._forward import ForwardPasser
 from .._basis import Basis, ConstantBasisFunction, HingeBasisFunction, LinearBasisFunction
 import numpy

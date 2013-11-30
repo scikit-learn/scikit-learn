@@ -19,6 +19,14 @@ cpdef apply_weights_2d(cnp.ndarray[FLOAT_t, ndim=2] B, cnp.ndarray[FLOAT_t, ndim
         for j in range(n):
             B[i, j] *= sqrt(weights[i])
 
+cpdef apply_weights_slice(cnp.ndarray[FLOAT_t, ndim=2] B, cnp.ndarray[FLOAT_t, ndim=1] weights, INDEX_t column):
+    cdef INDEX_t i
+    cdef INDEX_t j
+    cdef INDEX_t m = B.shape[0]
+    cdef INDEX_t n = B.shape[1]
+    for i in range(m):
+        B[i, column] *= sqrt(weights[i])
+
 cpdef apply_weights_1d(cnp.ndarray[FLOAT_t, ndim=1] y, cnp.ndarray[FLOAT_t, ndim=1] weights):
     cdef INDEX_t i
     cdef INDEX_t m = y.shape[0]

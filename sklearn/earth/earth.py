@@ -89,7 +89,7 @@ class EarthRegressor(BaseEstimator, RegressorMixin, TransformerMixin):
         then the forward pass is terminated.
 
 
-    min_searh_points : int, optional (default=100)
+    min_search_points : int, optional (default=100)
         Used to calculate check_every (below).  The minimum samples necessary for check_every
         to be greater than 1.  The check_every parameter is calculated as
 
@@ -103,6 +103,15 @@ class EarthRegressor(BaseEstimator, RegressorMixin, TransformerMixin):
         If check_every > 0, only one of every check_every sorted data points is considered as
         a candidate knot.  If check_every is set to -1 then the check_every parameter is
         calculated based on min_search_points (above).
+        
+        
+    allow_linear : bool, optional (default=True)
+        If True, the forward pass will check the GCV of each new pair of terms and, if it's not
+        an improvement on a single term with no knot (called a linear term, although it may 
+        actually be a product of a linear term with some other parent term), then only that 
+        single, knotless term will be used.  If False, that behavior is disabled and all terms
+        will have knots except those with variables specified by the linvars argument (see the 
+        fit method).
 
 
     Attributes
@@ -135,12 +144,12 @@ class EarthRegressor(BaseEstimator, RegressorMixin, TransformerMixin):
     forward_pass_arg_names = set(
         ['endspan', 'minspan', 'endspan_alpha', 'minspan_alpha',
          'max_terms', 'max_degree', 'thresh', 'penalty', 'check_every',
-         'min_searh_points'])
+         'min_search_points', 'allow_linear'])
     pruning_pass_arg_names = set(['penalty'])
 
     def __init__(
         self, endspan=None, minspan=None, endspan_alpha=None, minspan_alpha=None, max_terms=None, max_degree=None,
-            thresh=None, penalty=None, check_every=None, min_search_points=None):
+            thresh=None, penalty=None, check_every=None, min_search_points=None, allow_linear=None):
         kwargs = {}
         call = locals()
         for name in self._get_param_names():

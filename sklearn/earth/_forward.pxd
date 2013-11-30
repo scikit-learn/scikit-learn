@@ -24,6 +24,7 @@ cdef class ForwardPasser:
     cdef FLOAT_t endspan_alpha
     cdef FLOAT_t minspan_alpha
     cdef int max_terms
+    cdef bint allow_linear
     cdef int max_degree
     cdef FLOAT_t thresh
     cdef FLOAT_t penalty
