@@ -365,7 +365,7 @@ def auc_score(y_true, y_score):
     return roc_auc_score(y_true, y_score)
 
 
-def roc_auc_score(y_true, y_score):
+def roc_auc_score(y_true, y_score, pos_label=None):
     """Compute Area Under the Curve (AUC) from prediction scores
 
     Note: this implementation is restricted to the binary classification task.
@@ -374,11 +374,15 @@ def roc_auc_score(y_true, y_score):
     ----------
 
     y_true : array, shape = [n_samples]
-        True binary labels.
+        True binary labels in range {0, 1} or {-1, 1}.  If labels are not
+        binary, pos_label should be explicitly given.
 
     y_score : array, shape = [n_samples]
         Target scores, can either be probability estimates of the positive
         class, confidence values, or binary decisions.
+
+    pos_label : int
+        Label considered as positive and others are considered negative.
 
     Returns
     -------
@@ -403,11 +407,14 @@ def roc_auc_score(y_true, y_score):
     >>> y_scores = np.array([0.1, 0.4, 0.35, 0.8])
     >>> roc_auc_score(y_true, y_scores)
     0.75
+    >>> y_true = np.array(['No', 'No', 'Yes', 'Yes'])
+    >>> roc_auc_score(y_true, y_scores, pos_label='Yes')
+    0.75
 
     """
     if len(np.unique(y_true)) != 2:
         raise ValueError("AUC is defined for binary classification only")
-    fpr, tpr, tresholds = roc_curve(y_true, y_score)
+    fpr, tpr, tresholds = roc_curve(y_true, y_score, pos_label=pos_label)
     return auc(fpr, tpr, reorder=True)
 
 
