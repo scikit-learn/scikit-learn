@@ -519,7 +519,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
     @abstractmethod
     def __init__(self, loss, learning_rate, n_estimators, min_samples_split,
                  min_samples_leaf, max_depth, init, subsample, max_features,
-                 random_state, alpha=0.9, verbose=0, max_leaf_nodes=-1):
+                 random_state, alpha=0.9, verbose=0, max_leaf_nodes=None):
 
         self.n_estimators = n_estimators
         self.learning_rate = learning_rate
@@ -1012,15 +1012,15 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         Choosing `max_features < n_features` leads to a reduction of variance
         and an increase in bias.
 
+    max_leaf_nodes : int or None, optional (default=None)
+        Grow trees with ``max_leaf_nodes`` in best-first fashion.
+        Best nodes are defined as relative reduction in impurity.
+        If None then unlimited number of leaf nodes.
+
     init : BaseEstimator, None, optional (default=None)
         An estimator object that is used to compute the initial
         predictions. ``init`` has to provide ``fit`` and ``predict``.
         If None it uses ``loss.init_estimator``.
-
-    max_leaf_nodes : bool (default=True)
-        Whether to grow a max_leaf_nodes binary tree (subject to stopping conditions
-        of max_depth, and minimum samples) or a greedy tree branch of
-        ``max_depth`` and with ``max_depth + 1`` leaf nodes.
 
     verbose : int, default: 0
         Enable verbose output. If 1 then it prints progress and performance
@@ -1080,7 +1080,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
                  subsample=1.0, min_samples_split=2, min_samples_leaf=1,
                  max_depth=3, init=None, random_state=None,
                  max_features=None, verbose=0,
-                 max_leaf_nodes=-1):
+                 max_leaf_nodes=None):
 
         super(GradientBoostingClassifier, self).__init__(
             loss, learning_rate, n_estimators, min_samples_split,
@@ -1298,6 +1298,11 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         Choosing `max_features < n_features` leads to a reduction of variance
         and an increase in bias.
 
+    max_leaf_nodes : int or None, optional (default=None)
+        Grow trees with ``max_leaf_nodes`` in best-first fashion.
+        Best nodes are defined as relative reduction in impurity.
+        If None then unlimited number of leaf nodes.
+
     alpha : float (default=0.9)
         The alpha-quantile of the huber loss function and the quantile
         loss function. Only if ``loss='huber'`` or ``loss='quantile'``.
@@ -1306,11 +1311,6 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         An estimator object that is used to compute the initial
         predictions. ``init`` has to provide ``fit`` and ``predict``.
         If None it uses ``loss.init_estimator``.
-
-    max_leaf_nodes : bool (default=True)
-        Whether to grow a max_leaf_nodes binary tree (subject to stopping conditions
-        of max_depth, and minimum samples) or a greedy tree branch of
-        ``max_depth`` and with ``max_depth + 1`` leaf nodes.
 
     verbose : int, default: 0
         Enable verbose output. If 1 then it prints progress and performance
@@ -1369,7 +1369,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
     def __init__(self, loss='ls', learning_rate=0.1, n_estimators=100,
                  subsample=1.0, min_samples_split=2, min_samples_leaf=1,
                  max_depth=3, init=None, random_state=None,
-                 max_features=None, alpha=0.9, verbose=0, max_leaf_nodes=-1):
+                 max_features=None, alpha=0.9, verbose=0, max_leaf_nodes=None):
 
         super(GradientBoostingRegressor, self).__init__(
             loss, learning_rate, n_estimators, min_samples_split,

@@ -175,6 +175,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
 
         # Check parameters
         max_depth = (2 ** 31) - 1 if self.max_depth is None else self.max_depth
+        max_leaf_nodes = -1 if self.max_leaf_nodes is None else self.max_leaf_nodes
 
         if isinstance(self.max_features, six.string_types):
             if self.max_features == "auto":
@@ -210,7 +211,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
             raise ValueError("max_depth must be greater than zero. ")
         if not (0 < max_features <= self.n_features_):
             raise ValueError("max_features must be in (0, n_features]")
-        if not isinstance(self.max_leaf_nodes, (numbers.Integral, np.integer)):
+        if not isinstance(max_leaf_nodes, (numbers.Integral, np.integer)):
             raise ValueError("max_leaf_nodes must be integral number")
         if -1 < self.max_leaf_nodes < 2:
             raise ValueError("max_leaf_nodes must be either smaller than 0 or larger than 1")
@@ -252,14 +253,15 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         self.tree_ = Tree(self.n_features_, self.n_classes_,
                           self.n_outputs_, splitter, max_depth,
                           min_samples_split, self.min_samples_leaf,
-                          self.max_leaf_nodes, random_state)
+                          max_leaf_nodes, random_state)
 
         # Use BestFirst if max_leaf_nodes given; use DepthFirst otherwise
-        if self.max_leaf_nodes < 0:
-            tree_builder = DepthFirstTreeBuilder()
+        if max_leaf_nodes < 0:
+            builder = DepthFirstTreeBuilder()
         else:
-            tree_builder = BestFirstTreeBuilder()
-        tree_builder.build(self.tree_, X, y, sample_weight)
+            builder = BestFirstTreeBuilder()
+
+        builder.build(self.tree_, X, y, sample_weight)
 
         if self.n_outputs_ == 1:
             self.n_classes_ = self.n_classes_[0]
@@ -376,16 +378,16 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         all leaves are pure or until all leaves contain less than
         min_samples_split samples.
 
-    min_samples_split : integer, optional (default=2)
+    min_samples_split : int, optional (default=2)
         The minimum number of samples required to split an internal node.
 
-    min_samples_leaf : integer, optional (default=1)
+    min_samples_leaf : int, optional (default=1)
         The minimum number of samples required to be at a leaf node.
 
-    max_leaf_nodes : int (default=-1)
+    max_leaf_nodes : int or None, optional (default=None)
         Grow a tree with ``max_leaf_nodes`` in best-first fashion.
-        Best nodes are defines as relative reduction in impurity.
-        If < 0 then unlimited number of leaf nodes.
+        Best nodes are defined as relative reduction in impurity.
+        If None then unlimited number of leaf nodes.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
@@ -457,7 +459,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
                  random_state=None,
                  min_density=None,
                  compute_importances=None,
-                 max_leaf_nodes=-1):
+                 max_leaf_nodes=None):
         super(DecisionTreeClassifier, self).__init__(criterion=criterion,
                                                      splitter=splitter,
                                                      max_depth=max_depth,
@@ -580,21 +582,21 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
           - If "log2", then `max_features=log2(n_features)`.
           - If None, then `max_features=n_features`.
 
-    max_depth : integer or None, optional (default=None)
+    max_depth : int or None, optional (default=None)
         The maximum depth of the tree. If None, then nodes are expanded until
         all leaves are pure or until all leaves contain less than
         min_samples_split samples.
 
-    min_samples_split : integer, optional (default=2)
+    min_samples_split : int, optional (default=2)
         The minimum number of samples required to split an internal node.
 
-    min_samples_leaf : integer, optional (default=1)
+    min_samples_leaf : int, optional (default=1)
         The minimum number of samples required to be at a leaf node.
 
-    max_leaf_nodes : int (default=-1)
+    max_leaf_nodes : int or None, optional (default=None)
         Grow a tree with ``max_leaf_nodes`` in best-first fashion.
-        Best nodes are defines as relative reduction in impurity.
-        If < 0 then unlimited number of leaf nodes.
+        Best nodes are defined as relative reduction in impurity.
+        If None then unlimited number of leaf nodes.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
@@ -658,7 +660,7 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
                  random_state=None,
                  min_density=None,
                  compute_importances=None,
-                 max_leaf_nodes=-1):
+                 max_leaf_nodes=None):
         super(DecisionTreeRegressor, self).__init__(criterion=criterion,
                                                     splitter=splitter,
                                                     max_depth=max_depth,
@@ -711,7 +713,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
                  random_state=None,
                  min_density=None,
                  compute_importances=None,
-                 max_leaf_nodes=-1):
+                 max_leaf_nodes=None):
         super(ExtraTreeClassifier, self).__init__(criterion=criterion,
                                                   splitter=splitter,
                                                   max_depth=max_depth,
@@ -764,7 +766,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
                  random_state=None,
                  min_density=None,
                  compute_importances=None,
-                 max_leaf_nodes=-1):
+                 max_leaf_nodes=None):
         super(ExtraTreeRegressor, self).__init__(criterion=criterion,
                                                  splitter=splitter,
                                                  max_depth=max_depth,
