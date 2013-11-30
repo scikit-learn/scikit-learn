@@ -254,13 +254,12 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
                           min_samples_split, self.min_samples_leaf,
                           self.max_leaf_nodes, random_state)
 
+        # Use BestFirst if max_leaf_nodes given; use DepthFirst otherwise
         if self.max_leaf_nodes < 0:
             tree_builder = DepthFirstTreeBuilder()
         else:
             tree_builder = BestFirstTreeBuilder()
         tree_builder.build(self.tree_, X, y, sample_weight)
-        #n_leafs = (self.tree_.children_left == -1).sum()
-        #print('depth:%d n_leafs:%d' % (self.tree_.max_depth, n_leafs))
 
         if self.n_outputs_ == 1:
             self.n_classes_ = self.n_classes_[0]
