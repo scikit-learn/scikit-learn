@@ -212,7 +212,7 @@ def ignore_warnings(obj=None):
 
     >>> def nasty_warn():
     ...    warnings.warn('buhuhuhu')
-    ...    print 42
+    ...    print(42)
 
     >>> ignore_warnings(nasty_warn)()
     42
