@@ -73,7 +73,7 @@ def load_svmlight_file(f, n_features=None, dtype=np.float64,
     n_features: int or None
         The number of features to use. If None, it will be inferred. This
         argument is useful to load several files that are subsets of a
-        bigger sliced dataset: each subset might not have example of
+        bigger sliced dataset: each subset might not have examples of
         every feature, hence the inferred shape might vary from one
         slice to another.
 
@@ -168,6 +168,10 @@ def load_svmlight_files(files, n_features=None, dtype=np.float64,
         The number of features to use. If None, it will be inferred from the
         maximum column index occurring in any of the files.
 
+        This can be set to a higher value than the actual number of features
+        in any of the input files, but setting it to a lower value will cause
+        an exception to be raised.
+
     multilabel: boolean, optional
         Samples may have several labels each (see
         http://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/multilabel.html)
@@ -213,8 +217,13 @@ def load_svmlight_files(files, n_features=None, dtype=np.float64,
             indices = ind[1]
             indices -= 1
 
+    n_f = max(ind[1].max() for ind in r) + 1
     if n_features is None:
-        n_features = max(ind[1].max() for ind in r) + 1
+        n_features = n_f
+    elif n_features < n_f:
+        raise ValueError("n_features was set to {},"
+                         " but input file contains {} features"
+                         .format(n_features, n_f))
 
     result = []
     for data, indices, indptr, y, query_values in r:

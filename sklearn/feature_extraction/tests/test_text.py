@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 import warnings
+
 from sklearn.feature_extraction.text import strip_tags
 from sklearn.feature_extraction.text import strip_accents_unicode
 from sklearn.feature_extraction.text import strip_accents_ascii
@@ -15,6 +16,7 @@ from sklearn.grid_search import GridSearchCV
 from sklearn.pipeline import Pipeline
 from sklearn.svm import LinearSVC
 
+
 import numpy as np
 from nose import SkipTest
 from nose.tools import assert_equal
@@ -25,7 +27,8 @@ from nose.tools import assert_almost_equal
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
 from numpy.testing import assert_raises
-from sklearn.utils.testing import assert_in, assert_less, assert_greater
+from sklearn.utils.testing import (assert_in, assert_less, assert_greater,
+                                   assert_warns_message)
 
 from collections import defaultdict, Mapping
 from functools import partial
@@ -177,16 +180,12 @@ def test_unicode_decode_error():
     assert_raises(UnicodeDecodeError, ca, text_bytes)
 
     # Check the old interface
-    with warnings.catch_warnings(record=True) as w:
-        warnings.simplefilter("always")
-
-        ca = CountVectorizer(analyzer='char', ngram_range=(3, 6),
-                             charset='ascii').build_analyzer()
-        assert_raises(UnicodeDecodeError, ca, text_bytes)
-
-        assert_equal(len(w), 1)
-        assert_true(issubclass(w[0].category, DeprecationWarning))
-        assert_true("charset" in str(w[0].message).lower())
+    in_warning_message = 'charset'
+    ca = assert_warns_message(DeprecationWarning, in_warning_message,
+                              CountVectorizer, analyzer='char',
+                              ngram_range=(3, 6),
+                              charset='ascii').build_analyzer()
+    assert_raises(UnicodeDecodeError, ca, text_bytes)
 
 
 def test_char_ngram_analyzer():
@@ -349,22 +348,15 @@ def test_tfidf_no_smoothing():
          [1, 0, 0]]
     tr = TfidfTransformer(smooth_idf=False, norm='l2')
 
-    # First we need to verify that numpy here provides div 0 warnings
     with warnings.catch_warnings(record=True) as w:
         1. / np.array([0.])
         numpy_provides_div0_warning = len(w) == 1
 
-    with warnings.catch_warnings(record=True) as w:
-        tfidf = tr.fit_transform(X).toarray()
-        if not numpy_provides_div0_warning:
-            raise SkipTest("Numpy does not provide div 0 warnings.")
-        assert_equal(len(w), 1)
-        # For Python 3 compatibility
-        if hasattr(w[0].message, 'args'):
-            assert_true("divide by zero" in w[0].message.args[0])
-        else:
-            assert_true("divide by zero" in w[0].message)
-
+    in_warning_message = 'divide by zero'
+    tfidf = assert_warns_message(RuntimeWarning, in_warning_message,
+                                 tr.fit_transform, X).toarray()
+    if not numpy_provides_div0_warning:
+        raise SkipTest("Numpy does not provide div 0 warnings.")
 
 def test_sublinear_tf():
     X = [[1], [2], [3]]
@@ -596,32 +588,31 @@ def test_count_vectorizer_max_features():
 
 
 def test_vectorizer_max_df():
-    test_data = ['abc', 'dea']  # the letter a occurs in both strings
+    test_data = ['abc', 'dea', 'eat']
     vect = CountVectorizer(analyzer='char', max_df=1.0)
     vect.fit(test_data)
     assert_true('a' in vect.vocabulary_.keys())
-    assert_equal(len(vect.vocabulary_.keys()), 5)
+    assert_equal(len(vect.vocabulary_.keys()), 6)
     assert_equal(len(vect.stop_words_), 0)
 
-    vect.max_df = 0.5
+    vect.max_df = 0.5  # 0.5 * 3 documents -> max_doc_count == 1.5
     vect.fit(test_data)
-    assert_true('a' not in vect.vocabulary_.keys())  # 'a' is ignored
-    assert_equal(len(vect.vocabulary_.keys()), 4)  # the others remain
+    assert_true('a' not in vect.vocabulary_.keys())  # {ae} ignored
+    assert_equal(len(vect.vocabulary_.keys()), 4)    # {bcdt} remain
     assert_true('a' in vect.stop_words_)
-    assert_equal(len(vect.stop_words_), 1)
+    assert_equal(len(vect.stop_words_), 2)
 
-    # absolute count: if in more than one
     vect.max_df = 1
     vect.fit(test_data)
-    assert_true('a' not in vect.vocabulary_.keys())  # 'a' is ignored
-    assert_equal(len(vect.vocabulary_.keys()), 4)  # the others remain
+    assert_true('a' not in vect.vocabulary_.keys())  # {ae} ignored
+    assert_equal(len(vect.vocabulary_.keys()), 4)    # {bcdt} remain
     assert_true('a' in vect.stop_words_)
-    assert_equal(len(vect.stop_words_), 1)
+    assert_equal(len(vect.stop_words_), 2)
 
 
 def test_vectorizer_min_df():
-    test_data = ['abc', 'dea', 'eat']  # the letter a occurs in both strings
-    vect = CountVectorizer(analyzer='char', max_df=1.0, min_df=1)
+    test_data = ['abc', 'dea', 'eat']
+    vect = CountVectorizer(analyzer='char', min_df=1)
     vect.fit(test_data)
     assert_true('a' in vect.vocabulary_.keys())
     assert_equal(len(vect.vocabulary_.keys()), 6)
@@ -629,17 +620,17 @@ def test_vectorizer_min_df():
 
     vect.min_df = 2
     vect.fit(test_data)
-    assert_true('c' not in vect.vocabulary_.keys())  # 'c' is ignored
-    assert_equal(len(vect.vocabulary_.keys()), 2)  # only e, a remain
+    assert_true('c' not in vect.vocabulary_.keys())  # {bcdt} ignored
+    assert_equal(len(vect.vocabulary_.keys()), 2)    # {ae} remain
     assert_true('c' in vect.stop_words_)
     assert_equal(len(vect.stop_words_), 4)
 
-    vect.min_df = .5
+    vect.min_df = 0.8  # 0.8 * 3 documents -> min_doc_count == 2.4
     vect.fit(test_data)
-    assert_true('c' not in vect.vocabulary_.keys())  # 'c' is ignored
-    assert_equal(len(vect.vocabulary_.keys()), 2)  # only e, a remain
+    assert_true('c' not in vect.vocabulary_.keys())  # {bcdet} ignored
+    assert_equal(len(vect.vocabulary_.keys()), 1)    # {a} remains
     assert_true('c' in vect.stop_words_)
-    assert_equal(len(vect.stop_words_), 4)
+    assert_equal(len(vect.stop_words_), 5)
 
 
 def test_count_binary_occurrences():

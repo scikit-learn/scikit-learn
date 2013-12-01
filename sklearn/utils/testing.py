@@ -6,10 +6,12 @@
 #          Mathieu Blondel
 #          Olivier Grisel
 #          Arnaud Joly
+#          Denis Engemann
 # License: BSD 3 clause
 import inspect
 import pkgutil
 import warnings
+import sys
 
 import scipy as sp
 from functools import wraps
@@ -77,15 +79,37 @@ def _assert_greater(a, b, msg=None):
     assert a > b, message
 
 
+
 # To remove when we support numpy 1.7
 def assert_warns(warning_class, func, *args, **kw):
+    """Test that a certain warning occurs.
+
+    Parameters
+    ----------
+    warning_class : the warning class
+        The class to test for, e.g. UserWarning.
+
+    func : callable
+        Calable object to trigger warnings.
+
+    *args : the positional arguments to `func`.
+
+    **kw : the keyword arguments to `func`
+
+    Returns
+    -------
+
+    result : the return value of `func`
+
+    """
+
+    # very important to avoid uncontrolled state propagation
+    clean_warning_registry()
     with warnings.catch_warnings(record=True) as w:
         # Cause all warnings to always be triggered.
         warnings.simplefilter("always")
-
         # Trigger a warning.
         result = func(*args, **kw)
-
         # Verify some things
         if not len(w) > 0:
             raise AssertionError("No warning raised when calling %s"
@@ -99,10 +123,71 @@ def assert_warns(warning_class, func, *args, **kw):
     return result
 
 
+def assert_warns_message(warning_class, message, func, *args, **kw):
+    # very important to avoid uncontrolled state propagation
+    """Test that a certain warning occurs and with a certain message.
+
+    Parameters
+    ----------
+    warning_class : the warning class
+        The class to test for, e.g. UserWarning.
+
+    message : str | callable
+        The entire message or a substring to  test for. If callable,
+        it takes a string as argument and will trigger an assertion error
+        if it returns `False`.
+
+    func : callable
+        Calable object to trigger warnings.
+
+    *args : the positional arguments to `func`.
+
+    **kw : the keyword arguments to `func`.
+
+    Returns
+    -------
+
+    result : the return value of `func`
+
+    """
+    clean_warning_registry()
+    with warnings.catch_warnings(record=True) as w:
+        # Cause all warnings to always be triggered.
+        warnings.simplefilter("always")
+        # Trigger a warning.
+        result = func(*args, **kw)
+        # Verify some things
+        if not len(w) > 0:
+            raise AssertionError("No warning raised when calling %s"
+                                 % func.__name__)
+
+        if not w[0].category is warning_class:
+            raise AssertionError("First warning for %s is not a "
+                                 "%s( is %s)"
+                                 % (func.__name__, warning_class, w[0]))
+
+        # substring will match, the entire message with typo won't
+        msg = w[0].message  # For Python 3 compatibility
+        msg = str(msg.args[0] if hasattr(msg, 'args') else msg)
+        if callable(message):  # add support for certain tests
+            check_in_message = message
+        else:
+            check_in_message = lambda msg : message in msg
+        if not check_in_message(msg):
+            raise AssertionError("The message received ('%s') for <%s> is "
+                                 "not the one you expected ('%s')"
+                                 % (msg, func.__name__,  message
+                                 ))
+    return result
+
+
 # To remove when we support numpy 1.7
 def assert_no_warnings(func, *args, **kw):
     # XXX: once we may depend on python >= 2.6, this can be replaced by the
+
     # warnings module context manager.
+    # very important to avoid uncontrolled state propagation
+    clean_warning_registry()
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter('always')
 
@@ -113,15 +198,100 @@ def assert_no_warnings(func, *args, **kw):
     return result
 
 
-def ignore_warnings(fn):
+def ignore_warnings(obj=None):
+    """ Context manager and decorator to ignore warnings
+
+    Note. Using this (in both variants) will clear all warnings
+    from all python modules loaded. In case you need to test
+    cross-module-warning-logging this is not your tool of choice.
+
+    Examples
+    --------
+    >>> with ignore_warnings():
+    ...     warnings.warn('buhuhuhu')
+
+    >>> def nasty_warn():
+    ...    warnings.warn('buhuhuhu')
+    ...    print(42)
+
+    >>> ignore_warnings(nasty_warn)()
+    42
+
+    """
+    if callable(obj):
+        return _ignore_warnings(obj)
+    else:
+        return _IgnoreWarnings()
+
+
+def _ignore_warnings(fn):
     """Decorator to catch and hide warnings without visual nesting"""
     @wraps(fn)
     def wrapper(*args, **kwargs):
+        # very important to avoid uncontrolled state propagation
+        clean_warning_registry()
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter('always')
             return fn(*args, **kwargs)
             w[:] = []
+
     return wrapper
+
+
+class _IgnoreWarnings(object):
+
+    """Improved and simplified Python warnings context manager
+
+    Copied from Python 2.7.5 and modified as required.
+    """
+
+    def __init__(self):
+        """
+        Parameters
+        ==========
+        category : warning class
+            The category to filter. Defaults to Warning. If None,
+            all categories will be muted.
+        """
+        self._record = True
+        self._module = sys.modules['warnings']
+        self._entered = False
+        self.log = []
+
+    def __repr__(self):
+        args = []
+        if self._record:
+            args.append("record=True")
+        if self._module is not sys.modules['warnings']:
+            args.append("module=%r" % self._module)
+        name = type(self).__name__
+        return "%s(%s)" % (name, ", ".join(args))
+
+    def __enter__(self):
+        clean_warning_registry()  # be safe and not propagate state + chaos
+        warnings.simplefilter('always')
+        if self._entered:
+            raise RuntimeError("Cannot enter %r twice" % self)
+        self._entered = True
+        self._filters = self._module.filters
+        self._module.filters = self._filters[:]
+        self._showwarning = self._module.showwarning
+        if self._record:
+            self.log = []
+            def showwarning(*args, **kwargs):
+                self.log.append(warnings.WarningMessage(*args, **kwargs))
+            self._module.showwarning = showwarning
+            return self.log
+        else:
+            return None
+
+    def __exit__(self, *exc_info):
+        if not self._entered:
+            raise RuntimeError("Cannot exit %r without entering first" % self)
+        self._module.filters = self._filters
+        self._module.showwarning = self._showwarning
+        self.log[:] = []
+        clean_warning_registry() # be safe and not propagate state + chaos
 
 
 try:
@@ -358,3 +528,12 @@ def if_matplotlib(func):
         else:
             return func(*args, **kwargs)
     return run_test
+
+
+def clean_warning_registry():
+    """Safe way to reset warniings """
+    warnings.resetwarnings()
+    reg = "__warningregistry__"
+    for mod in sys.modules.values():
+        if hasattr(mod, reg):
+            getattr(mod, reg).clear()

@@ -49,18 +49,33 @@ Univariate feature selection
 ============================
 
 Univariate feature selection works by selecting the best features based on
-univariate statistical tests. It can seen as a preprocessing step
+univariate statistical tests. It can be seen as a preprocessing step
 to an estimator. Scikit-learn exposes feature selection routines
 as objects that implement the `transform` method:
 
  * :class:`SelectKBest` removes all but the `k` highest scoring features
 
  * :class:`SelectPercentile` removes all but a user-specified highest scoring
-   percentile of features
+   percentage of features
 
  * using common univariate statistical tests for each feature:
    false positive rate :class:`SelectFpr`, false discovery rate
    :class:`SelectFdr`, or family wise error :class:`SelectFwe`.
+
+Using the boolean-feature example given above,
+we can perform a :math:`\chi^2` test to the samples
+to retrieve only the two best features as follows:
+
+  >>> from sklearn.feature_selection import VarianceThreshold
+  >>> X = [[0, 0, 1], [0, 1, 0], [1, 0, 0], [0, 1, 1], [0, 1, 0], [0, 1, 1]]
+  >>> sel = VarianceThreshold(threshold=(.8 * (1 - .8)))
+  >>> sel.fit_transform(X)
+  array([[0, 1],
+         [1, 0],
+         [0, 0],
+         [1, 1],
+         [1, 0],
+         [1, 1]])
 
 These objects take as input a scoring function that returns
 univariate p-values:

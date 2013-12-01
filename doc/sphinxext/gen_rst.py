@@ -33,6 +33,7 @@ import token
 import tokenize
 import numpy as np
 
+from sklearn.externals import joblib
 
 ###############################################################################
 # A tee object to redict streams to multiple outputs
@@ -55,7 +56,7 @@ class Tee(object):
 # Documentation link resolver objects
 
 
-def get_data(url):
+def _get_data(url):
     """Helper function to get data over http or from a local file"""
     if url.startswith('http://'):
         resp = urllib2.urlopen(url)
@@ -74,6 +75,9 @@ def get_data(url):
         fid.close()
 
     return data
+
+mem = joblib.Memory(cachedir='_build')
+get_data = mem.cache(_get_data)
 
 
 def parse_sphinx_searchindex(searchindex):

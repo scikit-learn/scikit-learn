@@ -3,7 +3,6 @@
 #          Denis Engemann <d.engemann@fz-juelich.de>
 #
 # License: BSD 3 clause
-import warnings
 import numpy as np
 from scipy import sparse
 from scipy import linalg
@@ -16,6 +15,7 @@ from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raises, assert_raise_message
+from sklearn.utils.testing import assert_warns
 
 from sklearn.utils.extmath import density
 from sklearn.utils.extmath import logsumexp
@@ -310,7 +310,7 @@ def test_fast_dot():
     B = rng.random_sample([2, 10])
 
     try:
-        linalg.get_blas_funcs('gemm')
+        linalg.get_blas_funcs(['gemm'])[0]
         has_blas = True
     except (AttributeError, ValueError):
         has_blas = False
@@ -376,3 +376,7 @@ def test_fast_dot():
     if has_blas:
         for x in [np.array([[d] * 10] * 2) for d in [np.inf, np.nan]]:
             assert_raises(ValueError, _fast_dot, x, x.T)
+
+if __name__ == '__main__':
+    import nose
+    nose.runmodule()

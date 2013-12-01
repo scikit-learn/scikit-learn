@@ -2,7 +2,6 @@
 #          Alexandre Gramfort <alexandre.gramfort@inria.fr>
 # License: BSD 3 clause
 
-import warnings
 from sys import version_info
 
 import numpy as np
@@ -14,6 +13,9 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import SkipTest
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_greater
+from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import ignore_warnings
 
 from sklearn.linear_model.coordinate_descent import Lasso, \
     LassoCV, ElasticNet, ElasticNetCV, MultiTaskLasso, MultiTaskElasticNet, \
@@ -186,11 +188,10 @@ def test_lasso_path_return_models_vs_new_return_gives_same_coefficients():
     y = np.array([1, 2, 3.1])
     alphas = [5., 1., .5]
     # Compute the lasso_path
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore", DeprecationWarning)
-        coef_path = [e.coef_ for e in lasso_path(X, y, alphas=alphas,
-                                                 return_models=True,
-                                                 fit_intercept=False)]
+    f = ignore_warnings
+    coef_path = [e.coef_ for e in f(lasso_path)(X, y, alphas=alphas,
+                                                return_models=True,
+                                                fit_intercept=False)]
 
     # Use lars_path and lasso_path(new output) with 1D linear interpolation
     # to compute the the same path
@@ -217,23 +218,22 @@ def test_enet_path():
                                          n_informative_features=100)
     max_iter = 150
 
-    with warnings.catch_warnings():
-        # Here we have a small number of iterations, and thus the
-        # ElasticNet might not converge. This is to speed up tests
-        warnings.simplefilter("ignore", UserWarning)
-        clf = ElasticNetCV(n_alphas=5, eps=2e-3, l1_ratio=[0.5, 0.7], cv=3,
-                           max_iter=max_iter)
-        clf.fit(X, y)
-        # Well-conditioned settings, we should have selected our
-        # smallest penalty
-        assert_almost_equal(clf.alpha_, min(clf.alphas_))
-        # Non-sparse ground truth: we should have seleted an elastic-net
-        # that is closer to ridge than to lasso
-        assert_equal(clf.l1_ratio_, min(clf.l1_ratio))
+    # Here we have a small number of iterations, and thus the
+    # ElasticNet might not converge. This is to speed up tests
+    clf = ElasticNetCV(n_alphas=5, eps=2e-3, l1_ratio=[0.5, 0.7], cv=3,
+                       max_iter=max_iter)
+    ignore_warnings(clf.fit)(X, y)
+    # Well-conditioned settings, we should have selected our
+    # smallest penalty
+    assert_almost_equal(clf.alpha_, min(clf.alphas_))
+    # Non-sparse ground truth: we should have seleted an elastic-net
+    # that is closer to ridge than to lasso
+    assert_equal(clf.l1_ratio_, min(clf.l1_ratio))
 
-        clf = ElasticNetCV(n_alphas=5, eps=2e-3, l1_ratio=[0.5, 0.7], cv=3,
-                           max_iter=max_iter, precompute=True)
-        clf.fit(X, y)
+    clf = ElasticNetCV(n_alphas=5, eps=2e-3, l1_ratio=[0.5, 0.7], cv=3,
+                       max_iter=max_iter, precompute=True)
+    ignore_warnings(clf.fit)(X, y)
+
 
     # Well-conditioned settings, we should have selected our
     # smallest penalty
@@ -261,28 +261,21 @@ def test_path_parameters():
 
 def test_warm_start():
     X, y, _, _ = build_dataset()
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore", UserWarning)
-        clf = ElasticNet(alpha=0.1, max_iter=5, warm_start=True)
-        clf.fit(X, y)
-        clf.fit(X, y)  # do a second round with 5 iterations
+    clf = ElasticNet(alpha=0.1, max_iter=5, warm_start=True)
+    ignore_warnings(clf.fit)(X, y)
+    ignore_warnings(clf.fit)(X, y)  # do a second round with 5 iterations
 
-        clf2 = ElasticNet(alpha=0.1, max_iter=10)
-        clf2.fit(X, y)
-        assert_array_almost_equal(clf2.coef_, clf.coef_)
+    clf2 = ElasticNet(alpha=0.1, max_iter=10)
+    ignore_warnings(clf2.fit)(X, y)
+    assert_array_almost_equal(clf2.coef_, clf.coef_)
 
 
 def test_lasso_alpha_warning():
-    check_warnings()  # Skip if unsupported Python version
-    with warnings.catch_warnings(record=True) as w:
-        warnings.simplefilter('always')
-        X = [[-1], [0], [1]]
-        Y = [-1, 0, 1]       # just a straight line
+    X = [[-1], [0], [1]]
+    Y = [-1, 0, 1]       # just a straight line
 
-        clf = Lasso(alpha=0)
-        clf.fit(X, Y)
-
-        assert_greater(len(w), 0)  # warnings should be raised
+    clf = Lasso(alpha=0)
+    assert_warns(UserWarning, clf.fit, X, Y)
 
 
 def test_lasso_positive_constraint():
@@ -334,6 +327,13 @@ def test_enet_multitarget():
         assert_array_almost_equal(coef[k, :], estimator.coef_)
         assert_array_almost_equal(intercept[k], estimator.intercept_)
         assert_array_almost_equal(dual_gap[k], estimator.dual_gap_)
+
+
+def test_multioutput_enetcv_error():
+    X = np.random.randn(10, 2)
+    y = np.random.randn(10, 2)
+    clf = ElasticNetCV()
+    assert_raises(ValueError, clf.fit, X, y)
 
 
 if __name__ == '__main__':

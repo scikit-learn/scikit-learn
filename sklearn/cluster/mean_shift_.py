@@ -8,14 +8,17 @@ from collections import defaultdict
 import numpy as np
 
 from ..externals import six
-from ..utils import extmath, check_random_state
+from ..utils import extmath, check_random_state, gen_batches
 from ..base import BaseEstimator, ClusterMixin
 from ..neighbors import NearestNeighbors
 from ..metrics.pairwise import pairwise_distances_argmin
 
 
 def estimate_bandwidth(X, quantile=0.3, n_samples=None, random_state=0):
-    """Estimate the bandwidth to use with MeanShift algorithm
+    """Estimate the bandwidth to use with the mean-shift algorithm.
+
+    That this function takes time at least quadratic in n_samples. For large
+    datasets, it's wise to set that parameter to a small value.
 
     Parameters
     ----------
@@ -26,11 +29,11 @@ def estimate_bandwidth(X, quantile=0.3, n_samples=None, random_state=0):
         should be between [0, 1]
         0.5 means that the median of all pairwise distances is used.
 
-    n_samples : int
-        The number of samples to use. If None, all samples are used.
+    n_samples : int, optional
+        The number of samples to use. If not given, all samples are used.
 
     random_state : int or RandomState
-        Pseudo number generator state used for random sampling.
+        Pseudo-random number generator state used for random sampling.
 
     Returns
     -------
@@ -43,10 +46,13 @@ def estimate_bandwidth(X, quantile=0.3, n_samples=None, random_state=0):
         X = X[idx]
     nbrs = NearestNeighbors(n_neighbors=int(X.shape[0] * quantile))
     nbrs.fit(X)
-    d, _ = nbrs.kneighbors(X, return_distance=True)
 
-    bandwidth = np.mean(np.max(d, axis=1))
-    return bandwidth
+    bandwidth = 0.
+    for batch in gen_batches(len(X), 500):
+        d, _ = nbrs.kneighbors(X[batch, :], return_distance=True)
+        bandwidth += np.max(d, axis=1).sum()
+
+    return bandwidth / X.shape[0]
 
 
 def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
@@ -63,8 +69,11 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
 
     bandwidth : float, optional
         Kernel bandwidth.
-        If bandwidth is not defined, it is set using
-        a heuristic given by the median of all pairwise distances.
+
+        If bandwidth is not given, it is determined using a heuristic based on
+        the median of all pairwise distances. This will take quadratic time in
+        the number of samples. The sklearn.cluster.estimate_bandwidth function
+        can be used to do this more efficiently.
 
     seeds : array [n_seeds, n_features]
         Point used as initial kernel locations.
@@ -206,9 +215,11 @@ class MeanShift(BaseEstimator, ClusterMixin):
     Parameters
     ----------
     bandwidth : float, optional
-        Bandwidth used in the RBF kernel
-        If not set, the bandwidth is estimated.
-        See clustering.estimate_bandwidth.
+        Bandwidth used in the RBF kernel.
+
+        If not given, the bandwidth is estimated using
+        sklearn.cluster.estimate_bandwidth; see the documentation for that
+        function for hints on scalability (see also the Notes, below).
 
     seeds : array [n_samples, n_features], optional
         Seeds used to initialize kernels. If not set,
@@ -256,8 +267,8 @@ class MeanShift(BaseEstimator, ClusterMixin):
     Scalability can be boosted by using fewer seeds, for example by using
     a higher value of min_bin_freq in the get_bin_seeds function.
 
-    Note that the estimate_bandwidth function is much less scalable than
-    the mean shift algorithm and will be the bottleneck if it is used.
+    Note that the estimate_bandwidth function is much less scalable than the
+    mean shift algorithm and will be the bottleneck if it is used.
 
     References
     ----------

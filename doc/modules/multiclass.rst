@@ -7,10 +7,14 @@ Multiclass and multilabel algorithms
 
 .. currentmodule:: sklearn.multiclass
 
-The :mod:`sklearn.multiclass` module implements *meta-estimators* to perform
-``multiclass`` and ``multilabel`` classification. Those meta-estimators are
-meant to turn a binary classifier or a regressor into a multi-class/label
-classifier.
+.. warning::
+    All classifiers in scikit-learn do multiclass classification
+    out-of-the-box. You don't need to use the :mod:`sklearn.multiclass` module
+    unless you want to experiment with different multiclass strategies.
+
+The :mod:`sklearn.multiclass` module implements *meta-estimators* to solve
+``multiclass`` and ``multilabel`` classification problems
+by decomposing such problems into binary classification problems.
 
   - **Multiclass classification** means a classification task with more than
     two classes; e.g., classify a set of images of fruits which may be oranges,
@@ -25,8 +29,8 @@ classifier.
     education at the same time or none of these.
 
   - **Multioutput-multiclass classification** and **multi-task classification**
-    means that an estimators have to handle
-    jointly several classification tasks. This is a generalization
+    means that a single estimator has to handle
+    several joint classification tasks. This is a generalization
     of the multi-label classification task, where the set of classification
     problem is restricted to binary classification, and of the multi-class
     classification task. *The output format is a 2d numpy array.*
@@ -44,16 +48,15 @@ classifier.
     classification task with different model formulations. For
     more information, see the relevant estimator documentation.
 
-Estimators in this module are meta-estimators. For example, it is possible to
-use these estimators to turn a binary classifier or a regressor into a
-multiclass classifier. It is also possible to use these estimators with
-multiclass estimators in the hope that their generalization error or runtime
-performance improves.
+All scikit-learn classifiers are capable of multiclass classification,
+but the meta-estimators offered by :mod:`sklearn.multiclass`
+permit changing the way they handle more than two classes
+because this may have an effect on classifier performance
+(either in terms of generalization error or required computational resources).
 
-You don't need to use these estimators unless you want to experiment with
-different multiclass strategies: all classifiers in scikit-learn support
-multiclass classification out-of-the-box. Below is a summary of the
-classifiers supported by scikit-learn grouped by strategy:
+Below is a summary of the classifiers supported by scikit-learn
+grouped by strategy; you don't need the meta-estimators in this class
+if you're using one of these unless you want custom multiclass behavior:
 
   - Inherently multiclass: :ref:`Naive Bayes <naive_bayes>`,
     :class:`sklearn.lda.LDA`,
@@ -66,16 +69,15 @@ Some estimators also support multioutput-multiclass classification
 tasks :ref:`Decision Trees <tree>`, :ref:`Random Forests <forest>`,
 :ref:`Nearest Neighbors <neighbors>`.
 
-
 .. warning::
 
-    For the moment, no metric supports the multioutput-multiclass
-    classification task.
+    At present, no metric in :mod:`sklearn.metrics`
+    supports the multioutput-multiclass classification task.
 
 Multilabel classification format
 ================================
 
-In multilabel learning, the joint set of binary classification task
+In multilabel learning, the joint set of binary classification tasks
 is expressed with either a sequence of sequences or a label binary indicator
 array.
 

@@ -770,7 +770,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
                                                random_state=random_state,
                                                learning_rate=learning_rate,
                                                eta0=eta0, power_t=power_t,
-                                               warm_start=False)
+                                               warm_start=warm_start)
 
     def _partial_fit(self, X, y, alpha, C, loss, learning_rate,
                      n_iter, sample_weight,
@@ -1062,4 +1062,4 @@ class SGDRegressor(BaseSGDRegressor, _LearntSelectorMixin):
                                            random_state=random_state,
                                            learning_rate=learning_rate,
                                            eta0=eta0, power_t=power_t,
-                                           warm_start=False)
+                                           warm_start=warm_start)
