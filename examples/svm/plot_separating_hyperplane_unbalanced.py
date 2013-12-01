@@ -9,12 +9,27 @@ are unbalanced.
 We first find the separating plane with a plain SVC and then plot
 (dashed) the separating hyperplane with automatically correction for
 unbalanced classes.
+
+.. currentmodule:: sklearn.linear_model
+
+.. note::
+
+    This example will also work by replacing ``SVC(kernel="linear")``
+    with ``SGDClassifier(loss="hinge")``. Setting the ``loss`` parameter
+    of the :class:`SGDClassifier` equal to ``hinge`` will yield behaviour
+    such as that of a SVC with a linear kernel.
+
+    For example try instead of the ``SVC``::
+
+        clf = SGDClassifier(n_iter=100, alpha=0.01)
+
 """
 print(__doc__)
 
 import numpy as np
 import pylab as pl
 from sklearn import svm
+from sklearn.linear_model import SGDClassifier
 
 # we create 40 separable points
 rng = np.random.RandomState(0)

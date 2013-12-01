@@ -12,6 +12,22 @@ cimport numpy as np
 np.import_array()  # required in order to use C-API
 
 
+######################################################################
+# Numpy 1.3-1.4 compatibility utilities
+cdef DTYPE_t[:, ::1] get_memview_DTYPE_2D(
+                               np.ndarray[DTYPE_t, ndim=2, mode='c'] X):
+    return <DTYPE_t[:X.shape[0],:X.shape[1]:1]> (<DTYPE_t*> X.data)
+
+
+cdef DTYPE_t* get_vec_ptr(np.ndarray[DTYPE_t, ndim=1, mode='c'] vec):
+    return &vec[0]
+
+
+cdef DTYPE_t* get_mat_ptr(np.ndarray[DTYPE_t, ndim=2, mode='c'] mat):
+    return &mat[0, 0]
+######################################################################
+
+
 # First, define a function to get an ndarray from a memory bufffer
 cdef extern from "arrayobject.h":
     object PyArray_SimpleNewFromData(int nd, np.npy_intp* dims,
@@ -22,14 +38,14 @@ cdef inline np.ndarray _buffer_to_ndarray(DTYPE_t* x, np.npy_intp n):
     # Wrap a memory buffer with an ndarray. Warning: this is not robust.
     # In particular, if x is deallocated before the returned array goes
     # out of scope, this could cause memory errors.  Since there is not
-    # a possibility of this here, this should be safe.
+    # a possibility of this for our use-case, this should be safe.
 
     # Note: this Segfaults unless np.import_array() is called above
     return PyArray_SimpleNewFromData(1, &n, DTYPECODE, <void*>x)
 
 
 # some handy constants
-from libc.math cimport fmax, fmin, fabs, sqrt, exp, pow, cos, sin, asin
+from libc.math cimport fabs, sqrt, exp, pow, cos, sin, asin
 cdef DTYPE_t INF = np.inf
 
 from typedefs cimport DTYPE_t, ITYPE_t, DITYPE_t, DTYPECODE
@@ -105,15 +121,14 @@ cdef class DistanceMetric:
            [ 5.19615242,  0.        ]])
 
     Available Metrics
-    -----------------
     The following lists the string metric identifiers and the associated
     distance metric classes:
 
-    *Metrics intended for real-valued vector spaces:*
+    **Metrics intended for real-valued vector spaces:**
 
-    ==============  ====================  ========  ===========================
+    ==============  ====================  ========  ============================
     identifier      class name            args      distance function
-    --------------  --------------------  --------  ---------------------------
+    --------------  --------------------  --------  ----------------------------
     "euclidean"     EuclideanDistance     -         sqrt(sum((x - y)^2))
     "manhattan"     ManhattanDistance     -         sum(|x - y|)
     "chebyshev"     ChebyshevDistance     -         sum(max(|x - y|))
@@ -121,30 +136,31 @@ cdef class DistanceMetric:
     "wminkowski"    WMinkowskiDistance    p, w      sum(w * |x - y|^p)^(1/p)
     "seuclidean"    SEuclideanDistance    V         sqrt(sum((x - y)^2 / V))
     "mahalanobis"   MahalanobisDistance   V or VI   sqrt((x - y)' V^-1 (x - y))
-    ==============  ====================  ========  ===========================
+    ==============  ====================  ========  ============================
 
-    *Metrics intended for two-dimensional vector spaces:*
-    ===========  =================  =======================================
-    identifier   class name         distance function
-    -----------  -----------------  ----------------------------------------
-    "haversine"  HaversineDistance  2 arcsin(sqrt(sin^2(0.5*dx)
+    **Metrics intended for two-dimensional vector spaces:**
+
+    ============  ==================  ========================================
+    identifier    class name          distance function
+    ------------  ------------------  ----------------------------------------
+    "haversine"   HaversineDistance   2 arcsin(sqrt(sin^2(0.5*dx)
                                              + cos(x1)cos(x2)sin^2(0.5*dy)))
-    ===========  =================  ========================================
+    ============  ==================  ========================================
 
 
-    *Metrics intended for integer-valued vector spaces:*  Though intended
+    **Metrics intended for integer-valued vector spaces:**  Though intended
     for integer-valued vectors, these are also valid metrics in the case of
     real-valued vectors.
 
-    =============  ====================  ====================================
+    =============  ====================  =====================================
     identifier     class name            distance function
-    -------------  --------------------  ------------------------------------
+    -------------  --------------------  -------------------------------------
     "hamming"      HammingDistance       N_unequal(x, y) / N_tot
     "canberra"     CanberraDistance      sum(|x - y| / (|x| + |y|))
     "braycurtis"   BrayCurtisDistance    sum(|x - y|) / (sum(|x|) + sum(|y|))
-    =============  ====================  ====================================
+    =============  ====================  =====================================
 
-    *Metrics intended for boolean-valued vector spaces:*  Any nonzero entry
+    **Metrics intended for boolean-valued vector spaces:**  Any nonzero entry
     is evaluated to "True".  In the listings below, the following
     abbreviations are used:
 
@@ -156,26 +172,26 @@ cdef class DistanceMetric:
      - NNEQ : number of non-equal dimensions, NNEQ = NTF + NFT
      - NNZ : number of nonzero dimensions, NNZ = NTF + NFT + NTT
 
-    =============     ======================  =================================
-    identifier        class name              distance function
-    -------------     ----------------------  ---------------------------------
-    "jaccard"         JaccardDistance         NNEQ / NNZ
-    "maching"         MatchingDistance        NNEQ / N
-    "dice"            DiceDistance            NNEQ / (NTT + NNZ)
-    "kulsinski"       KulsinskiDistance       (NNEQ + N - NTT) / (NNEQ + N)
-    "rogerstanimoto"  RogersTanimotoDistance  2 * NNEQ / (N + NNEQ)
-    "russellrao"      RussellRaoDistance      NNZ / N
-    "sokalmichener"   SokalMichenerDistance   2 * NNEQ / (N + NNEQ)
-    "sokalsneath"     SokalSneathDistance     NNEQ / (NNEQ + 0.5 * NTT)
-    ================  ======================  =================================
+    =================  =======================  ===============================
+    identifier         class name               distance function
+    -----------------  -----------------------  -------------------------------
+    "jaccard"          JaccardDistance          NNEQ / NNZ
+    "maching"          MatchingDistance         NNEQ / N
+    "dice"             DiceDistance             NNEQ / (NTT + NNZ)
+    "kulsinski"        KulsinskiDistance        (NNEQ + N - NTT) / (NNEQ + N)
+    "rogerstanimoto"   RogersTanimotoDistance   2 * NNEQ / (N + NNEQ)
+    "russellrao"       RussellRaoDistance       NNZ / N
+    "sokalmichener"    SokalMichenerDistance    2 * NNEQ / (N + NNEQ)
+    "sokalsneath"      SokalSneathDistance      NNEQ / (NNEQ + 0.5 * NTT)
+    =================  =======================  ===============================
 
-    *User-defined distance:*
+    **User-defined distance:**
 
-    ==========    ==============    =======
-    identifier    class name        args
-    ----------    --------------    -------
-    "pyfunc"      PyFuncDistance    func
-    ==========    ==============    =======
+    ===========    ===============    =======
+    identifier     class name         args
+    -----------    ---------------    -------
+    "pyfunc"       PyFuncDistance     func
+    ===========    ===============    =======
 
     Here ``func`` is a function which takes two one-dimensional numpy
     arrays, and returns a distance.  Note that in order to be used within
@@ -193,10 +209,10 @@ cdef class DistanceMetric:
     """
     def __cinit__(self):
         self.p = 2
-        self.vec = np.zeros(1, dtype=DTYPE)
-        self.mat = np.zeros((1, 1), dtype=DTYPE)
-        self.vec_ptr = &self.vec[0]
-        self.mat_ptr = &self.mat[0, 0]
+        self.vec = np.zeros(1, dtype=DTYPE, order='c')
+        self.mat = np.zeros((1, 1), dtype=DTYPE, order='c')
+        self.vec_ptr = get_vec_ptr(self.vec)
+        self.mat_ptr = get_mat_ptr(self.mat)
         self.size = 1
 
     def __reduce__(self):
@@ -209,9 +225,7 @@ cdef class DistanceMetric:
         """
         get state for pickling
         """
-        return (float(self.p),
-                np.asarray(self.vec),
-                np.asarray(self.mat))
+        return (float(self.p), self.vec, self.mat)
 
     def __setstate__(self, state):
         """
@@ -220,8 +234,8 @@ cdef class DistanceMetric:
         self.p = state[0]
         self.vec = state[1]
         self.mat = state[2]
-        self.vec_ptr = &self.vec[0]
-        self.mat_ptr = &self.mat[0, 0]
+        self.vec_ptr = get_vec_ptr(self.vec)
+        self.mat_ptr = get_mat_ptr(self.mat)
         self.size = 1
 
     @classmethod
@@ -357,17 +371,24 @@ cdef class DistanceMetric:
             The shape (Nx, Ny) array of pairwise distances between points in
             X and Y.
         """
-        X = np.asarray(X, dtype=DTYPE)
+        cdef np.ndarray[DTYPE_t, ndim=2, mode='c'] Xarr
+        cdef np.ndarray[DTYPE_t, ndim=2, mode='c'] Yarr
+        cdef np.ndarray[DTYPE_t, ndim=2, mode='c'] Darr
+
+        Xarr = np.asarray(X, dtype=DTYPE, order='C')
         if Y is None:
-            D = np.zeros((X.shape[0], X.shape[0]),
+            Darr = np.zeros((Xarr.shape[0], Xarr.shape[0]),
                          dtype=DTYPE, order='C')
-            self.pdist(X, D)
+            self.pdist(get_memview_DTYPE_2D(Xarr),
+                       get_memview_DTYPE_2D(Darr))
         else:
-            Y = np.asarray(Y, dtype=DTYPE)
-            D = np.zeros((X.shape[0], Y.shape[0]),
+            Yarr = np.asarray(Y, dtype=DTYPE, order='C')
+            Darr = np.zeros((Xarr.shape[0], Yarr.shape[0]),
                          dtype=DTYPE, order='C')
-            self.cdist(X, Y, D)
-        return np.asarray(D)
+            self.cdist(get_memview_DTYPE_2D(Xarr),
+                       get_memview_DTYPE_2D(Yarr),
+                       get_memview_DTYPE_2D(Darr))
+        return Darr
 
 
 #------------------------------------------------------------
@@ -414,8 +435,8 @@ cdef class SEuclideanDistance(DistanceMetric):
     """
     def __init__(self, V):
         self.vec = np.asarray(V, dtype=DTYPE)
+        self.vec_ptr = get_vec_ptr(self.vec)
         self.size = self.vec.shape[0]
-        self.vec_ptr = &self.vec[0]
         self.p = 2
 
     cdef inline DTYPE_t rdist(self, DTYPE_t* x1, DTYPE_t* x2,
@@ -423,6 +444,7 @@ cdef class SEuclideanDistance(DistanceMetric):
         if size != self.size:
             raise ValueError('SEuclidean dist: size of V does not match')
         cdef DTYPE_t tmp, d=0
+        cdef np.intp_t j
         for j in range(size):
             tmp = x1[j] - x2[j]
             d += tmp * tmp / self.vec_ptr[j]
@@ -460,6 +482,7 @@ cdef class ManhattanDistance(DistanceMetric):
     cdef inline DTYPE_t dist(self, DTYPE_t* x1, DTYPE_t* x2,
                              ITYPE_t size) except -1:
         cdef DTYPE_t d = 0
+        cdef np.intp_t j
         for j in range(size):
             d += fabs(x1[j] - x2[j])
         return d
@@ -480,6 +503,7 @@ cdef class ChebyshevDistance(DistanceMetric):
     cdef inline DTYPE_t dist(self, DTYPE_t* x1, DTYPE_t* x2,
                              ITYPE_t size) except -1:
         cdef DTYPE_t d = 0
+        cdef np.intp_t j
         for j in range(size):
             d = fmax(d, fabs(x1[j] - x2[j]))
         return d
@@ -510,6 +534,7 @@ cdef class MinkowskiDistance(DistanceMetric):
     cdef inline DTYPE_t rdist(self, DTYPE_t* x1, DTYPE_t* x2,
                               ITYPE_t size) except -1:
         cdef DTYPE_t d=0
+        cdef np.intp_t j
         for j in range(size):
             d += pow(fabs(x1[j] - x2[j]), self.p)
         return d
@@ -558,8 +583,8 @@ cdef class WMinkowskiDistance(DistanceMetric):
                              "For p=inf, use ChebyshevDistance.")
         self.p = p
         self.vec = np.asarray(w, dtype=DTYPE)
+        self.vec_ptr = get_vec_ptr(self.vec)
         self.size = self.vec.shape[0]
-        self.vec_ptr = &self.vec[0]
 
     cdef inline DTYPE_t rdist(self, DTYPE_t* x1, DTYPE_t* x2,
                               ITYPE_t size) except -1:
@@ -567,6 +592,7 @@ cdef class WMinkowskiDistance(DistanceMetric):
             raise ValueError('WMinkowskiDistance dist: '
                              'size of w does not match')
         cdef DTYPE_t d=0
+        cdef np.intp_t j
         for j in range(size):
             d += pow(self.vec_ptr[j] * fabs(x1[j] - x2[j]), self.p)
         return d
@@ -611,13 +637,15 @@ cdef class MahalanobisDistance(DistanceMetric):
             VI = np.linalg.inv(V)
         if VI.ndim != 2 or VI.shape[0] != VI.shape[1]:
             raise ValueError("V/VI must be square")
+
         self.mat = np.asarray(VI, dtype=float, order='C')
-        self.mat_ptr = &self.mat[0, 0]
+        self.mat_ptr = get_mat_ptr(self.mat)
+
         self.size = self.mat.shape[0]
 
         # we need vec as a work buffer
         self.vec = np.zeros(self.size, dtype=DTYPE)
-        self.vec_ptr = &self.vec[0]
+        self.vec_ptr = get_vec_ptr(self.vec)
 
     cdef inline DTYPE_t rdist(self, DTYPE_t* x1, DTYPE_t* x2,
                               ITYPE_t size) except -1:
@@ -625,6 +653,7 @@ cdef class MahalanobisDistance(DistanceMetric):
             raise ValueError('Mahalanobis dist: size of V does not match')
 
         cdef DTYPE_t tmp, d = 0
+        cdef np.intp_t i, j
 
         # compute (x1 - x2).T * VI * (x1 - x2)
         for i in range(size):
@@ -669,6 +698,7 @@ cdef class HammingDistance(DistanceMetric):
     cdef inline DTYPE_t dist(self, DTYPE_t* x1, DTYPE_t* x2,
                              ITYPE_t size) except -1:
         cdef int n_unequal = 0
+        cdef np.intp_t j
         for j in range(size):
             if x1[j] != x2[j]:
                 n_unequal += 1
@@ -690,6 +720,7 @@ cdef class CanberraDistance(DistanceMetric):
     cdef inline DTYPE_t dist(self, DTYPE_t* x1, DTYPE_t* x2,
                              ITYPE_t size) except -1:
         cdef DTYPE_t denom, d = 0
+        cdef np.intp_t j
         for j in range(size):
             denom = abs(x1[j]) + abs(x2[j])
             if denom > 0:
@@ -712,6 +743,7 @@ cdef class BrayCurtisDistance(DistanceMetric):
     cdef inline DTYPE_t dist(self, DTYPE_t* x1, DTYPE_t* x2,
                              ITYPE_t size) except -1:
         cdef DTYPE_t num = 0, denom = 0
+        cdef np.intp_t j
         for j in range(size):
             num += abs(x1[j] - x2[j])
             denom += abs(x1[j]) + abs(x2[j])
@@ -737,6 +769,7 @@ cdef class JaccardDistance(DistanceMetric):
     cdef inline DTYPE_t dist(self, DTYPE_t* x1, DTYPE_t* x2,
                              ITYPE_t size) except -1:
         cdef int tf1, tf2, n_eq = 0, nnz = 0
+        cdef np.intp_t j
         for j in range(size):
             tf1 = x1[j] != 0
             tf2 = x2[j] != 0
@@ -761,6 +794,7 @@ cdef class MatchingDistance(DistanceMetric):
     cdef inline DTYPE_t dist(self, DTYPE_t* x1, DTYPE_t* x2,
                              ITYPE_t size) except -1:
         cdef int tf1, tf2, n_neq = 0
+        cdef np.intp_t j
         for j in range(size):
             tf1 = x1[j] != 0
             tf2 = x2[j] != 0
@@ -784,6 +818,7 @@ cdef class DiceDistance(DistanceMetric):
     cdef inline DTYPE_t dist(self, DTYPE_t* x1, DTYPE_t* x2,
                              ITYPE_t size) except -1:
         cdef int tf1, tf2, n_neq = 0, ntt = 0
+        cdef np.intp_t j
         for j in range(size):
             tf1 = x1[j] != 0
             tf2 = x2[j] != 0
@@ -808,6 +843,7 @@ cdef class KulsinskiDistance(DistanceMetric):
     cdef inline DTYPE_t dist(self, DTYPE_t* x1, DTYPE_t* x2,
                              ITYPE_t size) except -1:
         cdef int tf1, tf2, ntt = 0, n_neq = 0
+        cdef np.intp_t j
         for j in range(size):
             tf1 = x1[j] != 0
             tf2 = x2[j] != 0
@@ -832,6 +868,7 @@ cdef class RogersTanimotoDistance(DistanceMetric):
     cdef inline DTYPE_t dist(self, DTYPE_t* x1, DTYPE_t* x2,
                              ITYPE_t size) except -1:
         cdef int tf1, tf2, n_neq = 0
+        cdef np.intp_t j
         for j in range(size):
             tf1 = x1[j] != 0
             tf2 = x2[j] != 0
@@ -855,6 +892,7 @@ cdef class RussellRaoDistance(DistanceMetric):
     cdef inline DTYPE_t dist(self, DTYPE_t* x1, DTYPE_t* x2,
                              ITYPE_t size) except -1:
         cdef int tf1, tf2, ntt = 0
+        cdef np.intp_t j
         for j in range(size):
             tf1 = x1[j] != 0
             tf2 = x2[j] != 0
@@ -878,6 +916,7 @@ cdef class SokalMichenerDistance(DistanceMetric):
     cdef inline DTYPE_t dist(self, DTYPE_t* x1, DTYPE_t* x2,
                              ITYPE_t size) except -1:
         cdef int tf1, tf2, n_neq = 0
+        cdef np.intp_t j
         for j in range(size):
             tf1 = x1[j] != 0
             tf2 = x2[j] != 0
@@ -901,6 +940,7 @@ cdef class SokalSneathDistance(DistanceMetric):
     cdef inline DTYPE_t dist(self, DTYPE_t* x1, DTYPE_t* x2,
                              ITYPE_t size) except -1:
         cdef int tf1, tf2, ntt = 0, n_neq = 0
+        cdef np.intp_t j
         for j in range(size):
             tf1 = x1[j] != 0
             tf2 = x2[j] != 0
@@ -965,6 +1005,7 @@ cdef class HaversineDistance(DistanceMetric):
 #cdef class YuleDistance(DistanceMetric):
 #    cdef inline DTYPE_t dist(self, DTYPE_t* x1, DTYPE_t* x2, ITYPE_t size):
 #        cdef int tf1, tf2, ntf = 0, nft = 0, ntt = 0, nff = 0
+#        cdef np.intp_t j
 #        for j in range(size):
 #            tf1 = x1[j] != 0
 #            tf2 = x2[j] != 0
@@ -983,6 +1024,7 @@ cdef class HaversineDistance(DistanceMetric):
 #cdef class CosineDistance(DistanceMetric):
 #    cdef inline DTYPE_t dist(self, DTYPE_t* x1, DTYPE_t* x2, ITYPE_t size):
 #        cdef DTYPE_t d = 0, norm1 = 0, norm2 = 0
+#        cdef np.intp_t j
 #        for j in range(size):
 #            d += x1[j] * x2[j]
 #            norm1 += x1[j] * x1[j]
@@ -1000,6 +1042,7 @@ cdef class HaversineDistance(DistanceMetric):
 #        cdef DTYPE_t mu1 = 0, mu2 = 0, x1nrm = 0, x2nrm = 0, x1Tx2 = 0
 #        cdef DTYPE_t tmp1, tmp2
 #
+#        cdef np.intp_t i
 #        for i in range(size):
 #            mu1 += x1[i]
 #            mu2 += x2[i]
@@ -1051,44 +1094,5 @@ cdef class PyFuncDistance(DistanceMetric):
         return self.func(x1arr, x2arr, **self.kwargs)
 
 
-######################################################################
-# Functions for benchmarking and testing
-cdef int euclidean_cdist(DTYPE_t[:, ::1] X, DTYPE_t[:, ::1] Y,
-                         DTYPE_t[:, ::1] D) except -1:
-    if X.shape[1] != Y.shape[1]:
-        raise ValueError('X and Y must have the same second dimension')
-
-    for i1 in range(X.shape[0]):
-        for i2 in range(Y.shape[0]):
-            D[i1, i2] = euclidean_dist(&X[i1, 0], &Y[i2, 0], X.shape[1])
-    return 0
-
-
-def euclidean_pairwise_inline(DTYPE_t[:, ::1] X, DTYPE_t[:, ::1] Y):
-    D = np.zeros((X.shape[0], Y.shape[0]), dtype=DTYPE, order='c')
-    D = euclidean_cdist(X, Y, D)
-    return np.asarray(D)
-
-
-def euclidean_pairwise_class(DTYPE_t[:, ::1] X, DTYPE_t[:, ::1] Y):
-    cdef EuclideanDistance eucl_dist = EuclideanDistance()
-
-    assert X.shape[1] == Y.shape[1]
-    cdef DTYPE_t[:, ::1] D = np.zeros((X.shape[0], Y.shape[0]), dtype=DTYPE)
-
-    for i1 in range(X.shape[0]):
-        for i2 in range(Y.shape[0]):
-            D[i1, i2] = eucl_dist.dist(&X[i1, 0], &Y[i2, 0], X.shape[1])
-    return np.asarray(D)
-
-
-def euclidean_pairwise_polymorphic(DTYPE_t[:, ::1] X, DTYPE_t[:, ::1] Y):
-    cdef DistanceMetric eucl_dist = EuclideanDistance()
-
-    assert X.shape[1] == Y.shape[1]
-    cdef DTYPE_t[:, ::1] D = np.zeros((X.shape[0], Y.shape[0]), dtype=DTYPE)
-
-    for i1 in range(X.shape[0]):
-        for i2 in range(Y.shape[0]):
-            D[i1, i2] = eucl_dist.dist(&X[i1, 0], &Y[i2, 0], X.shape[1])
-    return np.asarray(D)
+cdef inline double fmax(double a, double b):
+    return max(a, b)

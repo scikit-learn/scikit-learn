@@ -9,6 +9,33 @@ from nose.tools import assert_raises, assert_true, assert_false, assert_equal
 from sklearn.utils import (array2d, as_float_array, atleast2d_or_csr,
                            atleast2d_or_csc, check_arrays, safe_asarray)
 
+from sklearn.random_projection import sparse_random_matrix
+
+
+def test_safe_asarray():
+    """Test that array dtype conversion works."""
+    # Test with sparse arrays
+    X = sp.csc_matrix(np.arange(4, dtype=np.float))
+    Y = safe_asarray(X)
+    assert_true(Y.dtype == np.float)
+    # Check that no copy has been performed
+    Y.data[0] = 7  # value not in original array
+    assert_equal(X.data[0], Y.data[0])
+
+    Y = safe_asarray(X, dtype=np.int)
+    assert_equal(Y.data.dtype, np.int)
+
+    # Test with dense arrays
+    X = np.arange(4, dtype=np.float)
+    Y = safe_asarray(X)
+    assert_true(Y.dtype == np.float)
+    # Check that no copy has been performed
+    Y[0] = 7
+    assert_equal(X[0], Y[0])
+
+    Y = safe_asarray(X, dtype=np.int)
+    assert_equal(Y.dtype, np.int)
+
 
 def test_as_float_array():
     """Test function for as_float_array"""
@@ -30,6 +57,17 @@ def test_as_float_array():
     # Test that if X is fortran ordered it stays
     X = np.asfortranarray(X)
     assert_true(np.isfortran(as_float_array(X, copy=True)))
+
+    # Test the copy parameter with some matrices
+    matrices = [
+        np.matrix(np.arange(5)),
+        sp.csc_matrix(np.arange(5)).todense(),
+        sparse_random_matrix(10, 10, density=0.10).todense()
+    ]
+    for M in matrices:
+        N = as_float_array(M, copy=True)
+        N[0, 0] = np.nan
+        assert_false(np.isnan(M).any())
 
 
 def test_check_arrays_exceptions():

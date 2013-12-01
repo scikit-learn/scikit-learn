@@ -7,24 +7,92 @@ Ensemble methods
 .. currentmodule:: sklearn.ensemble
 
 The goal of **ensemble methods** is to combine the predictions of several
-models built with a given learning algorithm in order to improve
-generalizability / robustness over a single model.
+base estimators built with a given learning algorithm in order to improve
+generalizability / robustness over a single estimator.
 
 Two families of ensemble methods are usually distinguished:
 
 - In **averaging methods**, the driving principle is to build several
-  models independently and then to average their predictions. On average,
-  the combined model is usually better than any of the single model
-  because its variance is reduced.
+  estimators independently and then to average their predictions. On average,
+  the combined estimator is usually better than any of the single base
+  estimator because its variance is reduced.
 
-  **Examples:** Bagging methods, :ref:`Forests of randomized trees <forest>`...
+  **Examples:** :ref:`Bagging methods <bagging>`, :ref:`Forests of randomized trees <forest>`, ...
 
-- By contrast, in **boosting methods**, models are built sequentially and one
-  tries to reduce the bias of the combined model. The motivation is to combine
-  several weak models to produce a powerful ensemble.
+- By contrast, in **boosting methods**, base estimators are built sequentially
+  and one tries to reduce the bias of the combined estimator. The motivation is
+  to combine several weak models to produce a powerful ensemble.
 
   **Examples:** :ref:`AdaBoost <adaboost>`, :ref:`Gradient Tree Boosting <gradient_boosting>`, ...
 
+
+.. _bagging:
+
+Bagging meta-estimator
+======================
+
+In ensemble algorithms, bagging methods form a class of algorithms which build
+several instances of a black-box estimator on random subsets of the original
+training set and then aggregate their individual predictions to form a final
+prediction. These methods are used as a way to reduce the variance of a base
+estimator (e.g., a decision tree), by introducing randomization into its
+construction procedure and then making an ensemble out of it. In many cases,
+bagging methods constitute a very simple way to improve with respect to a
+single model, without making it necessary to adapt the underlying base
+algorithm. As they provide a way to reduce overfitting, bagging methods work
+best with strong and complex models (e.g., fully developed decision trees), in
+contrast with boosting methods which usually work best with weak models (e.g.,
+shallow decision trees).
+
+Bagging methods come in many flavours but mostly differ from each other by the
+way they draw random subsets of the training set:
+
+  * When random subsets of the dataset are drawn as random subsets of the
+    samples, then this algorithm is known as Pasting [B1999]_.
+
+  * When samples are drawn with replacement, then the method is known as
+    Bagging [B1996]_.
+
+  * When random subsets of the dataset are drawn as random subsets of
+    the features, then the method is known as Random Subspaces [H1998]_.
+
+  * Finally, when base estimators are built on subsets of both samples and
+    features, then the method is known as Random Patches [LG2012]_.
+
+In scikit-learn, bagging methods are offered as a unified
+:class:`BaggingClassifier` meta-estimator  (resp. :class:`BaggingRegressor`),
+taking as input a user-specified base estimator along with parameters
+specifying the strategy to draw random subsets. In particular, ``max_samples``
+and ``max_features`` control the size of the subsets (in terms of samples and
+features), while ``bootstrap`` and ``bootstrap_features`` control whether
+samples and features are drawn with or without replacement. As an example, the
+snippet below illustrates how to instantiate a bagging ensemble of
+:class:`KNeighborsClassifier` base estimators, each built on random subsets of
+50% of the samples and 50% of the features.
+
+    >>> from sklearn.ensemble import BaggingClassifier
+    >>> from sklearn.neighbors import KNeighborsClassifier
+    >>> bagging = BaggingClassifier(KNeighborsClassifier(),
+    ...                             max_samples=0.5, max_features=0.5)
+
+.. topic:: Examples:
+
+ * :ref:`example_ensemble_plot_bias_variance.py`
+
+.. topic:: References
+
+  .. [B1999] L. Breiman, "Pasting small votes for classification in large
+         databases and on-line", Machine Learning, 36(1), 85-103, 1999.
+
+  .. [B1996] L. Breiman, "Bagging predictors", Machine Learning, 24(2),
+         123-140, 1996.
+
+  .. [H1998] T. Ho, "The random subspace method for constructing decision
+         forests", Pattern Analysis and Machine Intelligence, 20(8), 832-844,
+         1998.
+
+  .. [LG2012] G. Louppe and P. Geurts, "Ensembles on Random Patches",
+         Machine Learning and Knowledge Discovery in Databases, 346-361, 2012.
 
 .. _forest:
 
@@ -139,11 +207,6 @@ validated. In addition, note that bootstrap samples are used by default
 in random forests (``bootstrap=True``) while the default strategy is to
 use the original dataset for building extra-trees (``bootstrap=False``).
 
-When training on large datasets, where runtime and memory requirements
-are important, it might also be beneficial to adjust the ``min_density``
-parameter, that controls a heuristic for speeding up computations in
-each tree.  See :ref:`Complexity of trees<tree_complexity>` for details.
-
 Parallelization
 ---------------
 
@@ -162,7 +225,7 @@ amount of time (e.g., on large datasets).
 
  * :ref:`example_ensemble_plot_forest_iris.py`
  * :ref:`example_ensemble_plot_forest_importances_faces.py`
- * :ref:`example_ensemble_plot_forest_multioutput.py`
+ * :ref:`example_plot_multioutput_face_completion.py`
 
 .. topic:: References
 
@@ -199,10 +262,10 @@ a :class:`ExtraTreesClassifier` model.
    :align: center
    :scale: 75
 
-In practice those estimates are stored as an attribute named 
-``feature_importances_`` on the fitted model. This is an array with shape 
-``(n_features,)`` whose values are positive and sum to 1.0. The higher 
-the value, the more important is the contribution of the matching feature 
+In practice those estimates are stored as an attribute named
+``feature_importances_`` on the fitted model. This is an array with shape
+``(n_features,)`` whose values are positive and sum to 1.0. The higher
+the value, the more important is the contribution of the matching feature
 to the prediction function.
 
 .. topic:: Examples:
@@ -268,7 +331,7 @@ whereas the weights are decreased for those that were predicted correctly. As
 iterations proceed, examples that are difficult to predict receive
 ever-increasing influence. Each subsequent weak learner is thereby forced to
 concentrate on the examples that are missed by the previous ones in the sequence
-[HTF2009]_.
+[HTF]_.
 
 .. figure:: ../auto_examples/ensemble/images/plot_adaboost_hastie_10_2_1.png
    :target: ../auto_examples/ensemble/plot_adaboost_hastie_10_2.html
@@ -333,7 +396,7 @@ decision trees).
 
  .. [D1997] H. Drucker. "Improving Regressors using Boosting Techniques", 1997.
 
- .. [HTF2009] T. Hastie, R. Tibshirani and J. Friedman, "Elements of
+ .. [HTF] T. Hastie, R. Tibshirani and J. Friedman, "Elements of
               Statistical Learning Ed. 2", Springer, 2009.
 
 
@@ -445,6 +508,7 @@ the ``feature_importances_`` property.
 .. topic:: Examples:
 
  * :ref:`example_ensemble_plot_gradient_boosting_regression.py`
+ * :ref:`example_ensemble_plot_gradient_boosting_oob.py`
 
 
 Mathematical formulation
@@ -594,17 +658,29 @@ does poorly.
    :align: center
    :scale: 75
 
-For ``subsample < 1``, the deviance on the out-of-bag samples in the i-the iteration
-is stored in the attribute ``oob_score_[i]``. Out-of-bag estimates can be
-used for model selection (e.g. to determine the optimal number of iterations).
-
 Another strategy to reduce the variance is by subsampling the features
-analogous to the random splits in Random Forests. The size of the subsample
-can be controlled via the ``max_features`` parameter.
+analogous to the random splits in :class:`RandomForestClassifier` .
+The number of subsampled features can be controlled via the ``max_features``
+parameter.
+
+.. note:: Using a small ``max_features`` value can significantly decrease the runtime.
+
+Stochastic gradient boosting allows to compute out-of-bag estimates of the
+test deviance by computing the improvement in deviance on the examples that are
+not included in the bootstrap sample (i.e. the out-of-bag examples).
+The improvements are stored in the attribute
+:attr:`~GradientBoostingRegressor.oob_improvement_`. ``oob_improvement_[i]`` holds
+the improvement in terms of the loss on the OOB samples if you add the i-th stage
+to the current predictions.
+Out-of-bag estimates can be used for model selection, for example to determine
+the optimal number of iterations. OOB estimates are usually very pessimistic thus
+we recommend to use cross-validation instead and only use OOB if cross-validation
+is too time consuming.
 
 .. topic:: Examples:
 
  * :ref:`example_ensemble_plot_gradient_boosting_regularization.py`
+ * :ref:`example_ensemble_plot_gradient_boosting_oob.py`
 
 Interpretation
 --------------

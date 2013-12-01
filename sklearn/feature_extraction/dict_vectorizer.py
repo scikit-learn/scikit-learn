@@ -76,8 +76,7 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
 
     See also
     --------
-    DictVectorizer : performs vectorization in a similar as this class,
-      but using a hash table instead of only a hash function.
+    FeatureHasher : performs vectorization using only a hash function.
     sklearn.preprocessing.OneHotEncoder : handles nominal/categorical features
       encoded as columns of integers.
     """
@@ -101,8 +100,6 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         -------
         self
         """
-        X = _tosequence(X)
-
         # collect all the possible feature names
         feature_names = set()
         for x in X:
@@ -134,6 +131,11 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         -------
         Xa : {array, sparse matrix}
             Feature vectors; always 2-d.
+
+        Notes
+        -----
+        Because this method requires two passes over X, it materializes X in
+        memory.
         """
         X = _tosequence(X)
         self.fit(X)

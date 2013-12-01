@@ -139,26 +139,12 @@ class CommonTest(object):
     def test_warm_start_optimal(self):
         self._test_warm_start(X, Y, "optimal")
 
-    def test_warm_start_multiclass(self):
-        self._test_warm_start(X2, Y2, "optimal")
-
-    def test_multiple_fit(self):
-        """Test multiple calls of fit w/ different shaped inputs."""
-        clf = self.factory(alpha=0.01, n_iter=5,
-                           shuffle=False)
-        clf.fit(X, Y)
-        assert_true(hasattr(clf, "coef_"))
-
-        # Non-regression test: try fitting with a different label set.
-        y = [["ham", "spam"][i] for i in LabelEncoder().fit_transform(Y)]
-        clf.fit(X[:, :-1], y)
-
     def test_input_format(self):
         """Input format tests. """
         clf = self.factory(alpha=0.01, n_iter=5,
                            shuffle=False)
+        clf.fit(X, Y)
         Y_ = np.array(Y)[:, np.newaxis]
-        clf.fit(X, Y_)
 
         Y_ = np.c_[Y_, Y_]
         assert_raises(ValueError, clf.fit, X, Y_)
@@ -384,7 +370,7 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         rng.shuffle(idx)
 
         X = X4[idx, :]
-        Y = Y4[idx, :]
+        Y = Y4[idx]
 
         clf = self.factory(penalty='l1', alpha=.2, fit_intercept=False,
                            n_iter=2000)
@@ -571,6 +557,16 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         # check that coef_ haven't been re-allocated
         assert_true(id1, id2)
 
+    def test_fit_then_partial_fit(self):
+        """Partial_fit should work after initial fit in the multiclass case.
+
+        Non-regression test for #2496; fit would previously produce a
+        Fortran-ordered coef_ that subsequent partial_fit couldn't handle.
+        """
+        clf = self.factory()
+        clf.fit(X2, Y2)
+        clf.partial_fit(X2, Y2)     # no exception here
+
     def _test_partial_fit_equal_fit(self, lr):
         for X_, Y_, T_ in ((X, Y, T), (X2, Y2, T2)):
             clf = self.factory(alpha=0.01, eta0=0.01, n_iter=2,
@@ -618,6 +614,20 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         clf.fit(X, Y)
         assert_equal(1.0, np.mean(clf.predict(X) == Y))
 
+    def test_warm_start_multiclass(self):
+        self._test_warm_start(X2, Y2, "optimal")
+
+    def test_multiple_fit(self):
+        """Test multiple calls of fit w/ different shaped inputs."""
+        clf = self.factory(alpha=0.01, n_iter=5,
+                           shuffle=False)
+        clf.fit(X, Y)
+        assert_true(hasattr(clf, "coef_"))
+
+        # Non-regression test: try fitting with a different label set.
+        y = [["ham", "spam"][i] for i in LabelEncoder().fit_transform(Y)]
+        clf.fit(X[:, :-1], y)
+
 
 class SparseSGDClassifierTestCase(DenseSGDClassifierTestCase):
     """Run exactly the same tests using the sparse representation variant"""
@@ -628,7 +638,7 @@ class SparseSGDClassifierTestCase(DenseSGDClassifierTestCase):
 ###############################################################################
 # Regression Test Case
 
-class DenseSGDRegressorTestCase(unittest.TestCase):
+class DenseSGDRegressorTestCase(unittest.TestCase, CommonTest):
     """Test suite for the dense representation variant of SGD"""
 
     factory = SGDRegressor

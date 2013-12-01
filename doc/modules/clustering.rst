@@ -111,7 +111,7 @@ K-means
 
 The :class:`KMeans` algorithm clusters data by trying to separate samples
 in n groups of equal variance, minimizing a criterion known as the
-'inertia' of the groups. This algorithm requires the number of cluster to
+'inertia' of the groups. This algorithm requires the number of clusters to
 be specified. It scales well to large number of samples and has been used
 across a large range of application areas in many different fields. It is
 also equivalent to the expectation-maximization algorithm when setting the
@@ -124,11 +124,11 @@ squares objective function with a dataset :math:`X` with :math:`n` samples:
 K-means is often referred to as Lloyd's algorithm. In basic terms, the
 algorithm has three steps. The first step chooses the initial centroids, with
 the most basic method being to choose :math:`k` samples from the dataset
-:math:`X`. After initialization, k-means consists of looping between the other
-two major steps. The first steps assigns each sample to its nearest centroid.
+:math:`X`. After initialization, K-means consists of looping between the
+two other steps. The first step assigns each sample to its nearest centroid.
 The second step creates new centroids by taking the mean value of all of the
 samples assigned to each previous centroid. The difference between the old
-and the new centroids is the inertia and the algorithm repeats these last two
+and the new centroids are computed and the algorithm repeats these last two
 steps until this value is less than a threshold. In other words, it repeats
 until the centroids do not move significantly.
 
@@ -137,35 +137,37 @@ until the centroids do not move significantly.
    :align: right
    :scale: 35
 
-The algorithm can be identified through the concept of `Voronoi diagrams
-<https://en.wikipedia.org/wiki/Voronoi_diagram>`_. First the Voronoi diagram
-of the points is calculated using the current centroids. Each segment in the
+The algorithm can be understood through the concept of `Voronoi diagrams
+<https://en.wikipedia.org/wiki/Voronoi_diagram>`_. First the Voronoi diagram of
+the points is calculated using the current centroids. Each segment in the
 Voronoi diagram becomes a separate cluster. Secondly, the centroids are updated
 to the mean of each segment. The algorithm then repeats this until a stopping
-criterion is fulfilled. Usually, as in this implementation, the algorithm stops
-when the relative decrease in the objective function between iterations is less
-than the given tolerance value.
+criterion is fulfilled. Usually, the algorithm stops when the relative decrease
+in the objective function between iterations is less than the given tolerance
+value. This is not the case in this implementation: iteration stops when
+centroids move less than the tolerance.
 
 Given enough time, K-means will always converge, however this may be to a local
-minimum. This is highly dependent on the the initialisation of the centroids.
+minimum. This is highly dependent on the the initialization of the centroids.
 As a result, the computation is often done several times, with different
-initialisation of the centroids. One method to help address this issue is the
-k-means++ initialisation algorithm, which has been implemented in
-scikit-learn (use the ``init='kmeans++'`` parameter). This initialises the
-centroids to be (generally) distant from each other, leading to provably better
-results than random initialisation.
+initializations of the centroids. One method to help address this issue is the
+k-means++ initialization scheme, which has been implemented in scikit-learn
+(use the ``init='kmeans++'`` parameter). This initializes the centroids to be
+(generally) distant from each other, leading to provably better results than
+random initialization, as shown in the reference.
 
 A parameter can be given to allow K-means to be run in parallel, called
 `n_jobs`. Giving this parameter a positive value uses that many processors
-(default=1). A value of -1 uses all processors, with -2 using one less, and so
-on. Parallelization generally speeds up computation at the cost of memory (in
-this case, multiple copies of centroids need to be stored, one for each job).
+(default: 1). A value of -1 uses all available processors, with -2 using one
+less, and so on. Parallelization generally speeds up computation at the cost of
+memory (in this case, multiple copies of centroids need to be stored, one for
+each job).
 
 .. warning::
 
     The parallel version of K-Means is broken on OS X when numpy uses the
     Accelerate Framework. This is expected behavior: Accelerate can be called
-    after a fork but you need to execv the subprocess with the python binary
+    after a fork but you need to execv the subprocess with the Python binary
     (which multiprocessing does not do under posix).
 
 K-means can be used for vector quantization. This is achieved using the
@@ -175,6 +177,13 @@ transform method of a trained model of :class:`KMeans`.
 
  * :ref:`example_cluster_plot_kmeans_digits.py`: Clustering handwritten digits
 
+.. topic:: References:
+
+ * `"k-means++: The advantages of careful seeding"
+   <http://ilpubs.stanford.edu:8090/778/1/2006-13.pdf>`_
+   Arthur, David, and Sergei Vassilvitskii,
+   *Proceedings of the eighteenth annual ACM-SIAM symposium on Discrete
+   algorithms*, Society for Industrial and Applied Mathematics (2007)
 
 .. _mini_batch_kmeans:
 
@@ -326,15 +335,15 @@ Spectral clustering
 :class:`SpectralClustering` does a low-dimension embedding of the
 affinity matrix between samples, followed by a KMeans in the low
 dimensional space. It is especially efficient if the affinity matrix is
-sparse and the `pyamg <http://code.google.com/p/pyamg/>`_ module is
-installed. SpectralClustering requires the number of clusters to be
-specified. It works well for a small number of clusters but is not
-advised when using many clusters.
+sparse and the `pyamg <http://pyamg.org/>`_ module is installed.
+SpectralClustering requires the number of clusters to be specified. It
+works well for a small number of clusters but is not advised when using
+many clusters.
 
 For two clusters, it solves a convex relaxation of the `normalised
 cuts <http://www.cs.berkeley.edu/~malik/papers/SM-ncut.pdf>`_ problem on
 the similarity graph: cutting the graph in two so that the weight of the
-edges cut is small compared to the weights in of edges inside each
+edges cut is small compared to the weights of the edges inside each
 cluster. This criteria is especially interesting when working on images:
 graph vertices are pixels, and edges of the similarity graph are a
 function of the gradient of the image.
@@ -525,18 +534,6 @@ sample. For any sample that is not a core sample, and does have a
 distance higher than `eps` to any core sample, it is considered an outlier by
 the algorithm.
 
-The algorithm is non-deterministic, however the core samples themselves will
-always belong to the same clusters (although the labels themselves may be
-different). The non-determinism comes from deciding on which cluster a
-non-core sample belongs to. A non-core sample can have a distance lower
-than `eps` to two core samples in different classes. Following from the
-triangular inequality, those two core samples would be more distant than
-`eps` from each other -- else they would be in the same class. The non-core
-sample is simply assigned to which ever cluster is generated first, where
-the order is determined randomly within the code. Other than the ordering of,
-the dataset, the algorithm is deterministic, making the results relatively
-stable between iterations on the same data.
-
 In the figure below, the color indicates cluster membership, with large circles
 indicating core samples found by the algorithm. Smaller circles are non-core
 samples that are still part of a cluster. Moreover, the outliers are indicated
@@ -550,7 +547,28 @@ by black points below.
 
 .. topic:: Examples:
 
- * :ref:`example_cluster_plot_dbscan.py`: Clustering synthetic data with DBSCAN
+    * :ref:`example_cluster_plot_dbscan.py`
+
+.. topic:: Implementation
+
+    The algorithm is non-deterministic, but the core samples will
+    always belong to the same clusters (although the labels may be
+    different). The non-determinism comes from deciding to which cluster a
+    non-core sample belongs. A non-core sample can have a distance lower
+    than `eps` to two core samples in different clusters. By the
+    triangular inequality, those two core samples must be more distant than
+    `eps` from each other, or they would be in the same cluster. The non-core
+    sample is assigned to whichever cluster is generated first, where
+    the order is determined randomly. Other than the ordering of
+    the dataset, the algorithm is deterministic, making the results relatively
+    stable between runs on the same data.
+
+    The current implementation uses ball trees and kd-trees
+    to determine the neighborhood of points,
+    which avoids calculating the full distance matrix
+    (as was done in scikit-learn versions before 0.14).
+    The possibility to use custom metrics is retained;
+    for details, see :class:`NearestNeighbors`.
 
 .. topic:: References:
 

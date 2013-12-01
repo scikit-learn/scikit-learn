@@ -91,7 +91,7 @@ op.add_option("--use-hashing",
               help="Use a hashing feature vectorizer")
 op.add_option("--n-features", type=int, default=10000,
               help="Maximum number of features (dimensions)"
-                   "to extract from text.")
+                   " to extract from text.")
 op.add_option("--verbose",
               action="store_true", dest="verbose", default=False,
               help="Print progress reports inside k-means algorithm.")

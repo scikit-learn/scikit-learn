@@ -55,12 +55,14 @@ ax[0, 1].hist(X[:, 0], bins=bins + 0.75, fc='#AAAAFF', normed=True)
 ax[0, 1].text(-3.5, 0.31, "Histogram, bins shifted")
 
 # tophat KDE
-log_dens = KernelDensity(kernel='tophat', bandwidth=0.75).fit(X).eval(X_plot)
+kde = KernelDensity(kernel='tophat', bandwidth=0.75).fit(X)
+log_dens = kde.score_samples(X_plot)
 ax[1, 0].fill(X_plot[:, 0], np.exp(log_dens), fc='#AAAAFF')
 ax[1, 0].text(-3.5, 0.31, "Tophat Kernel Density")
 
 # gaussian KDE
-log_dens = KernelDensity(kernel='gaussian', bandwidth=0.75).fit(X).eval(X_plot)
+kde = KernelDensity(kernel='gaussian', bandwidth=0.75).fit(X)
+log_dens = kde.score_samples(X_plot)
 ax[1, 1].fill(X_plot[:, 0], np.exp(log_dens), fc='#AAAAFF')
 ax[1, 1].text(-3.5, 0.31, "Gaussian Kernel Density")
 
@@ -97,7 +99,7 @@ def format_func(x, loc):
 for i, kernel in enumerate(['gaussian', 'tophat', 'epanechnikov',
                             'exponential', 'linear', 'cosine']):
     axi = ax.ravel()[i]
-    log_dens = KernelDensity(kernel=kernel).fit(X_src).eval(X_plot)
+    log_dens = KernelDensity(kernel=kernel).fit(X_src).score_samples(X_plot)
     axi.fill(X_plot[:, 0], np.exp(log_dens), '-k', fc='#AAAAFF')
     axi.text(-2.6, 0.95, kernel)
 
@@ -127,7 +129,8 @@ ax.fill(X_plot[:, 0], true_dens, fc='black', alpha=0.2,
         label='input distribution')
 
 for kernel in ['gaussian', 'tophat', 'epanechnikov']:
-    log_dens = KernelDensity(kernel=kernel, bandwidth=0.5).fit(X).eval(X_plot)
+    kde = KernelDensity(kernel=kernel, bandwidth=0.5).fit(X)
+    log_dens = kde.score_samples(X_plot)
     ax.plot(X_plot[:, 0], np.exp(log_dens), '-',
             label="kernel = '{0}'".format(kernel))
 

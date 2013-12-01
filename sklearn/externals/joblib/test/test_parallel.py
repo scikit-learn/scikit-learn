@@ -4,7 +4,7 @@ Test the parallel module.
 
 # Author: Gael Varoquaux <gael dot varoquaux at normalesup dot org>
 # Copyright (c) 2010-2011 Gael Varoquaux
-# License: BSD 3 clause
+# License: BSD Style, 3 clauses.
 
 import time
 import sys
@@ -161,7 +161,7 @@ def test_error_capture():
                     [delayed(division)(x, y) for x, y in zip((0, 1), (1, 0))],
                         )
     try:
-        ex = JoblibException
+        ex = JoblibException()
         Parallel(n_jobs=1)(
                     delayed(division)(x, y) for x, y in zip((0, 1), (1, 0)))
     except Exception:
@@ -211,7 +211,7 @@ def test_dispatch_multiprocessing():
         lazily.
     """
     if multiprocessing is None:
-        return
+        raise nose.SkipTest("No multiprocessing available.")
     manager = multiprocessing.Manager()
     queue = manager.list()
 
@@ -253,7 +253,7 @@ def test_multiple_spawning():
     # subprocesses will raise an error, to avoid infinite loops on
     # systems that do not support fork
     if not int(os.environ.get('JOBLIB_MULTIPROCESSING', 1)):
-        raise nose.SkipTest()
+        raise nose.SkipTest("No multiprocessing available.")
     nose.tools.assert_raises(ImportError, Parallel(n_jobs=2),
                     [delayed(_reload_joblib)() for i in range(10)])
 

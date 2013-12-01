@@ -2,19 +2,22 @@
 This module defines export functions for decision trees.
 """
 
-# Authors: Brian Holt,
-#          Peter Prettenhofer,
-#          Satrajit Ghosh,
-#          Gilles Louppe,
-#          Noel Dawe
-# License: BSD 3 clause
+# Authors: Gilles Louppe <g.louppe@gmail.com>
+#          Peter Prettenhofer <peter.prettenhofer@gmail.com>
+#          Brian Holt <bdholt1@gmail.com>
+#          Noel Dawe <noel@dawe.me>
+#          Satrajit Gosh <satrajit.ghosh@gmail.com>
+# Licence: BSD 3 clause
+
+from warnings import warn
 
 from ..externals import six
+
 from . import _tree
 
 
 def export_graphviz(decision_tree, out_file="tree.dot", feature_names=None,
-                    max_depth=None, close=True):
+                    max_depth=None, close=None):
     """Export a decision tree in DOT format.
 
     This function generates a GraphViz representation of the decision tree,
@@ -39,15 +42,8 @@ def export_graphviz(decision_tree, out_file="tree.dot", feature_names=None,
         The maximum depth of the representation. If None, the tree is fully
         generated.
 
-    Returns
-    -------
-    out_file : file object
-        The file object to which the tree was exported.  The user is
-        expected to `close()` this object when done with it.
-
     Examples
     --------
-    >>> import os
     >>> from sklearn.datasets import load_iris
     >>> from sklearn import tree
 
@@ -55,31 +51,26 @@ def export_graphviz(decision_tree, out_file="tree.dot", feature_names=None,
     >>> iris = load_iris()
 
     >>> clf = clf.fit(iris.data, iris.target)
-    >>> import tempfile
-    >>> export_file = tree.export_graphviz(clf,
-    ...     out_file='test_export_graphvix.dot')
-    >>> export_file.close()
-    >>> os.unlink(export_file.name)
+    >>> tree.export_graphviz(clf,
+    ...     out_file='tree.dot')                # doctest: +SKIP
     """
-    def node_to_str(tree, node_id):
+    if close is not None:
+        warn("The close parameter is deprecated as of version 0.14 "
+             "and will be removed in 0.16.", DeprecationWarning)
+
+    def node_to_str(tree, node_id, criterion):
+        if not isinstance(criterion, six.string_types):
+            criterion = "impurity"
+
         value = tree.value[node_id]
         if tree.n_outputs == 1:
             value = value[0, :]
 
-        if isinstance(tree.criterion, _tree.Gini):
-            criterion = "gini"
-        elif isinstance(tree.criterion, _tree.Entropy):
-            criterion = "entropy"
-        elif isinstance(tree.criterion, _tree.MSE):
-            criterion = "mse"
-        else:
-            criterion = "impurity"
-
         if tree.children_left[node_id] == _tree.TREE_LEAF:
             return "%s = %.4f\\nsamples = %s\\nvalue = %s" \
                    % (criterion,
-                      tree.init_error[node_id],
-                      tree.n_samples[node_id],
+                      tree.impurity[node_id],
+                      tree.n_node_samples[node_id],
                       value)
         else:
             if feature_names is not None:
@@ -87,15 +78,15 @@ def export_graphviz(decision_tree, out_file="tree.dot", feature_names=None,
             else:
                 feature = "X[%s]" % tree.feature[node_id]
 
-            return "%s <= %.4f\\n%s = %s\\nsamples = %s\\nvalue = %s" \
+            return "%s <= %.4f\\n%s = %s\\nsamples = %s" \
                    % (feature,
                       tree.threshold[node_id],
                       criterion,
-                      tree.init_error[node_id],
-                      tree.n_samples[node_id],
-                      value)
+                      tree.impurity[node_id],
+                      tree.n_node_samples[node_id])
 
-    def recurse(tree, node_id, parent=None, depth=0):
+
+    def recurse(tree, node_id, criterion, parent=None, depth=0):
         if node_id == _tree.TREE_LEAF:
             raise ValueError("Invalid node_id %s" % _tree.TREE_LEAF)
 
@@ -105,15 +96,17 @@ def export_graphviz(decision_tree, out_file="tree.dot", feature_names=None,
         # Add node with description
         if max_depth is None or depth <= max_depth:
             out_file.write('%d [label="%s", shape="box"] ;\n' %
-                           (node_id, node_to_str(tree, node_id)))
+                           (node_id, node_to_str(tree, node_id, criterion)))
 
             if parent is not None:
                 # Add edge to parent
                 out_file.write('%d -> %d ;\n' % (parent, node_id))
 
             if left_child != _tree.TREE_LEAF:
-                recurse(tree, left_child, parent=node_id, depth=depth + 1)
-                recurse(tree, right_child, parent=node_id, depth=depth + 1)
+                recurse(tree, left_child, criterion=criterion, parent=node_id,
+                        depth=depth + 1)
+                recurse(tree, right_child, criterion=criterion, parent=node_id,
+                        depth=depth + 1)
 
         else:
             out_file.write('%d [label="(...)", shape="box"] ;\n' % node_id)
@@ -122,17 +115,21 @@ def export_graphviz(decision_tree, out_file="tree.dot", feature_names=None,
                 # Add edge to parent
                 out_file.write('%d -> %d ;\n' % (parent, node_id))
 
+    own_file = False
     if isinstance(out_file, six.string_types):
         if six.PY3:
             out_file = open(out_file, "w", encoding="utf-8")
         else:
             out_file = open(out_file, "wb")
+        own_file = True
 
     out_file.write("digraph Tree {\n")
+
     if isinstance(decision_tree, _tree.Tree):
-        recurse(decision_tree, 0)
+        recurse(decision_tree, 0, criterion="impurity")
     else:
-        recurse(decision_tree.tree_, 0)
+        recurse(decision_tree.tree_, 0, criterion=decision_tree.criterion)
     out_file.write("}")
 
-    return out_file
+    if own_file:
+        out_file.close()

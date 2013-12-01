@@ -1,11 +1,24 @@
 language: python
+env:
+    - COVERAGE=--with-coverage
 python:
     - "2.7"
+virtualenv:
+    system_site_packages: true
 before_install:
-    - deactivate
     - sudo apt-get update -qq
     - sudo apt-get install -qq python-scipy python-nose
-    - virtualenv --system-site-packages ~/virtualenv/this
-    - source ~/virtualenv/this/bin/activate
-install: python setup.py build_ext --inplace
-script: make test
+    - sudo apt-get install python-pip
+install:
+    - python setup.py build_ext --inplace
+    - if [ "${COVERAGE}" == "--with-coverage" ]; then sudo pip install coverage; fi
+    - if [ "${COVERAGE}" == "--with-coverage" ]; then sudo pip install coveralls; fi
+script:
+    - if [ "${COVERAGE}" == "--with-coverage" ]; then
+    -   make test-coverage;
+    - else
+    -   make test;
+    - fi
+after_success:
+    - if [ "${COVERAGE}" == "--with-coverage" ]; then coveralls; fi
+
