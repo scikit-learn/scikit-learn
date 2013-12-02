@@ -26,6 +26,7 @@ from scipy.sparse import coo_matrix
 from scipy.spatial.distance import hamming as sp_hamming
 
 from ..externals.six.moves import zip
+from ..externals.six.moves import xrange as range
 from ..preprocessing import LabelBinarizer, label_binarize
 from ..preprocessing import LabelEncoder
 from ..utils import check_arrays
@@ -201,7 +202,7 @@ class UndefinedMetricWarning(UserWarning):
 
 
 ###############################################################################
-# Binary classification loss
+# Classification metrics
 ###############################################################################
 def hinge_loss(y_true, pred_decision, pos_label=None, neg_label=None):
     """Average hinge loss (non-regularized)
@@ -271,24 +272,38 @@ def hinge_loss(y_true, pred_decision, pos_label=None, neg_label=None):
     return np.mean(losses)
 
 
-###############################################################################
-# Binary classification scores
-###############################################################################
-def average_precision_score(y_true, y_score):
+def average_precision_score(y_true, y_score, average="macro"):
     """Compute average precision (AP) from prediction scores
 
     This score corresponds to the area under the precision-recall curve.
 
-    Note: this implementation is restricted to the binary classification task.
+    Note: this implementation is restricted to the binary classification task
+    or multilabel classification task.
 
-    Parameters
     ----------
-    y_true : array, shape = [n_samples]
-        True binary labels.
+    y_true : array, shape = [n_samples] or [n_samples, n_classes]
+        True binary labels in binary indicator format.
 
-    y_score : array, shape = [n_samples]
+    y_score : array, shape = [n_samples] or [n_samples, n_classes]
         Target scores, can either be probability estimates of the positive
         class, confidence values, or binary decisions.
+
+    average : string, [None, 'micro', 'macro' (default), 'samples', 'weighted']
+        If ``None``, the scores for each class are returned. Otherwise,
+        this determines the type of averaging performed on the data:
+
+        ``'micro'``:
+            Calculate metrics globally by considering each element of the label
+            indicator matrix as a label.
+        ``'macro'``:
+            Calculate metrics for each label, and find their unweighted
+            mean.  This does not take label imbalance into account.
+        ``'weighted'``:
+            Calculate metrics for each label, and find their average, weighted
+            by support (the number of true instances for each label).
+        ``'samples'``:
+            Calculate metrics for each instance, and find their average.
+
 
     Returns
     -------
@@ -316,8 +331,12 @@ def average_precision_score(y_true, y_score):
     0.79...
 
     """
-    precision, recall, thresholds = precision_recall_curve(y_true, y_score)
-    return auc(recall, precision)
+    def _binary_average_precision(y_true, y_score):
+        precision, recall, thresholds = precision_recall_curve(y_true, y_score)
+        return auc(recall, precision)
+
+    return _average_binary_score(_binary_average_precision, y_true, y_score,
+                                 average)
 
 
 @deprecated("Function 'auc_score' has been renamed to "
@@ -365,20 +384,118 @@ def auc_score(y_true, y_score):
     return roc_auc_score(y_true, y_score)
 
 
-def roc_auc_score(y_true, y_score):
-    """Compute Area Under the Curve (AUC) from prediction scores
-
-    Note: this implementation is restricted to the binary classification task.
+def _average_binary_score(binary_metric, y_true, y_score, average):
+    """Average a binary metric for multilabel classification
 
     Parameters
     ----------
+    y_true : array, shape = [n_samples] or [n_samples, n_classes]
+        True binary labels in binary indicator format.
 
-    y_true : array, shape = [n_samples]
-        True binary labels.
-
-    y_score : array, shape = [n_samples]
+    y_score : array, shape = [n_samples] or [n_samples, n_classes]
         Target scores, can either be probability estimates of the positive
         class, confidence values, or binary decisions.
+
+    average : string, [None, 'micro', 'macro' (default), 'samples', 'weighted']
+        If ``None``, the scores for each class are returned. Otherwise,
+        this determines the type of averaging performed on the data:
+
+        ``'micro'``:
+            Calculate metrics globally by considering each element of the label
+            indicator matrix as a label.
+        ``'macro'``:
+            Calculate metrics for each label, and find their unweighted
+            mean.  This does not take label imbalance into account.
+        ``'weighted'``:
+            Calculate metrics for each label, and find their average, weighted
+            by support (the number of true instances for each label).
+        ``'samples'``:
+            Calculate metrics for each instance, and find their average.
+
+    Return
+    ------
+    score : float or array of shape [n_classes]
+        If not ``None``, average the score, else return the score for each
+        classes.
+
+    """
+    average_options = (None, 'micro', 'macro', 'weighted', 'samples')
+    if average not in average_options:
+        raise ValueError('average has to be one of {0}'
+                         ''.format(average_options))
+
+    y_type = type_of_target(y_true)
+    if y_type not in ("binary", "multilabel-indicator"):
+        raise ValueError("{0} format is not supported".format(y_type))
+
+    if y_type == "binary":
+        return binary_metric(y_true, y_score)
+
+    y_true, y_score = check_arrays(y_true, y_score)
+
+    if average == "micro":
+        y_true = y_true.ravel()
+        y_score = y_score.ravel()
+
+    if y_true.ndim == 1:
+        y_true = y_true.reshape((-1, 1))
+
+    if y_score.ndim == 1:
+        y_score = y_score.reshape((-1, 1))
+
+    average_axis = 1 if average == 'samples' else 0
+    n_classes = y_score.shape[not average_axis]
+    score = np.zeros((n_classes,))
+
+    for c in range(n_classes):
+        y_true_c = y_true.take([c], axis=not average_axis).ravel()
+        y_score_c = y_score.take([c], axis=not average_axis).ravel()
+        score[c] = binary_metric(y_true_c, y_score_c)
+
+    # Average the results
+    if average == 'weighted':
+        weights = np.sum(y_true, axis=average_axis)
+        if weights.sum() == 0:
+            return 0
+    else:
+        weights = None
+
+    if average is not None:
+        return np.average(score, weights=weights)
+    else:
+        return score
+
+
+def roc_auc_score(y_true, y_score, average="macro"):
+    """Compute Area Under the Curve (AUC) from prediction scores
+
+    Note: this implementation is restricted to the binary classification task
+    or multilabel classification task in label indicator format.
+
+    Parameters
+    ----------
+    y_true : array, shape = [n_samples] or [n_samples, n_classes]
+        True binary labels in binary indicator format.
+
+    y_score : array, shape = [n_samples] or [n_samples, n_classes]
+        Target scores, can either be probability estimates of the positive
+        class, confidence values, or binary decisions.
+
+    average : string, [None, 'micro', 'macro' (default), 'samples', 'weighted']
+        If ``None``, the scores for each class are returned. Otherwise,
+        this determines the type of averaging performed on the data:
+
+        ``'micro'``:
+            Calculate metrics globally by considering each element of the label
+            indicator matrix as a label.
+        ``'macro'``:
+            Calculate metrics for each label, and find their unweighted
+            mean.  This does not take label imbalance into account.
+        ``'weighted'``:
+            Calculate metrics for each label, and find their average, weighted
+            by support (the number of true instances for each label).
+        ``'samples'``:
+            Calculate metrics for each instance, and find their average.
 
     Returns
     -------
@@ -405,10 +522,15 @@ def roc_auc_score(y_true, y_score):
     0.75
 
     """
-    if len(np.unique(y_true)) != 2:
-        raise ValueError("AUC is defined for binary classification only")
-    fpr, tpr, tresholds = roc_curve(y_true, y_score)
-    return auc(fpr, tpr, reorder=True)
+    def _binary_roc_auc_score(y_true, y_score):
+        if len(np.unique(y_true)) != 2:
+            raise ValueError("ROC AUC score is not defined")
+
+        fpr, tpr, tresholds = roc_curve(y_true, y_score)
+        return auc(fpr, tpr, reorder=True)
+
+    return _average_binary_score(_binary_roc_auc_score, y_true, y_score,
+                                 average)
 
 
 def matthews_corrcoef(y_true, y_pred):
@@ -703,9 +825,6 @@ def roc_curve(y_true, y_score, pos_label=None):
     return fpr, tpr, thresholds
 
 
-##############################################################################
-# Multiclass general function
-###############################################################################
 def confusion_matrix(y_true, y_pred, labels=None):
     """Compute confusion matrix to evaluate the accuracy of a classification
 
@@ -778,9 +897,6 @@ def confusion_matrix(y_true, y_pred, labels=None):
     return CM
 
 
-###############################################################################
-# Multiclass loss functions
-###############################################################################
 def zero_one_loss(y_true, y_pred, normalize=True):
     """Zero-one classification loss.
 
@@ -949,10 +1065,6 @@ def log_loss(y_true, y_pred, eps=1e-15, normalize=True):
     loss = -(T * np.log(Y)).sum()
     return loss / T.shape[0] if normalize else loss
 
-
-###############################################################################
-# Multiclass score functions
-###############################################################################
 
 def jaccard_similarity_score(y_true, y_pred, normalize=True):
     """Jaccard similarity coefficient score
@@ -1756,9 +1868,6 @@ def zero_one_score(y_true, y_pred):
     return accuracy_score(y_true, y_pred)
 
 
-###############################################################################
-# Multiclass utility function
-###############################################################################
 def classification_report(y_true, y_pred, labels=None, target_names=None):
     """Build a text report showing the main classification metrics
 
@@ -1847,9 +1956,6 @@ def classification_report(y_true, y_pred, labels=None, target_names=None):
     return report
 
 
-###############################################################################
-# Multilabel loss function
-###############################################################################
 def hamming_loss(y_true, y_pred, classes=None):
     """Compute the average Hamming loss.
 
@@ -1941,7 +2047,7 @@ def hamming_loss(y_true, y_pred, classes=None):
 
 
 ###############################################################################
-# Regression loss functions
+# Regression metrics
 ###############################################################################
 def mean_absolute_error(y_true, y_pred):
     """Mean absolute error regression loss
@@ -2105,9 +2211,6 @@ def r2_score(y_true, y_pred):
     """
     y_type, y_true, y_pred = _check_reg_targets(y_true, y_pred)
 
-    if len(y_true) == 1:
-        raise ValueError("r2_score can only be computed given more than one"
-                         " sample.")
     numerator = ((y_true - y_pred) ** 2).sum(dtype=np.float64)
     denominator = ((y_true - y_true.mean(axis=0)) ** 2).sum(dtype=np.float64)
 

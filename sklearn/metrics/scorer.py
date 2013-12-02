@@ -15,6 +15,7 @@ ground truth labeling (or ``None`` in the case of unsupervised models).
 
 # Authors: Andreas Mueller <amueller@ais.uni-bonn.de>
 #          Lars Buitinck <L.J.Buitinck@uva.nl>
+#          Arnaud Joly <arnaud.v.joly@gmail.com>
 # License: Simplified BSD
 
 from abc import ABCMeta, abstractmethod
@@ -25,8 +26,8 @@ import numpy as np
 from . import (r2_score, mean_squared_error, accuracy_score, f1_score,
                roc_auc_score, average_precision_score, precision_score,
                recall_score, log_loss)
-
 from .cluster import adjusted_rand_score
+from ..utils.multiclass import type_of_target
 from ..externals import six
 
 
@@ -131,13 +132,25 @@ class _ThresholdScorer(_BaseScorer):
         score : float
             Score function applied to prediction of estimator on X.
         """
-        if len(np.unique(y)) > 2:
-            raise ValueError("This classification score only "
-                             "supports binary classification.")
+        y_type = type_of_target(y)
+        if y_type not in ("binary", "multilabel-indicator"):
+            raise ValueError("{0} format is not supported".format(y_type))
+
         try:
-            y_pred = clf.decision_function(X).ravel()
+            y_pred = clf.decision_function(X)
+
+            # For multi-output multi-class estimator
+            if isinstance(y_pred, list):
+                y_pred = np.vstack(p for p in y_pred).T
+
         except (NotImplementedError, AttributeError):
-            y_pred = clf.predict_proba(X)[:, 1]
+            y_pred = clf.predict_proba(X)
+
+            if y_type == "binary":
+                y_pred = y_pred[:, 1]
+            elif isinstance(y_pred, list):
+                y_pred = np.vstack([p[:, -1] for p in y_pred]).T
+
         return self._sign * self._score_func(y, y_pred, **self._kwargs)
 
     def _factory_args(self):
