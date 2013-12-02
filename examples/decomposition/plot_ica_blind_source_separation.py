@@ -41,13 +41,13 @@ X = np.dot(S, A.T)  # Generate observations
 
 # Compute ICA
 ica = FastICA(n_components=3)
-S_ = ica.fit(X).transform(X)  # Get the estimated sources
+S_ = ica.fit_transform(X)  # Get the estimated sources
 A_ = ica.mixing_  # Get estimated mixing matrix
 assert np.allclose(X, np.dot(S_, A_.T) + ica.mean_)
 
 # compute PCA
 pca = PCA(n_components=3)
-H = pca.fit(X).transform(X)  # estimate PCA components
+H = pca.fit_transform(X)  # estimate PCA sources
 
 ###############################################################################
 # Plot results
@@ -58,7 +58,7 @@ models = [X, S, S_, H]
 names = ['Observations (mixed signal)',
          'True Sources',
          'ICA estimated sources', 
-         'PCA estimated components']
+         'PCA estimated sources']
 colors = ['red', 'steelblue', 'orange']
 
 for ii, (model, name) in enumerate(zip(models, names), 1):
