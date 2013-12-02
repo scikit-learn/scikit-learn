@@ -60,9 +60,11 @@ Changelog
    - Added :class:`linear_model.RANSACRegressor` meta-estimator for the robust
      fitting of regression models. By Johannes Schönberger.
 
-   - Added :ref:`computational performance <computational_performance>`_
-     documentation with latency,throughput and tips for building faster
-     applications with scikit-learn.
+   - Added :ref:`Computational Performance <computational_performance>`
+     documentation. Discussion and examples of prediction latency / throughput
+     and different factors that have influence over speed. Additional tips for
+     building faster models and choosing a relevant compromise between speed
+     and predictive power.
      By `Eustache Diemert`_.
 
    - Fixed bug in :class:`gradient_boosting.GradientBoostingRegressor` with
