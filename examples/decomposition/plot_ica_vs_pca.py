@@ -22,7 +22,7 @@ Here we simulate independent sources using a highly non-Gaussian
 process, 2 student T with a low number of degrees of freedom (top left
 figure). We mix them to create observations (top right figure).
 In this raw observation space, directions identified by PCA are
-represented by green vectors. We represent the signal in the PCA space,
+represented by orange vectors. We represent the signal in the PCA space,
 after whitening by the variance corresponding to the PCA vectors (lower
 left). Running ICA corresponds to finding a rotation in this space to
 identify the directions of largest non-Gaussianity (lower right).
@@ -95,11 +95,11 @@ pl.title('Observations')
 
 pl.subplot(2, 2, 3)
 plot_samples(S_pca_ / np.std(S_pca_, axis=0))
-pl.title('PCA scores')
+pl.title('PCA recovered signals')
 
 pl.subplot(2, 2, 4)
 plot_samples(S_ica_ / np.std(S_ica_))
-pl.title('ICA estimated sources')
+pl.title('ICA recovered signals')
 
 pl.subplots_adjust(0.09, 0.04, 0.94, 0.94, 0.26, 0.26)
 pl.tight_layout()
