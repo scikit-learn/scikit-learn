@@ -69,5 +69,5 @@ for ii, (model, name) in enumerate(zip(models, names), 1):
     for sig, color in zip(model.T, colors):
         pl.plot(sig, color=color)
 
-pl.tight_layout()
+pl.subplots_adjust(0.09, 0.04, 0.94, 0.94, 0.26, 0.46)
 pl.show()

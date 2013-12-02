@@ -101,6 +101,5 @@ pl.subplot(2, 2, 4)
 plot_samples(S_ica_ / np.std(S_ica_))
 pl.title('ICA recovered signals')
 
-pl.subplots_adjust(0.09, 0.04, 0.94, 0.94, 0.26, 0.26)
-pl.tight_layout()
+pl.subplots_adjust(0.09, 0.04, 0.94, 0.94, 0.26, 0.36)
 pl.show()
