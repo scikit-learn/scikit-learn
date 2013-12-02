@@ -107,6 +107,22 @@ class Pipeline(BaseEstimator):
                     out['%s__%s' % (name, key)] = value
             return out
 
+    def __getattribute__(self, name):
+        '''
+        If an unknown attribute is accessed, look for it in the steps.
+        Start at the last step and work backward.
+        '''
+        try:
+            return super(Pipeline, self).__getattribute__(name)
+        except AttributeError:
+            for step in reversed(self.steps):
+                try:
+                    return getattr(step[1], name)
+                except AttributeError:
+                    pass
+        raise AttributeError("Neither the '%s' object nor any of its steps has the attribute '%s'" 
+                             % (self.__class__.__name__, name))
+        
     # Estimator interface
     
     def _extract_params(self, **params):
