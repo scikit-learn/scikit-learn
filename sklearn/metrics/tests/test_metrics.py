@@ -1500,7 +1500,7 @@ def check_single_sample_multioutput(name):
 
 def test_single_sample():
     for name in ALL_METRICS:
-        if name in METRIC_UNDEFINED_MULTICLASS + THRESHOLDED_METRICS.keys():
+        if name in METRIC_UNDEFINED_MULTICLASS or name in THRESHOLDED_METRICS:
             # Those metrics are not always defined with one sample
             # or in multiclass classification
             continue
