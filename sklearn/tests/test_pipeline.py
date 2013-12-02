@@ -20,6 +20,7 @@ from sklearn.decomposition.pca import PCA, RandomizedPCA
 from sklearn.datasets import load_iris
 from sklearn.preprocessing import StandardScaler
 from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.ensemble import AdaBoostClassifier
 
 
 JUNK_FOOD_DOCS = (
@@ -195,6 +196,22 @@ def test_pipeline_methods_preprocessing_svm():
         pipe.score(X, y)
 
 
+def test_pipeline_ada_boost_classifier():
+    """Test that Pipeline can be used as base_estimator in AdaBoostClassifier."""
+    iris = load_iris()
+    X = iris.data
+    y = iris.target
+    scaler = StandardScaler()
+    pca = RandomizedPCA(n_components=2, whiten=True)
+    clf = SVC()
+    pl = Pipeline([('scaler', scaler), ('pca', pca), ('clf', clf)])
+    model = AdaBoostClassifier(base_estimator = pl)
+    model.fit(X, y)
+    model.predict(X)
+    model.predict_proba(X)
+    model.predict_log_proba(X)
+    model.score(X, y)
+    
 def test_feature_union():
     # basic sanity check for feature union
     iris = load_iris()
