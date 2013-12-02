@@ -6,7 +6,7 @@ Blind source separation using FastICA
 An example of estimating sources from noisy data.
 
 :ref:`ICA` is used to estimate sources given noisy measurements.
-Imagine 3 instruments playing simultaneously and 2 microphones
+Imagine 3 instruments playing simultaneously and 3 microphones
 recording the mixed signals. ICA is used to recover the sources
 ie. what is played by each instrument. Importantly, PCA fails
 at recovering our `instruments` since the related signals reflect
@@ -19,7 +19,7 @@ import numpy as np
 import pylab as pl
 from scipy import signal
 
-from sklearn.decomposition import FastICA, RandomizedPCA
+from sklearn.decomposition import FastICA, PCA
 
 ###############################################################################
 # Generate sample data
@@ -38,15 +38,16 @@ S /= S.std(axis=0)  # Standardize data
 # Mix data
 A = np.array([[1, 1, 1], [0.5, 2, 1.0], [1.5, 1.0, 2.0]])  # Mixing matrix
 X = np.dot(S, A.T)  # Generate observations
+
 # Compute ICA
-ica = FastICA(3)
+ica = FastICA(n_components=3)
 S_ = ica.fit(X).transform(X)  # Get the estimated sources
 A_ = ica.mixing_  # Get estimated mixing matrix
 assert np.allclose(X, np.dot(S_, A_.T) + ica.mean_)
 
 # compute PCA
-pca = RandomizedPCA()
-H = pca.fit(X).transform(X)  # Get the estimated sources
+pca = PCA(n_components=3)
+H = pca.fit(X).transform(X)  # estimate PCA components
 
 ###############################################################################
 # Plot results
@@ -57,7 +58,7 @@ models = [X, S, S_, H]
 names = ['Observations (mixed signal)',
          'True Sources',
          'ICA estimated sources', 
-         'PCA estimated sources']
+         'PCA estimated components']
 colors = ['red', 'steelblue', 'orange']
 
 for ii, (model, name) in enumerate(zip(models, names), 1):
