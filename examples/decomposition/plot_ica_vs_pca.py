@@ -61,9 +61,10 @@ S_ica_ /= S_ica_.std(axis=0)
 # Plot results
 
 def plot_samples(S, axis_list=None):
-    pl.scatter(S[:, 0], S[:, 1], s=2, marker='o', linewidths=0, zorder=10)
+    pl.scatter(S[:, 0], S[:, 1], s=2, marker='o', linewidths=0, zorder=10,
+               color='steelblue')
     if axis_list is not None:
-        colors = [(0, 0.6, 0), (0.6, 0, 0)]
+        colors = ['orange', 'red']
         for color, axis in zip(colors, axis_list):
             axis /= axis.std()
             x_axis, y_axis = axis
@@ -80,6 +81,7 @@ def plot_samples(S, axis_list=None):
     pl.xlabel('x')
     pl.ylabel('y')
 
+pl.figure()
 pl.subplot(2, 2, 1)
 plot_samples(S / S.std())
 pl.title('True Independent Sources')
@@ -87,7 +89,9 @@ pl.title('True Independent Sources')
 axis_list = [pca.components_.T, ica.mixing_]
 pl.subplot(2, 2, 2)
 plot_samples(X / np.std(X), axis_list=axis_list)
-pl.legend(['PCA', 'ICA'], loc='upper left')
+legend = pl.legend(['PCA', 'ICA'], loc='upper right')
+legend.set_zorder(100)
+
 pl.title('Observations')
 
 pl.subplot(2, 2, 3)
@@ -99,5 +103,5 @@ plot_samples(S_ica_ / np.std(S_ica_))
 pl.title('ICA estimated sources')
 
 pl.subplots_adjust(0.09, 0.04, 0.94, 0.94, 0.26, 0.26)
-
+pl.tight_layout()
 pl.show()
