@@ -9,8 +9,8 @@ An example of estimating sources from noisy data.
 Imagine 3 instruments playing simultaneously and 2 microphones
 recording the mixed signals. ICA is used to recover the sources
 ie. what is played by each instrument. Importantly, PCA fails
-at recovering our `instruments` since the related signals are
-non-Gaussian .
+at recovering our `instruments` since the related signals reflect
+non-Gaussian processes.
 
 """
 print(__doc__)
