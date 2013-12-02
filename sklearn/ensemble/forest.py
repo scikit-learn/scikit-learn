@@ -648,6 +648,7 @@ class RandomForestClassifier(ForestClassifier):
         The maximum depth of the tree. If None, then nodes are expanded until
         all leaves are pure or until all leaves contain less than
         min_samples_split samples.
+        Ignored if ``max_samples_leaf`` is not None.
         Note: this parameter is tree-specific.
 
     min_samples_split : integer, optional (default=2)
@@ -664,6 +665,7 @@ class RandomForestClassifier(ForestClassifier):
         Grow trees with ``max_leaf_nodes`` in best-first fashion.
         Best nodes are defined as relative reduction in impurity.
         If None then unlimited number of leaf nodes.
+        If not None then ``max_depth`` will be ignored.
         Note: this parameter is tree-specific.
 
     bootstrap : boolean, optional (default=True)
@@ -800,6 +802,7 @@ class RandomForestRegressor(ForestRegressor):
         The maximum depth of the tree. If None, then nodes are expanded until
         all leaves are pure or until all leaves contain less than
         min_samples_split samples.
+        Ignored if ``max_samples_leaf`` is not None.
         Note: this parameter is tree-specific.
 
     min_samples_split : integer, optional (default=2)
@@ -816,6 +819,7 @@ class RandomForestRegressor(ForestRegressor):
         Grow trees with ``max_leaf_nodes`` in best-first fashion.
         Best nodes are defined as relative reduction in impurity.
         If None then unlimited number of leaf nodes.
+        If not None then ``max_depth`` will be ignored.
         Note: this parameter is tree-specific.
 
     bootstrap : boolean, optional (default=True)
@@ -942,6 +946,7 @@ class ExtraTreesClassifier(ForestClassifier):
         The maximum depth of the tree. If None, then nodes are expanded until
         all leaves are pure or until all leaves contain less than
         min_samples_split samples.
+        Ignored if ``max_samples_leaf`` is not None.
         Note: this parameter is tree-specific.
 
     min_samples_split : integer, optional (default=2)
@@ -958,6 +963,7 @@ class ExtraTreesClassifier(ForestClassifier):
         Grow trees with ``max_leaf_nodes`` in best-first fashion.
         Best nodes are defined as relative reduction in impurity.
         If None then unlimited number of leaf nodes.
+        If not None then ``max_depth`` will be ignored.
         Note: this parameter is tree-specific.
 
     bootstrap : boolean, optional (default=False)
@@ -1098,6 +1104,7 @@ class ExtraTreesRegressor(ForestRegressor):
         The maximum depth of the tree. If None, then nodes are expanded until
         all leaves are pure or until all leaves contain less than
         min_samples_split samples.
+        Ignored if ``max_samples_leaf`` is not None.
         Note: this parameter is tree-specific.
 
     min_samples_split : integer, optional (default=2)
@@ -1114,6 +1121,7 @@ class ExtraTreesRegressor(ForestRegressor):
         Grow trees with ``max_leaf_nodes`` in best-first fashion.
         Best nodes are defined as relative reduction in impurity.
         If None then unlimited number of leaf nodes.
+        If not None then ``max_depth`` will be ignored.
         Note: this parameter is tree-specific.
 
     bootstrap : boolean, optional (default=False)
@@ -1225,7 +1233,10 @@ class RandomTreesEmbedding(BaseForest):
         Number of trees in the forest.
 
     max_depth : int
-        Maximum depth of each tree.
+        The maximum depth of each tree. If None, then nodes are expanded until
+        all leaves are pure or until all leaves contain less than
+        min_samples_split samples.
+        Ignored if ``max_samples_leaf`` is not None.
 
     min_samples_split : integer, optional (default=2)
         The minimum number of samples required to split an internal node.
@@ -1241,6 +1252,7 @@ class RandomTreesEmbedding(BaseForest):
         Grow trees with ``max_leaf_nodes`` in best-first fashion.
         Best nodes are defined as relative reduction in impurity.
         If None then unlimited number of leaf nodes.
+        If not None then ``max_depth`` will be ignored.
         Note: this parameter is tree-specific.
 
     n_jobs : integer, optional (default=1)

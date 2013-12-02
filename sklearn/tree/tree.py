@@ -373,10 +373,11 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
           - If "log2", then `max_features=log2(n_features)`.
           - If None, then `max_features=n_features`.
 
-    max_depth : integer or None, optional (default=None)
+    max_depth : int or None, optional (default=None)
         The maximum depth of the tree. If None, then nodes are expanded until
         all leaves are pure or until all leaves contain less than
         min_samples_split samples.
+        Ignored if ``max_samples_leaf`` is not None.
 
     min_samples_split : int, optional (default=2)
         The minimum number of samples required to split an internal node.
@@ -388,6 +389,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         Grow a tree with ``max_leaf_nodes`` in best-first fashion.
         Best nodes are defined as relative reduction in impurity.
         If None then unlimited number of leaf nodes.
+        If not None then ``max_depth`` will be ignored.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
@@ -558,7 +560,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
 
 
 class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
-    """A tree regressor.
+    """A decision tree regressor.
 
     Parameters
     ----------
@@ -586,6 +588,7 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
         The maximum depth of the tree. If None, then nodes are expanded until
         all leaves are pure or until all leaves contain less than
         min_samples_split samples.
+        Ignored if ``max_samples_leaf`` is not None.
 
     min_samples_split : int, optional (default=2)
         The minimum number of samples required to split an internal node.
@@ -597,6 +600,7 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
         Grow a tree with ``max_leaf_nodes`` in best-first fashion.
         Best nodes are defined as relative reduction in impurity.
         If None then unlimited number of leaf nodes.
+        If not None then ``max_depth`` will be ignored.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;

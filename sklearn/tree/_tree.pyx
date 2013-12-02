@@ -1705,6 +1705,8 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
 
     The best node to expand is given by the node at the frontier that has the
     highest impurity improvement.
+
+    NOTE: this TreeBuilder will ignore ``tree.max_depth`` .
     """
 
     cpdef build(self, Tree tree, np.ndarray X, np.ndarray y,

@@ -984,6 +984,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         depth limits the number of nodes in the tree. Tune this parameter
         for best performance; the best value depends on the interaction
         of the input variables.
+        Ignored if ``max_samples_leaf`` is not None.
 
     min_samples_split : integer, optional (default=2)
         The minimum number of samples required to split an internal node.
@@ -1016,6 +1017,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         Grow trees with ``max_leaf_nodes`` in best-first fashion.
         Best nodes are defined as relative reduction in impurity.
         If None then unlimited number of leaf nodes.
+        If not None then ``max_depth`` will be ignored.
 
     init : BaseEstimator, None, optional (default=None)
         An estimator object that is used to compute the initial

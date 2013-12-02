@@ -628,3 +628,13 @@ def test_max_leaf_nodes():
         assert_raises(ValueError, est.fit, X, y)
         est = TreeEstimator(max_depth=None, max_leaf_nodes=1)
         assert_raises(ValueError, est.fit, X, y)
+
+
+def test_max_leaf_nodes_max_depth():
+    """Test preceedence of max_leaf_nodes over max_depth. """
+    X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
+    k = 4
+    for name, TreeEstimator in ALL_TREES.items():
+        est = TreeEstimator(max_depth=1, max_leaf_nodes=k).fit(X, y)
+        tree = est.tree_
+        assert_greater(tree.max_depth, 1)

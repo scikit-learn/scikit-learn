@@ -481,7 +481,7 @@ def test_distribution():
     # them has probability 1/3 while the 4 others have probability 1/6.
 
     assert_equal(len(uniques), 5)
-    assert_greater(0.20, uniques[0][0]) # Rough approximation of 1/6.
+    assert_greater(0.20, uniques[0][0])  # Rough approximation of 1/6.
     assert_greater(0.20, uniques[1][0])
     assert_greater(0.20, uniques[2][0])
     assert_greater(0.20, uniques[3][0])
@@ -508,6 +508,26 @@ def test_distribution():
 
     uniques = [(count, tree) for tree, count in uniques.items()]
     assert_equal(len(uniques), 8)
+
+
+def test_max_leaf_nodes_max_depth():
+    """Test preceedence of max_leaf_nodes over max_depth. """
+    X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
+    all_forests = [RandomForestClassifier,
+                   RandomForestRegressor,
+                   RandomTreesEmbedding,
+                   ExtraTreesClassifier,
+                   ExtraTreesRegressor]
+
+    k = 4
+    for ForestEstimator in all_forests:
+        est = ForestEstimator(max_depth=1, max_leaf_nodes=k).fit(X, y)
+        tree = est.estimators_[0].tree_
+        assert_greater(tree.max_depth, 1)
+
+        est = ForestEstimator(max_depth=1).fit(X, y)
+        tree = est.estimators_[0].tree_
+        assert_equal(tree.max_depth, 1)
 
 
 if __name__ == "__main__":

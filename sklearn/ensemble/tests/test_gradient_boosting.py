@@ -11,6 +11,7 @@ from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_almost_equal
+from sklearn.utils.testing import assert_greater
 
 
 from sklearn.metrics import mean_squared_error
@@ -819,3 +820,25 @@ def test_zero_estimator_clf():
     est = GradientBoostingClassifier(n_estimators=20, max_depth=1, random_state=1,
                                     init='foobar')
     assert_raises(ValueError, est.fit, X, y)
+
+
+def test_max_leaf_nodes_max_depth():
+    """Test preceedence of max_leaf_nodes over max_depth. """
+    X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
+    all_estimators = [GradientBoostingRegressor,
+                      GradientBoostingClassifier]
+
+    k = 4
+    for GBEstimator in all_estimators:
+        est = GBEstimator(max_depth=1, max_leaf_nodes=k).fit(X, y)
+        tree = est.estimators_[0, 0].tree_
+        assert_greater(tree.max_depth, 1)
+
+        est = GBEstimator(max_depth=1).fit(X, y)
+        tree = est.estimators_[0, 0].tree_
+        assert_equal(tree.max_depth, 1)
+
+
+if __name__ == "__main__":
+    import nose
+    nose.runmodule()
