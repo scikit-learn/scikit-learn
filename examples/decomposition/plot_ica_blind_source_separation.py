@@ -41,13 +41,15 @@ X = np.dot(S, A.T)  # Generate observations
 
 # Compute ICA
 ica = FastICA(n_components=3)
-S_ = ica.fit_transform(X)  # Get the estimated sources
+S_ = ica.fit_transform(X)  # Reconstruct signals
 A_ = ica.mixing_  # Get estimated mixing matrix
+
+# We can `prove` that the ICA model applies by reverting the unmixing.
 assert np.allclose(X, np.dot(S_, A_.T) + ica.mean_)
 
-# compute PCA
+# For comparison, compute PCA
 pca = PCA(n_components=3)
-H = pca.fit_transform(X)  # estimate PCA sources
+H = pca.fit_transform(X)  # Reconstruct signals based on orthogonal components
 
 ###############################################################################
 # Plot results
@@ -57,8 +59,8 @@ pl.figure()
 models = [X, S, S_, H]
 names = ['Observations (mixed signal)',
          'True Sources',
-         'ICA estimated sources', 
-         'PCA estimated sources']
+         'ICA recovered signals', 
+         'PCA recovered signals']
 colors = ['red', 'steelblue', 'orange']
 
 for ii, (model, name) in enumerate(zip(models, names), 1):
