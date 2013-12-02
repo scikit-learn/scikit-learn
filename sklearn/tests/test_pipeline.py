@@ -11,7 +11,7 @@ from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 
-from sklearn.base import BaseEstimator, clone
+from sklearn.base import BaseEstimator, clone, TransformerMixin
 from sklearn.pipeline import Pipeline, FeatureUnion
 from sklearn.svm import SVC
 from sklearn.linear_model import LogisticRegression
@@ -69,6 +69,14 @@ class FitParamT(BaseEstimator):
         return self.successful
 
 
+class MockWeightableTransformer(BaseEstimator, TransformerMixin):
+    def fit(self, X, y=None, sample_weight=None):
+        return self
+    
+    def transform(self, X):
+        return X
+    
+    
 def test_pipeline_init():
     """ Test the various init parameters of the pipeline.
     """
@@ -201,10 +209,9 @@ def test_pipeline_ada_boost_classifier():
     iris = load_iris()
     X = iris.data
     y = iris.target
-    scaler = StandardScaler()
-    pca = RandomizedPCA(n_components=2, whiten=True)
-    clf = SVC()
-    pl = Pipeline([('scaler', scaler), ('pca', pca), ('clf', clf)])
+    transformer = MockWeightableTransformer()
+    clf = SVC(probability=True)
+    pl = Pipeline([('transformer', transformer), ('clf', clf)])
     model = AdaBoostClassifier(base_estimator = pl)
     model.fit(X, y)
     model.predict(X)
