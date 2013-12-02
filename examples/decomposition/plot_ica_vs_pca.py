@@ -62,7 +62,7 @@ S_ica_ /= S_ica_.std(axis=0)
 
 def plot_samples(S, axis_list=None):
     pl.scatter(S[:, 0], S[:, 1], s=2, marker='o', linewidths=0, zorder=10,
-               color='steelblue')
+               color='steelblue', alpha=0.5)
     if axis_list is not None:
         colors = ['orange', 'red']
         for color, axis in zip(colors, axis_list):
@@ -70,7 +70,6 @@ def plot_samples(S, axis_list=None):
             x_axis, y_axis = axis
             # Trick to get legend to work
             pl.plot(0.1 * x_axis, 0.1 * y_axis, linewidth=2, color=color)
-            # pl.quiver(x_axis, y_axis, x_axis, y_axis, zorder=11, width=0.01,
             pl.quiver(0, 0, x_axis, y_axis, zorder=11, width=0.01, scale=6,
                       color=color)
 
