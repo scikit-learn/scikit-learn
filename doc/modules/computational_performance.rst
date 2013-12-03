@@ -139,15 +139,16 @@ time is the same, so latency should be equivalent. Of course the particular
 values (and sparsity) will change depending on how the model was trained but
 the type of operation is the same (a dot product).
 
-Here is an example using :class:`SGDClassifier` with the ``elasticnet``
-penalty. The regularization power is globally controlled by the ``alpha``
-parameter. With a sufficiently high ``alpha``, one can then play with the
-``l1_ratio`` parameter of ``elasticnet`` to enforce various levels of
-sparsity in the model coefficients. Higher sparsity here is interpreted as
-less model complexity as we need less coefficients to describe it fully. Of
-course sparsity influences in turn the prediction time as the sparse
-dot-product takes time roughly proportional to the number of non-zero
-coefficients.
+Here is an example using
+:class:`sklearn.linear_model.stochastic_gradient.SGDClassifier` with the
+``elasticnet`` penalty. The regularization power is globally controlled by
+the ``alpha`` parameter. With a sufficiently high ``alpha``,
+one can then play with the ``l1_ratio`` parameter of ``elasticnet`` to
+enforce various levels of sparsity in the model coefficients. Higher sparsity
+here is interpreted as less model complexity as we need less coefficients to
+describe it fully. Of course sparsity influences in turn the prediction time
+as the sparse dot-product takes time roughly proportional to the number of
+non-zero coefficients.
 
 .. |en_model_complexity| image::  ../auto_examples/applications/images/plot_model_complexity_influence_1.png
     :target: ../auto_examples/applications/plot_model_complexity_influence.html
@@ -160,8 +161,9 @@ to the number of support vectors (the fewer the faster). Latency and
 throughput should (asymptotically) grow linearly with the number of support
 vectors in a SVC or SVR model. The kernel will also influence the latency as
 it is used to compute the projection of the input vector once per support
-vector. In the following graph the ``nu`` parameter of :class:`NuSVR` was used
-to influence the number of support vectors.
+vector. In the following graph the ``nu`` parameter of
+:class:`sklearn.svm.classes.NuSVR` was used to influence the number of
+support vectors.
 
 .. |nusvr_model_complexity| image::  ../auto_examples/applications/images/plot_model_complexity_influence_2.png
     :target: ../auto_examples/applications/plot_model_complexity_influence.html
@@ -173,7 +175,7 @@ For ensemble of trees (e.g. RandomForest, GBT, ExternalTrees etc) the
 number of trees and their depth play the most important role. Latency and
 throughput should scale linearly with the number of trees. In this case
 we used directly the ``n_estimators`` parameter of
-:class:`GradientBoostingRegressor`.
+:class:`sklearn.ensemble.gradient_boosting.GradientBoostingRegressor`.
 
 .. |gbt_model_complexity| image::  ../auto_examples/applications/images/plot_model_complexity_influence_3.png
     :target: ../auto_examples/applications/plot_model_complexity_influence.html

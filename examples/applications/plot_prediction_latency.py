@@ -29,7 +29,9 @@ from sklearn.datasets.samples_generator import make_regression
 from sklearn.ensemble.forest import RandomForestRegressor
 from sklearn.linear_model.coordinate_descent import ElasticNet
 from sklearn.linear_model.ridge import Ridge
+from sklearn.linear_model.stochastic_gradient import SGDRegressor
 from sklearn.svm.classes import SVR
+from sklearn.utils.fixes import count_nonzero
 
 
 def _not_in_sphinx():
@@ -121,7 +123,7 @@ def generate_dataset(n_train, n_test, n_features, noise=0.1, verbose=False):
     return X_train, y_train, X_test, y_test
 
 
-def boxplot_runtimes(runtimes, cls_names, pred_type, n_features):
+def boxplot_runtimes(runtimes, pred_type, configuration):
     """
     Plot a new `Figure` with boxplots of prediction runtimes.
 
@@ -135,7 +137,12 @@ def boxplot_runtimes(runtimes, cls_names, pred_type, n_features):
     fig, ax1 = plt.subplots(figsize=(10, 6))
     bp = plt.boxplot(runtimes, )
 
-    xtick_names = plt.setp(ax1, xticklabels=cls_names)
+    cls_infos = ['%s\n(%d %s)' % (estimator_conf['name'],
+                                  estimator_conf['complexity_computer'](
+                                      estimator_conf['instance']),
+                                  estimator_conf['complexity_label']) for
+                 estimator_conf in configuration['estimators']]
+    xtick_names = plt.setp(ax1, xticklabels=cls_infos)
     plt.setp(xtick_names)
 
     plt.setp(bp['boxes'], color='black')
@@ -148,32 +155,33 @@ def boxplot_runtimes(runtimes, cls_names, pred_type, n_features):
     ax1.set_axisbelow(True)
     ax1.set_title('Prediction Time per Instance - %s, %d feats.' % (
         pred_type.capitalize(),
-        n_features))
-    ax1.set_xlabel('Estimator')
+        configuration['n_features']))
     ax1.set_ylabel('Prediction Time (us)')
 
     plt.show()
 
 
-def benchmark(estimators, n_train, n_test, n_features):
+def benchmark(configuration):
     """Run the whole benchmark."""
-    X_train, y_train, X_test, y_test = generate_dataset(n_train, n_test,
-                                                        n_features)
+    X_train, y_train, X_test, y_test = generate_dataset(
+        configuration['n_train'], configuration['n_test'],
+        configuration['n_features'])
 
-    stats = {'settings': {'n_train': n_train, 'n_test': 'n_test',
-                          'n_features': n_features}}
-    for clf_name, clf in estimators.iteritems():
-        print("Benchmarking", clf)
-        clf.fit(X_train, y_train)
+    stats = {}
+    for estimator_conf in configuration['estimators']:
+        print("Benchmarking", estimator_conf['instance'])
+        estimator_conf['instance'].fit(X_train, y_train)
         gc.collect()
-        a, b = benchmark_estimator(clf, X_test)
-        stats[clf_name] = {'atomic': a, 'bulk': b}
+        a, b = benchmark_estimator(estimator_conf['instance'], X_test)
+        stats[estimator_conf['name']] = {'atomic': a, 'bulk': b}
 
-    cls_names = estimators.keys()
+    cls_names = [estimator_conf['name'] for estimator_conf in configuration[
+        'estimators']]
     runtimes = [1e6 * stats[clf_name]['atomic'] for clf_name in cls_names]
-    boxplot_runtimes(runtimes, cls_names, 'atomic', n_features)
+    boxplot_runtimes(runtimes, 'atomic', configuration)
     runtimes = [1e6 * stats[clf_name]['bulk'] for clf_name in cls_names]
-    boxplot_runtimes(runtimes, cls_names, 'bulk (%d)' % n_test, n_features)
+    boxplot_runtimes(runtimes, 'bulk (%d)' % configuration['n_test'],
+                     configuration)
 
 
 def n_feature_influence(estimators, n_train, n_test, n_features, percentile):
@@ -226,37 +234,45 @@ def plot_n_features_influence(percentiles, percentile):
     plt.show()
 
 
-def benchmark_throughputs(estimators, n_train, n_test, n_features,
-                          duration_secs=0.1):
+def benchmark_throughputs(configuration, duration_secs=0.1):
     """benchmark throughput for different estimators."""
-    X_train, y_train, X_test, y_test = generate_dataset(n_train, n_test,
-                                                        n_features)
+    X_train, y_train, X_test, y_test = generate_dataset(
+        configuration['n_train'], configuration['n_test'],
+        configuration['n_features'])
     throughputs = dict()
-    for estimator_name, estimator_instance in estimators.iteritems():
-        estimator_instance.fit(X_train, y_train)
+    for estimator_config in configuration['estimators']:
+        estimator_config['instance'].fit(X_train, y_train)
         start_time = time.time()
         n_predictions = 0
         while (time.time() - start_time) < duration_secs:
-            estimator_instance.predict(X_test[0])
+            estimator_config['instance'].predict(X_test[0])
             n_predictions += 1
-        throughputs[estimator_name] = n_predictions / duration_secs
+        throughputs[estimator_config['name']] = n_predictions / duration_secs
     return throughputs
 
 
-def plot_benchmark_throughput(throughputs):
+def plot_benchmark_throughput(throughputs, configuration):
     fig, ax = plt.subplots(figsize=(10, 6))
     colors = ['r', 'g', 'b']
-    rectangles = plt.bar(range(len(throughputs.keys())), throughputs.values(),
-                         width=0.5, color=colors)
-
+    cls_infos = ['%s\n(%d %s)' % (estimator_conf['name'],
+                                  estimator_conf['complexity_computer'](
+                                      estimator_conf['instance']),
+                                  estimator_conf['complexity_label']) for
+                 estimator_conf in configuration['estimators']]
+    cls_values = [throughputs[estimator_conf['name']] for estimator_conf in
+                  configuration['estimators']]
+    rectangles = plt.bar(range(len(throughputs)), cls_values, width=0.5,
+                         color=colors)
     ax.set_xticks(np.linspace(0.25, len(throughputs) - 0.75, len(throughputs)))
-    ax.set_xticklabels(throughputs.keys(), fontsize=10)
-    ymax = max(throughputs.values()) * 1.2
+    ax.set_xticklabels(cls_infos, fontsize=10)
+    ymax = max(cls_values) * 1.2
     ax.set_ylim((0, ymax))
     ax.set_ylabel('Throughput (predictions/sec)')
-    ax.set_title('Prediction Throughput for different estimators')
+    ax.set_title('Prediction Throughput for different estimators (%d '
+                 'features)' % configuration['n_features'])
     ax.legend()
     plt.show()
+
 
 ###############################################################################
 # main code
@@ -264,23 +280,39 @@ def plot_benchmark_throughput(throughputs):
 start_time = time.time()
 
 # benchmark bulk/atomic prediction speed for various regressors
-n_train = int(1e3)
-n_test = int(1e2)
-n_features = int(1e2)
-estimators = {'Linear Model': ElasticNet(),
-              'SVR': SVR(kernel='rbf'),
-              'RandomForest': RandomForestRegressor()}
-benchmark(estimators, n_train, n_test, n_features)
+configuration = {
+    'n_train': int(1e3),
+    'n_test': int(1e2),
+    'n_features': int(1e2),
+    'estimators': [
+        {'name': 'Linear Model',
+         'instance': SGDRegressor(penalty='elasticnet', alpha=0.01,
+                                  l1_ratio=0.25, fit_intercept=True),
+         'complexity_label': 'non-zero coefficients',
+         'complexity_computer': lambda clf: count_nonzero(clf.coef_)},
+        {'name': 'RandomForest',
+         'instance': RandomForestRegressor(),
+         'complexity_label': 'estimators',
+         'complexity_computer': lambda clf: clf.n_estimators},
+        {'name': 'SVR',
+         'instance': SVR(kernel='rbf'),
+         'complexity_label': 'support vectors',
+         'complexity_computer': lambda clf: len(clf.support_vectors_)},
+    ]
+}
+benchmark(configuration)
 
 # benchmark n_features influence on prediction speed
 percentile = 90
-percentiles = n_feature_influence({'ridge': Ridge()}, n_train, n_test,
+percentiles = n_feature_influence({'ridge': Ridge()},
+                                  configuration['n_train'],
+                                  configuration['n_test'],
                                   [100, 250, 500], percentile)
 plot_n_features_influence(percentiles, percentile)
 
 # benchmark throughput
-throughputs = benchmark_throughputs(estimators, n_train, n_test, n_features)
-plot_benchmark_throughput(throughputs)
+throughputs = benchmark_throughputs(configuration)
+plot_benchmark_throughput(throughputs, configuration)
 
 stop_time = time.time()
 print("example run in %.2fs" % (stop_time - start_time))
