@@ -73,6 +73,9 @@ Changelog
      is now supported by :func:`metrics.roc_auc_score` and
      :func:`metrics.average_precision_score` by `Arnaud Joly`_.
 
+   - Fixed bug in :class:`linear_model.stochastic_gradient` :
+     ``l1_ratio`` was used as ``(1.0 - l1_ratio)`` .
+
 API changes summary
 -------------------
 
