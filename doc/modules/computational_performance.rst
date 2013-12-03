@@ -64,11 +64,11 @@ always faster, and for some of them by 1 to 2 orders of magnitude:
 .. centered:: |bulk_prediction_latency|
 
 To benchmark different estimators for your case you can simply change the
-``n_features`` parameter according to your case in this example:
-:ref:`example_applications_plot_prediction_latency.py`. This should give you
-an estimate of the order of magnitude of the prediction latency for your case.
+``n_features`` parameter in this example:
+:ref:`example_applications_plot_predictiaccordon_latency.py`. This should give
+you an estimate of the order of magnitude of the prediction latency.
 
-Influence of the number of Features
+Influence of the Number of Features
 -----------------------------------
 
 Obviously when the number of features increases so does the memory
@@ -91,7 +91,7 @@ memory footprint and estimator).
 Influence of the Input Data Representation
 ------------------------------------------
 
-Scipy support sparse matrix datastructures which are optimized for storing
+Scipy provides sparse matrix datastructures which are optimized for storing
 sparse data. The main feature of sparse formats is that you don't store zeros
 so if your data is sparse then you use much less memory. A non-zero value in
 a sparse (`CSR or CSC <http://docs.scipy.org/doc/scipy/reference/sparse.html>`_)
@@ -100,17 +100,16 @@ bit floating point value + an additional 32bit per row or column in the matrix.
 Using sparse input on a dense (or sparse) linear model can speedup prediction
 by quite a bit as only the non zero valued features impact the dot product
 and thus the model predictions. Hence if you have 100 non zeros in 1e6
-dimensional space, you only need 100 multiply + add operation instead of 1e6.
+dimensional space, you only need 100 multiply and add operation instead of 1e6.
 
-Note that dense / dense operations benefit from both BLAS-provided SSE
-vectorized operations and multithreading and lower CPU cache miss rates. Sparse
-dot product is more hit or miss and does not leverage the optimized BLAS
-benefit. So the sparsity should typically be quite high (10% non-zeros max,
-to be checked depending on the hardware) for the sparse input representation
-to be faster than the dense input representation on a machine with many CPU and
-an optimized BLAS implementation.
+Calculation over a dense representation, however, may leverage highly optimised
+vector operations and multithreading in BLAS, and tends to result in fewer CPU
+cache misses. So the sparsity should typically be quite high (10% non-zeros
+max, to be checked depending on the hardware) for the sparse input
+representation to be faster than the dense input representation on a machine
+with many CPUs and an optimized BLAS implementation.
 
-Here is a sample code to test the sparsity of your input:
+Here is sample code to test the sparsity of your input:
 
     >>> from sklearn.utils.fixes import count_nonzero
     >>> def sparsity_ratio(X):
@@ -118,10 +117,10 @@ Here is a sample code to test the sparsity of your input:
     >>> print("input sparsity ratio:", sparsity_ratio(X))
 
 As a rule of thumb you can consider that if the sparsity ratio is greater
-than 90% you can probably benefit from sparse formats. Now if you want to try
-to leverage sparsity for your input data you should either build your input
-matrix in the CSR or CSC or call the ``to_csr()`` method or the ``csr_matrix()``
-helper function from Scipy.
+than 90% you can probably benefit from sparse formats. Check Scipy's sparse
+matrix formats `documentation <http://docs.scipy.org/doc/scipy/reference/sparse.html>`_
+for more information on how to build (or convert your data to) sparse matrix
+formats. Most of the time the ``CSR`` and ``CSC`` formats work best.
 
 Influence of the Model Complexity
 ---------------------------------
@@ -132,20 +131,19 @@ interesting, but for many applications we would better not increase
 prediction latency too much. We will now review this idea for different
 families of supervised models.
 
-For linear models (e.g. Lasso, ElasticNet, SGDClassifier/Regressor,
-Ridge & RidgeClassifier, PassiveAgressiveClassifier/Regressor, LinearSVC,
-LogisticRegression...) the decision function that is applied at prediction
-time is the same, so latency should be equivalent. Of course the particular
-values (and sparsity) will change depending on how the model was trained but
-the type of operation is the same (a dot product).
+For :mod:`sklearn.linear_model` (e.g. Lasso, ElasticNet,
+SGDClassifier/Regressor, Ridge & RidgeClassifier,
+PassiveAgressiveClassifier/Regressor, LinearSVC, LogisticRegression...) the
+decision function that is applied at prediction time is the same (a dot product)
+, so latency should be equivalent.
 
 Here is an example using
 :class:`sklearn.linear_model.stochastic_gradient.SGDClassifier` with the
-``elasticnet`` penalty. The regularization power is globally controlled by
+``elasticnet`` penalty. The regularization strength is globally controlled by
 the ``alpha`` parameter. With a sufficiently high ``alpha``,
-one can then play with the ``l1_ratio`` parameter of ``elasticnet`` to
+one can then increase the ``l1_ratio`` parameter of ``elasticnet`` to
 enforce various levels of sparsity in the model coefficients. Higher sparsity
-here is interpreted as less model complexity as we need less coefficients to
+here is interpreted as less model complexity as we need fewer coefficients to
 describe it fully. Of course sparsity influences in turn the prediction time
 as the sparse dot-product takes time roughly proportional to the number of
 non-zero coefficients.
@@ -156,12 +154,12 @@ non-zero coefficients.
 
 .. centered:: |en_model_complexity|
 
-For the SVM family of algorithms with a non-linear kernel, the latency is tied
-to the number of support vectors (the fewer the faster). Latency and
-throughput should (asymptotically) grow linearly with the number of support
-vectors in a SVC or SVR model. The kernel will also influence the latency as
-it is used to compute the projection of the input vector once per support
-vector. In the following graph the ``nu`` parameter of
+For the :mod:`sklearn.svm` family of algorithms with a non-linear kernel,
+the latency is tied to the number of support vectors (the fewer the faster).
+Latency and throughput should (asymptotically) grow linearly with the number
+of support vectors in a SVC or SVR model. The kernel will also influence the
+latency as it is used to compute the projection of the input vector once per
+support vector. In the following graph the ``nu`` parameter of
 :class:`sklearn.svm.classes.NuSVR` was used to influence the number of
 support vectors.
 
@@ -171,10 +169,10 @@ support vectors.
 
 .. centered:: |nusvr_model_complexity|
 
-For ensemble of trees (e.g. RandomForest, GBT, ExternalTrees etc) the
-number of trees and their depth play the most important role. Latency and
-throughput should scale linearly with the number of trees. In this case
-we used directly the ``n_estimators`` parameter of
+For :mod:`sklearn.ensemble` of trees (e.g. RandomForest, GBT,
+ExternalTrees etc) the number of trees and their depth play the most
+important role. Latency and throughput should scale linearly with the number
+of trees. In this case we used directly the ``n_estimators`` parameter of
 :class:`sklearn.ensemble.gradient_boosting.GradientBoostingRegressor`.
 
 .. |gbt_model_complexity| image::  ../auto_examples/applications/images/plot_model_complexity_influence_3.png
@@ -183,36 +181,13 @@ we used directly the ``n_estimators`` parameter of
 
 .. centered:: |gbt_model_complexity|
 
-In any case be warned that playing with model complexity can hurt accuracy as
-mentionned above. For instance a non-linearly separable problem can be dealt
+In any case be warned that decreasing model complexity can hurt accuracy as
+mentioned above. For instance a non-linearly separable problem can be handled
 with a speedy linear model but prediction power will very likely suffer in
 the process.
 
-Prediction Throughput
-=====================
-
-Another important metric to care about when sizing production systems is the
-throughput i.e. the number of predictions you can make in a given amount of
-time. Here is a benchmark from the
-:ref:`example_applications_plot_prediction_latency.py` example that measures
-this quantity for a number of estimators on synthetic data:
-
-.. |throughput_benchmark| image::  ../auto_examples/applications/images/plot_prediction_latency_4.png
-    :target: ../auto_examples/applications/plot_prediction_latency.html
-    :scale: 80
-
-.. centered:: |throughput_benchmark|
-
-These throughputs are achieved on a single process. An obvious way to
-increase the throughput of your application is to spawn additional instances
-(usually processes in Python because of the
-`GIL <https://wiki.python.org/moin/GlobalInterpreterLock>`_) that share the
-same model. One might also add machines to spread the load. A detailed
-explanation on how to achieve this is beyond the scope of this documentation
-though.
-
 Feature Extraction Latency
-==========================
+--------------------------
 
 In many real world applications the feature extraction process (i.e. turning
 raw data like database rows or network packets into numpy arrays) governs the
@@ -239,6 +214,29 @@ extraction step while keeping the prediction in python with scikit-learn
 estimators is usually a good way to go as it allows for easy experimentation
 on the modeling side without sacrificing performance.
 
+Prediction Throughput
+=====================
+
+Another important metric to care about when sizing production systems is the
+throughput i.e. the number of predictions you can make in a given amount of
+time. Here is a benchmark from the
+:ref:`example_applications_plot_prediction_latency.py` example that measures
+this quantity for a number of estimators on synthetic data:
+
+.. |throughput_benchmark| image::  ../auto_examples/applications/images/plot_prediction_latency_4.png
+    :target: ../auto_examples/applications/plot_prediction_latency.html
+    :scale: 80
+
+.. centered:: |throughput_benchmark|
+
+These throughputs are achieved on a single process. An obvious way to
+increase the throughput of your application is to spawn additional instances
+(usually processes in Python because of the
+`GIL <https://wiki.python.org/moin/GlobalInterpreterLock>`_) that share the
+same model. One might also add machines to spread the load. A detailed
+explanation on how to achieve this is beyond the scope of this documentation
+though.
+
 Tips and Tricks
 ===============
 
@@ -253,7 +251,7 @@ Basically, you ought to make sure that Numpy is built using an optimized `BLAS
 
 Not all models benefit from optimized BLAS and Lapack implementations. For
 instance models based on (randomized) decision trees typically do not rely on
-BLAS calls in their inner loops. So do models implemented in third party C++
+BLAS calls in their inner loops. Nor do models implemented in third party C++
 library (like ``LinearSVC``, ``LogisticRegression`` from ``liblinear`` and SVC /
 SVR from ``libsvm``). On the other hand a linear model implemented with a BLAS
 DGEMM call (via ``numpy.dot``) will typically benefit hugely from a tuned BLAS
@@ -262,8 +260,6 @@ BLAS.
 
 You can display the BLAS / LAPACK implementation used by your NumPy / SciPy /
 scikit-learn install with the following commands:
-
-
     >>> from numpy.distutils.system_info import get_info
     >>> print(get_info('blas_opt'))
     >>> print(get_info('lapack_opt'))
@@ -275,8 +271,7 @@ Optimized BLAS / LAPACK implementations include:
  - MKL
  - Apple Accelerate and vecLib frameworks (OSX only)
 
-More information can be found on the `Scipy install page <http://docs.scipy
-.org/doc/numpy/user/install.html>`_
+More information can be found on the `Scipy install page <http://docs.scipy.org/doc/numpy/user/install.html>`_
 and in this
 `blog post <http://danielnouri.org/notes/2012/12/19/libblas-and-liblapack-issues-and-speed,-with-scipy-and-ubuntu/>`_
 from Daniel Nouri which has some nice step by step install instructions for
@@ -291,7 +286,6 @@ number of non-zero coordinates in the model vectors). It is generally a good
 idea to combine model sparsity with sparse input data representation.
 
 Here is a sample code that illustrates the use of the ``sparsify()`` method:
-
     >>> clf = SGDRegressor(penalty='elasticnet', l1_ratio=0.25)
     >>> clf.fit(X_train, y_train).sparsify()
     >>> clf.predict(X_test)
@@ -301,7 +295,7 @@ compromise between model compactness and prediction power. One can also
 further tune the ``l1_ratio`` parameter (in combination with the
 regularization strength ``alpha``) to control this tradeoff.
 
-A typical `benchmark <https://github.com/scikit-learn/scikit-learn/tree/masternchmarks/bench_sparsify.py>`_
+A typical `benchmark <https://github.com/scikit-learn/scikit-learn/tree/master/benchmarks/bench_sparsify.py>`_
 on synthetic data yields a >30% decrease in latency when both the model and
 input are sparse (with 0.000024 and 0.027400 non-zero coefficients ratio
 respectively). Your mileage may vary depending on the sparsity and size of
