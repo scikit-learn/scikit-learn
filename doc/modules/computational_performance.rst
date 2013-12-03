@@ -91,7 +91,7 @@ memory footprint and estimator).
 Influence of the Input Data Representation
 ------------------------------------------
 
-Numpy / Scipy support sparse matrix formats which are optimized for storing
+Scipy support sparse matrix datastructures which are optimized for storing
 sparse data. The main feature of sparse formats is that you don't store zeros
 so if your data is sparse then you use much less memory. A non-zero value in
 a sparse (`CSR or CSC <http://docs.scipy.org/doc/scipy/reference/sparse.html>`_)
@@ -232,12 +232,12 @@ In many cases it is thus recommended to carefully time and profile your
 feature extraction code as it may be a good place to start optimizing when
 your overall latency is too slow for your application. If needed,
 you can consider rewriting the feature extraction part in a lower-level,
-compiled language to further speed up the overall process. The fact that
-most scikit-learn models are implemented using Cython and optimized,
-compiled computing libraries under the hood make them usually pretty fast.
-So optimizing the feature extraction step while keeping the prediction in
-python with scikit-learn estimators is usually a good way to go as it allows
-for easy experimentation on the modeling side without sacrificing performance.
+compiled language to further speed up the overall process. Most scikit-learn
+models are usually pretty fast as they are implemented either with compiled
+Cython extensions or optimized computing libraries. So optimizing the feature
+extraction step while keeping the prediction in python with scikit-learn
+estimators is usually a good way to go as it allows for easy experimentation
+on the modeling side without sacrificing performance.
 
 Tips and Tricks
 ===============
@@ -255,7 +255,7 @@ Not all models benefit from optimized BLAS and Lapack implementations. For
 instance models based on (randomized) decision trees typically do not rely on
 BLAS calls in their inner loops. So do models implemented in third party C++
 library (like ``LinearSVC``, ``LogisticRegression`` from ``liblinear`` and SVC /
-SVR from ``libsvm``). On the other hand linear model implemented with a BLAS
+SVR from ``libsvm``). On the other hand a linear model implemented with a BLAS
 DGEMM call (via ``numpy.dot``) will typically benefit hugely from a tuned BLAS
 implementation and lead to orders of magnitude speedup over a non-optimized
 BLAS.
@@ -293,8 +293,7 @@ idea to combine model sparsity with sparse input data representation.
 Here is a sample code that illustrates the use of the ``sparsify()`` method:
 
     >>> clf = SGDRegressor(penalty='elasticnet', l1_ratio=0.25)
-    >>> clf.fit(X_train, y_train)
-    >>> clf.sparsify()
+    >>> clf.fit(X_train, y_train).sparsify()
     >>> clf.predict(X_test)
 
 In this example we prefer the ``elasticnet`` penalty as it is often a good
@@ -304,7 +303,7 @@ regularization strength ``alpha``) to control this tradeoff.
 
 A typical `benchmark <https://github.com/scikit-learn/scikit-learn/tree/masternchmarks/bench_sparsify.py>`_
 on synthetic data yields a >30% decrease in latency when both the model and
-input are sparsed (with 0.000024 and 0.027400 non-zero coefficients ratio
+input are sparse (with 0.000024 and 0.027400 non-zero coefficients ratio
 respectively). Your mileage may vary depending on the sparsity and size of
 your data and model.
 Furthermore, sparsifying can be very useful to reduce the memory usage of
