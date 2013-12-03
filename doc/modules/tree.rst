@@ -165,6 +165,47 @@ After being fitted, the model can then be used to predict new values::
    :align: center
    :scale: 75
 
+Once trained, we can export the tree to a more pythonic format for
+visualization or introspection with the :func:`export_dict` exporter.
+Below is an example using the same tree fitted above on the iris data
+set.  It is easy to extract the root level feature and threshold:
+
+    >>> d = tree.export_dict(clf, iris.feature_names)
+    >>> d['feature']
+    'petal length (cm)'
+    >>> d['threshold']
+    2.449999988079071
+
+We can also do more interesting operations on the tree.  In this
+example we extract the set of features which were used in the tree
+with a recursive navigation of the tree dict:
+
+    >>> def feature_set(node) :
+    ...     s = set()
+    ...     if node['feature'] :
+    ...         s |= set([node['feature']])
+    ...     if node['left'] :
+    ...         s |= feature_set(node['left'])
+    ...     if node['right'] :
+    ...         s |= feature_set(node['right'])
+    ...     return s
+    >>> feature_set(d)
+    {'petal length (cm)', 'petal width (cm)', 'sepal length (cm)'}
+
+We can also do more interesting operations on the tree.  In this
+example we recursively compute a mean_depth:
+
+    >>> def mean_depth(node, depth=0) :
+    ...     if not node :
+    ...         return depth-1
+    ... 
+    ...     l = mean_depth(node['left'], depth+1)
+    ...     r = mean_depth(node['right'], depth+1)
+    ...     return (l + r) / 2.0
+    >>> mean_depth(d)
+    2.4375
+
+
 .. topic:: Examples:
 
  * :ref:`example_tree_plot_iris.py`
