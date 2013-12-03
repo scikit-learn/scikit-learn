@@ -49,7 +49,7 @@ In general doing predictions in bulk (many instances at the same time) is
 more efficient for a number of reasons (branching predictability, CPU cache,
 linear algebra libraries optimizations etc.). Here we see on a setting
 with few features that independently of estimator choice the bulk mode is
-always faster by 2 orders of magnitude:
+always faster, and for some of them by 1 to 2 orders of magnitude:
 
 .. |atomic_prediction_latency| image::  ../auto_examples/applications/images/plot_prediction_latency_1.png
     :target: ../auto_examples/applications/plot_prediction_latency.html
@@ -107,7 +107,7 @@ vectorized operations and multithreading and lower CPU cache miss rates. Sparse
 dot product is more hit or miss and does not leverage the optimized BLAS
 benefit. So the sparsity should typically be quite high (10% non-zeros max,
 to be checked depending on the hardware) for the sparse input representation
-to be faster that the dense input representation on a machine with many CPU and
+to be faster than the dense input representation on a machine with many CPU and
 an optimized BLAS implementation.
 
 Here is a sample code to test the sparsity of your input:
@@ -217,15 +217,16 @@ Feature Extraction Latency
 In many real world applications the feature extraction process (i.e. turning
 raw data like database rows or network packets into numpy arrays) governs the
 overall prediction time. For example here on the Reuters text classification
-task the vectorization that includes parsing SGML files, tokenizing the text
-and hashing it into a common vector space is taking 5 to 30 times more time
-than the actual prediction code, depending on the chosen model.
+task the whole preparation that includes reading and parsing SGML files,
+tokenizing the text and hashing it into a common vector space is taking 100
+to 500 times more time than the actual prediction code, depending on the chosen
+model.
 
- .. |computation_time| image::  ../auto_examples/applications/images/plot_out_of_core_classification_3.png
+ .. |prediction_time| image::  ../auto_examples/applications/images/plot_out_of_core_classification_4.png
     :target: ../auto_examples/applications/plot_out_of_core_classification.html
     :scale: 80
 
-.. centered:: |computation_time|
+.. centered:: |prediction_time|
 
 In many cases it is thus recommended to carefully time and profile your
 feature extraction code as it may be a good place to start optimizing when
