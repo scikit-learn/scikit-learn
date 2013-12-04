@@ -312,22 +312,27 @@ def test_minibatch_k_means_perfect_init_sparse_csr():
     _check_fitted_model(mb_k_means)
 
 
-def test_minibatch_sensible_reassign():
+def test_minibatch_sensible_reassign_fit():
     zeroed_X, true_labels = make_blobs(n_samples=n_samples, centers=5,
                                        cluster_std=1., random_state=42)
     print(zeroed_X.shape)
     zeroed_X[::2, :] = 0
-    mb_k_means = MiniBatchKMeans(n_clusters=5, batch_size=10,
-                                 random_state=42, verbose=10)
+    mb_k_means = MiniBatchKMeans(n_clusters=20, batch_size=10, random_state=42,
+                                verbose=10, init="random")
     mb_k_means.fit(zeroed_X)
     print(mb_k_means.cluster_centers_)
     # there should be only one exact zero cluster center
     center_norms = np.sum(mb_k_means.cluster_centers_ ** 2, axis=1)
     assert_equal(np.sum(center_norms == 0), 1)
 
-    # same with partial fit:
-    mb_k_means = MiniBatchKMeans(n_clusters=20,
-                                 random_state=42, verbose=10)
+
+def test_minibatch_sensible_reassign_partial_fit():
+    zeroed_X, true_labels = make_blobs(n_samples=n_samples, centers=5,
+                                       cluster_std=1., random_state=42)
+    print(zeroed_X.shape)
+    zeroed_X[::2, :] = 0
+    mb_k_means = MiniBatchKMeans(n_clusters=20, random_state=42, verbose=10,
+                                 init="random")
     for i in range(100):
         mb_k_means.partial_fit(zeroed_X)
     print(mb_k_means.cluster_centers_)
