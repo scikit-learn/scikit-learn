@@ -183,7 +183,7 @@ with a recursive navigation of the tree dict:
     >>> def feature_set(node) :
     ...     s = set()
     ...     if node['feature'] :
-    ...         s |= set([node['feature']])
+    ...         s.add(node['feature']))
     ...     if node['left'] :
     ...         s |= feature_set(node['left'])
     ...     if node['right'] :
