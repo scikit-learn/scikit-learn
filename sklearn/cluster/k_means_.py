@@ -1165,7 +1165,8 @@ class MiniBatchKMeans(KMeans):
             # disabled
             old_center_buffer = np.zeros(0, np.double)
 
-        distances = np.zeros(self.batch_size, dtype=np.float64)
+        distances = np.zeros(min(self.batch_size, X.shape[0]),
+                             dtype=np.float64)
         n_batches = int(np.ceil(float(n_samples) / self.batch_size))
         n_iter = int(self.max_iter * n_batches)
 
