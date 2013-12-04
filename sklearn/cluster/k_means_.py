@@ -1257,7 +1257,8 @@ class MiniBatchKMeans(KMeans):
             return self
 
         x_squared_norms = row_norms(X, squared=True)
-        self.random_state_ = check_random_state(self.random_state)
+        self.random_state_ = getattr(self, "random_state_",
+                                     check_random_state(self.random_state))
         if (not hasattr(self, 'counts_')
                 or not hasattr(self, 'cluster_centers_')):
             # this is the first call partial_fit on this object:
