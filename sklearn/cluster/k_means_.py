@@ -1120,7 +1120,8 @@ class MiniBatchKMeans(KMeans):
             # disabled
             old_center_buffer = np.zeros(0, np.double)
 
-        distances = np.zeros(self.batch_size, dtype=np.float64)
+        distances = np.zeros(min(self.batch_size, X.shape[0]),
+                             dtype=np.float64)
         n_batches = int(np.ceil(float(n_samples) / self.batch_size))
         n_iter = int(self.max_iter * n_batches)
 
@@ -1277,7 +1278,7 @@ class MiniBatchKMeans(KMeans):
             # reassignment too often, to allow for building up counts
             random_reassign = self.random_state_.randint(
                 10 * (1 + self.counts_.min())) == 0
-            distances = np.zeros(self.n_clusters, dtype=np.float64)
+            distances = np.zeros(X.shape[0], dtype=np.float64)
 
         _mini_batch_step(X, x_squared_norms, self.cluster_centers_,
                          self.counts_, np.zeros(0, np.double), 0,
