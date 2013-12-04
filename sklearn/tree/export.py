@@ -165,6 +165,10 @@ def export_dict(tree, feature_names=None, max_depth=None) :
     python types as opposed to numpy types to make exporting to json
     and other pythonic operations easier.
 
+    the value attribute is a list containing a count of the number of
+    training examples of each class which fell into each leaf of the
+    tree.
+
     Examples
     --------
     >>> from sklearn.datasets import load_iris
