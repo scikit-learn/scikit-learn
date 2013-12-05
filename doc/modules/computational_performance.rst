@@ -299,13 +299,18 @@ predictive models deployed on production servers.
 Model Reshaping
 ---------------
 
-Model reshaping consists in selecting only a portion of the features to
-fit a model. In other words, if a model effectively uses only a portion of the
-available features during the learning phase we can then strip unused
-features from the input. This reduces memory (and therefore time) overhead,
-and can reduce feature extraction time. It also allows to discard explicit
+Model reshaping consists in selecting only a portion of the available features
+to fit a model. In other words, if a model discards features during the
+learning phase we can then strip those from the input. This has several
+benefits. Firstly it reduces memory (and therefore time) overhead of the
+model itself. It also allows to discard explicit
 feature selection components in a pipeline once we know which features to
-keep from a previous run.
+keep from a previous run. Finally, it can help reduce processing time and I/O
+usage upstream in the data access and feature extraction layers by not
+collecting and building features that are discarded by the model. For instance
+if the raw data come from a database, it can make it possible to write simpler
+and faster queries or reduce I/O usage by making the queries return lighter
+records.
 At the moment, reshaping needs to be performed manually in scikit-learn.
 In the case of sparse input (particularly in ``CSR`` format), it is generally
 sufficient to not generate the relevant features, leaving their columns empty.
