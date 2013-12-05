@@ -74,7 +74,7 @@ In the basic approach, called *k*-fold CV,
 the training set is split into *k* smaller sets
 (other approaches are described below,
 but generally follow the same principles).
-The following is procedure is followed for each of the *k* "folds":
+The following procedure is followed for each of the *k* "folds":
 
  * A model is trained using :math:`k-1` of the folds as training data;
  * the resulting model is validated on the remaining part of the data

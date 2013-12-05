@@ -27,7 +27,7 @@ these arrays is the **samples** axis, while the second is the
     `iris.DESCR`.
 
 When the data is not initially in the `(n_samples, n_features)` shape, it
-needs to be preprocessed in order to by used by scikit.
+needs to be preprocessed in order to be used by scikit.
 
 .. topic:: An example of reshaping data would be the digits dataset 
 
