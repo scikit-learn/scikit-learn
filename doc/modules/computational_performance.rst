@@ -110,7 +110,6 @@ representation to be faster than the dense input representation on a machine
 with many CPUs and an optimized BLAS implementation.
 
 Here is sample code to test the sparsity of your input:
-
     >>> from sklearn.utils.fixes import count_nonzero
     >>> def sparsity_ratio(X):
     >>>     return 1.0 - count_nonzero(X) / float(X.shape[0] * X.shape[1])
@@ -189,13 +188,15 @@ the process.
 Feature Extraction Latency
 --------------------------
 
-In many real world applications the feature extraction process (i.e. turning
-raw data like database rows or network packets into numpy arrays) governs the
-overall prediction time. For example here on the Reuters text classification
-task the whole preparation that includes reading and parsing SGML files,
-tokenizing the text and hashing it into a common vector space is taking 100
-to 500 times more time than the actual prediction code, depending on the chosen
-model.
+Most scikit-learn models are usually pretty fast as they are implemented
+either with compiled Cython extensions or optimized computing libraries.
+On the other hand, in many real world applications the feature extraction
+process (i.e. turning raw data like database rows or network packets into
+numpy arrays) governs the overall prediction time. For example on the Reuters
+text classification task the whole preparation (reading and parsing SGML
+files, tokenizing the text and hashing it into a common vector space) is
+taking 100 to 500 times more time than the actual prediction code, depending on
+the chosen model.
 
  .. |prediction_time| image::  ../auto_examples/applications/images/plot_out_of_core_classification_4.png
     :target: ../auto_examples/applications/plot_out_of_core_classification.html
@@ -205,14 +206,7 @@ model.
 
 In many cases it is thus recommended to carefully time and profile your
 feature extraction code as it may be a good place to start optimizing when
-your overall latency is too slow for your application. If needed,
-you can consider rewriting the feature extraction part in a lower-level,
-compiled language to further speed up the overall process. Most scikit-learn
-models are usually pretty fast as they are implemented either with compiled
-Cython extensions or optimized computing libraries. So optimizing the feature
-extraction step while keeping the prediction in python with scikit-learn
-estimators is usually a good way to go as it allows for easy experimentation
-on the modeling side without sacrificing performance.
+your overall latency is too slow for your application.
 
 Prediction Throughput
 =====================
@@ -264,7 +258,6 @@ scikit-learn install with the following commands:
     >>> print(get_info('blas_opt'))
     >>> print(get_info('lapack_opt'))
 
-
 Optimized BLAS / LAPACK implementations include:
  - Atlas (need hardware specific tuning by rebuilding on the target machine)
  - OpenBLAS
@@ -302,6 +295,20 @@ respectively). Your mileage may vary depending on the sparsity and size of
 your data and model.
 Furthermore, sparsifying can be very useful to reduce the memory usage of
 predictive models deployed on production servers.
+
+Model Reshaping
+---------------
+
+Model reshaping consists in selecting only a portion of the features to
+fit a model. In other words, if a model effectively uses only a portion of the
+available features during the learning phase we can then strip unused
+features from the input. This reduces memory (and therefore time) overhead,
+and can reduce feature extraction time. It also allows to discard explicit
+feature selection components in a pipeline once we know which features to
+keep from a previous run.
+At the moment, reshaping needs to be performed manually in scikit-learn.
+In the case of sparse input (particularly in ``CSR`` format), it is generally
+sufficient to not generate the relevant features, leaving their columns empty.
 
 Links
 -----
