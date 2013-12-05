@@ -639,16 +639,23 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         self.ngram_range = ngram_range
         if vocabulary is not None:
             if not isinstance(vocabulary, Mapping):
-                vocabulary = dict((t, i) for i, t in enumerate(vocabulary))
+                vocab = {}
+                for i, t in enumerate(vocabulary):
+                    if vocab.setdefault(t, i) != i:
+                        msg = "Duplicate term in vocabulary: %r" % t
+                        raise ValueError(msg)
+                vocabulary = vocab
+            else:
+                indices = set(six.itervalues(vocabulary))
+                if len(indices) != len(vocabulary):
+                    raise ValueError("Vocabulary contains repeated indices.")
+                for i in xrange(len(vocabulary)):
+                    if i not in indices:
+                        msg = ("Vocabulary of size %d doesn't contain index "
+                                "%d." % (len(vocabulary), i))
+                        raise ValueError(msg)
             if not vocabulary:
                 raise ValueError("empty vocabulary passed to fit")
-            indices = set(six.itervalues(vocabulary))
-            if len(indices) != len(vocabulary):
-                raise ValueError("Vocabulary contains repeated indices.")
-            for i in xrange(len(vocabulary)):
-                if i not in indices:
-                    msg = "Vocabulary of size %d doesn't contain index %d."
-                    raise ValueError(msg % (len(vocabulary), i))
             self.fixed_vocabulary = True
             self.vocabulary_ = dict(vocabulary)
         else:
