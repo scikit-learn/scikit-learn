@@ -51,9 +51,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         during training.
 
     verbose : int, optional
-        The verbosity level. Enabling it (with a non-zero value) will compute 
-        the log-likelihood of each mini-batch and hence cause a runtime overhead
-        in the order of 10%.
+        The verbosity level. The default, zero, means silent mode.
 
     random_state : integer or numpy.RandomState, optional
         A random number generator instance to define the state of the
@@ -81,7 +79,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
     >>> model = BernoulliRBM(n_components=2)
     >>> model.fit(X)
     BernoulliRBM(batch_size=10, learning_rate=0.1, n_components=2, n_iter=10,
-           random_state=None, verbose=False)
+           random_state=None, verbose=0)
 
     References
     ----------
@@ -95,7 +93,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         on Machine Learning (ICML) 2008
     """
     def __init__(self, n_components=256, learning_rate=0.1, batch_size=10,
-                 n_iter=10, verbose=False, random_state=None):
+                 n_iter=10, verbose=0, random_state=None):
         self.n_components = n_components
         self.learning_rate = learning_rate
         self.batch_size = batch_size
@@ -311,21 +309,17 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         batch_slices = list(gen_even_slices(n_batches * self.batch_size,
                                             n_batches, n_samples))
         verbose = self.verbose
-        for iteration in xrange(self.n_iter):
-            pl = 0.
-            if verbose:
-                begin = time.time()
-
+        begin = time.time()
+        for iteration in xrange(1, self.n_iter + 1):
             for batch_slice in batch_slices:
-                pl_batch = self._fit(X[batch_slice], rng)
-
-                if verbose:
-                    pl += pl_batch.sum()
+                self._fit(X[batch_slice], rng)
 
             if verbose:
-                pl /= n_samples
                 end = time.time()
-                print("Iteration %d, pseudo-likelihood = %.2f, time = %.2fs"
-                      % (iteration, pl, end - begin))
+                print("[%s] Iteration %d, pseudo-likelihood = %.2f,"
+                      " time = %.2fs"
+                      % (type(self).__name__, iteration,
+                         self.score_samples(X).mean(), end - begin))
+                begin = end
 
         return self
