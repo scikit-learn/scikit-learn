@@ -1427,11 +1427,12 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
                                                  beta=beta,
                                                  labels=labels,
                                                  pos_label=pos_label,
-                                                 average=average)
+                                                 average=average,
+                                                 warn_for=('f-score',))
     return f
 
 
-def _prf_divide(numerator, denominator, metric, modifier, average):
+def _prf_divide(numerator, denominator, metric, modifier, average, warn_for):
     """Performs division and handles divide-by-zero.
 
     On zero-division, sets the corresponding result elements to zero
@@ -1456,8 +1457,17 @@ def _prf_divide(numerator, denominator, metric, modifier, average):
     if average == 'samples':
         axis0, axis1 = axis1, axis0
 
-    msg = ('{0} and F-score are ill-defined and being set to 0.0 {{0}} '
-           'no {1} {2}s.'.format(metric.title(), modifier, axis0))
+    if metric in warn_for and 'f-score' in warn_for:
+        msg_start = '{0} and F-score are'.format(metric.title())
+    elif metric in warn_for:
+        msg_start = '{0} is'.format(metric.title())
+    elif 'f-score' in warn_for:
+        msg_start = 'F-score is'
+    else:
+        return result
+
+    msg = ('{0} ill-defined and being set to 0.0 {{0}} '
+           'no {1} {2}s.'.format(msg_start, modifier, axis0))
     if len(mask) == 1:
         msg = msg.format('due to')
     else:
@@ -1467,7 +1477,9 @@ def _prf_divide(numerator, denominator, metric, modifier, average):
 
 
 def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
-                                    pos_label=1, average=None):
+                                    pos_label=1, average=None,
+                                    warn_for=('precision', 'recall',
+                                              'f-score')):
     """Compute precision, recall, F-measure and support for each class
 
     The precision is the ratio ``tp / (tp + fp)`` where ``tp`` is the number of
@@ -1531,6 +1543,9 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
             meaningful for multilabel classification where this differs from
             :func:`accuracy_score`).
 
+    warn_for : tuple or set, for internal use
+        This determines which warnings will be made in the case that this
+        function is being used to return only one of its metrics.
 
     Returns
     -------
@@ -1659,9 +1674,9 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
         # Oddly, we may get an "invalid" rather than a "divide" error
         # here.
         precision = _prf_divide(tp_sum, pred_sum,
-                                'precision', 'predicted', average)
+                                'precision', 'predicted', average, warn_for)
         recall = _prf_divide(tp_sum, true_sum,
-                             'recall', 'true', average)
+                             'recall', 'true', average, warn_for)
         # Don't need to warn for F: either P or R warned, or tp == 0 where pos
         # and true are nonzero, in which case, F is well-defined and zero
         f_score = ((1 + beta2) * precision * recall /
@@ -1766,7 +1781,8 @@ def precision_score(y_true, y_pred, labels=None, pos_label=1,
     p, _, _, _ = precision_recall_fscore_support(y_true, y_pred,
                                                  labels=labels,
                                                  pos_label=pos_label,
-                                                 average=average)
+                                                 average=average,
+                                                 warn_for=('precision',))
     return p
 
 
@@ -1841,7 +1857,8 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
     _, r, _, _ = precision_recall_fscore_support(y_true, y_pred,
                                                  labels=labels,
                                                  pos_label=pos_label,
-                                                 average=average)
+                                                 average=average,
+                                                 warn_for=('recall',))
     return r
 
 

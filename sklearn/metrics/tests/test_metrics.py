@@ -23,6 +23,7 @@ from sklearn.utils.testing import (assert_true,
                                    assert_array_equal,
                                    assert_array_almost_equal,
                                    assert_warns,
+                                   assert_no_warnings,
                                    assert_greater,
                                    ignore_warnings,
                                    assert_warns_message)
@@ -2178,6 +2179,58 @@ def test_prf_warnings():
         msg = ('Recall and F-score are ill-defined and '
                'being set to 0.0 due to no true samples.')
         my_assert(w, msg, f, [-1, -1], [1, 1], average='macro')
+
+
+def test_recall_warnings():
+    assert_no_warnings(recall_score,
+                       np.array([[1, 1], [1, 1]]),
+                       np.array([[0, 0], [0, 0]]),
+                       average='micro')
+
+    with warnings.catch_warnings(record=True) as record:
+        warnings.simplefilter('always')
+        recall_score(np.array([[0, 0], [0, 0]]),
+                     np.array([[1, 1], [1, 1]]),
+                     average='micro')
+        assert_equal(str(record.pop().message),
+                     'Recall is ill-defined and '
+                     'being set to 0.0 due to no true samples.')
+
+
+def test_precision_warnings():
+    with warnings.catch_warnings(record=True) as record:
+        warnings.simplefilter('always')
+
+        precision_score(np.array([[1, 1], [1, 1]]),
+                        np.array([[0, 0], [0, 0]]),
+                        average='micro')
+        assert_equal(str(record.pop().message),
+                     'Precision is ill-defined and '
+                     'being set to 0.0 due to no predicted samples.')
+
+    assert_no_warnings(precision_score,
+                       np.array([[0, 0], [0, 0]]),
+                       np.array([[1, 1], [1, 1]]),
+                       average='micro')
+
+
+def test_fscore_warnings():
+    with warnings.catch_warnings(record=True) as record:
+        warnings.simplefilter('always')
+
+        for score in [f1_score, partial(fbeta_score, beta=2)]:
+            score(np.array([[1, 1], [1, 1]]),
+                  np.array([[0, 0], [0, 0]]),
+                  average='micro')
+            assert_equal(str(record.pop().message),
+                         'F-score is ill-defined and '
+                         'being set to 0.0 due to no predicted samples.')
+            score(np.array([[0, 0], [0, 0]]),
+                  np.array([[1, 1], [1, 1]]),
+                  average='micro')
+            assert_equal(str(record.pop().message),
+                         'F-score is ill-defined and '
+                         'being set to 0.0 due to no true samples.')
 
 
 def test__check_clf_targets():
