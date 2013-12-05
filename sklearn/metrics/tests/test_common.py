@@ -1,8 +1,10 @@
 from __future__ import division, print_function
 
-import numpy as np
 from functools import partial
 from itertools import product
+
+import numpy as np
+import scipy.sparse as sp
 
 from sklearn.datasets import make_multilabel_classification
 from sklearn.preprocessing import LabelBinarizer, MultiLabelBinarizer
@@ -612,7 +614,6 @@ def test_multioutput_regression_invariance_to_dimension_shuffling():
 
 
 def test_multilabel_representation_invariance():
-
     # Generate some data
     n_classes = 4
     n_samples = 50
@@ -635,13 +636,15 @@ def test_multilabel_representation_invariance():
     y2_shuffle = [shuffled(x) for x in y2]
 
     # Let's have redundant labels
-    y1_redundant = [x * rng.randint(1, 4) for x in y1]
     y2_redundant = [x * rng.randint(1, 4) for x in y2]
 
     # Binary indicator matrix format
     lb = MultiLabelBinarizer().fit([range(n_classes)])
     y1_binary_indicator = lb.transform(y1)
     y2_binary_indicator = lb.transform(y2)
+
+    y1_sparse_indicator = sp.coo_matrix(y1_binary_indicator)
+    y2_sparse_indicator = sp.coo_matrix(y2_binary_indicator)
 
     y1_shuffle_binary_indicator = lb.transform(y1_shuffle)
     y2_shuffle_binary_indicator = lb.transform(y2_shuffle)
@@ -653,38 +656,16 @@ def test_multilabel_representation_invariance():
         if isinstance(metric, partial):
             metric.__module__ = 'tmp'
             metric.__name__ = name
-        # Check warning for sequence of sequences
-        measure = assert_warns(DeprecationWarning, metric, y1, y2)
-        metric = ignore_warnings(metric)
+
+        measure = metric(y1_binary_indicator, y2_binary_indicator)
 
         # Check representation invariance
-        assert_almost_equal(metric(y1_binary_indicator,
-                                   y2_binary_indicator),
+        assert_almost_equal(metric(y1_sparse_indicator,
+                                   y2_sparse_indicator),
                             measure,
                             err_msg="%s failed representation invariance  "
-                                    "between list of list of labels "
-                                    "format and dense binary indicator "
-                                    "format." % name)
-
-        with ignore_warnings():  # sequence of sequences is deprecated
-            # Check invariance with redundant labels with list of labels
-            assert_almost_equal(metric(y1, y2_redundant), measure,
-                                err_msg="%s failed rendundant label invariance"
-                                        % name)
-
-            assert_almost_equal(metric(y1_redundant, y2_redundant), measure,
-                                err_msg="%s failed rendundant label invariance"
-                                        % name)
-
-            assert_almost_equal(metric(y1_redundant, y2), measure,
-                                err_msg="%s failed rendundant label invariance"
-                                        % name)
-
-            # Check shuffling invariance with list of labels
-            assert_almost_equal(metric(y1_shuffle, y2_shuffle), measure,
-                                err_msg="%s failed shuffling invariance "
-                                        "with list of list of labels format."
-                                        % name)
+                                    "between dense and sparse indicator "
+                                    "formats." % name)
 
         # Check shuffling invariance with dense binary indicator matrix
         assert_almost_equal(metric(y1_shuffle_binary_indicator,
@@ -693,10 +674,31 @@ def test_multilabel_representation_invariance():
                                     " with dense binary indicator format."
                                     % name)
 
-        with ignore_warnings():  # sequence of sequences is deprecated
-            # Check raises error with mix input representation
-            assert_raises(ValueError, metric, y1, y2_binary_indicator)
-            assert_raises(ValueError, metric, y1_binary_indicator, y2)
+        # Check deprecation warnings related to sequence of sequences
+        deprecated_metric = partial(assert_warns, DeprecationWarning, metric)
+
+        # Check representation invariance
+        assert_almost_equal(deprecated_metric(y1, y2),
+                            measure,
+                            err_msg="%s failed representation invariance  "
+                                    "between list of list of labels "
+                                    "format and dense binary indicator "
+                                    "format." % name)
+
+        # Check invariance with redundant labels with list of labels
+        assert_almost_equal(deprecated_metric(y1, y2_redundant), measure,
+                            err_msg="%s failed rendundant label invariance"
+                                    % name)
+
+        # Check shuffling invariance with list of labels
+        assert_almost_equal(deprecated_metric(y1_shuffle, y2_shuffle), measure,
+                            err_msg="%s failed shuffling invariance "
+                                    "with list of list of labels format."
+                                    % name)
+
+        # Check raises error with mix input representation
+        assert_raises(ValueError, deprecated_metric, y1, y2_binary_indicator)
+        assert_raises(ValueError, deprecated_metric, y1_binary_indicator, y2)
 
 
 def test_normalize_option_binary_classification(n_samples=20):
