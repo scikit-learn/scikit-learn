@@ -9,11 +9,12 @@
 import time
 
 import numpy as np
+import scipy.sparse as sp
 
 from ..base import BaseEstimator
 from ..base import TransformerMixin
 from ..externals.six.moves import xrange
-from ..utils import check_arrays
+from ..utils import atleast2d_or_csr, check_arrays
 from ..utils import check_random_state
 from ..utils import gen_even_slices
 from ..utils import issparse
@@ -189,8 +190,8 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
             The value of the free energy.
         """
         return (- safe_sparse_dot(v, self.intercept_visible_)
-                - np.log(1. + np.exp(safe_sparse_dot(v, self.components_.T)
-                            + self.intercept_hidden_)).sum(axis=1))
+                - np.log1p(np.exp(safe_sparse_dot(v, self.components_.T)
+                                  + self.intercept_hidden_)).sum(axis=1))
 
     def gibbs(self, v):
         """Perform one Gibbs sampling step.
@@ -246,33 +247,40 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         h_neg[rng.uniform(size=h_neg.shape) < h_neg] = 1.0  # sample binomial
         self.h_samples_ = np.floor(h_neg, h_neg)
 
-        if self.verbose:
-            return self.score_samples(v_pos)
-
-    def score_samples(self, v):
-        """Compute the pseudo-likelihood of v.
+    def score_samples(self, X):
+        """Compute the pseudo-likelihood of X.
 
         Parameters
         ----------
-        v : {array-like, sparse matrix} shape (n_samples, n_features)
-            Values of the visible layer.
+        X : {array-like, sparse matrix} shape (n_samples, n_features)
+            Values of the visible layer. Must be all-boolean (not checked).
 
         Returns
         -------
         pseudo_likelihood : array-like, shape (n_samples,)
-            Value of the pseudo-likelihood (proxy to likelihood).
-        """
-        rng = check_random_state(self.random_state)
-        fe = self._free_energy(v)
+            Value of the pseudo-likelihood (proxy for likelihood).
 
+        Notes
+        -----
+        This method is not deterministic: it computes a quantity called the
+        free energy on X, then on a randomly corrupted version of X, and
+        returns the log of the logistic function of the difference.
+        """
+        v = atleast2d_or_csr(X)
+        rng = check_random_state(self.random_state)
+
+        # Randomly corrupt one feature in each sample in v.
+        ind = (np.arange(v.shape[0]),
+               rng.randint(0, v.shape[1], v.shape[0]))
         if issparse(v):
-            v_ = v.toarray()
+            data = -2 * v[ind] + 1
+            v_ = v + sp.csr_matrix((data.A.ravel(), ind), shape=v.shape)
         else:
             v_ = v.copy()
-        i_ = rng.randint(0, v.shape[1], v.shape[0])
-        v_[np.arange(v.shape[0]), i_] = 1 - v_[np.arange(v.shape[0]), i_]
-        fe_ = self._free_energy(v_)
+            v_[ind] = 1 - v_[ind]
 
+        fe = self._free_energy(v)
+        fe_ = self._free_energy(v_)
         return v.shape[1] * logistic_sigmoid(fe_ - fe, log=True)
 
     def fit(self, X, y=None):
