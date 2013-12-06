@@ -19,8 +19,10 @@ from sklearn.utils.testing import assert_warns
 
 from sklearn.utils.extmath import density
 from sklearn.utils.extmath import logsumexp
+from sklearn.utils.extmath import norm
 from sklearn.utils.extmath import randomized_svd
 from sklearn.utils.extmath import row_norms
+from sklearn.utils.extmath import sqnorm
 from sklearn.utils.extmath import weighted_mode
 from sklearn.utils.extmath import cartesian
 from sklearn.utils.extmath import logistic_sigmoid
@@ -123,6 +125,15 @@ def test_randomized_svd_low_rank():
     # compute the singular values of X using the fast approximate method
     Ua, sa, Va = randomized_svd(X, k)
     assert_almost_equal(s[:rank], sa[:rank])
+
+
+def test_norm():
+    X = np.random.RandomState(42).randn(100, 100)[::2]
+    X *= 100    # introduce potential instability
+    assert_true(not X.flags.contiguous)
+
+    assert_almost_equal(sqnorm(X), (X ** 2).sum(), decimal=6)
+    assert_almost_equal(np.sqrt(sqnorm(X)), norm(X), decimal=6)
 
 
 def test_row_norms():
