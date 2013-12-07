@@ -109,11 +109,13 @@ max, to be checked depending on the hardware) for the sparse input
 representation to be faster than the dense input representation on a machine
 with many CPUs and an optimized BLAS implementation.
 
-Here is sample code to test the sparsity of your input:
-    >>> from sklearn.utils.fixes import count_nonzero
-    >>> def sparsity_ratio(X):
-    >>>     return 1.0 - count_nonzero(X) / float(X.shape[0] * X.shape[1])
-    >>> print("input sparsity ratio:", sparsity_ratio(X))
+Here is sample code to test the sparsity of your input
+(requires a relatively recent NumPy for the ``count_nonzero`` function)::
+
+    from sklearn.utils.fixes import count_nonzero
+    def sparsity_ratio(X):
+        return 1.0 - np.count_nonzero(X) / float(X.shape[0] * X.shape[1])
+    print("input sparsity ratio:", sparsity_ratio(X))
 
 As a rule of thumb you can consider that if the sparsity ratio is greater
 than 90% you can probably benefit from sparse formats. Check Scipy's sparse
@@ -253,10 +255,11 @@ implementation and lead to orders of magnitude speedup over a non-optimized
 BLAS.
 
 You can display the BLAS / LAPACK implementation used by your NumPy / SciPy /
-scikit-learn install with the following commands:
-    >>> from numpy.distutils.system_info import get_info
-    >>> print(get_info('blas_opt'))
-    >>> print(get_info('lapack_opt'))
+scikit-learn install with the following commands::
+
+    from numpy.distutils.system_info import get_info
+    print(get_info('blas_opt'))
+    print(get_info('lapack_opt'))
 
 Optimized BLAS / LAPACK implementations include:
  - Atlas (need hardware specific tuning by rebuilding on the target machine)
@@ -278,10 +281,11 @@ In this context it means that we want to control the model sparsity (i.e. the
 number of non-zero coordinates in the model vectors). It is generally a good
 idea to combine model sparsity with sparse input data representation.
 
-Here is a sample code that illustrates the use of the ``sparsify()`` method:
-    >>> clf = SGDRegressor(penalty='elasticnet', l1_ratio=0.25)
-    >>> clf.fit(X_train, y_train).sparsify()
-    >>> clf.predict(X_test)
+Here is sample code that illustrates the use of the ``sparsify()`` method::
+
+    clf = SGDRegressor(penalty='elasticnet', l1_ratio=0.25)
+    clf.fit(X_train, y_train).sparsify()
+    clf.predict(X_test)
 
 In this example we prefer the ``elasticnet`` penalty as it is often a good
 compromise between model compactness and prediction power. One can also
