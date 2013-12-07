@@ -620,41 +620,43 @@ def test_classifiers_classes():
     X, y = shuffle(X, y, random_state=1)
     X = StandardScaler().fit_transform(X)
     y_names = iris.target_names[y]
-    for name, Classifier in classifiers:
-        if name in dont_test:
-            continue
-        if name in ['MultinomialNB', 'BernoulliNB']:
-            # TODO also test these!
-            continue
-        if name in ["LabelPropagation", "LabelSpreading"]:
-            # TODO some complication with -1 label
-            y_ = y
-        else:
-            y_ = y_names
+    for y_names in [y_names, y_names.astype('O')]:
+        for name, Classifier in classifiers:
+            if name in dont_test:
+                continue
+            if name in ['MultinomialNB', 'BernoulliNB']:
+                # TODO also test these!
+                continue
+            if name in ["LabelPropagation", "LabelSpreading"]:
+                # TODO some complication with -1 label
+                y_ = y
+            else:
+                y_ = y_names
 
-        classes = np.unique(y_)
-        # catch deprecation warnings
-        with warnings.catch_warnings(record=True):
-            classifier = Classifier()
-        # fit
-        try:
-            classifier.fit(X, y_)
-        except Exception as e:
-            print(e)
+            classes = np.unique(y_)
+            # catch deprecation warnings
+            with warnings.catch_warnings(record=True):
+                classifier = Classifier()
+            # fit
+            try:
+                classifier.fit(X, y_)
+            except Exception as e:
+                print(e)
 
-        y_pred = classifier.predict(X)
-        # training set performance
-        assert_array_equal(np.unique(y_), np.unique(y_pred))
-        accuracy = accuracy_score(y_, y_pred)
-        assert_greater(accuracy, 0.78,
-                       "accuracy %f of %s not greater than 0.78"
-                       % (accuracy, name))
-        #assert_array_equal(
-            #clf.classes_, classes,
-            #"Unexpected classes_ attribute for %r" % clf)
-        if np.any(classifier.classes_ != classes):
-            print("Unexpected classes_ attribute for %r: expected %s, got %s" %
-                  (classifier, classes, classifier.classes_))
+            y_pred = classifier.predict(X)
+            # training set performance
+            assert_array_equal(np.unique(y_), np.unique(y_pred))
+            accuracy = accuracy_score(y_, y_pred)
+            assert_greater(accuracy, 0.78,
+                           "accuracy %f of %s not greater than 0.78"
+                           % (accuracy, name))
+            #assert_array_equal(
+                #clf.classes_, classes,
+                #"Unexpected classes_ attribute for %r" % clf)
+            if np.any(classifier.classes_ != classes):
+                print("Unexpected classes_ attribute for %r: "
+                      "expected %s, got %s" %
+                      (classifier, classes, classifier.classes_))
 
 
 def test_classifiers_input_shapes():
