@@ -102,6 +102,10 @@ API changes summary
      The generators have produced arrays of indices by default since 0.10.
      By `Joel Nothman`_.
 
+   - 1-d arrays containing strings with ``dtype=object`` (as used in Pandas)
+     are now considered valid classification targets. This fixes a regression
+     from version 0.13 in some classifiers. By `Joel Nothman`_.
+
 .. _changes_0_14:
 
 0.14
