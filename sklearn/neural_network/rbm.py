@@ -223,11 +223,6 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
 
         rng : RandomState
             Random number generator to use for sampling.
-
-        Returns
-        -------
-        pseudo_likelihood : array-like, shape (n_samples,)
-            If verbose=True, pseudo-likelihood estimate for this batch.
         """
         h_pos = self._mean_hiddens(v_pos)
         v_neg = self._sample_visibles(self.h_samples_, rng)
