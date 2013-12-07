@@ -703,6 +703,9 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
                 del vocabulary[term]
                 removed_terms.add(term)
         kept_indices = np.where(mask)[0]
+        if len(kept_indices) == 0:
+            raise ValueError("After pruning, no terms remain. Try a lower"
+                             " min_df or a higher max_df.")
         return cscmatrix[:, kept_indices], removed_terms
 
     def _count_vocab(self, raw_documents, fixed_vocab):
