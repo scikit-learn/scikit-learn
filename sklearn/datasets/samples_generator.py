@@ -6,6 +6,7 @@ Generate samples of synthetic data sets.
 #          G. Louppe
 # License: BSD 3 clause
 
+from itertools import product
 import numbers
 import numpy as np
 from scipy import linalg
@@ -16,12 +17,6 @@ from ..utils import shuffle as util_shuffle
 from ..externals import six
 map = six.moves.map
 zip = six.moves.zip
-
-
-def _cartesian_product(x, n):
-    """Like itertools.product(x, repeat=n), but faster."""
-    # Recipe from http://stackoverflow.com/a/11146645/166749
-    return np.dstack(np.meshgrid(*([x] * n))).reshape(-1, n)
 
 
 def make_classification(n_samples=100, n_features=20, n_informative=2,
@@ -110,9 +105,6 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
     The algorithm is adapted from Guyon [1] and was designed to generate
     the "Madelon" dataset.
 
-    The time and space complexity of this function are both exponential in
-    n_informative.
-
     References
     ----------
     .. [1] I. Guyon, "Design of experiments for the NIPS 2003 variable
@@ -156,7 +148,7 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
     y = np.zeros(n_samples, dtype=np.int)
 
     # Build the polytope
-    C = _cartesian_product([-class_sep, class_sep], n_informative)
+    C = np.array(list(product([-class_sep, class_sep], repeat=n_informative)))
 
     if not hypercube:
         for k in range(n_clusters):
