@@ -397,19 +397,21 @@ def _kmeans_single(X, n_clusters, x_squared_norms, max_iter=300,
     return best_labels, best_inertia, best_centers
 
 
-def _labels_inertia_precompute_dense(X, x_squared_norms, centers):
+def _labels_inertia_precompute_dense(X, x_squared_norms, centers, distances):
     n_samples = X.shape[0]
     k = centers.shape[0]
-    distances = euclidean_distances(centers, X, x_squared_norms,
-                                    squared=True)
+    all_distances = euclidean_distances(centers, X, x_squared_norms,
+                                        squared=True)
     labels = np.empty(n_samples, dtype=np.int32)
     labels.fill(-1)
     mindist = np.empty(n_samples)
     mindist.fill(np.infty)
     for center_id in range(k):
-        dist = distances[center_id]
+        dist = all_distances[center_id]
         labels[dist < mindist] = center_id
         mindist = np.minimum(dist, mindist)
+    if n_samples == distances.shape[0]:
+        distances[:] = mindist
     inertia = mindist.sum()
     return labels, inertia
 
@@ -432,6 +434,9 @@ def _labels_inertia(X, x_squared_norms, centers,
     centers: float64 array, shape (k, n_features)
         The cluster centers.
 
+    precompute_distances : boolean, default: True
+        Precompute distances (faster but takes more memory).
+
     distances: float64 array, shape (n_samples,)
         Pre-allocated array to be filled in with each sample's distance
         to the closest center.
@@ -447,7 +452,7 @@ def _labels_inertia(X, x_squared_norms, centers,
     n_samples = X.shape[0]
     # set the default value of centers to -1 to be able to detect any anomaly
     # easily
-    labels = - np.ones(n_samples, np.int32)
+    labels = -np.ones(n_samples, np.int32)
     if distances is None:
         distances = np.zeros(shape=(0,), dtype=np.float64)
     if sp.issparse(X):
@@ -456,7 +461,7 @@ def _labels_inertia(X, x_squared_norms, centers,
     else:
         if precompute_distances:
             return _labels_inertia_precompute_dense(X, x_squared_norms,
-                                                    centers)
+                                                    centers, distances)
         inertia = _k_means._assign_labels_array(
             X, x_squared_norms, centers, labels, distances=distances)
     return labels, inertia
@@ -551,11 +556,11 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         The number of clusters to form as well as the number of
         centroids to generate.
 
-    max_iter : int
+    max_iter : int, default: 300
         Maximum number of iterations of the k-means algorithm for a
         single run.
 
-    n_init : int, optional, default: 10
+    n_init : int, default: 10
         Number of time the k-means algorithm will be run with different
         centroid seeds. The final results will be the best output of
         n_init consecutive runs in terms of inertia.
@@ -573,15 +578,16 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         If an ndarray is passed, it should be of shape (n_clusters, n_features)
         and gives the initial centers.
 
-    precompute_distances : boolean
+    precompute_distances : boolean, default: True
         Precompute distances (faster but takes more memory).
 
-    tol : float, optional default: 1e-4
+    tol : float, default: 1e-4
         Relative tolerance with regards to inertia to declare convergence
 
-    n_jobs : int
-        The number of jobs to use for the computation. This works by computing
-        each of the n_init runs in parallel.
+    n_jobs : int, default: 1
+        The number of jobs to use for the computation. This works by breaking
+        down the pairwise matrix into n_jobs even slices and computing them in
+        parallel.
 
         If -1 all CPUs are used. If 1 is given, no parallel computing code is
         used at all, which is useful for debugging. For n_jobs below -1,
@@ -1169,7 +1175,7 @@ class MiniBatchKMeans(KMeans):
             batch_inertia, centers_squared_diff = _mini_batch_step(
                 X_valid, x_squared_norms[validation_indices],
                 cluster_centers, counts, old_center_buffer, False,
-                distances=distances, verbose=self.verbose)
+                distances=None, verbose=self.verbose)
 
             # Keep only the best cluster centers across independent inits on
             # the common validation set
