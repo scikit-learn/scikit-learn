@@ -367,7 +367,7 @@ def test_minibatch_reassign():
                              mb_k_means.cluster_centers_,
                              mb_k_means.counts_,
                              np.zeros(X.shape[1], np.double),
-                             False, distances=np.zeros(n_clusters),
+                             False, distances=np.zeros(X.shape[0]),
                              random_reassign=True, random_state=42,
                              reassignment_ratio=1, verbose=True)
         finally:
@@ -390,7 +390,7 @@ def test_minibatch_reassign():
                          mb_k_means.cluster_centers_,
                          mb_k_means.counts_,
                          np.zeros(X.shape[1], np.double),
-                         False, distances=np.zeros(n_clusters),
+                         False, distances=np.zeros(X.shape[0]),
                          random_reassign=True, random_state=42,
                          reassignment_ratio=1e-15)
 
