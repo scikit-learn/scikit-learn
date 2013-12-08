@@ -31,7 +31,8 @@ from . import cd_fast
 # Paths functions
 
 def _alpha_grid(X, y, Xy=None, l1_ratio=1.0, fit_intercept=True,
-                eps=1e-3, n_alphas=100, normalize=False, copy_X=True):
+                eps=1e-3, n_alphas=100, normalize=False, copy_X=True,
+                multi_output=False):
     """ Compute the grid of alpha values for elastic net parameter search
 
     Parameters
@@ -67,6 +68,10 @@ def _alpha_grid(X, y, Xy=None, l1_ratio=1.0, fit_intercept=True,
 
     copy_X : boolean, optional, default True
         If ``True``, X will be copied; else, it may be overwritten.
+
+    multi_output : boolean, optional, default False
+        If ``True``, alpha_max would be calculated assuming y to be
+        multi_output.
     """
     if Xy is None:
         X = atleast2d_or_csc(X, copy=(copy_X and fit_intercept and not
@@ -81,7 +86,11 @@ def _alpha_grid(X, y, Xy=None, l1_ratio=1.0, fit_intercept=True,
     else:
         n_samples = len(y)
 
-    alpha_max = np.abs(Xy).max() / (n_samples * l1_ratio)
+    if multi_output:
+        alpha_max = np.sqrt(np.sum(Xy**2, axis=1)).max() / (
+                            n_samples * l1_ratio)
+    else:
+        alpha_max = np.abs(Xy).max() / (n_samples * l1_ratio)
     alphas = np.logspace(np.log10(alpha_max * eps), np.log10(alpha_max),
                          num=n_alphas)[::-1]
     return alphas
@@ -901,29 +910,26 @@ def _path_residuals(X, y, train, test, path, path_params, l1_ratio=1,
     alphas, coefs, _ = path(X_train, y[train], **path_params)
     del X_train
 
-    n_samples, n_features = X_test.shape
-    n_alphas = len(alphas)
-
-    if n_outputs == 1:
-        coefs = coefs[np.newaxis, : , :]
-        y_mean = np.atleast_1d(y_mean)
-        y_test = y_test[np.newaxis, :]
-
     if normalize:
         nonzeros = np.flatnonzero(X_std)
-        for i, in xrange(n_outputs):
-            coefs[i][nonzeros] /= X_std[nonzeros][:, np.newaxis]
+        if n_outputs == 1:
+            coefs[:, nonzeros] /= X_std[nonzeros][:, np.newaxis]
+        else:
+            coefs[nonzeros] /= X_std[nonzeros][:, np.newaxis]
 
-    residues = np.zeros([n_samples, n_alphas])
-    for i in xrange(n_outputs):
-        # Macroaveraging in case of multitask outputs.
-        intercepts = y_mean[i] - np.dot(X_mean, coefs[i])
-        residues += safe_sparse_dot(X_test, coefs[i]) - \
-                                   y_test[:, i][:, np.newaxis]
+    if n_outputs == 1:
+        intercepts = y_mean - np.dot(X_mean, coefs)
+        residues = safe_sparse_dot(X_test, coefs) - y_test[:, np.newaxis]
         residues += intercepts[np.newaxis, :]
-    this_mses = (residues ** 2).mean(axis=0)
+        this_mses = (residues ** 2).mean(axis=0)
+    else:
+        intercepts = y_mean[:, np.newaxis] - np.dot(X_mean, coefs)
+        residues = safe_sparse_dot(X_test, coefs) - y_test[:, :, np.newaxis]
+        residues += intercepts
+        this_mses = ((residues ** 2).mean(axis=0)).mean(axis=0)
 
     return this_mses, l1_ratio
+
 
 class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
     """Base class for iterative model fitting along a regularization path"""
@@ -1665,10 +1671,10 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
            n_jobs=1, normalize=False, precompute='auto', tol=0.0001,
            verbose=0)
     >>> print(clf.coef_)
-    [[ 0.56711798  0.43174317]
-     [ 0.56711798  0.43174317]]
+    [[ 0.52875032  0.46958558]
+     [ 0.52875032  0.46958558]]
     >>> print(clf.intercept_)
-    [ 0.00113885  0.0872422]
+    [ 0.00166409,  0.00166409]
 
     See also
     --------
@@ -1746,7 +1752,6 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
             path_params['l1_ratio'] = l1_ratios[0]
         else:
             l1_ratios = [1, ]
-
         alphas = self.alphas
         if alphas is None:
             mean_l1_ratio = 1.
@@ -1756,7 +1761,8 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
                                  fit_intercept=self.fit_intercept,
                                  eps=self.eps, n_alphas=self.n_alphas,
                                  normalize=self.normalize,
-                                 copy_X=self.copy_X)
+                                 copy_X=self.copy_X,
+                                 multi_output=True)
         n_alphas = len(alphas)
         path_params.update({'alphas': alphas, 'n_alphas': n_alphas})
 
