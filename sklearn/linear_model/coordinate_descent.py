@@ -910,23 +910,20 @@ def _path_residuals(X, y, train, test, path, path_params, l1_ratio=1,
     alphas, coefs, _ = path(X_train, y[train], **path_params)
     del X_train
 
+    if n_outputs == 1:
+        # Doing this so that it becomes coherent with multioutput.
+        coefs = coefs[np.newaxis, :, :]
+        y_mean = np.atleast_1d(y_mean)
+        y_test = np.atleast_2d(y_test)
+
     if normalize:
         nonzeros = np.flatnonzero(X_std)
-        if n_outputs == 1:
-            coefs[:, nonzeros] /= X_std[nonzeros][:, np.newaxis]
-        else:
-            coefs[nonzeros] /= X_std[nonzeros][:, np.newaxis]
+        coefs[:, nonzeros] /= X_std[nonzeros][:, np.newaxis]
 
-    if n_outputs == 1:
-        intercepts = y_mean - np.dot(X_mean, coefs)
-        residues = safe_sparse_dot(X_test, coefs) - y_test[:, np.newaxis]
-        residues += intercepts[np.newaxis, :]
-        this_mses = (residues ** 2).mean(axis=0)
-    else:
-        intercepts = y_mean[:, np.newaxis] - np.dot(X_mean, coefs)
-        residues = safe_sparse_dot(X_test, coefs) - y_test[:, :, np.newaxis]
-        residues += intercepts
-        this_mses = ((residues ** 2).mean(axis=0)).mean(axis=0)
+    intercepts = y_mean[:, np.newaxis] - np.dot(X_mean, coefs)
+    residues = safe_sparse_dot(X_test, coefs) - y_test[:, :, np.newaxis]
+    residues += intercepts
+    this_mses = ((residues ** 2).mean(axis=0)).mean(axis=0)
 
     return this_mses, l1_ratio
 
