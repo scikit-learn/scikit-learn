@@ -63,19 +63,19 @@ def choice(a, size=None, replace=True, p=None, random_state=None):
     ---------
     Generate a uniform random sample from np.arange(5) of size 3:
 
-    >>> np.random.choice(5, 3)
+    >>> np.random.choice(5, 3)  # doctest: +SKIP
     array([0, 3, 4])
     >>> #This is equivalent to np.random.randint(0,5,3)
 
     Generate a non-uniform random sample from np.arange(5) of size 3:
 
-    >>> np.random.choice(5, 3, p=[0.1, 0, 0.3, 0.6, 0])
+    >>> np.random.choice(5, 3, p=[0.1, 0, 0.3, 0.6, 0])  # doctest: +SKIP
     array([3, 3, 0])
 
     Generate a uniform random sample from np.arange(5) of size 3 without
     replacement:
 
-    >>> np.random.choice(5, 3, replace=False)
+    >>> np.random.choice(5, 3, replace=False)  # doctest: +SKIP
     array([3,1,0])
     >>> #This is equivalent to np.random.shuffle(np.arange(5))[:3]
 
@@ -83,6 +83,7 @@ def choice(a, size=None, replace=True, p=None, random_state=None):
     3 without replacement:
 
     >>> np.random.choice(5, 3, replace=False, p=[0.1, 0, 0.3, 0.6, 0])
+    ... # doctest: +SKIP
     array([2, 3, 0])
 
     Any of the above can be repeated with an arbitrary array-like
@@ -90,6 +91,7 @@ def choice(a, size=None, replace=True, p=None, random_state=None):
 
     >>> aa_milne_arr = ['pooh', 'rabbit', 'piglet', 'Christopher']
     >>> np.random.choice(aa_milne_arr, 5, p=[0.5, 0.1, 0.1, 0.3])
+    ... # doctest: +SKIP
     array(['pooh', 'pooh', 'pooh', 'Christopher', 'piglet'],
     dtype='|S11')
 
