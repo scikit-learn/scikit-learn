@@ -6,7 +6,7 @@ Generate samples of synthetic data sets.
 #          G. Louppe
 # License: BSD 3 clause
 
-from itertools import product
+import random
 import numbers
 import numpy as np
 from scipy import linalg
@@ -17,6 +17,18 @@ from ..utils import shuffle as util_shuffle
 from ..externals import six
 map = six.moves.map
 zip = six.moves.zip
+
+
+def _hypercube(samples, dimensions, random_seed):
+    """Returns distinct binary samples of length dimensions
+    """
+    rng = random.Random(random_seed)
+    if dimensions > 30:
+        return np.hstack([_hypercube(samples, dimensions - 30, rng.random()),
+                          _hypercube(samples, 30, rng.random())])
+    out = np.array(rng.sample(xrange(2 ** dimensions), samples), dtype='>u4')
+    out = np.unpackbits(out.view('>u1')).reshape((-1, 32))[:, -dimensions:]
+    return out
 
 
 def make_classification(n_samples=100, n_features=20, n_informative=2,
@@ -148,10 +160,9 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
     y = np.zeros(n_samples, dtype=np.int)
 
     # Build the polytope
-    C = np.array(list(product([-class_sep, class_sep], repeat=n_informative)))
-
-    generator.shuffle(C)
-
+    C = _hypercube(n_clusters, n_informative, generator.rand())
+    C *= 2 * class_sep
+    C -= class_sep
     if not hypercube:
         C[:n_clusters] *= generator.rand(n_clusters, 1)
         C *= generator.rand(1, n_informative)
