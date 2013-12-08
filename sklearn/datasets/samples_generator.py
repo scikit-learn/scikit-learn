@@ -150,14 +150,11 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
     # Build the polytope
     C = np.array(list(product([-class_sep, class_sep], repeat=n_informative)))
 
-    if not hypercube:
-        for k in range(n_clusters):
-            C[k, :] *= generator.rand()
-
-        for f in range(n_informative):
-            C[:, f] *= generator.rand()
-
     generator.shuffle(C)
+
+    if not hypercube:
+        C[:n_clusters] *= generator.rand(n_clusters, 1)
+        C *= generator.rand(1, n_informative)
 
     # Loop over all clusters
     pos = 0
