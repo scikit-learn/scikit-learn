@@ -26,6 +26,7 @@ from ..utils import check_random_state
 from ..utils import atleast2d_or_csr
 from ..utils import as_float_array
 from ..utils import gen_batches
+from ..utils.random import choice
 from ..externals.joblib import Parallel
 from ..externals.joblib import delayed
 
@@ -847,8 +848,12 @@ def _mini_batch_step(X, x_squared_norms, centers, counts,
             # Pick new clusters amongst observations with probability
             # proportional to their closeness to their center.
             # Flip the ordering of the distances.
-            distances -= distances.max()
             distances *= -1
+            distances -= distances.min()
+            distances /= distances.sum()
+
+            new_centers = choice(X.shape[0], replace=False, p=distances,
+                                 size=n_reassigns)
             rand_vals = random_state.rand(n_reassigns)
             rand_vals *= distances.sum()
             new_centers = np.searchsorted(distances.cumsum(),
