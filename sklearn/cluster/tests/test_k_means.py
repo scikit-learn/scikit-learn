@@ -323,16 +323,14 @@ def test_minibatch_sensible_reassign_fit():
                                  verbose=10, init="random")
     mb_k_means.fit(zeroed_X)
     # there should be only one exact zero cluster center
-    center_norms = np.sum(mb_k_means.cluster_centers_ ** 2, axis=1)
-    assert_equal(np.sum(center_norms == 0), 1)
+    assert_equal(mb_k_means.cluster_centers_.any(axis=1).sum(), 19)
 
     # do the same with batch-size > X.shape[0] (regression test)
     mb_k_means = MiniBatchKMeans(n_clusters=20, batch_size=201,
                                  random_state=42, verbose=10, init="random")
     mb_k_means.fit(zeroed_X)
     # there should be only one exact zero cluster center
-    center_norms = np.sum(mb_k_means.cluster_centers_ ** 2, axis=1)
-    assert_equal(np.sum(center_norms == 0), 1)
+    assert_equal(mb_k_means.cluster_centers_.any(axis=1).sum(), 19)
 
 
 def test_minibatch_sensible_reassign_partial_fit():
@@ -346,8 +344,7 @@ def test_minibatch_sensible_reassign_partial_fit():
         mb_k_means.partial_fit(zeroed_X)
     print(mb_k_means.cluster_centers_)
     # there should be only one exact zero cluster center
-    center_norms = np.sum(mb_k_means.cluster_centers_ ** 2, axis=1)
-    assert_equal(np.sum(center_norms == 0), 1)
+    assert_equal(mb_k_means.cluster_centers_.any(axis=1).sum(), 19)
 
 
 def test_minibatch_reassign():
