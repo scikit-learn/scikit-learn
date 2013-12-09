@@ -784,7 +784,7 @@ performance.
 Polynomial Regression: Extending Linear Models with Basis Functions
 ===================================================================
 
-.. currentmodule:: sklearn.linear_model
+.. currentmodule:: sklearn.preprocessing
 
 One common pattern within machine learning is to use linear models trained
 on nonlinear functions of the data.  This approach maintains the generally
@@ -845,7 +845,7 @@ The features of ``X`` have been transformed from :math:`[x_1, x_2]` to
 :math:`[1, x_1, x_2, x_1^2, x_1 x_1, x_2^2]`, and can now be used within
 any linear model.
 
-This sort of preprocessing can be streamlined with the pipeline_ tools.
+This sort of preprocessing can be streamlined with the :ref:` Pipeline pipeline` tools.
 A single object representing a simple polynomial regression can be
 created and used as follows:
 
