@@ -778,8 +778,19 @@ performance.
 
   * :ref:`example_linear_model_plot_ransac.py`
 
+.. topic:: References:
+
+ * http://en.wikipedia.org/wiki/RANSAC
+ * `"Random Sample Consensus: A Paradigm for Model Fitting with Applications to
+   Image Analysis and Automated Cartography"
+   <http://www.cs.columbia.edu/~belhumeur/courses/compPhoto/ransac.pdf>`_
+   Martin A. Fischler and Robert C. Bolles - SRI International (1981)
+ * `"Performance Evaluation of RANSAC Family"
+   <http://www.bmva.org/bmvc/2009/Papers/Paper355/Paper355.pdf>`_
+   Sunglok Choi, Taemin Kim and Wonpil Yu - BMVC (2009)
 
 
+.. _polynomial_regression:
 
 Polynomial Regression: Extending Linear Models with Basis Functions
 ===================================================================
@@ -792,13 +803,14 @@ fast performance of linear methods, while allowing them to fit a much wider
 range of data.
 
 For example, a simple linear regression can be extended by constructing
-**polynomial features** from the coefficients.  In the standard non-polynomial
-case, you might have a model that looks like this for two-dimensional data:
+**polynomial features** from the coefficients.  In the standard linear
+regression case, you might have a model that looks like this for
+two-dimensional data:
 
 .. math::    \hat{y}(w, x) = w_0 + w_1 x_1 + w_2 x_2
 
-If we create order-2 polynomial features, the model can be extended to look
-like this:
+If we want to fit a paraboloid to the data instead of a plane, we can combine
+the features in second-order polynomials, so that the model looks like this:
 
 .. math::    \hat{y}(w, x) = w_0 + w_1 x_1 + w_2 x_2 + w_3 x_1 x_2 + w_4 x_1^2 + w_5 x_2^2
 
@@ -842,19 +854,19 @@ of a given degree.  It can be used as follows:
            [ 1,  4,  5, 16, 20, 25]])
 
 The features of ``X`` have been transformed from :math:`[x_1, x_2]` to
-:math:`[1, x_1, x_2, x_1^2, x_1 x_1, x_2^2]`, and can now be used within
+:math:`[1, x_1, x_2, x_1^2, x_1 x_2, x_2^2]`, and can now be used within
 any linear model.
 
-This sort of preprocessing can be streamlined with the :ref:` Pipeline pipeline` tools.
-A single object representing a simple polynomial regression can be
-created and used as follows:
+This sort of preprocessing can be streamlined with the
+:ref:`Pipeline <pipeline>` tools. A single object representing a simple
+polynomial regression can be created and used as follows:
 
     >>> from sklearn.preprocessing import PolynomialFeatures
     >>> from sklearn.linear_model import LinearRegression
     >>> from sklearn.pipeline import Pipeline
     >>> model = Pipeline([('poly', PolynomialFeatures(degree=3)),
     ...                   ('linear', LinearRegression(fit_intercept=False))])
-    >>> # fit to order-3 polynomial data
+    >>> # fit to an order-3 polynomial data
     >>> x = np.arange(5)
     >>> y = 3 - 2 * x + x ** 2 - x ** 3
     >>> model = model.fit(x[:, np.newaxis], y)
@@ -863,14 +875,3 @@ created and used as follows:
 
 The linear model trained on polynomial features is able to exactly recover
 the input polynomial coefficients.
-
-.. topic:: References:
-
- * http://en.wikipedia.org/wiki/RANSAC
- * `"Random Sample Consensus: A Paradigm for Model Fitting with Applications to
-   Image Analysis and Automated Cartography"
-   <http://www.cs.columbia.edu/~belhumeur/courses/compPhoto/ransac.pdf>`_
-   Martin A. Fischler and Robert C. Bolles - SRI International (1981)
- * `"Performance Evaluation of RANSAC Family"
-   <http://www.bmva.org/bmvc/2009/Papers/Paper355/Paper355.pdf>`_
-   Sunglok Choi, Taemin Kim and Wonpil Yu - BMVC (2009)
