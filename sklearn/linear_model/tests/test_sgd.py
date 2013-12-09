@@ -139,20 +139,6 @@ class CommonTest(object):
     def test_warm_start_optimal(self):
         self._test_warm_start(X, Y, "optimal")
 
-    def test_warm_start_multiclass(self):
-        self._test_warm_start(X2, Y2, "optimal")
-
-    def test_multiple_fit(self):
-        """Test multiple calls of fit w/ different shaped inputs."""
-        clf = self.factory(alpha=0.01, n_iter=5,
-                           shuffle=False)
-        clf.fit(X, Y)
-        assert_true(hasattr(clf, "coef_"))
-
-        # Non-regression test: try fitting with a different label set.
-        y = [["ham", "spam"][i] for i in LabelEncoder().fit_transform(Y)]
-        clf.fit(X[:, :-1], y)
-
     def test_input_format(self):
         """Input format tests. """
         clf = self.factory(alpha=0.01, n_iter=5,
@@ -628,6 +614,20 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         clf.fit(X, Y)
         assert_equal(1.0, np.mean(clf.predict(X) == Y))
 
+    def test_warm_start_multiclass(self):
+        self._test_warm_start(X2, Y2, "optimal")
+
+    def test_multiple_fit(self):
+        """Test multiple calls of fit w/ different shaped inputs."""
+        clf = self.factory(alpha=0.01, n_iter=5,
+                           shuffle=False)
+        clf.fit(X, Y)
+        assert_true(hasattr(clf, "coef_"))
+
+        # Non-regression test: try fitting with a different label set.
+        y = [["ham", "spam"][i] for i in LabelEncoder().fit_transform(Y)]
+        clf.fit(X[:, :-1], y)
+
 
 class SparseSGDClassifierTestCase(DenseSGDClassifierTestCase):
     """Run exactly the same tests using the sparse representation variant"""
@@ -638,7 +638,7 @@ class SparseSGDClassifierTestCase(DenseSGDClassifierTestCase):
 ###############################################################################
 # Regression Test Case
 
-class DenseSGDRegressorTestCase(unittest.TestCase):
+class DenseSGDRegressorTestCase(unittest.TestCase, CommonTest):
     """Test suite for the dense representation variant of SGD"""
 
     factory = SGDRegressor
@@ -811,3 +811,19 @@ class SparseSGDRegressorTestCase(DenseSGDRegressorTestCase):
     """Run exactly the same tests using the sparse representation variant"""
 
     factory = SparseSGDRegressor
+
+
+def test_l1_ratio():
+    """Test if l1 ratio extremes match L1 and L2 penalty settings. """
+    X, y = datasets.make_classification(n_samples=1000, n_features=100, n_informative=20,
+                                        random_state=1234)
+
+    # test if elasticnet with l1_ratio near 1 gives same result as pure l1
+    est_en = SGDClassifier(alpha=0.001, penalty='elasticnet', l1_ratio=0.9999999999).fit(X, y)
+    est_l1 = SGDClassifier(alpha=0.001, penalty='l1').fit(X, y)
+    assert_array_almost_equal(est_en.coef_, est_l1.coef_)
+
+    # test if elasticnet with l1_ratio near 0 gives same result as pure l2
+    est_en = SGDClassifier(alpha=0.001, penalty='elasticnet', l1_ratio=0.0000000001).fit(X, y)
+    est_l2 = SGDClassifier(alpha=0.001, penalty='l2').fit(X, y)
+    assert_array_almost_equal(est_en.coef_, est_l2.coef_)

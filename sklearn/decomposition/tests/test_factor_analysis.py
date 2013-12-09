@@ -2,10 +2,9 @@
 #         Alexandre Gramfort <alexandre.gramfort@inria.fr>
 # Licence: BSD3
 
-import warnings
 import numpy as np
 
-from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_less
@@ -69,16 +68,11 @@ def test_factor_analysis():
     fa1, fa2 = fas
     for attr in ['loglike_', 'components_', 'noise_variance_']:
         assert_almost_equal(f(fa1, attr), f(fa2, attr))
-    with warnings.catch_warnings(record=True) as w:
-        warnings.simplefilter('always', ConvergenceWarning)
-        fa1.max_iter = 1
-        fa1.verbose = True
-        fa1.fit(X)
-        assert_true(w[-1].category == ConvergenceWarning)
 
-        warnings.simplefilter('always', DeprecationWarning)
-        FactorAnalysis(verbose=1)
-        assert_true(w[-1].category == DeprecationWarning)
+    fa1.max_iter = 1
+    fa1.verbose = True
+    assert_warns(ConvergenceWarning, fa1.fit, X)
+    assert_warns(DeprecationWarning, FactorAnalysis, verbose=1)
 
     # Test get_covariance and get_precision with n_components == n_features
     # with n_components < n_features and with n_components == 0

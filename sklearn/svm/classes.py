@@ -178,7 +178,7 @@ class SVC(BaseSVC):
         Ignored by all other kernels.
 
     gamma : float, optional (default=0.0)
-        Kernel coefficient for 'rbf', 'poly' and 'sigm'.
+        Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
         If gamma is 0.0 then 1/n_features will be used instead.
 
     coef0 : float, optional (default=0.0)
@@ -658,16 +658,17 @@ class OneClassSVM(BaseLibSVM):
         vectors. Should be in the interval (0, 1]. By default 0.5
         will be taken.
 
-    degree : int, optional
-        Degree of kernel function. Significant only in poly, rbf, sigmoid.
+    degree : int, optional (default=3)
+        Degree of the polynomial kernel function ('poly').
+        Ignored by all other kernels.
 
     gamma : float, optional (default=0.0)
-        kernel coefficient for rbf and poly, if gamma is 0.0 then 1/n_features
-        will be taken.
+        Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
+        If gamma is 0.0 then 1/n_features will be used instead.
 
-    coef0 : float, optional
-        Independent term in kernel function. It is only significant in
-        poly/sigmoid.
+    coef0 : float, optional (default=0.0)
+        Independent term in kernel function.
+        It is only significant in 'poly' and 'sigmoid'.
 
     tol : float, optional
         Tolerance for stopping criterion.

@@ -8,6 +8,40 @@ function raw specifications may not be enough to give full guidelines on their
 uses.
 
 
+.. _base_ref:
+
+:mod:`sklearn.base`: Base classes and utility functions
+=======================================================
+
+.. automodule:: sklearn.base
+    :no-members:
+    :no-inherited-members:
+
+Base classes
+------------
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   base.BaseEstimator
+   base.ClassifierMixin
+   base.ClusterMixin
+   base.RegressorMixin
+   base.TransformerMixin
+
+Functions
+---------
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   base.clone
+
+
 .. _cluster_ref:
 
 :mod:`sklearn.cluster`: Clustering

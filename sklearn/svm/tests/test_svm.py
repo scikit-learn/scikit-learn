@@ -4,7 +4,6 @@ Testing for Support Vector Machine module (sklearn.svm)
 TODO: remove hard coded numerical results when possible
 """
 
-import warnings
 import numpy as np
 from numpy.testing import (assert_array_equal, assert_array_almost_equal,
                            assert_almost_equal)
@@ -18,6 +17,8 @@ from sklearn.utils import check_random_state
 from sklearn.utils import ConvergenceWarning
 from sklearn.utils.fixes import unique
 from sklearn.utils.testing import assert_greater, assert_less
+from sklearn.utils.testing import assert_warns
+
 
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
@@ -640,7 +641,7 @@ def test_svc_clone_with_callable_kernel():
 
     assert_array_almost_equal(svm_cloned.predict_proba(iris.data),
                               svm_builtin.predict_proba(iris.data),
-                              decimal=4)
+                               decimal=4)
     assert_array_almost_equal(svm_cloned.decision_function(iris.data),
                               svm_builtin.decision_function(iris.data))
 
@@ -653,14 +654,7 @@ def test_svc_bad_kernel():
 def test_timeout():
     a = svm.SVC(kernel=lambda x, y: np.dot(x, y.T), probability=True,
                 random_state=0, max_iter=1)
-    with warnings.catch_warnings(record=True) as foo:
-        # Hackish way to reset the  warning counter
-        from sklearn.svm import base
-        base.__warningregistry__ = {}
-        warnings.simplefilter("always")
-        a.fit(X, Y)
-        assert_equal(len(foo), 1, msg=foo)
-        assert_equal(foo[0].category, ConvergenceWarning, msg=foo[0].category)
+    assert_warns(ConvergenceWarning, a.fit, X, Y)
 
 
 def test_consistent_proba():

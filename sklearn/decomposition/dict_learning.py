@@ -18,7 +18,7 @@ from ..base import BaseEstimator, TransformerMixin
 from ..externals.joblib import Parallel, delayed, cpu_count
 from ..externals.six.moves import zip
 from ..utils import array2d, check_random_state, gen_even_slices
-from ..utils.extmath import randomized_svd
+from ..utils.extmath import randomized_svd, row_norms
 from ..linear_model import Lasso, orthogonal_mp_gram, LassoLars, Lars
 
 
@@ -127,9 +127,9 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
                     np.maximum(np.abs(cov) - regularization, 0)).T)
 
     elif algorithm == 'omp':
-        norms_squared = np.sum((X ** 2), axis=1)
         new_code = orthogonal_mp_gram(gram, cov, regularization, None,
-                                      norms_squared, copy_Xy=copy_cov).T
+                                      row_norms(X, squared=True),
+                                      copy_Xy=copy_cov).T
     else:
         raise ValueError('Sparse coding method must be "lasso_lars" '
                          '"lasso_cd",  "lasso", "threshold" or "omp", got %s.'
@@ -487,7 +487,8 @@ def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
 def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
                          return_code=True, dict_init=None, callback=None,
                          batch_size=3, verbose=False, shuffle=True, n_jobs=1,
-                         method='lars', iter_offset=0, random_state=None):
+                         method='lars', iter_offset=0, random_state=None,
+                         return_inner_stats=False, inner_stats=None):
     """Solves a dictionary learning matrix factorization problem online.
 
     Finds the best dictionary and the corresponding sparse code for
@@ -550,6 +551,19 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
     random_state : int or RandomState
         Pseudo number generator state used for random sampling.
 
+    return_inner_stats : boolean, optional
+        Return the inner statistics A (dictionary covariance) and B
+        (data approximation). Useful to restart the algorithm in an
+        online setting. If return_inner_stats is True, return_code is
+        ignored
+
+    inner_stats : tuple of (A, B) ndarrays
+        Inner sufficient statistics that are kept by the algorithm.
+        Passing them at initialization is useful in online settings, to
+        avoid loosing the history of the evolution.
+        A (n_components, n_components) is the dictionary covariance matrix.
+        B (n_features, n_components) is the data approximation matrix
+
     Returns
     -------
     code : array of shape (n_samples, n_components),
@@ -608,9 +622,13 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
     batches = itertools.cycle(batches)
 
     # The covariance of the dictionary
-    A = np.zeros((n_components, n_components))
-    # The data approximation
-    B = np.zeros((n_features, n_components))
+    if inner_stats is None:
+        A = np.zeros((n_components, n_components))
+        # The data approximation
+        B = np.zeros((n_features, n_components))
+    else:
+        A = inner_stats[0].copy()
+        B = inner_stats[1].copy()
 
     for ii, this_X in zip(range(iter_offset, iter_offset + n_iter), batches):
         dt = (time.time() - t0)
@@ -647,6 +665,8 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
         if callback is not None:
             callback(locals())
 
+    if return_inner_stats:
+        return dictionary.T, (A, B)
     if return_code:
         if verbose > 1:
             print('Learning code...', end=' ')
@@ -1035,6 +1055,16 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
     `components_` : array, [n_components, n_features]
         components extracted from the data
 
+    `inner_stats_` : tuple of (A, B) ndarrays
+        Internal sufficient statistics that are kept by the algorithm.
+        Keeping them is useful in online settings, to avoid loosing the
+        history of the evolution, but they shouldn't have any use for the
+        end user.
+        A (n_components, n_components) is the dictionary covariance matrix.
+        B (n_features, n_components) is the data approximation matrix
+
+
+
     Notes
     -----
     **References:**
@@ -1090,18 +1120,23 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
         else:
             n_components = self.n_components
 
-        U = dict_learning_online(X, n_components, self.alpha,
+        U, (A, B) = dict_learning_online(X, n_components, self.alpha,
                                  n_iter=self.n_iter, return_code=False,
                                  method=self.fit_algorithm,
                                  n_jobs=self.n_jobs,
                                  dict_init=self.dict_init,
                                  batch_size=self.batch_size,
                                  shuffle=self.shuffle, verbose=self.verbose,
-                                 random_state=random_state)
+                                 random_state=random_state,
+                                 return_inner_stats=True)
         self.components_ = U
+        # Keep track of the state of the algorithm to be able to do
+        # some online fitting (partial_fit)
+        self.inner_stats_ = (A, B)
+        self.iter_offset_ = self.n_iter
         return self
 
-    def partial_fit(self, X, y=None, iter_offset=0):
+    def partial_fit(self, X, y=None, iter_offset=None):
         """Updates the model using the data in X as a mini-batch.
 
         Parameters
@@ -1110,25 +1145,41 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
             Training vector, where n_samples in the number of samples
             and n_features is the number of features.
 
+        iter_offset: integer, optional
+            The number of iteration on data batches that has been
+            performed before this call to partial_fit. This is optional:
+            if no number is passed, the memory of the object is
+            used.
+
         Returns
         -------
         self : object
             Returns the instance itself.
         """
-        if not hasattr(self.random_state_):
+        if not hasattr(self, 'random_state_'):
             self.random_state_ = check_random_state(self.random_state)
         X = array2d(X)
         if hasattr(self, 'components_'):
             dict_init = self.components_
         else:
             dict_init = self.dict_init
-        U = dict_learning_online(X, self.n_components, self.alpha,
+        inner_stats = getattr(self, 'inner_stats_', None)
+        if iter_offset is None:
+            iter_offset = getattr(self, 'iter_offset_', 0)
+        U, (A, B) = dict_learning_online(X, self.n_components, self.alpha,
                                  n_iter=self.n_iter,
                                  method=self.fit_algorithm,
                                  n_jobs=self.n_jobs, dict_init=dict_init,
                                  batch_size=len(X), shuffle=False,
                                  verbose=self.verbose, return_code=False,
                                  iter_offset=iter_offset,
-                                 random_state=self.random_state_)
+                                 random_state=self.random_state_,
+                                 return_inner_stats=True,
+                                 inner_stats=inner_stats)
         self.components_ = U
+
+        # Keep track of the state of the algorithm to be able to do
+        # some online fitting (partial_fit)
+        self.inner_stats_ = (A, B)
+        self.iter_offset_ = iter_offset + self.n_iter
         return self

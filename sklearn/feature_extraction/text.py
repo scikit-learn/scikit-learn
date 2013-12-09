@@ -797,10 +797,10 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
             n_doc = X.shape[0]
             max_doc_count = (max_df
                              if isinstance(max_df, numbers.Integral)
-                             else int(round(max_df * n_doc)))
+                             else max_df * n_doc)
             min_doc_count = (min_df
                              if isinstance(min_df, numbers.Integral)
-                             else int(round(min_df * n_doc)))
+                             else min_df * n_doc)
             if max_doc_count < min_doc_count:
                 raise ValueError(
                     "max_df corresponds to < documents than min_df")

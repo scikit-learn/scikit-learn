@@ -49,7 +49,7 @@ dont_test = ['SparseCoder', 'EllipticEnvelope', 'EllipticEnvelop',
              'DictVectorizer', 'LabelBinarizer', 'LabelEncoder',
              'TfidfTransformer', 'IsotonicRegression', 'OneHotEncoder',
              'RandomTreesEmbedding', 'FeatureHasher', 'DummyClassifier',
-             'DummyRegressor', 'TruncatedSVD']
+             'DummyRegressor', 'TruncatedSVD', 'PolynomialFeatures']
 
 
 def test_all_estimators():
@@ -125,8 +125,8 @@ def test_all_estimator_no_base_class():
 
 
 def test_estimators_sparse_data():
-    # All estimators should either deal with sparse data, or raise an
-    # intelligible error message
+    # All estimators should either deal with sparse data or raise an
+    # exception with type TypeError and an intelligible error message
     rng = np.random.RandomState(0)
     X = rng.rand(40, 10)
     X[X < .8] = 0
@@ -139,22 +139,29 @@ def test_estimators_sparse_data():
         if name in dont_test:
             continue
         # catch deprecation warnings
-        with warnings.catch_warnings(record=True):
+        with warnings.catch_warnings():
             classifier = Classifier()
-        # fit
+        # fit and predict
         try:
             classifier.fit(X, y)
+            classifier.predict(X)
+            if hasattr(classifier, 'predict_proba'):
+                try:
+                    classifier.predict_proba(X)
+                except NotImplementedError:
+                    pass
         except TypeError as e:
             if not 'sparse' in repr(e):
                 print("Estimator %s doesn't seem to fail gracefully on "
-                      "sparse data" % name)
-                traceback.print_exc(file=sys.stdout)
-                raise e
-        except Exception as exc:
+                      "sparse data: error message state explicitly that "
+                      "sparse input is not supported if this is not the case."
+                      % name)
+                raise
+        except Exception:
             print("Estimator %s doesn't seem to fail gracefully on "
-                  "sparse data" % name)
-            traceback.print_exc(file=sys.stdout)
-            raise exc
+                  "sparse data: it should raise a TypeError if sparse input "
+                  "is explicitly not supported." % name)
+            raise
 
 
 def test_transformers():
@@ -252,8 +259,8 @@ def test_transformers():
 
 
 def test_transformers_sparse_data():
-    # All estimators should either deal with sparse data, or raise an
-    # intelligible error message
+    # All transformers should either deal with sparse data or raise an
+    # exception with type TypeError and an intelligible error message
     rng = np.random.RandomState(0)
     X = rng.rand(40, 10)
     X[X < .8] = 0
@@ -282,14 +289,15 @@ def test_transformers_sparse_data():
         except TypeError as e:
             if not 'sparse' in repr(e):
                 print("Estimator %s doesn't seem to fail gracefully on "
-                      "sparse data" % name)
-                traceback.print_exc(file=sys.stdout)
-                raise e
-        except Exception as exc:
+                      "sparse data: error message state explicitly that "
+                      "sparse input is not supported if this is not the case."
+                      % name)
+                raise
+        except Exception:
             print("Estimator %s doesn't seem to fail gracefully on "
-                  "sparse data" % name)
-            traceback.print_exc(file=sys.stdout)
-            raise exc
+                  "sparse data: it should raise a TypeError if sparse input "
+                  "is explicitly not supported." % name)
+            raise
 
 
 def test_estimators_nan_inf():

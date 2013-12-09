@@ -62,10 +62,19 @@ Changelog
 
    - Fixed bug in :class:`gradient_boosting.GradientBoostingRegressor` with
      ``loss='huber'``: ``gamma`` might have not been initialized.
-     
+
    - :class:`dummy.DummyClassifier` can now be used to predict a constant
      output value. By Manoj Kumar.
 
+   - Fixed bug in :class:`decomposition.MiniBatchDictionaryLearning` :
+     partial_fit was not working properly.
+
+   - Multi-label classification output in multilabel indicator format
+     is now supported by :func:`metrics.roc_auc_score` and
+     :func:`metrics.average_precision_score` by `Arnaud Joly`_.
+
+   - Fixed bug in :class:`linear_model.stochastic_gradient` :
+     ``l1_ratio`` was used as ``(1.0 - l1_ratio)`` .
 
 API changes summary
 -------------------

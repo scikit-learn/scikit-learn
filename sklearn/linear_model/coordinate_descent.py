@@ -916,6 +916,10 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
             copy_X = False
 
         y = np.asarray(y, dtype=np.float64)
+
+        if y.ndim > 1:
+            raise ValueError("For multi-task outputs, fit the linear model "
+                             "per output/task")
         if X.shape[0] != y.shape[0]:
             raise ValueError("X and y have inconsistent dimensions (%d != %d)"
                              % (X.shape[0], y.shape[0]))
