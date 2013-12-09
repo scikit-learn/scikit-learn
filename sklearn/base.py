@@ -38,8 +38,8 @@ def clone(estimator, safe=True):
             return copy.deepcopy(estimator)
         else:
             raise TypeError("Cannot clone object '%s' (type %s): "
-                            "it does not seem to be a scikit-learn estimator a"
-                            " it does not implement a 'get_params' methods."
+                            "it does not seem to be a scikit-learn estimator "
+                            "it does not implement a 'get_params' methods."
                             % (repr(estimator), type(estimator)))
     klass = estimator.__class__
     new_object_params = estimator.get_params(deep=False)
