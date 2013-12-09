@@ -778,6 +778,92 @@ performance.
 
   * :ref:`example_linear_model_plot_ransac.py`
 
+
+
+
+Polynomial Regression: Extending Linear Models with Basis Functions
+===================================================================
+
+.. currentmodule:: sklearn.linear_model
+
+One common pattern within machine learning is to use linear models trained
+on nonlinear functions of the data.  This approach maintains the generally
+fast performance of linear methods, while allowing them to fit a much wider
+range of data.
+
+For example, a simple linear regression can be extended by constructing
+**polynomial features** from the coefficients.  In the standard non-polynomial
+case, you might have a model that looks like this for two-dimensional data:
+
+.. math::    \hat{y}(w, x) = w_0 + w_1 x_1 + w_2 x_2
+
+If we create order-2 polynomial features, the model can be extended to look
+like this:
+
+.. math::    \hat{y}(w, x) = w_0 + w_1 x_1 + w_2 x_2 + w_3 x_1 x_2 + w_4 x_1^2 + w_5 x_2^2
+
+The (sometimes surprising) observation is that this is *still a linear model*:
+to see this, imagine creating a new variable
+
+.. math::  z = [x_1, x_2, x_1 x_2, x_1^2, x_2^2]
+
+With this re-labeling of the data, our problem can be written
+
+.. math::    \hat{y}(w, x) = w_0 + w_1 z_1 + w_2 z_2 + w_3 z_3 + w_4 z_4 + w_5 z_5
+
+We see that the resulting *polynomial regression* is in the same class of
+linear models we'd considered above (i.e. the model is linear in :math:`w`)
+and can be solved by the same techniques.  By considering linear fits within
+a higher-dimensional space built with these basis functions, the model has the
+flexibility to fit a much broader range of data.
+
+Here is an example of applying this idea to one-dimensional data, using
+polynomial features of varying degrees:
+
+.. figure:: ../auto_examples/linear_model/images/plot_polynomial_interpolation_1.png
+   :target: ../auto_examples/linear_model/plot_polynomial_interpolation.html
+   :align: center
+   :scale: 50%
+
+This figure is created using the :class:`PolynomialFeatures` preprocessor.
+This preprocessor transforms an input data matrix into a new data matrix
+of a given degree.  It can be used as follows:
+
+    >>> from sklearn.preprocessing import PolynomialFeatures
+    >>> X = np.arange(6).reshape(3, 2)
+    >>> X
+    array([[0, 1],
+           [2, 3],
+           [4, 5]])
+    >>> poly = PolynomialFeatures(degree=2)
+    >>> poly.fit_transform(X)
+    array([[ 1,  0,  1,  0,  0,  1],
+           [ 1,  2,  3,  4,  6,  9],
+           [ 1,  4,  5, 16, 20, 25]])
+
+The features of ``X`` have been transformed from :math:`[x_1, x_2]` to
+:math:`[1, x_1, x_2, x_1^2, x_1 x_1, x_2^2]`, and can now be used within
+any linear model.
+
+This sort of preprocessing can be streamlined with the pipeline_ tools.
+A single object representing a simple polynomial regression can be
+created and used as follows:
+
+    >>> from sklearn.preprocessing import PolynomialFeatures
+    >>> from sklearn.linear_model import LinearRegression
+    >>> from sklearn.pipeline import Pipeline
+    >>> model = Pipeline([('poly', PolynomialFeatures(degree=3)),
+    ...                   ('linear', LinearRegression(fit_intercept=False))])
+    >>> # fit to order-3 polynomial data
+    >>> x = np.arange(5)
+    >>> y = 3 - 2 * x + x ** 2 - x ** 3
+    >>> model = model.fit(x[:, np.newaxis], y)
+    >>> model.named_steps['linear'].coef_
+    array([ 3., -2.,  1., -1.])
+
+The linear model trained on polynomial features is able to exactly recover
+the input polynomial coefficients.
+
 .. topic:: References:
 
  * http://en.wikipedia.org/wiki/RANSAC
