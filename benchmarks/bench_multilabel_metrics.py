@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """
 A comparison of multilabel target formats and metrics over them
 """
@@ -32,8 +33,8 @@ FORMATS = {
 }
 
 
-def benchmark(metrics=[v for k, v in sorted(METRICS.items())],
-              formats=[v for k, v in sorted(FORMATS.items())],
+def benchmark(metrics=tuple(v for k, v in sorted(METRICS.items())),
+              formats=tuple(v for k, v in sorted(FORMATS.items())),
               samples=1000, classes=4, density=.2,
               n_times=5):
     """Times metric calculations for a number of inputs
@@ -91,10 +92,10 @@ def benchmark(metrics=[v for k, v in sorted(METRICS.items())],
     return out
 
 
-def tabulate(results, metrics, formats):
-    """Prints results by mertric and format
+def _tabulate(results, metrics, formats):
+    """Prints results by metric and format
 
-    Uses the last (index -1) value of other fields
+    Uses the last ([-1]) value of other fields
     """
     column_width = max(max(len(k) for k in formats) + 1, 8)
     first_width = max(len(k) for k in metrics)
@@ -107,9 +108,13 @@ def tabulate(results, metrics, formats):
                              cw=column_width, fw=first_width))
 
 
-def plot(results, metrics, formats, title, x_ticks, x_label,
-         format_markers=['x', '|', 'o'],
-         metric_colors=['c', 'm', 'y', 'k', 'g', 'r', 'b']):
+def _plot(results, metrics, formats, title, x_ticks, x_label,
+          format_markers=('x', '|', 'o'),
+          metric_colors=('c', 'm', 'y', 'k', 'g', 'r', 'b')):
+    """
+    Plot the results by metric, format and some other variable given by
+    x_label
+    """
     fig = plt.figure('scikit-learn multilabel metrics benchmarks')
     plt.title(title)
     ax = fig.add_subplot(111)
@@ -135,7 +140,7 @@ if __name__ == "__main__":
                          '(defaults to all).')
     ap.add_argument('--samples', type=int, default=1000,
                     help='The number of samples to generate')
-    ap.add_argument('--classes', type=int, default=4,
+    ap.add_argument('--classes', type=int, default=10,
                     help='The number of classes')
     ap.add_argument('--density', type=float, default=.2,
                     help='The average density of labels per sample')
@@ -171,7 +176,7 @@ if __name__ == "__main__":
                         args.samples, args.classes, args.density,
                         args.n_times)
 
-    tabulate(results, args.metrics, args.formats)
+    _tabulate(results, args.metrics, args.formats)
 
     if args.plot is not None:
         print('Displaying plot', file=sys.stderr)
@@ -179,4 +184,4 @@ if __name__ == "__main__":
                  ', '.join('{0}={1}'.format(field, getattr(args, field))
                            for field in ['samples', 'classes', 'density']
                            if args.plot != field))
-        plot(results, args.metrics, args.formats, title, steps, args.plot)
+        _plot(results, args.metrics, args.formats, title, steps, args.plot)
