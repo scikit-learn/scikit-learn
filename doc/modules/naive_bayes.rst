@@ -198,3 +198,108 @@ note::
   The ``partial_fit`` method call of naive Bayes models introduces some
   computational overhead. It is recommended to use data chunk sizes that are as
   large as possible, that is as the available RAM allows.
+
+
+Non-naive Bayes
+---------------
+
+As mentioned above, naive Bayesian methods are generally very fast, but often
+inaccurate estimators.  This can be addressed by relaxing the assumptions that
+make the models naive, so that more accurate classifications are possible.
+
+If we return to the general formalism outlined above, we can see that the
+generic model for Bayesian classification is:
+
+.. math::
+   \hat{y} = \arg\max_y P(y) \prod_{i=1}^{n} P(x_i \mid y).
+
+This model only becomes "naive" when we introduce certain assumptions about
+the form of :math:`P(x_i \mid y)`, e.g. that each class is drawn from an
+axis-aligned normal distribution (the assumption for Gaussian Naive Bayes).
+
+However, assumptions like these are in no way required for generative
+Bayesian classification formalism: we can equally well fit any suitable
+density model to each category to estimate :math:`P(x_i \mid y)`.  Some
+examples of more flexible density models are:
+
+- :class:`sklearn.neighbors.KernelDensity`: discussed in :ref:`kernel_density`
+- :class:`sklearn.mixture.GMM`: discussed in :ref:`clustering`
+
+Though it can be much more computationally intense,
+using one of these models rather than a naive Gaussian model can lead to much
+better generative classifiers, and can be especially applicable in cases of
+unbalanced data where accurate posterior classification probabilities are
+desired.
+
+.. figure:: ../auto_examples/images/plot_1d_generative_classification_1.png
+   :target: ../auto_examples/plot_1d_generative_classification.html
+   :align: center
+   :scale: 50%from the training data
+
+Here we have a 1 dimensional, two-class distribution of data which is not
+well-modeled by a normal distribution.  The two classes have a small amount
+of overlap, and by more accurately modeling the density of each class, we are
+able to increase the accuracy by a few percent.  This may seem like a small
+change, but often it is these marginal cases which are most important in
+practice!  That is, any basic classification algorithm will correctly
+classify the bulk of the data in this situation, but by accurately modeling
+the density, we recover an accurate Bayesian probabilistic classification of
+the most interesting cases.
+
+This type of classification can be performed with the :class:`GenerativeBayes`
+estimator.  The estimator can be used very easily:
+
+    >>> from sklearn.naive_bayes import GenerativeBayes
+    >>> from sklearn.datasets import make_blobs
+    >>> X, y = make_blobs(10, centers=2, random_state=0)
+    >>> clf = GenerativeBayes(density_estimator='kde')
+    >>> clf.fit(X, y)
+    >>> clf.predict(X)
+    array([0, 1, 0, 1, 1, 0, 1, 0, 0, 1])
+    >>> y
+    array([0, 1, 0, 1, 1, 0, 1, 0, 0, 1])
+
+The KDE-based Generative classifier for this problem has 100% accuracy on
+the training data.
+The specified density estimator can be ``'kde'``, ``'gmm'``, ``'norm_approx'``,
+or a custom class which has the same semantics as
+:class:`sklearn.neighbors.KernelDensity` (see the documentation of 
+:class:`GenerativeBayes` for details).
+
+
+Random Samples
+~~~~~~~~~~~~~~
+
+Another advantage of non-naive Bayesian classification models is that they
+provide an accurate generative model of each individual training class. This
+means that new random datasets can be drawn which have the same characteristics
+as the training data.
+
+Here is an example of a multi-class dataset in two dimensions.  The
+light-colored points are the training data, and the dark-colored points are
+random data drawn from the multi-class generative model:
+
+.. figure:: ../auto_examples/images/plot_generative_sampling_1.png
+   :target: ../auto_examples/plot_generative_sampling.html
+   :align: center
+   :scale: 50%
+
+The red and yellow clusters have four times the number of points as the
+blue and cyan clusters; this is accurately reflected in the number of "new"
+points drawn from the model.
+
+This type of generative model can be used in higher dimensions to do some
+very interesting analysis.  For example, here's a generative bayes model
+which uses kernel density estimation trained on the digits dataset.  The
+top panel shows a selection of the input digits, while the bottom panel
+shows draws from the class-wise probability distributions.  These give an
+intuitive feel to what the model "thinks" each digit looks like:
+
+.. figure:: ../auto_examples/images/plot_generative_sampling_2.png
+   :target: ../auto_examples/plot_generative_sampling.html
+   :align: center
+   :scale: 50%
+
+This result can be compared to the
+`similar figure <../auto_examples/neighbors/plot_digits_kde_sampling.html`_
+drawn from a distribution which does not utilize class information.

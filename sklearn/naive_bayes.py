@@ -581,10 +581,14 @@ class BernoulliNB(BaseDiscreteNB):
         return jll
 
 
- 
- 
 class _NormalApproximation(BaseEstimator):
-    """Normal Approximation Density Estimator"""
+    """Fit an axis-aligned normal approximation to the data.
+
+    Parameters
+    ----------
+    epsilon : float
+        The minimum variance along any dimension.  Default = 1E-9.
+    """
     def __init__(self, epsilon=1E-9):
         self.epsilon = epsilon
  
@@ -613,8 +617,8 @@ class _NormalApproximation(BaseEstimator):
  
         Returns
         -------
-        density : ndarray
-            The array of density evaluations.  This has shape X.shape[:-1]
+        sample scores : ndarray
+            The array of log density.  This has shape X.shape[:-1]
         """
         X = array2d(X)
         if X.shape[-1] != self.mean.shape[0]:
@@ -634,8 +638,8 @@ class _NormalApproximation(BaseEstimator):
  
         Returns
         -------
-        logprob : array_like, shape (n_samples,)
-            Log probabilities of each data point in X
+        logprob : float
+            log-likelihood of the data X under the model.
         """
         return np.sum(self.score_samples(X))
  
