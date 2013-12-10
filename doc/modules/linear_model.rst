@@ -842,6 +842,7 @@ This preprocessor transforms an input data matrix into a new data matrix
 of a given degree.  It can be used as follows:
 
     >>> from sklearn.preprocessing import PolynomialFeatures
+    >>> import numpy as np
     >>> X = np.arange(6).reshape(3, 2)
     >>> X
     array([[0, 1],
