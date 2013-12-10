@@ -418,7 +418,7 @@ def _labels_inertia_precompute_dense(X, x_squared_norms, centers, distances):
 
 def _labels_inertia(X, x_squared_norms, centers,
                     precompute_distances=True, distances=None):
-    """E step of the K-means EM algorithm
+    """E step of the K-means EM algorithm.
 
     Compute the labels and the inertia of the given samples and centers
 
@@ -841,22 +841,19 @@ def _mini_batch_step(X, x_squared_norms, centers, counts,
                                               distances=distances)
 
     if random_reassign and reassignment_ratio > 0:
-        from IPython.core.debugger import Tracer
-        Tracer()()
-
         random_state = check_random_state(random_state)
         # Reassign clusters that have very low counts
-        to_reassign = np.logical_or(
-            (counts <= 1), counts <= reassignment_ratio * min(counts.max(),
-                                                              X.shape[0]))
+        to_reassign = counts <= reassignment_ratio * counts.max()
+        # maximally assign reassignment_ratio*batch_size samples as clusters
+        if to_reassign.sum() > .5 * X.shape[0]:
+            indices_dont_reassign = np.argsort(counts)[.5 * X.shape[0]:]
+            to_reassign[indices_dont_reassign] = False
         n_reassigns = to_reassign.sum()
         if n_reassigns:
             # Pick new clusters amongst observations with probability
             # proportional to their closeness to their center.
             # Flip the ordering of the distances.
-            distances *= -1
-            # all probabilities must be >0
-            distances -= distances.min() - 1e-10
+            distances += 1e-10
             distances /= distances.sum()
 
             new_centers = choice(X.shape[0], replace=False, p=distances,
@@ -992,14 +989,14 @@ class MiniBatchKMeans(KMeans):
         Maximum number of iterations over the complete dataset before
         stopping independently of any early stopping criterion heuristics.
 
-    max_no_improvement : int, optional
+    max_no_improvement : int, default: 10
         Control early stopping based on the consecutive number of mini
         batches that does not yield an improvement on the smoothed inertia.
 
         To disable convergence detection based on inertia, set
         max_no_improvement to None.
 
-    tol : float, optional
+    tol : float, default: 0.0
         Control early stopping based on the relative center changes as
         measured by a smoothed, variance-normalized of the mean center
         squared position changes. This early stopping heuristics is
@@ -1019,7 +1016,7 @@ class MiniBatchKMeans(KMeans):
         only algorithm is initialized by running a batch KMeans on a
         random subset of the data. This needs to be larger than k.
 
-    init : {'k-means++', 'random' or an ndarray}
+    init : {'k-means++', 'random' or an ndarray}, default: 'k-means++'
         Method for initialization, defaults to 'k-means++':
 
         'k-means++' : selects initial cluster centers for k-mean
@@ -1029,7 +1026,6 @@ class MiniBatchKMeans(KMeans):
         'random': choose k observations (rows) at random from data for
         the initial centroids.
 
-
         If an ndarray is passed, it should be of shape (n_clusters, n_features)
         and gives the initial centers.
 
@@ -1038,7 +1034,7 @@ class MiniBatchKMeans(KMeans):
         In contrast to KMeans, the algorithm is only run once, using the
         best of the ``n_init`` initializations as measured by inertia.
 
-    compute_labels : boolean
+    compute_labels : boolean, default=True
         Compute label assignment and inertia for the complete dataset
         once the minibatch optimization has converged in fit.
 
@@ -1047,7 +1043,7 @@ class MiniBatchKMeans(KMeans):
         given, it fixes the seed. Defaults to the global numpy random
         number generator.
 
-    reassignment_ratio : float, optional
+    reassignment_ratio : float, default: 0.01
         Control the fraction of the maximum number of counts for a
         center to be reassigned. A higher value means that low count
         centers are more easily reassigned, which means that the
@@ -1132,8 +1128,7 @@ class MiniBatchKMeans(KMeans):
             # disabled
             old_center_buffer = np.zeros(0, np.double)
 
-        distances = np.zeros(min(self.batch_size, X.shape[0]),
-                             dtype=np.float64)
+        distances = np.zeros(self.batch_size, dtype=np.float64)
         n_batches = int(np.ceil(float(n_samples) / self.batch_size))
         n_iter = int(self.max_iter * n_batches)
 
