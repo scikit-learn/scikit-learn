@@ -8,6 +8,10 @@
 Changelog
 ---------
 
+   - Use of :class:`covariance.EllipticEnvelop` has now been removed after
+     deprecation.
+     Please use :class:`covariance.EllipticEnvelope` instead.
+
    - Added :class:`ensemble.BaggingClassifier` and
      :class:`ensemble.BaggingRegressor` meta-estimators for ensembling
      any kind of base estimator. See the :ref:`Bagging <bagging>` section of
