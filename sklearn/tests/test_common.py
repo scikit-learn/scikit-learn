@@ -45,9 +45,9 @@ from sklearn.svm.base import BaseLibSVM
 from sklearn.cross_validation import train_test_split
 from sklearn.utils.validation import DataConversionWarning
 
-dont_test = ['SparseCoder', 'EllipticEnvelope', 'EllipticEnvelop',
-             'DictVectorizer', 'LabelBinarizer', 'LabelEncoder',
-             'TfidfTransformer', 'IsotonicRegression', 'OneHotEncoder',
+dont_test = ['SparseCoder', 'EllipticEnvelope', 'DictVectorizer',
+             'LabelBinarizer', 'LabelEncoder', 'TfidfTransformer',
+             'IsotonicRegression', 'OneHotEncoder',
              'RandomTreesEmbedding', 'FeatureHasher', 'DummyClassifier',
              'DummyRegressor', 'TruncatedSVD', 'PolynomialFeatures']
 
