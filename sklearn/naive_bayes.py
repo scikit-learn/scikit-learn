@@ -728,6 +728,8 @@ class GenerativeBayes(BaseNB):
             Target values, array of float values, shape = [n_samples]
         """
         X, y = check_arrays(X, y, sparse_format='dense')
+        y = column_or_1d(y, warn=True)
+
         estimator = self._choose_estimator(self.density_estimator,
                                            self.model_kwds)
 

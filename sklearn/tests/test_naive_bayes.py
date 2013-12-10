@@ -369,7 +369,7 @@ def test_check_accuracy_on_digits():
 
     # Generative Bayes
     scores_cmp = {'kde': (0.98, 0.99),
-                  'norm_approx': (0.89, 0.93),
+                  'norm_approx': (0.79, 0.79),
                   'gmm': (0.92, 0.93)}
 
     for model, kwargs in MODEL_KWARGS.iteritems():
