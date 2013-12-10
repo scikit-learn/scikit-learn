@@ -160,9 +160,10 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
     y = np.zeros(n_samples, dtype=np.int)
 
     # Build the polytope
-    C = _hypercube(n_clusters, n_informative, generator.rand())
+    C = _hypercube(n_clusters, n_informative, generator.rand()).astype(float)
     C *= 2 * class_sep
     C -= class_sep
+    print(C)
     if not hypercube:
         C[:n_clusters] *= generator.rand(n_clusters, 1)
         C *= generator.rand(1, n_informative)
