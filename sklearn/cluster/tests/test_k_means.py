@@ -1,6 +1,5 @@
 """Testing for K-means"""
 import sys
-import warnings
 
 import numpy as np
 from scipy import sparse as sp
@@ -12,16 +11,17 @@ from sklearn.utils.testing import SkipTest
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_true
-
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_less
+from sklearn.utils.testing import assert_warns
+
+from sklearn.utils.extmath import row_norms
 from sklearn.utils.fixes import unique
 from sklearn.metrics.cluster import v_measure_score
 from sklearn.cluster import KMeans, k_means
 from sklearn.cluster import MiniBatchKMeans
 from sklearn.cluster.k_means_ import _labels_inertia
 from sklearn.cluster.k_means_ import _mini_batch_step
-from sklearn.cluster._k_means import csr_row_norm_l2
 from sklearn.datasets.samples_generator import make_blobs
 from sklearn.externals.six.moves import cStringIO as StringIO
 
@@ -39,21 +39,13 @@ X, true_labels = make_blobs(n_samples=n_samples, centers=centers,
 X_csr = sp.csr_matrix(X)
 
 
-def test_square_norms():
-    x_squared_norms = (X ** 2).sum(axis=1)
-    x_squared_norms_from_csr = csr_row_norm_l2(X_csr)
-    assert_array_almost_equal(x_squared_norms,
-                              x_squared_norms_from_csr, 5)
-
-
 def test_kmeans_dtype():
     rnd = np.random.RandomState(0)
     X = rnd.normal(size=(40, 2))
     X = (X * 10).astype(np.uint8)
     km = KMeans(n_init=1).fit(X)
-    with warnings.catch_warnings(record=True) as w:
-        assert_array_equal(km.labels_, km.predict(X))
-        assert_equal(len(w), 1)
+    pred_x = assert_warns(RuntimeWarning, km.predict, X)
+    assert_array_equal(km.labels_, pred_x)
 
 
 def test_labels_assignment_and_inertia():
@@ -80,7 +72,7 @@ def test_labels_assignment_and_inertia():
     assert_array_equal(labels_array, labels_gold)
 
     # perform label assignment using the sparse CSR input
-    x_squared_norms_from_csr = csr_row_norm_l2(X_csr)
+    x_squared_norms_from_csr = row_norms(X_csr, squared=True)
     labels_csr, inertia_csr = _labels_inertia(
         X_csr, x_squared_norms_from_csr, noisy_centers)
     assert_array_almost_equal(inertia_csr, inertia_gold)
@@ -99,7 +91,7 @@ def test_minibatch_update_consistency():
     counts_csr = np.zeros(new_centers.shape[0], dtype=np.int32)
 
     x_squared_norms = (X ** 2).sum(axis=1)
-    x_squared_norms_csr = csr_row_norm_l2(X_csr, squared=True)
+    x_squared_norms_csr = row_norms(X_csr, squared=True)
 
     buffer = np.zeros(centers.shape[1], dtype=np.double)
     buffer_csr = np.zeros(centers.shape[1], dtype=np.double)
@@ -217,7 +209,7 @@ def _has_blas_lib(libname):
 
 
 def test_k_means_plus_plus_init_2_jobs():
-    if _is_mac_os_version('10.7'):
+    if _is_mac_os_version('10.7') or _is_mac_os_version('10.8'):
         raise SkipTest('Multi-process bug in Mac OS X Lion (see issue #636)')
 
     if _has_blas_lib('openblas'):
@@ -294,10 +286,7 @@ def test_minibatch_init_with_large_k():
     mb_k_means = MiniBatchKMeans(init='k-means++', init_size=10, n_clusters=20)
     # Check that a warning is raised, as the number clusters is larger
     # than the init_size
-    with warnings.catch_warnings(record=True) as warn_queue:
-        mb_k_means.fit(X)
-
-    assert_equal(len(warn_queue), 1)
+    assert_warns(RuntimeWarning, mb_k_means.fit, X)
 
 
 def test_minibatch_k_means_random_init_dense_array():
@@ -617,9 +606,7 @@ def test_k_means_function():
     assert_greater(inertia, 0.0)
 
     # check warning when centers are passed
-    with warnings.catch_warnings(record=True) as w:
-        k_means(X, n_clusters=n_clusters, init=centers)
-        assert_equal(len(w), 1)
+    assert_warns(RuntimeWarning, k_means, X, n_clusters=n_clusters, init=centers)
 
     # to many clusters desired
     assert_raises(ValueError, k_means, X, n_clusters=X.shape[0] + 1)

@@ -6,22 +6,24 @@
 
 import numbers
 import warnings
+import itertools
 
 import numpy as np
 from scipy import sparse
+
 from ..base import BaseEstimator, TransformerMixin
+from ..externals import six
 from ..utils import check_arrays
 from ..utils import atleast2d_or_csc
 from ..utils import array2d
 from ..utils import atleast2d_or_csr
 from ..utils import safe_asarray
 from ..utils import warn_if_not_float
-
+from ..utils.extmath import row_norms
 from ..utils.sparsefuncs import inplace_csr_row_normalize_l1
 from ..utils.sparsefuncs import inplace_csr_row_normalize_l2
 from ..utils.sparsefuncs import inplace_csr_column_scale
 from ..utils.sparsefuncs import mean_variance_axis0
-from ..externals import six
 
 zip = six.moves.zip
 map = six.moves.map
@@ -394,6 +396,99 @@ class Scaler(StandardScaler):
         super(Scaler, self).__init__(copy, with_mean, with_std)
 
 
+class PolynomialFeatures(BaseEstimator, TransformerMixin):
+    """Transform to Polynomial Features
+
+    Generate a new feature matrix consisting of all polynomial combinations
+    of the features with degree less than or equal to the specified degree.
+    For example, if an input sample is two dimensional and of the form
+    [a, b], the degree-2 polynomial features are [1, a, b, a^2, ab, b^2].
+
+    Parameters
+    ----------
+    degree : integer
+        The degree of the polynomial features. Default = 2.
+    include_bias : integer
+        If True (default), then include a bias column, the feature in which
+        all polynomial powers are zero (i.e. a column of ones - acts as an
+        intercept term in a linear model).
+
+    Examples
+    --------
+    >>> X = np.arange(6).reshape(3, 2)
+    >>> X
+    array([[0, 1],
+           [2, 3],
+           [4, 5]])
+    >>> poly = PolynomialFeatures(2)
+    >>> poly.fit_transform(X)
+    array([[ 1,  0,  1,  0,  0,  1],
+           [ 1,  2,  3,  4,  6,  9],
+           [ 1,  4,  5, 16, 20, 25]])
+
+    Attributes
+    ----------
+    `powers_` : np.ndarray, shape = (Np, n_features)
+         This is the matrix of powers used to construct the polynomial
+         features.  powers_[i, j] is the exponent of the j^th input
+         feature in the i^th output feature.
+
+    Notes
+    -----
+    Be aware that the number of features in the output array scales
+    exponentially in the number of features of the input array, so this
+    is not suitable for higher-dimensional data.
+    """
+    def __init__(self, degree=2, include_bias=True):
+        self.degree = degree
+        self.include_bias = include_bias
+
+    @staticmethod
+    def _power_matrix(n_features, degree, include_bias):
+        """Compute the matrix of polynomial powers"""
+        # Find permutations/combinations which add to degree or less
+        deg_min = 0 if include_bias else 1
+        powers = itertools.product(*(range(degree + 1)
+                                     for i in range(n_features)))
+        powers = np.array([c for c in powers if deg_min <= sum(c) <= degree])
+
+        # sort so that the order of the powers makes sense
+        i = np.lexsort(np.vstack([powers.T, powers.sum(1)]))
+        return powers[i]
+
+    def fit(self, X, y=None):
+        """
+        Compute the polynomial feature combinations
+        """
+        n_samples, n_features = array2d(X).shape
+        self.powers_ = self._power_matrix(n_features,
+                                          self.degree,
+                                          self.include_bias)
+        return self
+
+    def transform(self, X, y=None):
+        """Transform data to polynomial features
+
+        Parameters
+        ----------
+        X : array with shape [n_samples, n_features]
+            The data to transform, row by row.
+
+        Returns
+        -------
+        XP : np.ndarray shape [n_samples, NP]
+            The matrix of features, where NP is the number of polynomial
+            features generated from the combination of inputs.
+        """
+        X = array2d(X)
+        n_samples, n_features = X.shape
+
+        if n_features != self.powers_.shape[1]:
+            raise ValueError("X shape does not match training shape")
+
+        return (X[:, None, :] ** self.powers_).prod(-1)
+
+
 def normalize(X, norm='l2', axis=1, copy=True):
     """Normalize a dataset along any axis
 
@@ -445,12 +540,12 @@ def normalize(X, norm='l2', axis=1, copy=True):
             inplace_csr_row_normalize_l2(X)
     else:
         if norm == 'l1':
-            norms = np.abs(X).sum(axis=1)[:, np.newaxis]
+            norms = np.abs(X).sum(axis=1)
             norms[norms == 0.0] = 1.0
         elif norm == 'l2':
-            norms = np.sqrt(np.sum(X ** 2, axis=1))[:, np.newaxis]
+            norms = row_norms(X)
             norms[norms == 0.0] = 1.0
-        X /= norms
+        X /= norms[:, np.newaxis]
 
     if axis == 0:
         X = X.T

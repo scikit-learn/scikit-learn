@@ -1,7 +1,11 @@
 """
 Extended math utilities.
 """
-# Authors: G. Varoquaux, A. Gramfort, A. Passos, O. Grisel
+# Authors: Gael Varoquaux
+#          Alexandre Gramfort
+#          Alexandre T. Passos
+#          Olivier Grisel
+#          Lars Buitinck
 # License: BSD 3 clause
 
 import warnings
@@ -14,13 +18,44 @@ from . import check_random_state
 from .fixes import qr_economic
 from ._logistic_sigmoid import _log_logistic_sigmoid
 from ..externals.six.moves import xrange
+from .sparsefuncs import csr_row_norms
 from .validation import array2d, NonBLASDotWarning
 
 
-def norm(v):
-    v = np.asarray(v)
-    __nrm2, = linalg.get_blas_funcs(['nrm2'], [v])
-    return __nrm2(v)
+def norm(x):
+    """Compute the Euclidean or Frobenius norm of x.
+
+    Returns the Euclidean norm when x is a vector, the Frobenius norm when x
+    is a matrix (2-d array).
+    """
+    x = np.asarray(x)
+    nrm2, = linalg.get_blas_funcs(['nrm2'], [x])
+    return nrm2(x)
+
+
+_have_einsum = hasattr(np, "einsum")
+
+
+def row_norms(X, squared=False):
+    """Row-wise (squared) Euclidean norm of X.
+
+    Equivalent to (X * X).sum(axis=1), but also supports CSR sparse matrices.
+    With newer NumPy versions, prevents an X.shape-sized temporary.
+
+    Performs no input validation.
+    """
+    if issparse(X):
+        norms = csr_row_norms(X)
+    elif _have_einsum:
+        # einsum avoids the creation of a temporary the size of X,
+        # but it's only available in NumPy >= 1.6.
+        norms = np.einsum('ij,ij->i', X, X)
+    else:
+        norms = (X * X).sum(axis=1)
+
+    if not squared:
+        np.sqrt(norms, norms)
+    return norms
 
 
 def _fast_logdet(A):
@@ -91,44 +126,46 @@ def _fast_dot(A, B):
         >> from sklearn.utils.validation import NonBLASDotWarning
         >> warnings.simplefilter('always', NonBLASDotWarning)
     """
-
     if B.shape[0] != A.shape[A.ndim - 1]:  # check adopted from '_dotblas.c'
-        msg = ('Invalid array shapes: A.shape[%d] should be the same as '
-               'B.shape[0]. Got A.shape=%r B.shape=%r' % (A.ndim - 1,
-                                                          A.shape,
-                                                          B.shape))
-        raise ValueError(msg)
+        raise ValueError
 
     if A.dtype != B.dtype or any(x.dtype not in (np.float32, np.float64)
                                  for x in [A, B]):
         warnings.warn('Data must be of same type. Supported types '
                       'are 32 and 64 bit float. '
                       'Falling back to np.dot.', NonBLASDotWarning)
-        return np.dot(A, B)
+        raise ValueError
 
-    if ((min(A.shape) == 1) or (min(B.shape) == 1) or
-        (A.ndim != 2) or (B.ndim != 2)):
+    if min(A.shape) == 1 or min(B.shape) == 1 or A.ndim != 2 or B.ndim != 2:
         warnings.warn('Data must be 2D with more than one colum / row.'
                       'Falling back to np.dot', NonBLASDotWarning)
-        return np.dot(A, B)
+        raise ValueError
 
-    dot = linalg.get_blas_funcs('gemm', (A, B))
+    # scipy 0.9 compliant API
+    dot = linalg.get_blas_funcs(['gemm'], (A, B))[0]
     A, trans_a = _impose_f_order(A)
     B, trans_b = _impose_f_order(B)
     return dot(alpha=1.0, a=A, b=B, trans_a=trans_a, trans_b=trans_b)
 
-#  only try to use fast_dot for older numpy versions.
-#  the related issue has been tackled meanwhile. Also, depending on the build
-#  the current numpy master's dot can about 3 times faster.
-if LooseVersion(np.__version__) < '1.7.2':  # backported
-    try:
-        linalg.get_blas_funcs('gemm')
-        fast_dot = _fast_dot
-    except (ImportError, AttributeError):
-        fast_dot = np.dot
-        warnings.warn('Could not import BLAS, falling back to np.dot')
-else:
-    fast_dot = np.dot
+
+def fast_dot(A, B):
+    #  only try to use fast_dot for older numpy versions.
+    #  the related issue has been tackled meanwhile. Also, depending on the build
+    #  the current numpy master's dot can about 3 times faster.
+    if LooseVersion(np.__version__) < '1.7.2':  # backported
+        try:
+            linalg.get_blas_funcs(['gemm'])
+        except (AttributeError, ValueError):
+            warnings.warn('Could not import BLAS, falling back to np.dot')
+            return np.dot(A, B)
+
+        try:
+            return _fast_dot(A, B)
+        except ValueError:
+            # Maltyped or malformed data.
+            return np.dot(A, B)
+    else:
+        return np.dot(A, B)
 
 
 def density(w, **kwargs):

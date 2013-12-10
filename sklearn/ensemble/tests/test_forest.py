@@ -5,6 +5,8 @@ Testing for the forest module (sklearn.ensemble.forest).
 # Authors: Gilles Louppe, Brian Holt, Andreas Mueller
 # License: BSD 3 clause
 
+from collections import defaultdict
+
 import numpy as np
 from numpy.testing import assert_array_equal
 from numpy.testing import assert_array_almost_equal
@@ -408,12 +410,12 @@ def test_random_hasher():
     # make sure that it is linearly separable.
     # even after projected to two SVD dimensions
     # Note: Not all random_states produce perfect results.
-    hasher = RandomTreesEmbedding(n_estimators=30, random_state=0)
+    hasher = RandomTreesEmbedding(n_estimators=30, random_state=1)
     X, y = datasets.make_circles(factor=0.5)
     X_transformed = hasher.fit_transform(X)
 
     # test fit and transform:
-    hasher = RandomTreesEmbedding(n_estimators=30, random_state=0)
+    hasher = RandomTreesEmbedding(n_estimators=30, random_state=1)
     assert_array_equal(hasher.fit(X).transform(X).toarray(),
                        X_transformed.toarray())
 
@@ -451,6 +453,61 @@ def test_parallel_train():
 
     for proba1, proba2 in zip(probas, probas[1:]):
         assert_true(np.allclose(proba1, proba2))
+
+
+def test_distribution():
+    rng = np.random.RandomState(12321)
+
+    # Single variable with 4 values
+    X = rng.randint(0, 4, size=(1000, 1))
+    y = rng.rand(1000)
+    n_trees = 200
+
+    clf = ExtraTreesRegressor(n_estimators=n_trees, random_state=1).fit(X, y)
+
+    uniques = defaultdict(int)
+    for tree in clf.estimators_:
+        tree = "".join(("%d,%d/" % (f, int(t)) if f >= 0 else "-")
+                       for f, t in zip(tree.tree_.feature,
+                                       tree.tree_.threshold))
+
+        uniques[tree] += 1
+
+    uniques = sorted([(1. * count / n_trees, tree)
+                      for tree, count in uniques.items()])
+
+    # On a single variable problem where X_0 has 4 equiprobable values, there
+    # are 5 ways to build a random tree. The more compact (0,1/0,0/--0,2/--) of
+    # them has probability 1/3 while the 4 others have probability 1/6.
+
+    assert_equal(len(uniques), 5)
+    assert_greater(0.20, uniques[0][0]) # Rough approximation of 1/6.
+    assert_greater(0.20, uniques[1][0])
+    assert_greater(0.20, uniques[2][0])
+    assert_greater(0.20, uniques[3][0])
+    assert_greater(uniques[4][0], 0.3)
+    assert_equal(uniques[4][1], "0,1/0,0/--0,2/--")
+
+    # Two variables, one with 2 values, one with 3 values
+    X = np.empty((1000, 2))
+    X[:, 0] = np.random.randint(0, 2, 1000)
+    X[:, 1] = np.random.randint(0, 3, 1000)
+    y = rng.rand(1000)
+
+    clf = ExtraTreesRegressor(n_estimators=100,
+                              max_features=1,
+                              random_state=1).fit(X, y)
+
+    uniques = defaultdict(int)
+    for tree in clf.estimators_:
+        tree = "".join(("%d,%d/" % (f, int(t)) if f >= 0 else "-")
+                       for f, t in zip(tree.tree_.feature,
+                                       tree.tree_.threshold))
+
+        uniques[tree] += 1
+
+    uniques = [(count, tree) for tree, count in uniques.items()]
+    assert_equal(len(uniques), 8)
 
 
 if __name__ == "__main__":

@@ -74,7 +74,7 @@ In the basic approach, called *k*-fold CV,
 the training set is split into *k* smaller sets
 (other approaches are described below,
 but generally follow the same principles).
-The following is procedure is followed for each of the *k* "folds":
+The following procedure is followed for each of the *k* "folds":
 
  * A model is trained using :math:`k-1` of the folds as training data;
  * the resulting model is validated on the remaining part of the data
@@ -93,7 +93,7 @@ where the number of samples is very small.
 Computing cross-validated metrics
 =================================
 
-The simplest way to use perform cross-validation in to call the
+The simplest way to use cross-validation is to call the
 :func:`cross_val_score` helper function on the estimator and the dataset.
 
 The following example demonstrates how to estimate the accuracy of a linear
@@ -105,24 +105,24 @@ time)::
   >>> scores = cross_validation.cross_val_score(
   ...    clf, iris.data, iris.target, cv=5)
   ...
-  >>> scores                                            # doctest: +ELLIPSIS
-  array([ 1.  ...,  0.96...,  0.9 ...,  0.96...,  1.        ])
+  >>> scores                                              # doctest: +ELLIPSIS
+  array([ 0.96...,  1.  ...,  0.96...,  0.96...,  1.        ])
 
 The mean score and the standard deviation of the score estimate are hence given
 by::
 
   >>> print("Accuracy: %0.2f (+/- %0.2f)" % (scores.mean(), scores.std() * 2))
-  Accuracy: 0.97 (+/- 0.07)
+  Accuracy: 0.98 (+/- 0.03)
 
 By default, the score computed at each CV iteration is the ``score``
 method of the estimator. It is possible to change this by using the
 scoring parameter::
 
   >>> from sklearn import metrics
-  >>> cross_validation.cross_val_score(clf, iris.data, iris.target, cv=5,
-  ...     scoring='f1')
-  ...                                                     # doctest: +ELLIPSIS
-  array([ 1.  ...,  0.96...,  0.89...,  0.96...,  1.        ])
+  >>> scores = cross_validation.cross_val_score(clf, iris.data, iris.target,
+  ...     cv=5, scoring='f1')
+  >>> scores                                              # doctest: +ELLIPSIS
+  array([ 0.96...,  1.  ...,  0.96...,  0.96...,  1.        ])
 
 See :ref:`scoring_parameter` for details.
 In the case of the Iris dataset, the samples are balanced across target
@@ -165,7 +165,7 @@ validation strategies.
 K-fold
 ------
 
-:class:`KFold` divides all the samples in math:`k` groups of samples,
+:class:`KFold` divides all the samples in :math:`k` groups of samples,
 called folds (if :math:`k = n`, this is equivalent to the *Leave One
 Out* strategy), of equal sizes (if possible). The prediction function is
 learned using :math:`k - 1` folds, and the fold left out is used for test.
@@ -197,17 +197,18 @@ Stratified k-fold
 folds: each set contains approximately the same percentage of samples of each
 target class as the complete set.
 
-Example of stratified 2-fold cross-validation on a dataset with 7 samples from
-two unbalanced classes::
+Example of stratified 2-fold cross-validation on a dataset with 10 samples from
+two slightly unbalanced classes::
 
   >>> from sklearn.cross_validation import StratifiedKFold
 
-  >>> labels = [0, 0, 0, 1, 1, 1, 0]
-  >>> skf = StratifiedKFold(labels, 2)
+  >>> labels = [0, 0, 0, 0, 1, 1, 1, 1, 1, 1]
+  >>> skf = StratifiedKFold(labels, 3)
   >>> for train, test in skf:
   ...     print("%s %s" % (train, test))
-  [1 4 6] [0 2 3 5]
-  [0 2 3 5] [1 4 6]
+  [2 3 6 7 8 9] [0 1 4 5]
+  [0 1 3 4 5 8 9] [2 6 7]
+  [0 1 2 4 5 6 7] [3 8 9]
 
 
 Leave-One-Out - LOO
@@ -228,6 +229,40 @@ not waste much data as only one sample is removed from the learning set::
   [0 2 3] [1]
   [0 1 3] [2]
   [0 1 2] [3]
+
+
+Potential users of LOO for model selection should weigh a few known caveats. 
+When compared with *k*-fold cross validation, one builds *n* models from *n* 
+samples instead of *k* models, where *n > k*. Moreover, each is trained on *n - 1* 
+samples rather than *(k-1)n / k*. In both ways, assuming *k* is not too large 
+and *k < n*, LOO is more computationally expensive than *k*-fold cross validation.
+
+In terms of accuracy, LOO often results in high variance as an estimator for the 
+test error. Intuitively, since *n - 1* of 
+the *n* samples are used to build each model, models constructed from folds are 
+virtually identical to each other and to the model built from the entire training 
+set. 
+
+However, if the learning curve is steep for the training size in question, 
+then 5- or 10- fold cross validation can overestimate the generalization error.
+
+As a general rule, most authors, and empirical evidence, suggest that 5- or 10- 
+fold cross validation should be preferred to LOO.
+
+
+.. topic:: References:
+
+ * http://www.faqs.org/faqs/ai-faq/neural-nets/part3/section-12.html
+ * T. Hastie, R. Tibshirani, J. Friedman,  `The Elements of Statistical Learning
+   <http://www-stat.stanford.edu/~tibs/ElemStatLearn>`_, Springer 2009
+ * L. Breiman, P. Spector `Submodel selection and evaluation in regression: The X-random case
+   <http://digitalassets.lib.berkeley.edu/sdtr/ucb/text/197.pdf>`_, International Statistical Review 1992
+ * R. Kohavi, `A Study of Cross-Validation and Bootstrap for Accuracy Estimation and Model Selection
+   <http://www.cs.iastate.edu/~jtian/cs573/Papers/Kohavi-IJCAI-95.pdf>`_, Intl. Jnt. Conf. AI   
+ * R. Bharat Rao, G. Fung, R. Rosales, `On the Dangers of Cross-Validation. An Experimental Evaluation
+   <http://www.siam.org/proceedings/datamining/2008/dm08_54_Rao.pdf>`_, SIAM 2008
+ * G. James, D. Witten, T. Hastie, R Tibshirani, `An Introduction to Statitical Learning
+   <http://www-bcf.usc.edu/~gareth/ISL>`_, Springer 2013
 
 
 Leave-P-Out - LPO

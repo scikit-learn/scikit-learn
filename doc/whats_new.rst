@@ -8,12 +8,19 @@
 Changelog
 ---------
 
+   - Use of :class:`covariance.EllipticEnvelop` has now been removed after
+     deprecation.
+     Please use :class:`covariance.EllipticEnvelope` instead.
+
    - Added :class:`ensemble.BaggingClassifier` and
      :class:`ensemble.BaggingRegressor` meta-estimators for ensembling
      any kind of base estimator. See the :ref:`Bagging <bagging>` section of
      the user guide for details and examples. By `Gilles Louppe`_.
 
-    - Added :func:`metrics.pairwise_distances_argmin_min`, by Philippe Gervais.
+   - Speed improvement of the :mod:`sklearn.ensemble.gradient_boosting` module.
+     By `Gilles Louppe`_ and `Peter Prettenhofer`_.
+
+   - Added :func:`metrics.pairwise_distances_argmin_min`, by Philippe Gervais.
 
    - Added predict method to :class:`cluster.AffinityPropagation` and
      :class:`cluster.MeanShift`, by `Mathieu Blondel`_.
@@ -41,6 +48,44 @@ Changelog
    - Memory improvements of extra trees and random forest by
      `Arnaud Joly`_.
 
+   - Changed :class:`cross_validation.StratifiedKFold` to try and
+     preserve as much of the original ordering of samples as possible so as
+     not to hide overfitting on datasets with a non-negligible level of
+     samples dependency.
+     By `Daniel Nouri`_ and `Olivier Grisel`_.
+
+   - Add multi-output support to :class:`gaussian_process.GaussianProcess`
+     by John Novak.
+
+   - Norm computations optimized for NumPy 1.6 and later versions by
+     `Lars Buitinck`_. In particular, the k-means algorithm no longer
+     needs a temporary data structure the size of its input.
+
+   - Added :class:`linear_model.RANSACRegressor` meta-estimator for the robust
+     fitting of regression models. By Johannes Schönberger.
+
+   - Added :ref:`Computational Performance <computational_performance>`
+     documentation. Discussion and examples of prediction latency / throughput
+     and different factors that have influence over speed. Additional tips for
+     building faster models and choosing a relevant compromise between speed
+     and predictive power.
+     By `Eustache Diemert`_.
+
+   - Fixed bug in :class:`gradient_boosting.GradientBoostingRegressor` with
+     ``loss='huber'``: ``gamma`` might have not been initialized.
+
+   - :class:`dummy.DummyClassifier` can now be used to predict a constant
+     output value. By Manoj Kumar.
+
+   - Fixed bug in :class:`decomposition.MiniBatchDictionaryLearning` :
+     partial_fit was not working properly.
+
+   - Multi-label classification output in multilabel indicator format
+     is now supported by :func:`metrics.roc_auc_score` and
+     :func:`metrics.average_precision_score` by `Arnaud Joly`_.
+
+   - Fixed bug in :class:`linear_model.stochastic_gradient` :
+     ``l1_ratio`` was used as ``(1.0 - l1_ratio)`` .
 
 API changes summary
 -------------------
@@ -60,6 +105,10 @@ API changes summary
      Support for masks will be removed in 0.17.
      The generators have produced arrays of indices by default since 0.10.
      By `Joel Nothman`_.
+
+   - 1-d arrays containing strings with ``dtype=object`` (as used in Pandas)
+     are now considered valid classification targets. This fixes a regression
+     from version 0.13 in some classifiers. By `Joel Nothman`_.
 
 .. _changes_0_14:
 
@@ -778,7 +827,7 @@ List of contributors for release 0.13 by number of commits.
  *  17  `Fabian Pedregosa`_
  *  17  Nelle Varoquaux
  *  16  `Christian Osendorfer`_
- *  14  Daniel Nouri
+ *  14  `Daniel Nouri`_
  *  13  `Virgile Fritsch`_
  *  13  syhw
  *  12  `Satrajit Ghosh`_
@@ -2285,3 +2334,7 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Kyle Kastner: http://kastnerkyle.github.io
 
 .. _@FedericoV: https://github.com/FedericoV/
+
+.. _Daniel Nouri: http://danielnouri.org
+
+.. _Johannes Schönberger: https://github.com/ahojnnes

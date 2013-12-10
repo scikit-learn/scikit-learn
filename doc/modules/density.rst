@@ -129,7 +129,7 @@ The form of these kernels is as follows:
 
 * Linear kernel (``kernel = 'linear'``)
 
-  :math:`K(x; h) \propto 1 - dist/h` if :math:`x < h`
+  :math:`K(x; h) \propto 1 - x/h` if :math:`x < h`
 
 * Cosine kernel (``kernel = 'cosine'``)
 

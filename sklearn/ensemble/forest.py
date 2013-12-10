@@ -79,7 +79,7 @@ def _parallel_build_trees(n_trees, forest, X, y,
         seed = random_state.randint(MAX_INT)
 
         tree = forest._make_estimator(append=False)
-        tree.set_params(random_state=check_random_state(seed))
+        tree.set_params(random_state=seed)
 
         if forest.bootstrap:
             n_samples = X.shape[0]
@@ -472,7 +472,7 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
             for j in xrange(1, len(all_proba)):
                 proba += all_proba[j]
 
-            proba /= self.n_estimators
+            proba /= len(self.estimators_)
 
         else:
             for j in xrange(1, len(all_proba)):
@@ -572,7 +572,7 @@ class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
             for i in range(n_jobs))
 
         # Reduce
-        y_hat = sum(all_y_hat) / self.n_estimators
+        y_hat = sum(all_y_hat) / len(self.estimators_)
 
         return y_hat
 

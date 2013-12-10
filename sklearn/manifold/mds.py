@@ -118,7 +118,7 @@ def _smacof_single(similarities, metric=True, n_components=2, init=None,
         X = 1. / n_samples * np.dot(B, X)
 
         dis = np.sqrt((X ** 2).sum(axis=1)).sum()
-        if verbose == 2:
+        if verbose >= 2:
             print('it: %d, stress %s' % (it, stress))
         if old_stress is not None:
             if(old_stress - stress / dis) < eps:
@@ -380,9 +380,9 @@ class MDS(BaseEstimator):
                           "dissimilarity matrix, set "
                           "``dissimilarity=precomputed``.")
 
-        if self.dissimilarity is "precomputed":
+        if self.dissimilarity == "precomputed":
             self.dissimilarity_matrix_ = X
-        elif self.dissimilarity is "euclidean":
+        elif self.dissimilarity == "euclidean":
             self.dissimilarity_matrix_ = euclidean_distances(X)
         else:
             raise ValueError("Proximity must be 'precomputed' or 'euclidean'."

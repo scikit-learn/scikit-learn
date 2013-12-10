@@ -135,7 +135,7 @@ def test_mini_batch_correct_shapes():
 
 
 def test_mini_batch_fit_transform():
-    raise SkipTest
+    raise SkipTest("skipping mini_batch_fit_transform.")
     alpha = 1
     rng = np.random.RandomState(0)
     Y, _, _ = generate_toy_data(3, 10, (8, 8), random_state=rng)  # wide array

@@ -45,11 +45,11 @@ from sklearn.svm.base import BaseLibSVM
 from sklearn.cross_validation import train_test_split
 from sklearn.utils.validation import DataConversionWarning
 
-dont_test = ['SparseCoder', 'EllipticEnvelope', 'EllipticEnvelop',
-             'DictVectorizer', 'LabelBinarizer', 'LabelEncoder',
-             'TfidfTransformer', 'IsotonicRegression', 'OneHotEncoder',
+dont_test = ['SparseCoder', 'EllipticEnvelope', 'DictVectorizer',
+             'LabelBinarizer', 'LabelEncoder', 'TfidfTransformer',
+             'IsotonicRegression', 'OneHotEncoder',
              'RandomTreesEmbedding', 'FeatureHasher', 'DummyClassifier',
-             'DummyRegressor', 'TruncatedSVD']
+             'DummyRegressor', 'TruncatedSVD', 'PolynomialFeatures']
 
 
 def test_all_estimators():
@@ -57,6 +57,10 @@ def test_all_estimators():
     # and have working repr.
     estimators = all_estimators(include_meta_estimators=True)
     classifier = LDA()
+
+    # Meta sanity-check to make sure that the estimator introspection runs
+    # properly
+    assert_greater(len(estimators), 0)
 
     for name, Estimator in estimators:
         # some can just not be sensibly default constructed
@@ -121,8 +125,8 @@ def test_all_estimator_no_base_class():
 
 
 def test_estimators_sparse_data():
-    # All estimators should either deal with sparse data, or raise an
-    # intelligible error message
+    # All estimators should either deal with sparse data or raise an
+    # exception with type TypeError and an intelligible error message
     rng = np.random.RandomState(0)
     X = rng.rand(40, 10)
     X[X < .8] = 0
@@ -135,22 +139,29 @@ def test_estimators_sparse_data():
         if name in dont_test:
             continue
         # catch deprecation warnings
-        with warnings.catch_warnings(record=True):
+        with warnings.catch_warnings():
             classifier = Classifier()
-        # fit
+        # fit and predict
         try:
             classifier.fit(X, y)
+            classifier.predict(X)
+            if hasattr(classifier, 'predict_proba'):
+                try:
+                    classifier.predict_proba(X)
+                except NotImplementedError:
+                    pass
         except TypeError as e:
             if not 'sparse' in repr(e):
                 print("Estimator %s doesn't seem to fail gracefully on "
-                      "sparse data" % name)
-                traceback.print_exc(file=sys.stdout)
-                raise e
-        except Exception as exc:
+                      "sparse data: error message state explicitly that "
+                      "sparse input is not supported if this is not the case."
+                      % name)
+                raise
+        except Exception:
             print("Estimator %s doesn't seem to fail gracefully on "
-                  "sparse data" % name)
-            traceback.print_exc(file=sys.stdout)
-            raise exc
+                  "sparse data: it should raise a TypeError if sparse input "
+                  "is explicitly not supported." % name)
+            raise
 
 
 def test_transformers():
@@ -248,8 +259,8 @@ def test_transformers():
 
 
 def test_transformers_sparse_data():
-    # All estimators should either deal with sparse data, or raise an
-    # intelligible error message
+    # All transformers should either deal with sparse data or raise an
+    # exception with type TypeError and an intelligible error message
     rng = np.random.RandomState(0)
     X = rng.rand(40, 10)
     X[X < .8] = 0
@@ -278,14 +289,15 @@ def test_transformers_sparse_data():
         except TypeError as e:
             if not 'sparse' in repr(e):
                 print("Estimator %s doesn't seem to fail gracefully on "
-                      "sparse data" % name)
-                traceback.print_exc(file=sys.stdout)
-                raise e
-        except Exception as exc:
+                      "sparse data: error message state explicitly that "
+                      "sparse input is not supported if this is not the case."
+                      % name)
+                raise
+        except Exception:
             print("Estimator %s doesn't seem to fail gracefully on "
-                  "sparse data" % name)
-            traceback.print_exc(file=sys.stdout)
-            raise exc
+                  "sparse data: it should raise a TypeError if sparse input "
+                  "is explicitly not supported." % name)
+            raise
 
 
 def test_estimators_nan_inf():
@@ -608,41 +620,43 @@ def test_classifiers_classes():
     X, y = shuffle(X, y, random_state=1)
     X = StandardScaler().fit_transform(X)
     y_names = iris.target_names[y]
-    for name, Classifier in classifiers:
-        if name in dont_test:
-            continue
-        if name in ['MultinomialNB', 'BernoulliNB']:
-            # TODO also test these!
-            continue
-        if name in ["LabelPropagation", "LabelSpreading"]:
-            # TODO some complication with -1 label
-            y_ = y
-        else:
-            y_ = y_names
+    for y_names in [y_names, y_names.astype('O')]:
+        for name, Classifier in classifiers:
+            if name in dont_test:
+                continue
+            if name in ['MultinomialNB', 'BernoulliNB']:
+                # TODO also test these!
+                continue
+            if name in ["LabelPropagation", "LabelSpreading"]:
+                # TODO some complication with -1 label
+                y_ = y
+            else:
+                y_ = y_names
 
-        classes = np.unique(y_)
-        # catch deprecation warnings
-        with warnings.catch_warnings(record=True):
-            classifier = Classifier()
-        # fit
-        try:
-            classifier.fit(X, y_)
-        except Exception as e:
-            print(e)
+            classes = np.unique(y_)
+            # catch deprecation warnings
+            with warnings.catch_warnings(record=True):
+                classifier = Classifier()
+            # fit
+            try:
+                classifier.fit(X, y_)
+            except Exception as e:
+                print(e)
 
-        y_pred = classifier.predict(X)
-        # training set performance
-        assert_array_equal(np.unique(y_), np.unique(y_pred))
-        accuracy = accuracy_score(y_, y_pred)
-        assert_greater(accuracy, 0.78,
-                       "accuracy %f of %s not greater than 0.78"
-                       % (accuracy, name))
-        #assert_array_equal(
-            #clf.classes_, classes,
-            #"Unexpected classes_ attribute for %r" % clf)
-        if np.any(classifier.classes_ != classes):
-            print("Unexpected classes_ attribute for %r: expected %s, got %s" %
-                  (classifier, classes, classifier.classes_))
+            y_pred = classifier.predict(X)
+            # training set performance
+            assert_array_equal(np.unique(y_), np.unique(y_pred))
+            accuracy = accuracy_score(y_, y_pred)
+            assert_greater(accuracy, 0.78,
+                           "accuracy %f of %s not greater than 0.78"
+                           % (accuracy, name))
+            #assert_array_equal(
+                #clf.classes_, classes,
+                #"Unexpected classes_ attribute for %r" % clf)
+            if np.any(classifier.classes_ != classes):
+                print("Unexpected classes_ attribute for %r: "
+                      "expected %s, got %s" %
+                      (classifier, classes, classifier.classes_))
 
 
 def test_classifiers_input_shapes():
@@ -750,7 +764,7 @@ def test_regressors_int():
     X, _ = _boston_subset()
     X = X[:50]
     rnd = np.random.RandomState(0)
-    y = rnd.randint(2, size=X.shape[0])
+    y = rnd.randint(3, size=X.shape[0])
     for name, Regressor in regressors:
         if name in dont_test or name in ('CCA'):
             continue
@@ -806,7 +820,10 @@ def test_regressors_train():
             regressor.fit(X, y_)
             regressor.predict(X)
 
-            if name not in ('PLSCanonical', 'CCA'):  # TODO: find out why
+              # TODO: find out why PLS and CCA fail. RANSAC is random
+              # and furthermore assumes the presence of outliers, hence
+              # skipped
+            if name not in ('PLSCanonical', 'CCA', 'RANSACRegressor'):
                 assert_greater(regressor.score(X, y_), 0.5)
         except Exception as e:
             print(regressor)
@@ -1047,3 +1064,63 @@ def test_import_all_consistency():
                 raise AttributeError(
                     "Module '{}' has no attribute '{}'".format(
                         modname, name))
+
+
+def test_sparsify_estimators():
+    """Test if predict with sparsified estimators works.
+
+    Tests regression, binary classification, and multi-class classification.
+    """
+    estimators = all_estimators()
+    X = np.array([[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]])
+    y = [1, 1, 1, 2, 2, 2]
+
+    # test regression and binary classification
+    for name, Estimator in estimators:
+        try:
+            Estimator.sparsify
+        except:
+            continue
+
+        est = Estimator()
+
+        est.fit(X, y)
+        pred_orig = est.predict(X)
+
+        # test sparsify with dense inputs
+        est.sparsify()
+        assert_true(sparse.issparse(est.coef_))
+        pred = est.predict(X)
+        assert_array_equal(pred, pred_orig)
+
+        # pickle and unpickle with sparse coef_
+        est = pickle.loads(pickle.dumps(est))
+        assert_true(sparse.issparse(est.coef_))
+        pred = est.predict(X)
+        assert_array_equal(pred, pred_orig)
+
+
+    # test multiclass classification
+    classifiers = all_estimators(type_filter='classifier')
+    y[-1] = 3  # make multi-class
+    for name, Classifier in classifiers:
+        try:
+            Classifier.sparsify
+        except:
+            continue
+        est = Classifier()
+
+        est.fit(X, y)
+        pred_orig = est.predict(X)
+
+        # test sparsify with dense inputs
+        est.sparsify()
+        assert_true(sparse.issparse(est.coef_))
+        pred = est.predict(X)
+        assert_array_equal(pred, pred_orig)
+
+        # pickle and unpickle with sparse coef_
+        est = pickle.loads(pickle.dumps(est))
+        assert_true(sparse.issparse(est.coef_))
+        pred = est.predict(X)
+        assert_array_equal(pred, pred_orig)

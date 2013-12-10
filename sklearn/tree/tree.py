@@ -45,7 +45,9 @@ DOUBLE = _tree.DOUBLE
 
 CRITERIA_CLF = {"gini": _tree.Gini, "entropy": _tree.Entropy}
 CRITERIA_REG = {"mse": _tree.MSE}
-SPLITTERS = {"best": _tree.BestSplitter, "random": _tree.RandomSplitter}
+SPLITTERS = {"best": _tree.BestSplitter,
+             "presort-best": _tree.PresortBestSplitter,
+             "random": _tree.RandomSplitter}
 
 
 # =============================================================================
@@ -240,8 +242,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
 
         self.tree_ = Tree(self.n_features_, self.n_classes_,
                           self.n_outputs_, splitter, max_depth,
-                          min_samples_split, self.min_samples_leaf,
-                          random_state)
+                          min_samples_split, self.min_samples_leaf)
 
         self.tree_.build(X, y, sample_weight=sample_weight)
 

@@ -128,16 +128,6 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
         with two algo. (a) the inner loop of the original NIPALS algo. or (b) a
         SVD on residuals cross-covariance matrices.
 
-    Parameters
-    ----------
-    X : array-like of predictors, shape = [n_samples, p]
-        Training vectors, where n_samples in the number of samples and
-        p is the number of predictors.
-
-    Y : array-like of response, shape = [n_samples, q]
-        Training vectors, where n_samples in the number of samples and
-        q is the number of response variables.
-
     n_components : int, number of components to keep. (default 2).
 
     scale : boolean, scale data? (default True)
@@ -225,6 +215,19 @@ class _PLS(six.with_metaclass(ABCMeta), BaseEstimator, TransformerMixin,
         self.copy = copy
 
     def fit(self, X, Y):
+        """Fit model to data.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+            Training vectors, where n_samples in the number of samples and
+            n_features is the number of predictors.
+
+        Y : array-like of response, shape = [n_samples, n_targets]
+            Target vectors, where n_samples in the number of samples and
+            n_targets is the number of response variables.
+        """
+
         # copy since this will contains the residuals (deflated) matrices
         X, Y = check_arrays(X, Y, dtype=np.float, copy=self.copy,
                             sparse_format='dense')

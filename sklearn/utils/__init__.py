@@ -1,7 +1,7 @@
 """
 The :mod:`sklearn.utils` module includes various utilities.
 """
-
+import sys
 from collections import Sequence
 
 import numpy as np
@@ -21,9 +21,6 @@ __all__ = ["murmurhash3_32", "as_float_array", "check_arrays", "safe_asarray",
            "assert_all_finite", "array2d", "atleast2d_or_csc",
            "atleast2d_or_csr", "warn_if_not_float", "check_random_state",
            "compute_class_weight", "minimum_spanning_tree", "column_or_1d"]
-
-# Make sure that DeprecationWarning get printed
-warnings.simplefilter("always", DeprecationWarning)
 
 
 class deprecated(object):
@@ -349,8 +346,11 @@ def gen_batches(n, batch_size):
         yield slice(start, n)
 
 
-def gen_even_slices(n, n_packs):
+def gen_even_slices(n, n_packs, n_samples=None):
     """Generator to create n_packs slices going up to n.
+
+    Pass n_samples when the slices are to be used for sparse matrix indexing;
+    slicing off-the-end raises an exception, while it works for NumPy arrays.
 
     Examples
     --------
@@ -371,6 +371,8 @@ def gen_even_slices(n, n_packs):
             this_n += 1
         if this_n > 0:
             end = start + this_n
+            if n_samples is not None:
+                end = min(n_samples, end)
             yield slice(start, end, None)
             start = end
 

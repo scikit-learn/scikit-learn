@@ -4,6 +4,7 @@ Testing for the tree module (sklearn.tree).
 import pickle
 import numpy as np
 
+from functools import partial
 from itertools import product
 
 from sklearn.metrics import accuracy_score
@@ -34,11 +35,15 @@ REG_CRITERIONS = ("mse", )
 
 CLF_TREES = {
     "DecisionTreeClassifier": DecisionTreeClassifier,
+    "Presort-DecisionTreeClassifier": partial(DecisionTreeClassifier,
+                                              splitter="presort-best"),
     "ExtraTreeClassifier": ExtraTreeClassifier,
 }
 
 REG_TREES = {
     "DecisionTreeRegressor": DecisionTreeRegressor,
+    "Presort-DecisionTreeRegressor": partial(DecisionTreeRegressor,
+                                             splitter="presort-best"),
     "ExtraTreeRegressor": ExtraTreeRegressor,
 }
 
@@ -246,7 +251,7 @@ def test_numerical_stability():
 
 def test_importances():
     """Check variable importances."""
-    X, y = datasets.make_classification(n_samples=1000,
+    X, y = datasets.make_classification(n_samples=2000,
                                         n_features=10,
                                         n_informative=3,
                                         n_redundant=0,
@@ -605,4 +610,4 @@ def test_32bit_equality():
 
     est.fit(X_train, y_train)
     score = est.score(X_test, y_test)
-    assert_almost_equal(0.76624433012786, score)
+    assert_almost_equal(0.84652100667116, score)

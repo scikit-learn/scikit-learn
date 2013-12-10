@@ -9,13 +9,15 @@
 import time
 
 import numpy as np
+import scipy.sparse as sp
 
 from ..base import BaseEstimator
 from ..base import TransformerMixin
 from ..externals.six.moves import xrange
-from ..utils import check_arrays
+from ..utils import atleast2d_or_csr, check_arrays
 from ..utils import check_random_state
 from ..utils import gen_even_slices
+from ..utils import issparse
 from ..utils.extmath import safe_sparse_dot
 from ..utils.extmath import logistic_sigmoid
 
@@ -48,8 +50,8 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         Number of iterations/sweeps over the training dataset to perform
         during training.
 
-    verbose : bool, optional
-        The verbosity level.
+    verbose : int, optional
+        The verbosity level. The default, zero, means silent mode.
 
     random_state : integer or numpy.RandomState, optional
         A random number generator instance to define the state of the
@@ -77,7 +79,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
     >>> model = BernoulliRBM(n_components=2)
     >>> model.fit(X)
     BernoulliRBM(batch_size=10, learning_rate=0.1, n_components=2, n_iter=10,
-           random_state=None, verbose=False)
+           random_state=None, verbose=0)
 
     References
     ----------
@@ -91,7 +93,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         on Machine Learning (ICML) 2008
     """
     def __init__(self, n_components=256, learning_rate=0.1, batch_size=10,
-                 n_iter=10, verbose=False, random_state=None):
+                 n_iter=10, verbose=0, random_state=None):
         self.n_components = n_components
         self.learning_rate = learning_rate
         self.batch_size = batch_size
@@ -104,7 +106,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} shape (n_samples, n_features)
             The data to be transformed.
 
         Returns
@@ -112,7 +114,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         h : array, shape (n_samples, n_components)
             Latent representations of the data.
         """
-        X, = check_arrays(X, sparse_format='csc', dtype=np.float)
+        X, = check_arrays(X, sparse_format='csr', dtype=np.float)
         return self._mean_hiddens(X)
 
     def _mean_hiddens(self, v):
@@ -185,9 +187,9 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         free_energy : array-like, shape (n_samples,)
             The value of the free energy.
         """
-        return - np.dot(v, self.intercept_visible_) - np.log(1. + np.exp(
-            safe_sparse_dot(v, self.components_.T) + self.intercept_hidden_)) \
-            .sum(axis=1)
+        return (- safe_sparse_dot(v, self.intercept_visible_)
+                - np.log1p(np.exp(safe_sparse_dot(v, self.components_.T)
+                                  + self.intercept_hidden_)).sum(axis=1))
 
     def gibbs(self, v):
         """Perform one Gibbs sampling step.
@@ -221,11 +223,6 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
 
         rng : RandomState
             Random number generator to use for sampling.
-
-        Returns
-        -------
-        pseudo_likelihood : array-like, shape (n_samples,)
-            If verbose=True, pseudo-likelihood estimate for this batch.
         """
         h_pos = self._mean_hiddens(v_pos)
         v_neg = self._sample_visibles(self.h_samples_, rng)
@@ -243,30 +240,40 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         h_neg[rng.uniform(size=h_neg.shape) < h_neg] = 1.0  # sample binomial
         self.h_samples_ = np.floor(h_neg, h_neg)
 
-        if self.verbose:
-            return self.score_samples(v_pos)
-
-    def score_samples(self, v):
-        """Compute the pseudo-likelihood of v.
+    def score_samples(self, X):
+        """Compute the pseudo-likelihood of X.
 
         Parameters
         ----------
-        v : array-like, shape (n_samples, n_features)
-            Values of the visible layer.
+        X : {array-like, sparse matrix} shape (n_samples, n_features)
+            Values of the visible layer. Must be all-boolean (not checked).
 
         Returns
         -------
         pseudo_likelihood : array-like, shape (n_samples,)
-            Value of the pseudo-likelihood (proxy to likelihood).
+            Value of the pseudo-likelihood (proxy for likelihood).
+
+        Notes
+        -----
+        This method is not deterministic: it computes a quantity called the
+        free energy on X, then on a randomly corrupted version of X, and
+        returns the log of the logistic function of the difference.
         """
+        v = atleast2d_or_csr(X)
         rng = check_random_state(self.random_state)
+
+        # Randomly corrupt one feature in each sample in v.
+        ind = (np.arange(v.shape[0]),
+               rng.randint(0, v.shape[1], v.shape[0]))
+        if issparse(v):
+            data = -2 * v[ind] + 1
+            v_ = v + sp.csr_matrix((data.A.ravel(), ind), shape=v.shape)
+        else:
+            v_ = v.copy()
+            v_[ind] = 1 - v_[ind]
+
         fe = self._free_energy(v)
-
-        v_ = v.copy()
-        i_ = rng.randint(0, v.shape[1], v.shape[0])
-        v_[np.arange(v.shape[0]), i_] = 1 - v_[np.arange(v.shape[0]), i_]
         fe_ = self._free_energy(v_)
-
         return v.shape[1] * logistic_sigmoid(fe_ - fe, log=True)
 
     def fit(self, X, y=None):
@@ -274,7 +281,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} shape (n_samples, n_features)
             Training data.
 
         Returns
@@ -282,7 +289,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         self : BernoulliRBM
             The fitted model.
         """
-        X, = check_arrays(X, sparse_format='csc', dtype=np.float)
+        X, = check_arrays(X, sparse_format='csr', dtype=np.float)
         n_samples = X.shape[0]
         rng = check_random_state(self.random_state)
 
@@ -295,23 +302,19 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
 
         n_batches = int(np.ceil(float(n_samples) / self.batch_size))
         batch_slices = list(gen_even_slices(n_batches * self.batch_size,
-                                            n_batches))
+                                            n_batches, n_samples))
         verbose = self.verbose
-        for iteration in xrange(self.n_iter):
-            pl = 0.
-            if verbose:
-                begin = time.time()
-
+        begin = time.time()
+        for iteration in xrange(1, self.n_iter + 1):
             for batch_slice in batch_slices:
-                pl_batch = self._fit(X[batch_slice], rng)
-
-                if verbose:
-                    pl += pl_batch.sum()
+                self._fit(X[batch_slice], rng)
 
             if verbose:
-                pl /= n_samples
                 end = time.time()
-                print("Iteration %d, pseudo-likelihood = %.2f, time = %.2fs"
-                      % (iteration, pl, end - begin))
+                print("[%s] Iteration %d, pseudo-likelihood = %.2f,"
+                      " time = %.2fs"
+                      % (type(self).__name__, iteration,
+                         self.score_samples(X).mean(), end - begin))
+                begin = end
 
         return self

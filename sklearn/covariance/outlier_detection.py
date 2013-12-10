@@ -15,7 +15,6 @@ covariance estimator (the Minimum Covariance Determinant).
 import numpy as np
 import scipy as sp
 from . import MinCovDet
-from ..utils import deprecated
 from ..base import ClassifierMixin
 
 
@@ -184,8 +183,3 @@ class EllipticEnvelope(ClassifierMixin, OutlierDetectionMixin, MinCovDet):
 
         return self
 
-
-# Deprecated classes
-@deprecated("Use EllipticEnvelope instead. To be removed in 0.13.")
-class EllipticEnvelop(EllipticEnvelope):
-    pass

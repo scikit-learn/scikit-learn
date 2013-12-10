@@ -8,15 +8,20 @@ Model selection with Probabilistic (PCA) and Factor Analysis (FA)
 
 Probabilistic PCA and Factor Analysis are probabilistic models.
 The consequence is that the likelihood of new data can be used
-for model selection. Here we compare PCA and FA with cross-validation
-on low rank data corrupted with homoscedastic noise (noise variance
+for model selection and covariance estimation.
+Here we compare PCA and FA with cross-validation on low rank data corrupted
+with homoscedastic noise (noise variance
 is the same for each feature) or heteroscedastic noise (noise variance
-is the different for each feature).
+is the different for each feature). In a second step we compare the model
+likelihood to the likelihoods obtained from shrinkage covariance estimators.
 
 One can observe that with homoscedastic noise both FA and PCA succeed
 in recovering the size of the low rank subspace. The likelihood with PCA
 is higher than FA in this case. However PCA fails and overestimates
-the rank when heteroscedastic noise is present. The automatic estimation from
+the rank when heteroscedastic noise is present. Under appropriate
+circumstances the low rank models are more likely than shrinkage models.
+
+The automatic estimation from
 Automatic Choice of Dimensionality for PCA. NIPS 2000: 598-604
 by Thomas P. Minka is also compared.
 
@@ -24,6 +29,7 @@ by Thomas P. Minka is also compared.
 print(__doc__)
 
 # Authors: Alexandre Gramfort
+#          Denis A. Engemann
 # License: BSD 3 clause
 
 import numpy as np
@@ -31,7 +37,9 @@ import pylab as pl
 from scipy import linalg
 
 from sklearn.decomposition import PCA, FactorAnalysis
+from sklearn.covariance import ShrunkCovariance, LedoitWolf
 from sklearn.cross_validation import cross_val_score
+from sklearn.grid_search import GridSearchCV
 
 ###############################################################################
 # Create the data
@@ -68,6 +76,19 @@ def compute_scores(X):
 
     return pca_scores, fa_scores
 
+
+def shrunk_cov_score(X):
+    shrinkages = np.logspace(-2, 0, 30)
+    cv = GridSearchCV(ShrunkCovariance(), {'shrinkage': shrinkages})
+    a = cv.fit(X).best_estimator_
+    return np.mean(cross_val_score(cv.fit(X).best_estimator_, X))
+
+
+def lw_score(X):
+    a = LedoitWolf().fit(X)
+    return np.mean(cross_val_score(LedoitWolf(), X))
+
+
 for X, title in [(X_homo, 'Homoscedastic Noise'),
                  (X_hetero, 'Heteroscedastic Noise')]:
     pca_scores, fa_scores = compute_scores(X)
@@ -92,6 +113,13 @@ for X, title in [(X_homo, 'Homoscedastic Noise'),
                label='FactorAnalysis CV: %d' % n_components_fa, linestyle='--')
     pl.axvline(n_components_pca_mle, color='k',
                label='PCA MLE: %d' % n_components_pca_mle, linestyle='--')
+
+    # compare with other covariance estimators
+    pl.axhline(shrunk_cov_score(X), color='violet',
+               label='Shrunk Covariance MLE', linestyle='-.')
+    pl.axhline(lw_score(X), color='orange',
+               label='LedoitWolf MLE' % n_components_pca_mle, linestyle='-.')
+
     pl.xlabel('nb of components')
     pl.ylabel('CV scores')
     pl.legend(loc='lower right')
