@@ -11,6 +11,35 @@ Who is using scikit-learn?
 
 .. to add a testimonials, just XXX
 
+`Spotify <http://www.spotify.com>`_
+------------------------------------
+
+.. raw:: html
+
+    <div class="logo">
+
+.. image:: images/spotify.jpg
+    :target: http://www.spotify.com
+
+.. raw:: html
+
+    </div>
+
+Scikit-learn provides a toolbox with solid implementations of a bunch of
+state-of-the-art models and makes it easy to plug them into existing
+applications. We've been using it quite a lot for music recommendations at
+Spotify and I think it's the most well-designed ML package I've seen so
+far.
+
+.. raw:: html
+
+   <span class="testimonial-author">
+
+Erik Bernhardsson, Engineering Manager Music Discovery & Machine Learning, Spotify
+
+.. raw:: html
+
+   </span>
 
 `Inria <http://www.inria.fr>`_
 -------------------------------
