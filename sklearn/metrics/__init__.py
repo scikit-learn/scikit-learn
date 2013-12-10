@@ -27,9 +27,6 @@ from .metrics import (accuracy_score,
                       roc_curve,
                       zero_one_loss)
 
-# Will be removed in 0.15
-from .metrics import zero_one
-from .metrics import zero_one_score
 
 # Deprecated in 0.16
 from .metrics import auc_score
