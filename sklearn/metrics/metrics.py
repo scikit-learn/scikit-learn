@@ -964,7 +964,6 @@ def zero_one_loss(y_true, y_pred, normalize=True):
         return n_samples - score
 
 
-
 def log_loss(y_true, y_pred, eps=1e-15, normalize=True):
     """Log loss, aka logistic loss or cross-entropy loss.
 
