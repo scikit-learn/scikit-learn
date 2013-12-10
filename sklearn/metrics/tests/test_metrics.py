@@ -52,8 +52,6 @@ from sklearn.metrics import (accuracy_score,
                              r2_score,
                              roc_auc_score,
                              roc_curve,
-                             zero_one,
-                             zero_one_score,
                              zero_one_loss)
 
 from sklearn.metrics.metrics import _average_binary_score
@@ -1252,8 +1250,6 @@ def test_losses():
     # Classification
     # --------------
     # Throw deprecated warning
-    f = ignore_warnings
-    assert_equal(f(zero_one)(y_true, y_pred), 11)
 
     assert_almost_equal(zero_one_loss(y_true, y_pred),
                         11 / float(n_samples), 2)
@@ -1266,8 +1262,6 @@ def test_losses():
     assert_equal(accuracy_score(y_true, y_pred),
                  1 - zero_one_loss(y_true, y_pred))
 
-    assert_equal(f(zero_one_score)(y_true, y_pred),
-                 1 - zero_one_loss(y_true, y_pred))
 
     # Regression
     # ----------
@@ -1326,18 +1320,6 @@ def test_symmetry():
         metric = ALL_METRICS[name]
         assert_true(np.any(metric(y_true, y_pred) != metric(y_pred, y_true)),
                     msg="%s seems to be symmetric" % name)
-
-    # Deprecated metrics
-
-    f = ignore_warnings
-    assert_almost_equal(f(zero_one)(y_true, y_pred),
-                        f(zero_one)(y_pred, y_true))
-
-    assert_almost_equal(f(zero_one)(y_true, y_pred, normalize=False),
-                        f(zero_one)(y_pred, y_true, normalize=False))
-
-    assert_almost_equal(f(zero_one_score)(y_true, y_pred),
-                        f(zero_one_score)(y_pred, y_true))
 
 
 def test_sample_order_invariance():
