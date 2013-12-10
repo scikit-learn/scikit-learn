@@ -368,9 +368,9 @@ def test_check_accuracy_on_digits():
     assert_greater(scores.mean(), 0.86)
 
     # Generative Bayes
-    scores_cmp = {'kde': (0.98, 0.99),
+    scores_cmp = {'kde': (0.96, 0.98),
                   'norm_approx': (0.79, 0.79),
-                  'gmm': (0.92, 0.93)}
+                  'gmm': (0.84, 0.92)}
 
     for model, kwargs in MODEL_KWARGS.iteritems():
         scores = cross_val_score(GenerativeBayes(model, kwargs),
