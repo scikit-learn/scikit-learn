@@ -63,7 +63,7 @@ the tests and will be removed in release 0.16.
     __all__ = ['cross_validation', 'cluster', 'covariance',
                'datasets', 'decomposition', 'feature_extraction',
                'feature_selection', 'semi_supervised',
-               'gaussian_process', 'grid_search', 'hmm', 'lda', 'linear_model',
+               'gaussian_process', 'grid_search', 'lda', 'linear_model',
                'metrics', 'mixture', 'naive_bayes', 'neighbors', 'pipeline',
                'preprocessing', 'qda', 'svm', 'clone',
                'cross_decomposition',
