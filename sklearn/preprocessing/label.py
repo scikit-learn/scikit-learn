@@ -557,7 +557,7 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
         indices = array.array('i')
         indptr = array.array('i', [0])
         for labels in y:
-            indices.extend(class_mapping[label] for label in labels)
+            indices.extend(set(class_mapping[label] for label in labels))
             indptr.append(len(indices))
         data = np.ones(len(indices), dtype=int)
         return sp.csr_matrix((data, indices, indptr),

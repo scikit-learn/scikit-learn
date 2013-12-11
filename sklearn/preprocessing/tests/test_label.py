@@ -371,3 +371,12 @@ def test_mutlilabel_binarizer_non_integer_labels():
 
     lsb = MultiLabelBinarizer()
     assert_raises(TypeError, lsb.fit_transform, [({}), ({}, {'a': 'b'})])
+
+
+def test_mutlilabel_binarizer_non_unique():
+    inp = [(1, 1, 1, 0)]
+    indicator_mat = np.array([[1, 1]])
+    lsb = MultiLabelBinarizer()
+    assert_array_equal(lsb.fit_transform(inp), indicator_mat)
+
+    assert_array_equal(lsb.inverse_transform(np.array([[1, 3]])), [(0, 1,)])
