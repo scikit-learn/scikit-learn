@@ -398,6 +398,33 @@ def _kmeans_single(X, n_clusters, x_squared_norms, max_iter=300,
 
 
 def _labels_inertia_precompute_dense(X, x_squared_norms, centers, distances):
+    """Compute labels and inertia using a full distance matrix.
+
+    This will overwrite the 'distances' array in-place.
+
+    Parameters
+    ----------
+    X : numpy array, shape (n_sample, n_features)
+        Input data.
+
+    x_squared_norms : numpy array, shape (n_samples,)
+        Precomputed squared norms of X.
+
+    centers : numpy array, shape (n_clusters, n_features)
+        Cluster centers which data is assigned to.
+
+    distances : numpy array, shape (n_samples,)
+        Pre-allocated array in which distances are stored.
+
+    Returns
+    -------
+    labels : numpy array, dtype=np.int, shape (n_samples,)
+        Indices of clusters that samples are assigned to.
+
+    inertia : float
+        Sum of distances of samples to their closest cluster center.
+
+    """
     n_samples = X.shape[0]
     k = centers.shape[0]
     all_distances = euclidean_distances(centers, X, x_squared_norms,
@@ -411,6 +438,7 @@ def _labels_inertia_precompute_dense(X, x_squared_norms, centers, distances):
         labels[dist < mindist] = center_id
         mindist = np.minimum(dist, mindist)
     if n_samples == distances.shape[0]:
+        # distances will be changed in-place
         distances[:] = mindist
     inertia = mindist.sum()
     return labels, inertia
@@ -420,7 +448,8 @@ def _labels_inertia(X, x_squared_norms, centers,
                     precompute_distances=True, distances=None):
     """E step of the K-means EM algorithm.
 
-    Compute the labels and the inertia of the given samples and centers
+    Compute the labels and the inertia of the given samples and centers.
+    This will compute the distances in-place.
 
     Parameters
     ----------
@@ -446,8 +475,8 @@ def _labels_inertia(X, x_squared_norms, centers,
     labels: int array of shape(n)
         The resulting assignment
 
-    inertia: float
-        The value of the inertia criterion with the assignment
+    inertia : float
+        Sum of distances of samples to their closest cluster center.
     """
     n_samples = X.shape[0]
     # set the default value of centers to -1 to be able to detect any anomaly
@@ -455,6 +484,7 @@ def _labels_inertia(X, x_squared_norms, centers,
     labels = -np.ones(n_samples, np.int32)
     if distances is None:
         distances = np.zeros(shape=(0,), dtype=np.float64)
+    # distances will be changed in-place
     if sp.issparse(X):
         inertia = _k_means._assign_labels_csr(
             X, x_squared_norms, centers, labels, distances=distances)
@@ -608,8 +638,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         Labels of each point
 
     `inertia_` : float
-        The value of the inertia criterion associated with the chosen
-        partition.
+        Sum of distances of samples to their closest cluster center.
 
     Notes
     ------
@@ -723,7 +752,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         return self.fit(X)._transform(X)
 
     def transform(self, X, y=None):
-        """Transform X to a cluster-distance space
+        """Transform X to a cluster-distance space.
 
         In the new space, each dimension is the distance to the cluster
         centers.  Note that even if X is sparse, the array returned by
@@ -793,47 +822,55 @@ def _mini_batch_step(X, x_squared_norms, centers, counts,
                      distances, random_reassign=False,
                      random_state=None, reassignment_ratio=.01,
                      verbose=False):
-    """Incremental update of the centers for the Minibatch K-Means algorithm
+    """Incremental update of the centers for the Minibatch K-Means algorithm.
 
     Parameters
     ----------
 
-    X: array, shape (n_samples, n_features)
+    X : array, shape (n_samples, n_features)
         The original data array.
 
-    x_squared_norms: array, shape (n_samples,)
+    x_squared_norms : array, shape (n_samples,)
         Squared euclidean norm of each data point.
 
-    centers: array, shape (k, n_features)
+    centers : array, shape (k, n_features)
         The cluster centers. This array is MODIFIED IN PLACE
 
-    counts: array, shape (k,)
+    counts : array, shape (k,)
          The vector in which we keep track of the numbers of elements in a
          cluster. This array is MODIFIED IN PLACE
 
-    distances: array, dtype float64, shape (n_samples), optional
+    distances : array, dtype float64, shape (n_samples), optional
         If not None, should be a pre-allocated array that will be used to store
         the distances of each sample to it's closest center.
         May not be None when random_reassign is True.
 
-    random_state: integer or numpy.RandomState, optional
+    random_state : integer or numpy.RandomState, optional
         The generator used to initialize the centers. If an integer is
         given, it fixes the seed. Defaults to the global numpy random
         number generator.
 
-    random_reassign: boolean, optional
+    random_reassign : boolean, optional
         If True, centers with very low counts are
         randomly-reassigned to observations in dense areas.
 
-    reassignment_ratio: float, optional
+    reassignment_ratio : float, optional
         Control the fraction of the maximum number of counts for a
         center to be reassigned. A higher value means that low count
         centers are more easily reassigned, which means that the
         model will take longer to converge, but should converge in a
         better clustering.
 
-    verbose: bool, optional
-        Controls the verbosity
+    verbose : bool, optional
+        Controls the verbosity.
+
+    Returns
+    -------
+    inertia : float
+        Sum of distances of samples to their closest cluster center.
+
+    squared_diff : numpy array, shape (n_clusters,)
+        Squared distances between previous and updated cluster centers.
 
     """
     # Perform label assignment to nearest centers
