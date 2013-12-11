@@ -167,9 +167,10 @@ class GaussianNB(BaseNB):
         self.class_prior_ = np.zeros(n_classes)
         epsilon = 1e-9
         for i, y_i in enumerate(unique_y):
-            self.theta_[i, :] = np.mean(X[y == y_i, :], axis=0)
-            self.sigma_[i, :] = np.var(X[y == y_i, :], axis=0) + epsilon
-            self.class_prior_[i] = np.float(np.sum(y == y_i)) / n_samples
+            Xi = X[y == y_i, :]
+            self.theta_[i, :] = np.mean(Xi, axis=0)
+            self.sigma_[i, :] = np.var(Xi, axis=0) + epsilon
+            self.class_prior_[i] = np.float(Xi.shape[0]) / n_samples
         return self
 
     def _joint_log_likelihood(self, X):
