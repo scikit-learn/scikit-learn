@@ -7,10 +7,11 @@ Generate samples of synthetic data sets.
 # License: BSD 3 clause
 
 import numbers
+import warnings
 import numpy as np
 from scipy import linalg
 
-from ..preprocessing import LabelBinarizer
+from ..preprocessing import MultiLabelBinarizer
 from ..utils import array2d, check_random_state
 from ..utils import shuffle as util_shuffle
 from ..utils.random import sample_without_replacement
@@ -336,8 +337,15 @@ def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
     X, Y = zip(*[sample_example() for i in range(n_samples)])
 
     if return_indicator:
-        lb = LabelBinarizer()
+        lb = MultiLabelBinarizer()
         Y = lb.fit([range(n_classes)]).transform(Y)
+    else:
+        warnings.warn('Support for the sequence of sequences multilabel '
+                      'representation is being deprecated and replaced with '
+                      'a sparse indicator matrix. '
+                      'return_indicator wil default to True from version '
+                      '0.17.',
+                      DeprecationWarning)
 
     return np.array(X, dtype=np.float64), Y
 

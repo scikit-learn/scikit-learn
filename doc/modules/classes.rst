@@ -1058,6 +1058,7 @@ Pairwise metrics
    preprocessing.KernelCenterer
    preprocessing.LabelBinarizer
    preprocessing.LabelEncoder
+   preprocessing.MultiLabelBinarizer
    preprocessing.MinMaxScaler
    preprocessing.Normalizer
    preprocessing.OneHotEncoder
