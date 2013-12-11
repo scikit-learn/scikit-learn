@@ -235,6 +235,12 @@ API changes summary
    - :class:`cluster.WardClustering` is deprecated. Use
    - :class:`cluster.AgglomerativeClustering` instead.
 
+   - Direct support for the sequence of sequences (or list of lists) multilabel
+     format is deprecated. To convert to and from the supported binary
+     indicator matrix format, use
+     :class:`MultiLabelBinarizer <preprocessing.MultiLabelBinarizer>`.
+     By `Joel Nothman`_.
+
    - Add score method to :class:`PCA <decomposition.PCA>` following the model of
      probabilistic PCA and deprecate
      :class:`ProbabilisticPCA <decomposition.ProbabilisticPCA>` model whose

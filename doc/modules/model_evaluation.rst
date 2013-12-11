@@ -259,15 +259,10 @@ where :math:`1(x)` is the `indicator function
   >>> accuracy_score(y_true, y_pred, normalize=False)
   2
 
-In the multilabel case with binary indicator format:
+In the multilabel case with binary label indicators:
 
   >>> accuracy_score(np.array([[0.0, 1.0], [1.0, 1.0]]), np.ones((2, 2)))
   0.5
-
-and with a list of labels format:
-
-  >>> accuracy_score([(1,), (3,)], [(1, 2), tuple()])
-  0.0
 
 .. topic:: Example:
 
@@ -377,15 +372,10 @@ where :math:`1(x)` is the `indicator function
   >>> hamming_loss(y_true, y_pred)
   0.25
 
-In the multilabel case with binary indicator format: ::
+In the multilabel case with binary label indicators: ::
 
   >>> hamming_loss(np.array([[0.0, 1.0], [1.0, 1.0]]), np.zeros((2, 2)))
   0.75
-
-and with a list of labels format: ::
-
-  >>> hamming_loss([(1, 2), (3,)], [(1, 2), tuple()])  # doctest: +ELLIPSIS
-  0.166...
 
 .. note::
 
@@ -434,16 +424,10 @@ score is equal to the classification accuracy.
   >>> jaccard_similarity_score(y_true, y_pred, normalize=False)
   2
 
-In the multilabel case with binary indicator format:
+In the multilabel case with binary label indicators:
 
   >>> jaccard_similarity_score(np.array([[0.0, 1.0], [1.0, 1.0]]), np.ones((2, 2)))
   0.75
-
-and with a list of labels format:
-
-  >>> jaccard_similarity_score([(1,), (3,)], [(1, 2), tuple()])
-  0.25
-
 
 .. _precision_recall_f_measure_metrics:
 
@@ -897,15 +881,10 @@ where :math:`1(x)` is the `indicator function
   >>> zero_one_loss(y_true, y_pred, normalize=False)
   1
 
-In the multilabel case with binary indicator format:
+In the multilabel case with binary label indicators: ::
 
   >>> zero_one_loss(np.array([[0.0, 1.0], [1.0, 1.0]]), np.ones((2, 2)))
   0.5
-
-and with a list of labels format:
-
-  >>> zero_one_loss([(1,), (3,)], [(1, 2), tuple()])
-  1.0
 
 
 .. topic:: Example:

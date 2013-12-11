@@ -8,6 +8,7 @@ from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
 
 from sklearn.preprocessing.label import LabelBinarizer
+from sklearn.preprocessing.label import MultiLabelBinarizer
 from sklearn.preprocessing.label import LabelEncoder
 from sklearn.preprocessing.label import label_binarize
 
@@ -253,3 +254,120 @@ def test_label_binarize_with_multilabel_indicator():
 
     output = lb.fit(y).transform(y)
     assert_array_equal(output, expected)
+
+
+def test_mutlilabel_binarizer():
+    # test input as iterable of iterables
+    inputs = [
+        lambda: [(2, 3), (1,), (1, 2)],
+        lambda: ({2, 3}, {1}, {1, 2}),
+        lambda: iter([iter((2, 3)), iter((1,)), {1, 2}]),
+    ]
+    indicator_mat = np.array([[0, 1, 1],
+                              [1, 0, 0],
+                              [1, 1, 0]])
+    inverse = inputs[0]()
+    for inp in inputs:
+        # With fit_tranform
+        lsb = MultiLabelBinarizer()
+        got = lsb.fit_transform(inp())
+        assert_array_equal(indicator_mat, got)
+        assert_array_equal([1, 2, 3], lsb.classes_)
+        assert_equal(lsb.inverse_transform(got), inverse)
+
+        # With fit
+        lsb = MultiLabelBinarizer()
+        got = lsb.fit(inp()).transform(inp())
+        assert_array_equal(indicator_mat, got)
+        assert_array_equal([1, 2, 3], lsb.classes_)
+        assert_equal(lsb.inverse_transform(got), inverse)
+
+
+def test_mutlilabel_binarizer_empty_sample():
+    lsb = MultiLabelBinarizer()
+    y = [[1, 2], [1], []]
+    Y = np.array([[1, 1],
+                  [1, 0],
+                  [0, 0]])
+    assert_array_equal(lsb.fit_transform(y), Y)
+
+
+def test_mutlilabel_binarizer_unknown_class():
+    lsb = MultiLabelBinarizer()
+    y = [[1, 2]]
+    assert_raises(KeyError, lsb.fit(y).transform, [[0]])
+
+    lsb = MultiLabelBinarizer(classes=[1, 2])
+    assert_raises(KeyError, lsb.fit_transform, [[0]])
+
+
+def test_mutlilabel_binarizer_given_classes():
+    inp = [(2, 3), (1,), (1, 2)]
+    indicator_mat = np.array([[0, 1, 1],
+                              [1, 0, 0],
+                              [1, 0, 1]])
+    # fit_transform()
+    lsb = MultiLabelBinarizer(classes=[1, 3, 2])
+    assert_array_equal(lsb.fit_transform(inp), indicator_mat)
+    assert_array_equal(lsb.classes_, [1, 3, 2])
+
+    # fit().transform()
+    lsb = MultiLabelBinarizer(classes=[1, 3, 2])
+    assert_array_equal(lsb.fit(inp).transform(inp), indicator_mat)
+    assert_array_equal(lsb.classes_, [1, 3, 2])
+
+    # ensure works with extra class
+    lsb = MultiLabelBinarizer(classes=[4, 1, 3, 2])
+    assert_array_equal(lsb.fit_transform(inp),
+                       np.hstack(([[0], [0], [0]], indicator_mat)))
+    assert_array_equal(lsb.classes_, [4, 1, 3, 2])
+
+    # ensure fit is no-op as iterable is not consumed
+    inp = iter(inp)
+    lsb = MultiLabelBinarizer(classes=[1, 3, 2])
+    assert_array_equal(lsb.fit(inp).transform(inp), indicator_mat)
+
+
+def test_mutlilabel_binarizer_same_length_sequence():
+    """Ensure sequences of the same length are not interpreted as a 2-d array
+    """
+    inp = [[1], [0], [2]]
+    indicator_mat = np.array([[0, 1, 0],
+                              [1, 0, 0],
+                              [0, 0, 1]])
+    # fit_transform()
+    lsb = MultiLabelBinarizer()
+    assert_array_equal(lsb.fit_transform(inp), indicator_mat)
+    assert_array_equal(lsb.inverse_transform(indicator_mat), inp)
+
+    # fit().transform()
+    lsb = MultiLabelBinarizer()
+    assert_array_equal(lsb.fit(inp).transform(inp), indicator_mat)
+    assert_array_equal(lsb.inverse_transform(indicator_mat), inp)
+
+
+def test_mutlilabel_binarizer_non_integer_labels():
+    tuple_classes = np.empty(3, dtype=object)
+    tuple_classes[:] = [(1,), (2,), (3,)]
+    inputs = [
+        ([('2', '3'), ('1',), ('1', '2')], ['1', '2', '3']),
+        ([((2,), (3,)), ((1,),), ((1,), (2,))], tuple_classes),
+    ]
+    indicator_mat = np.array([[0, 1, 1],
+                              [1, 0, 0],
+                              [1, 1, 0]])
+    for inp, classes in inputs:
+        # fit_transform()
+        lsb = MultiLabelBinarizer()
+        assert_array_equal(lsb.fit_transform(inp), indicator_mat)
+        assert_array_equal(lsb.classes_, classes)
+        assert_array_equal(lsb.inverse_transform(indicator_mat), inp)
+
+        # fit().transform()
+        lsb = MultiLabelBinarizer()
+        assert_array_equal(lsb.fit(inp).transform(inp), indicator_mat)
+        assert_array_equal(lsb.classes_, classes)
+        assert_array_equal(lsb.inverse_transform(indicator_mat), inp)
+
+    lsb = MultiLabelBinarizer()
+    assert_raises(TypeError, lsb.fit_transform, [({}), ({}, {'a': 'b'})])

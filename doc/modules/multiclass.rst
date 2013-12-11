@@ -77,42 +77,30 @@ tasks :ref:`Decision Trees <tree>`, :ref:`Random Forests <forest>`,
 Multilabel classification format
 ================================
 
-In multilabel learning, the joint set of binary classification tasks
-is expressed with either a sequence of sequences or a label binary indicator
-array.
+In multilabel learning, the joint set of binary classification tasks is
+expressed with label binary indicator array: each sample is one row of a 2d
+array of shape (n_samples, n_classes) with binary values: the one, i.e. the non
+zero elements, corresponds to the subset of labels. An array such as
+``np.array([[1, 0, 0], [0, 1, 1], [0, 0, 0]])`` represents label 0 in the first
+sample, labels 1 and 2 in the second sample, and no labels in the third sample.
 
-In the sequence of sequences format, each set of labels is represented as
-a sequence of integer, e.g. ``[0]``, ``[1, 2]``. An empty set of labels is
-then expressed as ``[]``, and a set of samples as ``[[0], [1, 2], []]``.
-In the label indicator format, each sample is one row of a 2d array of
-shape (n_samples, n_classes) with binary values: the one, i.e. the non zero
-elements, corresponds to the subset of labels. Our previous example is
-therefore expressed as ``np.array([[1, 0, 0], [0, 1, 1], [0, 0, 0])``
-and an empty set of labels would be represented by a row of zero elements.
-
-
-In the preprocessing module, the transformer
-:class:`sklearn.preprocessing.label_binarize` and the function
-:func:`sklearn.preprocessing.LabelBinarizer`
-can help you to convert the sequence of sequences format to the label
-indicator format.
+Producing multilabel data as a list of sets of labels may be more intuitive.
+The transformer :class:`MultiLabelBinarizer <preprocessing.MultiLabelBinarizer>`
+will convert between a collection of collections of labels and the indicator
+format.
 
   >>> from sklearn.datasets import make_multilabel_classification
-  >>> from sklearn.preprocessing import LabelBinarizer
-  >>> X, Y = make_multilabel_classification(n_samples=5, random_state=0)
+  >>> from sklearn.preprocessing import MultiLabelBinarizer
+  >>> X, Y = make_multilabel_classification(n_samples=5, random_state=0,
+  ...                                       return_indicator=False)
   >>> Y
   ([0, 1, 2], [4, 1, 0, 2], [4, 0, 1], [1, 0], [3, 2])
-  >>> LabelBinarizer().fit_transform(Y)
+  >>> MultiLabelBinarizer().fit_transform(Y)
   array([[1, 1, 1, 0, 0],
          [1, 1, 1, 0, 1],
          [1, 1, 0, 0, 1],
          [1, 1, 0, 0, 0],
          [0, 0, 1, 1, 0]])
-
-.. warning::
-
-    - The sequence of sequences format will disappear in a near future.
-    - Most estimators and functions support both multilabel format.
 
 
 One-Vs-The-Rest

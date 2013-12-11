@@ -8,6 +8,7 @@ Multi-class / multi-label utility function
 """
 from collections import Sequence
 from itertools import chain
+import warnings
 
 import numpy as np
 
@@ -179,10 +180,17 @@ def is_sequence_of_sequences(y):
     # the explicit check for ndarray is for forward compatibility; future
     # versions of Numpy might want to register ndarray as a Sequence
     try:
-        return (not isinstance(y[0], np.ndarray) and isinstance(y[0], Sequence)
-                and not isinstance(y[0], string_types))
+        out = (not isinstance(y[0], np.ndarray) and isinstance(y[0], Sequence)
+               and not isinstance(y[0], string_types))
     except IndexError:
         return False
+    if out:
+        warnings.warn('Direct support for sequence of sequences multilabel '
+                      'representation will be unavailable from version 0.17. '
+                      'Use sklearn.preprocessing.MultiLabelBinarizer to '
+                      'convert to a label indicator representation.',
+                      DeprecationWarning)
+    return out
 
 
 def is_multilabel(y):
