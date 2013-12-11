@@ -235,7 +235,7 @@ desired.
 .. figure:: ../auto_examples/images/plot_1d_generative_classification_1.png
    :target: ../auto_examples/plot_1d_generative_classification.html
    :align: center
-   :scale: 50%from the training data
+   :scale: 50%
 
 Here we have a 1 dimensional, two-class distribution of data which is not
 well-modeled by a normal distribution.  The two classes have a small amount
@@ -255,6 +255,7 @@ estimator.  The estimator can be used very easily:
     >>> X, y = make_blobs(10, centers=2, random_state=0)
     >>> clf = GenerativeBayes(density_estimator='kde')
     >>> clf.fit(X, y)
+    GenerativeBayes(density_estimator='kde', model_kwds=None)
     >>> clf.predict(X)
     array([0, 1, 0, 1, 1, 0, 1, 0, 0, 1])
     >>> y
@@ -262,10 +263,17 @@ estimator.  The estimator can be used very easily:
 
 The KDE-based Generative classifier for this problem has 100% accuracy on
 the training data.
-The specified density estimator can be ``'kde'``, ``'gmm'``, ``'norm_approx'``,
-or a custom class which has the same semantics as
+The specified density estimator can be ``'kde'``, ``'gmm'``,
+``'normal_approximation'``, or any class or estimator
+which has the same semantics as
 :class:`sklearn.neighbors.KernelDensity` (see the documentation of 
 :class:`GenerativeBayes` for details).
+
+.. topic:: References:
+
+ * George John and Pat Langley (1995). Estimating Continuous
+   Distributions in Bayesian Classifiers. Proceedings of the
+   Eleventh Conference on Uncertainty in Artificial Intelligence.
 
 
 Random Samples

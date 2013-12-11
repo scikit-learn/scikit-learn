@@ -33,7 +33,7 @@ y = np.hstack([np.ones(X1.size), np.zeros(X2.size)])
 x_plot = np.linspace(-6, 6, 200)
 
 # Test three density estimators
-density_estimators = ['norm_approx',
+density_estimators = ['normal_approximation',
                       GMM(3),
                       KernelDensity(0.25)]
 names = ['Normal Approximation',

@@ -32,7 +32,7 @@ X = np.vstack([X1, X2])
 y = np.concatenate([y1, y2 + 2])
 
 # Fit a generative Bayesian model to the data
-clf = GenerativeBayes('norm_approx')
+clf = GenerativeBayes('normal_approximation')
 clf.fit(X, y)
 
 # Sample new data from the generative Bayesian model

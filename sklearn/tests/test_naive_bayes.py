@@ -34,7 +34,7 @@ X2 = rng.randint(5, size=(6, 100))
 y2 = np.array([1, 1, 2, 2, 3, 3])
 
 # model keywords for GenerativeBayes classification
-MODEL_KWARGS = {'norm_approx': {},
+MODEL_KWARGS = {'normal_approximation': {},
                 'gmm':{'n_components': 3,
                        'covariance_type': 'diag'},
                 'kde':{'bandwidth': 4.0,
@@ -369,7 +369,7 @@ def test_check_accuracy_on_digits():
 
     # Generative Bayes
     scores_cmp = {'kde': (0.96, 0.98),
-                  'norm_approx': (0.79, 0.79),
+                  'normal_approximation': (0.79, 0.79),
                   'gmm': (0.84, 0.92)}
 
     for model, kwargs in MODEL_KWARGS.iteritems():
@@ -384,8 +384,8 @@ def test_check_accuracy_on_digits():
 
 def test_compare_generative_gnb():
     """Compare GenerativeBayes to GaussianNB"""
-    # using norm_approx, the two should yield an identical model.
-    clf1 = GenerativeBayes('norm_approx')
+    # using normal_approximation, the two should yield an identical model.
+    clf1 = GenerativeBayes('normal_approximation')
     clf2 = GaussianNB()
 
     p1 = clf1.fit(X, y).predict_proba(X)
@@ -416,9 +416,9 @@ def test_generate_samples():
     X = np.vstack([X1, X2])
     y = np.concatenate([y1, y2 + 2])
 
-    # test with norm_approx; other models have their sample() method
+    # test with normal_approximation; other models have their sample() method
     # tested independently
-    clf = GenerativeBayes('norm_approx')
+    clf = GenerativeBayes('normal_approximation')
     clf.fit(X, y)
 
     X_new, y_new = clf.sample(2000)

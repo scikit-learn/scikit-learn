@@ -660,7 +660,7 @@ class _NormalApproximation(BaseEstimator):
                           size=(n_samples, len(self.mean)))        
  
  
-DENSITY_MODELS = {'norm_approx': _NormalApproximation,
+DENSITY_MODELS = {'normal_approximation': _NormalApproximation,
                   'gmm': GMM,
                   'kde': KernelDensity}
  
@@ -676,10 +676,11 @@ class GenerativeBayes(BaseNB):
     ----------
     density_estimator : str, class, or instance
         The density estimator to use for each class.  Options are
-            'norm_approx' : Normal Approximation (i.e. naive Bayes)
-            'gmm' : Gaussian Mixture Model
-            'kde' : Kernel Density Estimate
-        The default is 'norm_approx'.
+            - 'normal_approximation' : Axis-aligned Normal Approximation
+                                       (i.e. Gaussian Naive Bayes)
+            - 'gmm' : Gaussian Mixture Model
+            - 'kde' : Kernel Density Estimate
+        The default is 'normal_approximation'.
         Alternatively, a class or class instance can be specified.  The
         instantiated class should be a sklearn estimator, and contain a
         ``score_samples`` method with semantics similar to those in
@@ -688,7 +689,7 @@ class GenerativeBayes(BaseNB):
         Additional keyword arguments to be passed to the constructor
         specified by density_estimator.  Default=None.
     """
-    def __init__(self, density_estimator='norm_approx',
+    def __init__(self, density_estimator='normal_approximation',
                  model_kwds=None):
         self.density_estimator = density_estimator
         self.model_kwds = model_kwds
