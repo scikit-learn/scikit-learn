@@ -1,3 +1,6 @@
+# This file contains a backport of np.random.choice from numpy 1.7
+# The function can be removed when we bump the requirements to >=1.7
+
 import numpy as np
 import operator
 
