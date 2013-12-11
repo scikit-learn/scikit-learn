@@ -437,29 +437,28 @@ def _average_binary_score(binary_metric, y_true, y_score, average):
         y_true = y_true.ravel()
         y_score = y_score.ravel()
 
+    if average == 'weighted':
+        weights = np.sum(y_true, axis=0)
+        if weights.sum() == 0:
+            return 0
+    else:
+        weights = None
+
     if y_true.ndim == 1:
         y_true = y_true.reshape((-1, 1))
 
     if y_score.ndim == 1:
         y_score = y_score.reshape((-1, 1))
 
-    average_axis = 1 if average == 'samples' else 0
-    n_classes = y_score.shape[not average_axis]
+    not_average_axis = 0 if average == 'samples' else 1
+    n_classes = y_score.shape[not_average_axis]
     score = np.zeros((n_classes,))
-
     for c in range(n_classes):
-        y_true_c = y_true.take([c], axis=not average_axis).ravel()
-        y_score_c = y_score.take([c], axis=not average_axis).ravel()
+        y_true_c = y_true.take([c], axis=not_average_axis).ravel()
+        y_score_c = y_score.take([c], axis=not_average_axis).ravel()
         score[c] = binary_metric(y_true_c, y_score_c)
 
     # Average the results
-    if average == 'weighted':
-        weights = np.sum(y_true, axis=average_axis)
-        if weights.sum() == 0:
-            return 0
-    else:
-        weights = None
-
     if average is not None:
         return np.average(score, weights=weights)
     else:
