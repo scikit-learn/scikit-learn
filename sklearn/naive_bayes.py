@@ -587,10 +587,10 @@ class _NormalApproximation(BaseEstimator):
     """
     def __init__(self, epsilon=1E-9):
         self.epsilon = epsilon
- 
+
     def fit(self, X):
         """Fit the Normal Approximation to data
- 
+
         Parameters
         ----------
         X: array_like, shape (n_samples, n_features)
@@ -601,16 +601,16 @@ class _NormalApproximation(BaseEstimator):
         self.mean = X.mean(0)
         self.var = X.var(0) + self.epsilon
         return self
- 
+
     def score_samples(self, X):
         """Evaluate the model on the data
- 
+
         Parameters
         ----------
         X : array_like
             An array of points to query.  Last dimension should match dimension
             of training data (n_features)
- 
+
         Returns
         -------
         sample scores : ndarray
@@ -622,34 +622,34 @@ class _NormalApproximation(BaseEstimator):
         log_norm = -0.5 * (X.shape[-1] * np.log(2 * np.pi)
                            + np.log(self.var).sum())
         return log_norm - 0.5 * ((X - self.mean) ** 2 / self.var).sum(1)
- 
+
     def score(self, X):
         """Compute the log probability under the model.
- 
+
         Parameters
         ----------
         X : array_like, shape (n_samples, n_features)
             List of n_features-dimensional data points.  Each row
             corresponds to a single data point.
- 
+
         Returns
         -------
         logprob : float
             log-likelihood of the data X under the model.
         """
         return np.sum(self.score_samples(X))
- 
+
     def sample(self, n_samples=1, random_state=None):
         """Generate random samples from the model.
- 
+
         Parameters
         ----------
         n_samples : int, optional
             Number of samples to generate. Defaults to 1.
- 
+
         random_state: RandomState or an int seed (0 by default)
             A random number generator instance
- 
+
         Returns
         -------
         X : array_like, shape (n_samples, n_features)
@@ -657,14 +657,14 @@ class _NormalApproximation(BaseEstimator):
         """
         rng = check_random_state(random_state)
         return rng.normal(self.mean, np.sqrt(self.var),
-                          size=(n_samples, len(self.mean)))        
- 
- 
+                          size=(n_samples, len(self.mean)))
+
+
 DENSITY_MODELS = {'normal_approximation': _NormalApproximation,
                   'gmm': GMM,
                   'kde': KernelDensity}
- 
- 
+
+
 class GenerativeBayes(BaseNB):
     """
     Generative Bayes Classifier
@@ -674,20 +674,31 @@ class GenerativeBayes(BaseNB):
 
     Parameters
     ----------
-    density_estimator : str, class, or instance
+    density_estimator : str or instance
         The density estimator to use for each class.  Options are
             - 'normal_approximation' : Axis-aligned Normal Approximation
                                        (i.e. Gaussian Naive Bayes)
             - 'gmm' : Gaussian Mixture Model
             - 'kde' : Kernel Density Estimate
         The default is 'normal_approximation'.
-        Alternatively, a class or class instance can be specified.  The
-        instantiated class should be a sklearn estimator, and contain a
-        ``score_samples`` method with semantics similar to those in
-        :class:`sklearn.neighbors.KDE`.
+        Alternatively, a scikit-learn estimator instance can be specified.
+        The estimator should contain a ``score_samples`` method with semantics
+        similar to those in :class:`sklearn.neighbors.KDE`.
     model_kwds : dict or None
         Additional keyword arguments to be passed to the constructor
-        specified by density_estimator.  Default=None.
+        specified by density_estimator.  Ignored if density_estimator is
+        a class instance.  Default=None.
+
+    Attributes
+    ----------
+    `classes_` : array, shape = [n_classes]
+        the sorted list of classes
+
+    `class_prior_` : array, shape = [n_classes]
+        probability of each class.
+
+    `estimators_` : list, length = [n_classes]
+        the density estimator associated with each class
     """
     def __init__(self, density_estimator='normal_approximation',
                  model_kwds=None):
@@ -699,20 +710,19 @@ class GenerativeBayes(BaseNB):
         self._choose_estimator(density_estimator, self.model_kwds)
 
     def _choose_estimator(self, density_estimator, kwargs=None):
-        if kwargs is None:
-            kwargs = {}
+        """Choose the estimator based on the input"""
+        dclass = DENSITY_MODELS.get(density_estimator)
 
-        if isinstance(density_estimator, str):
-            dclass = DENSITY_MODELS.get(density_estimator)
-            if dclass is None:
-                raise ValueError("Unrecognized model: %s" % density_estimator)
-            else:
-                return dclass(**kwargs)
-        elif isinstance(density_estimator, type):
-            return density_estimator(**kwargs)
-        else:
-            return density_estimator
- 
+        if dclass is not None:
+            if kwargs is None:
+                kwargs = {}
+            density_estimator = dclass(**kwargs)
+
+        if not hasattr(dclass, 'score_samples'):
+            raise ValueError('invalid density_estimator')
+
+        return density_estimator
+
     def fit(self, X, y):
         """Fit the model using X as training data and y as target values
 
@@ -741,7 +751,7 @@ class GenerativeBayes(BaseNB):
         self.estimators_ = [clone(estimator).fit(X[mask])
                             for mask in masks]
         return self
- 
+
     def _joint_log_likelihood(self, X):
         """Compute the per-class log likelihood of each sample
 

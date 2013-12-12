@@ -252,22 +252,25 @@ estimator.  The estimator can be used very easily:
 
     >>> from sklearn.naive_bayes import GenerativeBayes
     >>> from sklearn.datasets import make_blobs
-    >>> X, y = make_blobs(10, centers=2, random_state=0)
+    >>> X, y = make_blobs(100, centers=2, random_state=0)
     >>> clf = GenerativeBayes(density_estimator='kde')
-    >>> clf.fit(X, y)
+    >>> clf.fit(X[:-10], y[:-10])
     GenerativeBayes(density_estimator='kde', model_kwds=None)
-    >>> clf.predict(X)
-    array([0, 1, 0, 1, 1, 0, 1, 0, 0, 1])
-    >>> y
-    array([0, 1, 0, 1, 1, 0, 1, 0, 0, 1])
+    >>> clf.predict(X[-10:])
+    array([1, 1, 1, 1, 0, 0, 1, 1, 0, 1])
+    >>> y[-10:]
+    array([1, 1, 1, 1, 0, 0, 1, 1, 0, 1])
 
 The KDE-based Generative classifier for this problem has 100% accuracy on
-the training data.
+this small subset of test data.
 The specified density estimator can be ``'kde'``, ``'gmm'``,
 ``'normal_approximation'``, or any class or estimator
 which has the same semantics as
 :class:`sklearn.neighbors.KernelDensity` (see the documentation of 
 :class:`GenerativeBayes` for details).
+
+Note that care should be taken to make sure that the density estimator for
+each class is not over-fitting or under-fitting the data.
 
 .. topic:: References:
 

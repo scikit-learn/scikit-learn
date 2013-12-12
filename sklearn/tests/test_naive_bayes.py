@@ -35,11 +35,11 @@ y2 = np.array([1, 1, 2, 2, 3, 3])
 
 # model keywords for GenerativeBayes classification
 MODEL_KWARGS = {'normal_approximation': {},
-                'gmm':{'n_components': 3,
-                       'covariance_type': 'diag'},
-                'kde':{'bandwidth': 4.0,
-                       'kernel': 'gaussian',
-                       'metric': 'euclidean'}}
+                'gmm': {'n_components': 3,
+                        'covariance_type': 'diag'},
+                'kde': {'bandwidth': 4.0,
+                        'kernel': 'gaussian',
+                        'metric': 'euclidean'}}
 
 
 def test_gnb():
