@@ -744,12 +744,12 @@ class GenerativeBayes(BaseNB):
         n_classes = len(self.classes_)
         n_samples, self.n_features_ = X.shape
 
-        masks = [(y == c) for c in self.classes_]
+        class_membership_masks = [(y == c) for c in self.classes_]
 
         self.class_prior_ = np.array([np.float(mask.sum()) / n_samples
-                                      for mask in masks])
+                                      for mask in class_membership_masks])
         self.estimators_ = [clone(estimator).fit(X[mask])
-                            for mask in masks]
+                            for mask in class_membership_masks]
         return self
 
     def _joint_log_likelihood(self, X):
