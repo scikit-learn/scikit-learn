@@ -269,36 +269,36 @@ def test_mutlilabel_binarizer():
     inverse = inputs[0]()
     for inp in inputs:
         # With fit_tranform
-        lsb = MultiLabelBinarizer()
-        got = lsb.fit_transform(inp())
+        mlb = MultiLabelBinarizer()
+        got = mlb.fit_transform(inp())
         assert_array_equal(indicator_mat, got)
-        assert_array_equal([1, 2, 3], lsb.classes_)
-        assert_equal(lsb.inverse_transform(got), inverse)
+        assert_array_equal([1, 2, 3], mlb.classes_)
+        assert_equal(mlb.inverse_transform(got), inverse)
 
         # With fit
-        lsb = MultiLabelBinarizer()
-        got = lsb.fit(inp()).transform(inp())
+        mlb = MultiLabelBinarizer()
+        got = mlb.fit(inp()).transform(inp())
         assert_array_equal(indicator_mat, got)
-        assert_array_equal([1, 2, 3], lsb.classes_)
-        assert_equal(lsb.inverse_transform(got), inverse)
+        assert_array_equal([1, 2, 3], mlb.classes_)
+        assert_equal(mlb.inverse_transform(got), inverse)
 
 
 def test_mutlilabel_binarizer_empty_sample():
-    lsb = MultiLabelBinarizer()
+    mlb = MultiLabelBinarizer()
     y = [[1, 2], [1], []]
     Y = np.array([[1, 1],
                   [1, 0],
                   [0, 0]])
-    assert_array_equal(lsb.fit_transform(y), Y)
+    assert_array_equal(mlb.fit_transform(y), Y)
 
 
 def test_mutlilabel_binarizer_unknown_class():
-    lsb = MultiLabelBinarizer()
+    mlb = MultiLabelBinarizer()
     y = [[1, 2]]
-    assert_raises(KeyError, lsb.fit(y).transform, [[0]])
+    assert_raises(KeyError, mlb.fit(y).transform, [[0]])
 
-    lsb = MultiLabelBinarizer(classes=[1, 2])
-    assert_raises(KeyError, lsb.fit_transform, [[0]])
+    mlb = MultiLabelBinarizer(classes=[1, 2])
+    assert_raises(KeyError, mlb.fit_transform, [[0]])
 
 
 def test_mutlilabel_binarizer_given_classes():
@@ -307,25 +307,25 @@ def test_mutlilabel_binarizer_given_classes():
                               [1, 0, 0],
                               [1, 0, 1]])
     # fit_transform()
-    lsb = MultiLabelBinarizer(classes=[1, 3, 2])
-    assert_array_equal(lsb.fit_transform(inp), indicator_mat)
-    assert_array_equal(lsb.classes_, [1, 3, 2])
+    mlb = MultiLabelBinarizer(classes=[1, 3, 2])
+    assert_array_equal(mlb.fit_transform(inp), indicator_mat)
+    assert_array_equal(mlb.classes_, [1, 3, 2])
 
     # fit().transform()
-    lsb = MultiLabelBinarizer(classes=[1, 3, 2])
-    assert_array_equal(lsb.fit(inp).transform(inp), indicator_mat)
-    assert_array_equal(lsb.classes_, [1, 3, 2])
+    mlb = MultiLabelBinarizer(classes=[1, 3, 2])
+    assert_array_equal(mlb.fit(inp).transform(inp), indicator_mat)
+    assert_array_equal(mlb.classes_, [1, 3, 2])
 
     # ensure works with extra class
-    lsb = MultiLabelBinarizer(classes=[4, 1, 3, 2])
-    assert_array_equal(lsb.fit_transform(inp),
+    mlb = MultiLabelBinarizer(classes=[4, 1, 3, 2])
+    assert_array_equal(mlb.fit_transform(inp),
                        np.hstack(([[0], [0], [0]], indicator_mat)))
-    assert_array_equal(lsb.classes_, [4, 1, 3, 2])
+    assert_array_equal(mlb.classes_, [4, 1, 3, 2])
 
     # ensure fit is no-op as iterable is not consumed
     inp = iter(inp)
-    lsb = MultiLabelBinarizer(classes=[1, 3, 2])
-    assert_array_equal(lsb.fit(inp).transform(inp), indicator_mat)
+    mlb = MultiLabelBinarizer(classes=[1, 3, 2])
+    assert_array_equal(mlb.fit(inp).transform(inp), indicator_mat)
 
 
 def test_mutlilabel_binarizer_same_length_sequence():
@@ -336,14 +336,14 @@ def test_mutlilabel_binarizer_same_length_sequence():
                               [1, 0, 0],
                               [0, 0, 1]])
     # fit_transform()
-    lsb = MultiLabelBinarizer()
-    assert_array_equal(lsb.fit_transform(inp), indicator_mat)
-    assert_array_equal(lsb.inverse_transform(indicator_mat), inp)
+    mlb = MultiLabelBinarizer()
+    assert_array_equal(mlb.fit_transform(inp), indicator_mat)
+    assert_array_equal(mlb.inverse_transform(indicator_mat), inp)
 
     # fit().transform()
-    lsb = MultiLabelBinarizer()
-    assert_array_equal(lsb.fit(inp).transform(inp), indicator_mat)
-    assert_array_equal(lsb.inverse_transform(indicator_mat), inp)
+    mlb = MultiLabelBinarizer()
+    assert_array_equal(mlb.fit(inp).transform(inp), indicator_mat)
+    assert_array_equal(mlb.inverse_transform(indicator_mat), inp)
 
 
 def test_mutlilabel_binarizer_non_integer_labels():
@@ -358,25 +358,25 @@ def test_mutlilabel_binarizer_non_integer_labels():
                               [1, 1, 0]])
     for inp, classes in inputs:
         # fit_transform()
-        lsb = MultiLabelBinarizer()
-        assert_array_equal(lsb.fit_transform(inp), indicator_mat)
-        assert_array_equal(lsb.classes_, classes)
-        assert_array_equal(lsb.inverse_transform(indicator_mat), inp)
+        mlb = MultiLabelBinarizer()
+        assert_array_equal(mlb.fit_transform(inp), indicator_mat)
+        assert_array_equal(mlb.classes_, classes)
+        assert_array_equal(mlb.inverse_transform(indicator_mat), inp)
 
         # fit().transform()
-        lsb = MultiLabelBinarizer()
-        assert_array_equal(lsb.fit(inp).transform(inp), indicator_mat)
-        assert_array_equal(lsb.classes_, classes)
-        assert_array_equal(lsb.inverse_transform(indicator_mat), inp)
+        mlb = MultiLabelBinarizer()
+        assert_array_equal(mlb.fit(inp).transform(inp), indicator_mat)
+        assert_array_equal(mlb.classes_, classes)
+        assert_array_equal(mlb.inverse_transform(indicator_mat), inp)
 
-    lsb = MultiLabelBinarizer()
-    assert_raises(TypeError, lsb.fit_transform, [({}), ({}, {'a': 'b'})])
+    mlb = MultiLabelBinarizer()
+    assert_raises(TypeError, mlb.fit_transform, [({}), ({}, {'a': 'b'})])
 
 
 def test_mutlilabel_binarizer_non_unique():
     inp = [(1, 1, 1, 0)]
     indicator_mat = np.array([[1, 1]])
-    lsb = MultiLabelBinarizer()
-    assert_array_equal(lsb.fit_transform(inp), indicator_mat)
+    mlb = MultiLabelBinarizer()
+    assert_array_equal(mlb.fit_transform(inp), indicator_mat)
 
-    assert_array_equal(lsb.inverse_transform(np.array([[1, 3]])), [(0, 1,)])
+    assert_array_equal(mlb.inverse_transform(np.array([[1, 3]])), [(0, 1,)])
