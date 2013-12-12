@@ -248,9 +248,10 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        y : numpy array of shape (n_samples,) or sequence of sequences
-            Target values. In the multilabel case the nested sequences can
-            have variable lengths.
+        y : numpy array of shape (n_samples,) or (n_samples, n_classes)
+            Target values. The 2-d matrix should only contain 0 and 1,
+            represents multilabel classification, and is returned unchanged
+            by LabelBinarizer.
 
         Returns
         -------
@@ -273,9 +274,10 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        y : numpy array of shape [n_samples] or sequence of sequences
-            Target values. In the multilabel case the nested sequences can
-            have variable lengths.
+        y : numpy array of shape (n_samples,) or (n_samples, n_classes)
+            Target values. The 2-d matrix should only contain 0 and 1,
+            represents multilabel classification, and is returned unchanged
+            by LabelBinarizer.
 
         Returns
         -------
@@ -315,9 +317,10 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
 
         Returns
         -------
-        y : numpy array of shape [n_samples] or sequence of sequences
-            Target values. In the multilabel case the nested sequences can
-            have variable lengths.
+        y : numpy array of shape (n_samples,) or (n_samples, n_classes)
+            Target values. The 2-d matrix should only contain 0 and 1,
+            represents multilabel classification, and is returned unchanged
+            by LabelBinarizer.
 
         Notes
         -----
