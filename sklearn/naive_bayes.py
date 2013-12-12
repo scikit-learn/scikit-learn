@@ -712,15 +712,24 @@ class GenerativeBayes(BaseNB):
 
     def _choose_estimator(self, density_estimator, kwargs=None):
         """Choose the estimator based on the input"""
-        dclass = DENSITY_MODELS.get(density_estimator)
+        if kwargs is None:
+            kwargs = {}
 
-        if dclass is not None:
-            if kwargs is None:
-                kwargs = {}
+        if isinstance(density_estimator, str):
+            dclass = DENSITY_MODELS.get(density_estimator)
+            if dclass is None:
+                raise ValueError("Invalid density_estimator: '%s'"
+                                 % density_estimator)
             density_estimator = dclass(**kwargs)
 
-        if not hasattr(dclass, 'score_samples'):
-            raise ValueError('invalid density_estimator')
+        if isinstance(density_estimator, type):
+            raise TypeError('Invalid density_estimator: %s. '
+                            'Expected class instance, not class.')
+
+        if not hasattr(density_estimator, 'score_samples'):
+            raise TypeError('Invalid density_estimator: %s. '
+                            'Missing required score_samples method.'
+                            % density_estimator)
 
         return density_estimator
 

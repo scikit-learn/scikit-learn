@@ -264,8 +264,7 @@ estimator.  The estimator can be used very easily:
 The KDE-based Generative classifier for this problem has 100% accuracy on
 this small subset of test data.
 The specified density estimator can be ``'kde'``, ``'gmm'``,
-``'normal_approximation'``, or any class or estimator
-which has the same semantics as
+``'normal_approximation'``, or any estimator which has the same semantics as
 :class:`sklearn.neighbors.KernelDensity` (see the documentation of 
 :class:`GenerativeBayes` for details).
 
@@ -313,5 +312,5 @@ intuitive feel to what the model "thinks" each digit looks like:
    :scale: 50%
 
 This result can be compared to the
-`similar figure <../auto_examples/neighbors/plot_digits_kde_sampling.html`_
+`similar figure <../auto_examples/neighbors/plot_digits_kde_sampling.html>`_
 drawn from a distribution which does not utilize class information.

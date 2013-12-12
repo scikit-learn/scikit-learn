@@ -439,3 +439,17 @@ def test_generate_samples():
         assert_allclose(X_i.shape[0] * 1. / X.shape[0],
                         Xnew_i.shape[0] * 1. / X_new.shape[0],
                         rtol=0.1)
+
+
+def test_generative_bayes_invalid():
+    # invalid string
+    assert_raises(ValueError, GenerativeBayes, 'not_a_valid_arg')
+
+    # passing class rather than instance
+    from sklearn.mixture import GMM
+    assert_raises(TypeError, GenerativeBayes, GMM)
+
+    # passing a non-density estimator
+    from sklearn.svm import SVC
+    assert_raises(TypeError, GenerativeBayes, SVC())
+    
