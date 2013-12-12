@@ -459,13 +459,13 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
         A copy of the `classes` parameter where provided, or otherwise, the
         sorted set of classes found when fitting.
 
-    >>> lsb = MultiLabelBinarizer()
-    >>> lsb.fit_transform([(1, 2), (3,)])
+    >>> mlb = MultiLabelBinarizer()
+    >>> mlb.fit_transform([(1, 2), (3,)])
     array([[1, 1, 0],
            [0, 0, 1]])
-    >>> lsb.classes_          # doctest: +ELLIPSIS
+    >>> mlb.classes_          # doctest: +ELLIPSIS
     array([1, 2, 3]...)
-    >>> lsb.fit_transform([{1, 2}, {3,}])
+    >>> mlb.fit_transform([{1, 2}, {3,}])
     array([[1, 1, 0],
            [0, 0, 1]])
     """
