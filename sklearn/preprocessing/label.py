@@ -340,8 +340,8 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
                 return Y
             else:
                 # Lists of tuples format
-                return [tuple(self.classes_[np.flatnonzero(Y[i])])
-                        for i in range(Y.shape[0])]
+                mlb = MultiLabelBinarizer(classes=self.classes_).fit([])
+                return mlb.inverse_transform(Y)
 
         if len(Y.shape) == 1 or Y.shape[1] == 1:
             y = np.array(Y.ravel() > threshold, dtype=int)
@@ -418,14 +418,7 @@ def label_binarize(y, classes, multilabel=False, neg_label=0, pos_label=1):
             Y[y == 1] = pos_label
             return Y
         elif y_type == "multilabel-sequences":
-            # inverse map: label => column index
-            imap = dict((v, k) for k, v in enumerate(classes))
-
-            for i, label_tuple in enumerate(y):
-                for label in label_tuple:
-                    Y[i, imap[label]] = pos_label
-
-            return Y
+            return MultiLabelBinarizer(classes=classes).fit_transform(y)
         else:
             raise ValueError("y should be in a multilabel format, "
                              "got %r" % (y,))
