@@ -139,8 +139,8 @@ Multilabel learning
 -------------------
 
 :class:`OneVsRestClassifier` also supports multilabel classification.
-To use this feature, feed the classifier a list of tuples containing
-target labels, like in the example below.
+To use this feature, feed the classifier an indicator matrix, in which cell
+[i, j] indicates the presence of label j in sample i.
 
 
 .. figure:: ../auto_examples/images/plot_multilabel_1.png

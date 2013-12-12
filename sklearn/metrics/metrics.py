@@ -101,9 +101,9 @@ def _check_clf_targets(y_true, y_pred):
         The type of the true target data, as output by
         ``utils.multiclass.type_of_target``
 
-    y_true : array or indicator matrix or sequence of sequences
+    y_true : array or indicator matrix
 
-    y_pred : array or indicator matrix or sequence of sequences
+    y_pred : array or indicator matrix
     """
     y_true, y_pred = check_arrays(y_true, y_pred, allow_lists=True)
     type_true = type_of_target(y_true)
