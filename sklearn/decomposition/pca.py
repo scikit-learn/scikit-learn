@@ -247,7 +247,8 @@ class PCA(BaseEstimator, TransformerMixin):
         return U
 
     def _fit(self, X):
-        """ Fit the model on X
+        """Fit the model on X
+
         Parameters
         ----------
         X: array-like, shape (n_samples, n_features)
@@ -672,7 +673,11 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
                                  random_state=random_state)
 
         self.explained_variance_ = exp_var = (S ** 2) / n_samples
-        self.explained_variance_ratio_ = exp_var / exp_var.sum()
+        if not hasattr(X, 'todense'):
+            full_var = np.sum(X.ravel() * X.ravel()) / n_samples
+        else:
+            full_var = np.sum(X.data * X.data) / n_samples
+        self.explained_variance_ratio_ = exp_var / full_var
 
         if self.whiten:
             self.components_ = V / S[:, np.newaxis] * sqrt(n_samples)
