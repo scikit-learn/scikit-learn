@@ -118,6 +118,14 @@ def test_explained_variance():
     assert_almost_equal(rpca.explained_variance_,
                                       np.var(X_rpca, axis=0))
 
+    # Compare with RandomizedPCA using sparse data
+    X = csr_matrix(X)
+    rpca = assert_warns(DeprecationWarning, rpca.fit, X)
+    assert_array_almost_equal(pca.explained_variance_,
+                              rpca.explained_variance_, 1)
+    assert_array_almost_equal(pca.explained_variance_ratio_,
+                              rpca.explained_variance_ratio_, 3)
+
 
 def test_pca_check_projection():
     """Test that the projection of data is correct"""
