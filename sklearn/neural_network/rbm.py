@@ -221,9 +221,10 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         self : BernoulliRBM
             The fitted model.
         """
-        rng = check_random_state(self.random_state)
+        if not hasattr(self, 'random_state_'):
+            self.random_state_ = check_random_state(self.random_state)
         if not hasattr(self, 'components'):
-            self.components_ = np.asarray(rng.normal(0, 0.01, (self.n_components, X.shape[1])),order='fortran')
+            self.components_ = np.asarray(self.random_state_.normal(0, 0.01, (self.n_components, X.shape[1])),order='fortran')
         if not hasattr(self, 'intercept_hidden_'):
             self.intercept_hidden_ = np.zeros(self.n_components, )
         if not hasattr(self, 'intercept_visible_'):
@@ -231,7 +232,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         if not hasattr(self, 'h_samples_'):
             self.h_samples_ = np.zeros((self.batch_size, self.n_components))
         
-        self._fit(X,rng)
+        self._fit(X,self.random_state_)
 
     def _fit(self, v_pos, rng):
         """Inner fit for one mini-batch.
