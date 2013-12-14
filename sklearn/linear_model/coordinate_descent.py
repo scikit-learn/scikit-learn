@@ -885,7 +885,7 @@ def _path_residuals(X, y, train, test, path, path_params, l1_ratio=1,
     fit_intercept = path_params['fit_intercept']
     normalize = path_params['normalize']
     precompute = path_params['precompute']
-    n_outputs = path_params.get('multi-task', 1)
+    n_outputs = path_params.get('multi-task')
 
     X_train, y_train, X_mean, y_mean, X_std, precompute, Xy = \
         _pre_fit(X_train, y_train, None, precompute, normalize, fit_intercept,
@@ -910,11 +910,11 @@ def _path_residuals(X, y, train, test, path, path_params, l1_ratio=1,
     alphas, coefs, _ = path(X_train, y[train], **path_params)
     del X_train
 
-    if n_outputs == 1:
+    if not n_outputs:
         # Doing this so that it becomes coherent with multioutput.
         coefs = coefs[np.newaxis, :, :]
         y_mean = np.atleast_1d(y_mean)
-        y_test = np.atleast_2d(y_test)
+        y_test = y_test[:, np.newaxis]
 
     if normalize:
         nonzeros = np.flatnonzero(X_std)
@@ -1671,7 +1671,7 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
     [[ 0.52875032  0.46958558]
      [ 0.52875032  0.46958558]]
     >>> print(clf.intercept_)
-    [ 0.00166409,  0.00166409]
+    [ 0.00166409  0.00166409]
 
     See also
     --------
@@ -1729,9 +1729,9 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
         X, copy_X = self._check_copy_X(X)
 
         n_samples, n_features = X.shape
+
         if y.ndim == 1:
-            raise ValueError("For tasks with single output, use ElasticNetCV "
-                             "instead.")
+            y = y[:, np.newaxis]
         if X.shape[0] != y.shape[0]:
             raise ValueError("X and y have inconsistent dimensions (%d != %d)"
                              % (X.shape[0], y.shape[0]))
