@@ -676,7 +676,7 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
 
         self.explained_variance_ = exp_var = (S ** 2) / n_samples
         if sparse.issparse(X):
-            _ , full_var = mean_variance_axis0(X)
+            _, full_var = mean_variance_axis0(X)
             full_var = full_var.sum()
         else:
             full_var = np.sum(X.ravel() * X.ravel()) / n_samples
