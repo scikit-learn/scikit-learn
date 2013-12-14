@@ -110,6 +110,10 @@ API changes summary
      are now considered valid classification targets. This fixes a regression
      from version 0.13 in some classifiers. By `Joel Nothman`_.
 
+   - Fix wrong `explained_variance_ratio_` attribute in
+     :class:`RandomizedPCA <decomposition.RandomizedPCA>`.
+     By `Alexandre Gramfort`_.
+
 .. _changes_0_14:
 
 0.14
