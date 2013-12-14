@@ -13,12 +13,14 @@ import warnings
 
 import numpy as np
 from scipy import linalg
+from scipy import sparse
 from scipy.special import gammaln
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import array2d, check_random_state, as_float_array
 from ..utils import atleast2d_or_csr
 from ..utils import deprecated
+from ..utils.sparsefuncs import mean_variance_axis0
 from ..utils.extmath import (fast_logdet, safe_sparse_dot, randomized_svd,
                              fast_dot)
 
@@ -648,7 +650,7 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
             The input data, copied, centered and whitened when requested.
         """
         random_state = check_random_state(self.random_state)
-        if hasattr(X, 'todense'):
+        if sparse.issparse(X):
             warnings.warn("Sparse matrix support is deprecated"
                           " and will be dropped in 0.16."
                           " Use TruncatedSVD instead.",
@@ -659,7 +661,7 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
 
         n_samples = X.shape[0]
 
-        if not hasattr(X, 'todense'):
+        if not sparse.issparse(X):
             # Center data
             self.mean_ = np.mean(X, axis=0)
             X -= self.mean_
@@ -673,10 +675,11 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
                                  random_state=random_state)
 
         self.explained_variance_ = exp_var = (S ** 2) / n_samples
-        if not hasattr(X, 'todense'):
-            full_var = np.sum(X.ravel() * X.ravel()) / n_samples
+        if sparse.issparse(X):
+            _ , full_var = mean_variance_axis0(X)
+            full_var = full_var.sum()
         else:
-            full_var = np.sum(X.data * X.data) / n_samples
+            full_var = np.sum(X.ravel() * X.ravel()) / n_samples
         self.explained_variance_ratio_ = exp_var / full_var
 
         if self.whiten:
