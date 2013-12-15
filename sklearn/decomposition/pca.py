@@ -679,7 +679,7 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
             _, full_var = mean_variance_axis0(X)
             full_var = full_var.sum()
         else:
-            full_var = np.sum(X.ravel() * X.ravel()) / n_samples
+            full_var = np.var(X, axis=0).sum()
         self.explained_variance_ratio_ = exp_var / full_var
 
         if self.whiten:

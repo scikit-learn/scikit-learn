@@ -111,12 +111,12 @@ def test_explained_variance():
 
     # compare to empirical variances
     X_pca = pca.transform(X)
-    assert_almost_equal(pca.explained_variance_,
-                                      np.var(X_pca, axis=0))
+    assert_array_almost_equal(pca.explained_variance_,
+                              np.var(X_pca, axis=0))
 
     X_rpca = rpca.transform(X)
-    assert_almost_equal(rpca.explained_variance_,
-                                      np.var(X_rpca, axis=0))
+    assert_array_almost_equal(rpca.explained_variance_,
+                              np.var(X_rpca, axis=0))
 
     # Compare with RandomizedPCA using sparse data
     X = csr_matrix(X)
