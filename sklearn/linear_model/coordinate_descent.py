@@ -921,7 +921,16 @@ def _path_residuals(X, y, train, test, path, path_params, l1_ratio=1,
         coefs[:, nonzeros] /= X_std[nonzeros][:, np.newaxis]
 
     intercepts = y_mean[:, np.newaxis] - np.dot(X_mean, coefs)
-    residues = safe_sparse_dot(X_test, coefs) - y_test[:, :, np.newaxis]
+    if sparse.issparse(X_test):
+        n_order, n_features, n_alphas = coefs.shape
+        # Work around for sparse matices since coefs is a 3-D numpy array.
+        feature_major = np.rollaxis(coefs, 1)
+        feature_2d = np.reshape(feature_major, (n_features, -1))
+        sparse_dot = safe_sparse_dot(X_test, feature_2d).reshape(
+                                     X_test.shape[0], n_order, -1)
+    else:
+        sparse_dot = safe_sparse_dot(X_test, coefs)
+    residues =  sparse_dot - y_test[:, :, np.newaxis]
     residues += intercepts
     this_mses = ((residues ** 2).mean(axis=0)).mean(axis=0)
 
