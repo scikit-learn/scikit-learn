@@ -94,6 +94,39 @@ def test_whitening():
         # we always center, so no test for non-centering.
 
 
+def test_explained_variance():
+    """Check that PCA output has unit-variance"""
+    rng = np.random.RandomState(0)
+    n_samples = 100
+    n_features = 80
+
+    X = rng.randn(n_samples, n_features)
+
+    pca = PCA(n_components=2).fit(X)
+    rpca = RandomizedPCA(n_components=2, random_state=42).fit(X)
+    assert_array_almost_equal(pca.explained_variance_,
+                              rpca.explained_variance_, 1)
+    assert_array_almost_equal(pca.explained_variance_ratio_,
+                              rpca.explained_variance_ratio_, 3)
+
+    # compare to empirical variances
+    X_pca = pca.transform(X)
+    assert_array_almost_equal(pca.explained_variance_,
+                              np.var(X_pca, axis=0))
+
+    X_rpca = rpca.transform(X)
+    assert_array_almost_equal(rpca.explained_variance_,
+                              np.var(X_rpca, axis=0))
+
+    # Compare with RandomizedPCA using sparse data
+    X = csr_matrix(X)
+    rpca = assert_warns(DeprecationWarning, rpca.fit, X)
+    assert_array_almost_equal(pca.explained_variance_,
+                              rpca.explained_variance_, 1)
+    assert_array_almost_equal(pca.explained_variance_ratio_,
+                              rpca.explained_variance_ratio_, 3)
+
+
 def test_pca_check_projection():
     """Test that the projection of data is correct"""
     rng = np.random.RandomState(0)
