@@ -107,7 +107,7 @@ class PriorProbabilityEstimator(BaseEstimator):
 
 
 class ZeroEstimator(BaseEstimator):
-    """An estimator that simple predicts zero. """
+    """An estimator that simply predicts zero. """
 
     def fit(self, X, y):
         if np.issubdtype(y.dtype, int):

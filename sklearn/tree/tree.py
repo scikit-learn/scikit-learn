@@ -26,13 +26,11 @@ from ..utils import array2d, check_random_state
 from ..utils.fixes import unique
 from ..utils.validation import check_arrays
 
-from ._tree import BestFirstTreeBuilder
 from ._tree import Criterion
-from ._tree import DepthFirstTreeBuilder
 from ._tree import Splitter
+from ._tree import DepthFirstTreeBuilder, BestFirstTreeBuilder
 from ._tree import Tree
 from . import _tree
-
 
 __all__ = ["DecisionTreeClassifier",
            "DecisionTreeRegressor",
