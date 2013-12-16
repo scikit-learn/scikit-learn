@@ -25,8 +25,8 @@ def _hypercube(samples, dimensions, rng):
     if dimensions > 30:
         return np.hstack([_hypercube(samples, dimensions - 30, rng),
                           _hypercube(samples, 30, rng)])
-    out = np.array(sample_without_replacement(2 ** dimensions, samples,
-                                              random_state=rng), dtype='>u4')
+    out = sample_without_replacement(2 ** dimensions, samples,
+                                     random_state=rng).astype('>u4')
     out = np.unpackbits(out.view('>u1')).reshape((-1, 32))[:, -dimensions:]
     return out
 
