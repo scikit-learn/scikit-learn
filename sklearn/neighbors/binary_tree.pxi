@@ -1240,7 +1240,7 @@ cdef class BinaryTree:
         query(X, k=1, return_distance=True,
               dualtree=False, breadth_first=False)
 
-        query the treeree for the k nearest neighbors
+        query the tree for the k nearest neighbors
 
         Parameters
         ----------
