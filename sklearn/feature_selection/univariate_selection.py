@@ -17,7 +17,7 @@ from scipy.sparse import issparse
 from ..base import BaseEstimator
 from ..preprocessing import LabelBinarizer
 from ..utils import (array2d, as_float_array,
-                     atleast2d_or_csr, check_arrays, safe_asarray, safe_sqr,
+                     atleast2d_or_csr, check_arrays, safe_sqr,
                      safe_mask)
 from ..utils.extmath import norm, safe_sparse_dot
 from ..externals import six
@@ -92,7 +92,7 @@ def f_oneway(*args):
 
     """
     n_classes = len(args)
-    args = [safe_asarray(a) for a in args]
+    args = [as_float_array(a) for a in args]
     n_samples_per_class = np.array([a.shape[0] for a in args])
     n_samples = np.sum(n_samples_per_class)
     ss_alldata = sum(safe_sqr(a).sum(axis=0) for a in args)
