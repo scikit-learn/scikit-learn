@@ -7,8 +7,6 @@
 
 
 from abc import ABCMeta, abstractmethod
-from warnings import warn
-from functools import reduce
 
 import numpy as np
 from scipy import special, stats
