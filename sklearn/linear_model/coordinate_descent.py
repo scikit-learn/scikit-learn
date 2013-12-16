@@ -31,8 +31,7 @@ from . import cd_fast
 # Paths functions
 
 def _alpha_grid(X, y, Xy=None, l1_ratio=1.0, fit_intercept=True,
-                eps=1e-3, n_alphas=100, normalize=False, copy_X=True,
-                multi_output=False):
+                eps=1e-3, n_alphas=100, normalize=False, copy_X=True):
     """ Compute the grid of alpha values for elastic net parameter search
 
     Parameters
@@ -68,10 +67,6 @@ def _alpha_grid(X, y, Xy=None, l1_ratio=1.0, fit_intercept=True,
 
     copy_X : boolean, optional, default True
         If ``True``, X will be copied; else, it may be overwritten.
-
-    multi_output : boolean, optional, default False
-        If ``True``, alpha_max would be calculated assuming y to be
-        multi_output.
     """
     if Xy is None:
         X = atleast2d_or_csc(X, copy=(copy_X and fit_intercept and not
@@ -80,17 +75,15 @@ def _alpha_grid(X, y, Xy=None, l1_ratio=1.0, fit_intercept=True,
             # X can be touched inplace thanks to the above line
             X, y, _, _, _ = center_data(X, y, fit_intercept,
                                         normalize, copy=False)
-
         Xy = safe_sparse_dot(X.T, y, dense_output=True)
         n_samples = X.shape[0]
     else:
         n_samples = len(y)
 
-    if multi_output:
-        alpha_max = np.sqrt(np.sum(Xy**2, axis=1)).max() / (
+    if Xy.ndim == 1:
+        Xy = Xy[:, np.newaxis]
+    alpha_max = np.sqrt(np.sum(Xy ** 2, axis=1)).max() / (
                             n_samples * l1_ratio)
-    else:
-        alpha_max = np.abs(Xy).max() / (n_samples * l1_ratio)
     alphas = np.logspace(np.log10(alpha_max * eps), np.log10(alpha_max),
                          num=n_alphas)[::-1]
     return alphas
@@ -466,8 +459,90 @@ def enet_multitask_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100,
               alphas=None, precompute='auto', Xy=None,
               copy_X=True, coef_init=None, **params):
 
-    """
-    TODO: Add docstring.
+    """Compute Elastic-Net path for multi-output tasks
+       with multi task coordinate descent
+
+    The Elastic Net optimization function for multi-output is::
+
+        (1 / (2 * n_samples)) * ||Y - XW||^Fro_2
+        + alpha * l1_ratio * ||W||_21
+        + 0.5 * alpha * (1 - l1_ratio) * ||W||_Fro^2
+
+    Where::
+
+        ||W||_21 = \sum_i \sqrt{\sum_j w_{ij}^2}
+
+    i.e. the sum of norm of each row.
+
+    Parameters
+    ----------
+    X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        Training data. Pass directly as Fortran-contiguous data to avoid
+        unnecessary memory duplication
+
+    y : ndarray, shape = (n_samples, n_tasks)
+        Target values
+
+    l1_ratio : float, optional
+        float between 0 and 1 passed to ElasticNet (scaling between
+        l1 and l2 penalties). ``l1_ratio=1`` corresponds to the Lasso
+
+    eps : float
+        Length of the path. ``eps=1e-3`` means that
+        ``alpha_min / alpha_max = 1e-3``
+
+    n_alphas : int, optional
+        Number of alphas along the regularization path
+
+    alphas : ndarray, optional
+        List of alphas where to compute the models.
+        If None alphas are set automatically
+
+    precompute : True | False | 'auto' | array-like
+        Whether to use a precomputed Gram matrix to speed up
+        calculations. If set to ``'auto'`` let us decide. The Gram
+        matrix can also be passed as argument.
+
+    Xy : array-like, optional
+        Xy = np.dot(X.T, y) that can be precomputed. It is useful
+        only when the Gram matrix is precomputed.
+
+    copy_X : boolean, optional, default True
+        If ``True``, X will be copied; else, it may be overwritten.
+
+    coef_init : array, shape (n_features, ) | None
+        The initial values of the coefficients.
+
+    verbose : bool or integer
+        Amount of verbosity
+
+    params : kwargs
+        keyword arguments passed to the coordinate descent solver.
+
+    Returns
+    -------
+    models : a list of models along the regularization path
+        (Is returned if ``return_models`` is set ``True`` (default).
+
+    alphas : array, shape: [n_alphas + 1]
+        The alphas along the path where models are computed.
+        (Is returned, along with ``coefs``, when ``return_models`` is set
+        to ``False``)
+
+    coefs : shape (n_features, n_alphas + 1)
+        Coefficients along the path.
+        (Is returned, along with ``alphas``, when ``return_models`` is set
+        to ``False``).
+
+    dual_gaps : shape (n_alphas + 1)
+        The dual gaps and the end of the optimization for each alpha.
+        (Is returned, along with ``alphas``, when ``return_models`` is set
+        to ``False``).
+
+    See also
+    --------
+    ElasticNet
+    ElasticNetCV
     """
     X = atleast2d_or_csc(X, dtype=np.float64, order='F',
                          copy=copy_X and fit_intercept)
@@ -496,14 +571,14 @@ def enet_multitask_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100,
     coefs = np.zeros([n_outputs, n_features, n_alphas])
     dual_gaps = []
     if coef_init is None:
-        coef_ = np.zeros([n_outputs, n_features], dtype=np.float64)
+        coef_ = np.asfortranarray(np.zeros(
+                                  [n_outputs, n_features], dtype=np.float64))
     else:
-        coef_ = coef_init
-    coef_ = np.asfortranarray(coef_)
+        coef_ = np.asfortanarray(coef_init)
 
     for i, alpha in enumerate(alphas):
-        l1_reg = alphas[i] * l1_ratio * n_samples
-        l2_reg = alphas[i] * (1.0 - l1_ratio) * n_samples
+        l1_reg = alpha * l1_ratio * n_samples
+        l2_reg = alpha * (1.0 - l1_ratio) * n_samples
         coef_, dual_gap_, eps_ = cd_fast.enet_coordinate_descent_multi_task(
                 coef_, l1_reg, l2_reg, X, y, max_iter, tol)
         coefs[:,:,i] = coef_
@@ -515,7 +590,7 @@ def enet_multitask_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100,
                           ' to increase the number of iterations')
 
     alphas = np.asarray(alphas)
-    coefs = np.asarray(coefs)
+
     return alphas, coefs, dual_gaps
 
 ###############################################################################
@@ -885,7 +960,6 @@ def _path_residuals(X, y, train, test, path, path_params, l1_ratio=1,
     fit_intercept = path_params['fit_intercept']
     normalize = path_params['normalize']
     precompute = path_params['precompute']
-    n_outputs = path_params.get('multi-task')
 
     X_train, y_train, X_mean, y_mean, X_std, precompute, Xy = \
         _pre_fit(X_train, y_train, None, precompute, normalize, fit_intercept,
@@ -910,7 +984,7 @@ def _path_residuals(X, y, train, test, path, path_params, l1_ratio=1,
     alphas, coefs, _ = path(X_train, y[train], **path_params)
     del X_train
 
-    if not n_outputs:
+    if y.ndim == 1:
         # Doing this so that it becomes coherent with multioutput.
         coefs = coefs[np.newaxis, :, :]
         y_mean = np.atleast_1d(y_mean)
@@ -1596,7 +1670,9 @@ class MultiTaskLasso(MultiTaskElasticNet):
 
 
 class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
-    """Multi-task ElasticNet model trained with L1/L2 mixed-norm as regularizer
+    """Multi-task ElasticNet model trained with L1/L2 mixed-norm as
+       regularizer.
+
     The model is chosen by cross-validating across all tasks.
 
     The optimization objective for MultiTaskElasticNet is::
@@ -1747,11 +1823,8 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
 
         n_outputs = y.shape[1]
 
-        # Needed for _path_residual function.
-        path_params = {'multi-task': n_outputs}
-
         # All LinearModelCV parameters except 'cv' are acceptable.
-        path_params.update(self.get_params())
+        path_params = self.get_params()
         if 'l1_ratio' in path_params:
             l1_ratios = np.atleast_1d(path_params['l1_ratio'])
             # For the first path, we need to set l1_ratio
@@ -1767,8 +1840,7 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
                                  fit_intercept=self.fit_intercept,
                                  eps=self.eps, n_alphas=self.n_alphas,
                                  normalize=self.normalize,
-                                 copy_X=self.copy_X,
-                                 multi_output=True)
+                                 copy_X=self.copy_X)
         n_alphas = len(alphas)
         path_params.update({'alphas': alphas, 'n_alphas': n_alphas})
 
