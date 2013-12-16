@@ -343,3 +343,37 @@ Vijay Ramesh, Software Engineer in Data/science at Change.org
 
    </span>
 
+`PHIMECA Engineering <http://www.phimeca.com/?lang=en>`_
+----------------------------------------------------------
+
+.. raw:: html
+
+  <div class="logo">
+
+.. image:: images/phimeca.png
+   :target: http://www.phimeca.com/?lang=en
+
+.. raw:: html
+
+  </div>
+
+At PHIMECA Engineering, we use scikit-learn estimators as surrogates for
+expensive-to-evaluate numerical models (mostly but not exclusively
+finite-element mechanical models) for speeding up the intensive post-processing
+operations involved in our simulation-based decision making framework.
+Scikit-learn's fit/predict API together with its efficient cross-validation
+tools considerably eases the task of selecting the best-fit estimator. We are
+also using scikit-learn for illustrating concepts in our training sessions.
+Trainees are always impressed by the ease-of-use of scikit-learn despite the
+apparent theoretical complexity of machine learning.
+
+.. raw:: html
+
+   <span class="testimonial-author">
+
+Vincent Dubourg, PHIMECA Engineering, PhD Engineer
+
+.. raw:: html
+
+   </span>
+
