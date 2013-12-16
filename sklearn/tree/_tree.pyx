@@ -702,9 +702,8 @@ cdef class RegressionCriterion(Criterion):
             sq_sum_right[k] = sq_sum_total[k]
             sq_sum_left[k] = 0.0
             var_left[k] = 0.0
-            var_right[k] = (sq_sum_right[k] -
-                            weighted_n_node_samples * (mean_right[k] *
-                                                       mean_right[k]))
+            var_right[k] = (sq_sum_right[k] / weighted_n_node_samples -
+                            mean_right[k] * mean_right[k])
             sum_right[k] = sum_total[k]
             sum_left[k] = 0.0
 
@@ -764,10 +763,10 @@ cdef class RegressionCriterion(Criterion):
             weighted_n_right -= w
 
         for k from 0 <= k < n_outputs:
-            var_left[k] = (sq_sum_left[k] -
-                           weighted_n_left * (mean_left[k] * mean_left[k]))
-            var_right[k] = (sq_sum_right[k] -
-                            weighted_n_right * (mean_right[k] * mean_right[k]))
+            var_left[k] = (sq_sum_left[k] / weighted_n_left -
+                           mean_left[k] * mean_left[k])
+            var_right[k] = (sq_sum_right[k] / weighted_n_right -
+                            mean_right[k] * mean_right[k])
 
         self.weighted_n_left = weighted_n_left
         self.weighted_n_right = weighted_n_right
@@ -801,9 +800,8 @@ cdef class MSE(RegressionCriterion):
         cdef SIZE_t k
 
         for k from 0 <= k < n_outputs:
-            total += (sq_sum_total[k] -
-                      weighted_n_node_samples * (mean_total[k] *
-                                                 mean_total[k]))
+            total += (sq_sum_total[k] / weighted_n_node_samples -
+                      mean_total[k] * mean_total[k])
 
         return total / n_outputs
 
