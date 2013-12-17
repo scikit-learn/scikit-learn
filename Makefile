@@ -45,10 +45,10 @@ ctags:
 	$(CTAGS) -R *
 
 doc: inplace
-	make -C doc html
+	$(MAKE) -C doc html
 
 doc-noplot: inplace
-	make -C doc html-noplot
+	$(MAKE) -C doc html-noplot
 
 code-analysis:
 	flake8 sklearn | grep -v __init__ | grep -v external

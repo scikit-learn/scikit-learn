@@ -542,16 +542,17 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         and always treated as a token separator).
 
     max_df : float in range [0.0, 1.0] or int, optional, 1.0 by default
-        When building the vocabulary ignore terms that have a term frequency
-        strictly higher than the given threshold (corpus specific stop words).
+        When building the vocabulary ignore terms that have a document
+        frequency strictly higher than the given threshold (corpus-specific
+        stop words).
         If float, the parameter represents a proportion of documents, integer
         absolute counts.
         This parameter is ignored if vocabulary is not None.
 
     min_df : float in range [0.0, 1.0] or int, optional, 1 by default
-        When building the vocabulary ignore terms that have a term frequency
-        strictly lower than the given threshold. This value is also called
-        cut-off in the literature.
+        When building the vocabulary ignore terms that have a document
+        frequency strictly lower than the given threshold. This value is also
+        called cut-off in the literature.
         If float, the parameter represents a proportion of documents, integer
         absolute counts.
         This parameter is ignored if vocabulary is not None.
@@ -638,16 +639,23 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         self.ngram_range = ngram_range
         if vocabulary is not None:
             if not isinstance(vocabulary, Mapping):
-                vocabulary = dict((t, i) for i, t in enumerate(vocabulary))
+                vocab = {}
+                for i, t in enumerate(vocabulary):
+                    if vocab.setdefault(t, i) != i:
+                        msg = "Duplicate term in vocabulary: %r" % t
+                        raise ValueError(msg)
+                vocabulary = vocab
+            else:
+                indices = set(six.itervalues(vocabulary))
+                if len(indices) != len(vocabulary):
+                    raise ValueError("Vocabulary contains repeated indices.")
+                for i in xrange(len(vocabulary)):
+                    if i not in indices:
+                        msg = ("Vocabulary of size %d doesn't contain index "
+                                "%d." % (len(vocabulary), i))
+                        raise ValueError(msg)
             if not vocabulary:
                 raise ValueError("empty vocabulary passed to fit")
-            indices = set(six.itervalues(vocabulary))
-            if len(indices) != len(vocabulary):
-                raise ValueError("Vocabulary contains repeated indices.")
-            for i in xrange(len(vocabulary)):
-                if i not in indices:
-                    msg = "Vocabulary of size %d doesn't contain index %d."
-                    raise ValueError(msg % (len(vocabulary), i))
             self.fixed_vocabulary = True
             self.vocabulary_ = dict(vocabulary)
         else:
@@ -703,6 +711,9 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
                 del vocabulary[term]
                 removed_terms.add(term)
         kept_indices = np.where(mask)[0]
+        if len(kept_indices) == 0:
+            raise ValueError("After pruning, no terms remain. Try a lower"
+                             " min_df or a higher max_df.")
         return cscmatrix[:, kept_indices], removed_terms
 
     def _count_vocab(self, raw_documents, fixed_vocab):

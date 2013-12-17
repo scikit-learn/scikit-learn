@@ -3,13 +3,13 @@ Testing for the gradient boosting module (sklearn.ensemble.gradient_boosting).
 """
 
 import numpy as np
-import warnings
 
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_warns
 
 
 from sklearn.metrics import mean_squared_error
@@ -446,12 +446,10 @@ def test_shape_y():
     y_ = np.asarray(y, dtype=np.int32)
     y_ = y_[:, np.newaxis]
 
-    with warnings.catch_warnings(record=True):
-        # This will raise a DataConversionWarning that we want to
-        # "always" raise, elsewhere the warnings gets ignored in the
-        # later tests, and the tests that check for this warning fail
-        warnings.simplefilter("always", DataConversionWarning)
-        clf.fit(X, y_)
+    # This will raise a DataConversionWarning that we want to
+    # "always" raise, elsewhere the warnings gets ignored in the
+    # later tests, and the tests that check for this warning fail
+    assert_warns(DataConversionWarning, clf.fit, X, y_)
     assert_array_equal(clf.predict(T), true_result)
     assert_equal(100, len(clf.estimators_))
 
@@ -490,11 +488,7 @@ def test_oob_score():
     clf = GradientBoostingClassifier(n_estimators=100, random_state=1,
                                      subsample=0.5)
     clf.fit(X, y)
-    with warnings.catch_warnings(record=True) as w:
-        warnings.simplefilter("always")
-        assert_true(hasattr(clf, 'oob_score_'))
-        assert_equal(len(w), 1)
-
+    assert_warns(DeprecationWarning, hasattr, clf, 'oob_score_')
 
 def test_oob_improvement():
     """Test if oob improvement has correct shape and regression test. """
@@ -586,16 +580,12 @@ def test_more_verbose_output():
 def test_warn_deviance():
     """Test if mdeviance and bdeviance give deprecated warning. """
     for loss in ('bdeviance', 'mdeviance'):
-        with warnings.catch_warnings(record=True) as w:
-            # This will raise a DataConversionWarning that we want to
-            # "always" raise, elsewhere the warnings gets ignored in the
-            # later tests, and the tests that check for this warning fail
-            warnings.simplefilter("always", DataConversionWarning)
-            clf = GradientBoostingClassifier(loss=loss)
-            try:
-                clf.fit(X, y)
-            except:
-                # mdeviance will raise ValueError because only 2 classes
-                pass
-            # deprecated warning for bdeviance and mdeviance
-            assert len(w) == 1
+        # This will raise a DataConversionWarning that we want to
+        # "always" raise, elsewhere the warnings gets ignored in the
+        # later tests, and the tests that check for this warning fail
+        clf = GradientBoostingClassifier(loss=loss)
+        try:
+            assert_warns(UserWarning, clf.fit, X, y)
+        except ValueError:
+            # mdeviance will raise ValueError because only 2 classes
+            pass

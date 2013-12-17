@@ -299,6 +299,18 @@
                           </p>
                         </div>
                         <div class="item">
+                          <img src="_images/spotify.jpg" class="thumbnail" />
+                          <p>
+                          <em>"I think it's the most well-designed ML package I've seen so far."</em>
+                          </p>
+                        </div>
+                        <div class="item">
+                          <img src="_images/change-logo.png" class="thumbnail" />
+                          <p>
+                          <em>"scikit-learn's ease-of-use, performance and overall variety of algorithms implemented has proved invaluable [...]."</em>
+                          </p>
+                        </div>
+                        <div class="item">
                           <img src="_images/evernote.png" class="thumbnail" />
                           <p>
                           <em>"For these tasks, we relied on the excellent scikit-learn package for Python."</em>

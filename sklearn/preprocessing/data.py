@@ -10,19 +10,20 @@ import itertools
 
 import numpy as np
 from scipy import sparse
+
 from ..base import BaseEstimator, TransformerMixin
+from ..externals import six
 from ..utils import check_arrays
 from ..utils import atleast2d_or_csc
 from ..utils import array2d
 from ..utils import atleast2d_or_csr
 from ..utils import safe_asarray
 from ..utils import warn_if_not_float
-
+from ..utils.extmath import row_norms
 from ..utils.sparsefuncs import inplace_csr_row_normalize_l1
 from ..utils.sparsefuncs import inplace_csr_row_normalize_l2
 from ..utils.sparsefuncs import inplace_csr_column_scale
 from ..utils.sparsefuncs import mean_variance_axis0
-from ..externals import six
 
 zip = six.moves.zip
 map = six.moves.map
@@ -539,12 +540,12 @@ def normalize(X, norm='l2', axis=1, copy=True):
             inplace_csr_row_normalize_l2(X)
     else:
         if norm == 'l1':
-            norms = np.abs(X).sum(axis=1)[:, np.newaxis]
+            norms = np.abs(X).sum(axis=1)
             norms[norms == 0.0] = 1.0
         elif norm == 'l2':
-            norms = np.sqrt(np.sum(X ** 2, axis=1))[:, np.newaxis]
+            norms = row_norms(X)
             norms[norms == 0.0] = 1.0
-        X /= norms
+        X /= norms[:, np.newaxis]
 
     if axis == 0:
         X = X.T

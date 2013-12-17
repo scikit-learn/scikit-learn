@@ -1,6 +1,5 @@
 """Testing for K-means"""
 import sys
-import warnings
 
 import numpy as np
 from scipy import sparse as sp
@@ -12,9 +11,10 @@ from sklearn.utils.testing import SkipTest
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_true
-
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_less
+from sklearn.utils.testing import assert_warns
+
 from sklearn.utils.extmath import row_norms
 from sklearn.utils.fixes import unique
 from sklearn.metrics.cluster import v_measure_score
@@ -44,9 +44,8 @@ def test_kmeans_dtype():
     X = rnd.normal(size=(40, 2))
     X = (X * 10).astype(np.uint8)
     km = KMeans(n_init=1).fit(X)
-    with warnings.catch_warnings(record=True) as w:
-        assert_array_equal(km.labels_, km.predict(X))
-        assert_equal(len(w), 1)
+    pred_x = assert_warns(RuntimeWarning, km.predict, X)
+    assert_array_equal(km.labels_, pred_x)
 
 
 def test_labels_assignment_and_inertia():
@@ -287,10 +286,7 @@ def test_minibatch_init_with_large_k():
     mb_k_means = MiniBatchKMeans(init='k-means++', init_size=10, n_clusters=20)
     # Check that a warning is raised, as the number clusters is larger
     # than the init_size
-    with warnings.catch_warnings(record=True) as warn_queue:
-        mb_k_means.fit(X)
-
-    assert_equal(len(warn_queue), 1)
+    assert_warns(RuntimeWarning, mb_k_means.fit, X)
 
 
 def test_minibatch_k_means_random_init_dense_array():
@@ -610,9 +606,7 @@ def test_k_means_function():
     assert_greater(inertia, 0.0)
 
     # check warning when centers are passed
-    with warnings.catch_warnings(record=True) as w:
-        k_means(X, n_clusters=n_clusters, init=centers)
-        assert_equal(len(w), 1)
+    assert_warns(RuntimeWarning, k_means, X, n_clusters=n_clusters, init=centers)
 
     # to many clusters desired
     assert_raises(ValueError, k_means, X, n_clusters=X.shape[0] + 1)

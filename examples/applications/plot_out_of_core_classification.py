@@ -232,8 +232,12 @@ test_stats = {'n_test': 0, 'n_test_pos': 0}
 
 # First we hold out a number of examples to estimate accuracy
 n_test_documents = 1000
+tick = time.time()
 X_test_text, y_test = get_minibatch(data_stream, 1000)
+parsing_time = time.time() - tick
+tick = time.time()
 X_test = vectorizer.transform(X_test_text)
+vectorizing_time = time.time() - tick
 test_stats['n_test'] += len(y_test)
 test_stats['n_test_pos'] += sum(y_test)
 print("Test set is %d documents (%d positive)" % (len(y_test), sum(y_test)))
@@ -284,13 +288,15 @@ for i, (X_train_text, y_train) in enumerate(minibatch_iterators):
         cls.partial_fit(X_train, y_train, classes=all_classes)
 
         # accumulate test accuracy stats
+        cls_stats[cls_name]['total_fit_time'] += time.time() - tick
         cls_stats[cls_name]['n_train'] += X_train.shape[0]
         cls_stats[cls_name]['n_train_pos'] += sum(y_train)
+        tick = time.time()
         cls_stats[cls_name]['accuracy'] = cls.score(X_test, y_test)
+        cls_stats[cls_name]['prediction_time'] = time.time() - tick
         acc_history = (cls_stats[cls_name]['accuracy'],
                        cls_stats[cls_name]['n_train'])
         cls_stats[cls_name]['accuracy_history'].append(acc_history)
-        cls_stats[cls_name]['total_fit_time'] += time.time() - tick
         run_history = (cls_stats[cls_name]['accuracy'],
                        total_vect_time + cls_stats[cls_name]['total_fit_time'])
         cls_stats[cls_name]['runtime_history'].append(run_history)
@@ -319,6 +325,7 @@ def plot_accuracy(x, y, x_legend):
 rcParams['legend.fontsize'] = 10
 cls_names = list(sorted(cls_stats.keys()))
 
+# Plot accuracy evolution
 plt.figure()
 for _, stats in sorted(cls_stats.items()):
     # Plot accuracy evolution with #examples
@@ -337,6 +344,7 @@ for _, stats in sorted(cls_stats.items()):
     ax.set_ylim((0.8, 1))
 plt.legend(cls_names, loc='best')
 
+# Plot fitting times
 plt.figure()
 fig = plt.gcf()
 cls_runtime = []
@@ -356,7 +364,7 @@ ax.set_xticklabels(cls_names, fontsize=10)
 ymax = max(cls_runtime) * 1.2
 ax.set_ylim((0, ymax))
 ax.set_ylabel('runtime (s)')
-ax.set_title('Time in Process')
+ax.set_title('Training Times')
 
 
 def autolabel(rectangles):
@@ -367,5 +375,32 @@ def autolabel(rectangles):
                 1.05 * height, '%.4f' % height,
                 ha='center', va='bottom')
 
+autolabel(rectangles)
+plt.show()
+
+# Plot prediction times
+plt.figure()
+#fig = plt.gcf()
+cls_runtime = []
+cls_names = list(sorted(cls_stats.keys()))
+for cls_name, stats in sorted(cls_stats.items()):
+    cls_runtime.append(stats['prediction_time'])
+cls_runtime.append(parsing_time)
+cls_names.append('Read/Parse\n+Feat.Extr.')
+cls_runtime.append(vectorizing_time)
+cls_names.append('Hashing\n+Vect.')
+bar_colors = rcParams['axes.color_cycle'][:len(cls_names)]
+
+ax = plt.subplot(111)
+rectangles = plt.bar(range(len(cls_names)), cls_runtime, width=0.5,
+                     color=bar_colors)
+
+ax.set_xticks(np.linspace(0.25, len(cls_names) - 0.75, len(cls_names)))
+ax.set_xticklabels(cls_names, fontsize=8)
+plt.setp(plt.xticks()[1], rotation=30)
+ymax = max(cls_runtime) * 1.2
+ax.set_ylim((0, ymax))
+ax.set_ylabel('runtime (s)')
+ax.set_title('Prediction Times (%d instances)' % n_test_documents)
 autolabel(rectangles)
 plt.show()
