@@ -19,7 +19,7 @@ from sklearn.utils.testing import ignore_warnings
 
 from sklearn.linear_model.coordinate_descent import Lasso, \
     LassoCV, ElasticNet, ElasticNetCV, MultiTaskLasso, MultiTaskElasticNet, \
-    lasso_path
+    MultiTaskElasticNetCV, MultiTaskLassoCV, lasso_path
 from sklearn.linear_model import LassoLarsCV, lars_path
 
 
@@ -275,6 +275,14 @@ def test_path_parameters():
     assert_equal(50, clf.n_alphas)
     assert_equal(50, len(clf.alphas_))
 
+    X, y, _, _ = build_dataset(n_features=3)
+    max_iter = 100
+    clf = MultiTaskElasticNetCV(n_alphas=50, eps=1e-3, max_iter=max_iter,
+                                l1_ratio=0.5, tol=1e-3)
+    clf.fit(X, y)
+    assert_almost_equal(0.5, clf.l1_ratio)
+    assert_equal(50, clf.n_alphas)
+    assert_equal(50, len(clf.alphas_))
 
 def test_warm_start():
     X, y, _, _ = build_dataset()
@@ -368,6 +376,35 @@ def test_multioutput_enetcv_error():
     y = np.random.randn(10, 2)
     clf = ElasticNetCV()
     assert_raises(ValueError, clf.fit, X, y)
+
+
+def task_multitask_enet_path():
+    X, y, X_test, y_test = build_dataset(n_features=10, n_targets=3)
+    max_iter = 150
+    clf = ElasticNetCV(n_alphas=5, eps=2e-3, l1_ratio=[0.5, 0.7], cv=3,
+                       max_iter=max_iter)
+    ignore_warnings(clf.fit)(X, y)
+    # We are in well-conditioned settings with low noise: we should
+    # have a good test-set performance
+    assert_greater(clf.score(X_test, y_test), 0.99)
+
+    # Mono-output should have same cross-validated alpha_ and l1_ratio_
+    # in both cases.
+    X, y, _, _ = build_dataset(n_features=10)
+    clf1 = ElasticNetCV(n_alphas=5, eps=2e-3, l1_ratio=[0.5, 0.7])
+    clf2 = MultiTaskElasticNetCV(n_alphas=5, eps=2e-3, l1_ratio=[0.5, 0.7])
+    assert_almost_equal(clf1.l1_ratio_, clf2.l1_ratio_)
+    assert_almost_equal(clf1.alpha_, clf2.alpha_)
+
+
+def test_multitask_enetandlassocv():
+        X, y, _, _ = build_dataset(n_features=100, n_targets=3)
+        clf = MultiTaskElasticNetCV()
+        clf.fit(X, y)
+        assert_almost_equal(clf.alpha_, 0.00556, 3)
+        clf = MultiTaskLassoCV()
+        clf.fit(X, y)
+        assert_almost_equal(clf.alpha_, 0.00556, 3)
 
 
 if __name__ == '__main__':
