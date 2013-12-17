@@ -93,7 +93,8 @@ cdef class Criterion:
         pass
 
     cdef double impurity_improvement(self, double impurity) nogil:
-        """Impurity improvement impurity - (left impurity + right impurity) """
+        """Impurity improvement, i.e.
+           impurity - (left impurity + right impurity)."""
         cdef double impurity_left
         cdef double impurity_right
 
@@ -368,8 +369,9 @@ cdef class Entropy(ClassificationCriterion):
         return total / n_outputs
 
     cdef void children_impurity(self, double* impurity_left, double* impurity_right) nogil:
-        """Evaluate the impurity in children nodes, i.e. the impurity of
-           samples[start:pos] + the impurity of samples[pos:end]."""
+        """Evaluate the impurity in children nodes, i.e. the impurity of the
+           left child (samples[start:pos]) and the impurity the right child
+           (samples[pos:end])."""
         cdef double weighted_n_node_samples = self.weighted_n_node_samples
         cdef double weighted_n_left = self.weighted_n_left
         cdef double weighted_n_right = self.weighted_n_right
@@ -382,7 +384,6 @@ cdef class Entropy(ClassificationCriterion):
 
         cdef double entropy_left = 0.0
         cdef double entropy_right = 0.0
-        cdef double total = 0.0
         cdef double total_left = 0.0
         cdef double total_right = 0.0
         cdef double tmp
@@ -404,15 +405,13 @@ cdef class Entropy(ClassificationCriterion):
                     tmp /= weighted_n_right
                     entropy_right -= tmp * log(tmp)
 
-            total += weighted_n_left * entropy_left
-            total += weighted_n_right * entropy_right
-            total_left += weighted_n_left * entropy_left
-            total_right += weighted_n_right * entropy_right
+            total_left += entropy_left
+            total_right += entropy_right
             label_count_left += label_count_stride
             label_count_right += label_count_stride
 
-        impurity_left[0] = total_left / (weighted_n_left * n_outputs)
-        impurity_right[0] = total_right / (weighted_n_right * n_outputs)
+        impurity_left[0] = total_left / n_outputs
+        impurity_right[0] = total_right / n_outputs
 
 
 cdef class Gini(ClassificationCriterion):
@@ -450,7 +449,7 @@ cdef class Gini(ClassificationCriterion):
             gini = 0.0
 
             for c from 0 <= c < n_classes[k]:
-                tmp = label_count_total[c]
+                tmp = label_count_total[c] # TODO: use weighted count instead
                 gini += tmp * tmp
 
             gini = 1.0 - gini / (weighted_n_node_samples *
@@ -462,8 +461,9 @@ cdef class Gini(ClassificationCriterion):
         return total / n_outputs
 
     cdef void children_impurity(self, double* impurity_left, double* impurity_right) nogil:
-        """Evaluate the impurity in children nodes, i.e. the impurity of
-           samples[start:pos] and the impurity of samples[pos:end]."""
+        """Evaluate the impurity in children nodes, i.e. the impurity of the
+           left child (samples[start:pos]) and the impurity the right child
+           (samples[pos:end])."""
         cdef double weighted_n_node_samples = self.weighted_n_node_samples
         cdef double weighted_n_left = self.weighted_n_left
         cdef double weighted_n_right = self.weighted_n_right
@@ -488,7 +488,7 @@ cdef class Gini(ClassificationCriterion):
             gini_right = 0.0
 
             for c from 0 <= c < n_classes[k]:
-                tmp = label_count_left[c]
+                tmp = label_count_left[c] # TODO: use weighted count instead
                 gini_left += tmp * tmp
                 tmp = label_count_right[c]
                 gini_right += tmp * tmp
@@ -498,13 +498,13 @@ cdef class Gini(ClassificationCriterion):
             gini_right = 1.0 - gini_right / (weighted_n_right *
                                              weighted_n_right)
 
-            total_left += weighted_n_left * gini_left
-            total_right += weighted_n_right * gini_right
+            total_left += gini_left
+            total_right += gini_right
             label_count_left += label_count_stride
             label_count_right += label_count_stride
 
-        impurity_left[0] = total_left / (weighted_n_left * n_outputs)
-        impurity_right[0] = total_right / (weighted_n_right * n_outputs)
+        impurity_left[0] = total_left / n_outputs
+        impurity_right[0] = total_right / n_outputs
 
 
 cdef class RegressionCriterion(Criterion):
@@ -702,9 +702,8 @@ cdef class RegressionCriterion(Criterion):
             sq_sum_right[k] = sq_sum_total[k]
             sq_sum_left[k] = 0.0
             var_left[k] = 0.0
-            var_right[k] = (sq_sum_right[k] -
-                            weighted_n_node_samples * (mean_right[k] *
-                                                       mean_right[k]))
+            var_right[k] = (sq_sum_right[k] / weighted_n_node_samples -
+                            mean_right[k] * mean_right[k])
             sum_right[k] = sum_total[k]
             sum_left[k] = 0.0
 
@@ -764,10 +763,10 @@ cdef class RegressionCriterion(Criterion):
             weighted_n_right -= w
 
         for k from 0 <= k < n_outputs:
-            var_left[k] = (sq_sum_left[k] -
-                           weighted_n_left * (mean_left[k] * mean_left[k]))
-            var_right[k] = (sq_sum_right[k] -
-                            weighted_n_right * (mean_right[k] * mean_right[k]))
+            var_left[k] = (sq_sum_left[k] / weighted_n_left -
+                           mean_left[k] * mean_left[k])
+            var_right[k] = (sq_sum_right[k] / weighted_n_right -
+                            mean_right[k] * mean_right[k])
 
         self.weighted_n_left = weighted_n_left
         self.weighted_n_right = weighted_n_right
@@ -801,15 +800,15 @@ cdef class MSE(RegressionCriterion):
         cdef SIZE_t k
 
         for k from 0 <= k < n_outputs:
-            total += (sq_sum_total[k] -
-                      weighted_n_node_samples * (mean_total[k] *
-                                                 mean_total[k]))
+            total += (sq_sum_total[k] / weighted_n_node_samples -
+                      mean_total[k] * mean_total[k])
 
         return total / n_outputs
 
     cdef void children_impurity(self, double* impurity_left, double* impurity_right) nogil:
-        """Evaluate the impurity in children nodes, i.e. the impurity of
-           samples[start:pos] and the impurity of samples[pos:end]."""
+        """Evaluate the impurity in children nodes, i.e. the impurity of the
+           left child (samples[start:pos]) and the impurity the right child
+           (samples[pos:end])."""
         cdef SIZE_t n_outputs = self.n_outputs
         cdef double* var_left = self.var_left
         cdef double* var_right = self.var_right
@@ -952,8 +951,9 @@ cdef class Splitter:
                             start,
                             end)
 
-    cdef void node_split(self, double impurity, SIZE_t* pos, SIZE_t* feature, double* threshold,
-                         double* impurity_left, double* impurity_right,
+    cdef void node_split(self, double impurity, SIZE_t* pos, SIZE_t* feature,
+                         double* threshold, double* impurity_left,
+                         double* impurity_right,
                          double* impurity_improvement) nogil:
         """Find a split on node samples[start:end]."""
         pass
@@ -971,8 +971,9 @@ cdef class BestSplitter(Splitter):
                                self.min_samples_leaf,
                                self.random_state), self.__getstate__())
 
-    cdef void node_split(self, double impurity, SIZE_t* pos, SIZE_t* feature, double* threshold,
-                         double* impurity_left, double* impurity_right,
+    cdef void node_split(self, double impurity, SIZE_t* pos, SIZE_t* feature,
+                         double* threshold, double* impurity_left,
+                         double* impurity_right,
                          double* impurity_improvement) nogil:
         """Find the best split on node samples[start:end]."""
         # Find the best split
@@ -1152,8 +1153,9 @@ cdef class RandomSplitter(Splitter):
                                  self.min_samples_leaf,
                                  self.random_state), self.__getstate__())
 
-    cdef void node_split(self, double impurity, SIZE_t* pos, SIZE_t* feature, double* threshold,
-                         double* impurity_left, double* impurity_right,
+    cdef void node_split(self, double impurity, SIZE_t* pos, SIZE_t* feature,
+                         double* threshold, double* impurity_left,
+                         double* impurity_right,
                          double* impurity_improvement) nogil:
         """Find the best random split on node samples[start:end]."""
         # Draw random splits and pick the best
@@ -1640,8 +1642,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
 cdef void _add_split_node(Splitter splitter, Tree tree,
                           SIZE_t start, SIZE_t end, double impurity,
                           bint is_first, bint is_left, SIZE_t parent_id,
-                          SIZE_t depth,
-                          PriorityHeapRecord* res) nogil:
+                          SIZE_t depth, PriorityHeapRecord* res) nogil:
         """Adds node w/ partition ``[start, end)`` to the frontier. """
         cdef SIZE_t pos
         cdef SIZE_t feature
@@ -1761,30 +1762,31 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                 is_leaf = (record.is_leaf or max_split_nodes <= 0)
 
                 if is_leaf:
-                    # node is not expandable; set node as leaf
+                    # Node is not expandable; set node as leaf
                     tree.children_left[node_id] = _TREE_LEAF
                     tree.children_right[node_id] = _TREE_LEAF
                     tree.feature[node_id] = _TREE_UNDEFINED
                     tree.threshold[node_id] = _TREE_UNDEFINED
-                else:
-                    # node is expandable
 
-                    # decrement number of split nodes available
+                else:
+                    # Node is expandable
+
+                    # Decrement number of split nodes available
                     max_split_nodes -= 1
 
-                    # compute left split node
+                    # Compute left split node
                     _add_split_node(splitter, tree,
                                     record.start, record.pos, record.impurity,
                                     IS_NOT_FIRST, IS_LEFT, node_id,
                                     record.depth + 1, &split_node_left)
 
-                    # compute right split node
+                    # Compute right split node
                     _add_split_node(splitter, tree, record.pos,
                                     record.end, record.impurity,
                                     IS_NOT_FIRST, IS_NOT_LEFT, node_id,
                                     record.depth + 1, &split_node_right)
 
-                    # add nodes to queue
+                    # Add nodes to queue
                     _add_to_frontier(&split_node_left, frontier)
                     _add_to_frontier(&split_node_right, frontier)
 
