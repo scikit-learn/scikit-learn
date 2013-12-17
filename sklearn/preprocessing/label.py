@@ -6,6 +6,8 @@
 
 import numpy as np
 
+from scipy.sparse import coo_matrix, issparse
+
 from ..base import BaseEstimator, TransformerMixin
 
 from ..utils.fixes import unique, np_version
@@ -15,6 +17,8 @@ from ..utils.multiclass import unique_labels
 from ..utils.multiclass import type_of_target
 
 from ..externals import six
+
+import warnings
 
 zip = six.moves.zip
 map = six.moves.map
@@ -182,6 +186,11 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
     pos_label : int (default: 1)
         Value with which positive labels must be encoded.
 
+    dense_output : boolean (default: True)
+        If True, ensure that the output of label_binarize is a
+        dense numpy array even if the binarize matrix is sparse.
+        If False, the binarized data use a sparse representation.
+
     Attributes
     ----------
     `classes_` : array of shape [n_class]
@@ -196,7 +205,7 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
     >>> from sklearn import preprocessing
     >>> lb = preprocessing.LabelBinarizer()
     >>> lb.fit([1, 2, 6, 4, 2])
-    LabelBinarizer(neg_label=0, pos_label=1)
+    LabelBinarizer(dense_output=True, neg_label=0, pos_label=1)
     >>> lb.classes_
     array([1, 2, 4, 6])
     >>> lb.multilabel_
@@ -219,12 +228,13 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         LabelBinarizer with fixed classes.
     """
 
-    def __init__(self, neg_label=0, pos_label=1):
+    def __init__(self, neg_label=0, pos_label=1, dense_output=True):
         if neg_label >= pos_label:
             raise ValueError("neg_label must be strictly less than pos_label.")
 
         self.neg_label = neg_label
         self.pos_label = pos_label
+        self.dense_output = dense_output
 
     @property
     @deprecated("Attribute `multilabel` was renamed to `multilabel_` in "
@@ -272,7 +282,7 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
 
         Returns
         -------
-        Y : numpy array of shape [n_samples, n_classes]
+        Y : numpy array or COO matrix of shape [n_samples, n_classes]
         """
         self._check_fitted()
 
@@ -283,9 +293,9 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
                              " input.")
 
         return label_binarize(y, self.classes_,
-                              multilabel=self.multilabel_,
                               pos_label=self.pos_label,
-                              neg_label=self.neg_label)
+                              neg_label=self.neg_label,
+                              dense_output=self.dense_output)
 
     def inverse_transform(self, Y, threshold=None):
         """Transform binary labels back to multi-class labels
@@ -327,26 +337,46 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
             threshold = self.neg_label + half
 
         if self.multilabel_:
-            Y = np.array(Y > threshold, dtype=int)
-            # Return the predictions in the same format as in fit
-            if self.indicator_matrix_:
+            if not(issparse(Y)):
+                Y = np.array(Y > threshold, dtype=int)
+                # Return the predictions in the same format as in fit
+                if self.indicator_matrix_:
                 # Label indicator matrix format
-                return Y
-            else:
-                # Lists of tuples format
-                return [tuple(self.classes_[np.flatnonzero(Y[i])])
-                        for i in range(Y.shape[0])]
+                    return Y
+                else:
+                    # Lists of tuples format
+                    return [tuple(self.classes_[np.flatnonzero(Y[i])])
+                            for i in range(Y.shape[0])]
+
+            if issparse(Y):
+                # Splitting and processing sparse matrix
+                if self.indicator_matrix_:
+                    y = np.array(Y.todense() > threshold, dtype=int)
+                    return y
+                else:
+                    y = []
+                    for i in range(Y.shape[0]):
+                        r_split = np.array(Y.getrow(i).todense() > threshold,
+                                           dtype=int)
+                        y.append(tuple(self.classes_[np.flatnonzero(r_split)]))
+                    return y
 
         if len(Y.shape) == 1 or Y.shape[1] == 1:
-            y = np.array(Y.ravel() > threshold, dtype=int)
+            if issparse(Y):
+                y = np.array(Y.toarray().ravel() > threshold, dtype=int)
+            else:
+                y = np.array(Y.ravel() > threshold, dtype=int)
 
         else:
+            if issparse(Y):
+                Y = Y.toarray()
             y = Y.argmax(axis=1)
 
         return self.classes_[y]
 
 
-def label_binarize(y, classes, multilabel=False, neg_label=0, pos_label=1):
+def label_binarize(y, classes, neg_label=0, pos_label=1,
+                   dense_output=True, multilabel=None):
     """Binarize labels in a one-vs-all fashion
 
     Several regression and binary classification algorithms are
@@ -365,20 +395,20 @@ def label_binarize(y, classes, multilabel=False, neg_label=0, pos_label=1):
     classes : array-like of shape [n_classes]
         Uniquely holds the label for each class.
 
-    multilabel : boolean
-        Set to true if y is encoding a multilabel tasks (with a variable
-        number of label assignements per sample) rather than a multiclass task
-        where one sample has one and only one label assigned.
-
     neg_label: int (default: 0)
         Value with which negative labels must be encoded.
 
     pos_label: int (default: 1)
         Value with which positive labels must be encoded.
 
+    dense_output : boolean, optional (default=True)
+        If True, ensure that the output of label_binarize is a
+        dense numpy array even if the binarize matrix is sparse.
+        If False, the binarized data uses a sparse representation.
+
     Returns
     -------
-    Y : numpy array of shape [n_samples, n_classes]
+    Y : numpy array or COO matrix with shape [n_samples, n_classes]
 
     Examples
     --------
@@ -393,8 +423,7 @@ def label_binarize(y, classes, multilabel=False, neg_label=0, pos_label=1):
     array([[1, 0, 0, 0],
            [0, 1, 0, 0]])
 
-    >>> label_binarize([(1, 2), (6,), ()], multilabel=True,
-    ...                classes=[1, 6, 4, 2])
+    >>> label_binarize([(1, 2), (6,), ()], classes=[1, 6, 4, 2])
     array([[1, 0, 0, 1],
            [0, 1, 0, 0],
            [0, 0, 0, 0]])
@@ -404,44 +433,89 @@ def label_binarize(y, classes, multilabel=False, neg_label=0, pos_label=1):
     label_binarize : function to perform the transform operation of
         LabelBinarizer with fixed classes.
     """
+    # To account for pos_label==0
+    pos_switch = False
+
+    if pos_label == neg_label:
+        raise ValueError("neg_label cannot equal pos_label")
+    elif pos_label == 0:
+        pos_label = -neg_label 
+        pos_switch = True
+
     y_type = type_of_target(y)
 
-    if multilabel or len(classes) > 2:
-        Y = np.zeros((len(y), len(classes)), dtype=np.int)
-    else:
-        Y = np.zeros((len(y), 1), dtype=np.int)
+    if y_type == "binary" and len(classes) == 1:
+        classes = np.insert(classes, [0], 0)
 
-    Y += neg_label
+    n_samples = y.shape[0] if issparse(y) else len(y)
+    n_classes = len(classes)
+    classes = np.asarray(classes)
+    sorted_class = np.sort(classes)
 
-    if multilabel:
-        if y_type == "multilabel-indicator":
-            Y[y == 1] = pos_label
-            return Y
-        elif y_type == "multilabel-sequences":
-            # inverse map: label => column index
-            imap = dict((v, k) for k, v in enumerate(classes))
+    if y_type == "binary" and len(classes) > 2:
+        y_type = "multiclass"
 
-            for i, label_tuple in enumerate(y):
-                for label in label_tuple:
-                    Y[i, imap[label]] = pos_label
+    if y_type == "binary":
+        dense_output = True
 
-            return Y
-        else:
-            raise ValueError("y should be in a multilabel format, "
-                             "got %r" % (y,))
 
-    else:
+    if multilabel is not None:
+        warnings.warn("The multilabel parameter is deprecated as of version "
+                      "0.15 and will be removed in 0.17.", DeprecationWarning)
+
+    if not dense_output and neg_label != 0:
+        raise ValueError("Non-zero neg_label is not supported with "
+                         "dense_output=False if y is not binary")
+
+    if y_type in ("binary", "multiclass"):
         y = column_or_1d(y)
+        row = np.arange(n_samples)
+        col = np.searchsorted(sorted_class, y)
+        data = np.empty_like(row)
+        data.fill(pos_label)
 
-        if len(classes) == 2:
-            Y[y == classes[1], 0] = pos_label
-            return Y
+        Y = coo_matrix((data, (row, col)),
+                       shape=(n_samples, n_classes))
 
-        elif len(classes) >= 2:
-            for i, k in enumerate(classes):
-                Y[y == k, i] = pos_label
-            return Y
+    elif y_type == "multilabel-indicator":
+        Y = coo_matrix(y)
+        if pos_label != 1:
+            data = np.empty_like(Y.data)
+            data.fill(pos_label)
+            Y.data = data
 
-        else:
-            # Only one class, returns a matrix with all negative labels.
-            return Y
+    elif y_type == "multilabel-sequences":
+        row, col = [], []
+        for i, label_sequence in enumerate(y):
+            c = np.searchsorted(sorted_class, np.unique(label_sequence))
+            col.extend(c)
+
+            r = np.empty_like(c)
+            r.fill(i)
+            row.extend(r)
+
+        data = np.empty_like(col)
+        data.fill(pos_label)
+        Y = coo_matrix((data, (row, col)),
+                       shape=(n_samples, n_classes))
+    else:
+        raise ValueError("{0} format is not supported".format(y_type))
+
+    if dense_output:
+        Y = Y.toarray()
+
+    if neg_label != 0:
+        Y[Y == 0] = neg_label
+
+    if pos_switch:
+        Y[Y == pos_label] = 0
+
+    # preserve label ordering
+    if np.any(classes != sorted_class):
+        indices = np.argsort(classes)
+        Y = Y[:, indices]
+
+    if y_type == "binary":
+        Y = Y[:, 1].reshape((-1, 1))
+
+    return Y

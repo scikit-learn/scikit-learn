@@ -11,6 +11,9 @@ from itertools import chain
 
 import numpy as np
 
+from scipy.sparse import coo_matrix, issparse
+from scipy.sparse.base import spmatrix
+
 from ..externals.six import string_types
 
 
@@ -143,7 +146,12 @@ def is_label_indicator_matrix(y):
     """
     if not (hasattr(y, "shape") and y.ndim == 2 and y.shape[1] > 1):
         return False
-    labels = np.unique(y)
+
+    if issparse(y):
+        labels = np.setxor1d(y.data, [0])
+    else:
+        labels = np.unique(y)
+
     return len(labels) <= 2 and (y.dtype.kind in 'biu'  # bool, int, uint
                                  or _is_integral_float(labels))
 
@@ -182,7 +190,7 @@ def is_sequence_of_sequences(y):
     try:
         return (not isinstance(y[0], np.ndarray) and isinstance(y[0], Sequence)
                 and not isinstance(y[0], string_types))
-    except IndexError:
+    except (IndexError, TypeError):
         return False
 
 
@@ -274,7 +282,7 @@ def type_of_target(y):
     'multilabel-indicator'
     """
     # XXX: is there a way to duck-type this condition?
-    valid = (isinstance(y, (np.ndarray, Sequence))
+    valid = (isinstance(y, (np.ndarray, Sequence, spmatrix))
              and not isinstance(y, string_types))
     if not valid:
         raise ValueError('Expected array-like (array or non-string sequence), '

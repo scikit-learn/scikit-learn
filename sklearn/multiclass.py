@@ -33,6 +33,8 @@ case.
 # License: BSD 3 clause
 
 import numpy as np
+from scipy.sparse import coo_matrix, vstack
+
 import warnings
 
 from .base import BaseEstimator, ClassifierMixin, clone, is_classifier
@@ -44,17 +46,17 @@ from .externals.joblib import Parallel
 from .externals.joblib import delayed
 
 
-def _fit_binary(estimator, X, y, classes=None):
+def _fit_binary(estimator, X, Y, class_index=None, target_name=None):
     """Fit a single binary estimator."""
+    if isinstance(Y, coo_matrix):
+        y = Y.getcol(class_index).toarray()
+    else:
+        y = Y[:, class_index]
     unique_y = np.unique(y)
     if len(unique_y) == 1:
-        if classes is not None:
-            if y[0] == -1:
-                c = 0
-            else:
-                c = y[0]
+        if target_name is not None:
             warnings.warn("Label %s is present in all training examples." %
-                          str(classes[c]))
+                          str(target_name))
         estimator = _ConstantPredictor().fit(X, unique_y)
     else:
         estimator = clone(estimator)
@@ -88,16 +90,19 @@ def fit_ovr(estimator, X, y, n_jobs=1):
     Y = lb.fit_transform(y)
 
     estimators = Parallel(n_jobs=n_jobs)(
-        delayed(_fit_binary)(estimator, X, Y[:, i], classes=["not %s" % i, i])
+        delayed(_fit_binary)(estimator, X, Y, i, target_name="not %s" % i)
         for i in range(Y.shape[1]))
     return estimators, lb
 
 
 def predict_ovr(estimators, label_binarizer, X):
     """Make predictions using the one-vs-the-rest strategy."""
-    Y = np.array([_predict_binary(e, X) for e in estimators])
     e = estimators[0]
     thresh = 0 if hasattr(e, "decision_function") and is_classifier(e) else .5
+    Y = coo_matrix(_predict_binary(e, X))
+    for e in estimators[1:]:
+        row_pred = coo_matrix(_predict_binary(e, X))
+        Y = vstack([Y, row_pred])
     return label_binarizer.inverse_transform(Y.T, threshold=thresh)
 
 
@@ -307,7 +312,8 @@ def _fit_ovo_binary(estimator, X, y, i, j):
     y[y == i] = 0
     y[y == j] = 1
     ind = np.arange(X.shape[0])
-    return _fit_binary(estimator, X[ind[cond]], y, classes=[i, j])
+    return _fit_binary(estimator, X[ind[cond]], y,
+                       target_name="%s(negative) vs. %s(positive)" % (i, j))
 
 
 def fit_ovo(estimator, X, y, n_jobs=1):
@@ -479,7 +485,7 @@ def fit_ecoc(estimator, X, y, code_size=1.5, random_state=None, n_jobs=1):
                  dtype=np.int)
 
     estimators = Parallel(n_jobs=n_jobs)(
-        delayed(_fit_binary)(estimator, X, Y[:, i])
+        delayed(_fit_binary)(estimator, X, Y, i)
         for i in range(Y.shape[1]))
 
     return estimators, classes, code_book
