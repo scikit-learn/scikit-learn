@@ -87,6 +87,9 @@ Changelog
    - Fixed bug in :class:`linear_model.stochastic_gradient` :
      ``l1_ratio`` was used as ``(1.0 - l1_ratio)`` .
 
+   - Shorthand constructors :func:`pipeline.make_pipeline` and
+     :func:`pipeline.make_union` were added by `Lars Buitinck`_.
+
 API changes summary
 -------------------
 
