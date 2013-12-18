@@ -12,7 +12,7 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 
 from sklearn.base import BaseEstimator, clone
-from sklearn.pipeline import Pipeline, FeatureUnion
+from sklearn.pipeline import Pipeline, FeatureUnion, make_pipeline
 from sklearn.svm import SVC
 from sklearn.linear_model import LogisticRegression
 from sklearn.feature_selection import SelectKBest, f_classif
@@ -262,6 +262,22 @@ def test_pipeline_fit_transform():
     X_trans = pipeline.fit_transform(X, y)
     X_trans2 = transft.fit(X, y).transform(X)
     assert_array_almost_equal(X_trans, X_trans2)
+
+
+def test_make_pipeline():
+    t1 = TransfT()
+    t2 = TransfT()
+
+    pipe = make_pipeline(t1, t2)
+    assert_true(isinstance(pipe, Pipeline))
+    assert_equal(pipe.steps[0][0], "transft-1")
+    assert_equal(pipe.steps[1][0], "transft-2")
+
+    pipe = make_pipeline(t1, t2, FitParamT())
+    assert_true(isinstance(pipe, Pipeline))
+    assert_equal(pipe.steps[0][0], "transft-1")
+    assert_equal(pipe.steps[1][0], "transft-2")
+    assert_equal(pipe.steps[2][0], "fitparamt")
 
 
 def test_feature_union_weights():

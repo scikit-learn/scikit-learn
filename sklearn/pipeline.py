@@ -8,6 +8,8 @@ estimator, as a chain of transforms and estimators.
 #         Alexandre Gramfort
 # Licence: BSD
 
+from collections import defaultdict
+
 import numpy as np
 from scipy import sparse
 
@@ -206,6 +208,44 @@ class Pipeline(BaseEstimator):
         return getattr(self.steps[0][1], '_pairwise', False)
 
 
+def make_pipeline(*steps):
+    """Construct a Pipeline from the given estimators.
+
+    This is a shorthand for the Pipeline constructor; it does not require, and
+    does not permit, naming the estimators; instead, they will be given names
+    automatically based on their types.
+
+    Examples
+    --------
+    >>> from sklearn.naive_bayes import GaussianNB
+    >>> from sklearn.preprocessing import StandardScaler
+    >>> make_pipeline(StandardScaler(), GaussianNB())    # doctest: +NORMALIZE_WHITESPACE
+    Pipeline(steps=[('standardscaler',
+                     StandardScaler(copy=True, with_mean=True, with_std=True)),
+                    ('gaussiannb', GaussianNB())])
+
+    Returns
+    -------
+    p : Pipeline
+    """
+    names = [type(step).__name__.lower() for step in steps]
+    namecount = defaultdict(int)
+    for est, name in zip(steps, names):
+        namecount[name] += 1
+
+    for k, v in list(six.iteritems(namecount)):
+        if v == 1:
+            del namecount[k]
+
+    for i in reversed(range(len(steps))):
+        name = names[i]
+        if name in namecount:
+            names[i] += "-%d" % namecount[name]
+            namecount[name] -= 1
+
+    return Pipeline(list(zip(names, steps)))
+
+
 def _fit_one_transformer(transformer, X, y):
     return transformer.fit(X, y)
 
@@ -358,4 +398,3 @@ class FeatureUnion(BaseEstimator, TransformerMixin):
             (name, new)
             for ((name, old), new) in zip(self.transformer_list, transformers)
         ]
-
