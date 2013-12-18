@@ -90,6 +90,9 @@ Changelog
    - Fixed bug in :class:`multiclass.OneVsOneClassifier` with string
      labels
 
+   - Shorthand constructors :func:`pipeline.make_pipeline` and
+     :func:`pipeline.make_union` were added by `Lars Buitinck`_.
+
 API changes summary
 -------------------
 

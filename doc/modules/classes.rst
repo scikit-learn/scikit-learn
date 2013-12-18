@@ -1024,6 +1024,13 @@ Pairwise metrics
    pipeline.Pipeline
    pipeline.FeatureUnion
 
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   pipeline.make_pipeline
+   pipeline.make_union
+
 
 .. _preprocessing_ref:
 

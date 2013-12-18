@@ -57,7 +57,7 @@ from sklearn.decomposition import TruncatedSVD
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.feature_extraction.text import HashingVectorizer
 from sklearn.feature_extraction.text import TfidfTransformer
-from sklearn.pipeline import Pipeline
+from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import Normalizer
 from sklearn import metrics
 
@@ -137,10 +137,7 @@ if opts.use_hashing:
         hasher = HashingVectorizer(n_features=opts.n_features,
                                    stop_words='english', non_negative=True,
                                    norm=None, binary=False)
-        vectorizer = Pipeline((
-            ('hasher', hasher),
-            ('tf_idf', TfidfTransformer())
-        ))
+        vectorizer = make_pipeline(hasher, TfidfTransformer())
     else:
         vectorizer = HashingVectorizer(n_features=opts.n_features,
                                        stop_words='english',
@@ -159,12 +156,12 @@ print()
 if opts.n_components:
     print("Performing dimensionality reduction using LSA")
     t0 = time()
-    lsa = TruncatedSVD(opts.n_components)
-    X = lsa.fit_transform(X)
     # Vectorizer results are normalized, which makes KMeans behave as
     # spherical k-means for better results. Since LSA/SVD results are
     # not normalized, we have to redo the normalization.
-    X = Normalizer(copy=False).fit_transform(X)
+    lsa = make_pipeline(TruncatedSVD(opts.n_components),
+                        Normalizer(copy=False))
+    X = lsa.fit_transform(X)
 
     print("done in %fs" % (time() - t0))
     print()
