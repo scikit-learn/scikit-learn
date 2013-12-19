@@ -312,6 +312,17 @@ def test_ovo_ties2():
         assert_equal(ovo_prediction[0], (1 + i) % 3)
 
 
+def test_ovo_string_y():
+    "Test that the OvO doesn't screw the encoding of string labels"
+    X = np.eye(4)
+    y = np.array(['a', 'b', 'c', 'd'])
+
+    svc = LinearSVC()
+    ovo = OneVsOneClassifier(svc)
+    ovo.fit(X, y)
+    assert_array_equal(y, ovo.predict(X))
+
+
 def test_ecoc_exceptions():
     ecoc = OutputCodeClassifier(LinearSVC(random_state=0))
     assert_raises(ValueError, ecoc.predict, [])
