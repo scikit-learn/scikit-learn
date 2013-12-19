@@ -114,6 +114,11 @@ API changes summary
      :class:`RandomizedPCA <decomposition.RandomizedPCA>`.
      By `Alexandre Gramfort`_.
 
+   - `scoring` parameter for cross validatiokn now accepts `'f1_binary'`,
+     `'f1_micro'`, `'f1_macro'` or `'f1_weighted'`, deprecating the generic
+     `'f1'`. Similarly, `'precision'` and `'recall'` are deprecated.
+     By `Joel Nothman`_.
+
 .. _changes_0_14:
 
 0.14
