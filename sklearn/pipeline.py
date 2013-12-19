@@ -8,11 +8,13 @@ estimator, as a chain of transforms and estimators.
 #         Alexandre Gramfort
 # Licence: BSD
 
+from collections import defaultdict, namedtuple
+
 import numpy as np
 from scipy import sparse
 
 from .base import BaseEstimator, TransformerMixin
-from .externals.joblib import Parallel, delayed
+from .externals.joblib import Parallel, delayed, Memory
 from .externals import six
 from .utils import tosequence
 from .externals.six import iteritems
@@ -42,6 +44,12 @@ class Pipeline(BaseEstimator):
         List of (name, transform) tuples (implementing fit/transform) that are
         chained, in the order in which they are chained, with the last object
         an estimator.
+
+    memory : string or joblib Memory instance (optional)
+        A string value should point to a path to be used for caching.  This may
+        add substantial overhead, but will benefit when searching over a
+        parameter space in later steps of the pipeline and earlier steps are
+        not cheap.
 
     Examples
     --------
@@ -74,7 +82,9 @@ class Pipeline(BaseEstimator):
 
     # BaseEstimator interface
 
-    def __init__(self, steps):
+    def __init__(self, steps, memory=None):
+        self.memory = memory
+
         self.named_steps = dict(steps)
         names, estimators = zip(*steps)
         if len(self.named_steps) != len(steps):
@@ -107,81 +117,100 @@ class Pipeline(BaseEstimator):
                     out['%s__%s' % (name, key)] = value
             return out
 
-    # Estimator interface
+    def _cached_run(self, method, X, *other_args):
+        parameters = self.get_params(True)
+        step_params = defaultdict(dict)
+        for k, v in list(iteritems(parameters)):
+            try:
+                step_name, suffix = k.split('__', 1)
+            except ValueError:
+                # TODO: do something
+                continue
+            step_params[step_name][suffix] = v
+        step_states = [(name, type(estimator), step_params[name])
+                       for name, estimator in self.steps]
+        if method in ('fit', 'fit_transform'):
+            self._fit_args = (X,) + tuple(other_args)
+        elif not hasattr(self, '_fit_args'):
+            raise 'Pipeline is not fit when calling %r' % method
 
-    def _pre_transform(self, X, y=None, **fit_params):
-        fit_params_steps = dict((step, {}) for step, _ in self.steps)
-        for pname, pval in six.iteritems(fit_params):
-            step, param = pname.split('__', 1)
-            fit_params_steps[step][param] = pval
-        Xt = X
-        for name, transform in self.steps[:-1]:
-            if hasattr(transform, "fit_transform"):
-                Xt = transform.fit_transform(Xt, y, **fit_params_steps[name])
-            else:
-                Xt = transform.fit(Xt, y, **fit_params_steps[name]) \
-                              .transform(Xt)
-        return Xt, fit_params_steps[self.steps[-1][0]]
+        if hasattr(self.memory, 'cache'):
+            cache = self.memory.cache
+        else:
+            cache = Memory(self.memory).cache
+
+        @cache
+        def _fit(fit_args, step_states):
+            """Fit the steps covered by steps_state"""
+            X = fit_args[0]
+            other_args = fit_args[1:]
+            if len(step_states) > 1:
+                self.steps[:len(step_states) - 1] = _fit(fit_args,
+                                                         step_states[:-1])
+                X = _transform(X, other_args, fit_args, step_states[:-1])
+            step_name, step_estimator = self.steps[len(step_states) - 1]
+            step_estimator.fit(X, *other_args)
+            return self.steps[:len(step_states)]
+
+        @cache
+        def _transform(X, other_args, fit_args, step_states,
+                       method='transform'):
+            if len(step_states) > 1:
+                X = _transform(X, other_args, fit_args, step_states[:-1])
+            _, step_estimator = self.steps[len(step_states) - 1]
+            if method == 'transform':
+                other_args = ()
+            return getattr(step_estimator, method)(X, *other_args)
+
+        if method in ('fit', 'fit_transform'):
+            self.steps = _fit(self._fit_args, step_states)
+            if method == 'fit':
+                return self
+            method = 'transform'
+        res = _transform(X, other_args, self._fit_args, step_states, method)
+        return res
+
+    # Estimator interface
 
     def fit(self, X, y=None, **fit_params):
         """Fit all the transforms one after the other and transform the
         data, then fit the transformed data using the final estimator.
         """
-        Xt, fit_params = self._pre_transform(X, y, **fit_params)
-        self.steps[-1][-1].fit(Xt, y, **fit_params)
-        return self
+        return self._cached_run('fit', X, y)
 
     def fit_transform(self, X, y=None, **fit_params):
         """Fit all the transforms one after the other and transform the
         data, then use fit_transform on transformed data using the final
         estimator."""
-        Xt, fit_params = self._pre_transform(X, y, **fit_params)
-        if hasattr(self.steps[-1][-1], 'fit_transform'):
-            return self.steps[-1][-1].fit_transform(Xt, y, **fit_params)
-        else:
-            return self.steps[-1][-1].fit(Xt, y, **fit_params).transform(Xt)
+        res = self._cached_run('fit_transform', X, y)
+        return res
 
     def predict(self, X):
         """Applies transforms to the data, and the predict method of the
         final estimator. Valid only if the final estimator implements
         predict."""
-        Xt = X
-        for name, transform in self.steps[:-1]:
-            Xt = transform.transform(Xt)
-        return self.steps[-1][-1].predict(Xt)
+        return self._cached_run('predict', X)
 
     def predict_proba(self, X):
         """Applies transforms to the data, and the predict_proba method of the
         final estimator. Valid only if the final estimator implements
         predict_proba."""
-        Xt = X
-        for name, transform in self.steps[:-1]:
-            Xt = transform.transform(Xt)
-        return self.steps[-1][-1].predict_proba(Xt)
+        return self._cached_run('predict_proba', X)
 
     def decision_function(self, X):
         """Applies transforms to the data, and the decision_function method of
         the final estimator. Valid only if the final estimator implements
         decision_function."""
-        Xt = X
-        for name, transform in self.steps[:-1]:
-            Xt = transform.transform(Xt)
-        return self.steps[-1][-1].decision_function(Xt)
+        return self._cached_run('decision_function', X)
 
     def predict_log_proba(self, X):
-        Xt = X
-        for name, transform in self.steps[:-1]:
-            Xt = transform.transform(Xt)
-        return self.steps[-1][-1].predict_log_proba(Xt)
+        return self._cached_run('predict_log_proba', X)
 
     def transform(self, X):
         """Applies transforms to the data, and the transform method of the
         final estimator. Valid only if the final estimator implements
         transform."""
-        Xt = X
-        for name, transform in self.steps:
-            Xt = transform.transform(Xt)
-        return Xt
+        return self._cached_run('transform', X)
 
     def inverse_transform(self, X):
         if X.ndim == 1:
@@ -195,10 +224,7 @@ class Pipeline(BaseEstimator):
         """Applies transforms to the data, and the score method of the
         final estimator. Valid only if the final estimator implements
         score."""
-        Xt = X
-        for name, transform in self.steps[:-1]:
-            Xt = transform.transform(Xt)
-        return self.steps[-1][-1].score(Xt, y)
+        return self._cached_run('score', X, y)
 
     @property
     def _pairwise(self):
