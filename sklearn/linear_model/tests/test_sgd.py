@@ -610,14 +610,16 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         y = y[idx]
         clf = self.factory(alpha=0.0001, n_iter=1000,
                            class_weight=None).fit(X, y)
-        assert_almost_equal(metrics.f1_score(y, clf.predict(X)), 0.96,
-                            decimal=1)
+        assert_almost_equal(metrics.f1_score(y, clf.predict(X),
+                                             average='weighted'),
+                            0.96, decimal=1)
 
         # make the same prediction using automated class_weight
         clf_auto = self.factory(alpha=0.0001, n_iter=1000,
                                 class_weight="auto").fit(X, y)
-        assert_almost_equal(metrics.f1_score(y, clf_auto.predict(X)), 0.96,
-                            decimal=1)
+        assert_almost_equal(metrics.f1_score(y, clf_auto.predict(X),
+                                             average='weighted'),
+                            0.96, decimal=1)
 
         # Make sure that in the balanced case it does not change anything
         # to use "auto"
@@ -634,19 +636,19 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         clf = self.factory(n_iter=1000, class_weight=None)
         clf.fit(X_imbalanced, y_imbalanced)
         y_pred = clf.predict(X)
-        assert_less(metrics.f1_score(y, y_pred), 0.96)
+        assert_less(metrics.f1_score(y, y_pred, average='weighted'), 0.96)
 
         # fit a model with auto class_weight enabled
         clf = self.factory(n_iter=1000, class_weight="auto")
         clf.fit(X_imbalanced, y_imbalanced)
         y_pred = clf.predict(X)
-        assert_greater(metrics.f1_score(y, y_pred), 0.96)
+        assert_greater(metrics.f1_score(y, y_pred, average='weighted'), 0.96)
 
         # fit another using a fit parameter override
         clf = self.factory(n_iter=1000, class_weight="auto")
         clf.fit(X_imbalanced, y_imbalanced)
         y_pred = clf.predict(X)
-        assert_greater(metrics.f1_score(y, y_pred), 0.96)
+        assert_greater(metrics.f1_score(y, y_pred, average='weighted'), 0.96)
 
     def test_sample_weights(self):
         """Test weights on individual samples"""

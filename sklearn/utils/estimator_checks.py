@@ -742,8 +742,8 @@ def check_class_weight_auto_classifiers(name, Classifier, X_train, y_train,
     classifier.set_params(class_weight='auto')
     classifier.fit(X_train, y_train)
     y_pred_auto = classifier.predict(X_test)
-    assert_greater(f1_score(y_test, y_pred_auto),
-                   f1_score(y_test, y_pred))
+    assert_greater(f1_score(y_test, y_pred_auto, average='weighted'),
+                   f1_score(y_test, y_pred, average='weighted'))
 
 
 def check_class_weight_auto_linear_classifier(name, Classifier):

@@ -732,6 +732,7 @@ details.
    :template: function.rst
 
    metrics.make_scorer
+   metrics.get_scorer
 
 Classification metrics
 ----------------------
