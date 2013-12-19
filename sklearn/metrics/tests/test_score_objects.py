@@ -5,11 +5,14 @@ import numpy as np
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import ignore_warnings
+from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import assert_no_warnings
+from sklearn.utils.testing import assert_true
 
 from sklearn.metrics import (f1_score, r2_score, roc_auc_score, fbeta_score,
-                             log_loss)
+                             log_loss, precision_score, recall_score)
 from sklearn.metrics.cluster import adjusted_rand_score
-from sklearn.metrics import make_scorer, SCORERS
+from sklearn.metrics import make_scorer, get_scorer, list_scorers
 from sklearn.svm import LinearSVC
 from sklearn.cluster import KMeans
 from sklearn.linear_model import Ridge, LogisticRegression
@@ -31,13 +34,33 @@ def test_make_scorer():
 
 def test_classification_scores():
     """Test classification scorers."""
-    X, y = make_blobs(random_state=0)
+    X, y = make_blobs(random_state=0, centers=2)
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
     clf = LinearSVC(random_state=0)
     clf.fit(X_train, y_train)
-    score1 = SCORERS['f1'](clf, X_test, y_test)
-    score2 = f1_score(y_test, clf.predict(X_test))
-    assert_almost_equal(score1, score2)
+
+    for prefix, metric in [('f1', f1_score), ('precision', precision_score),
+                           ('recall', recall_score)]:
+
+        score1 = get_scorer('%s_weighted' % prefix)(clf, X_test, y_test)
+        score2 = metric(y_test, clf.predict(X_test), pos_label=None,
+                          average='weighted')
+        assert_almost_equal(score1, score2)
+
+        score1 = get_scorer('%s_macro' % prefix)(clf, X_test, y_test)
+        score2 = metric(y_test, clf.predict(X_test), pos_label=None,
+                          average='macro')
+        assert_almost_equal(score1, score2)
+
+        score1 = get_scorer('%s_micro' % prefix)(clf, X_test, y_test)
+        score2 = metric(y_test, clf.predict(X_test), pos_label=None,
+                          average='micro')
+        assert_almost_equal(score1, score2)
+
+        score1 = get_scorer('%s_binary' % prefix)(clf, X_test, y_test)
+        score2 = metric(y_test, clf.predict(X_test), pos_label=1)
+        assert_almost_equal(score1, score2)
+
 
     # test fbeta score that takes an argument
     scorer = make_scorer(fbeta_score, beta=2)
@@ -61,7 +84,7 @@ def test_regression_scorers():
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
     clf = Ridge()
     clf.fit(X_train, y_train)
-    score1 = SCORERS['r2'](clf, X_test, y_test)
+    score1 = get_scorer('r2')(clf, X_test, y_test)
     score2 = r2_score(y_test, clf.predict(X_test))
     assert_almost_equal(score1, score2)
 
@@ -72,20 +95,20 @@ def test_thresholded_scorers():
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
     clf = LogisticRegression(random_state=0)
     clf.fit(X_train, y_train)
-    score1 = SCORERS['roc_auc'](clf, X_test, y_test)
+    score1 = get_scorer('roc_auc')(clf, X_test, y_test)
     score2 = roc_auc_score(y_test, clf.decision_function(X_test))
     score3 = roc_auc_score(y_test, clf.predict_proba(X_test)[:, 1])
     assert_almost_equal(score1, score2)
     assert_almost_equal(score1, score3)
 
-    logscore = SCORERS['log_loss'](clf, X_test, y_test)
+    logscore = get_scorer('log_loss')(clf, X_test, y_test)
     logloss = log_loss(y_test, clf.predict_proba(X_test))
     assert_almost_equal(-logscore, logloss)
 
     # same for an estimator without decision_function
     clf = DecisionTreeClassifier()
     clf.fit(X_train, y_train)
-    score1 = SCORERS['roc_auc'](clf, X_test, y_test)
+    score1 = get_scorer('roc_auc')(clf, X_test, y_test)
     score2 = roc_auc_score(y_test, clf.predict_proba(X_test)[:, 1])
     assert_almost_equal(score1, score2)
 
@@ -93,7 +116,7 @@ def test_thresholded_scorers():
     X, y = make_blobs(random_state=0, centers=3)
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
     clf.fit(X_train, y_train)
-    assert_raises(ValueError, SCORERS['roc_auc'], clf, X_test, y_test)
+    assert_raises(ValueError, get_scorer('roc_auc'), clf, X_test, y_test)
 
 
 def test_thresholded_scorers_multilabel_indicator_data():
@@ -109,7 +132,7 @@ def test_thresholded_scorers_multilabel_indicator_data():
     clf = DecisionTreeClassifier()
     clf.fit(X_train, y_train)
     y_proba = clf.predict_proba(X_test)
-    score1 = SCORERS['roc_auc'](clf, X_test, y_test)
+    score1 = get_scorer('roc_auc')(clf, X_test, y_test)
     score2 = roc_auc_score(y_test, np.vstack(p[:, -1] for p in y_proba).T)
     assert_almost_equal(score1, score2)
 
@@ -122,21 +145,21 @@ def test_thresholded_scorers_multilabel_indicator_data():
     clf.decision_function = lambda X: [p[:, 1] for p in clf._predict_proba(X)]
 
     y_proba = clf.decision_function(X_test)
-    score1 = SCORERS['roc_auc'](clf, X_test, y_test)
+    score1 = get_scorer('roc_auc')(clf, X_test, y_test)
     score2 = roc_auc_score(y_test, np.vstack(p for p in y_proba).T)
     assert_almost_equal(score1, score2)
 
     # Multilabel predict_proba
     clf = OneVsRestClassifier(DecisionTreeClassifier())
     clf.fit(X_train, y_train)
-    score1 = SCORERS['roc_auc'](clf, X_test, y_test)
+    score1 = get_scorer('roc_auc')(clf, X_test, y_test)
     score2 = roc_auc_score(y_test, clf.predict_proba(X_test))
     assert_almost_equal(score1, score2)
 
     # Multilabel decision function
     clf = OneVsRestClassifier(LinearSVC(random_state=0))
     clf.fit(X_train, y_train)
-    score1 = SCORERS['roc_auc'](clf, X_test, y_test)
+    score1 = get_scorer('roc_auc')(clf, X_test, y_test)
     score2 = roc_auc_score(y_test, clf.decision_function(X_test))
     assert_almost_equal(score1, score2)
 
@@ -148,7 +171,7 @@ def test_unsupervised_scorers():
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
     km = KMeans(n_clusters=3)
     km.fit(X_train)
-    score1 = SCORERS['adjusted_rand_score'](km, X_test, y_test)
+    score1 = get_scorer('adjusted_rand_score')(km, X_test, y_test)
     score2 = adjusted_rand_score(y_test, km.predict(X_test))
     assert_almost_equal(score1, score2)
 
@@ -164,3 +187,17 @@ def test_raises_on_score_list():
     grid_search = GridSearchCV(clf, scoring=f1_scorer_no_average,
                                param_grid={'max_depth': [1, 2]})
     assert_raises(ValueError, grid_search.fit, X, y)
+
+
+def test_scorer_deprecation():
+    scorer_names = list_scorers()
+    for deprecated_name in ['f1', 'precision', 'recall']:
+        deprecated_scorer = assert_warns(DeprecationWarning, get_scorer,
+                                         deprecated_name)
+        assert_true(callable(deprecated_scorer))
+        assert_true(deprecated_name not in scorer_names)
+
+    for undeprecated_name in ['f1_weighted', 'adjusted_rand_score']:
+        scorer = assert_no_warnings(get_scorer, undeprecated_name)
+        assert_true(undeprecated_name in scorer_names)
+

@@ -319,14 +319,14 @@ def test_grid_search_sparse_scoring():
     X_, y_ = make_classification(n_samples=200, n_features=100, random_state=0)
 
     clf = LinearSVC()
-    cv = GridSearchCV(clf, {'C': [0.1, 1.0]}, scoring="f1")
+    cv = GridSearchCV(clf, {'C': [0.1, 1.0]}, scoring="f1_binary")
     cv.fit(X_[:180], y_[:180])
     y_pred = cv.predict(X_[180:])
     C = cv.best_estimator_.C
 
     X_ = sp.csr_matrix(X_)
     clf = LinearSVC()
-    cv = GridSearchCV(clf, {'C': [0.1, 1.0]}, scoring="f1")
+    cv = GridSearchCV(clf, {'C': [0.1, 1.0]}, scoring="f1_binary")
     cv.fit(X_[:180], y_[:180])
     y_pred2 = cv.predict(X_[180:])
     C2 = cv.best_estimator_.C
@@ -355,7 +355,7 @@ def test_deprecated_score_func():
     # supported
     X, y = make_classification(n_samples=200, n_features=100, random_state=0)
     clf = LinearSVC(random_state=0)
-    cv = GridSearchCV(clf, {'C': [0.1, 1.0]}, scoring="f1")
+    cv = GridSearchCV(clf, {'C': [0.1, 1.0]}, scoring="f1_binary")
     cv.fit(X[:180], y[:180])
     y_pred = cv.predict(X[180:])
     C = cv.best_estimator_.C
@@ -458,7 +458,7 @@ def test_refit():
     y = np.array([0] * 5 + [1] * 5)
 
     clf = GridSearchCV(BrokenClassifier(), [{'parameter': [0, 1]}],
-                       scoring="precision", refit=True)
+                       scoring="precision_binary", refit=True)
     clf.fit(X, y)
 
 
@@ -560,7 +560,7 @@ def test_grid_search_score_consistency():
     clf = LinearSVC(random_state=0)
     X, y = make_blobs(random_state=0, centers=2)
     Cs = [.1, 1, 10]
-    for score in ['f1', 'roc_auc']:
+    for score in ['f1_binary', 'roc_auc']:
         grid_search = GridSearchCV(clf, {'C': Cs}, scoring=score)
         grid_search.fit(X, y)
         cv = StratifiedKFold(n_folds=3, y=y)
@@ -570,7 +570,7 @@ def test_grid_search_score_consistency():
             i = 0
             for train, test in cv:
                 clf.fit(X[train], y[train])
-                if score == "f1":
+                if score == "f1_binary":
                     correct_score = f1_score(y[test], clf.predict(X[test]))
                 elif score == "roc_auc":
                     correct_score = roc_auc_score(y[test],
