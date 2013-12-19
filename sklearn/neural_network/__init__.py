@@ -4,3 +4,4 @@ networks.
 """
 
 from .rbm import BernoulliRBM
+from .gaussian_bernoulli_rbm import GaussianBernoulliRBM
