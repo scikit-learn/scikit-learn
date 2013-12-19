@@ -304,10 +304,7 @@ def _fit_ovo_binary(estimator, X, y, i, j):
     """Fit a single binary estimator (one-vs-one)."""
     cond = np.logical_or(y == i, y == j)
     y = y[cond]
-    if np.dtype.kind != 'i':
-        y_binary = np.empty(y.shape, np.int)
-    else:
-        y_binary = y
+    y_binary = np.empty(y.shape, np.int)
     y_binary[y == i] = 0
     y_binary[y == j] = 1
     ind = np.arange(X.shape[0])
