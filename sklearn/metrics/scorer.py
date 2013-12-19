@@ -322,8 +322,8 @@ SCORERS = dict(r2=r2_scorer,
 
 msg = ("The {0!r} scorer has been deprecated and will be removed in version "
        "0.17. Please choose one of '{0}_binary' or '{0}_weighted' depending "
-       "on your data; '{0}_macro' and '{0}_micro' provide alternative "
-       "multiclass/multilabel averaging.")
+       "on your data; '{0}_macro', '{0}_micro' and '{0}_samples' provide "
+       "alternative multiclass/multilabel averaging.")
 for name, metric in [('precision', precision_score),
                        ('recall', recall_score), ('f1', f1_score)]:
     SCORERS.update({
@@ -333,6 +333,8 @@ for name, metric in [('precision', precision_score),
                                                      average='macro')),
         '{0}_micro'.format(name): make_scorer(partial(metric, pos_label=None,
                                                      average='micro')),
+        '{0}_samples'.format(name): make_scorer(partial(metric, pos_label=None,
+                                                        average='samples')),
         '{0}_weighted'.format(name): make_scorer(partial(metric, pos_label=None,
                                                         average='weighted')),
     })

@@ -47,9 +47,9 @@ Common cases: predefined values
 For the most common usecases, you can simply provide a string as the
 ``scoring`` parameter. Possible values are:
 
-======================     ===================================================
+======================     =====================================================
 Scoring                    Function
-======================     ===================================================
+======================     =====================================================
 **Classification**
 'accuracy'                 :func:`sklearn.metrics.accuracy_score`
 'average_precision'        :func:`sklearn.metrics.average_precision_score`
@@ -57,6 +57,7 @@ Scoring                    Function
 'f1_micro'                 :func:`sklearn.metrics.f1_score` micro-averaged
 'f1_macro'                 :func:`sklearn.metrics.f1_score` macro-averaged
 'f1_weighted'              :func:`sklearn.metrics.f1_score` weighted average
+'f1_samples'               :func:`sklearn.metrics.f1_score` by multilabel sample
 'precision_...'            :func:`sklearn.metrics.precision_score` likewise
 'recall_...'               :func:`sklearn.metrics.recall_score` likewise
 'roc_auc'                  :func:`sklearn.metrics.roc_auc_score`
@@ -67,9 +68,9 @@ Scoring                    Function
 **Regression**
 'mean_squared_error'       :func:`sklearn.metrics.mean_squared_error`
 'r2'                       :func:`sklearn.metrics.r2_score`
-======================     ===================================================
+======================     =====================================================
 
-A list of acceptable values is available from ``sklearn.metrics.list_scorers``,
+A list of acceptable values is available from :func:`sklearn.metrics.list_scorers`,
 and is shown if ``scoring`` is set to an unknown string::
 
     >>> from sklearn import svm, cross_validation, datasets
@@ -78,12 +79,12 @@ and is shown if ``scoring`` is set to an unknown string::
     >>> model = svm.SVC()
     >>> cross_validation.cross_val_score(model, X, y, scoring='wrong_choice')
     Traceback (most recent call last):
-    ValueError: 'wrong_choice' is not a valid scoring value. Valid options are ['accuracy', 'adjusted_rand_score', 'average_precision', 'f1_binary', 'f1_macro', 'f1_micro', 'f1_weighted', 'log_loss', 'mean_squared_error', 'precision_binary', 'precision_macro', 'precision_micro', 'precision_weighted', 'r2', 'recall_binary', 'recall_macro', 'recall_micro', 'recall_weighted', 'roc_auc']
+    ValueError: 'wrong_choice' is not a valid scoring value. Valid options are ['accuracy', 'adjusted_rand_score', 'average_precision', 'f1_binary', 'f1_macro', 'f1_micro', 'f1_samples', 'f1_weighted', 'log_loss', 'mean_squared_error', 'precision_binary', 'precision_macro', 'precision_micro', 'precision_weighted', 'r2', 'recall_binary', 'recall_macro', 'recall_micro', 'recall_weighted', 'roc_auc']
 
 .. note::
 
     The corresponding scorer objects may be retrieved with
-    ``sklearn.metrics.get_scorer``.
+    :func:`sklearn.metrics.get_scorer`.
 
 The above choices correspond to error-metric functions that can be applied to
 predicted values. These are detailed below, in the next sections.
