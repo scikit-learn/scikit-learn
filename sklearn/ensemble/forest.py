@@ -264,8 +264,11 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
         # Free allocated memory, if any
         self.estimators_ = None
 
-        # Parallel loop
-        all_trees = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
+        # Parallel loop: we use the threading backend as the Cython code for
+        # fitting the trees is internally releasing the Python GIL making
+        # threading always more efficient than multiprocessing in that case.
+        all_trees = Parallel(n_jobs=n_jobs, verbose=self.verbose,
+                             backend="threading")(
             delayed(_parallel_build_trees)(
                 n_trees[i],
                 self,
