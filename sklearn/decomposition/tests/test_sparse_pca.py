@@ -64,20 +64,9 @@ def test_fit_transform():
     spca_lars.fit(Y)
     U1 = spca_lars.transform(Y)
     # Test multiple CPUs
-    if sys.platform == 'win32':  # fake parallelism for win32
-        import sklearn.externals.joblib.parallel as joblib_par
-        _mp = joblib_par.multiprocessing
-        joblib_par.multiprocessing = None
-        try:
-            spca = SparsePCA(n_components=3, n_jobs=2, random_state=0,
-                             alpha=alpha).fit(Y)
-            U2 = spca.transform(Y)
-        finally:
-            joblib_par.multiprocessing = _mp
-    else:  # we can efficiently use parallelism
-        spca = SparsePCA(n_components=3, n_jobs=2, method='lars', alpha=alpha,
-                         random_state=0).fit(Y)
-        U2 = spca.transform(Y)
+    spca = SparsePCA(n_components=3, n_jobs=2, method='lars', alpha=alpha,
+                     random_state=0).fit(Y)
+    U2 = spca.transform(Y)
     assert_true(not np.all(spca_lars.components_ == 0))
     assert_array_almost_equal(U1, U2)
     # Test that CD gives similar results
