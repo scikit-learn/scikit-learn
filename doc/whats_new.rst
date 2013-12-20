@@ -93,6 +93,12 @@ Changelog
    - Shorthand constructors :func:`pipeline.make_pipeline` and
      :func:`pipeline.make_union` were added by `Lars Buitinck`_.
 
+   - Reduce memory usage and overhead when fitting and predicting with forests
+     of randomized trees in parallel with ``n_jobs != 1`` by leveraging new
+     threading backend of joblib 0.8 and releasing the GIL in the tree fitting
+     Cython code.  By `Olivier Grisel`_ and `Gilles Louppe`_
+
+
 API changes summary
 -------------------
 
