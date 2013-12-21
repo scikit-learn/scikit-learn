@@ -1076,7 +1076,7 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
             Training data. Pass directly as float64, Fortran-contiguous data
             to avoid unnecessary memory duplication
 
-        y : array-like, shape (n_samples,) or (n_samples, n_targets)
+        y : array-like, shape (n_samples,)
             Target values
 
         """
