@@ -281,9 +281,12 @@ def test_path_parameters():
     clf = MultiTaskElasticNetCV(n_alphas=50, eps=1e-3, max_iter=max_iter,
                                 l1_ratio=0.5, tol=1e-3)
     clf.fit(X, y)
-    assert_almost_equal(0.5, clf.l1_ratio)
-    assert_equal(50, clf.n_alphas)
+    assert_equal(0.5, clf.l1_ratio_)
+    assert_equal((3, X.shape[1]), clf.coef_.shape)
+    assert_equal((3, ), clf.intercept_.shape)
+    assert_equal((50, 3), clf.mse_path_.shape)
     assert_equal(50, len(clf.alphas_))
+
 
 def test_warm_start():
     X, y, _, _ = build_dataset()
@@ -402,12 +405,11 @@ def task_multitask_enet_path():
 
 def test_multitask_enetandlassocv():
     X, y, _, _ = build_dataset(n_features=100, n_targets=3)
-    clf = MultiTaskElasticNetCV()
-    clf.fit(X, y)
+    clf = MultiTaskElasticNetCV().fit(X, y)
     assert_almost_equal(clf.alpha_, 0.00556, 3)
-    clf = MultiTaskLassoCV()
-    clf.fit(X, y)
+    clf = MultiTaskLassoCV().fit(X, y)
     assert_almost_equal(clf.alpha_, 0.00556, 3)
+    assert_equal(clf.l1_ratio_, 1.)
 
 
 if __name__ == '__main__':

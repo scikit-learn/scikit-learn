@@ -1670,11 +1670,9 @@ class MultiTaskLasso(MultiTaskElasticNet):
 
 
 class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
-    """Multi-task ElasticNet model trained with L1/L2 mixed-norm as
-       regularizer.
+    """Multi-task ElasticNet model regularized with L1/L2 mixed-norm
 
     The model is chosen by cross-validating across all tasks.
-
     The optimization objective for MultiTaskElasticNet is::
 
         (1 / (2 * n_samples)) * ||Y - XW||^Fro_2
@@ -1689,6 +1687,9 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
 
     Parameters
     ----------
+    XXX : eps, n_alphas, alphas, precompute, cv, verbose, n_jobs are **not** documented
+
+    # XXX : should be alphas
     alpha : float, optional
         Constant that multiplies the L1/L2 term. Defaults to 1.0
 
@@ -1717,10 +1718,6 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
         smaller than ``tol``, the optimization code checks the
         dual gap for optimality and continues until it is smaller
         than ``tol``.
-
-    warm_start : bool, optional
-        When set to ``True``, reuse the solution of the previous call to fit as
-        initialization, otherwise, just erase the previous solution.
 
     Attributes
     ----------
@@ -1792,20 +1789,18 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
 
 
     def fit(self, X, y):
-        """Fit linear model with coordinate descent
+        """Fit model with coordinate descent
 
         Fit is on grid of alphas and best alpha estimated by cross-validation.
 
         Parameters
         ----------
-
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : array-like, shape (n_samples, n_features)
             Training data. Pass directly as float64, Fortran-contiguous data
             to avoid unnecessary memory duplication
 
         y : array-like, shape (n_samples,) or (n_samples, n_targets)
             Target values
-
         """
         # X and y must be of type float64
         X = array2d(X, dtype=np.float64, order='F',
@@ -1830,9 +1825,11 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
             # For the first path, we need to set l1_ratio
             path_params['l1_ratio'] = l1_ratios[0]
         else:
-            l1_ratios = [1, ]
+            l1_ratios = [1.]
         alphas = self.alphas
         if alphas is None:
+            # XXX : this must be fixed. We should have a different grid
+            # of alphas for each value of l1_ratio
             mean_l1_ratio = 1.
             if hasattr(self, 'l1_ratio'):
                 mean_l1_ratio = np.mean(self.l1_ratio)
@@ -1904,13 +1901,12 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
 
 
 class MultiTaskLassoCV(MultiTaskElasticNetCV):
-    """Multi-task Lasso model trained with L1/L2 mixed-norm as regularizer
-    The model is chosen by cross-validating across all tasks.
+    """Multi-task Lasso model trained with L1/L2 mixed-norm as regularizer.
 
+    The model is chosen by cross-validating across all tasks.
     The optimization objective for MultiTaskElasticNet is::
 
-        (1 / (2 * n_samples)) * ||Y - XW||^Fro_2
-        + alpha * l1_ratio * ||W||_21
+        (1 / (2 * n_samples)) * ||Y - XW||^Fro_2 + alpha * ||W||_21
 
     Where::
 
@@ -1920,6 +1916,9 @@ class MultiTaskLassoCV(MultiTaskElasticNetCV):
 
     Parameters
     ----------
+    XXX : eps, n_alphas, alphas, precompute, cv, verbose, n_jobs are **not** documented
+
+    # XXX : should be alphas
     alpha : float, optional
         Constant that multiplies the L1/L2 term. Defaults to 1.0
 
@@ -1942,10 +1941,6 @@ class MultiTaskLassoCV(MultiTaskElasticNetCV):
         smaller than ``tol``, the optimization code checks the
         dual gap for optimality and continues until it is smaller
         than ``tol``.
-
-    warm_start : bool, optional
-        When set to ``True``, reuse the solution of the previous call to fit as
-        initialization, otherwise, just erase the previous solution.
 
     Attributes
     ----------
@@ -1988,3 +1983,5 @@ class MultiTaskLassoCV(MultiTaskElasticNetCV):
             fit_intercept=fit_intercept, normalize=normalize,
             precompute=precompute, max_iter=max_iter, tol=tol, copy_X=copy_X,
             cv=cv, verbose=verbose)
+        # XXX : this leads to a MultiTaskLassoCV having an l1_ratio_
+        # attribute but maybe we can live with it...
