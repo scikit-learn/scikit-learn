@@ -459,7 +459,8 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
         n_jobs, n_trees, starts = _partition_estimators(self)
 
         # Parallel loop
-        all_proba = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
+        all_proba = Parallel(n_jobs=n_jobs, verbose=self.verbose,
+                             backend="threading")(
             delayed(_parallel_predict_proba)(
                 self.estimators_[starts[i]:starts[i + 1]],
                 X,
