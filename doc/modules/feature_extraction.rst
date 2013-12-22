@@ -715,7 +715,7 @@ text classification tasks.
 Note that the dimensionality does not affect the CPU training time of
 algorithms which operate on CSR matrices (``LinearSVC(dual=True)``,
 ``Perceptron``, ``SGDClassifier``, ``PassiveAggressive``) but it does for
-algorithm that work with CSC matrices (``LinearSVC(dual=False)``, ``Lasso()``,
+algorithms that work with CSC matrices (``LinearSVC(dual=False)``, ``Lasso()``,
 etc).
 
 Let's try again with the default setting::
