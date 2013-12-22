@@ -701,7 +701,7 @@ meaning that you don't have to call ``fit`` on it::
   <4x10 sparse matrix of type '<... 'numpy.float64'>'
       with 16 stored elements in Compressed Sparse Row format>
 
-You can see that 16 non-zero feature tokens where extracted in the vector
+You can see that 16 non-zero feature tokens were extracted in the vector
 output: this is less than the 19 non-zeros extracted previously by the
 :class:`CountVectorizer` on the same toy corpus. The discrepancy comes from
 hash function collisions because of the low value of the ``n_features`` parameter.
@@ -715,7 +715,7 @@ text classification tasks.
 Note that the dimensionality does not affect the CPU training time of
 algorithms which operate on CSR matrices (``LinearSVC(dual=True)``,
 ``Perceptron``, ``SGDClassifier``, ``PassiveAggressive``) but it does for
-algorithm that work with CSC matrices (``LinearSVC(dual=False)``, ``Lasso()``,
+algorithms that work with CSC matrices (``LinearSVC(dual=False)``, ``Lasso()``,
 etc).
 
 Let's try again with the default setting::
