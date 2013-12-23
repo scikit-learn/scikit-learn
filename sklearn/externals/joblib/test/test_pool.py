@@ -1,28 +1,6 @@
 import os
 import shutil
 import tempfile
-import warnings
-
-multiprocessing = int(os.environ.get('JOBLIB_MULTIPROCESSING', 1)) or None
-if multiprocessing:
-    try:
-        import multiprocessing
-    except ImportError:
-        multiprocessing = None
-
-# 2nd stage: validate that locking is available on the system and
-#            issue a warning if not
-if multiprocessing:
-    try:
-        _sem = multiprocessing.Semaphore()
-        del _sem  # cleanup
-        from ..pool import MemmapingPool
-        from ..pool import has_shareable_memory
-        from ..pool import ArrayMemmapReducer
-        from ..pool import reduce_memmap
-    except (ImportError, OSError) as e:
-        multiprocessing = None
-        warnings.warn('%s.  joblib will operate in serial mode' % (e,))
 
 from nose import SkipTest
 from nose.tools import with_setup
@@ -34,12 +12,19 @@ from .common import with_numpy, np
 from .common import setup_autokill
 from .common import teardown_autokill
 
+from .._multiprocessing import mp
+if mp is not None:
+    from ..pool import MemmapingPool
+    from ..pool import has_shareable_memory
+    from ..pool import ArrayMemmapReducer
+    from ..pool import reduce_memmap
+
 
 TEMP_FOLDER = None
 
 
 def setup_module():
-    setup_autokill(__name__, timeout=5)
+    setup_autokill(__name__, timeout=30)
 
 
 def teardown_module():
@@ -47,7 +32,7 @@ def teardown_module():
 
 
 def check_multiprocessing():
-    if multiprocessing is None:
+    if mp is None:
         raise SkipTest('Need multiprocessing to run')
 
 

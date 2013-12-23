@@ -35,7 +35,7 @@ except ImportError:
 _KILLER_THREADS = dict()
 
 
-def setup_autokill(module_name, timeout=5):
+def setup_autokill(module_name, timeout=30):
     """Timeout based suiciding thread to kill the test runner process
 
     If some subprocess dies in an unexpected way we don't want the

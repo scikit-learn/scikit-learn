@@ -10,8 +10,8 @@ import warnings
 # Obtain possible configuration from the environment, assuming 1 (on)
 # by default, upon 0 set to None. Should instructively fail if some non
 # 0/1 value is set.
-multiprocessing = int(os.environ.get('JOBLIB_MULTIPROCESSING', 1)) or None
-if multiprocessing:
+mp = int(os.environ.get('JOBLIB_MULTIPROCESSING', 1)) or None
+if mp:
     try:
         import multiprocessing as mp
         import multiprocessing.pool
