@@ -458,7 +458,6 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
 def enet_multitask_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100,
               alphas=None, precompute='auto', Xy=None,
               copy_X=True, coef_init=None, **params):
-
     """Compute Elastic-Net path for multi-output tasks
        with multi task coordinate descent
 
@@ -476,7 +475,7 @@ def enet_multitask_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100,
 
     Parameters
     ----------
-    X : {array-like, sparse matrix}, shape (n_samples, n_features)
+    X : array-like, shape (n_samples, n_features)
         Training data. Pass directly as Fortran-contiguous data to avoid
         unnecessary memory duplication
 
@@ -1687,11 +1686,21 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
 
     Parameters
     ----------
-    XXX : eps, n_alphas, alphas, precompute, cv, verbose, n_jobs are **not** documented
+    eps : float, optional
+        Length of the path. ``eps=1e-3`` means that
+        ``alpha_min / alpha_max = 1e-3``.
 
-    # XXX : should be alphas
-    alpha : float, optional
-        Constant that multiplies the L1/L2 term. Defaults to 1.0
+    alphas : array-like, optional
+        List of alphas where to compute the models.
+        If not provided, set automaticlly.
+
+    precompute : True | False | 'auto' | array-like
+        Whether to use a precomputed Gram matrix to speed up
+        calculations. If set to ``'auto'`` let us decide. The Gram
+        matrix can also be passed as argument.
+
+    n_alphas : int, optional
+        Number of alphas along the regularization path
 
     l1_ratio : float or array of floats
         The ElasticNet mixing parameter, with 0 < l1_ratio <= 1.
@@ -1718,6 +1727,20 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
         smaller than ``tol``, the optimization code checks the
         dual gap for optimality and continues until it is smaller
         than ``tol``.
+
+    cv : integer or cross-validation generator, optional
+        If an integer is passed, it is the number of fold (default 3).
+        Specific cross-validation objects can be passed, see the
+        :mod:`sklearn.cross_validation` module for the list of possible
+        objects.
+
+    verbose : bool or integer
+        amount of verbosity
+
+    n_jobs : integer, optional
+        Number of CPUs to use during the cross validation. If ``-1``, use
+        all the CPUs. Note that this is used only if multiple values for
+        l1_ratio are given.
 
     Attributes
     ----------
@@ -1916,11 +1939,21 @@ class MultiTaskLassoCV(MultiTaskElasticNetCV):
 
     Parameters
     ----------
-    XXX : eps, n_alphas, alphas, precompute, cv, verbose, n_jobs are **not** documented
+    eps : float, optional
+        Length of the path. ``eps=1e-3`` means that
+        ``alpha_min / alpha_max = 1e-3``.
 
-    # XXX : should be alphas
-    alpha : float, optional
-        Constant that multiplies the L1/L2 term. Defaults to 1.0
+    alphas : array-like, optional
+        List of alphas where to compute the models.
+        If not provided, set automaticlly.
+
+    precompute : True | False | 'auto' | array-like
+        Whether to use a precomputed Gram matrix to speed up
+        calculations. If set to ``'auto'`` let us decide. The Gram
+        matrix can also be passed as argument.
+
+    n_alphas : int, optional
+        Number of alphas along the regularization path
 
     fit_intercept : boolean
         whether to calculate the intercept for this model. If set
@@ -1941,6 +1974,20 @@ class MultiTaskLassoCV(MultiTaskElasticNetCV):
         smaller than ``tol``, the optimization code checks the
         dual gap for optimality and continues until it is smaller
         than ``tol``.
+
+    cv : integer or cross-validation generator, optional
+        If an integer is passed, it is the number of fold (default 3).
+        Specific cross-validation objects can be passed, see the
+        :mod:`sklearn.cross_validation` module for the list of possible
+        objects.
+
+    verbose : bool or integer
+        amount of verbosity
+
+    n_jobs : integer, optional
+        Number of CPUs to use during the cross validation. If ``-1``, use
+        all the CPUs. Note that this is used only if multiple values for
+        l1_ratio are given.
 
     Attributes
     ----------
