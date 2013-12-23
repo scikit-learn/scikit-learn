@@ -448,8 +448,8 @@ attribute::
   array([ 1. ...,  2.25...,  1.84...])
 
 
-As tf–idf is a very often used for text features, there is also another
-class called :class:`TfidfVectorizer` that combines all the option of
+As tf–idf is very often used for text features, there is also another
+class called :class:`TfidfVectorizer` that combines all the options of
 :class:`CountVectorizer` and :class:`TfidfTransformer` in a single model::
 
   >>> from sklearn.feature_extraction.text import TfidfVectorizer
@@ -464,10 +464,10 @@ be cases where the binary occurrence markers might offer better
 features. This can be achieved by using the ``binary`` parameter
 of :class:`CountVectorizer`. In particular, some estimators such as
 :ref:`bernoulli_naive_bayes` explicitly model discrete boolean random
-variables. Also, very short text are likely to have noisy tf–idf values
+variables. Also, very short texts are likely to have noisy tf–idf values
 while the binary occurrence info is more stable.
 
-As usual the only way how to best adjust the feature extraction parameters
+As usual the best way to adjust the feature extraction parameters
 is to use a cross-validated grid search, for instance by pipelining the
 feature extractor with a classifier:
 
@@ -483,7 +483,7 @@ Common encodings are ASCII, Latin-1 (Western Europe), KOI8-R (Russian)
 and the universal encodings UTF-8 and UTF-16. Many others exist.
 
 .. note::
-    An encoding can also be called a or 'character set',
+    An encoding can also be called a 'character set',
     but this term is less accurate: several encodings can exist
     for a single character set.
 
@@ -562,7 +562,7 @@ The bag of words representation is quite simplistic but surprisingly
 useful in practice.
 
 In particular in a **supervised setting** it can be successfully combined
-with fast and scalable linear models to train **document classificers**,
+with fast and scalable linear models to train **document classifiers**,
 for instance:
 
  * :ref:`example_document_classification_20newsgroups.py`
@@ -584,7 +584,7 @@ Limitations of the Bag of Words representation
 
 A collection of unigrams (what bag of words is) cannot capture phrases
 and multi-word expressions, effectively disregarding any word order
-dependence. Additionally, bag of words model doesn't account for potential
+dependence. Additionally, the bag of words model doesn't account for potential
 misspellings or word derivations.
 
 N-grams to the rescue! Instead of building a simple collection of
@@ -612,7 +612,7 @@ decide better::
   array([[1, 1, 1, 0, 1, 1, 1, 0],
          [1, 1, 0, 1, 1, 1, 0, 1]])
 
-In above example, ``'char_wb`` analyzer is used, which creates n-grams
+In the above example, ``'char_wb`` analyzer is used, which creates n-grams
 only from characters inside word boundaries (padded with space on each
 side). The ``'char'`` analyzer, alternatively, creates n-grams that
 span across words::
