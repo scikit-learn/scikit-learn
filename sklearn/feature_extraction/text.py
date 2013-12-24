@@ -35,11 +35,12 @@ import numpy as np
 import scipy.sparse as sp
 
 from ..base import BaseEstimator, TransformerMixin
-from ..externals.six.moves import xrange
+#from ..externals.six.moves import xrange
 from ..preprocessing import normalize
 from .hashing import FeatureHasher
 from .stop_words import ENGLISH_STOP_WORDS
 from sklearn.externals import six
+from .readability import Readability
 
 from gensim import corpora, models
 
@@ -50,7 +51,9 @@ __all__ = ['CountVectorizer',
            'TfidfVectorizer',
            'strip_accents_ascii',
            'strip_accents_unicode',
-           'strip_tags']
+           'strip_tags',
+           'LdaVectorizer',
+           'LsiVectorizer']
 
 logging.basicConfig(level=logging.DEBUG,
                     format='''%(asctime)s - %(name)s
@@ -1385,7 +1388,7 @@ def _convert_gensim_corpus2csr(corpus, num_topics=None,
 
 
 class LdaVectorizer(CountVectorizer):
-    """Transform a count matrix to a LDA topic representation
+    """Convert a collection of raw documents to a matrix of LDA topic features
 
     Latent dirichlet allocation (LDA) is a widely-used generative model to
     extract latent topics from a collection of documents.
@@ -1677,7 +1680,7 @@ class LdaVectorizer(CountVectorizer):
 
 
 class LsiVectorizer(CountVectorizer):
-    """Transform a count matrix to a LSI topic representation
+    """Convert a collection of raw documents to a matrix of LSI topic features
 
     Latent semantic analysis/indexing (LSA/LSI) is a widely-used technique to
     analyze documents and find the unerlying meaning or concepts of
@@ -1964,3 +1967,85 @@ class LsiVectorizer(CountVectorizer):
         logger.info('Transforming new docs: gensim corpus generated!')
 
         return _convert_gensim_corpus2csr(self._model_lsi[corpus])
+
+
+class ReadabilityTransformer():
+    """Convert a collection of raw documents to a vector of readability scores
+
+    Parameters
+    ----------
+    readability_type : string {'ari', 'flesch_reading_ease', 
+                    'flesch_kincaid_grade_level', 'gunning_fog_index',
+                    'smog_index', 'coleman_liau_index', 'lix', 'rix'}, 
+                    optional, 'smog_index' by default
+        Specify the type of the readability score used for transformation
+        
+    """
+ 
+    def __init__(self, readability_type='smog_index'):
+        self.readability_types = {'ari': self.ari, 
+                'flesch_reading_ease': self.flesch_reading_ease,
+                'flesch_kincaid_grade_level': self.flesch_kincaid_grade_level,
+                'gunning_fog_index': self.gunning_fog_index,
+                'smog_index': self.smog_index,
+                'coleman_liau_index': self.coleman_liau_index,
+                'lix': self.lix,
+                'rix': self.rix}
+        if readability_type not in self.readability_types:
+            readability_type = 'smog_index'
+        self.readability_type = readability_type    
+
+    def transform(self, raw_docs):
+        """Return the readability scores of the given set of documents
+        
+        Parameters
+        ----------
+        raw_docs : iterable
+            A collection of documents, each is represented as a string
+
+        Returns
+        -------
+        vector : array, [n_samples, 1]
+        """
+        scores = []
+        indices = []
+        indptr = []
+        count = 0
+        for doc in raw_docs:
+            r = Readability(doc)
+            score = self.readability_types[self.readability_type](r)
+            scores.append(score)
+            indices.append(0)
+            indptr.append(count)
+            count += 1
+        
+        indptr.append(count)
+        num_docs = len(raw_docs)
+        return sp.csr_matrix((np.array(scores),
+                              np.array(indices),
+                              np.array(indptr)),
+                              shape=(num_docs, 1))
+
+    def ari(self, r):
+        return r.ARI()
+
+    def flesch_reading_ease(self, r):
+        return r.FleschReadingEase()
+
+    def flesch_kincaid_grade_level(self, r):
+        return r.FleschKincaidGradeLevel()
+
+    def gunning_fog_index(self, r):
+        return r.GunningFogIndex()
+
+    def smog_index(self, r):
+        return r.SMOGIndex()
+
+    def coleman_liau_index(self, r):
+        return r.ColemanLiauIndex()
+
+    def lix(self, r):
+        return r.LIX()
+
+    def rix(self, r):
+        return r.RIX()
