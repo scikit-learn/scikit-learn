@@ -167,15 +167,16 @@ def test_lasso_cv():
     lars = LassoLarsCV(normalize=False, max_iter=30).fit(X, y)
     # for this we check that they don't fall in the grid of
     # clf.alphas further than 1
-    for grid in clf.alphas_:
+    for this_alphas in clf.alphas_:
         assert_true(np.abs(
-            np.searchsorted(grid[::-1], lars.alpha_)
-            - np.searchsorted(grid[::-1], clf.alpha_)) <= 1)
+            np.searchsorted(this_alphas[::-1], lars.alpha_)
+            - np.searchsorted(this_alphas[::-1], clf.alpha_)) <= 1)
     # check that they also give a similar MSE
     mse_lars = interpolate.interp1d(lars.cv_alphas_, lars.cv_mse_path_.T)
-    for grid in clf.alphas_:
-            np.testing.assert_approx_equal(mse_lars(grid[5]).mean(),
-                                        clf.mse_path_[5].mean(), significant=2)
+    for this_alphas in clf.alphas_:
+            np.testing.assert_approx_equal(mse_lars(this_alphas[5]).mean(),
+                                           clf.mse_path_[5].mean(),
+                                           significant=2)
 
     # test set
     assert_greater(clf.score(X_test, y_test), 0.99)
@@ -239,7 +240,8 @@ def test_enet_path():
 
     # Here we have a small number of iterations, and thus the
     # ElasticNet might not converge. This is to speed up tests
-    clf = ElasticNetCV(alphas=[0.01, 0.05, 0.1], eps=2e-3, l1_ratio=[0.5, 0.7], cv=3,
+    clf = ElasticNetCV(alphas=[0.01, 0.05, 0.1], eps=2e-3,
+                       l1_ratio=[0.5, 0.7], cv=3,
                        max_iter=max_iter)
     ignore_warnings(clf.fit)(X, y)
     # Well-conditioned settings, we should have selected our
@@ -249,7 +251,8 @@ def test_enet_path():
     # that is closer to ridge than to lasso
     assert_equal(clf.l1_ratio_, min(clf.l1_ratio))
 
-    clf = ElasticNetCV(alphas=[0.01, 0.05, 0.1], eps=2e-3, l1_ratio=[0.5, 0.7], cv=3,
+    clf = ElasticNetCV(alphas=[0.01, 0.05, 0.1], eps=2e-3,
+                       l1_ratio=[0.5, 0.7], cv=3,
                        max_iter=max_iter, precompute=True)
     ignore_warnings(clf.fit)(X, y)
     # Well-conditioned settings, we should have selected our

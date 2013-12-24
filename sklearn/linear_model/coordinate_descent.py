@@ -456,10 +456,9 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
 
 
 def enet_multitask_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100,
-              alphas=None, precompute='auto', Xy=None,
-              copy_X=True, coef_init=None, **params):
-    """Compute Elastic-Net path for multi-output tasks
-       with multi task coordinate descent
+                        alphas=None, precompute='auto', Xy=None,
+                        copy_X=True, coef_init=None, **params):
+    """Multi-task Elastic-Net path with multi-task coordinate descent
 
     The Elastic Net optimization function for multi-output is::
 
@@ -543,8 +542,7 @@ def enet_multitask_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100,
     ElasticNet
     ElasticNetCV
     """
-    X = atleast2d_or_csc(X, dtype=np.float64, order='F',
-                         copy=copy_X and fit_intercept)
+    X = atleast2d_or_csc(X, dtype=np.float64, order='F', copy=copy_X)
 
     n_samples, n_features = X.shape
     _, n_outputs = y.shape
@@ -580,7 +578,7 @@ def enet_multitask_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100,
         l2_reg = alpha * (1.0 - l1_ratio) * n_samples
         coef_, dual_gap_, eps_ = cd_fast.enet_coordinate_descent_multi_task(
                 coef_, l1_reg, l2_reg, X, y, max_iter, tol)
-        coefs[:,:,i] = coef_
+        coefs[:, :, i] = coef_
         dual_gaps.append(dual_gap_)
 
         if dual_gap_ > eps_:
@@ -1008,7 +1006,7 @@ def _path_residuals(X, y, train, test, path, path_params, alphas=None,
                                      X_test.shape[0], n_order, -1)
     else:
         sparse_dot = safe_sparse_dot(X_test, coefs)
-    residues =  sparse_dot - y_test[:, :, np.newaxis]
+    residues = sparse_dot - y_test[:, :, np.newaxis]
     residues += intercepts
     this_mses = ((residues ** 2).mean(axis=0)).mean(axis=0)
 
@@ -1037,10 +1035,9 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
         self.n_jobs = n_jobs
         self.positive = positive
 
-
     def _check_copy_X(self, X):
         r"""
-        This makes sure that there is no duplication in memory. 
+        This makes sure that there is no duplication in memory.
         Dealing right with copy_X is important in the following:
         Multiple functions touch X and subsamples of X and can induce a
         lot of duplication of memory
@@ -1089,8 +1086,12 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
         y = np.asarray(y, dtype=np.float64)
 
         if y.ndim > 1:
-            raise ValueError("For multi-task outputs, fit the linear model "
-                             "per output/task")
+            if hasattr(self, 'l1_ratio'):
+                model_str = 'ElasticNet'
+            else:
+                model_str = 'Lasso'
+            raise ValueError("For multi-task outputs, use "
+                             "Multitask%sCV" % (model_str))
         if X.shape[0] != y.shape[0]:
             raise ValueError("X and y have inconsistent dimensions (%d != %d)"
                              % (X.shape[0], y.shape[0]))
@@ -1148,12 +1149,14 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
                 Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
                     delayed(_path_residuals)(
                         X, y, train, test, self.path, path_params,
-                        alphas=grid, l1_ratio=l1_ratio, X_order='F',
+                        alphas=this_alphas, l1_ratio=l1_ratio, X_order='F',
                         dtype=np.float64)
-                    for l1_ratio, grid in l1alpha_grid for train, test in folds
+                    for l1_ratio, this_alphas in l1alpha_grid
+                    for train, test in folds
                 ), operator.itemgetter(1)):
 
-            # Hack to get back alphas, since alphas for each l1_ratio are the same.
+            # Hack to get back alphas, since alphas for each
+            # l1_ratio are not the same.
             mse_alphas = list(mse_alphas)
             l1_alphas = mse_alphas[-1][2]
             mse_alphas = [m[0] for m in mse_alphas]
@@ -1686,9 +1689,8 @@ class MultiTaskLasso(MultiTaskElasticNet):
 
 
 class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
-    """Multi-task ElasticNet model regularized with L1/L2 mixed-norm
+    """Multi-task ElasticNet chosen by cross-validating across all tasks.
 
-    The model is chosen by cross-validating across all tasks.
     The optimization objective for MultiTaskElasticNet is::
 
         (1 / (2 * n_samples)) * ||Y - XW||^Fro_2
@@ -1809,6 +1811,7 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
     should be directly passed as a Fortran-contiguous numpy array.
     """
     path = staticmethod(enet_multitask_path)
+
     def __init__(self, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
                  fit_intercept=True, normalize=False, precompute='auto',
                  max_iter=1000, tol=1e-4, cv=None, copy_X=True,
@@ -1826,7 +1829,6 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
         self.copy_X = copy_X
         self.verbose = verbose
         self.n_jobs = n_jobs
-
 
     def fit(self, X, y):
         """Fit model with coordinate descent
@@ -1906,12 +1908,14 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
                 Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
                     delayed(_path_residuals)(
                         X, y, train, test, self.path, path_params,
-                        alphas=grid, l1_ratio=l1_ratio, X_order='F',
+                        alphas=this_alphas, l1_ratio=l1_ratio, X_order='F',
                         dtype=np.float64)
-                    for l1_ratio, grid in l1alpha_grid for train, test in folds
+                    for l1_ratio, this_alphas in l1alpha_grid
+                    for train, test in folds
                 ), operator.itemgetter(1)):
 
-            # Hack to get back alphas. Alphas for each l1_ratio are the same.
+            # Hack to get back alphas, since alphas for each
+            # l1_ratio are not the same.
             mse_alphas = list(mse_alphas)
             l1_alphas = mse_alphas[-1][2]
             mse_alphas = [m[0] for m in mse_alphas]
@@ -1925,7 +1929,6 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
                 best_alpha = l1_alphas[i_best_alpha]
                 best_l1_ratio = l1_ratio
                 best_mse = this_best_mse
-
 
         self.l1_ratio_ = best_l1_ratio
         self.alpha_ = best_alpha
@@ -1949,9 +1952,8 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
 
 
 class MultiTaskLassoCV(MultiTaskElasticNetCV):
-    """Multi-task Lasso model trained with L1/L2 mixed-norm as regularizer.
+    """Multitask Lasso chosen by cross-validating across all tasks.
 
-    The model is chosen by cross-validating across all tasks.
     The optimization objective for MultiTaskElasticNet is::
 
         (1 / (2 * n_samples)) * ||Y - XW||^Fro_2 + alpha * ||W||_21
