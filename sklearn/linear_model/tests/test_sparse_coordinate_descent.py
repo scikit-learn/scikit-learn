@@ -244,7 +244,7 @@ def test_path_parameters():
     ignore_warnings(clf.fit)(X, y)  # new params
     assert_almost_equal(0.5, clf.l1_ratio)
     assert_equal(n_alphas, clf.n_alphas)
-    assert_equal(n_alphas, len(clf.alphas_))
+    assert_equal((1, n_alphas), clf.alphas_.shape)
     sparse_mse_path = clf.mse_path_
     ignore_warnings(clf.fit)(X.toarray(), y)  # compare with dense data
     assert_almost_equal(clf.mse_path_, sparse_mse_path)

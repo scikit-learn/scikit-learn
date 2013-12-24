@@ -913,8 +913,8 @@ class Lasso(ElasticNet):
 ###############################################################################
 # Functions for CV with paths functions
 
-def _path_residuals(X, y, train, test, path, path_params, l1_ratio=1,
-                    X_order=None, dtype=None):
+def _path_residuals(X, y, train, test, path, path_params, alphas=None,
+                    l1_ratio=1, X_order=None, dtype=None):
     """Returns the MSE for the models computed by 'path'
 
     Parameters
@@ -937,6 +937,10 @@ def _path_residuals(X, y, train, test, path, path_params, l1_ratio=1,
 
     path_params : dictionary
         Parameters passed to the path function
+
+    alphas: array-like, optional
+        Array of float that is used for cross-validation. If not
+        provided, set automatically
 
     l1_ratio : float, optional
         float between 0 and 1 passed to ElasticNet (scaling between
@@ -973,6 +977,7 @@ def _path_residuals(X, y, train, test, path, path_params, l1_ratio=1,
     path_params['X_std'] = X_std
     path_params['precompute'] = precompute
     path_params['copy_X'] = False
+    path_params['alphas'] = alphas
 
     if 'l1_ratio' in path_params:
         path_params['l1_ratio'] = l1_ratio
@@ -1007,7 +1012,7 @@ def _path_residuals(X, y, train, test, path, path_params, l1_ratio=1,
     residues += intercepts
     this_mses = ((residues ** 2).mean(axis=0)).mean(axis=0)
 
-    return this_mses, l1_ratio
+    return this_mses, l1_ratio, alphas
 
 
 class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
@@ -1102,17 +1107,23 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
         path_params.pop('n_jobs', None)
 
         alphas = self.alphas
+        n_l1_ratio = len(l1_ratios)
         if alphas is None:
-            mean_l1_ratio = 1.
-            if hasattr(self, 'l1_ratio'):
-                mean_l1_ratio = np.mean(self.l1_ratio)
-            alphas = _alpha_grid(X, y, l1_ratio=mean_l1_ratio,
-                                 fit_intercept=self.fit_intercept,
-                                 eps=self.eps, n_alphas=self.n_alphas,
-                                 normalize=self.normalize,
-                                 copy_X=self.copy_X)
-        n_alphas = len(alphas)
-        path_params.update({'alphas': alphas, 'n_alphas': n_alphas})
+            alphas = []
+            for l1_ratio in l1_ratios:
+                alphas.append(
+                    _alpha_grid(
+                        X, y, l1_ratio=l1_ratio,
+                        fit_intercept=self.fit_intercept,
+                        eps=self.eps, n_alphas=self.n_alphas,
+                        normalize=self.normalize,
+                        copy_X=self.copy_X)
+                    )
+        else:
+            alphas = np.tile(alphas, (n_l1_ratio, 1))
+        # We want n_alphas to be the number of alphas used for each l1_ratio.
+        n_alphas = len(alphas[0])
+        path_params.update({'n_alphas': n_alphas})
 
         path_params['copy_X'] = copy_X
         # We are not computing in parallel, we can modify X
@@ -1128,17 +1139,23 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
         best_mse = np.inf
         all_mse_paths = list()
 
+        # Zip together l1_ratio and alpha.
+        l1alpha_grid = zip(l1_ratios, alphas)
+
         # We do a double for loop folded in one, in order to be able to
         # iterate in parallel on l1_ratio and folds
         for l1_ratio, mse_alphas in itertools.groupby(
                 Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
                     delayed(_path_residuals)(
                         X, y, train, test, self.path, path_params,
-                        l1_ratio=l1_ratio, X_order='F',
+                        alphas=grid, l1_ratio=l1_ratio, X_order='F',
                         dtype=np.float64)
-                    for l1_ratio in l1_ratios for train, test in folds
+                    for l1_ratio, grid in l1alpha_grid for train, test in folds
                 ), operator.itemgetter(1)):
 
+            # Hack to get back alphas, since alphas for each l1_ratio are the same.
+            mse_alphas = list(mse_alphas)
+            l1_alphas = mse_alphas[-1][2]
             mse_alphas = [m[0] for m in mse_alphas]
             mse_alphas = np.array(mse_alphas)
 
@@ -1147,7 +1164,7 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
             this_best_mse = mse[i_best_alpha]
             all_mse_paths.append(mse_alphas.T)
             if this_best_mse < best_mse:
-                best_alpha = alphas[i_best_alpha]
+                best_alpha = l1_alphas[i_best_alpha]
                 best_l1_ratio = l1_ratio
                 best_mse = this_best_mse
 
@@ -1307,7 +1324,7 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
         ``alpha_min / alpha_max = 1e-3``.
 
     n_alphas : int, optional
-        Number of alphas along the regularization path
+        Number of alphas along the regularization path, used for each l1_ratio.
 
     alphas : numpy array, optional
         List of alphas where to compute the models.
@@ -1692,7 +1709,7 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
 
     alphas : array-like, optional
         List of alphas where to compute the models.
-        If not provided, set automaticlly.
+        If not provided, set automatically.
 
     precompute : True | False | 'auto' | array-like
         Whether to use a precomputed Gram matrix to speed up
@@ -1839,8 +1856,6 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
             raise ValueError("X and y have inconsistent dimensions (%d != %d)"
                              % (X.shape[0], y.shape[0]))
 
-        n_outputs = y.shape[1]
-
         # All LinearModelCV parameters except 'cv' are acceptable.
         path_params = self.get_params()
         if 'l1_ratio' in path_params:
@@ -1850,19 +1865,23 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
         else:
             l1_ratios = [1.]
         alphas = self.alphas
+        n_l1_ratio = len(l1_ratios)
         if alphas is None:
-            # XXX : this must be fixed. We should have a different grid
-            # of alphas for each value of l1_ratio
-            mean_l1_ratio = 1.
-            if hasattr(self, 'l1_ratio'):
-                mean_l1_ratio = np.mean(self.l1_ratio)
-            alphas = _alpha_grid(X, y, l1_ratio=mean_l1_ratio,
-                                 fit_intercept=self.fit_intercept,
-                                 eps=self.eps, n_alphas=self.n_alphas,
-                                 normalize=self.normalize,
-                                 copy_X=self.copy_X)
-        n_alphas = len(alphas)
-        path_params.update({'alphas': alphas, 'n_alphas': n_alphas})
+            alphas = []
+            for l1_ratio in l1_ratios:
+                alphas.append(
+                    _alpha_grid(
+                        X, y, l1_ratio=l1_ratio,
+                        fit_intercept=self.fit_intercept,
+                        eps=self.eps, n_alphas=self.n_alphas,
+                        normalize=self.normalize,
+                        copy_X=self.copy_X)
+                    )
+        else:
+            alphas = np.tile(alphas, (n_l1_ratio, 1))
+        # We want n_alphas to be the number of alphas used for each l1_ratio.
+        n_alphas = len(alphas[0])
+        path_params.update({'n_alphas': n_alphas})
 
         path_params['copy_X'] = copy_X
         # We are not computing in parallel, we can modify X
@@ -1878,17 +1897,23 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
         best_mse = np.inf
         all_mse_paths = list()
 
+        # Zip together l1_ratio and alpha.
+        l1alpha_grid = zip(l1_ratios, alphas)
+
         # We do a double for loop folded in one, in order to be able to
         # iterate in parallel on l1_ratio and folds
         for l1_ratio, mse_alphas in itertools.groupby(
                 Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
                     delayed(_path_residuals)(
                         X, y, train, test, self.path, path_params,
-                        l1_ratio=l1_ratio, X_order='F',
+                        alphas=grid, l1_ratio=l1_ratio, X_order='F',
                         dtype=np.float64)
-                    for l1_ratio in l1_ratios for train, test in folds
+                    for l1_ratio, grid in l1alpha_grid for train, test in folds
                 ), operator.itemgetter(1)):
 
+            # Hack to get back alphas. Alphas for each l1_ratio are the same.
+            mse_alphas = list(mse_alphas)
+            l1_alphas = mse_alphas[-1][2]
             mse_alphas = [m[0] for m in mse_alphas]
             mse_alphas = np.array(mse_alphas)
 
@@ -1897,7 +1922,7 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
             this_best_mse = mse[i_best_alpha]
             all_mse_paths.append(mse_alphas.T)
             if this_best_mse < best_mse:
-                best_alpha = alphas[i_best_alpha]
+                best_alpha = l1_alphas[i_best_alpha]
                 best_l1_ratio = l1_ratio
                 best_mse = this_best_mse
 
