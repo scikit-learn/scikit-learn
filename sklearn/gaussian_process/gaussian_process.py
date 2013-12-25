@@ -83,7 +83,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         Built-in correlation models are::
 
             'absolute_exponential', 'squared_exponential',
-            'generalized_exponential', 'cubic', 'linear'
+            'generalized_exponential', 'cubic', 'linear', 'pure_nugget'
 
     beta0 : double array_like, optional
         The regression weight vector to perform Ordinary Kriging (OK).
@@ -218,7 +218,8 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         'squared_exponential': correlation.squared_exponential,
         'generalized_exponential': correlation.generalized_exponential,
         'cubic': correlation.cubic,
-        'linear': correlation.linear}
+        'linear': correlation.linear,
+        'pure_nugget': correlation.pure_nugget}
 
     _optimizer_types = [
         'fmin_cobyla',

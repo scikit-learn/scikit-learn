@@ -36,7 +36,7 @@ def test_1d(regr=regression.constant, corr=correlation.squared_exponential,
     y2_pred, MSE2 = gp.predict(X2, eval_MSE=True)
 
     assert_true(np.allclose(y_pred, y) and np.allclose(MSE, 0.)
-        and np.allclose(MSE2, 0., atol=10))
+        and np.allclose(MSE2, 0., atol=20))
 
 
 def test_2d(regr=regression.constant, corr=correlation.squared_exponential,
@@ -110,7 +110,7 @@ def test_more_builtin_correlation_models(random_start=1):
     models specified as strings.
     """
     all_corr = ['absolute_exponential', 'squared_exponential', 'cubic',
-                'linear']
+                'linear', 'pure_nugget']
 
     for corr in all_corr:
         test_1d(regr='constant', corr=corr, random_start=random_start)
@@ -135,3 +135,23 @@ def test_no_normalize():
     gp = GaussianProcess(normalize=False).fit(X, y)
     y_pred = gp.predict(X)
     assert_true(np.allclose(y_pred, y))
+
+
+def test_generalized_exponential_corr():
+    '''
+    Test the generalized_exponential correlation model for different values
+    of the exponent
+    '''
+    exponent = [0.1, 1, 2, 4, 5]
+
+    for exp in exponent:
+        gpe = GaussianProcess(regr='quadratic', corr='generalized_exponential',
+                              theta0=[1e-2, exp], thetaL=[1e-4]*2,
+                              thetaU=[1e-1]*2, random_start=10,
+                              verbose=False).fit(X, y)
+
+        y_pred, MSE = gpe.predict(X, eval_MSE=True)
+        y2_pred, MSE2 = gpe.predict(X2, eval_MSE=True)
+
+        assert_true (np.allclose(y_pred, y) and np.allclose(MSE, 0.)
+            and np.allclose(MSE2, 0., atol=10))
