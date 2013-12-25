@@ -345,7 +345,6 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
 
     def _set_oob_score(self, X, y):
         n_classes_ = self.n_classes_
-        classes_ = self.classes_
         n_samples = y.shape[0]
 
         oob_decision_function = []
@@ -376,8 +375,8 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
             decision = (predictions[k] /
                         predictions[k].sum(axis=1)[:, np.newaxis])
             oob_decision_function.append(decision)
-            oob_score += np.mean((y[:, k] == classes_[k].take(
-                np.argmax(predictions[k], axis=1), axis=0)))
+            oob_score += np.mean(y[:, k] ==
+                                 np.argmax(predictions[k], axis=1), axis=0)
 
         if self.n_outputs_ == 1:
             self.oob_decision_function_ = oob_decision_function[0]
