@@ -1086,10 +1086,7 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
         y = np.asarray(y, dtype=np.float64)
 
         if y.ndim > 1:
-            if hasattr(self, 'l1_ratio'):
-                model_str = 'ElasticNet'
-            else:
-                model_str = 'Lasso'
+            model_str = 'ElasticNet' if hasattr(self, 'l1_ratio') else 'Lasso'
             raise ValueError("For multi-task outputs, use "
                              "Multitask%sCV" % (model_str))
         if X.shape[0] != y.shape[0]:
@@ -1141,7 +1138,7 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
         all_mse_paths = list()
 
         # Zip together l1_ratio and alpha.
-        l1alpha_grid = zip(l1_ratios, alphas)
+        l1_ratio_alpha_grid = zip(l1_ratios, alphas)
 
         # We do a double for loop folded in one, in order to be able to
         # iterate in parallel on l1_ratio and folds
@@ -1149,9 +1146,9 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
                 Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
                     delayed(_path_residuals)(
                         X, y, train, test, self.path, path_params,
-                        alphas=this_alphas, l1_ratio=l1_ratio, X_order='F',
+                        alphas=this_alphas, l1_ratio=this_l1_ratio, X_order='F',
                         dtype=np.float64)
-                    for l1_ratio, this_alphas in l1alpha_grid
+                    for this_l1_ratio, this_alphas in l1_ratio_alpha_grid
                     for train, test in folds
                 ), operator.itemgetter(1)):
 
@@ -1689,7 +1686,7 @@ class MultiTaskLasso(MultiTaskElasticNet):
 
 
 class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
-    """Multi-task ElasticNet chosen by cross-validating across all tasks.
+    """Multi-task L1/L2 ElasticNet with built-in cross-validation.
 
     The optimization objective for MultiTaskElasticNet is::
 
@@ -1900,7 +1897,7 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
         all_mse_paths = list()
 
         # Zip together l1_ratio and alpha.
-        l1alpha_grid = zip(l1_ratios, alphas)
+        l1_ratio_alpha_grid = zip(l1_ratios, alphas)
 
         # We do a double for loop folded in one, in order to be able to
         # iterate in parallel on l1_ratio and folds
@@ -1908,9 +1905,9 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
                 Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
                     delayed(_path_residuals)(
                         X, y, train, test, self.path, path_params,
-                        alphas=this_alphas, l1_ratio=l1_ratio, X_order='F',
+                        alphas=this_alphas, l1_ratio=this_l1_ratio, X_order='F',
                         dtype=np.float64)
-                    for l1_ratio, this_alphas in l1alpha_grid
+                    for this_l1_ratio, this_alphas in l1_ratio_alpha_grid
                     for train, test in folds
                 ), operator.itemgetter(1)):
 
@@ -1952,7 +1949,7 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
 
 
 class MultiTaskLassoCV(MultiTaskElasticNetCV):
-    """Multitask Lasso chosen by cross-validating across all tasks.
+    """Multi-task L1/L2 Lasso with built-in cross-validation.
 
     The optimization objective for MultiTaskElasticNet is::
 
