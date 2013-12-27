@@ -908,6 +908,10 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
     `alpha_` : float
         Estimated regularization parameter.
 
+    `intercept_` : float | array, shape = (n_targets,)
+        Independent term in decision function. Set to 0.0 if
+        ``fit_intercept = False``.
+
     See also
     --------
     Ridge: Ridge regression
