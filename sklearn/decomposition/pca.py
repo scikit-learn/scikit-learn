@@ -425,6 +425,7 @@ class PCA(BaseEstimator, TransformerMixin):
         ll: array, shape (n_samples,)
             Log-likelihood of each sample under the current model
         """
+        X = array2d(X)
         Xr = X - self.mean_
         n_features = X.shape[1]
         log_like = np.zeros(X.shape[0])
