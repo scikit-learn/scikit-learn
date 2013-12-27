@@ -883,8 +883,6 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
         else:
             return _parallel_pairwise(X, Y, func, n_jobs, **kwds)
     elif callable(metric):
-        # Check matrices first (this is usually done by the metric).
-        X, Y = check_pairwise_arrays(X, Y)
         n_x, n_y = X.shape[0], Y.shape[0]
         # Calculate distance for each element in X and Y.
         # FIXME: can use n_jobs here too
