@@ -1070,6 +1070,13 @@ class MiniBatchKMeans(KMeans):
             n_clusters=n_clusters, init=init, max_iter=max_iter,
             verbose=verbose, random_state=random_state, tol=tol, n_init=n_init)
 
+        if hasattr(init, '__array__') and not self.n_init == 1:
+            warnings.warn(
+                'Explicit initial center position passed: '
+                'performing only one init in the MiniBatchKMeans instead of %d'
+                % self.n_init, RuntimeWarning, stacklevel=2)
+            self.n_init = 1
+
         self.max_no_improvement = max_no_improvement
         self.batch_size = batch_size
         self.compute_labels = compute_labels
