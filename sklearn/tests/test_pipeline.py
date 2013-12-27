@@ -12,7 +12,7 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 
 from sklearn.base import BaseEstimator, clone
-from sklearn.pipeline import Pipeline, FeatureUnion, make_pipeline
+from sklearn.pipeline import Pipeline, FeatureUnion, make_pipeline, make_union
 from sklearn.svm import SVC
 from sklearn.linear_model import LogisticRegression
 from sklearn.feature_selection import SelectKBest, f_classif
@@ -228,6 +228,15 @@ def test_feature_union():
     fs = FeatureUnion([("mock", TransfT()), ("pca", pca), ("select", select)])
     X_transformed = fs.fit_transform(X, y)
     assert_equal(X_transformed.shape, (X.shape[0], 8))
+
+
+def test_make_union():
+    pca = PCA()
+    mock = TransfT()
+    fu = make_union(pca, mock)
+    names, transformers = zip(*fu.transformer_list)
+    assert_equal(names, ("pca", "transft"))
+    assert_equal(transformers, (pca, mock))
 
 
 def test_pipeline_transform():

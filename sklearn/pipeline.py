@@ -6,6 +6,7 @@ estimator, as a chain of transforms and estimators.
 #         Gael Varoquaux
 #         Virgile Fritsch
 #         Alexandre Gramfort
+#         Lars Buitinck
 # Licence: BSD
 
 from collections import defaultdict
@@ -208,11 +209,32 @@ class Pipeline(BaseEstimator):
         return getattr(self.steps[0][1], '_pairwise', False)
 
 
+def _name_estimators(estimators):
+    """Generate names for estimators."""
+
+    names = [type(estimator).__name__.lower() for estimator in estimators]
+    namecount = defaultdict(int)
+    for est, name in zip(estimators, names):
+        namecount[name] += 1
+
+    for k, v in list(six.iteritems(namecount)):
+        if v == 1:
+            del namecount[k]
+
+    for i in reversed(range(len(estimators))):
+        name = names[i]
+        if name in namecount:
+            names[i] += "-%d" % namecount[name]
+            namecount[name] -= 1
+
+    return list(zip(names, estimators))
+
+
 def make_pipeline(*steps):
     """Construct a Pipeline from the given estimators.
 
     This is a shorthand for the Pipeline constructor; it does not require, and
-    does not permit, naming the estimators; instead, they will be given names
+    does not permit, naming the estimators. Instead, they will be given names
     automatically based on their types.
 
     Examples
@@ -228,22 +250,7 @@ def make_pipeline(*steps):
     -------
     p : Pipeline
     """
-    names = [type(step).__name__.lower() for step in steps]
-    namecount = defaultdict(int)
-    for est, name in zip(steps, names):
-        namecount[name] += 1
-
-    for k, v in list(six.iteritems(namecount)):
-        if v == 1:
-            del namecount[k]
-
-    for i in reversed(range(len(steps))):
-        name = names[i]
-        if name in namecount:
-            names[i] += "-%d" % namecount[name]
-            namecount[name] -= 1
-
-    return Pipeline(list(zip(names, steps)))
+    return Pipeline(_name_estimators(steps))
 
 
 def _fit_one_transformer(transformer, X, y):
@@ -398,3 +405,19 @@ class FeatureUnion(BaseEstimator, TransformerMixin):
             (name, new)
             for ((name, old), new) in zip(self.transformer_list, transformers)
         ]
+
+
+# XXX it would be nice to have a keyword-only n_jobs argument to this function,
+# but that's not allowed in Python 2.x.
+def make_union(*transformers):
+    """Construct a FeatureUnion from the given transformers.
+
+    This is a shorthand for the FeatureUnion constructor; it does not require,
+    and does not permit, naming the transformers. Instead, they will be given
+    names automatically based on their types. It also does not allow weighting.
+
+    Returns
+    -------
+    f : FeatureUnion
+    """
+    return FeatureUnion(_name_estimators(transformers))
