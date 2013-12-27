@@ -314,11 +314,9 @@ def test_minibatch_k_means_perfect_init_dense_array():
 
 
 def test_minibatch_k_means_init_multiple_runs_with_explicit_centers():
-    # check warning when centers are passed
-    with warnings.catch_warnings(record=True) as w:
-        mb_k_means = MiniBatchKMeans(init=centers.copy(), n_clusters=n_clusters,
-                                     random_state=42, n_init=10).fit(X)
-        assert_equal(len(w), 1)
+    mb_k_means = MiniBatchKMeans(init=centers.copy(), n_clusters=n_clusters,
+                                 random_state=42, n_init=10)
+    assert_warns(RuntimeWarning, mb_k_means.fit, X)
 
 
 def test_minibatch_k_means_perfect_init_sparse_csr():
