@@ -880,7 +880,7 @@ def _mini_batch_step(X, x_squared_norms, centers, counts,
     if random_reassign and reassignment_ratio > 0:
         random_state = check_random_state(random_state)
         # Reassign clusters that have very low counts
-        to_reassign = counts <= reassignment_ratio * counts.max()
+        to_reassign = counts < reassignment_ratio * counts.max()
         # maximally assign reassignment_ratio*batch_size samples as clusters
         if to_reassign.sum() > .5 * X.shape[0]:
             indices_dont_reassign = np.argsort(counts)[.5 * X.shape[0]:]
