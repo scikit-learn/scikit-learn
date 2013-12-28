@@ -1093,9 +1093,9 @@ class MiniBatchKMeans(KMeans):
             raise ValueError("Number of samples smaller than number "
                              "of clusters.")
 
+        n_init = self.n_init
         if hasattr(self.init, '__array__'):
             self.init = np.ascontiguousarray(self.init, dtype=np.float64)
-            n_init = self.n_init
             if n_init != 1:
                 warnings.warn(
                     'Explicit initial center position passed: '
