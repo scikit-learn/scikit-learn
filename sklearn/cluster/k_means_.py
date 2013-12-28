@@ -242,10 +242,10 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances=True,
     if hasattr(init, '__array__'):
         init = np.asarray(init).copy()
         init -= X_mean
-        if not n_init == 1:
+        if n_init != 1:
             warnings.warn(
                 'Explicit initial center position passed: '
-                'performing only one init in the k-means instead of %d'
+                'performing only one init in k-means instead of n_init=%d'
                 % n_init, RuntimeWarning, stacklevel=2)
             n_init = 1
 
@@ -1095,12 +1095,14 @@ class MiniBatchKMeans(KMeans):
 
         if hasattr(self.init, '__array__'):
             self.init = np.ascontiguousarray(self.init, dtype=np.float64)
-            if not self.n_init == 1:
+            n_init = self.n_init
+            if n_init != 1:
                 warnings.warn(
                     'Explicit initial center position passed: '
-                    'performing only one init in the MiniBatchKMeans instead of %d'
+                    'performing only one init in MiniBatchKMeans instead of '
+                    'n_init=%d'
                     % self.n_init, RuntimeWarning, stacklevel=2)
-                self.n_init = 1
+                n_init = 1
 
         x_squared_norms = row_norms(X, squared=True)
 
@@ -1135,10 +1137,10 @@ class MiniBatchKMeans(KMeans):
 
         # perform several inits with random sub-sets
         best_inertia = None
-        for init_idx in range(self.n_init):
+        for init_idx in range(n_init):
             if self.verbose:
                 print("Init %d/%d with method: %s"
-                      % (init_idx + 1, self.n_init, self.init))
+                      % (init_idx + 1, n_init, self.init))
             counts = np.zeros(self.n_clusters, dtype=np.int32)
 
             # TODO: once the `k_means` function works with sparse input we
@@ -1164,7 +1166,7 @@ class MiniBatchKMeans(KMeans):
                                          cluster_centers)
             if self.verbose:
                 print("Inertia for init %d/%d: %f"
-                      % (init_idx + 1, self.n_init, inertia))
+                      % (init_idx + 1, n_init, inertia))
             if best_inertia is None or inertia < best_inertia:
                 self.cluster_centers_ = cluster_centers
                 self.counts_ = counts
