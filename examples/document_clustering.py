@@ -148,7 +148,8 @@ if opts.use_hashing:
                                        binary=False)
 else:
     vectorizer = TfidfVectorizer(max_df=0.5, max_features=opts.n_features,
-                                 stop_words='english', use_idf=opts.use_idf)
+                                 min_df=2, stop_words='english',
+                                 use_idf=opts.use_idf)
 X = vectorizer.fit_transform(dataset.data)
 
 print("done in %fs" % (time() - t0))
@@ -194,3 +195,13 @@ print("Silhouette Coefficient: %0.3f"
       % metrics.silhouette_score(X, labels, sample_size=1000))
 
 print()
+
+if not (opts.n_components or opts.use_hashing):
+    print("Top terms per cluster:")
+    order_centroids = km.cluster_centers_.argsort()[:, ::-1]
+    terms = vectorizer.get_feature_names()
+    for i in xrange(true_k):
+        print("Cluster %d:" % i, end='')
+        for ind in order_centroids[i, :10]:
+            print(' %s' % terms[ind], end='')
+        print()
