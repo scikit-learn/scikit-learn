@@ -38,7 +38,7 @@ def test_1d(regr=regression.constant, corr=correlation.squared_exponential,
     y2_pred, MSE2 = gp.predict(X2, eval_MSE=True, batch_size=batch_size)
 
     assert_true(np.allclose(y_pred, y) and np.allclose(MSE, 0.)
-        and np.allclose(MSE2, 0., atol=20))
+                and np.allclose(MSE2, 0., atol=20))
 
 
 def test_2d(regr=regression.constant, corr=correlation.squared_exponential,
@@ -73,8 +73,8 @@ def test_2d(regr=regression.constant, corr=correlation.squared_exponential,
 
 
 def test_2d_2d(regr=regression.constant, corr=correlation.squared_exponential,
-            random_start=10, beta0=None, storage_mode='full',
-            batch_size=None, optimizer='fmin_cobyla'):
+               random_start=10, beta0=None, storage_mode='full',
+               batch_size=None, optimizer='fmin_cobyla'):
     """
     MLE estimation of a two-dimensional Gaussian Process model accounting for
     anisotropy. Check random start optimization.
@@ -152,15 +152,15 @@ def test_generalized_exponential_corr():
 
     for exp in exponent:
         gpe = GaussianProcess(regr='quadratic', corr='generalized_exponential',
-                              theta0=[1e-2, exp], thetaL=[1e-4]*2,
-                              thetaU=[1e-1]*2, random_start=10,
+                              theta0=[1e-2, exp], thetaL=[1e-4] * 2,
+                              thetaU=[1e-1] * 2, random_start=10,
                               verbose=False).fit(X, y)
 
         y_pred, MSE = gpe.predict(X, eval_MSE=True)
         y2_pred, MSE2 = gpe.predict(X2, eval_MSE=True)
 
-        assert_true (np.allclose(y_pred, y) and np.allclose(MSE, 0.)
-            and np.allclose(MSE2, 0., atol=10))
+        assert_true(np.allclose(y_pred, y) and np.allclose(MSE, 0.)
+                    and np.allclose(MSE2, 0., atol=10))
 
 
 def test_memory_management():
