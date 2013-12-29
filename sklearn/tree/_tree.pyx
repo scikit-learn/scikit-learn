@@ -138,7 +138,7 @@ cdef class ClassificationCriterion(Criterion):
         cdef SIZE_t k = 0
         cdef SIZE_t label_count_stride = 0
 
-        for k from 0 <= k < n_outputs:
+        for k in range(n_outputs):
             self.n_classes[k] = n_classes[k]
 
             if n_classes[k] > label_count_stride:
@@ -211,17 +211,17 @@ cdef class ClassificationCriterion(Criterion):
         cdef DOUBLE_t w = 1.0
         cdef SIZE_t offset = 0
 
-        for k from 0 <= k < n_outputs:
+        for k in range(n_outputs):
             memset(label_count_total + offset, 0, n_classes[k] * sizeof(double))
             offset += label_count_stride
 
-        for p from start <= p < end:
+        for p in range(start, end):
             i = samples[p]
 
             if sample_weight != NULL:
                 w = sample_weight[i]
 
-            for k from 0 <= k < n_outputs:
+            for k in range(n_outputs):
                 c = <SIZE_t> y[i * y_stride + k]
                 label_count_total[k * label_count_stride + c] += w
 
@@ -248,7 +248,7 @@ cdef class ClassificationCriterion(Criterion):
 
         cdef SIZE_t k = 0
 
-        for k from 0 <= k < n_outputs:
+        for k in range(n_outputs):
             memset(label_count_left, 0, n_classes[k] * sizeof(double))
             memcpy(label_count_right, label_count_total, n_classes[k] * sizeof(double))
 
@@ -284,13 +284,13 @@ cdef class ClassificationCriterion(Criterion):
 
         # Note: We assume start <= pos < new_pos <= end
 
-        for p from pos <= p < new_pos:
+        for p in range(pos, new_pos):
             i = samples[p]
 
             if sample_weight != NULL:
                 w  = sample_weight[i]
 
-            for k from 0 <= k < n_outputs:
+            for k in range(n_outputs):
                 label_index = (k * label_count_stride +
                                <SIZE_t> y[i * y_stride + k])
                 label_count_left[label_index] += w
@@ -318,7 +318,7 @@ cdef class ClassificationCriterion(Criterion):
         cdef double* label_count_total = self.label_count_total
         cdef SIZE_t k
 
-        for k from 0 <= k < n_outputs:
+        for k in range(n_outputs):
             memcpy(dest, label_count_total, n_classes[k] * sizeof(double))
             dest += label_count_stride
             label_count_total += label_count_stride
@@ -354,10 +354,10 @@ cdef class Entropy(ClassificationCriterion):
         cdef SIZE_t k
         cdef SIZE_t c
 
-        for k from 0 <= k < n_outputs:
+        for k in range(n_outputs):
             entropy = 0.0
 
-            for c from 0 <= c < n_classes[k]:
+            for c in range(n_classes[k]):
                 tmp = label_count_total[c]
                 if tmp > 0.0:
                     tmp /= weighted_n_node_samples
@@ -390,11 +390,11 @@ cdef class Entropy(ClassificationCriterion):
         cdef SIZE_t k
         cdef SIZE_t c
 
-        for k from 0 <= k < n_outputs:
+        for k in range(n_outputs):
             entropy_left = 0.0
             entropy_right = 0.0
 
-            for c from 0 <= c < n_classes[k]:
+            for c in range(n_classes[k]):
                 tmp = label_count_left[c]
                 if tmp > 0.0:
                     tmp /= weighted_n_left
@@ -445,11 +445,11 @@ cdef class Gini(ClassificationCriterion):
         cdef SIZE_t k
         cdef SIZE_t c
 
-        for k from 0 <= k < n_outputs:
+        for k in range(n_outputs):
             gini = 0.0
 
-            for c from 0 <= c < n_classes[k]:
-                tmp = label_count_total[c] # TODO: use weighted count instead
+            for c in range(n_classes[k]):
+                tmp = label_count_total[c]  # TODO: use weighted count instead
                 gini += tmp * tmp
 
             gini = 1.0 - gini / (weighted_n_node_samples *
@@ -483,12 +483,12 @@ cdef class Gini(ClassificationCriterion):
         cdef SIZE_t k
         cdef SIZE_t c
 
-        for k from 0 <= k < n_outputs:
+        for k in range(n_outputs):
             gini_left = 0.0
             gini_right = 0.0
 
-            for c from 0 <= c < n_classes[k]:
-                tmp = label_count_left[c] # TODO: use weighted count instead
+            for c in range(n_classes[k]):
+                tmp = label_count_left[c]   # TODO: use weighted count instead
                 gini_left += tmp * tmp
                 tmp = label_count_right[c]
                 gini_right += tmp * tmp
@@ -638,7 +638,7 @@ cdef class RegressionCriterion(Criterion):
         cdef DOUBLE_t y_ik = 0.0
         cdef DOUBLE_t w = 1.0
 
-        for k from 0 <= k < n_outputs:
+        for k in range(n_outputs):
             mean_left[k] = 0.0
             mean_right[k] = 0.0
             mean_total[k] = 0.0
@@ -651,13 +651,13 @@ cdef class RegressionCriterion(Criterion):
             self.sum_right[k] = 0.0
             self.sum_total[k] = 0.0
 
-        for p from start <= p < end:
+        for p in range(start, end):
             i = samples[p]
 
             if sample_weight != NULL:
                 w = sample_weight[i]
 
-            for k from 0 <= k < n_outputs:
+            for k in range(n_outputs):
                 y_ik = y[i * y_stride + k]
                 sq_sum_total[k] += w * y_ik * y_ik
                 mean_total[k] += w * y_ik
@@ -667,7 +667,7 @@ cdef class RegressionCriterion(Criterion):
 
         self.weighted_n_node_samples = weighted_n_node_samples
 
-        for k from 0 <= k < n_outputs:
+        for k in range(n_outputs):
             mean_total[k] /= weighted_n_node_samples
 
         # Reset to pos=start
@@ -696,7 +696,7 @@ cdef class RegressionCriterion(Criterion):
 
         cdef SIZE_t k = 0
 
-        for k from 0 <= k < n_outputs:
+        for k in range(n_outputs):
             mean_right[k] = mean_total[k]
             mean_left[k] = 0.0
             sq_sum_right[k] = sq_sum_total[k]
@@ -738,13 +738,13 @@ cdef class RegressionCriterion(Criterion):
 
         # Note: We assume start <= pos < new_pos <= end
 
-        for p from pos <= p < new_pos:
+        for p in range(pos, new_pos):
             i = samples[p]
 
             if sample_weight != NULL:
                 w  = sample_weight[i]
 
-            for k from 0 <= k < n_outputs:
+            for k in range(n_outputs):
                 y_ik = y[i * y_stride + k]
                 w_y_ik = w * y_ik
 
@@ -762,7 +762,7 @@ cdef class RegressionCriterion(Criterion):
             weighted_n_left += w
             weighted_n_right -= w
 
-        for k from 0 <= k < n_outputs:
+        for k in range(n_outputs):
             var_left[k] = (sq_sum_left[k] / weighted_n_left -
                            mean_left[k] * mean_left[k])
             var_right[k] = (sq_sum_right[k] / weighted_n_right -
@@ -799,7 +799,7 @@ cdef class MSE(RegressionCriterion):
         cdef double total = 0.0
         cdef SIZE_t k
 
-        for k from 0 <= k < n_outputs:
+        for k in range(n_outputs):
             total += (sq_sum_total[k] / weighted_n_node_samples -
                       mean_total[k] * mean_total[k])
 
@@ -816,7 +816,7 @@ cdef class MSE(RegressionCriterion):
         cdef double total_right = 0.0
         cdef SIZE_t k
 
-        for k from 0 <= k < n_outputs:
+        for k in range(n_outputs):
             total_left += var_left[k]
             total_right += var_right[k]
 
@@ -913,7 +913,7 @@ cdef class Splitter:
         cdef SIZE_t i, j
         j = 0
 
-        for i from 0 <= i < n_samples:
+        for i in range(n_samples):
             # Only work with positively weighted samples
             if sample_weight == NULL or sample_weight[i] != 0.0:
                 samples[j] = i
@@ -925,7 +925,7 @@ cdef class Splitter:
         cdef SIZE_t n_features = X.shape[1]
         cdef SIZE_t* features = <SIZE_t*> malloc(n_features * sizeof(SIZE_t))
 
-        for i from 0 <= i < n_features:
+        for i in range(n_features):
             features[i] = i
 
         self.features = features
@@ -994,8 +994,8 @@ cdef class BestSplitter(Splitter):
         cdef double best_impurity_left = INFINITY
         cdef double best_impurity_right = INFINITY
         cdef SIZE_t best_pos = end
-        cdef SIZE_t best_feature
-        cdef double best_threshold
+        cdef SIZE_t best_feature = 0
+        cdef double best_threshold = 0.
         cdef double best_improvement = -INFINITY
 
         cdef double current_improvement
@@ -1012,7 +1012,7 @@ cdef class BestSplitter(Splitter):
         cdef SIZE_t partition_start
         cdef SIZE_t partition_end
 
-        for f_idx from 0 <= f_idx < n_features:
+        for f_idx in range(n_features):
             # Draw a feature at random
             f_i = n_features - f_idx - 1
             f_j = rand_int(n_features - f_idx, random_state)
@@ -1176,8 +1176,8 @@ cdef class RandomSplitter(Splitter):
         cdef double best_impurity_left = INFINITY
         cdef double best_impurity_right = INFINITY
         cdef SIZE_t best_pos = end
-        cdef SIZE_t best_feature
-        cdef double best_threshold
+        cdef SIZE_t best_feature = 0
+        cdef double best_threshold = 0.
         cdef double best_improvement = -INFINITY
 
         cdef double current_improvement
@@ -1197,7 +1197,7 @@ cdef class RandomSplitter(Splitter):
         cdef SIZE_t partition_start
         cdef SIZE_t partition_end
 
-        for f_idx from 0 <= f_idx < n_features:
+        for f_idx in range(n_features):
             # Draw a feature at random
             f_i = n_features - f_idx - 1
             f_j = rand_int(n_features - f_idx, random_state)
@@ -1211,7 +1211,7 @@ cdef class RandomSplitter(Splitter):
             # Find min, max
             min_feature_value = max_feature_value = X[X_sample_stride * samples[start] + X_fx_stride * current_feature]
 
-            for p from start < p < end:
+            for p in range(start + 1, end):
                 current_feature_value = X[X_sample_stride * samples[p] + X_fx_stride * current_feature]
 
                 if current_feature_value < min_feature_value:
@@ -1379,8 +1379,8 @@ cdef class PresortBestSplitter(Splitter):
         cdef double best_impurity_left = INFINITY
         cdef double best_impurity_right = INFINITY
         cdef SIZE_t best_pos = end
-        cdef SIZE_t best_feature
-        cdef double best_threshold
+        cdef SIZE_t best_feature = 0
+        cdef double best_threshold = 0.
         cdef double best_improvement = -INFINITY
 
         cdef double current_improvement
@@ -1400,11 +1400,11 @@ cdef class PresortBestSplitter(Splitter):
         cdef SIZE_t i, j
 
         # Set sample mask
-        for p from start <= p < end:
+        for p in range(start, end):
             sample_mask[samples[p]] = 1
 
         # Look for splits
-        for f_idx from 0 <= f_idx < n_features:
+        for f_idx in range(n_features):
             # Draw a feature at random
             f_i = n_features - f_idx - 1
             f_j = rand_int(n_features - f_idx, random_state)
@@ -1420,7 +1420,7 @@ cdef class PresortBestSplitter(Splitter):
             # Extract ordering from X_argsorted
             p = start
 
-            for i from 0 <= i < n_total_samples:
+            for i in range(n_total_samples):
                 j = X_argsorted[X_argsorted_stride * current_feature + i]
                 if sample_mask[j] == 1:
                     samples[p] = j
@@ -1496,7 +1496,7 @@ cdef class PresortBestSplitter(Splitter):
                     samples[p] = tmp
 
         # Reset sample mask
-        for p from start <= p < end:
+        for p in range(start, end):
             sample_mask[samples[p]] = 0
 
         # Return values
@@ -1933,7 +1933,7 @@ cdef class Tree:
 
         cdef SIZE_t k
 
-        for k from 0 <= k < n_outputs:
+        for k in range(n_outputs):
             self.n_classes[k] = n_classes[k]
 
         # Parameters
@@ -2152,7 +2152,7 @@ cdef class Tree:
             out = np.zeros((n_samples, max_n_classes), dtype=np.float64)
 
             with nogil:
-                for i from 0 <= i < n_samples:
+                for i in range(n_samples):
                     node_id = 0
 
                     # While node_id not a leaf
@@ -2165,7 +2165,7 @@ cdef class Tree:
 
                     offset = node_id * value_stride
 
-                    for c from 0 <= c < n_classes[0]:
+                    for c in range(n_classes[0]):
                         out[i, c] = value[offset + c]
 
             return out
@@ -2176,7 +2176,7 @@ cdef class Tree:
                                   max_n_classes), dtype=np.float64)
 
             with nogil:
-                for i from 0 <= i < n_samples:
+                for i in range(n_samples):
                     node_id = 0
 
                     # While node_id not a leaf
@@ -2189,8 +2189,8 @@ cdef class Tree:
 
                     offset = node_id * value_stride
 
-                    for k from 0 <= k < n_outputs:
-                        for c from 0 <= c < n_classes[k]:
+                    for k in range(n_outputs):
+                        for c in range(n_classes[k]):
                             out_multi[i, k, c] = value[offset + c]
                         offset += max_n_classes
 
@@ -2211,7 +2211,7 @@ cdef class Tree:
         out = np.zeros((n_samples,), dtype=np.int32)
 
         with nogil:
-            for i from 0 <= i < n_samples:
+            for i in range(n_samples):
                 node_id = 0
 
                 # While node_id not a leaf
@@ -2244,7 +2244,7 @@ cdef class Tree:
         cdef np.ndarray[np.float64_t, ndim=1] importances
         importances = np.zeros((self.n_features,))
 
-        for node from 0 <= node < node_count:
+        for node in range(node_count):
             if children_left[node] != _TREE_LEAF:
                 # ... and children_right[node] != _TREE_LEAF:
                 n_left = n_node_samples[children_left[node]]
@@ -2279,7 +2279,7 @@ cdef inline UINT32_t our_rand_r(UINT32_t* seed) nogil:
     seed[0] ^= <UINT32_t>(seed[0] >> 17)
     seed[0] ^= <UINT32_t>(seed[0] << 5)
 
-    return seed[0] % <UINT32_t>(RAND_R_MAX + 1)
+    return seed[0] % (<UINT32_t>RAND_R_MAX + 1)
 
 cdef inline np.ndarray int_ptr_to_ndarray(int* data, SIZE_t size):
     """Encapsulate data into a 1D numpy array of int's."""
