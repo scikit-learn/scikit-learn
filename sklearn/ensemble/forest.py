@@ -150,6 +150,11 @@ def _parallel_predict_regression(trees, X):
     return sum(tree.predict(X) for tree in trees)
 
 
+def _parallel_apply(tree, X):
+    """Private helper function for parallizing calls to apply in a forest."""
+    return tree.tree_.apply(X)
+
+
 class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
                                     _LearntSelectorMixin)):
     """Base class for forests of trees.
@@ -194,7 +199,10 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
             return the index of the leaf x ends up in.
         """
         X = array2d(X, dtype=DTYPE)
-        return np.array([est.tree_.apply(X) for est in self.estimators_]).T
+        results = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
+                           backend="threading")(
+            delayed(_parallel_apply)(tree, X) for tree in self.estimators_)
+        return np.array(results).T
 
     def fit(self, X, y, sample_weight=None):
         """Build a forest of trees from the training set (X, y).

@@ -1861,18 +1861,19 @@ cdef class Tree:
         cdef np.ndarray[np.int32_t, ndim=1] out
         out = np.zeros((n_samples,), dtype=np.int32)
 
-        for i from 0 <= i < n_samples:
-            node_id = 0
+        with nogil:
+            for i from 0 <= i < n_samples:
+                node_id = 0
 
-            # While node_id not a leaf
-            while children_left[node_id] != _TREE_LEAF:
-                # ... and children_right[node_id] != _TREE_LEAF:
-                if X[i, feature[node_id]] <= threshold[node_id]:
-                    node_id = children_left[node_id]
-                else:
-                    node_id = children_right[node_id]
+                # While node_id not a leaf
+                while children_left[node_id] != _TREE_LEAF:
+                    # ... and children_right[node_id] != _TREE_LEAF:
+                    if X[i, feature[node_id]] <= threshold[node_id]:
+                        node_id = children_left[node_id]
+                    else:
+                        node_id = children_right[node_id]
 
-            out[i] = node_id
+                out[i] = node_id
 
         return out
 
