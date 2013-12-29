@@ -65,10 +65,12 @@ cdef class Stack:
         # Resize if capacity not sufficient
         if top >= self.capacity:
             self.capacity *= 2
-            self.stack_ = <StackRecord*> realloc(self.stack_, self.capacity * sizeof(StackRecord))
-            if self.stack_ == NULL:
-                free(self.stack_)
+            stack = <StackRecord*> realloc(self.stack_,
+                                           self.capacity * sizeof(StackRecord))
+            if stack == NULL:
+                # no free; __dealloc__ handles that
                 return -1
+            self.stack_ = stack
 
         stack = self.stack_
         stack[top].start = start
@@ -198,12 +200,13 @@ cdef class PriorityHeap:
         # Resize if capacity not sufficient
         if heap_ptr >= self.capacity:
             self.capacity *= 2
-            self.heap_ = <PriorityHeapRecord*> realloc(self.heap_,
-                                                       self.capacity *
-                                                       sizeof(PriorityHeapRecord))
-            if self.heap_ == NULL:
-                free(self.heap_)
+            heap = <PriorityHeapRecord*> realloc(self.heap_,
+                                                 self.capacity *
+                                                 sizeof(PriorityHeapRecord))
+            if heap == NULL:
+                # no free; __dealloc__ handles that
                 return -1
+            self.heap_ = heap
 
         # Put element as last element of heap
         heap = self.heap_

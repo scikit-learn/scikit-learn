@@ -143,7 +143,8 @@ cdef class Tree:
                                 double threshold,
                                 double impurity,
                                 SIZE_t n_node_samples) nogil
-    cdef void _resize(self, SIZE_t capacity=*) nogil
+    cdef void _resize(self, SIZE_t capacity)
+    cdef int _resize_c(self, SIZE_t capacity=*) nogil
 
     cpdef predict(self, np.ndarray[DTYPE_t, ndim=2] X)
     cpdef apply(self, np.ndarray[DTYPE_t, ndim=2] X)
