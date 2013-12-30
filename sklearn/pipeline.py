@@ -71,8 +71,8 @@ class Pipeline(BaseEstimator):
     Pipeline(steps=[...])
 
     >>> prediction = anova_svm.predict(X)
-    >>> anova_svm.score(X, y)
-    0.75
+    >>> anova_svm.score(X, y)                        # doctest: +ELLIPSIS
+    0.77...
     """
 
     # BaseEstimator interface

@@ -499,7 +499,7 @@ def test_crammer_singer_binary():
         acc = svm.LinearSVC(fit_intercept=fit_intercept,
                             multi_class="crammer_singer",
                             random_state=0).fit(X, y).score(X, y)
-        assert_almost_equal(acc, 0.68)
+        assert_greater(acc, 0.9)
 
 
 def test_linearsvc_iris():
