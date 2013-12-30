@@ -37,7 +37,7 @@ from sklearn.utils import shuffle
 from sklearn.preprocessing import StandardScaler
 from sklearn.datasets import (load_iris, load_boston, make_blobs,
                               make_classification)
-from sklearn.metrics import accuracy_score, adjusted_rand_score, f1_score
+from sklearn.metrics import accuracy_score, adjusted_rand_score
 
 from sklearn.lda import LDA
 from sklearn.svm.base import BaseLibSVM
@@ -938,20 +938,19 @@ def test_class_weight_classifiers():
             assert_greater(np.mean(y_pred == 0), 0.9)
 
 
-def test_class_weight_auto_classifies():
-    # test that class_weight="auto" improves f1-score
+def test_class_weight_auto_classifiers():
+    """Test that class_weight="auto" degrades accuracy for imbalanced data
+    """
     classifiers = all_estimators(type_filter='classifier')
 
     with warnings.catch_warnings(record=True):
         classifiers = [c for c in classifiers
                        if 'class_weight' in c[1]().get_params().keys()]
 
-    for n_classes, weights in zip([2, 3], [[.8, .2], [.8, .1, .1]]):
+    for n_samples_per_class in [[300, 50], [300, 25, 25]]:
         # create unbalanced dataset
-        X, y = make_classification(n_classes=n_classes, n_samples=200,
-                                   n_features=10, weights=weights,
-                                   random_state=0, n_informative=n_classes)
-        X = StandardScaler().fit_transform(X)
+        y = np.hstack([[i] * n for i, n in enumerate(n_samples_per_class)])
+        X = np.random.RandomState(1).randn(len(y), 20)
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.5,
                                                             random_state=0)
         for name, Classifier in classifiers:
@@ -981,8 +980,8 @@ def test_class_weight_auto_classifies():
             classifier.set_params(class_weight='auto')
             classifier.fit(X_train, y_train)
             y_pred_auto = classifier.predict(X_test)
-            assert_greater(f1_score(y_test, y_pred_auto),
-                           f1_score(y_test, y_pred))
+            assert_greater(accuracy_score(y_test, y_pred),
+                           accuracy_score(y_test, y_pred_auto))
 
 
 def test_estimators_overwrite_params():
