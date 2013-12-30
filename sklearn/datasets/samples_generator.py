@@ -3,7 +3,7 @@ Generate samples of synthetic data sets.
 """
 
 # Authors: B. Thirion, G. Varoquaux, A. Gramfort, V. Michel, O. Grisel,
-#          G. Louppe
+#          G. Louppe, J. Nothman
 # License: BSD 3 clause
 
 import numbers
@@ -184,20 +184,15 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
 
     # Create each cluster; a variant of make_blobs
     stop = 0
-
     for k, centroid in enumerate(centroids):
         start, stop = stop, stop + n_samples_per_cluster[k]
-        X_k = X[start:stop, :n_informative]
+        y[start:stop] = k % n_classes  # assign labels
+        X_k = X[start:stop, :n_informative]  # slice a view of the cluster
 
-        # Assign labels
-        y[start:stop] = k % n_classes
-
-        # Multiply by a random matrix to create co-variance of the features
         A = 2 * generator.rand(n_informative, n_informative) - 1
-        X_k[...] = np.dot(X_k, A)
+        X_k[...] = np.dot(X_k, A)  # introduce random covariance
 
-        # Shift the cluster to a vertex
-        X_k += centroid
+        X_k += centroid  # shift the cluster to a vertex
 
     # Create redundant features
     if n_redundant > 0:
