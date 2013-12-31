@@ -10,9 +10,11 @@ from scipy import sparse
 from scipy import stats
 
 from ..base import BaseEstimator, TransformerMixin
+from ..utils import check_arrays
 from ..utils import array2d
 from ..utils import atleast2d_or_csr
 from ..utils import atleast2d_or_csc
+from ..utils import as_float_array
 
 from ..externals import six
 
@@ -127,7 +129,8 @@ class Imputer(BaseEstimator, TransformerMixin):
 
     copy : boolean, optional (default=True)
         If True, a copy of X will be created. If False, imputation will
-        be done in-place.
+        be done in-place. Note that if X is sparse and missing_values=0, then
+        a new copy is made, even if copy=False.
 
     Attributes
     ----------
@@ -337,14 +340,13 @@ class Imputer(BaseEstimator, TransformerMixin):
         X : {array-like, sparse matrix}, shape = [n_samples, n_features]
             The input data to complete.
         """
-        if self.copy and not isinstance(X, list):
-            X = X.copy()
+        X = as_float_array(X, copy=self.copy) # Copy just once
 
         # Since two different arrays can be provided in fit(X) and
         # transform(X), the imputation data need to be recomputed
         # when the imputation is done per sample
         if self.axis == 1:
-            X = atleast2d_or_csr(X, force_all_finite=False).astype(np.float)
+            X = atleast2d_or_csr(X, force_all_finite=False, copy=False)
 
             if sparse.issparse(X):
                 statistics = self._sparse_fit(X,
@@ -358,7 +360,7 @@ class Imputer(BaseEstimator, TransformerMixin):
                                              self.missing_values,
                                              self.axis)
         else:
-            X = atleast2d_or_csc(X, force_all_finite=False).astype(np.float)
+            X = atleast2d_or_csc(X, force_all_finite=False, copy=False)
             statistics = self.statistics_
 
         # Delete the invalid rows/columns
