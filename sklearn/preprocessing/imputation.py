@@ -10,7 +10,6 @@ from scipy import sparse
 from scipy import stats
 
 from ..base import BaseEstimator, TransformerMixin
-from ..utils import check_arrays
 from ..utils import array2d
 from ..utils import atleast2d_or_csr
 from ..utils import atleast2d_or_csc
