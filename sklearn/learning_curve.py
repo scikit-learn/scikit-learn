@@ -81,7 +81,7 @@ def learning_curve(estimator, X, y, n_samples_range=np.linspace(0.1, 1.0, 10),
     n_max_required_samples = np.max(n_samples_range)
     if np.issubdtype(n_samples_range.dtype, np.float):
         if n_min_required_samples <= 0.0 or n_max_required_samples > 1.0:
-            raise ValueError("n_samples_range must be within ]0, 1], "
+            raise ValueError("n_samples_range must be within (0, 1], "
                              "but is within [%f, %f]."
                              % (n_min_required_samples,
                                 n_max_required_samples))
@@ -94,7 +94,7 @@ def learning_curve(estimator, X, y, n_samples_range=np.linspace(0.1, 1.0, 10),
     else:
         if (n_min_required_samples <= 0 or
             n_max_required_samples > n_max_training_samples):
-            raise ValueError("n_samples_range must be within ]0, %d], "
+            raise ValueError("n_samples_range must be within (0, %d], "
                              "but is within [%d, %d]."
                              % (n_max_training_samples,
                                 n_min_required_samples,
@@ -125,7 +125,10 @@ def learning_curve(estimator, X, y, n_samples_range=np.linspace(0.1, 1.0, 10),
 
 def _fit_estimator(base_estimator, X, y, train, test, n_train_samples,
                    scorer, verbose):
+    # HACK as long as boolean indices are allowed in cv generators
+    if train.dtype == np.bool:
+        train = np.nonzero(train)
     test_score, _, train_score, _ = _split_and_score(
-            base_estimator, X, y, parameters={}, train=train[:n_train_samples], # TODO slice does not work for booleans, slice after indexing
+            base_estimator, X, y, parameters={}, train=train[:n_train_samples],
             test=test, scorer=scorer, return_train_score=True)
     return train_score, test_score
