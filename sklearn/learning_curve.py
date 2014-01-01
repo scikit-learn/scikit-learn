@@ -38,10 +38,10 @@ def learning_curve(estimator, X, y,
                            n_max_training_samples).astype(np.int)
     else:
         if (n_min_required_samples <= 0 or
-            n_max_required_samples > n_max_samples):
+            n_max_required_samples > n_max_training_samples):
             raise ValueError("n_samples_range must be within ]0, %d], "
                              "but is within [%d, %d]."
-                             % (n_max_samples,
+                             % (n_max_training_samples,
                                 n_min_required_samples,
                                 n_max_required_samples))
 
