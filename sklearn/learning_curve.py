@@ -27,7 +27,7 @@ def learning_curve(estimator, X, y,
     n_samples_range : array-like, shape = [n_ticks,], dtype float or int
         Numbers of training examples that will be used to generate the
         learning curve. If the dtype is float, it is regarded as a
-        fraction of n_samples, i.e. it has to be within ]0, 1].
+        fraction of n_samples, i.e. it has to be within (0, 1].
         (default: np.linspace(0.1, 1.0, 10))
 
     cv : integer, cross-validation generator or None, optional, default: None
@@ -48,9 +48,10 @@ def learning_curve(estimator, X, y,
 
     Returns
     -------
-    n_samples_range : array, shape = [n_ticks,], dtype int
+    n_samples_range : array, shape = [n_unique_ticks,], dtype int
         Numbers of training examples that has been used to generate the
-        learning curve.
+        learning curve. Note that the number of ticks might be less
+        than n_ticks because duplicate entries will be removed.
 
     train_scores : array, shape = [n_ticks,]
         Scores on training sets.
@@ -59,8 +60,6 @@ def learning_curve(estimator, X, y,
         Scores on test set.
     """
     # TODO tests, doc
-    # TODO allow y to be None for unsupervised learning
-    # TODO there is an overlap with grid search -> refactoring
     # TODO exploit incremental learning
     # TODO use verbose argument
 
@@ -79,8 +78,8 @@ def learning_curve(estimator, X, y,
                              "but is within [%f, %f]."
                              % (n_min_required_samples,
                                 n_max_required_samples))
-        n_samples_range = (n_samples_range *
-                           n_max_training_samples).astype(np.int)
+        n_samples_range = np.unique((n_samples_range *
+                                     n_max_training_samples).astype(np.int))
     else:
         if (n_min_required_samples <= 0 or
             n_max_required_samples > n_max_training_samples):
@@ -99,20 +98,19 @@ def learning_curve(estimator, X, y,
             delayed(_fit_estimator)(
                 estimator, X, y, train, test, n_train_samples,
                 scorer, verbose)
-            for train, test in cv for n_train_samples in n_samples_range)
+            for n_train_samples in n_samples_range for train, test in cv)
 
-    out = np.asarray(out)
-    train_scores = np.zeros(n_samples_range.shape, dtype=np.float)
-    test_scores = np.zeros(n_samples_range.shape, dtype=np.float)
-    for i, n_train_samples in enumerate(n_samples_range):
-        res_indices = np.where(out[:, 0] == n_train_samples)
-        train_scores[i], test_scores[i] = out[res_indices[0], 1:].mean(axis=0)
+    out = np.array(out)
+    n_unique_ticks = n_samples_range.shape[0]
+    n_cv_folds = out.shape[0]/n_unique_ticks
+    out = out.reshape(n_unique_ticks, n_cv_folds, 2)
+    avg_over_cv = out.mean(axis=1).reshape(n_unique_ticks, 2)
 
-    return n_samples_range, train_scores, test_scores
+    return n_samples_range, avg_over_cv[:, 0], avg_over_cv[:, 1]
 
 def _fit_estimator(base_estimator, X, y, train, test, n_train_samples,
                    scorer, verbose):
     test_score, _, train_score, _ = _split_and_score(
             base_estimator, X, y, parameters={}, train=train[:n_train_samples],
             test=test, scorer=scorer, return_train_score=True)
-    return n_train_samples, train_score, test_score
+    return train_score, test_score
