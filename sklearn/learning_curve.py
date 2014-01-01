@@ -6,7 +6,7 @@ from .externals.joblib import Parallel, delayed
 from .metrics.scorer import _deprecate_loss_and_score_funcs
 
 def learning_curve(estimator, X, y,
-                   n_samples_range=np.arange(0.1, 1.1, 0.1), cv=None, scoring=None,
+                   n_samples_range=np.linspace(0.1, 1.0, 10), cv=None, scoring=None,
                    n_jobs=1, verbose=False, random_state=None):
     """ TODO document me
     Parameters
@@ -28,7 +28,7 @@ def learning_curve(estimator, X, y,
     n_samples_range = np.asarray(n_samples_range)
     n_min_required_samples = np.min(n_samples_range)
     n_max_required_samples = np.max(n_samples_range)
-    if np.issubdtype(n_samples_range.dtype, float):
+    if np.issubdtype(n_samples_range.dtype, np.float):
         if n_min_required_samples <= 0.0 or n_max_required_samples > 1.0:
             raise ValueError("n_samples_range must be within ]0, 1], "
                              "but is within [%f, %f]."
@@ -61,19 +61,22 @@ def learning_curve(estimator, X, y,
                 "does not." % estimator)
         scorer = _deprecate_loss_and_score_funcs(scoring=scoring)
 
-    scores = []
-    for n_train_samples in n_samples_range:
-        out = Parallel(
-            # TODO set pre_dispatch parameter? what is it good for?
-            n_jobs=n_jobs, verbose=verbose)(
-                delayed(_fit_estimator)(
-                    estimator, X, y, train[:n_train_samples], test, scorer,
-                    verbose)
-                for train, test in cv)
-        scores.append(np.mean(out, axis=0))
-    scores = np.array(scores)
+    out = Parallel(
+        # TODO use pre_dispatch parameter? what is it good for?
+        n_jobs=n_jobs, verbose=verbose)(
+            delayed(_fit_estimator)(
+                estimator, X, y, train[:n_train_samples], test, scorer,
+                verbose)
+            for train, test in cv for n_train_samples in n_samples_range)
 
-    return n_samples_range, scores[:, 0], scores[:, 1]
+    out = np.asarray(out)
+    train_scores = np.zeros(n_samples_range.shape, dtype=np.float)
+    test_scores = np.zeros(n_samples_range.shape, dtype=np.float)
+    for i, n_train_samples in enumerate(n_samples_range):
+        res_indices = np.where(out[:, 0] == n_train_samples)
+        train_scores[i], test_scores[i] = out[res_indices[0], 1:].mean(axis=0)
+
+    return n_samples_range, train_scores, test_scores
 
 def _fit_estimator(base_estimator, X, y, train, test, scorer, verbose):
     # TODO similar to fit_grid_point from grid search, refactor
@@ -85,4 +88,4 @@ def _fit_estimator(base_estimator, X, y, train, test, scorer, verbose):
     else:
         train_score = scorer(estimator, X[train], y[train])
         test_score = scorer(estimator, X[test], y[test])
-    return train_score, test_score
+    return train.shape[0], train_score, test_score
