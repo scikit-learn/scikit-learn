@@ -6,8 +6,8 @@ from .externals.joblib import Parallel, delayed
 from .metrics.scorer import _deprecate_loss_and_score_funcs
 from .grid_search import _check_scorable, _split_and_score
 
-def learning_curve(estimator, X, y,
-                   n_samples_range=np.linspace(0.1, 1.0, 10), cv=None, scoring=None,
+def learning_curve(estimator, X, y, n_samples_range=np.linspace(0.1, 1.0, 10),
+                   cv=None, scoring=None, exploit_incremental_learning=False,
                    n_jobs=1, verbose=0):
     """ TODO document me
 
@@ -40,6 +40,10 @@ def learning_curve(estimator, X, y,
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)``.
 
+    exploit_incremental_learning : boolean, optional, default: False
+        If the estimator supports incremental learning, this will be
+        used to speed up fitting for different training set sizes.
+
     n_jobs : integer, optional
         Number of jobs to run in parallel (default 1).
 
@@ -60,12 +64,15 @@ def learning_curve(estimator, X, y,
         Scores on test set.
     """
     # TODO tests, doc
-    # TODO exploit incremental learning
     # TODO use verbose argument
 
     X, y = check_arrays(X, y, sparse_format='csr', allow_lists=True)
     # Make a list since we will be iterating multiple times over the folds
     cv = list(_check_cv(cv, X, y, classifier=is_classifier(estimator)))
+
+    if exploit_incremental_learning and not hasattr(estimator, 'partial_fit'):
+        raise ValueError('An estimator must support the partial_fit interface '
+                         'to exploit incremental learning')
 
     # Determine range of number of training samples
     n_max_training_samples = cv[0][0].shape[0]
@@ -80,6 +87,10 @@ def learning_curve(estimator, X, y,
                                 n_max_required_samples))
         n_samples_range = np.unique((n_samples_range *
                                      n_max_training_samples).astype(np.int))
+        # TODO we could
+        # - print a warning
+        # - *, inverse = np.unique(*, return_inverse=True); return np.take(., inverse)
+        # if there are duplicate elements
     else:
         if (n_min_required_samples <= 0 or
             n_max_required_samples > n_max_training_samples):
@@ -92,25 +103,29 @@ def learning_curve(estimator, X, y,
     _check_scorable(estimator, scoring=scoring)
     scorer = _deprecate_loss_and_score_funcs(scoring=scoring)
 
-    out = Parallel(
-        # TODO use pre_dispatch parameter? what is it good for?
-        n_jobs=n_jobs, verbose=verbose)(
-            delayed(_fit_estimator)(
-                estimator, X, y, train, test, n_train_samples,
-                scorer, verbose)
-            for n_train_samples in n_samples_range for train, test in cv)
+    if exploit_incremental_learning:
+        # TODO exploit incremental learning 
+        pass
+    else:
+        out = Parallel(
+            # TODO use pre_dispatch parameter? what is it good for?
+            n_jobs=n_jobs, verbose=verbose)(
+                delayed(_fit_estimator)(
+                    estimator, X, y, train, test, n_train_samples,
+                    scorer, verbose)
+                for n_train_samples in n_samples_range for train, test in cv)
 
-    out = np.array(out)
-    n_unique_ticks = n_samples_range.shape[0]
-    n_cv_folds = out.shape[0]/n_unique_ticks
-    out = out.reshape(n_unique_ticks, n_cv_folds, 2)
-    avg_over_cv = out.mean(axis=1).reshape(n_unique_ticks, 2)
+        out = np.array(out)
+        n_unique_ticks = n_samples_range.shape[0]
+        n_cv_folds = out.shape[0]/n_unique_ticks
+        out = out.reshape(n_unique_ticks, n_cv_folds, 2)
+        avg_over_cv = out.mean(axis=1).reshape(n_unique_ticks, 2)
 
-    return n_samples_range, avg_over_cv[:, 0], avg_over_cv[:, 1]
+        return n_samples_range, avg_over_cv[:, 0], avg_over_cv[:, 1]
 
 def _fit_estimator(base_estimator, X, y, train, test, n_train_samples,
                    scorer, verbose):
     test_score, _, train_score, _ = _split_and_score(
-            base_estimator, X, y, parameters={}, train=train[:n_train_samples],
+            base_estimator, X, y, parameters={}, train=train[:n_train_samples], # TODO slice does not work for booleans, slice after indexing
             test=test, scorer=scorer, return_train_score=True)
     return train_score, test_score
