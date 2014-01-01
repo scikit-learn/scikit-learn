@@ -2,7 +2,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.naive_bayes import GaussianNB
 from sklearn.datasets import load_digits
-from sklearn.cross_validation import KFold
 from sklearn.learning_curve import learning_curve # TODO should be: from sklearn import learning_curve
 
 if __name__ == "__main__":
@@ -11,7 +10,7 @@ if __name__ == "__main__":
     X, y = digits.data, digits.target
 
     n_samples_range, train_scores, test_scores = learning_curve(
-        estimator, X, y, cv=KFold(n=X.shape[0], n_folds=10), n_jobs=4, verbose=False)
+        estimator, X, y, cv=10, n_jobs=4, verbose=False)
 
     plt.title("Learning Curves (Naive Bayes on Digits Dataset)")
     plt.xlabel("Training examples")
