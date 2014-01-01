@@ -29,6 +29,7 @@ from sklearn.utils.testing import all_estimators
 from sklearn.utils.testing import meta_estimators
 from sklearn.utils.testing import set_random_state
 from sklearn.utils.testing import assert_greater
+from sklearn.utils.testing import SkipTest
 
 import sklearn
 from sklearn.base import (clone, ClassifierMixin, RegressorMixin,
@@ -985,8 +986,16 @@ def check_class_weight_classifiers(name, Classifier, X_train, y_train, X_test,
     assert_greater(np.mean(y_pred == 0), 0.9)
 
 
-def test_class_weight_auto_classifiers():
-    # test that class_weight="auto" improves f1-score
+def test_class_weight_auto_classifies():
+    """Test that class_weight="auto" improves f1-score"""
+
+    # This test is broken; its success depends on:
+    # * a rare fortuitous RNG seed for make_classification; and
+    # * the use of binary F1 over a seemingly arbitrary positive class for two
+    #   datasets, and weighted average F1 for the third.
+    # Its expectations need to be clarified and reimplemented.
+    raise SkipTest('This test requires redefinition')
+
     classifiers = all_estimators(type_filter='classifier')
 
     with warnings.catch_warnings(record=True):
