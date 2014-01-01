@@ -7,17 +7,61 @@ from .metrics.scorer import _deprecate_loss_and_score_funcs
 
 def learning_curve(estimator, X, y,
                    n_samples_range=np.linspace(0.1, 1.0, 10), cv=None, scoring=None,
-                   n_jobs=1, verbose=False, random_state=None):
+                   n_jobs=1, verbose=0):
     """ TODO document me
+
     Parameters
     ----------
-    n_samples_range : array-like with dtype float or int,
-        If the dtype is float, it is regarded as a fraction of n_samples, i.e. it has to be within ]0, 1].
+    estimator : object type that implements the "fit" and "predict" methods
+        An object of that type is instantiated for each validation.
+
+    X : array-like, shape = [n_samples, n_features]
+        Training vector, where n_samples is the number of samples and
+        n_features is the number of features.
+
+    y : array-like, shape = [n_samples] or [n_samples, n_output], optional
+        Target relative to X for classification or regression;
+        None for unsupervised learning.
+
+    n_samples_range : array-like, shape = [n_ticks,], dtype float or int
+        Numbers of training examples that will be used to generate the
+        learning curve. If the dtype is float, it is regarded as a
+        fraction of n_samples, i.e. it has to be within ]0, 1].
+        (default: np.linspace(0.1, 1.0, 10))
+
+    cv : integer, cross-validation generator or None, optional, default: None
+        If an integer is passed, it is the number of folds (default 3).
+        Specific cross-validation objects can be passed, see
+        sklearn.cross_validation module for the list of possible objects
+
+    scoring : string, callable or None, optional, default: None
+        A string (see model evaluation documentation) or
+        a scorer callable object / function with signature
+        ``scorer(estimator, X, y)``.
+
+    n_jobs : integer, optional
+        Number of jobs to run in parallel (default 1).
+
+    verbose : integer, optional
+        Controls the verbosity: the higher, the more messages.
+
+    Returns
+    -------
+    n_samples_range : array, shape = [n_ticks,], dtype int
+        Numbers of training examples that has been used to generate the
+        learning curve.
+
+    train_scores : array, shape = [n_ticks,]
+        Scores on training sets.
+
+    test_scores : array, shape = [n_ticks,]
+        Scores on test set.
     """
     # TODO tests, doc
     # TODO allow y to be None for unsupervised learning
     # TODO there is an overlap with grid search -> refactoring
     # TODO exploit incremental learning
+    # TODO use verbose argument
 
     X, y = check_arrays(X, y, sparse_format='csr', allow_lists=True)
     # Make a list since we will be iterating multiple times over the folds
