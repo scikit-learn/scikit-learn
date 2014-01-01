@@ -331,6 +331,24 @@ class _CVScoreTuple (namedtuple('_CVScoreTuple',
             self.parameters)
 
 
+def _check_scorable(estimator, scoring=None, loss_func=None, score_func=None):
+    """Check that estimator can be fitted and score can be computed."""
+    if (not hasattr(estimator, 'fit') or
+            not (hasattr(estimator, 'predict')
+                    or hasattr(estimator, 'score'))):
+        raise TypeError("estimator should a be an estimator implementing"
+                        " 'fit' and 'predict' or 'score' methods,"
+                        " %s (type %s) was passed" %
+                        (estimator, type(estimator)))
+    if (scoring is None and loss_func is None and score_func
+            is None):
+        if not hasattr(estimator, 'score'):
+            raise TypeError(
+                "If no scoring is specified, the estimator passed "
+                "should have a 'score' method. The estimator %s "
+                "does not." % estimator)
+
+
 class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                                       MetaEstimatorMixin)):
     """Base class for hyper parameter search with cross-validation."""
@@ -398,21 +416,8 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         return self.best_estimator_.transform
 
     def _check_estimator(self):
-        """Check that estimator can be fitted and score can be computed."""
-        if (not hasattr(self.estimator, 'fit') or
-                not (hasattr(self.estimator, 'predict')
-                     or hasattr(self.estimator, 'score'))):
-            raise TypeError("estimator should a be an estimator implementing"
-                            " 'fit' and 'predict' or 'score' methods,"
-                            " %s (type %s) was passed" %
-                            (self.estimator, type(self.estimator)))
-        if (self.scoring is None and self.loss_func is None and self.score_func
-                is None):
-            if not hasattr(self.estimator, 'score'):
-                raise TypeError(
-                    "If no scoring is specified, the estimator passed "
-                    "should have a 'score' method. The estimator %s "
-                    "does not." % self.estimator)
+        _check_scorable(self.estimator, scoring=self.scoring,
+                        loss_func=self.loss_func, score_func=self.score_func)
 
     def _fit(self, X, y, parameter_iterable):
         """Actual fitting,  performing the search over parameters."""

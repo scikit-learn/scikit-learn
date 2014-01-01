@@ -4,6 +4,7 @@ from .cross_validation import _check_cv
 from .utils import check_arrays
 from .externals.joblib import Parallel, delayed
 from .metrics.scorer import _deprecate_loss_and_score_funcs
+from .grid_search import _check_scorable
 
 def learning_curve(estimator, X, y,
                    n_samples_range=np.linspace(0.1, 1.0, 10), cv=None, scoring=None,
@@ -89,21 +90,8 @@ def learning_curve(estimator, X, y,
                                 n_min_required_samples,
                                 n_max_required_samples))
 
-    # TODO copied from BaseGridSearch -> move to utils? .base? where?
-    if (not hasattr(estimator, 'fit') or
-            not (hasattr(estimator, 'predict')
-                  or hasattr(estimator, 'score'))):
-        raise TypeError("estimator should a be an estimator implementing"
-                        " 'fit' and 'predict' or 'score' methods,"
-                        " %s (type %s) was passed" %
-                        (estimator, type(estimator)))
-    if scoring is None:
-        if not hasattr(estimator, 'score'):
-            raise TypeError(
-                "If no scoring is specified, the estimator passed "
-                "should have a 'score' method. The estimator %s "
-                "does not." % estimator)
-        scorer = _deprecate_loss_and_score_funcs(scoring=scoring)
+    _check_scorable(estimator, scoring=scoring)
+    scorer = _deprecate_loss_and_score_funcs(scoring=scoring)
 
     out = Parallel(
         # TODO use pre_dispatch parameter? what is it good for?
