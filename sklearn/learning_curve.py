@@ -1,35 +1,49 @@
 import numpy as np
-from .base import clone
-from .cross_validation import KFold
+from .base import is_classifier, clone
+from .cross_validation import _check_cv
+from .utils import check_arrays
 from .externals.joblib import Parallel, delayed
 from .metrics.scorer import _deprecate_loss_and_score_funcs
 
-def learning_curve(estimator, X, y, n_samples_range=None, step_size=1,
-                   n_cv_folds=10, loss_func=None, scoring=None,
+def learning_curve(estimator, X, y,
+                   n_samples_range=np.arange(0.1, 1.1, 0.1), cv=None, scoring=None,
                    n_jobs=1, verbose=False, random_state=None):
+    """ TODO document me
+    Parameters
+    ----------
+    n_samples_range : array-like with dtype float or int,
+        If the dtype is float, it is regarded as a fraction of n_samples, i.e. it has to be within ]0, 1].
+    """
     # TODO tests, doc
     # TODO allow y to be None for unsupervised learning
-    # TODO test different n_cv_folds / dataset sizes / etc. (there could be bugs)
-    # TODO there is a huge overlap with grid search -> refactoring
-    # TODO exploit incremental learning?! (might be a bit complicated with CV)
+    # TODO there is an overlap with grid search -> refactoring
+    # TODO exploit incremental learning
 
-    n_samples = X.shape[0]
-    max_fold_size = n_samples / n_cv_folds
+    X, y = check_arrays(X, y, sparse_format='csr', allow_lists=True)
+    # Make a list since we will be iterating multiple times over the folds
+    cv = list(_check_cv(cv, X, y, classifier=is_classifier(estimator)))
 
-    if n_samples_range is None:
-        if step_size is None or step_size < 1:
-            raise ValueError("Define either a range of training set sizes or "
-                             "a proper step size.")
-        n_samples_range = np.arange(n_cv_folds-1, n_samples-max_fold_size+1,
-                                    step_size)
-
-    n_max_samples = np.max(n_samples_range)
-    n_required_samples = n_max_samples + max_fold_size
-    if n_samples < n_required_samples:
-        raise ValueError(
-                "For %d-fold cross-validation with %d training examples, "
-                "%d samples are required (got %d)."
-                % (n_cv_folds, n_max_samples, n_required_samples, n_samples))
+    # Determine range of number of training samples
+    n_max_training_samples = cv[0][0].shape[0]
+    n_samples_range = np.asarray(n_samples_range)
+    n_min_required_samples = np.min(n_samples_range)
+    n_max_required_samples = np.max(n_samples_range)
+    if np.issubdtype(n_samples_range.dtype, float):
+        if n_min_required_samples <= 0.0 or n_max_required_samples > 1.0:
+            raise ValueError("n_samples_range must be within ]0, 1], "
+                             "but is within [%f, %f]."
+                             % (n_min_required_samples,
+                                n_max_required_samples))
+        n_samples_range = (n_samples_range *
+                           n_max_training_samples).astype(np.int)
+    else:
+        if (n_min_required_samples <= 0 or
+            n_max_required_samples > n_max_samples):
+            raise ValueError("n_samples_range must be within ]0, %d], "
+                             "but is within [%d, %d]."
+                             % (n_max_samples,
+                                n_min_required_samples,
+                                n_max_required_samples))
 
     # TODO copied from BaseGridSearch -> move to utils? .base? where?
     if (not hasattr(estimator, 'fit') or
@@ -39,28 +53,22 @@ def learning_curve(estimator, X, y, n_samples_range=None, step_size=1,
                         " 'fit' and 'predict' or 'score' methods,"
                         " %s (type %s) was passed" %
                         (estimator, type(estimator)))
-    if scoring is None and loss_func is None:
+    if scoring is None:
         if not hasattr(estimator, 'score'):
             raise TypeError(
                 "If no scoring is specified, the estimator passed "
                 "should have a 'score' method. The estimator %s "
                 "does not." % estimator)
-        scorer = _deprecate_loss_and_score_funcs(loss_func=loss_func,
-                                                 scoring=scoring)
+        scorer = _deprecate_loss_and_score_funcs(scoring=scoring)
 
     scores = []
     for n_train_samples in n_samples_range:
-        # TODO maybe take random indices instead of the first slice_length?
-        fold_size = (n_train_samples+1) / n_cv_folds
-        slice_length = n_train_samples + fold_size
-        cv = KFold(n=slice_length, n_folds=n_cv_folds,
-                   random_state=random_state)
-
         out = Parallel(
             # TODO set pre_dispatch parameter? what is it good for?
             n_jobs=n_jobs, verbose=verbose)(
-                delayed(_fit_estimator)(estimator, X, y, train, test, scorer,
-                                       verbose)
+                delayed(_fit_estimator)(
+                    estimator, X, y, train[:n_train_samples], test, scorer,
+                    verbose)
                 for train, test in cv)
         scores.append(np.mean(out, axis=0))
     scores = np.array(scores)
