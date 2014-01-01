@@ -235,9 +235,26 @@ def fit_grid_point(X, y, base_estimator, parameters, train, test, scorer,
                       for k, v in parameters.items()))
         print("[GridSearchCV] %s %s" % (msg, (64 - len(msg)) * '.'))
 
+    this_score, n_test_samples = _split_and_score(
+            base_estimator, X, y, parameters, train, test, scorer,
+            return_train_score=False, **fit_params)
+
+    if verbose > 2:
+        msg += ", score=%f" % this_score
+    if verbose > 1:
+        end_msg = "%s -%s" % (msg,
+                              logger.short_format_time(time.time() -
+                                                       start_time))
+        print("[GridSearchCV] %s %s" % ((64 - len(end_msg)) * '.', end_msg))
+
+    return this_score, parameters, n_test_samples
+
+
+def _split_and_score(base_estimator, X, y, parameters, train, test, scorer,
+                     return_train_score=False, **fit_params):
     # update parameters of the classifier after a copy of its base structure
-    clf = clone(base_estimator)
-    clf.set_params(**parameters)
+    estimator = clone(base_estimator)
+    estimator.set_params(**parameters)
 
     if hasattr(base_estimator, 'kernel') and callable(base_estimator.kernel):
         # cannot compute the kernel values with custom function
@@ -261,34 +278,48 @@ def fit_grid_point(X, y, base_estimator, parameters, train, test, scorer,
             X_train = X[safe_mask(X, train)]
             X_test = X[safe_mask(X, test)]
 
-    if y is None:
-        clf.fit(X_train, **fit_params)
-        if scorer is None:
-            this_score = clf.score(X_test)
-        else:
-            this_score = scorer(clf, X_test)
-    else:
+    if y is not None:
         y_test = y[safe_mask(y, test)]
         y_train = y[safe_mask(y, train)]
-        clf.fit(X_train, y_train, **fit_params)
+    else:
+        y_test = None
+        y_train = None
 
-        if scorer is None:
-            this_score = clf.score(X_test, y_test)
-        else:
-            this_score = scorer(clf, X_test, y_test)
+    _fit(estimator, X_train, y_train, **fit_params)
+    test_score = _score(estimator, X_test, y_test, scorer)
 
-    if not isinstance(this_score, numbers.Number):
+    if not isinstance(test_score, numbers.Number):
         raise ValueError("scoring must return a number, got %s (%s)"
-                         " instead." % (str(this_score), type(this_score)))
+                         " instead." % (str(test_score), type(test_score)))
 
-    if verbose > 2:
-        msg += ", score=%f" % this_score
-    if verbose > 1:
-        end_msg = "%s -%s" % (msg,
-                              logger.short_format_time(time.time() -
-                                                       start_time))
-        print("[GridSearchCV] %s %s" % ((64 - len(end_msg)) * '.', end_msg))
-    return this_score, parameters, _num_samples(X_test)
+    if return_train_score:
+        train_score = _score(estimator, X_train, y_train, scorer)
+        return (test_score, _num_samples(X_test), train_score,
+                _num_samples(X_train))
+    else:
+        return test_score, _num_samples(X_test)
+
+
+def _fit(estimator, X_train, y_train, **fit_params):
+    if y_train is None:
+        estimator.fit(X_train, **fit_params)
+    else:
+        estimator.fit(X_train, y_train, **fit_params)
+
+
+def _score(estimator, X_test, y_test, scorer):
+    if y_test is None:
+        if scorer is None:
+            this_score = estimator.score(X_test)
+        else:
+            this_score = scorer(estimator, X_test)
+    else:
+        if scorer is None:
+            this_score = estimator.score(X_test, y_test)
+        else:
+            this_score = scorer(estimator, X_test, y_test)
+
+    return this_score
 
 
 def _check_param_grid(param_grid):

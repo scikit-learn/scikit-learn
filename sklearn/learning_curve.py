@@ -4,7 +4,7 @@ from .cross_validation import _check_cv
 from .utils import check_arrays
 from .externals.joblib import Parallel, delayed
 from .metrics.scorer import _deprecate_loss_and_score_funcs
-from .grid_search import _check_scorable
+from .grid_search import _check_scorable, _split_and_score
 
 def learning_curve(estimator, X, y,
                    n_samples_range=np.linspace(0.1, 1.0, 10), cv=None, scoring=None,
@@ -97,8 +97,8 @@ def learning_curve(estimator, X, y,
         # TODO use pre_dispatch parameter? what is it good for?
         n_jobs=n_jobs, verbose=verbose)(
             delayed(_fit_estimator)(
-                estimator, X, y, train[:n_train_samples], test, scorer,
-                verbose)
+                estimator, X, y, train, test, n_train_samples,
+                scorer, verbose)
             for train, test in cv for n_train_samples in n_samples_range)
 
     out = np.asarray(out)
@@ -110,14 +110,9 @@ def learning_curve(estimator, X, y,
 
     return n_samples_range, train_scores, test_scores
 
-def _fit_estimator(base_estimator, X, y, train, test, scorer, verbose):
-    # TODO similar to fit_grid_point from grid search, refactor
-    estimator = clone(base_estimator)
-    estimator.fit(X[train], y[train])
-    if scorer is None:
-        train_score = estimator.score(X[train], y[train])
-        test_score = estimator.score(X[test], y[test])
-    else:
-        train_score = scorer(estimator, X[train], y[train])
-        test_score = scorer(estimator, X[test], y[test])
-    return train.shape[0], train_score, test_score
+def _fit_estimator(base_estimator, X, y, train, test, n_train_samples,
+                   scorer, verbose):
+    test_score, _, train_score, _ = _split_and_score(
+            base_estimator, X, y, parameters={}, train=train[:n_train_samples],
+            test=test, scorer=scorer, return_train_score=True)
+    return n_train_samples, train_score, test_score
