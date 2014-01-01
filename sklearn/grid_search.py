@@ -261,21 +261,21 @@ def fit_grid_point(X, y, base_estimator, parameters, train, test, scorer,
             X_train = X[safe_mask(X, train)]
             X_test = X[safe_mask(X, test)]
 
-    if y is not None:
+    if y is None:
+        clf.fit(X_train, **fit_params)
+        if scorer is None:
+            this_score = clf.score(X_test)
+        else:
+            this_score = scorer(clf, X_test)
+    else:
         y_test = y[safe_mask(y, test)]
         y_train = y[safe_mask(y, train)]
         clf.fit(X_train, y_train, **fit_params)
 
-        if scorer is not None:
-            this_score = scorer(clf, X_test, y_test)
-        else:
+        if scorer is None:
             this_score = clf.score(X_test, y_test)
-    else:
-        clf.fit(X_train, **fit_params)
-        if scorer is not None:
-            this_score = scorer(clf, X_test)
         else:
-            this_score = clf.score(X_test)
+            this_score = scorer(clf, X_test, y_test)
 
     if not isinstance(this_score, numbers.Number):
         raise ValueError("scoring must return a number, got %s (%s)"
