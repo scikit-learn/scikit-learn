@@ -1,4 +1,5 @@
 import numpy as np
+import warnings
 from .base import is_classifier, clone
 from .cross_validation import _check_cv
 from .utils import check_arrays
@@ -9,7 +10,10 @@ from .grid_search import _check_scorable, _split_and_score
 def learning_curve(estimator, X, y, n_samples_range=np.linspace(0.1, 1.0, 10),
                    cv=None, scoring=None, exploit_incremental_learning=False,
                    n_jobs=1, verbose=0):
-    """ TODO document me
+    """Learning curve
+
+    Determines cross-validated training and test scores for different training
+    set sizes.
 
     Parameters
     ----------
@@ -63,49 +67,26 @@ def learning_curve(estimator, X, y, n_samples_range=np.linspace(0.1, 1.0, 10),
     test_scores : array, shape = [n_ticks,]
         Scores on test set.
     """
-    # TODO tests, doc
     # TODO use verbose argument
-
-    X, y = check_arrays(X, y, sparse_format='csr', allow_lists=True)
-    # Make a list since we will be iterating multiple times over the folds
-    cv = list(_check_cv(cv, X, y, classifier=is_classifier(estimator)))
 
     if exploit_incremental_learning and not hasattr(estimator, 'partial_fit'):
         raise ValueError('An estimator must support the partial_fit interface '
                          'to exploit incremental learning')
 
-    # Determine range of number of training samples
+    X, y = check_arrays(X, y, sparse_format='csr', allow_lists=True)
+    # Make a list since we will be iterating multiple times over the folds
+    cv = list(_check_cv(cv, X, y, classifier=is_classifier(estimator)))
+
     n_max_training_samples = cv[0][0].shape[0]
-    n_samples_range = np.asarray(n_samples_range)
-    n_min_required_samples = np.min(n_samples_range)
-    n_max_required_samples = np.max(n_samples_range)
-    if np.issubdtype(n_samples_range.dtype, np.float):
-        if n_min_required_samples <= 0.0 or n_max_required_samples > 1.0:
-            raise ValueError("n_samples_range must be within (0, 1], "
-                             "but is within [%f, %f]."
-                             % (n_min_required_samples,
-                                n_max_required_samples))
-        n_samples_range = np.unique((n_samples_range *
-                                     n_max_training_samples).astype(np.int))
-        # TODO we could
-        # - print a warning
-        # - *, inverse = np.unique(*, return_inverse=True); return np.take(., inverse)
-        # if there are duplicate elements
-    else:
-        if (n_min_required_samples <= 0 or
-            n_max_required_samples > n_max_training_samples):
-            raise ValueError("n_samples_range must be within (0, %d], "
-                             "but is within [%d, %d]."
-                             % (n_max_training_samples,
-                                n_min_required_samples,
-                                n_max_required_samples))
+    n_samples_range, n_unique_ticks = _translate_n_samples_range(
+            n_samples_range, n_max_training_samples)
 
     _check_scorable(estimator, scoring=scoring)
     scorer = _deprecate_loss_and_score_funcs(scoring=scoring)
 
     if exploit_incremental_learning:
+        raise NotImplemented("Incremental learning is not supported yet")
         # TODO exploit incremental learning 
-        pass
     else:
         out = Parallel(
             # TODO use pre_dispatch parameter? what is it good for?
@@ -116,12 +97,46 @@ def learning_curve(estimator, X, y, n_samples_range=np.linspace(0.1, 1.0, 10),
                 for n_train_samples in n_samples_range for train, test in cv)
 
         out = np.array(out)
-        n_unique_ticks = n_samples_range.shape[0]
         n_cv_folds = out.shape[0]/n_unique_ticks
         out = out.reshape(n_unique_ticks, n_cv_folds, 2)
         avg_over_cv = out.mean(axis=1).reshape(n_unique_ticks, 2)
 
         return n_samples_range, avg_over_cv[:, 0], avg_over_cv[:, 1]
+
+
+def _translate_n_samples_range(n_samples_range, n_max_training_samples):
+    """Determine range of number of training samples"""
+    n_samples_range = np.asarray(n_samples_range)
+    n_ticks = n_samples_range.shape[0]
+    n_min_required_samples = np.min(n_samples_range)
+    n_max_required_samples = np.max(n_samples_range)
+    if np.issubdtype(n_samples_range.dtype, np.float):
+        if n_min_required_samples <= 0.0 or n_max_required_samples > 1.0:
+            raise ValueError("n_samples_range must be within (0, 1], "
+                             "but is within [%f, %f]."
+                             % (n_min_required_samples,
+                                n_max_required_samples))
+        n_samples_range = (n_samples_range * n_max_training_samples
+                ).astype(np.int)
+        n_samples_range = np.clip(n_samples_range, 1, n_max_training_samples)
+    else:
+        if (n_min_required_samples <= 0 or
+            n_max_required_samples > n_max_training_samples):
+            raise ValueError("n_samples_range must be within (0, %d], "
+                             "but is within [%d, %d]."
+                             % (n_max_training_samples,
+                                n_min_required_samples,
+                                n_max_required_samples))
+
+    n_samples_range = np.unique(n_samples_range)
+    n_unique_ticks = n_samples_range.shape[0]
+    if n_ticks > n_unique_ticks:
+        warnings.warn("Number of ticks will be less than than the size of "
+                      "'n_samples_range' (%d instead of %d)."
+                      % (n_unique_ticks, n_ticks), RuntimeWarning)
+
+    return n_samples_range, n_unique_ticks
+
 
 def _fit_estimator(base_estimator, X, y, train, test, n_train_samples,
                    scorer, verbose):

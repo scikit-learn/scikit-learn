@@ -254,7 +254,8 @@ def _split_and_score(base_estimator, X, y, parameters, train, test, scorer,
                      return_train_score=False, **fit_params):
     # update parameters of the classifier after a copy of its base structure
     estimator = clone(base_estimator)
-    estimator.set_params(**parameters)
+    if len(parameters) > 0:
+        estimator.set_params(**parameters)
 
     if hasattr(base_estimator, 'kernel') and callable(base_estimator.kernel):
         # cannot compute the kernel values with custom function
