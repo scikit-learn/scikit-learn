@@ -100,19 +100,9 @@ class SparseFiltering(BaseEstimator):
             # View 1d weight vector as a 2d matrix
             W = w.reshape(self.n_features, X.shape[0])
 
-            # Compute unnormalized features by multiplying weight matrix with
-            # data
-            F = W.dot(X)  # Linear Activation
-            Fs = np.sqrt(F ** 2 + 1e-8)  # Soft-Absolute Activation
-
-            # Normalize each feature to be equally active by dividing each
-            # feature by its l2-norm across all examples
-            L2Fs = np.apply_along_axis(np.linalg.norm, 1, Fs)
-            NFs = Fs / L2Fs[:, None]
-            # Normalize features per example, so that they lie on the unit
-            # l2 -ball
-            L2Fn = np.apply_along_axis(np.linalg.norm, 1, NFs.T)
-            Fhat = NFs.T / L2Fn[:, None]
+            # Determine features resulting from weight vector
+            F, Fs, L2Fs, NFs, L2Fn, Fhat = self._determine_features(X, W)
+            
             # Compute sparsity of each feature over all example, i.e., compute
             # its l1-norm; the objective function is the sum over these
             # sparsities
@@ -144,6 +134,13 @@ class SparseFiltering(BaseEstimator):
 
         W = self.w_.reshape(self.n_features, X.shape[0])
 
+        # Determine features resulting from weight vector
+        # (ignore internals required for gradient)
+        _, _, _, _, _, Fhat = self._determine_features(X, W) 
+
+        return Fhat.T
+
+    def _determine_features(self, X, W):
         # Compute unnormalized features by multiplying weight matrix with
         # data
         F = W.dot(X)  # Linear Activation
@@ -153,8 +150,8 @@ class SparseFiltering(BaseEstimator):
         L2Fs = np.apply_along_axis(np.linalg.norm, 1, Fs)
         NFs = Fs / L2Fs[:, None]
         # Normalize features per example, so that they lie on the unit
-        # l2 -ball
+        # l2-ball
         L2Fn = np.apply_along_axis(np.linalg.norm, 1, NFs.T)
         Fhat = NFs.T / L2Fn[:, None]
 
-        return Fhat.T
+        return F, Fs, L2Fs, NFs, L2Fn, Fhat
