@@ -264,18 +264,33 @@ def fit_grid_point(X, y, base_estimator, parameters, train, test, scorer,
     if y is not None:
         y_test = y[safe_mask(y, test)]
         y_train = y[safe_mask(y, train)]
-        clf.fit(X_train, y_train, **fit_params)
-
-        if scorer is not None:
-            this_score = scorer(clf, X_test, y_test)
+        try:
+            clf.fit(X_train, y_train, **fit_params)
+        except ValueError as e:
+            # If the classifier fails, the score is set to 0 by default
+            this_score = 0
+            warnings.warn("Classifier fit failed. The score for this fold on "
+                          "this test point will be set to zero. Details: " +
+                          str(e), RuntimeWarning)
         else:
-            this_score = clf.score(X_test, y_test)
+            if scorer is not None:
+                this_score = scorer(clf, X_test, y_test)
+            else:
+                this_score = clf.score(X_test, y_test)
     else:
-        clf.fit(X_train, **fit_params)
-        if scorer is not None:
-            this_score = scorer(clf, X_test)
+        try:
+            clf.fit(X_train, **fit_params)
+        except ValueError as e:
+            # If the classifier fails, the score is set to 0 by default
+            this_score = 0
+            warnings.warn("Classifier fit failed. The score for this fold on "
+                          "this test point will be set to zero. Details: " +
+                          str(e), RuntimeWarning)
         else:
-            this_score = clf.score(X_test)
+            if scorer is not None:
+                this_score = scorer(clf, X_test)
+            else:
+                this_score = clf.score(X_test)
 
     if not isinstance(this_score, numbers.Number):
         raise ValueError("scoring must return a number, got %s (%s)"
