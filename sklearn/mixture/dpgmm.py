@@ -485,7 +485,7 @@ class DPGMM(GMM):
         algorithm.
 
         For a full derivation and description of the algorithm see
-        doc/dp-derivation/dp-derivation.tex
+        doc/modules/mixture.rst
 
         A initialization step is performed before entering the em
         algorithm. If you want to avoid this step, set the keyword
