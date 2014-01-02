@@ -1,18 +1,19 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.naive_bayes import GaussianNB
+from sklearn.linear_model import PassiveAggressiveClassifier
 from sklearn.datasets import load_digits
 from sklearn.learning_curve import learning_curve
 
 if __name__ == "__main__":
-    estimator = GaussianNB()
+    estimator = PassiveAggressiveClassifier(n_iter=1)
     digits = load_digits()
     X, y = digits.data, digits.target
 
     n_samples_range, train_scores, test_scores = learning_curve(
-        estimator, X, y, cv=10, n_jobs=4, verbose=False)
+        estimator, X, y, cv=10, exploit_incremental_learning=False,
+        n_jobs=4, verbose=False)
 
-    plt.title("Learning Curves (Naive Bayes on Digits Dataset)")
+    plt.title("Learning Curves (Passive-Aggressive Classifier on Digits)")
     plt.xlabel("Training examples")
     plt.ylabel("Score")
     plt.plot(n_samples_range, train_scores, label="Training score")

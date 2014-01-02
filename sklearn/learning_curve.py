@@ -84,24 +84,29 @@ def learning_curve(estimator, X, y, n_samples_range=np.linspace(0.1, 1.0, 10),
     _check_scorable(estimator, scoring=scoring)
     scorer = _deprecate_loss_and_score_funcs(scoring=scoring)
 
+    parallel = Parallel(n_jobs=n_jobs, verbose=verbose)
     if exploit_incremental_learning:
-        raise NotImplemented("Incremental learning is not supported yet")
-        # TODO exploit incremental learning 
+        if is_classifier(estimator):
+            classes = np.unique(y)
+        else:
+            classes = None
+        out = parallel(delayed(_incremental_fit_estimator)(
+                           estimator, X, y, classes, train, test,
+                           n_samples_range, scorer, verbose)
+                       for train, test in cv)
     else:
-        out = Parallel(
-            # TODO use pre_dispatch parameter? what is it good for?
-            n_jobs=n_jobs, verbose=verbose)(
-                delayed(_fit_estimator)(
-                    estimator, X, y, train, test, n_train_samples,
-                    scorer, verbose)
-                for n_train_samples in n_samples_range for train, test in cv)
-
+        out = parallel(delayed(_fit_estimator)(
+                           estimator, X, y, train, test, n_train_samples,
+                           scorer, verbose)
+                       for train, test in cv
+                       for n_train_samples in n_samples_range)
         out = np.array(out)
         n_cv_folds = out.shape[0]/n_unique_ticks
-        out = out.reshape(n_unique_ticks, n_cv_folds, 2)
-        avg_over_cv = out.mean(axis=1).reshape(n_unique_ticks, 2)
+        out = out.reshape(n_cv_folds, n_unique_ticks, 2)
 
-        return n_samples_range, avg_over_cv[:, 0], avg_over_cv[:, 1]
+    avg_over_cv = np.asarray(out).mean(axis=0).reshape(n_unique_ticks, 2)
+
+    return n_samples_range, avg_over_cv[:, 0], avg_over_cv[:, 1]
 
 
 def _translate_n_samples_range(n_samples_range, n_max_training_samples):
@@ -138,12 +143,33 @@ def _translate_n_samples_range(n_samples_range, n_max_training_samples):
     return n_samples_range, n_unique_ticks
 
 
-def _fit_estimator(base_estimator, X, y, train, test, n_train_samples,
-                   scorer, verbose):
+def _fit_estimator(base_estimator, X, y, train, test,
+                   n_train_samples, scorer, verbose):
     # HACK as long as boolean indices are allowed in cv generators
     if train.dtype == np.bool:
         train = np.nonzero(train)
+
+    estimator = clone(base_estimator)
     test_score, _, train_score, _ = _split_and_score(
-            base_estimator, X, y, parameters={}, train=train[:n_train_samples],
+            estimator, X, y, train=train[:n_train_samples],
             test=test, scorer=scorer, return_train_score=True)
     return train_score, test_score
+
+def _incremental_fit_estimator(base_estimator, X, y, classes, train, test,
+                               n_samples_range, scorer, verbose):
+    # HACK as long as boolean indices are allowed in cv generators
+    if train.dtype == np.bool:
+        train = np.nonzero(train)
+
+    estimator = clone(base_estimator)
+    train_scores, test_scores = [], []
+    for n_train_samples, partial_train in zip(n_samples_range, np.split(train,
+            n_samples_range[:-1])):
+        test_score, _, train_score, _ = _split_and_score(
+                estimator, X, y, train=train[:n_train_samples],
+                partial_train=partial_train, test=test, scorer=scorer,
+                return_train_score=True, classes=classes)
+        train_scores.append(train_score)
+        test_scores.append(test_score)
+    #return np.zeros((2, n_samples_range.shape[0]))
+    return np.array((train_scores, test_scores)).T

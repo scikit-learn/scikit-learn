@@ -235,8 +235,12 @@ def fit_grid_point(X, y, base_estimator, parameters, train, test, scorer,
                       for k, v in parameters.items()))
         print("[GridSearchCV] %s %s" % (msg, (64 - len(msg)) * '.'))
 
+    # update parameters of the classifier after a copy of its base structure
+    estimator = clone(base_estimator)
+    estimator.set_params(**parameters)
+
     this_score, n_test_samples = _split_and_score(
-            base_estimator, X, y, parameters, train, test, scorer,
+            estimator, X, y, train, test, scorer,
             return_train_score=False, **fit_params)
 
     if verbose > 2:
@@ -250,43 +254,53 @@ def fit_grid_point(X, y, base_estimator, parameters, train, test, scorer,
     return this_score, parameters, n_test_samples
 
 
-def _split_and_score(base_estimator, X, y, parameters, train, test, scorer,
-                     return_train_score=False, **fit_params):
-    # update parameters of the classifier after a copy of its base structure
-    estimator = clone(base_estimator)
-    if len(parameters) > 0:
-        estimator.set_params(**parameters)
-
-    if hasattr(base_estimator, 'kernel') and callable(base_estimator.kernel):
+def _split_and_score(estimator, X, y, train, test, scorer,
+                     return_train_score=False, partial_train=None,
+                     **fit_params):
+    if hasattr(estimator, 'kernel') and callable(estimator.kernel):
         # cannot compute the kernel values with custom function
         raise ValueError("Cannot use a custom kernel function. "
                          "Precompute the kernel matrix instead.")
 
     if not hasattr(X, "shape"):
-        if getattr(base_estimator, "_pairwise", False):
+        if getattr(estimator, "_pairwise", False):
             raise ValueError("Precomputed kernels or affinity matrices have "
                              "to be passed as arrays or sparse matrices.")
         X_train = [X[idx] for idx in train]
         X_test = [X[idx] for idx in test]
+        if partial_train is not None:
+            X_partial_train = [X[idx] for idx in partial_train]
     else:
-        if getattr(base_estimator, "_pairwise", False):
+        if getattr(estimator, "_pairwise", False):
             # X is a precomputed square kernel matrix
             if X.shape[0] != X.shape[1]:
                 raise ValueError("X should be a square kernel matrix")
             X_train = X[np.ix_(train, train)]
             X_test = X[np.ix_(test, train)]
+            if partial_train is not None:
+                X_partial_train = X[np.ix_(partial_train, partial_train)]
         else:
             X_train = X[safe_mask(X, train)]
             X_test = X[safe_mask(X, test)]
+            if partial_train is not None:
+                X_partial_train = X[safe_mask(X, partial_train)]
 
     if y is not None:
         y_test = y[safe_mask(y, test)]
         y_train = y[safe_mask(y, train)]
+        if partial_train is not None:
+            y_partial_train = y[safe_mask(y, partial_train)]
     else:
         y_test = None
         y_train = None
+        if partial_train is not None:
+            y_partial_train = None
 
-    _fit(estimator, X_train, y_train, **fit_params)
+    if partial_train is None:
+        _fit(estimator, X_train, y_train, **fit_params)
+    else:
+        _fit_incremental(estimator, X_partial_train, y_partial_train,
+                         **fit_params)
     test_score = _score(estimator, X_test, y_test, scorer)
 
     if not isinstance(test_score, numbers.Number):
@@ -306,6 +320,14 @@ def _fit(estimator, X_train, y_train, **fit_params):
         estimator.fit(X_train, **fit_params)
     else:
         estimator.fit(X_train, y_train, **fit_params)
+
+
+def _fit_incremental(estimator, X_partial_train, y_partial_train,
+                     **fit_params):
+    if y_partial_train is None:
+        estimator.partial_fit(X_partial_train, **fit_params)
+    else:
+        estimator.partial_fit(X_partial_train, y_partial_train, **fit_params)
 
 
 def _score(estimator, X_test, y_test, scorer):

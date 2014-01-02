@@ -20,7 +20,7 @@ class MockImprovingClassifier(object):
         return self
 
     def predict(self, X):
-        raise NotImplemented
+        raise NotImplementedError
 
     def score(self, X=None, Y=None):
         # training score becomes worse (2 -> 1), test error better (0 -> 1)
