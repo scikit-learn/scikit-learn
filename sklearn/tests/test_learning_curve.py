@@ -12,10 +12,10 @@ class MockImprovingClassifier(object):
     def __init__(self, n_max_train_samples):
         self.n_max_train_samples = n_max_train_samples
         self.n_train_samples = 0
+        self.X_subset = None
 
     def fit(self, X_subset, y_subset):
         self.X_subset = X_subset
-        self.y_subset = y_subset
         self.n_train_samples = X_subset.shape[0]
         return self
 
@@ -24,10 +24,13 @@ class MockImprovingClassifier(object):
 
     def score(self, X=None, Y=None):
         # training score becomes worse (2 -> 1), test error better (0 -> 1)
-        if X is self.X_subset:
+        if self._is_training_data(X):
             return 2. - float(self.n_train_samples) / self.n_max_train_samples
         else:
             return float(self.n_train_samples) / self.n_max_train_samples
+
+    def _is_training_data(self, X):
+        return X is self.X_subset
 
     def get_params(self, deep=False):
         return {"n_max_train_samples" : self.n_max_train_samples}
@@ -35,6 +38,21 @@ class MockImprovingClassifier(object):
     def set_params(self, **params):
         self.n_max_train_samples = params["n_max_train_samples"]
         return self
+
+
+class MockIncrementalImprovingClassifier(MockImprovingClassifier):
+    """Dummy classifier that provides partial_fit"""
+    def __init__(self, n_max_train_samples):
+        super(MockIncrementalImprovingClassifier, self).__init__(
+                n_max_train_samples)
+        self.x = None
+
+    def _is_training_data(self, X):
+        return self.x in X
+
+    def partial_fit(self, X, y, **params):
+        self.n_train_samples += X.shape[0]
+        self.x = X[0]
 
 
 def test_learning_curve():
@@ -57,6 +75,18 @@ def test_incremental_learning_not_possible():
     estimator = MockImprovingClassifier(1)
     assert_raises(ValueError, learning_curve, estimator, X, y,
                   exploit_incremental_learning=True)
+
+
+def test_incremental_learning():
+    X, y = make_classification(n_samples=30, n_features=1, n_informative=1,
+                               n_redundant=0, n_classes=2,
+                               n_clusters_per_class=1, random_state=0)
+    estimator = MockIncrementalImprovingClassifier(20)
+    n_samples_range, train_scores, test_scores = learning_curve(
+            estimator, X, y, cv=3, exploit_incremental_learning=True)
+    assert_array_equal(n_samples_range, np.linspace(2, 20, 10))
+    assert_array_almost_equal(train_scores, np.linspace(1.9, 1.0, 10))
+    assert_array_almost_equal(test_scores, np.linspace(0.1, 1.0, 10))
 
 
 def test_n_sample_range_out_of_bounds():
