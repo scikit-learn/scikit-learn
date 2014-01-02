@@ -5,7 +5,8 @@ from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.datasets import make_classification
-from sklearn.svm import SVC
+from sklearn.cross_validation import KFold
+
 
 class MockImprovingClassifier(object):
     """Dummy classifier to test the learning curve"""
@@ -103,7 +104,8 @@ def test_n_sample_range_out_of_bounds():
     assert_raises(ValueError, learning_curve, estimator, X, y, cv=3,
                   n_samples_range=[1, 21])
 
-def test_remove_multiple_sample_sizes():
+
+def test_remove_duplicate_sample_sizes():
     X, y = make_classification(n_samples=3, n_features=1, n_informative=1,
                                n_redundant=0, n_classes=2,
                                n_clusters_per_class=1, random_state=0)
@@ -112,3 +114,17 @@ def test_remove_multiple_sample_sizes():
             learning_curve, estimator, X, y, cv=3,
             n_samples_range=np.linspace(0.33, 1.0, 3))
     assert_array_equal(n_samples_range, [1, 2])
+
+
+def test_learning_curve_with_boolean_indices():
+    X, y = make_classification(n_samples=30, n_features=1, n_informative=1,
+                               n_redundant=0, n_classes=2,
+                               n_clusters_per_class=1, random_state=0)
+    estimator = MockImprovingClassifier(20)
+    cv = KFold(n=30, n_folds=3, indices=False)
+    n_samples_range, train_scores, test_scores = learning_curve(estimator,
+                                                                X, y, cv=cv)
+    assert_array_equal(n_samples_range, np.linspace(2, 20, 10))
+    assert_array_almost_equal(train_scores, np.linspace(1.9, 1.0, 10))
+    assert_array_almost_equal(test_scores, np.linspace(0.1, 1.0, 10))
+    

@@ -77,7 +77,14 @@ def learning_curve(estimator, X, y, n_samples_range=np.linspace(0.1, 1.0, 10),
     # Make a list since we will be iterating multiple times over the folds
     cv = list(_check_cv(cv, X, y, classifier=is_classifier(estimator)))
 
-    n_max_training_samples = cv[0][0].shape[0]
+    # HACK as long as boolean indices are allowed in cv generators
+    if cv[0][0].dtype == bool:
+        new_cv = []
+        for i in range(len(cv)):
+            new_cv.append((np.nonzero(cv[i][0])[0], np.nonzero(cv[i][1])[0]))
+        cv = new_cv
+
+    n_max_training_samples = len(cv[0][0])
     n_samples_range, n_unique_ticks = _translate_n_samples_range(
             n_samples_range, n_max_training_samples)
 
@@ -145,10 +152,6 @@ def _translate_n_samples_range(n_samples_range, n_max_training_samples):
 
 def _fit_estimator(base_estimator, X, y, train, test,
                    n_train_samples, scorer, verbose):
-    # HACK as long as boolean indices are allowed in cv generators
-    if train.dtype == np.bool:
-        train = np.nonzero(train)
-
     estimator = clone(base_estimator)
     test_score, _, train_score, _ = _split_and_score(
             estimator, X, y, train=train[:n_train_samples],
@@ -157,10 +160,6 @@ def _fit_estimator(base_estimator, X, y, train, test,
 
 def _incremental_fit_estimator(base_estimator, X, y, classes, train, test,
                                n_samples_range, scorer, verbose):
-    # HACK as long as boolean indices are allowed in cv generators
-    if train.dtype == np.bool:
-        train = np.nonzero(train)
-
     estimator = clone(base_estimator)
     train_scores, test_scores = [], []
     for n_train_samples, partial_train in zip(n_samples_range, np.split(train,
