@@ -128,10 +128,12 @@ class Imputer(BaseEstimator, TransformerMixin):
 
     copy : boolean, optional (default=True)
         If True, a copy of X will be created. If False, imputation will
-        be done in-place. Note that if X is sparse and `missing_values=0`, then
-        a new copy is made, even if copy=False. A copy is also always made
-        if `axis=0` and X is encoded as a CSR matrix, or if `axis=1` and X is
-        encoded as a CSC matrix.
+        be done in-place whenever possible. Note that, in the following cases,
+        a new copy will always be made, even if `copy=False`:
+            - If X is not an array of floating values;
+            - If X is sparse and `missing_values=0`;
+            - If `axis=0` and X is encoded as a CSR matrix;
+            - If `axis=1` and X is encoded as a CSC matrix.
 
     Attributes
     ----------
@@ -384,7 +386,7 @@ class Imputer(BaseEstimator, TransformerMixin):
         if sparse.issparse(X) and self.missing_values != 0:
             mask = _get_mask(X.data, self.missing_values)
             indexes = np.repeat(np.arange(len(X.indptr) - 1, dtype=np.int),
-                                X.indptr[1:] - X.indptr[:-1])[mask]
+                                np.diff(X.indptr))[mask]
 
             X.data[mask] = valid_statistics[indexes].astype(X.dtype)
         else:
