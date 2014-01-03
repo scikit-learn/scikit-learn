@@ -14,12 +14,6 @@ if __name__ == "__main__":
     plt.ylabel("Score")
 
     n_samples_range, train_scores, test_scores = learning_curve(
-        estimator, X, y, cv=10, exploit_incremental_learning=False,
-        n_jobs=1, verbose=False)
-    plt.plot(n_samples_range, train_scores, label="Training score")
-    plt.plot(n_samples_range, test_scores, label="Cross-validation score")
-
-    n_samples_range, train_scores, test_scores = learning_curve(
         estimator, X, y, cv=10, exploit_incremental_learning=True,
         n_jobs=1, verbose=False)
     plt.plot(n_samples_range, train_scores, label="Training score")

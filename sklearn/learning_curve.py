@@ -87,6 +87,9 @@ def learning_curve(estimator, X, y, n_samples_range=np.linspace(0.1, 1.0, 10),
     n_max_training_samples = len(cv[0][0])
     n_samples_range, n_unique_ticks = _translate_n_samples_range(
             n_samples_range, n_max_training_samples)
+    # Because the lengths of folds can be significantly different, it is
+    # not guaranteed that we use all of the available training data when we
+    # use the first 'n_max_training_samples' samples.
 
     _check_scorable(estimator, scoring=scoring)
     scorer = _deprecate_loss_and_score_funcs(scoring=scoring)
