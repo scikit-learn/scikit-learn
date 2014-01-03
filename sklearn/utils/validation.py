@@ -52,23 +52,25 @@ def assert_all_finite(X):
     _assert_all_finite(X.data if sparse.issparse(X) else X)
 
 
-def safe_asarray(X, dtype=None, order=None, copy=False):
+def safe_asarray(X, dtype=None, order=None, copy=False, force_all_finite=True):
     """Convert X to an array or sparse matrix.
 
     Prevents copying X when possible; sparse matrices are passed through."""
     if sparse.issparse(X):
         if copy:
             X = X.copy()
-        assert_all_finite(X.data)
+        if force_all_finite:
+            assert_all_finite(X.data)
         # enforces dtype on data array (order should be kept the same).
         X.data = np.asarray(X.data, dtype=dtype)
     else:
         X = np.array(X, dtype=dtype, order=order, copy=copy)
-        assert_all_finite(X)
+        if force_all_finite:
+            assert_all_finite(X)
     return X
 
 
-def as_float_array(X, copy=True):
+def as_float_array(X, copy=True, force_all_finite=True):
     """Converts an array-like to an array of floats
 
     The new dtype will be np.float32 or np.float64, depending on the original
@@ -90,7 +92,8 @@ def as_float_array(X, copy=True):
     """
     if isinstance(X, np.matrix) or (not isinstance(X, np.ndarray)
                                     and not sparse.issparse(X)):
-        return safe_asarray(X, dtype=np.float64, copy=copy)
+        return safe_asarray(X, dtype=np.float64, copy=copy,
+                            force_all_finite=force_all_finite)
     elif sparse.issparse(X) and X.dtype in [np.float32, np.float64]:
         return X.copy() if copy else X
     elif X.dtype in [np.float32, np.float64]:  # is numpy array
