@@ -86,7 +86,6 @@ which can drastically reduce running times.
 
   * :ref:`example_semi_supervised_plot_label_propagation_versus_svm_iris.py`
   * :ref:`example_semi_supervised_plot_label_propagation_structure.py`
-  * :ref:`example_semi_supervised_plot_label_propagation_versus_svm_iris.py`
   * :ref:`example_semi_supervised_plot_label_propagation_digits_active_learning.py`
 
 .. topic:: References
