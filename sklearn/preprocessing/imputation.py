@@ -343,7 +343,8 @@ class Imputer(BaseEstimator, TransformerMixin):
         X : {array-like, sparse matrix}, shape = [n_samples, n_features]
             The input data to complete.
         """
-        X = as_float_array(X, copy=self.copy) # Copy just once
+        # Copy just once
+        X = as_float_array(X, copy=self.copy, force_all_finite=False)
 
         # Since two different arrays can be provided in fit(X) and
         # transform(X), the imputation data need to be recomputed
