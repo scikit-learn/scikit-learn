@@ -158,17 +158,17 @@ def _fit_estimator(base_estimator, X, y, train, test,
             test=test, scorer=scorer, return_train_score=True)
     return train_score, test_score
 
+
 def _incremental_fit_estimator(base_estimator, X, y, classes, train, test,
                                n_samples_range, scorer, verbose):
     estimator = clone(base_estimator)
     train_scores, test_scores = [], []
     for n_train_samples, partial_train in zip(n_samples_range, np.split(train,
-            n_samples_range[:-1])):
+            n_samples_range)[:-1]):
         test_score, _, train_score, _ = _split_and_score(
                 estimator, X, y, train=train[:n_train_samples],
                 partial_train=partial_train, test=test, scorer=scorer,
                 return_train_score=True, classes=classes)
         train_scores.append(train_score)
         test_scores.append(test_score)
-    #return np.zeros((2, n_samples_range.shape[0]))
     return np.array((train_scores, test_scores)).T
