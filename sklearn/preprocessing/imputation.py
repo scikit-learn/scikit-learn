@@ -13,6 +13,7 @@ from ..base import BaseEstimator, TransformerMixin
 from ..utils import array2d
 from ..utils import atleast2d_or_csr
 from ..utils import atleast2d_or_csc
+from ..utils import as_float_array
 
 from ..externals import six
 
@@ -127,7 +128,12 @@ class Imputer(BaseEstimator, TransformerMixin):
 
     copy : boolean, optional (default=True)
         If True, a copy of X will be created. If False, imputation will
-        be done in-place.
+        be done in-place whenever possible. Note that, in the following cases,
+        a new copy will always be made, even if `copy=False`:
+            - If X is not an array of floating values;
+            - If X is sparse and `missing_values=0`;
+            - If `axis=0` and X is encoded as a CSR matrix;
+            - If `axis=1` and X is encoded as a CSC matrix.
 
     Attributes
     ----------
@@ -337,14 +343,13 @@ class Imputer(BaseEstimator, TransformerMixin):
         X : {array-like, sparse matrix}, shape = [n_samples, n_features]
             The input data to complete.
         """
-        if self.copy and not isinstance(X, list):
-            X = X.copy()
+        X = as_float_array(X, copy=self.copy) # Copy just once
 
         # Since two different arrays can be provided in fit(X) and
         # transform(X), the imputation data need to be recomputed
         # when the imputation is done per sample
         if self.axis == 1:
-            X = atleast2d_or_csr(X, force_all_finite=False).astype(np.float)
+            X = atleast2d_or_csr(X, force_all_finite=False, copy=False)
 
             if sparse.issparse(X):
                 statistics = self._sparse_fit(X,
@@ -358,7 +363,7 @@ class Imputer(BaseEstimator, TransformerMixin):
                                              self.missing_values,
                                              self.axis)
         else:
-            X = atleast2d_or_csc(X, force_all_finite=False).astype(np.float)
+            X = atleast2d_or_csc(X, force_all_finite=False, copy=False)
             statistics = self.statistics_
 
         # Delete the invalid rows/columns
@@ -379,13 +384,9 @@ class Imputer(BaseEstimator, TransformerMixin):
 
         # Do actual imputation
         if sparse.issparse(X) and self.missing_values != 0:
-            if self.axis == 0:
-                X = X.tocsr()
-            else:
-                X = X.tocsc()
-
             mask = _get_mask(X.data, self.missing_values)
-            indexes = X.indices[mask]
+            indexes = np.repeat(np.arange(len(X.indptr) - 1, dtype=np.int),
+                                np.diff(X.indptr))[mask]
 
             X.data[mask] = valid_statistics[indexes].astype(X.dtype)
         else:
