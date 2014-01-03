@@ -60,13 +60,13 @@ def safe_asarray(X, dtype=None, order=None, copy=False, force_all_finite=True):
         if copy:
             X = X.copy()
         if force_all_finite:
-            assert_all_finite(X.data)
+            _assert_all_finite(X.data)
         # enforces dtype on data array (order should be kept the same).
         X.data = np.asarray(X.data, dtype=dtype)
     else:
         X = np.array(X, dtype=dtype, order=order, copy=copy)
         if force_all_finite:
-            assert_all_finite(X)
+            _assert_all_finite(X)
     return X
 
 
