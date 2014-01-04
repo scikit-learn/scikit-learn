@@ -9,7 +9,7 @@ from .grid_search import _check_scorable, _split_and_score
 
 def learning_curve(estimator, X, y, n_samples_range=np.linspace(0.1, 1.0, 10),
                    cv=None, scoring=None, exploit_incremental_learning=False,
-                   n_jobs=1, verbose=0):
+                   n_jobs=1, pre_dispatch=None, verbose=0):
     """Learning curve
 
     Determines cross-validated training and test scores for different training
@@ -54,6 +54,11 @@ def learning_curve(estimator, X, y, n_samples_range=np.linspace(0.1, 1.0, 10),
     n_jobs : integer, optional
         Number of jobs to run in parallel (default 1).
 
+    pre_dispatch : integer or string, optional
+        Number of predispatched jobs for parallel execution (default is
+        all). The option can reduce the allocated memory. The string can
+        be an expression like '2*n_jobs'.
+
     verbose : integer, optional
         Controls the verbosity: the higher, the more messages.
 
@@ -70,7 +75,6 @@ def learning_curve(estimator, X, y, n_samples_range=np.linspace(0.1, 1.0, 10),
     test_scores : array, shape = [n_ticks,]
         Scores on test set.
     """
-    # TODO use verbose argument
 
     if exploit_incremental_learning and not hasattr(estimator, 'partial_fit'):
         raise ValueError('An estimator must support the partial_fit interface '
@@ -97,7 +101,8 @@ def learning_curve(estimator, X, y, n_samples_range=np.linspace(0.1, 1.0, 10),
     _check_scorable(estimator, scoring=scoring)
     scorer = _deprecate_loss_and_score_funcs(scoring=scoring)
 
-    parallel = Parallel(n_jobs=n_jobs, verbose=verbose)
+    parallel = Parallel(n_jobs=n_jobs, pre_dispatch=pre_dispatch,
+                        verbose=verbose)
     if exploit_incremental_learning:
         if is_classifier(estimator):
             classes = np.unique(y)
