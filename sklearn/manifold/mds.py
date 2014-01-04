@@ -68,8 +68,7 @@ def _smacof_single(similarities, metric=True, n_components=2, init=None,
     if similarities.shape[0] != similarities.shape[1]:
         raise ValueError("similarities must be a square array (shape=%d)" %
                          n_samples)
-    res = 100 * np.finfo(np.float).resolution
-    if np.any((similarities - similarities.T) > res):
+    if not np.allclose(similarities, similarities.T):
         raise ValueError("similarities must be symmetric")
 
     sim_flat = ((1 - np.tri(n_samples)) * similarities).ravel()

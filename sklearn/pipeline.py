@@ -6,7 +6,10 @@ estimator, as a chain of transforms and estimators.
 #         Gael Varoquaux
 #         Virgile Fritsch
 #         Alexandre Gramfort
+#         Lars Buitinck
 # Licence: BSD
+
+from collections import defaultdict
 
 import numpy as np
 from scipy import sparse
@@ -68,8 +71,8 @@ class Pipeline(BaseEstimator):
     Pipeline(steps=[...])
 
     >>> prediction = anova_svm.predict(X)
-    >>> anova_svm.score(X, y)
-    0.75
+    >>> anova_svm.score(X, y)                        # doctest: +ELLIPSIS
+    0.77...
     """
 
     # BaseEstimator interface
@@ -204,6 +207,50 @@ class Pipeline(BaseEstimator):
     def _pairwise(self):
         # check if first estimator expects pairwise input
         return getattr(self.steps[0][1], '_pairwise', False)
+
+
+def _name_estimators(estimators):
+    """Generate names for estimators."""
+
+    names = [type(estimator).__name__.lower() for estimator in estimators]
+    namecount = defaultdict(int)
+    for est, name in zip(estimators, names):
+        namecount[name] += 1
+
+    for k, v in list(six.iteritems(namecount)):
+        if v == 1:
+            del namecount[k]
+
+    for i in reversed(range(len(estimators))):
+        name = names[i]
+        if name in namecount:
+            names[i] += "-%d" % namecount[name]
+            namecount[name] -= 1
+
+    return list(zip(names, estimators))
+
+
+def make_pipeline(*steps):
+    """Construct a Pipeline from the given estimators.
+
+    This is a shorthand for the Pipeline constructor; it does not require, and
+    does not permit, naming the estimators. Instead, they will be given names
+    automatically based on their types.
+
+    Examples
+    --------
+    >>> from sklearn.naive_bayes import GaussianNB
+    >>> from sklearn.preprocessing import StandardScaler
+    >>> make_pipeline(StandardScaler(), GaussianNB())    # doctest: +NORMALIZE_WHITESPACE
+    Pipeline(steps=[('standardscaler',
+                     StandardScaler(copy=True, with_mean=True, with_std=True)),
+                    ('gaussiannb', GaussianNB())])
+
+    Returns
+    -------
+    p : Pipeline
+    """
+    return Pipeline(_name_estimators(steps))
 
 
 def _fit_one_transformer(transformer, X, y):
@@ -359,3 +406,31 @@ class FeatureUnion(BaseEstimator, TransformerMixin):
             for ((name, old), new) in zip(self.transformer_list, transformers)
         ]
 
+
+# XXX it would be nice to have a keyword-only n_jobs argument to this function,
+# but that's not allowed in Python 2.x.
+def make_union(*transformers):
+    """Construct a FeatureUnion from the given transformers.
+
+    This is a shorthand for the FeatureUnion constructor; it does not require,
+    and does not permit, naming the transformers. Instead, they will be given
+    names automatically based on their types. It also does not allow weighting.
+
+    Examples
+    --------
+    >>> from sklearn.decomposition import PCA, TruncatedSVD
+    >>> make_union(PCA(), TruncatedSVD())    # doctest: +NORMALIZE_WHITESPACE
+    FeatureUnion(n_jobs=1,
+                 transformer_list=[('pca', PCA(copy=True, n_components=None,
+                                               whiten=False)),
+                                   ('truncatedsvd',
+                                    TruncatedSVD(algorithm='randomized',
+                                                 n_components=2, n_iter=5,
+                                                 random_state=None, tol=0.0))],
+                 transformer_weights=None)
+
+    Returns
+    -------
+    f : FeatureUnion
+    """
+    return FeatureUnion(_name_estimators(transformers))

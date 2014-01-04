@@ -219,6 +219,19 @@ def test_oob_score_classification():
     assert_less(abs(test_score - clf.oob_score_), 0.1)
 
 
+def test_oob_score_classification_for_non_contiguous_target():
+    """Check that oob prediction is a good estimation of the generalization
+    error for non-contiguous targets."""
+    iris_target = iris.target * 2 + 1
+    clf = RandomForestClassifier(n_estimators=50,
+                                 oob_score=True, random_state=rng)
+    n_samples = iris.data.shape[0]
+    clf.fit(iris.data[:n_samples / 2, :], iris_target[:n_samples / 2])
+    test_score = clf.score(iris.data[n_samples / 2:, :],
+                           iris_target[n_samples / 2:])
+    assert_less(abs(test_score - clf.oob_score_), 0.1)
+
+
 def test_oob_score_regression():
     """Check that oob prediction is pessimistic estimate.
     Not really a good test that prediction is independent."""

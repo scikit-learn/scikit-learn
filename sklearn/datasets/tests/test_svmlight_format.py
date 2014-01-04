@@ -113,12 +113,14 @@ def test_load_compressed():
     X, y = load_svmlight_file(datafile)
 
     with NamedTemporaryFile(prefix="sklearn-test", suffix=".gz") as tmp:
+        tmp.close()  # necessary under windows
         shutil.copyfileobj(open(datafile, "rb"), gzip.open(tmp.name, "wb"))
         Xgz, ygz = load_svmlight_file(tmp.name)
         assert_array_equal(X.toarray(), Xgz.toarray())
         assert_array_equal(y, ygz)
 
     with NamedTemporaryFile(prefix="sklearn-test", suffix=".bz2") as tmp:
+        tmp.close()  # necessary under windows
         shutil.copyfileobj(open(datafile, "rb"), BZ2File(tmp.name, "wb"))
         Xbz, ybz = load_svmlight_file(tmp.name)
         assert_array_equal(X.toarray(), Xbz.toarray())

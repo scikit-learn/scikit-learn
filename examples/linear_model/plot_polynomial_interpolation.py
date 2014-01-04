@@ -32,12 +32,13 @@ import matplotlib.pyplot as plt
 
 from sklearn.linear_model import Ridge
 from sklearn.preprocessing import PolynomialFeatures
-from sklearn.pipeline import Pipeline
+from sklearn.pipeline import make_pipeline
 
 
 def f(x):
     """ function to approximate by polynomial interpolation"""
     return x * np.sin(x)
+
 
 # generate points used to plot
 x_plot = np.linspace(0, 10, 100)
@@ -57,8 +58,7 @@ plt.plot(x_plot, f(x_plot), label="ground truth")
 plt.scatter(x, y, label="training points")
 
 for degree in [3, 4, 5]:
-    model = Pipeline([('poly', PolynomialFeatures(degree)),
-                      ('ridge', Ridge())])
+    model = make_pipeline(PolynomialFeatures(degree), Ridge())
     model.fit(X, y)
     y_plot = model.predict(X_plot)
     plt.plot(x_plot, y_plot, label="degree %d" % degree)

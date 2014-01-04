@@ -8,6 +8,10 @@
 Changelog
 ---------
 
+   - Use of :class:`covariance.EllipticEnvelop` has now been removed after
+     deprecation.
+     Please use :class:`covariance.EllipticEnvelope` instead.
+
    - Added :class:`ensemble.BaggingClassifier` and
      :class:`ensemble.BaggingRegressor` meta-estimators for ensembling
      any kind of base estimator. See the :ref:`Bagging <bagging>` section of
@@ -60,6 +64,13 @@ Changelog
    - Added :class:`linear_model.RANSACRegressor` meta-estimator for the robust
      fitting of regression models. By Johannes Schönberger.
 
+   - Added :ref:`Computational Performance <computational_performance>`
+     documentation. Discussion and examples of prediction latency / throughput
+     and different factors that have influence over speed. Additional tips for
+     building faster models and choosing a relevant compromise between speed
+     and predictive power.
+     By `Eustache Diemert`_.
+
    - Fixed bug in :class:`gradient_boosting.GradientBoostingRegressor` with
      ``loss='huber'``: ``gamma`` might have not been initialized.
 
@@ -75,6 +86,18 @@ Changelog
 
    - Fixed bug in :class:`linear_model.stochastic_gradient` :
      ``l1_ratio`` was used as ``(1.0 - l1_ratio)`` .
+
+   - Fixed bug in :class:`multiclass.OneVsOneClassifier` with string
+     labels
+
+   - Shorthand constructors :func:`pipeline.make_pipeline` and
+     :func:`pipeline.make_union` were added by `Lars Buitinck`_.
+
+   - Reduce memory usage and overhead when fitting and predicting with forests
+     of randomized trees in parallel with ``n_jobs != 1`` by leveraging new
+     threading backend of joblib 0.8 and releasing the GIL in the tree fitting
+     Cython code.  By `Olivier Grisel`_ and `Gilles Louppe`_
+
 
 API changes summary
 -------------------
@@ -94,6 +117,14 @@ API changes summary
      Support for masks will be removed in 0.17.
      The generators have produced arrays of indices by default since 0.10.
      By `Joel Nothman`_.
+
+   - 1-d arrays containing strings with ``dtype=object`` (as used in Pandas)
+     are now considered valid classification targets. This fixes a regression
+     from version 0.13 in some classifiers. By `Joel Nothman`_.
+
+   - Fix wrong `explained_variance_ratio_` attribute in
+     :class:`RandomizedPCA <decomposition.RandomizedPCA>`.
+     By `Alexandre Gramfort`_.
 
 .. _changes_0_14:
 

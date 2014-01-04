@@ -169,7 +169,7 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
         to ``False``).
 
     dual_gaps : shape (n_alphas + 1)
-        The dual gaps and the end of the optimization for each alpha.
+        The dual gaps at the end of the optimization for each alpha.
         (Is returned, along with ``alphas``, when ``return_models`` is set
         to ``False``).
 
@@ -321,7 +321,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
         to ``False``).
 
     dual_gaps : shape (n_alphas + 1)
-        The dual gaps and the end of the optimization for each alpha.
+        The dual gaps at the end of the optimization for each alpha.
         (Is returned, along with ``alphas``, when ``return_models`` is set
         to ``False``).
 
@@ -1067,6 +1067,18 @@ class LassoCV(LinearModelCV, RegressorMixin):
 
     ``alphas_`` : numpy array
         The grid of alphas used for fitting
+
+    ``l1_ratio_`` : int
+        An artifact of the super class LinearModelCV. In this case,
+        ``l1_ratio_ = 1`` because the Lasso estimator uses an L1 penalty
+        by definition.
+        Typically it is a float between 0 and 1 passed to an estimator such as
+        ElasticNet (scaling between l1 and l2 penalties). For ``l1_ratio = 0``
+        the penalty is an L2 penalty. For ``l1_ratio = 1`` it is an L1 penalty.
+
+    ``dual_gap_`` : numpy array
+        The dual gap at the end of the optimization for the optimal alpha
+        (``alpha_``).
 
     Notes
     -----

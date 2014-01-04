@@ -11,6 +11,35 @@ Who is using scikit-learn?
 
 .. to add a testimonials, just XXX
 
+`Spotify <http://www.spotify.com>`_
+------------------------------------
+
+.. raw:: html
+
+    <div class="logo">
+
+.. image:: images/spotify.jpg
+    :target: http://www.spotify.com
+
+.. raw:: html
+
+    </div>
+
+Scikit-learn provides a toolbox with solid implementations of a bunch of
+state-of-the-art models and makes it easy to plug them into existing
+applications. We've been using it quite a lot for music recommendations at
+Spotify and I think it's the most well-designed ML package I've seen so
+far.
+
+.. raw:: html
+
+   <span class="testimonial-author">
+
+Erik Bernhardsson, Engineering Manager Music Discovery & Machine Learning, Spotify
+
+.. raw:: html
+
+   </span>
 
 `Inria <http://www.inria.fr>`_
 -------------------------------
@@ -309,6 +338,40 @@ in giving us a single reliable source to turn to for our machine-learning needs.
    <span class="testimonial-author">
 
 Vijay Ramesh, Software Engineer in Data/science at Change.org
+
+.. raw:: html
+
+   </span>
+
+`PHIMECA Engineering <http://www.phimeca.com/?lang=en>`_
+----------------------------------------------------------
+
+.. raw:: html
+
+  <div class="logo">
+
+.. image:: images/phimeca.png
+   :target: http://www.phimeca.com/?lang=en
+
+.. raw:: html
+
+  </div>
+
+At PHIMECA Engineering, we use scikit-learn estimators as surrogates for
+expensive-to-evaluate numerical models (mostly but not exclusively
+finite-element mechanical models) for speeding up the intensive post-processing
+operations involved in our simulation-based decision making framework.
+Scikit-learn's fit/predict API together with its efficient cross-validation
+tools considerably eases the task of selecting the best-fit estimator. We are
+also using scikit-learn for illustrating concepts in our training sessions.
+Trainees are always impressed by the ease-of-use of scikit-learn despite the
+apparent theoretical complexity of machine learning.
+
+.. raw:: html
+
+   <span class="testimonial-author">
+
+Vincent Dubourg, PHIMECA Engineering, PhD Engineer
 
 .. raw:: html
 

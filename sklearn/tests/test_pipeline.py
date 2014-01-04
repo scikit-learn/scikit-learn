@@ -12,11 +12,11 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 
 from sklearn.base import BaseEstimator, clone
-from sklearn.pipeline import Pipeline, FeatureUnion
+from sklearn.pipeline import Pipeline, FeatureUnion, make_pipeline, make_union
 from sklearn.svm import SVC
 from sklearn.linear_model import LogisticRegression
 from sklearn.feature_selection import SelectKBest, f_classif
-from sklearn.decomposition.pca import PCA, RandomizedPCA
+from sklearn.decomposition import PCA, RandomizedPCA, TruncatedSVD
 from sklearn.datasets import load_iris
 from sklearn.preprocessing import StandardScaler
 from sklearn.feature_extraction.text import CountVectorizer
@@ -201,21 +201,21 @@ def test_feature_union():
     X = iris.data
     X -= X.mean(axis=0)
     y = iris.target
-    pca = RandomizedPCA(n_components=2, random_state=0)
+    svd = TruncatedSVD(n_components=2, random_state=0)
     select = SelectKBest(k=1)
-    fs = FeatureUnion([("pca", pca), ("select", select)])
+    fs = FeatureUnion([("svd", svd), ("select", select)])
     fs.fit(X, y)
     X_transformed = fs.transform(X)
     assert_equal(X_transformed.shape, (X.shape[0], 3))
 
     # check if it does the expected thing
-    assert_array_almost_equal(X_transformed[:, :-1], pca.fit_transform(X))
+    assert_array_almost_equal(X_transformed[:, :-1], svd.fit_transform(X))
     assert_array_equal(X_transformed[:, -1],
                        select.fit_transform(X, y).ravel())
 
     # test if it also works for sparse input
-    # We use a different pca object to control the random_state stream
-    fs = FeatureUnion([("pca", pca), ("select", select)])
+    # We use a different svd object to control the random_state stream
+    fs = FeatureUnion([("svd", svd), ("select", select)])
     X_sp = sparse.csr_matrix(X)
     X_sp_transformed = fs.fit_transform(X_sp, y)
     assert_array_almost_equal(X_transformed, X_sp_transformed.toarray())
@@ -225,9 +225,18 @@ def test_feature_union():
     assert_equal(fs.fit_transform(X, y).shape, (X.shape[0], 4))
 
     # test it works with transformers missing fit_transform
-    fs = FeatureUnion([("mock", TransfT()), ("pca", pca), ("select", select)])
+    fs = FeatureUnion([("mock", TransfT()), ("svd", svd), ("select", select)])
     X_transformed = fs.fit_transform(X, y)
     assert_equal(X_transformed.shape, (X.shape[0], 8))
+
+
+def test_make_union():
+    pca = PCA()
+    mock = TransfT()
+    fu = make_union(pca, mock)
+    names, transformers = zip(*fu.transformer_list)
+    assert_equal(names, ("pca", "transft"))
+    assert_equal(transformers, (pca, mock))
 
 
 def test_pipeline_transform():
@@ -262,6 +271,22 @@ def test_pipeline_fit_transform():
     X_trans = pipeline.fit_transform(X, y)
     X_trans2 = transft.fit(X, y).transform(X)
     assert_array_almost_equal(X_trans, X_trans2)
+
+
+def test_make_pipeline():
+    t1 = TransfT()
+    t2 = TransfT()
+
+    pipe = make_pipeline(t1, t2)
+    assert_true(isinstance(pipe, Pipeline))
+    assert_equal(pipe.steps[0][0], "transft-1")
+    assert_equal(pipe.steps[1][0], "transft-2")
+
+    pipe = make_pipeline(t1, t2, FitParamT())
+    assert_true(isinstance(pipe, Pipeline))
+    assert_equal(pipe.steps[0][0], "transft-1")
+    assert_equal(pipe.steps[1][0], "transft-2")
+    assert_equal(pipe.steps[2][0], "fitparamt")
 
 
 def test_feature_union_weights():

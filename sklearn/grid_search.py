@@ -613,6 +613,10 @@ class GridSearchCV(BaseSearchCV):
     `best_params_` : dict
         Parameter setting that gave the best results on the hold out data.
 
+    `scorer_` : function
+        Scorer function used on the held out data to choose the best
+        parameters for the model.
+
     Notes
     ------
     The parameters selected are those that maximize the score of the left out
@@ -635,6 +639,9 @@ class GridSearchCV(BaseSearchCV):
         utility function to split the data into a development set usable
         for fitting a GridSearchCV instance and an evaluation set for
         its final evaluation.
+
+    :func:`sklearn.metrics.make_scorer`:
+        Make a scorer from a performance metric or loss function.
 
     """
 

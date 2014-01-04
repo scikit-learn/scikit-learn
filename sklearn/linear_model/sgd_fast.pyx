@@ -352,6 +352,8 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
         The penalty 2 for L2, 1 for L1, and 3 for Elastic-Net.
     alpha : float
         The regularization parameter.
+    C : float
+        Maximum step size for passive aggressive.
     l1_ratio : float
         The Elastic Net mixing parameter, with 0 <= l1_ratio <= 1.
         l1_ratio=0 corresponds to L2 penalty, l1_ratio=1 to L1.

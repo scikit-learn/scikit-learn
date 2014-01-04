@@ -437,29 +437,28 @@ def _average_binary_score(binary_metric, y_true, y_score, average):
         y_true = y_true.ravel()
         y_score = y_score.ravel()
 
+    if average == 'weighted':
+        weights = np.sum(y_true, axis=0)
+        if weights.sum() == 0:
+            return 0
+    else:
+        weights = None
+
     if y_true.ndim == 1:
         y_true = y_true.reshape((-1, 1))
 
     if y_score.ndim == 1:
         y_score = y_score.reshape((-1, 1))
 
-    average_axis = 1 if average == 'samples' else 0
-    n_classes = y_score.shape[not average_axis]
+    not_average_axis = 0 if average == 'samples' else 1
+    n_classes = y_score.shape[not_average_axis]
     score = np.zeros((n_classes,))
-
     for c in range(n_classes):
-        y_true_c = y_true.take([c], axis=not average_axis).ravel()
-        y_score_c = y_score.take([c], axis=not average_axis).ravel()
+        y_true_c = y_true.take([c], axis=not_average_axis).ravel()
+        y_score_c = y_score.take([c], axis=not_average_axis).ravel()
         score[c] = binary_metric(y_true_c, y_score_c)
 
     # Average the results
-    if average == 'weighted':
-        weights = np.sum(y_true, axis=average_axis)
-        if weights.sum() == 0:
-            return 0
-    else:
-        weights = None
-
     if average is not None:
         return np.average(score, weights=weights)
     else:
@@ -962,48 +961,6 @@ def zero_one_loss(y_true, y_pred, normalize=True):
     else:
         n_samples = len(y_true)
         return n_samples - score
-
-
-@deprecated("Function 'zero_one' has been renamed to "
-            "'zero_one_loss' and will be removed in release 0.15."
-            " Default behavior is changed from 'normalize=False' to "
-            "'normalize=True'")
-def zero_one(y_true, y_pred, normalize=False):
-    """Zero-One classification loss
-
-    If normalize is ``True``, return the fraction of misclassifications
-    (float), else it returns the number of misclassifications (int). The best
-    performance is 0.
-
-    Parameters
-    ----------
-    y_true : array-like
-
-    y_pred : array-like
-
-    normalize : bool, optional (default=False)
-        If ``False`` (default), return the number of misclassifications.
-        Otherwise, return the fraction of misclassifications.
-
-    Returns
-    -------
-    loss : float
-        If normalize is True, return the fraction of misclassifications
-        (float), else it returns the number of misclassifications (int).
-
-
-    Examples
-    --------
-    >>> from sklearn.metrics import zero_one
-    >>> y_pred = [1, 2, 3, 4]
-    >>> y_true = [2, 2, 3, 4]
-    >>> zero_one(y_true, y_pred)
-    1
-    >>> zero_one(y_true, y_pred, normalize=True)
-    0.25
-
-    """
-    return zero_one_loss(y_true, y_pred, normalize)
 
 
 def log_loss(y_true, y_pred, eps=1e-15, normalize=True):
@@ -1860,29 +1817,6 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
                                                  average=average,
                                                  warn_for=('recall',))
     return r
-
-
-@deprecated("Function zero_one_score has been renamed to "
-            'accuracy_score'" and will be removed in release 0.15.")
-def zero_one_score(y_true, y_pred):
-    """Zero-one classification score (accuracy)
-
-    Parameters
-    ----------
-    y_true : array-like, shape = n_samples
-        Ground truth (correct) labels.
-
-    y_pred : array-like, shape = n_samples
-        Predicted labels, as returned by a classifier.
-
-    Returns
-    -------
-    score : float
-        Fraction of correct predictions in ``y_pred``. The best performance is
-        1.
-
-    """
-    return accuracy_score(y_true, y_pred)
 
 
 def classification_report(y_true, y_pred, labels=None, target_names=None):

@@ -860,3 +860,7 @@ def test_pickling_transformer():
     assert_array_equal(
         copy.fit_transform(X).toarray(),
         orig.fit_transform(X).toarray())
+
+def test_non_unique_vocab():
+    vocab = ['a', 'b', 'c', 'a', 'a']
+    vectorizer = assert_raises(ValueError, CountVectorizer, vocabulary=vocab)

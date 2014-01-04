@@ -290,7 +290,8 @@ def type_of_target(y):
     except ValueError:
         # known to fail in numpy 1.3 for array of arrays
         return 'unknown'
-    if y.ndim > 2 or y.dtype == object:
+    if y.ndim > 2 or (y.dtype == object and len(y) and
+                      not isinstance(y.flat[0], string_types)):
         return 'unknown'
     if y.ndim == 2 and y.shape[1] == 0:
         return 'unknown'

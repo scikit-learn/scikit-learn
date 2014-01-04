@@ -52,8 +52,6 @@ from sklearn.metrics import (accuracy_score,
                              r2_score,
                              roc_auc_score,
                              roc_curve,
-                             zero_one,
-                             zero_one_score,
                              zero_one_loss)
 
 from sklearn.metrics.metrics import _average_binary_score
@@ -370,9 +368,9 @@ def _auc(y_true, y_score):
 
     return n_correct / float(len(pos) * len(neg))
 
+
 ###############################################################################
 # Tests
-
 def _average_precision(y_true, y_score):
     """Alternative implementation to check for correctness of
     `average_precision_score`."""
@@ -496,7 +494,7 @@ def test_roc_curve_one_label():
     y_true = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
     y_pred = [0, 1, 0, 1, 0, 1, 0, 1, 0, 1]
     # assert there are warnings
-    w =  UndefinedMetricWarning
+    w = UndefinedMetricWarning
     fpr, tpr, thresholds = assert_warns(w, roc_curve, y_true, y_pred)
     # all true labels, all fpr should be nan
     assert_array_equal(fpr,
@@ -561,16 +559,15 @@ def test_roc_curve_toydata():
     y_score = [0.25, 0.75]
     tpr, fpr, _ = roc_curve(y_true, y_score)
     assert_raises(ValueError, roc_auc_score, y_true, y_score)
-    assert_array_almost_equal(tpr, [ 0. ,  0.5,  1. ])
-    assert_array_almost_equal(fpr, [ np.nan,  np.nan,  np.nan])
+    assert_array_almost_equal(tpr, [0., 0.5, 1.])
+    assert_array_almost_equal(fpr, [np.nan,  np.nan,  np.nan])
 
     y_true = [1, 1]
     y_score = [0.25, 0.75]
     tpr, fpr, _ = roc_curve(y_true, y_score)
     assert_raises(ValueError, roc_auc_score, y_true, y_score)
-    assert_array_almost_equal(tpr, [ np.nan,  np.nan])
-    assert_array_almost_equal(fpr, [ 0.5,  1. ])
-
+    assert_array_almost_equal(tpr, [np.nan, np.nan])
+    assert_array_almost_equal(fpr, [0.5, 1.])
 
     # Multi-label classification task
     y_true = np.array([[0, 1], [0, 1]])
@@ -690,6 +687,7 @@ def test_auc_score_non_binary_class():
         assert_raise_message(ValueError, "multiclass format is not supported",
                              roc_auc_score, y_true, y_pred)
 
+
 def test_precision_recall_f1_score_binary():
     """Test Precision Recall and F1 Score for binary classification task"""
     y_true, y_pred, _ = make_prediction(binary=True)
@@ -805,6 +803,7 @@ def test_confusion_matrix_binary():
     test(y_true, y_pred)
     test([str(y) for y in y_true],
          [str(y) for y in y_pred])
+
 
 @ignore_warnings
 def test_matthews_corrcoef_nan():
@@ -1131,8 +1130,8 @@ def test_precision_recall_curve_toydata():
         y_score = [1, 0]
         p, r, _ = precision_recall_curve(y_true, y_score)
         auc_prc = average_precision_score(y_true, y_score)
-        assert_array_almost_equal(p, [ 0.5,  0. ,  1. ])
-        assert_array_almost_equal(r, [ 1.,  0.,  0.])
+        assert_array_almost_equal(p, [0.5, 0., 1.])
+        assert_array_almost_equal(r, [1., 0.,  0.])
         assert_almost_equal(auc_prc, 0.25)
 
         y_true = [1, 0]
@@ -1168,9 +1167,8 @@ def test_precision_recall_curve_toydata():
         y_score = [0.25, 0.75]
         p, r, _ = precision_recall_curve(y_true, y_score)
         assert_almost_equal(average_precision_score(y_true, y_score), 1.)
-        assert_array_almost_equal(p, [ 1. ,  1.,  1.])
+        assert_array_almost_equal(p, [1., 1., 1.])
         assert_array_almost_equal(r, [1, 0.5, 0.])
-
 
         # Multi-label classification task
         y_true = np.array([[0, 1], [0, 1]])
@@ -1252,8 +1250,6 @@ def test_losses():
     # Classification
     # --------------
     # Throw deprecated warning
-    f = ignore_warnings
-    assert_equal(f(zero_one)(y_true, y_pred), 11)
 
     assert_almost_equal(zero_one_loss(y_true, y_pred),
                         11 / float(n_samples), 2)
@@ -1264,9 +1260,6 @@ def test_losses():
                         2 * 11. / (n_samples * n_classes), 2)
 
     assert_equal(accuracy_score(y_true, y_pred),
-                 1 - zero_one_loss(y_true, y_pred))
-
-    assert_equal(f(zero_one_score)(y_true, y_pred),
                  1 - zero_one_loss(y_true, y_pred))
 
     # Regression
@@ -1327,18 +1320,6 @@ def test_symmetry():
         assert_true(np.any(metric(y_true, y_pred) != metric(y_pred, y_true)),
                     msg="%s seems to be symmetric" % name)
 
-    # Deprecated metrics
-
-    f = ignore_warnings
-    assert_almost_equal(f(zero_one)(y_true, y_pred),
-                        f(zero_one)(y_pred, y_true))
-
-    assert_almost_equal(f(zero_one)(y_true, y_pred, normalize=False),
-                        f(zero_one)(y_pred, y_true, normalize=False))
-
-    assert_almost_equal(f(zero_one_score)(y_true, y_pred),
-                        f(zero_one_score)(y_pred, y_true))
-
 
 def test_sample_order_invariance():
     y_true, y_pred, _ = make_prediction(binary=True)
@@ -1360,7 +1341,7 @@ def test_sample_order_invariance_multilabel_and_multioutput():
     # Generate some data
     y_true = random_state.randint(0, 2, size=(20, 25))
     y_pred = random_state.randint(0, 2, size=(20, 25))
-    y_score =random_state.normal(size=y_true.shape)
+    y_score = random_state.normal(size=y_true.shape)
 
     y_true_shuffle, y_pred_shuffle, y_score_shuffle = shuffle(y_true,
                                                               y_pred,
@@ -1381,7 +1362,6 @@ def test_sample_order_invariance_multilabel_and_multioutput():
                             err_msg="%s is not sample order invariant"
                                     % name)
 
-
     for name in MULTIOUTPUT_METRICS:
         metric = ALL_METRICS[name]
         assert_almost_equal(metric(y_true, y_score),
@@ -1392,6 +1372,7 @@ def test_sample_order_invariance_multilabel_and_multioutput():
                             metric(y_true_shuffle, y_pred_shuffle),
                             err_msg="%s is not sample order invariant"
                                     % name)
+
 
 def test_format_invariance_with_1d_vectors():
     y1, y2, _ = make_prediction(binary=True)
@@ -1496,10 +1477,22 @@ def test_invariance_string_vs_numbers_labels():
                            err_msg="{0} failed string vs number invariance "
                                    "test".format(name))
 
+        measure_with_strobj = metric_str(y1_str.astype('O'),
+                                         y2_str.astype('O'))
+        assert_array_equal(measure_with_number, measure_with_strobj,
+                           err_msg="{0} failed string object vs number "
+                                   "invariance test".format(name))
+
         if name in METRICS_WITH_LABELS:
             metric_str = partial(metric_str, labels=labels_str)
             measure_with_str = metric_str(y1_str, y2_str)
             assert_array_equal(measure_with_number, measure_with_str,
+                               err_msg="{0} failed string vs number  "
+                                       "invariance test".format(name))
+
+            measure_with_strobj = metric_str(y1_str.astype('O'),
+                                             y2_str.astype('O'))
+            assert_array_equal(measure_with_number, measure_with_strobj,
                                err_msg="{0} failed string vs number  "
                                        "invariance test".format(name))
 
@@ -1521,6 +1514,7 @@ def check_single_sample(name):
     # assert that no exception is thrown
     for i, j in product([0, 1], repeat=2):
         metric([i], [j])
+
 
 @ignore_warnings
 def check_single_sample_multioutput(name):
@@ -1642,7 +1636,7 @@ def test_multilabel_representation_invariance():
         # XXX cruel hack to work with partial functions
         if isinstance(metric, partial):
             metric.__module__ = 'tmp'
-            metric.__name__ =  name
+            metric.__name__ = name
         metric = ignore_warnings(metric)
         measure = metric(y1, y2)
 
@@ -2157,7 +2151,8 @@ def test_prf_warnings():
 
         msg = ('Recall and F-score are ill-defined and '
                'being set to 0.0 in samples with no true labels.')
-        my_assert(w, msg, f, np.array([[1, 0], [0, 0]]), np.array([[1, 0], [1, 0]]),
+        my_assert(w, msg, f, np.array([[1, 0], [0, 0]]),
+                  np.array([[1, 0], [1, 0]]),
                   average='samples')
 
         # single score: micro-average
@@ -2166,8 +2161,8 @@ def test_prf_warnings():
         my_assert(w, msg, f, np.array([[1, 1], [1, 1]]),
                   np.array([[0, 0], [0, 0]]), average='micro')
 
-        msg =('Recall and F-score are ill-defined and '
-              'being set to 0.0 due to no true samples.')
+        msg = ('Recall and F-score are ill-defined and '
+               'being set to 0.0 due to no true samples.')
         my_assert(w, msg, f, np.array([[0, 0], [0, 0]]),
                   np.array([[1, 1], [1, 1]]), average='micro')
 
@@ -2478,9 +2473,11 @@ def test_averaging_multilabel_all_zeroes():
 
     # Test _average_binary_score for weight.sum() == 0
     binary_metric = (lambda y_true, y_score, average="macro":
-        _average_binary_score(precision_score, y_true, y_score, average))
+                     _average_binary_score(precision_score,
+                     y_true, y_score, average))
     _check_averaging(binary_metric, y_true, y_pred, y_true_binarize,
                      y_pred_binarize, is_multilabel=True)
+
 
 def test_averaging_multilabel_all_ones():
     y_true = np.ones((20, 3))
