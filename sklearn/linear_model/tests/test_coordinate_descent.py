@@ -167,16 +167,14 @@ def test_lasso_cv():
     lars = LassoLarsCV(normalize=False, max_iter=30).fit(X, y)
     # for this we check that they don't fall in the grid of
     # clf.alphas further than 1
-    for this_alphas in clf.alphas_:
-        assert_true(np.abs(
-            np.searchsorted(this_alphas[::-1], lars.alpha_)
-            - np.searchsorted(this_alphas[::-1], clf.alpha_)) <= 1)
+    assert_true(np.abs(
+        np.searchsorted(clf.alphas_[::-1], lars.alpha_)
+        - np.searchsorted(clf.alphas_[::-1], clf.alpha_)) <= 1)
     # check that they also give a similar MSE
     mse_lars = interpolate.interp1d(lars.cv_alphas_, lars.cv_mse_path_.T)
-    for this_alphas in clf.alphas_:
-        np.testing.assert_approx_equal(mse_lars(this_alphas[5]).mean(),
-                                       clf.mse_path_[5].mean(),
-                                       significant=2)
+    np.testing.assert_approx_equal(mse_lars(clf.alphas_[5]).mean(),
+                                   clf.mse_path_[5].mean(),
+                                   significant=2)
 
     # test set
     assert_greater(clf.score(X_test, y_test), 0.99)
@@ -246,7 +244,7 @@ def test_enet_path():
     ignore_warnings(clf.fit)(X, y)
     # Well-conditioned settings, we should have selected our
     # smallest penalty
-    assert_almost_equal(clf.alpha_, min(np.ravel(clf.alphas_)))
+    assert_almost_equal(clf.alpha_, min(clf.alphas_))
     # Non-sparse ground truth: we should have seleted an elastic-net
     # that is closer to ridge than to lasso
     assert_equal(clf.l1_ratio_, min(clf.l1_ratio))
@@ -257,7 +255,7 @@ def test_enet_path():
     ignore_warnings(clf.fit)(X, y)
     # Well-conditioned settings, we should have selected our
     # smallest penalty
-    assert_almost_equal(clf.alpha_, min(np.ravel(clf.alphas_)))
+    assert_almost_equal(clf.alpha_, min(clf.alphas_))
     # Non-sparse ground truth: we should have seleted an elastic-net
     # that is closer to ridge than to lasso
     assert_equal(clf.l1_ratio_, min(clf.l1_ratio))
@@ -276,7 +274,7 @@ def test_path_parameters():
     clf.fit(X, y)  # new params
     assert_almost_equal(0.5, clf.l1_ratio)
     assert_equal(50, clf.n_alphas)
-    assert_equal((1, 50), clf.alphas_.shape)
+    assert_equal(50, len(clf.alphas_))
 
     # Multi-task output
     X, y, _, _ = build_dataset(n_targets=3)
@@ -288,7 +286,7 @@ def test_path_parameters():
     assert_equal((3, X.shape[1]), clf.coef_.shape)
     assert_equal((3, ), clf.intercept_.shape)
     assert_equal((50, 3), clf.mse_path_.shape)
-    assert_equal((1, 50), clf.alphas_.shape)
+    assert_equal(50, len(clf.alphas_))
 
 
 def test_warm_start():

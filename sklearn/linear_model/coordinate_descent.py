@@ -1170,7 +1170,11 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
 
         self.l1_ratio_ = best_l1_ratio
         self.alpha_ = best_alpha
-        self.alphas_ = np.asarray(alphas)
+        # Remove duplicate alphas in case alphas is provided.
+        if self.alphas is None:
+            self.alphas_ = np.ravel(np.asarray(alphas))
+        else:
+            self.alphas_ = np.asarray(alphas[0])
         self.mse_path_ = np.squeeze(all_mse_paths)
 
         # Refit the model with the parameters selected
@@ -1929,7 +1933,11 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
 
         self.l1_ratio_ = best_l1_ratio
         self.alpha_ = best_alpha
-        self.alphas_ = np.asarray(alphas)
+        # Remove duplicate alphas in case alphas is provided. 
+        if self.alphas is None:
+            self.alphas_ = np.ravel(np.asarray(alphas))
+        else:
+            self.alphas_ = np.asarray(alphas[0])
         self.mse_path_ = np.squeeze(all_mse_paths)
 
         # Refit the model with the parameters selected
