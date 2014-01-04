@@ -503,13 +503,13 @@ the ``feature_importances_`` property.
    :scale: 75
 
 Both :class:`GradientBoostingRegressor` and :class:`GradientBoostingClassifier`
-support :meth:`~GradientBoostingRegressor.fit_more` which allows you to add
-more estimators to an already fitted model
+support ``warm_start=True`` which allows you to add more estimators to an already
+fitted model.
 
 ::
 
-  >>> est.set_params(n_estimators=100)  # set additional nr of trees to fit
-  >>> est.fit_more(X_train, y_train) # fit additional est.n_estimators trees
+  >>> est.set_params(n_estimators=100, warm_start=True)  # set additional nr of trees to fit
+  >>> est.fit(X_train, y_train) # fit additional est.n_estimators trees
   >>> mean_squared_error(y_test, est.predict(X_test))    # doctest: +ELLIPSIS
   5.90...
 

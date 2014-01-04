@@ -519,7 +519,8 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
     @abstractmethod
     def __init__(self, loss, learning_rate, n_estimators, min_samples_split,
                  min_samples_leaf, max_depth, init, subsample, max_features,
-                 random_state, alpha=0.9, verbose=0, max_leaf_nodes=None):
+                 random_state, alpha=0.9, verbose=0, max_leaf_nodes=None,
+                 warm_start=False):
 
         self.n_estimators = n_estimators
         self.learning_rate = learning_rate
@@ -534,6 +535,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         self.alpha = alpha
         self.verbose = verbose
         self.max_leaf_nodes = max_leaf_nodes
+        self.warm_start = warm_start
 
         self.estimators_ = np.empty((0, 0), dtype=np.object)
 
@@ -729,42 +731,10 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         self : object
             Returns self.
         """
-        self._clear_state()
-        return self.fit_more(X, y, monitor)
+        # if not warmstart - clear the estimator state
+        if not self.warm_start:
+            self._clear_state()
 
-    def fit_more(self, X, y, monitor=None):
-        """Fit additional estimators to the gradient boosting model.
-
-        If the model has already been fitted it will add ``n_estimators``
-        more estimators to ``estimators_`` else it will do the same as
-        ``fit``.
-
-        Parameters
-        ----------
-        X : array-like, shape = [n_samples, n_features]
-            Training vectors, where n_samples is the number of samples
-            and n_features is the number of features.
-
-        y : array-like, shape = [n_samples]
-            Target values (integers in classification, real numbers in
-            regression)
-            For classification, labels must correspond to classes
-            ``0, 1, ..., n_classes_-1``.
-
-        monitor : callable, optional
-            The monitor is called after each iteration with the current
-            iteration, a reference to the estimator and the local variables
-            of xx as keyword arguments ``callable(i, self, locals())``.
-            If the callable returns ``True`` the fitting procedure is stopped.
-            The monitor can be used for various things such as computing
-            held-out estimates, early stopping, model introspect,
-            and snapshoting.
-
-        Returns
-        -------
-        self : object
-            Returns self.
-        """
         # Check input
         X, = check_arrays(X, dtype=DTYPE, sparse_format="dense")
         y = column_or_1d(y, warn=True)
@@ -1030,6 +1000,11 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         once in a while (the more trees the lower the frequency).
         If greater than 1 then it prints progress and performance for every tree.
 
+    warm_start : bool, default: False
+        When set to ``True``, reuse the solution of the previous call to fit and
+        add more estimators to the ensemble, otherwise, just erase the
+        previous solution.
+
     Attributes
     ----------
     `feature_importances_` : array, shape = [n_features]
@@ -1083,12 +1058,13 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
                  subsample=1.0, min_samples_split=2, min_samples_leaf=1,
                  max_depth=3, init=None, random_state=None,
                  max_features=None, verbose=0,
-                 max_leaf_nodes=None):
+                 max_leaf_nodes=None, warm_start=False):
 
         super(GradientBoostingClassifier, self).__init__(
             loss, learning_rate, n_estimators, min_samples_split,
             min_samples_leaf, max_depth, init, subsample, max_features,
-            random_state, verbose=verbose, max_leaf_nodes=max_leaf_nodes)
+            random_state, verbose=verbose, max_leaf_nodes=max_leaf_nodes,
+            warm_start=warm_start)
 
     def fit(self, X, y, monitor=None):
         """Fit the gradient boosting model.
@@ -1119,46 +1095,10 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         self : object
             Returns self.
         """
-        return super(GradientBoostingClassifier, self).fit(X, y, monitor)
-
-    def fit_more(self, X, y, monitor=None):
-        """Fit additional estimators to the gradient boosting model.
-
-        If the model has already been fitted it will add ``n_estimators``
-        more estimators to ``estimators_`` else it will do the same as
-        ``fit``.
-
-        Parameters
-        ----------
-        X : array-like, shape = [n_samples, n_features]
-            Training vectors, where n_samples is the number of samples
-            and n_features is the number of features.
-
-        y : array-like, shape = [n_samples]
-            Target values (integers in classification, real numbers in
-            regression)
-            For classification, labels must correspond to classes
-            ``0, 1, ..., n_classes_-1``.
-
-        monitor : callable, optional
-            The monitor is called after each iteration with the current
-            iteration, a reference to the estimator and the local variables
-            of ``_fit_stages`` as keyword arguments ``callable(i, self, locals())``.
-            If the callable returns ``True`` the fitting procedure is stopped.
-            The monitor can be used for various things such as computing
-            held-out estimates, early stopping, model introspect,
-            and snapshoting.
-
-        Returns
-        -------
-        self : object
-            Returns self.
-        """
         y = column_or_1d(y, warn=True)
         self.classes_, y = unique(y, return_inverse=True)
         self.n_classes_ = len(self.classes_)
-
-        return super(GradientBoostingClassifier, self).fit_more(X, y, monitor)
+        return super(GradientBoostingClassifier, self).fit(X, y, monitor)
 
     def _score_to_proba(self, score):
         """Compute class probability estimates from decision scores. """
@@ -1321,6 +1261,12 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         once in a while (the more trees the lower the frequency).
         If greater than 1 then it prints progress and performance for every tree.
 
+    warm_start : bool, default: False
+        When set to ``True``, reuse the solution of the previous call to fit and
+        add more estimators to the ensemble, otherwise, just erase the
+        previous solution.
+
+
     Attributes
     ----------
     `feature_importances_` : array, shape = [n_features]
@@ -1373,12 +1319,14 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
     def __init__(self, loss='ls', learning_rate=0.1, n_estimators=100,
                  subsample=1.0, min_samples_split=2, min_samples_leaf=1,
                  max_depth=3, init=None, random_state=None,
-                 max_features=None, alpha=0.9, verbose=0, max_leaf_nodes=None):
+                 max_features=None, alpha=0.9, verbose=0, max_leaf_nodes=None,
+                 warm_start=False):
 
         super(GradientBoostingRegressor, self).__init__(
             loss, learning_rate, n_estimators, min_samples_split,
             min_samples_leaf, max_depth, init, subsample, max_features,
-            random_state, alpha, verbose, max_leaf_nodes=max_leaf_nodes)
+            random_state, alpha, verbose, max_leaf_nodes=max_leaf_nodes,
+            warm_start=warm_start)
 
     def fit(self, X, y, monitor=None):
         """Fit the gradient boosting model.
@@ -1409,43 +1357,8 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         self : object
             Returns self.
         """
-        return super(GradientBoostingRegressor, self).fit(X, y, monitor)
-
-    def fit_more(self, X, y, monitor=None):
-        """Fit additional estimators to the gradient boosting model.
-
-        If the model has already been fitted it will add ``n_estimators``
-        more estimators to ``estimators_`` else it will do the same as
-        ``fit``.
-
-        Parameters
-        ----------
-        X : array-like, shape = [n_samples, n_features]
-            Training vectors, where n_samples is the number of samples
-            and n_features is the number of features.
-
-        y : array-like, shape = [n_samples]
-            Target values (integers in classification, real numbers in
-            regression)
-            For classification, labels must correspond to classes
-            ``0, 1, ..., n_classes_-1``.
-
-        monitor : callable, optional
-            The monitor is called after each iteration with the current
-            iteration, a reference to the estimator and the local variables
-            of ``_fit_stages`` as keyword arguments ``callable(i, self, locals())``.
-            If the callable returns ``True`` the fitting procedure is stopped.
-            The monitor can be used for various things such as computing
-            held-out estimates, early stopping, model introspect,
-            and snapshoting.
-
-        Returns
-        -------
-        self : object
-            Returns self.
-        """
         self.n_classes_ = 1
-        return super(GradientBoostingRegressor, self).fit_more(X, y, monitor)
+        return super(GradientBoostingRegressor, self).fit(X, y, monitor)
 
     def predict(self, X):
         """Predict regression target for X.
