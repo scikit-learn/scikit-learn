@@ -1,3 +1,5 @@
+import sys
+from sklearn.externals.six.moves import cStringIO as StringIO
 import numpy as np
 from sklearn.learning_curve import learning_curve
 from sklearn.utils.testing import assert_raises
@@ -69,7 +71,26 @@ def test_learning_curve():
     assert_array_almost_equal(test_scores, np.linspace(0.1, 1.0, 10))
 
 
-def test_incremental_learning_not_possible():
+def test_learning_curve_verbose():
+    X, y = make_classification(n_samples=30, n_features=1, n_informative=1,
+                               n_redundant=0, n_classes=2,
+                               n_clusters_per_class=1, random_state=0)
+    estimator = MockImprovingClassifier(20)
+
+    old_stdout = sys.stdout
+    sys.stdout = StringIO()
+    try:
+        n_samples_range, train_scores, test_scores = \
+                learning_curve(estimator, X, y, cv=3, verbose=1)
+    finally:
+        out = sys.stdout.getvalue()
+        sys.stdout.close()
+        sys.stdout = old_stdout
+
+    assert("[learning_curve]" in out)
+
+
+def test_learning_curve_incremental_learning_not_possible():
     X, y = make_classification(n_samples=2, n_features=1, n_informative=1,
                                n_redundant=0, n_classes=2,
                                n_clusters_per_class=1, random_state=0)
@@ -79,7 +100,7 @@ def test_incremental_learning_not_possible():
                   exploit_incremental_learning=True)
 
 
-def test_incremental_learning():
+def test_learning_curve_incremental_learning():
     X, y = make_classification(n_samples=30, n_features=1, n_informative=1,
                                n_redundant=0, n_classes=2,
                                n_clusters_per_class=1, random_state=0)
@@ -91,7 +112,7 @@ def test_incremental_learning():
     assert_array_almost_equal(test_scores, np.linspace(0.1, 1.0, 10))
 
 
-def test_batch_and_incremental_learning_are_equal():
+def test_learning_curve_batch_and_incremental_learning_are_equal():
     X, y = make_classification(n_samples=30, n_features=1, n_informative=1,
                                n_redundant=0, n_classes=2,
                                n_clusters_per_class=1, random_state=0)
@@ -112,7 +133,7 @@ def test_batch_and_incremental_learning_are_equal():
     assert_array_almost_equal(test_scores_inc, test_scores_batch)
 
 
-def test_n_sample_range_out_of_bounds():
+def test_learning_curve_n_sample_range_out_of_bounds():
     X, y = make_classification(n_samples=30, n_features=1, n_informative=1,
                                n_redundant=0, n_classes=2,
                                n_clusters_per_class=1, random_state=0)
@@ -127,7 +148,7 @@ def test_n_sample_range_out_of_bounds():
                   n_samples_range=[1, 21])
 
 
-def test_remove_duplicate_sample_sizes():
+def test_learning_curve_remove_duplicate_sample_sizes():
     X, y = make_classification(n_samples=3, n_features=1, n_informative=1,
                                n_redundant=0, n_classes=2,
                                n_clusters_per_class=1, random_state=0)
@@ -149,4 +170,3 @@ def test_learning_curve_with_boolean_indices():
     assert_array_equal(n_samples_range, np.linspace(2, 20, 10))
     assert_array_almost_equal(train_scores, np.linspace(1.9, 1.0, 10))
     assert_array_almost_equal(test_scores, np.linspace(0.1, 1.0, 10))
-    

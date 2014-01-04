@@ -9,7 +9,7 @@ from .grid_search import _check_scorable, _split_and_score
 
 def learning_curve(estimator, X, y, n_samples_range=np.linspace(0.1, 1.0, 10),
                    cv=None, scoring=None, exploit_incremental_learning=False,
-                   n_jobs=1, pre_dispatch=None, verbose=0):
+                   n_jobs=1, pre_dispatch="all", verbose=0):
     """Learning curve
 
     Determines cross-validated training and test scores for different training
@@ -76,9 +76,9 @@ def learning_curve(estimator, X, y, n_samples_range=np.linspace(0.1, 1.0, 10),
         Scores on test set.
     """
 
-    if exploit_incremental_learning and not hasattr(estimator, 'partial_fit'):
-        raise ValueError('An estimator must support the partial_fit interface '
-                         'to exploit incremental learning')
+    if exploit_incremental_learning and not hasattr(estimator, "partial_fit"):
+        raise ValueError("An estimator must support the partial_fit interface "
+                         "to exploit incremental learning")
 
     X, y = check_arrays(X, y, sparse_format='csr', allow_lists=True)
     # Make a list since we will be iterating multiple times over the folds
@@ -97,6 +97,8 @@ def learning_curve(estimator, X, y, n_samples_range=np.linspace(0.1, 1.0, 10),
     # Because the lengths of folds can be significantly different, it is
     # not guaranteed that we use all of the available training data when we
     # use the first 'n_max_training_samples' samples.
+    if verbose > 0:
+        print("[learning_curve] Training set sizes: " + str(n_samples_range))
 
     _check_scorable(estimator, scoring=scoring)
     scorer = _deprecate_loss_and_score_funcs(scoring=scoring)
