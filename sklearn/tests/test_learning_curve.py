@@ -95,12 +95,18 @@ def test_batch_and_incremental_learning_are_equal():
     X, y = make_classification(n_samples=30, n_features=1, n_informative=1,
                                n_redundant=0, n_classes=2,
                                n_clusters_per_class=1, random_state=0)
+    n_samples_range = np.linspace(0.2, 1.0, 5)
     estimator = PassiveAggressiveClassifier(n_iter=1, shuffle=False)
-    n_samples_range_inc, train_scores_inc, test_scores_inc = learning_curve(
-            estimator, X, y, cv=3, exploit_incremental_learning=True)
+
+    n_samples_range_inc, train_scores_inc, test_scores_inc = \
+            learning_curve(
+                estimator, X, y, n_samples_range=n_samples_range,
+                cv=3, exploit_incremental_learning=True)
     n_samples_range_batch, train_scores_batch, test_scores_batch = \
-            learning_curve(estimator, X, y, cv=3,
-                           exploit_incremental_learning=False)
+            learning_curve(
+                estimator, X, y, cv=3, n_samples_range=n_samples_range,
+                exploit_incremental_learning=False)
+
     assert_array_equal(n_samples_range_inc, n_samples_range_batch)
     assert_array_almost_equal(train_scores_inc, train_scores_batch)
     assert_array_almost_equal(test_scores_inc, test_scores_batch)
