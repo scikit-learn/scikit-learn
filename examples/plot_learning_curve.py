@@ -4,40 +4,53 @@ Plotting Learning Curves
 ========================
 
 A learning curve shows the validation and training score of a learning
-algorithm for varying numbers of training samples. A learning curve
-shows how much we benefit from adding more training data.
+algorithm for varying numbers of training samples. It is a tool to
+find out how much we benefit from adding more training data. If both
+the validation score and the training score converge too a value that is
+too low, we will not benefit much from more training data and we will
+probably have to use a learning algorithm or a parametrization of the
+current learning algorithm with a lower bias.
 
-In this example, the learning curve of a PassiveAggressiveClassifier
-is shown for the digits dataset. Note that the training score and the
-cross-validation score are both not very good. However, the of the curve
-can be found in more complex datasets very often: the training score
-is very high at the beginning and decreases and the cross-validation
-score is very low at the beginning and increases.
+In this example, on the left side the learning curve of a naive Bayes
+classifier is shown for the digits dataset. Note that the training score
+and the cross-validation score are both not very good at the end. However,
+the shape of the curve can be found in more complex datasets very often:
+the training score is very high at the beginning and decreases and the
+cross-validation score is very low at the beginning and increases. On the
+right side we see the learning curve of an SVM with RBF kernel. We can
+see clearly that the training score is still around the maximum and the
+validation score could be increased with more training samples.
 """
-
-# Author: Alexander Fabisch <afabisch@informatik.uni-bremen.de>
-#
-# License: BSD 3 clause
 
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.naive_bayes import GaussianNB
+from sklearn.svm import SVC
 from sklearn.datasets import load_digits
 from sklearn.learning_curve import learning_curve
 
 
-estimator = GaussianNB()
 digits = load_digits()
 X, y = digits.data, digits.target
 
-plt.title("Learning Curves (Passive-Aggressive Classifier on Digits)")
+plt.figure()
+plt.title("Learning Curve (Naive Bayes)")
 plt.xlabel("Training examples")
 plt.ylabel("Score")
-
 n_samples_range, train_scores, test_scores = learning_curve(
-    estimator, X, y, cv=10, n_jobs=1, verbose=1)
+    GaussianNB(), X, y, cv=10, n_jobs=1)
 plt.plot(n_samples_range, train_scores, label="Training score")
 plt.plot(n_samples_range, test_scores, label="Cross-validation score")
-
 plt.legend(loc="best")
+
+plt.figure()
+plt.title("Learning Curve (SVM, RBF kernel, $\gamma=0.001$)")
+plt.xlabel("Training examples")
+plt.ylabel("Score")
+n_samples_range, train_scores, test_scores = learning_curve(
+    SVC(gamma=0.001), X, y, cv=10, n_jobs=1)
+plt.plot(n_samples_range, train_scores, label="Training score")
+plt.plot(n_samples_range, test_scores, label="Cross-validation score")
+plt.legend(loc="best")
+
 plt.show()
