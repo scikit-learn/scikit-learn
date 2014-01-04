@@ -1,3 +1,7 @@
+# Author: Alexander Fabisch <afabisch@informatik.uni-bremen.de>
+#
+# License: BSD 3 clause
+
 import sys
 from sklearn.externals.six.moves import cStringIO as StringIO
 import numpy as np

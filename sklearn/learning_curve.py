@@ -1,3 +1,7 @@
+# Author: Alexander Fabisch <afabisch@informatik.uni-bremen.de>
+#
+# License: BSD 3 clause
+
 import numpy as np
 import warnings
 from .base import is_classifier, clone
@@ -15,16 +19,22 @@ def learning_curve(estimator, X, y, n_samples_range=np.linspace(0.1, 1.0, 10),
     Determines cross-validated training and test scores for different training
     set sizes.
 
+    A cross-validation generator splits the whole dataset k times in training
+    and test data. Subsets of the training set with varying sizes will be used
+    to train the estimator and a score for each training subset size and the
+    test set will be computed. Afterwards, the scores will be averaged over
+    all k runs for each training subset size.
+
     Parameters
     ----------
     estimator : object type that implements the "fit" and "predict" methods
-        An object of that type is instantiated for each validation.
+        An object of that type which is cloned for each validation.
 
-    X : array-like, shape = [n_samples, n_features]
+    X : array-like, shape (n_samples, n_features)
         Training vector, where n_samples is the number of samples and
         n_features is the number of features.
 
-    y : array-like, shape = [n_samples] or [n_samples, n_output], optional
+    y : array-like, shape (n_samples) or (n_samples, n_features), optional
         Target relative to X for classification or regression;
         None for unsupervised learning.
 
