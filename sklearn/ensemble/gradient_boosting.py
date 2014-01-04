@@ -730,13 +730,14 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             Returns self.
         """
         self._clear_state()
-        return self.partial_fit(X, y, monitor)
+        return self.fit_more(X, y, monitor)
 
-    def partial_fit(self, X, y, monitor=None):
-        """Partial fit the gradient boosting model.
+    def fit_more(self, X, y, monitor=None):
+        """Fit additional estimators to the gradient boosting model.
 
         If the model has already been fitted it will add ``n_estimators``
-        more estimators to ``estimators_``.
+        more estimators to ``estimators_`` else it will do the same as
+        ``fit``.
 
         Parameters
         ----------
@@ -1107,7 +1108,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         monitor : callable, optional
             The monitor is called after each iteration with the current
             iteration, a reference to the estimator and the local variables
-            of xx as keyword arguments ``callable(i, self, locals())``.
+            of ``_fit_stages`` as keyword arguments ``callable(i, self, locals())``.
             If the callable returns ``True`` the fitting procedure is stopped.
             The monitor can be used for various things such as computing
             held-out estimates, early stopping, model introspect,
@@ -1120,11 +1121,12 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         """
         return super(GradientBoostingClassifier, self).fit(X, y, monitor)
 
-    def partial_fit(self, X, y, monitor=None):
-        """Partial fit the gradient boosting model.
+    def fit_more(self, X, y, monitor=None):
+        """Fit additional estimators to the gradient boosting model.
 
         If the model has already been fitted it will add ``n_estimators``
-        more estimators to ``estimators_``.
+        more estimators to ``estimators_`` else it will do the same as
+        ``fit``.
 
         Parameters
         ----------
@@ -1141,7 +1143,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         monitor : callable, optional
             The monitor is called after each iteration with the current
             iteration, a reference to the estimator and the local variables
-            of xx as keyword arguments ``callable(i, self, locals())``.
+            of ``_fit_stages`` as keyword arguments ``callable(i, self, locals())``.
             If the callable returns ``True`` the fitting procedure is stopped.
             The monitor can be used for various things such as computing
             held-out estimates, early stopping, model introspect,
@@ -1156,7 +1158,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         self.classes_, y = unique(y, return_inverse=True)
         self.n_classes_ = len(self.classes_)
 
-        return super(GradientBoostingClassifier, self).partial_fit(X, y, monitor)
+        return super(GradientBoostingClassifier, self).fit_more(X, y, monitor)
 
     def _score_to_proba(self, score):
         """Compute class probability estimates from decision scores. """
@@ -1409,11 +1411,12 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         """
         return super(GradientBoostingRegressor, self).fit(X, y, monitor)
 
-    def partial_fit(self, X, y, monitor=None):
-        """Partial fit the gradient boosting model.
+    def fit_more(self, X, y, monitor=None):
+        """Fit additional estimators to the gradient boosting model.
 
         If the model has already been fitted it will add ``n_estimators``
-        more estimators to ``estimators_``.
+        more estimators to ``estimators_`` else it will do the same as
+        ``fit``.
 
         Parameters
         ----------
@@ -1430,7 +1433,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         monitor : callable, optional
             The monitor is called after each iteration with the current
             iteration, a reference to the estimator and the local variables
-            of xx as keyword arguments ``callable(i, self, locals())``.
+            of ``_fit_stages`` as keyword arguments ``callable(i, self, locals())``.
             If the callable returns ``True`` the fitting procedure is stopped.
             The monitor can be used for various things such as computing
             held-out estimates, early stopping, model introspect,
@@ -1442,7 +1445,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
             Returns self.
         """
         self.n_classes_ = 1
-        return super(GradientBoostingRegressor, self).partial_fit(X, y, monitor)
+        return super(GradientBoostingRegressor, self).fit_more(X, y, monitor)
 
     def predict(self, X):
         """Predict regression target for X.
