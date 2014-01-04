@@ -739,15 +739,38 @@ def test_monitor_early_stopping():
     X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
 
     for cls in [GradientBoostingRegressor, GradientBoostingClassifier]:
-        est = cls(n_estimators=20, max_depth=1, random_state=1)
+        est = cls(n_estimators=20, max_depth=1, random_state=1, subsample=0.5)
         _ = est.fit(X, y, monitor=early_stopping_monitor)
         assert_equal(est.n_estimators, 10)
         assert_equal(est.estimators_.shape[0], 10)
+        assert_equal(est.train_score_.shape[0], 10)
+        assert_equal(est.oob_improvement_.shape[0], 10)
+        assert_equal(est._oob_score_.shape[0], 10)
 
-        est = cls(n_estimators=20, max_depth=1, random_state=1, warm_start=True)
+        # try refit
+        est.set_params(n_estimators=30)
+        est.fit(X, y)
+        assert_equal(est.n_estimators, 30)
+        assert_equal(est.estimators_.shape[0], 30)
+        assert_equal(est.train_score_.shape[0], 30)
+        assert_equal(est.oob_improvement_.shape[0], 30)
+
+        est = cls(n_estimators=20, max_depth=1, random_state=1, subsample=0.5,
+                  warm_start=True)
         _ = est.fit(X, y, monitor=early_stopping_monitor)
         assert_equal(est.n_estimators, 10)
         assert_equal(est.estimators_.shape[0], 10)
+        assert_equal(est.train_score_.shape[0], 10)
+        assert_equal(est.oob_improvement_.shape[0], 10)
+        assert_equal(est._oob_score_.shape[0], 10)
+
+        # try refit
+        est.set_params(n_estimators=30, warm_start=False)
+        est.fit(X, y)
+        assert_equal(est.n_estimators, 30)
+        assert_equal(est.train_score_.shape[0], 30)
+        assert_equal(est.estimators_.shape[0], 30)
+        assert_equal(est.oob_improvement_.shape[0], 30)
 
 
 def test_complete_classification():

@@ -765,6 +765,12 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         # change n_estimators after fit (early-stopping or additional ests)
         if n_stages != self.n_estimators:
             self.estimators_ = self.estimators_[:n_stages]
+            self.train_score_ = self.train_score_[:n_stages]
+            if hasattr(self, 'oob_improvement_'):
+                self.oob_improvement_ = self.oob_improvement_[:n_stages]
+            if hasattr(self, '_oob_score_'):
+                self._oob_score_ = self._oob_score_[:n_stages]
+
             self.n_estimators = n_stages
         return self
 
