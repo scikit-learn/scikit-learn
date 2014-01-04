@@ -539,8 +539,8 @@ def enet_multitask_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100,
 
     See also
     --------
-    ElasticNet
-    ElasticNetCV
+    MultiTaskElasticNet
+    MultiTaskElasticNetCV
     """
     X = atleast2d_or_csc(X, dtype=np.float64, order='F', copy=copy_X)
 
@@ -938,7 +938,7 @@ def _path_residuals(X, y, train, test, path, path_params, alphas=None,
 
     alphas: array-like, optional
         Array of float that is used for cross-validation. If not
-        provided, set automatically
+        provided, computed using 'path'
 
     l1_ratio : float, optional
         float between 0 and 1 passed to ElasticNet (scaling between
@@ -1000,13 +1000,13 @@ def _path_residuals(X, y, train, test, path, path_params, alphas=None,
     if sparse.issparse(X_test):
         n_order, n_features, n_alphas = coefs.shape
         # Work around for sparse matices since coefs is a 3-D numpy array.
-        feature_major = np.rollaxis(coefs, 1)
-        feature_2d = np.reshape(feature_major, (n_features, -1))
-        sparse_dot = safe_sparse_dot(X_test, feature_2d).reshape(
+        coefs_feature_major = np.rollaxis(coefs, 1)
+        feature_2d = np.reshape(coefs_feature_major, (n_features, -1))
+        X_test_coefs = safe_sparse_dot(X_test, feature_2d).reshape(
                                      X_test.shape[0], n_order, -1)
     else:
-        sparse_dot = safe_sparse_dot(X_test, coefs)
-    residues = sparse_dot - y_test[:, :, np.newaxis]
+        X_test_coefs = safe_sparse_dot(X_test, coefs)
+    residues = X_test_coefs - y_test[:, :, np.newaxis]
     residues += intercepts
     this_mses = ((residues ** 2).mean(axis=0)).mean(axis=0)
 
@@ -1088,7 +1088,7 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
         if y.ndim > 1:
             model_str = 'ElasticNet' if hasattr(self, 'l1_ratio') else 'Lasso'
             raise ValueError("For multi-task outputs, use "
-                             "Multitask%sCV" % (model_str))
+                             "MultiTask%sCV" % (model_str))
         if X.shape[0] != y.shape[0]:
             raise ValueError("X and y have inconsistent dimensions (%d != %d)"
                              % (X.shape[0], y.shape[0]))
@@ -1146,8 +1146,8 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
                 Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
                     delayed(_path_residuals)(
                         X, y, train, test, self.path, path_params,
-                        alphas=this_alphas, l1_ratio=this_l1_ratio, X_order='F',
-                        dtype=np.float64)
+                        alphas=this_alphas, l1_ratio=this_l1_ratio,
+                        X_order='F', dtype=np.float64)
                     for this_l1_ratio, this_alphas in l1_ratio_alpha_grid
                     for train, test in folds
                 ), operator.itemgetter(1)):
@@ -1170,9 +1170,9 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
 
         self.l1_ratio_ = best_l1_ratio
         self.alpha_ = best_alpha
-        # Remove duplicate alphas in case alphas is provided.
         if self.alphas is None:
             self.alphas_ = np.ravel(np.asarray(alphas))
+        # Remove duplicate alphas in case alphas is provided.
         else:
             self.alphas_ = np.asarray(alphas[0])
         self.mse_path_ = np.squeeze(all_mse_paths)
@@ -1909,8 +1909,8 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
                 Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
                     delayed(_path_residuals)(
                         X, y, train, test, self.path, path_params,
-                        alphas=this_alphas, l1_ratio=this_l1_ratio, X_order='F',
-                        dtype=np.float64)
+                        alphas=this_alphas, l1_ratio=this_l1_ratio,
+                        X_order='F', dtype=np.float64)
                     for this_l1_ratio, this_alphas in l1_ratio_alpha_grid
                     for train, test in folds
                 ), operator.itemgetter(1)):
@@ -1933,9 +1933,9 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
 
         self.l1_ratio_ = best_l1_ratio
         self.alpha_ = best_alpha
-        # Remove duplicate alphas in case alphas is provided. 
         if self.alphas is None:
             self.alphas_ = np.ravel(np.asarray(alphas))
+        # Remove duplicate alphas in case alphas is provided.
         else:
             self.alphas_ = np.asarray(alphas[0])
         self.mse_path_ = np.squeeze(all_mse_paths)
@@ -1950,6 +1950,8 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
         model.l1_ratio = best_l1_ratio
         model.copy_X = copy_X
         model.fit(X, y)
+        if not hasattr(self, 'l1_ratio'):
+            del self.l1_ratio_
         self.coef_ = model.coef_
         self.intercept_ = model.intercept_
         self.dual_gap_ = model.dual_gap_
@@ -2062,5 +2064,3 @@ class MultiTaskLassoCV(MultiTaskElasticNetCV):
             fit_intercept=fit_intercept, normalize=normalize,
             precompute=precompute, max_iter=max_iter, tol=tol, copy_X=copy_X,
             cv=cv, verbose=verbose)
-        # XXX : this leads to a MultiTaskLassoCV having an l1_ratio_
-        # attribute but maybe we can live with it...

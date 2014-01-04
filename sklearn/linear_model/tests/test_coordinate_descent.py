@@ -173,8 +173,7 @@ def test_lasso_cv():
     # check that they also give a similar MSE
     mse_lars = interpolate.interp1d(lars.cv_alphas_, lars.cv_mse_path_.T)
     np.testing.assert_approx_equal(mse_lars(clf.alphas_[5]).mean(),
-                                   clf.mse_path_[5].mean(),
-                                   significant=2)
+                                   clf.mse_path_[5].mean(), significant=2)
 
     # test set
     assert_greater(clf.score(X_test, y_test), 0.99)
@@ -404,13 +403,12 @@ def task_multitask_enet_path():
     assert_almost_equal(clf1.alpha_, clf2.alpha_)
 
 
-def test_multitask_enetandlassocv():
+def test_multitask_enet_and_lasso_cv():
     X, y, _, _ = build_dataset(n_features=100, n_targets=3)
     clf = MultiTaskElasticNetCV().fit(X, y)
     assert_almost_equal(clf.alpha_, 0.00556, 3)
     clf = MultiTaskLassoCV().fit(X, y)
     assert_almost_equal(clf.alpha_, 0.00278, 3)
-    assert_equal(clf.l1_ratio_, 1.)
 
 
 if __name__ == '__main__':
