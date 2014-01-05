@@ -96,7 +96,25 @@ Changelog
    - Reduce memory usage and overhead when fitting and predicting with forests
      of randomized trees in parallel with ``n_jobs != 1`` by leveraging new
      threading backend of joblib 0.8 and releasing the GIL in the tree fitting
-     Cython code.  By `Olivier Grisel`_ and `Gilles Louppe`_
+     Cython code.  By `Olivier Grisel`_ and `Gilles Louppe`_.
+
+   - Decision trees can now be built in best-first manner by using ``max_leaf_nodes``
+     as the stopping critertia. Refactored the tree code to use either a
+     stack or a priority queue for tree building.
+     By `Peter Prettenhofer`_ and `Gilles Louppe`_.
+
+   - Decision trees can now be fitted on fortran- and c-style arrays, and
+     non-continuouse arrays without the need to make a copy.
+     If the input array has a different dtype than ``np.float32``, a fortran-
+     style copy will be made since fortran-style memory layout has speed
+     advantages. By `Peter Prettenhofer`_ and `Gilles Louppe`_.
+
+   - Various enhancements to the  :mod:`sklearn.ensemble.gradient_boosting`
+     module: a ``warm_start`` argument to fit additional trees,
+     a ``max_leaf_nodes`` argument to fit GBM style trees,
+     a ``monitor`` fit argument to inspect the estimator during training, and
+     refactoring of the verbose code. By `Peter Prettenhofer`_.
+
 
 
 API changes summary
