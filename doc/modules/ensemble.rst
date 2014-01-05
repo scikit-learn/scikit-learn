@@ -479,10 +479,10 @@ for regression which can be specified via the argument
     >>> X, y = make_friedman1(n_samples=1200, random_state=0, noise=1.0)
     >>> X_train, X_test = X[:200], X[200:]
     >>> y_train, y_test = y[:200], y[200:]
-    >>> est = GradientBoostingRegressor(n_estimators=100, learning_rate=1.0,
+    >>> est = GradientBoostingRegressor(n_estimators=100, learning_rate=0.1,
     ...     max_depth=1, random_state=0, loss='ls').fit(X_train, y_train)
     >>> mean_squared_error(y_test, est.predict(X_test))    # doctest: +ELLIPSIS
-    6.90...
+    5.00...
 
 The figure below shows the results of applying :class:`GradientBoostingRegressor`
 with least squares loss and 500 base learners to the Boston house price dataset
@@ -508,10 +508,10 @@ fitted model.
 
 ::
 
-  >>> est.set_params(n_estimators=100, warm_start=True)  # set additional nr of trees to fit
-  >>> est.fit(X_train, y_train) # fit additional est.n_estimators trees
+  >>> _ = est.set_params(n_estimators=200, warm_start=True)  # set warm_start and new nr of trees
+  >>> _ = est.fit(X_train, y_train) # fit additional 100 trees to est
   >>> mean_squared_error(y_test, est.predict(X_test))    # doctest: +ELLIPSIS
-  5.90...
+  3.84...
 
 .. topic:: Examples:
 
