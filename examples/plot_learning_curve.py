@@ -23,7 +23,6 @@ validation score could be increased with more training samples.
 """
 print(__doc__)
 
-import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.naive_bayes import GaussianNB
 from sklearn.svm import SVC

@@ -104,7 +104,7 @@ def learning_curve(estimator, X, y, n_samples_range=np.linspace(0.1, 1.0, 10),
 
     n_max_training_samples = len(cv[0][0])
     n_samples_range, n_unique_ticks = _translate_n_samples_range(
-            n_samples_range, n_max_training_samples)
+        n_samples_range, n_max_training_samples)
     # Because the lengths of folds can be significantly different, it is
     # not guaranteed that we use all of the available training data when we
     # use the first 'n_max_training_samples' samples.
@@ -122,15 +122,12 @@ def learning_curve(estimator, X, y, n_samples_range=np.linspace(0.1, 1.0, 10),
         else:
             classes = None
         out = parallel(delayed(_incremental_fit_estimator)(
-                           estimator, X, y, classes, train, test,
-                           n_samples_range, scorer, verbose)
-                       for train, test in cv)
+            estimator, X, y, classes, train, test, n_samples_range, scorer,
+            verbose) for train, test in cv)
     else:
         out = parallel(delayed(_fit_estimator)(
-                           estimator, X, y, train, test, n_train_samples,
-                           scorer, verbose)
-                       for train, test in cv
-                       for n_train_samples in n_samples_range)
+            estimator, X, y, train, test, n_train_samples, scorer, verbose)
+            for train, test in cv for n_train_samples in n_samples_range)
         out = np.array(out)
         n_cv_folds = out.shape[0]/n_unique_ticks
         out = out.reshape(n_cv_folds, n_unique_ticks, 2)
@@ -157,7 +154,7 @@ def _translate_n_samples_range(n_samples_range, n_max_training_samples):
         n_samples_range = np.clip(n_samples_range, 1, n_max_training_samples)
     else:
         if (n_min_required_samples <= 0 or
-            n_max_required_samples > n_max_training_samples):
+                n_max_required_samples > n_max_training_samples):
             raise ValueError("n_samples_range must be within (0, %d], "
                              "but is within [%d, %d]."
                              % (n_max_training_samples,
@@ -178,8 +175,8 @@ def _fit_estimator(base_estimator, X, y, train, test,
                    n_train_samples, scorer, verbose):
     estimator = clone(base_estimator)
     test_score, _, train_score, _ = _split_and_score(
-            estimator, X, y, train=train[:n_train_samples],
-            test=test, scorer=scorer, return_train_score=True)
+        estimator, X, y, train=train[:n_train_samples], test=test,
+        scorer=scorer, return_train_score=True)
     return train_score, test_score
 
 
@@ -187,12 +184,13 @@ def _incremental_fit_estimator(base_estimator, X, y, classes, train, test,
                                n_samples_range, scorer, verbose):
     estimator = clone(base_estimator)
     train_scores, test_scores = [], []
-    for n_train_samples, partial_train in zip(n_samples_range, np.split(train,
-            n_samples_range)[:-1]):
+    for n_train_samples, partial_train in zip(n_samples_range,
+                                              np.split(train,
+                                                       n_samples_range)[:-1]):
         test_score, _, train_score, _ = _split_and_score(
-                estimator, X, y, train=train[:n_train_samples],
-                partial_train=partial_train, test=test, scorer=scorer,
-                return_train_score=True, classes=classes)
+            estimator, X, y, train=train[:n_train_samples],
+            partial_train=partial_train, test=test, scorer=scorer,
+            return_train_score=True, classes=classes)
         train_scores.append(train_score)
         test_scores.append(test_score)
     return np.array((train_scores, test_scores)).T

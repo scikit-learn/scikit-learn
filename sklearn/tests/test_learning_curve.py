@@ -41,7 +41,7 @@ class MockImprovingClassifier(object):
         return X is self.X_subset
 
     def get_params(self, deep=False):
-        return {"n_max_train_samples" : self.n_max_train_samples}
+        return {"n_max_train_samples": self.n_max_train_samples}
 
     def set_params(self, **params):
         self.n_max_train_samples = params["n_max_train_samples"]
@@ -52,7 +52,7 @@ class MockIncrementalImprovingClassifier(MockImprovingClassifier):
     """Dummy classifier that provides partial_fit"""
     def __init__(self, n_max_train_samples):
         super(MockIncrementalImprovingClassifier, self).__init__(
-                n_max_train_samples)
+            n_max_train_samples)
         self.x = None
 
     def _is_training_data(self, X):
@@ -85,7 +85,7 @@ def test_learning_curve_verbose():
     sys.stdout = StringIO()
     try:
         n_samples_range, train_scores, test_scores = \
-                learning_curve(estimator, X, y, cv=3, verbose=1)
+            learning_curve(estimator, X, y, cv=3, verbose=1)
     finally:
         out = sys.stdout.getvalue()
         sys.stdout.close()
@@ -110,7 +110,7 @@ def test_learning_curve_incremental_learning():
                                n_clusters_per_class=1, random_state=0)
     estimator = MockIncrementalImprovingClassifier(20)
     n_samples_range, train_scores, test_scores = learning_curve(
-            estimator, X, y, cv=3, exploit_incremental_learning=True)
+        estimator, X, y, cv=3, exploit_incremental_learning=True)
     assert_array_equal(n_samples_range, np.linspace(2, 20, 10))
     assert_array_almost_equal(train_scores, np.linspace(1.9, 1.0, 10))
     assert_array_almost_equal(test_scores, np.linspace(0.1, 1.0, 10))
@@ -124,13 +124,13 @@ def test_learning_curve_batch_and_incremental_learning_are_equal():
     estimator = PassiveAggressiveClassifier(n_iter=1, shuffle=False)
 
     n_samples_range_inc, train_scores_inc, test_scores_inc = \
-            learning_curve(
-                estimator, X, y, n_samples_range=n_samples_range,
-                cv=3, exploit_incremental_learning=True)
+        learning_curve(
+            estimator, X, y, n_samples_range=n_samples_range,
+            cv=3, exploit_incremental_learning=True)
     n_samples_range_batch, train_scores_batch, test_scores_batch = \
-            learning_curve(
-                estimator, X, y, cv=3, n_samples_range=n_samples_range,
-                exploit_incremental_learning=False)
+        learning_curve(
+            estimator, X, y, cv=3, n_samples_range=n_samples_range,
+            exploit_incremental_learning=False)
 
     assert_array_equal(n_samples_range_inc, n_samples_range_batch)
     assert_array_almost_equal(train_scores_inc, train_scores_batch)
@@ -157,9 +157,9 @@ def test_learning_curve_remove_duplicate_sample_sizes():
                                n_redundant=0, n_classes=2,
                                n_clusters_per_class=1, random_state=0)
     estimator = MockImprovingClassifier(2)
-    n_samples_range, _, _ = assert_warns(RuntimeWarning,
-            learning_curve, estimator, X, y, cv=3,
-            n_samples_range=np.linspace(0.33, 1.0, 3))
+    n_samples_range, _, _ = assert_warns(
+        RuntimeWarning, learning_curve, estimator, X, y, cv=3,
+        n_samples_range=np.linspace(0.33, 1.0, 3))
     assert_array_equal(n_samples_range, [1, 2])
 
 
