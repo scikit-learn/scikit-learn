@@ -28,7 +28,7 @@ from sklearn import tree
 from sklearn import datasets
 from sklearn.utils.fixes import bincount
 
-from sklearn.preprocessing import balance_weights
+from sklearn.preprocessing._weights import _balance_weights
 
 
 CLF_CRITERIONS = ("gini", "entropy")
@@ -518,7 +518,7 @@ def test_unbalanced_iris():
     """Check class rebalancing."""
     unbalanced_X = iris.data[:125]
     unbalanced_y = iris.target[:125]
-    sample_weight = balance_weights(unbalanced_y)
+    sample_weight = _balance_weights(unbalanced_y)
 
     for name, TreeClassifier in CLF_TREES.items():
         clf = TreeClassifier(random_state=0)
