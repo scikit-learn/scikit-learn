@@ -898,7 +898,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         """
         X = array2d(X, dtype=DTYPE, order="C")
         score = self._init_decision_function(X)
-        for i in range(self.n_estimators):
+        for i in range(self.estimators_.shape[0]):
             predict_stage(self.estimators_, i, X, self.learning_rate, score)
             yield score
 
