@@ -681,7 +681,9 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
     def _resize_state(self):
         """Add additional ``n_estimators`` entries to all attributes. """
         # self.n_estimators is the number of additional est to fit
-        total_n_estimators = self.n_estimators + self.estimators_.shape[0]
+        total_n_estimators = self.n_estimators
+        if total_n_estimators < self.estimators_.shape[0]:
+            raise ValueError('resize with smaller n_estimators than len(estimators_)')
 
         self.estimators_.resize((total_n_estimators, self.loss_.K))
         self.train_score_.resize(total_n_estimators)
@@ -755,6 +757,10 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             begin_at_stage = 0
         else:
             # add more estimators to fitted model
+            # invariant: warm_start = True
+            if self.n_estimators < self.estimators_.shape[0]:
+                raise ValueError('n_estimators must be larger or equal to estimators_.shape[0]' +
+                                 'when warm_start==True')
             begin_at_stage = self.estimators_.shape[0]
             y_pred = self.decision_function(X)
             self._resize_state()
@@ -801,7 +807,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             verbose_reporter.init(self, begin_at_stage)
 
         # perform boosting iterations
-        for i in range(begin_at_stage, begin_at_stage + self.n_estimators):
+        for i in range(begin_at_stage, self.n_estimators):
 
             # subsampling
             if do_oob:
