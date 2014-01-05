@@ -257,6 +257,22 @@ def fit_grid_point(X, y, base_estimator, parameters, train, test, scorer,
 def _split_and_score(estimator, X, y, train, test, scorer,
                      return_train_score=False, partial_train=None,
                      **fit_params):
+    """Split the dataset in training and test set and compute scores.
+
+    The dataset consists of of either a precomputed kernel matrix or an input
+    matrix 'X' and optional targets 'y' (y can be None for unsupervised
+    learners). It will be split according to the indices given by 'train' and
+    'test'. Usually an estimator will be trained with the whole training set.
+    However, it is possible to reuse a previously trained model to train it
+    incrementally by passing the indices of the next training subset in
+    'partial_train'. After splitting the dataset and fitting the estimator, the
+    scores will be computed on the test set according to the scoring function
+    of the estimator or with a given 'scorer'. It is possible to return the
+    score on the training set optionally by setting 'return_train_score'. The
+    function will return the score on the test set and the number of samples in
+    the test set and optionally the score on the training set and the number of
+    samples in the training set.
+    """
     if hasattr(estimator, 'kernel') and callable(estimator.kernel):
         # cannot compute the kernel values with custom function
         raise ValueError("Cannot use a custom kernel function. "
@@ -316,6 +332,7 @@ def _split_and_score(estimator, X, y, train, test, scorer,
 
 
 def _fit(estimator, X_train, y_train, **fit_params):
+    """Fit and estimator on a given training set."""
     if y_train is None:
         estimator.fit(X_train, **fit_params)
     else:
@@ -324,6 +341,7 @@ def _fit(estimator, X_train, y_train, **fit_params):
 
 def _fit_incremental(estimator, X_partial_train, y_partial_train,
                      **fit_params):
+    """Fit an estimator incrementally with a given training subset."""
     if y_partial_train is None:
         estimator.partial_fit(X_partial_train, **fit_params)
     else:
@@ -331,6 +349,7 @@ def _fit_incremental(estimator, X_partial_train, y_partial_train,
 
 
 def _score(estimator, X_test, y_test, scorer):
+    """Compute the score of an estimator on a given test set."""
     if y_test is None:
         if scorer is None:
             this_score = estimator.score(X_test)

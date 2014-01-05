@@ -11,6 +11,7 @@ from .externals.joblib import Parallel, delayed
 from .metrics.scorer import _deprecate_loss_and_score_funcs
 from .grid_search import _check_scorable, _split_and_score
 
+
 def learning_curve(estimator, X, y, n_samples_range=np.linspace(0.1, 1.0, 10),
                    cv=None, scoring=None, exploit_incremental_learning=False,
                    n_jobs=1, pre_dispatch="all", verbose=0):
@@ -47,8 +48,8 @@ def learning_curve(estimator, X, y, n_samples_range=np.linspace(0.1, 1.0, 10),
         be big enough to contain at least one sample from each class.
         (default: np.linspace(0.1, 1.0, 10))
 
-    cv : integer, cross-validation generator or None, optional, default: None
-        If an integer is passed, it is the number of folds (default 3).
+    cv : integer, cross-validation generator, optional
+        If an integer is passed, it is the number of folds (defaults to 3).
         Specific cross-validation objects can be passed, see
         sklearn.cross_validation module for the list of possible objects
 
@@ -151,8 +152,8 @@ def _translate_n_samples_range(n_samples_range, n_max_training_samples):
                              "but is within [%f, %f]."
                              % (n_min_required_samples,
                                 n_max_required_samples))
-        n_samples_range = (n_samples_range * n_max_training_samples
-                ).astype(np.int)
+        n_samples_range = (n_samples_range
+                           * n_max_training_samples).astype(np.int)
         n_samples_range = np.clip(n_samples_range, 1, n_max_training_samples)
     else:
         if (n_min_required_samples <= 0 or

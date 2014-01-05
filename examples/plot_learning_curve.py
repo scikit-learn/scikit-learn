@@ -6,7 +6,7 @@ Plotting Learning Curves
 A learning curve shows the validation and training score of a learning
 algorithm for varying numbers of training samples. It is a tool to
 find out how much we benefit from adding more training data. If both
-the validation score and the training score converge too a value that is
+the validation score and the training score converge to a value that is
 too low, we will not benefit much from more training data and we will
 probably have to use a learning algorithm or a parametrization of the
 current learning algorithm with a lower bias.
@@ -21,6 +21,7 @@ right side we see the learning curve of an SVM with RBF kernel. We can
 see clearly that the training score is still around the maximum and the
 validation score could be increased with more training samples.
 """
+print(__doc__)
 
 import numpy as np
 import matplotlib.pyplot as plt
