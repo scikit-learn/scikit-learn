@@ -629,11 +629,11 @@ def test_warn_deviance():
 def test_warm_start():
     """Test if warm start equals fit. """
     X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
-    for cls in [GradientBoostingRegressor, GradientBoostingClassifier]:
-        est = cls(n_estimators=200, max_depth=1)
+    for Cls in [GradientBoostingRegressor, GradientBoostingClassifier]:
+        est = Cls(n_estimators=200, max_depth=1)
         est.fit(X, y)
 
-        est_ws = cls(n_estimators=100, max_depth=1, warm_start=True)
+        est_ws = Cls(n_estimators=100, max_depth=1, warm_start=True)
         est_ws.fit(X, y)
         est_ws.set_params(n_estimators=200)
         est_ws.fit(X, y)
@@ -644,11 +644,11 @@ def test_warm_start():
 def test_warm_start_n_estimators():
     """Test if warm start equals fit - set n_estimators. """
     X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
-    for cls in [GradientBoostingRegressor, GradientBoostingClassifier]:
-        est = cls(n_estimators=300, max_depth=1)
+    for Cls in [GradientBoostingRegressor, GradientBoostingClassifier]:
+        est = Cls(n_estimators=300, max_depth=1)
         est.fit(X, y)
 
-        est_ws = cls(n_estimators=100, max_depth=1, warm_start=True)
+        est_ws = Cls(n_estimators=100, max_depth=1, warm_start=True)
         est_ws.fit(X, y)
         est_ws.set_params(n_estimators=300)
         est_ws.fit(X, y)
@@ -659,8 +659,8 @@ def test_warm_start_n_estimators():
 def test_warm_start_max_depth():
     """Test if possible to fit trees of differet depth in ensemble. """
     X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
-    for cls in [GradientBoostingRegressor, GradientBoostingClassifier]:
-        est = cls(n_estimators=100, max_depth=1, warm_start=True)
+    for Cls in [GradientBoostingRegressor, GradientBoostingClassifier]:
+        est = Cls(n_estimators=100, max_depth=1, warm_start=True)
         est.fit(X, y)
         est.set_params(n_estimators=110, max_depth=2)
         est.fit(X, y)
@@ -674,11 +674,11 @@ def test_warm_start_max_depth():
 def test_warm_start_clear():
     """Test if fit clears state. """
     X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
-    for cls in [GradientBoostingRegressor, GradientBoostingClassifier]:
-        est = cls(n_estimators=100, max_depth=1)
+    for Cls in [GradientBoostingRegressor, GradientBoostingClassifier]:
+        est = Cls(n_estimators=100, max_depth=1)
         est.fit(X, y)
 
-        est_2 = cls(n_estimators=100, max_depth=1, warm_start=True)
+        est_2 = Cls(n_estimators=100, max_depth=1, warm_start=True)
         est_2.fit(X, y)  # inits state
         est_2.set_params(warm_start=False)
         est_2.fit(X, y)  # clears old state and equals est
@@ -689,8 +689,8 @@ def test_warm_start_clear():
 def test_warm_start_zero_n_estimators():
     """Test if warm start with zero n_estimators raises error """
     X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
-    for cls in [GradientBoostingRegressor, GradientBoostingClassifier]:
-        est = cls(n_estimators=100, max_depth=1, warm_start=True)
+    for Cls in [GradientBoostingRegressor, GradientBoostingClassifier]:
+        est = Cls(n_estimators=100, max_depth=1, warm_start=True)
         est.fit(X, y)
         est.set_params(n_estimators=0)
         assert_raises(ValueError, est.fit, X, y)
@@ -699,8 +699,8 @@ def test_warm_start_zero_n_estimators():
 def test_warm_start_smaller_n_estimators():
     """Test if warm start with smaller n_estimators raises error """
     X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
-    for cls in [GradientBoostingRegressor, GradientBoostingClassifier]:
-        est = cls(n_estimators=100, max_depth=1, warm_start=True)
+    for Cls in [GradientBoostingRegressor, GradientBoostingClassifier]:
+        est = Cls(n_estimators=100, max_depth=1, warm_start=True)
         est.fit(X, y)
         est.set_params(n_estimators=99)
         assert_raises(ValueError, est.fit, X, y)
@@ -709,8 +709,8 @@ def test_warm_start_smaller_n_estimators():
 def test_warm_start_equal_n_estimators():
     """Test if warm start with equal n_estimators does nothing """
     X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
-    for cls in [GradientBoostingRegressor, GradientBoostingClassifier]:
-        est = cls(n_estimators=100, max_depth=1)
+    for Cls in [GradientBoostingRegressor, GradientBoostingClassifier]:
+        est = Cls(n_estimators=100, max_depth=1)
         est.fit(X, y)
 
         est2 = clone(est)
@@ -723,8 +723,8 @@ def test_warm_start_equal_n_estimators():
 def test_warm_start_oob_switch():
     """Test if oob can be turned on during warm start. """
     X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
-    for cls in [GradientBoostingRegressor, GradientBoostingClassifier]:
-        est = cls(n_estimators=100, max_depth=1, warm_start=True)
+    for Cls in [GradientBoostingRegressor, GradientBoostingClassifier]:
+        est = Cls(n_estimators=100, max_depth=1, warm_start=True)
         est.fit(X, y)
         est.set_params(n_estimators=110, subsample=0.5)
         est.fit(X, y)
@@ -738,12 +738,12 @@ def test_warm_start_oob_switch():
 def test_warm_start_oob():
     """Test if warm start OOB equals fit. """
     X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
-    for cls in [GradientBoostingRegressor, GradientBoostingClassifier]:
-        est = cls(n_estimators=200, max_depth=1, subsample=0.5,
+    for Cls in [GradientBoostingRegressor, GradientBoostingClassifier]:
+        est = Cls(n_estimators=200, max_depth=1, subsample=0.5,
                   random_state=1)
         est.fit(X, y)
 
-        est_ws = cls(n_estimators=100, max_depth=1, subsample=0.5,
+        est_ws = Cls(n_estimators=100, max_depth=1, subsample=0.5,
                        random_state=1, warm_start=True)
         est_ws.fit(X, y)
         est_ws.set_params(n_estimators=200)
@@ -766,8 +766,8 @@ def test_monitor_early_stopping():
     """Test if monitor return value works. """
     X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
 
-    for cls in [GradientBoostingRegressor, GradientBoostingClassifier]:
-        est = cls(n_estimators=20, max_depth=1, random_state=1, subsample=0.5)
+    for Cls in [GradientBoostingRegressor, GradientBoostingClassifier]:
+        est = Cls(n_estimators=20, max_depth=1, random_state=1, subsample=0.5)
         _ = est.fit(X, y, monitor=early_stopping_monitor)
         assert_equal(est.n_estimators, 10)
         assert_equal(est.estimators_.shape[0], 10)
@@ -783,7 +783,7 @@ def test_monitor_early_stopping():
         assert_equal(est.train_score_.shape[0], 30)
         assert_equal(est.oob_improvement_.shape[0], 30)
 
-        est = cls(n_estimators=20, max_depth=1, random_state=1, subsample=0.5,
+        est = Cls(n_estimators=20, max_depth=1, random_state=1, subsample=0.5,
                   warm_start=True)
         _ = est.fit(X, y, monitor=early_stopping_monitor)
         assert_equal(est.n_estimators, 10)

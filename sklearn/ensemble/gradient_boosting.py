@@ -616,7 +616,8 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             else:
                 if (not hasattr(self.init, 'fit')
                     or not hasattr(self.init, 'predict')):
-                    raise ValueError("init must be valid estimator")
+                    raise ValueError("init must be valid BaseEstimator and support " +
+                                     "both fit and predict")
 
         if not (0.0 < self.alpha and self.alpha < 1.0):
             raise ValueError("alpha must be in (0.0, 1.0)")
@@ -722,7 +723,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         monitor : callable, optional
             The monitor is called after each iteration with the current
             iteration, a reference to the estimator and the local variables
-            of xx as keyword arguments ``callable(i, self, locals())``.
+            of ``_fit_stages`` as keyword arguments ``callable(i, self, locals())``.
             If the callable returns ``True`` the fitting procedure is stopped.
             The monitor can be used for various things such as computing
             held-out estimates, early stopping, model introspect,
@@ -759,7 +760,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             # add more estimators to fitted model
             # invariant: warm_start = True
             if self.n_estimators < self.estimators_.shape[0]:
-                raise ValueError('n_estimators must be larger or equal to estimators_.shape[0]' +
+                raise ValueError('n_estimators must be larger or equal to estimators_.shape[0] ' +
                                  'when warm_start==True')
             begin_at_stage = self.estimators_.shape[0]
             y_pred = self.decision_function(X)
@@ -791,7 +792,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         """
         n_samples = X.shape[0]
         do_oob = self.subsample < 1.0
-        sample_mask = np.ones((n_samples,), dtype=np.bool)
+        sample_mask = np.ones((n_samples, ), dtype=np.bool)
         n_inbag = max(1, int(self.subsample * n_samples))
         loss_ = self.loss_
 
@@ -1358,7 +1359,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         monitor : callable, optional
             The monitor is called after each iteration with the current
             iteration, a reference to the estimator and the local variables
-            of xx as keyword arguments ``callable(i, self, locals())``.
+            of ``_fit_stages`` as keyword arguments ``callable(i, self, locals())``.
             If the callable returns ``True`` the fitting procedure is stopped.
             The monitor can be used for various things such as computing
             held-out estimates, early stopping, model introspect,
