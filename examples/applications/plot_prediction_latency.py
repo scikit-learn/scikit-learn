@@ -30,7 +30,6 @@ from sklearn.ensemble.forest import RandomForestRegressor
 from sklearn.linear_model.ridge import Ridge
 from sklearn.linear_model.stochastic_gradient import SGDRegressor
 from sklearn.svm.classes import SVR
-from sklearn.utils.fixes import count_nonzero
 
 
 def _not_in_sphinx():
@@ -287,7 +286,7 @@ configuration = {
          'instance': SGDRegressor(penalty='elasticnet', alpha=0.01,
                                   l1_ratio=0.25, fit_intercept=True),
          'complexity_label': 'non-zero coefficients',
-         'complexity_computer': lambda clf: count_nonzero(clf.coef_)},
+         'complexity_computer': lambda clf: np.count_nonzero(clf.coef_)},
         {'name': 'RandomForest',
          'instance': RandomForestRegressor(),
          'complexity_label': 'estimators',

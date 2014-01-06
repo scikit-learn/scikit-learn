@@ -55,7 +55,6 @@ from ..tree import (DecisionTreeClassifier, DecisionTreeRegressor,
 from ..tree._tree import DTYPE, DOUBLE
 from ..utils import array2d, check_random_state, check_arrays, safe_asarray
 from ..utils.validation import DataConversionWarning
-from ..utils.fixes import bincount, unique
 
 from .base import BaseEnsemble, _partition_estimators
 
@@ -82,7 +81,7 @@ def _parallel_build_trees(trees, forest, X, y, sample_weight, verbose):
 
             random_state = check_random_state(tree.random_state)
             indices = random_state.randint(0, n_samples, n_samples)
-            sample_counts = bincount(indices, minlength=n_samples)
+            sample_counts = np.bincount(indices, minlength=n_samples)
             curr_sample_weight *= sample_counts
 
             tree.fit(X, y,
@@ -395,7 +394,7 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
         self.n_classes_ = []
 
         for k in xrange(self.n_outputs_):
-            classes_k, y[:, k] = unique(y[:, k], return_inverse=True)
+            classes_k, y[:, k] = np.unique(y[:, k], return_inverse=True)
             self.classes_.append(classes_k)
             self.n_classes_.append(classes_k.shape[0])
 

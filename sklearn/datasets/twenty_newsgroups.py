@@ -50,7 +50,6 @@ from .base import get_data_home
 from .base import Bunch
 from .base import load_files
 from ..utils import check_random_state
-from ..utils.fixes import in1d
 from ..feature_extraction.text import CountVectorizer
 from ..preprocessing import normalize
 from ..externals import joblib, six
@@ -246,7 +245,7 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
         # Sort the categories to have the ordering of the labels
         labels.sort()
         labels, categories = zip(*labels)
-        mask = in1d(data.target, labels)
+        mask = np.in1d(data.target, labels)
         data.filenames = data.filenames[mask]
         data.target = data.target[mask]
         # searchsorted to have continuous labels

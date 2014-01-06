@@ -37,7 +37,7 @@ Dependencies
 scikit-learn is tested to work under Python 2.6+ and Python 3.3+
 (using the same codebase thanks to an embedded copy of `six <http://pythonhosted.org/six/>`_).
 
-The required dependencies to build the software Numpy >= 1.3, SciPy >= 0.7
+The required dependencies to build the software NumPy >= 1.6.1, SciPy >= 0.9
 and a working C/C++ compiler.
 
 For running the examples Matplotlib >= 0.99.1 is required and for running the

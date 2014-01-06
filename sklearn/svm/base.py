@@ -11,7 +11,6 @@ from ..base import BaseEstimator, ClassifierMixin
 from ..preprocessing import LabelEncoder
 from ..utils import atleast2d_or_csr, array2d, check_random_state, column_or_1d
 from ..utils import ConvergenceWarning, compute_class_weight
-from ..utils.fixes import unique
 from ..utils.extmath import safe_sparse_dot
 from ..externals import six
 
@@ -437,7 +436,7 @@ class BaseSVC(BaseLibSVM, ClassifierMixin):
 
     def _validate_targets(self, y):
         y_ = column_or_1d(y, warn=True)
-        cls, y = unique(y_, return_inverse=True)
+        cls, y = np.unique(y_, return_inverse=True)
         self.class_weight_ = compute_class_weight(self.class_weight, cls, y_)
         if len(cls) < 2:
             raise ValueError(

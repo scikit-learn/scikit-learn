@@ -35,7 +35,7 @@ Getting the dependencies
 ------------------------
 
 Installing from source requires you to have installed Python (>= 2.6),
-NumPy (>= 1.3), SciPy (>= 0.7), setuptools, Python development headers
+NumPy (>= 1.6.1), SciPy (>= 0.9), setuptools, Python development headers
 and a working C++ compiler.
 Under Debian-based operating systems, which include Ubuntu,
 you can install all these requirements by issuing::

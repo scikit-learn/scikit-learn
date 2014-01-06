@@ -29,7 +29,6 @@ from sklearn.tree import ExtraTreeRegressor
 
 from sklearn import tree
 from sklearn import datasets
-from sklearn.utils.fixes import bincount
 
 from sklearn.preprocessing._weights import _balance_weights
 
@@ -624,7 +623,7 @@ def test_sample_weight():
     clf = DecisionTreeClassifier(random_state=1)
     clf.fit(X[duplicates], y[duplicates])
 
-    sample_weight = bincount(duplicates, minlength=X.shape[0])
+    sample_weight = np.bincount(duplicates, minlength=X.shape[0])
     clf2 = DecisionTreeClassifier(random_state=1)
     clf2.fit(X, y, sample_weight=sample_weight)
 

@@ -12,10 +12,9 @@ import warnings
 import numpy as np
 from scipy import linalg
 from scipy.sparse import issparse
-from distutils.version import LooseVersion
 
 from . import check_random_state, deprecated
-from .fixes import qr_economic
+from .fixes import np_version, qr_economic
 from ._logistic_sigmoid import _log_logistic_sigmoid
 from ..externals.six.moves import xrange
 from .sparsefuncs import csr_row_norms
@@ -33,25 +32,18 @@ def norm(x):
     return nrm2(x)
 
 
-_have_einsum = hasattr(np, "einsum")
-
-
 def row_norms(X, squared=False):
     """Row-wise (squared) Euclidean norm of X.
 
-    Equivalent to (X * X).sum(axis=1), but also supports CSR sparse matrices.
-    With newer NumPy versions, prevents an X.shape-sized temporary.
+    Equivalent to (X * X).sum(axis=1), but also supports CSR sparse matrices
+    and does not create an X.shape-sized temporary.
 
     Performs no input validation.
     """
     if issparse(X):
         norms = csr_row_norms(X)
-    elif _have_einsum:
-        # einsum avoids the creation of a temporary the size of X,
-        # but it's only available in NumPy >= 1.6.
-        norms = np.einsum('ij,ij->i', X, X)
     else:
-        norms = (X * X).sum(axis=1)
+        norms = np.einsum('ij,ij->i', X, X)
 
     if not squared:
         np.sqrt(norms, norms)
@@ -136,7 +128,7 @@ def _have_blas_gemm():
 
 
 # Only use fast_dot for older NumPy; newer ones have tackled the speed issue.
-if LooseVersion(np.__version__) < '1.7.2' and _have_blas_gemm():
+if np_version < (1, 7, 2) and _have_blas_gemm():
     def fast_dot(A, B):
         """Compute fast dot products directly calling BLAS.
 
