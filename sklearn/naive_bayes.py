@@ -533,7 +533,7 @@ class BernoulliNB(BaseDiscreteNB):
     def _binarize(self, X):
         """check if data is binary and binarize if necessary"""
         if self.binarize is None:
-            #ensure data is binary
+            # ensure data is binary
             non_binary = np.setdiff1d(X.data if issparse(X) else X, [0, 1])
             if (non_binary.size > 0):
                 raise ValueError('Expected binary input, but there are %d'

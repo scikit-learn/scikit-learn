@@ -121,19 +121,19 @@ def test_bnb():
     """
     clf = BernoulliNB(binarize=None)
 
-    #fit should raise an error when using
+    # fit should raise an error when using
     # non-binary data with binarize=None
     X = np.array([[0, 0], [0, 1], [0, 2]])
-    sX = scipy.sparse.csr_matrix(X)
+    X_sparse = scipy.sparse.csr_matrix(X)
     assert_raises(ValueError, clf.fit, X, [0, 1, 1])
-    assert_raises(ValueError, clf.fit, sX, [0, 1, 1])
+    assert_raises(ValueError, clf.fit, X_sparse, [0, 1, 1])
 
     X2 = np.array([[0, 0], [0, 1], [0, 1]])
-    sX2 = scipy.sparse.csr_matrix(X2)
+    X2_sparse = scipy.sparse.csr_matrix(X2)
     clf.fit(X2, [0, 1, 1])
-    clf.fit(sX2, [0, 1, 1])
+    clf.fit(X2_sparse, [0, 1, 1])
 
-    #predict should raise an error when using
+    # predict should raise an error when using
     # non-binary data with binarize=None
     assert_raises(ValueError, clf.predict, [0, 2])
 
