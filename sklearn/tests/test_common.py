@@ -66,8 +66,6 @@ def test_all_estimators():
         # some can just not be sensibly default constructed
         if name in dont_test:
             continue
-        check_parameters_default_constructible.description = \
-            "check_parameters_default_constructible(%s)" % name
         yield check_parameters_default_constructible, name, Estimator
 
 
@@ -145,8 +143,6 @@ def test_estimators_sparse_data():
     for name, Estimator in estimators:
         if name in dont_test:
             continue
-        check_regressors_classifiers_sparse_data.description = \
-            "check_regressors_classifiers_sparse_data(%s)" % name
         yield check_regressors_classifiers_sparse_data, name, Estimator, X, y
 
 
@@ -192,7 +188,6 @@ def test_transformers():
         # these don't actually fit the data:
         if name in ['AdditiveChi2Sampler', 'Binarizer', 'Normalizer']:
             continue
-        check_transformer.description = "check_transformer(%s)" % name
         yield check_transformer, name, Transformer, X, y
 
 
@@ -278,8 +273,6 @@ def test_transformers_sparse_data():
     for name, Transformer in estimators:
         if name in dont_test:
             continue
-        check_transformer_sparse_data.description =\
-            "check_transformer_sparse_data(%s)" % name
         yield check_transformer_sparse_data, name, Transformer, X, y
 
 
@@ -337,8 +330,6 @@ def test_estimators_nan_inf():
             if name in ('PLSCanonical', 'PLSRegression', 'CCA',
                         'PLSSVD', 'Imputer'):  # Imputer accepts nan
                 continue
-            check_estimators_nan_inf.description =\
-                "check_estimators_nan_inf(%s)" % name
             yield (check_estimators_nan_inf, name, Estimator, X_train,
                    X_train_finite, y)
 
@@ -431,8 +422,6 @@ def test_transformers_pickle():
     for name, Transformer in transformers:
         if name in dont_test:
             continue
-        check_transformer_pickle.description =\
-            "check_transformer_pickle(%s)" % name
         yield check_transformer_pickle, name, Transformer, X, y
 
 
@@ -486,8 +475,6 @@ def test_classifiers_one_label():
     for name, Classifier in classifiers:
         if name in dont_test:
             continue
-        check_classifiers_one_label.description =\
-            "check_classifier_one_labels(%s)" % name
         yield check_classifiers_one_label, name, Classifier, X_train, X_test, y
 
 
@@ -533,7 +520,6 @@ def test_clustering():
             # this is clustering on the features
             # let's not test that here.
             continue
-        check_clustering.description = "check_clustering(%s)" % name
         yield check_clustering, name, Alg, X, y
 
 
@@ -581,8 +567,6 @@ def test_classifiers_train():
             if name in ['MultinomialNB', 'BernoulliNB']:
                 # TODO also test these!
                 continue
-            check_classifiers_train.description =\
-                "check_classifiers(%s)" % name
             yield check_classifiers_train, name, Classifier, X, y
 
 
@@ -660,8 +644,6 @@ def test_classifiers_classes():
             if name in ['MultinomialNB', 'BernoulliNB']:
                 # TODO also test these!
                 continue
-            check_classifiers_classes.description =\
-                "check_classifier_classes(%s)" % name
             yield check_classifiers_classes, name, Classifier, X, y, y_names
 
 
@@ -715,8 +697,6 @@ def test_classifiers_input_shapes():
             # We don't raise a warning in these classifiers, as
             # the column y interface is used by the forests.
             continue
-        check_classifiers_input_shapes.description =\
-            "check_classifiers_input_shapes(%s)" % name
         yield check_classifiers_input_shapes, name, Classifier, X, y
 
 
@@ -758,8 +738,6 @@ def test_classifiers_pickle():
             if name in ['MultinomialNB', 'BernoulliNB']:
                 # TODO also test these!
                 continue
-            check_classifiers_pickle.description =\
-                "check_classifiers_pickle(%s, %d)" % (name, len(np.unique(y)))
             yield check_classifiers_pickle, name, Classifier, X, y
 
 
@@ -806,7 +784,6 @@ def test_regressors_int():
     for name, Regressor in regressors:
         if name in dont_test or name in ('CCA'):
             continue
-        check_regressors_int.description = "check_regressors_int(%s)" % name
         yield check_regressors_int, name, Regressor, X, y
 
 
@@ -843,8 +820,6 @@ def test_regressors_train():
     for name, Regressor in regressors:
         if name in dont_test:
             continue
-        check_regressors_train.description =\
-            "check_regressors_train(%s)" % name
         yield check_regressors_train, name, Regressor, X, y
 
 
@@ -886,8 +861,6 @@ def test_regressor_pickle():
     for name, Regressor in regressors:
         if name in dont_test:
             continue
-        check_regressors_pickle.description =\
-            "check_regressors_pickle(%s)" % name
         yield check_regressors_pickle, name, Regressor, X, y
 
 
@@ -960,8 +933,6 @@ def test_class_weight_classifiers():
                 # NaiveBayes classifiers have a somewhat different interface.
                 # FIXME SOON!
                 continue
-            check_class_weight_classifiers.description =\
-                "check_class_weight_classfiers(%s, %d)" % (name, n_centers)
             yield (check_class_weight_classifiers, name, Classifier, X_train,
                    y_train, X_test, y_test)
 
@@ -1024,8 +995,6 @@ def test_class_weight_auto_classifies():
                 # NaiveBayes classifiers have a somewhat different interface.
                 # FIXME SOON!
                 continue
-            check_class_weight_auto_classifiers.description =\
-                "check_class_weight_auto_classifiers(%s, %d)" % (name, n_classes)
             yield (check_class_weight_auto_classifiers, name, Classifier,
                    X_train, y_train, X_test, y_test, weights)
 
@@ -1063,8 +1032,6 @@ def test_estimators_overwrite_params():
                 # FIXME!
                 # in particular GaussianProcess!
                 continue
-            check_estimators_overwrite_params.description =\
-                "check_estimators_overwrite_params(%s)" % name
             yield check_estimators_overwrite_params, name, Estimator, X, y
 
 
@@ -1106,8 +1073,6 @@ def test_cluster_overwrite_params():
     # some want non-negative input
     X
     for name, Clustering in clusterers:
-        check_cluster_overwrite_params.description =\
-            "check_cluster_overwrite_params(%s)" % name
         yield check_cluster_overwrite_params, name, Clustering, X, y
 
 
@@ -1156,8 +1121,6 @@ def test_sparsify_estimators():
             Estimator.sparsify
         except:
             continue
-        check_sparsify_binary_classifier.description =\
-            "check_sparsify_binary_classifiers(%s)" % name
         yield check_sparsify_binary_classifier, name, Estimator, X, y
 
     # test multiclass classification
@@ -1168,8 +1131,6 @@ def test_sparsify_estimators():
             Classifier.sparsify
         except:
             continue
-        check_sparsify_multiclass_classifier.description =\
-            "check_sparsify_multiclass_classifiers(%s)" % name
         yield check_sparsify_multiclass_classifier, name, Classifier, X, y
 
 
