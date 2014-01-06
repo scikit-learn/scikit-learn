@@ -530,21 +530,22 @@ class BernoulliNB(BaseDiscreteNB):
         self.fit_prior = fit_prior
         self.class_prior = class_prior
 
-    def _count(self, X, Y):
-        """Count and smooth feature occurrences."""
+    def _binarize(self, X):
+        """check if data is binary and binarize if necessary"""
         if self.binarize is None:
             #ensure data is binary
-            if issparse(X):
-                if not (X.data == 1).all():
-                    raise ValueError("Expected binary input, \
-                                    got non-binary input")
-            else:
-                if not np.logical_or(X == 1, X == 0).all():
-                    raise ValueError("Expected binary input, \
-                                    got non-binary input")
+            non_binary = np.setdiff1d(X.data if issparse(X) else X, [0, 1])
+            if (non_binary.size > 0):
+                raise ValueError('Expected binary input, but there are %d'
+                                 ' non-binary value(s) in input'
+                                 % non_binary.size)
         else:
             X = binarize(X, threshold=self.binarize)
+        return X
 
+    def _count(self, X, Y):
+        """Count and smooth feature occurrences."""
+        X = self._binarize(X)
         self.feature_count_ += safe_sparse_dot(Y.T, X)
         self.class_count_ += Y.sum(axis=0)
 
@@ -562,12 +563,8 @@ class BernoulliNB(BaseDiscreteNB):
 
         X = atleast2d_or_csr(X)
 
-        if self.binarize is None:
-            #ensure data is binary
-            if not set(np.unique(X)).issubset({0, 1}):
-                raise ValueError("Expected binary input, got non-binary input")
-        else:
-            X = binarize(X, threshold=self.binarize)
+        X = self._binarize(X)
+
         n_classes, n_features = self.feature_log_prob_.shape
         n_samples, n_features_X = X.shape
 
