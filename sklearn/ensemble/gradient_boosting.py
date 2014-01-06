@@ -54,7 +54,7 @@ class QuantileEstimator(BaseEstimator):
     """An estimator predicting the alpha-quantile of the training targets."""
     def __init__(self, alpha=0.9):
         if not 0 < alpha < 1.0:
-            raise ValueError("`alpha` must be in (0, 1.0)")
+            raise ValueError("`alpha` must be in (0, 1.0) but was %r" % alpha)
         self.alpha = alpha
 
     def fit(self, X, y):
@@ -208,7 +208,8 @@ class RegressionLossFunction(six.with_metaclass(ABCMeta, LossFunction)):
 
     def __init__(self, n_classes):
         if n_classes != 1:
-            raise ValueError("``n_classes`` must be 1 for regression")
+            raise ValueError("``n_classes`` must be 1 for regression but was %r" %
+                             n_classes)
         super(RegressionLossFunction, self).__init__(n_classes)
 
 
@@ -581,10 +582,12 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
     def _check_params(self):
         """Check validity of parameters and raise ValueError if not valid. """
         if self.n_estimators <= 0:
-            raise ValueError("n_estimators must be greater than 0")
+            raise ValueError("n_estimators must be greater than 0 but was %r" %
+                             self.n_estimators)
 
         if self.learning_rate <= 0.0:
-            raise ValueError("learning_rate must be greater than 0")
+            raise ValueError("learning_rate must be greater than 0 but was %r" %
+                             self.learning_rate)
 
         if (self.loss not in self._SUPPORTED_LOSS or
             self.loss not in LOSS_FUNCTIONS):
@@ -606,8 +609,8 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         else:
             self.loss_ = loss_class(self.n_classes_)
 
-        if self.subsample <= 0.0 or self.subsample > 1:
-            raise ValueError("subsample must be in (0,1]")
+        if not (0.0 < self.subsample <= 1.0):
+            raise ValueError("subsample must be in (0,1] but was %r" % self.subsample)
 
         if self.init is not None:
             if isinstance(self.init, basestring):
@@ -616,11 +619,11 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             else:
                 if (not hasattr(self.init, 'fit')
                     or not hasattr(self.init, 'predict')):
-                    raise ValueError("init must be valid BaseEstimator and support " +
-                                     "both fit and predict")
+                    raise ValueError(("init=%r must be valid BaseEstimator and support " +
+                                      "both fit and predict") % self.init)
 
-        if not (0.0 < self.alpha and self.alpha < 1.0):
-            raise ValueError("alpha must be in (0.0, 1.0)")
+        if not (0.0 < self.alpha < 1.0):
+            raise ValueError("alpha must be in (0.0, 1.0) but was %r" % self.alpha)
 
         if isinstance(self.max_features, six.string_types):
             if self.max_features == "auto":
@@ -636,8 +639,8 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
                 max_features = max(1, int(np.log2(self.n_features)))
             else:
                 raise ValueError(
-                    'Invalid value for max_features. Allowed string '
-                    'values are "auto", "sqrt" or "log2".')
+                    ('Invalid value for max_features: %r. Allowed string '
+                     'values are "auto", "sqrt" or "log2".')  % self.max_features)
         elif self.max_features is None:
             max_features = self.n_features
         elif isinstance(self.max_features, (numbers.Integral, np.integer)):
@@ -684,7 +687,8 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         # self.n_estimators is the number of additional est to fit
         total_n_estimators = self.n_estimators
         if total_n_estimators < self.estimators_.shape[0]:
-            raise ValueError('resize with smaller n_estimators than len(estimators_)')
+            raise ValueError('resize with smaller n_estimators %d < %d' % (total_n_estimators,
+                                                                           self.estimators_[0]))
 
         self.estimators_.resize((total_n_estimators, self.loss_.K))
         self.train_score_.resize(total_n_estimators)
