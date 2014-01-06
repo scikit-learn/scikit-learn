@@ -24,7 +24,6 @@ import scipy.sparse as sp
 from .base import is_classifier, clone
 from .utils import check_arrays, check_random_state, safe_mask
 from .utils.validation import _num_samples
-from .utils.fixes import unique
 from .externals.joblib import Parallel, delayed, logger
 from .externals.six import with_metaclass
 from .metrics.scorer import check_scoring
@@ -379,7 +378,7 @@ class StratifiedKFold(_BaseKFold):
         super(StratifiedKFold, self).__init__(len(y), n_folds, indices)
         y = np.asarray(y)
         n_samples = y.shape[0]
-        unique_labels, y_inversed = unique(y, return_inverse=True)
+        unique_labels, y_inversed = np.unique(y, return_inverse=True)
         label_counts = np.bincount(y_inversed)
         min_labels = np.min(label_counts)
         if self.n_folds > min_labels:
@@ -474,7 +473,7 @@ class LeaveOneLabelOut(_PartitionIterator):
         super(LeaveOneLabelOut, self).__init__(len(labels), indices)
         # We make a copy of labels to avoid side-effects during iteration
         self.labels = np.array(labels, copy=True)
-        self.unique_labels = unique(labels)
+        self.unique_labels = np.unique(labels)
         self.n_unique_labels = len(self.unique_labels)
 
     def _iter_test_masks(self):
@@ -547,7 +546,7 @@ class LeavePLabelOut(_PartitionIterator):
         # We make a copy of labels to avoid side-effects during iteration
         super(LeavePLabelOut, self).__init__(len(labels), indices)
         self.labels = np.array(labels, copy=True)
-        self.unique_labels = unique(labels)
+        self.unique_labels = np.unique(labels)
         self.n_unique_labels = len(self.unique_labels)
         self.p = p
 
@@ -967,7 +966,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
             len(y), n_iter, test_size, train_size, indices, random_state,
             n_iterations)
         self.y = np.array(y)
-        self.classes, self.y_indices = unique(y, return_inverse=True)
+        self.classes, self.y_indices = np.unique(y, return_inverse=True)
         n_cls = self.classes.shape[0]
 
         if np.min(np.bincount(self.y_indices)) < 2:
@@ -1274,7 +1273,7 @@ def _shuffle(y, labels, random_state):
         ind = random_state.permutation(len(y))
     else:
         ind = np.arange(len(labels))
-        for label in unique(labels):
+        for label in np.unique(labels):
             this_mask = (labels == label)
             ind[this_mask] = random_state.permutation(ind[this_mask])
     return y[ind]

@@ -25,7 +25,6 @@ import numpy as np
 import scipy.sparse as sp
 
 from ..base import BaseEstimator, TransformerMixin
-from ..utils.fixes import bincount
 from ..externals.six.moves import xrange
 from ..preprocessing import normalize
 from .hashing import FeatureHasher
@@ -458,7 +457,7 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
 def _document_frequency(X):
     """Count the number of non-zero values for each feature in sparse X."""
     if sp.isspmatrix_csr(X):
-        return bincount(X.indices, minlength=X.shape[1])
+        return np.bincount(X.indices, minlength=X.shape[1])
     else:
         return np.diff(sp.csc_matrix(X, copy=False).indptr)
 

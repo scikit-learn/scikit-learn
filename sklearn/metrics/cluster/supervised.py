@@ -15,7 +15,6 @@ from scipy.misc import comb
 from scipy.sparse import coo_matrix
 import numpy as np
 
-from ...utils.fixes import unique
 from .expected_mutual_info_fast import expected_mutual_information
 
 
@@ -68,8 +67,8 @@ def contingency_matrix(labels_true, labels_pred, eps=None):
         ``eps is None``, the dtype of this array will be integer. If ``eps`` is
         given, the dtype will be float.
     """
-    classes, class_idx = unique(labels_true, return_inverse=True)
-    clusters, cluster_idx = unique(labels_pred, return_inverse=True)
+    classes, class_idx = np.unique(labels_true, return_inverse=True)
+    clusters, cluster_idx = np.unique(labels_pred, return_inverse=True)
     n_classes = classes.shape[0]
     n_clusters = clusters.shape[0]
     # Using coo_matrix to accelerate simple histogram calculation,
@@ -738,7 +737,7 @@ def entropy(labels):
     """Calculates the entropy for a labeling."""
     if len(labels) == 0:
         return 1.0
-    label_idx = unique(labels, return_inverse=True)[1]
+    label_idx = np.unique(labels, return_inverse=True)[1]
     pi = np.bincount(label_idx).astype(np.float)
     pi = pi[pi > 0]
     pi_sum = np.sum(pi)
