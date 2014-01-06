@@ -773,8 +773,8 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         # fit the boosting stages
         n_stages = self._fit_stages(X, y, y_pred, random_state,
                                     begin_at_stage, monitor)
-        # change n_estimators after fit (early-stopping or additional ests)
-        if n_stages != self.n_estimators:
+        # change shape of arrays after fit (early-stopping or additional ests)
+        if n_stages != self.estimators_.shape[0]:
             self.estimators_ = self.estimators_[:n_stages]
             self.train_score_ = self.train_score_[:n_stages]
             if hasattr(self, 'oob_improvement_'):
@@ -782,7 +782,6 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             if hasattr(self, '_oob_score_'):
                 self._oob_score_ = self._oob_score_[:n_stages]
 
-            self.n_estimators = n_stages
         return self
 
     def _fit_stages(self, X, y, y_pred, random_state, begin_at_stage=0,
