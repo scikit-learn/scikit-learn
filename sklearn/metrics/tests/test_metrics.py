@@ -147,6 +147,8 @@ CLASSIFICATION_METRICS = {
 }
 
 THRESHOLDED_METRICS = {
+    "log_loss": log_loss,
+    "hinge_loss": hinge_loss,
     "roc_auc_score": roc_auc_score,
     "weighted_roc_auc": partial(roc_auc_score, average="weighted"),
     "samples_roc_auc": partial(roc_auc_score, average="samples"),
@@ -198,7 +200,7 @@ THRESHOLDED_METRICS_WITH_AVERAGING = [
 
 # Metrics with a "pos_label" argument
 METRICS_WITH_POS_LABEL = [
-    "roc_curve",
+    "roc_curve", "hinge_loss",
 
     "precision_score", "recall_score", "f1_score", "f2_score", "f0.5_score",
 
@@ -238,7 +240,7 @@ METRICS_WITH_NORMALIZE_OPTION = [
 # Threshold-based metrics with "multilabel-indicator" format support
 THRESHOLDED_MULTILABEL_METRICS = [
     "roc_auc_score", "weighted_roc_auc", "samples_roc_auc",
-    "micro_roc_auc", "macro_roc_auc",
+    "micro_roc_auc", "macro_roc_auc", "log_loss",
 
     "average_precision_score", "weighted_average_precision_score",
     "samples_average_precision_score", "micro_average_precision_score",
@@ -303,7 +305,7 @@ NOT_SYMMETRIC_METRICS = [
     "micro_recall_score",
 
     "macro_f0.5_score", "macro_f2_score", "macro_precision_score",
-    "macro_recall_score",
+    "macro_recall_score", "log_loss", "hinge_loss"
 ]
 
 ###############################################################################
@@ -1497,7 +1499,10 @@ def test_invariance_string_vs_numbers_labels():
                                        "invariance test".format(name))
 
     # TODO Currently not supported
-    for name, metrics in THRESHOLDED_METRICS.items():
+    # Hinge_loss raises TypeError
+    THRESHOLDED_METRICS_ITEMS = THRESHOLDED_METRICS.items()
+    THRESHOLDED_METRICS_ITEMS.remove(('hinge_loss', hinge_loss))
+    for name, metrics in THRESHOLDED_METRICS_ITEMS:
         assert_raises(ValueError, metrics, y1_str, y2_str)
 
 
