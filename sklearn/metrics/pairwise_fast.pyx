@@ -8,13 +8,20 @@ import cython
 
 np.import_array()
 
+ctypedef float [:, :] float_array_2d_t 
+ctypedef double [:, :] double_array_2d_t 
+
+cdef fused floating_array_2d_t:
+    float_array_2d_t
+    double_array_2d_t
+
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-def _chi2_kernel_fast(cython.floating[:,:] X,
-                      cython.floating[:,:] Y,
-                      cython.floating[:, :] result):
+def _chi2_kernel_fast(floating_array_2d_t X,
+                      floating_array_2d_t Y,
+                      floating_array_2d_t result):
     cdef int i, j, k
     cdef int n_samples_X = X.shape[0]
     cdef int n_samples_Y = Y.shape[0]
