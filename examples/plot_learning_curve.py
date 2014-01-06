@@ -9,7 +9,8 @@ find out how much we benefit from adding more training data. If both
 the validation score and the training score converge to a value that is
 too low, we will not benefit much from more training data and we will
 probably have to use a learning algorithm or a parametrization of the
-current learning algorithm with a lower bias.
+current learning algorithm that can learn more complex concepts (i.e.
+has a lower bias).
 
 In this example, on the left side the learning curve of a naive Bayes
 classifier is shown for the digits dataset. Note that the training score
@@ -37,20 +38,20 @@ plt.figure()
 plt.title("Learning Curve (Naive Bayes)")
 plt.xlabel("Training examples")
 plt.ylabel("Score")
-n_samples_range, train_scores, test_scores = learning_curve(
+samples_range, train_scores, test_scores = learning_curve(
     GaussianNB(), X, y, cv=10, n_jobs=1)
-plt.plot(n_samples_range, train_scores, label="Training score")
-plt.plot(n_samples_range, test_scores, label="Cross-validation score")
+plt.plot(samples_range, train_scores, label="Training score")
+plt.plot(samples_range, test_scores, label="Cross-validation score")
 plt.legend(loc="best")
 
 plt.figure()
 plt.title("Learning Curve (SVM, RBF kernel, $\gamma=0.001$)")
 plt.xlabel("Training examples")
 plt.ylabel("Score")
-n_samples_range, train_scores, test_scores = learning_curve(
+samples_range, train_scores, test_scores = learning_curve(
     SVC(gamma=0.001), X, y, cv=10, n_jobs=1)
-plt.plot(n_samples_range, train_scores, label="Training score")
-plt.plot(n_samples_range, test_scores, label="Cross-validation score")
+plt.plot(samples_range, train_scores, label="Training score")
+plt.plot(samples_range, test_scores, label="Cross-validation score")
 plt.legend(loc="best")
 
 plt.show()

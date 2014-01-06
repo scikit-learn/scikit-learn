@@ -68,9 +68,9 @@ def test_learning_curve():
                                n_redundant=0, n_classes=2,
                                n_clusters_per_class=1, random_state=0)
     estimator = MockImprovingClassifier(20)
-    n_samples_range, train_scores, test_scores = learning_curve(estimator,
-                                                                X, y, cv=3)
-    assert_array_equal(n_samples_range, np.linspace(2, 20, 10))
+    samples_range, train_scores, test_scores = learning_curve(estimator, X, y,
+                                                              cv=3)
+    assert_array_equal(samples_range, np.linspace(2, 20, 10))
     assert_array_almost_equal(train_scores, np.linspace(1.9, 1.0, 10))
     assert_array_almost_equal(test_scores, np.linspace(0.1, 1.0, 10))
 
@@ -84,7 +84,7 @@ def test_learning_curve_verbose():
     old_stdout = sys.stdout
     sys.stdout = StringIO()
     try:
-        n_samples_range, train_scores, test_scores = \
+        samples_range, train_scores, test_scores = \
             learning_curve(estimator, X, y, cv=3, verbose=1)
     finally:
         out = sys.stdout.getvalue()
@@ -109,9 +109,9 @@ def test_learning_curve_incremental_learning():
                                n_redundant=0, n_classes=2,
                                n_clusters_per_class=1, random_state=0)
     estimator = MockIncrementalImprovingClassifier(20)
-    n_samples_range, train_scores, test_scores = learning_curve(
+    samples_range, train_scores, test_scores = learning_curve(
         estimator, X, y, cv=3, exploit_incremental_learning=True)
-    assert_array_equal(n_samples_range, np.linspace(2, 20, 10))
+    assert_array_equal(samples_range, np.linspace(2, 20, 10))
     assert_array_almost_equal(train_scores, np.linspace(1.9, 1.0, 10))
     assert_array_almost_equal(test_scores, np.linspace(0.1, 1.0, 10))
 
@@ -120,19 +120,19 @@ def test_learning_curve_batch_and_incremental_learning_are_equal():
     X, y = make_classification(n_samples=30, n_features=1, n_informative=1,
                                n_redundant=0, n_classes=2,
                                n_clusters_per_class=1, random_state=0)
-    n_samples_range = np.linspace(0.2, 1.0, 5)
+    samples_range = np.linspace(0.2, 1.0, 5)
     estimator = PassiveAggressiveClassifier(n_iter=1, shuffle=False)
 
-    n_samples_range_inc, train_scores_inc, test_scores_inc = \
+    samples_range_inc, train_scores_inc, test_scores_inc = \
         learning_curve(
-            estimator, X, y, n_samples_range=n_samples_range,
+            estimator, X, y, samples_range=samples_range,
             cv=3, exploit_incremental_learning=True)
-    n_samples_range_batch, train_scores_batch, test_scores_batch = \
+    samples_range_batch, train_scores_batch, test_scores_batch = \
         learning_curve(
-            estimator, X, y, cv=3, n_samples_range=n_samples_range,
+            estimator, X, y, cv=3, samples_range=samples_range,
             exploit_incremental_learning=False)
 
-    assert_array_equal(n_samples_range_inc, n_samples_range_batch)
+    assert_array_equal(samples_range_inc, samples_range_batch)
     assert_array_almost_equal(train_scores_inc, train_scores_batch)
     assert_array_almost_equal(test_scores_inc, test_scores_batch)
 
@@ -143,13 +143,13 @@ def test_learning_curve_n_sample_range_out_of_bounds():
                                n_clusters_per_class=1, random_state=0)
     estimator = MockImprovingClassifier(20)
     assert_raises(ValueError, learning_curve, estimator, X, y, cv=3,
-                  n_samples_range=[0.0, 1.0])
+                  samples_range=[0.0, 1.0])
     assert_raises(ValueError, learning_curve, estimator, X, y, cv=3,
-                  n_samples_range=[0.1, 1.1])
+                  samples_range=[0.1, 1.1])
     assert_raises(ValueError, learning_curve, estimator, X, y, cv=3,
-                  n_samples_range=[0, 20])
+                  samples_range=[0, 20])
     assert_raises(ValueError, learning_curve, estimator, X, y, cv=3,
-                  n_samples_range=[1, 21])
+                  samples_range=[1, 21])
 
 
 def test_learning_curve_remove_duplicate_sample_sizes():
@@ -157,10 +157,10 @@ def test_learning_curve_remove_duplicate_sample_sizes():
                                n_redundant=0, n_classes=2,
                                n_clusters_per_class=1, random_state=0)
     estimator = MockImprovingClassifier(2)
-    n_samples_range, _, _ = assert_warns(
+    samples_range, _, _ = assert_warns(
         RuntimeWarning, learning_curve, estimator, X, y, cv=3,
-        n_samples_range=np.linspace(0.33, 1.0, 3))
-    assert_array_equal(n_samples_range, [1, 2])
+        samples_range=np.linspace(0.33, 1.0, 3))
+    assert_array_equal(samples_range, [1, 2])
 
 
 def test_learning_curve_with_boolean_indices():
@@ -169,8 +169,8 @@ def test_learning_curve_with_boolean_indices():
                                n_clusters_per_class=1, random_state=0)
     estimator = MockImprovingClassifier(20)
     cv = KFold(n=30, n_folds=3, indices=False)
-    n_samples_range, train_scores, test_scores = learning_curve(estimator,
-                                                                X, y, cv=cv)
-    assert_array_equal(n_samples_range, np.linspace(2, 20, 10))
+    samples_range, train_scores, test_scores = learning_curve(estimator, X, y,
+                                                              cv=cv)
+    assert_array_equal(samples_range, np.linspace(2, 20, 10))
     assert_array_almost_equal(train_scores, np.linspace(1.9, 1.0, 10))
     assert_array_almost_equal(test_scores, np.linspace(0.1, 1.0, 10))

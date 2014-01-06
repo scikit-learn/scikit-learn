@@ -239,9 +239,10 @@ def fit_grid_point(X, y, base_estimator, parameters, train, test, scorer,
     estimator = clone(base_estimator)
     estimator.set_params(**parameters)
 
-    this_score, n_test_samples = _split_and_score(
-            estimator, X, y, train, test, scorer,
-            return_train_score=False, **fit_params)
+    X_train, y_train = _split(estimator, X, y, train)
+    X_test, y_test = _split(estimator, X, y, test, train)
+    _fit(estimator.fit, X_train, y_train, **fit_params)
+    this_score = _score(estimator, X_test, y_test, scorer)
 
     if verbose > 2:
         msg += ", score=%f" % this_score
@@ -251,28 +252,11 @@ def fit_grid_point(X, y, base_estimator, parameters, train, test, scorer,
                                                        start_time))
         print("[GridSearchCV] %s %s" % ((64 - len(end_msg)) * '.', end_msg))
 
-    return this_score, parameters, n_test_samples
+    return this_score, parameters, _num_samples(X_test)
 
 
-def _split_and_score(estimator, X, y, train, test, scorer,
-                     return_train_score=False, partial_train=None,
-                     **fit_params):
-    """Split the dataset in training and test set and compute scores.
-
-    The dataset consists of of either a precomputed kernel matrix or an input
-    matrix 'X' and optional targets 'y' (y can be None for unsupervised
-    learners). It will be split according to the indices given by 'train' and
-    'test'. Usually an estimator will be trained with the whole training set.
-    However, it is possible to reuse a previously trained model to train it
-    incrementally by passing the indices of the next training subset in
-    'partial_train'. After splitting the dataset and fitting the estimator, the
-    scores will be computed on the test set according to the scoring function
-    of the estimator or with a given 'scorer'. It is possible to return the
-    score on the training set optionally by setting 'return_train_score'. The
-    function will return the score on the test set and the number of samples in
-    the test set and optionally the score on the training set and the number of
-    samples in the training set.
-    """
+def _split(estimator, X, y, indices, train_indices=None):
+    """Create subset of dataset."""
     if hasattr(estimator, 'kernel') and callable(estimator.kernel):
         # cannot compute the kernel values with custom function
         raise ValueError("Cannot use a custom kernel function. "
@@ -282,70 +266,33 @@ def _split_and_score(estimator, X, y, train, test, scorer,
         if getattr(estimator, "_pairwise", False):
             raise ValueError("Precomputed kernels or affinity matrices have "
                              "to be passed as arrays or sparse matrices.")
-        X_train = [X[idx] for idx in train]
-        X_test = [X[idx] for idx in test]
-        if partial_train is not None:
-            X_partial_train = [X[idx] for idx in partial_train]
+        X_subset = [X[idx] for idx in indices]
     else:
         if getattr(estimator, "_pairwise", False):
             # X is a precomputed square kernel matrix
             if X.shape[0] != X.shape[1]:
                 raise ValueError("X should be a square kernel matrix")
-            X_train = X[np.ix_(train, train)]
-            X_test = X[np.ix_(test, train)]
-            if partial_train is not None:
-                X_partial_train = X[np.ix_(partial_train, partial_train)]
+            if train_indices is None:
+                X_subset = X[np.ix_(indices, indices)]
+            else:
+                X_subset = X[np.ix_(indices, train_indices)]
         else:
-            X_train = X[safe_mask(X, train)]
-            X_test = X[safe_mask(X, test)]
-            if partial_train is not None:
-                X_partial_train = X[safe_mask(X, partial_train)]
+            X_subset = X[safe_mask(X, indices)]
 
     if y is not None:
-        y_test = y[safe_mask(y, test)]
-        y_train = y[safe_mask(y, train)]
-        if partial_train is not None:
-            y_partial_train = y[safe_mask(y, partial_train)]
+        y_subset = y[safe_mask(y, indices)]
     else:
-        y_test = None
-        y_train = None
-        if partial_train is not None:
-            y_partial_train = None
+        y_subset = None
 
-    if partial_train is None:
-        _fit(estimator, X_train, y_train, **fit_params)
-    else:
-        _fit_incremental(estimator, X_partial_train, y_partial_train,
-                         **fit_params)
-    test_score = _score(estimator, X_test, y_test, scorer)
-
-    if not isinstance(test_score, numbers.Number):
-        raise ValueError("scoring must return a number, got %s (%s)"
-                         " instead." % (str(test_score), type(test_score)))
-
-    if return_train_score:
-        train_score = _score(estimator, X_train, y_train, scorer)
-        return (test_score, _num_samples(X_test), train_score,
-                _num_samples(X_train))
-    else:
-        return test_score, _num_samples(X_test)
+    return X_subset, y_subset
 
 
-def _fit(estimator, X_train, y_train, **fit_params):
+def _fit(fit_function, X_train, y_train, **fit_params):
     """Fit and estimator on a given training set."""
     if y_train is None:
-        estimator.fit(X_train, **fit_params)
+        fit_function(X_train, **fit_params)
     else:
-        estimator.fit(X_train, y_train, **fit_params)
-
-
-def _fit_incremental(estimator, X_partial_train, y_partial_train,
-                     **fit_params):
-    """Fit an estimator incrementally with a given training subset."""
-    if y_partial_train is None:
-        estimator.partial_fit(X_partial_train, **fit_params)
-    else:
-        estimator.partial_fit(X_partial_train, y_partial_train, **fit_params)
+        fit_function(X_train, y_train, **fit_params)
 
 
 def _score(estimator, X_test, y_test, scorer):
@@ -442,7 +389,8 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         self.cv = cv
         self.verbose = verbose
         self.pre_dispatch = pre_dispatch
-        self._check_estimator()
+        _check_scorable(self.estimator, scoring=self.scoring,
+                        loss_func=self.loss_func, score_func=self.score_func)
 
     def score(self, X, y=None):
         """Returns the score on the given test data and labels, if the search
@@ -487,11 +435,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
     @property
     def transform(self):
         return self.best_estimator_.transform
-
-    def _check_estimator(self):
-        _check_scorable(self.estimator, scoring=self.scoring,
-                        loss_func=self.loss_func, score_func=self.score_func)
-
+        
     def _fit(self, X, y, parameter_iterable):
         """Actual fitting,  performing the search over parameters."""
 

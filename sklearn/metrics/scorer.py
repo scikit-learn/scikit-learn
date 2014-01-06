@@ -180,7 +180,13 @@ def _deprecate_loss_and_score_funcs(
             if loss_func is None or score_overrides_loss:
                 scorer = make_scorer(score_func)
 
-    elif isinstance(scoring, six.string_types):
+    else:
+        scorer = get_scorer(scoring)
+    return scorer
+
+
+def get_scorer(scoring):
+    if isinstance(scoring, six.string_types):
         try:
             scorer = SCORERS[scoring]
         except KeyError:
