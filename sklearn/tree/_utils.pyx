@@ -44,6 +44,8 @@ cdef class Stack:
         self.capacity = capacity
         self.top = 0
         self.stack_ = <StackRecord*> malloc(capacity * sizeof(StackRecord))
+        if self.stack_ == NULL:
+            raise MemoryError()
 
     def __dealloc__(self):
         free(self.stack_)
@@ -51,9 +53,12 @@ cdef class Stack:
     cdef bint is_empty(self) nogil:
         return self.top <= 0
 
-    cdef void push(self, SIZE_t start, SIZE_t end, SIZE_t depth, SIZE_t parent,
+    cdef int push(self, SIZE_t start, SIZE_t end, SIZE_t depth, SIZE_t parent,
                    bint is_left, double impurity) nogil:
-        """Push a new element onto the stack. """
+        """Push a new element onto the stack.
+
+        Returns 0 if successful; -1 on out of memory error.
+        """
         cdef SIZE_t top = self.top
         cdef StackRecord* stack = NULL
 
@@ -61,6 +66,9 @@ cdef class Stack:
         if top >= self.capacity:
             self.capacity *= 2
             self.stack_ = <StackRecord*> realloc(self.stack_, self.capacity * sizeof(StackRecord))
+            if self.stack_ == NULL:
+                free(self.stack_)
+                return -1
 
         stack = self.stack_
         stack[top].start = start
@@ -72,19 +80,24 @@ cdef class Stack:
 
         # Increment stack pointer
         self.top = top + 1
+        return 0
 
     cdef int pop(self, StackRecord* res) nogil:
-        """Remove the top element from the stack. """
+        """Remove the top element from the stack and copy to ``res``.
+
+        Returns 0 if pop was successful (and ``res`` is set); -1
+        otherwise.
+        """
         cdef SIZE_t top = self.top
         cdef StackRecord* stack = self.stack_
 
         if top <= 0:
-            return 0
+            return -1
 
         copy_stack(res, stack + top - 1)
         self.top = top - 1
 
-        return 1
+        return 0
 
 
 # =============================================================================
@@ -163,6 +176,8 @@ cdef class PriorityHeap:
         self.capacity = capacity
         self.heap_ptr = 0
         self.heap_ = <PriorityHeapRecord*> malloc(capacity * sizeof(PriorityHeapRecord))
+        if self.heap_ == NULL:
+            raise MemoryError()
 
     def __dealloc__(self):
         free(self.heap_)
@@ -170,10 +185,13 @@ cdef class PriorityHeap:
     cdef bint is_empty(self) nogil:
         return self.heap_ptr <= 0
 
-    cdef void push(self, SIZE_t node_id, SIZE_t start, SIZE_t end, SIZE_t pos,
+    cdef int push(self, SIZE_t node_id, SIZE_t start, SIZE_t end, SIZE_t pos,
                    SIZE_t depth, bint is_leaf, double improvement,
                    double impurity) nogil:
-        """Push record on the priority heap. """
+        """Push record on the priority heap.
+
+        Returns 0 if successful; -1 on out of memory error.
+        """
         cdef SIZE_t heap_ptr = self.heap_ptr
         cdef PriorityHeapRecord* heap = NULL
 
@@ -183,6 +201,9 @@ cdef class PriorityHeap:
             self.heap_ = <PriorityHeapRecord*> realloc(self.heap_,
                                                        self.capacity *
                                                        sizeof(PriorityHeapRecord))
+            if self.heap_ == NULL:
+                free(self.heap_)
+                return -1
 
         # Put element as last element of heap
         heap = self.heap_
@@ -200,6 +221,7 @@ cdef class PriorityHeap:
 
         # Increase element count
         self.heap_ptr = heap_ptr + 1
+        return 0
 
     cdef int pop(self, PriorityHeapRecord* res) nogil:
         """Remove max element from the heap. """
@@ -207,7 +229,7 @@ cdef class PriorityHeap:
         cdef PriorityHeapRecord* heap = self.heap_
 
         if heap_ptr <= 0:
-            return 0
+            return -1
 
         # Take first element
         copy_heap(res, heap)
@@ -221,4 +243,4 @@ cdef class PriorityHeap:
 
         self.heap_ptr = heap_ptr - 1
 
-        return 1
+        return 0

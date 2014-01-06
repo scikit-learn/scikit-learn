@@ -29,7 +29,7 @@ cdef class Stack:
     cdef StackRecord* stack_
 
     cdef bint is_empty(self) nogil
-    cdef void push(self, SIZE_t start, SIZE_t end, SIZE_t depth, SIZE_t parent,
+    cdef int push(self, SIZE_t start, SIZE_t end, SIZE_t depth, SIZE_t parent,
                    bint is_left, double impurity) nogil
     cdef int pop(self, StackRecord* res) nogil
 
@@ -55,7 +55,7 @@ cdef class PriorityHeap:
     cdef PriorityHeapRecord* heap_
 
     cdef bint is_empty(self) nogil
-    cdef void push(self, SIZE_t node_id, SIZE_t start, SIZE_t end, SIZE_t pos,
+    cdef int push(self, SIZE_t node_id, SIZE_t start, SIZE_t end, SIZE_t pos,
                    SIZE_t depth, bint is_leaf, double improvement,
                    double impurity) nogil
     cdef int pop(self, PriorityHeapRecord* res) nogil

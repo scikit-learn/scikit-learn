@@ -1577,13 +1577,18 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         cdef bint is_leaf
         cdef bint first = 1
         cdef SIZE_t max_depth_seen = -1
+        cdef int rc = 0
 
         cdef Stack stack = Stack(INITIAL_STACK_SIZE)
         cdef StackRecord stack_record
 
         with nogil:
             # push root node onto stack
-            stack.push(0, n_node_samples, 0, _TREE_UNDEFINED, 0, INFINITY)
+            rc = stack.push(0, n_node_samples, 0, _TREE_UNDEFINED, 0, INFINITY)
+            if rc == -1:
+                # got return code -1 - out-of-memory
+                with gil:
+                    raise MemoryError()
 
             while not stack.is_empty():
                 stack.pop(&stack_record)
@@ -1623,10 +1628,18 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
 
                 else:
                     # Push right child on stack
-                    stack.push(pos, end, depth + 1, node_id, 0, split_impurity_right)
+                    rc = stack.push(pos, end, depth + 1, node_id, 0, split_impurity_right)
+                    if rc == -1:
+                        # got return code -1 - out-of-memory
+                        with gil:
+                            raise MemoryError()
 
                     # Push left child on stack
-                    stack.push(start, pos, depth + 1, node_id, 1, split_impurity_left)
+                    rc = stack.push(start, pos, depth + 1, node_id, 1, split_impurity_left)
+                    if rc == -1:
+                        # got return code -1 - out-of-memory
+                        with gil:
+                            raise MemoryError()
 
                 if depth > max_depth_seen:
                     max_depth_seen = depth
@@ -1695,10 +1708,11 @@ cdef void _add_split_node(Splitter splitter, Tree tree,
             res.improvement = 0.0
 
 
-cdef void _add_to_frontier(PriorityHeapRecord* rec, PriorityHeap frontier) nogil:
-    """Adds record ``rec`` to the priority queue ``frontier``. """
-    frontier.push(rec.node_id, rec.start, rec.end, rec.pos, rec.depth,
-                  rec.is_leaf, rec.improvement, rec.impurity)
+cdef int _add_to_frontier(PriorityHeapRecord* rec, PriorityHeap frontier) nogil:
+    """Adds record ``rec`` to the priority queue ``frontier``; returns -1 on memory-error. """
+    return frontier.push(rec.node_id, rec.start, rec.end, rec.pos, rec.depth,
+                         rec.is_leaf, rec.improvement, rec.impurity)
+
 
 
 cdef class BestFirstTreeBuilder(TreeBuilder):
@@ -1743,6 +1757,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         cdef int max_split_nodes = max_leaf_nodes - 1
         cdef bint is_leaf
         cdef SIZE_t max_depth_seen = -1
+        cdef int rc = 0
 
         # Initial capacity
         cdef int init_capacity = max_split_nodes + max_leaf_nodes
@@ -1753,7 +1768,10 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
             _add_split_node(splitter, tree,
                             0, n_node_samples, INFINITY, IS_FIRST, IS_LEFT,
                             _TREE_UNDEFINED, 0, &split_node_left)
-            _add_to_frontier(&split_node_left, frontier)
+            rc = _add_to_frontier(&split_node_left, frontier)
+            if rc == -1:
+                with gil:
+                    raise MemoryError()
 
             while not frontier.is_empty():
                 frontier.pop(&record)
@@ -1787,8 +1805,15 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                                     record.depth + 1, &split_node_right)
 
                     # Add nodes to queue
-                    _add_to_frontier(&split_node_left, frontier)
-                    _add_to_frontier(&split_node_right, frontier)
+                    rc = _add_to_frontier(&split_node_left, frontier)
+                    if rc == -1:
+                        with gil:
+                            raise MemoryError()
+
+                    rc = _add_to_frontier(&split_node_right, frontier)
+                    if rc == -1:
+                        with gil:
+                            raise MemoryError()
 
                 if record.depth > max_depth_seen:
                     max_depth_seen = record.depth
