@@ -14,7 +14,7 @@ from sklearn.svm import SVC
 from sklearn.utils import check_random_state
 from sklearn.utils.testing import ignore_warnings
 
-from sklearn.metrics.scorer import SCORERS
+from sklearn.metrics.scorer import get_scorer
 
 def test_rfe_set_params():
     generator = check_random_state(0)
@@ -94,7 +94,7 @@ def test_rfecv():
     assert_array_equal(X_r, iris.data)
 
     # Test using a scorer
-    scorer = SCORERS['accuracy']
+    scorer = get_scorer('accuracy')
     rfecv = RFECV(estimator=SVC(kernel="linear"), step=1, cv=5,
                   scoring=scorer)
     rfecv.fit(X, y)

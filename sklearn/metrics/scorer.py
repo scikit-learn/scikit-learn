@@ -16,9 +16,11 @@ ground truth labeling (or ``None`` in the case of unsupervised models).
 # Authors: Andreas Mueller <amueller@ais.uni-bonn.de>
 #          Lars Buitinck <L.J.Buitinck@uva.nl>
 #          Arnaud Joly <arnaud.v.joly@gmail.com>
+#          Joel Nothman <joel.nothman@gmail.com>
 # License: Simplified BSD
 
 from abc import ABCMeta, abstractmethod
+from functools import partial
 from warnings import warn
 
 import numpy as np
@@ -179,17 +181,35 @@ def _deprecate_loss_and_score_funcs(
                  category=DeprecationWarning, stacklevel=2)
             if loss_func is None or score_overrides_loss:
                 scorer = make_scorer(score_func)
-
-    elif isinstance(scoring, six.string_types):
-        try:
-            scorer = SCORERS[scoring]
-        except KeyError:
-            raise ValueError('%r is not a valid scoring value. '
-                             'Valid options are %s' % (scoring,
-                             sorted(SCORERS.keys())))
     else:
-        scorer = scoring
+        scorer = get_scorer(scoring)
+
     return scorer
+
+
+def get_scorer(scoring=None):
+    """Get a scorer by its name
+
+    Parameters
+    ----------
+    scoring : string or callable
+
+    Returns
+    -------
+    scorer : callable
+        Returns the scorer of the given name if scoring is a string, and
+        otherwise the object passed in.
+    """
+    if isinstance(scoring, six.string_types):
+        if scoring in SCORER_DEPRECATION:
+            warn(SCORER_DEPRECATION[scoring], DeprecationWarning)
+        try:
+            return SCORERS[scoring]
+        except KeyError:
+            raise ValueError('%r is not a valid scoring name. '
+                             'Valid options are %s' % (scoring,
+                             list_scorers()))
+    return scoring
 
 
 def make_scorer(score_func, greater_is_better=True, needs_proba=False,
@@ -256,6 +276,17 @@ def make_scorer(score_func, greater_is_better=True, needs_proba=False,
     return cls(score_func, sign, kwargs)
 
 
+def list_scorers():
+    """Lists the names of known scorers
+
+    Returns
+    -------
+    scorer_names : list of strings
+    """
+    return sorted(set(SCORERS) - set(SCORER_DEPRECATION))
+
+
+
 # Standard regression scores
 r2_scorer = make_scorer(r2_score)
 mean_squared_error_scorer = make_scorer(mean_squared_error,
@@ -280,6 +311,7 @@ log_loss_scorer = make_scorer(log_loss, greater_is_better=False,
 # Clustering scores
 adjusted_rand_scorer = make_scorer(adjusted_rand_score)
 
+SCORER_DEPRECATION = {}
 SCORERS = dict(r2=r2_scorer,
                mean_squared_error=mean_squared_error_scorer,
                accuracy=accuracy_scorer, f1=f1_scorer, roc_auc=roc_auc_scorer,
@@ -287,3 +319,23 @@ SCORERS = dict(r2=r2_scorer,
                precision=precision_scorer, recall=recall_scorer,
                log_loss=log_loss_scorer,
                adjusted_rand_score=adjusted_rand_scorer)
+
+msg = ("The {0!r} scorer has been deprecated and will be removed in version "
+       "0.17. Please choose one of '{0}_binary' or '{0}_weighted' depending "
+       "on your data; '{0}_macro', '{0}_micro' and '{0}_samples' provide "
+       "alternative multiclass/multilabel averaging.")
+for name, metric in [('precision', precision_score),
+                       ('recall', recall_score), ('f1', f1_score)]:
+    SCORERS.update({
+        name: make_scorer(metric),
+        '{0}_binary'.format(name): make_scorer(partial(metric)),
+        '{0}_macro'.format(name): make_scorer(partial(metric, pos_label=None,
+                                                     average='macro')),
+        '{0}_micro'.format(name): make_scorer(partial(metric, pos_label=None,
+                                                     average='micro')),
+        '{0}_samples'.format(name): make_scorer(partial(metric, pos_label=None,
+                                                        average='samples')),
+        '{0}_weighted'.format(name): make_scorer(partial(metric, pos_label=None,
+                                                        average='weighted')),
+    })
+    SCORER_DEPRECATION[name] = (msg.format(name))

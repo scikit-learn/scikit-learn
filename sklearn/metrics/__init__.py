@@ -31,7 +31,7 @@ from .metrics import (accuracy_score,
 # Deprecated in 0.16
 from .metrics import auc_score
 
-from .scorer import make_scorer, SCORERS
+from .scorer import make_scorer, get_scorer, list_scorers, SCORERS
 
 from . import cluster
 from .cluster import (adjusted_rand_score,
@@ -93,5 +93,7 @@ __all__ = ['accuracy_score',
            'v_measure_score',
            'consensus_score',
            'zero_one_loss',
+           'get_scorer',
+           'list_scorers',
            'make_scorer',
            'SCORERS']

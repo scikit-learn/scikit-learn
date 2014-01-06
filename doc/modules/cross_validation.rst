@@ -120,7 +120,7 @@ scoring parameter::
 
   >>> from sklearn import metrics
   >>> scores = cross_validation.cross_val_score(clf, iris.data, iris.target,
-  ...     cv=5, scoring='f1')
+  ...     cv=5, scoring='f1_weighted')
   >>> scores                                              # doctest: +ELLIPSIS
   array([ 0.96...,  1.  ...,  0.96...,  0.96...,  1.        ])
 
