@@ -1499,10 +1499,7 @@ def test_invariance_string_vs_numbers_labels():
                                        "invariance test".format(name))
 
     # TODO Currently not supported
-    # Hinge_loss raises TypeError
-    THRESHOLDED_METRICS_ITEMS = THRESHOLDED_METRICS.items()
-    THRESHOLDED_METRICS_ITEMS.remove(('hinge_loss', hinge_loss))
-    for name, metrics in THRESHOLDED_METRICS_ITEMS:
+    for name, metrics in THRESHOLDED_METRICS.items():
         assert_raises(ValueError, metrics, y1_str, y2_str)
 
 

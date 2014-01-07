@@ -257,12 +257,7 @@ def hinge_loss(y_true, pred_decision, pos_label=None, neg_label=None):
                       "release 0.15.", DeprecationWarning)
 
     # TODO: multi-class hinge-loss
-
     y_true, pred_decision = check_arrays(y_true, pred_decision)
-    if y_true.shape[0] != pred_decision.shape[0]:
-        raise ValueError("y_true and pred_decision have different number of "
-                         "samples ({0}!={1})".format(
-                         y_true.shape[0], pred_decision.shape[0]))
 
     # the rest of the code assumes that positive and negative labels
     # are encoded as +1 and -1 respectively
@@ -271,12 +266,14 @@ def hinge_loss(y_true, pred_decision, pos_label=None, neg_label=None):
     else:
         y_true = LabelBinarizer(neg_label=-1).fit_transform(y_true)[:, 0]
 
-    # Done to be homogeneous with the output of LabelBinarizer.
     if pred_decision.ndim == 2 and pred_decision.shape[1] != 1:
         raise ValueError("Multi-class hinge loss not supported")
     pred_decision = np.ravel(pred_decision)
 
-    margin = y_true * pred_decision
+    try:
+        margin = y_true * pred_decision
+    except TypeError:
+        raise ValueError("pred_decision should be an array of floats.")
     losses = 1 - margin
     # The hinge doesn't penalize good enough predictions.
     losses[losses <= 0] = 0
@@ -1031,7 +1028,7 @@ def log_loss(y_true, y_pred, eps=1e-15, normalize=True):
 
     # This happens in cases when elements in y_pred have type "str".
     if not isinstance(Y, np.ndarray):
-        raise ValueError("y_pred should have valid input.")
+        raise ValueError("y_pred should be an array of floats.")
 
     # If y_pred is of single dimension, assume y_true to be binary
     # and then check.
@@ -1041,9 +1038,7 @@ def log_loss(y_true, y_pred, eps=1e-15, normalize=True):
         Y = np.append(1 - Y, Y, axis=1)
 
     # Check if dimensions are consistent.
-    if T.shape[0] != Y.shape[0]:
-        raise ValueError("y_true and y_pred have different number of samples "
-                         "%d, %d" % (T.shape[0], Y.shape[0]))
+    T, Y = check_arrays(T, Y)
     if T.shape[1] != Y.shape[1]:
         raise ValueError("y_true and y_pred have different number of classes "
                          "%d, %d" % (T.shape[1], Y.shape[1]))
