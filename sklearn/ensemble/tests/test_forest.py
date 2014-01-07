@@ -474,9 +474,9 @@ def test_distribution():
     # Single variable with 4 values
     X = rng.randint(0, 4, size=(1000, 1))
     y = rng.rand(1000)
-    n_trees = 200
+    n_trees = 500
 
-    clf = ExtraTreesRegressor(n_estimators=n_trees, random_state=1).fit(X, y)
+    clf = ExtraTreesRegressor(n_estimators=n_trees, random_state=42).fit(X, y)
 
     uniques = defaultdict(int)
     for tree in clf.estimators_:
