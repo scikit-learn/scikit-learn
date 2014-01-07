@@ -13,8 +13,7 @@
 #
 # Licence: BSD 3 clause
 
-from libc.stdio cimport perror, printf
-from libc.stdlib cimport calloc, free, malloc, realloc, abort
+from libc.stdlib cimport calloc, free, malloc, realloc
 from libc.string cimport memcpy, memset
 from libc.math cimport log as ln
 from cpython cimport Py_INCREF, PyObject
@@ -1068,6 +1067,7 @@ cdef class BestSplitter(Splitter):
             for p in range(start, end):
                 Xf[p] = X[X_sample_stride * samples[p]
                           + X_fx_stride * current_feature]
+
             sort(Xf + start, samples + start, end - start)
 
             # Evaluate all splits
@@ -1146,10 +1146,71 @@ cdef class BestSplitter(Splitter):
         impurity_improvement[0] = best_improvement
 
 
+# Sort n-element arrays pointed to by Xf and samples, simultaneously,
+# by the values in Xf. Algorithm: Introsort (Musser, SP&E, 1997).
+cdef inline void sort(DTYPE_t* Xf, SIZE_t* samples, SIZE_t n) nogil:
+    cdef int maxd = 2 * <int>log(n)
+    introsort(Xf, samples, n, maxd)
+
+
 cdef inline void swap(DTYPE_t* Xf, SIZE_t* samples, SIZE_t i, SIZE_t j) nogil:
     # Helper for sort
     Xf[i], Xf[j] = Xf[j], Xf[i]
     samples[i], samples[j] = samples[j], samples[i]
+
+
+cdef inline DTYPE_t median3(DTYPE_t* Xf, SIZE_t n) nogil:
+    # Median of three pivot selection, after Bentley and McIlroy (1993).
+    # Engineering a sort function. SP&E. Requires 8/3 comparisons on average.
+    cdef DTYPE_t a = Xf[0], b = Xf[n / 2], c = Xf[n - 1]
+    if a < b:
+        if b < c:
+            return b
+        elif a < c:
+            return c
+        else:
+            return a
+    elif b < c:
+        if a < c:
+            return a
+        else:
+            return c
+    else:
+        return b
+
+
+# Introsort with median of 3 pivot selection and 3-way partition function
+# (robust to repeated elements, e.g. lots of zero features).
+cdef void introsort(DTYPE_t* Xf, SIZE_t *samples, SIZE_t n, int maxd) nogil:
+    cdef DTYPE_t pivot
+    cdef SIZE_t i, l, r
+
+    while n > 1:
+        if maxd <= 0:   # max depth limit exceeded ("gone quadratic")
+            heapsort(Xf, samples, n)
+            return
+        maxd -= 1
+
+        pivot = median3(Xf, n)
+
+        # Three-way partition.
+        i = l = 0
+        r = n
+        while i < r:
+            if Xf[i] < pivot:
+                swap(Xf, samples, i, l)
+                i += 1
+                l += 1
+            elif Xf[i] > pivot:
+                r -= 1
+                swap(Xf, samples, i, r)
+            else:
+                i += 1
+
+        introsort(Xf, samples, l, maxd)
+        Xf += r
+        samples += r
+        n -= r
 
 
 cdef inline void sift_down(DTYPE_t* Xf, SIZE_t* samples,
@@ -1175,7 +1236,7 @@ cdef inline void sift_down(DTYPE_t* Xf, SIZE_t* samples,
             root = maxind
 
 
-cdef void sort(DTYPE_t* Xf, SIZE_t* samples, SIZE_t n) nogil:
+cdef void heapsort(DTYPE_t* Xf, SIZE_t* samples, SIZE_t n) nogil:
     cdef SIZE_t start, end
 
     # heapify
