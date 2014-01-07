@@ -108,9 +108,9 @@ class BaseSpectral(six.with_metaclass(ABCMeta, BaseEstimator,
     def _check_parameters(self):
         legal_svd_methods = ('randomized', 'arpack')
         if self.svd_method not in legal_svd_methods:
-            raise ValueError("Unknown SVD method: '{}'. svd_method must be"
-                             " one of {}.".format(self.svd_method,
-                                                  legal_svd_methods))
+            raise ValueError("Unknown SVD method: '{0}'. svd_method must be"
+                             " one of {1}.".format(self.svd_method,
+                                                   legal_svd_methods))
 
     def fit(self, X):
         """Creates a biclustering for X.
@@ -405,8 +405,8 @@ class SpectralBiclustering(BaseSpectral):
         super(SpectralBiclustering, self)._check_parameters()
         legal_methods = ('bistochastic', 'scale', 'log')
         if self.method not in legal_methods:
-            raise ValueError("Unknown method: '{}'. method must be"
-                             " one of {}.".format(self.method, legal_methods))
+            raise ValueError("Unknown method: '{0}'. method must be"
+                             " one of {1}.".format(self.method, legal_methods))
         try:
             int(self.n_clusters)
         except TypeError:

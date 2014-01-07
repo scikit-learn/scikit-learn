@@ -51,7 +51,7 @@ def test_make_classification():
 
 def test_make_classification_informative_features():
     """Test the construction of informative features in make_classification
-    
+
     Also tests `n_clusters_per_class`, `n_classes`, `hypercube` and
     fully-specified `weights`.
     """
@@ -62,12 +62,12 @@ def test_make_classification_informative_features():
                    n_repeated=0, flip_y=0, shift=0, scale=1, shuffle=False)
 
     for n_informative, weights, n_clusters_per_class in [(2, [1], 1),
-                                                           (2, [1/3] * 3, 1),
-                                                           (2, [1/4] * 4, 1),
-                                                           (2, [1/2] * 2, 2),
-                                                           (2, [3/4, 1/4], 2),
-                                                           (10, [1/3] * 3, 10)
-                                                           ]:
+                                                         (2, [1/3] * 3, 1),
+                                                         (2, [1/4] * 4, 1),
+                                                         (2, [1/2] * 2, 2),
+                                                         (2, [3/4, 1/4], 2),
+                                                         (10, [1/3] * 3, 10)
+                                                         ]:
         n_classes = len(weights)
         n_clusters = n_classes * n_clusters_per_class
         n_samples = n_clusters * 50
@@ -84,7 +84,7 @@ def test_make_classification_informative_features():
 
             # Cluster by sign, viewed as strings to allow uniquing
             signs = np.sign(X)
-            signs = signs.view(dtype='|S{}'.format(signs.strides[0]))
+            signs = signs.view(dtype='|S{0}'.format(signs.strides[0]))
             unique_signs, cluster_index = np.unique(signs,
                                                     return_inverse=True)
 

@@ -1102,7 +1102,7 @@ def test_import_all_consistency():
         for name in getattr(package, '__all__', ()):
             if getattr(package, name, None) is None:
                 raise AttributeError(
-                    "Module '{}' has no attribute '{}'".format(
+                    "Module '{0}' has no attribute '{1}'".format(
                         modname, name))
 
 
