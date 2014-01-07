@@ -444,28 +444,29 @@ def test_random_hasher():
 
 def test_parallel_train():
     rng = np.random.RandomState(12321)
-    X = rng.randn(100, 1000)
-    y = rng.randint(0, 2, 100)
+    n_samples, n_features = 80, 30
+    X_train = rng.randn(n_samples, n_features)
+    y_train = rng.randint(0, 2, n_samples)
 
     clfs = [
         RandomForestClassifier(n_estimators=20,
                                n_jobs=n_jobs,
                                random_state=12345)
-        for n_jobs in range(1, 9)
+        for n_jobs in [1, 2, 3, 8, 16, 32]
     ]
 
     for clf in clfs:
-        clf.fit(X, y)
+        clf.fit(X_train, y_train)
 
-    X2 = rng.randn(100, 1000)
+    X_test = rng.randn(n_samples, n_features)
 
     probas = []
     for clf in clfs:
-        proba = clf.predict_proba(X2)
+        proba = clf.predict_proba(X_test)
         probas.append(proba)
 
     for proba1, proba2 in zip(probas, probas[1:]):
-        assert_true(np.allclose(proba1, proba2))
+        assert_array_almost_equal(proba1, proba2)
 
 
 def test_distribution():
@@ -494,7 +495,7 @@ def test_distribution():
     # them has probability 1/3 while the 4 others have probability 1/6.
 
     assert_equal(len(uniques), 5)
-    assert_greater(0.20, uniques[0][0]) # Rough approximation of 1/6.
+    assert_greater(0.20, uniques[0][0])  # Rough approximation of 1/6.
     assert_greater(0.20, uniques[1][0])
     assert_greater(0.20, uniques[2][0])
     assert_greater(0.20, uniques[3][0])
