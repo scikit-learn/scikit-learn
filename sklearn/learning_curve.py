@@ -143,8 +143,8 @@ def _translate_train_sizes(train_sizes, n_max_training_samples):
     """Determine absolute sizes of training subsets and validate 'train_sizes'.
 
     Examples:
-        _translate_train_sizes([0.5, 1.0], 10) -> ([5, 10], 2)
-        _translate_train_sizes([5, 10], 10) -> ([5, 10], 2)
+        _translate_train_sizes([0.5, 1.0], 10) -> [5, 10]
+        _translate_train_sizes([5, 10], 10) -> [5, 10]
 
     Parameters
     ----------
@@ -200,6 +200,7 @@ def _translate_train_sizes(train_sizes, n_max_training_samples):
 
 def _fit_estimator(base_estimator, X, y, train, test,
                    n_train_samples, scorer, verbose):
+    """Train estimator on a training subset and compute scores."""
     train_subset = train[:n_train_samples]
     estimator = clone(base_estimator)
     X_train, y_train = _split(estimator, X, y, train_subset)
@@ -212,6 +213,7 @@ def _fit_estimator(base_estimator, X, y, train, test,
 
 def _incremental_fit_estimator(base_estimator, X, y, classes, train, test,
                                train_sizes, scorer, verbose):
+    """Train estimator on training subsets incrementally and compute scores."""
     estimator = clone(base_estimator)
     train_scores, test_scores = [], []
     for n_train_samples, partial_train in zip(train_sizes,
