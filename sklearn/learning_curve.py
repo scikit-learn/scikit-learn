@@ -12,7 +12,7 @@ from .metrics.scorer import get_scorer
 from .grid_search import _check_scorable, _split, _fit, _score
 
 
-def learning_curve(estimator, X, y, samples_range=np.linspace(0.1, 1.0, 10),
+def learning_curve(estimator, X, y, train_sizes=np.linspace(0.1, 1.0, 10),
                    cv=None, scoring=None, exploit_incremental_learning=False,
                    n_jobs=1, pre_dispatch="all", verbose=0):
     """Learning curve
@@ -39,7 +39,7 @@ def learning_curve(estimator, X, y, samples_range=np.linspace(0.1, 1.0, 10),
         Target relative to X for classification or regression;
         None for unsupervised learning.
 
-    samples_range : array-like, shape = [n_ticks,], dtype float or int
+    train_sizes : array-like, shape = [n_ticks,], dtype float or int
         Numbers of training examples that will be used to generate the
         learning curve. If the dtype is float, it is regarded as a
         fraction of the maximum size of the training set (that is determined
@@ -75,7 +75,7 @@ def learning_curve(estimator, X, y, samples_range=np.linspace(0.1, 1.0, 10),
 
     Returns
     -------
-    samples_range_abs : array, shape = [n_unique_ticks,], dtype int
+    train_sizes_abs : array, shape = [n_unique_ticks,], dtype int
         Numbers of training examples that has been used to generate the
         learning curve. Note that the number of ticks might be less
         than n_ticks because duplicate entries will be removed.
@@ -103,13 +103,13 @@ def learning_curve(estimator, X, y, samples_range=np.linspace(0.1, 1.0, 10),
         cv = new_cv
 
     n_max_training_samples = len(cv[0][0])
-    samples_range_abs, n_unique_ticks = _translate_samples_range(
-        samples_range, n_max_training_samples)
+    train_sizes_abs, n_unique_ticks = _translate_train_sizes(
+        train_sizes, n_max_training_samples)
     # Because the lengths of folds can be significantly different, it is
     # not guaranteed that we use all of the available training data when we
     # use the first 'n_max_training_samples' samples.
     if verbose > 0:
-        print("[learning_curve] Training set sizes: " + str(samples_range_abs))
+        print("[learning_curve] Training set sizes: " + str(train_sizes_abs))
 
     _check_scorable(estimator, scoring=scoring)
     scorer = get_scorer(scoring)
@@ -122,59 +122,59 @@ def learning_curve(estimator, X, y, samples_range=np.linspace(0.1, 1.0, 10),
         else:
             classes = None
         out = parallel(delayed(_incremental_fit_estimator)(
-            estimator, X, y, classes, train, test, samples_range_abs, scorer,
+            estimator, X, y, classes, train, test, train_sizes_abs, scorer,
             verbose) for train, test in cv)
     else:
         out = parallel(delayed(_fit_estimator)(
             estimator, X, y, train, test, n_train_samples, scorer, verbose)
-            for train, test in cv for n_train_samples in samples_range_abs)
+            for train, test in cv for n_train_samples in train_sizes_abs)
         out = np.array(out)
         n_cv_folds = out.shape[0]/n_unique_ticks
         out = out.reshape(n_cv_folds, n_unique_ticks, 2)
 
     avg_over_cv = np.asarray(out).mean(axis=0).reshape(n_unique_ticks, 2)
 
-    return samples_range_abs, avg_over_cv[:, 0], avg_over_cv[:, 1]
+    return train_sizes_abs, avg_over_cv[:, 0], avg_over_cv[:, 1]
 
 
-def _translate_samples_range(samples_range, n_max_training_samples):
+def _translate_train_sizes(train_sizes, n_max_training_samples):
     """Determine range of number of training samples.
 
-    If the dtype of samples_range is float, the numbers will be interpreted as
+    If the dtype of train_sizes is float, the numbers will be interpreted as
     fractions of n_max_training_samples. Otherwise they will be interpreted
     as absolute values with n_max_training_samples as maximum value.
     """
-    samples_range_abs = np.asarray(samples_range)
-    n_ticks = samples_range_abs.shape[0]
-    n_min_required_samples = np.min(samples_range_abs)
-    n_max_required_samples = np.max(samples_range_abs)
-    if np.issubdtype(samples_range_abs.dtype, np.float):
+    train_sizes_abs = np.asarray(train_sizes)
+    n_ticks = train_sizes_abs.shape[0]
+    n_min_required_samples = np.min(train_sizes_abs)
+    n_max_required_samples = np.max(train_sizes_abs)
+    if np.issubdtype(train_sizes_abs.dtype, np.float):
         if n_min_required_samples <= 0.0 or n_max_required_samples > 1.0:
-            raise ValueError("samples_range must be within (0, 1], "
+            raise ValueError("train_sizes must be within (0, 1], "
                              "but is within [%f, %f]."
                              % (n_min_required_samples,
                                 n_max_required_samples))
-        samples_range_abs = (samples_range_abs
+        train_sizes_abs = (train_sizes_abs
                              * n_max_training_samples).astype(np.int)
-        samples_range_abs = np.clip(samples_range_abs, 1,
+        train_sizes_abs = np.clip(train_sizes_abs, 1,
                                     n_max_training_samples)
     else:
         if (n_min_required_samples <= 0 or
                 n_max_required_samples > n_max_training_samples):
-            raise ValueError("samples_range must be within (0, %d], "
+            raise ValueError("train_sizes must be within (0, %d], "
                              "but is within [%d, %d]."
                              % (n_max_training_samples,
                                 n_min_required_samples,
                                 n_max_required_samples))
 
-    samples_range_abs = np.unique(samples_range_abs)
-    n_unique_ticks = samples_range_abs.shape[0]
+    train_sizes_abs = np.unique(train_sizes_abs)
+    n_unique_ticks = train_sizes_abs.shape[0]
     if n_ticks > n_unique_ticks:
         warnings.warn("Number of ticks will be less than than the size of "
-                      "'samples_range' (%d instead of %d)."
+                      "'train_sizes' (%d instead of %d)."
                       % (n_unique_ticks, n_ticks), RuntimeWarning)
 
-    return samples_range_abs, n_unique_ticks
+    return train_sizes_abs, n_unique_ticks
 
 
 def _fit_estimator(base_estimator, X, y, train, test,
@@ -190,12 +190,11 @@ def _fit_estimator(base_estimator, X, y, train, test,
 
 
 def _incremental_fit_estimator(base_estimator, X, y, classes, train, test,
-                               samples_range, scorer, verbose):
+                               train_sizes, scorer, verbose):
     estimator = clone(base_estimator)
     train_scores, test_scores = [], []
-    for n_train_samples, partial_train in zip(samples_range,
-                                              np.split(train,
-                                                       samples_range)[:-1]):
+    for n_train_samples, partial_train in zip(train_sizes,
+            np.split(train, train_sizes)[:-1]):
         X_train, y_train = _split(estimator, X, y, train[:n_train_samples])
         X_partial_train, y_partial_train = _split(estimator, X, y,
                                                   partial_train)

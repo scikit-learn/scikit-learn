@@ -38,20 +38,20 @@ plt.figure()
 plt.title("Learning Curve (Naive Bayes)")
 plt.xlabel("Training examples")
 plt.ylabel("Score")
-samples_range, train_scores, test_scores = learning_curve(
+train_sizes, train_scores, test_scores = learning_curve(
     GaussianNB(), X, y, cv=10, n_jobs=1)
-plt.plot(samples_range, train_scores, label="Training score")
-plt.plot(samples_range, test_scores, label="Cross-validation score")
+plt.plot(train_sizes, train_scores, label="Training score")
+plt.plot(train_sizes, test_scores, label="Cross-validation score")
 plt.legend(loc="best")
 
 plt.figure()
 plt.title("Learning Curve (SVM, RBF kernel, $\gamma=0.001$)")
 plt.xlabel("Training examples")
 plt.ylabel("Score")
-samples_range, train_scores, test_scores = learning_curve(
+train_sizes, train_scores, test_scores = learning_curve(
     SVC(gamma=0.001), X, y, cv=10, n_jobs=1)
-plt.plot(samples_range, train_scores, label="Training score")
-plt.plot(samples_range, test_scores, label="Cross-validation score")
+plt.plot(train_sizes, train_scores, label="Training score")
+plt.plot(train_sizes, test_scores, label="Cross-validation score")
 plt.legend(loc="best")
 
 plt.show()
