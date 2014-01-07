@@ -299,7 +299,7 @@
                           </p>
                         </div>
                         <div class="item">
-                          <img src="_images/spotify.jpg" class="thumbnail" />
+                          <img src="_images/spotify.png" class="thumbnail" />
                           <p>
                           <em>"I think it's the most well-designed ML package I've seen so far."</em>
                           </p>
