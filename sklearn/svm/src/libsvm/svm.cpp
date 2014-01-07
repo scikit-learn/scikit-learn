@@ -2008,6 +2008,7 @@ static void sigmoid_train(
 static double sigmoid_predict(double decision_value, double A, double B)
 {
 	double fApB = decision_value*A+B;
+	// 1-p used later; avoid catastrophic cancellation
 	if (fApB >= 0)
 		return exp(-fApB)/(1.0+exp(-fApB));
 	else
@@ -2786,14 +2787,13 @@ double PREFIX(get_svr_probability)(const PREFIX(model) *model)
 
 double PREFIX(predict_values)(const PREFIX(model) *model, const PREFIX(node) *x, double* dec_values)
 {
-        int i;
+	int i;
 	if(model->param.svm_type == ONE_CLASS ||
 	   model->param.svm_type == EPSILON_SVR ||
 	   model->param.svm_type == NU_SVR)
 	{
 		double *sv_coef = model->sv_coef[0];
 		double sum = 0;
-
 		
 		for(i=0;i<model->l;i++)
 #ifdef _DENSE_REP
@@ -2811,7 +2811,6 @@ double PREFIX(predict_values)(const PREFIX(model) *model, const PREFIX(node) *x,
 	}
 	else
 	{
-		int i;
 		int nr_class = model->nr_class;
 		int l = model->l;
 		
@@ -2928,32 +2927,52 @@ double PREFIX(predict_probability)(
 
 void PREFIX(free_model_content)(PREFIX(model)* model_ptr)
 {
-	if(model_ptr->free_sv && model_ptr->l > 0)
+	if(model_ptr->free_sv && model_ptr->l > 0 && model_ptr->SV != NULL)
 #ifdef _DENSE_REP
-	for (int i = 0; i < model_ptr->l; i++)
-		free (model_ptr->SV[i].values);
+		for (int i = 0; i < model_ptr->l; i++)
+			free(model_ptr->SV[i].values);
 #else
 		free((void *)(model_ptr->SV[0]));
 #endif
-	for(int i=0;i<model_ptr->nr_class-1;i++)
-		free(model_ptr->sv_coef[i]);
+
+	if(model_ptr->sv_coef)
+	{
+		for(int i=0;i<model_ptr->nr_class-1;i++)
+			free(model_ptr->sv_coef[i]);
+	}
+
 	free(model_ptr->SV);
+	model_ptr->SV = NULL;
+
 	free(model_ptr->sv_coef);
+	model_ptr->sv_coef = NULL;
+
 	free(model_ptr->sv_ind);
+	model_ptr->sv_ind = NULL;
+
 	free(model_ptr->rho);
+	model_ptr->rho = NULL;
+
 	free(model_ptr->label);
+	model_ptr->label= NULL;
+
 	free(model_ptr->probA);
+	model_ptr->probA = NULL;
+
 	free(model_ptr->probB);
+	model_ptr->probB= NULL;
+
 	free(model_ptr->nSV);
+	model_ptr->nSV = NULL;
 }
 
 void PREFIX(free_and_destroy_model)(PREFIX(model)** model_ptr_ptr)
 {
-	PREFIX(model)* model_ptr = *model_ptr_ptr;
-	if(model_ptr != NULL)
+	if(model_ptr_ptr != NULL && *model_ptr_ptr != NULL)
 	{
-		PREFIX(free_model_content)(model_ptr);
-		free(model_ptr);
+		PREFIX(free_model_content)(*model_ptr_ptr);
+		free(*model_ptr_ptr);
+		*model_ptr_ptr = NULL;
 	}
 }
 

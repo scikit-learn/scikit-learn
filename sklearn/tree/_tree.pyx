@@ -1802,21 +1802,22 @@ cdef class Tree:
         if n_outputs == 1:
             out = np.zeros((n_samples, max_n_classes), dtype=np.float64)
 
-            for i from 0 <= i < n_samples:
-                node_id = 0
+            with nogil:
+                for i from 0 <= i < n_samples:
+                    node_id = 0
 
-                # While node_id not a leaf
-                while children_left[node_id] != _TREE_LEAF:
-                    # ... and children_right[node_id] != _TREE_LEAF:
-                    if X[i, feature[node_id]] <= threshold[node_id]:
-                        node_id = children_left[node_id]
-                    else:
-                        node_id = children_right[node_id]
+                    # While node_id not a leaf
+                    while children_left[node_id] != _TREE_LEAF:
+                        # ... and children_right[node_id] != _TREE_LEAF:
+                        if X[i, feature[node_id]] <= threshold[node_id]:
+                            node_id = children_left[node_id]
+                        else:
+                            node_id = children_right[node_id]
 
-                offset = node_id * value_stride
+                    offset = node_id * value_stride
 
-                for c from 0 <= c < n_classes[0]:
-                    out[i, c] = value[offset + c]
+                    for c from 0 <= c < n_classes[0]:
+                        out[i, c] = value[offset + c]
 
             return out
 
@@ -1825,23 +1826,24 @@ cdef class Tree:
                                   n_outputs,
                                   max_n_classes), dtype=np.float64)
 
-            for i from 0 <= i < n_samples:
-                node_id = 0
+            with nogil:
+                for i from 0 <= i < n_samples:
+                    node_id = 0
 
-                # While node_id not a leaf
-                while children_left[node_id] != _TREE_LEAF:
-                    # ... and children_right[node_id] != _TREE_LEAF:
-                    if X[i, feature[node_id]] <= threshold[node_id]:
-                        node_id = children_left[node_id]
-                    else:
-                        node_id = children_right[node_id]
+                    # While node_id not a leaf
+                    while children_left[node_id] != _TREE_LEAF:
+                        # ... and children_right[node_id] != _TREE_LEAF:
+                        if X[i, feature[node_id]] <= threshold[node_id]:
+                            node_id = children_left[node_id]
+                        else:
+                            node_id = children_right[node_id]
 
-                offset = node_id * value_stride
+                    offset = node_id * value_stride
 
-                for k from 0 <= k < n_outputs:
-                    for c from 0 <= c < n_classes[k]:
-                        out_multi[i, k, c] = value[offset + c]
-                    offset += max_n_classes
+                    for k from 0 <= k < n_outputs:
+                        for c from 0 <= c < n_classes[k]:
+                            out_multi[i, k, c] = value[offset + c]
+                        offset += max_n_classes
 
             return out_multi
 
@@ -1859,18 +1861,19 @@ cdef class Tree:
         cdef np.ndarray[np.int32_t, ndim=1] out
         out = np.zeros((n_samples,), dtype=np.int32)
 
-        for i from 0 <= i < n_samples:
-            node_id = 0
+        with nogil:
+            for i from 0 <= i < n_samples:
+                node_id = 0
 
-            # While node_id not a leaf
-            while children_left[node_id] != _TREE_LEAF:
-                # ... and children_right[node_id] != _TREE_LEAF:
-                if X[i, feature[node_id]] <= threshold[node_id]:
-                    node_id = children_left[node_id]
-                else:
-                    node_id = children_right[node_id]
+                # While node_id not a leaf
+                while children_left[node_id] != _TREE_LEAF:
+                    # ... and children_right[node_id] != _TREE_LEAF:
+                    if X[i, feature[node_id]] <= threshold[node_id]:
+                        node_id = children_left[node_id]
+                    else:
+                        node_id = children_right[node_id]
 
-            out[i] = node_id
+                out[i] = node_id
 
         return out
 

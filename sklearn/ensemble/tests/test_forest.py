@@ -219,6 +219,19 @@ def test_oob_score_classification():
     assert_less(abs(test_score - clf.oob_score_), 0.1)
 
 
+def test_oob_score_classification_for_non_contiguous_target():
+    """Check that oob prediction is a good estimation of the generalization
+    error for non-contiguous targets."""
+    iris_target = iris.target * 2 + 1
+    clf = RandomForestClassifier(n_estimators=50,
+                                 oob_score=True, random_state=rng)
+    n_samples = iris.data.shape[0]
+    clf.fit(iris.data[:n_samples / 2, :], iris_target[:n_samples / 2])
+    test_score = clf.score(iris.data[n_samples / 2:, :],
+                           iris_target[n_samples / 2:])
+    assert_less(abs(test_score - clf.oob_score_), 0.1)
+
+
 def test_oob_score_regression():
     """Check that oob prediction is pessimistic estimate.
     Not really a good test that prediction is independent."""
@@ -431,28 +444,29 @@ def test_random_hasher():
 
 def test_parallel_train():
     rng = np.random.RandomState(12321)
-    X = rng.randn(100, 1000)
-    y = rng.randint(0, 2, 100)
+    n_samples, n_features = 80, 30
+    X_train = rng.randn(n_samples, n_features)
+    y_train = rng.randint(0, 2, n_samples)
 
     clfs = [
         RandomForestClassifier(n_estimators=20,
                                n_jobs=n_jobs,
                                random_state=12345)
-        for n_jobs in range(1, 9)
+        for n_jobs in [1, 2, 3, 8, 16, 32]
     ]
 
     for clf in clfs:
-        clf.fit(X, y)
+        clf.fit(X_train, y_train)
 
-    X2 = rng.randn(100, 1000)
+    X_test = rng.randn(n_samples, n_features)
 
     probas = []
     for clf in clfs:
-        proba = clf.predict_proba(X2)
+        proba = clf.predict_proba(X_test)
         probas.append(proba)
 
     for proba1, proba2 in zip(probas, probas[1:]):
-        assert_true(np.allclose(proba1, proba2))
+        assert_array_almost_equal(proba1, proba2)
 
 
 def test_distribution():
@@ -461,9 +475,9 @@ def test_distribution():
     # Single variable with 4 values
     X = rng.randint(0, 4, size=(1000, 1))
     y = rng.rand(1000)
-    n_trees = 200
+    n_trees = 500
 
-    clf = ExtraTreesRegressor(n_estimators=n_trees, random_state=1).fit(X, y)
+    clf = ExtraTreesRegressor(n_estimators=n_trees, random_state=42).fit(X, y)
 
     uniques = defaultdict(int)
     for tree in clf.estimators_:
@@ -481,7 +495,7 @@ def test_distribution():
     # them has probability 1/3 while the 4 others have probability 1/6.
 
     assert_equal(len(uniques), 5)
-    assert_greater(0.20, uniques[0][0]) # Rough approximation of 1/6.
+    assert_greater(0.20, uniques[0][0])  # Rough approximation of 1/6.
     assert_greater(0.20, uniques[1][0])
     assert_greater(0.20, uniques[2][0])
     assert_greater(0.20, uniques[3][0])

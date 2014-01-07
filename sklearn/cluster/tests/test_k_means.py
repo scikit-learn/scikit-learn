@@ -305,13 +305,19 @@ def test_minibatch_k_means_random_init_sparse_csr():
 
 def test_minibatch_k_means_perfect_init_dense_array():
     mb_k_means = MiniBatchKMeans(init=centers.copy(), n_clusters=n_clusters,
-                                 random_state=42).fit(X)
+                                 random_state=42, n_init=1).fit(X)
     _check_fitted_model(mb_k_means)
+
+
+def test_minibatch_k_means_init_multiple_runs_with_explicit_centers():
+    mb_k_means = MiniBatchKMeans(init=centers.copy(), n_clusters=n_clusters,
+                                 random_state=42, n_init=10)
+    assert_warns(RuntimeWarning, mb_k_means.fit, X)
 
 
 def test_minibatch_k_means_perfect_init_sparse_csr():
     mb_k_means = MiniBatchKMeans(init=centers.copy(), n_clusters=n_clusters,
-                                 random_state=42).fit(X_csr)
+                                 random_state=42, n_init=1).fit(X_csr)
     _check_fitted_model(mb_k_means)
 
 
@@ -347,7 +353,7 @@ def test_minibatch_reassign():
     for this_X in (X, X_csr):
         mb_k_means = MiniBatchKMeans(n_clusters=n_clusters, batch_size=1,
                                      init=centers.copy(),
-                                     random_state=42)
+                                     random_state=42, n_init=1)
         mb_k_means.fit(this_X)
         centers_before = mb_k_means.cluster_centers_.copy()
         # Turn on verbosity to smoke test the display code
@@ -390,7 +396,7 @@ def test_mini_batch_k_means_random_init_partial_fit():
 
 def test_minibatch_default_init_size():
     mb_k_means = MiniBatchKMeans(init=centers.copy(), n_clusters=n_clusters,
-                                 batch_size=10, random_state=42).fit(X)
+                                 batch_size=10, random_state=42, n_init=1).fit(X)
     assert_equal(mb_k_means.init_size_, 3 * mb_k_means.batch_size)
     _check_fitted_model(mb_k_means)
 
@@ -403,7 +409,7 @@ def test_minibatch_tol():
 
 def test_minibatch_set_init_size():
     mb_k_means = MiniBatchKMeans(init=centers.copy(), n_clusters=n_clusters,
-                                 init_size=666, random_state=42).fit(X)
+                                 init_size=666, random_state=42, n_init=1).fit(X)
     assert_equal(mb_k_means.init_size, 666)
     assert_equal(mb_k_means.init_size_, n_samples)
     _check_fitted_model(mb_k_means)
@@ -538,10 +544,12 @@ def test_input_dtypes():
         MiniBatchKMeans(n_clusters=2, n_init=10, batch_size=2).fit(X_list),
         MiniBatchKMeans(n_clusters=2, n_init=10, batch_size=2).fit(X_int),
         MiniBatchKMeans(n_clusters=2, n_init=10, batch_size=2).fit(X_int_csr),
-        MiniBatchKMeans(n_clusters=2, batch_size=2, init=init_int).fit(X_list),
-        MiniBatchKMeans(n_clusters=2, batch_size=2, init=init_int).fit(X_int),
         MiniBatchKMeans(n_clusters=2, batch_size=2,
-                        init=init_int).fit(X_int_csr),
+                        init=init_int, n_init=1).fit(X_list),
+        MiniBatchKMeans(n_clusters=2, batch_size=2,
+                        init=init_int, n_init=1).fit(X_int),
+        MiniBatchKMeans(n_clusters=2, batch_size=2,
+                        init=init_int, n_init=1).fit(X_int_csr),
     ]
     expected_labels = [0, 1, 1, 0, 0, 1]
     scores = np.array([v_measure_score(expected_labels, km.labels_)

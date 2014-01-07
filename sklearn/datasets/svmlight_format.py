@@ -130,12 +130,34 @@ def _gen_open(f):
         return open(f, "rb")
 
 
+def _frombuffer(x, dtype):
+    # np.frombuffer doesn't like zero-length buffers in older NumPy
+    if len(x):
+        return np.frombuffer(x, dtype=dtype)
+    else:
+        return np.empty(0, dtype=dtype)
+
+
 def _open_and_load(f, dtype, multilabel, zero_based, query_id):
     if hasattr(f, "read"):
-        return _load_svmlight_file(f, dtype, multilabel, zero_based, query_id)
+        actual_dtype, data, ind, indptr, labels, query = \
+            _load_svmlight_file(f, dtype, multilabel, zero_based, query_id)
     # XXX remove closing when Python 2.7+/3.1+ required
-    with closing(_gen_open(f)) as f:
-        return _load_svmlight_file(f, dtype, multilabel, zero_based, query_id)
+    else:
+        with closing(_gen_open(f)) as f:
+            actual_dtype, data, ind, indptr, labels, query = \
+                _load_svmlight_file(f, dtype, multilabel, zero_based, query_id)
+
+    # convert from array.array, give data the right dtype
+    if not multilabel:
+        labels = _frombuffer(labels, np.float64)
+    data = _frombuffer(data, actual_dtype)
+    indices = _frombuffer(ind, np.intc)
+    indptr = np.frombuffer(indptr, dtype=np.intc)   # never empty
+    query = _frombuffer(query, np.intc)
+
+    data = np.asarray(data, dtype=dtype)    # no-op for float{32,64}
+    return data, indices, indptr, labels, query
 
 
 def load_svmlight_files(files, n_features=None, dtype=np.float64,

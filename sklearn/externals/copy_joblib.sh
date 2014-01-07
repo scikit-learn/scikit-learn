@@ -14,5 +14,6 @@ cd $old_pwd
 cp -r tmp/lib/python2.7/site-packages/joblib-*.egg/joblib .
 rm -rf tmp
 # Needed to rewrite the doctests
-find joblib -name "*.py" | xargs sed -i "s/from joblib/from sklearn.externals.joblib/"
+find joblib -name "*.py" | xargs sed -i.bak "s/from joblib/from sklearn.externals.joblib/"
+find joblib -name "*.bak" | xargs rm
 chmod -x joblib/*.py joblib/test/*.py

@@ -106,26 +106,6 @@ def _impose_f_order(X):
 
 
 def _fast_dot(A, B):
-    """Compute fast dot products directly calling BLAS.
-
-    This function calls BLAS directly while warranting Fortran contiguity.
-    This helps avoiding extra copies `np.dot` would have created.
-    For details see section `Linear Algebra on large Arrays`:
-    http://wiki.scipy.org/PerformanceTips
-
-    Parameters
-    ----------
-    A, B: instance of np.ndarray
-        input matrices. Matrices are supposed to be of the same types
-        and to have exactly 2 dimensions. Currently only floats are supported.
-        In case these requirements aren't met np.dot(A, B) is returned
-        instead. To activate the related warning issued in this case
-        execute the following lines of code:
-
-        >> import warnings
-        >> from sklearn.utils.validation import NonBLASDotWarning
-        >> warnings.simplefilter('always', NonBLASDotWarning)
-    """
     if B.shape[0] != A.shape[A.ndim - 1]:  # check adopted from '_dotblas.c'
         raise ValueError
 
@@ -137,8 +117,6 @@ def _fast_dot(A, B):
         raise ValueError
 
     if min(A.shape) == 1 or min(B.shape) == 1 or A.ndim != 2 or B.ndim != 2:
-        warnings.warn('Data must be 2D with more than one colum / row.'
-                      'Falling back to np.dot', NonBLASDotWarning)
         raise ValueError
 
     # scipy 0.9 compliant API
@@ -148,24 +126,45 @@ def _fast_dot(A, B):
     return dot(alpha=1.0, a=A, b=B, trans_a=trans_a, trans_b=trans_b)
 
 
-def fast_dot(A, B):
-    #  only try to use fast_dot for older numpy versions.
-    #  the related issue has been tackled meanwhile. Also, depending on the build
-    #  the current numpy master's dot can about 3 times faster.
-    if LooseVersion(np.__version__) < '1.7.2':  # backported
-        try:
-            linalg.get_blas_funcs(['gemm'])
-        except (AttributeError, ValueError):
-            warnings.warn('Could not import BLAS, falling back to np.dot')
-            return np.dot(A, B)
+def _have_blas_gemm():
+    try:
+        linalg.get_blas_funcs(['gemm'])
+        return True
+    except (AttributeError, ValueError):
+        warnings.warn('Could not import BLAS, falling back to np.dot')
+        return False
 
+
+# Only use fast_dot for older NumPy; newer ones have tackled the speed issue.
+if LooseVersion(np.__version__) < '1.7.2' and _have_blas_gemm():
+    def fast_dot(A, B):
+        """Compute fast dot products directly calling BLAS.
+
+        This function calls BLAS directly while warranting Fortran contiguity.
+        This helps avoiding extra copies `np.dot` would have created.
+        For details see section `Linear Algebra on large Arrays`:
+        http://wiki.scipy.org/PerformanceTips
+
+        Parameters
+        ----------
+        A, B: instance of np.ndarray
+            Input arrays. Arrays are supposed to be of the same dtype and to
+            have exactly 2 dimensions. Currently only floats are supported.
+            In case these requirements aren't met np.dot(A, B) is returned
+            instead. To activate the related warning issued in this case
+            execute the following lines of code:
+
+            >> import warnings
+            >> from sklearn.utils.validation import NonBLASDotWarning
+            >> warnings.simplefilter('always', NonBLASDotWarning)
+        """
         try:
             return _fast_dot(A, B)
         except ValueError:
             # Maltyped or malformed data.
             return np.dot(A, B)
-    else:
-        return np.dot(A, B)
+else:
+    fast_dot = np.dot
 
 
 def density(w, **kwargs):

@@ -67,19 +67,11 @@ __all__ = ["RandomForestClassifier",
 MAX_INT = np.iinfo(np.int32).max
 
 
-def _parallel_build_trees(n_trees, forest, X, y,
-                          sample_weight, seeds, verbose):
+def _parallel_build_trees(trees, forest, X, y, sample_weight, verbose):
     """Private function used to build a batch of trees within a job."""
-    trees = []
-
-    for i in range(n_trees):
-        random_state = check_random_state(seeds[i])
+    for i, tree in enumerate(trees):
         if verbose > 1:
-            print("building tree %d of %d" % (i + 1, n_trees))
-        seed = random_state.randint(MAX_INT)
-
-        tree = forest._make_estimator(append=False)
-        tree.set_params(random_state=seed)
+            print("building tree %d of %d" % (i + 1, len(trees)))
 
         if forest.bootstrap:
             n_samples = X.shape[0]
@@ -88,6 +80,7 @@ def _parallel_build_trees(n_trees, forest, X, y,
             else:
                 curr_sample_weight = sample_weight.copy()
 
+            random_state = check_random_state(tree.random_state)
             indices = random_state.randint(0, n_samples, n_samples)
             sample_counts = bincount(indices, minlength=n_samples)
             curr_sample_weight *= sample_counts
@@ -102,8 +95,6 @@ def _parallel_build_trees(n_trees, forest, X, y,
             tree.fit(X, y,
                      sample_weight=sample_weight,
                      check_input=False)
-
-        trees.append(tree)
 
     return trees
 
@@ -150,6 +141,11 @@ def _parallel_predict_regression(trees, X):
     return sum(tree.predict(X) for tree in trees)
 
 
+def _parallel_apply(tree, X):
+    """Private helper function for parallizing calls to apply in a forest."""
+    return tree.tree_.apply(X)
+
+
 class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
                                     _LearntSelectorMixin)):
     """Base class for forests of trees.
@@ -194,7 +190,10 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
             return the index of the leaf x ends up in.
         """
         X = array2d(X, dtype=DTYPE)
-        return np.array([est.tree_.apply(X) for est in self.estimators_]).T
+        results = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
+                           backend="threading")(
+            delayed(_parallel_apply)(tree, X) for tree in self.estimators_)
+        return np.array(results).T
 
     def fit(self, X, y, sample_weight=None):
         """Build a forest of trees from the training set (X, y).
@@ -256,23 +255,28 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
                              " if bootstrap=True")
 
         # Assign chunk of trees to jobs
-        n_jobs, n_trees, _ = _partition_estimators(self)
+        n_jobs, n_trees, starts = _partition_estimators(self)
+        trees = []
 
-        # Precalculate the random states
-        seeds = [random_state.randint(MAX_INT, size=i) for i in n_trees]
+        for i in range(self.n_estimators):
+            tree = self._make_estimator(append=False)
+            tree.set_params(random_state=random_state.randint(MAX_INT))
+            trees.append(tree)
 
         # Free allocated memory, if any
         self.estimators_ = None
 
-        # Parallel loop
-        all_trees = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
+        # Parallel loop: we use the threading backend as the Cython code for
+        # fitting the trees is internally releasing the Python GIL making
+        # threading always more efficient than multiprocessing in that case.
+        all_trees = Parallel(n_jobs=n_jobs, verbose=self.verbose,
+                             backend="threading")(
             delayed(_parallel_build_trees)(
-                n_trees[i],
+                trees[starts[i]:starts[i + 1]],
                 self,
                 X,
                 y,
                 sample_weight,
-                seeds[i],
                 verbose=self.verbose)
             for i in range(n_jobs))
 
@@ -345,7 +349,6 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
 
     def _set_oob_score(self, X, y):
         n_classes_ = self.n_classes_
-        classes_ = self.classes_
         n_samples = y.shape[0]
 
         oob_decision_function = []
@@ -376,8 +379,8 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
             decision = (predictions[k] /
                         predictions[k].sum(axis=1)[:, np.newaxis])
             oob_decision_function.append(decision)
-            oob_score += np.mean((y[:, k] == classes_[k].take(
-                np.argmax(predictions[k], axis=1), axis=0)))
+            oob_score += np.mean(y[:, k] ==
+                                 np.argmax(predictions[k], axis=1), axis=0)
 
         if self.n_outputs_ == 1:
             self.oob_decision_function_ = oob_decision_function[0]
@@ -457,7 +460,8 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
         n_jobs, n_trees, starts = _partition_estimators(self)
 
         # Parallel loop
-        all_proba = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
+        all_proba = Parallel(n_jobs=n_jobs, verbose=self.verbose,
+                             backend="threading")(
             delayed(_parallel_predict_proba)(
                 self.estimators_[starts[i]:starts[i + 1]],
                 X,
@@ -566,7 +570,8 @@ class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
         n_jobs, n_trees, starts = _partition_estimators(self)
 
         # Parallel loop
-        all_y_hat = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
+        all_y_hat = Parallel(n_jobs=n_jobs, verbose=self.verbose,
+                             backend="threading")(
             delayed(_parallel_predict_regression)(
                 self.estimators_[starts[i]:starts[i + 1]], X)
             for i in range(n_jobs))
