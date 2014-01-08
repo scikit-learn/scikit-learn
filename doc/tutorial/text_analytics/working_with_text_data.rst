@@ -536,3 +536,32 @@ English.
 Bonus point if the utility is able to give a confidence level for its
 predictions.
 
+
+Where to From Here
+------------------
+
+Here are a few suggestions to help further your scikit-learn intuition
+upon the completion of this tutorial:
+
+
+- Try playing around with the `analyzer` and `token normalisation` under
+  :class:`CountVectorizer`
+
+- If you don't have labels, try using
+  :ref:`Clustering <example_document_clustering.py>`
+  on your problem.
+
+- If you have multiple labels per document, e.g categories, have a look
+  at the :ref:`Multiclass and multilabel section <multiclass>`
+
+- Try using :ref:`PCA (Principal Component Analysis) <decompositions>` for
+  `latent semantic analysis <http://en.wikipedia.org/wiki/Latent_semantic_analysis>`_.
+
+- Have a look at using
+  :ref:`Out-of-core Classification
+  <example_applications_plot_out_of_core_classification.py>` to
+  learn from data that would not fit into the computer main memory.
+
+- If you have too many sparse features, try using the :ref:`Hashing Vectorizer
+  <hashing_vectorizer>`.
+
