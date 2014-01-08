@@ -261,6 +261,10 @@ def test_importances():
 
     for name, Tree in CLF_TREES.items():
         clf = Tree(random_state=0)
+        # raise error if not fitted
+        with assert_raises(ValueError):
+            clf.feature_importances_
+
         clf.fit(X, y)
         importances = clf.feature_importances_
         n_important = np.sum(importances > 0.1)
@@ -600,6 +604,28 @@ def test_sample_weight():
                               clf2.tree_.threshold[internal])
 
 
+def test_sample_weight_invalid():
+    """Check sample weighting raises errors."""
+    X = np.arange(100)[:, np.newaxis]
+    y = np.ones(100)
+    y[:50] = 0.0
+
+
+    clf = DecisionTreeClassifier(random_state=0)
+
+    sample_weight = np.random.rand(100, 1)
+    assert_raises(ValueError, clf.fit, X, y, sample_weight=sample_weight)
+
+    sample_weight = np.array(0)
+    assert_raises(ValueError, clf.fit, X, y, sample_weight=sample_weight)
+
+    sample_weight = np.ones(101)
+    assert_raises(ValueError, clf.fit, X, y, sample_weight=sample_weight)
+
+    sample_weight = np.ones(99)
+    assert_raises(ValueError, clf.fit, X, y, sample_weight=sample_weight)
+
+
 def test_max_leaf_nodes():
     """Test greedy trees with max_depth + 1 leafs. """
     from sklearn.tree._tree import TREE_LEAF
@@ -608,12 +634,15 @@ def test_max_leaf_nodes():
     for name, TreeEstimator in ALL_TREES.items():
         est = TreeEstimator(max_depth=None, max_leaf_nodes=k + 1).fit(X, y)
         tree = est.tree_
-        assert_equal(tree.children_left[tree.children_left == TREE_LEAF].shape[0], k + 1)
+        assert_equal(tree.children_left[tree.children_left == TREE_LEAF].shape[0],
+                     k + 1)
 
         # max_leaf_nodes in (0, 1) should raise ValueError
         est = TreeEstimator(max_depth=None, max_leaf_nodes=0)
         assert_raises(ValueError, est.fit, X, y)
         est = TreeEstimator(max_depth=None, max_leaf_nodes=1)
+        assert_raises(ValueError, est.fit, X, y)
+        est = TreeEstimator(max_depth=None, max_leaf_nodes=0.1)
         assert_raises(ValueError, est.fit, X, y)
 
 
