@@ -83,7 +83,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         Built-in correlation models are::
 
             'absolute_exponential', 'squared_exponential',
-            'generalized_exponential', 'cubic', 'linear'
+            'generalized_exponential', 'cubic', 'linear', 'pure_nugget'
 
     beta0 : double array_like, optional
         The regression weight vector to perform Ordinary Kriging (OK).
@@ -218,7 +218,8 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         'squared_exponential': correlation.squared_exponential,
         'generalized_exponential': correlation.generalized_exponential,
         'cubic': correlation.cubic,
-        'linear': correlation.linear}
+        'linear': correlation.linear,
+        'pure_nugget': correlation.pure_nugget}
 
     _optimizer_types = [
         'fmin_cobyla',
@@ -507,10 +508,15 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             if type(batch_size) is not int or batch_size <= 0:
                 raise Exception("batch_size must be a positive integer")
 
+            if self.y_ndim_ == 1:
+                y = np.zeros(n_eval)
+            else:
+                y = np.zeros((n_eval, n_targets))
+
             if eval_MSE:
 
-                y, MSE = np.zeros(n_eval), np.zeros(n_eval)
-                for k in range(max(1, n_eval / batch_size)):
+                MSE = np.zeros(n_eval)
+                for k in range(max(1, n_eval // batch_size + 1)):
                     batch_from = k * batch_size
                     batch_to = min([(k + 1) * batch_size + 1, n_eval + 1])
                     y[batch_from:batch_to], MSE[batch_from:batch_to] = \
@@ -520,9 +526,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                 return y, MSE
 
             else:
-
-                y = np.zeros(n_eval)
-                for k in range(max(1, n_eval / batch_size)):
+                for k in range(max(1, n_eval // batch_size + 1)):
                     batch_from = k * batch_size
                     batch_to = min([(k + 1) * batch_size + 1, n_eval + 1])
                     y[batch_from:batch_to] = \

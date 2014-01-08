@@ -22,7 +22,8 @@ y = f(X).ravel()
 
 
 def test_1d(regr=regression.constant, corr=correlation.squared_exponential,
-            random_start=10, beta0=None):
+            random_start=10, beta0=None, storage_mode='full',
+            batch_size=None, optimizer='fmin_cobyla'):
     """
     MLE estimation of a one-dimensional Gaussian Process model.
     Check random start optimization.
@@ -31,16 +32,18 @@ def test_1d(regr=regression.constant, corr=correlation.squared_exponential,
     """
     gp = GaussianProcess(regr=regr, corr=corr, beta0=beta0,
                          theta0=1e-2, thetaL=1e-4, thetaU=1e-1,
-                         random_start=random_start, verbose=False).fit(X, y)
-    y_pred, MSE = gp.predict(X, eval_MSE=True)
-    y2_pred, MSE2 = gp.predict(X2, eval_MSE=True)
+                         random_start=random_start, storage_mode=storage_mode,
+                         optimizer=optimizer, verbose=False).fit(X, y)
+    y_pred, MSE = gp.predict(X, eval_MSE=True, batch_size=batch_size)
+    y2_pred, MSE2 = gp.predict(X2, eval_MSE=True, batch_size=batch_size)
 
     assert_true(np.allclose(y_pred, y) and np.allclose(MSE, 0.)
-        and np.allclose(MSE2, 0., atol=10))
+                and np.allclose(MSE2, 0., atol=20))
 
 
 def test_2d(regr=regression.constant, corr=correlation.squared_exponential,
-            random_start=10, beta0=None):
+            random_start=10, beta0=None, storage_mode='full',
+            batch_size=None, optimizer='fmin_cobyla'):
     """
     MLE estimation of a two-dimensional Gaussian Process model accounting for
     anisotropy. Check random start optimization.
@@ -60,16 +63,18 @@ def test_2d(regr=regression.constant, corr=correlation.squared_exponential,
     y = g(X).ravel()
     gp = GaussianProcess(regr=regr, corr=corr, beta0=beta0,
                          theta0=[1e-2] * 2, thetaL=[1e-4] * 2,
-                         thetaU=[1e-1] * 2,
-                         random_start=random_start, verbose=False)
+                         thetaU=[1e-1] * 2, random_start=random_start,
+                         storage_mode=storage_mode, optimizer=optimizer,
+                         verbose=False)
     gp.fit(X, y)
-    y_pred, MSE = gp.predict(X, eval_MSE=True)
+    y_pred, MSE = gp.predict(X, eval_MSE=True, batch_size=batch_size)
 
     assert_true(np.allclose(y_pred, y) and np.allclose(MSE, 0.))
 
 
 def test_2d_2d(regr=regression.constant, corr=correlation.squared_exponential,
-            random_start=10, beta0=None):
+               random_start=10, beta0=None, storage_mode='full',
+               batch_size=None, optimizer='fmin_cobyla'):
     """
     MLE estimation of a two-dimensional Gaussian Process model accounting for
     anisotropy. Check random start optimization.
@@ -90,10 +95,11 @@ def test_2d_2d(regr=regression.constant, corr=correlation.squared_exponential,
     y = f(X)
     gp = GaussianProcess(regr=regr, corr=corr, beta0=beta0,
                          theta0=[1e-2] * 2, thetaL=[1e-4] * 2,
-                         thetaU=[1e-1] * 2,
-                         random_start=random_start, verbose=False)
+                         thetaU=[1e-1] * 2, random_start=random_start,
+                         storage_mode=storage_mode, optimizer=optimizer,
+                         verbose=False)
     gp.fit(X, y)
-    y_pred, MSE = gp.predict(X, eval_MSE=True)
+    y_pred, MSE = gp.predict(X, eval_MSE=True, batch_size=batch_size)
 
     assert_true(np.allclose(y_pred, y) and np.allclose(MSE, 0.))
 
@@ -110,7 +116,7 @@ def test_more_builtin_correlation_models(random_start=1):
     models specified as strings.
     """
     all_corr = ['absolute_exponential', 'squared_exponential', 'cubic',
-                'linear']
+                'linear', 'pure_nugget']
 
     for corr in all_corr:
         test_1d(regr='constant', corr=corr, random_start=random_start)
@@ -135,3 +141,41 @@ def test_no_normalize():
     gp = GaussianProcess(normalize=False).fit(X, y)
     y_pred = gp.predict(X)
     assert_true(np.allclose(y_pred, y))
+
+
+def test_generalized_exponential_corr():
+    '''
+    Test the generalized_exponential correlation model for different values
+    of the exponent
+    '''
+    exponent = [0.1, 1, 2, 4, 5]
+
+    for exp in exponent:
+        gpe = GaussianProcess(regr='quadratic', corr='generalized_exponential',
+                              theta0=[1e-2, exp], thetaL=[1e-4] * 2,
+                              thetaU=[1e-1] * 2, random_start=10,
+                              verbose=False).fit(X, y)
+
+        y_pred, MSE = gpe.predict(X, eval_MSE=True)
+        y2_pred, MSE2 = gpe.predict(X2, eval_MSE=True)
+
+        assert_true(np.allclose(y_pred, y) and np.allclose(MSE, 0.)
+                    and np.allclose(MSE2, 0., atol=10))
+
+
+def test_memory_management():
+    '''
+    Test the storage_mode option and predicting in batches
+    '''
+    test_1d(storage_mode='light', batch_size=1)
+    test_2d(storage_mode='light', batch_size=5)
+    test_2d_2d(storage_mode='light', batch_size=10)
+
+
+def test_welch_optimizer():
+    '''
+    Repeat test_1d and test_2d for the Welch optimizer
+    '''
+    test_1d(optimizer='Welch')
+    test_2d(optimizer='Welch')
+    test_2d_2d(optimizer='Welch')
