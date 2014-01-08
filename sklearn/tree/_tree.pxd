@@ -49,13 +49,15 @@ cdef class Criterion:
     cdef void reset(self) nogil
     cdef void update(self, SIZE_t new_pos) nogil
     cdef double node_impurity(self) nogil
-    cdef double children_impurity(self) nogil
+    cdef void children_impurity(self, double* impurity_left, double* impurity_right) nogil
     cdef void node_value(self, double* dest) nogil
+    cdef double impurity_improvement(self, double impurity) nogil
 
 
 # =============================================================================
 # Splitter
 # =============================================================================
+
 cdef class Splitter:
     # Internal structures
     cdef public Criterion criterion      # Impurity criterion
@@ -73,7 +75,8 @@ cdef class Splitter:
     cdef SIZE_t end                      # End position for the current ndoe
 
     cdef DTYPE_t* X
-    cdef SIZE_t X_stride
+    cdef SIZE_t X_sample_stride
+    cdef SIZE_t X_fx_stride
     cdef DOUBLE_t* y
     cdef SIZE_t y_stride
     cdef DOUBLE_t* sample_weight
@@ -88,11 +91,15 @@ cdef class Splitter:
                          np.ndarray y,
                          DOUBLE_t* sample_weight)
 
-    cdef void node_reset(self, SIZE_t start, SIZE_t end, double* impurity) nogil
+    cdef void node_reset(self, SIZE_t start, SIZE_t end) nogil
 
-    cdef void node_split(self, SIZE_t* pos, # Set to >= end if the node is a leaf
+    cdef void node_split(self, double impurity,  # Impurity of the node
+                               SIZE_t* pos, # Set to >= end if the node is a leaf
                                SIZE_t* feature,
-                               double* threshold) nogil
+                               double* threshold,
+                               double* impurity_left,
+                               double* impurity_right,
+                               double* impurity_improvement) nogil
 
     cdef void node_value(self, double* dest) nogil
 
@@ -114,6 +121,8 @@ cdef class Tree:
     cdef public SIZE_t max_depth         # Max depth of the tree
     cdef public SIZE_t min_samples_split # Minimum number of samples in an internal node
     cdef public SIZE_t min_samples_leaf  # Minimum number of samples in a leaf
+    cdef public object random_state      # Random state
+    cdef public int max_leaf_nodes       # Number of leafs to grow
 
     # Inner structures
     cdef public SIZE_t node_count        # Counter for node IDs
@@ -136,10 +145,25 @@ cdef class Tree:
                                 SIZE_t n_node_samples) nogil
     cdef void _resize(self, SIZE_t capacity=*) nogil
 
-    cpdef build(self, np.ndarray X,
-                      np.ndarray y,
-                      np.ndarray sample_weight=*)
-
     cpdef predict(self, np.ndarray[DTYPE_t, ndim=2] X)
     cpdef apply(self, np.ndarray[DTYPE_t, ndim=2] X)
     cpdef compute_feature_importances(self, normalize=*)
+
+
+# =============================================================================
+# Tree builder
+# =============================================================================
+
+cdef class TreeBuilder:
+     cpdef build(self, Tree tree, np.ndarray X, np.ndarray y,
+                 np.ndarray sample_weight=*)
+
+
+cdef class DepthFirstTreeBuilder(TreeBuilder):
+     cpdef build(self, Tree tree, np.ndarray X, np.ndarray y,
+                 np.ndarray sample_weight=*)
+
+
+cdef class BestFirstTreeBuilder(TreeBuilder):
+     cpdef build(self, Tree tree, np.ndarray X, np.ndarray y,
+                 np.ndarray sample_weight=*)

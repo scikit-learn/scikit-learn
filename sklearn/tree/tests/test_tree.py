@@ -238,7 +238,7 @@ def test_numerical_stability():
         [120.91514587, 140.40744019, 129.75102234, 159.90493774]])
 
     y = np.array(
-        [1., 0.70209277, 0.53896582, 0., 0.90914464, 0.48026916,  0.49622521])
+        [1., 0.70209277, 0.53896582, 0., 0.90914464, 0.48026916, 0.49622521])
 
     with np.errstate(all="raise"):
         for name, Tree in REG_TREES.items():
@@ -261,6 +261,10 @@ def test_importances():
 
     for name, Tree in CLF_TREES.items():
         clf = Tree(random_state=0)
+        # raise error if not fitted
+        with assert_raises(ValueError):
+            clf.feature_importances_
+
         clf.fit(X, y)
         importances = clf.feature_importances_
         n_important = np.sum(importances > 0.1)
@@ -600,14 +604,53 @@ def test_sample_weight():
                               clf2.tree_.threshold[internal])
 
 
-def test_32bit_equality():
-    """Check if 32bit and 64bit get the same result. """
-    from sklearn.cross_validation import train_test_split
-    X_train, X_test, y_train, y_test = train_test_split(boston.data,
-                                                        boston.target,
-                                                        random_state=1)
-    est = DecisionTreeRegressor(random_state=1)
+def test_sample_weight_invalid():
+    """Check sample weighting raises errors."""
+    X = np.arange(100)[:, np.newaxis]
+    y = np.ones(100)
+    y[:50] = 0.0
 
-    est.fit(X_train, y_train)
-    score = est.score(X_test, y_test)
-    assert_almost_equal(0.84652100667116, score)
+
+    clf = DecisionTreeClassifier(random_state=0)
+
+    sample_weight = np.random.rand(100, 1)
+    assert_raises(ValueError, clf.fit, X, y, sample_weight=sample_weight)
+
+    sample_weight = np.array(0)
+    assert_raises(ValueError, clf.fit, X, y, sample_weight=sample_weight)
+
+    sample_weight = np.ones(101)
+    assert_raises(ValueError, clf.fit, X, y, sample_weight=sample_weight)
+
+    sample_weight = np.ones(99)
+    assert_raises(ValueError, clf.fit, X, y, sample_weight=sample_weight)
+
+
+def test_max_leaf_nodes():
+    """Test greedy trees with max_depth + 1 leafs. """
+    from sklearn.tree._tree import TREE_LEAF
+    X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
+    k = 4
+    for name, TreeEstimator in ALL_TREES.items():
+        est = TreeEstimator(max_depth=None, max_leaf_nodes=k + 1).fit(X, y)
+        tree = est.tree_
+        assert_equal(tree.children_left[tree.children_left == TREE_LEAF].shape[0],
+                     k + 1)
+
+        # max_leaf_nodes in (0, 1) should raise ValueError
+        est = TreeEstimator(max_depth=None, max_leaf_nodes=0)
+        assert_raises(ValueError, est.fit, X, y)
+        est = TreeEstimator(max_depth=None, max_leaf_nodes=1)
+        assert_raises(ValueError, est.fit, X, y)
+        est = TreeEstimator(max_depth=None, max_leaf_nodes=0.1)
+        assert_raises(ValueError, est.fit, X, y)
+
+
+def test_max_leaf_nodes_max_depth():
+    """Test preceedence of max_leaf_nodes over max_depth. """
+    X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
+    k = 4
+    for name, TreeEstimator in ALL_TREES.items():
+        est = TreeEstimator(max_depth=1, max_leaf_nodes=k).fit(X, y)
+        tree = est.tree_
+        assert_greater(tree.max_depth, 1)

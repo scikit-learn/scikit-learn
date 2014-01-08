@@ -419,7 +419,7 @@ The advantages of GBRT are:
 
   + Predictive power
 
-  + Robustness to outliers in input space (via robust loss functions)
+  + Robustness to outliers in output space (via robust loss functions)
 
 The disadvantages of GBRT are:
 
@@ -450,10 +450,7 @@ with 100 decision stumps as weak learners::
     >>> clf.score(X_test, y_test)                 # doctest: +ELLIPSIS
     0.913...
 
-The number of weak learners (i.e. regression trees) is controlled by the
-parameter ``n_estimators``; The maximum depth of each tree is controlled via
-``max_depth``. The ``learning_rate`` is a hyper-parameter in the range (0.0, 1.0]
-that controls overfitting via :ref:`shrinkage <gradient_boosting_shrinkage>`.
+The number of weak learners (i.e. regression trees) is controlled by the parameter ``n_estimators``; :ref:`The size of each tree <gradient_boosting_tree_size>` can be controlled either by setting the tree depth via ``max_depth`` or by setting the number of leaf nodes via ``max_leaf_nodes``. The ``learning_rate`` is a hyper-parameter in the range (0.0, 1.0] that controls overfitting via :ref:`shrinkage <gradient_boosting_shrinkage>` .
 
 .. note::
 
@@ -462,7 +459,7 @@ that controls overfitting via :ref:`shrinkage <gradient_boosting_shrinkage>`.
    thus, the total number of induced trees equals
    ``n_classes * n_estimators``. For datasets with a large number
    of classes we strongly recommend to use
-   :class:`RandomForestClassifier` as an alternative to GBRT.
+   :class:`RandomForestClassifier` as an alternative to :class:`GradientBoostingClassifier` .
 
 Regression
 ----------
@@ -482,10 +479,10 @@ for regression which can be specified via the argument
     >>> X, y = make_friedman1(n_samples=1200, random_state=0, noise=1.0)
     >>> X_train, X_test = X[:200], X[200:]
     >>> y_train, y_test = y[:200], y[200:]
-    >>> clf = GradientBoostingRegressor(n_estimators=100, learning_rate=1.0,
+    >>> est = GradientBoostingRegressor(n_estimators=100, learning_rate=0.1,
     ...     max_depth=1, random_state=0, loss='ls').fit(X_train, y_train)
-    >>> mean_squared_error(y_test, clf.predict(X_test))    # doctest: +ELLIPSIS
-    6.90...
+    >>> mean_squared_error(y_test, est.predict(X_test))    # doctest: +ELLIPSIS
+    5.00...
 
 The figure below shows the results of applying :class:`GradientBoostingRegressor`
 with least squares loss and 500 base learners to the Boston house price dataset
@@ -510,6 +507,50 @@ the ``feature_importances_`` property.
  * :ref:`example_ensemble_plot_gradient_boosting_regression.py`
  * :ref:`example_ensemble_plot_gradient_boosting_oob.py`
 
+.. _gradient_boosting_warm_start:
+
+Fitting additional weak-learners
+--------------------------------
+
+Both :class:`GradientBoostingRegressor` and :class:`GradientBoostingClassifier`
+support ``warm_start=True`` which allows you to add more estimators to an already
+fitted model.
+
+::
+
+  >>> _ = est.set_params(n_estimators=200, warm_start=True)  # set warm_start and new nr of trees
+  >>> _ = est.fit(X_train, y_train) # fit additional 100 trees to est
+  >>> mean_squared_error(y_test, est.predict(X_test))    # doctest: +ELLIPSIS
+  3.84...
+
+.. _gradient_boosting_tree_size:
+
+Controlling the tree size
+-------------------------
+
+The size of the regression tree base learners defines the level of variable
+interactions that can be captured by the gradient boosting model. In general,
+a tree of depth ``h`` can capture interactions of order ``h`` .
+There are two ways in which the size of the individual regression trees can
+be controlled.
+
+If you specify ``max_depth=h`` then complete binary trees
+of depth ``h`` will be grown. Such trees will have (at most) ``2**h`` leaf nodes
+and ``2**h - 1`` split nodes.
+
+Alternatively, you can control the tree size by specifying the number of
+leaf nodes via the parameter ``max_leaf_nodes``. In this case,
+trees will be grown using best-first search where nodes with the highest improvement
+in impurity will be expanded first.
+A tree with ``max_leaf_nodes=k`` has ``k - 1`` split nodes and thus can
+model interactions of up to order ``max_leaf_nodes - 1`` .
+
+We found that ``max_leaf_nodes=k`` gives comparable results to ``max_depth=k-1``
+but is significantly faster to train at the expense of a slightly higher
+training error.
+The parameter ``max_leaf_nodes`` corresponds to the variable ``J`` in the
+chapter on gradient boosting in [F2001]_ and is related to the parameter
+``interaction.depth`` in R's gbm package where ``max_leaf_nodes == interaction.depth + 1`` .
 
 Mathematical formulation
 -------------------------
