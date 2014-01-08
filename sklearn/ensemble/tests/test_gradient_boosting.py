@@ -755,7 +755,6 @@ def test_warm_start_oob():
 
 def early_stopping_monitor(i, est, locals):
     """Returns True on the 10th iteration. """
-    print 'i', i
     if i == 9:
         return True
     else:
