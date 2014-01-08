@@ -17,6 +17,7 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_less
+from sklearn.utils.testing import raises
 
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.tree import DecisionTreeRegressor
@@ -261,9 +262,6 @@ def test_importances():
 
     for name, Tree in CLF_TREES.items():
         clf = Tree(random_state=0)
-        # raise error if not fitted
-        with assert_raises(ValueError):
-            clf.feature_importances_
 
         clf.fit(X, y)
         importances = clf.feature_importances_
@@ -275,6 +273,13 @@ def test_importances():
         X_new = clf.transform(X, threshold="mean")
         assert_less(0, X_new.shape[1], "Failed with {0}".format(name))
         assert_less(X_new.shape[1], X.shape[1], "Failed with {0}".format(name))
+
+
+@raises(ValueError)
+def test_importances_raises():
+    """Check if variable importance before fit raises ValueError. """
+    clf = DecisionTreeClassifier()
+    clf.feature_importances_
 
 
 def test_max_features():
