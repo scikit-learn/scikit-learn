@@ -764,8 +764,9 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             # add more estimators to fitted model
             # invariant: warm_start = True
             if self.n_estimators < self.estimators_.shape[0]:
-                raise ValueError('n_estimators must be larger or equal to estimators_.shape[0] ' +
-                                 'when warm_start==True')
+                raise ValueError('n_estimators=%d must be larger or equal to'
+                                 'estimators_.shape[0]=%d when warm_start==True'
+                                 % (self.n_estimators, self.estimators_.shape[0]))
             begin_at_stage = self.estimators_.shape[0]
             y_pred = self.decision_function(X)
             self._resize_state()

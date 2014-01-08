@@ -600,19 +600,6 @@ def test_sample_weight():
                               clf2.tree_.threshold[internal])
 
 
-# def test_32bit_equality():
-#     """Check if 32bit and 64bit get the same result. """
-#     from sklearn.cross_validation import train_test_split
-#     X_train, X_test, y_train, y_test = train_test_split(boston.data,
-#                                                         boston.target,
-#                                                         random_state=1)
-#     est = DecisionTreeRegressor(random_state=1)
-
-#     est.fit(X_train, y_train)
-#     score = est.score(X_test, y_test)
-#     assert_almost_equal(score, 0.86908506408880637)
-
-
 def test_max_leaf_nodes():
     """Test greedy trees with max_depth + 1 leafs. """
     from sklearn.tree._tree import TREE_LEAF
