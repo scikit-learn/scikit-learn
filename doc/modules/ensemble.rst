@@ -502,6 +502,16 @@ the ``feature_importances_`` property.
    :align: center
    :scale: 75
 
+.. topic:: Examples:
+
+ * :ref:`example_ensemble_plot_gradient_boosting_regression.py`
+ * :ref:`example_ensemble_plot_gradient_boosting_oob.py`
+
+.. _gradient_boosting_warm_start:
+
+Fitting additional weak-learners
+--------------------------------
+
 Both :class:`GradientBoostingRegressor` and :class:`GradientBoostingClassifier`
 support ``warm_start=True`` which allows you to add more estimators to an already
 fitted model.
@@ -512,11 +522,6 @@ fitted model.
   >>> _ = est.fit(X_train, y_train) # fit additional 100 trees to est
   >>> mean_squared_error(y_test, est.predict(X_test))    # doctest: +ELLIPSIS
   3.84...
-
-.. topic:: Examples:
-
- * :ref:`example_ensemble_plot_gradient_boosting_regression.py`
- * :ref:`example_ensemble_plot_gradient_boosting_oob.py`
 
 .. _gradient_boosting_tree_size:
 
