@@ -2372,6 +2372,17 @@ def test_log_loss():
     loss = log_loss(y_true, y_pred, normalize=True, eps=.1)
     assert_almost_equal(loss, log_loss(y_true, np.clip(y_pred, .1, .9)))
 
+    # raise error if number of classes are not equal.
+    y_true = [1, 0, 2]
+    y_pred = [[0.2, 0.7], [0.6, 0.5], [0.4, 0.1]]
+    assert_raises(ValueError, log_loss, y_true, y_pred)
+
+    # case when y_true is a string array object
+    y_true = ["ham", "spam", "spam", "ham"]
+    y_pred = [[0.2, 0.7], [0.6, 0.5], [0.4, 0.1], [0.7, 0.2]]
+    loss = log_loss(y_true, y_pred)
+    assert_almost_equal(loss, 1.0383217, decimal=6)
+
 
 @ignore_warnings
 def _check_averaging(metric, y_true, y_pred, y_true_binarize, y_pred_binarize,
