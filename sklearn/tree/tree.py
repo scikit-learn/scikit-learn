@@ -213,7 +213,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
             raise ValueError("max_leaf_nodes must be integral number but was "
                              "%r" % max_leaf_nodes)
         if -1 < max_leaf_nodes < 2:
-            raise ValueError(("max_leaf_nodes %r must be either smaller than 0 or "
+            raise ValueError(("max_leaf_nodes {0} must be either smaller than 0 or "
                              "larger than 1").format(max_leaf_nodes))
 
         if sample_weight is not None:
