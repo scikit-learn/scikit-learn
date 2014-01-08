@@ -8,6 +8,9 @@
 Changelog
 ---------
 
+   - :mod:`sklearn.hmm` is deprecated. Its removal is planned
+     for the 0.17 release.
+
    - Use of :class:`covariance.EllipticEnvelop` has now been removed after
      deprecation.
      Please use :class:`covariance.EllipticEnvelope` instead.
