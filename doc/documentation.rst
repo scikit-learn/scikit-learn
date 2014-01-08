@@ -38,10 +38,10 @@ Documentation of scikit-learn 0.15
                 <!-- Documentation overview -->
                     <div class="row-fluid">
                         <div class="span4 box">
-                            <h2><a href="tutorial/statistical_inference/index.html">Statistical Learning Tutorial</a></h2>
-                            <blockquote>A tutorial on statistical learning for
-                            data analysis. Contains a more in-depth discussion
-                            of important concepts.
+                            <h2><a href="tutorial/index.html">Tutorials</a></h2>
+                            <blockquote>Useful tutorials for developing a feel
+			    for some of scikit-learn's applications in the
+			    machine learning field.
                             </blockquote>
                         </div>
                         <div class="span4 box">
@@ -52,43 +52,18 @@ Documentation of scikit-learn 0.15
                     	    </blockquote>
                         </div>
 			<div class="span4 box">
-			    <h2><a href="presentations.html">Additional Resources</a></h2>
-                            <blockquote>Talks given, slide-sets and other information relevant to scikit-learn.
-                            </blockquote>
-			</div>
-                        <!-- row -->
-                    </div>
-	    </div>
-
-          <!-- row -->
-            <div class="row-fluid">
-                <div class="span4 box">
-                    <h2><a href="tutorial/text_analytics/working_with_text_data.html">Text Analysis Tutorial</a></h2>
-                    <blockquote>This tutorial explores an application of machine learning, namely, Text-analysis.
-		    The goal of this guide is to utilize some of the main scikit-learn tools in order to analyze
-		    a collection of text documents.
-                    </blockquote>
-                </div>
-                <div class="span4 box">
-		    <h2><a href="developers/index.html">Contributing</a></h2>
-                    <blockquote>Information on how to contribute. This also
-                    contains useful information for advanced users, for example
-                    how to build their own estimators.
-                    </blockquote>
-                </div>
-		<!-- doc versions -->
-                <div class="span4 box">
-                    <h2>Other Versions</h2>
-                    <ul>
-                        <li><a href="http://scikit-learn.org/stable/user_guide.html">scikit-learn 0.14 (stable)</a></li>
-                        <li>scikit-learn 0.15 (development)</li>
-                        <li><a href="http://scikit-learn.org/0.13/user_guide.html">scikit-learn 0.13</a></li>
-                        <li><a href="http://scikit-learn.org/0.12/user_guide.html">scikit-learn 0.12</a></li>
-                        <li><a href="http://scikit-learn.org/0.11/user_guide.html">scikit-learn 0.11</a></li>
-			<li id="other-versions">Older versions
-			    <a class="btn dropdown-toggle" data-toggle="dropdown">
-			        <span class="caret"></span>
-			    </a>
+			<!-- doc versions -->
+			    <h2>Other Versions</h2>
+                        <ul>
+                            <li><a href="http://scikit-learn.org/stable/user_guide.html">scikit-learn 0.14 (stable)</a></li>
+                            <li>scikit-learn 0.15 (development)</li>
+                            <li><a href="http://scikit-learn.org/0.13/user_guide.html">scikit-learn 0.13</a></li>
+                            <li><a href="http://scikit-learn.org/0.12/user_guide.html">scikit-learn 0.12</a></li>
+                            <li><a href="http://scikit-learn.org/0.11/user_guide.html">scikit-learn 0.11</a></li>
+			    <li id="other-versions">Older versions
+			    	<a class="btn dropdown-toggle" data-toggle="dropdown">
+			           <span class="caret"></span>
+			    	   </a>
 		      	    <ul class="dropdown-menu">
 			        <li><a href="http://scikit-learn.org/0.10/user_guide.html">scikit-learn 0.10</a></li>
                             	<li><a href="http://scikit-learn.org/0.9/user_guide.html">scikit-learn 0.9</a></li>
@@ -99,6 +74,26 @@ Documentation of scikit-learn 0.15
 		      	    </ul>
 			</li>
                     </ul>
+
+			</div>
+                        <!-- row -->
+                    </div>
+	    </div>
+
+          <!-- row -->
+            <div class="row-fluid">
+                <div class="span4 box">
+		    <h2><a href="presentations.html">Additional Resources</a></h2>
+                        <blockquote>Talks given, slide-sets and other information relevant to scikit-learn.
+                        </blockquote>
                 </div>
+                <div class="span4 box">
+		    <h2><a href="developers/index.html">Contributing</a></h2>
+                    <blockquote>Information on how to contribute. This also
+                    contains useful information for advanced users, for example
+                    how to build their own estimators.
+                    </blockquote>
+                </div>
+		
             </div>
 
