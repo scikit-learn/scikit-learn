@@ -554,7 +554,7 @@ upon the completion of this tutorial:
 - If you have multiple labels per document, e.g categories, have a look
   at the :ref:`Multiclass and multilabel section <multiclass>`
 
-- Try using :ref:`PCA (Principal Component Analysis) <LSA>` for
+- Try using :ref:`Truncated SVD <LSA>` for
   `latent semantic analysis <http://en.wikipedia.org/wiki/Latent_semantic_analysis>`_.
 
 - Have a look at using
