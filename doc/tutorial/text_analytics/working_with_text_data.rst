@@ -119,12 +119,12 @@ reference the filenames are also available::
 
 Let's print the first lines of the first loaded file::
 
-  >>> print ("\n".join(twenty_train.data[0].split("\n")[:3]))
+  >>> print("\n".join(twenty_train.data[0].split("\n")[:3]))
   From: sd345@city.ac.uk (Michael Collier)
   Subject: Converting images to HP LaserJet III?
   Nntp-Posting-Host: hampton
 
-  >>> print (twenty_train.target_names[twenty_train.target[0]])
+  >>> print(twenty_train.target_names[twenty_train.target[0]])
   comp.graphics
 
 Supervised learning algorithms will require a category label for each
@@ -143,7 +143,7 @@ integer id of each sample is stored in the ``target`` attribute::
 It is possible to get back the category names as follows::
 
   >>> for t in twenty_train.target[:10]:
-  ...     print (twenty_train.target_names[t])
+  ...     print(twenty_train.target_names[t])
   ...
   comp.graphics
   comp.graphics
@@ -303,7 +303,7 @@ on the transformers, since they have already been fit to the training set::
   >>> predicted = clf.predict(X_new_tfidf)
 
   >>> for doc, category in zip(docs_new, predicted):
-  ...     print ('%r => %s' % (doc, twenty_train.target_names[category]))
+  ...     print('%r => %s' % (doc, twenty_train.target_names[category]))
   ...
   'God is love' => soc.religion.christian
   'OpenGL on the GPU is fast' => comp.graphics
@@ -364,7 +364,7 @@ classifier object into our pipeline::
 analysis of the results::
 
   >>> from sklearn import metrics
-  >>> print (metrics.classification_report(twenty_test.target, predicted,
+  >>> print(metrics.classification_report(twenty_test.target, predicted,
   ...     target_names=twenty_test.target_names))
   ...                                         # doctest: +NORMALIZE_WHITESPACE
                           precision    recall  f1-score   support
@@ -454,7 +454,7 @@ we can do::
 
   >>> best_parameters, score, _ = max(gs_clf.grid_scores_, key=lambda x: x[1])
   >>> for param_name in sorted(parameters.keys()):
-  ...     print ("%s: %r" % (param_name, best_parameters[param_name]))
+  ...     print("%s: %r" % (param_name, best_parameters[param_name]))
   ...
   clf__alpha: 0.001
   tfidf__use_idf: True
