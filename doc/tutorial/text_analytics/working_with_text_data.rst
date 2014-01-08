@@ -537,7 +537,7 @@ Bonus point if the utility is able to give a confidence level for its
 predictions.
 
 
-Where to From Here
+Where to go from Here
 ------------------
 
 Here are a few suggestions to help further your scikit-learn intuition
@@ -554,7 +554,7 @@ upon the completion of this tutorial:
 - If you have multiple labels per document, e.g categories, have a look
   at the :ref:`Multiclass and multilabel section <multiclass>`
 
-- Try using :ref:`PCA (Principal Component Analysis) <decompositions>` for
+- Try using :ref:`PCA (Principal Component Analysis) <LSA>` for
   `latent semantic analysis <http://en.wikipedia.org/wiki/Latent_semantic_analysis>`_.
 
 - Have a look at using
@@ -562,6 +562,6 @@ upon the completion of this tutorial:
   <example_applications_plot_out_of_core_classification.py>` to
   learn from data that would not fit into the computer main memory.
 
-- If you have too many sparse features, try using the :ref:`Hashing Vectorizer
-  <hashing_vectorizer>`.
+- Have a look at the :ref:`Hashing Vectorizer <hashing_vectorizer>`
+  as a memory efficient alternative to :class:`CountVectorizer`.
 
