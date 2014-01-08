@@ -1498,9 +1498,22 @@ def test_invariance_string_vs_numbers_labels():
                                err_msg="{0} failed string vs number  "
                                        "invariance test".format(name))
 
-    # TODO Currently not supported
-    for name, metrics in THRESHOLDED_METRICS.items():
-        assert_raises(ValueError, metrics, y1_str, y2_str)
+    for name, metric in THRESHOLDED_METRICS.items():
+        if name in ("log_loss", "hinge_loss"):
+            measure_with_number = metric(y1, y2)
+            measure_with_str = metric(y1_str, y2)
+            assert_array_equal(measure_with_number, measure_with_str,
+                               err_msg="{0} failed string vs number invariance "
+                                       "test".format(name))
+
+            measure_with_strobj = metric(y1_str.astype('O'), y2)
+            assert_array_equal(measure_with_number, measure_with_strobj,
+                               err_msg="{0} failed string object vs number "
+                                       "invariance test".format(name))
+        else:
+            # TODO those metrics doesn't support string label yet
+            assert_raises(ValueError, metric, y1_str, y2)
+            assert_raises(ValueError, metric, y1_str.astype('O'), y2)
 
 
 @ignore_warnings
