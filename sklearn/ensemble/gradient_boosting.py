@@ -613,7 +613,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             raise ValueError("subsample must be in (0,1] but was %r" % self.subsample)
 
         if self.init is not None:
-            if isinstance(self.init, basestring):
+            if isinstance(self.init, six.string_types):
                 if self.init not in INIT_ESTIMATORS:
                     raise ValueError('init="%s" is not supported' % self.init)
             else:
@@ -655,7 +655,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
 
         if self.init is None:
             self.init_ = self.loss_.init_estimator()
-        elif isinstance(self.init, basestring):
+        elif isinstance(self.init, six.string_types):
             self.init_ = INIT_ESTIMATORS[self.init]()
         else:
             self.init_ = self.init
