@@ -18,7 +18,7 @@ for f in solutions:
     if f == os.path.basename(__file__):
         continue
 
-    print "Generating skeleton for %s" % f
+    print("Generating skeleton for %s" % f)
 
     input_file = open(os.path.join(exercise_dir, f))
     output_file = open(os.path.join(skeleton_dir, f), 'w')
