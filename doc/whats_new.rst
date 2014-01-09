@@ -115,6 +115,10 @@ Changelog
      a ``monitor`` fit argument to inspect the estimator during training, and
      refactoring of the verbose code. By `Peter Prettenhofer`_.
 
+   - Added :func:`learning_curve <learning_curve.learning_curve>` utility to
+     chart performance with respet to training size. See
+     :ref:`example_plot_learning_curve.py`. By `Alexander Fabisch`_.
+
 
 
 API changes summary

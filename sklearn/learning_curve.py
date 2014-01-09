@@ -1,3 +1,5 @@
+"""Utilities to evaluate models with respect to a variable
+"""
 # Author: Alexander Fabisch <afabisch@informatik.uni-bremen.de>
 #
 # License: BSD 3 clause
@@ -86,6 +88,10 @@ def learning_curve(estimator, X, y, train_sizes=np.linspace(0.1, 1.0, 10),
 
     test_scores : array, shape = [n_ticks,]
         Scores on test set.
+
+    Notes
+    -----
+    See :ref:`examples/plot_learning_curve.py <example_plot_learning_curve.py>`
     """
 
     if exploit_incremental_learning and not hasattr(estimator, "partial_fit"):
@@ -169,9 +175,9 @@ def _translate_train_sizes(train_sizes, n_max_training_samples):
     n_max_required_samples = np.max(train_sizes_abs)
     if np.issubdtype(train_sizes_abs.dtype, np.float):
         if n_min_required_samples <= 0.0 or n_max_required_samples > 1.0:
-            raise ValueError("train_sizes has been interpreted as fractions of "
-                             "the maximum number of training samples and must "
-                             "be within (0, 1], but is within [%f, %f]."
+            raise ValueError("train_sizes has been interpreted as fractions "
+                             "of the maximum number of training samples and "
+                             "must be within (0, 1], but is within [%f, %f]."
                              % (n_min_required_samples,
                                 n_max_required_samples))
         train_sizes_abs = (train_sizes_abs
@@ -190,9 +196,9 @@ def _translate_train_sizes(train_sizes, n_max_training_samples):
 
     train_sizes_abs = np.unique(train_sizes_abs)
     if n_ticks > train_sizes_abs.shape[0]:
-        warnings.warn("Removed duplicate entries from 'train_sizes'. Number of "
-                      "ticks will be less than than the size of 'train_sizes' "
-                      "(%d instead of %d)."
+        warnings.warn("Removed duplicate entries from 'train_sizes'. Number "
+                      "of ticks will be less than than the size of "
+                      "'train_sizes' %d instead of %d)."
                       % (train_sizes_abs.shape[0], n_ticks), RuntimeWarning)
 
     return train_sizes_abs
@@ -216,8 +222,8 @@ def _incremental_fit_estimator(base_estimator, X, y, classes, train, test,
     """Train estimator on training subsets incrementally and compute scores."""
     estimator = clone(base_estimator)
     train_scores, test_scores = [], []
-    for n_train_samples, partial_train in zip(train_sizes,
-            np.split(train, train_sizes)[:-1]):
+    partitions = zip(train_sizes, np.split(train, train_sizes)[:-1])
+    for n_train_samples, partial_train in partitions:
         X_train, y_train = _split(estimator, X, y, train[:n_train_samples])
         X_partial_train, y_partial_train = _split(estimator, X, y,
                                                   partial_train)
