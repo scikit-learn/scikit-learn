@@ -263,6 +263,25 @@ def test_enet_path():
     # have a good test-set performance
     assert_greater(clf.score(X_test, y_test), 0.99)
 
+    # Multi-output/target case
+    X, y, X_test, y_test = build_dataset(n_features=10, n_targets=3)
+    clf = MultiTaskElasticNetCV(n_alphas=5, eps=2e-3, l1_ratio=[0.5, 0.7],
+                       cv=3, max_iter=max_iter)
+    ignore_warnings(clf.fit)(X, y)
+    # We are in well-conditioned settings with low noise: we should
+    # have a good test-set performance
+    assert_greater(clf.score(X_test, y_test), 0.99)
+
+    # Mono-output should have same cross-validated alpha_ and l1_ratio_
+    # in both cases.
+    X, y, _, _ = build_dataset(n_features=10)
+    clf1 = ElasticNetCV(n_alphas=5, eps=2e-3, l1_ratio=[0.5, 0.7])
+    clf1.fit(X, y)
+    clf2 = MultiTaskElasticNetCV(n_alphas=5, eps=2e-3, l1_ratio=[0.5, 0.7])
+    clf2.fit(X, y)
+    assert_almost_equal(clf1.l1_ratio_, clf2.l1_ratio_)
+    assert_almost_equal(clf1.alpha_, clf2.alpha_)
+
 
 def test_path_parameters():
     X, y, _, _ = build_dataset()
@@ -380,27 +399,6 @@ def test_multioutput_enetcv_error():
     y = np.random.randn(10, 2)
     clf = ElasticNetCV()
     assert_raises(ValueError, clf.fit, X, y)
-
-
-def task_multitask_enet_path():
-    X, y, X_test, y_test = build_dataset(n_features=10, n_targets=3)
-    max_iter = 150
-    clf = ElasticNetCV(n_alphas=5, eps=2e-3, l1_ratio=[0.5, 0.7], cv=3,
-                       max_iter=max_iter)
-    ignore_warnings(clf.fit)(X, y)
-    # We are in well-conditioned settings with low noise: we should
-    # have a good test-set performance
-    assert_greater(clf.score(X_test, y_test), 0.99)
-
-    # Mono-output should have same cross-validated alpha_ and l1_ratio_
-    # in both cases.
-    X, y, _, _ = build_dataset(n_features=10)
-    clf1 = ElasticNetCV(n_alphas=5, eps=2e-3, l1_ratio=[0.5, 0.7])
-    clf1.fit(X, y)
-    clf2 = MultiTaskElasticNetCV(n_alphas=5, eps=2e-3, l1_ratio=[0.5, 0.7])
-    clf2.fit(X, y)
-    assert_almost_equal(clf1.l1_ratio_, clf2.l1_ratio_)
-    assert_almost_equal(clf1.alpha_, clf2.alpha_)
 
 
 def test_multitask_enet_and_lasso_cv():
