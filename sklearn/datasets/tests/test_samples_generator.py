@@ -171,8 +171,12 @@ def test_make_regression():
     assert_equal(c.shape, (10,), "coef shape mismatch")
     assert_equal(sum(c != 0.0), 3, "Unexpected number of informative features")
 
-    # Test that y ~= np.dot(X, c) + bias + N(0, 1.0)
+    # Test that y ~= np.dot(X, c) + bias + N(0, 1.0).
     assert_almost_equal(np.std(y - np.dot(X, c)), 1.0, decimal=1)
+
+    # Test with small number of features.
+    X, y = make_regression(n_samples=100, n_features=1)  # n_informative=3
+    assert_equal(X.shape, (100, 1))
 
 
 def test_make_regression_multitarget():
