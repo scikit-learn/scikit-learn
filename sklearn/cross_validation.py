@@ -1091,7 +1091,6 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
                                              scoring=scoring)
     # We clone the estimator to make sure that all the folds are
     # independent, and that it is pickle-able.
-    fit_params = fit_params if fit_params is not None else {}
     parallel = Parallel(n_jobs=n_jobs, verbose=verbose,
                         pre_dispatch=pre_dispatch)
     scores = parallel(
@@ -1104,15 +1103,15 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
 def _cross_val_score(estimator, X, y, scorer, train, test, verbose,
                      fit_params):
     """Inner loop for cross validation"""
-    # TODO replace with grid_search.fit_grid_point()
     n_samples = _num_samples(X)
+    fit_params = fit_params if fit_params is not None else {}
     fit_params = dict([(k, np.asarray(v)[train] # TODO why is this necessary?
                        if hasattr(v, '__len__') and len(v) == n_samples else v)
                        for k, v in fit_params.items()])
 
     X_train, y_train = _split(estimator, X, y, train)
     X_test, y_test = _split(estimator, X, y, test, train)
-    estimator.fit(X_train, y_train, **fit_params)
+    _fit(estimator.fit, X_train, y_train, **fit_params)
     score = _score(estimator, X_test, y_test, scorer)
 
     if verbose > 1:
