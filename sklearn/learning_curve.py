@@ -11,7 +11,7 @@ from .cross_validation import _check_cv
 from .utils import check_arrays
 from .externals.joblib import Parallel, delayed
 from .metrics.scorer import get_scorer
-from .grid_search import _check_scorable, _split, _fit, _score
+from .cross_validation import _check_scorable, _split, _fit, _score
 
 
 def learning_curve(estimator, X, y, train_sizes=np.linspace(0.1, 1.0, 10),
