@@ -3,7 +3,13 @@
 # same topic namely the Wikipedia encyclopedia itself
 
 import os
-import urllib2
+try:
+    # Python 2 compat
+    from urllib2 import Request, build_opener
+except ImportError:
+    # Python 3
+    from urllib.request import Request, build_opener
+
 import lxml.html
 from lxml.etree import ElementTree
 import numpy as np
@@ -32,7 +38,7 @@ n_words_per_short_text = 5
 if not os.path.exists(html_folder):
     os.makedirs(html_folder)
 
-for lang, page in pages.iteritems():
+for lang, page in pages.items():
 
     text_lang_folder = os.path.join(text_folder, lang)
     if not os.path.exists(text_lang_folder):
@@ -42,11 +48,11 @@ for lang, page in pages.iteritems():
     if not os.path.exists(short_text_lang_folder):
         os.makedirs(short_text_lang_folder)
 
-    opener = urllib2.build_opener()
+    opener = build_opener()
     html_filename = os.path.join(html_folder, lang + '.html')
     if not os.path.exists(html_filename):
-        print "Downloading %s" % page
-        request = urllib2.Request(page)
+        print("Downloading %s" % page)
+        request = Request(page)
         # change the User Agent to avoid being blocked by Wikipedia
         # downloading a couple of articles ones should not be abusive
         request.add_header('User-Agent', 'OpenAnything/1.0')
@@ -55,7 +61,9 @@ for lang, page in pages.iteritems():
 
     # decode the payload explicitly as UTF-8 since lxml is confused for some
     # reason
-    html_content = open(html_filename).read().decode('utf-8')
+    html_content = open(html_filename).read()
+    if hasattr(html_content, 'decode'):
+        html_content = html_content.decode('utf-8')
     tree = ElementTree(lxml.html.document_fromstring(html_content))
     i = 0
     j = 0
@@ -68,7 +76,7 @@ for lang, page in pages.iteritems():
 
         text_filename = os.path.join(text_lang_folder,
                                      '%s_%04d.txt' % (lang, i))
-        print "Writing %s" % text_filename
+        print("Writing %s" % text_filename)
         open(text_filename, 'wb').write(content.encode('utf-8', 'ignore'))
         i += 1
 
@@ -88,7 +96,7 @@ for lang, page in pages.iteritems():
 
             short_text_filename = os.path.join(short_text_lang_folder,
                                                '%s_%04d.txt' % (lang, j))
-            print "Writing %s" % short_text_filename
+            print("Writing %s" % short_text_filename)
             open(short_text_filename, 'wb').write(
                 small_content.encode('utf-8', 'ignore'))
             j += 1
