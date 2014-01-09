@@ -271,6 +271,7 @@ def test_enet_path():
     # We are in well-conditioned settings with low noise: we should
     # have a good test-set performance
     assert_greater(clf.score(X_test, y_test), 0.99)
+    assert_equal(clf.coef_.shape, (3, 10))
 
     # Mono-output should have same cross-validated alpha_ and l1_ratio_
     # in both cases.

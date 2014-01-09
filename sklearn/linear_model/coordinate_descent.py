@@ -345,12 +345,13 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
         (Is returned, along with ``coefs``, when ``return_models`` is set
         to ``False``)
 
-    coefs : shape (n_features, n_alphas) or (n_outputs, n_features, n_alphas)
+    coefs : array, shape (n_features, n_alphas) or
+            (n_outputs, n_features, n_alphas)
         Coefficients along the path.
         (Is returned, along with ``alphas``, when ``return_models`` is set
         to ``False``).
 
-    dual_gaps : shape (n_alphas,)
+    dual_gaps : array, shape (n_alphas,)
         The dual gaps at the end of the optimization for each alpha.
         (Is returned, along with ``alphas``, when ``return_models`` is set
         to ``False``).
@@ -408,12 +409,12 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
 
     # MultiTaskElasticNet does not support sparse matrices
     if not multi_output and sparse.isspmatrix(X):
-            if 'X_mean' in params:
-                # As sparse matrices are not actually centered we need this
-                # to be passed to the CD solver.
-                X_sparse_scaling = params['X_mean'] / params['X_std']
-            else:
-                X_sparse_scaling = np.ones(n_features)
+        if 'X_mean' in params:
+            # As sparse matrices are not actually centered we need this
+            # to be passed to the CD solver.
+            X_sparse_scaling = params['X_mean'] / params['X_std']
+        else:
+            X_sparse_scaling = np.ones(n_features)
 
     X, y, X_mean, y_mean, X_std, precompute, Xy = \
         _pre_fit(X, y, Xy, precompute, normalize, fit_intercept, copy=False)
@@ -435,40 +436,33 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
 
     if not multi_output:
         coefs = np.empty((n_features, n_alphas), dtype=np.float64)
-        if coef_init is None:
-            coef_ = np.zeros(n_features, dtype=np.float64)
-        else:
-            coef_ = coef_init
     else:
         coefs = np.empty([n_outputs, n_features, n_alphas])
-        if coef_init is None:
-            coef_ = np.asfortranarray(np.zeros([n_outputs, n_features],
-                                      dtype=np.float64))
-        else:
-            coef_ = np.asfortanarray(coef_init)
+
+    if coef_init is None:
+        coef_ = np.asfortranarray(np.zeros(coefs.shape[:-1]))
+    else:
+        coef_ = np.asfortranarray(coef_init)
 
     for i, alpha in enumerate(alphas):
         l1_reg = alpha * l1_ratio * n_samples
         l2_reg = alpha * (1.0 - l1_ratio) * n_samples
-        if not multi_output:
-            if sparse.isspmatrix(X):
-                coef_, dual_gap_, eps_ = (
-                    cd_fast.sparse_enet_coordinate_descent(
-                    coef_, l1_reg, l2_reg, X.data, X.indices,
-                    X.indptr, y, X_sparse_scaling,
-                    max_iter, tol, positive)
-                    )
-            else:
+        if not multi_output and sparse.isspmatrix(X):
+            coef_, dual_gap_, eps_ = (
+                cd_fast.sparse_enet_coordinate_descent(
+                coef_, l1_reg, l2_reg, X.data, X.indices,
+                X.indptr, y, X_sparse_scaling,
+                max_iter, tol, positive)
+                )
+        elif not multi_output:
                 coef_, dual_gap_, eps_ = cd_fast.enet_coordinate_descent(
                     coef_, l1_reg, l2_reg, X, y, max_iter, tol, positive)
-            coefs[:, i] = coef_
         else:
             coef_, dual_gap_, eps_ = (
                 cd_fast.enet_coordinate_descent_multi_task(
                 coef_, l1_reg, l2_reg, X, y, max_iter, tol)
                 )
-            coefs[:, :, i] = coef_
-
+        coefs[..., i] = coef_
         dual_gaps[i] = dual_gap_
         if dual_gap_ > eps_:
             warnings.warn('Objective did not converge.' +
@@ -482,14 +476,12 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
                     fit_intercept=fit_intercept
                     if sparse.isspmatrix(X) else False,
                     precompute=precompute)
-                model.coef_ = coefs[:, i]
             else:
                 model = MultiTaskElasticNet(
                     alpha=alpha, l1_ratio=l1_ratio, fit_intercept=False)
-                model.coef_ = coefs[:, :, i]
             model.dual_gap_ = dual_gaps[i]
-
-            if fit_intercept and not sparse.isspmatrix(X) or multi_output:
+            model.coef_ = coefs[..., i]
+            if (fit_intercept and not sparse.isspmatrix(X)) or multi_output:
                 model.fit_intercept = True
                 model._set_intercept(X_mean, y_mean, X_std)
             models.append(model)
@@ -952,13 +944,44 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
         self.n_jobs = n_jobs
         self.positive = positive
 
-    def _check_copy_X(self, X):
-        r"""
-        This makes sure that there is no duplication in memory.
-        Dealing right with copy_X is important in the following:
-        Multiple functions touch X and subsamples of X and can induce a
-        lot of duplication of memory
+    def fit(self, X, y):
+        """Fit linear model with coordinate descent
+
+        Fit is on grid of alphas and best alpha estimated by cross-validation.
+
+        Parameters
+        ----------
+        X : {array-like}, shape (n_samples, n_features)
+            Training data. Pass directly as float64, Fortran-contiguous data
+            to avoid unnecessary memory duplication. If y is mono-output,
+            X can be sparse.
+
+        y : array-like, shape (n_samples,) or (n_samples, n_targets)
+            Target values
         """
+        y = np.asarray(y, dtype=np.float64)
+
+        if isinstance(self, ElasticNetCV) or isinstance(self, LassoCV):
+            if y.ndim > 1:
+                if hasattr(self, 'l1_ratio'):
+                    model_str = 'ElasticNet'
+                else:
+                    model_str = 'Lasso'
+                raise ValueError("For multi-task outputs, use "
+                                 "MultiTask%sCV" % (model_str))
+            model = ElasticNet()
+        else:
+            if sparse.isspmatrix(X):
+                raise TypeError("X should be dense but a sparse matrix was"
+                                "passed")
+            elif y.ndim == 1:
+                y = y[:, np.newaxis]
+            model = MultiTaskElasticNet()
+
+        # This makes sure that there is no duplication in memory.
+        # Dealing right with copy_X is important in the following:
+        # Multiple functions touch X and subsamples of X and can induce a
+        # lot of duplication of memory
         copy_X = self.copy_X and self.fit_intercept
 
         if isinstance(X, np.ndarray) or sparse.isspmatrix(X):
@@ -980,32 +1003,7 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
             X = atleast2d_or_csc(X, dtype=np.float64, order='F',
                                  copy=copy_X)
             copy_X = False
-        return X, copy_X
 
-    def fit(self, X, y):
-        """Fit linear model with coordinate descent
-
-        Fit is on grid of alphas and best alpha estimated by cross-validation.
-
-        Parameters
-        ----------
-
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
-            Training data. Pass directly as float64, Fortran-contiguous data
-            to avoid unnecessary memory duplication
-
-        y : array-like, shape (n_samples,)
-            Target values
-
-        """
-
-        X, copy_X = self._check_copy_X(X)
-        y = np.asarray(y, dtype=np.float64)
-
-        if y.ndim > 1:
-            model_str = 'ElasticNet' if hasattr(self, 'l1_ratio') else 'Lasso'
-            raise ValueError("For multi-task outputs, use "
-                             "MultiTask%sCV" % (model_str))
         if X.shape[0] != y.shape[0]:
             raise ValueError("X and y have inconsistent dimensions (%d != %d)"
                              % (X.shape[0], y.shape[0]))
@@ -1054,9 +1052,6 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
         best_mse = np.inf
         all_mse_paths = list()
 
-        # Zip together l1_ratio and alpha.
-        l1_ratio_alpha_grid = zip(l1_ratios, alphas)
-
         # We do a double for loop folded in one, in order to be able to
         # iterate in parallel on l1_ratio and folds
         for l1_ratio, mse_alphas in itertools.groupby(
@@ -1065,7 +1060,7 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
                         X, y, train, test, self.path, path_params,
                         alphas=this_alphas, l1_ratio=this_l1_ratio,
                         X_order='F', dtype=np.float64)
-                    for this_l1_ratio, this_alphas in l1_ratio_alpha_grid
+                    for this_l1_ratio, this_alphas in zip(l1_ratios, alphas)
                     for train, test in folds
                 ), operator.itemgetter(1)):
 
@@ -1095,7 +1090,6 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
         self.mse_path_ = np.squeeze(all_mse_paths)
 
         # Refit the model with the parameters selected
-        model = ElasticNet()
         common_params = dict((name, value)
                              for name, value in self.get_params().items()
                              if name in model.get_params())
@@ -1104,6 +1098,8 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
         model.l1_ratio = best_l1_ratio
         model.copy_X = copy_X
         model.fit(X, y)
+        if not hasattr(self, 'l1_ratio'):
+            del self.l1_ratio_
         self.coef_ = model.coef_
         self.intercept_ = model.intercept_
         self.dual_gap_ = model.dual_gap_
@@ -1177,18 +1173,10 @@ class LassoCV(LinearModelCV, RegressorMixin):
     ``mse_path_`` : array, shape = (n_alphas, n_folds)
         mean square error for the test set on each fold, varying alpha
 
-    ``alphas_`` : numpy array
+    ``alphas_`` : numpy array, shape = (n_alphas,)
         The grid of alphas used for fitting
 
-    ``l1_ratio_`` : int
-        An artifact of the super class LinearModelCV. In this case,
-        ``l1_ratio_ = 1`` because the Lasso estimator uses an L1 penalty
-        by definition.
-        Typically it is a float between 0 and 1 passed to an estimator such as
-        ElasticNet (scaling between l1 and l2 penalties). For ``l1_ratio = 0``
-        the penalty is an L2 penalty. For ``l1_ratio = 1`` it is an L1 penalty.
-
-    ``dual_gap_`` : numpy array
+    ``dual_gap_`` : numpy array, shape = (n_alphas,)
         The dual gap at the end of the optimization for the optimal alpha
         (``alpha_``).
 
@@ -1300,6 +1288,12 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
     ``mse_path_`` : array, shape = (n_l1_ratio, n_alpha, n_folds)
         Mean square error for the test set on each fold, varying l1_ratio and
         alpha.
+
+    ``alphas_`` : numpy array, shape = (n_alphas,) or (n_alphas*n_l1_ratio)
+        The grid of alphas used for fitting.
+        If provided, alphas_ is a 1-D array of shape n_alphas, else it is
+        of shape of n_alphas*n_l1_ratio since a grid of alphas is fit for
+        each l1_ratio
 
     Notes
     -----
@@ -1693,8 +1687,11 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
     ``mse_path_`` : array, shape = (n_alphas, n_folds)
         mean square error for the test set on each fold, varying alpha
 
-    ``alphas_`` : numpy array
+    ``alphas_`` : numpy array, shape = (n_alphas,) or (n_alphas*n_l1_ratio)
         The grid of alphas used for fitting.
+        If provided, alphas_ is a 1-D array of shape n_alphas, else it is
+        of shape of n_alphas*n_l1_ratio since a grid of alphas is fit for
+        each l1_ratio
 
     ``l1_ratio_`` : float
         best l1_ratio obtained by cross-validation.
@@ -1703,7 +1700,8 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
     --------
     >>> from sklearn import linear_model
     >>> clf = linear_model.MultiTaskElasticNetCV()
-    >>> clf.fit([[0,0], [1, 1], [2, 2]], [[0, 0], [1, 1], [2, 2]])
+    >>> clf.fit([[0,0], [1, 1], [2, 2]],
+    ...         [[0, 0], [1, 1], [2, 2]])
     ... #doctest: +NORMALIZE_WHITESPACE
     MultiTaskElasticNetCV(alphas=None, copy_X=True, cv=None, eps=0.001,
            fit_intercept=True, l1_ratio=0.5, max_iter=1000, n_alphas=100,
@@ -1747,132 +1745,6 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
         self.copy_X = copy_X
         self.verbose = verbose
         self.n_jobs = n_jobs
-
-    def fit(self, X, y):
-        """Fit model with coordinate descent
-
-        Fit is on grid of alphas and best alpha estimated by cross-validation.
-
-        Parameters
-        ----------
-        X : array-like, shape (n_samples, n_features)
-            Training data. Pass directly as float64, Fortran-contiguous data
-            to avoid unnecessary memory duplication
-
-        y : array-like, shape (n_samples,) or (n_samples, n_targets)
-            Target values
-        """
-        # X and y must be of type float64
-        X = array2d(X, dtype=np.float64, order='F',
-                    copy=self.copy_X and self.fit_intercept)
-        y = np.asarray(y, dtype=np.float64)
-        X, copy_X = self._check_copy_X(X)
-
-        n_samples, n_features = X.shape
-
-        if y.ndim == 1:
-            y = y[:, np.newaxis]
-        if X.shape[0] != y.shape[0]:
-            raise ValueError("X and y have inconsistent dimensions (%d != %d)"
-                             % (X.shape[0], y.shape[0]))
-
-        # All LinearModelCV parameters except 'cv' are acceptable.
-        path_params = self.get_params()
-        if 'l1_ratio' in path_params:
-            l1_ratios = np.atleast_1d(path_params['l1_ratio'])
-            # For the first path, we need to set l1_ratio
-            path_params['l1_ratio'] = l1_ratios[0]
-        else:
-            l1_ratios = [1.]
-        alphas = self.alphas
-        n_l1_ratio = len(l1_ratios)
-        if alphas is None:
-            alphas = []
-            for l1_ratio in l1_ratios:
-                alphas.append(
-                    _alpha_grid(
-                        X, y, l1_ratio=l1_ratio,
-                        fit_intercept=self.fit_intercept,
-                        eps=self.eps, n_alphas=self.n_alphas,
-                        normalize=self.normalize,
-                        copy_X=self.copy_X)
-                    )
-        else:
-            alphas = np.tile(alphas, (n_l1_ratio, 1))
-        # We want n_alphas to be the number of alphas used for each l1_ratio.
-        n_alphas = len(alphas[0])
-        path_params.update({'n_alphas': n_alphas})
-
-        path_params['copy_X'] = copy_X
-        # We are not computing in parallel, we can modify X
-        # inplace in the folds
-        if not (self.n_jobs == 1 or self.n_jobs is None):
-            path_params['copy_X'] = False
-
-        # init cross-validation generator
-        cv = check_cv(self.cv, X)
-
-        # Compute path for all folds and compute MSE to get the best alpha
-        folds = list(cv)
-        best_mse = np.inf
-        all_mse_paths = list()
-
-        # Zip together l1_ratio and alpha.
-        l1_ratio_alpha_grid = zip(l1_ratios, alphas)
-
-        # We do a double for loop folded in one, in order to be able to
-        # iterate in parallel on l1_ratio and folds
-        for l1_ratio, mse_alphas in itertools.groupby(
-                Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
-                    delayed(_path_residuals)(
-                        X, y, train, test, self.path, path_params,
-                        alphas=this_alphas, l1_ratio=this_l1_ratio,
-                        X_order='F', dtype=np.float64)
-                    for this_l1_ratio, this_alphas in l1_ratio_alpha_grid
-                    for train, test in folds
-                ), operator.itemgetter(1)):
-
-            # Hack to get back alphas, since alphas for each
-            # l1_ratio are not the same.
-            mse_alphas = list(mse_alphas)
-            l1_alphas = mse_alphas[-1][2]
-            mse_alphas = [m[0] for m in mse_alphas]
-            mse_alphas = np.array(mse_alphas)
-
-            mse = np.mean(mse_alphas, axis=0)
-            i_best_alpha = np.argmin(mse)
-            this_best_mse = mse[i_best_alpha]
-            all_mse_paths.append(mse_alphas.T)
-            if this_best_mse < best_mse:
-                best_alpha = l1_alphas[i_best_alpha]
-                best_l1_ratio = l1_ratio
-                best_mse = this_best_mse
-
-        self.l1_ratio_ = best_l1_ratio
-        self.alpha_ = best_alpha
-        if self.alphas is None:
-            self.alphas_ = np.ravel(np.asarray(alphas))
-        # Remove duplicate alphas in case alphas is provided.
-        else:
-            self.alphas_ = np.asarray(alphas[0])
-        self.mse_path_ = np.squeeze(all_mse_paths)
-
-        # Refit the model with the parameters selected
-        model = MultiTaskElasticNet()
-        common_params = dict((name, value)
-                             for name, value in self.get_params().items()
-                             if name in model.get_params())
-        model.set_params(**common_params)
-        model.alpha = best_alpha
-        model.l1_ratio = best_l1_ratio
-        model.copy_X = copy_X
-        model.fit(X, y)
-        if not hasattr(self, 'l1_ratio'):
-            del self.l1_ratio_
-        self.coef_ = model.coef_
-        self.intercept_ = model.intercept_
-        self.dual_gap_ = model.dual_gap_
-        return self
 
 
 class MultiTaskLassoCV(MultiTaskElasticNetCV):
@@ -1954,7 +1826,7 @@ class MultiTaskLassoCV(MultiTaskElasticNetCV):
     ``mse_path_`` : array, shape = (n_alphas, n_folds)
         mean square error for the test set on each fold, varying alpha
 
-    ``alphas_`` : numpy array
+    ``alphas_`` : numpy array, shape = (n_alphas,)
         The grid of alphas used for fitting.
 
     See also
