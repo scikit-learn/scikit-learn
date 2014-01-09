@@ -608,7 +608,7 @@ class ElasticNet(LinearModel, RegressorMixin):
 
         if not self.warm_start or self.coef_ is None:
             coef_ = np.zeros((n_targets, n_features), dtype=np.float64,
-                                  order='F')
+                             order='F')
         else:
             coef_ = self.coef_
             if coef_.ndim == 1:
@@ -992,6 +992,8 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
         self.alpha_ = best_alpha
         self.alphas_ = np.asarray(alphas)
         self.mse_path_ = np.squeeze(all_mse_paths)
+        self.best_score_ = best_mse
+        self.best_params_ = {'alpha': best_alpha, 'l1_ratio': best_l1_ratio}
 
         # Refit the model with the parameters selected
         model = ElasticNet()
@@ -1006,6 +1008,7 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
         self.coef_ = model.coef_
         self.intercept_ = model.intercept_
         self.dual_gap_ = model.dual_gap_
+        self.best_estimator_ = model
         return self
 
 
@@ -1091,6 +1094,20 @@ class LassoCV(LinearModelCV, RegressorMixin):
         The dual gap at the end of the optimization for the optimal alpha
         (``alpha_``).
 
+    ``best_estimator_`` : estimator
+        Estimator that was chosen by the search, i.e. estimator
+        which gave the lowest mean squared error on the left out data. The
+        estimator will be of type ElasticNet.
+
+    ``best_score_`` : float
+        Score of ``best_estimator_`` on the left out data
+        (i.e. best mean squared error). Note that by default GridSearchCV
+        computes ``best_score_`` based on the R^2, not the mean squared error,
+        which will account for differences between the two.
+
+    ``best_params_`` : dict
+        Parameter setting that gave the best results on the left out data.
+
     Notes
     -----
     See examples/linear_model/lasso_path_with_crossvalidation.py
@@ -1106,6 +1123,8 @@ class LassoCV(LinearModelCV, RegressorMixin):
     LassoLars
     Lasso
     LassoLarsCV
+    ElasticNetCV
+    ElasticNet
     """
     path = staticmethod(lasso_path)
 
@@ -1200,6 +1219,19 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
         Mean square error for the test set on each fold, varying l1_ratio and
         alpha.
 
+    ``best_estimator_`` : estimator
+        Estimator that was chosen by the search, i.e. estimator
+        which gave the lowest mean squared error on the left out data.
+
+    ``best_score_`` : float
+        Score of ``best_estimator_`` on the left out data
+        (i.e. best mean squared error). Note that by default GridSearchCV
+        computes ``best_score_`` based on the R^2, not the mean squared error,
+        which will account for differences between the two.
+
+    ``best_params_`` : dict
+        Parameter setting that gave the best results on the left out data.
+
     Notes
     -----
     See examples/linear_model/lasso_path_with_crossvalidation.py
@@ -1229,6 +1261,7 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
     --------
     enet_path
     ElasticNet
+    LassoCV
 
     """
     path = staticmethod(enet_path)
