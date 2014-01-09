@@ -242,17 +242,16 @@ def fit_grid_point(X, y, base_estimator, parameters, train, test, scorer,
     X_train, y_train = _split(estimator, X, y, train)
     X_test, y_test = _split(estimator, X, y, test, train)
     _fit(estimator.fit, X_train, y_train, **fit_params)
-    this_score = _score(estimator, X_test, y_test, scorer)
+    score = _score(estimator, X_test, y_test, scorer)
 
     if verbose > 2:
-        msg += ", score=%f" % this_score
+        msg += ", score=%f" % score
     if verbose > 1:
-        end_msg = "%s -%s" % (msg,
-                              logger.short_format_time(time.time() -
-                                                       start_time))
+        end_msg = "%s -%s" % (msg, logger.short_format_time(time.time() -
+                                                            start_time))
         print("[GridSearchCV] %s %s" % ((64 - len(end_msg)) * '.', end_msg))
 
-    return this_score, parameters, _num_samples(X_test)
+    return score, parameters, _num_samples(X_test)
 
 
 def _check_param_grid(param_grid):
