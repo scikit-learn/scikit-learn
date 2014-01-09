@@ -1758,6 +1758,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         cdef bint is_leaf
         cdef SIZE_t max_depth_seen = -1
         cdef int rc = 0
+        cdef SIZE_t node_id
 
         # Initial capacity
         cdef int init_capacity = max_split_nodes + max_leaf_nodes
