@@ -23,6 +23,7 @@ import numpy as np
 from .base import BaseEstimator, is_classifier, clone
 from .base import MetaEstimatorMixin
 from .cross_validation import _check_cv as check_cv
+from .cross_validation import _check_scorable, _split, _fit, _score
 from .externals.joblib import Parallel, delayed, logger
 from .externals import six
 from .utils import safe_mask, check_random_state
@@ -254,62 +255,6 @@ def fit_grid_point(X, y, base_estimator, parameters, train, test, scorer,
     return this_score, parameters, _num_samples(X_test)
 
 
-def _split(estimator, X, y, indices, train_indices=None):
-    """Create subset of dataset."""
-    if hasattr(estimator, 'kernel') and callable(estimator.kernel):
-        # cannot compute the kernel values with custom function
-        raise ValueError("Cannot use a custom kernel function. "
-                         "Precompute the kernel matrix instead.")
-
-    if not hasattr(X, "shape"):
-        if getattr(estimator, "_pairwise", False):
-            raise ValueError("Precomputed kernels or affinity matrices have "
-                             "to be passed as arrays or sparse matrices.")
-        X_subset = [X[idx] for idx in indices]
-    else:
-        if getattr(estimator, "_pairwise", False):
-            # X is a precomputed square kernel matrix
-            if X.shape[0] != X.shape[1]:
-                raise ValueError("X should be a square kernel matrix")
-            if train_indices is None:
-                X_subset = X[np.ix_(indices, indices)]
-            else:
-                X_subset = X[np.ix_(indices, train_indices)]
-        else:
-            X_subset = X[safe_mask(X, indices)]
-
-    if y is not None:
-        y_subset = y[safe_mask(y, indices)]
-    else:
-        y_subset = None
-
-    return X_subset, y_subset
-
-
-def _fit(fit_function, X_train, y_train, **fit_params):
-    """Fit and estimator on a given training set."""
-    if y_train is None:
-        fit_function(X_train, **fit_params)
-    else:
-        fit_function(X_train, y_train, **fit_params)
-
-
-def _score(estimator, X_test, y_test, scorer):
-    """Compute the score of an estimator on a given test set."""
-    if y_test is None:
-        if scorer is None:
-            this_score = estimator.score(X_test)
-        else:
-            this_score = scorer(estimator, X_test)
-    else:
-        if scorer is None:
-            this_score = estimator.score(X_test, y_test)
-        else:
-            this_score = scorer(estimator, X_test, y_test)
-
-    return this_score
-
-
 def _check_param_grid(param_grid):
     if hasattr(param_grid, 'items'):
         param_grid = [param_grid]
@@ -348,24 +293,6 @@ class _CVScoreTuple (namedtuple('_CVScoreTuple',
             self.mean_validation_score,
             np.std(self.cv_validation_scores),
             self.parameters)
-
-
-def _check_scorable(estimator, scoring=None, loss_func=None, score_func=None):
-    """Check that estimator can be fitted and score can be computed."""
-    if (not hasattr(estimator, 'fit') or
-            not (hasattr(estimator, 'predict')
-                    or hasattr(estimator, 'score'))):
-        raise TypeError("estimator should a be an estimator implementing"
-                        " 'fit' and 'predict' or 'score' methods,"
-                        " %s (type %s) was passed" %
-                        (estimator, type(estimator)))
-    if (scoring is None and loss_func is None and score_func
-            is None):
-        if not hasattr(estimator, 'score'):
-            raise TypeError(
-                "If no scoring is specified, the estimator passed "
-                "should have a 'score' method. The estimator %s "
-                "does not." % estimator)
 
 
 class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,

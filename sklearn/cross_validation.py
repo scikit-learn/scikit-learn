@@ -22,6 +22,7 @@ import scipy.sparse as sp
 
 from .base import is_classifier, clone
 from .utils import check_arrays, check_random_state, safe_mask
+from .utils.validation import _num_samples
 from .utils.fixes import unique
 from .externals.joblib import Parallel, delayed
 from .externals.six import string_types, with_metaclass
@@ -1023,48 +1024,6 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
 
 ##############################################################################
 
-def _cross_val_score(estimator, X, y, scorer, train, test, verbose,
-                     fit_params):
-    """Inner loop for cross validation"""
-    n_samples = X.shape[0] if sp.issparse(X) else len(X)
-    fit_params = dict([(k, np.asarray(v)[train]
-                       if hasattr(v, '__len__') and len(v) == n_samples else v)
-                       for k, v in fit_params.items()])
-    if not hasattr(X, "shape"):
-        if getattr(estimator, "_pairwise", False):
-            raise ValueError("Precomputed kernels or affinity matrices have "
-                             "to be passed as arrays or sparse matrices.")
-        X_train = [X[idx] for idx in train]
-        X_test = [X[idx] for idx in test]
-    else:
-        if getattr(estimator, "_pairwise", False):
-            # X is a precomputed square kernel matrix
-            if X.shape[0] != X.shape[1]:
-                raise ValueError("X should be a square kernel matrix")
-            X_train = X[np.ix_(train, train)]
-            X_test = X[np.ix_(test, train)]
-        else:
-            X_train = X[safe_mask(X, train)]
-            X_test = X[safe_mask(X, test)]
-
-    if y is None:
-        y_train = None
-        y_test = None
-    else:
-        y_train = y[train]
-        y_test = y[test]
-    estimator.fit(X_train, y_train, **fit_params)
-    if scorer is None:
-        score = estimator.score(X_test, y_test)
-    else:
-        score = scorer(estimator, X_test, y_test)
-        if not isinstance(score, numbers.Number):
-            raise ValueError("scoring must return a number, got %s (%s)"
-                             " instead." % (str(score), type(score)))
-    if verbose > 1:
-        print("score: %f" % score)
-    return score
-
 
 def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
                     verbose=0, fit_params=None, score_func=None,
@@ -1127,16 +1086,9 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
     """
     X, y = check_arrays(X, y, sparse_format='csr', allow_lists=True)
     cv = _check_cv(cv, X, y, classifier=is_classifier(estimator))
-    scorer = _deprecate_loss_and_score_funcs(
-        loss_func=None,
-        score_func=score_func,
-        scoring=scoring
-    )
-    if scorer is None and not hasattr(estimator, 'score'):
-        raise TypeError(
-            "If no scoring is specified, the estimator passed "
-            "should have a 'score' method. The estimator %s "
-            "does not." % estimator)
+    _check_scorable(estimator, score_func=score_func, scoring=scoring)
+    scorer = _deprecate_loss_and_score_funcs(score_func=score_func,
+                                             scoring=scoring)
     # We clone the estimator to make sure that all the folds are
     # independent, and that it is pickle-able.
     fit_params = fit_params if fit_params is not None else {}
@@ -1147,6 +1099,85 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
                                   verbose, fit_params)
         for train, test in cv)
     return np.array(scores)
+
+
+def _cross_val_score(estimator, X, y, scorer, train, test, verbose,
+                     fit_params):
+    """Inner loop for cross validation"""
+    # TODO replace with grid_search.fit_grid_point()
+    n_samples = _num_samples(X)
+    fit_params = dict([(k, np.asarray(v)[train] # TODO why is this necessary?
+                       if hasattr(v, '__len__') and len(v) == n_samples else v)
+                       for k, v in fit_params.items()])
+
+    X_train, y_train = _split(estimator, X, y, train)
+    X_test, y_test = _split(estimator, X, y, test, train)
+    estimator.fit(X_train, y_train, **fit_params)
+    score = _score(estimator, X_test, y_test, scorer)
+
+    if verbose > 1:
+        print("score: %f" % score)
+    return score
+
+
+def _split(estimator, X, y, indices, train_indices=None):
+    """Create subset of dataset."""
+    if hasattr(estimator, 'kernel') and callable(estimator.kernel):
+        # cannot compute the kernel values with custom function
+        raise ValueError("Cannot use a custom kernel function. "
+                         "Precompute the kernel matrix instead.")
+
+    if not hasattr(X, "shape"):
+        if getattr(estimator, "_pairwise", False):
+            raise ValueError("Precomputed kernels or affinity matrices have "
+                             "to be passed as arrays or sparse matrices.")
+        X_subset = [X[idx] for idx in indices]
+    else:
+        if getattr(estimator, "_pairwise", False):
+            # X is a precomputed square kernel matrix
+            if X.shape[0] != X.shape[1]:
+                raise ValueError("X should be a square kernel matrix")
+            if train_indices is None:
+                X_subset = X[np.ix_(indices, indices)]
+            else:
+                X_subset = X[np.ix_(indices, train_indices)]
+        else:
+            X_subset = X[safe_mask(X, indices)]
+
+    if y is not None:
+        y_subset = y[safe_mask(y, indices)]
+    else:
+        y_subset = None
+
+    return X_subset, y_subset
+
+
+def _fit(fit_function, X_train, y_train, **fit_params):
+    """Fit and estimator on a given training set."""
+    if y_train is None:
+        fit_function(X_train, **fit_params)
+    else:
+        fit_function(X_train, y_train, **fit_params)
+
+
+def _score(estimator, X_test, y_test, scorer):
+    """Compute the score of an estimator on a given test set."""
+    if y_test is None:
+        if scorer is None:
+            score = estimator.score(X_test)
+        else:
+            score = scorer(estimator, X_test)
+    else:
+        if scorer is None:
+            score = estimator.score(X_test, y_test)
+        else:
+            score = scorer(estimator, X_test, y_test)
+
+    if not isinstance(score, numbers.Number):
+        raise ValueError("scoring must return a number, got %s (%s) instead."
+                         % (str(score), type(score)))
+
+    return score
 
 
 def _permutation_test_score(estimator, X, y, cv, scorer):
@@ -1224,6 +1255,24 @@ def _check_cv(cv, X=None, y=None, classifier=False, warn_mask=False):
         raise ValueError("Sparse data and lists require indices-based cross"
                          " validation generator, got: %r", cv)
     return cv
+
+
+def _check_scorable(estimator, scoring=None, loss_func=None, score_func=None):
+    """Check that estimator can be fitted and score can be computed."""
+    if (not hasattr(estimator, 'fit') or
+            not (hasattr(estimator, 'predict')
+                    or hasattr(estimator, 'score'))):
+        raise TypeError("estimator should a be an estimator implementing"
+                        " 'fit' and 'predict' or 'score' methods,"
+                        " %s (type %s) was passed" %
+                        (estimator, type(estimator)))
+    if (scoring is None and loss_func is None and score_func
+            is None):
+        if not hasattr(estimator, 'score'):
+            raise TypeError(
+                "If no scoring is specified, the estimator passed "
+                "should have a 'score' method. The estimator %s "
+                "does not." % estimator)
 
 
 def permutation_test_score(estimator, X, y, score_func=None, cv=None,
