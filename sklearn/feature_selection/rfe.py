@@ -13,6 +13,7 @@ from ..base import MetaEstimatorMixin
 from ..base import clone
 from ..base import is_classifier
 from ..cross_validation import _check_cv as check_cv
+from ..cross_validation import _check_scorable, _split, _score
 from .base import SelectorMixin
 from ..metrics.scorer import _deprecate_loss_and_score_funcs
 
@@ -325,29 +326,31 @@ class RFECV(RFE, MetaEstimatorMixin):
                   verbose=self.verbose - 1)
 
         cv = check_cv(self.cv, X, y, is_classifier(self.estimator))
+        _check_scorable(self.estimator, scoring=self.scoring,
+                        loss_func=self.loss_func)
         scores = np.zeros(X.shape[1])
 
         # Cross-validation
         for n, (train, test) in enumerate(cv):
-            X_train, X_test = X[train], X[test]
-            y_train, y_test = y[train], y[test]
+            X_train, y_train = _split(self.estimator, X, y, train)
+            X_test, y_test = _split(self.estimator, X, y, test, train)
 
             # Compute a full ranking of the features
             ranking_ = rfe.fit(X_train, y_train).ranking_
             # Score each subset of features
             for k in range(0, max(ranking_)):
                 mask = np.where(ranking_ <= k + 1)[0]
-                estimator = clone(self.estimator)
-                estimator.fit(X_train[:, mask], y_train)
+                X_train_subset = X_train[:, mask]
+                X_test_subset = X_test[:, mask]
 
-                if self.loss_func is None and self.scoring is None:
-                    score = estimator.score(X_test[:, mask], y_test)
-                else:
-                    scorer = _deprecate_loss_and_score_funcs(
-                        loss_func=self.loss_func,
-                        scoring=self.scoring
-                    )
-                    score = scorer(estimator, X_test[:, mask], y_test)
+                estimator = clone(self.estimator)
+                estimator.fit(X_train_subset, y_train)
+
+                scorer = _deprecate_loss_and_score_funcs(
+                    loss_func=self.loss_func,
+                    scoring=self.scoring
+                )
+                score = _score(estimator, X_test_subset, y_test, scorer)
 
                 if self.verbose > 0:
                     print("Finished fold with %d / %d feature ranks, score=%f"
