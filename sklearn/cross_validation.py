@@ -15,6 +15,7 @@ import warnings
 from itertools import chain, combinations
 from math import ceil, floor, factorial
 import numbers
+import time
 from abc import ABCMeta, abstractmethod
 
 import numpy as np
@@ -24,7 +25,7 @@ from .base import is_classifier, clone
 from .utils import check_arrays, check_random_state, safe_mask
 from .utils.validation import _num_samples
 from .utils.fixes import unique
-from .externals.joblib import Parallel, delayed
+from .externals.joblib import Parallel, delayed, logger
 from .externals.six import string_types, with_metaclass
 from .metrics.scorer import _deprecate_loss_and_score_funcs
 
@@ -1095,17 +1096,30 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
                         pre_dispatch=pre_dispatch)
     scores = parallel(
         delayed(_cross_val_score)(clone(estimator), X, y, scorer, train, test,
-                                  verbose, fit_params)
+                                  parameters=None, verbose=verbose,
+                                  fit_params=fit_params,
+                                  log_label="cross_val_score")
         for train, test in cv)
-    return np.array(scores)
+    return np.array(scores)[:, 0]
 
 
-def _cross_val_score(estimator, X, y, scorer, train, test, verbose,
-                     fit_params):
+def _cross_val_score(estimator, X, y, scorer, train, test, parameters, verbose,
+                     fit_params, log_label):
     """Inner loop for cross validation"""
+    if parameters is not None:
+        estimator.set_params(**parameters)
+    if verbose > 1:
+        start_time = time.time()
+        if parameters is None:
+            msg = "Evaluating..."
+        else:
+            msg = '%s' % (', '.join('%s=%s' % (k, v)
+                        for k, v in parameters.items()))
+        print("[%s] %s %s" % (log_label, msg, (64 - len(msg)) * '.'))
+
     n_samples = _num_samples(X)
     fit_params = fit_params if fit_params is not None else {}
-    fit_params = dict([(k, np.asarray(v)[train] # TODO why is this necessary?
+    fit_params = dict([(k, np.asarray(v)[train]
                        if hasattr(v, '__len__') and len(v) == n_samples else v)
                        for k, v in fit_params.items()])
 
@@ -1114,9 +1128,14 @@ def _cross_val_score(estimator, X, y, scorer, train, test, verbose,
     _fit(estimator.fit, X_train, y_train, **fit_params)
     score = _score(estimator, X_test, y_test, scorer)
 
+    if verbose > 2:
+        msg += ", score=%f" % score
     if verbose > 1:
-        print("score: %f" % score)
-    return score
+        end_msg = "%s -%s" % (msg, logger.short_format_time(time.time() -
+                                                            start_time))
+        print("[%s] %s %s" % (log_label, (64 - len(end_msg)) * '.', end_msg))
+
+    return score, _num_samples(X_test)
 
 
 def _split(estimator, X, y, indices, train_indices=None):
