@@ -183,7 +183,7 @@ class ParameterSampler(object):
 
 
 def fit_grid_point(X, y, estimator, parameters, train, test, scorer,
-                   verbose, loss_func=None, **fit_params):
+                   verbose, **fit_params):
     """Run fit on one set of parameters.
 
     Parameters
@@ -228,10 +228,10 @@ def fit_grid_point(X, y, estimator, parameters, train, test, scorer,
     n_samples_test : int
         Number of test samples in this split.
     """
-    score, n_samples_test = _cross_val_score(estimator, X, y, scorer, train,
-                                             test, parameters, verbose,
-                                             fit_params,
-                                             log_label="GridSearchCV")
+    score, n_samples_test, _ = _cross_val_score(estimator, X, y, scorer,
+                                                train, test, parameters,
+                                                verbose, fit_params,
+                                                log_label="GridSearchCV")
     return score, parameters, n_samples_test
 
 

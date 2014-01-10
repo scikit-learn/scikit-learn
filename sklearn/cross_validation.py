@@ -1103,39 +1103,40 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
     return np.array(scores)[:, 0]
 
 
-def _cross_val_score(estimator, X, y, scorer, train, test, parameters, verbose,
-                     fit_params, log_label):
+def _cross_val_score(estimator, X, y, scorer, train, test, parameters,
+                     verbose, fit_params, log_label):
     """Inner loop for cross validation"""
     if parameters is not None:
         estimator.set_params(**parameters)
-    if verbose > 1:
-        start_time = time.time()
-        if parameters is None:
-            msg = "Evaluating..."
-        else:
-            msg = '%s' % (', '.join('%s=%s' % (k, v)
-                        for k, v in parameters.items()))
-        print("[%s] %s %s" % (log_label, msg, (64 - len(msg)) * '.'))
-
     n_samples = _num_samples(X)
     fit_params = fit_params if fit_params is not None else {}
     fit_params = dict([(k, np.asarray(v)[train]
                        if hasattr(v, '__len__') and len(v) == n_samples else v)
                        for k, v in fit_params.items()])
 
+    start_time = time.time()
+
+    if verbose > 1:
+        if parameters is None:
+            msg = ""
+        else:
+            msg = '%s' % (', '.join('%s=%s' % (k, v)
+                          for k, v in parameters.items()))
+        print("[%s] %s %s" % (log_label, msg, (64 - len(msg)) * '.'))
+
     X_train, y_train = _split(estimator, X, y, train)
     X_test, y_test = _split(estimator, X, y, test, train)
     _fit(estimator.fit, X_train, y_train, **fit_params)
     score = _score(estimator, X_test, y_test, scorer)
 
+    scoring_time = time.time() - start_time
     if verbose > 2:
         msg += ", score=%f" % score
     if verbose > 1:
-        end_msg = "%s -%s" % (msg, logger.short_format_time(time.time() -
-                                                            start_time))
+        end_msg = "%s -%s" % (msg, logger.short_format_time(scoring_time))
         print("[%s] %s %s" % (log_label, (64 - len(end_msg)) * '.', end_msg))
 
-    return score, _num_samples(X_test)
+    return score, _num_samples(X_test), scoring_time
 
 
 def _split(estimator, X, y, indices, train_indices=None):
