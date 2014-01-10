@@ -1152,7 +1152,7 @@ def _split(estimator, X, y, indices, train_indices=None):
 
 
 def _fit(fit_function, X_train, y_train, **fit_params):
-    """Fit and estimator on a given training set."""
+    """Fit an estimator on a given training set."""
     if y_train is None:
         fit_function(X_train, **fit_params)
     else:
