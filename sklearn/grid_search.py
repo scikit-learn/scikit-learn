@@ -23,7 +23,7 @@ from .base import BaseEstimator, is_classifier, clone
 from .base import MetaEstimatorMixin
 from .cross_validation import _check_cv as check_cv
 from .cross_validation import _check_scorable, _cross_val_score
-from .externals.joblib import Parallel, delayed
+from .externals.joblib import Parallel, delayed, logger
 from .externals import six
 from .utils import safe_mask, check_random_state
 from .utils.validation import _num_samples, check_arrays
@@ -228,10 +228,21 @@ def fit_grid_point(X, y, estimator, parameters, train, test, scorer,
     n_samples_test : int
         Number of test samples in this split.
     """
-    score, n_samples_test, _ = _cross_val_score(estimator, X, y, scorer,
-                                                train, test, parameters,
-                                                verbose, fit_params,
-                                                log_label="GridSearchCV")
+    if verbose > 1:
+        msg = '%s' % (', '.join('%s=%s' % (k, v)
+                      for k, v in parameters.items()))
+        print("[GridSearchCV] %s %s" % (msg, (64 - len(msg)) * '.'))
+
+    estimator.set_params(**parameters)
+    score, n_samples_test, scoring_time = _cross_val_score(
+        estimator, X, y, scorer, train, test, verbose, fit_params)
+
+    if verbose > 2:
+        msg += ", score=%f" % score
+    if verbose > 1:
+        end_msg = "%s -%s" % (msg, logger.short_format_time(scoring_time))
+        print("[GridSearchCV] %s %s" % ((64 - len(end_msg)) * '.', end_msg))
+
     return score, parameters, n_samples_test
 
 
