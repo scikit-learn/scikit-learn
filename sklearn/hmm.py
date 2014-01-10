@@ -609,7 +609,7 @@ class GaussianHMM(_BaseHMM):
     This class allows for easy evaluation of, sampling from, and
     maximum-likelihood estimation of the parameters of a HMM.
 
-.. warning::
+    .. warning::
 
        The HMM module and its functions will be removed in 0.17
        as it no longer falls within the project's scope and API.
