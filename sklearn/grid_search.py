@@ -15,7 +15,6 @@ from collections import Mapping, namedtuple, Sized
 from functools import partial, reduce
 from itertools import product
 import operator
-import time
 import warnings
 
 import numpy as np
@@ -23,8 +22,8 @@ import numpy as np
 from .base import BaseEstimator, is_classifier, clone
 from .base import MetaEstimatorMixin
 from .cross_validation import _check_cv as check_cv
-from .cross_validation import _check_scorable, _split, _fit, _score
-from .externals.joblib import Parallel, delayed, logger
+from .cross_validation import _check_scorable, _cross_val_score
+from .externals.joblib import Parallel, delayed
 from .externals import six
 from .utils import safe_mask, check_random_state
 from .utils.validation import _num_samples, check_arrays
@@ -183,7 +182,7 @@ class ParameterSampler(object):
         return self.n_iter
 
 
-def fit_grid_point(X, y, base_estimator, parameters, train, test, scorer,
+def fit_grid_point(X, y, estimator, parameters, train, test, scorer,
                    verbose, loss_func=None, **fit_params):
     """Run fit on one set of parameters.
 
@@ -195,11 +194,11 @@ def fit_grid_point(X, y, base_estimator, parameters, train, test, scorer,
     y : array-like or None
         Targets for input data.
 
-    base_estimator : estimator object
+    estimator : estimator object
         This estimator will be cloned and then fitted.
 
     parameters : dict
-        Parameters to be set on base_estimator clone for this grid point.
+        Parameters to be set on estimator for this grid point.
 
     train : ndarray, dtype int or bool
         Boolean mask or indices for training set.
@@ -229,29 +228,11 @@ def fit_grid_point(X, y, base_estimator, parameters, train, test, scorer,
     n_samples_test : int
         Number of test samples in this split.
     """
-    if verbose > 1:
-        start_time = time.time()
-        msg = '%s' % (', '.join('%s=%s' % (k, v)
-                      for k, v in parameters.items()))
-        print("[GridSearchCV] %s %s" % (msg, (64 - len(msg)) * '.'))
-
-    # update parameters of the classifier after a copy of its base structure
-    estimator = clone(base_estimator)
-    estimator.set_params(**parameters)
-
-    X_train, y_train = _split(estimator, X, y, train)
-    X_test, y_test = _split(estimator, X, y, test, train)
-    _fit(estimator.fit, X_train, y_train, **fit_params)
-    score = _score(estimator, X_test, y_test, scorer)
-
-    if verbose > 2:
-        msg += ", score=%f" % score
-    if verbose > 1:
-        end_msg = "%s -%s" % (msg, logger.short_format_time(time.time() -
-                                                            start_time))
-        print("[GridSearchCV] %s %s" % ((64 - len(end_msg)) * '.', end_msg))
-
-    return score, parameters, _num_samples(X_test)
+    score, n_samples_test = _cross_val_score(estimator, X, y, scorer, train,
+                                             test, parameters, verbose,
+                                             fit_params,
+                                             log_label="GridSearchCV")
+    return score, parameters, n_samples_test
 
 
 def _check_param_grid(param_grid):
@@ -396,7 +377,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
             n_jobs=self.n_jobs, verbose=self.verbose,
             pre_dispatch=pre_dispatch)(
                 delayed(fit_grid_point)(
-                    X, y, base_estimator, parameters, train, test,
+                    X, y, clone(base_estimator), parameters, train, test,
                     self.scorer_, self.verbose, **self.fit_params)
                 for parameters in parameter_iterable
                 for train, test in cv)
