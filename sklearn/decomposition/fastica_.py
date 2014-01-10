@@ -42,16 +42,30 @@ def _gs_decorrelation(w, W, j):
     return w
 
 
-def _sym_decorrelation(W):
-    """ Symmetric decorrelation using SVD
+def _sym_decorrelation(W, svd_decorr):
+    """ Symmetric decorrelation
     i.e. W <- (W * W.T) ^{-1/2} * W
+
+    If svd_decorr=True, this is achieved using the singular value decomposition.
+    This method is slightly slower, but produces a more orthogonal output.
+
+    Otherwise this is done using an eigendecomposition, which is faster but
+    produces a less orthogonal output and can yield NaNs if the determinant of
+    the covariance matrix is sufficiently small.
     """
-    U, _, Vt = linalg.svd(W, full_matrices=False)
-    W = np.dot(U, Vt)
-    return W
+    if svd_decorr:
+        U, _, Vt = linalg.svd(W, full_matrices=False)
+        # the columns of U and Vt.T are orthonormal bases, so U*Vt is
+        # orthogonal
+        return np.dot(U, Vt)
+    else:
+        s, u = linalg.eigh(np.dot(W, W.T))
+        # u (resp. s) contains the eigenvectors (resp. square roots of
+        # the eigenvalues) of W * W.T
+        return np.dot(np.dot(u * (1. / np.sqrt(s)), u.T), W)
 
 
-def _ica_def(X, tol, g, fun_args, max_iter, w_init):
+def _ica_def(X, tol, g, fun_args, max_iter, w_init, svd_decorr):
     """Deflationary FastICA using fun approx to neg-entropy function
 
     Used internally by FastICA.
@@ -84,19 +98,19 @@ def _ica_def(X, tol, g, fun_args, max_iter, w_init):
     return W
 
 
-def _ica_par(X, tol, g, fun_args, max_iter, w_init):
+def _ica_par(X, tol, g, fun_args, max_iter, w_init, svd_decorr):
     """Parallel FastICA.
 
     Used internally by FastICA --main loop
 
     """
-    W = _sym_decorrelation(w_init)
+    W = _sym_decorrelation(w_init, svd_decorr)
     del w_init
     p_ = float(X.shape[1])
     for ii in moves.xrange(max_iter):
         gwtx, g_wtx = g(fast_dot(W, X), fun_args)
         W1 = _sym_decorrelation(fast_dot(gwtx, X.T) / p_
-                                - g_wtx[:, np.newaxis] * W)
+                                - g_wtx[:, np.newaxis] * W, svd_decorr)
         del gwtx, g_wtx
         # builtin max, abs are faster than numpy counter parts.
         lim = max(abs(abs(np.diag(fast_dot(W1, W.T))) - 1))
@@ -138,7 +152,8 @@ def _cube(x, fun_args):
 
 def fastica(X, n_components=None, algorithm="parallel", whiten=True,
             fun="logcosh", fun_args=None, max_iter=200, tol=1e-04, w_init=None,
-            random_state=None, return_X_mean=False, compute_sources=True):
+            random_state=None, return_X_mean=False, compute_sources=True, 
+            svd_decorr=False):
     """Perform Fast Independent Component Analysis.
 
     Parameters
@@ -197,6 +212,16 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
     compute_sources : bool, optional
         If False, sources are not computes but only the rotation matrix. This
         can save memory when working with big data. Defaults to True.
+
+    svd_decorr: boolean, optional
+        If False (default) and if algorithm='parallel', the symmetric
+        orthogonalization of the mixing matrix is carried out using an
+        eigendecomposition, which is faster but is less numerically stable and
+        produces a less orthogonal output.
+        If True, the orthogonalization is done using the singular value
+        decomposition, which is slower but more stable and produces a more
+        orthogonal output.
+        This option is ignored if algorithm='deflation'
 
     Returns
     -------
@@ -309,7 +334,8 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
               'g': g,
               'fun_args': fun_args,
               'max_iter': max_iter,
-              'w_init': w_init}
+              'w_init': w_init,
+              'svd_decorr': svd_decorr}
 
     if algorithm == 'parallel':
         W = _ica_par(X1, **kwargs)
@@ -380,6 +406,16 @@ class FastICA(BaseEstimator, TransformerMixin):
     w_init : None of an (n_components, n_components) ndarray
         The mixing matrix to be used to initialize the algorithm.
 
+    svd_decorr: boolean, optional
+        If False (default) and if algorithm='parallel', the symmetric
+        orthogonalization of the mixing matrix is carried out using an
+        eigendecomposition, which is faster but is less numerically stable and
+        produces a less orthogonal output.
+        If True, the orthogonalization is done using the singular value
+        decomposition, which is slower but more stable and produces a more
+        orthogonal output.
+        This option is ignored if algorithm='deflation'
+
     random_state : int or RandomState
         Pseudo number generator state used for random sampling.
 
@@ -406,7 +442,7 @@ class FastICA(BaseEstimator, TransformerMixin):
     """
     def __init__(self, n_components=None, algorithm='parallel', whiten=True,
                  fun='logcosh', fun_args=None, max_iter=200, tol=1e-4,
-                 w_init=None, random_state=None):
+                 svd_decorr=False, w_init=None, random_state=None):
         super(FastICA, self).__init__()
         self.n_components = n_components
         self.algorithm = algorithm
@@ -415,6 +451,7 @@ class FastICA(BaseEstimator, TransformerMixin):
         self.fun_args = fun_args
         self.max_iter = max_iter
         self.tol = tol
+        self.svd_decorr = svd_decorr
         self.w_init = w_init
         self.random_state = random_state
 
@@ -441,7 +478,8 @@ class FastICA(BaseEstimator, TransformerMixin):
             whiten=self.whiten, fun=self.fun, fun_args=fun_args,
             max_iter=self.max_iter, tol=self.tol, w_init=self.w_init,
             random_state=self.random_state, return_X_mean=True,
-            compute_sources=compute_sources)
+            compute_sources=compute_sources, 
+            svd_decorr=self.svd_decorr)
 
         if self.whiten:
             self.components_ = np.dot(unmixing, whitening)
