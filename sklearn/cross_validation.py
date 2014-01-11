@@ -1119,6 +1119,9 @@ def _cross_val_score(estimator, X, y, scorer, train, test,
 
     scoring_time = time.time() - start_time
 
+    if verbose > 1:
+        print("score %f in %f s" % (score, scoring_time))
+
     return score, _num_samples(X_test), scoring_time
 
 

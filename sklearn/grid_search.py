@@ -235,7 +235,8 @@ def fit_grid_point(X, y, estimator, parameters, train, test, scorer,
 
     estimator.set_params(**parameters)
     score, n_samples_test, scoring_time = _cross_val_score(
-        estimator, X, y, scorer, train, test, verbose, fit_params)
+        estimator, X, y, scorer, train, test, verbose=0,
+        fit_params=fit_params)
 
     if verbose > 2:
         msg += ", score=%f" % score
