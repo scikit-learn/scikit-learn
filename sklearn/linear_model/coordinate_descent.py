@@ -861,7 +861,8 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
     @abstractmethod
     def __init__(self, eps=1e-3, n_alphas=100, alphas=None, fit_intercept=True,
                  normalize=False, precompute='auto', max_iter=1000, tol=1e-4,
-                 copy_X=True, cv=None, verbose=False, positive=False):
+                 copy_X=True, cv=None, verbose=False, n_jobs=1,
+                 positive=False):
         self.eps = eps
         self.n_alphas = n_alphas
         self.alphas = alphas
@@ -873,6 +874,7 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
         self.copy_X = copy_X
         self.cv = cv
         self.verbose = verbose
+        self.n_jobs = n_jobs
         self.positive = positive
 
     def fit(self, X, y):
@@ -1052,6 +1054,11 @@ class LassoCV(LinearModelCV, RegressorMixin):
     verbose : bool or integer
         amount of verbosity
 
+    n_jobs : integer, optional
+        Number of CPUs to use during the cross validation. If ``-1``, use
+        all the CPUs. Note that this is used only if multiple values for
+        l1_ratio are given.
+
     positive : bool, optional
         If positive, restrict regression coefficients to be positive
 
@@ -1101,16 +1108,16 @@ class LassoCV(LinearModelCV, RegressorMixin):
     LassoLarsCV
     """
     path = staticmethod(lasso_path)
-    n_jobs = 1
 
     def __init__(self, eps=1e-3, n_alphas=100, alphas=None, fit_intercept=True,
                  normalize=False, precompute='auto', max_iter=1000, tol=1e-4,
-                 copy_X=True, cv=None, verbose=False, positive=False):
+                 copy_X=True, cv=None, verbose=False, n_jobs=1,
+                 positive=False):
         super(LassoCV, self).__init__(
             eps=eps, n_alphas=n_alphas, alphas=alphas,
             fit_intercept=fit_intercept, normalize=normalize,
             precompute=precompute, max_iter=max_iter, tol=tol, copy_X=copy_X,
-            cv=cv, verbose=verbose, positive=positive)
+            cv=cv, verbose=verbose, n_jobs=n_jobs, positive=positive)
 
 
 class ElasticNetCV(LinearModelCV, RegressorMixin):
