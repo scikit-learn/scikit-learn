@@ -102,7 +102,7 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
 
         (1 / (2 * n_samples)) * ||y - Xw||^2_2 + alpha * ||w||_1
 
-     For multi-output tasks it is::
+    For multi-output tasks it is::
 
         (1 / (2 * n_samples)) * ||Y - XW||^2_Fro + alpha * ||W||_21
 
@@ -110,7 +110,7 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
 
         ||W||_21 = \sum_i \sqrt{\sum_j w_{ij}^2}
 
-    i.e. the sum of norm of earch row.
+    i.e. the sum of norm of each row.
 
     Parameters
     ----------
@@ -157,7 +157,7 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
         The initial values of the coefficients.
 
     verbose : bool or integer
-        Amount of verbosity
+        Amount of verbosity.
 
     return_models : boolean, optional, default True
         If ``True``, the function will return list of models. Setting it
@@ -324,7 +324,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
         The initial values of the coefficients.
 
     verbose : bool or integer
-        Amount of verbosity
+        Amount of verbosity.
 
     return_models : boolean, optional, default False
         If ``True``, the function will return list of models. Setting it
@@ -437,7 +437,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     if not multi_output:
         coefs = np.empty((n_features, n_alphas), dtype=np.float64)
     else:
-        coefs = np.empty([n_outputs, n_features, n_alphas])
+        coefs = np.empty((n_outputs, n_features, n_alphas), dtype=np.float64)
 
     if coef_init is None:
         coef_ = np.asfortranarray(np.zeros(coefs.shape[:-1]))
@@ -493,6 +493,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
                 print('Path: %03i out of %03i' % (i, n_alphas))
             else:
                 sys.stderr.write('.')
+
     if return_models:
         return models
     else:
@@ -1149,7 +1150,7 @@ class LassoCV(LinearModelCV, RegressorMixin):
         objects.
 
     verbose : bool or integer
-        amount of verbosity
+        Amount of verbosity.
 
     n_jobs : integer, optional
         Number of CPUs to use during the cross validation. If ``-1``, use
@@ -1260,7 +1261,7 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
         objects.
 
     verbose : bool or integer
-        amount of verbosity
+        Amount of verbosity.
 
     n_jobs : integer, optional
         Number of CPUs to use during the cross validation. If ``-1``, use
@@ -1364,7 +1365,7 @@ class MultiTaskElasticNet(Lasso):
 
         ||W||_21 = \sum_i \sqrt{\sum_j w_{ij}^2}
 
-    i.e. the sum of norm of earch row.
+    i.e. the sum of norm of each row.
 
     Parameters
     ----------
@@ -1666,7 +1667,7 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
         objects.
 
     verbose : bool or integer
-        amount of verbosity
+        Amount of verbosity.
 
     n_jobs : integer, optional
         Number of CPUs to use during the cross validation. If ``-1``, use
@@ -1750,7 +1751,7 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
 class MultiTaskLassoCV(MultiTaskElasticNetCV):
     """Multi-task L1/L2 Lasso with built-in cross-validation.
 
-    The optimization objective for MultiTaskElasticNet is::
+    The optimization objective for MultiTaskLasso is::
 
         (1 / (2 * n_samples)) * ||Y - XW||^Fro_2 + alpha * ||W||_21
 
@@ -1790,7 +1791,7 @@ class MultiTaskLassoCV(MultiTaskElasticNetCV):
         If ``True``, X will be copied; else, it may be overwritten.
 
     max_iter : int, optional
-        The maximum number of iterations
+        The maximum number of iterations.
 
     tol : float, optional
         The tolerance for the optimization: if the updates are
@@ -1805,7 +1806,7 @@ class MultiTaskLassoCV(MultiTaskElasticNetCV):
         objects.
 
     verbose : bool or integer
-        amount of verbosity
+        Amount of verbosity.
 
     n_jobs : integer, optional
         Number of CPUs to use during the cross validation. If ``-1``, use
@@ -1843,13 +1844,12 @@ class MultiTaskLassoCV(MultiTaskElasticNetCV):
     should be directly passed as a Fortran-contiguous numpy array.
     """
     path = staticmethod(lasso_path)
-    n_jobs = 1
 
     def __init__(self, eps=1e-3, n_alphas=100, alphas=None, fit_intercept=True,
                  normalize=False, precompute='auto', max_iter=1000, tol=1e-4,
-                 copy_X=True, cv=None, verbose=False):
+                 copy_X=True, cv=None, verbose=False, n_jobs=1):
         super(MultiTaskLassoCV, self).__init__(
-            eps=eps, n_alphas=n_alphas, alphas=alphas,
+            eps=eps, n_alphas=n_alphas, alphas=alphas, l1_ratio=1.,
             fit_intercept=fit_intercept, normalize=normalize,
             precompute=precompute, max_iter=max_iter, tol=tol, copy_X=copy_X,
-            cv=cv, verbose=verbose)
+            cv=cv, verbose=verbose, n_jobs=n_jobs)
