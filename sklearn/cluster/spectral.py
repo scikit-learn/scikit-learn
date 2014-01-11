@@ -157,7 +157,7 @@ def discretize(vectors, copy=True, max_svd_restarts=30, n_iter_max=20,
 
 def spectral_clustering(affinity, n_clusters=8, n_components=None,
                         eigen_solver=None, random_state=None, n_init=10,
-                        k=None, eigen_tol=0.0, assign_labels='kmeans'):
+                        eigen_tol=0.0, assign_labels='kmeans'):
     """Apply clustering to a projection to the normalized laplacian.
 
     In practice Spectral Clustering is very useful when the structure of
