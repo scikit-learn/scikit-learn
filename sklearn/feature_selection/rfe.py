@@ -13,9 +13,9 @@ from ..base import MetaEstimatorMixin
 from ..base import clone
 from ..base import is_classifier
 from ..cross_validation import _check_cv as check_cv
-from ..cross_validation import _check_scorable, _split, _score
+from ..cross_validation import _split, _score
 from .base import SelectorMixin
-from ..metrics.scorer import _deprecate_loss_and_score_funcs
+from ..metrics.scorer import check_scorable
 
 
 class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
@@ -326,8 +326,8 @@ class RFECV(RFE, MetaEstimatorMixin):
                   verbose=self.verbose - 1)
 
         cv = check_cv(self.cv, X, y, is_classifier(self.estimator))
-        _check_scorable(self.estimator, scoring=self.scoring,
-                        loss_func=self.loss_func)
+        scorer = check_scorable(self.estimator, scoring=self.scoring,
+                                loss_func=self.loss_func)
         scores = np.zeros(X.shape[1])
 
         # Cross-validation
@@ -345,11 +345,6 @@ class RFECV(RFE, MetaEstimatorMixin):
 
                 estimator = clone(self.estimator)
                 estimator.fit(X_train_subset, y_train)
-
-                scorer = _deprecate_loss_and_score_funcs(
-                    loss_func=self.loss_func,
-                    scoring=self.scoring
-                )
                 score = _score(estimator, X_test_subset, y_test, scorer)
 
                 if self.verbose > 0:

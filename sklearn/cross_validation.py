@@ -27,7 +27,7 @@ from .utils.validation import _num_samples
 from .utils.fixes import unique
 from .externals.joblib import Parallel, delayed
 from .externals.six import string_types, with_metaclass
-from .metrics.scorer import _deprecate_loss_and_score_funcs
+from .metrics.scorer import check_scorable
 
 __all__ = ['Bootstrap',
            'KFold',
@@ -1087,9 +1087,7 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
     """
     X, y = check_arrays(X, y, sparse_format='csr', allow_lists=True)
     cv = _check_cv(cv, X, y, classifier=is_classifier(estimator))
-    _check_scorable(estimator, score_func=score_func, scoring=scoring)
-    scorer = _deprecate_loss_and_score_funcs(score_func=score_func,
-                                             scoring=scoring)
+    scorer = check_scorable(estimator, score_func=score_func, scoring=scoring)
     # We clone the estimator to make sure that all the folds are
     # independent, and that it is pickle-able.
     parallel = Parallel(n_jobs=n_jobs, verbose=verbose,
@@ -1168,20 +1166,12 @@ def _fit(fit_function, X_train, y_train, **fit_params):
 def _score(estimator, X_test, y_test, scorer):
     """Compute the score of an estimator on a given test set."""
     if y_test is None:
-        if scorer is None:
-            score = estimator.score(X_test)
-        else:
-            score = scorer(estimator, X_test)
+        score = scorer(estimator, X_test)
     else:
-        if scorer is None:
-            score = estimator.score(X_test, y_test)
-        else:
-            score = scorer(estimator, X_test, y_test)
-
+        score = scorer(estimator, X_test, y_test)
     if not isinstance(score, numbers.Number):
         raise ValueError("scoring must return a number, got %s (%s) instead."
                          % (str(score), type(score)))
-
     return score
 
 
@@ -1262,24 +1252,6 @@ def _check_cv(cv, X=None, y=None, classifier=False, warn_mask=False):
     return cv
 
 
-def _check_scorable(estimator, scoring=None, loss_func=None, score_func=None):
-    """Check that estimator can be fitted and score can be computed."""
-    if (not hasattr(estimator, 'fit') or
-            not (hasattr(estimator, 'predict')
-                    or hasattr(estimator, 'score'))):
-        raise TypeError("estimator should a be an estimator implementing"
-                        " 'fit' and 'predict' or 'score' methods,"
-                        " %s (type %s) was passed" %
-                        (estimator, type(estimator)))
-    if (scoring is None and loss_func is None and score_func
-            is None):
-        if not hasattr(estimator, 'score'):
-            raise TypeError(
-                "If no scoring is specified, the estimator passed "
-                "should have a 'score' method. The estimator %s "
-                "does not." % estimator)
-
-
 def permutation_test_score(estimator, X, y, score_func=None, cv=None,
                            n_permutations=100, n_jobs=1, labels=None,
                            random_state=0, verbose=0, scoring=None):
@@ -1351,11 +1323,7 @@ def permutation_test_score(estimator, X, y, score_func=None, cv=None,
     """
     X, y = check_arrays(X, y, sparse_format='csr')
     cv = _check_cv(cv, X, y, classifier=is_classifier(estimator))
-    scorer = _deprecate_loss_and_score_funcs(
-        loss_func=None,
-        score_func=score_func,
-        scoring=scoring
-    )
+    scorer = check_scorable(estimator, scoring=scoring, score_func=score_func)
     random_state = check_random_state(random_state)
 
     # We clone the estimator to make sure that all the folds are
