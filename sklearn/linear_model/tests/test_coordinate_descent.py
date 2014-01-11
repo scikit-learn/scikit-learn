@@ -181,16 +181,16 @@ def test_lasso_cv():
 
 def test_lasso_cv_positive_constraint():
     X, y, X_test, y_test = build_dataset()
-    max_iter = 1000
+    max_iter = 500
 
     # Ensure the unconstrained fit has a negative coefficient
-    clf_unconstrained  = LassoCV(n_alphas=10, eps=1e-3, max_iter=max_iter)
+    clf_unconstrained  = LassoCV(n_alphas=3, eps=1e-1, max_iter=max_iter, cv=2)
     clf_unconstrained.fit(X, y)
     assert_true(min(clf_unconstrained.coef_) < 0)
 
     # On same data, constrained fit has non-negative coefficients
-    clf_constrained  = LassoCV(n_alphas=10, eps=1e-3, max_iter=max_iter,
-                               positive=True)
+    clf_constrained  = LassoCV(n_alphas=3, eps=1e-1, max_iter=max_iter,
+                               positive=True, cv=2)
     clf_constrained.fit(X, y)
     assert_true(min(clf_constrained.coef_) >= 0)
 
@@ -318,15 +318,17 @@ def test_enet_positive_constraint():
 
 def test_enet_cv_positive_constraint():
     X, y, X_test, y_test = build_dataset()
-    max_iter = 1500
+    max_iter = 500
 
     # Ensure the unconstrained fit has a negative coefficient
-    enetcv_unconstrained = ElasticNetCV(max_iter=max_iter)
+    enetcv_unconstrained = ElasticNetCV(n_alphas=3, eps=1e-1, max_iter=max_iter,
+                                        cv=2)
     enetcv_unconstrained.fit(X, y)
     assert_true(min(enetcv_unconstrained.coef_) < 0)
 
     # On same data, constrained fit has non-negative coefficients
-    enetcv_constrained = ElasticNetCV(max_iter=max_iter, positive=True)
+    enetcv_constrained = ElasticNetCV(n_alphas=3, eps=1e-1, max_iter=max_iter,
+                                      cv=2, positive=True)
     enetcv_constrained.fit(X, y)
     assert_true(min(enetcv_constrained.coef_) >= 0)
 

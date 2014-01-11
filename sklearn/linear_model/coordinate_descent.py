@@ -1171,7 +1171,7 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
         all the CPUs. Note that this is used only if multiple values for
         l1_ratio are given.
 
-        positive: bool, optional
+    positive: bool, optional
         When set to ``True``, forces the coefficients to be positive.
 
     Attributes
