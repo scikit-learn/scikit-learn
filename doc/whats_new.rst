@@ -122,6 +122,10 @@ Changelog
      chart performance with respet to training size. See
      :ref:`example_plot_learning_curve.py`. By `Alexander Fabisch`_.
 
+   - Add positive option in :class:`LassoCV <linear_model.LassoCV>` and
+     :class:`ElasticNetCV <linear_model.ElasticNetCV>`.
+     By Brian Wignall and `Alexandre Gramfort`_.
+
 
 
 API changes summary
