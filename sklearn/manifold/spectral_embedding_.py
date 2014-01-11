@@ -259,6 +259,7 @@ def _solve_eigenvalue_problem(adjacency, n_components=1, eigen_solver=None,
                                            sigma=1.0, which='LM',
                                            tol=eigen_tol)
             vectors = diffusion_map.T[n_components::-1]
+            lambdas = lambdas[n_components::-1]
         except RuntimeError:
             # When submatrices are exactly singular, an LU decomposition
             # in arpack fails. We fallback to lobpcg
@@ -654,16 +655,17 @@ def diffusion_embedding(adjacency, n_components=8, diffusion_time=None,
                                                      random_state=random_state,
                                                      eigen_tol=eigen_tol,
                                                      norm_laplacian=norm_laplacian)
-    embedding = vectors * dd
-    if diffusion_time is not None:
-        norm_factor = np.sqrt(np.sum(dd))
-        psi = (norm_factor * np.diag(1. / (dd ** 0.5))).dot(vectors)
+    norm_factor = np.sqrt(np.sum(dd))
+    psi = (norm_factor * np.diag(1. / (np.sqrt(dd)))).dot(vectors.T)
+    if diffusion_time is None:
+        embedding = psi
+    else:
         Lt = np.power(1 + lambdas, diffusion_time)
         embedding = psi * Lt
     if drop_first:
-        return embedding[1:].T
+        return embedding[:, 1:]
     else:
-        return embedding.T
+        return embedding
 
 
 class DiffusionEmbedding(SpectralEmbedding):
