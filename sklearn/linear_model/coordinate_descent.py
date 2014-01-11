@@ -1171,6 +1171,9 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
         all the CPUs. Note that this is used only if multiple values for
         l1_ratio are given.
 
+        positive: bool, optional
+        When set to ``True``, forces the coefficients to be positive.
+
     Attributes
     ----------
     ``alpha_`` : float
@@ -1226,7 +1229,7 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
     def __init__(self, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
                  fit_intercept=True, normalize=False, precompute='auto',
                  max_iter=1000, tol=1e-4, cv=None, copy_X=True,
-                 verbose=0, n_jobs=1):
+                 verbose=0, n_jobs=1, positive=False):
         self.l1_ratio = l1_ratio
         self.eps = eps
         self.n_alphas = n_alphas
@@ -1240,6 +1243,7 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
         self.copy_X = copy_X
         self.verbose = verbose
         self.n_jobs = n_jobs
+        self.positive = positive
 
 
 ###############################################################################
