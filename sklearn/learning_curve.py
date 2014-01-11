@@ -11,7 +11,8 @@ from .cross_validation import _check_cv
 from .utils import check_arrays
 from .externals.joblib import Parallel, delayed
 from .metrics.scorer import get_scorer
-from .cross_validation import _check_scorable, _split, _fit, _score
+from .cross_validation import _split, _fit, _score
+from .metrics.scorer import check_scorable
 
 
 def learning_curve(estimator, X, y, train_sizes=np.linspace(0.1, 1.0, 10),
@@ -101,6 +102,7 @@ def learning_curve(estimator, X, y, train_sizes=np.linspace(0.1, 1.0, 10),
     X, y = check_arrays(X, y, sparse_format='csr', allow_lists=True)
     # Make a list since we will be iterating multiple times over the folds
     cv = list(_check_cv(cv, X, y, classifier=is_classifier(estimator)))
+    scorer = check_scorable(estimator, scoring=scoring)
 
     # HACK as long as boolean indices are allowed in cv generators
     if cv[0][0].dtype == bool:
@@ -118,9 +120,6 @@ def learning_curve(estimator, X, y, train_sizes=np.linspace(0.1, 1.0, 10),
     n_unique_ticks = train_sizes_abs.shape[0]
     if verbose > 0:
         print("[learning_curve] Training set sizes: " + str(train_sizes_abs))
-
-    _check_scorable(estimator, scoring=scoring)
-    scorer = get_scorer(scoring)
 
     parallel = Parallel(n_jobs=n_jobs, pre_dispatch=pre_dispatch,
                         verbose=verbose)

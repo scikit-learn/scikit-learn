@@ -22,12 +22,12 @@ import numpy as np
 from .base import BaseEstimator, is_classifier, clone
 from .base import MetaEstimatorMixin
 from .cross_validation import _check_cv as check_cv
-from .cross_validation import _check_scorable, _cross_val_score
+from .cross_validation import _cross_val_score
 from .externals.joblib import Parallel, delayed, logger
 from .externals import six
 from .utils import safe_mask, check_random_state
 from .utils.validation import _num_samples, check_arrays
-from .metrics.scorer import _deprecate_loss_and_score_funcs
+from .metrics.scorer import check_scorable
 
 
 __all__ = ['GridSearchCV', 'ParameterGrid', 'fit_grid_point',
@@ -307,8 +307,6 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         self.cv = cv
         self.verbose = verbose
         self.pre_dispatch = pre_dispatch
-        _check_scorable(self.estimator, scoring=self.scoring,
-                        loss_func=self.loss_func, score_func=self.score_func)
 
     def score(self, X, y=None):
         """Returns the score on the given test data and labels, if the search
@@ -359,12 +357,12 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
 
         estimator = self.estimator
         cv = self.cv
+        self.scorer_ = check_scorable(self.estimator, scoring=self.scoring,
+                                      loss_func=self.loss_func,
+                                      score_func=self.score_func)
 
         n_samples = _num_samples(X)
         X, y = check_arrays(X, y, allow_lists=True, sparse_format='csr')
-
-        self.scorer_ = _deprecate_loss_and_score_funcs(
-            self.loss_func, self.score_func, self.scoring)
 
         if y is not None:
             if len(y) != n_samples:
