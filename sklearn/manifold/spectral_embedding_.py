@@ -691,8 +691,15 @@ class DiffusionEmbedding(SpectralEmbedding):
 
     """
 
-    def __init__(self, diffusion_time=0., **kwargs):
-        super(DiffusionEmbedding, self).__init__(**kwargs)
+    def __init__(self, diffusion_time=0., n_components=2,
+                 affinity="nearest_neighbors", gamma=None, random_state=None,
+                 eigen_solver=None, n_neighbors=None):
+        super(DiffusionEmbedding, self).__init__(n_components=n_components,
+                                                 affinity=affinity,
+                                                 gamma=gamma,
+                                                 random_state=random_state,
+                                                 eigen_solver=eigen_solver,
+                                                 n_neighbors=n_neighbors)
         self.diffusion_time = diffusion_time
 
     def fit(self, X, y=None):
