@@ -15,7 +15,6 @@
 /sklearn/svm/libsvm_sparse.c -diff
 /sklearn/tree/_tree.c -diff
 /sklearn/tree/_utils.c -diff
-/sklearn/utils/arraybuilder.c -diff
 /sklearn/utils/arrayfuncs.c -diff
 /sklearn/utils/graph_shortest_path.c -diff
 /sklearn/utils/lgamma.c -diff
