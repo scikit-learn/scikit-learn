@@ -179,6 +179,22 @@ def test_lasso_cv():
     assert_greater(clf.score(X_test, y_test), 0.99)
 
 
+def test_lasso_cv_positive_constraint():
+    X, y, X_test, y_test = build_dataset()
+    max_iter = 1000
+
+    # Ensure the unconstrained fit has a negative coefficient
+    clf_unconstrained  = LassoCV(n_alphas=10, eps=1e-3, max_iter=max_iter)
+    clf_unconstrained.fit(X, y)
+    assert_true(min(clf_unconstrained.coef_) < 0)
+
+    # On same data, constrained fit has non-negative coefficients
+    clf_constrained  = LassoCV(n_alphas=10, eps=1e-3, max_iter=max_iter,
+                               positive=True)
+    clf_constrained.fit(X, y)
+    assert_true(min(clf_constrained.coef_) >= 0)
+
+
 def test_lasso_path_return_models_vs_new_return_gives_same_coefficients():
     # Test that lasso_path with lars_path style output gives the
     # same result
@@ -298,6 +314,21 @@ def test_enet_positive_constraint():
     enet = ElasticNet(alpha=0.1, max_iter=1000, positive=True)
     enet.fit(X, y)
     assert_true(min(enet.coef_) >= 0)
+
+
+def test_enet_cv_positive_constraint():
+    X, y, X_test, y_test = build_dataset()
+    max_iter = 1500
+
+    # Ensure the unconstrained fit has a negative coefficient
+    enetcv_unconstrained = ElasticNetCV(max_iter=max_iter)
+    enetcv_unconstrained.fit(X, y)
+    assert_true(min(enetcv_unconstrained.coef_) < 0)
+
+    # On same data, constrained fit has non-negative coefficients
+    enetcv_constrained = ElasticNetCV(max_iter=max_iter, positive=True)
+    enetcv_constrained.fit(X, y)
+    assert_true(min(enetcv_constrained.coef_) >= 0)
 
 
 def test_multi_task_lasso_and_enet():
