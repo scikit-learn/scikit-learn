@@ -25,7 +25,7 @@ from .cross_validation import _check_cv as check_cv
 from .cross_validation import _cross_val_score
 from .externals.joblib import Parallel, delayed, logger
 from .externals import six
-from .utils import safe_mask, check_random_state
+from .utils import check_random_state
 from .utils.validation import _num_samples, check_arrays
 from .metrics.scorer import check_scoring
 

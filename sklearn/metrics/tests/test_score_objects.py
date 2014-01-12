@@ -38,6 +38,7 @@ class EstimatorWithFitAndScore(object):
     """Dummy estimator to test check_scoring"""
     def fit(self, X, y):
         return self
+
     def score(self, X, y):
         return 1.0
 
@@ -47,6 +48,7 @@ class EstimatorWithFitAndPredict(object):
     def fit(self, X, y):
         self.y = y
         return self
+
     def predict(self, X):
         return self.y
 

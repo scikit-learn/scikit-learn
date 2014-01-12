@@ -205,7 +205,7 @@ class _PassthroughScorer(object):
 
 
 def check_scoring(estimator, scoring=None, loss_func=None, score_func=None):
-    """Check if estimator can be scored.
+    """Determine scorer from user options.
 
     A TypeError will be thrown if the estimator cannot be scored.
 
@@ -229,23 +229,21 @@ def check_scoring(estimator, scoring=None, loss_func=None, score_func=None):
                        score_func is None)
     if not hasattr(estimator, 'fit'):
         raise TypeError("estimator should a be an estimator implementing "
-                        "'fit' method, %s (type %s) was passed" %
-                        (estimator, type(estimator)))
+                        "'fit' method, %r was passed" % estimator)
     elif hasattr(estimator, 'predict') and has_scoring:
         return _deprecate_loss_and_score_funcs(scoring=scoring,
-            loss_func=loss_func, score_func=score_func)
+                                               loss_func=loss_func,
+                                               score_func=score_func)
     elif hasattr(estimator, 'score'):
         return _PassthroughScorer()
     elif not has_scoring:
         raise TypeError(
             "If no scoring is specified, the estimator passed should "
-            "have a 'score' method. The estimator %s (type %s) "
-            "does not." % (estimator, type(estimator)))
+            "have a 'score' method. The estimator %r does not." % estimator)
     else:
         raise TypeError(
             "The estimator passed should have a 'score' or a 'predict' "
-            "method. The estimator %s (type %s) does not."
-            % (estimator, type(estimator)))
+            "method. The estimator %r does not." % estimator)
 
 
 def make_scorer(score_func, greater_is_better=True, needs_proba=False,
