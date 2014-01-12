@@ -9,6 +9,7 @@ from sklearn.utils.testing import ignore_warnings
 from sklearn.metrics import (f1_score, r2_score, roc_auc_score, fbeta_score,
                              log_loss)
 from sklearn.metrics.cluster import adjusted_rand_score
+from sklearn.metrics.scorer import check_scoring
 from sklearn.metrics import make_scorer, SCORERS
 from sklearn.svm import LinearSVC
 from sklearn.cluster import KMeans
@@ -20,6 +21,55 @@ from sklearn.datasets import load_diabetes
 from sklearn.cross_validation import train_test_split, cross_val_score
 from sklearn.grid_search import GridSearchCV
 from sklearn.multiclass import OneVsRestClassifier
+
+
+class EstimatorWithoutFit(object):
+    """Dummy estimator to test check_scoring"""
+    pass
+
+
+class EstimatorWithFit(object):
+    """Dummy estimator to test check_scoring"""
+    def fit(self, X, y):
+        return self
+
+
+class EstimatorWithFitAndScore(object):
+    """Dummy estimator to test check_scoring"""
+    def fit(self, X, y):
+        return self
+    def score(self, X, y):
+        return 1.0
+
+
+class EstimatorWithFitAndPredict(object):
+    """Dummy estimator to test check_scoring"""
+    def fit(self, X, y):
+        self.y = y
+        return self
+    def predict(self, X):
+        return self.y
+
+
+def test_check_scoring():
+    """Test all branches of check_scoring"""
+    estimator = EstimatorWithoutFit()
+    assert_raises(TypeError, check_scoring, estimator)
+
+    estimator = EstimatorWithFitAndScore()
+    estimator.fit([[1]], [1])
+    scorer = check_scoring(estimator)
+    assert_almost_equal(scorer(estimator, [[1]], [1]), 1.0)
+
+    estimator = EstimatorWithFitAndPredict()
+    estimator.fit([[1]], [1])
+    assert_raises(TypeError, check_scoring, estimator)
+
+    scorer = check_scoring(estimator, "accuracy")
+    assert_almost_equal(scorer(estimator, [[1]], [1]), 1.0)
+
+    estimator = EstimatorWithFit()
+    assert_raises(TypeError, check_scoring, estimator)
 
 
 def test_make_scorer():

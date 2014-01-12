@@ -27,7 +27,7 @@ from .externals.joblib import Parallel, delayed, logger
 from .externals import six
 from .utils import safe_mask, check_random_state
 from .utils.validation import _num_samples, check_arrays
-from .metrics.scorer import check_scorable
+from .metrics.scorer import check_scoring
 
 
 __all__ = ['GridSearchCV', 'ParameterGrid', 'fit_grid_point',
@@ -231,7 +231,7 @@ def fit_grid_point(X, y, estimator, parameters, train, test, scorer,
     if verbose > 1:
         msg = '%s' % (', '.join('%s=%s' % (k, v)
                       for k, v in parameters.items()))
-        print("[GridSearchCV] %s %s" % (msg, (64 - len(msg)) * '.'))
+        print("[CV] %s %s" % (msg, (64 - len(msg)) * '.'))
 
     estimator.set_params(**parameters)
     score, n_samples_test, scoring_time = _cross_val_score(
@@ -242,7 +242,7 @@ def fit_grid_point(X, y, estimator, parameters, train, test, scorer,
         msg += ", score=%f" % score
     if verbose > 1:
         end_msg = "%s -%s" % (msg, logger.short_format_time(scoring_time))
-        print("[GridSearchCV] %s %s" % ((64 - len(end_msg)) * '.', end_msg))
+        print("[CV] %s %s" % ((64 - len(end_msg)) * '.', end_msg))
 
     return score, parameters, n_samples_test
 
@@ -357,9 +357,9 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
 
         estimator = self.estimator
         cv = self.cv
-        self.scorer_ = check_scorable(self.estimator, scoring=self.scoring,
-                                      loss_func=self.loss_func,
-                                      score_func=self.score_func)
+        self.scorer_ = check_scoring(self.estimator, scoring=self.scoring,
+                                     loss_func=self.loss_func,
+                                     score_func=self.score_func)
 
         n_samples = _num_samples(X)
         X, y = check_arrays(X, y, allow_lists=True, sparse_format='csr')
