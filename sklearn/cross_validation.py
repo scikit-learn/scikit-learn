@@ -1100,7 +1100,7 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
 
 
 def _cross_val_score(estimator, X, y, scorer, train, test,
-                     verbose, fit_params):
+                     verbose, fit_params, return_train_score=False):
     """Inner loop for cross validation"""
     n_samples = _num_samples(X)
     fit_params = fit_params if fit_params is not None else {}
@@ -1120,7 +1120,11 @@ def _cross_val_score(estimator, X, y, scorer, train, test,
     if verbose > 1:
         print("score %f in %f s" % (score, scoring_time))
 
-    return score, _num_samples(X_test), scoring_time
+    if return_train_score:
+        return (_score(estimator, X_train, y_train, scorer), score,
+                _num_samples(X_test), scoring_time)
+    else:
+        return score, _num_samples(X_test), scoring_time
 
 
 def _split(estimator, X, y, indices, train_indices=None):
