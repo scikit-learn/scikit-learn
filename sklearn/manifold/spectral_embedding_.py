@@ -723,7 +723,7 @@ class DiffusionEmbedding(SpectralEmbedding):
         self : object
             Returns the instance itself.
         """
-        self.random_state = check_random_state(self.random_state)
+        random_state = check_random_state(self.random_state)
         if isinstance(self.affinity, basestring):
             if self.affinity not in set(("nearest_neighbors", "rbf",
                                          "precomputed")):
@@ -738,7 +738,7 @@ class DiffusionEmbedding(SpectralEmbedding):
         self.embedding_ = diffusion_embedding(affinity_matrix,
                                               n_components=self.n_components,
                                               eigen_solver=self.eigen_solver,
-                                              random_state=self.random_state,
+                                              random_state=random_state,
                                               diffusion_time=self.diffusion_time,
                                               drop_first=False)
         return self
