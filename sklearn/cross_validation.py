@@ -27,7 +27,7 @@ from .utils.validation import _num_samples
 from .utils.fixes import unique
 from .externals.joblib import Parallel, delayed
 from .externals.six import string_types, with_metaclass
-from .metrics.scorer import check_scorable
+from .metrics.scorer import check_scoring
 
 __all__ = ['Bootstrap',
            'KFold',
@@ -1087,7 +1087,7 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
     """
     X, y = check_arrays(X, y, sparse_format='csr', allow_lists=True)
     cv = _check_cv(cv, X, y, classifier=is_classifier(estimator))
-    scorer = check_scorable(estimator, score_func=score_func, scoring=scoring)
+    scorer = check_scoring(estimator, score_func=score_func, scoring=scoring)
     # We clone the estimator to make sure that all the folds are
     # independent, and that it is pickle-able.
     parallel = Parallel(n_jobs=n_jobs, verbose=verbose,
@@ -1323,7 +1323,7 @@ def permutation_test_score(estimator, X, y, score_func=None, cv=None,
     """
     X, y = check_arrays(X, y, sparse_format='csr')
     cv = _check_cv(cv, X, y, classifier=is_classifier(estimator))
-    scorer = check_scorable(estimator, scoring=scoring, score_func=score_func)
+    scorer = check_scoring(estimator, scoring=scoring, score_func=score_func)
     random_state = check_random_state(random_state)
 
     # We clone the estimator to make sure that all the folds are

@@ -15,7 +15,7 @@ from ..base import is_classifier
 from ..cross_validation import _check_cv as check_cv
 from ..cross_validation import _split, _score
 from .base import SelectorMixin
-from ..metrics.scorer import check_scorable
+from ..metrics.scorer import check_scoring
 
 
 class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
@@ -326,8 +326,8 @@ class RFECV(RFE, MetaEstimatorMixin):
                   verbose=self.verbose - 1)
 
         cv = check_cv(self.cv, X, y, is_classifier(self.estimator))
-        scorer = check_scorable(self.estimator, scoring=self.scoring,
-                                loss_func=self.loss_func)
+        scorer = check_scoring(self.estimator, scoring=self.scoring,
+                               loss_func=self.loss_func)
         scores = np.zeros(X.shape[1])
 
         # Cross-validation

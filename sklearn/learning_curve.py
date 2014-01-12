@@ -12,7 +12,7 @@ from .utils import check_arrays
 from .externals.joblib import Parallel, delayed
 from .metrics.scorer import get_scorer
 from .cross_validation import _split, _fit, _score
-from .metrics.scorer import check_scorable
+from .metrics.scorer import check_scoring
 
 
 def learning_curve(estimator, X, y, train_sizes=np.linspace(0.1, 1.0, 10),
@@ -94,7 +94,6 @@ def learning_curve(estimator, X, y, train_sizes=np.linspace(0.1, 1.0, 10),
     -----
     See :ref:`examples/plot_learning_curve.py <example_plot_learning_curve.py>`
     """
-
     if exploit_incremental_learning and not hasattr(estimator, "partial_fit"):
         raise ValueError("An estimator must support the partial_fit interface "
                          "to exploit incremental learning")
@@ -102,7 +101,7 @@ def learning_curve(estimator, X, y, train_sizes=np.linspace(0.1, 1.0, 10),
     X, y = check_arrays(X, y, sparse_format='csr', allow_lists=True)
     # Make a list since we will be iterating multiple times over the folds
     cv = list(_check_cv(cv, X, y, classifier=is_classifier(estimator)))
-    scorer = check_scorable(estimator, scoring=scoring)
+    scorer = check_scoring(estimator, scoring=scoring)
 
     # HACK as long as boolean indices are allowed in cv generators
     if cv[0][0].dtype == bool:
