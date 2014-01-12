@@ -10,7 +10,6 @@ from .base import is_classifier, clone
 from .cross_validation import _check_cv
 from .utils import check_arrays
 from .externals.joblib import Parallel, delayed
-from .metrics.scorer import get_scorer
 from .cross_validation import _split, _fit, _score, _cross_val_score
 from .metrics.scorer import check_scoring
 
@@ -123,11 +122,7 @@ def learning_curve(estimator, X, y, train_sizes=np.linspace(0.1, 1.0, 10),
     parallel = Parallel(n_jobs=n_jobs, pre_dispatch=pre_dispatch,
                         verbose=verbose)
     if exploit_incremental_learning:
-        if is_classifier(estimator):
-            classes = np.unique(y)
-        else:
-            classes = None
-            
+        classes = np.unique(y) if is_classifier(estimator) else None
         out = parallel(delayed(_incremental_fit_estimator)(
             clone(estimator), X, y, classes, train, test, train_sizes_abs,
             scorer, verbose) for train, test in cv)
