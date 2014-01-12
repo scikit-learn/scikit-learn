@@ -340,12 +340,9 @@ class RFECV(RFE, MetaEstimatorMixin):
             # Score each subset of features
             for k in range(0, max(ranking_)):
                 mask = np.where(ranking_ <= k + 1)[0]
-                X_train_subset = X_train[:, mask]
-                X_test_subset = X_test[:, mask]
-
                 estimator = clone(self.estimator)
-                estimator.fit(X_train_subset, y_train)
-                score = _score(estimator, X_test_subset, y_test, scorer)
+                estimator.fit(X_train[:, mask], y_train)
+                score = _score(estimator, X_test[:, mask], y_test, scorer)
 
                 if self.verbose > 0:
                     print("Finished fold with %d / %d feature ranks, score=%f"
