@@ -244,13 +244,14 @@ def pairwise_ranking_accuracy(y_true, y_score):
     n_correct = 0
     n_total = 0
     for i in xrange(n_samples):
-        for j in xrange(n_samples):
+        for j in xrange(i + 1, n_samples):
             if y_true[i] == y_true[j]:
                 continue
-            if y_true[i] > y_true[j]:
-                n_total += 1
-                if y_score[i] > y_score[j]:
-                    n_correct += 1
+
+            n_total += 1
+            if np.sign(y_true[i] - y_true[j]) == np.sign(y_score[i] -
+                                                         y_score[j]):
+                n_correct += 1
 
     if n_total == 0:
         warnings.warn("pairwise_ranking_accuracy is undefined when all values"
