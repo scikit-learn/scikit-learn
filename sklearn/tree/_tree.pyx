@@ -635,11 +635,15 @@ cdef class RegressionCriterion(Criterion):
         cdef double* sq_sum_total = self.sq_sum_total
         cdef double* var_left = self.var_left
         cdef double* var_right = self.var_right
+        cdef double* sum_left = self.sum_left
+        cdef double* sum_right = self.sum_right
+        cdef double* sum_total = self.sum_total
 
         cdef SIZE_t i = 0
         cdef SIZE_t p = 0
         cdef SIZE_t k = 0
         cdef DOUBLE_t y_ik = 0.0
+        cdef DOUBLE_t w_y_ik = 0.0
         cdef DOUBLE_t w = 1.0
 
         for k in range(n_outputs):
@@ -651,9 +655,9 @@ cdef class RegressionCriterion(Criterion):
             sq_sum_total[k] = 0.0
             var_left[k] = 0.0
             var_right[k] = 0.0
-            self.sum_left[k] = 0.0
-            self.sum_right[k] = 0.0
-            self.sum_total[k] = 0.0
+            sum_left[k] = 0.0
+            sum_right[k] = 0.0
+            sum_total[k] = 0.0
 
         for p in range(start, end):
             i = samples[p]
@@ -663,16 +667,16 @@ cdef class RegressionCriterion(Criterion):
 
             for k in range(n_outputs):
                 y_ik = y[i * y_stride + k]
-                sq_sum_total[k] += w * y_ik * y_ik
-                mean_total[k] += w * y_ik
-                self.sum_total[k] += w * y_ik
+                w_y_ik = w * y_ik
+                sum_total[k] += w_y_ik
+                sq_sum_total[k] += w_y_ik * y_ik
 
             weighted_n_node_samples += w
 
         self.weighted_n_node_samples = weighted_n_node_samples
 
         for k in range(n_outputs):
-            mean_total[k] /= weighted_n_node_samples
+            mean_total[k] = sum_total[k] / weighted_n_node_samples
 
         # Reset to pos=start
         self.reset()
@@ -705,9 +709,9 @@ cdef class RegressionCriterion(Criterion):
             mean_left[k] = 0.0
             sq_sum_right[k] = sq_sum_total[k]
             sq_sum_left[k] = 0.0
-            var_left[k] = 0.0
             var_right[k] = (sq_sum_right[k] / weighted_n_node_samples -
                             mean_right[k] * mean_right[k])
+            var_left[k] = 0.0
             sum_right[k] = sum_total[k]
             sum_left[k] = 0.0
 
@@ -740,7 +744,6 @@ cdef class RegressionCriterion(Criterion):
         cdef DOUBLE_t w = 1.0
         cdef DOUBLE_t y_ik, w_y_ik
 
-
         # Note: We assume start <= pos < new_pos <= end
         for p in range(pos, new_pos):
             i = samples[p]
@@ -752,11 +755,11 @@ cdef class RegressionCriterion(Criterion):
                 y_ik = y[i * y_stride + k]
                 w_y_ik = w * y_ik
 
-                sq_sum_left[k] += w_y_ik * y_ik
-                sq_sum_right[k] -= w_y_ik * y_ik
-
                 sum_left[k] += w_y_ik
                 sum_right[k] -= w_y_ik
+
+                sq_sum_left[k] += w_y_ik * y_ik
+                sq_sum_right[k] -= w_y_ik * y_ik
 
             weighted_n_left += w
             weighted_n_right -= w
