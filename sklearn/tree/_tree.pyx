@@ -740,8 +740,8 @@ cdef class RegressionCriterion(Criterion):
         cdef DOUBLE_t w = 1.0
         cdef DOUBLE_t y_ik, w_y_ik
 
-        # Note: We assume start <= pos < new_pos <= end
 
+        # Note: We assume start <= pos < new_pos <= end
         for p in range(pos, new_pos):
             i = samples[p]
 
@@ -758,15 +758,12 @@ cdef class RegressionCriterion(Criterion):
                 sum_left[k] += w_y_ik
                 sum_right[k] -= w_y_ik
 
-                mean_left[k] = ((weighted_n_left * mean_left[k] + w_y_ik) /
-                                (weighted_n_left + w))
-                mean_right[k] = ((weighted_n_right * mean_right[k] - w_y_ik) /
-                                 (weighted_n_right - w))
-
             weighted_n_left += w
             weighted_n_right -= w
 
         for k in range(n_outputs):
+            mean_left[k] = sum_left[k] / weighted_n_left
+            mean_right[k] = sum_right[k] / weighted_n_right
             var_left[k] = (sq_sum_left[k] / weighted_n_left -
                            mean_left[k] * mean_left[k])
             var_right[k] = (sq_sum_right[k] / weighted_n_right -
