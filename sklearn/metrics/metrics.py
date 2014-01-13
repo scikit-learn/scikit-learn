@@ -27,6 +27,7 @@ from scipy.spatial.distance import hamming as sp_hamming
 
 from ..externals.six.moves import zip
 from ..externals.six.moves import xrange as range
+from .metrics_fast import _pairwise_ranking_accuracy
 from ..preprocessing import LabelBinarizer, label_binarize
 from ..preprocessing import LabelEncoder
 from ..utils import check_arrays
@@ -238,20 +239,10 @@ def pairwise_ranking_accuracy(y_true, y_score):
     Large-scale Linear RankSVM .
     Neural Computation, 2013.
     """
-    y_true, y_score = check_arrays(y_true, y_score)
+    y_true, y_score = check_arrays(y_true, y_score, dtype=np.float64)
     n_samples = y_true.shape[0]
 
-    n_correct = 0
-    n_total = 0
-    for i in xrange(n_samples):
-        for j in xrange(i + 1, n_samples):
-            if y_true[i] == y_true[j]:
-                continue
-
-            n_total += 1
-            if np.sign(y_true[i] - y_true[j]) == np.sign(y_score[i] -
-                                                         y_score[j]):
-                n_correct += 1
+    n_correct, n_total = _pairwise_ranking_accuracy(y_true, y_score)
 
     if n_total == 0:
         warnings.warn("pairwise_ranking_accuracy is undefined when all values"
@@ -259,7 +250,6 @@ def pairwise_ranking_accuracy(y_true, y_score):
         return 0
 
     return n_correct / float(n_total)
-
 
 
 ###############################################################################
