@@ -282,6 +282,27 @@ def test_importances_raises():
     clf.feature_importances_
 
 
+def test_importances_gini_equal_mse():
+    """Check that gini is equivalent to mse for binary output variable"""
+
+    X, y = datasets.make_classification(n_samples=2000,
+                                        n_features=10,
+                                        n_informative=3,
+                                        n_redundant=0,
+                                        n_repeated=0,
+                                        shuffle=False,
+                                        random_state=0)
+
+    clf = DecisionTreeClassifier(criterion="gini", random_state=0).fit(X, y)
+    reg = DecisionTreeRegressor(criterion="mse", random_state=0).fit(X, y)
+
+    assert_almost_equal(clf.feature_importances_, reg.feature_importances_)
+    assert_array_equal(clf.tree_.feature, reg.tree_.feature)
+    assert_array_equal(clf.tree_.children_left, reg.tree_.children_left)
+    assert_array_equal(clf.tree_.children_right, reg.tree_.children_right)
+    assert_array_equal(clf.tree_.n_node_samples, reg.tree_.n_node_samples)
+
+
 def test_max_features():
     """Check max_features."""
     for name, TreeRegressor in REG_TREES.items():
