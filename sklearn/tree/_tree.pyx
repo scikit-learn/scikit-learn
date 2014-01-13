@@ -854,7 +854,8 @@ cdef class FriedmanMSE(MSE):
 
         total_sum_left = total_sum_left / n_outputs
         total_sum_right = total_sum_right / n_outputs
-        diff = (total_sum_left / weighted_n_left) - (total_sum_right / weighted_n_right)
+        diff = ((total_sum_left / weighted_n_left) -
+                (total_sum_right / weighted_n_right))
 
         return (weighted_n_left * weighted_n_right * diff * diff) / (weighted_n_left + weighted_n_right)
 
