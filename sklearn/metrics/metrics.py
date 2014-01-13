@@ -202,6 +202,66 @@ class UndefinedMetricWarning(UserWarning):
 
 
 ###############################################################################
+# Ranking metrics
+###############################################################################
+
+# FIXME: ROC-AUC and Average Precision are also ranking metrics.
+
+
+def pairwise_ranking_accuracy(y_true, y_score):
+    """Pairwise ranking accuracy
+
+    Returns the percentage of pairs which are predicted in the correct order by
+    the model.
+
+    Parameters
+    ----------
+    y_true : array, shape = [n_samples]
+        True targets, consisting of real or integer values.
+
+    y_score : array, shape = [n_samples]
+        Predicted targets, consisting of real values (output of
+        decision_function or predict_proba).
+
+    Returns
+    -------
+    pairwise_accuracy : float
+
+    Note
+    ----
+    ROC-AUC is a special case of pairwise ranking accuracy: the pairwise ranking
+    accuracy is equal to AUC when y_true contains only two unique values.
+
+    Reference
+    ---------
+    C.-P. Lee and C.-J. Lin.
+    Large-scale Linear RankSVM .
+    Neural Computation, 2013.
+    """
+    y_true, y_score = check_arrays(y_true, y_score)
+    n_samples = y_true.shape[0]
+
+    n_correct = 0
+    n_total = 0
+    for i in xrange(n_samples):
+        for j in xrange(n_samples):
+            if y_true[i] == y_true[j]:
+                continue
+            if y_true[i] > y_true[j]:
+                n_total += 1
+                if y_score[i] > y_score[j]:
+                    n_correct += 1
+
+    if n_total == 0:
+        warnings.warn("pairwise_ranking_accuracy is undefined when all values"
+                      " in y_true are the same.")
+        return 0
+
+    return n_correct / float(n_total)
+
+
+
+###############################################################################
 # Classification metrics
 ###############################################################################
 def hinge_loss(y_true, pred_decision, pos_label=None, neg_label=None):
