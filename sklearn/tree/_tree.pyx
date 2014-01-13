@@ -8,6 +8,7 @@
 #          Noel Dawe <noel@dawe.me>
 #          Satrajit Gosh <satrajit.ghosh@gmail.com>
 #          Lars Buitinck <L.J.Buitinck@uva.nl>
+#          Arnaud Joly <arnaud.v.joly@gmail.com>
 #
 # Licence: BSD 3 clause
 
@@ -646,18 +647,18 @@ cdef class RegressionCriterion(Criterion):
         cdef DOUBLE_t w_y_ik = 0.0
         cdef DOUBLE_t w = 1.0
 
-        for k in range(n_outputs):
-            mean_left[k] = 0.0
-            mean_right[k] = 0.0
-            mean_total[k] = 0.0
-            sq_sum_right[k] = 0.0
-            sq_sum_left[k] = 0.0
-            sq_sum_total[k] = 0.0
-            var_left[k] = 0.0
-            var_right[k] = 0.0
-            sum_left[k] = 0.0
-            sum_right[k] = 0.0
-            sum_total[k] = 0.0
+        cdef SIZE_t n_byte = n_outputs * sizeof(double)
+        memset(mean_left, 0, n_byte)
+        memset(mean_right, 0, n_byte)
+        memset(mean_total, 0, n_byte)
+        memset(sq_sum_left, 0, n_byte)
+        memset(sq_sum_right, 0, n_byte)
+        memset(sq_sum_total, 0, n_byte)
+        memset(var_left, 0, n_byte)
+        memset(var_right, 0, n_byte)
+        memset(sum_left, 0, n_byte)
+        memset(sum_right, 0, n_byte)
+        memset(sum_total, 0, n_byte)
 
         for p in range(start, end):
             i = samples[p]
