@@ -2242,7 +2242,7 @@ Major changes in this release include:
 
     - feature_selection module redesign.
 
-    - Migration to GIT as content management system.
+    - Migration to GIT as version control system.
 
     - Removal of obsolete attrselect module.
 
