@@ -29,6 +29,12 @@ def _pairwise_ranking_accuracy(np.ndarray[double, ndim=1] y_true,
     cdef int n_total = 0
     cdef int i, j
 
+    # FIXME: the following algorithm can be used for reducing the complexity
+    # from O(n^2) to O(n log(n)):
+    # David Christensen.
+    # Fast algorithms for the calculation of Kendall’s tau.
+    # Computational Statistics, 20:51–62, 2005.
+
     for i in xrange(n_samples):
         for j in xrange(i + 1, n_samples):
             if y_true[i] == y_true[j]:
