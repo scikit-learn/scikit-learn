@@ -178,12 +178,13 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
         (Is returned, along with ``coefs``, when ``return_models`` is set
         to ``False``)
 
-    coefs : shape (n_features, n_alphas) or (n_outputs, n_features, n_alphas)
+    coefs : array, shape (n_features, n_alphas) or
+            (n_outputs, n_features, n_alphas)
         Coefficients along the path.
         (Is returned, along with ``alphas``, when ``return_models`` is set
         to ``False``).
 
-    dual_gaps : shape (n_alphas)
+    dual_gaps : array, shape (n_alphas,)
         The dual gaps at the end of the optimization for each alpha.
         (Is returned, along with ``alphas``, when ``return_models`` is set
         to ``False``).
@@ -340,7 +341,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     models : a list of models along the regularization path
         (Is returned if ``return_models`` is set ``True`` (default).
 
-    alphas : array, shape: (n_alphas,)
+    alphas : array, shape (n_alphas,)
         The alphas along the path where models are computed.
         (Is returned, along with ``coefs``, when ``return_models`` is set
         to ``False``)
@@ -437,7 +438,8 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     if not multi_output:
         coefs = np.empty((n_features, n_alphas), dtype=np.float64)
     else:
-        coefs = np.empty((n_outputs, n_features, n_alphas), dtype=np.float64)
+        coefs = np.empty((n_outputs, n_features, n_alphas),
+                          dtype=np.float64)
 
     if coef_init is None:
         coef_ = np.asfortranarray(np.zeros(coefs.shape[:-1]))
@@ -455,8 +457,8 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
                 max_iter, tol, positive)
                 )
         elif not multi_output:
-                coef_, dual_gap_, eps_ = cd_fast.enet_coordinate_descent(
-                    coef_, l1_reg, l2_reg, X, y, max_iter, tol, positive)
+            coef_, dual_gap_, eps_ = cd_fast.enet_coordinate_descent(
+                coef_, l1_reg, l2_reg, X, y, max_iter, tol, positive)
         else:
             coef_, dual_gap_, eps_ = (
                 cd_fast.enet_coordinate_descent_multi_task(
