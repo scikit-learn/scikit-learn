@@ -24,6 +24,7 @@ import numpy as np
 
 from scipy.sparse import coo_matrix
 from scipy.spatial.distance import hamming as sp_hamming
+from scipy.stats import kendalltau
 
 from ..externals.six.moves import zip
 from ..externals.six.moves import xrange as range
@@ -250,6 +251,29 @@ def pairwise_ranking_accuracy(y_true, y_score):
         return 0
 
     return n_correct / float(n_total)
+
+
+def kendall_tau_score(y_true, y_score):
+    """Kendall's tau score
+
+    Parameters
+    ----------
+    y_true : array, shape = [n_samples]
+        True targets, consisting of real or integer values.
+
+    y_score : array, shape = [n_samples]
+        Predicted targets, consisting of real values (output of
+        decision_function or predict_proba).
+
+    Returns
+    -------
+    kendall_tau : float
+
+    Note
+    ----
+    The implementation uses scipy.stats.kendalltau.
+    """
+    return kendalltau(y_true, y_score)[0]
 
 
 ###############################################################################

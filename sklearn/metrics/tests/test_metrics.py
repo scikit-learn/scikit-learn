@@ -41,6 +41,7 @@ from sklearn.metrics import (accuracy_score,
                              hamming_loss,
                              hinge_loss,
                              jaccard_similarity_score,
+                             kendall_tau_score,
                              log_loss,
                              matthews_corrcoef,
                              mean_squared_error,
@@ -2559,3 +2560,35 @@ def test_pairwise_ranking_accuracy_auc():
 
     assert_array_almost_equal(roc_auc_score(y_true, probas_pred),
                               pairwise_ranking_accuracy(y_true, probas_pred))
+
+
+def test_kendall_tau():
+    # Perfect rankings.
+    assert_almost_equal(kendall_tau_score([3, 2, 1], [3, 2, 1]),
+                        1.0)
+    assert_almost_equal(kendall_tau_score([3, 2, 1], [6, 4, 2]),
+                        1.0)
+    # Imperfect rankings.
+    assert_almost_equal(kendall_tau_score([3, 2, 1], [6, 4, 5]),
+                        1./3)
+    assert_almost_equal(kendall_tau_score([3, 2, 1], [6, 7, 5]),
+                        1./3)
+    assert_almost_equal(kendall_tau_score([3, 2, 1], [1, 2, 3]),
+                        -1)
+    ## Imperfect rankings (same but in different order)
+    assert_almost_equal(kendall_tau_score([2, 3, 1], [4, 6, 5]),
+                        1./3)
+    assert_almost_equal(kendall_tau_score([2, 3, 1], [7, 6, 5]),
+                        1./3)
+    assert_almost_equal(kendall_tau_score([2, 3, 1], [2, 1, 3]),
+                        -1)
+    ## With ties.
+    assert_almost_equal(kendall_tau_score([3, 3, 1], [6, 4, 5]),
+                        0)
+    assert_almost_equal(kendall_tau_score([3, 3, 1], [6, 7, 5]),
+                        0.816, 3)
+    assert_almost_equal(kendall_tau_score([3, 2, 1], [6, 6, 5]),
+                        0.816, 3)
+    with warnings.catch_warnings(record=True):
+        assert_true(np.isnan(kendall_tau_score([3, 2, 1], [6, 6, 6])))
+        assert_true(np.isnan(kendall_tau_score([3, 3, 3], [6, 4, 5])))
