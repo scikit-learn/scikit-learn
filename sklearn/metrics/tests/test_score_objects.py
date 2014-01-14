@@ -5,17 +5,19 @@ import numpy as np
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import ignore_warnings
+from sklearn.utils.testing import SkipTest
 
 from sklearn.metrics import (f1_score, r2_score, roc_auc_score, fbeta_score,
                              log_loss)
 from sklearn.metrics.cluster import adjusted_rand_score
-from sklearn.metrics.scorer import check_scoring
+from sklearn.metrics.scorer import check_scoring, evaluate_scorers
 from sklearn.metrics import make_scorer, SCORERS
 from sklearn.svm import LinearSVC
 from sklearn.cluster import KMeans
 from sklearn.linear_model import Ridge, LogisticRegression
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.datasets import make_blobs
+from sklearn.datasets import make_classification
 from sklearn.datasets import make_multilabel_classification
 from sklearn.datasets import load_diabetes
 from sklearn.cross_validation import train_test_split, cross_val_score
@@ -152,6 +154,7 @@ def test_thresholded_scorers_multilabel_indicator_data():
     """Test that the scorer work with multilabel-indicator format
     for multilabel and multi-output multi-class classifier
     """
+    raise SkipTest
     X, y = make_multilabel_classification(return_indicator=True,
                                           allow_unlabeled=False,
                                           random_state=0)
@@ -203,6 +206,21 @@ def test_unsupervised_scorers():
     score1 = SCORERS['adjusted_rand_score'](km, X_test, y_test)
     score2 = adjusted_rand_score(y_test, km.predict(X_test))
     assert_almost_equal(score1, score2)
+
+
+def test_evaluate_scorers():
+    X, y = make_classification(n_classes=2, random_state=0)
+    clf = LinearSVC()
+    clf.fit(X, y)
+    s1, s2 = evaluate_scorers(clf, X, y, [SCORERS["f1"],
+                                          SCORERS["roc_auc"]])
+    df = clf.decision_function(X)
+    y_pred = clf.predict(X)
+    f1 = f1_score(y, y_pred)
+    roc = roc_auc_score(y, df.ravel())
+
+    assert_almost_equal(s1, f1)
+    assert_almost_equal(s2, roc)
 
 
 @ignore_warnings

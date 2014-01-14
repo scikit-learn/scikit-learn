@@ -31,130 +31,94 @@ from ..utils.multiclass import type_of_target
 from ..externals import six
 
 
-class _BaseScorer(six.with_metaclass(ABCMeta, object)):
-    def __init__(self, score_func, sign, kwargs):
-        self._kwargs = kwargs
-        self._score_func = score_func
-        self._sign = sign
+class _Scorer(object):
 
-    @abstractmethod
+    def __init__(self, score_func, greater_is_better=True, needs_proba=False,
+                 needs_threshold=False, kwargs={}):
+        self.score_func = score_func
+        self.greater_is_better = greater_is_better
+        self.needs_proba = needs_proba
+        self.needs_threshold = needs_threshold
+        self.kwargs = kwargs
+
     def __call__(self, estimator, X, y):
-        pass
-
-    def __repr__(self):
-        kwargs_string = "".join([", %s=%s" % (str(k), str(v))
-                                 for k, v in self._kwargs.items()])
-        return ("make_scorer(%s%s%s%s)"
-                % (self._score_func.__name__,
-                   "" if self._sign > 0 else ", greater_is_better=False",
-                   self._factory_args(), kwargs_string))
-
-    def _factory_args(self):
-        """Return non-default make_scorer arguments for repr."""
-        return ""
+        return evaluate_scorers(estimator, X, y, [self])[0]
 
 
-class _PredictScorer(_BaseScorer):
-    def __call__(self, estimator, X, y_true):
-        """Evaluate predicted target values for X relative to y_true.
+def evaluate_scorers(estimator, X, y, scorers):
+    has_pb = hasattr(estimator, "predict_proba")
+    has_df = hasattr(estimator, "decision_function")
 
-        Parameters
-        ----------
-        estimator : object
-            Trained estimator to use for scoring. Must have a predict_proba
-            method; the output of that is used to compute the score.
+    # Make a first pass through scorers to determine if we need
+    # predict_proba or decision_function.
+    compute_proba = False
+    compute_df = False
+    for scorer in scorers:
+        if scorer.needs_proba:
+            if not has_pb:
+                raise ValueError("%s needs probabilities but predict_proba is"
+                                 "not available in %s." % (scorer, estimator))
+            compute_proba = True
 
-        X : array-like or sparse matrix
-            Test data that will be fed to estimator.predict.
+        elif scorer.needs_threshold:
+            if has_pb:
+                # We choose predict_proba first because its interface
+                # is more consistent across the project.
+                compute_proba = True
+            elif has_df:
+                compute_df = True
+            else:
+                raise ValueError("%s needs continuous outputs but neither"
+                                 "predict_proba nor decision_function "
+                                 "are available in %s." % (scorer, estimator))
 
-        y_true : array-like
-            Gold standard target values for X.
+    # Compute predict_proba or decision_function if needed.
+    y_pred = None
+    if compute_proba:
+        y_proba = estimator.predict_proba(X)
 
-        Returns
-        -------
-        score : float
-            Score function applied to prediction of estimator on X.
-        """
+        # For multi-output multi-class estimator
+        #if isinstance(y_proba, list):
+            #y_proba = np.vstack([p[:, -1] for p in y_proba]).T
+
+        y_pred = estimator.classes_[y_proba.argmax(axis=1)]
+
+
+    elif compute_df:
+        df = estimator.decision_function(X)
+
+        # For multi-output multi-class estimator
+        #if isinstance(df, list):
+            #df = np.vstack(p for p in df).T
+
+        if len(df.shape) == 2 and df.shape[1] >= 2:
+            y_pred = estimator.classes_[df.argmax(axis=1)]
+        else:
+            y_pred = estimator.classes_[(df >= 0).astype(int)]
+
+    # Compute y_pred if needed
+    if y_pred is None:
         y_pred = estimator.predict(X)
-        return self._sign * self._score_func(y_true, y_pred, **self._kwargs)
 
+    # Compute scores.
+    scores = []
+    for scorer in scorers:
+        if scorer.needs_proba:
+            score = scorer.score_func(y, y_proba, **scorer.kwargs)
 
-class _ProbaScorer(_BaseScorer):
-    def __call__(self, clf, X, y):
-        """Evaluate predicted probabilities for X relative to y_true.
+        elif scorer.needs_threshold:
+            if compute_proba:
+                score = scorer.score_func(y, y_proba[:, 1], **scorer.kwargs)
+            else:
+                score = scorer.score_func(y, df.ravel(), **scorer.kwargs)
 
-        Parameters
-        ----------
-        clf : object
-            Trained classifier to use for scoring. Must have a predict_proba
-            method; the output of that is used to compute the score.
+        else:
+            score = scorer.score_func(y, y_pred, **scorer.kwargs)
 
-        X : array-like or sparse matrix
-            Test data that will be fed to clf.predict_proba.
+        sign = 1 if scorer.greater_is_better else -1
+        scores.append(sign * score)
 
-        y : array-like
-            Gold standard target values for X. These must be class labels,
-            not probabilities.
-
-        Returns
-        -------
-        score : float
-            Score function applied to prediction of estimator on X.
-        """
-        y_pred = clf.predict_proba(X)
-        return self._sign * self._score_func(y, y_pred, **self._kwargs)
-
-    def _factory_args(self):
-        return ", needs_proba=True"
-
-
-class _ThresholdScorer(_BaseScorer):
-    def __call__(self, clf, X, y):
-        """Evaluate decision function output for X relative to y_true.
-
-        Parameters
-        ----------
-        clf : object
-            Trained classifier to use for scoring. Must have either a
-            decision_function method or a predict_proba method; the output of
-            that is used to compute the score.
-
-        X : array-like or sparse matrix
-            Test data that will be fed to clf.decision_function or
-            clf.predict_proba.
-
-        y : array-like
-            Gold standard target values for X. These must be class labels,
-            not decision function values.
-
-        Returns
-        -------
-        score : float
-            Score function applied to prediction of estimator on X.
-        """
-        y_type = type_of_target(y)
-        if y_type not in ("binary", "multilabel-indicator"):
-            raise ValueError("{0} format is not supported".format(y_type))
-
-        try:
-            y_pred = clf.decision_function(X)
-
-            # For multi-output multi-class estimator
-            if isinstance(y_pred, list):
-                y_pred = np.vstack(p for p in y_pred).T
-
-        except (NotImplementedError, AttributeError):
-            y_pred = clf.predict_proba(X)
-
-            if y_type == "binary":
-                y_pred = y_pred[:, 1]
-            elif isinstance(y_pred, list):
-                y_pred = np.vstack([p[:, -1] for p in y_pred]).T
-
-        return self._sign * self._score_func(y, y_pred, **self._kwargs)
-
-    def _factory_args(self):
-        return ", needs_threshold=True"
+    return np.array(scores)
 
 
 def _deprecate_loss_and_score_funcs(
@@ -297,17 +261,15 @@ def make_scorer(score_func, greater_is_better=True, needs_proba=False,
     >>> grid = GridSearchCV(LinearSVC(), param_grid={'C': [1, 10]},
     ...                     scoring=ftwo_scorer)
     """
-    sign = 1 if greater_is_better else -1
     if needs_proba and needs_threshold:
         raise ValueError("Set either needs_proba or needs_threshold to True,"
                          " but not both.")
-    if needs_proba:
-        cls = _ProbaScorer
-    elif needs_threshold:
-        cls = _ThresholdScorer
-    else:
-        cls = _PredictScorer
-    return cls(score_func, sign, kwargs)
+
+    return _Scorer(score_func,
+                   greater_is_better=greater_is_better,
+                   needs_proba=needs_proba,
+                   needs_threshold=needs_threshold,
+                   kwargs=kwargs)
 
 
 # Standard regression scores
