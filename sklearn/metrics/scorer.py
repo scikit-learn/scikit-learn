@@ -198,6 +198,54 @@ def get_scorer(scoring):
     return scorer
 
 
+class _PassthroughScorer(object):
+    """Callable that wraps estimator.score"""
+    def __call__(self, estimator, *args, **kwargs):
+        return estimator.score(*args, **kwargs)
+
+
+def check_scoring(estimator, scoring=None, loss_func=None, score_func=None):
+    """Determine scorer from user options.
+
+    A TypeError will be thrown if the estimator cannot be scored.
+
+    Parameters
+    ----------
+    estimator : estimator object implementing 'fit'
+        The object to use to fit the data.
+
+    scoring : string, callable or None, optional, default: None
+        A string (see model evaluation documentation) or
+        a scorer callable object / function with signature
+        ``scorer(estimator, X, y)``.
+
+    Returns
+    -------
+    scoring : callable
+        A scorer callable object / function with signature
+        ``scorer(estimator, X, y)``.
+    """
+    has_scoring = not (scoring is None and loss_func is None and
+                       score_func is None)
+    if not hasattr(estimator, 'fit'):
+        raise TypeError("estimator should a be an estimator implementing "
+                        "'fit' method, %r was passed" % estimator)
+    elif hasattr(estimator, 'predict') and has_scoring:
+        return _deprecate_loss_and_score_funcs(scoring=scoring,
+                                               loss_func=loss_func,
+                                               score_func=score_func)
+    elif hasattr(estimator, 'score'):
+        return _PassthroughScorer()
+    elif not has_scoring:
+        raise TypeError(
+            "If no scoring is specified, the estimator passed should "
+            "have a 'score' method. The estimator %r does not." % estimator)
+    else:
+        raise TypeError(
+            "The estimator passed should have a 'score' or a 'predict' "
+            "method. The estimator %r does not." % estimator)
+
+
 def make_scorer(score_func, greater_is_better=True, needs_proba=False,
                 needs_threshold=False, **kwargs):
     """Make a scorer from a performance metric or loss function.
