@@ -184,14 +184,14 @@ def test_lasso_cv_positive_constraint():
     max_iter = 500
 
     # Ensure the unconstrained fit has a negative coefficient
-    clf_unconstrained  = LassoCV(n_alphas=3, eps=1e-1, max_iter=max_iter, cv=2,
-                                 n_jobs=1)
+    clf_unconstrained = LassoCV(n_alphas=3, eps=1e-1, max_iter=max_iter, cv=2,
+                                n_jobs=1)
     clf_unconstrained.fit(X, y)
     assert_true(min(clf_unconstrained.coef_) < 0)
 
     # On same data, constrained fit has non-negative coefficients
-    clf_constrained  = LassoCV(n_alphas=3, eps=1e-1, max_iter=max_iter,
-                               positive=True, cv=2, n_jobs=1)
+    clf_constrained = LassoCV(n_alphas=3, eps=1e-1, max_iter=max_iter,
+                              positive=True, cv=2, n_jobs=1)
     clf_constrained.fit(X, y)
     assert_true(min(clf_constrained.coef_) >= 0)
 
@@ -295,18 +295,6 @@ def test_path_parameters():
     assert_equal(50, clf.n_alphas)
     assert_equal(50, len(clf.alphas_))
 
-    # Multi-task output
-    X, y, _, _ = build_dataset(n_targets=3)
-    max_iter = 100
-    clf = MultiTaskElasticNetCV(n_alphas=50, eps=1e-3, max_iter=max_iter,
-                                l1_ratio=0.5, tol=1e-3)
-    clf.fit(X, y)
-    assert_equal(0.5, clf.l1_ratio_)
-    assert_equal((3, X.shape[1]), clf.coef_.shape)
-    assert_equal((3, ), clf.intercept_.shape)
-    assert_equal((50, 3), clf.mse_path_.shape)
-    assert_equal(50, len(clf.alphas_))
-
 
 def test_warm_start():
     X, y, _, _ = build_dataset()
@@ -354,8 +342,8 @@ def test_enet_cv_positive_constraint():
     max_iter = 500
 
     # Ensure the unconstrained fit has a negative coefficient
-    enetcv_unconstrained = ElasticNetCV(n_alphas=3, eps=1e-1, max_iter=max_iter,
-                                        cv=2, n_jobs=1)
+    enetcv_unconstrained = ElasticNetCV(n_alphas=3, eps=1e-1,
+                                        max_iter=max_iter, cv=2, n_jobs=1)
     enetcv_unconstrained.fit(X, y)
     assert_true(min(enetcv_unconstrained.coef_) < 0)
 
@@ -409,6 +397,24 @@ def test_multitask_enet_and_lasso_cv():
     clf = MultiTaskLassoCV().fit(X, y)
     assert_almost_equal(clf.alpha_, 0.00278, 3)
 
+    X, y, _, _ = build_dataset(n_targets=3)
+    clf = MultiTaskElasticNetCV(n_alphas=50, eps=1e-3, max_iter=100,
+                                l1_ratio=0.5, tol=1e-3)
+    clf.fit(X, y)
+    assert_equal(0.5, clf.l1_ratio_)
+    assert_equal((3, X.shape[1]), clf.coef_.shape)
+    assert_equal((3, ), clf.intercept_.shape)
+    assert_equal((50, 3), clf.mse_path_.shape)
+    assert_equal(50, len(clf.alphas_))
+
+    X, y, _, _ = build_dataset(n_targets=3)
+    clf = MultiTaskLassoCV(n_alphas=50, eps=1e-3, max_iter=100, tol=1e-3)
+    clf.fit(X, y)
+    assert_equal((3, X.shape[1]), clf.coef_.shape)
+    assert_equal((3, ), clf.intercept_.shape)
+    assert_equal((50, 3), clf.mse_path_.shape)
+    assert_equal(50, len(clf.alphas_))
+
 
 def check_1d_multioutput_enet_and_multitask_enet_cv():
     X, y, _, _ = build_dataset(n_features=10)
@@ -419,8 +425,8 @@ def check_1d_multioutput_enet_and_multitask_enet_cv():
     clf1.fit(X, y)
     assert_almost_equal(clf.l1_ratio_, clf1.l1_ratio_)
     assert_almost_equal(clf.alpha_, clf1.alpha_)
-    assert_almost_equal(clf.coef_, clf1.coef_)
-    assert_almost_equal(clf.intercept_, clf1.intercept_)
+    assert_almost_equal(clf.coef_, clf1.coef_[0])
+    assert_almost_equal(clf.intercept_, clf1.intercept_[0])
 
 
 def check_1d_multioutput_lasso_and_multitask_lasso_cv():
@@ -432,8 +438,8 @@ def check_1d_multioutput_lasso_and_multitask_lasso_cv():
     clf1.fit(X, y)
     assert_almost_equal(clf.l1_ratio_, clf1.l1_ratio_)
     assert_almost_equal(clf.alpha_, clf1.alpha_)
-    assert_almost_equal(clf.coef_, clf1.coef_)
-    assert_almost_equal(clf.intercept_, clf1.intercept_)
+    assert_almost_equal(clf.coef_, clf1.coef_[0])
+    assert_almost_equal(clf.intercept_, clf1.intercept_[0])
 
 
 if __name__ == '__main__':

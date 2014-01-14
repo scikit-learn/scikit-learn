@@ -922,7 +922,7 @@ def _path_residuals(X, y, train, test, path, path_params, alphas=None,
     residues += intercepts
     this_mses = ((residues ** 2).mean(axis=0)).mean(axis=0)
 
-    return this_mses, l1_ratio, alphas
+    return this_mses
 
 
 class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
@@ -1036,7 +1036,8 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
                         copy_X=self.copy_X)
                     )
         else:
-            alphas = np.tile(alphas, (n_l1_ratio, 1))
+            # Making sure alphas is properly ordered.
+            alphas = np.tile(np.sort(alphas)[::-1], (n_l1_ratio, 1))
         # We want n_alphas to be the number of alphas used for each l1_ratio.
         n_alphas = len(alphas[0])
         path_params.update({'n_alphas': n_alphas})
@@ -1057,27 +1058,20 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
 
         # We do a double for loop folded in one, in order to be able to
         # iterate in parallel on l1_ratio and folds
-        for l1_ratio, mse_alphas in itertools.groupby(
-                Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
-                    delayed(_path_residuals)(
-                        X, y, train, test, self.path, path_params,
-                        alphas=this_alphas, l1_ratio=this_l1_ratio,
-                        X_order='F', dtype=np.float64)
-                    for this_l1_ratio, this_alphas in zip(l1_ratios, alphas)
-                    for train, test in folds
-                ), operator.itemgetter(1)):
-
-            # Hack to get back alphas, since alphas for each
-            # l1_ratio are not the same.
-            mse_alphas = list(mse_alphas)
-            l1_alphas = mse_alphas[-1][2]
-            mse_alphas = [m[0] for m in mse_alphas]
-            mse_alphas = np.array(mse_alphas)
-
-            mse = np.mean(mse_alphas, axis=0)
-            i_best_alpha = np.argmin(mse)
-            this_best_mse = mse[i_best_alpha]
-            all_mse_paths.append(mse_alphas.T)
+        jobs = (delayed(_path_residuals)(X, y, train, test, self.path,
+                                         path_params, alphas=this_alphas,
+                                         l1_ratio=this_l1_ratio, X_order='F',
+                                         dtype=np.float64)
+                for this_l1_ratio, this_alphas in zip(l1_ratios, alphas)
+                for train, test in folds)
+        mse_paths = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(jobs)
+        mse_paths = np.reshape(mse_paths, (n_l1_ratio, len(folds), -1))
+        mean_mse = np.mean(mse_paths, axis=1)
+        self.mse_path_ = np.squeeze(np.rollaxis(mse_paths, 2, 1))
+        for l1_ratio, l1_alphas, mse_alphas in zip(
+            l1_ratios, alphas, mean_mse):
+            i_best_alpha = np.argmin(mse_alphas)
+            this_best_mse = mse_alphas[i_best_alpha]
             if this_best_mse < best_mse:
                 best_alpha = l1_alphas[i_best_alpha]
                 best_l1_ratio = l1_ratio
@@ -1090,7 +1084,6 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
         # Remove duplicate alphas in case alphas is provided.
         else:
             self.alphas_ = np.asarray(alphas[0])
-        self.mse_path_ = np.squeeze(all_mse_paths)
 
         # Refit the model with the parameters selected
         common_params = dict((name, value)
