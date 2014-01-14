@@ -647,18 +647,18 @@ cdef class RegressionCriterion(Criterion):
         cdef DOUBLE_t w_y_ik = 0.0
         cdef DOUBLE_t w = 1.0
 
-        cdef SIZE_t n_byte = n_outputs * sizeof(double)
-        memset(mean_left, 0, n_byte)
-        memset(mean_right, 0, n_byte)
-        memset(mean_total, 0, n_byte)
-        memset(sq_sum_left, 0, n_byte)
-        memset(sq_sum_right, 0, n_byte)
-        memset(sq_sum_total, 0, n_byte)
-        memset(var_left, 0, n_byte)
-        memset(var_right, 0, n_byte)
-        memset(sum_left, 0, n_byte)
-        memset(sum_right, 0, n_byte)
-        memset(sum_total, 0, n_byte)
+        cdef SIZE_t n_bytes = n_outputs * sizeof(double)
+        memset(mean_left, 0, n_bytes)
+        memset(mean_right, 0, n_bytes)
+        memset(mean_total, 0, n_bytes)
+        memset(sq_sum_left, 0, n_bytes)
+        memset(sq_sum_right, 0, n_bytes)
+        memset(sq_sum_total, 0, n_bytes)
+        memset(var_left, 0, n_bytes)
+        memset(var_right, 0, n_bytes)
+        memset(sum_left, 0, n_bytes)
+        memset(sum_right, 0, n_bytes)
+        memset(sum_total, 0, n_bytes)
 
         for p in range(start, end):
             i = samples[p]
