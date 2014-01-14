@@ -195,6 +195,42 @@ def safe_sparse_dot(a, b, dense_output=False):
         return fast_dot(a, b)
 
 
+def _block_slices(dim_size, block_size):
+    """Generator that yields slice objects for indexing into sequential blocks
+    of an array along a particular axis
+    """
+    count = 0
+    while True:
+        yield slice(count, count + block_size, 1)
+        count += block_size
+        if count > dim_size:
+            raise StopIteration
+
+
+def _blockwise_dot(A, B, max_rows, max_cols, out=None):
+    """Computes the dot product of two matrices in a block-wise fashion. Only
+    blocks of `A` with a maximum size of `(max_rows, max_cols)` will be
+    processed simultaneously.
+    """
+    m,  n = A.shape
+    n1, o = B.shape
+    if n1 != n:
+        raise ValueError('matrices are not aligned')
+
+    if out is None:
+        out = np.empty((m, o), dtype=np.result_type(A, B))
+    elif out.shape != (m, o):
+        raise ValueError('output array has incorrect dimensions')
+
+    for mm in _block_slices(m, max_rows):
+        out[mm, :] = 0
+        for nn in _block_slices(n, max_cols):
+            A_block = A[mm, nn].copy()  # copy to force a read
+            out[mm, :] += np.dot(A_block, B[nn, :])
+            del A_block
+    return out
+
+
 def randomized_range_finder(A, size, n_iter, random_state=None):
     """Computes an orthonormal matrix whose range approximates the range of A.
 
@@ -242,9 +278,67 @@ def randomized_range_finder(A, size, n_iter, random_state=None):
     return Q
 
 
+def randomized_buffered_range_finder(A, size, n_iter, max_rows, max_cols,
+                                     random_state=None):
+    """Computes an orthonormal matrix whose range approximates the range of A,
+    where A can be a memory-mapped array that is too large to fit in core
+    memory
+
+    Parameters
+    ----------
+    A: 2D array
+        The input data matrix
+    size: integer
+        Size of the return array
+    n_iter: integer
+        Number of power iterations used to stabilize the result
+    max_rows: integer
+        Maximum number of rows of A to process at a time
+    max_cols: integer
+        Maximum number of columns of A to process at a time
+    random_state: RandomState or an int seed (0 by default)
+        A random number generator instance
+
+    Returns
+    -------
+    Q: 2D array
+        A (size x size) projection matrix, the range of which
+        approximates well the range of the input matrix A.
+
+    Reference
+    -----
+    An algorithm for the principal component analysis of large data sets
+    Halko, et al., 2011 (arXiv:1007) http://arxiv.org/pdf/1007.5510
+    """
+    random_state = check_random_state(random_state)
+
+    # generating random gaussian vectors r with shape: (A.shape[1], size)
+    R = random_state.normal(size=(A.shape[1], size))
+
+    # sampling the range of A using by linear projection of r
+    Y = _blockwise_dot(A, R, max_rows, max_cols)
+    del R
+
+    # perform power iterations with Y to further 'imprint' the top
+    # singular vectors of A in Y
+    if n_iter > 0:
+        F = np.empty((A.shape[1], size), dtype=A.dtype)
+        for i in xrange(n_iter):
+            # multiply by A.T
+            _blockwise_dot(A.T, Y, max_cols, max_rows, out=F)
+            # multiply by A
+            _blockwise_dot(A, F, max_rows, max_cols, out=Y)
+        del F
+
+    # extracting an orthonormal basis of the A range samples
+    Q, R = qr_economic(Y)
+    return Q
+
+
 def randomized_svd(M, n_components, n_oversamples=10, n_iter=0,
                    transpose='auto', flip_sign=True, random_state=0,
-                   n_iterations=None):
+                   n_iterations=None, buffered=False,
+                   buffer_nbytes=int(2 ** 30)):
     """Computes a truncated randomized SVD
 
     Parameters
@@ -277,6 +371,17 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter=0,
         set to `True`, the sign ambiguity is resolved by making the largest
         loadings for each component in the left singular vectors positive.
 
+    buffered: boolean, (False by default)
+        If `buffered` is set to `True`, the input array is processed in blocks
+        in order to accommodate dense memory-mapped arrays that are too
+        large to fit into core memory. Sparse input arrays are not supported
+        when `buffered` is `True`.
+
+    buffer_nbytes: int, (2**30 by default)
+        This argument specifies the maximum number of bytes of M that will be
+        processed simultaneously when `buffered` is `True`. The default value
+        corresponds to a buffer size of 1GB.
+
     random_state: RandomState or an int seed (0 by default)
         A random number generator instance to make behavior
 
@@ -292,6 +397,9 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter=0,
     * Finding structure with randomness: Stochastic algorithms for constructing
       approximate matrix decompositions
       Halko, et al., 2009 http://arxiv.org/abs/arXiv:0909.4061
+
+    * An algorithm for the principal component analysis of large data sets
+      Halko, et al., 2011 (arXiv:1007) http://arxiv.org/pdf/1007.5510
 
     * A randomized algorithm for the decomposition of matrices
       Per-Gunnar Martinsson, Vladimir Rokhlin and Mark Tygert
@@ -311,10 +419,35 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter=0,
         # this implementation is a bit faster with smaller shape[1]
         M = M.T
 
-    Q = randomized_range_finder(M, n_random, n_iter, random_state)
+    if buffered:
 
-    # project M to the (k + p) dimensional space using the basis vectors
-    B = safe_sparse_dot(Q.T, M)
+        if issparse(M):
+            raise TypeError("Sparse input arrays are not supported when"
+                            " buffered=True")
+
+        max_block_elements = int(buffer_nbytes / M.dtype.itemsize)
+
+        if M.flags.f_contiguous:
+            # block-process as many columns of M as possible
+            max_cols = max(1, max_block_elements / M.shape[0])
+            max_rows = max_block_elements / max_cols
+
+        else:
+            # block-process as many rows of M as possible
+            max_rows = max(1, max_block_elements / M.shape[1])
+            max_cols = max_block_elements / max_rows
+
+        Q = randomized_buffered_range_finder(M, n_random, n_iter, max_rows,
+                                             max_cols, random_state)
+
+        # project M to the (k + p) dimensional space using the basis vectors
+        B = _blockwise_dot(Q.T, M, max_cols, max_rows)
+
+    else:
+        Q = randomized_range_finder(M, n_random, n_iter, random_state)
+
+        # project M to the (k + p) dimensional space using the basis vectors
+        B = safe_sparse_dot(Q.T, M)
 
     # compute the SVD on the thin matrix: (k + p) wide
     Uhat, s, V = linalg.svd(B, full_matrices=False)
