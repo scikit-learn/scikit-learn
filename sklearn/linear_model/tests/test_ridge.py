@@ -21,6 +21,8 @@ from sklearn.linear_model.ridge import _RidgeGCV
 from sklearn.linear_model.ridge import RidgeCV
 from sklearn.linear_model.ridge import RidgeClassifier
 from sklearn.linear_model.ridge import RidgeClassifierCV
+from sklearn.linear_model.ridge import _solve_dense_cholesky
+from sklearn.linear_model.ridge import _solve_dense_cholesky_kernel
 
 
 from sklearn.cross_validation import KFold
@@ -79,6 +81,15 @@ def test_ridge():
             # Currently the only solver to support sample_weight.
             ridge.fit(X, y, sample_weight=np.ones(n_samples))
             assert_greater(ridge.score(X, y), 0.9)
+
+
+def test_primal_dual_relationship():
+    y = y_diabetes.reshape(-1, 1)
+    coef = _solve_dense_cholesky(X_diabetes, y, alpha=[1e-2])
+    K = np.dot(X_diabetes, X_diabetes.T)
+    dual_coef = _solve_dense_cholesky_kernel(K, y, alpha=[1e-2])
+    coef2 = np.dot(X_diabetes.T, dual_coef).T
+    assert_array_almost_equal(coef, coef2)
 
 
 def test_ridge_singular():
