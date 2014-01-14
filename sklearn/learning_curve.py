@@ -10,7 +10,7 @@ from .base import is_classifier, clone
 from .cross_validation import _check_cv
 from .utils import check_arrays
 from .externals.joblib import Parallel, delayed
-from .cross_validation import _split, _fit, _score, _cross_val_score
+from .cross_validation import _split, _score, _cross_val_score
 from .metrics.scorer import check_scoring
 
 
@@ -209,8 +209,12 @@ def _incremental_fit_estimator(estimator, X, y, classes, train, test,
         X_partial_train, y_partial_train = _split(estimator, X, y,
                                                   partial_train)
         X_test, y_test = _split(estimator, X, y, test, train[:n_train_samples])
-        _fit(estimator.partial_fit, X_partial_train, y_partial_train,
-             classes=classes)
+        if y_partial_train is None:
+            estimator.partial_fit(X_partial_train, classes=classes)
+        else:
+            estimator.partial_fit(X_partial_train, y_partial_train,
+                                  classes=classes)
         train_scores.append(_score(estimator, X_train, y_train, scorer))
         test_scores.append(_score(estimator, X_test, y_test, scorer))
     return np.array((train_scores, test_scores)).T
+
