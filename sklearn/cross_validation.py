@@ -1112,7 +1112,10 @@ def _cross_val_score(estimator, X, y, scorer, train, test,
 
     X_train, y_train = _split(estimator, X, y, train)
     X_test, y_test = _split(estimator, X, y, test, train)
-    _fit(estimator.fit, X_train, y_train, **fit_params)
+    if y_train is None:
+        estimator.fit(X_train, **fit_params)
+    else:
+        estimator.fit(X_train, y_train, **fit_params)
     score = _score(estimator, X_test, y_test, scorer)
 
     scoring_time = time.time() - start_time
@@ -1157,14 +1160,6 @@ def _split(estimator, X, y, indices, train_indices=None):
         y_subset = None
 
     return X_subset, y_subset
-
-
-def _fit(fit_function, X_train, y_train, **fit_params):
-    """Fit an estimator on a given training set."""
-    if y_train is None:
-        fit_function(X_train, **fit_params)
-    else:
-        fit_function(X_train, y_train, **fit_params)
 
 
 def _score(estimator, X_test, y_test, scorer):
