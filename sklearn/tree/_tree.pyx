@@ -8,6 +8,7 @@
 #          Noel Dawe <noel@dawe.me>
 #          Satrajit Gosh <satrajit.ghosh@gmail.com>
 #          Lars Buitinck <L.J.Buitinck@uva.nl>
+#          Arnaud Joly <arnaud.v.joly@gmail.com>
 #
 # Licence: BSD 3 clause
 
@@ -635,25 +636,29 @@ cdef class RegressionCriterion(Criterion):
         cdef double* sq_sum_total = self.sq_sum_total
         cdef double* var_left = self.var_left
         cdef double* var_right = self.var_right
+        cdef double* sum_left = self.sum_left
+        cdef double* sum_right = self.sum_right
+        cdef double* sum_total = self.sum_total
 
         cdef SIZE_t i = 0
         cdef SIZE_t p = 0
         cdef SIZE_t k = 0
         cdef DOUBLE_t y_ik = 0.0
+        cdef DOUBLE_t w_y_ik = 0.0
         cdef DOUBLE_t w = 1.0
 
-        for k in range(n_outputs):
-            mean_left[k] = 0.0
-            mean_right[k] = 0.0
-            mean_total[k] = 0.0
-            sq_sum_right[k] = 0.0
-            sq_sum_left[k] = 0.0
-            sq_sum_total[k] = 0.0
-            var_left[k] = 0.0
-            var_right[k] = 0.0
-            self.sum_left[k] = 0.0
-            self.sum_right[k] = 0.0
-            self.sum_total[k] = 0.0
+        cdef SIZE_t n_bytes = n_outputs * sizeof(double)
+        memset(mean_left, 0, n_bytes)
+        memset(mean_right, 0, n_bytes)
+        memset(mean_total, 0, n_bytes)
+        memset(sq_sum_left, 0, n_bytes)
+        memset(sq_sum_right, 0, n_bytes)
+        memset(sq_sum_total, 0, n_bytes)
+        memset(var_left, 0, n_bytes)
+        memset(var_right, 0, n_bytes)
+        memset(sum_left, 0, n_bytes)
+        memset(sum_right, 0, n_bytes)
+        memset(sum_total, 0, n_bytes)
 
         for p in range(start, end):
             i = samples[p]
@@ -663,16 +668,16 @@ cdef class RegressionCriterion(Criterion):
 
             for k in range(n_outputs):
                 y_ik = y[i * y_stride + k]
-                sq_sum_total[k] += w * y_ik * y_ik
-                mean_total[k] += w * y_ik
-                self.sum_total[k] += w * y_ik
+                w_y_ik = w * y_ik
+                sum_total[k] += w_y_ik
+                sq_sum_total[k] += w_y_ik * y_ik
 
             weighted_n_node_samples += w
 
         self.weighted_n_node_samples = weighted_n_node_samples
 
         for k in range(n_outputs):
-            mean_total[k] /= weighted_n_node_samples
+            mean_total[k] = sum_total[k] / weighted_n_node_samples
 
         # Reset to pos=start
         self.reset()
@@ -705,9 +710,9 @@ cdef class RegressionCriterion(Criterion):
             mean_left[k] = 0.0
             sq_sum_right[k] = sq_sum_total[k]
             sq_sum_left[k] = 0.0
-            var_left[k] = 0.0
             var_right[k] = (sq_sum_right[k] / weighted_n_node_samples -
                             mean_right[k] * mean_right[k])
+            var_left[k] = 0.0
             sum_right[k] = sum_total[k]
             sum_left[k] = 0.0
 
@@ -741,7 +746,6 @@ cdef class RegressionCriterion(Criterion):
         cdef DOUBLE_t y_ik, w_y_ik
 
         # Note: We assume start <= pos < new_pos <= end
-
         for p in range(pos, new_pos):
             i = samples[p]
 
@@ -752,21 +756,18 @@ cdef class RegressionCriterion(Criterion):
                 y_ik = y[i * y_stride + k]
                 w_y_ik = w * y_ik
 
-                sq_sum_left[k] += w_y_ik * y_ik
-                sq_sum_right[k] -= w_y_ik * y_ik
-
                 sum_left[k] += w_y_ik
                 sum_right[k] -= w_y_ik
 
-                mean_left[k] = ((weighted_n_left * mean_left[k] + w_y_ik) /
-                                (weighted_n_left + w))
-                mean_right[k] = ((weighted_n_right * mean_right[k] - w_y_ik) /
-                                 (weighted_n_right - w))
+                sq_sum_left[k] += w_y_ik * y_ik
+                sq_sum_right[k] -= w_y_ik * y_ik
 
             weighted_n_left += w
             weighted_n_right -= w
 
         for k in range(n_outputs):
+            mean_left[k] = sum_left[k] / weighted_n_left
+            mean_right[k] = sum_right[k] / weighted_n_right
             var_left[k] = (sq_sum_left[k] / weighted_n_left -
                            mean_left[k] * mean_left[k])
             var_right[k] = (sq_sum_right[k] / weighted_n_right -
@@ -854,7 +855,8 @@ cdef class FriedmanMSE(MSE):
 
         total_sum_left = total_sum_left / n_outputs
         total_sum_right = total_sum_right / n_outputs
-        diff = (total_sum_left / weighted_n_left) - (total_sum_right / weighted_n_right)
+        diff = ((total_sum_left / weighted_n_left) -
+                (total_sum_right / weighted_n_right))
 
         return (weighted_n_left * weighted_n_right * diff * diff) / (weighted_n_left + weighted_n_right)
 

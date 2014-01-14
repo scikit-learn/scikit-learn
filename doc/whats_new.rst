@@ -112,6 +112,11 @@ Changelog
      style copy will be made since fortran-style memory layout has speed
      advantages. By `Peter Prettenhofer`_ and `Gilles Louppe`_.
 
+   - Speed improvement of regression trees by optimizing the
+     the computation of the mean square error criterion. This lead
+     to speed improvement of the tree, forest and gradient boosting tree
+     modules. By `Arnaud Joly`_
+
    - Various enhancements to the  :mod:`sklearn.ensemble.gradient_boosting`
      module: a ``warm_start`` argument to fit additional trees,
      a ``max_leaf_nodes`` argument to fit GBM style trees,
