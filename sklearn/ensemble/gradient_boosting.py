@@ -499,7 +499,7 @@ class VerboseReporter(object):
         i = j - self.begin_at_stage  # iteration relative to the start iter
         if (i + 1) % self.verbose_mod == 0:
             oob_impr = est.oob_improvement_[j] if do_oob else 0
-            remaining_time = ((est.n_estimators - (i + 1)) *
+            remaining_time = ((est.n_estimators - (j + 1)) *
                               (time() - self.start_time) / float(i + 1))
             if remaining_time > 60:
                 remaining_time = '{0:.2f}m'.format(remaining_time / 60.0)
