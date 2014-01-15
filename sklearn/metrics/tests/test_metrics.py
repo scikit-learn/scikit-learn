@@ -48,7 +48,7 @@ from sklearn.metrics import (accuracy_score,
                              mean_squared_error,
                              mean_absolute_error,
                              ndcg_score,
-                             pairwise_ranking_accuracy,
+                             pairwise_accuracy_score,
                              precision_recall_curve,
                              precision_recall_fscore_support,
                              precision_score,
@@ -2522,38 +2522,38 @@ def test_averaging_multilabel_all_ones():
                y_pred_binarize, y_score)
 
 
-def test_pairwise_ranking_accuracy():
-    """Test pairwise_ranking_accuracy correctness."""
+def test_pairwise_accuracy_score():
+    """Test pairwise_accuracy_score correctness."""
     # Perfect rankings.
-    assert_almost_equal(pairwise_ranking_accuracy([3, 2, 1], [3, 2, 1]),
+    assert_almost_equal(pairwise_accuracy_score([3, 2, 1], [3, 2, 1]),
                         1.0)
-    assert_almost_equal(pairwise_ranking_accuracy([3, 2, 1], [6, 4, 2]),
+    assert_almost_equal(pairwise_accuracy_score([3, 2, 1], [6, 4, 2]),
                         1.0)
     # Imperfect rankings.
-    assert_almost_equal(pairwise_ranking_accuracy([3, 2, 1], [6, 4, 5]),
+    assert_almost_equal(pairwise_accuracy_score([3, 2, 1], [6, 4, 5]),
                         2./3)
-    assert_almost_equal(pairwise_ranking_accuracy([3, 2, 1], [6, 7, 5]),
+    assert_almost_equal(pairwise_accuracy_score([3, 2, 1], [6, 7, 5]),
                         2./3)
-    assert_almost_equal(pairwise_ranking_accuracy([3, 2, 1], [1, 2, 3]),
+    assert_almost_equal(pairwise_accuracy_score([3, 2, 1], [1, 2, 3]),
                         0)
     # Imperfect rankings (same but in different order)
-    assert_almost_equal(pairwise_ranking_accuracy([2, 3, 1], [4, 6, 5]),
+    assert_almost_equal(pairwise_accuracy_score([2, 3, 1], [4, 6, 5]),
                         2./3)
-    assert_almost_equal(pairwise_ranking_accuracy([2, 3, 1], [7, 6, 5]),
+    assert_almost_equal(pairwise_accuracy_score([2, 3, 1], [7, 6, 5]),
                         2./3)
-    assert_almost_equal(pairwise_ranking_accuracy([2, 3, 1], [2, 1, 3]),
+    assert_almost_equal(pairwise_accuracy_score([2, 3, 1], [2, 1, 3]),
                         0)
     # With ties.
-    assert_almost_equal(pairwise_ranking_accuracy([3, 3, 1], [6, 4, 5]),
+    assert_almost_equal(pairwise_accuracy_score([3, 3, 1], [6, 4, 5]),
                         1./2)
-    assert_almost_equal(pairwise_ranking_accuracy([3, 3, 1], [6, 7, 5]),
+    assert_almost_equal(pairwise_accuracy_score([3, 3, 1], [6, 7, 5]),
                         2./2)
-    assert_almost_equal(pairwise_ranking_accuracy([3, 2, 1], [6, 6, 5]),
+    assert_almost_equal(pairwise_accuracy_score([3, 2, 1], [6, 6, 5]),
                         2./3)
-    assert_almost_equal(pairwise_ranking_accuracy([3, 2, 1], [6, 6, 6]),
+    assert_almost_equal(pairwise_accuracy_score([3, 2, 1], [6, 6, 6]),
                         0)
     with warnings.catch_warnings(record=True):
-        assert_almost_equal(pairwise_ranking_accuracy([3, 3, 3], [6, 4, 5]),
+        assert_almost_equal(pairwise_accuracy_score([3, 3, 3], [6, 4, 5]),
                             0)
 
 def test_pairwise_ranking_accuracy_auc():
@@ -2562,7 +2562,7 @@ def test_pairwise_ranking_accuracy_auc():
     y_true, _, probas_pred = make_prediction(binary=True)
 
     assert_array_almost_equal(roc_auc_score(y_true, probas_pred),
-                              pairwise_ranking_accuracy(y_true, probas_pred))
+                              pairwise_accuracy_score(y_true, probas_pred))
 
 
 def test_kendall_tau():

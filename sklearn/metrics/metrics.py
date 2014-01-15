@@ -211,8 +211,8 @@ class UndefinedMetricWarning(UserWarning):
 # FIXME: ROC-AUC and Average Precision are also ranking metrics.
 
 
-def pairwise_ranking_accuracy(y_true, y_score):
-    """Pairwise ranking accuracy
+def pairwise_accuracy_score(y_true, y_score):
+    """Pairwise accuracy score
 
     Returns the percentage of pairs which are predicted in the correct order by
     the model.
@@ -232,7 +232,7 @@ def pairwise_ranking_accuracy(y_true, y_score):
 
     Note
     ----
-    ROC-AUC is a special case of pairwise ranking accuracy: the pairwise ranking
+    ROC-AUC is a special case of pairwise accuracy: the pairwise ranking
     accuracy is equal to AUC when y_true contains only two unique values.
 
     Reference
@@ -247,7 +247,7 @@ def pairwise_ranking_accuracy(y_true, y_score):
     n_correct, n_total = _pairwise_ranking_accuracy(y_true, y_score)
 
     if n_total == 0:
-        warnings.warn("pairwise_ranking_accuracy is undefined when all values"
+        warnings.warn("pairwise_accuracy_score is undefined when all values"
                       " in y_true are the same.")
         return 0
 
