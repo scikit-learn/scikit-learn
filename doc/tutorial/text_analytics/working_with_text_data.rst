@@ -270,7 +270,7 @@ our count-matrix to a tf-idf representation.
 These two steps can be combined to achieve the same end result faster
 by skipping redundant processing. This is done through using the
 ``fit_transform(..)`` method as shown below, and as mentioned in the note
-in the previous section.
+in the previous section::
 
   >>> tfidf_transformer = TfidfTransformer()
   >>> X_train_tfidf = tfidf_transformer.fit_transform(X_train_counts)
