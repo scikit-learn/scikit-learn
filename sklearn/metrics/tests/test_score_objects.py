@@ -4,6 +4,7 @@ import numpy as np
 
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import ignore_warnings
 
 from sklearn.metrics import (f1_score, r2_score, roc_auc_score, fbeta_score,
@@ -56,7 +57,7 @@ class EstimatorWithFitAndPredict(object):
 def test_check_scoring():
     """Test all branches of check_scoring"""
     estimator = EstimatorWithoutFit()
-    assert_raises(TypeError, check_scoring, estimator)
+    assert_raise_message(TypeError, "'fit' method", check_scoring, estimator)
 
     estimator = EstimatorWithFitAndScore()
     estimator.fit([[1]], [1])
@@ -65,13 +66,14 @@ def test_check_scoring():
 
     estimator = EstimatorWithFitAndPredict()
     estimator.fit([[1]], [1])
-    assert_raises(TypeError, check_scoring, estimator)
+    assert_raise_message(TypeError, "no scoring", check_scoring, estimator)
 
     scorer = check_scoring(estimator, "accuracy")
     assert_almost_equal(scorer(estimator, [[1]], [1]), 1.0)
 
     estimator = EstimatorWithFit()
-    assert_raises(TypeError, check_scoring, estimator)
+    assert_raise_message(TypeError, "'score' or a 'predict'", check_scoring,
+                         estimator, "accuracy")
 
 
 def test_make_scorer():
