@@ -25,6 +25,24 @@ from sklearn.cross_validation import train_test_split, cross_val_score
 from sklearn.grid_search import GridSearchCV
 from sklearn.multiclass import OneVsRestClassifier
 
+# FIXME: temporary, to demonstrate ranking with several relevance levels.
+def dcg_score(y_true, y_score, k=10, gains="exponential"):
+    order = np.argsort(y_score)[::-1]
+    y_true = np.take(y_true, order[:k])
+
+    if gains == "exponential":
+        gains = 2 ** y_true - 1
+    elif gains == "linear":
+        gains = y_true
+    else:
+        raise ValueError("Invalid gains option.")
+
+    # highest rank is 1 so +2 instead of +1
+    discounts = np.log2(np.arange(len(y_true)) + 2)
+    return np.sum(gains / discounts)
+
+dcg_scorer = make_scorer(dcg_score, needs_threshold=True)
+
 
 class EstimatorWithoutFit(object):
     """Dummy estimator to test check_scoring"""
@@ -293,6 +311,18 @@ def test_evaluate_scorers_ranking_by_regression():
 
     assert_almost_equal(s1, roc_auc_score(y, y_pred))
     assert_almost_equal(s2, average_precision_score(y, y_pred))
+
+    diabetes = load_diabetes()
+    X, y = diabetes.data, diabetes.target
+
+    reg.fit(X, y)
+
+    s1, s2 = evaluate_scorers(reg, X, y, [SCORERS["r2"],
+                                          dcg_scorer])
+    y_pred = reg.predict(X)
+
+    assert_almost_equal(s1, r2_score(y, y_pred))
+    assert_almost_equal(s2, dcg_score(y, y_pred))
 
 
 def test_evaluate_scorers_exceptions():
