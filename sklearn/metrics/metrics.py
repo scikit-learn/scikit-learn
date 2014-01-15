@@ -24,9 +24,11 @@ import numpy as np
 
 from scipy.sparse import coo_matrix
 from scipy.spatial.distance import hamming as sp_hamming
+from scipy.stats import kendalltau
 
 from ..externals.six.moves import zip
 from ..externals.six.moves import xrange as range
+from .metrics_fast import _pairwise_ranking_accuracy
 from ..preprocessing import LabelBinarizer, label_binarize
 from ..preprocessing import LabelEncoder
 from ..utils import check_arrays
@@ -199,6 +201,79 @@ def auc(x, y, reorder=False):
 
 class UndefinedMetricWarning(UserWarning):
     pass
+
+
+###############################################################################
+# Ranking metrics
+###############################################################################
+
+# FIXME: ROC-AUC and Average Precision are also ranking metrics.
+
+
+def pairwise_ranking_accuracy(y_true, y_score):
+    """Pairwise ranking accuracy
+
+    Returns the percentage of pairs which are predicted in the correct order by
+    the model.
+
+    Parameters
+    ----------
+    y_true : array, shape = [n_samples]
+        True targets, consisting of real or integer values.
+
+    y_score : array, shape = [n_samples]
+        Predicted targets, consisting of real values (output of
+        decision_function or predict_proba).
+
+    Returns
+    -------
+    pairwise_accuracy : float
+
+    Note
+    ----
+    ROC-AUC is a special case of pairwise ranking accuracy: the pairwise ranking
+    accuracy is equal to AUC when y_true contains only two unique values.
+
+    Reference
+    ---------
+    C.-P. Lee and C.-J. Lin.
+    Large-scale Linear RankSVM .
+    Neural Computation, 2013.
+    """
+    y_true, y_score = check_arrays(y_true, y_score, dtype=np.float64)
+    n_samples = y_true.shape[0]
+
+    n_correct, n_total = _pairwise_ranking_accuracy(y_true, y_score)
+
+    if n_total == 0:
+        warnings.warn("pairwise_ranking_accuracy is undefined when all values"
+                      " in y_true are the same.")
+        return 0
+
+    return n_correct / float(n_total)
+
+
+def kendall_tau_score(y_true, y_score):
+    """Kendall's tau score
+
+    Parameters
+    ----------
+    y_true : array, shape = [n_samples]
+        True targets, consisting of real or integer values.
+
+    y_score : array, shape = [n_samples]
+        Predicted targets, consisting of real values (output of
+        decision_function or predict_proba).
+
+    Returns
+    -------
+    kendall_tau : float
+
+    Note
+    ----
+    The implementation uses scipy.stats.kendalltau.
+    """
+    return kendalltau(y_true, y_score)[0]
 
 
 ###############################################################################
