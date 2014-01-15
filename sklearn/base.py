@@ -4,11 +4,11 @@
 
 import copy
 import inspect
-import warnings
 
 import numpy as np
 from scipy import sparse
 from .externals import six
+from .utils.safe_warnings import catch_warnings
 
 
 ###############################################################################
@@ -207,15 +207,11 @@ class BaseEstimator(object):
             # catch deprecated param values.
             # This is set in utils/__init__.py but it gets overwritten
             # when running under python3 somehow.
-            warnings.simplefilter("always", DeprecationWarning)
-            try:
-                with warnings.catch_warnings(record=True) as w:
-                    value = getattr(self, key, None)
-                if len(w) and w[0].category == DeprecationWarning:
-                # if the parameter is deprecated, don't show it
-                    continue
-            finally:
-                warnings.filters.pop(0)
+            with catch_warnings(record_category=DeprecationWarning) as w:
+                value = getattr(self, key, None)
+            if len(w) and w[0].category == DeprecationWarning:
+            # if the parameter is deprecated, don't show it
+                continue
 
             # XXX: should we rather test if instance of estimator?
             if deep and hasattr(value, 'get_params'):
