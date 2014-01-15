@@ -14,7 +14,6 @@ from abc import ABCMeta, abstractmethod
 from collections import Mapping, namedtuple, Sized
 from functools import partial, reduce
 from itertools import product
-import numbers
 import operator
 import time
 import warnings
