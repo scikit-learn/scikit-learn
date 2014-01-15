@@ -27,7 +27,7 @@ cdef extern from "libsvm_sparse_helper.c":
                             char *SV_data, np.npy_intp *SV_indices_dims,
                             char *SV_indices, np.npy_intp *SV_intptr_dims,
                             char *SV_intptr,
-                            char *sv_coef, char *rho, char *nSV, char *label,
+                            char *sv_coef, char *rho, char *nSV,
                             char *probA, char *probB)
     svm_parameter *set_parameter (int , int , int , double, double ,
                                   double , double , double , double,
@@ -50,7 +50,6 @@ cdef extern from "libsvm_sparse_helper.c":
                 svm_csr_model *model, int n_features)
     np.npy_intp get_nonzero_SV ( svm_csr_model *)
     void copy_nSV     (char *, svm_csr_model *)
-    void copy_label   (char *, svm_csr_model *)
     void copy_probA   (char *, svm_csr_model *, np.npy_intp *)
     void copy_probB   (char *, svm_csr_model *, np.npy_intp *)
     np.npy_intp  get_l  (svm_csr_model *)
@@ -187,11 +186,6 @@ def libsvm_sparse_train ( int n_features,
     n_class_SV = np.empty(n_class, dtype=np.int32)
     copy_nSV(n_class_SV.data, model)
 
-    # # copy label
-    cdef np.ndarray label
-    label = np.empty((n_class), dtype=np.int32)
-    copy_label(label.data, model)
-
     # # copy probabilities
     cdef np.ndarray probA, probB
     if probability != 0:
@@ -211,7 +205,7 @@ def libsvm_sparse_train ( int n_features,
     free_problem(problem)
     free_param(param)
 
-    return (support, support_vectors_, sv_coef_data, intercept, label, n_class_SV,
+    return (support, support_vectors_, sv_coef_data, intercept, n_class_SV,
             probA, probB, fit_status)
 
 
@@ -230,7 +224,6 @@ def libsvm_sparse_predict (np.ndarray[np.float64_t, ndim=1, mode='c'] T_data,
                             double nu, double p, int
                             shrinking, int probability,
                             np.ndarray[np.int32_t, ndim=1, mode='c'] nSV,
-                            np.ndarray[np.int32_t, ndim=1, mode='c'] label,
                             np.ndarray[np.float64_t, ndim=1, mode='c'] probA,
                             np.ndarray[np.float64_t, ndim=1, mode='c'] probB):
     """
@@ -273,7 +266,7 @@ def libsvm_sparse_predict (np.ndarray[np.float64_t, ndim=1, mode='c'] T_data,
                           SV_indices.shape, SV_indices.data,
                           SV_indptr.shape, SV_indptr.data,
                           sv_coef.data, intercept.data,
-                          nSV.data, label.data, probA.data, probB.data)
+                          nSV.data, probA.data, probB.data)
     #TODO: use check_model
     dec_values = np.empty(T_indptr.shape[0]-1)
     with nogil:
@@ -307,7 +300,6 @@ def libsvm_sparse_predict_proba(
     np.ndarray[np.float64_t, ndim=1] class_weight,
     double nu, double p, int shrinking, int probability,
     np.ndarray[np.int32_t, ndim=1, mode='c'] nSV,
-    np.ndarray[np.int32_t, ndim=1, mode='c'] label,
     np.ndarray[np.float64_t, ndim=1, mode='c'] probA,
     np.ndarray[np.float64_t, ndim=1, mode='c'] probB):
     """
@@ -330,7 +322,7 @@ def libsvm_sparse_predict_proba(
                           SV_indices.shape, SV_indices.data,
                           SV_indptr.shape, SV_indptr.data,
                           sv_coef.data, intercept.data,
-                          nSV.data, label.data, probA.data, probB.data)
+                          nSV.data, probA.data, probB.data)
     #TODO: use check_model
     cdef np.npy_intp n_class = get_nr(model)
     cdef int rv
