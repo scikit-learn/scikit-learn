@@ -96,7 +96,7 @@ def evaluate_scorers(estimator, X, y, scorers):
         else:
             y_pred = estimator.classes_[(df >= 0).astype(int)]
 
-    # Compute y_pred if needed
+    # Compute y_pred if needed.
     if y_pred is None:
         y_pred = estimator.predict(X)
 

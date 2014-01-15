@@ -7,8 +7,8 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import SkipTest
 
-from sklearn.metrics import (f1_score, r2_score, roc_auc_score, fbeta_score,
-                             log_loss)
+from sklearn.metrics import (accuracy_score, f1_score, r2_score, roc_auc_score,
+                             fbeta_score, log_loss, mean_squared_error)
 from sklearn.metrics.cluster import adjusted_rand_score
 from sklearn.metrics.scorer import check_scoring, evaluate_scorers
 from sklearn.metrics import make_scorer, SCORERS
@@ -17,6 +17,7 @@ from sklearn.cluster import KMeans
 from sklearn.linear_model import Ridge, LogisticRegression
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.datasets import make_blobs
+from sklearn.datasets import load_iris
 from sklearn.datasets import make_classification
 from sklearn.datasets import make_multilabel_classification
 from sklearn.datasets import load_diabetes
@@ -208,19 +209,84 @@ def test_unsupervised_scorers():
     assert_almost_equal(score1, score2)
 
 
-def test_evaluate_scorers():
+def test_evaluate_scorers_binary():
     X, y = make_classification(n_classes=2, random_state=0)
+
+    # Test a classifier with decision_function.
     clf = LinearSVC()
     clf.fit(X, y)
+
     s1, s2 = evaluate_scorers(clf, X, y, [SCORERS["f1"],
                                           SCORERS["roc_auc"]])
     df = clf.decision_function(X)
     y_pred = clf.predict(X)
-    f1 = f1_score(y, y_pred)
-    roc = roc_auc_score(y, df.ravel())
 
-    assert_almost_equal(s1, f1)
-    assert_almost_equal(s2, roc)
+    assert_almost_equal(s1, f1_score(y, y_pred))
+    assert_almost_equal(s2, roc_auc_score(y, df))
+
+    # Test a classifier with predict_proba.
+    clf = LogisticRegression()
+    clf.fit(X, y)
+
+    s1, s2 = evaluate_scorers(clf, X, y, [SCORERS["f1"],
+                                          SCORERS["roc_auc"]])
+    y_proba = clf.predict_proba(X)[:, 1]
+    y_pred = clf.predict(X)
+
+    assert_almost_equal(s1, f1_score(y, y_pred))
+    assert_almost_equal(s2, roc_auc_score(y, y_proba))
+
+
+def test_evaluate_scorers_multiclass():
+    iris = load_iris()
+    X, y = iris.data, iris.target
+
+    # Test a classifier with decision_function.
+    clf = LinearSVC()
+    clf.fit(X, y)
+
+    s1, s2 = evaluate_scorers(clf, X, y, [SCORERS["f1"],
+                                          SCORERS["accuracy"]])
+    y_pred = clf.predict(X)
+
+    assert_almost_equal(s1, f1_score(y, y_pred))
+    assert_almost_equal(s2, accuracy_score(y, y_pred))
+
+    # Test a classifier with predict_proba.
+    clf = LogisticRegression()
+    clf.fit(X, y)
+
+    s1, s2, s3 = evaluate_scorers(clf, X, y, [SCORERS["f1"],
+                                              SCORERS["accuracy"],
+                                              SCORERS["log_loss"]])
+    y_proba = clf.predict_proba(X)
+    y_pred = clf.predict(X)
+
+    assert_almost_equal(s1, f1_score(y, y_pred))
+    assert_almost_equal(s2, accuracy_score(y, y_pred))
+    assert_almost_equal(s3, -log_loss(y, y_proba))
+
+
+def test_evaluate_scorers_regression():
+    diabetes = load_diabetes()
+    X, y = diabetes.data, diabetes.target
+
+    reg = Ridge()
+    reg.fit(X, y)
+
+    s1, s2 = evaluate_scorers(reg, X, y, [SCORERS["r2"],
+                                          SCORERS["mean_squared_error"]])
+    y_pred = reg.predict(X)
+
+    assert_almost_equal(s1, r2_score(y, y_pred))
+    assert_almost_equal(s2, -mean_squared_error(y, y_pred))
+
+
+def test_evaluate_scorers_exceptions():
+    clf = LinearSVC()
+    # log_loss needs probabilities but LinearSVC does not have predict_proba.
+    assert_raises(ValueError, evaluate_scorers, clf, [], [],
+                  [SCORERS["log_loss"]])
 
 
 @ignore_warnings
