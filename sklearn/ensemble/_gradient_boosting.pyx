@@ -12,7 +12,7 @@ import numpy as np
 cimport numpy as np
 np.import_array()
 
-from sklearn.tree._tree cimport Tree
+from sklearn.tree._tree cimport Tree, Node
 
 ctypedef np.int32_t int32
 ctypedef np.float64_t float64
@@ -39,10 +39,7 @@ ctypedef np.npy_intp SIZE_t
 cdef int LEAF = -1
 
 cdef void _predict_regression_tree_inplace_fast(DTYPE_t *X,
-                                                SIZE_t *children_left,
-                                                SIZE_t *children_right,
-                                                SIZE_t *feature,
-                                                double *threshold,
+                                                Node* root_node,
                                                 double *value,
                                                 double scale,
                                                 Py_ssize_t k,
@@ -64,15 +61,8 @@ cdef void _predict_regression_tree_inplace_fast(DTYPE_t *X,
     X : DTYPE_t pointer
         The pointer to the data array of the input ``X``.
         Assumes that the array is c-continuous.
-    children : np.npy_intp pointer
-        The pointer to the data array of the ``children`` array attribute
-        of the :class:``sklearn.tree.Tree``.
-    feature : np.npy_intp pointer
-        The pointer to the data array of the ``feature`` array attribute
-        of the :class:``sklearn.tree.Tree``.
-    threshold : np.float64_t pointer
-        The pointer to the data array of the ``threshold`` array attribute
-        of the :class:``sklearn.tree.Tree``.
+    root_node : tree Node pointer
+        Pointer to the main node array of the :class:``sklearn.tree.Tree``.
     value : np.float64_t pointer
         The pointer to the data array of the ``value`` array attribute
         of the :class:``sklearn.tree.Tree``.
@@ -97,18 +87,16 @@ cdef void _predict_regression_tree_inplace_fast(DTYPE_t *X,
     """
     cdef Py_ssize_t i
     cdef int32 node_id
-    cdef SIZE_t feature_idx
+    cdef Node *node
     for i in range(n_samples):
-        node_id = 0
-        # While node_id not a leaf
-        while children_left[node_id] != -1 and \
-                  children_right[node_id] != -1:
-            feature_idx = feature[node_id]
-            if X[(i * n_features) + feature_idx] <= threshold[node_id]:
-                node_id = children_left[node_id]
+        node = root_node
+        # While node not a leaf
+        while node.left_child != -1 and node.right_child != -1:
+            if X[i * n_features + node.feature] <= node.threshold:
+                node = root_node + node.left_child
             else:
-                node_id = children_right[node_id]
-        out[(i * K) + k] += scale * value[node_id]
+                node = root_node + node.right_child
+        out[i * K + k] += scale * value[node - root_node]
 
 
 @cython.nonecheck(False)
@@ -123,8 +111,6 @@ def predict_stages(np.ndarray[object, ndim=2] estimators,
     cdef Py_ssize_t i
     cdef Py_ssize_t k
     cdef Py_ssize_t n_estimators = estimators.shape[0]
-    cdef Py_ssize_t n_samples = X.shape[0]
-    cdef Py_ssize_t n_features = X.shape[1]
     cdef Py_ssize_t K = estimators.shape[1]
     cdef Tree tree
 
@@ -136,14 +122,10 @@ def predict_stages(np.ndarray[object, ndim=2] estimators,
             # and get data pointer
             # need brackets because of casting operator priority
             _predict_regression_tree_inplace_fast(
-                <DTYPE_t*>(X.data),
-                tree.children_left,
-                tree.children_right,
-                tree.feature,
-                tree.threshold,
-                tree.value,
-                scale, k, K, n_samples, n_features,
-                <float64*>((<np.ndarray>out).data))
+                <DTYPE_t*> X.data,
+                tree.nodes, tree.value,
+                scale, k, K, X.shape[0], X.shape[1],
+                <float64 *> (<np.ndarray> out).data)
             ## out += scale * tree.predict(X).reshape((X.shape[0], 1))
 
 
@@ -157,26 +139,7 @@ def predict_stage(np.ndarray[object, ndim=2] estimators,
     Each estimator in the stage is scaled by ``scale`` before
     its prediction is added to ``out``.
     """
-    cdef Py_ssize_t i
-    cdef Py_ssize_t k
-    cdef Py_ssize_t n_estimators = estimators.shape[0]
-    cdef Py_ssize_t n_samples = X.shape[0]
-    cdef Py_ssize_t n_features = X.shape[1]
-    cdef Py_ssize_t K = estimators.shape[1]
-    cdef Tree tree
-    for k in range(K):
-        tree = estimators[stage, k].tree_
-
-        _predict_regression_tree_inplace_fast(
-                <DTYPE_t*>(X.data),
-                tree.children_left,
-                tree.children_right,
-                tree.feature,
-                tree.threshold,
-                tree.value,
-                scale, k, K, n_samples, n_features,
-                <float64*>((<np.ndarray>out).data))
-        ## out += scale * tree.predict(X).reshape((X.shape[0], 1))
+    return predict_stages(estimators[stage:stage + 1], X, scale, out)
 
 
 cdef inline int array_index(int32 val, int32[::1] arr):
@@ -228,27 +191,25 @@ cpdef _partial_dependence_tree(Tree tree, DTYPE_t[:, ::1] X,
     """
     cdef Py_ssize_t i = 0
     cdef Py_ssize_t n_features = X.shape[1]
-    cdef SIZE_t *children_left = tree.children_left
-    cdef SIZE_t *children_right = tree.children_right
-    cdef SIZE_t *feature = tree.feature
+    cdef Node* root_node = tree.nodes
     cdef double *value = tree.value
-    cdef double *threshold = tree.threshold
-    cdef SIZE_t *n_node_samples = tree.n_node_samples
     cdef SIZE_t node_count = tree.node_count
 
     cdef SIZE_t stack_capacity = node_count * 2
-    cdef SIZE_t[::1] node_stack = np_zeros((stack_capacity,), dtype=np_intp)
+    cdef Node **node_stack
     cdef double[::1] weight_stack = np_ones((stack_capacity,), dtype=np_float64)
     cdef SIZE_t stack_size = 1
     cdef double left_sample_frac
     cdef double current_weight
     cdef double total_weight = 0.0
-    cdef SIZE_t current_node
+    cdef Node *current_node
+    underlying_stack = np_zeros((stack_capacity,), dtype=np.intp)
+    node_stack = <Node **>(<np.ndarray> underlying_stack).data
 
     for i in range(X.shape[0]):
         # init stacks for new example
         stack_size = 1
-        node_stack[0] = 0
+        node_stack[0] = root_node
         weight_stack[0] = 1.0
         total_weight = 0.0
 
@@ -257,44 +218,46 @@ cpdef _partial_dependence_tree(Tree tree, DTYPE_t[:, ::1] X,
             stack_size -= 1
             current_node = node_stack[stack_size]
 
-            if children_left[current_node] == LEAF:
-                out[i] += weight_stack[stack_size] * value[current_node] * \
+            if current_node.left_child == LEAF:
+                out[i] += weight_stack[stack_size] * value[current_node - root_node] * \
                           learn_rate
                 total_weight += weight_stack[stack_size]
             else:
                 # non-terminal node
-                feature_index = array_index(feature[current_node], target_feature)
+                feature_index = array_index(current_node.feature, target_feature)
                 if feature_index != -1:
                     # split feature in target set
                     # push left or right child on stack
-                    if X[i, feature_index] <= threshold[current_node]:
+                    if X[i, feature_index] <= current_node.threshold:
                         # left
-                        node_stack[stack_size] = children_left[current_node]
+                        node_stack[stack_size] = (root_node +
+                                                  current_node.left_child)
                     else:
                         # right
-                        node_stack[stack_size] = children_right[current_node]
+                        node_stack[stack_size] = (root_node +
+                                                  current_node.right_child)
                     stack_size += 1
                 else:
                     # split feature in complement set
                     # push both children onto stack
 
                     # push left child
-                    node_stack[stack_size] = children_left[current_node]
+                    node_stack[stack_size] = root_node + current_node.left_child
                     current_weight = weight_stack[stack_size]
-                    left_sample_frac = n_node_samples[children_left[current_node]] / \
-                                       <double>n_node_samples[current_node]
+                    left_sample_frac = root_node[current_node.left_child].n_samples / \
+                                       <double>current_node.n_samples
                     if left_sample_frac <= 0.0 or left_sample_frac >= 1.0:
                         raise ValueError("left_sample_frac:%f, "
                                          "n_samples current: %d, "
                                          "n_samples left: %d"
                                          % (left_sample_frac,
-                                            n_node_samples[current_node],
-                                            n_node_samples[children_left[current_node]]))
+                                            current_node.n_samples,
+                                            root_node[current_node.left_child].n_samples))
                     weight_stack[stack_size] = current_weight * left_sample_frac
                     stack_size +=1
 
                     # push right child
-                    node_stack[stack_size] = children_right[current_node]
+                    node_stack[stack_size] = root_node + current_node.right_child
                     weight_stack[stack_size] = current_weight * \
                                                (1.0 - left_sample_frac)
                     stack_size +=1
