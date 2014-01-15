@@ -74,8 +74,9 @@ class BaseNB(six.with_metaclass(ABCMeta, BaseEstimator, ClassifierMixin)):
         Returns
         -------
         C : array-like, shape = [n_samples, n_classes]
-            Returns the log-probability of the sample for each class
-            in the model, where classes are ordered arithmetically.
+            Returns the log-probability of the samples for each class in
+            the model. The columns correspond to the classes in sorted
+            order, as they appear in the attribute `classes_`.
         """
         jll = self._joint_log_likelihood(X)
         # normalize by P(x) = P(f_1, ..., f_n)
@@ -93,8 +94,9 @@ class BaseNB(six.with_metaclass(ABCMeta, BaseEstimator, ClassifierMixin)):
         Returns
         -------
         C : array-like, shape = [n_samples, n_classes]
-            Returns the probability of the sample for each class in
-            the model, where classes are ordered arithmetically.
+            Returns the probability of the samples for each class in
+            the model. The columns correspond to the classes in sorted
+            order, as they appear in the attribute `classes_`.
         """
         return np.exp(self.predict_log_proba(X))
 

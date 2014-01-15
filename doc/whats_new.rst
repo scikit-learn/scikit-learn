@@ -8,6 +8,9 @@
 Changelog
 ---------
 
+   - :mod:`sklearn.hmm` is deprecated. Its removal is planned
+     for the 0.17 release.
+
    - Use of :class:`covariance.EllipticEnvelop` has now been removed after
      deprecation.
      Please use :class:`covariance.EllipticEnvelope` instead.
@@ -109,6 +112,11 @@ Changelog
      style copy will be made since fortran-style memory layout has speed
      advantages. By `Peter Prettenhofer`_ and `Gilles Louppe`_.
 
+   - Speed improvement of regression trees by optimizing the
+     the computation of the mean square error criterion. This lead
+     to speed improvement of the tree, forest and gradient boosting tree
+     modules. By `Arnaud Joly`_
+
    - Various enhancements to the  :mod:`sklearn.ensemble.gradient_boosting`
      module: a ``warm_start`` argument to fit additional trees,
      a ``max_leaf_nodes`` argument to fit GBM style trees,
@@ -118,6 +126,10 @@ Changelog
    - Added :func:`learning_curve <learning_curve.learning_curve>` utility to
      chart performance with respet to training size. See
      :ref:`example_plot_learning_curve.py`. By `Alexander Fabisch`_.
+
+   - Add positive option in :class:`LassoCV <linear_model.LassoCV>` and
+     :class:`ElasticNetCV <linear_model.ElasticNetCV>`.
+     By Brian Wignall and `Alexandre Gramfort`_.
 
 
 
@@ -2235,7 +2247,7 @@ Major changes in this release include:
 
     - feature_selection module redesign.
 
-    - Migration to GIT as content management system.
+    - Migration to GIT as version control system.
 
     - Removal of obsolete attrselect module.
 

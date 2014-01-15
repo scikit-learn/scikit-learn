@@ -243,7 +243,7 @@ class _BaseKFold(with_metaclass(ABCMeta, _PartitionIterator)):
             raise ValueError(
                 "k-fold cross validation requires at least one"
                 " train / test split by setting n_folds=2 or more,"
-                " got n_folds=%d.".format(n_folds))
+                " got n_folds={0}.".format(n_folds))
         if n_folds > self.n:
             raise ValueError(
                 ("Cannot have number of folds n_folds={0} greater"

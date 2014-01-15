@@ -905,7 +905,7 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
     variants:
 
     Tf is "n" (natural) by default, "l" (logarithmic) when sublinear_tf=True.
-    Idf is "t" idf is "t" when use_idf is given, "n" (none) otherwise.
+    Idf is "t" when use_idf is given, "n" (none) otherwise.
     Normalization is "c" (cosine) when norm='l2', "n" (none) when norm=None.
 
     Parameters

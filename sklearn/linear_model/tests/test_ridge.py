@@ -21,6 +21,8 @@ from sklearn.linear_model.ridge import _RidgeGCV
 from sklearn.linear_model.ridge import RidgeCV
 from sklearn.linear_model.ridge import RidgeClassifier
 from sklearn.linear_model.ridge import RidgeClassifierCV
+from sklearn.linear_model.ridge import _solve_dense_cholesky
+from sklearn.linear_model.ridge import _solve_dense_cholesky_kernel
 
 
 from sklearn.cross_validation import KFold
@@ -81,6 +83,15 @@ def test_ridge():
             assert_greater(ridge.score(X, y), 0.9)
 
 
+def test_primal_dual_relationship():
+    y = y_diabetes.reshape(-1, 1)
+    coef = _solve_dense_cholesky(X_diabetes, y, alpha=[1e-2])
+    K = np.dot(X_diabetes, X_diabetes.T)
+    dual_coef = _solve_dense_cholesky_kernel(K, y, alpha=[1e-2])
+    coef2 = np.dot(X_diabetes.T, dual_coef).T
+    assert_array_almost_equal(coef, coef2)
+
+
 def test_ridge_singular():
     # test on a singular matrix
     rng = np.random.RandomState(0)
@@ -97,24 +108,25 @@ def test_ridge_singular():
 
 def test_ridge_sample_weights():
     rng = np.random.RandomState(0)
-    alpha = 1.0
 
-    #for solver in ("svd", "sparse_cg", "dense_cholesky", "lsqr"):
     for solver in ("dense_cholesky", ):
         for n_samples, n_features in ((6, 5), (5, 10)):
-            y = rng.randn(n_samples)
-            X = rng.randn(n_samples, n_features)
-            sample_weight = 1 + rng.rand(n_samples)
+            for alpha in (1.0, 1e-2):
+                y = rng.randn(n_samples)
+                X = rng.randn(n_samples, n_features)
+                sample_weight = 1 + rng.rand(n_samples)
 
-            coefs = ridge_regression(X, y, alpha, sample_weight,
-                                     solver=solver)
-            # Sample weight can be implemented via a simple rescaling
-            # for the square loss
-            coefs2 = ridge_regression(
-                X * np.sqrt(sample_weight)[:, np.newaxis],
-                y * np.sqrt(sample_weight),
-                alpha, solver=solver)
-            assert_array_almost_equal(coefs, coefs2)
+                coefs = ridge_regression(X, y,
+                                         alpha=alpha,
+                                         sample_weight=sample_weight,
+                                         solver=solver)
+                # Sample weight can be implemented via a simple rescaling
+                # for the square loss.
+                coefs2 = ridge_regression(
+                    X * np.sqrt(sample_weight)[:, np.newaxis],
+                    y * np.sqrt(sample_weight),
+                    alpha=alpha, solver=solver)
+                assert_array_almost_equal(coefs, coefs2)
 
 
 def test_ridge_shapes():
