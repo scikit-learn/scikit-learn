@@ -8,6 +8,14 @@
 Changelog
 ---------
 
+   - The :ref:`Working With Text Data <text_data_tutorial>` tutorial
+     has now been worked in to the main documentation's tutorial section.
+     Includes exercises and skeletons for tutorial presentation.
+     Original tutorial created by several authors including
+     `Olivier Grisel`_, Lars Buitinck and many others.
+     Tutorial integration into the scikit-learn documentation
+     by `Jaques Grobler`_
+
    - :mod:`sklearn.hmm` is deprecated. Its removal is planned
      for the 0.17 release.
 
