@@ -5,6 +5,7 @@ import numpy as np
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
+from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import ignore_warnings
 
 from sklearn.metrics import (f1_score, r2_score, roc_auc_score, fbeta_score,
@@ -74,6 +75,10 @@ def test_check_scoring():
     estimator = EstimatorWithFit()
     assert_raise_message(TypeError, "'score' or a 'predict'", check_scoring,
                          estimator, "accuracy")
+
+    estimator = EstimatorWithFit()
+    scorer = check_scoring(estimator, allow_none=True)
+    assert_true(scorer is None)
 
 
 def test_make_scorer():

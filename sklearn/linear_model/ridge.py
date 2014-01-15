@@ -25,7 +25,7 @@ from ..utils import column_or_1d
 from ..preprocessing import LabelBinarizer
 from ..grid_search import GridSearchCV
 from ..externals import six
-from ..metrics.scorer import _deprecate_loss_and_score_funcs
+from ..metrics.scorer import check_scoring
 
 
 def _solve_sparse_cg(X, y, alpha, max_iter=None, tol=1e-3):
@@ -728,12 +728,10 @@ class _RidgeGCV(LinearModel):
         cv_values = np.zeros((n_samples * n_y, len(self.alphas)))
         C = []
 
-        scorer = _deprecate_loss_and_score_funcs(
-            self.loss_func, self.score_func, self.scoring,
-            score_overrides_loss=True
-        )
+        scorer = check_scoring(self, scoring=self.scoring, allow_none=True,
+            loss_func=self.loss_func, score_func=self.score_func,
+            score_overrides_loss=True)
         error = scorer is None
-        #error = self.score_func is None and self.loss_func is None
 
         for i, alpha in enumerate(self.alphas):
             if error:
