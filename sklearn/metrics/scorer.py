@@ -157,34 +157,6 @@ class _ThresholdScorer(_BaseScorer):
         return ", needs_threshold=True"
 
 
-def _deprecate_loss_and_score_funcs(
-        loss_func=None, score_func=None, scoring=None,
-        score_overrides_loss=False):
-
-    scorer = None
-    if loss_func is not None or score_func is not None:
-
-        if loss_func is not None:
-            warn("Passing a loss function is "
-                 "deprecated and will be removed in 0.15. "
-                 "Either use strings or score objects. "
-                 "The relevant new parameter is called ''scoring''. ",
-                 category=DeprecationWarning, stacklevel=2)
-            scorer = make_scorer(loss_func, greater_is_better=False)
-        if score_func is not None:
-            warn("Passing function as ``score_func`` is "
-                 "deprecated and will be removed in 0.15. "
-                 "Either use strings or score objects. "
-                 "The relevant new parameter is called ''scoring''.",
-                 category=DeprecationWarning, stacklevel=2)
-            if loss_func is None or score_overrides_loss:
-                scorer = make_scorer(score_func)
-
-    else:
-        scorer = get_scorer(scoring)
-    return scorer
-
-
 def get_scorer(scoring):
     if isinstance(scoring, six.string_types):
         try:
@@ -203,7 +175,8 @@ def _passthrough_scorer(estimator, *args, **kwargs):
     return estimator.score(*args, **kwargs)
 
 
-def check_scoring(estimator, scoring=None, loss_func=None, score_func=None):
+def check_scoring(estimator, scoring=None, allow_none=False, loss_func=None,
+                  score_func=None, score_overrides_loss=False):
     """Determine scorer from user options.
 
     A TypeError will be thrown if the estimator cannot be scored.
@@ -218,6 +191,10 @@ def check_scoring(estimator, scoring=None, loss_func=None, score_func=None):
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)``.
 
+    allow_none : boolean, optional, default: False
+        If no scoring is specified and the estimator has no score function, we
+        can either return None or raise an exception.
+
     Returns
     -------
     scoring : callable
@@ -230,12 +207,31 @@ def check_scoring(estimator, scoring=None, loss_func=None, score_func=None):
         raise TypeError("estimator should a be an estimator implementing "
                         "'fit' method, %r was passed" % estimator)
     elif hasattr(estimator, 'predict') and has_scoring:
-        return _deprecate_loss_and_score_funcs(scoring=scoring,
-                                               loss_func=loss_func,
-                                               score_func=score_func)
+        scorer = None
+        if loss_func is not None or score_func is not None:
+            if loss_func is not None:
+                warn("Passing a loss function is "
+                    "deprecated and will be removed in 0.15. "
+                    "Either use strings or score objects. "
+                    "The relevant new parameter is called ''scoring''. ",
+                    category=DeprecationWarning, stacklevel=2)
+                scorer = make_scorer(loss_func, greater_is_better=False)
+            if score_func is not None:
+                warn("Passing function as ``score_func`` is "
+                    "deprecated and will be removed in 0.15. "
+                    "Either use strings or score objects. "
+                    "The relevant new parameter is called ''scoring''.",
+                    category=DeprecationWarning, stacklevel=2)
+                if loss_func is None or score_overrides_loss:
+                    scorer = make_scorer(score_func)
+        else:
+            scorer = get_scorer(scoring)
+        return scorer
     elif hasattr(estimator, 'score'):
         return _passthrough_scorer
     elif not has_scoring:
+        if allow_none:
+            return None
         raise TypeError(
             "If no scoring is specified, the estimator passed should "
             "have a 'score' method. The estimator %r does not." % estimator)
