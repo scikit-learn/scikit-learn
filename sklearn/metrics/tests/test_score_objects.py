@@ -13,7 +13,7 @@ from sklearn.metrics import (accuracy_score, f1_score, r2_score, roc_auc_score,
 from sklearn.metrics.cluster import adjusted_rand_score
 from sklearn.metrics.scorer import check_scoring, evaluate_scorers
 from sklearn.metrics import make_scorer, SCORERS
-from sklearn.svm import LinearSVC
+from sklearn.svm import LinearSVC, SVC
 from sklearn.cluster import KMeans
 from sklearn.linear_model import Ridge, LogisticRegression
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
@@ -214,16 +214,16 @@ def test_evaluate_scorers_binary():
     X, y = make_classification(n_classes=2, random_state=0)
 
     # Test a classifier with decision_function.
-    clf = LinearSVC()
-    clf.fit(X, y)
+    for clf in (SVC(), LinearSVC()):
+        clf.fit(X, y)
 
-    s1, s2 = evaluate_scorers(clf, X, y, [SCORERS["f1"],
-                                          SCORERS["roc_auc"]])
-    df = clf.decision_function(X)
-    y_pred = clf.predict(X)
+        s1, s2 = evaluate_scorers(clf, X, y, [SCORERS["f1"],
+                                              SCORERS["roc_auc"]])
+        df = clf.decision_function(X)
+        y_pred = clf.predict(X)
 
-    assert_almost_equal(s1, f1_score(y, y_pred))
-    assert_almost_equal(s2, roc_auc_score(y, df))
+        assert_almost_equal(s1, f1_score(y, y_pred))
+        assert_almost_equal(s2, roc_auc_score(y, df))
 
     # Test a classifier with predict_proba.
     clf = LogisticRegression()

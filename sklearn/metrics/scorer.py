@@ -79,14 +79,20 @@ def evaluate_scorers(estimator, X, y, scorers):
     # Compute predict_proba or decision_function if needed.
     y_pred = None
     if compute_proba:
-        y_proba = estimator.predict_proba(X)
+        try:
+            y_proba = estimator.predict_proba(X)
 
-        # For multi-output multi-class estimator
-        #if isinstance(y_proba, list):
-            #y_proba = np.vstack([p[:, -1] for p in y_proba]).T
+            # For multi-output multi-class estimator
+            #if isinstance(y_proba, list):
+                #y_proba = np.vstack([p[:, -1] for p in y_proba]).T
 
-        y_pred = estimator.classes_[y_proba.argmax(axis=1)]
+            y_pred = estimator.classes_[y_proba.argmax(axis=1)]
 
+        except NotImplementedError:
+            # SVC has predict_proba but it may raise NotImplementedError
+            # if probabilities are not enabled.
+            compute_proba = False
+            compute_df = True
 
     if compute_df:
         df = estimator.decision_function(X)
