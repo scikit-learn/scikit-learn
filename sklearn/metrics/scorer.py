@@ -29,6 +29,7 @@ from . import (r2_score, mean_squared_error, accuracy_score, f1_score,
 from .cluster import adjusted_rand_score
 from ..utils.multiclass import type_of_target
 from ..externals import six
+from  ..base import is_classifier
 
 
 class _Scorer(object):
@@ -65,12 +66,15 @@ def evaluate_scorers(estimator, X, y, scorers):
                 # We choose predict_proba first because its interface
                 # is more consistent across the project.
                 compute_proba = True
-            elif has_df:
-                compute_df = True
-            else:
+                continue
+
+            if is_classifier(estimator) and not has_df:
                 raise ValueError("%s needs continuous outputs but neither"
                                  "predict_proba nor decision_function "
                                  "are available in %s." % (scorer, estimator))
+
+            if is_classifier(estimator):
+                compute_df = True
 
     # Compute predict_proba or decision_function if needed.
     y_pred = None
@@ -84,7 +88,7 @@ def evaluate_scorers(estimator, X, y, scorers):
         y_pred = estimator.classes_[y_proba.argmax(axis=1)]
 
 
-    elif compute_df:
+    if compute_df:
         df = estimator.decision_function(X)
 
         # For multi-output multi-class estimator
@@ -109,8 +113,10 @@ def evaluate_scorers(estimator, X, y, scorers):
         elif scorer.needs_threshold:
             if compute_proba:
                 score = scorer.score_func(y, y_proba[:, 1], **scorer.kwargs)
-            else:
+            elif is_classifier(estimator):
                 score = scorer.score_func(y, df.ravel(), **scorer.kwargs)
+            else:
+                score = scorer.score_func(y, y_pred, **scorer.kwargs)
 
         else:
             score = scorer.score_func(y, y_pred, **scorer.kwargs)

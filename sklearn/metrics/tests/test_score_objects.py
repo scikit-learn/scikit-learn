@@ -8,14 +8,15 @@ from sklearn.utils.testing import ignore_warnings
 from sklearn.utils.testing import SkipTest
 
 from sklearn.metrics import (accuracy_score, f1_score, r2_score, roc_auc_score,
-                             fbeta_score, log_loss, mean_squared_error)
+                             fbeta_score, log_loss, mean_squared_error,
+                             average_precision_score)
 from sklearn.metrics.cluster import adjusted_rand_score
 from sklearn.metrics.scorer import check_scoring, evaluate_scorers
 from sklearn.metrics import make_scorer, SCORERS
 from sklearn.svm import LinearSVC
 from sklearn.cluster import KMeans
 from sklearn.linear_model import Ridge, LogisticRegression
-from sklearn.tree import DecisionTreeClassifier
+from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.datasets import make_blobs
 from sklearn.datasets import load_iris
 from sklearn.datasets import make_classification
@@ -280,6 +281,20 @@ def test_evaluate_scorers_regression():
 
     assert_almost_equal(s1, r2_score(y, y_pred))
     assert_almost_equal(s2, -mean_squared_error(y, y_pred))
+
+
+def test_evaluate_scorers_ranking_by_regression():
+    X, y = make_classification(n_classes=2, random_state=0)
+
+    reg = DecisionTreeRegressor()
+    reg.fit(X, y)
+
+    s1, s2 = evaluate_scorers(reg, X, y, [SCORERS["roc_auc"],
+                                          SCORERS["average_precision"]])
+    y_pred = reg.predict(X)
+
+    assert_almost_equal(s1, roc_auc_score(y, y_pred))
+    assert_almost_equal(s2, average_precision_score(y, y_pred))
 
 
 def test_evaluate_scorers_exceptions():
