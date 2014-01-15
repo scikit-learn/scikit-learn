@@ -35,6 +35,7 @@ from sklearn.metrics import (accuracy_score,
                              auc_score,
                              classification_report,
                              confusion_matrix,
+                             dcg_score,
                              explained_variance_score,
                              f1_score,
                              fbeta_score,
@@ -46,6 +47,7 @@ from sklearn.metrics import (accuracy_score,
                              matthews_corrcoef,
                              mean_squared_error,
                              mean_absolute_error,
+                             ndcg_score,
                              pairwise_ranking_accuracy,
                              precision_recall_curve,
                              precision_recall_fscore_support,
@@ -2625,3 +2627,30 @@ def test_spearman_rho():
     with warnings.catch_warnings(record=True):
         assert_true(np.isnan(spearman_rho_score([3, 2, 1], [6, 6, 6])))
         assert_true(np.isnan(spearman_rho_score([3, 3, 3], [6, 4, 5])))
+
+
+def test_dcg():
+    # Check that some rankings are better than others
+    assert_greater(dcg_score([5, 3, 2], [2, 1, 0]),
+                   dcg_score([4, 3, 2], [2, 1, 0]))
+    assert_greater(dcg_score([4, 3, 2], [2, 1, 0]),
+                   dcg_score([1, 3, 2], [2, 1, 0]))
+    assert_greater(dcg_score([5, 3, 2], [2, 1, 0], k=2),
+                   dcg_score([4, 3, 2], [2, 1, 0], k=2))
+    assert_greater(dcg_score([4, 3, 2], [2, 1, 0], k=2),
+                   dcg_score([1, 3, 2], [2, 1, 0], k=2))
+
+
+    # Check that sample order is irrelevant
+    assert_equal(dcg_score([5, 3, 2], [2, 1, 0]),
+                 dcg_score([2, 3, 5], [0, 1, 2]))
+    assert_equal(dcg_score([5, 3, 2], [2, 1, 0], k=2),
+                 dcg_score([2, 3, 5], [0, 1, 2], k=2))
+
+
+def test_ndcg():
+    # Perfect rankings
+    assert_equal(ndcg_score([5, 3, 2], [2, 1, 0]), 1.0)
+    assert_equal(ndcg_score([2, 3, 5], [0, 1, 2]), 1.0)
+    assert_equal(ndcg_score([5, 3, 2], [2, 1, 0], k=2), 1.0)
+    assert_equal(ndcg_score([2, 3, 5], [0, 1, 2], k=2), 1.0)
