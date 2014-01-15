@@ -139,6 +139,10 @@ Changelog
      :class:`ElasticNetCV <linear_model.ElasticNetCV>`.
      By Brian Wignall and `Alexandre Gramfort`_.
 
+   - Fixed a race condition in parallel processing with
+     ``pre_dispatch != "all"`` (for instance in ``cross_val_score``).
+     By `Olivier Grisel`_.
+
 
 
 API changes summary
