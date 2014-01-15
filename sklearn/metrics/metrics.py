@@ -25,6 +25,7 @@ import numpy as np
 from scipy.sparse import coo_matrix
 from scipy.spatial.distance import hamming as sp_hamming
 from scipy.stats import kendalltau
+from scipy.stats import spearmanr
 
 from ..externals.six.moves import zip
 from ..externals.six.moves import xrange as range
@@ -256,6 +257,9 @@ def pairwise_ranking_accuracy(y_true, y_score):
 def kendall_tau_score(y_true, y_score):
     """Kendall's tau score
 
+    Kendall's tau is a number between -1 (negative correlation) and +1 (positive
+    correlation). 0 means no correlation.
+
     Parameters
     ----------
     y_true : array, shape = [n_samples]
@@ -272,8 +276,42 @@ def kendall_tau_score(y_true, y_score):
     Note
     ----
     The implementation uses scipy.stats.kendalltau.
+
+    Reference
+    ---------
+    http://en.wikipedia.org/wiki/Kendall_tau_rank_correlation_coefficient
     """
     return kendalltau(y_true, y_score)[0]
+
+
+def spearman_rho_score(y_true, y_score):
+    """Spearman's rho score
+
+    Spearman's rho is a number between -1 (negative correlation) and +1
+    (positive correlation). 0 means no correlation.
+
+    Parameters
+    ----------
+    y_true : array, shape = [n_samples]
+        True targets, consisting of real or integer values.
+
+    y_score : array, shape = [n_samples]
+        Predicted targets, consisting of real values (output of
+        decision_function or predict_proba).
+
+    Returns
+    -------
+    spearman_rho : float
+
+    Note
+    ----
+    The implementation uses scipy.stats.spearmanr.
+
+    Reference
+    ---------
+    http://en.wikipedia.org/wiki/Spearman%27s_rank_correlation_coefficient
+    """
+    return spearmanr(y_true, y_score)[0]
 
 
 ###############################################################################

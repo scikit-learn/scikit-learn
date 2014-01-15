@@ -54,6 +54,7 @@ from sklearn.metrics import (accuracy_score,
                              r2_score,
                              roc_auc_score,
                              roc_curve,
+                             spearman_rho_score,
                              zero_one_loss)
 
 from sklearn.metrics.metrics import _average_binary_score
@@ -2575,14 +2576,14 @@ def test_kendall_tau():
                         1./3)
     assert_almost_equal(kendall_tau_score([3, 2, 1], [1, 2, 3]),
                         -1)
-    ## Imperfect rankings (same but in different order)
+    # Imperfect rankings (same but in different order)
     assert_almost_equal(kendall_tau_score([2, 3, 1], [4, 6, 5]),
                         1./3)
     assert_almost_equal(kendall_tau_score([2, 3, 1], [7, 6, 5]),
                         1./3)
     assert_almost_equal(kendall_tau_score([2, 3, 1], [2, 1, 3]),
                         -1)
-    ## With ties.
+    # With ties.
     assert_almost_equal(kendall_tau_score([3, 3, 1], [6, 4, 5]),
                         0)
     assert_almost_equal(kendall_tau_score([3, 3, 1], [6, 7, 5]),
@@ -2592,3 +2593,35 @@ def test_kendall_tau():
     with warnings.catch_warnings(record=True):
         assert_true(np.isnan(kendall_tau_score([3, 2, 1], [6, 6, 6])))
         assert_true(np.isnan(kendall_tau_score([3, 3, 3], [6, 4, 5])))
+
+
+def test_spearman_rho():
+    # Perfect rankings.
+    assert_almost_equal(spearman_rho_score([3, 2, 1], [3, 2, 1]),
+                        1.0)
+    assert_almost_equal(spearman_rho_score([3, 2, 1], [6, 4, 2]),
+                        1.0)
+    # Imperfect rankings.
+    assert_almost_equal(spearman_rho_score([3, 2, 1], [6, 4, 5]),
+                        0.5)
+    assert_almost_equal(spearman_rho_score([3, 2, 1], [6, 7, 5]),
+                        0.5)
+    assert_almost_equal(spearman_rho_score([3, 2, 1], [1, 2, 3]),
+                        -1)
+    # Imperfect rankings (same but in different order)
+    assert_almost_equal(spearman_rho_score([2, 3, 1], [4, 6, 5]),
+                        0.5)
+    assert_almost_equal(spearman_rho_score([2, 3, 1], [7, 6, 5]),
+                        0.5)
+    assert_almost_equal(spearman_rho_score([2, 3, 1], [2, 1, 3]),
+                        -1)
+    # With ties.
+    assert_almost_equal(spearman_rho_score([3, 3, 1], [6, 4, 5]),
+                        0)
+    assert_almost_equal(spearman_rho_score([3, 3, 1], [6, 7, 5]),
+                        0.866, 3)
+    assert_almost_equal(spearman_rho_score([3, 2, 1], [6, 6, 5]),
+                        0.866, 3)
+    with warnings.catch_warnings(record=True):
+        assert_true(np.isnan(spearman_rho_score([3, 2, 1], [6, 6, 6])))
+        assert_true(np.isnan(spearman_rho_score([3, 3, 3], [6, 4, 5])))

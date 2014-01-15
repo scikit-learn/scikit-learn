@@ -27,6 +27,7 @@ from .metrics import (accuracy_score,
                       recall_score,
                       r2_score,
                       roc_curve,
+                      spearman_rho_score,
                       zero_one_loss)
 
 
