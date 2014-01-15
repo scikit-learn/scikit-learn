@@ -3,23 +3,25 @@ Testing for the gradient boosting module (sklearn.ensemble.gradient_boosting).
 """
 
 import numpy as np
+import warnings
 
-from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_array_equal
+from sklearn import datasets
+from sklearn.base import clone
+from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.ensemble import GradientBoostingRegressor
+from sklearn.ensemble.gradient_boosting import ZeroEstimator
+from sklearn.metrics import mean_squared_error
+from sklearn.utils import check_random_state, tosequence
+from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_warns
-
-
-from sklearn.metrics import mean_squared_error
-from sklearn.utils import check_random_state, tosequence
 from sklearn.utils.validation import DataConversionWarning
 
-from sklearn.ensemble import GradientBoostingClassifier
-from sklearn.ensemble import GradientBoostingRegressor
-
-from sklearn import datasets
 
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
@@ -313,6 +315,35 @@ def test_max_feature_regression():
     assert_true(deviance < 0.5, "GB failed with deviance %.4f" % deviance)
 
 
+def test_max_feature_auto():
+    """Test if max features is set properly for floats and str. """
+    X, y = datasets.make_hastie_10_2(n_samples=12000, random_state=1)
+    _, n_features = X.shape
+
+    X_train, X_test = X[:2000], X[2000:]
+    y_train, y_test = y[:2000], y[2000:]
+
+    gbrt = GradientBoostingClassifier(n_estimators=1, max_features='auto')
+    gbrt.fit(X_train, y_train)
+    assert_equal(gbrt.max_features_, int(np.sqrt(n_features)))
+
+    gbrt = GradientBoostingRegressor(n_estimators=1, max_features='auto')
+    gbrt.fit(X_train, y_train)
+    assert_equal(gbrt.max_features_, n_features)
+
+    gbrt = GradientBoostingRegressor(n_estimators=1, max_features=0.3)
+    gbrt.fit(X_train, y_train)
+    assert_equal(gbrt.max_features_, int(n_features * 0.3))
+
+    gbrt = GradientBoostingRegressor(n_estimators=1, max_features='sqrt')
+    gbrt.fit(X_train, y_train)
+    assert_equal(gbrt.max_features_, int(np.sqrt(n_features)))
+
+    gbrt = GradientBoostingRegressor(n_estimators=1, max_features='log2')
+    gbrt.fit(X_train, y_train)
+    assert_equal(gbrt.max_features_, int(np.log2(n_features)))
+
+
 def test_staged_predict():
     """Test whether staged decision function eventually gives
     the same prediction.
@@ -580,12 +611,280 @@ def test_more_verbose_output():
 def test_warn_deviance():
     """Test if mdeviance and bdeviance give deprecated warning. """
     for loss in ('bdeviance', 'mdeviance'):
-        # This will raise a DataConversionWarning that we want to
-        # "always" raise, elsewhere the warnings gets ignored in the
-        # later tests, and the tests that check for this warning fail
-        clf = GradientBoostingClassifier(loss=loss)
-        try:
-            assert_warns(UserWarning, clf.fit, X, y)
-        except ValueError:
-            # mdeviance will raise ValueError because only 2 classes
-            pass
+        with warnings.catch_warnings(record=True) as w:
+            # This will raise a DataConversionWarning that we want to
+            # "always" raise, elsewhere the warnings gets ignored in the
+            # later tests, and the tests that check for this warning fail
+            warnings.simplefilter("always", DataConversionWarning)
+            clf = GradientBoostingClassifier(loss=loss)
+            try:
+                clf.fit(X, y)
+            except:
+                # mdeviance will raise ValueError because only 2 classes
+                pass
+            # deprecated warning for bdeviance and mdeviance
+            assert len(w) == 1
+
+
+def test_warm_start():
+    """Test if warm start equals fit. """
+    X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
+    for Cls in [GradientBoostingRegressor, GradientBoostingClassifier]:
+        est = Cls(n_estimators=200, max_depth=1)
+        est.fit(X, y)
+
+        est_ws = Cls(n_estimators=100, max_depth=1, warm_start=True)
+        est_ws.fit(X, y)
+        est_ws.set_params(n_estimators=200)
+        est_ws.fit(X, y)
+
+        assert_array_almost_equal(est_ws.predict(X), est.predict(X))
+
+
+def test_warm_start_n_estimators():
+    """Test if warm start equals fit - set n_estimators. """
+    X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
+    for Cls in [GradientBoostingRegressor, GradientBoostingClassifier]:
+        est = Cls(n_estimators=300, max_depth=1)
+        est.fit(X, y)
+
+        est_ws = Cls(n_estimators=100, max_depth=1, warm_start=True)
+        est_ws.fit(X, y)
+        est_ws.set_params(n_estimators=300)
+        est_ws.fit(X, y)
+
+    assert_array_almost_equal(est_ws.predict(X), est.predict(X))
+
+
+def test_warm_start_max_depth():
+    """Test if possible to fit trees of differet depth in ensemble. """
+    X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
+    for Cls in [GradientBoostingRegressor, GradientBoostingClassifier]:
+        est = Cls(n_estimators=100, max_depth=1, warm_start=True)
+        est.fit(X, y)
+        est.set_params(n_estimators=110, max_depth=2)
+        est.fit(X, y)
+
+        # last 10 trees have different depth
+        assert est.estimators_[0, 0].max_depth == 1
+        for i in range(1, 11):
+            assert est.estimators_[-i, 0].max_depth == 2
+
+
+def test_warm_start_clear():
+    """Test if fit clears state. """
+    X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
+    for Cls in [GradientBoostingRegressor, GradientBoostingClassifier]:
+        est = Cls(n_estimators=100, max_depth=1)
+        est.fit(X, y)
+
+        est_2 = Cls(n_estimators=100, max_depth=1, warm_start=True)
+        est_2.fit(X, y)  # inits state
+        est_2.set_params(warm_start=False)
+        est_2.fit(X, y)  # clears old state and equals est
+
+        assert_array_almost_equal(est_2.predict(X), est.predict(X))
+
+
+def test_warm_start_zero_n_estimators():
+    """Test if warm start with zero n_estimators raises error """
+    X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
+    for Cls in [GradientBoostingRegressor, GradientBoostingClassifier]:
+        est = Cls(n_estimators=100, max_depth=1, warm_start=True)
+        est.fit(X, y)
+        est.set_params(n_estimators=0)
+        assert_raises(ValueError, est.fit, X, y)
+
+
+def test_warm_start_smaller_n_estimators():
+    """Test if warm start with smaller n_estimators raises error """
+    X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
+    for Cls in [GradientBoostingRegressor, GradientBoostingClassifier]:
+        est = Cls(n_estimators=100, max_depth=1, warm_start=True)
+        est.fit(X, y)
+        est.set_params(n_estimators=99)
+        assert_raises(ValueError, est.fit, X, y)
+
+
+def test_warm_start_equal_n_estimators():
+    """Test if warm start with equal n_estimators does nothing """
+    X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
+    for Cls in [GradientBoostingRegressor, GradientBoostingClassifier]:
+        est = Cls(n_estimators=100, max_depth=1)
+        est.fit(X, y)
+
+        est2 = clone(est)
+        est2.set_params(n_estimators=est.n_estimators, warm_start=True)
+        est2.fit(X, y)
+
+        assert_array_almost_equal(est2.predict(X), est.predict(X))
+
+
+def test_warm_start_oob_switch():
+    """Test if oob can be turned on during warm start. """
+    X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
+    for Cls in [GradientBoostingRegressor, GradientBoostingClassifier]:
+        est = Cls(n_estimators=100, max_depth=1, warm_start=True)
+        est.fit(X, y)
+        est.set_params(n_estimators=110, subsample=0.5)
+        est.fit(X, y)
+
+        assert_array_equal(est.oob_improvement_[:100], np.zeros(100))
+        # the last 10 are not zeros
+        assert_array_equal(est.oob_improvement_[-10:] == 0.0,
+                           np.zeros(10, dtype=np.bool))
+
+
+def test_warm_start_oob():
+    """Test if warm start OOB equals fit. """
+    X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
+    for Cls in [GradientBoostingRegressor, GradientBoostingClassifier]:
+        est = Cls(n_estimators=200, max_depth=1, subsample=0.5,
+                  random_state=1)
+        est.fit(X, y)
+
+        est_ws = Cls(n_estimators=100, max_depth=1, subsample=0.5,
+                       random_state=1, warm_start=True)
+        est_ws.fit(X, y)
+        est_ws.set_params(n_estimators=200)
+        est_ws.fit(X, y)
+
+        assert_array_almost_equal(est_ws.oob_improvement_[:100],
+                                  est.oob_improvement_[:100])
+
+
+def early_stopping_monitor(i, est, locals):
+    """Returns True on the 10th iteration. """
+    if i == 9:
+        return True
+    else:
+        return False
+
+
+def test_monitor_early_stopping():
+    """Test if monitor return value works. """
+    X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
+
+    for Cls in [GradientBoostingRegressor, GradientBoostingClassifier]:
+        est = Cls(n_estimators=20, max_depth=1, random_state=1, subsample=0.5)
+        _ = est.fit(X, y, monitor=early_stopping_monitor)
+        assert_equal(est.n_estimators, 20)  # this is not altered
+        assert_equal(est.estimators_.shape[0], 10)
+        assert_equal(est.train_score_.shape[0], 10)
+        assert_equal(est.oob_improvement_.shape[0], 10)
+        assert_equal(est._oob_score_.shape[0], 10)
+
+        # try refit
+        est.set_params(n_estimators=30)
+        est.fit(X, y)
+        assert_equal(est.n_estimators, 30)
+        assert_equal(est.estimators_.shape[0], 30)
+        assert_equal(est.train_score_.shape[0], 30)
+        assert_equal(est.oob_improvement_.shape[0], 30)
+
+        est = Cls(n_estimators=20, max_depth=1, random_state=1, subsample=0.5,
+                  warm_start=True)
+        _ = est.fit(X, y, monitor=early_stopping_monitor)
+        assert_equal(est.n_estimators, 20)
+        assert_equal(est.estimators_.shape[0], 10)
+        assert_equal(est.train_score_.shape[0], 10)
+        assert_equal(est.oob_improvement_.shape[0], 10)
+        assert_equal(est._oob_score_.shape[0], 10)
+
+        # try refit
+        est.set_params(n_estimators=30, warm_start=False)
+        est.fit(X, y)
+        assert_equal(est.n_estimators, 30)
+        assert_equal(est.train_score_.shape[0], 30)
+        assert_equal(est.estimators_.shape[0], 30)
+        assert_equal(est.oob_improvement_.shape[0], 30)
+
+
+def test_complete_classification():
+    """Test greedy trees with max_depth + 1 leafs. """
+    from sklearn.tree._tree import TREE_LEAF
+    X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
+    k = 4
+    est = GradientBoostingClassifier(n_estimators=20, max_depth=None, random_state=1,
+                                     max_leaf_nodes=k+1).fit(X, y)
+    tree = est.estimators_[0, 0].tree_
+    assert_equal(tree.max_depth, k)
+    assert_equal(tree.children_left[tree.children_left == TREE_LEAF].shape[0], k + 1)
+
+
+def test_complete_regression():
+    """Test greedy trees with max_depth + 1 leafs. """
+    from sklearn.tree._tree import TREE_LEAF
+    k = 4
+    est = GradientBoostingRegressor(n_estimators=20, max_depth=None, random_state=1,
+                                    max_leaf_nodes=k+1).fit(boston.data, boston.target)
+    tree = est.estimators_[-1, 0].tree_
+    assert_equal(tree.children_left[tree.children_left == TREE_LEAF].shape[0], k + 1)
+
+
+def test_zero_estimator_reg():
+    """Test if ZeroEstimator works for regression. """
+    est = GradientBoostingRegressor(n_estimators=20, max_depth=1, random_state=1,
+                                    init=ZeroEstimator()).fit(boston.data, boston.target)
+    y_pred = est.predict(boston.data)
+    mse = mean_squared_error(boston.target, y_pred)
+    assert_almost_equal(mse, 33.0, decimal=0)
+
+    est = GradientBoostingRegressor(n_estimators=20, max_depth=1, random_state=1,
+                                    init='zero').fit(boston.data, boston.target)
+    y_pred = est.predict(boston.data)
+    mse = mean_squared_error(boston.target, y_pred)
+    assert_almost_equal(mse, 33.0, decimal=0)
+
+    est = GradientBoostingRegressor(n_estimators=20, max_depth=1, random_state=1,
+                                    init='foobar')
+    assert_raises(ValueError, est.fit, boston.data, boston.target)
+
+
+def test_zero_estimator_clf():
+    """Test if ZeroEstimator works for classification. """
+    X = iris.data
+    y = np.array(iris.target)
+    est = GradientBoostingClassifier(n_estimators=20, max_depth=1, random_state=1,
+                                    init=ZeroEstimator()).fit(X, y)
+
+    assert est.score(X, y) > 0.96
+
+    est = GradientBoostingClassifier(n_estimators=20, max_depth=1, random_state=1,
+                                    init='zero').fit(X, y)
+
+    assert est.score(X, y) > 0.96
+
+    # binary clf
+    mask = y != 0
+    y[mask] = 1
+    y[~mask] = 0
+    est = GradientBoostingClassifier(n_estimators=20, max_depth=1, random_state=1,
+                                    init='zero').fit(X, y)
+    assert est.score(X, y) > 0.96
+
+    est = GradientBoostingClassifier(n_estimators=20, max_depth=1, random_state=1,
+                                    init='foobar')
+    assert_raises(ValueError, est.fit, X, y)
+
+
+def test_max_leaf_nodes_max_depth():
+    """Test preceedence of max_leaf_nodes over max_depth. """
+    X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
+    all_estimators = [GradientBoostingRegressor,
+                      GradientBoostingClassifier]
+
+    k = 4
+    for GBEstimator in all_estimators:
+        est = GBEstimator(max_depth=1, max_leaf_nodes=k).fit(X, y)
+        tree = est.estimators_[0, 0].tree_
+        assert_greater(tree.max_depth, 1)
+
+        est = GBEstimator(max_depth=1).fit(X, y)
+        tree = est.estimators_[0, 0].tree_
+        assert_equal(tree.max_depth, 1)
+
+
+if __name__ == "__main__":
+    import nose
+    nose.runmodule()

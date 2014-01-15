@@ -25,6 +25,7 @@ __all__ = [
     'LabelEncoder',
 ]
 
+
 def _check_numpy_unicode_bug(labels):
     """Check that user is not subject to an old numpy bug
 
@@ -32,10 +33,9 @@ def _check_numpy_unicode_bug(labels):
 
       https://github.com/numpy/numpy/pull/243
 
-    and then backported to 1.6.1.
     """
-    if np_version[:3] < (1, 6, 1) and labels.dtype.kind == 'U':
-        raise RuntimeError("NumPy < 1.6.1 does not implement searchsorted"
+    if np_version[:3] < (1, 7, 0) and labels.dtype.kind == 'U':
+        raise RuntimeError("NumPy < 1.7.0 does not implement searchsorted"
                            " on unicode data correctly. Please upgrade"
                            " NumPy to use LabelEncoder with unicode inputs.")
 

@@ -147,6 +147,8 @@ CLASSIFICATION_METRICS = {
 }
 
 THRESHOLDED_METRICS = {
+    "log_loss": log_loss,
+    "hinge_loss": hinge_loss,
     "roc_auc_score": roc_auc_score,
     "weighted_roc_auc": partial(roc_auc_score, average="weighted"),
     "samples_roc_auc": partial(roc_auc_score, average="samples"),
@@ -198,7 +200,7 @@ THRESHOLDED_METRICS_WITH_AVERAGING = [
 
 # Metrics with a "pos_label" argument
 METRICS_WITH_POS_LABEL = [
-    "roc_curve",
+    "roc_curve", "hinge_loss",
 
     "precision_score", "recall_score", "f1_score", "f2_score", "f0.5_score",
 
@@ -238,7 +240,7 @@ METRICS_WITH_NORMALIZE_OPTION = [
 # Threshold-based metrics with "multilabel-indicator" format support
 THRESHOLDED_MULTILABEL_METRICS = [
     "roc_auc_score", "weighted_roc_auc", "samples_roc_auc",
-    "micro_roc_auc", "macro_roc_auc",
+    "micro_roc_auc", "macro_roc_auc", "log_loss",
 
     "average_precision_score", "weighted_average_precision_score",
     "samples_average_precision_score", "micro_average_precision_score",
@@ -303,7 +305,7 @@ NOT_SYMMETRIC_METRICS = [
     "micro_recall_score",
 
     "macro_f0.5_score", "macro_f2_score", "macro_precision_score",
-    "macro_recall_score",
+    "macro_recall_score", "log_loss", "hinge_loss"
 ]
 
 ###############################################################################
@@ -1025,8 +1027,8 @@ def test_classification_report_multiclass_with_unicode_label():
 
 avg / total       0.51      0.53      0.47        75
 """
-    if np_version[:3] < (1, 6, 1):
-        expected_message = ("NumPy < 1.6.1 does not implement"
+    if np_version[:3] < (1, 7, 0):
+        expected_message = ("NumPy < 1.7.0 does not implement"
                             " searchsorted on unicode data correctly.")
         assert_raise_message(RuntimeError, expected_message,
                              classification_report, y_true, y_pred)
@@ -1496,9 +1498,22 @@ def test_invariance_string_vs_numbers_labels():
                                err_msg="{0} failed string vs number  "
                                        "invariance test".format(name))
 
-    # TODO Currently not supported
-    for name, metrics in THRESHOLDED_METRICS.items():
-        assert_raises(ValueError, metrics, y1_str, y2_str)
+    for name, metric in THRESHOLDED_METRICS.items():
+        if name in ("log_loss", "hinge_loss"):
+            measure_with_number = metric(y1, y2)
+            measure_with_str = metric(y1_str, y2)
+            assert_array_equal(measure_with_number, measure_with_str,
+                               err_msg="{0} failed string vs number invariance "
+                                       "test".format(name))
+
+            measure_with_strobj = metric(y1_str.astype('O'), y2)
+            assert_array_equal(measure_with_number, measure_with_strobj,
+                               err_msg="{0} failed string object vs number "
+                                       "invariance test".format(name))
+        else:
+            # TODO those metrics doesn't support string label yet
+            assert_raises(ValueError, metric, y1_str, y2)
+            assert_raises(ValueError, metric, y1_str.astype('O'), y2)
 
 
 @ignore_warnings
@@ -2369,6 +2384,17 @@ def test_log_loss():
     y_pred = np.asarray(y_pred) > .5
     loss = log_loss(y_true, y_pred, normalize=True, eps=.1)
     assert_almost_equal(loss, log_loss(y_true, np.clip(y_pred, .1, .9)))
+
+    # raise error if number of classes are not equal.
+    y_true = [1, 0, 2]
+    y_pred = [[0.2, 0.7], [0.6, 0.5], [0.4, 0.1]]
+    assert_raises(ValueError, log_loss, y_true, y_pred)
+
+    # case when y_true is a string array object
+    y_true = ["ham", "spam", "spam", "ham"]
+    y_pred = [[0.2, 0.7], [0.6, 0.5], [0.4, 0.1], [0.7, 0.2]]
+    loss = log_loss(y_true, y_pred)
+    assert_almost_equal(loss, 1.0383217, decimal=6)
 
 
 @ignore_warnings

@@ -18,7 +18,7 @@ Who is using scikit-learn?
 
     <div class="logo">
 
-.. image:: images/spotify.jpg
+.. image:: images/spotify.png
     :target: http://www.spotify.com
 
 .. raw:: html

@@ -17,6 +17,7 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_less
+from sklearn.utils.testing import raises
 
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.tree import DecisionTreeRegressor
@@ -27,7 +28,7 @@ from sklearn import tree
 from sklearn import datasets
 from sklearn.utils.fixes import bincount
 
-from sklearn.preprocessing import balance_weights
+from sklearn.preprocessing._weights import _balance_weights
 
 
 CLF_CRITERIONS = ("gini", "entropy")
@@ -238,7 +239,7 @@ def test_numerical_stability():
         [120.91514587, 140.40744019, 129.75102234, 159.90493774]])
 
     y = np.array(
-        [1., 0.70209277, 0.53896582, 0., 0.90914464, 0.48026916,  0.49622521])
+        [1., 0.70209277, 0.53896582, 0., 0.90914464, 0.48026916, 0.49622521])
 
     with np.errstate(all="raise"):
         for name, Tree in REG_TREES.items():
@@ -261,6 +262,7 @@ def test_importances():
 
     for name, Tree in CLF_TREES.items():
         clf = Tree(random_state=0)
+
         clf.fit(X, y)
         importances = clf.feature_importances_
         n_important = np.sum(importances > 0.1)
@@ -271,6 +273,34 @@ def test_importances():
         X_new = clf.transform(X, threshold="mean")
         assert_less(0, X_new.shape[1], "Failed with {0}".format(name))
         assert_less(X_new.shape[1], X.shape[1], "Failed with {0}".format(name))
+
+
+@raises(ValueError)
+def test_importances_raises():
+    """Check if variable importance before fit raises ValueError. """
+    clf = DecisionTreeClassifier()
+    clf.feature_importances_
+
+
+def test_importances_gini_equal_mse():
+    """Check that gini is equivalent to mse for binary output variable"""
+
+    X, y = datasets.make_classification(n_samples=2000,
+                                        n_features=10,
+                                        n_informative=3,
+                                        n_redundant=0,
+                                        n_repeated=0,
+                                        shuffle=False,
+                                        random_state=0)
+
+    clf = DecisionTreeClassifier(criterion="gini", random_state=0).fit(X, y)
+    reg = DecisionTreeRegressor(criterion="mse", random_state=0).fit(X, y)
+
+    assert_almost_equal(clf.feature_importances_, reg.feature_importances_)
+    assert_array_equal(clf.tree_.feature, reg.tree_.feature)
+    assert_array_equal(clf.tree_.children_left, reg.tree_.children_left)
+    assert_array_equal(clf.tree_.children_right, reg.tree_.children_right)
+    assert_array_equal(clf.tree_.n_node_samples, reg.tree_.n_node_samples)
 
 
 def test_max_features():
@@ -509,7 +539,7 @@ def test_unbalanced_iris():
     """Check class rebalancing."""
     unbalanced_X = iris.data[:125]
     unbalanced_y = iris.target[:125]
-    sample_weight = balance_weights(unbalanced_y)
+    sample_weight = _balance_weights(unbalanced_y)
 
     for name, TreeClassifier in CLF_TREES.items():
         clf = TreeClassifier(random_state=0)
@@ -600,14 +630,53 @@ def test_sample_weight():
                               clf2.tree_.threshold[internal])
 
 
-def test_32bit_equality():
-    """Check if 32bit and 64bit get the same result. """
-    from sklearn.cross_validation import train_test_split
-    X_train, X_test, y_train, y_test = train_test_split(boston.data,
-                                                        boston.target,
-                                                        random_state=1)
-    est = DecisionTreeRegressor(random_state=1)
+def test_sample_weight_invalid():
+    """Check sample weighting raises errors."""
+    X = np.arange(100)[:, np.newaxis]
+    y = np.ones(100)
+    y[:50] = 0.0
 
-    est.fit(X_train, y_train)
-    score = est.score(X_test, y_test)
-    assert_almost_equal(0.84652100667116, score)
+
+    clf = DecisionTreeClassifier(random_state=0)
+
+    sample_weight = np.random.rand(100, 1)
+    assert_raises(ValueError, clf.fit, X, y, sample_weight=sample_weight)
+
+    sample_weight = np.array(0)
+    assert_raises(ValueError, clf.fit, X, y, sample_weight=sample_weight)
+
+    sample_weight = np.ones(101)
+    assert_raises(ValueError, clf.fit, X, y, sample_weight=sample_weight)
+
+    sample_weight = np.ones(99)
+    assert_raises(ValueError, clf.fit, X, y, sample_weight=sample_weight)
+
+
+def test_max_leaf_nodes():
+    """Test greedy trees with max_depth + 1 leafs. """
+    from sklearn.tree._tree import TREE_LEAF
+    X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
+    k = 4
+    for name, TreeEstimator in ALL_TREES.items():
+        est = TreeEstimator(max_depth=None, max_leaf_nodes=k + 1).fit(X, y)
+        tree = est.tree_
+        assert_equal(tree.children_left[tree.children_left == TREE_LEAF].shape[0],
+                     k + 1)
+
+        # max_leaf_nodes in (0, 1) should raise ValueError
+        est = TreeEstimator(max_depth=None, max_leaf_nodes=0)
+        assert_raises(ValueError, est.fit, X, y)
+        est = TreeEstimator(max_depth=None, max_leaf_nodes=1)
+        assert_raises(ValueError, est.fit, X, y)
+        est = TreeEstimator(max_depth=None, max_leaf_nodes=0.1)
+        assert_raises(ValueError, est.fit, X, y)
+
+
+def test_max_leaf_nodes_max_depth():
+    """Test preceedence of max_leaf_nodes over max_depth. """
+    X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
+    k = 4
+    for name, TreeEstimator in ALL_TREES.items():
+        est = TreeEstimator(max_depth=1, max_leaf_nodes=k).fit(X, y)
+        tree = est.tree_
+        assert_greater(tree.max_depth, 1)

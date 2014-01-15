@@ -588,24 +588,6 @@ From text
    kernel_approximation.RBFSampler
    kernel_approximation.SkewedChi2Sampler
 
-:mod:`sklearn.semi_supervised` Semi-Supervised Learning
-========================================================
-
-.. automodule:: sklearn.semi_supervised
-   :no-members:
-   :no-inherited-members:
-
-**User guide:** See the :ref:`semi_supervised` section for further details.
-
-.. currentmodule:: sklearn
-
-.. autosummary::
-   :toctree: generated/
-   :template: class.rst
-
-   semi_supervised.LabelPropagation
-   semi_supervised.LabelSpreading
-
 .. _lda_ref:
 
 :mod:`sklearn.lda`: Linear Discriminant Analysis
@@ -625,6 +607,23 @@ From text
 
    lda.LDA
 
+
+.. _learning_curve_ref:
+
+:mod:`sklearn.learning_curve` Learning curve evaluation
+=======================================================
+
+.. automodule:: sklearn.learning_curve
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   learning_curve.learning_curve
 
 .. _linear_model_ref:
 
@@ -1112,6 +1111,27 @@ Pairwise metrics
    :template: function.rst
 
    random_projection.johnson_lindenstrauss_min_dim
+
+
+.. _semi_supervised_ref:
+
+:mod:`sklearn.semi_supervised` Semi-Supervised Learning
+========================================================
+
+.. automodule:: sklearn.semi_supervised
+   :no-members:
+   :no-inherited-members:
+
+**User guide:** See the :ref:`semi_supervised` section for further details.
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   semi_supervised.LabelPropagation
+   semi_supervised.LabelSpreading
 
 
 .. _svm_ref:

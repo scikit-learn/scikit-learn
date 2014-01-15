@@ -460,6 +460,7 @@ def make_regression(n_samples=100, n_features=100, n_informative=10,
         The coefficient of the underlying linear model. It is returned only if
         coef is True.
     """
+    n_informative = min(n_features, n_informative)
     generator = check_random_state(random_state)
 
     if effective_rank is None:

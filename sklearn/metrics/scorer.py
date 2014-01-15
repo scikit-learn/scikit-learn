@@ -23,9 +23,9 @@ from warnings import warn
 
 import numpy as np
 
-from . import (r2_score, mean_squared_error, accuracy_score, f1_score,
-               roc_auc_score, average_precision_score, precision_score,
-               recall_score, log_loss)
+from . import (r2_score, mean_absolute_error, mean_squared_error,
+               accuracy_score, f1_score, roc_auc_score, average_precision_score,
+               precision_score, recall_score, log_loss)
 from .cluster import adjusted_rand_score
 from ..utils.multiclass import type_of_target
 from ..externals import six
@@ -180,7 +180,13 @@ def _deprecate_loss_and_score_funcs(
             if loss_func is None or score_overrides_loss:
                 scorer = make_scorer(score_func)
 
-    elif isinstance(scoring, six.string_types):
+    else:
+        scorer = get_scorer(scoring)
+    return scorer
+
+
+def get_scorer(scoring):
+    if isinstance(scoring, six.string_types):
         try:
             scorer = SCORERS[scoring]
         except KeyError:
@@ -260,6 +266,8 @@ def make_scorer(score_func, greater_is_better=True, needs_proba=False,
 r2_scorer = make_scorer(r2_score)
 mean_squared_error_scorer = make_scorer(mean_squared_error,
                                         greater_is_better=False)
+mean_absolute_error_scorer = make_scorer(mean_absolute_error,
+                                         greater_is_better=False)
 
 # Standard Classification Scores
 accuracy_scorer = make_scorer(accuracy_score)
@@ -281,6 +289,7 @@ log_loss_scorer = make_scorer(log_loss, greater_is_better=False,
 adjusted_rand_scorer = make_scorer(adjusted_rand_score)
 
 SCORERS = dict(r2=r2_scorer,
+               mean_absolute_error=mean_absolute_error_scorer,
                mean_squared_error=mean_squared_error_scorer,
                accuracy=accuracy_scorer, f1=f1_scorer, roc_auc=roc_auc_scorer,
                average_precision=average_precision_scorer,

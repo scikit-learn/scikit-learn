@@ -222,8 +222,7 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
         random_state = check_random_state(self.random_state)
 
         # Convert data
-        X, = check_arrays(X, dtype=DTYPE, sparse_format="dense",
-                          check_ccontiguous=True)
+        X, = check_arrays(X, dtype=DTYPE, sparse_format="dense")
 
         # Remap output
         n_samples, self.n_features_ = X.shape
@@ -654,6 +653,7 @@ class RandomForestClassifier(ForestClassifier):
         The maximum depth of the tree. If None, then nodes are expanded until
         all leaves are pure or until all leaves contain less than
         min_samples_split samples.
+        Ignored if ``max_samples_leaf`` is not None.
         Note: this parameter is tree-specific.
 
     min_samples_split : integer, optional (default=2)
@@ -664,6 +664,13 @@ class RandomForestClassifier(ForestClassifier):
         The minimum number of samples in newly created leaves.  A split is
         discarded if after the split, one of the leaves would contain less then
         ``min_samples_leaf`` samples.
+        Note: this parameter is tree-specific.
+
+    max_leaf_nodes : int or None, optional (default=None)
+        Grow trees with ``max_leaf_nodes`` in best-first fashion.
+        Best nodes are defined as relative reduction in impurity.
+        If None then unlimited number of leaf nodes.
+        If not None then ``max_depth`` will be ignored.
         Note: this parameter is tree-specific.
 
     bootstrap : boolean, optional (default=True)
@@ -727,6 +734,7 @@ class RandomForestClassifier(ForestClassifier):
                  min_samples_split=2,
                  min_samples_leaf=1,
                  max_features="auto",
+                 max_leaf_nodes=None,
                  bootstrap=True,
                  oob_score=False,
                  n_jobs=1,
@@ -739,7 +747,7 @@ class RandomForestClassifier(ForestClassifier):
             n_estimators=n_estimators,
             estimator_params=("criterion", "max_depth", "min_samples_split",
                               "min_samples_leaf", "max_features",
-                              "random_state"),
+                              "max_leaf_nodes", "random_state"),
             bootstrap=bootstrap,
             oob_score=oob_score,
             n_jobs=n_jobs,
@@ -751,6 +759,7 @@ class RandomForestClassifier(ForestClassifier):
         self.min_samples_split = min_samples_split
         self.min_samples_leaf = min_samples_leaf
         self.max_features = max_features
+        self.max_leaf_nodes = max_leaf_nodes
 
         if min_density is not None:
             warn("The min_density parameter is deprecated as of version 0.14 "
@@ -798,6 +807,7 @@ class RandomForestRegressor(ForestRegressor):
         The maximum depth of the tree. If None, then nodes are expanded until
         all leaves are pure or until all leaves contain less than
         min_samples_split samples.
+        Ignored if ``max_samples_leaf`` is not None.
         Note: this parameter is tree-specific.
 
     min_samples_split : integer, optional (default=2)
@@ -808,6 +818,13 @@ class RandomForestRegressor(ForestRegressor):
         The minimum number of samples in newly created leaves.  A split is
         discarded if after the split, one of the leaves would contain less then
         ``min_samples_leaf`` samples.
+        Note: this parameter is tree-specific.
+
+    max_leaf_nodes : int or None, optional (default=None)
+        Grow trees with ``max_leaf_nodes`` in best-first fashion.
+        Best nodes are defined as relative reduction in impurity.
+        If None then unlimited number of leaf nodes.
+        If not None then ``max_depth`` will be ignored.
         Note: this parameter is tree-specific.
 
     bootstrap : boolean, optional (default=True)
@@ -860,6 +877,7 @@ class RandomForestRegressor(ForestRegressor):
                  min_samples_split=2,
                  min_samples_leaf=1,
                  max_features="auto",
+                 max_leaf_nodes=None,
                  bootstrap=True,
                  oob_score=False,
                  n_jobs=1,
@@ -872,7 +890,7 @@ class RandomForestRegressor(ForestRegressor):
             n_estimators=n_estimators,
             estimator_params=("criterion", "max_depth", "min_samples_split",
                               "min_samples_leaf", "max_features",
-                              "random_state"),
+                              "max_leaf_nodes", "random_state"),
             bootstrap=bootstrap,
             oob_score=oob_score,
             n_jobs=n_jobs,
@@ -884,6 +902,7 @@ class RandomForestRegressor(ForestRegressor):
         self.min_samples_split = min_samples_split
         self.min_samples_leaf = min_samples_leaf
         self.max_features = max_features
+        self.max_leaf_nodes = max_leaf_nodes
 
         if min_density is not None:
             warn("The min_density parameter is deprecated as of version 0.14 "
@@ -932,6 +951,7 @@ class ExtraTreesClassifier(ForestClassifier):
         The maximum depth of the tree. If None, then nodes are expanded until
         all leaves are pure or until all leaves contain less than
         min_samples_split samples.
+        Ignored if ``max_samples_leaf`` is not None.
         Note: this parameter is tree-specific.
 
     min_samples_split : integer, optional (default=2)
@@ -942,6 +962,13 @@ class ExtraTreesClassifier(ForestClassifier):
         The minimum number of samples in newly created leaves.  A split is
         discarded if after the split, one of the leaves would contain less then
         ``min_samples_leaf`` samples.
+        Note: this parameter is tree-specific.
+
+    max_leaf_nodes : int or None, optional (default=None)
+        Grow trees with ``max_leaf_nodes`` in best-first fashion.
+        Best nodes are defined as relative reduction in impurity.
+        If None then unlimited number of leaf nodes.
+        If not None then ``max_depth`` will be ignored.
         Note: this parameter is tree-specific.
 
     bootstrap : boolean, optional (default=False)
@@ -1008,6 +1035,7 @@ class ExtraTreesClassifier(ForestClassifier):
                  min_samples_split=2,
                  min_samples_leaf=1,
                  max_features="auto",
+                 max_leaf_nodes=None,
                  bootstrap=False,
                  oob_score=False,
                  n_jobs=1,
@@ -1020,7 +1048,7 @@ class ExtraTreesClassifier(ForestClassifier):
             n_estimators=n_estimators,
             estimator_params=("criterion", "max_depth", "min_samples_split",
                               "min_samples_leaf", "max_features",
-                              "random_state"),
+                              "max_leaf_nodes", "random_state"),
             bootstrap=bootstrap,
             oob_score=oob_score,
             n_jobs=n_jobs,
@@ -1032,6 +1060,7 @@ class ExtraTreesClassifier(ForestClassifier):
         self.min_samples_split = min_samples_split
         self.min_samples_leaf = min_samples_leaf
         self.max_features = max_features
+        self.max_leaf_nodes = max_leaf_nodes
 
         if min_density is not None:
             warn("The min_density parameter is deprecated as of version 0.14 "
@@ -1080,6 +1109,7 @@ class ExtraTreesRegressor(ForestRegressor):
         The maximum depth of the tree. If None, then nodes are expanded until
         all leaves are pure or until all leaves contain less than
         min_samples_split samples.
+        Ignored if ``max_samples_leaf`` is not None.
         Note: this parameter is tree-specific.
 
     min_samples_split : integer, optional (default=2)
@@ -1090,6 +1120,13 @@ class ExtraTreesRegressor(ForestRegressor):
         The minimum number of samples in newly created leaves.  A split is
         discarded if after the split, one of the leaves would contain less then
         ``min_samples_leaf`` samples.
+        Note: this parameter is tree-specific.
+
+    max_leaf_nodes : int or None, optional (default=None)
+        Grow trees with ``max_leaf_nodes`` in best-first fashion.
+        Best nodes are defined as relative reduction in impurity.
+        If None then unlimited number of leaf nodes.
+        If not None then ``max_depth`` will be ignored.
         Note: this parameter is tree-specific.
 
     bootstrap : boolean, optional (default=False)
@@ -1145,6 +1182,7 @@ class ExtraTreesRegressor(ForestRegressor):
                  min_samples_split=2,
                  min_samples_leaf=1,
                  max_features="auto",
+                 max_leaf_nodes=None,
                  bootstrap=False,
                  oob_score=False,
                  n_jobs=1,
@@ -1157,7 +1195,7 @@ class ExtraTreesRegressor(ForestRegressor):
             n_estimators=n_estimators,
             estimator_params=("criterion", "max_depth", "min_samples_split",
                               "min_samples_leaf", "max_features",
-                              "random_state"),
+                              "max_leaf_nodes", "random_state"),
             bootstrap=bootstrap,
             oob_score=oob_score,
             n_jobs=n_jobs,
@@ -1169,6 +1207,7 @@ class ExtraTreesRegressor(ForestRegressor):
         self.min_samples_split = min_samples_split
         self.min_samples_leaf = min_samples_leaf
         self.max_features = max_features
+        self.max_leaf_nodes = max_leaf_nodes
 
         if min_density is not None:
             warn("The min_density parameter is deprecated as of version 0.14 "
@@ -1199,7 +1238,10 @@ class RandomTreesEmbedding(BaseForest):
         Number of trees in the forest.
 
     max_depth : int
-        Maximum depth of each tree.
+        The maximum depth of each tree. If None, then nodes are expanded until
+        all leaves are pure or until all leaves contain less than
+        min_samples_split samples.
+        Ignored if ``max_samples_leaf`` is not None.
 
     min_samples_split : integer, optional (default=2)
         The minimum number of samples required to split an internal node.
@@ -1209,6 +1251,13 @@ class RandomTreesEmbedding(BaseForest):
         The minimum number of samples in newly created leaves.  A split is
         discarded if after the split, one of the leaves would contain less then
         ``min_samples_leaf`` samples.
+        Note: this parameter is tree-specific.
+
+    max_leaf_nodes : int or None, optional (default=None)
+        Grow trees with ``max_leaf_nodes`` in best-first fashion.
+        Best nodes are defined as relative reduction in impurity.
+        If None then unlimited number of leaf nodes.
+        If not None then ``max_depth`` will be ignored.
         Note: this parameter is tree-specific.
 
     n_jobs : integer, optional (default=1)
@@ -1244,6 +1293,7 @@ class RandomTreesEmbedding(BaseForest):
                  max_depth=5,
                  min_samples_split=2,
                  min_samples_leaf=1,
+                 max_leaf_nodes=None,
                  n_jobs=1,
                  random_state=None,
                  verbose=0,
@@ -1253,7 +1303,7 @@ class RandomTreesEmbedding(BaseForest):
             n_estimators=n_estimators,
             estimator_params=("criterion", "max_depth", "min_samples_split",
                               "min_samples_leaf", "max_features",
-                              "random_state"),
+                              "max_leaf_nodes", "random_state"),
             bootstrap=False,
             oob_score=False,
             n_jobs=n_jobs,
@@ -1265,6 +1315,7 @@ class RandomTreesEmbedding(BaseForest):
         self.min_samples_split = min_samples_split
         self.min_samples_leaf = min_samples_leaf
         self.max_features = 1
+        self.max_leaf_nodes = max_leaf_nodes
 
         if min_density is not None:
             warn("The min_density parameter is deprecated as of version 0.14 "

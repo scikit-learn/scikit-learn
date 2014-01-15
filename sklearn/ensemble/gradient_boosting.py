@@ -42,7 +42,8 @@ from ..externals import six
 
 from ..tree.tree import DecisionTreeRegressor
 from ..tree._tree import DTYPE, TREE_LEAF
-from ..tree._tree import MSE, PresortBestSplitter
+from ..tree._tree import PresortBestSplitter
+from ..tree._tree import FriedmanMSE
 
 from ._gradient_boosting import predict_stages
 from ._gradient_boosting import predict_stage
@@ -53,7 +54,7 @@ class QuantileEstimator(BaseEstimator):
     """An estimator predicting the alpha-quantile of the training targets."""
     def __init__(self, alpha=0.9):
         if not 0 < alpha < 1.0:
-            raise ValueError("`alpha` must be in (0, 1.0)")
+            raise ValueError("`alpha` must be in (0, 1.0) but was %r" % alpha)
         self.alpha = alpha
 
     def fit(self, X, y):
@@ -102,6 +103,25 @@ class PriorProbabilityEstimator(BaseEstimator):
     def predict(self, X):
         y = np.empty((X.shape[0], self.priors.shape[0]), dtype=np.float64)
         y[:] = self.priors
+        return y
+
+
+class ZeroEstimator(BaseEstimator):
+    """An estimator that simply predicts zero. """
+
+    def fit(self, X, y):
+        if np.issubdtype(y.dtype, int):
+            # classification
+            self.n_classes = np.unique(y).shape[0]
+            if self.n_classes == 2:
+                self.n_classes = 1
+        else:
+            # regression
+            self.n_classes = 1
+
+    def predict(self, X):
+        y = np.empty((X.shape[0], self.n_classes), dtype=np.float64)
+        y.fill(0.0)
         return y
 
 
@@ -188,7 +208,8 @@ class RegressionLossFunction(six.with_metaclass(ABCMeta, LossFunction)):
 
     def __init__(self, n_classes):
         if n_classes != 1:
-            raise ValueError("``n_classes`` must be 1 for regression")
+            raise ValueError("``n_classes`` must be 1 for regression but was %r" %
+                             n_classes)
         super(RegressionLossFunction, self).__init__(n_classes)
 
 
@@ -436,13 +457,71 @@ LOSS_FUNCTIONS = {'ls': LeastSquaresError,
                   'deviance': None}  # for both, multinomial and binomial
 
 
+INIT_ESTIMATORS = {'zero': ZeroEstimator}
+
+
+class VerboseReporter(object):
+    """Reports verbose output to stdout.
+
+    If ``verbose==1`` output is printed once in a while (when iteration mod
+    verbose_mod is zero).; if larger than 1 then output is printed for
+    each update.
+    """
+
+    def __init__(self, verbose):
+        self.verbose = verbose
+
+    def init(self, est, begin_at_stage=0):
+        # header fields and line format str
+        header_fields = ['Iter', 'Train Loss']
+        verbose_fmt = ['{iter:>10d}', '{train_score:>16.4f}']
+        # do oob?
+        if est.subsample < 1:
+            header_fields.append('OOB Improve')
+            verbose_fmt.append('{oob_impr:>16.4f}')
+        header_fields.append('Remaining Time')
+        verbose_fmt.append('{remaining_time:>16s}')
+
+        # print the header line
+        print(('%10s ' + '%16s ' *
+               (len(header_fields) - 1)) % tuple(header_fields))
+
+        self.verbose_fmt = ' '.join(verbose_fmt)
+        # plot verbose info each time i % verbose_mod == 0
+        self.verbose_mod = 1
+        self.start_time = time()
+        self.begin_at_stage = begin_at_stage
+
+    def update(self, j, est):
+        """Update reporter with new iteration. """
+        do_oob = est.subsample < 1
+        # we need to take into account if we fit additional estimators.
+        i = j - self.begin_at_stage  # iteration relative to the start iter
+        if (i + 1) % self.verbose_mod == 0:
+            oob_impr = est.oob_improvement_[j] if do_oob else 0
+            remaining_time = ((est.n_estimators - (j + 1)) *
+                              (time() - self.start_time) / float(i + 1))
+            if remaining_time > 60:
+                remaining_time = '{0:.2f}m'.format(remaining_time / 60.0)
+            else:
+                remaining_time = '{0:.2f}s'.format(remaining_time)
+            print(self.verbose_fmt.format(iter=j + 1,
+                                          train_score=est.train_score_[j],
+                                          oob_impr=oob_impr,
+                                          remaining_time=remaining_time))
+            if self.verbose == 1 and ((i + 1) // (self.verbose_mod * 10) > 0):
+                # adjust verbose frequency (powers of 10)
+                self.verbose_mod *= 10
+
+
 class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
     """Abstract base class for Gradient Boosting. """
 
     @abstractmethod
     def __init__(self, loss, learning_rate, n_estimators, min_samples_split,
                  min_samples_leaf, max_depth, init, subsample, max_features,
-                 random_state, alpha=0.9, verbose=0):
+                 random_state, alpha=0.9, verbose=0, max_leaf_nodes=None,
+                 warm_start=False):
 
         self.n_estimators = n_estimators
         self.learning_rate = learning_rate
@@ -456,6 +535,9 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         self.random_state = random_state
         self.alpha = alpha
         self.verbose = verbose
+        self.max_leaf_nodes = max_leaf_nodes
+        self.warm_start = warm_start
+
         self.estimators_ = np.empty((0, 0), dtype=np.object)
 
     def _fit_stage(self, i, X, y, y_pred, sample_mask,
@@ -478,6 +560,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
                 min_samples_split=self.min_samples_split,
                 min_samples_leaf=self.min_samples_leaf,
                 max_features=self.max_features,
+                max_leaf_nodes=self.max_leaf_nodes,
                 random_state=random_state)
 
             sample_weight = None
@@ -499,10 +582,12 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
     def _check_params(self):
         """Check validity of parameters and raise ValueError if not valid. """
         if self.n_estimators <= 0:
-            raise ValueError("n_estimators must be greater than 0")
+            raise ValueError("n_estimators must be greater than 0 but was %r" %
+                             self.n_estimators)
 
         if self.learning_rate <= 0.0:
-            raise ValueError("learning_rate must be greater than 0")
+            raise ValueError("learning_rate must be greater than 0 but was %r" %
+                             self.learning_rate)
 
         if (self.loss not in self._SUPPORTED_LOSS or
             self.loss not in LOSS_FUNCTIONS):
@@ -524,34 +609,38 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         else:
             self.loss_ = loss_class(self.n_classes_)
 
-        if self.subsample <= 0.0 or self.subsample > 1:
-            raise ValueError("subsample must be in (0,1]")
+        if not (0.0 < self.subsample <= 1.0):
+            raise ValueError("subsample must be in (0,1] but was %r" % self.subsample)
 
         if self.init is not None:
-            if (not hasattr(self.init, 'fit')
+            if isinstance(self.init, six.string_types):
+                if self.init not in INIT_ESTIMATORS:
+                    raise ValueError('init="%s" is not supported' % self.init)
+            else:
+                if (not hasattr(self.init, 'fit')
                     or not hasattr(self.init, 'predict')):
-                raise ValueError("init must be valid estimator")
-            self.init_ = self.init
-        else:
-            self.init_ = self.loss_.init_estimator()
+                    raise ValueError(("init=%r must be valid BaseEstimator and support " +
+                                      "both fit and predict") % self.init)
 
-        if not (0.0 < self.alpha and self.alpha < 1.0):
-            raise ValueError("alpha must be in (0.0, 1.0)")
+        if not (0.0 < self.alpha < 1.0):
+            raise ValueError("alpha must be in (0.0, 1.0) but was %r" % self.alpha)
 
         if isinstance(self.max_features, six.string_types):
             if self.max_features == "auto":
-                if is_classification:
+                # if is_classification
+                if self.n_classes_ > 1:
                     max_features = max(1, int(np.sqrt(self.n_features)))
                 else:
-                    max_features = self.n_features_
+                    # is regression
+                    max_features = self.n_features
             elif self.max_features == "sqrt":
                 max_features = max(1, int(np.sqrt(self.n_features)))
             elif self.max_features == "log2":
                 max_features = max(1, int(np.log2(self.n_features)))
             else:
                 raise ValueError(
-                    'Invalid value for max_features. Allowed string '
-                    'values are "auto", "sqrt" or "log2".')
+                    ('Invalid value for max_features: %r. Allowed string '
+                     'values are "auto", "sqrt" or "log2".')  % self.max_features)
         elif self.max_features is None:
             max_features = self.n_features
         elif isinstance(self.max_features, (numbers.Integral, np.integer)):
@@ -561,7 +650,66 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
 
         self.max_features_ = max_features
 
-    def fit(self, X, y):
+    def _init_state(self):
+        """Initialize model state and allocate model state data structures. """
+
+        if self.init is None:
+            self.init_ = self.loss_.init_estimator()
+        elif isinstance(self.init, six.string_types):
+            self.init_ = INIT_ESTIMATORS[self.init]()
+        else:
+            self.init_ = self.init
+
+        self.estimators_ = np.empty((self.n_estimators, self.loss_.K),
+                                    dtype=np.object)
+        self.train_score_ = np.zeros((self.n_estimators,), dtype=np.float64)
+        # do oob?
+        if self.subsample < 1.0:
+            self._oob_score_ = np.zeros((self.n_estimators), dtype=np.float64)
+            self.oob_improvement_ = np.zeros((self.n_estimators),
+                                             dtype=np.float64)
+
+    def _clear_state(self):
+        """Clear the state of the gradient boosting model. """
+        if hasattr(self, 'estimators_'):
+            self.estimators_ = np.empty((0, 0), dtype=np.object)
+        if hasattr(self, 'train_score_'):
+            del self.train_score_
+        if hasattr(self, '_oob_score_'):
+            del self._oob_score_
+        if hasattr(self, 'oob_improvement_'):
+            del self.oob_improvement_
+        if hasattr(self, 'init_'):
+            del self.init_
+
+    def _resize_state(self):
+        """Add additional ``n_estimators`` entries to all attributes. """
+        # self.n_estimators is the number of additional est to fit
+        total_n_estimators = self.n_estimators
+        if total_n_estimators < self.estimators_.shape[0]:
+            raise ValueError('resize with smaller n_estimators %d < %d' % (total_n_estimators,
+                                                                           self.estimators_[0]))
+
+        self.estimators_.resize((total_n_estimators, self.loss_.K))
+        self.train_score_.resize(total_n_estimators)
+        if (self.subsample < 1 or hasattr(self, '_oob_score_')
+            or hasattr(self, 'oob_improvement_')):
+            # if do oob resize arrays or create new if not available
+            if hasattr(self, '_oob_score_'):
+                self._oob_score_.resize(total_n_estimators)
+            else:
+                self._oob_score_ = np.zeros((total_n_estimators),
+                                            dtype=np.float64)
+            if hasattr(self, 'oob_improvement_'):
+                self.oob_improvement_.resize(total_n_estimators)
+            else:
+                self.oob_improvement_ = np.zeros((total_n_estimators,),
+                                                 dtype=np.float64)
+
+    def _is_initialized(self):
+        return len(getattr(self, 'estimators_', [])) > 0
+
+    def fit(self, X, y, monitor=None):
         """Fit the gradient boosting model.
 
         Parameters
@@ -576,71 +724,95 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             For classification, labels must correspond to classes
             ``0, 1, ..., n_classes_-1``
 
+        monitor : callable, optional
+            The monitor is called after each iteration with the current
+            iteration, a reference to the estimator and the local variables
+            of ``_fit_stages`` as keyword arguments ``callable(i, self, locals())``.
+            If the callable returns ``True`` the fitting procedure is stopped.
+            The monitor can be used for various things such as computing
+            held-out estimates, early stopping, model introspect,
+            and snapshoting.
+
         Returns
         -------
         self : object
             Returns self.
         """
+        # if not warmstart - clear the estimator state
+        if not self.warm_start:
+            self._clear_state()
+
         # Check input
-        X, = check_arrays(X, dtype=DTYPE, sparse_format="dense",
-                          check_ccontiguous=True)
+        X, = check_arrays(X, dtype=DTYPE, sparse_format="dense")
         y = column_or_1d(y, warn=True)
         n_samples, n_features = X.shape
         self.n_features = n_features
         random_state = check_random_state(self.random_state)
-
-        # Check parameters
         self._check_params()
 
-        # pull freq used parameters into local scope
-        subsample = self.subsample
+        if not self._is_initialized():
+            # init state
+            self._init_state()
+
+            # fit initial model
+            self.init_.fit(X, y)
+
+            # init predictions
+            y_pred = self.init_.predict(X)
+            begin_at_stage = 0
+        else:
+            # add more estimators to fitted model
+            # invariant: warm_start = True
+            if self.n_estimators < self.estimators_.shape[0]:
+                raise ValueError('n_estimators=%d must be larger or equal to'
+                                 'estimators_.shape[0]=%d when warm_start==True'
+                                 % (self.n_estimators, self.estimators_.shape[0]))
+            begin_at_stage = self.estimators_.shape[0]
+            y_pred = self.decision_function(X)
+            self._resize_state()
+
+        # fit the boosting stages
+        n_stages = self._fit_stages(X, y, y_pred, random_state,
+                                    begin_at_stage, monitor)
+        # change shape of arrays after fit (early-stopping or additional ests)
+        if n_stages != self.estimators_.shape[0]:
+            self.estimators_ = self.estimators_[:n_stages]
+            self.train_score_ = self.train_score_[:n_stages]
+            if hasattr(self, 'oob_improvement_'):
+                self.oob_improvement_ = self.oob_improvement_[:n_stages]
+            if hasattr(self, '_oob_score_'):
+                self._oob_score_ = self._oob_score_[:n_stages]
+
+        return self
+
+    def _fit_stages(self, X, y, y_pred, random_state, begin_at_stage=0,
+                    monitor=None):
+        """Iteratively fits the stages.
+
+        For each stage it computes the progress (OOB, train score)
+        and delegates to ``_fit_stage``.
+        Returns the number of stages fit; might differ from ``n_estimators``
+        due to early stopping.
+        """
+        n_samples = X.shape[0]
+        do_oob = self.subsample < 1.0
+        sample_mask = np.ones((n_samples, ), dtype=np.bool)
+        n_inbag = max(1, int(self.subsample * n_samples))
         loss_ = self.loss_
-        do_oob = subsample < 1.0
-
-        # allocate model state data structures
-        self.estimators_ = np.empty((self.n_estimators, self.loss_.K),
-                                    dtype=np.object)
-        self.train_score_ = np.zeros((self.n_estimators,), dtype=np.float64)
-        if do_oob:
-            self._oob_score_ = np.zeros((self.n_estimators), dtype=np.float64)
-            self.oob_improvement_ = np.zeros((self.n_estimators),
-                                             dtype=np.float64)
-
-        sample_mask = np.ones((n_samples,), dtype=np.bool)
-        n_inbag = max(1, int(subsample * n_samples))
-
-        if self.verbose:
-            # header fields and line format str
-            header_fields = ['Iter', 'Train Loss']
-            verbose_fmt = ['{iter:>10d}', '{train_score:>16.4f}']
-            if do_oob:
-                header_fields.append('OOB Improve')
-                verbose_fmt.append('{oob_impr:>16.4f}')
-            header_fields.append('Remaining Time')
-            verbose_fmt.append('{remaining_time:>16s}')
-            verbose_fmt = ' '.join(verbose_fmt)
-            # print the header line
-            print(('%10s ' + '%16s ' *
-                   (len(header_fields) - 1)) % tuple(header_fields))
-            # plot verbose info each time i % verbose_mod == 0
-            verbose_mod = 1
-            start_time = time()
-
-        # fit initial model
-        self.init_.fit(X, y)
-
-        # init predictions
-        y_pred = self.init_.predict(X)
 
         # init criterion and splitter
-        criterion = MSE(1)
+        criterion = FriedmanMSE(1)
         splitter = PresortBestSplitter(criterion,
                                        self.max_features_,
                                        self.min_samples_leaf,
                                        random_state)
 
+        if self.verbose:
+            verbose_reporter = VerboseReporter(self.verbose)
+            verbose_reporter.init(self, begin_at_stage)
+
         # perform boosting iterations
-        for i in range(self.n_estimators):
+        for i in range(begin_at_stage, self.n_estimators):
 
             # subsampling
             if do_oob:
@@ -663,26 +835,16 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
                 self.oob_improvement_[i] = old_oob_score - self._oob_score_[i]
             else:
                 # no need to fancy index w/ no subsampling
-                self.train_score_[i] = self.loss_(y, y_pred)
+                self.train_score_[i] = loss_(y, y_pred)
 
             if self.verbose > 0:
-                if (i + 1) % verbose_mod == 0:
-                    oob_impr = self.oob_improvement_[i] if do_oob else 0
-                    remaining_time = ((self.n_estimators - (i + 1)) *
-                                      (time() - start_time) / float(i + 1))
-                    if remaining_time > 60:
-                        remaining_time = '{0:.2f}m'.format(remaining_time / 60.0)
-                    else:
-                        remaining_time = '{0:.2f}s'.format(remaining_time)
-                    print(verbose_fmt.format(iter=i + 1,
-                                             train_score=self.train_score_[i],
-                                             oob_impr=oob_impr,
-                                             remaining_time=remaining_time))
-                if self.verbose == 1 and ((i + 1) // (verbose_mod * 10) > 0):
-                    # adjust verbose frequency (powers of 10)
-                    verbose_mod *= 10
+                verbose_reporter.update(i, self)
 
-        return self
+            if monitor is not None:
+                early_stopping = monitor(i, self, locals())
+                if early_stopping:
+                    break
+        return i + 1
 
     def _make_estimator(self, append=True):
         # we don't need _make_estimator
@@ -741,7 +903,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         """
         X = array2d(X, dtype=DTYPE, order="C")
         score = self._init_decision_function(X)
-        for i in range(self.n_estimators):
+        for i in range(self.estimators_.shape[0]):
             predict_stage(self.estimators_, i, X, self.learning_rate, score)
             yield score
 
@@ -810,6 +972,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         depth limits the number of nodes in the tree. Tune this parameter
         for best performance; the best value depends on the interaction
         of the input variables.
+        Ignored if ``max_samples_leaf`` is not None.
 
     min_samples_split : integer, optional (default=2)
         The minimum number of samples required to split an internal node.
@@ -838,6 +1001,12 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         Choosing `max_features < n_features` leads to a reduction of variance
         and an increase in bias.
 
+    max_leaf_nodes : int or None, optional (default=None)
+        Grow trees with ``max_leaf_nodes`` in best-first fashion.
+        Best nodes are defined as relative reduction in impurity.
+        If None then unlimited number of leaf nodes.
+        If not None then ``max_depth`` will be ignored.
+
     init : BaseEstimator, None, optional (default=None)
         An estimator object that is used to compute the initial
         predictions. ``init`` has to provide ``fit`` and ``predict``.
@@ -847,6 +1016,11 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         Enable verbose output. If 1 then it prints progress and performance
         once in a while (the more trees the lower the frequency).
         If greater than 1 then it prints progress and performance for every tree.
+
+    warm_start : bool, default: False
+        When set to ``True``, reuse the solution of the previous call to fit and
+        add more estimators to the ensemble, otherwise, just erase the
+        previous solution.
 
     Attributes
     ----------
@@ -900,14 +1074,16 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
     def __init__(self, loss='deviance', learning_rate=0.1, n_estimators=100,
                  subsample=1.0, min_samples_split=2, min_samples_leaf=1,
                  max_depth=3, init=None, random_state=None,
-                 max_features=None, verbose=0):
+                 max_features=None, verbose=0,
+                 max_leaf_nodes=None, warm_start=False):
 
         super(GradientBoostingClassifier, self).__init__(
             loss, learning_rate, n_estimators, min_samples_split,
             min_samples_leaf, max_depth, init, subsample, max_features,
-            random_state, verbose=verbose)
+            random_state, verbose=verbose, max_leaf_nodes=max_leaf_nodes,
+            warm_start=warm_start)
 
-    def fit(self, X, y):
+    def fit(self, X, y, monitor=None):
         """Fit the gradient boosting model.
 
         Parameters
@@ -920,7 +1096,16 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
             Target values (integers in classification, real numbers in
             regression)
             For classification, labels must correspond to classes
-            ``0, 1, ..., n_classes_-1``
+            ``0, 1, ..., n_classes_-1``.
+
+        monitor : callable, optional
+            The monitor is called after each iteration with the current
+            iteration, a reference to the estimator and the local variables
+            of ``_fit_stages`` as keyword arguments ``callable(i, self, locals())``.
+            If the callable returns ``True`` the fitting procedure is stopped.
+            The monitor can be used for various things such as computing
+            held-out estimates, early stopping, model introspect,
+            and snapshoting.
 
         Returns
         -------
@@ -930,8 +1115,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         y = column_or_1d(y, warn=True)
         self.classes_, y = unique(y, return_inverse=True)
         self.n_classes_ = len(self.classes_)
-
-        return super(GradientBoostingClassifier, self).fit(X, y)
+        return super(GradientBoostingClassifier, self).fit(X, y, monitor)
 
     def _score_to_proba(self, score):
         """Compute class probability estimates from decision scores. """
@@ -1075,6 +1259,11 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         Choosing `max_features < n_features` leads to a reduction of variance
         and an increase in bias.
 
+    max_leaf_nodes : int or None, optional (default=None)
+        Grow trees with ``max_leaf_nodes`` in best-first fashion.
+        Best nodes are defined as relative reduction in impurity.
+        If None then unlimited number of leaf nodes.
+
     alpha : float (default=0.9)
         The alpha-quantile of the huber loss function and the quantile
         loss function. Only if ``loss='huber'`` or ``loss='quantile'``.
@@ -1088,6 +1277,12 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         Enable verbose output. If 1 then it prints progress and performance
         once in a while (the more trees the lower the frequency).
         If greater than 1 then it prints progress and performance for every tree.
+
+    warm_start : bool, default: False
+        When set to ``True``, reuse the solution of the previous call to fit and
+        add more estimators to the ensemble, otherwise, just erase the
+        previous solution.
+
 
     Attributes
     ----------
@@ -1141,14 +1336,16 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
     def __init__(self, loss='ls', learning_rate=0.1, n_estimators=100,
                  subsample=1.0, min_samples_split=2, min_samples_leaf=1,
                  max_depth=3, init=None, random_state=None,
-                 max_features=None, alpha=0.9, verbose=0):
+                 max_features=None, alpha=0.9, verbose=0, max_leaf_nodes=None,
+                 warm_start=False):
 
         super(GradientBoostingRegressor, self).__init__(
             loss, learning_rate, n_estimators, min_samples_split,
             min_samples_leaf, max_depth, init, subsample, max_features,
-            random_state, alpha, verbose)
+            random_state, alpha, verbose, max_leaf_nodes=max_leaf_nodes,
+            warm_start=warm_start)
 
-    def fit(self, X, y):
+    def fit(self, X, y, monitor=None):
         """Fit the gradient boosting model.
 
         Parameters
@@ -1161,7 +1358,16 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
             Target values (integers in classification, real numbers in
             regression)
             For classification, labels must correspond to classes
-            ``0, 1, ..., n_classes_-1``
+            ``0, 1, ..., n_classes_-1``.
+
+        monitor : callable, optional
+            The monitor is called after each iteration with the current
+            iteration, a reference to the estimator and the local variables
+            of ``_fit_stages`` as keyword arguments ``callable(i, self, locals())``.
+            If the callable returns ``True`` the fitting procedure is stopped.
+            The monitor can be used for various things such as computing
+            held-out estimates, early stopping, model introspect,
+            and snapshoting.
 
         Returns
         -------
@@ -1169,7 +1375,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
             Returns self.
         """
         self.n_classes_ = 1
-        return super(GradientBoostingRegressor, self).fit(X, y)
+        return super(GradientBoostingRegressor, self).fit(X, y, monitor)
 
     def predict(self, X):
         """Predict regression target for X.

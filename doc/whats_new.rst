@@ -16,6 +16,9 @@ Changelog
      Tutorial integration into the scikit-learn documentation
      by `Jaques Grobler`_
 
+   - :mod:`sklearn.hmm` is deprecated. Its removal is planned
+     for the 0.17 release.
+
    - Use of :class:`covariance.EllipticEnvelop` has now been removed after
      deprecation.
      Please use :class:`covariance.EllipticEnvelope` instead.
@@ -104,7 +107,38 @@ Changelog
    - Reduce memory usage and overhead when fitting and predicting with forests
      of randomized trees in parallel with ``n_jobs != 1`` by leveraging new
      threading backend of joblib 0.8 and releasing the GIL in the tree fitting
-     Cython code.  By `Olivier Grisel`_ and `Gilles Louppe`_
+     Cython code.  By `Olivier Grisel`_ and `Gilles Louppe`_.
+
+   - Decision trees can now be built in best-first manner by using ``max_leaf_nodes``
+     as the stopping critertia. Refactored the tree code to use either a
+     stack or a priority queue for tree building.
+     By `Peter Prettenhofer`_ and `Gilles Louppe`_.
+
+   - Decision trees can now be fitted on fortran- and c-style arrays, and
+     non-continuouse arrays without the need to make a copy.
+     If the input array has a different dtype than ``np.float32``, a fortran-
+     style copy will be made since fortran-style memory layout has speed
+     advantages. By `Peter Prettenhofer`_ and `Gilles Louppe`_.
+
+   - Speed improvement of regression trees by optimizing the
+     the computation of the mean square error criterion. This lead
+     to speed improvement of the tree, forest and gradient boosting tree
+     modules. By `Arnaud Joly`_
+
+   - Various enhancements to the  :mod:`sklearn.ensemble.gradient_boosting`
+     module: a ``warm_start`` argument to fit additional trees,
+     a ``max_leaf_nodes`` argument to fit GBM style trees,
+     a ``monitor`` fit argument to inspect the estimator during training, and
+     refactoring of the verbose code. By `Peter Prettenhofer`_.
+
+   - Added :func:`learning_curve <learning_curve.learning_curve>` utility to
+     chart performance with respet to training size. See
+     :ref:`example_plot_learning_curve.py`. By `Alexander Fabisch`_.
+
+   - Add positive option in :class:`LassoCV <linear_model.LassoCV>` and
+     :class:`ElasticNetCV <linear_model.ElasticNetCV>`.
+     By Brian Wignall and `Alexandre Gramfort`_.
+
 
 
 API changes summary
@@ -2221,7 +2255,7 @@ Major changes in this release include:
 
     - feature_selection module redesign.
 
-    - Migration to GIT as content management system.
+    - Migration to GIT as version control system.
 
     - Removal of obsolete attrselect module.
 
