@@ -22,8 +22,8 @@ import numpy as np
 from .base import BaseEstimator, is_classifier, clone
 from .base import MetaEstimatorMixin
 from .cross_validation import _check_cv as check_cv
-from .cross_validation import _cross_val_score
-from .externals.joblib import Parallel, delayed, logger
+from .cross_validation import fit_and_score
+from .externals.joblib import Parallel, delayed
 from .externals import six
 from .utils import check_random_state
 from .utils.validation import _num_samples, check_arrays
@@ -228,22 +228,9 @@ def fit_grid_point(X, y, estimator, parameters, train, test, scorer,
     n_samples_test : int
         Number of test samples in this split.
     """
-    if verbose > 1:
-        msg = '%s' % (', '.join('%s=%s' % (k, v)
-                      for k, v in parameters.items()))
-        print("[CV] %s %s" % (msg, (64 - len(msg)) * '.'))
-
-    estimator.set_params(**parameters)
-    score, n_samples_test, scoring_time = _cross_val_score(
-        estimator, X, y, scorer, train, test, verbose=0,
-        fit_params=fit_params)
-
-    if verbose > 2:
-        msg += ", score=%f" % score
-    if verbose > 1:
-        end_msg = "%s -%s" % (msg, logger.short_format_time(scoring_time))
-        print("[CV] %s %s" % ((64 - len(end_msg)) * '.', end_msg))
-
+    score, n_samples_test, _ = fit_and_score(estimator, X, y, scorer, train,
+                                             test, verbose, parameters,
+                                             fit_params)
     return score, parameters, n_samples_test
 
 
@@ -386,9 +373,10 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         out = Parallel(
             n_jobs=self.n_jobs, verbose=self.verbose,
             pre_dispatch=pre_dispatch)(
-                delayed(fit_grid_point)(
-                    X, y, clone(base_estimator), parameters, train, test,
-                    self.scorer_, self.verbose, **self.fit_params)
+                delayed(fit_and_score)(
+                    clone(base_estimator), X, y, self.scorer_, train, test,
+                    self.verbose, parameters, self.fit_params,
+                    return_parameters=True)
                 for parameters in parameter_iterable
                 for train, test in cv)
 
@@ -402,7 +390,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
             n_test_samples = 0
             score = 0
             all_scores = []
-            for this_score, parameters, this_n_test_samples in \
+            for this_score, this_n_test_samples, _, parameters in \
                     out[grid_start:grid_start + n_folds]:
                 all_scores.append(this_score)
                 if self.iid:

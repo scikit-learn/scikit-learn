@@ -25,7 +25,7 @@ from .base import is_classifier, clone
 from .utils import check_arrays, check_random_state, safe_mask
 from .utils.validation import _num_samples
 from .utils.fixes import unique
-from .externals.joblib import Parallel, delayed
+from .externals.joblib import Parallel, delayed, logger
 from .externals.six import with_metaclass
 from .metrics.scorer import check_scoring
 
@@ -1092,21 +1092,89 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
     # independent, and that it is pickle-able.
     parallel = Parallel(n_jobs=n_jobs, verbose=verbose,
                         pre_dispatch=pre_dispatch)
-    scores = parallel(
-        delayed(_cross_val_score)(clone(estimator), X, y, scorer, train, test,
-                                  verbose=verbose, fit_params=fit_params)
-        for train, test in cv)
+    scores = parallel(delayed(fit_and_score)(clone(estimator), X, y, scorer,
+                                             train, test, verbose, None,
+                                             fit_params)
+                      for train, test in cv)
     return np.array(scores)[:, 0]
 
 
-def _cross_val_score(estimator, X, y, scorer, train, test,
-                     verbose, fit_params, return_train_score=False):
-    """Inner loop for cross validation"""
+def fit_and_score(estimator, X, y, scorer, train, test, verbose, parameters,
+                  fit_params, return_train_score=False,
+                  return_parameters=False):
+    """Fit estimator and compute scores for a given dataset split.
+
+    Parameters
+    ----------
+    estimator : estimator object implementing 'fit'
+        The object to use to fit the data.
+
+    X : array-like of shape at least 2D
+        The data to fit.
+
+    y : array-like, optional, default: None
+        The target variable to try to predict in the case of
+        supervised learning.
+
+    scoring : callable
+        A scorer callable object / function with signature
+        ``scorer(estimator, X, y)``.
+
+    train : array-like, shape = (n_train_samples,)
+        Indices of training samples.
+
+    test : array-like, shape = (n_test_samples,)
+        Indices of test samples.
+
+    verbose : integer
+        The verbosity level.
+
+    parameters : dict or None
+        Parameters to be set on the estimator.
+
+    fit_params : dict or None
+        Parameters that will be passed to ``estimator.fit``.
+
+    return_train_score : boolean, optional, default: False
+        Compute and return score on training set.
+
+    return_parameters : boolean, optional, default: False
+        Return parameters that has been used for the estimator.
+
+    Returns
+    -------
+    test_score : float
+        Score on test set.
+
+    train_score : float, optional
+        Score on training set.
+
+    n_test_samples : int
+        Number of test samples.
+
+    scoring_time : float
+        Time spent for fitting and scoring in seconds.
+
+    parameters : dict or None, optional
+        The parameters that have been evaluated.
+    """
+    if verbose > 1:
+        if parameters is None:
+            msg = "no parameters to be set"
+        else:
+            msg = '%s' % (', '.join('%s=%s' % (k, v)
+                          for k, v in parameters.items()))
+        print("[CV] %s %s" % (msg, (64 - len(msg)) * '.'))
+
+    # Adjust lenght of sample weights
     n_samples = _num_samples(X)
     fit_params = fit_params if fit_params is not None else {}
     fit_params = dict([(k, np.asarray(v)[train]
                        if hasattr(v, '__len__') and len(v) == n_samples else v)
                        for k, v in fit_params.items()])
+
+    if parameters is not None:
+        estimator.set_params(**parameters)
 
     start_time = time.time()
 
@@ -1116,18 +1184,23 @@ def _cross_val_score(estimator, X, y, scorer, train, test,
         estimator.fit(X_train, **fit_params)
     else:
         estimator.fit(X_train, y_train, **fit_params)
-    score = _score(estimator, X_test, y_test, scorer)
+    test_score = _score(estimator, X_test, y_test, scorer)
+    if return_train_score:
+        train_score = _score(estimator, X_train, y_train, scorer)
 
     scoring_time = time.time() - start_time
 
+    if verbose > 2:
+        msg += ", score=%f" % test_score
     if verbose > 1:
-        print("score %f in %f s" % (score, scoring_time))
+        end_msg = "%s -%s" % (msg, logger.short_format_time(scoring_time))
+        print("[CV] %s %s" % ((64 - len(end_msg)) * '.', end_msg))
 
-    if return_train_score:
-        return (_score(estimator, X_train, y_train, scorer), score,
-                _num_samples(X_test), scoring_time)
-    else:
-        return score, _num_samples(X_test), scoring_time
+    ret = [train_score] if return_train_score else []
+    ret.extend([test_score, _num_samples(X_test), scoring_time])
+    if return_parameters:
+        ret.append(parameters)
+    return ret
 
 
 def _split(estimator, X, y, indices, train_indices=None):
