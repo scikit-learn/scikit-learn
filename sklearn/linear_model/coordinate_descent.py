@@ -1080,7 +1080,9 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
         self.l1_ratio_ = best_l1_ratio
         self.alpha_ = best_alpha
         if self.alphas is None:
-            self.alphas_ = np.ravel(np.asarray(alphas))
+            self.alphas_ = np.asarray(alphas)
+            if n_l1_ratio == 1:
+                self.alphas_ = self.alphas_[0]
         # Remove duplicate alphas in case alphas is provided.
         else:
             self.alphas_ = np.asarray(alphas[0])
@@ -1285,11 +1287,8 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
         Mean square error for the test set on each fold, varying l1_ratio and
         alpha.
 
-    ``alphas_`` : numpy array, shape = (n_alphas,) or (n_alphas*n_l1_ratio)
-        The grid of alphas used for fitting.
-        If provided, alphas_ is a 1-D array of shape n_alphas, else it is
-        of shape of n_alphas*n_l1_ratio since a grid of alphas is fit for
-        each l1_ratio
+    ``alphas_`` : numpy array, shape = (n_alphas,) or (n_l1_ratio, n_alphas)
+        The grid of alphas used for fitting, for each l1_ratio.
 
     Notes
     -----
@@ -1671,23 +1670,21 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
 
     Attributes
     ----------
-    ``intercept_`` : array, shape = (n_tasks,)
+    ``intercept_`` : array, shape (n_tasks,)
         Independent term in decision function.
 
-    ``coef_`` : array, shape = (n_tasks, n_features)
+    ``coef_`` : array, shape (n_tasks, n_features)
         Parameter vector (W in the cost function formula).
 
     ``alpha_`` : float
         The amount of penalization chosen by cross validation
 
-    ``mse_path_`` : array, shape = (n_alphas, n_folds)
+    ``mse_path_`` : array, shape (n_alphas, n_folds) or
+                    (n_l1_ratio, n_alphas, n_folds)
         mean square error for the test set on each fold, varying alpha
 
-    ``alphas_`` : numpy array, shape = (n_alphas,) or (n_alphas*n_l1_ratio)
-        The grid of alphas used for fitting.
-        If provided, alphas_ is a 1-D array of shape n_alphas, else it is
-        of shape of n_alphas*n_l1_ratio since a grid of alphas is fit for
-        each l1_ratio
+    ``alphas_`` : numpy array, shape (n_alphas,) or (n_l1_ratio, n_alphas)
+        The grid of alphas used for fitting, for each l1_ratio
 
     ``l1_ratio_`` : float
         best l1_ratio obtained by cross-validation.
@@ -1810,19 +1807,19 @@ class MultiTaskLassoCV(MultiTaskElasticNetCV):
 
     Attributes
     ----------
-    ``intercept_`` : array, shape = (n_tasks,)
+    ``intercept_`` : array, shape (n_tasks,)
         Independent term in decision function.
 
-    ``coef_`` : array, shape = (n_tasks, n_features)
+    ``coef_`` : array, shape (n_tasks, n_features)
         Parameter vector (W in the cost function formula).
 
     ``alpha_`` : float
         The amount of penalization chosen by cross validation
 
-    ``mse_path_`` : array, shape = (n_alphas, n_folds)
+    ``mse_path_`` : array, shape (n_alphas, n_folds)
         mean square error for the test set on each fold, varying alpha
 
-    ``alphas_`` : numpy array, shape = (n_alphas,)
+    ``alphas_`` : numpy array, shape (n_alphas,)
         The grid of alphas used for fitting.
 
     See also

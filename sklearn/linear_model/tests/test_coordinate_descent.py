@@ -243,7 +243,7 @@ def test_enet_path():
     ignore_warnings(clf.fit)(X, y)
     # Well-conditioned settings, we should have selected our
     # smallest penalty
-    assert_almost_equal(clf.alpha_, min(clf.alphas_))
+    assert_almost_equal(clf.alpha_, min(np.ravel(clf.alphas_)))
     # Non-sparse ground truth: we should have seleted an elastic-net
     # that is closer to ridge than to lasso
     assert_equal(clf.l1_ratio_, min(clf.l1_ratio))
@@ -254,7 +254,7 @@ def test_enet_path():
     ignore_warnings(clf.fit)(X, y)
     # Well-conditioned settings, we should have selected our
     # smallest penalty
-    assert_almost_equal(clf.alpha_, min(clf.alphas_))
+    assert_almost_equal(clf.alpha_, min(np.ravel(clf.alphas_)))
     # Non-sparse ground truth: we should have seleted an elastic-net
     # that is closer to ridge than to lasso
     assert_equal(clf.l1_ratio_, min(clf.l1_ratio))
@@ -266,7 +266,7 @@ def test_enet_path():
     # Multi-output/target case
     X, y, X_test, y_test = build_dataset(n_features=10, n_targets=3)
     clf = MultiTaskElasticNetCV(n_alphas=5, eps=2e-3, l1_ratio=[0.5, 0.7],
-                       cv=3, max_iter=max_iter)
+                                cv=3, max_iter=max_iter)
     ignore_warnings(clf.fit)(X, y)
     # We are in well-conditioned settings with low noise: we should
     # have a good test-set performance
@@ -399,13 +399,13 @@ def test_multitask_enet_and_lasso_cv():
 
     X, y, _, _ = build_dataset(n_targets=3)
     clf = MultiTaskElasticNetCV(n_alphas=50, eps=1e-3, max_iter=100,
-                                l1_ratio=0.5, tol=1e-3)
+                                l1_ratio=[0.3, 0.5], tol=1e-3)
     clf.fit(X, y)
     assert_equal(0.5, clf.l1_ratio_)
     assert_equal((3, X.shape[1]), clf.coef_.shape)
     assert_equal((3, ), clf.intercept_.shape)
-    assert_equal((50, 3), clf.mse_path_.shape)
-    assert_equal(50, len(clf.alphas_))
+    assert_equal((2, 50, 3), clf.mse_path_.shape)
+    assert_equal((2, 50), clf.alphas_.shape)
 
     X, y, _, _ = build_dataset(n_targets=3)
     clf = MultiTaskLassoCV(n_alphas=50, eps=1e-3, max_iter=100, tol=1e-3)
