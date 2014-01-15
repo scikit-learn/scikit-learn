@@ -1178,8 +1178,8 @@ def fit_and_score(estimator, X, y, scorer, train, test, verbose, parameters,
 
     start_time = time.time()
 
-    X_train, y_train = _split(estimator, X, y, train)
-    X_test, y_test = _split(estimator, X, y, test, train)
+    X_train, y_train = _split_with_kernel(estimator, X, y, train)
+    X_test, y_test = _split_with_kernel(estimator, X, y, test, train)
     if y_train is None:
         estimator.fit(X_train, **fit_params)
     else:
@@ -1203,7 +1203,7 @@ def fit_and_score(estimator, X, y, scorer, train, test, verbose, parameters,
     return ret
 
 
-def _split(estimator, X, y, indices, train_indices=None):
+def _split_with_kernel(estimator, X, y, indices, train_indices=None):
     """Create subset of dataset."""
     if hasattr(estimator, 'kernel') and callable(estimator.kernel):
         # cannot compute the kernel values with custom function
