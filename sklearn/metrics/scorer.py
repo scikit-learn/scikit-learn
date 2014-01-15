@@ -198,10 +198,9 @@ def get_scorer(scoring):
     return scorer
 
 
-class _PassthroughScorer(object):
-    """Callable that wraps estimator.score"""
-    def __call__(self, estimator, *args, **kwargs):
-        return estimator.score(*args, **kwargs)
+def _passthrough_scorer(estimator, *args, **kwargs):
+    """Function that wraps estimator.score"""
+    return estimator.score(*args, **kwargs)
 
 
 def check_scoring(estimator, scoring=None, loss_func=None, score_func=None):
@@ -235,7 +234,7 @@ def check_scoring(estimator, scoring=None, loss_func=None, score_func=None):
                                                loss_func=loss_func,
                                                score_func=score_func)
     elif hasattr(estimator, 'score'):
-        return _PassthroughScorer()
+        return _passthrough_scorer
     elif not has_scoring:
         raise TypeError(
             "If no scoring is specified, the estimator passed should "
