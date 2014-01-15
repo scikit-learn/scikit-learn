@@ -49,57 +49,57 @@ class _Scorer(object):
 def evaluate_scorers(estimator, X, y, scorers):
     has_pb = hasattr(estimator, "predict_proba")
     has_df = hasattr(estimator, "decision_function")
+    _is_classifier = is_classifier(estimator)
+    _type_of_y = type_of_target(y)
 
     # Make a first pass through scorers to determine if we need
     # predict_proba or decision_function.
-    compute_proba = False
-    compute_df = False
+    needs_proba = False
+    needs_df = False
     for scorer in scorers:
         if scorer.needs_proba:
             if not has_pb:
                 raise ValueError("%s needs probabilities but predict_proba is"
                                  "not available in %s." % (scorer, estimator))
-            compute_proba = True
+            needs_proba = True
 
         elif scorer.needs_threshold:
             if has_pb:
                 # We choose predict_proba first because its interface
                 # is more consistent across the project.
-                compute_proba = True
+                needs_proba = True
                 continue
 
-            if is_classifier(estimator) and not has_df:
+            if _is_classifier and not has_df:
                 raise ValueError("%s needs continuous outputs but neither"
                                  "predict_proba nor decision_function "
                                  "are available in %s." % (scorer, estimator))
 
-            if is_classifier(estimator):
-                compute_df = True
+            if _is_classifier:
+                needs_df = True
 
-    # Compute predict_proba or decision_function if needed.
+    # Compute predict_proba if needed.
+    y_proba = None
     y_pred = None
-    if compute_proba:
+    if needs_proba:
         try:
             y_proba = estimator.predict_proba(X)
 
-            # For multi-output multi-class estimator
-            #if isinstance(y_proba, list):
-                #y_proba = np.vstack([p[:, -1] for p in y_proba]).T
-
             y_pred = estimator.classes_[y_proba.argmax(axis=1)]
 
-        except NotImplementedError:
+            if _type_of_y == "binary":
+                y_proba = y_proba[:, 1]
+
+        except (NotImplementedError, AttributeError):
             # SVC has predict_proba but it may raise NotImplementedError
             # if probabilities are not enabled.
-            compute_proba = False
-            compute_df = True
+            needs_proba = False
+            needs_df = True
 
-    if compute_df:
+    # Compute decision_function.
+    df = None
+    if needs_df:
         df = estimator.decision_function(X)
-
-        # For multi-output multi-class estimator
-        #if isinstance(df, list):
-            #df = np.vstack(p for p in df).T
 
         if len(df.shape) == 2 and df.shape[1] >= 2:
             y_pred = estimator.classes_[df.argmax(axis=1)]
@@ -117,10 +117,10 @@ def evaluate_scorers(estimator, X, y, scorers):
             score = scorer.score_func(y, y_proba, **scorer.kwargs)
 
         elif scorer.needs_threshold:
-            if compute_proba:
-                score = scorer.score_func(y, y_proba[:, 1], **scorer.kwargs)
-            elif is_classifier(estimator):
-                score = scorer.score_func(y, df.ravel(), **scorer.kwargs)
+            if y_proba is not None:
+                score = scorer.score_func(y, y_proba, **scorer.kwargs)
+            elif df is not None:
+                score = scorer.score_func(y, df, **scorer.kwargs)
             else:
                 score = scorer.score_func(y, y_pred, **scorer.kwargs)
 
