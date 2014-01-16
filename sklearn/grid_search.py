@@ -424,6 +424,88 @@ def grid_search_cv(estimator, param_grid, X, y=None, scoring=None,
                            pre_dispatch, fit_params, iid, n_jobs, verbose)
 
 
+def randomized_search_cv(estimator, param_distributions, X, y, n_iter=10,
+                         scoring=None, fit_params=None, n_jobs=1, iid=True,
+                         refit=True, cv=None, verbose=0,
+                         pre_dispatch='2*n_jobs', random_state=None):
+    """Randomized search on hyper parameters.
+
+    Parameters
+    ----------
+    estimator : object type that implements the "fit" and "predict" methods
+        A object of that type is instantiated for each parameter setting.
+
+    param_distributions : dict
+        Dictionary with parameters names (string) as keys and distributions
+        or lists of parameters to try. Distributions must provide a ``rvs``
+        method for sampling (such as those from scipy.stats.distributions).
+        If a list is given, it is sampled uniformly.
+
+    X : array-like, shape = [n_samples, n_features]
+        Training vector, where n_samples is the number of samples and
+        n_features is the number of features.
+
+    y : array-like, shape = [n_samples] or [n_samples, n_output], optional
+        Target relative to X for classification or regression;
+        None for unsupervised learning.
+
+    n_iter : int, default=10
+        Number of parameter settings that are sampled. n_iter trades
+        off runtime vs quality of the solution.
+
+    scoring : string, callable or None, optional, default: None
+        A string (see model evaluation documentation) or
+        a scorer callable object / function with signature
+        ``scorer(estimator, X, y)``.
+
+    fit_params : dict, optional
+        Parameters to pass to the fit method.
+
+    n_jobs : int, optional
+        Number of jobs to run in parallel (default 1).
+
+    pre_dispatch : int, or string, optional
+        Controls the number of jobs that get dispatched during parallel
+        execution. Reducing this number can be useful to avoid an
+        explosion of memory consumption when more jobs get dispatched
+        than CPUs can process. This parameter can be:
+
+            - None, in which case all the jobs are immediately
+              created and spawned. Use this for lightweight and
+              fast-running jobs, to avoid delays due to on-demand
+              spawning of the jobs
+
+            - An int, giving the exact number of total jobs that are
+              spawned
+
+            - A string, giving an expression as a function of n_jobs,
+              as in '2*n_jobs'
+
+    iid : boolean, optional
+        If True, the data is assumed to be identically distributed across
+        the folds, and the loss minimized is the total loss per sample,
+        and not the mean loss across the folds.
+
+    cv : integer or cross-validation generator, optional
+        If an integer is passed, it is the number of folds (default 3).
+        Specific cross-validation objects can be passed, see
+        sklearn.cross_validation module for the list of possible objects
+
+    refit : boolean
+        Refit the best estimator with the entire dataset.
+        If "False", it is impossible to make predictions using
+        this RandomizedSearchCV instance after fitting.
+
+    verbose : integer
+        Controls the verbosity: the higher, the more messages.
+    """
+    sampled_params = ParameterSampler(param_distributions,
+                                      n_iter,
+                                      random_state=random_state)
+    return _fit_param_iter(estimator, X, y, scoring, sampled_params, refit, cv,
+                           pre_dispatch, fit_params, iid, n_jobs, verbose)
+
+
 def _check_param_grid(param_grid):
     if hasattr(param_grid, 'items'):
         param_grid = [param_grid]
