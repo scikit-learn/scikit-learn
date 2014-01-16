@@ -12,7 +12,7 @@ from sklearn.metrics import (accuracy_score, f1_score, r2_score, roc_auc_score,
                              fbeta_score, log_loss, mean_squared_error,
                              average_precision_score)
 from sklearn.metrics.cluster import adjusted_rand_score
-from sklearn.metrics.scorer import check_scoring, evaluate_scorers
+from sklearn.metrics.scorer import check_scoring, _evaluate_scorers
 from sklearn.metrics import make_scorer, SCORERS
 from sklearn.svm import LinearSVC, SVC
 from sklearn.cluster import KMeans
@@ -291,7 +291,7 @@ def test_evaluate_scorers_binary():
     for clf in (SVC(), LinearSVC()):
         clf.fit(X, y)
 
-        s1, s2 = evaluate_scorers(clf, X, y, [SCORERS["f1"],
+        s1, s2 = _evaluate_scorers(clf, X, y, [SCORERS["f1"],
                                               SCORERS["roc_auc"]])
         df = clf.decision_function(X)
         y_pred = clf.predict(X)
@@ -303,7 +303,7 @@ def test_evaluate_scorers_binary():
     clf = LogisticRegression()
     clf.fit(X, y)
 
-    s1, s2 = evaluate_scorers(clf, X, y, [SCORERS["f1"],
+    s1, s2 = _evaluate_scorers(clf, X, y, [SCORERS["f1"],
                                           SCORERS["roc_auc"]])
     y_proba = clf.predict_proba(X)[:, 1]
     y_pred = clf.predict(X)
@@ -320,7 +320,7 @@ def test_evaluate_scorers_multiclass():
     clf = LinearSVC()
     clf.fit(X, y)
 
-    s1, s2 = evaluate_scorers(clf, X, y, [SCORERS["f1"],
+    s1, s2 = _evaluate_scorers(clf, X, y, [SCORERS["f1"],
                                           SCORERS["accuracy"]])
     y_pred = clf.predict(X)
 
@@ -331,7 +331,7 @@ def test_evaluate_scorers_multiclass():
     clf = LogisticRegression()
     clf.fit(X, y)
 
-    s1, s2, s3 = evaluate_scorers(clf, X, y, [SCORERS["f1"],
+    s1, s2, s3 = _evaluate_scorers(clf, X, y, [SCORERS["f1"],
                                               SCORERS["accuracy"],
                                               SCORERS["log_loss"]])
     y_proba = clf.predict_proba(X)
@@ -349,7 +349,7 @@ def test_evaluate_scorers_regression():
     reg = Ridge()
     reg.fit(X, y)
 
-    s1, s2 = evaluate_scorers(reg, X, y, [SCORERS["r2"],
+    s1, s2 = _evaluate_scorers(reg, X, y, [SCORERS["r2"],
                                           SCORERS["mean_squared_error"]])
     y_pred = reg.predict(X)
 
@@ -363,7 +363,7 @@ def test_evaluate_scorers_ranking_by_regression():
     reg = DecisionTreeRegressor()
     reg.fit(X, y)
 
-    s1, s2 = evaluate_scorers(reg, X, y, [SCORERS["roc_auc"],
+    s1, s2 = _evaluate_scorers(reg, X, y, [SCORERS["roc_auc"],
                                           SCORERS["average_precision"]])
     y_pred = reg.predict(X)
 
@@ -375,7 +375,7 @@ def test_evaluate_scorers_ranking_by_regression():
 
     reg.fit(X, y)
 
-    s1, s2 = evaluate_scorers(reg, X, y, [SCORERS["r2"],
+    s1, s2 = _evaluate_scorers(reg, X, y, [SCORERS["r2"],
                                           dcg_scorer])
     y_pred = reg.predict(X)
 
@@ -386,7 +386,7 @@ def test_evaluate_scorers_ranking_by_regression():
 def test_evaluate_scorers_exceptions():
     clf = LinearSVC()
     # log_loss needs probabilities but LinearSVC does not have predict_proba.
-    assert_raises(ValueError, evaluate_scorers, clf, [], [],
+    assert_raises(ValueError, _evaluate_scorers, clf, [], [],
                   [SCORERS["log_loss"]])
 
 

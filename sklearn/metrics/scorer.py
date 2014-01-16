@@ -43,10 +43,10 @@ class _Scorer(object):
         self.kwargs = kwargs
 
     def __call__(self, estimator, X, y):
-        return evaluate_scorers(estimator, X, y, [self])[0]
+        return _evaluate_scorers(estimator, X, y, [self])[0]
 
 
-def evaluate_scorers(estimator, X, y, scorers):
+def _evaluate_scorers(estimator, X, y, scorers):
     has_pb = hasattr(estimator, "predict_proba")
     has_df = hasattr(estimator, "decision_function")
     _is_classifier = is_classifier(estimator)
