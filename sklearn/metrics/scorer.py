@@ -193,6 +193,9 @@ def check_scoring(estimator, scoring=None, allow_none=False, loss_func=None,
         A scorer callable object / function with signature
         ``scorer(estimator, X, y)``.
     """
+    if isinstance(scoring, _Scorer):
+        return scoring
+
     has_scoring = not (scoring is None and loss_func is None and
                        score_func is None)
     if not hasattr(estimator, 'fit'):

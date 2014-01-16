@@ -182,9 +182,18 @@ class ParameterSampler(object):
         return self.n_iter
 
 
-def _fit_parameter_iterable(estimator, X, y, scorers, parameter_iterable, cv,
-                            pre_dispatch, fit_params, iid, n_jobs, verbose):
+def _fit_param_iter(estimator, X, y, scoring, parameter_iterable, refit,
+                    cv, pre_dispatch, fit_params, iid, n_jobs, verbose):
     """Actual fitting,  performing the search over parameters."""
+
+    fit_params = fit_params if fit_params is not None else {}
+
+    if isinstance(scoring, list):
+        scorers = [check_scoring(estimator, scoring=s) for s in scoring]
+        ret_1d = False
+    else:
+        scorers = [check_scoring(estimator, scoring=scoring)]
+        ret_1d = True
 
     n_samples = _num_samples(X)
     X, y = check_arrays(X, y, allow_lists=True, sparse_format='csr')
@@ -259,7 +268,30 @@ def _fit_parameter_iterable(estimator, X, y, scorers, parameter_iterable, cv,
     best_params = [best.parameters for best in bests]
     best_scores = [best.mean_validation_score for best in bests]
 
-    return grid_scores, best_params, best_scores
+    best_estimators = []
+    if refit:
+        for i in xrange(len(scorers)):
+            base_estimator = clone(estimator)
+            best_estimator = base_estimator.set_params(**best_params[i])
+            best_estimators.append(best_estimator)
+            if y is not None:
+                best_estimator.fit(X, y, **fit_params)
+            else:
+                best_estimator.fit(X, **fit_params)
+
+    if ret_1d:
+        grid_scores = grid_scores[0]
+        best_params = best_params[0]
+        best_scores = best_scores[0]
+        if refit:
+            best_estimators = best_estimators[0]
+
+    ret = [best_params, best_scores, grid_scores]
+
+    if refit:
+        ret.append(best_estimators)
+
+    return ret
 
 
 def fit_grid_point(X, y, estimator, parameters, train, test, scorer,
@@ -387,42 +419,9 @@ def grid_search_cv(estimator, param_grid, X, y=None, scoring=None,
             - A string, giving an expression as a function of n_jobs,
               as in '2*n_jobs'
     """
-    fit_params = fit_params if fit_params is not None else {}
-    if isinstance(scoring, list):
-        scorers = [check_scoring(estimator, scoring=s) for s in scoring]
-        ret_1d = False
-    else:
-        scorers = [check_scoring(estimator, scoring=scoring)]
-        ret_1d = True
-
-    grid_scores, best_params, best_scores = \
-        _fit_parameter_iterable(estimator, X, y, scorers,
-                                ParameterGrid(param_grid), cv, pre_dispatch,
-                                fit_params, iid, n_jobs, verbose)
-    best_estimators = []
-    if refit:
-        for i in xrange(len(scorers)):
-            base_estimator = clone(estimator)
-            best_estimator = base_estimator.set_params(**best_params[i])
-            best_estimators.append(best_estimator)
-            if y is not None:
-                best_estimator.fit(X, y, **fit_params)
-            else:
-                best_estimator.fit(X, **fit_params)
-
-    if ret_1d:
-        grid_scores = grid_scores[0]
-        best_params = best_params[0]
-        best_scores = best_scores[0]
-        if refit:
-            best_estimators = best_estimators[0]
-
-    ret = [best_params, best_scores, grid_scores]
-
-    if refit:
-        ret.append(best_estimators)
-
-    return ret
+    param_grid = ParameterGrid(param_grid)
+    return _fit_param_iter(estimator, X, y, scoring, param_grid, refit, cv,
+                           pre_dispatch, fit_params, iid, n_jobs, verbose)
 
 
 def _check_param_grid(param_grid):
@@ -535,26 +534,18 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                                      loss_func=self.loss_func,
                                      score_func=self.score_func)
 
-        grid_scores, best_params, best_scores = \
-            _fit_parameter_iterable(self.estimator, X, y, [self.scorer_],
-                                    parameter_iterable, self.cv,
-                                    self.pre_dispatch, self.fit_params,
-                                    self.iid, self.n_jobs, self.verbose)
+        ret = _fit_param_iter(self.estimator, X, y, self.scorer_,
+                              parameter_iterable, self.refit, self.cv,
+                              self.pre_dispatch, self.fit_params, self.iid,
+                              self.n_jobs, self.verbose)
 
-        self.grid_scores_ = grid_scores[0]
-        self.best_params_ = best_params[0]
-        self.best_score_ = best_scores[0]
+
+        self.best_params_ = ret[0]
+        self.best_score_ = ret[1]
+        self.grid_scores_ = ret[2]
 
         if self.refit:
-            # fit the best estimator using the entire dataset
-            # clone first to work around broken estimators
-            base_estimator = clone(self.estimator)
-            best_estimator = base_estimator.set_params(**self.best_params_)
-            if y is not None:
-                best_estimator.fit(X, y, **self.fit_params)
-            else:
-                best_estimator.fit(X, **self.fit_params)
-            self.best_estimator_ = best_estimator
+            self.best_estimator_ = ret[3]
 
         return self
 
@@ -728,6 +719,7 @@ class GridSearchCV(BaseSearchCV):
             warnings.warn("Additional parameters to GridSearchCV are ignored!"
                           " The params argument will be removed in 0.15.",
                           DeprecationWarning)
+
         return self._fit(X, y, ParameterGrid(self.param_grid))
 
 
