@@ -158,12 +158,15 @@ def test_boston():
         for subsample in (1.0, 0.5):
             clf = GradientBoostingRegressor(n_estimators=100, loss=loss,
                                             max_depth=4, subsample=subsample,
-                                            min_samples_split=1, random_state=1)
+                                            min_samples_split=1,
+                                            random_state=1)
+
             assert_raises(ValueError, clf.predict, boston.data)
             clf.fit(boston.data, boston.target)
             y_pred = clf.predict(boston.data)
             mse = mean_squared_error(boston.target, y_pred)
-            assert mse < 6.0, "Failed with loss %s and mse = %.4f" % (loss, mse)
+            assert mse < 6.0, "Failed with loss %s and " \
+                "mse = %.4f" % (loss, mse)
 
 
 def test_iris():
@@ -521,6 +524,7 @@ def test_oob_score():
     clf.fit(X, y)
     assert_warns(DeprecationWarning, hasattr, clf, 'oob_score_')
 
+
 def test_oob_improvement():
     """Test if oob improvement has correct shape and regression test. """
     clf = GradientBoostingClassifier(n_estimators=100, random_state=1,
@@ -548,7 +552,7 @@ def test_oob_multilcass_iris():
     clf.fit(iris.data, iris.target)
     score = clf.score(iris.data, iris.target)
     assert score > 0.9, "Failed with subsample %.1f " \
-           "and score = %f" % (0.5, score)
+        "and score = %f" % (0.5, score)
 
     assert clf.oob_improvement_.shape[0] == clf.n_estimators
     # hard-coded regression test - change if modification in OOB computation
@@ -744,7 +748,7 @@ def test_warm_start_oob():
         est.fit(X, y)
 
         est_ws = Cls(n_estimators=100, max_depth=1, subsample=0.5,
-                       random_state=1, warm_start=True)
+                     random_state=1, warm_start=True)
         est_ws.fit(X, y)
         est_ws.set_params(n_estimators=200)
         est_ws.fit(X, y)
@@ -805,39 +809,49 @@ def test_complete_classification():
     from sklearn.tree._tree import TREE_LEAF
     X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
     k = 4
-    est = GradientBoostingClassifier(n_estimators=20, max_depth=None, random_state=1,
-                                     max_leaf_nodes=k+1).fit(X, y)
+
+    est = GradientBoostingClassifier(n_estimators=20, max_depth=None,
+                                     random_state=1, max_leaf_nodes=k+1)
+    est.fit(X, y)
+
     tree = est.estimators_[0, 0].tree_
     assert_equal(tree.max_depth, k)
-    assert_equal(tree.children_left[tree.children_left == TREE_LEAF].shape[0], k + 1)
+    assert_equal(tree.children_left[tree.children_left == TREE_LEAF].shape[0],
+                 k + 1)
 
 
 def test_complete_regression():
     """Test greedy trees with max_depth + 1 leafs. """
     from sklearn.tree._tree import TREE_LEAF
     k = 4
-    est = GradientBoostingRegressor(n_estimators=20, max_depth=None, random_state=1,
-                                    max_leaf_nodes=k+1).fit(boston.data, boston.target)
+
+    est = GradientBoostingRegressor(n_estimators=20, max_depth=None,
+                                    random_state=1, max_leaf_nodes=k+1)
+    est.fit(boston.data, boston.target)
+
     tree = est.estimators_[-1, 0].tree_
-    assert_equal(tree.children_left[tree.children_left == TREE_LEAF].shape[0], k + 1)
+    assert_equal(tree.children_left[tree.children_left == TREE_LEAF].shape[0],
+                 k + 1)
 
 
 def test_zero_estimator_reg():
     """Test if ZeroEstimator works for regression. """
-    est = GradientBoostingRegressor(n_estimators=20, max_depth=1, random_state=1,
-                                    init=ZeroEstimator()).fit(boston.data, boston.target)
+    est = GradientBoostingRegressor(n_estimators=20, max_depth=1,
+                                    random_state=1, init=ZeroEstimator())
+    est.fit(boston.data, boston.target)
     y_pred = est.predict(boston.data)
     mse = mean_squared_error(boston.target, y_pred)
     assert_almost_equal(mse, 33.0, decimal=0)
 
-    est = GradientBoostingRegressor(n_estimators=20, max_depth=1, random_state=1,
-                                    init='zero').fit(boston.data, boston.target)
+    est = GradientBoostingRegressor(n_estimators=20, max_depth=1,
+                                    random_state=1, init='zero')
+    est.fit(boston.data, boston.target)
     y_pred = est.predict(boston.data)
     mse = mean_squared_error(boston.target, y_pred)
     assert_almost_equal(mse, 33.0, decimal=0)
 
-    est = GradientBoostingRegressor(n_estimators=20, max_depth=1, random_state=1,
-                                    init='foobar')
+    est = GradientBoostingRegressor(n_estimators=20, max_depth=1,
+                                    random_state=1, init='foobar')
     assert_raises(ValueError, est.fit, boston.data, boston.target)
 
 
@@ -845,13 +859,15 @@ def test_zero_estimator_clf():
     """Test if ZeroEstimator works for classification. """
     X = iris.data
     y = np.array(iris.target)
-    est = GradientBoostingClassifier(n_estimators=20, max_depth=1, random_state=1,
-                                    init=ZeroEstimator()).fit(X, y)
+    est = GradientBoostingClassifier(n_estimators=20, max_depth=1,
+                                     random_state=1, init=ZeroEstimator())
+    est.fit(X, y)
 
     assert est.score(X, y) > 0.96
 
-    est = GradientBoostingClassifier(n_estimators=20, max_depth=1, random_state=1,
-                                    init='zero').fit(X, y)
+    est = GradientBoostingClassifier(n_estimators=20, max_depth=1,
+                                     random_state=1, init='zero')
+    est.fit(X, y)
 
     assert est.score(X, y) > 0.96
 
@@ -859,12 +875,13 @@ def test_zero_estimator_clf():
     mask = y != 0
     y[mask] = 1
     y[~mask] = 0
-    est = GradientBoostingClassifier(n_estimators=20, max_depth=1, random_state=1,
-                                    init='zero').fit(X, y)
+    est = GradientBoostingClassifier(n_estimators=20, max_depth=1,
+                                     random_state=1, init='zero')
+    est.fit(X, y)
     assert est.score(X, y) > 0.96
 
-    est = GradientBoostingClassifier(n_estimators=20, max_depth=1, random_state=1,
-                                    init='foobar')
+    est = GradientBoostingClassifier(n_estimators=20, max_depth=1,
+                                     random_state=1, init='foobar')
     assert_raises(ValueError, est.fit, X, y)
 
 
