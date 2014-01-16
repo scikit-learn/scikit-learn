@@ -30,8 +30,8 @@ from .utils.validation import _num_samples, check_arrays
 from .metrics.scorer import check_scoring
 
 
-__all__ = ['GridSearchCV', 'ParameterGrid', 'fit_grid_point',
-           'ParameterSampler', 'RandomizedSearchCV']
+__all__ = ['GridSearchCV', 'ParameterGrid', 'ParameterSampler',
+           'RandomizedSearchCV']
 
 
 class ParameterGrid(object):
@@ -308,6 +308,9 @@ def fit_grid_point(X, y, estimator, parameters, train, test, scorer,
     n_samples_test : int
         Number of test samples in this split.
     """
+    warnings.warn("fit_grid_point is deprecated and will be "
+                  "removed in 0.17", DeprecationWarning, stacklevel=1)
+
     scores, n_samples_test, _ = _fit_and_score(estimator, X, y, [scorer], train,
                                               test, verbose, parameters,
                                               fit_params)
