@@ -1184,9 +1184,9 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose, parameters,
         estimator.fit(X_train, **fit_params)
     else:
         estimator.fit(X_train, y_train, **fit_params)
-    test_score = _score(estimator, X_test, y_test, scorer)
+    test_score = scorer(estimator, X_test, y_test)
     if return_train_score:
-        train_score = _score(estimator, X_train, y_train, scorer)
+        train_score = scorer(estimator, X_train, y_train)
 
     scoring_time = time.time() - start_time
 
@@ -1233,18 +1233,6 @@ def _safe_split(estimator, X, y, indices, train_indices=None):
         y_subset = None
 
     return X_subset, y_subset
-
-
-def _score(estimator, X_test, y_test, scorer):
-    """Compute the score of an estimator on a given test set."""
-    if y_test is None:
-        score = scorer(estimator, X_test)
-    else:
-        score = scorer(estimator, X_test, y_test)
-    if not isinstance(score, numbers.Number):
-        raise ValueError("scoring must return a number, got %s (%s) instead."
-                         % (str(score), type(score)))
-    return score
 
 
 def _permutation_test_score(estimator, X, y, cv, scorer):

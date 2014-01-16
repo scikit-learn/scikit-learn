@@ -13,7 +13,7 @@ from ..base import MetaEstimatorMixin
 from ..base import clone
 from ..base import is_classifier
 from ..cross_validation import _check_cv as check_cv
-from ..cross_validation import _safe_split, _score
+from ..cross_validation import _safe_split
 from .base import SelectorMixin
 from ..metrics.scorer import check_scoring
 
@@ -342,7 +342,7 @@ class RFECV(RFE, MetaEstimatorMixin):
                 mask = np.where(ranking_ <= k + 1)[0]
                 estimator = clone(self.estimator)
                 estimator.fit(X_train[:, mask], y_train)
-                score = _score(estimator, X_test[:, mask], y_test, scorer)
+                score = scorer(estimator, X_test[:, mask], y_test)
 
                 if self.verbose > 0:
                     print("Finished fold with %d / %d feature ranks, score=%f"

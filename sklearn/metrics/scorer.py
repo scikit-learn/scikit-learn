@@ -20,6 +20,7 @@ ground truth labeling (or ``None`` in the case of unsupervised models).
 
 from abc import ABCMeta, abstractmethod
 from warnings import warn
+import numbers
 
 import numpy as np
 
@@ -127,6 +128,10 @@ def _evaluate_scorers(estimator, X, y, scorers):
         else:
             score = scorer.score_func(y, y_pred, **scorer.kwargs)
 
+        if not isinstance(score, numbers.Number):
+            raise ValueError("scoring must return a number, got %s (%s)"
+                             " instead." % (str(score), type(score)))
+
         sign = 1 if scorer.greater_is_better else -1
         scores.append(sign * score)
 
@@ -146,9 +151,12 @@ def get_scorer(scoring):
     return scorer
 
 
-def _passthrough_scorer(estimator, *args, **kwargs):
+def _default_scorer(estimator, X, y, *args, **kwargs):
     """Function that wraps estimator.score"""
-    return estimator.score(*args, **kwargs)
+    if y is None:
+        return estimator.score(X, *args, **kwargs)
+    else:
+        return estimator.score(X, y, *args, **kwargs)
 
 
 def check_scoring(estimator, scoring=None, allow_none=False, loss_func=None,
@@ -204,7 +212,7 @@ def check_scoring(estimator, scoring=None, allow_none=False, loss_func=None,
             scorer = get_scorer(scoring)
         return scorer
     elif hasattr(estimator, 'score'):
-        return _passthrough_scorer
+        return _default_scorer
     elif not has_scoring:
         if allow_none:
             return None
