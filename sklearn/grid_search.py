@@ -316,6 +316,114 @@ def fit_grid_point(X, y, estimator, parameters, train, test, scorer,
                                               fit_params)
     return scores[0], parameters, n_samples_test
 
+def grid_search_cv(estimator, param_grid, X, y=None, scoring=None,
+                   fit_params=None, n_jobs=1, iid=True,
+                   refit=True, cv=None, verbose=0, pre_dispatch='2*n_jobs'):
+    """Exhaustive search over specified parameter values for an estimator.
+
+    Parameters
+    ----------
+    estimator : object type that implements the "fit" and "predict" methods
+        A object of that type is instantiated for each grid point.
+
+    param_grid : dict or list of dictionaries
+        Dictionary with parameters names (string) as keys and lists of
+        parameter settings to try as values, or a list of such
+        dictionaries, in which case the grids spanned by each dictionary
+        in the list are explored. This enables searching over any sequence
+        of parameter settings.
+
+    X : array-like, shape = [n_samples, n_features]
+        Training vector, where n_samples is the number of samples and
+        n_features is the number of features.
+
+    y : array-like, shape = [n_samples] or [n_samples, n_output], optional
+        Target relative to X for classification or regression;
+        None for unsupervised learning.
+
+    scoring : string, callable or None, optional, default: None
+        A string (see model evaluation documentation) or
+        a scorer callable object / function with signature
+        ``scorer(estimator, X, y)``.
+
+    fit_params : dict, optional
+        Parameters to pass to the fit method.
+
+    n_jobs : int, optional
+        Number of jobs to run in parallel (default 1).
+
+    iid : boolean, optional
+        If True, the data is assumed to be identically distributed across
+        the folds, and the loss minimized is the total loss per sample,
+        and not the mean loss across the folds.
+
+    refit : boolean
+        Refit the best estimator with the entire dataset.
+        If "False", it is impossible to make predictions using
+        this GridSearchCV instance after fitting.
+
+    cv : integer or cross-validation generator, optional
+        If an integer is passed, it is the number of folds (default 3).
+        Specific cross-validation objects can be passed, see
+        sklearn.cross_validation module for the list of possible objects
+
+    verbose : integer
+        Controls the verbosity: the higher, the more messages.
+
+    pre_dispatch : int, or string, optional
+        Controls the number of jobs that get dispatched during parallel
+        execution. Reducing this number can be useful to avoid an
+        explosion of memory consumption when more jobs get dispatched
+        than CPUs can process. This parameter can be:
+
+            - None, in which case all the jobs are immediately
+              created and spawned. Use this for lightweight and
+              fast-running jobs, to avoid delays due to on-demand
+              spawning of the jobs
+
+            - An int, giving the exact number of total jobs that are
+              spawned
+
+            - A string, giving an expression as a function of n_jobs,
+              as in '2*n_jobs'
+    """
+    fit_params = fit_params if fit_params is not None else {}
+    if isinstance(scoring, list):
+        scorers = [check_scoring(estimator, scoring=s) for s in scoring]
+        ret_1d = False
+    else:
+        scorers = [check_scoring(estimator, scoring=scoring)]
+        ret_1d = True
+
+    grid_scores, best_params, best_scores = \
+        _fit_parameter_iterable(estimator, X, y, scorers,
+                                ParameterGrid(param_grid), cv, pre_dispatch,
+                                fit_params, iid, n_jobs, verbose)
+    best_estimators = []
+    if refit:
+        for i in xrange(len(scorers)):
+            base_estimator = clone(estimator)
+            best_estimator = base_estimator.set_params(**best_params[i])
+            best_estimators.append(best_estimator)
+            if y is not None:
+                best_estimator.fit(X, y, **fit_params)
+            else:
+                best_estimator.fit(X, **fit_params)
+
+    if ret_1d:
+        grid_scores = grid_scores[0]
+        best_params = best_params[0]
+        best_scores = best_scores[0]
+        if refit:
+            best_estimators = best_estimators[0]
+
+    ret = [best_params, best_scores, grid_scores]
+
+    if refit:
+        ret.append(best_estimators)
+
+    return ret
+
 
 def _check_param_grid(param_grid):
     if hasattr(param_grid, 'items'):

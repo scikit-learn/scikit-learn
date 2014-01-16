@@ -28,8 +28,9 @@ from sklearn.base import BaseEstimator
 from sklearn.datasets import make_classification
 from sklearn.datasets import make_blobs
 from sklearn.datasets import make_multilabel_classification
-from sklearn.grid_search import (GridSearchCV, RandomizedSearchCV,
-                                 ParameterGrid, ParameterSampler)
+from sklearn.grid_search import (grid_search_cv, GridSearchCV,
+                                 RandomizedSearchCV, ParameterGrid,
+                                 ParameterSampler)
 from sklearn.svm import LinearSVC, SVC
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.tree import DecisionTreeClassifier
@@ -644,3 +645,19 @@ def test_grid_search_with_multioutput_data():
                 correct_score = est.score(X[test], y[test])
                 assert_almost_equal(correct_score,
                                     cv_validation_scores[i])
+
+def test_multiple_grid_search():
+    clf = LinearSVC(random_state=0)
+    X, y = make_blobs(random_state=0, centers=2)
+    param_grid = {"C": [0.1, 1, 10]}
+
+    ret = grid_search_cv(clf, param_grid, X, y, scoring=["f1", "roc_auc"])
+    ret_f1 = grid_search_cv(clf, param_grid, X, y, scoring="f1")
+    ret_auc = grid_search_cv(clf, param_grid, X, y, scoring="roc_auc")
+
+    for i in xrange(len(ret)):
+        assert_equal(len(ret[i]), 2)
+
+    for i in (0, 1):
+        assert_equal(ret[i][0], ret_f1[i])
+        assert_equal(ret[i][1], ret_auc[i])
