@@ -1044,10 +1044,12 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
         The target variable to try to predict in the case of
         supervised learning.
 
-    scoring : string, callable or None, optional, default: None
+    scoring : string, callable, list of strings/callables or None, optional,
+              default: None
         A string (see model evaluation documentation) or
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)``.
+        Lists can be used for randomized search of multiple metrics.
 
     cv : cross-validation generator, optional, default: None
         A cross-validation generator. If None, a 3-fold cross
@@ -1083,8 +1085,9 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
 
     Returns
     -------
-    scores : array of float, shape=(len(list(cv)),)
+    scores : array of float, shape=(n_folds,) or (n_scoring, n_folds)
         Array of scores of the estimator for each run of the cross validation.
+        The returned array is 2d is `scoring` is a list.
     """
     X, y = check_arrays(X, y, sparse_format='csr', allow_lists=True)
     cv = _check_cv(cv, X, y, classifier=is_classifier(estimator))

@@ -373,10 +373,12 @@ def grid_search_cv(estimator, param_grid, X, y=None, scoring=None,
         Target relative to X for classification or regression;
         None for unsupervised learning.
 
-    scoring : string, callable or None, optional, default: None
+    scoring : string, callable, list of strings/callables or None, optional,
+              default: None
         A string (see model evaluation documentation) or
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)``.
+        Lists can be used for randomized search of multiple metrics.
 
     fit_params : dict, optional
         Parameters to pass to the fit method.
@@ -418,6 +420,31 @@ def grid_search_cv(estimator, param_grid, X, y=None, scoring=None,
 
             - A string, giving an expression as a function of n_jobs,
               as in '2*n_jobs'
+
+    Returns
+    -------
+    `best_params` : dict or list of dicts
+        Parameter setting that gave the best results on the hold out data.
+
+    `best_score` : float or list of floats
+        Score of best_estimator on the left out data.
+
+    `grid_scores` : list of named tuples or list of lists of named tuples
+        Contains scores for all parameter combinations in param_grid.
+        Each entry corresponds to one parameter setting.
+        Each named tuple has the attributes:
+
+            * ``parameters``, a dict of parameter settings
+            * ``mean_validation_score``, the mean score over the
+              cross-validation folds
+            * ``cv_validation_scores``, the list of scores for each fold
+
+    `best_estimator` : estimator or list of estimators (only if refit=True)
+        Estimator that was chosen by the search, i.e. estimator
+        which gave highest score (or smallest loss if specified)
+        on the left out data.
+
+    Lists are returned when `scoring` is a list.
     """
     param_grid = ParameterGrid(param_grid)
     return _fit_param_iter(estimator, X, y, scoring, param_grid, refit, cv,
@@ -453,10 +480,12 @@ def randomized_search_cv(estimator, param_distributions, X, y, n_iter=10,
         Number of parameter settings that are sampled. n_iter trades
         off runtime vs quality of the solution.
 
-    scoring : string, callable or None, optional, default: None
+    scoring : string, callable, list of strings/callables or None, optional,
+              default: None
         A string (see model evaluation documentation) or
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)``.
+        Lists can be used for randomized search of multiple metrics.
 
     fit_params : dict, optional
         Parameters to pass to the fit method.
@@ -498,6 +527,31 @@ def randomized_search_cv(estimator, param_distributions, X, y, n_iter=10,
 
     verbose : integer
         Controls the verbosity: the higher, the more messages.
+
+    Returns
+    -------
+    `best_params` : dict or list of dicts
+        Parameter setting that gave the best results on the hold out data.
+
+    `best_score` : float or list of floats
+        Score of best_estimator on the left out data.
+
+    `grid_scores` : list of named tuples or list of lists of named tuples
+        Contains scores for all parameter combinations in param_grid.
+        Each entry corresponds to one parameter setting.
+        Each named tuple has the attributes:
+
+            * ``parameters``, a dict of parameter settings
+            * ``mean_validation_score``, the mean score over the
+              cross-validation folds
+            * ``cv_validation_scores``, the list of scores for each fold
+
+    `best_estimator` : estimator or list of estimators (only if refit=True)
+        Estimator that was chosen by the search, i.e. estimator
+        which gave highest score (or smallest loss if specified)
+        on the left out data.
+
+    Lists are returned when `scoring` is a list.
     """
     sampled_params = ParameterSampler(param_distributions,
                                       n_iter,
