@@ -22,7 +22,7 @@ import numpy as np
 from .base import BaseEstimator, is_classifier, clone
 from .base import MetaEstimatorMixin
 from .cross_validation import _check_cv as check_cv
-from .cross_validation import fit_and_score
+from .cross_validation import _fit_and_score
 from .externals.joblib import Parallel, delayed
 from .externals import six
 from .utils import check_random_state
@@ -228,9 +228,9 @@ def fit_grid_point(X, y, estimator, parameters, train, test, scorer,
     n_samples_test : int
         Number of test samples in this split.
     """
-    score, n_samples_test, _ = fit_and_score(estimator, X, y, scorer, train,
-                                             test, verbose, parameters,
-                                             fit_params)
+    score, n_samples_test, _ = _fit_and_score(estimator, X, y, scorer, train,
+                                              test, verbose, parameters,
+                                              fit_params)
     return score, parameters, n_samples_test
 
 
@@ -338,7 +338,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
     @property
     def transform(self):
         return self.best_estimator_.transform
-        
+
     def _fit(self, X, y, parameter_iterable):
         """Actual fitting,  performing the search over parameters."""
 
@@ -373,7 +373,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         out = Parallel(
             n_jobs=self.n_jobs, verbose=self.verbose,
             pre_dispatch=pre_dispatch)(
-                delayed(fit_and_score)(
+                delayed(_fit_and_score)(
                     clone(base_estimator), X, y, self.scorer_, train, test,
                     self.verbose, parameters, self.fit_params,
                     return_parameters=True)

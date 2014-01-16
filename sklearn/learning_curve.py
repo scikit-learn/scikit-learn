@@ -10,7 +10,7 @@ from .base import is_classifier, clone
 from .cross_validation import _check_cv
 from .utils import check_arrays
 from .externals.joblib import Parallel, delayed
-from .cross_validation import _safe_split, _score, fit_and_score
+from .cross_validation import _safe_split, _score, _fit_and_score
 from .metrics.scorer import check_scoring
 
 
@@ -127,7 +127,7 @@ def learning_curve(estimator, X, y, train_sizes=np.linspace(0.1, 1.0, 10),
             clone(estimator), X, y, classes, train, test, train_sizes_abs,
             scorer, verbose) for train, test in cv)
     else:
-        out = parallel(delayed(fit_and_score)(
+        out = parallel(delayed(_fit_and_score)(
             clone(estimator), X, y, scorer, train[:n_train_samples], test,
             verbose, parameters=None, fit_params=None, return_train_score=True)
             for train, test in cv for n_train_samples in train_sizes_abs)

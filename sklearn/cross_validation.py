@@ -1092,16 +1092,16 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
     # independent, and that it is pickle-able.
     parallel = Parallel(n_jobs=n_jobs, verbose=verbose,
                         pre_dispatch=pre_dispatch)
-    scores = parallel(delayed(fit_and_score)(clone(estimator), X, y, scorer,
-                                             train, test, verbose, None,
-                                             fit_params)
+    scores = parallel(delayed(_fit_and_score)(clone(estimator), X, y, scorer,
+                                              train, test, verbose, None,
+                                              fit_params)
                       for train, test in cv)
     return np.array(scores)[:, 0]
 
 
-def fit_and_score(estimator, X, y, scorer, train, test, verbose, parameters,
-                  fit_params, return_train_score=False,
-                  return_parameters=False):
+def _fit_and_score(estimator, X, y, scorer, train, test, verbose, parameters,
+                   fit_params, return_train_score=False,
+                   return_parameters=False):
     """Fit estimator and compute scores for a given dataset split.
 
     Parameters
