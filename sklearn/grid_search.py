@@ -182,6 +182,83 @@ class ParameterSampler(object):
         return self.n_iter
 
 
+def _fit(estimator, X, y, scorers, parameter_iterable, cv, pre_dispatch,
+         fit_params, iid, n_jobs, verbose):
+    """Actual fitting,  performing the search over parameters."""
+
+    n_samples = _num_samples(X)
+    X, y = check_arrays(X, y, allow_lists=True, sparse_format='csr')
+
+    if y is not None:
+        if len(y) != n_samples:
+            raise ValueError('Target variable (y) has a different number '
+                             'of samples (%i) than data (X: %i samples)'
+                             % (len(y), n_samples))
+        y = np.asarray(y)
+    cv = check_cv(cv, X, y, classifier=is_classifier(estimator))
+
+    if verbose > 0:
+        if isinstance(parameter_iterable, Sized):
+            n_candidates = len(parameter_iterable)
+            print("Fitting {0} folds for each of {1} candidates, totalling"
+                  " {2} fits".format(len(cv), n_candidates,
+                                     n_candidates * len(cv)))
+
+    base_estimator = clone(estimator)
+
+    out = Parallel(n_jobs=n_jobs, verbose=verbose, pre_dispatch=pre_dispatch)(
+            delayed(_fit_and_score)(
+                clone(base_estimator), X, y, scorers, train, test,
+                verbose, parameters, fit_params,
+                return_parameters=True)
+            for parameters in parameter_iterable
+            for train, test in cv)
+
+    # Out is a list of triplet: score, estimator, n_test_samples
+    n_fits = len(out)
+    n_folds = len(cv)
+    n_scorers = len(scorers)
+
+    grid_scores = []
+    for i in xrange(n_scorers):
+        grid_scores.append([])
+
+    for grid_start in range(0, n_fits, n_folds):
+        n_test_samples = 0
+        scores = np.zeros(n_scorers)
+        all_scores = np.zeros((n_scorers, n_folds))
+
+        for j, (curr_scores, curr_n_test_samples, _, parameters) in \
+                enumerate(out[grid_start:grid_start + n_folds]):
+
+            all_scores[:, j] = curr_scores
+
+            if iid:
+                curr_scores *= curr_n_test_samples
+                n_test_samples += curr_n_test_samples
+
+            scores += curr_scores
+
+        if iid:
+            scores /= float(n_test_samples)
+        else:
+            scores /= float(n_folds)
+
+        for i in xrange(n_scorers):
+            # TODO: shall we also store the test_fold_sizes?
+            tup = _CVScoreTuple(parameters, scores[i], all_scores[i])
+            grid_scores[i].append(tup)
+
+    # Find the best parameters by comparing on the mean validation score:
+    # note that `sorted` is deterministic in the way it breaks ties
+    bests = [sorted(grid_scores[i], key=lambda x: x.mean_validation_score,
+                      reverse=True)[0] for i in xrange(n_scorers)]
+    best_params = [best.parameters for best in bests]
+    best_scores = [best.mean_validation_score for best in bests]
+
+    return grid_scores, best_params, best_scores
+
+
 def fit_grid_point(X, y, estimator, parameters, train, test, scorer,
                    verbose, **fit_params):
     """Run fit on one set of parameters.
@@ -340,96 +417,32 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         return self.best_estimator_.transform
 
     def _fit(self, X, y, parameter_iterable):
-        """Actual fitting,  performing the search over parameters."""
-
-        estimator = self.estimator
-        cv = self.cv
         self.scorer_ = check_scoring(self.estimator, scoring=self.scoring,
                                      loss_func=self.loss_func,
                                      score_func=self.score_func)
 
-        n_samples = _num_samples(X)
-        X, y = check_arrays(X, y, allow_lists=True, sparse_format='csr')
+        grid_scores, best_params, best_scores = _fit(self.estimator, X, y,
+                                                     [self.scorer_],
+                                                     parameter_iterable,
+                                                     self.cv, self.pre_dispatch,
+                                                     self.fit_params, self.iid,
+                                                     self.n_jobs, self.verbose)
 
-        if y is not None:
-            if len(y) != n_samples:
-                raise ValueError('Target variable (y) has a different number '
-                                 'of samples (%i) than data (X: %i samples)'
-                                 % (len(y), n_samples))
-            y = np.asarray(y)
-        cv = check_cv(cv, X, y, classifier=is_classifier(estimator))
-
-        if self.verbose > 0:
-            if isinstance(parameter_iterable, Sized):
-                n_candidates = len(parameter_iterable)
-                print("Fitting {0} folds for each of {1} candidates, totalling"
-                      " {2} fits".format(len(cv), n_candidates,
-                                         n_candidates * len(cv)))
-
-        base_estimator = clone(self.estimator)
-
-        pre_dispatch = self.pre_dispatch
-
-        out = Parallel(
-            n_jobs=self.n_jobs, verbose=self.verbose,
-            pre_dispatch=pre_dispatch)(
-                delayed(_fit_and_score)(
-                    clone(base_estimator), X, y, [self.scorer_], train, test,
-                    self.verbose, parameters, self.fit_params,
-                    return_parameters=True)
-                for parameters in parameter_iterable
-                for train, test in cv)
-
-        # Out is a list of triplet: score, estimator, n_test_samples
-        n_fits = len(out)
-        n_folds = len(cv)
-
-        scores = list()
-        grid_scores = list()
-        for grid_start in range(0, n_fits, n_folds):
-            n_test_samples = 0
-            score = 0
-            all_scores = []
-            for this_score, this_n_test_samples, _, parameters in \
-                    out[grid_start:grid_start + n_folds]:
-                # _fit_and_score returns a list even if there is only one
-                # scorer in the list.
-                this_score = this_score[0]
-                all_scores.append(this_score)
-                if self.iid:
-                    this_score *= this_n_test_samples
-                    n_test_samples += this_n_test_samples
-                score += this_score
-            if self.iid:
-                score /= float(n_test_samples)
-            else:
-                score /= float(n_folds)
-            scores.append((score, parameters))
-            # TODO: shall we also store the test_fold_sizes?
-            grid_scores.append(_CVScoreTuple(
-                parameters,
-                score,
-                np.array(all_scores)))
-        # Store the computed scores
-        self.grid_scores_ = grid_scores
-
-        # Find the best parameters by comparing on the mean validation score:
-        # note that `sorted` is deterministic in the way it breaks ties
-        best = sorted(grid_scores, key=lambda x: x.mean_validation_score,
-                      reverse=True)[0]
-        self.best_params_ = best.parameters
-        self.best_score_ = best.mean_validation_score
+        self.grid_scores_ = grid_scores[0]
+        self.best_params_ = best_params[0]
+        self.best_score_ = best_scores[0]
 
         if self.refit:
             # fit the best estimator using the entire dataset
             # clone first to work around broken estimators
-            best_estimator = clone(base_estimator).set_params(
-                **best.parameters)
+            base_estimator = clone(self.estimator)
+            best_estimator = base_estimator.set_params(**self.best_params_)
             if y is not None:
                 best_estimator.fit(X, y, **self.fit_params)
             else:
                 best_estimator.fit(X, **self.fit_params)
             self.best_estimator_ = best_estimator
+
         return self
 
 
