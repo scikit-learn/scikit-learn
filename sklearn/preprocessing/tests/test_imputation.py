@@ -278,35 +278,40 @@ def test_imputation_copy():
 
     # copy=False, sparse csr, axis=1 => no copy
     X = X_orig.copy()
-    imputer = Imputer(missing_values=X.data[0], strategy="mean", copy=False, axis=1)
+    imputer = Imputer(missing_values=X.data[0], strategy="mean",
+                      copy=False, axis=1)
     Xt = imputer.fit(X).transform(X)
     Xt.data[0] = -1
     assert_true(np.all(X.data == Xt.data))
 
     # copy=False, sparse csc, axis=0 => no copy
     X = X_orig.copy().tocsc()
-    imputer = Imputer(missing_values=X.data[0], strategy="mean", copy=False, axis=0)
+    imputer = Imputer(missing_values=X.data[0], strategy="mean",
+                      copy=False, axis=0)
     Xt = imputer.fit(X).transform(X)
     Xt.data[0] = -1
     assert_true(np.all(X.data == Xt.data))
 
     # copy=False, sparse csr, axis=0 => copy
     X = X_orig.copy()
-    imputer = Imputer(missing_values=X.data[0], strategy="mean", copy=False, axis=0)
+    imputer = Imputer(missing_values=X.data[0], strategy="mean",
+                      copy=False, axis=0)
     Xt = imputer.fit(X).transform(X)
     Xt.data[0] = -1
     assert_false(np.all(X.data == Xt.data))
 
     # copy=False, sparse csc, axis=1 => copy
     X = X_orig.copy().tocsc()
-    imputer = Imputer(missing_values=X.data[0], strategy="mean", copy=False, axis=1)
+    imputer = Imputer(missing_values=X.data[0], strategy="mean",
+                      copy=False, axis=1)
     Xt = imputer.fit(X).transform(X)
     Xt.data[0] = -1
     assert_false(np.all(X.data == Xt.data))
 
     # copy=False, sparse csr, axis=1, missing_values=0 => copy
     X = X_orig.copy()
-    imputer = Imputer(missing_values=0, strategy="mean", copy=False, axis=1)
+    imputer = Imputer(missing_values=0, strategy="mean",
+                      copy=False, axis=1)
     Xt = imputer.fit(X).transform(X)
     assert_false(sparse.issparse(Xt))
 
