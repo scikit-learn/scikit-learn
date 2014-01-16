@@ -228,7 +228,10 @@ def _fit(estimator, X, y, scorers, parameter_iterable, cv, pre_dispatch,
         scores = np.zeros(n_scorers)
         all_scores = np.zeros((n_scorers, n_folds))
 
-        for j, (curr_scores, curr_n_test_samples, _, parameters) in \
+        # Parameters for this part of the grid.
+        parameters = out[grid_start][3]
+
+        for j, (curr_scores, curr_n_test_samples, _, _) in \
                 enumerate(out[grid_start:grid_start + n_folds]):
 
             all_scores[:, j] = curr_scores
