@@ -13,7 +13,7 @@ from ..base import MetaEstimatorMixin
 from ..base import clone
 from ..base import is_classifier
 from ..cross_validation import _check_cv as check_cv
-from ..cross_validation import _split_with_kernel, _score
+from ..cross_validation import _safe_split, _score
 from .base import SelectorMixin
 from ..metrics.scorer import check_scoring
 
@@ -332,9 +332,8 @@ class RFECV(RFE, MetaEstimatorMixin):
 
         # Cross-validation
         for n, (train, test) in enumerate(cv):
-            X_train, y_train = _split_with_kernel(self.estimator, X, y, train)
-            X_test, y_test = _split_with_kernel(self.estimator, X, y, test,
-                                                train)
+            X_train, y_train = _safe_split(self.estimator, X, y, train)
+            X_test, y_test = _safe_split(self.estimator, X, y, test, train)
 
             # Compute a full ranking of the features
             ranking_ = rfe.fit(X_train, y_train).ranking_

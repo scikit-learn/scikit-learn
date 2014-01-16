@@ -1178,8 +1178,8 @@ def fit_and_score(estimator, X, y, scorer, train, test, verbose, parameters,
 
     start_time = time.time()
 
-    X_train, y_train = _split_with_kernel(estimator, X, y, train)
-    X_test, y_test = _split_with_kernel(estimator, X, y, test, train)
+    X_train, y_train = _safe_split(estimator, X, y, train)
+    X_test, y_test = _safe_split(estimator, X, y, test, train)
     if y_train is None:
         estimator.fit(X_train, **fit_params)
     else:
@@ -1203,8 +1203,8 @@ def fit_and_score(estimator, X, y, scorer, train, test, verbose, parameters,
     return ret
 
 
-def _split_with_kernel(estimator, X, y, indices, train_indices=None):
-    """Create subset of dataset."""
+def _safe_split(estimator, X, y, indices, train_indices=None):
+    """Create subset of dataset and properly handle kernels."""
     if hasattr(estimator, 'kernel') and callable(estimator.kernel):
         # cannot compute the kernel values with custom function
         raise ValueError("Cannot use a custom kernel function. "
@@ -1350,7 +1350,7 @@ def permutation_test_score(estimator, X, y, score_func=None, cv=None,
         If an integer is passed, it is the number of fold (default 3).
         Specific cross-validation objects can be passed, see
         sklearn.cross_validation module for the list of possible objects.
-        
+
     n_permutations : integer, optional
         Number of times to permute ``y``.
 
