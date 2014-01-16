@@ -19,7 +19,7 @@ def test_base():
 
     iris = load_iris()
     ensemble.fit(iris.data, iris.target)
-    ensemble.estimators_ = [] # empty the list and create estimators manually
+    ensemble.estimators_ = []  # empty the list and create estimators manually
 
     ensemble._make_estimator()
     ensemble._make_estimator()
