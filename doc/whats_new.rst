@@ -8,6 +8,14 @@
 Changelog
 ---------
 
+   - The :ref:`Working With Text Data <text_data_tutorial>` tutorial
+     has now been worked in to the main documentation's tutorial section.
+     Includes exercises and skeletons for tutorial presentation.
+     Original tutorial created by several authors including
+     `Olivier Grisel`_, Lars Buitinck and many others.
+     Tutorial integration into the scikit-learn documentation
+     by `Jaques Grobler`_
+
    - :mod:`sklearn.hmm` is deprecated. Its removal is planned
      for the 0.17 release.
 
@@ -130,6 +138,10 @@ Changelog
    - Add positive option in :class:`LassoCV <linear_model.LassoCV>` and
      :class:`ElasticNetCV <linear_model.ElasticNetCV>`.
      By Brian Wignall and `Alexandre Gramfort`_.
+
+   - Fixed a race condition in parallel processing with
+     ``pre_dispatch != "all"`` (for instance in ``cross_val_score``).
+     By `Olivier Grisel`_.
 
 
 

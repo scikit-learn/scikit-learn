@@ -10,7 +10,7 @@ from .base import is_classifier, clone
 from .cross_validation import _check_cv
 from .utils import check_arrays
 from .externals.joblib import Parallel, delayed
-from .cross_validation import _split, _score, _cross_val_score
+from .cross_validation import _safe_split, _score, _fit_and_score
 from .metrics.scorer import check_scoring
 
 
@@ -127,9 +127,9 @@ def learning_curve(estimator, X, y, train_sizes=np.linspace(0.1, 1.0, 10),
             clone(estimator), X, y, classes, train, test, train_sizes_abs,
             scorer, verbose) for train, test in cv)
     else:
-        out = parallel(delayed(_cross_val_score)(
+        out = parallel(delayed(_fit_and_score)(
             clone(estimator), X, y, scorer, train[:n_train_samples], test,
-            verbose, fit_params=None, return_train_score=True)
+            verbose, parameters=None, fit_params=None, return_train_score=True)
             for train, test in cv for n_train_samples in train_sizes_abs)
         out = np.array(out)[:, :2]
         n_cv_folds = out.shape[0]/n_unique_ticks
@@ -205,10 +205,11 @@ def _incremental_fit_estimator(estimator, X, y, classes, train, test,
     train_scores, test_scores = [], []
     partitions = zip(train_sizes, np.split(train, train_sizes)[:-1])
     for n_train_samples, partial_train in partitions:
-        X_train, y_train = _split(estimator, X, y, train[:n_train_samples])
-        X_partial_train, y_partial_train = _split(estimator, X, y,
-                                                  partial_train)
-        X_test, y_test = _split(estimator, X, y, test, train[:n_train_samples])
+        train_subset = train[:n_train_samples]
+        X_train, y_train = _safe_split(estimator, X, y, train_subset)
+        X_partial_train, y_partial_train = _safe_split(estimator, X, y,
+                                                              partial_train)
+        X_test, y_test = _safe_split(estimator, X, y, test, train_subset)
         if y_partial_train is None:
             estimator.partial_fit(X_partial_train, classes=classes)
         else:

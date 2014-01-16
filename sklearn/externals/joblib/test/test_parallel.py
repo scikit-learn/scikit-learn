@@ -320,3 +320,13 @@ def test_joblib_exception():
 def test_safe_function():
     safe_division = SafeFunction(division)
     nose.tools.assert_raises(JoblibException, safe_division, 1, 0)
+
+
+def test_pre_dispatch_race_condition():
+    # Check that using pre-dispatch does not yield a race condition on the
+    # iterable generator that is not thread-safe natively.
+    # this is a non-regression test for the "Pool seems closed" class of error
+    for n_tasks in [2, 10, 20]:
+        for n_jobs in [2, 4, 8, 16]:
+            Parallel(n_jobs=n_jobs, pre_dispatch="2 * n_jobs")(
+                delayed(square)(i) for i in range(n_tasks))

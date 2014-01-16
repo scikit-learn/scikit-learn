@@ -333,7 +333,7 @@ class MemorizedFunc(Logger):
             print(self.format_call(*args, **kwargs))
         output = self.func(*args, **kwargs)
         self._persist_output(output, output_dir)
-        self._persist_input(output_dir, *args, **kwargs)
+        self._persist_input(output_dir, args, kwargs)
         duration = time.time() - start_time
         if self._verbose:
             _, name = get_func_name(self.func)
@@ -394,7 +394,7 @@ class MemorizedFunc(Logger):
         except OSError:
             " Race condition in the creation of the directory "
 
-    def _persist_input(self, output_dir, *args, **kwargs):
+    def _persist_input(self, output_dir, args, kwargs):
         """ Save a small summary of the call using json format in the
             output directory.
         """

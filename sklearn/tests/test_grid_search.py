@@ -497,7 +497,8 @@ def test_bad_estimator():
     sc = SpectralClustering()
     grid_search = GridSearchCV(sc, param_grid=dict(gamma=[.1, 1, 10]),
                                scoring='ari')
-    assert_raises(TypeError, grid_search.fit, [[1]])
+    assert_raise_message(TypeError, "'score' or a 'predict'", grid_search.fit,
+                         [[1]])
 
 
 def test_param_sampler():
