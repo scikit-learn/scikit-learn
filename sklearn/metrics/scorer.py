@@ -46,6 +46,14 @@ class _Scorer(object):
     def __call__(self, estimator, X, y):
         return _evaluate_scorers(estimator, X, y, [self])[0]
 
+    def __repr__(self):
+        kwargs_string = "".join([", %s=%s" % (str(k), str(v))
+                                 for k, v in self.kwargs.items()])
+        return ("make_scorer(%s%s%s)"
+                % (self.score_func.__name__,
+                   "" if self.greater_is_better else ", greater_is_better=False",
+                   kwargs_string))
+
 
 def _evaluate_scorers(estimator, X, y, scorers):
     has_pb = hasattr(estimator, "predict_proba")
