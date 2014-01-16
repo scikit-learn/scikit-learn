@@ -228,10 +228,10 @@ def fit_grid_point(X, y, estimator, parameters, train, test, scorer,
     n_samples_test : int
         Number of test samples in this split.
     """
-    score, n_samples_test, _ = _fit_and_score(estimator, X, y, scorer, train,
+    scores, n_samples_test, _ = _fit_and_score(estimator, X, y, [scorer], train,
                                               test, verbose, parameters,
                                               fit_params)
-    return score, parameters, n_samples_test
+    return scores[0], parameters, n_samples_test
 
 
 def _check_param_grid(param_grid):
@@ -374,7 +374,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
             n_jobs=self.n_jobs, verbose=self.verbose,
             pre_dispatch=pre_dispatch)(
                 delayed(_fit_and_score)(
-                    clone(base_estimator), X, y, self.scorer_, train, test,
+                    clone(base_estimator), X, y, [self.scorer_], train, test,
                     self.verbose, parameters, self.fit_params,
                     return_parameters=True)
                 for parameters in parameter_iterable
@@ -392,6 +392,9 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
             all_scores = []
             for this_score, this_n_test_samples, _, parameters in \
                     out[grid_start:grid_start + n_folds]:
+                # _fit_and_score returns a list even if there is only one
+                # scorer in the list.
+                this_score = this_score[0]
                 all_scores.append(this_score)
                 if self.iid:
                     this_score *= this_n_test_samples

@@ -27,7 +27,8 @@ from .utils.validation import _num_samples
 from .utils.fixes import unique
 from .externals.joblib import Parallel, delayed, logger
 from .externals.six import with_metaclass
-from .metrics.scorer import check_scoring
+from .metrics.scorer import check_scoring, _evaluate_scorers
+
 
 __all__ = ['Bootstrap',
            'KFold',
@@ -1087,20 +1088,38 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
     """
     X, y = check_arrays(X, y, sparse_format='csr', allow_lists=True)
     cv = _check_cv(cv, X, y, classifier=is_classifier(estimator))
-    scorer = check_scoring(estimator, score_func=score_func, scoring=scoring)
+
+    if isinstance(scoring, list):
+        scorers = [check_scoring(estimator, scoring=s) for s in scoring]
+        ret_1d = False
+    else:
+        scorers = [check_scoring(estimator, score_func=score_func,
+                               scoring=scoring)]
+        ret_1d = True
+
     # We clone the estimator to make sure that all the folds are
     # independent, and that it is pickle-able.
     parallel = Parallel(n_jobs=n_jobs, verbose=verbose,
                         pre_dispatch=pre_dispatch)
-    scores = parallel(delayed(_fit_and_score)(clone(estimator), X, y, scorer,
-                                              train, test, verbose, None,
-                                              fit_params)
+
+    # ret is a list of size n_folds. Each element of the list contains the tuple
+    # returned by _fit_and_score.
+    ret = parallel(delayed(_fit_and_score)(clone(estimator), X, y, scorers,
+                                           train, test, verbose, None,
+                                           fit_params)
                       for train, test in cv)
-    return np.array(scores)[:, 0]
+
+    # Retrieve n_scorers x n_folds 2d-array.
+    scores = np.array([r[0] for r in ret]).T
+
+    if ret_1d:
+        return scores[0]
+    else:
+        return scores
 
 
-def _fit_and_score(estimator, X, y, scorer, train, test, verbose, parameters,
-                   fit_params, return_train_score=False,
+def _fit_and_score(estimator, X, y, scorers, train, test, verbose, parameters,
+                   fit_params, return_train_scores=False,
                    return_parameters=False):
     """Fit estimator and compute scores for a given dataset split.
 
@@ -1116,9 +1135,8 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose, parameters,
         The target variable to try to predict in the case of
         supervised learning.
 
-    scoring : callable
-        A scorer callable object / function with signature
-        ``scorer(estimator, X, y)``.
+    scorers : list
+        A list of scorer objects
 
     train : array-like, shape = (n_train_samples,)
         Indices of training samples.
@@ -1135,19 +1153,19 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose, parameters,
     fit_params : dict or None
         Parameters that will be passed to ``estimator.fit``.
 
-    return_train_score : boolean, optional, default: False
-        Compute and return score on training set.
+    return_train_scores : boolean, optional, default: False
+        Compute and return scores on training set.
 
     return_parameters : boolean, optional, default: False
         Return parameters that has been used for the estimator.
 
     Returns
     -------
-    test_score : float
-        Score on test set.
+    test_score : array of floats
+        Scores on test set.
 
-    train_score : float, optional
-        Score on training set.
+    train_score : array of floats, optional
+        Scores on training set.
 
     n_test_samples : int
         Number of test samples.
@@ -1180,24 +1198,37 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose, parameters,
 
     X_train, y_train = _safe_split(estimator, X, y, train)
     X_test, y_test = _safe_split(estimator, X, y, test, train)
+
     if y_train is None:
         estimator.fit(X_train, **fit_params)
     else:
         estimator.fit(X_train, y_train, **fit_params)
-    test_score = scorer(estimator, X_test, y_test)
-    if return_train_score:
-        train_score = scorer(estimator, X_train, y_train)
+
+    if len(scorers) == 1:
+        # We cannot use _evaluate_scorers here because the scorer might be
+        # estimator.score.
+        test_scores = np.array([scorers[0](estimator, X_test, y_test)])
+    else:
+        test_scores = _evaluate_scorers(estimator, X_test, y_test, scorers)
+
+
+    if return_train_scores:
+        if len(scorers) == 1:
+            train_scores = np.array([scorers[0](estimator, X_train, y_train)])
+        else:
+            train_scores = _evaluate_scorers(estimator, X_train, y_train,
+                                             scorers)
 
     scoring_time = time.time() - start_time
 
     if verbose > 2:
-        msg += ", score=%f" % test_score
+        msg += ", score=%s" % test_scores
     if verbose > 1:
         end_msg = "%s -%s" % (msg, logger.short_format_time(scoring_time))
         print("[CV] %s %s" % ((64 - len(end_msg)) * '.', end_msg))
 
-    ret = [train_score] if return_train_score else []
-    ret.extend([test_score, _num_samples(X_test), scoring_time])
+    ret = [train_scores] if return_train_scores else []
+    ret.extend([test_scores, _num_samples(X_test), scoring_time])
     if return_parameters:
         ret.append(parameters)
     return ret

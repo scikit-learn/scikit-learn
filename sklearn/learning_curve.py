@@ -127,11 +127,17 @@ def learning_curve(estimator, X, y, train_sizes=np.linspace(0.1, 1.0, 10),
             clone(estimator), X, y, classes, train, test, train_sizes_abs,
             scorer, verbose) for train, test in cv)
     else:
+        # ret is a list of size n_folds. Each element of the list contains the
+        # tuple returned by _fit_and_score.
         out = parallel(delayed(_fit_and_score)(
-            clone(estimator), X, y, scorer, train[:n_train_samples], test,
-            verbose, parameters=None, fit_params=None, return_train_score=True)
+            clone(estimator), X, y, [scorer], train[:n_train_samples], test,
+            verbose, parameters=None, fit_params=None, return_train_scores=True)
             for train, test in cv for n_train_samples in train_sizes_abs)
-        out = np.array(out)[:, :2]
+
+        test_scores = [r[0][0] for r in out]
+        train_scores = [r[1][0] for r in out]
+        out = np.array([test_scores, train_scores]).T
+
         n_cv_folds = out.shape[0]/n_unique_ticks
         out = out.reshape(n_cv_folds, n_unique_ticks, 2)
 
