@@ -65,12 +65,12 @@ NODE_DTYPE = np.dtype({
               'n_samples'],
     'formats': [np.intp, np.intp, np.intp, np.float64, np.float64, np.intp],
     'offsets': [
-        <Py_ssize_t>&(<Node*>NULL).left_child,
-        <Py_ssize_t>&(<Node*>NULL).right_child,
-        <Py_ssize_t>&(<Node*>NULL).feature,
-        <Py_ssize_t>&(<Node*>NULL).threshold,
-        <Py_ssize_t>&(<Node*>NULL).impurity,
-        <Py_ssize_t>&(<Node*>NULL).n_samples,
+        <Py_ssize_t>&(<Node*> NULL).left_child,
+        <Py_ssize_t>&(<Node*> NULL).right_child,
+        <Py_ssize_t>&(<Node*> NULL).feature,
+        <Py_ssize_t>&(<Node*> NULL).threshold,
+        <Py_ssize_t>&(<Node*> NULL).impurity,
+        <Py_ssize_t>&(<Node*> NULL).n_samples,
     ]
 })
 
@@ -1377,7 +1377,7 @@ cdef class PresortBestSplitter(Splitter):
             self.X_argsorted = \
                 np.asfortranarray(np.argsort(X, axis=0), dtype=np.int32)
 
-            self.X_argsorted_ptr = <INT32_t*>self.X_argsorted.data
+            self.X_argsorted_ptr = <INT32_t*> self.X_argsorted.data
             self.X_argsorted_stride = (<SIZE_t> self.X_argsorted.strides[1] /
                                        <SIZE_t> self.X_argsorted.itemsize)
 
@@ -1387,7 +1387,7 @@ cdef class PresortBestSplitter(Splitter):
                 raise MemoryError("failed to allocate %d bytes"
                                   % self.n_total_samples)
             memset(sample_mask, 0, self.n_total_samples)
-            self.sample_mask = <unsigned char *>sample_mask
+            self.sample_mask = <unsigned char*> sample_mask
 
     cdef void node_split(self, double impurity, SIZE_t* pos,
                          SIZE_t* feature, double* threshold,
@@ -1695,7 +1695,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
 
 cdef int _add_split_node(Splitter splitter, Tree tree,
                          SIZE_t start, SIZE_t end, double impurity,
-                         bint is_first, bint is_left, Node *parent,
+                         bint is_first, bint is_left, Node* parent,
                          SIZE_t depth, PriorityHeapRecord* res) nogil:
     """Adds node w/ partition ``[start, end)`` to the frontier. """
     cdef SIZE_t pos
@@ -1805,7 +1805,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         cdef bint is_leaf
         cdef SIZE_t max_depth_seen = -1
         cdef int rc = 0
-        cdef Node *node
+        cdef Node* node
 
         # Initial capacity
         cdef int init_capacity = max_split_nodes + max_leaf_nodes
@@ -2127,7 +2127,7 @@ cdef class Tree:
             if self._resize_c() != 0:
                 return <SIZE_t>(-1)
 
-        cdef Node *node = &self.nodes[node_id]
+        cdef Node* node = &self.nodes[node_id]
         node.impurity = impurity
         node.n_samples = n_node_samples
 
@@ -2162,7 +2162,7 @@ cdef class Tree:
     cpdef np.ndarray apply(self, np.ndarray[DTYPE_t, ndim=2] X):
         """Finds the terminal region (=leaf node) for each sample in X."""
         cdef SIZE_t n_samples = X.shape[0]
-        cdef Node *node = NULL
+        cdef Node* node = NULL
         cdef SIZE_t i = 0
 
         cdef np.ndarray[SIZE_t] out = np.zeros((n_samples,), dtype=np.intp)
@@ -2188,11 +2188,11 @@ cdef class Tree:
         """Computes the importance of each feature (aka variable)."""
         cdef SIZE_t n_left
         cdef SIZE_t n_right
-        cdef Node *left
-        cdef Node *right
-        cdef Node *nodes = self.nodes
-        cdef Node *node = nodes
-        cdef Node *end_node = node + self.node_count
+        cdef Node* left
+        cdef Node* right
+        cdef Node* nodes = self.nodes
+        cdef Node* node = nodes
+        cdef Node* end_node = node + self.node_count
 
         cdef np.ndarray[np.float64_t, ndim=1] importances
         importances = np.zeros((self.n_features,))
@@ -2238,7 +2238,7 @@ cdef class Tree:
         cdef np.npy_intp strides[1]
         strides[0] = sizeof(Node)
         arr = PyArray_NewFromDescr(np.ndarray, <np.dtype> NODE_DTYPE, 1, shape,
-                                   strides, <void *> self.nodes,
+                                   strides, <void*> self.nodes,
                                    np.NPY_DEFAULT, None)
         arr.base = <PyObject*> self
         Py_INCREF(self)
