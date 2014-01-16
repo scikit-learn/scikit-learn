@@ -17,6 +17,7 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_less
+from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import raises
 
 from sklearn.tree import DecisionTreeClassifier
@@ -636,7 +637,6 @@ def test_sample_weight_invalid():
     y = np.ones(100)
     y[:50] = 0.0
 
-
     clf = DecisionTreeClassifier(random_state=0)
 
     sample_weight = np.random.rand(100, 1)
@@ -660,8 +660,7 @@ def test_max_leaf_nodes():
     for name, TreeEstimator in ALL_TREES.items():
         est = TreeEstimator(max_depth=None, max_leaf_nodes=k + 1).fit(X, y)
         tree = est.tree_
-        assert_equal(tree.children_left[tree.children_left == TREE_LEAF].shape[0],
-                     k + 1)
+        assert_equal((tree.children_left == TREE_LEAF).sum(), k + 1)
 
         # max_leaf_nodes in (0, 1) should raise ValueError
         est = TreeEstimator(max_depth=None, max_leaf_nodes=0)
@@ -680,3 +679,16 @@ def test_max_leaf_nodes_max_depth():
         est = TreeEstimator(max_depth=1, max_leaf_nodes=k).fit(X, y)
         tree = est.tree_
         assert_greater(tree.max_depth, 1)
+
+
+def test_arrays_persist():
+    """Ensure property arrays' memory stays alive when tree disappears
+
+    non-regression for #2726
+    """
+    for attr in ['n_classes', 'value', 'children_left', 'children_right',
+                 'threshold', 'impurity', 'feature', 'n_node_samples']:
+        value = getattr(DecisionTreeClassifier().fit([[0]], [0]).tree_, attr)
+        # if pointing to freed memory, contents may be arbitrary
+        assert_true(-2 <= value.flat[0] < 2,
+                    'Array points to arbitrary memory')
