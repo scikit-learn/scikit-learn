@@ -182,8 +182,8 @@ class ParameterSampler(object):
         return self.n_iter
 
 
-def _fit(estimator, X, y, scorers, parameter_iterable, cv, pre_dispatch,
-         fit_params, iid, n_jobs, verbose):
+def _fit_parameter_iterable(estimator, X, y, scorers, parameter_iterable, cv,
+                            pre_dispatch, fit_params, iid, n_jobs, verbose):
     """Actual fitting,  performing the search over parameters."""
 
     n_samples = _num_samples(X)
@@ -424,12 +424,11 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                                      loss_func=self.loss_func,
                                      score_func=self.score_func)
 
-        grid_scores, best_params, best_scores = _fit(self.estimator, X, y,
-                                                     [self.scorer_],
-                                                     parameter_iterable,
-                                                     self.cv, self.pre_dispatch,
-                                                     self.fit_params, self.iid,
-                                                     self.n_jobs, self.verbose)
+        grid_scores, best_params, best_scores = \
+            _fit_parameter_iterable(self.estimator, X, y, [self.scorer_],
+                                    parameter_iterable, self.cv,
+                                    self.pre_dispatch, self.fit_params,
+                                    self.iid, self.n_jobs, self.verbose)
 
         self.grid_scores_ = grid_scores[0]
         self.best_params_ = best_params[0]
