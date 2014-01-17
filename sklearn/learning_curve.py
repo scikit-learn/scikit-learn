@@ -218,3 +218,35 @@ def _incremental_fit_estimator(estimator, X, y, classes, train, test,
         train_scores.append(_score(estimator, X_train, y_train, scorer))
         test_scores.append(_score(estimator, X_test, y_test, scorer))
     return np.array((train_scores, test_scores)).T
+
+
+def validation_curve(estimator, X, y, cv=None, scoring=None,
+                     n_jobs=1, pre_dispatch="all", verbose=0, **param_range):
+    X, y = check_arrays(X, y, sparse_format='csr', allow_lists=True)
+    cv = _check_cv(cv, X, y, classifier=is_classifier(estimator))
+    scorer = check_scoring(estimator, scoring=scoring)
+
+    if len(param_range) == 0:
+        raise ValueError("You must provide a range for an estimator "
+                         "parameter.")
+    elif len(param_range) > 1:
+        raise ValueError("Only one parameter is allowed to change to "
+                         "generate a validation curve.")
+    param_name = param_range.keys()[0]
+    param_configs = [{param_name : v}
+                     for v in param_range[param_name]]
+    n_params = len(param_configs)
+
+    parallel = Parallel(n_jobs=n_jobs, pre_dispatch=pre_dispatch,
+                        verbose=verbose)
+    out = parallel(delayed(_fit_and_score)(
+        estimator, X, y, scorer, train, test, verbose, params, fit_params=None,
+        return_train_score=True)
+        for train, test in cv for params in param_configs)
+    out = np.asarray(out)[:, :2]
+    n_cv_folds = out.shape[0] / n_params
+    out = out.reshape(n_cv_folds, n_params, 2)
+
+    avg_over_cv = out.mean(axis=0).reshape(n_params, 2)
+
+    return avg_over_cv[:, 0], avg_over_cv[:, 1]
