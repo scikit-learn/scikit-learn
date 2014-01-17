@@ -29,12 +29,12 @@ import collections
 # Helper functions to compute the objective and dual objective functions
 # of the l1-penalized estimator
 def _objective(mle, precision_, alpha):
-    """Evaluation of the graph-lasso objective function   
-    
+    """Evaluation of the graph-lasso objective function
+
     the objective function is made of a shifted scaled version of the
-    normalized log-likelihood (i.e. its empirical mean over the samples) and a 
+    normalized log-likelihood (i.e. its empirical mean over the samples) and a
     penalisation term to promote sparsity
-    """    
+    """
     p = precision_.shape[0]
     cost = - 2. * log_likelihood(mle, precision_) + p * np.log(2 * np.pi)
     cost += alpha * (np.abs(precision_).sum()
