@@ -5,7 +5,7 @@
 import sys
 from sklearn.externals.six.moves import cStringIO as StringIO
 import numpy as np
-from sklearn.learning_curve import learning_curve
+from sklearn.learning_curve import learning_curve, validation_curve
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_array_equal
@@ -61,6 +61,34 @@ class MockIncrementalImprovingClassifier(MockImprovingClassifier):
     def partial_fit(self, X, y, **params):
         self.train_sizes += X.shape[0]
         self.x = X[0]
+
+
+class MockClassifierWithParameter(object):
+    """Dummy classifier to test the validation curve"""
+    def __init__(self, param=0.5):
+        self.X_subset = None
+        self.param = param
+
+    def fit(self, X_subset, y_subset):
+        self.X_subset = X_subset
+        self.train_sizes = X_subset.shape[0]
+        return self
+
+    def predict(self, X):
+        raise NotImplementedError
+
+    def score(self, X=None, Y=None):
+        return self.param if self._is_training_data(X) else 1 - self.param
+
+    def _is_training_data(self, X):
+        return X is self.X_subset
+
+    def get_params(self, deep=False):
+        return {"param": self.param}
+
+    def set_params(self, **params):
+        self.param = params["param"]
+        return self
 
 
 def test_learning_curve():
@@ -174,3 +202,32 @@ def test_learning_curve_with_boolean_indices():
     assert_array_equal(train_sizes, np.linspace(2, 20, 10))
     assert_array_almost_equal(train_scores, np.linspace(1.9, 1.0, 10))
     assert_array_almost_equal(test_scores, np.linspace(0.1, 1.0, 10))
+
+
+def test_validation_curve():
+    X, y = make_classification(n_samples=2, n_features=1, n_informative=1,
+                               n_redundant=0, n_classes=2,
+                               n_clusters_per_class=1, random_state=0)
+    param_range = np.linspace(0, 1, 10)
+    train_scores, test_scores = validation_curve(MockClassifierWithParameter(),
+                                                 X, y, cv=2, param=param_range)
+    assert_array_almost_equal(train_scores, param_range)
+    assert_array_almost_equal(test_scores, 1 - param_range)
+
+
+def test_validation_curve_no_param_range():
+    X, y = make_classification(n_samples=2, n_features=1, n_informative=1,
+                               n_redundant=0, n_classes=2,
+                               n_clusters_per_class=1, random_state=0)
+    param_range = np.linspace(0, 1, 10)
+    assert_raises(ValueError, validation_curve, MockClassifierWithParameter(),
+                  X, y, cv=2)
+
+
+def test_validation_curve_too_many_param_ranges():
+    X, y = make_classification(n_samples=2, n_features=1, n_informative=1,
+                               n_redundant=0, n_classes=2,
+                               n_clusters_per_class=1, random_state=0)
+    param_range = np.linspace(0, 1, 10)
+    assert_raises(ValueError, validation_curve, MockClassifierWithParameter(),
+                  X, y, cv=2, param1=[0], param2=[0])

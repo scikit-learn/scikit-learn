@@ -222,6 +222,49 @@ def _incremental_fit_estimator(estimator, X, y, classes, train, test,
 
 def validation_curve(estimator, X, y, cv=None, scoring=None,
                      n_jobs=1, pre_dispatch="all", verbose=0, **param_range):
+    """Validation curve
+
+    Compute training and validation scores for an estimator with different
+    values of a specified parameter.
+
+    Parameters
+    ----------
+    estimator : object type that implements the "fit" and "predict" methods
+        An object of that type which is cloned for each validation.
+
+    X : array-like, shape (n_samples, n_features)
+        Training vector, where n_samples is the number of samples and
+        n_features is the number of features.
+
+    y : array-like, shape (n_samples) or (n_samples, n_features), optional
+        Target relative to X for classification or regression;
+        None for unsupervised learning.
+
+    cv : integer, cross-validation generator, optional
+        If an integer is passed, it is the number of folds (defaults to 3).
+        Specific cross-validation objects can be passed, see
+        sklearn.cross_validation module for the list of possible objects
+
+    scoring : string, callable or None, optional, default: None
+        A string (see model evaluation documentation) or
+        a scorer callable object / function with signature
+        ``scorer(estimator, X, y)``.
+
+    n_jobs : integer, optional
+        Number of jobs to run in parallel (default 1).
+
+    pre_dispatch : integer or string, optional
+        Number of predispatched jobs for parallel execution (default is
+        all). The option can reduce the allocated memory. The string can
+        be an expression like '2*n_jobs'.
+
+    verbose : integer, optional
+        Controls the verbosity: the higher, the more messages.
+
+    param_range : dict
+        Contains one entry that maps the name of the parameter that will be
+        varied to the values that will be evaluated.
+    """
     X, y = check_arrays(X, y, sparse_format='csr', allow_lists=True)
     cv = _check_cv(cv, X, y, classifier=is_classifier(estimator))
     scorer = check_scoring(estimator, scoring=scoring)
