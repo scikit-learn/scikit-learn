@@ -485,8 +485,8 @@ class DPGMM(GMM):
         algorithm.
 
         For a full derivation and description of the algorithm see
-        doc/modules/dp-derivation.rst 
-        or 
+        doc/modules/dp-derivation.rst
+        or
         http://scikit-learn.org/stable/modules/dp-derivation.html#
 
         A initialization step is performed before entering the em
