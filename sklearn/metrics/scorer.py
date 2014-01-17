@@ -24,7 +24,8 @@ from warnings import warn
 import numpy as np
 
 from . import (r2_score, mean_absolute_error, mean_squared_error,
-               accuracy_score, f1_score, roc_auc_score, average_precision_score,
+               accuracy_score, f1_score, roc_auc_score,
+               average_precision_score,
                precision_score, recall_score, log_loss)
 from .cluster import adjusted_rand_score
 from ..utils.multiclass import type_of_target
@@ -211,17 +212,17 @@ def check_scoring(estimator, scoring=None, allow_none=False, loss_func=None,
         if loss_func is not None or score_func is not None:
             if loss_func is not None:
                 warn("Passing a loss function is "
-                    "deprecated and will be removed in 0.15. "
-                    "Either use strings or score objects. "
-                    "The relevant new parameter is called ''scoring''. ",
-                    category=DeprecationWarning, stacklevel=2)
+                     "deprecated and will be removed in 0.15. "
+                     "Either use strings or score objects. "
+                     "The relevant new parameter is called ''scoring''. ",
+                     category=DeprecationWarning, stacklevel=2)
                 scorer = make_scorer(loss_func, greater_is_better=False)
             if score_func is not None:
                 warn("Passing function as ``score_func`` is "
-                    "deprecated and will be removed in 0.15. "
-                    "Either use strings or score objects. "
-                    "The relevant new parameter is called ''scoring''.",
-                    category=DeprecationWarning, stacklevel=2)
+                     "deprecated and will be removed in 0.15. "
+                     "Either use strings or score objects. "
+                     "The relevant new parameter is called ''scoring''.",
+                     category=DeprecationWarning, stacklevel=2)
                 if loss_func is None or score_overrides_loss:
                     scorer = make_scorer(score_func)
         else:
