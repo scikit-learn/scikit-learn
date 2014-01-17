@@ -15,14 +15,14 @@ from sklearn.cross_validation import KFold
 from sklearn.linear_model import PassiveAggressiveClassifier
 
 
-class MockImprovingClassifier(object):
+class MockImprovingEstimator(object):
     """Dummy classifier to test the learning curve"""
     def __init__(self, n_max_train_sizes):
         self.n_max_train_sizes = n_max_train_sizes
         self.train_sizes = 0
         self.X_subset = None
 
-    def fit(self, X_subset, y_subset):
+    def fit(self, X_subset, y_subset=None):
         self.X_subset = X_subset
         self.train_sizes = X_subset.shape[0]
         return self
@@ -48,22 +48,22 @@ class MockImprovingClassifier(object):
         return self
 
 
-class MockIncrementalImprovingClassifier(MockImprovingClassifier):
+class MockIncrementalImprovingEstimator(MockImprovingEstimator):
     """Dummy classifier that provides partial_fit"""
     def __init__(self, n_max_train_sizes):
-        super(MockIncrementalImprovingClassifier, self).__init__(
-            n_max_train_sizes)
+        super(MockIncrementalImprovingEstimator, self).__init__(
+              n_max_train_sizes)
         self.x = None
 
     def _is_training_data(self, X):
         return self.x in X
 
-    def partial_fit(self, X, y, **params):
+    def partial_fit(self, X, y=None, **params):
         self.train_sizes += X.shape[0]
         self.x = X[0]
 
 
-class MockClassifierWithParameter(object):
+class MockEstimatorWithParameter(object):
     """Dummy classifier to test the validation curve"""
     def __init__(self, param=0.5):
         self.X_subset = None
@@ -95,9 +95,21 @@ def test_learning_curve():
     X, y = make_classification(n_samples=30, n_features=1, n_informative=1,
                                n_redundant=0, n_classes=2,
                                n_clusters_per_class=1, random_state=0)
-    estimator = MockImprovingClassifier(20)
+    estimator = MockImprovingEstimator(20)
     train_sizes, train_scores, test_scores = learning_curve(estimator, X, y,
                                                             cv=3)
+    assert_array_equal(train_sizes, np.linspace(2, 20, 10))
+    assert_array_almost_equal(train_scores, np.linspace(1.9, 1.0, 10))
+    assert_array_almost_equal(test_scores, np.linspace(0.1, 1.0, 10))
+
+
+def test_learning_curve_unsupervised():
+    X, _ = make_classification(n_samples=30, n_features=1, n_informative=1,
+                               n_redundant=0, n_classes=2,
+                               n_clusters_per_class=1, random_state=0)
+    estimator = MockImprovingEstimator(20)
+    train_sizes, train_scores, test_scores = learning_curve(estimator, X,
+                                                            y=None, cv=3)
     assert_array_equal(train_sizes, np.linspace(2, 20, 10))
     assert_array_almost_equal(train_scores, np.linspace(1.9, 1.0, 10))
     assert_array_almost_equal(test_scores, np.linspace(0.1, 1.0, 10))
@@ -107,7 +119,7 @@ def test_learning_curve_verbose():
     X, y = make_classification(n_samples=30, n_features=1, n_informative=1,
                                n_redundant=0, n_classes=2,
                                n_clusters_per_class=1, random_state=0)
-    estimator = MockImprovingClassifier(20)
+    estimator = MockImprovingEstimator(20)
 
     old_stdout = sys.stdout
     sys.stdout = StringIO()
@@ -127,7 +139,7 @@ def test_learning_curve_incremental_learning_not_possible():
                                n_redundant=0, n_classes=2,
                                n_clusters_per_class=1, random_state=0)
     # The mockup does not have partial_fit()
-    estimator = MockImprovingClassifier(1)
+    estimator = MockImprovingEstimator(1)
     assert_raises(ValueError, learning_curve, estimator, X, y,
                   exploit_incremental_learning=True)
 
@@ -136,9 +148,21 @@ def test_learning_curve_incremental_learning():
     X, y = make_classification(n_samples=30, n_features=1, n_informative=1,
                                n_redundant=0, n_classes=2,
                                n_clusters_per_class=1, random_state=0)
-    estimator = MockIncrementalImprovingClassifier(20)
+    estimator = MockIncrementalImprovingEstimator(20)
     train_sizes, train_scores, test_scores = learning_curve(
         estimator, X, y, cv=3, exploit_incremental_learning=True)
+    assert_array_equal(train_sizes, np.linspace(2, 20, 10))
+    assert_array_almost_equal(train_scores, np.linspace(1.9, 1.0, 10))
+    assert_array_almost_equal(test_scores, np.linspace(0.1, 1.0, 10))
+
+
+def test_learning_curve_incremental_learning_unsupervised():
+    X, _ = make_classification(n_samples=30, n_features=1, n_informative=1,
+                               n_redundant=0, n_classes=2,
+                               n_clusters_per_class=1, random_state=0)
+    estimator = MockIncrementalImprovingEstimator(20)
+    train_sizes, train_scores, test_scores = learning_curve(
+        estimator, X, y=None, cv=3, exploit_incremental_learning=True)
     assert_array_equal(train_sizes, np.linspace(2, 20, 10))
     assert_array_almost_equal(train_scores, np.linspace(1.9, 1.0, 10))
     assert_array_almost_equal(test_scores, np.linspace(0.1, 1.0, 10))
@@ -169,7 +193,7 @@ def test_learning_curve_n_sample_range_out_of_bounds():
     X, y = make_classification(n_samples=30, n_features=1, n_informative=1,
                                n_redundant=0, n_classes=2,
                                n_clusters_per_class=1, random_state=0)
-    estimator = MockImprovingClassifier(20)
+    estimator = MockImprovingEstimator(20)
     assert_raises(ValueError, learning_curve, estimator, X, y, cv=3,
                   train_sizes=[0.0, 1.0])
     assert_raises(ValueError, learning_curve, estimator, X, y, cv=3,
@@ -184,7 +208,7 @@ def test_learning_curve_remove_duplicate_sample_sizes():
     X, y = make_classification(n_samples=3, n_features=1, n_informative=1,
                                n_redundant=0, n_classes=2,
                                n_clusters_per_class=1, random_state=0)
-    estimator = MockImprovingClassifier(2)
+    estimator = MockImprovingEstimator(2)
     train_sizes, _, _ = assert_warns(
         RuntimeWarning, learning_curve, estimator, X, y, cv=3,
         train_sizes=np.linspace(0.33, 1.0, 3))
@@ -195,7 +219,7 @@ def test_learning_curve_with_boolean_indices():
     X, y = make_classification(n_samples=30, n_features=1, n_informative=1,
                                n_redundant=0, n_classes=2,
                                n_clusters_per_class=1, random_state=0)
-    estimator = MockImprovingClassifier(20)
+    estimator = MockImprovingEstimator(20)
     cv = KFold(n=30, n_folds=3, indices=False)
     train_sizes, train_scores, test_scores = learning_curve(estimator, X, y,
                                                             cv=cv)
@@ -209,7 +233,7 @@ def test_validation_curve():
                                n_redundant=0, n_classes=2,
                                n_clusters_per_class=1, random_state=0)
     param_range = np.linspace(0, 1, 10)
-    train_scores, test_scores = validation_curve(MockClassifierWithParameter(),
+    train_scores, test_scores = validation_curve(MockEstimatorWithParameter(),
                                                  X, y, cv=2, param=param_range)
     assert_array_almost_equal(train_scores, param_range)
     assert_array_almost_equal(test_scores, 1 - param_range)
@@ -220,7 +244,7 @@ def test_validation_curve_no_param_range():
                                n_redundant=0, n_classes=2,
                                n_clusters_per_class=1, random_state=0)
     param_range = np.linspace(0, 1, 10)
-    assert_raises(ValueError, validation_curve, MockClassifierWithParameter(),
+    assert_raises(ValueError, validation_curve, MockEstimatorWithParameter(),
                   X, y, cv=2)
 
 
@@ -229,5 +253,5 @@ def test_validation_curve_too_many_param_ranges():
                                n_redundant=0, n_classes=2,
                                n_clusters_per_class=1, random_state=0)
     param_range = np.linspace(0, 1, 10)
-    assert_raises(ValueError, validation_curve, MockClassifierWithParameter(),
+    assert_raises(ValueError, validation_curve, MockEstimatorWithParameter(),
                   X, y, cv=2, param1=[0], param2=[0])
