@@ -360,7 +360,7 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         d = clf.decision_function(x)
         if np.all(d < -1):  # XXX not true in sparse test case (why?)
             p = clf.predict_proba(x)
-            assert_array_almost_equal(p[0], [1/3.] * 3)
+            assert_array_almost_equal(p[0], [1 / 3.] * 3)
 
     def test_sgd_l1(self):
         """Test L1 regularization"""
@@ -815,15 +815,18 @@ class SparseSGDRegressorTestCase(DenseSGDRegressorTestCase):
 
 def test_l1_ratio():
     """Test if l1 ratio extremes match L1 and L2 penalty settings. """
-    X, y = datasets.make_classification(n_samples=1000, n_features=100, n_informative=20,
+    X, y = datasets.make_classification(n_samples=1000,
+                                        n_features=100, n_informative=20,
                                         random_state=1234)
 
     # test if elasticnet with l1_ratio near 1 gives same result as pure l1
-    est_en = SGDClassifier(alpha=0.001, penalty='elasticnet', l1_ratio=0.9999999999).fit(X, y)
+    est_en = SGDClassifier(alpha=0.001, penalty='elasticnet',
+                           l1_ratio=0.9999999999).fit(X, y)
     est_l1 = SGDClassifier(alpha=0.001, penalty='l1').fit(X, y)
     assert_array_almost_equal(est_en.coef_, est_l1.coef_)
 
     # test if elasticnet with l1_ratio near 0 gives same result as pure l2
-    est_en = SGDClassifier(alpha=0.001, penalty='elasticnet', l1_ratio=0.0000000001).fit(X, y)
+    est_en = SGDClassifier(alpha=0.001, penalty='elasticnet',
+                           l1_ratio=0.0000000001).fit(X, y)
     est_l2 = SGDClassifier(alpha=0.001, penalty='l2').fit(X, y)
     assert_array_almost_equal(est_en.coef_, est_l2.coef_)
