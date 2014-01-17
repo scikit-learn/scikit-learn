@@ -184,14 +184,14 @@ def test_lasso_cv_positive_constraint():
     max_iter = 500
 
     # Ensure the unconstrained fit has a negative coefficient
-    clf_unconstrained  = LassoCV(n_alphas=3, eps=1e-1, max_iter=max_iter, cv=2,
-                                 n_jobs=1)
+    clf_unconstrained = LassoCV(n_alphas=3, eps=1e-1, max_iter=max_iter, cv=2,
+                                n_jobs=1)
     clf_unconstrained.fit(X, y)
     assert_true(min(clf_unconstrained.coef_) < 0)
 
     # On same data, constrained fit has non-negative coefficients
-    clf_constrained  = LassoCV(n_alphas=3, eps=1e-1, max_iter=max_iter,
-                               positive=True, cv=2, n_jobs=1)
+    clf_constrained = LassoCV(n_alphas=3, eps=1e-1, max_iter=max_iter,
+                              positive=True, cv=2, n_jobs=1)
     clf_constrained.fit(X, y)
     assert_true(min(clf_constrained.coef_) >= 0)
 
@@ -250,7 +250,6 @@ def test_enet_path():
     clf = ElasticNetCV(n_alphas=5, eps=2e-3, l1_ratio=[0.5, 0.7], cv=3,
                        max_iter=max_iter, precompute=True)
     ignore_warnings(clf.fit)(X, y)
-
 
     # Well-conditioned settings, we should have selected our
     # smallest penalty
@@ -322,7 +321,8 @@ def test_enet_cv_positive_constraint():
     max_iter = 500
 
     # Ensure the unconstrained fit has a negative coefficient
-    enetcv_unconstrained = ElasticNetCV(n_alphas=3, eps=1e-1, max_iter=max_iter,
+    enetcv_unconstrained = ElasticNetCV(n_alphas=3, eps=1e-1,
+                                        max_iter=max_iter,
                                         cv=2, n_jobs=1)
     enetcv_unconstrained.fit(X, y)
     assert_true(min(enetcv_unconstrained.coef_) < 0)
