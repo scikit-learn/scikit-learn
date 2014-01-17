@@ -125,6 +125,10 @@ Changelog
      to speed improvement of the tree, forest and gradient boosting tree
      modules. By `Arnaud Joly`_
 
+   - Changed the internal storage of decision trees to use a struct array.
+     This fixed some small bugs, while improving code and providing a small
+     speed gain. By `Joel Nothman`_.
+
    - Various enhancements to the  :mod:`sklearn.ensemble.gradient_boosting`
      module: a ``warm_start`` argument to fit additional trees,
      a ``max_leaf_nodes`` argument to fit GBM style trees,
