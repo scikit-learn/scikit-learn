@@ -176,4 +176,14 @@ def test_theilsen_2d():
     nptest.assert_array_almost_equal(theilsen.intercept_, c, 1)
 
 
+# def test_subpopulation():
+#     X, y, w, c = gen_toy_problem_4d()
+#     lstq = LinearRegression().fit(X, y)
+#     assert np.linalg.norm(lstq.coef_ - w) > 1.0
+#     # Check that Theil-Sen works
+#     theilsen = TheilSen(n_samples=1e5).fit(X, y)
+#     nptest.assert_array_almost_equal(theilsen.coef_, w, 1)
+#     nptest.assert_array_almost_equal(theilsen.intercept_, c, 1)
+
+
 
