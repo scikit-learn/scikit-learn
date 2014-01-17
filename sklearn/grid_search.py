@@ -185,9 +185,6 @@ class ParameterSampler(object):
 def _fit_param_iter(estimator, X, y, scoring, parameter_iterable, refit,
                     cv, pre_dispatch, fit_params, iid, n_jobs, verbose):
     """Actual fitting,  performing the search over parameters."""
-
-    fit_params = fit_params if fit_params is not None else {}
-
     if isinstance(scoring, list):
         scorers = [check_scoring(estimator, scoring=s) for s in scoring]
         ret_1d = False
@@ -280,13 +277,14 @@ def _fit_param_iter(estimator, X, y, scoring, parameter_iterable, refit,
                 best_estimator.fit(X, **fit_params)
 
     if ret_1d:
-        grid_scores = grid_scores[0]
+        scorers = scorers[0]
         best_params = best_params[0]
         best_scores = best_scores[0]
+        grid_scores = grid_scores[0]
         if refit:
             best_estimators = best_estimators[0]
 
-    ret = [best_params, best_scores, grid_scores]
+    ret = [scorers, best_params, best_scores, grid_scores]
 
     if refit:
         ret.append(best_estimators)
@@ -347,217 +345,6 @@ def fit_grid_point(X, y, estimator, parameters, train, test, scorer,
                                               test, verbose, parameters,
                                               fit_params)
     return scores[0], parameters, n_samples_test
-
-def grid_search_cv(estimator, param_grid, X, y=None, scoring=None,
-                   fit_params=None, n_jobs=1, iid=True,
-                   refit=True, cv=None, verbose=0, pre_dispatch='2*n_jobs'):
-    """Exhaustive search over specified parameter values for an estimator.
-
-    Parameters
-    ----------
-    estimator : object type that implements the "fit" and "predict" methods
-        A object of that type is instantiated for each grid point.
-
-    param_grid : dict or list of dictionaries
-        Dictionary with parameters names (string) as keys and lists of
-        parameter settings to try as values, or a list of such
-        dictionaries, in which case the grids spanned by each dictionary
-        in the list are explored. This enables searching over any sequence
-        of parameter settings.
-
-    X : array-like, shape = [n_samples, n_features]
-        Training vector, where n_samples is the number of samples and
-        n_features is the number of features.
-
-    y : array-like, shape = [n_samples] or [n_samples, n_output], optional
-        Target relative to X for classification or regression;
-        None for unsupervised learning.
-
-    scoring : string, callable, list of strings/callables or None, optional,
-              default: None
-        A string (see model evaluation documentation) or
-        a scorer callable object / function with signature
-        ``scorer(estimator, X, y)``.
-        Lists can be used for randomized search of multiple metrics.
-
-    fit_params : dict, optional
-        Parameters to pass to the fit method.
-
-    n_jobs : int, optional
-        Number of jobs to run in parallel (default 1).
-
-    iid : boolean, optional
-        If True, the data is assumed to be identically distributed across
-        the folds, and the loss minimized is the total loss per sample,
-        and not the mean loss across the folds.
-
-    refit : boolean
-        Refit the best estimator with the entire dataset.
-        If "False", it is impossible to make predictions using
-        this GridSearchCV instance after fitting.
-
-    cv : integer or cross-validation generator, optional
-        If an integer is passed, it is the number of folds (default 3).
-        Specific cross-validation objects can be passed, see
-        sklearn.cross_validation module for the list of possible objects
-
-    verbose : integer
-        Controls the verbosity: the higher, the more messages.
-
-    pre_dispatch : int, or string, optional
-        Controls the number of jobs that get dispatched during parallel
-        execution. Reducing this number can be useful to avoid an
-        explosion of memory consumption when more jobs get dispatched
-        than CPUs can process. This parameter can be:
-
-            - None, in which case all the jobs are immediately
-              created and spawned. Use this for lightweight and
-              fast-running jobs, to avoid delays due to on-demand
-              spawning of the jobs
-
-            - An int, giving the exact number of total jobs that are
-              spawned
-
-            - A string, giving an expression as a function of n_jobs,
-              as in '2*n_jobs'
-
-    Returns
-    -------
-    `best_params` : dict or list of dicts
-        Parameter setting that gave the best results on the hold out data.
-
-    `best_score` : float or list of floats
-        Score of best_estimator on the left out data.
-
-    `grid_scores` : list of named tuples or list of lists of named tuples
-        Contains scores for all parameter combinations in param_grid.
-        Each entry corresponds to one parameter setting.
-        Each named tuple has the attributes:
-
-            * ``parameters``, a dict of parameter settings
-            * ``mean_validation_score``, the mean score over the
-              cross-validation folds
-            * ``cv_validation_scores``, the list of scores for each fold
-
-    `best_estimator` : estimator or list of estimators (only if refit=True)
-        Estimator that was chosen by the search, i.e. estimator
-        which gave highest score (or smallest loss if specified)
-        on the left out data.
-
-    Lists are returned when `scoring` is a list.
-    """
-    param_grid = ParameterGrid(param_grid)
-    return _fit_param_iter(estimator, X, y, scoring, param_grid, refit, cv,
-                           pre_dispatch, fit_params, iid, n_jobs, verbose)
-
-
-def randomized_search_cv(estimator, param_distributions, X, y, n_iter=10,
-                         scoring=None, fit_params=None, n_jobs=1, iid=True,
-                         refit=True, cv=None, verbose=0,
-                         pre_dispatch='2*n_jobs', random_state=None):
-    """Randomized search on hyper parameters.
-
-    Parameters
-    ----------
-    estimator : object type that implements the "fit" and "predict" methods
-        A object of that type is instantiated for each parameter setting.
-
-    param_distributions : dict
-        Dictionary with parameters names (string) as keys and distributions
-        or lists of parameters to try. Distributions must provide a ``rvs``
-        method for sampling (such as those from scipy.stats.distributions).
-        If a list is given, it is sampled uniformly.
-
-    X : array-like, shape = [n_samples, n_features]
-        Training vector, where n_samples is the number of samples and
-        n_features is the number of features.
-
-    y : array-like, shape = [n_samples] or [n_samples, n_output], optional
-        Target relative to X for classification or regression;
-        None for unsupervised learning.
-
-    n_iter : int, default=10
-        Number of parameter settings that are sampled. n_iter trades
-        off runtime vs quality of the solution.
-
-    scoring : string, callable, list of strings/callables or None, optional,
-              default: None
-        A string (see model evaluation documentation) or
-        a scorer callable object / function with signature
-        ``scorer(estimator, X, y)``.
-        Lists can be used for randomized search of multiple metrics.
-
-    fit_params : dict, optional
-        Parameters to pass to the fit method.
-
-    n_jobs : int, optional
-        Number of jobs to run in parallel (default 1).
-
-    pre_dispatch : int, or string, optional
-        Controls the number of jobs that get dispatched during parallel
-        execution. Reducing this number can be useful to avoid an
-        explosion of memory consumption when more jobs get dispatched
-        than CPUs can process. This parameter can be:
-
-            - None, in which case all the jobs are immediately
-              created and spawned. Use this for lightweight and
-              fast-running jobs, to avoid delays due to on-demand
-              spawning of the jobs
-
-            - An int, giving the exact number of total jobs that are
-              spawned
-
-            - A string, giving an expression as a function of n_jobs,
-              as in '2*n_jobs'
-
-    iid : boolean, optional
-        If True, the data is assumed to be identically distributed across
-        the folds, and the loss minimized is the total loss per sample,
-        and not the mean loss across the folds.
-
-    cv : integer or cross-validation generator, optional
-        If an integer is passed, it is the number of folds (default 3).
-        Specific cross-validation objects can be passed, see
-        sklearn.cross_validation module for the list of possible objects
-
-    refit : boolean
-        Refit the best estimator with the entire dataset.
-        If "False", it is impossible to make predictions using
-        this RandomizedSearchCV instance after fitting.
-
-    verbose : integer
-        Controls the verbosity: the higher, the more messages.
-
-    Returns
-    -------
-    `best_params` : dict or list of dicts
-        Parameter setting that gave the best results on the hold out data.
-
-    `best_score` : float or list of floats
-        Score of best_estimator on the left out data.
-
-    `grid_scores` : list of named tuples or list of lists of named tuples
-        Contains scores for all parameter combinations in param_grid.
-        Each entry corresponds to one parameter setting.
-        Each named tuple has the attributes:
-
-            * ``parameters``, a dict of parameter settings
-            * ``mean_validation_score``, the mean score over the
-              cross-validation folds
-            * ``cv_validation_scores``, the list of scores for each fold
-
-    `best_estimator` : estimator or list of estimators (only if refit=True)
-        Estimator that was chosen by the search, i.e. estimator
-        which gave highest score (or smallest loss if specified)
-        on the left out data.
-
-    Lists are returned when `scoring` is a list.
-    """
-    sampled_params = ParameterSampler(param_distributions,
-                                      n_iter,
-                                      random_state=random_state)
-    return _fit_param_iter(estimator, X, y, scoring, sampled_params, refit, cv,
-                           pre_dispatch, fit_params, iid, n_jobs, verbose)
 
 
 def _check_param_grid(param_grid):
@@ -666,22 +453,25 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         return self.best_estimator_.transform
 
     def _fit(self, X, y, parameter_iterable):
-        self.scorer_ = check_scoring(self.estimator, scoring=self.scoring,
-                                     loss_func=self.loss_func,
-                                     score_func=self.score_func)
-
-        ret = _fit_param_iter(self.estimator, X, y, self.scorer_,
+        ret = _fit_param_iter(self.estimator, X, y, self.scoring,
                               parameter_iterable, self.refit, self.cv,
                               self.pre_dispatch, self.fit_params, self.iid,
                               self.n_jobs, self.verbose)
 
+        self.scorer_ = ret[0]
+        self.best_params_ = ret[1]
+        self.best_score_ = ret[2]
+        self.grid_scores_ = ret[3]
 
-        self.best_params_ = ret[0]
-        self.best_score_ = ret[1]
-        self.grid_scores_ = ret[2]
 
         if self.refit:
-            self.best_estimator_ = ret[3]
+            if isinstance(ret[4], list):
+                self.best_estimators_ = ret[4]
+                # By default, select the best estimator corresponding to the
+                # first scorer.
+                self.best_estimator_ = ret[4][0]
+            else:
+                self.best_estimator_ = ret[4]
 
         return self
 

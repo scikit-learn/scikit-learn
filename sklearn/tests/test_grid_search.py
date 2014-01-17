@@ -24,12 +24,11 @@ from sklearn.utils.testing import assert_array_almost_equal
 
 from scipy.stats import distributions
 
-from sklearn.base import BaseEstimator
+from sklearn.base import BaseEstimator, clone
 from sklearn.datasets import make_classification
 from sklearn.datasets import make_blobs
 from sklearn.datasets import make_multilabel_classification
-from sklearn.grid_search import (grid_search_cv, GridSearchCV,
-                                 randomized_search_cv, RandomizedSearchCV,
+from sklearn.grid_search import (GridSearchCV, RandomizedSearchCV,
                                  ParameterGrid, ParameterSampler)
 from sklearn.svm import LinearSVC, SVC
 from sklearn.tree import DecisionTreeRegressor
@@ -648,24 +647,31 @@ def test_grid_search_with_multioutput_data():
 
 
 def test_multiple_grid_search_cv():
-    for n, func in enumerate((grid_search_cv, randomized_search_cv)):
-        clf = LinearSVC(random_state=0)
-        X, y = make_blobs(random_state=0, centers=2)
-        param_grid = {"C": [0.1, 1, 10]}
+    clf = LinearSVC(random_state=0)
+    X, y = make_blobs(random_state=0, centers=2)
+    param_grid = {"C": [0.1, 1, 10]}
+    scoring = ["f1", "roc_auc"]
 
-        if n == 0:
-            kwargs = dict()
-        else:
-            kwargs = dict(random_state=0)
+    gs = GridSearchCV(clf, param_grid, scoring=scoring)
+    rs = RandomizedSearchCV(clf, param_grid, scoring=scoring, random_state=0)
 
-        ret = func(clf, param_grid, X, y, scoring=["f1", "roc_auc"], **kwargs)
-        ret_f1 = func(clf, param_grid, X, y, scoring="f1", **kwargs)
-        ret_auc = func(clf, param_grid, X, y, scoring="roc_auc", **kwargs)
+    for n, est in enumerate((gs, rs)):
+        est.fit(X, y)
 
-        for i in xrange(len(ret)):
+        for attr in ("scorer_", "best_score_", "grid_scores_", "best_params_"):
+            attr = getattr(est, attr)
+            assert_equal(len(attr), 2)
 
-            assert_equal(len(ret[i]), 2)
+        est_f1 = clone(est)
+        est_f1.scoring = "f1"
+        est_f1.fit(X, y)
 
-        for i in (0, 1):
-            assert_equal(ret[i][0], ret_f1[i])
-            assert_equal(ret[i][1], ret_auc[i])
+        est_auc = clone(est)
+        est_auc.scoring = "roc_auc"
+        est_auc.fit(X, y)
+
+        for attr in ("best_score_", "best_params_"):
+            assert_equal(getattr(est, attr)[0],
+                         getattr(est_f1, attr))
+            assert_equal(getattr(est, attr)[1],
+                         getattr(est_auc, attr))
