@@ -4,7 +4,7 @@ import numpy as np
 
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_raise_message
+from sklearn.utils.testing import assert_raises_regexp
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import ignore_warnings
 
@@ -58,7 +58,9 @@ class EstimatorWithFitAndPredict(object):
 def test_check_scoring():
     """Test all branches of check_scoring"""
     estimator = EstimatorWithoutFit()
-    assert_raise_message(TypeError, "'fit' method", check_scoring, estimator)
+    assert_raises_regexp(TypeError,
+        r"estimator should a be an estimator implementing 'fit' method, .* "
+        "was passed", check_scoring, estimator)
 
     estimator = EstimatorWithFitAndScore()
     estimator.fit([[1]], [1])
@@ -67,14 +69,17 @@ def test_check_scoring():
 
     estimator = EstimatorWithFitAndPredict()
     estimator.fit([[1]], [1])
-    assert_raise_message(TypeError, "no scoring", check_scoring, estimator)
+    assert_raises_regexp(TypeError,
+        r"If no scoring is specified, the estimator passed should have a "
+        "'score' method\. The estimator .* does not.", check_scoring, estimator)
 
     scorer = check_scoring(estimator, "accuracy")
     assert_almost_equal(scorer(estimator, [[1]], [1]), 1.0)
 
     estimator = EstimatorWithFit()
-    assert_raise_message(TypeError, "'score' or a 'predict'", check_scoring,
-                         estimator, "accuracy")
+    assert_raises_regexp(TypeError,
+        r"The estimator passed should have a 'score' or a 'predict' method. "
+        "The estimator .* does not.", check_scoring, estimator, "accuracy")
 
     estimator = EstimatorWithFit()
     scorer = check_scoring(estimator, allow_none=True)
