@@ -7,8 +7,8 @@ python:
 virtualenv:
     system_site_packages: true
 before_install:
-    - SITE_PKG_DIR=$VIRTUAL_ENV/lib/python$TRAVIS_PYTHON_VERSION/site-packages
-    - rm -f $VIRTUAL_ENV/lib/python$TRAVIS_PYTHON_VERSION/no-global-site-packages.txt
+    - if [[ $TRAVIS_PYTHON_VERSION == '2.6' ]]; then wget -O- http://neuro.debian.net/lists/precise.us-nh.libre | sudo tee /etc/apt/sources.list.d/neurodebian.sources.list; fi
+    - if [[ $TRAVIS_PYTHON_VERSION == '2.6' ]]; then sudo apt-key adv --recv-keys --keyserver pgp.mit.edu 2649A5A9; fi
     - sudo apt-get update -qq
     - sudo apt-get install -qq python-scipy python-nose
     - sudo apt-get install python-pip
