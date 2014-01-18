@@ -3,6 +3,7 @@ env:
     - COVERAGE=--with-coverage
 python:
     - "2.7"
+    - "2.6"
 virtualenv:
     system_site_packages: true
 before_install:
