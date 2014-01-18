@@ -173,7 +173,7 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
     models : a list of models along the regularization path
         (Is returned if ``return_models`` is set ``True`` (default).
 
-    alphas : array, shape: (n_alphas)
+    alphas : array, shape (n_alphas,)
         The alphas along the path where models are computed.
         (Is returned, along with ``coefs``, when ``return_models`` is set
         to ``False``)
@@ -965,21 +965,25 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
         y = np.asarray(y, dtype=np.float64)
 
         if isinstance(self, ElasticNetCV) or isinstance(self, LassoCV):
+            if hasattr(self, 'l1_ratio'):
+                model_str = 'ElasticNet'
+                model = ElasticNet()
+            else:
+                model_str = 'Lasso'
+                model = Lasso()
             if y.ndim > 1:
-                if hasattr(self, 'l1_ratio'):
-                    model_str = 'ElasticNet'
-                else:
-                    model_str = 'Lasso'
                 raise ValueError("For multi-task outputs, use "
                                  "MultiTask%sCV" % (model_str))
-            model = ElasticNet()
         else:
             if sparse.isspmatrix(X):
                 raise TypeError("X should be dense but a sparse matrix was"
                                 "passed")
             elif y.ndim == 1:
                 y = y[:, np.newaxis]
-            model = MultiTaskElasticNet()
+            if hasattr(self, 'l1_ratio'):
+                model = MultiTaskElasticNet()
+            else:
+                model = MultiTaskLasso()
 
         # This makes sure that there is no duplication in memory.
         # Dealing right with copy_X is important in the following:
