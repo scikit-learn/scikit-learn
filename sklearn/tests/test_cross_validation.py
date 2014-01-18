@@ -4,6 +4,7 @@ import warnings
 
 import numpy as np
 from scipy.sparse import coo_matrix
+from scipy import stats
 
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_equal
@@ -394,6 +395,46 @@ def test_stratified_shuffle_split_iter_no_indices():
     train_indices, test_indices = next(iter(sss2))
 
     assert_array_equal(sorted(test_indices), np.where(test_mask)[0])
+
+
+def test_shuffle_split_even():
+    # Test the in StratifiedShuffleSplit, indices are drawn with a
+    # equal chance
+
+    def assert_counts_are_ok(idx_counts, p):
+        # Here we test that the distribution of the counts
+        # per index is close enough to a binomial
+        threshold = 0.05 / n_splits
+        bf = stats.binom(n_splits, p)
+        for count in idx_counts:
+            p = bf.pmf(count)
+            assert_true(p > threshold,
+                        "An index is not drawn with chance corresponding "
+                        "to even draws")
+
+    for n_labels in (6, 22):
+        labels = np.array((n_labels // 2) * [0, 1])
+        n_folds = 5
+        splits = cval.StratifiedShuffleSplit(labels, n_iter=1000,
+                                    test_size=1./n_folds, random_state=0)
+
+        train_counts = [0] * len(labels)
+        test_counts = [0] * len(labels)
+        for train, test in splits:
+            for counter, ids in [(train_counts, train), (test_counts, test)]:
+                for id in ids:
+                    counter[id] += 1
+
+        n_splits = len(splits)
+        label_counts = np.unique(labels)
+        assert_equal(splits.test_size, 1.0 / n_folds)
+        assert_equal(splits.n_train + splits.n_test, len(labels))
+        assert_equal(len(label_counts), 2)
+        ex_test_p = (1. * splits.n_test) / n_labels
+        ex_train_p = 1.0 - ex_test_p
+
+        assert_counts_are_ok(train_counts, ex_train_p)
+        assert_counts_are_ok(test_counts, ex_test_p)
 
 
 def test_leave_label_out_changing_labels():
