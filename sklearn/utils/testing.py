@@ -12,6 +12,7 @@ import inspect
 import pkgutil
 import warnings
 import sys
+import re
 
 import scipy as sp
 from functools import wraps
@@ -34,7 +35,6 @@ from nose.tools import assert_not_equal
 from nose.tools import assert_true
 from nose.tools import assert_false
 from nose.tools import assert_raises
-from nose.tools import assert_raises_regexp
 from nose.tools import raises
 from nose import SkipTest
 from nose import with_setup
@@ -64,6 +64,30 @@ except ImportError:
 
     def assert_not_in(x, container):
         assert_false(x in container, msg="%r in %r" % (x, container))
+
+try:
+    from nose.tools import assert_raises_regexp
+except ImportError:
+    # for Py 2.6
+    def assert_raises_regexp(expected_exception, expected_regexp,
+                            callable_obj=None, *args, **kwargs):
+        """Helper function to check for message patterns in exceptions"""
+
+        not_raised = False
+        try:
+            callable_obj(*args, **kwargs)
+            not_raised = True
+        except Exception as e:
+            error_message = str(e)
+            if not re.compile(expected_regexp).match(error_message):
+                raise AssertionError("Error message should match pattern '%s'. "
+                                     "'%s' does not." %
+                                     (expected_regexp, error_message))
+        if not_raised:
+            raise AssertionError("Should have raised %r" %
+                                  expected_exception(expected_regexp))
+
+
 
 
 def _assert_less(a, b, msg=None):
