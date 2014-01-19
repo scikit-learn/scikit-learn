@@ -1745,7 +1745,7 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
         self.n_jobs = n_jobs
 
 
-class MultiTaskLassoCV(MultiTaskElasticNetCV):
+class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
     """Multi-task L1/L2 Lasso with built-in cross-validation.
 
     The optimization objective for MultiTaskLasso is::
@@ -1846,7 +1846,7 @@ class MultiTaskLassoCV(MultiTaskElasticNetCV):
                  normalize=False, precompute='auto', max_iter=1000, tol=1e-4,
                  copy_X=True, cv=None, verbose=False, n_jobs=1):
         super(MultiTaskLassoCV, self).__init__(
-            eps=eps, n_alphas=n_alphas, alphas=alphas, l1_ratio=1.,
+            eps=eps, n_alphas=n_alphas, alphas=alphas,
             fit_intercept=fit_intercept, normalize=normalize,
             precompute=precompute, max_iter=max_iter, tol=tol, copy_X=copy_X,
             cv=cv, verbose=verbose, n_jobs=n_jobs)

@@ -416,7 +416,7 @@ def test_multitask_enet_and_lasso_cv():
     assert_equal(50, len(clf.alphas_))
 
 
-def check_1d_multioutput_enet_and_multitask_enet_cv():
+def test_1d_multioutput_enet_and_multitask_enet_cv():
     X, y, _, _ = build_dataset(n_features=10)
     y = y[:, np.newaxis]
     clf = ElasticNetCV(n_alphas=5, eps=2e-3, l1_ratio=[0.5, 0.7])
@@ -429,14 +429,13 @@ def check_1d_multioutput_enet_and_multitask_enet_cv():
     assert_almost_equal(clf.intercept_, clf1.intercept_[0])
 
 
-def check_1d_multioutput_lasso_and_multitask_lasso_cv():
+def test_1d_multioutput_lasso_and_multitask_lasso_cv():
     X, y, _, _ = build_dataset(n_features=10)
     y = y[:, np.newaxis]
-    clf = LassoCV(n_alphas=5, eps=2e-3, l1_ratio=[0.5, 0.7])
+    clf = LassoCV(n_alphas=5, eps=2e-3)
     clf.fit(X, y[:, 0])
-    clf1 = MultiTaskLassoCV(n_alphas=5, eps=2e-3, l1_ratio=[0.5, 0.7])
+    clf1 = MultiTaskLassoCV(n_alphas=5, eps=2e-3)
     clf1.fit(X, y)
-    assert_almost_equal(clf.l1_ratio_, clf1.l1_ratio_)
     assert_almost_equal(clf.alpha_, clf1.alpha_)
     assert_almost_equal(clf.coef_, clf1.coef_[0])
     assert_almost_equal(clf.intercept_, clf1.intercept_[0])
