@@ -431,6 +431,7 @@ def test_shuffle_split_even():
 
         assert_equal(len(train), splits.n_train)
         assert_equal(len(test), splits.n_test)
+        assert_equal(len(set(train).intersection(test)), 0)
 
         label_counts = np.unique(labels)
         assert_equal(splits.test_size, 1.0 / n_folds)
