@@ -397,8 +397,8 @@ def test_stratified_shuffle_split_iter_no_indices():
     assert_array_equal(sorted(test_indices), np.where(test_mask)[0])
 
 
-def test_shuffle_split_even():
-    # Test the in StratifiedShuffleSplit, indices are drawn with a
+def test_stratified_shuffle_split_even():
+    # Test the StratifiedShuffleSplit, indices are drawn with a
     # equal chance
     n_folds = 5
     n_iter = 1000
@@ -431,6 +431,7 @@ def test_shuffle_split_even():
 
         assert_equal(len(train), splits.n_train)
         assert_equal(len(test), splits.n_test)
+        assert_equal(len(set(train).intersection(test)), 0)
 
         label_counts = np.unique(labels)
         assert_equal(splits.test_size, 1.0 / n_folds)

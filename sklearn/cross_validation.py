@@ -1015,7 +1015,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
                                        )[0]
                 missing_idx = rng.permutation(missing_idx)
                 train.extend(missing_idx[:(self.n_train - len(train))])
-                test.extend(missing_idx[:(self.n_test - len(test))])
+                test.extend(missing_idx[-(self.n_test - len(test)):])
 
             train = rng.permutation(train)
             test = rng.permutation(test)
