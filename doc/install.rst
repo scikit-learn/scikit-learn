@@ -251,6 +251,20 @@ scikit-learn is available via `pkgsrc-wip <http://pkgsrc-wip.sourceforge.net/>`_
 
     http://pkgsrc.se/wip/py-scikit_learn
 
+Fedora
+------
+
+The Fedora package is called `python-scikit-learn` for the Python 2 version
+and `python3-scikit-learn` for the Python 3 version. Both versions can
+be installed using `yum`::
+
+    $ sudo yum install python-scikit-learn
+
+or::
+
+    $ sudo yum install python3-scikit-learn
+
+
 .. _install_bleeding_edge:
 
 Bleeding Edge

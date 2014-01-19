@@ -73,7 +73,7 @@ def load_svmlight_file(f, n_features=None, dtype=np.float64,
     n_features: int or None
         The number of features to use. If None, it will be inferred. This
         argument is useful to load several files that are subsets of a
-        bigger sliced dataset: each subset might not have example of
+        bigger sliced dataset: each subset might not have examples of
         every feature, hence the inferred shape might vary from one
         slice to another.
 
@@ -130,12 +130,34 @@ def _gen_open(f):
         return open(f, "rb")
 
 
+def _frombuffer(x, dtype):
+    # np.frombuffer doesn't like zero-length buffers in older NumPy
+    if len(x):
+        return np.frombuffer(x, dtype=dtype)
+    else:
+        return np.empty(0, dtype=dtype)
+
+
 def _open_and_load(f, dtype, multilabel, zero_based, query_id):
     if hasattr(f, "read"):
-        return _load_svmlight_file(f, dtype, multilabel, zero_based, query_id)
+        actual_dtype, data, ind, indptr, labels, query = \
+            _load_svmlight_file(f, dtype, multilabel, zero_based, query_id)
     # XXX remove closing when Python 2.7+/3.1+ required
-    with closing(_gen_open(f)) as f:
-        return _load_svmlight_file(f, dtype, multilabel, zero_based, query_id)
+    else:
+        with closing(_gen_open(f)) as f:
+            actual_dtype, data, ind, indptr, labels, query = \
+                _load_svmlight_file(f, dtype, multilabel, zero_based, query_id)
+
+    # convert from array.array, give data the right dtype
+    if not multilabel:
+        labels = _frombuffer(labels, np.float64)
+    data = _frombuffer(data, actual_dtype)
+    indices = _frombuffer(ind, np.intc)
+    indptr = np.frombuffer(indptr, dtype=np.intc)   # never empty
+    query = _frombuffer(query, np.intc)
+
+    data = np.asarray(data, dtype=dtype)    # no-op for float{32,64}
+    return data, indices, indptr, labels, query
 
 
 def load_svmlight_files(files, n_features=None, dtype=np.float64,
@@ -167,6 +189,10 @@ def load_svmlight_files(files, n_features=None, dtype=np.float64,
     n_features: int or None
         The number of features to use. If None, it will be inferred from the
         maximum column index occurring in any of the files.
+
+        This can be set to a higher value than the actual number of features
+        in any of the input files, but setting it to a lower value will cause
+        an exception to be raised.
 
     multilabel: boolean, optional
         Samples may have several labels each (see
@@ -213,8 +239,13 @@ def load_svmlight_files(files, n_features=None, dtype=np.float64,
             indices = ind[1]
             indices -= 1
 
+    n_f = max(ind[1].max() for ind in r) + 1
     if n_features is None:
-        n_features = max(ind[1].max() for ind in r) + 1
+        n_features = n_f
+    elif n_features < n_f:
+        raise ValueError("n_features was set to {},"
+                         " but input file contains {} features"
+                         .format(n_features, n_f))
 
     result = []
     for data, indices, indptr, y, query_values in r:

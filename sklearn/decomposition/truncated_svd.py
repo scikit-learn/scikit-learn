@@ -33,6 +33,10 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
     returned by the vectorizers in sklearn.feature_extraction.text. In that
     context, it is known as latent semantic analysis (LSA).
 
+    This estimator supports two algorithm: a fast randomized SVD solver, and
+    a "naive" algorithm that uses ARPACK as an eigensolver on (X * X.T) or
+    (X.T * X), whichever is more efficient.
+
     Parameters
     ----------
     n_components : int, default = 2
@@ -120,7 +124,6 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
         U, Sigma, VT = self._fit(X)
         Sigma = np.diag(Sigma)
 
-        # or (X * VT.T).T, whichever takes fewer operations...
         return np.dot(U, Sigma.T)
 
     def _fit(self, X):

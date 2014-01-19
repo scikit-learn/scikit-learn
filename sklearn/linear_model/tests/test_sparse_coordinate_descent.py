@@ -1,14 +1,16 @@
-import warnings
-
 import numpy as np
 import scipy.sparse as sp
 
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_less
+from sklearn.utils.testing import assert_true
+
 from sklearn.utils.testing import assert_greater
+from sklearn.utils.testing import ignore_warnings
+
+
 
 from sklearn.linear_model.coordinate_descent import (Lasso, ElasticNet,
                                                      ElasticNetCV)
@@ -58,10 +60,9 @@ def test_enet_toy_list_input():
 
     # this should be the same as unregularized least squares
     clf = ElasticNet(alpha=0, l1_ratio=1.0)
-    with warnings.catch_warnings(record=True):
-        # catch warning about alpha=0.
-        # this is discouraged but should work.
-        clf.fit(X, Y)
+    # catch warning about alpha=0.
+    # this is discouraged but should work.
+    ignore_warnings(clf.fit)(X, Y)
     pred = clf.predict(T)
     assert_array_almost_equal(clf.coef_, [1])
     assert_array_almost_equal(pred, [2, 3, 4])
@@ -85,7 +86,7 @@ def test_enet_toy_list_input():
 def test_enet_toy_explicit_sparse_input():
     """Test ElasticNet for various values of alpha and l1_ratio with sparse
     X"""
-
+    f = ignore_warnings
     # training samples
     X = sp.lil_matrix((3, 1))
     X[0, 0] = -1
@@ -101,7 +102,7 @@ def test_enet_toy_explicit_sparse_input():
 
     # this should be the same as lasso
     clf = ElasticNet(alpha=0, l1_ratio=1.0)
-    clf.fit(X, Y)
+    f(clf.fit)(X, Y)
     pred = clf.predict(T)
     assert_array_almost_equal(clf.coef_, [1])
     assert_array_almost_equal(pred, [2, 3, 4])
@@ -240,10 +241,10 @@ def test_path_parameters():
     n_alphas = 10
     clf = ElasticNetCV(n_alphas=n_alphas, eps=1e-3, max_iter=max_iter,
                        l1_ratio=0.5, fit_intercept=False)
-    clf.fit(X, y)  # new params
+    ignore_warnings(clf.fit)(X, y)  # new params
     assert_almost_equal(0.5, clf.l1_ratio)
     assert_equal(n_alphas, clf.n_alphas)
     assert_equal(n_alphas, len(clf.alphas_))
     sparse_mse_path = clf.mse_path_
-    clf.fit(X.toarray(), y)  # compare with dense data
+    ignore_warnings(clf.fit)(X.toarray(), y)  # compare with dense data
     assert_almost_equal(clf.mse_path_, sparse_mse_path)

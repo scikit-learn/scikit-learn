@@ -68,8 +68,7 @@ def _smacof_single(similarities, metric=True, n_components=2, init=None,
     if similarities.shape[0] != similarities.shape[1]:
         raise ValueError("similarities must be a square array (shape=%d)" %
                          n_samples)
-    res = 100 * np.finfo(np.float).resolution
-    if np.any((similarities - similarities.T) > res):
+    if not np.allclose(similarities, similarities.T):
         raise ValueError("similarities must be symmetric")
 
     sim_flat = ((1 - np.tri(n_samples)) * similarities).ravel()
@@ -118,7 +117,7 @@ def _smacof_single(similarities, metric=True, n_components=2, init=None,
         X = 1. / n_samples * np.dot(B, X)
 
         dis = np.sqrt((X ** 2).sum(axis=1)).sum()
-        if verbose == 2:
+        if verbose >= 2:
             print('it: %d, stress %s' % (it, stress))
         if old_stress is not None:
             if(old_stress - stress / dis) < eps:
@@ -380,9 +379,9 @@ class MDS(BaseEstimator):
                           "dissimilarity matrix, set "
                           "``dissimilarity=precomputed``.")
 
-        if self.dissimilarity is "precomputed":
+        if self.dissimilarity == "precomputed":
             self.dissimilarity_matrix_ = X
-        elif self.dissimilarity is "euclidean":
+        elif self.dissimilarity == "euclidean":
             self.dissimilarity_matrix_ = euclidean_distances(X)
         else:
             raise ValueError("Proximity must be 'precomputed' or 'euclidean'."

@@ -5,11 +5,10 @@ Todo: cross-check the F-value with stats model
 import itertools
 import numpy as np
 from scipy import stats, sparse
-import warnings
 
 from nose.tools import assert_equal, assert_raises, assert_true
 from numpy.testing import assert_array_equal, assert_array_almost_equal
-from sklearn.utils.testing import assert_not_in
+from sklearn.utils.testing import assert_not_in, ignore_warnings
 
 from sklearn.utils import safe_mask
 from sklearn.datasets.samples_generator import (make_classification,
@@ -37,7 +36,14 @@ def test_f_oneway_vs_scipy_stats():
 def test_f_oneway_ints():
     # Smoke test f_oneway on integers: that it does raise casting errors
     # with recent numpys
-    f_oneway(np.random.randint(10, size=(10, 10)), np.arange(10))
+    X = np.random.randint(10, size=(10, 10))
+    y = np.arange(10)
+    fint, pint = f_oneway(X, y)
+
+    # test that is gives the same result as with float
+    f, p = f_oneway(X.astype(np.float), y)
+    assert_array_almost_equal(f, fint, decimal=5)
+    assert_array_almost_equal(p, pint, decimal=5)
 
 
 def test_f_classif():
@@ -432,16 +438,15 @@ def test_selectkbest_tiebreaking():
     y = [1]
     dummy_score = lambda X, y: (X[0], X[0])
     for X in Xs:
-        with warnings.catch_warnings(record=True):
-            sel = SelectKBest(dummy_score, k=1)
-            X1 = sel.fit_transform([X], y)
-            assert_equal(X1.shape[1], 1)
-            assert_best_scores_kept(sel)
+        sel = SelectKBest(dummy_score, k=1)
+        X1 = ignore_warnings(sel.fit_transform)([X], y)
+        assert_equal(X1.shape[1], 1)
+        assert_best_scores_kept(sel)
 
-            sel = SelectKBest(dummy_score, k=2)
-            X2 = sel.fit_transform([X], y)
-            assert_equal(X2.shape[1], 2)
-            assert_best_scores_kept(sel)
+        sel = SelectKBest(dummy_score, k=2)
+        X2 = ignore_warnings(sel.fit_transform)([X], y)
+        assert_equal(X2.shape[1], 2)
+        assert_best_scores_kept(sel)
 
 
 def test_selectpercentile_tiebreaking():
@@ -451,16 +456,15 @@ def test_selectpercentile_tiebreaking():
     y = [1]
     dummy_score = lambda X, y: (X[0], X[0])
     for X in Xs:
-        with warnings.catch_warnings(record=True):
-            sel = SelectPercentile(dummy_score, percentile=34)
-            X1 = sel.fit_transform([X], y)
-            assert_equal(X1.shape[1], 1)
-            assert_best_scores_kept(sel)
+        sel = SelectPercentile(dummy_score, percentile=34)
+        X1 = ignore_warnings(sel.fit_transform)([X], y)
+        assert_equal(X1.shape[1], 1)
+        assert_best_scores_kept(sel)
 
-            sel = SelectPercentile(dummy_score, percentile=67)
-            X2 = sel.fit_transform([X], y)
-            assert_equal(X2.shape[1], 2)
-            assert_best_scores_kept(sel)
+        sel = SelectPercentile(dummy_score, percentile=67)
+        X2 = ignore_warnings(sel.fit_transform)([X], y)
+        assert_equal(X2.shape[1], 2)
+        assert_best_scores_kept(sel)
 
 
 def test_tied_pvalues():
@@ -503,7 +507,7 @@ def test_nans():
 
     for select in (SelectKBest(f_classif, 2),
                    SelectPercentile(f_classif, percentile=67)):
-        select.fit(X, y)
+        ignore_warnings(select.fit)(X, y)
         assert_array_equal(select.get_support(indices=True), np.array([1, 2]))
 
 

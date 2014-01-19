@@ -276,10 +276,6 @@ Helper Functions
   to ``n``.  Used in ``sklearn.decomposition.dict_learning`` and
   ``sklearn.cluster.k_means``.
 
-- :class:`arraybuilder.ArrayBuilder`: Helper class to incrementally build
-  a 1-d numpy.ndarray.  Currently used in
-  ``sklearn.datasets._svmlight_format.pyx``.
-
 - :func:`safe_mask`: Helper function to convert a mask to the format expected
   by the numpy array or scipy sparse matrix on which to use it (sparse
   matrices support integer indices only while numpy arrays support both

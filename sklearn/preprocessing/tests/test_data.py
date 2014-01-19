@@ -23,6 +23,7 @@ from sklearn.preprocessing.data import StandardScaler
 from sklearn.preprocessing.data import scale
 from sklearn.preprocessing.data import MinMaxScaler
 from sklearn.preprocessing.data import add_dummy_feature
+from sklearn.preprocessing.data import PolynomialFeatures
 
 from sklearn import datasets
 
@@ -33,6 +34,32 @@ def toarray(a):
     if hasattr(a, "toarray"):
         a = a.toarray()
     return a
+
+
+def test_polynomial_features():
+    """Test Polynomial Features"""
+    X1 = np.arange(6)[:, np.newaxis]
+    P1 = np.hstack([np.ones_like(X1),
+                    X1, X1 ** 2, X1 ** 3])
+    deg1 = 3
+
+    X2 = np.arange(6).reshape((3, 2))
+    x1 = X2[:, :1]
+    x2 = X2[:, 1:]
+    P2 = np.hstack([x1 ** 0 * x2 ** 0,
+                    x1 ** 1 * x2 ** 0,
+                    x1 ** 0 * x2 ** 1,
+                    x1 ** 2 * x2 ** 0,
+                    x1 ** 1 * x2 ** 1,
+                    x1 ** 0 * x2 ** 2])
+    deg2 = 2
+
+    for (deg, X, P) in [(deg1, X1, P1), (deg2, X2, P2)]:
+        P_test = PolynomialFeatures(deg, include_bias=True).fit_transform(X)
+        assert_array_almost_equal(P_test, P)
+
+        P_test = PolynomialFeatures(deg, include_bias=False).fit_transform(X)
+        assert_array_almost_equal(P_test, P[:, 1:])
 
 
 def test_scaler_1d():

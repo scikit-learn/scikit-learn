@@ -27,9 +27,6 @@ from .metrics import (accuracy_score,
                       roc_curve,
                       zero_one_loss)
 
-# Will be removed in 0.15
-from .metrics import zero_one
-from .metrics import zero_one_score
 
 # Deprecated in 0.16
 from .metrics import auc_score
@@ -82,6 +79,8 @@ __all__ = ['accuracy_score',
            'mutual_info_score',
            'normalized_mutual_info_score',
            'pairwise_distances',
+           'pairwise_distances_argmin',
+           'pairwise_distances_argmin_min',
            'pairwise_kernels',
            'precision_recall_curve',
            'precision_recall_fscore_support',

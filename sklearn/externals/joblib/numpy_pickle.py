@@ -68,7 +68,7 @@ def read_zfile(file_handle):
     data = zlib.decompress(file_handle.read(), 15, length)
     assert len(data) == length, (
         "Incorrect data length while decompressing %s."
-        " The file could be corrupted." % file_handle)
+        "The file could be corrupted." % file_handle)
     return data
 
 
@@ -177,7 +177,7 @@ class NumpyPickler(Pickler):
            temporaries.
     """
 
-    def __init__(self, filename, compress=0, cache_size=100):
+    def __init__(self, filename, compress=0, cache_size=10):
         self._filename = filename
         self._filenames = [filename, ]
         self.cache_size = cache_size
@@ -354,6 +354,10 @@ def dump(value, filename, compress=0, cache_size=100):
     addition, compressed files take extra extra memory during
     dump and load.
     """
+    if compress is True:
+        # By default, if compress is enabled, we want to be using 3 by
+        # default
+        compress = 3
     if not isinstance(filename, _basestring):
         # People keep inverting arguments, and the resulting error is
         # incomprehensible

@@ -1,7 +1,7 @@
 import numpy as np
 from numpy import linalg
 
-from scipy.sparse import dok_matrix, csr_matrix
+from scipy.sparse import dok_matrix, csr_matrix, issparse
 from scipy.spatial.distance import cosine, cityblock, minkowski
 
 from sklearn.utils.testing import assert_greater
@@ -419,15 +419,18 @@ def test_check_sparse_arrays():
     XB = rng.random_sample((5, 4))
     XB_sparse = csr_matrix(XB)
     XA_checked, XB_checked = check_pairwise_arrays(XA_sparse, XB_sparse)
-
     # compare their difference because testing csr matrices for
     # equality with '==' does not work as expected.
-    assert_true(abs(XA_sparse - XA_checked).nnz == 0)
-    assert_true(abs(XB_sparse - XB_checked).nnz == 0)
+    assert_true(issparse(XA_checked))
+    assert_equal(abs(XA_sparse - XA_checked).sum(), 0)
+    assert_true(issparse(XB_checked))
+    assert_equal(abs(XB_sparse - XB_checked).sum(), 0)
 
-    XA_checked, XB_checked = check_pairwise_arrays(XA_sparse, XA_sparse)
-    assert_true(XA_sparse == XB_checked)
-    assert_true(abs(XA_sparse - XA_checked).nnz == 0)
+    XA_checked, XA_2_checked = check_pairwise_arrays(XA_sparse, XA_sparse)
+    assert_true(issparse(XA_checked))
+    assert_equal(abs(XA_sparse - XA_checked).sum(), 0)
+    assert_true(issparse(XA_2_checked))
+    assert_equal(abs(XA_2_checked - XA_checked).sum(), 0)
 
 
 def tuplify(X):

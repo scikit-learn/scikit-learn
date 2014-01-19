@@ -41,7 +41,7 @@ labels, y = unique(y, return_inverse=True)
 X_train, X_test = X[:2000], X[2000:]
 y_train, y_test = y[:2000], y[2000:]
 
-original_params = {'n_estimators': 1000, 'max_depth': 2, 'random_state': 1,
+original_params = {'n_estimators': 1000, 'max_leaf_nodes': 4, 'max_depth': None, 'random_state': 2,
                    'min_samples_split': 5}
 
 pl.figure()

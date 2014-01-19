@@ -169,7 +169,7 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
         to ``False``).
 
     dual_gaps : shape (n_alphas + 1)
-        The dual gaps and the end of the optimization for each alpha.
+        The dual gaps at the end of the optimization for each alpha.
         (Is returned, along with ``alphas``, when ``return_models`` is set
         to ``False``).
 
@@ -321,7 +321,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
         to ``False``).
 
     dual_gaps : shape (n_alphas + 1)
-        The dual gaps and the end of the optimization for each alpha.
+        The dual gaps at the end of the optimization for each alpha.
         (Is returned, along with ``alphas``, when ``return_models`` is set
         to ``False``).
 
@@ -861,7 +861,8 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
     @abstractmethod
     def __init__(self, eps=1e-3, n_alphas=100, alphas=None, fit_intercept=True,
                  normalize=False, precompute='auto', max_iter=1000, tol=1e-4,
-                 copy_X=True, cv=None, verbose=False):
+                 copy_X=True, cv=None, verbose=False, n_jobs=1,
+                 positive=False):
         self.eps = eps
         self.n_alphas = n_alphas
         self.alphas = alphas
@@ -873,6 +874,8 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
         self.copy_X = copy_X
         self.cv = cv
         self.verbose = verbose
+        self.n_jobs = n_jobs
+        self.positive = positive
 
     def fit(self, X, y):
         """Fit linear model with coordinate descent
@@ -916,6 +919,10 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
             copy_X = False
 
         y = np.asarray(y, dtype=np.float64)
+
+        if y.ndim > 1:
+            raise ValueError("For multi-task outputs, fit the linear model "
+                             "per output/task")
         if X.shape[0] != y.shape[0]:
             raise ValueError("X and y have inconsistent dimensions (%d != %d)"
                              % (X.shape[0], y.shape[0]))
@@ -1047,6 +1054,14 @@ class LassoCV(LinearModelCV, RegressorMixin):
     verbose : bool or integer
         amount of verbosity
 
+    n_jobs : integer, optional
+        Number of CPUs to use during the cross validation. If ``-1``, use
+        all the CPUs. Note that this is used only if multiple values for
+        l1_ratio are given.
+
+    positive : bool, optional
+        If positive, restrict regression coefficients to be positive
+
     Attributes
     ----------
     ``alpha_`` : float
@@ -1063,6 +1078,18 @@ class LassoCV(LinearModelCV, RegressorMixin):
 
     ``alphas_`` : numpy array
         The grid of alphas used for fitting
+
+    ``l1_ratio_`` : int
+        An artifact of the super class LinearModelCV. In this case,
+        ``l1_ratio_ = 1`` because the Lasso estimator uses an L1 penalty
+        by definition.
+        Typically it is a float between 0 and 1 passed to an estimator such as
+        ElasticNet (scaling between l1 and l2 penalties). For ``l1_ratio = 0``
+        the penalty is an L2 penalty. For ``l1_ratio = 1`` it is an L1 penalty.
+
+    ``dual_gap_`` : numpy array
+        The dual gap at the end of the optimization for the optimal alpha
+        (``alpha_``).
 
     Notes
     -----
@@ -1081,16 +1108,16 @@ class LassoCV(LinearModelCV, RegressorMixin):
     LassoLarsCV
     """
     path = staticmethod(lasso_path)
-    n_jobs = 1
 
     def __init__(self, eps=1e-3, n_alphas=100, alphas=None, fit_intercept=True,
                  normalize=False, precompute='auto', max_iter=1000, tol=1e-4,
-                 copy_X=True, cv=None, verbose=False):
+                 copy_X=True, cv=None, verbose=False, n_jobs=1,
+                 positive=False):
         super(LassoCV, self).__init__(
             eps=eps, n_alphas=n_alphas, alphas=alphas,
             fit_intercept=fit_intercept, normalize=normalize,
             precompute=precompute, max_iter=max_iter, tol=tol, copy_X=copy_X,
-            cv=cv, verbose=verbose)
+            cv=cv, verbose=verbose, n_jobs=n_jobs, positive=positive)
 
 
 class ElasticNetCV(LinearModelCV, RegressorMixin):
@@ -1151,6 +1178,9 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
         all the CPUs. Note that this is used only if multiple values for
         l1_ratio are given.
 
+    positive: bool, optional
+        When set to ``True``, forces the coefficients to be positive.
+
     Attributes
     ----------
     ``alpha_`` : float
@@ -1206,7 +1236,7 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
     def __init__(self, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
                  fit_intercept=True, normalize=False, precompute='auto',
                  max_iter=1000, tol=1e-4, cv=None, copy_X=True,
-                 verbose=0, n_jobs=1):
+                 verbose=0, n_jobs=1, positive=False):
         self.l1_ratio = l1_ratio
         self.eps = eps
         self.n_alphas = n_alphas
@@ -1220,6 +1250,7 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
         self.copy_X = copy_X
         self.verbose = verbose
         self.n_jobs = n_jobs
+        self.positive = positive
 
 
 ###############################################################################

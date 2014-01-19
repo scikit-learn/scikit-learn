@@ -22,8 +22,6 @@ def configuration(parent_package='', top_path=None):
         libraries.append('m')
         cblas_libs.append('m')
 
-    config.add_extension('arraybuilder', sources=['arraybuilder.c'])
-
     config.add_extension('sparsefuncs', sources=['sparsefuncs.c'],
                          libraries=libraries)
 

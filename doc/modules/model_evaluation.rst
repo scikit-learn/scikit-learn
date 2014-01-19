@@ -62,6 +62,7 @@ Scoring                    Function
 'adjusted_rand_score'      :func:`sklearn.metrics.adjusted_rand_score`
 
 **Regression**
+'mean_absolute_error'      :func:`sklearn.metrics.mean_absolute_error`
 'mean_squared_error'       :func:`sklearn.metrics.mean_squared_error`
 'r2'                       :func:`sklearn.metrics.r2_score`
 ======================     =================================================
@@ -75,7 +76,7 @@ of acceptable values::
     >>> model = svm.SVC()
     >>> cross_validation.cross_val_score(model, X, y, scoring='wrong_choice')
     Traceback (most recent call last):
-    ValueError: 'wrong_choice' is not a valid scoring value. Valid options are ['accuracy', 'adjusted_rand_score', 'average_precision', 'f1', 'log_loss', 'mean_squared_error', 'precision', 'r2', 'recall', 'roc_auc']
+    ValueError: 'wrong_choice' is not a valid scoring value. Valid options are ['accuracy', 'adjusted_rand_score', 'average_precision', 'f1', 'log_loss', 'mean_absolute_error', 'mean_squared_error', 'precision', 'r2', 'recall', 'roc_auc']
 
 .. note::
 
@@ -176,17 +177,17 @@ Classification metrics
 
 The :mod:`sklearn.metrics` implements several losses, scores and utility
 functions to measure classification performance.
+Some metrics might require probability estimates of the positive class,
+confidence values or binary decisions values.
 
 Some of these are restricted to the binary classification case:
 
 .. autosummary::
    :template: function.rst
 
-   average_precision_score
    hinge_loss
    matthews_corrcoef
    precision_recall_curve
-   roc_auc_score
    roc_curve
 
 
@@ -209,14 +210,20 @@ And some also work in the multilabel case:
    fbeta_score
    hamming_loss
    jaccard_similarity_score
+   log_loss
    precision_recall_fscore_support
    precision_score
    recall_score
    zero_one_loss
 
+And some work with binary and multilabel indicator format:
 
-Some metrics might require probability estimates of the positive class,
-confidence values or binary decisions value.
+.. autosummary::
+   :template: function.rst
+
+   average_precision_score
+   roc_auc_score
+
 
 In the following sub-sections, we will describe each of those functions.
 
@@ -267,29 +274,6 @@ and with a list of labels format:
   * See :ref:`example_plot_permutation_test_for_classification.py`
     for an example of accuracy score usage using permutations of
     the dataset.
-
-
-.. _average_precision_metrics:
-
-Average precision score
-........................
-
-The :func:`average_precision_score` function computes the average precision
-(AP) from prediction scores. This score corresponds to the area under the
-precision-recall curve.
-
-  >>> import numpy as np
-  >>> from sklearn.metrics import average_precision_score
-  >>> y_true = np.array([0, 0, 1, 1])
-  >>> y_scores = np.array([0.1, 0.4, 0.35, 0.8])
-  >>> average_precision_score(y_true, y_scores)  # doctest: +ELLIPSIS
-  0.79...
-
-For more information see the
-`Wikipedia article on average precision
-<http://en.wikipedia.org/wiki/Information_retrieval#Average_precision>`_
-and the :ref:`precision_recall_f_measure_metrics` section.
-
 
 Confusion matrix
 ................
@@ -480,12 +464,21 @@ harmonic mean of the precision and recall. A
 With :math:`\beta = 1`, the :math:`F_\beta` measure leads to the
 :math:`F_1` measure, wheres the recall and the precision are equally important.
 
+The :func:`precision_recall_curve` computes a precision-recall curve
+from the ground truth label and a score given by the classifier
+by varying a decision threshold.
+
+The :func:`average_precision_score` function computes the average precision
+(AP) from prediction scores. This score corresponds to the area under the
+precision-recall curve.
+
 Several functions allow you to analyze the precision, recall and F-measures
 score:
 
 .. autosummary::
    :template: function.rst
 
+   average_precision_score
    f1_score
    fbeta_score
    precision_recall_curve
@@ -494,10 +487,9 @@ score:
    recall_score
 
 Note that the :func:`precision_recall_curve` function is restricted to the
-binary case.
+binary case. The :func:`average_precision_score` function works only in
+binary classification and multilabel indicator format.
 
-The average precision score might also interest you. See the
-:ref:`average_precision_metrics` section.
 
 .. topic:: Examples:
 
@@ -573,6 +565,7 @@ Here some small examples in binary classification::
 
   >>> import numpy as np
   >>> from sklearn.metrics import precision_recall_curve
+  >>> from sklearn.metrics import average_precision_score
   >>> y_true = np.array([0, 0, 1, 1])
   >>> y_scores = np.array([0.1, 0.4, 0.35, 0.8])
   >>> precision, recall, threshold = precision_recall_curve(y_true, y_scores)
@@ -582,6 +575,9 @@ Here some small examples in binary classification::
   array([ 1. ,  0.5,  0.5,  0. ])
   >>> threshold
   array([ 0.35,  0.4 ,  0.8 ])
+  >>> average_precision_score(y_true, y_scores)  # doctest: +ELLIPSIS
+  0.79...
+
 
 
 Multiclass and multilabel classification
@@ -589,9 +585,10 @@ Multiclass and multilabel classification
 In multiclass and multilabel classification task, the notions of precision,
 recall and F-measures can be applied to each label independently.
 There are a few ways to combine results across labels,
-specified by the ``average`` argument to the :func:`f1_score`,
+specified by the ``average`` argument to the
+:func:`average_precision_score` (multilabel only), :func:`f1_score`,
 :func:`fbeta_score`, :func:`precision_recall_fscore_support`,
-:func:`precision_score`  and :func:`recall_score` functions:
+:func:`precision_score` and :func:`recall_score` functions:
 
 * ``"micro"``: calculate metrics globally by counting the total true
   positives, false negatives and false positives. Except in the multi-label
@@ -805,6 +802,13 @@ Here a small example of how to use the :func:`roc_curve` function::
     >>> thresholds
     array([ 0.8 ,  0.4 ,  0.35,  0.1 ])
 
+The following figure shows an example of such ROC curve.
+
+.. image:: ../auto_examples/images/plot_roc_1.png
+   :target: ../auto_examples/plot_roc.html
+   :scale: 75
+   :align: center
+
 The :func:`roc_auc_score` function computes the area under the receiver
 operating characteristic (ROC) curve, which is also denoted by
 AUC or AUROC.  By computing the
@@ -819,9 +823,29 @@ For more information see the `Wikipedia article on AUC
   >>> roc_auc_score(y_true, y_scores)
   0.75
 
-The following figure shows an example of such ROC curve.
+In multi-label classification, the :func:`roc_auc_score` function is
+extended by averaging over the labels:
 
-.. image:: ../auto_examples/images/plot_roc_1.png
+* ``"micro"``: computes the area under the ROC curve globally obtained
+  by considering each element of the label indicator matrix as a label.
+* ``"samples"``: computes the area under the ROC curve on each sample,
+  comparing the set of labels and scores assigned to each, and find the mean
+  across all samples.
+* ``"macro"``: computes the area under the ROC curve for each label, and find
+  their mean.
+* ``"weighted"``: computes the area under the ROC curve for each label, and
+  find their average weighted by the number of occurrences of the label in the
+  true data.
+* ``None``: this returns an array of scores with scores with shape (n_classes,)
+  instead of an aggregate scalar score.
+
+Compared to metrics such as the subset accuracy, the hamming loss or the
+F1 score, ROC AUC doesn't require to optimize a threshold for each label. The
+:func:`roc_auc_score` function can also be used in multi-class classification
+if predicted outputs have been binarized.
+
+
+.. image:: ../auto_examples/images/plot_roc_2.png
    :target: ../auto_examples/plot_roc.html
    :scale: 75
    :align: center
@@ -1073,6 +1097,9 @@ implements three such simple strategies for classification:
   set's class distribution,
 - `most_frequent` always predicts the most frequent label in the training set,
 - `uniform` generates predictions uniformly at random.
+- `constant` always predicts a constant label that is provided by the user.
+   A major motivation of this method is F1-scoring when the positive class
+   is in the minority.
 
 Note that with all these strategies, the `predict` method completely ignores
 the input data!
@@ -1096,7 +1123,7 @@ Next, let's compare the accuracy of `SVC` and `most_frequent`::
   0.63...
   >>> clf = DummyClassifier(strategy='most_frequent',random_state=0)
   >>> clf.fit(X_train, y_train)
-  DummyClassifier(random_state=0, strategy='most_frequent')
+  DummyClassifier(constant=None, random_state=0, strategy='most_frequent')
   >>> clf.score(X_test, y_test)  # doctest: +ELLIPSIS
   0.57...
 

@@ -13,11 +13,10 @@ from .shrunk_covariance_ import shrunk_covariance, ShrunkCovariance, \
     LedoitWolf, oas, OAS
 from .robust_covariance import fast_mcd, MinCovDet
 from .graph_lasso_ import graph_lasso, GraphLasso, GraphLassoCV
-from .outlier_detection import EllipticEnvelope, EllipticEnvelop
+from .outlier_detection import EllipticEnvelope
 
 
-__all__ = ['EllipticEnvelop',
-           'EllipticEnvelope',
+__all__ = ['EllipticEnvelope',
            'EmpiricalCovariance',
            'GraphLasso',
            'GraphLassoCV',
