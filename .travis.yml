@@ -4,18 +4,19 @@ env:
 python:
     - "2.7"
     - "2.6"
+    - "3.3"
 virtualenv:
   system_site_packages: true
 before_install:
-    - if [[ $TRAVIS_PYTHON_VERSION == '2.6' ]]; then wget http://repo.continuum.io/miniconda/Miniconda-2.2.2-Linux-x86_64.sh -O miniconda.sh ; fi
-    - if [[ $TRAVIS_PYTHON_VERSION == '2.6' ]]; then chmod +x miniconda.sh ; fi
-    - if [[ $TRAVIS_PYTHON_VERSION == '2.6' ]]; then ./miniconda.sh -b ; fi
-    - if [[ $TRAVIS_PYTHON_VERSION == '2.6' ]]; then export PATH=/home/travis/anaconda/bin:$PATH ; fi
-    - if [[ $TRAVIS_PYTHON_VERSION == '2.6' ]]; then conda update --yes conda ; fi
-    - if [[ $TRAVIS_PYTHON_VERSION == '2.6' ]]; then conda update --yes conda ; fi
-    - if [[ $TRAVIS_PYTHON_VERSION == '2.6' ]]; then conda create -n testenv --yes pip python=$TRAVIS_PYTHON_VERSION ; fi
-    - if [[ $TRAVIS_PYTHON_VERSION == '2.6' ]]; then source activate testenv ; fi
-    - if [[ $TRAVIS_PYTHON_VERSION == '2.6' ]]; then conda install --yes numpy scipy nose ; fi
+    - if [[ $TRAVIS_PYTHON_VERSION != '2.7' ]]; then wget http://repo.continuum.io/miniconda/Miniconda-2.2.2-Linux-x86_64.sh -O miniconda.sh ; fi
+    - if [[ $TRAVIS_PYTHON_VERSION != '2.7' ]]; then chmod +x miniconda.sh ; fi
+    - if [[ $TRAVIS_PYTHON_VERSION != '2.7' ]]; then ./miniconda.sh -b ; fi
+    - if [[ $TRAVIS_PYTHON_VERSION != '2.7' ]]; then export PATH=/home/travis/anaconda/bin:$PATH ; fi
+    - if [[ $TRAVIS_PYTHON_VERSION != '2.7' ]]; then conda update --yes conda ; fi
+    - if [[ $TRAVIS_PYTHON_VERSION != '2.7' ]]; then conda update --yes conda ; fi
+    - if [[ $TRAVIS_PYTHON_VERSION != '2.7' ]]; then conda create -n testenv --yes pip python=$TRAVIS_PYTHON_VERSION ; fi
+    - if [[ $TRAVIS_PYTHON_VERSION != '2.7' ]]; then source activate testenv ; fi
+    - if [[ $TRAVIS_PYTHON_VERSION != '2.7' ]]; then conda install --yes numpy scipy nose ; fi
     - if [[ $TRAVIS_PYTHON_VERSION == '2.7' ]]; then sudo apt-get update -qq ; fi
     - if [[ $TRAVIS_PYTHON_VERSION == '2.7' ]]; then sudo apt-get install -qq python-scipy python-nose python-pip ; fi
 install:
