@@ -334,15 +334,15 @@ the mean of the samples within its neighborhood:
 
     m(x_i) = \frac{\sum_{x_j \in N(x_i)}K(x_j - x_i)x_j}{\sum_{x_j \in N(x_i)}K(x_j - x_i)}
 
-The algorithm automatically sets the number of clusters, instead relying on a
-paramter `bandwidth`, which dictates the size of the region to search through.
+The algorithm automatically sets the number of clusters, instead of relying on a
+parameter `bandwidth`, which dictates the size of the region to search through.
 This parameter can be set manually, but can be estimated using the provided
 `estimate_bandwidth` function, which is called if the bandwidth is not set.
 
 The algorithm is not highly scalable, as it requires multiple nearest neighbor
 searches during the execution of the algorithm. The algorithm is guaranteed to
 converge, however the algorithm will stop iterating when the change in centroids
-if small.
+is small.
 
 Labelling a new sample is performed by finding the nearest centroid for a
 given sample.
