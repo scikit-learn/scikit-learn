@@ -964,12 +964,15 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
         """
         y = np.asarray(y, dtype=np.float64)
 
+        if hasattr(self, 'l1_ratio'):
+            model_str = 'ElasticNet'
+        else:
+            model_str = 'Lasso'
+
         if isinstance(self, ElasticNetCV) or isinstance(self, LassoCV):
-            if hasattr(self, 'l1_ratio'):
-                model_str = 'ElasticNet'
+            if model_str == 'ElasticNet':
                 model = ElasticNet()
             else:
-                model_str = 'Lasso'
                 model = Lasso()
             if y.ndim > 1:
                 raise ValueError("For multi-task outputs, use "
@@ -979,8 +982,9 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
                 raise TypeError("X should be dense but a sparse matrix was"
                                 "passed")
             elif y.ndim == 1:
-                y = y[:, np.newaxis]
-            if hasattr(self, 'l1_ratio'):
+                raise ValueError("For mono-task outputs, use "
+                                 "%sCV" % (model_str))
+            if model_str == 'ElasticNet':
                 model = MultiTaskElasticNet()
             else:
                 model = MultiTaskLasso()
@@ -1473,10 +1477,12 @@ class MultiTaskElasticNet(Lasso):
                     copy=self.copy_X and self.fit_intercept)
         y = np.asarray(y, dtype=np.float64)
 
-        squeeze_me = False
+        if hasattr(self, 'l1_ratio'):
+            model_str = 'ElasticNet'
+        else:
+            model_str = 'Lasso'
         if y.ndim == 1:
-            squeeze_me = True
-            y = y[:, np.newaxis]
+            raise ValueError("For mono-task outputs, use %s" % model_str)
 
         n_samples, n_features = X.shape
         _, n_tasks = y.shape
@@ -1498,11 +1504,6 @@ class MultiTaskElasticNet(Lasso):
                 self.coef_, l1_reg, l2_reg, X, y, self.max_iter, self.tol)
 
         self._set_intercept(X_mean, y_mean, X_std)
-
-        # Make sure that the coef_ have the same shape as the given 'y',
-        # to predict with the same shape
-        if squeeze_me:
-            self.coef_ = self.coef_.squeeze()
 
         if self.dual_gap_ > self.eps_:
             warnings.warn('Objective did not converge, you might want'
