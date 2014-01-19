@@ -309,12 +309,44 @@ of each iterates until convergence.
 
 Mean Shift
 ==========
+:class:`MeanShift` clustering aims to discover *blobs* in a smooth density of
+samples. It is a centroid based algorithm, which works by updating candidates
+for centroids to be the mean of the points within a given region. These
+candidates are then filtered in a
+post-processing stage to eliminate near-duplicates to form the final set of
+centroids.
 
-:class:`MeanShift` clusters data by estimating *blobs* in a smooth
-density of points matrix. This algorithm automatically sets its numbers
-of cluster. It will have difficulties scaling to thousands of samples.
-The utility function :func:`estimate_bandwidth` can be used to guess
-the optimal bandwidth for :class:`MeanShift` from the data.
+Given a candidate centroid :math:`x_i` for iteration :math:`t`, the candidate
+is updated according to the following equation:
+
+.. math::
+
+    x_i^{t+1} = x_i^t + m(x_i^t)
+
+Where :math:`N(x_i)` is the neighborhood of samples within a given distance
+around :math:`x_i` and :math:`m` is the *mean shift* vector that is computed
+for each centroid that
+points towards a region of the maximum increase in the density of points. This
+is computed using the following equation, effectively updating a centroid to be
+the mean of the samples within its neighborhood:
+
+.. math::
+
+    m(x_i) = \frac{\sum_{x_j \in N(x_i)}K(x_j - x_i)x_j}{\sum_{x_j \in N(x_i)}K(x_j - x_i)}
+
+The algorithm automatically sets the number of clusters, instead relying on a
+paramter `bandwidth`, which dictates the size of the region to search through.
+This parameter can be set manually, but can be estimated using the provided
+`estimate_bandwidth` function, which is called if the bandwidth is not set.
+
+The algorithm is not highly scalable, as it requires multiple nearest neighbor
+searches during the execution of the algorithm. The algorithm is guaranteed to
+converge, however the algorithm will stop iterating when the change in centroids
+if small.
+
+Labelling a new sample is performed by finding the nearest centroid for a
+given sample.
+
 
 .. figure:: ../auto_examples/cluster/images/plot_mean_shift_1.png
    :target: ../auto_examples/cluster/plot_mean_shift.html
@@ -326,6 +358,13 @@ the optimal bandwidth for :class:`MeanShift` from the data.
 
  * :ref:`example_cluster_plot_mean_shift.py`: Mean Shift clustering
    on a synthetic 2D datasets with 3 classes.
+
+.. topic:: References:
+
+ * `"Mean shift: A robust approach toward feature space analysis."
+   <http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.76.8968&rep=rep1&type=pdf>`_
+   D. Comaniciu, & P. Meer *IEEE Transactions on Pattern Analysis and Machine Intelligence* (2002)
+
 
 .. _spectral_clustering:
 
