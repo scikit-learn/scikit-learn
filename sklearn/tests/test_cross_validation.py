@@ -400,6 +400,8 @@ def test_stratified_shuffle_split_iter_no_indices():
 def test_shuffle_split_even():
     # Test the in StratifiedShuffleSplit, indices are drawn with a
     # equal chance
+    n_folds = 5
+    n_iter = 1000
 
     def assert_counts_are_ok(idx_counts, p):
         # Here we test that the distribution of the counts
@@ -412,26 +414,30 @@ def test_shuffle_split_even():
                         "An index is not drawn with chance corresponding "
                         "to even draws")
 
-    for n_labels in (6, 22):
-        labels = np.array((n_labels // 2) * [0, 1])
-        n_folds = 5
-        splits = cval.StratifiedShuffleSplit(labels, n_iter=1000,
+    for n_samples in (6, 22):
+        labels = np.array((n_samples // 2) * [0, 1])
+        splits = cval.StratifiedShuffleSplit(labels, n_iter=n_iter,
                                     test_size=1./n_folds, random_state=0)
 
-        train_counts = [0] * len(labels)
-        test_counts = [0] * len(labels)
+        train_counts = [0] * n_samples
+        test_counts = [0] * n_samples
+        n_splits = 0
         for train, test in splits:
+            n_splits += 1
             for counter, ids in [(train_counts, train), (test_counts, test)]:
                 for id in ids:
                     counter[id] += 1
+        assert_equal(n_splits, n_iter)
 
-        n_splits = len(splits)
+        assert_equal(len(train), splits.n_train)
+        assert_equal(len(test), splits.n_test)
+
         label_counts = np.unique(labels)
         assert_equal(splits.test_size, 1.0 / n_folds)
         assert_equal(splits.n_train + splits.n_test, len(labels))
         assert_equal(len(label_counts), 2)
-        ex_test_p = (1. * splits.n_test) / n_labels
-        ex_train_p = 1.0 - ex_test_p
+        ex_test_p = float(splits.n_test) / n_samples
+        ex_train_p = float(splits.n_train) / n_samples
 
         assert_counts_are_ok(train_counts, ex_train_p)
         assert_counts_are_ok(test_counts, ex_test_p)
