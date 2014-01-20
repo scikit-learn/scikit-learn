@@ -461,7 +461,7 @@ def test_ridgecv_store_cv_values():
     """
     Test _RidgeCV's store_cv_values attribute.
     """
-    rng = rng = np.random.RandomState(42)
+    rng = np.random.RandomState(42)
 
     n_samples = 8
     n_features = 5

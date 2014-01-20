@@ -17,6 +17,10 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import ignore_warnings
 
+from sklearn.cross_validation import KFold
+
+from sklearn.grid_search import GridSearchCV
+
 from sklearn.linear_model.coordinate_descent import Lasso, \
     LassoCV, ElasticNet, ElasticNetCV, MultiTaskLasso, MultiTaskElasticNet, \
     lasso_path
@@ -368,6 +372,33 @@ def test_multioutput_enetcv_error():
     y = np.random.randn(10, 2)
     clf = ElasticNetCV()
     assert_raises(ValueError, clf.fit, X, y)
+
+
+def test_lasso_cv_best_score():
+    X, y, X_test, y_test = build_dataset(n_features=20)
+    grid_cv = GridSearchCV(
+        Lasso(), {'alpha': [0.1, 1., 10.]}, scoring='mean_squared_error',
+        cv=KFold(3)
+    ).fit(X, y)
+    lasso_cv = LassoCV(alphas=[0.1, 1., 10.], cv=KFold(3)).fit(X, y)
+    assert_equal(lasso_cv.best_score_, -1 * grid_cv.best_score_)
+
+
+def test_elasticnet_cv_best_score():
+    X, y, X_test, y_test = build_dataset(n_features=20)
+    grid_cv = GridSearchCV(
+        ElasticNet(),
+        {'alpha': [0.1, 1., 10.], 'l1_ratio': [0.1, 0.5, 0.9, 0.95, 0.99]},
+        scoring='mean_squared_error', cv=KFold(3)
+    ).fit(X, y)
+    enet_cv = ElasticNetCV(alphas=[0.1, 1., 10.], cv=KFold(3)).fit(X, y)
+    assert_equal(enet_cv.best_score_, -1 * grid_cv.best_score_)
+
+
+def test_lasso_cv_l1ratio():
+    X, y, X_test, y_test = build_dataset(n_features=20)
+    lasso_cv = LassoCV().fit(X, y)
+    assert_equal(lasso_cv.best_params_['l1_ratio'], 1)
 
 
 if __name__ == '__main__':
