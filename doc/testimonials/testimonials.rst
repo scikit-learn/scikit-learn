@@ -377,3 +377,35 @@ Vincent Dubourg, PHIMECA Engineering, PhD Engineer
 
    </span>
 
+`HowAboutWe <http://www.howaboutwe.com/>`_
+----------------------------------------------------------
+
+.. raw:: html
+
+  <div class="logo">
+
+.. image:: images/howaboutwe.png
+   :target: http://www.howaboutwe.com/
+
+.. raw:: html
+
+  </div>
+
+At HowAboutWe, scikit-learn lets us implement a wide array of machine learning
+techniques in analysis and in production, despite having a small team.  We use
+scikit-learn’s classification algorithms to predict user behavior, enabling us
+to (for example) estimate the value of leads from a given traffic source early
+in the lead’s tenure on our site. Also, our users' profiles consist of primarily
+unstructured data (answers to open-ended questions), so we use scikit-learn’s
+feature extraction and dimensionality reduction tools to translate these unstructured
+data into inputs for our matchmaking system.
+
+.. raw:: html
+
+   <span class="testimonial-author">
+
+Daniel Weitzenfeld, Senior Data Scientist at HowAboutWe
+
+.. raw:: html
+
+   </span>
