@@ -5,6 +5,7 @@
 import sys
 from sklearn.externals.six.moves import cStringIO as StringIO
 import numpy as np
+from sklearn.base import BaseEstimator
 from sklearn.learning_curve import learning_curve, validation_curve
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_warns
@@ -15,7 +16,7 @@ from sklearn.cross_validation import KFold
 from sklearn.linear_model import PassiveAggressiveClassifier
 
 
-class MockImprovingEstimator(object):
+class MockImprovingEstimator(BaseEstimator):
     """Dummy classifier to test the learning curve"""
     def __init__(self, n_max_train_sizes):
         self.n_max_train_sizes = n_max_train_sizes
@@ -40,13 +41,6 @@ class MockImprovingEstimator(object):
     def _is_training_data(self, X):
         return X is self.X_subset
 
-    def get_params(self, deep=False):
-        return {"n_max_train_sizes": self.n_max_train_sizes}
-
-    def set_params(self, **params):
-        self.n_max_train_sizes = params["n_max_train_sizes"]
-        return self
-
 
 class MockIncrementalImprovingEstimator(MockImprovingEstimator):
     """Dummy classifier that provides partial_fit"""
@@ -63,7 +57,7 @@ class MockIncrementalImprovingEstimator(MockImprovingEstimator):
         self.x = X[0]
 
 
-class MockEstimatorWithParameter(object):
+class MockEstimatorWithParameter(BaseEstimator):
     """Dummy classifier to test the validation curve"""
     def __init__(self, param=0.5):
         self.X_subset = None
@@ -77,18 +71,11 @@ class MockEstimatorWithParameter(object):
     def predict(self, X):
         raise NotImplementedError
 
-    def score(self, X=None, Y=None):
+    def score(self, X=None, y=None):
         return self.param if self._is_training_data(X) else 1 - self.param
 
     def _is_training_data(self, X):
         return X is self.X_subset
-
-    def get_params(self, deep=False):
-        return {"param": self.param}
-
-    def set_params(self, **params):
-        self.param = params["param"]
-        return self
 
 
 def test_learning_curve():
