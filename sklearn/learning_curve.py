@@ -220,12 +220,14 @@ def _incremental_fit_estimator(estimator, X, y, classes, train, test,
     return np.array((train_scores, test_scores)).T
 
 
-def validation_curve(estimator, X, y, cv=None, scoring=None,
-                     n_jobs=1, pre_dispatch="all", verbose=0, **param_range):
-    """Validation curve
+def validation_curve(estimator, X, y, param_name, param_range, cv=None,
+                     scoring=None, n_jobs=1, pre_dispatch="all", verbose=0):
+    """Validation curve: training and test scores for varying parameter values
 
-    Compute training and validation scores for an estimator with different
-    values of a specified parameter.
+    Compute scores for an estimator with different values of a specified
+    parameter. In contrast to grid search with one parameter training scores
+    will be returned and the order of given parameters will be kept in the
+    results. Hence, it is particularly useful for plots.
 
     Parameters
     ----------
@@ -239,6 +241,12 @@ def validation_curve(estimator, X, y, cv=None, scoring=None,
     y : array-like, shape (n_samples) or (n_samples, n_features), optional
         Target relative to X for classification or regression;
         None for unsupervised learning.
+
+    param_name : string
+        Name of the parameter that will be varied.
+
+    param_range : array-like, shape = (n_values,)
+        The values of the parameter that will be evaluated.
 
     cv : integer, cross-validation generator, optional
         If an integer is passed, it is the number of folds (defaults to 3).
@@ -261,35 +269,29 @@ def validation_curve(estimator, X, y, cv=None, scoring=None,
     verbose : integer, optional
         Controls the verbosity: the higher, the more messages.
 
-    param_range : dict
-        Contains one entry that maps the name of the parameter that will be
-        varied to the values that will be evaluated.
+    Returns
+    -------
+    train_scores : array, shape = (n_values,)
+        Scores on training sets.
+
+    test_scores : array, shape = (n_values,)
+        Scores on test sets.
     """
     X, y = check_arrays(X, y, sparse_format='csr', allow_lists=True)
     cv = _check_cv(cv, X, y, classifier=is_classifier(estimator))
     scorer = check_scoring(estimator, scoring=scoring)
 
-    if len(param_range) == 0:
-        raise ValueError("You must provide a range for an estimator "
-                         "parameter.")
-    elif len(param_range) > 1:
-        raise ValueError("Only one parameter is allowed to change to "
-                         "generate a validation curve.")
-    param_name = param_range.keys()[0]
-    param_configs = [{param_name : v}
-                     for v in param_range[param_name]]
-    n_params = len(param_configs)
-
     parallel = Parallel(n_jobs=n_jobs, pre_dispatch=pre_dispatch,
                         verbose=verbose)
     out = parallel(delayed(_fit_and_score)(
-        estimator, X, y, scorer, train, test, verbose, params, fit_params=None,
-        return_train_score=True)
-        for train, test in cv for params in param_configs)
+        estimator, X, y, scorer, train, test, verbose,
+        parameters={param_name : v}, fit_params=None, return_train_score=True)
+        for train, test in cv for v in param_range)
+
     out = np.asarray(out)[:, :2]
+    n_params = len(param_range)
     n_cv_folds = out.shape[0] / n_params
     out = out.reshape(n_cv_folds, n_params, 2)
-
     avg_over_cv = out.mean(axis=0).reshape(n_params, 2)
 
     return avg_over_cv[:, 0], avg_over_cv[:, 1]
