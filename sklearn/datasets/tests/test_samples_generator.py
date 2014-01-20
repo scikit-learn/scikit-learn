@@ -143,6 +143,17 @@ def test_make_multilabel_classification():
         assert_true(max([len(y) for y in Y]) <= 3)
 
 
+def test_make_multilabel_classification_sparse():
+    X1, Y1 = make_multilabel_classification(n_samples=100, n_features=20,
+                                            n_classes=3, random_state=0,
+                                            sparse=False)
+    X2, Y2 = make_multilabel_classification(n_samples=100, n_features=20,
+                                            n_classes=3, random_state=0,
+                                            sparse=True)
+    assert_array_equal(Y1, Y2)
+    assert_array_equal(X1, X2.toarray())
+
+
 def test_make_multilabel_classification_return_indicator():
     for allow_unlabeled, min_length in zip((True, False), (0, 1)):
         X, Y = make_multilabel_classification(n_samples=25, n_features=20,
