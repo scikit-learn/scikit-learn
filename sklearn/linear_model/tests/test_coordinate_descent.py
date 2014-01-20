@@ -678,7 +678,8 @@ def test_lasso_non_float_y():
         clf_float = model(fit_intercept=False)
         clf_float.fit(X, y_float)
         assert_array_equal(clf.coef_, clf_float.coef_)
-=======
+
+
 def test_lasso_cv_best_score():
     X, y, X_test, y_test = build_dataset(n_features=20)
     grid_cv = GridSearchCV(
