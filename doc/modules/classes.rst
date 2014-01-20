@@ -987,6 +987,8 @@ Pairwise metrics
    :template: class.rst
 
    neural_network.BernoulliRBM
+   neural_network.MultilayerPerceptronClassifier
+   neural_network.MultilayerPerceptronRegressor
 
 
 .. _cross_decomposition_ref:
