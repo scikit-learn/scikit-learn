@@ -87,7 +87,7 @@ suitable for feeding into a classifier (maybe after being piped into a
   >>> pos_vectorized = vec.fit_transform(pos_window)
   >>> pos_vectorized                # doctest: +NORMALIZE_WHITESPACE  +ELLIPSIS
   <1x6 sparse matrix of type '<... 'numpy.float64'>'
-      with 6 stored elements in Compressed Sparse Row format>
+      with 6 stored elements in Compressed Sparse ... format>
   >>> pos_vectorized.toarray()
   array([[ 1.,  1.,  1.,  1.,  1.,  1.]])
   >>> vec.get_feature_names()
@@ -310,7 +310,7 @@ corpus of text documents::
   >>> X = vectorizer.fit_transform(corpus)
   >>> X                              # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
   <4x9 sparse matrix of type '<... 'numpy.int64'>'
-      with 19 stored elements in Compressed Sparse Column format>
+      with 19 stored elements in Compressed Sparse ... format>
 
 The default configuration tokenizes the string by extracting words of
 at least 2 letters. The specific function that does this step can be
@@ -430,7 +430,7 @@ content of the documents::
   >>> tfidf = transformer.fit_transform(counts)
   >>> tfidf                         # doctest: +NORMALIZE_WHITESPACE  +ELLIPSIS
   <6x3 sparse matrix of type '<... 'numpy.float64'>'
-      with 9 stored elements in Compressed Sparse Row format>
+      with 9 stored elements in Compressed Sparse ... format>
 
   >>> tfidf.toarray()                        # doctest: +ELLIPSIS
   array([[ 0.85...,  0.  ...,  0.52...],
@@ -457,7 +457,7 @@ class called :class:`TfidfVectorizer` that combines all the options of
   >>> vectorizer.fit_transform(corpus)
   ...                                # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
   <4x9 sparse matrix of type '<... 'numpy.float64'>'
-      with 19 stored elements in Compressed Sparse Row format>
+      with 19 stored elements in Compressed Sparse ... format>
 
 While the tf–idf normalization is often very useful, there might
 be cases where the binary occurrence markers might offer better
@@ -621,7 +621,7 @@ span across words::
   >>> ngram_vectorizer.fit_transform(['jumpy fox'])
   ...                                # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
   <1x4 sparse matrix of type '<... 'numpy.int64'>'
-     with 4 stored elements in Compressed Sparse Column format>
+     with 4 stored elements in Compressed Sparse ... format>
   >>> ngram_vectorizer.get_feature_names() == (
   ...     [' fox ', ' jump', 'jumpy', 'umpy '])
   True
@@ -630,7 +630,7 @@ span across words::
   >>> ngram_vectorizer.fit_transform(['jumpy fox'])
   ...                                # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
   <1x5 sparse matrix of type '<... 'numpy.int64'>'
-      with 5 stored elements in Compressed Sparse Column format>
+      with 5 stored elements in Compressed Sparse ... format>
   >>> ngram_vectorizer.get_feature_names() == (
   ...     ['jumpy', 'mpy f', 'py fo', 'umpy ', 'y fox'])
   True
@@ -699,7 +699,7 @@ meaning that you don't have to call ``fit`` on it::
   >>> hv.transform(corpus)
   ...                                # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
   <4x10 sparse matrix of type '<... 'numpy.float64'>'
-      with 16 stored elements in Compressed Sparse Row format>
+      with 16 stored elements in Compressed Sparse ... format>
 
 You can see that 16 non-zero feature tokens were extracted in the vector
 output: this is less than the 19 non-zeros extracted previously by the
@@ -724,7 +724,7 @@ Let's try again with the default setting::
   >>> hv.transform(corpus)
   ...                               # doctest: +NORMALIZE_WHITESPACE  +ELLIPSIS
   <4x1048576 sparse matrix of type '<... 'numpy.float64'>'
-      with 19 stored elements in Compressed Sparse Row format>
+      with 19 stored elements in Compressed Sparse ... format>
 
 We no longer get the collisions, but this comes at the expense of a much larger
 dimensionality of the output space.
