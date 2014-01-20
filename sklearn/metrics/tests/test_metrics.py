@@ -1053,12 +1053,12 @@ def test_multilabel_classification_report():
     expected_report = """\
              precision    recall  f1-score   support
 
-          0       0.39      0.73      0.51        15
-          1       0.57      0.75      0.65        28
-          2       0.33      0.11      0.17        18
-          3       0.44      0.50      0.47        24
+          0       0.69      0.67      0.68        30
+          1       0.44      0.65      0.53        23
+          2       0.75      0.12      0.21        24
+          3       0.38      0.59      0.47        17
 
-avg / total       0.45      0.54      0.47        85
+avg / total       0.59      0.51      0.48        94
 """
 
     lb = LabelBinarizer()
@@ -2472,7 +2472,7 @@ def test_averaging_multilabel():
     n_classes = 5
     n_samples = 40
     _, y = make_multilabel_classification(n_features=1, n_classes=n_classes,
-                                          random_state=5, n_samples=n_samples,
+                                          random_state=0, n_samples=n_samples,
                                           return_indicator=True,
                                           allow_unlabeled=False)
     y_true = y[:20]
