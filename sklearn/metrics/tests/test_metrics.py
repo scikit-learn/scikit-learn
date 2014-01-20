@@ -1097,12 +1097,12 @@ def test_multilabel_classification_report():
     expected_report = """\
              precision    recall  f1-score   support
 
-          0       0.39      0.73      0.51        15
-          1       0.57      0.75      0.65        28
-          2       0.33      0.11      0.17        18
-          3       0.44      0.50      0.47        24
+          0       0.50      0.67      0.57        24
+          1       0.51      0.74      0.61        27
+          2       0.29      0.08      0.12        26
+          3       0.52      0.56      0.54        27
 
-avg / total       0.45      0.54      0.47        85
+avg / total       0.45      0.51      0.46       104
 """
 
     lb = MultiLabelBinarizer()

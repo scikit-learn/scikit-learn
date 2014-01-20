@@ -129,7 +129,7 @@ def test_ovr_fit_predict_svc():
 
 def test_ovr_multilabel_dataset():
     base_clf = MultinomialNB(alpha=1)
-    for au, prec, recall in zip((True, False), (0.65, 0.74), (0.72, 0.84)):
+    for au, prec, recall in zip((True, False), (0.51, 0.66), (0.51, 0.80)):
         X, Y = datasets.make_multilabel_classification(n_samples=100,
                                                        n_features=20,
                                                        n_classes=5,
