@@ -176,7 +176,7 @@ can be constructed using::
 
 and fed to a hasher with::
 
-  hasher = FeatureHasher(input_type=string)
+  hasher = FeatureHasher(input_type='string')
   X = hasher.transform(raw_X)
 
 to get a ``scipy.sparse`` matrix ``X``.
