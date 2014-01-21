@@ -110,12 +110,12 @@ Changelog
      Cython code.  By `Olivier Grisel`_ and `Gilles Louppe`_.
 
    - Decision trees can now be built in best-first manner by using ``max_leaf_nodes``
-     as the stopping critertia. Refactored the tree code to use either a
+     as the stopping criteria. Refactored the tree code to use either a
      stack or a priority queue for tree building.
      By `Peter Prettenhofer`_ and `Gilles Louppe`_.
 
    - Decision trees can now be fitted on fortran- and c-style arrays, and
-     non-continuouse arrays without the need to make a copy.
+     non-continuous arrays without the need to make a copy.
      If the input array has a different dtype than ``np.float32``, a fortran-
      style copy will be made since fortran-style memory layout has speed
      advantages. By `Peter Prettenhofer`_ and `Gilles Louppe`_.
@@ -136,7 +136,7 @@ Changelog
      refactoring of the verbose code. By `Peter Prettenhofer`_.
 
    - Added :func:`learning_curve <learning_curve.learning_curve>` utility to
-     chart performance with respet to training size. See
+     chart performance with respect to training size. See
      :ref:`example_plot_learning_curve.py`. By `Alexander Fabisch`_.
 
    - Add positive option in :class:`LassoCV <linear_model.LassoCV>` and
@@ -227,7 +227,7 @@ Changelog
      :class:`linear_model.Ridge`, by @eickenberg and `Mathieu Blondel`_.
 
    - Fixed :mod:`sklearn.linear_model.stochastic_gradient.py` L2 regularization
-     issue (minor practical significants).
+     issue (minor practical significance).
      By `Norbert Crombach`_ and `Mathieu Blondel`_ .
 
    - Added an interactive version of `Andreas Müller`_'s
@@ -746,7 +746,7 @@ Changelog
      :class:`ensemble.GradientBoostingRegressor` and
      :class:`ensemble.GradientBoostingClassifier` use the estimator
      :class:`tree.DecisionTreeRegressor` instead of the
-     :class:`tree._tree.Tree` datastructure by `Arnaud Joly`_.
+     :class:`tree._tree.Tree` data structure by `Arnaud Joly`_.
 
    - Fixed a floating point exception in the :ref:`decision trees <tree>`
      module, by Seberg.
@@ -971,13 +971,13 @@ Changelog
  - Documentation fixes for elastic net by `Andreas Müller`_ and
    `Alexandre Gramfort`_
 
- - Proper behavior with fortran-ordered numpy arrays by `Gael Varoquaux`_
+ - Proper behavior with fortran-ordered NumPy arrays by `Gael Varoquaux`_
 
  - Make GridSearchCV work with non-CSR sparse matrix by `Lars Buitinck`_
 
  - Fix parallel computing in MDS by `Gael Varoquaux`_
 
- - Fix unicode support in count vectorizer by `Andreas Müller`_
+ - Fix Unicode support in count vectorizer by `Andreas Müller`_
 
  - Fix MinCovDet breaking with X.shape = (3, 1) by `Virgile Fritsch`_
 
@@ -1275,7 +1275,7 @@ Other changes
      by `Olivier Grisel`_.
 
    - Beam pruning option in :class:`_BaseHMM` module has been removed since it
-     is difficult to cythonize. If you are interested in contributing a cython
+     is difficult to Cythonize. If you are interested in contributing a Cython
      version, you can use the python version in the git history as a reference.
 
    - Classes in :ref:`neighbors` now support arbitrary Minkowski metric for
@@ -1318,7 +1318,7 @@ API changes summary
      Options now are 'ovr' and 'crammer_singer', with 'ovr' being the default.
      This does not change the default behavior but hopefully is less confusing.
 
-   - Classs :class:`feature_selection.text.Vectorizer` is deprecated and
+   - Class :class:`feature_selection.text.Vectorizer` is deprecated and
      replaced by :class:`feature_selection.text.TfidfVectorizer`.
 
    - The preprocessor / analyzer nested structure for text feature
@@ -1336,7 +1336,7 @@ API changes summary
 
        - ``input`` explicitly control how to interpret the sequence passed to
          ``fit`` and ``predict``: filenames, file objects or direct (byte or
-         unicode) strings.
+         Unicode) strings.
 
        - charset decoding is explicit and strict by default.
 
@@ -2041,7 +2041,7 @@ People that made this release possible preceded by number of commits:
 0.6
 ===
 
-scikit-learn 0.6 was released on december 2010. It is marked by the
+scikit-learn 0.6 was released on December 2010. It is marked by the
 inclusion of several new modules and a general renaming of old
 ones. It is also marked by the inclusion of new example, including
 applications to real-world datasets.
@@ -2276,7 +2276,7 @@ Major changes in this release include:
 
     - Removal of obsolete attrselect module.
 
-    - Rename of private compiled extensions (aded underscore).
+    - Rename of private compiled extensions (added underscore).
 
     - Removal of legacy unmaintained code.
 
