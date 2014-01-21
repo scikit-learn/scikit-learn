@@ -215,7 +215,7 @@ class RandomizedLasso(BaseRandomizedLinearModel):
     verbose : boolean or integer, optional
         Sets the verbosity amount
 
-    normalize : boolean, optional, default False
+    normalize : boolean, optional, default True
         If True, the regressors X will be normalized before regression.
 
     precompute : True | False | 'auto'
@@ -395,7 +395,7 @@ class RandomizedLogisticRegression(BaseRandomizedLinearModel):
     verbose : boolean or integer, optional
         Sets the verbosity amount
 
-    normalize : boolean, optional, default=False
+    normalize : boolean, optional, default=True
         If True, the regressors X will be normalized before regression.
 
     tol : float, optional, default=1e-3

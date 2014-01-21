@@ -53,6 +53,15 @@ dont_test = ['SparseCoder', 'EllipticEnvelope', 'DictVectorizer',
              'DummyRegressor', 'TruncatedSVD', 'PolynomialFeatures']
 
 
+def multioutput_estimator_convert_y_2d(name, y):
+    # Estimators in mono_output_task_error raise ValueError if y is of 1-D
+    # Convert into a 2-D y for those estimators.
+    if name in (['MultiTaskElasticNetCV', 'MultiTaskLassoCV',
+                 'MultiTaskLasso', 'MultiTaskElasticNet']):
+        return y[:, np.newaxis]
+    return y
+
+
 def test_all_estimators():
     # Test that estimators are default-constructible, clonable
     # and have working repr.
@@ -331,7 +340,8 @@ def test_estimators_nan_inf():
                         'PLSSVD', 'Imputer'):  # Imputer accepts nan
                 continue
             yield (check_estimators_nan_inf, name, Estimator, X_train,
-                   X_train_finite, y)
+                   X_train_finite,
+                   multioutput_estimator_convert_y_2d(name, y))
 
 
 def check_estimators_nan_inf(name, Estimator, X_train, X_train_finite, y):
@@ -784,7 +794,8 @@ def test_regressors_int():
     for name, Regressor in regressors:
         if name in dont_test or name in ('CCA'):
             continue
-        yield check_regressors_int, name, Regressor, X, y
+        yield (check_regressors_int, name, Regressor, X,
+               multioutput_estimator_convert_y_2d(name, y))
 
 
 def check_regressors_int(name, Regressor, X, y):
@@ -820,7 +831,8 @@ def test_regressors_train():
     for name, Regressor in regressors:
         if name in dont_test:
             continue
-        yield check_regressors_train, name, Regressor, X, y
+        yield (check_regressors_train, name, Regressor, X,
+               multioutput_estimator_convert_y_2d(name, y))
 
 
 def check_regressors_train(name, Regressor, X, y):
@@ -861,7 +873,8 @@ def test_regressor_pickle():
     for name, Regressor in regressors:
         if name in dont_test:
             continue
-        yield check_regressors_pickle, name, Regressor, X, y
+        yield (check_regressors_pickle, name, Regressor, X,
+               multioutput_estimator_convert_y_2d(name, y))
 
 
 def check_regressors_pickle(name, Regressor, X, y):
@@ -1032,7 +1045,8 @@ def test_estimators_overwrite_params():
                 # FIXME!
                 # in particular GaussianProcess!
                 continue
-            yield check_estimators_overwrite_params, name, Estimator, X, y
+            yield (check_estimators_overwrite_params, name, Estimator, X,
+                   multioutput_estimator_convert_y_2d(name, y))
 
 
 def check_estimators_overwrite_params(name, Estimator, X, y):
