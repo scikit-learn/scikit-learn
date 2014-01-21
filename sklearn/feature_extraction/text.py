@@ -245,7 +245,7 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
     This text vectorizer implementation uses the hashing trick to find the
     token string name to feature integer index mapping.
 
-    This strategy has several advantage:
+    This strategy has several advantages:
 
     - it is very low memory scalable to large datasets as there is no need to
       store a vocabulary dictionary in memory
