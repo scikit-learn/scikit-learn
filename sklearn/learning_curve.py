@@ -225,9 +225,9 @@ def validation_curve(estimator, X, y, param_name, param_range, cv=None,
     """Validation curve: training and test scores for varying parameter values
 
     Compute scores for an estimator with different values of a specified
-    parameter. In contrast to grid search with one parameter training scores
-    will be returned and the order of given parameters will be kept in the
-    results. Hence, it is particularly useful for plots.
+    parameter. This is similar to grid search with one parameter. However, this
+    will also compute training scores and is merely a utility for plotting the
+    results.
 
     Parameters
     ----------
