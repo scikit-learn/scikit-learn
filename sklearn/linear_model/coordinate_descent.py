@@ -7,8 +7,6 @@
 
 import sys
 import warnings
-import itertools
-import operator
 from abc import ABCMeta, abstractmethod
 
 import numpy as np
@@ -119,7 +117,7 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
         unnecessary memory duplication. If ``y`` is mono-output then ``X``
         can be sparse.
 
-    y : ndarray, shape = (n_samples,), (n_samples, n_outputs)
+    y : ndarray, shape = (n_samples,), or (n_samples, n_outputs)
         Target values
 
     eps : float, optional
