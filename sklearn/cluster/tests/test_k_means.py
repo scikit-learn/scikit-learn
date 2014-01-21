@@ -345,8 +345,8 @@ def test_minibatch_reassign():
             sys.stdout = old_stdout
         centers_after = mb_k_means.cluster_centers_.copy()
         # Check that all the centers have moved
-        assert_greater(((centers_before - centers_after) ** 2).sum(axis=1).
-                       min(), .2)
+        assert_greater(((centers_before - centers_after) ** 2)
+                       .sum(axis=1).min(), .2)
 
     # Give a perfect initialization, with a small reassignment_ratio,
     # no center should be reassigned
