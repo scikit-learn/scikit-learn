@@ -1,4 +1,4 @@
-.. _learning_curve:
+.. _learning_curves:
 
 =====================================================
 Validation curves: plotting scores to evaluate models
@@ -34,51 +34,10 @@ We can change the bias and variance by selecting the model, which means we
 first have to choose an estimator and then we have to select an appropriate
 parametrization of that estimator. The following tools can help to do that.
 
-Learning curve
-==============
+.. topic:: Examples:
 
-.. currentmodule:: sklearn.learning_curve
-
-A learning curve shows the validation and training score of an estimator
-for varying numbers of training samples. It is a tool to find out how much
-we benefit from adding more training data and whether the estimator suffers
-more from a variance error or a bias error. If both the validation score and
-the training score converge to a value that is too low with increasing
-size of the training set, we will not benefit much from more training data
-and we will probably have to use an estimator or a parametrization of the
-current estimator that can learn more complex concepts (i.e. has a lower
-bias). If the training score is much greater than the validation score for
-the maximum number of training samples, adding more training samples will
-most likely increase generalization.
-
-We can use the function :func:`learning_curve` to generate the values
-that are required to plot such a learning curve (number of samples
-that have been used, the average scores on the training sets and the
-average scores on the validation sets)::
-
-  >>> import numpy as np
-  >>> from sklearn.learning_curve import learning_curve
-  >>> from sklearn.datasets import load_iris
-  >>> from sklearn.svm import SVC
-
-  >>> np.random.seed(0)
-  >>> iris = load_iris()
-  >>> X, y = iris.data, iris.target
-  >>> indices = np.arange(y.shape[0])
-  >>> np.random.shuffle(indices)
-  >>> X, y = X[indices], y[indices]
-
-  >>> train_sizes, train_scores, test_scores = learning_curve(
-  ...     SVC(kernel='linear'), X, y, train_sizes=[50, 80, 110], cv=5)
-  >>> train_sizes            # doctest: +NORMALIZE_WHITESPACE
-  array([ 50, 80, 110])
-  >>> train_scores           # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
-  array([ 0.98 , 0.99 , 0.987...])
-  >>> test_scores            # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
-  array([ 0.98 , 0.986..., 0.986...])
-
-Examples for actually plotted learning curves can be found in
-:ref:`example_plot_learning_curve.py`.
+   * :ref:`example_plot_validation_curve.py`
+   * :ref:`example_plot_learning_curve.py`
 
 
 .. _validation_curve:
@@ -107,7 +66,72 @@ The function :func:`validation_curve` can help in this case::
 If the training score and the test score are both low, the estimator will be
 underfitting. If the training score is high and the test score is low, the
 estimator is overfitting and otherwise it is working very well. A low training
-score and a high test score is usually not possible. A good example that shows
-all three possible cases, can be found in
-:ref:`examples/plot_validation_curve.py <example_plot_validation_curve.py>`.
+score and a high test score is usually not possible. All three cases can
+be found in the plot below where we varied the parameter :math:`\gamma` of an
+SVM on the digits dataset.
+
+.. figure:: ../auto_examples/images/plot_validation_curve_1.png
+   :target: ../auto_examples/plot_validation_curve.html
+   :align: center
+   :scale: 50%
+
+
+.. _learning_curve:
+
+Learning curve
+==============
+
+.. currentmodule:: sklearn.learning_curve
+
+A learning curve shows the validation and training score of an estimator
+for varying numbers of training samples. It is a tool to find out how much
+we benefit from adding more training data and whether the estimator suffers
+more from a variance error or a bias error. If both the validation score and
+the training score converge to a value that is too low with increasing
+size of the training set, we will not benefit much from more training data.
+In the following plot you can see naive Bayes, which roughly converges to a
+low score.
+
+.. figure:: ../auto_examples/images/plot_learning_curve_1.png
+   :target: ../auto_examples/plot_learning_curve.html
+   :align: center
+   :scale: 50%
+
+We will probably have to use an estimator or a parametrization of the
+current estimator that can learn more complex concepts (i.e. has a lower
+bias). If the training score is much greater than the validation score for
+the maximum number of training samples, adding more training samples will
+most likely increase generalization. In the following plot you can see that
+the SVM could benefit from more training examples.
+
+.. figure:: ../auto_examples/images/plot_learning_curve_2.png
+   :target: ../auto_examples/plot_learning_curve.html
+   :align: center
+   :scale: 50%
+
+We can use the function :func:`learning_curve` to generate the values
+that are required to plot such a learning curve (number of samples
+that have been used, the average scores on the training sets and the
+average scores on the validation sets)::
+
+  >>> import numpy as np
+  >>> from sklearn.learning_curve import learning_curve
+  >>> from sklearn.datasets import load_iris
+  >>> from sklearn.svm import SVC
+
+  >>> np.random.seed(0)
+  >>> iris = load_iris()
+  >>> X, y = iris.data, iris.target
+  >>> indices = np.arange(y.shape[0])
+  >>> np.random.shuffle(indices)
+  >>> X, y = X[indices], y[indices]
+
+  >>> train_sizes, train_scores, test_scores = learning_curve(
+  ...     SVC(kernel='linear'), X, y, train_sizes=[50, 80, 110], cv=5)
+  >>> train_sizes            # doctest: +NORMALIZE_WHITESPACE
+  array([ 50, 80, 110])
+  >>> train_scores           # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
+  array([ 0.98 , 0.99 , 0.987...])
+  >>> test_scores            # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
+  array([ 0.98 , 0.986..., 0.986...])
 

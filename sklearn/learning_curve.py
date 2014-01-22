@@ -17,7 +17,7 @@ from .metrics.scorer import check_scoring
 def learning_curve(estimator, X, y, train_sizes=np.linspace(0.1, 1.0, 10),
                    cv=None, scoring=None, exploit_incremental_learning=False,
                    n_jobs=1, pre_dispatch="all", verbose=0):
-    """Learning curve
+    """Learning curve.
 
     Determines cross-validated training and test scores for different training
     set sizes.
@@ -222,7 +222,9 @@ def _incremental_fit_estimator(estimator, X, y, classes, train, test,
 
 def validation_curve(estimator, X, y, param_name, param_range, cv=None,
                      scoring=None, n_jobs=1, pre_dispatch="all", verbose=0):
-    """Validation curve: training and test scores for varying parameter values
+    """Validation curve.
+
+    Determine training and test scores for varying parameter values.
 
     Compute scores for an estimator with different values of a specified
     parameter. This is similar to grid search with one parameter. However, this
