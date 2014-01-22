@@ -344,6 +344,24 @@ def test_sample_weights():
     clf.fit(X, Y, sample_weight=np.repeat(0.01, len(X)))
     assert_array_almost_equal(dual_coef_no_weight, clf.dual_coef_)
 
+    # Test that an exception is raised if the number of sample weights is
+    # incorrect.
+    clf = svm.SVC()
+    assert_raises(ValueError, clf.fit, X, Y,
+                  sample_weight=np.ones((len(Y)-1,)))
+
+    # Test that the length of clf.classes_ is correct if all examples of a
+    # certain class have 0 weight.
+    X_tmp = np.array([[0,0], [1,1], [2,2]])
+    Y_tmp = np.array([1, 2, 3])
+    sample_weight = np.array([1, 1, 0])
+
+    clf = svm.SVC()
+    clf.fit(X_tmp, Y_tmp, sample_weight)
+
+    expected_num_classes = len(np.unique(Y_tmp[sample_weight > 0]))
+    assert_array_equal(len(clf.classes_), expected_num_classes)
+
 
 def test_auto_weight():
     """Test class weights for imbalanced data"""
