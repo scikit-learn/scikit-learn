@@ -113,7 +113,7 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
             self.class_prior_.append(np.bincount(y_k) / float(y_k.shape[0]))
 
             # Checking in case of constant strategy if the constant provided
-            # by the user is in y. 
+            # by the user is in y.
             if self.strategy == "constant":
                 if constant[k] not in self.classes_[k]:
                     raise ValueError("The constant target value must be "
@@ -177,7 +177,7 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
 
             elif self.strategy == "constant":
                 ret = np.ones(n_samples, dtype=int) * (
-                      np.where(classes_[k] == constant[k]))
+                    np.where(classes_[k] == constant[k]))
 
             y.append(classes_[k][ret])
 

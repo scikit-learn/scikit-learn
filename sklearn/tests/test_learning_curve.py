@@ -69,7 +69,7 @@ def test_learning_curve():
                                n_clusters_per_class=1, random_state=0)
     estimator = MockImprovingClassifier(20)
     train_sizes, train_scores, test_scores = learning_curve(estimator, X, y,
-                                                              cv=3)
+                                                            cv=3)
     assert_array_equal(train_sizes, np.linspace(2, 20, 10))
     assert_array_almost_equal(train_scores, np.linspace(1.9, 1.0, 10))
     assert_array_almost_equal(test_scores, np.linspace(0.1, 1.0, 10))

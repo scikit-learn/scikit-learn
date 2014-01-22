@@ -655,7 +655,7 @@ class ElasticNet(LinearModel, RegressorMixin):
 
         if not self.warm_start or self.coef_ is None:
             coef_ = np.zeros((n_targets, n_features), dtype=np.float64,
-                                  order='F')
+                             order='F')
         else:
             coef_ = self.coef_
             if coef_.ndim == 1:

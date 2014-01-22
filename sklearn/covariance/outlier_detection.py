@@ -182,4 +182,3 @@ class EllipticEnvelope(ClassifierMixin, OutlierDetectionMixin, MinCovDet):
             self.dist_, 100. * (1. - self.contamination))
 
         return self
-

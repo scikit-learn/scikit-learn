@@ -132,7 +132,7 @@ def learning_curve(estimator, X, y, train_sizes=np.linspace(0.1, 1.0, 10),
             verbose, parameters=None, fit_params=None, return_train_score=True)
             for train, test in cv for n_train_samples in train_sizes_abs)
         out = np.array(out)[:, :2]
-        n_cv_folds = out.shape[0]/n_unique_ticks
+        n_cv_folds = out.shape[0] / n_unique_ticks
         out = out.reshape(n_cv_folds, n_unique_ticks, 2)
 
     avg_over_cv = np.asarray(out).mean(axis=0).reshape(n_unique_ticks, 2)
@@ -208,7 +208,7 @@ def _incremental_fit_estimator(estimator, X, y, classes, train, test,
         train_subset = train[:n_train_samples]
         X_train, y_train = _safe_split(estimator, X, y, train_subset)
         X_partial_train, y_partial_train = _safe_split(estimator, X, y,
-                                                              partial_train)
+                                                       partial_train)
         X_test, y_test = _safe_split(estimator, X, y, test, train_subset)
         if y_partial_train is None:
             estimator.partial_fit(X_partial_train, classes=classes)
@@ -218,4 +218,3 @@ def _incremental_fit_estimator(estimator, X, y, classes, train, test,
         train_scores.append(_score(estimator, X_train, y_train, scorer))
         test_scores.append(_score(estimator, X_test, y_test, scorer))
     return np.array((train_scores, test_scores)).T
-

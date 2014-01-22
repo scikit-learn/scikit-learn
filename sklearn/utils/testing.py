@@ -104,7 +104,6 @@ def _assert_greater(a, b, msg=None):
     assert a > b, message
 
 
-
 # To remove when we support numpy 1.7
 def assert_warns(warning_class, func, *args, **kw):
     """Test that a certain warning occurs.
@@ -197,12 +196,12 @@ def assert_warns_message(warning_class, message, func, *args, **kw):
         if callable(message):  # add support for certain tests
             check_in_message = message
         else:
-            check_in_message = lambda msg : message in msg
+            check_in_message = lambda msg: message in msg
         if not check_in_message(msg):
             raise AssertionError("The message received ('%s') for <%s> is "
                                  "not the one you expected ('%s')"
                                  % (msg, func.__name__,  message
-                                 ))
+                                    ))
     return result
 
 
@@ -303,6 +302,7 @@ class _IgnoreWarnings(object):
         self._showwarning = self._module.showwarning
         if self._record:
             self.log = []
+
             def showwarning(*args, **kwargs):
                 self.log.append(warnings.WarningMessage(*args, **kwargs))
             self._module.showwarning = showwarning
@@ -316,7 +316,7 @@ class _IgnoreWarnings(object):
         self._module.filters = self._filters
         self._module.showwarning = self._showwarning
         self.log[:] = []
-        clean_warning_registry() # be safe and not propagate state + chaos
+        clean_warning_registry()  # be safe and not propagate state + chaos
 
 
 try:

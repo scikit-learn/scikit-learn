@@ -319,6 +319,7 @@ def test_lasso_lars_vs_lasso_cd_ill_conditioned():
     y = y.squeeze()
 
     f = assert_warns_message
+
     def in_warn_message(msg):
         return 'Early stopping' in msg or 'Dropping regressor' in msg
     lars_alphas, _, lars_coef = f(UserWarning,
@@ -332,11 +333,11 @@ def test_lasso_lars_vs_lasso_cd_ill_conditioned():
                                                     fit_intercept=False)
 
         lasso_coef = np.zeros((w.shape[0], len(lars_alphas)))
-        iter_models =  enumerate(linear_model.lasso_path(X, y,
-                                                         alphas=lars_alphas,
-                                                         tol=1e-6,
-                                                         return_models=True,
-                                                         fit_intercept=False))
+        iter_models = enumerate(linear_model.lasso_path(X, y,
+                                                        alphas=lars_alphas,
+                                                        tol=1e-6,
+                                                        return_models=True,
+                                                        fit_intercept=False))
         for i, model in iter_models:
             lasso_coef[:, i] = model.coef_
 
