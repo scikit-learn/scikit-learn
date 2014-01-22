@@ -1,0 +1,113 @@
+.. _learning_curve:
+
+=====================================================
+Validation curves: plotting scores to evaluate models
+=====================================================
+
+There are several problems that can occur during learning and visualization
+can help to avoid some of them. First of all, we have to choose an appropriate
+estimator. That is not a simple decision because every algorithm has its
+advantages and drawbacks.
+
+A good way of categorizing estimators are their inherent `bias and variance
+<http://en.wikipedia.org/wiki/Bias-variance_dilemma>`_. Simple algorithms
+(e.g. :ref:`linear_model`) usually have a high **bias**, which means they have
+strong assumptions about the underlying function that will be approximated.
+As a result, they need less training samples to learn a function that
+complies with these assumptions, e.g. a linear model can approximate the
+true linear function usually with only very few examples very accurately.
+However, if the latent function to be learned does not comply with these
+assumptions, the error of the model will be very high and that is true for the
+training error as well as for the validation error. More training examples do
+not help in this case. If both the training error and the validation error are
+high, we call this **underfitting**. More complex models with a low bias can
+usually approximate much more complex functions. They usually have another
+problem which is called **variance**, i.e. they are very sensitive to varying
+training sets. Usually we can recognize too complex models because the training
+error will be very low and the validation error will be very high. This is
+also called **overfitting**. An overfitting estimator typically learns the
+noise of the training data. To reduce this type of error, we can either select
+a simpler estimator with a higher bias, regularize a complex estimator, or if
+this did not help, collect more training examples.
+
+We can change the bias and variance by selecting the model, which means we
+first have to choose an estimator and then we have to select an appropriate
+parametrization of that estimator. The following tools can help to do that.
+
+Learning curve
+==============
+
+.. currentmodule:: sklearn.learning_curve
+
+A learning curve shows the validation and training score of an estimator
+for varying numbers of training samples. It is a tool to find out how much
+we benefit from adding more training data and whether the estimator suffers
+more from a variance error or a bias error. If both the validation score and
+the training score converge to a value that is too low with increasing
+size of the training set, we will not benefit much from more training data
+and we will probably have to use an estimator or a parametrization of the
+current estimator that can learn more complex concepts (i.e. has a lower
+bias). If the training score is much greater than the validation score for
+the maximum number of training samples, adding more training samples will
+most likely increase generalization.
+
+We can use the function :func:`learning_curve` to generate the values
+that are required to plot such a learning curve (number of samples
+that have been used, the average scores on the training sets and the
+average scores on the validation sets)::
+
+  >>> import numpy as np
+  >>> from sklearn.learning_curve import learning_curve
+  >>> from sklearn.datasets import load_iris
+  >>> from sklearn.svm import SVC
+
+  >>> np.random.seed(0)
+  >>> iris = load_iris()
+  >>> X, y = iris.data, iris.target
+  >>> indices = np.arange(y.shape[0])
+  >>> np.random.shuffle(indices)
+  >>> X, y = X[indices], y[indices]
+
+  >>> train_sizes, train_scores, test_scores = learning_curve(
+  ...     SVC(kernel='linear'), X, y, train_sizes=[50, 80, 110], cv=5)
+  >>> train_sizes            # doctest: +NORMALIZE_WHITESPACE
+  array([ 50, 80, 110])
+  >>> train_scores           # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
+  array([ 0.98 , 0.99 , 0.987...])
+  >>> test_scores            # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
+  array([ 0.98 , 0.986..., 0.986...])
+
+Examples for actually plotted learning curves can be found in
+:ref:`example_plot_learning_curve.py`.
+
+
+.. _validation_curve:
+
+Validation curve
+================
+
+The proper way of choosing multiple hyperparameters of an estimator are of
+course grid search or similar methods (see :ref:`grid_search`). However, it is
+sometimes helpful to plot the influence of a single hyperparameter on the
+training score and the test score to find out whether the estimator is
+overfitting or underfitting for some hyperparameter values.
+
+The function :func:`validation_curve` can help in this case::
+
+  >>> from sklearn.learning_curve import validation_curve
+  >>> from sklearn.linear_model import Ridge
+
+  >>> train_scores, test_scores = validation_curve(Ridge(), X, y, "alpha",
+  ...                                              np.logspace(-7, 3, 3))
+  >>> train_scores           # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
+  array([ 0.931...,  0.931...,  0.452...])
+  >>> test_scores            # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
+  array([ 0.923...,  0.923...,  0.433...])
+
+If the training score and the test score are both low, the estimator will be
+underfitting. If the training score is high and the test score is low, the
+estimator is overfitting and otherwise it is working very well. A low training
+score and a high test score is usually not possible. A good example that shows
+all three possible cases, can be found in
+:ref:`examples/plot_validation_curve.py <example_plot_validation_curve.py>`.
+

@@ -276,6 +276,11 @@ def validation_curve(estimator, X, y, param_name, param_range, cv=None,
 
     test_scores : array, shape = (n_values,)
         Scores on test sets.
+
+    Notes
+    -----
+    See
+    :ref:`examples/plot_validation_curve.py <example_plot_validation_curve.py>`
     """
     X, y = check_arrays(X, y, sparse_format='csr', allow_lists=True)
     cv = _check_cv(cv, X, y, classifier=is_classifier(estimator))
