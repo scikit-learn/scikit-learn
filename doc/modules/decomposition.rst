@@ -31,11 +31,6 @@ the case for Support Vector Machines with the RBF kernel and the K-Means
 clustering algorithm. However in that case the inverse transform is no
 longer exact since some information is lost while forward transforming.
 
-In addition, the :class:`ProbabilisticPCA` object provides a
-probabilistic interpretation of the PCA that can give a likelihood of
-data based on the amount of variance it explains. As such it implements a
-`score` method that can be used in cross-validation.
-
 Below is an example of the iris dataset, which is comprised of 4
 features, projected on the 2 dimensions that explain most variance:
 
@@ -44,9 +39,22 @@ features, projected on the 2 dimensions that explain most variance:
     :align: center
     :scale: 75%
 
+
+The :class:`PCA` object also provides a
+probabilistic interpretation of the PCA that can give a likelihood of
+data based on the amount of variance it explains. As such it implements a
+`score` method that can be used in cross-validation:
+
+.. figure:: ../auto_examples/decomposition/images/plot_pca_vs_fa_model_selection_1.png
+    :target: ../auto_examples/decomposition/plot_pca_vs_fa_model_selection.html
+    :align: center
+    :scale: 75%
+
+
 .. topic:: Examples:
 
     * :ref:`example_decomposition_plot_pca_vs_lda.py`
+    * :ref:`example_decomposition_plot_pca_vs_fa_model_selection.py`
 
 
 .. _RandomizedPCA:
@@ -54,15 +62,17 @@ features, projected on the 2 dimensions that explain most variance:
 Approximate PCA
 ---------------
 
-Often we are interested in projecting the data onto a lower dimensional
-space that preserves most of the variance by dropping the singular vector
+It is often interesting to project data to a lower-dimensional
+space that preserves most of the variance, by dropping the singular vector
 of components associated with lower singular values.
 
-For instance for face recognition, if we work with 64x64 gray level pixel
-pictures the dimensionality of the data is 4096 and it is slow to train a
-RBF Support Vector Machine on such wide data. Furthermore we know that
-intrinsic dimensionality of the data is much lower than 4096 since all
-faces pictures look alike. The samples lie on a manifold of much lower
+For instance, if we work with 64x64 pixel gray-level pictures
+for face recognition,
+the dimensionality of the data is 4096 and it is slow to train an
+RBF support vector machine on such wide data. Furthermore we know that
+the intrinsic dimensionality of the data is much lower than 4096 since all
+pictures of human faces look somewhat alike.
+The samples lie on a manifold of much lower
 dimension (say around 200 for instance). The PCA algorithm can be used
 to linearly transform the data while both reducing the dimensionality
 and preserve most of the explained variance at the same time.
@@ -90,8 +100,8 @@ less than 1s:
 .. centered:: |orig_img| |pca_img|
 
 :class:`RandomizedPCA` can hence be used as a drop in replacement for
-:class:`PCA` minor the exception that we need to give it the size of
-the lower dimensional space `n_components` as mandatory input parameter.
+:class:`PCA` with the exception that we need to give it the size of
+the lower-dimensional space `n_components` as a mandatory input parameter.
 
 If we note :math:`n_{max} = max(n_{samples}, n_{features})` and
 :math:`n_{min} = min(n_{samples}, n_{features})`, the time complexity
@@ -149,13 +159,13 @@ applications including denoising, compression and structured prediction
 
 .. _SparsePCA:
 
-Sparse Principal Components Analysis (SparsePCA and MiniBatchSparsePCA)
+Sparse principal components analysis (SparsePCA and MiniBatchSparsePCA)
 -----------------------------------------------------------------------
 
 :class:`SparsePCA` is a variant of PCA, with the goal of extracting the
 set of sparse components that best reconstruct the data.
 
-Mini Batch Sparse PCA (:class:`MiniBatchSparsePCA`) is a variant of
+Mini-batch sparse PCA (:class:`MiniBatchSparsePCA`) is a variant of
 :class:`SparsePCA` that is faster but less accurate. The increased speed is
 reached by iterating over small chunks of the set of features, for a given
 number of iterations.
@@ -205,7 +215,7 @@ problem solved is a PCA problem (dictionary learning) with an
                 0 \leq k < n_{components}
 
 
-The sparsity inducing :math:`\ell_1` norm also prevents learning
+The sparsity-inducing :math:`\ell_1` norm also prevents learning
 components from noise when few training samples are available. The degree
 of penalization (and thus sparsity) can be adjusted through the
 hyperparameter `alpha`. Small values lead to a gently regularized
@@ -507,7 +517,7 @@ of these two parameters. A simple additional assumption regards the
 structure of the error covariance :math:`\Psi`:
 
 * :math:`\Psi = \sigma^2 \mathbf{I}`: This assumption leads to
-  :class:`ProbabilisticPCA`.
+  the probabilistic model of :class:`PCA`.
 
 * :math:`\Psi = diag(\psi_1, \psi_2, \dots, \psi_n)`: This model is called Factor
   Analysis, a classical statistical model. The matrix W is sometimes called
@@ -532,13 +542,27 @@ about these components (e.g. whether they are orthogonal):
 
 .. centered:: |pca_img3| |fa_img3|
 
-The main advantage for Factor Analysis (over :class:`ProbabilisticPCA` is that
-it can model the variance in every direction of the input space independently:
+The main advantage for Factor Analysis (over :class:`PCA` is that
+it can model the variance in every direction of the input space independently
+(heteroscedastic noise):
 
 .. figure:: ../auto_examples/decomposition/images/plot_faces_decomposition_8.png
     :target: ../auto_examples/decomposition/plot_faces_decomposition.html
     :align: center
     :scale: 75%
+
+This allows better model selection than probabilistic PCA in the presence
+of heteroscedastic noise:
+
+.. figure:: ../auto_examples/decomposition/images/plot_pca_vs_fa_model_selection_2.png
+    :target: ../auto_examples/decomposition/plot_pca_vs_fa_model_selection.html
+    :align: center
+    :scale: 75%
+
+
+.. topic:: Examples:
+
+    * :ref:`example_decomposition_plot_pca_vs_fa_model_selection.py`
 
 .. _ICA:
 
@@ -548,7 +572,11 @@ Independent component analysis (ICA)
 Independent component analysis separates a multivariate signal into
 additive subcomponents that are maximally independent. It is
 implemented in scikit-learn using the :class:`Fast ICA <FastICA>`
-algorithm.
+algorithm. Typically, ICA is not used for reducing dimensionality but
+for separating superimposed signals. Since the ICA model does not include
+a noise term, for the model to be correct, whitening must be applied.
+This can be done internally using the whiten argument or manually using one
+of the PCA variants.
 
 It is classically used to separate mixed signals (a problem known as
 *blind source separation*), as in the example below:
@@ -588,6 +616,17 @@ Non-negative matrix factorization (NMF or NNMF)
 data and the components are non-negative. :class:`NMF` can be plugged in
 instead of :class:`PCA` or its variants, in the cases where the data matrix
 does not contain negative values.
+It finds a decomposition of samples :math:`X`
+into two matrices :math:`V` and :math:`H` of non-negative elements,
+by optimizing for the squared Frobenius norm::
+
+.. math::
+    \arg\min_{W,H} ||X - WH||^2 = \sum_{i,j} X_{ij} - {WH}_{ij}
+
+This norm is an obvious extension of the Euclidean norm to matrices.
+(Other optimization objectives have been suggested in the NMF literature,
+in particular Kullback-Leibler divergence,
+but these are not currently implemented.)
 
 Unlike :class:`PCA`, the representation of a vector is obtained in an additive
 fashion, by superimposing the components, without subtracting. Such additive

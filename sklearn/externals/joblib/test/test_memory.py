@@ -4,7 +4,7 @@ Test the memory module.
 
 # Author: Gael Varoquaux <gael dot varoquaux at normalesup dot org>
 # Copyright (c) 2009 Gael Varoquaux
-# License: BSD 3 clause
+# License: BSD Style, 3 clauses.
 
 import shutil
 import os
@@ -241,13 +241,13 @@ def test_memory_warning_lambda_collisions():
     with warnings.catch_warnings(record=True) as w:
         # Cause all warnings to always be triggered.
         warnings.simplefilter("always")
-        a(0)
-        b(1)
-        a(1)
+        nose.tools.assert_equal(0, a(0))
+        nose.tools.assert_equal(2, b(1))
+        nose.tools.assert_equal(1, a(1))
 
     # In recent Python versions, we can retrieve the code of lambdas,
     # thus nothing is raised
-    yield nose.tools.assert_equal, len(w), 0
+    nose.tools.assert_equal(len(w), 4)
 
 
 def test_memory_warning_collision_detection():
@@ -307,7 +307,7 @@ def test_memory_eval():
 def count_and_append(x=[]):
     """ A function with a side effect in its arguments.
 
-        Return the length of its argument and append one element.
+        Return the lenght of its argument and append one element.
     """
     len_x = len(x)
     x.append(None)
@@ -352,6 +352,29 @@ def test_memory_numpy():
                 yield nose.tools.assert_equal, len(accumulator), i + 1
 
 
+@with_numpy
+def test_memory_numpy_check_mmap_mode():
+    """Check that mmap_mode is respected even at the first call"""
+
+    memory = Memory(cachedir=env['dir'], mmap_mode='r', verbose=0)
+    memory.clear(warn=False)
+
+    @memory.cache()
+    def twice(a):
+        return a * 2
+
+    a = np.ones(3)
+
+    b = twice(a)
+    c = twice(a)
+
+    nose.tools.assert_true(isinstance(c, np.memmap))
+    nose.tools.assert_equal(c.mode, 'r')
+
+    nose.tools.assert_true(isinstance(b, np.memmap))
+    nose.tools.assert_equal(b.mode, 'r')
+
+
 def test_memory_exception():
     """ Smoketest the exception handling of Memory.
     """
@@ -390,6 +413,24 @@ def test_memory_ignore():
     yield nose.tools.assert_equal, len(accumulator), 1
     z(0, y=2)
     yield nose.tools.assert_equal, len(accumulator), 1
+
+
+def test_partial_decoration():
+    "Check cache may be called with kwargs before decorating"
+    memory = Memory(cachedir=env['dir'], verbose=0)
+
+    test_values = [
+        (['x'], 100, 'r'),
+        ([], 10, None),
+    ]
+    for ignore, verbose, mmap_mode in test_values:
+        @memory.cache(ignore=ignore, verbose=verbose, mmap_mode=mmap_mode)
+        def z(x):
+            pass
+
+        yield nose.tools.assert_equal, z.ignore, ignore
+        yield nose.tools.assert_equal, z._verbose, verbose
+        yield nose.tools.assert_equal, z.mmap_mode, mmap_mode
 
 
 def test_func_dir():
@@ -456,3 +497,16 @@ def test_format_signature():
 def test_format_signature_numpy():
     """ Test the format signature formatting with numpy.
     """
+
+
+def test_persist_with_output_dir_keyword_arg():
+    """Test that "output_dir" keyword argument can be persisted (issue #72)"""
+
+    def f(output_dir="thing"):
+        return output_dir
+
+    mem = Memory(cachedir=env['dir'])
+    first_result = mem.cache(f)(output_dir="other/thing")
+    cached_result = mem.cache(f)(output_dir="other/thing")
+    nose.tools.assert_equal(first_result, "other/thing")
+    nose.tools.assert_equal(cached_result, "other/thing")

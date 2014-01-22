@@ -210,7 +210,7 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
         Parameters
         ----------
-        X: {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
             Data.
 
         Returns
@@ -248,10 +248,29 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         return predict_proba_ovr(self.estimators_, X,
                                  is_multilabel=self.multilabel_)
 
+    def decision_function(self, X):
+        """Returns the distance of each sample from the decision boundary for
+        each class. This can only be used with estimators which implement the
+        decision_function method.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+
+        Returns
+        -------
+        T : array-like, shape = [n_samples, n_classes]
+        """
+        if not hasattr(self.estimators_[0], "decision_function"):
+            raise AttributeError(
+                "Base estimator doesn't have a decision_function attribute.")
+        return np.array([est.decision_function(X).ravel()
+                         for est in self.estimators_]).T
+
     @property
     def multilabel_(self):
         """Whether this is a multilabel classifier"""
-        return self.label_binarizer_.multilabel
+        return self.label_binarizer_.multilabel_
 
     def score(self, X, y):
         if self.multilabel_:
@@ -285,10 +304,11 @@ def _fit_ovo_binary(estimator, X, y, i, j):
     """Fit a single binary estimator (one-vs-one)."""
     cond = np.logical_or(y == i, y == j)
     y = y[cond]
-    y[y == i] = 0
-    y[y == j] = 1
+    y_binary = np.empty(y.shape, np.int)
+    y_binary[y == i] = 0
+    y_binary[y == j] = 1
     ind = np.arange(X.shape[0])
-    return _fit_binary(estimator, X[ind[cond]], y, classes=[i, j])
+    return _fit_binary(estimator, X[ind[cond]], y_binary, classes=[i, j])
 
 
 def fit_ovo(estimator, X, y, n_jobs=1):
@@ -375,7 +395,7 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
         Parameters
         ----------
-        X: {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
             Data.
 
         y : numpy array of shape [n_samples]
@@ -418,10 +438,10 @@ def fit_ecoc(estimator, X, y, code_size=1.5, random_state=None, n_jobs=1):
         An estimator object implementing `fit` and one of `decision_function`
         or `predict_proba`.
 
-    code_size: float, optional
+    code_size : float, optional
         Percentage of the number of classes to be used to create the code book.
 
-    random_state: numpy.RandomState, optional
+    random_state : numpy.RandomState, optional
         The generator used to initialize the codebook. Defaults to
         numpy.random.
 
@@ -551,7 +571,7 @@ class OutputCodeClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
         Parameters
         ----------
-        X: {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
             Data.
 
         y : numpy array of shape [n_samples]
@@ -571,7 +591,7 @@ class OutputCodeClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
         Parameters
         ----------
-        X: {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
             Data.
 
         Returns

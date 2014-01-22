@@ -1,17 +1,233 @@
 .. currentmodule:: sklearn
 
-.. _changes_0_14:
+.. _changes_0_15:
 
-0.14
-====
+0.15
+=====
 
 Changelog
 ---------
+
+   - The :ref:`Working With Text Data <text_data_tutorial>` tutorial
+     has now been worked in to the main documentation's tutorial section.
+     Includes exercises and skeletons for tutorial presentation.
+     Original tutorial created by several authors including
+     `Olivier Grisel`_, Lars Buitinck and many others.
+     Tutorial integration into the scikit-learn documentation
+     by `Jaques Grobler`_
+
+   - :mod:`sklearn.hmm` is deprecated. Its removal is planned
+     for the 0.17 release.
+
+   - Use of :class:`covariance.EllipticEnvelop` has now been removed after
+     deprecation.
+     Please use :class:`covariance.EllipticEnvelope` instead.
+
+   - Added :class:`ensemble.BaggingClassifier` and
+     :class:`ensemble.BaggingRegressor` meta-estimators for ensembling
+     any kind of base estimator. See the :ref:`Bagging <bagging>` section of
+     the user guide for details and examples. By `Gilles Louppe`_.
+
+   - Speed improvement of the :mod:`sklearn.ensemble.gradient_boosting` module.
+     By `Gilles Louppe`_ and `Peter Prettenhofer`_.
+
+   - Added :func:`metrics.pairwise_distances_argmin_min`, by Philippe Gervais.
+
+   - Added predict method to :class:`cluster.AffinityPropagation` and
+     :class:`cluster.MeanShift`, by `Mathieu Blondel`_.
+
+   - Vector and matrix multiplications have been optimised throughout the
+     library by `Denis Engemann`_, and `Alexandre Gramfort`_.
+     In particular, they should take less memory with older NumPy versions
+     (prior to 1.7.2).
+
+   - New unsupervised feature selection algorithm
+     :class:`feature_selection.VarianceThreshold`, by `Lars Buitinck`_.
+
+   - Precision-recall and ROC examples now use train_test_split, and have more
+     explanation of why these metrics are useful. By `Kyle Kastner`_
+
+   - The training algorithm for :class:`decomposition.NMF` is faster for
+     sparse matrices and has much lower memory complexity, meaning it will
+     scale up gracefully to large datasets. By `Lars Buitinck`_.
+
+   - Added svd_method option with default value to "randomized" to
+     :class:`decomposition.factor_analysis.FactorAnalysis` to save memory and
+     significantly speedup computation by `Denis Engemann`_, and
+     `Alexandre Gramfort`_.
+
+   - Memory improvements of extra trees and random forest by
+     `Arnaud Joly`_.
+
+   - Changed :class:`cross_validation.StratifiedKFold` to try and
+     preserve as much of the original ordering of samples as possible so as
+     not to hide overfitting on datasets with a non-negligible level of
+     samples dependency.
+     By `Daniel Nouri`_ and `Olivier Grisel`_.
+
+   - Add multi-output support to :class:`gaussian_process.GaussianProcess`
+     by John Novak.
+
+   - Norm computations optimized for NumPy 1.6 and later versions by
+     `Lars Buitinck`_. In particular, the k-means algorithm no longer
+     needs a temporary data structure the size of its input.
+
+   - Added :class:`linear_model.RANSACRegressor` meta-estimator for the robust
+     fitting of regression models. By Johannes Schönberger.
+
+   - Added :ref:`Computational Performance <computational_performance>`
+     documentation. Discussion and examples of prediction latency / throughput
+     and different factors that have influence over speed. Additional tips for
+     building faster models and choosing a relevant compromise between speed
+     and predictive power.
+     By `Eustache Diemert`_.
+
+   - Fixed bug in :class:`gradient_boosting.GradientBoostingRegressor` with
+     ``loss='huber'``: ``gamma`` might have not been initialized.
+
+   - :class:`dummy.DummyClassifier` can now be used to predict a constant
+     output value. By `Manoj Kumar`_.
+
+   - Fixed bug in :class:`decomposition.MiniBatchDictionaryLearning` :
+     partial_fit was not working properly.
+
+   - Multi-label classification output in multilabel indicator format
+     is now supported by :func:`metrics.roc_auc_score` and
+     :func:`metrics.average_precision_score` by `Arnaud Joly`_.
+
+   - Fixed bug in :class:`linear_model.stochastic_gradient` :
+     ``l1_ratio`` was used as ``(1.0 - l1_ratio)`` .
+
+   - Fixed bug in :class:`multiclass.OneVsOneClassifier` with string
+     labels
+
+   - Shorthand constructors :func:`pipeline.make_pipeline` and
+     :func:`pipeline.make_union` were added by `Lars Buitinck`_.
+
+   - Reduce memory usage and overhead when fitting and predicting with forests
+     of randomized trees in parallel with ``n_jobs != 1`` by leveraging new
+     threading backend of joblib 0.8 and releasing the GIL in the tree fitting
+     Cython code.  By `Olivier Grisel`_ and `Gilles Louppe`_.
+
+   - Decision trees can now be built in best-first manner by using ``max_leaf_nodes``
+     as the stopping criteria. Refactored the tree code to use either a
+     stack or a priority queue for tree building.
+     By `Peter Prettenhofer`_ and `Gilles Louppe`_.
+
+   - Decision trees can now be fitted on fortran- and c-style arrays, and
+     non-continuous arrays without the need to make a copy.
+     If the input array has a different dtype than ``np.float32``, a fortran-
+     style copy will be made since fortran-style memory layout has speed
+     advantages. By `Peter Prettenhofer`_ and `Gilles Louppe`_.
+
+   - Speed improvement of regression trees by optimizing the
+     the computation of the mean square error criterion. This lead
+     to speed improvement of the tree, forest and gradient boosting tree
+     modules. By `Arnaud Joly`_
+
+   - Changed the internal storage of decision trees to use a struct array.
+     This fixed some small bugs, while improving code and providing a small
+     speed gain. By `Joel Nothman`_.
+
+   - Various enhancements to the  :mod:`sklearn.ensemble.gradient_boosting`
+     module: a ``warm_start`` argument to fit additional trees,
+     a ``max_leaf_nodes`` argument to fit GBM style trees,
+     a ``monitor`` fit argument to inspect the estimator during training, and
+     refactoring of the verbose code. By `Peter Prettenhofer`_.
+
+   - Added :func:`learning_curve <learning_curve.learning_curve>` utility to
+     chart performance with respect to training size. See
+     :ref:`example_plot_learning_curve.py`. By `Alexander Fabisch`_.
+
+   - Add positive option in :class:`LassoCV <linear_model.LassoCV>` and
+     :class:`ElasticNetCV <linear_model.ElasticNetCV>`.
+     By Brian Wignall and `Alexandre Gramfort`_.
+
+   - Fixed a race condition in parallel processing with
+     ``pre_dispatch != "all"`` (for instance in ``cross_val_score``).
+     By `Olivier Grisel`_.
+
+   - Added :class:`linear_model.MultiTaskElasticNetCV` and
+     :class:`linear_model.MultiTaskLassoCV`. By `Manoj Kumar`_.
+
+
+API changes summary
+-------------------
+
+   - Add score method to :class:`PCA <decomposition.PCA>` following the model of
+     probabilistic PCA and deprecate
+     :class:`ProbabilisticPCA <decomposition.ProbabilisticPCA>` model whose
+     score implementation is not correct. The computation now also exploits the
+     matrix inversion lemma for faster computation. By `Alexandre Gramfort`_.
+
+   - The score method of :class:`FactorAnalysis <decomposition.FactorAnalysis>`
+     now returns the average log-likelihood of the samples. Use score_samples
+     to get log-likelihood of each sample. By `Alexandre Gramfort`_.
+
+   - Generating boolean masks (the setting ``indices=False``)
+     from cross-validation generators is deprecated.
+     Support for masks will be removed in 0.17.
+     The generators have produced arrays of indices by default since 0.10.
+     By `Joel Nothman`_.
+
+   - 1-d arrays containing strings with ``dtype=object`` (as used in Pandas)
+     are now considered valid classification targets. This fixes a regression
+     from version 0.13 in some classifiers. By `Joel Nothman`_.
+
+   - Fix wrong `explained_variance_ratio_` attribute in
+     :class:`RandomizedPCA <decomposition.RandomizedPCA>`.
+     By `Alexandre Gramfort`_.
+
+   - Fit alphas for each l1_ratio instead of mean_l1_ratio in
+     :class: `linear_model.ElasticNetCV` and :class: `linear_model.LassoCV`.
+     This changes the shape of alphas_ from (n_alphas,) to
+     (n_l1_ratio, n_alphas) if the l1_ratio provided is a 1-D array like object
+     of length greater than one.
+     By `Manoj Kumar`_.
+
+.. _changes_0_14:
+
+0.14
+=======
+
+Changelog
+---------
+
+   - Missing values with sparse and dense matrices can be imputed with the
+     transformer :class:`preprocessing.Imputer` by `Nicolas Trésegnie`_.
+
+   - The core implementation of decisions trees has been rewritten from
+     scratch, allowing for faster tree induction and lower memory
+     consumption in all tree-based estimators. By `Gilles Louppe`_.
+
+   - Added :class:`ensemble.AdaBoostClassifier` and
+     :class:`ensemble.AdaBoostRegressor`, by `Noel Dawe`_  and
+     `Gilles Louppe`_. See the :ref:`AdaBoost <adaboost>` section of the user
+     guide for details and examples.
+
+   - Added :class:`grid_search.RandomizedSearchCV` and
+     :class:`grid_search.ParameterSampler` for randomized hyperparameter
+     optimization. By `Andreas Müller`_.
+
+   - Added :ref:`biclustering <biclustering>` algorithms
+     (:class:`sklearn.cluster.bicluster.SpectralCoclustering` and
+     :class:`sklearn.cluster.bicluster.SpectralBiclustering`), data
+     generation methods (:func:`sklearn.datasets.make_biclusters` and
+     :func:`sklearn.datasets.make_checkerboard`), and scoring metrics
+     (:func:`sklearn.metrics.consensus_score`). By `Kemal Eren`_.
+
+   - Added :ref:`Restricted Boltzmann Machines<rbm>`
+     (:class:`neural_network.BernoulliRBM`). By `Yann Dauphin`_.
+
+   - Python 3 support by `Justin Vincent`_, `Lars Buitinck`_,
+     `Subhodeep Moitra`_ and `Olivier Grisel`_. All tests now pass under
+     Python 3.3.
+
    - Ability to pass one penalty (alpha value) per target in
      :class:`linear_model.Ridge`, by @eickenberg and `Mathieu Blondel`_.
 
    - Fixed :mod:`sklearn.linear_model.stochastic_gradient.py` L2 regularization
-     issue (minor practical significants).
+     issue (minor practical significance).
      By `Norbert Crombach`_ and `Mathieu Blondel`_ .
 
    - Added an interactive version of `Andreas Müller`_'s
@@ -23,14 +239,10 @@ Changelog
    - :class:`grid_search.GridSearchCV` and
      :func:`cross_validation.cross_val_score` now support the use of advanced
      scoring function such as area under the ROC curve and f-beta scores.
-     See :ref:`score_func_objects` for details. By `Andreas Müller`_.
+     See :ref:`scoring_parameter` for details. By `Andreas Müller`_
+     and `Lars Buitinck`_.
      Passing a function from :mod:`sklearn.metrics` as ``score_func`` is
      deprecated.
-
-   - Added :class:`ensemble.AdaBoostClassifier` and
-     :class:`ensemble.AdaBoostRegressor`, by `Noel Dawe`_  and
-     `Gilles Louppe`_. See the :ref:`AdaBoost <adaboost>` section of the user
-     guide for details and examples.
 
    - Multi-label classification output is now supported by
      :func:`metrics.accuracy_score`, :func:`metrics.zero_one_loss`,
@@ -39,7 +251,7 @@ Changelog
      :func:`metrics.precision_score` and :func:`metrics.recall_score`
      by `Arnaud Joly`_.
 
-  -  Two new metrics :func:`metrics.hamming_loss` and
+   - Two new metrics :func:`metrics.hamming_loss` and
      :func:`metrics.jaccard_similarity_score`
      are added with multi-label support by `Arnaud Joly`_.
 
@@ -54,16 +266,6 @@ Changelog
      has been reset to 1 to avoid unpleasant surprises (empty vocabularies)
      for novice users who try it out on tiny document collections.
      A value of at least 2 is still recommended for practical use.
-
-   - Feature importances in :class:`tree.DecisionTreeClassifier`,
-     :class:`tree.DecisionTreeRegressor` and all derived ensemble estimators
-     are now computed on the fly when accessing  the ``feature_importances_``
-     attribute. Setting ``compute_importances=True`` is no longer required.
-     By `Gilles Louppe`_.
-
-   - Added :class:`grid_search.RandomizedSearchCV` and
-     :class:`grid_search.ParameterSampler` for randomized hyperparameter
-     optimization. By `Andreas Müller`_.
 
    - :class:`svm.LinearSVC`, :class:`linear_model.SGDClassifier` and
      :class:`linear_model.SGDRegressor` now have a ``sparsify`` method that
@@ -85,11 +287,14 @@ Changelog
      now supports percentage values. By `Gilles Louppe`_.
 
    - Performance improvements in :class:`isotonic.IsotonicRegression` by
-     Nelle Varoquaux.
+     `Nelle Varoquaux`_.
 
    - :func:`metrics.accuracy_score` has an option normalize to return
      the fraction or the number of correctly classified sample
      by `Arnaud Joly`_.
+
+   - Added :func:`metrics.log_loss` that computes log loss, aka cross-entropy
+     loss. By Jochen Wersdörfer and `Lars Buitinck`_.
 
    - A bug that caused :class:`ensemble.AdaBoostClassifier`'s to output
      incorrect probabilities has been fixed.
@@ -118,14 +323,118 @@ Changelog
      to be ``n_features``. This was the default behavior, so programs using it
      will continue to work as they did.
 
+   - :class:`sklearn.cluster.KMeans` now fits several orders of magnitude
+     faster on sparse data (the speedup depends on the sparsity). By
+     `Lars Buitinck`_.
+
+   - Reduce memory footprint of FastICA by `Denis Engemann`_ and
+     `Alexandre Gramfort`_.
+
+   - Verbose output in :mod:`sklearn.ensemble.gradient_boosting` now uses
+     a column format and prints progress in decreasing frequency.
+     It also shows the remaining time. By `Peter Prettenhofer`_.
+
+   - :mod:`sklearn.ensemble.gradient_boosting` provides out-of-bag improvement
+     :attr:`~sklearn.ensemble.GradientBoostingRegressor.oob_improvement_`
+     rather than the OOB score for model selection. An example that shows
+     how to use OOB estimates to select the number of trees was added.
+     By `Peter Prettenhofer`_.
+
+   - Most metrics now support string labels for multiclass classification
+     by `Arnaud Joly`_ and `Lars Buitinck`_.
+
+   - New OrthogonalMatchingPursuitCV class by `Alexandre Gramfort`_
+     and `Vlad Niculae`_.
+
+   - Fixed a bug in :class:`sklearn.covariance.GraphLassoCV`: the
+     'alphas' parameter now works as expected when given a list of
+     values. By Philippe Gervais.
+
+   - Fixed an important bug in :class:`sklearn.covariance.GraphLassoCV`
+     that prevented all folds provided by a CV object to be used (only
+     the first 3 were used). When providing a CV object, execution
+     time may thus increase significantly compared to the previous
+     version (bug results are correct now). By Philippe Gervais.
+
+   - :class:`cross_validation.cross_val_score` and the :mod:`grid_search`
+     module is now tested with multi-output data by `Arnaud Joly`_.
+
+   - :func:`datasets.make_multilabel_classification` can now return
+     the output in label indicator multilabel format  by `Arnaud Joly`_.
+
+   - K-nearest neighbors, :class:`neighbors.KNeighborsRegressor`
+     and :class:`neighbors.RadiusNeighborsRegressor`,
+     and radius neighbors, :class:`neighbors.RadiusNeighborsRegressor` and
+     :class:`neighbors.RadiusNeighborsClassifier` support multioutput data
+     by `Arnaud Joly`_.
+
+   - Random state in LibSVM-based estimators (:class:`svm.SVC`, :class:`NuSVC`,
+     :class:`OneClassSVM`, :class:`svm.SVR`, :class:`svm.NuSVR`) can now be
+     controlled.  This is useful to ensure consistency in the probability
+     estimates for the classifiers trained with ``probability=True``. By
+     `Vlad Niculae`_.
+
+   - Out-of-core learning support for discrete naive Bayes classifiers
+     :class:`sklearn.naive_bayes.MultinomialNB` and
+     :class:`sklearn.naive_bayes.BernoulliNB` by adding the ``partial_fit``
+     method by `Olivier Grisel`_.
+
+   - New website design and navigation by `Gilles Louppe`_, `Nelle Varoquaux`_,
+     Vincent Michel and `Andreas Müller`_.
+
+   - Improved documentation on :ref:`multi-class, multi-label and multi-output
+     classification <multiclass>` by `Yannick Schwartz`_ and `Arnaud Joly`_.
+
+   - Better input and error handling in the :mod:`metrics` module by
+     `Arnaud Joly`_ and `Joel Nothman`_.
+
+   - Speed optimization of the :mod:`hmm` module by `Mikhail Korobov`_
+
+   - Significant speed improvements for :class:`sklearn.cluster.DBSCAN`_
+     by `cleverless <https://github.com/cleverless>`_
+
+
 API changes summary
 -------------------
+
+   - The :func:`auc_score` was renamed :func:`roc_auc_score`.
+
+   - Testing scikit-learn with `sklearn.test()` is deprecated. Use
+     `nosetest sklearn` from the command line.
+
+   - Feature importances in :class:`tree.DecisionTreeClassifier`,
+     :class:`tree.DecisionTreeRegressor` and all derived ensemble estimators
+     are now computed on the fly when accessing  the ``feature_importances_``
+     attribute. Setting ``compute_importances=True`` is no longer required.
+     By `Gilles Louppe`_.
+
+   - :class:`linear_model.lasso_path` and
+     :class:`linear_model.enet_path` can return its results in the same
+     format as that of :class:`linear_model.lars_path`. This is done by
+     setting the `return_models` parameter to `False`. By
+     `Jaques Grobler`_ and `Alexandre Gramfort`_
 
    - :class:`grid_search.IterGrid` was renamed to
      :class:`grid_search.ParameterGrid`.
 
    - Fixed bug in :class:`KFold` causing imperfect class balance in some
      cases. By `Alexandre Gramfort`_ and Tadej Janež.
+
+   - :class:`sklearn.neighbors.BallTree` has been refactored, and a
+     :class:`sklearn.neighbors.KDTree` has been
+     added which shares the same interface.  The Ball Tree now works with
+     a wide variety of distance metrics.  Both classes have many new
+     methods, including single-tree and dual-tree queries, breadth-first
+     and depth-first searching, and more advanced queries such as
+     kernel density estimation and 2-point correlation functions.
+     By `Jake Vanderplas`_
+
+   - Support for scipy.spatial.cKDTree within neighbors queries has been
+     removed, and the functionality replaced with the new :class:`KDTree`
+     class.
+
+   - :class:`sklearn.neighbors.KernelDensity` has been added, which performs
+     efficient kernel density estimation with a variety of kernels.
 
    - :class:`sklearn.decomposition.KernelPCA` now always returns output with
      ``n_components`` components, unless the new parameter ``remove_zero_eig``
@@ -145,6 +454,119 @@ API changes summary
 
    - :func:`datasets.load_files`'s ``charset`` and ``charset_errors``
      parameters were renamed ``encoding`` and ``decode_errors``.
+
+   - Attribute ``oob_score_`` in :class:`sklearn.ensemble.GradientBoostingRegressor`
+     and :class:`sklearn.ensemble.GradientBoostingClassifier`
+     is deprecated and has been replaced by ``oob_improvement_`` .
+
+   - Attributes in OrthogonalMatchingPursuit have been deprecated
+     (copy_X, Gram, ...) and precompute_gram renamed precompute
+     for consistency. See #2224.
+
+   - :class:`sklearn.preprocessing.StandardScaler` now converts integer input
+     to float, and raises a warning. Previously it rounded for dense integer
+     input.
+
+   - :class:`sklearn.multiclass.OneVsRestClassifier` now has a
+     ``decision_function`` method. This will return the distance of each
+     sample from the decision boundary for each class, as long as the
+     underlying estimators implement the ``decision_function`` method.
+     By `Kyle Kastner`_.
+
+   - Better input validation, warning on unexpected shapes for y.
+
+People
+------
+List of contributors for release 0.14 by number of commits.
+
+ * 277  Gilles Louppe
+ * 245  Lars Buitinck
+ * 187  Andreas Mueller
+ * 124  Arnaud Joly
+ * 112  Jaques Grobler
+ * 109  Gael Varoquaux
+ * 107  Olivier Grisel
+ * 102  Noel Dawe
+ *  99  Kemal Eren
+ *  79  Joel Nothman
+ *  75  Jake VanderPlas
+ *  73  Nelle Varoquaux
+ *  71  Vlad Niculae
+ *  65  Peter Prettenhofer
+ *  64  Alexandre Gramfort
+ *  54  Mathieu Blondel
+ *  38  Nicolas Trésegnie
+ *  35  eustache
+ *  27  Denis Engemann
+ *  25  Yann N. Dauphin
+ *  19  Justin Vincent
+ *  17  Robert Layton
+ *  15  Doug Coleman
+ *  14  Michael Eickenberg
+ *  13  Robert Marchman
+ *  11  Fabian Pedregosa
+ *  11  Philippe Gervais
+ *  10  Jim Holmström
+ *  10  Tadej Janež
+ *  10  syhw
+ *   9  Mikhail Korobov
+ *   9  Steven De Gryze
+ *   8  sergeyf
+ *   7  Ben Root
+ *   7  Hrishikesh Huilgolkar
+ *   6  Kyle Kastner
+ *   6  Martin Luessi
+ *   6  Rob Speer
+ *   5  Federico Vaggi
+ *   5  Raul Garreta
+ *   5  Rob Zinkov
+ *   4  Ken Geis
+ *   3  A. Flaxman
+ *   3  Denton Cockburn
+ *   3  Dougal Sutherland
+ *   3  Ian Ozsvald
+ *   3  Johannes Schönberger
+ *   3  Robert McGibbon
+ *   3  Roman Sinayev
+ *   3  Szabo Roland
+ *   2  Diego Molla
+ *   2  Imran Haque
+ *   2  Jochen Wersdörfer
+ *   2  Sergey Karayev
+ *   2  Yannick Schwartz
+ *   2  jamestwebber
+ *   1  Abhijeet Kolhe
+ *   1  Alexander Fabisch
+ *   1  Bastiaan van den Berg
+ *   1  Benjamin Peterson
+ *   1  Daniel Velkov
+ *   1  Fazlul Shahriar
+ *   1  Felix Brockherde
+ *   1  Félix-Antoine Fortin
+ *   1  Harikrishnan S
+ *   1  Jack Hale
+ *   1  JakeMick
+ *   1  James McDermott
+ *   1  John Benediktsson
+ *   1  John Zwinck
+ *   1  Joshua Vredevoogd
+ *   1  Justin Pati
+ *   1  Kevin Hughes
+ *   1  Kyle Kelley
+ *   1  Matthias Ekman
+ *   1  Miroslav Shubernetskiy
+ *   1  Naoki Orii
+ *   1  Norbert Crombach
+ *   1  Rafael Cunha de Almeida
+ *   1  Rolando Espinoza La fuente
+ *   1  Seamus Abshere
+ *   1  Sergey Feldman
+ *   1  Sergio Medina
+ *   1  Stefano Lattarini
+ *   1  Steve Koch
+ *   1  Sturla Molden
+ *   1  Thomas Jarosch
+ *   1  Yaroslav Halchenko
 
 .. _changes_0_13_1:
 
@@ -185,7 +607,7 @@ List of contributors for release 0.13.1 by number of commits.
  *  1  Diego Molla
  *  1  `Gilles Louppe`_
  *  1  `Mathieu Blondel`_
- *  1  Nelle Varoquaux
+ *  1  `Nelle Varoquaux`_
  *  1  Rafael Cunha de Almeida
  *  1  Rolando Espinoza La fuente
  *  1  `Vlad Niculae`_
@@ -246,11 +668,11 @@ New Estimator Classes
 
    - :class:`manifold.SpectralEmbedding` and function
      :func:`manifold.spectral_embedding`, implementing the "laplacian
-     eigenmaps" transformation for nonlinear dimensionality reduction by Wei
+     eigenmaps" transformation for non-linear dimensionality reduction by Wei
      Li. See :ref:`spectral_embedding` in the user guide.
 
    - :class:`isotonic.IsotonicRegression` by `Fabian Pedregosa`_, `Alexandre Gramfort`_
-     and Nelle Varoquaux.
+     and `Nelle Varoquaux`_,
 
 
 Changelog
@@ -324,7 +746,7 @@ Changelog
      :class:`ensemble.GradientBoostingRegressor` and
      :class:`ensemble.GradientBoostingClassifier` use the estimator
      :class:`tree.DecisionTreeRegressor` instead of the
-     :class:`tree._tree.Tree` datastructure by `Arnaud Joly`_.
+     :class:`tree._tree.Tree` data structure by `Arnaud Joly`_.
 
    - Fixed a floating point exception in the :ref:`decision trees <tree>`
      module, by Seberg.
@@ -480,7 +902,7 @@ List of contributors for release 0.13 by number of commits.
  *  17  `Fabian Pedregosa`_
  *  17  Nelle Varoquaux
  *  16  `Christian Osendorfer`_
- *  14  Daniel Nouri
+ *  14  `Daniel Nouri`_
  *  13  `Virgile Fritsch`_
  *  13  syhw
  *  12  `Satrajit Ghosh`_
@@ -493,7 +915,7 @@ List of contributors for release 0.13 by number of commits.
  *   8  `James Bergstra`_
  *   7  Tadej Janež
  *   6  Brian Cajes
- *   6  `Jake VanderPlas`_
+ *   6  `Jake Vanderplas`_
  *   6  Michael
  *   6  Noel Dawe
  *   6  Tiago Nunes
@@ -549,13 +971,13 @@ Changelog
  - Documentation fixes for elastic net by `Andreas Müller`_ and
    `Alexandre Gramfort`_
 
- - Proper behavior with fortran-ordered numpy arrays by `Gael Varoquaux`_
+ - Proper behavior with fortran-ordered NumPy arrays by `Gael Varoquaux`_
 
  - Make GridSearchCV work with non-CSR sparse matrix by `Lars Buitinck`_
 
  - Fix parallel computing in MDS by `Gael Varoquaux`_
 
- - Fix unicode support in count vectorizer by `Andreas Müller`_
+ - Fix Unicode support in count vectorizer by `Andreas Müller`_
 
  - Fix MinCovDet breaking with X.shape = (3, 1) by `Virgile Fritsch`_
 
@@ -742,7 +1164,7 @@ People
  *   7  Marko Burjek
  *   5  `Nicolas Pinto`_
  *   4  Alexandre Abraham
- *   4  Jake VanderPlas
+ *   4  `Jake Vanderplas`_
  *   3  `Brian Holt`_
  *   3  `Edouard Duchesnay`_
  *   3  Florian Hoenig
@@ -853,7 +1275,7 @@ Other changes
      by `Olivier Grisel`_.
 
    - Beam pruning option in :class:`_BaseHMM` module has been removed since it
-     is difficult to cythonize. If you are interested in contributing a cython
+     is difficult to Cythonize. If you are interested in contributing a Cython
      version, you can use the python version in the git history as a reference.
 
    - Classes in :ref:`neighbors` now support arbitrary Minkowski metric for
@@ -896,7 +1318,7 @@ API changes summary
      Options now are 'ovr' and 'crammer_singer', with 'ovr' being the default.
      This does not change the default behavior but hopefully is less confusing.
 
-   - Classs :class:`feature_selection.text.Vectorizer` is deprecated and
+   - Class :class:`feature_selection.text.Vectorizer` is deprecated and
      replaced by :class:`feature_selection.text.TfidfVectorizer`.
 
    - The preprocessor / analyzer nested structure for text feature
@@ -914,7 +1336,7 @@ API changes summary
 
        - ``input`` explicitly control how to interpret the sequence passed to
          ``fit`` and ``predict``: filenames, file objects or direct (byte or
-         unicode) strings.
+         Unicode) strings.
 
        - charset decoding is explicit and strict by default.
 
@@ -1064,7 +1486,7 @@ Changelog
    - :ref:`k_means` support for sparse matrices by `Mathieu Blondel`_.
 
    - Improved documentation for developers and for the :mod:`sklearn.utils`
-     module, by `Jake VanderPlas`_.
+     module, by `Jake Vanderplas`_.
 
    - Vectorized 20newsgroups dataset loader
      (:func:`sklearn.datasets.fetch_20newsgroups_vectorized`) by
@@ -1433,7 +1855,7 @@ scikit-learn 0.8 was released on May 2011, one month after the first
 "international" `scikit-learn coding sprint
 <https://github.com/scikit-learn/scikit-learn/wiki/Upcoming-events>`_ and is
 marked by the inclusion of important modules: :ref:`hierarchical_clustering`,
-:ref:`pls`, :ref:`NMF`, initial support for Python 3 and by important
+:ref:`cross_decomposition`, :ref:`NMF`, initial support for Python 3 and by important
 enhancements and bug fixes.
 
 
@@ -1449,7 +1871,7 @@ Several new modules where introduced during this release:
 
   - :ref:`labeled_faces_in_the_wild` by `Olivier Grisel`_.
 
-  - New :ref:`pls` module by `Edouard Duchesnay`_.
+  - New :ref:`cross_decomposition` module by `Edouard Duchesnay`_.
 
   - :ref:`NMF` module `Vlad Niculae`_
 
@@ -1493,7 +1915,7 @@ Some other modules benefited from significant improvements or cleanups.
 People
 -------
 
-People that made this release possible preceeded by number of commits:
+People that made this release possible preceded by number of commits:
 
 
    - 159  `Olivier Grisel`_
@@ -1562,7 +1984,7 @@ Changelog
   - Refactoring of :class:`neighbors.NeighborsClassifier` and
     :func:`neighbors.kneighbors_graph`: added different algorithms for
     the k-Nearest Neighbor Search and implemented a more stable
-    algorithm for finding barycenter weigths. Also added some
+    algorithm for finding barycenter weights. Also added some
     developer documentation for this module, see
     `notes_neighbors
     <https://github.com/scikit-learn/scikit-learn/wiki/Neighbors-working-notes>`_ for more information [`Fabian Pedregosa`_].
@@ -1619,7 +2041,7 @@ People that made this release possible preceded by number of commits:
 0.6
 ===
 
-scikit-learn 0.6 was released on december 2010. It is marked by the
+scikit-learn 0.6 was released on December 2010. It is marked by the
 inclusion of several new modules and a general renaming of old
 ones. It is also marked by the inclusion of new example, including
 applications to real-world datasets.
@@ -1850,11 +2272,11 @@ Major changes in this release include:
 
     - feature_selection module redesign.
 
-    - Migration to GIT as content management system.
+    - Migration to GIT as version control system.
 
     - Removal of obsolete attrselect module.
 
-    - Rename of private compiled extensions (aded underscore).
+    - Rename of private compiled extensions (added underscore).
 
     - Removal of legacy unmaintained code.
 
@@ -1898,7 +2320,7 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 
 .. _Fabian Pedregosa: http://fseoane.net/blog/
 
-.. _Mathieu Blondel: http://www.mblondel.org/journal/
+.. _Mathieu Blondel: http://www.mblondel.org
 
 .. _James Bergstra: http://www-etud.iro.umontreal.ca/~bergstrj/
 
@@ -1965,3 +2387,31 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Norbert Crombach: https://github.com/norbert
 
 .. _Eustache Diemert: https://github.com/oddskool
+
+.. _Justin Vincent: https://github.com/justinvf
+
+.. _Denis Engemann: https://github.com/dengemann
+
+.. _Nicolas Trésegnie : http://nicolastr.com/
+
+.. _Kemal Eren: http://www.kemaleren.com
+
+.. _Yann Dauphin: http://ynd.github.io/
+
+.. _Nelle Varoquaux: https://github.com/nellev
+
+.. _Subhodeep Moitra: https://github.com/smoitra87
+
+.. _Yannick Schwartz: https://team.inria.fr/parietal/schwarty/
+
+.. _Mikhail Korobov: http://kmike.ru/pages/about/
+
+.. _Kyle Kastner: http://kastnerkyle.github.io
+
+.. _@FedericoV: https://github.com/FedericoV/
+
+.. _Daniel Nouri: http://danielnouri.org
+
+.. _Johannes Schönberger: https://github.com/ahojnnes
+
+.. _Manoj Kumar: https://github.com/Manoj-Kumar-S

@@ -1,5 +1,5 @@
 import numpy as np
-
+from itertools import product
 from sklearn.externals.six.moves import xrange
 from sklearn.externals.six import iteritems
 
@@ -51,6 +51,8 @@ EXAMPLES = {
         [0, 1, 2],
         ['a', 'b', 'c'],
         np.array([u'a', u'b', u'c']),
+        np.array([u'a', u'b', u'c'], dtype=object),
+        np.array(['a', 'b', 'c'], dtype=object),
     ],
     'multiclass-multioutput': [
         np.array([[1, 0, 2, 2], [1, 4, 2, 4]]),
@@ -60,6 +62,7 @@ EXAMPLES = {
         np.array([[1, 0, 2, 2], [1, 4, 2, 4]], dtype=np.float32),
         np.array([['a', 'b'], ['c', 'd']]),
         np.array([[u'a', u'b'], [u'c', u'd']]),
+        np.array([[u'a', u'b'], [u'c', u'd']], dtype=object),
         np.array([[1, 0, 2]]),
     ],
     'binary': [
@@ -79,7 +82,9 @@ EXAMPLES = {
         ['a'],
         ['a', 'b'],
         ['abc', 'def'],
+        np.array(['abc', 'def']),
         [u'a', u'b'],
+        np.array(['abc', 'def'], dtype=object),
     ],
     'continuous': [
         [1e-5],
@@ -136,11 +141,70 @@ def test_unique_labels():
                                                [0, 0, 0]])),
                        np.arange(3))
 
+    assert_array_equal(unique_labels(np.array([[0, 0, 1],
+                                               [0, 0, 0]])),
+                       np.arange(3))
+
     # Several arrays passed
     assert_array_equal(unique_labels([4, 0, 2], xrange(5)),
                        np.arange(5))
     assert_array_equal(unique_labels((0, 1, 2), (0,), (2, 1)),
                        np.arange(3))
+
+    # Border line case with binary indicator matrix
+    assert_raises(ValueError, unique_labels, [4, 0, 2], np.ones((5, 5)))
+    assert_raises(ValueError, unique_labels, np.ones((5, 4)), np.ones((5, 5)))
+    assert_array_equal(unique_labels(np.ones((4, 5)), np.ones((5, 5))),
+                       np.arange(5))
+
+    # Some tests with strings input
+    assert_array_equal(unique_labels(["a", "b", "c"], ["d"]),
+                       ["a", "b", "c", "d"])
+    assert_array_equal(unique_labels([["a", "b"], ["c"]], [["d"]]),
+                       ["a", "b", "c", "d"])
+
+    # Smoke test for all supported format
+    for format in ["binary", "multiclass", "multilabel-sequences",
+                   "multilabel-indicator"]:
+        for y in EXAMPLES[format]:
+            unique_labels(y)
+
+    # We don't support those format at the moment
+    for example in NON_ARRAY_LIKE_EXAMPLES:
+        assert_raises(ValueError, unique_labels, example)
+
+    for y_type in ["unknown", "continuous", 'continuous-multioutput',
+                   'multiclass-multioutput']:
+        for example in EXAMPLES[y_type]:
+            assert_raises(ValueError, unique_labels, example)
+
+    #Mix of multilabel-indicator and multilabel-sequences
+    mix_multilabel_format = product(EXAMPLES["multilabel-indicator"],
+                                    EXAMPLES["multilabel-sequences"])
+    for y_multilabel, y_multiclass in mix_multilabel_format:
+        assert_raises(ValueError, unique_labels, y_multiclass, y_multilabel)
+        assert_raises(ValueError, unique_labels, y_multilabel, y_multiclass)
+
+    #Mix with binary or multiclass and multilabel
+    mix_clf_format = product(EXAMPLES["multilabel-indicator"] +
+                             EXAMPLES["multilabel-sequences"],
+                             EXAMPLES["multiclass"] +
+                             EXAMPLES["binary"])
+
+    for y_multilabel, y_multiclass in mix_clf_format:
+        assert_raises(ValueError, unique_labels, y_multiclass, y_multilabel)
+        assert_raises(ValueError, unique_labels, y_multilabel, y_multiclass)
+
+    # Mix string and number input type
+    assert_raises(ValueError, unique_labels, [[1, 2], [3]],
+                  [["a", "d"]])
+    assert_raises(ValueError, unique_labels, ["1", 2])
+    assert_raises(ValueError, unique_labels, [["1", 2], [3]])
+    assert_raises(ValueError, unique_labels, [["1", "2"], [3]])
+
+    assert_array_equal(unique_labels([(2,), (0, 2,)], [(), ()]), [0, 2])
+    assert_array_equal(unique_labels([("2",), ("0", "2",)], [(), ()]),
+                       ["0", "2"])
 
 
 def test_is_multilabel():

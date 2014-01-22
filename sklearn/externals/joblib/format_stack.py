@@ -232,7 +232,7 @@ def format_records(records):   # , print_globals=False):
 
             The list of names it appends to (from the enclosing scope) can
             contain repeated composite names.  This is unavoidable, since
-            there is no way to disambguate partial dotted structures until
+            there is no way to disambiguate partial dotted structures until
             the full list is known.  The caller is responsible for pruning
             the final list of duplicates before using it."""
 
@@ -295,7 +295,7 @@ def format_records(records):   # , print_globals=False):
             if name_base in frame.f_code.co_varnames:
                 if name_base in locals.keys():
                     try:
-                        value = repr(eval(name_full, locals))
+                        value = safe_repr(eval(name_full, locals))
                     except:
                         value = "undefined"
                 else:
@@ -305,7 +305,7 @@ def format_records(records):   # , print_globals=False):
             #elif print_globals:
             #    if frame.f_globals.has_key(name_base):
             #        try:
-            #            value = repr(eval(name_full,frame.f_globals))
+            #            value = safe_repr(eval(name_full,frame.f_globals))
             #        except:
             #            value = "undefined"
             #    else:
@@ -399,7 +399,7 @@ def format_outer_frames(context=5, stack_start=None, stack_end=None,
             if filename.endswith('.pyc'):
                 filename = filename[:-4] + '.py'
         if ignore_ipython:
-            # Hack to avoid printing the interals of IPython
+            # Hack to avoid printing the internals of IPython
             if (os.path.basename(filename) == 'iplib.py'
                         and func_name in ('safe_execfile', 'runcode')):
                 break

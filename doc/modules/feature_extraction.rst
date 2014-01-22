@@ -1,4 +1,3 @@
-
 .. _feature_extraction:
 
 ==================
@@ -86,9 +85,9 @@ suitable for feeding into a classifier (maybe after being piped into a
 
   >>> vec = DictVectorizer()
   >>> pos_vectorized = vec.fit_transform(pos_window)
-  >>> pos_vectorized                     # doctest: +NORMALIZE_WHITESPACE
-  <1x6 sparse matrix of type '<type 'numpy.float64'>'
-      with 6 stored elements in Compressed Sparse Row format>
+  >>> pos_vectorized                # doctest: +NORMALIZE_WHITESPACE  +ELLIPSIS
+  <1x6 sparse matrix of type '<... 'numpy.float64'>'
+      with 6 stored elements in Compressed Sparse ... format>
   >>> pos_vectorized.toarray()
   array([[ 1.,  1.,  1.,  1.,  1.,  1.]])
   >>> vec.get_feature_names()
@@ -177,7 +176,7 @@ can be constructed using::
 
 and fed to a hasher with::
 
-  hasher = FeatureHasher(input_type=string)
+  hasher = FeatureHasher(input_type='string')
   X = hasher.transform(raw_X)
 
 to get a ``scipy.sparse`` matrix ``X``.
@@ -263,7 +262,7 @@ of the words in the document.
 Sparsity
 --------
 
-As most documents will typically use a very subset of a the words used in
+As most documents will typically use a very small subset of the words used in
 the corpus, the resulting matrix will have many feature values that are
 zeros (typically more than 99% of them).
 
@@ -290,13 +289,14 @@ reasonable (please see  the :ref:`reference documentation
 <text_feature_extraction_ref>` for the details)::
 
   >>> vectorizer = CountVectorizer(min_df=1)
-  >>> vectorizer                            # doctest: +NORMALIZE_WHITESPACE
-  CountVectorizer(analyzer=u'word', binary=False, charset=u'utf-8',
-          charset_error=u'strict', dtype=<type 'numpy.int64'>,
-          input=u'content', lowercase=True, max_df=1.0, max_features=None,
-          min_df=1, ngram_range=(1, 1), preprocessor=None, 
-          stop_words=None, strip_accents=None,
-          token_pattern=u'(?u)\\b\\w\\w+\\b', tokenizer=None, vocabulary=None)
+  >>> vectorizer                     # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+  CountVectorizer(analyzer=...'word', binary=False, charset=None,
+          charset_error=None, decode_error=...'strict',
+          dtype=<... 'numpy.int64'>, encoding=...'utf-8', input=...'content',
+          lowercase=True, max_df=1.0, max_features=None, min_df=1,
+          ngram_range=(1, 1), preprocessor=None, stop_words=None,
+          strip_accents=None, token_pattern=...'(?u)\\b\\w\\w+\\b',
+          tokenizer=None, vocabulary=None)
 
 Let's use it to tokenize and count the word occurrences of a minimalistic
 corpus of text documents::
@@ -308,24 +308,27 @@ corpus of text documents::
   ...     'Is this the first document?',
   ... ]
   >>> X = vectorizer.fit_transform(corpus)
-  >>> X                                       # doctest: +NORMALIZE_WHITESPACE
-  <4x9 sparse matrix of type '<type 'numpy.int64'>'
-      with 19 stored elements in Compressed Sparse Column format>
+  >>> X                              # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+  <4x9 sparse matrix of type '<... 'numpy.int64'>'
+      with 19 stored elements in Compressed Sparse ... format>
 
 The default configuration tokenizes the string by extracting words of
 at least 2 letters. The specific function that does this step can be
 requested explicitly::
 
   >>> analyze = vectorizer.build_analyzer()
-  >>> analyze("This is a text document to analyze.")
-  [u'this', u'is', u'text', u'document', u'to', u'analyze']
+  >>> analyze("This is a text document to analyze.") == (
+  ...     ['this', 'is', 'text', 'document', 'to', 'analyze'])
+  True
 
 Each term found by the analyzer during the fit is assigned a unique
 integer index corresponding to a column in the resulting matrix. This
 interpretation of the columns can be retrieved as follows::
 
-  >>> vectorizer.get_feature_names()
-  [u'and', u'document', u'first', u'is', u'one', u'second', u'the', u'third', u'this']
+  >>> vectorizer.get_feature_names() == (
+  ...     ['and', 'document', 'first', 'is', 'one',
+  ...      'second', 'the', 'third', 'this'])
+  True
 
   >>> X.toarray()           # doctest: +ELLIPSIS
   array([[0, 1, 1, 1, 0, 0, 1, 0, 1],
@@ -350,13 +353,14 @@ Note that in the previous corpus, the first and the last documents have
 exactly the same words hence are encoded in equal vectors. In particular
 we lose the information that the last document is an interrogative form. To
 preserve some of the local ordering information we can extract 2-grams
-of words in addition to the 1-grams (the word themselvs)::
+of words in addition to the 1-grams (individual words)::
 
   >>> bigram_vectorizer = CountVectorizer(ngram_range=(1, 2),
-  ...                                     token_pattern=ur'\b\w+\b', min_df=1)
+  ...                                     token_pattern=r'\b\w+\b', min_df=1)
   >>> analyze = bigram_vectorizer.build_analyzer()
-  >>> analyze('Bi-grams are cool!')
-  [u'bi', u'grams', u'are', u'cool', u'bi grams', u'grams are', u'are cool']
+  >>> analyze('Bi-grams are cool!') == (
+  ...     ['bi', 'grams', 'are', 'cool', 'bi grams', 'grams are', 'are cool'])
+  True
 
 The vocabulary extracted by this vectorizer is hence much bigger and
 can now resolve ambiguities encoded in local positioning patterns::
@@ -373,7 +377,7 @@ can now resolve ambiguities encoded in local positioning patterns::
 In particular the interrogative form "Is this" is only present in the
 last document::
 
-  >>> feature_index = bigram_vectorizer.vocabulary_.get(u'is this')
+  >>> feature_index = bigram_vectorizer.vocabulary_.get('is this')
   >>> X_2[:, feature_index]     # doctest: +ELLIPSIS
   array([0, 0, 0, 1]...)
 
@@ -404,8 +408,8 @@ class::
 
   >>> from sklearn.feature_extraction.text import TfidfTransformer
   >>> transformer = TfidfTransformer()
-  >>> transformer   # doctest: +NORMALIZE_WHITESPACE
-  TfidfTransformer(norm=u'l2', smooth_idf=True, sublinear_tf=False,
+  >>> transformer   # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+  TfidfTransformer(norm=...'l2', smooth_idf=True, sublinear_tf=False,
                    use_idf=True)
 
 Again please see the :ref:`reference documentation
@@ -424,9 +428,9 @@ content of the documents::
   ...           [3, 0, 2]]
   ...
   >>> tfidf = transformer.fit_transform(counts)
-  >>> tfidf                                  # doctest: +NORMALIZE_WHITESPACE
-  <6x3 sparse matrix of type '<type 'numpy.float64'>'
-      with 9 stored elements in Compressed Sparse Row format>
+  >>> tfidf                         # doctest: +NORMALIZE_WHITESPACE  +ELLIPSIS
+  <6x3 sparse matrix of type '<... 'numpy.float64'>'
+      with 9 stored elements in Compressed Sparse ... format>
 
   >>> tfidf.toarray()                        # doctest: +ELLIPSIS
   array([[ 0.85...,  0.  ...,  0.52...],
@@ -444,26 +448,26 @@ attribute::
   array([ 1. ...,  2.25...,  1.84...])
 
 
-As tf–idf is a very often used for text features, there is also another
-class called :class:`TfidfVectorizer` that combines all the option of
+As tf–idf is very often used for text features, there is also another
+class called :class:`TfidfVectorizer` that combines all the options of
 :class:`CountVectorizer` and :class:`TfidfTransformer` in a single model::
 
   >>> from sklearn.feature_extraction.text import TfidfVectorizer
   >>> vectorizer = TfidfVectorizer(min_df=1)
   >>> vectorizer.fit_transform(corpus)
-  ...                                       # doctest: +NORMALIZE_WHITESPACE
-  <4x9 sparse matrix of type '<type 'numpy.float64'>'
-      with 19 stored elements in Compressed Sparse Row format>
+  ...                                # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+  <4x9 sparse matrix of type '<... 'numpy.float64'>'
+      with 19 stored elements in Compressed Sparse ... format>
 
 While the tf–idf normalization is often very useful, there might
 be cases where the binary occurrence markers might offer better
 features. This can be achieved by using the ``binary`` parameter
 of :class:`CountVectorizer`. In particular, some estimators such as
 :ref:`bernoulli_naive_bayes` explicitly model discrete boolean random
-variables. Also, very short text are likely to have noisy tf–idf values
+variables. Also, very short texts are likely to have noisy tf–idf values
 while the binary occurrence info is more stable.
 
-As usual the only way how to best adjust the feature extraction parameters
+As usual the best way to adjust the feature extraction parameters
 is to use a cross-validated grid search, for instance by pipelining the
 feature extractor with a classifier:
 
@@ -472,28 +476,35 @@ feature extractor with a classifier:
 
 Decoding text files
 -------------------
-Text is made of characters, but files are made of bytes. In Unicode,
-there are many more possible characters than possible bytes. Every text
-file is *encoded* so that its characters can be represented as bytes.
+Text is made of characters, but files are made of bytes. These bytes represent
+characters according to some *encoding*. To work with text files in Python,
+their bytes must be *decoded* to a character set called Unicode.
+Common encodings are ASCII, Latin-1 (Western Europe), KOI8-R (Russian)
+and the universal encodings UTF-8 and UTF-16. Many others exist.
 
-When you work with text in Python, it should be Unicode. Most of the
-text feature extractors in scikit-learn will only work with Unicode. So
-to correctly load text from a file (or from the network), you need to
-decode it with the correct encoding.
+.. note::
+    An encoding can also be called a 'character set',
+    but this term is less accurate: several encodings can exist
+    for a single character set.
 
-An encoding can also be called a 'charset' or 'character set', though
-this terminology is less accurate. The :class:`CountVectorizer` takes
-a ``charset`` parameter to tell it what encoding to decode text from.
+The text feature extractors in scikit-learn know how to decode text files,
+but only if you tell them what encoding the files are in.
+The :class:`CountVectorizer` takes an ``encoding`` parameter for this purpose.
+For modern text files, the correct encoding is probably UTF-8,
+which is therefore the default (``encoding="utf-8"``).
 
-For modern text files, the correct encoding is probably UTF-8. The
-:class:`CountVectorizer` has ``charset='utf-8'`` as the default. If the
-text you are loading is not actually encoded with UTF-8, however, you
-will get a ``UnicodeDecodeError``.
+If the text you are loading is not actually encoded with UTF-8, however,
+you will get a ``UnicodeDecodeError``.
+The vectorizers can be told to be silent about decoding errors
+by setting the ``decode_error`` parameter to either ``"ignore"``
+or ``"replace"``. See the documentation for the Python function
+``bytes.decode`` for more details
+(type ``help(bytes.decode)`` at the Python prompt).
 
 If you are having trouble decoding text, here are some things to try:
 
 - Find out what the actual encoding of the text is. The file might come
-  with a header that tells you the encoding, or there might be some
+  with a header or README that tells you the encoding, or there might be some
   standard encoding you can assume based on where the text comes from.
 
 - You may be able to find out what kind of encoding it is in general
@@ -504,7 +515,7 @@ If you are having trouble decoding text, here are some things to try:
 - You could try UTF-8 and disregard the errors. You can decode byte
   strings with ``bytes.decode(errors='replace')`` to replace all
   decoding errors with a meaningless character, or set
-  ``charset_error='replace'`` in the vectorizer. This may damage the
+  ``decode_error='replace'`` in the vectorizer. This may damage the
   usefulness of your features.
 
 - Real text may come from a variety of sources that may have used different
@@ -520,6 +531,27 @@ If you are having trouble decoding text, here are some things to try:
   incorrectly, but at least the same sequence of bytes will always represent
   the same feature.
 
+For example, the following snippet uses ``chardet``
+(not shipped with scikit-learn, must be installed separately)
+to figure out the encoding of three texts.
+It then vectorizes the texts and prints the learned vocabulary.
+The output is not shown here.
+
+  >>> import chardet    # doctest: +SKIP
+  >>> text1 = b"Sei mir gegr\xc3\xbc\xc3\x9ft mein Sauerkraut"
+  >>> text2 = b"holdselig sind deine Ger\xfcche"
+  >>> text3 = b"\xff\xfeA\x00u\x00f\x00 \x00F\x00l\x00\xfc\x00g\x00e\x00l\x00n\x00 \x00d\x00e\x00s\x00 \x00G\x00e\x00s\x00a\x00n\x00g\x00e\x00s\x00,\x00 \x00H\x00e\x00r\x00z\x00l\x00i\x00e\x00b\x00c\x00h\x00e\x00n\x00,\x00 \x00t\x00r\x00a\x00g\x00 \x00i\x00c\x00h\x00 \x00d\x00i\x00c\x00h\x00 \x00f\x00o\x00r\x00t\x00"
+  >>> decoded = [x.decode(chardet.detect(x)['encoding'])
+  ...            for x in (text1, text2, text3)]        # doctest: +SKIP
+  >>> v = CountVectorizer().fit(decoded).vocabulary_    # doctest: +SKIP
+  >>> for term in v: print(v)                           # doctest: +SKIP
+
+(Depending on the version of ``chardet``, it might get the first one wrong.)
+
+For an introduction to Unicode and character encodings in general,
+see Joel Spolsky's `Absolute Minimum Every Software Developer Must Know
+About Unicode <http://www.joelonsoftware.com/articles/Unicode.html>`_.
+
 .. _`ftfy`: http://github.com/LuminosoInsight/python-ftfy
 
 
@@ -530,7 +562,7 @@ The bag of words representation is quite simplistic but surprisingly
 useful in practice.
 
 In particular in a **supervised setting** it can be successfully combined
-with fast and scalable linear models to train **document classificers**,
+with fast and scalable linear models to train **document classifiers**,
 for instance:
 
  * :ref:`example_document_classification_20newsgroups.py`
@@ -552,7 +584,7 @@ Limitations of the Bag of Words representation
 
 A collection of unigrams (what bag of words is) cannot capture phrases
 and multi-word expressions, effectively disregarding any word order
-dependence. Additionally, bag of words model doesn't account for potential
+dependence. Additionally, the bag of words model doesn't account for potential
 misspellings or word derivations.
 
 N-grams to the rescue! Instead of building a simple collection of
@@ -573,32 +605,35 @@ decide better::
 
   >>> ngram_vectorizer = CountVectorizer(analyzer='char_wb', ngram_range=(2, 2), min_df=1)
   >>> counts = ngram_vectorizer.fit_transform(['words', 'wprds'])
-  >>> ngram_vectorizer.get_feature_names()
-  [u' w', u'ds', u'or', u'pr', u'rd', u's ', u'wo', u'wp']
+  >>> ngram_vectorizer.get_feature_names() == (
+  ...     [' w', 'ds', 'or', 'pr', 'rd', 's ', 'wo', 'wp'])
+  True
   >>> counts.toarray().astype(int)
   array([[1, 1, 1, 0, 1, 1, 1, 0],
          [1, 1, 0, 1, 1, 1, 0, 1]])
 
-In above example, ``'char_wb`` analyzer is used, which creates n-grams
+In the above example, ``'char_wb`` analyzer is used, which creates n-grams
 only from characters inside word boundaries (padded with space on each
 side). The ``'char'`` analyzer, alternatively, creates n-grams that
 span across words::
 
   >>> ngram_vectorizer = CountVectorizer(analyzer='char_wb', ngram_range=(5, 5), min_df=1)
   >>> ngram_vectorizer.fit_transform(['jumpy fox'])
-  ...                                         # doctest: +NORMALIZE_WHITESPACE
-  <1x4 sparse matrix of type '<type 'numpy.int64'>'
-     with 4 stored elements in Compressed Sparse Column format>
-  >>> ngram_vectorizer.get_feature_names()
-  [u' fox ', u' jump', u'jumpy', u'umpy ']
+  ...                                # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+  <1x4 sparse matrix of type '<... 'numpy.int64'>'
+     with 4 stored elements in Compressed Sparse ... format>
+  >>> ngram_vectorizer.get_feature_names() == (
+  ...     [' fox ', ' jump', 'jumpy', 'umpy '])
+  True
 
   >>> ngram_vectorizer = CountVectorizer(analyzer='char', ngram_range=(5, 5), min_df=1)
   >>> ngram_vectorizer.fit_transform(['jumpy fox'])
-  ...                                         # doctest: +NORMALIZE_WHITESPACE
-  <1x5 sparse matrix of type '<type 'numpy.int64'>'
-      with 5 stored elements in Compressed Sparse Column format>
-  >>> ngram_vectorizer.get_feature_names()
-  [u'jumpy', u'mpy f', u'py fo', u'umpy ', u'y fox']
+  ...                                # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+  <1x5 sparse matrix of type '<... 'numpy.int64'>'
+      with 5 stored elements in Compressed Sparse ... format>
+  >>> ngram_vectorizer.get_feature_names() == (
+  ...     ['jumpy', 'mpy f', 'py fo', 'umpy ', 'y fox'])
+  True
 
 The word boundaries-aware variant ``char_wb`` is especially interesting
 for languages that use white-spaces for word separation as it generates
@@ -662,11 +697,11 @@ meaning that you don't have to call ``fit`` on it::
   >>> from sklearn.feature_extraction.text import HashingVectorizer
   >>> hv = HashingVectorizer(n_features=10)
   >>> hv.transform(corpus)
-  ...                                       # doctest: +NORMALIZE_WHITESPACE
-  <4x10 sparse matrix of type '<type 'numpy.float64'>'
-      with 16 stored elements in Compressed Sparse Row format>
+  ...                                # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+  <4x10 sparse matrix of type '<... 'numpy.float64'>'
+      with 16 stored elements in Compressed Sparse ... format>
 
-You can see that 16 non-zero feature tokens where extracted in the vector
+You can see that 16 non-zero feature tokens were extracted in the vector
 output: this is less than the 19 non-zeros extracted previously by the
 :class:`CountVectorizer` on the same toy corpus. The discrepancy comes from
 hash function collisions because of the low value of the ``n_features`` parameter.
@@ -680,16 +715,16 @@ text classification tasks.
 Note that the dimensionality does not affect the CPU training time of
 algorithms which operate on CSR matrices (``LinearSVC(dual=True)``,
 ``Perceptron``, ``SGDClassifier``, ``PassiveAggressive``) but it does for
-algorithm that work with CSC matrices (``LinearSVC(dual=False)``, ``Lasso()``,
+algorithms that work with CSC matrices (``LinearSVC(dual=False)``, ``Lasso()``,
 etc).
 
 Let's try again with the default setting::
 
   >>> hv = HashingVectorizer()
   >>> hv.transform(corpus)
-  ...                                       # doctest: +NORMALIZE_WHITESPACE
-  <4x1048576 sparse matrix of type '<type 'numpy.float64'>'
-      with 19 stored elements in Compressed Sparse Row format>
+  ...                               # doctest: +NORMALIZE_WHITESPACE  +ELLIPSIS
+  <4x1048576 sparse matrix of type '<... 'numpy.float64'>'
+      with 19 stored elements in Compressed Sparse ... format>
 
 We no longer get the collisions, but this comes at the expense of a much larger
 dimensionality of the output space.
@@ -736,8 +771,9 @@ to the vectorizer constructor::
   ...     return s.split()
   ...
   >>> vectorizer = CountVectorizer(tokenizer=my_tokenizer)
-  >>> vectorizer.build_analyzer()(u"Some... punctuation!")
-  [u'some...', u'punctuation!']
+  >>> vectorizer.build_analyzer()(u"Some... punctuation!") == (
+  ...     ['some...', 'punctuation!'])
+  True
 
 In particular we name:
 

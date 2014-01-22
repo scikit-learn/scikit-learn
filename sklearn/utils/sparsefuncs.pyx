@@ -1,5 +1,6 @@
 # Authors: Mathieu Blondel
 #          Olivier Grisel
+#          Peter Prettenhofer
 #          Lars Buitinck
 #
 # Licence: BSD 3 clause
@@ -14,6 +15,35 @@ np.import_array()
 
 
 ctypedef np.float64_t DOUBLE
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.cdivision(True)
+def csr_row_norms(X):
+    """L2 norm of each row in CSR matrix X."""
+    cdef:
+        unsigned int n_samples = X.shape[0]
+        unsigned int n_features = X.shape[1]
+        np.ndarray[DOUBLE, ndim=1, mode="c"] norms
+        np.ndarray[DOUBLE, ndim=1, mode="c"] data
+        np.ndarray[int, ndim=1, mode="c"] indices = X.indices
+        np.ndarray[int, ndim=1, mode="c"] indptr = X.indptr
+
+        np.npy_intp i, j
+        double sum_
+
+    norms = np.zeros(n_samples, dtype=np.float64)
+    data = np.asarray(X.data, dtype=np.float64)     # might copy!
+
+    for i in range(n_samples):
+        sum_ = 0.0
+        for j in range(indptr[i], indptr[i + 1]):
+            sum_ += data[j] * data[j]
+        norms[i] = sum_
+
+    return norms
+
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
@@ -280,10 +310,27 @@ def mean_variance_axis0(X):
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
+cdef void add_row_csr(np.ndarray[np.float64_t, ndim=1] data,
+                      np.ndarray[int, ndim=1] indices,
+                      np.ndarray[int, ndim=1] indptr,
+                      int i, np.ndarray[np.float64_t, ndim=1, mode="c"] out):
+    """Add row i of CSR matrix (data, indices, indptr) to array out.
+
+    Equivalent to out += X[i].toarray(). Returns None.
+    """
+    cdef int ind, j
+
+    for ind in range(indptr[i], indptr[i + 1]):
+        j = indices[ind]
+        out[j] += data[ind]
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
 def assign_rows_csr(X,
                     np.ndarray[np.npy_intp, ndim=1] X_rows,
                     np.ndarray[np.npy_intp, ndim=1] out_rows,
-                    np.ndarray[DOUBLE, ndim=2, mode="c"] out):
+                    np.ndarray[np.float64_t, ndim=2, mode="c"] out):
     """Densify selected rows of a CSR matrix into a preallocated array.
 
     Like out[out_rows] = X[X_rows].toarray() but without copying. Only supported for
@@ -310,6 +357,8 @@ def assign_rows_csr(X,
 
     out[:] = 0.
     for i in range(X_rows.shape[0]):
+        # XXX we could reuse add_row_csr here, but the array slice
+        # is not optimized away.
         rX = X_rows[i]
         for ind in range(indptr[rX], indptr[rX + 1]):
             j = indices[ind]

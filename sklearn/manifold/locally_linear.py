@@ -69,7 +69,7 @@ def barycenter_kneighbors_graph(X, n_neighbors, reg=1e-3):
 
     Parameters
     ----------
-    X : {array-like, sparse matrix, BallTree, cKDTree, NearestNeighbors}
+    X : {array-like, sparse matrix, BallTree, KDTree, NearestNeighbors}
         Sample data, shape = (n_samples, n_features), in the form of a
         numpy array, sparse array, precomputed tree, or NearestNeighbors
         object.
@@ -184,7 +184,7 @@ def locally_linear_embedding(
 
     Parameters
     ----------
-    X : {array-like, sparse matrix, BallTree, cKDTree, NearestNeighbors}
+    X : {array-like, sparse matrix, BallTree, KDTree, NearestNeighbors}
         Sample data, shape = (n_samples, n_features), in the form of a
         numpy array, sparse array, precomputed tree, or NearestNeighbors
         object.

@@ -17,9 +17,9 @@ and classification. :class:`Pipeline` serves two purposes here:
     **Joint parameter selection**: You can :ref:`grid search <grid_search>`
     over parameters of all estimators in the pipeline at once.
 
-For estimators to be usable within a pipeline, all except the last one need to have
-a ``transform`` function. Otherwise, the dataset can not be passed through this
-estimator.
+All estimators in a pipeline, except the last one, must be transformers
+(i.e. must have a ``transform`` method).
+The last estimator may be any type (transformer, classifier, etc.).
 
 
 Usage
@@ -38,9 +38,24 @@ is an estimator object::
     Pipeline(steps=[('reduce_dim', PCA(copy=True, n_components=None,
         whiten=False)), ('svm', SVC(C=1.0, cache_size=200, class_weight=None,
         coef0=0.0, degree=3, gamma=0.0, kernel='rbf', max_iter=-1,
-        probability=False, shrinking=True, tol=0.001, verbose=False))])
+        probability=False, random_state=None, shrinking=True, tol=0.001,
+        verbose=False))])
 
-The estimators of the pipeline are stored as a list in the ``steps`` attribute::
+The utility function :func:`make_pipeline` is a shorthand
+for constructing pipelines;
+it takes a variable number of estimators and returns a pipeline,
+filling in the names automatically::
+
+    >>> from sklearn.pipeline import make_pipeline
+    >>> from sklearn.naive_bayes import MultinomialNB
+    >>> from sklearn.preprocessing import Binarizer
+    >>> make_pipeline(Binarizer(), MultinomialNB()) # doctest: +NORMALIZE_WHITESPACE
+    Pipeline(steps=[('binarizer', Binarizer(copy=True, threshold=0.0)),
+                    ('multinomialnb', MultinomialNB(alpha=1.0,
+                                                    class_prior=None,
+                                                    fit_prior=True))])
+
+The estimators of a pipeline are stored as a list in the ``steps`` attribute::
 
     >>> clf.steps[0]
     ('reduce_dim', PCA(copy=True, n_components=None, whiten=False))
@@ -57,7 +72,8 @@ Parameters of the estimators in the pipeline can be accessed using the
     Pipeline(steps=[('reduce_dim', PCA(copy=True, n_components=None,
         whiten=False)), ('svm', SVC(C=10, cache_size=200, class_weight=None,
         coef0=0.0, degree=3, gamma=0.0, kernel='rbf', max_iter=-1,
-        probability=False, shrinking=True, tol=0.001, verbose=False))])
+        probability=False, random_state=None, shrinking=True, tol=0.001,
+        verbose=False))])
 
 This is particularly important for doing grid searches::
 
@@ -135,6 +151,8 @@ and ``value`` is an estimator object::
         n_components=None, remove_zero_eig=False, tol=0))],
         transformer_weights=None)
 
+Like pipelines, feature unions have a shorthand constructor called
+:func:`make_union` that does require manual naming of the components.
 
                                                                        
 .. topic:: Examples:

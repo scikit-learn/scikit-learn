@@ -1,4 +1,3 @@
-import warnings
 from nose.tools import assert_equal
 
 import numpy as np
@@ -9,7 +8,7 @@ from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raises
-
+from sklearn.utils.testing import ignore_warnings, assert_warns_message
 from sklearn import linear_model, datasets
 
 diabetes = datasets.load_diabetes()
@@ -112,7 +111,8 @@ def test_collinearity():
                   [1., 1., 0]])
     y = np.array([1., 0., 0])
 
-    _, _, coef_path_ = linear_model.lars_path(X, y, alpha_min=0.01)
+    f = ignore_warnings
+    _, _, coef_path_ = f(linear_model.lars_path)(X, y, alpha_min=0.01)
     assert_true(not np.isnan(coef_path_).any())
     residual = np.dot(X, coef_path_[:, -1]) - y
     assert_less((residual ** 2).sum(), 1.)  # just make sure it's bounded
@@ -182,12 +182,10 @@ def test_singular_matrix():
     # to give a good answer
     X1 = np.array([[1, 1.], [1., 1.]])
     y1 = np.array([1, 1])
-    with warnings.catch_warnings(record=True) as warning_list:
-        warnings.simplefilter("always", UserWarning)
-        alphas, active, coef_path = linear_model.lars_path(X1, y1)
-    assert_true(len(warning_list) > 0)
-    assert_true('Dropping a regressor' in warning_list[0].message.args[0])
-
+    in_warn_message = 'Dropping a regressor'
+    f = assert_warns_message
+    alphas, active, coef_path = f(UserWarning, in_warn_message,
+                                  linear_model.lars_path, X1, y1)
     assert_array_almost_equal(coef_path.T, [[0, 0], [1, 0]])
 
 
@@ -221,7 +219,7 @@ def test_rank_deficient_design():
 def test_lasso_lars_vs_lasso_cd(verbose=False):
     """
     Test that LassoLars and Lasso using coordinate descent give the
-    same results
+    same results.
     """
     X = 3 * diabetes.data
 
@@ -301,6 +299,9 @@ def test_lasso_lars_vs_lasso_cd_ill_conditioned():
     # Test lasso lars on a very ill-conditioned design, and check that
     # it does not blow up, and stays somewhat close to a solution given
     # by the coordinate descent solver
+    # Also test that lasso_path (using lars_path output style) gives
+    # the same result as lars_path and previous lasso output style
+    # under these conditions.
     rng = np.random.RandomState(42)
 
     # Generate data
@@ -317,19 +318,31 @@ def test_lasso_lars_vs_lasso_cd_ill_conditioned():
     y += sigma * rng.rand(*y.shape)
     y = y.squeeze()
 
-    with warnings.catch_warnings(record=True) as warning_list:
-        warnings.simplefilter("always", UserWarning)
-        lars_alphas, _, lars_coef = linear_model.lars_path(X, y,
-                                                           method='lasso')
-    assert_true(len(warning_list) > 0)
-    assert_true(('Dropping a regressor' in warning_list[0].message.args[0])
-                or ('Early stopping' in warning_list[0].message.args[0]))
+    f = assert_warns_message
+    def in_warn_message(msg):
+        return 'Early stopping' in msg or 'Dropping regressor' in msg
+    lars_alphas, _, lars_coef = f(UserWarning,
+                                  in_warn_message,
+                                  linear_model.lars_path, X, y, method='lasso')
 
-    lasso_coef = np.zeros((w.shape[0], len(lars_alphas)))
-    for i, model in enumerate(linear_model.lasso_path(X, y, alphas=lars_alphas,
-                                                      tol=1e-6)):
-        lasso_coef[:, i] = model.coef_
+    with ignore_warnings():
+        _, lasso_coef2, _ = linear_model.lasso_path(X, y,
+                                                    alphas=lars_alphas,
+                                                    tol=1e-6,
+                                                    fit_intercept=False)
+
+        lasso_coef = np.zeros((w.shape[0], len(lars_alphas)))
+        iter_models =  enumerate(linear_model.lasso_path(X, y,
+                                                         alphas=lars_alphas,
+                                                         tol=1e-6,
+                                                         return_models=True,
+                                                         fit_intercept=False))
+        for i, model in iter_models:
+            lasso_coef[:, i] = model.coef_
+
     np.testing.assert_array_almost_equal(lars_coef, lasso_coef, decimal=1)
+    np.testing.assert_array_almost_equal(lars_coef, lasso_coef2, decimal=1)
+    np.testing.assert_array_almost_equal(lasso_coef, lasso_coef2, decimal=1)
 
 
 def test_lars_drop_for_good():

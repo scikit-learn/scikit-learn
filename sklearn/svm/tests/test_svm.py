@@ -4,7 +4,6 @@ Testing for Support Vector Machine module (sklearn.svm)
 TODO: remove hard coded numerical results when possible
 """
 
-import warnings
 import numpy as np
 from numpy.testing import (assert_array_equal, assert_array_almost_equal,
                            assert_almost_equal)
@@ -18,6 +17,8 @@ from sklearn.utils import check_random_state
 from sklearn.utils import ConvergenceWarning
 from sklearn.utils.fixes import unique
 from sklearn.utils.testing import assert_greater, assert_less
+from sklearn.utils.testing import assert_warns
+
 
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
@@ -55,11 +56,6 @@ def test_libsvm_iris():
         clf = svm.SVC(kernel=k).fit(iris.data, iris.target)
         assert_greater(np.mean(clf.predict(iris.data) == iris.target), 0.9)
 
-    # check deprecated ``label_`` attribute:
-    with warnings.catch_warnings(record=True):
-        # catch deprecation warning
-        assert_array_equal(clf.label_, np.sort(clf.label_))
-
     assert_array_equal(clf.classes_, np.sort(clf.classes_))
 
     # check also the low-level API
@@ -74,7 +70,8 @@ def test_libsvm_iris():
 
     pred = svm.libsvm.cross_validation(iris.data,
                                        iris.target.astype(np.float64), 5,
-                                       kernel='linear')
+                                       kernel='linear',
+                                       random_seed=0)
     assert_greater(np.mean(pred == iris.target), .95)
 
 
@@ -264,8 +261,8 @@ def test_probability():
     This uses cross validation, so we use a slightly bigger testing set.
     """
 
-    for clf in (svm.SVC(probability=True, C=1.0),
-                svm.NuSVC(probability=True)):
+    for clf in (svm.SVC(probability=True, random_state=0, C=1.0),
+                svm.NuSVC(probability=True, random_state=0)):
 
         clf.fit(iris.data, iris.target)
 
@@ -339,6 +336,14 @@ def test_sample_weights():
     sample_weight = [.1] * 3 + [10] * 3
     clf.fit(X, Y, sample_weight=sample_weight)
     assert_array_equal(clf.predict(X[2]), [2.])
+
+    # test that rescaling all samples is the same as changing C
+    clf = svm.SVC()
+    clf.fit(X, Y)
+    dual_coef_no_weight = clf.dual_coef_
+    clf.set_params(C=100)
+    clf.fit(X, Y, sample_weight=np.repeat(0.01, len(X)))
+    assert_array_almost_equal(dual_coef_no_weight, clf.dual_coef_)
 
 
 def test_auto_weight():
@@ -486,7 +491,19 @@ def test_linearsvc_crammer_singer():
     assert_array_almost_equal(dec_func, cs_clf.decision_function(iris.data))
 
 
+def test_crammer_singer_binary():
+    """Test Crammer-Singer formulation in the binary case"""
+    X, y = make_classification(n_classes=2, random_state=0)
+
+    for fit_intercept in (True, False):
+        acc = svm.LinearSVC(fit_intercept=fit_intercept,
+                            multi_class="crammer_singer",
+                            random_state=0).fit(X, y).score(X, y)
+        assert_greater(acc, 0.9)
+
+
 def test_linearsvc_iris():
+
     """
     Test that LinearSVC gives plausible predictions on the iris dataset
 
@@ -607,24 +624,26 @@ def test_svc_clone_with_callable_kernel():
     # create SVM with callable linear kernel, check that results are the same
     # as with built-in linear kernel
     svm_callable = svm.SVC(kernel=lambda x, y: np.dot(x, y.T),
-                           probability=True)
+                           probability=True, random_state=0)
     # clone for checking clonability with lambda functions..
     svm_cloned = base.clone(svm_callable)
-    svm_cloned.fit(X, Y)
+    svm_cloned.fit(iris.data, iris.target)
 
-    svm_builtin = svm.SVC(kernel='linear', probability=True)
-    svm_builtin.fit(X, Y)
+    svm_builtin = svm.SVC(kernel='linear', probability=True, random_state=0)
+    svm_builtin.fit(iris.data, iris.target)
 
     assert_array_almost_equal(svm_cloned.dual_coef_,
                               svm_builtin.dual_coef_)
     assert_array_almost_equal(svm_cloned.intercept_,
                               svm_builtin.intercept_)
-    assert_array_equal(svm_cloned.predict(X), svm_builtin.predict(X))
+    assert_array_equal(svm_cloned.predict(iris.data),
+                       svm_builtin.predict(iris.data))
 
-    assert_array_almost_equal(svm_cloned.predict_proba(X),
-                              svm_builtin.predict_proba(X))
-    assert_array_almost_equal(svm_cloned.decision_function(X),
-                              svm_builtin.decision_function(X))
+    assert_array_almost_equal(svm_cloned.predict_proba(iris.data),
+                              svm_builtin.predict_proba(iris.data),
+                               decimal=4)
+    assert_array_almost_equal(svm_cloned.decision_function(iris.data),
+                              svm_builtin.decision_function(iris.data))
 
 
 def test_svc_bad_kernel():
@@ -634,15 +653,16 @@ def test_svc_bad_kernel():
 
 def test_timeout():
     a = svm.SVC(kernel=lambda x, y: np.dot(x, y.T), probability=True,
-                max_iter=1)
-    with warnings.catch_warnings(record=True) as foo:
-        # Hackish way to reset the  warning counter
-        from sklearn.svm import base
-        base.__warningregistry__ = {}
-        warnings.simplefilter("always")
-        a.fit(X, Y)
-        assert_equal(len(foo), 1, msg=foo)
-        assert_equal(foo[0].category, ConvergenceWarning, msg=foo[0].category)
+                random_state=0, max_iter=1)
+    assert_warns(ConvergenceWarning, a.fit, X, Y)
+
+
+def test_consistent_proba():
+    a = svm.SVC(probability=True, max_iter=1, random_state=0)
+    proba_1 = a.fit(X, Y).predict_proba(X)
+    a = svm.SVC(probability=True, max_iter=1, random_state=0)
+    proba_2 = a.fit(X, Y).predict_proba(X)
+    assert_array_almost_equal(proba_1, proba_2)
 
 
 if __name__ == '__main__':

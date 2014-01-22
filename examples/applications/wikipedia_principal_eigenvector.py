@@ -44,7 +44,7 @@ import numpy as np
 
 from scipy import sparse
 
-from sklearn.utils.extmath import randomized_svd
+from sklearn.decomposition import randomized_svd
 from sklearn.externals.joblib import Memory
 
 

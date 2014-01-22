@@ -28,7 +28,7 @@ print(__doc__)
 import numpy as np
 import pylab as pl
 from sklearn.cluster import KMeans
-from sklearn.metrics import euclidean_distances
+from sklearn.metrics import pairwise_distances_argmin
 from sklearn.datasets import load_sample_image
 from sklearn.utils import shuffle
 from time import time
@@ -64,8 +64,9 @@ print("done in %0.3fs." % (time() - t0))
 codebook_random = shuffle(image_array, random_state=0)[:n_colors + 1]
 print("Predicting color indices on the full image (random)")
 t0 = time()
-dist = euclidean_distances(codebook_random, image_array, squared=True)
-labels_random = dist.argmin(axis=0)
+labels_random = pairwise_distances_argmin(codebook_random,
+                                          image_array,
+                                          axis=0)
 print("done in %0.3fs." % (time() - t0))
 
 

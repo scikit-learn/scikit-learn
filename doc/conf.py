@@ -14,6 +14,7 @@
 
 import sys
 import os
+from sklearn.externals.six import u
 
 # If extensions (or modules to document with autodoc) are in another
 # directory, add these directories to sys.path here. If the directory
@@ -59,15 +60,15 @@ plot_gallery = True
 master_doc = 'index'
 
 # General information about the project.
-project = u'scikit-learn'
-copyright = u'2010–2013, scikit-learn developers (BSD License)'
+project = u('scikit-learn')
+copyright = u('2010 - 2013, scikit-learn developers (BSD License)')
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 #
 # The short X.Y version.
-version = '0.14-git'
+version = '0.15-git'
 # The full version, including alpha/beta/rc tags.
 import sklearn
 release = sklearn.__version__
@@ -199,8 +200,8 @@ htmlhelp_basename = 'scikit-learndoc'
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass
 # [howto/manual]).
-latex_documents = [('index', 'user_guide.tex', u'scikit-learn user guide',
-                    u'scikit-learn developers', 'manual'), ]
+latex_documents = [('index', 'user_guide.tex', u('scikit-learn user guide'),
+                    u('scikit-learn developers'), 'manual'), ]
 
 # The name of an image file (relative to this directory) to place at the top of
 # the title page.
@@ -211,7 +212,7 @@ latex_logo = "logos/scikit-learn-logo.png"
 #latex_use_parts = False
 
 # Additional stuff for the LaTeX preamble.
-latex_preamble = """
+latex_preamble = r"""
 \usepackage{amsmath}\usepackage{amsfonts}\usepackage{bm}\usepackage{morefloats}
 \usepackage{enumitem} \setlistdepth{10}
 """
@@ -223,3 +224,8 @@ latex_preamble = """
 #latex_use_modindex = True
 
 trim_doctests_flags = True
+
+# Add the 'copybutton' javascript, to hide/show the prompt in code
+# examples
+def setup(app):
+    app.add_javascript('js/copybutton.js')

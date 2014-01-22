@@ -12,7 +12,7 @@ of Gaussian Mixture Models.
 import numpy as np
 
 from ..base import BaseEstimator
-from ..utils import check_random_state
+from ..utils import check_random_state, deprecated
 from ..utils.extmath import logsumexp, pinvh
 from .. import cluster
 
@@ -177,7 +177,7 @@ class GMM(BaseEstimator):
     See Also
     --------
 
-    DPGMM : Ininite gaussian mixture model, using the dirichlet
+    DPGMM : Infinite gaussian mixture model, using the dirichlet
         process, fit with a variational algorithm
 
 
@@ -273,8 +273,13 @@ class GMM(BaseEstimator):
         _validate_covars(covars, self.covariance_type, self.n_components)
         self.covars_ = covars
 
+    @deprecated("GMM.eval was renamed to GMM.score_samples in 0.14 and will be"
+                " removed in 0.16.")
     def eval(self, X):
-        """Evaluate the model on data
+        return self.score_samples(X)
+
+    def score_samples(self, X):
+        """Return the per-sample likelihood of the data under the model.
 
         Compute the log probability of X under the model and
         return the posterior distribution (responsibilities) of each
@@ -283,14 +288,15 @@ class GMM(BaseEstimator):
         Parameters
         ----------
         X: array_like, shape (n_samples, n_features)
-            List of n_features-dimensional data points.  Each row
+            List of n_features-dimensional data points. Each row
             corresponds to a single data point.
 
         Returns
         -------
-        logprob: array_like, shape (n_samples,)
-            Log probabilities of each data point in X
-        responsibilities: array_like, shape (n_samples, n_components)
+        logprob : array_like, shape (n_samples,)
+            Log probabilities of each data point in X.
+
+        responsibilities : array_like, shape (n_samples, n_components)
             Posterior probabilities of each mixture component for each
             observation
         """
@@ -300,7 +306,7 @@ class GMM(BaseEstimator):
         if X.size == 0:
             return np.array([]), np.empty((0, self.n_components))
         if X.shape[1] != self.means_.shape[1]:
-            raise ValueError('the shape of X  is not compatible with self')
+            raise ValueError('The shape of X  is not compatible with self')
 
         lpr = (log_multivariate_normal_density(X, self.means_, self.covars_,
                                                self.covariance_type)
@@ -323,7 +329,7 @@ class GMM(BaseEstimator):
         logprob : array_like, shape (n_samples,)
             Log probabilities of each data point in X
         """
-        logprob, _ = self.eval(X)
+        logprob, _ = self.score_samples(X)
         return logprob
 
     def predict(self, X):
@@ -337,7 +343,7 @@ class GMM(BaseEstimator):
         -------
         C : array, shape = (n_samples,)
         """
-        logprob, responsibilities = self.eval(X)
+        logprob, responsibilities = self.score_samples(X)
         return responsibilities.argmax(axis=1)
 
     def predict_proba(self, X):
@@ -354,7 +360,7 @@ class GMM(BaseEstimator):
             Returns the probability of the sample for each Gaussian
             (state) in the model.
         """
-        logprob, responsibilities = self.eval(X)
+        logprob, responsibilities = self.score_samples(X)
         return responsibilities
 
     def sample(self, n_samples=1, random_state=None):
@@ -448,7 +454,7 @@ class GMM(BaseEstimator):
             self.converged_ = False
             for i in range(self.n_iter):
                 # Expectation step
-                curr_log_likelihood, responsibilities = self.eval(X)
+                curr_log_likelihood, responsibilities = self.score_samples(X)
                 log_likelihood.append(curr_log_likelihood.sum())
 
                 # Check for convergence.
@@ -598,7 +604,7 @@ def _log_multivariate_normal_density_full(X, means, covars, min_covar=1.e-7):
         try:
             cv_chol = linalg.cholesky(cv, lower=True)
         except linalg.LinAlgError:
-            # The model is most probabily stuck in a component with too
+            # The model is most probably stuck in a component with too
             # few observations, we need to reinitialize this components
             cv_chol = linalg.cholesky(cv + min_covar * np.eye(n_dim),
                                       lower=True)
@@ -628,7 +634,7 @@ def _validate_covars(covars, covariance_type, n_components):
                              "positive-definite")
     elif covariance_type == 'diag':
         if len(covars.shape) != 2:
-            raise ValueError("'diag' covars must have shape"
+            raise ValueError("'diag' covars must have shape "
                              "(n_components, n_dim)")
         elif np.any(covars <= 0):
             raise ValueError("'diag' covars must be non-negative")

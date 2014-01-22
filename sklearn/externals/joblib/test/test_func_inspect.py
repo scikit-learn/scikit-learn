@@ -4,8 +4,10 @@ Test the func_inspect module.
 
 # Author: Gael Varoquaux <gael dot varoquaux at normalesup dot org>
 # Copyright (c) 2009 Gael Varoquaux
-# License: BSD 3 clause
+# License: BSD Style, 3 clauses.
 
+import os
+import shutil
 import nose
 import tempfile
 import functools
@@ -28,7 +30,17 @@ def f2(x):
 # Create a Memory object to test decorated functions.
 # We should be careful not to call the decorated functions, so that
 # cache directories are not created in the temp dir.
-mem = Memory(cachedir=tempfile.gettempdir())
+temp_folder = tempfile.mkdtemp(prefix="joblib_test_func_inspect_")
+mem = Memory(cachedir=temp_folder)
+
+
+def teardown_module():
+    if os.path.exists(temp_folder):
+        try:
+            shutil.rmtree(temp_folder)
+        except Exception as e:
+            print("Failed to delete temporary folder %s: %r" %
+                  (temp_folder, e))
 
 
 @mem.cache

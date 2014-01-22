@@ -11,24 +11,23 @@ from __future__ import print_function
 # License: BSD 3 clause
 
 from abc import ABCMeta, abstractmethod
-from collections import Mapping, namedtuple
+from collections import Mapping, namedtuple, Sized
 from functools import partial, reduce
 from itertools import product
-import numbers
 import operator
-import time
 import warnings
 
 import numpy as np
 
 from .base import BaseEstimator, is_classifier, clone
 from .base import MetaEstimatorMixin
-from .cross_validation import check_cv
-from .externals.joblib import Parallel, delayed, logger
+from .cross_validation import _check_cv as check_cv
+from .cross_validation import _fit_and_score
+from .externals.joblib import Parallel, delayed
 from .externals import six
-from .utils import safe_mask, check_random_state
+from .utils import check_random_state
 from .utils.validation import _num_samples, check_arrays
-from .metrics import SCORERS, Scorer
+from .metrics.scorer import check_scoring
 
 
 __all__ = ['GridSearchCV', 'ParameterGrid', 'fit_grid_point',
@@ -57,15 +56,16 @@ class ParameterGrid(object):
     --------
     >>> from sklearn.grid_search import ParameterGrid
     >>> param_grid = {'a': [1, 2], 'b': [True, False]}
-    >>> list(ParameterGrid(param_grid)) #doctest: +NORMALIZE_WHITESPACE
-    [{'a': 1, 'b': True}, {'a': 1, 'b': False},
-     {'a': 2, 'b': True}, {'a': 2, 'b': False}]
+    >>> list(ParameterGrid(param_grid)) == (
+    ...    [{'a': 1, 'b': True}, {'a': 1, 'b': False},
+    ...     {'a': 2, 'b': True}, {'a': 2, 'b': False}])
+    True
 
     >>> grid = [{'kernel': ['linear']}, {'kernel': ['rbf'], 'gamma': [1, 10]}]
-    >>> list(ParameterGrid(grid)) #doctest: +NORMALIZE_WHITESPACE
-    [{'kernel': 'linear'},
-     {'kernel': 'rbf', 'gamma': 1},
-     {'kernel': 'rbf', 'gamma': 10}]
+    >>> list(ParameterGrid(grid)) == [{'kernel': 'linear'},
+    ...                               {'kernel': 'rbf', 'gamma': 1},
+    ...                               {'kernel': 'rbf', 'gamma': 10}]
+    True
 
     See also
     --------
@@ -109,44 +109,6 @@ class ParameterGrid(object):
                    for p in self.param_grid)
 
 
-class IterGrid(ParameterGrid):
-    """Generators on the combination of the various parameter lists given.
-
-    This class is DEPRECATED. It was renamed to ``ParameterGrid``. The name
-    ``IterGrid`` will be removed in 0.15.
-
-    Parameters
-    ----------
-    param_grid: dict of string to sequence
-        The parameter grid to explore, as a dictionary mapping estimator
-        parameters to sequences of allowed values.
-
-    Returns
-    -------
-    params: dict of string to any
-        **Yields** dictionaries mapping each estimator parameter to one of its
-        allowed values.
-
-    Examples
-    --------
-    >>> from sklearn.grid_search import IterGrid
-    >>> param_grid = {'a':[1, 2], 'b':[True, False]}
-    >>> list(IterGrid(param_grid)) #doctest: +NORMALIZE_WHITESPACE
-    [{'a': 1, 'b': True}, {'a': 1, 'b': False},
-     {'a': 2, 'b': True}, {'a': 2, 'b': False}]
-
-    See also
-    --------
-    :class:`GridSearchCV`:
-        uses ``IterGrid`` to perform a full parallelized parameter search.
-    """
-
-    def __init__(self, param_grid):
-        warnings.warn("IterGrid was renamed to ParameterGrid and will be"
-                      " removed in 0.15.", DeprecationWarning)
-        super(IterGrid, self).__init__(param_grid)
-
-
 class ParameterSampler(object):
     """Generator on parameters sampled from given distributions.
 
@@ -177,7 +139,7 @@ class ParameterSampler(object):
 
     Returns
     -------
-    params: dict of string to any
+    params : dict of string to any
         **Yields** dictionaries mapping each estimator parameter to
         as sampled value.
 
@@ -188,11 +150,14 @@ class ParameterSampler(object):
     >>> import numpy as np
     >>> np.random.seed(0)
     >>> param_grid = {'a':[1, 2], 'b': expon()}
-    >>> list(ParameterSampler(param_grid, n_iter=4))
-    ...  #doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-    [{'a': 1, 'b': 0.89...}, {'a': 1, 'b': 0.92...},
-     {'a': 2, 'b': 1.87...}, {'a': 2, 'b': 1.03...}]
-
+    >>> param_list = list(ParameterSampler(param_grid, n_iter=4))
+    >>> rounded_list = [dict((k, round(v, 6)) for (k, v) in d.items())
+    ...                 for d in param_list]
+    >>> rounded_list == [{'b': 0.89856, 'a': 1},
+    ...                  {'b': 0.923223, 'a': 1},
+    ...                  {'b': 1.878964, 'a': 2},
+    ...                  {'b': 1.038159, 'a': 2}]
+    True
     """
     def __init__(self, param_distributions, n_iter, random_state=None):
         self.param_distributions = param_distributions
@@ -217,8 +182,8 @@ class ParameterSampler(object):
         return self.n_iter
 
 
-def fit_grid_point(X, y, base_estimator, parameters, train, test, scorer,
-                   verbose, loss_func=None, **fit_params):
+def fit_grid_point(X, y, estimator, parameters, train, test, scorer,
+                   verbose, **fit_params):
     """Run fit on one set of parameters.
 
     Parameters
@@ -229,11 +194,11 @@ def fit_grid_point(X, y, base_estimator, parameters, train, test, scorer,
     y : array-like or None
         Targets for input data.
 
-    base_estimator : estimator object
+    estimator : estimator object
         This estimator will be cloned and then fitted.
 
     parameters : dict
-        Parameters to be set on base_estimator clone for this grid point.
+        Parameters to be set on estimator for this grid point.
 
     train : ndarray, dtype int or bool
         Boolean mask or indices for training set.
@@ -242,7 +207,7 @@ def fit_grid_point(X, y, base_estimator, parameters, train, test, scorer,
         Boolean mask or indices for test set.
 
     scorer : callable or None.
-        If provided must be a scoring object / function with signature
+        If provided must be a scorer callable object / function with signature
         ``scorer(estimator, X, y)``.
 
     verbose : int
@@ -263,66 +228,10 @@ def fit_grid_point(X, y, base_estimator, parameters, train, test, scorer,
     n_samples_test : int
         Number of test samples in this split.
     """
-    if verbose > 1:
-        start_time = time.time()
-        msg = '%s' % (', '.join('%s=%s' % (k, v)
-                      for k, v in parameters.items()))
-        print("[GridSearchCV] %s %s" % (msg, (64 - len(msg)) * '.'))
-
-    # update parameters of the classifier after a copy of its base structure
-    clf = clone(base_estimator)
-    clf.set_params(**parameters)
-
-    if hasattr(base_estimator, 'kernel') and callable(base_estimator.kernel):
-        # cannot compute the kernel values with custom function
-        raise ValueError("Cannot use a custom kernel function. "
-                         "Precompute the kernel matrix instead.")
-
-    if not hasattr(X, "shape"):
-        if getattr(base_estimator, "_pairwise", False):
-            raise ValueError("Precomputed kernels or affinity matrices have "
-                             "to be passed as arrays or sparse matrices.")
-        X_train = [X[idx] for idx in train]
-        X_test = [X[idx] for idx in test]
-    else:
-        if getattr(base_estimator, "_pairwise", False):
-            # X is a precomputed square kernel matrix
-            if X.shape[0] != X.shape[1]:
-                raise ValueError("X should be a square kernel matrix")
-            X_train = X[np.ix_(train, train)]
-            X_test = X[np.ix_(test, train)]
-        else:
-            X_train = X[safe_mask(X, train)]
-            X_test = X[safe_mask(X, test)]
-
-    if y is not None:
-        y_test = y[safe_mask(y, test)]
-        y_train = y[safe_mask(y, train)]
-        clf.fit(X_train, y_train, **fit_params)
-
-        if scorer is not None:
-            this_score = scorer(clf, X_test, y_test)
-        else:
-            this_score = clf.score(X_test, y_test)
-    else:
-        clf.fit(X_train, **fit_params)
-        if scorer is not None:
-            this_score = scorer(clf, X_test)
-        else:
-            this_score = clf.score(X_test)
-
-    if not isinstance(this_score, numbers.Number):
-        raise ValueError("scoring must return a number, got %s (%s)"
-                         " instead." % (str(this_score), type(this_score)))
-
-    if verbose > 2:
-        msg += ", score=%f" % this_score
-    if verbose > 1:
-        end_msg = "%s -%s" % (msg,
-                              logger.short_format_time(time.time() -
-                                                       start_time))
-        print("[GridSearchCV] %s %s" % ((64 - len(end_msg)) * '.', end_msg))
-    return this_score, parameters, _num_samples(X_test)
+    score, n_samples_test, _ = _fit_and_score(estimator, X, y, scorer, train,
+                                              test, verbose, parameters,
+                                              fit_params)
+    return score, parameters, n_samples_test
 
 
 def _check_param_grid(param_grid):
@@ -385,7 +294,6 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         self.cv = cv
         self.verbose = verbose
         self.pre_dispatch = pre_dispatch
-        self._check_estimator()
 
     def score(self, X, y=None):
         """Returns the score on the given test data and labels, if the search
@@ -395,10 +303,12 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         Parameters
         ----------
         X : array-like, shape = [n_samples, n_features]
-            Training set.
+            Input data, where n_samples is the number of samples and
+            n_features is the number of features.
 
-        y : array-like, shape = [n_samples], optional
-            Labels for X.
+        y : array-like, shape = [n_samples] or [n_samples, n_output], optional
+            Target relative to X for classification or regression;
+            None for unsupervised learning.
 
         Returns
         -------
@@ -429,50 +339,17 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
     def transform(self):
         return self.best_estimator_.transform
 
-    def _check_estimator(self):
-        """Check that estimator can be fitted and score can be computed."""
-        if (not hasattr(self.estimator, 'fit') or
-                not (hasattr(self.estimator, 'predict')
-                     or hasattr(self.estimator, 'score'))):
-            raise TypeError("estimator should a be an estimator implementing"
-                            " 'fit' and 'predict' or 'score' methods,"
-                            " %s (type %s) was passed" %
-                            (self.estimator, type(self.estimator)))
-        if (self.scoring is None and self.loss_func is None and self.score_func
-                is None):
-            if not hasattr(self.estimator, 'score'):
-                raise TypeError(
-                    "If no scoring is specified, the estimator passed "
-                    "should have a 'score' method. The estimator %s "
-                    "does not." % self.estimator)
-
     def _fit(self, X, y, parameter_iterable):
         """Actual fitting,  performing the search over parameters."""
 
         estimator = self.estimator
         cv = self.cv
+        self.scorer_ = check_scoring(self.estimator, scoring=self.scoring,
+                                     loss_func=self.loss_func,
+                                     score_func=self.score_func)
 
         n_samples = _num_samples(X)
         X, y = check_arrays(X, y, allow_lists=True, sparse_format='csr')
-
-        if self.loss_func is not None:
-            warnings.warn("Passing a loss function is "
-                          "deprecated and will be removed in 0.15. "
-                          "Either use strings or score objects."
-                          "The relevant new parameter is called ''scoring''. ")
-            scorer = Scorer(self.loss_func, greater_is_better=False)
-        elif self.score_func is not None:
-            warnings.warn("Passing function as ``score_func`` is "
-                          "deprecated and will be removed in 0.15. "
-                          "Either use strings or score objects."
-                          "The relevant new parameter is called ''scoring''.")
-            scorer = Scorer(self.score_func)
-        elif isinstance(self.scoring, six.string_types):
-            scorer = SCORERS[self.scoring]
-        else:
-            scorer = self.scoring
-
-        self.scorer_ = scorer
 
         if y is not None:
             if len(y) != n_samples:
@@ -482,6 +359,13 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
             y = np.asarray(y)
         cv = check_cv(cv, X, y, classifier=is_classifier(estimator))
 
+        if self.verbose > 0:
+            if isinstance(parameter_iterable, Sized):
+                n_candidates = len(parameter_iterable)
+                print("Fitting {0} folds for each of {1} candidates, totalling"
+                      " {2} fits".format(len(cv), n_candidates,
+                                         n_candidates * len(cv)))
+
         base_estimator = clone(self.estimator)
 
         pre_dispatch = self.pre_dispatch
@@ -489,9 +373,10 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         out = Parallel(
             n_jobs=self.n_jobs, verbose=self.verbose,
             pre_dispatch=pre_dispatch)(
-                delayed(fit_grid_point)(
-                    X, y, base_estimator, parameters, train, test, scorer,
-                    self.verbose, **self.fit_params)
+                delayed(_fit_and_score)(
+                    clone(base_estimator), X, y, self.scorer_, train, test,
+                    self.verbose, parameters, self.fit_params,
+                    return_parameters=True)
                 for parameters in parameter_iterable
                 for train, test in cv)
 
@@ -500,12 +385,12 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         n_folds = len(cv)
 
         scores = list()
-        cv_scores = list()
+        grid_scores = list()
         for grid_start in range(0, n_fits, n_folds):
             n_test_samples = 0
             score = 0
             all_scores = []
-            for this_score, parameters, this_n_test_samples in \
+            for this_score, this_n_test_samples, _, parameters in \
                     out[grid_start:grid_start + n_folds]:
                 all_scores.append(this_score)
                 if self.iid:
@@ -518,18 +403,17 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                 score /= float(n_folds)
             scores.append((score, parameters))
             # TODO: shall we also store the test_fold_sizes?
-            cv_scores.append(_CVScoreTuple(
+            grid_scores.append(_CVScoreTuple(
                 parameters,
                 score,
                 np.array(all_scores)))
         # Store the computed scores
-        self.cv_scores_ = cv_scores
+        self.grid_scores_ = grid_scores
 
         # Find the best parameters by comparing on the mean validation score:
         # note that `sorted` is deterministic in the way it breaks ties
-        greater_is_better = getattr(self.scorer_, 'greater_is_better', True)
-        best = sorted(cv_scores, key=lambda x: x.mean_validation_score,
-                      reverse=greater_is_better)[0]
+        best = sorted(grid_scores, key=lambda x: x.mean_validation_score,
+                      reverse=True)[0]
         self.best_params_ = best.parameters
         self.best_score_ = best.mean_validation_score
 
@@ -567,11 +451,10 @@ class GridSearchCV(BaseSearchCV):
         in the list are explored. This enables searching over any sequence
         of parameter settings.
 
-    scoring : string or callable, optional
-        Either one of either a string ("zero_one", "f1", "roc_auc", ... for
-        classification, "mse", "r2",... for regression) or a callable.
-        See 'Scoring objects' in the model evaluation section of the user guide
-        for details.
+    scoring : string, callable or None, optional, default: None
+        A string (see model evaluation documentation) or
+        a scorer callable object / function with signature
+        ``scorer(estimator, X, y)``.
 
     fit_params : dict, optional
         Parameters to pass to the fit method.
@@ -624,16 +507,18 @@ class GridSearchCV(BaseSearchCV):
     >>> clf.fit(iris.data, iris.target)
     ...                             # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
     GridSearchCV(cv=None,
-        estimator=SVC(C=1.0, cache_size=..., coef0=..., degree=...,
-            gamma=..., kernel='rbf', max_iter=-1, probability=False,
-            shrinking=True, tol=...),
-        fit_params={}, iid=True, loss_func=None, n_jobs=1,
-            param_grid=...,
-            ...)
+           estimator=SVC(C=1.0, cache_size=..., class_weight=..., coef0=...,
+                         degree=..., gamma=..., kernel='rbf', max_iter=-1,
+                         probability=False, random_state=None, shrinking=True,
+                         tol=..., verbose=False),
+           fit_params={}, iid=..., loss_func=..., n_jobs=1,
+           param_grid=..., pre_dispatch=..., refit=..., score_func=...,
+           scoring=..., verbose=...)
+
 
     Attributes
     ----------
-    `cv_scores_` : list of named tuples
+    `grid_scores_` : list of named tuples
         Contains scores for all parameter combinations in param_grid.
         Each entry corresponds to one parameter setting.
         Each named tuple has the attributes:
@@ -653,6 +538,10 @@ class GridSearchCV(BaseSearchCV):
 
     `best_params_` : dict
         Parameter setting that gave the best results on the hold out data.
+
+    `scorer_` : function
+        Scorer function used on the held out data to choose the best
+        parameters for the model.
 
     Notes
     ------
@@ -677,6 +566,9 @@ class GridSearchCV(BaseSearchCV):
         for fitting a GridSearchCV instance and an evaluation set for
         its final evaluation.
 
+    :func:`sklearn.metrics.make_scorer`:
+        Make a scorer from a performance metric or loss function.
+
     """
 
     def __init__(self, estimator, param_grid, scoring=None, loss_func=None,
@@ -688,24 +580,18 @@ class GridSearchCV(BaseSearchCV):
         self.param_grid = param_grid
         _check_param_grid(param_grid)
 
-    @property
-    def grid_scores_(self):
-        warnings.warn("grid_scores_ is deprecated and will be removed in 0.15."
-                      " Use cv_scores_ instead.", DeprecationWarning)
-        return self.cv_scores_
-
     def fit(self, X, y=None, **params):
         """Run fit with all sets of parameters.
 
         Parameters
         ----------
 
-        X: array-like, shape = [n_samples, n_features]
-            Training vector, where n_samples in the number of samples and
+        X : array-like, shape = [n_samples, n_features]
+            Training vector, where n_samples is the number of samples and
             n_features is the number of features.
 
-        y: array-like, shape = [n_samples], optional
-            Target vector relative to X for classification;
+        y : array-like, shape = [n_samples] or [n_samples, n_output], optional
+            Target relative to X for classification or regression;
             None for unsupervised learning.
 
         """
@@ -743,11 +629,10 @@ class RandomizedSearchCV(BaseSearchCV):
         Number of parameter settings that are sampled. n_iter trades
         off runtime vs quality of the solution.
 
-    scoring : string or callable, optional
-        Either one of either a string ("zero_one", "f1", "roc_auc", ... for
-        classification, "mse", "r2",... for regression) or a callable.
-        See 'Scoring objects' in the model evaluation section of the user guide
-        for details.
+    scoring : string, callable or None, optional, default: None
+        A string (see model evaluation documentation) or
+        a scorer callable object / function with signature
+        ``scorer(estimator, X, y)``.
 
     fit_params : dict, optional
         Parameters to pass to the fit method.
@@ -793,7 +678,7 @@ class RandomizedSearchCV(BaseSearchCV):
 
     Attributes
     ----------
-    `cv_scores_` : list of named tuples
+    `grid_scores_` : list of named tuples
         Contains scores for all parameter combinations in param_grid.
         Each entry corresponds to one parameter setting.
         Each named tuple has the attributes:
@@ -816,10 +701,8 @@ class RandomizedSearchCV(BaseSearchCV):
 
     Notes
     -----
-    The parameters selected are those that maximize the score of the left out
-    data, unless an explicit score_func is passed in which case it is used
-    instead. If a loss function loss_func is passed, it overrides the score
-    functions and is minimized.
+    The parameters selected are those that maximize the score of the held-out
+    data, according to the scoring parameter.
 
     If `n_jobs` was set to a value higher than one, the data is copied for each
     parameter setting(and not `n_jobs` times). This is done for efficiency
@@ -841,28 +724,28 @@ class RandomizedSearchCV(BaseSearchCV):
     """
 
     def __init__(self, estimator, param_distributions, n_iter=10, scoring=None,
-                 loss_func=None, score_func=None, fit_params=None, n_jobs=1,
-                 iid=True, refit=True, cv=None, verbose=0,
-                 pre_dispatch='2*n_jobs', random_state=None):
+                 fit_params=None, n_jobs=1, iid=True, refit=True, cv=None,
+                 verbose=0, pre_dispatch='2*n_jobs', random_state=None):
 
         self.param_distributions = param_distributions
         self.n_iter = n_iter
         self.random_state = random_state
         super(RandomizedSearchCV, self).__init__(
-            estimator, scoring, loss_func, score_func, fit_params, n_jobs, iid,
-            refit, cv, verbose, pre_dispatch)
+            estimator=estimator, scoring=scoring, fit_params=fit_params,
+            n_jobs=n_jobs, iid=iid, refit=refit, cv=cv, verbose=verbose,
+            pre_dispatch=pre_dispatch)
 
     def fit(self, X, y=None):
         """Run fit on the estimator with randomly drawn parameters.
 
         Parameters
         ----------
-        X: array-like, shape = [n_samples, n_features]
+        X : array-like, shape = [n_samples, n_features]
             Training vector, where n_samples in the number of samples and
             n_features is the number of features.
 
-        y: array-like, shape = [n_samples], optional
-            Target vector relative to X for classification;
+        y : array-like, shape = [n_samples] or [n_samples, n_output], optional
+            Target relative to X for classification or regression;
             None for unsupervised learning.
 
         """

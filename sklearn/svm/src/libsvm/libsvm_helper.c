@@ -58,7 +58,7 @@ struct svm_node *dense_to_libsvm (double *x, npy_intp *dims)
 void set_parameter(struct svm_parameter *param, int svm_type, int kernel_type, int degree,
 		double gamma, double coef0, double nu, double cache_size, double C,
 		double eps, double p, int shrinking, int probability, int nr_weight,
-		char *weight_label, char *weight, int max_iter)
+		char *weight_label, char *weight, int max_iter, int random_seed)
 {
     param->svm_type = svm_type;
     param->kernel_type = kernel_type;
@@ -76,6 +76,7 @@ void set_parameter(struct svm_parameter *param, int svm_type, int kernel_type, i
     param->weight = (double *) weight;
     param->gamma = gamma;
     param->max_iter = max_iter;
+    param->random_seed = random_seed;
 }
 
 /*
@@ -391,11 +392,6 @@ int free_param(struct svm_parameter *param)
 }
 
 
-/* rely on built-in facility to control verbose output
- * in the versions of libsvm >= 2.89
- */
-#if LIBSVM_VERSION && LIBSVM_VERSION >= 289
-
 /* borrowed from original libsvm code */
 static void print_null(const char *s) {}
 
@@ -408,14 +404,7 @@ static void print_string_stdout(const char *s)
 /* provide convenience wrapper */
 void set_verbosity(int verbosity_flag){
 	if (verbosity_flag)
-# if LIBSVM_VERSION < 291
-		svm_print_string = &print_string_stdout;
-	else
-		svm_print_string = &print_null;
-# else
 		svm_set_print_string_function(&print_string_stdout);
 	else
 		svm_set_print_string_function(&print_null);
-# endif
 }
-#endif

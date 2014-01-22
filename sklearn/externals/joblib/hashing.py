@@ -5,7 +5,7 @@ hashing of numpy arrays.
 
 # Author: Gael Varoquaux <gael dot varoquaux at normalesup dot org>
 # Copyright (c) 2009 Gael Varoquaux
-# License: BSD 3 clause
+# License: BSD Style, 3 clauses.
 
 import warnings
 import pickle
@@ -31,7 +31,7 @@ class _ConsistentSet(object):
 
 
 class _MyHash(object):
-    """ Class used to hash objects that won't normaly pickle """
+    """ Class used to hash objects that won't normally pickle """
 
     def __init__(self, *args):
         self.args = args
@@ -83,10 +83,13 @@ class Hasher(Pickler):
         # We have to override this method in order to deal with objects
         # defined interactively in IPython that are not injected in
         # __main__
+        kwargs = dict(name=name, pack=pack)
+        if sys.version_info >= (3, 4):
+            del kwargs['pack']
         try:
-            Pickler.save_global(self, obj, name=name, pack=pack)
+            Pickler.save_global(self, obj, **kwargs)
         except pickle.PicklingError:
-            Pickler.save_global(self, obj, name=name, pack=pack)
+            Pickler.save_global(self, obj, **kwargs)
             module = getattr(obj, "__module__", None)
             if module == '__main__':
                 my_name = name
@@ -152,10 +155,12 @@ class NumpyHasher(Hasher):
             # Compute a hash of the object:
             try:
                 self._hash.update(self._getbuffer(obj))
-            except (TypeError, BufferError):
+            except (TypeError, BufferError, ValueError):
                 # Cater for non-single-segment arrays: this creates a
                 # copy, and thus aleviates this issue.
                 # XXX: There might be a more efficient way of doing this
+                # Python 3.2's memoryview raise a ValueError instead of a
+                # TypeError or a BufferError
                 self._hash.update(self._getbuffer(obj.flatten()))
 
             # We store the class, to be able to distinguish between

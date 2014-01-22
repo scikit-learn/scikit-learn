@@ -3,8 +3,7 @@
 Support Vector Regression (SVR) using linear and non-linear kernels
 ===================================================================
 
-Toy example of 1D regression using linear, polynominial and RBF
-kernels.
+Toy example of 1D regression using linear, polynomial and RBF kernels.
 
 """
 print(__doc__)

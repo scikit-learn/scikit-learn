@@ -1,5 +1,10 @@
 """Utilities for input validation"""
-# Authors: Olivier Grisel and Gael Varoquaux and others (please update me)
+# Authors: Olivier Grisel
+#          Gael Varoquaux
+#          Andreas Mueller
+#          Lars Buitinck
+#          Alexandre Gramfort
+#          Nicolas Tresegnie
 # License: BSD 3 clause
 
 import warnings
@@ -10,6 +15,23 @@ from scipy import sparse
 
 from ..externals import six
 from .fixes import safe_copy
+
+
+class DataConversionWarning(UserWarning):
+    "A warning on implicit data conversions happening in the code"
+    pass
+
+warnings.simplefilter("always", DataConversionWarning)
+
+
+class NonBLASDotWarning(UserWarning):
+    "A warning on implicit dispatch to numpy.dot"
+    pass
+
+
+# Silenced by default to reduce verbosity. Turn on at runtime for
+# performance profiling.
+warnings.simplefilter('ignore', NonBLASDotWarning)
 
 
 def _assert_all_finite(X):
@@ -30,19 +52,25 @@ def assert_all_finite(X):
     _assert_all_finite(X.data if sparse.issparse(X) else X)
 
 
-def safe_asarray(X, dtype=None, order=None):
+def safe_asarray(X, dtype=None, order=None, copy=False, force_all_finite=True):
     """Convert X to an array or sparse matrix.
 
     Prevents copying X when possible; sparse matrices are passed through."""
     if sparse.issparse(X):
-        assert_all_finite(X.data)
+        if copy:
+            X = X.copy()
+        if force_all_finite:
+            _assert_all_finite(X.data)
+        # enforces dtype on data array (order should be kept the same).
+        X.data = np.asarray(X.data, dtype=dtype)
     else:
-        X = np.asarray(X, dtype, order)
-        assert_all_finite(X)
+        X = np.array(X, dtype=dtype, order=order, copy=copy)
+        if force_all_finite:
+            _assert_all_finite(X)
     return X
 
 
-def as_float_array(X, copy=True):
+def as_float_array(X, copy=True, force_all_finite=True):
     """Converts an array-like to an array of floats
 
     The new dtype will be np.float32 or np.float64, depending on the original
@@ -64,7 +92,8 @@ def as_float_array(X, copy=True):
     """
     if isinstance(X, np.matrix) or (not isinstance(X, np.ndarray)
                                     and not sparse.issparse(X)):
-        return safe_asarray(X, dtype=np.float64)
+        return safe_asarray(X, dtype=np.float64, copy=copy,
+                            force_all_finite=force_all_finite)
     elif sparse.issparse(X) and X.dtype in [np.float32, np.float64]:
         return X.copy() if copy else X
     elif X.dtype in [np.float32, np.float64]:  # is numpy array
@@ -73,48 +102,53 @@ def as_float_array(X, copy=True):
         return X.astype(np.float32 if X.dtype == np.int32 else np.float64)
 
 
-def array2d(X, dtype=None, order=None, copy=False):
+def array2d(X, dtype=None, order=None, copy=False, force_all_finite=True):
     """Returns at least 2-d array with data from X"""
     if sparse.issparse(X):
         raise TypeError('A sparse matrix was passed, but dense data '
                         'is required. Use X.toarray() to convert to dense.')
     X_2d = np.asarray(np.atleast_2d(X), dtype=dtype, order=order)
-    _assert_all_finite(X_2d)
+    if force_all_finite:
+        _assert_all_finite(X_2d)
     if X is X_2d and copy:
         X_2d = safe_copy(X_2d)
     return X_2d
 
 
-def _atleast2d_or_sparse(X, dtype, order, copy, sparse_class, convmethod):
+def _atleast2d_or_sparse(X, dtype, order, copy, sparse_class, convmethod,
+                         force_all_finite):
     if sparse.issparse(X):
-        # Note: order is ignored because CSR matrices hold data in 1-d arrays
         if dtype is None or X.dtype == dtype:
             X = getattr(X, convmethod)()
         else:
             X = sparse_class(X, dtype=dtype)
-        _assert_all_finite(X.data)
+        if force_all_finite:
+            _assert_all_finite(X.data)
+        X.data = np.array(X.data, copy=False, order=order)
     else:
-        X = array2d(X, dtype=dtype, order=order, copy=copy)
-        _assert_all_finite(X)
+        X = array2d(X, dtype=dtype, order=order, copy=copy,
+                    force_all_finite=force_all_finite)
     return X
 
 
-def atleast2d_or_csc(X, dtype=None, order=None, copy=False):
+def atleast2d_or_csc(X, dtype=None, order=None, copy=False,
+                     force_all_finite=True):
     """Like numpy.atleast_2d, but converts sparse matrices to CSC format.
 
     Also, converts np.matrix to np.ndarray.
     """
     return _atleast2d_or_sparse(X, dtype, order, copy, sparse.csc_matrix,
-                                "tocsc")
+                                "tocsc", force_all_finite)
 
 
-def atleast2d_or_csr(X, dtype=None, order=None, copy=False):
+def atleast2d_or_csr(X, dtype=None, order=None, copy=False,
+                     force_all_finite=True):
     """Like numpy.atleast_2d, but converts sparse matrices to CSR format
 
     Also, converts np.matrix to np.ndarray.
     """
     return _atleast2d_or_sparse(X, dtype, order, copy, sparse.csr_matrix,
-                                "tocsr")
+                                "tocsr", force_all_finite)
 
 
 def _num_samples(x):
@@ -248,14 +282,23 @@ def column_or_1d(y, warn=False):
     raise ValueError("bad input shape {0}".format(shape))
 
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> upstream/master
 def warn_if_not_float(X, estimator='This algorithm'):
-    """Warning utility function to check that data type is floating point"""
+    """Warning utility function to check that data type is floating point.
+
+    Returns True if a warning was raised (i.e. the input is not float) and
+    False otherwise, for easier input validation.
+    """
     if not isinstance(estimator, six.string_types):
         estimator = estimator.__class__.__name__
     if X.dtype.kind != 'f':
         warnings.warn("%s assumes floating point values as input, "
                       "got %s" % (estimator, X.dtype))
+        return True
+    return False
 
 
 def check_random_state(seed):

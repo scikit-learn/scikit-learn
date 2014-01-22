@@ -9,16 +9,17 @@ Files that generate images should start with 'plot'
 """
 from time import time
 import os
+import re
 import shutil
 import traceback
 import glob
 import sys
 from StringIO import StringIO
 import cPickle
-import re
 import urllib2
 import gzip
 import posixpath
+import subprocess
 
 try:
     from PIL import Image
@@ -32,6 +33,7 @@ import token
 import tokenize
 import numpy as np
 
+from sklearn.externals import joblib
 
 ###############################################################################
 # A tee object to redict streams to multiple outputs
@@ -54,7 +56,7 @@ class Tee(object):
 # Documentation link resolver objects
 
 
-def get_data(url):
+def _get_data(url):
     """Helper function to get data over http or from a local file"""
     if url.startswith('http://'):
         resp = urllib2.urlopen(url)
@@ -73,6 +75,9 @@ def get_data(url):
         fid.close()
 
     return data
+
+mem = joblib.Memory(cachedir='_build')
+get_data = mem.cache(_get_data)
 
 
 def parse_sphinx_searchindex(searchindex):
@@ -203,7 +208,7 @@ class SphinxDocLinkResolver(object):
         if os.name.lower() == 'nt' and not doc_url.startswith('http://'):
             if not relative:
                 raise ValueError('You have to use relative=True for the local'
-                                 'package on a Windows system.')
+                                 ' package on a Windows system.')
             self._is_windows = True
         else:
             self._is_windows = False
@@ -331,7 +336,8 @@ plot_rst_template = """
 .. literalinclude:: %(fname)s
     :lines: %(end_row)s-
 
-**Total running time of the example:** %(time_elapsed) .2f seconds
+**Total running time of the example:** %(time_elapsed) .2f seconds 
+(%(time_m) .0f minutes %(time_s) .2f seconds)
     """
 
 # The following strings are used when we have several pictures: we use
@@ -354,8 +360,18 @@ SINGLE_IMAGE = """
     :align: center
 """
 
+# The following dictionary contains the information used to create the
+# thumbnails for the front page of the scikit-learn home page.
+# key: first image in set
+# values: (number of plot in set, height of thumbnail)
+carousel_thumbs = {'plot_classifier_comparison_1.png': (1, 600),
+                   'plot_outlier_detection_1.png': (3, 372),
+                   'plot_gp_regression_1.png': (2, 250),
+                   'plot_adaboost_twoclass_1.png': (1, 372),
+                   'plot_compare_methods_1.png': (1, 349)}
 
-def extract_docstring(filename):
+
+def extract_docstring(filename, ignore_heading=False):
     """ Extract a module-level docstring, if any
     """
     lines = file(filename).readlines()
@@ -363,7 +379,6 @@ def extract_docstring(filename):
     if lines[0].startswith('#!'):
         lines.pop(0)
         start_row = 1
-
     docstring = ''
     first_par = ''
     tokens = tokenize.generate_tokens(iter(lines).next)
@@ -375,10 +390,22 @@ def extract_docstring(filename):
             docstring = eval(tok_content)
             # If the docstring is formatted with several paragraphs, extract
             # the first one:
-            paragraphs = '\n'.join(line.rstrip()
-                              for line in docstring.split('\n')).split('\n\n')
-            if len(paragraphs) > 0:
-                first_par = paragraphs[0]
+            paragraphs = '\n'.join(
+                line.rstrip() for line
+                in docstring.split('\n')).split('\n\n')
+            if paragraphs:
+                if ignore_heading:
+                    if len(paragraphs) > 1:
+                        first_par = re.sub('\n', ' ', paragraphs[1])
+                        first_par = ((first_par[:95] + '...')
+                                     if len(first_par) > 95 else first_par)
+                    else:
+                        raise ValueError("Docstring not found by gallery",
+                                         "Please check your example's layout",
+                                         " and make sure it's correct")
+                else:
+                    first_par = paragraphs[0]
+
         break
     return docstring, first_par, erow + 1 + start_row
 
@@ -404,6 +431,8 @@ def generate_example_rst(app):
     #      due to how it messes up the layout. Will be fixed at a later point
     fhindex.write("""\
 
+
+
 .. raw:: html
 
 
@@ -416,36 +445,121 @@ def generate_example_rst(app):
     .figure {
         float: left;
         margin: 10px;
-        position: absolute;
-        top: 0;
-        left: 0;
         -webkit-border-radius: 10px; /* Saf3-4, iOS 1-3.2, Android <1.6 */
         -moz-border-radius: 10px; /* FF1-3.6 */
         border-radius: 10px; /* Opera 10.5, IE9, Saf5, Chrome, FF4, iOS 4, Android 2.1+ */
         border: 2px solid #fff;
-        -webkit-transition: all 0.15s ease-out;  /* Saf3.2+, Chrome */
-        -moz-transition: all 0.15s ease-out;  /* FF4+ */
-        -ms-transition: all 0.15s ease-out;  /* IE10? */
-        -o-transition: all 0.15s ease-out;  /* Opera 10.5+ */
-        transition: all 0.15s ease-out;
-        background-repeat: no-repeat;
+        background-color: white;
         /* --> Thumbnail image size */
         width: 150px;
         height: 100px;
         -webkit-background-size: 150px 100px; /* Saf3-4 */
         -moz-background-size: 150px 100px; /* FF3.6 */
-        background-size: 150px 100px; /* Opera, IE9, Saf5, Chrome, FF4 */
     }
 
     .figure img {
         display: inline;
-        }
-
-    .figure .caption {
-        width: 170px;
-        text-align: center !important;
     }
+
+    div.docstringWrapper p.caption {
+        display: block;
+        -webkit-box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.0);
+        -moz-box-shadow: 0px 0px 20px rgba(0, 0, 0, .0); /* FF3.5 - 3.6 */
+        box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.0); /* Opera 10.5, IE9, FF4+, Chrome 10+ */
+        padding: 0px;
+        border: white;
+    }
+
+    div.docstringWrapper p {
+        display: none;
+        background-color: white;
+        -webkit-box-shadow: 0px 0px 20px rgba(0, 0, 0, 1.00);
+        -moz-box-shadow: 0px 0px 20px rgba(0, 0, 0, 1.00); /* FF3.5 - 3.6 */
+        box-shadow: 0px 0px 20px rgba(0, 0, 0, 1.00); /* Opera 10.5, IE9, FF4+, Chrome 10+ */
+        padding: 13px;
+        margin-top: 0px;
+        border-style: solid;
+        border-width: 1px;
+    }
+
+
     </style>
+
+
+.. raw:: html
+
+
+        <script type="text/javascript">
+
+        function animateClone(e){
+          var position;
+          position = $(this).position();
+          var clone = $(this).closest('.thumbnailContainer').find('.clonedItem');
+          var clone_fig = clone.find('.figure');
+          clone.css("left", position.left - 70).css("top", position.top - 70).css("position", "absolute").css("z-index", 1000).css("background-color", "white");
+
+          var cloneImg = clone_fig.find('img');
+
+          clone.show();
+          clone.animate({
+                height: "270px",
+                width: "320px"
+            }, 0
+          );
+          cloneImg.css({
+                'max-height': "200px",
+                'max-width': "280px"
+          });
+          cloneImg.animate({
+                height: "200px",
+                width: "280px"
+            }, 0
+           );
+          clone_fig.css({
+               'margin-top': '20px',
+          });
+          clone_fig.show();
+          clone.find('p').css("display", "block");
+          clone_fig.css({
+               height: "240",
+               width: "305px"
+          });
+          cloneP_height = clone.find('p.caption').height();
+          clone_fig.animate({
+               height: (200 + cloneP_height)
+           }, 0
+          );
+
+          clone.bind("mouseleave", function(e){
+              clone.animate({
+                  height: "100px",
+                  width: "150px"
+              }, 10, function(){$(this).hide();});
+              clone_fig.animate({
+                  height: "100px",
+                  width: "150px"
+              }, 10, function(){$(this).hide();});
+          });
+        } //end animateClone()
+
+
+        $(window).load(function () {
+            $(".figure").css("z-index", 1);
+
+            $(".docstringWrapper").each(function(i, obj){
+                var clone;
+                var $obj = $(obj);
+                clone = $obj.clone();
+                clone.addClass("clonedItem");
+                clone.appendTo($obj.closest(".thumbnailContainer"));
+                clone.hide();
+                $obj.bind("mouseenter", animateClone);
+            }); // end each
+        }); // end
+
+        </script>
+
+
 
 Examples
 ========
@@ -460,12 +574,13 @@ Examples
             generate_dir_rst(dir, fhindex, example_dir, root_dir, plot_gallery)
     fhindex.flush()
 
+
 def extract_line_count(filename, target_dir):
     # Extract the line count of a file
     example_file = os.path.join(target_dir, filename)
     lines = file(example_file).readlines()
     start_row = 0
-    if lines[0].startswith('#!'):
+    if lines and lines[0].startswith('#!'):
         lines.pop(0)
         start_row = 1
     tokens = tokenize.generate_tokens(lines.__iter__().next)
@@ -475,10 +590,11 @@ def extract_line_count(filename, target_dir):
         tok_type = token.tok_name[tok_type]
         if tok_type in ('NEWLINE', 'COMMENT', 'NL', 'INDENT', 'DEDENT'):
             continue
-        elif ((tok_type == 'STRING') and (check_docstring == True)):
+        elif ((tok_type == 'STRING') and check_docstring):
             erow_docstring = erow
             check_docstring = False
     return erow_docstring+1+start_row, erow+1+start_row
+
 
 def line_count_sort(file_list, target_dir):
     # Sort the list of examples by line-count
@@ -489,9 +605,12 @@ def line_count_sort(file_list, target_dir):
         docstr_lines, total_lines = extract_line_count(exmpl, target_dir)
         unsorted[count][1] = total_lines - docstr_lines
         unsorted[count][0] = exmpl
-    index = np.lexsort((unsorted[:,0].astype(np.str),
-                        unsorted[:,1].astype(np.float)))
-    return np.array(unsorted[index][:,0]).tolist()
+    index = np.lexsort((unsorted[:, 0].astype(np.str),
+                        unsorted[:, 1].astype(np.float)))
+    if not len(unsorted):
+        return []
+    return np.array(unsorted[index][:, 0]).tolist()
+
 
 def generate_dir_rst(dir, fhindex, example_dir, root_dir, plot_gallery):
     """ Generate the rst file for an example directory.
@@ -504,8 +623,8 @@ def generate_dir_rst(dir, fhindex, example_dir, root_dir, plot_gallery):
         src_dir = example_dir
     if not os.path.exists(os.path.join(src_dir, 'README.txt')):
         print 80 * '_'
-        print ('Example directory %s does not have a README.txt file'
-                        % src_dir)
+        print ('Example directory %s does not have a README.txt file' %
+               src_dir)
         print 'Skipping this directory'
         print 80 * '_'
         return
@@ -520,16 +639,22 @@ def generate_dir_rst(dir, fhindex, example_dir, root_dir, plot_gallery):
         os.makedirs(target_dir)
     sorted_listdir = line_count_sort(os.listdir(src_dir),
                                      src_dir)
+    if not os.path.exists(os.path.join(dir, 'images', 'thumb')):
+        os.makedirs(os.path.join(dir, 'images', 'thumb'))
     for fname in sorted_listdir:
         if fname.endswith('py'):
-            generate_file_rst(fname, target_dir, src_dir, plot_gallery)
+            generate_file_rst(fname, target_dir, src_dir, root_dir, plot_gallery)
+            new_fname = os.path.join(src_dir, fname)
+            _, fdocstring, _ = extract_docstring(new_fname, True)
             thumb = os.path.join(dir, 'images', 'thumb', fname[:-3] + '.png')
             link_name = os.path.join(dir, fname).replace(os.path.sep, '_')
             fhindex.write("""
 
 .. raw:: html
 
+
     <div class="thumbnailContainer">
+        <div class="docstringWrapper">
 
 
 """)
@@ -539,7 +664,7 @@ def generate_dir_rst(dir, fhindex, example_dir, root_dir, plot_gallery):
                 link_name = link_name[2:]
             if dir != '.':
                 fhindex.write('   :target: ./%s/%s.html\n\n' % (dir,
-                                                               fname[:-3]))
+                                                                fname[:-3]))
             else:
                 fhindex.write('   :target: ./%s.html\n\n' % link_name[:-3])
             fhindex.write("""   :ref:`example_%s`
@@ -547,6 +672,9 @@ def generate_dir_rst(dir, fhindex, example_dir, root_dir, plot_gallery):
 
 .. raw:: html
 
+
+    <p>%s
+    </p></div>
     </div>
 
 
@@ -555,7 +683,7 @@ def generate_dir_rst(dir, fhindex, example_dir, root_dir, plot_gallery):
 
    %s/%s
 
-""" % (link_name, dir, fname[:-3]))
+""" % (link_name, fdocstring, dir, fname[:-3]))
     fhindex.write("""
 .. raw:: html
 
@@ -592,6 +720,14 @@ def make_thumbnail(in_fname, out_fname, width, height):
     thumb.paste(img, pos_insert)
 
     thumb.save(out_fname)
+    # Use optipng to perform lossless compression on the resized image if
+    # software is installed
+    if os.environ.get('SKLEARN_DOC_OPTIPNG', False):
+        try:
+            subprocess.call(["optipng", "-quiet", "-o", "9", out_fname])
+        except Exception:
+            warnings.warn('Install optipng to reduce the size of the generated images')
+
 
 
 def get_short_module_name(module_name, obj_name):
@@ -609,7 +745,7 @@ def get_short_module_name(module_name, obj_name):
     return short_name
 
 
-def generate_file_rst(fname, target_dir, src_dir, plot_gallery):
+def generate_file_rst(fname, target_dir, src_dir, root_dir, plot_gallery):
     """ Generate the rst file for a given example.
     """
     base_image_name = os.path.splitext(fname)[0]
@@ -640,9 +776,11 @@ def generate_file_rst(fname, target_dir, src_dir, plot_gallery):
     stdout_path = os.path.join(image_dir,
                                'stdout_%s.txt' % base_image_name)
     time_path = os.path.join(image_dir,
-                               'time_%s.txt' % base_image_name)
+                             'time_%s.txt' % base_image_name)
     thumb_file = os.path.join(thumb_dir, fname[:-3] + '.png')
     time_elapsed = 0
+    time_m = 0
+    time_s = 0
     if plot_gallery and fname.startswith('plot'):
         # generate the plot as png image if file name
         # starts with plot and if it is more recent than an
@@ -655,9 +793,8 @@ def generate_file_rst(fname, target_dir, src_dir, plot_gallery):
         if os.path.exists(time_path):
             time_elapsed = float(open(time_path).read())
 
-        if (not os.path.exists(first_image_file) or
-                os.stat(first_image_file).st_mtime <=
-                                    os.stat(src_file).st_mtime):
+        if not os.path.exists(first_image_file) or \
+           os.stat(first_image_file).st_mtime <= os.stat(src_file).st_mtime:
             # We need to execute the code
             print 'plotting %s' % fname
             t0 = time()
@@ -708,11 +845,19 @@ def generate_file_rst(fname, target_dir, src_dir, plot_gallery):
                             continue
                         for match in funregex.findall(line):
                             fun_name = match[:-1]
+
                             try:
                                 exec('this_fun = %s' % fun_name, my_globals)
                             except Exception as err:
-                                print 'extracting function failed'
-                                print err
+                                # Here, we were not able to execute the
+                                # previous statement, either because the
+                                # fun_name was not a function but a statement
+                                # (print), or because the regexp didn't
+                                # catch the whole function name :
+                                #    eg:
+                                #       X = something().blah()
+                                # will work for something, but not blah.
+
                                 continue
                             this_fun = my_globals['this_fun']
                             if not callable(this_fun):
@@ -748,8 +893,8 @@ def generate_file_rst(fname, target_dir, src_dir, plot_gallery):
                     # The __doc__ is often printed in the example, we
                     # don't with to echo it
                     my_stdout = my_stdout.replace(
-                                            my_globals['__doc__'],
-                                            '')
+                        my_globals['__doc__'],
+                        '')
                 my_stdout = my_stdout.strip()
                 if my_stdout:
                     stdout = '**Script output**::\n\n  %s\n\n' % (
@@ -765,7 +910,7 @@ def generate_file_rst(fname, target_dir, src_dir, plot_gallery):
                 # * iterate over [fig_mngr.num for fig_mngr in
                 #   matplotlib._pylab_helpers.Gcf.get_all_fig_managers()]
                 for fig_num in (fig_mngr.num for fig_mngr in
-                        matplotlib._pylab_helpers.Gcf.get_all_fig_managers()):
+                    matplotlib._pylab_helpers.Gcf.get_all_fig_managers()):
                     # Set the fig_num figure as the current figure as we can't
                     # save a figure that's not the current figure.
                     plt.figure(fig_num)
@@ -788,8 +933,28 @@ def generate_file_rst(fname, target_dir, src_dir, plot_gallery):
 
         # generate thumb file
         this_template = plot_rst_template
+        car_thumb_path =  os.path.join(os.path.split(root_dir)[0], '_build/html/stable/_images/')
+        # Note: normaly, make_thumbnail is used to write to the path contained in `thumb_file`
+        # which is within `auto_examples/../images/thumbs` depending on the example.
+        # Because the carousel has different dimensions than those of the examples gallery,
+        # I did not simply reuse them all as some contained whitespace due to their default gallery
+        # thumbnail size. Below, for a few cases, seperate thumbnails are created (the originals can't
+        # just be overwritten with the carousel dimensions as it messes up the examples gallery layout).
+        # The special carousel thumbnails are written directly to _build/html/stable/_images/,
+        # as for some reason unknown to me, Sphinx refuses to copy my 'extra' thumbnails from the
+        # auto examples gallery to the _build folder. This works fine as is, but it would be cleaner to
+        # have it happen with the rest. Ideally the should be written to 'thumb_file' as well, and then
+        # copied to the _images folder during the `Copying Downloadable Files` step like the rest.
+        if not os.path.exists(car_thumb_path):
+            os.makedirs(car_thumb_path)
         if os.path.exists(first_image_file):
-            make_thumbnail(first_image_file, thumb_file, 200, 140)
+            # We generate extra special thumbnails for the carousel
+            carousel_tfile = os.path.join(car_thumb_path, fname[:-3] + '_carousel.png')
+            first_img = image_fname % 1
+            if first_img in carousel_thumbs:
+                make_thumbnail((image_path % carousel_thumbs[first_img][0]),
+                               carousel_tfile, carousel_thumbs[first_img][1], 190)
+            make_thumbnail(first_image_file, thumb_file, 400, 280)
 
     if not os.path.exists(thumb_file):
         # create something to replace the thumbnail
@@ -807,6 +972,7 @@ def generate_file_rst(fname, target_dir, src_dir, plot_gallery):
         for figure_name in figure_list:
             image_list += HLIST_IMAGE_TEMPLATE % figure_name.lstrip('/')
 
+    time_m, time_s = divmod(time_elapsed, 60)
     f = open(os.path.join(target_dir, fname[:-2] + 'rst'), 'w')
     f.write(this_template % locals())
     f.flush()

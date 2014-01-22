@@ -12,7 +12,7 @@ from numpy.testing import assert_raises
 from ..image import img_to_graph, grid_to_graph
 from ..image import (extract_patches_2d, reconstruct_from_patches_2d,
                      PatchExtractor, extract_patches)
-from ...utils.graph import cs_graph_components
+from ...utils.graph import connected_components
 
 
 def test_img_to_graph():
@@ -38,12 +38,12 @@ def test_grid_to_graph():
     mask[-roi_size:, -roi_size:] = True
     mask = mask.reshape(size ** 2)
     A = grid_to_graph(n_x=size, n_y=size, mask=mask, return_as=np.ndarray)
-    assert_true(cs_graph_components(A)[0] == 2)
+    assert_true(connected_components(A)[0] == 2)
 
     # Checking that the function works whatever the type of mask is
     mask = np.ones((size, size), dtype=np.int16)
     A = grid_to_graph(n_x=size, n_y=size, n_z=size, mask=mask)
-    assert_true(cs_graph_components(A)[0] == 1)
+    assert_true(connected_components(A)[0] == 1)
 
     # Checking dtype of the graph
     mask = np.ones((size, size))
@@ -60,18 +60,18 @@ def test_connect_regions():
     for thr in (50, 150):
         mask = lena > thr
         graph = img_to_graph(lena, mask)
-        assert_equal(ndimage.label(mask)[1], cs_graph_components(graph)[0])
+        assert_equal(ndimage.label(mask)[1], connected_components(graph)[0])
 
 
 def test_connect_regions_with_grid():
     lena = sp.misc.lena()
     mask = lena > 50
     graph = grid_to_graph(*lena.shape, mask=mask)
-    assert_equal(ndimage.label(mask)[1], cs_graph_components(graph)[0])
+    assert_equal(ndimage.label(mask)[1], connected_components(graph)[0])
 
     mask = lena > 150
     graph = grid_to_graph(*lena.shape, mask=mask, dtype=None)
-    assert_equal(ndimage.label(mask)[1], cs_graph_components(graph)[0])
+    assert_equal(ndimage.label(mask)[1], connected_components(graph)[0])
 
 
 def _downsampled_lena():
@@ -186,13 +186,16 @@ def test_patch_extractor_max_patches():
 
     max_patches = 100
     expected_n_patches = len(lenas) * max_patches
-    extr = PatchExtractor(patch_size=(p_h, p_w), max_patches=max_patches, random_state=0)
+    extr = PatchExtractor(patch_size=(p_h, p_w), max_patches=max_patches,
+                          random_state=0)
     patches = extr.transform(lenas)
     assert_true(patches.shape == (expected_n_patches, p_h, p_w))
 
     max_patches = 0.5
-    expected_n_patches = len(lenas) * int((i_h - p_h + 1) * (i_w - p_w + 1) * max_patches)
-    extr = PatchExtractor(patch_size=(p_h, p_w), max_patches=max_patches, random_state=0)
+    expected_n_patches = len(lenas) * int((i_h - p_h + 1) * (i_w - p_w + 1)
+                                          * max_patches)
+    extr = PatchExtractor(patch_size=(p_h, p_w), max_patches=max_patches,
+                          random_state=0)
     patches = extr.transform(lenas)
     assert_true(patches.shape == (expected_n_patches, p_h, p_w))
 

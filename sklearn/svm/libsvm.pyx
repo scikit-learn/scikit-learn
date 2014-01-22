@@ -2,7 +2,7 @@
 Binding for libsvm_skl
 ----------------------
 
-These are the bindings for libsvm_skl, which is a fork o libsvm[1]
+These are the bindings for libsvm_skl, which is a fork of libsvm[1]
 that adds to libsvm some capabilities, like index of support vectors
 and efficient representation of dense matrices.
 
@@ -63,51 +63,72 @@ def fit(
         sample_weight=np.empty(0),
     int shrinking=1, int probability=0,
     double cache_size=100.,
-    int max_iter=-1):
+    int max_iter=-1,
+    int random_seed=0):
     """
     Train the model using libsvm (low-level method)
 
     Parameters
     ----------
-    X: array-like, dtype=float64, size=[n_samples, n_features]
+    X : array-like, dtype=float64, size=[n_samples, n_features]
 
-    Y: array, dtype=float64, size=[n_samples]
+    Y : array, dtype=float64, size=[n_samples]
         target vector
 
-    svm_type : {0, 1, 2, 3, 4}
+    svm_type : {0, 1, 2, 3, 4}, optional
         Type of SVM: C_SVC, NuSVC, OneClassSVM, EpsilonSVR or NuSVR
-        respectively.
+        respectively. 0 by default.
 
-    kernel : {'linear', 'rbf', 'poly', 'sigmoid', 'precomputed'}
+    kernel : {'linear', 'rbf', 'poly', 'sigmoid', 'precomputed'}, optional
         Kernel to use in the model: linear, polynomial, RBF, sigmoid
-        or precomputed.
+        or precomputed. 'rbf' by default.
 
-    degree : int32
+    degree : int32, optional
         Degree of the polynomial kernel (only relevant if kernel is
-        set to polynomial)
+        set to polynomial), 3 by default.
 
-    gamma : float64
+    gamma : float64, optional
         Gamma parameter in RBF kernel (only relevant if kernel is set
-        to RBF)
+        to RBF). 0.1 by default.
 
-    coef0 : float64
-        Independent parameter in poly/sigmoid kernel.
+    coef0 : float64, optional
+        Independent parameter in poly/sigmoid kernel. 0 by default.
 
-    tol : float64
-        Numeric stopping criterion (WRITEME).
+    tol : float64, optional
+        Numeric stopping criterion (WRITEME). 1e-3 by default.
 
-    C : float64
-        C parameter in C-Support Vector Classification
+    C : float64, optional
+        C parameter in C-Support Vector Classification. 1 by default.
 
-    nu : float64
+    nu : float64, optional
+        0.5 by default.
 
-    cache_size : float64
-        Cache size for gram matrix columns (in megabytes)
+    epsilon : double, optional
+        0.1 by default.
 
-    max_iter: int (-1 for no limit)
+    class_weight : array, dtype float64, shape (n_classes,), optional
+        np.empty(0) by default.
+
+    sample_weight : array, dtype float64, shape (n_samples,), optional
+        np.empty(0) by default.
+
+    shrinking : int, optional
+        1 by default.
+
+    probability : int, optional
+        0 by default.
+
+    cache_size : float64, optional
+        Cache size for gram matrix columns (in megabytes). 100 by default.
+
+    max_iter : int (-1 for no limit), optional.
         Stop solver after this many iterations regardless of accuracy
         (XXX Currently there is no API to know whether this kicked in.)
+        -1 by default.
 
+    random_seed : int, optional
+        Seed for the random number generator used for probability estimates.
+        0 by default.
 
     Returns
     -------
@@ -156,11 +177,10 @@ def fit(
         raise MemoryError("Seems we've run out of memory")
     cdef np.ndarray[np.int32_t, ndim=1, mode='c'] \
         class_weight_label = np.arange(class_weight.shape[0], dtype=np.int32)
-
     set_parameter(
         &param, svm_type, kernel_index, degree, gamma, coef0, nu, cache_size,
         C, tol, epsilon, shrinking, probability, <int> class_weight.shape[0],
-        class_weight_label.data, class_weight.data, max_iter)
+        class_weight_label.data, class_weight.data, max_iter, random_seed)
 
     error_msg = svm_check_parameter(&problem, &param)
     if error_msg:
@@ -244,12 +264,13 @@ cdef void set_predict_params(
     cdef double nu = .5
     cdef int shrinking = 0
     cdef double tol = .1
+    cdef int random_seed = -1
 
     kernel_index = LIBSVM_KERNEL_TYPES.index(kernel)
 
     set_parameter(param, svm_type, kernel_index, degree, gamma, coef0, nu,
                          cache_size, C, tol, epsilon, shrinking, probability,
-                         nr_weight, weight_label, weight, max_iter)
+                         nr_weight, weight_label, weight, max_iter, random_seed)
 
 
 def predict(np.ndarray[np.float64_t, ndim=2, mode='c'] X,
@@ -458,7 +479,8 @@ def cross_validation(
     np.ndarray[np.float64_t, ndim=1, mode='c']
         sample_weight=np.empty(0),
     int shrinking=0, int probability=0, double cache_size=100.,
-    int max_iter=-1):
+    int max_iter=-1,
+    int random_seed=0):
     """
     Binding of the cross-validation routine (low-level routine)
 
@@ -498,6 +520,10 @@ def cross_validation(
 
     cache_size : float
 
+    random_seed : int, optional
+        Seed for the random number generator used for probability estimates.
+        0 by default.
+
     Returns
     -------
     target : array, float
@@ -536,7 +562,7 @@ def cross_validation(
         &param, svm_type, kernel_index, degree, gamma, coef0, nu, cache_size,
         C, tol, tol, shrinking, probability, <int>
         class_weight.shape[0], class_weight_label.data,
-        class_weight.data, max_iter)
+        class_weight.data, max_iter, random_seed)
 
     error_msg = svm_check_parameter(&problem, &param);
     if error_msg:

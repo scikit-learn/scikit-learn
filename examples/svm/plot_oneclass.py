@@ -3,6 +3,8 @@
 One-class SVM with non-linear kernel (RBF)
 ==========================================
 
+An example using a one-class SVM for novelty detection.
+
 :ref:`One-class SVM <svm_outlier_detection>` is an unsupervised
 algorithm that learns a decision function for novelty detection:
 classifying new data as similar or different to the training set.
@@ -55,7 +57,7 @@ pl.legend([a.collections[0], b1, b2, c],
           loc="upper left",
           prop=matplotlib.font_manager.FontProperties(size=11))
 pl.xlabel(
-    "error train: %d/200 ; errors novel regular: %d/20 ; "
-    "errors novel abnormal: %d/20"
+    "error train: %d/200 ; errors novel regular: %d/40 ; "
+    "errors novel abnormal: %d/40"
     % (n_error_train, n_error_test, n_error_outliers))
 pl.show()

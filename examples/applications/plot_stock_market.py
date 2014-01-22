@@ -1,7 +1,4 @@
 """
-
-.. _stock_market:
-
 =======================================
 Visualizing the stock market structure
 =======================================
@@ -12,6 +9,7 @@ the stock market structure from variations in historical quotes.
 The quantity that we use is the daily variation in quote price: quotes
 that are linked tend to cofluctuate during a day.
 
+.. _stock_market:
 
 Learning a graph structure
 --------------------------
@@ -83,6 +81,7 @@ from sklearn import cluster, covariance, manifold
 d1 = datetime.datetime(2003, 01, 01)
 d2 = datetime.datetime(2008, 01, 01)
 
+# kraft symbol has now changed from KFT to MDLZ in yahoo
 symbol_dict = {
     'TOT': 'Total',
     'XOM': 'Exxon',
@@ -111,13 +110,12 @@ symbol_dict = {
     'MMM': '3M',
     'MCD': 'Mc Donalds',
     'PEP': 'Pepsi',
-    'KFT': 'Kraft Foods',
+    'MDLZ': 'Kraft Foods',
     'K': 'Kellogg',
     'UN': 'Unilever',
     'MAR': 'Marriott',
     'PG': 'Procter Gamble',
     'CL': 'Colgate-Palmolive',
-    'NWS': 'News Corp',
     'GE': 'General Electrics',
     'WFC': 'Wells Fargo',
     'JPM': 'JPMorgan Chase',

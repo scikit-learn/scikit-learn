@@ -55,12 +55,13 @@ from optparse import OptionParser
 
 import numpy as np
 
-from sklearn.datasets import fetch_covtype
+from sklearn.datasets import fetch_covtype, get_data_home
 from sklearn.svm import LinearSVC
 from sklearn.linear_model import SGDClassifier
 from sklearn.naive_bayes import GaussianNB
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier
+from sklearn.ensemble import GradientBoostingClassifier
 from sklearn import metrics
 from sklearn.externals.joblib import Memory
 
@@ -95,21 +96,21 @@ if len(args) > 0:
 
 # Memoize the data extraction and memory map the resulting
 # train / test splits in readonly mode
-bench_folder = os.path.dirname(__file__)
-original_archive = os.path.join(bench_folder, 'covtype.data.gz')
-joblib_cache_folder = os.path.join(bench_folder, 'bench_covertype_data')
+joblib_cache_folder = os.path.join(get_data_home(), 'covertype_benchmark_data')
 m = Memory(joblib_cache_folder, mmap_mode='r')
 
 
 # Load the data, then cache and memmap the train/test split
 @m.cache
-def load_data(dtype=np.float32, order='F'):
+def load_data(dtype=np.float32, order='C'):
     ######################################################################
     ## Load dataset
     print("Loading dataset...")
     data = fetch_covtype(download_if_missing=True, shuffle=True,
                          random_state=opts.random_seed)
     X, y = data['data'], data['target']
+    X = np.asarray(X, dtype=dtype)
+    
     if order.lower() == 'f':
         X = np.asfortranarray(X)
 
@@ -210,9 +211,6 @@ classifiers['CART'] = DecisionTreeClassifier(min_samples_split=5,
 ## Train RandomForest model
 rf_parameters = {
     "n_estimators": 20,
-    "min_samples_split": 5,
-    "max_features": None,
-    "max_depth": None,
     "n_jobs": opts.n_jobs,
     "random_state": opts.random_seed,
 }
@@ -221,10 +219,12 @@ classifiers['RandomForest'] = RandomForestClassifier(**rf_parameters)
 ######################################################################
 ## Train Extra-Trees model
 classifiers['ExtraTrees'] = ExtraTreesClassifier(n_estimators=20,
-                                                 min_samples_split=5,
-                                                 max_features=None,
-                                                 max_depth=None,
                                                  n_jobs=opts.n_jobs,
+                                                 random_state=opts.random_seed)
+
+######################################################################
+## Train GBRT model
+classifiers['GBRT'] = GradientBoostingClassifier(n_estimators=250,
                                                  random_state=opts.random_seed)
 
 

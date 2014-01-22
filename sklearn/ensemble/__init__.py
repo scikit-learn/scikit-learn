@@ -9,6 +9,8 @@ from .forest import RandomForestRegressor
 from .forest import RandomTreesEmbedding
 from .forest import ExtraTreesClassifier
 from .forest import ExtraTreesRegressor
+from .bagging import BaggingClassifier
+from .bagging import BaggingRegressor
 from .weight_boosting import AdaBoostClassifier
 from .weight_boosting import AdaBoostRegressor
 from .gradient_boosting import GradientBoostingClassifier
@@ -24,10 +26,13 @@ from . import weight_boosting
 from . import gradient_boosting
 from . import partial_dependence
 
-__all__ = ["BaseEnsemble", "RandomForestClassifier", "RandomForestRegressor",
+__all__ = ["BaseEnsemble",
+           "RandomForestClassifier", "RandomForestRegressor",
            "RandomTreesEmbedding", "ExtraTreesClassifier",
-           "ExtraTreesRegressor", "GradientBoostingClassifier",
+           "ExtraTreesRegressor", "BaggingClassifier",
+           "BaggingRegressor", "GradientBoostingClassifier",
            "GradientBoostingRegressor", "AdaBoostClassifier",
+<<<<<<< HEAD
            "AdaBoostRegressor",  "bagging", "forest", "gradient_boosting",
            "partial_dependence", "weight_boosting", "BaggingClassifier", "BaggingRegressor"]
 
@@ -47,3 +52,7 @@ __all__ = ["BaseEnsemble", "RandomForestClassifier", "RandomForestRegressor",
 
 
 
+=======
+           "AdaBoostRegressor", "bagging", "forest", "gradient_boosting",
+           "partial_dependence", "weight_boosting"]
+>>>>>>> upstream/master

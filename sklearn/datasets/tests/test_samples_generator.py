@@ -1,4 +1,10 @@
+from __future__ import division
+
+from collections import defaultdict
+from functools import partial
+
 import numpy as np
+from sklearn.externals.six.moves import zip
 
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
@@ -6,6 +12,7 @@ from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_less
+from sklearn.utils.testing import assert_raises
 
 from sklearn.datasets import make_classification
 from sklearn.datasets import make_multilabel_classification
@@ -21,6 +28,10 @@ from sklearn.datasets import make_sparse_uncorrelated
 from sklearn.datasets import make_spd_matrix
 from sklearn.datasets import make_swiss_roll
 from sklearn.datasets import make_s_curve
+from sklearn.datasets import make_biclusters
+from sklearn.datasets import make_checkerboard
+
+from sklearn.utils.validation import assert_all_finite
 
 
 def test_make_classification():
@@ -38,6 +49,88 @@ def test_make_classification():
     assert_equal(sum(y == 2), 65, "Unexpected number of samples in class #2")
 
 
+def test_make_classification_informative_features():
+    """Test the construction of informative features in make_classification
+
+    Also tests `n_clusters_per_class`, `n_classes`, `hypercube` and
+    fully-specified `weights`.
+    """
+    # Create very separate clusters; check that vertices are unique and
+    # correspond to classes
+    class_sep = 1e6
+    make = partial(make_classification, class_sep=class_sep, n_redundant=0,
+                   n_repeated=0, flip_y=0, shift=0, scale=1, shuffle=False)
+
+    for n_informative, weights, n_clusters_per_class in [(2, [1], 1),
+                                                         (2, [1/3] * 3, 1),
+                                                         (2, [1/4] * 4, 1),
+                                                         (2, [1/2] * 2, 2),
+                                                         (2, [3/4, 1/4], 2),
+                                                         (10, [1/3] * 3, 10)
+                                                         ]:
+        n_classes = len(weights)
+        n_clusters = n_classes * n_clusters_per_class
+        n_samples = n_clusters * 50
+
+        for hypercube in (False, True):
+            X, y = make(n_samples=n_samples, n_classes=n_classes,
+                        weights=weights, n_features=n_informative,
+                        n_informative=n_informative,
+                        n_clusters_per_class=n_clusters_per_class,
+                        hypercube=hypercube, random_state=0)
+
+            assert_equal(X.shape, (n_samples, n_informative))
+            assert_equal(y.shape, (n_samples,))
+
+            # Cluster by sign, viewed as strings to allow uniquing
+            signs = np.sign(X)
+            signs = signs.view(dtype='|S{0}'.format(signs.strides[0]))
+            unique_signs, cluster_index = np.unique(signs,
+                                                    return_inverse=True)
+
+            assert_equal(len(unique_signs), n_clusters,
+                         "Wrong number of clusters, or not in distinct "
+                         "quadrants")
+
+            clusters_by_class = defaultdict(set)
+            for cluster, cls in zip(cluster_index, y):
+                clusters_by_class[cls].add(cluster)
+            for clusters in clusters_by_class.values():
+                assert_equal(len(clusters), n_clusters_per_class,
+                             "Wrong number of clusters per class")
+            assert_equal(len(clusters_by_class), n_classes,
+                         "Wrong number of classes")
+
+            assert_array_almost_equal(np.bincount(y) / len(y) // weights,
+                                      [1] * n_classes,
+                                      err_msg="Wrong number of samples "
+                                              "per class")
+
+            # Ensure on vertices of hypercube
+            for cluster in range(len(unique_signs)):
+                centroid = X[cluster_index == cluster].mean(axis=0)
+                if hypercube:
+                    assert_array_almost_equal(np.abs(centroid),
+                                              [class_sep] * n_informative,
+                                              decimal=0,
+                                              err_msg="Clusters are not "
+                                                      "centered on hypercube "
+                                                      "vertices")
+                else:
+                    assert_raises(AssertionError,
+                                  assert_array_almost_equal,
+                                  np.abs(centroid),
+                                  [class_sep] * n_informative,
+                                  decimal=0,
+                                  err_msg="Clusters should not be cenetered "
+                                          "on hypercube vertices")
+
+    assert_raises(ValueError, make, n_features=2, n_informative=2, n_classes=5,
+                  n_clusters_per_class=1)
+    assert_raises(ValueError, make, n_features=2, n_informative=2, n_classes=3,
+                  n_clusters_per_class=2)
+
+
 def test_make_multilabel_classification():
     for allow_unlabeled, min_length in zip((True, False), (0, 1)):
         X, Y = make_multilabel_classification(n_samples=100, n_features=20,
@@ -48,6 +141,17 @@ def test_make_multilabel_classification():
             assert_equal(max([max(y) for y in Y]), 2)
         assert_equal(min([len(y) for y in Y]), min_length)
         assert_true(max([len(y) for y in Y]) <= 3)
+
+
+def test_make_multilabel_classification_return_indicator():
+    for allow_unlabeled, min_length in zip((True, False), (0, 1)):
+        X, Y = make_multilabel_classification(n_samples=25, n_features=20,
+                                              n_classes=3, random_state=0,
+                                              return_indicator=True,
+                                              allow_unlabeled=allow_unlabeled)
+        assert_equal(X.shape, (25, 20), "X shape mismatch")
+        assert_equal(Y.shape, (25, 3), "Y shape mismatch")
+        assert_true(np.all(np.sum(Y, axis=0) > min_length))
 
 
 def test_make_hastie_10_2():
@@ -67,8 +171,12 @@ def test_make_regression():
     assert_equal(c.shape, (10,), "coef shape mismatch")
     assert_equal(sum(c != 0.0), 3, "Unexpected number of informative features")
 
-    # Test that y ~= np.dot(X, c) + bias + N(0, 1.0)
+    # Test that y ~= np.dot(X, c) + bias + N(0, 1.0).
     assert_almost_equal(np.std(y - np.dot(X, c)), 1.0, decimal=1)
+
+    # Test with small number of features.
+    X, y = make_regression(n_samples=100, n_features=1)  # n_informative=3
+    assert_equal(X.shape, (100, 1))
 
 
 def test_make_regression_multitarget():
@@ -191,3 +299,39 @@ def test_make_s_curve():
     assert_equal(t.shape, (5,), "t shape mismatch")
     assert_array_equal(X[:, 0], np.sin(t))
     assert_array_equal(X[:, 2], np.sign(t) * (np.cos(t) - 1))
+
+
+def test_make_biclusters():
+    X, rows, cols = make_biclusters(
+        shape=(100, 100), n_clusters=4, shuffle=True, random_state=0)
+    assert_equal(X.shape, (100, 100), "X shape mismatch")
+    assert_equal(rows.shape, (4, 100), "rows shape mismatch")
+    assert_equal(cols.shape, (4, 100,), "columns shape mismatch")
+    assert_all_finite(X)
+    assert_all_finite(rows)
+    assert_all_finite(cols)
+
+    X2, _, _ = make_biclusters(shape=(100, 100), n_clusters=4,
+                               shuffle=True, random_state=0)
+    assert_array_equal(X, X2)
+
+
+def test_make_checkerboard():
+    X, rows, cols = make_checkerboard(
+        shape=(100, 100), n_clusters=(20, 5),
+        shuffle=True, random_state=0)
+    assert_equal(X.shape, (100, 100), "X shape mismatch")
+    assert_equal(rows.shape, (100, 100), "rows shape mismatch")
+    assert_equal(cols.shape, (100, 100,), "columns shape mismatch")
+
+    X, rows, cols = make_checkerboard(
+        shape=(100, 100), n_clusters=2, shuffle=True, random_state=0)
+    assert_all_finite(X)
+    assert_all_finite(rows)
+    assert_all_finite(cols)
+
+    X1, _, _ = make_checkerboard(shape=(100, 100), n_clusters=2,
+                                 shuffle=True, random_state=0)
+    X2, _, _ = make_checkerboard(shape=(100, 100), n_clusters=2,
+                                 shuffle=True, random_state=0)
+    assert_array_equal(X1, X2)

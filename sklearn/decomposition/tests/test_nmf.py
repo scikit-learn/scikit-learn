@@ -82,13 +82,6 @@ def test_projgrad_nmf_fit_close():
     assert_less(pnmf.fit(X).reconstruction_err_, 0.05)
 
 
-@raises(ValueError)
-def test_nls_nn_input():
-    """Test NLS solver's behaviour on negative input"""
-    A = np.ones((2, 2))
-    nmf._nls_subproblem(A, A, -A, 0.001, 20)
-
-
 def test_nls_nn_output():
     """Test that NLS solver doesn't return negative values"""
     A = np.arange(1, 5).reshape(1, -1)
@@ -140,14 +133,14 @@ def test_projgrad_nmf_sparseness():
 
 def test_sparse_input():
     """Test that sparse matrices are accepted as input"""
-    from scipy.sparse import csr_matrix
+    from scipy.sparse import csc_matrix
 
     A = np.abs(random_state.randn(10, 10))
     A[:, 2 * np.arange(5)] = 0
     T1 = nmf.ProjectedGradientNMF(n_components=5, init='random',
                                   random_state=999).fit_transform(A)
 
-    A_sparse = csr_matrix(A)
+    A_sparse = csc_matrix(A)
     pg_nmf = nmf.ProjectedGradientNMF(n_components=5, init='random',
                                       random_state=999)
     T2 = pg_nmf.fit_transform(A_sparse)
@@ -164,6 +157,21 @@ def test_sparse_input():
     T1 = nmf.ProjectedGradientNMF(
         n_components=5, init='random', sparseness='data',
         random_state=999).fit_transform(A)
+
+
+def test_sparse_transform():
+    """Test that transform works on sparse data.  Issue #2124"""
+    from scipy.sparse import csc_matrix
+
+    A = np.abs(random_state.randn(5, 4))
+    A[A > 1.0] = 0
+    A = csc_matrix(A)
+
+    model = nmf.NMF()
+    A_fit_tr = model.fit_transform(A)
+    A_tr = model.transform(A)
+    # This solver seems pretty inconsistent
+    assert_array_almost_equal(A_fit_tr, A_tr, decimal=2)
 
 
 if __name__ == '__main__':

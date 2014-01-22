@@ -113,4 +113,3 @@ class SelectorMixin(six.with_metaclass(ABCMeta, TransformerMixin)):
         Xt = np.zeros((X.shape[0], support.size), dtype=X.dtype)
         Xt[:, support] = X
         return Xt
-

@@ -15,8 +15,8 @@ We use a GridSearchCV to set the dimensionality of the PCA
 print(__doc__)
 
 
-# Code source: Gael Varoqueux
-# Modified for Documentation merge by Jaques Grobler
+# Code source: Gaël Varoquaux
+# Modified for documentation by Jaques Grobler
 # License: BSD 3 clause
 
 
@@ -24,11 +24,12 @@ import numpy as np
 import pylab as pl
 
 from sklearn import linear_model, decomposition, datasets
+from sklearn.pipeline import Pipeline
+from sklearn.grid_search import GridSearchCV
 
 logistic = linear_model.LogisticRegression()
 
 pca = decomposition.PCA()
-from sklearn.pipeline import Pipeline
 pipe = Pipeline(steps=[('pca', pca), ('logistic', logistic)])
 
 digits = datasets.load_digits()
@@ -49,8 +50,6 @@ pl.ylabel('explained_variance_')
 
 ###############################################################################
 # Prediction
-
-from sklearn.grid_search import GridSearchCV
 
 n_components = [20, 40, 64]
 Cs = np.logspace(-4, 4, 3)

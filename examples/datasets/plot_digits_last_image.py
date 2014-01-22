@@ -5,6 +5,7 @@
 =========================================================
 The Digit Dataset
 =========================================================
+
 This dataset is made up of 1797 8x8 images. Each image,
 like the one shown below, is of a hand-written digit.
 In order to utilize an 8x8 figure like this, we'd have to
@@ -17,8 +18,8 @@ for more information about this dataset.
 print(__doc__)
 
 
-# Code source: Gael Varoqueux
-# Modified for Documentation merge by Jaques Grobler
+# Code source: Gaël Varoquaux
+# Modified for documentation by Jaques Grobler
 # License: BSD 3 clause
 
 from sklearn import datasets
