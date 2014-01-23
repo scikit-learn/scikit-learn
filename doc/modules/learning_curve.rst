@@ -22,22 +22,38 @@ However, if the latent function to be learned does not comply with these
 assumptions, the error of the model will be very high and that is true for the
 training error as well as for the validation error. More training examples do
 not help in this case. If both the training error and the validation error are
-high, we call this **underfitting**. More complex models with a low bias can
-usually approximate much more complex functions. They usually have another
-problem which is called **variance**, i.e. they are very sensitive to varying
-training sets. Usually we can recognize too complex models because the training
-error will be very low and the validation error will be very high. This is
-also called **overfitting**. An overfitting estimator typically learns the
-noise of the training data. To reduce this type of error, we can either select
-a simpler estimator with a higher bias, regularize a complex estimator, or if
-this did not help, collect more training examples.
+high, we call this **underfitting**.
+
+An example for underfitting can be seen on the left side of the following plot.
+Linear regression does not fit the noisy samples drawn from a sine function at
+all. With polynomial features, we can decrease the bias and increase the
+complexity of the model.
+
+.. figure:: ../auto_examples/images/plot_polynomial_regression_1.png
+   :target: ../auto_examples/plot_polynomial_regression.html
+   :align: center
+   :scale: 50%
+
+More complex models with a low bias can usually approximate much more complex
+functions. However, they usually have another problem which is called
+**variance**, i.e. they are very sensitive to varying training sets. Usually
+we can recognize too complex models because the training error will be very
+low and the validation error will be very high. This is also called
+**overfitting**. In the plot you can see an example on the right side.
+An overfitting estimator typically learns the noise of the training data. To
+reduce this type of error, we can either select a simpler estimator with a
+higher bias, regularize a complex estimator, or if this did not help, collect
+more training examples.
 
 We can change the bias and variance by selecting the model, which means we
 first have to choose an estimator and then we have to select an appropriate
-parametrization of that estimator. The following tools can help to do that.
+parametrization of that estimator. In the simple one-dimensional problem that
+we have seen in the example, this seems to be easy. However, in high-dimensional
+spaces this might not be the case but with the following tools it is feasible.
 
 .. topic:: Examples:
 
+   * :ref:`example_plot_polynomial_regression.py`
    * :ref:`example_plot_validation_curve.py`
    * :ref:`example_plot_learning_curve.py`
 

@@ -438,6 +438,11 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
     Be aware that the number of features in the output array scales
     exponentially in the number of features of the input array, so this
     is not suitable for higher-dimensional data.
+
+    See also
+    --------
+    :ref:`examples/plot_polynmial_regression.py
+    <example_plot_polynomial_regression.py>`
     """
     def __init__(self, degree=2, include_bias=True):
         self.degree = degree
