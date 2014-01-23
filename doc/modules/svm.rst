@@ -249,10 +249,10 @@ that sets the parameter ``C`` of class ``class_label`` to ``C * value``.
    :scale: 75
 
 
-:class:`SVC`, :class:`NuSVC`, :class:`SVR`, :class:`NuSVR` and
-:class:`OneClassSVM` implement also weights for individual samples in method
-``fit`` through keyword ``sample_weight``. Similar to ``class_weight``, these
-set the parameter ``C`` for the i-th example to ``C * sample_weight[i]``.
+:class:`SVC`, :class:`LinearSVC`, :class:`NuSVC`, :class:`SVR`, :class:`NuSVR`
+and :class:`OneClassSVM` also implement weights for individual samples in
+method ``fit`` through keyword ``sample_weight``. Similar to ``class_weight``,
+these set the parameter ``C`` for the i-th example to ``C * sample_weight[i]``.
 
 
 .. figure:: ../auto_examples/svm/images/plot_weighted_samples_001.png

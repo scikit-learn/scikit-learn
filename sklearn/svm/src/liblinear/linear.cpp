@@ -13,6 +13,9 @@
    Modified 2014:
 
    - Patched to add support for instance weights, Gabriel Schwartz.
+        Instance weight support added from:
+        http://www.csie.ntu.edu.tw/~cjlin/libsvmtools/#weights_for_data_instances
+
         See issue 409: https://github.com/scikit-learn/scikit-learn/pull/409
    
  */
