@@ -11,9 +11,8 @@ from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import ignore_warnings
 
 
-
 from sklearn.linear_model.coordinate_descent import (Lasso, ElasticNet,
-                                                     ElasticNetCV)
+                                                     LassoCV, ElasticNetCV)
 
 
 def test_sparse_coef():
@@ -248,3 +247,24 @@ def test_path_parameters():
     sparse_mse_path = clf.mse_path_
     ignore_warnings(clf.fit)(X.toarray(), y)  # compare with dense data
     assert_almost_equal(clf.mse_path_, sparse_mse_path)
+
+
+def test_same_output_sparse_dense_lasso_and_enet_cv():
+    X, y = make_sparse_data(n_samples=50, n_features=10)
+    clfs = ElasticNetCV(max_iter=100, cv=10)
+    ignore_warnings(clfs.fit)(X, y)
+    clfd = ElasticNetCV(max_iter=100, cv=10)
+    ignore_warnings(clfd.fit)(X.todense(), y)
+    assert_almost_equal(clfs.alpha_, clfd.alpha_, 7)
+    assert_almost_equal(clfs.intercept_, clfd.intercept_, 7)
+    assert_array_almost_equal(clfs.mse_path_, clfd.mse_path_)
+    assert_array_almost_equal(clfs.alphas_, clfd.alphas_)
+
+    clfs = LassoCV(max_iter=100, cv=10)
+    ignore_warnings(clfs.fit)(X, y)
+    clfd = LassoCV(max_iter=100, cv=10)
+    ignore_warnings(clfd.fit)(X.todense(), y)
+    assert_almost_equal(clfs.alpha_, clfd.alpha_, 7)
+    assert_almost_equal(clfs.intercept_, clfd.intercept_, 7)
+    assert_array_almost_equal(clfs.mse_path_, clfd.mse_path_)
+    assert_array_almost_equal(clfs.alphas_, clfd.alphas_)

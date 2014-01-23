@@ -21,6 +21,7 @@ from ..externals.joblib import Parallel, delayed
 from ..externals import six
 from ..externals.six.moves import xrange
 from ..utils.extmath import safe_sparse_dot
+from ..utils.sparsefuncs import csc_mean_variance_axis0
 
 from . import cd_fast
 
@@ -66,20 +67,33 @@ def _alpha_grid(X, y, Xy=None, l1_ratio=1.0, fit_intercept=True,
     copy_X : boolean, optional, default True
         If ``True``, X will be copied; else, it may be overwritten.
     """
+    n_samples = len(y)
+
     if Xy is None:
+        X_sparse = False
+        if sparse.isspmatrix(X):
+            X_sparse = True
+        sparse_center = X_sparse and fit_intercept
+
         X = atleast2d_or_csc(X, copy=(copy_X and fit_intercept and not
-                                      sparse.isspmatrix(X)))
-        if not sparse.isspmatrix(X):
+                                      X_sparse))
+        if not X_sparse:
             # X can be touched inplace thanks to the above line
             X, y, _, _, _ = center_data(X, y, fit_intercept,
                                         normalize, copy=False)
         Xy = safe_sparse_dot(X.T, y, dense_output=True)
-        n_samples = X.shape[0]
-    else:
-        n_samples = len(y)
+
+        if sparse_center:
+            # Workaround to find alpha_max for sparse matrices.
+            # since we should not destroy the sparsity of such matrices.
+            X_mean, _ = csc_mean_variance_axis0(X)
+            mean_dot = np.sum(X_mean[:, np.newaxis] * y, axis=1)
 
     if Xy.ndim == 1:
         Xy = Xy[:, np.newaxis]
+    if sparse_center:
+        Xy -= mean_dot[:, np.newaxis]
+
     alpha_max = np.sqrt(np.sum(Xy ** 2, axis=1)).max() / (
                             n_samples * l1_ratio)
     alphas = np.logspace(np.log10(alpha_max * eps), np.log10(alpha_max),
