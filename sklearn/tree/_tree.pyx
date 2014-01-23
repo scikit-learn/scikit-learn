@@ -1688,8 +1688,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         if rc == -1:
             raise MemoryError()
 
-        # release memory
-        tree.splitter = None
+        tree._finalize()
 
 
 # Best first builder ----------------------------------------------------------
@@ -1882,8 +1881,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         if rc == -1:
             raise MemoryError()
 
-        # release memory
-        tree.splitter = None
+        tree._finalize()
 
 
 # =============================================================================
@@ -2010,6 +2008,7 @@ cdef class Tree:
         self.capacity = 0
         self.value = NULL
         self.nodes = NULL
+        self.locked = False
 
     def __dealloc__(self):
         """Destructor."""
@@ -2066,13 +2065,19 @@ cdef class Tree:
     cdef void _resize(self, SIZE_t capacity):
         """Resize all inner arrays to `capacity`, if `capacity` == -1, then
            double the size of the inner arrays."""
-        if self._resize_c(capacity) != 0:
-            raise MemoryError()
+        cdef int ret = self._resize_c(capacity)
+        if ret == 0:
+            return
+        elif ret == 1:
+            raise RuntimeError('Cannot resize tree after building is complete')
+        raise MemoryError()
 
     # XXX using (size_t)(-1) is ugly, but SIZE_MAX is not available in C89
     # (i.e., older MSVC).
     cdef int _resize_c(self, SIZE_t capacity=<SIZE_t>(-1)) nogil:
         """Guts of _resize. Returns 0 for success, -1 for error."""
+        if self.locked:
+            return 1
 
         if capacity == self.capacity and self.nodes != NULL:
             return 0
@@ -2219,6 +2224,11 @@ cdef class Tree:
 
         return importances
 
+    cdef void _finalize(self):
+        # release memory
+        self.splitter = None
+        self.locked = True
+
     cdef np.ndarray _get_value_ndarray(self):
         cdef np.npy_intp shape[3]
         shape[0] = <np.npy_intp> self.node_count
@@ -2226,8 +2236,8 @@ cdef class Tree:
         shape[2] = <np.npy_intp> self.max_n_classes
         cdef np.ndarray arr
         arr = np.PyArray_SimpleNewFromData(3, shape, np.NPY_DOUBLE, self.value)
-        arr.base = <PyObject*> self
         Py_INCREF(self)
+        arr.base = <PyObject*> self
         return arr
 
     cdef np.ndarray _get_node_ndarray(self):
@@ -2236,11 +2246,12 @@ cdef class Tree:
         cdef np.npy_intp strides[1]
         strides[0] = sizeof(Node)
         cdef np.ndarray arr
+        Py_INCREF(NODE_DTYPE)
         arr = PyArray_NewFromDescr(np.ndarray, <np.dtype> NODE_DTYPE, 1, shape,
                                    strides, <void*> self.nodes,
                                    np.NPY_DEFAULT, None)
-        arr.base = <PyObject*> self
         Py_INCREF(self)
+        arr.base = <PyObject*> self
         return arr
 
 
