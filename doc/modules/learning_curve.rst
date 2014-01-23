@@ -4,6 +4,8 @@
 Validation curves: plotting scores to evaluate models
 =====================================================
 
+.. currentmodule:: sklearn.learning_curve
+
 There are several problems that can occur during learning and visualization
 can help to avoid some of them. First of all, we have to choose an appropriate
 estimator. That is not a simple decision because every algorithm has its
@@ -80,8 +82,6 @@ SVM on the digits dataset.
 
 Learning curve
 ==============
-
-.. currentmodule:: sklearn.learning_curve
 
 A learning curve shows the validation and training score of an estimator
 for varying numbers of training samples. It is a tool to find out how much
