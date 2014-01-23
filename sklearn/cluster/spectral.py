@@ -14,7 +14,7 @@ from ..utils import check_random_state, as_float_array
 from ..utils.extmath import norm
 from ..metrics.pairwise import pairwise_kernels
 from ..neighbors import kneighbors_graph
-from ..manifold import spectral_embedding
+from ..manifold import spectral_embedding, diffusion_embedding
 from .k_means_ import k_means
 
 
@@ -450,3 +450,113 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
     @property
     def _pairwise(self):
         return self.affinity == "precomputed"
+
+
+def diffusion_clustering(affinity, n_clusters=8, n_components=None,
+                        eigen_solver=None, random_state=None, n_init=10,
+                        eigen_tol=0.0, assign_labels='kmeans',
+                        diffusion_time=None):
+    """Apply clustering to a projection to the normalized laplacian.
+
+    In practice Spectral Clustering is very useful when the structure of
+    the individual clusters is highly non-convex or more generally when
+    a measure of the center and spread of the cluster is not a suitable
+    description of the complete cluster. For instance when clusters are
+    nested circles on the 2D plan.
+
+    If affinity is the adjacency matrix of a graph, this method can be
+    used to find normalized graph cuts.
+
+    Parameters
+    -----------
+    affinity: array-like or sparse matrix, shape: (n_samples, n_samples)
+        The affinity matrix describing the relationship of the samples to
+        embed. **Must be symmetric**.
+
+        Possible examples:
+          - adjacency matrix of a graph,
+          - heat kernel of the pairwise distance matrix of the samples,
+          - symmetric k-nearest neighbours connectivity matrix of the samples.
+
+    n_clusters: integer, optional
+        Number of clusters to extract.
+
+    n_components: integer, optional, default is k
+        Number of eigen vectors to use for the spectral embedding
+
+    eigen_solver: {None, 'arpack', 'lobpcg', or 'amg'}
+        The eigenvalue decomposition strategy to use. AMG requires pyamg
+        to be installed. It can be faster on very large, sparse problems,
+        but may also lead to instabilities
+
+    random_state: int seed, RandomState instance, or None (default)
+        A pseudo random number generator used for the initialization
+        of the lobpcg eigen vectors decomposition when eigen_solver == 'amg'
+        and by the K-Means initialization.
+
+    n_init: int, optional, default: 10
+        Number of time the k-means algorithm will be run with different
+        centroid seeds. The final results will be the best output of
+        n_init consecutive runs in terms of inertia.
+
+    eigen_tol : float, optional, default: 0.0
+        Stopping criterion for eigendecomposition of the Laplacian matrix
+        when using arpack eigen_solver.
+
+    assign_labels : {'kmeans', 'discretize'}, default: 'kmeans'
+        The strategy to use to assign labels in the embedding
+        space.  There are two ways to assign labels after the laplacian
+        embedding.  k-means can be applied and is a popular choice. But it can
+        also be sensitive to initialization. Discretization is another
+        approach which is less sensitive to random initialization. See
+        the 'Multiclass spectral clustering' paper referenced below for
+        more details on the discretization approach.
+
+    Returns
+    -------
+    labels: array of integers, shape: n_samples
+        The labels of the clusters.
+
+    References
+    ----------
+
+    - Normalized cuts and image segmentation, 2000
+      Jianbo Shi, Jitendra Malik
+      http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.160.2324
+
+    - A Tutorial on Spectral Clustering, 2007
+      Ulrike von Luxburg
+      http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.165.9323
+
+    - Multiclass spectral clustering, 2003
+      Stella X. Yu, Jianbo Shi
+      http://www1.icsi.berkeley.edu/~stellayu/publication/doc/2003kwayICCV.pdf
+
+    Notes
+    ------
+    The graph should contain only one connect component, elsewhere
+    the results make little sense.
+
+    This algorithm solves the normalized cut for k=2: it is a
+    normalized spectral clustering.
+    """
+    if not assign_labels in ('kmeans', 'discretize'):
+        raise ValueError("The 'assign_labels' parameter should be "
+                         "'kmeans' or 'discretize', but '%s' was given"
+                         % assign_labels)
+
+    random_state = check_random_state(random_state)
+    n_components = n_clusters if n_components is None else n_components
+    maps = diffusion_embedding(affinity, n_components=n_components,
+                              eigen_solver=eigen_solver,
+                              random_state=random_state,
+                              eigen_tol=eigen_tol, drop_first=False,
+                              diffusion_time=diffusion_time)
+
+    if assign_labels == 'kmeans':
+        _, labels, _ = k_means(maps, n_clusters, random_state=random_state,
+                               n_init=n_init)
+    else:
+        labels = discretize(maps, random_state=random_state)
+
+    return labels
