@@ -1688,7 +1688,8 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         if rc == -1:
             raise MemoryError()
 
-        tree._finalize()
+        # release memory
+        tree.splitter = None
 
 
 # Best first builder ----------------------------------------------------------
@@ -1881,7 +1882,8 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         if rc == -1:
             raise MemoryError()
 
-        tree._finalize()
+        # release memory
+        tree.splitter = None
 
 
 # =============================================================================
@@ -1943,31 +1945,31 @@ cdef class Tree:
 
     property children_left:
         def __get__(self):
-            return self.node_ndarray['left_child'][:self.node_count]
+            return self._get_node_ndarray()['left_child'][:self.node_count]
 
     property children_right:
         def __get__(self):
-            return self.node_ndarray['right_child'][:self.node_count]
+            return self._get_node_ndarray()['right_child'][:self.node_count]
 
     property feature:
         def __get__(self):
-            return self.node_ndarray['feature'][:self.node_count]
+            return self._get_node_ndarray()['feature'][:self.node_count]
 
     property threshold:
         def __get__(self):
-            return self.node_ndarray['threshold'][:self.node_count]
+            return self._get_node_ndarray()['threshold'][:self.node_count]
 
     property impurity:
         def __get__(self):
-            return self.node_ndarray['impurity'][:self.node_count]
+            return self._get_node_ndarray()['impurity'][:self.node_count]
 
     property n_node_samples:
         def __get__(self):
-            return self.node_ndarray['n_samples'][:self.node_count]
+            return self._get_node_ndarray()['n_samples'][:self.node_count]
 
     property value:
         def __get__(self):
-            return self.value_ndarray[:self.node_count]
+            return self._get_value_ndarray()[:self.node_count]
 
     def __cinit__(self, int n_features, np.ndarray[SIZE_t, ndim=1] n_classes,
                   int n_outputs, Splitter splitter, SIZE_t max_depth,
@@ -2006,9 +2008,7 @@ cdef class Tree:
         # Inner structures
         self.node_count = 0
         self.capacity = 0
-        self.value_ndarray = None
         self.value = NULL
-        self.node_ndarray = None
         self.nodes = NULL
 
     def __dealloc__(self):
@@ -2017,8 +2017,6 @@ cdef class Tree:
         free(self.n_classes)
         free(self.value)
         free(self.nodes)
-        self.node_ndarray = None
-        self.value_ndarray = None
 
     def __reduce__(self):
         """Reduce re-implementation, for pickling."""
@@ -2036,8 +2034,8 @@ cdef class Tree:
         """Getstate re-implementation, for pickling."""
         d = {}
         d["node_count"] = self.node_count
-        d["nodes"] = self.node_ndarray
-        d["values"] = self.value_ndarray
+        d["nodes"] = self._get_node_ndarray()
+        d["values"] = self._get_value_ndarray()
         return d
 
     def __setstate__(self, d):
@@ -2064,7 +2062,6 @@ cdef class Tree:
         self._resize_c(self.capacity)
         nodes = memcpy(self.nodes, (<np.ndarray> node_ndarray).data, self.capacity * sizeof(Node))
         value = memcpy(self.value, (<np.ndarray> value_ndarray).data, self.capacity * self.value_stride * sizeof(double))
-        self._finalize()
 
     cdef void _resize(self, SIZE_t capacity):
         """Resize all inner arrays to `capacity`, if `capacity` == -1, then
@@ -2154,7 +2151,7 @@ cdef class Tree:
 
     cpdef np.ndarray predict(self, np.ndarray[DTYPE_t, ndim=2] X):
         """Predict target for X."""
-        out = self.value_ndarray.take(self.apply(X), axis=0, mode='clip')
+        out = self._get_value_ndarray().take(self.apply(X), axis=0, mode='clip')
         if self.n_outputs == 1:
             out = out.reshape(X.shape[0], self.max_n_classes)
         return out
@@ -2222,9 +2219,7 @@ cdef class Tree:
 
         return importances
 
-    cdef void _finalize(self):
-        """Call after building or setstate complete"""
-        # after building, create ndarrays for convenience
+    cdef np.ndarray _get_value_ndarray(self):
         cdef np.npy_intp shape[3]
         shape[0] = <np.npy_intp> self.node_count
         shape[1] = <np.npy_intp> self.n_outputs
@@ -2233,19 +2228,20 @@ cdef class Tree:
         arr = np.PyArray_SimpleNewFromData(3, shape, np.NPY_DOUBLE, self.value)
         arr.base = <PyObject*> self
         Py_INCREF(self)
-        self.value_ndarray = arr
+        return arr
 
+    cdef np.ndarray _get_node_ndarray(self):
+        cdef np.npy_intp shape[1]
+        shape[0] = <np.npy_intp> self.node_count
         cdef np.npy_intp strides[1]
         strides[0] = sizeof(Node)
+        cdef np.ndarray arr
         arr = PyArray_NewFromDescr(np.ndarray, <np.dtype> NODE_DTYPE, 1, shape,
                                    strides, <void*> self.nodes,
                                    np.NPY_DEFAULT, None)
         arr.base = <PyObject*> self
         Py_INCREF(self)
-        self.node_ndarray = arr
-
-        # release memory
-        self.splitter = None
+        return arr
 
 
 # =============================================================================

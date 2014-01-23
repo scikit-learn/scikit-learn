@@ -145,8 +145,6 @@ cdef class Tree:
     cdef Node* nodes                     # Array of nodes
     cdef double* value                   # (capacity, n_outputs, max_n_classes) array of values
     cdef SIZE_t value_stride             # = n_outputs * max_n_classes
-    cdef np.ndarray node_ndarray         # a numpy array viewing nodes for convenience
-    cdef np.ndarray value_ndarray        # a numpy array viewing nodes for convenience
 
     # Methods
     cdef SIZE_t _add_node(self, SIZE_t parent,
@@ -158,7 +156,9 @@ cdef class Tree:
                                 SIZE_t n_node_samples) nogil
     cdef void _resize(self, SIZE_t capacity)
     cdef int _resize_c(self, SIZE_t capacity=*) nogil
-    cdef void _finalize(self)
+
+    cdef np.ndarray _get_value_ndarray(self)
+    cdef np.ndarray _get_node_ndarray(self)
 
     cpdef np.ndarray predict(self, np.ndarray[DTYPE_t, ndim=2] X)
     cpdef np.ndarray apply(self, np.ndarray[DTYPE_t, ndim=2] X)
