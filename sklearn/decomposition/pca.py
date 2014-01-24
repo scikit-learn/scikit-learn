@@ -151,6 +151,9 @@ class PCA(BaseEstimator, TransformerMixin):
         k is not set then all components are stored and the sum of explained \
         variances is equal to 1.0
 
+    `mean_` : array, [n_features]
+        Per-feature empirical mean, estimated from the training set.
+
     `n_components_` : int
         The estimated number of components. Relevant when n_components is set
         to 'mle' or a number between 0 and 1 to select using explained
@@ -573,6 +576,9 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         k is not set then all components are stored and the sum of explained \
         variances is equal to 1.0
 
+    `mean_` : array, [n_features]
+        Per-feature empirical mean, estimated from the training set.
+
     Examples
     --------
     >>> import numpy as np
@@ -616,7 +622,6 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         self.copy = copy
         self.iterated_power = iterated_power
         self.whiten = whiten
-        self.mean_ = None
         self.random_state = random_state
 
     def fit(self, X, y=None):
@@ -662,7 +667,9 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
 
         n_samples = X.shape[0]
 
-        if not sparse.issparse(X):
+        if sparse.issparse(X):
+            self.mean_ = None
+        else:
             # Center data
             self.mean_ = np.mean(X, axis=0)
             X -= self.mean_
