@@ -204,7 +204,7 @@ def fit(
 
     # the intercept is just model.rho but with sign changed
     cdef np.ndarray[np.float64_t, ndim=1, mode='c'] intercept
-    intercept = np.empty(n_class*(n_class-1)/2, dtype=np.float64)
+    intercept = np.empty(int((n_class*(n_class-1))/2), dtype=np.float64)
     copy_intercept (intercept.data, model, intercept.shape)
 
     cdef np.ndarray[np.int32_t, ndim=1, mode='c'] support
