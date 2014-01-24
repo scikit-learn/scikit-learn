@@ -15,7 +15,7 @@ A good way of categorizing estimators are their inherent `bias and variance
 <http://en.wikipedia.org/wiki/Bias-variance_dilemma>`_. Simple algorithms
 (e.g. :ref:`linear_model`) usually have a high **bias**, which means they have
 strong assumptions about the underlying function that will be approximated.
-As a result, they need less training samples to learn a function that
+As a result, they need fewer training samples to learn a function that
 complies with these assumptions, e.g. a linear model can approximate the
 true linear function usually with only very few examples very accurately.
 However, if the latent function to be learned does not comply with these
@@ -25,9 +25,9 @@ not help in this case. If both the training error and the validation error are
 high, we call this **underfitting**.
 
 An example for underfitting can be seen on the left side of the following plot.
-Linear regression does not fit the noisy samples drawn from a sine function at
-all. With polynomial features, we can decrease the bias and increase the
-complexity of the model.
+A simple linear model can at best provide only a poor fit to samples drawn from
+a sine function. With polynomial features, we can decrease the bias and
+increase the complexity of the model.
 
 .. figure:: ../auto_examples/images/plot_polynomial_regression_1.png
    :target: ../auto_examples/plot_polynomial_regression.html
@@ -35,21 +35,21 @@ complexity of the model.
    :scale: 50%
 
 More complex models with a low bias can usually approximate much more complex
-functions. However, they usually have another problem which is called
-**variance**, i.e. they are very sensitive to varying training sets. Usually
-we can recognize too complex models because the training error will be very
-low and the validation error will be very high. This is also called
-**overfitting**. In the plot you can see an example on the right side.
-An overfitting estimator typically learns the noise of the training data. To
-reduce this type of error, we can either select a simpler estimator with a
-higher bias, regularize a complex estimator, or if this did not help, collect
-more training examples.
+functions. However, too complex models usually have a high **variance**, i.e.
+they are very sensitive to varying training sets. Usually we can recognize too
+complex models because the training error will be very low and the validation
+error will be very high. This is also called **overfitting**. In the plot you
+can see an example on the right side. An overfitting estimator typically learns
+the noise of the training data. To reduce this type of error, we can either
+select a simpler estimator with a higher bias, regularize a complex estimator,
+or if this did not help, collect more training examples.
 
 We can change the bias and variance by selecting the model, which means we
 first have to choose an estimator and then we have to select an appropriate
 parametrization of that estimator. In the simple one-dimensional problem that
-we have seen in the example, this seems to be easy. However, in high-dimensional
-spaces this might not be the case but with the following tools it is feasible.
+we have seen in the example, this seems to be easy. However, in
+high-dimensional spaces, models can become very difficult to visualize. For
+this reason, it is often helpful to use the tools described below.
 
 .. topic:: Examples:
 
@@ -63,30 +63,39 @@ spaces this might not be the case but with the following tools it is feasible.
 Validation curve
 ================
 
-The proper way of choosing multiple hyperparameters of an estimator are of
-course grid search or similar methods (see :ref:`grid_search`). However, it is
-sometimes helpful to plot the influence of a single hyperparameter on the
-training score and the test score to find out whether the estimator is
-overfitting or underfitting for some hyperparameter values.
+To validate a model we need a scoring function (see :ref:`model_evaluation`),
+e.g. accuracy for classifiers. The proper way of choosing multiple
+hyperparameters of an estimator are of course grid search or similar methods
+(see :ref:`grid_search`) that select the hyperparameter with the maximum score
+on a validation set or multiple validation sets. Note that if we optimized
+the hyperparameters based on a validation score the validation score is biased
+and not a good estimate of the generalization any longer. To get a proper
+estimate of the generalization we have to compute the score on another data set
+which is called test set.
+
+However, it is sometimes helpful to plot the influence of a single
+hyperparameter on the training score and the validation score to find out
+whether the estimator is overfitting or underfitting for some hyperparameter
+values.
 
 The function :func:`validation_curve` can help in this case::
 
   >>> from sklearn.learning_curve import validation_curve
   >>> from sklearn.linear_model import Ridge
 
-  >>> train_scores, test_scores = validation_curve(Ridge(), X, y, "alpha",
-  ...                                              np.logspace(-7, 3, 3))
+  >>> train_scores, valid_scores = validation_curve(Ridge(), X, y, "alpha",
+  ...                                               np.logspace(-7, 3, 3))
   >>> train_scores           # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
   array([ 0.931...,  0.931...,  0.452...])
-  >>> test_scores            # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
+  >>> valid_scores           # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
   array([ 0.923...,  0.923...,  0.433...])
 
-If the training score and the test score are both low, the estimator will be
-underfitting. If the training score is high and the test score is low, the
-estimator is overfitting and otherwise it is working very well. A low training
-score and a high test score is usually not possible. All three cases can
-be found in the plot below where we varied the parameter :math:`\gamma` of an
-SVM on the digits dataset.
+If the training score and the validation score are both low, the estimator will
+be underfitting. If the training score is high and the validation score is low,
+the estimator is overfitting and otherwise it is working very well. A low
+training score and a high validation score is usually not possible. All three
+cases can be found in the plot below where we varied the parameter
+:math:`\gamma` of an SVM on the digits dataset.
 
 .. figure:: ../auto_examples/images/plot_validation_curve_1.png
    :target: ../auto_examples/plot_validation_curve.html
@@ -142,12 +151,12 @@ average scores on the validation sets)::
   >>> np.random.shuffle(indices)
   >>> X, y = X[indices], y[indices]
 
-  >>> train_sizes, train_scores, test_scores = learning_curve(
+  >>> train_sizes, train_scores, valid_scores = learning_curve(
   ...     SVC(kernel='linear'), X, y, train_sizes=[50, 80, 110], cv=5)
   >>> train_sizes            # doctest: +NORMALIZE_WHITESPACE
   array([ 50, 80, 110])
   >>> train_scores           # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
   array([ 0.98 , 0.99 , 0.987...])
-  >>> test_scores            # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
+  >>> valid_scores           # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
   array([ 0.98 , 0.986..., 0.986...])
 
