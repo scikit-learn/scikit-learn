@@ -1608,6 +1608,9 @@ class LdaVectorizer(CountVectorizer):
         self._corpus_tfidf = self._model_tfidf[self._corpus]
         logger.info('Building LDA model: gensim tf-idf corpus generated!')
 
+        logger.info('Cleaning up the TFIDF model...')
+        self._model_tfidf = None
+
         # build an LDA model
         # Specifying dictionary is important if we want to output actual words,
         # not IDs, into the topic log file
@@ -1620,6 +1623,10 @@ class LdaVectorizer(CountVectorizer):
             alpha=self.alpha, eta=self.eta,
             decay=self.decay)
         logger.info('Building LDA model: gensim LDA model generated!')
+        self._corpus_lda = self._model_lda[self._corpus]
+
+        logger.info('Cleaning up gensim corpus...')
+        self._corpus = None
 
         if self.writedown_topics:
             lda_topic_file = codecs.open(self.topic_file, 'a', 'utf-8')
@@ -1651,7 +1658,8 @@ class LdaVectorizer(CountVectorizer):
         """
 
         self.fit(raw_docs)
-        return _convert_gensim_corpus2csr(self._model_lda[self._corpus])
+        #return _convert_gensim_corpus2csr(self._model_lda[self._corpus])
+        return _convert_gensim_corpus2csr(self._corpus_lda)
 
     def transform(self, raw_docs):
         """Return the LDA vector representation of the new documents
@@ -1899,6 +1907,9 @@ class LsiVectorizer(CountVectorizer):
         self._corpus_tfidf = self._model_tfidf[self._corpus]
         logger.info('Building LSI model: gensim tf-idf corpus generated!')
 
+        logger.info('Cleaning up TFIDF model...')
+        self._model_tfidf = None
+
         # build an LSI model
         # Specifying dictionary is important if we want to output actual words,
         # not IDs, into the topic log file
@@ -1910,6 +1921,10 @@ class LsiVectorizer(CountVectorizer):
             extra_samples=self.extra_samples,
             decay=self.decay)
         logger.info('Building LSI model: gensim LSI model generated!')
+        self._corpus_lsi = self._model_lsi[self._corpus]
+
+        logger.info('Cleaning up gensim corpus...')
+        self._corpus = None
 
         if self.writedown_topics:
             lsi_topic_file = codecs.open(self.topic_file, 'a', 'utf-8')
@@ -1941,7 +1956,8 @@ class LsiVectorizer(CountVectorizer):
         """
 
         self.fit(raw_docs)
-        return _convert_gensim_corpus2csr(self._model_lsi[self._corpus])
+        #return _convert_gensim_corpus2csr(self._model_lsi[self._corpus])
+        return _convert_gensim_corpus2csr(self._corpus_lsi)
 
     def transform(self, raw_docs):
         """Return the LSI vector representation of the new documents
@@ -1974,16 +1990,16 @@ class ReadabilityTransformer():
 
     Parameters
     ----------
-    readability_type : string {'ari', 'flesch_reading_ease', 
+    readability_type : string {'ari', 'flesch_reading_ease',
                     'flesch_kincaid_grade_level', 'gunning_fog_index',
-                    'smog_index', 'coleman_liau_index', 'lix', 'rix'}, 
+                    'smog_index', 'coleman_liau_index', 'lix', 'rix'},
                     optional, 'smog_index' by default
         Specify the type of the readability score used for transformation
-        
+
     """
- 
+
     def __init__(self, readability_type='smog_index'):
-        self.readability_types = {'ari': self.ari, 
+        self.readability_types = {'ari': self.ari,
                 'flesch_reading_ease': self.flesch_reading_ease,
                 'flesch_kincaid_grade_level': self.flesch_kincaid_grade_level,
                 'gunning_fog_index': self.gunning_fog_index,
@@ -1993,11 +2009,11 @@ class ReadabilityTransformer():
                 'rix': self.rix}
         if readability_type not in self.readability_types:
             readability_type = 'smog_index'
-        self.readability_type = readability_type    
+        self.readability_type = readability_type
 
     def transform(self, raw_docs):
         """Return the readability scores of the given set of documents
-        
+
         Parameters
         ----------
         raw_docs : iterable
@@ -2018,7 +2034,7 @@ class ReadabilityTransformer():
             indices.append(0)
             indptr.append(count)
             count += 1
-        
+
         indptr.append(count)
         num_docs = len(raw_docs)
         return sp.csr_matrix((np.array(scores),
