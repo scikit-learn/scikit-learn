@@ -17,6 +17,7 @@ import scipy.sparse as sp
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_false, assert_true
 from sklearn.utils.testing import assert_array_equal
@@ -44,7 +45,7 @@ from sklearn.cluster import KMeans, SpectralClustering
 from sklearn.metrics import f1_score
 from sklearn.metrics import make_scorer
 from sklearn.metrics import roc_auc_score
-from sklearn.cross_validation import KFold, StratifiedKFold
+from sklearn.cross_validation import KFold, StratifiedKFold, FitFailedWarning
 from sklearn.preprocessing import Imputer
 from sklearn.pipeline import Pipeline
 
@@ -674,3 +675,63 @@ def test_grid_search_allows_nans():
         ('classifier', MockClassifier()),
     ])
     GridSearchCV(p, {'classifier__foo_param': [1, 2, 3]}, cv=2).fit(X, y)
+
+
+
+class FailingClassifier(BaseEstimator):
+    """Classifier that raises a ValueError on fit()"""
+
+    FAILING_PARAMETER = 2
+
+    def __init__(self, parameter=None):
+        self.parameter = parameter
+
+    def fit(self, X, y=None):
+        if self.parameter == FailingClassifier.FAILING_PARAMETER:
+            raise ValueError("Failing classifier failed as required")
+
+    def predict(self, X):
+        return np.zeros(X.shape[0])
+
+
+def test_grid_search_failing_classifier():
+    """GridSearchCV with on_error != 'raise'
+
+    Ensures that a warning is raised and score reset where appropriate.
+    """
+
+    X, y = make_classification(n_samples=20, n_features=10, random_state=0)
+
+    clf = FailingClassifier()
+
+    # refit=False because we only want to check that errors caused by fits
+    # to individual folds will be caught and warnings raised instead. If
+    # refit was done, then an exception would be raised on refit and not
+    # caught by grid_search (expected behavior), and this would cause an
+    # error in this test.
+    gs = GridSearchCV(clf, [{'parameter': [0, 1, 2]}], scoring='accuracy',
+                      refit=False, error_score=0.0)
+
+    assert_warns(FitFailedWarning, gs.fit, X, y)
+
+    # Ensure that grid scores were set to zero as required for those fits
+    # that are expected to fail.
+    assert all(np.all(this_point.cv_validation_scores == 0.0)
+               for this_point in gs.grid_scores_
+               if this_point.parameters['parameter'] ==
+               FailingClassifier.FAILING_PARAMETER)
+
+
+def test_grid_search_failing_classifier_raise():
+    """GridSearchCV with on_error == 'raise' raises the error"""
+
+    X, y = make_classification(n_samples=20, n_features=10, random_state=0)
+
+    clf = FailingClassifier()
+
+    # refit=False because we want to test the behaviour of the grid search part
+    gs = GridSearchCV(clf, [{'parameter': [0, 1, 2]}], scoring='accuracy',
+                      refit=False, error_score='raise')
+
+    # FailingClassifier issues a ValueError so this is what we look for.
+    assert_raises(ValueError, gs.fit, X, y)

@@ -69,6 +69,12 @@ Enhancements
    - ``DictVectorizer`` can now perform ``fit_transform`` on an iterable in a
      single pass, when giving the option ``sort=False``. By Dan Blanchard.
 
+   - :class:`GridSearchCV` and :class:`RandomizedSearchCV` can now be
+     configured to work with estimators that may fail and raise errors on
+     individual folds. This option is controlled by the `error_score`
+     parameter. This does not affect errors raised on re-fit. By 
+	 `Michal Romaniuk`_.
+
 
 Documentation improvements
 ..........................
@@ -2985,3 +2991,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Jatin Shah: http://jatinshah.org/
 
 .. _Dougal Sutherland: https://github.com/dougalsutherland
+
+.. _Michal Romaniuk: https://github.com/romaniukm
