@@ -14,6 +14,8 @@ The module structure is the following:
 
 - ``GradientBoostingRegressor`` implements gradient boosting for
   regression problems.
+
+- ``LambdaMART`` implements gradient boosting for ranking problems.
 """
 
 # Authors: Peter Prettenhofer, Scott White, Gilles Louppe, Emanuele Olivetti,
@@ -48,6 +50,9 @@ from ..tree._tree import FriedmanMSE
 from ._gradient_boosting import predict_stages
 from ._gradient_boosting import predict_stage
 from ._gradient_boosting import _random_sample_mask
+from ._gradient_boosting import _ranked_random_sample_mask
+from ._gradient_boosting import _ndcg
+from ._gradient_boosting import _lambda
 
 
 class QuantileEstimator(BaseEstimator):
@@ -108,9 +113,11 @@ class PriorProbabilityEstimator(BaseEstimator):
 
 class ZeroEstimator(BaseEstimator):
     """An estimator that simply predicts zero. """
+    def __init__(self, is_classification=True):
+        self.is_classification = is_classification
 
     def fit(self, X, y):
-        if np.issubdtype(y.dtype, int):
+        if np.issubdtype(y.dtype, int) and self.is_classification:
             # classification
             self.n_classes = np.unique(y).shape[0]
             if self.n_classes == 2:
@@ -146,7 +153,7 @@ class LossFunction(six.with_metaclass(ABCMeta, object)):
         raise NotImplementedError()
 
     @abstractmethod
-    def __call__(self, y, pred):
+    def __call__(self, y, pred, **kargs):
         """Compute the loss of prediction ``pred`` and ``y``. """
 
     @abstractmethod
@@ -219,7 +226,7 @@ class LeastSquaresError(RegressionLossFunction):
     def init_estimator(self):
         return MeanEstimator()
 
-    def __call__(self, y, pred):
+    def __call__(self, y, pred, **kargs):
         return np.mean((y - pred.ravel()) ** 2.0)
 
     def negative_gradient(self, y, pred, **kargs):
@@ -244,7 +251,7 @@ class LeastAbsoluteError(RegressionLossFunction):
     def init_estimator(self):
         return QuantileEstimator(alpha=0.5)
 
-    def __call__(self, y, pred):
+    def __call__(self, y, pred, **kargs):
         return np.abs(y - pred.ravel()).mean()
 
     def negative_gradient(self, y, pred, **kargs):
@@ -271,7 +278,7 @@ class HuberLossFunction(RegressionLossFunction):
     def init_estimator(self):
         return QuantileEstimator(alpha=0.5)
 
-    def __call__(self, y, pred):
+    def __call__(self, y, pred, **kargs):
         pred = pred.ravel()
         diff = y - pred
         gamma = self.gamma
@@ -323,7 +330,7 @@ class QuantileLossFunction(RegressionLossFunction):
     def init_estimator(self):
         return QuantileEstimator(self.alpha)
 
-    def __call__(self, y, pred):
+    def __call__(self, y, pred, **kargs):
         pred = pred.ravel()
         diff = y - pred
         alpha = self.alpha
@@ -348,6 +355,100 @@ class QuantileLossFunction(RegressionLossFunction):
         tree.value[leaf, 0] = val
 
 
+class NormalizedDiscountedCumulativeGain(RegressionLossFunction):
+    """Note: this is not a loss function"""
+    def init_estimator(self):
+        self.weights = None
+        return MeanEstimator()
+
+    def __call__(self, y, pred, group=None, **kargs):
+        if group is None:
+            ix = np.argsort(-pred[:, 0])
+            ndcg = _ndcg(y[ix], np.sort(y)[::-1])
+        else:
+            last_group = group[0]
+            start_ix = 0
+            n_group = 0
+            s_ndcg = 0
+            # for each group compute the ndcg
+            for i, g in enumerate(group[1:]):
+                if last_group != g:
+                    end_ix = i+1
+                    ix = np.argsort(-pred[start_ix:end_ix, 0])
+                    tmp_ndcg = _ndcg(y[ix+start_ix],
+                                     np.sort(y[start_ix:end_ix])[::-1])
+                    if not np.isnan(tmp_ndcg):
+                        s_ndcg += tmp_ndcg
+                        n_group += 1
+                    start_ix = i+1
+                    last_group = g
+
+            ix = np.argsort(-pred[start_ix:, 0])
+            tmp_ndcg = _ndcg(y[ix+start_ix], np.sort(y[start_ix:])[::-1])
+            if not np.isnan(tmp_ndcg):
+                s_ndcg += tmp_ndcg
+                n_group += 1
+            ndcg = s_ndcg / n_group
+        return ndcg
+
+    def negative_gradient(self, y, pred, group=None, **kargs):
+        # the lambda terms
+        grad = np.empty_like(y, dtype=np.float64)
+
+        # for updating terminal regions
+        self.weights = np.empty_like(y, dtype=np.float64)
+
+        if group is None:
+            ix = np.argsort(-pred[:, 0])
+            inv_ix = np.empty_like(ix)
+            for j, x in enumerate(ix):
+                inv_ix[x] = j
+            tmp_grad, tmp_weights = _lambda(y[ix], pred[ix])
+            grad = tmp_grad[inv_ix]
+            self.weights = tmp_weights[inv_ix]
+        else:
+            last_q = group[0]
+            start_ix = 0
+            for i, q in enumerate(group[1:]):
+                if last_q != q:
+                    end_ix = i+1
+                    ix = np.argsort(-pred[start_ix:end_ix, 0])
+
+                    inv_ix = np.empty_like(ix)
+                    for j, x in enumerate(ix):
+                        inv_ix[x] = j
+
+                    # sort by current score before passing
+                    # and then remap the return values
+                    tmp_grad, tmp_weights = _lambda(y[ix + start_ix],
+                                                    pred[ix + start_ix])
+                    grad[start_ix:end_ix] = tmp_grad[inv_ix]
+                    self.weights[start_ix:end_ix] = tmp_weights[inv_ix]
+                    start_ix = i+1
+                    last_q = q
+
+            ix = np.argsort(-pred[start_ix:, 0])
+
+            inv_ix = np.empty_like(ix)
+            for j, x in enumerate(ix):
+                inv_ix[x] = j
+
+            # sort by current score before passing and then remap the return values
+            tmp_grad, tmp_weights = _lambda(y[ix + start_ix], pred[ix + start_ix])
+            grad[start_ix:] = tmp_grad[inv_ix]
+            self.weights[start_ix:] = tmp_weights[inv_ix]
+
+        return grad
+
+    def _update_terminal_region(self, tree, terminal_regions, leaf, X, y,
+                                residual, pred):
+        terminal_region = np.where(terminal_regions == leaf)[0]
+        num = np.sum(residual.take(terminal_region, axis=0))
+        den = np.sum(self.weights.take(terminal_region, axis=0))
+        tree.value[leaf, 0, 0] = ((num + np.finfo(float).eps) /
+                                  (den + np.finfo(float).eps))
+
+
 class BinomialDeviance(LossFunction):
     """Binomial deviance loss function for binary classification.
 
@@ -364,7 +465,7 @@ class BinomialDeviance(LossFunction):
     def init_estimator(self):
         return LogOddsEstimator()
 
-    def __call__(self, y, pred):
+    def __call__(self, y, pred, **kargs):
         """Compute the deviance (= 2 * negative log-likelihood). """
         # logaddexp(0, v) == log(1.0 + exp(v))
         pred = pred.ravel()
@@ -415,7 +516,7 @@ class MultinomialDeviance(LossFunction):
     def init_estimator(self):
         return PriorProbabilityEstimator()
 
-    def __call__(self, y, pred):
+    def __call__(self, y, pred, **kargs):
         # create one-hot label encoding
         Y = np.zeros((y.shape[0], self.K), dtype=np.float64)
         for k in range(self.K):
@@ -424,7 +525,7 @@ class MultinomialDeviance(LossFunction):
         return np.sum(-1 * (Y * pred).sum(axis=1) +
                       logsumexp(pred, axis=1))
 
-    def negative_gradient(self, y, pred, k=0):
+    def negative_gradient(self, y, pred, k=0, **kargs):
         """Compute negative gradient for the ``k``-th class. """
         return y - np.nan_to_num(np.exp(pred[:, k] -
                                         logsumexp(pred, axis=1)))
@@ -452,6 +553,7 @@ LOSS_FUNCTIONS = {'ls': LeastSquaresError,
                   'lad': LeastAbsoluteError,
                   'huber': HuberLossFunction,
                   'quantile': QuantileLossFunction,
+                  'ndcg': NormalizedDiscountedCumulativeGain,
                   'bdeviance': BinomialDeviance,
                   'mdeviance': MultinomialDeviance,
                   'deviance': None}  # for both, multinomial and binomial
@@ -541,7 +643,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         self.estimators_ = np.empty((0, 0), dtype=np.object)
 
     def _fit_stage(self, i, X, y, y_pred, sample_mask,
-                   criterion, splitter, random_state):
+                   criterion, splitter, random_state, group):
         """Fit another stage of ``n_classes_`` trees to the boosting model. """
         loss = self.loss_
         original_y = y
@@ -550,7 +652,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             if loss.is_multi_class:
                 y = np.array(original_y == k, dtype=np.float64)
 
-            residual = loss.negative_gradient(y, y_pred, k=k)
+            residual = loss.negative_gradient(y, y_pred, k=k, group=group)
 
             # induce regression tree on residuals
             tree = DecisionTreeRegressor(
@@ -713,7 +815,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
     def _is_initialized(self):
         return len(getattr(self, 'estimators_', [])) > 0
 
-    def fit(self, X, y, monitor=None):
+    def fit(self, X, y, monitor=None, group=None):
         """Fit the gradient boosting model.
 
         Parameters
@@ -735,7 +837,11 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             locals())``. If the callable returns ``True`` the fitting procedure
             is stopped. The monitor can be used for various things such as
             computing held-out estimates, early stopping, model introspect, and
-            snapshoting.
+            snapshotting.
+
+        group : array-like, shape = [n_samples], optional (default=None)
+            Only used with LambdaMART, used to group samples. If not present,
+            then the all the samples are treated as one group.
 
         Returns
         -------
@@ -749,6 +855,19 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         # Check input
         X, = check_arrays(X, dtype=DTYPE, sparse_format="dense")
         y = column_or_1d(y, warn=True)
+        if group is not None:
+            group = column_or_1d(group, warn=True)
+            # check group is grouped
+            uniq_group = {group[0]}
+            last_group = group[0]
+            for q in group[1:]:
+                if q != last_group:
+                    # group must be unseen thus far
+                    if q in uniq_group:
+                        raise ValueError("queries must be grouped together")
+                    uniq_group.add(q)
+                    last_group = q
+            self.n_uniq_group = len(uniq_group)
         n_samples, n_features = X.shape
         self.n_features = n_features
         random_state = check_random_state(self.random_state)
@@ -779,7 +898,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
 
         # fit the boosting stages
         n_stages = self._fit_stages(X, y, y_pred, random_state,
-                                    begin_at_stage, monitor)
+                                    begin_at_stage, monitor, group)
         # change shape of arrays after fit (early-stopping or additional ests)
         if n_stages != self.estimators_.shape[0]:
             self.estimators_ = self.estimators_[:n_stages]
@@ -792,7 +911,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         return self
 
     def _fit_stages(self, X, y, y_pred, random_state, begin_at_stage=0,
-                    monitor=None):
+                    monitor=None, group=None):
         """Iteratively fits the stages.
 
         For each stage it computes the progress (OOB, train score)
@@ -822,26 +941,38 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
 
             # subsampling
             if do_oob:
-                sample_mask = _random_sample_mask(n_samples, n_inbag,
-                                                  random_state)
+                group_inbag = None
+                group_oob = None
+                if group is not None:
+                    sample_mask = \
+                        _ranked_random_sample_mask(n_samples, n_inbag,
+                                                   group, self.n_uniq_group,
+                                                   random_state)
+                    group_inbag = group[sample_mask]
+                    group_oob = group[~sample_mask]
+                else:
+                    sample_mask = _random_sample_mask(n_samples, n_inbag,
+                                                      random_state)
                 # OOB score before adding this stage
                 old_oob_score = loss_(y[~sample_mask],
-                                      y_pred[~sample_mask])
+                                      y_pred[~sample_mask], group=group_oob)
 
             # fit next stage of trees
             y_pred = self._fit_stage(i, X, y, y_pred, sample_mask,
-                                     criterion, splitter, random_state)
+                                     criterion, splitter, random_state, group)
 
             # track deviance (= loss)
             if do_oob:
                 self.train_score_[i] = loss_(y[sample_mask],
-                                             y_pred[sample_mask])
+                                             y_pred[sample_mask],
+                                             group=group_inbag)
                 self._oob_score_[i] = loss_(y[~sample_mask],
-                                            y_pred[~sample_mask])
+                                            y_pred[~sample_mask],
+                                            group=group_oob)
                 self.oob_improvement_[i] = old_oob_score - self._oob_score_[i]
             else:
                 # no need to fancy index w/ no subsampling
-                self.train_score_[i] = loss_(y, y_pred)
+                self.train_score_[i] = self.loss_(y, y_pred, group=group)
 
             if self.verbose > 0:
                 verbose_reporter.update(i, self)
@@ -1111,7 +1242,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
             locals())``. If the callable returns ``True`` the fitting procedure
             is stopped. The monitor can be used for various things such as
             computing held-out estimates, early stopping, model introspect, and
-            snapshoting.
+            snapshotting.
 
         Returns
         -------
@@ -1416,3 +1547,227 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         """
         for y in self.staged_decision_function(X):
             yield y.ravel()
+
+
+class LambdaMART(BaseGradientBoosting):
+    """LambdaMART for learning to rank.
+
+    GB builds an additive model in a forward stage-wise fashion;
+    it allows for the optimization of arbitrary differentiable loss functions.
+    In each stage a regression tree is fit on the negative gradient of the
+    given loss function.
+
+    Parameters
+    ----------
+    loss : {'ndcg'}, optional (default='ndcg')
+        loss function to be optimized. 'ls' refers to least squares
+        regression. 'lad' (least absolute deviation) is a highly robust
+        loss function solely based on order information of the input
+        variables. 'huber' is a combination of the two. 'quantile'
+        allows quantile regression (use `alpha` to specify the quantile).
+
+    learning_rate : float, optional (default=0.1)
+        learning rate shrinks the contribution of each tree by `learning_rate`.
+        There is a trade-off between learning_rate and n_estimators.
+
+    n_estimators : int (default=100)
+        The number of boosting stages to perform. Gradient boosting
+        is fairly robust to over-fitting so a large number usually
+        results in better performance.
+
+    max_depth : integer, optional (default=3)
+        maximum depth of the individual regression estimators. The maximum
+        depth limits the number of nodes in the tree. Tune this parameter
+        for best performance; the best value depends on the interaction
+        of the input variables.
+
+    min_samples_split : integer, optional (default=2)
+        The minimum number of samples required to split an internal node.
+
+    min_samples_leaf : integer, optional (default=1)
+        The minimum number of samples required to be at a leaf node.
+
+    subsample : float, optional (default=1.0)
+        The fraction of samples to be used for fitting the individual base
+        learners. If smaller than 1.0 this results in Stochastic Gradient
+        Boosting. `subsample` interacts with the parameter `n_estimators`.
+        Choosing `subsample < 1.0` leads to a reduction of variance
+        and an increase in bias.
+
+    max_features : int, float, string or None, optional (default=None)
+        The number of features to consider when looking for the best split:
+          - If int, then consider `max_features` features at each split.
+          - If float, then `max_features` is a percentage and
+            `int(max_features * n_features)` features are considered at each
+            split.
+          - If "auto", then `max_features=n_features`.
+          - If "sqrt", then `max_features=sqrt(n_features)`.
+          - If "log2", then `max_features=log2(n_features)`.
+          - If None, then `max_features=n_features`.
+
+        Choosing `max_features < n_features` leads to a reduction of variance
+        and an increase in bias.
+
+    alpha : float (default=0.9)
+        The alpha-quantile of the huber loss function and the quantile
+        loss function. Only if ``loss='huber'`` or ``loss='quantile'``.
+
+    init : BaseEstimator, None, optional (default=None)
+        An estimator object that is used to compute the initial
+        predictions. ``init`` has to provide ``fit`` and ``predict``.
+        If None it uses ``loss.init_estimator``.
+
+    verbose : int, default: 0
+        Enable verbose output. If 1 then it prints progress and performance
+        once in a while (the more trees the lower the frequency).
+        If greater than 1 then it prints progress and performance for every tree.
+
+    Attributes
+    ----------
+    `feature_importances_` : array, shape = [n_features]
+        The feature importances (the higher, the more important the feature).
+
+    `oob_improvement_` : array, shape = [n_estimators]
+        The improvement in loss (= deviance) on the out-of-bag samples
+        relative to the previous iteration.
+        ``oob_improvement_[0]`` is the improvement in
+        loss of the first stage over the ``init`` estimator.
+
+    `oob_score_` : array, shape = [n_estimators]
+        Score of the training dataset obtained using an out-of-bag estimate.
+        The i-th score ``oob_score_[i]`` is the deviance (= loss) of the
+        model at iteration ``i`` on the out-of-bag sample.
+        Deprecated: use `oob_improvement_` instead.
+
+    `train_score_` : array, shape = [n_estimators]
+        The i-th score ``train_score_[i]`` is the deviance (= loss) of the
+        model at iteration ``i`` on the in-bag sample.
+        If ``subsample == 1`` this is the deviance on the training data.
+
+    `loss_` : LossFunction
+        The concrete ``LossFunction`` object.
+
+    `init` : BaseEstimator
+        The estimator that provides the initial predictions.
+        Set via the ``init`` argument or ``loss.init_estimator``.
+
+    `estimators_`: list of DecisionTreeRegressor
+        The collection of fitted sub-estimators.
+
+    See also
+    --------
+    DecisionTreeRegressor, RandomForestRegressor
+
+    References
+    ----------
+    J. Friedman, Greedy Function Approximation: A Gradient Boosting
+    Machine, The Annals of Statistics, Vol. 29, No. 5, 2001.
+
+    J. Friedman, Stochastic Gradient Boosting, 1999
+
+    T. Hastie, R. Tibshirani and J. Friedman.
+    Elements of Statistical Learning Ed. 2, Springer, 2009.
+    """
+
+    _SUPPORTED_LOSS = ('ndcg',)
+
+    def __init__(self, loss='ndcg', learning_rate=0.1, n_estimators=100,
+                 subsample=1.0, min_samples_split=2, min_samples_leaf=1,
+                 max_depth=3, init=None, random_state=None,
+                 max_features=None, alpha=0.9, verbose=0, max_leaf_nodes=None,
+                 warm_start=False):
+
+        super(LambdaMART, self).__init__(
+            loss, learning_rate, n_estimators, min_samples_split,
+            min_samples_leaf, max_depth, init, subsample, max_features,
+            random_state, alpha, verbose, max_leaf_nodes=max_leaf_nodes,
+            warm_start=warm_start)
+
+    def fit(self, X, y, monitor=None, group=None):
+        """Fit the gradient boosting model.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+            Training vectors, where n_samples is the number of samples
+            and n_features is the number of features.
+
+        y : array-like, shape = [n_samples]
+            Target values (integers in classification, real numbers in
+            regression)
+            For classification, labels must correspond to classes
+            ``0, 1, ..., n_classes_-1``.
+
+        monitor : callable, optional
+            The monitor is called after each iteration with the current
+            iteration, a reference to the estimator and the local variables of
+            ``_fit_stages`` as keyword arguments ``callable(i, self,
+            locals())``. If the callable returns ``True`` the fitting procedure
+            is stopped. The monitor can be used for various things such as
+            computing held-out estimates, early stopping, model introspect, and
+            snapshoting.
+
+        group : array-like, shape = [n_samples], optional (default=None)
+            Only used with LambdaMART, used to group samples. If not present,
+            then the all the samples are treated as one group.
+
+        Returns
+        -------
+        self : object
+            Returns self.
+        """
+        self.n_classes_ = 1
+        return super(LambdaMART, self).fit(X, y, monitor, group)
+
+    def predict(self, X):
+        """Predict regression target for X.
+
+        Parameters
+        ----------
+        X : array-like of shape = [n_samples, n_features]
+            The input samples.
+
+        Returns
+        -------
+        y: array of shape = [n_samples]
+            The predicted values.
+        """
+        return self.decision_function(X).ravel()
+
+    def staged_predict(self, X):
+        """Predict regression target at each stage for X.
+
+        This method allows monitoring (i.e. determine error on testing set)
+        after each stage.
+
+        Parameters
+        ----------
+        X : array-like of shape = [n_samples, n_features]
+            The input samples.
+
+        Returns
+        -------
+        y : array of shape = [n_samples]
+            The predicted value of the input samples.
+        """
+        for y in self.staged_decision_function(X):
+            yield y.ravel()
+
+    def score(self, X, y, group=None):
+        """Returns the mean accuracy on the given test data and labels.
+
+        Parameters
+        ----------
+        X : array-like, shape = (n_samples, n_features)
+            Test samples.
+
+        y : array-like, shape = (n_samples,)
+            True labels for X.
+
+        Returns
+        -------
+        score : float
+            Mean accuracy of self.predict(X) wrt. y.
+
+        """
+        return self.loss_(y, self.decision_function(X), group)

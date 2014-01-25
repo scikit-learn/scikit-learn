@@ -15,6 +15,7 @@ from .weight_boosting import AdaBoostClassifier
 from .weight_boosting import AdaBoostRegressor
 from .gradient_boosting import GradientBoostingClassifier
 from .gradient_boosting import GradientBoostingRegressor
+from .gradient_boosting import LambdaMART
 
 from . import bagging
 from . import forest
@@ -27,6 +28,7 @@ __all__ = ["BaseEnsemble",
            "RandomTreesEmbedding", "ExtraTreesClassifier",
            "ExtraTreesRegressor", "BaggingClassifier",
            "BaggingRegressor", "GradientBoostingClassifier",
-           "GradientBoostingRegressor", "AdaBoostClassifier",
-           "AdaBoostRegressor", "bagging", "forest", "gradient_boosting",
+           "GradientBoostingRegressor", "LambdaMART",
+           "AdaBoostClassifier", "AdaBoostRegressor", "bagging",
+           "forest", "gradient_boosting",
            "partial_dependence", "weight_boosting"]

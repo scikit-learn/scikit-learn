@@ -12,11 +12,18 @@ import numpy as np
 cimport numpy as np
 np.import_array()
 
+from libc.math cimport exp, log
+
 from sklearn.tree._tree cimport Tree, Node
 
 ctypedef np.int32_t int32
 ctypedef np.float64_t float64
 ctypedef np.int8_t int8
+ctypedef fused all32_64_t:
+    np.int32_t
+    np.int64_t
+    np.float32_t
+    np.float64_t
 
 from numpy import bool as np_bool
 
@@ -25,6 +32,7 @@ from numpy import zeros as np_zeros
 from numpy import ones as np_ones
 from numpy import bool as np_bool
 from numpy import int8 as np_int8
+from numpy import int32 as np_int32
 from numpy import intp as np_intp
 from numpy import float32 as np_float32
 from numpy import float64 as np_float64
@@ -268,36 +276,159 @@ cpdef _partial_dependence_tree(Tree tree, DTYPE_t[:, ::1] X,
 
 
 def _random_sample_mask(int n_total_samples, int n_total_in_bag, random_state):
-     """Create a random sample mask where ``n_total_in_bag`` elements are set.
+    """Create a random sample mask where ``n_total_in_bag`` elements are set.
 
-     Parameters
-     ----------
-     n_total_samples : int
-         The length of the resulting mask.
+    Parameters
+    ----------
+    n_total_samples : int
+        The length of the resulting mask.
 
-     n_total_in_bag : int
-         The number of elements in the sample mask which are set to 1.
+    n_total_in_bag : int
+        The number of elements in the sample mask which are set to 1.
 
-     random_state : np.RandomState
-         A numpy ``RandomState`` object.
+    random_state : np.RandomState
+        A numpy ``RandomState`` object.
 
-     Returns
-     -------
-     sample_mask : np.ndarray, shape=[n_total_samples]
-         An ndarray where ``n_total_in_bag`` elements are set to ``True``
-         the others are ``False``.
-     """
-     cdef np.ndarray[float64, ndim=1, mode="c"] rand = \
-          random_state.rand(n_total_samples)
-     cdef np.ndarray[int8, ndim=1, mode="c"] sample_mask = \
-          np_zeros((n_total_samples,), dtype=np_int8)
+    Returns
+    -------
+    sample_mask : np.ndarray, shape=[n_total_samples]
+        An ndarray where ``n_total_in_bag`` elements are set to ``True``
+        the others are ``False``.
+    """
+    cdef np.ndarray[float64, ndim=1, mode="c"] rand = \
+         random_state.rand(n_total_samples)
+    cdef np.ndarray[int8, ndim=1, mode="c"] sample_mask = \
+         np_zeros((n_total_samples,), dtype=np_int8)
 
-     cdef int n_bagged = 0
-     cdef int i = 0
+    cdef int n_bagged = 0
+    cdef int i = 0
 
-     for i from 0 <= i < n_total_samples:
-         if rand[i] * (n_total_samples - i) < (n_total_in_bag - n_bagged):
-             sample_mask[i] = 1
-             n_bagged += 1
+    for i from 0 <= i < n_total_samples:
+        if rand[i] * (n_total_samples - i) < (n_total_in_bag - n_bagged):
+            sample_mask[i] = 1
+            n_bagged += 1
 
-     return sample_mask.astype(np_bool)
+    return sample_mask.astype(np_bool)
+
+
+def _ranked_random_sample_mask(int n_total_samples, int n_total_in_bag,
+                               int32 [::1] group, int n_uniq_group,
+                               random_state):
+    """Create a random sample mask where ``n_total_in_bag`` elements are set.
+
+    Parameters
+    ----------
+    n_total_samples : int
+        The length of the resulting mask.
+
+    n_total_in_bag : int
+        The number of elements in the sample mask which are set to 1.
+
+    group : group associated with each sample
+
+    n_uniq_group : number of unique queries
+
+    random_state : np.RandomState
+        A numpy ``RandomState`` object.
+
+    Returns
+    -------
+    sample_mask : np.ndarray, shape=[n_total_samples]
+        An ndarray where ``n_total_in_bag`` elements are set to ``True``
+        the others are ``False``.
+    """
+    cdef np.ndarray[float64, ndim=1, mode="c"] rand = \
+         random_state.rand(n_uniq_group)
+    cdef np.ndarray[int8, ndim=1, mode="c"] sample_mask = \
+         np_zeros((n_total_samples,), dtype=np_int8)
+    cdef np.ndarray[int32, ndim=1, mode="c"] group_mask = \
+         np_zeros((n_total_in_bag,), dtype=np_int32)
+
+    cdef int n_bagged = 0
+    cdef int i = 0
+    cdef int j = 0
+    cdef int8 mask = 0
+    cdef int32 last_group = 0
+
+    last_group = group[0]
+    if rand[0] * n_uniq_group < n_total_in_bag - n_bagged:
+        sample_mask[0] = 1
+        mask = 1
+        n_bagged += 1
+
+    for i from 1 <= i < n_total_samples:
+        if group[i] != last_group:
+            last_group = group[i]
+            # track number of unique queries processed
+            j += 1
+            if rand[j] * (n_uniq_group - j) < (n_total_in_bag - n_bagged):
+                mask = 1
+                n_bagged += 1
+            else:
+                mask = 0
+        sample_mask[i] = mask
+
+    return sample_mask.astype(np_bool)
+
+
+def _ndcg(all32_64_t [::1] y, all32_64_t [:] sorty):
+    """Computes Normalized Discounted Cumulative Gain
+    Currently there is no iteration cap.
+    """
+    cdef int i
+    cdef double dcg = 0
+    cdef double max_dcg = 0
+    for i from 0 <= i < y.shape[0]:
+        dcg += y[i] / log(2 + i)
+        max_dcg += sorty[i] / log(2 + i)
+    if max_dcg == 0:
+        return np.nan
+    return dcg / max_dcg
+
+
+def _ndcg_array(all32_64_t [:] sorty):
+    """Computes Normalized Discounted Cumulative Gain
+    This returns an array to make computing NDCG deltas easier
+    when rankings are swapped while computing lambda terms.
+    """
+    cdef int i
+    cdef double max_dcg = 0
+    for i from 0 <= i < sorty.shape[0]:
+        max_dcg += sorty[i] / log(2 + i)
+    return max_dcg
+
+
+def _lambda(all32_64_t [::1] y, double [:, ::1] pred):
+    """Computes the gradient and second derivitives as part of the LambdaMart
+    algorithm.
+    """
+    cdef int i
+    cdef int j
+
+    cdef double [::1] grad = np_zeros(y.shape[0])
+    cdef double [::1] weight = np_zeros(y.shape[0])
+    cdef double score_diff
+    cdef double ndcg_diff
+    cdef double rho
+    cdef double max_dcg
+    cdef int sign
+
+    max_dcg = _ndcg_array(np.sort(y)[::-1])
+    cdef double ndcg = 0
+    if max_dcg != 0:
+        for i from 0 <= i < y.shape[0]:
+            for j from i+1 <= j < y.shape[0]:
+                if y[i] != y[j]:
+                    ndcg_diff = (y[j] - y[i]) / log(2+i) + \
+                        (y[i] - y[j]) / log(2+j)
+                    ndcg_diff = abs(ndcg_diff / max_dcg)
+
+                    score_diff = pred[i, 0] - pred[j, 0]
+                    sign = 1 if y[i] > y[j] else -1
+                    rho = 1 / (1 + exp(sign * score_diff))
+                    grad[i] += sign * ndcg_diff * rho
+                    grad[j] -= sign * ndcg_diff * rho
+                    weight[i] += ndcg_diff * rho * (1 - rho)
+                    weight[j] += ndcg_diff * rho * (1 - rho)
+
+    return grad.base, weight.base

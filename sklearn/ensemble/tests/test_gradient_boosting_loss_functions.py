@@ -12,6 +12,7 @@ from nose.tools import assert_raises
 
 from sklearn.ensemble.gradient_boosting import BinomialDeviance
 from sklearn.ensemble.gradient_boosting import LogOddsEstimator
+from sklearn.ensemble.gradient_boosting import NormalizedDiscountedCumulativeGain
 
 
 def test_binomial_deviance():
@@ -59,3 +60,38 @@ def test_log_odds_estimator():
     assert_equal(est.prior, 0.0)
     assert_array_equal(est.predict(np.array([[1.0], [1.0]])),
                        np.array([[0.0], [0.0]]))
+
+
+def test_ndcg():
+    ndcg = NormalizedDiscountedCumulativeGain(n_classes=1)
+
+    # test all zeros, 64 bit
+    y = np.zeros(5, dtype=np.int64)
+    pred = np.ones((5, 1))
+    assert(np.isnan(ndcg(y, pred)))
+
+    # test all ones, 64 bit
+    y = np.ones(5, dtype=np.int64)
+    pred = np.ones((5, 1))
+    assert(ndcg(y, pred) == 1)
+
+    # test all zeros, 32 bit
+    y = np.zeros(5, dtype=np.int32)
+    pred = np.ones((5, 1))
+    assert(np.isnan(ndcg(y, pred)))
+
+    # test all ones, 32 bit
+    y = np.ones(5, dtype=np.int32)
+    pred = np.ones((5, 1))
+    assert(ndcg(y, pred) == 1)
+
+    # nontrivial ndcg
+    y = np.asarray([3, 4, 5, 0, 1, 2], dtype=np.int32)
+    pred = np.asarray(range(6)[::-1])[:, None]
+    assert_almost_equal(ndcg(y, pred), 0.88814767)
+
+    # two queries
+    y = np.r_[y, y]
+    pred = np.asarray(range(12)[::-1])[:, None]
+    query = np.r_[np.zeros(6), np.ones(6)]
+    assert_almost_equal(ndcg(y, pred, query), 0.88814767)
