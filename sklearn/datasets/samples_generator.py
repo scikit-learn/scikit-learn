@@ -6,6 +6,8 @@ Generate samples of synthetic data sets.
 #          G. Louppe, J. Nothman
 # License: BSD 3 clause
 
+from __future__ import division
+
 import numbers
 import array
 import numpy as np
@@ -302,7 +304,6 @@ def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
     p_c /= p_c.sum()
     p_w_c = generator.rand(n_features, n_classes)
     p_w_c /= np.sum(p_w_c, axis=0)
-    cumulative_p_w_c = np.cumsum(p_w_c, axis=0)
 
     if hasattr(generator, 'choice'):
         # available in numpy >=1.7
@@ -318,40 +319,36 @@ def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
                 c = np.searchsorted(cumulative_p_c, generator.rand())
                 y.add(c)
 
-    def sample_example():
-        _, n_classes = p_w_c.shape
+    # pick a (nonzero) number of labels per document by rejection sampling
+    sample_n_labels = generator.poisson(n_labels, size=n_samples)
+    while 0 in sample_n_labels or np.max(sample_n_labels) > n_classes:
+        mask = np.logical_or(sample_n_labels == 0, sample_n_labels > n_classes)
+        sample_n_labels[mask] = generator.poisson(n_labels, size=mask.sum())
 
-        # pick a nonzero number of labels per document by rejection sampling
-        n = n_classes + 1
-        while (not allow_unlabeled and n == 0) or n > n_classes:
-            n = generator.poisson(n_labels)
+    # pick a non-zero length per document by rejection sampling
+    sample_length = generator.poisson(length, size=n_samples)
+    while 0 in sample_length:
+        mask = sample_length == 0
+        sample_length[mask] = generator.poisson(length, size=mask.sum())
 
-        y = sample_classes(n)
-
-        # pick a non-zero document length by rejection sampling
-        k = 0
-        while k == 0:
-            k = generator.poisson(length)
-
-        # generate a document of length k words
-        if len(y) == 0:
-            # if sample does not belong to any class, generate noise word
-            words = generator.randint(n_features, size=k)
-            return words, y
-
-        words = array.array('i')
-        word_classes = y[generator.randint(len(y), size=k)]
-        for c in word_classes:
-            # pick a class and generate an appropriate word
-            words.append(np.searchsorted(cumulative_p_w_c[:, c],
-                                         generator.rand()))
-        return words, y
-
+    # generate the samples
     X_indices = array.array('i')
     X_indptr = array.array('i', [0])
     Y = []
     for i in range(n_samples):
-        words, y = sample_example()
+        y = sample_classes(sample_n_labels[i])
+
+        if len(y) == 0:
+            # if sample does not belong to any class, generate noise words
+            words = generator.randint(n_features, size=sample_length[i])
+            return words, y
+
+        # sample words without replacement from selected classes
+        p_w_sample = p_w_c[:, y].sum(axis=1)
+        p_w_sample /= p_w_sample.sum()
+        words = np.searchsorted(np.cumsum(p_w_sample),
+                                generator.rand(sample_length[i]))
+
         X_indices.extend(words)
         X_indptr.append(len(X_indices))
         Y.append(y)
