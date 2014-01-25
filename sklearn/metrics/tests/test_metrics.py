@@ -1053,12 +1053,12 @@ def test_multilabel_classification_report():
     expected_report = """\
              precision    recall  f1-score   support
 
-          0       0.69      0.67      0.68        30
-          1       0.44      0.65      0.53        23
-          2       0.75      0.12      0.21        24
-          3       0.38      0.59      0.47        17
+          0       0.30      0.50      0.37        16
+          1       0.46      0.62      0.53        21
+          2       0.60      0.11      0.19        27
+          3       0.40      0.42      0.41        19
 
-avg / total       0.59      0.51      0.48        94
+avg / total       0.46      0.39      0.36        83
 """
 
     lb = LabelBinarizer()
@@ -1503,8 +1503,8 @@ def test_invariance_string_vs_numbers_labels():
             measure_with_number = metric(y1, y2)
             measure_with_str = metric(y1_str, y2)
             assert_array_equal(measure_with_number, measure_with_str,
-                               err_msg="{0} failed string vs number invariance "
-                                       "test".format(name))
+                               err_msg="{0} failed string vs number "
+                                       "invariance test".format(name))
 
             measure_with_strobj = metric(y1_str.astype('O'), y2)
             assert_array_equal(measure_with_number, measure_with_strobj,
@@ -2472,7 +2472,7 @@ def test_averaging_multilabel():
     n_classes = 5
     n_samples = 40
     _, y = make_multilabel_classification(n_features=1, n_classes=n_classes,
-                                          random_state=0, n_samples=n_samples,
+                                          random_state=3, n_samples=n_samples,
                                           return_indicator=True,
                                           allow_unlabeled=False)
     y_true = y[:20]
