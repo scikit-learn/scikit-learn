@@ -341,17 +341,16 @@ def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
         if len(y) == 0:
             # if sample does not belong to any class, generate noise words
             words = generator.randint(n_features, size=sample_length[i])
-            return words, y
-
-        # sample words without replacement from selected classes
-        p_w_sample = p_w_c[:, y].sum(axis=1)
-        p_w_sample /= p_w_sample.sum()
-        words = np.searchsorted(np.cumsum(p_w_sample),
-                                generator.rand(sample_length[i]))
+        else:
+            # sample words without replacement from selected classes
+            p_w_sample = p_w_c[:, y].sum(axis=1)
+            p_w_sample /= p_w_sample.sum()
+            words = np.searchsorted(np.cumsum(p_w_sample),
+                                    generator.rand(sample_length[i]))
 
         X_indices.extend(words)
         X_indptr.append(len(X_indices))
-        Y.append(y)
+        Y.append(list(y))
     X_data = np.ones(len(X_indices), dtype=np.float64)
     X = sp.csr_matrix((X_data, X_indices, X_indptr),
                       shape=(n_samples, n_features))
@@ -362,6 +361,8 @@ def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
     if return_indicator:
         lb = LabelBinarizer()
         Y = lb.fit([range(n_classes)]).transform(Y)
+    else:
+        Y = tuple(Y)
 
     return X, Y
 
