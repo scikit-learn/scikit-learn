@@ -1627,6 +1627,8 @@ class LdaVectorizer(CountVectorizer):
 
         logger.info('Cleaning up gensim corpus...')
         self._corpus = None
+        self._corpus_tfidf = None
+        self._dictionary = None
 
         if self.writedown_topics:
             lda_topic_file = codecs.open(self.topic_file, 'a', 'utf-8')
@@ -1925,6 +1927,8 @@ class LsiVectorizer(CountVectorizer):
 
         logger.info('Cleaning up gensim corpus...')
         self._corpus = None
+        self._corpus_tfidf = None
+        self._dictionary = None
 
         if self.writedown_topics:
             lsi_topic_file = codecs.open(self.topic_file, 'a', 'utf-8')
