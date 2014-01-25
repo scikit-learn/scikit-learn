@@ -276,7 +276,7 @@ def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
         If ``True``, some instances might not belong to any class.
 
     sparse : bool, optional (default=False)
-        If ``True``, return a sparse matrix
+        If ``True``, return a sparse feature matrix
 
     return_indicator : bool, optional (default=False),
         If ``True``, return ``Y`` in the binary indicator format, else
@@ -290,7 +290,7 @@ def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
 
     Returns
     -------
-    X : array or sparse matrix of shape [n_samples, n_features]
+    X : array or sparse CSR matrix of shape [n_samples, n_features]
         The generated samples.
 
     Y : tuple of lists or array of shape [n_samples, n_classes]
@@ -300,10 +300,23 @@ def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
     generator = check_random_state(random_state)
     p_c = generator.rand(n_classes)
     p_c /= p_c.sum()
-    cumulative_p_c = np.cumsum(p_c)
     p_w_c = generator.rand(n_features, n_classes)
     p_w_c /= np.sum(p_w_c, axis=0)
     cumulative_p_w_c = np.cumsum(p_w_c, axis=0)
+
+    if hasattr(generator, 'choice'):
+        # available in numpy >=1.7
+        def sample_classes(n):
+            return generator.choice(n_classes, n, replace=False, p=p_c)
+    else:
+        cumulative_p_c = np.cumsum(p_c)
+
+        def sample_classes(n):
+            y = set()
+            while len(y) != n:
+                # pick a class with probability P(c)
+                c = np.searchsorted(cumulative_p_c, generator.rand())
+                y.add(c)
 
     def sample_example():
         _, n_classes = p_w_c.shape
@@ -313,14 +326,7 @@ def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
         while (not allow_unlabeled and n == 0) or n > n_classes:
             n = generator.poisson(n_labels)
 
-        # pick n classes
-        y = []
-        while len(y) != n:
-            # pick a class with probability P(c)
-            c = np.searchsorted(cumulative_p_c, generator.rand())
-
-            if not c in y:
-                y.append(c)
+        y = sample_classes(n)
 
         # pick a non-zero document length by rejection sampling
         k = 0
@@ -334,9 +340,9 @@ def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
             return words, y
 
         words = array.array('i')
-        for i in range(k):
+        word_classes = y[generator.randint(len(y), size=k)]
+        for c in word_classes:
             # pick a class and generate an appropriate word
-            c = y[generator.randint(len(y))]
             words.append(np.searchsorted(cumulative_p_w_c[:, c],
                                          generator.rand()))
         return words, y
