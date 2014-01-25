@@ -14,14 +14,13 @@ from scipy import sparse
 
 from .base import LinearModel, _pre_fit
 from ..base import RegressorMixin
-from .base import center_data
+from .base import center_data, sparse_center_data
 from ..utils import array2d, atleast2d_or_csc
 from ..cross_validation import _check_cv as check_cv
 from ..externals.joblib import Parallel, delayed
 from ..externals import six
 from ..externals.six.moves import xrange
 from ..utils.extmath import safe_sparse_dot
-from ..utils.sparsefuncs import csc_mean_variance_axis0
 
 from . import cd_fast
 
@@ -70,11 +69,8 @@ def _alpha_grid(X, y, Xy=None, l1_ratio=1.0, fit_intercept=True,
     n_samples = len(y)
 
     if Xy is None:
-        X_sparse = False
-        if sparse.isspmatrix(X):
-            X_sparse = True
-        sparse_center = X_sparse and fit_intercept
-
+        X_sparse = sparse.isspmatrix(X)
+        sparse_center = X_sparse and (fit_intercept or normalize)
         X = atleast2d_or_csc(X, copy=(copy_X and fit_intercept and not
                                       X_sparse))
         if not X_sparse:
@@ -86,14 +82,17 @@ def _alpha_grid(X, y, Xy=None, l1_ratio=1.0, fit_intercept=True,
         if sparse_center:
             # Workaround to find alpha_max for sparse matrices.
             # since we should not destroy the sparsity of such matrices.
-            X_mean, _ = csc_mean_variance_axis0(X)
+            _, _, X_mean, _, X_std = sparse_center_data(X, y, fit_intercept,
+                                                        normalize)
             mean_dot = np.sum(X_mean[:, np.newaxis] * y, axis=1)
 
     if Xy.ndim == 1:
         Xy = Xy[:, np.newaxis]
     if sparse_center:
-        Xy -= mean_dot[:, np.newaxis]
-
+        if fit_intercept:
+            Xy -= mean_dot[:, np.newaxis]
+        if normalize:
+            Xy /= X_std[:, np.newaxis]
     alpha_max = np.sqrt(np.sum(Xy ** 2, axis=1)).max() / (
                             n_samples * l1_ratio)
     alphas = np.logspace(np.log10(alpha_max * eps), np.log10(alpha_max),
@@ -890,7 +889,6 @@ def _path_residuals(X, y, train, test, path, path_params, alphas=None,
         _pre_fit(X_train, y_train, None, precompute, normalize, fit_intercept,
                  copy=False)
 
-    # del path_params['precompute']
     path_params = path_params.copy()
     path_params['fit_intercept'] = False
     path_params['normalize'] = False
