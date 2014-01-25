@@ -233,8 +233,8 @@ def fit(
     cdef np.ndarray[np.float64_t, ndim=1, mode='c'] probB
     if probability != 0:
         if svm_type < 2: # SVC and NuSVC
-            probA = np.empty(n_class*(n_class-1)/2, dtype=np.float64)
-            probB = np.empty(n_class*(n_class-1)/2, dtype=np.float64)
+            probA = np.empty(int(n_class*(n_class-1)/2), dtype=np.float64)
+            probB = np.empty(int(n_class*(n_class-1)/2), dtype=np.float64)
             copy_probB(probB.data, model, probB.shape)
         else:
             probA = np.empty(1, dtype=np.float64)
