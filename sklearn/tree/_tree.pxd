@@ -146,8 +146,6 @@ cdef class Tree:
     cdef double* value                   # (capacity, n_outputs, max_n_classes) array of values
     cdef SIZE_t value_stride             # = n_outputs * max_n_classes
 
-    cdef bint locked                     # blocks resizing after building
-
     # Methods
     cdef SIZE_t _add_node(self, SIZE_t parent,
                                 bint is_left,
@@ -158,7 +156,6 @@ cdef class Tree:
                                 SIZE_t n_node_samples) nogil
     cdef void _resize(self, SIZE_t capacity)
     cdef int _resize_c(self, SIZE_t capacity=*) nogil
-    cdef void _finalize(self)
 
     cdef np.ndarray _get_value_ndarray(self)
     cdef np.ndarray _get_node_ndarray(self)

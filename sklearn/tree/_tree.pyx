@@ -1688,7 +1688,8 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         if rc == -1:
             raise MemoryError()
 
-        tree._finalize()
+        # release memory
+        tree.splitter = None
 
 
 # Best first builder ----------------------------------------------------------
@@ -1881,7 +1882,8 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         if rc == -1:
             raise MemoryError()
 
-        tree._finalize()
+        # release memory
+        tree.splitter = None
 
 
 # =============================================================================
@@ -1935,7 +1937,10 @@ cdef class Tree:
     n_node_samples : array of int, shape [node_count]
         n_samples[i] holds the number of training samples reaching node i.
     """
-    # Wrap for outside world
+    # Wrap for outside world.
+    # WARNING: these reference the current `nodes` and `value` buffers, which
+    # must not be be freed by a subsequent memory allocation.
+    # (i.e. through `_resize` or `__setstate__`)
     property n_classes:
         def __get__(self):
             # it's small; copy for memory safety
@@ -2008,7 +2013,6 @@ cdef class Tree:
         self.capacity = 0
         self.value = NULL
         self.nodes = NULL
-        self.locked = False
 
     def __dealloc__(self):
         """Destructor."""
@@ -2065,20 +2069,13 @@ cdef class Tree:
     cdef void _resize(self, SIZE_t capacity):
         """Resize all inner arrays to `capacity`, if `capacity` == -1, then
            double the size of the inner arrays."""
-        cdef int ret = self._resize_c(capacity)
-        if ret == 0:
-            return
-        elif ret == 1:
-            raise RuntimeError('Cannot resize tree after building is complete')
-        raise MemoryError()
+        if self._resize_c(capacity)!= 0:
+            raise MemoryError()
 
     # XXX using (size_t)(-1) is ugly, but SIZE_MAX is not available in C89
     # (i.e., older MSVC).
     cdef int _resize_c(self, SIZE_t capacity=<SIZE_t>(-1)) nogil:
         """Guts of _resize. Returns 0 for success, -1 for error."""
-        if self.locked:
-            return 1
-
         if capacity == self.capacity and self.nodes != NULL:
             return 0
 
@@ -2224,12 +2221,12 @@ cdef class Tree:
 
         return importances
 
-    cdef void _finalize(self):
-        # release memory
-        self.splitter = None
-        self.locked = True
-
     cdef np.ndarray _get_value_ndarray(self):
+        """Wraps value as a 3-d NumPy array
+        
+        The array keeps a reference to this Tree, which manages the underlying
+        memory.
+        """
         cdef np.npy_intp shape[3]
         shape[0] = <np.npy_intp> self.node_count
         shape[1] = <np.npy_intp> self.n_outputs
@@ -2241,6 +2238,12 @@ cdef class Tree:
         return arr
 
     cdef np.ndarray _get_node_ndarray(self):
+        """Wraps nodes as a NumPy struct array
+        
+        The array keeps a reference to this Tree, which manages the underlying
+        memory. Individual fields are publicly accessible as properties of the
+        Tree.
+        """
         cdef np.npy_intp shape[1]
         shape[0] = <np.npy_intp> self.node_count
         cdef np.npy_intp strides[1]
