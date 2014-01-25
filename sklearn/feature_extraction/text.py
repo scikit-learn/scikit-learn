@@ -1623,7 +1623,8 @@ class LdaVectorizer(CountVectorizer):
             alpha=self.alpha, eta=self.eta,
             decay=self.decay)
         logger.info('Building LDA model: gensim LDA model generated!')
-        self._corpus_lda = self._model_lda[self._corpus]
+
+        #self._corpus_lda = self._model_lda[self._corpus]
 
         logger.info('Cleaning up gensim corpus...')
         self._corpus = None
@@ -1660,8 +1661,12 @@ class LdaVectorizer(CountVectorizer):
         """
 
         self.fit(raw_docs)
+        count_matrix = super(LdaVectorizer, self).fit_transform(raw_docs)
+        corpus = _generate_gensim_corpus(count_matrix)
+        return _convert_gensim_corpus2csr(self._model_lda[corpus])
+
         #return _convert_gensim_corpus2csr(self._model_lda[self._corpus])
-        return _convert_gensim_corpus2csr(self._corpus_lda)
+        #return _convert_gensim_corpus2csr(self._corpus_lda)
 
     def transform(self, raw_docs):
         """Return the LDA vector representation of the new documents
@@ -1923,7 +1928,8 @@ class LsiVectorizer(CountVectorizer):
             extra_samples=self.extra_samples,
             decay=self.decay)
         logger.info('Building LSI model: gensim LSI model generated!')
-        self._corpus_lsi = self._model_lsi[self._corpus]
+
+        #self._corpus_lsi = self._model_lsi[self._corpus]
 
         logger.info('Cleaning up gensim corpus...')
         self._corpus = None
@@ -1960,8 +1966,12 @@ class LsiVectorizer(CountVectorizer):
         """
 
         self.fit(raw_docs)
+        count_matrix = super(LsiVectorizer, self).fit_transform(raw_docs)
+        corpus = _generate_gensim_corpus(count_matrix)
+        return _convert_gensim_corpus2csr(self._model_lsi[corpus])
+
         #return _convert_gensim_corpus2csr(self._model_lsi[self._corpus])
-        return _convert_gensim_corpus2csr(self._corpus_lsi)
+        #return _convert_gensim_corpus2csr(self._corpus_lsi)
 
     def transform(self, raw_docs):
         """Return the LSI vector representation of the new documents
