@@ -321,8 +321,11 @@ def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
 
     # pick a (nonzero) number of labels per document by rejection sampling
     sample_n_labels = generator.poisson(n_labels, size=n_samples)
-    while 0 in sample_n_labels or np.max(sample_n_labels) > n_classes:
-        mask = np.logical_or(sample_n_labels == 0, sample_n_labels > n_classes)
+    while ((not allow_unlabeled and 0 in sample_n_labels) or
+           np.max(sample_n_labels) > n_classes):
+        mask = sample_n_labels > n_classes
+        if not allow_unlabeled:
+            mask = np.logical_or(mask, sample_n_labels == 0, out=mask)
         sample_n_labels[mask] = generator.poisson(n_labels, size=mask.sum())
 
     # pick a non-zero length per document by rejection sampling
