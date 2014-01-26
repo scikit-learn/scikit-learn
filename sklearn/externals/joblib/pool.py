@@ -414,7 +414,7 @@ class MemmapingPool(PicklingPool):
     suprocesses will have access to the same shared memory in the
     original mode except for the 'w+' mode that is automatically
     transformed as 'r+' to avoid zeroing the original data upon
-    instanciation.
+    instantiation.
 
     Furthermore large arrays from the parent process are automatically
     dumped to a temporary folder on the filesystem such as child

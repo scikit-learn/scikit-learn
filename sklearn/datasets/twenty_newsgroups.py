@@ -41,6 +41,7 @@ import tarfile
 import pickle
 import shutil
 import re
+import codecs
 
 import numpy as np
 import scipy.sparse as sp
@@ -92,7 +93,9 @@ def download_20newsgroups(target_dir, cache_path):
     # Store a zipped pickle
     cache = dict(train=load_files(train_path, encoding='latin1'),
                  test=load_files(test_path, encoding='latin1'))
-    open(cache_path, 'wb').write(pickle.dumps(cache).encode('zip'))
+    compressed_content = codecs.encode(pickle.dumps(cache), 'zlib_codec')
+    open(cache_path, 'wb').write(compressed_content)
+
     shutil.rmtree(target_dir)
     return cache
 
@@ -194,7 +197,10 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
     cache = None
     if os.path.exists(cache_path):
         try:
-            cache = pickle.loads(open(cache_path, 'rb').read().decode('zip'))
+            compressed_content = open(cache_path, 'rb').read()
+            uncompressed_content = codecs.decode(
+                compressed_content, 'zlib_codec')
+            cache = pickle.loads(uncompressed_content)
         except Exception as e:
             print(80 * '_')
             print('Cache loading failed')

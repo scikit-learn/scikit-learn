@@ -19,7 +19,7 @@ from sklearn.utils.testing import ignore_warnings
 
 from sklearn.linear_model.coordinate_descent import Lasso, \
     LassoCV, ElasticNet, ElasticNetCV, MultiTaskLasso, MultiTaskElasticNet, \
-    lasso_path
+    MultiTaskElasticNetCV, MultiTaskLassoCV, lasso_path
 from sklearn.linear_model import LassoLarsCV, lars_path
 
 
@@ -184,14 +184,14 @@ def test_lasso_cv_positive_constraint():
     max_iter = 500
 
     # Ensure the unconstrained fit has a negative coefficient
-    clf_unconstrained  = LassoCV(n_alphas=3, eps=1e-1, max_iter=max_iter, cv=2,
-                                 n_jobs=1)
+    clf_unconstrained = LassoCV(n_alphas=3, eps=1e-1, max_iter=max_iter, cv=2,
+                                n_jobs=1)
     clf_unconstrained.fit(X, y)
     assert_true(min(clf_unconstrained.coef_) < 0)
 
     # On same data, constrained fit has non-negative coefficients
-    clf_constrained  = LassoCV(n_alphas=3, eps=1e-1, max_iter=max_iter,
-                               positive=True, cv=2, n_jobs=1)
+    clf_constrained = LassoCV(n_alphas=3, eps=1e-1, max_iter=max_iter,
+                              positive=True, cv=2, n_jobs=1)
     clf_constrained.fit(X, y)
     assert_true(min(clf_constrained.coef_) >= 0)
 
@@ -237,7 +237,8 @@ def test_enet_path():
 
     # Here we have a small number of iterations, and thus the
     # ElasticNet might not converge. This is to speed up tests
-    clf = ElasticNetCV(n_alphas=5, eps=2e-3, l1_ratio=[0.5, 0.7], cv=3,
+    clf = ElasticNetCV(alphas=[0.01, 0.05, 0.1], eps=2e-3,
+                       l1_ratio=[0.5, 0.7], cv=3,
                        max_iter=max_iter)
     ignore_warnings(clf.fit)(X, y)
     # Well-conditioned settings, we should have selected our
@@ -247,11 +248,10 @@ def test_enet_path():
     # that is closer to ridge than to lasso
     assert_equal(clf.l1_ratio_, min(clf.l1_ratio))
 
-    clf = ElasticNetCV(n_alphas=5, eps=2e-3, l1_ratio=[0.5, 0.7], cv=3,
+    clf = ElasticNetCV(alphas=[0.01, 0.05, 0.1], eps=2e-3,
+                       l1_ratio=[0.5, 0.7], cv=3,
                        max_iter=max_iter, precompute=True)
     ignore_warnings(clf.fit)(X, y)
-
-
     # Well-conditioned settings, we should have selected our
     # smallest penalty
     assert_almost_equal(clf.alpha_, min(clf.alphas_))
@@ -262,6 +262,26 @@ def test_enet_path():
     # We are in well-conditioned settings with low noise: we should
     # have a good test-set performance
     assert_greater(clf.score(X_test, y_test), 0.99)
+
+    # Multi-output/target case
+    X, y, X_test, y_test = build_dataset(n_features=10, n_targets=3)
+    clf = MultiTaskElasticNetCV(n_alphas=5, eps=2e-3, l1_ratio=[0.5, 0.7],
+                                cv=3, max_iter=max_iter)
+    ignore_warnings(clf.fit)(X, y)
+    # We are in well-conditioned settings with low noise: we should
+    # have a good test-set performance
+    assert_greater(clf.score(X_test, y_test), 0.99)
+    assert_equal(clf.coef_.shape, (3, 10))
+
+    # Mono-output should have same cross-validated alpha_ and l1_ratio_
+    # in both cases.
+    X, y, _, _ = build_dataset(n_features=10)
+    clf1 = ElasticNetCV(n_alphas=5, eps=2e-3, l1_ratio=[0.5, 0.7])
+    clf1.fit(X, y)
+    clf2 = MultiTaskElasticNetCV(n_alphas=5, eps=2e-3, l1_ratio=[0.5, 0.7])
+    clf2.fit(X, y[:, np.newaxis])
+    assert_almost_equal(clf1.l1_ratio_, clf2.l1_ratio_)
+    assert_almost_equal(clf1.alpha_, clf2.alpha_)
 
 
 def test_path_parameters():
@@ -322,8 +342,8 @@ def test_enet_cv_positive_constraint():
     max_iter = 500
 
     # Ensure the unconstrained fit has a negative coefficient
-    enetcv_unconstrained = ElasticNetCV(n_alphas=3, eps=1e-1, max_iter=max_iter,
-                                        cv=2, n_jobs=1)
+    enetcv_unconstrained = ElasticNetCV(n_alphas=3, eps=1e-1,
+                                        max_iter=max_iter, cv=2, n_jobs=1)
     enetcv_unconstrained.fit(X, y)
     assert_true(min(enetcv_unconstrained.coef_) < 0)
 
@@ -368,6 +388,57 @@ def test_multioutput_enetcv_error():
     y = np.random.randn(10, 2)
     clf = ElasticNetCV()
     assert_raises(ValueError, clf.fit, X, y)
+
+
+def test_multitask_enet_and_lasso_cv():
+    X, y, _, _ = build_dataset(n_features=100, n_targets=3)
+    clf = MultiTaskElasticNetCV().fit(X, y)
+    assert_almost_equal(clf.alpha_, 0.00556, 3)
+    clf = MultiTaskLassoCV().fit(X, y)
+    assert_almost_equal(clf.alpha_, 0.00278, 3)
+
+    X, y, _, _ = build_dataset(n_targets=3)
+    clf = MultiTaskElasticNetCV(n_alphas=50, eps=1e-3, max_iter=100,
+                                l1_ratio=[0.3, 0.5], tol=1e-3)
+    clf.fit(X, y)
+    assert_equal(0.5, clf.l1_ratio_)
+    assert_equal((3, X.shape[1]), clf.coef_.shape)
+    assert_equal((3, ), clf.intercept_.shape)
+    assert_equal((2, 50, 3), clf.mse_path_.shape)
+    assert_equal((2, 50), clf.alphas_.shape)
+
+    X, y, _, _ = build_dataset(n_targets=3)
+    clf = MultiTaskLassoCV(n_alphas=50, eps=1e-3, max_iter=100, tol=1e-3)
+    clf.fit(X, y)
+    assert_equal((3, X.shape[1]), clf.coef_.shape)
+    assert_equal((3, ), clf.intercept_.shape)
+    assert_equal((50, 3), clf.mse_path_.shape)
+    assert_equal(50, len(clf.alphas_))
+
+
+def test_1d_multioutput_enet_and_multitask_enet_cv():
+    X, y, _, _ = build_dataset(n_features=10)
+    y = y[:, np.newaxis]
+    clf = ElasticNetCV(n_alphas=5, eps=2e-3, l1_ratio=[0.5, 0.7])
+    clf.fit(X, y[:, 0])
+    clf1 = MultiTaskElasticNetCV(n_alphas=5, eps=2e-3, l1_ratio=[0.5, 0.7])
+    clf1.fit(X, y)
+    assert_almost_equal(clf.l1_ratio_, clf1.l1_ratio_)
+    assert_almost_equal(clf.alpha_, clf1.alpha_)
+    assert_almost_equal(clf.coef_, clf1.coef_[0])
+    assert_almost_equal(clf.intercept_, clf1.intercept_[0])
+
+
+def test_1d_multioutput_lasso_and_multitask_lasso_cv():
+    X, y, _, _ = build_dataset(n_features=10)
+    y = y[:, np.newaxis]
+    clf = LassoCV(n_alphas=5, eps=2e-3)
+    clf.fit(X, y[:, 0])
+    clf1 = MultiTaskLassoCV(n_alphas=5, eps=2e-3)
+    clf1.fit(X, y)
+    assert_almost_equal(clf.alpha_, clf1.alpha_)
+    assert_almost_equal(clf.coef_, clf1.coef_[0])
+    assert_almost_equal(clf.intercept_, clf1.intercept_[0])
 
 
 if __name__ == '__main__':

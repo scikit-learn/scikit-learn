@@ -10,8 +10,8 @@ from .base import is_classifier, clone
 from .cross_validation import _check_cv
 from .utils import check_arrays
 from .externals.joblib import Parallel, delayed
-from .metrics.scorer import get_scorer
-from .grid_search import _check_scorable, _split, _fit, _score
+from .cross_validation import _safe_split, _score, _fit_and_score
+from .metrics.scorer import check_scoring
 
 
 def learning_curve(estimator, X, y, train_sizes=np.linspace(0.1, 1.0, 10),
@@ -93,7 +93,6 @@ def learning_curve(estimator, X, y, train_sizes=np.linspace(0.1, 1.0, 10),
     -----
     See :ref:`examples/plot_learning_curve.py <example_plot_learning_curve.py>`
     """
-
     if exploit_incremental_learning and not hasattr(estimator, "partial_fit"):
         raise ValueError("An estimator must support the partial_fit interface "
                          "to exploit incremental learning")
@@ -101,6 +100,7 @@ def learning_curve(estimator, X, y, train_sizes=np.linspace(0.1, 1.0, 10),
     X, y = check_arrays(X, y, sparse_format='csr', allow_lists=True)
     # Make a list since we will be iterating multiple times over the folds
     cv = list(_check_cv(cv, X, y, classifier=is_classifier(estimator)))
+    scorer = check_scoring(estimator, scoring=scoring)
 
     # HACK as long as boolean indices are allowed in cv generators
     if cv[0][0].dtype == bool:
@@ -119,24 +119,19 @@ def learning_curve(estimator, X, y, train_sizes=np.linspace(0.1, 1.0, 10),
     if verbose > 0:
         print("[learning_curve] Training set sizes: " + str(train_sizes_abs))
 
-    _check_scorable(estimator, scoring=scoring)
-    scorer = get_scorer(scoring)
-
     parallel = Parallel(n_jobs=n_jobs, pre_dispatch=pre_dispatch,
                         verbose=verbose)
     if exploit_incremental_learning:
-        if is_classifier(estimator):
-            classes = np.unique(y)
-        else:
-            classes = None
+        classes = np.unique(y) if is_classifier(estimator) else None
         out = parallel(delayed(_incremental_fit_estimator)(
-            estimator, X, y, classes, train, test, train_sizes_abs, scorer,
-            verbose) for train, test in cv)
+            clone(estimator), X, y, classes, train, test, train_sizes_abs,
+            scorer, verbose) for train, test in cv)
     else:
-        out = parallel(delayed(_fit_estimator)(
-            estimator, X, y, train, test, n_train_samples, scorer, verbose)
+        out = parallel(delayed(_fit_and_score)(
+            clone(estimator), X, y, scorer, train[:n_train_samples], test,
+            verbose, parameters=None, fit_params=None, return_train_score=True)
             for train, test in cv for n_train_samples in train_sizes_abs)
-        out = np.array(out)
+        out = np.array(out)[:, :2]
         n_cv_folds = out.shape[0]/n_unique_ticks
         out = out.reshape(n_cv_folds, n_unique_ticks, 2)
 
@@ -204,32 +199,23 @@ def _translate_train_sizes(train_sizes, n_max_training_samples):
     return train_sizes_abs
 
 
-def _fit_estimator(base_estimator, X, y, train, test,
-                   n_train_samples, scorer, verbose):
-    """Train estimator on a training subset and compute scores."""
-    train_subset = train[:n_train_samples]
-    estimator = clone(base_estimator)
-    X_train, y_train = _split(estimator, X, y, train_subset)
-    X_test, y_test = _split(estimator, X, y, test, train_subset)
-    _fit(estimator.fit, X_train, y_train)
-    train_score = _score(estimator, X_train, y_train, scorer)
-    test_score = _score(estimator, X_test, y_test, scorer)
-    return train_score, test_score
-
-
-def _incremental_fit_estimator(base_estimator, X, y, classes, train, test,
+def _incremental_fit_estimator(estimator, X, y, classes, train, test,
                                train_sizes, scorer, verbose):
     """Train estimator on training subsets incrementally and compute scores."""
-    estimator = clone(base_estimator)
     train_scores, test_scores = [], []
     partitions = zip(train_sizes, np.split(train, train_sizes)[:-1])
     for n_train_samples, partial_train in partitions:
-        X_train, y_train = _split(estimator, X, y, train[:n_train_samples])
-        X_partial_train, y_partial_train = _split(estimator, X, y,
-                                                  partial_train)
-        X_test, y_test = _split(estimator, X, y, test, train[:n_train_samples])
-        _fit(estimator.partial_fit, X_partial_train, y_partial_train,
-             classes=classes)
+        train_subset = train[:n_train_samples]
+        X_train, y_train = _safe_split(estimator, X, y, train_subset)
+        X_partial_train, y_partial_train = _safe_split(estimator, X, y,
+                                                              partial_train)
+        X_test, y_test = _safe_split(estimator, X, y, test, train_subset)
+        if y_partial_train is None:
+            estimator.partial_fit(X_partial_train, classes=classes)
+        else:
+            estimator.partial_fit(X_partial_train, y_partial_train,
+                                  classes=classes)
         train_scores.append(_score(estimator, X_train, y_train, scorer))
         test_scores.append(_score(estimator, X_test, y_test, scorer))
     return np.array((train_scores, test_scores)).T
+

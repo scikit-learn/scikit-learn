@@ -170,7 +170,7 @@ def test_learning_curve_with_boolean_indices():
     estimator = MockImprovingClassifier(20)
     cv = KFold(n=30, n_folds=3, indices=False)
     train_sizes, train_scores, test_scores = learning_curve(estimator, X, y,
-                                                              cv=cv)
+                                                            cv=cv)
     assert_array_equal(train_sizes, np.linspace(2, 20, 10))
     assert_array_almost_equal(train_scores, np.linspace(1.9, 1.0, 10))
     assert_array_almost_equal(test_scores, np.linspace(0.1, 1.0, 10))

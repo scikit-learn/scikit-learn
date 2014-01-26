@@ -208,8 +208,8 @@ class RegressionLossFunction(six.with_metaclass(ABCMeta, LossFunction)):
 
     def __init__(self, n_classes):
         if n_classes != 1:
-            raise ValueError("``n_classes`` must be 1 for regression but was %r" %
-                             n_classes)
+            raise ValueError("``n_classes`` must be 1 for regression but "
+                             "was %r" % n_classes)
         super(RegressionLossFunction, self).__init__(n_classes)
 
 
@@ -582,12 +582,12 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
     def _check_params(self):
         """Check validity of parameters and raise ValueError if not valid. """
         if self.n_estimators <= 0:
-            raise ValueError("n_estimators must be greater than 0 but was %r" %
-                             self.n_estimators)
+            raise ValueError("n_estimators must be greater than 0 but "
+                             "was %r" % self.n_estimators)
 
         if self.learning_rate <= 0.0:
-            raise ValueError("learning_rate must be greater than 0 but was %r" %
-                             self.learning_rate)
+            raise ValueError("learning_rate must be greater than 0 but "
+                             "was %r" % self.learning_rate)
 
         if (self.loss not in self._SUPPORTED_LOSS or
             self.loss not in LOSS_FUNCTIONS):
@@ -610,7 +610,8 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             self.loss_ = loss_class(self.n_classes_)
 
         if not (0.0 < self.subsample <= 1.0):
-            raise ValueError("subsample must be in (0,1] but was %r" % self.subsample)
+            raise ValueError("subsample must be in (0,1] but "
+                             "was %r" % self.subsample)
 
         if self.init is not None:
             if isinstance(self.init, six.string_types):
@@ -619,11 +620,13 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             else:
                 if (not hasattr(self.init, 'fit')
                     or not hasattr(self.init, 'predict')):
-                    raise ValueError(("init=%r must be valid BaseEstimator and support " +
-                                      "both fit and predict") % self.init)
+                    raise ValueError("init=%r must be valid BaseEstimator "
+                                     "and support both fit and "
+                                     "predict" % self.init)
 
         if not (0.0 < self.alpha < 1.0):
-            raise ValueError("alpha must be in (0.0, 1.0) but was %r" % self.alpha)
+            raise ValueError("alpha must be in (0.0, 1.0) but "
+                             "was %r" % self.alpha)
 
         if isinstance(self.max_features, six.string_types):
             if self.max_features == "auto":
@@ -638,9 +641,9 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             elif self.max_features == "log2":
                 max_features = max(1, int(np.log2(self.n_features)))
             else:
-                raise ValueError(
-                    ('Invalid value for max_features: %r. Allowed string '
-                     'values are "auto", "sqrt" or "log2".')  % self.max_features)
+                raise ValueError("Invalid value for max_features: %r. "
+                                 "Allowed string values are 'auto', 'sqrt' "
+                                 "or 'log2'." % self.max_features)
         elif self.max_features is None:
             max_features = self.n_features
         elif isinstance(self.max_features, (numbers.Integral, np.integer)):
@@ -687,12 +690,13 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         # self.n_estimators is the number of additional est to fit
         total_n_estimators = self.n_estimators
         if total_n_estimators < self.estimators_.shape[0]:
-            raise ValueError('resize with smaller n_estimators %d < %d' % (total_n_estimators,
-                                                                           self.estimators_[0]))
+            raise ValueError('resize with smaller n_estimators %d < %d' %
+                             (total_n_estimators, self.estimators_[0]))
 
         self.estimators_.resize((total_n_estimators, self.loss_.K))
         self.train_score_.resize(total_n_estimators)
-        if (self.subsample < 1 or hasattr(self, '_oob_score_')
+        if (self.subsample < 1
+            or hasattr(self, '_oob_score_')
             or hasattr(self, 'oob_improvement_')):
             # if do oob resize arrays or create new if not available
             if hasattr(self, '_oob_score_'):
@@ -726,12 +730,12 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
 
         monitor : callable, optional
             The monitor is called after each iteration with the current
-            iteration, a reference to the estimator and the local variables
-            of ``_fit_stages`` as keyword arguments ``callable(i, self, locals())``.
-            If the callable returns ``True`` the fitting procedure is stopped.
-            The monitor can be used for various things such as computing
-            held-out estimates, early stopping, model introspect,
-            and snapshoting.
+            iteration, a reference to the estimator and the local variables of
+            ``_fit_stages`` as keyword arguments ``callable(i, self,
+            locals())``. If the callable returns ``True`` the fitting procedure
+            is stopped. The monitor can be used for various things such as
+            computing held-out estimates, early stopping, model introspect, and
+            snapshoting.
 
         Returns
         -------
@@ -764,9 +768,11 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             # add more estimators to fitted model
             # invariant: warm_start = True
             if self.n_estimators < self.estimators_.shape[0]:
-                raise ValueError('n_estimators=%d must be larger or equal to'
-                                 'estimators_.shape[0]=%d when warm_start==True'
-                                 % (self.n_estimators, self.estimators_.shape[0]))
+                raise ValueError('n_estimators=%d must be larger or equal to '
+                                 'estimators_.shape[0]=%d when '
+                                 'warm_start==True'
+                                 % (self.n_estimators,
+                                    self.estimators_.shape[0]))
             begin_at_stage = self.estimators_.shape[0]
             y_pred = self.decision_function(X)
             self._resize_state()
@@ -1014,12 +1020,12 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
 
     verbose : int, default: 0
         Enable verbose output. If 1 then it prints progress and performance
-        once in a while (the more trees the lower the frequency).
-        If greater than 1 then it prints progress and performance for every tree.
+        once in a while (the more trees the lower the frequency). If greater
+        than 1 then it prints progress and performance for every tree.
 
     warm_start : bool, default: False
-        When set to ``True``, reuse the solution of the previous call to fit and
-        add more estimators to the ensemble, otherwise, just erase the
+        When set to ``True``, reuse the solution of the previous call to fit
+        and add more estimators to the ensemble, otherwise, just erase the
         previous solution.
 
     Attributes
@@ -1100,12 +1106,12 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
 
         monitor : callable, optional
             The monitor is called after each iteration with the current
-            iteration, a reference to the estimator and the local variables
-            of ``_fit_stages`` as keyword arguments ``callable(i, self, locals())``.
-            If the callable returns ``True`` the fitting procedure is stopped.
-            The monitor can be used for various things such as computing
-            held-out estimates, early stopping, model introspect,
-            and snapshoting.
+            iteration, a reference to the estimator and the local variables of
+            ``_fit_stages`` as keyword arguments ``callable(i, self,
+            locals())``. If the callable returns ``True`` the fitting procedure
+            is stopped. The monitor can be used for various things such as
+            computing held-out estimates, early stopping, model introspect, and
+            snapshoting.
 
         Returns
         -------
@@ -1275,12 +1281,12 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
 
     verbose : int, default: 0
         Enable verbose output. If 1 then it prints progress and performance
-        once in a while (the more trees the lower the frequency).
-        If greater than 1 then it prints progress and performance for every tree.
+        once in a while (the more trees the lower the frequency). If greater
+        than 1 then it prints progress and performance for every tree.
 
     warm_start : bool, default: False
-        When set to ``True``, reuse the solution of the previous call to fit and
-        add more estimators to the ensemble, otherwise, just erase the
+        When set to ``True``, reuse the solution of the previous call to fit
+        and add more estimators to the ensemble, otherwise, just erase the
         previous solution.
 
 
@@ -1362,12 +1368,12 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
 
         monitor : callable, optional
             The monitor is called after each iteration with the current
-            iteration, a reference to the estimator and the local variables
-            of ``_fit_stages`` as keyword arguments ``callable(i, self, locals())``.
-            If the callable returns ``True`` the fitting procedure is stopped.
-            The monitor can be used for various things such as computing
-            held-out estimates, early stopping, model introspect,
-            and snapshoting.
+            iteration, a reference to the estimator and the local variables of
+            ``_fit_stages`` as keyword arguments ``callable(i, self,
+            locals())``. If the callable returns ``True`` the fitting procedure
+            is stopped. The monitor can be used for various things such as
+            computing held-out estimates, early stopping, model introspect, and
+            snapshoting.
 
         Returns
         -------
