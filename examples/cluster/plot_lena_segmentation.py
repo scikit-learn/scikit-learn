@@ -3,6 +3,9 @@
 Segmenting the picture of Lena in regions
 =========================================
 
+
+
+
 This example uses :ref:`spectral_clustering` on a graph created from
 voxel-to-voxel difference on an image to break this image into multiple
 partly-homogeneous regions.
