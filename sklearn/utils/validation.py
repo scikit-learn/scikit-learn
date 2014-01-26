@@ -282,10 +282,6 @@ def column_or_1d(y, warn=False):
     raise ValueError("bad input shape {0}".format(shape))
 
 
-<<<<<<< HEAD
-
-=======
->>>>>>> upstream/master
 def warn_if_not_float(X, estimator='This algorithm'):
     """Warning utility function to check that data type is floating point.
 

@@ -36,7 +36,6 @@ Single and multi-output problems are both handled.
 #          Brian Holt <bdholt1@gmail.com>
 # License: BSD 3 clause
 
-
 from __future__ import division
 
 import itertools

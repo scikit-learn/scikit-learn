@@ -20,14 +20,7 @@ from sklearn.utils.sparsetools import minimum_spanning_tree
 __all__ = ["murmurhash3_32", "as_float_array", "check_arrays", "safe_asarray",
            "assert_all_finite", "array2d", "atleast2d_or_csc",
            "atleast2d_or_csr", "warn_if_not_float", "check_random_state",
-<<<<<<< HEAD
-           "compute_class_weight",  "minimum_spanning_tree",  "column_or_1d"]
-
-# Make sure that DeprecationWarning get printed
-warnings.simplefilter("always", DeprecationWarning)
-=======
            "compute_class_weight", "minimum_spanning_tree", "column_or_1d"]
->>>>>>> upstream/master
 
 
 class deprecated(object):

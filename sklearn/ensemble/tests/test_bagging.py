@@ -1,15 +1,8 @@
 """
-<<<<<<< HEAD
-Testing for the ensemble module (sklearn.ensemble.bagging).
-"""
-
-# Authors: Maheshakya Wijewardena
-=======
 Testing for the bagging ensemble module (sklearn.ensemble.bagging).
 """
 
 # Author: Gilles Louppe
->>>>>>> upstream/master
 # License: BSD 3 clause
 
 import numpy as np
@@ -21,31 +14,17 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_true
-<<<<<<< HEAD
-#from sklearn.utils.testing import assert_warns
-=======
 from sklearn.utils.testing import assert_warns
->>>>>>> upstream/master
 from sklearn.utils.testing import SkipTest
 
 from sklearn.dummy import DummyClassifier, DummyRegressor
 from sklearn.grid_search import GridSearchCV, ParameterGrid
 from sklearn.ensemble import BaggingClassifier, BaggingRegressor
-<<<<<<< HEAD
-from sklearn.ensemble import _partition_estimators
-from sklearn.ensemble import _parallel_build_estimators	
-from sklearn.linear_model import Perceptron, LogisticRegression
-from sklearn.neighbors import KNeighborsClassifier, KNeighborsRegressor
-from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.svm import SVC, SVR
-=======
 from sklearn.linear_model import Perceptron, LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier, KNeighborsRegressor
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.svm import SVC, SVR
 
->>>>>>> upstream/master
 from sklearn.cross_validation import train_test_split
 from sklearn.datasets import load_boston, load_iris
 from sklearn.utils import check_random_state
@@ -66,81 +45,6 @@ perm = rng.permutation(boston.target.size)
 boston.data = boston.data[perm]
 boston.target = boston.target[perm]
 
-<<<<<<< HEAD
-"""***BaseBagging class cannot be tested directly as is has been initialized as an abstract method. A concrete class should be created in order 
-test the BaseBagging class***"""
-
-def test__partition_estimators():
-    """test for parttition_estimators() function"""
-    ensemble = RandomForestClassifier(n_estimators=13, n_jobs= 5)
-    
-    assert_equal((5,[3,3,3,2,2],[0,3,6,9,11,13]),_partition_estimators(ensemble))
-    
-def test__parallel_build_estimators():
-    """test for _parallel_build_estimators() function"""
-    ensemble_1 = BaggingRegressor(base_estimator = RandomForestClassifier())
-    #ensemble_2 = BaggingRegressor(None)
-    seeds = np.arange(5)
-    try:
-        res = _parallel_build_estimators(5, ensemble_1, iris.data, iris.target, sample_weight = None, seeds = seeds, verbose = True)
-        assert_true(isinstance(res,tuple))
-    except ValueError:
-        print ValueError
-        
-def test_probability():
-    """Predict probabilities."""
-    rng = check_random_state(0)
-    X_train, X_test, y_train, y_test = train_test_split(iris.data,
-                                                        iris.target,
-                                                        random_state=rng)
-
-    with np.errstate(divide="ignore", invalid="ignore"):
-        # Normal case
-        ensemble = BaggingClassifier(base_estimator=DecisionTreeClassifier(),
-                                     random_state=rng).fit(X_train, y_train)
-
-        assert_array_almost_equal(np.sum(ensemble.predict_proba(X_test),
-                                         axis=1),
-                                  np.ones(len(X_test)))
-
-        assert_array_almost_equal(ensemble.predict_proba(X_test),
-                           np.exp(ensemble.predict_log_proba(X_test)))
-
-        # Degenerate case, where some classes are missing
-        ensemble = BaggingClassifier(base_estimator=LogisticRegression(),
-                                     random_state=rng,
-                                     max_samples=5).fit(X_train, y_train)
-
-        assert_array_almost_equal(np.sum(ensemble.predict_proba(X_test),
-                                         axis=1),
-                                  np.ones(len(X_test)))
-
-        assert_array_almost_equal(ensemble.predict_proba(X_test),
-                           np.exp(ensemble.predict_log_proba(X_test)))
-
-
-def test_oob_score_classification():
-    """Check that oob prediction is a good estimation of the generalization
-    error."""
-    rng = check_random_state(0)
-    X_train, X_test, y_train, y_test = train_test_split(iris.data,
-                                                        iris.target,
-                                                        random_state=rng)
-
-    for base_estimator in [DecisionTreeClassifier(), SVC()]:
-        clf = BaggingClassifier(base_estimator=base_estimator,
-                                n_estimators=100,
-                                bootstrap=True,
-                                oob_score=True,
-                                random_state=rng).fit(X_train, y_train)
-
-        test_score = clf.score(X_test, y_test)
-
-        assert_less(abs(test_score - clf.oob_score_), 0.1)
-
-        
-=======
->>>>>>> upstream/master
 
 def test_classification():
     """Check classification for various parameter settings."""
@@ -148,13 +52,6 @@ def test_classification():
     X_train, X_test, y_train, y_test = train_test_split(iris.data,
                                                         iris.target,
                                                         random_state=rng)
-<<<<<<< HEAD
-    grid = ParameterGrid({"max_samples": [0.5, 1.0],                          
-                          "bootstrap": [True, False],
-                          })
-
-    for base_estimator in [DummyClassifier(),
-=======
     grid = ParameterGrid({"max_samples": [0.5, 1.0],
                           "max_features": [1, 2, 3, 4],
                           "bootstrap": [True, False],
@@ -162,7 +59,6 @@ def test_classification():
 
     for base_estimator in [None,
                            DummyClassifier(),
->>>>>>> upstream/master
                            Perceptron(),
                            DecisionTreeClassifier(),
                            KNeighborsClassifier(),
@@ -179,12 +75,6 @@ def test_regression():
     X_train, X_test, y_train, y_test = train_test_split(boston.data,
                                                         boston.target,
                                                         random_state=rng)
-<<<<<<< HEAD
-    grid = ParameterGrid({"max_samples": [0.5, 1.0,100],                          
-                          "bootstrap": [True, False]})
-
-    for base_estimator in [DummyRegressor(),
-=======
     grid = ParameterGrid({"max_samples": [0.5, 1.0],
                           "max_features": [0.5, 1.0],
                           "bootstrap": [True, False],
@@ -192,7 +82,6 @@ def test_regression():
 
     for base_estimator in [None,
                            DummyRegressor(),
->>>>>>> upstream/master
                            DecisionTreeRegressor(),
                            KNeighborsRegressor(),
                            SVR()]:
@@ -200,31 +89,7 @@ def test_regression():
             BaggingRegressor(base_estimator=base_estimator,
                              random_state=rng,
                              **params).fit(X_train, y_train).predict(X_test)
-<<<<<<< HEAD
-        
-def test__set_oob_score_regression():
-    """Evaluate out of bag prediction accuracy for regression for various parameter settings."""
-    rng = check_random_state(0)
-    X_train, X_test, y_train, y_test = train_test_split(boston.data,
-                                                        boston.target,
-                                                        random_state=rng)
-    grid = ParameterGrid({"max_samples": [0.5, 1.0,100,300]                       
-                          })
 
-    for base_estimator in [DummyRegressor(),
-                           DecisionTreeRegressor(),
-                           KNeighborsRegressor(),
-                           SVR()]:
-        for params in grid:
-            #print base_estimator, params
-            
-            BaggingRegressor(base_estimator=base_estimator,
-                             random_state=rng,oob_score=True,
-                             **params).fit(X_train, y_train).predict(X_test)
-            #print
-=======
-
->>>>>>> upstream/master
 
 def test_bootstrap_samples():
     """Test that bootstraping samples generate non-perfect base estimators."""
@@ -254,10 +119,6 @@ def test_bootstrap_samples():
                    ensemble.score(X_train, y_train))
 
 
-<<<<<<< HEAD
-def test_oob_score_regression():
-    """Check that oob prediction is a good estimation of the generalization error."""
-=======
 def test_bootstrap_features():
     """Test that bootstraping features may generate dupplicate features."""
     rng = check_random_state(0)
@@ -347,7 +208,6 @@ def test_oob_score_classification():
 def test_oob_score_regression():
     """Check that oob prediction is a good estimation of the generalization
     error."""
->>>>>>> upstream/master
     rng = check_random_state(0)
     X_train, X_test, y_train, y_test = train_test_split(boston.data,
                                                         boston.target,
@@ -363,8 +223,6 @@ def test_oob_score_regression():
 
     assert_less(abs(test_score - clf.oob_score_), 0.1)
 
-<<<<<<< HEAD
-=======
     # Test with few estimators
     assert_warns(UserWarning,
                  BaggingRegressor(base_estimator=DecisionTreeRegressor(),
@@ -375,7 +233,6 @@ def test_oob_score_regression():
                  X_train,
                  y_train)
 
->>>>>>> upstream/master
 
 def test_single_estimator():
     """Check singleton ensembles."""
@@ -386,12 +243,8 @@ def test_single_estimator():
 
     clf1 = BaggingRegressor(base_estimator=KNeighborsRegressor(),
                             n_estimators=1,
-<<<<<<< HEAD
-                            bootstrap=False,                            
-=======
                             bootstrap=False,
                             bootstrap_features=False,
->>>>>>> upstream/master
                             random_state=rng).fit(X_train, y_train)
 
     clf2 = KNeighborsRegressor().fit(X_train, y_train)
@@ -416,8 +269,6 @@ def test_error():
     assert_raises(ValueError,
                   BaggingClassifier(base, max_samples="foobar").fit, X, y)
 
-<<<<<<< HEAD
-=======
     # Test max_features
     assert_raises(ValueError,
                   BaggingClassifier(base, max_features=-1).fit, X, y)
@@ -429,7 +280,6 @@ def test_error():
                   BaggingClassifier(base, max_features=5).fit, X, y)
     assert_raises(ValueError,
                   BaggingClassifier(base, max_features="foobar").fit, X, y)
->>>>>>> upstream/master
 
     # Test support of decision_function
     assert_raises(NotImplementedError,
@@ -506,8 +356,6 @@ def test_parallel():
         assert_array_almost_equal(y1, y3)
 
 
-<<<<<<< HEAD
-=======
 def test_gridsearch():
     """Check that bagging ensembles can be grid-searched."""
     # Transform iris into a binary classification task
@@ -572,7 +420,6 @@ def test_base_estimator():
                                 random_state=0).fit(X_train, y_train)
 
     assert_true(isinstance(ensemble.base_estimator_, SVR))
->>>>>>> upstream/master
 
 if __name__ == "__main__":
     import nose
