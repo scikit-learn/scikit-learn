@@ -186,7 +186,9 @@ API changes summary
      By `Manoj Kumar`_.
 
    - Fix :class: `linear_model.ElasticNetCV` and :class: `linear_model.LassoCV`
-     when fitting intercept and X is sparse. By `Manoj Kumar`_.
+     when fitting intercept and X is sparse. The automatic grid
+     of alphas was not computed correctly and the scaling with normalize
+     was wrong. By `Manoj Kumar`_.
 
 .. _changes_0_14:
 
