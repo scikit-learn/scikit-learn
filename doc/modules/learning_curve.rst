@@ -7,10 +7,7 @@ Validation curves: plotting scores to evaluate models
 .. currentmodule:: sklearn.learning_curve
 
 There are several problems that can occur during learning and visualization
-can help to avoid some of them. First of all, we have to choose an appropriate
-estimator. That is not a simple decision because every algorithm has its
-advantages and drawbacks.
-
+can help to identify these. Every algorithm has its advantages and drawbacks.
 A good way of categorizing estimators are their inherent `bias and variance
 <http://en.wikipedia.org/wiki/Bias-variance_dilemma>`_. Simple algorithms
 (e.g. :ref:`linear_model`) usually have a high **bias**, which means they have
@@ -18,11 +15,11 @@ strong assumptions about the underlying function that will be approximated.
 As a result, they need fewer training samples to learn a function that
 complies with these assumptions, e.g. a linear model can approximate the
 true linear function usually with only very few examples very accurately.
-However, if the latent function to be learned does not comply with these
-assumptions, the error of the model will be very high and that is true for the
-training error as well as for the validation error. More training examples do
-not help in this case. If both the training error and the validation error are
-high, we call this **underfitting**.
+However, if the function to be learned does not comply with these assumptions,
+the error of the model will be very high and that applies to the training error
+as well as to the validation error. More training examples do not help in this
+case. If both the training error and the validation error are high, we call
+this **underfitting**.
 
 An example for underfitting can be seen on the left side of the following plot.
 A simple linear model can at best provide only a poor fit to samples drawn from
@@ -38,11 +35,11 @@ More complex models with a low bias can usually approximate much more complex
 functions. However, too complex models usually have a high **variance**, i.e.
 they are very sensitive to varying training sets. Usually we can recognize too
 complex models because the training error will be very low and the validation
-error will be very high. This is also called **overfitting**. In the plot you
-can see an example on the right side. An overfitting estimator typically learns
+error will be very high. This is known as **overfitting**. In the plot you can
+see an example on the right side. An overfitting estimator typically learns
 the noise of the training data. To reduce this type of error, we can either
 select a simpler estimator with a higher bias, regularize a complex estimator,
-or if this did not help, collect more training examples.
+or if this did not help, collect more training data.
 
 We can change the bias and variance by selecting the model, which means we
 first have to choose an estimator and then we have to select an appropriate
@@ -64,14 +61,14 @@ Validation curve
 ================
 
 To validate a model we need a scoring function (see :ref:`model_evaluation`),
-e.g. accuracy for classifiers. The proper way of choosing multiple
+for example accuracy for classifiers. The proper way of choosing multiple
 hyperparameters of an estimator are of course grid search or similar methods
 (see :ref:`grid_search`) that select the hyperparameter with the maximum score
 on a validation set or multiple validation sets. Note that if we optimized
 the hyperparameters based on a validation score the validation score is biased
 and not a good estimate of the generalization any longer. To get a proper
-estimate of the generalization we have to compute the score on another data set
-which is called test set.
+estimate of the generalization we have to compute the score on another test
+set.
 
 However, it is sometimes helpful to plot the influence of a single
 hyperparameter on the training score and the validation score to find out
@@ -94,7 +91,7 @@ If the training score and the validation score are both low, the estimator will
 be underfitting. If the training score is high and the validation score is low,
 the estimator is overfitting and otherwise it is working very well. A low
 training score and a high validation score is usually not possible. All three
-cases can be found in the plot below where we varied the parameter
+cases can be found in the plot below where we vary the parameter
 :math:`\gamma` of an SVM on the digits dataset.
 
 .. figure:: ../auto_examples/images/plot_validation_curve_1.png
@@ -114,8 +111,8 @@ we benefit from adding more training data and whether the estimator suffers
 more from a variance error or a bias error. If both the validation score and
 the training score converge to a value that is too low with increasing
 size of the training set, we will not benefit much from more training data.
-In the following plot you can see naive Bayes, which roughly converges to a
-low score.
+In the following plot you can see an example: naive Bayes roughly converges
+to a low score.
 
 .. figure:: ../auto_examples/images/plot_learning_curve_1.png
    :target: ../auto_examples/plot_learning_curve.html
