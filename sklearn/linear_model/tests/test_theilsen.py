@@ -14,9 +14,10 @@ import numpy as np
 import numpy.testing as nptest
 from numpy.linalg import norm
 from scipy.optimize import minimize
-import matplotlib.pylab as plt
+from nose.tools import raises
 from sklearn.linear_model import LinearRegression, TheilSen
-from sklearn.linear_model.theilsen import spatial_median, modweiszfeld_step
+from sklearn.linear_model.theilsen import spatial_median, modweiszfeld_step,\
+    breakdown_point
 
 
 def gen_toy_problem_1d():
@@ -57,7 +58,7 @@ def gen_toy_problem_1d_no_intercept():
 
 def gen_toy_problem_2d():
     np.random.seed(0)
-    n_samples = 100
+    n_samples=100
     # Linear model y = 5*x_1 + 10*x_2 + N(1, 0.1**2)
     X = np.random.randn(2*n_samples).reshape(n_samples, 2)
     w = np.array([5., 10.])
@@ -73,7 +74,7 @@ def gen_toy_problem_2d():
 
 def gen_toy_problem_4d():
     np.random.seed(0)
-    n_samples = 100
+    n_samples = 10000
     # Linear model y = 5*x_1 + 10*x_2  + 42*x_3 + 7*x_4 + N(1, 0.1**2)
     X = np.random.randn(4*n_samples).reshape(n_samples, 4)
     w = np.array([5., 10., 42., 7.])
@@ -103,6 +104,11 @@ def test_modweiszfeld_step_1d():
     new_y = modweiszfeld_step(X, y)
     nptest.assert_array_less(median, new_y)
     nptest.assert_array_less(new_y, y)
+    # Check that a single vector is identity
+    X = np.array([1., 2., 3.]).reshape(1, 3)
+    y = X[0, ]
+    new_y = modweiszfeld_step(X, y)
+    nptest.assert_array_equal(y, new_y)
 
 
 def test_modweiszfeld_step_2d():
@@ -176,14 +182,39 @@ def test_theilsen_2d():
     nptest.assert_array_almost_equal(theilsen.intercept_, c, 1)
 
 
-# def test_subpopulation():
-#     X, y, w, c = gen_toy_problem_4d()
-#     lstq = LinearRegression().fit(X, y)
-#     assert np.linalg.norm(lstq.coef_ - w) > 1.0
-#     # Check that Theil-Sen works
-#     theilsen = TheilSen(n_samples=1e5).fit(X, y)
-#     nptest.assert_array_almost_equal(theilsen.coef_, w, 1)
-#     nptest.assert_array_almost_equal(theilsen.intercept_, c, 1)
+def test_calc_breakdown_point():
+    bp = breakdown_point(1e10, 2)
+    assert np.abs(bp - (1 - 1/(np.sqrt(2)))) <= 1.e-6
 
 
+@raises(AssertionError)
+def test__checksubparams_too_large_subpopulation():
+    X, y, w, c = gen_toy_problem_1d()
+    TheilSen(n_subpopulation=100000).fit(X, y)
 
+
+@raises(AssertionError)
+def test__checksubparams_too_few_subsamples():
+    X, y, w, c = gen_toy_problem_1d()
+    TheilSen(n_subsamples=1).fit(X, y)
+
+
+@raises(AssertionError)
+def test__checksubparams_too_many_subsamples():
+    X, y, w, c = gen_toy_problem_1d()
+    TheilSen(n_subsamples=101).fit(X, y)
+
+
+def test_subpopulation():
+    X, y, w, c = gen_toy_problem_4d()
+    theilsen = TheilSen(n_subpopulation=1000, random_state=0).fit(X, y)
+    nptest.assert_array_almost_equal(theilsen.coef_, w, 1)
+    nptest.assert_array_almost_equal(theilsen.intercept_, c, 1)
+
+
+def test_subsamples():
+    X, y, w, c = gen_toy_problem_4d()
+    theilsen = TheilSen(n_subsamples=X.shape[0]).fit(X, y)
+    lstq = LinearRegression().fit(X, y)
+    # Check for exact the same results as Least Squares
+    nptest.assert_array_almost_equal(theilsen.coef_, lstq.coef_, 9)
