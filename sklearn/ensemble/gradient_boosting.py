@@ -944,8 +944,9 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
                 group_inbag = None
                 group_oob = None
                 if group is not None:
+                    n_group_inbag = max(1, int(self.subsample * self.n_uniq_group))
                     sample_mask = \
-                        _ranked_random_sample_mask(n_samples, n_inbag,
+                        _ranked_random_sample_mask(n_samples, n_group_inbag,
                                                    group, self.n_uniq_group,
                                                    random_state)
                     group_inbag = group[sample_mask]
