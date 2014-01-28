@@ -1684,7 +1684,7 @@ class LdaVectorizer(CountVectorizer):
 
         # create word-count matrix (sparse csc) using the
         # parent CountVectorizer
-        count_matrix = super(LdaVectorizer, self).fit_transform(raw_docs)
+        count_matrix = super(LdaVectorizer, self).transform(raw_docs)
         logger.info('''Transforming new docs:
                      sklearn word count matrix completed!''')
 
@@ -1989,7 +1989,7 @@ class LsiVectorizer(CountVectorizer):
 
         # create word-count matrix (sparse csc) using
         # the parent CountVectorizer
-        count_matrix = super(LsiVectorizer, self).fit_transform(raw_docs)
+        count_matrix = super(LsiVectorizer, self).transform(raw_docs)
         logger.info('''Transforming new docs:
                     sklearn word count matrix completed!''')
 
