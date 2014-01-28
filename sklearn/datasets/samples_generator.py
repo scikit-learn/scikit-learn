@@ -6,9 +6,13 @@ Generate samples of synthetic data sets.
 #          G. Louppe, J. Nothman
 # License: BSD 3 clause
 
+from __future__ import division
+
 import numbers
+import array
 import numpy as np
 from scipy import linalg
+import scipy.sparse as sp
 
 from ..preprocessing import LabelBinarizer
 from ..utils import array2d, check_random_state
@@ -238,7 +242,8 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
 
 def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
                                    n_labels=2, length=50, allow_unlabeled=True,
-                                   return_indicator=False, random_state=None):
+                                   sparse=False, return_indicator=False,
+                                   random_state=None):
     """Generate a random multilabel classification problem.
 
     For each sample, the generative process is:
@@ -272,6 +277,9 @@ def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
     allow_unlabeled : bool, optional (default=True)
         If ``True``, some instances might not belong to any class.
 
+    sparse : bool, optional (default=False)
+        If ``True``, return a sparse feature matrix
+
     return_indicator : bool, optional (default=False),
         If ``True``, return ``Y`` in the binary indicator format, else
         return a tuple of lists of labels.
@@ -284,7 +292,7 @@ def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
 
     Returns
     -------
-    X : array of shape [n_samples, n_features]
+    X : array or sparse CSR matrix of shape [n_samples, n_features]
         The generated samples.
 
     Y : tuple of lists or array of shape [n_samples, n_classes]
@@ -297,49 +305,69 @@ def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
     p_w_c = generator.rand(n_features, n_classes)
     p_w_c /= np.sum(p_w_c, axis=0)
 
-    def sample_example():
-        _, n_classes = p_w_c.shape
+    if hasattr(generator, 'choice'):
+        # available in numpy >=1.7
+        def sample_classes(n):
+            return generator.choice(n_classes, n, replace=False, p=p_c)
+    else:
+        cumulative_p_c = np.cumsum(p_c)
 
-        # pick a nonzero number of labels per document by rejection sampling
-        n = n_classes + 1
-        while (not allow_unlabeled and n == 0) or n > n_classes:
-            n = generator.poisson(n_labels)
+        def sample_classes(n):
+            y = set()
+            while len(y) != n:
+                # pick a class with probability P(c)
+                c = np.searchsorted(cumulative_p_c, generator.rand())
+                y.add(c)
 
-        # pick n classes
-        y = []
-        while len(y) != n:
-            # pick a class with probability P(c)
-            c = generator.multinomial(1, p_c).argmax()
+    # pick a (nonzero) number of labels per document by rejection sampling
+    sample_n_labels = generator.poisson(n_labels, size=n_samples)
+    while ((not allow_unlabeled and 0 in sample_n_labels) or
+           np.max(sample_n_labels) > n_classes):
+        mask = sample_n_labels > n_classes
+        if not allow_unlabeled:
+            mask = np.logical_or(mask, sample_n_labels == 0, out=mask)
+        sample_n_labels[mask] = generator.poisson(n_labels, size=mask.sum())
 
-            if not c in y:
-                y.append(c)
+    # pick a non-zero length per document by rejection sampling
+    sample_length = generator.poisson(length, size=n_samples)
+    while 0 in sample_length:
+        mask = sample_length == 0
+        sample_length[mask] = generator.poisson(length, size=mask.sum())
 
-        # pick a non-zero document length by rejection sampling
-        k = 0
-        while k == 0:
-            k = generator.poisson(length)
+    # generate the samples
+    X_indices = array.array('i')
+    X_indptr = array.array('i', [0])
+    Y = []
+    for i in range(n_samples):
+        y = sample_classes(sample_n_labels[i])
 
-        # generate a document of length k words
-        x = np.zeros(n_features, dtype=int)
-        for i in range(k):
-            if len(y) == 0:
-                # if sample does not belong to any class, generate noise word
-                w = generator.randint(n_features)
-            else:
-                # pick a class and generate an appropriate word
-                c = y[generator.randint(len(y))]
-                w = generator.multinomial(1, p_w_c[:, c]).argmax()
-            x[w] += 1
+        if len(y) == 0:
+            # if sample does not belong to any class, generate noise words
+            words = generator.randint(n_features, size=sample_length[i])
+        else:
+            # sample words without replacement from selected classes
+            p_w_sample = p_w_c[:, y].sum(axis=1)
+            p_w_sample /= p_w_sample.sum()
+            words = np.searchsorted(np.cumsum(p_w_sample),
+                                    generator.rand(sample_length[i]))
 
-        return x, y
-
-    X, Y = zip(*[sample_example() for i in range(n_samples)])
+        X_indices.extend(words)
+        X_indptr.append(len(X_indices))
+        Y.append(list(y))
+    X_data = np.ones(len(X_indices), dtype=np.float64)
+    X = sp.csr_matrix((X_data, X_indices, X_indptr),
+                      shape=(n_samples, n_features))
+    X.sum_duplicates()
+    if not sparse:
+        X = X.toarray()
 
     if return_indicator:
         lb = LabelBinarizer()
         Y = lb.fit([range(n_classes)]).transform(Y)
+    else:
+        Y = tuple(Y)
 
-    return np.array(X, dtype=np.float64), Y
+    return X, Y
 
 
 def make_hastie_10_2(n_samples=12000, random_state=None):
