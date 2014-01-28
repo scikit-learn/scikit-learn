@@ -65,12 +65,12 @@ NODE_DTYPE = np.dtype({
               'n_samples'],
     'formats': [np.intp, np.intp, np.intp, np.float64, np.float64, np.intp],
     'offsets': [
-        <Py_ssize_t>&(<Node*> NULL).left_child,
-        <Py_ssize_t>&(<Node*> NULL).right_child,
-        <Py_ssize_t>&(<Node*> NULL).feature,
-        <Py_ssize_t>&(<Node*> NULL).threshold,
-        <Py_ssize_t>&(<Node*> NULL).impurity,
-        <Py_ssize_t>&(<Node*> NULL).n_samples,
+        <Py_ssize_t> &(<Node*> NULL).left_child,
+        <Py_ssize_t> &(<Node*> NULL).right_child,
+        <Py_ssize_t> &(<Node*> NULL).feature,
+        <Py_ssize_t> &(<Node*> NULL).threshold,
+        <Py_ssize_t> &(<Node*> NULL).impurity,
+        <Py_ssize_t> &(<Node*> NULL).n_samples,
     ]
 })
 
@@ -898,6 +898,7 @@ cdef class Splitter:
         self.n_samples = 0
         self.features = NULL
         self.n_features = 0
+        self.feature_values = NULL
 
         self.X = NULL
         self.X_sample_stride = 0
@@ -914,6 +915,7 @@ cdef class Splitter:
         """Destructor."""
         free(self.samples)
         free(self.features)
+        free(self.feature_values)
 
     def __getstate__(self):
         return {}
@@ -925,16 +927,13 @@ cdef class Splitter:
                          np.ndarray[DOUBLE_t, ndim=2, mode="c"] y,
                          DOUBLE_t* sample_weight):
         """Initialize the splitter."""
-        # Free old structures, if any
-        free(self.samples)
-        free(self.features)
-
         # Reset random state
         self.rand_r_state = self.random_state.randint(0, RAND_R_MAX)
 
         # Initialize samples and features structures
         cdef SIZE_t n_samples = X.shape[0]
-        cdef SIZE_t* samples = <SIZE_t*> malloc(n_samples * sizeof(SIZE_t))
+        cdef SIZE_t* samples = <SIZE_t*> realloc(self.samples,
+                                                 n_samples * sizeof(SIZE_t))
         if samples == NULL:
             raise MemoryError()
 
@@ -951,7 +950,8 @@ cdef class Splitter:
         self.n_samples = j
 
         cdef SIZE_t n_features = X.shape[1]
-        cdef SIZE_t* features = <SIZE_t*> malloc(n_features * sizeof(SIZE_t))
+        cdef SIZE_t* features = <SIZE_t*> realloc(self.features,
+                                                  n_features * sizeof(SIZE_t))
         if features == NULL:
             raise MemoryError()
 
@@ -960,6 +960,12 @@ cdef class Splitter:
 
         self.features = features
         self.n_features = n_features
+
+        cdef DTYPE_t* fv = <DTYPE_t*> realloc(self.feature_values,
+                                              n_samples * sizeof(DTYPE_t))
+        if fv == NULL:
+            raise MemoryError()
+        self.feature_values = fv
 
         # Initialize X, y, sample_weight
         self.X = <DTYPE_t*> X.data
@@ -1015,6 +1021,7 @@ cdef class BestSplitter(Splitter):
         cdef SIZE_t n_features = self.n_features
 
         cdef DTYPE_t* X = self.X
+        cdef DTYPE_t* Xf = self.feature_values
         cdef SIZE_t X_sample_stride = self.X_sample_stride
         cdef SIZE_t X_fx_stride = self.X_fx_stride
         cdef SIZE_t max_features = self.max_features
@@ -1053,17 +1060,21 @@ cdef class BestSplitter(Splitter):
 
             current_feature = features[f_i]
 
-            # Sort samples along that feature
-            sort(X, X_sample_stride, X_fx_stride, current_feature, samples + start, end - start)
+            # Sort samples along that feature; first copy the feature values
+            # for the active samples into Xf, s.t. Xf[i] == X[samples[i], j],
+            # so the sort uses the cache more effectively.
+            for p in range(start, end):
+                Xf[p] = X[X_sample_stride * samples[p]
+                          + X_fx_stride * current_feature]
+
+            sort(Xf + start, samples + start, end - start)
 
             # Evaluate all splits
             self.criterion.reset()
             p = start
 
             while p < end:
-                while ((p + 1 < end) and
-                       (X[X_sample_stride * samples[p + 1] + X_fx_stride * current_feature] <=
-                        X[X_sample_stride * samples[p] + X_fx_stride * current_feature] + EPSILON_FLT)):
+                while p + 1 < end and Xf[p + 1] <= Xf[p] + EPSILON_FLT:
                     p += 1
 
                 # (p + 1 >= end) or (X[samples[p + 1], current_feature] >
@@ -1091,11 +1102,10 @@ cdef class BestSplitter(Splitter):
                         best_pos = current_pos
                         best_feature = current_feature
 
-                        current_threshold = (X[X_sample_stride * samples[p - 1] + X_fx_stride * current_feature] +
-                                             X[X_sample_stride * samples[p] + X_fx_stride * current_feature]) / 2.0
+                        current_threshold = (Xf[p - 1] + Xf[p]) / 2.0
 
-                        if current_threshold == X[X_sample_stride * samples[p] + X_fx_stride * current_feature]:
-                            current_threshold = X[X_sample_stride * samples[p - 1] + X_fx_stride * current_feature]
+                        if current_threshold == Xf[p]:
+                            current_threshold = Xf[p - 1]
 
                         best_threshold = current_threshold
 
@@ -1115,7 +1125,8 @@ cdef class BestSplitter(Splitter):
             p = start
 
             while p < partition_end:
-                if X[X_sample_stride * samples[p] + X_fx_stride * best_feature] <= best_threshold:
+                if X[X_sample_stride * samples[p]
+                     + X_fx_stride * best_feature] <= best_threshold:
                     p += 1
 
                 else:
@@ -1133,46 +1144,115 @@ cdef class BestSplitter(Splitter):
         impurity_right[0] = best_impurity_right
         impurity_improvement[0] = best_improvement
 
-cdef inline void sort(DTYPE_t* X, SIZE_t X_sample_stride, SIZE_t X_fx_stride, SIZE_t current_feature,
-                      SIZE_t* samples, SIZE_t length) nogil:
-    """In-place sorting of samples[start:end] using
-      X[sample[i], current_feature] as key."""
-    # Heapsort, adapted from Numerical Recipes in C
-    cdef SIZE_t tmp
-    cdef DOUBLE_t tmp_value
-    cdef SIZE_t n = length
-    cdef SIZE_t parent = length / 2
-    cdef SIZE_t index, child
 
-    while True:
-        if parent > 0:
-            parent -= 1
-            tmp = samples[parent]
+# Sort n-element arrays pointed to by Xf and samples, simultaneously,
+# by the values in Xf. Algorithm: Introsort (Musser, SP&E, 1997).
+cdef inline void sort(DTYPE_t* Xf, SIZE_t* samples, SIZE_t n) nogil:
+    cdef int maxd = 2 * <int>log(n)
+    introsort(Xf, samples, n, maxd)
+
+
+cdef inline void swap(DTYPE_t* Xf, SIZE_t* samples, SIZE_t i, SIZE_t j) nogil:
+    # Helper for sort
+    Xf[i], Xf[j] = Xf[j], Xf[i]
+    samples[i], samples[j] = samples[j], samples[i]
+
+
+cdef inline DTYPE_t median3(DTYPE_t* Xf, SIZE_t n) nogil:
+    # Median of three pivot selection, after Bentley and McIlroy (1993).
+    # Engineering a sort function. SP&E. Requires 8/3 comparisons on average.
+    cdef DTYPE_t a = Xf[0], b = Xf[n / 2], c = Xf[n - 1]
+    if a < b:
+        if b < c:
+            return b
+        elif a < c:
+            return c
         else:
-            n -= 1
-            if n == 0:
-                return
-            tmp = samples[n]
-            samples[n] = samples[0]
+            return a
+    elif b < c:
+        if a < c:
+            return a
+        else:
+            return c
+    else:
+        return b
 
-        tmp_value = X[X_sample_stride * tmp + X_fx_stride * current_feature]
-        index = parent
-        child = index * 2 + 1
 
-        while child < n:
-            if ((child + 1 < n) and
-                (X[X_sample_stride * samples[child + 1] + X_fx_stride * current_feature] > X[X_sample_stride * samples[child] + X_fx_stride * current_feature])):
-                child += 1
+# Introsort with median of 3 pivot selection and 3-way partition function
+# (robust to repeated elements, e.g. lots of zero features).
+cdef void introsort(DTYPE_t* Xf, SIZE_t *samples, SIZE_t n, int maxd) nogil:
+    cdef DTYPE_t pivot
+    cdef SIZE_t i, l, r
 
-            if X[X_sample_stride * samples[child] + X_fx_stride * current_feature] > tmp_value:
-                samples[index] = samples[child]
-                index = child
-                child = index * 2 + 1
+    while n > 1:
+        if maxd <= 0:   # max depth limit exceeded ("gone quadratic")
+            heapsort(Xf, samples, n)
+            return
+        maxd -= 1
 
+        pivot = median3(Xf, n)
+
+        # Three-way partition.
+        i = l = 0
+        r = n
+        while i < r:
+            if Xf[i] < pivot:
+                swap(Xf, samples, i, l)
+                i += 1
+                l += 1
+            elif Xf[i] > pivot:
+                r -= 1
+                swap(Xf, samples, i, r)
             else:
-                break
+                i += 1
 
-        samples[index] = tmp
+        introsort(Xf, samples, l, maxd)
+        Xf += r
+        samples += r
+        n -= r
+
+
+cdef inline void sift_down(DTYPE_t* Xf, SIZE_t* samples,
+                          SIZE_t start, SIZE_t end) nogil:
+    # Restore heap order in Xf[start:end] by moving the max element to start.
+    cdef SIZE_t child, maxind, root
+
+    root = start
+    while True:
+        child = root * 2 + 1
+
+        # find max of root, left child, right child
+        maxind = root
+        if child < end and Xf[maxind] < Xf[child]:
+            maxind = child
+        if child + 1 < end and Xf[maxind] < Xf[child + 1]:
+            maxind = child + 1
+
+        if maxind == root:
+            break
+        else:
+            swap(Xf, samples, root, maxind)
+            root = maxind
+
+
+cdef void heapsort(DTYPE_t* Xf, SIZE_t* samples, SIZE_t n) nogil:
+    cdef SIZE_t start, end
+
+    # heapify
+    start = (n - 2) / 2
+    end = n
+    while True:
+        sift_down(Xf, samples, start, end)
+        if start == 0:
+            break
+        start -= 1
+
+    # sort by shrinking the heap, putting the max element immediately after it
+    end = n - 1
+    while end > 0:
+        swap(Xf, samples, 0, end)
+        sift_down(Xf, samples, 0, end)
+        end = end - 1
 
 
 cdef class RandomSplitter(Splitter):
@@ -1314,7 +1394,8 @@ cdef class RandomSplitter(Splitter):
             p = start
 
             while p < partition_end:
-                if X[X_sample_stride * samples[p] + X_fx_stride * best_feature] <= best_threshold:
+                if X[X_sample_stride * samples[p]
+                     + X_fx_stride * best_feature] <= best_threshold:
                     p += 1
 
                 else:
@@ -1403,7 +1484,7 @@ cdef class PresortBestSplitter(Splitter):
         cdef SIZE_t n_features = self.n_features
 
         cdef DTYPE_t* X = self.X
-        cdef DTYPE_t* X_fx
+        cdef DTYPE_t* Xf = self.feature_values
         cdef SIZE_t X_sample_stride = self.X_sample_stride
         cdef SIZE_t X_fx_stride = self.X_fx_stride
         cdef INT32_t* X_argsorted = self.X_argsorted_ptr
@@ -1454,8 +1535,6 @@ cdef class PresortBestSplitter(Splitter):
 
             current_feature = features[f_i]
 
-            X_fx = X + (X_fx_stride * current_feature)
-
             # Extract ordering from X_argsorted
             p = start
 
@@ -1463,6 +1542,8 @@ cdef class PresortBestSplitter(Splitter):
                 j = X_argsorted[X_argsorted_stride * current_feature + i]
                 if sample_mask[j] == 1:
                     samples[p] = j
+                    Xf[p] = X[X_sample_stride * j
+                              + X_fx_stride * current_feature]
                     p += 1
 
             # Evaluate all splits
@@ -1470,9 +1551,7 @@ cdef class PresortBestSplitter(Splitter):
             p = start
 
             while p < end:
-                while ((p + 1 < end) and
-                       (X_fx[X_sample_stride * samples[p + 1]] <=
-                        X_fx[X_sample_stride * samples[p]] + EPSILON_FLT)):
+                while p + 1 < end and Xf[p + 1] <= Xf[p] + EPSILON_FLT:
                     p += 1
 
                 # (p + 1 >= end) or (X[samples[p + 1], current_feature] >
@@ -1487,7 +1566,7 @@ cdef class PresortBestSplitter(Splitter):
                     # Reject if min_samples_leaf is not guaranteed
                     if (((current_pos - start) < min_samples_leaf) or
                         ((end - current_pos) < min_samples_leaf)):
-                        continue
+                       continue
 
                     self.criterion.update(current_pos)
                     current_improvement = self.criterion.impurity_improvement(impurity)
@@ -1500,11 +1579,10 @@ cdef class PresortBestSplitter(Splitter):
                         best_pos = current_pos
                         best_feature = current_feature
 
-                        current_threshold = (X_fx[X_sample_stride * samples[p - 1]] +
-                                             X_fx[X_sample_stride * samples[p]]) / 2.0
+                        current_threshold = (Xf[p - 1] + Xf[p]) / 2.0
 
-                        if current_threshold == X_fx[X_sample_stride * samples[p]]:
-                            current_threshold = X_fx[X_sample_stride * samples[p - 1]]
+                        if current_threshold == Xf[p]:
+                            current_threshold = Xf[p - 1]
 
                         best_threshold = current_threshold
 
@@ -1524,7 +1602,8 @@ cdef class PresortBestSplitter(Splitter):
             p = start
 
             while p < partition_end:
-                if X[X_sample_stride * samples[p] + X_fx_stride * best_feature] <= best_threshold:
+                if X[X_sample_stride * samples[p]
+                     + X_fx_stride * best_feature] <= best_threshold:
                     p += 1
 
                 else:
