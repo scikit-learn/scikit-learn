@@ -213,9 +213,9 @@ def test_oob_score_classification():
     error."""
     clf = RandomForestClassifier(oob_score=True, random_state=rng)
     n_samples = iris.data.shape[0]
-    clf.fit(iris.data[:n_samples / 2, :], iris.target[:n_samples / 2])
-    test_score = clf.score(iris.data[n_samples / 2:, :],
-                           iris.target[n_samples / 2:])
+    clf.fit(iris.data[:n_samples // 2, :], iris.target[:n_samples // 2])
+    test_score = clf.score(iris.data[n_samples // 2:, :],
+                           iris.target[n_samples // 2:])
     assert_less(abs(test_score - clf.oob_score_), 0.1)
 
 
@@ -226,9 +226,9 @@ def test_oob_score_classification_for_non_contiguous_target():
     clf = RandomForestClassifier(n_estimators=50,
                                  oob_score=True, random_state=rng)
     n_samples = iris.data.shape[0]
-    clf.fit(iris.data[:n_samples / 2, :], iris_target[:n_samples / 2])
-    test_score = clf.score(iris.data[n_samples / 2:, :],
-                           iris_target[n_samples / 2:])
+    clf.fit(iris.data[:n_samples // 2, :], iris_target[:n_samples // 2])
+    test_score = clf.score(iris.data[n_samples // 2:, :],
+                           iris_target[n_samples // 2:])
     assert_less(abs(test_score - clf.oob_score_), 0.1)
 
 
@@ -238,9 +238,9 @@ def test_oob_score_regression():
     clf = RandomForestRegressor(n_estimators=50, oob_score=True,
                                 random_state=rng)
     n_samples = boston.data.shape[0]
-    clf.fit(boston.data[:n_samples / 2, :], boston.target[:n_samples / 2])
-    test_score = clf.score(boston.data[n_samples / 2:, :],
-                           boston.target[n_samples / 2:])
+    clf.fit(boston.data[:n_samples // 2, :], boston.target[:n_samples // 2])
+    test_score = clf.score(boston.data[n_samples // 2:, :],
+                           boston.target[n_samples // 2:])
     assert_greater(test_score, clf.oob_score_)
     assert_greater(clf.oob_score_, .8)
 
