@@ -365,11 +365,11 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
 
             n_active -= 1
             m, n = idx, n_active
-            drop_idx = active.pop(idx)
+            drop_idx = active.pop(idx[0])
 
             if Gram is None:
                 # propagate dropped variable
-                for i in range(idx, n_active):
+                for i in range(idx[0], n_active):
                     X.T[i], X.T[i + 1] = swap(X.T[i], X.T[i + 1])
                     # yeah this is stupid
                     indices[i], indices[i + 1] = indices[i + 1], indices[i]
@@ -380,7 +380,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
 
                 Cov = np.r_[temp, Cov]
             else:
-                for i in range(idx, n_active):
+                for i in range(idx[0], n_active):
                     indices[i], indices[i + 1] = indices[i + 1], indices[i]
                     Gram[i], Gram[i + 1] = swap(Gram[i], Gram[i + 1])
                     Gram[:, i], Gram[:, i + 1] = swap(Gram[:, i],
