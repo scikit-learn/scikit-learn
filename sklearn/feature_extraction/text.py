@@ -1663,7 +1663,9 @@ class LdaVectorizer(CountVectorizer):
         self.fit(raw_docs)
         count_matrix = super(LdaVectorizer, self).fit_transform(raw_docs)
         corpus = _generate_gensim_corpus(count_matrix)
-        return _convert_gensim_corpus2csr(self._model_lda[corpus])
+        #return _convert_gensim_corpus2csr(self._model_lda[corpus])
+        return _convert_gensim_corpus2csr(self._model_lda[corpus],
+                                          num_topics=self.num_topics)
 
         #return _convert_gensim_corpus2csr(self._model_lda[self._corpus])
         #return _convert_gensim_corpus2csr(self._corpus_lda)
@@ -1691,7 +1693,9 @@ class LdaVectorizer(CountVectorizer):
         corpus = _generate_gensim_corpus(count_matrix)
         logger.info('Transforming new docs: gensim corpus generated!')
 
-        return _convert_gensim_corpus2csr(self._model_lda[corpus])
+        #return _convert_gensim_corpus2csr(self._model_lda[corpus])
+        return _convert_gensim_corpus2csr(self._model_lda[corpus],
+                                          num_topics=self.num_topics)
 
 
 class LsiVectorizer(CountVectorizer):
