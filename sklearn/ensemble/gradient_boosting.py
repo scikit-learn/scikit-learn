@@ -922,7 +922,10 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         n_samples = X.shape[0]
         do_oob = self.subsample < 1.0
         sample_mask = np.ones((n_samples, ), dtype=np.bool)
-        n_inbag = max(1, int(self.subsample * n_samples))
+        if group is None:
+            n_inbag = max(1, int(self.subsample * n_samples))
+        else:
+            n_inbag = max(1, int(self.subsample * self.n_uniq_group))
         loss_ = self.loss_
 
         # init criterion and splitter
@@ -944,9 +947,8 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
                 group_inbag = None
                 group_oob = None
                 if group is not None:
-                    n_group_inbag = max(1, int(self.subsample * self.n_uniq_group))
                     sample_mask = \
-                        _ranked_random_sample_mask(n_samples, n_group_inbag,
+                        _ranked_random_sample_mask(n_samples, n_inbag,
                                                    group, self.n_uniq_group,
                                                    random_state)
                     group_inbag = group[sample_mask]
@@ -1560,13 +1562,6 @@ class LambdaMART(BaseGradientBoosting):
 
     Parameters
     ----------
-    loss : {'ndcg'}, optional (default='ndcg')
-        loss function to be optimized. 'ls' refers to least squares
-        regression. 'lad' (least absolute deviation) is a highly robust
-        loss function solely based on order information of the input
-        variables. 'huber' is a combination of the two. 'quantile'
-        allows quantile regression (use `alpha` to specify the quantile).
-
     learning_rate : float, optional (default=0.1)
         learning rate shrinks the contribution of each tree by `learning_rate`.
         There is a trade-off between learning_rate and n_estimators.
@@ -1672,14 +1667,14 @@ class LambdaMART(BaseGradientBoosting):
 
     _SUPPORTED_LOSS = ('ndcg',)
 
-    def __init__(self, loss='ndcg', learning_rate=0.1, n_estimators=100,
+    def __init__(self, learning_rate=0.1, n_estimators=100,
                  subsample=1.0, min_samples_split=2, min_samples_leaf=1,
                  max_depth=3, init=None, random_state=None,
                  max_features=None, alpha=0.9, verbose=0, max_leaf_nodes=None,
                  warm_start=False):
 
         super(LambdaMART, self).__init__(
-            loss, learning_rate, n_estimators, min_samples_split,
+            'ndcg', learning_rate, n_estimators, min_samples_split,
             min_samples_leaf, max_depth, init, subsample, max_features,
             random_state, alpha, verbose, max_leaf_nodes=max_leaf_nodes,
             warm_start=warm_start)

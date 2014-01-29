@@ -125,10 +125,6 @@ def test_loss_function():
                   GradientBoostingRegressor(loss='deviance').fit, X, y)
     assert_raises(ValueError,
                   GradientBoostingRegressor(loss='ndcg').fit, X, y)
-    assert_raises(ValueError,
-                  LambdaMART(loss='ls').fit, X, y)
-    assert_raises(ValueError,
-                  LambdaMART(loss='deviance').fit, X, y)
 
 
 def test_classification_synthetic():

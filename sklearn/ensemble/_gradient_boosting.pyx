@@ -19,6 +19,9 @@ from sklearn.tree._tree cimport Tree, Node
 ctypedef np.int32_t int32
 ctypedef np.float64_t float64
 ctypedef np.int8_t int8
+ctypedef fused int32_64_t:
+    np.int32_t
+    np.int64_t
 ctypedef fused all32_64_t:
     np.int32_t
     np.int64_t
@@ -312,7 +315,7 @@ def _random_sample_mask(int n_total_samples, int n_total_in_bag, random_state):
 
 
 def _ranked_random_sample_mask(int n_total_samples, int n_total_in_bag,
-                               int32 [::1] group, int n_uniq_group,
+                               int32_64_t [::1] group, int n_uniq_group,
                                random_state):
     """Create a random sample mask where ``n_total_in_bag`` elements are set.
 
