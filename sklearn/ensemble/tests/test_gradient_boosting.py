@@ -11,6 +11,7 @@ from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.ensemble import LambdaMART
 from sklearn.ensemble.gradient_boosting import ZeroEstimator
+from sklearn.ensemble._gradient_boosting import _ranked_random_sample_mask
 from sklearn.metrics import mean_squared_error
 from sklearn.utils import check_random_state, tosequence
 from sklearn.utils.testing import assert_almost_equal
@@ -912,6 +913,24 @@ def test_max_leaf_nodes_max_depth():
         est = GBEstimator(max_depth=1).fit(X, y)
         tree = est.estimators_[0, 0].tree_
         assert_equal(tree.max_depth, 1)
+
+
+def test_ranked_sample_mask():
+    """Check sampling on a groups."""
+    n_groups = 10
+    for t in [np.int32, np.int64]:
+        group = np.round(np.arange(0, n_groups - 1, 0.2)).astype(t)
+        n_total_samples = len(group)
+        n_uniq_group = len(np.unique(group))
+        n_inbag = 5
+
+        mask = _ranked_random_sample_mask(n_total_samples, n_inbag,
+                                          group, n_uniq_group, rng)
+
+        inbag = np.unique(group[mask])
+        oob = np.unique(group[~mask])
+        assert(len(inbag) == n_inbag)
+        assert(set(inbag).intersection(set(oob)) == set())
 
 
 if __name__ == "__main__":
