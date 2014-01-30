@@ -11,7 +11,8 @@ from sklearn import ensemble
 
 from sklearn.preprocessing import LabelBinarizer, MultiLabelBinarizer
 from sklearn.datasets import make_multilabel_classification
-from sklearn.utils import check_random_state, shuffle
+from sklearn.random_projection import sparse_random_matrix
+from sklearn.utils import check_random_state, shuffle, check_arrays
 from sklearn.utils.multiclass import unique_labels
 from sklearn.utils.fixes import np_version
 from sklearn.utils.multiclass import type_of_target
@@ -42,6 +43,7 @@ from sklearn.metrics import (accuracy_score,
                              hamming_loss,
                              hinge_loss,
                              jaccard_similarity_score,
+                             label_ranking_average_precision_score,
                              log_loss,
                              matthews_corrcoef,
                              mean_squared_error,
@@ -2707,3 +2709,214 @@ def test_sample_weight_invariance():
         else:
             yield (check_sample_weight_invariance, name, metric, y_true,
                    y_pred)
+
+def check_lrap_toy(lrap_score):
+    """Check on several small example that it works """
+    assert_almost_equal(lrap_score([[0, 1]], [[0.25, 0.75]]), 1)
+    assert_almost_equal(lrap_score([[0, 1]], [[0.75, 0.25]]), 1 / 2)
+    assert_almost_equal(lrap_score([[1, 1]], [[0.75, 0.25]]), 1)
+
+    assert_almost_equal(lrap_score([[0, 0, 1]], [[0.25, 0.5, 0.75]]), 1)
+    assert_almost_equal(lrap_score([[0, 1, 0]], [[0.25, 0.5, 0.75]]), 1 / 2)
+    assert_almost_equal(lrap_score([[0, 1, 1]], [[0.25, 0.5, 0.75]]), 1)
+    assert_almost_equal(lrap_score([[1, 0, 0]], [[0.25, 0.5, 0.75]]), 1 / 3)
+    assert_almost_equal(lrap_score([[1, 0, 1]], [[0.25, 0.5, 0.75]]),
+                        (2 / 3 + 1 / 1) / 2)
+    assert_almost_equal(lrap_score([[1, 1, 0]], [[0.25, 0.5, 0.75]]),
+                        (2 / 3 + 1 / 2) / 2)
+
+    assert_almost_equal(lrap_score([[0, 0, 1]], [[0.75, 0.5, 0.25]]), 1 / 3)
+    assert_almost_equal(lrap_score([[0, 1, 0]], [[0.75, 0.5, 0.25]]), 1 / 2)
+    assert_almost_equal(lrap_score([[0, 1, 1]], [[0.75, 0.5, 0.25]]),
+                        (1 / 2 + 2 / 3) / 2)
+    assert_almost_equal(lrap_score([[1, 0, 0]], [[0.75, 0.5, 0.25]]), 1)
+    assert_almost_equal(lrap_score([[1, 0, 1]], [[0.75, 0.5, 0.25]]),
+                        (1 + 2 / 3) / 2)
+    assert_almost_equal(lrap_score([[1, 1, 0]], [[0.75, 0.5, 0.25]]), 1)
+    assert_almost_equal(lrap_score([[1, 1, 1]], [[0.75, 0.5, 0.25]]), 1)
+
+    assert_almost_equal(lrap_score([[0, 0, 1]], [[0.5, 0.75, 0.25]]), 1 / 3)
+    assert_almost_equal(lrap_score([[0, 1, 0]], [[0.5, 0.75, 0.25]]), 1)
+    assert_almost_equal(lrap_score([[0, 1, 1]], [[0.5, 0.75, 0.25]]),
+                        (1 + 2 / 3) / 2)
+    assert_almost_equal(lrap_score([[1, 0, 0]], [[0.5, 0.75, 0.25]]), 1 / 2)
+    assert_almost_equal(lrap_score([[1, 0, 1]], [[0.5, 0.75, 0.25]]),
+                        (1 / 2 + 2 / 3) / 2)
+    assert_almost_equal(lrap_score([[1, 1, 0]], [[0.5, 0.75, 0.25]]), 1)
+    assert_almost_equal(lrap_score([[1, 1, 1]], [[0.5, 0.75, 0.25]]), 1)
+
+    # Tie handling
+    assert_almost_equal(lrap_score([[1, 0]], [[0.5, 0.5]]), 0.5)
+    assert_almost_equal(lrap_score([[0, 1]], [[0.5, 0.5]]), 0.5)
+    assert_almost_equal(lrap_score([[1, 1]], [[0.5, 0.5]]), 1)
+
+    assert_almost_equal(lrap_score([[0, 0, 1]], [[0.25, 0.5, 0.5]]), 0.5)
+    assert_almost_equal(lrap_score([[0, 1, 0]], [[0.25, 0.5, 0.5]]), 0.5)
+    assert_almost_equal(lrap_score([[0, 1, 1]], [[0.25, 0.5, 0.5]]), 1)
+    assert_almost_equal(lrap_score([[1, 0, 0]], [[0.25, 0.5, 0.5]]), 1 / 3)
+    assert_almost_equal(lrap_score([[1, 0, 1]], [[0.25, 0.5, 0.5]]),
+                        (2 / 3 + 1 / 2) / 2)
+    assert_almost_equal(lrap_score([[1, 1, 0]], [[0.25, 0.5, 0.5]]),
+                        (2 / 3 + 1 / 2) / 2)
+    assert_almost_equal(lrap_score([[1, 1, 1]], [[0.25, 0.5, 0.5]]), 1)
+
+    assert_almost_equal(lrap_score([[1, 1, 0]], [[0.5, 0.5, 0.5]]), 2 / 3)
+
+    assert_almost_equal(lrap_score([[1, 1, 1, 0]], [[0.5, 0.5, 0.5, 0.5]]),
+                        3 / 4)
+
+
+def check_zero_or_all_relevant_labels(lrap_score):
+    random_state = check_random_state(0)
+
+    for n_labels in range(2, 5):
+        y_score = random_state.uniform(size=(1, n_labels))
+        y_score_ties = np.zeros_like(y_score)
+
+        # No relevant labels
+        y_true = np.zeros((1, n_labels))
+        assert_equal(lrap_score(y_true, y_score), 1.)
+        assert_equal(lrap_score(y_true, y_score_ties), 1.)
+
+        # Only relevant labels
+        y_true = np.ones((1, n_labels))
+        assert_equal(lrap_score(y_true, y_score), 1.)
+        assert_equal(lrap_score(y_true, y_score_ties), 1.)
+
+
+def check_lrap_error_raised(lrap_score):
+    # Raise value error if not appropriate format
+    assert_raises(ValueError, lrap_score,
+                  [0, 1, 0], [0.25, 0.3, 0.2])
+    assert_raises(ValueError, lrap_score, [0, 1, 2],
+                  [[0.25, 0.75, 0.0], [0.7, 0.3, 0.0], [0.8, 0.2, 0.0]])
+    assert_raises(ValueError, lrap_score, [(0), (1), (2)],
+                  [[0.25, 0.75, 0.0], [0.7, 0.3, 0.0], [0.8, 0.2, 0.0]])
+
+    # Check that that y_true.shape != y_score.shape raise the proper exception
+    assert_raises(ValueError, lrap_score, [[0, 1], [0, 1]], [0, 1])
+    assert_raises(ValueError, lrap_score, [[0, 1], [0, 1]], [[0, 1]])
+    assert_raises(ValueError, lrap_score, [[0, 1], [0, 1]], [[0], [1]])
+    assert_raises(ValueError, lrap_score, [[0, 1]], [[0, 1], [0, 1]])
+    assert_raises(ValueError, lrap_score, [[0], [1]], [[0, 1], [0, 1]])
+    assert_raises(ValueError, lrap_score, [[0, 1], [0, 1]], [[0], [1]])
+
+
+def check_lrap_only_ties(lrap_score):
+    """Check tie handling in score"""
+    # Basic check with only ties and increasing label space
+    for n_labels in range(2, 10):
+        y_score = np.ones((1, n_labels))
+
+        # Check for growing number of consecutive relevant
+        for n_relevant in range(1, n_labels):
+            # Check for a bunch of positions
+            for pos in range(n_labels - n_relevant):
+                y_true = np.zeros((1, n_labels))
+                y_true[0, pos:pos + n_relevant] = 1
+                assert_almost_equal(lrap_score(y_true, y_score),
+                                    n_relevant / n_labels)
+
+
+def check_lrap_without_tie_and_increasing_score(lrap_score):
+    """ Check that Label ranking average precision works for various"""
+    # Basic check with increasing label space size and decreasing score
+    for n_labels in range(2, 10):
+        y_score = n_labels - (np.arange(n_labels).reshape((1, n_labels)) + 1)
+
+        # First and last
+        y_true = np.zeros((1, n_labels))
+        y_true[0, 0] = 1
+        y_true[0, -1] = 1
+        assert_almost_equal(lrap_score(y_true, y_score),
+                            (2 / n_labels + 1) / 2)
+
+        # Check for growing number of consecutive relevant label
+        for n_relevant in range(1, n_labels):
+           # Check for a bunch of position
+            for pos in range(n_labels - n_relevant):
+                y_true = np.zeros((1, n_labels))
+                y_true[0, pos:pos + n_relevant] = 1
+                assert_almost_equal(lrap_score(y_true, y_score),
+                                    sum((r + 1) / ((pos + r + 1) * n_relevant)
+                                        for r in range(n_relevant)))
+
+
+def _my_lrap(y_true, y_score):
+    """Simple implementation of label ranking average precision"""
+    y_true, y_score = check_arrays(y_true, y_score)
+    n_samples, n_labels = y_true.shape
+    score = np.empty((n_samples, ))
+    for i in range(n_samples):
+        # The best rank correspond to 1. Rank higher than 1 are worse.
+        # The best inverse ranking correspond to n_labels.
+        unique_rank, inv_rank = np.unique(y_score[i], return_inverse=True)
+        n_ranks = unique_rank.size
+        rank = n_ranks - inv_rank
+
+        # Rank need to be corrected to take into account ties
+        # ex: rank 1 ex aequo means that both label are rank 2.
+        corr_rank = np.bincount(rank, minlength=n_ranks + 1).cumsum()
+        rank = corr_rank[rank]
+
+        relevant = y_true[i].nonzero()[0]
+        if relevant.size == 0 or relevant.size == n_labels:
+            score[i] = 1
+            continue
+
+        score[i] = 0.
+        for label in relevant:
+            # Let's count the number of relevant label with better rank
+            # (smaller rank).
+            n_ranked_above = sum(rank[r] <= rank[label] for r in relevant)
+
+            # Weight by the rank of the actual label
+            score[i] += n_ranked_above / rank[label]
+
+        score[i] /= relevant.size
+
+    return score.mean()
+
+
+def check_alternative_lrap_implementation(lrap_score, n_classes=5,
+                                          n_samples=20, random_state=0):
+    _, y_true = make_multilabel_classification(n_features=1,
+                                               allow_unlabeled=False,
+                                               return_indicator=True,
+                                               random_state=random_state,
+                                               n_classes=n_classes,
+                                               n_samples=n_samples)
+
+    # Score with ties
+    y_score = sparse_random_matrix(n_components=y_true.shape[0],
+                                   n_features=y_true.shape[1],
+                                   random_state=random_state)
+
+    if hasattr(y_score, "toarray"):
+        y_score = y_score.toarray()
+    score_lrap = label_ranking_average_precision_score(y_true, y_score)
+    score_my_lrap = _my_lrap(y_true, y_score)
+    assert_equal(score_lrap, score_my_lrap)
+
+    # Uniform score
+    random_state = check_random_state(random_state)
+    y_score = random_state.uniform(size=(n_samples, n_classes))
+    score_lrap = label_ranking_average_precision_score(y_true, y_score)
+    score_my_lrap = _my_lrap(y_true, y_score)
+    assert_equal(score_lrap, score_my_lrap)
+
+
+def test_label_ranking_avp():
+    for fn in [label_ranking_average_precision_score, _my_lrap]:
+        yield check_lrap_toy, fn
+        yield check_lrap_without_tie_and_increasing_score, fn
+        yield check_lrap_only_ties, fn
+        yield check_zero_or_all_relevant_labels, fn
+        yield check_lrap_error_raised, label_ranking_average_precision_score
+
+    for n_samples, n_classes, random_state in product((1, 2, 8, 20),
+                                                      (2, 5, 10),
+                                                      range(1)):
+        yield (check_alternative_lrap_implementation,
+               label_ranking_average_precision_score,
+               n_classes, n_samples, random_state)

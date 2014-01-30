@@ -2144,6 +2144,83 @@ def hamming_loss(y_true, y_pred, classes=None):
         raise ValueError("{0} is not supported".format(y_type))
 
 
+def label_ranking_average_precision_score(y_true, y_score):
+    """Compute ranking-based average precision
+
+    For each sample, ranking-based average precision average over
+    each relevant label r: the number of relevant labels with scores higher or
+    equal to the label r divided by the the number of labels with scores
+    higher or equal to the label r. The final score is obtained by averaging
+    over the samples. A label with higher score is thus considered as having
+    better rank.
+
+    The best value is one. The lowest value is the label density average
+    over the samples.
+
+    This metrics is used in multilabel ranking problem, where the goal
+    is to rank the label associated to each sample.
+
+    Parameters
+    ----------
+    y_true : array, shape = [n_samples, n_labels]
+        True binary labels in binary indicator format.
+
+    y_score : array, shape = [n_samples, n_labels]
+        Target scores, can either be probability estimates of the positive
+        class, confidence values, or binary decisions.
+
+    Return
+    ------
+    score : float
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.metrics import label_ranking_average_precision_score
+    >>> y_true = np.array([[1, 0, 0], [0, 0, 1]])
+    >>> y_score = np.array([[0.75, 0.5, 1], [1, 0.2, 0.1]])
+    >>> label_ranking_average_precision_score(y_true, y_score) # doctest: +ELLIPSIS
+    0.416...
+
+    """
+    y_true, y_score = check_arrays(y_true, y_score)
+
+    y_type = type_of_target(y_true)
+    if y_type not in ("multilabel-indicator",):
+        raise ValueError("{0} format is not supported".format(y_type))
+
+    if y_true.shape != y_score.shape:
+        raise ValueError("y_true and y_score have different shape")
+
+    n_samples, n_labels = y_true.shape
+
+    score = 0.
+    for i in range(n_samples):
+        relevant = y_true[i].nonzero()[0]
+
+        # No relevant label, so we will have to sum over zero element
+        # and divide by 0. But lim_{x->0} x/x = 1.
+        # If all labels are relevant, the score is also equal to 1.
+        if (relevant.size == 0 or relevant.size == n_labels):
+            score += 1.
+            continue
+
+        unique_all, inverse = np.unique(y_score[i], return_inverse=True)
+        count = np.bincount(inverse, minlength=unique_all.size)
+        cum_count = count[::-1].cumsum()[::-1] # reverse cumsum
+
+        unique_relevant, relevant_inverse = np.unique(y_score[i, relevant],
+                                                      return_inverse=True)
+        count_relevant = np.bincount(relevant_inverse,
+                                  minlength=unique_relevant.size)
+        cum_count_relevant = count_relevant[::-1].cumsum()[::-1]
+
+
+        score += (cum_count_relevant[relevant_inverse] /
+                  cum_count[inverse[relevant]]).mean()
+
+    return score / n_samples
+
 ###############################################################################
 # Regression metrics
 ###############################################################################
