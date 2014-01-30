@@ -75,7 +75,7 @@ cdef class Splitter:
     cdef SIZE_t n_features               # X.shape[1]
     cdef DTYPE_t* feature_values         # temp. array holding feature values
     cdef SIZE_t start                    # Start position for the current node
-    cdef SIZE_t end                      # End position for the current ndoe
+    cdef SIZE_t end                      # End position for the current node
 
     cdef DTYPE_t* X
     cdef SIZE_t X_sample_stride
@@ -87,7 +87,7 @@ cdef class Splitter:
     # The samples vector `samples` is maintained by the Splitter object such
     # that the samples contained in a node are contiguous. With this setting,
     # split reorganizes the node samples `samples[start:end]` in two
-    # subsets `samples[start:pos]` and `start[pos:end]`.
+    # subsets `samples[start:pos]` and `samples[pos:end]`.
 
     # Methods
     cdef void init(self, np.ndarray X,
@@ -140,7 +140,7 @@ cdef class Tree:
     cdef public int max_leaf_nodes       # Number of leafs to grow
 
     # Inner structures: values are stored separately from node structure,
-    # since size determined at runtime.
+    # since size is determined at runtime.
     cdef public SIZE_t node_count        # Counter for node IDs
     cdef public SIZE_t capacity          # Capacity of tree, in terms of nodes
     cdef Node* nodes                     # Array of nodes
