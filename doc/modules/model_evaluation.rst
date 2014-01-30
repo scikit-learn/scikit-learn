@@ -900,6 +900,54 @@ In the multilabel case with binary label indicators: ::
     elimination with cross-validation.
 
 
+.. _multilabel_ranking_metrics:
+
+Multilabel ranking metrics
+--------------------------
+
+.. currentmodule:: sklearn.metrics
+
+The goal in multilabel ranking is to give high scores and better rank to
+relevant labels. The :mod:`sklearn.metrics` currently implements
+the label ranking average precision.
+
+Label ranking average precision
+...............................
+The :func:`label_ranking_average_precision_score` function
+implements the label ranking average precision (AP), which is also simply
+called average precision. It averages over each
+sample and each relevant label :math:`r` the ratio between the number of
+relevant labels with higher or equal score to the label :math:`r` and rank of
+the label, i.e. the number of labels with higher or equal score. Given
+the binary indicator matrix of the relevant labels
+:math:`y \in \mathcal{R}^{n_\text{samples} \times n_\text{labels}}` and the score
+associated to each label
+:math:`\hat{f} \in \mathcal{R}^{n_\text{samples} \times n_\text{labels}}`,
+the average precision is defined
+
+.. math::
+  AP(y, \hat{f}) = \frac{1}{n_{\text{samples}}}
+    \sum_{i=0}^{n_{\text{samples}} - 1} \frac{1}{|y_i|}
+    \sum_{j:y_{ij} = 1} \frac{|\mathcal{L}_{ij}|}{\text{rank}_{ij}}
+
+
+with :math:`\mathcal{L}_{ij} = \left\{k: y_{ik} = 1, \hat{f}_{ik} \geq \hat{f}_{ij} \right\}`,
+:math:`\text{rank}_{ij} = \left|\left\{k: \hat{f}_{ik} \geq \hat{f}_{ij} \right\}\right|`
+and :math:`|\cdot|` is the l0 norm or the cardinality of the set.
+
+The best value is one and the lowest value is equal to the label density.
+
+
+Here a small example of usage of this function::
+
+    >>> import numpy as np
+    >>> from sklearn.metrics import label_ranking_average_precision_score
+    >>> y_true = np.array([[1, 0, 0], [0, 0, 1]])
+    >>> y_score = np.array([[0.75, 0.5, 1], [1, 0.2, 0.1]])
+    >>> label_ranking_average_precision_score(y_true, y_score) # doctest: +ELLIPSIS
+    0.416...
+
+
 .. _regression_metrics:
 
 Regression metrics

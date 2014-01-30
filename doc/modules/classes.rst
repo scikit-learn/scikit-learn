@@ -770,6 +770,18 @@ details.
    metrics.mean_squared_error
    metrics.r2_score
 
+Multilabel ranking metrics
+--------------------------
+See the :ref:`multilabel_ranking_metrics` section of the user guide for further
+details.
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   metrics.label_ranking_average_precision_score
+
+
 
 Clustering metrics
 ------------------
