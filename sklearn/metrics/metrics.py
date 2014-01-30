@@ -314,31 +314,10 @@ def spearman_rho_score(y_true, y_score):
     return spearmanr(y_true, y_score)[0]
 
 
-def dcg_score(y_true, y_score, k=10, gains="exponential"):
-    """Discounted cumulative gain (DCG) at rank k
+def _dcg(y_true, y_score, k=None, gains="exponential", ret_all=False):
+    if k is None:
+        k = len(y_score)
 
-    Parameters
-    ----------
-    y_true : array-like, shape = [n_samples]
-        Ground truth (true relevance labels).
-
-    y_score : array-like, shape = [n_samples]
-        Predicted scores.
-
-    k : int
-        Rank.
-
-    gains : str
-        Whether gains should be "exponential" (default) or "linear".
-
-    Returns
-    -------
-    DCG @k : float
-
-    Reference
-    ---------
-    http://en.wikipedia.org/wiki/Discounted_cumulative_gain
-    """
     order = np.argsort(y_score)[::-1]
     y_true = np.take(y_true, order[:k])
 
@@ -351,10 +330,14 @@ def dcg_score(y_true, y_score, k=10, gains="exponential"):
 
     # highest rank is 1 so +2 instead of +1
     discounts = np.log2(np.arange(len(y_true)) + 2)
-    return np.sum(gains / discounts)
+
+    if ret_all:
+        return np.cumsum(gains / discounts)
+    else:
+        return np.sum(gains / discounts)
 
 
-def ndcg_score(y_true, y_score, k=10, gains="exponential"):
+def ndcg_score(y_true, y_score, k=None, gains="exponential"):
     """Normalized discounted cumulative gain (NDCG) at rank k
 
     Parameters
@@ -365,8 +348,8 @@ def ndcg_score(y_true, y_score, k=10, gains="exponential"):
     y_score : array-like, shape = [n_samples]
         Predicted scores.
 
-    k : int
-        Rank.
+    k : int or None
+        Position.
 
     gains : str
         Whether gains should be "exponential" (default) or "linear".
@@ -379,9 +362,35 @@ def ndcg_score(y_true, y_score, k=10, gains="exponential"):
     ---------
     http://en.wikipedia.org/wiki/Discounted_cumulative_gain
     """
-    best = dcg_score(y_true, y_true, k, gains)
-    actual = dcg_score(y_true, y_score, k, gains)
+    best = _dcg(y_true, y_true, k, gains, ret_all=False)
+    actual = _dcg(y_true, y_score, k, gains, ret_all=False)
     return actual / best
+
+
+def mean_ndcg_score(y_true, y_score, k=None, gains="exponential"):
+    """Mean of the NDCG scores from positions 1 to k.
+
+    Parameters
+    ----------
+    y_true : array-like, shape = [n_samples]
+        Ground truth (true relevance labels).
+
+    y_score : array-like, shape = [n_samples]
+        Predicted scores.
+
+    k : int or None
+        Position.
+
+    gains : str
+        Whether gains should be "exponential" (default) or "linear".
+
+    Returns
+    -------
+    mean NDCG @k : float
+    """
+    best = _dcg(y_true, y_true, k, gains, ret_all=True)
+    actual = _dcg(y_true, y_score, k, gains, ret_all=True)
+    return np.mean(actual / best)
 
 
 ###############################################################################

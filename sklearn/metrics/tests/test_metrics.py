@@ -35,7 +35,6 @@ from sklearn.metrics import (accuracy_score,
                              auc_score,
                              classification_report,
                              confusion_matrix,
-                             dcg_score,
                              explained_variance_score,
                              f1_score,
                              fbeta_score,
@@ -47,6 +46,7 @@ from sklearn.metrics import (accuracy_score,
                              matthews_corrcoef,
                              mean_squared_error,
                              mean_absolute_error,
+                             mean_ndcg_score,
                              ndcg_score,
                              pairwise_accuracy_score,
                              precision_recall_curve,
@@ -62,6 +62,7 @@ from sklearn.metrics import (accuracy_score,
 from sklearn.metrics.metrics import _average_binary_score
 from sklearn.metrics.metrics import _check_clf_targets
 from sklearn.metrics.metrics import _check_reg_targets
+from sklearn.metrics.metrics import _dcg
 from sklearn.metrics.metrics import UndefinedMetricWarning
 
 from sklearn.externals.six.moves import xrange
@@ -2631,21 +2632,21 @@ def test_spearman_rho():
 
 def test_dcg():
     # Check that some rankings are better than others
-    assert_greater(dcg_score([5, 3, 2], [2, 1, 0]),
-                   dcg_score([4, 3, 2], [2, 1, 0]))
-    assert_greater(dcg_score([4, 3, 2], [2, 1, 0]),
-                   dcg_score([1, 3, 2], [2, 1, 0]))
-    assert_greater(dcg_score([5, 3, 2], [2, 1, 0], k=2),
-                   dcg_score([4, 3, 2], [2, 1, 0], k=2))
-    assert_greater(dcg_score([4, 3, 2], [2, 1, 0], k=2),
-                   dcg_score([1, 3, 2], [2, 1, 0], k=2))
+    assert_greater(_dcg([5, 3, 2], [2, 1, 0]),
+                   _dcg([4, 3, 2], [2, 1, 0]))
+    assert_greater(_dcg([4, 3, 2], [2, 1, 0]),
+                   _dcg([1, 3, 2], [2, 1, 0]))
+    assert_greater(_dcg([5, 3, 2], [2, 1, 0], k=2),
+                   _dcg([4, 3, 2], [2, 1, 0], k=2))
+    assert_greater(_dcg([4, 3, 2], [2, 1, 0], k=2),
+                   _dcg([1, 3, 2], [2, 1, 0], k=2))
 
 
     # Check that sample order is irrelevant
-    assert_equal(dcg_score([5, 3, 2], [2, 1, 0]),
-                 dcg_score([2, 3, 5], [0, 1, 2]))
-    assert_equal(dcg_score([5, 3, 2], [2, 1, 0], k=2),
-                 dcg_score([2, 3, 5], [0, 1, 2], k=2))
+    assert_equal(_dcg([5, 3, 2], [2, 1, 0]),
+                 _dcg([2, 3, 5], [0, 1, 2]))
+    assert_equal(_dcg([5, 3, 2], [2, 1, 0], k=2),
+                 _dcg([2, 3, 5], [0, 1, 2], k=2))
 
 
 def test_ndcg():
@@ -2654,3 +2655,24 @@ def test_ndcg():
     assert_equal(ndcg_score([2, 3, 5], [0, 1, 2]), 1.0)
     assert_equal(ndcg_score([5, 3, 2], [2, 1, 0], k=2), 1.0)
     assert_equal(ndcg_score([2, 3, 5], [0, 1, 2], k=2), 1.0)
+
+
+def test_mean_ndcg():
+    def _mean_ndcg(y_true, y_score, k=None):
+        if k is None:
+            k = len(y_true)
+
+        return np.mean([ndcg_score(y_true, y_score, i) for i in xrange(1, k+1)])
+
+    # Perfect rankings
+    assert_equal(mean_ndcg_score([5, 3, 2], [2, 1, 0]), 1.0)
+    assert_equal(mean_ndcg_score([2, 3, 5], [0, 1, 2]), 1.0)
+    assert_equal(mean_ndcg_score([5, 3, 2], [2, 1, 0], k=2), 1.0)
+    assert_equal(mean_ndcg_score([2, 3, 5], [0, 1, 2], k=2), 1.0)
+
+    # Imperfect rankings
+    assert_almost_equal(mean_ndcg_score([5, 3, 2], [3, 1, 2]),
+                        _mean_ndcg([5, 3, 2], [3, 1, 2]))
+
+    assert_almost_equal(mean_ndcg_score([5, 3, 2], [3, 1, 2], k=2),
+                        _mean_ndcg([5, 3, 2], [3, 1, 2], k=2))
