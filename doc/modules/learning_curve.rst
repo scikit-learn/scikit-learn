@@ -23,8 +23,8 @@ this **underfitting**.
 
 An example for underfitting can be seen on the left side of the following plot.
 A simple linear model can at best provide only a poor fit to samples drawn from
-a sine function. With polynomial features, we can decrease the bias and
-increase the complexity of the model.
+a sine function. With polynomial features, we can increase the complexity of
+the model and decrease the bias.
 
 .. figure:: ../auto_examples/images/plot_polynomial_regression_1.png
    :target: ../auto_examples/plot_polynomial_regression.html
