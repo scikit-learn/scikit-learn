@@ -356,7 +356,12 @@ class QuantileLossFunction(RegressionLossFunction):
 
 
 class NormalizedDiscountedCumulativeGain(RegressionLossFunction):
-    """Note: this is not a loss function"""
+    """Quantify ranking by weighing more top higher ranked samples.
+
+    Contrary to other subclasses of RegressionLossFunction, this is not a loss
+    function to minimize but a score function to maximize.
+    """
+
     def init_estimator(self):
         self.weights = None
         return MeanEstimator()
@@ -373,37 +378,37 @@ class NormalizedDiscountedCumulativeGain(RegressionLossFunction):
             # for each group compute the ndcg
             for i, g in enumerate(group[1:]):
                 if last_group != g:
-                    end_ix = i+1
+                    end_ix = i + 1
                     ix = np.argsort(-pred[start_ix:end_ix, 0])
-                    tmp_ndcg = _ndcg(y[ix+start_ix],
+                    tmp_ndcg = _ndcg(y[ix + start_ix],
                                      np.sort(y[start_ix:end_ix])[::-1])
                     if not np.isnan(tmp_ndcg):
                         s_ndcg += tmp_ndcg
                         n_group += 1
-                    start_ix = i+1
+                    start_ix = i + 1
                     last_group = g
 
             ix = np.argsort(-pred[start_ix:, 0])
-            tmp_ndcg = _ndcg(y[ix+start_ix], np.sort(y[start_ix:])[::-1])
+            tmp_ndcg = _ndcg(y[ix + start_ix], np.sort(y[start_ix:])[::-1])
             if not np.isnan(tmp_ndcg):
                 s_ndcg += tmp_ndcg
                 n_group += 1
             ndcg = s_ndcg / n_group
         return ndcg
 
-    def negative_gradient(self, y, pred, group=None, **kargs):
+    def negative_gradient(self, y_true, y_pred, group=None, **kargs):
         # the lambda terms
-        grad = np.empty_like(y, dtype=np.float64)
+        grad = np.empty_like(y_true, dtype=np.float64)
 
         # for updating terminal regions
-        self.weights = np.empty_like(y, dtype=np.float64)
+        self.weights = np.empty_like(y_pred, dtype=np.float64)
 
         if group is None:
-            ix = np.argsort(-pred[:, 0])
+            ix = np.argsort(-y_pred[:, 0])
             inv_ix = np.empty_like(ix)
             for j, x in enumerate(ix):
                 inv_ix[x] = j
-            tmp_grad, tmp_weights = _lambda(y[ix], pred[ix])
+            tmp_grad, tmp_weights = _lambda(y_true[ix], y_pred[ix])
             grad = tmp_grad[inv_ix]
             self.weights = tmp_weights[inv_ix]
         else:
@@ -411,8 +416,8 @@ class NormalizedDiscountedCumulativeGain(RegressionLossFunction):
             start_ix = 0
             for i, q in enumerate(group[1:]):
                 if last_q != q:
-                    end_ix = i+1
-                    ix = np.argsort(-pred[start_ix:end_ix, 0])
+                    end_ix = i + 1
+                    ix = np.argsort(-y_pred[start_ix:end_ix, 0])
 
                     inv_ix = np.empty_like(ix)
                     for j, x in enumerate(ix):
@@ -420,21 +425,23 @@ class NormalizedDiscountedCumulativeGain(RegressionLossFunction):
 
                     # sort by current score before passing
                     # and then remap the return values
-                    tmp_grad, tmp_weights = _lambda(y[ix + start_ix],
-                                                    pred[ix + start_ix])
+                    tmp_grad, tmp_weights = _lambda(y_true[ix + start_ix],
+                                                    y_pred[ix + start_ix])
                     grad[start_ix:end_ix] = tmp_grad[inv_ix]
                     self.weights[start_ix:end_ix] = tmp_weights[inv_ix]
-                    start_ix = i+1
+                    start_ix = i + 1
                     last_q = q
 
-            ix = np.argsort(-pred[start_ix:, 0])
+            ix = np.argsort(-y_pred[start_ix:, 0])
 
             inv_ix = np.empty_like(ix)
             for j, x in enumerate(ix):
                 inv_ix[x] = j
 
-            # sort by current score before passing and then remap the return values
-            tmp_grad, tmp_weights = _lambda(y[ix + start_ix], pred[ix + start_ix])
+            # sort by current score before passing and then remap the return
+            # values
+            tmp_grad, tmp_weights = _lambda(y_true[ix + start_ix],
+                                            y_pred[ix + start_ix])
             grad[start_ix:] = tmp_grad[inv_ix]
             self.weights[start_ix:] = tmp_weights[inv_ix]
 
@@ -691,8 +698,8 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             raise ValueError("learning_rate must be greater than 0 but "
                              "was %r" % self.learning_rate)
 
-        if (self.loss not in self._SUPPORTED_LOSS or
-            self.loss not in LOSS_FUNCTIONS):
+        if (self.loss not in self._SUPPORTED_LOSS
+                or self.loss not in LOSS_FUNCTIONS):
             raise ValueError("Loss '{0:s}' not supported. ".format(self.loss))
 
         if self.loss in ('mdeviance', 'bdeviance'):
@@ -721,7 +728,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
                     raise ValueError('init="%s" is not supported' % self.init)
             else:
                 if (not hasattr(self.init, 'fit')
-                    or not hasattr(self.init, 'predict')):
+                        or not hasattr(self.init, 'predict')):
                     raise ValueError("init=%r must be valid BaseEstimator "
                                      "and support both fit and "
                                      "predict" % self.init)
@@ -798,8 +805,8 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         self.estimators_.resize((total_n_estimators, self.loss_.K))
         self.train_score_.resize(total_n_estimators)
         if (self.subsample < 1
-            or hasattr(self, '_oob_score_')
-            or hasattr(self, 'oob_improvement_')):
+                or hasattr(self, '_oob_score_')
+                or hasattr(self, 'oob_improvement_')):
             # if do oob resize arrays or create new if not available
             if hasattr(self, '_oob_score_'):
                 self._oob_score_.resize(total_n_estimators)

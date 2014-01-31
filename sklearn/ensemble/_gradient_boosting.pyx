@@ -374,8 +374,9 @@ def _ranked_random_sample_mask(int n_total_samples, int n_total_in_bag,
     return sample_mask.astype(np_bool)
 
 
-def _ndcg(all32_64_t [::1] y, all32_64_t [:] sorty):
+def _ndcg(all32_64_t [::1] y, all32_64_t [:] y_sorted):
     """Computes Normalized Discounted Cumulative Gain
+
     Currently there is no iteration cap.
     """
     cdef int i
@@ -383,51 +384,53 @@ def _ndcg(all32_64_t [::1] y, all32_64_t [:] sorty):
     cdef double max_dcg = 0
     for i from 0 <= i < y.shape[0]:
         dcg += y[i] / log(2 + i)
-        max_dcg += sorty[i] / log(2 + i)
+        max_dcg += y_sorted[i] / log(2 + i)
     if max_dcg == 0:
         return np.nan
     return dcg / max_dcg
 
 
-def _ndcg_array(all32_64_t [:] sorty):
-    """Computes Normalized Discounted Cumulative Gain
+def _max_dcg_array(all32_64_t [:] y_sorted):
+    """Computes Maximum Discounted Cumulative Gain
+
     This returns an array to make computing NDCG deltas easier
     when rankings are swapped while computing lambda terms.
     """
     cdef int i
     cdef double max_dcg = 0
-    for i from 0 <= i < sorty.shape[0]:
-        max_dcg += sorty[i] / log(2 + i)
+    for i from 0 <= i < y_sorted.shape[0]:
+        max_dcg += y_sorted[i] / log(2 + i)
     return max_dcg
 
 
-def _lambda(all32_64_t [::1] y, double [:, ::1] pred):
-    """Computes the gradient and second derivitives as part of the LambdaMart
-    algorithm.
+def _lambda(all32_64_t [::1] y_true, double [:, ::1] y_pred):
+    """Computes the gradient and second derivatives for NDCG
+
+    This part of the LambdaMART algorithm.
     """
     cdef int i
     cdef int j
 
-    cdef double [::1] grad = np_zeros(y.shape[0])
-    cdef double [::1] weight = np_zeros(y.shape[0])
+    cdef double [::1] grad = np_zeros(y_true.shape[0])
+    cdef double [::1] weight = np_zeros(y_true.shape[0])
     cdef double score_diff
     cdef double ndcg_diff
     cdef double rho
     cdef double max_dcg
     cdef int sign
 
-    max_dcg = _ndcg_array(np.sort(y)[::-1])
+    max_dcg = _max_dcg_array(np.sort(y_true)[::-1])
     cdef double ndcg = 0
     if max_dcg != 0:
-        for i from 0 <= i < y.shape[0]:
-            for j from i+1 <= j < y.shape[0]:
-                if y[i] != y[j]:
-                    ndcg_diff = (y[j] - y[i]) / log(2+i) + \
-                        (y[i] - y[j]) / log(2+j)
+        for i from 0 <= i < y_true.shape[0]:
+            for j from i + 1 <= j < y_true.shape[0]:
+                if y_true[i] != y_true[j]:
+                    ndcg_diff = ((y_true[j] - y_true[i]) / log(2 + i)
+                                 + (y_true[i] - y_true[j]) / log(2 + j))
                     ndcg_diff = abs(ndcg_diff / max_dcg)
 
-                    score_diff = pred[i, 0] - pred[j, 0]
-                    sign = 1 if y[i] > y[j] else -1
+                    score_diff = y_pred[i, 0] - y_pred[j, 0]
+                    sign = 1 if y_true[i] > y_true[j] else -1
                     rho = 1 / (1 + exp(sign * score_diff))
                     grad[i] += sign * ndcg_diff * rho
                     grad[j] -= sign * ndcg_diff * rho
