@@ -987,9 +987,9 @@ cdef class Splitter:
                             start,
                             end)
 
-    cdef void node_split(self, double impurity, SIZE_t* pos, SIZE_t* feature,
-                         double* threshold, double* impurity_left,
-                         double* impurity_right,
+    cdef void node_split(self, double impurity, SIZE_t* n_relevant_features,
+                         SIZE_t* pos, SIZE_t* feature, double* threshold,
+                         double* impurity_left, double* impurity_right,
                          double* impurity_improvement) nogil:
         """Find a split on node samples[start:end]."""
         pass
@@ -1007,9 +1007,9 @@ cdef class BestSplitter(Splitter):
                                self.min_samples_leaf,
                                self.random_state), self.__getstate__())
 
-    cdef void node_split(self, double impurity, SIZE_t* pos, SIZE_t* feature,
-                         double* threshold, double* impurity_left,
-                         double* impurity_right,
+    cdef void node_split(self, double impurity, SIZE_t* n_relevant_features,
+                         SIZE_t* pos, SIZE_t* feature, double* threshold,
+                         double* impurity_left, double* impurity_right,
                          double* impurity_improvement) nogil:
         """Find the best split on node samples[start:end]."""
         # Find the best split
@@ -1263,9 +1263,9 @@ cdef class RandomSplitter(Splitter):
                                  self.min_samples_leaf,
                                  self.random_state), self.__getstate__())
 
-    cdef void node_split(self, double impurity, SIZE_t* pos, SIZE_t* feature,
-                         double* threshold, double* impurity_left,
-                         double* impurity_right,
+    cdef void node_split(self, double impurity, SIZE_t* n_relevant_features,
+                         SIZE_t* pos, SIZE_t* feature, double* threshold,
+                         double* impurity_left, double* impurity_right,
                          double* impurity_improvement) nogil:
         """Find the best random split on node samples[start:end]."""
         # Draw random splits and pick the best
@@ -1470,8 +1470,8 @@ cdef class PresortBestSplitter(Splitter):
             memset(sample_mask, 0, self.n_total_samples)
             self.sample_mask = <unsigned char*> sample_mask
 
-    cdef void node_split(self, double impurity, SIZE_t* pos,
-                         SIZE_t* feature, double* threshold,
+    cdef void node_split(self, double impurity, SIZE_t* n_relevant_features,
+                         SIZE_t* pos, SIZE_t* feature, double* threshold,
                          double* impurity_left, double* impurity_right,
                          double* impurity_improvement) nogil:
         """Find the best split on node samples[start:end]."""
@@ -1683,6 +1683,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         cdef SIZE_t parent
         cdef bint is_left
         cdef SIZE_t n_node_samples = splitter.n_samples
+        cdef SIZE_t n_relevant_features = splitter.n_features
         cdef SIZE_t pos
         cdef SIZE_t feature
         cdef SIZE_t node_id
@@ -1701,7 +1702,8 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         cdef StackRecord stack_record
 
         # push root node onto stack
-        rc = stack.push(0, n_node_samples, 0, _TREE_UNDEFINED, 0, INFINITY)
+        rc = stack.push(0, n_node_samples, 0, _TREE_UNDEFINED, 0, INFINITY,
+                        n_relevant_features)
         if rc == -1:
             # got return code -1 - out-of-memory
             raise MemoryError()
@@ -1716,6 +1718,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                 parent = stack_record.parent
                 is_left = stack_record.is_left
                 impurity = stack_record.impurity
+                n_relevant_features = stack_record.n_relevant_features
 
                 n_node_samples = end - start
                 is_leaf = ((depth >= tree.max_depth) or
@@ -1731,7 +1734,8 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                 is_leaf = is_leaf or (impurity < EPSILON_FLT)
 
                 if not is_leaf:
-                    splitter.node_split(impurity, &pos, &feature, &threshold,
+                    splitter.node_split(impurity, &n_relevant_features,
+                                        &pos, &feature, &threshold,
                                         &split_impurity_left,
                                         &split_impurity_right,
                                         &split_improvement)
@@ -1747,12 +1751,14 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
 
                 else:
                     # Push right child on stack
-                    rc = stack.push(pos, end, depth + 1, node_id, 0, split_impurity_right)
+                    rc = stack.push(pos, end, depth + 1, node_id, 0,
+                                    split_impurity_right, n_relevant_features)
                     if rc == -1:
                         break
 
                     # Push left child on stack
-                    rc = stack.push(start, pos, depth + 1, node_id, 1, split_impurity_left)
+                    rc = stack.push(start, pos, depth + 1, node_id, 1,
+                                    split_impurity_left, n_relevant_features)
                     if rc == -1:
                         break
 
@@ -1800,7 +1806,8 @@ cdef int _add_split_node(Splitter splitter, Tree tree,
                (n_node_samples < 2 * tree.min_samples_leaf))
 
     if not is_leaf:
-        splitter.node_split(impurity, &pos, &feature, &threshold,
+        splitter.node_split(impurity, &splitter.n_features,
+                            &pos, &feature, &threshold,
                             &split_impurity_left, &split_impurity_right,
                             &split_improvement)
         is_leaf = is_leaf or (pos >= end)
@@ -1878,6 +1885,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         cdef PriorityHeapRecord record
         cdef PriorityHeapRecord split_node_left
         cdef PriorityHeapRecord split_node_right
+
 
         cdef SIZE_t n_node_samples = splitter.n_samples
         cdef int max_leaf_nodes = tree.max_leaf_nodes
@@ -2302,7 +2310,7 @@ cdef class Tree:
 
     cdef np.ndarray _get_value_ndarray(self):
         """Wraps value as a 3-d NumPy array
-        
+
         The array keeps a reference to this Tree, which manages the underlying
         memory.
         """
@@ -2318,7 +2326,7 @@ cdef class Tree:
 
     cdef np.ndarray _get_node_ndarray(self):
         """Wraps nodes as a NumPy struct array
-        
+
         The array keeps a reference to this Tree, which manages the underlying
         memory. Individual fields are publicly accessible as properties of the
         Tree.

@@ -20,6 +20,7 @@ cdef struct StackRecord:
     SIZE_t end
     SIZE_t depth
     SIZE_t parent
+    SIZE_t n_relevant_features
     bint is_left
     double impurity
 
@@ -30,7 +31,8 @@ cdef class Stack:
 
     cdef bint is_empty(self) nogil
     cdef int push(self, SIZE_t start, SIZE_t end, SIZE_t depth, SIZE_t parent,
-                   bint is_left, double impurity) nogil
+                  bint is_left, double impurity,
+                  SIZE_t n_relevant_features) nogil
     cdef int pop(self, StackRecord* res) nogil
 
 

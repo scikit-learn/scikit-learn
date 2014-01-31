@@ -22,6 +22,7 @@ cdef inline void copy_stack(StackRecord* a, StackRecord* b) nogil:
     a.parent = b.parent
     a.is_left = b.is_left
     a.impurity = b.impurity
+    a.n_relevant_features = b.n_relevant_features
 
 
 cdef class Stack:
@@ -54,7 +55,8 @@ cdef class Stack:
         return self.top <= 0
 
     cdef int push(self, SIZE_t start, SIZE_t end, SIZE_t depth, SIZE_t parent,
-                   bint is_left, double impurity) nogil:
+                  bint is_left, double impurity,
+                  SIZE_t n_relevant_features) nogil:
         """Push a new element onto the stack.
 
         Returns 0 if successful; -1 on out of memory error.
@@ -79,6 +81,7 @@ cdef class Stack:
         stack[top].parent = parent
         stack[top].is_left = is_left
         stack[top].impurity = impurity
+        stack[top].n_relevant_features = n_relevant_features
 
         # Increment stack pointer
         self.top = top + 1

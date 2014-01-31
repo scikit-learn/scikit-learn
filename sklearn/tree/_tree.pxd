@@ -96,13 +96,15 @@ cdef class Splitter:
 
     cdef void node_reset(self, SIZE_t start, SIZE_t end) nogil
 
-    cdef void node_split(self, double impurity,  # Impurity of the node
-                               SIZE_t* pos, # Set to >= end if the node is a leaf
-                               SIZE_t* feature,
-                               double* threshold,
-                               double* impurity_left,
-                               double* impurity_right,
-                               double* impurity_improvement) nogil
+    cdef void node_split(self,
+                         double impurity,  # Impurity of the node
+                         SIZE_t* n_relevant_features,  # Number of relevant features
+                         SIZE_t* pos, # Set to >= end if the node is a leaf
+                         SIZE_t* feature,
+                         double* threshold,
+                         double* impurity_left,
+                         double* impurity_right,
+                         double* impurity_improvement) nogil
 
     cdef void node_value(self, double* dest) nogil
 
