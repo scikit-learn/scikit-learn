@@ -63,35 +63,59 @@ def test_log_odds_estimator():
 
 
 def test_ndcg():
-    ndcg = NormalizedDiscountedCumulativeGain(n_classes=1)
+    ndcg = NormalizedDiscountedCumulativeGain(n_classes=1, max_rank=None)
 
-    # test all zeros, 64 bit
-    y = np.zeros(5, dtype=np.int64)
-    pred = np.ones((5, 1))
-    assert(np.isnan(ndcg(y, pred)))
+    for t in [np.int64, np.int32, np.float32, np.float64]:
+        # test all zeros
+        y = np.zeros(5, dtype=t)
+        pred = np.ones((5, 1))
+        assert(np.isnan(ndcg(y, pred)))
 
-    # test all ones, 64 bit
-    y = np.ones(5, dtype=np.int64)
-    pred = np.ones((5, 1))
-    assert(ndcg(y, pred) == 1)
-
-    # test all zeros, 32 bit
-    y = np.zeros(5, dtype=np.int32)
-    pred = np.ones((5, 1))
-    assert(np.isnan(ndcg(y, pred)))
-
-    # test all ones, 32 bit
-    y = np.ones(5, dtype=np.int32)
-    pred = np.ones((5, 1))
-    assert(ndcg(y, pred) == 1)
+        # test all ones
+        y = np.ones(5, dtype=t)
+        pred = np.ones((5, 1))
+        assert(ndcg(y, pred) == 1)
 
     # nontrivial ndcg
     y = np.asarray([3, 4, 5, 0, 1, 2], dtype=np.int32)
     pred = np.asarray(range(6)[::-1])[:, None]
-    assert_almost_equal(ndcg(y, pred), 0.88814767)
+    denom = np.log(range(2, 8))
+    score = (np.sum(y / denom) /
+             np.sum(np.sort(y)[::-1] / denom))
+    assert_almost_equal(ndcg(y, pred), score)
 
     # two queries
     y = np.r_[y, y]
     pred = np.asarray(range(12)[::-1])[:, None]
     query = np.r_[np.zeros(6), np.ones(6)]
-    assert_almost_equal(ndcg(y, pred, query), 0.88814767)
+    assert_almost_equal(ndcg(y, pred, query), score)
+
+
+def test_max_ndcg():
+    max_rank = 3
+    denom = np.log(range(2, max_rank + 2))
+    ndcg = NormalizedDiscountedCumulativeGain(n_classes=1, max_rank=max_rank)
+
+    for t in [np.int64, np.int32, np.float32, np.float64]:
+        # test all zeros
+        y = np.zeros(5, dtype=t)
+        pred = np.ones((5, 1))
+        assert(np.isnan(ndcg(y, pred)))
+
+        # test all ones
+        y = np.ones(5, dtype=t)
+        pred = np.ones((5, 1))
+        assert(ndcg(y, pred) == 1)
+
+    # nontrivial ndcg
+    y = np.asarray([3, 4, 5, 0, 1, 2], dtype=np.int32)
+    pred = np.asarray(range(6)[::-1])[:, None]
+    score = (np.sum(y[:max_rank] / denom) /
+             np.sum(np.sort(y)[::-1][:max_rank] / denom))
+    assert_almost_equal(ndcg(y, pred), score)
+
+    # two queries
+    y = np.r_[y, y]
+    pred = np.asarray(range(12)[::-1])[:, None]
+    query = np.r_[np.zeros(6), np.ones(6)]
+    assert_almost_equal(ndcg(y, pred, query), score)

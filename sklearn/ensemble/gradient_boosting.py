@@ -361,35 +361,42 @@ class NormalizedDiscountedCumulativeGain(RegressionLossFunction):
     Contrary to other subclasses of RegressionLossFunction, this is not a loss
     function to minimize but a score function to maximize.
     """
+    def __init__(self, n_classes, max_rank=10):
+        super(NormalizedDiscountedCumulativeGain, self).__init__(n_classes)
+        if max_rank is not None:
+            assert max_rank > 0
+        self.max_rank = max_rank
+        self.weights = None
 
     def init_estimator(self):
-        self.weights = None
         return MeanEstimator()
 
     def __call__(self, y, pred, group=None, **kargs):
         if group is None:
             ix = np.argsort(-pred[:, 0])
-            ndcg = _ndcg(y[ix], np.sort(y)[::-1])
+            ndcg = _ndcg(y[ix][:self.max_rank],
+                         np.sort(y)[::-1][:self.max_rank])
         else:
             last_group = group[0]
             start_ix = 0
             n_group = 0
             s_ndcg = 0
             # for each group compute the ndcg
-            for i, g in enumerate(group[1:]):
+            for i, g in enumerate(group[1:], start=1):
                 if last_group != g:
-                    end_ix = i + 1
+                    end_ix = i
                     ix = np.argsort(-pred[start_ix:end_ix, 0])
-                    tmp_ndcg = _ndcg(y[ix + start_ix],
-                                     np.sort(y[start_ix:end_ix])[::-1])
+                    tmp_ndcg = _ndcg(y[ix + start_ix][:self.max_rank],
+                                     np.sort(y[start_ix:end_ix])[::-1][:self.max_rank])
                     if not np.isnan(tmp_ndcg):
                         s_ndcg += tmp_ndcg
                         n_group += 1
-                    start_ix = i + 1
+                    start_ix = i
                     last_group = g
 
             ix = np.argsort(-pred[start_ix:, 0])
-            tmp_ndcg = _ndcg(y[ix + start_ix], np.sort(y[start_ix:])[::-1])
+            tmp_ndcg = _ndcg(y[ix + start_ix][:self.max_rank],
+                             np.sort(y[start_ix:])[::-1][:self.max_rank])
             if not np.isnan(tmp_ndcg):
                 s_ndcg += tmp_ndcg
                 n_group += 1
@@ -401,14 +408,15 @@ class NormalizedDiscountedCumulativeGain(RegressionLossFunction):
         grad = np.empty_like(y_true, dtype=np.float64)
 
         # for updating terminal regions
-        self.weights = np.empty_like(y_pred, dtype=np.float64)
+        self.weights = np.empty_like(y_true, dtype=np.float64)
 
         if group is None:
             ix = np.argsort(-y_pred[:, 0])
             inv_ix = np.empty_like(ix)
             for j, x in enumerate(ix):
                 inv_ix[x] = j
-            tmp_grad, tmp_weights = _lambda(y_true[ix], y_pred[ix])
+            tmp_grad, tmp_weights = _lambda(y_true[ix], y_pred[ix],
+                                            self.max_rank)
             grad = tmp_grad[inv_ix]
             self.weights = tmp_weights[inv_ix]
         else:
@@ -426,7 +434,8 @@ class NormalizedDiscountedCumulativeGain(RegressionLossFunction):
                     # sort by current score before passing
                     # and then remap the return values
                     tmp_grad, tmp_weights = _lambda(y_true[ix + start_ix],
-                                                    y_pred[ix + start_ix])
+                                                    y_pred[ix + start_ix],
+                                                    self.max_rank)
                     grad[start_ix:end_ix] = tmp_grad[inv_ix]
                     self.weights[start_ix:end_ix] = tmp_weights[inv_ix]
                     start_ix = i + 1
@@ -441,7 +450,8 @@ class NormalizedDiscountedCumulativeGain(RegressionLossFunction):
             # sort by current score before passing and then remap the return
             # values
             tmp_grad, tmp_weights = _lambda(y_true[ix + start_ix],
-                                            y_pred[ix + start_ix])
+                                            y_pred[ix + start_ix],
+                                            self.max_rank)
             grad[start_ix:] = tmp_grad[inv_ix]
             self.weights[start_ix:] = tmp_weights[inv_ix]
 
@@ -630,7 +640,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
     def __init__(self, loss, learning_rate, n_estimators, min_samples_split,
                  min_samples_leaf, max_depth, init, subsample, max_features,
                  random_state, alpha=0.9, verbose=0, max_leaf_nodes=None,
-                 warm_start=False):
+                 max_rank=10, warm_start=False):
 
         self.n_estimators = n_estimators
         self.learning_rate = learning_rate
@@ -645,6 +655,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         self.alpha = alpha
         self.verbose = verbose
         self.max_leaf_nodes = max_leaf_nodes
+        self.max_rank = max_rank
         self.warm_start = warm_start
 
         self.estimators_ = np.empty((0, 0), dtype=np.object)
@@ -715,6 +726,8 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
 
         if self.loss in ('huber', 'quantile'):
             self.loss_ = loss_class(self.n_classes_, self.alpha)
+        elif self.loss in ('ndcg',):
+            self.loss_ = loss_class(self.n_classes_, self.max_rank)
         else:
             self.loss_ = loss_class(self.n_classes_)
 
@@ -1611,6 +1624,15 @@ class LambdaMART(BaseGradientBoosting):
         Choosing `max_features < n_features` leads to a reduction of variance
         and an increase in bias.
 
+    max_leaf_nodes : int or None, optional (default=None)
+        Grow trees with ``max_leaf_nodes`` in best-first fashion.
+        Best nodes are defined as relative reduction in impurity.
+        If None then unlimited number of leaf nodes.
+
+    max_rank : int or None, optional (default=10)
+        Only score the top ``max_rank`` samples from each group. If None,
+        all the samples will be scored.
+
     alpha : float (default=0.9)
         The alpha-quantile of the huber loss function and the quantile
         loss function. Only if ``loss='huber'`` or ``loss='quantile'``.
@@ -1622,8 +1644,14 @@ class LambdaMART(BaseGradientBoosting):
 
     verbose : int, default: 0
         Enable verbose output. If 1 then it prints progress and performance
-        once in a while (the more trees the lower the frequency).
-        If greater than 1 then it prints progress and performance for every tree.
+        once in a while (the more trees the lower the frequency). If greater
+        than 1 then it prints progress and performance for every tree.
+
+    warm_start : bool, default: False
+        When set to ``True``, reuse the solution of the previous call to fit
+        and add more estimators to the ensemble, otherwise, just erase the
+        previous solution.
+
 
     Attributes
     ----------
@@ -1678,13 +1706,13 @@ class LambdaMART(BaseGradientBoosting):
                  subsample=1.0, min_samples_split=2, min_samples_leaf=1,
                  max_depth=3, init=None, random_state=None,
                  max_features=None, alpha=0.9, verbose=0, max_leaf_nodes=None,
-                 warm_start=False):
+                 max_rank=10, warm_start=False):
 
         super(LambdaMART, self).__init__(
             'ndcg', learning_rate, n_estimators, min_samples_split,
             min_samples_leaf, max_depth, init, subsample, max_features,
             random_state, alpha, verbose, max_leaf_nodes=max_leaf_nodes,
-            warm_start=warm_start)
+            max_rank=max_rank, warm_start=warm_start)
 
     def fit(self, X, y, monitor=None, group=None):
         """Fit the gradient boosting model.
@@ -1711,8 +1739,8 @@ class LambdaMART(BaseGradientBoosting):
             snapshoting.
 
         group : array-like, shape = [n_samples], optional (default=None)
-            Only used with LambdaMART, used to group samples. If not present,
-            then the all the samples are treated as one group.
+            Used to group samples. If not present, then the all the
+            samples are treated as one group.
 
         Returns
         -------
@@ -1757,7 +1785,7 @@ class LambdaMART(BaseGradientBoosting):
             yield y.ravel()
 
     def score(self, X, y, group=None):
-        """Returns the mean accuracy on the given test data and labels.
+        """Returns the NDCG on the given test data and labels.
 
         Parameters
         ----------
@@ -1766,6 +1794,10 @@ class LambdaMART(BaseGradientBoosting):
 
         y : array-like, shape = (n_samples,)
             True labels for X.
+
+        group : array-like, shape = [n_samples], optional (default=None)
+            Used to group samples. If not present, then the all the
+            samples are treated as one group.
 
         Returns
         -------

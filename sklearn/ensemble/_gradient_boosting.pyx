@@ -359,7 +359,7 @@ def _ranked_random_sample_mask(int n_total_samples, int n_total_in_bag,
         mask = 1
         n_bagged += 1
 
-    for i from 1 <= i < n_total_samples:
+    for i in range(1, n_total_samples):
         if group[i] != last_group:
             last_group = group[i]
             # track number of unique queries processed
@@ -382,7 +382,7 @@ def _ndcg(all32_64_t [::1] y, all32_64_t [:] y_sorted):
     cdef int i
     cdef double dcg = 0
     cdef double max_dcg = 0
-    for i from 0 <= i < y.shape[0]:
+    for i in range(y.shape[0]):
         dcg += y[i] / log(2 + i)
         max_dcg += y_sorted[i] / log(2 + i)
     if max_dcg == 0:
@@ -390,20 +390,18 @@ def _ndcg(all32_64_t [::1] y, all32_64_t [:] y_sorted):
     return dcg / max_dcg
 
 
-def _max_dcg_array(all32_64_t [:] y_sorted):
+def _max_dcg(all32_64_t [:] y_sorted):
     """Computes Maximum Discounted Cumulative Gain
-
-    This returns an array to make computing NDCG deltas easier
-    when rankings are swapped while computing lambda terms.
     """
     cdef int i
     cdef double max_dcg = 0
-    for i from 0 <= i < y_sorted.shape[0]:
+    for i in range(y_sorted.shape[0]):
         max_dcg += y_sorted[i] / log(2 + i)
     return max_dcg
 
 
-def _lambda(all32_64_t [::1] y_true, double [:, ::1] y_pred):
+def _lambda(all32_64_t [::1] y_true, double [:, ::1] y_pred,
+            max_rank):
     """Computes the gradient and second derivatives for NDCG
 
     This part of the LambdaMART algorithm.
@@ -419,14 +417,20 @@ def _lambda(all32_64_t [::1] y_true, double [:, ::1] y_pred):
     cdef double max_dcg
     cdef int sign
 
-    max_dcg = _max_dcg_array(np.sort(y_true)[::-1])
+    if max_rank is None:
+        max_rank = len(y_true)
+    max_dcg = _max_dcg(np.sort(y_true)[::-1][:max_rank])
     cdef double ndcg = 0
     if max_dcg != 0:
-        for i from 0 <= i < y_true.shape[0]:
-            for j from i + 1 <= j < y_true.shape[0]:
+        for i in range(max_rank):
+            for j in range(i + 1, y_true.shape[0]):
                 if y_true[i] != y_true[j]:
-                    ndcg_diff = ((y_true[j] - y_true[i]) / log(2 + i)
-                                 + (y_true[i] - y_true[j]) / log(2 + j))
+                    if j < max_rank:
+                        ndcg_diff = ((y_true[j] - y_true[i]) / log(2 + i)
+                                     + (y_true[i] - y_true[j]) / log(2 + j))
+                    else:
+                        ndcg_diff = (y_true[j] - y_true[i]) / log(2 + i)
+
                     ndcg_diff = abs(ndcg_diff / max_dcg)
 
                     score_diff = y_pred[i, 0] - y_pred[j, 0]
