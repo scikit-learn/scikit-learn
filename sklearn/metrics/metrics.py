@@ -2154,10 +2154,10 @@ def label_ranking_average_precision_score(y_true, y_score):
     over the samples. A label with higher score is thus considered as having
     better rank.
 
-    The best value is one. The lowest value is the label density.
+    The best value is one.
 
     This metrics is used in multilabel ranking problem, where the goal
-    is to rank the label associated to each sample.
+    is to rank the labels associated to each sample.
 
     Parameters
     ----------

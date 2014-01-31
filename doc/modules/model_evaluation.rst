@@ -917,13 +917,13 @@ The :func:`label_ranking_average_precision_score` function
 implements the label ranking average precision (AP), which is also simply
 called average precision. It averages over each
 sample and each relevant label :math:`r` the ratio between the number of
-relevant labels with higher or equal score to the label :math:`r` and rank of
-the label, i.e. the number of labels with higher or equal score. Given
-the binary indicator matrix of the relevant labels
-:math:`y \in \mathcal{R}^{n_\text{samples} \times n_\text{labels}}` and the score
-associated to each label
+relevant labels with higher or equal score to the label :math:`r` and the rank
+of the label, i.e. the number of labels with higher or equal score. Given
+a binary indicator matrix of the relevant labels
+:math:`y \in \mathcal{R}^{n_\text{samples} \times n_\text{labels}}` and the
+score associated to each label
 :math:`\hat{f} \in \mathcal{R}^{n_\text{samples} \times n_\text{labels}}`,
-the average precision is defined
+the average precision is defined as
 
 .. math::
   AP(y, \hat{f}) = \frac{1}{n_{\text{samples}}}
@@ -934,9 +934,7 @@ the average precision is defined
 with :math:`\mathcal{L}_{ij} = \left\{k: y_{ik} = 1, \hat{f}_{ik} \geq \hat{f}_{ij} \right\}`,
 :math:`\text{rank}_{ij} = \left|\left\{k: \hat{f}_{ik} \geq \hat{f}_{ij} \right\}\right|`
 and :math:`|\cdot|` is the l0 norm or the cardinality of the set.
-
-The best value is one and the lowest value is equal to the label density.
-
+The best value is one.
 
 Here a small example of usage of this function::
 
