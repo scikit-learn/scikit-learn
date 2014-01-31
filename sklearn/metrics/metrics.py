@@ -2184,12 +2184,14 @@ def label_ranking_average_precision_score(y_true, y_score):
     """
     y_true, y_score = check_arrays(y_true, y_score)
 
-    y_type = type_of_target(y_true)
-    if y_type not in ("multilabel-indicator",):
-        raise ValueError("{0} format is not supported".format(y_type))
-
     if y_true.shape != y_score.shape:
         raise ValueError("y_true and y_score have different shape")
+
+    # Handle badly formated array and the degenerate case with one label
+    y_type = type_of_target(y_true)
+    if (y_type != "multilabel-indicator"
+            and not (y_type == "binary" and y_true.ndim == 2)):
+        raise ValueError("{0} format is not supported".format(y_type))
 
     n_samples, n_labels = y_true.shape
 
