@@ -361,7 +361,9 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
         # See if any coefficient has changed sign
         if drop and method == 'lasso':
 
-            arrayfuncs.cholesky_delete(L[:n_active, :n_active], idx)
+            # handle the case when idx is not length of 1
+            [arrayfuncs.cholesky_delete(L[:n_active, :n_active], ii) for ii in
+                idx]
 
             n_active -= 1
             m, n = idx, n_active
