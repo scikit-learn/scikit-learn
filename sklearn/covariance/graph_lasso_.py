@@ -25,7 +25,6 @@ from ..externals.joblib import Parallel, delayed
 import collections
 
 
-###############################################################################
 # Helper functions to compute the objective and dual objective functions
 # of the l1-penalized estimator
 def _objective(mle, precision_, alpha):
@@ -76,7 +75,6 @@ def alpha_max(emp_cov):
     return np.max(np.abs(A))
 
 
-###############################################################################
 # The g-lasso algorithm
 
 def graph_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
@@ -302,7 +300,6 @@ class GraphLasso(EmpiricalCovariance):
         return self
 
 
-###############################################################################
 # Cross-validation with GraphLasso
 def graph_lasso_path(X, alphas, cov_init=None, X_test=None, mode='cd',
                      tol=1e-4, max_iter=100, verbose=False):
@@ -518,14 +515,15 @@ class GraphLassoCV(GraphLasso):
                 # or without).
                 this_path = Parallel(
                     n_jobs=self.n_jobs,
-                    verbose=self.verbose)(
-                        delayed(graph_lasso_path)(
-                            X[train], alphas=alphas,
-                            X_test=X[test], mode=self.mode,
-                            tol=self.tol,
-                            max_iter=int(.1 * self.max_iter),
-                            verbose=inner_verbose)
-                        for train, test in cv)
+                    verbose=self.verbose
+                )(
+                    delayed(graph_lasso_path)(
+                        X[train], alphas=alphas,
+                        X_test=X[test], mode=self.mode,
+                        tol=self.tol,
+                        max_iter=int(.1 * self.max_iter),
+                        verbose=inner_verbose)
+                    for train, test in cv)
 
             # Little danse to transform the list in what we need
             covs, _, scores = zip(*this_path)

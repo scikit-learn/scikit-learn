@@ -18,13 +18,11 @@ from ..utils.extmath import fast_logdet, pinvh
 from ..utils import check_random_state
 
 
-###############################################################################
-### Minimum Covariance Determinant
+# Minimum Covariance Determinant
 #   Implementing of an algorithm by Rousseeuw & Van Driessen described in
 #   (A Fast Algorithm for the Minimum Covariance Determinant Estimator,
 #   1999, American Statistical Association and the American Society
 #   for Quality, TECHNOMETRICS)
-###############################################################################
 def c_step(X, n_support, remaining_iterations=30, initial_estimates=None,
            verbose=False, cov_computation_method=empirical_covariance,
            random_state=None):
@@ -377,9 +375,9 @@ def fast_mcd(X, support_fraction=None,
             # get precision matrix in an optimized way
             precision = pinvh(covariance)
             dist = (np.dot(X_centered, precision) * (X_centered)).sum(axis=1)
-### Starting FastMCD algorithm for p-dimensional case
+# Starting FastMCD algorithm for p-dimensional case
     if (n_samples > 500) and (n_features > 1):
-        ## 1. Find candidate supports on subsets
+        # 1. Find candidate supports on subsets
         # a. split the set in subsets of size ~ 300
         n_subsets = n_samples // 300
         n_samples_subsets = n_samples // n_subsets
@@ -415,8 +413,8 @@ def fast_mcd(X, support_fraction=None,
             subset_slice = np.arange(i * n_best_sub, (i + 1) * n_best_sub)
             all_best_locations[subset_slice] = best_locations_sub
             all_best_covariances[subset_slice] = best_covariances_sub
-        ## 2. Pool the candidate supports into a merged set
-        ##    (possibly the full dataset)
+        # 2. Pool the candidate supports into a merged set
+        # (possibly the full dataset)
         n_samples_merged = min(1500, n_samples)
         h_merged = int(np.ceil(n_samples_merged *
                        (n_support / float(n_samples))))
@@ -433,7 +431,7 @@ def fast_mcd(X, support_fraction=None,
                 select=n_best_merged,
                 cov_computation_method=cov_computation_method,
                 random_state=random_state)
-        ## 3. Finally get the overall best (locations, covariance) couple
+        # 3. Finally get the overall best (locations, covariance) couple
         if n_samples < 1500:
             # directly get the best couple (location, covariance)
             location = locations_merged[0]
@@ -456,15 +454,15 @@ def fast_mcd(X, support_fraction=None,
             support = supports_full[0]
             dist = d[0]
     elif n_features > 1:
-        ## 1. Find the 10 best couples (location, covariance)
-        ## considering two iterations
+        # 1. Find the 10 best couples (location, covariance)
+        # considering two iterations
         n_trials = 30
         n_best = 10
         locations_best, covariances_best, _, _ = select_candidates(
             X, n_support, n_trials=n_trials, select=n_best, n_iter=2,
             cov_computation_method=cov_computation_method,
             random_state=random_state)
-        ## 2. Select the best couple on the full dataset amongst the 10
+        # 2. Select the best couple on the full dataset amongst the 10
         locations_full, covariances_full, supports_full, d = select_candidates(
             X, n_support, n_trials=(locations_best, covariances_best),
             select=1, cov_computation_method=cov_computation_method,
