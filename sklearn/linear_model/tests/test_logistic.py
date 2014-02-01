@@ -9,7 +9,7 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import raises
 
-from sklearn.linear_model import logistic
+from sklearn.linear_model import LogisticRegression, MultinomialLR
 from sklearn import datasets
 
 X = [[-1, 0], [0, 1], [1, 1]]
@@ -42,28 +42,26 @@ def test_predict_2_classes():
 
     Make sure it predicts the correct result on simple datasets.
     """
-    check_predictions(logistic.LogisticRegression(random_state=0), X, Y1)
-    check_predictions(logistic.LogisticRegression(random_state=0), X_sp, Y1)
+    check_predictions(LogisticRegression(random_state=0), X, Y1)
+    check_predictions(LogisticRegression(random_state=0), X_sp, Y1)
 
-    check_predictions(logistic.LogisticRegression(C=100, random_state=0),
+    check_predictions(LogisticRegression(C=100, random_state=0), X, Y1)
+    check_predictions(LogisticRegression(C=100, random_state=0), X_sp, Y1)
+
+    check_predictions(LogisticRegression(fit_intercept=False, random_state=0),
                       X, Y1)
-    check_predictions(logistic.LogisticRegression(C=100, random_state=0),
+    check_predictions(LogisticRegression(fit_intercept=False, random_state=0),
                       X_sp, Y1)
-
-    check_predictions(logistic.LogisticRegression(fit_intercept=False,
-                                                  random_state=0), X, Y1)
-    check_predictions(logistic.LogisticRegression(fit_intercept=False,
-                                                  random_state=0), X_sp, Y1)
 
 
 def test_error():
     """Test for appropriate exception on errors"""
-    assert_raises(ValueError, logistic.LogisticRegression(C=-1).fit, X, Y1)
+    assert_raises(ValueError, LogisticRegression(C=-1).fit, X, Y1)
 
 
 def test_predict_3_classes():
-    check_predictions(logistic.LogisticRegression(C=10), X, Y2)
-    check_predictions(logistic.LogisticRegression(C=10), X_sp, Y2)
+    check_predictions(LogisticRegression(C=10), X, Y2)
+    check_predictions(LogisticRegression(C=10), X_sp, Y2)
 
 
 def test_predict_iris():
@@ -71,24 +69,49 @@ def test_predict_iris():
     n_samples, n_features = iris.data.shape
 
     target = iris.target_names[iris.target]
-    clf = logistic.LogisticRegression(C=len(iris.data)).fit(iris.data, target)
-    assert_array_equal(np.unique(target), clf.classes_)
+    for clf in [LogisticRegression(C=len(iris.data)),
+                MultinomialLR(alpha=(1. / len(iris.data)))]:
+        clf.fit(iris.data, target)
 
-    pred = clf.predict(iris.data)
-    assert_greater(np.mean(pred == target), .95)
+        assert_array_equal(np.unique(target), clf.classes_)
 
-    probabilities = clf.predict_proba(iris.data)
-    assert_array_almost_equal(probabilities.sum(axis=1), np.ones(n_samples))
+        pred = clf.predict(iris.data)
+        assert_greater(np.mean(pred == target), .95)
 
-    pred = iris.target_names[probabilities.argmax(axis=1)]
-    assert_greater(np.mean(pred == target), .95)
+        probabilities = clf.predict_proba(iris.data)
+        assert_array_almost_equal(probabilities.sum(axis=1),
+                                  np.ones(n_samples))
+
+        pred = iris.target_names[probabilities.argmax(axis=1)]
+        assert_greater(np.mean(pred == target), .95)
+
+
+def test_multinomial_validation():
+    lr = MultinomialLR(alpha=-1)
+    assert_raises(ValueError, lr.fit, [[0, 1], [1, 0]], [0, 1])
+
+
+def test_multinomial_binary():
+    """Test multinomial LR on a binary problem."""
+    target = (iris.target > 0).astype(np.intp)
+    target = np.array(["setosa", "not-setosa"])[target]
+
+    clf = MultinomialLR().fit(iris.data, target)
+
+    assert_equal(clf.coef_.shape, (1, iris.data.shape[1]))
+    assert_equal(clf.intercept_.shape, (1,))
+    assert_array_equal(clf.predict(iris.data), target)
+
+    clf = MultinomialLR(fit_intercept=False).fit(iris.data, target)
+    pred = clf.classes_[np.argmax(clf.predict_log_proba(iris.data), axis=1)]
+    assert_greater(np.mean(pred == target), .9)
 
 
 def test_sparsify():
     """Test sparsify and densify members."""
     n_samples, n_features = iris.data.shape
     target = iris.target_names[iris.target]
-    clf = logistic.LogisticRegression(random_state=0).fit(iris.data, target)
+    clf = LogisticRegression(random_state=0).fit(iris.data, target)
 
     pred_d_d = clf.decision_function(iris.data)
 
@@ -114,7 +137,7 @@ def test_inconsistent_input():
     y_ = np.ones(X_.shape[0])
     y_[0] = 0
 
-    clf = logistic.LogisticRegression(random_state=0)
+    clf = LogisticRegression(random_state=0)
 
     # Wrong dimensions for training data
     y_wrong = y_[:-1]
@@ -130,7 +153,7 @@ def test_write_parameters():
     #rng = np.random.RandomState(0)
     #X = rng.random_sample((5, 10))
     #y = np.ones(X.shape[0])
-    clf = logistic.LogisticRegression(random_state=0)
+    clf = LogisticRegression(random_state=0)
     clf.fit(X, Y1)
     clf.coef_[:] = 0
     clf.intercept_[:] = 0
@@ -145,13 +168,13 @@ def test_nan():
     """
     Xnan = np.array(X, dtype=np.float64)
     Xnan[0, 1] = np.nan
-    logistic.LogisticRegression(random_state=0).fit(Xnan, Y1)
+    LogisticRegression(random_state=0).fit(Xnan, Y1)
 
 
 def test_liblinear_random_state():
     X, y = datasets.make_classification(n_samples=20)
-    lr1 = logistic.LogisticRegression(random_state=0)
+    lr1 = LogisticRegression(random_state=0)
     lr1.fit(X, y)
-    lr2 = logistic.LogisticRegression(random_state=0)
+    lr2 = LogisticRegression(random_state=0)
     lr2.fit(X, y)
     assert_array_almost_equal(lr1.coef_, lr2.coef_)

@@ -37,6 +37,7 @@ from sklearn.feature_extraction.text import HashingVectorizer
 from sklearn.feature_selection import SelectKBest, chi2
 from sklearn.linear_model import RidgeClassifier
 from sklearn.svm import LinearSVC
+from sklearn.linear_model import MultinomialLR
 from sklearn.linear_model import SGDClassifier
 from sklearn.linear_model import Perceptron
 from sklearn.linear_model import PassiveAggressiveClassifier
@@ -235,7 +236,8 @@ for clf, name in (
         (RidgeClassifier(tol=1e-2, solver="lsqr"), "Ridge Classifier"),
         (Perceptron(n_iter=50), "Perceptron"),
         (PassiveAggressiveClassifier(n_iter=50), "Passive-Aggressive"),
-        (KNeighborsClassifier(n_neighbors=10), "kNN")):
+        (KNeighborsClassifier(n_neighbors=10), "kNN"),
+        (MultinomialLR(), "Multinomial LR")):
     print('=' * 80)
     print(name)
     results.append(benchmark(clf))

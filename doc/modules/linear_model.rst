@@ -651,12 +651,27 @@ rather than the sum of square residuals (as in ordinary regression).
 Logistic regression is also known in the literature as
 logit regression, maximum-entropy classification (MaxEnt)
 or the log-linear classifier.
+Several estimators are available for logistic regression.
 
-The :class:`LogisticRegression` class can be used to do L1 or L2 penalized
-logistic regression. L1 penalization yields sparse predicting weights.
+:class:`LogisticRegression` uses a coordinate descent (CD) algorithm based on
+Liblinear and supports L1 or L2-penalized logistic regression.
+L1 penalization yields sparse predicting weights.
 For L1 penalization :func:`sklearn.svm.l1_min_c` allows to calculate
 the lower bound for C in order to get a non "null" (all feature weights to
 zero) model.
+
+However, the CD algorithm cannot learn a true multinomial (multiclass) model;
+instead, the optimization problem is decomposed in a "one-vs-rest" fashion
+so separate binary classifiers are trained for all classes.
+This happens under the hood, so :class:`LogisticRegression` instances
+behave as multiclass classifiers.
+
+:class:`MultinomialLR` uses the L-BFGS algorithm
+to learn a true multinomial logistic regression model,
+which means that its probability estimates should be better-calibrated
+than those of :class:`LogisticRegression`.
+L-BFGS cannot optimize L1-penalized models, though,
+so :class:`MultinomialLR` does not learn sparse models.
 
 .. topic:: Examples:
 
