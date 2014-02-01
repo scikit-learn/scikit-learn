@@ -575,8 +575,8 @@ def test_grid_search_score_consistency():
                 if score == "f1":
                     correct_score = f1_score(y[test], clf.predict(X[test]))
                 elif score == "roc_auc":
-                    correct_score = roc_auc_score(y[test],
-                                              clf.decision_function(X[test]))
+                    dec = clf.decision_function(X[test])
+                    correct_score = roc_auc_score(y[test], dec)
                 assert_almost_equal(correct_score, scores[i])
                 i += 1
 

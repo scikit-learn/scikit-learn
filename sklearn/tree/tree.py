@@ -172,8 +172,10 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
             y = np.ascontiguousarray(y, dtype=DOUBLE)
 
         # Check parameters
-        max_depth = (2 ** 31) - 1 if self.max_depth is None else self.max_depth
-        max_leaf_nodes = -1 if self.max_leaf_nodes is None else self.max_leaf_nodes
+        max_depth = ((2 ** 31) - 1 if self.max_depth is None
+                     else self.max_depth)
+        max_leaf_nodes = (-1 if self.max_leaf_nodes is None
+                          else self.max_leaf_nodes)
 
         if isinstance(self.max_features, six.string_types):
             if self.max_features == "auto":

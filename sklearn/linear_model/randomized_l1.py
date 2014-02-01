@@ -100,16 +100,13 @@ class BaseRandomizedLinearModel(six.with_metaclass(ABCMeta, BaseEstimator,
             memory = Memory(cachedir=memory)
 
         scores_ = memory.cache(
-            _resample_model, ignore=['verbose', 'n_jobs', 'pre_dispatch'])(
-                estimator_func, X, y,
-                scaling=self.scaling,
-                n_resampling=self.n_resampling,
-                n_jobs=self.n_jobs,
-                verbose=self.verbose,
-                pre_dispatch=self.pre_dispatch,
-                random_state=self.random_state,
-                sample_fraction=self.sample_fraction,
-                **params)
+            _resample_model, ignore=['verbose', 'n_jobs', 'pre_dispatch']
+        )(
+            estimator_func, X, y,
+            scaling=self.scaling, n_resampling=self.n_resampling,
+            n_jobs=self.n_jobs, verbose=self.verbose,
+            pre_dispatch=self.pre_dispatch, random_state=self.random_state,
+            sample_fraction=self.sample_fraction, **params)
 
         if scores_.ndim == 1:
             scores_ = scores_[:, np.newaxis]

@@ -1009,8 +1009,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
             # up here with less samples in train and test than asked for.
             if len(train) < self.n_train or len(test) < self.n_test:
                 # We complete by affecting randomly the missing indexes
-                missing_idx = np.where(
-                                       np.bincount(train + test,
+                missing_idx = np.where(np.bincount(train + test,
                                                    minlength=len(self.y)) == 0,
                                        )[0]
                 missing_idx = rng.permutation(missing_idx)

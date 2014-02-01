@@ -111,7 +111,7 @@ def test_gibbs_smoke():
 def test_score_samples():
     """Test score_samples (pseudo-likelihood) method."""
     # Assert that pseudo-likelihood is computed without clipping.
-    # http://fa.bianp.net/blog/2013/numerical-optimizers-for-logistic-regression
+    # See Fabian's blog, http://bit.ly/1iYefRk
     rng = np.random.RandomState(42)
     X = np.vstack([np.zeros(1000), np.ones(1000)])
     rbm1 = BernoulliRBM(n_components=10, batch_size=2,
