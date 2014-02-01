@@ -22,7 +22,7 @@ from ..utils.extmath import fast_logdet, pinvh
 
 def log_likelihood(emp_cov, precision):
     """Computes the sample mean of the log_likelihood under a covariance model
-    
+
     computes the empirical expected log-likelihood (accounting for the
     normalization terms and scaling), allowing for universal comparison (beyond
     this software package)
@@ -34,7 +34,7 @@ def log_likelihood(emp_cov, precision):
 
     precision : 2D ndarray (n_features, n_features)
         The precision matrix of the covariance model to be tested
-    
+
     Returns
     -------
     sample mean of the log-likelihood
@@ -82,6 +82,7 @@ def empirical_covariance(X, assume_centered=False):
 
 
 class EmpiricalCovariance(BaseEstimator):
+
     """Maximum likelihood covariance estimator
 
     Parameters
@@ -105,6 +106,7 @@ class EmpiricalCovariance(BaseEstimator):
         (stored only if store_precision is True)
 
     """
+
     def __init__(self, store_precision=True, assume_centered=False):
         self.store_precision = store_precision
         self.assume_centered = assume_centered

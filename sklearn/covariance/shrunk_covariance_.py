@@ -22,7 +22,7 @@ from ..externals.six.moves import xrange
 from ..utils import array2d
 
 
-###############################################################################
+#
 # ShrunkCovariance estimator
 
 def shrunk_covariance(emp_cov, shrinkage=0.1):
@@ -63,6 +63,7 @@ def shrunk_covariance(emp_cov, shrinkage=0.1):
 
 
 class ShrunkCovariance(EmpiricalCovariance):
+
     """Covariance estimator with shrinkage
 
     Parameters
@@ -97,6 +98,7 @@ class ShrunkCovariance(EmpiricalCovariance):
     where mu = trace(cov) / n_features
 
     """
+
     def __init__(self, store_precision=True, assume_centered=False,
                  shrinkage=0.1):
         EmpiricalCovariance.__init__(self, store_precision=store_precision,
@@ -141,7 +143,7 @@ class ShrunkCovariance(EmpiricalCovariance):
         return self
 
 
-###############################################################################
+#
 # Ledoit-Wolf estimator
 
 def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
@@ -305,6 +307,7 @@ def ledoit_wolf(X, assume_centered=False, block_size=1000):
 
 
 class LedoitWolf(EmpiricalCovariance):
+
     """LedoitWolf Estimator
 
     Ledoit-Wolf is a particular form of shrinkage, where the shrinkage
@@ -361,6 +364,7 @@ class LedoitWolf(EmpiricalCovariance):
     February 2004, pages 365-411.
 
     """
+
     def __init__(self, store_precision=True, assume_centered=False,
                  block_size=1000):
         EmpiricalCovariance.__init__(self, store_precision=store_precision,
@@ -399,7 +403,7 @@ class LedoitWolf(EmpiricalCovariance):
         return self
 
 
-###############################################################################
+#
 # OAS estimator
 
 def oas(X, assume_centered=False):
@@ -471,6 +475,7 @@ def oas(X, assume_centered=False):
 
 
 class OAS(EmpiricalCovariance):
+
     """Oracle Approximating Shrinkage Estimator
 
     OAS is a particular form of shrinkage described in
@@ -521,6 +526,7 @@ class OAS(EmpiricalCovariance):
     Chen et al., IEEE Trans. on Sign. Proc., Volume 58, Issue 10, October 2010.
 
     """
+
     def fit(self, X, y=None):
         """ Fits the Oracle Approximating Shrinkage covariance model
         according to the given training data and parameters.

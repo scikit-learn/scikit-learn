@@ -19,6 +19,7 @@ from ..base import ClassifierMixin
 
 
 class OutlierDetectionMixin(object):
+
     """Set of methods for outliers detection with covariance estimators.
 
     Parameters
@@ -34,6 +35,7 @@ class OutlierDetectionMixin(object):
     always take care to work with ``n_samples > n_features ** 2``.
 
     """
+
     def __init__(self, contamination=0.1):
         self.contamination = contamination
         self.threshold = None
@@ -103,6 +105,7 @@ class OutlierDetectionMixin(object):
 
 
 class EllipticEnvelope(ClassifierMixin, OutlierDetectionMixin, MinCovDet):
+
     """An object for detecting outliers in a Gaussian distributed dataset.
 
     Attributes
@@ -165,6 +168,7 @@ class EllipticEnvelope(ClassifierMixin, OutlierDetectionMixin, MinCovDet):
         covariance determinant estimator" Technometrics 41(3), 212 (1999)
 
     """
+
     def __init__(self, store_precision=True, assume_centered=False,
                  support_fraction=None, contamination=0.1,
                  random_state=None):
@@ -182,4 +186,3 @@ class EllipticEnvelope(ClassifierMixin, OutlierDetectionMixin, MinCovDet):
             self.dist_, 100. * (1. - self.contamination))
 
         return self
-
