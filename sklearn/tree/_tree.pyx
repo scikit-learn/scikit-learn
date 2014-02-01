@@ -1018,7 +1018,8 @@ cdef class BestSplitter(Splitter):
         cdef SIZE_t end = self.end
 
         cdef SIZE_t* features = self.features
-        cdef SIZE_t n_features = self.n_features
+        cdef SIZE_t n_features = n_relevant_features[0]
+        cdef SIZE_t n_current_relevant = n_relevant_features[0]
 
         cdef DTYPE_t* X = self.X
         cdef DTYPE_t* Xf = self.feature_values
@@ -1069,6 +1070,16 @@ cdef class BestSplitter(Splitter):
 
             sort(Xf + start, samples + start, end - start)
 
+            # The feature is constant since Xf[start] == Xf[end] after sorting
+            if Xf[start] == Xf[end - 1]:
+                # XXX: Should I consider
+                #      abs(Xf[start] - Xf[end - 1]) <= EPSILON_FLT?
+                tmp = features[n_current_relevant - 1]
+                features[n_current_relevant - 1] = current_feature
+                features[f_i] = tmp
+                n_current_relevant -= 1
+                continue
+
             # Evaluate all splits
             self.criterion.reset()
             p = start
@@ -1095,7 +1106,8 @@ cdef class BestSplitter(Splitter):
                     current_improvement = self.criterion.impurity_improvement(impurity)
 
                     if current_improvement > best_improvement:
-                        self.criterion.children_impurity(&current_impurity_left, &current_impurity_right)
+                        self.criterion.children_impurity(&current_impurity_left,
+                                                         &current_impurity_right)
                         best_impurity_left = current_impurity_left
                         best_impurity_right = current_impurity_right
                         best_improvement = current_improvement
@@ -1137,6 +1149,7 @@ cdef class BestSplitter(Splitter):
                     samples[p] = tmp
 
         # Return values
+        n_relevant_features[0] = n_current_relevant
         pos[0] = best_pos
         feature[0] = best_feature
         threshold[0] = best_threshold
