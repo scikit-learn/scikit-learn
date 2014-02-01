@@ -78,7 +78,7 @@ def test_unreachable_accuracy():
         assert_warns(RuntimeWarning, orthogonal_mp, X, y, tol=0,
                      precompute=True),
         orthogonal_mp(X, y, precompute=True,
-                     n_nonzero_coefs=n_features))
+                      n_nonzero_coefs=n_features))
 
 
 def test_bad_input():

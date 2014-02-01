@@ -93,6 +93,7 @@ y = np.arange(10) // 2
 ##############################################################################
 # Tests
 
+
 def check_valid_split(train, test, n_samples=None):
     # Use python sets to get more informative assertion failure messages
     train, test = set(train), set(test)
@@ -417,7 +418,8 @@ def test_stratified_shuffle_split_even():
     for n_samples in (6, 22):
         labels = np.array((n_samples // 2) * [0, 1])
         splits = cval.StratifiedShuffleSplit(labels, n_iter=n_iter,
-                                    test_size=1./n_folds, random_state=0)
+                                             test_size=1./n_folds,
+                                             random_state=0)
 
         train_counts = [0] * n_samples
         test_counts = [0] * n_samples

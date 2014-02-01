@@ -730,8 +730,9 @@ class _RidgeGCV(LinearModel):
         C = []
 
         scorer = check_scoring(self, scoring=self.scoring, allow_none=True,
-            loss_func=self.loss_func, score_func=self.score_func,
-            score_overrides_loss=True)
+                               loss_func=self.loss_func,
+                               score_func=self.score_func,
+                               score_overrides_loss=True)
         error = scorer is None
 
         for i, alpha in enumerate(self.alphas):

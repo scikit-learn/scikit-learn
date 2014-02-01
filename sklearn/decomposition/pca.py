@@ -458,11 +458,11 @@ class PCA(BaseEstimator, TransformerMixin):
         return np.mean(self.score_samples(X))
 
 
-@deprecated("ProbabilisticPCA will be removed in 0.16. WARNING: the covariance"
-            " estimation was previously incorrect, your output might be different "
-            " than under the previous versions. Use PCA that implements score"
-            " and score_samples. To work with homoscedastic=False, you should use"
-            " FactorAnalysis.")
+@deprecated("ProbabilisticPCA will be removed in 0.16. WARNING: the "
+            "covariance estimation was previously incorrect, your "
+            "output might be different than under the previous versions. "
+            "Use PCA that implements score and score_samples. To work with "
+            "homoscedastic=False, you should use FactorAnalysis.")
 class ProbabilisticPCA(PCA):
     """Additional layer on top of PCA that adds a probabilistic evaluation"""
     __doc__ += PCA.__doc__

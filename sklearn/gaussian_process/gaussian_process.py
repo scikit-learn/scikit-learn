@@ -428,8 +428,9 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
         if X.shape[1] != n_features:
             raise ValueError(("The number of features in X (X.shape[1] = %d) "
-                             "should match the number of features used for fit() "
-                             "which is %d.") % (X.shape[1], n_features))
+                              "should match the number of features used "
+                              "for fit() "
+                              "which is %d.") % (X.shape[1], n_features))
 
         if batch_size is None:
             # No memory management

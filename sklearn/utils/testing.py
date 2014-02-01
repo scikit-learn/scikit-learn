@@ -70,7 +70,7 @@ try:
 except ImportError:
     # for Py 2.6
     def assert_raises_regexp(expected_exception, expected_regexp,
-                            callable_obj=None, *args, **kwargs):
+                             callable_obj=None, *args, **kwargs):
         """Helper function to check for message patterns in exceptions"""
 
         not_raised = False
@@ -80,14 +80,12 @@ except ImportError:
         except Exception as e:
             error_message = str(e)
             if not re.compile(expected_regexp).match(error_message):
-                raise AssertionError("Error message should match pattern '%s'. "
-                                     "'%s' does not." %
+                raise AssertionError("Error message should match pattern "
+                                     "'%s'. '%s' does not." %
                                      (expected_regexp, error_message))
         if not_raised:
             raise AssertionError("Should have raised %r" %
-                                  expected_exception(expected_regexp))
-
-
+                                 expected_exception(expected_regexp))
 
 
 def _assert_less(a, b, msg=None):
@@ -102,7 +100,6 @@ def _assert_greater(a, b, msg=None):
     if msg is not None:
         message += ": " + msg
     assert a > b, message
-
 
 
 # To remove when we support numpy 1.7
@@ -197,12 +194,12 @@ def assert_warns_message(warning_class, message, func, *args, **kw):
         if callable(message):  # add support for certain tests
             check_in_message = message
         else:
-            check_in_message = lambda msg : message in msg
+            check_in_message = lambda msg: message in msg
         if not check_in_message(msg):
             raise AssertionError("The message received ('%s') for <%s> is "
                                  "not the one you expected ('%s')"
                                  % (msg, func.__name__,  message
-                                 ))
+                                    ))
     return result
 
 
@@ -303,6 +300,7 @@ class _IgnoreWarnings(object):
         self._showwarning = self._module.showwarning
         if self._record:
             self.log = []
+
             def showwarning(*args, **kwargs):
                 self.log.append(warnings.WarningMessage(*args, **kwargs))
             self._module.showwarning = showwarning
@@ -316,7 +314,7 @@ class _IgnoreWarnings(object):
         self._module.filters = self._filters
         self._module.showwarning = self._showwarning
         self.log[:] = []
-        clean_warning_registry() # be safe and not propagate state + chaos
+        clean_warning_registry()  # be safe and not propagate state + chaos
 
 
 try:

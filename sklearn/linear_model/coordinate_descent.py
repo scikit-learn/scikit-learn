@@ -93,8 +93,8 @@ def _alpha_grid(X, y, Xy=None, l1_ratio=1.0, fit_intercept=True,
             Xy -= mean_dot[:, np.newaxis]
         if normalize:
             Xy /= X_std[:, np.newaxis]
-    alpha_max = np.sqrt(np.sum(Xy ** 2, axis=1)).max() / (
-                            n_samples * l1_ratio)
+    alpha_max = (np.sqrt(np.sum(Xy ** 2, axis=1)).max() /
+                 (n_samples * l1_ratio))
     alphas = np.logspace(np.log10(alpha_max * eps), np.log10(alpha_max),
                          num=n_alphas)[::-1]
     return alphas
@@ -450,7 +450,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
         coefs = np.empty((n_features, n_alphas), dtype=np.float64)
     else:
         coefs = np.empty((n_outputs, n_features, n_alphas),
-                          dtype=np.float64)
+                         dtype=np.float64)
 
     if coef_init is None:
         coef_ = np.asfortranarray(np.zeros(coefs.shape[:-1]))
@@ -461,20 +461,17 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
         l1_reg = alpha * l1_ratio * n_samples
         l2_reg = alpha * (1.0 - l1_ratio) * n_samples
         if not multi_output and sparse.isspmatrix(X):
-            coef_, dual_gap_, eps_ = (
-                cd_fast.sparse_enet_coordinate_descent(
+            model = cd_fast.sparse_enet_coordinate_descent(
                 coef_, l1_reg, l2_reg, X.data, X.indices,
                 X.indptr, y, X_sparse_scaling,
                 max_iter, tol, positive)
-                )
         elif not multi_output:
-            coef_, dual_gap_, eps_ = cd_fast.enet_coordinate_descent(
+            model = cd_fast.enet_coordinate_descent(
                 coef_, l1_reg, l2_reg, X, y, max_iter, tol, positive)
         else:
-            coef_, dual_gap_, eps_ = (
-                cd_fast.enet_coordinate_descent_multi_task(
+            model = cd_fast.enet_coordinate_descent_multi_task(
                 coef_, l1_reg, l2_reg, X, y, max_iter, tol)
-                )
+        coef_, dual_gap_, eps_ = model
         coefs[..., i] = coef_
         dual_gaps[i] = dual_gap_
         if dual_gap_ > eps_:
@@ -668,7 +665,7 @@ class ElasticNet(LinearModel, RegressorMixin):
 
         if not self.warm_start or self.coef_ is None:
             coef_ = np.zeros((n_targets, n_features), dtype=np.float64,
-                                  order='F')
+                             order='F')
         else:
             coef_ = self.coef_
             if coef_.ndim == 1:
@@ -924,8 +921,8 @@ def _path_residuals(X, y, train, test, path, path_params, alphas=None,
         # Work around for sparse matices since coefs is a 3-D numpy array.
         coefs_feature_major = np.rollaxis(coefs, 1)
         feature_2d = np.reshape(coefs_feature_major, (n_features, -1))
-        X_test_coefs = safe_sparse_dot(X_test, feature_2d).reshape(
-                                     X_test.shape[0], n_order, -1)
+        X_test_coefs = safe_sparse_dot(X_test, feature_2d)
+        X_test_coefs = X_test_coefs.reshape(X_test.shape[0], n_order, -1)
     else:
         X_test_coefs = safe_sparse_dot(X_test, coefs)
     residues = X_test_coefs - y_test[:, :, np.newaxis]
@@ -1045,14 +1042,12 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
         if alphas is None:
             alphas = []
             for l1_ratio in l1_ratios:
-                alphas.append(
-                    _alpha_grid(
-                        X, y, l1_ratio=l1_ratio,
-                        fit_intercept=self.fit_intercept,
-                        eps=self.eps, n_alphas=self.n_alphas,
-                        normalize=self.normalize,
-                        copy_X=self.copy_X)
-                    )
+                alphas.append(_alpha_grid(
+                    X, y, l1_ratio=l1_ratio,
+                    fit_intercept=self.fit_intercept,
+                    eps=self.eps, n_alphas=self.n_alphas,
+                    normalize=self.normalize,
+                    copy_X=self.copy_X))
         else:
             # Making sure alphas is properly ordered.
             alphas = np.tile(np.sort(alphas)[::-1], (n_l1_ratio, 1))
@@ -1086,8 +1081,8 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
         mse_paths = np.reshape(mse_paths, (n_l1_ratio, len(folds), -1))
         mean_mse = np.mean(mse_paths, axis=1)
         self.mse_path_ = np.squeeze(np.rollaxis(mse_paths, 2, 1))
-        for l1_ratio, l1_alphas, mse_alphas in zip(
-            l1_ratios, alphas, mean_mse):
+        for l1_ratio, l1_alphas, mse_alphas in zip(l1_ratios, alphas,
+                                                   mean_mse):
             i_best_alpha = np.argmin(mse_alphas)
             this_best_mse = mse_alphas[i_best_alpha]
             if this_best_mse < best_mse:

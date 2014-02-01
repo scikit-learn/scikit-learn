@@ -358,6 +358,7 @@ def test_tfidf_no_smoothing():
     if not numpy_provides_div0_warning:
         raise SkipTest("Numpy does not provide div 0 warnings.")
 
+
 def test_sublinear_tf():
     X = [[1], [2], [3]]
     tr = TfidfTransformer(sublinear_tf=True, use_idf=False, norm=None)
@@ -860,6 +861,7 @@ def test_pickling_transformer():
     assert_array_equal(
         copy.fit_transform(X).toarray(),
         orig.fit_transform(X).toarray())
+
 
 def test_non_unique_vocab():
     vocab = ['a', 'b', 'c', 'a', 'a']

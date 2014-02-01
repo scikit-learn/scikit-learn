@@ -280,7 +280,7 @@ def pairwise_distances_argmin_min(X, Y, axis=1, metric="euclidean",
             if dist_func is not None:
                 if metric == 'euclidean':  # special case, for speed
                     d_chunk = safe_sparse_dot(X_chunk, Y_chunk.T,
-                                                 dense_output=True)
+                                              dense_output=True)
                     d_chunk *= -2
                     d_chunk += row_norms(X_chunk, squared=True)[:, np.newaxis]
                     d_chunk += row_norms(Y_chunk, squared=True)[np.newaxis, :]

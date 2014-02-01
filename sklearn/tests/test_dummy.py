@@ -223,7 +223,7 @@ def test_constant_strategy():
     y = ['two', 'one', 'two', 'two']
     clf = DummyClassifier(strategy="constant", random_state=0, constant='one')
     clf.fit(X, y)
-    assert_array_equal(clf.predict(X), np.array(['one']*4))
+    assert_array_equal(clf.predict(X), np.array(['one'] * 4))
     _check_predict_proba(clf, X, y)
 
 
@@ -251,5 +251,5 @@ def test_constant_strategy_exceptions():
     clf = DummyClassifier(strategy="constant", random_state=0)
     assert_raises(ValueError, clf.fit, X, y)
     clf = DummyClassifier(strategy="constant", random_state=0,
-                          constant=[2,0])
+                          constant=[2, 0])
     assert_raises(ValueError, clf.fit, X, y)

@@ -656,7 +656,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
                 for i in xrange(len(vocabulary)):
                     if i not in indices:
                         msg = ("Vocabulary of size %d doesn't contain index "
-                                "%d." % (len(vocabulary), i))
+                               "%d." % (len(vocabulary), i))
                         raise ValueError(msg)
             if not vocabulary:
                 raise ValueError("empty vocabulary passed to fit")
