@@ -1071,14 +1071,11 @@ cdef class BestSplitter(Splitter):
             sort(Xf + start, samples + start, end - start)
 
             # The feature is constant since Xf[start] == Xf[end] after sorting
-            if Xf[start] == Xf[end - 1]:
-                # XXX: Should I consider
-                #      abs(Xf[start] - Xf[end - 1]) <= EPSILON_FLT?
+            if Xf[start] <= Xf[end - 1] + EPSILON_FLT:
                 tmp = features[n_current_relevant - 1]
                 features[n_current_relevant - 1] = current_feature
                 features[f_i] = tmp
                 n_current_relevant -= 1
-                continue
 
             # Evaluate all splits
             self.criterion.reset()
