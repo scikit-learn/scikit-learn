@@ -17,10 +17,12 @@ from sklearn.utils import ConvergenceWarning
 from sklearn.linear_model.logistic import (
     LogisticRegression,
     logistic_regression_path, LogisticRegressionCV,
-    _logistic_loss_and_grad, _logistic_loss_grad_hess
+    _logistic_loss_and_grad, _logistic_loss_grad_hess,
+    MultinomialLR
     )
 from sklearn.cross_validation import StratifiedKFold
 from sklearn.datasets import load_iris, make_classification
+
 
 X = [[-1, 0], [0, 1], [1, 1]]
 X_sp = sp.csr_matrix(X)
@@ -79,17 +81,42 @@ def test_predict_iris():
     n_samples, n_features = iris.data.shape
 
     target = iris.target_names[iris.target]
-    clf = LogisticRegression(C=len(iris.data)).fit(iris.data, target)
-    assert_array_equal(np.unique(target), clf.classes_)
 
-    pred = clf.predict(iris.data)
-    assert_greater(np.mean(pred == target), .95)
+    for clf in [LogisticRegression(C=len(iris.data)),
+                MultinomialLR(alpha=(1. / len(iris.data)))]:
+        clf.fit(iris.data, target)
+        assert_array_equal(np.unique(target), clf.classes_)
 
-    probabilities = clf.predict_proba(iris.data)
-    assert_array_almost_equal(probabilities.sum(axis=1), np.ones(n_samples))
+        pred = clf.predict(iris.data)
+        assert_greater(np.mean(pred == target), .95)
 
-    pred = iris.target_names[probabilities.argmax(axis=1)]
-    assert_greater(np.mean(pred == target), .95)
+        probabilities = clf.predict_proba(iris.data)
+        assert_array_almost_equal(probabilities.sum(axis=1),
+                                  np.ones(n_samples))
+
+        pred = iris.target_names[probabilities.argmax(axis=1)]
+        assert_greater(np.mean(pred == target), .95)
+
+
+def test_multinomial_validation():
+    lr = MultinomialLR(alpha=-1)
+    assert_raises(ValueError, lr.fit, [[0, 1], [1, 0]], [0, 1])
+
+
+def test_multinomial_binary():
+    """Test multinomial LR on a binary problem."""
+    target = (iris.target > 0).astype(np.intp)
+    target = np.array(["setosa", "not-setosa"])[target]
+
+    clf = MultinomialLR().fit(iris.data, target)
+
+    assert_equal(clf.coef_.shape, (1, iris.data.shape[1]))
+    assert_equal(clf.intercept_.shape, (1,))
+    assert_array_equal(clf.predict(iris.data), target)
+
+    clf = MultinomialLR(fit_intercept=False).fit(iris.data, target)
+    pred = clf.classes_[np.argmax(clf.predict_log_proba(iris.data), axis=1)]
+    assert_greater(np.mean(pred == target), .9)
 
 
 def test_sparsify():

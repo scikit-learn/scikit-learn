@@ -6,6 +6,7 @@ Logistic Regression
 #         Fabian Pedregosa <f@bianp.net>
 #         Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
 #         Manoj Kumar <manojkumarsivaraj334@gmail.com>
+#         Lars Buitinck
 
 import numbers
 import warnings
@@ -15,10 +16,10 @@ from scipy import optimize, sparse
 
 from .base import LinearClassifierMixin, SparseCoefMixin, BaseEstimator
 from ..feature_selection.from_model import _LearntSelectorMixin
-from ..preprocessing import LabelEncoder
+from ..preprocessing import LabelEncoder, LabelBinarizer
 from ..svm.base import BaseLibLinear
 from ..utils import check_array, check_consistent_length, compute_class_weight
-from ..utils.extmath import log_logistic, safe_sparse_dot
+from ..utils.extmath import logsumexp, log_logistic, safe_sparse_dot
 from ..utils.optimize import newton_cg
 from ..utils.validation import as_float_array, DataConversionWarning
 from ..utils.fixes import expit
@@ -563,8 +564,46 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
     return coefs, Cs, np.array(scores)
 
 
-class LogisticRegression(BaseLibLinear, LinearClassifierMixin,
-                         _LearntSelectorMixin, SparseCoefMixin):
+class _LogRegMixin(LinearClassifierMixin):
+    def predict_proba(self, X):
+        """Probability estimates.
+
+        The returned estimates for all classes are ordered by the
+        label of classes.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+
+        Returns
+        -------
+        T : array-like, shape = [n_samples, n_classes]
+            Returns the probability of the sample for each class in the model,
+            where classes are ordered as they are in ``self.classes_``.
+        """
+        return self._predict_proba_lr(X)
+
+    def predict_log_proba(self, X):
+        """Log of probability estimates.
+
+        The returned estimates for all classes are ordered by the
+        label of classes.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+
+        Returns
+        -------
+        T : array-like, shape = [n_samples, n_classes]
+            Returns the log-probability of the sample for each class in the
+            model, where classes are ordered as they are in ``self.classes_``.
+        """
+        return np.log(self.predict_proba(X))
+
+
+class LogisticRegression(BaseLibLinear, _LogRegMixin, _LearntSelectorMixin,
+                         SparseCoefMixin):
     """Logistic Regression (aka logit, MaxEnt) classifier.
 
     In the multiclass case, the training algorithm uses a one-vs.-all (OvA)
@@ -666,6 +705,12 @@ class LogisticRegression(BaseLibLinear, LinearClassifierMixin,
         methods for logistic regression and maximum entropy models.
         Machine Learning 85(1-2):41-75.
         http://www.csie.ntu.edu.tw/~cjlin/papers/maxent_dual.pdf
+
+
+    See also
+    --------
+    sklearn.linear_model.MultinomialLR
+    sklearn.linear_model.SGDClassifier
     """
 
     def __init__(self, penalty='l2', dual=False, tol=1e-4, C=1.0,
@@ -677,42 +722,6 @@ class LogisticRegression(BaseLibLinear, LinearClassifierMixin,
             fit_intercept=fit_intercept, intercept_scaling=intercept_scaling,
             class_weight=class_weight, random_state=random_state,
             solver=solver, max_iter=max_iter)
-
-    def predict_proba(self, X):
-        """Probability estimates.
-
-        The returned estimates for all classes are ordered by the
-        label of classes.
-
-        Parameters
-        ----------
-        X : array-like, shape = [n_samples, n_features]
-
-        Returns
-        -------
-        T : array-like, shape = [n_samples, n_classes]
-            Returns the probability of the sample for each class in the model,
-            where classes are ordered as they are in ``self.classes_``.
-        """
-        return self._predict_proba_lr(X)
-
-    def predict_log_proba(self, X):
-        """Log of probability estimates.
-
-        The returned estimates for all classes are ordered by the
-        label of classes.
-
-        Parameters
-        ----------
-        X : array-like, shape = [n_samples, n_features]
-
-        Returns
-        -------
-        T : array-like, shape = [n_samples, n_classes]
-            Returns the log-probability of the sample for each class in the
-            model, where classes are ordered as they are in ``self.classes_``.
-        """
-        return np.log(self.predict_proba(X))
 
 
 class LogisticRegressionCV(LogisticRegression, BaseEstimator,
@@ -1007,3 +1016,148 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         self.coef_ = np.asarray(self.coef_)
         self.intercept_ = np.asarray(self.intercept_)
         return self
+
+
+class MultinomialLR(BaseEstimator, _LogRegMixin):
+    """Multinomial logistic regression.
+
+    This class implements logistic regression for multiclass problems. While
+    LogisticRegression is able to do multiclass classification out of the box,
+    the probabilities it estimates are not well-calibrated for such problems
+    as it fits one binary model per class. By contrast, multinomial LR
+    estimators solve a single multiclass optimization problem and minimize
+    the cross-entropy (aka. log loss) over the whole probability
+    distribution P(y=k|X).
+
+    Parameters
+    ----------
+    alpha : float, optional
+        Strength of L2 penalty (aka. regularization, weight decay).
+        Note that the (optional) intercept term is not regularized.
+
+    class_weight : {dict, 'auto'}, optional
+        Over-/undersamples the samples of each class according to the given
+        weights. If not given, all classes are supposed to have weight one.
+        The 'auto' mode selects weights inversely proportional to class
+        frequencies in the training set.
+
+    fit_intercept : bool, default: True
+        Whether an intercept (bias) term should be learned and added to the
+        decision function.
+
+    Attributes
+    ----------
+    `coef_` : array, shape = [n_classes, n_features]
+        Coefficient of the features in the decision function.
+
+    `intercept_` : array, shape = [n_classes]
+        Intercept (a.k.a. bias) added to the decision function.
+        If `fit_intercept` is set to False, the intercept is set to zero.
+
+    References
+    ----------
+    C. M. Bishop (2006). Pattern Recognition and Machine Learning. Springer,
+        pp. 205-210.
+
+    See also
+    --------
+    sklearn.linear_model.LogisticRegression
+    sklearn.linear_model.SGDClassifier
+
+    """
+    def __init__(self, alpha=1e-4, fit_intercept=True, class_weight=None,
+                 max_iter=100, tol=0.0001):
+        self.alpha = alpha
+        self.class_weight = class_weight
+        self.fit_intercept = fit_intercept
+        self.max_iter = max_iter
+        self.tol = tol
+
+    def fit(self, X, y):
+        """Fit logistic regression model to training data X, y.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+            Training vectors, where n_samples in the number of samples and
+            n_features is the number of features.
+
+        y : array-like, shape = [n_samples]
+            Target vector for the samples in X.
+        """
+        X = check_array(X, accept_sparse='csr')
+
+        if y.ndim == 2 and y.shape[1] == 1:
+            warnings.warn(
+                "A column-vector y was passed when a 1d array was"
+                " expected. Please change the shape of y to "
+                "(n_samples, ), for example using ravel().",
+                DataConversionWarning
+                )
+            y = np.ravel(y)
+
+        lbin = LabelBinarizer()
+        Y = lbin.fit_transform(y)
+        if Y.shape[1] == 1:
+            Y = np.hstack([1 - Y, Y])
+
+        # Fortran-ordered so we can slice off the intercept in loss_grad and
+        # get contiguous arrays.
+        w = np.zeros((Y.shape[1], X.shape[1] + bool(self.fit_intercept)),
+                     order='F')
+
+        C = 1. / self.alpha
+        if C < 0:
+            raise ValueError("Penalty term must be positive; got (alpha=%r)"
+                             % self.alpha)
+        w, loss, info = optimize.fmin_l_bfgs_b(_loss_grad, w.ravel(),
+                                               args=[X, Y, C, self.fit_intercept],
+                                               maxiter=self.max_iter,
+                                               pgtol=self.tol)
+        w = w.reshape(Y.shape[1], -1)
+        if self.fit_intercept:
+            intercept = w[:, -1]
+            w = w[:, :-1]
+        else:
+            intercept = np.zeros(Y.shape[1])
+
+        self.classes_ = lbin.classes_
+        if len(self.classes_) == 2:
+            w = w[1].reshape(1, -1)
+            intercept = intercept[1:]
+        self.coef_ = w
+        self.intercept_ = intercept
+
+        return self
+
+
+def _sqnorm(x):
+    x = x.ravel()
+    return np.dot(x, x)
+
+
+def _loss_grad(w, X, Y, C, fit_intercept):
+    # Cross-entropy loss and its gradient for multinomial logistic regression
+    # (Bishop 2006, p. 209) with L2 penalty (weight decay).
+    w = w.reshape(Y.shape[1], -1)
+    if fit_intercept:
+        intercept = w[:, -1]
+        w = w[:, :-1]
+    else:
+        intercept = 0
+
+    p = safe_sparse_dot(X, w.T)
+    p += intercept
+    p -= logsumexp(p, axis=1).reshape(-1, 1)
+
+    loss = (-C * (Y * p).sum()) + .5 * _sqnorm(w)
+
+    p = np.exp(p, p)
+    diff = p - Y
+    grad = safe_sparse_dot(diff.T, X)
+    grad *= C
+    grad += w
+    if fit_intercept:
+        grad = np.hstack([grad, diff.sum(axis=0).reshape(-1, 1)])
+
+    return loss, grad.ravel()
