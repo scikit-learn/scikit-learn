@@ -25,7 +25,7 @@ from ..utils.extmath import safe_sparse_dot
 from . import cd_fast
 
 
-###############################################################################
+#
 # Paths functions
 
 def _alpha_grid(X, y, Xy=None, l1_ratio=1.0, fit_intercept=True,
@@ -94,7 +94,7 @@ def _alpha_grid(X, y, Xy=None, l1_ratio=1.0, fit_intercept=True,
         if normalize:
             Xy /= X_std[:, np.newaxis]
     alpha_max = np.sqrt(np.sum(Xy ** 2, axis=1)).max() / (
-                            n_samples * l1_ratio)
+        n_samples * l1_ratio)
     alphas = np.logspace(np.log10(alpha_max * eps), np.log10(alpha_max),
                          num=n_alphas)[::-1]
     return alphas
@@ -450,7 +450,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
         coefs = np.empty((n_features, n_alphas), dtype=np.float64)
     else:
         coefs = np.empty((n_outputs, n_features, n_alphas),
-                          dtype=np.float64)
+                         dtype=np.float64)
 
     if coef_init is None:
         coef_ = np.asfortranarray(np.zeros(coefs.shape[:-1]))
@@ -463,18 +463,18 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
         if not multi_output and sparse.isspmatrix(X):
             coef_, dual_gap_, eps_ = (
                 cd_fast.sparse_enet_coordinate_descent(
-                coef_, l1_reg, l2_reg, X.data, X.indices,
-                X.indptr, y, X_sparse_scaling,
-                max_iter, tol, positive)
-                )
+                    coef_, l1_reg, l2_reg, X.data, X.indices,
+                    X.indptr, y, X_sparse_scaling,
+                    max_iter, tol, positive)
+            )
         elif not multi_output:
             coef_, dual_gap_, eps_ = cd_fast.enet_coordinate_descent(
                 coef_, l1_reg, l2_reg, X, y, max_iter, tol, positive)
         else:
             coef_, dual_gap_, eps_ = (
                 cd_fast.enet_coordinate_descent_multi_task(
-                coef_, l1_reg, l2_reg, X, y, max_iter, tol)
-                )
+                    coef_, l1_reg, l2_reg, X, y, max_iter, tol)
+            )
         coefs[..., i] = coef_
         dual_gaps[i] = dual_gap_
         if dual_gap_ > eps_:
@@ -513,11 +513,12 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
         return alphas, coefs, dual_gaps
 
 
-###############################################################################
+#
 # ElasticNet model
 
 
 class ElasticNet(LinearModel, RegressorMixin):
+
     """Linear Model trained with L1 and L2 prior as regularizer
 
     Minimizes the objective function::
@@ -668,7 +669,7 @@ class ElasticNet(LinearModel, RegressorMixin):
 
         if not self.warm_start or self.coef_ is None:
             coef_ = np.zeros((n_targets, n_features), dtype=np.float64,
-                                  order='F')
+                             order='F')
         else:
             coef_ = self.coef_
             if coef_.ndim == 1:
@@ -723,10 +724,11 @@ class ElasticNet(LinearModel, RegressorMixin):
             return super(ElasticNet, self).decision_function(X)
 
 
-###############################################################################
+#
 # Lasso model
 
 class Lasso(ElasticNet):
+
     """Linear Model trained with L1 prior as regularizer (aka the Lasso)
 
     The optimization objective for Lasso is::
@@ -831,7 +833,7 @@ class Lasso(ElasticNet):
             positive=positive)
 
 
-###############################################################################
+#
 # Functions for CV with paths functions
 
 def _path_residuals(X, y, train, test, path, path_params, alphas=None,
@@ -925,7 +927,7 @@ def _path_residuals(X, y, train, test, path, path_params, alphas=None,
         coefs_feature_major = np.rollaxis(coefs, 1)
         feature_2d = np.reshape(coefs_feature_major, (n_features, -1))
         X_test_coefs = safe_sparse_dot(X_test, feature_2d).reshape(
-                                     X_test.shape[0], n_order, -1)
+            X_test.shape[0], n_order, -1)
     else:
         X_test_coefs = safe_sparse_dot(X_test, coefs)
     residues = X_test_coefs - y_test[:, :, np.newaxis]
@@ -936,6 +938,7 @@ def _path_residuals(X, y, train, test, path, path_params, alphas=None,
 
 
 class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
+
     """Base class for iterative model fitting along a regularization path"""
 
     @abstractmethod
@@ -1052,7 +1055,7 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
                         eps=self.eps, n_alphas=self.n_alphas,
                         normalize=self.normalize,
                         copy_X=self.copy_X)
-                    )
+                )
         else:
             # Making sure alphas is properly ordered.
             alphas = np.tile(np.sort(alphas)[::-1], (n_l1_ratio, 1))
@@ -1087,7 +1090,7 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
         mean_mse = np.mean(mse_paths, axis=1)
         self.mse_path_ = np.squeeze(np.rollaxis(mse_paths, 2, 1))
         for l1_ratio, l1_alphas, mse_alphas in zip(
-            l1_ratios, alphas, mean_mse):
+                l1_ratios, alphas, mean_mse):
             i_best_alpha = np.argmin(mse_alphas)
             this_best_mse = mse_alphas[i_best_alpha]
             if this_best_mse < best_mse:
@@ -1123,6 +1126,7 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
 
 
 class LassoCV(LinearModelCV, RegressorMixin):
+
     """Lasso linear model with iterative fitting along a regularization path
 
     The best model is selected by cross-validation.
@@ -1226,6 +1230,7 @@ class LassoCV(LinearModelCV, RegressorMixin):
 
 
 class ElasticNetCV(LinearModelCV, RegressorMixin):
+
     """Elastic Net model with iterative fitting along a regularization path
 
     The best model is selected by cross-validation.
@@ -1361,10 +1366,11 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
         self.positive = positive
 
 
-###############################################################################
+#
 # Multi Task ElasticNet and Lasso models (with joint feature selection)
 
 class MultiTaskElasticNet(Lasso):
+
     """Multi-task ElasticNet model trained with L1/L2 mixed-norm as regularizer
 
     The optimization objective for MultiTaskElasticNet is::
@@ -1449,6 +1455,7 @@ class MultiTaskElasticNet(Lasso):
     To avoid unnecessary memory duplication the X argument of the fit method
     should be directly passed as a Fortran-contiguous numpy array.
     """
+
     def __init__(self, alpha=1.0, l1_ratio=0.5, fit_intercept=True,
                  normalize=False, copy_X=True, max_iter=1000, tol=1e-4,
                  warm_start=False):
@@ -1524,6 +1531,7 @@ class MultiTaskElasticNet(Lasso):
 
 
 class MultiTaskLasso(MultiTaskElasticNet):
+
     """Multi-task Lasso model trained with L1/L2 mixed-norm as regularizer
 
     The optimization objective for Lasso is::
@@ -1597,6 +1605,7 @@ class MultiTaskLasso(MultiTaskElasticNet):
     To avoid unnecessary memory duplication the X argument of the fit method
     should be directly passed as a Fortran-contiguous numpy array.
     """
+
     def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
                  copy_X=True, max_iter=1000, tol=1e-4, warm_start=False):
         self.alpha = alpha
@@ -1611,6 +1620,7 @@ class MultiTaskLasso(MultiTaskElasticNet):
 
 
 class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
+
     """Multi-task L1/L2 ElasticNet with built-in cross-validation.
 
     The optimization objective for MultiTaskElasticNet is::
@@ -1756,6 +1766,7 @@ class MultiTaskElasticNetCV(LinearModelCV, RegressorMixin):
 
 
 class MultiTaskLassoCV(LinearModelCV, RegressorMixin):
+
     """Multi-task L1/L2 Lasso with built-in cross-validation.
 
     The optimization objective for MultiTaskLasso is::

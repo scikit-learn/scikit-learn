@@ -24,7 +24,7 @@ from .least_angle import lars_path, LassoLarsIC
 from .logistic import LogisticRegression
 
 
-###############################################################################
+#
 # Randomized linear model: feature selection
 
 def _resample_model(estimator_func, X, y, scaling=.5, n_resampling=200,
@@ -57,6 +57,7 @@ def _resample_model(estimator_func, X, y, scaling=.5, n_resampling=200,
 
 class BaseRandomizedLinearModel(six.with_metaclass(ABCMeta, BaseEstimator,
                                                    TransformerMixin)):
+
     """Base class to implement randomized linear models for feature selection
 
     This implements the strategy by Meinshausen and Buhlman:
@@ -101,15 +102,15 @@ class BaseRandomizedLinearModel(six.with_metaclass(ABCMeta, BaseEstimator,
 
         scores_ = memory.cache(
             _resample_model, ignore=['verbose', 'n_jobs', 'pre_dispatch'])(
-                estimator_func, X, y,
-                scaling=self.scaling,
-                n_resampling=self.n_resampling,
-                n_jobs=self.n_jobs,
-                verbose=self.verbose,
-                pre_dispatch=self.pre_dispatch,
-                random_state=self.random_state,
-                sample_fraction=self.sample_fraction,
-                **params)
+            estimator_func, X, y,
+            scaling=self.scaling,
+            n_resampling=self.n_resampling,
+            n_jobs=self.n_jobs,
+            verbose=self.verbose,
+            pre_dispatch=self.pre_dispatch,
+            random_state=self.random_state,
+            sample_fraction=self.sample_fraction,
+            **params)
 
         if scores_.ndim == 1:
             scores_ = scores_[:, np.newaxis]
@@ -145,7 +146,7 @@ class BaseRandomizedLinearModel(six.with_metaclass(ABCMeta, BaseEstimator,
         return Xt
 
 
-###############################################################################
+#
 # Randomized lasso: regression settings
 
 def _randomized_lasso(X, y, weights, mask, alpha=1., verbose=False,
@@ -180,6 +181,7 @@ def _randomized_lasso(X, y, weights, mask, alpha=1., verbose=False,
 
 
 class RandomizedLasso(BaseRandomizedLinearModel):
+
     """Randomized Lasso.
 
     Randomized Lasso works by resampling the train data and computing
@@ -295,6 +297,7 @@ class RandomizedLasso(BaseRandomizedLinearModel):
     --------
     RandomizedLogisticRegression, LogisticRegression
     """
+
     def __init__(self, alpha='aic', scaling=.5, sample_fraction=.75,
                  n_resampling=200, selection_threshold=.25,
                  fit_intercept=True, verbose=False,
@@ -334,7 +337,7 @@ class RandomizedLasso(BaseRandomizedLinearModel):
                                        precompute=self.precompute)
 
 
-###############################################################################
+#
 # Randomized logistic: classification settings
 
 def _randomized_logistic(X, y, weights, mask, C=1., verbose=False,
@@ -362,6 +365,7 @@ def _randomized_logistic(X, y, weights, mask, C=1., verbose=False,
 
 
 class RandomizedLogisticRegression(BaseRandomizedLinearModel):
+
     """Randomized Logistic Regression
 
     Randomized Regression works by resampling the train data and computing
@@ -463,6 +467,7 @@ class RandomizedLogisticRegression(BaseRandomizedLinearModel):
     --------
     RandomizedLasso, Lasso, ElasticNet
     """
+
     def __init__(self, C=1, scaling=.5, sample_fraction=.75,
                  n_resampling=200,
                  selection_threshold=.25, tol=1e-3,
@@ -497,7 +502,7 @@ class RandomizedLogisticRegression(BaseRandomizedLinearModel):
         return X, y, Xmean, y, X_std
 
 
-###############################################################################
+#
 # Stability paths
 def _lasso_stability_path(X, y, mask, weights, eps):
     "Inner loop of lasso_stability_path"
