@@ -1274,7 +1274,8 @@ cdef class RandomSplitter(Splitter):
         cdef SIZE_t end = self.end
 
         cdef SIZE_t* features = self.features
-        cdef SIZE_t n_features = self.n_features
+        cdef SIZE_t n_features = n_relevant_features[0]
+        cdef SIZE_t n_current_relevant = n_relevant_features[0]
 
         cdef DTYPE_t* X = self.X
         cdef SIZE_t X_sample_stride = self.X_sample_stride
@@ -1333,6 +1334,10 @@ cdef class RandomSplitter(Splitter):
                     max_feature_value = current_feature_value
 
             if min_feature_value == max_feature_value:
+                tmp = features[n_current_relevant - 1]
+                features[n_current_relevant - 1] = current_feature
+                features[f_i] = tmp
+                n_current_relevant -= 1
                 continue
 
             # Draw a random threshold
@@ -1406,6 +1411,7 @@ cdef class RandomSplitter(Splitter):
                     samples[p] = tmp
 
         # Return values
+        n_relevant_features[0] = n_current_relevant
         pos[0] = best_pos
         feature[0] = best_feature
         threshold[0] = best_threshold
@@ -1787,6 +1793,7 @@ cdef int _add_split_node(Splitter splitter, Tree tree,
     cdef SIZE_t pos
     cdef SIZE_t feature
     cdef SIZE_t node_id
+    cdef SIZE_t n_relevant_features = splitter.n_features
     cdef double threshold
     cdef double split_impurity_left
     cdef double split_impurity_right
@@ -1806,7 +1813,7 @@ cdef int _add_split_node(Splitter splitter, Tree tree,
                (n_node_samples < 2 * tree.min_samples_leaf))
 
     if not is_leaf:
-        splitter.node_split(impurity, &splitter.n_features,
+        splitter.node_split(impurity, &n_relevant_features,
                             &pos, &feature, &threshold,
                             &split_impurity_left, &split_impurity_right,
                             &split_improvement)
