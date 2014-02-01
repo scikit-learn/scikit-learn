@@ -16,7 +16,7 @@ from ..utils.extmath import fast_logdet, pinvh
 from ..utils import check_arrays
 
 
-###############################################################################
+#################
 # BayesianRidge regression
 
 class BayesianRidge(LinearModel, RegressorMixin):

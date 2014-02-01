@@ -342,6 +342,7 @@ class _BaseRidge(six.with_metaclass(ABCMeta, LinearModel)):
 
 
 class Ridge(_BaseRidge, RegressorMixin):
+
     """Linear least squares with l2 regularization.
 
     This model solves a regression model where the loss function is
@@ -423,6 +424,7 @@ class Ridge(_BaseRidge, RegressorMixin):
     Ridge(alpha=1.0, copy_X=True, fit_intercept=True, max_iter=None,
           normalize=False, solver='auto', tol=0.001)
     """
+
     def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
                  copy_X=True, max_iter=None, tol=1e-3, solver="auto"):
         super(Ridge, self).__init__(alpha=alpha, fit_intercept=fit_intercept,
@@ -451,6 +453,7 @@ class Ridge(_BaseRidge, RegressorMixin):
 
 
 class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
+
     """Classifier using Ridge regression.
 
     Parameters
@@ -509,6 +512,7 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
     a one-versus-all approach. Concretely, this is implemented by taking
     advantage of the multi-variate response support in Ridge.
     """
+
     def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
                  copy_X=True, max_iter=None, tol=1e-3, class_weight=None,
                  solver="auto"):
@@ -554,6 +558,7 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
 
 
 class _RidgeGCV(LinearModel):
+
     """Ridge regression with built-in Generalized Cross-Validation
 
     It allows efficient Leave-One-Out cross-validation.
@@ -730,8 +735,9 @@ class _RidgeGCV(LinearModel):
         C = []
 
         scorer = check_scoring(self, scoring=self.scoring, allow_none=True,
-            loss_func=self.loss_func, score_func=self.score_func,
-            score_overrides_loss=True)
+                               loss_func=self.loss_func,
+                               score_func=self.score_func,
+                               score_overrides_loss=True)
         error = scorer is None
 
         for i, alpha in enumerate(self.alphas):
@@ -774,6 +780,7 @@ class _RidgeGCV(LinearModel):
 
 
 class _BaseRidgeCV(LinearModel):
+
     def __init__(self, alphas=np.array([0.1, 1.0, 10.0]),
                  fit_intercept=True, normalize=False, scoring=None,
                  score_func=None, loss_func=None, cv=None, gcv_mode=None,
@@ -826,7 +833,7 @@ class _BaseRidgeCV(LinearModel):
             parameters = {'alpha': self.alphas}
             # FIXME: sample_weight must be split into training/validation data
             #        too!
-            #fit_params = {'sample_weight' : sample_weight}
+            # fit_params = {'sample_weight' : sample_weight}
             fit_params = {}
             gs = GridSearchCV(Ridge(fit_intercept=self.fit_intercept),
                               parameters, fit_params=fit_params, cv=self.cv)
@@ -841,6 +848,7 @@ class _BaseRidgeCV(LinearModel):
 
 
 class RidgeCV(_BaseRidgeCV, RegressorMixin):
+
     """Ridge regression with built-in cross-validation.
 
     By default, it performs Generalized Cross-Validation, which is a form of
@@ -921,6 +929,7 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
 
 
 class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
+
     """Ridge classifier with built-in cross-validation.
 
     By default, it performs Generalized Cross-Validation, which is a form of
@@ -985,6 +994,7 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
     a one-versus-all approach. Concretely, this is implemented by taking
     advantage of the multi-variate response support in Ridge.
     """
+
     def __init__(self, alphas=np.array([0.1, 1.0, 10.0]), fit_intercept=True,
                  normalize=False, score_func=None, loss_func=None, cv=None,
                  class_weight=None):
