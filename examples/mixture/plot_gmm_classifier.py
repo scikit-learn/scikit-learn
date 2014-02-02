@@ -79,7 +79,7 @@ pl.subplots_adjust(bottom=.01, top=0.95, hspace=.15, wspace=.05,
                    left=.01, right=.99)
 
 
-for index, (name, classifier) in enumerate(classifiers.iteritems()):
+for index, (name, classifier) in enumerate(classifiers.items()):
     # Since we have class labels for the training data, we can
     # initialize the GMM parameters in a supervised manner.
     classifier.means_ = np.array([X_train[y_train == i].mean(axis=0)
