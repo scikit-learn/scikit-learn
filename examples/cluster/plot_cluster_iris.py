@@ -45,7 +45,7 @@ estimators = {'k_means_iris_3': KMeans(n_clusters=3),
 
 
 fignum = 1
-for name, est in estimators.iteritems():
+for name, est in estimators.items():
     fig = pl.figure(fignum, figsize=(4, 3))
     pl.clf()
     ax = Axes3D(fig, rect=[0, 0, .95, 1], elev=48, azim=134)
