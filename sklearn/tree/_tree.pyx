@@ -1060,7 +1060,6 @@ cdef class BestSplitter(Splitter):
             if f_j < n_irrelevant:
                 features[n_drawn_irrelevant], features[f_j] = features[f_j], features[n_drawn_irrelevant]
                 n_drawn_irrelevant += 1
-                visited_features += 1
                 continue
             else:
                 features[f_i], features[f_j] = features[f_j], features[f_i]
@@ -1083,7 +1082,6 @@ cdef class BestSplitter(Splitter):
                 features[n_irrelevant], features[n_drawn_irrelevant] = features[n_drawn_irrelevant], features[n_irrelevant]
                 n_irrelevant += 1
                 n_drawn_irrelevant += 1
-                visited_features += 1
                 continue
 
             # Evaluate all splits
