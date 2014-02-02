@@ -22,7 +22,7 @@ cdef inline void copy_stack(StackRecord* a, StackRecord* b) nogil:
     a.parent = b.parent
     a.is_left = b.is_left
     a.impurity = b.impurity
-    a.n_relevant_features = b.n_relevant_features
+    a.n_valid_features = b.n_valid_features
 
 
 cdef class Stack:
@@ -56,7 +56,7 @@ cdef class Stack:
 
     cdef int push(self, SIZE_t start, SIZE_t end, SIZE_t depth, SIZE_t parent,
                   bint is_left, double impurity,
-                  SIZE_t n_relevant_features) nogil:
+                  SIZE_t n_valid_features) nogil:
         """Push a new element onto the stack.
 
         Returns 0 if successful; -1 on out of memory error.
@@ -81,7 +81,7 @@ cdef class Stack:
         stack[top].parent = parent
         stack[top].is_left = is_left
         stack[top].impurity = impurity
-        stack[top].n_relevant_features = n_relevant_features
+        stack[top].n_valid_features = n_valid_features
 
         # Increment stack pointer
         self.top = top + 1
@@ -130,7 +130,8 @@ cdef void swap_heap(PriorityHeapRecord* heap, SIZE_t a, SIZE_t b) nogil:
 
 
 cdef void heapify_up(PriorityHeapRecord* heap, SIZE_t pos) nogil:
-    """Restore heap invariant parent.improvement > child.improvement from ``pos`` upwards. """
+    """Restore heap invariant parent.improvement > child.improvement from
+       ``pos`` upwards. """
     if pos == 0:
         return
 
@@ -142,14 +143,18 @@ cdef void heapify_up(PriorityHeapRecord* heap, SIZE_t pos) nogil:
 
 
 cdef void heapify_down(PriorityHeapRecord* heap, SIZE_t pos, SIZE_t heap_length) nogil:
-    """Restore heap invariant parent.improvement > children.improvement from ``pos`` downwards. """
+    """Restore heap invariant parent.improvement > children.improvement from
+       ``pos`` downwards. """
     cdef SIZE_t left_pos = 2 * (pos + 1) - 1
     cdef SIZE_t right_pos = 2 * (pos + 1)
     cdef SIZE_t largest = pos
 
-    if left_pos < heap_length and heap[left_pos].improvement > heap[largest].improvement:
+    if (left_pos < heap_length and
+            heap[left_pos].improvement > heap[largest].improvement):
         largest = left_pos
-    if right_pos < heap_length and heap[right_pos].improvement > heap[largest].improvement:
+
+    if (right_pos < heap_length and
+            heap[right_pos].improvement > heap[largest].improvement):
         largest = right_pos
 
     if largest != pos:

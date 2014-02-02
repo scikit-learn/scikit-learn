@@ -51,7 +51,8 @@ cdef class Criterion:
     cdef void reset(self) nogil
     cdef void update(self, SIZE_t new_pos) nogil
     cdef double node_impurity(self) nogil
-    cdef void children_impurity(self, double* impurity_left, double* impurity_right) nogil
+    cdef void children_impurity(self, double* impurity_left,
+                                double* impurity_right) nogil
     cdef void node_value(self, double* dest) nogil
     cdef double impurity_improvement(self, double impurity) nogil
 
@@ -96,9 +97,14 @@ cdef class Splitter:
 
     cdef void node_reset(self, SIZE_t start, SIZE_t end) nogil
 
+    # With depth-first tree builder the n_valid_features arguments is used by
+    # the splitter to avoid splitting on constant features (invalid features).
+    # The array features is such that `features[n_valid_features:n_features]`
+    # correspond to features with constant value at the current depth.
+
     cdef void node_split(self,
                          double impurity,  # Impurity of the node
-                         SIZE_t* n_relevant_features,  # Number of relevant features
+                         SIZE_t* n_valid_features,  # See the comment above
                          SIZE_t* pos, # Set to >= end if the node is a leaf
                          SIZE_t* feature,
                          double* threshold,
