@@ -402,7 +402,7 @@ div.admonition p.admonition-title + p {
 }
 
 div.highlight{
-    background-color: white;
+    background: none;
 }
 
 div.highlight a {
