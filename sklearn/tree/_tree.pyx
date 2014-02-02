@@ -1018,8 +1018,9 @@ cdef class BestSplitter(Splitter):
         cdef SIZE_t end = self.end
 
         cdef SIZE_t* features = self.features
-        cdef SIZE_t n_features = n_relevant_features[0]
-        cdef SIZE_t n_current_relevant = n_relevant_features[0]
+        cdef SIZE_t n_features = self.n_features
+        cdef SIZE_t n_irrelevant = self.n_features - n_relevant_features[0]
+        cdef SIZE_t n_drawn_irrelevant = 0
 
         cdef DTYPE_t* X = self.X
         cdef DTYPE_t* Xf = self.feature_values
@@ -1052,12 +1053,18 @@ cdef class BestSplitter(Splitter):
 
         for f_idx in range(n_features):
             # Draw a feature at random
-            f_i = n_features - f_idx - 1
-            f_j = rand_int(n_features - f_idx, random_state)
+            f_i = n_features - f_idx - 1 + n_drawn_irrelevant
+            f_j = n_drawn_irrelevant + rand_int(n_features - f_idx,
+                                                random_state)
 
-            tmp = features[f_i]
-            features[f_i] = features[f_j]
-            features[f_j] = tmp
+            if f_j < n_irrelevant:
+                features[n_drawn_irrelevant], features[f_j] = features[f_j], features[n_drawn_irrelevant]
+                n_drawn_irrelevant += 1
+                visited_features += 1
+                continue
+            else:
+                features[f_i], features[f_j] = features[f_j], features[f_i]
+
 
             current_feature = features[f_i]
 
@@ -1071,11 +1078,13 @@ cdef class BestSplitter(Splitter):
             sort(Xf + start, samples + start, end - start)
 
             # The feature is constant since Xf[start] == Xf[end] after sorting
-            if Xf[start] <= Xf[end - 1] + EPSILON_FLT:
-                tmp = features[n_current_relevant - 1]
-                features[n_current_relevant - 1] = current_feature
-                features[f_i] = tmp
-                n_current_relevant -= 1
+            if  Xf[end - 1] <= Xf[start] + EPSILON_FLT:
+                features[n_irrelevant], features[f_i] = features[f_i], features[n_irrelevant]
+                features[n_irrelevant], features[n_drawn_irrelevant] = features[n_drawn_irrelevant], features[n_irrelevant]
+                n_irrelevant += 1
+                n_drawn_irrelevant += 1
+                visited_features += 1
+                continue
 
             # Evaluate all splits
             self.criterion.reset()
@@ -1124,6 +1133,7 @@ cdef class BestSplitter(Splitter):
             # Count one more visited feature
             visited_features += 1
 
+
             if visited_features >= max_features:
                 break
 
@@ -1146,7 +1156,7 @@ cdef class BestSplitter(Splitter):
                     samples[p] = tmp
 
         # Return values
-        n_relevant_features[0] = n_current_relevant
+        n_relevant_features[0] = n_features - n_irrelevant
         pos[0] = best_pos
         feature[0] = best_feature
         threshold[0] = best_threshold
