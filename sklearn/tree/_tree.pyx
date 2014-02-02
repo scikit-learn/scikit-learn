@@ -1068,7 +1068,8 @@ cdef class BestSplitter(Splitter):
 
             sort(Xf + start, samples + start, end - start)
 
-            # The feature is constant since Xf[start] == Xf[end] after sorting
+            # The feature is constant since Xf[start] ~ Xf[end] after sorting
+            # No valid split can be found.
             if  Xf[end - 1] <= Xf[start] + EPSILON_FLT:
                 tmp = features[n_current_relevant - 1]
                 features[n_current_relevant - 1] = current_feature
@@ -1117,12 +1118,8 @@ cdef class BestSplitter(Splitter):
 
                         best_threshold = current_threshold
 
-            if best_pos == end: # No valid split was ever found
-                continue
-
             # Count one more visited feature
             visited_features += 1
-
 
             if visited_features >= max_features:
                 break
@@ -1330,9 +1327,9 @@ cdef class RandomSplitter(Splitter):
             current_feature = features[f_i]
 
             # Find min, max
-            min_feature_value = max_feature_value = \
-                X[X_sample_stride * samples[start]
-                  + X_fx_stride * current_feature]
+            min_feature_value =  X[X_sample_stride * samples[start] +
+                                   X_fx_stride * current_feature]
+            max_feature_value = min_feature_value
 
             for p in range(start + 1, end):
                 current_feature_value = X[X_sample_stride * samples[p]
@@ -1497,7 +1494,8 @@ cdef class PresortBestSplitter(Splitter):
         cdef SIZE_t end = self.end
 
         cdef SIZE_t* features = self.features
-        cdef SIZE_t n_features = self.n_features
+        cdef SIZE_t n_features = n_relevant_features[0]
+        cdef SIZE_t n_current_relevant = n_relevant_features[0]
 
         cdef DTYPE_t* X = self.X
         cdef DTYPE_t* Xf = self.feature_values
@@ -1544,10 +1542,7 @@ cdef class PresortBestSplitter(Splitter):
             # Draw a feature at random
             f_i = n_features - f_idx - 1
             f_j = rand_int(n_features - f_idx, random_state)
-
-            tmp = features[f_i]
-            features[f_i] = features[f_j]
-            features[f_j] = tmp
+            features[f_i], features[f_j] = features[f_j], features[f_i]
 
             current_feature = features[f_i]
 
@@ -1558,9 +1553,18 @@ cdef class PresortBestSplitter(Splitter):
                 j = X_argsorted[X_argsorted_stride * current_feature + i]
                 if sample_mask[j] == 1:
                     samples[p] = j
-                    Xf[p] = X[X_sample_stride * j
-                              + X_fx_stride * current_feature]
+                    Xf[p] = X[X_sample_stride * j +
+                              X_fx_stride * current_feature]
                     p += 1
+
+            # The feature is constant since Xf[start] ~ Xf[end] after sorting
+            # No valid split can be found.
+            if  Xf[end - 1] <= Xf[start] + EPSILON_FLT:
+                tmp = features[n_current_relevant - 1]
+                features[n_current_relevant - 1] = current_feature
+                features[f_i] = tmp
+                n_current_relevant -= 1
+                continue
 
             # Evaluate all splits
             self.criterion.reset()
@@ -1602,9 +1606,6 @@ cdef class PresortBestSplitter(Splitter):
 
                         best_threshold = current_threshold
 
-            if best_pos == end: # No valid split was ever found
-                continue
-
             # Count one more visited feature
             visited_features += 1
 
@@ -1634,6 +1635,7 @@ cdef class PresortBestSplitter(Splitter):
             sample_mask[samples[p]] = 0
 
         # Return values
+        n_relevant_features[0] = n_current_relevant
         pos[0] = best_pos
         feature[0] = best_feature
         threshold[0] = best_threshold
