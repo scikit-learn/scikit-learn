@@ -6,45 +6,36 @@ Validation curves: plotting scores to evaluate models
 
 .. currentmodule:: sklearn.learning_curve
 
-There are several problems that can occur during learning and visualization
-can help to identify these. Every algorithm has its advantages and drawbacks.
-A good way of categorizing estimators are their inherent `bias and variance
-<http://en.wikipedia.org/wiki/Bias-variance_dilemma>`_. Simple algorithms
-(e.g. :ref:`linear_model`) usually have a high **bias**, which means they have
-strong assumptions about the underlying function that will be approximated.
-As a result, they need fewer training samples to learn a function that
-complies with these assumptions, e.g. a linear model can approximate the
-true linear function usually with only very few examples very accurately.
-However, if the function to be learned does not comply with these assumptions,
-the error of the model will be very high and that applies to the training error
-as well as to the validation error. More training examples do not help in this
-case. If both the training error and the validation error are high, we call
-this **underfitting**.
+Every estimator has its advantages and drawbacks. Its generalization error
+can be decomposed in terms of bias, variance and noise. The **bias** of an
+estimator is its average error for different training sets. The **variance**
+of an estimator indicates how sensitive it is to varying training sets. Noise
+is a property of the data.
 
-An example for underfitting can be seen on the left side of the following plot.
-A simple linear model can at best provide only a poor fit to samples drawn from
-a sine function. With polynomial features, we can increase the complexity of
-the model and decrease the bias.
+In the following plot, we see a function :math:`f(x) = \cos (\frac{3}{2} \pi x)`
+and some noisy samples from that function. We use three different estimators
+to fit the function: linear regression with polynomial features of degree 1,
+4 and 15. We see that the first estimator can at best provide only a poor fit
+to the samples and the true function because it is too simple (high bias),
+the second estimator approximates it almost perfectly and the last estimator
+approximates the training data perfectly but does not fit the true function
+very well, i.e. it is very sensitive to varying training data (high variance).
 
 .. figure:: ../auto_examples/images/plot_polynomial_regression_1.png
    :target: ../auto_examples/plot_polynomial_regression.html
    :align: center
    :scale: 50%
 
-More complex models with a low bias can usually approximate much more complex
-functions. However, too complex models usually have a high **variance**, i.e.
-they are very sensitive to varying training sets. Usually we can recognize too
-complex models because the training error will be very low and the validation
-error will be very high. This is known as **overfitting**. In the plot you can
-see an example on the right side. An overfitting estimator typically learns
-the noise of the training data. To reduce this type of error, we can either
-select a simpler estimator with a higher bias, regularize a complex estimator,
-or if this did not help, collect more training data.
+Bias and variance are inherent properties of estimators and we usually have to
+select learning algorithms and hyperparameters so that both bias and variance
+are as low as possible (see `Bias-variance dilemma
+<http://en.wikipedia.org/wiki/Bias-variance_dilemma>`_). Another way to reduce
+the variance of a model is to use more training data. However, you should only
+collect more training data if the true function is too complex to be
+approximated by an estimator with a lower variance.
 
-We can change the bias and variance by selecting the model, which means we
-first have to choose an estimator and then we have to select an appropriate
-parametrization of that estimator. In the simple one-dimensional problem that
-we have seen in the example, this seems to be easy. However, in
+In the simple one-dimensional problem that we have seen in the example it is
+easy to see whether the estimator suffers from bias or variance. However, in
 high-dimensional spaces, models can become very difficult to visualize. For
 this reason, it is often helpful to use the tools described below.
 
