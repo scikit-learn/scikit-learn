@@ -220,7 +220,7 @@ def _fit_param_iter(estimator, X, y, scoring, parameter_iterable, refit,
             for parameters in parameter_iterable
             for train, test in cv)
 
-    # Out is a list of triplet: score, estimator, n_test_samples
+    # `out` is a list of tuples (fold_score, n_test, scoring_time, params).
     n_fits = len(out)
     n_folds = len(cv)
     n_scorers = len(scorers)
