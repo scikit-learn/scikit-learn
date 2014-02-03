@@ -1022,8 +1022,10 @@ cdef class BestSplitter(Splitter):
         cdef SIZE_t end = self.end
 
         cdef SIZE_t* features = self.features
+        cdef SIZE_t n_features = self.n_features
         cdef SIZE_t n_valid = n_valid_features[0]
-        cdef SIZE_t n_current_valid = n_valid_features[0]
+        cdef SIZE_t n_invalid = self.n_features - n_valid
+        cdef SIZE_t n_invalid_drawn = 0
 
         cdef DTYPE_t* X = self.X
         cdef DTYPE_t* Xf = self.feature_values
@@ -1054,11 +1056,21 @@ cdef class BestSplitter(Splitter):
         cdef SIZE_t partition_start
         cdef SIZE_t partition_end
 
-        for f_idx in range(n_valid):
+        for f_idx in range(n_features):
             # Draw a feature at random
-            f_i = n_valid - f_idx - 1
-            f_j = rand_int(n_valid - f_idx, random_state)
-            features[f_i], features[f_j] = features[f_j], features[f_i]
+            f_i = n_features - f_idx - 1 + n_invalid_drawn
+            f_j = n_invalid_drawn + rand_int(n_features - f_idx, random_state)
+
+            if n_invalid > f_j:
+                # Swap f_j and n_invalid_drawn
+                tmp = features[f_i]
+                features[f_i] = features[n_invalid_drawn]
+                features[n_invalid_drawn] = tmp
+                n_invalid_drawn += 1
+                visited_features += 1
+                continue
+            else:
+                features[f_i], features[f_j] = features[f_j], features[f_i]
 
             current_feature = features[f_i]
 
@@ -1072,12 +1084,20 @@ cdef class BestSplitter(Splitter):
             sort(Xf + start, samples + start, end - start)
 
             # The feature is constant since Xf[start] ~ Xf[end] after sorting
-            # No valid split can be found.
             if  Xf[end - 1] <= Xf[start] + EPSILON_FLT:
-                n_current_valid -= 1
-                tmp = features[n_current_valid]
-                features[n_current_valid] = current_feature
-                features[f_i] = tmp
+                # Swap n_invalid and f_i
+                tmp = features[f_i]
+                features[f_i] = features[n_invalid]
+                features[n_invalid] = tmp
+
+                # Swap n_invalid and n_invalid_drawn
+                tmp = features[n_invalid_drawn]
+                features[n_invalid_drawn] = features[n_invalid]
+                features[n_invalid] = tmp
+
+                n_invalid += 1
+                n_invalid_drawn += 1
+                visited_features += 1
                 continue
 
             # Evaluate all splits
@@ -1124,6 +1144,10 @@ cdef class BestSplitter(Splitter):
             # Count one more visited feature
             visited_features += 1
 
+            # No valid split was ever found
+            if best_pos == end:
+                continue
+
             if visited_features >= max_features:
                 break
 
@@ -1146,7 +1170,7 @@ cdef class BestSplitter(Splitter):
                     samples[p] = tmp
 
         # Return values
-        n_valid_features[0] = n_current_valid
+        n_valid_features[0] = n_features - n_invalid
         pos[0] = best_pos
         feature[0] = best_feature
         threshold[0] = best_threshold
