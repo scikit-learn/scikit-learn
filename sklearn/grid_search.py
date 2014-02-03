@@ -230,32 +230,19 @@ def _fit_param_iter(estimator, X, y, scoring, parameter_iterable, refit,
         grid_scores.append([])
 
     for grid_start in range(0, n_fits, n_folds):
-        n_test_samples = 0
-        scores = np.zeros(n_scorers)
-        all_scores = np.zeros((n_scorers, n_folds))
 
-        # Parameters for this part of the grid.
-        parameters = out[grid_start][3]
-
-        for j, (curr_scores, curr_n_test_samples, _, _) in \
-                enumerate(out[grid_start:grid_start + n_folds]):
-
-            all_scores[:, j] = curr_scores
-
-            if iid:
-                curr_scores *= curr_n_test_samples
-                n_test_samples += curr_n_test_samples
-
-            scores += curr_scores
-
-        if iid:
-            scores /= float(n_test_samples)
-        else:
-            scores /= float(n_folds)
+        grid_stop = grid_start + n_folds
+        fold_scores, n_test, _, parameters = zip(*out[grid_start:grid_stop])
+        # `params` contains the same parameters n_fold times.
+        parameters = parameters[0]
+        # `fold_scores` is an n_folds x n_scorers 2-d array.
+        fold_scores = np.array(fold_scores)
+        weights = n_test if iid else None
+        mean_scores = np.average(fold_scores, axis=0, weights=weights)
 
         for i in xrange(n_scorers):
             # TODO: shall we also store the test_fold_sizes?
-            tup = _CVScoreTuple(parameters, scores[i], all_scores[i])
+            tup = _CVScoreTuple(parameters, mean_scores[i], fold_scores[:, i])
             grid_scores[i].append(tup)
 
     # Find the best parameters by comparing on the mean validation score:
