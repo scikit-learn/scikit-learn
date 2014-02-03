@@ -462,13 +462,13 @@ def pinvh(a, cond=None, rcond=None, lower=True):
 
     Examples
     --------
-    >>> from numpy import *
-    >>> a = random.randn(9, 6)
+    >>> import numpy as np
+    >>> a = np.random.randn(9, 6)
     >>> a = np.dot(a, a.T)
     >>> B = pinvh(a)
-    >>> allclose(a, dot(a, dot(B, a)))
+    >>> np.allclose(a, np.dot(a, np.dot(B, a)))
     True
-    >>> allclose(B, dot(B, dot(a, B)))
+    >>> np.allclose(B, np.dot(B, np.dot(a, B)))
     True
 
     """
