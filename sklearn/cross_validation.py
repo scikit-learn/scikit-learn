@@ -1104,7 +1104,7 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
                         pre_dispatch=pre_dispatch)
 
     # `out` is a list of size n_folds. Each element of the list is a tuple
-    # (fold_scores, n_test, scoring_time)
+    # (fold_scores, n_test, train_time)
     out = parallel(delayed(_fit_and_score)(clone(estimator), X, y, scorers,
                                            train, test, verbose, None,
                                            fit_params)
@@ -1171,8 +1171,8 @@ def _fit_and_score(estimator, X, y, scorers, train, test, verbose, parameters,
     n_test_samples : int
         Number of test samples.
 
-    scoring_time : float
-        Time spent for fitting and scoring in seconds.
+    train_time : float
+        Time spent for fitting in seconds.
 
     parameters : dict or None, optional
         The parameters that have been evaluated.
@@ -1195,15 +1195,17 @@ def _fit_and_score(estimator, X, y, scorers, train, test, verbose, parameters,
     if parameters is not None:
         estimator.set_params(**parameters)
 
-    start_time = time.time()
-
     X_train, y_train = _safe_split(estimator, X, y, train)
     X_test, y_test = _safe_split(estimator, X, y, test, train)
+
+    start_time = time.time()
 
     if y_train is None:
         estimator.fit(X_train, **fit_params)
     else:
         estimator.fit(X_train, y_train, **fit_params)
+
+    train_time = time.time() - start_time
 
     if len(scorers) == 1:
         # We cannot use _evaluate_scorers here because the scorer might be
@@ -1220,16 +1222,14 @@ def _fit_and_score(estimator, X, y, scorers, train, test, verbose, parameters,
             train_scores = _evaluate_scorers(estimator, X_train, y_train,
                                              scorers)
 
-    scoring_time = time.time() - start_time
-
     if verbose > 2:
         msg += ", score=%s" % test_scores
     if verbose > 1:
-        end_msg = "%s -%s" % (msg, logger.short_format_time(scoring_time))
+        end_msg = "%s -%s" % (msg, logger.short_format_time(train_time))
         print("[CV] %s %s" % ((64 - len(end_msg)) * '.', end_msg))
 
     ret = [train_scores] if return_train_scores else []
-    ret.extend([test_scores, _num_samples(X_test), scoring_time])
+    ret.extend([test_scores, _num_samples(X_test), train_time])
     if return_parameters:
         ret.append(parameters)
     return ret
