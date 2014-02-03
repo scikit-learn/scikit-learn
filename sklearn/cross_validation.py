@@ -1192,7 +1192,7 @@ def _fit_and_score(estimator, X, y, scorers, train, test, verbose, parameters,
         print("[CV] %s %s" % ((64 - len(end_msg)) * '.', end_msg))
 
     ret = [train_scores] if return_train_scores else []
-    ret.extend([test_scores, _num_samples(X_test), train_time, parameters])
+    ret += [test_scores, _num_samples(X_test), train_time, parameters]
     return ret
 
 
