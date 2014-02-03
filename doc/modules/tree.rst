@@ -140,7 +140,7 @@ a PDF file (or any other supported file type) directly in Python::
 
     >>> from sklearn.externals.six import StringIO  # doctest: +SKIP
     >>> import pydot # doctest: +SKIP
-    >>> dot_data = StringIO.StringIO() # doctest: +SKIP
+    >>> dot_data = StringIO() # doctest: +SKIP
     >>> tree.export_graphviz(clf, out_file=dot_data) # doctest: +SKIP
     >>> graph = pydot.graph_from_dot_data(dot_data.getvalue()) # doctest: +SKIP
     >>> graph.write_pdf("iris.pdf") # doctest: +SKIP
