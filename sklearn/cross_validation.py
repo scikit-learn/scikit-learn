@@ -1120,53 +1120,16 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
 
 
 def _fit_and_score(estimator, X, y, scorers, train, test, verbose, parameters,
-                   fit_params, return_train_scores=False,
-                   return_parameters=False):
+                   fit_params, return_train_scores=False):
     """Fit estimator and compute scores for a given dataset split.
-
-    Parameters
-    ----------
-    estimator : estimator object implementing 'fit'
-        The object to use to fit the data.
-
-    X : array-like of shape at least 2D
-        The data to fit.
-
-    y : array-like, optional, default: None
-        The target variable to try to predict in the case of
-        supervised learning.
-
-    scorers : list
-        A list of scorer objects
-
-    train : array-like, shape = (n_train_samples,)
-        Indices of training samples.
-
-    test : array-like, shape = (n_test_samples,)
-        Indices of test samples.
-
-    verbose : integer
-        The verbosity level.
-
-    parameters : dict or None
-        Parameters to be set on the estimator.
-
-    fit_params : dict or None
-        Parameters that will be passed to ``estimator.fit``.
-
-    return_train_scores : boolean, optional, default: False
-        Compute and return scores on training set.
-
-    return_parameters : boolean, optional, default: False
-        Return parameters that has been used for the estimator.
 
     Returns
     -------
-    test_score : array of floats
-        Scores on test set.
-
     train_score : array of floats, optional
         Scores on training set.
+
+    test_score : array of floats
+        Scores on test set.
 
     n_test_samples : int
         Number of test samples.
@@ -1229,9 +1192,7 @@ def _fit_and_score(estimator, X, y, scorers, train, test, verbose, parameters,
         print("[CV] %s %s" % ((64 - len(end_msg)) * '.', end_msg))
 
     ret = [train_scores] if return_train_scores else []
-    ret.extend([test_scores, _num_samples(X_test), train_time])
-    if return_parameters:
-        ret.append(parameters)
+    ret.extend([test_scores, _num_samples(X_test), train_time, parameters])
     return ret
 
 

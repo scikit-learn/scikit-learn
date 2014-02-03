@@ -215,8 +215,7 @@ def _fit_param_iter(estimator, X, y, scoring, parameter_iterable, refit,
     out = Parallel(n_jobs=n_jobs, verbose=verbose, pre_dispatch=pre_dispatch)(
             delayed(_fit_and_score)(
                 clone(base_estimator), X, y, scorers, train, test,
-                verbose, parameters, fit_params,
-                return_parameters=True)
+                verbose, parameters, fit_params)
             for parameters in parameter_iterable
             for train, test in cv)
 
