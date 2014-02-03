@@ -1,5 +1,6 @@
 # Authors: Gilles Louppe <g.louppe@gmail.com>
 #          Peter Prettenhofer <peter.prettenhofer@gmail.com>
+#          Arnaud Joly <arnaud.v.joly@gmail.com>
 # Licence: BSD 3 clause
 
 # See _utils.pyx for details.

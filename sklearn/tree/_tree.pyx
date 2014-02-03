@@ -275,7 +275,6 @@ cdef class ClassificationCriterion(Criterion):
         cdef SIZE_t k = 0
 
         for k in range(n_outputs):
-
             memset(label_count_left, 0, n_classes[k] * sizeof(double))
             memcpy(label_count_right, label_count_total,
                    n_classes[k] * sizeof(double))
@@ -992,10 +991,10 @@ cdef class Splitter:
                             start,
                             end)
 
-    cdef void node_split(self, double impurity, SIZE_t* n_valid_features,
-                         SIZE_t* pos, SIZE_t* feature, double* threshold,
-                         double* impurity_left, double* impurity_right,
-                         double* impurity_improvement) nogil:
+    cdef void node_split(self, double impurity, SIZE_t* pos, SIZE_t* feature,
+                         double* threshold, double* impurity_left,
+                         double* impurity_right, double* impurity_improvement,
+                         SIZE_t* n_valid_features) nogil:
         """Find a split on node samples[start:end]."""
         pass
 
@@ -1012,10 +1011,10 @@ cdef class BestSplitter(Splitter):
                                self.min_samples_leaf,
                                self.random_state), self.__getstate__())
 
-    cdef void node_split(self, double impurity, SIZE_t* n_valid_features,
-                         SIZE_t* pos, SIZE_t* feature, double* threshold,
-                         double* impurity_left, double* impurity_right,
-                         double* impurity_improvement) nogil:
+    cdef void node_split(self, double impurity, SIZE_t* pos, SIZE_t* feature,
+                         double* threshold, double* impurity_left,
+                         double* impurity_right, double* impurity_improvement,
+                         SIZE_t* n_valid_features) nogil:
         """Find the best split on node samples[start:end]."""
         # Find the best split
         cdef SIZE_t* samples = self.samples
@@ -1023,9 +1022,8 @@ cdef class BestSplitter(Splitter):
         cdef SIZE_t end = self.end
 
         cdef SIZE_t* features = self.features
-        cdef SIZE_t n_features = n_valid_features[0]
+        cdef SIZE_t n_valid = n_valid_features[0]
         cdef SIZE_t n_current_valid = n_valid_features[0]
-
 
         cdef DTYPE_t* X = self.X
         cdef DTYPE_t* Xf = self.feature_values
@@ -1056,10 +1054,10 @@ cdef class BestSplitter(Splitter):
         cdef SIZE_t partition_start
         cdef SIZE_t partition_end
 
-        for f_idx in range(n_features):
+        for f_idx in range(n_valid):
             # Draw a feature at random
-            f_i = n_features - f_idx - 1
-            f_j = rand_int(n_features - f_idx, random_state)
+            f_i = n_valid - f_idx - 1
+            f_j = rand_int(n_valid - f_idx, random_state)
             features[f_i], features[f_j] = features[f_j], features[f_i]
 
             current_feature = features[f_i]
@@ -1076,10 +1074,10 @@ cdef class BestSplitter(Splitter):
             # The feature is constant since Xf[start] ~ Xf[end] after sorting
             # No valid split can be found.
             if  Xf[end - 1] <= Xf[start] + EPSILON_FLT:
-                tmp = features[n_current_valid - 1]
-                features[n_current_valid - 1] = current_feature
-                features[f_i] = tmp
                 n_current_valid -= 1
+                tmp = features[n_current_valid]
+                features[n_current_valid] = current_feature
+                features[f_i] = tmp
                 continue
 
             # Evaluate all splits
@@ -1275,10 +1273,10 @@ cdef class RandomSplitter(Splitter):
                                  self.min_samples_leaf,
                                  self.random_state), self.__getstate__())
 
-    cdef void node_split(self, double impurity, SIZE_t* n_valid_features,
-                         SIZE_t* pos, SIZE_t* feature, double* threshold,
-                         double* impurity_left, double* impurity_right,
-                         double* impurity_improvement) nogil:
+    cdef void node_split(self, double impurity, SIZE_t* pos, SIZE_t* feature,
+                         double* threshold, double* impurity_left,
+                         double* impurity_right, double* impurity_improvement,
+                         SIZE_t* n_valid_features) nogil:
         """Find the best random split on node samples[start:end]."""
         # Draw random splits and pick the best
         cdef SIZE_t* samples = self.samples
@@ -1286,7 +1284,7 @@ cdef class RandomSplitter(Splitter):
         cdef SIZE_t end = self.end
 
         cdef SIZE_t* features = self.features
-        cdef SIZE_t n_features = n_valid_features[0]
+        cdef SIZE_t n_valid = n_valid_features[0]
         cdef SIZE_t n_current_valid = n_valid_features[0]
 
         cdef DTYPE_t* X = self.X
@@ -1320,10 +1318,10 @@ cdef class RandomSplitter(Splitter):
         cdef SIZE_t partition_start
         cdef SIZE_t partition_end
 
-        for f_idx in range(n_features):
+        for f_idx in range(n_valid):
             # Draw a feature at random
-            f_i = n_features - f_idx - 1
-            f_j = rand_int(n_features - f_idx, random_state)
+            f_i = n_valid - f_idx - 1
+            f_j = rand_int(n_valid - f_idx, random_state)
 
             tmp = features[f_i]
             features[f_i] = features[f_j]
@@ -1346,10 +1344,10 @@ cdef class RandomSplitter(Splitter):
                     max_feature_value = current_feature_value
 
             if min_feature_value == max_feature_value:
-                tmp = features[n_current_valid - 1]
-                features[n_current_valid - 1] = current_feature
-                features[f_i] = tmp
                 n_current_valid -= 1
+                tmp = features[n_current_valid]
+                features[n_current_valid] = current_feature
+                features[f_i] = tmp
                 continue
 
             # Draw a random threshold
@@ -1411,8 +1409,8 @@ cdef class RandomSplitter(Splitter):
             p = start
 
             while p < partition_end:
-                if X[X_sample_stride * samples[p]
-                     + X_fx_stride * best_feature] <= best_threshold:
+                if (X[X_sample_stride * samples[p] +
+                      X_fx_stride * best_feature] <= best_threshold):
                     p += 1
 
                 else:
@@ -1488,10 +1486,10 @@ cdef class PresortBestSplitter(Splitter):
             memset(sample_mask, 0, self.n_total_samples)
             self.sample_mask = <unsigned char*> sample_mask
 
-    cdef void node_split(self, double impurity, SIZE_t* n_valid_features,
-                         SIZE_t* pos, SIZE_t* feature, double* threshold,
-                         double* impurity_left, double* impurity_right,
-                         double* impurity_improvement) nogil:
+    cdef void node_split(self, double impurity, SIZE_t* pos, SIZE_t* feature,
+                         double* threshold, double* impurity_left,
+                         double* impurity_right, double* impurity_improvement,
+                         SIZE_t* n_valid_features) nogil:
         """Find the best split on node samples[start:end]."""
         # Find the best split
         cdef SIZE_t* samples = self.samples
@@ -1499,7 +1497,7 @@ cdef class PresortBestSplitter(Splitter):
         cdef SIZE_t end = self.end
 
         cdef SIZE_t* features = self.features
-        cdef SIZE_t n_features = n_valid_features[0]
+        cdef SIZE_t n_valid = n_valid_features[0]
         cdef SIZE_t n_current_valid = n_valid_features[0]
 
         cdef DTYPE_t* X = self.X
@@ -1543,10 +1541,10 @@ cdef class PresortBestSplitter(Splitter):
             sample_mask[samples[p]] = 1
 
         # Look for splits
-        for f_idx in range(n_features):
+        for f_idx in range(n_valid):
             # Draw a feature at random
-            f_i = n_features - f_idx - 1
-            f_j = rand_int(n_features - f_idx, random_state)
+            f_i = n_valid - f_idx - 1
+            f_j = rand_int(n_valid - f_idx, random_state)
             features[f_i], features[f_j] = features[f_j], features[f_i]
 
             current_feature = features[f_i]
@@ -1565,10 +1563,10 @@ cdef class PresortBestSplitter(Splitter):
             # The feature is constant since Xf[start] ~ Xf[end] after sorting
             # No valid split can be found.
             if  Xf[end - 1] <= Xf[start] + EPSILON_FLT:
-                tmp = features[n_current_valid - 1]
-                features[n_current_valid - 1] = current_feature
-                features[f_i] = tmp
                 n_current_valid -= 1
+                tmp = features[n_current_valid]
+                features[n_current_valid] = current_feature
+                features[f_i] = tmp
                 continue
 
             # Evaluate all splits
@@ -1758,11 +1756,11 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                 is_leaf = is_leaf or (impurity < EPSILON_FLT)
 
                 if not is_leaf:
-                    splitter.node_split(impurity, &n_valid_features,
-                                        &pos, &feature, &threshold,
+                    splitter.node_split(impurity, &pos, &feature, &threshold,
                                         &split_impurity_left,
                                         &split_impurity_right,
-                                        &split_improvement)
+                                        &split_improvement,
+                                        &n_valid_features)
                     is_leaf = is_leaf or (pos >= end)
 
                 node_id = tree._add_node(parent, is_left, is_leaf, feature,
@@ -1831,10 +1829,9 @@ cdef int _add_split_node(Splitter splitter, Tree tree,
                (n_node_samples < 2 * tree.min_samples_leaf))
 
     if not is_leaf:
-        splitter.node_split(impurity, &n_valid_features,
-                            &pos, &feature, &threshold,
+        splitter.node_split(impurity, &pos, &feature, &threshold,
                             &split_impurity_left, &split_impurity_right,
-                            &split_improvement)
+                            &split_improvement, &n_valid_features)
         is_leaf = is_leaf or (pos >= end)
 
     node_id = tree._add_node(parent - tree.nodes if parent != NULL

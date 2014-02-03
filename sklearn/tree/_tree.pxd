@@ -2,6 +2,7 @@
 #          Peter Prettenhofer <peter.prettenhofer@gmail.com>
 #          Brian Holt <bdholt1@gmail.com>
 #          Joel Nothman <joel.nothman@gmail.com>
+#          Arnaud Joly <arnaud.v.joly@gmail.com>
 # Licence: BSD 3 clause
 
 # See _tree.pyx for details.
@@ -14,7 +15,6 @@ ctypedef np.npy_float64 DOUBLE_t         # Type of y, sample_weight
 ctypedef np.npy_intp SIZE_t              # Type for indices and counters
 ctypedef np.npy_int32 INT32_t            # Signed 32 bit integer
 ctypedef np.npy_uint32 UINT32_t          # Unsigned 32 bit integer
-
 
 
 # =============================================================================
@@ -42,12 +42,8 @@ cdef class Criterion:
     # statistics correspond to samples[start:pos] and samples[pos:end].
 
     # Methods
-    cdef void init(self, DOUBLE_t* y,
-                         SIZE_t y_stride,
-                         DOUBLE_t* sample_weight,
-                         SIZE_t* samples,
-                         SIZE_t start,
-                         SIZE_t end) nogil
+    cdef void init(self, DOUBLE_t* y, SIZE_t y_stride, DOUBLE_t* sample_weight,
+                   SIZE_t* samples, SIZE_t start, SIZE_t end) nogil
     cdef void reset(self) nogil
     cdef void update(self, SIZE_t new_pos) nogil
     cdef double node_impurity(self) nogil
@@ -91,9 +87,7 @@ cdef class Splitter:
     # subsets `samples[start:pos]` and `samples[pos:end]`.
 
     # Methods
-    cdef void init(self, np.ndarray X,
-                         np.ndarray y,
-                         DOUBLE_t* sample_weight)
+    cdef void init(self, np.ndarray X, np.ndarray y, DOUBLE_t* sample_weight)
 
     cdef void node_reset(self, SIZE_t start, SIZE_t end) nogil
 
@@ -104,13 +98,13 @@ cdef class Splitter:
 
     cdef void node_split(self,
                          double impurity,  # Impurity of the node
-                         SIZE_t* n_valid_features,  # See the comment above
                          SIZE_t* pos, # Set to >= end if the node is a leaf
                          SIZE_t* feature,
                          double* threshold,
                          double* impurity_left,
                          double* impurity_right,
-                         double* impurity_improvement) nogil
+                         double* impurity_improvement,
+                         SIZE_t* n_valid_features) nogil
 
     cdef void node_value(self, double* dest) nogil
 
@@ -156,13 +150,9 @@ cdef class Tree:
     cdef SIZE_t value_stride             # = n_outputs * max_n_classes
 
     # Methods
-    cdef SIZE_t _add_node(self, SIZE_t parent,
-                                bint is_left,
-                                bint is_leaf,
-                                SIZE_t feature,
-                                double threshold,
-                                double impurity,
-                                SIZE_t n_node_samples) nogil
+    cdef SIZE_t _add_node(self, SIZE_t parent, bint is_left, bint is_leaf,
+                          SIZE_t feature, double threshold, double impurity,
+                          SIZE_t n_node_samples) nogil
     cdef void _resize(self, SIZE_t capacity)
     cdef int _resize_c(self, SIZE_t capacity=*) nogil
 
