@@ -1100,20 +1100,18 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
                                scoring=scoring)]
         ret_1d = True
 
-    # We clone the estimator to make sure that all the folds are
-    # independent, and that it is pickle-able.
     parallel = Parallel(n_jobs=n_jobs, verbose=verbose,
                         pre_dispatch=pre_dispatch)
 
-    # ret is a list of size n_folds. Each element of the list contains the tuple
-    # returned by _fit_and_score.
-    ret = parallel(delayed(_fit_and_score)(clone(estimator), X, y, scorers,
+    # `out` is a list of size n_folds. Each element of the list is a tuple
+    # (fold_scores, n_test, scoring_time)
+    out = parallel(delayed(_fit_and_score)(clone(estimator), X, y, scorers,
                                            train, test, verbose, None,
                                            fit_params)
                       for train, test in cv)
 
     # Retrieve n_scorers x n_folds 2d-array.
-    scores = np.array([r[0] for r in ret]).T
+    scores = np.array([o[0] for o in out]).T
 
     if ret_1d:
         return scores[0]
