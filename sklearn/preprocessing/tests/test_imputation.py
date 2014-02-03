@@ -2,7 +2,6 @@ import numpy as np
 from scipy import sparse
 
 from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_false

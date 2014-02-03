@@ -12,7 +12,6 @@ from sklearn.svm import SVC
 from sklearn.cross_validation import StratifiedKFold
 from sklearn.feature_selection import RFECV
 from sklearn.datasets import make_classification
-from sklearn.metrics import zero_one_loss
 
 # Build a classification task using 3 informative features
 X, y = make_classification(n_samples=1000, n_features=25, n_informative=3,

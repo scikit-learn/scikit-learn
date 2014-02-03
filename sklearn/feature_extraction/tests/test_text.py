@@ -865,4 +865,4 @@ def test_pickling_transformer():
 
 def test_non_unique_vocab():
     vocab = ['a', 'b', 'c', 'a', 'a']
-    vectorizer = assert_raises(ValueError, CountVectorizer, vocabulary=vocab)
+    assert_raises(ValueError, CountVectorizer, vocabulary=vocab)

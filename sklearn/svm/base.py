@@ -10,7 +10,7 @@ from . import libsvm_sparse
 from ..base import BaseEstimator, ClassifierMixin
 from ..preprocessing import LabelEncoder
 from ..utils import atleast2d_or_csr, array2d, check_random_state, column_or_1d
-from ..utils import ConvergenceWarning, compute_class_weight, deprecated
+from ..utils import ConvergenceWarning, compute_class_weight
 from ..utils.fixes import unique
 from ..utils.extmath import safe_sparse_dot
 from ..externals import six

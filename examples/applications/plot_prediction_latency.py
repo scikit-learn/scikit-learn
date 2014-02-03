@@ -27,7 +27,6 @@ import matplotlib.pyplot as plt
 from scipy.stats import scoreatpercentile
 from sklearn.datasets.samples_generator import make_regression
 from sklearn.ensemble.forest import RandomForestRegressor
-from sklearn.linear_model.coordinate_descent import ElasticNet
 from sklearn.linear_model.ridge import Ridge
 from sklearn.linear_model.stochastic_gradient import SGDRegressor
 from sklearn.svm.classes import SVR
@@ -261,8 +260,7 @@ def plot_benchmark_throughput(throughputs, configuration):
                  estimator_conf in configuration['estimators']]
     cls_values = [throughputs[estimator_conf['name']] for estimator_conf in
                   configuration['estimators']]
-    rectangles = plt.bar(range(len(throughputs)), cls_values, width=0.5,
-                         color=colors)
+    plt.bar(range(len(throughputs)), cls_values, width=0.5, color=colors)
     ax.set_xticks(np.linspace(0.25, len(throughputs) - 0.75, len(throughputs)))
     ax.set_xticklabels(cls_infos, fontsize=10)
     ymax = max(cls_values) * 1.2
