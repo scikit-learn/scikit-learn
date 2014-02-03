@@ -704,7 +704,6 @@ def test_constant_features():
         est.fit(X, y)
         assert_equal(est.tree_.max_depth, 0)
 
-
     X = np.array([[1., 0., 0.],
                   [1., 0., 0.],
                   [0., 0., 0.],
