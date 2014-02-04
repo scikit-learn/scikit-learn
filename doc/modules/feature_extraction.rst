@@ -87,7 +87,7 @@ suitable for feeding into a classifier (maybe after being piped into a
   >>> pos_vectorized = vec.fit_transform(pos_window)
   >>> pos_vectorized                # doctest: +NORMALIZE_WHITESPACE  +ELLIPSIS
   <1x6 sparse matrix of type '<... 'numpy.float64'>'
-      with 6 stored elements in Compressed Sparse Row format>
+      with 6 stored elements in Compressed Sparse ... format>
   >>> pos_vectorized.toarray()
   array([[ 1.,  1.,  1.,  1.,  1.,  1.]])
   >>> vec.get_feature_names()
@@ -176,7 +176,7 @@ can be constructed using::
 
 and fed to a hasher with::
 
-  hasher = FeatureHasher(input_type=string)
+  hasher = FeatureHasher(input_type='string')
   X = hasher.transform(raw_X)
 
 to get a ``scipy.sparse`` matrix ``X``.
@@ -310,7 +310,7 @@ corpus of text documents::
   >>> X = vectorizer.fit_transform(corpus)
   >>> X                              # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
   <4x9 sparse matrix of type '<... 'numpy.int64'>'
-      with 19 stored elements in Compressed Sparse Column format>
+      with 19 stored elements in Compressed Sparse ... format>
 
 The default configuration tokenizes the string by extracting words of
 at least 2 letters. The specific function that does this step can be
@@ -430,7 +430,7 @@ content of the documents::
   >>> tfidf = transformer.fit_transform(counts)
   >>> tfidf                         # doctest: +NORMALIZE_WHITESPACE  +ELLIPSIS
   <6x3 sparse matrix of type '<... 'numpy.float64'>'
-      with 9 stored elements in Compressed Sparse Row format>
+      with 9 stored elements in Compressed Sparse ... format>
 
   >>> tfidf.toarray()                        # doctest: +ELLIPSIS
   array([[ 0.85...,  0.  ...,  0.52...],
@@ -448,8 +448,8 @@ attribute::
   array([ 1. ...,  2.25...,  1.84...])
 
 
-As tf–idf is a very often used for text features, there is also another
-class called :class:`TfidfVectorizer` that combines all the option of
+As tf–idf is very often used for text features, there is also another
+class called :class:`TfidfVectorizer` that combines all the options of
 :class:`CountVectorizer` and :class:`TfidfTransformer` in a single model::
 
   >>> from sklearn.feature_extraction.text import TfidfVectorizer
@@ -457,17 +457,17 @@ class called :class:`TfidfVectorizer` that combines all the option of
   >>> vectorizer.fit_transform(corpus)
   ...                                # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
   <4x9 sparse matrix of type '<... 'numpy.float64'>'
-      with 19 stored elements in Compressed Sparse Row format>
+      with 19 stored elements in Compressed Sparse ... format>
 
 While the tf–idf normalization is often very useful, there might
 be cases where the binary occurrence markers might offer better
 features. This can be achieved by using the ``binary`` parameter
 of :class:`CountVectorizer`. In particular, some estimators such as
 :ref:`bernoulli_naive_bayes` explicitly model discrete boolean random
-variables. Also, very short text are likely to have noisy tf–idf values
+variables. Also, very short texts are likely to have noisy tf–idf values
 while the binary occurrence info is more stable.
 
-As usual the only way how to best adjust the feature extraction parameters
+As usual the best way to adjust the feature extraction parameters
 is to use a cross-validated grid search, for instance by pipelining the
 feature extractor with a classifier:
 
@@ -483,7 +483,7 @@ Common encodings are ASCII, Latin-1 (Western Europe), KOI8-R (Russian)
 and the universal encodings UTF-8 and UTF-16. Many others exist.
 
 .. note::
-    An encoding can also be called a or 'character set',
+    An encoding can also be called a 'character set',
     but this term is less accurate: several encodings can exist
     for a single character set.
 
@@ -562,7 +562,7 @@ The bag of words representation is quite simplistic but surprisingly
 useful in practice.
 
 In particular in a **supervised setting** it can be successfully combined
-with fast and scalable linear models to train **document classificers**,
+with fast and scalable linear models to train **document classifiers**,
 for instance:
 
  * :ref:`example_document_classification_20newsgroups.py`
@@ -584,7 +584,7 @@ Limitations of the Bag of Words representation
 
 A collection of unigrams (what bag of words is) cannot capture phrases
 and multi-word expressions, effectively disregarding any word order
-dependence. Additionally, bag of words model doesn't account for potential
+dependence. Additionally, the bag of words model doesn't account for potential
 misspellings or word derivations.
 
 N-grams to the rescue! Instead of building a simple collection of
@@ -612,7 +612,7 @@ decide better::
   array([[1, 1, 1, 0, 1, 1, 1, 0],
          [1, 1, 0, 1, 1, 1, 0, 1]])
 
-In above example, ``'char_wb`` analyzer is used, which creates n-grams
+In the above example, ``'char_wb`` analyzer is used, which creates n-grams
 only from characters inside word boundaries (padded with space on each
 side). The ``'char'`` analyzer, alternatively, creates n-grams that
 span across words::
@@ -621,7 +621,7 @@ span across words::
   >>> ngram_vectorizer.fit_transform(['jumpy fox'])
   ...                                # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
   <1x4 sparse matrix of type '<... 'numpy.int64'>'
-     with 4 stored elements in Compressed Sparse Column format>
+     with 4 stored elements in Compressed Sparse ... format>
   >>> ngram_vectorizer.get_feature_names() == (
   ...     [' fox ', ' jump', 'jumpy', 'umpy '])
   True
@@ -630,7 +630,7 @@ span across words::
   >>> ngram_vectorizer.fit_transform(['jumpy fox'])
   ...                                # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
   <1x5 sparse matrix of type '<... 'numpy.int64'>'
-      with 5 stored elements in Compressed Sparse Column format>
+      with 5 stored elements in Compressed Sparse ... format>
   >>> ngram_vectorizer.get_feature_names() == (
   ...     ['jumpy', 'mpy f', 'py fo', 'umpy ', 'y fox'])
   True
@@ -699,9 +699,9 @@ meaning that you don't have to call ``fit`` on it::
   >>> hv.transform(corpus)
   ...                                # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
   <4x10 sparse matrix of type '<... 'numpy.float64'>'
-      with 16 stored elements in Compressed Sparse Row format>
+      with 16 stored elements in Compressed Sparse ... format>
 
-You can see that 16 non-zero feature tokens where extracted in the vector
+You can see that 16 non-zero feature tokens were extracted in the vector
 output: this is less than the 19 non-zeros extracted previously by the
 :class:`CountVectorizer` on the same toy corpus. The discrepancy comes from
 hash function collisions because of the low value of the ``n_features`` parameter.
@@ -715,7 +715,7 @@ text classification tasks.
 Note that the dimensionality does not affect the CPU training time of
 algorithms which operate on CSR matrices (``LinearSVC(dual=True)``,
 ``Perceptron``, ``SGDClassifier``, ``PassiveAggressive``) but it does for
-algorithm that work with CSC matrices (``LinearSVC(dual=False)``, ``Lasso()``,
+algorithms that work with CSC matrices (``LinearSVC(dual=False)``, ``Lasso()``,
 etc).
 
 Let's try again with the default setting::
@@ -724,7 +724,7 @@ Let's try again with the default setting::
   >>> hv.transform(corpus)
   ...                               # doctest: +NORMALIZE_WHITESPACE  +ELLIPSIS
   <4x1048576 sparse matrix of type '<... 'numpy.float64'>'
-      with 19 stored elements in Compressed Sparse Row format>
+      with 19 stored elements in Compressed Sparse ... format>
 
 We no longer get the collisions, but this comes at the expense of a much larger
 dimensionality of the output space.

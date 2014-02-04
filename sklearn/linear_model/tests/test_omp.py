@@ -1,8 +1,6 @@
 # Author: Vlad Niculae
 # Licence: BSD 3 clause
 
-import warnings
-
 import numpy as np
 
 from sklearn.utils.testing import assert_raises
@@ -10,7 +8,9 @@ from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_greater
+from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import ignore_warnings
+
 
 from sklearn.linear_model import (orthogonal_mp, orthogonal_mp_gram,
                                   OrthogonalMatchingPursuit,
@@ -70,17 +70,15 @@ def test_with_without_gram_tol():
 
 
 def test_unreachable_accuracy():
-    with warnings.catch_warnings(record=True) as w:
-        warnings.simplefilter('always')
-        assert_array_almost_equal(
-            orthogonal_mp(X, y, tol=0),
-            orthogonal_mp(X, y, n_nonzero_coefs=n_features))
+    assert_array_almost_equal(
+        orthogonal_mp(X, y, tol=0),
+        orthogonal_mp(X, y, n_nonzero_coefs=n_features))
 
-        assert_array_almost_equal(
-            orthogonal_mp(X, y, tol=0, precompute=True),
-            orthogonal_mp(X, y, precompute=True,
-                          n_nonzero_coefs=n_features))
-        assert_greater(len(w), 0)  # warnings should be raised
+    assert_array_almost_equal(
+        assert_warns(RuntimeWarning, orthogonal_mp, X, y, tol=0,
+                     precompute=True),
+        orthogonal_mp(X, y, precompute=True,
+                      n_nonzero_coefs=n_features))
 
 
 def test_bad_input():
@@ -118,44 +116,32 @@ def test_estimator():
 
     omp.set_params(fit_intercept=False, normalize=False)
 
-    with warnings.catch_warnings(record=True) as w:
-        warnings.simplefilter('always')
-        omp.fit(X, y[:, 0], Gram=G, Xy=Xy[:, 0])
-        assert_equal(omp.coef_.shape, (n_features,))
-        assert_equal(omp.intercept_, 0)
-        assert_true(count_nonzero(omp.coef_) <= n_nonzero_coefs)
-        assert_true(len(w) == 2)
+    assert_warns(DeprecationWarning, omp.fit, X, y[:, 0], Gram=G, Xy=Xy[:, 0])
+    assert_equal(omp.coef_.shape, (n_features,))
+    assert_equal(omp.intercept_, 0)
+    assert_true(count_nonzero(omp.coef_) <= n_nonzero_coefs)
 
-    with warnings.catch_warnings(record=True) as w:
-        warnings.simplefilter('always')
-        omp.fit(X, y, Gram=G, Xy=Xy)
-        assert_equal(omp.coef_.shape, (n_targets, n_features))
-        assert_equal(omp.intercept_, 0)
-        assert_true(count_nonzero(omp.coef_) <= n_targets * n_nonzero_coefs)
-        assert_true(len(w) == 2)
+    assert_warns(DeprecationWarning, omp.fit, X, y, Gram=G, Xy=Xy)
+    assert_equal(omp.coef_.shape, (n_targets, n_features))
+    assert_equal(omp.intercept_, 0)
+    assert_true(count_nonzero(omp.coef_) <= n_targets * n_nonzero_coefs)
 
 
 def test_scaling_with_gram():
-    with warnings.catch_warnings(record=True) as w:
-        warnings.simplefilter('always')
-        # Use only 1 nonzero coef to be faster and to avoid warnings
-        omp1 = OrthogonalMatchingPursuit(n_nonzero_coefs=1,
-                                         fit_intercept=False, normalize=False)
-        omp2 = OrthogonalMatchingPursuit(n_nonzero_coefs=1,
-                                         fit_intercept=True, normalize=False)
-        omp3 = OrthogonalMatchingPursuit(n_nonzero_coefs=1,
-                                         fit_intercept=False, normalize=True)
-        omp1.fit(X, y, Gram=G)
-        omp1.fit(X, y, Gram=G, Xy=Xy)
-        assert_true(len(w) == 3)
-        omp2.fit(X, y, Gram=G)
-        assert_true(len(w) == 5)
-        omp2.fit(X, y, Gram=G, Xy=Xy)
-        assert_true(len(w) == 8)
-        omp3.fit(X, y, Gram=G)
-        assert_true(len(w) == 10)
-        omp3.fit(X, y, Gram=G, Xy=Xy)
-        assert_true(len(w) == 13)
+    omp1 = OrthogonalMatchingPursuit(n_nonzero_coefs=1,
+                                     fit_intercept=False, normalize=False)
+    omp2 = OrthogonalMatchingPursuit(n_nonzero_coefs=1,
+                                     fit_intercept=True, normalize=False)
+    omp3 = OrthogonalMatchingPursuit(n_nonzero_coefs=1,
+                                     fit_intercept=False, normalize=True)
+
+    f, w = assert_warns, DeprecationWarning
+    f(w, omp1.fit, X, y, Gram=G)
+    f(w, omp1.fit, X, y, Gram=G, Xy=Xy)
+    f(w, omp2.fit, X, y, Gram=G)
+    f(w, omp2.fit, X, y, Gram=G, Xy=Xy)
+    f(w, omp3.fit, X, y, Gram=G)
+    f(w, omp3.fit, X, y, Gram=G, Xy=Xy)
 
 
 def test_identical_regressors():
@@ -164,10 +150,7 @@ def test_identical_regressors():
     gamma = np.zeros(n_features)
     gamma[0] = gamma[1] = 1.
     newy = np.dot(newX, gamma)
-    with warnings.catch_warnings(record=True) as w:
-        warnings.simplefilter('always')
-        orthogonal_mp(newX, newy, 2)
-        assert_true(len(w) == 1)
+    assert_warns(RuntimeWarning, orthogonal_mp, newX, newy, 2)
 
 
 def test_swapped_regressors():
@@ -188,10 +171,8 @@ def test_swapped_regressors():
 def test_no_atoms():
     y_empty = np.zeros_like(y)
     Xy_empty = np.dot(X.T, y_empty)
-    with warnings.catch_warnings():
-        warnings.simplefilter('ignore')
-        gamma_empty = orthogonal_mp(X, y_empty, 1)
-        gamma_empty_gram = orthogonal_mp_gram(G, Xy_empty, 1)
+    gamma_empty = ignore_warnings(orthogonal_mp)(X, y_empty, 1)
+    gamma_empty_gram = ignore_warnings(orthogonal_mp)(G, Xy_empty, 1)
     assert_equal(np.all(gamma_empty == 0), True)
     assert_equal(np.all(gamma_empty_gram == 0), True)
 

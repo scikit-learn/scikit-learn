@@ -3,10 +3,9 @@ Generate samples of synthetic data sets.
 """
 
 # Authors: B. Thirion, G. Varoquaux, A. Gramfort, V. Michel, O. Grisel,
-#          G. Louppe
+#          G. Louppe, J. Nothman
 # License: BSD 3 clause
 
-from itertools import product
 import numbers
 import numpy as np
 from scipy import linalg
@@ -14,9 +13,22 @@ from scipy import linalg
 from ..preprocessing import LabelBinarizer
 from ..utils import array2d, check_random_state
 from ..utils import shuffle as util_shuffle
+from ..utils.random import sample_without_replacement
 from ..externals import six
 map = six.moves.map
 zip = six.moves.zip
+
+
+def _generate_hypercube(samples, dimensions, rng):
+    """Returns distinct binary samples of length dimensions
+    """
+    if dimensions > 30:
+        return np.hstack([_generate_hypercube(samples, dimensions - 30, rng),
+                          _generate_hypercube(samples, 30, rng)])
+    out = sample_without_replacement(2 ** dimensions, samples,
+                                     random_state=rng).astype('>u4')
+    out = np.unpackbits(out.view('>u1')).reshape((-1, 32))[:, -dimensions:]
+    return out
 
 
 def make_classification(n_samples=100, n_features=20, n_informative=2,
@@ -25,6 +37,15 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
                         class_sep=1.0, hypercube=True, shift=0.0, scale=1.0,
                         shuffle=True, random_state=None):
     """Generate a random n-class classification problem.
+
+    This initially creates clusters of points normally distributed (std=1)
+    about vertices of a `2 * class_sep`-sided hypercube, and assigns an equal
+    number of clusters to each class. It introduces interdependence between
+    these features and adds various types of further noise to the data.
+
+    Prior to shuffling, `X` stacks a number of these primary "informative"
+    features, "redundant" linear combinations of these, "repeated" duplicates
+    of sampled features, and arbitrary noise for and remaining features.
 
     Parameters
     ----------
@@ -42,8 +63,9 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
         of gaussian clusters each located around the vertices of a hypercube
         in a subspace of dimension `n_informative`. For each cluster,
         informative features are drawn independently from  N(0, 1) and then
-        randomly linearly combined in order to add covariance. The clusters
-        are then placed on the vertices of the hypercube.
+        randomly linearly combined within each cluster in order to add
+        covariance. The clusters are then placed on the vertices of the
+        hypercube.
 
     n_redundant : int, optional (default=2)
         The number of redundant features. These features are generated as
@@ -63,6 +85,8 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
         The proportions of samples assigned to each class. If None, then
         classes are balanced. Note that if `len(weights) == n_classes - 1`,
         then the last class weight is automatically inferred.
+        More than `n_samples` samples may be returned if the sum of `weights`
+        exceeds 1.
 
     flip_y : float, optional (default=0.01)
         The fraction of samples whose class are randomly exchanged.
@@ -74,12 +98,12 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
         If True, the clusters are put on the vertices of a hypercube. If
         False, the clusters are put on the vertices of a random polytope.
 
-    shift : float or None, optional (default=0.0)
-        Shift all features by the specified value. If None, then features
+    shift : float, array of shape [n_features] or None, optional (default=0.0)
+        Shift features by the specified value. If None, then features
         are shifted by a random value drawn in [-class_sep, class_sep].
 
-    scale : float or None, optional (default=1.0)
-        Multiply all features by the specified value. If None, then features
+    scale : float, array of shape [n_features] or None, optional (default=1.0)
+        Multiply features by the specified value. If None, then features
         are scaled by a random value drawn in [1, 100]. Note that scaling
         happens after shifting.
 
@@ -134,12 +158,11 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
         weights = [1.0 / n_classes] * n_classes
         weights[-1] = 1.0 - sum(weights[:-1])
 
+    # Distribute samples among clusters by weight
     n_samples_per_cluster = []
-
     for k in range(n_clusters):
         n_samples_per_cluster.append(int(n_samples * weights[k % n_classes]
                                      / n_clusters_per_class))
-
     for i in range(n_samples - sum(n_samples_per_cluster)):
         n_samples_per_cluster[i % n_clusters] += 1
 
@@ -147,44 +170,29 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
     X = np.zeros((n_samples, n_features))
     y = np.zeros(n_samples, dtype=np.int)
 
-    # Build the polytope
-    C = np.array(list(product([-class_sep, class_sep], repeat=n_informative)))
-
+    # Build the polytope whose vertices become cluster centroids
+    centroids = _generate_hypercube(n_clusters, n_informative,
+                                    generator).astype(float)
+    centroids *= 2 * class_sep
+    centroids -= class_sep
     if not hypercube:
-        for k in range(n_clusters):
-            C[k, :] *= generator.rand()
+        centroids *= generator.rand(n_clusters, 1)
+        centroids *= generator.rand(1, n_informative)
 
-        for f in range(n_informative):
-            C[:, f] *= generator.rand()
+    # Initially draw informative features from the standard normal
+    X[:, :n_informative] = generator.randn(n_samples, n_informative)
 
-    generator.shuffle(C)
+    # Create each cluster; a variant of make_blobs
+    stop = 0
+    for k, centroid in enumerate(centroids):
+        start, stop = stop, stop + n_samples_per_cluster[k]
+        y[start:stop] = k % n_classes  # assign labels
+        X_k = X[start:stop, :n_informative]  # slice a view of the cluster
 
-    # Loop over all clusters
-    pos = 0
-    pos_end = 0
-
-    for k in range(n_clusters):
-        # Number of samples in cluster k
-        n_samples_k = n_samples_per_cluster[k]
-
-        # Define the range of samples
-        pos = pos_end
-        pos_end = pos + n_samples_k
-
-        # Assign labels
-        y[pos:pos_end] = k % n_classes
-
-        # Draw features at random
-        X[pos:pos_end, :n_informative] = generator.randn(n_samples_k,
-                                                         n_informative)
-
-        # Multiply by a random matrix to create co-variance of the features
         A = 2 * generator.rand(n_informative, n_informative) - 1
-        X[pos:pos_end, :n_informative] = np.dot(X[pos:pos_end, :n_informative],
-                                                A)
+        X_k[...] = np.dot(X_k, A)  # introduce random covariance
 
-        # Shift the cluster to a vertice
-        X[pos:pos_end, :n_informative] += np.tile(C[k, :], (n_samples_k, 1))
+        X_k += centroid  # shift the cluster to a vertex
 
     # Create redundant features
     if n_redundant > 0:
@@ -199,32 +207,28 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
         X[:, n:n + n_repeated] = X[:, indices]
 
     # Fill useless features
-    X[:, n_features - n_useless:] = generator.randn(n_samples, n_useless)
+    if n_useless > 0:
+        X[:, -n_useless:] = generator.randn(n_samples, n_useless)
 
-    # Randomly flip labels
+    # Randomly replace labels
     if flip_y >= 0.0:
-        for i in range(n_samples):
-            if generator.rand() < flip_y:
-                y[i] = generator.randint(n_classes)
+        flip_mask = generator.rand(n_samples) < flip_y
+        y[flip_mask] = generator.randint(n_classes, size=flip_mask.sum())
 
     # Randomly shift and scale
-    constant_shift = shift is not None
-    constant_scale = scale is not None
+    if shift is None:
+        shift = (2 * generator.rand(n_features) - 1) * class_sep
+    X += shift
 
-    for f in range(n_features):
-        if not constant_shift:
-            shift = (2 * generator.rand() - 1) * class_sep
+    if scale is None:
+        scale = 1 + 100 * generator.rand(n_features)
+    X *= scale
 
-        if not constant_scale:
-            scale = 1 + 100 * generator.rand()
-
-        X[:, f] += shift
-        X[:, f] *= scale
-
-    # Randomly permute samples and features
     if shuffle:
+        # Randomly permute samples
         X, y = util_shuffle(X, y, random_state=generator)
 
+        # Randomly permute features
         indices = np.arange(n_features)
         generator.shuffle(indices)
         X[:, :] = X[:, indices]
@@ -456,6 +460,7 @@ def make_regression(n_samples=100, n_features=100, n_informative=10,
         The coefficient of the underlying linear model. It is returned only if
         coef is True.
     """
+    n_informative = min(n_features, n_informative)
     generator = check_random_state(random_state)
 
     if effective_rank is None:
@@ -545,8 +550,8 @@ def make_circles(n_samples=100, shuffle=True, noise=None, random_state=None,
 
     X = np.vstack((np.append(outer_circ_x, inner_circ_x),
                    np.append(outer_circ_y, inner_circ_y))).T
-    y = np.hstack([np.zeros(n_samples / 2, dtype=np.intp),
-                   np.ones(n_samples / 2, dtype=np.intp)])
+    y = np.hstack([np.zeros(n_samples // 2, dtype=np.intp),
+                   np.ones(n_samples // 2, dtype=np.intp)])
     if shuffle:
         X, y = util_shuffle(X, y, random_state=generator)
 
@@ -1383,10 +1388,10 @@ def make_biclusters(shape, n_clusters, noise=0.0, minval=10,
     # row and column clusters of approximately equal sizes
     row_sizes = generator.multinomial(n_rows,
                                       np.repeat(1.0 / n_clusters,
-                                      n_clusters))
+                                                n_clusters))
     col_sizes = generator.multinomial(n_cols,
                                       np.repeat(1.0 / n_clusters,
-                                      n_clusters))
+                                                n_clusters))
 
     row_labels = np.hstack(list(np.repeat(val, rep) for val, rep in
                                 zip(range(n_clusters), row_sizes)))
@@ -1474,10 +1479,10 @@ def make_checkerboard(shape, n_clusters, noise=0.0, minval=10,
     n_rows, n_cols = shape
     row_sizes = generator.multinomial(n_rows,
                                       np.repeat(1.0 / n_row_clusters,
-                                      n_row_clusters))
+                                                n_row_clusters))
     col_sizes = generator.multinomial(n_cols,
                                       np.repeat(1.0 / n_col_clusters,
-                                      n_col_clusters))
+                                                n_col_clusters))
 
     row_labels = np.hstack(list(np.repeat(val, rep) for val, rep in
                                 zip(range(n_row_clusters), row_sizes)))

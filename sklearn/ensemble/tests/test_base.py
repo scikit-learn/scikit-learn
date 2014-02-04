@@ -6,7 +6,7 @@ Testing for the base module (sklearn.ensemble.base).
 # License: BSD 3 clause
 
 from numpy.testing import assert_equal
-from nose.tools import assert_raises, assert_true
+from nose.tools import assert_true
 
 from sklearn.datasets import load_iris
 from sklearn.ensemble import BaggingClassifier
@@ -19,7 +19,7 @@ def test_base():
 
     iris = load_iris()
     ensemble.fit(iris.data, iris.target)
-    ensemble.estimators_ = [] # empty the list and create estimators manually
+    ensemble.estimators_ = []  # empty the list and create estimators manually
 
     ensemble._make_estimator()
     ensemble._make_estimator()

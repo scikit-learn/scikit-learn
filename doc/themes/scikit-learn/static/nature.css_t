@@ -294,7 +294,7 @@ div.buttonPrevious, div.buttonNext {
 
 div.buttonPrevious {
     border-top-right-radius: .8em;
-    right: 1;
+    left: 0;
 }
 
 div.buttonNext {
@@ -402,7 +402,7 @@ div.admonition p.admonition-title + p {
 }
 
 div.highlight{
-    background-color: white;
+    background: none;
 }
 
 div.highlight a {
@@ -1106,8 +1106,37 @@ div.navbar ul.dropdown-menu li a.btn {
   box-shadow: inset 0 0px 0 rgba(255,255,255,.2), 0 0px 0px rgba(0,0,0,.05);
 }
 
-a.btn.dropdown-toggle {
+a.btn.dropdown-toggle,  a.btn.dropdown-toggle:hover{
   vertical-align: baseline;
+}
+
+li#other-versions {
+  position: absolute;
+  left: inherit;
+  right: inherit;
+  top: inherit;
+}
+
+#other-versions a.btn.dropdown-toggle {
+  margin-left: 0.5em;
+  padding: 4px 6px 4px 11px;
+}
+
+#other-versions .caret {
+  border-left: 5px solid transparent;
+  border-right: 6px solid transparent;
+  border-bottom: 8px solid black;
+  border-top: 0px;
+  margin-right: 5px;
+  margin-top: 0px;
+  vertical-align: middle;
+}
+
+#other-versions .dropdown-menu {
+  position: absolute;
+  right: -60%;
+  top: -805%;
+  left: initial;
 }
 
 .navbar .btn, .navbar .open>.btn, .navbar .btn:hover{

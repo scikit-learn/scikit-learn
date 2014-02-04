@@ -26,9 +26,11 @@ from ..utils import array2d, check_random_state
 from ..utils.fixes import unique
 from ..utils.validation import check_arrays
 
-from ._tree import Criterion, Splitter, Tree
+from ._tree import Criterion
+from ._tree import Splitter
+from ._tree import DepthFirstTreeBuilder, BestFirstTreeBuilder
+from ._tree import Tree
 from . import _tree
-
 
 __all__ = ["DecisionTreeClassifier",
            "DecisionTreeRegressor",
@@ -44,7 +46,7 @@ DTYPE = _tree.DTYPE
 DOUBLE = _tree.DOUBLE
 
 CRITERIA_CLF = {"gini": _tree.Gini, "entropy": _tree.Entropy}
-CRITERIA_REG = {"mse": _tree.MSE}
+CRITERIA_REG = {"mse": _tree.MSE, "friedman_mse": _tree.FriedmanMSE}
 SPLITTERS = {"best": _tree.BestSplitter,
              "presort-best": _tree.PresortBestSplitter,
              "random": _tree.RandomSplitter}
@@ -70,6 +72,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
                  min_samples_split,
                  min_samples_leaf,
                  max_features,
+                 max_leaf_nodes,
                  random_state):
         self.criterion = criterion
         self.splitter = splitter
@@ -78,6 +81,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         self.min_samples_leaf = min_samples_leaf
         self.max_features = max_features
         self.random_state = random_state
+        self.max_leaf_nodes = max_leaf_nodes
 
         self.n_features_ = None
         self.n_outputs_ = None
@@ -132,8 +136,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
 
         # Convert data
         if check_input:
-            X, = check_arrays(X, dtype=DTYPE, sparse_format="dense",
-                              check_ccontiguous=True)
+            X, = check_arrays(X, dtype=DTYPE, sparse_format="dense")
 
         # Determine output settings
         n_samples, self.n_features_ = X.shape
@@ -169,7 +172,10 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
             y = np.ascontiguousarray(y, dtype=DOUBLE)
 
         # Check parameters
-        max_depth = (2 ** 31) - 1 if self.max_depth is None else self.max_depth
+        max_depth = ((2 ** 31) - 1 if self.max_depth is None
+                     else self.max_depth)
+        max_leaf_nodes = (-1 if self.max_leaf_nodes is None
+                          else self.max_leaf_nodes)
 
         if isinstance(self.max_features, six.string_types):
             if self.max_features == "auto":
@@ -205,6 +211,12 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
             raise ValueError("max_depth must be greater than zero. ")
         if not (0 < max_features <= self.n_features_):
             raise ValueError("max_features must be in (0, n_features]")
+        if not isinstance(max_leaf_nodes, (numbers.Integral, np.integer)):
+            raise ValueError("max_leaf_nodes must be integral number but was "
+                             "%r" % max_leaf_nodes)
+        if -1 < max_leaf_nodes < 2:
+            raise ValueError(("max_leaf_nodes {0} must be either smaller than "
+                              "0 or larger than 1").format(max_leaf_nodes))
 
         if sample_weight is not None:
             if (getattr(sample_weight, "dtype", None) != DOUBLE or
@@ -243,9 +255,15 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         self.tree_ = Tree(self.n_features_, self.n_classes_,
                           self.n_outputs_, splitter, max_depth,
                           min_samples_split, self.min_samples_leaf,
-                          random_state)
+                          max_leaf_nodes, random_state)
 
-        self.tree_.build(X, y, sample_weight=sample_weight)
+        # Use BestFirst if max_leaf_nodes given; use DepthFirst otherwise
+        if max_leaf_nodes < 0:
+            builder = DepthFirstTreeBuilder()
+        else:
+            builder = BestFirstTreeBuilder()
+
+        builder.build(self.tree_, X, y, sample_weight)
 
         if self.n_outputs_ == 1:
             self.n_classes_ = self.n_classes_[0]
@@ -357,16 +375,23 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
           - If "log2", then `max_features=log2(n_features)`.
           - If None, then `max_features=n_features`.
 
-    max_depth : integer or None, optional (default=None)
+    max_depth : int or None, optional (default=None)
         The maximum depth of the tree. If None, then nodes are expanded until
         all leaves are pure or until all leaves contain less than
         min_samples_split samples.
+        Ignored if ``max_samples_leaf`` is not None.
 
-    min_samples_split : integer, optional (default=2)
+    min_samples_split : int, optional (default=2)
         The minimum number of samples required to split an internal node.
 
-    min_samples_leaf : integer, optional (default=1)
+    min_samples_leaf : int, optional (default=1)
         The minimum number of samples required to be at a leaf node.
+
+    max_leaf_nodes : int or None, optional (default=None)
+        Grow a tree with ``max_leaf_nodes`` in best-first fashion.
+        Best nodes are defined as relative reduction in impurity.
+        If None then unlimited number of leaf nodes.
+        If not None then ``max_depth`` will be ignored.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
@@ -437,14 +462,18 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
                  max_features=None,
                  random_state=None,
                  min_density=None,
-                 compute_importances=None):
-        super(DecisionTreeClassifier, self).__init__(criterion,
-                                                     splitter,
-                                                     max_depth,
-                                                     min_samples_split,
-                                                     min_samples_leaf,
-                                                     max_features,
-                                                     random_state)
+                 compute_importances=None,
+                 max_leaf_nodes=None):
+        super(DecisionTreeClassifier, self).__init__(
+            criterion=criterion,
+            splitter=splitter,
+            max_depth=max_depth,
+            min_samples_split=min_samples_split,
+            min_samples_leaf=min_samples_leaf,
+            max_features=max_features,
+            max_leaf_nodes=max_leaf_nodes,
+            random_state=random_state)
+
         if min_density is not None:
             warn("The min_density parameter is deprecated as of version 0.14 "
                  "and will be removed in 0.16.", DeprecationWarning)
@@ -535,7 +564,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
 
 
 class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
-    """A tree regressor.
+    """A decision tree regressor.
 
     Parameters
     ----------
@@ -559,16 +588,23 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
           - If "log2", then `max_features=log2(n_features)`.
           - If None, then `max_features=n_features`.
 
-    max_depth : integer or None, optional (default=None)
+    max_depth : int or None, optional (default=None)
         The maximum depth of the tree. If None, then nodes are expanded until
         all leaves are pure or until all leaves contain less than
         min_samples_split samples.
+        Ignored if ``max_samples_leaf`` is not None.
 
-    min_samples_split : integer, optional (default=2)
+    min_samples_split : int, optional (default=2)
         The minimum number of samples required to split an internal node.
 
-    min_samples_leaf : integer, optional (default=1)
+    min_samples_leaf : int, optional (default=1)
         The minimum number of samples required to be at a leaf node.
+
+    max_leaf_nodes : int or None, optional (default=None)
+        Grow a tree with ``max_leaf_nodes`` in best-first fashion.
+        Best nodes are defined as relative reduction in impurity.
+        If None then unlimited number of leaf nodes.
+        If not None then ``max_depth`` will be ignored.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
@@ -631,14 +667,18 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
                  max_features=None,
                  random_state=None,
                  min_density=None,
-                 compute_importances=None):
-        super(DecisionTreeRegressor, self).__init__(criterion,
-                                                    splitter,
-                                                    max_depth,
-                                                    min_samples_split,
-                                                    min_samples_leaf,
-                                                    max_features,
-                                                    random_state)
+                 compute_importances=None,
+                 max_leaf_nodes=None):
+        super(DecisionTreeRegressor, self).__init__(
+            criterion=criterion,
+            splitter=splitter,
+            max_depth=max_depth,
+            min_samples_split=min_samples_split,
+            min_samples_leaf=min_samples_leaf,
+            max_features=max_features,
+            max_leaf_nodes=max_leaf_nodes,
+            random_state=random_state)
+
         if min_density is not None:
             warn("The min_density parameter is deprecated as of version 0.14 "
                  "and will be removed in 0.16.", DeprecationWarning)
@@ -682,14 +722,18 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
                  max_features="auto",
                  random_state=None,
                  min_density=None,
-                 compute_importances=None):
-        super(ExtraTreeClassifier, self).__init__(criterion,
-                                                  splitter,
-                                                  max_depth,
-                                                  min_samples_split,
-                                                  min_samples_leaf,
-                                                  max_features,
-                                                  random_state)
+                 compute_importances=None,
+                 max_leaf_nodes=None):
+        super(ExtraTreeClassifier, self).__init__(
+            criterion=criterion,
+            splitter=splitter,
+            max_depth=max_depth,
+            min_samples_split=min_samples_split,
+            min_samples_leaf=min_samples_leaf,
+            max_features=max_features,
+            max_leaf_nodes=max_leaf_nodes,
+            random_state=random_state)
+
         if min_density is not None:
             warn("The min_density parameter is deprecated as of version 0.14 "
                  "and will be removed in 0.16.", DeprecationWarning)
@@ -733,14 +777,18 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
                  max_features="auto",
                  random_state=None,
                  min_density=None,
-                 compute_importances=None):
-        super(ExtraTreeRegressor, self).__init__(criterion,
-                                                 splitter,
-                                                 max_depth,
-                                                 min_samples_split,
-                                                 min_samples_leaf,
-                                                 max_features,
-                                                 random_state)
+                 compute_importances=None,
+                 max_leaf_nodes=None):
+        super(ExtraTreeRegressor, self).__init__(
+            criterion=criterion,
+            splitter=splitter,
+            max_depth=max_depth,
+            min_samples_split=min_samples_split,
+            min_samples_leaf=min_samples_leaf,
+            max_features=max_features,
+            max_leaf_nodes=max_leaf_nodes,
+            random_state=random_state)
+
         if min_density is not None:
             warn("The min_density parameter is deprecated as of version 0.14 "
                  "and will be removed in 0.16.", DeprecationWarning)

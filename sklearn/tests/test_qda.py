@@ -3,6 +3,7 @@ import numpy as np
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_greater
 
 from sklearn import qda
 
@@ -48,9 +49,16 @@ def test_qda():
 
 
 def test_qda_priors():
-    clf = qda.QDA(priors=np.array([0.0, 1.0]))
+    clf = qda.QDA()
     y_pred = clf.fit(X, y).predict(X)
-    assert (y_pred == 2).all()
+    n_pos = np.sum(y_pred == 2)
+
+    neg = 1e-10
+    clf = qda.QDA(priors=np.array([neg, 1 - neg]))
+    y_pred = clf.fit(X, y).predict(X)
+    n_pos2 = np.sum(y_pred == 2)
+
+    assert_greater(n_pos2, n_pos)
 
 
 def test_qda_store_covariances():

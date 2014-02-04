@@ -55,7 +55,7 @@ from optparse import OptionParser
 
 import numpy as np
 
-from sklearn.datasets import fetch_covtype
+from sklearn.datasets import fetch_covtype, get_data_home
 from sklearn.svm import LinearSVC
 from sklearn.linear_model import SGDClassifier
 from sklearn.naive_bayes import GaussianNB
@@ -96,9 +96,7 @@ if len(args) > 0:
 
 # Memoize the data extraction and memory map the resulting
 # train / test splits in readonly mode
-bench_folder = os.path.dirname(__file__)
-original_archive = os.path.join(bench_folder, 'covtype.data.gz')
-joblib_cache_folder = os.path.join(bench_folder, 'bench_covertype_data')
+joblib_cache_folder = os.path.join(get_data_home(), 'covertype_benchmark_data')
 m = Memory(joblib_cache_folder, mmap_mode='r')
 
 

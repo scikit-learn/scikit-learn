@@ -24,7 +24,8 @@ test-code: in
 	$(NOSETESTS) -s -v sklearn
 test-doc:
 	$(NOSETESTS) -s -v doc/ doc/modules/ doc/datasets/ \
-	doc/developers doc/tutorial/basic doc/tutorial/statistical_inference
+	doc/developers doc/tutorial/basic doc/tutorial/statistical_inference \
+	doc/tutorial/text_analytics
 
 test-coverage:
 	rm -rf coverage .coverage
@@ -44,10 +45,10 @@ ctags:
 	$(CTAGS) -R *
 
 doc: inplace
-	make -C doc html
+	$(MAKE) -C doc html
 
 doc-noplot: inplace
-	make -C doc html-noplot
+	$(MAKE) -C doc html-noplot
 
 code-analysis:
 	flake8 sklearn | grep -v __init__ | grep -v external

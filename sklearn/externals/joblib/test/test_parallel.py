@@ -29,11 +29,17 @@ except NameError:
 
 
 from ..parallel import Parallel, delayed, SafeFunction, WorkerInterrupt, \
-        multiprocessing, cpu_count
+        mp, cpu_count, VALID_BACKENDS
 from ..my_exceptions import JoblibException
 
 import nose
 
+
+ALL_VALID_BACKENDS = [None] + VALID_BACKENDS
+
+if hasattr(mp, 'get_context'):
+    # Custom multiprocessing context in Python 3.4+
+    ALL_VALID_BACKENDS.append(mp.get_context('spawn'))
 
 ###############################################################################
 
@@ -70,12 +76,12 @@ def test_cpu_count():
 
 ###############################################################################
 # Test parallel
-def test_simple_parallel():
+def check_simple_parallel(backend):
     X = range(5)
     for n_jobs in (1, 2, -1, -2):
-        yield (nose.tools.assert_equal, [square(x) for x in X],
-                Parallel(n_jobs=-1)(
-                        delayed(square)(x) for x in X))
+        nose.tools.assert_equal(
+            [square(x) for x in X],
+            Parallel(n_jobs=n_jobs)(delayed(square)(x) for x in X))
     try:
         # To smoke-test verbosity, we capture stdout
         orig_stdout = sys.stdout
@@ -87,12 +93,15 @@ def test_simple_parallel():
             sys.stdout = io.BytesIO()
             sys.stderr = io.BytesIO()
         for verbose in (2, 11, 100):
-                Parallel(n_jobs=-1, verbose=verbose)(
-                        delayed(square)(x) for x in X)
-                Parallel(n_jobs=1, verbose=verbose)(
-                        delayed(square)(x) for x in X)
-                Parallel(n_jobs=2, verbose=verbose, pre_dispatch=2)(
-                        delayed(square)(x) for x in X)
+            Parallel(n_jobs=-1, verbose=verbose, backend=backend)(
+                delayed(square)(x) for x in X)
+            Parallel(n_jobs=1, verbose=verbose, backend=backend)(
+                delayed(square)(x) for x in X)
+            Parallel(n_jobs=2, verbose=verbose, pre_dispatch=2,
+                     backend=backend)(
+                delayed(square)(x) for x in X)
+            Parallel(n_jobs=2, verbose=verbose, backend=backend)(
+                delayed(square)(x) for x in X)
     except Exception as e:
         my_stdout = sys.stdout
         my_stderr = sys.stderr
@@ -106,12 +115,37 @@ def test_simple_parallel():
         sys.stderr = orig_stderr
 
 
-def nested_loop():
-    Parallel(n_jobs=2)(delayed(square)(.01) for _ in range(2))
+def test_simple_parallel():
+    for backend in ALL_VALID_BACKENDS:
+        yield check_simple_parallel, backend
+
+
+def nested_loop(backend):
+    Parallel(n_jobs=2, backend=backend)(
+        delayed(square)(.01) for _ in range(2))
+
+
+def check_nested_loop(parent_backend, child_backend):
+    Parallel(n_jobs=2, backend=parent_backend)(
+        delayed(nested_loop)(child_backend) for _ in range(2))
 
 
 def test_nested_loop():
-    Parallel(n_jobs=2)(delayed(nested_loop)() for _ in range(2))
+    for parent_backend in VALID_BACKENDS:
+        for child_backend in VALID_BACKENDS:
+            yield check_nested_loop, parent_backend, child_backend
+
+
+def increment_input(a):
+    a[0] += 1
+
+
+def test_increment_input_with_threads():
+    """Input is mutable when using the threading backend"""
+    a = [0]
+    Parallel(n_jobs=2, backend="threading")(
+        delayed(increment_input)(a) for _ in range(5))
+    nose.tools.assert_equal(a, [5])
 
 
 def test_parallel_kwargs():
@@ -140,7 +174,7 @@ def test_parallel_pickling():
 def test_error_capture():
     # Check that error are captured, and that correct exceptions
     # are raised.
-    if multiprocessing is not None:
+    if mp is not None:
         # A JoblibException will be raised only if there is indeed
         # multiprocessing
         nose.tools.assert_raises(JoblibException,
@@ -184,7 +218,7 @@ def consumer(queue, item):
     queue.append('Consumed %s' % item)
 
 
-def test_dispatch_one_job():
+def check_dispatch_one_job(backend):
     """ Test that with only one job, Parallel does act as a iterator.
     """
     queue = list()
@@ -194,7 +228,8 @@ def test_dispatch_one_job():
             queue.append('Produced %i' % i)
             yield i
 
-    Parallel(n_jobs=1)(delayed(consumer)(queue, x) for x in producer())
+    Parallel(n_jobs=1, backend=backend)(
+        delayed(consumer)(queue, x) for x in producer())
     nose.tools.assert_equal(queue,
                               ['Produced 0', 'Consumed 0',
                                'Produced 1', 'Consumed 1',
@@ -206,13 +241,18 @@ def test_dispatch_one_job():
     nose.tools.assert_equal(len(queue), 12)
 
 
-def test_dispatch_multiprocessing():
+def test_dispatch_one_job():
+    for backend in VALID_BACKENDS:
+        yield check_dispatch_one_job, backend
+
+
+def check_dispatch_multiprocessing(backend):
     """ Check that using pre_dispatch Parallel does indeed dispatch items
         lazily.
     """
-    if multiprocessing is None:
-        raise nose.SkipTest("No multiprocessing available.")
-    manager = multiprocessing.Manager()
+    if mp is None:
+        raise nose.SkipTest()
+    manager = mp.Manager()
     queue = manager.list()
 
     def producer():
@@ -220,12 +260,20 @@ def test_dispatch_multiprocessing():
             queue.append('Produced %i' % i)
             yield i
 
-    Parallel(n_jobs=2, pre_dispatch=3)(delayed(consumer)(queue, i)
-                                       for i in producer())
+    Parallel(n_jobs=2, pre_dispatch=3, backend=backend)(
+        delayed(consumer)(queue, 'any') for _ in producer())
+
+    # Only 3 tasks are dispatched out of 6. The 4th task is dispatched only
+    # after any of the first 3 jobs have completed.
     nose.tools.assert_equal(list(queue)[:4],
             ['Produced 0', 'Produced 1', 'Produced 2',
-             'Consumed 0', ])
+             'Consumed any', ])
     nose.tools.assert_equal(len(queue), 12)
+
+
+def test_dispatch_multiprocessing():
+    for backend in VALID_BACKENDS:
+        yield check_dispatch_multiprocessing, backend
 
 
 def test_exception_dispatch():
@@ -253,7 +301,7 @@ def test_multiple_spawning():
     # subprocesses will raise an error, to avoid infinite loops on
     # systems that do not support fork
     if not int(os.environ.get('JOBLIB_MULTIPROCESSING', 1)):
-        raise nose.SkipTest("No multiprocessing available.")
+        raise nose.SkipTest()
     nose.tools.assert_raises(ImportError, Parallel(n_jobs=2),
                     [delayed(_reload_joblib)() for i in range(10)])
 
@@ -272,3 +320,13 @@ def test_joblib_exception():
 def test_safe_function():
     safe_division = SafeFunction(division)
     nose.tools.assert_raises(JoblibException, safe_division, 1, 0)
+
+
+def test_pre_dispatch_race_condition():
+    # Check that using pre-dispatch does not yield a race condition on the
+    # iterable generator that is not thread-safe natively.
+    # this is a non-regression test for the "Pool seems closed" class of error
+    for n_tasks in [2, 10, 20]:
+        for n_jobs in [2, 4, 8, 16]:
+            Parallel(n_jobs=n_jobs, pre_dispatch="2 * n_jobs")(
+                delayed(square)(i) for i in range(n_tasks))

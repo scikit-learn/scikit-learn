@@ -7,14 +7,13 @@ import shutil
 from tempfile import NamedTemporaryFile
 
 from sklearn.externals.six import b
+
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import raises
 from sklearn.utils.testing import assert_in
-
-from sklearn.externals.six import b
 
 import sklearn
 from sklearn.datasets import (load_svmlight_file, load_svmlight_files,
@@ -92,12 +91,12 @@ def test_load_svmlight_files():
 
 
 def test_load_svmlight_file_n_features():
-    X, y = load_svmlight_file(datafile, n_features=20)
+    X, y = load_svmlight_file(datafile, n_features=22)
 
     # test X'shape
     assert_equal(X.indptr.shape[0], 7)
     assert_equal(X.shape[0], 6)
-    assert_equal(X.shape[1], 20)
+    assert_equal(X.shape[1], 22)
 
     # test X's non-zero values
     for i, j, val in ((0, 2, 2.5), (0, 10, -5.2),
@@ -105,17 +104,22 @@ def test_load_svmlight_file_n_features():
 
         assert_equal(X[i, j], val)
 
+    # 21 features in file
+    assert_raises(ValueError, load_svmlight_file, datafile, n_features=20)
+
 
 def test_load_compressed():
     X, y = load_svmlight_file(datafile)
 
     with NamedTemporaryFile(prefix="sklearn-test", suffix=".gz") as tmp:
+        tmp.close()  # necessary under windows
         shutil.copyfileobj(open(datafile, "rb"), gzip.open(tmp.name, "wb"))
         Xgz, ygz = load_svmlight_file(tmp.name)
         assert_array_equal(X.toarray(), Xgz.toarray())
         assert_array_equal(y, ygz)
 
     with NamedTemporaryFile(prefix="sklearn-test", suffix=".bz2") as tmp:
+        tmp.close()  # necessary under windows
         shutil.copyfileobj(open(datafile, "rb"), BZ2File(tmp.name, "wb"))
         Xbz, ybz = load_svmlight_file(tmp.name)
         assert_array_equal(X.toarray(), Xbz.toarray())

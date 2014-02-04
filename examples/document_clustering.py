@@ -57,7 +57,7 @@ from sklearn.decomposition import TruncatedSVD
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.feature_extraction.text import HashingVectorizer
 from sklearn.feature_extraction.text import TfidfTransformer
-from sklearn.pipeline import Pipeline
+from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import Normalizer
 from sklearn import metrics
 
@@ -137,10 +137,7 @@ if opts.use_hashing:
         hasher = HashingVectorizer(n_features=opts.n_features,
                                    stop_words='english', non_negative=True,
                                    norm=None, binary=False)
-        vectorizer = Pipeline((
-            ('hasher', hasher),
-            ('tf_idf', TfidfTransformer())
-        ))
+        vectorizer = make_pipeline(hasher, TfidfTransformer())
     else:
         vectorizer = HashingVectorizer(n_features=opts.n_features,
                                        stop_words='english',
@@ -148,7 +145,8 @@ if opts.use_hashing:
                                        binary=False)
 else:
     vectorizer = TfidfVectorizer(max_df=0.5, max_features=opts.n_features,
-                                 stop_words='english', use_idf=opts.use_idf)
+                                 min_df=2, stop_words='english',
+                                 use_idf=opts.use_idf)
 X = vectorizer.fit_transform(dataset.data)
 
 print("done in %fs" % (time() - t0))
@@ -158,12 +156,12 @@ print()
 if opts.n_components:
     print("Performing dimensionality reduction using LSA")
     t0 = time()
-    lsa = TruncatedSVD(opts.n_components)
-    X = lsa.fit_transform(X)
     # Vectorizer results are normalized, which makes KMeans behave as
     # spherical k-means for better results. Since LSA/SVD results are
     # not normalized, we have to redo the normalization.
-    X = Normalizer(copy=False).fit_transform(X)
+    lsa = make_pipeline(TruncatedSVD(opts.n_components),
+                        Normalizer(copy=False))
+    X = lsa.fit_transform(X)
 
     print("done in %fs" % (time() - t0))
     print()
@@ -194,3 +192,13 @@ print("Silhouette Coefficient: %0.3f"
       % metrics.silhouette_score(X, labels, sample_size=1000))
 
 print()
+
+if not (opts.n_components or opts.use_hashing):
+    print("Top terms per cluster:")
+    order_centroids = km.cluster_centers_.argsort()[:, ::-1]
+    terms = vectorizer.get_feature_names()
+    for i in xrange(true_k):
+        print("Cluster %d:" % i, end='')
+        for ind in order_centroids[i, :10]:
+            print(' %s' % terms[ind], end='')
+        print()

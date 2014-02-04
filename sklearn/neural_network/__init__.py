@@ -4,3 +4,5 @@ networks.
 """
 
 from .rbm import BernoulliRBM
+
+__all__ = ['BernoulliRBM']

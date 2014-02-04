@@ -76,21 +76,23 @@ class MemorizedFunc(Logger):
 
         Attributes
         ----------
-        func: callable
+        func : callable
             The original, undecorated, function.
-        cachedir: string
+        cachedir : string
             Path to the base cache directory of the memory context.
-        ignore: list or None
+        ignore : list or None
             List of variable names to ignore when choosing whether to
             recompute.
-        mmap_mode: {None, 'r+', 'r', 'w+', 'c'}
+        mmap_mode : {None, 'r+', 'r', 'w+', 'c'}
             The memmapping mode used when loading from cache
             numpy arrays. See numpy.load for the meaning of the
             arguments.
-        compress: boolean
-            Whether to zip the stored data on disk. Note that compressed
-            arrays cannot be read by memmapping.
-        verbose: int, optional
+        compress : boolean, or integer
+            Whether to zip the stored data on disk. If an integer is
+            given, it should be between 1 and 9, and sets the amount
+            of compression. Note that compressed arrays cannot be
+            read by memmapping.
+        verbose : int, optional
             The verbosity flag, controls messages that are issued as
             the function is evaluated.
     """
@@ -113,6 +115,11 @@ class MemorizedFunc(Logger):
                 The memmapping mode used when loading from cache
                 numpy arrays. See numpy.load for the meaning of the
                 arguments.
+            compress : boolean, or integer
+                Whether to zip the stored data on disk. If an integer is
+                given, it should be between 1 and 9, and sets the amount
+                of compression. Note that compressed arrays cannot be
+                read by memmapping.
             verbose: int, optional
                 Verbosity flag, controls the debug messages that are issued
                 as functions are evaluated. The higher, the more verbose
@@ -160,7 +167,13 @@ class MemorizedFunc(Logger):
                 self.warn('Computing func %s, argument hash %s in '
                           'directory %s'
                         % (name, argument_hash, output_dir))
-            return self.call(*args, **kwargs)
+            out = self.call(*args, **kwargs)
+            if self.mmap_mode is None:
+                return out
+            else:
+                # Memmap the output at the first call to be consistent with
+                # later calls
+                return self.load_output(output_dir)
         else:
             try:
                 t0 = time.time()
@@ -320,7 +333,7 @@ class MemorizedFunc(Logger):
             print(self.format_call(*args, **kwargs))
         output = self.func(*args, **kwargs)
         self._persist_output(output, output_dir)
-        self._persist_input(output_dir, *args, **kwargs)
+        self._persist_input(output_dir, args, kwargs)
         duration = time.time() - start_time
         if self._verbose:
             _, name = get_func_name(self.func)
@@ -381,7 +394,7 @@ class MemorizedFunc(Logger):
         except OSError:
             " Race condition in the creation of the directory "
 
-    def _persist_input(self, output_dir, *args, **kwargs):
+    def _persist_input(self, output_dir, args, kwargs):
         """ Save a small summary of the call using json format in the
             output directory.
         """
@@ -464,9 +477,11 @@ class Memory(Logger):
                 The memmapping mode used when loading from cache
                 numpy arrays. See numpy.load for the meaning of the
                 arguments.
-            compress: boolean
-                Whether to zip the stored data on disk. Note that
-                compressed arrays cannot be read by memmapping.
+            compress: boolean, or integer
+                Whether to zip the stored data on disk. If an integer is
+                given, it should be between 1 and 9, and sets the amount
+                of compression. Note that compressed arrays cannot be
+                read by memmapping.
             verbose: int, optional
                 Verbosity flag, controls the debug messages that are issued
                 as functions are evaluated.
@@ -516,7 +531,8 @@ class Memory(Logger):
         if func is None:
             # Partial application, to be able to specify extra keyword
             # arguments in decorators
-            return functools.partial(self.cache, ignore=ignore)
+            return functools.partial(self.cache, ignore=ignore,
+                                     verbose=verbose, mmap_mode=mmap_mode)
         if self.cachedir is None:
             return func
         if verbose is None:

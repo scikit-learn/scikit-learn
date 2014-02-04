@@ -15,6 +15,7 @@ import warnings
 from itertools import chain, combinations
 from math import ceil, floor, factorial
 import numbers
+import time
 from abc import ABCMeta, abstractmethod
 
 import numpy as np
@@ -22,10 +23,11 @@ import scipy.sparse as sp
 
 from .base import is_classifier, clone
 from .utils import check_arrays, check_random_state, safe_mask
+from .utils.validation import _num_samples
 from .utils.fixes import unique
-from .externals.joblib import Parallel, delayed
-from .externals.six import string_types, with_metaclass
-from .metrics.scorer import _deprecate_loss_and_score_funcs
+from .externals.joblib import Parallel, delayed, logger
+from .externals.six import with_metaclass
+from .metrics.scorer import check_scoring
 
 __all__ = ['Bootstrap',
            'KFold',
@@ -243,7 +245,7 @@ class _BaseKFold(with_metaclass(ABCMeta, _PartitionIterator)):
             raise ValueError(
                 "k-fold cross validation requires at least one"
                 " train / test split by setting n_folds=2 or more,"
-                " got n_folds=%d.".format(n_folds))
+                " got n_folds={0}.".format(n_folds))
         if n_folds > self.n:
             raise ValueError(
                 ("Cannot have number of folds n_folds={0} greater"
@@ -996,11 +998,23 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
             test = []
 
             for i, cls in enumerate(self.classes):
-                permutation = rng.permutation(n_i[i] + t_i[i])
+                permutation = rng.permutation(cls_count[i])
                 cls_i = np.where((self.y == cls))[0][permutation]
 
                 train.extend(cls_i[:n_i[i]])
                 test.extend(cls_i[n_i[i]:n_i[i] + t_i[i]])
+
+            # Because of rounding issues (as n_train and n_test are not
+            # dividers of the number of elements per class), we may end
+            # up here with less samples in train and test than asked for.
+            if len(train) < self.n_train or len(test) < self.n_test:
+                # We complete by affecting randomly the missing indexes
+                missing_idx = np.where(np.bincount(train + test,
+                                                   minlength=len(self.y)) == 0,
+                                       )[0]
+                missing_idx = rng.permutation(missing_idx)
+                train.extend(missing_idx[:(self.n_train - len(train))])
+                test.extend(missing_idx[-(self.n_test - len(test)):])
 
             train = rng.permutation(train)
             test = rng.permutation(test)
@@ -1022,48 +1036,6 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
 
 
 ##############################################################################
-
-def _cross_val_score(estimator, X, y, scorer, train, test, verbose,
-                     fit_params):
-    """Inner loop for cross validation"""
-    n_samples = X.shape[0] if sp.issparse(X) else len(X)
-    fit_params = dict([(k, np.asarray(v)[train]
-                       if hasattr(v, '__len__') and len(v) == n_samples else v)
-                       for k, v in fit_params.items()])
-    if not hasattr(X, "shape"):
-        if getattr(estimator, "_pairwise", False):
-            raise ValueError("Precomputed kernels or affinity matrices have "
-                             "to be passed as arrays or sparse matrices.")
-        X_train = [X[idx] for idx in train]
-        X_test = [X[idx] for idx in test]
-    else:
-        if getattr(estimator, "_pairwise", False):
-            # X is a precomputed square kernel matrix
-            if X.shape[0] != X.shape[1]:
-                raise ValueError("X should be a square kernel matrix")
-            X_train = X[np.ix_(train, train)]
-            X_test = X[np.ix_(test, train)]
-        else:
-            X_train = X[safe_mask(X, train)]
-            X_test = X[safe_mask(X, test)]
-
-    if y is None:
-        y_train = None
-        y_test = None
-    else:
-        y_train = y[train]
-        y_test = y[test]
-    estimator.fit(X_train, y_train, **fit_params)
-    if scorer is None:
-        score = estimator.score(X_test, y_test)
-    else:
-        score = scorer(estimator, X_test, y_test)
-        if not isinstance(score, numbers.Number):
-            raise ValueError("scoring must return a number, got %s (%s)"
-                             " instead." % (str(score), type(score)))
-    if verbose > 1:
-        print("score: %f" % score)
-    return score
 
 
 def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
@@ -1127,26 +1099,164 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
     """
     X, y = check_arrays(X, y, sparse_format='csr', allow_lists=True)
     cv = _check_cv(cv, X, y, classifier=is_classifier(estimator))
-    scorer = _deprecate_loss_and_score_funcs(
-        loss_func=None,
-        score_func=score_func,
-        scoring=scoring
-    )
-    if scorer is None and not hasattr(estimator, 'score'):
-        raise TypeError(
-            "If no scoring is specified, the estimator passed "
-            "should have a 'score' method. The estimator %s "
-            "does not." % estimator)
+    scorer = check_scoring(estimator, score_func=score_func, scoring=scoring)
     # We clone the estimator to make sure that all the folds are
     # independent, and that it is pickle-able.
-    fit_params = fit_params if fit_params is not None else {}
     parallel = Parallel(n_jobs=n_jobs, verbose=verbose,
                         pre_dispatch=pre_dispatch)
-    scores = parallel(
-        delayed(_cross_val_score)(clone(estimator), X, y, scorer, train, test,
-                                  verbose, fit_params)
-        for train, test in cv)
-    return np.array(scores)
+    scores = parallel(delayed(_fit_and_score)(clone(estimator), X, y, scorer,
+                                              train, test, verbose, None,
+                                              fit_params)
+                      for train, test in cv)
+    return np.array(scores)[:, 0]
+
+
+def _fit_and_score(estimator, X, y, scorer, train, test, verbose, parameters,
+                   fit_params, return_train_score=False,
+                   return_parameters=False):
+    """Fit estimator and compute scores for a given dataset split.
+
+    Parameters
+    ----------
+    estimator : estimator object implementing 'fit'
+        The object to use to fit the data.
+
+    X : array-like of shape at least 2D
+        The data to fit.
+
+    y : array-like, optional, default: None
+        The target variable to try to predict in the case of
+        supervised learning.
+
+    scoring : callable
+        A scorer callable object / function with signature
+        ``scorer(estimator, X, y)``.
+
+    train : array-like, shape = (n_train_samples,)
+        Indices of training samples.
+
+    test : array-like, shape = (n_test_samples,)
+        Indices of test samples.
+
+    verbose : integer
+        The verbosity level.
+
+    parameters : dict or None
+        Parameters to be set on the estimator.
+
+    fit_params : dict or None
+        Parameters that will be passed to ``estimator.fit``.
+
+    return_train_score : boolean, optional, default: False
+        Compute and return score on training set.
+
+    return_parameters : boolean, optional, default: False
+        Return parameters that has been used for the estimator.
+
+    Returns
+    -------
+    test_score : float
+        Score on test set.
+
+    train_score : float, optional
+        Score on training set.
+
+    n_test_samples : int
+        Number of test samples.
+
+    scoring_time : float
+        Time spent for fitting and scoring in seconds.
+
+    parameters : dict or None, optional
+        The parameters that have been evaluated.
+    """
+    if verbose > 1:
+        if parameters is None:
+            msg = "no parameters to be set"
+        else:
+            msg = '%s' % (', '.join('%s=%s' % (k, v)
+                          for k, v in parameters.items()))
+        print("[CV] %s %s" % (msg, (64 - len(msg)) * '.'))
+
+    # Adjust lenght of sample weights
+    n_samples = _num_samples(X)
+    fit_params = fit_params if fit_params is not None else {}
+    fit_params = dict([(k, np.asarray(v)[train]
+                       if hasattr(v, '__len__') and len(v) == n_samples else v)
+                       for k, v in fit_params.items()])
+
+    if parameters is not None:
+        estimator.set_params(**parameters)
+
+    start_time = time.time()
+
+    X_train, y_train = _safe_split(estimator, X, y, train)
+    X_test, y_test = _safe_split(estimator, X, y, test, train)
+    if y_train is None:
+        estimator.fit(X_train, **fit_params)
+    else:
+        estimator.fit(X_train, y_train, **fit_params)
+    test_score = _score(estimator, X_test, y_test, scorer)
+    if return_train_score:
+        train_score = _score(estimator, X_train, y_train, scorer)
+
+    scoring_time = time.time() - start_time
+
+    if verbose > 2:
+        msg += ", score=%f" % test_score
+    if verbose > 1:
+        end_msg = "%s -%s" % (msg, logger.short_format_time(scoring_time))
+        print("[CV] %s %s" % ((64 - len(end_msg)) * '.', end_msg))
+
+    ret = [train_score] if return_train_score else []
+    ret.extend([test_score, _num_samples(X_test), scoring_time])
+    if return_parameters:
+        ret.append(parameters)
+    return ret
+
+
+def _safe_split(estimator, X, y, indices, train_indices=None):
+    """Create subset of dataset and properly handle kernels."""
+    if hasattr(estimator, 'kernel') and callable(estimator.kernel):
+        # cannot compute the kernel values with custom function
+        raise ValueError("Cannot use a custom kernel function. "
+                         "Precompute the kernel matrix instead.")
+
+    if not hasattr(X, "shape"):
+        if getattr(estimator, "_pairwise", False):
+            raise ValueError("Precomputed kernels or affinity matrices have "
+                             "to be passed as arrays or sparse matrices.")
+        X_subset = [X[idx] for idx in indices]
+    else:
+        if getattr(estimator, "_pairwise", False):
+            # X is a precomputed square kernel matrix
+            if X.shape[0] != X.shape[1]:
+                raise ValueError("X should be a square kernel matrix")
+            if train_indices is None:
+                X_subset = X[np.ix_(indices, indices)]
+            else:
+                X_subset = X[np.ix_(indices, train_indices)]
+        else:
+            X_subset = X[safe_mask(X, indices)]
+
+    if y is not None:
+        y_subset = y[safe_mask(y, indices)]
+    else:
+        y_subset = None
+
+    return X_subset, y_subset
+
+
+def _score(estimator, X_test, y_test, scorer):
+    """Compute the score of an estimator on a given test set."""
+    if y_test is None:
+        score = scorer(estimator, X_test)
+    else:
+        score = scorer(estimator, X_test, y_test)
+    if not isinstance(score, numbers.Number):
+        raise ValueError("scoring must return a number, got %s (%s) instead."
+                         % (str(score), type(score)))
+    return score
 
 
 def _permutation_test_score(estimator, X, y, cv, scorer):
@@ -1252,7 +1362,7 @@ def permutation_test_score(estimator, X, y, score_func=None, cv=None,
         If an integer is passed, it is the number of fold (default 3).
         Specific cross-validation objects can be passed, see
         sklearn.cross_validation module for the list of possible objects.
-        
+
     n_permutations : integer, optional
         Number of times to permute ``y``.
 
@@ -1297,11 +1407,7 @@ def permutation_test_score(estimator, X, y, score_func=None, cv=None,
     """
     X, y = check_arrays(X, y, sparse_format='csr')
     cv = _check_cv(cv, X, y, classifier=is_classifier(estimator))
-    scorer = _deprecate_loss_and_score_funcs(
-        loss_func=None,
-        score_func=score_func,
-        scoring=scoring
-    )
+    scorer = check_scoring(estimator, scoring=scoring, score_func=score_func)
     random_state = check_random_state(random_state)
 
     # We clone the estimator to make sure that all the folds are

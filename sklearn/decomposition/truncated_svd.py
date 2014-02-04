@@ -15,7 +15,7 @@ except ImportError:
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import (array2d, as_float_array, atleast2d_or_csr,
-                     check_random_state, deprecated)
+                     check_random_state)
 from ..utils.extmath import randomized_svd, safe_sparse_dot, svd_flip
 
 __all__ = ["TruncatedSVD"]
@@ -32,6 +32,10 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
     In particular, truncated SVD works on term count/tf-idf matrices as
     returned by the vectorizers in sklearn.feature_extraction.text. In that
     context, it is known as latent semantic analysis (LSA).
+
+    This estimator supports two algorithm: a fast randomized SVD solver, and
+    a "naive" algorithm that uses ARPACK as an eigensolver on (X * X.T) or
+    (X.T * X), whichever is more efficient.
 
     Parameters
     ----------
@@ -120,7 +124,6 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
         U, Sigma, VT = self._fit(X)
         Sigma = np.diag(Sigma)
 
-        # or (X * VT.T).T, whichever takes fewer operations...
         return np.dot(U, Sigma.T)
 
     def _fit(self, X):

@@ -24,6 +24,7 @@ from ..utils import check_arrays
 from ..utils import check_random_state
 from ..utils import atleast2d_or_csr
 from ..utils import as_float_array
+from ..utils import gen_batches
 from ..externals.joblib import Parallel
 from ..externals.joblib import delayed
 
@@ -241,10 +242,10 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances=True,
     if hasattr(init, '__array__'):
         init = np.asarray(init).copy()
         init -= X_mean
-        if not n_init == 1:
+        if n_init != 1:
             warnings.warn(
                 'Explicit initial center position passed: '
-                'performing only one init in the k-means instead of %d'
+                'performing only one init in k-means instead of n_init=%d'
                 % n_init, RuntimeWarning, stacklevel=2)
             n_init = 1
 
@@ -1092,8 +1093,16 @@ class MiniBatchKMeans(KMeans):
             raise ValueError("Number of samples smaller than number "
                              "of clusters.")
 
+        n_init = self.n_init
         if hasattr(self.init, '__array__'):
             self.init = np.ascontiguousarray(self.init, dtype=np.float64)
+            if n_init != 1:
+                warnings.warn(
+                    'Explicit initial center position passed: '
+                    'performing only one init in MiniBatchKMeans instead of '
+                    'n_init=%d'
+                    % self.n_init, RuntimeWarning, stacklevel=2)
+                n_init = 1
 
         x_squared_norms = row_norms(X, squared=True)
 
@@ -1128,10 +1137,10 @@ class MiniBatchKMeans(KMeans):
 
         # perform several inits with random sub-sets
         best_inertia = None
-        for init_idx in range(self.n_init):
+        for init_idx in range(n_init):
             if self.verbose:
                 print("Init %d/%d with method: %s"
-                      % (init_idx + 1, self.n_init, self.init))
+                      % (init_idx + 1, n_init, self.init))
             counts = np.zeros(self.n_clusters, dtype=np.int32)
 
             # TODO: once the `k_means` function works with sparse input we
@@ -1157,7 +1166,7 @@ class MiniBatchKMeans(KMeans):
                                          cluster_centers)
             if self.verbose:
                 print("Inertia for init %d/%d: %f"
-                      % (init_idx + 1, self.n_init, inertia))
+                      % (init_idx + 1, n_init, inertia))
             if best_inertia is None or inertia < best_inertia:
                 self.cluster_centers_ = cluster_centers
                 self.counts_ = counts
@@ -1197,12 +1206,37 @@ class MiniBatchKMeans(KMeans):
                 break
 
         if self.compute_labels:
-            if self.verbose:
-                print('Computing label assignment and total inertia')
-            self.labels_, self.inertia_ = _labels_inertia(
-                X, x_squared_norms, self.cluster_centers_)
+            self.labels_, self.inertia_ = self._labels_inertia_minibatch(X)
 
         return self
+
+    def _labels_inertia_minibatch(self, X):
+        """Compute labels and inertia using mini batches.
+
+        This is slightly slower than doing everything at once but preventes
+        memory errors / segfaults.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            Input data.
+
+        Returns
+        -------
+        labels : array, shap (n_samples,)
+            Cluster labels for each point.
+
+        inertia : float
+            Sum of squared distances of points to nearest cluster.
+        """
+        if self.verbose:
+            print('Computing label assignment and total inertia')
+        x_squared_norms = row_norms(X, squared=True)
+        slices = gen_batches(X.shape[0], self.batch_size)
+        results = [_labels_inertia(X[s], x_squared_norms[s],
+                                   self.cluster_centers_) for s in slices]
+        labels, inertia = zip(*results)
+        return np.hstack(labels), np.sum(inertia)
 
     def partial_fit(self, X, y=None):
         """Update k means estimate on a single mini-batch X.
@@ -1255,3 +1289,24 @@ class MiniBatchKMeans(KMeans):
                 X, x_squared_norms, self.cluster_centers_)
 
         return self
+
+    def predict(self, X):
+        """Predict the closest cluster each sample in X belongs to.
+
+        In the vector quantization literature, `cluster_centers_` is called
+        the code book and each value returned by `predict` is the index of
+        the closest code in the code book.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+            New data to predict.
+
+        Returns
+        -------
+        labels : array, shape [n_samples,]
+            Index of the cluster each sample belongs to.
+        """
+        self._check_fitted()
+        X = self._check_test_data(X)
+        return self._labels_inertia_minibatch(X)[0]

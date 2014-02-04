@@ -80,3 +80,9 @@ def test_hasher_set_params():
     hasher = FeatureHasher()
     hasher.set_params(n_features=np.inf)
     assert_raises(TypeError, hasher.fit)
+
+
+def test_hasher_zeros():
+    """Assert that no zeros are materialized in the output."""
+    X = FeatureHasher().transform([{'foo': 0}])
+    assert_equal(X.data.shape, (0,))

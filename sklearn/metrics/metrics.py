@@ -26,6 +26,7 @@ from scipy.sparse import coo_matrix
 from scipy.spatial.distance import hamming as sp_hamming
 
 from ..externals.six.moves import zip
+from ..externals.six.moves import xrange as range
 from ..preprocessing import LabelBinarizer, label_binarize
 from ..preprocessing import LabelEncoder
 from ..utils import check_arrays
@@ -201,7 +202,7 @@ class UndefinedMetricWarning(UserWarning):
 
 
 ###############################################################################
-# Binary classification loss
+# Classification metrics
 ###############################################################################
 def hinge_loss(y_true, pred_decision, pos_label=None, neg_label=None):
     """Average hinge loss (non-regularized)
@@ -256,6 +257,7 @@ def hinge_loss(y_true, pred_decision, pos_label=None, neg_label=None):
                       "release 0.15.", DeprecationWarning)
 
     # TODO: multi-class hinge-loss
+    y_true, pred_decision = check_arrays(y_true, pred_decision)
 
     # the rest of the code assumes that positive and negative labels
     # are encoded as +1 and -1 respectively
@@ -264,31 +266,52 @@ def hinge_loss(y_true, pred_decision, pos_label=None, neg_label=None):
     else:
         y_true = LabelBinarizer(neg_label=-1).fit_transform(y_true)[:, 0]
 
-    margin = y_true * np.asarray(pred_decision)
+    if pred_decision.ndim == 2 and pred_decision.shape[1] != 1:
+        raise ValueError("Multi-class hinge loss not supported")
+    pred_decision = np.ravel(pred_decision)
+
+    try:
+        margin = y_true * pred_decision
+    except TypeError:
+        raise ValueError("pred_decision should be an array of floats.")
     losses = 1 - margin
     # The hinge doesn't penalize good enough predictions.
     losses[losses <= 0] = 0
     return np.mean(losses)
 
 
-###############################################################################
-# Binary classification scores
-###############################################################################
-def average_precision_score(y_true, y_score):
+def average_precision_score(y_true, y_score, average="macro"):
     """Compute average precision (AP) from prediction scores
 
     This score corresponds to the area under the precision-recall curve.
 
-    Note: this implementation is restricted to the binary classification task.
+    Note: this implementation is restricted to the binary classification task
+    or multilabel classification task.
 
-    Parameters
     ----------
-    y_true : array, shape = [n_samples]
-        True binary labels.
+    y_true : array, shape = [n_samples] or [n_samples, n_classes]
+        True binary labels in binary indicator format.
 
-    y_score : array, shape = [n_samples]
+    y_score : array, shape = [n_samples] or [n_samples, n_classes]
         Target scores, can either be probability estimates of the positive
         class, confidence values, or binary decisions.
+
+    average : string, [None, 'micro', 'macro' (default), 'samples', 'weighted']
+        If ``None``, the scores for each class are returned. Otherwise,
+        this determines the type of averaging performed on the data:
+
+        ``'micro'``:
+            Calculate metrics globally by considering each element of the label
+            indicator matrix as a label.
+        ``'macro'``:
+            Calculate metrics for each label, and find their unweighted
+            mean.  This does not take label imbalance into account.
+        ``'weighted'``:
+            Calculate metrics for each label, and find their average, weighted
+            by support (the number of true instances for each label).
+        ``'samples'``:
+            Calculate metrics for each instance, and find their average.
+
 
     Returns
     -------
@@ -316,8 +339,12 @@ def average_precision_score(y_true, y_score):
     0.79...
 
     """
-    precision, recall, thresholds = precision_recall_curve(y_true, y_score)
-    return auc(recall, precision)
+    def _binary_average_precision(y_true, y_score):
+        precision, recall, thresholds = precision_recall_curve(y_true, y_score)
+        return auc(recall, precision)
+
+    return _average_binary_score(_binary_average_precision, y_true, y_score,
+                                 average)
 
 
 @deprecated("Function 'auc_score' has been renamed to "
@@ -365,20 +392,117 @@ def auc_score(y_true, y_score):
     return roc_auc_score(y_true, y_score)
 
 
-def roc_auc_score(y_true, y_score):
-    """Compute Area Under the Curve (AUC) from prediction scores
-
-    Note: this implementation is restricted to the binary classification task.
+def _average_binary_score(binary_metric, y_true, y_score, average):
+    """Average a binary metric for multilabel classification
 
     Parameters
     ----------
+    y_true : array, shape = [n_samples] or [n_samples, n_classes]
+        True binary labels in binary indicator format.
 
-    y_true : array, shape = [n_samples]
-        True binary labels.
-
-    y_score : array, shape = [n_samples]
+    y_score : array, shape = [n_samples] or [n_samples, n_classes]
         Target scores, can either be probability estimates of the positive
         class, confidence values, or binary decisions.
+
+    average : string, [None, 'micro', 'macro' (default), 'samples', 'weighted']
+        If ``None``, the scores for each class are returned. Otherwise,
+        this determines the type of averaging performed on the data:
+
+        ``'micro'``:
+            Calculate metrics globally by considering each element of the label
+            indicator matrix as a label.
+        ``'macro'``:
+            Calculate metrics for each label, and find their unweighted
+            mean.  This does not take label imbalance into account.
+        ``'weighted'``:
+            Calculate metrics for each label, and find their average, weighted
+            by support (the number of true instances for each label).
+        ``'samples'``:
+            Calculate metrics for each instance, and find their average.
+
+    Return
+    ------
+    score : float or array of shape [n_classes]
+        If not ``None``, average the score, else return the score for each
+        classes.
+
+    """
+    average_options = (None, 'micro', 'macro', 'weighted', 'samples')
+    if average not in average_options:
+        raise ValueError('average has to be one of {0}'
+                         ''.format(average_options))
+
+    y_type = type_of_target(y_true)
+    if y_type not in ("binary", "multilabel-indicator"):
+        raise ValueError("{0} format is not supported".format(y_type))
+
+    if y_type == "binary":
+        return binary_metric(y_true, y_score)
+
+    y_true, y_score = check_arrays(y_true, y_score)
+
+    if average == "micro":
+        y_true = y_true.ravel()
+        y_score = y_score.ravel()
+
+    if average == 'weighted':
+        weights = np.sum(y_true, axis=0)
+        if weights.sum() == 0:
+            return 0
+    else:
+        weights = None
+
+    if y_true.ndim == 1:
+        y_true = y_true.reshape((-1, 1))
+
+    if y_score.ndim == 1:
+        y_score = y_score.reshape((-1, 1))
+
+    not_average_axis = 0 if average == 'samples' else 1
+    n_classes = y_score.shape[not_average_axis]
+    score = np.zeros((n_classes,))
+    for c in range(n_classes):
+        y_true_c = y_true.take([c], axis=not_average_axis).ravel()
+        y_score_c = y_score.take([c], axis=not_average_axis).ravel()
+        score[c] = binary_metric(y_true_c, y_score_c)
+
+    # Average the results
+    if average is not None:
+        return np.average(score, weights=weights)
+    else:
+        return score
+
+
+def roc_auc_score(y_true, y_score, average="macro"):
+    """Compute Area Under the Curve (AUC) from prediction scores
+
+    Note: this implementation is restricted to the binary classification task
+    or multilabel classification task in label indicator format.
+
+    Parameters
+    ----------
+    y_true : array, shape = [n_samples] or [n_samples, n_classes]
+        True binary labels in binary indicator format.
+
+    y_score : array, shape = [n_samples] or [n_samples, n_classes]
+        Target scores, can either be probability estimates of the positive
+        class, confidence values, or binary decisions.
+
+    average : string, [None, 'micro', 'macro' (default), 'samples', 'weighted']
+        If ``None``, the scores for each class are returned. Otherwise,
+        this determines the type of averaging performed on the data:
+
+        ``'micro'``:
+            Calculate metrics globally by considering each element of the label
+            indicator matrix as a label.
+        ``'macro'``:
+            Calculate metrics for each label, and find their unweighted
+            mean.  This does not take label imbalance into account.
+        ``'weighted'``:
+            Calculate metrics for each label, and find their average, weighted
+            by support (the number of true instances for each label).
+        ``'samples'``:
+            Calculate metrics for each instance, and find their average.
 
     Returns
     -------
@@ -405,10 +529,15 @@ def roc_auc_score(y_true, y_score):
     0.75
 
     """
-    if len(np.unique(y_true)) != 2:
-        raise ValueError("AUC is defined for binary classification only")
-    fpr, tpr, tresholds = roc_curve(y_true, y_score)
-    return auc(fpr, tpr, reorder=True)
+    def _binary_roc_auc_score(y_true, y_score):
+        if len(np.unique(y_true)) != 2:
+            raise ValueError("ROC AUC score is not defined")
+
+        fpr, tpr, tresholds = roc_curve(y_true, y_score)
+        return auc(fpr, tpr, reorder=True)
+
+    return _average_binary_score(_binary_roc_auc_score, y_true, y_score,
+                                 average)
 
 
 def matthews_corrcoef(y_true, y_pred):
@@ -638,7 +767,7 @@ def roc_curve(y_true, y_score, pos_label=None):
         positive rate of predictions with score >= thresholds[i].
 
     tpr : array, shape = [>2]
-        Increasing false positive rates such that element i is the true
+        Increasing true positive rates such that element i is the true
         positive rate of predictions with score >= thresholds[i].
 
     thresholds : array, shape = [n_thresholds]
@@ -703,9 +832,6 @@ def roc_curve(y_true, y_score, pos_label=None):
     return fpr, tpr, thresholds
 
 
-##############################################################################
-# Multiclass general function
-###############################################################################
 def confusion_matrix(y_true, y_pred, labels=None):
     """Compute confusion matrix to evaluate the accuracy of a classification
 
@@ -778,9 +904,6 @@ def confusion_matrix(y_true, y_pred, labels=None):
     return CM
 
 
-###############################################################################
-# Multiclass loss functions
-###############################################################################
 def zero_one_loss(y_true, y_pred, normalize=True):
     """Zero-one classification loss.
 
@@ -848,48 +971,6 @@ def zero_one_loss(y_true, y_pred, normalize=True):
         return n_samples - score
 
 
-@deprecated("Function 'zero_one' has been renamed to "
-            "'zero_one_loss' and will be removed in release 0.15."
-            " Default behavior is changed from 'normalize=False' to "
-            "'normalize=True'")
-def zero_one(y_true, y_pred, normalize=False):
-    """Zero-One classification loss
-
-    If normalize is ``True``, return the fraction of misclassifications
-    (float), else it returns the number of misclassifications (int). The best
-    performance is 0.
-
-    Parameters
-    ----------
-    y_true : array-like
-
-    y_pred : array-like
-
-    normalize : bool, optional (default=False)
-        If ``False`` (default), return the number of misclassifications.
-        Otherwise, return the fraction of misclassifications.
-
-    Returns
-    -------
-    loss : float
-        If normalize is True, return the fraction of misclassifications
-        (float), else it returns the number of misclassifications (int).
-
-
-    Examples
-    --------
-    >>> from sklearn.metrics import zero_one
-    >>> y_pred = [1, 2, 3, 4]
-    >>> y_true = [2, 2, 3, 4]
-    >>> zero_one(y_true, y_pred)
-    1
-    >>> zero_one(y_true, y_pred, normalize=True)
-    0.25
-
-    """
-    return zero_one_loss(y_true, y_pred, normalize)
-
-
 def log_loss(y_true, y_pred, eps=1e-15, normalize=True):
     """Log loss, aka logistic loss or cross-entropy loss.
 
@@ -942,17 +1023,31 @@ def log_loss(y_true, y_pred, eps=1e-15, normalize=True):
     if T.shape[1] == 1:
         T = np.append(1 - T, T, axis=1)
 
-    # Clip and renormalize
+    # Clipping
     Y = np.clip(y_pred, eps, 1 - eps)
-    Y /= Y.sum(axis=1)[:, np.newaxis]
 
+    # This happens in cases when elements in y_pred have type "str".
+    if not isinstance(Y, np.ndarray):
+        raise ValueError("y_pred should be an array of floats.")
+
+    # If y_pred is of single dimension, assume y_true to be binary
+    # and then check.
+    if Y.ndim == 1:
+        Y = Y[:, np.newaxis]
+    if Y.shape[1] == 1:
+        Y = np.append(1 - Y, Y, axis=1)
+
+    # Check if dimensions are consistent.
+    T, Y = check_arrays(T, Y)
+    if T.shape[1] != Y.shape[1]:
+        raise ValueError("y_true and y_pred have different number of classes "
+                         "%d, %d" % (T.shape[1], Y.shape[1]))
+
+    # Renormalize
+    Y /= Y.sum(axis=1)[:, np.newaxis]
     loss = -(T * np.log(Y)).sum()
     return loss / T.shape[0] if normalize else loss
 
-
-###############################################################################
-# Multiclass score functions
-###############################################################################
 
 def jaccard_similarity_score(y_true, y_pred, normalize=True):
     """Jaccard similarity coefficient score
@@ -1315,11 +1410,12 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
                                                  beta=beta,
                                                  labels=labels,
                                                  pos_label=pos_label,
-                                                 average=average)
+                                                 average=average,
+                                                 warn_for=('f-score',))
     return f
 
 
-def _prf_divide(numerator, denominator, metric, modifier, average):
+def _prf_divide(numerator, denominator, metric, modifier, average, warn_for):
     """Performs division and handles divide-by-zero.
 
     On zero-division, sets the corresponding result elements to zero
@@ -1344,8 +1440,17 @@ def _prf_divide(numerator, denominator, metric, modifier, average):
     if average == 'samples':
         axis0, axis1 = axis1, axis0
 
-    msg = ('{0} and F-score are ill-defined and being set to 0.0 {{0}} '
-           'no {1} {2}s.'.format(metric.title(), modifier, axis0))
+    if metric in warn_for and 'f-score' in warn_for:
+        msg_start = '{0} and F-score are'.format(metric.title())
+    elif metric in warn_for:
+        msg_start = '{0} is'.format(metric.title())
+    elif 'f-score' in warn_for:
+        msg_start = 'F-score is'
+    else:
+        return result
+
+    msg = ('{0} ill-defined and being set to 0.0 {{0}} '
+           'no {1} {2}s.'.format(msg_start, modifier, axis0))
     if len(mask) == 1:
         msg = msg.format('due to')
     else:
@@ -1355,7 +1460,9 @@ def _prf_divide(numerator, denominator, metric, modifier, average):
 
 
 def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
-                                    pos_label=1, average=None):
+                                    pos_label=1, average=None,
+                                    warn_for=('precision', 'recall',
+                                              'f-score')):
     """Compute precision, recall, F-measure and support for each class
 
     The precision is the ratio ``tp / (tp + fp)`` where ``tp`` is the number of
@@ -1419,6 +1526,9 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
             meaningful for multilabel classification where this differs from
             :func:`accuracy_score`).
 
+    warn_for : tuple or set, for internal use
+        This determines which warnings will be made in the case that this
+        function is being used to return only one of its metrics.
 
     Returns
     -------
@@ -1547,9 +1657,9 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
         # Oddly, we may get an "invalid" rather than a "divide" error
         # here.
         precision = _prf_divide(tp_sum, pred_sum,
-                                'precision', 'predicted', average)
+                                'precision', 'predicted', average, warn_for)
         recall = _prf_divide(tp_sum, true_sum,
-                             'recall', 'true', average)
+                             'recall', 'true', average, warn_for)
         # Don't need to warn for F: either P or R warned, or tp == 0 where pos
         # and true are nonzero, in which case, F is well-defined and zero
         f_score = ((1 + beta2) * precision * recall /
@@ -1654,7 +1764,8 @@ def precision_score(y_true, y_pred, labels=None, pos_label=1,
     p, _, _, _ = precision_recall_fscore_support(y_true, y_pred,
                                                  labels=labels,
                                                  pos_label=pos_label,
-                                                 average=average)
+                                                 average=average,
+                                                 warn_for=('precision',))
     return p
 
 
@@ -1729,36 +1840,11 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
     _, r, _, _ = precision_recall_fscore_support(y_true, y_pred,
                                                  labels=labels,
                                                  pos_label=pos_label,
-                                                 average=average)
+                                                 average=average,
+                                                 warn_for=('recall',))
     return r
 
 
-@deprecated("Function zero_one_score has been renamed to "
-            'accuracy_score'" and will be removed in release 0.15.")
-def zero_one_score(y_true, y_pred):
-    """Zero-one classification score (accuracy)
-
-    Parameters
-    ----------
-    y_true : array-like, shape = n_samples
-        Ground truth (correct) labels.
-
-    y_pred : array-like, shape = n_samples
-        Predicted labels, as returned by a classifier.
-
-    Returns
-    -------
-    score : float
-        Fraction of correct predictions in ``y_pred``. The best performance is
-        1.
-
-    """
-    return accuracy_score(y_true, y_pred)
-
-
-###############################################################################
-# Multiclass utility function
-###############################################################################
 def classification_report(y_true, y_pred, labels=None, target_names=None):
     """Build a text report showing the main classification metrics
 
@@ -1847,9 +1933,6 @@ def classification_report(y_true, y_pred, labels=None, target_names=None):
     return report
 
 
-###############################################################################
-# Multilabel loss function
-###############################################################################
 def hamming_loss(y_true, y_pred, classes=None):
     """Compute the average Hamming loss.
 
@@ -1941,7 +2024,7 @@ def hamming_loss(y_true, y_pred, classes=None):
 
 
 ###############################################################################
-# Regression loss functions
+# Regression metrics
 ###############################################################################
 def mean_absolute_error(y_true, y_pred):
     """Mean absolute error regression loss
@@ -2105,9 +2188,6 @@ def r2_score(y_true, y_pred):
     """
     y_type, y_true, y_pred = _check_reg_targets(y_true, y_pred)
 
-    if len(y_true) == 1:
-        raise ValueError("r2_score can only be computed given more than one"
-                         " sample.")
     numerator = ((y_true - y_pred) ** 2).sum(dtype=np.float64)
     denominator = ((y_true - y_true.mean(axis=0)) ** 2).sum(dtype=np.float64)
 

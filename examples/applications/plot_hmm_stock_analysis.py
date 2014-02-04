@@ -7,6 +7,12 @@ This script shows how to use Gaussian HMM.
 It uses stock price data, which can be obtained from yahoo finance.
 For more information on how to get stock prices with matplotlib, please refer
 to date_demo1.py of matplotlib.
+
+.. warning::
+
+       The HMM module and its functions will be removed in 0.17
+       as it no longer falls within the project's scope and API.
+
 """
 
 from __future__ import print_function

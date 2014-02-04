@@ -2,8 +2,9 @@ import sys
 import re
 
 import numpy as np
-from numpy.testing import assert_almost_equal, assert_array_equal
-from scipy.sparse import csr_matrix
+from scipy.sparse import csr_matrix, lil_matrix
+from sklearn.utils.testing import (assert_almost_equal, assert_array_equal,
+                                   assert_true)
 
 from sklearn.datasets import load_digits
 from sklearn.externals.six.moves import cStringIO as StringIO
@@ -108,16 +109,23 @@ def test_gibbs_smoke():
 
 
 def test_score_samples():
-    """Check that the pseudo likelihood is computed without clipping.
-
-    http://fa.bianp.net/blog/2013/numerical-optimizers-for-logistic-regression/
-    """
+    """Test score_samples (pseudo-likelihood) method."""
+    # Assert that pseudo-likelihood is computed without clipping.
+    # See Fabian's blog, http://bit.ly/1iYefRk
     rng = np.random.RandomState(42)
     X = np.vstack([np.zeros(1000), np.ones(1000)])
     rbm1 = BernoulliRBM(n_components=10, batch_size=2,
                         n_iter=10, random_state=rng)
     rbm1.fit(X)
-    assert((rbm1.score_samples(X) < -300).all())
+    assert_true((rbm1.score_samples(X) < -300).all())
+
+    # Sparse vs. dense should not affect the output. Also test sparse input
+    # validation.
+    rbm1.random_state = 42
+    d_score = rbm1.score_samples(X)
+    rbm1.random_state = 42
+    s_score = rbm1.score_samples(lil_matrix(X))
+    assert_almost_equal(d_score, s_score)
 
 
 def test_rbm_verbose():
@@ -144,8 +152,10 @@ def test_sparse_and_verbose():
         rbm.fit(X)
         s = sys.stdout.getvalue()
         # make sure output is sound
-        assert(re.match(r"Iteration 0, pseudo-likelihood = -?(\d)+(\.\d+)?",
-                        s))
+        assert_true(re.match(r"\[BernoulliRBM\] Iteration 1,"
+                             r" pseudo-likelihood = -?(\d)+(\.\d+)?,"
+                             r" time = (\d|\.)+s",
+                             s))
     finally:
         sio = sys.stdout
         sys.stdout = old_stdout

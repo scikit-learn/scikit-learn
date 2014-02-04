@@ -25,6 +25,7 @@ import numpy as np
 import scipy.sparse as sp
 
 from ..base import BaseEstimator, TransformerMixin
+from ..utils.fixes import bincount
 from ..externals.six.moves import xrange
 from ..preprocessing import normalize
 from .hashing import FeatureHasher
@@ -244,7 +245,7 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
     This text vectorizer implementation uses the hashing trick to find the
     token string name to feature integer index mapping.
 
-    This strategy has several advantage:
+    This strategy has several advantages:
 
     - it is very low memory scalable to large datasets as there is no need to
       store a vocabulary dictionary in memory
@@ -455,8 +456,11 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
 
 
 def _document_frequency(X):
-    """Count the number of non-zero values for each feature in csc_matrix X."""
-    return np.diff(X.indptr)
+    """Count the number of non-zero values for each feature in sparse X."""
+    if sp.isspmatrix_csr(X):
+        return bincount(X.indices, minlength=X.shape[1])
+    else:
+        return np.diff(sp.csc_matrix(X, copy=False).indptr)
 
 
 class CountVectorizer(BaseEstimator, VectorizerMixin):
@@ -542,16 +546,17 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         and always treated as a token separator).
 
     max_df : float in range [0.0, 1.0] or int, optional, 1.0 by default
-        When building the vocabulary ignore terms that have a term frequency
-        strictly higher than the given threshold (corpus specific stop words).
+        When building the vocabulary ignore terms that have a document
+        frequency strictly higher than the given threshold (corpus-specific
+        stop words).
         If float, the parameter represents a proportion of documents, integer
         absolute counts.
         This parameter is ignored if vocabulary is not None.
 
     min_df : float in range [0.0, 1.0] or int, optional, 1 by default
-        When building the vocabulary ignore terms that have a term frequency
-        strictly lower than the given threshold. This value is also called
-        cut-off in the literature.
+        When building the vocabulary ignore terms that have a document
+        frequency strictly lower than the given threshold. This value is also
+        called cut-off in the literature.
         If float, the parameter represents a proportion of documents, integer
         absolute counts.
         This parameter is ignored if vocabulary is not None.
@@ -638,16 +643,23 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         self.ngram_range = ngram_range
         if vocabulary is not None:
             if not isinstance(vocabulary, Mapping):
-                vocabulary = dict((t, i) for i, t in enumerate(vocabulary))
+                vocab = {}
+                for i, t in enumerate(vocabulary):
+                    if vocab.setdefault(t, i) != i:
+                        msg = "Duplicate term in vocabulary: %r" % t
+                        raise ValueError(msg)
+                vocabulary = vocab
+            else:
+                indices = set(six.itervalues(vocabulary))
+                if len(indices) != len(vocabulary):
+                    raise ValueError("Vocabulary contains repeated indices.")
+                for i in xrange(len(vocabulary)):
+                    if i not in indices:
+                        msg = ("Vocabulary of size %d doesn't contain index "
+                               "%d." % (len(vocabulary), i))
+                        raise ValueError(msg)
             if not vocabulary:
                 raise ValueError("empty vocabulary passed to fit")
-            indices = set(six.itervalues(vocabulary))
-            if len(indices) != len(vocabulary):
-                raise ValueError("Vocabulary contains repeated indices.")
-            for i in xrange(len(vocabulary)):
-                if i not in indices:
-                    msg = "Vocabulary of size %d doesn't contain index %d."
-                    raise ValueError(msg % (len(vocabulary), i))
             self.fixed_vocabulary = True
             self.vocabulary_ = dict(vocabulary)
         else:
@@ -655,7 +667,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         self.binary = binary
         self.dtype = dtype
 
-    def _sort_features(self, cscmatrix, vocabulary):
+    def _sort_features(self, X, vocabulary):
         """Sort features by name
 
         Returns a reordered matrix and modifies the vocabulary in place
@@ -665,9 +677,9 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         for new_val, (term, old_val) in enumerate(sorted_features):
             map_index[new_val] = old_val
             vocabulary[term] = new_val
-        return cscmatrix[:, map_index]
+        return X[:, map_index]
 
-    def _limit_features(self, cscmatrix, vocabulary, high=None, low=None,
+    def _limit_features(self, X, vocabulary, high=None, low=None,
                         limit=None):
         """Remove too rare or too common features.
 
@@ -678,11 +690,11 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         This does not prune samples with zero features.
         """
         if high is None and low is None and limit is None:
-            return cscmatrix, set()
+            return X, set()
 
         # Calculate a mask based on document frequencies
-        dfs = _document_frequency(cscmatrix)
-        tfs = np.asarray(cscmatrix.sum(axis=0)).ravel()
+        dfs = _document_frequency(X)
+        tfs = np.asarray(X.sum(axis=0)).ravel()
         mask = np.ones(len(dfs), dtype=bool)
         if high is not None:
             mask &= dfs <= high
@@ -703,7 +715,10 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
                 del vocabulary[term]
                 removed_terms.add(term)
         kept_indices = np.where(mask)[0]
-        return cscmatrix[:, kept_indices], removed_terms
+        if len(kept_indices) == 0:
+            raise ValueError("After pruning, no terms remain. Try a lower"
+                             " min_df or a higher max_df.")
+        return X[:, kept_indices], removed_terms
 
     def _count_vocab(self, raw_documents, fixed_vocab):
         """Create sparse feature matrix, and vocabulary where fixed_vocab=False
@@ -786,7 +801,6 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         max_features = self.max_features
 
         vocabulary, X = self._count_vocab(raw_documents, self.fixed_vocabulary)
-        X = X.tocsc()
 
         if self.binary:
             X.data.fill(1)
@@ -797,10 +811,10 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
             n_doc = X.shape[0]
             max_doc_count = (max_df
                              if isinstance(max_df, numbers.Integral)
-                             else int(round(max_df * n_doc)))
+                             else max_df * n_doc)
             min_doc_count = (min_df
                              if isinstance(min_df, numbers.Integral)
-                             else int(round(min_df * n_doc)))
+                             else min_df * n_doc)
             if max_doc_count < min_doc_count:
                 raise ValueError(
                     "max_df corresponds to < documents than min_df")
@@ -894,7 +908,7 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
     variants:
 
     Tf is "n" (natural) by default, "l" (logarithmic) when sublinear_tf=True.
-    Idf is "t" idf is "t" when use_idf is given, "n" (none) otherwise.
+    Idf is "t" when use_idf is given, "n" (none) otherwise.
     Normalization is "c" (cosine) when norm='l2', "n" (none) when norm=None.
 
     Parameters
@@ -939,7 +953,7 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
         X : sparse matrix, [n_samples, n_features]
             a matrix of term/token counts
         """
-        if not sp.isspmatrix_csc(X):
+        if not sp.issparse(X):
             X = sp.csc_matrix(X)
         if self.use_idf:
             n_samples, n_features = X.shape

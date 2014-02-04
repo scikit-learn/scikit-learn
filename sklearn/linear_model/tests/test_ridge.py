@@ -1,8 +1,6 @@
 import numpy as np
 import scipy.sparse as sp
 
-import warnings
-
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
@@ -10,6 +8,7 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import ignore_warnings
 
 from sklearn import datasets
 from sklearn.metrics import mean_squared_error
@@ -22,6 +21,8 @@ from sklearn.linear_model.ridge import _RidgeGCV
 from sklearn.linear_model.ridge import RidgeCV
 from sklearn.linear_model.ridge import RidgeClassifier
 from sklearn.linear_model.ridge import RidgeClassifierCV
+from sklearn.linear_model.ridge import _solve_dense_cholesky
+from sklearn.linear_model.ridge import _solve_dense_cholesky_kernel
 
 
 from sklearn.cross_validation import KFold
@@ -82,6 +83,15 @@ def test_ridge():
             assert_greater(ridge.score(X, y), 0.9)
 
 
+def test_primal_dual_relationship():
+    y = y_diabetes.reshape(-1, 1)
+    coef = _solve_dense_cholesky(X_diabetes, y, alpha=[1e-2])
+    K = np.dot(X_diabetes, X_diabetes.T)
+    dual_coef = _solve_dense_cholesky_kernel(K, y, alpha=[1e-2])
+    coef2 = np.dot(X_diabetes.T, dual_coef).T
+    assert_array_almost_equal(coef, coef2)
+
+
 def test_ridge_singular():
     # test on a singular matrix
     rng = np.random.RandomState(0)
@@ -98,24 +108,25 @@ def test_ridge_singular():
 
 def test_ridge_sample_weights():
     rng = np.random.RandomState(0)
-    alpha = 1.0
 
-    #for solver in ("svd", "sparse_cg", "dense_cholesky", "lsqr"):
     for solver in ("dense_cholesky", ):
         for n_samples, n_features in ((6, 5), (5, 10)):
-            y = rng.randn(n_samples)
-            X = rng.randn(n_samples, n_features)
-            sample_weight = 1 + rng.rand(n_samples)
+            for alpha in (1.0, 1e-2):
+                y = rng.randn(n_samples)
+                X = rng.randn(n_samples, n_features)
+                sample_weight = 1 + rng.rand(n_samples)
 
-            coefs = ridge_regression(X, y, alpha, sample_weight,
-                                     solver=solver)
-            # Sample weight can be implemented via a simple rescaling
-            # for the square loss
-            coefs2 = ridge_regression(
-                X * np.sqrt(sample_weight)[:, np.newaxis],
-                y * np.sqrt(sample_weight),
-                alpha, solver=solver)
-            assert_array_almost_equal(coefs, coefs2)
+                coefs = ridge_regression(X, y,
+                                         alpha=alpha,
+                                         sample_weight=sample_weight,
+                                         solver=solver)
+                # Sample weight can be implemented via a simple rescaling
+                # for the square loss.
+                coefs2 = ridge_regression(
+                    X * np.sqrt(sample_weight)[:, np.newaxis],
+                    y * np.sqrt(sample_weight),
+                    alpha=alpha, solver=solver)
+                assert_array_almost_equal(coefs, coefs2)
 
 
 def test_ridge_shapes():
@@ -280,16 +291,15 @@ def _test_ridge_loo(filter_):
     ret.append(alpha_)
 
     # check that we get same best alpha with custom loss_func
+    f = ignore_warnings
     ridge_gcv2 = RidgeCV(fit_intercept=False, loss_func=mean_squared_error)
-    with warnings.catch_warnings(record=True):
-        ridge_gcv2.fit(filter_(X_diabetes), y_diabetes)
+    f(ridge_gcv2.fit)(filter_(X_diabetes), y_diabetes)
     assert_equal(ridge_gcv2.alpha_, alpha_)
 
     # check that we get same best alpha with custom score_func
     func = lambda x, y: -mean_squared_error(x, y)
     ridge_gcv3 = RidgeCV(fit_intercept=False, score_func=func)
-    with warnings.catch_warnings(record=True):
-        ridge_gcv3.fit(filter_(X_diabetes), y_diabetes)
+    f(ridge_gcv3.fit)(filter_(X_diabetes), y_diabetes)
     assert_equal(ridge_gcv3.alpha_, alpha_)
 
     # check that we get same best alpha with a scorer

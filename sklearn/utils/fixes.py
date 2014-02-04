@@ -9,9 +9,7 @@ at which the fixe is no longer needed.
 #
 # License: BSD 3 clause
 
-from operator import itemgetter
 import inspect
-from sklearn.externals import six
 
 import numpy as np
 

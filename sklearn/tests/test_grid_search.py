@@ -190,8 +190,9 @@ def test_grid_search_no_score():
     assert_equal(grid_search.score(X, y), grid_search_no_score.score(X, y))
 
     # giving no scoring function raises an error
-    assert_raise_message(TypeError, "no scoring",
-                         GridSearchCV, clf_no_score, {'C': Cs})
+    grid_search_no_score = GridSearchCV(clf_no_score, {'C': Cs})
+    assert_raise_message(TypeError, "no scoring", grid_search_no_score.fit,
+                         [[1]])
 
 
 def test_trivial_grid_scores():
@@ -494,9 +495,10 @@ def test_bad_estimator():
     # test grid-search with clustering algorithm which doesn't support
     # "predict"
     sc = SpectralClustering()
-    assert_raises(TypeError, GridSearchCV, sc,
-                  param_grid=dict(gamma=[.1, 1, 10]),
-                  scoring='ari')
+    grid_search = GridSearchCV(sc, param_grid=dict(gamma=[.1, 1, 10]),
+                               scoring='ari')
+    assert_raise_message(TypeError, "'score' or a 'predict'", grid_search.fit,
+                         [[1]])
 
 
 def test_param_sampler():
@@ -573,8 +575,8 @@ def test_grid_search_score_consistency():
                 if score == "f1":
                     correct_score = f1_score(y[test], clf.predict(X[test]))
                 elif score == "roc_auc":
-                    correct_score = roc_auc_score(y[test],
-                                              clf.decision_function(X[test]))
+                    dec = clf.decision_function(X[test])
+                    correct_score = roc_auc_score(y[test], dec)
                 assert_almost_equal(correct_score, scores[i])
                 i += 1
 

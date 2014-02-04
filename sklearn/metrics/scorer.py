@@ -15,6 +15,7 @@ ground truth labeling (or ``None`` in the case of unsupervised models).
 
 # Authors: Andreas Mueller <amueller@ais.uni-bonn.de>
 #          Lars Buitinck <L.J.Buitinck@uva.nl>
+#          Arnaud Joly <arnaud.v.joly@gmail.com>
 # License: Simplified BSD
 
 from abc import ABCMeta, abstractmethod
@@ -22,11 +23,12 @@ from warnings import warn
 
 import numpy as np
 
-from . import (r2_score, mean_squared_error, accuracy_score, f1_score,
-               roc_auc_score, average_precision_score, precision_score,
-               recall_score, log_loss)
-
+from . import (r2_score, mean_absolute_error, mean_squared_error,
+               accuracy_score, f1_score, roc_auc_score,
+               average_precision_score,
+               precision_score, recall_score, log_loss)
 from .cluster import adjusted_rand_score
+from ..utils.multiclass import type_of_target
 from ..externals import six
 
 
@@ -131,52 +133,113 @@ class _ThresholdScorer(_BaseScorer):
         score : float
             Score function applied to prediction of estimator on X.
         """
-        if len(np.unique(y)) > 2:
-            raise ValueError("This classification score only "
-                             "supports binary classification.")
+        y_type = type_of_target(y)
+        if y_type not in ("binary", "multilabel-indicator"):
+            raise ValueError("{0} format is not supported".format(y_type))
+
         try:
-            y_pred = clf.decision_function(X).ravel()
+            y_pred = clf.decision_function(X)
+
+            # For multi-output multi-class estimator
+            if isinstance(y_pred, list):
+                y_pred = np.vstack(p for p in y_pred).T
+
         except (NotImplementedError, AttributeError):
-            y_pred = clf.predict_proba(X)[:, 1]
+            y_pred = clf.predict_proba(X)
+
+            if y_type == "binary":
+                y_pred = y_pred[:, 1]
+            elif isinstance(y_pred, list):
+                y_pred = np.vstack([p[:, -1] for p in y_pred]).T
+
         return self._sign * self._score_func(y, y_pred, **self._kwargs)
 
     def _factory_args(self):
         return ", needs_threshold=True"
 
 
-def _deprecate_loss_and_score_funcs(
-        loss_func=None, score_func=None, scoring=None,
-        score_overrides_loss=False):
-
-    scorer = None
-    if loss_func is not None or score_func is not None:
-
-        if loss_func is not None:
-            warn("Passing a loss function is "
-                 "deprecated and will be removed in 0.15. "
-                 "Either use strings or score objects. "
-                 "The relevant new parameter is called ''scoring''. ",
-                 category=DeprecationWarning, stacklevel=2)
-            scorer = make_scorer(loss_func, greater_is_better=False)
-        if score_func is not None:
-            warn("Passing function as ``score_func`` is "
-                 "deprecated and will be removed in 0.15. "
-                 "Either use strings or score objects. "
-                 "The relevant new parameter is called ''scoring''.",
-                 category=DeprecationWarning, stacklevel=2)
-            if loss_func is None or score_overrides_loss:
-                scorer = make_scorer(score_func)
-
-    elif isinstance(scoring, six.string_types):
+def get_scorer(scoring):
+    if isinstance(scoring, six.string_types):
         try:
             scorer = SCORERS[scoring]
         except KeyError:
             raise ValueError('%r is not a valid scoring value. '
-                             'Valid options are %s' % (scoring,
-                             sorted(SCORERS.keys())))
+                             'Valid options are %s'
+                             % (scoring, sorted(SCORERS.keys())))
     else:
         scorer = scoring
     return scorer
+
+
+def _passthrough_scorer(estimator, *args, **kwargs):
+    """Function that wraps estimator.score"""
+    return estimator.score(*args, **kwargs)
+
+
+def check_scoring(estimator, scoring=None, allow_none=False, loss_func=None,
+                  score_func=None, score_overrides_loss=False):
+    """Determine scorer from user options.
+
+    A TypeError will be thrown if the estimator cannot be scored.
+
+    Parameters
+    ----------
+    estimator : estimator object implementing 'fit'
+        The object to use to fit the data.
+
+    scoring : string, callable or None, optional, default: None
+        A string (see model evaluation documentation) or
+        a scorer callable object / function with signature
+        ``scorer(estimator, X, y)``.
+
+    allow_none : boolean, optional, default: False
+        If no scoring is specified and the estimator has no score function, we
+        can either return None or raise an exception.
+
+    Returns
+    -------
+    scoring : callable
+        A scorer callable object / function with signature
+        ``scorer(estimator, X, y)``.
+    """
+    has_scoring = not (scoring is None and loss_func is None and
+                       score_func is None)
+    if not hasattr(estimator, 'fit'):
+        raise TypeError("estimator should a be an estimator implementing "
+                        "'fit' method, %r was passed" % estimator)
+    elif hasattr(estimator, 'predict') and has_scoring:
+        scorer = None
+        if loss_func is not None or score_func is not None:
+            if loss_func is not None:
+                warn("Passing a loss function is "
+                     "deprecated and will be removed in 0.15. "
+                     "Either use strings or score objects. "
+                     "The relevant new parameter is called ''scoring''. ",
+                     category=DeprecationWarning, stacklevel=2)
+                scorer = make_scorer(loss_func, greater_is_better=False)
+            if score_func is not None:
+                warn("Passing function as ``score_func`` is "
+                     "deprecated and will be removed in 0.15. "
+                     "Either use strings or score objects. "
+                     "The relevant new parameter is called ''scoring''.",
+                     category=DeprecationWarning, stacklevel=2)
+                if loss_func is None or score_overrides_loss:
+                    scorer = make_scorer(score_func)
+        else:
+            scorer = get_scorer(scoring)
+        return scorer
+    elif hasattr(estimator, 'score'):
+        return _passthrough_scorer
+    elif not has_scoring:
+        if allow_none:
+            return None
+        raise TypeError(
+            "If no scoring is specified, the estimator passed should "
+            "have a 'score' method. The estimator %r does not." % estimator)
+    else:
+        raise TypeError(
+            "The estimator passed should have a 'score' or a 'predict' "
+            "method. The estimator %r does not." % estimator)
 
 
 def make_scorer(score_func, greater_is_better=True, needs_proba=False,
@@ -247,6 +310,8 @@ def make_scorer(score_func, greater_is_better=True, needs_proba=False,
 r2_scorer = make_scorer(r2_score)
 mean_squared_error_scorer = make_scorer(mean_squared_error,
                                         greater_is_better=False)
+mean_absolute_error_scorer = make_scorer(mean_absolute_error,
+                                         greater_is_better=False)
 
 # Standard Classification Scores
 accuracy_scorer = make_scorer(accuracy_score)
@@ -268,6 +333,7 @@ log_loss_scorer = make_scorer(log_loss, greater_is_better=False,
 adjusted_rand_scorer = make_scorer(adjusted_rand_score)
 
 SCORERS = dict(r2=r2_scorer,
+               mean_absolute_error=mean_absolute_error_scorer,
                mean_squared_error=mean_squared_error_scorer,
                accuracy=accuracy_scorer, f1=f1_scorer, roc_auc=roc_auc_scorer,
                average_precision=average_precision_scorer,

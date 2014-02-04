@@ -15,8 +15,7 @@ from ..externals.joblib import Parallel, delayed
 from .base import LinearClassifierMixin, SparseCoefMixin
 from ..base import BaseEstimator, RegressorMixin
 from ..feature_selection.from_model import _LearntSelectorMixin
-from ..utils import (array2d, atleast2d_or_csr, check_arrays, deprecated,
-                     column_or_1d)
+from ..utils import atleast2d_or_csr, check_arrays, deprecated, column_or_1d
 from ..utils.extmath import safe_sparse_dot
 from ..utils.multiclass import _check_partial_fit_first_call
 from ..externals import six
@@ -770,7 +769,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
                                                random_state=random_state,
                                                learning_rate=learning_rate,
                                                eta0=eta0, power_t=power_t,
-                                               warm_start=False)
+                                               warm_start=warm_start)
 
     def _partial_fit(self, X, y, alpha, C, loss, learning_rate,
                      n_iter, sample_weight,
@@ -885,7 +884,8 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
            Predicted target values per element in X.
         """
         X = atleast2d_or_csr(X)
-        scores = safe_sparse_dot(X, self.coef_) + self.intercept_
+        scores = safe_sparse_dot(X, self.coef_.T,
+                                 dense_output=True) + self.intercept_
         return scores.ravel()
 
     def predict(self, X):
@@ -1061,4 +1061,4 @@ class SGDRegressor(BaseSGDRegressor, _LearntSelectorMixin):
                                            random_state=random_state,
                                            learning_rate=learning_rate,
                                            eta0=eta0, power_t=power_t,
-                                           warm_start=False)
+                                           warm_start=warm_start)

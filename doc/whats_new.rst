@@ -8,6 +8,21 @@
 Changelog
 ---------
 
+   - The :ref:`Working With Text Data <text_data_tutorial>` tutorial
+     has now been worked in to the main documentation's tutorial section.
+     Includes exercises and skeletons for tutorial presentation.
+     Original tutorial created by several authors including
+     `Olivier Grisel`_, Lars Buitinck and many others.
+     Tutorial integration into the scikit-learn documentation
+     by `Jaques Grobler`_
+
+   - :mod:`sklearn.hmm` is deprecated. Its removal is planned
+     for the 0.17 release.
+
+   - Use of :class:`covariance.EllipticEnvelop` has now been removed after
+     deprecation.
+     Please use :class:`covariance.EllipticEnvelope` instead.
+
    - Added :class:`ensemble.BaggingClassifier` and
      :class:`ensemble.BaggingRegressor` meta-estimators for ensembling
      any kind of base estimator. See the :ref:`Bagging <bagging>` section of
@@ -60,6 +75,81 @@ Changelog
    - Added :class:`linear_model.RANSACRegressor` meta-estimator for the robust
      fitting of regression models. By Johannes Schönberger.
 
+   - Added :ref:`Computational Performance <computational_performance>`
+     documentation. Discussion and examples of prediction latency / throughput
+     and different factors that have influence over speed. Additional tips for
+     building faster models and choosing a relevant compromise between speed
+     and predictive power.
+     By `Eustache Diemert`_.
+
+   - Fixed bug in :class:`gradient_boosting.GradientBoostingRegressor` with
+     ``loss='huber'``: ``gamma`` might have not been initialized.
+
+   - :class:`dummy.DummyClassifier` can now be used to predict a constant
+     output value. By `Manoj Kumar`_.
+
+   - Fixed bug in :class:`decomposition.MiniBatchDictionaryLearning` :
+     partial_fit was not working properly.
+
+   - Multi-label classification output in multilabel indicator format
+     is now supported by :func:`metrics.roc_auc_score` and
+     :func:`metrics.average_precision_score` by `Arnaud Joly`_.
+
+   - Fixed bug in :class:`linear_model.stochastic_gradient` :
+     ``l1_ratio`` was used as ``(1.0 - l1_ratio)`` .
+
+   - Fixed bug in :class:`multiclass.OneVsOneClassifier` with string
+     labels
+
+   - Shorthand constructors :func:`pipeline.make_pipeline` and
+     :func:`pipeline.make_union` were added by `Lars Buitinck`_.
+
+   - Reduce memory usage and overhead when fitting and predicting with forests
+     of randomized trees in parallel with ``n_jobs != 1`` by leveraging new
+     threading backend of joblib 0.8 and releasing the GIL in the tree fitting
+     Cython code.  By `Olivier Grisel`_ and `Gilles Louppe`_.
+
+   - Decision trees can now be built in best-first manner by using ``max_leaf_nodes``
+     as the stopping criteria. Refactored the tree code to use either a
+     stack or a priority queue for tree building.
+     By `Peter Prettenhofer`_ and `Gilles Louppe`_.
+
+   - Decision trees can now be fitted on fortran- and c-style arrays, and
+     non-continuous arrays without the need to make a copy.
+     If the input array has a different dtype than ``np.float32``, a fortran-
+     style copy will be made since fortran-style memory layout has speed
+     advantages. By `Peter Prettenhofer`_ and `Gilles Louppe`_.
+
+   - Speed improvement of regression trees by optimizing the
+     the computation of the mean square error criterion. This lead
+     to speed improvement of the tree, forest and gradient boosting tree
+     modules. By `Arnaud Joly`_
+
+   - Changed the internal storage of decision trees to use a struct array.
+     This fixed some small bugs, while improving code and providing a small
+     speed gain. By `Joel Nothman`_.
+
+   - Various enhancements to the  :mod:`sklearn.ensemble.gradient_boosting`
+     module: a ``warm_start`` argument to fit additional trees,
+     a ``max_leaf_nodes`` argument to fit GBM style trees,
+     a ``monitor`` fit argument to inspect the estimator during training, and
+     refactoring of the verbose code. By `Peter Prettenhofer`_.
+
+   - Added :func:`learning_curve <learning_curve.learning_curve>` utility to
+     chart performance with respect to training size. See
+     :ref:`example_plot_learning_curve.py`. By `Alexander Fabisch`_.
+
+   - Add positive option in :class:`LassoCV <linear_model.LassoCV>` and
+     :class:`ElasticNetCV <linear_model.ElasticNetCV>`.
+     By Brian Wignall and `Alexandre Gramfort`_.
+
+   - Fixed a race condition in parallel processing with
+     ``pre_dispatch != "all"`` (for instance in ``cross_val_score``).
+     By `Olivier Grisel`_.
+
+   - Added :class:`linear_model.MultiTaskElasticNetCV` and
+     :class:`linear_model.MultiTaskLassoCV`. By `Manoj Kumar`_.
+
 
 API changes summary
 -------------------
@@ -79,6 +169,26 @@ API changes summary
      Support for masks will be removed in 0.17.
      The generators have produced arrays of indices by default since 0.10.
      By `Joel Nothman`_.
+
+   - 1-d arrays containing strings with ``dtype=object`` (as used in Pandas)
+     are now considered valid classification targets. This fixes a regression
+     from version 0.13 in some classifiers. By `Joel Nothman`_.
+
+   - Fix wrong `explained_variance_ratio_` attribute in
+     :class:`RandomizedPCA <decomposition.RandomizedPCA>`.
+     By `Alexandre Gramfort`_.
+
+   - Fit alphas for each l1_ratio instead of mean_l1_ratio in
+     :class: `linear_model.ElasticNetCV` and :class: `linear_model.LassoCV`.
+     This changes the shape of alphas_ from (n_alphas,) to
+     (n_l1_ratio, n_alphas) if the l1_ratio provided is a 1-D array like object
+     of length greater than one.
+     By `Manoj Kumar`_.
+
+   - Fix :class: `linear_model.ElasticNetCV` and :class: `linear_model.LassoCV`
+     when fitting intercept and X is sparse. The automatic grid
+     of alphas was not computed correctly and the scaling with normalize
+     was wrong. By `Manoj Kumar`_.
 
 .. _changes_0_14:
 
@@ -122,7 +232,7 @@ Changelog
      :class:`linear_model.Ridge`, by @eickenberg and `Mathieu Blondel`_.
 
    - Fixed :mod:`sklearn.linear_model.stochastic_gradient.py` L2 regularization
-     issue (minor practical significants).
+     issue (minor practical significance).
      By `Norbert Crombach`_ and `Mathieu Blondel`_ .
 
    - Added an interactive version of `Andreas Müller`_'s
@@ -641,7 +751,7 @@ Changelog
      :class:`ensemble.GradientBoostingRegressor` and
      :class:`ensemble.GradientBoostingClassifier` use the estimator
      :class:`tree.DecisionTreeRegressor` instead of the
-     :class:`tree._tree.Tree` datastructure by `Arnaud Joly`_.
+     :class:`tree._tree.Tree` data structure by `Arnaud Joly`_.
 
    - Fixed a floating point exception in the :ref:`decision trees <tree>`
      module, by Seberg.
@@ -866,13 +976,13 @@ Changelog
  - Documentation fixes for elastic net by `Andreas Müller`_ and
    `Alexandre Gramfort`_
 
- - Proper behavior with fortran-ordered numpy arrays by `Gael Varoquaux`_
+ - Proper behavior with fortran-ordered NumPy arrays by `Gael Varoquaux`_
 
  - Make GridSearchCV work with non-CSR sparse matrix by `Lars Buitinck`_
 
  - Fix parallel computing in MDS by `Gael Varoquaux`_
 
- - Fix unicode support in count vectorizer by `Andreas Müller`_
+ - Fix Unicode support in count vectorizer by `Andreas Müller`_
 
  - Fix MinCovDet breaking with X.shape = (3, 1) by `Virgile Fritsch`_
 
@@ -1170,7 +1280,7 @@ Other changes
      by `Olivier Grisel`_.
 
    - Beam pruning option in :class:`_BaseHMM` module has been removed since it
-     is difficult to cythonize. If you are interested in contributing a cython
+     is difficult to Cythonize. If you are interested in contributing a Cython
      version, you can use the python version in the git history as a reference.
 
    - Classes in :ref:`neighbors` now support arbitrary Minkowski metric for
@@ -1213,7 +1323,7 @@ API changes summary
      Options now are 'ovr' and 'crammer_singer', with 'ovr' being the default.
      This does not change the default behavior but hopefully is less confusing.
 
-   - Classs :class:`feature_selection.text.Vectorizer` is deprecated and
+   - Class :class:`feature_selection.text.Vectorizer` is deprecated and
      replaced by :class:`feature_selection.text.TfidfVectorizer`.
 
    - The preprocessor / analyzer nested structure for text feature
@@ -1231,7 +1341,7 @@ API changes summary
 
        - ``input`` explicitly control how to interpret the sequence passed to
          ``fit`` and ``predict``: filenames, file objects or direct (byte or
-         unicode) strings.
+         Unicode) strings.
 
        - charset decoding is explicit and strict by default.
 
@@ -1936,7 +2046,7 @@ People that made this release possible preceded by number of commits:
 0.6
 ===
 
-scikit-learn 0.6 was released on december 2010. It is marked by the
+scikit-learn 0.6 was released on December 2010. It is marked by the
 inclusion of several new modules and a general renaming of old
 ones. It is also marked by the inclusion of new example, including
 applications to real-world datasets.
@@ -2167,11 +2277,11 @@ Major changes in this release include:
 
     - feature_selection module redesign.
 
-    - Migration to GIT as content management system.
+    - Migration to GIT as version control system.
 
     - Removal of obsolete attrselect module.
 
-    - Rename of private compiled extensions (aded underscore).
+    - Rename of private compiled extensions (added underscore).
 
     - Removal of legacy unmaintained code.
 
@@ -2308,3 +2418,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Daniel Nouri: http://danielnouri.org
 
 .. _Johannes Schönberger: https://github.com/ahojnnes
+
+.. _Manoj Kumar: https://github.com/Manoj-Kumar-S

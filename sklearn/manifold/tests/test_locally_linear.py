@@ -6,6 +6,7 @@ from numpy.testing import assert_almost_equal, assert_array_almost_equal
 from sklearn import neighbors, manifold
 from sklearn.manifold.locally_linear import barycenter_kneighbors_graph
 from sklearn.utils.testing import assert_less
+from sklearn.utils.testing import ignore_warnings
 
 eigen_solvers = ['dense', 'arpack']
 
@@ -113,12 +114,11 @@ def test_pipeline():
 
 # Test the error raised when the weight matrix is singular
 def test_singular_matrix():
-    import warnings
     from nose.tools import assert_raises
     M = np.ones((10, 3))
-    with warnings.catch_warnings(record=True):
-        assert_raises(ValueError, manifold.locally_linear_embedding,
-                      M, 2, 1, method='standard', eigen_solver='arpack')
+    f = ignore_warnings
+    assert_raises(ValueError, f(manifold.locally_linear_embedding),
+                  M, 2, 1, method='standard', eigen_solver='arpack')
 
 
 if __name__ == '__main__':

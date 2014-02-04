@@ -76,47 +76,37 @@ When using Cython, include the generated C source code alongside with
 the Cython source code. The goal is to make it possible to install the
 scikit on any machine with Python, Numpy, Scipy and C/C++ compiler.
 
-Memory and implicit copies
-==========================
+Fast matrix multiplications
+===========================
 
-Some of the numpy and scipy core functions are optimized for Fortran contiguous
-data. In the case of the dot product, for numpy vetsions < 1.8, this leads to
-implicit copies performed to adjust data to the needs of the underlying
-Fortran routines (See section `Linear Algebra on large Arrays`
-on http://wiki.scipy.org/PerformanceTips). This not only consumes memory
-but also takes additional time.
+Matrix multiplications (matrix-matrix and matrix-vector) are usually handled
+using the NumPy function ``np.dot``, but in versions of NumPy before 1.7.2
+this function is suboptimal when the inputs are not both in the C (row-major)
+layout; in that case, the inputs may be implicitly copied to obtain the right
+layout. This obviously consumes memory and takes time.
 
-For convenience, if the numpy version available is older than 1.8, we internally
-use an optimized `numpy.dot` function that saves additional copies and improves
-speed by directly calling the Fortran routines with the appropriate data input
-while preserving the `numpy.dot` call signature. This means it can be used as a
-replacement for `numpy.dot`. example::
+The function ``fast_dot`` in ``sklearn.utils.extmath`` offers a fast
+replacement for ``np.dot`` that prevents copies from being made in some cases.
+In all other cases, it dispatches to ``np.dot`` and when the NumPy version is
+new enough, it is in fact an alias for that function, making it a drop-in
+replacement. Example usage of ``fast_dot``::
 
   >>> import numpy as np
-
   >>> from sklearn.utils.extmath import fast_dot
-
   >>> X = np.random.random_sample([2, 10])
-
   >>> np.allclose(np.dot(X, X.T), fast_dot(X, X.T))
   True
 
-However this requires data to be exactly 2 dimensional and of the same type,
-either single or double precision float. If these requirements aren't met or
-the BLAS package is not available, the call is silently dispatched to
-`numpy.dot`. If you want to be sure when the original `numpy.dot` has been
-invoked and when our `fast_dot` function has been used you can activate the
-related warning which is silenced by default. example::
+This function operates optimally on 2-dimensional arrays, both of the same
+dtype, which should be either single or double precision float. If these
+requirements aren't met or the BLAS package is not available, the call is
+silently dispatched to ``numpy.dot``. If you want to be sure when the original
+``numpy.dot`` has been invoked in a situation where it is suboptimal, you can
+activate the related warning::
 
   >>> import warnings
-
   >>> from sklearn.utils.validation import NonBLASDotWarning
-
   >>> warnings.simplefilter('always', NonBLASDotWarning) # doctest: +SKIP
-
-If numpy > 1.8 is available the `fast_dot` is not necessary. In that case
-the `numpy.dot` is being used. The issue has also been fixed in the 1.7.2
-maintenance branch.
 
 .. _profiling-python-code:
 

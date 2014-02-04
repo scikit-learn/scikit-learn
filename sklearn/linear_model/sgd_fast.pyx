@@ -3,6 +3,9 @@
 # cython: wraparound=False
 #
 # Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
+#         Mathieu Blondel (partial_fit support)
+#         Rob Zinkov (passive-aggressive)
+#         Lars Buitinck
 #
 # Licence: BSD 3 clause
 
@@ -326,7 +329,7 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
               LossFunction loss,
               int penalty_type,
               double alpha, double C,
-              double rho,
+              double l1_ratio,
               SequentialDataset dataset,
               int n_iter, int fit_intercept,
               int verbose, int shuffle, seed,
@@ -349,8 +352,11 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
         The penalty 2 for L2, 1 for L1, and 3 for Elastic-Net.
     alpha : float
         The regularization parameter.
-    rho : float
-        The elastic net hyperparameter.
+    C : float
+        Maximum step size for passive aggressive.
+    l1_ratio : float
+        The Elastic Net mixing parameter, with 0 <= l1_ratio <= 1.
+        l1_ratio=0 corresponds to L2 penalty, l1_ratio=1 to L1.
     dataset : SequentialDataset
         A concrete ``SequentialDataset`` object.
     n_iter : int
@@ -425,9 +431,9 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
     cdef double u = 0.0
 
     if penalty_type == L2:
-        rho = 1.0
+        l1_ratio = 0.0
     elif penalty_type == L1:
-        rho = 0.0
+        l1_ratio = 1.0
 
     eta = eta0
 
@@ -478,14 +484,14 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
             update *= class_weight * sample_weight
 
             if penalty_type >= L2:
-                w.scale(1.0 - (rho * eta * alpha))
+                w.scale(1.0 - ((1.0 - l1_ratio) * eta * alpha))
             if update != 0.0:
                 w.add(x_data_ptr, x_ind_ptr, xnnz, update)
                 if fit_intercept == 1:
                     intercept += update * intercept_decay
 
             if penalty_type == L1 or penalty_type == ELASTICNET:
-                u += ((1.0 - rho) * eta * alpha)
+                u += (l1_ratio * eta * alpha)
                 l1penalty(w, q_data_ptr, x_ind_ptr, xnnz, u)
             t += 1
             count += 1
