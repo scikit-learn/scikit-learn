@@ -986,7 +986,7 @@ cdef class Splitter:
     cdef void node_split(self, double impurity, SIZE_t* pos, SIZE_t* feature,
                          double* threshold, double* impurity_left,
                          double* impurity_right, double* impurity_improvement,
-                         SIZE_t* n_valid_features) nogil:
+                         SIZE_t* n_invalid_features) nogil:
         """Find a split on node samples[start:end]."""
         pass
 
@@ -1006,7 +1006,7 @@ cdef class BestSplitter(Splitter):
     cdef void node_split(self, double impurity, SIZE_t* pos, SIZE_t* feature,
                          double* threshold, double* impurity_left,
                          double* impurity_right, double* impurity_improvement,
-                         SIZE_t* n_valid_features) nogil:
+                         SIZE_t* n_invalid_features) nogil:
         """Find the best split on node samples[start:end]."""
         # Find the best split
         cdef SIZE_t* samples = self.samples
@@ -1021,7 +1021,7 @@ cdef class BestSplitter(Splitter):
         # constant and were randomly drawn by the shuffling algorithm.
         cdef SIZE_t* features = self.features
         cdef SIZE_t n_features = self.n_features
-        cdef SIZE_t n_invalid = n_features - n_valid_features[0]
+        cdef SIZE_t n_invalid = n_invalid_features[0]
         cdef SIZE_t n_invalid_drawn = 0
 
         cdef DTYPE_t* X = self.X
@@ -1172,7 +1172,7 @@ cdef class BestSplitter(Splitter):
         impurity_left[0] = best_impurity_left
         impurity_right[0] = best_impurity_right
         impurity_improvement[0] = best_improvement
-        n_valid_features[0] = n_features - n_invalid
+        n_invalid_features[0] = n_invalid
 
 
 # Sort n-element arrays pointed to by Xf and samples, simultaneously,
@@ -1296,21 +1296,17 @@ cdef class RandomSplitter(Splitter):
     cdef void node_split(self, double impurity, SIZE_t* pos, SIZE_t* feature,
                          double* threshold, double* impurity_left,
                          double* impurity_right, double* impurity_improvement,
-                         SIZE_t* n_valid_features) nogil:
+                         SIZE_t* n_invalid_features) nogil:
         """Find the best random split on node samples[start:end]."""
         # Draw random splits and pick the best
         cdef SIZE_t* samples = self.samples
         cdef SIZE_t start = self.start
         cdef SIZE_t end = self.end
 
-        # To avoid trying to split on constant features:
-        # the array `features` is such that
-        # `features[n_valid_features:n_features]` corresponds to features with
-        # constant values at the current depth.
-
         cdef SIZE_t* features = self.features
-        cdef SIZE_t n_valid = n_valid_features[0]
-        cdef SIZE_t n_current_valid = n_valid_features[0]
+        cdef SIZE_t n_features = self.n_features
+        cdef SIZE_t n_invalid = n_invalid_features[0]
+        cdef SIZE_t n_invalid_drawn = 0
 
         cdef DTYPE_t* X = self.X
         cdef SIZE_t X_sample_stride = self.X_sample_stride
@@ -1343,12 +1339,22 @@ cdef class RandomSplitter(Splitter):
         cdef SIZE_t partition_start
         cdef SIZE_t partition_end
 
-        for f_idx in range(n_valid):
+        # Look for splits
+        for f_idx in range(n_features):
             # Draw a feature at random
-            f_i = n_valid - f_idx - 1
-            f_j = rand_int(n_valid - f_idx, random_state)
-            features[f_i], features[f_j] = features[f_j], features[f_i]
+            f_i = n_invalid_drawn + n_features - f_idx - 1
+            f_j = n_invalid_drawn + rand_int(n_features - f_idx, random_state)
 
+            if f_j < n_invalid:
+                # Swap f_j and n_invalid_drawn
+                tmp = features[f_j]
+                features[f_j] = features[n_invalid_drawn]
+                features[n_invalid_drawn] = tmp
+                n_invalid_drawn += 1
+                visited_features += 1
+                continue
+
+            features[f_i], features[f_j] = features[f_j], features[f_i]
             current_feature = features[f_i]
 
             # Find min, max
@@ -1365,11 +1371,21 @@ cdef class RandomSplitter(Splitter):
                 elif current_feature_value > max_feature_value:
                     max_feature_value = current_feature_value
 
-            if min_feature_value == max_feature_value:
-                n_current_valid -= 1
-                tmp = features[n_current_valid]
-                features[n_current_valid] = current_feature
-                features[f_i] = tmp
+            # Constant features
+            if max_feature_value <= min_feature_value + EPSILON_FLT:
+                # Swap n_invalid and f_i
+                tmp = features[f_i]
+                features[f_i] = features[n_invalid]
+                features[n_invalid] = tmp
+
+                # Swap n_invalid and n_invalid_drawn
+                tmp = features[n_invalid_drawn]
+                features[n_invalid_drawn] = features[n_invalid]
+                features[n_invalid] = tmp
+
+                n_invalid += 1
+                n_invalid_drawn += 1
+                visited_features += 1
                 continue
 
             # Draw a random threshold
@@ -1450,7 +1466,7 @@ cdef class RandomSplitter(Splitter):
         impurity_left[0] = best_impurity_left
         impurity_right[0] = best_impurity_right
         impurity_improvement[0] = best_improvement
-        n_valid_features[0] = n_current_valid
+        n_invalid_features[0] = n_invalid
 
 
 cdef class PresortBestSplitter(Splitter):
@@ -1510,22 +1526,16 @@ cdef class PresortBestSplitter(Splitter):
     cdef void node_split(self, double impurity, SIZE_t* pos, SIZE_t* feature,
                          double* threshold, double* impurity_left,
                          double* impurity_right, double* impurity_improvement,
-                         SIZE_t* n_valid_features) nogil:
+                         SIZE_t* n_invalid_features) nogil:
         """Find the best split on node samples[start:end]."""
         # Find the best split
         cdef SIZE_t* samples = self.samples
         cdef SIZE_t start = self.start
         cdef SIZE_t end = self.end
 
-        # To avoid trying to split on constant features:
-        # the array `features` is such that
-        # `features[:n_invalid]` corresponds to features with
-        # constant values at the current depth,
-        # `features[:n_invalid_drawn]` corresponds to features that are
-        # constant and were randomly drawn by the shuffling algorithm.
         cdef SIZE_t* features = self.features
         cdef SIZE_t n_features = self.n_features
-        cdef SIZE_t n_invalid = n_features - n_valid_features[0]
+        cdef SIZE_t n_invalid = n_invalid_features[0]
         cdef SIZE_t n_invalid_drawn = 0
 
         cdef DTYPE_t* X = self.X
@@ -1694,7 +1704,7 @@ cdef class PresortBestSplitter(Splitter):
         impurity_left[0] = best_impurity_left
         impurity_right[0] = best_impurity_right
         impurity_improvement[0] = best_improvement
-        n_valid_features[0] = n_features - n_invalid
+        n_invalid_features[0] = n_invalid
 
 
 # =============================================================================
@@ -1753,7 +1763,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         cdef SIZE_t parent
         cdef bint is_left
         cdef SIZE_t n_node_samples = splitter.n_samples
-        cdef SIZE_t n_valid_features = splitter.n_features
+        cdef SIZE_t n_invalid_features = 0
         cdef SIZE_t pos
         cdef SIZE_t feature
         cdef SIZE_t node_id
@@ -1773,7 +1783,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
 
         # push root node onto stack
         rc = stack.push(0, n_node_samples, 0, _TREE_UNDEFINED, 0, INFINITY,
-                        n_valid_features)
+                        n_invalid_features)
         if rc == -1:
             # got return code -1 - out-of-memory
             raise MemoryError()
@@ -1788,7 +1798,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                 parent = stack_record.parent
                 is_left = stack_record.is_left
                 impurity = stack_record.impurity
-                n_valid_features = stack_record.n_valid_features
+                n_invalid_features = stack_record.n_invalid_features
 
                 n_node_samples = end - start
                 is_leaf = ((depth >= tree.max_depth) or
@@ -1808,7 +1818,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                                         &split_impurity_left,
                                         &split_impurity_right,
                                         &split_improvement,
-                                        &n_valid_features)
+                                        &n_invalid_features)
                     is_leaf = is_leaf or (pos >= end)
 
                 node_id = tree._add_node(parent, is_left, is_leaf, feature,
@@ -1822,13 +1832,13 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                 else:
                     # Push right child on stack
                     rc = stack.push(pos, end, depth + 1, node_id, 0,
-                                    split_impurity_right, n_valid_features)
+                                    split_impurity_right, n_invalid_features)
                     if rc == -1:
                         break
 
                     # Push left child on stack
                     rc = stack.push(start, pos, depth + 1, node_id, 1,
-                                    split_impurity_left, n_valid_features)
+                                    split_impurity_left, n_invalid_features)
                     if rc == -1:
                         break
 
@@ -1857,7 +1867,7 @@ cdef int _add_split_node(Splitter splitter, Tree tree,
     cdef SIZE_t pos
     cdef SIZE_t feature
     cdef SIZE_t node_id
-    cdef SIZE_t n_valid_features = splitter.n_features
+    cdef SIZE_t n_invalid_features = 0
     cdef double threshold
     cdef double split_impurity_left
     cdef double split_impurity_right
@@ -1879,7 +1889,7 @@ cdef int _add_split_node(Splitter splitter, Tree tree,
     if not is_leaf:
         splitter.node_split(impurity, &pos, &feature, &threshold,
                             &split_impurity_left, &split_impurity_right,
-                            &split_improvement, &n_valid_features)
+                            &split_improvement, &n_invalid_features)
         is_leaf = is_leaf or (pos >= end)
 
     node_id = tree._add_node(parent - tree.nodes if parent != NULL

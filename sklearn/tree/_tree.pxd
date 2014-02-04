@@ -91,8 +91,11 @@ cdef class Splitter:
 
     cdef void node_reset(self, SIZE_t start, SIZE_t end) nogil
 
-    # With depth-first tree builder the n_valid_features arguments is used by
+    # With depth-first tree builder the n_invalid_features arguments is used by
     # the splitter to avoid splitting on constant features (invalid features).
+    # To avoid trying to split on constant features: the array `features` is
+    # such that `features[:n_invalid]` corresponds to features with
+    # constant values at the current depth.
 
     cdef void node_split(self,
                          double impurity,  # Impurity of the node
@@ -102,7 +105,7 @@ cdef class Splitter:
                          double* impurity_left,
                          double* impurity_right,
                          double* impurity_improvement,
-                         SIZE_t* n_valid_features) nogil
+                         SIZE_t* n_invalid_features) nogil
 
     cdef void node_value(self, double* dest) nogil
 
