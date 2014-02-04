@@ -75,6 +75,8 @@ perm = rng.permutation(boston.target.size)
 boston.data = boston.data[perm]
 boston.target = boston.target[perm]
 
+twentynews_train = datasets.fetch_20newsgroups_vectorized(subset="train")
+twentynews_test = datasets.fetch_20newsgroups_vectorized(subset="test")
 
 def test_classification_toy():
     """Check classification on a toy dataset."""
@@ -178,6 +180,18 @@ def test_boston():
         assert_less(score, 2,
                     "Failed with {0}, criterion = {1} and score = {2}"
                     "".format(name, criterion, score))
+
+
+def test_20news():
+    """Check consistency on dataset 20news."""
+    for (name, Tree), criterion in product(CLF_TREES.items(), CLF_CRITERIONS):
+        clf = Tree(criterion=criterion, random_state=0)
+        clf.fit(twentynews_train.data, twentynews_train.target)
+        score = accuracy_score(clf.predict(twentynews_test.data), twentynews_test.target)
+        assert_greater(score, 0.9,
+                       "Failed with {0}, criterion = {1} and score = {2}"
+                       "".format(name, criterion, score))
+
 
 
 def test_probability():
