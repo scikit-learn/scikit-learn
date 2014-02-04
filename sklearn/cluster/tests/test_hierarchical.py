@@ -15,6 +15,7 @@ from scipy.cluster import hierarchy
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
 
 from sklearn.cluster import Ward, WardAgglomeration, ward_tree
@@ -190,9 +191,9 @@ def test_agglomerative_clustering():
             affinity=affinity,
             linkage="complete")
         clustering2.fit(X)
-        assert_equal(normalized_mutual_info_score(
-                        clustering2.labels_,
-                        clustering.labels_), 1)
+        assert_almost_equal(normalized_mutual_info_score(
+                            clustering2.labels_,
+                            clustering.labels_), 1)
 
 
 def test_ward_agglomeration():
