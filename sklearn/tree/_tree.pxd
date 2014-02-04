@@ -93,8 +93,6 @@ cdef class Splitter:
 
     # With depth-first tree builder the n_valid_features arguments is used by
     # the splitter to avoid splitting on constant features (invalid features).
-    # The array features is such that `features[n_valid_features:n_features]`
-    # correspond to features with constant value at the current depth.
 
     cdef void node_split(self,
                          double impurity,  # Impurity of the node

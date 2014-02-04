@@ -197,8 +197,8 @@ cdef class PriorityHeap:
         return self.heap_ptr <= 0
 
     cdef int push(self, SIZE_t node_id, SIZE_t start, SIZE_t end, SIZE_t pos,
-                   SIZE_t depth, bint is_leaf, double improvement,
-                   double impurity) nogil:
+                  SIZE_t depth, bint is_leaf, double improvement,
+                  double impurity) nogil:
         """Push record on the priority heap.
 
         Returns 0 if successful; -1 on out of memory error.
