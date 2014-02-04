@@ -1120,8 +1120,7 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
 
 
 def cross_val_report(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
-                     verbose=0, fit_params=None, score_func=None,
-                     pre_dispatch='2*n_jobs'):
+                     verbose=0, fit_params=None, pre_dispatch='2*n_jobs'):
     """Evaluate a score by cross-validation
 
     Parameters
@@ -1196,8 +1195,7 @@ def cross_val_report(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
         scorers = [check_scoring(estimator, scoring=s) for s in scoring]
         ret_1d = False
     else:
-        scorers = [check_scoring(estimator, score_func=score_func,
-                               scoring=scoring)]
+        scorers = [check_scoring(estimator, scoring=scoring)]
         ret_1d = True
 
     parallel = Parallel(n_jobs=n_jobs, verbose=verbose,
