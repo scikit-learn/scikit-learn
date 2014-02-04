@@ -343,6 +343,11 @@ def linkage_tree(X, connectivity=None, n_components=None,
             # the distance matrix.
             i, j = np.triu_indices(X.shape[0], k=1)
             X = X[i, j]
+        elif affinity == 'l2':
+            # Translate to something understood by scipy
+            affinity = 'euclidean'
+        elif affinity in ('l1', 'manhattan'):
+            affinity = 'cityblock'
         elif callable(affinity):
             X = affinity(X)
             i, j = np.triu_indices(X.shape[0], k=1)
