@@ -441,7 +441,7 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
 
     See also
     --------
-    :ref:`examples/plot_polynmial_regression.py
+    :ref:`examples/plot_polynomial_regression.py
     <example_plot_polynomial_regression.py>`
     """
     def __init__(self, degree=2, include_bias=True):
