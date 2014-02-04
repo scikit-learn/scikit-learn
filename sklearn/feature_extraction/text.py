@@ -1972,7 +1972,9 @@ class LsiVectorizer(CountVectorizer):
         self.fit(raw_docs)
         count_matrix = super(LsiVectorizer, self).fit_transform(raw_docs)
         corpus = _generate_gensim_corpus(count_matrix)
-        return _convert_gensim_corpus2csr(self._model_lsi[corpus])
+        #return _convert_gensim_corpus2csr(self._model_lsi[corpus])
+        return _convert_gensim_corpus2csr(self._model_lsi[corpus],
+                                          num_topics=self.num_topics)
 
         #return _convert_gensim_corpus2csr(self._model_lsi[self._corpus])
         #return _convert_gensim_corpus2csr(self._corpus_lsi)
@@ -2000,7 +2002,9 @@ class LsiVectorizer(CountVectorizer):
         corpus = _generate_gensim_corpus(count_matrix)
         logger.info('Transforming new docs: gensim corpus generated!')
 
-        return _convert_gensim_corpus2csr(self._model_lsi[corpus])
+        #return _convert_gensim_corpus2csr(self._model_lsi[corpus])
+        return _convert_gensim_corpus2csr(self._model_lsi[corpus],
+                                          num_topics=self.num_topics)
 
 
 class ReadabilityTransformer():
