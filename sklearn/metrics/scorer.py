@@ -308,10 +308,8 @@ def make_scorer(score_func, greater_is_better=True, needs_proba=False,
 
 # Standard regression scores
 r2_scorer = make_scorer(r2_score)
-mean_squared_error_scorer = make_scorer(mean_squared_error,
-                                        greater_is_better=False)
-mean_absolute_error_scorer = make_scorer(mean_absolute_error,
-                                         greater_is_better=False)
+mean_squared_error_scorer = make_scorer(mean_squared_error)
+mean_absolute_error_scorer = make_scorer(mean_absolute_error)
 
 # Standard Classification Scores
 accuracy_scorer = make_scorer(accuracy_score)
