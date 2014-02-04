@@ -18,7 +18,6 @@ from sklearn.utils.fast_dict cimport IntFloatDict
 # C++
 from cython.operator cimport dereference as deref, preincrement as inc
 from libcpp.map cimport map as cpp_map
-from libc.math cimport fmax
 
 DTYPE = np.float64
 ctypedef np.float64_t DTYPE_t
@@ -26,6 +25,9 @@ ctypedef np.float64_t DTYPE_t
 ITYPE = np.intp
 ctypedef np.intp_t ITYPE_t
 
+# Reimplementation for MSVC support
+cdef inline double fmax(double a, double b):
+    return max(a, b)
 
 ###############################################################################
 # Utilities for computing the ward momentum
@@ -301,11 +303,29 @@ cdef class WeightedEdge:
         self.b = b
 
     @cython.nonecheck(False)
-    def __cmp__(self, WeightedEdge other):
-        """Return negative if self < other, zero if self == other,
-           positive if self > other.
+    def __richcmp__(self, WeightedEdge other, int op):
+        """Cython-specific comparison method.
+
+        op is the comparison code::
+            <   0
+            ==  2
+            >   4
+            <=  1
+            !=  3
+            >=  5
         """
-        return self.weight > other.weight
+        if op == 0:
+            return self.weight < other.weight
+        elif op == 1:
+            return self.weight <= other.weight
+        elif op == 2:
+            return self.weight == other.weight
+        elif op == 3:
+            return self.weight != other.weight
+        elif op == 4:
+            return self.weight > other.weight
+        elif op == 5:
+            return self.weight >= other.weight
         
     def __repr__(self):
         return "%s(weight=%f, a=%i, b=%i)" % (self.__class__.__name__,
