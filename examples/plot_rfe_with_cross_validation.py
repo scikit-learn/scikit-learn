@@ -20,6 +20,8 @@ X, y = make_classification(n_samples=1000, n_features=25, n_informative=3,
 
 # Create the RFE object and compute a cross-validated score.
 svc = SVC(kernel="linear")
+# The "accuracy" scoring is proportional to the number of correct
+# classifications
 rfecv = RFECV(estimator=svc, step=1, cv=StratifiedKFold(y, 2),
               scoring='accuracy')
 rfecv.fit(X, y)
@@ -30,6 +32,6 @@ print("Optimal number of features : %d" % rfecv.n_features_)
 import pylab as pl
 pl.figure()
 pl.xlabel("Number of features selected")
-pl.ylabel("Cross validation score (nb of misclassifications)")
+pl.ylabel("Cross validation score (nb of correct classifications)")
 pl.plot(range(1, len(rfecv.grid_scores_) + 1), rfecv.grid_scores_)
 pl.show()
