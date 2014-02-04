@@ -44,7 +44,7 @@ def test_linkage_misc():
     FeatureAgglomeration().fit(X)
 
     with warnings.catch_warnings(record=True) as warning_list:
-        warnings.simplefilter("always", UserWarning)
+        warnings.simplefilter("always", DeprecationWarning)
         # Use the copy argument, to raise a warning
         Ward(copy=True).fit(X)
     # We should be getting 2 warnings: one for using Ward that is

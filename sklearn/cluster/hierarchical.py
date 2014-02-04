@@ -9,6 +9,7 @@ License: BSD 3 clause
 """
 from heapq import heapify, heappop, heappush, heappushpop
 import warnings
+import sys
 
 import numpy as np
 from scipy import sparse
@@ -25,6 +26,8 @@ from . import _hierarchical
 from ._feature_agglomeration import AgglomerationTransform
 from ..utils.fast_dict import IntFloatDict
 
+if sys.version_info[0] > 2:
+    xrange = range
 
 ###############################################################################
 # For non fully-connected graphs

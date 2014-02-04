@@ -4,6 +4,7 @@ import numpy as np
 from nose.tools import assert_equal
 
 from sklearn.utils.fast_dict import IntFloatDict, argmin
+from sklearn.externals.six.moves import xrange
 
 def test_int_float_dict():
     rng = np.random.RandomState(0)

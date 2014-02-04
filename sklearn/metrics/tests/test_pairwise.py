@@ -12,6 +12,8 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_true
 
+from sklearn.externals.six import iteritems
+
 from sklearn.metrics.pairwise import euclidean_distances
 from sklearn.metrics.pairwise import manhattan_distances
 from sklearn.metrics.pairwise import linear_kernel
@@ -202,7 +204,7 @@ def test_paired_distances():
     X = rng.random_sample((5, 4))
     # Euclidean distance, with Y != X.
     Y = rng.random_sample((5, 4))
-    for metric, func in PAIRED_DISTANCES.iteritems():
+    for metric, func in iteritems(PAIRED_DISTANCES):
         S = paired_distances(X, Y, metric=metric)
         S2 = func(X, Y)
         assert_array_almost_equal(S, S2)
