@@ -68,15 +68,28 @@ values.
 
 The function :func:`validation_curve` can help in this case::
 
+  >>> import numpy as np
   >>> from sklearn.learning_curve import validation_curve
+  >>> from sklearn.datasets import load_iris
   >>> from sklearn.linear_model import Ridge
+
+  >>> np.random.seed(0)
+  >>> iris = load_iris()
+  >>> X, y = iris.data, iris.target
+  >>> indices = np.arange(y.shape[0])
+  >>> np.random.shuffle(indices)
+  >>> X, y = X[indices], y[indices]
 
   >>> train_scores, valid_scores = validation_curve(Ridge(), X, y, "alpha",
   ...                                               np.logspace(-7, 3, 3))
   >>> train_scores           # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
-  array([ 0.931...,  0.931...,  0.452...])
+  array([[ 0.94...,  0.92...,  0.92...],
+         [ 0.94...,  0.92...,  0.92...],
+         [ 0.47...,  0.45...,  0.42...]])
   >>> valid_scores           # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
-  array([ 0.923...,  0.923...,  0.433...])
+  array([[ 0.90...,  0.92...,  0.94...],
+         [ 0.90...,  0.92...,  0.94...],
+         [ 0.44...,  0.39...,  0.45...]])
 
 If the training score and the validation score are both low, the estimator will
 be underfitting. If the training score is high and the validation score is low,
@@ -127,24 +140,19 @@ that are required to plot such a learning curve (number of samples
 that have been used, the average scores on the training sets and the
 average scores on the validation sets)::
 
-  >>> import numpy as np
   >>> from sklearn.learning_curve import learning_curve
-  >>> from sklearn.datasets import load_iris
   >>> from sklearn.svm import SVC
-
-  >>> np.random.seed(0)
-  >>> iris = load_iris()
-  >>> X, y = iris.data, iris.target
-  >>> indices = np.arange(y.shape[0])
-  >>> np.random.shuffle(indices)
-  >>> X, y = X[indices], y[indices]
 
   >>> train_sizes, train_scores, valid_scores = learning_curve(
   ...     SVC(kernel='linear'), X, y, train_sizes=[50, 80, 110], cv=5)
   >>> train_sizes            # doctest: +NORMALIZE_WHITESPACE
   array([ 50, 80, 110])
   >>> train_scores           # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
-  array([ 0.98 , 0.99 , 0.987...])
+  array([[ 0.98...,  0.98 ,  0.98...,  0.98...,  0.98...],
+         [ 0.98...,  1.   ,  0.98...,  0.98...,  0.98...],
+         [ 0.98...,  1.   ,  0.98...,  0.98...,  0.99...]])
   >>> valid_scores           # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
-  array([ 0.98 , 0.986..., 0.986...])
+  array([[ 1. ,  0.93...,  1. ,  1. ,  0.96...],
+         [ 1. ,  0.96...,  1. ,  1. ,  0.96...],
+         [ 1. ,  0.96...,  1. ,  1. ,  0.96...]])
 

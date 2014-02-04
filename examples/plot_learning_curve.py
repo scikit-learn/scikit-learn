@@ -15,6 +15,7 @@ samples.
 """
 print(__doc__)
 
+import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.naive_bayes import GaussianNB
 from sklearn.svm import SVC
@@ -31,8 +32,16 @@ plt.xlabel("Training examples")
 plt.ylabel("Score")
 train_sizes, train_scores, test_scores = learning_curve(
     GaussianNB(), X, y, cv=10, n_jobs=1)
-plt.plot(train_sizes, train_scores, label="Training score")
-plt.plot(train_sizes, test_scores, label="Cross-validation score")
+train_scores_mean = np.mean(train_scores, axis=1)
+train_scores_std = np.std(train_scores, axis=1)
+test_scores_mean = np.mean(test_scores, axis=1)
+test_scores_std = np.std(test_scores, axis=1)
+plt.plot(train_sizes, train_scores_mean, label="Training score")
+plt.fill_between(train_sizes, train_scores_mean - train_scores_std,
+                 train_scores_mean + train_scores_std, alpha=0.2)
+plt.plot(train_sizes, test_scores_mean, label="Cross-validation score")
+plt.fill_between(train_sizes, test_scores_mean - test_scores_std,
+                 test_scores_mean + test_scores_std, alpha=0.2)
 plt.legend(loc="best")
 
 plt.figure()
@@ -40,9 +49,17 @@ plt.title("Learning Curve (SVM, RBF kernel, $\gamma=0.001$)")
 plt.xlabel("Training examples")
 plt.ylabel("Score")
 train_sizes, train_scores, test_scores = learning_curve(
-    SVC(gamma=0.001), X, y, cv=10, n_jobs=1)
-plt.plot(train_sizes, train_scores, label="Training score")
-plt.plot(train_sizes, test_scores, label="Cross-validation score")
+    SVC(gamma=0.001), X, y, cv=10, n_jobs=4)
+train_scores_mean = np.mean(train_scores, axis=1)
+train_scores_std = np.std(train_scores, axis=1)
+test_scores_mean = np.mean(test_scores, axis=1)
+test_scores_std = np.std(test_scores, axis=1)
+plt.plot(train_sizes, train_scores_mean, label="Training score")
+plt.fill_between(train_sizes, train_scores_mean - train_scores_std,
+                 train_scores_mean + train_scores_std, alpha=0.2)
+plt.plot(train_sizes, test_scores_mean, label="Cross-validation score")
+plt.fill_between(train_sizes, test_scores_mean - test_scores_std,
+                 test_scores_mean + test_scores_std, alpha=0.2)
 plt.legend(loc="best")
 
 plt.show()

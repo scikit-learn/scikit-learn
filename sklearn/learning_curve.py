@@ -41,7 +41,7 @@ def learning_curve(estimator, X, y, train_sizes=np.linspace(0.1, 1.0, 10),
         Target relative to X for classification or regression;
         None for unsupervised learning.
 
-    train_sizes : array-like, shape = (n_ticks,), dtype float or int
+    train_sizes : array-like, shape (n_ticks,), dtype float or int
         Relative or absolute numbers of training examples that will be used to
         generate the learning curve. If the dtype is float, it is regarded as a
         fraction of the maximum size of the training set (that is determined
@@ -78,15 +78,15 @@ def learning_curve(estimator, X, y, train_sizes=np.linspace(0.1, 1.0, 10),
 
     Returns
     -------
-    train_sizes_abs : array, shape = [n_unique_ticks,], dtype int
+    train_sizes_abs : array, shape = (n_unique_ticks,), dtype int
         Numbers of training examples that has been used to generate the
         learning curve. Note that the number of ticks might be less
         than n_ticks because duplicate entries will be removed.
 
-    train_scores : array, shape = [n_ticks,]
+    train_scores : array, shape (n_ticks, n_cv_folds)
         Scores on training sets.
 
-    test_scores : array, shape = [n_ticks,]
+    test_scores : array, shape (n_ticks, n_cv_folds)
         Scores on test set.
 
     Notes
@@ -135,9 +135,9 @@ def learning_curve(estimator, X, y, train_sizes=np.linspace(0.1, 1.0, 10),
         n_cv_folds = out.shape[0] / n_unique_ticks
         out = out.reshape(n_cv_folds, n_unique_ticks, 2)
 
-    avg_over_cv = np.asarray(out).mean(axis=0).reshape(n_unique_ticks, 2)
+    out = np.asarray(out).transpose((2, 1, 0))
 
-    return train_sizes_abs, avg_over_cv[:, 0], avg_over_cv[:, 1]
+    return train_sizes_abs, out[0], out[1]
 
 
 def _translate_train_sizes(train_sizes, n_max_training_samples):
@@ -149,7 +149,7 @@ def _translate_train_sizes(train_sizes, n_max_training_samples):
 
     Parameters
     ----------
-    train_sizes : array-like, shape = (n_ticks,), dtype float or int
+    train_sizes : array-like, shape (n_ticks,), dtype float or int
         Numbers of training examples that will be used to generate the
         learning curve. If the dtype is float, it is regarded as a
         fraction of 'n_max_training_samples', i.e. it has to be within (0, 1].
@@ -159,7 +159,7 @@ def _translate_train_sizes(train_sizes, n_max_training_samples):
 
     Returns
     -------
-    train_sizes_abs : array, shape = [n_unique_ticks,], dtype int
+    train_sizes_abs : array, shape (n_unique_ticks,), dtype int
         Numbers of training examples that will be used to generate the
         learning curve. Note that the number of ticks might be less
         than n_ticks because duplicate entries will be removed.
@@ -247,7 +247,7 @@ def validation_curve(estimator, X, y, param_name, param_range, cv=None,
     param_name : string
         Name of the parameter that will be varied.
 
-    param_range : array-like, shape = (n_values,)
+    param_range : array-like, shape (n_values,)
         The values of the parameter that will be evaluated.
 
     cv : integer, cross-validation generator, optional
@@ -273,11 +273,11 @@ def validation_curve(estimator, X, y, param_name, param_range, cv=None,
 
     Returns
     -------
-    train_scores : array, shape = (n_values,)
+    train_scores : array, shape (n_ticks, n_cv_folds)
         Scores on training sets.
 
-    test_scores : array, shape = (n_values,)
-        Scores on test sets.
+    test_scores : array, shape (n_ticks, n_cv_folds)
+        Scores on test set.
 
     Notes
     -----
@@ -298,7 +298,6 @@ def validation_curve(estimator, X, y, param_name, param_range, cv=None,
     out = np.asarray(out)[:, :2]
     n_params = len(param_range)
     n_cv_folds = out.shape[0] / n_params
-    out = out.reshape(n_cv_folds, n_params, 2)
-    avg_over_cv = out.mean(axis=0).reshape(n_params, 2)
+    out = out.reshape(n_cv_folds, n_params, 2).transpose((2, 1, 0))
 
-    return avg_over_cv[:, 0], avg_over_cv[:, 1]
+    return out[0], out[1]
