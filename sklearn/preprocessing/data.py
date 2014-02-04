@@ -428,10 +428,9 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-    `powers_` : np.ndarray, shape = (Np, n_features)
-         This is the matrix of powers used to construct the polynomial
-         features.  powers_[i, j] is the exponent of the j^th input
-         feature in the i^th output feature.
+
+    `powers_`:
+         powers_[i, j] is the exponent of the jth input in the ith output.
 
     Notes
     -----
@@ -439,9 +438,7 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
     exponentially in the number of features of the input array, so this
     is not suitable for higher-dimensional data.
 
-    See also
-    --------
-    :ref:`examples/plot_polynomial_regression.py
+    See :ref:`examples/plot_polynomial_regression.py
     <example_plot_polynomial_regression.py>`
     """
     def __init__(self, degree=2, include_bias=True):
