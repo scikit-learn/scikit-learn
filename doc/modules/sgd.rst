@@ -267,7 +267,7 @@ training error given by
 
 .. math::
 
-    E(w,b) = \sum_{i=1}^{n} L(y_i, f(x_i)) + \alpha R(w)
+    E(w,b) = \frac{1}{n}\sum_{i=1}^{n} L(y_i, f(x_i)) + \alpha R(w)
 
 where :math:`L` is a loss function that measures model (mis)fit and
 :math:`R` is a regularization term (aka penalty) that penalizes model
