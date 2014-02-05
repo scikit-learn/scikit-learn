@@ -5,7 +5,12 @@ from scipy.spatial.distance import pdist
 from scipy.spatial.distance import squareform
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_random_state
+from ..neighbors import NearestNeighbors
+from ..neighbors.base import _get_weights
 from . import _binary_search
+
+
+EPSILON = 1e-16
 
 
 def _gradient_descent(objective, p0, n_iter, momentum=0.5,
@@ -93,11 +98,16 @@ def trustworthiness(X, X_embedded, n_neighbors=5, precomputed=False):
 
         T(k) = 1 - \frac{2}{nk (2n - 3k - 1)} \sum^n_{i=1} \sum_{j \in U^{(k)}_i (r(i, j) - k)}
 
-    where :math:`r(i, j)` represents the rank of the low-dimensional
-    datapoint j  according to the pairwise distances between the
-    low-dimensional datapoints and :math:`U^{(k)}_i` represents the
-    set of points that are in the k nearest neighbors in the
-    low-dimensional space but not in the high-dimensional space.
+    where :math:`r(i, j)` is the rank of the embedded datapoint j
+    according to the pairwise distances between the embedded datapoints,
+    :math:`U^{(k)}_i` is the set of points that are in the k nearest
+    neighbors in the embedded space but not in the original space.
+
+    * "Neighborhood Preservation in Nonlinear Projection Methods: An
+    Experimental Study"
+    J. Venna, S. Kaski
+    * "Learning a Parametric Embedding by Preserving Local Structure"
+    L.J.P. van der Maaten
 
     Parameters
     ----------
@@ -125,14 +135,14 @@ def trustworthiness(X, X_embedded, n_neighbors=5, precomputed=False):
         dist_X = squareform(pdist(X, "sqeuclidean"))
     dist_X_embedded = squareform(pdist(X_embedded, "sqeuclidean"))
     ind_X = np.argsort(dist_X, axis=1)
-    ind_X_embedded = np.argsort(dist_X_embedded, axis=1)[:, :n_neighbors + 1]
+    ind_X_embedded = np.argsort(dist_X_embedded, axis=1)[:, 1:n_neighbors + 1]
 
     n_samples = X.shape[0]
     t = 0.0
     ranks = np.zeros(n_neighbors)
     for i in range(n_samples):
         for j in range(n_neighbors):
-            ranks[j] = np.where(ind_X[i] == ind_X_embedded[i, j + 1])[0][0]
+            ranks[j] = np.where(ind_X[i] == ind_X_embedded[i, j])[0][0]
         ranks -= n_neighbors
         t += np.sum(ranks[ranks > 0])
     t = 1.0 - t * (2.0 / (n_samples * n_neighbors *
@@ -153,6 +163,14 @@ class TSNE(BaseEstimator, TransformerMixin):
     method (e.g. PCA) to reduce the number of dimensions to a reasonable
     amount (e.g. 50) if the number of features is very high. This will
     often improve the visualization.
+
+    Usually t-SNE does not generalize, i.e. it can only compute the
+    embedding of the training data. However, we use a heuristic to
+    embed unseen data: first we determine the n_neighbors nearest
+    neighbors from the training set of the test sample in the original
+    space and then we compute a distance-weighted average in the
+    embedded space to obtain the transformed test sample. Note that
+    this does not work if the distance matrix is precomputed.
 
     .. topic:: References:
 
@@ -192,6 +210,13 @@ class TSNE(BaseEstimator, TransformerMixin):
         A distance metric that is defined in scipy.spatial.distance or
         'precomputed'.
 
+    n_neighbors : int, optional, (default: 3)
+        Number of neighbors that will be used to transform the data to the
+        embedded space.
+
+    fit_inverse_transform : bool, optional, (default: False)
+        Learn the inverse transform for non-precomputed distances.
+
     verbose : int, optional (default: 0)
         Verbosity level.
 
@@ -200,13 +225,19 @@ class TSNE(BaseEstimator, TransformerMixin):
         numpy.random singleton.
     """
     def __init__(self, n_components=2, perplexity=30.0,
-                 optimizer="gradient_descent", n_iter=1000, distances="sqeuclidean",
-                 verbose=0, random_state=None):
+                 optimizer="gradient_descent", n_iter=1000,
+                 distances="sqeuclidean", n_neighbors=3,
+                 fit_inverse_transform=False, verbose=0, random_state=None):
+        if fit_inverse_transform and distances == "precomputed":
+            raise ValueError("Cannot fit_inverse_transform with a precomputed "
+                             "distance matrix.")
         self.n_components = n_components
         self.perplexity = perplexity
         self.optimizer = optimizer
         self.n_iter = n_iter
         self.distances = distances
+        self.n_neighbors = n_neighbors
+        self.fit_inverse_transform = fit_inverse_transform
         self.verbose = verbose
         self.random_state = random_state
 
@@ -227,29 +258,35 @@ class TSNE(BaseEstimator, TransformerMixin):
         if not self.optimizer in ["gradient_descent", "lbfgs"]:
             raise ValueError("Unknown optimizer '%s'" % self.optimizer)
 
-        if self.distances == "precomputed" and X.shape[0] != X.shape[1]:
-            raise ValueError("X should be a square distance matrix")
-
-        self.embedding_ = self._tsne(X)
-
-        return self
-
-    def _tsne(self, X):
-        """Runs t-SNE."""
-        self.X = X
-        n_samples = X.shape[0]
-        # Degrees of freedom of the Student's t-distribution. The suggestion
-        # alpha = n_components - 1 comes from "Learning a Parametric Embedding
-        # by Preserving Local Structure" Laurens van der Maaten, 2009.
-        alpha = self.n_components - 1.0
-        random_state = check_random_state(self.random_state)
-
         if self.distances == "precomputed":
+            if X.shape[0] != X.shape[1]:
+                raise ValueError("X should be a square distance matrix")
             dist = X
         else:
             if self.verbose:
                 print("Computing pairwise distances...")
             dist = squareform(pdist(X, self.distances))
+
+        self.embedding_ = self._tsne(dist)
+
+        if self.distances != "precomputed":
+            self.knn_ = NearestNeighbors(n_neighbors=self.n_neighbors)
+            self.knn_.fit(X)
+
+        if self.fit_inverse_transform:
+            self.knn_embedded_ = NearestNeighbors(n_neighbors=self.n_neighbors)
+            self.knn_embedded_.fit(self.embedding_)
+
+        return self
+
+    def _tsne(self, dist):
+        """Runs t-SNE."""
+        n_samples = dist.shape[0]
+        # Degrees of freedom of the Student's t-distribution. The suggestion
+        # alpha = n_components - 1 comes from "Learning a Parametric Embedding
+        # by Preserving Local Structure" Laurens van der Maaten, 2009.
+        alpha = self.n_components - 1.0
+        random_state = check_random_state(self.random_state)
 
         # Compute conditional probabilities such that they approximately match
         # the desired perplexity
@@ -258,8 +295,8 @@ class TSNE(BaseEstimator, TransformerMixin):
         P = conditional_P + conditional_P.T
         # Normalization and "early exaggeration" (* 4, see below for an
         # explanation)
-        sum_P = np.maximum(np.sum(P), _binary_search.EPSILON)
-        P = np.maximum(4.0 * squareform(P) / sum_P, _binary_search.EPSILON)
+        sum_P = np.maximum(np.sum(P), EPSILON)
+        P = np.maximum(4.0 * squareform(P) / sum_P, EPSILON)
         # Note that P and Q are stored as condensed matrices, i.e. we omit
         # the diagonal and duplicate entries and store everything in a
         # one-dimensional array.
@@ -274,7 +311,7 @@ class TSNE(BaseEstimator, TransformerMixin):
             # Q is a heavy-tailed distribution: Student's t-distribution
             n = ((1.0 + pdist(Y, "sqeuclidean") / alpha)
                  ** ((alpha + 1.0) / -2.0))
-            Q = np.maximum(n / (2.0 * np.sum(n)), _binary_search.EPSILON)
+            Q = np.maximum(n / (2.0 * np.sum(n)), EPSILON)
 
             # Gradient: dC/dY
             grad = np.ndarray((n_samples, self.n_components))
@@ -346,13 +383,42 @@ class TSNE(BaseEstimator, TransformerMixin):
         trustworthiness : float
             Trustworthiness of the low-dimensional embedding.
         """
-        return trustworthiness(X, self.embedding_, n_neighbors=n_neighbors,
+        return trustworthiness(X, self.transform(X), n_neighbors=n_neighbors,
                                precomputed=self.distances == "precomputed")
+
+    def inverse_transform(self, X):
+        """Transform X back to original space.
+
+        Parameters
+        ----------
+        X : array, shape (n_samples, n_components)
+            Embedded data.
+
+        Returns
+        -------
+        X_new : array, shape (n_samples, n_features)
+            Data in the original space.
+        """
+        if not self.fit_inverse_transform:
+            raise ValueError("Inverse transform was not fitted!")
+
+        neigh_dist, neigh_ind = self.knn_embedded_.kneighbors(X)
+        neigh_dist = np.array([np.maximum(d, EPSILON) for d in neigh_dist])
+
+        weights = _get_weights(neigh_dist, "distance")
+
+        if weights is None:
+            X_original = np.array([np.mean(self.X[ind], axis=0)
+                                   for ind in neigh_ind])
+        else:
+            X_original = np.array([(np.average(self.X[ind], axis=0,
+                                               weights=weights[i]))
+                                   for (i, ind) in enumerate(neigh_ind)])
+
+        return X_original
 
     def transform(self, X):
         """Transform X to the embedded space.
-
-        This is only possible with the training data!
 
         Parameters
         ----------
@@ -365,7 +431,23 @@ class TSNE(BaseEstimator, TransformerMixin):
         X_new : array, shape (n_samples, n_components)
             Embedding of the training data in low-dimensional space.
         """
-        if X is not self.X:
-            raise ValueError("Non-parametric t-SNE can only compute the "
-                             "embedding for the training data.")
-        return self.embedding_
+        if self.distances == "precomputed":
+            if X is self.X:
+                return self.embedding_
+            else:
+                raise ValueError("Can only transform trainin data when "
+                                 "distances are precomputed.")
+        neigh_dist, neigh_ind = self.knn_.kneighbors(X)
+        neigh_dist = np.array([np.maximum(d, EPSILON) for d in neigh_dist])
+
+        weights = _get_weights(neigh_dist, "distance")
+
+        if weights is None:
+            X_embedded = np.array([np.mean(self.embedding_[ind], axis=0)
+                                   for ind in neigh_ind])
+        else:
+            X_embedded = np.array([(np.average(self.embedding_[ind], axis=0,
+                                               weights=weights[i]))
+                                   for (i, ind) in enumerate(neigh_ind)])
+
+        return X_embedded
