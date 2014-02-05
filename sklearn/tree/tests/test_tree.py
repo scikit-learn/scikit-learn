@@ -28,7 +28,7 @@ from sklearn.tree import ExtraTreeRegressor
 from sklearn import tree
 from sklearn import datasets
 from sklearn.utils.fixes import bincount
-
+from sklearn.utils.validation import check_random_state
 from sklearn.preprocessing._weights import _balance_weights
 
 
@@ -692,3 +692,25 @@ def test_arrays_persist():
         # if pointing to freed memory, contents may be arbitrary
         assert_true(-2 <= value.flat[0] < 2,
                     'Array points to arbitrary memory')
+
+
+def test_constant_features():
+    random_state = check_random_state(0)
+
+    X = np.zeros((10, 20))
+    y = random_state.randint(0, 2, (10, ))
+    for name, TreeEstimator in ALL_TREES.items():
+        est = TreeEstimator(random_state=0)
+        est.fit(X, y)
+        assert_equal(est.tree_.max_depth, 0)
+
+    X = np.array([[1., 0., 0.],
+                  [1., 0., 0.],
+                  [0., 0., 0.],
+                  [0., 0., 0.]])
+
+    y = np.array([0., 1., 0., 1.0])
+    for name, TreeEstimator in ALL_TREES.items():
+        est = TreeEstimator(random_state=0)
+        est.fit(X, y)
+        assert_equal(est.tree_.max_depth, 1)
