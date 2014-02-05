@@ -202,8 +202,8 @@ def _mini_batch_update_csr(X, np.ndarray[DOUBLE, ndim=1] x_squared_norms,
             # no new sample: leave this center as it stands
             continue
 
-        # rescale the old center to reflect it previous accumulated
-        # weight w.r.t. the new data that will be incrementally contributed
+        # rescale the old center to reflect it previous accumulated weight
+        # with regards to the new data that will be incrementally contributed
         if compute_squared_diff:
             old_center[:] = centers[center_idx]
         centers[center_idx] *= old_count

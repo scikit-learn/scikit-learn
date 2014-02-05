@@ -301,7 +301,7 @@ def test_kfold_can_detect_dependent_samples_on_digits():  # see #2372
     assert_greater(mean_score, 0.85)
 
     # Shuffling the data artificially breaks the dependency and hides the
-    # overfitting of the model w.r.t. the writing style of the authors
+    # overfitting of the model with regards to the writing style of the authors
     # by yielding a seriously overestimated score:
 
     cv = cval.KFold(n, 5, shuffle=True, random_state=0)

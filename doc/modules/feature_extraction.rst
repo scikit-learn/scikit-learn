@@ -640,7 +640,7 @@ for languages that use white-spaces for word separation as it generates
 significantly less noisy features than the raw ``char`` variant in
 that case. For such languages it can increase both the predictive
 accuracy and convergence speed of classifiers trained using such
-features while retaining the robustness w.r.t. misspellings and
+features while retaining the robustness with regards to misspellings and
 word derivations.
 
 While some local positioning information can be preserved by extracting

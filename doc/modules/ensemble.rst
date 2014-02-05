@@ -629,8 +629,8 @@ the parameter ``loss``:
       target values.
     * Huber (``'huber'``): Another robust loss function that combines
       least squares and least absolute deviation; use ``alpha`` to
-      control the sensitivity w.r.t. outliers (see [F2001]_ for more
-      details).
+      control the sensitivity with regards to outliers (see [F2001]_ for
+      more details).
     * Quantile (``'quantile'``): A loss function for quantile regression.
       Use ``0 < alpha < 1`` to specify the quantile. This loss function
       can be used to create prediction intervals
