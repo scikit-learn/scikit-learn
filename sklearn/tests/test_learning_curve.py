@@ -195,6 +195,8 @@ def test_learning_curve_n_sample_range_out_of_bounds():
                                n_clusters_per_class=1, random_state=0)
     estimator = MockImprovingEstimator(20)
     assert_raises(ValueError, learning_curve, estimator, X, y, cv=3,
+                  train_sizes=[0, 1])
+    assert_raises(ValueError, learning_curve, estimator, X, y, cv=3,
                   train_sizes=[0.0, 1.0])
     assert_raises(ValueError, learning_curve, estimator, X, y, cv=3,
                   train_sizes=[0.1, 1.1])
