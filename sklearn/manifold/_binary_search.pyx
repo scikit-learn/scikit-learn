@@ -1,15 +1,17 @@
 cimport cython
 import numpy as np
 cimport numpy as np
+from libc cimport math
 
 
-EPSILON = 1e-16
-PERPLEXITY_TOLERANCE = 1e-5
+cdef float EPSILON = 1e-16
+cdef float PERPLEXITY_TOLERANCE = 1e-5
 
 
 @cython.boundscheck(False)
-def _binary_search_perplexity(np.ndarray[np.float_t, ndim=2] dist,
-                              float desired_perplexity, int verbose):
+cpdef np.ndarray[np.float_t, ndim=2] _binary_search_perplexity(
+        np.ndarray[np.float_t, ndim=2] dist, float desired_perplexity,
+        int verbose):
     """Binary search for sigmas of conditional Gaussians.
 
     We are looking for sigma = sqrt(1/beta) so that the perplexity
@@ -47,43 +49,50 @@ def _binary_search_perplexity(np.ndarray[np.float_t, ndim=2] dist,
     cdef float beta_max
     cdef float beta_sum = 0.0
     # Now we go to log scale
-    cdef float desired_entropy = np.log(desired_perplexity)
+    cdef float desired_entropy = math.log(desired_perplexity)
     cdef float entropy_diff
 
     cdef float entropy
     cdef float sum_Pi
+    cdef float sum_disti_Pi
     cdef int i
+    cdef int j
 
     for i in range(n_samples):
-        beta_min = -np.inf
-        beta_max = np.inf
+        beta_min = -math.INFINITY
+        beta_max = math.INFINITY
         beta = 1.0
 
         # Binary search of precision for i-th conditional distribution
         for _ in range(n_steps):
             # Compute current entropy and corresponding probabilities
-            P[i] = np.exp(-dist[i] * beta)
+            for j in range(n_samples):
+                P[i, j] = math.exp(-dist[i, j] * beta)
             P[i, i] = 0.0
-            sum_Pi = np.sum(P[i])
+            sum_Pi = 0.0
+            for j in range(n_samples):
+                sum_Pi += P[i, j]
             if sum_Pi == 0.0:
                 sum_Pi = EPSILON
-            entropy = np.log(sum_Pi) + beta * np.sum(dist[i] * P[i]) / sum_Pi
-            P[i] /= sum_Pi
-
+            sum_disti_Pi = 0.0
+            for j in range(n_samples):
+                P[i, j] /= sum_Pi
+                sum_disti_Pi += dist[i, j] * P[i, j]
+            entropy = math.log(sum_Pi) + beta * sum_disti_Pi
             entropy_diff = entropy - desired_entropy
 
-            if np.abs(entropy_diff) <= PERPLEXITY_TOLERANCE:
+            if math.fabs(entropy_diff) <= PERPLEXITY_TOLERANCE:
                 break
 
             if entropy_diff > 0.0:
                 beta_min = beta
-                if beta_max == np.inf:
+                if beta_max == math.INFINITY:
                     beta *= 2.0
                 else:
                     beta = (beta + beta_max) / 2.0
             else:
                 beta_max = beta;
-                if beta_min == -np.inf:
+                if beta_min == -math.INFINITY:
                     beta /= 2.0
                 else:
                     beta = (beta + beta_min) / 2.0

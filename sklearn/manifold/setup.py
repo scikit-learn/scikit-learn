@@ -6,9 +6,13 @@ from numpy.distutils.misc_util import Configuration
 
 def configuration(parent_package="", top_path=None):
     config = Configuration("manifold", parent_package, top_path)
+    libraries = []
+    if os.name == 'posix':
+        libraries.append('m')
     config.add_extension("_binary_search",
                          sources=["_binary_search.c"],
                          include_dirs=[numpy.get_include()],
+                         libraries=libraries,
                          extra_compile_args=["-O3"])
 
     config.add_subpackage("tests")
