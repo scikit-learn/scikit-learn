@@ -35,11 +35,12 @@ plt.title("Validation Curve with SVM")
 plt.xlabel("$\gamma$")
 plt.ylabel("Score")
 plt.ylim(0.0, 1.1)
-plt.semilogx(param_range, train_scores_mean, label="Training score")
+plt.semilogx(param_range, train_scores_mean, label="Training score", color="r")
 plt.fill_between(param_range, train_scores_mean - train_scores_std,
-                 train_scores_mean + train_scores_std, alpha=0.2)
-plt.semilogx(param_range, test_scores_mean, label="Cross-validation score")
+                 train_scores_mean + train_scores_std, alpha=0.2, color="r")
+plt.semilogx(param_range, test_scores_mean, label="Cross-validation score",
+             color="g")
 plt.fill_between(param_range, test_scores_mean - test_scores_std,
-                 test_scores_mean + test_scores_std, alpha=0.2)
+                 test_scores_mean + test_scores_std, alpha=0.2, color="g")
 plt.legend(loc="best")
 plt.show()
