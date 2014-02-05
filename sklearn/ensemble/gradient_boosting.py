@@ -384,10 +384,9 @@ class NormalizedDiscountedCumulativeGain(RegressionLossFunction):
             # for each group compute the ndcg
             for i, g in enumerate(group[1:], start=1):
                 if last_group != g:
-                    end_ix = i
-                    ix = np.argsort(-pred[start_ix:end_ix, 0])
+                    ix = np.argsort(-pred[start_ix:i, 0])
                     tmp_ndcg = _ndcg(y[ix + start_ix][:self.max_rank],
-                                     np.sort(y[start_ix:end_ix])[::-1][:self.max_rank])
+                                     np.sort(y[start_ix:i])[::-1][:self.max_rank])
                     if not np.isnan(tmp_ndcg):
                         s_ndcg += tmp_ndcg
                         n_group += 1
@@ -413,39 +412,35 @@ class NormalizedDiscountedCumulativeGain(RegressionLossFunction):
         if group is None:
             ix = np.argsort(-y_pred[:, 0])
             inv_ix = np.empty_like(ix)
-            for j, x in enumerate(ix):
-                inv_ix[x] = j
+            inv_ix[ix] = np.arange(len(ix))
             tmp_grad, tmp_weights = _lambda(y_true[ix], y_pred[ix],
                                             self.max_rank)
             grad = tmp_grad[inv_ix]
             self.weights = tmp_weights[inv_ix]
         else:
-            last_q = group[0]
+            last_group = group[0]
             start_ix = 0
-            for i, q in enumerate(group[1:]):
-                if last_q != q:
-                    end_ix = i + 1
-                    ix = np.argsort(-y_pred[start_ix:end_ix, 0])
+            for i, g in enumerate(group[1:], start=1):
+                if last_group != g:
+                    ix = np.argsort(-y_pred[start_ix:i, 0])
 
                     inv_ix = np.empty_like(ix)
-                    for j, x in enumerate(ix):
-                        inv_ix[x] = j
+                    inv_ix[ix] = np.arange(len(ix))
 
                     # sort by current score before passing
                     # and then remap the return values
                     tmp_grad, tmp_weights = _lambda(y_true[ix + start_ix],
                                                     y_pred[ix + start_ix],
                                                     self.max_rank)
-                    grad[start_ix:end_ix] = tmp_grad[inv_ix]
-                    self.weights[start_ix:end_ix] = tmp_weights[inv_ix]
-                    start_ix = i + 1
-                    last_q = q
+                    grad[start_ix:i] = tmp_grad[inv_ix]
+                    self.weights[start_ix:i] = tmp_weights[inv_ix]
+                    start_ix = i
+                    last_group = g
 
             ix = np.argsort(-y_pred[start_ix:, 0])
 
             inv_ix = np.empty_like(ix)
-            for j, x in enumerate(ix):
-                inv_ix[x] = j
+            inv_ix[ix] = np.arange(len(ix))
 
             # sort by current score before passing and then remap the return
             # values
