@@ -19,7 +19,7 @@ import numpy as np
 import scipy as sp
 import pylab as pl
 from sklearn.feature_extraction.image import grid_to_graph
-from sklearn.cluster import Ward
+from sklearn.cluster import AgglomerativeClustering
 
 ###############################################################################
 # Generate data
@@ -37,7 +37,8 @@ connectivity = grid_to_graph(*lena.shape)
 print("Compute structured hierarchical clustering...")
 st = time.time()
 n_clusters = 15  # number of regions
-ward = Ward(n_clusters=n_clusters, connectivity=connectivity).fit(X)
+ward = AgglomerativeClustering(n_clusters=n_clusters,
+        linkage='ward', connectivity=connectivity).fit(X)
 label = np.reshape(ward.labels_, lena.shape)
 print("Elapsed time: ", time.time() - st)
 print("Number of pixels: ", label.size)

@@ -76,11 +76,18 @@ Overview of clustering methods
      - Few clusters, even cluster size, non-flat geometry
      - Graph distance (e.g. nearest-neighbor graph)
 
-   * - :ref:`Hierarchical clustering <hierarchical_clustering>`
+   * - :ref:`Ward hierarchical clustering <hierarchical_clustering>`
      - number of clusters
      - Large `n_samples` and `n_clusters`
      - Many clusters, possibly connectivity constraints
      - Distances between points
+
+   * - :ref:`Agglomerative clustering <hierarchical_clustering>`
+     - number of clusters, linkage type, distance
+     - Large `n_samples` and `n_clusters`
+     - Many clusters, possibly connectivity constraints, non Euclidean
+       distances
+     - Any pairwise distance
 
    * - :ref:`DBSCAN <dbscan>`
      - neighborhood size
@@ -495,6 +502,18 @@ expensive when no connectivity constraints are added between samples: it
 considers at each step all the possible merges.
 
 It is also very efficient for large number of clusters.
+
+Different linkage type: Ward, complete and average linkage
+-----------------------------------------------------------
+
+:class:`AgglomerativeClustering` supports Ward, complete and average
+linkage strategies.
+
+.. image:: ../auto_examples/cluster/images/plot_hierarchical_clustering_1.png
+    :target: ../auto_examples/cluster/plot_hierarchical_clustering.html
+
+.. image:: ../auto_examples/cluster/images/plot_hierarchical_clustering_2.png
+    :target: ../auto_examples/cluster/plot_hierarchical_clustering.html
 
 Adding connectivity constraints
 -------------------------------

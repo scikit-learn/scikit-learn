@@ -21,8 +21,9 @@ t = 1.5 * np.pi * (1 + 3 * np.random.rand(1, n_samples))
 x = t * np.cos(t)
 y = t * np.sin(t)
 
+
 X = np.concatenate((x, y))
-X += .75 * np.random.randn(2, n_samples)
+X += .7 * np.random.randn(2, n_samples)
 X = X.T
 
 # Create a graph capturing local connectivity. Larger number of neighbors
@@ -31,11 +32,11 @@ X = X.T
 # the data is no longer respected
 knn_graph = kneighbors_graph(X, 20)
 
-for n_clusters in (30, 4):
-    plt.figure(figsize=(12, 7))
-    for connectivity in (None, knn_graph):
+for connectivity in (None, knn_graph):
+    for n_clusters in (30, 3):
+        plt.figure(figsize=(12, 4.3))
         for index, linkage in enumerate(('average', 'complete', 'ward')):
-            plt.subplot(2, 3, (connectivity is None) * 3 + index + 1)
+            plt.subplot(1, 3, index + 1)
             model = AgglomerativeClustering(linkage=linkage,
                                             connectivity=connectivity,
                                             n_clusters=n_clusters)
@@ -47,11 +48,12 @@ for n_clusters in (30, 4):
             plt.title('linkage=%s, connectivity=%r \n(time %.2fs)' % (linkage,
                       connectivity is not None, elapsed_time),
                       fontdict=dict(verticalalignment='top'))
+            plt.axis('equal')
             plt.axis('off')
 
-        plt.subplots_adjust(bottom=0, top=.94, hspace=0, wspace=0,
-                            left=0, right=1)
-        plt.suptitle('n_cluster=%i' % n_clusters, size=15)
+            plt.subplots_adjust(bottom=0, top=.91, wspace=0,
+                                left=0, right=1)
+            plt.suptitle('n_cluster=%i' % n_clusters, size=15)
 
 
 plt.show()
