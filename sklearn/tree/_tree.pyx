@@ -2018,7 +2018,11 @@ cdef class Tree:
         criterion) at node i.
 
     n_node_samples : array of int, shape [node_count]
-        n_samples[i] holds the number of training samples reaching node i.
+        n_node_samples[i] holds the number of training samples reaching node i.
+
+    weighted_n_node_samples : array of int, shape [node_count]
+        weighted_n_samples[i] holds the weighted number of training samples
+        reaching node i.
     """
     # Wrap for outside world.
     # WARNING: these reference the current `nodes` and `value` buffers, which
@@ -2052,6 +2056,10 @@ cdef class Tree:
     property n_node_samples:
         def __get__(self):
             return self._get_node_ndarray()['n_samples'][:self.node_count]
+
+    property weighted_n_node_samples:
+        def __get__(self):
+            return self._get_node_ndarray()['weighted_n_samples'][:self.node_count]
 
     property value:
         def __get__(self):
