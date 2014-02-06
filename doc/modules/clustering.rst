@@ -530,7 +530,7 @@ Euclidean metrics, average linkage is a good alternative.
 
 .. topic:: Examples:
 
- * :ref:`example_cluster_plot_digits_linkage`: exploration of the
+ * :ref:`example_cluster_plot_digits_linkage.py`: exploration of the
    different linkage strategies in a real dataset.
 
 
@@ -593,7 +593,9 @@ enable only merging of neighboring pixels on an image, as in the
     Connectivity constraints and complete or average linkage enhance the
     'rich getting richer' aspect of agglomerative clustering. In the
     limit of a small number of clusters, they tend to give a few
-    macroscopically occupied clusters.
+    macroscopically occupied clusters and almost empty ones. (see the
+    discussion in
+    :ref:`example_cluster_plot_agglomerative_clustering.py`).
 
 .. image:: ../auto_examples/cluster/images/plot_agglomerative_clustering_1.png
     :target: ../auto_examples/cluster/plot_agglomerative_clustering.html
@@ -612,17 +614,40 @@ enable only merging of neighboring pixels on an image, as in the
     :scale: 38
 
 
-
 Varying the metric
 -------------------
 
-.. image:: ../auto_examples/cluster/images/plot_agglomerative_clustering_metrics_1.png
+Average and complete linkage can be used with a variety of distances (or
+affinities), in particular Euclidean distance (*l2*), Manhattan distance
+(or Cityblock, or *l1*), cosine distance, or any precomputed affinity
+matrix.
+
+* *l1* distance is often good for sparse features, or sparse noise: ie
+  many of the features are zero, as in text mining using occurences of
+  rare words.
+
+* *cosine* distance is interesting because it is invariant to global
+  scalings of the signal.
+
+The guidelines for choosing a metric is to use one that maximizes the
+distance between samples in different classes, and minimizes that across
+class.
+
+.. image:: ../auto_examples/cluster/images/plot_agglomerative_clustering_metrics_5.png
     :target: ../auto_examples/cluster/plot_agglomerative_clustering_metric.html
+    :scale: 32
 
-.. image:: ../auto_examples/cluster/images/plot_agglomerative_clustering_metrics_2.png
+.. image:: ../auto_examples/cluster/images/plot_agglomerative_clustering_metrics_6.png
     :target: ../auto_examples/cluster/plot_agglomerative_clustering_metric.html
+    :scale: 32
 
+.. image:: ../auto_examples/cluster/images/plot_agglomerative_clustering_metrics_7.png
+    :target: ../auto_examples/cluster/plot_agglomerative_clustering_metric.html
+    :scale: 32
 
+.. topic:: Examples:
+
+ * :ref:`example_cluster_plot_agglomerative_clustering_metrics.py`
 
 
 .. _dbscan:

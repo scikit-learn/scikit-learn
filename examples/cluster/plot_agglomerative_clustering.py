@@ -2,9 +2,23 @@
 Agglomerative clustering with and without structure
 ===================================================
 
-* Demonstrates the percolation effect
-* Shows the effect of connectivity graph to capture manifold structure
-* Demonstrates the interest of having structure for speed reasons
+This example shows the effect of imposing a connectivity graph to capture
+local structure in the data. The graph is simply the graph of 20 nearest
+neighbors.
+
+Two consequences of imposing a connectivity can be seen. First clustering
+with a connectivity matrix is much faster.
+
+Second, when using a connectivity matrix, average and complete linkage are
+unstable and tend to create a few clusters that grow very quickly. Indeed,
+average and complete linkage fight this percolation behavior by considering all
+the distances between two clusters when merging them. The connectivity
+graph breaks this mechanism. This effect is more pronounced for very
+sparse graphs (try decreasing the number of neighbors in
+kneighbors_graph) and with complete linkage. In particular, having a very
+small number of neighbors in the graph, imposes a geometry that is
+close to that of single linkage, which is well known to have this
+percolation instability.
 """
 # Authors: Gael Varoquaux, Nelle Varoquaux
 
@@ -29,9 +43,10 @@ X = X.T
 
 # Create a graph capturing local connectivity. Larger number of neighbors
 # will give more homogeneous clusters to the cost of computation
-# time. With a very large number of neighbors, the manifold structure of
-# the data is no longer respected
-knn_graph = kneighbors_graph(X, 20)
+# time. A very large number of neighbors gives more evenly distributed
+# cluster sizes, but may not impose the local manifold structure of
+# the data
+knn_graph = kneighbors_graph(X, 30)
 
 for connectivity in (None, knn_graph):
     for n_clusters in (30, 3):

@@ -84,7 +84,7 @@ plt.legend(loc='best')
 
 plt.axis('tight')
 plt.axis('off')
-plt.suptitle("Ground truth", size=18)
+plt.suptitle("Ground truth", size=20)
 
 
 # Plot the distances
@@ -122,7 +122,7 @@ for index, metric in enumerate(["cosine", "euclidean", "cityblock"]):
         plt.plot(X[model.labels_ == l].T, c=c, alpha=.5)
     plt.axis('tight')
     plt.axis('off')
-    plt.suptitle("AgglomerativeClustering(affinity=%s)" % metric, size=18)
+    plt.suptitle("AgglomerativeClustering(affinity=%s)" % metric, size=20)
 
 
 plt.show()
