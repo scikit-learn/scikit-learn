@@ -17,7 +17,7 @@ import numpy as np
 import scipy.sparse as sp
 
 from ..base import BaseEstimator, ClusterMixin, TransformerMixin
-from ..metrics.pairwise import euclidean_distances
+from ..metrics.pairwise import euclidean_distances, manhattan_distances
 from ..utils.extmath import row_norms
 from ..utils.sparsefuncs import assign_rows_csr, mean_variance_axis0
 from ..utils import check_arrays
@@ -147,7 +147,7 @@ def _tolerance(X, tol):
 
 def k_means(X, n_clusters, init='k-means++', precompute_distances=True,
             n_init=10, max_iter=300, verbose=False,
-            tol=1e-4, random_state=None, copy_x=True, n_jobs=1):
+            tol=1e-4, random_state=None, copy_x=True, n_jobs=1, metric='L2'):
     """K-means clustering algorithm.
 
     Parameters
@@ -249,8 +249,11 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances=True,
                 % n_init, RuntimeWarning, stacklevel=2)
             n_init = 1
 
+    metric = metric.lower()
     # precompute squared norms of data points
-    x_squared_norms = row_norms(X, squared=True)
+    x_squared_norms = None
+    if metric == 'l2':
+        x_squared_norms = row_norms(X, squared=True)
 
     best_labels, best_inertia, best_centers = None, None, None
     if n_jobs == 1:
@@ -370,7 +373,7 @@ def _kmeans_single(X, n_clusters, x_squared_norms, max_iter=300,
         centers_old = centers.copy()
         # labels assignment is also called the E-step of EM
         labels, inertia = \
-            _labels_inertia(X, x_squared_norms, centers,
+            _labels_inertia(X, centers, x_squared_norms,
                             precompute_distances=precompute_distances,
                             distances=distances)
 
@@ -396,11 +399,17 @@ def _kmeans_single(X, n_clusters, x_squared_norms, max_iter=300,
     return best_labels, best_inertia, best_centers
 
 
-def _labels_inertia_precompute_dense(X, x_squared_norms, centers):
+def _labels_inertia_precompute_dense(X, x_squared_norms, centers, metric='L2'):
+    metric = metric.lower()
     n_samples = X.shape[0]
     k = centers.shape[0]
-    distances = euclidean_distances(centers, X, x_squared_norms,
-                                    squared=True)
+
+    if metric == 'l2':
+        distances = euclidean_distances(centers, X, x_squared_norms,
+                                        squared=True)
+    elif metric == 'l1':
+        distances = manhattan_distances(centers, X)
+
     labels = np.empty(n_samples, dtype=np.int32)
     labels.fill(-1)
     mindist = np.empty(n_samples)
@@ -413,8 +422,8 @@ def _labels_inertia_precompute_dense(X, x_squared_norms, centers):
     return labels, inertia
 
 
-def _labels_inertia(X, x_squared_norms, centers,
-                    precompute_distances=True, distances=None, metric='L2'):
+def _labels_inertia(X, centers, x_squared_norms=None, precompute_distances=True,
+                    distances=None, metric='L2'):
     """E step of the K-means EM algorithm
 
     Compute the labels and the inertia of the given samples and centers
@@ -455,19 +464,25 @@ def _labels_inertia(X, x_squared_norms, centers,
         distances = np.zeros(shape=(0,), dtype=np.float64)
     if sp.issparse(X):
         if metric == 'l2':
+            if x_squared_norms is None:
+                x_squared_norms = row_norms(X, squared=True)
+
             inertia = _k_means._assign_labels_csr(
                 X, x_squared_norms, centers, labels, distances=distances)
+
         elif metric == 'l1':
             inertia = _k_means._assign_labels_csr_L1(
-                X, x_squared_norms, centers, labels, distances=distances)
+                X, centers, labels, distances=distances)
     else:
         if precompute_distances:
-            # todo do something here about metric
             return _labels_inertia_precompute_dense(X, x_squared_norms,
-                                                    centers)
+                                                    centers, metric=metric)
         if metric == 'l2':
+            if x_squared_norms is None:
+                x_squared_norms = row_norms(X, squared=True)
             inertia = _k_means._assign_labels_array(
                 X, x_squared_norms, centers, labels, distances=distances)
+
         elif metric == 'l1':
             inertia = _k_means._assign_labels_array_L1(
                 X, centers, labels, distances=distances)
@@ -776,7 +791,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         self._check_fitted()
         X = self._check_test_data(X)
         x_squared_norms = row_norms(X, squared=True)
-        return _labels_inertia(X, x_squared_norms, self.cluster_centers_)[0]
+        return _labels_inertia(X, self.cluster_centers_, x_squared_norms)[0]
 
     def score(self, X):
         """Opposite of the value of X on the K-means objective.
@@ -794,7 +809,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         self._check_fitted()
         X = self._check_test_data(X)
         x_squared_norms = row_norms(X, squared=True)
-        return -_labels_inertia(X, x_squared_norms, self.cluster_centers_)[1]
+        return -_labels_inertia(X, self.cluster_centers_, x_squared_norms)[1]
 
 
 def _mini_batch_step(X, x_squared_norms, centers, counts,
@@ -846,7 +861,7 @@ def _mini_batch_step(X, x_squared_norms, centers, counts,
 
     """
     # Perform label assignment to nearest centers
-    nearest_center, inertia = _labels_inertia(X, x_squared_norms, centers,
+    nearest_center, inertia = _labels_inertia(X, centers, x_squared_norms,
                                               distances=distances)
 
     if random_reassign and reassignment_ratio > 0:
@@ -1177,8 +1192,8 @@ class MiniBatchKMeans(KMeans):
 
             # Keep only the best cluster centers across independent inits on
             # the common validation set
-            _, inertia = _labels_inertia(X_valid, x_squared_norms_valid,
-                                         cluster_centers)
+            _, inertia = _labels_inertia(X_valid, cluster_centers,
+                                         x_squared_norms_valid)
             if self.verbose:
                 print("Inertia for init %d/%d: %f"
                       % (init_idx + 1, n_init, inertia))
@@ -1248,8 +1263,8 @@ class MiniBatchKMeans(KMeans):
             print('Computing label assignment and total inertia')
         x_squared_norms = row_norms(X, squared=True)
         slices = gen_batches(X.shape[0], self.batch_size)
-        results = [_labels_inertia(X[s], x_squared_norms[s],
-                                   self.cluster_centers_) for s in slices]
+        results = [
+            _labels_inertia(X[s], self.cluster_centers_, x_squared_norms[s]) for s in slices]
         labels, inertia = zip(*results)
         return np.hstack(labels), np.sum(inertia)
 
@@ -1300,8 +1315,9 @@ class MiniBatchKMeans(KMeans):
                          verbose=self.verbose)
 
         if self.compute_labels:
-            self.labels_, self.inertia_ = _labels_inertia(
-                X, x_squared_norms, self.cluster_centers_)
+            self.labels_, self.inertia_ = _labels_inertia(X,
+                                                          self.cluster_centers_,
+                                                          x_squared_norms)
 
         return self
 
