@@ -1685,6 +1685,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         cdef SIZE_t parent
         cdef bint is_left
         cdef SIZE_t n_node_samples = splitter.n_samples
+        cdef double weighted_n_node_samples
         cdef SIZE_t pos
         cdef SIZE_t feature
         cdef SIZE_t node_id
@@ -1725,6 +1726,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                            (n_node_samples < 2 * tree.min_samples_leaf))
 
                 splitter.node_reset(start, end)  # calls criterion.init
+                weighted_n_node_samples = splitter.criterion.weighted_n_node_samples
 
                 if first:
                     impurity = splitter.criterion.node_impurity()
@@ -1741,7 +1743,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
 
                 node_id = tree._add_node(parent, is_left, is_leaf, feature,
                                          threshold, impurity, n_node_samples,
-                                         splitter.criterion.weighted_n_node_samples)
+                                         weighted_n_node_samples)
 
                 if is_leaf:
                     # Don't store value for internal nodes
@@ -1789,11 +1791,14 @@ cdef int _add_split_node(Splitter splitter, Tree tree,
     cdef double split_impurity_right
     cdef double split_improvement
     cdef SIZE_t n_node_samples
+    cdef double weighted_n_node_samples
     cdef bint is_leaf
     cdef SIZE_t n_left, n_right
     cdef double imp_diff
 
     splitter.node_reset(start, end)  # calls criterion.init
+    weighted_n_node_samples = splitter.criterion.weighted_n_node_samples
+
     if is_first:
         impurity = splitter.criterion.node_impurity()
 
@@ -1812,7 +1817,7 @@ cdef int _add_split_node(Splitter splitter, Tree tree,
                                                  else _TREE_UNDEFINED,
                              is_left, is_leaf,
                              feature, threshold, impurity, n_node_samples,
-                             splitter.criterion.weighted_n_node_samples)
+                             weighted_n_node_samples)
     if node_id == <SIZE_t>(-1):
         return -1
 
@@ -2204,7 +2209,7 @@ cdef class Tree:
                                 SIZE_t feature,
                                 double threshold,
                                 double impurity,
-                                SIZE_t n_node_samples,
+                                SIZE_t n_samples,
                                 double weighted_n_samples) nogil:
         """Add a node to the tree.
 
@@ -2220,7 +2225,7 @@ cdef class Tree:
 
         cdef Node* node = &self.nodes[node_id]
         node.impurity = impurity
-        node.n_samples = n_node_samples
+        node.n_samples = n_samples
         node.weighted_n_samples = weighted_n_samples
 
         if parent != _TREE_UNDEFINED:
