@@ -48,7 +48,7 @@ def test_kmeans_dtype():
     assert_array_equal(km.labels_, pred_x)
 
 
-def test_labels_assignment_and_inertia():
+def test_labels_assignment_and_inertia_L2():
     # pure numpy implementation as easily auditable reference gold
     # implementation
     rng = np.random.RandomState(42)
@@ -66,18 +66,46 @@ def test_labels_assignment_and_inertia():
 
     # perform label assignment using the dense array input
     x_squared_norms = (X ** 2).sum(axis=1)
-    labels_array, inertia_array = _labels_inertia(
-        X, x_squared_norms, noisy_centers)
+    labels_array, inertia_array = _labels_inertia(X, noisy_centers,
+                                                  x_squared_norms)
     assert_array_almost_equal(inertia_array, inertia_gold)
     assert_array_equal(labels_array, labels_gold)
 
     # perform label assignment using the sparse CSR input
     x_squared_norms_from_csr = row_norms(X_csr, squared=True)
-    labels_csr, inertia_csr = _labels_inertia(
-        X_csr, x_squared_norms_from_csr, noisy_centers)
+    labels_csr, inertia_csr = _labels_inertia(X_csr, noisy_centers,
+                                              x_squared_norms_from_csr)
     assert_array_almost_equal(inertia_csr, inertia_gold)
     assert_array_equal(labels_csr, labels_gold)
 
+
+def test_labels_assignment_and_inertia_L1():
+    # pure numpy implementation as easily auditable reference gold
+    # implementation
+    rng = np.random.RandomState(42)
+    noisy_centers = centers + rng.normal(size=centers.shape)
+    labels_gold = - np.ones(n_samples, dtype=np.int)
+    mindist = np.empty(n_samples)
+    mindist.fill(np.infty)
+    for center_id in range(n_clusters):
+        dist = np.sum(np.abs(X - noisy_centers[center_id]), axis=1)
+        labels_gold[dist < mindist] = center_id
+        mindist = np.minimum(dist, mindist)
+    inertia_gold = mindist.sum()
+    assert_true((mindist >= 0.0).all())
+    assert_true((labels_gold != -1).all())
+
+    # perform label assignment using the dense array input
+    labels_array, inertia_array = _labels_inertia(X, noisy_centers,
+                                                  metric='L1')
+    assert_array_almost_equal(inertia_array, inertia_gold)
+    assert_array_equal(labels_array, labels_gold)
+
+    # perform label assignment using the sparse CSR input
+    labels_csr, inertia_csr = _labels_inertia(X_csr, noisy_centers,
+                                              metric='L1')
+    assert_array_almost_equal(inertia_csr, inertia_gold)
+    assert_array_equal(labels_csr, labels_gold)
 
 def test_minibatch_update_consistency():
     """Check that dense and sparse minibatch update give the same results"""
@@ -109,8 +137,7 @@ def test_minibatch_update_consistency():
     assert_greater(old_inertia, 0.0)
 
     # compute the new inertia on the same batch to check that it decreased
-    labels, new_inertia = _labels_inertia(
-        X_mb, x_mb_squared_norms, new_centers)
+    labels, new_inertia = _labels_inertia(X_mb, new_centers, x_mb_squared_norms)
     assert_greater(new_inertia, 0.0)
     assert_less(new_inertia, old_inertia)
 
@@ -126,8 +153,8 @@ def test_minibatch_update_consistency():
     assert_greater(old_inertia_csr, 0.0)
 
     # compute the new inertia on the same batch to check that it decreased
-    labels_csr, new_inertia_csr = _labels_inertia(
-        X_mb_csr, x_mb_squared_norms_csr, new_centers_csr)
+    labels_csr, new_inertia_csr = _labels_inertia(X_mb_csr, new_centers_csr,
+                                                  x_mb_squared_norms_csr)
     assert_greater(new_inertia_csr, 0.0)
     assert_less(new_inertia_csr, old_inertia_csr)
 
