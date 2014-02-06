@@ -414,7 +414,7 @@ def _labels_inertia_precompute_dense(X, x_squared_norms, centers):
 
 
 def _labels_inertia(X, x_squared_norms, centers,
-                    precompute_distances=True, distances=None):
+                    precompute_distances=True, distances=None, metric='L2'):
     """E step of the K-means EM algorithm
 
     Compute the labels and the inertia of the given samples and centers
@@ -446,18 +446,31 @@ def _labels_inertia(X, x_squared_norms, centers,
     n_samples = X.shape[0]
     # set the default value of centers to -1 to be able to detect any anomaly
     # easily
+    metric = metric.lower()
+    if metric not in ['l1', 'l2']:
+        raise ValueError('Unknown metric type %s. Possible values are '
+                         '\'L1\', \'L2\', \'cosine\'')
     labels = - np.ones(n_samples, np.int32)
     if distances is None:
         distances = np.zeros(shape=(0,), dtype=np.float64)
     if sp.issparse(X):
-        inertia = _k_means._assign_labels_csr(
-            X, x_squared_norms, centers, labels, distances=distances)
+        if metric == 'l2':
+            inertia = _k_means._assign_labels_csr(
+                X, x_squared_norms, centers, labels, distances=distances)
+        elif metric == 'l1':
+            inertia = _k_means._assign_labels_csr_L1(
+                X, x_squared_norms, centers, labels, distances=distances)
     else:
         if precompute_distances:
+            # todo do something here about metric
             return _labels_inertia_precompute_dense(X, x_squared_norms,
                                                     centers)
-        inertia = _k_means._assign_labels_array(
-            X, x_squared_norms, centers, labels, distances=distances)
+        if metric == 'l2':
+            inertia = _k_means._assign_labels_array(
+                X, x_squared_norms, centers, labels, distances=distances)
+        elif metric == 'l1':
+            inertia = _k_means._assign_labels_array_L1(
+                X, centers, labels, distances=distances)
     return labels, inertia
 
 
@@ -513,6 +526,8 @@ def _init_centroids(X, k, init, random_state=None, x_squared_norms=None,
     elif n_samples < k:
             raise ValueError(
                 "n_samples=%d should be larger than k=%d" % (n_samples, k))
+
+    # centroids initialisation needs to take distance measure into account
 
     if init == 'k-means++':
         centers = _k_init(X, k, random_state=random_state,
