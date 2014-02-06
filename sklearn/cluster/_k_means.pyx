@@ -29,6 +29,91 @@ np.import_array()
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
+cpdef DOUBLE _assign_labels_array_L1(np.ndarray[DOUBLE, ndim=2] X,
+                                     np.ndarray[DOUBLE, ndim=2] centers,
+                                     np.ndarray[INT, ndim=1] labels,
+                                     np.ndarray[DOUBLE, ndim=1] distances):
+    """Compute label assignment and inertia for a dense array using the L1 norm
+
+    Return the inertia (sum of squared distances to the centers).
+    """
+    cdef:
+        unsigned int n_clusters = centers.shape[0]
+        unsigned int n_features = centers.shape[1]
+        unsigned int n_samples = X.shape[0]
+        unsigned int sample_idx, center_idx
+        unsigned int store_distances = 0
+        DOUBLE inertia = 0.0
+        DOUBLE min_dist
+        DOUBLE dist
+
+    if n_samples == distances.shape[0]:
+        store_distances = 1
+
+    sum, abs = np.sum, np.abs
+    for sample_idx in range(n_samples):
+        min_dist = -1
+        for center_idx in range(n_clusters):
+            dist = sum(abs(centers[center_idx] - X[sample_idx]))
+            if min_dist == -1 or dist < min_dist:
+                min_dist = dist
+                labels[sample_idx] = center_idx
+
+        if store_distances:
+            distances[sample_idx] = min_dist
+        inertia += min_dist
+
+    return inertia
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.cdivision(True)
+cpdef DOUBLE _assign_labels_csr_L1(X, np.ndarray[DOUBLE, ndim=2] centers,
+                                   np.ndarray[INT, ndim=1] labels,
+                                   np.ndarray[DOUBLE, ndim=1] distances):
+    """Compute label assignment and inertia for a dense array using the L1 norm
+
+    Return the inertia (sum of squared distances to the centers).
+    """
+    cdef:
+        np.ndarray[DOUBLE, ndim=1] X_data = X.data
+        np.ndarray[INT, ndim=1] X_indices = X.indices
+        np.ndarray[INT, ndim=1] X_indptr = X.indptr
+        unsigned int n_clusters = centers.shape[0]
+        unsigned int n_features = centers.shape[1]
+        unsigned int n_samples = X.shape[0]
+        unsigned int sample_idx, center_idx
+        unsigned int store_distances = 0
+        unsigned int k
+        DOUBLE inertia = 0.0
+        DOUBLE min_dist
+        DOUBLE dist
+
+    if n_samples == distances.shape[0]:
+        store_distances = 1
+
+    sum, abs = np.sum, np.abs
+    for sample_idx in range(n_samples):
+        min_dist = -1
+        for center_idx in range(n_clusters):
+            dist = 0.0
+            for k in range(X_indptr[sample_idx], X_indptr[sample_idx + 1]):
+                dist += abs(centers[center_idx, X_indices[k]] - X_data[k])
+            if min_dist == -1 or dist < min_dist:
+                min_dist = dist
+                labels[sample_idx] = center_idx
+
+        if store_distances:
+            distances[sample_idx] = min_dist
+        inertia += min_dist
+
+    return inertia
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.cdivision(True)
 cpdef DOUBLE _assign_labels_array(np.ndarray[DOUBLE, ndim=2] X,
                                   np.ndarray[DOUBLE, ndim=1] x_squared_norms,
                                   np.ndarray[DOUBLE, ndim=2] centers,
@@ -290,6 +375,7 @@ def _centers_dense(np.ndarray[DOUBLE, ndim=2] X,
         for j in range(n_features):
             centers[labels[i], j] += X[i, j]
 
+    # todo center computation needs to be aware of the distance measure
     centers /= n_samples_in_cluster[:, np.newaxis]
 
     return centers
@@ -353,6 +439,7 @@ def _centers_sparse(X, np.ndarray[INT, ndim=1] labels, n_clusters,
     for i in range(labels.shape[0]):
         add_row_csr(data, indices, indptr, i, centers[labels[i]])
 
+    # todo center computation needs to be aware of the distance measure
     centers /= n_samples_in_cluster[:, np.newaxis]
 
     return centers
