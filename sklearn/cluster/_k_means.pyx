@@ -322,6 +322,69 @@ def _mini_batch_update_csr(X, np.ndarray[DOUBLE, ndim=1] x_squared_norms,
 
     return squared_diff
 
+@cython.boundscheck(False)
+@cython.wraparound(False)
+cdef void _assign_empty_clusters(np.ndarray[DOUBLE, ndim=2] X,
+                                 np.ndarray[DOUBLE, ndim=2] centers,
+                                 np.ndarray[DOUBLE, ndim=2] distances,
+                                 np.ndarray[INT, ndim=1] n_samples_in_cluster):
+    empty_clusters = np.where(n_samples_in_cluster == 0)[0]
+    # maybe also relocate small clusters?
+
+    if len(empty_clusters):
+        # find points to reassign empty clusters to
+        far_from_centers = distances.argsort()[::-1]
+
+    for i, cluster_id in enumerate(empty_clusters):
+        # XXX two relocated clusters could be close to each other
+        new_center = X[far_from_centers[i]]
+        centers[cluster_id] = new_center
+        n_samples_in_cluster[cluster_id] = 1
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.cdivision(True)
+def _centers_dense_L1(np.ndarray[DOUBLE, ndim=2] X,
+        np.ndarray[INT, ndim=1] labels, int n_clusters,
+        np.ndarray[DOUBLE, ndim=1] distances):
+    """M step of the K-means EM algorithm
+
+    Computation of cluster centers / means.
+
+    Parameters
+    ----------
+    X: array-like, shape (n_samples, n_features)
+
+    labels: array of integers, shape (n_samples)
+        Current label assignment
+
+    n_clusters: int
+        Number of desired clusters
+
+    distances: array-like, shape (n_samples)
+        Distance to closest cluster for each sample.
+
+    Returns
+    -------
+    centers: array, shape (n_clusters, n_features)
+        The resulting centers
+    """
+    ## TODO: add support for CSR input
+    cdef int n_samples, n_features
+    n_samples = X.shape[0]
+    n_features = X.shape[1]
+    cdef int i, j
+    cdef np.ndarray[DOUBLE, ndim=2] centers = np.zeros((n_clusters, n_features))
+    n_samples_in_cluster = bincount(labels, minlength=n_clusters)
+
+    _assign_empty_clusters(X, centers, distances, n_samples_in_cluster)
+
+    for i in range(n_clusters):
+        centers[i] = np.median(X[labels == i], axis=0)
+
+    return centers
+
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
@@ -358,24 +421,13 @@ def _centers_dense(np.ndarray[DOUBLE, ndim=2] X,
     cdef int i, j, c
     cdef np.ndarray[DOUBLE, ndim=2] centers = np.zeros((n_clusters, n_features))
     n_samples_in_cluster = bincount(labels, minlength=n_clusters)
-    empty_clusters = np.where(n_samples_in_cluster == 0)[0]
-    # maybe also relocate small clusters?
 
-    if len(empty_clusters):
-        # find points to reassign empty clusters to
-        far_from_centers = distances.argsort()[::-1]
-
-    for i, cluster_id in enumerate(empty_clusters):
-        # XXX two relocated clusters could be close to each other
-        new_center = X[far_from_centers[i]]
-        centers[cluster_id] = new_center
-        n_samples_in_cluster[cluster_id] = 1
+    _assign_empty_clusters(X, centers, distances, n_samples_in_cluster)
 
     for i in range(n_samples):
         for j in range(n_features):
             centers[labels[i], j] += X[i, j]
 
-    # todo center computation needs to be aware of the distance measure
     centers /= n_samples_in_cluster[:, np.newaxis]
 
     return centers
