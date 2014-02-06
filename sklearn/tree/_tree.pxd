@@ -122,6 +122,7 @@ cdef struct Node:
     DOUBLE_t threshold
     DOUBLE_t impurity
     SIZE_t n_samples
+    DOUBLE_t weighted_n_samples
 
 
 cdef class Tree:
@@ -154,7 +155,8 @@ cdef class Tree:
                                 SIZE_t feature,
                                 double threshold,
                                 double impurity,
-                                SIZE_t n_node_samples) nogil
+                                SIZE_t n_node_samples,
+                                double weighted_n_samples) nogil
     cdef void _resize(self, SIZE_t capacity)
     cdef int _resize_c(self, SIZE_t capacity=*) nogil
 
