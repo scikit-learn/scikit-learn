@@ -12,11 +12,13 @@ from sklearn.utils.testing import assert_greater
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.multiclass import OneVsOneClassifier
 from sklearn.multiclass import OutputCodeClassifier
+from sklearn.dummy import DummyClassifier
 
 from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
 
 from sklearn.svm import LinearSVC
+from sklearn.svm import SVC
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.linear_model import (LinearRegression, Lasso, ElasticNet, Ridge,
                                   Perceptron)
@@ -25,6 +27,8 @@ from sklearn.grid_search import GridSearchCV
 from sklearn.pipeline import Pipeline
 from sklearn import svm
 from sklearn import datasets
+from sklearn.datasets import make_multilabel_classification
+from sklearn import preprocessing
 
 iris = datasets.load_iris()
 rng = np.random.RandomState(0)
@@ -32,6 +36,70 @@ perm = rng.permutation(iris.target.size)
 iris.data = iris.data[perm]
 iris.target = iris.target[perm]
 n_classes = 3
+
+
+def test_ovr_identical_results_seq_of_seqs():
+    # Test that ovr works the same when
+    # samples are differently binarized
+    X, Y = make_multilabel_classification(n_samples=100, n_features=4,
+                                          n_classes=4, n_labels=2)
+
+    lbNeg = preprocessing.LabelBinarizer(neg_label=-1)
+    lbZero = preprocessing.LabelBinarizer(neg_label=0)
+
+    lbNeg.fit(Y)
+    lbZero.fit(Y)
+
+    ovr = OneVsRestClassifier(LinearSVC(random_state=0))
+    predictorNeg = ovr.fit(X, lbNeg.transform(Y))
+    predictorZero = ovr.fit(X, lbZero.transform(Y))
+    predictorNone = ovr.fit(X, Y)
+
+    predictionNeg = predictorNeg.predict(X)
+    predictionZero = predictorZero.predict(X)
+    predictionNone = predictorNone.predict(X)
+
+    assert_array_equal(predictionNeg, predictionZero)
+    assert_array_equal(predictionNeg, predictionNone)
+
+
+def test_ovr_no_class_disjoint():
+    X = np.array([[1, 1, 0, 0], [1, 0, 1, 0], [1, 0, 0, 1],
+                  [0, 1, 1, 0], [0, 1, 0, 1], [0, 0, 1, 1],
+                  [2, 2, 0, 0], [2, 0, 2, 0], [2, 0, 0, 2],
+                  [0, 2, 2, 0], [0, 2, 0, 2], [0, 0, 2, 2]])
+
+    Y_integers = [[1, 2], [1, 3], [1, 4],
+                  [2, 3], [2, 4], [3, 4],
+                  [1, 2], [1, 3], [1, 4],
+                  [2, 3], [2, 4], [3, 4]]
+
+    Y_strings = [["left", "right"], ["left", "up"], ["left", "down"],
+                 ["right", "up"], ["right", "down"], ["up", "down"],
+                 ["left", "right"], ["left", "up"], ["left", "down"],
+                 ["right", "up"], ["right", "down"], ["up", "down"]]
+
+    ovr = OneVsRestClassifier(SVC(kernel='linear'))
+
+    x = np.array([[1, 1, 1, 1], [0, 1, 1, 1], [1, 0, 1, 1],
+                  [1, 1, 0, 1], [1, 1, 1, 0]])
+    y_integers = ovr.fit(X, Y_integers).predict(x)
+    y_strings = ovr.fit(X, Y_strings).predict(x)
+
+    expected_predictions_integers = np.array([(1, 2, 3, 4),
+                                              (2, 3, 4),
+                                              (1, 3, 4),
+                                              (1, 2, 4),
+                                              (1, 2, 3)])
+
+    expected_predictions_strings = np.array([('down', 'left', 'right', 'up'),
+                                             ('down', 'right', 'up'),
+                                             ('down', 'left', 'up'),
+                                             ('down', 'left', 'right'),
+                                             ('left', 'right', 'up')])
+
+    assert_array_equal(y_integers, expected_predictions_integers)
+    assert_array_equal(y_strings, expected_predictions_strings)
 
 
 def test_ovr_exceptions():
@@ -349,3 +417,25 @@ def test_ecoc_gridsearch():
     cv.fit(iris.data, iris.target)
     best_C = cv.best_estimator_.estimators_[0].C
     assert_true(best_C in Cs)
+
+
+def test_ovr_intercept():
+    X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
+    Y = [1, 1, 1, 2, 2, 2]
+
+    ovr = OneVsRestClassifier(SVC(kernel='linear'))
+    ovr.fit(X, Y)
+
+    assert_array_equal(ovr.intercept_, [[-0.]])
+
+
+def test_ovr_missing_intercept_exception():
+    def retrieve_intercept(ovr):
+        return ovr.intercept_
+    X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
+    Y = [1, 1, 1, 2, 2, 2]
+
+    ovr = OneVsRestClassifier(DummyClassifier())
+    ovr.fit(X, Y)
+
+    assert_raises(AttributeError, retrieve_intercept, ovr)
