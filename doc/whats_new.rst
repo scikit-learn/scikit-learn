@@ -150,9 +150,15 @@ Changelog
    - Added :class:`linear_model.MultiTaskElasticNetCV` and
      :class:`linear_model.MultiTaskLassoCV`. By `Manoj Kumar`_.
 
+   - Added :class:`cluster.AgglomerativeClustering` for hierarchical
+     agglomerative clustering with average linkage, complete linkage and
+     ward strategies, by  `Nelle Varoquaux`_ and `Gael Varoquaux`_.
 
 API changes summary
 -------------------
+
+   - :class:`cluster.Ward` is deprecated. Use
+     :class:`cluster.AgglomerativeClustering` instead.
 
    - Add score method to :class:`PCA <decomposition.PCA>` following the model of
      probabilistic PCA and deprecate

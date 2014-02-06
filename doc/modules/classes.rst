@@ -62,6 +62,7 @@ Classes
    :template: class.rst
 
    cluster.AffinityPropagation
+   cluster.AgglomerativeClustering
    cluster.DBSCAN
    cluster.KMeans
    cluster.MiniBatchKMeans

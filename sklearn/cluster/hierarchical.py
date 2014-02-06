@@ -288,7 +288,7 @@ def linkage_tree(X, connectivity=None, n_components=None,
             - complete or maximum linkage uses the maximum distances between
               all observations of the two sets.
 
-    affinity : string, optional, default: "euclidean".
+    affinity : string or callable, optional, default: "euclidean".
         which metric to use. Can be "euclidean", "manhattan", or any
         distance know to paired distance (see metric.pairwise)
 
@@ -338,7 +338,6 @@ def linkage_tree(X, connectivity=None, n_components=None,
                           'for the specified number of clusters',
                           stacklevel=2)
 
-        # XXX: if affinity is a callable, the following will not work
         if affinity == 'precomputed':
             # for the linkage function of hierarchy to work on precomputed
             # data, provide as first argument an ndarray of the shape returned
@@ -530,7 +529,7 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
 
     affinity : string or callable, default: "euclidean"
         Metric used to compute the linkage. Can be "euclidean", "l1", "l2",
-        "manhattan", or "cosine".
+        "manhattan", "cosine", or 'precomputed'.
         If linkage is "ward", only "euclidean" is accepted.
 
     memory : Instance of joblib.Memory or string (optional)

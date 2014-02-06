@@ -496,12 +496,11 @@ metric used for the merge strategy:
 - **Average linkage** minimizes the average of the distances between all
   observations of pairs of clusters.
 
-The :class:`AgglomerativeClustering` can also scale to large number of samples
+:class:`AgglomerativeClustering` can also scale to large number of samples
 when it is used jointly with a connectivity matrix, but is computationally
 expensive when no connectivity constraints are added between samples: it
 considers at each step all the possible merges.
 
-It is also very efficient for large number of clusters.
 
 Different linkage type: Ward, complete and average linkage
 -----------------------------------------------------------
@@ -567,8 +566,8 @@ matrix can be constructed from a-priori information: for instance, you
 may wish to cluster web pages by only merging pages with a link pointing
 from one to another. It can also be learned from the data, for instance
 using :func:`sklearn.neighbors.kneighbors_graph` to restrict
-merging to nearest neighbors as in the :ref:`swiss roll
-<example_cluster_plot_ward_structured_vs_unstructured.py>` example, or
+merging to nearest neighbors as in :ref:`this example
+<example_cluster_plot_agglomerative_clustering.py>`, or
 using :func:`sklearn.feature_extraction.image.grid_to_graph` to
 enable only merging of neighboring pixels on an image, as in the
 :ref:`Lena <example_cluster_plot_lena_ward_segmentation.py>` example.
