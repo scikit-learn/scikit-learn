@@ -6,6 +6,7 @@ Agglomerative clustering with and without structure
 * Shows the effect of connectivity graph to capture manifold structure
 * Demonstrates the interest of having structure for speed reasons
 """
+# Authors: Gael Varoquaux, Nelle Varoquaux
 
 import time
 import matplotlib.pyplot as plt
@@ -34,7 +35,7 @@ knn_graph = kneighbors_graph(X, 20)
 
 for connectivity in (None, knn_graph):
     for n_clusters in (30, 3):
-        plt.figure(figsize=(12, 4.3))
+        plt.figure(figsize=(10, 4))
         for index, linkage in enumerate(('average', 'complete', 'ward')):
             plt.subplot(1, 3, index + 1)
             model = AgglomerativeClustering(linkage=linkage,
@@ -45,15 +46,15 @@ for connectivity in (None, knn_graph):
             elapsed_time = time.time() - t0
             plt.scatter(X[:, 0], X[:, 1], c=model.labels_,
                         cmap=plt.cm.spectral)
-            plt.title('linkage=%s, connectivity=%r \n(time %.2fs)' % (linkage,
-                      connectivity is not None, elapsed_time),
+            plt.title('linkage=%s (time %.2fs)' % (linkage, elapsed_time),
                       fontdict=dict(verticalalignment='top'))
             plt.axis('equal')
             plt.axis('off')
 
-            plt.subplots_adjust(bottom=0, top=.91, wspace=0,
+            plt.subplots_adjust(bottom=0, top=.89, wspace=0,
                                 left=0, right=1)
-            plt.suptitle('n_cluster=%i' % n_clusters, size=15)
+            plt.suptitle('n_cluster=%i, connectivity=%r' %
+                         (n_clusters, connectivity is not None), size=17)
 
 
 plt.show()

@@ -35,7 +35,7 @@ from sklearn.datasets.samples_generator import make_swiss_roll
 
 ###############################################################################
 # Generate data (swiss roll dataset)
-n_samples = 1000
+n_samples = 1500
 noise = 0.05
 X, _ = make_swiss_roll(n_samples, noise)
 # Make it thinner
@@ -46,9 +46,10 @@ X[:, 1] *= .5
 print("Compute unstructured hierarchical clustering...")
 st = time.time()
 ward = Ward(n_clusters=6).fit(X)
+elapsed_time = time.time() - st
 label = ward.labels_
-print("Elapsed time: ", time.time() - st)
-print("Number of points: ", label.size)
+print("Elapsed time: %.2fs" % elapsed_time)
+print("Number of points: %i" % label.size)
 
 ###############################################################################
 # Plot result
@@ -58,7 +59,7 @@ ax.view_init(7, -80)
 for l in np.unique(label):
     ax.plot3D(X[label == l, 0], X[label == l, 1], X[label == l, 2],
               'o', color=pl.cm.jet(np.float(l) / np.max(label + 1)))
-pl.title('Without connectivity constraints')
+pl.title('Without connectivity constraints (time %.2fs)' % elapsed_time)
 
 
 ###############################################################################
@@ -71,9 +72,10 @@ connectivity = kneighbors_graph(X, n_neighbors=10)
 print("Compute structured hierarchical clustering...")
 st = time.time()
 ward = Ward(n_clusters=6, connectivity=connectivity).fit(X)
+elapsed_time = time.time() - st
 label = ward.labels_
-print("Elapsed time: ", time.time() - st)
-print("Number of points: ", label.size)
+print("Elapsed time: %.2fs" % elapsed_time)
+print("Number of points: %i" % label.size)
 
 ###############################################################################
 # Plot result
@@ -83,6 +85,6 @@ ax.view_init(7, -80)
 for l in np.unique(label):
     ax.plot3D(X[label == l, 0], X[label == l, 1], X[label == l, 2],
               'o', color=pl.cm.jet(float(l) / np.max(label + 1)))
-pl.title('With connectivity constraints')
+pl.title('With connectivity constraints (time %.2fs)' % elapsed_time)
 
 pl.show()

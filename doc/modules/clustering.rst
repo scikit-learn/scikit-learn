@@ -506,19 +506,38 @@ It is also very efficient for large number of clusters.
 Different linkage type: Ward, complete and average linkage
 -----------------------------------------------------------
 
-:class:`AgglomerativeClustering` supports Ward, complete and average
+:class:`AgglomerativeClustering` supports Ward, average, and complete
 linkage strategies.
 
-.. image:: ../auto_examples/cluster/images/plot_hierarchical_clustering_1.png
-    :target: ../auto_examples/cluster/plot_hierarchical_clustering.html
+.. image:: ../auto_examples/cluster/images/plot_digits_linkage_1.png
+    :target: ../auto_examples/cluster/plot_digits_linkage.html
+    :scale: 43
 
-.. image:: ../auto_examples/cluster/images/plot_hierarchical_clustering_2.png
-    :target: ../auto_examples/cluster/plot_hierarchical_clustering.html
+.. image:: ../auto_examples/cluster/images/plot_digits_linkage_2.png
+    :target: ../auto_examples/cluster/plot_digits_linkage.html
+    :scale: 43
+
+.. image:: ../auto_examples/cluster/images/plot_digits_linkage_3.png
+    :target: ../auto_examples/cluster/plot_digits_linkage.html
+    :scale: 43
+
+
+Agglomerative cluster has a "rich get richer" behavior that leads to
+uneven cluster sizes. In this regard, complete linkage is the worst
+strategy, and Ward gives the most regular sizes. However, the affinity
+(or distance used in clustering) cannot be varied with Ward, thus for non
+Euclidean metrics, average linkage is a good alternative.
+
+.. topic:: Examples:
+
+ * :ref:`example_cluster_plot_digits_linkage`: exploration of the
+   different linkage strategies in a real dataset.
+
 
 Adding connectivity constraints
 -------------------------------
 
-An interesting aspect of the :class:`AgglomerativeClustering` object is that
+An interesting aspect of :class:`AgglomerativeClustering` is that
 connectivity constraints can be added to this algorithm (only adjacent
 clusters can be merged together), through a connectivity matrix that defines
 for each sample the neighboring samples following a given structure of the
@@ -537,6 +556,9 @@ the roll.
 
 .. centered:: |unstructured| |structured|
 
+These constraint are useful to impose a certain local structure, but they
+also make the algorithm faster, especially when the number of the samples
+is high.
 
 The connectivity constraints are imposed via an connectivity matrix: a
 scipy sparse matrix that has elements only at the intersection of a row
@@ -563,6 +585,45 @@ enable only merging of neighboring pixels on an image, as in the
  * :ref:`example_cluster_plot_feature_agglomeration_vs_univariate_selection.py`:
    Example of dimensionality reduction with feature agglomeration based on
    Ward hierarchical clustering.
+
+ * :ref:`example_cluster_plot_agglomerative_clustering.py`
+
+.. warning:: **Connectivity constraints with average and complete linkage**
+
+    Connectivity constraints and complete or average linkage enhance the
+    'rich getting richer' aspect of agglomerative clustering. In the
+    limit of a small number of clusters, they tend to give a few
+    macroscopically occupied clusters.
+
+.. image:: ../auto_examples/cluster/images/plot_agglomerative_clustering_1.png
+    :target: ../auto_examples/cluster/plot_agglomerative_clustering.html
+    :scale: 38
+
+.. image:: ../auto_examples/cluster/images/plot_agglomerative_clustering_2.png
+    :target: ../auto_examples/cluster/plot_agglomerative_clustering.html
+    :scale: 38
+
+.. image:: ../auto_examples/cluster/images/plot_agglomerative_clustering_3.png
+    :target: ../auto_examples/cluster/plot_agglomerative_clustering.html
+    :scale: 38
+
+.. image:: ../auto_examples/cluster/images/plot_agglomerative_clustering_4.png
+    :target: ../auto_examples/cluster/plot_agglomerative_clustering.html
+    :scale: 38
+
+
+
+Varying the metric
+-------------------
+
+.. image:: ../auto_examples/cluster/images/plot_agglomerative_clustering_metrics_1.png
+    :target: ../auto_examples/cluster/plot_agglomerative_clustering_metric.html
+
+.. image:: ../auto_examples/cluster/images/plot_agglomerative_clustering_metrics_2.png
+    :target: ../auto_examples/cluster/plot_agglomerative_clustering_metric.html
+
+
+
 
 .. _dbscan:
 
