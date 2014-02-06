@@ -207,6 +207,15 @@ def test_importances():
     X_new = clf.transform(X, threshold="mean")
     assert_less(0 < X_new.shape[1], X.shape[1])
 
+    # Check with sample weights
+    sample_weight = np.ones(y.shape)
+    sample_weight[y == 1] *= 100
+
+    clf = RandomForestClassifier(n_estimators=50)
+    clf.fit(X, y, sample_weight=sample_weight)
+    importances = clf.feature_importances_
+    assert np.all(importances >= 0.0)
+
 
 def test_oob_score_classification():
     """Check that oob prediction is a good estimation of the generalization
