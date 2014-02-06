@@ -585,8 +585,9 @@ class BaseLibLinear(six.with_metaclass(ABCMeta, BaseEstimator)):
 
     @abstractmethod
     def __init__(self, penalty='l2', loss='l2', dual=True, tol=1e-4, C=1.0,
-                 multi_class='ovr', fit_intercept=True, intercept_scaling=1,
-                 class_weight=None, verbose=0, random_state=None):
+                 multi_class='ovr', fit_intercept=True, normalize=False,
+                 intercept_scaling=1, class_weight=None, verbose=0,
+                 random_state=None):
 
         self.penalty = penalty
         self.loss = loss
@@ -594,6 +595,7 @@ class BaseLibLinear(six.with_metaclass(ABCMeta, BaseEstimator)):
         self.tol = tol
         self.C = C
         self.fit_intercept = fit_intercept
+        self.normalize = normalize
         self.intercept_scaling = intercept_scaling
         self.multi_class = multi_class
         self.class_weight = class_weight
@@ -659,8 +661,8 @@ class BaseLibLinear(six.with_metaclass(ABCMeta, BaseEstimator)):
             raise ValueError("The number of classes has to be greater than"
                              " one.")
 
-        X = atleast2d_or_csr(X, dtype=np.float64, order="C")
-
+        X = atleast2d_or_csr(X, dtype=np.float64, order="C",
+                             copy=self.normalize)
         self.class_weight_ = compute_class_weight(self.class_weight,
                                                   self.classes_, y)
 
@@ -677,6 +679,17 @@ class BaseLibLinear(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         # LibLinear wants targets as doubles, even for classification
         y = np.asarray(y, dtype=np.float64).ravel()
+
+        # Center data if self.normalize
+        if self.normalize:
+            if not sp.issparse(X):
+                X_mean, X_std = np.mean(X, axis=0), np.std(X, axis=0)
+                X -= X_mean
+                X /= X_std
+            else:
+                warnings.warn('Normalize option doens''t support'
+                              ' sparse matrix')
+
         self.raw_coef_ = liblinear.train_wrap(X, y,
                                               sp.isspmatrix(X),
                                               self._get_solver_type(),
@@ -695,6 +708,10 @@ class BaseLibLinear(six.with_metaclass(ABCMeta, BaseEstimator)):
         else:
             self.coef_ = self.raw_coef_
             self.intercept_ = 0.
+
+        if self.normalize and not sp.issparse(X):
+            self.coef_ = self.coef_ / X_std
+            self.intercept_ = self.intercept_ - np.dot(X_mean, self.coef_.T)
 
         if self.multi_class == "crammer_singer" and len(self.classes_) == 2:
             self.coef_ = (self.coef_[1] - self.coef_[0]).reshape(1, -1)

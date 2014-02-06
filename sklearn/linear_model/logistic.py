@@ -40,6 +40,10 @@ class LogisticRegression(BaseLibLinear, LinearClassifierMixin,
         Specifies if a constant (a.k.a. bias or intercept) should be
         added the decision function.
 
+    normalize : boolean, optional, default False
+        If True, the training data X will be normalized before
+        logistic regression.
+
     intercept_scaling : float, default: 1
         when self.fit_intercept is True, instance vector x becomes
         [x, self.intercept_scaling],
@@ -99,12 +103,13 @@ class LogisticRegression(BaseLibLinear, LinearClassifierMixin,
     """
 
     def __init__(self, penalty='l2', dual=False, tol=1e-4, C=1.0,
-                 fit_intercept=True, intercept_scaling=1, class_weight=None,
-                 random_state=None):
+                 fit_intercept=True, normalize=False, intercept_scaling=1,
+                 class_weight=None, random_state=None):
 
         super(LogisticRegression, self).__init__(
             penalty=penalty, dual=dual, loss='lr', tol=tol, C=C,
-            fit_intercept=fit_intercept, intercept_scaling=intercept_scaling,
+            fit_intercept=fit_intercept, normalize=normalize,
+            intercept_scaling=intercept_scaling,
             class_weight=class_weight, random_state=random_state)
 
     def predict_proba(self, X):
