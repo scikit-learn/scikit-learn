@@ -38,7 +38,7 @@ def test_partial_fit():
     n_batches = int(np.ceil(float(n_samples) / rbm.batch_size))
     batch_slices = list(gen_even_slices(n_batches * rbm.batch_size,
                                             n_batches))
-    for i in xrange(n):
+    for i in range(n):
         for batch in batch_slices:
             rbm.partial_fit(X[batch])
 
