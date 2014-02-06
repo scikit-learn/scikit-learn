@@ -35,7 +35,8 @@ from . import _k_means
 # Initialization heuristic
 
 
-def _k_init(X, n_clusters, x_squared_norms, random_state, n_local_trials=None):
+def _k_init(X, n_clusters, x_squared_norms, random_state,
+            n_local_trials=None, metric='L2'):
     """Init n_clusters seeds according to k-means++
 
     Parameters
@@ -89,9 +90,14 @@ def _k_init(X, n_clusters, x_squared_norms, random_state, n_local_trials=None):
     else:
         centers[0] = X[center_id]
 
+    metric = metric.lower()
+
     # Initialize list of closest distances and calculate current potential
-    closest_dist_sq = euclidean_distances(
-        centers[0], X, Y_norm_squared=x_squared_norms, squared=True)
+    if metric == 'l2':
+        closest_dist_sq = euclidean_distances(
+            centers[0], X, Y_norm_squared=x_squared_norms, squared=True)
+    elif metric == 'l1':
+        closest_dist_sq = manhattan_distances(centers[0], X)
     current_pot = closest_dist_sq.sum()
 
     # Pick the remaining n_clusters-1 points
@@ -102,8 +108,11 @@ def _k_init(X, n_clusters, x_squared_norms, random_state, n_local_trials=None):
         candidate_ids = np.searchsorted(closest_dist_sq.cumsum(), rand_vals)
 
         # Compute distances to center candidates
-        distance_to_candidates = euclidean_distances(
-            X[candidate_ids], X, Y_norm_squared=x_squared_norms, squared=True)
+        if metric == 'l2':
+            distance_to_candidates = euclidean_distances(X[candidate_ids],
+                X, Y_norm_squared=x_squared_norms, squared=True)
+        elif metric == 'l1':
+            distance_to_candidates = manhattan_distances(X[candidate_ids], X)
 
         # Decide which candidate is the best
         best_candidate = None
@@ -231,7 +240,7 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances=True,
     X = as_float_array(X, copy=copy_x)
     tol = _tolerance(X, tol)
 
-    # subtract of mean of x for more accurate distance computations
+    # de-mean X for more accurate distance computations
     if not sp.issparse(X) or hasattr(init, '__array__'):
         X_mean = X.mean(axis=0)
     if not sp.issparse(X):
@@ -264,7 +273,8 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances=True,
             labels, inertia, centers = _kmeans_single(
                 X, n_clusters, max_iter=max_iter, init=init, verbose=verbose,
                 precompute_distances=precompute_distances, tol=tol,
-                x_squared_norms=x_squared_norms, random_state=random_state)
+                x_squared_norms=x_squared_norms, random_state=random_state,
+                metric=metric)
             # determine if these results are the best so far
             if best_inertia is None or inertia < best_inertia:
                 best_labels = labels.copy()
@@ -279,7 +289,7 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances=True,
                                     precompute_distances=precompute_distances,
                                     x_squared_norms=x_squared_norms,
                                     # Change seed to ensure variety
-                                    random_state=seed)
+                                    random_state=seed, metric=metric)
             for seed in seeds)
         # Get results with the lowest inertia
         labels, inertia, centers = zip(*results)
@@ -297,7 +307,7 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances=True,
 
 def _kmeans_single(X, n_clusters, x_squared_norms, max_iter=300,
                    init='k-means++', verbose=False, random_state=None,
-                   tol=1e-4, precompute_distances=True):
+                   tol=1e-4, precompute_distances=True, metric='L2'):
     """A single run of k-means, assumes preparation completed prior.
 
     Parameters
@@ -356,11 +366,11 @@ def _kmeans_single(X, n_clusters, x_squared_norms, max_iter=300,
         the closest centroid for all observations in the training set).
     """
     random_state = check_random_state(random_state)
-
+    metric = metric.lower()
     best_labels, best_inertia, best_centers = None, None, None
     # init
     centers = _init_centroids(X, n_clusters, init, random_state=random_state,
-                              x_squared_norms=x_squared_norms)
+                              x_squared_norms=x_squared_norms, metric=metric)
     if verbose:
         print('Initialization complete')
 
@@ -375,14 +385,19 @@ def _kmeans_single(X, n_clusters, x_squared_norms, max_iter=300,
         labels, inertia = \
             _labels_inertia(X, centers, x_squared_norms,
                             precompute_distances=precompute_distances,
-                            distances=distances)
+                            distances=distances, metric=metric)
 
         # computation of the means is also called the M-step of EM
         if sp.issparse(X):
             centers = _k_means._centers_sparse(X, labels, n_clusters,
                                                distances)
         else:
-            centers = _k_means._centers_dense(X, labels, n_clusters, distances)
+            if metric == 'l2':
+                centers = _k_means._centers_dense(X, labels, n_clusters,
+                                                  distances)
+            elif metric == 'l1':
+                centers = _k_means._centers_dense_L1(X, labels, n_clusters,
+                                                     distances)
 
         if verbose:
             print('Iteration %2d, inertia %.3f' % (i, inertia))
@@ -490,7 +505,7 @@ def _labels_inertia(X, centers, x_squared_norms=None, precompute_distances=True,
 
 
 def _init_centroids(X, k, init, random_state=None, x_squared_norms=None,
-                    init_size=None):
+                    init_size=None, metric='L2'):
     """Compute the initial centroids
 
     Parameters
@@ -546,7 +561,7 @@ def _init_centroids(X, k, init, random_state=None, x_squared_norms=None,
 
     if init == 'k-means++':
         centers = _k_init(X, k, random_state=random_state,
-                          x_squared_norms=x_squared_norms)
+                          x_squared_norms=x_squared_norms, metric=metric)
     elif init == 'random':
         seeds = random_state.permutation(n_samples)[:k]
         centers = X[seeds]
@@ -663,11 +678,17 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
 
     def __init__(self, n_clusters=8, init='k-means++', n_init=10, max_iter=300,
                  tol=1e-4, precompute_distances=True,
-                 verbose=0, random_state=None, copy_x=True, n_jobs=1):
+                 verbose=0, random_state=None, copy_x=True, n_jobs=1,
+                 metric='L2'):
 
         if hasattr(init, '__array__'):
             n_clusters = init.shape[0]
             init = np.asarray(init, dtype=np.float64)
+
+        if metric.lower() not in ['l1', 'l2']:
+            raise ValueError('Given metric (%s) not supported. Current '
+                             'supported distance metrics are L1 and L2 norm.'
+                             % metric)
 
         self.n_clusters = n_clusters
         self.init = init
@@ -679,6 +700,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         self.random_state = random_state
         self.copy_x = copy_x
         self.n_jobs = n_jobs
+        self.metric = metric
 
     def _check_fit_data(self, X):
         """Verify that the number of samples given is larger than k"""
@@ -723,7 +745,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
             max_iter=self.max_iter, verbose=self.verbose,
             precompute_distances=self.precompute_distances,
             tol=self.tol, random_state=random_state, copy_x=self.copy_x,
-            n_jobs=self.n_jobs)
+            n_jobs=self.n_jobs, metric=self.metric)
         return self
 
     def fit_predict(self, X):
@@ -769,7 +791,11 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
 
     def _transform(self, X):
         """guts of transform method; no input validation"""
-        return euclidean_distances(X, self.cluster_centers_)
+        metric = self.metric.lower()
+        if metric == 'l2':
+            return euclidean_distances(X, self.cluster_centers_)
+        elif metric == 'l1':
+            return manhattan_distances(X, self.cluster_centers_)
 
     def predict(self, X):
         """Predict the closest cluster each sample in X belongs to.
@@ -791,7 +817,8 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         self._check_fitted()
         X = self._check_test_data(X)
         x_squared_norms = row_norms(X, squared=True)
-        return _labels_inertia(X, self.cluster_centers_, x_squared_norms)[0]
+        return _labels_inertia(X, self.cluster_centers_, x_squared_norms,
+                               metric=self.metric)[0]
 
     def score(self, X):
         """Opposite of the value of X on the K-means objective.
@@ -809,7 +836,8 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         self._check_fitted()
         X = self._check_test_data(X)
         x_squared_norms = row_norms(X, squared=True)
-        return -_labels_inertia(X, self.cluster_centers_, x_squared_norms)[1]
+        return -_labels_inertia(X, self.cluster_centers_, x_squared_norms,
+                                metric=self.metric)[1]
 
 
 def _mini_batch_step(X, x_squared_norms, centers, counts,
