@@ -37,7 +37,6 @@ np.import_array()
 # consumption is reduced a lot compared to a Python dict
 
 cdef class IntFloatDict:
-    #cdef cpp_map[ITYPE_t, DTYPE_t] my_map
 
     @cython.boundscheck(False)
     @cython.wraparound(False)

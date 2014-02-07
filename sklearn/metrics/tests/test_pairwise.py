@@ -215,10 +215,17 @@ def test_paired_distances():
             distances = np.diag(distances)
             assert_array_almost_equal(distances, S)
 
+    # Check the callable implementation
+    S = paired_distances(X, Y, metric='manhattan')
+    S2 = paired_distances(X, Y,
+        metric=lambda x, y: np.abs(x -y).sum(axis=0))
+    assert_array_almost_equal(S, S2)
+
     # Test that a value error is raised when the lengths of X and Y should not
     # differ
     Y = rng.random_sample((3, 4))
     assert_raises(ValueError, paired_distances, X, Y)
+
 
 
 def test_pairwise_distances_argmin_min():

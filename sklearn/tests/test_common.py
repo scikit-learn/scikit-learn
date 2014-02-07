@@ -526,7 +526,7 @@ def test_clustering():
     X, y = shuffle(X, y, random_state=7)
     X = StandardScaler().fit_transform(X)
     for name, Alg in clustering:
-        if name in['WardAgglomeration', "FeatureAgglomeration"]:
+        if name in ('WardAgglomeration', "FeatureAgglomeration"):
             # this is clustering on the features
             # let's not test that here.
             continue

@@ -11,7 +11,6 @@ import numpy as np
 from scipy import sparse
 from scipy.cluster import hierarchy
 
-
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_equal
@@ -23,7 +22,8 @@ from sklearn.cluster import AgglomerativeClustering, FeatureAgglomeration
 from sklearn.cluster.hierarchical import (_hc_cut, _TREE_BUILDERS,
                                           linkage_tree)
 from sklearn.feature_extraction.image import grid_to_graph
-from sklearn.metrics.pairwise import PAIRED_DISTANCES, cosine_distances
+from sklearn.metrics.pairwise import PAIRED_DISTANCES, cosine_distances,\
+    manhattan_distances
 from sklearn.metrics.cluster import normalized_mutual_info_score
 from sklearn.cluster._hierarchical import average_merge, max_merge
 from sklearn.utils.fast_dict import IntFloatDict
@@ -51,10 +51,15 @@ def test_linkage_misc():
     # deprecated, one for using the copy argument
     assert_equal(len(warning_list), 2)
 
-    # Let's test a hiearchical clustering on a precomputed distances matrix
+    # test hiearchical clustering on a precomputed distances matrix
     dis = cosine_distances(X)
     res = linkage_tree(dis, affinity="precomputed")
     assert_array_equal(res[0], linkage_tree(X, affinity="cosine")[0])
+
+    # test hiearchical clustering on a precomputed distances matrix
+    res = linkage_tree(X,
+        affinity=manhattan_distances)
+    assert_array_equal(res[0], linkage_tree(X, affinity="manhattan")[0])
 
 
 def test_structured_linkage_tree():

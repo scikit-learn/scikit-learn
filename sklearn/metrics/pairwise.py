@@ -135,11 +135,7 @@ def check_paired_arrays(X, Y):
     X, Y = check_pairwise_arrays(X, Y)
     if X.shape != Y.shape:
         raise ValueError("X and Y should be of same shape. They were "
-                         "respectively (%d, %d) and (%d, %d) long." % (
-                             X.shape[0],
-                             X.shape[1],
-                             Y.shape[0],
-                             Y.shape[1]))
+                         "respectively %r and %r long." % (X.shape, Y.shape))
     return X, Y
 
 
@@ -620,7 +616,8 @@ def paired_distances(X, Y, metric="euclidean", **kwds):
     metric : string or callable
         The metric to use when calculating distance between instances in a
         feature array. If metric is a string, it must be one of the options
-        specified in PAIRED_DISTANCES
+        specified in PAIRED_DISTANCES, including "euclidean",
+        "manhattan", or "cosine".
         Alternatively, if metric is a callable function, it is called on each
         pair of instances (rows) and the resulting value recorded. The callable
         should take two arrays from X as input and return a value indicating
@@ -1047,9 +1044,8 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
         from X and the jth array from Y.
 
     """
-    if metric not in _VALID_METRICS and \
-       not callable(metric) and \
-       metric != "precomputed":
+    if (metric not in _VALID_METRICS and
+       not callable(metric) and metric != "precomputed"):
         raise ValueError("Unknown metric %s. "
                          "Valid metrics are %s, or 'precomputed', or a "
                          "callable" % (metric, _VALID_METRICS))

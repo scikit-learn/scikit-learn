@@ -1,4 +1,4 @@
-""" Test fast_dict. So far only smoke test
+""" Test fast_dict.
 """
 import numpy as np
 from nose.tools import assert_equal
@@ -13,12 +13,14 @@ def test_int_float_dict():
 
     d = IntFloatDict(keys, values)
     for key, value in zip(keys, values):
-        assert d[key] == value
+        assert_equal(d[key], value)
+    assert_equal(len(d), len(keys))
 
     d.append(120, 3.)
-    assert d[120] == 3.0
-    [d.append(i+1000, 4.0) for i in xrange(2000)]
-    assert d[1100] == 4.0
+    assert_equal(d[120], 3.0)
+    assert_equal(len(d), len(keys) + 1)
+    [d.append(i + 1000, 4.0) for i in xrange(2000)]
+    assert_equal(d[1100], 4.0)
 
 
 def test_int_float_dict_argmin():
