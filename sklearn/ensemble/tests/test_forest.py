@@ -211,10 +211,15 @@ def test_importances():
     sample_weight = np.ones(y.shape)
     sample_weight[y == 1] *= 100
 
-    clf = RandomForestClassifier(n_estimators=50)
+    clf = RandomForestClassifier(n_estimators=50, random_state=0)
     clf.fit(X, y, sample_weight=sample_weight)
     importances = clf.feature_importances_
     assert np.all(importances >= 0.0)
+
+    clf = RandomForestClassifier(n_estimators=50, random_state=0)
+    clf.fit(X, y, sample_weight=3*sample_weight)
+    importances_bis = clf.feature_importances_
+    assert_almost_equal(importances, importances_bis)
 
 
 def test_oob_score_classification():
