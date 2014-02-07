@@ -16,13 +16,6 @@ Changelog
      Tutorial integration into the scikit-learn documentation
      by `Jaques Grobler`_
 
-   - :mod:`sklearn.hmm` is deprecated. Its removal is planned
-     for the 0.17 release.
-
-   - Use of :class:`covariance.EllipticEnvelop` has now been removed after
-     deprecation.
-     Please use :class:`covariance.EllipticEnvelope` instead.
-
    - Added :class:`ensemble.BaggingClassifier` and
      :class:`ensemble.BaggingRegressor` meta-estimators for ensembling
      any kind of base estimator. See the :ref:`Bagging <bagging>` section of
@@ -30,6 +23,44 @@ Changelog
 
    - Speed improvement of the :mod:`sklearn.ensemble.gradient_boosting` module.
      By `Gilles Louppe`_ and `Peter Prettenhofer`_.
+     
+   - Memory improvements of extra trees and random forest by
+     `Arnaud Joly`_.
+     
+   - Reduce memory usage and overhead when fitting and predicting with forests
+     of randomized trees in parallel with ``n_jobs != 1`` by leveraging new
+     threading backend of joblib 0.8 and releasing the GIL in the tree fitting
+     Cython code.  By `Olivier Grisel`_ and `Gilles Louppe`_.
+
+   - Decision trees can now be built in best-first manner by using ``max_leaf_nodes``
+     as the stopping criteria. Refactored the tree code to use either a
+     stack or a priority queue for tree building.
+     By `Peter Prettenhofer`_ and `Gilles Louppe`_.
+
+   - Decision trees can now be fitted on fortran- and c-style arrays, and
+     non-continuous arrays without the need to make a copy.
+     If the input array has a different dtype than ``np.float32``, a fortran-
+     style copy will be made since fortran-style memory layout has speed
+     advantages. By `Peter Prettenhofer`_ and `Gilles Louppe`_.
+
+   - Speed improvement of regression trees by optimizing the
+     the computation of the mean square error criterion. This lead
+     to speed improvement of the tree, forest and gradient boosting tree
+     modules. By `Arnaud Joly`_
+
+   - Changed the internal storage of decision trees to use a struct array.
+     This fixed some small bugs, while improving code and providing a small
+     speed gain. By `Joel Nothman`_.
+
+   - Various enhancements to the  :mod:`sklearn.ensemble.gradient_boosting`
+     module: a ``warm_start`` argument to fit additional trees,
+     a ``max_leaf_nodes`` argument to fit GBM style trees,
+     a ``monitor`` fit argument to inspect the estimator during training, and
+     refactoring of the verbose code. By `Peter Prettenhofer`_.
+     
+   - Fixed feature importances as computed with a forest of randomized trees
+     when fit with ``sample_weight != None`` and/or with ``bootstrap=True``.
+     By `Gilles Louppe`_.
 
    - Added :func:`metrics.pairwise_distances_argmin_min`, by Philippe Gervais.
 
@@ -55,9 +86,6 @@ Changelog
      :class:`decomposition.factor_analysis.FactorAnalysis` to save memory and
      significantly speedup computation by `Denis Engemann`_, and
      `Alexandre Gramfort`_.
-
-   - Memory improvements of extra trees and random forest by
-     `Arnaud Joly`_.
 
    - Changed :class:`cross_validation.StratifiedKFold` to try and
      preserve as much of the original ordering of samples as possible so as
@@ -104,37 +132,6 @@ Changelog
    - Shorthand constructors :func:`pipeline.make_pipeline` and
      :func:`pipeline.make_union` were added by `Lars Buitinck`_.
 
-   - Reduce memory usage and overhead when fitting and predicting with forests
-     of randomized trees in parallel with ``n_jobs != 1`` by leveraging new
-     threading backend of joblib 0.8 and releasing the GIL in the tree fitting
-     Cython code.  By `Olivier Grisel`_ and `Gilles Louppe`_.
-
-   - Decision trees can now be built in best-first manner by using ``max_leaf_nodes``
-     as the stopping criteria. Refactored the tree code to use either a
-     stack or a priority queue for tree building.
-     By `Peter Prettenhofer`_ and `Gilles Louppe`_.
-
-   - Decision trees can now be fitted on fortran- and c-style arrays, and
-     non-continuous arrays without the need to make a copy.
-     If the input array has a different dtype than ``np.float32``, a fortran-
-     style copy will be made since fortran-style memory layout has speed
-     advantages. By `Peter Prettenhofer`_ and `Gilles Louppe`_.
-
-   - Speed improvement of regression trees by optimizing the
-     the computation of the mean square error criterion. This lead
-     to speed improvement of the tree, forest and gradient boosting tree
-     modules. By `Arnaud Joly`_
-
-   - Changed the internal storage of decision trees to use a struct array.
-     This fixed some small bugs, while improving code and providing a small
-     speed gain. By `Joel Nothman`_.
-
-   - Various enhancements to the  :mod:`sklearn.ensemble.gradient_boosting`
-     module: a ``warm_start`` argument to fit additional trees,
-     a ``max_leaf_nodes`` argument to fit GBM style trees,
-     a ``monitor`` fit argument to inspect the estimator during training, and
-     refactoring of the verbose code. By `Peter Prettenhofer`_.
-
    - Added :func:`learning_curve <learning_curve.learning_curve>` utility to
      chart performance with respect to training size. See
      :ref:`example_plot_learning_curve.py`. By `Alexander Fabisch`_.
@@ -150,6 +147,12 @@ Changelog
    - Added :class:`linear_model.MultiTaskElasticNetCV` and
      :class:`linear_model.MultiTaskLassoCV`. By `Manoj Kumar`_.
 
+   - :mod:`sklearn.hmm` is deprecated. Its removal is planned
+     for the 0.17 release.
+
+   - Use of :class:`covariance.EllipticEnvelop` has now been removed after
+     deprecation.
+     Please use :class:`covariance.EllipticEnvelope` instead.
 
 API changes summary
 -------------------
