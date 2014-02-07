@@ -107,6 +107,7 @@ def test_labels_assignment_and_inertia_L1():
     assert_array_almost_equal(inertia_csr, inertia_gold)
     assert_array_equal(labels_csr, labels_gold)
 
+
 def test_minibatch_update_consistency():
     """Check that dense and sparse minibatch update give the same results"""
     rng = np.random.RandomState(42)
