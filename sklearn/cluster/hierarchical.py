@@ -167,7 +167,10 @@ def ward_tree(X, connectivity=None, n_components=None, copy=None,
     if n_clusters is None:
         n_nodes = 2 * n_samples - 1
     else:
-        assert n_clusters <= n_samples
+        if n_clusters > n_samples:
+            raise ValueError('Cannot provide more clusters than samples. '
+                '%i n_clusters was asked, and there are %i samples.'
+                % (n_clusters, n_samples))
         n_nodes = 2 * n_samples - n_clusters
 
     # create inertia matrix
@@ -605,7 +608,6 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         if isinstance(memory, six.string_types):
             memory = Memory(cachedir=memory, verbose=0)
 
-        # FIXME check affinity exists.
         if self.linkage == "ward" and self.affinity != "euclidean":
             raise ValueError("%s was provided as affinity. Ward can only "
                              "work with euclidean distances." %
