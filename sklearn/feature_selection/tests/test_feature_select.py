@@ -122,7 +122,7 @@ def test_f_regression_center():
     F1, _ = f_regression(X, Y, center=True)
     F2, _ = f_regression(X, Y, center=False)
     assert_array_almost_equal(F1 * (n_samples - 1.) / (n_samples - 2.), F2)
-    assert_array_almost_equal(F2[0], 0.232558139)  # value from statsmodels OLS
+    assert_almost_equal(F2[0], 0.232558139)  # value from statsmodels OLS
 
 
 def test_f_classif_multi_class():

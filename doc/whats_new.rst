@@ -154,6 +154,11 @@ Changelog
      deprecation.
      Please use :class:`covariance.EllipticEnvelope` instead.
 
+   - Fixed incorrect estimation of the degrees of freedom in
+     :func:`feature_selection.f_regression` when variates are not centered.
+     By `VirgileFritsch`_.
+
+
 API changes summary
 -------------------
 
