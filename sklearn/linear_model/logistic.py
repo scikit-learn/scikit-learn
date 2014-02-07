@@ -1,3 +1,7 @@
+# Authors: Fabian Pedregosa
+#          Alexandre Gramfort
+# License: 3-clause BSD
+
 import numpy as np
 
 from .base import LinearClassifierMixin, SparseCoefMixin
@@ -58,15 +62,15 @@ class LogisticRegression(BaseLibLinear, LinearClassifierMixin,
 
     Attributes
     ----------
-    `coef_` : array, shape = [n_classes-1, n_features]
+    `coef_` : array, shape = [n_classes, n_features]
         Coefficient of the features in the decision function.
 
         `coef_` is readonly property derived from `raw_coef_` that \
         follows the internal memory layout of liblinear.
 
-    `intercept_` : array, shape = [n_classes-1]
+    `intercept_` : array, shape = [n_classes]
         Intercept (a.k.a. bias) added to the decision function.
-        It is available only when parameter intercept is set to True.
+        If `fit_intercept` is set to False, the intercept is set to zero.
 
     random_state: int seed, RandomState instance, or None (default)
         The seed of the pseudo random number generator to use when

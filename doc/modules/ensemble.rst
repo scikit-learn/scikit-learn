@@ -313,7 +313,7 @@ AdaBoost
 ========
 
 The module :mod:`sklearn.ensemble` includes the popular boosting algorithm
-AdaBoost, introduced in 1995 by Freud and Schapire [FS1995]_.
+AdaBoost, introduced in 1995 by Freund and Schapire [FS1995]_.
 
 The core principle of AdaBoost is to fit a sequence of weak learners (i.e.,
 models that are only slightly better than random guessing, such as small
@@ -388,8 +388,8 @@ decision trees).
 
 .. topic:: References
 
- .. [FS1995] Y. Freud, and R. Schapire, "A decision theoretic generalization of
-             online learning and an application to boosting", 1997.
+ .. [FS1995] Y. Freund, and R. Schapire, "A Decision-Theoretic Generalization of
+             On-Line Learning and an Application to Boosting", 1997.
 
  .. [ZZRH2009] J. Zhu, H. Zou, S. Rosset, T. Hastie. "Multi-class AdaBoost",
                2009.

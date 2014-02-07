@@ -7,14 +7,13 @@ import shutil
 from tempfile import NamedTemporaryFile
 
 from sklearn.externals.six import b
+
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import raises
 from sklearn.utils.testing import assert_in
-
-from sklearn.externals.six import b
 
 import sklearn
 from sklearn.datasets import (load_svmlight_file, load_svmlight_files,

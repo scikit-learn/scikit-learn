@@ -14,8 +14,7 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_greater
-from sklearn.utils.testing import assert_raises, assert_raise_message
-from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import assert_raises
 
 from sklearn.utils.extmath import density
 from sklearn.utils.extmath import logsumexp
@@ -25,7 +24,6 @@ from sklearn.utils.extmath import weighted_mode
 from sklearn.utils.extmath import cartesian
 from sklearn.utils.extmath import logistic_sigmoid
 from sklearn.utils.extmath import fast_dot, _fast_dot
-from sklearn.utils.validation import NonBLASDotWarning
 from sklearn.datasets.samples_generator import make_low_rank_matrix
 
 

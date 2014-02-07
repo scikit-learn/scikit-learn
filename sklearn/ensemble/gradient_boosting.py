@@ -589,8 +589,8 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             raise ValueError("learning_rate must be greater than 0 but "
                              "was %r" % self.learning_rate)
 
-        if (self.loss not in self._SUPPORTED_LOSS or
-            self.loss not in LOSS_FUNCTIONS):
+        if (self.loss not in self._SUPPORTED_LOSS
+                or self.loss not in LOSS_FUNCTIONS):
             raise ValueError("Loss '{0:s}' not supported. ".format(self.loss))
 
         if self.loss in ('mdeviance', 'bdeviance'):
@@ -619,7 +619,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
                     raise ValueError('init="%s" is not supported' % self.init)
             else:
                 if (not hasattr(self.init, 'fit')
-                    or not hasattr(self.init, 'predict')):
+                        or not hasattr(self.init, 'predict')):
                     raise ValueError("init=%r must be valid BaseEstimator "
                                      "and support both fit and "
                                      "predict" % self.init)
@@ -696,8 +696,8 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         self.estimators_.resize((total_n_estimators, self.loss_.K))
         self.train_score_.resize(total_n_estimators)
         if (self.subsample < 1
-            or hasattr(self, '_oob_score_')
-            or hasattr(self, 'oob_improvement_')):
+                or hasattr(self, '_oob_score_')
+                or hasattr(self, 'oob_improvement_')):
             # if do oob resize arrays or create new if not available
             if hasattr(self, '_oob_score_'):
                 self._oob_score_.resize(total_n_estimators)

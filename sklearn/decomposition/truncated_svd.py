@@ -15,7 +15,7 @@ except ImportError:
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import (array2d, as_float_array, atleast2d_or_csr,
-                     check_random_state, deprecated)
+                     check_random_state)
 from ..utils.extmath import randomized_svd, safe_sparse_dot, svd_flip
 
 __all__ = ["TruncatedSVD"]

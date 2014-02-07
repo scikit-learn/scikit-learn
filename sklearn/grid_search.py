@@ -450,7 +450,6 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         self.best_score_ = ret[2]
         self.grid_scores_ = ret[3]
 
-
         if self.refit:
             if isinstance(ret[4], list):
                 self.best_estimators_ = ret[4]

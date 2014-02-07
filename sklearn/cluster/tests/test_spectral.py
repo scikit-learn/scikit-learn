@@ -17,7 +17,7 @@ from sklearn.utils.testing import assert_greater
 from sklearn.cluster import SpectralClustering, spectral_clustering
 from sklearn.cluster.spectral import spectral_embedding
 from sklearn.cluster.spectral import discretize
-from sklearn.metrics import pairwise_distances, adjusted_rand_score
+from sklearn.metrics import pairwise_distances
 from sklearn.metrics import adjusted_rand_score
 from sklearn.metrics.pairwise import rbf_kernel
 from sklearn.datasets.samples_generator import make_blobs

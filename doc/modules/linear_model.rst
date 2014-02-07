@@ -676,11 +676,14 @@ Stochastic Gradient Descent - SGD
 Stochastic gradient descent is a simple yet very efficient approach
 to fit linear models. It is particularly useful when the number of samples
 (and the number of features) is very large.
-
+The ``partial_fit`` method allows only/out-of-core learning.
 
 The classes :class:`SGDClassifier` and :class:`SGDRegressor` provide
 functionality to fit linear models for classification and regression
 using different (convex) loss functions and different penalties.
+E.g., with ``loss="log"``, :class:`SGDClassifier`
+fits a logistic regression model,
+while with ``loss="hinge"`` it fits a linear support vector machine (SVM).
 
 .. topic:: References
 

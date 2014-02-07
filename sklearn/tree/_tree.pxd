@@ -67,14 +67,15 @@ cdef class Splitter:
     cdef public SIZE_t min_samples_leaf  # Min samples in a leaf
 
     cdef object random_state             # Random state
-    cdef UINT32_t rand_r_state            # sklearn_rand_r random number state
+    cdef UINT32_t rand_r_state           # sklearn_rand_r random number state
 
     cdef SIZE_t* samples                 # Sample indices in X, y
     cdef SIZE_t n_samples                # X.shape[0]
     cdef SIZE_t* features                # Feature indices in X
     cdef SIZE_t n_features               # X.shape[1]
+    cdef DTYPE_t* feature_values         # temp. array holding feature values
     cdef SIZE_t start                    # Start position for the current node
-    cdef SIZE_t end                      # End position for the current ndoe
+    cdef SIZE_t end                      # End position for the current node
 
     cdef DTYPE_t* X
     cdef SIZE_t X_sample_stride
@@ -86,7 +87,7 @@ cdef class Splitter:
     # The samples vector `samples` is maintained by the Splitter object such
     # that the samples contained in a node are contiguous. With this setting,
     # split reorganizes the node samples `samples[start:end]` in two
-    # subsets `samples[start:pos]` and `start[pos:end]`.
+    # subsets `samples[start:pos]` and `samples[pos:end]`.
 
     # Methods
     cdef void init(self, np.ndarray X,
@@ -139,14 +140,12 @@ cdef class Tree:
     cdef public int max_leaf_nodes       # Number of leafs to grow
 
     # Inner structures: values are stored separately from node structure,
-    # since size determined at runtime.
+    # since size is determined at runtime.
     cdef public SIZE_t node_count        # Counter for node IDs
     cdef public SIZE_t capacity          # Capacity of tree, in terms of nodes
     cdef Node* nodes                     # Array of nodes
     cdef double* value                   # (capacity, n_outputs, max_n_classes) array of values
     cdef SIZE_t value_stride             # = n_outputs * max_n_classes
-    cdef np.ndarray node_ndarray         # a numpy array viewing nodes for convenience
-    cdef np.ndarray value_ndarray        # a numpy array viewing nodes for convenience
 
     # Methods
     cdef SIZE_t _add_node(self, SIZE_t parent,
@@ -158,7 +157,9 @@ cdef class Tree:
                                 SIZE_t n_node_samples) nogil
     cdef void _resize(self, SIZE_t capacity)
     cdef int _resize_c(self, SIZE_t capacity=*) nogil
-    cdef void _finalize(self)
+
+    cdef np.ndarray _get_value_ndarray(self)
+    cdef np.ndarray _get_node_ndarray(self)
 
     cpdef np.ndarray predict(self, np.ndarray[DTYPE_t, ndim=2] X)
     cpdef np.ndarray apply(self, np.ndarray[DTYPE_t, ndim=2] X)

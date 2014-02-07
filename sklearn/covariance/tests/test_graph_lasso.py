@@ -33,7 +33,7 @@ def test_graph_lasso(random_state=0):
                                          return_costs=True)
             covs[method] = cov_
             costs, dual_gap = np.array(costs).T
-            # Check that the costs always decrease (does not hold if alpha == 0)
+            # Check that the costs always decrease (doesn't hold if alpha == 0)
             if not alpha == 0:
                 assert_array_less(np.diff(costs), 0)
         # Check that the 2 approaches give similar results

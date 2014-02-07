@@ -525,7 +525,7 @@ class PLSRegression(_PLS):
 
     Examples
     --------
-    >>> from sklearn.cross_decomposition import PLSCanonical, PLSRegression
+    >>> from sklearn.cross_decomposition import PLSRegression
     >>> X = [[0., 0., 1.], [1.,0.,0.], [2.,2.,2.], [2.,5.,4.]]
     >>> Y = [[0.1, -0.2], [0.9, 1.1], [6.2, 5.9], [11.9, 12.3]]
     >>> pls2 = PLSRegression(n_components=2)
@@ -643,7 +643,7 @@ class PLSCanonical(_PLS):
 
     Examples
     --------
-    >>> from sklearn.cross_decomposition import PLSCanonical, PLSRegression
+    >>> from sklearn.cross_decomposition import PLSCanonical
     >>> X = [[0., 0., 1.], [1.,0.,0.], [2.,2.,2.], [2.,5.,4.]]
     >>> Y = [[0.1, -0.2], [0.9, 1.1], [6.2, 5.9], [11.9, 12.3]]
     >>> plsca = PLSCanonical(n_components=2)
