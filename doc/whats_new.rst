@@ -185,7 +185,7 @@ API changes summary
      of length greater than one.
      By `Manoj Kumar`_.
 
-   - Fix :class: `linear_model.ElasticNetCV` and :class: `linear_model.LassoCV`
+   - Fix :class:`linear_model.ElasticNetCV` and :class:`linear_model.LassoCV`
      when fitting intercept and X is sparse. The automatic grid
      of alphas was not computed correctly and the scaling with normalize
      was wrong. By `Manoj Kumar`_.

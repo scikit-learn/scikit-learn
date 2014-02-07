@@ -68,6 +68,7 @@ def _alpha_grid(X, y, Xy=None, l1_ratio=1.0, fit_intercept=True,
     """
     n_samples = len(y)
 
+    sparse_center = False
     if Xy is None:
         X_sparse = sparse.isspmatrix(X)
         sparse_center = X_sparse and (fit_intercept or normalize)

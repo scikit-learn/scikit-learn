@@ -17,7 +17,7 @@ from .metrics.scorer import check_scoring
 def learning_curve(estimator, X, y, train_sizes=np.linspace(0.1, 1.0, 10),
                    cv=None, scoring=None, exploit_incremental_learning=False,
                    n_jobs=1, pre_dispatch="all", verbose=0):
-    """Learning curve
+    """Learning curve.
 
     Determines cross-validated training and test scores for different training
     set sizes.
@@ -41,7 +41,7 @@ def learning_curve(estimator, X, y, train_sizes=np.linspace(0.1, 1.0, 10),
         Target relative to X for classification or regression;
         None for unsupervised learning.
 
-    train_sizes : array-like, shape = (n_ticks,), dtype float or int
+    train_sizes : array-like, shape (n_ticks,), dtype float or int
         Relative or absolute numbers of training examples that will be used to
         generate the learning curve. If the dtype is float, it is regarded as a
         fraction of the maximum size of the training set (that is determined
@@ -78,15 +78,15 @@ def learning_curve(estimator, X, y, train_sizes=np.linspace(0.1, 1.0, 10),
 
     Returns
     -------
-    train_sizes_abs : array, shape = [n_unique_ticks,], dtype int
+    train_sizes_abs : array, shape = (n_unique_ticks,), dtype int
         Numbers of training examples that has been used to generate the
         learning curve. Note that the number of ticks might be less
         than n_ticks because duplicate entries will be removed.
 
-    train_scores : array, shape = [n_ticks,]
+    train_scores : array, shape (n_ticks, n_cv_folds)
         Scores on training sets.
 
-    test_scores : array, shape = [n_ticks,]
+    test_scores : array, shape (n_ticks, n_cv_folds)
         Scores on test set.
 
     Notes
@@ -135,9 +135,9 @@ def learning_curve(estimator, X, y, train_sizes=np.linspace(0.1, 1.0, 10),
         n_cv_folds = out.shape[0] / n_unique_ticks
         out = out.reshape(n_cv_folds, n_unique_ticks, 2)
 
-    avg_over_cv = np.asarray(out).mean(axis=0).reshape(n_unique_ticks, 2)
+    out = np.asarray(out).transpose((2, 1, 0))
 
-    return train_sizes_abs, avg_over_cv[:, 0], avg_over_cv[:, 1]
+    return train_sizes_abs, out[0], out[1]
 
 
 def _translate_train_sizes(train_sizes, n_max_training_samples):
@@ -149,7 +149,7 @@ def _translate_train_sizes(train_sizes, n_max_training_samples):
 
     Parameters
     ----------
-    train_sizes : array-like, shape = (n_ticks,), dtype float or int
+    train_sizes : array-like, shape (n_ticks,), dtype float or int
         Numbers of training examples that will be used to generate the
         learning curve. If the dtype is float, it is regarded as a
         fraction of 'n_max_training_samples', i.e. it has to be within (0, 1].
@@ -159,7 +159,7 @@ def _translate_train_sizes(train_sizes, n_max_training_samples):
 
     Returns
     -------
-    train_sizes_abs : array, shape = [n_unique_ticks,], dtype int
+    train_sizes_abs : array, shape (n_unique_ticks,), dtype int
         Numbers of training examples that will be used to generate the
         learning curve. Note that the number of ticks might be less
         than n_ticks because duplicate entries will be removed.
@@ -218,3 +218,86 @@ def _incremental_fit_estimator(estimator, X, y, classes, train, test,
         train_scores.append(_score(estimator, X_train, y_train, scorer))
         test_scores.append(_score(estimator, X_test, y_test, scorer))
     return np.array((train_scores, test_scores)).T
+
+
+def validation_curve(estimator, X, y, param_name, param_range, cv=None,
+                     scoring=None, n_jobs=1, pre_dispatch="all", verbose=0):
+    """Validation curve.
+
+    Determine training and test scores for varying parameter values.
+
+    Compute scores for an estimator with different values of a specified
+    parameter. This is similar to grid search with one parameter. However, this
+    will also compute training scores and is merely a utility for plotting the
+    results.
+
+    Parameters
+    ----------
+    estimator : object type that implements the "fit" and "predict" methods
+        An object of that type which is cloned for each validation.
+
+    X : array-like, shape (n_samples, n_features)
+        Training vector, where n_samples is the number of samples and
+        n_features is the number of features.
+
+    y : array-like, shape (n_samples) or (n_samples, n_features), optional
+        Target relative to X for classification or regression;
+        None for unsupervised learning.
+
+    param_name : string
+        Name of the parameter that will be varied.
+
+    param_range : array-like, shape (n_values,)
+        The values of the parameter that will be evaluated.
+
+    cv : integer, cross-validation generator, optional
+        If an integer is passed, it is the number of folds (defaults to 3).
+        Specific cross-validation objects can be passed, see
+        sklearn.cross_validation module for the list of possible objects
+
+    scoring : string, callable or None, optional, default: None
+        A string (see model evaluation documentation) or
+        a scorer callable object / function with signature
+        ``scorer(estimator, X, y)``.
+
+    n_jobs : integer, optional
+        Number of jobs to run in parallel (default 1).
+
+    pre_dispatch : integer or string, optional
+        Number of predispatched jobs for parallel execution (default is
+        all). The option can reduce the allocated memory. The string can
+        be an expression like '2*n_jobs'.
+
+    verbose : integer, optional
+        Controls the verbosity: the higher, the more messages.
+
+    Returns
+    -------
+    train_scores : array, shape (n_ticks, n_cv_folds)
+        Scores on training sets.
+
+    test_scores : array, shape (n_ticks, n_cv_folds)
+        Scores on test set.
+
+    Notes
+    -----
+    See
+    :ref:`examples/plot_validation_curve.py <example_plot_validation_curve.py>`
+    """
+    X, y = check_arrays(X, y, sparse_format='csr', allow_lists=True)
+    cv = _check_cv(cv, X, y, classifier=is_classifier(estimator))
+    scorer = check_scoring(estimator, scoring=scoring)
+
+    parallel = Parallel(n_jobs=n_jobs, pre_dispatch=pre_dispatch,
+                        verbose=verbose)
+    out = parallel(delayed(_fit_and_score)(
+        estimator, X, y, scorer, train, test, verbose,
+        parameters={param_name : v}, fit_params=None, return_train_score=True)
+        for train, test in cv for v in param_range)
+
+    out = np.asarray(out)[:, :2]
+    n_params = len(param_range)
+    n_cv_folds = out.shape[0] / n_params
+    out = out.reshape(n_cv_folds, n_params, 2).transpose((2, 1, 0))
+
+    return out[0], out[1]
