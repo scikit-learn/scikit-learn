@@ -150,6 +150,10 @@ Changelog
    - Added :class:`linear_model.MultiTaskElasticNetCV` and
      :class:`linear_model.MultiTaskLassoCV`. By `Manoj Kumar`_.
 
+   - Fixed incorrect estimation of the degrees of freedom in
+     :func:`feature_selection.f_regression` when variates are not centered.
+     By `VirgileFritsch`_.
+
 
 API changes summary
 -------------------
