@@ -18,7 +18,6 @@ ground truth labeling (or ``None`` in the case of unsupervised models).
 #          Arnaud Joly <arnaud.v.joly@gmail.com>
 # License: Simplified BSD
 
-from abc import ABCMeta, abstractmethod
 from warnings import warn
 import numbers
 
