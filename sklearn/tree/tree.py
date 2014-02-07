@@ -290,7 +290,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         y : array of shape = [n_samples] or [n_samples, n_outputs]
             The predicted classes, or the predict values.
         """
-        if getattr(X, "dtype", None) != DTYPE or X.ndim != 2:
+        if not issparse(X) and (getattr(X, "dtype", None) != DTYPE or X.ndim != 2):
             X = array2d(X, dtype=DTYPE)
 
         n_samples, n_features = X.shape

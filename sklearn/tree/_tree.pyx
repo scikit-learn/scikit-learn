@@ -2278,14 +2278,14 @@ cdef class Tree:
 
         return node_id
 
-    cpdef np.ndarray predict(self, np.ndarray[DTYPE_t, ndim=2] X):
+    cpdef np.ndarray predict(self, object X):
         """Predict target for X."""
         out = self._get_value_ndarray().take(self.apply(X), axis=0, mode='clip')
         if self.n_outputs == 1:
             out = out.reshape(X.shape[0], self.max_n_classes)
         return out
 
-    cpdef np.ndarray apply(self, np.ndarray[DTYPE_t, ndim=2] X):
+    cpdef np.ndarray apply(self, object X):
         """Finds the terminal region (=leaf node) for each sample in X."""
         cdef SIZE_t n_samples = X.shape[0]
         cdef Node* node = NULL
@@ -2294,19 +2294,18 @@ cdef class Tree:
         cdef np.ndarray[SIZE_t] out = np.zeros((n_samples,), dtype=np.intp)
         cdef SIZE_t* out_data = <SIZE_t*> out.data
 
-        with nogil:
-            for i in range(n_samples):
-                node = self.nodes
+        for i in range(n_samples):
+            node = self.nodes
 
-                # While node not a leaf
-                while node.left_child != _TREE_LEAF:
-                    # ... and node.right_child != _TREE_LEAF:
-                    if X[i, node.feature] <= node.threshold:
-                        node = &self.nodes[node.left_child]
-                    else:
-                        node = &self.nodes[node.right_child]
+            # While node not a leaf
+            while node.left_child != _TREE_LEAF:
+                # ... and node.right_child != _TREE_LEAF:
+                if X[i, node.feature] <= node.threshold:
+                    node = &self.nodes[node.left_child]
+                else:
+                    node = &self.nodes[node.right_child]
 
-                out_data[i] = <SIZE_t>(node - self.nodes)  # node offset
+            out_data[i] = <SIZE_t>(node - self.nodes)  # node offset
 
         return out
 

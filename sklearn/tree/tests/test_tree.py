@@ -3,6 +3,7 @@ Testing for the tree module (sklearn.tree).
 """
 import pickle
 import numpy as np
+import scipy as sp
 
 from functools import partial
 from itertools import product
@@ -59,6 +60,8 @@ X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
 y = [-1, -1, -1, 1, 1, 1]
 T = [[-1, -1], [2, 2], [3, 2]]
 true_result = [-1, 1, 1]
+X_sparse = sp.sparse.csc_matrix(X)
+T_sparse = sp.sparse.csc_matrix(T)
 
 # also load the iris dataset
 # and randomly permute it
@@ -91,6 +94,15 @@ def test_classification_toy():
         assert_array_equal(clf.predict(T), true_result,
                            "Failed with {0}".format(name))
 
+        clf = Tree(random_state=0)
+        clf.fit(X_sparse, y)
+        assert_array_equal(clf.predict(T_sparse), true_result,
+                           "Failed with {0}".format(name))
+
+        clf = Tree(max_features=1, random_state=1)
+        clf.fit(X_sparse, y)
+        assert_array_equal(clf.predict(T_sparse), true_result,
+                           "Failed with {0}".format(name))
 
 def test_weighted_classification_toy():
     """Check classification on a weighted toy dataset."""
@@ -191,7 +203,6 @@ def test_20news():
         assert_greater(score, 0.9,
                        "Failed with {0}, criterion = {1} and score = {2}"
                        "".format(name, criterion, score))
-
 
 
 def test_probability():
