@@ -185,6 +185,9 @@ class ParameterSampler(object):
 def _fit_param_iter(estimator, X, y, scoring, parameter_iterable, refit,
                     cv, pre_dispatch, fit_params, iid, n_jobs, verbose):
     """Actual fitting,  performing the search over parameters."""
+
+    estimator = clone(estimator)
+
     if isinstance(scoring, (tuple, list)):
         scorers = [check_scoring(estimator, scoring=s) for s in scoring]
         ret_1d = False
@@ -210,11 +213,9 @@ def _fit_param_iter(estimator, X, y, scoring, parameter_iterable, refit,
                   " {2} fits".format(len(cv), n_candidates,
                                      n_candidates * len(cv)))
 
-    base_estimator = clone(estimator)
-
     out = Parallel(n_jobs=n_jobs, verbose=verbose, pre_dispatch=pre_dispatch)(
             delayed(_fit_and_score)(
-                clone(base_estimator), X, y, scorers, train, test,
+                clone(estimator), X, y, scorers, train, test,
                 verbose, parameters, fit_params)
             for parameters in parameter_iterable
             for train, test in cv)
@@ -254,8 +255,8 @@ def _fit_param_iter(estimator, X, y, scoring, parameter_iterable, refit,
     best_estimators = []
     if refit:
         for i in xrange(len(scorers)):
-            base_estimator = clone(estimator)
-            best_estimator = base_estimator.set_params(**best_params[i])
+            estimator = clone(estimator)
+            best_estimator = estimator.set_params(**best_params[i])
             best_estimators.append(best_estimator)
             if y is not None:
                 best_estimator.fit(X, y, **fit_params)
