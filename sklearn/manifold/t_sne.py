@@ -187,18 +187,10 @@ class TSNE(BaseEstimator, TransformerMixin):
         Number of components to keep.
 
     perplexity : float, optional (default: 30)
-        From Laurens van der Maaten's FAQ
-        (`<http://homepage.tudelft.nl/19j49/t-SNE.html>`_):
-        Perplexity is a measure for information that is defined as 2 to
-        the power of the Shannon entropy. The perplexity of a fair die with
-        k sides is equal to k. In t-SNE, the perplexity may be viewed as a
-        knob that sets the number of effective nearest neighbors. It is
-        comparable with the number of nearest neighbors k that is employed
-        in many manifold learners. The performance of t-SNE is fairly robust
-        under different settings of the perplexity. The most appropriate value
-        depends on the density of your data. Loosely speaking, one could say
-        that a larger / denser dataset requires a larger perplexity. Typical
-        values for the perplexity range between 5 and 50.
+        The perplexity is related to the number of nearest neighbors that is
+        used in other manifold learning algorithms. Larger datasets usually
+        require a larger perplexity. Consider selcting a value between 5 and
+        50.
 
     optimizer : string
         One of 'gradient_descent' and 'lbfgs'.
