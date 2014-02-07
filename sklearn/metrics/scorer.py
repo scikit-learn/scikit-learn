@@ -56,16 +56,27 @@ class _Scorer(object):
 
 
 def _evaluate_scorers(estimator, X, y, scorers):
+    """Evaluate a list of scorers. `scorers` may contain _Scorer objects or
+    callables of the form callable(estimator, X, y)."""
+
+    if len(scorers) == 1 and not isinstance(scorers[0], _Scorer):
+        # We won't need any predictions if there is only one callable in the
+        # list.
+        return np.array([scorers[0](estimator, X, y)])
+
     has_pb = hasattr(estimator, "predict_proba")
     has_df = hasattr(estimator, "decision_function")
     _is_classifier = is_classifier(estimator)
-    _type_of_y = type_of_target(y)
+    _type_of_y = type_of_target(y) if y is not None else None
 
     # Make a first pass through scorers to determine if we need
     # predict_proba or decision_function.
     needs_proba = False
     needs_df = False
     for scorer in scorers:
+        if not isinstance(scorer, _Scorer):
+            continue  # assumed to be a callable
+
         if scorer.needs_proba:
             if not has_pb:
                 raise ValueError("%s needs probabilities but predict_proba is"
@@ -122,6 +133,10 @@ def _evaluate_scorers(estimator, X, y, scorers):
     # Compute scores.
     scores = []
     for scorer in scorers:
+        if not isinstance(scorer, _Scorer):
+            scores.append(scorer(estimator, X, y))
+            continue
+
         if scorer.needs_proba:
             score = scorer.score_func(y, y_proba, **scorer.kwargs)
 
@@ -189,7 +204,7 @@ def check_scoring(estimator, scoring=None, allow_none=False, loss_func=None,
 
     Returns
     -------
-    scoring : callable
+    scorer : callable
         A scorer callable object / function with signature
         ``scorer(estimator, X, y)``.
     """

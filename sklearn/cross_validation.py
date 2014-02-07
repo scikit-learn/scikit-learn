@@ -1271,13 +1271,7 @@ def _fit_and_score(estimator, X, y, scorers, train, test, verbose, parameters,
 
     train_time = time.time() - start_time
 
-    if len(scorers) == 1:
-        # We cannot use _evaluate_scorers here because the scorer might be
-        # estimator.score.
-        test_scores = np.array([scorers[0](estimator, X_test, y_test)])
-    else:
-        test_scores = _evaluate_scorers(estimator, X_test, y_test, scorers)
-
+    test_scores = _evaluate_scorers(estimator, X_test, y_test, scorers)
 
     if return_train_scores:
         if len(scorers) == 1:
