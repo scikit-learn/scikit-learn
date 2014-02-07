@@ -255,9 +255,9 @@ def f_regression(X, y, center=True):
     corr /= norm(y)
 
     # convert to p-value
-    dof = y.size - 1 - int(center)  # one more lost dof if 'center' is True
-    F = corr ** 2 / (1 - corr ** 2) * dof
-    pv = stats.f.sf(F, 1, dof)
+    degrees_of_freedom = y.size - (2 if center else 1)
+    F = corr ** 2 / (1 - corr ** 2) * degrees_of_freedom
+    pv = stats.f.sf(F, 1, degrees_of_freedom)
     return F, pv
 
 
