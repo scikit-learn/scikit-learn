@@ -30,7 +30,7 @@ import time as time
 import numpy as np
 import pylab as pl
 import mpl_toolkits.mplot3d.axes3d as p3
-from sklearn.cluster import Ward
+from sklearn.cluster import AgglomerativeClustering
 from sklearn.datasets.samples_generator import make_swiss_roll
 
 ###############################################################################
@@ -45,7 +45,7 @@ X[:, 1] *= .5
 # Compute clustering
 print("Compute unstructured hierarchical clustering...")
 st = time.time()
-ward = Ward(n_clusters=6).fit(X)
+ward = AgglomerativeClustering(n_clusters=6, linkage='ward').fit(X)
 elapsed_time = time.time() - st
 label = ward.labels_
 print("Elapsed time: %.2fs" % elapsed_time)
@@ -71,7 +71,8 @@ connectivity = kneighbors_graph(X, n_neighbors=10)
 # Compute clustering
 print("Compute structured hierarchical clustering...")
 st = time.time()
-ward = Ward(n_clusters=6, connectivity=connectivity).fit(X)
+ward = AgglomerativeClustering(n_clusters=6, connectivity=connectivity,
+                               linkage='ward').fit(X)
 elapsed_time = time.time() - st
 label = ward.labels_
 print("Elapsed time: %.2fs" % elapsed_time)

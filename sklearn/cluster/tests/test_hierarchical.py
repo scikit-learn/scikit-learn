@@ -204,6 +204,7 @@ def test_ward_agglomeration():
     mask = np.ones([10, 10], dtype=np.bool)
     X = rnd.randn(50, 100)
     connectivity = grid_to_graph(*mask.shape)
+    assert_warns(DeprecationWarning, WardAgglomeration)
     ward = WardAgglomeration(n_clusters=5, connectivity=connectivity)
     ward.fit(X)
     assert_true(np.size(np.unique(ward.labels_)) == 5)

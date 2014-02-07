@@ -72,7 +72,7 @@ for i_dataset, dataset in enumerate([noisy_circles, noisy_moons, blobs,
     # create clustering estimators
     ms = cluster.MeanShift(bandwidth=bandwidth, bin_seeding=True)
     two_means = cluster.MiniBatchKMeans(n_clusters=2)
-    ward_five = cluster.AgglomerativeClustering(n_clusters=2,
+    ward = cluster.AgglomerativeClustering(n_clusters=2,
                     linkage='ward', connectivity=connectivity)
     spectral = cluster.SpectralClustering(n_clusters=2,
                                           eigen_solver='arpack',
@@ -89,7 +89,7 @@ for i_dataset, dataset in enumerate([noisy_circles, noisy_moons, blobs,
         ('AffinityPropagation', affinity_propagation),
         ('MeanShift', ms),
         ('SpectralClustering', spectral),
-        ('Ward', ward_five),
+        ('Ward', ward),
         ('AgglomerativeClustering', average_linkage),
         ('DBSCAN', dbscan)]:
         # predict cluster memberships

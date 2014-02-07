@@ -589,11 +589,12 @@ enable only merging of neighboring pixels on an image, as in the
 
 .. warning:: **Connectivity constraints with average and complete linkage**
 
-    Connectivity constraints and complete or average linkage enhance the
-    'rich getting richer' aspect of agglomerative clustering. In the
-    limit of a small number of clusters, they tend to give a few
-    macroscopically occupied clusters and almost empty ones. (see the
-    discussion in
+    Connectivity constraints and complete or average linkage can enhance
+    the 'rich getting richer' aspect of agglomerative clustering,
+    particularly so if they are built with
+    :func:`sklearn.neighbors.kneighbors_graph`. In the limit of a small
+    number of clusters, they tend to give a few macroscopically occupied
+    clusters and almost empty ones. (see the discussion in
     :ref:`example_cluster_plot_agglomerative_clustering.py`).
 
 .. image:: ../auto_examples/cluster/images/plot_agglomerative_clustering_1.png

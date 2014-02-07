@@ -213,10 +213,10 @@ transposed data.
    >>> X = np.reshape(images, (len(images), -1))
    >>> connectivity = grid_to_graph(*images[0].shape)
 
-   >>> agglo = cluster.WardAgglomeration(connectivity=connectivity,
+   >>> agglo = cluster.FeatureAgglomeration(connectivity=connectivity,
    ...                                   n_clusters=32)
    >>> agglo.fit(X) # doctest: +ELLIPSIS
-   WardAgglomeration(compute_full_tree='auto',...
+   FeatureAgglomeration(compute_full_tree='auto',...
    >>> X_reduced = agglo.transform(X)
 
    >>> X_approx = agglo.inverse_transform(X_reduced)

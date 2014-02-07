@@ -26,8 +26,8 @@ images = digits.images
 X = np.reshape(images, (len(images), -1))
 connectivity = grid_to_graph(*images[0].shape)
 
-agglo = cluster.WardAgglomeration(connectivity=connectivity,
-                                  n_clusters=32)
+agglo = cluster.FeatureAgglomeration(connectivity=connectivity,
+                                     n_clusters=32)
 
 agglo.fit(X)
 X_reduced = agglo.transform(X)
