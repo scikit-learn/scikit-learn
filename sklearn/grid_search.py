@@ -185,7 +185,7 @@ class ParameterSampler(object):
 def _fit_param_iter(estimator, X, y, scoring, parameter_iterable, refit,
                     cv, pre_dispatch, fit_params, iid, n_jobs, verbose):
     """Actual fitting,  performing the search over parameters."""
-    if isinstance(scoring, list):
+    if isinstance(scoring, (tuple, list)):
         scorers = [check_scoring(estimator, scoring=s) for s in scoring]
         ret_1d = False
     else:

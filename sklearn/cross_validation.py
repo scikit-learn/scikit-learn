@@ -1092,7 +1092,7 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
     X, y = check_arrays(X, y, sparse_format='csr', allow_lists=True)
     cv = _check_cv(cv, X, y, classifier=is_classifier(estimator))
 
-    if isinstance(scoring, list):
+    if isinstance(scoring, (tuple, list)):
         scorers = [check_scoring(estimator, scoring=s) for s in scoring]
         ret_1d = False
     else:
@@ -1191,7 +1191,7 @@ def cross_val_report(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
     X, y = check_arrays(X, y, sparse_format='csr', allow_lists=True)
     cv = _check_cv(cv, X, y, classifier=is_classifier(estimator))
 
-    if isinstance(scoring, list):
+    if isinstance(scoring, (tuple, list)):
         scorers = [check_scoring(estimator, scoring=s) for s in scoring]
         ret_1d = False
     else:
