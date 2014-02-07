@@ -17,6 +17,7 @@ from libc.stdlib cimport calloc, free, malloc, realloc
 from libc.string cimport memcpy, memset
 from libc.math cimport log as ln
 from cpython cimport Py_INCREF, PyObject
+from cpython cimport bool
 
 from sklearn.tree._utils cimport Stack, StackRecord
 from sklearn.tree._utils cimport PriorityHeap, PriorityHeapRecord
@@ -891,7 +892,8 @@ cdef class Splitter:
     def __cinit__(self, Criterion criterion,
                         SIZE_t max_features,
                         SIZE_t min_samples_leaf,
-                        object random_state):
+                        object random_state,
+                        bool issparse):
         self.criterion = criterion
 
         self.samples = NULL
@@ -900,7 +902,10 @@ cdef class Splitter:
         self.n_features = 0
         self.feature_values = NULL
 
+        self.issparse = issparse
         self.X = NULL
+        self.X_indices = NULL
+        self.X_indptr = NULL
         self.X_sample_stride = 0
         self.X_fx_stride = 0
         self.y = NULL
@@ -969,8 +974,12 @@ cdef class Splitter:
 
         # Initialize X, y, sample_weight
         self.X = <DTYPE_t*> X.data
-        self.X_sample_stride = <SIZE_t> X.strides[0] / <SIZE_t> X.itemsize
-        self.X_fx_stride = <SIZE_t> X.strides[1] / <SIZE_t> X.itemsize
+        if self.issparse:
+            self.X_indices = <UINT32_t*> (<np.ndarray[UINT32_t, ndim=1]> X.indices).data
+            self.X_indptr = <UINT32_t*> (<np.ndarray[UINT32_t, ndim=1]> X.indptr).data
+        else:
+            self.X_sample_stride = <SIZE_t> X.strides[0] / <SIZE_t> X.itemsize
+            self.X_fx_stride = <SIZE_t> X.strides[1] / <SIZE_t> X.itemsize
         self.y = <DOUBLE_t*> y.data
         self.y_stride = <SIZE_t> y.strides[0] / <SIZE_t> y.itemsize
         self.sample_weight = sample_weight
@@ -1005,7 +1014,8 @@ cdef class BestSplitter(Splitter):
         return (BestSplitter, (self.criterion,
                                self.max_features,
                                self.min_samples_leaf,
-                               self.random_state), self.__getstate__())
+                               self.random_state,
+                               self.issparse), self.__getstate__())
 
     cdef void node_split(self, double impurity, SIZE_t* pos, SIZE_t* feature,
                          double* threshold, double* impurity_left,
@@ -1261,7 +1271,8 @@ cdef class RandomSplitter(Splitter):
         return (RandomSplitter, (self.criterion,
                                  self.max_features,
                                  self.min_samples_leaf,
-                                 self.random_state), self.__getstate__())
+                                 self.random_state,
+                                 self.issparse), self.__getstate__())
 
     cdef void node_split(self, double impurity, SIZE_t* pos, SIZE_t* feature,
                          double* threshold, double* impurity_left,
@@ -1427,7 +1438,8 @@ cdef class PresortBestSplitter(Splitter):
     def __cinit__(self, Criterion criterion,
                         SIZE_t max_features,
                         SIZE_t min_samples_leaf,
-                        object random_state):
+                        object random_state,
+                        bool issparse):
         # Initialize pointers
         self.X_old = NULL
         self.X_argsorted_ptr = NULL
@@ -1442,7 +1454,8 @@ cdef class PresortBestSplitter(Splitter):
         return (PresortBestSplitter, (self.criterion,
                                       self.max_features,
                                       self.min_samples_leaf,
-                                      self.random_state), self.__getstate__())
+                                      self.random_state,
+                                      self.issparse), self.__getstate__())
 
     cdef void init(self, np.ndarray[DTYPE_t, ndim=2] X,
                          np.ndarray[DOUBLE_t, ndim=2, mode="c"] y,

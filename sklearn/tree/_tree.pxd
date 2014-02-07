@@ -6,6 +6,8 @@
 
 # See _tree.pyx for details.
 
+from cpython cimport bool
+
 import numpy as np
 cimport numpy as np
 
@@ -77,7 +79,10 @@ cdef class Splitter:
     cdef SIZE_t start                    # Start position for the current node
     cdef SIZE_t end                      # End position for the current node
 
+    cdef bool issparse
     cdef DTYPE_t* X
+    cdef UINT32_t* X_indices
+    cdef UINT32_t* X_indptr
     cdef SIZE_t X_sample_stride
     cdef SIZE_t X_fx_stride
     cdef DOUBLE_t* y

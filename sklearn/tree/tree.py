@@ -15,6 +15,7 @@ from __future__ import division
 
 import numbers
 import numpy as np
+from scipy.sparse import issparse
 from abc import ABCMeta, abstractmethod
 from warnings import warn
 
@@ -250,7 +251,8 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
             splitter = SPLITTERS[self.splitter](criterion,
                                                 self.max_features_,
                                                 self.min_samples_leaf,
-                                                random_state)
+                                                random_state,
+                                                issparse(X))
 
         self.tree_ = Tree(self.n_features_, self.n_classes_,
                           self.n_outputs_, splitter, max_depth,
