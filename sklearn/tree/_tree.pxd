@@ -6,8 +6,6 @@
 
 # See _tree.pyx for details.
 
-from cpython cimport bool
-
 import numpy as np
 cimport numpy as np
 
@@ -79,10 +77,10 @@ cdef class Splitter:
     cdef SIZE_t start                    # Start position for the current node
     cdef SIZE_t end                      # End position for the current node
 
-    cdef bool issparse
-    cdef DTYPE_t* X
-    cdef UINT32_t* X_indices
-    cdef UINT32_t* X_indptr
+    cdef bint issparse                   # Indicates wheter input is sparse
+    cdef DTYPE_t* X                      # Input data
+    cdef UINT32_t* X_indices             # Sparse matrix indices data
+    cdef UINT32_t* X_indptr              # Sparse matrix indptr data
     cdef SIZE_t X_sample_stride
     cdef SIZE_t X_fx_stride
     cdef DOUBLE_t* y
@@ -95,7 +93,7 @@ cdef class Splitter:
     # subsets `samples[start:pos]` and `samples[pos:end]`.
 
     # Methods
-    cdef void init(self, np.ndarray X,
+    cdef void init(self, object X,
                          np.ndarray y,
                          DOUBLE_t* sample_weight)
 
@@ -176,15 +174,15 @@ cdef class Tree:
 # =============================================================================
 
 cdef class TreeBuilder:
-     cpdef build(self, Tree tree, np.ndarray X, np.ndarray y,
+     cpdef build(self, Tree tree, object X, np.ndarray y,
                  np.ndarray sample_weight=*)
 
 
 cdef class DepthFirstTreeBuilder(TreeBuilder):
-     cpdef build(self, Tree tree, np.ndarray X, np.ndarray y,
+     cpdef build(self, Tree tree, object X, np.ndarray y,
                  np.ndarray sample_weight=*)
 
 
 cdef class BestFirstTreeBuilder(TreeBuilder):
-     cpdef build(self, Tree tree, np.ndarray X, np.ndarray y,
+     cpdef build(self, Tree tree, object X, np.ndarray y,
                  np.ndarray sample_weight=*)

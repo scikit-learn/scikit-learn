@@ -17,7 +17,6 @@ from libc.stdlib cimport calloc, free, malloc, realloc
 from libc.string cimport memcpy, memset
 from libc.math cimport log as ln
 from cpython cimport Py_INCREF, PyObject
-from cpython cimport bool
 
 from sklearn.tree._utils cimport Stack, StackRecord
 from sklearn.tree._utils cimport PriorityHeap, PriorityHeapRecord
@@ -893,7 +892,7 @@ cdef class Splitter:
                         SIZE_t max_features,
                         SIZE_t min_samples_leaf,
                         object random_state,
-                        bool issparse):
+                        bint issparse):
         self.criterion = criterion
 
         self.samples = NULL
@@ -928,7 +927,7 @@ cdef class Splitter:
     def __setstate__(self, d):
         pass
 
-    cdef void init(self, np.ndarray[DTYPE_t, ndim=2] X,
+    cdef void init(self, object X,
                          np.ndarray[DOUBLE_t, ndim=2, mode="c"] y,
                          DOUBLE_t* sample_weight):
         """Initialize the splitter."""
@@ -973,7 +972,7 @@ cdef class Splitter:
         self.feature_values = fv
 
         # Initialize X, y, sample_weight
-        self.X = <DTYPE_t*> X.data
+        self.X = <DTYPE_t*> (<np.ndarray> X).data
         if self.issparse:
             self.X_indices = <UINT32_t*> (<np.ndarray[UINT32_t, ndim=1]> X.indices).data
             self.X_indptr = <UINT32_t*> (<np.ndarray[UINT32_t, ndim=1]> X.indptr).data
@@ -1030,7 +1029,10 @@ cdef class BestSplitter(Splitter):
         cdef SIZE_t* features = self.features
         cdef SIZE_t n_features = self.n_features
 
+        cdef bint issparse = <bint> self.issparse
         cdef DTYPE_t* X = self.X
+        cdef UINT32_t* X_indices = self.X_indices
+        cdef UINT32_t* X_indptr = self.X_indptr
         cdef DTYPE_t* Xf = self.feature_values
         cdef SIZE_t X_sample_stride = self.X_sample_stride
         cdef SIZE_t X_fx_stride = self.X_fx_stride
@@ -1059,6 +1061,8 @@ cdef class BestSplitter(Splitter):
         cdef SIZE_t partition_start
         cdef SIZE_t partition_end
 
+        cdef DTYPE_t value
+
         for f_idx in range(n_features):
             # Draw a feature at random
             f_i = n_features - f_idx - 1
@@ -1074,8 +1078,11 @@ cdef class BestSplitter(Splitter):
             # for the active samples into Xf, s.t. Xf[i] == X[samples[i], j],
             # so the sort uses the cache more effectively.
             for p in range(start, end):
-                Xf[p] = X[X_sample_stride * samples[p]
-                          + X_fx_stride * current_feature]
+                if issparse:
+                    Xf[p] = sparse_get_item(X, X_indices, X_indptr, samples[p], current_feature)
+                else:
+                    Xf[p] = X[X_sample_stride * samples[p]
+                              + X_fx_stride * current_feature]
 
             sort(Xf + start, samples + start, end - start)
 
@@ -1135,8 +1142,13 @@ cdef class BestSplitter(Splitter):
             p = start
 
             while p < partition_end:
-                if X[X_sample_stride * samples[p]
-                     + X_fx_stride * best_feature] <= best_threshold:
+                if issparse:
+                    value = sparse_get_item(X, X_indices, X_indptr, samples[p], best_feature)
+                else:
+                    value = X[X_sample_stride * samples[p]
+                              + X_fx_stride * best_feature]
+
+                if value <= best_threshold:
                     p += 1
 
                 else:
@@ -1263,6 +1275,29 @@ cdef void heapsort(DTYPE_t* Xf, SIZE_t* samples, SIZE_t n) nogil:
         swap(Xf, samples, 0, end)
         sift_down(Xf, samples, 0, end)
         end = end - 1
+
+
+# Auxiliary function to access sparse-format data
+cdef inline DTYPE_t sparse_get_item(DTYPE_t* X, UINT32_t* X_indices,
+                                    UINT32_t* X_indptr, SIZE_t row_i,
+                                    SIZE_t col_i) nogil:
+    cdef bint nz_found = 0
+    cdef DTYPE_t val
+    cdef int i
+    cdef int offset = 0
+
+    for i in range(X_indptr[col_i], X_indptr[col_i+1]):
+        if row_i == X_indices[i]:
+            # non-zero value found
+            nz_found = 1
+            val = X[X_indptr[col_i] + offset]
+        offset += 1
+
+    if nz_found == 0:
+        # non-zero value not found; return zero
+        val = 0
+
+    return val
 
 
 cdef class RandomSplitter(Splitter):
@@ -1439,7 +1474,7 @@ cdef class PresortBestSplitter(Splitter):
                         SIZE_t max_features,
                         SIZE_t min_samples_leaf,
                         object random_state,
-                        bool issparse):
+                        bint issparse):
         # Initialize pointers
         self.X_old = NULL
         self.X_argsorted_ptr = NULL
@@ -1457,7 +1492,7 @@ cdef class PresortBestSplitter(Splitter):
                                       self.random_state,
                                       self.issparse), self.__getstate__())
 
-    cdef void init(self, np.ndarray[DTYPE_t, ndim=2] X,
+    cdef void init(self, object X,
                          np.ndarray[DOUBLE_t, ndim=2, mode="c"] y,
                          DOUBLE_t* sample_weight):
         cdef void* sample_mask = NULL
@@ -1646,7 +1681,7 @@ cdef class PresortBestSplitter(Splitter):
 cdef class TreeBuilder:
     """Interface for different tree building strategies. """
 
-    cpdef build(self, Tree tree, np.ndarray X, np.ndarray y,
+    cpdef build(self, Tree tree, object X, np.ndarray y,
                 np.ndarray sample_weight=None):
         """Build a decision tree from the training set (X, y)."""
         pass
@@ -1657,7 +1692,7 @@ cdef class TreeBuilder:
 cdef class DepthFirstTreeBuilder(TreeBuilder):
     """Build a decision tree in depth-first fashion."""
 
-    cpdef build(self, Tree tree, np.ndarray X, np.ndarray y,
+    cpdef build(self, Tree tree, object X, np.ndarray y,
                 np.ndarray sample_weight=None):
         """Build a decision tree from the training set (X, y)."""
         # check if dtype is correct
@@ -1864,7 +1899,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
     NOTE: this TreeBuilder will ignore ``tree.max_depth`` .
     """
 
-    cpdef build(self, Tree tree, np.ndarray X, np.ndarray y,
+    cpdef build(self, Tree tree, object X, np.ndarray y,
                 np.ndarray sample_weight=None):
         """Build a decision tree from the training set (X, y)."""
         # Check if dtype is correct
