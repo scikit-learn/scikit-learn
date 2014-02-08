@@ -129,12 +129,9 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         rnd = check_random_state(self.random_state)
 
-        self._sparse = sp.isspmatrix(X) and not self._pairwise
-
+        self._sparse = sp.isspmatrix(X)
         if self._sparse and self._pairwise:
-            raise ValueError("Sparse precomputed kernels are not supported. "
-                             "Using sparse data and dense kernels is possible "
-                             "by not using the ``sparse`` parameter")
+            raise TypeError("Sparse precomputed kernels are not supported.")
 
         X = atleast2d_or_csr(X, dtype=np.float64, order='C')
         y = self._validate_targets(y)
