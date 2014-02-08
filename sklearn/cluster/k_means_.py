@@ -73,8 +73,10 @@ def _k_init(X, n_clusters, x_squared_norms, random_state,
     n_samples, n_features = X.shape
 
     centers = np.empty((n_clusters, n_features))
+    metric = metric.lower()
 
-    assert x_squared_norms is not None, 'x_squared_norms None in _k_init'
+    if metric in ['l2', 'cosine']:
+        assert x_squared_norms is not None, 'x_squared_norms None in _k_init'
 
     # Set the number of local seeding trials if none is given
     if n_local_trials is None:
@@ -89,8 +91,6 @@ def _k_init(X, n_clusters, x_squared_norms, random_state,
         centers[0] = X[center_id].toarray()
     else:
         centers[0] = X[center_id]
-
-    metric = metric.lower()
 
     # Initialize list of closest distances and calculate current potential
     if metric in ['l2', 'cosine']:
