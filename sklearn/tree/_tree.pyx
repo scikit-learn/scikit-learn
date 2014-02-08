@@ -62,8 +62,9 @@ cdef enum:
 # Repeat struct definition for numpy
 NODE_DTYPE = np.dtype({
     'names': ['left_child', 'right_child', 'feature', 'threshold', 'impurity',
-              'n_samples'],
-    'formats': [np.intp, np.intp, np.intp, np.float64, np.float64, np.intp],
+              'n_samples', 'weighted_n_samples'],
+    'formats': [np.intp, np.intp, np.intp, np.float64, np.float64, np.intp,
+                np.float64],
     'offsets': [
         <Py_ssize_t> &(<Node*> NULL).left_child,
         <Py_ssize_t> &(<Node*> NULL).right_child,
@@ -71,6 +72,7 @@ NODE_DTYPE = np.dtype({
         <Py_ssize_t> &(<Node*> NULL).threshold,
         <Py_ssize_t> &(<Node*> NULL).impurity,
         <Py_ssize_t> &(<Node*> NULL).n_samples,
+        <Py_ssize_t> &(<Node*> NULL).weighted_n_samples
     ]
 })
 
@@ -1683,6 +1685,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         cdef SIZE_t parent
         cdef bint is_left
         cdef SIZE_t n_node_samples = splitter.n_samples
+        cdef double weighted_n_node_samples
         cdef SIZE_t pos
         cdef SIZE_t feature
         cdef SIZE_t node_id
@@ -1723,6 +1726,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                            (n_node_samples < 2 * tree.min_samples_leaf))
 
                 splitter.node_reset(start, end)  # calls criterion.init
+                weighted_n_node_samples = splitter.criterion.weighted_n_node_samples
 
                 if first:
                     impurity = splitter.criterion.node_impurity()
@@ -1738,7 +1742,8 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                     is_leaf = is_leaf or (pos >= end)
 
                 node_id = tree._add_node(parent, is_left, is_leaf, feature,
-                                         threshold, impurity, n_node_samples)
+                                         threshold, impurity, n_node_samples,
+                                         weighted_n_node_samples)
 
                 if is_leaf:
                     # Don't store value for internal nodes
@@ -1786,11 +1791,14 @@ cdef int _add_split_node(Splitter splitter, Tree tree,
     cdef double split_impurity_right
     cdef double split_improvement
     cdef SIZE_t n_node_samples
+    cdef double weighted_n_node_samples
     cdef bint is_leaf
     cdef SIZE_t n_left, n_right
     cdef double imp_diff
 
     splitter.node_reset(start, end)  # calls criterion.init
+    weighted_n_node_samples = splitter.criterion.weighted_n_node_samples
+
     if is_first:
         impurity = splitter.criterion.node_impurity()
 
@@ -1808,7 +1816,8 @@ cdef int _add_split_node(Splitter splitter, Tree tree,
     node_id = tree._add_node(parent - tree.nodes if parent != NULL
                                                  else _TREE_UNDEFINED,
                              is_left, is_leaf,
-                             feature, threshold, impurity, n_node_samples)
+                             feature, threshold, impurity, n_node_samples,
+                             weighted_n_node_samples)
     if node_id == <SIZE_t>(-1):
         return -1
 
@@ -2014,7 +2023,11 @@ cdef class Tree:
         criterion) at node i.
 
     n_node_samples : array of int, shape [node_count]
-        n_samples[i] holds the number of training samples reaching node i.
+        n_node_samples[i] holds the number of training samples reaching node i.
+
+    weighted_n_node_samples : array of int, shape [node_count]
+        weighted_n_samples[i] holds the weighted number of training samples
+        reaching node i.
     """
     # Wrap for outside world.
     # WARNING: these reference the current `nodes` and `value` buffers, which
@@ -2048,6 +2061,10 @@ cdef class Tree:
     property n_node_samples:
         def __get__(self):
             return self._get_node_ndarray()['n_samples'][:self.node_count]
+
+    property weighted_n_node_samples:
+        def __get__(self):
+            return self._get_node_ndarray()['weighted_n_samples'][:self.node_count]
 
     property value:
         def __get__(self):
@@ -2192,7 +2209,8 @@ cdef class Tree:
                                 SIZE_t feature,
                                 double threshold,
                                 double impurity,
-                                SIZE_t n_node_samples) nogil:
+                                SIZE_t n_samples,
+                                double weighted_n_samples) nogil:
         """Add a node to the tree.
 
         The new node registers itself as the child of its parent.
@@ -2207,7 +2225,8 @@ cdef class Tree:
 
         cdef Node* node = &self.nodes[node_id]
         node.impurity = impurity
-        node.n_samples = n_node_samples
+        node.n_samples = n_samples
+        node.weighted_n_samples = weighted_n_samples
 
         if parent != _TREE_UNDEFINED:
             if is_left:
@@ -2264,8 +2283,6 @@ cdef class Tree:
 
     cpdef compute_feature_importances(self, normalize=True):
         """Computes the importance of each feature (aka variable)."""
-        cdef SIZE_t n_left
-        cdef SIZE_t n_right
         cdef Node* left
         cdef Node* right
         cdef Node* nodes = self.nodes
@@ -2280,15 +2297,13 @@ cdef class Tree:
                 # ... and node.right_child != _TREE_LEAF:
                 left = &nodes[node.left_child]
                 right = &nodes[node.right_child]
-                n_left = left.n_samples
-                n_right = right.n_samples
 
-                importances[node.feature] += (node.n_samples * node.impurity -
-                                              left.n_samples * left.impurity -
-                                              right.n_samples * right.impurity)
+                importances[node.feature] += (node.weighted_n_samples * node.impurity -
+                                              left.weighted_n_samples * left.impurity -
+                                              right.weighted_n_samples * right.impurity)
             node += 1
 
-        importances = importances / nodes[0].n_samples
+        importances = importances / nodes[0].weighted_n_samples
         cdef double normalizer
 
         if normalize:
@@ -2302,7 +2317,7 @@ cdef class Tree:
 
     cdef np.ndarray _get_value_ndarray(self):
         """Wraps value as a 3-d NumPy array
-        
+
         The array keeps a reference to this Tree, which manages the underlying
         memory.
         """
@@ -2318,7 +2333,7 @@ cdef class Tree:
 
     cdef np.ndarray _get_node_ndarray(self):
         """Wraps nodes as a NumPy struct array
-        
+
         The array keeps a reference to this Tree, which manages the underlying
         memory. Individual fields are publicly accessible as properties of the
         Tree.
