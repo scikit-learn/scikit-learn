@@ -16,7 +16,7 @@ from sklearn.metrics import f1_score
 from sklearn.utils import check_random_state
 from sklearn.utils import ConvergenceWarning
 from sklearn.utils.fixes import unique
-from sklearn.utils.testing import assert_greater, assert_in, assert_less
+from sklearn.utils.testing import assert_greater, assert_less
 from sklearn.utils.testing import assert_warns
 
 
@@ -416,16 +416,6 @@ def test_bad_input():
     clf = svm.SVC()
     clf.fit(X, Y)
     assert_raises(ValueError, clf.predict, Xt)
-
-
-def test_sparse_precomputed():
-    clf = svm.SVC(kernel='precomputed')
-    sparse_gram = sparse.csr_matrix([[1, 0], [0, 1]])
-    try:
-        clf.fit(sparse_gram, [0, 1])
-        assert not "reached"
-    except TypeError as e:
-        assert_in("Sparse precomputed", str(e))
 
 
 def test_linearsvc_parameters():
