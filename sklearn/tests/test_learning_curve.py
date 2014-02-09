@@ -15,6 +15,7 @@ from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.datasets import make_classification
 from sklearn.cross_validation import KFold
 from sklearn.linear_model import PassiveAggressiveClassifier
+from sklearn.svm import LinearSVC
 
 
 class MockImprovingEstimator(BaseEstimator):
@@ -242,3 +243,20 @@ def test_validation_curve():
                                                  param_range=param_range, cv=2)
     assert_array_almost_equal(train_scores.mean(axis=1), param_range)
     assert_array_almost_equal(test_scores.mean(axis=1), 1 - param_range)
+
+
+def test_validation_curve_multiple_scorers():
+    X, y = make_classification(n_classes=2, random_state=0)
+    clf = LinearSVC(random_state=0)
+    C = [0.1, 1, 10, 100]
+    train_scores, test_scores = validation_curve(clf, X, y, param_name="C",
+                                                 param_range=C, cv=3,
+                                                 scoring=["f1", "roc_auc"])
+    assert_equal(train_scores.shape, (2, 4, 3))
+    assert_equal(test_scores.shape, (2, 4, 3))
+
+    for i, scoring in enumerate(("f1", "roc_auc")):
+        tr, te = validation_curve(clf, X, y, param_name="C", param_range=C,
+                                  cv=3, scoring=scoring)
+        assert_array_almost_equal(train_scores[i], tr)
+        assert_array_almost_equal(test_scores[i], te)

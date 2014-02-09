@@ -252,7 +252,7 @@ def validation_curve(estimator, X, y, param_name, param_range, cv=None,
     param_name : string
         Name of the parameter that will be varied.
 
-    param_range : array-like, shape (n_values,)
+    param_range : array-like, shape (n_params,)
         The values of the parameter that will be evaluated.
 
     cv : integer, cross-validation generator, optional
@@ -278,10 +278,12 @@ def validation_curve(estimator, X, y, param_name, param_range, cv=None,
 
     Returns
     -------
-    train_scores : array, shape (n_ticks, n_cv_folds)
+    train_scores : array, shape (n_params, n_cv_folds) or
+                                (n_scorers, n_params, n_cv_folds)
         Scores on training sets.
 
-    test_scores : array, shape (n_ticks, n_cv_folds)
+    test_scores : array, shape (n_params, n_cv_folds) or
+                               (n_scorers, n_params, n_cv_folds)
         Scores on test set.
 
     Notes
@@ -291,22 +293,32 @@ def validation_curve(estimator, X, y, param_name, param_range, cv=None,
     """
     X, y = check_arrays(X, y, sparse_format='csr', allow_lists=True)
     cv = _check_cv(cv, X, y, classifier=is_classifier(estimator))
-    scorer = check_scoring(estimator, scoring=scoring)
+
+    if isinstance(scoring, (tuple, list)):
+        scorer = [check_scoring(estimator, scoring=s) for s in scoring]
+        one_scorer = False
+    else:
+        scorer = [check_scoring(estimator, scoring=scoring)]
+        one_scorer = True
 
     parallel = Parallel(n_jobs=n_jobs, pre_dispatch=pre_dispatch,
                         verbose=verbose)
     out = parallel(delayed(_fit_and_score)(
-        estimator, X, y, [scorer], train, test, verbose,
+        estimator, X, y, scorer, train, test, verbose,
         parameters={param_name : v}, fit_params=None, return_train_scores=True)
         for train, test in cv for v in param_range)
 
-    out = np.asarray(out)
     n_params = len(param_range)
-    n_cv_folds = out.shape[0] / n_params
+    n_folds = len(out) / n_params
 
-    out = np.array(out).reshape(n_cv_folds, n_params, -1)
+    shape = (n_folds, n_params, -1)
+    train_scores = np.array([o[0] for o in out]).reshape(shape).T
+    test_scores = np.array([o[1] for o in out]).reshape(shape).T
 
-    train_scores = out[:, :, 0].T
-    test_scores = out[:, :, 1].T
+    #train_times = np.array([o[3] for o in out]).reshape(n_folds, n_params)
+
+    if one_scorer:
+        train_scores = train_scores[0]
+        test_scores = test_scores[0]
 
     return train_scores, test_scores
