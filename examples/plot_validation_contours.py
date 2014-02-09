@@ -9,14 +9,11 @@ memory = Memory(cachedir=".", verbose=0)
 
 @memory.cache
 def grid(X, y, Cs, gammas):
-    scores = np.zeros((len(Cs), len(gammas)))
+    param_grid = {"C": Cs, "gamma": gammas}
 
-    for i, C in enumerate(Cs):
-        tr, te = validation_curve(SVC(kernel="rbf", C=C), X, y,
-                                  param_name="gamma", param_range=gammas, cv=3)
-        scores[i] = te.mean(axis=1)
+    tr, te = validation_curve(SVC(kernel="rbf"), X, y, param_grid, cv=3)
 
-    return scores
+    return te.mean(axis=1).reshape(len(Cs), len(gammas))
 
 digits = load_digits()
 X, y = digits.data, digits.target

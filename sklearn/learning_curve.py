@@ -11,6 +11,7 @@ from .cross_validation import _check_cv
 from .utils import check_arrays
 from .externals.joblib import Parallel, delayed
 from .cross_validation import _safe_split, _fit_and_score
+from .grid_search import ParameterGrid
 from .metrics.scorer import check_scoring
 
 
@@ -225,7 +226,7 @@ def _incremental_fit_estimator(estimator, X, y, classes, train, test,
     return np.array((train_scores, test_scores)).T
 
 
-def validation_curve(estimator, X, y, param_name, param_range, cv=None,
+def validation_curve(estimator, X, y, param_grid, cv=None,
                      scoring=None, n_jobs=1, pre_dispatch="all", verbose=0):
     """Validation curve.
 
@@ -249,11 +250,9 @@ def validation_curve(estimator, X, y, param_name, param_range, cv=None,
         Target relative to X for classification or regression;
         None for unsupervised learning.
 
-    param_name : string
-        Name of the parameter that will be varied.
-
-    param_range : array-like, shape (n_params,)
-        The values of the parameter that will be evaluated.
+    param_grid : dict or list of dictionaries
+        Dictionary with parameters names (string) as keys and lists of
+        parameter settings to try as values.
 
     cv : integer, cross-validation generator, optional
         If an integer is passed, it is the number of folds (defaults to 3).
@@ -301,14 +300,16 @@ def validation_curve(estimator, X, y, param_name, param_range, cv=None,
         scorer = [check_scoring(estimator, scoring=scoring)]
         one_scorer = True
 
+    param_grid = ParameterGrid(param_grid)
+    n_params = len(param_grid)
+
     parallel = Parallel(n_jobs=n_jobs, pre_dispatch=pre_dispatch,
                         verbose=verbose)
     out = parallel(delayed(_fit_and_score)(
         estimator, X, y, scorer, train, test, verbose,
-        parameters={param_name : v}, fit_params=None, return_train_scores=True)
-        for train, test in cv for v in param_range)
+        parameters=params, fit_params=None, return_train_scores=True)
+        for train, test in cv for params in param_grid)
 
-    n_params = len(param_range)
     n_folds = len(out) / n_params
 
     shape = (n_folds, n_params, -1)

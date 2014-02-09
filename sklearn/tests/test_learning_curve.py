@@ -238,25 +238,32 @@ def test_validation_curve():
                                n_redundant=0, n_classes=2,
                                n_clusters_per_class=1, random_state=0)
     param_range = np.linspace(0, 1, 10)
+    param_grid = {"param": param_range}
     train_scores, test_scores = validation_curve(MockEstimatorWithParameter(),
-                                                 X, y, param_name="param",
-                                                 param_range=param_range, cv=2)
+                                                 X, y, param_grid, cv=2)
     assert_array_almost_equal(train_scores.mean(axis=1), param_range)
     assert_array_almost_equal(test_scores.mean(axis=1), 1 - param_range)
+
+
+def test_validation_curve_2d():
+    X, y = make_classification(n_classes=2, random_state=0)
+    param_grid = {"C": [1, 10, 100], "fit_intercept": [True, False]}
+    clf = LinearSVC(random_state=0)
+    train_scores, test_scores = validation_curve(clf,  X, y, param_grid, cv=2)
+    assert_equal(train_scores.shape, (6, 2))
+    assert_equal(test_scores.shape, (6, 2))
 
 
 def test_validation_curve_multiple_scorers():
     X, y = make_classification(n_classes=2, random_state=0)
     clf = LinearSVC(random_state=0)
-    C = [0.1, 1, 10, 100]
-    train_scores, test_scores = validation_curve(clf, X, y, param_name="C",
-                                                 param_range=C, cv=3,
+    param_grid = {"C": [0.1, 1, 10, 100]}
+    train_scores, test_scores = validation_curve(clf, X, y, param_grid, cv=3,
                                                  scoring=["f1", "roc_auc"])
     assert_equal(train_scores.shape, (2, 4, 3))
     assert_equal(test_scores.shape, (2, 4, 3))
 
     for i, scoring in enumerate(("f1", "roc_auc")):
-        tr, te = validation_curve(clf, X, y, param_name="C", param_range=C,
-                                  cv=3, scoring=scoring)
+        tr, te = validation_curve(clf, X, y, param_grid, cv=3, scoring=scoring)
         assert_array_almost_equal(train_scores[i], tr)
         assert_array_almost_equal(test_scores[i], te)
