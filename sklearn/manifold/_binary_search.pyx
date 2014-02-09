@@ -4,13 +4,13 @@ cimport numpy as np
 from libc cimport math
 
 
-cdef float EPSILON = 1e-16
-cdef float PERPLEXITY_TOLERANCE = 1e-5
+cdef double EPSILON_DBL = 1e-7
+cdef double PERPLEXITY_TOLERANCE = 1e-5
 
 
 @cython.boundscheck(False)
 cpdef np.ndarray[np.float_t, ndim=2] _binary_search_perplexity(
-        np.ndarray[np.float_t, ndim=2] dist, float desired_perplexity,
+        np.ndarray[np.float_t, ndim=2] dist, double desired_perplexity,
         int verbose):
     """Binary search for sigmas of conditional Gaussians.
 
@@ -26,7 +26,7 @@ cpdef np.ndarray[np.float_t, ndim=2] _binary_search_perplexity(
     dist : array-like, shape (n_samples, n_samples)
         Distances between training samples.
 
-    desired_perplexity : float
+    desired_perplexity : double
         Desired perplexity (2^entropy) of the conditional Gaussians.
 
     verbose : int
@@ -42,19 +42,19 @@ cpdef np.ndarray[np.float_t, ndim=2] _binary_search_perplexity(
 
     cdef int n_samples = dist.shape[0]
     cdef np.ndarray[np.float_t, ndim=2] P = np.ndarray((n_samples, n_samples),
-                                                       dtype=np.float)
+                                                       dtype=np.double)
     # Precisions of conditional Gaussian distrubutions
-    cdef float beta
-    cdef float beta_min
-    cdef float beta_max
-    cdef float beta_sum = 0.0
+    cdef double beta
+    cdef double beta_min
+    cdef double beta_max
+    cdef double beta_sum = 0.0
     # Now we go to log scale
-    cdef float desired_entropy = math.log(desired_perplexity)
-    cdef float entropy_diff
+    cdef double desired_entropy = math.log(desired_perplexity)
+    cdef double entropy_diff
 
-    cdef float entropy
-    cdef float sum_Pi
-    cdef float sum_disti_Pi
+    cdef double entropy
+    cdef double sum_Pi
+    cdef double sum_disti_Pi
     cdef int i
     cdef int j
 
@@ -73,7 +73,7 @@ cpdef np.ndarray[np.float_t, ndim=2] _binary_search_perplexity(
             for j in range(n_samples):
                 sum_Pi += P[i, j]
             if sum_Pi == 0.0:
-                sum_Pi = EPSILON
+                sum_Pi = EPSILON_DBL
             sum_disti_Pi = 0.0
             for j in range(n_samples):
                 P[i, j] /= sum_Pi
