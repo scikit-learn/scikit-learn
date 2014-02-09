@@ -100,9 +100,10 @@ cpdef np.ndarray[np.float_t, ndim=2] _binary_search_perplexity(
         beta_sum += beta
 
         if verbose and ((i + 1) % 1000 == 0 or i + 1 == n_samples):
-            print("Computed conditional probabilities for sample %d / %d"
-                  % (i + 1, n_samples))
+            print("[t-SNE] Computed conditional probabilities for sample "
+                  "%d / %d" % (i + 1, n_samples))
 
     if verbose:
-        print("Mean sigma: %f" % np.mean(np.sqrt(n_samples / beta_sum)))
+        print("[t-SNE] Mean sigma: %f" % np.mean(np.sqrt(n_samples /
+                                                         beta_sum)))
     return P

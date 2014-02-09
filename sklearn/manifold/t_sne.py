@@ -13,8 +13,8 @@ from . import _binary_search
 EPSILON = 1e-16
 
 
-def _gradient_descent(objective, p0, n_iter, momentum=0.5,
-                      learning_rate=100.0, min_gain=0.01,
+def _gradient_descent(objective, p0, it, n_iter, n_iter_without_progress=30,
+                      momentum=0.5, learning_rate=100.0, min_gain=0.01,
                       min_grad_norm=1e-6, min_error_diff=1e-5, verbose=0):
     """Batch gradient descent with momentum and individual gains.
 
@@ -27,8 +27,16 @@ def _gradient_descent(objective, p0, n_iter, momentum=0.5,
     p0 : array-like, shape (n_params,)
         Initial parameter vector.
 
+    it : int
+        Current number of iterations (this function will be called more than
+        once during the optimization).
+
     n_iter : int
         Maximum number of gradient descent iterations.
+
+    n_iter_without_progress : int, optional (default: 30)
+        Maximum number of iterations without progress before we abort the
+        optimization.
 
     momentum : float, within (0.0, 1.0), optional (default: 0.5)
         The momentum generates a weight for previous gradients that decays
@@ -56,20 +64,31 @@ def _gradient_descent(objective, p0, n_iter, momentum=0.5,
     update = np.zeros_like(p)
     gains = np.ones_like(p)
     error = np.finfo(np.float).max
-    for i in range(n_iter):
+    best_error = np.finfo(np.float).max
+    best_iter = 0
+    for i in range(it, n_iter):
         new_error, grad = objective(p)
         error_diff = np.abs(new_error - error)
         error = new_error
         grad_norm = linalg.norm(grad)
 
+        if error < best_error:
+            best_error = error
+            best_iter = i
+        elif i - best_iter > n_iter_without_progress:
+            if verbose >= 2:
+                print("[t-SNE] Iteration %d: did not make any progress "
+                      "during the last %d episodes. Finished."
+                      % (i + 1, n_iter_without_progress))
+            break
         if min_grad_norm >= grad_norm:
-            if verbose:
-                print("Iteration %d: gradient norm %f. Finished."
+            if verbose >= 2:
+                print("[t-SNE] Iteration %d: gradient norm %f. Finished."
                       % (i + 1, grad_norm))
             break
         if min_error_diff >= error_diff:
-            if verbose:
-                print("Iteration %d: error difference %f. Finished."
+            if verbose >= 2:
+                print("[t-SNE] Iteration %d: error difference %f. Finished."
                       % (i + 1, error_diff))
             break
 
@@ -82,11 +101,11 @@ def _gradient_descent(objective, p0, n_iter, momentum=0.5,
         update = momentum * update - learning_rate * grad
         p += update
 
-        if verbose and (i+1) % 10 == 0:
-            print("Iteration %d: error = %.6f, gradient norm = %.6f"
+        if verbose >= 2 and (i+1) % 10 == 0:
+            print("[t-SNE] Iteration %d: error = %.6f, gradient norm = %.6f"
                   % (i + 1, error, grad_norm))
 
-    return p, error
+    return p, error, i
 
 
 def trustworthiness(X, X_embedded, n_neighbors=5, precomputed=False):
@@ -190,13 +209,23 @@ class TSNE(BaseEstimator, TransformerMixin):
         The perplexity is related to the number of nearest neighbors that is
         used in other manifold learning algorithms. Larger datasets usually
         require a larger perplexity. Consider selcting a value between 5 and
-        50.
+        50. The choice is not extremely critical since t-SNE is quite
+        insensitive to this parameter.
 
-    optimizer : string
-        One of 'gradient_descent' and 'lbfgs'.
+    early_exaggeration : float, optional (default: 4.0)
+        Controls how tight natural clusters in the original space are in
+        the embedded space and how much space will be between them. For
+        larger values, the space between natural clusters will be larger
+        in the embedded space. Again, the choice of this parameter is not
+        very critical.
+
+    learning_rate : float, optional (default: 100)
+        The learning rate can be a critical parameter. It should be between
+        100 and 500.
 
     n_iter : int, optional (default: 1000)
-        Maximum number of iterations for the optimizer.
+        Maximum number of iterations for the optimization. Should be at
+        least 200.
 
     distances : string, optional (default: sqeuclidean)
         A distance metric that is defined in scipy.spatial.distance or
@@ -217,7 +246,7 @@ class TSNE(BaseEstimator, TransformerMixin):
         numpy.random singleton.
     """
     def __init__(self, n_components=2, perplexity=30.0,
-                 optimizer="gradient_descent", n_iter=1000,
+                 early_exaggeration=4.0, learning_rate=100.0, n_iter=1000,
                  distances="sqeuclidean", n_neighbors=3,
                  fit_inverse_transform=False, verbose=0, random_state=None):
         if fit_inverse_transform and distances == "precomputed":
@@ -225,7 +254,8 @@ class TSNE(BaseEstimator, TransformerMixin):
                              "distance matrix.")
         self.n_components = n_components
         self.perplexity = perplexity
-        self.optimizer = optimizer
+        self.early_exaggeration = early_exaggeration
+        self.learning_rate = learning_rate
         self.n_iter = n_iter
         self.distances = distances
         self.n_neighbors = n_neighbors
@@ -247,8 +277,12 @@ class TSNE(BaseEstimator, TransformerMixin):
         self : TSNE
             This object.
         """
-        if not self.optimizer in ["gradient_descent", "lbfgs"]:
-            raise ValueError("Unknown optimizer '%s'" % self.optimizer)
+        if self.early_exaggeration < 1.0:
+            raise ValueError("early_exaggeration must be at least 1, but is "
+                             "%f" % self.early_exaggeration)
+
+        if self.n_iter < 200:
+            raise ValueError("n_iter should be at least 60")
 
         if self.distances == "precomputed":
             if X.shape[0] != X.shape[1]:
@@ -285,10 +319,8 @@ class TSNE(BaseEstimator, TransformerMixin):
         conditional_P = _binary_search._binary_search_perplexity(dist,
             self.perplexity, self.verbose)
         P = conditional_P + conditional_P.T
-        # Normalization and "early exaggeration" (* 4, see below for an
-        # explanation)
         sum_P = np.maximum(np.sum(P), EPSILON)
-        P = np.maximum(4.0 * squareform(P) / sum_P, EPSILON)
+        P = np.maximum(squareform(P) / sum_P, EPSILON)
         # Note that P and Q are stored as condensed matrices, i.e. we omit
         # the diagonal and duplicate entries and store everything in a
         # one-dimensional array.
@@ -318,41 +350,24 @@ class TSNE(BaseEstimator, TransformerMixin):
 
             return kl_divergence, grad
 
-        if self.optimizer == "lbfgs":
-            optimizer = fmin_l_bfgs_b
-            pre_opt_args = dict(disp=self.verbose, maxfun=10)
-            opt_args = dict(disp=self.verbose, maxfun=self.n_iter)
-        elif self.optimizer == "gradient_descent":
-            optimizer = _gradient_descent
-            pre_opt_args = dict(verbose=self.verbose, momentum=0.5,
-                                learning_rate=100.0, n_iter=100)
-            opt_args = dict(verbose=self.verbose, momentum=0.9,
-                            learning_rate=100.0, n_iter=self.n_iter)
-
-        # Early exaggeration (from "Visualizing Data using t-SNE" by
-        # Laurens van der Maaten and Geoffrey Hinton):
-        # "A less obvious way to improve the optimization, which we call
-        # 'early exaggeration', is to multiply all of the pij's by, for
-        # example, 4, in the initial stages of the optimization. This means
-        # that almost all of the qij's, which still add up to 1, are much
-        # too small to model their corresponding pij's. As a result, the
-        # optimization is encouraged to focus on modeling the large pij's
-        # by fairly large qij's. The effect is that the natural clusters in
-        # the data tend to form tight widely separated clusters in the map.
-        # This creates a lot of relatively empty space in the map, which
-        # makes it much easier for the clusters to move around relative to
-        # one another in order to find a good global organization."
+        # Early exaggeration
+        P *= self.early_exaggeration
         p = Y.ravel()
-        r = optimizer(objective, p, **pre_opt_args)
-        p, error = r[:2]
+        p, error, it = _gradient_descent(objective, p, verbose=self.verbose,
+            momentum=0.5, learning_rate=self.learning_rate, it=0, n_iter=50)
+        p, error, it = _gradient_descent(objective, p, verbose=self.verbose,
+            momentum=0.8, learning_rate=self.learning_rate, it=it, n_iter=100)
         if self.verbose:
-            print("Error after initial optimization: %f" % error)
+            print("[t-SNE] Error after %d iterations with early exaggeration: "
+                  "%f" % (it + 1, error))
 
-        P /= 4.0  # Undo exaggeration
-        r = optimizer(objective, p, **opt_args)
-        p, error = r[:2]
+        # Final optimization
+        P /= self.early_exaggeration
+        p, error, it = _gradient_descent(objective, p, verbose=self.verbose,
+            momentum=0.8, learning_rate=self.learning_rate, it=it,
+            n_iter=self.n_iter)
         if self.verbose:
-            print("Error after final optimization: %f" % error)
+            print("[t-SNE] Error after %d iterations: %f" % (it + 1, error))
 
         Y = p.reshape(n_samples, self.n_components)
 
