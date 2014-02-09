@@ -558,43 +558,6 @@ def test_cross_val_score_errors():
     assert_raises(TypeError, cval.cross_val_score, BrokenEstimator(), X)
 
 
-def test_cross_val_report():
-    X, y = make_classification(n_classes=2, random_state=0)
-    clf = Perceptron(random_state=0)
-
-    tr_scores, te_scores, tr_times = cval.cross_val_report(clf, X, y, cv=3,
-                                                           scoring="f1")
-    assert_equal(tr_scores.shape, (3,))
-    assert_equal(te_scores.shape, (3,))
-    assert_equal(tr_times.shape, (3,))
-
-    assert_greater(tr_scores.mean(), te_scores.mean())
-
-
-def test_cross_val_report_multiple_scorers():
-    X, y = make_classification(n_classes=2, random_state=0)
-    clf = Perceptron(random_state=0)
-
-    tr_scores, te_scores, tr_times = cval.cross_val_report(clf, X, y, cv=3,
-                                                           scoring=["f1",
-                                                                    "roc_auc"])
-    assert_equal(tr_scores.shape, (2, 3))
-    assert_equal(te_scores.shape, (2, 3))
-    assert_equal(tr_times.shape, (3,))
-
-    # Check that the results are the same as when cross_val_report is called
-    # individually.
-    f1_tr, f1_te, _ = cval.cross_val_report(clf, X, y, cv=3, scoring="f1")
-    auc_tr, auc_te, _ = cval.cross_val_report(clf, X, y, cv=3,
-                                              scoring="roc_auc")
-
-    assert_array_almost_equal(tr_scores[0], f1_tr)
-    assert_array_almost_equal(te_scores[0], f1_te)
-    assert_array_almost_equal(tr_scores[1], auc_tr)
-    assert_array_almost_equal(te_scores[1], auc_te)
-
-
-
 def test_train_test_split_errors():
     assert_raises(ValueError, cval.train_test_split)
     assert_raises(ValueError, cval.train_test_split, range(3), train_size=1.1)
