@@ -1,6 +1,5 @@
 import numpy as np
 from scipy import linalg
-from scipy.optimize import fmin_l_bfgs_b
 from scipy.spatial.distance import pdist
 from scipy.spatial.distance import squareform
 from ..base import BaseEstimator, TransformerMixin
@@ -10,7 +9,7 @@ from ..neighbors.base import _get_weights
 from . import _binary_search
 
 
-EPSILON = 1e-16
+MACHINE_EPSILON = np.finfo(np.double).eps
 
 
 def _gradient_descent(objective, p0, it, n_iter, n_iter_without_progress=30,
@@ -66,6 +65,7 @@ def _gradient_descent(objective, p0, it, n_iter, n_iter_without_progress=30,
     error = np.finfo(np.float).max
     best_error = np.finfo(np.float).max
     best_iter = 0
+
     for i in range(it, n_iter):
         new_error, grad = objective(p)
         error_diff = np.abs(new_error - error)
@@ -108,6 +108,57 @@ def _gradient_descent(objective, p0, it, n_iter, n_iter_without_progress=30,
     return p, error, i
 
 
+def _kl_divergence(params, P, alpha, n_samples, n_components):
+    """t-SNE objective function: KL divergence of p_ijs and q_ijs.
+
+    Parameters
+    ----------
+    params : array, shape (n_params,)
+        Unraveled embedding.
+
+    P : array, shape (n_samples * (n_samples-1) / 2,)
+        Condensed joint probability matrix.
+
+    alpha : float
+        Degrees of freedom of the Student's-t distribution.
+
+    n_samples : int
+        Number of samples.
+
+    n_components : int
+        Dimension of the embedded space.
+
+    Returns
+    -------
+    kl_divergence : float
+        Kullback-Leibler divergence of p_ij and q_ij.
+
+    grad : array, shape (n_params,)
+        Unraveled gradient of the Kullback-Leibler divergence with respect to
+        the embedding.
+    """
+    X_embedded = params.reshape(n_samples, n_components)
+
+    # Q is a heavy-tailed distribution: Student's t-distribution
+    n = ((1.0 + pdist(X_embedded, "sqeuclidean") / alpha) **
+         ((alpha + 1.0) / -2.0))
+    Q = np.maximum(n / (2.0 * np.sum(n)), MACHINE_EPSILON)
+
+    # Objective: C (Kullback-Leibler divergence of P and Q)
+    kl_divergence = 2.0 * np.sum(P * np.log(P / Q))
+
+    # Gradient: dC/dY
+    grad = np.ndarray((n_samples, n_components))
+    PQd = squareform((P - Q) * n)
+    c = 2.0 * (alpha + 1.0) / alpha
+    for i in range(n_samples):
+        grad[i] = c * np.sum(PQd[i].reshape(-1, 1) *
+                             (X_embedded[i] - X_embedded), axis=0)
+    grad = grad.ravel()
+
+    return kl_divergence, grad
+
+
 def trustworthiness(X, X_embedded, n_neighbors=5, precomputed=False):
     """Expresses to what extent the local structure is retained.
 
@@ -131,7 +182,7 @@ def trustworthiness(X, X_embedded, n_neighbors=5, precomputed=False):
     Parameters
     ----------
     X : array, shape (n_samples, n_features) or (n_samples, n_samples)
-        If the distance is 'precomputed' X must be a square distance
+        If the affinity is 'precomputed' X must be a square affinity
         matrix. Otherwise it contains a sample per row.
 
     X_embedded : array, shape (n_samples, n_components)
@@ -141,7 +192,7 @@ def trustworthiness(X, X_embedded, n_neighbors=5, precomputed=False):
         Number of neighbors k that will be considered.
 
     precomputed : bool, optional (default: False)
-        Set this flag if X is a precomputed square distance matrix.
+        Set this flag if X is a precomputed square affinity matrix.
 
     Returns
     -------
@@ -178,6 +229,9 @@ class TSNE(BaseEstimator, TransformerMixin):
     probabilities of the low-dimensional embedding and the
     high-dimensional data.
 
+    t-SNE has a cost function that is not convex, i.e. with different
+    initializations we can get different results.
+
     It is highly recommended to use another dimensionality reduction
     method (e.g. PCA) to reduce the number of dimensions to a reasonable
     amount (e.g. 50) if the number of features is very high. This will
@@ -189,7 +243,7 @@ class TSNE(BaseEstimator, TransformerMixin):
     neighbors from the training set of the test sample in the original
     space and then we compute a distance-weighted average in the
     embedded space to obtain the transformed test sample. Note that
-    this does not work if the distance matrix is precomputed.
+    this does not work if the affinity matrix is precomputed.
 
     .. topic:: References:
 
@@ -203,7 +257,7 @@ class TSNE(BaseEstimator, TransformerMixin):
     Parameters
     ----------
     n_components : int, optional (default: 2)
-        Number of components to keep.
+        Dimension of the embedded space.
 
     perplexity : float, optional (default: 30)
         The perplexity is related to the number of nearest neighbors that is
@@ -227,8 +281,8 @@ class TSNE(BaseEstimator, TransformerMixin):
         Maximum number of iterations for the optimization. Should be at
         least 200.
 
-    distances : string, optional (default: sqeuclidean)
-        A distance metric that is defined in scipy.spatial.distance or
+    affinity : string, optional (default: sqeuclidean)
+        An affinity metric that is defined in scipy.spatial.distance or
         'precomputed'.
 
     n_neighbors : int, optional, (default: 3)
@@ -236,7 +290,7 @@ class TSNE(BaseEstimator, TransformerMixin):
         embedded space.
 
     fit_inverse_transform : bool, optional, (default: False)
-        Learn the inverse transform for non-precomputed distances.
+        Learn the inverse transform for non-precomputed affinities.
 
     verbose : int, optional (default: 0)
         Verbosity level.
@@ -247,17 +301,17 @@ class TSNE(BaseEstimator, TransformerMixin):
     """
     def __init__(self, n_components=2, perplexity=30.0,
                  early_exaggeration=4.0, learning_rate=100.0, n_iter=1000,
-                 distances="sqeuclidean", n_neighbors=3,
+                 affinity="sqeuclidean", n_neighbors=3,
                  fit_inverse_transform=False, verbose=0, random_state=None):
-        if fit_inverse_transform and distances == "precomputed":
+        if fit_inverse_transform and affinity == "precomputed":
             raise ValueError("Cannot fit_inverse_transform with a precomputed "
-                             "distance matrix.")
+                             "affinity matrix.")
         self.n_components = n_components
         self.perplexity = perplexity
         self.early_exaggeration = early_exaggeration
         self.learning_rate = learning_rate
         self.n_iter = n_iter
-        self.distances = distances
+        self.affinity = affinity
         self.n_neighbors = n_neighbors
         self.fit_inverse_transform = fit_inverse_transform
         self.verbose = verbose
@@ -269,7 +323,7 @@ class TSNE(BaseEstimator, TransformerMixin):
         Parameters
         ----------
         X : array, shape (n_samples, n_features) or (n_samples, n_samples)
-            If the distance is 'precomputed' X must be a square distance
+            If the affinity is 'precomputed' X must be a square affinity
             matrix. Otherwise it contains a sample per row.
 
         Returns
@@ -282,96 +336,91 @@ class TSNE(BaseEstimator, TransformerMixin):
                              "%f" % self.early_exaggeration)
 
         if self.n_iter < 200:
-            raise ValueError("n_iter should be at least 60")
+            raise ValueError("n_iter should be at least 200")
 
-        if self.distances == "precomputed":
+        if self.affinity == "precomputed":
             if X.shape[0] != X.shape[1]:
-                raise ValueError("X should be a square distance matrix")
-            dist = X
+                raise ValueError("X should be a square affinity matrix")
+            affinities = X
         else:
             if self.verbose:
-                print("Computing pairwise distances...")
-            dist = squareform(pdist(X, self.distances))
+                print("Computing pairwise affinities...")
+            affinities = squareform(pdist(X, self.affinity))
 
-        self.embedding_ = self._tsne(dist)
-
-        if self.distances != "precomputed":
-            self.knn_ = NearestNeighbors(n_neighbors=self.n_neighbors)
-            self.knn_.fit(X)
-
-        if self.fit_inverse_transform:
-            self.knn_embedded_ = NearestNeighbors(n_neighbors=self.n_neighbors)
-            self.knn_embedded_.fit(self.embedding_)
-
-        return self
-
-    def _tsne(self, dist):
-        """Runs t-SNE."""
-        n_samples = dist.shape[0]
         # Degrees of freedom of the Student's t-distribution. The suggestion
         # alpha = n_components - 1 comes from "Learning a Parametric Embedding
         # by Preserving Local Structure" Laurens van der Maaten, 2009.
         alpha = self.n_components - 1.0
-        random_state = check_random_state(self.random_state)
+        n_samples = X.shape[0]
+        self.X_ = X
 
+        P = self._joint_probabilities(affinities)
+        self.X_embedded_ = self._tsne(P, alpha, n_samples)
+
+        if self.affinity != "precomputed":
+            self.knn_ = NearestNeighbors(n_neighbors=self.n_neighbors)
+            self.knn_.fit(self.X_)
+
+        if self.fit_inverse_transform:
+            self.knn_embedded_ = NearestNeighbors(n_neighbors=self.n_neighbors)
+            self.knn_embedded_.fit(self.X_embedded_)
+
+        return self
+
+    def _joint_probabilities(self, affinities):
+        """Compute joint probabilities p_ij from affinities.
+
+        Parameters
+        ----------
+        affinities : array, shape (n_samples * (n_samples-1) / 2,)
+            Affinities of samples are stored as condensed matrices, i.e.
+            we omit the diagonal and duplicate entries and store everything
+            in a one-dimensional array.
+        """
         # Compute conditional probabilities such that they approximately match
         # the desired perplexity
-        conditional_P = _binary_search._binary_search_perplexity(dist,
+        conditional_P = _binary_search._binary_search_perplexity(affinities,
             self.perplexity, self.verbose)
         P = conditional_P + conditional_P.T
-        sum_P = np.maximum(np.sum(P), EPSILON)
-        P = np.maximum(squareform(P) / sum_P, EPSILON)
-        # Note that P and Q are stored as condensed matrices, i.e. we omit
-        # the diagonal and duplicate entries and store everything in a
-        # one-dimensional array.
+        sum_P = np.maximum(np.sum(P), MACHINE_EPSILON)
+        P = np.maximum(squareform(P) / sum_P, MACHINE_EPSILON)
+        return P
 
-        # Initialize embedding
-        Y = random_state.randn(n_samples, self.n_components)
+    def _tsne(self, P, alpha, n_samples):
+        """Runs t-SNE."""
+        random_state = check_random_state(self.random_state)
 
-        # Objective function: KL divergence of pij and qij
-        def objective(p):
-            Y = p.reshape(n_samples, self.n_components)
+        def objective(params):
+            return _kl_divergence(params, P, alpha, n_samples,
+                                  self.n_components)
 
-            # Q is a heavy-tailed distribution: Student's t-distribution
-            n = ((1.0 + pdist(Y, "sqeuclidean") / alpha)
-                 ** ((alpha + 1.0) / -2.0))
-            Q = np.maximum(n / (2.0 * np.sum(n)), EPSILON)
-
-            # Gradient: dC/dY
-            grad = np.ndarray((n_samples, self.n_components))
-            PQd = squareform((P - Q) * n)
-            c = 2.0 * (alpha + 1.0) / alpha
-            for i in range(n_samples):
-                grad[i] = c * np.sum(PQd[i].reshape(-1, 1) * (Y[i] - Y), axis=0)
-            grad = grad.ravel()
-
-            # Objective: C (Kullback-Leibler divergence of P and Q)
-            kl_divergence = 2.0 * np.sum(P * np.log(P / Q))
-
-            return kl_divergence, grad
+        # Initialize embedding randomly
+        X_embedded = random_state.randn(n_samples, self.n_components)
+        params = X_embedded.ravel()
 
         # Early exaggeration
         P *= self.early_exaggeration
-        p = Y.ravel()
-        p, error, it = _gradient_descent(objective, p, verbose=self.verbose,
-            momentum=0.5, learning_rate=self.learning_rate, it=0, n_iter=50)
-        p, error, it = _gradient_descent(objective, p, verbose=self.verbose,
-            momentum=0.8, learning_rate=self.learning_rate, it=it, n_iter=100)
+        params, error, it = _gradient_descent(objective, params,
+            it=0, n_iter=50, momentum=0.5, learning_rate=self.learning_rate,
+            verbose=self.verbose)
+        params, error, it = _gradient_descent(objective, params,
+            it=it + 1, n_iter=100, momentum=0.8,
+            learning_rate=self.learning_rate, verbose=self.verbose)
         if self.verbose:
             print("[t-SNE] Error after %d iterations with early exaggeration: "
                   "%f" % (it + 1, error))
 
         # Final optimization
         P /= self.early_exaggeration
-        p, error, it = _gradient_descent(objective, p, verbose=self.verbose,
-            momentum=0.8, learning_rate=self.learning_rate, it=it,
-            n_iter=self.n_iter)
+        params, error, it = _gradient_descent(objective, params, it=it + 1,
+            n_iter=self.n_iter, momentum=0.8, learning_rate=self.learning_rate,
+            verbose=self.verbose)
         if self.verbose:
             print("[t-SNE] Error after %d iterations: %f" % (it + 1, error))
 
-        Y = p.reshape(n_samples, self.n_components)
+        X_embedded = params.reshape(n_samples, self.n_components)
 
-        return Y
+        return X_embedded
 
     def score(self, X, y=None, n_neighbors=5):
         """Compute trustworthiness.
@@ -379,7 +428,7 @@ class TSNE(BaseEstimator, TransformerMixin):
         Parameters
         ----------
         X : array, shape (n_samples, n_features) or (n_samples, n_samples)
-            If the distance is 'precomputed' X must be a square distance
+            If the affinity is 'precomputed' X must be a square affinity
             matrix. Otherwise it contains a sample per row.
 
         n_neighbors : int, optional (default: 5)
@@ -391,7 +440,7 @@ class TSNE(BaseEstimator, TransformerMixin):
             Trustworthiness of the low-dimensional embedding.
         """
         return trustworthiness(X, self.transform(X), n_neighbors=n_neighbors,
-                               precomputed=self.distances == "precomputed")
+                               precomputed=self.affinity == "precomputed")
 
     def inverse_transform(self, X):
         """Transform X back to original space.
@@ -410,17 +459,11 @@ class TSNE(BaseEstimator, TransformerMixin):
             raise ValueError("Inverse transform was not fitted!")
 
         neigh_dist, neigh_ind = self.knn_embedded_.kneighbors(X)
-        neigh_dist = np.array([np.maximum(d, EPSILON) for d in neigh_dist])
-
+        neigh_dist = np.maximum(neigh_dist, MACHINE_EPSILON)
         weights = _get_weights(neigh_dist, "distance")
-
-        if weights is None:
-            X_original = np.array([np.mean(self.X[ind], axis=0)
-                                   for ind in neigh_ind])
-        else:
-            X_original = np.array([(np.average(self.X[ind], axis=0,
-                                               weights=weights[i]))
-                                   for (i, ind) in enumerate(neigh_ind)])
+        X_original = np.array([(np.average(self.X_[ind], axis=0,
+                                           weights=weights[i]))
+                               for (i, ind) in enumerate(neigh_ind)])
 
         return X_original
 
@@ -430,7 +473,7 @@ class TSNE(BaseEstimator, TransformerMixin):
         Parameters
         ----------
         X : array, shape (n_samples, n_features) or (n_samples, n_samples)
-            If the distance is 'precomputed' X must be a square distance
+            If the affinity is 'precomputed' X must be a square affinity
             matrix. Otherwise it contains a sample per row.
 
         Returns
@@ -438,23 +481,18 @@ class TSNE(BaseEstimator, TransformerMixin):
         X_new : array, shape (n_samples, n_components)
             Embedding of the training data in low-dimensional space.
         """
-        if self.distances == "precomputed":
-            if X is self.X:
-                return self.embedding_
+        if self.affinity == "precomputed":
+            if X is self.X_:
+                return self.X_embedded_
             else:
-                raise ValueError("Can only transform trainin data when "
-                                 "distances are precomputed.")
+                raise ValueError("Can only transform training data when "
+                                 "affinities are precomputed.")
+
         neigh_dist, neigh_ind = self.knn_.kneighbors(X)
-        neigh_dist = np.array([np.maximum(d, EPSILON) for d in neigh_dist])
-
+        neigh_dist = np.maximum(neigh_dist, MACHINE_EPSILON)
         weights = _get_weights(neigh_dist, "distance")
-
-        if weights is None:
-            X_embedded = np.array([np.mean(self.embedding_[ind], axis=0)
-                                   for ind in neigh_ind])
-        else:
-            X_embedded = np.array([(np.average(self.embedding_[ind], axis=0,
-                                               weights=weights[i]))
-                                   for (i, ind) in enumerate(neigh_ind)])
+        X_embedded = np.array([(np.average(self.X_embedded_[ind], axis=0,
+                                           weights=weights[i]))
+                               for (i, ind) in enumerate(neigh_ind)])
 
         return X_embedded
