@@ -285,6 +285,9 @@ def validation_curve(estimator, X, y, param_grid, cv=None,
                                (n_scorers, n_params, n_cv_folds)
         Scores on test set.
 
+    train_times : array, shape (n_params, n_cv_folds)
+        Training times.
+
     Notes
     -----
     See
@@ -316,10 +319,10 @@ def validation_curve(estimator, X, y, param_grid, cv=None,
     train_scores = np.array([o[0] for o in out]).reshape(shape).T
     test_scores = np.array([o[1] for o in out]).reshape(shape).T
 
-    #train_times = np.array([o[3] for o in out]).reshape(n_folds, n_params)
+    train_times = np.array([o[3] for o in out]).reshape(n_folds, n_params).T
 
     if one_scorer:
         train_scores = train_scores[0]
         test_scores = test_scores[0]
 
-    return train_scores, test_scores
+    return train_scores, test_scores, train_times

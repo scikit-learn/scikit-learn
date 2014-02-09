@@ -23,9 +23,9 @@ digits = load_digits()
 X, y = digits.data, digits.target
 
 param_range = np.logspace(-6, -1, 5)
-train_scores, test_scores = validation_curve(
-    SVC(), X, y, param_name="gamma", param_range=param_range,
-    cv=10, scoring="accuracy", n_jobs=1)
+param_grid = {"gamma": param_range}
+train_scores, test_scores, train_times = validation_curve(
+    SVC(), X, y, param_grid, cv=10, scoring="accuracy", n_jobs=1)
 train_scores_mean = np.mean(train_scores, axis=1)
 train_scores_std = np.std(train_scores, axis=1)
 test_scores_mean = np.mean(test_scores, axis=1)

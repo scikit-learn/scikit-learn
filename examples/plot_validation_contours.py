@@ -11,9 +11,14 @@ memory = Memory(cachedir=".", verbose=0)
 def grid(X, y, Cs, gammas):
     param_grid = {"C": Cs, "gamma": gammas}
 
-    tr, te = validation_curve(SVC(kernel="rbf"), X, y, param_grid, cv=3)
+    tr, te, times = validation_curve(SVC(kernel="rbf"), X, y, param_grid, cv=3)
 
-    return te.mean(axis=1).reshape(len(Cs), len(gammas))
+    shape = (len(Cs), len(gammas))
+    tr = tr.mean(axis=1).reshape(shape)
+    te = te.mean(axis=1).reshape(shape)
+    times = times.mean(axis=1).reshape(shape)
+
+    return tr, te, times
 
 digits = load_digits()
 X, y = digits.data, digits.target
@@ -21,18 +26,25 @@ X, y = digits.data, digits.target
 gammas = np.logspace(-6, -1, 5)
 Cs = np.logspace(-3, 3, 5)
 
-scores = grid(X, y, Cs, gammas)
+tr, te, times = grid(X, y, Cs, gammas)
 
 
-plt.xlabel("C")
-plt.xscale("log")
+for title, values in (("Training accuracy", tr),
+                      ("Test accuracy", te),
+                      ("Training time", times)):
 
-plt.ylabel("gamma")
-plt.yscale("log")
+    plt.figure()
 
-X1, X2 = np.meshgrid(Cs, gammas)
-cs = plt.contour(X1, X2, scores)
+    plt.title(title)
+    plt.xlabel("C")
+    plt.xscale("log")
 
-plt.colorbar(cs)
+    plt.ylabel("gamma")
+    plt.yscale("log")
+
+    X1, X2 = np.meshgrid(Cs, gammas)
+    cs = plt.contour(X1, X2, values)
+
+    plt.colorbar(cs)
 
 plt.show()
