@@ -42,6 +42,9 @@ CLF_TREES = {
                                               splitter="presort-best"),
     "ExtraTreeClassifier": ExtraTreeClassifier,
 }
+SPARSE_CLF_TREES = {
+    "DecisionTreeClassifier": DecisionTreeClassifier,
+}
 
 REG_TREES = {
     "DecisionTreeRegressor": DecisionTreeRegressor,
@@ -94,6 +97,10 @@ def test_classification_toy():
         assert_array_equal(clf.predict(T), true_result,
                            "Failed with {0}".format(name))
 
+
+def test_classification_toy_sparse():
+    """Check classification on a sparse toy dataset."""
+    for name, Tree in SPARSE_CLF_TREES.items():
         clf = Tree(random_state=0)
         clf.fit(X_sparse, y)
         assert_array_equal(clf.predict(T_sparse), true_result,
@@ -103,6 +110,7 @@ def test_classification_toy():
         clf.fit(X_sparse, y)
         assert_array_equal(clf.predict(T_sparse), true_result,
                            "Failed with {0}".format(name))
+
 
 def test_weighted_classification_toy():
     """Check classification on a weighted toy dataset."""
