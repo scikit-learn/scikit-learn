@@ -1,6 +1,7 @@
 
 # Author: Mathieu Blondel <mathieu@mblondel.org>
 #         Arnaud Joly <a.joly@ulg.ac.be>
+#         Maheshakya Wijewardena<maheshakya.10@cse.mrt.ac.lk>
 # License: BSD 3 clause
 
 import numpy as np

@@ -59,7 +59,7 @@ def _check_behavior_2d(clf):
     assert_equal(y.shape, y_pred.shape)
 
 def _check_behavior_2d_for_constant(clf):
-    # 2d case
+    # 2d case only
     X = np.array([[0], [0], [0], [0]])  # ignored
     y = np.array([[1, 0, 5, 4, 3],
                   [2, 0, 1, 2, 5],
