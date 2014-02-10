@@ -732,6 +732,9 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
                 raise ValueError("Shape mismatch: if n_values is an array,"
                                  " it has to be of shape (n_features,).")
         self.n_values_ = n_values
+	if not all(i < n_values[0] for i in X[0]):
+		raise ValueError("Invalid input: if n_values is an integer,"
+                                 " X must contain inputs with value less than n_values.")
         n_values = np.hstack([[0], n_values])
         indices = np.cumsum(n_values)
         self.feature_indices_ = indices
