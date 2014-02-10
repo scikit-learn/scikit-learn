@@ -1061,7 +1061,7 @@ cdef class BestSplitter(Splitter):
         cdef SIZE_t partition_start
         cdef SIZE_t partition_end
 
-        cdef DTYPE_t value
+        cdef DTYPE_t aux
 
         for f_idx in range(n_features):
             # Draw a feature at random
@@ -1079,7 +1079,8 @@ cdef class BestSplitter(Splitter):
             # so the sort uses the cache more effectively.
             for p in range(start, end):
                 if issparse:
-                    Xf[p] = sparse_get_item(X, X_indices, X_indptr, samples[p], current_feature)
+                    Xf[p] = sparse_get_item(X, X_indices, X_indptr, samples[p],
+                                            current_feature)
                 else:
                     Xf[p] = X[X_sample_stride * samples[p]
                               + X_fx_stride * current_feature]
@@ -1143,12 +1144,13 @@ cdef class BestSplitter(Splitter):
 
             while p < partition_end:
                 if issparse:
-                    value = sparse_get_item(X, X_indices, X_indptr, samples[p], best_feature)
+                    aux = sparse_get_item(X, X_indices, X_indptr, samples[p],
+                                          best_feature)
                 else:
-                    value = X[X_sample_stride * samples[p]
+                    aux = X[X_sample_stride * samples[p]
                               + X_fx_stride * best_feature]
 
-                if value <= best_threshold:
+                if aux <= best_threshold:
                     p += 1
 
                 else:
@@ -1322,7 +1324,10 @@ cdef class RandomSplitter(Splitter):
         cdef SIZE_t* features = self.features
         cdef SIZE_t n_features = self.n_features
 
+        cdef bint issparse = <bint> self.issparse
         cdef DTYPE_t* X = self.X
+        cdef UINT32_t* X_indices = self.X_indices
+        cdef UINT32_t* X_indptr = self.X_indptr
         cdef SIZE_t X_sample_stride = self.X_sample_stride
         cdef SIZE_t X_fx_stride = self.X_fx_stride
         cdef SIZE_t max_features = self.max_features
@@ -1353,6 +1358,8 @@ cdef class RandomSplitter(Splitter):
         cdef SIZE_t partition_start
         cdef SIZE_t partition_end
 
+        cdef DTYPE_t aux
+
         for f_idx in range(n_features):
             # Draw a feature at random
             f_i = n_features - f_idx - 1
@@ -1365,13 +1372,23 @@ cdef class RandomSplitter(Splitter):
             current_feature = features[f_i]
 
             # Find min, max
-            min_feature_value = max_feature_value = \
-                X[X_sample_stride * samples[start]
-                  + X_fx_stride * current_feature]
+            if issparse:
+                min_feature_value = max_feature_value = \
+                    sparse_get_item(X, X_indices, X_indptr, samples[start],
+                                    current_feature)
+            else:
+                min_feature_value = max_feature_value = \
+                    X[X_sample_stride * samples[start]
+                      + X_fx_stride * current_feature]
 
             for p in range(start + 1, end):
-                current_feature_value = X[X_sample_stride * samples[p]
-                                          + X_fx_stride * current_feature]
+                if issparse:
+                    current_feature_value = \
+                        sparse_get_item(X, X_indices, X_indptr, samples[p],
+                                        current_feature)
+                else:
+                    current_feature_value = X[X_sample_stride * samples[p]
+                                              + X_fx_stride * current_feature]
 
                 if current_feature_value < min_feature_value:
                     min_feature_value = current_feature_value
@@ -1395,8 +1412,14 @@ cdef class RandomSplitter(Splitter):
             p = start
 
             while p < partition_end:
-                if X[X_sample_stride * samples[p]
-                     + X_fx_stride * current_feature] <= current_threshold:
+                if issparse:
+                    aux = sparse_get_item(X, X_indices, X_indptr, samples[p],
+                                          current_feature)
+                else:
+                    aux = X[X_sample_stride * samples[p]
+                            + X_fx_stride * current_feature]
+
+                if aux <= current_threshold:
                     p += 1
 
                 else:
@@ -1440,8 +1463,14 @@ cdef class RandomSplitter(Splitter):
             p = start
 
             while p < partition_end:
-                if X[X_sample_stride * samples[p]
-                     + X_fx_stride * best_feature] <= best_threshold:
+                if issparse:
+                    aux = sparse_get_item(X, X_indices, X_indptr, samples[p],
+                                          best_feature)
+                else:
+                    aux = X[X_sample_stride * samples[p]
+                            + X_fx_stride * best_feature]
+
+                if aux <= best_threshold:
                     p += 1
 
                 else:
