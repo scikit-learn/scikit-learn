@@ -8,9 +8,6 @@ The `Johnson-Lindenstrauss lemma`_ states that any high dimensional
 dataset can be randomly projected into a lower dimensional Euclidean
 space while controlling the distortion in the pairwise distances.
 
-
-
-
 .. _`Johnson-Lindenstrauss lemma`: http://en.wikipedia.org/wiki/Johnson%E2%80%93Lindenstrauss_lemma
 
 
