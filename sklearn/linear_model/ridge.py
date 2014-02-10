@@ -483,7 +483,7 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
 
     solver : {'auto', 'svd', 'dense_cholesky', 'lsqr', 'sparse_cg'}
         Solver to use in the computational
-        routines. 'svd' will use a Sinvular value decomposition to obtain
+        routines. 'svd' will use a Singular value decomposition to obtain
         the solution, 'dense_cholesky' will use the standard
         scipy.linalg.solve function, 'sparse_cg' will use the
         conjugate gradient solver as found in
