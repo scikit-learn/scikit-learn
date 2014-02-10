@@ -1,7 +1,7 @@
+from libc cimport math
 cimport cython
 import numpy as np
 cimport numpy as np
-from libc cimport math
 
 
 cdef double EPSILON_DBL = 1e-7
@@ -104,6 +104,6 @@ cpdef np.ndarray[np.float_t, ndim=2] _binary_search_perplexity(
                   "%d / %d" % (i + 1, n_samples))
 
     if verbose:
-        print("[t-SNE] Mean sigma: %f" % np.mean(np.sqrt(n_samples /
-                                                         beta_sum)))
+        print("[t-SNE] Mean sigma: %f"
+              % np.mean(math.sqrt(n_samples / beta_sum)))
     return P
