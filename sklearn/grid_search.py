@@ -27,6 +27,7 @@ from .externals.joblib import Parallel, delayed
 from .externals import six
 from .utils import check_random_state
 from .utils.validation import _num_samples, indexable
+from .utils.metaestimators import make_delegation_decorator
 from .metrics.scorer import check_scoring
 
 
@@ -282,6 +283,9 @@ class ChangedBehaviorWarning(UserWarning):
     pass
 
 
+iff_best_estimator_has_method = make_delegation_decorator('best_estimator_')
+
+
 class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                                       MetaEstimatorMixin)):
     """Base class for hyper parameter search with cross-validation."""
@@ -342,21 +346,25 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                           ChangedBehaviorWarning)
         return self.scorer_(self.best_estimator_, X, y)
 
-    @property
-    def predict(self):
-        return self.best_estimator_.predict
+    @iff_best_estimator_has_method
+    def predict(self, X):
+        return self.best_estimator_.predict(X)
 
-    @property
-    def predict_proba(self):
-        return self.best_estimator_.predict_proba
+    @iff_best_estimator_has_method
+    def predict_proba(self, X):
+        return self.best_estimator_.predict_proba(X)
 
-    @property
-    def decision_function(self):
-        return self.best_estimator_.decision_function
+    @iff_best_estimator_has_method
+    def decision_function(self, X):
+        return self.best_estimator_.decision_function(X)
 
-    @property
-    def transform(self):
-        return self.best_estimator_.transform
+    @iff_best_estimator_has_method
+    def transform(self, X):
+        return self.best_estimator_.transform(X)
+
+    @iff_best_estimator_has_method
+    def inverse_transform(self, Xt):
+        return self.best_estimator_.transform(Xt)
 
     def _fit(self, X, y, parameter_iterable):
         """Actual fitting,  performing the search over parameters."""
