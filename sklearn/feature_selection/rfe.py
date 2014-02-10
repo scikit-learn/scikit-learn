@@ -8,14 +8,18 @@
 
 import numpy as np
 from ..utils import check_X_y, safe_sqr
+from ..utils.metaestimators import make_delegation_decorator
 from ..base import BaseEstimator
 from ..base import MetaEstimatorMixin
 from ..base import clone
 from ..base import is_classifier
 from ..cross_validation import _check_cv as check_cv
 from ..cross_validation import _safe_split, _score
-from .base import SelectorMixin
 from ..metrics.scorer import check_scoring
+from .base import SelectorMixin
+
+
+iff_estimator_has_method = make_delegation_decorator('estimator_')
 
 
 class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
@@ -170,6 +174,7 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
 
         return self
 
+    @iff_estimator_has_method
     def predict(self, X):
         """Reduce X to the selected features and then predict using the
            underlying estimator.
@@ -186,6 +191,7 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         """
         return self.estimator_.predict(self.transform(X))
 
+    @iff_estimator_has_method
     def score(self, X, y):
         """Reduce X to the selected features and then return the score of the
            underlying estimator.
@@ -203,9 +209,11 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
     def _get_support_mask(self):
         return self.support_
 
+    @iff_estimator_has_method
     def decision_function(self, X):
         return self.estimator_.decision_function(self.transform(X))
 
+    @iff_estimator_has_method
     def predict_proba(self, X):
         return self.estimator_.predict_proba(self.transform(X))
 
