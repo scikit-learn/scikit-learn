@@ -1,6 +1,7 @@
 import numpy as np
-from nose.tools import assert_equals
+from nose.tools import assert_equals, assert_almost_equal
 from sklearn.manifold.t_sne import _gradient_descent
+from sklearn.manifold._binary_search import _binary_search_perplexity
 
 
 def test_gradient_descent_stops():
@@ -46,3 +47,15 @@ def test_gradient_descent_stops():
         min_error_diff=0.0)
     assert_equals(error, 0.0)
     assert_equals(it, 10)
+
+
+def test_binary_search():
+    dist = np.random.randn(100, 2)
+    dist = dist.dot(dist.T)
+    np.fill_diagonal(dist, 0.0)
+    desired_perplexity = 50.0
+    P = _binary_search_perplexity(dist, desired_perplexity, verbose=1)
+    P = np.maximum(P, np.finfo(np.double).eps)
+    mean_perplexity = np.mean([np.exp(-np.sum(P[i] * np.log(P[i])))
+                               for i in range(P.shape[0])])
+    assert_almost_equal(mean_perplexity, desired_perplexity, places=4)
