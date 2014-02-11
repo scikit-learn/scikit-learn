@@ -21,8 +21,8 @@ the second estimator approximates it almost perfectly and the last estimator
 approximates the training data perfectly but does not fit the true function
 very well, i.e. it is very sensitive to varying training data (high variance).
 
-.. figure:: ../auto_examples/images/plot_polynomial_regression_1.png
-   :target: ../auto_examples/plot_polynomial_regression.html
+.. figure:: ../auto_examples/images/plot_underfitting_overfitting_1.png
+   :target: ../auto_examples/plot_underfitting_overfitting.html
    :align: center
    :scale: 50%
 
