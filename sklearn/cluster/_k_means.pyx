@@ -35,7 +35,7 @@ cpdef DOUBLE _assign_labels_array_L1(np.ndarray[DOUBLE, ndim=2] X,
                                      np.ndarray[DOUBLE, ndim=1] distances):
     """Compute label assignment and inertia for a dense array using the L1 norm
 
-    Return the inertia (sum of squared distances to the centers).
+    Return the inertia (sum of absolute distances to the centers).
     """
     cdef:
         unsigned int n_clusters = centers.shape[0]
@@ -72,9 +72,9 @@ cpdef DOUBLE _assign_labels_array_L1(np.ndarray[DOUBLE, ndim=2] X,
 cpdef DOUBLE _assign_labels_csr_L1(X, np.ndarray[DOUBLE, ndim=2] centers,
                                    np.ndarray[INT, ndim=1] labels,
                                    np.ndarray[DOUBLE, ndim=1] distances):
-    """Compute label assignment and inertia for a dense array using the L1 norm
+    """Compute label assignment and inertia for a csr matrix using the L1 norm
 
-    Return the inertia (sum of squared distances to the centers).
+    Return the inertia (sum of absolute distances to the centers).
     """
     cdef:
         np.ndarray[DOUBLE, ndim=1] X_data = X.data
