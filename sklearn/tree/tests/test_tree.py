@@ -19,6 +19,7 @@ from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import raises
+from sklearn.utils.validation import check_random_state
 
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.tree import DecisionTreeRegressor
@@ -692,3 +693,31 @@ def test_arrays_persist():
         # if pointing to freed memory, contents may be arbitrary
         assert_true(-2 <= value.flat[0] < 2,
                     'Array points to arbitrary memory')
+
+
+def test_only_constant_features():
+    random_state = check_random_state(0)
+    X = np.zeros((10, 20))
+    y = random_state.randint(0, 2, (10, ))
+    for name, TreeEstimator in ALL_TREES.items():
+        est = TreeEstimator(random_state=0)
+        est.fit(X, y)
+        assert_equal(est.tree_.max_depth, 0)
+
+
+def test_with_only_one_non_constant_features():
+    X = np.hstack([np.array([[1.], [1.], [0.], [0.]]),
+                   np.zeros((4, 1000))])
+
+    y = np.array([0., 1., 0., 1.0])
+    for name, TreeEstimator in CLF_TREES.items():
+        est = TreeEstimator(random_state=0, max_features=1)
+        est.fit(X, y)
+        assert_equal(est.tree_.max_depth, 1)
+        assert_array_equal(est.predict_proba(X), 0.5 * np.ones((4, 2)))
+
+    for name, TreeEstimator in REG_TREES.items():
+        est = TreeEstimator(random_state=0, max_features=1)
+        est.fit(X, y)
+        assert_equal(est.tree_.max_depth, 1)
+        assert_array_equal(est.predict(X), 0.5 * np.ones((4, )))
