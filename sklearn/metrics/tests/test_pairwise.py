@@ -1,7 +1,7 @@
 import numpy as np
 from numpy import linalg
 
-from scipy.sparse import dok_matrix, csr_matrix, issparse
+from scipy.sparse import dok_matrix, csr_matrix, issparse, coo_matrix
 from scipy.spatial.distance import cosine, cityblock, minkowski
 
 from sklearn.utils.testing import assert_greater
@@ -61,9 +61,14 @@ def test_pairwise_distances():
     assert_equal(S.shape[0], X.shape[0])
     assert_equal(S.shape[1], Y.shape[0])
     assert_array_almost_equal(S, S2)
-    # manhattan does not support sparse matrices atm.
-    assert_raises(ValueError, pairwise_distances, csr_matrix(X),
-                  metric="manhattan")
+    # manhattan with sparse should equal manhattan with dense
+    X_coo = coo_matrix(X)
+    Y_coo = coo_matrix(Y)
+    S = pairwise_distances(X, Y, metric="manhattan")
+    S2 = pairwise_distances(X_coo, Y_coo, metric="manhattan")
+    assert_equal(S.shape[0], X.shape[0])
+    assert_equal(S.shape[1], Y.shape[0])
+    assert_array_almost_equal(S, S2)
     # Low-level function for manhattan can divide in blocks to avoid
     # using too much memory during the broadcasting
     S3 = manhattan_distances(X, Y, size_threshold=10)
@@ -104,6 +109,24 @@ def test_pairwise_distances():
     assert_raises(TypeError, pairwise_distances, X, Y_sparse,
                   metric="minkowski")
 
+
+def test_manhattan_sparse():
+    # test that manhattan distances handles combinations of sparse matrices
+    # correctly
+    rng = np.random.RandomState(42)
+    # Euclidean distance should be equivalent to calling the function.
+    X = rng.random_sample((5, 4))
+    Y = rng.random_sample((2, 4))
+
+    S = pairwise_distances(X, Y, metric="manhattan")
+    S2 = manhattan_distances(coo_matrix(X), Y)
+    assert_almost_equal(S, S2)
+    S2 = manhattan_distances(X, coo_matrix(Y))
+    assert_almost_equal(S, S2)
+    S2 = manhattan_distances(X, csr_matrix(Y))
+    assert_almost_equal(S, S2)
+    S2 = manhattan_distances(csr_matrix(X), Y)
+    assert_almost_equal(S, S2)
 
 def test_pairwise_parallel():
     rng = np.random.RandomState(0)
