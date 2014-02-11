@@ -3,6 +3,7 @@ from scipy import linalg
 from scipy.spatial.distance import pdist
 from scipy.spatial.distance import squareform
 from ..base import BaseEstimator, TransformerMixin
+from ..utils import check_arrays
 from ..utils import check_random_state
 from ..neighbors import NearestNeighbors
 from ..neighbors.base import _get_weights
@@ -12,100 +13,35 @@ from . import _binary_search
 MACHINE_EPSILON = np.finfo(np.double).eps
 
 
-def _gradient_descent(objective, p0, it, n_iter, n_iter_without_progress=30,
-                      momentum=0.5, learning_rate=100.0, min_gain=0.01,
-                      min_grad_norm=1e-6, min_error_diff=1e-5, verbose=0):
-    """Batch gradient descent with momentum and individual gains.
+def _joint_probabilities(affinities, desired_perplexity, verbose):
+    """Compute joint probabilities p_ij from affinities.
 
     Parameters
     ----------
-    objective : function or callable
-        Should return a tuple of cost and gradient for a given parameter
-        vector.
+    affinities : array, shape (n_samples * (n_samples-1) / 2,)
+        Affinities of samples are stored as condensed matrices, i.e.
+        we omit the diagonal and duplicate entries and store everything
+        in a one-dimensional array.
 
-    p0 : array-like, shape (n_params,)
-        Initial parameter vector.
+    desired_perplexity : float
+        Desired perplexity of the joint probability distributions.
 
-    it : int
-        Current number of iterations (this function will be called more than
-        once during the optimization).
-
-    n_iter : int
-        Maximum number of gradient descent iterations.
-
-    n_iter_without_progress : int, optional (default: 30)
-        Maximum number of iterations without progress before we abort the
-        optimization.
-
-    momentum : float, within (0.0, 1.0), optional (default: 0.5)
-        The momentum generates a weight for previous gradients that decays
-        exponentially.
-
-    learning_rate : float, optional (default: 100.0)
-        The learning rate should be extremely high for t-SNE! Values in the
-        range [100.0, 500.0] are common.
-
-    min_gain : float, optional (default: 0.01)
-        Minimum individual gain for each parameter.
-
-    min_grad_norm : float, optional (default: 1e-6)
-        If the gradient norm is below this threshold, the optimization will
-        be aborted.
-
-    min_error_diff : float, optional (default: 1e-5)
-        If the absolute difference of two successive cost function values
-        is below this threshold, the optimization will be aborted.
-
-    verbose : int, optional (default: 0)
+    verbose : int
         Verbosity level.
+
+    Returns
+    -------
+    P : array, shape (n_samples * (n_samples-1) / 2,)
+        Condensed joint probability matrix.
     """
-    p = p0.copy().ravel()
-    update = np.zeros_like(p)
-    gains = np.ones_like(p)
-    error = np.finfo(np.float).max
-    best_error = np.finfo(np.float).max
-    best_iter = 0
-
-    for i in range(it, n_iter):
-        new_error, grad = objective(p)
-        error_diff = np.abs(new_error - error)
-        error = new_error
-        grad_norm = linalg.norm(grad)
-
-        if error < best_error:
-            best_error = error
-            best_iter = i
-        elif i - best_iter > n_iter_without_progress:
-            if verbose >= 2:
-                print("[t-SNE] Iteration %d: did not make any progress "
-                      "during the last %d episodes. Finished."
-                      % (i + 1, n_iter_without_progress))
-            break
-        if min_grad_norm >= grad_norm:
-            if verbose >= 2:
-                print("[t-SNE] Iteration %d: gradient norm %f. Finished."
-                      % (i + 1, grad_norm))
-            break
-        if min_error_diff >= error_diff:
-            if verbose >= 2:
-                print("[t-SNE] Iteration %d: error difference %f. Finished."
-                      % (i + 1, error_diff))
-            break
-
-        inc = update * grad >= 0.0
-        dec = np.invert(inc)
-        gains[inc] += 0.05
-        gains[dec] *= 0.95;
-        np.clip(gains, min_gain, np.inf)
-        grad *= gains
-        update = momentum * update - learning_rate * grad
-        p += update
-
-        if verbose >= 2 and (i+1) % 10 == 0:
-            print("[t-SNE] Iteration %d: error = %.6f, gradient norm = %.6f"
-                  % (i + 1, error, grad_norm))
-
-    return p, error, i
+    # Compute conditional probabilities such that they approximately match
+    # the desired perplexity
+    conditional_P = _binary_search._binary_search_perplexity(affinities,
+        desired_perplexity, verbose)
+    P = conditional_P + conditional_P.T
+    sum_P = np.maximum(np.sum(P), MACHINE_EPSILON)
+    P = np.maximum(squareform(P) / sum_P, MACHINE_EPSILON)
+    return P
 
 
 def _kl_divergence(params, P, alpha, n_samples, n_components):
@@ -157,6 +93,117 @@ def _kl_divergence(params, P, alpha, n_samples, n_components):
     grad = grad.ravel()
 
     return kl_divergence, grad
+
+
+def _gradient_descent(objective, p0, it, n_iter, n_iter_without_progress=30,
+                      momentum=0.5, learning_rate=100.0, min_gain=0.01,
+                      min_grad_norm=1e-6, min_error_diff=1e-5, verbose=0,
+                      args=[]):
+    """Batch gradient descent with momentum and individual gains.
+
+    Parameters
+    ----------
+    objective : function or callable
+        Should return a tuple of cost and gradient for a given parameter
+        vector.
+
+    p0 : array-like, shape (n_params,)
+        Initial parameter vector.
+
+    it : int
+        Current number of iterations (this function will be called more than
+        once during the optimization).
+
+    n_iter : int
+        Maximum number of gradient descent iterations.
+
+    n_iter_without_progress : int, optional (default: 30)
+        Maximum number of iterations without progress before we abort the
+        optimization.
+
+    momentum : float, within (0.0, 1.0), optional (default: 0.5)
+        The momentum generates a weight for previous gradients that decays
+        exponentially.
+
+    learning_rate : float, optional (default: 100.0)
+        The learning rate should be extremely high for t-SNE! Values in the
+        range [100.0, 500.0] are common.
+
+    min_gain : float, optional (default: 0.01)
+        Minimum individual gain for each parameter.
+
+    min_grad_norm : float, optional (default: 1e-6)
+        If the gradient norm is below this threshold, the optimization will
+        be aborted.
+
+    min_error_diff : float, optional (default: 1e-5)
+        If the absolute difference of two successive cost function values
+        is below this threshold, the optimization will be aborted.
+
+    verbose : int, optional (default: 0)
+        Verbosity level.
+
+    args : sequence
+        Arguments to pass to objective function.
+
+    Returns
+    -------
+    p : array, shape (n_params,)
+        Optimum parameters.
+
+    error : float
+        Optimum.
+
+    i : int
+        Last iteration.
+    """
+    p = p0.copy().ravel()
+    update = np.zeros_like(p)
+    gains = np.ones_like(p)
+    error = np.finfo(np.float).max
+    best_error = np.finfo(np.float).max
+    best_iter = 0
+
+    for i in range(it, n_iter):
+        new_error, grad = objective(p, *args)
+        error_diff = np.abs(new_error - error)
+        error = new_error
+        grad_norm = linalg.norm(grad)
+
+        if error < best_error:
+            best_error = error
+            best_iter = i
+        elif i - best_iter > n_iter_without_progress:
+            if verbose >= 2:
+                print("[t-SNE] Iteration %d: did not make any progress "
+                      "during the last %d episodes. Finished."
+                      % (i + 1, n_iter_without_progress))
+            break
+        if min_grad_norm >= grad_norm:
+            if verbose >= 2:
+                print("[t-SNE] Iteration %d: gradient norm %f. Finished."
+                      % (i + 1, grad_norm))
+            break
+        if min_error_diff >= error_diff:
+            if verbose >= 2:
+                print("[t-SNE] Iteration %d: error difference %f. Finished."
+                      % (i + 1, error_diff))
+            break
+
+        inc = update * grad >= 0.0
+        dec = np.invert(inc)
+        gains[inc] += 0.05
+        gains[dec] *= 0.95;
+        np.clip(gains, min_gain, np.inf)
+        grad *= gains
+        update = momentum * update - learning_rate * grad
+        p += update
+
+        if verbose >= 2 and (i+1) % 10 == 0:
+            print("[t-SNE] Iteration %d: error = %.6f, gradient norm = %.6f"
+                  % (i + 1, error, grad_norm))
+
+    return p, error, i
 
 
 def trustworthiness(X, X_embedded, n_neighbors=5, precomputed=False):
@@ -304,8 +351,8 @@ class TSNE(BaseEstimator, TransformerMixin):
                  affinity="sqeuclidean", n_neighbors=3,
                  fit_inverse_transform=False, verbose=0, random_state=None):
         if fit_inverse_transform and affinity == "precomputed":
-            raise ValueError("Cannot fit_inverse_transform with a precomputed "
-                             "affinity matrix.")
+            raise ValueError("Cannot fit_inverse_transform with a "
+                             "precomputed affinity matrix.")
         self.n_components = n_components
         self.perplexity = perplexity
         self.early_exaggeration = early_exaggeration
@@ -331,6 +378,9 @@ class TSNE(BaseEstimator, TransformerMixin):
         self : TSNE
             This object.
         """
+        X, = check_arrays(X, sparse_format='dense')
+        random_state = check_random_state(self.random_state)
+
         if self.early_exaggeration < 1.0:
             raise ValueError("early_exaggeration must be at least 1, but is "
                              "%f" % self.early_exaggeration)
@@ -344,7 +394,7 @@ class TSNE(BaseEstimator, TransformerMixin):
             affinities = X
         else:
             if self.verbose:
-                print("Computing pairwise affinities...")
+                print("[t-SNE] Computing pairwise affinities...")
             affinities = squareform(pdist(X, self.affinity))
 
         # Degrees of freedom of the Student's t-distribution. The suggestion
@@ -354,8 +404,8 @@ class TSNE(BaseEstimator, TransformerMixin):
         n_samples = X.shape[0]
         self.X_ = X
 
-        P = self._joint_probabilities(affinities)
-        self.X_embedded_ = self._tsne(P, alpha, n_samples)
+        P = _joint_probabilities(affinities, self.perplexity, self.verbose)
+        self.X_embedded_ = self._tsne(P, alpha, n_samples, random_state)
 
         if self.affinity != "precomputed":
             self.knn_ = NearestNeighbors(n_neighbors=self.n_neighbors)
@@ -367,54 +417,32 @@ class TSNE(BaseEstimator, TransformerMixin):
 
         return self
 
-    def _joint_probabilities(self, affinities):
-        """Compute joint probabilities p_ij from affinities.
-
-        Parameters
-        ----------
-        affinities : array, shape (n_samples * (n_samples-1) / 2,)
-            Affinities of samples are stored as condensed matrices, i.e.
-            we omit the diagonal and duplicate entries and store everything
-            in a one-dimensional array.
-        """
-        # Compute conditional probabilities such that they approximately match
-        # the desired perplexity
-        conditional_P = _binary_search._binary_search_perplexity(affinities,
-            self.perplexity, self.verbose)
-        P = conditional_P + conditional_P.T
-        sum_P = np.maximum(np.sum(P), MACHINE_EPSILON)
-        P = np.maximum(squareform(P) / sum_P, MACHINE_EPSILON)
-        return P
-
-    def _tsne(self, P, alpha, n_samples):
+    def _tsne(self, P, alpha, n_samples, random_state):
         """Runs t-SNE."""
-        random_state = check_random_state(self.random_state)
-
-        def objective(params):
-            return _kl_divergence(params, P, alpha, n_samples,
-                                  self.n_components)
-
         # Initialize embedding randomly
         X_embedded = random_state.randn(n_samples, self.n_components)
         params = X_embedded.ravel()
 
         # Early exaggeration
         P *= self.early_exaggeration
-        params, error, it = _gradient_descent(objective, params,
+        params, error, it = _gradient_descent(_kl_divergence, params,
             it=0, n_iter=50, momentum=0.5, learning_rate=self.learning_rate,
-            verbose=self.verbose)
-        params, error, it = _gradient_descent(objective, params,
+            verbose=self.verbose, args=[P, alpha, n_samples,
+                                        self.n_components])
+        params, error, it = _gradient_descent(_kl_divergence, params,
             it=it + 1, n_iter=100, momentum=0.8,
-            learning_rate=self.learning_rate, verbose=self.verbose)
+            learning_rate=self.learning_rate, verbose=self.verbose,
+            args=[P, alpha, n_samples, self.n_components])
         if self.verbose:
-            print("[t-SNE] Error after %d iterations with early exaggeration: "
-                  "%f" % (it + 1, error))
+            print("[t-SNE] Error after %d iterations with early "
+                  "exaggeration: %f" % (it + 1, error))
 
         # Final optimization
         P /= self.early_exaggeration
-        params, error, it = _gradient_descent(objective, params, it=it + 1,
-            n_iter=self.n_iter, momentum=0.8, learning_rate=self.learning_rate,
-            verbose=self.verbose)
+        params, error, it = _gradient_descent(_kl_divergence, params,
+            it=it + 1, n_iter=self.n_iter, momentum=0.8,
+            learning_rate=self.learning_rate, verbose=self.verbose,
+            args=[P, alpha, n_samples, self.n_components])
         if self.verbose:
             print("[t-SNE] Error after %d iterations: %f" % (it + 1, error))
 
