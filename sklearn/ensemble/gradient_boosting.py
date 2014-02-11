@@ -1701,7 +1701,12 @@ class LambdaMART(BaseGradientBoosting):
                  subsample=1.0, min_samples_split=2, min_samples_leaf=1,
                  max_depth=3, init=None, random_state=None,
                  max_features=None, alpha=0.9, verbose=0, max_leaf_nodes=None,
-                 max_rank=10, warm_start=False):
+                 max_rank=10, gain='exponential', warm_start=False):
+
+        self.gain = gain
+        self.gain_ = lambda y: y
+        if gain == 'exponential':
+            self.gain_ = lambda y: 2**y - 1
 
         super(LambdaMART, self).__init__(
             'ndcg', learning_rate, n_estimators, min_samples_split,
@@ -1743,7 +1748,7 @@ class LambdaMART(BaseGradientBoosting):
             Returns self.
         """
         self.n_classes_ = 1
-        return super(LambdaMART, self).fit(X, y, monitor, group)
+        return super(LambdaMART, self).fit(X, self.gain_(y), monitor, group)
 
     def predict(self, X):
         """Predict regression target for X.
@@ -1800,4 +1805,4 @@ class LambdaMART(BaseGradientBoosting):
             Mean accuracy of self.predict(X) wrt. y.
 
         """
-        return self.loss_(y, self.decision_function(X), group)
+        return self.loss_(self.gain_(y), self.decision_function(X), group)
