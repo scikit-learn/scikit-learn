@@ -304,7 +304,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
                              " input n_features is %s "
                              % (self.n_features_, n_features))
 
-        proba = self.tree_.predict(X)
+        proba = self.tree_.predict(X, issparse(X))
 
         # Classification
         if isinstance(self, ClassifierMixin):
@@ -516,7 +516,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
                              " input n_features is %s "
                              % (self.n_features_, n_features))
 
-        proba = self.tree_.predict(X)
+        proba = self.tree_.predict(X, issparse(X))
 
         if self.n_outputs_ == 1:
             proba = proba[:, :self.n_classes_]

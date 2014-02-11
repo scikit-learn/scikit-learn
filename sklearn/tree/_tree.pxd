@@ -79,6 +79,7 @@ cdef class Splitter:
 
     cdef bint issparse                   # Indicates wheter input is sparse
     cdef DTYPE_t* X                      # Input data
+    cdef DTYPE_t* X_data                 # Sparse matrix internal data
     cdef UINT32_t* X_indices             # Sparse matrix indices data
     cdef UINT32_t* X_indptr              # Sparse matrix indptr data
     cdef SIZE_t X_sample_stride
@@ -164,8 +165,8 @@ cdef class Tree:
     cdef np.ndarray _get_value_ndarray(self)
     cdef np.ndarray _get_node_ndarray(self)
 
-    cpdef np.ndarray predict(self, object X)
-    cpdef np.ndarray apply(self, object X)
+    cpdef np.ndarray predict(self, object X, bint issparse)
+    cpdef np.ndarray apply(self, object X, bint issparse)
     cpdef compute_feature_importances(self, normalize=*)
 
 

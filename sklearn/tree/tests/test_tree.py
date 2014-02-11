@@ -457,7 +457,7 @@ def test_min_samples_leaf():
     for name, TreeEstimator in ALL_TREES.items():
         est = TreeEstimator(min_samples_leaf=5, random_state=0)
         est.fit(X, y)
-        out = est.tree_.apply(X)
+        out = est.tree_.apply(X, issparse(X))
         node_counts = np.bincount(out)
         leaf_count = node_counts[node_counts != 0]  # drop inner nodes
         assert_greater(np.min(leaf_count), 4,

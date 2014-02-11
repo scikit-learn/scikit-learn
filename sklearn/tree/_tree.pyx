@@ -903,6 +903,7 @@ cdef class Splitter:
 
         self.issparse = issparse
         self.X = NULL
+        self.X_data = NULL
         self.X_indices = NULL
         self.X_indptr = NULL
         self.X_sample_stride = 0
@@ -974,8 +975,9 @@ cdef class Splitter:
         # Initialize X, y, sample_weight
         self.X = <DTYPE_t*> (<np.ndarray> X).data
         if self.issparse:
-            self.X_indices = <UINT32_t*> (<np.ndarray[UINT32_t, ndim=1]> X.indices).data
-            self.X_indptr = <UINT32_t*> (<np.ndarray[UINT32_t, ndim=1]> X.indptr).data
+            self.X_data = <DTYPE_t*> (<np.ndarray> X.data).data
+            self.X_indices = <UINT32_t*> (<np.ndarray> X.indices).data
+            self.X_indptr = <UINT32_t*> (<np.ndarray> X.indptr).data
         else:
             self.X_sample_stride = <SIZE_t> X.strides[0] / <SIZE_t> X.itemsize
             self.X_fx_stride = <SIZE_t> X.strides[1] / <SIZE_t> X.itemsize
@@ -1031,6 +1033,7 @@ cdef class BestSplitter(Splitter):
 
         cdef bint issparse = <bint> self.issparse
         cdef DTYPE_t* X = self.X
+        cdef DTYPE_t* X_data = self.X_data
         cdef UINT32_t* X_indices = self.X_indices
         cdef UINT32_t* X_indptr = self.X_indptr
         cdef DTYPE_t* Xf = self.feature_values
@@ -1079,8 +1082,8 @@ cdef class BestSplitter(Splitter):
             # so the sort uses the cache more effectively.
             for p in range(start, end):
                 if issparse:
-                    Xf[p] = sparse_get_item(X, X_indices, X_indptr, samples[p],
-                                            current_feature)
+                    Xf[p] = sparse_get_item(X_data, X_indices, X_indptr,
+                                            samples[p], current_feature)
                 else:
                     Xf[p] = X[X_sample_stride * samples[p]
                               + X_fx_stride * current_feature]
@@ -1144,8 +1147,8 @@ cdef class BestSplitter(Splitter):
 
             while p < partition_end:
                 if issparse:
-                    aux = sparse_get_item(X, X_indices, X_indptr, samples[p],
-                                          best_feature)
+                    aux = sparse_get_item(X_data, X_indices, X_indptr,
+                                          samples[p], best_feature)
                 else:
                     aux = X[X_sample_stride * samples[p]
                               + X_fx_stride * best_feature]
@@ -1292,7 +1295,7 @@ cdef inline DTYPE_t sparse_get_item(DTYPE_t* X, UINT32_t* X_indices,
         if row_i == X_indices[i]:
             # non-zero value found
             nz_found = 1
-            val = X[X_indptr[col_i] + offset]
+            val = <DTYPE_t> X[X_indptr[col_i] + offset]
         offset += 1
 
     if nz_found == 0:
@@ -1326,6 +1329,7 @@ cdef class RandomSplitter(Splitter):
 
         cdef bint issparse = <bint> self.issparse
         cdef DTYPE_t* X = self.X
+        cdef DTYPE_t* X_data = self.X_data
         cdef UINT32_t* X_indices = self.X_indices
         cdef UINT32_t* X_indptr = self.X_indptr
         cdef SIZE_t X_sample_stride = self.X_sample_stride
@@ -1374,8 +1378,8 @@ cdef class RandomSplitter(Splitter):
             # Find min, max
             if issparse:
                 min_feature_value = max_feature_value = \
-                    sparse_get_item(X, X_indices, X_indptr, samples[start],
-                                    current_feature)
+                    sparse_get_item(X_data, X_indices, X_indptr,
+                                    samples[start], current_feature)
             else:
                 min_feature_value = max_feature_value = \
                     X[X_sample_stride * samples[start]
@@ -1384,8 +1388,8 @@ cdef class RandomSplitter(Splitter):
             for p in range(start + 1, end):
                 if issparse:
                     current_feature_value = \
-                        sparse_get_item(X, X_indices, X_indptr, samples[p],
-                                        current_feature)
+                        sparse_get_item(X_data, X_indices, X_indptr,
+                                        samples[p], current_feature)
                 else:
                     current_feature_value = X[X_sample_stride * samples[p]
                                               + X_fx_stride * current_feature]
@@ -1413,8 +1417,8 @@ cdef class RandomSplitter(Splitter):
 
             while p < partition_end:
                 if issparse:
-                    aux = sparse_get_item(X, X_indices, X_indptr, samples[p],
-                                          current_feature)
+                    aux = sparse_get_item(X_data, X_indices, X_indptr,
+                                          samples[p], current_feature)
                 else:
                     aux = X[X_sample_stride * samples[p]
                             + X_fx_stride * current_feature]
@@ -1464,8 +1468,8 @@ cdef class RandomSplitter(Splitter):
 
             while p < partition_end:
                 if issparse:
-                    aux = sparse_get_item(X, X_indices, X_indptr, samples[p],
-                                          best_feature)
+                    aux = sparse_get_item(X_data, X_indices, X_indptr,
+                                          samples[p], best_feature)
                 else:
                     aux = X[X_sample_stride * samples[p]
                             + X_fx_stride * best_feature]
@@ -2307,14 +2311,14 @@ cdef class Tree:
 
         return node_id
 
-    cpdef np.ndarray predict(self, object X):
+    cpdef np.ndarray predict(self, object X, bint issparse):
         """Predict target for X."""
-        out = self._get_value_ndarray().take(self.apply(X), axis=0, mode='clip')
+        out = self._get_value_ndarray().take(self.apply(X, issparse), axis=0, mode='clip')
         if self.n_outputs == 1:
             out = out.reshape(X.shape[0], self.max_n_classes)
         return out
 
-    cpdef np.ndarray apply(self, object X):
+    cpdef np.ndarray apply(self, object X, bint issparse):
         """Finds the terminal region (=leaf node) for each sample in X."""
         cdef SIZE_t n_samples = X.shape[0]
         cdef Node* node = NULL
@@ -2323,18 +2327,41 @@ cdef class Tree:
         cdef np.ndarray[SIZE_t] out = np.zeros((n_samples,), dtype=np.intp)
         cdef SIZE_t* out_data = <SIZE_t*> out.data
 
-        for i in range(n_samples):
-            node = self.nodes
+        # dense representation variables
+        cdef np.ndarray[DTYPE_t, ndim=2] X_dense
 
-            # While node not a leaf
-            while node.left_child != _TREE_LEAF:
-                # ... and node.right_child != _TREE_LEAF:
-                if X[i, node.feature] <= node.threshold:
-                    node = &self.nodes[node.left_child]
-                else:
-                    node = &self.nodes[node.right_child]
+        # sparse representation variables
+        cdef DTYPE_t* X_data
+        cdef UINT32_t* X_indices
+        cdef UINT32_t* X_indptr
+        if issparse:
+            X_data = <DTYPE_t*> (<np.ndarray> X.data).data
+            X_indices = <UINT32_t*> (<np.ndarray> X.indices).data
+            X_indptr = <UINT32_t*> (<np.ndarray> X.indptr).data
+        else:
+            X_dense = <np.ndarray[DTYPE_t, ndim=2]> X
 
-            out_data[i] = <SIZE_t>(node - self.nodes)  # node offset
+        cdef DTYPE_t aux
+
+        with nogil:
+            for i in range(n_samples):
+                node = self.nodes
+
+                # While node not a leaf
+                while node.left_child != _TREE_LEAF:
+                    # ... and node.right_child != _TREE_LEAF:
+                    if issparse:
+                        aux = sparse_get_item(X_data, X_indices, X_indptr, i,
+                                              node.feature)
+                    else:
+                        aux = X_dense[i, node.feature]
+
+                    if aux <= node.threshold:
+                        node = &self.nodes[node.left_child]
+                    else:
+                        node = &self.nodes[node.right_child]
+
+                out_data[i] = <SIZE_t>(node - self.nodes)  # node offset
 
         return out
 
