@@ -193,7 +193,7 @@ def plot_species_distribution(species=["bradypus_variegatus_0",
         pl.title(species.name)
         pl.axis('equal')
 
-        # Compute AUC w.r.t. background points
+        # Compute AUC with regards to background points
         pred_background = Z[background_points[0], background_points[1]]
         pred_test = clf.decision_function((species.cov_test - mean)
                                           / std)[:, 0]

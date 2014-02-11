@@ -76,7 +76,7 @@ cdef class LossFunction:
         Returns
         -------
         double
-            The derivative of the loss function w.r.t. `p`.
+            The derivative of the loss function with regards to `p`.
         """
         raise NotImplementedError()
 
