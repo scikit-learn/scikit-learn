@@ -1628,6 +1628,10 @@ class LambdaMART(BaseGradientBoosting):
         Only score the top ``max_rank`` samples from each group. If None,
         all the samples will be scored.
 
+    gain : str or None, optional (default='exponential')
+        If exponential, labels will be transformed by (2**y - 1). If None,
+        no transformation will take place.
+
     alpha : float (default=0.9)
         The alpha-quantile of the huber loss function and the quantile
         loss function. Only if ``loss='huber'`` or ``loss='quantile'``.
