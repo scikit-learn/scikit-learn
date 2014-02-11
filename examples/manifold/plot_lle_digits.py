@@ -211,4 +211,17 @@ plot_embedding(X_se,
                "Spectral embedding of the digits (time %.2fs)" %
                (time() - t0))
 
-plt.show()
+#----------------------------------------------------------------------
+# t-SNE embedding of the digits dataset
+print("Computing t-SNE embedding")
+tsne = manifold.TSNE(n_components=2, perplexity=40.0, learning_rate=500.0,
+                     random_state=0)
+t0 = time()
+X_tsne = tsne.fit_transform(X)
+print("Done. Trustworthiness: %f" % tsne.score(X, X_tsne))
+
+plot_embedding(X_tsne,
+               "t-SNE embedding of the digits (time %.2fs)" %
+               (time() - t0))
+
+pl.show()
