@@ -7,7 +7,7 @@
 #
 # Licence: BSD 3 clause
 
-from libc.math cimport sqrt
+from libc.math cimport sqrt, abs
 import numpy as np
 import scipy.sparse as sp
 cimport numpy as np
@@ -93,7 +93,7 @@ cpdef DOUBLE _assign_labels_csr_L1(X, np.ndarray[DOUBLE, ndim=2] centers,
     if n_samples == distances.shape[0]:
         store_distances = 1
 
-    sum, abs = np.sum, np.abs
+    sum = np.sum
     for sample_idx in range(n_samples):
         min_dist = -1
         for center_idx in range(n_clusters):
@@ -206,7 +206,7 @@ cpdef DOUBLE _assign_labels_csr(X, np.ndarray[DOUBLE, ndim=1] x_squared_norms,
             # hardcoded: minimize euclidean distance to cluster center:
             # ||a - b||^2 = ||a||^2 + ||b||^2 -2 <a, b>
             for k in range(X_indptr[sample_idx], X_indptr[sample_idx + 1]):
-                dist += centers[center_idx, X_indices[k]] * X_data[k]
+                    dist += centers[center_idx, X_indices[k]] * X_data[k]
             dist *= -2
             dist += center_squared_norms[center_idx]
             dist += x_squared_norms[sample_idx]
