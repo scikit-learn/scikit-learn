@@ -402,18 +402,19 @@ class TSNE(BaseEstimator, TransformerMixin):
         # by Preserving Local Structure" Laurens van der Maaten, 2009.
         alpha = self.n_components - 1.0
         n_samples = X.shape[0]
-        self.X_ = X
+        self.training_data_ = X
 
         P = _joint_probabilities(affinities, self.perplexity, self.verbose)
-        self.X_embedded_ = self._tsne(P, alpha, n_samples, random_state)
+        self.embedding_ = self._tsne(P, alpha, n_samples, random_state)
 
         if self.affinity != "precomputed":
-            self.knn_ = NearestNeighbors(n_neighbors=self.n_neighbors)
-            self.knn_.fit(self.X_)
+            self.nbrs_ = NearestNeighbors(n_neighbors=self.n_neighbors)
+            self.nbrs_.fit(self.training_data_)
 
         if self.fit_inverse_transform:
-            self.knn_embedded_ = NearestNeighbors(n_neighbors=self.n_neighbors)
-            self.knn_embedded_.fit(self.X_embedded_)
+            self.embedding_nbrs_ = NearestNeighbors(
+                n_neighbors=self.n_neighbors)
+            self.embedding_nbrs_.fit(self.embedding_)
 
         return self
 
@@ -495,10 +496,10 @@ class TSNE(BaseEstimator, TransformerMixin):
         if not self.fit_inverse_transform:
             raise ValueError("Inverse transform was not fitted!")
 
-        neigh_dist, neigh_ind = self.knn_embedded_.kneighbors(X)
+        neigh_dist, neigh_ind = self.embedding_nbrs_.kneighbors(X)
         neigh_dist = np.maximum(neigh_dist, MACHINE_EPSILON)
         weights = _get_weights(neigh_dist, "distance")
-        X_original = np.array([(np.average(self.X_[ind], axis=0,
+        X_original = np.array([(np.average(self.training_data_[ind], axis=0,
                                            weights=weights[i]))
                                for (i, ind) in enumerate(neigh_ind)])
 
@@ -519,16 +520,16 @@ class TSNE(BaseEstimator, TransformerMixin):
             Embedding of the training data in low-dimensional space.
         """
         if self.affinity == "precomputed":
-            if X is self.X_:
-                return self.X_embedded_
+            if X is self.training_data_:
+                return self.embedding_
             else:
                 raise ValueError("Can only transform training data when "
                                  "affinities are precomputed.")
 
-        neigh_dist, neigh_ind = self.knn_.kneighbors(X)
+        neigh_dist, neigh_ind = self.nbrs_.kneighbors(X)
         neigh_dist = np.maximum(neigh_dist, MACHINE_EPSILON)
         weights = _get_weights(neigh_dist, "distance")
-        X_embedded = np.array([(np.average(self.X_embedded_[ind], axis=0,
+        X_embedded = np.array([(np.average(self.embedding_[ind], axis=0,
                                            weights=weights[i]))
                                for (i, ind) in enumerate(neigh_ind)])
 
