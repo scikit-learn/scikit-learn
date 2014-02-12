@@ -64,6 +64,7 @@ Classes
    cluster.AffinityPropagation
    cluster.AgglomerativeClustering
    cluster.DBSCAN
+   cluster.FeatureAgglomeration
    cluster.KMeans
    cluster.MiniBatchKMeans
    cluster.MeanShift

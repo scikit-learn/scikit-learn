@@ -160,6 +160,9 @@ API changes summary
    - :class:`cluster.Ward` is deprecated. Use
      :class:`cluster.AgglomerativeClustering` instead.
 
+   - :class:`cluster.WardClustering` is deprecated. Use
+   - :class:`cluster.AgglomerativeClustering` instead.
+
    - Add score method to :class:`PCA <decomposition.PCA>` following the model of
      probabilistic PCA and deprecate
      :class:`ProbabilisticPCA <decomposition.ProbabilisticPCA>` model whose

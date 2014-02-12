@@ -490,7 +490,9 @@ clusters are successively merged together. The linkage criteria determines the
 metric used for the merge strategy:
 
 - **Ward** minimizes the sum of squared differences within all clusters. It is a
-  variance-minimizing approach.
+  variance-minimizing approach and in this sens is similar to the k-means
+  objective function but tackled with an agglomerative hierarchical
+  approach.
 - **Maximum** or **complete linkage** minimizes the maximum distance between
   observations of pairs of clusters.
 - **Average linkage** minimizes the average of the distances between all
@@ -501,6 +503,11 @@ when it is used jointly with a connectivity matrix, but is computationally
 expensive when no connectivity constraints are added between samples: it
 considers at each step all the possible merges.
 
+.. topic:: :class:`FeatureAgglomeration`
+
+   The :class:`FeatureAgglomeration` uses agglomerative clustering to
+   group together features that look very similar, thus decreasing the
+   number of features.
 
 Different linkage type: Ward, complete and average linkage
 -----------------------------------------------------------
@@ -634,15 +641,15 @@ distance between samples in different classes, and minimizes that across
 class.
 
 .. image:: ../auto_examples/cluster/images/plot_agglomerative_clustering_metrics_5.png
-    :target: ../auto_examples/cluster/plot_agglomerative_clustering_metric.html
+    :target: ../auto_examples/cluster/plot_agglomerative_clustering_metrics.html
     :scale: 32
 
 .. image:: ../auto_examples/cluster/images/plot_agglomerative_clustering_metrics_6.png
-    :target: ../auto_examples/cluster/plot_agglomerative_clustering_metric.html
+    :target: ../auto_examples/cluster/plot_agglomerative_clustering_metrics.html
     :scale: 32
 
 .. image:: ../auto_examples/cluster/images/plot_agglomerative_clustering_metrics_7.png
-    :target: ../auto_examples/cluster/plot_agglomerative_clustering_metric.html
+    :target: ../auto_examples/cluster/plot_agglomerative_clustering_metrics.html
     :scale: 32
 
 .. topic:: Examples:

@@ -57,8 +57,7 @@ def test_linkage_misc():
     assert_array_equal(res[0], linkage_tree(X, affinity="cosine")[0])
 
     # test hiearchical clustering on a precomputed distances matrix
-    res = linkage_tree(X,
-        affinity=manhattan_distances)
+    res = linkage_tree(X, affinity=manhattan_distances)
     assert_array_equal(res[0], linkage_tree(X, affinity="manhattan")[0])
 
 
@@ -212,13 +211,16 @@ def test_ward_agglomeration():
     assert_warns(DeprecationWarning, WardAgglomeration)
     ward = WardAgglomeration(n_clusters=5, connectivity=connectivity)
     ward.fit(X)
-    assert_true(np.size(np.unique(ward.labels_)) == 5)
+    agglo = FeatureAgglomeration(n_clusters=5, connectivity=connectivity)
+    agglo.fit(X)
+    assert_array_equal(agglo.labels_, ward.labels_)
+    assert_true(np.size(np.unique(agglo.labels_)) == 5)
 
-    Xred = ward.transform(X)
-    assert_true(Xred.shape[1] == 5)
-    Xfull = ward.inverse_transform(Xred)
-    assert_true(np.unique(Xfull[0]).size == 5)
-    assert_array_almost_equal(ward.transform(Xfull), Xred)
+    X_red = agglo.transform(X)
+    assert_true(X_red.shape[1] == 5)
+    X_full = agglo.inverse_transform(X_red)
+    assert_true(np.unique(X_full[0]).size == 5)
+    assert_array_almost_equal(agglo.transform(X_full), X_red)
 
 
 def assess_same_labelling(cut1, cut2):
