@@ -283,7 +283,7 @@ class ChangedBehaviorWarning(UserWarning):
     pass
 
 
-iff_best_estimator_has_method = make_delegation_decorator('best_estimator_')
+iff_estimator_has_method = make_delegation_decorator('estimator')
 
 
 class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
@@ -346,23 +346,27 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                           ChangedBehaviorWarning)
         return self.scorer_(self.best_estimator_, X, y)
 
-    @iff_best_estimator_has_method
+    @iff_estimator_has_method
     def predict(self, X):
         return self.best_estimator_.predict(X)
 
-    @iff_best_estimator_has_method
+    @iff_estimator_has_method
     def predict_proba(self, X):
         return self.best_estimator_.predict_proba(X)
 
-    @iff_best_estimator_has_method
+    @iff_estimator_has_method
+    def predict_log_proba(self, X):
+        return self.best_estimator_.predict_log_proba(X)
+
+    @iff_estimator_has_method
     def decision_function(self, X):
         return self.best_estimator_.decision_function(X)
 
-    @iff_best_estimator_has_method
+    @iff_estimator_has_method
     def transform(self, X):
         return self.best_estimator_.transform(X)
 
-    @iff_best_estimator_has_method
+    @iff_estimator_has_method
     def inverse_transform(self, Xt):
         return self.best_estimator_.transform(Xt)
 
