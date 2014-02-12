@@ -11,6 +11,8 @@ estimator, as a chain of transforms and estimators.
 
 from collections import defaultdict
 
+from functools import partial
+
 import numpy as np
 from scipy import sparse
 
@@ -78,7 +80,7 @@ class Pipeline(BaseEstimator):
     # BaseEstimator interface
 
     def __init__(self, steps):
-        self.named_steps = dict(steps)
+        self.steps = steps
         names, estimators = zip(*steps)
         if len(self.named_steps) != len(steps):
             raise ValueError("Names provided are not unique: %s" % (names,))
@@ -110,6 +112,19 @@ class Pipeline(BaseEstimator):
                     out['%s__%s' % (name, key)] = value
             return out
 
+    @property
+    def named_steps(self):
+        return dict(self.steps)
+
+    @property
+    def _transforms(self):
+        """Non-final estimators in (name, est) tuples."""
+        return self.steps[:-1]
+
+    @property
+    def _final_estimator(self):
+        return self.steps[-1][1]
+
     # Estimator interface
 
     def _pre_transform(self, X, y=None, **fit_params):
@@ -118,7 +133,9 @@ class Pipeline(BaseEstimator):
             step, param = pname.split('__', 1)
             fit_params_steps[step][param] = pval
         Xt = X
-        for name, transform in self.steps[:-1]:
+        for name, transform in self._transforms:
+            if transform is None:
+                continue
             if hasattr(transform, "fit_transform"):
                 Xt = transform.fit_transform(Xt, y, **fit_params_steps[name])
             else:
@@ -129,79 +146,192 @@ class Pipeline(BaseEstimator):
     def fit(self, X, y=None, **fit_params):
         """Fit all the transforms one after the other and transform the
         data, then fit the transformed data using the final estimator.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+            Training data, where n_samples in the number of samples and
+            n_features is the number of features.
+        y : array-like, shape = [n_samples], optional
+            Target vector relative to X for classification;
+            None for unsupervised learning.
+        fit_params : dict of string -> object
+            Parameters passed to the `fit` method of each step, where
+            each parameter name is prefixed such that parameter ``p`` for step
+            ``s`` has key ``s__p``.
         """
         Xt, fit_params = self._pre_transform(X, y, **fit_params)
-        self.steps[-1][-1].fit(Xt, y, **fit_params)
+        self._final_estimator.fit(Xt, y, **fit_params)
         return self
 
-    def fit_transform(self, X, y=None, **fit_params):
-        """Fit all the transforms one after the other and transform the
+    @property
+    def fit_transform(self):
+        """Pipeline.fit_transform(X, y=None, **fit_params)
+
+        Fit all the transforms one after the other and transform the
         data, then use fit_transform on transformed data using the final
-        estimator."""
-        Xt, fit_params = self._pre_transform(X, y, **fit_params)
-        if hasattr(self.steps[-1][-1], 'fit_transform'):
-            return self.steps[-1][-1].fit_transform(Xt, y, **fit_params)
-        else:
-            return self.steps[-1][-1].fit(Xt, y, **fit_params).transform(Xt)
+        estimator.
 
-    def predict(self, X):
-        """Applies transforms to the data, and the predict method of the
-        final estimator. Valid only if the final estimator implements
-        predict."""
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+            Training data, where n_samples in the number of samples and
+            n_features is the number of features.
+        y : array-like, shape = [n_samples], optional
+            Target vector relative to X for classification;
+            None for unsupervised learning.
+        fit_params : dict of string -> object
+            Parameters passed to the `fit` method of each step, where
+            each parameter name is prefixed such that parameter ``p`` for step
+            ``s`` has key ``s__p``.
+        """
+        last_step = self._final_estimator
+        if (
+                not hasattr(last_step, 'fit_transform')
+                and not hasattr(last_step, 'transform')):
+            raise AttributeError(
+                'last step has neither `transform` nor `fit_transform`')
+
+        def fn(X, y=None, **fit_params):
+            Xt, fit_params = self._pre_transform(X, y, **fit_params)
+            if hasattr(last_step, 'fit_transform'):
+                return last_step.fit_transform(Xt, y, **fit_params)
+            else:
+                return last_step.fit(Xt, y, **fit_params).transform(Xt)
+        return fn
+
+    def _run_pipeline(self, est_fn, X, *args, **kwargs):
         Xt = X
-        for name, transform in self.steps[:-1]:
-            Xt = transform.transform(Xt)
-        return self.steps[-1][-1].predict(Xt)
+        for name, transform in self._transforms:
+            if transform is not None:
+                Xt = transform.transform(Xt)
+        return est_fn(Xt, *args, **kwargs)
 
-    def predict_proba(self, X):
-        """Applies transforms to the data, and the predict_proba method of the
+    @property
+    def predict(self):
+        """Pipeline.predict(X)
+
+        Applies transforms to the data, and the `predict` method of the
         final estimator. Valid only if the final estimator implements
-        predict_proba."""
-        Xt = X
-        for name, transform in self.steps[:-1]:
-            Xt = transform.transform(Xt)
-        return self.steps[-1][-1].predict_proba(Xt)
+        predict.
 
-    def decision_function(self, X):
-        """Applies transforms to the data, and the decision_function method of
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+            Data samples, where n_samples in the number of samples and
+            n_features is the number of features.
+        """
+        return partial(self._run_pipeline, self._final_estimator.predict)
+
+    @property
+    def predict_proba(self):
+        """Pipeline.predict_proba(X)
+
+        Applies transforms to the data, and the `predict_proba` method of
         the final estimator. Valid only if the final estimator implements
-        decision_function."""
-        Xt = X
-        for name, transform in self.steps[:-1]:
-            Xt = transform.transform(Xt)
-        return self.steps[-1][-1].decision_function(Xt)
+        predict_proba.
 
-    def predict_log_proba(self, X):
-        Xt = X
-        for name, transform in self.steps[:-1]:
-            Xt = transform.transform(Xt)
-        return self.steps[-1][-1].predict_log_proba(Xt)
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+            Data samples, where n_samples in the number of samples and
+            n_features is the number of features.
+        """
+        return partial(self._run_pipeline, self._final_estimator.predict_proba)
 
-    def transform(self, X):
-        """Applies transforms to the data, and the transform method of the
+    @property
+    def predict_log_proba(self):
+        """Pipeline.predict_log_proba(X)
+
+        Applies transforms to the data, and the `predict_log_proba` method
+        of the final estimator. Valid only if the final estimator implements
+        predict_log_proba.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+            Data samples, where n_samples in the number of samples and
+            n_features is the number of features.
+        """
+        return partial(self._run_pipeline,
+            self._final_estimator.predict_log_proba)
+
+    @property
+    def decision_function(self):
+        """Pipeline.decision_function(X)
+
+        Applies transforms to the data, and the `decision_function` method
+        of the final estimator. Valid only if the final estimator implements
+        decision_function.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+            Data samples, where n_samples in the number of samples and
+            n_features is the number of features.
+        """
+        return partial(self._run_pipeline,
+            self._final_estimator.decision_function)
+
+    @property
+    def transform(self):
+        """Pipeline.transform(X)
+
+        Applies transforms to the data, and the `transform` method of the
         final estimator. Valid only if the final estimator implements
-        transform."""
-        Xt = X
-        for name, transform in self.steps:
-            Xt = transform.transform(Xt)
-        return Xt
+        transform.
 
-    def inverse_transform(self, X):
-        if X.ndim == 1:
-            X = X[None, :]
-        Xt = X
-        for name, step in self.steps[::-1]:
-            Xt = step.inverse_transform(Xt)
-        return Xt
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+            Data samples, where n_samples in the number of samples and
+            n_features is the number of features.
+        """
+        return partial(self._run_pipeline, self._final_estimator.transform)
 
-    def score(self, X, y=None):
-        """Applies transforms to the data, and the score method of the
+    @property
+    def inverse_transform(self):
+        """Pipeline.inverse_transform(X)
+
+        Applies inverse transforms to the data from the last step to the
+        first.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+            Data samples, where n_samples in the number of samples and
+            n_features is the number of features.
+        """
+        inverse_transforms = [step.inverse_transform
+            for name, step in self.steps[::-1] if step is not None]
+
+        def fn(X):
+            if X.ndim == 1:
+                X = X[None, :]
+            Xt = X
+            for inv_transform in inverse_transforms:
+                Xt = inv_transform(Xt)
+            return Xt
+        return fn
+
+    @property
+    def score(self):
+        """Pipeline.score(X, y=None)
+
+        Applies transforms to the data, and the `score` method of the
         final estimator. Valid only if the final estimator implements
-        score."""
-        Xt = X
-        for name, transform in self.steps[:-1]:
-            Xt = transform.transform(Xt)
-        return self.steps[-1][-1].score(Xt, y)
+        score.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+            Data samples, where n_samples in the number of samples and
+            n_features is the number of features.
+        y : array-like, shape = [n_samples], optional
+            Target vector relative to X;
+            None for unsupervised learning.
+        """
+        return partial(self._run_pipeline, self._final_estimator.score)
 
     @property
     def _pairwise(self):

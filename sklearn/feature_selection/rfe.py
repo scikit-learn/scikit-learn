@@ -6,6 +6,7 @@
 
 """Recursive feature elimination for feature ranking"""
 
+from functools import wraps
 import numpy as np
 from ..utils import check_arrays, safe_sqr
 from ..base import BaseEstimator
@@ -36,6 +37,7 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         A supervised learning estimator with a `fit` method that updates a
         `coef_` attribute that holds the fitted parameters. Important features
         must correspond to high absolute values in the `coef_` array.
+        The estimator must also implement a `score` method.
 
         For instance, this is the case for most supervised learning
         algorithms such as Support Vector Classifiers and Generalized
@@ -169,7 +171,13 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
 
         return self
 
-    def predict(self, X):
+    def _delegate_wrapper(self, delegate):
+        def wrapper(X, *args, **kwargs):
+            return delegate(self.transform(X), *args, **kwargs)
+        return wrapper
+
+    @property
+    def predict(self):
         """Reduce X to the selected features and then predict using the
            underlying estimator.
 
@@ -183,9 +191,10 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         y : array of shape [n_samples]
             The predicted target values.
         """
-        return self.estimator_.predict(self.transform(X))
+        return self._delegate_wrapper(self.estimator_.predict)
 
-    def score(self, X, y):
+    @property
+    def score(self):
         """Reduce X to the selected features and then return the score of the
            underlying estimator.
 
@@ -197,16 +206,22 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         y : array of shape [n_samples]
             The target values.
         """
-        return self.estimator_.score(self.transform(X), y)
+        return self._delegate_wrapper(self.estimator_.score)
 
     def _get_support_mask(self):
         return self.support_
 
-    def decision_function(self, X):
-        return self.estimator_.decision_function(self.transform(X))
+    @property
+    def decision_function(self):
+        return self._delegate_wrapper(self.estimator_.decision_function)
 
-    def predict_proba(self, X):
-        return self.estimator_.predict_proba(self.transform(X))
+    @property
+    def predict_proba(self):
+        return self._delegate_wrapper(self.estimator_.predict_proba)
+
+    @property
+    def predict_log_proba(self):
+        return self._delegate_wrapper(self.estimator_.predict_log_proba)
 
 
 class RFECV(RFE, MetaEstimatorMixin):
