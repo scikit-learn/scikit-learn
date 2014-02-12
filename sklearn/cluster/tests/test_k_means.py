@@ -191,7 +191,7 @@ def _check_fitted_model(km):
 
 def test_k_means_plus_plus_init():
     km = KMeans(init="k-means++", n_clusters=n_clusters,
-                     random_state=42).fit(X)
+                random_state=42).fit(X)
     _check_fitted_model(km)
 
 
@@ -471,8 +471,8 @@ def test_k_means_non_collapsed():
 
     Starting with bad centers that are quickly ignored should not
     result in a repositioning of the centers to the center of mass that
-    would lead to collapsed centers which in turns make the clustering
-    dependent of the numerical unstabilities.
+    would lead to collapsed centers which in turn makes the clustering
+    dependent on numerical instability.
     """
     my_X = np.array([[1.1, 1.1], [0.9, 1.1], [1.1, 0.9], [0.9, 1.1]])
     array_init = np.array([[1.0, 1.0], [5.0, 5.0], [-5.0, -5.0]])

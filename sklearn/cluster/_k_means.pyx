@@ -326,8 +326,9 @@ def _mini_batch_update_csr(X, np.ndarray[DOUBLE, ndim=1] x_squared_norms,
 @cython.wraparound(False)
 cdef void _assign_empty_clusters(np.ndarray[DOUBLE, ndim=2] X,
                                  np.ndarray[DOUBLE, ndim=2] centers,
-                                 np.ndarray[DOUBLE, ndim=2] distances,
-                                 np.ndarray[INT, ndim=1] n_samples_in_cluster):
+                                 np.ndarray[DOUBLE, ndim=1] distances,
+                                 np.ndarray[np.int64_t, ndim=1]
+                                 n_samples_in_cluster):
     empty_clusters = np.where(n_samples_in_cluster == 0)[0]
     # maybe also relocate small clusters?
 
