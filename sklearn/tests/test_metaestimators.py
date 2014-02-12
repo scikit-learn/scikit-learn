@@ -7,7 +7,7 @@ import numpy as np
 from sklearn.base import BaseEstimator
 from sklearn.externals.six import iterkeys
 from sklearn.datasets import make_classification
-from sklearn.utils.testing import assert_true, assert_false
+from sklearn.utils.testing import assert_true, assert_false, assert_raises
 from sklearn.pipeline import Pipeline
 from sklearn.grid_search import GridSearchCV, RandomizedSearchCV
 from sklearn.feature_selection import RFE, RFECV
@@ -58,32 +58,43 @@ def test_metaestimator_delegation():
             self.coef_ = np.arange(X.shape[1])
             return True
 
+        def _check_fit(self):
+            if not hasattr(self, 'coef_'):
+                raise RuntimeError('Estimator is not fit')
+
         @hides
         def inverse_transform(self, X, *args, **kwargs):
+            self._check_fit()
             return X
 
         @hides
         def transform(self, X, *args, **kwargs):
+            self._check_fit()
             return X
 
         @hides
         def predict(self, X, *args, **kwargs):
+            self._check_fit()
             return np.ones(X.shape[0])
 
         @hides
         def predict_proba(self, X, *args, **kwargs):
+            self._check_fit()
             return np.ones(X.shape[0])
 
         @hides
         def predict_log_proba(self, X, *args, **kwargs):
+            self._check_fit()
             return np.ones(X.shape[0])
 
         @hides
         def decision_function(self, X, *args, **kwargs):
+            self._check_fit()
             return np.ones(X.shape[0])
 
         @hides
         def score(self, X, *args, **kwargs):
+            self._check_fit()
             return 1.0
 
     methods = [k for k in iterkeys(SubEstimator.__dict__)
@@ -100,6 +111,9 @@ def test_metaestimator_delegation():
             assert_true(hasattr(delegator, method),
                         msg="%s does not have method %r when its delegate does"
                             % (delegator_data.name, method))
+            # delegation before fit raises an exception
+            assert_raises(Exception, getattr(delegator, method),
+                          delegator_data.fit_args[0])
 
         delegator.fit(*delegator_data.fit_args)
         for method in methods:
