@@ -214,8 +214,7 @@ plot_embedding(X_se,
 #----------------------------------------------------------------------
 # t-SNE embedding of the digits dataset
 print("Computing t-SNE embedding")
-tsne = manifold.TSNE(n_components=2, perplexity=40.0, learning_rate=500.0,
-                     random_state=0)
+tsne = manifold.TSNE(n_components=2, perplexity=40.0, random_state=0)
 t0 = time()
 X_tsne = tsne.fit_transform(X)
 print("Done. Trustworthiness: %f" % tsne.score(X, X_tsne))
