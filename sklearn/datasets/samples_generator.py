@@ -311,34 +311,34 @@ def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
         _, n_classes = p_w_c.shape
 
         # pick a nonzero number of labels per document by rejection sampling
-        n = n_classes + 1
-        while (not allow_unlabeled and n == 0) or n > n_classes:
-            n = generator.poisson(n_labels)
+        y_size = n_classes + 1
+        while (not allow_unlabeled and y_size == 0) or y_size > n_classes:
+            y_size = generator.poisson(n_labels)
 
         # pick n classes
-        y = []
-        while len(y) != n:
+        y = set()
+        while len(y) != y_size:
             # pick a class with probability P(c)
-            c = np.searchsorted(cumulative_p_c, generator.rand())
-
-            if not c in y:
-                y.append(c)
+            c = np.searchsorted(cumulative_p_c,
+                                generator.rand(y_size - len(y)))
+            y.update(c)
+        y = list(y)
 
         # pick a non-zero document length by rejection sampling
-        k = 0
-        while k == 0:
-            k = generator.poisson(length)
+        n_words = 0
+        while n_words == 0:
+            n_words = generator.poisson(length)
 
-        # generate a document of length k words
+        # generate a document of length n_words
         if len(y) == 0:
             # if sample does not belong to any class, generate noise word
-            words = generator.randint(n_features, size=k)
+            words = generator.randint(n_features, size=n_words)
             return words, y
 
         # sample words with replacement from selected classes
-        cumulative_p_w_sample = np.cumsum(p_w_c[:, y].sum(axis=1))
+        cumulative_p_w_sample = p_w_c.take(y, axis=1).sum(axis=1).cumsum()
         cumulative_p_w_sample /= cumulative_p_w_sample[-1]
-        words = np.searchsorted(cumulative_p_w_sample, generator.rand(k))
+        words = np.searchsorted(cumulative_p_w_sample, generator.rand(n_words))
         return words, y
 
     X_indices = array.array('i')
