@@ -93,7 +93,6 @@ def test_metaestimator_delegation():
     for delegator_data in DELEGATING_METAESTIMATORS:
         delegate = SubEstimator()
         delegator = delegator_data.construct(delegate)
-        delegator.fit(*delegator_data.fit_args)
         for method in methods:
             if method in delegator_data.skip_methods:
                 continue
@@ -101,6 +100,11 @@ def test_metaestimator_delegation():
             assert_true(hasattr(delegator, method),
                         msg="%s does not have method %r when its delegate does"
                             % (delegator_data.name, method))
+
+        delegator.fit(*delegator_data.fit_args)
+        for method in methods:
+            if method in delegator_data.skip_methods:
+                continue
             # smoke test delegation
             getattr(delegator, method)(delegator_data.fit_args[0])
 
@@ -109,7 +113,6 @@ def test_metaestimator_delegation():
                 continue
             delegate = SubEstimator(hidden_method=method)
             delegator = delegator_data.construct(delegate)
-            delegator.fit(*delegator_data.fit_args)
             assert_false(hasattr(delegate, method))
             assert_false(hasattr(delegator, method),
                          msg="%s has method %r when its delegate does not"
