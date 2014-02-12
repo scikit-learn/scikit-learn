@@ -10,7 +10,7 @@ cdef double PERPLEXITY_TOLERANCE = 1e-5
 
 @cython.boundscheck(False)
 cpdef np.ndarray[np.float_t, ndim=2] _binary_search_perplexity(
-        np.ndarray[np.float_t, ndim=2] dist, double desired_perplexity,
+        np.ndarray[np.float_t, ndim=2] affinities, double desired_perplexity,
         int verbose):
     """Binary search for sigmas of conditional Gaussians.
 
@@ -23,7 +23,7 @@ cpdef np.ndarray[np.float_t, ndim=2] _binary_search_perplexity(
 
     Parameters
     ----------
-    dist : array-like, shape (n_samples, n_samples)
+    affinities : array-like, shape (n_samples, n_samples)
         Distances between training samples.
 
     desired_perplexity : double
@@ -40,7 +40,7 @@ cpdef np.ndarray[np.float_t, ndim=2] _binary_search_perplexity(
     # Maximum number of binary search steps
     cdef int n_steps = 100
 
-    cdef int n_samples = dist.shape[0]
+    cdef int n_samples = affinities.shape[0]
     cdef np.ndarray[np.float_t, ndim=2] P = np.ndarray((n_samples, n_samples),
                                                        dtype=np.double)
     # Precisions of conditional Gaussian distrubutions
@@ -67,7 +67,7 @@ cpdef np.ndarray[np.float_t, ndim=2] _binary_search_perplexity(
         for _ in range(n_steps):
             # Compute current entropy and corresponding probabilities
             for j in range(n_samples):
-                P[i, j] = math.exp(-dist[i, j] * beta)
+                P[i, j] = math.exp(-affinities[i, j] * beta)
             P[i, i] = 0.0
             sum_Pi = 0.0
             for j in range(n_samples):
@@ -77,7 +77,7 @@ cpdef np.ndarray[np.float_t, ndim=2] _binary_search_perplexity(
             sum_disti_Pi = 0.0
             for j in range(n_samples):
                 P[i, j] /= sum_Pi
-                sum_disti_Pi += dist[i, j] * P[i, j]
+                sum_disti_Pi += affinities[i, j] * P[i, j]
             entropy = math.log(sum_Pi) + beta * sum_disti_Pi
             entropy_diff = entropy - desired_entropy
 
