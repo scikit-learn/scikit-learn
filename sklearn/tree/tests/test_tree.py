@@ -53,6 +53,10 @@ REG_TREES = {
                                              splitter="presort-best"),
     "ExtraTreeRegressor": ExtraTreeRegressor,
 }
+SPARSE_REG_TREES = {
+    "DecisionTreeRegressor": DecisionTreeRegressor,
+    "ExtraTreeRegressor": ExtraTreeRegressor,
+}
 
 ALL_TREES = dict()
 ALL_TREES.update(CLF_TREES)
@@ -98,8 +102,6 @@ def test_classification_toy():
         assert_array_equal(clf.predict(T), true_result,
                            "Failed with {0}".format(name))
 
-
-def test_classification_toy_sparse():
     """Check classification on a sparse toy dataset."""
     for name, Tree in SPARSE_CLF_TREES.items():
         clf = Tree(random_state=0)
@@ -126,6 +128,18 @@ def test_weighted_classification_toy():
         assert_array_equal(clf.predict(T), true_result,
                            "Failed with {0}".format(name))
 
+    """Check classification on a weighted sparse toy dataset."""
+    for name, Tree in SPARSE_CLF_TREES.items():
+        clf = Tree(random_state=0)
+
+        clf.fit(X_sparse, y, sample_weight=np.ones(X_sparse.shape[0]))
+        assert_array_equal(clf.predict(T_sparse), true_result,
+                           "Failed with {0}".format(name))
+
+        clf.fit(X_sparse, y, sample_weight=np.ones(X_sparse.shape[0]) * 0.5)
+        assert_array_equal(clf.predict(T_sparse), true_result,
+                           "Failed with {0}".format(name))
+
 
 def test_regression_toy():
     """Check regression on a toy dataset."""
@@ -138,6 +152,18 @@ def test_regression_toy():
         clf = Tree(max_features=1, random_state=1)
         clf.fit(X, y)
         assert_almost_equal(reg.predict(T), true_result,
+                            err_msg="Failed with {0}".format(name))
+
+    """Check regression on a toy dataset."""
+    for name, Tree in SPARSE_REG_TREES.items():
+        reg = Tree(random_state=1)
+        reg.fit(X_sparse, y)
+        assert_almost_equal(reg.predict(T_sparse), true_result,
+                            err_msg="Failed with {0}".format(name))
+
+        clf = Tree(max_features=1, random_state=1)
+        clf.fit(X_sparse, y)
+        assert_almost_equal(reg.predict(T_sparse), true_result,
                             err_msg="Failed with {0}".format(name))
 
 
