@@ -1,3 +1,5 @@
+import sys
+from sklearn.externals.six.moves import cStringIO as StringIO
 import numpy as np
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
@@ -29,36 +31,68 @@ def test_gradient_descent_stops():
         return 0.0, np.ones(1)
 
     # Gradient norm
-    _, error, it = _gradient_descent(ObjectiveSmallGradient(), np.zeros(1), 0,
-        n_iter=100, n_iter_without_progress=100, momentum=0.0,
-        learning_rate=0.0, min_gain=0.0, min_grad_norm=1e-5,
-        min_error_diff=0.0)
+    old_stdout = sys.stdout
+    sys.stdout = StringIO()
+    try:
+        _, error, it = _gradient_descent(ObjectiveSmallGradient(), np.zeros(1), 0,
+            n_iter=100, n_iter_without_progress=100, momentum=0.0,
+            learning_rate=0.0, min_gain=0.0, min_grad_norm=1e-5,
+            min_error_diff=0.0, verbose=2)
+    finally:
+        out = sys.stdout.getvalue()
+        sys.stdout.close()
+        sys.stdout = old_stdout
     assert_equal(error, 1.0)
     assert_equal(it, 0)
+    assert("gradient norm" in out)
 
     # Error difference
-    _, error, it = _gradient_descent(ObjectiveSmallGradient(), np.zeros(1), 0,
-        n_iter=100, n_iter_without_progress=100, momentum=0.0,
-        learning_rate=0.0, min_gain=0.0, min_grad_norm=0.0,
-        min_error_diff=0.2)
+    old_stdout = sys.stdout
+    sys.stdout = StringIO()
+    try:
+        _, error, it = _gradient_descent(ObjectiveSmallGradient(), np.zeros(1), 0,
+            n_iter=100, n_iter_without_progress=100, momentum=0.0,
+            learning_rate=0.0, min_gain=0.0, min_grad_norm=0.0,
+            min_error_diff=0.2, verbose=2)
+    finally:
+        out = sys.stdout.getvalue()
+        sys.stdout.close()
+        sys.stdout = old_stdout
     assert_equal(error, 0.9)
     assert_equal(it, 1)
+    assert("error difference" in out)
 
     # Maximum number of iterations without improvement
-    _, error, it = _gradient_descent(flat_function, np.zeros(1), 0,
-        n_iter=100, n_iter_without_progress=10, momentum=0.0,
-        learning_rate=0.0, min_gain=0.0, min_grad_norm=0.0,
-        min_error_diff=-1.0)
+    old_stdout = sys.stdout
+    sys.stdout = StringIO()
+    try:
+        _, error, it = _gradient_descent(flat_function, np.zeros(1), 0,
+            n_iter=100, n_iter_without_progress=10, momentum=0.0,
+            learning_rate=0.0, min_gain=0.0, min_grad_norm=0.0,
+            min_error_diff=-1.0, verbose=2)
+    finally:
+        out = sys.stdout.getvalue()
+        sys.stdout.close()
+        sys.stdout = old_stdout
     assert_equal(error, 0.0)
     assert_equal(it, 11)
+    assert("did not make any progress" in out)
 
     # Maximum number of iterations
-    _, error, it = _gradient_descent(ObjectiveSmallGradient(), np.zeros(1), 0,
-        n_iter=11, n_iter_without_progress=100, momentum=0.0,
-        learning_rate=0.0, min_gain=0.0, min_grad_norm=0.0,
-        min_error_diff=0.0)
+    old_stdout = sys.stdout
+    sys.stdout = StringIO()
+    try:
+        _, error, it = _gradient_descent(ObjectiveSmallGradient(), np.zeros(1), 0,
+            n_iter=11, n_iter_without_progress=100, momentum=0.0,
+            learning_rate=0.0, min_gain=0.0, min_grad_norm=0.0,
+            min_error_diff=0.0, verbose=2)
+    finally:
+        out = sys.stdout.getvalue()
+        sys.stdout.close()
+        sys.stdout = old_stdout
     assert_equal(error, 0.0)
     assert_equal(it, 10)
+    assert("Iteration 10" in out)
 
 
 def test_binary_search():
@@ -184,4 +218,24 @@ def test_cannot_generalize_with_precomputed_affinities():
     assert_raises_regexp(ValueError, "Can only transform training data .*",
                          tsne.transform, X_test)
 
-# TODO tests with verbose = 1 or 2
+
+def test_verbose():
+    tsne = TSNE(verbose=2)
+    X = np.random.randn(5, 2)
+
+    old_stdout = sys.stdout
+    sys.stdout = StringIO()
+    try:
+        tsne.fit_transform(X)
+    finally:
+        out = sys.stdout.getvalue()
+        sys.stdout.close()
+        sys.stdout = old_stdout
+
+    assert("[t-SNE]" in out)
+    assert("Computing pairwise affinities" in out)
+    assert("Computed conditional probabilities" in out)
+    assert("Mean sigma" in out)
+    assert("Finished" in out)
+    assert("early exaggeration" in out)
+    assert("Finished" in out)
