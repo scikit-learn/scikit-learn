@@ -96,8 +96,8 @@ def _kl_divergence(params, P, alpha, n_samples, n_components):
 
 
 def _gradient_descent(objective, p0, it, n_iter, n_iter_without_progress=30,
-                      momentum=0.5, learning_rate=100.0, min_gain=0.01,
-                      min_grad_norm=1e-6, min_error_diff=1e-5, verbose=0,
+                      momentum=0.5, learning_rate=1000.0, min_gain=0.01,
+                      min_grad_norm=1e-7, min_error_diff=1e-7, verbose=0,
                       args=[]):
     """Batch gradient descent with momentum and individual gains.
 
@@ -125,18 +125,18 @@ def _gradient_descent(objective, p0, it, n_iter, n_iter_without_progress=30,
         The momentum generates a weight for previous gradients that decays
         exponentially.
 
-    learning_rate : float, optional (default: 100.0)
+    learning_rate : float, optional (default: 1000.0)
         The learning rate should be extremely high for t-SNE! Values in the
-        range [100.0, 500.0] are common.
+        range [100.0, 1000.0] are common.
 
     min_gain : float, optional (default: 0.01)
         Minimum individual gain for each parameter.
 
-    min_grad_norm : float, optional (default: 1e-6)
+    min_grad_norm : float, optional (default: 1e-7)
         If the gradient norm is below this threshold, the optimization will
         be aborted.
 
-    min_error_diff : float, optional (default: 1e-5)
+    min_error_diff : float, optional (default: 1e-7)
         If the absolute difference of two successive cost function values
         is below this threshold, the optimization will be aborted.
 
@@ -200,7 +200,7 @@ def _gradient_descent(objective, p0, it, n_iter, n_iter_without_progress=30,
         p += update
 
         if verbose >= 2 and (i+1) % 10 == 0:
-            print("[t-SNE] Iteration %d: error = %.6f, gradient norm = %.6f"
+            print("[t-SNE] Iteration %d: error = %.7f, gradient norm = %.7f"
                   % (i + 1, error, grad_norm))
 
     return p, error, i
@@ -320,9 +320,9 @@ class TSNE(BaseEstimator, TransformerMixin):
         in the embedded space. Again, the choice of this parameter is not
         very critical.
 
-    learning_rate : float, optional (default: 100)
+    learning_rate : float, optional (default: 1000)
         The learning rate can be a critical parameter. It should be between
-        100 and 500.
+        100 and 1000.
 
     n_iter : int, optional (default: 1000)
         Maximum number of iterations for the optimization. Should be at
@@ -347,7 +347,7 @@ class TSNE(BaseEstimator, TransformerMixin):
         numpy.random singleton.
     """
     def __init__(self, n_components=2, perplexity=30.0,
-                 early_exaggeration=4.0, learning_rate=100.0, n_iter=1000,
+                 early_exaggeration=4.0, learning_rate=1000.0, n_iter=1000,
                  affinity="sqeuclidean", n_neighbors=3,
                  fit_inverse_transform=False, verbose=0, random_state=None):
         if fit_inverse_transform and affinity == "precomputed":
@@ -419,8 +419,17 @@ class TSNE(BaseEstimator, TransformerMixin):
 
     def _tsne(self, P, alpha, n_samples, random_state):
         """Runs t-SNE."""
+        # t-SNE minimizes the Kullback-Leiber divergence of the Gaussians P
+        # and the Student's t-distributions Q. The optimization algorithm that
+        # we use is batch gradient descent with three stages:
+        # * early exaggeration with momentum 0.5
+        # * early exaggeration with momentum 0.8
+        # * final optimization with momentum 0.8
+        # The embedding is initialized with iid samples from Gaussians with
+        # standard deviation 1e-4.
+
         # Initialize embedding randomly
-        X_embedded = random_state.randn(n_samples, self.n_components)
+        X_embedded = random_state.randn(n_samples, self.n_components) * 1e-4
         params = X_embedded.ravel()
 
         # Early exaggeration
