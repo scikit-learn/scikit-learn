@@ -19,7 +19,7 @@ from ..metrics.scorer import check_scoring
 from .base import SelectorMixin
 
 
-iff_estimator_has_method = make_delegation_decorator('estimator_')
+iff_estimator_has_method = make_delegation_decorator('estimator')
 
 
 class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
@@ -216,6 +216,10 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
     @iff_estimator_has_method
     def predict_proba(self, X):
         return self.estimator_.predict_proba(self.transform(X))
+
+    @iff_estimator_has_method
+    def predict_log_proba(self, X):
+        return self.estimator_.predict_log_proba(self.transform(X))
 
 
 class RFECV(RFE, MetaEstimatorMixin):
