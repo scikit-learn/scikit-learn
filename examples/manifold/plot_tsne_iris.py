@@ -3,7 +3,11 @@
 t-SNE Visualization of Iris Dataset
 ===================================
 
-TODO
+The iris dataset will be split randomly in a training set and a test set. We
+use the training set to learn a two-dimensional embedding of the training data
+which is displayed on the left side. It is possible to generalize and map the
+test data to the embedded space as well. This is shown on the right side of
+the plot.
 """
 
 import numpy as np
