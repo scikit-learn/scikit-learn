@@ -44,6 +44,7 @@ CLF_TREES = {
 }
 SPARSE_CLF_TREES = {
     "DecisionTreeClassifier": DecisionTreeClassifier,
+    "ExtraTreeClassifier": ExtraTreeClassifier,
 }
 
 REG_TREES = {
@@ -63,8 +64,8 @@ X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
 y = [-1, -1, -1, 1, 1, 1]
 T = [[-1, -1], [2, 2], [3, 2]]
 true_result = [-1, 1, 1]
-X_sparse = sp.sparse.csc_matrix(X)
-T_sparse = sp.sparse.csc_matrix(T)
+X_sparse = sp.sparse.csc_matrix(X, dtype=np.float32)
+T_sparse = sp.sparse.csc_matrix(T, dtype=np.float32)
 
 # also load the iris dataset
 # and randomly permute it
@@ -204,7 +205,7 @@ def test_boston():
 
 def test_20news():
     """Check consistency on dataset 20news."""
-    for (name, Tree), criterion in product(CLF_TREES.items(), CLF_CRITERIONS):
+    for (name, Tree), criterion in product(SPARSE_CLF_TREES.items(), CLF_CRITERIONS):
         clf = Tree(criterion=criterion, random_state=0)
         clf.fit(twentynews_train.data, twentynews_train.target)
         score = accuracy_score(clf.predict(twentynews_test.data), twentynews_test.target)
