@@ -345,6 +345,22 @@ class TSNE(BaseEstimator, TransformerMixin):
     random_state : int or RandomState instance or None (default)
         Pseudo Random Number generator seed control. If None, use the
         numpy.random singleton.
+
+    Attributes
+    ----------
+    `embedding_` : array-like, shape (n_samples, n_components)
+        Stores the embedding vectors.
+
+    `training_data_` : array-like, shape (n_samples, n_features)
+        Stores the training data.
+
+    `nbrs_` : sklearn.neighbors.NearestNeighbors instance
+        Stores nearest neighbors instance, including BallTree or KDtree
+        if applicable.
+
+    `nbrs_embedding_` : sklearn.neighbors.NearestNeighbors instance
+        Stores nearest neighbors instance in the embedded space, including
+        BallTree or KDtree if applicable.
     """
     def __init__(self, n_components=2, perplexity=30.0,
                  early_exaggeration=4.0, learning_rate=1000.0, n_iter=1000,
