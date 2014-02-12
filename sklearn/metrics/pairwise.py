@@ -457,7 +457,7 @@ def manhattan_distances(X, Y=None, sum_over_features=True,
         D.sum_duplicates()
         D = np.abs(D)
         if sum_over_features:
-            D = D.sum(axis=1).reshape((X.shape[0], Y.shape[0]))
+            D = D.sum(axis=1).A.reshape((X.shape[0], Y.shape[0]))
         return D
 
     if temporary_size > size_threshold and sum_over_features:

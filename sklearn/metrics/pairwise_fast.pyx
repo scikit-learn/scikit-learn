@@ -46,7 +46,7 @@ def _chi2_kernel_fast(floating_array_2d_t X,
 @cython.cdivision(True)
 def _manhattan_distances_sparse(X, Y):
     cdef:
-        int i, r_, r, idx
+        int i, j, r_, r, idx
         int n_x = len(X.data)
         int n_y = len(Y.data)
         int n_clusters = Y.shape[0]
@@ -67,16 +67,16 @@ def _manhattan_distances_sparse(X, Y):
     idx = 0
     for i in xrange(n_x):
         r_ = xrow[i] * n_clusters
-        for y in xrange(n_clusters):
-            r = r_ + y
+        for j in xrange(n_clusters):
+            r = r_ + j
             rows[idx] = r
             cols[idx] = xcol[i]
             data[idx] = xdata[i]
             idx += 1
 
     for i in xrange(n_y):
-        for x in xrange(n_documents):
-            r = x * n_clusters + yrow[i]
+        for j in xrange(n_documents):
+            r = j * n_clusters + yrow[i]
             rows[idx] = r
             cols[idx] = ycol[i]
             data[idx] = -ydata[i]
