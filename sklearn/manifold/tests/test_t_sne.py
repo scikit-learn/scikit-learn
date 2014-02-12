@@ -142,27 +142,27 @@ def test_transform_inverse_transform():
 
 def test_precomputed_affinities_inverse_transform():
     """Cannot fit inverse tranform with precomputed affinities."""
-    assert_raises_regexp(ValueError, "Cannot fit_inverse_transform",
+    assert_raises_regexp(ValueError, "Cannot fit_inverse_transform .*",
         TSNE, affinity="precomputed", fit_inverse_transform=True)
 
 
 def test_early_exaggeration_too_small():
     """Early exaggeration factor must be >= 1."""
     tsne = TSNE(early_exaggeration=0.99)
-    assert_raises_regexp(ValueError, "early_exaggeration", tsne.fit,
+    assert_raises_regexp(ValueError, "early_exaggeration .*", tsne.fit,
                          np.array([[0.0]]))
 
 
 def test_too_few_iterations():
     """Number of gradient descent iterations must be at least 200."""
     tsne = TSNE(n_iter=199)
-    assert_raises_regexp(ValueError, "n_iter", tsne.fit, np.array([[0.0]]))
+    assert_raises_regexp(ValueError, "n_iter .*", tsne.fit, np.array([[0.0]]))
 
 
 def test_non_square_precomputed_affinities():
-    """Precomputed affinity matrices must be sqaure matrices."""
+    """Precomputed affinity matrices must be square matrices."""
     tsne = TSNE(affinity="precomputed")
-    assert_raises_regexp(ValueError, "square affinity matrix", tsne.fit,
+    assert_raises_regexp(ValueError, ".* square affinity matrix", tsne.fit,
                          np.array([[0.0], [1.0]]))
 
 
@@ -171,7 +171,8 @@ def test_inverse_transform_not_fitted():
     X = np.ones((2, 2))
     tsne = TSNE(fit_inverse_transform=False)
     tsne.fit(X)
-    assert_raises_regexp(ValueError, "not fitted", tsne.inverse_transform, X)
+    assert_raises_regexp(ValueError, ".* not fitted.*", tsne.inverse_transform,
+                         X)
 
 
 def test_cannot_generalize_with_precomputed_affinities():
@@ -180,7 +181,7 @@ def test_cannot_generalize_with_precomputed_affinities():
     X_test = np.zeros((2, 2))
     tsne = TSNE(affinity="precomputed")
     tsne.fit(X_train)
-    assert_raises_regexp(ValueError, "Can only transform training data",
+    assert_raises_regexp(ValueError, "Can only transform training data .*",
                          tsne.transform, X_test)
 
 # TODO tests with verbose = 1 or 2
