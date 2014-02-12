@@ -933,6 +933,20 @@ def test_ranked_sample_mask():
         assert(set(inbag).intersection(set(oob)) == set())
 
 
+def test_lambdamart_gain_equivalence():
+    lm_exp = LambdaMART(n_estimators=1)
+    lm_lin = LambdaMART(n_estimators=1, gain=None)
+    y = np.array([2, 1, 0, 0, 1, 2])
+    group = [0, 0, 0, 1, 1, 1]
+
+    lm_exp.fit(X, y, group=group)
+    lm_lin.fit(X, 2**y - 1, group=group)
+
+    assert_array_equal(lm_exp.predict(X), lm_lin.predict(X))
+    assert(lm_exp.score(X, y, group=group) ==
+           lm_lin.score(X, 2**y - 1, group=group))
+
+
 if __name__ == "__main__":
     import nose
     nose.runmodule()
