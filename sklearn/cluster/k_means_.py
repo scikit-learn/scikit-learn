@@ -60,6 +60,13 @@ def _k_init(X, n_clusters, x_squared_norms, random_state,
         Set to None to make the number of trials depend logarithmically
         on the number of seeds (2+log(k)); this is the default.
 
+    metric: str, ('L1', 'L2', 'cosine'), default: 'L2'
+        The distance measure to use for computing the nearest neighbours of
+        centroids. For 'L2' and 'cosine' the new centroids are the mean (
+        along each feature dimension) of the set of vectors assigned to that
+        cluster. In the case of 'L1' the centroids are computed using the
+        median along each feature dimension.
+
     Notes
     -----
     Selects initial cluster centers for k-mean clustering in a smart way
@@ -220,6 +227,13 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances=True,
         (n_cpus + 1 + n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
         are used.
 
+    metric: str, ('L1', 'L2', 'cosine'), default: 'L2'
+        The distance measure to use for computing the nearest neighbours of
+        centroids. For 'L2' and 'cosine' the new centroids are the mean (
+        along each feature dimension) of the set of vectors assigned to that
+        cluster. In the case of 'L1' the centroids are computed using the
+        median along each feature dimension.
+
     Returns
     -------
     centroid : float ndarray with shape (k, n_features)
@@ -337,6 +351,13 @@ def _kmeans_single(X, n_clusters, x_squared_norms, max_iter=300,
 
         If a callable is passed, it should take arguments X, k and
         and a random state and return an initialization.
+
+    metric: str, ('L1', 'L2', 'cosine'), default: 'L2'
+        The distance measure to use for computing the nearest neighbours of
+        centroids. For 'L2' and 'cosine' the new centroids are the mean (
+        along each feature dimension) of the set of vectors assigned to that
+        cluster. In the case of 'L1' the centroids are computed using the
+        median along each feature dimension.
 
     tol: float, optional
         The relative increment in the results before declaring convergence.
@@ -459,6 +480,13 @@ def _labels_inertia(X, centers, x_squared_norms=None, precompute_distances=True,
         Pre-allocated array to be filled in with each sample's distance
         to the closest center.
 
+    metric: str, ('L1', 'L2', 'cosine'), default: 'L2'
+        The distance measure to use for computing the nearest neighbours of
+        centroids. For 'L2' and 'cosine' the new centroids are the mean (
+        along each feature dimension) of the set of vectors assigned to that
+        cluster. In the case of 'L1' the centroids are computed using the
+        median along each feature dimension.
+
     Returns
     -------
     labels: int array of shape(n)
@@ -530,6 +558,13 @@ def _init_centroids(X, k, init, random_state=None, x_squared_norms=None,
         initialization (sometimes at the expense of accuracy): the
         only algorithm is initialized by running a batch KMeans on a
         random subset of the data. This needs to be larger than k.
+
+    metric: str, ('L1', 'L2', 'cosine'), default: 'L2'
+        The distance measure to use for computing the nearest neighbours of
+        centroids. For 'L2' and 'cosine' the new centroids are the mean (
+        along each feature dimension) of the set of vectors assigned to that
+        cluster. In the case of 'L1' the centroids are computed using the
+        median along each feature dimension.
 
     Returns
     -------
@@ -638,6 +673,13 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         The generator used to initialize the centers. If an integer is
         given, it fixes the seed. Defaults to the global numpy random
         number generator.
+
+    metric: str, ('L1', 'L2', 'cosine'), default: 'L2'
+        The distance measure to use for computing the nearest neighbours of
+        centroids. For 'L2' and 'cosine' the new centroids are the mean (
+        along each feature dimension) of the set of vectors assigned to that
+        cluster. In the case of 'L1' the centroids are computed using the
+        median along each feature dimension.
 
     Attributes
     ----------
