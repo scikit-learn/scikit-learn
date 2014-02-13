@@ -36,8 +36,8 @@ def _joint_probabilities(affinities, desired_perplexity, verbose):
     """
     # Compute conditional probabilities such that they approximately match
     # the desired perplexity
-    conditional_P = _binary_search._binary_search_perplexity(affinities,
-        desired_perplexity, verbose)
+    conditional_P = _binary_search._binary_search_perplexity(
+        affinities, desired_perplexity, verbose)
     P = conditional_P + conditional_P.T
     sum_P = np.maximum(np.sum(P), MACHINE_EPSILON)
     P = np.maximum(squareform(P) / sum_P, MACHINE_EPSILON)
@@ -193,7 +193,7 @@ def _gradient_descent(objective, p0, it, n_iter, n_iter_without_progress=30,
         inc = update * grad >= 0.0
         dec = np.invert(inc)
         gains[inc] += 0.05
-        gains[dec] *= 0.95;
+        gains[dec] *= 0.95
         np.clip(gains, min_gain, np.inf)
         grad *= gains
         update = momentum * update - learning_rate * grad
@@ -213,7 +213,8 @@ def trustworthiness(X, X_embedded, n_neighbors=5, precomputed=False):
 
     .. math::
 
-        T(k) = 1 - \frac{2}{nk (2n - 3k - 1)} \sum^n_{i=1} \sum_{j \in U^{(k)}_i (r(i, j) - k)}
+        T(k) = 1 - \frac{2}{nk (2n - 3k - 1)} \sum^n_{i=1}
+            \sum_{j \in U^{(k)}_i (r(i, j) - k)}
 
     where :math:`r(i, j)` is the rank of the embedded datapoint j
     according to the pairwise distances between the embedded datapoints,
@@ -292,15 +293,6 @@ class TSNE(BaseEstimator, TransformerMixin):
     embedded space to obtain the transformed test sample. Note that
     this does not work if the affinity matrix is precomputed.
 
-    .. topic:: References:
-
-        * `"t-Distributed Stochastic Neighbor Embedding"
-        <http://homepage.tudelft.nl/19j49/t-SNE.html>`_
-        L.J.P. van der Maaten
-        * `"Visualizing High-Dimensional Data Using t-SNE"
-        <http://jmlr.csail.mit.edu/papers/volume9/vandermaaten08a/vandermaaten08a.pdf>`_
-        L.J.P. van der Maaten, G.E. Hinton, 2008
-
     Parameters
     ----------
     n_components : int, optional (default: 2)
@@ -361,6 +353,29 @@ class TSNE(BaseEstimator, TransformerMixin):
     `nbrs_embedding_` : sklearn.neighbors.NearestNeighbors instance
         Stores nearest neighbors instance in the embedded space, including
         BallTree or KDtree if applicable.
+
+    Examples
+    --------
+
+    >>> import numpy as np
+    >>> from sklearn.manifold import TSNE
+    >>> X = np.array([[0, 0, 0], [0, 1, 1], [1, 0, 1], [1, 1, 1]])
+    >>> model = TSNE(n_components=2)
+    >>> model.fit(X)
+    TSNE(affinity='sqeuclidean', early_exaggeration=4.0,
+       fit_inverse_transform=False, learning_rate=1000.0, n_components=2,
+       n_iter=1000, n_neighbors=3, perplexity=30.0, random_state=None,
+       verbose=0)
+
+    References
+    ----------
+
+    [1] L.J.P. van der Maaten. t-Distributed Stochastic Neighbor Embedding
+        http://homepage.tudelft.nl/19j49/t-SNE.html
+
+    [2] L.J.P. van der Maaten, G.E. Hinton. Visualizing High-Dimensional Data
+        Using t-SNE. Journal of Machine Learning Research 9(Nov):2579-2605,
+        2008.
     """
     def __init__(self, n_components=2, perplexity=30.0,
                  early_exaggeration=4.0, learning_rate=1000.0, n_iter=1000,
@@ -451,12 +466,12 @@ class TSNE(BaseEstimator, TransformerMixin):
 
         # Early exaggeration
         P *= self.early_exaggeration
-        params, error, it = _gradient_descent(_kl_divergence, params,
-            it=0, n_iter=50, momentum=0.5, learning_rate=self.learning_rate,
-            verbose=self.verbose, args=[P, alpha, n_samples,
-                                        self.n_components])
-        params, error, it = _gradient_descent(_kl_divergence, params,
-            it=it + 1, n_iter=100, momentum=0.8,
+        params, error, it = _gradient_descent(
+            _kl_divergence, params, it=0, n_iter=50, momentum=0.5,
+            learning_rate=self.learning_rate, verbose=self.verbose,
+            args=[P, alpha, n_samples, self.n_components])
+        params, error, it = _gradient_descent(
+            _kl_divergence, params, it=it + 1, n_iter=100, momentum=0.8,
             learning_rate=self.learning_rate, verbose=self.verbose,
             args=[P, alpha, n_samples, self.n_components])
         if self.verbose:
@@ -465,10 +480,11 @@ class TSNE(BaseEstimator, TransformerMixin):
 
         # Final optimization
         P /= self.early_exaggeration
-        params, error, it = _gradient_descent(_kl_divergence, params,
-            it=it + 1, n_iter=self.n_iter, momentum=0.8,
-            learning_rate=self.learning_rate, verbose=self.verbose,
-            args=[P, alpha, n_samples, self.n_components])
+        params, error, it = _gradient_descent(
+            _kl_divergence, params, it=it + 1, n_iter=self.n_iter,
+            momentum=0.8, learning_rate=self.learning_rate,
+            verbose=self.verbose, args=[P, alpha, n_samples,
+                                        self.n_components])
         if self.verbose:
             print("[t-SNE] Error after %d iterations: %f" % (it + 1, error))
 
