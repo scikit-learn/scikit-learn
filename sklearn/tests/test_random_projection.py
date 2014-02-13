@@ -343,3 +343,30 @@ def test_warning_n_components_greater_than_n_features():
             RandomProjection(n_components=n_features + 1).fit(data)
             assert_equal(len(w), 1)
             assert issubclass(w[-1].category, UserWarning)
+
+
+def test_n_components_as_float():
+    n_features = 20
+    X, _ = make_sparse_random_data(5, n_features, int(n_features / 4))
+
+    for RandomProjection in all_RandomProjection:
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+
+            rp = RandomProjection(n_components=0.5).fit(X)
+            assert_equal(rp.n_components_, 10)
+
+            rp = RandomProjection(n_components=1.5).fit(X)
+            assert_equal(rp.n_components_, 30)
+
+            rp = RandomProjection(n_components=1.).fit(X)
+            assert_equal(rp.n_components_, 20)
+
+            rp = RandomProjection(n_components=1).fit(X)
+            assert_equal(rp.n_components_, 1)
+
+            assert_raises(ValueError, RandomProjection(n_components=-0.1).fit,
+                          X)
+
+            assert_raises(ValueError, RandomProjection(n_components=0.).fit,
+                          X)
