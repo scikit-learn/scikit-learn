@@ -271,19 +271,18 @@ def trustworthiness(X, X_embedded, n_neighbors=5, precomputed=False):
 class TSNE(BaseEstimator, TransformerMixin):
     """t-distributed Stochastic Neighbor Embedding.
 
-    t-SNE is a tool to visualize high-dimensional data. It converts
+    t-SNE [1] is a tool to visualize high-dimensional data. It converts
     similarities between data points to joint probabilities and tries
     to minimize the Kullback-Leibler divergence between the joint
     probabilities of the low-dimensional embedding and the
-    high-dimensional data.
-
-    t-SNE has a cost function that is not convex, i.e. with different
-    initializations we can get different results.
+    high-dimensional data. t-SNE has a cost function that is not convex,
+    i.e. with different initializations we can get different results.
 
     It is highly recommended to use another dimensionality reduction
     method (e.g. PCA) to reduce the number of dimensions to a reasonable
     amount (e.g. 50) if the number of features is very high. This will
-    often improve the visualization.
+    often improve the visualization. For more tips see Laurens van der
+    Maaten's FAQ [2].
 
     Usually t-SNE does not generalize, i.e. it can only compute the
     embedding of the training data. However, we use a heuristic to
@@ -347,12 +346,10 @@ class TSNE(BaseEstimator, TransformerMixin):
         Stores the training data.
 
     `nbrs_` : sklearn.neighbors.NearestNeighbors instance
-        Stores nearest neighbors instance, including BallTree or KDtree
-        if applicable.
+        Stores nearest neighbors instance in the original space.
 
     `nbrs_embedding_` : sklearn.neighbors.NearestNeighbors instance
-        Stores nearest neighbors instance in the embedded space, including
-        BallTree or KDtree if applicable.
+        Stores nearest neighbors instance in the embedded space.
 
     Examples
     --------
@@ -360,22 +357,20 @@ class TSNE(BaseEstimator, TransformerMixin):
     >>> import numpy as np
     >>> from sklearn.manifold import TSNE
     >>> X = np.array([[0, 0, 0], [0, 1, 1], [1, 0, 1], [1, 1, 1]])
-    >>> model = TSNE(n_components=2)
+    >>> model = TSNE(n_components=2, random_state=0)
     >>> model.fit(X)
     TSNE(affinity='sqeuclidean', early_exaggeration=4.0,
        fit_inverse_transform=False, learning_rate=1000.0, n_components=2,
-       n_iter=1000, n_neighbors=3, perplexity=30.0, random_state=None,
-       verbose=0)
+       n_iter=1000, n_neighbors=3, perplexity=30.0, random_state=0, verbose=0)
 
     References
     ----------
 
-    [1] L.J.P. van der Maaten. t-Distributed Stochastic Neighbor Embedding
-        http://homepage.tudelft.nl/19j49/t-SNE.html
+    [1] van der Maaten, L.J.P.; Hinton, G.E. Visualizing High-Dimensional Data
+        Using t-SNE. Journal of Machine Learning Research 9:2579-2605, 2008.
 
-    [2] L.J.P. van der Maaten, G.E. Hinton. Visualizing High-Dimensional Data
-        Using t-SNE. Journal of Machine Learning Research 9(Nov):2579-2605,
-        2008.
+    [2] van der Maaten, L.J.P. t-Distributed Stochastic Neighbor Embedding
+        http://homepage.tudelft.nl/19j49/t-SNE.html
     """
     def __init__(self, n_components=2, perplexity=30.0,
                  early_exaggeration=4.0, learning_rate=1000.0, n_iter=1000,
