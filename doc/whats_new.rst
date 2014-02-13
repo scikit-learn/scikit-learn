@@ -23,17 +23,6 @@ Changelog
 
    - Memory improvements of decision trees, by `Arnaud Joly`_.
 
-   - Speed improvement of the :mod:`sklearn.ensemble.gradient_boosting` module.
-     By `Gilles Louppe`_ and `Peter Prettenhofer`_.
-
-   - Memory improvements of extra trees and random forest by
-     `Arnaud Joly`_.
-
-   - Reduce memory usage and overhead when fitting and predicting with forests
-     of randomized trees in parallel with ``n_jobs != 1`` by leveraging new
-     threading backend of joblib 0.8 and releasing the GIL in the tree fitting
-     Cython code.  By `Olivier Grisel`_ and `Gilles Louppe`_.
-
    - Decision trees can now be built in best-first manner by using ``max_leaf_nodes``
      as the stopping criteria. Refactored the tree code to use either a
      stack or a priority queue for tree building.
