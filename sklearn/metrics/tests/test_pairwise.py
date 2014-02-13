@@ -241,8 +241,11 @@ def test_pairwise_distances_argmin_min():
     assert_array_almost_equal(E, [1., 1.])
 
     # sparse matrix case
-    assert_raises(ValueError,
-                  pairwise_distances_argmin_min, Xsp, Ysp, metric="manhattan")
+    D, E = pairwise_distances_argmin_min(Xsp, Ysp, metric="manhattan")
+    D2 = pairwise_distances_argmin(Xsp, Ysp, metric="manhattan")
+    assert_array_almost_equal(D, [0, 1])
+    assert_array_almost_equal(D2, [0, 1])
+    assert_array_almost_equal(E, [1., 1.])
 
     # Non-euclidean Scipy distance (callable)
     D, E = pairwise_distances_argmin_min(X, Y, metric=minkowski,

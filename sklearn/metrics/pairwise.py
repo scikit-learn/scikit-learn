@@ -41,7 +41,7 @@ kernel:
 import numpy as np
 from scipy.spatial import distance
 from scipy.sparse import csr_matrix, coo_matrix
-from scipy.sparse import issparse, isspmatrix_coo
+from scipy.sparse import issparse, isspmatrix_coo, isspmatrix_csr
 
 from ..utils import array2d, atleast2d_or_csr
 from ..utils import gen_even_slices
@@ -435,30 +435,20 @@ def manhattan_distances(X, Y=None, sum_over_features=True,
     """
 
     X, Y = check_pairwise_arrays(X, Y)
+    sparse_input = False
+    if issparse(X) or issparse(Y):
+        sparse_input = True
+        if not issparse(X):
+            X = coo_matrix(X)
+
+        if not issparse(Y):
+            Y = coo_matrix(Y)
+        elif not isspmatrix_coo(Y):
+            Y = Y.tocoo()
+
     temporary_size = X.size * Y.shape[-1]
     # Convert to bytes
     temporary_size *= X.dtype.alignment
-
-    if issparse(X) or issparse(Y):
-        if issparse(X) and not isspmatrix_coo(X):
-            X = X.tocoo()
-        elif not issparse(X):
-            X = coo_matrix(X)
-
-        if issparse(Y) and not isspmatrix_coo(Y):
-            Y = Y.tocoo()
-        elif not issparse(Y):
-            Y = coo_matrix(Y)
-
-        data, rows, cols = _manhattan_distances_sparse(X, Y)
-        shape = (X.shape[0] * Y.shape[0], X.shape[1])
-        D = coo_matrix((data, (rows, cols)), shape=shape, dtype=np.float64)
-        D = D.tocsr()
-        D.sum_duplicates()
-        D = np.abs(D)
-        if sum_over_features:
-            D = D.sum(axis=1).A.reshape((X.shape[0], Y.shape[0]))
-        return D
 
     if temporary_size > size_threshold and sum_over_features:
         # Broadcasting the full thing would be too big: it's on the order
@@ -467,20 +457,50 @@ def manhattan_distances(X, Y=None, sum_over_features=True,
         index = 0
         increment = 1 + int(size_threshold / float(temporary_size) *
                             X.shape[0])
+
+        if sparse_input and not isspmatrix_csr(X):
+            # X has to be csr to support slicing
+            X = X.tocsr()
+
         while index < X.shape[0]:
             this_slice = slice(index, index + increment)
-            tmp = X[this_slice, np.newaxis, :] - Y[np.newaxis, :, :]
-            tmp = np.abs(tmp, tmp)
-            tmp = np.sum(tmp, axis=2)
+            if sparse_input:
+                X_n = this_slice.stop - this_slice.start
+                shape = ((X_n) * Y.shape[0], X.shape[1])
+                X_sub = X[this_slice]
+                data, rows, cols = _manhattan_distances_sparse(X_sub.tocoo(), Y)
+                tmp = coo_matrix((data, (rows, cols)), shape=shape,
+                                 dtype=np.float64)
+                tmp = tmp.tocsr()
+                tmp.sum_duplicates()
+                tmp = np.abs(tmp)
+                tmp = tmp.sum(axis=1).A.reshape(((X_n), Y.shape[0]))
+            else:
+                this_slice = slice(index, index + increment)
+                tmp = X[this_slice, np.newaxis, :] - Y[np.newaxis, :, :]
+                tmp = np.abs(tmp, tmp)
+                tmp = np.sum(tmp, axis=2)
             D[this_slice] = tmp
             index += increment
     else:
-        D = X[:, np.newaxis, :] - Y[np.newaxis, :, :]
-        D = np.abs(D, D)
-        if sum_over_features:
-            D = np.sum(D, axis=2)
+        if sparse_input:
+            if not isspmatrix_coo(X):
+                X = X.tocoo()
+            data, rows, cols = _manhattan_distances_sparse(X, Y)
+            shape = (X.shape[0] * Y.shape[0], X.shape[1])
+            D = coo_matrix((data, (rows, cols)), shape=shape, dtype=np.float64)
+            D = D.tocsr()
+            D.sum_duplicates()
+            D = np.abs(D)
+            if sum_over_features:
+                D = D.sum(axis=1).A.reshape((X.shape[0], Y.shape[0]))
         else:
-            D = D.reshape((-1, X.shape[1]))
+            D = X[:, np.newaxis, :] - Y[np.newaxis, :, :]
+            D = np.abs(D, D)
+            if sum_over_features:
+                D = np.sum(D, axis=2)
+            else:
+                D = D.reshape((-1, X.shape[1]))
     return D
 
 
