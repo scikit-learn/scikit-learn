@@ -91,7 +91,7 @@ cpdef np.ndarray[np.float_t, ndim=2] _binary_search_perplexity(
                 else:
                     beta = (beta + beta_max) / 2.0
             else:
-                beta_max = beta;
+                beta_max = beta
                 if beta_min == -math.INFINITY:
                     beta /= 2.0
                 else:
