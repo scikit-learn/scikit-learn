@@ -463,12 +463,12 @@ def manhattan_distances(X, Y=None, sum_over_features=True,
             X = X.tocsr()
 
         while index < X.shape[0]:
-            this_slice = slice(index, index + increment)
+            this_slice = slice(index, min(index + increment, X.shape[0]))
             if sparse_input:
                 X_n = this_slice.stop - this_slice.start
-                shape = ((X_n) * Y.shape[0], X.shape[1])
                 X_sub = X[this_slice]
                 data, rows, cols = _manhattan_distances_sparse(X_sub.tocoo(), Y)
+                shape = ((X_n) * Y.shape[0], X.shape[1])
                 tmp = coo_matrix((data, (rows, cols)), shape=shape,
                                  dtype=np.float64)
                 tmp = tmp.tocsr()
