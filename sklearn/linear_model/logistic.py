@@ -9,12 +9,13 @@ from scipy import optimize
 from .base import LinearClassifierMixin, SparseCoefMixin, BaseEstimator
 from ..feature_selection.from_model import _LearntSelectorMixin
 from ..svm.base import BaseLibLinear
-from ..preprocessing import LabelEncoder
+from ..preprocessing import LabelEncoder, LabelBinarizer
 from ..cross_validation import check_cv
 from ..metrics import SCORERS
 from ..externals.joblib import Parallel, delayed
 from ..externals import six
 
+from ..utils import check_arrays
 from ..utils.optimize import newton_cg
 
 class LogisticRegression(BaseLibLinear, LinearClassifierMixin,
@@ -304,11 +305,14 @@ def logistic_regression(X, y, C=1., fit_intercept=False, w0=None,
                         solver='newton', max_iter=100, gtol=1e-4,
                         tol=1e-4, verbose=0,
                         ):
-    # Convert y to [-1, 1] values
-    assert len(np.unique(y)) == 2
-    y = y - y.mean()
-    y = np.sign(y)
-    y = y.astype(np.float)
+    
+    X, y = check_arrays(X, y)
+    lb = LabelBinarizer(neg_label = -1, pos_label = +1)
+    y = lb.fit_transform(y)
+    if len(lb.classes_) != 2:
+        raise ValueError("Logistic Regression currently supports only " 
+                          "binary Classification")
+    y = np.ravel(y)
 
     if w0 is None:
         if fit_intercept:

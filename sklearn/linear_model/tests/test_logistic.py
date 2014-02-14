@@ -158,7 +158,7 @@ def test_liblinear_random_state():
     assert_array_almost_equal(lr1.coef_, lr2.coef_)
 
 
-def test__logistic_loss_and_grad():
+def test_logistic_loss_and_grad():
     X_ref, y = datasets.make_classification(n_samples=20)
     n_features = X_ref.shape[1]
 
@@ -249,5 +249,3 @@ def test__logistic_loss_grad_hess():
                                                     X, y, alpha=1.)
         np.testing.assert_allclose(loss_interp, loss_interp_2)
         np.testing.assert_allclose(grad_interp, grad_interp_2)
-
-
