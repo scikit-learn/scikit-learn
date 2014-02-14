@@ -786,6 +786,7 @@ class GaussianHMM(_BaseHMM):
                 cv.shape = (1, 1)
             self._covars_ = distribute_covar_matrix_to_match_covariance_type(
                 cv, self._covariance_type, self.n_components)
+            self._covars_[self._covars_==0] = 1e-5
 
     def _initialize_sufficient_statistics(self):
         stats = super(GaussianHMM, self)._initialize_sufficient_statistics()
@@ -850,7 +851,7 @@ class GaussianHMM(_BaseHMM):
                           - 2 * self._means_ * stats['obs']
                           + self._means_ ** 2 * denom)
                 cv_den = max(covars_weight - 1, 0) + denom
-                self._covars_ = (covars_prior + cv_num) / cv_den
+                self._covars_ = (covars_prior + cv_num) / np.maximum(cv_den, 1e-5)
                 if self._covariance_type == 'spherical':
                     self._covars_ = np.tile(
                         self._covars_.mean(1)[:, np.newaxis],
