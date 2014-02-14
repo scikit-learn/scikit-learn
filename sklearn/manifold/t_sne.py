@@ -463,10 +463,12 @@ class TSNE(BaseEstimator, TransformerMixin):
         P *= self.early_exaggeration
         params, error, it = _gradient_descent(
             _kl_divergence, params, it=0, n_iter=50, momentum=0.5,
+            min_grad_norm=0.0, min_error_diff=0.0,
             learning_rate=self.learning_rate, verbose=self.verbose,
             args=[P, alpha, n_samples, self.n_components])
         params, error, it = _gradient_descent(
             _kl_divergence, params, it=it + 1, n_iter=100, momentum=0.8,
+            min_grad_norm=0.0, min_error_diff=0.0,
             learning_rate=self.learning_rate, verbose=self.verbose,
             args=[P, alpha, n_samples, self.n_components])
         if self.verbose:
