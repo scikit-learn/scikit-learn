@@ -1273,6 +1273,7 @@ cdef class RandomSplitter(Splitter):
         cdef SIZE_t n_features = self.n_features
 
         cdef DTYPE_t* X = self.X
+        cdef DTYPE_t* Xf = self.feature_values
         cdef SIZE_t X_sample_stride = self.X_sample_stride
         cdef SIZE_t X_fx_stride = self.X_fx_stride
         cdef SIZE_t max_features = self.max_features
@@ -1317,10 +1318,12 @@ cdef class RandomSplitter(Splitter):
             min_feature_value = X[X_sample_stride * samples[start] +
                                   X_fx_stride * current_feature]
             max_feature_value = min_feature_value
+            Xf[start] = min_feature_value
 
             for p in range(start + 1, end):
                 current_feature_value = X[X_sample_stride * samples[p] +
                                           X_fx_stride * current_feature]
+                Xf[p] = current_feature_value
 
                 if current_feature_value < min_feature_value:
                     min_feature_value = current_feature_value
@@ -1344,12 +1347,15 @@ cdef class RandomSplitter(Splitter):
                 p = start
 
                 while p < partition_end:
-                    if X[X_sample_stride * samples[p] +
-                         X_fx_stride * current_feature] <= current_threshold:
+                    current_feature_value = Xf[p]
+                    if current_feature_value <= current_threshold:
                         p += 1
 
                     else:
                         partition_end -= 1
+
+                        Xf[p] = Xf[partition_end]
+                        Xf[partition_end] = current_feature_value
 
                         tmp = samples[partition_end]
                         samples[partition_end] = samples[p]
