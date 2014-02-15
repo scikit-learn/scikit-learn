@@ -106,9 +106,9 @@ cv_score -= cv_score[0]
 cv_best_iter = x[np.argmin(cv_score)]
 
 # color brew for the three curves
-oob_color = map(lambda x: x / 256.0, (190, 174, 212))
-test_color = map(lambda x: x / 256.0, (127, 201, 127))
-cv_color = map(lambda x: x / 256.0, (253, 192, 134))
+oob_color = list(map(lambda x: x / 256.0, (190, 174, 212)))
+test_color = list(map(lambda x: x / 256.0, (127, 201, 127)))
+cv_color = list(map(lambda x: x / 256.0, (253, 192, 134)))
 
 # plot curves and vertical lines for best iterations
 plt.plot(x, cumsum, label='OOB loss', color=oob_color)
@@ -122,7 +122,7 @@ plt.axvline(x=cv_best_iter, color=cv_color)
 xticks = plt.xticks()
 xticks_pos = np.array(xticks[0].tolist() +
                       [oob_best_iter, cv_best_iter, test_best_iter])
-xticks_label = np.array(map(lambda t: int(t), xticks[0]) +
+xticks_label = np.array(list(map(lambda t: int(t), xticks[0])) +
                         ['OOB', 'CV', 'Test'])
 ind = np.argsort(xticks_pos)
 xticks_pos = xticks_pos[ind]

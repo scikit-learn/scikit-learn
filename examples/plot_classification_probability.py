@@ -42,7 +42,7 @@ n_classifiers = len(classifiers)
 pl.figure(figsize=(3 * 2, n_classifiers * 2))
 pl.subplots_adjust(bottom=.2, top=.95)
 
-for index, (name, classifier) in enumerate(classifiers.iteritems()):
+for index, (name, classifier) in enumerate(classifiers.items()):
     classifier.fit(X, y)
 
     y_pred = classifier.predict(X)
