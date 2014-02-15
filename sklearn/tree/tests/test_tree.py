@@ -14,6 +14,7 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_in
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_less
@@ -721,3 +722,13 @@ def test_with_only_one_non_constant_features():
         est.fit(X, y)
         assert_equal(est.tree_.max_depth, 1)
         assert_array_equal(est.predict(X), 0.5 * np.ones((4, )))
+
+
+def test_big_input():
+    """Test if the warning for too large inputs is appropriate."""
+    X = np.repeat(10 ** 40., 4).astype(np.float64).reshape(-1, 1)
+    clf = DecisionTreeClassifier()
+    try:
+        clf.fit(X, [0, 1, 0, 1])
+    except ValueError as e:
+        assert_in("float32", str(e))

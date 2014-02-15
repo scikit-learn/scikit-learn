@@ -38,7 +38,8 @@ def _assert_all_finite(X):
     """Like assert_all_finite, but only for ndarray."""
     if (X.dtype.char in np.typecodes['AllFloat'] and not np.isfinite(X.sum())
             and not np.isfinite(X).all()):
-        raise ValueError("Array contains NaN or infinity.")
+        raise ValueError("Input contains NaN, infinity"
+                         " or a value too large for %r." % X.dtype)
 
 
 def assert_all_finite(X):
