@@ -853,19 +853,6 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         # Check input
         X, = check_arrays(X, dtype=DTYPE, sparse_format="dense")
         y = column_or_1d(y, warn=True)
-        if group is not None:
-            group = column_or_1d(group, warn=True)
-            # check group is grouped
-            uniq_group = {group[0]}
-            last_group = group[0]
-            for q in group[1:]:
-                if q != last_group:
-                    # group must be unseen thus far
-                    if q in uniq_group:
-                        raise ValueError("queries must be grouped together")
-                    uniq_group.add(q)
-                    last_group = q
-            self.n_uniq_group = len(uniq_group)
         n_samples, n_features = X.shape
         self.n_features = n_features
         random_state = check_random_state(self.random_state)
@@ -1691,9 +1678,9 @@ class LambdaMART(BaseGradientBoosting):
                  max_rank=10, gain='exponential', warm_start=False):
 
         self.gain = gain
-        self.__gain = lambda y: y
+        self._gain = lambda y: y
         if gain == 'exponential':
-            self.__gain = lambda y: 2**y - 1
+            self._gain = lambda y: 2**y - 1
 
         super(LambdaMART, self).__init__(
             'ndcg', learning_rate, n_estimators, min_samples_split,
@@ -1735,7 +1722,21 @@ class LambdaMART(BaseGradientBoosting):
             Returns self.
         """
         self.n_classes_ = 1
-        return super(LambdaMART, self).fit(X, self.__gain(y), monitor, group)
+        if group is not None:
+            group = column_or_1d(group, warn=True)
+            # check group is grouped
+            uniq_group = {group[0]}
+            last_group = group[0]
+            for g in group[1:]:
+                if g != last_group:
+                    # group must be unseen thus far
+                    if g in uniq_group:
+                        raise ValueError("queries must be grouped together")
+                    uniq_group.add(g)
+                    last_group = g
+            self.n_uniq_group = len(uniq_group)
+        y = self._gain(column_or_1d(y, warn=True))
+        return super(LambdaMART, self).fit(X, y, monitor, group)
 
     def predict(self, X):
         """Predict regression target for X.
@@ -1792,4 +1793,5 @@ class LambdaMART(BaseGradientBoosting):
             Mean accuracy of self.predict(X) wrt. y.
 
         """
-        return self.loss_(self.__gain(y), self.decision_function(X), group)
+        y = self._gain(column_or_1d(y, warn=True))
+        return self.loss_(y, self.decision_function(X), group)

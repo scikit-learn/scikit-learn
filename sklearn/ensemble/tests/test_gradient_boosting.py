@@ -64,47 +64,51 @@ def test_classification_toy():
 def test_parameter_checks():
     """Check input parameter validation."""
 
-    assert_raises(ValueError,
-                  GradientBoostingClassifier(n_estimators=0).fit, X, y)
-    assert_raises(ValueError,
-                  GradientBoostingClassifier(n_estimators=-1).fit, X, y)
+    for Cls in [GradientBoostingRegressor, GradientBoostingClassifier]:
+        assert_raises(ValueError,
+                      Cls(loss='foobar').fit, X, y)
 
-    assert_raises(ValueError,
-                  GradientBoostingClassifier(learning_rate=0.0).fit, X, y)
-    assert_raises(ValueError,
-                  GradientBoostingClassifier(learning_rate=-1.0).fit, X, y)
+    for Cls in [GradientBoostingRegressor, GradientBoostingClassifier,
+                LambdaMART]:
+        assert_raises(ValueError,
+                      Cls(n_estimators=0).fit, X, y)
+        assert_raises(ValueError,
+                      Cls(n_estimators=-1).fit, X, y)
 
-    assert_raises(ValueError,
-                  GradientBoostingClassifier(loss='foobar').fit, X, y)
+        assert_raises(ValueError,
+                      Cls(learning_rate=0.0).fit, X, y)
+        assert_raises(ValueError,
+                      Cls(learning_rate=-1.0).fit, X, y)
 
-    assert_raises(ValueError,
-                  GradientBoostingClassifier(min_samples_split=0.0).fit, X, y)
-    assert_raises(ValueError,
-                  GradientBoostingClassifier(min_samples_split=-1.0).fit, X, y)
 
-    assert_raises(ValueError,
-                  GradientBoostingClassifier(min_samples_leaf=0).fit, X, y)
-    assert_raises(ValueError,
-                  GradientBoostingClassifier(min_samples_leaf=-1.).fit, X, y)
+        assert_raises(ValueError,
+                      Cls(min_samples_split=0.0).fit, X, y)
+        assert_raises(ValueError,
+                      Cls(min_samples_split=-1.0).fit, X, y)
 
-    assert_raises(ValueError,
-                  GradientBoostingClassifier(subsample=0.0).fit, X, y)
-    assert_raises(ValueError,
-                  GradientBoostingClassifier(subsample=1.1).fit, X, y)
-    assert_raises(ValueError,
-                  GradientBoostingClassifier(subsample=-0.1).fit, X, y)
+        assert_raises(ValueError,
+                      Cls(min_samples_leaf=0).fit, X, y)
+        assert_raises(ValueError,
+                      Cls(min_samples_leaf=-1.).fit, X, y)
 
-    assert_raises(ValueError,
-                  GradientBoostingClassifier(max_depth=-0.1).fit, X, y)
-    assert_raises(ValueError,
-                  GradientBoostingClassifier(max_depth=0).fit, X, y)
+        assert_raises(ValueError,
+                      Cls(subsample=0.0).fit, X, y)
+        assert_raises(ValueError,
+                      Cls(subsample=1.1).fit, X, y)
+        assert_raises(ValueError,
+                      Cls(subsample=-0.1).fit, X, y)
 
-    assert_raises(ValueError,
-                  GradientBoostingClassifier(init={}).fit, X, y)
+        assert_raises(ValueError,
+                      Cls(max_depth=-0.1).fit, X, y)
+        assert_raises(ValueError,
+                      Cls(max_depth=0).fit, X, y)
 
-    # test fit before feature importance
-    assert_raises(ValueError,
-                  lambda: GradientBoostingClassifier().feature_importances_)
+        assert_raises(ValueError,
+                      Cls(init={}).fit, X, y)
+
+        # test fit before feature importance
+        assert_raises(ValueError,
+                      lambda: Cls().feature_importances_)
 
     # deviance requires ``n_classes >= 2``.
     assert_raises(ValueError,
@@ -270,40 +274,40 @@ def test_check_inputs():
 
 def test_check_inputs_predict():
     """X has wrong shape """
+    def run_predict(clf):
+        x = np.array([1.0, 2.0])[:, np.newaxis]
+        assert_raises(ValueError, clf.predict, x)
+
+        x = np.array([])
+        assert_raises(ValueError, clf.predict, x)
+
+        x = np.array([1.0, 2.0, 3.0])[:, np.newaxis]
+        assert_raises(ValueError, clf.predict, x)
+
     clf = GradientBoostingClassifier(n_estimators=100, random_state=1)
     clf.fit(X, y)
-
-    x = np.array([1.0, 2.0])[:, np.newaxis]
-    assert_raises(ValueError, clf.predict, x)
-
-    x = np.array([])
-    assert_raises(ValueError, clf.predict, x)
-
-    x = np.array([1.0, 2.0, 3.0])[:, np.newaxis]
-    assert_raises(ValueError, clf.predict, x)
+    run_predict(clf)
 
     clf = GradientBoostingRegressor(n_estimators=100, random_state=1)
     clf.fit(X, rng.rand(len(X)))
+    run_predict(clf)
 
-    x = np.array([1.0, 2.0])[:, np.newaxis]
-    assert_raises(ValueError, clf.predict, x)
-
-    x = np.array([])
-    assert_raises(ValueError, clf.predict, x)
-
-    x = np.array([1.0, 2.0, 3.0])[:, np.newaxis]
-    assert_raises(ValueError, clf.predict, x)
+    clf = LambdaMART(n_estimators=100, random_state=1)
+    clf.fit(X, y)
+    run_predict(clf)
 
 
 def test_check_max_features():
     """test if max_features is valid. """
-    clf = GradientBoostingRegressor(n_estimators=100, random_state=1,
-                                    max_features=0)
-    assert_raises(ValueError, clf.fit, X, y)
+    for Cls in [GradientBoostingRegressor, GradientBoostingClassifier,
+                LambdaMART]:
+        clf = Cls(n_estimators=100, random_state=1,
+                  max_features=0)
+        assert_raises(ValueError, clf.fit, X, y)
 
-    clf = GradientBoostingRegressor(n_estimators=100, random_state=1,
-                                    max_features=(len(X[0]) + 1))
-    assert_raises(ValueError, clf.fit, X, y)
+        clf = Cls(n_estimators=100, random_state=1,
+                  max_features=(len(X[0]) + 1))
+        assert_raises(ValueError, clf.fit, X, y)
 
 
 def test_max_feature_regression():
