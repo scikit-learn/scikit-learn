@@ -24,11 +24,12 @@ from sklearn import datasets, svm, metrics
 # The digits dataset
 digits = datasets.load_digits()
 
-# The data that we are interested in is made of 8x8 images of digits,
-# let's have a look at the first 3 images, stored in the `images`
-# attribute of the dataset. If we were working from image files, we
-# could load them using pylab.imread. For these images know which
-# digit they represent: it is given in the 'target' of the dataset.
+# The data that we are interested in is made of 8x8 images of digits, let's
+# have a look at the first 3 images, stored in the `images` attribute of the
+# dataset.  If we were working from image files, we could load them using
+# pylab.imread.  Note that each image must have the same size. For these
+# images, we know which digit they represent: it is given in the 'target' of
+# the dataset.
 for index, (image, label) in enumerate(list(zip(digits.images,
                                                 digits.target))[:4]):
     pl.subplot(2, 4, index + 1)
@@ -36,7 +37,7 @@ for index, (image, label) in enumerate(list(zip(digits.images,
     pl.imshow(image, cmap=pl.cm.gray_r, interpolation='nearest')
     pl.title('Training: %i' % label)
 
-# To apply an classifier on this data, we need to flatten the image, to
+# To apply a classifier on this data, we need to flatten the image, to
 # turn the data in a (samples, feature) matrix:
 n_samples = len(digits.images)
 data = digits.images.reshape((n_samples, -1))
