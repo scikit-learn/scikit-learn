@@ -937,7 +937,7 @@ def test_lambdamart_gain_equivalence():
     lm_exp = LambdaMART(n_estimators=1)
     lm_lin = LambdaMART(n_estimators=1, gain=None)
     y = np.array([2, 1, 0, 0, 1, 2])
-    group = [0, 0, 0, 1, 1, 1]
+    group = np.array([0, 0, 0, 1, 1, 1])
 
     lm_exp.fit(X, y, group=group)
     lm_lin.fit(X, 2**y - 1, group=group)

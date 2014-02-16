@@ -371,38 +371,40 @@ class NormalizedDiscountedCumulativeGain(RegressionLossFunction):
     def init_estimator(self):
         return MeanEstimator()
 
+    def _groupby(self, group):
+        fl = group.flat
+        start = 0
+        start_group = fl.next()
+        for g in fl:
+            if start_group != g:
+                yield start, fl.index - 1
+                start = fl.index - 1
+                start_group = g
+        yield start, fl.index
+
     def __call__(self, y, pred, group=None, **kargs):
+        pred = pred.ravel()
         if group is None:
-            ix = np.argsort(-pred[:, 0])
+            ix = np.lexsort((y, -pred))
             ndcg = _ndcg(y[ix][:self.max_rank],
                          np.sort(y)[::-1][:self.max_rank])
         else:
-            last_group = group[0]
-            start_ix = 0
             n_group = 0
             s_ndcg = 0
             # for each group compute the ndcg
-            for i, g in enumerate(group[1:], start=1):
-                if last_group != g:
-                    ix = np.argsort(-pred[start_ix:i, 0])
-                    tmp_ndcg = _ndcg(y[ix + start_ix][:self.max_rank],
-                                     np.sort(y[start_ix:i])[::-1][:self.max_rank])
-                    if not np.isnan(tmp_ndcg):
-                        s_ndcg += tmp_ndcg
-                        n_group += 1
-                    start_ix = i
-                    last_group = g
+            for start, end in self._groupby(group):
+                ix = np.lexsort((y[start:end], -pred[start:end]))
+                tmp_ndcg = _ndcg(y[ix + start][:self.max_rank],
+                                 np.sort(y[start:end])[::-1][:self.max_rank])
+                if not np.isnan(tmp_ndcg):
+                    s_ndcg += tmp_ndcg
+                    n_group += 1
 
-            ix = np.argsort(-pred[start_ix:, 0])
-            tmp_ndcg = _ndcg(y[ix + start_ix][:self.max_rank],
-                             np.sort(y[start_ix:])[::-1][:self.max_rank])
-            if not np.isnan(tmp_ndcg):
-                s_ndcg += tmp_ndcg
-                n_group += 1
             ndcg = s_ndcg / n_group
         return ndcg
 
     def negative_gradient(self, y_true, y_pred, group=None, **kargs):
+        y_pred = y_pred.ravel()
         # the lambda terms
         grad = np.empty_like(y_true, dtype=np.float64)
 
@@ -410,7 +412,7 @@ class NormalizedDiscountedCumulativeGain(RegressionLossFunction):
         self.weights = np.empty_like(y_true, dtype=np.float64)
 
         if group is None:
-            ix = np.argsort(-y_pred[:, 0])
+            ix = np.lexsort((y_true, -y_pred))
             inv_ix = np.empty_like(ix)
             inv_ix[ix] = np.arange(len(ix))
             tmp_grad, tmp_weights = _lambda(y_true[ix], y_pred[ix],
@@ -418,37 +420,18 @@ class NormalizedDiscountedCumulativeGain(RegressionLossFunction):
             grad = tmp_grad[inv_ix]
             self.weights = tmp_weights[inv_ix]
         else:
-            last_group = group[0]
-            start_ix = 0
-            for i, g in enumerate(group[1:], start=1):
-                if last_group != g:
-                    ix = np.argsort(-y_pred[start_ix:i, 0])
+            for start, end in self._groupby(group):
+                ix = np.lexsort((y_true[start:end], -y_pred[start:end]))
+                inv_ix = np.empty_like(ix)
+                inv_ix[ix] = np.arange(len(ix))
 
-                    inv_ix = np.empty_like(ix)
-                    inv_ix[ix] = np.arange(len(ix))
-
-                    # sort by current score before passing
-                    # and then remap the return values
-                    tmp_grad, tmp_weights = _lambda(y_true[ix + start_ix],
-                                                    y_pred[ix + start_ix],
-                                                    self.max_rank)
-                    grad[start_ix:i] = tmp_grad[inv_ix]
-                    self.weights[start_ix:i] = tmp_weights[inv_ix]
-                    start_ix = i
-                    last_group = g
-
-            ix = np.argsort(-y_pred[start_ix:, 0])
-
-            inv_ix = np.empty_like(ix)
-            inv_ix[ix] = np.arange(len(ix))
-
-            # sort by current score before passing and then remap the return
-            # values
-            tmp_grad, tmp_weights = _lambda(y_true[ix + start_ix],
-                                            y_pred[ix + start_ix],
-                                            self.max_rank)
-            grad[start_ix:] = tmp_grad[inv_ix]
-            self.weights[start_ix:] = tmp_weights[inv_ix]
+                # sort by current score before passing
+                # and then remap the return values
+                tmp_grad, tmp_weights = _lambda(y_true[ix + start],
+                                                y_pred[ix + start],
+                                                self.max_rank)
+                grad[start:end] = tmp_grad[inv_ix]
+                self.weights[start:end] = tmp_weights[inv_ix]
 
         return grad
 

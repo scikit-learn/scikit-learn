@@ -397,7 +397,7 @@ def _max_dcg(all32_64_t [:] y_sorted):
     return max_dcg
 
 
-def _lambda(all32_64_t [::1] y_true, double [:, ::1] y_pred,
+def _lambda(all32_64_t [::1] y_true, double [::1] y_pred,
             max_rank):
     """Computes the gradient and second derivatives for NDCG
 
@@ -430,7 +430,7 @@ def _lambda(all32_64_t [::1] y_true, double [:, ::1] y_pred,
 
                     ndcg_diff = abs(ndcg_diff / max_dcg)
 
-                    score_diff = y_pred[i, 0] - y_pred[j, 0]
+                    score_diff = y_pred[i] - y_pred[j]
                     sign = 1 if y_true[i] > y_true[j] else -1
                     rho = 1 / (1 + exp(sign * score_diff))
                     grad[i] += sign * ndcg_diff * rho
