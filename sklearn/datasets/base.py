@@ -431,7 +431,8 @@ def load_boston():
 
     return Bunch(data=data,
                  target=target,
-                 feature_names=feature_names,
+                 # last column is target value
+                 feature_names=feature_names[:-1],
                  DESCR=fdescr.read())
 
 
