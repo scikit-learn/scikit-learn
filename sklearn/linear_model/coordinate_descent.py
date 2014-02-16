@@ -12,7 +12,7 @@ from abc import ABCMeta, abstractmethod
 import numpy as np
 from scipy import sparse
 
-from .base import LinearModel, _pre_fit, SparseCoefMixin
+from .base import LinearModel, _pre_fit
 from ..base import RegressorMixin
 from .base import center_data, sparse_center_data
 from ..utils import array2d, atleast2d_or_csc
@@ -515,7 +515,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
 # ElasticNet model
 
 
-class ElasticNet(LinearModel, RegressorMixin, SparseCoefMixin):
+class ElasticNet(LinearModel, RegressorMixin):
     """Linear Model trained with L1 and L2 prior as regularizer
 
     Minimizes the objective function::
@@ -699,10 +699,7 @@ class ElasticNet(LinearModel, RegressorMixin, SparseCoefMixin):
 
     @property
     def sparse_coef_(self):
-        """Sparse representation of the fitted coef_."""
-        warnings.warn("sparse_coef_ is deprecated and will be removed in 0.17."
-                      " Call the sparsify method instead.",
-                      DeprecationWarning)
+        """ sparse representation of the fitted coef """
         return sparse.csr_matrix(self.coef_)
 
     def decision_function(self, X):
