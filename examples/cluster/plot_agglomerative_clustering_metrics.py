@@ -16,9 +16,9 @@ distance is invariant to a scaling of the data, as a result, it cannot
 distinguish these two waveforms. Thus even with no noise, clustering
 using this distance will not separate out waveform 1 and 2.
 
-We add observation noise to these waveforms. We generate this noise
-very sparse: only 6% of the time points contain noise. As a result, the
-l1 norm of this noise (ie "cityblock" distance) is much small than it's
+We add observation noise to these waveforms. We generate very sparse
+noise: only 6% of the time points contain noise. As a result, the
+l1 norm of this noise (ie "cityblock" distance) is much smaller than it's
 l2 norm ("euclidean" distance). This can be seen on the inter-class
 distance matrices: the values on the diagonal, that caracterize the
 spread of the class, are much bigger for the Euclidean distance than for

@@ -85,13 +85,15 @@ for i_dataset, dataset in enumerate([noisy_circles, noisy_moons, blobs,
                             affinity="cityblock", n_clusters=2,
                             connectivity=connectivity)
 
-    for name, algorithm in [('MiniBatchKMeans', two_means),
-        ('AffinityPropagation', affinity_propagation),
-        ('MeanShift', ms),
-        ('SpectralClustering', spectral),
-        ('Ward', ward),
-        ('AgglomerativeClustering', average_linkage),
-        ('DBSCAN', dbscan)]:
+    for name, algorithm in [
+                            ('MiniBatchKMeans', two_means),
+                            ('AffinityPropagation', affinity_propagation),
+                            ('MeanShift', ms),
+                            ('SpectralClustering', spectral),
+                            ('Ward', ward),
+                            ('AgglomerativeClustering', average_linkage),
+                            ('DBSCAN', dbscan)
+                           ]:
         # predict cluster memberships
         t0 = time.time()
         algorithm.fit(X)

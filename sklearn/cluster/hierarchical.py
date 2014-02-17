@@ -398,8 +398,8 @@ def linkage_tree(X, connectivity=None, n_components=None,
                               np.asarray(data, dtype=np.float64))
         # We keep only the upper triangular for the heap
         # Generator expressions are faster than arrays on the following
-        [inertia.append(_hierarchical.WeightedEdge(d, ind, r))
-         for r, d in zip(row, data) if r < ind]
+        inertia.extend(_hierarchical.WeightedEdge(d, ind, r)
+            for r, d in zip(row, data) if r < ind)
     del connectivity
 
     heapify(inertia)
@@ -517,7 +517,7 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
     Agglomerative Clustering
 
     Recursively merges the pair of clusters that minimally increases
-    a giving linkage distance.
+    a given linkage distance.
 
     Parameters
     ----------

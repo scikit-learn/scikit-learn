@@ -157,7 +157,7 @@ of this technique are either:
 
   * **Agglomerative** - `bottom-up` approaches: each observation starts in its
     own cluster, and clusters are iterativelly merged in such a way to
-    minimize a *linkage* criteria. This approach is particularly interesting
+    minimize a *linkage* criterion. This approach is particularly interesting
     when the clusters of interest are made of only a few observations. When
     the number of clusters is large, it is much more computationally efficient
     than k-means.

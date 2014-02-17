@@ -638,8 +638,8 @@ matrix.
   scalings of the signal.
 
 The guidelines for choosing a metric is to use one that maximizes the
-distance between samples in different classes, and minimizes that across
-class.
+distance between samples in different classes, and minimizes that within
+each class.
 
 .. image:: ../auto_examples/cluster/images/plot_agglomerative_clustering_metrics_5.png
     :target: ../auto_examples/cluster/plot_agglomerative_clustering_metrics.html
