@@ -287,6 +287,27 @@ def test_euclidean_distances():
     assert_array_almost_equal(D, [[1., 2.]])
 
 
+def test_manhattan_distances():
+    """Check that manhattan_distances return correct output."""
+    X = np.array([[0, 0, 1, 1],
+                  [1, 0, 2, 5],
+                  [5, 6, 1, 4]], dtype=np.float64)
+
+    Y = np.array([[-1, 2, 1, 0],
+                  [ 1, 6, 2, 0]], dtype=np.float64)
+
+    D = manhattan_distances(X, Y)
+    assert_array_almost_equal(D, [[4, 9], [10, 11], [14, 9]])
+
+    X = csr_matrix(X)
+    Y = csr_matrix(Y)
+    D = manhattan_distances(X, Y)
+    assert_array_almost_equal(D, [[4, 9], [10, 11], [14, 9]])
+
+    D = manhattan_distances(X, Y, size_threshold=0.1)
+    assert_array_almost_equal(D, [[4, 9], [10, 11], [14, 9]])
+
+
 def test_chi_square_kernel():
     rng = np.random.RandomState(0)
     X = rng.random_sample((5, 4))
