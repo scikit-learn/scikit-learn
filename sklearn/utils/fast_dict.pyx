@@ -62,12 +62,57 @@ cdef class IntFloatDict:
     def __setitem__(self, int key, float value):
         self.my_map[key] = value
 
+    # Cython 0.20 generates buggy code below. Commenting this out for now
+    # and relying on the to_arrays method
+    #def __iter__(self):
+    #    cdef cpp_map[ITYPE_t, DTYPE_t].iterator it = self.my_map.begin()
+    #    cdef cpp_map[ITYPE_t, DTYPE_t].iterator end = self.my_map.end()
+    #    while it != end:
+    #        yield deref(it).first, deref(it).second
+    #        inc(it)
+    
     def __iter__(self):
+        cdef int size = self.my_map.size()
+        cdef ITYPE_t [:] keys = np.empty(size, dtype=np.intp)
+        cdef DTYPE_t [:] values = np.empty(size, dtype=np.float64)
+        self._to_arrays(keys, values)
+        cdef int idx
+        cdef ITYPE_t key
+        cdef DTYPE_t value
+        for idx in range(size):
+            key = keys[idx]
+            value = values[idx]
+            yield key, value
+
+    def to_arrays(self):
+        """Return the key, value representation of the IntFloatDict
+           object.
+
+           Returns
+           =======
+           keys : ndarray, shape (n_items, ), dtype=int
+                The indices of the data points
+           values : ndarray, shape (n_items, ), dtype=float
+                The values of the data points
+        """
+        cdef int size = self.my_map.size()
+        cdef np.ndarray[ITYPE_t, ndim=1] keys = np.empty(size,
+                                                         dtype=np.intp)
+        cdef np.ndarray[DTYPE_t, ndim=1] values = np.empty(size,
+                                                           dtype=np.float64)
+        self._to_arrays(keys, values)
+        return keys, values
+
+    cdef _to_arrays(self, ITYPE_t [:] keys, DTYPE_t [:] values):
+        # Internal version of to_arrays that takes already-initialized arrays
         cdef cpp_map[ITYPE_t, DTYPE_t].iterator it = self.my_map.begin()
         cdef cpp_map[ITYPE_t, DTYPE_t].iterator end = self.my_map.end()
+        cdef int index = 0
         while it != end:
-            yield deref(it).first, deref(it).second
+            keys[index] = deref(it).first
+            values[index] = deref(it).second
             inc(it)
+            index += 1
 
     def update(self, IntFloatDict other):
         cdef cpp_map[ITYPE_t, DTYPE_t].iterator it = other.my_map.begin()
