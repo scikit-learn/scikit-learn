@@ -878,10 +878,10 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         Returns
         -------
         score : array, shape = [n_samples, k]
-            The decision function of the input samples. Classes are
-            ordered by arithmetical order. Regression and binary
-            classification are special cases with ``k == 1``,
-            otherwise ``k==n_classes``.
+            The decision function of the input samples. The order of the
+            classes corresponds to that in the attribute `classes_`.
+            Regression and binary classification are special cases with
+            ``k == 1``, otherwise ``k==n_classes``.
         """
         X = array2d(X, dtype=DTYPE, order="C")
         score = self._init_decision_function(X)
@@ -902,10 +902,10 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         Returns
         -------
         score : generator of array, shape = [n_samples, k]
-            The decision function of the input samples. Classes are
-            ordered by arithmetical order. Regression and binary
-            classification are special cases with ``k == 1``,
-            otherwise ``k==n_classes``.
+            The decision function of the input samples. The order of the
+            classes corresponds to that in the attribute `classes_`.
+            Regression and binary classification are special cases with
+            ``k == 1``, otherwise ``k==n_classes``.
         """
         X = array2d(X, dtype=DTYPE, order="C")
         score = self._init_decision_function(X)
@@ -1145,8 +1145,8 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         Returns
         -------
         p : array of shape = [n_samples]
-            The class probabilities of the input samples. Classes are
-            ordered by arithmetical order.
+            The class probabilities of the input samples. The order of the
+            classes corresponds to that in the attribute `classes_`.
         """
         score = self.decision_function(X)
         return self._score_to_proba(score)

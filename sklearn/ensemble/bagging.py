@@ -534,8 +534,8 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
         Returns
         -------
         p : array of shape = [n_samples, n_classes]
-            The class probabilities of the input samples. Classes are
-            ordered by arithmetical order.
+            The class probabilities of the input samples. The order of the
+            classes corresponds to that in the attribute `classes_`.
         """
         # Check data
         X, = check_arrays(X)
@@ -577,8 +577,8 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
         Returns
         -------
         p : array of shape = [n_samples, n_classes]
-            The class log-probabilities of the input samples. Classes are
-            ordered by arithmetical order.
+            The class log-probabilities of the input samples. The order of the
+            classes corresponds to that in the attribute `classes_`.
         """
         if hasattr(self.base_estimator_, "predict_log_proba"):
             # Check data

@@ -497,8 +497,8 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         -------
         p : array of shape = [n_samples, n_classes], or a list of n_outputs
             such arrays if n_outputs > 1.
-            The class probabilities of the input samples. Classes are ordered
-            by arithmetical order.
+            The class probabilities of the input samples. The order of the
+            classes corresponds to that in the attribute `classes_`.
         """
         if getattr(X, "dtype", None) != DTYPE or X.ndim != 2:
             X = array2d(X, dtype=DTYPE)
@@ -548,8 +548,8 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         -------
         p : array of shape = [n_samples, n_classes], or a list of n_outputs
             such arrays if n_outputs > 1.
-            The class log-probabilities of the input samples. Classes are
-            ordered by arithmetical order.
+            The class log-probabilities of the input samples. The order of the
+            classes corresponds to that in the attribute `classes_`.
         """
         proba = self.predict_proba(X)
 
