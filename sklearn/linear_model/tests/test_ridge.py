@@ -1,5 +1,6 @@
 import numpy as np
 import scipy.sparse as sp
+from scipy.linalg import inv
 
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_almost_equal
@@ -127,6 +128,33 @@ def test_ridge_sample_weights():
                     y * np.sqrt(sample_weight),
                     alpha=alpha, solver=solver)
                 assert_array_almost_equal(coefs, coefs2)
+
+                # Test for fit_intercept = True
+                est = Ridge(alpha=alpha, solver=solver)
+                est.fit(X, y, sample_weight=sample_weight)
+
+                # Check using Newtons Method
+                # Quadratic function should be solved in a single step.
+                newX = np.ones([n_samples, n_features + 1])
+                coef_ = np.zeros(n_features + 1)
+                grad = np.zeros(n_features + 1)
+                newX[:,  1:] = X
+                sample_weight = np.sqrt(sample_weight)
+                newX *= sample_weight[:, np.newaxis]
+                newy = y * sample_weight
+
+                # Gradient
+                grad = np.dot((np.dot(newX, coef_) - newy), newX)
+                grad[1:] += alpha * coef_[1:]
+
+                # Hessian
+                diag = alpha * np.ones(n_features + 1)
+                diag[0] = 0.
+                hess = np.dot(newX.T, newX)
+                hess.flat[::n_features + 2] += diag
+                coef_ = coef_ - np.dot(inv(hess), grad)
+                assert_almost_equal(coef_[0], est.intercept_)
+                assert_array_almost_equal(coef_[1:], est.coef_)
 
 
 def test_ridge_shapes():
