@@ -1154,8 +1154,8 @@ Advantages
 Drawbacks
 ~~~~~~~~~
 
-- The previously introduced metrics are **not normalized w.r.t. random
-  labeling**: this means that depending on the number of samples,
+- The previously introduced metrics are **not normalized with regards to
+  random labeling**: this means that depending on the number of samples,
   clusters and ground truth classes, a completely random labeling will
   not always yield the same values for homogeneity, completeness and
   hence v-measure. In particular **random labeling won't yield zero

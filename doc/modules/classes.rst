@@ -626,6 +626,7 @@ From text
    :template: function.rst
 
    learning_curve.learning_curve
+   learning_curve.validation_curve
 
 .. _linear_model_ref:
 
@@ -1061,6 +1062,7 @@ Pairwise metrics
    preprocessing.Normalizer
    preprocessing.OneHotEncoder
    preprocessing.StandardScaler
+   preprocessing.PolynomialFeatures
 
 .. autosummary::
    :toctree: generated/

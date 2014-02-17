@@ -93,6 +93,7 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
 
     @property
     def _pairwise(self):
+        # Used by cross_val_score.
         kernel = self.kernel
         return kernel == "precomputed" or callable(kernel)
 
@@ -129,12 +130,10 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         rnd = check_random_state(self.random_state)
 
-        self._sparse = sp.isspmatrix(X) and not self._pairwise
-
-        if self._sparse and self._pairwise:
-            raise ValueError("Sparse precomputed kernels are not supported. "
-                             "Using sparse data and dense kernels is possible "
-                             "by not using the ``sparse`` parameter")
+        sparse = sp.isspmatrix(X)
+        if sparse and self.kernel == "precomputed":
+            raise TypeError("Sparse precomputed kernels are not supported.")
+        self._sparse = sparse and not callable(self.kernel)
 
         X = atleast2d_or_csr(X, dtype=np.float64, order='C')
         y = self._validate_targets(y)
@@ -614,26 +613,28 @@ class BaseLibLinear(six.with_metaclass(ABCMeta, BaseEstimator)):
         """
         if self.multi_class == 'crammer_singer':
             solver_type = 'MC_SVC'
-        else:
-            if self.multi_class != 'ovr':
-                raise ValueError("`multi_class` must be one of `ovr`, "
-                                 "`crammer_singer`")
+        elif self.multi_class == 'ovr':
             solver_type = "P%s_L%s_D%d" % (
                 self.penalty.upper(), self.loss.upper(), int(self.dual))
+        else:
+            raise ValueError("`multi_class` must be one of `ovr`, "
+                             "`crammer_singer`, got %r" % self.multi_class)
         if not solver_type in self._solver_type_dict:
             if self.penalty.upper() == 'L1' and self.loss.upper() == 'L1':
                 error_string = ("The combination of penalty='l1' "
                                 "and loss='l1' is not supported.")
             elif self.penalty.upper() == 'L2' and self.loss.upper() == 'L1':
                 # this has to be in primal
-                error_string = ("penalty='l2' and ploss='l1' is "
+                error_string = ("penalty='l2' and loss='l1' is "
                                 "only supported when dual='true'.")
             else:
                 # only PL1 in dual remains
                 error_string = ("penalty='l1' is only supported "
                                 "when dual='false'.")
-            raise ValueError('Not supported set of arguments: '
-                             + error_string)
+            raise ValueError('Unsupported set of arguments: %s, '
+                             'Parameters: penalty=%r, loss=%r, dual=%r'
+                             % (error_string, self.penalty,
+                                self.loss, self.dual))
         return self._solver_type_dict[solver_type]
 
     def fit(self, X, y):

@@ -6,7 +6,8 @@ import itertools
 import numpy as np
 from scipy import stats, sparse
 
-from nose.tools import assert_equal, assert_raises, assert_true
+from nose.tools import (assert_equal, assert_almost_equal, assert_raises,
+                        assert_true)
 from numpy.testing import assert_array_equal, assert_array_almost_equal
 from sklearn.utils.testing import assert_not_in, ignore_warnings
 
@@ -103,6 +104,25 @@ def test_f_regression_input_dtype():
     F2, pv2 = f_regression(X, y.astype(np.float))
     assert_array_almost_equal(F1, F2, 5)
     assert_array_almost_equal(pv1, pv2, 5)
+
+
+def test_f_regression_center():
+    """Test whether f_regression preserves dof according to 'center' argument
+
+    We use two centered variates so we have a simple relationship between
+    F-score with variates centering and F-score without variates centering.
+    """
+    # Create toy example
+    X = np.arange(-5, 6)  # X has zero mean
+    n_samples = X.size
+    Y = np.ones(n_samples)
+    Y[::2] *= -1.
+    Y[0] = 0.  # have Y mean being null
+
+    F1, _ = f_regression(X, Y, center=True)
+    F2, _ = f_regression(X, Y, center=False)
+    assert_array_almost_equal(F1 * (n_samples - 1.) / (n_samples - 2.), F2)
+    assert_almost_equal(F2[0], 0.232558139)  # value from statsmodels OLS
 
 
 def test_f_classif_multi_class():

@@ -62,8 +62,9 @@ cdef enum:
 # Repeat struct definition for numpy
 NODE_DTYPE = np.dtype({
     'names': ['left_child', 'right_child', 'feature', 'threshold', 'impurity',
-              'n_samples'],
-    'formats': [np.intp, np.intp, np.intp, np.float64, np.float64, np.intp],
+              'n_samples', 'weighted_n_samples'],
+    'formats': [np.intp, np.intp, np.intp, np.float64, np.float64, np.intp,
+                np.float64],
     'offsets': [
         <Py_ssize_t> &(<Node*> NULL).left_child,
         <Py_ssize_t> &(<Node*> NULL).right_child,
@@ -71,6 +72,7 @@ NODE_DTYPE = np.dtype({
         <Py_ssize_t> &(<Node*> NULL).threshold,
         <Py_ssize_t> &(<Node*> NULL).impurity,
         <Py_ssize_t> &(<Node*> NULL).n_samples,
+        <Py_ssize_t> &(<Node*> NULL).weighted_n_samples
     ]
 })
 
@@ -888,10 +890,8 @@ cdef class FriedmanMSE(MSE):
 # =============================================================================
 
 cdef class Splitter:
-    def __cinit__(self, Criterion criterion,
-                        SIZE_t max_features,
-                        SIZE_t min_samples_leaf,
-                        object random_state):
+    def __cinit__(self, Criterion criterion, SIZE_t max_features,
+                  SIZE_t min_samples_leaf, object random_state):
         self.criterion = criterion
 
         self.samples = NULL
@@ -923,9 +923,10 @@ cdef class Splitter:
     def __setstate__(self, d):
         pass
 
-    cdef void init(self, np.ndarray[DTYPE_t, ndim=2] X,
-                         np.ndarray[DOUBLE_t, ndim=2, mode="c"] y,
-                         DOUBLE_t* sample_weight):
+    cdef void init(self,
+                   np.ndarray[DTYPE_t, ndim=2] X,
+                   np.ndarray[DOUBLE_t, ndim=2, mode="c"] y,
+                   DOUBLE_t* sample_weight):
         """Initialize the splitter."""
         # Reset random state
         self.rand_r_state = self.random_state.randint(0, RAND_R_MAX)
@@ -1043,90 +1044,85 @@ cdef class BestSplitter(Splitter):
         cdef SIZE_t current_feature
         cdef double current_threshold
 
-        cdef SIZE_t f_idx, f_i, f_j, p, tmp
-        cdef SIZE_t visited_features = 0
-
-        cdef SIZE_t partition_start
+        cdef SIZE_t f_i = n_features
+        cdef SIZE_t f_j, p, tmp
+        cdef SIZE_t n_visited_features = 0
+        cdef SIZE_t n_constant_features = 0
+        cdef DTYPE_t current_feature_value
         cdef SIZE_t partition_end
 
-        for f_idx in range(n_features):
+        while (f_i > 0 and (n_visited_features < max_features or
+                            n_visited_features <= n_constant_features)):
+            n_visited_features += 1
+
             # Draw a feature at random
-            f_i = n_features - f_idx - 1
-            f_j = rand_int(n_features - f_idx, random_state)
-
-            tmp = features[f_i]
-            features[f_i] = features[f_j]
-            features[f_j] = tmp
-
+            f_j = rand_int(f_i, random_state)
+            f_i -= 1
+            features[f_i], features[f_j] = features[f_j], features[f_i]
             current_feature = features[f_i]
 
             # Sort samples along that feature; first copy the feature values
             # for the active samples into Xf, s.t. Xf[i] == X[samples[i], j],
             # so the sort uses the cache more effectively.
             for p in range(start, end):
-                Xf[p] = X[X_sample_stride * samples[p]
-                          + X_fx_stride * current_feature]
+                Xf[p] = X[X_sample_stride * samples[p] +
+                          X_fx_stride * current_feature]
 
             sort(Xf + start, samples + start, end - start)
 
-            # Evaluate all splits
-            self.criterion.reset()
-            p = start
+            if Xf[end - 1] <= Xf[start] + EPSILON_FLT:
+                n_constant_features += 1
 
-            while p < end:
-                while p + 1 < end and Xf[p + 1] <= Xf[p] + EPSILON_FLT:
+            else:
+                # Evaluate all splits
+                self.criterion.reset()
+                p = start
+
+                while p < end:
+                    while p + 1 < end and Xf[p + 1] <= Xf[p] + EPSILON_FLT:
+                        p += 1
+
+                    # (p + 1 >= end) or (X[samples[p + 1], current_feature] >
+                    #                    X[samples[p], current_feature])
                     p += 1
+                    # (p >= end) or (X[samples[p], current_feature] >
+                    #                X[samples[p - 1], current_feature])
 
-                # (p + 1 >= end) or (X[samples[p + 1], current_feature] >
-                #                    X[samples[p], current_feature])
-                p += 1
-                # (p >= end) or (X[samples[p], current_feature] >
-                #                X[samples[p - 1], current_feature])
+                    if p < end:
+                        current_pos = p
 
-                if p < end:
-                    current_pos = p
+                        # Reject if min_samples_leaf is not guaranteed
+                        if (((current_pos - start) < min_samples_leaf) or
+                                ((end - current_pos) < min_samples_leaf)):
+                           continue
 
-                    # Reject if min_samples_leaf is not guaranteed
-                    if (((current_pos - start) < min_samples_leaf) or
-                        ((end - current_pos) < min_samples_leaf)):
-                       continue
+                        self.criterion.update(current_pos)
+                        current_improvement = self.criterion.impurity_improvement(impurity)
 
-                    self.criterion.update(current_pos)
-                    current_improvement = self.criterion.impurity_improvement(impurity)
+                        if current_improvement > best_improvement:
+                            self.criterion.children_impurity(&current_impurity_left,
+                                                             &current_impurity_right)
+                            best_impurity_left = current_impurity_left
+                            best_impurity_right = current_impurity_right
+                            best_improvement = current_improvement
+                            best_pos = current_pos
+                            best_feature = current_feature
 
-                    if current_improvement > best_improvement:
-                        self.criterion.children_impurity(&current_impurity_left, &current_impurity_right)
-                        best_impurity_left = current_impurity_left
-                        best_impurity_right = current_impurity_right
-                        best_improvement = current_improvement
-                        best_pos = current_pos
-                        best_feature = current_feature
+                            current_threshold = (Xf[p - 1] + Xf[p]) / 2.0
 
-                        current_threshold = (Xf[p - 1] + Xf[p]) / 2.0
+                            if current_threshold == Xf[p]:
+                                current_threshold = Xf[p - 1]
 
-                        if current_threshold == Xf[p]:
-                            current_threshold = Xf[p - 1]
-
-                        best_threshold = current_threshold
-
-            if best_pos == end: # No valid split was ever found
-                continue
-
-            # Count one more visited feature
-            visited_features += 1
-
-            if visited_features >= max_features:
-                break
+                            best_threshold = current_threshold
 
         # Reorganize into samples[start:best_pos] + samples[best_pos:end]
         if best_pos < end:
-            partition_start = start
             partition_end = end
             p = start
 
             while p < partition_end:
-                if X[X_sample_stride * samples[p]
-                     + X_fx_stride * best_feature] <= best_threshold:
+                if X[X_sample_stride * samples[p] +
+                     X_fx_stride * best_feature] <= best_threshold:
                     p += 1
 
                 else:
@@ -1298,104 +1294,97 @@ cdef class RandomSplitter(Splitter):
         cdef SIZE_t current_feature
         cdef double current_threshold
 
-        cdef SIZE_t f_idx, f_i, f_j, p, tmp
-        cdef SIZE_t visited_features = 0
+        cdef SIZE_t f_i = n_features
+        cdef SIZE_t f_j, p, tmp
+        cdef SIZE_t n_constant_features = 0
+        cdef SIZE_t n_visited_features = 0
         cdef DTYPE_t min_feature_value
         cdef DTYPE_t max_feature_value
         cdef DTYPE_t current_feature_value
-
-        cdef SIZE_t partition_start
         cdef SIZE_t partition_end
 
-        for f_idx in range(n_features):
+        while (f_i > 0 and (n_visited_features < max_features or
+                            n_visited_features <= n_constant_features)):
+            n_visited_features += 1
+
             # Draw a feature at random
-            f_i = n_features - f_idx - 1
-            f_j = rand_int(n_features - f_idx, random_state)
-
-            tmp = features[f_i]
-            features[f_i] = features[f_j]
-            features[f_j] = tmp
-
+            f_j = rand_int(f_i, random_state)
+            f_i -= 1
+            features[f_i], features[f_j] = features[f_j], features[f_i]
             current_feature = features[f_i]
 
             # Find min, max
-            min_feature_value = max_feature_value = \
-                X[X_sample_stride * samples[start]
-                  + X_fx_stride * current_feature]
+            min_feature_value = X[X_sample_stride * samples[start] +
+                                  X_fx_stride * current_feature]
+            max_feature_value = min_feature_value
 
             for p in range(start + 1, end):
-                current_feature_value = X[X_sample_stride * samples[p]
-                                          + X_fx_stride * current_feature]
+                current_feature_value = X[X_sample_stride * samples[p] +
+                                          X_fx_stride * current_feature]
 
                 if current_feature_value < min_feature_value:
                     min_feature_value = current_feature_value
                 elif current_feature_value > max_feature_value:
                     max_feature_value = current_feature_value
 
-            if min_feature_value == max_feature_value:
-                continue
+            if max_feature_value <= min_feature_value + EPSILON_FLT:
+                n_constant_features += 1
 
-            # Draw a random threshold
-            current_threshold = (min_feature_value
-                                 + rand_double(random_state)
-                                 * (max_feature_value - min_feature_value))
+            else:
+                # Draw a random threshold
+                current_threshold = (min_feature_value +
+                                     rand_double(random_state) *
+                                     (max_feature_value - min_feature_value))
 
-            if current_threshold == max_feature_value:
-                current_threshold = min_feature_value
+                if current_threshold == max_feature_value:
+                    current_threshold = min_feature_value
 
-            # Partition
-            partition_start = start
-            partition_end = end
-            p = start
+                # Partition
+                partition_end = end
+                p = start
 
-            while p < partition_end:
-                if X[X_sample_stride * samples[p]
-                     + X_fx_stride * current_feature] <= current_threshold:
-                    p += 1
+                while p < partition_end:
+                    if X[X_sample_stride * samples[p] +
+                         X_fx_stride * current_feature] <= current_threshold:
+                        p += 1
 
-                else:
-                    partition_end -= 1
+                    else:
+                        partition_end -= 1
 
-                    tmp = samples[partition_end]
-                    samples[partition_end] = samples[p]
-                    samples[p] = tmp
+                        tmp = samples[partition_end]
+                        samples[partition_end] = samples[p]
+                        samples[p] = tmp
 
-            current_pos = partition_end
+                current_pos = partition_end
 
-            # Reject if min_samples_leaf is not guaranteed
-            if (((current_pos - start) < min_samples_leaf) or
-                ((end - current_pos) < min_samples_leaf)):
-               continue
+                # Reject if min_samples_leaf is not guaranteed
+                if (((current_pos - start) < min_samples_leaf) or
+                        ((end - current_pos) < min_samples_leaf)):
+                   continue
 
-            # Evaluate split
-            self.criterion.reset()
-            self.criterion.update(current_pos)
-            current_improvement = self.criterion.impurity_improvement(impurity)
+                # Evaluate split
+                self.criterion.reset()
+                self.criterion.update(current_pos)
+                current_improvement = self.criterion.impurity_improvement(impurity)
 
-            if current_improvement > best_improvement:
-                self.criterion.children_impurity(&current_impurity_left, &current_impurity_right)
-                best_impurity_left = current_impurity_left
-                best_impurity_right = current_impurity_right
-                best_improvement = current_improvement
-                best_pos = current_pos
-                best_feature = current_feature
-                best_threshold = current_threshold
-
-            # Count one more visited feature
-            visited_features += 1
-
-            if visited_features >= max_features:
-                break
+                if current_improvement > best_improvement:
+                    self.criterion.children_impurity(&current_impurity_left,
+                                                     &current_impurity_right)
+                    best_impurity_left = current_impurity_left
+                    best_impurity_right = current_impurity_right
+                    best_improvement = current_improvement
+                    best_pos = current_pos
+                    best_feature = current_feature
+                    best_threshold = current_threshold
 
         # Reorganize into samples[start:best_pos] + samples[best_pos:end]
         if best_pos < end and current_feature != best_feature:
-            partition_start = start
             partition_end = end
             p = start
 
             while p < partition_end:
-                if X[X_sample_stride * samples[p]
-                     + X_fx_stride * best_feature] <= best_threshold:
+                if X[X_sample_stride * samples[p] +
+                     X_fx_stride * best_feature] <= best_threshold:
                     p += 1
 
                 else:
@@ -1424,10 +1413,8 @@ cdef class PresortBestSplitter(Splitter):
     cdef SIZE_t n_total_samples
     cdef unsigned char* sample_mask
 
-    def __cinit__(self, Criterion criterion,
-                        SIZE_t max_features,
-                        SIZE_t min_samples_leaf,
-                        object random_state):
+    def __cinit__(self, Criterion criterion, SIZE_t max_features,
+                  SIZE_t min_samples_leaf, object random_state):
         # Initialize pointers
         self.X_old = NULL
         self.X_argsorted_ptr = NULL
@@ -1455,9 +1442,8 @@ cdef class PresortBestSplitter(Splitter):
         # Pre-sort X
         if self.X_old != self.X:
             self.X_old = self.X
-            self.X_argsorted = \
-                np.asfortranarray(np.argsort(X, axis=0), dtype=np.int32)
-
+            self.X_argsorted = np.asfortranarray(np.argsort(X, axis=0),
+                                                 dtype=np.int32)
             self.X_argsorted_ptr = <INT32_t*> self.X_argsorted.data
             self.X_argsorted_stride = (<SIZE_t> self.X_argsorted.strides[1] /
                                        <SIZE_t> self.X_argsorted.itemsize)
@@ -1511,12 +1497,11 @@ cdef class PresortBestSplitter(Splitter):
         cdef SIZE_t current_feature
         cdef double current_threshold
 
-        cdef SIZE_t f_idx, f_i, f_j, p, tmp
-        cdef SIZE_t visited_features = 0
-
-        cdef SIZE_t partition_start
+        cdef SIZE_t f_i = n_features
+        cdef SIZE_t f_j, p
+        cdef SIZE_t n_constant_features = 0
+        cdef SIZE_t n_visited_features = 0
         cdef SIZE_t partition_end
-
         cdef SIZE_t i, j
 
         # Set sample mask
@@ -1524,15 +1509,14 @@ cdef class PresortBestSplitter(Splitter):
             sample_mask[samples[p]] = 1
 
         # Look for splits
-        for f_idx in range(n_features):
+        while (f_i > 0 and (n_visited_features < max_features or
+                            n_visited_features <= n_constant_features)):
+            n_visited_features += 1
+
             # Draw a feature at random
-            f_i = n_features - f_idx - 1
-            f_j = rand_int(n_features - f_idx, random_state)
-
-            tmp = features[f_i]
-            features[f_i] = features[f_j]
-            features[f_j] = tmp
-
+            f_j = rand_int(f_i, random_state)
+            f_i -= 1
+            features[f_i], features[f_j] = features[f_j], features[f_i]
             current_feature = features[f_i]
 
             # Extract ordering from X_argsorted
@@ -1542,68 +1526,63 @@ cdef class PresortBestSplitter(Splitter):
                 j = X_argsorted[X_argsorted_stride * current_feature + i]
                 if sample_mask[j] == 1:
                     samples[p] = j
-                    Xf[p] = X[X_sample_stride * j
-                              + X_fx_stride * current_feature]
+                    Xf[p] = X[X_sample_stride * j +
+                              X_fx_stride * current_feature]
                     p += 1
 
             # Evaluate all splits
-            self.criterion.reset()
-            p = start
+            if Xf[end - 1] <= Xf[start] + EPSILON_FLT:
+                n_constant_features += 1
 
-            while p < end:
-                while p + 1 < end and Xf[p + 1] <= Xf[p] + EPSILON_FLT:
+            else:
+                self.criterion.reset()
+                p = start
+
+                while p < end:
+                    while p + 1 < end and Xf[p + 1] <= Xf[p] + EPSILON_FLT:
+                        p += 1
+
+                    # (p + 1 >= end) or (X[samples[p + 1], current_feature] >
+                    #                    X[samples[p], current_feature])
                     p += 1
+                    # (p >= end) or (X[samples[p], current_feature] >
+                    #                X[samples[p - 1], current_feature])
 
-                # (p + 1 >= end) or (X[samples[p + 1], current_feature] >
-                #                    X[samples[p], current_feature])
-                p += 1
-                # (p >= end) or (X[samples[p], current_feature] >
-                #                X[samples[p - 1], current_feature])
+                    if p < end:
+                        current_pos = p
 
-                if p < end:
-                    current_pos = p
+                        # Reject if min_samples_leaf is not guaranteed
+                        if (((current_pos - start) < min_samples_leaf) or
+                                ((end - current_pos) < min_samples_leaf)):
+                           continue
 
-                    # Reject if min_samples_leaf is not guaranteed
-                    if (((current_pos - start) < min_samples_leaf) or
-                        ((end - current_pos) < min_samples_leaf)):
-                       continue
+                        self.criterion.update(current_pos)
+                        current_improvement = self.criterion.impurity_improvement(impurity)
 
-                    self.criterion.update(current_pos)
-                    current_improvement = self.criterion.impurity_improvement(impurity)
+                        if current_improvement > best_improvement:
+                            self.criterion.children_impurity(&current_impurity_left,
+                                                             &current_impurity_right)
+                            best_impurity_left = current_impurity_left
+                            best_impurity_right = current_impurity_right
+                            best_improvement = current_improvement
+                            best_pos = current_pos
+                            best_feature = current_feature
 
-                    if current_improvement > best_improvement:
-                        self.criterion.children_impurity(&current_impurity_left, &current_impurity_right)
-                        best_impurity_left = current_impurity_left
-                        best_impurity_right = current_impurity_right
-                        best_improvement = current_improvement
-                        best_pos = current_pos
-                        best_feature = current_feature
+                            current_threshold = (Xf[p - 1] + Xf[p]) / 2.0
 
-                        current_threshold = (Xf[p - 1] + Xf[p]) / 2.0
+                            if current_threshold == Xf[p]:
+                                current_threshold = Xf[p - 1]
 
-                        if current_threshold == Xf[p]:
-                            current_threshold = Xf[p - 1]
-
-                        best_threshold = current_threshold
-
-            if best_pos == end: # No valid split was ever found
-                continue
-
-            # Count one more visited feature
-            visited_features += 1
-
-            if visited_features >= max_features:
-                break
+                            best_threshold = current_threshold
 
         # Reorganize into samples[start:best_pos] + samples[best_pos:end]
         if best_pos < end:
-            partition_start = start
             partition_end = end
             p = start
 
             while p < partition_end:
-                if X[X_sample_stride * samples[p]
-                     + X_fx_stride * best_feature] <= best_threshold:
+                if X[X_sample_stride * samples[p] +
+                     X_fx_stride * best_feature] <= best_threshold:
                     p += 1
 
                 else:
@@ -1683,6 +1662,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         cdef SIZE_t parent
         cdef bint is_left
         cdef SIZE_t n_node_samples = splitter.n_samples
+        cdef double weighted_n_node_samples
         cdef SIZE_t pos
         cdef SIZE_t feature
         cdef SIZE_t node_id
@@ -1723,6 +1703,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                            (n_node_samples < 2 * tree.min_samples_leaf))
 
                 splitter.node_reset(start, end)  # calls criterion.init
+                weighted_n_node_samples = splitter.criterion.weighted_n_node_samples
 
                 if first:
                     impurity = splitter.criterion.node_impurity()
@@ -1738,7 +1719,8 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                     is_leaf = is_leaf or (pos >= end)
 
                 node_id = tree._add_node(parent, is_left, is_leaf, feature,
-                                         threshold, impurity, n_node_samples)
+                                         threshold, impurity, n_node_samples,
+                                         weighted_n_node_samples)
 
                 if is_leaf:
                     # Don't store value for internal nodes
@@ -1786,11 +1768,14 @@ cdef int _add_split_node(Splitter splitter, Tree tree,
     cdef double split_impurity_right
     cdef double split_improvement
     cdef SIZE_t n_node_samples
+    cdef double weighted_n_node_samples
     cdef bint is_leaf
     cdef SIZE_t n_left, n_right
     cdef double imp_diff
 
     splitter.node_reset(start, end)  # calls criterion.init
+    weighted_n_node_samples = splitter.criterion.weighted_n_node_samples
+
     if is_first:
         impurity = splitter.criterion.node_impurity()
 
@@ -1808,7 +1793,8 @@ cdef int _add_split_node(Splitter splitter, Tree tree,
     node_id = tree._add_node(parent - tree.nodes if parent != NULL
                                                  else _TREE_UNDEFINED,
                              is_left, is_leaf,
-                             feature, threshold, impurity, n_node_samples)
+                             feature, threshold, impurity, n_node_samples,
+                             weighted_n_node_samples)
     if node_id == <SIZE_t>(-1):
         return -1
 
@@ -2014,7 +2000,11 @@ cdef class Tree:
         criterion) at node i.
 
     n_node_samples : array of int, shape [node_count]
-        n_samples[i] holds the number of training samples reaching node i.
+        n_node_samples[i] holds the number of training samples reaching node i.
+
+    weighted_n_node_samples : array of int, shape [node_count]
+        weighted_n_samples[i] holds the weighted number of training samples
+        reaching node i.
     """
     # Wrap for outside world.
     # WARNING: these reference the current `nodes` and `value` buffers, which
@@ -2048,6 +2038,10 @@ cdef class Tree:
     property n_node_samples:
         def __get__(self):
             return self._get_node_ndarray()['n_samples'][:self.node_count]
+
+    property weighted_n_node_samples:
+        def __get__(self):
+            return self._get_node_ndarray()['weighted_n_samples'][:self.node_count]
 
     property value:
         def __get__(self):
@@ -2192,7 +2186,8 @@ cdef class Tree:
                                 SIZE_t feature,
                                 double threshold,
                                 double impurity,
-                                SIZE_t n_node_samples) nogil:
+                                SIZE_t n_samples,
+                                double weighted_n_samples) nogil:
         """Add a node to the tree.
 
         The new node registers itself as the child of its parent.
@@ -2207,7 +2202,8 @@ cdef class Tree:
 
         cdef Node* node = &self.nodes[node_id]
         node.impurity = impurity
-        node.n_samples = n_node_samples
+        node.n_samples = n_samples
+        node.weighted_n_samples = weighted_n_samples
 
         if parent != _TREE_UNDEFINED:
             if is_left:
@@ -2264,8 +2260,6 @@ cdef class Tree:
 
     cpdef compute_feature_importances(self, normalize=True):
         """Computes the importance of each feature (aka variable)."""
-        cdef SIZE_t n_left
-        cdef SIZE_t n_right
         cdef Node* left
         cdef Node* right
         cdef Node* nodes = self.nodes
@@ -2280,15 +2274,13 @@ cdef class Tree:
                 # ... and node.right_child != _TREE_LEAF:
                 left = &nodes[node.left_child]
                 right = &nodes[node.right_child]
-                n_left = left.n_samples
-                n_right = right.n_samples
 
-                importances[node.feature] += (node.n_samples * node.impurity -
-                                              left.n_samples * left.impurity -
-                                              right.n_samples * right.impurity)
+                importances[node.feature] += (node.weighted_n_samples * node.impurity -
+                                              left.weighted_n_samples * left.impurity -
+                                              right.weighted_n_samples * right.impurity)
             node += 1
 
-        importances = importances / nodes[0].n_samples
+        importances = importances / nodes[0].weighted_n_samples
         cdef double normalizer
 
         if normalize:
@@ -2302,7 +2294,7 @@ cdef class Tree:
 
     cdef np.ndarray _get_value_ndarray(self):
         """Wraps value as a 3-d NumPy array
-        
+
         The array keeps a reference to this Tree, which manages the underlying
         memory.
         """
@@ -2318,7 +2310,7 @@ cdef class Tree:
 
     cdef np.ndarray _get_node_ndarray(self):
         """Wraps nodes as a NumPy struct array
-        
+
         The array keeps a reference to this Tree, which manages the underlying
         memory. Individual fields are publicly accessible as properties of the
         Tree.

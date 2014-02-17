@@ -16,20 +16,53 @@ Changelog
      Tutorial integration into the scikit-learn documentation
      by `Jaques Grobler`_
 
-   - :mod:`sklearn.hmm` is deprecated. Its removal is planned
-     for the 0.17 release.
-
-   - Use of :class:`covariance.EllipticEnvelop` has now been removed after
-     deprecation.
-     Please use :class:`covariance.EllipticEnvelope` instead.
-
    - Added :class:`ensemble.BaggingClassifier` and
      :class:`ensemble.BaggingRegressor` meta-estimators for ensembling
      any kind of base estimator. See the :ref:`Bagging <bagging>` section of
      the user guide for details and examples. By `Gilles Louppe`_.
 
+   - Memory improvements of decision trees, by `Arnaud Joly`_.
+
+   - Decision trees can now be built in best-first manner by using ``max_leaf_nodes``
+     as the stopping criteria. Refactored the tree code to use either a
+     stack or a priority queue for tree building.
+     By `Peter Prettenhofer`_ and `Gilles Louppe`_.
+
+   - Decision trees can now be fitted on fortran- and c-style arrays, and
+     non-continuous arrays without the need to make a copy.
+     If the input array has a different dtype than ``np.float32``, a fortran-
+     style copy will be made since fortran-style memory layout has speed
+     advantages. By `Peter Prettenhofer`_ and `Gilles Louppe`_.
+
+   - Speed improvement of regression trees by optimizing the
+     the computation of the mean square error criterion. This lead
+     to speed improvement of the tree, forest and gradient boosting tree
+     modules. By `Arnaud Joly`_
+
+   - Changed the internal storage of decision trees to use a struct array.
+     This fixed some small bugs, while improving code and providing a small
+     speed gain. By `Joel Nothman`_.
+
+   - Reduce memory usage and overhead when fitting and predicting with forests
+     of randomized trees in parallel with ``n_jobs != 1`` by leveraging new
+     threading backend of joblib 0.8 and releasing the GIL in the tree fitting
+     Cython code.  By `Olivier Grisel`_ and `Gilles Louppe`_.
+
    - Speed improvement of the :mod:`sklearn.ensemble.gradient_boosting` module.
      By `Gilles Louppe`_ and `Peter Prettenhofer`_.
+
+   - Various enhancements to the  :mod:`sklearn.ensemble.gradient_boosting`
+     module: a ``warm_start`` argument to fit additional trees,
+     a ``max_leaf_nodes`` argument to fit GBM style trees,
+     a ``monitor`` fit argument to inspect the estimator during training, and
+     refactoring of the verbose code. By `Peter Prettenhofer`_.
+
+   - Fixed bug in :class:`gradient_boosting.GradientBoostingRegressor` with
+     ``loss='huber'``: ``gamma`` might have not been initialized.
+
+   - Fixed feature importances as computed with a forest of randomized trees
+     when fit with ``sample_weight != None`` and/or with ``bootstrap=True``.
+     By `Gilles Louppe`_.
 
    - Added :func:`metrics.pairwise_distances_argmin_min`, by Philippe Gervais.
 
@@ -56,9 +89,6 @@ Changelog
      significantly speedup computation by `Denis Engemann`_, and
      `Alexandre Gramfort`_.
 
-   - Memory improvements of extra trees and random forest by
-     `Arnaud Joly`_.
-
    - Changed :class:`cross_validation.StratifiedKFold` to try and
      preserve as much of the original ordering of samples as possible so as
      not to hide overfitting on datasets with a non-negligible level of
@@ -82,9 +112,6 @@ Changelog
      and predictive power.
      By `Eustache Diemert`_.
 
-   - Fixed bug in :class:`gradient_boosting.GradientBoostingRegressor` with
-     ``loss='huber'``: ``gamma`` might have not been initialized.
-
    - :class:`dummy.DummyClassifier` can now be used to predict a constant
      output value. By `Manoj Kumar`_.
 
@@ -103,37 +130,6 @@ Changelog
 
    - Shorthand constructors :func:`pipeline.make_pipeline` and
      :func:`pipeline.make_union` were added by `Lars Buitinck`_.
-
-   - Reduce memory usage and overhead when fitting and predicting with forests
-     of randomized trees in parallel with ``n_jobs != 1`` by leveraging new
-     threading backend of joblib 0.8 and releasing the GIL in the tree fitting
-     Cython code.  By `Olivier Grisel`_ and `Gilles Louppe`_.
-
-   - Decision trees can now be built in best-first manner by using ``max_leaf_nodes``
-     as the stopping criteria. Refactored the tree code to use either a
-     stack or a priority queue for tree building.
-     By `Peter Prettenhofer`_ and `Gilles Louppe`_.
-
-   - Decision trees can now be fitted on fortran- and c-style arrays, and
-     non-continuous arrays without the need to make a copy.
-     If the input array has a different dtype than ``np.float32``, a fortran-
-     style copy will be made since fortran-style memory layout has speed
-     advantages. By `Peter Prettenhofer`_ and `Gilles Louppe`_.
-
-   - Speed improvement of regression trees by optimizing the
-     the computation of the mean square error criterion. This lead
-     to speed improvement of the tree, forest and gradient boosting tree
-     modules. By `Arnaud Joly`_
-
-   - Changed the internal storage of decision trees to use a struct array.
-     This fixed some small bugs, while improving code and providing a small
-     speed gain. By `Joel Nothman`_.
-
-   - Various enhancements to the  :mod:`sklearn.ensemble.gradient_boosting`
-     module: a ``warm_start`` argument to fit additional trees,
-     a ``max_leaf_nodes`` argument to fit GBM style trees,
-     a ``monitor`` fit argument to inspect the estimator during training, and
-     refactoring of the verbose code. By `Peter Prettenhofer`_.
 
    - Added :func:`learning_curve <learning_curve.learning_curve>` utility to
      chart performance with respect to training size. See
@@ -154,8 +150,20 @@ Changelog
      agglomerative clustering with average linkage, complete linkage and
      ward strategies, by  `Nelle Varoquaux`_ and `Gael Varoquaux`_.
 
+   - Fixed incorrect estimation of the degrees of freedom in
+     :func:`feature_selection.f_regression` when variates are not centered.
+     By `VirgileFritsch`_.
+
+
 API changes summary
 -------------------
+
+   - :mod:`sklearn.hmm` is deprecated. Its removal is planned
+     for the 0.17 release.
+
+   - Use of :class:`covariance.EllipticEnvelop` has now been removed after
+     deprecation.
+     Please use :class:`covariance.EllipticEnvelope` instead.
 
    - :class:`cluster.Ward` is deprecated. Use
      :class:`cluster.AgglomerativeClustering` instead.
@@ -194,10 +202,31 @@ API changes summary
      of length greater than one.
      By `Manoj Kumar`_.
 
-   - Fix :class: `linear_model.ElasticNetCV` and :class: `linear_model.LassoCV`
+   - Fix :class:`linear_model.ElasticNetCV` and :class:`linear_model.LassoCV`
      when fitting intercept and X is sparse. The automatic grid
      of alphas was not computed correctly and the scaling with normalize
      was wrong. By `Manoj Kumar`_.
+
+   - Fix wrong maximal number of features drawn (`max_features`) at each split
+     for decision trees, random forests and gradient tree boosting.
+     Previously, the count for the number of drawn features started only after
+     one non constant features in the split. This bug fix will affect
+     computational and generalization performance of those algorithms in the
+     presence of constant features. To get back previous generalization
+     performance, you should modify the value of `max_features`.
+     By `Arnaud Joly`_.
+
+   - Fix wrong maximal number of features drawn (`max_features`) at each split
+     for :class:`ensemble.ExtraTreesClassifier` and
+     :class:`ensemble.ExtraTreesRegressor`. Previously, only non constant
+     features in the split was counted as drawn. Now constant features are
+     counted as drawn. Furthermore at least one feature must be non constant
+     in order to make a valid split. This bug fix will affect
+     computational and generalization performance of extra trees in the
+     presence of constant features. To get back previous generalization
+     performance, you should modify the value of `max_features`.
+     By `Arnaud Joly`_.
+
 
 .. _changes_0_14:
 

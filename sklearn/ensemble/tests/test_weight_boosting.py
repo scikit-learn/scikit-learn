@@ -52,7 +52,6 @@ def test_classification_toy():
 def test_regression_toy():
     """Check classification on a toy dataset."""
     clf = AdaBoostRegressor(random_state=0)
-    clf = AdaBoostRegressor()
     clf.fit(X, y_regr)
     assert_array_equal(clf.predict(T), y_t_regr)
 
