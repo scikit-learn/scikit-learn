@@ -163,7 +163,7 @@ of this technique are either:
     than k-means.
 
   * **Divisive** - `top-down` approaches: all observations start in one
-    cluster, which is iteratively splitted as one moves down the hierarchy.
+    cluster, which is iteratively split as one moves down the hierarchy.
     For estimating large numbers of clusters, this approach is both slow (due
     to all observations starting as one cluster, which it splits recursively)
     and statistically ill-posed.
@@ -171,7 +171,7 @@ of this technique are either:
 Connectivity-constrained clustering
 .....................................
 
-With Agglomerative clustering, it is possible to specify which samples can be
+With agglomerative clustering, it is possible to specify which samples can be
 clustered together by giving a connectivity graph. Graphs in the scikit
 are represented by their adjacency matrix. Often, a sparse matrix is used.
 This can be useful, for instance, to retrieve connected regions (sometimes
@@ -214,7 +214,7 @@ transposed data.
    >>> connectivity = grid_to_graph(*images[0].shape)
 
    >>> agglo = cluster.FeatureAgglomeration(connectivity=connectivity,
-   ...                                   n_clusters=32)
+   ...                                      n_clusters=32)
    >>> agglo.fit(X) # doctest: +ELLIPSIS
    FeatureAgglomeration(compute_full_tree='auto',...
    >>> X_reduced = agglo.transform(X)

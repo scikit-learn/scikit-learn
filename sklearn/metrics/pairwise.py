@@ -72,16 +72,16 @@ def check_pairwise_arrays(X, Y):
 
     Parameters
     ----------
-    X : {array-like, sparse matrix}, shape = [n_samples_a, n_features]
+    X : {array-like, sparse matrix}, shape (n_samples_a, n_features)
 
-    Y : {array-like, sparse matrix}, shape = [n_samples_b, n_features]
+    Y : {array-like, sparse matrix}, shape (n_samples_b, n_features)
 
     Returns
     -------
-    safe_X : {array-like, sparse matrix}, shape = [n_samples_a, n_features]
+    safe_X : {array-like, sparse matrix}, shape (n_samples_a, n_features)
         An array equal to X, guaranteed to be a numpy array.
 
-    safe_Y : {array-like, sparse matrix}, shape = [n_samples_b, n_features]
+    safe_Y : {array-like, sparse matrix}, shape (n_samples_b, n_features)
         An array equal to Y if Y was not None, guaranteed to be a numpy array.
         If Y was None, safe_Y will be a pointer to X.
 
@@ -118,16 +118,16 @@ def check_paired_arrays(X, Y):
 
     Parameters
     ----------
-    X : {array-like, sparse matrix}, shape = [n_samples_a, n_features]
+    X : {array-like, sparse matrix}, shape (n_samples_a, n_features)
 
-    Y : {array-like, sparse matrix}, shape = [n_samples_b, n_features]
+    Y : {array-like, sparse matrix}, shape (n_samples_b, n_features)
 
     Returns
     -------
-    safe_X : {array-like, sparse matrix}, shape = [n_samples_a, n_features]
+    safe_X : {array-like, sparse matrix}, shape (n_samples_a, n_features)
         An array equal to X, guaranteed to be a numpy array.
 
-    safe_Y : {array-like, sparse matrix}, shape = [n_samples_b, n_features]
+    safe_Y : {array-like, sparse matrix}, shape (n_samples_b, n_features)
         An array equal to Y if Y was not None, guaranteed to be a numpy array.
         If Y was None, safe_Y will be a pointer to X.
 
@@ -157,11 +157,11 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
 
     Parameters
     ----------
-    X : {array-like, sparse matrix}, shape = [n_samples_1, n_features]
+    X : {array-like, sparse matrix}, shape (n_samples_1, n_features)
 
-    Y : {array-like, sparse matrix}, shape = [n_samples_2, n_features]
+    Y : {array-like, sparse matrix}, shape (n_samples_2, n_features)
 
-    Y_norm_squared : array-like, shape = [n_samples_2], optional
+    Y_norm_squared : array-like, shape (n_samples_2, ), optional
         Pre-computed dot-products of vectors in Y (e.g.,
         ``(Y**2).sum(axis=1)``)
 
@@ -170,7 +170,7 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
 
     Returns
     -------
-    distances : {array, sparse matrix}, shape = [n_samples_1, n_samples_2]
+    distances : {array, sparse matrix}, shape (n_samples_1, n_samples_2)
 
     Examples
     --------
@@ -537,9 +537,9 @@ def paired_euclidean_distances(X, Y):
 
     Parameters
     ----------
-    X : array-like, shape = [n_samples, n_features]
+    X : array-like, shape (n_samples, n_features)
 
-    Y : array-like, shape = [n_samples, n_features]
+    Y : array-like, shape (n_samples, n_features)
 
     Returns
     -------
@@ -555,9 +555,9 @@ def paired_manhattan_distances(X, Y):
 
     Parameters
     ----------
-    X : array-like, shape = [n_samples, n_features]
+    X : array-like, shape (n_samples, n_features)
 
-    Y : array-like, shape = [n_samples, n_features]
+    Y : array-like, shape (n_samples, n_features)
 
     Returns
     -------
@@ -573,13 +573,13 @@ def paired_cosine_distances(X, Y):
 
     Parameters
     ----------
-    X : array-like, shape = [n_samples, n_features]
+    X : array-like, shape (n_samples, n_features)
 
-    Y : array-like, shape = [n_samples, n_features]
+    Y : array-like, shape (n_samples, n_features)
 
     Returns
     -------
-    distances : ndarray (n_samples, )
+    distances : ndarray, shape (n_samples, )
 
     Notes
     ------
@@ -611,7 +611,7 @@ def paired_distances(X, Y, metric="euclidean", **kwds):
 
     Parameters
     ----------
-    X, Y : ndarray (n_samples, n_features]
+    X, Y : ndarray (n_samples, n_features)
 
     metric : string or callable
         The metric to use when calculating distance between instances in a

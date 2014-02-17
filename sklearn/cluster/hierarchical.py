@@ -101,7 +101,7 @@ def ward_tree(X, connectivity=None, n_components=None, copy=None,
 
     Parameters
     ----------
-    X : array of shape (n_samples, n_features)
+    X : array, shape (n_samples, n_features)
         feature matrix  representing n_samples samples to be clustered
 
     connectivity : sparse matrix (optional).
@@ -262,7 +262,7 @@ def linkage_tree(X, connectivity=None, n_components=None,
 
     Parameters
     ----------
-    X : array of shape (n_samples, n_features)
+    X : array, shape (n_samples, n_features)
         feature matrix representing n_samples samples to be clustered
 
     connectivity : sparse matrix (optional).
