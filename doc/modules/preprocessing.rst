@@ -470,6 +470,8 @@ values than observed values.
 :class:`Imputer` can be used in a Pipeline as a way to build a composite
 estimator that supports imputation. See :ref:`example_imputation.py`
 
+.. _data_reduction:
+
 Unsupervised data reduction
 ============================
 
@@ -496,12 +498,23 @@ capture well the variance of the original features.
 
    * :ref:`example_applications_face_recognition.py`
 
+Random projections
+-------------------
+
+The module: :mod:`random_projection` provides several tools for data
+reduction by random projections. See the relevant section of the
+documentation: :ref:`random_projection`.
+
+.. topic:: **Examples**
+
+   * :ref:`example_plot_johnson_lindenstrauss_bound.py`
+
 Feature agglometration
 ------------------------
 
 :class:`cluster.FeatureAgglomeration` applies
 :ref:`hierarchical_clustering` to group together features that behave
-similar.
+similarly.
 
 .. topic:: **Examples**
 

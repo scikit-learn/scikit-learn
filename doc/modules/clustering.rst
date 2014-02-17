@@ -490,7 +490,7 @@ clusters are successively merged together. The linkage criteria determines the
 metric used for the merge strategy:
 
 - **Ward** minimizes the sum of squared differences within all clusters. It is a
-  variance-minimizing approach and in this sens is similar to the k-means
+  variance-minimizing approach and in this sense is similar to the k-means
   objective function but tackled with an agglomerative hierarchical
   approach.
 - **Maximum** or **complete linkage** minimizes the maximum distance between
@@ -507,7 +507,8 @@ considers at each step all the possible merges.
 
    The :class:`FeatureAgglomeration` uses agglomerative clustering to
    group together features that look very similar, thus decreasing the
-   number of features.
+   number of features. It is a dimensionality reduction tool, see
+   :ref:`data_reduction`.
 
 Different linkage type: Ward, complete and average linkage
 -----------------------------------------------------------
