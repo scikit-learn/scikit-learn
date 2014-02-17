@@ -216,7 +216,7 @@ transposed data.
    >>> agglo = cluster.FeatureAgglomeration(connectivity=connectivity,
    ...                                      n_clusters=32)
    >>> agglo.fit(X) # doctest: +ELLIPSIS
-   FeatureAgglomeration(compute_full_tree='auto',...
+   FeatureAgglomeration(affinity='euclidean', compute_full_tree='auto',...
    >>> X_reduced = agglo.transform(X)
 
    >>> X_approx = agglo.inverse_transform(X_reduced)
