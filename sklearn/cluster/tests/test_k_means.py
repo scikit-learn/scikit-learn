@@ -3,6 +3,7 @@ import sys
 
 import numpy as np
 from scipy import sparse as sp
+from scipy.spatial.distance import cosine
 
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
@@ -18,6 +19,7 @@ from sklearn.utils.testing import assert_warns
 from sklearn.utils.extmath import row_norms
 from sklearn.utils.fixes import unique
 from sklearn.metrics.cluster import v_measure_score
+from sklearn.metrics.pairwise import cosine_distances
 from sklearn.cluster import KMeans, k_means
 from sklearn.cluster import MiniBatchKMeans
 from sklearn.cluster.k_means_ import _labels_inertia
@@ -108,6 +110,37 @@ def test_labels_assignment_and_inertia_L1():
     assert_array_equal(labels_csr, labels_gold)
 
 
+def test_labels_assignment_and_inertia_COS():
+    # pure numpy implementation as easily auditable reference gold
+    # implementation
+    rng = np.random.RandomState(42)
+    noisy_centers = centers + rng.normal(size=centers.shape)
+    labels_gold = - np.ones(n_samples, dtype=np.int)
+    mindist = np.empty(n_samples)
+    mindist.fill(np.infty)
+    for center_id in range(n_clusters):
+        dist = np.empty(n_samples, dtype=np.float64)
+        for i in range(n_samples):
+            dist[i] = cosine(X[i], noisy_centers[center_id])
+        labels_gold[dist < mindist] = center_id
+        mindist = np.minimum(dist, mindist)
+    inertia_gold = mindist.sum()
+    assert_true((mindist >= 0.0).all())
+    assert_true((labels_gold != -1).all())
+
+    # perform label assignment using the dense array input
+    labels_array, inertia_array = _labels_inertia(X, noisy_centers,
+                                                  metric='cosine')
+    assert_array_almost_equal(inertia_array, inertia_gold)
+    assert_array_equal(labels_array, labels_gold)
+
+    # perform label assignment using the sparse CSR input
+    labels_csr, inertia_csr = _labels_inertia(X_csr, noisy_centers,
+                                              metric='cosine')
+    assert_array_almost_equal(inertia_csr, inertia_gold)
+    assert_array_equal(labels_csr, labels_gold)
+
+
 def test_minibatch_update_consistency():
     """Check that dense and sparse minibatch update give the same results"""
     rng = np.random.RandomState(42)
@@ -172,7 +205,9 @@ def test_minibatch_update_consistency():
     assert_almost_equal(new_inertia, new_inertia_csr)
 
 
-def _check_fitted_model(km):
+def _check_fitted_model(km, true_labels_=None):
+    if true_labels_ is None:
+        true_labels_ = true_labels
     # check that the number of clusters centers and distinct labels match
     # the expectation
     centers = km.cluster_centers_
@@ -182,7 +217,7 @@ def _check_fitted_model(km):
     assert_equal(np.unique(labels).shape[0], n_clusters)
 
     # check that the labels assignment are perfect (up to a permutation)
-    assert_equal(v_measure_score(true_labels, labels), 1.0)
+    assert_equal(v_measure_score(true_labels_, labels), 1.0)
     assert_greater(km.inertia_, 0.0)
 
     # check error on dataset being too small
@@ -193,6 +228,24 @@ def test_k_means_plus_plus_init():
     km = KMeans(init="k-means++", n_clusters=n_clusters,
                 random_state=42).fit(X)
     _check_fitted_model(km)
+
+    km = KMeans(init="k-means++", n_clusters=n_clusters,
+                random_state=42, metric='cosine').fit(X)
+    _check_fitted_model(km, true_labels_=true_labels)
+
+
+def test_k_means_plus_plus_init_L1():
+    labels_gold = - np.ones(n_samples, dtype=np.int)
+    mindist = np.empty(n_samples)
+    mindist.fill(np.infty)
+    for center_id in range(n_clusters):
+        dist = np.sum(np.abs(X - centers[center_id]), axis=1)
+        labels_gold[dist < mindist] = center_id
+        mindist = np.minimum(dist, mindist)
+
+    km = KMeans(init="k-means++", n_clusters=n_clusters,
+                random_state=42, metric='L1').fit(X)
+    _check_fitted_model(km, true_labels_=labels_gold)
 
 
 def test_k_means_check_fitted():
@@ -253,9 +306,29 @@ def test_k_means_plus_plus_init_sparse():
     km.fit(X_csr)
     _check_fitted_model(km)
 
+    km = KMeans(init="k-means++", n_clusters=n_clusters, random_state=42,
+                metric='cosine')
+    km.fit(X_csr)
+    _check_fitted_model(km)
+
+    km = KMeans(init="k-means++", n_clusters=n_clusters, random_state=42,
+                metric='L1')
+    km.fit(X_csr)
+    _check_fitted_model(km)
+
 
 def test_k_means_random_init():
     km = KMeans(init="random", n_clusters=n_clusters, random_state=42)
+    km.fit(X)
+    _check_fitted_model(km)
+
+    km = KMeans(init="random", n_clusters=n_clusters, random_state=42,
+                metric='L1')
+    km.fit(X)
+    _check_fitted_model(km)
+
+    km = KMeans(init="random", n_clusters=n_clusters, random_state=42,
+                metric='cosine')
     km.fit(X)
     _check_fitted_model(km)
 
@@ -265,10 +338,28 @@ def test_k_means_random_init_sparse():
     km.fit(X_csr)
     _check_fitted_model(km)
 
+    km = KMeans(init="random", n_clusters=n_clusters, random_state=42,
+                metric='cosine')
+    km.fit(X_csr)
+    _check_fitted_model(km)
+
+    km = KMeans(init="random", n_clusters=n_clusters, random_state=42,
+                metric='L1')
+    km.fit(X_csr)
+    _check_fitted_model(km)
+
 
 def test_k_means_plus_plus_init_not_precomputed():
     km = KMeans(init="k-means++", n_clusters=n_clusters, random_state=42,
                      precompute_distances=False).fit(X)
+    _check_fitted_model(km)
+
+    km = KMeans(init="k-means++", n_clusters=n_clusters, random_state=42,
+                     precompute_distances=False, metric='cosine').fit(X)
+    _check_fitted_model(km)
+
+    km = KMeans(init="k-means++", n_clusters=n_clusters, random_state=42,
+                     precompute_distances=False, metric='L1').fit(X)
     _check_fitted_model(km)
 
 
@@ -277,10 +368,28 @@ def test_k_means_random_init_not_precomputed():
                      precompute_distances=False).fit(X)
     _check_fitted_model(km)
 
+    km = KMeans(init="random", n_clusters=n_clusters, random_state=42,
+                     precompute_distances=False, metric='cosine').fit(X)
+    _check_fitted_model(km)
+
+    km = KMeans(init="random", n_clusters=n_clusters, random_state=42,
+                     precompute_distances=False, metric='L1').fit(X)
+    _check_fitted_model(km)
+
 
 def test_k_means_perfect_init():
     km = KMeans(init=centers.copy(), n_clusters=n_clusters, random_state=42,
                 n_init=1)
+    km.fit(X)
+    _check_fitted_model(km)
+
+    km = KMeans(init=centers.copy(), n_clusters=n_clusters, random_state=42,
+                n_init=1, metric='cosine')
+    km.fit(X)
+    _check_fitted_model(km)
+
+    km = KMeans(init=centers.copy(), n_clusters=n_clusters, random_state=42,
+                n_init=1, metric='L1')
     km.fit(X)
     _check_fitted_model(km)
 
@@ -405,7 +514,7 @@ def test_sparse_mb_k_means_callable_init():
                   MiniBatchKMeans(init=test_init, random_state=42).fit, X_csr)
 
     # Now check that the fit actually works
-    mb_k_means = MiniBatchKMeans(n_clusters=3, init=test_init,
+    mb_k_means = MiniBatchKMeans(n_clusters=centers.shape[0], init=test_init,
                                  random_state=42).fit(X_csr)
     _check_fitted_model(mb_k_means)
 

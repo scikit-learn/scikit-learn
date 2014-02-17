@@ -17,7 +17,8 @@ import numpy as np
 import scipy.sparse as sp
 
 from ..base import BaseEstimator, ClusterMixin, TransformerMixin
-from ..metrics.pairwise import euclidean_distances, manhattan_distances
+from ..metrics.pairwise import euclidean_distances, manhattan_distances,\
+    cosine_distances
 from ..utils.extmath import row_norms
 from ..utils.sparsefuncs import assign_rows_csr, mean_variance_axis0
 from ..utils import check_arrays
@@ -25,6 +26,7 @@ from ..utils import check_random_state
 from ..utils import atleast2d_or_csr
 from ..utils import as_float_array
 from ..utils import gen_batches
+from ..preprocessing import normalize
 from ..externals.joblib import Parallel
 from ..externals.joblib import delayed
 
@@ -100,11 +102,13 @@ def _k_init(X, n_clusters, x_squared_norms, random_state,
         centers[0] = X[center_id]
 
     # Initialize list of closest distances and calculate current potential
-    if metric in ['l2', 'cosine']:
+    if metric == 'l2':
         closest_dist_sq = euclidean_distances(
             centers[0], X, Y_norm_squared=x_squared_norms, squared=True)
     elif metric == 'l1':
         closest_dist_sq = manhattan_distances(centers[0], X)
+    elif metric == 'cosine':
+        closest_dist_sq = cosine_distances(centers[0], X)
     current_pot = closest_dist_sq.sum()
 
     # Pick the remaining n_clusters-1 points
@@ -115,11 +119,13 @@ def _k_init(X, n_clusters, x_squared_norms, random_state,
         candidate_ids = np.searchsorted(closest_dist_sq.cumsum(), rand_vals)
 
         # Compute distances to center candidates
-        if metric in ['l2', 'cosine']:
+        if metric == 'l2':
             distance_to_candidates = euclidean_distances(X[candidate_ids],
                 X, Y_norm_squared=x_squared_norms, squared=True)
         elif metric == 'l1':
             distance_to_candidates = manhattan_distances(X[candidate_ids], X)
+        elif metric == 'cosine':
+            distance_to_candidates = cosine_distances(X[candidate_ids], X)
 
         # Decide which candidate is the best
         best_candidate = None
@@ -410,8 +416,12 @@ def _kmeans_single(X, n_clusters, x_squared_norms, max_iter=300,
 
         # computation of the means is also called the M-step of EM
         if sp.issparse(X):
-            centers = _k_means._centers_sparse(X, labels, n_clusters,
-                                               distances)
+            if metric == 'l1':
+                centers = _k_means._centers_sparse_L1(X, labels, n_clusters,
+                                                      distances)
+            elif metric in ['l2', 'cosine']:
+                centers = _k_means._centers_sparse(X, labels, n_clusters,
+                                                   distances)
         else:
             if metric in ['l2', 'cosine']:
                 centers = _k_means._centers_dense(X, labels, n_clusters,
@@ -440,11 +450,13 @@ def _labels_inertia_precompute_dense(X, x_squared_norms, centers, metric='L2'):
     n_samples = X.shape[0]
     k = centers.shape[0]
 
-    if metric in ['l2', 'cosine']:
+    if metric == 'l2':
         distances = euclidean_distances(centers, X, x_squared_norms,
                                         squared=True)
     elif metric == 'l1':
         distances = manhattan_distances(centers, X)
+    elif metric == 'cosine':
+        distances = cosine_distances(centers, X)
 
     labels = np.empty(n_samples, dtype=np.int32)
     labels.fill(-1)
@@ -503,7 +515,7 @@ def _labels_inertia(X, centers, x_squared_norms=None, precompute_distances=True,
     if distances is None:
         distances = np.zeros(shape=(0,), dtype=np.float64)
     if sp.issparse(X):
-        if metric in ['l2', 'cosine']:
+        if metric == 'l2':
             if x_squared_norms is None:
                 x_squared_norms = row_norms(X, squared=True)
 
@@ -513,11 +525,15 @@ def _labels_inertia(X, centers, x_squared_norms=None, precompute_distances=True,
         elif metric == 'l1':
             inertia = _k_means._assign_labels_csr_L1(
                 X, centers, labels, distances=distances)
+        elif metric == 'cosine':
+            labels, inertia = _labels_inertia_precompute_dense(X, None,
+                                                               centers,
+                                                               metric='cosine')
     else:
         if precompute_distances:
             return _labels_inertia_precompute_dense(X, x_squared_norms,
                                                     centers, metric=metric)
-        if metric in ['l2', 'cosine']:
+        if metric == 'l2':
             if x_squared_norms is None:
                 x_squared_norms = row_norms(X, squared=True)
             inertia = _k_means._assign_labels_array(
@@ -526,6 +542,10 @@ def _labels_inertia(X, centers, x_squared_norms=None, precompute_distances=True,
         elif metric == 'l1':
             inertia = _k_means._assign_labels_array_L1(
                 X, centers, labels, distances=distances)
+        elif metric == 'cosine':
+            labels, inertia = _labels_inertia_precompute_dense(X, None,
+                                                               centers,
+                                                               metric='cosine')
     return labels, inertia
 
 
@@ -615,10 +635,6 @@ def _init_centroids(X, k, init, random_state=None, x_squared_norms=None,
                          % (centers.shape, k))
 
     return centers
-
-
-def _to_unit_length(X):
-    return (X.T / np.sqrt(np.einsum('...i,...i', X, X))).T
 
 
 class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
@@ -783,9 +799,9 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         random_state = check_random_state(self.random_state)
         X = self._check_fit_data(X)
 
-        if self.metric.lower() == 'cosine':
-            # normalise Xs to have unit length
-            X = _to_unit_length(X)
+        # if self.metric.lower() == 'cosine':
+        #     # normalise Xs to have unit length
+        #     X = _to_unit_length(X)
 
         self.cluster_centers_, self.labels_, self.inertia_ = k_means(
             X, n_clusters=self.n_clusters, init=self.init, n_init=self.n_init,
@@ -839,13 +855,12 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
     def _transform(self, X):
         """guts of transform method; no input validation"""
         metric = self.metric.lower()
-        if metric in ['l2', 'cosine']:
-            if metric == 'cosine':
-                # normalise Xs to have unit length
-                X = _to_unit_length(X)
+        if metric == 'l2':
             return euclidean_distances(X, self.cluster_centers_)
         elif metric == 'l1':
             return manhattan_distances(X, self.cluster_centers_)
+        elif metric == 'cosine':
+            return cosine_distances(X, self.cluster_centers_)
 
     def predict(self, X):
         """Predict the closest cluster each sample in X belongs to.
@@ -866,7 +881,9 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         """
         self._check_fitted()
         X = self._check_test_data(X)
-        x_squared_norms = row_norms(X, squared=True)
+        x_squared_norms = None
+        if self.metric == 'l2':
+            x_squared_norms = row_norms(X, squared=True)
         return _labels_inertia(X, self.cluster_centers_, x_squared_norms,
                                metric=self.metric)[0]
 
@@ -885,7 +902,9 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         """
         self._check_fitted()
         X = self._check_test_data(X)
-        x_squared_norms = row_norms(X, squared=True)
+        x_squared_norms = None
+        if self.metric == 'l2':
+            x_squared_norms = row_norms(X, squared=True)
         return -_labels_inertia(X, self.cluster_centers_, x_squared_norms,
                                 metric=self.metric)[1]
 

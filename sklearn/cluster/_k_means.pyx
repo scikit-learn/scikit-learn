@@ -373,8 +373,8 @@ def _centers_dense_L1(np.ndarray[DOUBLE, ndim=2] X,
     """
     ## TODO: add support for CSR input
     cdef int n_samples, n_features
-    n_samples = X.shape[0]
-    n_features = X.shape[1]
+    cdef int n_samples = X.shape[0]
+    cdef int n_features = X.shape[1]
     cdef int i, j
     cdef np.ndarray[DOUBLE, ndim=2] centers = np.zeros((n_clusters, n_features))
     n_samples_in_cluster = bincount(labels, minlength=n_clusters)
