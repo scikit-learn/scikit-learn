@@ -372,7 +372,6 @@ def _centers_dense_L1(np.ndarray[DOUBLE, ndim=2] X,
         The resulting centers
     """
     ## TODO: add support for CSR input
-    cdef int n_samples, n_features
     cdef int n_samples = X.shape[0]
     cdef int n_features = X.shape[1]
     cdef int i, j
@@ -435,7 +434,7 @@ def _centers_dense(np.ndarray[DOUBLE, ndim=2] X,
 
 
 def _centers_sparse(X, np.ndarray[INT, ndim=1] labels, n_clusters,
-        np.ndarray[DOUBLE, ndim=1] distances):
+        np.ndarray[DOUBLE, ndim=1] distances, metric='l2'):
     """M step of the K-means EM algorithm
 
     Computation of cluster centers / means.
@@ -492,7 +491,17 @@ def _centers_sparse(X, np.ndarray[INT, ndim=1] labels, n_clusters,
     for i in range(labels.shape[0]):
         add_row_csr(data, indices, indptr, i, centers[labels[i]])
 
-    # todo center computation needs to be aware of the distance measure
     centers /= n_samples_in_cluster[:, np.newaxis]
+
+    return centers
+
+
+cdef _centers_sparse_L1(np.ndarray[DOUBLE, ndim=2] centers):
+    cdef int i, j
+    cdef int n_features = centers.shape[1]
+    cdef int n_clusters = centers.shape[0]
+    for i in xrange(n_clusters):
+        for j in xrange(n_features):
+            centers[i, j] = np.median(centers[i, j].data)
 
     return centers

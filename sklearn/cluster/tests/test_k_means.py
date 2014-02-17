@@ -31,7 +31,7 @@ from sklearn.externals.six.moves import cStringIO as StringIO
 # non centered, sparse centers to check the
 centers = np.array([
     [0.0, 5.0, 0.0, 0.0, 0.0],
-    [1.0, 1.0, 4.0, 0.0, 0.0],
+    [2.0, 1.0, 4.0, 0.0, 0.0],
     [1.0, 0.0, 0.0, 5.0, 1.0],
 ])
 n_samples = 100
@@ -205,9 +205,7 @@ def test_minibatch_update_consistency():
     assert_almost_equal(new_inertia, new_inertia_csr)
 
 
-def _check_fitted_model(km, true_labels_=None):
-    if true_labels_ is None:
-        true_labels_ = true_labels
+def _check_fitted_model(km):
     # check that the number of clusters centers and distinct labels match
     # the expectation
     centers = km.cluster_centers_
@@ -217,7 +215,7 @@ def _check_fitted_model(km, true_labels_=None):
     assert_equal(np.unique(labels).shape[0], n_clusters)
 
     # check that the labels assignment are perfect (up to a permutation)
-    assert_equal(v_measure_score(true_labels_, labels), 1.0)
+    assert_equal(v_measure_score(true_labels, labels), 1.0)
     assert_greater(km.inertia_, 0.0)
 
     # check error on dataset being too small
@@ -231,21 +229,11 @@ def test_k_means_plus_plus_init():
 
     km = KMeans(init="k-means++", n_clusters=n_clusters,
                 random_state=42, metric='cosine').fit(X)
-    _check_fitted_model(km, true_labels_=true_labels)
-
-
-def test_k_means_plus_plus_init_L1():
-    labels_gold = - np.ones(n_samples, dtype=np.int)
-    mindist = np.empty(n_samples)
-    mindist.fill(np.infty)
-    for center_id in range(n_clusters):
-        dist = np.sum(np.abs(X - centers[center_id]), axis=1)
-        labels_gold[dist < mindist] = center_id
-        mindist = np.minimum(dist, mindist)
+    _check_fitted_model(km)
 
     km = KMeans(init="k-means++", n_clusters=n_clusters,
                 random_state=42, metric='L1').fit(X)
-    _check_fitted_model(km, true_labels_=labels_gold)
+    _check_fitted_model(km)
 
 
 def test_k_means_check_fitted():
@@ -313,8 +301,7 @@ def test_k_means_plus_plus_init_sparse():
 
     km = KMeans(init="k-means++", n_clusters=n_clusters, random_state=42,
                 metric='L1')
-    km.fit(X_csr)
-    _check_fitted_model(km)
+    assert_raises(ValueError, km.fit, X_csr)
 
 
 def test_k_means_random_init():

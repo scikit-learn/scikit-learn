@@ -416,12 +416,14 @@ def _kmeans_single(X, n_clusters, x_squared_norms, max_iter=300,
 
         # computation of the means is also called the M-step of EM
         if sp.issparse(X):
-            if metric == 'l1':
-                centers = _k_means._centers_sparse_L1(X, labels, n_clusters,
-                                                      distances)
-            elif metric in ['l2', 'cosine']:
+            if metric in ['l2', 'cosine']:
                 centers = _k_means._centers_sparse(X, labels, n_clusters,
-                                                   distances)
+                                                   distances, metric)
+            elif metric == 'l1':
+                n_features = X.shape[1]
+                for c in xrange(n_clusters):
+                    for f in xrange(n_features):
+                        centers[c, f] = np.median(X[labels == c, f].data)
         else:
             if metric in ['l2', 'cosine']:
                 centers = _k_means._centers_dense(X, labels, n_clusters,
