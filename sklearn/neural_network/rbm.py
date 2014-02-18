@@ -1,10 +1,10 @@
 """Restricted Boltzmann Machine
 """
 
-# Main author: Yann N. Dauphin <dauphiya@iro.umontreal.ca>
-# Author: Vlad Niculae
-# Author: Gabriel Synnaeve
-# License: BSD Style.
+# Authors: Yann N. Dauphin <dauphiya@iro.umontreal.ca>
+#          Vlad Niculae
+#          Gabriel Synnaeve
+# License: BSD 3 clause
 
 import time
 
@@ -188,8 +188,8 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
             The value of the free energy.
         """
         return (- safe_sparse_dot(v, self.intercept_visible_)
-                - np.log1p(np.exp(safe_sparse_dot(v, self.components_.T)
-                                  + self.intercept_hidden_)).sum(axis=1))
+                - np.logaddexp(0, safe_sparse_dot(v, self.components_.T)
+                                  + self.intercept_hidden_).sum(axis=1))
 
     def gibbs(self, v):
         """Perform one Gibbs sampling step.

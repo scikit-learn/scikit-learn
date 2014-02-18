@@ -127,6 +127,11 @@ def test_score_samples():
     s_score = rbm1.score_samples(lil_matrix(X))
     assert_almost_equal(d_score, s_score)
 
+    # Test numerical stability (#2785): would previously generate infinities
+    # and crash with an exception.
+    with np.errstate(under='ignore'):
+        rbm1.score_samples(np.arange(1000) * 100)
+
 
 def test_rbm_verbose():
     rbm = BernoulliRBM(n_iter=2, verbose=10)
