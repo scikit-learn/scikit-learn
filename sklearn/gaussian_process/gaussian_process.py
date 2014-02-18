@@ -701,9 +701,9 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
             constraints = []
             for i in range(self.theta0.size):
-                constraints.append(lambda log10t:
+                constraints.append(lambda log10t, i=i:
                                    log10t[i] - np.log10(self.thetaL[0, i]))
-                constraints.append(lambda log10t:
+                constraints.append(lambda log10t, i=i:
                                    np.log10(self.thetaU[0, i]) - log10t[i])
 
             for k in range(self.random_start):
