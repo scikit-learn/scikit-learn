@@ -1,6 +1,6 @@
 import numpy as np
 import scipy.sparse as sp
-from scipy.linalg import inv
+from scipy import linalg
 
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_almost_equal
@@ -133,26 +133,26 @@ def test_ridge_sample_weights():
                 est = Ridge(alpha=alpha, solver=solver)
                 est.fit(X, y, sample_weight=sample_weight)
 
-                # Check using Newtons Method
+                # Check using Newton's Method
                 # Quadratic function should be solved in a single step.
-                newX = np.ones([n_samples, n_features + 1])
-                coef_ = np.zeros(n_features + 1)
-                grad = np.zeros(n_features + 1)
-                newX[:,  1:] = X
+                # Initialize
                 sample_weight = np.sqrt(sample_weight)
-                newX *= sample_weight[:, np.newaxis]
-                newy = y * sample_weight
+                X_weighted = sample_weight[:, np.newaxis] * (
+                    np.column_stack((np.ones(n_samples), X)))
+                y_weighted = y * sample_weight
 
-                # Gradient
-                grad = np.dot((np.dot(newX, coef_) - newy), newX)
-                grad[1:] += alpha * coef_[1:]
+                # Gradient is (X*coef-y)*X + alpha*coef_[1:]
+                # Remove coef since it is initialized to zero.
+                grad = -np.dot(y_weighted, X_weighted)
 
-                # Hessian
+                # Hessian is (X.T*X) + alpha*I except that the first
+                # diagonal element should be zero, since there is no
+                # penalization of intercept.
                 diag = alpha * np.ones(n_features + 1)
                 diag[0] = 0.
-                hess = np.dot(newX.T, newX)
+                hess = np.dot(X_weighted.T, X_weighted)
                 hess.flat[::n_features + 2] += diag
-                coef_ = coef_ - np.dot(inv(hess), grad)
+                coef_ = - np.dot(linalg.inv(hess), grad)
                 assert_almost_equal(coef_[0], est.intercept_)
                 assert_array_almost_equal(coef_[1:], est.coef_)
 
