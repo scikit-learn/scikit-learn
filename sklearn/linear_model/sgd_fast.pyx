@@ -26,7 +26,7 @@ from sklearn.utils.seq_dataset cimport SequentialDataset
 np.import_array()
 
 
-# Penalty constans
+# Penalty constants
 DEF NO_PENALTY = 0
 DEF L1 = 1
 DEF L2 = 2
