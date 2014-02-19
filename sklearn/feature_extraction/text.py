@@ -1603,19 +1603,20 @@ class LdaVectorizer(CountVectorizer):
         logger.info('Building LDA model: gensim corpus generated!')
 
         # build a gensim tf-idf model
-        self._model_tfidf = models.TfidfModel(self._corpus)
+        #self._model_tfidf = models.TfidfModel(self._corpus)
         # turn the word count into a normalized tfidf
-        self._corpus_tfidf = self._model_tfidf[self._corpus]
-        logger.info('Building LDA model: gensim tf-idf corpus generated!')
+        #self._corpus_tfidf = self._model_tfidf[self._corpus]
+        #logger.info('Building LDA model: gensim tf-idf corpus generated!')
 
-        logger.info('Cleaning up the TFIDF model...')
-        self._model_tfidf = None
+        #logger.info('Cleaning up the TFIDF model...')
+        #self._model_tfidf = None
 
         # build an LDA model
         # Specifying dictionary is important if we want to output actual words,
         # not IDs, into the topic log file
         self._model_lda = models.LdaModel(
-            corpus=self._corpus_tfidf, id2word=self._dictionary,
+            #corpus=self._corpus_tfidf, id2word=self._dictionary,
+            corpus=self._corpus, id2word=self._dictionary,
             num_topics=self.num_topics,
             distributed=self.distributed,
             chunksize=self.chunksize, passes=self.passes,
@@ -1628,7 +1629,7 @@ class LdaVectorizer(CountVectorizer):
 
         logger.info('Cleaning up gensim corpus...')
         self._corpus = None
-        self._corpus_tfidf = None
+        #self._corpus_tfidf = None
         self._dictionary = None
 
         if self.writedown_topics:
@@ -1663,7 +1664,6 @@ class LdaVectorizer(CountVectorizer):
         self.fit(raw_docs)
         count_matrix = super(LdaVectorizer, self).fit_transform(raw_docs)
         corpus = _generate_gensim_corpus(count_matrix)
-        #return _convert_gensim_corpus2csr(self._model_lda[corpus])
         return _convert_gensim_corpus2csr(self._model_lda[corpus],
                                           num_topics=self.num_topics)
 
@@ -1693,7 +1693,6 @@ class LdaVectorizer(CountVectorizer):
         corpus = _generate_gensim_corpus(count_matrix)
         logger.info('Transforming new docs: gensim corpus generated!')
 
-        #return _convert_gensim_corpus2csr(self._model_lda[corpus])
         return _convert_gensim_corpus2csr(self._model_lda[corpus],
                                           num_topics=self.num_topics)
 
@@ -1918,8 +1917,8 @@ class LsiVectorizer(CountVectorizer):
         self._corpus_tfidf = self._model_tfidf[self._corpus]
         logger.info('Building LSI model: gensim tf-idf corpus generated!')
 
-        logger.info('Cleaning up TFIDF model...')
-        self._model_tfidf = None
+        #logger.info('Cleaning up the TFIDF model...')
+        #self._model_tfidf = None
 
         # build an LSI model
         # Specifying dictionary is important if we want to output actual words,
@@ -1972,8 +1971,11 @@ class LsiVectorizer(CountVectorizer):
         self.fit(raw_docs)
         count_matrix = super(LsiVectorizer, self).fit_transform(raw_docs)
         corpus = _generate_gensim_corpus(count_matrix)
-        #return _convert_gensim_corpus2csr(self._model_lsi[corpus])
-        return _convert_gensim_corpus2csr(self._model_lsi[corpus],
+        corpus_tfidf = self._model_tfidf[corpus]
+
+        #return _convert_gensim_corpus2csr(self._model_lsi[corpus],
+        #                                  num_topics=self.num_topics)
+        return _convert_gensim_corpus2csr(self._model_lsi[corpus_tfidf],
                                           num_topics=self.num_topics)
 
         #return _convert_gensim_corpus2csr(self._model_lsi[self._corpus])
@@ -2000,10 +2002,12 @@ class LsiVectorizer(CountVectorizer):
                     sklearn word count matrix completed!''')
 
         corpus = _generate_gensim_corpus(count_matrix)
+        corpus_tfidf = self._model_tfidf[corpus]
         logger.info('Transforming new docs: gensim corpus generated!')
 
-        #return _convert_gensim_corpus2csr(self._model_lsi[corpus])
-        return _convert_gensim_corpus2csr(self._model_lsi[corpus],
+        #return _convert_gensim_corpus2csr(self._model_lsi[corpus],
+        #                                  num_topics=self.num_topics)
+        return _convert_gensim_corpus2csr(self._model_lsi[corpus_tfidf],
                                           num_topics=self.num_topics)
 
 
