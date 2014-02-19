@@ -1055,7 +1055,7 @@ cdef class BestSplitter(Splitter):
         cdef SIZE_t n_found_constant = 0
         cdef SIZE_t n_drawn_constant = 0
         cdef SIZE_t n_known_constant = n_constant_features[0]
-        cdef SIZE_t n_total_constant = n_constant_features[0]
+        cdef SIZE_t n_total_constant = n_known_constant
         cdef DTYPE_t current_feature_value
         cdef SIZE_t partition_end
 
@@ -1074,11 +1074,13 @@ cdef class BestSplitter(Splitter):
             f_j = rand_int(f_i - n_drawn_constant - n_found_constant,
                            random_state) + n_drawn_constant
             if f_j < n_known_constant:
-                # f_j in the interval [0, n_known_constant[
+                # f_j in the interval [n_drawn_constant, n_known_constant[
 
                 tmp = features[f_j]
                 features[f_j] = features[n_drawn_constant]
-                features[n_drawn_constant] = features[f_j]
+                features[n_drawn_constant] = tmp
+
+                n_drawn_constant += 1
 
             else:
                 # f_j in the interval [n_total_constant, f_i[
@@ -1099,7 +1101,7 @@ cdef class BestSplitter(Splitter):
 
                     tmp = features[f_j]
                     features[f_j] = features[n_total_constant]
-                    features[n_total_constant] = features[f_j]
+                    features[n_total_constant] = tmp
 
                     n_total_constant += 1
 
@@ -1311,6 +1313,7 @@ cdef class RandomSplitter(Splitter):
         cdef SIZE_t end = self.end
 
         cdef SIZE_t* features = self.features
+        cdef SIZE_t* constant_features = self.constant_features
         cdef SIZE_t n_features = self.n_features
 
         cdef DTYPE_t* X = self.X
@@ -1339,90 +1342,122 @@ cdef class RandomSplitter(Splitter):
         cdef SIZE_t f_i = n_features
         cdef SIZE_t f_j, p, tmp
         cdef SIZE_t n_found_constant = 0
+        cdef SIZE_t n_drawn_constant = 0
+        cdef SIZE_t n_known_constant = n_constant_features[0]
+        cdef SIZE_t n_total_constant = n_known_constant
         cdef SIZE_t n_visited_features = 0
         cdef DTYPE_t min_feature_value
         cdef DTYPE_t max_feature_value
         cdef DTYPE_t current_feature_value
         cdef SIZE_t partition_end
 
-        while (f_i > 0 and (n_visited_features < max_features or
-                            n_visited_features <= n_found_constant)):
+        # Copy constant features
+        f_j = 0
+        while f_j < n_known_constant:
+            features[f_j] = constant_features[f_j]
+            f_j += 1
+
+        while (f_i > n_total_constant and
+                (n_visited_features < max_features or
+                 n_visited_features <= n_found_constant + n_drawn_constant)):
             n_visited_features += 1
 
             # Draw a feature at random
-            f_j = rand_int(f_i, random_state)
-            f_i -= 1
-            features[f_i], features[f_j] = features[f_j], features[f_i]
-            current_feature = features[f_i]
+            f_j = rand_int(f_i - n_drawn_constant - n_found_constant,
+                           random_state) + n_drawn_constant
+            if f_j < n_known_constant:
+                # f_j in the interval [n_drawn_constant, n_known_constant[
 
-            # Find min, max
-            min_feature_value = X[X_sample_stride * samples[start] +
-                                  X_fx_stride * current_feature]
-            max_feature_value = min_feature_value
-            Xf[start] = min_feature_value
+                tmp = features[f_j]
+                features[f_j] = features[n_drawn_constant]
+                features[n_drawn_constant] = tmp
 
-            for p in range(start + 1, end):
-                current_feature_value = X[X_sample_stride * samples[p] +
-                                          X_fx_stride * current_feature]
-                Xf[p] = current_feature_value
-
-                if current_feature_value < min_feature_value:
-                    min_feature_value = current_feature_value
-                elif current_feature_value > max_feature_value:
-                    max_feature_value = current_feature_value
-
-            if max_feature_value <= min_feature_value + EPSILON_FLT:
-                n_found_constant += 1
+                n_drawn_constant += 1
 
             else:
-                # Draw a random threshold
-                current_threshold = (min_feature_value +
-                                     rand_double(random_state) *
-                                     (max_feature_value - min_feature_value))
+                # f_j in the interval [n_total_constant, f_i[
+                f_j += n_found_constant
+                current_feature = features[f_j]
 
-                if current_threshold == max_feature_value:
-                    current_threshold = min_feature_value
 
-                # Partition
-                partition_end = end
-                p = start
+                # Find min, max
+                min_feature_value = X[X_sample_stride * samples[start] +
+                                      X_fx_stride * current_feature]
+                max_feature_value = min_feature_value
+                Xf[start] = min_feature_value
 
-                while p < partition_end:
-                    current_feature_value = Xf[p]
-                    if current_feature_value <= current_threshold:
-                        p += 1
 
-                    else:
-                        partition_end -= 1
+                for p in range(start + 1, end):
+                    current_feature_value = X[X_sample_stride * samples[p] +
+                                              X_fx_stride * current_feature]
+                    Xf[p] = current_feature_value
 
-                        Xf[p] = Xf[partition_end]
-                        Xf[partition_end] = current_feature_value
+                    if current_feature_value < min_feature_value:
+                        min_feature_value = current_feature_value
+                    elif current_feature_value > max_feature_value:
+                        max_feature_value = current_feature_value
 
-                        tmp = samples[partition_end]
-                        samples[partition_end] = samples[p]
-                        samples[p] = tmp
+                if max_feature_value <= min_feature_value + EPSILON_FLT:
+                    n_found_constant += 1
 
-                current_pos = partition_end
+                    tmp = features[f_j]
+                    features[f_j] = features[n_total_constant]
+                    features[n_total_constant] = tmp
 
-                # Reject if min_samples_leaf is not guaranteed
-                if (((current_pos - start) < min_samples_leaf) or
-                        ((end - current_pos) < min_samples_leaf)):
-                   continue
 
-                # Evaluate split
-                self.criterion.reset()
-                self.criterion.update(current_pos)
-                current_improvement = self.criterion.impurity_improvement(impurity)
+                    n_total_constant += 1
 
-                if current_improvement > best_improvement:
-                    self.criterion.children_impurity(&current_impurity_left,
-                                                     &current_impurity_right)
-                    best_impurity_left = current_impurity_left
-                    best_impurity_right = current_impurity_right
-                    best_improvement = current_improvement
-                    best_pos = current_pos
-                    best_feature = current_feature
-                    best_threshold = current_threshold
+                else:
+                    f_i -= 1
+                    features[f_i], features[f_j] = features[f_j], features[f_i]
+
+                    # Draw a random threshold
+                    current_threshold = (min_feature_value +
+                                         rand_double(random_state) *
+                                         (max_feature_value -
+                                          min_feature_value))
+
+                    if current_threshold == max_feature_value:
+                        current_threshold = min_feature_value
+
+                    # Partition
+                    partition_end = end
+                    p = start
+                    while p < partition_end:
+                        current_feature_value = Xf[p]
+                        if current_feature_value <= current_threshold:
+                            p += 1
+                        else:
+                            partition_end -= 1
+
+                            Xf[p] = Xf[partition_end]
+                            Xf[partition_end] = current_feature_value
+
+                            tmp = samples[partition_end]
+                            samples[partition_end] = samples[p]
+                            samples[p] = tmp
+
+                    current_pos = partition_end
+
+                    # Reject if min_samples_leaf is not guaranteed
+                    if (((current_pos - start) < min_samples_leaf) or
+                            ((end - current_pos) < min_samples_leaf)):
+                       continue
+
+                    # Evaluate split
+                    self.criterion.reset()
+                    self.criterion.update(current_pos)
+                    current_improvement = self.criterion.impurity_improvement(impurity)
+
+                    if current_improvement > best_improvement:
+                        self.criterion.children_impurity(&current_impurity_left,
+                                                         &current_impurity_right)
+                        best_impurity_left = current_impurity_left
+                        best_impurity_right = current_impurity_right
+                        best_improvement = current_improvement
+                        best_pos = current_pos
+                        best_feature = current_feature
+                        best_threshold = current_threshold
 
         # Reorganize into samples[start:best_pos] + samples[best_pos:end]
         if best_pos < end and current_feature != best_feature:
@@ -1441,6 +1476,12 @@ cdef class RandomSplitter(Splitter):
                     samples[partition_end] = samples[p]
                     samples[p] = tmp
 
+        # Copy found features
+        f_j = n_known_constant
+        while f_j < n_total_constant:
+            constant_features[f_j] = features[f_j]
+            f_j += 1
+
         # Return values
         pos[0] = best_pos
         feature[0] = best_feature
@@ -1448,6 +1489,7 @@ cdef class RandomSplitter(Splitter):
         impurity_left[0] = best_impurity_left
         impurity_right[0] = best_impurity_right
         impurity_improvement[0] = best_improvement
+        n_constant_features[0] = n_total_constant
 
 
 cdef class PresortBestSplitter(Splitter):
