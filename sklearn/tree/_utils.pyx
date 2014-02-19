@@ -4,6 +4,7 @@
 
 # Authors: Gilles Louppe <g.louppe@gmail.com>
 #          Peter Prettenhofer <peter.prettenhofer@gmail.com>
+#          Arnaud Joly <arnaud.v.joly@gmail.com>
 #
 # Licence: BSD 3 clause
 
@@ -22,6 +23,7 @@ cdef inline void copy_stack(StackRecord* a, StackRecord* b) nogil:
     a.parent = b.parent
     a.is_left = b.is_left
     a.impurity = b.impurity
+    a.n_constant_features = b.n_constant_features
 
 
 cdef class Stack:
@@ -54,7 +56,8 @@ cdef class Stack:
         return self.top <= 0
 
     cdef int push(self, SIZE_t start, SIZE_t end, SIZE_t depth, SIZE_t parent,
-                   bint is_left, double impurity) nogil:
+                   bint is_left, double impurity,
+                   SIZE_t n_constant_features) nogil:
         """Push a new element onto the stack.
 
         Returns 0 if successful; -1 on out of memory error.
@@ -79,6 +82,7 @@ cdef class Stack:
         stack[top].parent = parent
         stack[top].is_left = is_left
         stack[top].impurity = impurity
+        stack[top].n_constant_features = n_constant_features
 
         # Increment stack pointer
         self.top = top + 1

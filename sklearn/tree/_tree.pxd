@@ -2,6 +2,8 @@
 #          Peter Prettenhofer <peter.prettenhofer@gmail.com>
 #          Brian Holt <bdholt1@gmail.com>
 #          Joel Nothman <joel.nothman@gmail.com>
+#          Arnaud Joly <arnaud.v.joly@gmail.com>
+#
 # Licence: BSD 3 clause
 
 # See _tree.pyx for details.
@@ -102,7 +104,8 @@ cdef class Splitter:
                                double* threshold,
                                double* impurity_left,
                                double* impurity_right,
-                               double* impurity_improvement) nogil
+                               double* impurity_improvement,
+                               SIZE_t* n_constant_features) nogil
 
     cdef void node_value(self, double* dest) nogil
 
