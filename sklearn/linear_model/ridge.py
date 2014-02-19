@@ -22,7 +22,7 @@ from ..utils.extmath import safe_sparse_dot
 from ..utils import safe_asarray
 from ..utils import compute_class_weight
 from ..utils import column_or_1d
-from ..preprocessing import LabelBinarizer
+from ..preprocessing import LabelBinarizer, LabelEncoder
 from ..grid_search import GridSearchCV
 from ..externals import six
 from ..metrics.scorer import check_scoring
@@ -538,8 +538,11 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
             y = column_or_1d(y, warn=True)
 
         if self.class_weight:
+            # compute_class_weight cannot handle negative values
+            # hence transform to positive integers.
+            lby = LabelEncoder().fit_transform(y)
             cw = compute_class_weight(self.class_weight,
-                                      self.classes_, Y)
+                                      self.classes_, lby)
             # get the class weight corresponding to each sample
             sample_weight = cw[np.searchsorted(self.classes_, y)]
         else:

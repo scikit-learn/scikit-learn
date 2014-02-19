@@ -466,6 +466,18 @@ def test_class_weights():
     # the prediction on this point should shift
     assert_array_equal(clf.predict([[0.2, -1.0]]), np.array([-1]))
 
+    # class_weight = 'auto', and class_weight = None should return
+    # same values when y has equal number of all labels
+    X = np.array([[-1.0, -1.0], [-1.0, 0], [-.8, -1.0], [1.0, 1.0]])
+    y = [1, 1, -1, -1]
+    clf = RidgeClassifier(class_weight=None)
+    clf.fit(X, y)
+    clfa = RidgeClassifier(class_weight='auto')
+    clfa.fit(X, y)
+    assert_equal(len(clfa.classes_), 2)
+    assert_array_almost_equal(clf.coef_, clfa.coef_)
+    assert_array_almost_equal(clf.intercept_, clfa.intercept_)
+
 
 def test_class_weights_cv():
     """
