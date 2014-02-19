@@ -961,6 +961,8 @@ cdef class Splitter:
 
         self.features = features
         self.n_features = n_features
+        self.constant_features = <SIZE_t*> realloc(self.features,
+                                                   n_features * sizeof(SIZE_t))
 
         cdef DTYPE_t* fv = <DTYPE_t*> realloc(self.feature_values,
                                               n_samples * sizeof(DTYPE_t))
