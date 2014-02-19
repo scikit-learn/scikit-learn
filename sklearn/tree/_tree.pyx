@@ -1052,40 +1052,40 @@ cdef class BestSplitter(Splitter):
         cdef SIZE_t f_i = n_features
         cdef SIZE_t f_j, p, tmp
         cdef SIZE_t n_visited_features = 0
-        cdef SIZE_t n_found_constant = 0
-        cdef SIZE_t n_drawn_constant = 0
-        cdef SIZE_t n_known_constant = n_constant_features[0]
-        cdef SIZE_t n_total_constant = n_known_constant
+        cdef SIZE_t n_found_constants = 0
+        cdef SIZE_t n_drawn_constants = 0
+        cdef SIZE_t n_known_constants = n_constant_features[0]
+        cdef SIZE_t n_total_constants = n_known_constants
         cdef DTYPE_t current_feature_value
         cdef SIZE_t partition_end
 
         # Copy constant features
         f_j = 0
-        while f_j < n_known_constant:
+        while f_j < n_known_constants:
             features[f_j] = constant_features[f_j]
             f_j += 1
 
         # Look for splits
-        while (f_i > n_total_constant and
+        while (f_i > n_total_constants and
                 (n_visited_features < max_features or
-                 n_visited_features <= n_found_constant + n_drawn_constant)):
+                 n_visited_features <= n_found_constants + n_drawn_constants)):
             n_visited_features += 1
 
             # Draw a feature at random
-            f_j = rand_int(f_i - n_drawn_constant - n_found_constant,
-                           random_state) + n_drawn_constant
-            if f_j < n_known_constant:
-                # f_j in the interval [n_drawn_constant, n_known_constant[
+            f_j = rand_int(f_i - n_drawn_constants - n_found_constants,
+                           random_state) + n_drawn_constants
+            if f_j < n_known_constants:
+                # f_j in the interval [n_drawn_constants, n_known_constants[
 
                 tmp = features[f_j]
-                features[f_j] = features[n_drawn_constant]
-                features[n_drawn_constant] = tmp
+                features[f_j] = features[n_drawn_constants]
+                features[n_drawn_constants] = tmp
 
-                n_drawn_constant += 1
+                n_drawn_constants += 1
 
             else:
-                # f_j in the interval [n_total_constant, f_i[
-                f_j += n_found_constant
+                # f_j in the interval [n_total_constants, f_i[
+                f_j += n_found_constants
                 current_feature = features[f_j]
 
                 # Sort samples along that feature; first copy the feature values
@@ -1098,13 +1098,13 @@ cdef class BestSplitter(Splitter):
                 sort(Xf + start, samples + start, end - start)
 
                 if Xf[end - 1] <= Xf[start] + EPSILON_FLT:
-                    n_found_constant += 1
+                    n_found_constants += 1
 
                     tmp = features[f_j]
-                    features[f_j] = features[n_total_constant]
-                    features[n_total_constant] = tmp
+                    features[f_j] = features[n_total_constants]
+                    features[n_total_constants] = tmp
 
-                    n_total_constant += 1
+                    n_total_constants += 1
 
                 else:
                     f_i -= 1
@@ -1169,8 +1169,8 @@ cdef class BestSplitter(Splitter):
                     samples[p] = tmp
 
         # Copy found constant features
-        f_j = n_known_constant
-        while f_j < n_total_constant:
+        f_j = n_known_constants
+        while f_j < n_total_constants:
             constant_features[f_j] = features[f_j]
             f_j += 1
 
@@ -1181,7 +1181,7 @@ cdef class BestSplitter(Splitter):
         impurity_left[0] = best_impurity_left
         impurity_right[0] = best_impurity_right
         impurity_improvement[0] = best_improvement
-        n_constant_features[0] = n_total_constant
+        n_constant_features[0] = n_total_constants
 
 
 # Sort n-element arrays pointed to by Xf and samples, simultaneously,
@@ -1342,10 +1342,10 @@ cdef class RandomSplitter(Splitter):
 
         cdef SIZE_t f_i = n_features
         cdef SIZE_t f_j, p, tmp
-        cdef SIZE_t n_found_constant = 0
-        cdef SIZE_t n_drawn_constant = 0
-        cdef SIZE_t n_known_constant = n_constant_features[0]
-        cdef SIZE_t n_total_constant = n_known_constant
+        cdef SIZE_t n_found_constants = 0
+        cdef SIZE_t n_drawn_constants = 0
+        cdef SIZE_t n_known_constants = n_constant_features[0]
+        cdef SIZE_t n_total_constants = n_known_constants
         cdef SIZE_t n_visited_features = 0
         cdef DTYPE_t min_feature_value
         cdef DTYPE_t max_feature_value
@@ -1354,31 +1354,31 @@ cdef class RandomSplitter(Splitter):
 
         # Copy constant features
         f_j = 0
-        while f_j < n_known_constant:
+        while f_j < n_known_constants:
             features[f_j] = constant_features[f_j]
             f_j += 1
 
         # Look for splits
-        while (f_i > n_total_constant and
+        while (f_i > n_total_constants and
                 (n_visited_features < max_features or
-                 n_visited_features <= n_found_constant + n_drawn_constant)):
+                 n_visited_features <= n_found_constants + n_drawn_constants)):
             n_visited_features += 1
 
             # Draw a feature at random
-            f_j = rand_int(f_i - n_drawn_constant - n_found_constant,
-                           random_state) + n_drawn_constant
-            if f_j < n_known_constant:
-                # f_j in the interval [n_drawn_constant, n_known_constant[
+            f_j = rand_int(f_i - n_drawn_constants - n_found_constants,
+                           random_state) + n_drawn_constants
+            if f_j < n_known_constants:
+                # f_j in the interval [n_drawn_constants, n_known_constants[
 
                 tmp = features[f_j]
-                features[f_j] = features[n_drawn_constant]
-                features[n_drawn_constant] = tmp
+                features[f_j] = features[n_drawn_constants]
+                features[n_drawn_constants] = tmp
 
-                n_drawn_constant += 1
+                n_drawn_constants += 1
 
             else:
-                # f_j in the interval [n_total_constant, f_i[
-                f_j += n_found_constant
+                # f_j in the interval [n_total_constants, f_i[
+                f_j += n_found_constants
                 current_feature = features[f_j]
 
                 # Find min, max
@@ -1399,13 +1399,13 @@ cdef class RandomSplitter(Splitter):
                         max_feature_value = current_feature_value
 
                 if max_feature_value <= min_feature_value + EPSILON_FLT:
-                    n_found_constant += 1
+                    n_found_constants += 1
 
                     tmp = features[f_j]
-                    features[f_j] = features[n_total_constant]
-                    features[n_total_constant] = tmp
+                    features[f_j] = features[n_total_constants]
+                    features[n_total_constants] = tmp
 
-                    n_total_constant += 1
+                    n_total_constants += 1
 
                 else:
                     f_i -= 1
@@ -1477,8 +1477,8 @@ cdef class RandomSplitter(Splitter):
                     samples[p] = tmp
 
         # Copy found constant features
-        f_j = n_known_constant
-        while f_j < n_total_constant:
+        f_j = n_known_constants
+        while f_j < n_total_constants:
             constant_features[f_j] = features[f_j]
             f_j += 1
 
@@ -1489,7 +1489,7 @@ cdef class RandomSplitter(Splitter):
         impurity_left[0] = best_impurity_left
         impurity_right[0] = best_impurity_right
         impurity_improvement[0] = best_improvement
-        n_constant_features[0] = n_total_constant
+        n_constant_features[0] = n_total_constants
 
 
 cdef class PresortBestSplitter(Splitter):
@@ -1590,10 +1590,10 @@ cdef class PresortBestSplitter(Splitter):
 
         cdef SIZE_t f_i = n_features
         cdef SIZE_t f_j, p
-        cdef SIZE_t n_found_constant = 0
-        cdef SIZE_t n_drawn_constant = 0
-        cdef SIZE_t n_known_constant = n_constant_features[0]
-        cdef SIZE_t n_total_constant = n_known_constant
+        cdef SIZE_t n_found_constants = 0
+        cdef SIZE_t n_drawn_constants = 0
+        cdef SIZE_t n_known_constants = n_constant_features[0]
+        cdef SIZE_t n_total_constants = n_known_constants
         cdef SIZE_t n_visited_features = 0
         cdef SIZE_t partition_end
         cdef SIZE_t i, j
@@ -1604,31 +1604,31 @@ cdef class PresortBestSplitter(Splitter):
 
         # Copy constant features
         f_j = 0
-        while f_j < n_known_constant:
+        while f_j < n_known_constants:
             features[f_j] = constant_features[f_j]
             f_j += 1
 
         # Look for splits
-        while (f_i > n_total_constant and
+        while (f_i > n_total_constants and
                 (n_visited_features < max_features or
-                 n_visited_features <= n_found_constant + n_drawn_constant)):
+                 n_visited_features <= n_found_constants + n_drawn_constants)):
             n_visited_features += 1
 
             # Draw a feature at random
-            f_j = rand_int(f_i - n_drawn_constant - n_found_constant,
-                           random_state) + n_drawn_constant
-            if f_j < n_known_constant:
-                # f_j in the interval [n_drawn_constant, n_known_constant[
+            f_j = rand_int(f_i - n_drawn_constants - n_found_constants,
+                           random_state) + n_drawn_constants
+            if f_j < n_known_constants:
+                # f_j in the interval [n_drawn_constants, n_known_constants[
 
                 tmp = features[f_j]
-                features[f_j] = features[n_drawn_constant]
-                features[n_drawn_constant] = tmp
+                features[f_j] = features[n_drawn_constants]
+                features[n_drawn_constants] = tmp
 
-                n_drawn_constant += 1
+                n_drawn_constants += 1
 
             else:
-                # f_j in the interval [n_total_constant, f_i[
-                f_j += n_found_constant
+                # f_j in the interval [n_total_constants, f_i[
+                f_j += n_found_constants
                 current_feature = features[f_j]
 
                 # Extract ordering from X_argsorted
@@ -1644,13 +1644,13 @@ cdef class PresortBestSplitter(Splitter):
 
                 # Evaluate all splits
                 if Xf[end - 1] <= Xf[start] + EPSILON_FLT:
-                    n_found_constant += 1
+                    n_found_constants += 1
 
                     tmp = features[f_j]
-                    features[f_j] = features[n_total_constant]
-                    features[n_total_constant] = tmp
+                    features[f_j] = features[n_total_constants]
+                    features[n_total_constants] = tmp
 
-                    n_total_constant += 1
+                    n_total_constants += 1
 
                 else:
                     f_i -= 1
@@ -1718,8 +1718,8 @@ cdef class PresortBestSplitter(Splitter):
             sample_mask[samples[p]] = 0
 
         # Copy found constant features
-        f_j = n_known_constant
-        while f_j < n_total_constant:
+        f_j = n_known_constants
+        while f_j < n_total_constants:
             constant_features[f_j] = features[f_j]
             f_j += 1
 
@@ -1730,7 +1730,7 @@ cdef class PresortBestSplitter(Splitter):
         impurity_left[0] = best_impurity_left
         impurity_right[0] = best_impurity_right
         impurity_improvement[0] = best_improvement
-        n_constant_features[0] = n_total_constant
+        n_constant_features[0] = n_total_constants
 
 
 # =============================================================================
