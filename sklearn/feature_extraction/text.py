@@ -933,9 +933,9 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
     .. [Yates2011] `R. Baeza-Yates and B. Ribeiro-Neto (2011). Modern
                    Information Retrieval. Addison Wesley, pp. 68-74.`
 
-    .. [MSR2008] `C.D. Manning, H. Schuetze and P. Raghavan (2008).
+    .. [MRS2008] `C.D. Manning, P. Raghavan and H. Schuetze  (2008).
                    Introduction to Information Retrieval. Cambridge University
-                   Press, pp. 121-125.`
+                   Press, pp. 118-120.`
     """
 
     def __init__(self, norm='l2', use_idf=True, smooth_idf=True,
