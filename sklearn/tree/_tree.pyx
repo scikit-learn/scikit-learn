@@ -1405,7 +1405,6 @@ cdef class RandomSplitter(Splitter):
                     features[f_j] = features[n_total_constant]
                     features[n_total_constant] = tmp
 
-
                     n_total_constant += 1
 
                 else:
