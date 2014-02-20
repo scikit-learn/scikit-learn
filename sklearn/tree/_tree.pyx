@@ -1393,12 +1393,11 @@ cdef class RandomSplitter(Splitter):
                         max_feature_value = current_feature_value
 
                 if max_feature_value <= min_feature_value + EPSILON_FLT:
-                    n_found_constants += 1
-
                     tmp = features[f_j]
                     features[f_j] = features[n_total_constants]
                     features[n_total_constants] = tmp
 
+                    n_found_constants += 1
                     n_total_constants += 1
 
                 else:
@@ -1608,8 +1607,7 @@ cdef class PresortBestSplitter(Splitter):
             f_j = rand_int(f_i - n_drawn_constants - n_found_constants,
                            random_state) + n_drawn_constants
             if f_j < n_known_constants:
-                # f_j in the interval [n_drawn_constants, n_known_constants[
-
+                # f_j is in [n_drawn_constants, n_known_constants[
                 tmp = features[f_j]
                 features[f_j] = features[n_drawn_constants]
                 features[n_drawn_constants] = tmp
@@ -1634,12 +1632,11 @@ cdef class PresortBestSplitter(Splitter):
 
                 # Evaluate all splits
                 if Xf[end - 1] <= Xf[start] + EPSILON_FLT:
-                    n_found_constants += 1
-
                     tmp = features[f_j]
                     features[f_j] = features[n_total_constants]
                     features[n_total_constants] = tmp
 
+                    n_found_constants += 1
                     n_total_constants += 1
 
                 else:
