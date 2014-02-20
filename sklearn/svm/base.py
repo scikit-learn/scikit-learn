@@ -654,11 +654,11 @@ class BaseLibLinear(six.with_metaclass(ABCMeta, BaseEstimator)):
         self : object
             Returns self.
         """
-        self._enc = LabelEncoder()
-        y = self._enc.fit_transform(y)
-        if len(self.classes_) < 2:
-            raise ValueError("The number of classes has to be greater than"
-                             " one.")
+        lenc = LabelEncoder()
+        y = lenc.fit_transform(y)
+        self.classes_ = lenc.classes_
+        if len(lenc.classes_) < 2:
+            raise ValueError("The number of classes must be greater than one.")
 
         X = atleast2d_or_csr(X, dtype=np.float64, order="C")
 
@@ -704,10 +704,6 @@ class BaseLibLinear(six.with_metaclass(ABCMeta, BaseEstimator)):
                 self.intercept_ = np.array([intercept])
 
         return self
-
-    @property
-    def classes_(self):
-        return self._enc.classes_
 
     def _get_bias(self):
         if self.fit_intercept:

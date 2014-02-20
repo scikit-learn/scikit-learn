@@ -22,7 +22,7 @@ from .sgd_fast import Hinge, Log, ModifiedHuber, SquaredLoss, Huber
 from .stochastic_gradient import SGDClassifier, SGDRegressor
 from .ridge import (Ridge, RidgeCV, RidgeClassifier, RidgeClassifierCV,
                     ridge_regression)
-from .logistic import LogisticRegression
+from .logistic import LogisticRegression, MultinomialLR
 from .omp import (orthogonal_mp, orthogonal_mp_gram, OrthogonalMatchingPursuit,
                   OrthogonalMatchingPursuitCV)
 from .passive_aggressive import PassiveAggressiveClassifier
