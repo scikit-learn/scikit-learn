@@ -1061,10 +1061,7 @@ cdef class BestSplitter(Splitter):
         cdef SIZE_t partition_end
 
         # Copy constant features
-        f_j = 0
-        while f_j < n_known_constants:
-            features[f_j] = constant_features[f_j]
-            f_j += 1
+        memcpy(features, constant_features, sizeof(SIZE_t) * n_known_constants)
 
         # Look for splits
         while (f_i > n_total_constants and
@@ -1170,10 +1167,9 @@ cdef class BestSplitter(Splitter):
                     samples[p] = tmp
 
         # Copy found constant features
-        f_j = n_known_constants
-        while f_j < n_total_constants:
-            constant_features[f_j] = features[f_j]
-            f_j += 1
+        memcpy(constant_features + n_known_constants,
+               features + n_known_constants,
+               sizeof(SIZE_t) * n_found_constants)
 
         # Return values
         pos[0] = best_pos
@@ -1354,10 +1350,7 @@ cdef class RandomSplitter(Splitter):
         cdef SIZE_t partition_end
 
         # Copy constant features
-        f_j = 0
-        while f_j < n_known_constants:
-            features[f_j] = constant_features[f_j]
-            f_j += 1
+        memcpy(features, constant_features, sizeof(SIZE_t) * n_known_constants)
 
         # Look for splits
         while (f_i > n_total_constants and
@@ -1478,10 +1471,9 @@ cdef class RandomSplitter(Splitter):
                     samples[p] = tmp
 
         # Copy found constant features
-        f_j = n_known_constants
-        while f_j < n_total_constants:
-            constant_features[f_j] = features[f_j]
-            f_j += 1
+        memcpy(constant_features + n_known_constants,
+               features + n_known_constants,
+               sizeof(SIZE_t) * n_found_constants)
 
         # Return values
         pos[0] = best_pos
@@ -1604,10 +1596,7 @@ cdef class PresortBestSplitter(Splitter):
             sample_mask[samples[p]] = 1
 
         # Copy constant features
-        f_j = 0
-        while f_j < n_known_constants:
-            features[f_j] = constant_features[f_j]
-            f_j += 1
+        memcpy(features, constant_features, sizeof(SIZE_t) * n_known_constants)
 
         # Look for splits
         while (f_i > n_total_constants and
@@ -1719,10 +1708,9 @@ cdef class PresortBestSplitter(Splitter):
             sample_mask[samples[p]] = 0
 
         # Copy found constant features
-        f_j = n_known_constants
-        while f_j < n_total_constants:
-            constant_features[f_j] = features[f_j]
-            f_j += 1
+        memcpy(constant_features + n_known_constants,
+               features + n_known_constants,
+               sizeof(SIZE_t) * n_found_constants)
 
         # Return values
         pos[0] = best_pos
