@@ -915,6 +915,7 @@ cdef class Splitter:
         """Destructor."""
         free(self.samples)
         free(self.features)
+        free(self.constant_features)
         free(self.feature_values)
 
     def __getstate__(self):
@@ -961,7 +962,7 @@ cdef class Splitter:
 
         self.features = features
         self.n_features = n_features
-        self.constant_features = <SIZE_t*> realloc(self.features,
+        self.constant_features = <SIZE_t*> realloc(self.constant_features,
                                                    n_features * sizeof(SIZE_t))
 
         cdef DTYPE_t* fv = <DTYPE_t*> realloc(self.feature_values,
