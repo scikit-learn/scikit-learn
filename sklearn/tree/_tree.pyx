@@ -303,7 +303,6 @@ cdef class ClassificationCriterion(Criterion):
         cdef SIZE_t k
         cdef SIZE_t label_index
         cdef DOUBLE_t w = 1.0
-
         cdef DOUBLE_t diff_w = 0.0
 
         # Note: We assume start <= pos < new_pos <= end
@@ -765,6 +764,7 @@ cdef class RegressionCriterion(Criterion):
         cdef SIZE_t p
         cdef SIZE_t k
         cdef DOUBLE_t w = 1.0
+        cdef DOUBLE_t diff_w = 0.0
         cdef DOUBLE_t y_ik, w_y_ik
 
         # Note: We assume start <= pos < new_pos <= end
@@ -784,8 +784,10 @@ cdef class RegressionCriterion(Criterion):
                 sq_sum_left[k] += w_y_ik * y_ik
                 sq_sum_right[k] -= w_y_ik * y_ik
 
-            weighted_n_left += w
-            weighted_n_right -= w
+            diff_w += w
+
+        weighted_n_left += diff_w
+        weighted_n_right -= diff_w
 
         for k in range(n_outputs):
             mean_left[k] = sum_left[k] / weighted_n_left
