@@ -298,14 +298,13 @@ cdef class ClassificationCriterion(Criterion):
         cdef double* label_count_left = self.label_count_left
         cdef double* label_count_right = self.label_count_right
 
-        cdef double weighted_n_left = self.weighted_n_left
-        cdef double weighted_n_right = self.weighted_n_right
-
         cdef SIZE_t i
         cdef SIZE_t p
         cdef SIZE_t k
         cdef SIZE_t label_index
         cdef DOUBLE_t w = 1.0
+
+        cdef DOUBLE_t diff_w = 0.0
 
         # Note: We assume start <= pos < new_pos <= end
 
@@ -321,11 +320,10 @@ cdef class ClassificationCriterion(Criterion):
                 label_count_left[label_index] += w
                 label_count_right[label_index] -= w
 
-            weighted_n_left += w
-            weighted_n_right -= w
+            diff_w += w
 
-        self.weighted_n_left = weighted_n_left
-        self.weighted_n_right = weighted_n_right
+        self.weighted_n_left += diff_w
+        self.weighted_n_right -= diff_w
 
         self.pos = new_pos
 
