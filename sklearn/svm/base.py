@@ -436,9 +436,9 @@ class BaseSVC(BaseLibSVM, ClassifierMixin):
     """ABC for LibSVM-based classifiers."""
 
     def _validate_targets(self, y):
-        y = column_or_1d(y, warn=True)
-        cls, y = unique(y, return_inverse=True)
-        self.class_weight_ = compute_class_weight(self.class_weight, cls, y)
+        y_ = column_or_1d(y, warn=True)
+        cls, y = unique(y_, return_inverse=True)
+        self.class_weight_ = compute_class_weight(self.class_weight, cls, y_)
         if len(cls) < 2:
             raise ValueError(
                 "The number of classes has to be greater than one; got %d"
@@ -655,7 +655,7 @@ class BaseLibLinear(six.with_metaclass(ABCMeta, BaseEstimator)):
             Returns self.
         """
         self._enc = LabelEncoder()
-        y = self._enc.fit_transform(y)
+        y_ind = self._enc.fit_transform(y)
         if len(self.classes_) < 2:
             raise ValueError("The number of classes has to be greater than"
                              " one.")
@@ -665,7 +665,7 @@ class BaseLibLinear(six.with_metaclass(ABCMeta, BaseEstimator)):
         self.class_weight_ = compute_class_weight(self.class_weight,
                                                   self.classes_, y)
 
-        if X.shape[0] != y.shape[0]:
+        if X.shape[0] != y_ind.shape[0]:
             raise ValueError("X and y have incompatible shapes.\n"
                              "X has %s samples, but y has %s." %
                              (X.shape[0], y.shape[0]))
@@ -677,8 +677,8 @@ class BaseLibLinear(six.with_metaclass(ABCMeta, BaseEstimator)):
             print('[LibLinear]', end='')
 
         # LibLinear wants targets as doubles, even for classification
-        y = np.asarray(y, dtype=np.float64).ravel()
-        self.raw_coef_ = liblinear.train_wrap(X, y,
+        y_ind = np.asarray(y_ind, dtype=np.float64).ravel()
+        self.raw_coef_ = liblinear.train_wrap(X, y_ind,
                                               sp.isspmatrix(X),
                                               self._get_solver_type(),
                                               self.tol, self._get_bias(),
