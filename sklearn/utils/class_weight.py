@@ -22,22 +22,24 @@ def compute_class_weight(class_weight, classes, y_ind):
         Array of the classes occurring in the data, as given by
         ``np.unique(y_org)`` with ``y_org`` the original class labels.
 
-    y_ind : array-like, shape=(n_samples,), dtype=int
-        Array of class indices per sample;
-        0 <= y_ind[i] < n_classes for i in range(n_samples).
+    y_ind : array-like, shape (n_samples,)
+        Array of original class labels per sample;
 
     Returns
     -------
-    class_weight_vect : ndarray, shape=(n_classes,)
+    class_weight_vect : ndarray, shape (n_classes,)
         Array with class_weight_vect[i] the weight for i-th class
         (as determined by sorting).
     """
+    from ..preprocessing import LabelEncoder
+
     if class_weight is None or len(class_weight) == 0:
         # uniform class weights
         weight = np.ones(classes.shape[0], dtype=np.float64, order='C')
     elif class_weight == 'auto':
+        le = LabelEncoder()
         # inversely proportional to the number of samples in the class
-        counts = bincount(y_ind, minlength=len(classes))
+        counts = bincount(le.fit_transform(y_ind), minlength=len(classes))
         counts = np.maximum(counts, 1)
         weight = 1. / counts
         weight *= classes.shape[0] / np.sum(weight)
