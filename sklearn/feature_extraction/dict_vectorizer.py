@@ -233,10 +233,9 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
 
                 indptr.append(len(indices))
 
-            if len(indptr) == 0:
+            if len(indices) == 0:
                 raise ValueError("Sample sequence X is empty.")
-
-            if len(indices) > 0:
+            else:
                 # workaround for bug in older NumPy:
                 # http://projects.scipy.org/numpy/ticket/1943
                 indices = np.frombuffer(indices, dtype=np.intc)
