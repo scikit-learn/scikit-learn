@@ -6,6 +6,7 @@ at which the fixe is no longer needed.
 # Authors: Emmanuelle Gouillart <emmanuelle.gouillart@normalesup.org>
 #          Gael Varoquaux <gael.varoquaux@normalesup.org>
 #          Fabian Pedregosa <fpedregosa@acm.org>
+#          Lars Buitinck
 #
 # License: BSD 3 clause
 
@@ -107,6 +108,27 @@ if np_version[:2] < (1, 4):
     logaddexp = _logaddexp
 else:
     logaddexp = np.logaddexp
+
+
+try:
+    from scipy.special import expit     # SciPy >= 0.10
+except ImportError:
+    def expit(x, out=None):
+        """Logistic sigmoid function, ``1 / (1 + exp(-x))``.
+
+        See sklearn.utils.extmath.log_logistic for the log of this function.
+        """
+        if out is None:
+            out = np.copy(x)
+
+        # 1 / (1 + exp(-x)) = (1 + tanh(x / 2)) / 2
+        # This way of computing the logistic is both fast and stable.
+        out *= .5
+        np.tanh(out, out)
+        out += 1
+        out *= .5
+
+        return out
 
 
 def _bincount(X, weights=None, minlength=None):

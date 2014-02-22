@@ -567,28 +567,21 @@ def svd_flip(u, v):
     return u, v
 
 
-def logistic_sigmoid(X, log=False, out=None):
-    """
-    Implements the logistic function, ``1 / (1 + e ** -x)`` and its log.
+def log_logistic(X, out=None):
+    """Compute the log of the logistic function, ``log(1 / (1 + e ** -x))``.
 
-    This implementation is more stable by splitting on positive and negative
-    values and computing::
+    This implementation is numerically stable because it splits positive and
+    negative values::
 
-        1 / (1 + exp(-x_i)) if x_i > 0
-        exp(x_i) / (1 + exp(x_i)) if x_i <= 0
-
-    The log is computed using::
-
-        -log(1 + exp(-x_i)) if x_i > 0
+        -log(1 + exp(-x_i))     if x_i > 0
         x_i - log(1 + exp(x_i)) if x_i <= 0
+
+    For the ordinary logistic function, use ``sklearn.utils.fixes.expit``.
 
     Parameters
     ----------
     X: array-like, shape (M, N)
         Argument to the logistic function
-
-    log: boolean, default: False
-        Whether to compute the logarithm of the logistic function.
 
     out: array-like, shape: (M, N), optional:
         Preallocated output array.
@@ -596,7 +589,7 @@ def logistic_sigmoid(X, log=False, out=None):
     Returns
     -------
     out: array, shape (M, N)
-        Value of the logistic function evaluated at every point in x
+        Log of the logistic function evaluated at every point in x
 
     Notes
     -----
@@ -611,15 +604,7 @@ def logistic_sigmoid(X, log=False, out=None):
     if out is None:
         out = np.empty_like(X)
 
-    if log:
-        _log_logistic_sigmoid(n_samples, n_features, X, out)
-    else:
-        # logistic(x) = (1 + tanh(x / 2)) / 2
-        out[:] = X
-        out *= .5
-        np.tanh(out, out)
-        out += 1
-        out *= .5
+    _log_logistic_sigmoid(n_samples, n_features, X, out)
 
     if is_1d:
         return np.squeeze(out)

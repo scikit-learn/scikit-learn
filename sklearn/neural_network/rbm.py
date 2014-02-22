@@ -4,6 +4,7 @@
 # Authors: Yann N. Dauphin <dauphiya@iro.umontreal.ca>
 #          Vlad Niculae
 #          Gabriel Synnaeve
+#          Lars Buitinck
 # License: BSD 3 clause
 
 import time
@@ -19,7 +20,8 @@ from ..utils import check_random_state
 from ..utils import gen_even_slices
 from ..utils import issparse
 from ..utils.extmath import safe_sparse_dot
-from ..utils.extmath import logistic_sigmoid
+from ..utils.extmath import log_logistic
+from ..utils.fixes import expit             # logistic function
 
 
 class BernoulliRBM(BaseEstimator, TransformerMixin):
@@ -130,8 +132,9 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         h : array-like, shape (n_samples, n_components)
             Corresponding mean field values for the hidden layer.
         """
-        return logistic_sigmoid(safe_sparse_dot(v, self.components_.T)
-                                + self.intercept_hidden_)
+        p = safe_sparse_dot(v, self.components_.T)
+        p += self.intercept_hidden_
+        return expit(p, out=p)
 
     def _sample_hiddens(self, v, rng):
         """Sample from the distribution P(h|v).
@@ -169,8 +172,9 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         v : array-like, shape (n_samples, n_features)
             Values of the visible layer.
         """
-        p = logistic_sigmoid(np.dot(h, self.components_)
-                             + self.intercept_visible_)
+        p = np.dot(h, self.components_)
+        p += self.intercept_visible_
+        expit(p, out=p)
         p[rng.uniform(size=p.shape) < p] = 1.
         return np.floor(p, p)
 
@@ -274,7 +278,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
 
         fe = self._free_energy(v)
         fe_ = self._free_energy(v_)
-        return v.shape[1] * logistic_sigmoid(fe_ - fe, log=True)
+        return v.shape[1] * log_logistic(fe_ - fe)
 
     def fit(self, X, y=None):
         """Fit the model to the data X.
