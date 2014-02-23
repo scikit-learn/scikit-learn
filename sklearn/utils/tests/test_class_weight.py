@@ -29,9 +29,17 @@ def test_compute_class_weight_not_present():
 
 def test_compute_class_weight_auto_negative():
     """Test compute_class_weight when labels are negative"""
+    # Test with balanced class labels.
     classes = -np.arange(3)
     y = np.asarray([-1, -1, 0, 0, -2, -2])
     cw = compute_class_weight("auto", classes, y)
     assert_almost_equal(cw.sum(), classes.shape)
     assert_equal(len(cw), len(classes))
     assert_array_almost_equal(cw, np.array([1., 1., 1.]))
+
+    # Test with unbalanced class labels.
+    y = np.asarray([-1, 0, 0, -2, -2, -2])
+    cw = compute_class_weight("auto", classes, y)
+    assert_almost_equal(cw.sum(), classes.shape)
+    assert_equal(len(cw), len(classes))
+    assert_array_almost_equal(cw, np.array([0.545, 1.636, 0.818]), decimal=3)
