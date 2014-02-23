@@ -14,7 +14,7 @@ from scipy import linalg
 from scipy.sparse import issparse
 from distutils.version import LooseVersion
 
-from . import check_random_state
+from . import check_random_state, deprecated
 from .fixes import qr_economic
 from ._logistic_sigmoid import _log_logistic_sigmoid
 from ..externals.six.moves import xrange
@@ -565,6 +565,15 @@ def svd_flip(u, v):
     u *= signs
     v *= signs[:, np.newaxis]
     return u, v
+
+
+@deprecated('to be removed in 0.17; use scipy.special.expit or log_logistic')
+def logistic_sigmoid(X, log=False, out=None):
+    """Logistic function, ``1 / (1 + e ** (-x))``, or its log."""
+    from .fixes import expit
+    fn = log_logistic if log else expit
+    return fn(X, out)
+
 
 
 def log_logistic(X, out=None):

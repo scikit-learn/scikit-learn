@@ -3,6 +3,8 @@
 #          Denis Engemann <d.engemann@fz-juelich.de>
 #
 # License: BSD 3 clause
+import warnings
+
 import numpy as np
 from scipy import sparse
 from scipy import linalg
@@ -22,7 +24,7 @@ from sklearn.utils.extmath import randomized_svd
 from sklearn.utils.extmath import row_norms
 from sklearn.utils.extmath import weighted_mode
 from sklearn.utils.extmath import cartesian
-from sklearn.utils.extmath import log_logistic
+from sklearn.utils.extmath import log_logistic, logistic_sigmoid
 from sklearn.utils.extmath import fast_dot, _fast_dot
 from sklearn.datasets.samples_generator import make_low_rank_matrix
 
@@ -273,9 +275,12 @@ def test_cartesian():
 
 def test_logistic_sigmoid():
     """Check correctness and robustness of logistic sigmoid implementation"""
-    naive_log_logistic = lambda x: np.log(1 / (1 + np.exp(-x)))
+    naive_logistic = lambda x: 1 / (1 + np.exp(-x))
+    naive_log_logistic = lambda x: np.log(naive_logistic(x))
 
     x = np.linspace(-2, 2, 50)
+    with warnings.catch_warnings(record=True):
+        assert_array_almost_equal(logistic_sigmoid(x), naive_logistic(x))
     assert_array_almost_equal(log_logistic(x), naive_log_logistic(x))
 
     extreme_x = np.array([-100., 100.])
