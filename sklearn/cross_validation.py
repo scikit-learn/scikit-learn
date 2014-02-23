@@ -27,7 +27,8 @@ from .utils.validation import _num_samples
 from .utils.fixes import unique
 from .externals.joblib import Parallel, delayed, logger
 from .externals.six import with_metaclass
-from .metrics.scorer import check_scoring
+from .metrics.scorer import check_scoring, _evaluate_scorers
+
 
 __all__ = ['Bootstrap',
            'KFold',
@@ -1041,7 +1042,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
 def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
                     verbose=0, fit_params=None, score_func=None,
                     pre_dispatch='2*n_jobs'):
-    """Evaluate a score by cross-validation
+    """Evaluate test score by cross-validation
 
     Parameters
     ----------
@@ -1055,10 +1056,12 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
         The target variable to try to predict in the case of
         supervised learning.
 
-    scoring : string, callable or None, optional, default: None
+    scoring : string, callable, list of strings/callables or None, optional,
+              default: None
         A string (see model evaluation documentation) or
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)``.
+        Lists can be used for randomized search of multiple metrics.
 
     cv : cross-validation generator, optional, default: None
         A cross-validation generator. If None, a 3-fold cross
@@ -1094,78 +1097,57 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
 
     Returns
     -------
-    scores : array of float, shape=(len(list(cv)),)
+    scores : array of float, shape=(n_folds,) or (n_scoring, n_folds)
         Array of scores of the estimator for each run of the cross validation.
+        The returned array is 2d if `scoring` is a list.
     """
     X, y = check_arrays(X, y, sparse_format='csr', allow_lists=True)
     cv = _check_cv(cv, X, y, classifier=is_classifier(estimator))
-    scorer = check_scoring(estimator, score_func=score_func, scoring=scoring)
-    # We clone the estimator to make sure that all the folds are
-    # independent, and that it is pickle-able.
+
+    if isinstance(scoring, (tuple, list)):
+        scorers = [check_scoring(estimator, scoring=s) for s in scoring]
+        ret_1d = False
+    else:
+        scorers = [check_scoring(estimator, score_func=score_func,
+                               scoring=scoring)]
+        ret_1d = True
+
     parallel = Parallel(n_jobs=n_jobs, verbose=verbose,
                         pre_dispatch=pre_dispatch)
-    scores = parallel(delayed(_fit_and_score)(clone(estimator), X, y, scorer,
-                                              train, test, verbose, None,
-                                              fit_params)
+
+    # `out` is a list of size n_folds. Each element of the list is a tuple
+    # (test_scores, n_test, train_time)
+    out = parallel(delayed(_fit_and_score)(clone(estimator), X, y, scorers,
+                                           train, test, verbose, None,
+                                           fit_params)
                       for train, test in cv)
-    return np.array(scores)[:, 0]
+
+    # Retrieve n_scorers x n_folds 2d-array.
+    test_scores = np.array([o[0] for o in out]).T
+
+    if ret_1d:
+        return test_scores[0]
+    else:
+        return test_scores
 
 
-def _fit_and_score(estimator, X, y, scorer, train, test, verbose, parameters,
-                   fit_params, return_train_score=False,
-                   return_parameters=False):
+def _fit_and_score(estimator, X, y, scorers, train, test, verbose, parameters,
+                   fit_params, return_train_scores=False):
     """Fit estimator and compute scores for a given dataset split.
-
-    Parameters
-    ----------
-    estimator : estimator object implementing 'fit'
-        The object to use to fit the data.
-
-    X : array-like of shape at least 2D
-        The data to fit.
-
-    y : array-like, optional, default: None
-        The target variable to try to predict in the case of
-        supervised learning.
-
-    scoring : callable
-        A scorer callable object / function with signature
-        ``scorer(estimator, X, y)``.
-
-    train : array-like, shape = (n_train_samples,)
-        Indices of training samples.
-
-    test : array-like, shape = (n_test_samples,)
-        Indices of test samples.
-
-    verbose : integer
-        The verbosity level.
-
-    parameters : dict or None
-        Parameters to be set on the estimator.
-
-    fit_params : dict or None
-        Parameters that will be passed to ``estimator.fit``.
-
-    return_train_score : boolean, optional, default: False
-        Compute and return score on training set.
-
-    return_parameters : boolean, optional, default: False
-        Return parameters that has been used for the estimator.
 
     Returns
     -------
-    test_score : float
-        Score on test set.
+    train_score : array of floats, optional
+        Scores on training set.
 
-    train_score : float, optional
-        Score on training set.
+    test_score : array of floats
+        Scores on test set.
 
     n_test_samples : int
         Number of test samples.
 
-    scoring_time : float
-        Time spent for fitting and scoring in seconds.
+    train_time : float
+        Time spent for fitting in seconds.
 
     parameters : dict or None, optional
         The parameters that have been evaluated.
@@ -1188,30 +1170,35 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose, parameters,
     if parameters is not None:
         estimator.set_params(**parameters)
 
-    start_time = time.time()
-
     X_train, y_train = _safe_split(estimator, X, y, train)
     X_test, y_test = _safe_split(estimator, X, y, test, train)
+
+    start_time = time.time()
+
     if y_train is None:
         estimator.fit(X_train, **fit_params)
     else:
         estimator.fit(X_train, y_train, **fit_params)
-    test_score = _score(estimator, X_test, y_test, scorer)
-    if return_train_score:
-        train_score = _score(estimator, X_train, y_train, scorer)
 
-    scoring_time = time.time() - start_time
+    train_time = time.time() - start_time
+
+    test_scores = _evaluate_scorers(estimator, X_test, y_test, scorers)
+
+    if return_train_scores:
+        if len(scorers) == 1:
+            train_scores = np.array([scorers[0](estimator, X_train, y_train)])
+        else:
+            train_scores = _evaluate_scorers(estimator, X_train, y_train,
+                                             scorers)
 
     if verbose > 2:
-        msg += ", score=%f" % test_score
+        msg += ", score=%s" % test_scores
     if verbose > 1:
-        end_msg = "%s -%s" % (msg, logger.short_format_time(scoring_time))
+        end_msg = "%s -%s" % (msg, logger.short_format_time(train_time))
         print("[CV] %s %s" % ((64 - len(end_msg)) * '.', end_msg))
 
-    ret = [train_score] if return_train_score else []
-    ret.extend([test_score, _num_samples(X_test), scoring_time])
-    if return_parameters:
-        ret.append(parameters)
+    ret = [train_scores] if return_train_scores else []
+    ret += [test_scores, _num_samples(X_test), train_time, parameters]
     return ret
 
 
@@ -1245,18 +1232,6 @@ def _safe_split(estimator, X, y, indices, train_indices=None):
         y_subset = None
 
     return X_subset, y_subset
-
-
-def _score(estimator, X_test, y_test, scorer):
-    """Compute the score of an estimator on a given test set."""
-    if y_test is None:
-        score = scorer(estimator, X_test)
-    else:
-        score = scorer(estimator, X_test, y_test)
-    if not isinstance(score, numbers.Number):
-        raise ValueError("scoring must return a number, got %s (%s) instead."
-                         % (str(score), type(score)))
-    return score
 
 
 def _permutation_test_score(estimator, X, y, cv, scorer):

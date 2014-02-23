@@ -24,7 +24,7 @@ from sklearn.utils.testing import assert_array_almost_equal
 
 from scipy.stats import distributions
 
-from sklearn.base import BaseEstimator
+from sklearn.base import BaseEstimator, clone
 from sklearn.datasets import make_classification
 from sklearn.datasets import make_blobs
 from sklearn.datasets import make_multilabel_classification
@@ -644,3 +644,34 @@ def test_grid_search_with_multioutput_data():
                 correct_score = est.score(X[test], y[test])
                 assert_almost_equal(correct_score,
                                     cv_validation_scores[i])
+
+
+def test_multiple_grid_search_cv():
+    clf = LinearSVC(random_state=0)
+    X, y = make_blobs(random_state=0, centers=2)
+    param_grid = {"C": [0.1, 1, 10]}
+    scoring = ["f1", "roc_auc"]
+
+    gs = GridSearchCV(clf, param_grid, scoring=scoring)
+    rs = RandomizedSearchCV(clf, param_grid, scoring=scoring, random_state=0)
+
+    for n, est in enumerate((gs, rs)):
+        est.fit(X, y)
+
+        for attr in ("scorer_", "best_score_", "grid_scores_", "best_params_"):
+            attr = getattr(est, attr)
+            assert_equal(len(attr), 2)
+
+        est_f1 = clone(est)
+        est_f1.scoring = "f1"
+        est_f1.fit(X, y)
+
+        est_auc = clone(est)
+        est_auc.scoring = "roc_auc"
+        est_auc.fit(X, y)
+
+        for attr in ("best_score_", "best_params_"):
+            assert_equal(getattr(est, attr)[0],
+                         getattr(est_f1, attr))
+            assert_equal(getattr(est, attr)[1],
+                         getattr(est_auc, attr))

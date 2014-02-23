@@ -10,7 +10,8 @@ from .base import is_classifier, clone
 from .cross_validation import _check_cv
 from .utils import check_arrays
 from .externals.joblib import Parallel, delayed
-from .cross_validation import _safe_split, _score, _fit_and_score
+from .cross_validation import _safe_split, _fit_and_score
+from .grid_search import ParameterGrid
 from .metrics.scorer import check_scoring
 
 
@@ -127,17 +128,18 @@ def learning_curve(estimator, X, y, train_sizes=np.linspace(0.1, 1.0, 10),
             clone(estimator), X, y, classes, train, test, train_sizes_abs,
             scorer, verbose) for train, test in cv)
     else:
+        # ret is a list of size n_folds. Each element of the list contains the
+        # tuple returned by _fit_and_score.
         out = parallel(delayed(_fit_and_score)(
-            clone(estimator), X, y, scorer, train[:n_train_samples], test,
-            verbose, parameters=None, fit_params=None, return_train_score=True)
+            clone(estimator), X, y, [scorer], train[:n_train_samples], test,
+            verbose, parameters=None, fit_params=None, return_train_scores=True)
             for train, test in cv for n_train_samples in train_sizes_abs)
-        out = np.array(out)[:, :2]
-        n_cv_folds = out.shape[0] / n_unique_ticks
-        out = out.reshape(n_cv_folds, n_unique_ticks, 2)
 
-    out = np.asarray(out).transpose((2, 1, 0))
+    out = np.array(out).reshape(len(cv), len(train_sizes_abs), -1)
+    train_scores = out[:, :, 0].T
+    test_scores = out[:, :, 1].T
 
-    return train_sizes_abs, out[0], out[1]
+    return train_sizes_abs, train_scores, test_scores
 
 
 def _translate_train_sizes(train_sizes, n_max_training_samples):
@@ -204,23 +206,27 @@ def _incremental_fit_estimator(estimator, X, y, classes, train, test,
     """Train estimator on training subsets incrementally and compute scores."""
     train_scores, test_scores = [], []
     partitions = zip(train_sizes, np.split(train, train_sizes)[:-1])
+
     for n_train_samples, partial_train in partitions:
         train_subset = train[:n_train_samples]
         X_train, y_train = _safe_split(estimator, X, y, train_subset)
         X_partial_train, y_partial_train = _safe_split(estimator, X, y,
                                                        partial_train)
         X_test, y_test = _safe_split(estimator, X, y, test, train_subset)
+
         if y_partial_train is None:
             estimator.partial_fit(X_partial_train, classes=classes)
         else:
             estimator.partial_fit(X_partial_train, y_partial_train,
                                   classes=classes)
-        train_scores.append(_score(estimator, X_train, y_train, scorer))
-        test_scores.append(_score(estimator, X_test, y_test, scorer))
+
+        train_scores.append(scorer(estimator, X_train, y_train))
+        test_scores.append(scorer(estimator, X_test, y_test))
+
     return np.array((train_scores, test_scores)).T
 
 
-def validation_curve(estimator, X, y, param_name, param_range, cv=None,
+def validation_curve(estimator, X, y, param_grid, cv=None,
                      scoring=None, n_jobs=1, pre_dispatch="all", verbose=0):
     """Validation curve.
 
@@ -244,11 +250,9 @@ def validation_curve(estimator, X, y, param_name, param_range, cv=None,
         Target relative to X for classification or regression;
         None for unsupervised learning.
 
-    param_name : string
-        Name of the parameter that will be varied.
-
-    param_range : array-like, shape (n_values,)
-        The values of the parameter that will be evaluated.
+    param_grid : dict or list of dictionaries
+        Dictionary with parameters names (string) as keys and lists of
+        parameter settings to try as values.
 
     cv : integer, cross-validation generator, optional
         If an integer is passed, it is the number of folds (defaults to 3).
@@ -273,11 +277,16 @@ def validation_curve(estimator, X, y, param_name, param_range, cv=None,
 
     Returns
     -------
-    train_scores : array, shape (n_ticks, n_cv_folds)
+    train_scores : array, shape (n_params, n_cv_folds) or
+                                (n_scorers, n_params, n_cv_folds)
         Scores on training sets.
 
-    test_scores : array, shape (n_ticks, n_cv_folds)
+    test_scores : array, shape (n_params, n_cv_folds) or
+                               (n_scorers, n_params, n_cv_folds)
         Scores on test set.
+
+    train_times : array, shape (n_params, n_cv_folds)
+        Training times.
 
     Notes
     -----
@@ -286,18 +295,34 @@ def validation_curve(estimator, X, y, param_name, param_range, cv=None,
     """
     X, y = check_arrays(X, y, sparse_format='csr', allow_lists=True)
     cv = _check_cv(cv, X, y, classifier=is_classifier(estimator))
-    scorer = check_scoring(estimator, scoring=scoring)
+
+    if isinstance(scoring, (tuple, list)):
+        scorer = [check_scoring(estimator, scoring=s) for s in scoring]
+        one_scorer = False
+    else:
+        scorer = [check_scoring(estimator, scoring=scoring)]
+        one_scorer = True
+
+    param_grid = ParameterGrid(param_grid)
+    n_params = len(param_grid)
 
     parallel = Parallel(n_jobs=n_jobs, pre_dispatch=pre_dispatch,
                         verbose=verbose)
     out = parallel(delayed(_fit_and_score)(
         estimator, X, y, scorer, train, test, verbose,
-        parameters={param_name : v}, fit_params=None, return_train_score=True)
-        for train, test in cv for v in param_range)
+        parameters=params, fit_params=None, return_train_scores=True)
+        for train, test in cv for params in param_grid)
 
-    out = np.asarray(out)[:, :2]
-    n_params = len(param_range)
-    n_cv_folds = out.shape[0] / n_params
-    out = out.reshape(n_cv_folds, n_params, 2).transpose((2, 1, 0))
+    n_folds = len(out) / n_params
 
-    return out[0], out[1]
+    shape = (n_folds, n_params, -1)
+    train_scores = np.array([o[0] for o in out]).reshape(shape).T
+    test_scores = np.array([o[1] for o in out]).reshape(shape).T
+
+    train_times = np.array([o[3] for o in out]).reshape(n_folds, n_params).T
+
+    if one_scorer:
+        train_scores = train_scores[0]
+        test_scores = test_scores[0]
+
+    return train_scores, test_scores, train_times

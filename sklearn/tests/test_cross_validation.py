@@ -22,6 +22,7 @@ from sklearn.utils.fixes import unique
 
 from sklearn import cross_validation as cval
 from sklearn.base import BaseEstimator
+from sklearn.datasets import make_classification
 from sklearn.datasets import make_regression
 from sklearn.datasets import load_digits
 from sklearn.datasets import load_iris
@@ -32,7 +33,7 @@ from sklearn.metrics import fbeta_score
 from sklearn.metrics import make_scorer
 
 from sklearn.externals import six
-from sklearn.linear_model import Ridge
+from sklearn.linear_model import Ridge, Perceptron
 from sklearn.svm import SVC
 
 
@@ -508,6 +509,23 @@ def test_cross_val_score_precomputed():
     # or sparse
     assert_raises(ValueError, cval.cross_val_score, svm,
                   linear_kernel.tolist(), y)
+
+
+def test_cross_val_score_multiple_scorers():
+    X, y = make_classification(n_classes=2, random_state=0)
+    clf = Perceptron(random_state=0)
+
+    scores = cval.cross_val_score(clf, X, y, cv=3, scoring=["f1", "roc_auc"])
+    assert_equal(scores.shape, (2, 3))
+
+    # Check that the results are the same as when cross_val_score is called
+    # individually.
+    f1_scores = cval.cross_val_score(clf, X, y, cv=3, scoring="f1")
+    auc_scores = cval.cross_val_score(clf, X, y, cv=3, scoring="roc_auc")
+    scores2 = np.array([f1_scores, auc_scores])
+    assert_equal(scores2.shape, (2, 3))
+
+    assert_array_almost_equal(scores, scores2)
 
 
 def test_cross_val_score_fit_params():

@@ -8,21 +8,93 @@ from sklearn.utils.testing import assert_raises_regexp
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import ignore_warnings
 
-from sklearn.metrics import (f1_score, r2_score, roc_auc_score, fbeta_score,
-                             log_loss)
+from sklearn.metrics import (accuracy_score, f1_score, r2_score, roc_auc_score,
+                             fbeta_score, log_loss, mean_squared_error,
+                             average_precision_score)
 from sklearn.metrics.cluster import adjusted_rand_score
-from sklearn.metrics.scorer import check_scoring
+from sklearn.metrics.scorer import check_scoring, _evaluate_scorers
 from sklearn.metrics import make_scorer, SCORERS
-from sklearn.svm import LinearSVC
+from sklearn.svm import LinearSVC, SVC
 from sklearn.cluster import KMeans
 from sklearn.linear_model import Ridge, LogisticRegression
-from sklearn.tree import DecisionTreeClassifier
+from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.datasets import make_blobs
+from sklearn.datasets import load_iris
+from sklearn.datasets import make_classification
 from sklearn.datasets import make_multilabel_classification
 from sklearn.datasets import load_diabetes
 from sklearn.cross_validation import train_test_split, cross_val_score
 from sklearn.grid_search import GridSearchCV
 from sklearn.multiclass import OneVsRestClassifier
+
+# FIXME: temporary, to demonstrate ranking with several relevance levels.
+def dcg_score(y_true, y_score, k=10, gains="exponential"):
+    order = np.argsort(y_score)[::-1]
+    y_true = np.take(y_true, order[:k])
+
+    if gains == "exponential":
+        gains = 2 ** y_true - 1
+    elif gains == "linear":
+        gains = y_true
+    else:
+        raise ValueError("Invalid gains option.")
+
+    # highest rank is 1 so +2 instead of +1
+    discounts = np.log2(np.arange(len(y_true)) + 2)
+    return np.sum(gains / discounts)
+
+dcg_scorer = make_scorer(dcg_score, needs_threshold=True)
+
+
+class EstimatorWithoutFit(object):
+    """Dummy estimator to test check_scoring"""
+    pass
+
+
+class EstimatorWithFit(object):
+    """Dummy estimator to test check_scoring"""
+    def fit(self, X, y):
+        return self
+
+
+class EstimatorWithFitAndScore(object):
+    """Dummy estimator to test check_scoring"""
+    def fit(self, X, y):
+        return self
+
+    def score(self, X, y):
+        return 1.0
+
+
+class EstimatorWithFitAndPredict(object):
+    """Dummy estimator to test check_scoring"""
+    def fit(self, X, y):
+        self.y = y
+        return self
+
+    def predict(self, X):
+        return self.y
+
+
+def test_check_scoring():
+    """Test all branches of check_scoring"""
+    estimator = EstimatorWithoutFit()
+    assert_raises(TypeError, check_scoring, estimator)
+
+    estimator = EstimatorWithFitAndScore()
+    estimator.fit([[1]], [1])
+    scorer = check_scoring(estimator)
+    assert_almost_equal(scorer(estimator, [[1]], [1]), 1.0)
+
+    estimator = EstimatorWithFitAndPredict()
+    estimator.fit([[1]], [1])
+    assert_raises(TypeError, check_scoring, estimator)
+
+    scorer = check_scoring(estimator, "accuracy")
+    assert_almost_equal(scorer(estimator, [[1]], [1]), 1.0)
+
+    estimator = EstimatorWithFit()
+    assert_raises(TypeError, check_scoring, estimator)
 
 
 class EstimatorWithoutFit(object):
@@ -170,27 +242,6 @@ def test_thresholded_scorers_multilabel_indicator_data():
                                           random_state=0)
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 
-    # Multi-output multi-class predict_proba
-    clf = DecisionTreeClassifier()
-    clf.fit(X_train, y_train)
-    y_proba = clf.predict_proba(X_test)
-    score1 = SCORERS['roc_auc'](clf, X_test, y_test)
-    score2 = roc_auc_score(y_test, np.vstack(p[:, -1] for p in y_proba).T)
-    assert_almost_equal(score1, score2)
-
-    # Multi-output multi-class decision_function
-    # TODO Is there any yet?
-    clf = DecisionTreeClassifier()
-    clf.fit(X_train, y_train)
-    clf._predict_proba = clf.predict_proba
-    clf.predict_proba = None
-    clf.decision_function = lambda X: [p[:, 1] for p in clf._predict_proba(X)]
-
-    y_proba = clf.decision_function(X_test)
-    score1 = SCORERS['roc_auc'](clf, X_test, y_test)
-    score2 = roc_auc_score(y_test, np.vstack(p for p in y_proba).T)
-    assert_almost_equal(score1, score2)
-
     # Multilabel predict_proba
     clf = OneVsRestClassifier(DecisionTreeClassifier())
     clf.fit(X_train, y_train)
@@ -216,6 +267,112 @@ def test_unsupervised_scorers():
     score1 = SCORERS['adjusted_rand_score'](km, X_test, y_test)
     score2 = adjusted_rand_score(y_test, km.predict(X_test))
     assert_almost_equal(score1, score2)
+
+
+def test_evaluate_scorers_binary():
+    X, y = make_classification(n_classes=2, random_state=0)
+
+    # Test a classifier with decision_function.
+    for clf in (SVC(), LinearSVC()):
+        clf.fit(X, y)
+
+        s1, s2 = _evaluate_scorers(clf, X, y, [SCORERS["f1"],
+                                              SCORERS["roc_auc"]])
+        df = clf.decision_function(X)
+        y_pred = clf.predict(X)
+
+        assert_almost_equal(s1, f1_score(y, y_pred))
+        assert_almost_equal(s2, roc_auc_score(y, df))
+
+    # Test a classifier with predict_proba.
+    clf = LogisticRegression()
+    clf.fit(X, y)
+
+    s1, s2 = _evaluate_scorers(clf, X, y, [SCORERS["f1"],
+                                          SCORERS["roc_auc"]])
+    y_proba = clf.predict_proba(X)[:, 1]
+    y_pred = clf.predict(X)
+
+    assert_almost_equal(s1, f1_score(y, y_pred))
+    assert_almost_equal(s2, roc_auc_score(y, y_proba))
+
+
+def test_evaluate_scorers_multiclass():
+    iris = load_iris()
+    X, y = iris.data, iris.target
+
+    # Test a classifier with decision_function.
+    clf = LinearSVC()
+    clf.fit(X, y)
+
+    s1, s2 = _evaluate_scorers(clf, X, y, [SCORERS["f1"],
+                                          SCORERS["accuracy"]])
+    y_pred = clf.predict(X)
+
+    assert_almost_equal(s1, f1_score(y, y_pred))
+    assert_almost_equal(s2, accuracy_score(y, y_pred))
+
+    # Test a classifier with predict_proba.
+    clf = LogisticRegression()
+    clf.fit(X, y)
+
+    s1, s2, s3 = _evaluate_scorers(clf, X, y, [SCORERS["f1"],
+                                              SCORERS["accuracy"],
+                                              SCORERS["log_loss"]])
+    y_proba = clf.predict_proba(X)
+    y_pred = clf.predict(X)
+
+    assert_almost_equal(s1, f1_score(y, y_pred))
+    assert_almost_equal(s2, accuracy_score(y, y_pred))
+    assert_almost_equal(s3, -log_loss(y, y_proba))
+
+
+def test_evaluate_scorers_regression():
+    diabetes = load_diabetes()
+    X, y = diabetes.data, diabetes.target
+
+    reg = Ridge()
+    reg.fit(X, y)
+
+    s1, s2 = _evaluate_scorers(reg, X, y, [SCORERS["r2"],
+                                          SCORERS["mean_squared_error"]])
+    y_pred = reg.predict(X)
+
+    assert_almost_equal(s1, r2_score(y, y_pred))
+    assert_almost_equal(s2, -mean_squared_error(y, y_pred))
+
+
+def test_evaluate_scorers_ranking_by_regression():
+    X, y = make_classification(n_classes=2, random_state=0)
+
+    reg = DecisionTreeRegressor()
+    reg.fit(X, y)
+
+    s1, s2 = _evaluate_scorers(reg, X, y, [SCORERS["roc_auc"],
+                                          SCORERS["average_precision"]])
+    y_pred = reg.predict(X)
+
+    assert_almost_equal(s1, roc_auc_score(y, y_pred))
+    assert_almost_equal(s2, average_precision_score(y, y_pred))
+
+    diabetes = load_diabetes()
+    X, y = diabetes.data, diabetes.target
+
+    reg.fit(X, y)
+
+    s1, s2 = _evaluate_scorers(reg, X, y, [SCORERS["r2"],
+                                          dcg_scorer])
+    y_pred = reg.predict(X)
+
+    assert_almost_equal(s1, r2_score(y, y_pred))
+    assert_almost_equal(s2, dcg_score(y, y_pred))
+
+
+def test_evaluate_scorers_exceptions():
+    clf = LinearSVC()
+    # log_loss needs probabilities but LinearSVC does not have predict_proba.
+    assert_raises(ValueError, _evaluate_scorers, clf, [], [],
+                  [SCORERS["log_loss"]])
 
 
 @ignore_warnings
