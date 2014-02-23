@@ -967,10 +967,12 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
       encoding of dictionary items or strings.
     """
     def __init__(self, n_values="auto", categorical_features="all",
-                 dtype=np.float):
+                 dtype=np.float, 
+                 sparse=True):
         self.n_values = n_values
         self.categorical_features = categorical_features
         self.dtype = dtype
+        self.sparse= sparse
 
     def fit(self, X, y=None):
         """Fit OneHotEncoder to X.
@@ -1064,7 +1066,12 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
                                 dtype=self.dtype).tocsr()
         if self.n_values == 'auto':
             out = out[:, self.active_features_]
-        return out
+        
+        if self.sparse:
+            return out
+        
+        else:
+            return out.toarray()
 
     def transform(self, X):
         """Transform X using one-hot encoding.
