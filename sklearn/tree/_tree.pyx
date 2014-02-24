@@ -1060,9 +1060,6 @@ cdef class BestSplitter(Splitter):
         cdef DTYPE_t current_feature_value
         cdef SIZE_t partition_end
 
-        # Copy constant features
-        memcpy(features, constant_features, sizeof(SIZE_t) * n_known_constants)
-
         # Look for splits
         while (f_i > n_total_constants and
                 (n_visited_features < max_features or
@@ -1100,7 +1097,7 @@ cdef class BestSplitter(Splitter):
 
                     tmp = features[f_j]
                     features[f_j] = features[n_total_constants]
-                    features[n_total_constants] = tmp
+                    features[n_total_constants] = current_feature
 
                     n_total_constants += 1
 
@@ -1166,7 +1163,10 @@ cdef class BestSplitter(Splitter):
                     samples[partition_end] = samples[p]
                     samples[p] = tmp
 
-        # Copy found constant features
+        # Respect invariant for constant features
+        memcpy(features, constant_features, sizeof(SIZE_t) * n_known_constants)
+
+        # Copy constant features
         memcpy(constant_features + n_known_constants,
                features + n_known_constants,
                sizeof(SIZE_t) * n_found_constants)
@@ -1349,9 +1349,6 @@ cdef class RandomSplitter(Splitter):
         cdef DTYPE_t current_feature_value
         cdef SIZE_t partition_end
 
-        # Copy constant features
-        memcpy(features, constant_features, sizeof(SIZE_t) * n_known_constants)
-
         # Look for splits
         while (f_i > n_total_constants and
                 (n_visited_features < max_features or
@@ -1361,6 +1358,7 @@ cdef class RandomSplitter(Splitter):
             # Draw a feature at random
             f_j = rand_int(f_i - n_drawn_constants - n_found_constants,
                            random_state) + n_drawn_constants
+
             if f_j < n_known_constants:
                 # f_j in the interval [n_drawn_constants, n_known_constants[
 
@@ -1469,7 +1467,10 @@ cdef class RandomSplitter(Splitter):
                     samples[partition_end] = samples[p]
                     samples[p] = tmp
 
-        # Copy found constant features
+        # Respect invariant for constant features
+        memcpy(features, constant_features, sizeof(SIZE_t) * n_known_constants)
+
+        # Copy constant features
         memcpy(constant_features + n_known_constants,
                features + n_known_constants,
                sizeof(SIZE_t) * n_found_constants)
@@ -1537,9 +1538,9 @@ cdef class PresortBestSplitter(Splitter):
             memset(sample_mask, 0, self.n_total_samples)
             self.sample_mask = <unsigned char*> sample_mask
 
-    cdef void node_split(self, double impurity, SIZE_t* pos,
-                         SIZE_t* feature, double* threshold,
-                         double* impurity_left, double* impurity_right,
+    cdef void node_split(self, double impurity, SIZE_t* pos, SIZE_t* feature,
+                         double* threshold, double* impurity_left,
+                         double* impurity_right,
                          double* impurity_improvement,
                          SIZE_t* n_constant_features) nogil:
         """Find the best split on node samples[start:end]."""
@@ -1704,7 +1705,10 @@ cdef class PresortBestSplitter(Splitter):
         for p in range(start, end):
             sample_mask[samples[p]] = 0
 
-        # Copy found constant features
+        # Respect invariant for constant features
+        memcpy(features, constant_features, sizeof(SIZE_t) * n_known_constants)
+
+        # Copy constant features
         memcpy(constant_features + n_known_constants,
                features + n_known_constants,
                sizeof(SIZE_t) * n_found_constants)
@@ -1722,7 +1726,6 @@ cdef class PresortBestSplitter(Splitter):
 # =============================================================================
 # Tree builders
 # =============================================================================
-
 cdef class TreeBuilder:
     """Interface for different tree building strategies. """
 
@@ -1824,6 +1827,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                 if first:
                     impurity = splitter.criterion.node_impurity()
                     first = 0
+
 
                 is_leaf = is_leaf or (impurity < EPSILON_FLT)
 
