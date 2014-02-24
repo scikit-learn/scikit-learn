@@ -58,6 +58,18 @@ def _check_behavior_2d(clf):
     y_pred = est.predict(X)
     assert_equal(y.shape, y_pred.shape)
 
+def _check_behavior_2d_for_constant(clf):
+    # 2d case only
+    X = np.array([[0], [0], [0], [0]])  # ignored
+    y = np.array([[1, 0, 5, 4, 3],
+                  [2, 0, 1, 2, 5],
+                  [1, 0, 4, 5, 2],
+                  [1, 3, 3, 2, 0]])
+    est = clone(clf)
+    est.fit(X, y)
+    y_pred = est.predict(X)
+    assert_equal(y.shape, y_pred.shape)
+
 
 def test_most_frequent_strategy():
     X = [[0], [0], [0], [0]]  # ignored
@@ -175,7 +187,7 @@ def test_classifier_exceptions():
     assert_raises(ValueError, clf.predict_proba, [])
 
 
-def test_regressor():
+def test_mean_strategy_regressor():
     X = [[0]] * 4  # ignored
     y = [1, 2, 1, 1]
 
@@ -184,7 +196,7 @@ def test_regressor():
     assert_array_equal(reg.predict(X), [5. / 4] * len(X))
 
 
-def test_multioutput_regressor():
+def test_mean_strategy_multioutput_regressor():
 
     X_learn = np.random.randn(10, 10)
     y_learn = np.random.randn(10, 5)
@@ -210,6 +222,63 @@ def test_regressor_exceptions():
     assert_raises(ValueError, reg.predict, [])
 
 
+def test_median_strategy_regressor():
+    X = [[0]] * 5  # ignored
+    y = [1, 2, 4, 6, 8]
+
+    reg = DummyRegressor(strategy="median")
+    reg.fit(X, y)
+    assert_array_equal(reg.predict(X), [4] * len(X))
+
+def test_median_strategy_multioutput_regressor():
+
+    X_learn = np.random.randn(10, 10)
+    y_learn = np.random.randn(10, 5)
+
+    median = np.median(y_learn, axis=0).reshape((1, -1))
+
+    X_test = np.random.randn(20, 10)
+    y_test = np.random.randn(20, 5)
+
+    # Correctness oracle
+    est = DummyRegressor(strategy="median")
+    est.fit(X_learn, y_learn)
+    y_pred_learn = est.predict(X_learn)
+    y_pred_test = est.predict(X_test)
+
+    assert_array_equal(np.tile(median, (y_learn.shape[0], 1)), y_pred_learn)
+    assert_array_equal(np.tile(median, (y_test.shape[0], 1)), y_pred_test)
+    _check_behavior_2d(est)
+
+def test_constant_strategy_regressor():
+    X = [[0]] * 5  # ignored
+    y = [1, 2, 4, 6, 8]
+
+    reg = DummyRegressor(strategy="constant", constant=[43])
+    reg.fit(X, y)
+    assert_array_equal(reg.predict(X), [43] * len(X))
+
+def test_constant_strategy_multioutput_regressor():
+
+    X_learn = np.random.randn(10, 10)
+    y_learn = np.random.randn(10, 5)
+
+    constants = np.random.randn(1, 5)
+
+    X_test = np.random.randn(20, 10)
+    y_test = np.random.randn(20, 5)
+
+    # Correctness oracle
+    est = DummyRegressor(strategy="constant", constant=constants)
+    est.fit(X_learn, y_learn)
+    y_pred_learn = est.predict(X_learn)
+    y_pred_test = est.predict(X_test)
+
+    assert_array_equal(np.tile(constants, (y_learn.shape[0], 1)), y_pred_learn)
+    assert_array_equal(np.tile(constants, (y_test.shape[0], 1)), y_pred_test)
+    _check_behavior_2d_for_constant(est)
+
+
 def test_constant_strategy():
     X = [[0], [0], [0], [0]]  # ignored
     y = [2, 1, 2, 2]
@@ -223,7 +292,7 @@ def test_constant_strategy():
     y = ['two', 'one', 'two', 'two']
     clf = DummyClassifier(strategy="constant", random_state=0, constant='one')
     clf.fit(X, y)
-    assert_array_equal(clf.predict(X), np.array(['one'] * 4))
+    assert_array_equal(clf.predict(X), np.array(['one']*4))
     _check_predict_proba(clf, X, y)
 
 
@@ -251,5 +320,5 @@ def test_constant_strategy_exceptions():
     clf = DummyClassifier(strategy="constant", random_state=0)
     assert_raises(ValueError, clf.fit, X, y)
     clf = DummyClassifier(strategy="constant", random_state=0,
-                          constant=[2, 0])
+                          constant=[2,0])
     assert_raises(ValueError, clf.fit, X, y)
