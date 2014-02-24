@@ -1,8 +1,3 @@
-sklearn/dummy.py:290:1: W293 blank line contains whitespace
-sklearn/dummy.py:341:80: E501 line too long (94 > 79 characters)
-sklearn/dummy.py:351:80: E501 line too long (82 > 79 characters)
-sklearn/dummy.py:388:1: W391 blank line at end of file
-maheshakya@maheshakya-TECRA-M11:~/scikit-learn$ autopep8 sklearn/tests/test_dummy.py 
 import warnings
 import numpy as np
 
