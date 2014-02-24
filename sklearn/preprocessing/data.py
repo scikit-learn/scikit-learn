@@ -966,8 +966,8 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
     sklearn.feature_extraction.FeatureHasher : performs an approximate one-hot
       encoding of dictionary items or strings.
     """
-    def __init__(self, n_values="auto", categorical_features="all",
-                 dtype=np.float,sparse=True):
+    def __init__(self, n_values="auto", categorical_features="all", sparse=True,
+                 dtype=np.float):
         self.n_values = n_values
         self.categorical_features = categorical_features
         self.dtype = dtype
