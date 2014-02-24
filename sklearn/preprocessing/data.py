@@ -967,12 +967,11 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
       encoding of dictionary items or strings.
     """
     def __init__(self, n_values="auto", categorical_features="all",
-                 dtype=np.float, 
-                 sparse=True):
+                 dtype=np.float,sparse=True):
         self.n_values = n_values
         self.categorical_features = categorical_features
         self.dtype = dtype
-        self.sparse= sparse
+        self.sparse = sparse
 
     def fit(self, X, y=None):
         """Fit OneHotEncoder to X.
