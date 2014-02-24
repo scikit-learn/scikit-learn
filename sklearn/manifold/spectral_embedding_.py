@@ -228,6 +228,7 @@ def _solve_eigenvalue_problem(adjacency, n_components=1, eigen_solver=None,
 
     laplacian, dd = graph_laplacian(adjacency,
                                     normed=norm_laplacian, return_diag=True)
+
     if (eigen_solver == 'arpack'
         or eigen_solver != 'lobpcg' and
             (not sparse.isspmatrix(laplacian)
@@ -740,5 +741,5 @@ class DiffusionEmbedding(SpectralEmbedding):
                                               eigen_solver=self.eigen_solver,
                                               random_state=random_state,
                                               diffusion_time=self.diffusion_time,
-                                              drop_first=False)
+                                              drop_first=True)
         return self
