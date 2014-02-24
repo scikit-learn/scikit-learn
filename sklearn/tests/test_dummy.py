@@ -261,6 +261,10 @@ def test_constant_strategy_regressor():
     reg.fit(X, y)
     assert_array_equal(reg.predict(X), [43] * len(X))
 
+    reg = DummyRegressor(strategy="constant", constant=43)
+    reg.fit(X, y)
+    assert_array_equal(reg.predict(X), [43] * len(X))
+
 
 def test_constant_strategy_multioutput_regressor():
 
@@ -326,4 +330,3 @@ def test_constant_strategy_exceptions():
     clf = DummyClassifier(strategy="constant", random_state=0,
                           constant=[2, 0])
     assert_raises(ValueError, clf.fit, X, y)
-
