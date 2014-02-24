@@ -10,10 +10,10 @@ from .externals.six.moves import xrange
 from .utils import check_random_state
 from .utils.fixes import unique
 from .utils.validation import safe_asarray
+from sklearn.utils import deprecated
 
 
 class DummyClassifier(BaseEstimator, ClassifierMixin):
-
     """
     DummyClassifier is a classifier that makes predictions using simple rules.
 
@@ -274,7 +274,6 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
 
 
 class DummyRegressor(BaseEstimator, RegressorMixin):
-
     """
     DummyRegressor is a regressor that always predicts the mean of the training
     targets.
@@ -298,6 +297,13 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
     def __init__(self, strategy="mean", constant=None):
         self.strategy = strategy
         self.constant = constant
+
+    @property
+    @deprecated('This will be removed in version 0.17')
+    def y_mean_(self):
+        if self.strategy == 'mean':
+            return self.constant_
+        raise AttributeError
 
     def fit(self, X, y):
         """Fit the random regressor.
