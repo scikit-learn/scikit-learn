@@ -237,8 +237,8 @@ class SpectralCoclustering(BaseSpectral):
     Attributes
     ----------
     `rows_` : array-like, shape (n_row_clusters, n_rows)
-        Results of the clustering. `rows[i, r]` is True if cluster `i`
-        contains row `r`. Available only after calling ``fit``.
+        Results of the clustering. `rows[i, r]` is True if
+        cluster `i` contains row `r`. Available only after calling ``fit``.
 
     `columns_` : array-like, shape (n_column_clusters, n_columns)
         Results of the clustering, like `rows`.
@@ -365,8 +365,8 @@ class SpectralBiclustering(BaseSpectral):
     Attributes
     ----------
     `rows_` : array-like, shape (n_row_clusters, n_rows)
-        Results of the clustering. `rows[i, r]` is True if cluster `i`
-        contains row `r`. Available only after calling ``fit``.
+        Results of the clustering. `rows[i, r]` is True if
+        cluster `i` contains row `r`. Available only after calling ``fit``.
 
     `columns_` : array-like, shape (n_column_clusters, n_columns)
         Results of the clustering, like `rows`.
