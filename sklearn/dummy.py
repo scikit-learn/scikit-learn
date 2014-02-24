@@ -287,7 +287,7 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
     `constant_' : float or array of shape [n_outputs]
         Mean or median of the training targets or constant value given the by
         the user.
-        
+
     `n_outputs_` : int,
         Number of outputs.
 
