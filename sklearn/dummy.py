@@ -1,4 +1,3 @@
-
 # Author: Mathieu Blondel <mathieu@mblondel.org>
 #         Arnaud Joly <a.joly@ulg.ac.be>
 #         Maheshakya Wijewardena<maheshakya.10@cse.mrt.ac.lk>
@@ -14,6 +13,7 @@ from .utils.validation import safe_asarray
 
 
 class DummyClassifier(BaseEstimator, ClassifierMixin):
+
     """
     DummyClassifier is a classifier that makes predictions using simple rules.
 
@@ -114,7 +114,7 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
             self.class_prior_.append(np.bincount(y_k) / float(y_k.shape[0]))
 
             # Checking in case of constant strategy if the constant provided
-            # by the user is in y. 
+            # by the user is in y.
             if self.strategy == "constant":
                 if constant[k] not in self.classes_[k]:
                     raise ValueError("The constant target value must be "
@@ -178,7 +178,7 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
 
             elif self.strategy == "constant":
                 ret = np.ones(n_samples, dtype=int) * (
-                      np.where(classes_[k] == constant[k]))
+                    np.where(classes_[k] == constant[k]))
 
             y.append(classes_[k][ret])
 
@@ -274,6 +274,7 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
 
 
 class DummyRegressor(BaseEstimator, RegressorMixin):
+
     """
     DummyRegressor is a regressor that always predicts the mean of the training
     targets.
@@ -283,8 +284,9 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
 
     Attributes
     ----------
-    `y_mean_`, `y_median`, 'y_constant`' : float or array of shape [n_outputs]
-        Mean or median of the training targets or constant value given the by the user.
+    `constant_' : float or array of shape [n_outputs]
+        Mean or median of the training targets or constant value given the by
+        the user.
         
     `n_outputs_` : int,
         Number of outputs.
@@ -292,11 +294,10 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
     `outputs_2d_` : bool,
         True if the output at fit is 2d, else false.
     """
-    
+
     def __init__(self, strategy="mean", constant=None):
         self.strategy = strategy
         self.constant = constant
-        
 
     def fit(self, X, y):
         """Fit the random regressor.
@@ -315,51 +316,47 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
         self : object
             Returns self.
         """
-        
+
         if self.strategy not in ("mean", "median", "constant"):
             raise ValueError("Unknown strategy type.")
-            
-            
-        y = safe_asarray(y)     
-        
+
+        y = safe_asarray(y)
+
         if self.strategy == "mean":
-            self.y_mean_ = np.reshape(np.mean(y, axis=0), (1, -1))
-            self.n_outputs_ = np.size(self.y_mean_)  # y.shape[1] is not safe
+            self.constant_ = np.reshape(np.mean(y, axis=0), (1, -1))
+            self.n_outputs_ = np.size(self.constant_)  # y.shape[1] is not safe
             self.output_2d_ = (y.ndim == 2)
             return self
-        
+
         elif self.strategy == "median":
-            self.y_median_ = np.reshape(np.median(y, axis=0), (1, -1))
-            self.n_outputs_ = np.size(self.y_median_)  # y.shape[1] is not safe
+            self.constant_ = np.reshape(np.median(y, axis=0), (1, -1))
+            self.n_outputs_ = np.size(self.constant_)  # y.shape[1] is not safe
             self.output_2d_ = (y.ndim == 2)
             return self
-        
+
         elif self.strategy == "constant":
             if self.constant is None:
                 raise ValueError("Constant not defined.")
-                
+
             if not (isinstance(self.constant, np.ndarray) or isinstance(self.constant, list)):
-                raise ValueError("Constants should be in type list or numpy.ndarray.")
-            
+                raise ValueError(
+                    "Constants should be in type list or numpy.ndarray.")
+
             self.output_2d_ = (y.ndim == 2)
             self.constant = safe_asarray(self.constant)
-      
-            
+
             if self.output_2d_:
-                if self.constant.shape[1] != y.shape[1]:                    
-                    raise ValueError("Number of outputs and number of constants do not match.")
+                if self.constant.shape[1] != y.shape[1]:
+                    raise ValueError(
+                        "Number of outputs and number of constants do not match.")
             else:
                 if len(self.constant) != 1:
-                    raise ValueError("Number of constants should be equal to one.")
-                    
-                
-            self.y_constant_ = np.reshape(self.constant, (1, -1))            
-            self.n_outputs_ = np.size(self.y_constant_)  # y.shape[1] is not safe
-            return self 
-                
-            
-                
-            
+                    raise ValueError(
+                        "Number of constants should be equal to one.")
+
+            self.constant_ = np.reshape(self.constant, (1, -1))
+            self.n_outputs_ = np.size(self.constant_)  # y.shape[1] is not safe
+            return self
 
     def predict(self, X):
         """
@@ -376,22 +373,16 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
         y : array, shape = [n_samples]  or [n_samples, n_outputs]
             Predicted target values for X.
         """
-        if not (hasattr(self, "y_mean_") or hasattr(self, "y_median_") or hasattr(self, "y_constant_")):
+        if not hasattr(self, "constant_"):
             raise ValueError("DummyRegressor not fitted.")
 
         X = safe_asarray(X)
         n_samples = X.shape[0]
-        
-        if self.strategy == "mean":
-            y = np.ones((n_samples, 1)) * self.y_mean_
-        
-        elif self.strategy == "median":
-            y = np.ones((n_samples, 1)) * self.y_median_
-            
-        elif self.strategy == "constant":
-            y = np.ones((n_samples, 1)) * self.y_constant_            
+
+        y = np.ones((n_samples, 1)) * self.constant_
 
         if self.n_outputs_ == 1 and not self.output_2d_:
             y = np.ravel(y)
 
         return y
+
