@@ -358,8 +358,8 @@ def test_auto_weight():
     X, y = iris.data[:, :2], iris.target + 1
     unbalanced = np.delete(np.arange(y.size), np.where(y > 2)[0][::2])
 
-    classes, y_ind = unique(y[unbalanced], return_inverse=True)
-    class_weights = compute_class_weight('auto', classes, y_ind)
+    classes = unique(y[unbalanced])
+    class_weights = compute_class_weight('auto', classes, y[unbalanced])
     assert_true(np.argmax(class_weights) == 2)
 
     for clf in (svm.SVC(kernel='linear'), svm.LinearSVC(random_state=0),
