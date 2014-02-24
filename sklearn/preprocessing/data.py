@@ -958,6 +958,18 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
     array([0, 2, 5, 9])
     >>> enc.transform([[0, 1, 1]]).toarray()
     array([[ 1.,  0.,  0.,  1.,  0.,  0.,  1.,  0.,  0.]])
+    
+    >>> enc = OneHotEncoder(sparse=False)
+    >>> enc.fit([[0, 0, 3], [1, 1, 0], [0, 2, 1], \
+[1, 0, 2]])  # doctest: +ELLIPSIS
+    OneHotEncoder(categorical_features='all', dtype=<... 'float'>,
+           n_values='auto', sparse=False)
+    >>> print enc.n_values_
+    [2 3 4]
+    >>> enc.feature_indices_
+    array([0, 2, 5, 9])
+    >>> enc.transform([[0, 1, 1]]).toarray()
+    array([[ 1.,  0.,  0.,  1.,  0.,  0.,  1.,  0.,  0.]])
 
     See also
     --------
