@@ -324,7 +324,8 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
         """
 
         if self.strategy not in ("mean", "median", "constant"):
-            raise ValueError("Unknown strategy type.")
+            raise ValueError("Unknown strategy type: %s, expected mean, median or constant"
+                             % self.strategy)
 
         y = safe_asarray(y)
 
@@ -344,21 +345,17 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
             if self.constant is None:
                 raise ValueError("Constant not defined.")
 
-            if not (isinstance(self.constant, np.ndarray) or isinstance(self.constant, list)):
-                raise ValueError(
-                    "Constants should be in type list or numpy.ndarray.")
-
             self.output_2d_ = (y.ndim == 2)
             self.constant = safe_asarray(self.constant)
 
             if self.output_2d_:
+                if not (isinstance(self.constant, np.ndarray) or isinstance(self.constant, list)):
+                    raise ValueError(
+                        "Constants should be in type list or numpy.ndarray.")
+
                 if self.constant.shape[1] != y.shape[1]:
                     raise ValueError(
                         "Number of outputs and number of constants do not match.")
-            else:
-                if len(self.constant) != 1:
-                    raise ValueError(
-                        "Number of constants should be equal to one.")
 
             self.constant_ = np.reshape(self.constant, (1, -1))
             self.n_outputs_ = np.size(self.constant_)  # y.shape[1] is not safe
@@ -391,4 +388,3 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
             y = np.ravel(y)
 
         return y
-
