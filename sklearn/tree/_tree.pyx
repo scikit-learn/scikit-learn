@@ -1069,9 +1069,9 @@ cdef class BestSplitter(Splitter):
             # Draw a feature at random
             f_j = rand_int(f_i - n_drawn_constants - n_found_constants,
                            random_state) + n_drawn_constants
+
             if f_j < n_known_constants:
                 # f_j in the interval [n_drawn_constants, n_known_constants[
-
                 tmp = features[f_j]
                 features[f_j] = features[n_drawn_constants]
                 features[n_drawn_constants] = tmp
@@ -1093,12 +1093,10 @@ cdef class BestSplitter(Splitter):
                 sort(Xf + start, samples + start, end - start)
 
                 if Xf[end - 1] <= Xf[start] + EPSILON_FLT:
-                    n_found_constants += 1
-
-                    tmp = features[f_j]
                     features[f_j] = features[n_total_constants]
                     features[n_total_constants] = current_feature
 
+                    n_found_constants += 1
                     n_total_constants += 1
 
                 else:
@@ -1361,7 +1359,6 @@ cdef class RandomSplitter(Splitter):
 
             if f_j < n_known_constants:
                 # f_j in the interval [n_drawn_constants, n_known_constants[
-
                 tmp = features[f_j]
                 features[f_j] = features[n_drawn_constants]
                 features[n_drawn_constants] = tmp
@@ -1379,7 +1376,6 @@ cdef class RandomSplitter(Splitter):
                 max_feature_value = min_feature_value
                 Xf[start] = min_feature_value
 
-
                 for p in range(start + 1, end):
                     current_feature_value = X[X_sample_stride * samples[p] +
                                               X_fx_stride * current_feature]
@@ -1391,9 +1387,8 @@ cdef class RandomSplitter(Splitter):
                         max_feature_value = current_feature_value
 
                 if max_feature_value <= min_feature_value + EPSILON_FLT:
-                    tmp = features[f_j]
                     features[f_j] = features[n_total_constants]
-                    features[n_total_constants] = tmp
+                    features[n_total_constants] = current_feature
 
                     n_found_constants += 1
                     n_total_constants += 1
@@ -1595,9 +1590,6 @@ cdef class PresortBestSplitter(Splitter):
         for p in range(start, end):
             sample_mask[samples[p]] = 1
 
-        # Copy constant features
-        memcpy(features, constant_features, sizeof(SIZE_t) * n_known_constants)
-
         # Look for splits
         while (f_i > n_total_constants and
                 (n_visited_features < max_features or
@@ -1633,9 +1625,8 @@ cdef class PresortBestSplitter(Splitter):
 
                 # Evaluate all splits
                 if Xf[end - 1] <= Xf[start] + EPSILON_FLT:
-                    tmp = features[f_j]
                     features[f_j] = features[n_total_constants]
-                    features[n_total_constants] = tmp
+                    features[n_total_constants] = current_feature
 
                     n_found_constants += 1
                     n_total_constants += 1
