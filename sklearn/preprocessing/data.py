@@ -1032,8 +1032,11 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
             active_features = np.where(mask)[0]
             out = out[:, active_features]
             self.active_features_ = active_features
-
-        return out
+	if self.sparse:
+        	return out
+        	
+        else:
+        	return out.toarray()
 
     def fit_transform(self, X, y=None):
         """Fit OneHotEncoder to X, then transform X.
