@@ -63,13 +63,14 @@ def test_log_odds_estimator():
 
 
 def test_ndcg():
+    """Test NDCG with no max rank."""
     ndcg = NormalizedDiscountedCumulativeGain(n_classes=1, max_rank=None)
 
     for t in [np.int64, np.int32, np.float32, np.float64]:
         # test all zeros
         y = np.zeros(5, dtype=t)
         pred = np.ones((5, 1))
-        assert(np.isnan(ndcg(y, pred)))
+        assert(ndcg(y, pred) == 1)
 
         # test all ones
         y = np.ones(5, dtype=t)
@@ -90,8 +91,18 @@ def test_ndcg():
     query = np.r_[np.zeros(6), np.ones(6)]
     assert_almost_equal(ndcg(y, pred, query), score)
 
+    # test pessimism
+    from itertools import permutations
+    num = 1. / np.log2(1 + 2) + 2. / np.log2(1 + 3)
+    den = 2. / np.log2(1 + 1) + 1. / np.log2(1 + 2)
+    for perm in permutations(range(3)):
+        assert_almost_equal(ndcg(np.asarray(perm), np.ones(3)), num / den)
+    for perm in permutations(range(3)):
+        assert_almost_equal(ndcg(np.asarray(perm), np.zeros(3)), num / den)
 
-def test_max_ndcg():
+
+def test_max_rank_ndcg():
+    """Test NDCG with max rank."""
     max_rank = 3
     denom = np.log(range(2, max_rank + 2))
     ndcg = NormalizedDiscountedCumulativeGain(n_classes=1, max_rank=max_rank)
@@ -100,7 +111,7 @@ def test_max_ndcg():
         # test all zeros
         y = np.zeros(5, dtype=t)
         pred = np.ones((5, 1))
-        assert(np.isnan(ndcg(y, pred)))
+        assert(ndcg(y, pred) == 1)
 
         # test all ones
         y = np.ones(5, dtype=t)
@@ -119,3 +130,12 @@ def test_max_ndcg():
     pred = np.asarray(range(12)[::-1])[:, None]
     query = np.r_[np.zeros(6), np.ones(6)]
     assert_almost_equal(ndcg(y, pred, query), score)
+
+    # test pessimism
+    from itertools import permutations
+    num = 1. / np.log2(1 + 2) + 2. / np.log2(1 + 3)
+    den = 2. / np.log2(1 + 1) + 1. / np.log2(1 + 2)
+    for perm in permutations(range(3)):
+        assert_almost_equal(ndcg(np.asarray(perm), np.ones(3)), num / den)
+    for perm in permutations(range(3)):
+        assert_almost_equal(ndcg(np.asarray(perm), np.zeros(3)), num / den)

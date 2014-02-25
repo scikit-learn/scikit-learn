@@ -383,7 +383,7 @@ def _ndcg(all32_64_t [::1] y, all32_64_t [:] y_sorted):
         dcg += y[i] / log(2 + i)
         max_dcg += y_sorted[i] / log(2 + i)
     if max_dcg == 0:
-        return np.nan
+        return 1.
     return dcg / max_dcg
 
 

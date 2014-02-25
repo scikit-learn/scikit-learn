@@ -396,9 +396,8 @@ class NormalizedDiscountedCumulativeGain(RegressionLossFunction):
                 ix = np.lexsort((y[start:end], -pred[start:end]))
                 tmp_ndcg = _ndcg(y[ix + start][:self.max_rank],
                                  np.sort(y[start:end])[::-1][:self.max_rank])
-                if not np.isnan(tmp_ndcg):
-                    s_ndcg += tmp_ndcg
-                    n_group += 1
+                s_ndcg += tmp_ndcg
+                n_group += 1
 
             ndcg = s_ndcg / n_group
         return ndcg
@@ -440,8 +439,11 @@ class NormalizedDiscountedCumulativeGain(RegressionLossFunction):
         terminal_region = np.where(terminal_regions == leaf)[0]
         num = np.sum(residual.take(terminal_region, axis=0))
         den = np.sum(self.weights.take(terminal_region, axis=0))
-        tree.value[leaf, 0, 0] = ((num + np.finfo(float).eps) /
-                                  (den + np.finfo(float).eps))
+        # Numerator is gradient and denominator is 2nd derivative
+        # Need to be careful when denominator is zero.
+        # If num == 0 and den == 0: set to zero
+        # If num != 0 and den == 0: set den to epsilon
+        tree.value[leaf, 0, 0] = num / (den + np.finfo(float).eps)
 
 
 class BinomialDeviance(LossFunction):
@@ -1678,15 +1680,17 @@ class LambdaMART(BaseGradientBoosting):
                  max_rank=10, gain='exponential', warm_start=False):
 
         self.gain = gain
-        self._gain = lambda y: y
-        if gain == 'exponential':
-            self._gain = lambda y: 2**y - 1
 
         super(LambdaMART, self).__init__(
             'ndcg', learning_rate, n_estimators, min_samples_split,
             min_samples_leaf, max_depth, init, subsample, max_features,
             random_state, alpha, verbose, max_leaf_nodes=max_leaf_nodes,
             max_rank=max_rank, warm_start=warm_start)
+
+    def _gain(self, y):
+        if self.gain == 'exponential':
+            y = 2 ** y - 1
+        return y
 
     def fit(self, X, y, monitor=None, group=None):
         """Fit the gradient boosting model.

@@ -426,6 +426,24 @@ def test_serialization():
     assert_equal(100, len(clf.estimators_))
 
 
+def test_serialization_equality():
+    """Check model serialization."""
+    for Cls in [GradientBoostingRegressor, GradientBoostingClassifier,
+                LambdaMART]:
+        clf = Cls(n_estimators=10, random_state=1)
+
+        clf.fit(X, y)
+
+        try:
+            import cPickle as pickle
+        except ImportError:
+            import pickle
+
+        serialized_clf = pickle.dumps(clf, protocol=pickle.HIGHEST_PROTOCOL)
+        clf_pkl = pickle.loads(serialized_clf)
+        assert_array_equal(clf.predict(T), clf_pkl.predict(T))
+
+
 def test_degenerate_targets():
     """Check if we can fit even though all targets are equal. """
     clf = GradientBoostingClassifier(n_estimators=100, random_state=1)
