@@ -598,8 +598,7 @@ def adjusted_mutual_info_score(labels_true, labels_pred):
     -------
     ami: float(upperlimited by 1.0)
        The AMI takes a value of 1 when the two partitions 
-       are identical and 0 when the MI between two partitions equals 
-       to that expected by chance.
+       are identical and a value of 0 is expected for random partitions.
 
     See also
     --------
