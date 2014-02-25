@@ -547,7 +547,8 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
             A matrix such that `y_indicator[i, j] = 1` iff `classes_[j]` is in
             `y[i]`, and 0 otherwise.
         """
-        yt = self._transform(y, {k: i for i, k in enumerate(self.classes_)})
+        class_to_index = dict(zip(self.classes_, range(len(self.classes_))))
+        yt = self._transform(y, class_to_index)
         return yt.toarray()
 
     def _transform(self, y, class_mapping):
