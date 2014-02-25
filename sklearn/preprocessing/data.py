@@ -926,6 +926,11 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
 
     dtype : number type, default=np.float
         Desired dtype of output.
+        
+    sparse : boolean
+	    Will return Dense matrix if set "False" else will return Sparse Matrix.
+	    It is True by default.
+	    View the examples.
 
     Attributes
     ----------
@@ -953,14 +958,14 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
     >>> enc.fit([[0, 0, 3], [1, 1, 0], [0, 2, 1], \
 [1, 0, 2]])  # doctest: +ELLIPSIS
     OneHotEncoder(categorical_features='all', dtype=<... 'float'>,
-           n_values='auto')
+           n_values='auto', sparse=True)
     >>> enc.n_values_
     array([2, 3, 4])
     >>> enc.feature_indices_
     array([0, 2, 5, 9])
     >>> enc.transform([[0, 1, 1]]).toarray()
     array([[ 1.,  0.,  0.,  1.,  0.,  0.,  1.,  0.,  0.]])
-
+    
     See also
     --------
     sklearn.feature_extraction.DictVectorizer : performs a one-hot encoding of
@@ -968,11 +973,12 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
     sklearn.feature_extraction.FeatureHasher : performs an approximate one-hot
       encoding of dictionary items or strings.
     """
-    def __init__(self, n_values="auto", categorical_features="all",
+    def __init__(self, n_values="auto", categorical_features="all", sparse=True,
                  dtype=np.float):
         self.n_values = n_values
         self.categorical_features = categorical_features
         self.dtype = dtype
+        self.sparse = sparse
 
     def fit(self, X, y=None):
         """Fit OneHotEncoder to X.
@@ -1028,8 +1034,11 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
             active_features = np.where(mask)[0]
             out = out[:, active_features]
             self.active_features_ = active_features
-
-        return out
+	if self.sparse:
+        	return out
+        	
+        else:
+        	return out.toarray()
 
     def fit_transform(self, X, y=None):
         """Fit OneHotEncoder to X, then transform X.
@@ -1066,7 +1075,12 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
                                 dtype=self.dtype).tocsr()
         if self.n_values == 'auto':
             out = out[:, self.active_features_]
-        return out
+        
+        if self.sparse:
+            return out
+        
+        else:
+            return out.toarray()
 
     def transform(self, X):
         """Transform X using one-hot encoding.
