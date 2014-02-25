@@ -72,6 +72,11 @@ def _check_behavior_2d_for_constant(clf):
     assert_equal(y.shape, y_pred.shape)
 
 
+def _check_equality_regressor(statistic, y_learn, y_pred_learn, y_test, y_pred_test):
+    assert_array_equal(np.tile(statistic, (y_learn.shape[0], 1)), y_pred_learn)
+    assert_array_equal(np.tile(statistic, (y_test.shape[0], 1)), y_pred_test)
+
+
 def test_most_frequent_strategy():
     X = [[0], [0], [0], [0]]  # ignored
     y = [1, 2, 1, 1]
@@ -213,8 +218,7 @@ def test_mean_strategy_multioutput_regressor():
     y_pred_learn = est.predict(X_learn)
     y_pred_test = est.predict(X_test)
 
-    assert_array_equal(np.tile(mean, (y_learn.shape[0], 1)), y_pred_learn)
-    assert_array_equal(np.tile(mean, (y_test.shape[0], 1)), y_pred_test)
+    _check_equality_regressor(mean, y_learn, y_pred_learn, y_test, y_pred_test)
     _check_behavior_2d(est)
 
 
@@ -248,8 +252,8 @@ def test_median_strategy_multioutput_regressor():
     y_pred_learn = est.predict(X_learn)
     y_pred_test = est.predict(X_test)
 
-    assert_array_equal(np.tile(median, (y_learn.shape[0], 1)), y_pred_learn)
-    assert_array_equal(np.tile(median, (y_test.shape[0], 1)), y_pred_test)
+    _check_equality_regressor(
+        median, y_learn, y_pred_learn, y_test, y_pred_test)
     _check_behavior_2d(est)
 
 
@@ -271,7 +275,10 @@ def test_constant_strategy_multioutput_regressor():
     X_learn = np.random.randn(10, 10)
     y_learn = np.random.randn(10, 5)
 
-    constants = np.random.randn(1, 5)
+    rand_generator = np.random.RandomState(seed=1)
+
+    # test with 2d array
+    constants = rand_generator.randn(5)
 
     X_test = np.random.randn(20, 10)
     y_test = np.random.randn(20, 5)
@@ -282,8 +289,8 @@ def test_constant_strategy_multioutput_regressor():
     y_pred_learn = est.predict(X_learn)
     y_pred_test = est.predict(X_test)
 
-    assert_array_equal(np.tile(constants, (y_learn.shape[0], 1)), y_pred_learn)
-    assert_array_equal(np.tile(constants, (y_test.shape[0], 1)), y_pred_test)
+    _check_equality_regressor(
+        constants, y_learn, y_pred_learn, y_test, y_pred_test)
     _check_behavior_2d_for_constant(est)
 
 

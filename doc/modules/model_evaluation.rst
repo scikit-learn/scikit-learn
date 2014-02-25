@@ -1150,7 +1150,7 @@ from class imbalance, etc...
 
 `mean` always predicts the mean of the training targets.
 `median` always predicts the median of the training targests.
-`constant` always predicts a constant label that is provided by the user.
+`constant` always predicts a constant value that is provided by the user.
 
 In all these strategies, the `predict` method completely ignores
 the input data.
