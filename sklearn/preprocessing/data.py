@@ -969,8 +969,8 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
 [1, 0, 2]])  # doctest: +ELLIPSIS
     OneHotEncoder(categorical_features='all', dtype=<... 'float'>,
            n_values='auto', sparse=False)
-    >>> print enc.n_values_
-    [2 3 4]
+    >>> enc.n_values_
+    array([2, 3, 4])
     >>> enc.feature_indices_
     array([0, 2, 5, 9])
     >>> enc.transform([[0, 1, 1]])
