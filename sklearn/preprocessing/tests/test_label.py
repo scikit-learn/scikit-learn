@@ -379,4 +379,18 @@ def test_mutlilabel_binarizer_non_unique():
     mlb = MultiLabelBinarizer()
     assert_array_equal(mlb.fit_transform(inp), indicator_mat)
 
-    assert_array_equal(mlb.inverse_transform(np.array([[1, 3]])), [(0, 1,)])
+
+def test_multilabel_binarizer_inverse_validation():
+    inp = [(1, 1, 1, 0)]
+    mlb = MultiLabelBinarizer()
+    mlb.fit_transform(inp)
+    # Not binary
+    assert_raises(ValueError, mlb.inverse_transform, np.array([[1, 3]]))
+    # The following binary cases are fine, however
+    mlb.inverse_transform(np.array([[0, 0]]))
+    mlb.inverse_transform(np.array([[1, 1]]))
+    mlb.inverse_transform(np.array([[1, 0]]))
+
+    # Wrong shape
+    assert_raises(ValueError, mlb.inverse_transform, np.array([[1]]))
+    assert_raises(ValueError, mlb.inverse_transform, np.array([[1, 1, 1]]))
