@@ -10,7 +10,6 @@ import itertools
 import array
 
 import numpy as np
-from numpy.lib.stride_tricks import as_strided
 import scipy.sparse as sp
 
 from ..base import BaseEstimator, TransformerMixin
@@ -552,14 +551,26 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
         return yt.toarray()
 
     def _transform(self, y, class_mapping):
+        """Transforms the label sets with a given mapping
+
+        Parameters
+        ----------
+        y : iterable of iterables
+        class_mapping : Mapping
+            Maps from label to column index in label indicator matrix
+
+        Returns
+        -------
+        y_indicator : sparse CSR matrix, shape (n_samples, n_classes)
+            Label indicator matrix
+        """
         indices = array.array('i')
         indptr = array.array('i', [0])
         for labels in y:
             indices.extend(set(class_mapping[label] for label in labels))
             indptr.append(len(indices))
         # virtual array of len(indices) 1s:
-        data = as_strided(np.array([1], dtype=int), strides=(0,),
-                          shape=(len(indices),))
+        data = np.ones(len(indices), dtype=int)
         return sp.csr_matrix((data, indices, indptr),
                              shape=(len(indptr) - 1, len(class_mapping)))
 
