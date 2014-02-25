@@ -974,7 +974,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
     >>> enc.feature_indices_
     array([0, 2, 5, 9])
     >>> enc.transform([[0, 1, 1]])
-    [[ 1.  0.  0.  1.  0.  0.  1.  0.  0.]]
+    array([[ 1.,  0.,  0.,  1.,  0.,  0.,  1.,  0.,  0.]])
 
     See also
     --------
