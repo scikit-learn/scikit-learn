@@ -596,8 +596,10 @@ def adjusted_mutual_info_score(labels_true, labels_pred):
 
     Returns
     -------
-    ami: float
-       score between 0.0 and 1.0. 1.0 stands for perfectly complete labeling
+    ami: float(upperlimited by 1.0)
+       The AMI takes a value of 1 when the two partitions 
+       are identical and 0 when the MI between two partitions equals 
+       to that expected by chance.
 
     See also
     --------
