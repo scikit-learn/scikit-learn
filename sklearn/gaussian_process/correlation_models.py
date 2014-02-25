@@ -29,7 +29,7 @@ def absolute_exponential(theta, d):
 
     dx : array_like
         An array with shape (n_eval, n_features) giving the componentwise
-        distances between locations x and x' at which the correlation model
+        differences of x and x' at which the correlation model
         should be evaluated.
 
     Returns
@@ -59,19 +59,38 @@ def squared_exponential(theta, d):
     Squared exponential correlation model (Radial Basis Function).
     (Infinitely differentiable stochastic process, very smooth)::
 
-                                            n
-        theta, dx --> r(theta, dx) = exp(  sum  - theta_i * (dx_i)^2 )
-                                          i = 1
+        theta, dx --> r(theta, dx) = exp(-dx.T * M * dx),
+    where M is the covariance matrix of size n*n. The hyperparameters theta
+    specify
+     * a isotropic covariance matrix, i.e., M = theta * I with I being the
+       identity, if theta has shape 1
+     * an automatic relevance determination model if theta has shape n,
+       in which the characteristic length scales of each dimension are learned 
+       separately:  M = diag(theta)
+     * an factor analysis distance model if theta has shape k*n for k> 1,
+       in which a low-rank approximation of the full matrix M is learned. This
+       low-rank approximation approximates the covariance matrix as low-rank 
+       matrix plus a diagonal matrix:  M = Lambda * Lambda.T + diag(l), 
+       where Lambda is a n*(k-1) matrix and l specifies the diagonal matrix.
+
+    See Rasmussen and Williams 2006, p107 for details regarding the different 
+    variants of the squared exponential kernel.
 
     Parameters
     ----------
     theta : array_like
-        An array with shape 1 (isotropic) or n (anisotropic) giving the
-        autocorrelation parameter(s).
+        An array with shape 1 (isotropic), n (anisotropic), or k*n (factor 
+        analysis distance) giving the autocorrelation parameter(s). In the
+        case of the factor analysis distance, M is approximated by
+        M = Lambda * Lambda.T + diag(l), where l is encoded in the last n 
+        entries of theta and Lambda is encoded row-wise in the first entries of
+        theta. Note that Lambda may contain negative entries while theta is
+        strictly positive; because of this, the entries of Lambda are set to 
+        the logarithm with basis 10 of the corresponding entries in theta.
 
     dx : array_like
         An array with shape (n_eval, n_features) giving the componentwise
-        distances between locations x and x' at which the correlation model
+        differences of x and x' at which the correlation model
         should be evaluated.
 
     Returns
@@ -89,13 +108,25 @@ def squared_exponential(theta, d):
     else:
         n_features = 1
 
-    if theta.size == 1:
+    if theta.size == 1:  # case where M is isotropic: M = diag(theta[0])
         return np.exp(-theta[0] * np.sum(d ** 2, axis=1))
-    elif theta.size != n_features:
-        raise ValueError("Length of theta must be 1 or %s" % n_features)
-    else:
+    elif theta.size == n_features:  # anisotropic but diagonal case (ARD)
         return np.exp(-np.sum(theta.reshape(1, n_features) * d ** 2, axis=1))
-
+    elif theta.size % n_features == 0:
+        # Factor analysis case: M = lambda*lambda.T + diag(l)
+        theta = theta.reshape((1, theta.size))
+        M = np.diag(theta[0, :n_features])  # the diagonal matrix part l
+        # The low-rank matrix contribution which allows accounting for 
+        # correlations in the feature dimensions
+        # NOTE: these components of theta are passed through a log-function to
+        #       allow negative values in Lambda
+        Lambda = np.log10(theta[0, n_features:].reshape((n_features, -1)))
+        M += Lambda.dot(Lambda.T)
+        return np.exp(-np.sum(d.dot(M) * d, -1))
+    else:
+        raise ValueError("Length of theta must be 1 or a multiple of %s." 
+                         % n_features)
+    
 
 def generalized_exponential(theta, d):
     """
@@ -115,7 +146,7 @@ def generalized_exponential(theta, d):
 
     dx : array_like
         An array with shape (n_eval, n_features) giving the componentwise
-        distances between locations x and x' at which the correlation model
+        differences of x and x' at which the correlation model
         should be evaluated.
 
     Returns
@@ -126,7 +157,7 @@ def generalized_exponential(theta, d):
     """
 
     theta = np.asarray(theta, dtype=np.float)
-    d = np.asarray(d, dtype=np.float)
+    d = np.abs(np.asarray(d, dtype=np.float))
 
     if d.ndim > 1:
         n_features = d.shape[1]
@@ -141,7 +172,7 @@ def generalized_exponential(theta, d):
     else:
         theta = theta.reshape(1, lth)
 
-    td = theta[:, 0:-1].reshape(1, n_features) * np.abs(d) ** theta[:, -1]
+    td = theta[:, 0:-1].reshape(1, n_features) * d ** theta[:, -1]
     r = np.exp(- np.sum(td, 1))
 
     return r
@@ -164,7 +195,7 @@ def pure_nugget(theta, d):
 
     dx : array_like
         An array with shape (n_eval, n_features) giving the componentwise
-        distances between locations x and x' at which the correlation model
+        differences of x and x' at which the correlation model
         should be evaluated.
 
     Returns
@@ -201,7 +232,7 @@ def cubic(theta, d):
 
     dx : array_like
         An array with shape (n_eval, n_features) giving the componentwise
-        distances between locations x and x' at which the correlation model
+        differences of x and x' at which the correlation model
         should be evaluated.
 
     Returns
@@ -212,7 +243,7 @@ def cubic(theta, d):
     """
 
     theta = np.asarray(theta, dtype=np.float)
-    d = np.asarray(d, dtype=np.float)
+    d = np.abs(np.asarray(d, dtype=np.float))
 
     if d.ndim > 1:
         n_features = d.shape[1]
@@ -221,11 +252,11 @@ def cubic(theta, d):
 
     lth = theta.size
     if lth == 1:
-        td = np.abs(d) * theta
+        td = d * theta
     elif lth != n_features:
         raise Exception("Length of theta must be 1 or " + str(n_features))
     else:
-        td = np.abs(d) * theta.reshape(1, n_features)
+        td = d * theta.reshape(1, n_features)
 
     td[td > 1.] = 1.
     ss = 1. - td ** 2. * (3. - 2. * td)
@@ -251,7 +282,7 @@ def linear(theta, d):
 
     dx : array_like
         An array with shape (n_eval, n_features) giving the componentwise
-        distances between locations x and x' at which the correlation model
+        differences of x and x' at which the correlation model
         should be evaluated.
 
     Returns
@@ -262,7 +293,7 @@ def linear(theta, d):
     """
 
     theta = np.asarray(theta, dtype=np.float)
-    d = np.asarray(d, dtype=np.float)
+    d = np.abs(np.asarray(d, dtype=np.float))
 
     if d.ndim > 1:
         n_features = d.shape[1]
@@ -271,11 +302,11 @@ def linear(theta, d):
 
     lth = theta.size
     if lth == 1:
-        td = np.abs(d) * theta
+        td = d * theta
     elif lth != n_features:
         raise Exception("Length of theta must be 1 or %s" % n_features)
     else:
-        td = np.abs(d) * theta.reshape(1, n_features)
+        td = d * theta.reshape(1, n_features)
 
     td[td > 1.] = 1.
     ss = 1. - td

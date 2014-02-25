@@ -10,7 +10,7 @@ import numpy as np
 from scipy import linalg, optimize, rand
 
 from ..base import BaseEstimator, RegressorMixin
-from ..metrics.pairwise import manhattan_distances
+from ..metrics.pairwise import check_pairwise_arrays
 from ..utils import array2d, check_random_state, check_arrays
 from . import regression_models as regression
 from . import correlation_models as correlation
@@ -25,9 +25,9 @@ else:
         return linalg.solve(x, y)
 
 
-def l1_cross_distances(X):
+def l1_cross_differences(X):
     """
-    Computes the nonzero componentwise L1 cross-distances between the vectors
+    Computes the nonzero componentwise differences between the vectors
     in X.
 
     Parameters
@@ -40,7 +40,7 @@ def l1_cross_distances(X):
     -------
 
     D: array with shape (n_samples * (n_samples - 1) / 2, n_features)
-        The array of componentwise L1 cross-distances.
+        The array of componentwise differences.
 
     ij: arrays with shape (n_samples * (n_samples - 1) / 2, 2)
         The indices i and j of the vectors in X associated to the cross-
@@ -57,7 +57,7 @@ def l1_cross_distances(X):
         ll_1 = ll_0 + n_samples - k - 1
         ij[ll_0:ll_1, 0] = k
         ij[ll_0:ll_1, 1] = np.arange(k + 1, n_samples)
-        D[ll_0:ll_1] = np.abs(X[k] - X[(k + 1):n_samples])
+        D[ll_0:ll_1] = X[k] - X[(k + 1):n_samples]
 
     return D, ij.astype(np.int)
 
@@ -301,8 +301,8 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             y_mean = np.zeros(1)
             y_std = np.ones(1)
 
-        # Calculate matrix of distances D between samples
-        D, ij = l1_cross_distances(X)
+        # Calculate matrix of differences D between samples
+        D, ij = l1_cross_differences(X)
         if (np.min(np.sum(D, axis=1)) == 0.
                 and self.corr != correlation.pure_nugget):
             raise Exception("Multiple input features cannot have the same"
@@ -444,8 +444,10 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             if eval_MSE:
                 MSE = np.zeros(n_eval)
 
-            # Get pairwise componentwise L1-distances to the input training set
-            dx = manhattan_distances(X, Y=self.X, sum_over_features=False)
+            # Get pairwise componentwise differences to the input training set
+            X, Y = check_pairwise_arrays(X, Y=self.X)
+            dx = X[:, np.newaxis, :] - Y[np.newaxis, :, :]
+            dx = dx.reshape((-1, X.shape[1]))
             # Get regression function and correlation
             f = self.regr(X)
             r = self.corr(self.theta_, dx).reshape(n_eval, n_samples)
@@ -592,7 +594,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
         if D is None:
             # Light storage mode (need to recompute D, ij and F)
-            D, ij = l1_cross_distances(self.X)
+            D, ij = l1_cross_differences(self.X)
             if (np.min(np.sum(D, axis=1)) == 0.
                     and self.corr != correlation.pure_nugget):
                 raise Exception("Multiple X are not allowed")
@@ -708,9 +710,9 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
             constraints = []
             for i in range(self.theta0.size):
-                constraints.append(lambda log10t:
+                constraints.append(lambda log10t, i=i:
                                    log10t[i] - np.log10(self.thetaL[0, i]))
-                constraints.append(lambda log10t:
+                constraints.append(lambda log10t, i=i:
                                    np.log10(self.thetaU[0, i]) - log10t[i])
 
             for k in range(self.random_start):
