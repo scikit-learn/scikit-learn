@@ -964,18 +964,6 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
     >>> enc.transform([[0, 1, 1]]).toarray()
     array([[ 1.,  0.,  0.,  1.,  0.,  0.,  1.,  0.,  0.]])
     
-    >>> enc = OneHotEncoder(sparse=False)
-    >>> enc.fit([[0, 0, 3], [1, 1, 0], [0, 2, 1], \
-[1, 0, 2]])  # doctest: +ELLIPSIS
-    OneHotEncoder(categorical_features='all', dtype=<... 'float'>,
-           n_values='auto', sparse=False)
-    >>> enc.n_values_
-    array([2, 3, 4])
-    >>> enc.feature_indices_
-    array([0, 2, 5, 9])
-    >>> enc.transform([[0, 1, 1]])
-    array([[ 1.,  0.,  0.,  1.,  0.,  0.,  1.,  0.,  0.]])
-
     See also
     --------
     sklearn.feature_extraction.DictVectorizer : performs a one-hot encoding of
