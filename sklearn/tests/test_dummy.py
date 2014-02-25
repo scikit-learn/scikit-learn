@@ -303,11 +303,6 @@ def test_y_mean_attribute_regressor():
     est.fit(X, y)
     assert_equal(est.y_mean_, np.mean(y))
 
-    # for other strategies
-    est = DummyRegressor(strategy='median')
-    est.fit(X, y)
-    assert_raises(AttributeError)
-
 
 def test_unknown_strategey_regressor():
     X = [[0]] * 5
