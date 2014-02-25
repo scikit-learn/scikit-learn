@@ -339,19 +339,15 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
         elif self.strategy == "constant":
             if self.constant is None:
                 raise TypeError("Constant target value has to be specified "
-                                 "when the constant strategy is used.")
+                                "when the constant strategy is used.")
 
             self.constant = safe_asarray(self.constant)
 
             if self.output_2d_:
-                if not (isinstance(self.constant, np.ndarray) or isinstance(self.constant, list)):
-                    raise ValueError(
-                        "Constants should be in type list or numpy.ndarray.")
-
                 if self.constant.shape[0] != y.shape[1]:
                     raise ValueError(
                         "Constant target value should have "
-                                     "shape (%d, 1)." % y.shape[1])
+                        "shape (%d, 1)." % y.shape[1])
 
             self.constant_ = np.reshape(self.constant, (1, -1))
 
