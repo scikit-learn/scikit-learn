@@ -1056,7 +1056,7 @@ cdef class BestSplitter(Splitter):
         cdef SIZE_t n_found_constants = 0
         cdef SIZE_t n_drawn_constants = 0
         cdef SIZE_t n_known_constants = n_constant_features[0]
-        cdef SIZE_t n_total_constants = n_known_constants
+        cdef SIZE_t n_total_constants = n_known_constants # n_total_constants = n_known_constants + n_found_constants
         cdef DTYPE_t current_feature_value
         cdef SIZE_t partition_end
 
@@ -1079,8 +1079,10 @@ cdef class BestSplitter(Splitter):
                 n_drawn_constants += 1
 
             else:
-                # f_j in the interval [n_total_constants, f_i[
+                # f_j in the interval [n_known_constants, f_i - n_found_constants[
                 f_j += n_found_constants
+                # f_j in the interval [n_total_constants, f_i[
+
                 current_feature = features[f_j]
 
                 # Sort samples along that feature; first copy the feature values
@@ -1340,7 +1342,7 @@ cdef class RandomSplitter(Splitter):
         cdef SIZE_t n_found_constants = 0
         cdef SIZE_t n_drawn_constants = 0
         cdef SIZE_t n_known_constants = n_constant_features[0]
-        cdef SIZE_t n_total_constants = n_known_constants
+        cdef SIZE_t n_total_constants = n_known_constants # n_total_constants = n_known_constants + n_found_constants
         cdef SIZE_t n_visited_features = 0
         cdef DTYPE_t min_feature_value
         cdef DTYPE_t max_feature_value
@@ -1366,8 +1368,10 @@ cdef class RandomSplitter(Splitter):
                 n_drawn_constants += 1
 
             else:
-                # f_j in the interval [n_total_constants, f_i[
+                # f_j in the interval [n_known_constants, f_i - n_found_constants[
                 f_j += n_found_constants
+                # f_j in the interval [n_total_constants, f_i[
+
                 current_feature = features[f_j]
 
                 # Find min, max
@@ -1581,7 +1585,7 @@ cdef class PresortBestSplitter(Splitter):
         cdef SIZE_t n_found_constants = 0
         cdef SIZE_t n_drawn_constants = 0
         cdef SIZE_t n_known_constants = n_constant_features[0]
-        cdef SIZE_t n_total_constants = n_known_constants
+        cdef SIZE_t n_total_constants = n_known_constants # n_total_constants = n_known_constants + n_found_constants
         cdef SIZE_t n_visited_features = 0
         cdef SIZE_t partition_end
         cdef SIZE_t i, j
@@ -1608,8 +1612,10 @@ cdef class PresortBestSplitter(Splitter):
                 n_drawn_constants += 1
 
             else:
-                # f_j in the interval [n_total_constants, f_i[
+                # f_j in the interval [n_known_constants, f_i - n_found_constants[
                 f_j += n_found_constants
+                # f_j in the interval [n_total_constants, f_i[
+
                 current_feature = features[f_j]
 
                 # Extract ordering from X_argsorted
