@@ -286,7 +286,7 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
     `constant_' : float or array of shape [n_outputs]
         Mean or median of the training targets or constant value given the by
         the user.
-
+        
     `n_outputs_` : int,
         Number of outputs.
 
@@ -328,24 +328,18 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
                              % self.strategy)
 
         y = safe_asarray(y)
+        self.output_2d_ = (y.ndim == 2)
 
         if self.strategy == "mean":
             self.constant_ = np.reshape(np.mean(y, axis=0), (1, -1))
-            self.n_outputs_ = np.size(self.constant_)  # y.shape[1] is not safe
-            self.output_2d_ = (y.ndim == 2)
-            return self
 
         elif self.strategy == "median":
             self.constant_ = np.reshape(np.median(y, axis=0), (1, -1))
-            self.n_outputs_ = np.size(self.constant_)  # y.shape[1] is not safe
-            self.output_2d_ = (y.ndim == 2)
-            return self
 
         elif self.strategy == "constant":
             if self.constant is None:
-                raise ValueError("Constant not defined.")
+                raise TypeError("Constant not defined.")
 
-            self.output_2d_ = (y.ndim == 2)
             self.constant = safe_asarray(self.constant)
 
             if self.output_2d_:
@@ -353,13 +347,14 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
                     raise ValueError(
                         "Constants should be in type list or numpy.ndarray.")
 
-                if self.constant.shape[1] != y.shape[1]:
+                if self.constant.shape[0] != y.shape[1]:
                     raise ValueError(
                         "Number of outputs and number of constants do not match.")
 
             self.constant_ = np.reshape(self.constant, (1, -1))
-            self.n_outputs_ = np.size(self.constant_)  # y.shape[1] is not safe
-            return self
+
+        self.n_outputs_ = np.size(self.constant_)  # y.shape[1] is not safe
+        return self
 
     def predict(self, X):
         """
