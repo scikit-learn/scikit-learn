@@ -294,6 +294,40 @@ def test_constant_strategy_multioutput_regressor():
     _check_behavior_2d_for_constant(est)
 
 
+def test_y_mean_attribute_regressor():
+    X = [[0]] * 5
+    y = [1, 2, 4, 6, 8]
+
+    # when strategy = 'mean'
+    est = DummyRegressor(strategy='mean')
+    est.fit(X, y)
+    assert_equal(est.y_mean_, np.mean(y))
+
+
+def test_unknown_strategey_regressor():
+    X = [[0]] * 5
+    y = [1, 2, 4, 6, 8]
+
+    est = DummyRegressor(strategy='gona')
+    assert_raises(ValueError, est.fit, X, y)
+
+
+def test_constants_not_specified_regressor():
+    X = [[0]] * 5
+    y = [1, 2, 4, 6, 8]
+
+    est = DummyRegressor(strategy='constant')
+    assert_raises(TypeError, est.fit, X, y)
+
+
+def test_constant_size_multioutput_regressor():
+    X = np.random.randn(10, 10)
+    y = np.random.randn(10, 5)
+
+    est = DummyRegressor(strategy='constant', constant=[1, 2, 3, 4])
+    assert_raises(ValueError, est.fit, X, y)
+
+
 def test_constant_strategy():
     X = [[0], [0], [0], [0]]  # ignored
     y = [2, 1, 2, 2]
