@@ -941,6 +941,11 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
 
     `n_values_` : array of shape (n_features,)
         Maximum number of values per feature.
+        
+    `sparse`: boolean
+        will return dense matrix when set to False
+        else will return sparse matrix
+        True by default
 
     Examples
     --------
@@ -953,7 +958,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
     >>> enc.fit([[0, 0, 3], [1, 1, 0], [0, 2, 1], \
 [1, 0, 2]])  # doctest: +ELLIPSIS
     OneHotEncoder(categorical_features='all', dtype=<... 'float'>,
-           n_values='auto')
+           n_values='auto', sparse=True)
     >>> enc.n_values_
     array([2, 3, 4])
     >>> enc.feature_indices_
@@ -969,10 +974,11 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
       encoding of dictionary items or strings.
     """
     def __init__(self, n_values="auto", categorical_features="all",
-                 dtype=np.float):
+                 dtype=np.float, sparse=True):
         self.n_values = n_values
         self.categorical_features = categorical_features
         self.dtype = dtype
+        self.sparse=True
 
     def fit(self, X, y=None):
         """Fit OneHotEncoder to X.
@@ -1028,8 +1034,11 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
             active_features = np.where(mask)[0]
             out = out[:, active_features]
             self.active_features_ = active_features
-
-        return out
+        if self.sparse:
+            return out
+        
+        else:
+            return out.toarray()
 
     def fit_transform(self, X, y=None):
         """Fit OneHotEncoder to X, then transform X.
@@ -1066,8 +1075,13 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
                                 dtype=self.dtype).tocsr()
         if self.n_values == 'auto':
             out = out[:, self.active_features_]
-        return out
+        
+        if self.sparse:    
+            return out
 
+        else:
+            return out.toarray()
+            
     def transform(self, X):
         """Transform X using one-hot encoding.
 
