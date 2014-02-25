@@ -297,7 +297,6 @@ def test_constant_strategy_multioutput_regressor():
 def test_y_mean_attribute_regressor():
     X = [[0]] * 5
     y = [1, 2, 4, 6, 8]
-
     # when strategy = 'mean'
     est = DummyRegressor(strategy='mean')
     est.fit(X, y)
