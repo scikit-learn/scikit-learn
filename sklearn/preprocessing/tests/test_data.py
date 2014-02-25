@@ -673,6 +673,62 @@ def test_one_hot_encoder():
     # test negative input to transform
     enc.fit([[0], [1]])
     assert_raises(ValueError, enc.transform, [[0], [-1]])
+    
+    
+    
+    #similarly test for sparse=False
+    X = [[3, 2, 1], [0, 1, 1]]		
+    enc = OneHotEncoder(sparse=False) 
+    enc.fit([[0, 0, 3], [1, 1, 0], [0, 2, 1], \
+[1, 0, 2]])
+    
+    # discover max values automatically
+    X_trans = enc.fit_transform(X)
+    assert_equal(X_trans.shape, (2, 5))
+    assert_array_equal(enc.active_features_,
+                       np.where([1, 0, 0, 1, 0, 1, 1, 0, 1])[0])
+    assert_array_equal(enc.feature_indices_, [0, 4, 7, 9])
+
+    # check outcome
+    assert_array_equal(X_trans,
+                       [[0., 1., 0., 1., 1.],
+                        [1., 0., 1., 0., 1.]])	
+
+    # max value given as 3
+    enc = OneHotEncoder(n_values=4)
+    X_trans = enc.fit_transform(X)
+    assert_equal(X_trans.shape, (2, 4 * 3))
+    assert_array_equal(enc.feature_indices_, [0, 4, 8, 12])
+
+    # max value given per feature
+    enc = OneHotEncoder(n_values=[3, 2, 2])
+    X = [[1, 0, 1], [0, 1, 1]]
+    X_trans = enc.fit_transform(X)
+    assert_equal(X_trans.shape, (2, 3 + 2 + 2))
+    assert_array_equal(enc.n_values_, [3, 2, 2])
+    # check that testing with larger feature works:
+    X = np.array([[2, 0, 1], [0, 1, 1]])
+    enc.transform(X)
+
+    # test that an error is raise when out of bounds:
+    X_too_large = [[0, 2, 1], [0, 1, 1]]
+    assert_raises(ValueError, enc.transform, X_too_large)
+
+    # test that error is raised when wrong number of features
+    assert_raises(ValueError, enc.transform, X[:, :-1])
+    # test that error is raised when wrong number of features in fit
+    # with prespecified n_values
+    assert_raises(ValueError, enc.fit, X[:, :-1])
+    # test exception on wrong init param
+    assert_raises(TypeError, OneHotEncoder(n_values=np.int).fit, X)
+
+    enc = OneHotEncoder()
+    # test negative input to fit
+    assert_raises(ValueError, enc.fit, [[0], [-1]])
+
+    # test negative input to transform
+    enc.fit([[0], [1]])
+    assert_raises(ValueError, enc.transform, [[0], [-1]])
 
 
 def _check_transform_selected(X, X_expected, sel):
