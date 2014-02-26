@@ -391,7 +391,7 @@ def manhattan_distances(X, Y=None, sum_over_features=True,
         An array or sparse matrix with shape (n_samples_X, n_features).
 
     Y : array_like, optional
-        An arrayor sparse matrix with shape (n_samples_Y, n_features).
+        An array or sparse matrix with shape (n_samples_Y, n_features).
 
     sum_over_features : bool, default=True
         If True the function returns the pairwise distance matrix
