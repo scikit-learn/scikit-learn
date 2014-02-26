@@ -82,3 +82,39 @@ def _manhattan_distances_sparse(X, Y):
             data[idx] = -ydata[i]
             idx += 1
     return data, rows, cols
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.cdivision(True)
+def _manhattan_distances_csr(X, Y):
+    cdef:
+        int i, j, r_, r, idx
+        int n_x = len(X.data)
+        int n_y = len(Y.data)
+        int n_clusters = Y.shape[0]
+        int n_documents = X.shape[0]
+
+        np.ndarray[np.float64_t, ndim=1] xdata = X.data
+        np.ndarray[int, ndim=1] x_indptr = X.indptr
+        np.ndarray[int, ndim=1] x_indices = X.indices
+        np.ndarray[np.float64_t, ndim=1] ydata = Y.data
+        np.ndarray[int, ndim=1] y_indptr = Y.indptr
+        np.ndarray[int, ndim=1] y_indices = Y.indices
+
+        np.int64_t nnz = X.nnz * Y.shape[0] + Y.nnz * X.shape[0]
+        np.ndarray[np.float64_t, ndim=1] data = np.empty(nnz, dtype=np.float64)
+        np.ndarray[np.int32_t, ndim=1] indptr = np.empty(nnz, dtype=np.int32)
+        np.ndarray[np.int32_t, ndim=1] indices = np.empty(nnz, dtype=np.int32)
+
+    idx = 0
+    for x_row in xrange(n_documents):
+        r_ = x_row * n_clusters
+        start, stop = x_indptr[x_row], x_indptr[x_row+1]
+        for j in xrange(n_clusters):
+            r = r_ + j
+            for i in xrange(start, stop):
+                xcol = x_indices[i]
+                data[idx] = xdata[i]
+                indices[idx] = x_indices[i]
+            indptr[r] = idx
