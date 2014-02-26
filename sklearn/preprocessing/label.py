@@ -468,7 +468,7 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
            [0, 0, 1]])
     >>> mlb.classes_          # doctest: +ELLIPSIS
     array([1, 2, 3]...)
-    >>> mlb.fit_transform([{1, 2}, {3,}])
+    >>> mlb.fit_transform([set([1, 2]), set([3])])
     array([[1, 1, 0],
            [0, 0, 1]])
     """
