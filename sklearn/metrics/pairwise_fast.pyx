@@ -44,7 +44,7 @@ def _chi2_kernel_fast(floating_array_2d_t X,
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-def _manhattan_distances_sparse(X, Y):
+def _manhattan_distances_coo(X, Y):
     cdef:
         int i, j, r_, r, idx
         int n_x = len(X.data)
@@ -89,7 +89,8 @@ def _manhattan_distances_sparse(X, Y):
 @cython.cdivision(True)
 def _manhattan_distances_csr(X, Y):
     cdef:
-        int i, j, r_, r, idx
+        int i, j, k, r_, r, idx, xi, yi
+        int xstart, xstop, ystart, ystop, xcol, ycol
         int n_x = len(X.data)
         int n_y = len(Y.data)
         int n_clusters = Y.shape[0]
@@ -103,18 +104,48 @@ def _manhattan_distances_csr(X, Y):
         np.ndarray[int, ndim=1] y_indices = Y.indices
 
         np.int64_t nnz = X.nnz * Y.shape[0] + Y.nnz * X.shape[0]
+        int ptr_size = X.shape[0] * Y.shape[0] + 1
         np.ndarray[np.float64_t, ndim=1] data = np.empty(nnz, dtype=np.float64)
-        np.ndarray[np.int32_t, ndim=1] indptr = np.empty(nnz, dtype=np.int32)
         np.ndarray[np.int32_t, ndim=1] indices = np.empty(nnz, dtype=np.int32)
+        np.ndarray[np.int32_t, ndim=1] indptr = np.empty(ptr_size,
+                                                         dtype=np.int32)
 
     idx = 0
-    for x_row in xrange(n_documents):
-        r_ = x_row * n_clusters
-        start, stop = x_indptr[x_row], x_indptr[x_row+1]
+    indptr[0] = 0
+    for i in xrange(n_documents):
+        r_ = i * n_clusters
+        xstart, xstop = x_indptr[i], x_indptr[i+1]
         for j in xrange(n_clusters):
+            ystart, ystop = y_indptr[j], y_indptr[j+1]
             r = r_ + j
-            for i in xrange(start, stop):
-                xcol = x_indices[i]
-                data[idx] = xdata[i]
-                indices[idx] = x_indices[i]
-            indptr[r] = idx
+            nnz = (xstop - xstart) + (ystop - ystart)
+            k, xi, yi = 0, xstart, ystart
+            xcol , ycol = -1, -1
+            # insertion sort for the indices of row r
+            while k < nnz:
+                if xstart <= xi < xstop:
+                    xcol = x_indices[xi]
+
+                if ystart <= yi < ystop:
+                    ycol = y_indices[yi]
+
+                if xcol == ycol:
+                    data[idx] = xdata[xi] - ydata[yi]
+                    indices[idx] = xcol
+                    xi += 1
+                    yi += 1
+                    nnz -= 1  # shared column, do one less iteration
+                elif (xi < xstop and xcol < ycol) or yi == ystop:
+                    data[idx] = xdata[xi]
+                    indices[idx] = xcol
+                    xi += 1
+                elif (yi < ystop and ycol < xcol) or xi == xstop:
+                    data[idx] = ydata[yi]
+                    indices[idx] = ycol
+                    yi += 1
+
+                k += 1
+                idx += 1
+            indptr[r+1] = idx
+
+    return data, indices, indptr

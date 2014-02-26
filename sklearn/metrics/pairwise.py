@@ -53,7 +53,8 @@ from ..externals.joblib import Parallel
 from ..externals.joblib import delayed
 from ..externals.joblib.parallel import cpu_count
 
-from .pairwise_fast import _chi2_kernel_fast, _manhattan_distances_sparse
+from .pairwise_fast import _chi2_kernel_fast, _manhattan_distances_coo, \
+    _manhattan_distances_csr
 
 
 # Utility Functions
@@ -438,13 +439,8 @@ def manhattan_distances(X, Y=None, sum_over_features=True,
     sparse_input = False
     if issparse(X) or issparse(Y):
         sparse_input = True
-        if not issparse(X):
-            X = coo_matrix(X)
-
-        if not issparse(Y):
-            Y = coo_matrix(Y)
-        elif not isspmatrix_coo(Y):
-            Y = Y.tocoo()
+        X = csr_matrix(X, copy=False)
+        Y = csr_matrix(Y, copy=False)
 
     temporary_size = X.size * Y.shape[-1]
     # Convert to bytes
@@ -458,21 +454,15 @@ def manhattan_distances(X, Y=None, sum_over_features=True,
         increment = 1 + int(size_threshold / float(temporary_size) *
                             X.shape[0])
 
-        if sparse_input and not isspmatrix_csr(X):
-            # X has to be csr to support slicing
-            X = X.tocsr()
-
         while index < X.shape[0]:
             this_slice = slice(index, min(index + increment, X.shape[0]))
             if sparse_input:
                 n_samples_x = this_slice.stop - this_slice.start
-                X_sub = X[this_slice].tocoo()
-                data, rows, cols = _manhattan_distances_sparse(X_sub, Y)
+                X_sub = X[this_slice]
+                data, indices, indptr = _manhattan_distances_csr(X_sub, Y)
                 shape = ((n_samples_x) * Y.shape[0], X.shape[1])
-                tmp = coo_matrix((data, (rows, cols)), shape=shape,
+                tmp = csr_matrix((data, indices, indptr), shape=shape,
                                  dtype=np.float64)
-                tmp = tmp.tocsr()
-                tmp.sum_duplicates()
                 tmp = np.abs(tmp)
                 tmp = tmp.sum(axis=1).A.reshape(((n_samples_x), Y.shape[0]))
             else:
@@ -484,13 +474,9 @@ def manhattan_distances(X, Y=None, sum_over_features=True,
             index += increment
     else:
         if sparse_input:
-            if not isspmatrix_coo(X):
-                X = X.tocoo()
-            data, rows, cols = _manhattan_distances_sparse(X, Y)
             shape = (X.shape[0] * Y.shape[0], X.shape[1])
-            D = coo_matrix((data, (rows, cols)), shape=shape, dtype=np.float64)
-            D = D.tocsr()
-            D.sum_duplicates()
+            data, indices, indptr = _manhattan_distances_csr(X, Y)
+            D = csr_matrix((data, indices, indptr), shape=shape)
             D = np.abs(D)
             if sum_over_features:
                 D = D.sum(axis=1).A.reshape((X.shape[0], Y.shape[0]))
