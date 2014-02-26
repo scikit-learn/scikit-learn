@@ -927,6 +927,9 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
     dtype : number type, default=np.float
         Desired dtype of output.
 
+    sparse : boolean, default=True
+        Will return sparse matrix if set True else will return an array.
+
     Attributes
     ----------
     `active_features_` : array
@@ -953,7 +956,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
     >>> enc.fit([[0, 0, 3], [1, 1, 0], [0, 2, 1], \
 [1, 0, 2]])  # doctest: +ELLIPSIS
     OneHotEncoder(categorical_features='all', dtype=<... 'float'>,
-           n_values='auto')
+           n_values='auto', sparse=True)
     >>> enc.n_values_
     array([2, 3, 4])
     >>> enc.feature_indices_
@@ -969,10 +972,11 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
       encoding of dictionary items or strings.
     """
     def __init__(self, n_values="auto", categorical_features="all",
-                 dtype=np.float):
+                 dtype=np.float, sparse=True):
         self.n_values = n_values
         self.categorical_features = categorical_features
         self.dtype = dtype
+        self.sparse = sparse
 
     def fit(self, X, y=None):
         """Fit OneHotEncoder to X.
@@ -1033,7 +1037,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
             out = out[:, active_features]
             self.active_features_ = active_features
 
-        return out
+        return out if self.sparse else out.toarray()
 
     def fit_transform(self, X, y=None):
         """Fit OneHotEncoder to X, then transform X.
@@ -1069,7 +1073,8 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
                                 dtype=self.dtype).tocsr()
         if self.n_values == 'auto':
             out = out[:, self.active_features_]
-        return out
+
+        return out if self.sparse else out.toarray()
 
     def transform(self, X):
         """Transform X using one-hot encoding.
@@ -1081,7 +1086,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
 
         Returns
         -------
-        X_out : sparse matrix, dtype=int
+        X_out : sparse matrix if sparse=True else a 2-d array, dtype=int
             Transformed input.
         """
         return _transform_selected(X, self._transform,
