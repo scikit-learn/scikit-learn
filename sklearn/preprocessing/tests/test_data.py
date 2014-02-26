@@ -686,7 +686,7 @@ def test_one_hot_encoder():
 
     # check outcome
     assert_array_equal(X_trans,
-                       np.toarray([[0., 1., 0., 1., 1.],
+                       np.array([[0., 1., 0., 1., 1.],
                         [1., 0., 1., 0., 1.]]))
 
     # max value given as 3
