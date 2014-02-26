@@ -928,8 +928,8 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         Desired dtype of output.
         
     sparse : boolean
-        The function Returns sparse output on setting this to true.
-        Else will return dense output.Set to True by default.
+        Will return sparse matrix if set True else will return False.
+	    It is True by default.
 
     Attributes
     ----------
@@ -1090,7 +1090,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
 
         Returns
         -------
-        X_out : sparse matrix, dtype=int
+        X_out : sparse/dense matrix depending on sparse=boolean, dtype=int
             Transformed input.
         """
         return _transform_selected(X, self._transform,
