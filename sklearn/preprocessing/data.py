@@ -929,7 +929,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         
     sparse : boolean
         Will return sparse matrix if set True else will return False.
-	    It is True by default.
+	It is True by default.
 
     Attributes
     ----------
