@@ -312,7 +312,7 @@ def _random_sample_mask(int n_total_samples, int n_total_in_bag, random_state):
 
 
 def _ranked_random_sample_mask(int n_total_samples, int n_total_in_bag,
-                               cython.integral [::1] group, int n_uniq_group,
+                               cython.integral [::1] sample_group, int n_uniq_group,
                                random_state):
     """Create a random sample mask where ``n_total_in_bag`` elements are set.
 
@@ -324,7 +324,7 @@ def _ranked_random_sample_mask(int n_total_samples, int n_total_in_bag,
     n_total_in_bag : int
         The number of elements in the sample mask which are set to 1.
 
-    group : group associated with each sample
+    sample_group : sample_group associated with each sample
 
     n_uniq_group : number of unique queries
 
@@ -350,15 +350,15 @@ def _ranked_random_sample_mask(int n_total_samples, int n_total_in_bag,
     cdef int8 mask = 0
     cdef int32 last_group = 0
 
-    last_group = group[0]
+    last_group = sample_group[0]
     if rand[0] * n_uniq_group < n_total_in_bag - n_bagged:
         sample_mask[0] = 1
         mask = 1
         n_bagged += 1
 
     for i in range(1, n_total_samples):
-        if group[i] != last_group:
-            last_group = group[i]
+        if sample_group[i] != last_group:
+            last_group = sample_group[i]
             # track number of unique queries processed
             j += 1
             if rand[j] * (n_uniq_group - j) < (n_total_in_bag - n_bagged):

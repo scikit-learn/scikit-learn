@@ -965,12 +965,12 @@ def test_lambdamart_gain_equivalence():
     y = np.array([2, 1, 0, 0, 1, 2])
     group = np.array([0, 0, 0, 1, 1, 1])
 
-    lm_exp.fit(X, y, group=group)
-    lm_lin.fit(X, 2 ** y - 1, group=group)
+    lm_exp.fit(X, y, sample_group=group)
+    lm_lin.fit(X, 2 ** y - 1, sample_group=group)
 
     assert_array_equal(lm_exp.predict(X), lm_lin.predict(X))
-    assert(lm_exp.score(X, y, group=group) ==
-           lm_lin.score(X, 2 ** y - 1, group=group))
+    assert(lm_exp.score(X, y, sample_group=group) ==
+           lm_lin.score(X, 2 ** y - 1, sample_group=group))
 
 
 if __name__ == "__main__":
