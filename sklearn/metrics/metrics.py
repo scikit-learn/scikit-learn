@@ -314,7 +314,7 @@ def average_precision_score(y_true, y_score, average="macro",
 
     ----------
     y_true : array, shape = [n_samples] or [n_samples, n_classes]
-        True binary labels in binary indicator format.
+        True binary labels in binary label indicators.
 
     y_score : array, shape = [n_samples] or [n_samples, n_classes]
         Target scores, can either be probability estimates of the positive
@@ -426,7 +426,7 @@ def _average_binary_score(binary_metric, y_true, y_score, average,
     Parameters
     ----------
     y_true : array, shape = [n_samples] or [n_samples, n_classes]
-        True binary labels in binary indicator format.
+        True binary labels in binary label indicators.
 
     y_score : array, shape = [n_samples] or [n_samples, n_classes]
         Target scores, can either be probability estimates of the positive
@@ -527,7 +527,7 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None):
     Parameters
     ----------
     y_true : array, shape = [n_samples] or [n_samples, n_classes]
-        True binary labels in binary indicator format.
+        True binary labels in binary label indicators.
 
     y_score : array, shape = [n_samples] or [n_samples, n_classes]
         Target scores, can either be probability estimates of the positive
@@ -986,10 +986,10 @@ def zero_one_loss(y_true, y_pred, normalize=True, sample_weight=None):
 
     Parameters
     ----------
-    y_true : array-like or list of labels or label indicator matrix
+    y_true : array-like or label indicator matrix
         Ground truth (correct) labels.
 
-    y_pred : array-like or list of labels or label indicator matrix
+    y_pred : array-like or label indicator matrix
         Predicted labels, as returned by a classifier.
 
     normalize : bool, optional (default=True)
@@ -1025,17 +1025,10 @@ def zero_one_loss(y_true, y_pred, normalize=True, sample_weight=None):
     >>> zero_one_loss(y_true, y_pred, normalize=False)
     1
 
-    In the multilabel case with binary indicator format:
+    In the multilabel case with binary label indicators:
 
-    >>> zero_one_loss(np.array([[0.0, 1.0], [1.0, 1.0]]), np.ones((2, 2)))
+    >>> zero_one_loss(np.array([[0, 1], [1, 1]]), np.ones((2, 2)))
     0.5
-
-    and with a list of labels format:
-
-    >>> zero_one_loss([(1, ), (3, )], [(1, 2), tuple()])
-    1.0
-
-
     """
     score = accuracy_score(y_true, y_pred,
                            normalize=normalize,
@@ -1064,7 +1057,7 @@ def log_loss(y_true, y_pred, eps=1e-15, normalize=True):
 
     Parameters
     ----------
-    y_true : array-like or list of labels or label indicator matrix
+    y_true : array-like or label indicator matrix
         Ground truth (correct) labels for n_samples samples.
 
     y_pred : array-like of float, shape = (n_samples, n_classes)
@@ -1139,10 +1132,10 @@ def jaccard_similarity_score(y_true, y_pred, normalize=True):
 
     Parameters
     ----------
-    y_true : array-like or list of labels or label indicator matrix
+    y_true : array-like or label indicator matrix
         Ground truth (correct) labels.
 
-    y_pred : array-like or list of labels or label indicator matrix
+    y_pred : array-like or label indicator matrix
         Predicted labels, as returned by a classifier.
 
     normalize : bool, optional (default=True)
@@ -1187,17 +1180,11 @@ def jaccard_similarity_score(y_true, y_pred, normalize=True):
     >>> jaccard_similarity_score(y_true, y_pred, normalize=False)
     2
 
-    In the multilabel case with binary indicator format:
+    In the multilabel case with binary label indicators:
 
-    >>> jaccard_similarity_score(np.array([[0.0, 1.0], [1.0, 1.0]]),\
+    >>> jaccard_similarity_score(np.array([[0, 1], [1, 1]]),\
         np.ones((2, 2)))
     0.75
-
-    and with a list of labels format:
-
-    >>> jaccard_similarity_score([(1, ), (3, )], [(1, 2), tuple()])
-    0.25
-
     """
 
     # Compute accuracy for each possible representation
@@ -1252,10 +1239,10 @@ def accuracy_score(y_true, y_pred, normalize=True, sample_weight=None):
 
     Parameters
     ----------
-    y_true : array-like or list of labels or label indicator matrix
+    y_true : array-like or label indicator matrix
         Ground truth (correct) labels.
 
-    y_pred : array-like or list of labels or label indicator matrix
+    y_pred : array-like or label indicator matrix
         Predicted labels, as returned by a classifier.
 
     normalize : bool, optional (default=True)
@@ -1295,16 +1282,10 @@ def accuracy_score(y_true, y_pred, normalize=True, sample_weight=None):
     >>> accuracy_score(y_true, y_pred, normalize=False)
     2
 
-    In the multilabel case with binary indicator format:
+    In the multilabel case with binary label indicators:
 
-    >>> accuracy_score(np.array([[0.0, 1.0], [1.0, 1.0]]), np.ones((2, 2)))
+    >>> accuracy_score(np.array([[0, 1], [1, 1]]), np.ones((2, 2)))
     0.5
-
-    and with a list of labels format:
-
-    >>> accuracy_score([(1, ), (3, )], [(1, 2), tuple()])
-    0.0
-
     """
 
     # Compute accuracy for each possible representation
@@ -1343,10 +1324,10 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='weighted',
 
     Parameters
     ----------
-    y_true : array-like or list of labels or label indicator matrix
+    y_true : array-like or label indicator matrix
         Ground truth (correct) target values.
 
-    y_pred : array-like or list of labels or label indicator matrix
+    y_pred : array-like or label indicator matrix
         Estimated targets as returned by a classifier.
 
     labels : array
@@ -1426,10 +1407,10 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
 
     Parameters
     ----------
-    y_true : array-like or list of labels or label indicator matrix
+    y_true : array-like or label indicator matrix
         Ground truth (correct) target values.
 
-    y_pred : array-like or list of labels or label indicator matrix
+    y_pred : array-like or label indicator matrix
         Estimated targets as returned by a classifier.
 
     beta: float
@@ -1585,10 +1566,10 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
 
     Parameters
     ----------
-    y_true : array-like or list of labels or label indicator matrix
+    y_true : array-like or label indicator matrix
         Ground truth (correct) target values.
 
-    y_pred : array-like or list of labels or label indicator matrix
+    y_pred : array-like or label indicator matrix
         Estimated targets as returned by a classifier.
 
     beta : float, 1.0 by default
@@ -1830,10 +1811,10 @@ def precision_score(y_true, y_pred, labels=None, pos_label=1,
 
     Parameters
     ----------
-    y_true : array-like or list of labels or label indicator matrix
+    y_true : array-like or label indicator matrix
         Ground truth (correct) target values.
 
-    y_pred : array-like or list of labels or label indicator matrix
+    y_pred : array-like or label indicator matrix
         Estimated targets as returned by a classifier.
 
     labels : array
@@ -1912,10 +1893,10 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='weighted',
 
     Parameters
     ----------
-    y_true : array-like or list of labels or label indicator matrix
+    y_true : array-like or label indicator matrix
         Ground truth (correct) target values.
 
-    y_pred : array-like or list of labels or label indicator matrix
+    y_pred : array-like or label indicator matrix
         Estimated targets as returned by a classifier.
 
     labels : array
@@ -1987,10 +1968,10 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
 
     Parameters
     ----------
-    y_true : array-like or list of labels or label indicator matrix
+    y_true : array-like or label indicator matrix
         Ground truth (correct) target values.
 
-    y_pred : array-like or list of labels or label indicator matrix
+    y_pred : array-like or label indicator matrix
         Estimated targets as returned by a classifier.
 
     labels : array, shape = [n_labels]
@@ -2081,10 +2062,10 @@ def hamming_loss(y_true, y_pred, classes=None):
 
     Parameters
     ----------
-    y_true : array-like or list of labels or label indicator matrix
+    y_true : array-like or label indicator matrix
         Ground truth (correct) labels.
 
-    y_pred : array-like or list of labels or label indicator matrix
+    y_pred : array-like or label indicator matrix
         Predicted labels, as returned by a classifier.
 
     classes : array, shape = [n_labels], optional
@@ -2132,16 +2113,10 @@ def hamming_loss(y_true, y_pred, classes=None):
     >>> hamming_loss(y_true, y_pred)
     0.25
 
-    In the multilabel case with binary indicator format:
+    In the multilabel case with binary label indicators:
 
-    >>> hamming_loss(np.array([[0.0, 1.0], [1.0, 1.0]]), np.zeros((2, 2)))
+    >>> hamming_loss(np.array([[0, 1], [1, 1]]), np.zeros((2, 2)))
     0.75
-
-    and with a list of labels format:
-
-    >>> hamming_loss([(1, 2), (3, )], [(1, 2), tuple()])  # doctest: +ELLIPSIS
-    0.166...
-
     """
     y_type, y_true, y_pred = _check_clf_targets(y_true, y_pred)
 

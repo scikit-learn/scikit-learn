@@ -259,7 +259,7 @@ where :math:`1(x)` is the `indicator function
   >>> accuracy_score(y_true, y_pred, normalize=False)
   2
 
-In the multilabel case with binary label indicators:
+In the multilabel case with binary label indicators: ::
 
   >>> accuracy_score(np.array([[0.0, 1.0], [1.0, 1.0]]), np.ones((2, 2)))
   0.5
@@ -424,7 +424,7 @@ score is equal to the classification accuracy.
   >>> jaccard_similarity_score(y_true, y_pred, normalize=False)
   2
 
-In the multilabel case with binary label indicators:
+In the multilabel case with binary label indicators: ::
 
   >>> jaccard_similarity_score(np.array([[0.0, 1.0], [1.0, 1.0]]), np.ones((2, 2)))
   0.75
