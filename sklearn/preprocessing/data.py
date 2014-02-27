@@ -1033,7 +1033,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
             active_features = np.where(mask)[0]
             out = out[:, active_features]
             self.active_features_ = active_features
-            
+
         if self.sparse:
             return out
         else:
