@@ -14,6 +14,7 @@ from sklearn.utils import deprecated
 
 
 class DummyClassifier(BaseEstimator, ClassifierMixin):
+
     """
     DummyClassifier is a classifier that makes predictions using simple rules.
 
@@ -274,6 +275,7 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
 
 
 class DummyRegressor(BaseEstimator, RegressorMixin):
+
     """
     DummyRegressor is a regressor that always predicts the mean of the training
     targets.
@@ -286,7 +288,7 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
     `constant_' : float or array of shape [n_outputs]
         Mean or median of the training targets or constant value given the by
         the user.
-        
+
     `n_outputs_` : int,
         Number of outputs.
 
@@ -324,7 +326,8 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
         """
 
         if self.strategy not in ("mean", "median", "constant"):
-            raise ValueError("Unknown strategy type: %s, expected 'mean, 'median' or 'constant'"
+            raise ValueError("Unknown strategy type: %s, "
+                             "expected 'mean', 'median' or 'constant'"
                              % self.strategy)
 
         y = safe_asarray(y)
@@ -345,8 +348,8 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
 
             if self.output_2d_ and self.constant.shape[0] != y.shape[1]:
                 raise ValueError(
-                        "Constant target value should have "
-                                     "shape (%d, 1)." % y.shape[1])
+                    "Constant target value should have "
+                    "shape (%d, 1)." % y.shape[1])
 
             self.constant_ = np.reshape(self.constant, (1, -1))
 
