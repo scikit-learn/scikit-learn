@@ -977,7 +977,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         self.n_values = n_values
         self.categorical_features = categorical_features
         self.dtype = dtype
-        self.sparse= sparse
+        self.sparse = sparse
 
     def fit(self, X, y=None):
         """Fit OneHotEncoder to X.
