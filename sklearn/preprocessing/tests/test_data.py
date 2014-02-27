@@ -622,7 +622,7 @@ def test_add_dummy_feature_csr():
     assert_array_equal(X.toarray(), [[1, 1, 0], [1, 0, 1], [1, 0, 1]])
 
 
-def test_one_hot_encoder():
+def test_one_hot_encoder_sparse():
     """Test OneHotEncoder's fit and transform."""
     X = [[3, 2, 1], [0, 1, 1]]
     enc = OneHotEncoder()
@@ -674,6 +674,7 @@ def test_one_hot_encoder():
     enc.fit([[0], [1]])
     assert_raises(ValueError, enc.transform, [[0], [-1]])
     
+def test_one_hot_encoder_dense():    
     """check for sparse=False"""
     X = [[3, 2, 1], [0, 1, 1]]
     enc = OneHotEncoder(sparse=False)
