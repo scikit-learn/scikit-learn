@@ -324,7 +324,7 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
         """
 
         if self.strategy not in ("mean", "median", "constant"):
-            raise ValueError("Unknown strategy type: %s, expected mean, median or constant"
+            raise ValueError("Unknown strategy type: %s, expected 'mean, 'median' or 'constant'"
                              % self.strategy)
 
         y = safe_asarray(y)
@@ -343,11 +343,10 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
 
             self.constant = safe_asarray(self.constant)
 
-            if self.output_2d_:
-                if self.constant.shape[0] != y.shape[1]:
-                    raise ValueError(
+            if self.output_2d_ and self.constant.shape[0] != y.shape[1]:
+                raise ValueError(
                         "Constant target value should have "
-                        "shape (%d, 1)." % y.shape[1])
+                                     "shape (%d, 1)." % y.shape[1])
 
             self.constant_ = np.reshape(self.constant, (1, -1))
 
