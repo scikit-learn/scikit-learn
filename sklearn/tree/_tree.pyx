@@ -2141,7 +2141,8 @@ cdef class Tree:
             raise ValueError('Did not recognise loaded array layout')
 
         self.capacity = node_ndarray.shape[0]
-        self._resize_c(self.capacity)
+        if self._resize_c(self.capacity) != 0:
+            raise MemoryError("resizing tree to %d" % self.capacity)
         nodes = memcpy(self.nodes, (<np.ndarray> node_ndarray).data, self.capacity * sizeof(Node))
         value = memcpy(self.value, (<np.ndarray> value_ndarray).data, self.capacity * self.value_stride * sizeof(double))
 
