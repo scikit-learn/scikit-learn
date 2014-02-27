@@ -351,6 +351,7 @@ def test_mutlilabel_binarizer_non_integer_labels():
     tuple_classes[:] = [(1,), (2,), (3,)]
     inputs = [
         ([('2', '3'), ('1',), ('1', '2')], ['1', '2', '3']),
+        ([('b', 'c'), ('a',), ('a', 'b')], ['a', 'b', 'c']),
         ([((2,), (3,)), ((1,),), ((1,), (2,))], tuple_classes),
     ]
     indicator_mat = np.array([[0, 1, 1],
