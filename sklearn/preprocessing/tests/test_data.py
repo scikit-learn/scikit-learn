@@ -654,9 +654,10 @@ def test_one_hot_encoder():
     X = np.array([[2, 0, 1], [0, 1, 1]])
     enc.transform(X)
 
-    # test that an error is raise when out of bounds:
+    # test that an error is raised when out of bounds:
     X_too_large = [[0, 2, 1], [0, 1, 1]]
     assert_raises(ValueError, enc.transform, X_too_large)
+    assert_raises(ValueError, OneHotEncoder(n_values=2).fit_transform, X)
 
     # test that error is raised when wrong number of features
     assert_raises(ValueError, enc.transform, X[:, :-1])
