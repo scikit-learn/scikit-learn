@@ -2,11 +2,9 @@ import numpy as np
 from scipy import linalg
 from scipy.spatial.distance import pdist
 from scipy.spatial.distance import squareform
-from ..base import BaseEstimator, TransformerMixin
+from ..base import BaseEstimator
 from ..utils import check_arrays
 from ..utils import check_random_state
-from ..neighbors import NearestNeighbors
-from ..neighbors.base import _get_weights
 from . import _binary_search
 
 
@@ -268,7 +266,7 @@ def trustworthiness(X, X_embedded, n_neighbors=5, precomputed=False):
     return t
 
 
-class TSNE(BaseEstimator, TransformerMixin):
+class TSNE(BaseEstimator):
     """t-distributed Stochastic Neighbor Embedding.
 
     t-SNE [1] is a tool to visualize high-dimensional data. It converts
@@ -328,13 +326,6 @@ class TSNE(BaseEstimator, TransformerMixin):
         An affinity metric that is defined in scipy.spatial.distance or
         'precomputed'.
 
-    n_neighbors : int, optional, (default: 3)
-        Number of neighbors that will be used to transform the data to
-        the embedded space.
-
-    fit_inverse_transform : bool, optional, (default: False)
-        Learn the inverse transform for non-precomputed affinities.
-
     verbose : int, optional (default: 0)
         Verbosity level.
 
@@ -351,12 +342,6 @@ class TSNE(BaseEstimator, TransformerMixin):
     `training_data_` : array-like, shape (n_samples, n_features)
         Stores the training data.
 
-    `nbrs_` : sklearn.neighbors.NearestNeighbors instance
-        Stores nearest neighbors instance in the original space.
-
-    `nbrs_embedding_` : sklearn.neighbors.NearestNeighbors instance
-        Stores nearest neighbors instance in the embedded space.
-
     Examples
     --------
 
@@ -364,10 +349,11 @@ class TSNE(BaseEstimator, TransformerMixin):
     >>> from sklearn.manifold import TSNE
     >>> X = np.array([[0, 0, 0], [0, 1, 1], [1, 0, 1], [1, 1, 1]])
     >>> model = TSNE(n_components=2, random_state=0)
-    >>> model.fit(X)
-    TSNE(affinity='sqeuclidean', early_exaggeration=4.0,
-       fit_inverse_transform=False, learning_rate=1000.0, n_components=2,
-       n_iter=1000, n_neighbors=3, perplexity=30.0, random_state=0, verbose=0)
+    >>> model.fit_transform(X) # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
+    array([[  887.28...,   238.61...],
+           [ -714.79...,  3243.34...],
+           [  957.30..., -2505.78...],
+           [-1130.28...,  -974.78...])
 
     References
     ----------
@@ -380,23 +366,17 @@ class TSNE(BaseEstimator, TransformerMixin):
     """
     def __init__(self, n_components=2, perplexity=30.0,
                  early_exaggeration=4.0, learning_rate=1000.0, n_iter=1000,
-                 affinity="sqeuclidean", n_neighbors=3,
-                 fit_inverse_transform=False, verbose=0, random_state=None):
-        if fit_inverse_transform and affinity == "precomputed":
-            raise ValueError("Cannot fit_inverse_transform with a "
-                             "precomputed affinity matrix.")
+                 affinity="sqeuclidean", verbose=0, random_state=None):
         self.n_components = n_components
         self.perplexity = perplexity
         self.early_exaggeration = early_exaggeration
         self.learning_rate = learning_rate
         self.n_iter = n_iter
         self.affinity = affinity
-        self.n_neighbors = n_neighbors
-        self.fit_inverse_transform = fit_inverse_transform
         self.verbose = verbose
         self.random_state = random_state
 
-    def fit(self, X, y=None):
+    def _fit(self, X):
         """Fit the model using X as training data.
 
         Parameters
@@ -404,11 +384,6 @@ class TSNE(BaseEstimator, TransformerMixin):
         X : array, shape (n_samples, n_features) or (n_samples, n_samples)
             If the affinity is 'precomputed' X must be a square affinity
             matrix. Otherwise it contains a sample per row.
-
-        Returns
-        -------
-        self : TSNE
-            This object.
         """
         X, = check_arrays(X, sparse_format='dense')
         random_state = check_random_state(self.random_state)
@@ -438,17 +413,6 @@ class TSNE(BaseEstimator, TransformerMixin):
 
         P = _joint_probabilities(affinities, self.perplexity, self.verbose)
         self.embedding_ = self._tsne(P, alpha, n_samples, random_state)
-
-        if self.affinity != "precomputed":
-            self.nbrs_ = NearestNeighbors(n_neighbors=self.n_neighbors)
-            self.nbrs_.fit(self.training_data_)
-
-        if self.fit_inverse_transform:
-            self.embedding_nbrs_ = NearestNeighbors(
-                n_neighbors=self.n_neighbors)
-            self.embedding_nbrs_.fit(self.embedding_)
-
-        return self
 
     def _tsne(self, P, alpha, n_samples, random_state):
         """Runs t-SNE."""
@@ -495,52 +459,7 @@ class TSNE(BaseEstimator, TransformerMixin):
 
         return X_embedded
 
-    def score(self, X, y=None, n_neighbors=5):
-        """Compute trustworthiness.
-
-        Parameters
-        ----------
-        X : array, shape (n_samples, n_features) or (n_samples, n_samples)
-            If the affinity is 'precomputed' X must be a square affinity
-            matrix. Otherwise it contains a sample per row.
-
-        n_neighbors : int, optional (default: 5)
-            Number of neighbors k that will be considered.
-
-        Returns
-        -------
-        trustworthiness : float
-            Trustworthiness of the low-dimensional embedding.
-        """
-        return trustworthiness(X, self.transform(X), n_neighbors=n_neighbors,
-                               precomputed=self.affinity == "precomputed")
-
-    def inverse_transform(self, X):
-        """Transform X back to original space.
-
-        Parameters
-        ----------
-        X : array, shape (n_samples, n_components)
-            Embedded data.
-
-        Returns
-        -------
-        X_new : array, shape (n_samples, n_features)
-            Data in the original space.
-        """
-        if not self.fit_inverse_transform:
-            raise ValueError("Inverse transform was not fitted!")
-
-        neigh_dist, neigh_ind = self.embedding_nbrs_.kneighbors(X)
-        neigh_dist = np.maximum(neigh_dist, MACHINE_EPSILON)
-        weights = _get_weights(neigh_dist, "distance")
-        X_original = np.array([(np.average(self.training_data_[ind], axis=0,
-                                           weights=weights[i]))
-                               for (i, ind) in enumerate(neigh_ind)])
-
-        return X_original
-
-    def transform(self, X):
+    def fit_transform(self, X):
         """Transform X to the embedded space.
 
         Parameters
@@ -554,18 +473,5 @@ class TSNE(BaseEstimator, TransformerMixin):
         X_new : array, shape (n_samples, n_components)
             Embedding of the training data in low-dimensional space.
         """
-        if self.affinity == "precomputed":
-            if X is self.training_data_:
-                return self.embedding_
-            else:
-                raise ValueError("Can only transform training data when "
-                                 "affinities are precomputed.")
-
-        neigh_dist, neigh_ind = self.nbrs_.kneighbors(X)
-        neigh_dist = np.maximum(neigh_dist, MACHINE_EPSILON)
-        weights = _get_weights(neigh_dist, "distance")
-        X_embedded = np.array([(np.average(self.embedding_[ind], axis=0,
-                                           weights=weights[i]))
-                               for (i, ind) in enumerate(neigh_ind)])
-
-        return X_embedded
+        self._fit(X)
+        return self.embedding_
