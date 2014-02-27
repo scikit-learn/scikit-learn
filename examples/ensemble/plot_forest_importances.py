@@ -13,7 +13,7 @@ remaining are not.
 print(__doc__)
 
 import numpy as np
-import pylab as pl
+import matplotlib.pyplot as plt
 
 from sklearn.datasets import make_classification
 from sklearn.ensemble import ExtraTreesClassifier
@@ -45,10 +45,10 @@ for f in range(10):
     print("%d. feature %d (%f)" % (f + 1, indices[f], importances[indices[f]]))
 
 # Plot the feature importances of the forest
-pl.figure()
-pl.title("Feature importances")
-pl.bar(range(10), importances[indices],
+plt.figure()
+plt.title("Feature importances")
+plt.bar(range(10), importances[indices],
        color="r", yerr=std[indices], align="center")
-pl.xticks(range(10), indices)
-pl.xlim([-1, 10])
-pl.show()
+plt.xticks(range(10), indices)
+plt.xlim([-1, 10])
+plt.show()
