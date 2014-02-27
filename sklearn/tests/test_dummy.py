@@ -194,23 +194,28 @@ def test_classifier_exceptions():
 
 
 def test_mean_strategy_regressor():
+
+    rand_generator = np.random.RandomState(seed=1)
+
     X = [[0]] * 4  # ignored
-    y = [1, 2, 1, 1]
+    y = rand_generator.randn(4)
 
     reg = DummyRegressor()
     reg.fit(X, y)
-    assert_array_equal(reg.predict(X), [5. / 4] * len(X))
+    assert_array_equal(reg.predict(X), [np.mean(y)] * len(X))
 
 
 def test_mean_strategy_multioutput_regressor():
 
-    X_learn = np.random.randn(10, 10)
-    y_learn = np.random.randn(10, 5)
+    rand_generator = np.random.RandomState(seed=1)
+
+    X_learn = rand_generator.randn(10, 10)
+    y_learn = rand_generator.randn(10, 5)
 
     mean = np.mean(y_learn, axis=0).reshape((1, -1))
 
-    X_test = np.random.randn(20, 10)
-    y_test = np.random.randn(20, 5)
+    X_test = rand_generator.randn(20, 10)
+    y_test = rand_generator.randn(20, 5)
 
     # Correctness oracle
     est = DummyRegressor()
@@ -228,23 +233,28 @@ def test_regressor_exceptions():
 
 
 def test_median_strategy_regressor():
+
+    rand_generator = np.random.RandomState(seed=1)
+
     X = [[0]] * 5  # ignored
-    y = [1, 2, 4, 6, 8]
+    y = rand_generator.randn(5)
 
     reg = DummyRegressor(strategy="median")
     reg.fit(X, y)
-    assert_array_equal(reg.predict(X), [4] * len(X))
+    assert_array_equal(reg.predict(X), [np.median(y)] * len(X))
 
 
 def test_median_strategy_multioutput_regressor():
 
-    X_learn = np.random.randn(10, 10)
-    y_learn = np.random.randn(10, 5)
+    rand_generator = np.random.RandomState(seed=1)
+
+    X_learn = rand_generator.randn(10, 10)
+    y_learn = rand_generator.randn(10, 5)
 
     median = np.median(y_learn, axis=0).reshape((1, -1))
 
-    X_test = np.random.randn(20, 10)
-    y_test = np.random.randn(20, 5)
+    X_test = rand_generator.randn(20, 10)
+    y_test = rand_generator.randn(20, 5)
 
     # Correctness oracle
     est = DummyRegressor(strategy="median")
@@ -258,8 +268,11 @@ def test_median_strategy_multioutput_regressor():
 
 
 def test_constant_strategy_regressor():
+
+    rand_generator = np.random.RandomState(seed=1)
+
     X = [[0]] * 5  # ignored
-    y = [1, 2, 4, 6, 8]
+    y = rand_generator.randn(5)
 
     reg = DummyRegressor(strategy="constant", constant=[43])
     reg.fit(X, y)
@@ -272,16 +285,16 @@ def test_constant_strategy_regressor():
 
 def test_constant_strategy_multioutput_regressor():
 
-    X_learn = np.random.randn(10, 10)
-    y_learn = np.random.randn(10, 5)
-
     rand_generator = np.random.RandomState(seed=1)
+
+    X_learn = rand_generator.randn(10, 10)
+    y_learn = rand_generator.randn(10, 5)
 
     # test with 2d array
     constants = rand_generator.randn(5)
 
-    X_test = np.random.randn(20, 10)
-    y_test = np.random.randn(20, 5)
+    X_test = rand_generator.randn(20, 10)
+    y_test = rand_generator.randn(20, 5)
 
     # Correctness oracle
     est = DummyRegressor(strategy="constant", constant=constants)
