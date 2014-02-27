@@ -249,8 +249,7 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         ----------
         y : numpy array of shape (n_samples,) or (n_samples, n_classes)
             Target values. The 2-d matrix should only contain 0 and 1,
-            represents multilabel classification, and is returned unchanged
-            by LabelBinarizer.
+            represents multilabel classification.
 
         Returns
         -------
@@ -275,8 +274,7 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         ----------
         y : numpy array of shape (n_samples,) or (n_samples, n_classes)
             Target values. The 2-d matrix should only contain 0 and 1,
-            represents multilabel classification, and is returned unchanged
-            by LabelBinarizer.
+            represents multilabel classification.
 
         Returns
         -------
@@ -318,8 +316,7 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         -------
         y : numpy array of shape (n_samples,) or (n_samples, n_classes)
             Target values. The 2-d matrix should only contain 0 and 1,
-            represents multilabel classification, and is returned unchanged
-            by LabelBinarizer.
+            represents multilabel classification.
 
         Notes
         -----
@@ -569,8 +566,8 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
         for labels in y:
             indices.extend(set(class_mapping[label] for label in labels))
             indptr.append(len(indices))
-        # virtual array of len(indices) 1s:
         data = np.ones(len(indices), dtype=int)
+
         return sp.csr_matrix((data, indices, indptr),
                              shape=(len(indptr) - 1, len(class_mapping)))
 

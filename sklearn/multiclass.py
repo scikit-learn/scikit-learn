@@ -143,9 +143,7 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
     This strategy can also be used for multilabel learning, where a classifier
     is used to predict multiple labels for instance, by fitting on a 2-d matrix
-    in which cell [i, j] is 1 sample i has label j and 0 otherwise.
-    For multilabel learning, the number of classes must be at
-    least three, since otherwise OvR reduces to binary classification.
+    in which cell [i, j] is 1 if sample i has label j and 0 otherwise.
 
     In the multilabel learning literature, OvR is also known as the binary
     relevance method.
