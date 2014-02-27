@@ -11,7 +11,7 @@ from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import raises
 from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_false, assert_true
 from sklearn.utils.testing import assert_equal
 
 from sklearn import linear_model, datasets, metrics
@@ -24,23 +24,19 @@ class SparseSGDClassifier(SGDClassifier):
 
     def fit(self, X, y, *args, **kw):
         X = sp.csr_matrix(X)
-        return SGDClassifier.fit(self, X, y, *args, **kw)
+        return super(SparseSGDClassifier, self).fit(X, y, *args, **kw)
 
     def partial_fit(self, X, y, *args, **kw):
         X = sp.csr_matrix(X)
-        return SGDClassifier.partial_fit(self, X, y, *args, **kw)
+        return super(SparseSGDClassifier, self).partial_fit(X, y, *args, **kw)
 
-    def decision_function(self, X, *args, **kw):
+    def decision_function(self, X):
         X = sp.csr_matrix(X)
-        return SGDClassifier.decision_function(self, X, *args, **kw)
+        return super(SparseSGDClassifier, self).decision_function(X)
 
-    def predict_proba(self, X, *args, **kw):
+    def predict_proba(self, X):
         X = sp.csr_matrix(X)
-        return SGDClassifier.predict_proba(self, X, *args, **kw)
-
-    def predict_log_proba(self, X, *args, **kw):
-        X = sp.csr_matrix(X)
-        return SGDClassifier.predict_log_proba(self, X, *args, **kw)
+        return super(SparseSGDClassifier, self).predict_proba(X)
 
 
 class SparseSGDRegressor(SGDRegressor):
@@ -301,9 +297,12 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
     def test_sgd_proba(self):
         """Check SGD.predict_proba"""
 
-        # hinge loss does not allow for conditional prob estimate
-        clf = self.factory(loss="hinge", alpha=0.01, n_iter=10).fit(X, Y)
-        assert_raises(NotImplementedError, clf.predict_proba, [3, 2])
+        # Hinge loss does not allow for conditional prob estimate.
+        # We cannot use the factory here, because it defines predict_proba
+        # anyway.
+        clf = SGDClassifier(loss="hinge", alpha=0.01, n_iter=10).fit(X, Y)
+        assert_false(hasattr(clf, "predict_proba"))
+        assert_false(hasattr(clf, "predict_log_proba"))
 
         # log and modified_huber losses can output probability estimates
         # binary case
