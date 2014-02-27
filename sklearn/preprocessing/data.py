@@ -1090,7 +1090,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
 
         Returns
         -------
-        X_out : sparse/dense matrix depending on sparse=boolean, dtype=int
+        X_out : sparse matrix if sparse=True else a 2-d array, dtype=int
             Transformed input.
         """
         return _transform_selected(X, self._transform,
