@@ -838,8 +838,10 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             snapshotting.
 
         group : array-like, shape = [n_samples], optional (default=None)
-            Only used with LambdaMART, used to group samples. If not present,
-            then the all the samples are treated as one group.
+            Indicates which group each sample belongs to. Samples from the
+            same group must be adjoined. For example, [0, 0, 2, 2, 1, 1] is valid
+            but [0, 1, 0] is invalid. If None, then all the samples will
+            be considered to be of the same group.
 
         Returns
         -------
