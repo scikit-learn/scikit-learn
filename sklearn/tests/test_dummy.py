@@ -336,8 +336,9 @@ def test_constants_not_specified_regressor():
 
 
 def test_constant_size_multioutput_regressor():
-    X = np.random.randn(10, 10)
-    y = np.random.randn(10, 5)
+    random_state = np.random.RandomState(seed=1)
+    X = random_state.randn(10, 10)
+    y = random_state.randn(10, 5)
 
     est = DummyRegressor(strategy='constant', constant=[1, 2, 3, 4])
     assert_raises(ValueError, est.fit, X, y)
