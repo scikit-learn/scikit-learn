@@ -298,22 +298,27 @@ class TSNE(BaseEstimator, TransformerMixin):
         Dimension of the embedded space.
 
     perplexity : float, optional (default: 30)
-        The perplexity is related to the number of nearest neighbors that is
-        used in other manifold learning algorithms. Larger datasets usually
-        require a larger perplexity. Consider selcting a value between 5 and
-        50. The choice is not extremely critical since t-SNE is quite
-        insensitive to this parameter.
+        The perplexity is related to the number of nearest neighbors that
+        is used in other manifold learning algorithms. Larger datasets
+        usually require a larger perplexity. Consider selcting a value
+        between 5 and 50. The choice is not extremely critical since t-SNE
+        is quite insensitive to this parameter.
 
     early_exaggeration : float, optional (default: 4.0)
         Controls how tight natural clusters in the original space are in
         the embedded space and how much space will be between them. For
         larger values, the space between natural clusters will be larger
         in the embedded space. Again, the choice of this parameter is not
-        very critical.
+        very critical. If the cost function increases during initial
+        optimization, the early exaggeration factor or the learning rate
+        might be too high.
 
     learning_rate : float, optional (default: 1000)
-        The learning rate can be a critical parameter. It should be between
-        100 and 1000.
+        The learning rate can be a critical parameter. It should be
+        between 100 and 1000. If the cost function increases during initial
+        optimization, the early exaggeration factor or the learning rate
+        might be too high. If the cost function gets stuck in a bad local
+        minimum increasing the learning rate helps sometimes.
 
     n_iter : int, optional (default: 1000)
         Maximum number of iterations for the optimization. Should be at
@@ -324,8 +329,8 @@ class TSNE(BaseEstimator, TransformerMixin):
         'precomputed'.
 
     n_neighbors : int, optional, (default: 3)
-        Number of neighbors that will be used to transform the data to the
-        embedded space.
+        Number of neighbors that will be used to transform the data to
+        the embedded space.
 
     fit_inverse_transform : bool, optional, (default: False)
         Learn the inverse transform for non-precomputed affinities.
@@ -335,7 +340,8 @@ class TSNE(BaseEstimator, TransformerMixin):
 
     random_state : int or RandomState instance or None (default)
         Pseudo Random Number generator seed control. If None, use the
-        numpy.random singleton.
+        numpy.random singleton. Note that different initializations
+        might result in different local minima of the cost function.
 
     Attributes
     ----------
