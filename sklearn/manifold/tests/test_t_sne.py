@@ -154,7 +154,8 @@ def test_preserve_trustworthiness_approximately():
     tsne = TSNE(n_components=2, perplexity=10, learning_rate=100.0,
                 random_state=0)
     X_embedded = tsne.fit_transform(X)
-    assert_almost_equal(tsne.score(X, n_neighbors=1), 1.0, decimal=1)
+    assert_almost_equal(trustworthiness(X, X_embedded, n_neighbors=1), 1.0,
+                        decimal=1)
 
 
 def test_preserve_trustworthiness_approximately_with_precomputed_affinities():
@@ -163,63 +164,30 @@ def test_preserve_trustworthiness_approximately_with_precomputed_affinities():
     D = squareform(pdist(X), "sqeuclidean")
     tsne = TSNE(n_components=2, perplexity=10, learning_rate=100.0,
                 affinity="precomputed", random_state=0)
-    tsne.fit(D)
-    assert_almost_equal(tsne.score(D, n_neighbors=1), 1.0, decimal=1)
-
-
-def test_transform_inverse_transform():
-    """Training data can be reconstructed approximately."""
-    X = np.random.randn(5, 2)
-    tsne = TSNE(n_components=2, fit_inverse_transform=True, random_state=0)
-    tsne.fit(X)
-    X_reconstructed = tsne.inverse_transform(tsne.transform(X))
-    assert_array_almost_equal(X, X_reconstructed)
-
-
-def test_precomputed_affinities_inverse_transform():
-    """Cannot fit inverse tranform with precomputed affinities."""
-    assert_raises_regexp(
-        ValueError, "Cannot fit_inverse_transform .*", TSNE,
-        affinity="precomputed", fit_inverse_transform=True)
+    X_embedded = tsne.fit_transform(D)
+    assert_almost_equal(trustworthiness(D, X_embedded, n_neighbors=1,
+                                        precomputed=True), 1.0, decimal=1)
 
 
 def test_early_exaggeration_too_small():
     """Early exaggeration factor must be >= 1."""
     tsne = TSNE(early_exaggeration=0.99)
-    assert_raises_regexp(ValueError, "early_exaggeration .*", tsne.fit,
-                         np.array([[0.0]]))
+    assert_raises_regexp(ValueError, "early_exaggeration .*",
+                         tsne.fit_transform, np.array([[0.0]]))
 
 
 def test_too_few_iterations():
     """Number of gradient descent iterations must be at least 200."""
     tsne = TSNE(n_iter=199)
-    assert_raises_regexp(ValueError, "n_iter .*", tsne.fit, np.array([[0.0]]))
+    assert_raises_regexp(ValueError, "n_iter .*", tsne.fit_transform,
+                         np.array([[0.0]]))
 
 
 def test_non_square_precomputed_affinities():
     """Precomputed affinity matrices must be square matrices."""
     tsne = TSNE(affinity="precomputed")
-    assert_raises_regexp(ValueError, ".* square affinity matrix", tsne.fit,
-                         np.array([[0.0], [1.0]]))
-
-
-def test_inverse_transform_not_fitted():
-    """The inverse transform must be activated."""
-    X = np.ones((2, 2))
-    tsne = TSNE(fit_inverse_transform=False)
-    tsne.fit(X)
-    assert_raises_regexp(ValueError, ".* not fitted.*", tsne.inverse_transform,
-                         X)
-
-
-def test_cannot_generalize_with_precomputed_affinities():
-    """Cannot generalize with precomputed affinity matrix."""
-    X_train = np.ones((2, 2))
-    X_test = np.zeros((2, 2))
-    tsne = TSNE(affinity="precomputed")
-    tsne.fit(X_train)
-    assert_raises_regexp(ValueError, "Can only transform training data .*",
-                         tsne.transform, X_test)
+    assert_raises_regexp(ValueError, ".* square affinity matrix",
+                         tsne.fit_transform, np.array([[0.0], [1.0]]))
 
 
 def test_verbose():
