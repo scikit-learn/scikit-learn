@@ -399,9 +399,8 @@ def _max_dcg(all32_64_t [:] y_sorted):
 
 def _lambda(all32_64_t [::1] y_true, double [::1] y_pred,
             max_rank):
-    """Computes the gradient and second derivatives for NDCG
-
-    This part of the LambdaMART algorithm.
+    """Computes the Lambda-gradient and second derivatives as part of
+    the LambdaMART algorithm.
     """
     cdef int i
     cdef int j

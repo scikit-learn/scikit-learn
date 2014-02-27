@@ -363,8 +363,6 @@ class NormalizedDiscountedCumulativeGain(RegressionLossFunction):
     """
     def __init__(self, n_classes, max_rank=10):
         super(NormalizedDiscountedCumulativeGain, self).__init__(n_classes)
-        if max_rank is not None:
-            assert max_rank > 0
         self.max_rank = max_rank
         self.weights = None
 
@@ -1542,10 +1540,9 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
 class LambdaMART(BaseGradientBoosting):
     """LambdaMART for learning to rank.
 
-    GB builds an additive model in a forward stage-wise fashion;
-    it allows for the optimization of arbitrary differentiable loss functions.
-    In each stage a regression tree is fit on the negative gradient of the
-    given loss function.
+    LambdaMART creates an approximation of the gradient of a ranking
+    measure, known as the Lambda-gradient. Gradient boosted trees are used
+    to fit this gradient and a Newton-Raphson step is performed.
 
     Parameters
     ----------
@@ -1658,17 +1655,13 @@ class LambdaMART(BaseGradientBoosting):
 
     See also
     --------
+    GradientBoostingRegressor, GradientBoostingClassifier,
     DecisionTreeRegressor, RandomForestRegressor
 
     References
     ----------
-    J. Friedman, Greedy Function Approximation: A Gradient Boosting
-    Machine, The Annals of Statistics, Vol. 29, No. 5, 2001.
-
-    J. Friedman, Stochastic Gradient Boosting, 1999
-
-    T. Hastie, R. Tibshirani and J. Friedman.
-    Elements of Statistical Learning Ed. 2, Springer, 2009.
+    Q. Wu, C.J.C. Burges, K. Svore and J. Gao. Adapting Boosting for
+    Information Retrieval Measures. Journal of Information Retrieval, 2007.
     """
 
     _SUPPORTED_LOSS = ('ndcg',)
@@ -1687,6 +1680,13 @@ class LambdaMART(BaseGradientBoosting):
             random_state, alpha, verbose, max_leaf_nodes=max_leaf_nodes,
             max_rank=max_rank, warm_start=warm_start)
 
+    def _check_params(self):
+        """Check validity of parameters and raise ValueError if not valid. """
+        super(LambdaMART, self)._check_params()
+        if self.max_rank is not None and self.max_rank <= 0:
+            raise ValueError("max_rank must be None or a positive integer but "
+                             "was %r" % self.max_rank)
+
     def _gain(self, y):
         if self.gain == 'exponential':
             y = 2 ** y - 1
@@ -1702,10 +1702,8 @@ class LambdaMART(BaseGradientBoosting):
             and n_features is the number of features.
 
         y : array-like, shape = [n_samples]
-            Target values (integers in classification, real numbers in
-            regression)
-            For classification, labels must correspond to classes
-            ``0, 1, ..., n_classes_-1``.
+            Relevance values (can be floating point but typical problems
+            use integer values)
 
         monitor : callable, optional
             The monitor is called after each iteration with the current
@@ -1717,8 +1715,10 @@ class LambdaMART(BaseGradientBoosting):
             snapshoting.
 
         group : array-like, shape = [n_samples], optional (default=None)
-            Used to group samples. If not present, then the all the
-            samples are treated as one group.
+            Indicates which group each sample belongs to. Samples from the
+            same group must be adjoined. For example, [0, 0, 2, 2, 1, 1] is valid
+            but [0, 1, 0] is invalid. If None, then all the samples will
+            be considered to be of the same group.
 
         Returns
         -------
@@ -1788,13 +1788,15 @@ class LambdaMART(BaseGradientBoosting):
             True labels for X.
 
         group : array-like, shape = [n_samples], optional (default=None)
-            Used to group samples. If not present, then the all the
-            samples are treated as one group.
+            Indicates which group each sample belongs to. Samples from the
+            same group must be adjoined. For example, [0, 0, 2, 2, 1, 1] is valid
+            but [0, 1, 0] is invalid. If None, then all the samples will
+            be considered to be of the same group.
 
         Returns
         -------
         score : float
-            Mean accuracy of self.predict(X) wrt. y.
+            Average NDCG over all groups.
 
         """
         y = self._gain(column_or_1d(y, warn=True))

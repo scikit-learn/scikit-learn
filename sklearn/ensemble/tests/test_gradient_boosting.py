@@ -80,7 +80,6 @@ def test_parameter_checks():
         assert_raises(ValueError,
                       Cls(learning_rate=-1.0).fit, X, y)
 
-
         assert_raises(ValueError,
                       Cls(min_samples_split=0.0).fit, X, y)
         assert_raises(ValueError,
@@ -115,6 +114,11 @@ def test_parameter_checks():
                   lambda X, y: GradientBoostingClassifier(
                       loss='deviance').fit(X, y),
                   X, [0, 0, 0, 0])
+
+    assert_raises(ValueError,
+                  LambdaMART(max_rank=0).fit, X, y)
+    assert_raises(ValueError,
+                  LambdaMART(max_rank=-1).fit, X, y)
 
 
 def test_loss_function():
@@ -962,11 +966,11 @@ def test_lambdamart_gain_equivalence():
     group = np.array([0, 0, 0, 1, 1, 1])
 
     lm_exp.fit(X, y, group=group)
-    lm_lin.fit(X, 2**y - 1, group=group)
+    lm_lin.fit(X, 2 ** y - 1, group=group)
 
     assert_array_equal(lm_exp.predict(X), lm_lin.predict(X))
     assert(lm_exp.score(X, y, group=group) ==
-           lm_lin.score(X, 2**y - 1, group=group))
+           lm_lin.score(X, 2 ** y - 1, group=group))
 
 
 if __name__ == "__main__":
