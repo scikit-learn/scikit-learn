@@ -14,7 +14,6 @@ from sklearn.utils import deprecated
 
 
 class DummyClassifier(BaseEstimator, ClassifierMixin):
-
     """
     DummyClassifier is a classifier that makes predictions using simple rules.
 
@@ -275,7 +274,6 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
 
 
 class DummyRegressor(BaseEstimator, RegressorMixin):
-
     """
     DummyRegressor is a regressor that always predicts the mean of the training
     targets.
