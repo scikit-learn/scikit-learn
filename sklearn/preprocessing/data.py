@@ -397,7 +397,7 @@ class Scaler(StandardScaler):
 
 
 class PolynomialFeatures(BaseEstimator, TransformerMixin):
-    """Transform to Polynomial Features
+    """Generate polynomial (interaction) features.
 
     Generate a new feature matrix consisting of all polynomial combinations
     of the features with degree less than or equal to the specified degree.
