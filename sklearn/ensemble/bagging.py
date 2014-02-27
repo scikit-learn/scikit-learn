@@ -127,7 +127,7 @@ def _parallel_predict_proba(estimators, estimators_features, X, n_classes):
     proba = np.zeros((n_samples, n_classes))
 
     for estimator, features in zip(estimators, estimators_features):
-        try:
+        if hasattr(estimator, "predict_proba"):
             proba_estimator = estimator.predict_proba(X[:, features])
 
             if n_classes == len(estimator.classes_):
@@ -137,7 +137,7 @@ def _parallel_predict_proba(estimators, estimators_features, X, n_classes):
                 proba[:, estimator.classes_] += \
                     proba_estimator[:, range(len(estimator.classes_))]
 
-        except (AttributeError, NotImplementedError):
+        else:
             # Resort to voting
             predictions = estimator.predict(X[:, features])
 
@@ -463,11 +463,11 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
             mask = np.ones(n_samples, dtype=np.bool)
             mask[samples] = False
 
-            try:
+            if hasattr(estimator, "predict_proba"):
                 predictions[mask, :] += estimator.predict_proba(
                     (X[mask, :])[:, features])
 
-            except (AttributeError, NotImplementedError):
+            else:
                 p = estimator.predict((X[mask, :])[:, features])
                 j = 0
 
