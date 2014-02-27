@@ -367,7 +367,7 @@ class NormalizedDiscountedCumulativeGain(RegressionLossFunction):
         self.weights = None
 
     def init_estimator(self):
-        return MeanEstimator()
+        return ZeroEstimator(is_classification=False)
 
     def _groupby(self, sample_group):
         fl = sample_group.flat
