@@ -929,7 +929,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         
     sparse : boolean
         Will return sparse matrix if set True else will return False.
-	It is True by default.
+        It is True by default.
 
     Attributes
     ----------
@@ -1033,7 +1033,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
             active_features = np.where(mask)[0]
             out = out[:, active_features]
             self.active_features_ = active_features
-        
+            
         if self.sparse:
             return out
         else:
@@ -1075,7 +1075,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         if self.n_values == 'auto':
             out = out[:, self.active_features_]
             
-        if self.sparse:    
+        if self.sparse:
             return out
         else:
             return out.toarray()
