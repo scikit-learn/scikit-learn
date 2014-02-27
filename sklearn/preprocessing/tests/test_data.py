@@ -688,7 +688,7 @@ def test_one_hot_encoder_dense():
     # check outcome
     assert_array_equal(X_trans,
                        np.array([[0., 1., 0., 1., 1.],
-                        [1., 0., 1., 0., 1.]]))
+                                 [1., 0., 1., 0., 1.]]))
 
 
 def _check_transform_selected(X, X_expected, sel):
