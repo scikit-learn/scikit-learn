@@ -282,14 +282,6 @@ class TSNE(BaseEstimator):
     often improve the visualization. For more tips see Laurens van der
     Maaten's FAQ [2].
 
-    Usually t-SNE does not generalize, i.e. it can only compute the
-    embedding of the training data. However, we use a heuristic to
-    embed unseen data: first we determine the n_neighbors nearest
-    neighbors from the training set of the test sample in the original
-    space and then we compute a distance-weighted average in the
-    embedded space to obtain the transformed test sample. Note that
-    this does not work if the affinity matrix is precomputed.
-
     Parameters
     ----------
     n_components : int, optional (default: 2)
