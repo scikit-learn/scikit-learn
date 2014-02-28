@@ -927,9 +927,8 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
     dtype : number type, default=np.float
         Desired dtype of output.
         
-    sparse : boolean
-        Will return sparse matrix if set True else will return False.
-        It is True by default.
+    sparse : boolean, default=True
+        Will return sparse matrix if set True else will return an array.
 
     Attributes
     ----------
