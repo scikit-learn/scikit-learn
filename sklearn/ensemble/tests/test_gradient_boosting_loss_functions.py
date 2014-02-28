@@ -88,8 +88,8 @@ def test_ndcg():
     # two queries
     y = np.r_[y, y]
     pred = np.asarray(range(12)[::-1])[:, None]
-    query = np.r_[np.zeros(6), np.ones(6)]
-    assert_almost_equal(ndcg(y, pred, query), score)
+    group = np.r_[np.zeros(6), np.ones(6)]
+    assert_almost_equal(ndcg(y, pred, sample_group=group), score)
 
     # test pessimism
     from itertools import permutations
@@ -128,8 +128,8 @@ def test_max_rank_ndcg():
     # two queries
     y = np.r_[y, y]
     pred = np.asarray(range(12)[::-1])[:, None]
-    query = np.r_[np.zeros(6), np.ones(6)]
-    assert_almost_equal(ndcg(y, pred, query), score)
+    group = np.r_[np.zeros(6), np.ones(6)]
+    assert_almost_equal(ndcg(y, pred, sample_group=group), score)
 
     # test pessimism
     from itertools import permutations

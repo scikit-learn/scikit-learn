@@ -226,8 +226,8 @@ class LeastSquaresError(RegressionLossFunction):
     def init_estimator(self):
         return MeanEstimator()
 
-    def __call__(self, y, pred, **kargs):
-        return np.mean((y - pred.ravel()) ** 2.0)
+    def __call__(self, y, pred, mask=Ellipsis, **kargs):
+        return np.mean((y[mask] - pred[mask].ravel()) ** 2.0)
 
     def negative_gradient(self, y, pred, **kargs):
         return y - pred.ravel()
@@ -251,8 +251,8 @@ class LeastAbsoluteError(RegressionLossFunction):
     def init_estimator(self):
         return QuantileEstimator(alpha=0.5)
 
-    def __call__(self, y, pred, **kargs):
-        return np.abs(y - pred.ravel()).mean()
+    def __call__(self, y, pred, mask=Ellipsis, **kargs):
+        return np.abs(y[mask] - pred[mask].ravel()).mean()
 
     def negative_gradient(self, y, pred, **kargs):
         """1.0 if y - pred > 0.0 else -1.0"""
@@ -278,8 +278,9 @@ class HuberLossFunction(RegressionLossFunction):
     def init_estimator(self):
         return QuantileEstimator(alpha=0.5)
 
-    def __call__(self, y, pred, **kargs):
-        pred = pred.ravel()
+    def __call__(self, y, pred, mask=Ellipsis, **kargs):
+        pred = pred[mask].ravel()
+        y = y[mask]
         diff = y - pred
         gamma = self.gamma
         if gamma is None:
@@ -330,8 +331,9 @@ class QuantileLossFunction(RegressionLossFunction):
     def init_estimator(self):
         return QuantileEstimator(self.alpha)
 
-    def __call__(self, y, pred, **kargs):
-        pred = pred.ravel()
+    def __call__(self, y, pred, mask=Ellipsis, **kargs):
+        pred = pred[mask].ravel()
+        y = y[mask]
         diff = y - pred
         alpha = self.alpha
 
@@ -380,13 +382,15 @@ class NormalizedDiscountedCumulativeGain(RegressionLossFunction):
                 start_group = g
         yield start, fl.index
 
-    def __call__(self, y, pred, sample_group=None, **kargs):
-        pred = pred.ravel()
+    def __call__(self, y, pred, mask=Ellipsis, sample_group=None, **kargs):
+        pred = pred[mask].ravel()
+        y = y[mask]
         if sample_group is None:
             ix = np.lexsort((y, -pred))
             ndcg = _ndcg(y[ix][:self.max_rank],
                          np.sort(y)[::-1][:self.max_rank])
         else:
+            sample_group = sample_group[mask]
             n_group = 0
             s_ndcg = 0
             # for each group compute the ndcg
@@ -460,11 +464,11 @@ class BinomialDeviance(LossFunction):
     def init_estimator(self):
         return LogOddsEstimator()
 
-    def __call__(self, y, pred, **kargs):
+    def __call__(self, y, pred, mask=Ellipsis, **kargs):
         """Compute the deviance (= 2 * negative log-likelihood). """
         # logaddexp(0, v) == log(1.0 + exp(v))
-        pred = pred.ravel()
-        return -2.0 * np.mean((y * pred) - np.logaddexp(0.0, pred))
+        pred = pred[mask].ravel()
+        return -2.0 * np.mean((y[mask] * pred) - np.logaddexp(0.0, pred))
 
     def negative_gradient(self, y, pred, **kargs):
         """Compute the residual (= negative gradient). """
@@ -511,7 +515,9 @@ class MultinomialDeviance(LossFunction):
     def init_estimator(self):
         return PriorProbabilityEstimator()
 
-    def __call__(self, y, pred, **kargs):
+    def __call__(self, y, pred, mask=Ellipsis, **kargs):
+        y = y[mask]
+        pred = pred[mask]
         # create one-hot label encoding
         Y = np.zeros((y.shape[0], self.K), dtype=np.float64)
         for k in range(self.K):
@@ -639,7 +645,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         self.estimators_ = np.empty((0, 0), dtype=np.object)
 
     def _fit_stage(self, i, X, y, y_pred, sample_mask,
-                   criterion, splitter, random_state, sample_group):
+                   criterion, splitter, random_state, **kargs):
         """Fit another stage of ``n_classes_`` trees to the boosting model. """
         loss = self.loss_
         original_y = y
@@ -648,7 +654,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             if loss.is_multi_class:
                 y = np.array(original_y == k, dtype=np.float64)
 
-            residual = loss.negative_gradient(y, y_pred, k=k, sample_group=sample_group)
+            residual = loss.negative_gradient(y, y_pred, k=k, **kargs)
 
             # induce regression tree on residuals
             tree = DecisionTreeRegressor(
@@ -813,7 +819,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
     def _is_initialized(self):
         return len(getattr(self, 'estimators_', [])) > 0
 
-    def fit(self, X, y, monitor=None, sample_group=None):
+    def fit(self, X, y, monitor=None, **kargs):
         """Fit the gradient boosting model.
 
         Parameters
@@ -885,7 +891,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
 
         # fit the boosting stages
         n_stages = self._fit_stages(X, y, y_pred, random_state,
-                                    begin_at_stage, monitor, sample_group)
+                                    begin_at_stage, monitor, **kargs)
         # change shape of arrays after fit (early-stopping or additional ests)
         if n_stages != self.estimators_.shape[0]:
             self.estimators_ = self.estimators_[:n_stages]
@@ -897,8 +903,14 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
 
         return self
 
+    def _random_sample_mask(self, n_samples, n_inbag, random_state, **kargs):
+        return _random_sample_mask(n_samples, n_inbag, random_state)
+
+    def _inbag_samples(self, n_samples, **kargs):
+        return max(1, int(self.subsample * n_samples))
+
     def _fit_stages(self, X, y, y_pred, random_state, begin_at_stage=0,
-                    monitor=None, sample_group=None):
+                    monitor=None, **kargs):
         """Iteratively fits the stages.
 
         For each stage it computes the progress (OOB, train score)
@@ -909,10 +921,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         n_samples = X.shape[0]
         do_oob = self.subsample < 1.0
         sample_mask = np.ones((n_samples, ), dtype=np.bool)
-        if sample_group is None:
-            n_inbag = max(1, int(self.subsample * n_samples))
-        else:
-            n_inbag = max(1, int(self.subsample * self.n_uniq_group))
+        n_inbag = self._inbag_samples(n_samples, **kargs)
         loss_ = self.loss_
 
         # init criterion and splitter
@@ -931,38 +940,25 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
 
             # subsampling
             if do_oob:
-                group_inbag = None
-                group_oob = None
-                if sample_group is not None:
-                    sample_mask = \
-                        _ranked_random_sample_mask(n_samples, n_inbag,
-                                                   sample_group, self.n_uniq_group,
-                                                   random_state)
-                    group_inbag = sample_group[sample_mask]
-                    group_oob = sample_group[~sample_mask]
-                else:
-                    sample_mask = _random_sample_mask(n_samples, n_inbag,
-                                                      random_state)
+                sample_mask = self._random_sample_mask(n_samples, n_inbag,
+                                                       random_state, **kargs)
                 # OOB score before adding this stage
-                old_oob_score = loss_(y[~sample_mask],
-                                      y_pred[~sample_mask], sample_group=group_oob)
+                old_oob_score = loss_(y, y_pred, mask=~sample_mask, **kargs)
 
             # fit next stage of trees
             y_pred = self._fit_stage(i, X, y, y_pred, sample_mask,
-                                     criterion, splitter, random_state, sample_group)
+                                     criterion, splitter, random_state, **kargs)
 
             # track deviance (= loss)
             if do_oob:
-                self.train_score_[i] = loss_(y[sample_mask],
-                                             y_pred[sample_mask],
-                                             sample_group=group_inbag)
-                self._oob_score_[i] = loss_(y[~sample_mask],
-                                            y_pred[~sample_mask],
-                                            sample_group=group_oob)
+                self.train_score_[i] = loss_(y, y_pred, mask=sample_mask,
+                                             **kargs)
+                self._oob_score_[i] = loss_(y, y_pred, mask=~sample_mask,
+                                            **kargs)
                 self.oob_improvement_[i] = old_oob_score - self._oob_score_[i]
             else:
                 # no need to fancy index w/ no subsampling
-                self.train_score_[i] = self.loss_(y, y_pred, sample_group=sample_group)
+                self.train_score_[i] = self.loss_(y, y_pred, **kargs)
 
             if self.verbose > 0:
                 verbose_reporter.update(i, self)
@@ -1694,6 +1690,24 @@ class LambdaMART(BaseGradientBoosting):
             y = 2 ** y - 1
         return y
 
+    def _random_sample_mask(self, n_samples, n_inbag, random_state,
+                            sample_group=None, **kargs):
+        if sample_group is None:
+            mask = super(LambdaMART, self)._random_sample_mask(n_samples,
+                                                               n_inbag,
+                                                               random_state)
+        else:
+            mask = _ranked_random_sample_mask(n_samples, n_inbag, random_state,
+                                              sample_group, self.n_uniq_group)
+        return mask
+
+    def _inbag_samples(self, n_samples, sample_group=None, **kargs):
+        if sample_group is None:
+            n_inbag = max(1, int(self.subsample * n_samples))
+        else:
+            n_inbag = max(1, int(self.subsample * self.n_uniq_group))
+        return n_inbag
+
     def fit(self, X, y, monitor=None, sample_group=None):
         """Fit the gradient boosting model.
 
@@ -1730,7 +1744,7 @@ class LambdaMART(BaseGradientBoosting):
         self.n_classes_ = 1
         if sample_group is not None:
             sample_group = column_or_1d(sample_group, warn=True)
-            # check group is grouped
+            # check if sample_group is grouped
             uniq_group = {sample_group[0]}
             last_group = sample_group[0]
             for g in sample_group[1:]:
@@ -1742,7 +1756,8 @@ class LambdaMART(BaseGradientBoosting):
                     last_group = g
             self.n_uniq_group = len(uniq_group)
         y = self._gain(column_or_1d(y, warn=True))
-        return super(LambdaMART, self).fit(X, y, monitor, sample_group)
+        return super(LambdaMART, self).fit(X, y, monitor,
+                                           sample_group=sample_group)
 
     def predict(self, X):
         """Predict regression target for X.

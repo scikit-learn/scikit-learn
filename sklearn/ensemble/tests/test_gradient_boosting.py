@@ -950,8 +950,8 @@ def test_ranked_sample_mask():
         n_uniq_group = len(np.unique(group))
         n_inbag = 5
 
-        mask = _ranked_random_sample_mask(n_total_samples, n_inbag,
-                                          group, n_uniq_group, rng)
+        mask = _ranked_random_sample_mask(n_total_samples, n_inbag, rng,
+                                          group, n_uniq_group)
 
         inbag = np.unique(group[mask])
         oob = np.unique(group[~mask])

@@ -312,8 +312,8 @@ def _random_sample_mask(int n_total_samples, int n_total_in_bag, random_state):
 
 
 def _ranked_random_sample_mask(int n_total_samples, int n_total_in_bag,
-                               cython.integral [::1] sample_group, int n_uniq_group,
-                               random_state):
+                               random_state, cython.integral [::1] sample_group,
+                               int n_uniq_group):
     """Create a random sample mask where ``n_total_in_bag`` elements are set.
 
     Parameters
