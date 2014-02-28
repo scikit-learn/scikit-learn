@@ -600,10 +600,10 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                         QR decomposition of the matrix Ft.
         """
         if self.learn_nugget:
-        	nugget = theta[-1]
-        	theta = theta[:-1]
+            nugget = theta[-1]
+            theta = theta[:-1]
         else:
-        	nugget = self.nugget
+            nugget = self.nugget
 
         if theta is None:
             # Use built-in autocorrelation parameters
@@ -726,12 +726,12 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         percent_completed = 0.
 
         if self.learn_nugget:
-        	# Add a further dimension to theta which corresponds to the
-        	# estimation of the internal nugget (noise level)
-        	self.theta0 = array2d(np.hstack((self.theta0[0], self.nugget)))
-        	self.thetaL = \
-        		array2d(np.hstack((self.thetaL[0], 10 * MACHINE_EPSILON)))
-        	self.thetaU = array2d(np.hstack((self.thetaU[0], self.nuggetU)))
+            # Add a further dimension to theta which corresponds to the
+            # estimation of the internal nugget (noise level)
+            self.theta0 = array2d(np.hstack((self.theta0[0], self.nugget)))
+            self.thetaL = \
+                array2d(np.hstack((self.thetaL[0], 10 * MACHINE_EPSILON)))
+            self.thetaU = array2d(np.hstack((self.thetaU[0], self.nuggetU)))
 
         # Force optimizer to fmin_cobyla if the model is meant to be isotropic
         if self.optimizer == 'Welch' and self.theta0.size == 1:
@@ -769,7 +769,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                         optimize.fmin_cobyla(minus_reduced_likelihood_function,
                                              np.log10(theta0), constraints,
                                              iprint=0)[0]
-                except ValueError as ve:
+                except ValueError:
                     print("Optimization failed. Try increasing the ``nugget``")
                     raise
 
@@ -796,12 +796,12 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             optimal_rlf_value = best_optimal_rlf_value
             optimal_par = best_optimal_par
             if self.learn_nugget:
-            	# chop off last element of theta corresponding to
-            	# the nugget
-            	optimal_theta = best_optimal_theta[:-1]
-            	self.nugget = best_optimal_theta[-1]
+                # chop off last element of theta corresponding to
+                # the nugget
+                optimal_theta = best_optimal_theta[:-1]
+                self.nugget = best_optimal_theta[-1]
             else:
-            	optimal_theta = best_optimal_theta
+                optimal_theta = best_optimal_theta
 
         elif self.optimizer == 'Welch':
 

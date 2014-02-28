@@ -62,7 +62,7 @@ def squared_exponential(theta, d):
     (Infinitely differentiable stochastic process, very smooth)::
 
         theta, dx --> r(theta, dx) = exp(-activ),
-    where activ=dx.T * M * dx and M is a covariance matrix of size n*n. 
+    where activ=dx.T * M * dx and M is a covariance matrix of size n*n.
     The hyperparameters theta specify
      * a isotropic covariance matrix, i.e., M = theta * I with I being the
        identity, if theta has shape 1
@@ -104,13 +104,12 @@ def squared_exponential(theta, d):
     return np.exp(-_activation(theta, d))
 
 
-
 def matern_1_5(theta, d):
     """
     Matern correlation model vor nu=1.5. Sample paths are once differentiable.
 
         r(theta, dx) = (1 + np.sqrt(3*activ))*exp(-np.sqrt(3*activ))
-    where activ=dx.T * M * dx and M is a covariance matrix of size n*n. 
+    where activ=dx.T * M * dx and M is a covariance matrix of size n*n.
     The hyperparameters theta specify
      * a isotropic covariance matrix, i.e., M = theta * I with I being the
        identity, if theta has shape 1
@@ -158,8 +157,8 @@ def matern_2_5(theta, d):
     """
     Matern correlation model vor nu=2.5. Sample paths are twice differentiable.
 
-        r(theta, dx) = (1 + np.sqrt(5*activ) + 5/3*activ)*exp(-np.sqrt(5*activ))
-    where activ=dx.T * M * dx and M is a covariance matrix of size n*n. 
+       r(theta, dx) = (1 + np.sqrt(5*activ) + 5/3*activ)*exp(-np.sqrt(5*activ))
+    where activ=dx.T * M * dx and M is a covariance matrix of size n*n.
     The hyperparameters theta specify
      * a isotropic covariance matrix, i.e., M = theta * I with I being the
        identity, if theta has shape 1
@@ -391,9 +390,9 @@ def linear(theta, d):
 
 
 def _activation(theta, dx):
-    """ Utility function for computing activation in different correlation models.
+    """ Utility function for computing activation in correlation models.
 
-    Computes the activation activ=dx.T * M * dx where M is a covariance matrix 
+    Computes the activation activ=dx.T * M * dx where M is a covariance matrix
     of size n*n. The hyperparameters theta specify
      * an isotropic covariance matrix, i.e., M = theta * I with I being the
        identity, if theta has shape 1
