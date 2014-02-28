@@ -29,8 +29,8 @@ def compute_class_weight(class_weight, classes, y):
     -------
     class_weight_vect : ndarray, shape (n_classes,)
         Array with class_weight_vect[i] the weight for i-th class
-        (as determined by sorting).
     """
+    # Import error caused by circular imports.
     from ..preprocessing import LabelEncoder
 
     if class_weight is None or len(class_weight) == 0:
@@ -38,16 +38,14 @@ def compute_class_weight(class_weight, classes, y):
         weight = np.ones(classes.shape[0], dtype=np.float64, order='C')
     elif class_weight == 'auto':
         # Find the weight of each class as present in y.
-        y_classes = np.unique(y)
-        if not all(np.in1d(classes, y)):
+        le = LabelEncoder()
+        y_ind = le.fit_transform(y)
+        if not all(np.in1d(classes, le.classes_)):
             raise ValueError("classes should have valid labels that are in y")
 
-        le = LabelEncoder()
         # inversely proportional to the number of samples in the class
-        counts = bincount(le.fit_transform(y))
-        weighted_array = 1. / counts
-        weights = y_classes.shape[0] / np.sum(weighted_array)
-        weight = weighted_array[le.transform(classes)] * weights
+        recip_freq = 1. / bincount(y_ind)
+        weight = recip_freq[le.transform(classes)] / np.mean(recip_freq)
     else:
         # user-defined dictionary
         weight = np.ones(classes.shape[0], dtype=np.float64, order='C')
