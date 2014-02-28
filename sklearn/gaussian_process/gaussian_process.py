@@ -2,6 +2,8 @@
 
 # Author: Vincent Dubourg <vincent.dubourg@gmail.com>
 #         (mostly translation, see implementation details)
+#         Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
+#         optionional learning of the nugget
 # Licence: BSD 3 clause
 
 from __future__ import print_function
@@ -141,9 +143,24 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         The nugget is added to the diagonal of the assumed training covariance;
         in this way it acts as a Tikhonov regularization in the problem.  In
         the special case of the squared exponential correlation function, the
-        nugget mathematically represents the variance of the input values.
-        Default assumes a nugget close to machine precision for the sake of
-        robustness (nugget = 10. * MACHINE_EPSILON).
+        nugget mathematically represents the variance of the input values. If
+        learn_nugget is True, the nugget specifies only the starting point of
+        the optimization. Default assumes a nugget close to machine precision
+        for the sake of robustness (nugget = 10. * MACHINE_EPSILON).
+
+    learn_nugget : bool, optional
+        If true, the magnitude of the nugget effect is estimated along with the
+        hyperparameters theta. The magnitude of the nugget effect is optimized
+        within the range [10. * MACHINE_EPSILON, nuggetU] with starting
+        at the value passed via the parameter nugget. Note: only the
+        optimization of a global nugget effect is supported but not the
+        optimization of a per-datapoint nugget.
+        Defaults to False.
+
+    nuggetU : float, optional
+        An upper bound on the nugget effect, i.e., the noise level. Only
+        relevant if learn_nugget is true.
+        Defaults to 1.0.
 
     optimizer : string, optional
         A string specifying the optimization algorithm to be used.
@@ -230,7 +247,8 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                  storage_mode='full', verbose=False, theta0=1e-1,
                  thetaL=None, thetaU=None, optimizer='fmin_cobyla',
                  random_start=1, normalize=True,
-                 nugget=10. * MACHINE_EPSILON, random_state=None):
+                 nugget=10. * MACHINE_EPSILON, learn_nugget=False,
+                 nuggetU=1.0, random_state=None):
 
         self.regr = regr
         self.corr = corr
@@ -242,6 +260,8 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         self.thetaU = thetaU
         self.normalize = normalize
         self.nugget = nugget
+        self.learn_nugget = learn_nugget
+        self.nuggetU = nuggetU
         self.optimizer = optimizer
         self.random_start = random_start
         self.random_state = random_state
@@ -579,6 +599,11 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                 G
                         QR decomposition of the matrix Ft.
         """
+        if self.learn_nugget:
+        	nugget = theta[-1]
+        	theta = theta[:-1]
+        else:
+        	nugget = self.nugget
 
         if theta is None:
             # Use built-in autocorrelation parameters
@@ -604,7 +629,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
         # Set up R
         r = self.corr(theta, D)
-        R = np.eye(n_samples) * (1. + self.nugget)
+        R = np.eye(n_samples) * (1. + nugget)
         R[ij[:, 0], ij[:, 1]] = r
         R[ij[:, 1], ij[:, 0]] = r
 
@@ -700,6 +725,14 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
         percent_completed = 0.
 
+        if self.learn_nugget:
+        	# Add a further dimension to theta which corresponds to the
+        	# estimation of the internal nugget (noise level)
+        	self.theta0 = array2d(np.hstack((self.theta0[0], self.nugget)))
+        	self.thetaL = \
+        		array2d(np.hstack((self.thetaL[0], 10 * MACHINE_EPSILON)))
+        	self.thetaU = array2d(np.hstack((self.thetaU[0], self.nuggetU)))
+
         # Force optimizer to fmin_cobyla if the model is meant to be isotropic
         if self.optimizer == 'Welch' and self.theta0.size == 1:
             self.optimizer = 'fmin_cobyla'
@@ -735,10 +768,10 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                     log10_optimal_theta = \
                         optimize.fmin_cobyla(minus_reduced_likelihood_function,
                                              np.log10(theta0), constraints,
-                                             iprint=0)
+                                             iprint=0)[0]
                 except ValueError as ve:
                     print("Optimization failed. Try increasing the ``nugget``")
-                    raise ve
+                    raise
 
                 optimal_theta = 10. ** log10_optimal_theta
                 optimal_minus_rlf_value, optimal_par = \
@@ -762,7 +795,13 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
             optimal_rlf_value = best_optimal_rlf_value
             optimal_par = best_optimal_par
-            optimal_theta = best_optimal_theta
+            if self.learn_nugget:
+            	# chop off last element of theta corresponding to
+            	# the nugget
+            	optimal_theta = best_optimal_theta[:-1]
+            	self.nugget = best_optimal_theta[-1]
+            else:
+            	optimal_theta = best_optimal_theta
 
         elif self.optimizer == 'Welch':
 
