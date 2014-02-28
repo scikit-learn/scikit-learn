@@ -216,6 +216,8 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
     _correlation_types = {
         'absolute_exponential': correlation.absolute_exponential,
         'squared_exponential': correlation.squared_exponential,
+        'matern_1.5': correlation.matern_1_5,
+        'matern_2.5': correlation.matern_2_5,
         'generalized_exponential': correlation.generalized_exponential,
         'cubic': correlation.cubic,
         'linear': correlation.linear}
