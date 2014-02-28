@@ -153,7 +153,7 @@ class LossFunction(six.with_metaclass(ABCMeta, object)):
         raise NotImplementedError()
 
     @abstractmethod
-    def __call__(self, y, pred, **kargs):
+    def __call__(self, y, pred):
         """Compute the loss of prediction ``pred`` and ``y``. """
 
     @abstractmethod
@@ -226,7 +226,7 @@ class LeastSquaresError(RegressionLossFunction):
     def init_estimator(self):
         return MeanEstimator()
 
-    def __call__(self, y, pred, mask=Ellipsis, **kargs):
+    def __call__(self, y, pred, mask=Ellipsis):
         return np.mean((y[mask] - pred[mask].ravel()) ** 2.0)
 
     def negative_gradient(self, y, pred, **kargs):
@@ -251,7 +251,7 @@ class LeastAbsoluteError(RegressionLossFunction):
     def init_estimator(self):
         return QuantileEstimator(alpha=0.5)
 
-    def __call__(self, y, pred, mask=Ellipsis, **kargs):
+    def __call__(self, y, pred, mask=Ellipsis):
         return np.abs(y[mask] - pred[mask].ravel()).mean()
 
     def negative_gradient(self, y, pred, **kargs):
@@ -278,7 +278,7 @@ class HuberLossFunction(RegressionLossFunction):
     def init_estimator(self):
         return QuantileEstimator(alpha=0.5)
 
-    def __call__(self, y, pred, mask=Ellipsis, **kargs):
+    def __call__(self, y, pred, mask=Ellipsis):
         pred = pred[mask].ravel()
         y = y[mask]
         diff = y - pred
@@ -331,7 +331,7 @@ class QuantileLossFunction(RegressionLossFunction):
     def init_estimator(self):
         return QuantileEstimator(self.alpha)
 
-    def __call__(self, y, pred, mask=Ellipsis, **kargs):
+    def __call__(self, y, pred, mask=Ellipsis):
         pred = pred[mask].ravel()
         y = y[mask]
         diff = y - pred
@@ -382,7 +382,7 @@ class NormalizedDiscountedCumulativeGain(RegressionLossFunction):
                 start_group = g
         yield start, fl.index
 
-    def __call__(self, y, pred, mask=Ellipsis, sample_group=None, **kargs):
+    def __call__(self, y, pred, mask=Ellipsis, sample_group=None):
         pred = pred[mask].ravel()
         y = y[mask]
         if sample_group is None:
@@ -464,7 +464,7 @@ class BinomialDeviance(LossFunction):
     def init_estimator(self):
         return LogOddsEstimator()
 
-    def __call__(self, y, pred, mask=Ellipsis, **kargs):
+    def __call__(self, y, pred, mask=Ellipsis):
         """Compute the deviance (= 2 * negative log-likelihood). """
         # logaddexp(0, v) == log(1.0 + exp(v))
         pred = pred[mask].ravel()
@@ -515,7 +515,7 @@ class MultinomialDeviance(LossFunction):
     def init_estimator(self):
         return PriorProbabilityEstimator()
 
-    def __call__(self, y, pred, mask=Ellipsis, **kargs):
+    def __call__(self, y, pred, mask=Ellipsis):
         y = y[mask]
         pred = pred[mask]
         # create one-hot label encoding
