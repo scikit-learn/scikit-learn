@@ -164,10 +164,7 @@ def check_regressors_classifiers_sparse_data(name, Estimator, X, y):
         estimator.fit(X, y)
         estimator.predict(X)
         if hasattr(estimator, 'predict_proba'):
-            try:
-                estimator.predict_proba(X)
-            except NotImplementedError:
-                pass
+            estimator.predict_proba(X)
     except TypeError as e:
         if not 'sparse' in repr(e):
             print("Estimator %s doesn't seem to fail gracefully on "
@@ -623,20 +620,16 @@ def check_classifiers_train(name, Classifier, X, y):
         except NotImplementedError:
             pass
     if hasattr(classifier, "predict_proba"):
-        try:
-            # predict_proba agrees with predict:
-            y_prob = classifier.predict_proba(X)
-            assert_equal(y_prob.shape, (n_samples, n_classes))
-            assert_array_equal(np.argmax(y_prob, axis=1), y_pred)
-            # check that probas for all classes sum to one
-            assert_array_almost_equal(
-                np.sum(y_prob, axis=1), np.ones(n_samples))
-            # raises error on malformed input
-            assert_raises(ValueError, classifier.predict_proba, X.T)
-            # raises error on malformed input for predict_proba
-            assert_raises(ValueError, classifier.predict_proba, X.T)
-        except NotImplementedError:
-            pass
+        # predict_proba agrees with predict:
+        y_prob = classifier.predict_proba(X)
+        assert_equal(y_prob.shape, (n_samples, n_classes))
+        assert_array_equal(np.argmax(y_prob, axis=1), y_pred)
+        # check that probas for all classes sum to one
+        assert_array_almost_equal(np.sum(y_prob, axis=1), np.ones(n_samples))
+        # raises error on malformed input
+        assert_raises(ValueError, classifier.predict_proba, X.T)
+        # raises error on malformed input for predict_proba
+        assert_raises(ValueError, classifier.predict_proba, X.T)
 
 
 def test_classifiers_classes():

@@ -465,7 +465,20 @@ class BaseSVC(BaseLibSVM, ClassifierMixin):
         y = super(BaseSVC, self).predict(X)
         return self.classes_.take(np.asarray(y, dtype=np.intp))
 
-    def predict_proba(self, X):
+    # Hacky way of getting predict_proba to raise an AttributeError when
+    # probability=False using properties. Do not use this in new code; when
+    # probabilities are not available depending on a setting, introduce two
+    # estimators.
+    def _check_proba(self):
+        if not self.probability:
+            raise AttributeError("predict_proba is not available when"
+                                 " probability=%r" % self.probability)
+        if self._impl not in ('c_svc', 'nu_svc'):
+            raise AttributeError("predict_proba only implemented for SVC"
+                                 " and NuSVC")
+
+    @property
+    def predict_proba(self):
         """Compute probabilities of possible outcomes for samples in X.
 
         The model need to have probability information computed at training
@@ -489,20 +502,17 @@ class BaseSVC(BaseLibSVM, ClassifierMixin):
         predict. Also, it will produce meaningless results on very small
         datasets.
         """
-        if not self.probability:
-            raise NotImplementedError(
-                "probability estimates must be enabled to use this method")
+        self._check_proba()
+        return self._predict_proba
 
-        if self._impl not in ('c_svc', 'nu_svc'):
-            raise NotImplementedError("predict_proba only implemented for SVC "
-                                      "and NuSVC")
-
+    def _predict_proba(self, X):
         X = self._validate_for_predict(X)
         pred_proba = (self._sparse_predict_proba
                       if self._sparse else self._dense_predict_proba)
         return pred_proba(X)
 
-    def predict_log_proba(self, X):
+    @property
+    def predict_log_proba(self):
         """Compute log probabilities of possible outcomes for samples in X.
 
         The model need to have probability information computed at training
@@ -526,6 +536,10 @@ class BaseSVC(BaseLibSVM, ClassifierMixin):
         predict. Also, it will produce meaningless results on very small
         datasets.
         """
+        self._check_proba()
+        return self._predict_log_proba
+
+    def _predict_log_proba(self, X):
         return np.log(self.predict_proba(X))
 
     def _dense_predict_proba(self, X):
