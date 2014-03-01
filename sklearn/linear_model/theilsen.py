@@ -9,6 +9,7 @@ A Theil-Sen Estimator for Multiple Linear Regression Model
 from __future__ import division, print_function, absolute_import
 
 import logging
+import tempfile
 from itertools import combinations
 
 import numpy as np
@@ -17,6 +18,7 @@ from scipy.special import binom
 from .base import LinearModel
 from ..base import RegressorMixin
 from ..utils import check_arrays, check_random_state
+from ..externals.joblib import Parallel, delayed
 
 _logger = logging.getLogger(__name__)
 
@@ -150,6 +152,10 @@ class TheilSen(LinearModel, RegressorMixin):
         A random number generator instance to define the state of the
         random permutations generator.
 
+    n_jobs : integer, optional, default 1
+        Number of CPUs to use during the cross validation. If ``-1``, use
+        all the CPUs
+
     verbose : boolean, optional, default False
         Verbose mode when fitting the model.
 
@@ -170,7 +176,7 @@ class TheilSen(LinearModel, RegressorMixin):
 
     def __init__(self, fit_intercept=True, copy_X=True,
                  n_subpopulation=None, n_subsamples=None, n_iter=300,
-                 tol=1.e-3, random_state=None, verbose=False):
+                 tol=1.e-3, random_state=None, n_jobs=1, verbose=False):
         self.fit_intercept = fit_intercept
         self.copy_X = copy_X
         self.n_subpopulation = n_subpopulation
@@ -178,15 +184,23 @@ class TheilSen(LinearModel, RegressorMixin):
         self.n_iter = n_iter
         self.tol = tol
         self.random_state = random_state
+        self.n_jobs = n_jobs
         self.verbose = verbose
+
+    def _print_verbose(self, n_samples, n_subpopulation):
+        if self.verbose:
+            print("Breakdown point: {}".format(self.breakdown_))
+            tol_outliers = int(self.breakdown_ * n_samples)
+            print("Tolerable outliers: {}".format(tol_outliers))
+            print("Number of subpopulations: {}".format(n_subpopulation))
 
     def _check_subparams(self, n_samples, n_features):
         if self.fit_intercept:
             n_dim = n_features + 1
-            fst = 1
+            fst = 1  # first index
         else:
             n_dim = n_features
-            fst = 0
+            fst = 0  # first index
         n_subpopulation = self.n_subpopulation
         n_subsamples = self.n_subsamples
         if n_subsamples is not None:
@@ -200,15 +214,20 @@ class TheilSen(LinearModel, RegressorMixin):
 
         return fst, n_dim, n_subsamples, n_subpopulation
 
-    def _subpop_iter(self, n_samples, n_dim):
+    def _subpop_iter(self, n_samples, n_ss):
         for s in xrange(self.n_subpopulation):
-            yield self.random_state_.randint(0, n_samples, n_dim)
+            yield self.random_state_.randint(0, n_samples, n_ss)
 
-    def _get_indices(self, n_samples, n_dim):
+    def _get_Xysubs(self, X, y, n_samples, n_dim, n_ss, fst):
         if self.n_subpopulation is None:
-            return combinations(xrange(n_samples), n_dim)
+            indices = combinations(xrange(n_samples), n_ss)
         else:
-            return self._subpop_iter(n_samples, n_dim)
+            indices = self._subpop_iter(n_samples, n_ss)
+        for i, ix in enumerate(indices):
+            X_sub = np.ones((n_ss, n_dim))
+            X_sub[:, fst:] = X[list(ix), :]
+            yield X_sub, y[list(ix)]
+            #weights[i, :] = lstsq(X_sub, y[list(ix)])[0]
 
     def fit(self, X, y):
         self.random_state_ = check_random_state(self.random_state)
@@ -216,15 +235,17 @@ class TheilSen(LinearModel, RegressorMixin):
         n_samples, n_features = X.shape
         fst, n_dim, n_ss, n_sp = self._check_subparams(n_samples, n_features)
         self.breakdown_ = breakdown_point(n_samples, n_dim)
+        self._print_verbose(n_samples, n_sp)
+        Xysubs = self._get_Xysubs(X, y, n_samples, n_dim, n_ss, fst)
 
-        indices = self._get_indices(n_samples, n_ss)
-        weights = np.empty((n_sp, n_dim))
-        for i, ix in enumerate(indices):
-            X_sub = np.ones((n_ss, n_dim))
-            X_sub[:, fst:] = X[list(ix), :]
-            weights[i, :] = lstsq(X_sub, y[list(ix)])[0]
-
-        coefs = spatial_median(weights, n_iter=self.n_iter, tol=self.tol)
+        with tempfile.NamedTemporaryFile() as fh:
+            weights = np.memmap(fh.name, dtype=np.float, shape=(n_sp, n_dim),
+                                mode="w+")
+            Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
+                delayed(_lse)(weights, i, *Xy)
+                for i, Xy in enumerate(Xysubs)
+            )
+            coefs = spatial_median(weights, n_iter=self.n_iter, tol=self.tol)
 
         if self.fit_intercept:
             self.intercept_ = coefs[0]
@@ -234,3 +255,23 @@ class TheilSen(LinearModel, RegressorMixin):
             self.coef_ = coefs
 
         return self
+
+
+def _lse(w, i, X, y):
+    """Least Squares Estimator for TheilSen class.
+
+    Parameters
+    ----------
+    w : array, shape = [n_subpopulation, n_dim]
+        Weights array that holds the coefficients of i-th subpopulation.
+
+    i : int
+        Index where the coefficients for the i-th subpopulation are saved in w.
+
+    X : array, shape = [n_subsamples, n_dim]
+        Subarray of the original X.
+
+    y : array, shape = [n_subamples]
+        Subarray of the original y.
+    """
+    w[i, :] = lstsq(X, y)[0]

@@ -218,3 +218,20 @@ def test_subsamples():
     lstq = LinearRegression().fit(X, y)
     # Check for exact the same results as Least Squares
     nptest.assert_array_almost_equal(theilsen.coef_, lstq.coef_, 9)
+
+
+def test_verbosity():
+    X, y, w, c = gen_toy_problem_1d()
+    # Check that Theil-Sen can be verbose
+    TheilSen(verbose=True).fit(X, y)
+
+
+def test_theilsen_parallel():
+    X, y, w, c = gen_toy_problem_2d()
+    # Check that Least Squares fails
+    lstq = LinearRegression().fit(X, y)
+    assert np.linalg.norm(lstq.coef_ - w) > 1.0
+    # Check that Theil-Sen works
+    theilsen = TheilSen(n_jobs=-1).fit(X, y)
+    nptest.assert_array_almost_equal(theilsen.coef_, w, 1)
+    nptest.assert_array_almost_equal(theilsen.intercept_, c, 1)
