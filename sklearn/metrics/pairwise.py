@@ -40,8 +40,8 @@ kernel:
 
 import numpy as np
 from scipy.spatial import distance
-from scipy.sparse import csr_matrix
-from scipy.sparse import issparse
+from scipy.sparse import csr_matrix, coo_matrix
+from scipy.sparse import issparse, isspmatrix_coo, isspmatrix_csr
 
 from ..utils import array2d, atleast2d_or_csr
 from ..utils import gen_even_slices
@@ -53,7 +53,8 @@ from ..externals.joblib import Parallel
 from ..externals.joblib import delayed
 from ..externals.joblib.parallel import cpu_count
 
-from .pairwise_fast import _chi2_kernel_fast
+from .pairwise_fast import _chi2_kernel_fast, _manhattan_distances_coo, \
+    _manhattan_distances_csr
 
 
 # Utility Functions
@@ -386,19 +387,22 @@ def manhattan_distances(X, Y=None, sum_over_features=True,
     """ Compute the L1 distances between the vectors in X and Y.
 
     With sum_over_features equal to False it returns the componentwise
-    distances.
+    distances. If either the X or Y input matrix is sparse, they will both be
+    converted to sparse (coo) matrices to carry out the computation.
 
     Parameters
     ----------
     X : array_like
-        An array with shape (n_samples_X, n_features).
+        An array or sparse matrix with shape (n_samples_X, n_features).
 
     Y : array_like, optional
-        An array with shape (n_samples_Y, n_features).
+        An array or sparse matrix with shape (n_samples_Y, n_features).
 
     sum_over_features : bool, default=True
         If True the function returns the pairwise distance matrix
-        else it returns the componentwise L1 pairwise-distances.
+        else it returns the componentwise L1 pairwise-distances. If either of
+        the X and Y matrices is sparse and sum_over_features=True the returned
+        distance matrix is also sparse (csr).
 
     size_threshold : int, default=5e8
         Avoid creating temporary matrices bigger than size_threshold (in
@@ -407,7 +411,7 @@ def manhattan_distances(X, Y=None, sum_over_features=True,
 
     Returns
     -------
-    D : array
+    D : array or csr sparse matrix
         If sum_over_features is False shape is
         (n_samples_X * n_samples_Y, n_features) and D contains the
         componentwise L1 pairwise-distances (ie. absolute difference),
@@ -434,13 +438,18 @@ def manhattan_distances(X, Y=None, sum_over_features=True,
     array([[ 1.,  1.],
            [ 1.,  1.]]...)
     """
-    if issparse(X) or issparse(Y):
-        raise ValueError("manhattan_distance does not support sparse"
-                         " matrices.")
+
     X, Y = check_pairwise_arrays(X, Y)
+    sparse_input = False
+    if issparse(X) or issparse(Y):
+        sparse_input = True
+        X = csr_matrix(X, copy=False)
+        Y = csr_matrix(Y, copy=False)
+
     temporary_size = X.size * Y.shape[-1]
     # Convert to bytes
-    temporary_size *= X.itemsize
+    temporary_size *= X.dtype.alignment
+
     if temporary_size > size_threshold and sum_over_features:
         # Broadcasting the full thing would be too big: it's on the order
         # of magnitude of the gigabyte
@@ -448,20 +457,40 @@ def manhattan_distances(X, Y=None, sum_over_features=True,
         index = 0
         increment = 1 + int(size_threshold / float(temporary_size) *
                             X.shape[0])
+
         while index < X.shape[0]:
-            this_slice = slice(index, index + increment)
-            tmp = X[this_slice, np.newaxis, :] - Y[np.newaxis, :, :]
-            tmp = np.abs(tmp, tmp)
-            tmp = np.sum(tmp, axis=2)
+            this_slice = slice(index, min(index + increment, X.shape[0]))
+            if sparse_input:
+                n_samples_x = this_slice.stop - this_slice.start
+                X_sub = X[this_slice]
+                data, indices, indptr = _manhattan_distances_csr(X_sub, Y)
+                shape = ((n_samples_x) * Y.shape[0], X.shape[1])
+                tmp = csr_matrix((data, indices, indptr), shape=shape,
+                                 dtype=np.float64)
+                tmp = np.abs(tmp)
+                tmp = tmp.sum(axis=1).A.reshape(((n_samples_x), Y.shape[0]))
+            else:
+                this_slice = slice(index, index + increment)
+                tmp = X[this_slice, np.newaxis, :] - Y[np.newaxis, :, :]
+                tmp = np.abs(tmp, tmp)
+                tmp = np.sum(tmp, axis=2)
             D[this_slice] = tmp
             index += increment
     else:
-        D = X[:, np.newaxis, :] - Y[np.newaxis, :, :]
-        D = np.abs(D, D)
-        if sum_over_features:
-            D = np.sum(D, axis=2)
+        if sparse_input:
+            shape = (X.shape[0] * Y.shape[0], X.shape[1])
+            data, indices, indptr = _manhattan_distances_csr(X, Y)
+            D = csr_matrix((data, indices, indptr), shape=shape)
+            D = np.abs(D)
+            if sum_over_features:
+                D = D.sum(axis=1).A.reshape((X.shape[0], Y.shape[0]))
         else:
-            D = D.reshape((-1, X.shape[1]))
+            D = X[:, np.newaxis, :] - Y[np.newaxis, :, :]
+            D = np.abs(D, D)
+            if sum_over_features:
+                D = np.sum(D, axis=2)
+            else:
+                D = D.reshape((-1, X.shape[1]))
     return D
 
 

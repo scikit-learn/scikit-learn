@@ -1,7 +1,7 @@
 import numpy as np
 from numpy import linalg
 
-from scipy.sparse import dok_matrix, csr_matrix, issparse
+from scipy.sparse import dok_matrix, csr_matrix, issparse, coo_matrix
 from scipy.spatial.distance import cosine, cityblock, minkowski
 
 from sklearn.utils.testing import assert_greater
@@ -61,9 +61,14 @@ def test_pairwise_distances():
     assert_equal(S.shape[0], X.shape[0])
     assert_equal(S.shape[1], Y.shape[0])
     assert_array_almost_equal(S, S2)
-    # manhattan does not support sparse matrices atm.
-    assert_raises(ValueError, pairwise_distances, csr_matrix(X),
-                  metric="manhattan")
+    # manhattan with sparse should equal manhattan with dense
+    X_coo = coo_matrix(X)
+    Y_coo = coo_matrix(Y)
+    S = pairwise_distances(X, Y, metric="manhattan")
+    S2 = pairwise_distances(X_coo, Y_coo, metric="manhattan")
+    assert_equal(S.shape[0], X.shape[0])
+    assert_equal(S.shape[1], Y.shape[0])
+    assert_array_almost_equal(S, S2)
     # Low-level function for manhattan can divide in blocks to avoid
     # using too much memory during the broadcasting
     S3 = manhattan_distances(X, Y, size_threshold=10)
@@ -104,6 +109,28 @@ def test_pairwise_distances():
     assert_raises(TypeError, pairwise_distances, X, Y_sparse,
                   metric="minkowski")
 
+
+def test_manhattan_sparse():
+    # test that manhattan distances handles combinations of sparse matrices
+    # correctly
+    rng = np.random.RandomState(42)
+    # Euclidean distance should be equivalent to calling the function.
+    X = rng.random_sample((5, 4))
+    Y = rng.random_sample((2, 4))
+
+    S = pairwise_distances(X, Y, metric="manhattan")
+    S2 = manhattan_distances(coo_matrix(X), Y)
+    assert_true(not issparse(Y))
+    assert_almost_equal(S, S2)
+    S2 = manhattan_distances(X, coo_matrix(Y))
+    assert_true(not issparse(X))
+    assert_almost_equal(S, S2)
+    S2 = manhattan_distances(X, csr_matrix(Y))
+    assert_true(not issparse(X))
+    assert_almost_equal(S, S2)
+    S2 = manhattan_distances(csr_matrix(X), Y)
+    assert_true(not issparse(Y))
+    assert_almost_equal(S, S2)
 
 def test_pairwise_parallel():
     rng = np.random.RandomState(0)
@@ -218,8 +245,11 @@ def test_pairwise_distances_argmin_min():
     assert_array_almost_equal(E, [1., 1.])
 
     # sparse matrix case
-    assert_raises(ValueError,
-                  pairwise_distances_argmin_min, Xsp, Ysp, metric="manhattan")
+    D, E = pairwise_distances_argmin_min(Xsp, Ysp, metric="manhattan")
+    D2 = pairwise_distances_argmin(Xsp, Ysp, metric="manhattan")
+    assert_array_almost_equal(D, [0, 1])
+    assert_array_almost_equal(D2, [0, 1])
+    assert_array_almost_equal(E, [1., 1.])
 
     # Non-euclidean Scipy distance (callable)
     D, E = pairwise_distances_argmin_min(X, Y, metric=minkowski,
@@ -259,6 +289,42 @@ def test_euclidean_distances():
     Y = csr_matrix(Y)
     D = euclidean_distances(X, Y)
     assert_array_almost_equal(D, [[1., 2.]])
+
+
+def test_manhattan_distances():
+    """Check that manhattan_distances return correct output."""
+    X = np.array([[0, 0, 1, 1],
+                  [1, 0, 2, 5],
+                  [5, 6, 1, 4],
+                  [0, 0, 1, 0],
+                  [5, 0, 1, 0],
+                  [5, 0, 0, 0],
+                  [0, 0, 0, 4]], dtype=np.float64)
+
+    Y = np.array([[-1, 2, 1, 0],
+                  [ 1, 6, 2, 0],
+                  [ 0, 0, 2, 0],
+                  [ 0, 6, 2, 0],
+                  [ 0, 6, 0, 1]], dtype=np.float64)
+
+    D_gold = np.array([[  4.,   9.,   2.,   8.,   7.],
+                       [ 10.,  11.,   6.,  12.,  13.],
+                       [ 14.,   9.,  16.,  10.,   9.],
+                       [  3.,   8.,   1.,   7.,   8.],
+                       [  8.,  11.,   6.,  12.,  13.],
+                       [  9.,  12.,   7.,  13.,  12.],
+                       [  8.,  13.,   6.,  12.,   9.]])
+
+    D = manhattan_distances(X, Y)
+    assert_array_almost_equal(D, D_gold)
+
+    X = csr_matrix(X)
+    Y = csr_matrix(Y)
+    D = manhattan_distances(X, Y)
+    assert_array_almost_equal(D, D_gold)
+
+    D = manhattan_distances(X, Y, size_threshold=0.1)
+    assert_array_almost_equal(D, D_gold)
 
 
 def test_chi_square_kernel():
