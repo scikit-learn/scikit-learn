@@ -17,7 +17,7 @@ import scipy.sparse as sp
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_false, assert_true
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
@@ -190,8 +190,9 @@ def test_grid_search_no_score():
     assert_equal(grid_search.score(X, y), grid_search_no_score.score(X, y))
 
     # giving no scoring function raises an error
-    assert_raise_message(TypeError, "no scoring",
-                         GridSearchCV, clf_no_score, {'C': Cs})
+    grid_search_no_score = GridSearchCV(clf_no_score, {'C': Cs})
+    assert_raise_message(TypeError, "no scoring", grid_search_no_score.fit,
+                         [[1]])
 
 
 def test_trivial_grid_scores():
@@ -494,9 +495,10 @@ def test_bad_estimator():
     # test grid-search with clustering algorithm which doesn't support
     # "predict"
     sc = SpectralClustering()
-    assert_raises(TypeError, GridSearchCV, sc,
-                  param_grid=dict(gamma=[.1, 1, 10]),
-                  scoring='ari')
+    grid_search = GridSearchCV(sc, param_grid=dict(gamma=[.1, 1, 10]),
+                               scoring='ari')
+    assert_raise_message(TypeError, "'score' or a 'predict'", grid_search.fit,
+                         [[1]])
 
 
 def test_param_sampler():
@@ -543,7 +545,7 @@ def test_randomized_search_grid_scores():
 
     # Check the consistency with the best_score_ and best_params_ attributes
     sorted_grid_scores = list(sorted(search.grid_scores_,
-                            key=lambda x: x.mean_validation_score))
+                              key=lambda x: x.mean_validation_score))
     best_score = sorted_grid_scores[-1].mean_validation_score
     assert_equal(search.best_score_, best_score)
 
@@ -573,8 +575,8 @@ def test_grid_search_score_consistency():
                 if score == "f1":
                     correct_score = f1_score(y[test], clf.predict(X[test]))
                 elif score == "roc_auc":
-                    correct_score = roc_auc_score(y[test],
-                                              clf.decision_function(X[test]))
+                    dec = clf.decision_function(X[test])
+                    correct_score = roc_auc_score(y[test], dec)
                 assert_almost_equal(correct_score, scores[i])
                 i += 1
 
@@ -642,3 +644,12 @@ def test_grid_search_with_multioutput_data():
                 correct_score = est.score(X[test], y[test])
                 assert_almost_equal(correct_score,
                                     cv_validation_scores[i])
+
+
+def test_predict_proba_disabled():
+    """Test predict_proba when disabled on estimator."""
+    X = np.arange(20).reshape(5, -1)
+    y = [0, 0, 1, 1, 1]
+    clf = SVC(probability=False)
+    gs = GridSearchCV(clf, {}, cv=2).fit(X, y)
+    assert_false(hasattr(gs, "predict_proba"))

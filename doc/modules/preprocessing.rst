@@ -343,7 +343,7 @@ Continuing the example above::
   >>> enc = preprocessing.OneHotEncoder()
   >>> enc.fit([[0, 0, 3], [1, 1, 0], [0, 2, 1], [1, 0, 2]])  # doctest: +ELLIPSIS
   OneHotEncoder(categorical_features='all', dtype=<... 'float'>,
-         n_values='auto')
+         n_values='auto', sparse=True)
   >>> enc.transform([[0, 1, 3]]).toarray()
   array([[ 1.,  0.,  0.,  1.,  0.,  0.,  0.,  0.,  1.]])
 
@@ -445,9 +445,9 @@ that contain the missing values::
     >>> imp.fit([[1, 2], [np.nan, 3], [7, 6]])
     Imputer(axis=0, copy=True, missing_values='NaN', strategy='mean', verbose=0)
     >>> X = [[np.nan, 2], [6, np.nan], [7, 6]]
-    >>> print(imp.transform(X))
+    >>> print(imp.transform(X))                           # doctest: +ELLIPSIS
     [[ 4.          2.        ]
-     [ 6.          3.66666667]
+     [ 6.          3.666...]
      [ 7.          6.        ]]
 
 The :class:`Imputer` class also supports sparse matrices::
@@ -458,9 +458,9 @@ The :class:`Imputer` class also supports sparse matrices::
     >>> imp.fit(X)
     Imputer(axis=0, copy=True, missing_values=0, strategy='mean', verbose=0)
     >>> X_test = sp.csc_matrix([[0, 2], [6, 0], [7, 6]])
-    >>> print(imp.transform(X_test))
+    >>> print(imp.transform(X_test))                      # doctest: +ELLIPSIS
     [[ 4.          2.        ]
-     [ 6.          3.66666667]
+     [ 6.          3.666...]
      [ 7.          6.        ]]
 
 Note that, here, missing values are encoded by 0 and are thus implicitly stored

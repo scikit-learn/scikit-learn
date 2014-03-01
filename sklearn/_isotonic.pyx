@@ -1,8 +1,12 @@
+# Author: Nelle Varoquaux
+
 import numpy as np
 cimport numpy as np
 cimport cython
 
 ctypedef np.float64_t DOUBLE
+
+np.import_array()
 
 
 @cython.boundscheck(False)

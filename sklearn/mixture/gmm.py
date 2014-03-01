@@ -177,7 +177,7 @@ class GMM(BaseEstimator):
     See Also
     --------
 
-    DPGMM : Ininite gaussian mixture model, using the dirichlet
+    DPGMM : Infinite gaussian mixture model, using the dirichlet
         process, fit with a variational algorithm
 
 
@@ -604,7 +604,7 @@ def _log_multivariate_normal_density_full(X, means, covars, min_covar=1.e-7):
         try:
             cv_chol = linalg.cholesky(cv, lower=True)
         except linalg.LinAlgError:
-            # The model is most probabily stuck in a component with too
+            # The model is most probably stuck in a component with too
             # few observations, we need to reinitialize this components
             cv_chol = linalg.cholesky(cv + min_covar * np.eye(n_dim),
                                       lower=True)
@@ -634,7 +634,7 @@ def _validate_covars(covars, covariance_type, n_components):
                              "positive-definite")
     elif covariance_type == 'diag':
         if len(covars.shape) != 2:
-            raise ValueError("'diag' covars must have shape"
+            raise ValueError("'diag' covars must have shape "
                              "(n_components, n_dim)")
         elif np.any(covars <= 0):
             raise ValueError("'diag' covars must be non-negative")

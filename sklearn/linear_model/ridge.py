@@ -25,7 +25,7 @@ from ..utils import column_or_1d
 from ..preprocessing import LabelBinarizer
 from ..grid_search import GridSearchCV
 from ..externals import six
-from ..metrics.scorer import _deprecate_loss_and_score_funcs
+from ..metrics.scorer import check_scoring
 
 
 def _solve_sparse_cg(X, y, alpha, max_iter=None, tol=1e-3):
@@ -108,7 +108,7 @@ def _solve_dense_cholesky(X, y, alpha):
         return coefs
 
 
-def _solve_dense_cholesky_kernel(K, y, alpha, sample_weight=None):
+def _solve_dense_cholesky_kernel(K, y, alpha, sample_weight=1.0):
     # dual_coef = inv(X X^t + alpha*Id) y
     n_samples = K.shape[0]
     n_targets = y.shape[1]
@@ -287,11 +287,12 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
             try:
                 dual_coef = _solve_dense_cholesky_kernel(K, y, alpha,
                                                          sample_weight)
+
+                coef = safe_sparse_dot(X.T, dual_coef, dense_output=True).T
             except linalg.LinAlgError:
                 # use SVD solver if matrix is singular
                 solver = 'svd'
 
-            coef = safe_sparse_dot(X.T, dual_coef, dense_output=True).T
         else:
             try:
                 coef = _solve_dense_cholesky(X, y, alpha)
@@ -482,7 +483,7 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
 
     solver : {'auto', 'svd', 'dense_cholesky', 'lsqr', 'sparse_cg'}
         Solver to use in the computational
-        routines. 'svd' will use a Sinvular value decomposition to obtain
+        routines. 'svd' will use a Singular value decomposition to obtain
         the solution, 'dense_cholesky' will use the standard
         scipy.linalg.solve function, 'sparse_cg' will use the
         conjugate gradient solver as found in
@@ -538,7 +539,7 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
 
         if self.class_weight:
             cw = compute_class_weight(self.class_weight,
-                                      self.classes_, Y)
+                                      self.classes_, y)
             # get the class weight corresponding to each sample
             sample_weight = cw[np.searchsorted(self.classes_, y)]
         else:
@@ -591,9 +592,11 @@ class _RidgeGCV(LinearModel):
     http://www.mit.edu/~9.520/spring07/Classes/rlsslides.pdf
     """
 
-    def __init__(self, alphas=[0.1, 1.0, 10.0], fit_intercept=True,
-                 normalize=False, scoring=None, score_func=None, loss_func=None,
-                 copy_X=True, gcv_mode=None, store_cv_values=False):
+    def __init__(self, alphas=[0.1, 1.0, 10.0],
+                 fit_intercept=True, normalize=False,
+                 scoring=None, score_func=None,
+                 loss_func=None, copy_X=True,
+                 gcv_mode=None, store_cv_values=False):
         self.alphas = np.asarray(alphas)
         self.fit_intercept = fit_intercept
         self.normalize = normalize
@@ -726,12 +729,11 @@ class _RidgeGCV(LinearModel):
         cv_values = np.zeros((n_samples * n_y, len(self.alphas)))
         C = []
 
-        scorer = _deprecate_loss_and_score_funcs(
-            self.loss_func, self.score_func, self.scoring,
-            score_overrides_loss=True
-        )
+        scorer = check_scoring(self, scoring=self.scoring, allow_none=True,
+                               loss_func=self.loss_func,
+                               score_func=self.score_func,
+                               score_overrides_loss=True)
         error = scorer is None
-        #error = self.score_func is None and self.loss_func is None
 
         for i, alpha in enumerate(self.alphas):
             if error:
@@ -906,6 +908,10 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
     `alpha_` : float
         Estimated regularization parameter.
 
+    `intercept_` : float | array, shape = (n_targets,)
+        Independent term in decision function. Set to 0.0 if
+        ``fit_intercept = False``.
+
     See also
     --------
     Ridge: Ridge regression
@@ -1018,7 +1024,7 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
             class_weight = self.class_weight
         else:
             warnings.warn("'class_weight' is now an initialization parameter."
-                          "Using it in the 'fit' method is deprecated and "
+                          " Using it in the 'fit' method is deprecated and "
                           "will be removed in 0.15.", DeprecationWarning,
                           stacklevel=2)
 

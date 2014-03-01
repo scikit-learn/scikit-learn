@@ -15,8 +15,7 @@ from ..externals.joblib import Parallel, delayed
 from .base import LinearClassifierMixin, SparseCoefMixin
 from ..base import BaseEstimator, RegressorMixin
 from ..feature_selection.from_model import _LearntSelectorMixin
-from ..utils import (array2d, atleast2d_or_csr, check_arrays, deprecated,
-                     column_or_1d)
+from ..utils import atleast2d_or_csr, check_arrays, deprecated, column_or_1d
 from ..utils.extmath import safe_sparse_dot
 from ..utils.multiclass import _check_partial_fit_first_call
 from ..externals import six
@@ -160,15 +159,6 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
         if sample_weight.shape[0] != n_samples:
             raise ValueError("Shapes of X and sample_weight do not match.")
         return sample_weight
-
-    def _set_coef(self, coef_):
-        """Make sure that coef_ is fortran-style and 2d.
-
-        Fortran-style memory layout is needed to ensure that computing
-        the dot product between input ``X`` and ``coef_`` does not trigger
-        a memory copy.
-        """
-        self.coef_ = np.asfortranarray(array2d(coef_))
 
     def _allocate_parameter_mem(self, n_classes, n_features, coef_init=None,
                                 intercept_init=None):
@@ -384,7 +374,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
 
         if class_weight is not None:
             warnings.warn("Using 'class_weight' as a parameter to the 'fit'"
-                          "method is deprecated and will be removed in 0.13. "
+                          " method is deprecated and will be removed in 0.13. "
                           "Set it on initialization instead.",
                           DeprecationWarning, stacklevel=2)
 
@@ -411,10 +401,6 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
 
         self._partial_fit(X, y, alpha, C, loss, learning_rate, self.n_iter,
                           classes, sample_weight, coef_init, intercept_init)
-
-        # fitting is over, we can now transform coef_ to fortran order
-        # for faster predictions
-        self._set_coef(self.coef_)
 
         return self
 
@@ -553,7 +539,7 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
     penalty : str, 'l2' or 'l1' or 'elasticnet'
         The penalty (aka regularization term) to be used. Defaults to 'l2'
         which is the standard regularizer for linear SVM models. 'l1' and
-        'elasticnet' migh bring sparsity to the model (feature selection)
+        'elasticnet' might bring sparsity to the model (feature selection)
         not achievable with 'l2'.
 
     alpha : float
@@ -599,11 +585,13 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
     learning_rate : string, optional
         The learning rate:
         constant: eta = eta0
-        optimal: eta = 1.0/(t+t0) [default]
+        optimal: eta = 1.0 / (t + t0) [default]
         invscaling: eta = eta0 / pow(t, power_t)
 
     eta0 : double
-        The initial learning rate [default 0.01].
+        The initial learning rate for the 'constant' or 'invscaling'
+        schedules. The default value is 0.0 as eta0 is not used by the
+        default schedule 'optimal'.
 
     power_t : double
         The exponent for inverse scaling learning rate [default 0.5].
@@ -666,8 +654,16 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
             power_t=power_t, class_weight=class_weight, warm_start=warm_start,
             seed=seed)
 
-    def predict_proba(self, X):
+    def _check_proba(self):
+        if self.loss not in ("log", "modified_huber"):
+            raise AttributeError("probability estimates are not available for"
+                                 " loss=%r" % self.loss)
+
+    @property
+    def predict_proba(self):
         """Probability estimates.
+
+        This method is only available for log loss and modified Huber loss.
 
         Multiclass probability estimates are derived from binary (one-vs.-rest)
         estimates by simple normalization, as recommended by Zadrozny and
@@ -696,6 +692,10 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
         case is in the appendix B in:
         http://jmlr.csail.mit.edu/papers/volume2/zhang02c/zhang02c.pdf
         """
+        self._check_proba()
+        return self._predict_proba
+
+    def _predict_proba(self, X):
         if self.loss == "log":
             return self._predict_proba_lr(X)
 
@@ -736,11 +736,16 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
                                       " loss='log' or loss='modified_huber' "
                                       "(%r given)" % self.loss)
 
-    def predict_log_proba(self, X):
+    @property
+    def predict_log_proba(self):
         """Log of probability estimates.
+
+        This method is only available for log loss and modified Huber loss.
 
         When loss="modified_huber", probability estimates may be hard zeros
         and ones, so taking the logarithm is not possible.
+
+        See ``predict_proba`` for details.
 
         Parameters
         ----------
@@ -753,6 +758,10 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
             model, where classes are ordered as they are in
             `self.classes_`.
         """
+        self._check_proba()
+        return self._predict_log_proba
+
+    def _predict_log_proba(self, X):
         return np.log(self.predict_proba(X))
 
 
@@ -781,7 +790,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
                                                random_state=random_state,
                                                learning_rate=learning_rate,
                                                eta0=eta0, power_t=power_t,
-                                               warm_start=False)
+                                               warm_start=warm_start)
 
     def _partial_fit(self, X, y, alpha, C, loss, learning_rate,
                      n_iter, sample_weight,
@@ -896,7 +905,8 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
            Predicted target values per element in X.
         """
         X = atleast2d_or_csr(X)
-        scores = safe_sparse_dot(X, self.coef_) + self.intercept_
+        scores = safe_sparse_dot(X, self.coef_.T,
+                                 dense_output=True) + self.intercept_
         return scores.ravel()
 
     def predict(self, X):
@@ -1064,13 +1074,12 @@ class SGDRegressor(BaseSGDRegressor, _LearntSelectorMixin):
                  learning_rate="invscaling", eta0=0.01, power_t=0.25,
                  warm_start=False):
         super(SGDRegressor, self).__init__(loss=loss, penalty=penalty,
-                                               alpha=alpha, l1_ratio=l1_ratio,
-                                               fit_intercept=fit_intercept,
-                                               n_iter=n_iter, shuffle=shuffle,
-                                               verbose=verbose,
-                                               epsilon=epsilon,
-                                               random_state=random_state,
-                                               learning_rate=learning_rate,
-                                               eta0=eta0, power_t=power_t,
-                                               warm_start=False)
-
+                                           alpha=alpha, l1_ratio=l1_ratio,
+                                           fit_intercept=fit_intercept,
+                                           n_iter=n_iter, shuffle=shuffle,
+                                           verbose=verbose,
+                                           epsilon=epsilon,
+                                           random_state=random_state,
+                                           learning_rate=learning_rate,
+                                           eta0=eta0, power_t=power_t,
+                                           warm_start=warm_start)

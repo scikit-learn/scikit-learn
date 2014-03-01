@@ -1,6 +1,10 @@
 # Authors: Olivier Grisel <olivier.grisel@ensta.org>
 #          Mathieu Blondel <mathieu@mblondel.org>
+#          Denis Engemann <d.engemann@fz-juelich.de>
+#
 # License: BSD 3 clause
+import warnings
+
 import numpy as np
 from scipy import sparse
 from scipy import linalg
@@ -12,13 +16,16 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_greater
+from sklearn.utils.testing import assert_raises
 
 from sklearn.utils.extmath import density
 from sklearn.utils.extmath import logsumexp
 from sklearn.utils.extmath import randomized_svd
+from sklearn.utils.extmath import row_norms
 from sklearn.utils.extmath import weighted_mode
 from sklearn.utils.extmath import cartesian
-from sklearn.utils.extmath import logistic_sigmoid
+from sklearn.utils.extmath import log_logistic, logistic_sigmoid
+from sklearn.utils.extmath import fast_dot, _fast_dot
 from sklearn.datasets.samples_generator import make_low_rank_matrix
 
 
@@ -116,6 +123,18 @@ def test_randomized_svd_low_rank():
     # compute the singular values of X using the fast approximate method
     Ua, sa, Va = randomized_svd(X, k)
     assert_almost_equal(s[:rank], sa[:rank])
+
+
+def test_row_norms():
+    X = np.random.RandomState(42).randn(100, 100)
+    sq_norm = (X ** 2).sum(axis=1)
+
+    assert_array_almost_equal(sq_norm, row_norms(X, squared=True), 5)
+    assert_array_almost_equal(np.sqrt(sq_norm), row_norms(X))
+
+    Xcsr = sparse.csr_matrix(X, dtype=np.float32)
+    assert_array_almost_equal(sq_norm, row_norms(Xcsr, squared=True), 5)
+    assert_array_almost_equal(np.sqrt(sq_norm), row_norms(Xcsr))
 
 
 def test_randomized_svd_low_rank_with_noise():
@@ -256,29 +275,92 @@ def test_cartesian():
 
 def test_logistic_sigmoid():
     """Check correctness and robustness of logistic sigmoid implementation"""
-    naive_logsig = lambda x: 1 / (1 + np.exp(-x))
-    naive_log_logsig = lambda x: np.log(naive_logsig(x))
-
-    # Simulate the previous Cython implementations of logistic_sigmoid based on
-    #http://fa.bianp.net/blog/2013/numerical-optimizers-for-logistic-regression
-    def stable_logsig(x):
-        out = np.zeros_like(x)
-        positive = x > 0
-        negative = x <= 0
-        out[positive] = 1. / (1 + np.exp(-x[positive]))
-        out[negative] = np.exp(x[negative]) / (1. + np.exp(x[negative]))
-        return out
+    naive_logistic = lambda x: 1 / (1 + np.exp(-x))
+    naive_log_logistic = lambda x: np.log(naive_logistic(x))
 
     x = np.linspace(-2, 2, 50)
-    assert_array_almost_equal(logistic_sigmoid(x), naive_logsig(x))
-    assert_array_almost_equal(logistic_sigmoid(x, log=True),
-                              naive_log_logsig(x))
-    assert_array_almost_equal(logistic_sigmoid(x), stable_logsig(x),
-                              decimal=16)
+    with warnings.catch_warnings(record=True):
+        assert_array_almost_equal(logistic_sigmoid(x), naive_logistic(x))
+    assert_array_almost_equal(log_logistic(x), naive_log_logistic(x))
 
-    extreme_x = np.array([-100, 100], dtype=np.float)
-    assert_array_almost_equal(logistic_sigmoid(extreme_x), [0, 1])
-    assert_array_almost_equal(logistic_sigmoid(extreme_x, log=True), [-100, 0])
-    assert_array_almost_equal(logistic_sigmoid(extreme_x),
-                              stable_logsig(extreme_x),
-                              decimal=16)
+    extreme_x = np.array([-100., 100.])
+    assert_array_almost_equal(log_logistic(extreme_x), [-100, 0])
+
+
+def test_fast_dot():
+    """Check fast dot blas wrapper function"""
+    rng = np.random.RandomState(42)
+    A = rng.random_sample([2, 10])
+    B = rng.random_sample([2, 10])
+
+    try:
+        linalg.get_blas_funcs(['gemm'])[0]
+        has_blas = True
+    except (AttributeError, ValueError):
+        has_blas = False
+
+    if has_blas:
+        # Test _fast_dot for invalid input.
+
+            # Maltyped data.
+            for dt1, dt2 in [['f8', 'f4'], ['i4', 'i4']]:
+                assert_raises(ValueError, _fast_dot, A.astype(dt1),
+                              B.astype(dt2).T)
+
+            # Malformed data.
+
+            ## ndim == 0
+            E = np.empty(0)
+            assert_raises(ValueError, _fast_dot, E, E)
+
+            ## ndim == 1
+            assert_raises(ValueError, _fast_dot, A, A[0])
+
+            ## ndim > 2
+            assert_raises(ValueError, _fast_dot, A.T, np.array([A, A]))
+
+            ## min(shape) == 1
+            assert_raises(ValueError, _fast_dot, A, A[0, :][None, :])
+
+            # test for matrix mismatch error
+            assert_raises(ValueError, _fast_dot, A, A)
+
+    # Test cov-like use case + dtypes.
+    for dtype in ['f8', 'f4']:
+        A = A.astype(dtype)
+        B = B.astype(dtype)
+
+        #  col < row
+        C = np.dot(A.T, A)
+        C_ = fast_dot(A.T, A)
+        assert_almost_equal(C, C_)
+
+        C = np.dot(A.T, B)
+        C_ = fast_dot(A.T, B)
+        assert_almost_equal(C, C_)
+
+        C = np.dot(A, B.T)
+        C_ = fast_dot(A, B.T)
+        assert_almost_equal(C, C_)
+
+    # Test square matrix * rectangular use case.
+    A = rng.random_sample([2, 2])
+    for dtype in ['f8', 'f4']:
+        A = A.astype(dtype)
+        B = B.astype(dtype)
+
+        C = np.dot(A, B)
+        C_ = fast_dot(A, B)
+        assert_almost_equal(C, C_)
+
+        C = np.dot(A.T, B)
+        C_ = fast_dot(A.T, B)
+        assert_almost_equal(C, C_)
+
+    if has_blas:
+        for x in [np.array([[d] * 10] * 2) for d in [np.inf, np.nan]]:
+            assert_raises(ValueError, _fast_dot, x, x.T)
+
+if __name__ == '__main__':
+    import nose
+    nose.runmodule()

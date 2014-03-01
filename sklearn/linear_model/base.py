@@ -46,7 +46,7 @@ def sparse_center_data(X, y, fit_intercept, normalize=False):
     axis 0. Be aware that X will not be centered since it would break
     the sparsity, but will be normalized if asked so.
     """
-    X = X.astype(np.float64)
+    X = safe_asarray(X, dtype=np.float64)
 
     if fit_intercept:
         X_data = X.data
@@ -58,7 +58,7 @@ def sparse_center_data(X, y, fit_intercept, normalize=False):
                 X.shape[0], X.shape[1],
                 X_data, X.indices, X.indptr, X_mean)
             X_std[X_std == 0] = 1
-            inplace_csc_column_scale(X, X_std)
+            inplace_csc_column_scale(X, 1. / X_std)
         else:
             X_std = np.ones(X.shape[1])
         y_mean = y.mean(axis=0)

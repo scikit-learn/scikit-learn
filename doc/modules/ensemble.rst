@@ -7,24 +7,92 @@ Ensemble methods
 .. currentmodule:: sklearn.ensemble
 
 The goal of **ensemble methods** is to combine the predictions of several
-models built with a given learning algorithm in order to improve
-generalizability / robustness over a single model.
+base estimators built with a given learning algorithm in order to improve
+generalizability / robustness over a single estimator.
 
 Two families of ensemble methods are usually distinguished:
 
 - In **averaging methods**, the driving principle is to build several
-  models independently and then to average their predictions. On average,
-  the combined model is usually better than any of the single model
-  because its variance is reduced.
+  estimators independently and then to average their predictions. On average,
+  the combined estimator is usually better than any of the single base
+  estimator because its variance is reduced.
 
-  **Examples:** Bagging methods, :ref:`Forests of randomized trees <forest>`...
+  **Examples:** :ref:`Bagging methods <bagging>`, :ref:`Forests of randomized trees <forest>`, ...
 
-- By contrast, in **boosting methods**, models are built sequentially and one
-  tries to reduce the bias of the combined model. The motivation is to combine
-  several weak models to produce a powerful ensemble.
+- By contrast, in **boosting methods**, base estimators are built sequentially
+  and one tries to reduce the bias of the combined estimator. The motivation is
+  to combine several weak models to produce a powerful ensemble.
 
   **Examples:** :ref:`AdaBoost <adaboost>`, :ref:`Gradient Tree Boosting <gradient_boosting>`, ...
 
+
+.. _bagging:
+
+Bagging meta-estimator
+======================
+
+In ensemble algorithms, bagging methods form a class of algorithms which build
+several instances of a black-box estimator on random subsets of the original
+training set and then aggregate their individual predictions to form a final
+prediction. These methods are used as a way to reduce the variance of a base
+estimator (e.g., a decision tree), by introducing randomization into its
+construction procedure and then making an ensemble out of it. In many cases,
+bagging methods constitute a very simple way to improve with respect to a
+single model, without making it necessary to adapt the underlying base
+algorithm. As they provide a way to reduce overfitting, bagging methods work
+best with strong and complex models (e.g., fully developed decision trees), in
+contrast with boosting methods which usually work best with weak models (e.g.,
+shallow decision trees).
+
+Bagging methods come in many flavours but mostly differ from each other by the
+way they draw random subsets of the training set:
+
+  * When random subsets of the dataset are drawn as random subsets of the
+    samples, then this algorithm is known as Pasting [B1999]_.
+
+  * When samples are drawn with replacement, then the method is known as
+    Bagging [B1996]_.
+
+  * When random subsets of the dataset are drawn as random subsets of
+    the features, then the method is known as Random Subspaces [H1998]_.
+
+  * Finally, when base estimators are built on subsets of both samples and
+    features, then the method is known as Random Patches [LG2012]_.
+
+In scikit-learn, bagging methods are offered as a unified
+:class:`BaggingClassifier` meta-estimator  (resp. :class:`BaggingRegressor`),
+taking as input a user-specified base estimator along with parameters
+specifying the strategy to draw random subsets. In particular, ``max_samples``
+and ``max_features`` control the size of the subsets (in terms of samples and
+features), while ``bootstrap`` and ``bootstrap_features`` control whether
+samples and features are drawn with or without replacement. As an example, the
+snippet below illustrates how to instantiate a bagging ensemble of
+:class:`KNeighborsClassifier` base estimators, each built on random subsets of
+50% of the samples and 50% of the features.
+
+    >>> from sklearn.ensemble import BaggingClassifier
+    >>> from sklearn.neighbors import KNeighborsClassifier
+    >>> bagging = BaggingClassifier(KNeighborsClassifier(),
+    ...                             max_samples=0.5, max_features=0.5)
+
+.. topic:: Examples:
+
+ * :ref:`example_ensemble_plot_bias_variance.py`
+
+.. topic:: References
+
+  .. [B1999] L. Breiman, "Pasting small votes for classification in large
+         databases and on-line", Machine Learning, 36(1), 85-103, 1999.
+
+  .. [B1996] L. Breiman, "Bagging predictors", Machine Learning, 24(2),
+         123-140, 1996.
+
+  .. [H1998] T. Ho, "The random subspace method for constructing decision
+         forests", Pattern Analysis and Machine Intelligence, 20(8), 832-844,
+         1998.
+
+  .. [LG2012] G. Louppe and P. Geurts, "Ensembles on Random Patches",
+         Machine Learning and Knowledge Discovery in Databases, 346-361, 2012.
 
 .. _forest:
 
@@ -99,7 +167,7 @@ in bias::
     ...     random_state=0)
     >>> scores = cross_val_score(clf, X, y)
     >>> scores.mean()                             # doctest: +ELLIPSIS
-    0.98...
+    0.97...
 
     >>> clf = RandomForestClassifier(n_estimators=10, max_depth=None,
     ...     min_samples_split=1, random_state=0)
@@ -245,7 +313,7 @@ AdaBoost
 ========
 
 The module :mod:`sklearn.ensemble` includes the popular boosting algorithm
-AdaBoost, introduced in 1995 by Freud and Schapire [FS1995]_.
+AdaBoost, introduced in 1995 by Freund and Schapire [FS1995]_.
 
 The core principle of AdaBoost is to fit a sequence of weak learners (i.e.,
 models that are only slightly better than random guessing, such as small
@@ -320,8 +388,8 @@ decision trees).
 
 .. topic:: References
 
- .. [FS1995] Y. Freud, and R. Schapire, "A decision theoretic generalization of
-             online learning and an application to boosting", 1997.
+ .. [FS1995] Y. Freund, and R. Schapire, "A Decision-Theoretic Generalization of
+             On-Line Learning and an Application to Boosting", 1997.
 
  .. [ZZRH2009] J. Zhu, H. Zou, S. Rosset, T. Hastie. "Multi-class AdaBoost",
                2009.
@@ -351,7 +419,7 @@ The advantages of GBRT are:
 
   + Predictive power
 
-  + Robustness to outliers in input space (via robust loss functions)
+  + Robustness to outliers in output space (via robust loss functions)
 
 The disadvantages of GBRT are:
 
@@ -382,10 +450,7 @@ with 100 decision stumps as weak learners::
     >>> clf.score(X_test, y_test)                 # doctest: +ELLIPSIS
     0.913...
 
-The number of weak learners (i.e. regression trees) is controlled by the
-parameter ``n_estimators``; The maximum depth of each tree is controlled via
-``max_depth``. The ``learning_rate`` is a hyper-parameter in the range (0.0, 1.0]
-that controls overfitting via :ref:`shrinkage <gradient_boosting_shrinkage>`.
+The number of weak learners (i.e. regression trees) is controlled by the parameter ``n_estimators``; :ref:`The size of each tree <gradient_boosting_tree_size>` can be controlled either by setting the tree depth via ``max_depth`` or by setting the number of leaf nodes via ``max_leaf_nodes``. The ``learning_rate`` is a hyper-parameter in the range (0.0, 1.0] that controls overfitting via :ref:`shrinkage <gradient_boosting_shrinkage>` .
 
 .. note::
 
@@ -394,7 +459,7 @@ that controls overfitting via :ref:`shrinkage <gradient_boosting_shrinkage>`.
    thus, the total number of induced trees equals
    ``n_classes * n_estimators``. For datasets with a large number
    of classes we strongly recommend to use
-   :class:`RandomForestClassifier` as an alternative to GBRT.
+   :class:`RandomForestClassifier` as an alternative to :class:`GradientBoostingClassifier` .
 
 Regression
 ----------
@@ -414,10 +479,10 @@ for regression which can be specified via the argument
     >>> X, y = make_friedman1(n_samples=1200, random_state=0, noise=1.0)
     >>> X_train, X_test = X[:200], X[200:]
     >>> y_train, y_test = y[:200], y[200:]
-    >>> clf = GradientBoostingRegressor(n_estimators=100, learning_rate=1.0,
+    >>> est = GradientBoostingRegressor(n_estimators=100, learning_rate=0.1,
     ...     max_depth=1, random_state=0, loss='ls').fit(X_train, y_train)
-    >>> mean_squared_error(y_test, clf.predict(X_test))    # doctest: +ELLIPSIS
-    6.90...
+    >>> mean_squared_error(y_test, est.predict(X_test))    # doctest: +ELLIPSIS
+    5.00...
 
 The figure below shows the results of applying :class:`GradientBoostingRegressor`
 with least squares loss and 500 base learners to the Boston house price dataset
@@ -442,6 +507,50 @@ the ``feature_importances_`` property.
  * :ref:`example_ensemble_plot_gradient_boosting_regression.py`
  * :ref:`example_ensemble_plot_gradient_boosting_oob.py`
 
+.. _gradient_boosting_warm_start:
+
+Fitting additional weak-learners
+--------------------------------
+
+Both :class:`GradientBoostingRegressor` and :class:`GradientBoostingClassifier`
+support ``warm_start=True`` which allows you to add more estimators to an already
+fitted model.
+
+::
+
+  >>> _ = est.set_params(n_estimators=200, warm_start=True)  # set warm_start and new nr of trees
+  >>> _ = est.fit(X_train, y_train) # fit additional 100 trees to est
+  >>> mean_squared_error(y_test, est.predict(X_test))    # doctest: +ELLIPSIS
+  3.84...
+
+.. _gradient_boosting_tree_size:
+
+Controlling the tree size
+-------------------------
+
+The size of the regression tree base learners defines the level of variable
+interactions that can be captured by the gradient boosting model. In general,
+a tree of depth ``h`` can capture interactions of order ``h`` .
+There are two ways in which the size of the individual regression trees can
+be controlled.
+
+If you specify ``max_depth=h`` then complete binary trees
+of depth ``h`` will be grown. Such trees will have (at most) ``2**h`` leaf nodes
+and ``2**h - 1`` split nodes.
+
+Alternatively, you can control the tree size by specifying the number of
+leaf nodes via the parameter ``max_leaf_nodes``. In this case,
+trees will be grown using best-first search where nodes with the highest improvement
+in impurity will be expanded first.
+A tree with ``max_leaf_nodes=k`` has ``k - 1`` split nodes and thus can
+model interactions of up to order ``max_leaf_nodes - 1`` .
+
+We found that ``max_leaf_nodes=k`` gives comparable results to ``max_depth=k-1``
+but is significantly faster to train at the expense of a slightly higher
+training error.
+The parameter ``max_leaf_nodes`` corresponds to the variable ``J`` in the
+chapter on gradient boosting in [F2001]_ and is related to the parameter
+``interaction.depth`` in R's gbm package where ``max_leaf_nodes == interaction.depth + 1`` .
 
 Mathematical formulation
 -------------------------
@@ -520,8 +629,8 @@ the parameter ``loss``:
       target values.
     * Huber (``'huber'``): Another robust loss function that combines
       least squares and least absolute deviation; use ``alpha`` to
-      control the sensitivity w.r.t. outliers (see [F2001]_ for more
-      details).
+      control the sensitivity with regards to outliers (see [F2001]_ for
+      more details).
     * Quantile (``'quantile'``): A loss function for quantile regression.
       Use ``0 < alpha < 1`` to specify the quantile. This loss function
       can be used to create prediction intervals

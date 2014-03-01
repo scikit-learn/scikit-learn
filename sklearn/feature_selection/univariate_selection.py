@@ -7,8 +7,6 @@
 
 
 from abc import ABCMeta, abstractmethod
-from warnings import warn
-from functools import reduce
 
 import numpy as np
 from scipy import special, stats
@@ -17,9 +15,9 @@ from scipy.sparse import issparse
 from ..base import BaseEstimator
 from ..preprocessing import LabelBinarizer
 from ..utils import (array2d, as_float_array,
-                     atleast2d_or_csr, check_arrays, safe_asarray, safe_sqr,
+                     atleast2d_or_csr, check_arrays, safe_sqr,
                      safe_mask)
-from ..utils.extmath import safe_sparse_dot
+from ..utils.extmath import norm, safe_sparse_dot
 from ..externals import six
 from .base import SelectorMixin
 
@@ -92,14 +90,13 @@ def f_oneway(*args):
 
     """
     n_classes = len(args)
-    args = [safe_asarray(a) for a in args]
+    args = [as_float_array(a) for a in args]
     n_samples_per_class = np.array([a.shape[0] for a in args])
     n_samples = np.sum(n_samples_per_class)
-    ss_alldata = reduce(lambda x, y: x + y,
-                        [safe_sqr(a).sum(axis=0) for a in args])
-    sums_args = [a.sum(axis=0) for a in args]
-    square_of_sums_alldata = safe_sqr(reduce(lambda x, y: x + y, sums_args))
-    square_of_sums_args = [safe_sqr(s) for s in sums_args]
+    ss_alldata = sum(safe_sqr(a).sum(axis=0) for a in args)
+    sums_args = [np.asarray(a.sum(axis=0)) for a in args]
+    square_of_sums_alldata = sum(sums_args) ** 2
+    square_of_sums_args = [s ** 2 for s in sums_args]
     sstot = ss_alldata - square_of_sums_alldata / float(n_samples)
     ssbn = 0.
     for k, _ in enumerate(args):
@@ -160,14 +157,14 @@ def _chisquare(f_obs, f_exp):
 
 
 def chi2(X, y):
-    """Compute χ² (chi-squared) statistic for each class/feature combination.
+    """Compute chi-squared statistic for each class/feature combination.
 
     This score can be used to select the n_features features with the
-    highest values for the χ² (chi-square) statistic from X, which must
+    highest values for the test chi-squared statistic from X, which must
     contain booleans or frequencies (e.g., term counts in document
     classification), relative to the classes.
 
-    Recall that the χ² statistic measures dependence between stochastic
+    Recall that the chi-square test measures dependence between stochastic
     variables, so using this function "weeds out" the features that are the
     most likely to be independent of class and therefore irrelevant for
     classification.
@@ -253,13 +250,14 @@ def f_regression(X, y, center=True):
 
     # compute the correlation
     corr = safe_sparse_dot(y, X)
+    # XXX could use corr /= row_norms(X.T) here, but the test doesn't pass
     corr /= np.asarray(np.sqrt(safe_sqr(X).sum(axis=0))).ravel()
-    corr /= np.asarray(np.sqrt(safe_sqr(y).sum())).ravel()
+    corr /= norm(y)
 
     # convert to p-value
-    dof = y.size - 2
-    F = corr ** 2 / (1 - corr ** 2) * dof
-    pv = stats.f.sf(F, 1, dof)
+    degrees_of_freedom = y.size - (2 if center else 1)
+    F = corr ** 2 / (1 - corr ** 2) * degrees_of_freedom
+    pv = stats.f.sf(F, 1, degrees_of_freedom)
     return F, pv
 
 

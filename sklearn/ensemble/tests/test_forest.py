@@ -5,6 +5,8 @@ Testing for the forest module (sklearn.ensemble.forest).
 # Authors: Gilles Louppe, Brian Holt, Andreas Mueller
 # License: BSD 3 clause
 
+from collections import defaultdict
+
 import numpy as np
 from numpy.testing import assert_array_equal
 from numpy.testing import assert_array_almost_equal
@@ -205,15 +207,42 @@ def test_importances():
     X_new = clf.transform(X, threshold="mean")
     assert_less(0 < X_new.shape[1], X.shape[1])
 
+    # Check with sample weights
+    sample_weight = np.ones(y.shape)
+    sample_weight[y == 1] *= 100
+
+    clf = RandomForestClassifier(n_estimators=50, random_state=0)
+    clf.fit(X, y, sample_weight=sample_weight)
+    importances = clf.feature_importances_
+    assert np.all(importances >= 0.0)
+
+    clf = RandomForestClassifier(n_estimators=50, random_state=0)
+    clf.fit(X, y, sample_weight=3*sample_weight)
+    importances_bis = clf.feature_importances_
+    assert_almost_equal(importances, importances_bis)
+
 
 def test_oob_score_classification():
     """Check that oob prediction is a good estimation of the generalization
     error."""
     clf = RandomForestClassifier(oob_score=True, random_state=rng)
     n_samples = iris.data.shape[0]
-    clf.fit(iris.data[:n_samples / 2, :], iris.target[:n_samples / 2])
-    test_score = clf.score(iris.data[n_samples / 2:, :],
-                           iris.target[n_samples / 2:])
+    clf.fit(iris.data[:n_samples // 2, :], iris.target[:n_samples // 2])
+    test_score = clf.score(iris.data[n_samples // 2:, :],
+                           iris.target[n_samples // 2:])
+    assert_less(abs(test_score - clf.oob_score_), 0.1)
+
+
+def test_oob_score_classification_for_non_contiguous_target():
+    """Check that oob prediction is a good estimation of the generalization
+    error for non-contiguous targets."""
+    iris_target = iris.target * 2 + 1
+    clf = RandomForestClassifier(n_estimators=50,
+                                 oob_score=True, random_state=rng)
+    n_samples = iris.data.shape[0]
+    clf.fit(iris.data[:n_samples // 2, :], iris_target[:n_samples // 2])
+    test_score = clf.score(iris.data[n_samples // 2:, :],
+                           iris_target[n_samples // 2:])
     assert_less(abs(test_score - clf.oob_score_), 0.1)
 
 
@@ -223,9 +252,9 @@ def test_oob_score_regression():
     clf = RandomForestRegressor(n_estimators=50, oob_score=True,
                                 random_state=rng)
     n_samples = boston.data.shape[0]
-    clf.fit(boston.data[:n_samples / 2, :], boston.target[:n_samples / 2])
-    test_score = clf.score(boston.data[n_samples / 2:, :],
-                           boston.target[n_samples / 2:])
+    clf.fit(boston.data[:n_samples // 2, :], boston.target[:n_samples // 2])
+    test_score = clf.score(boston.data[n_samples // 2:, :],
+                           boston.target[n_samples // 2:])
     assert_greater(test_score, clf.oob_score_)
     assert_greater(clf.oob_score_, .8)
 
@@ -408,12 +437,12 @@ def test_random_hasher():
     # make sure that it is linearly separable.
     # even after projected to two SVD dimensions
     # Note: Not all random_states produce perfect results.
-    hasher = RandomTreesEmbedding(n_estimators=30, random_state=0)
+    hasher = RandomTreesEmbedding(n_estimators=30, random_state=1)
     X, y = datasets.make_circles(factor=0.5)
     X_transformed = hasher.fit_transform(X)
 
     # test fit and transform:
-    hasher = RandomTreesEmbedding(n_estimators=30, random_state=0)
+    hasher = RandomTreesEmbedding(n_estimators=30, random_state=1)
     assert_array_equal(hasher.fit(X).transform(X).toarray(),
                        X_transformed.toarray())
 
@@ -429,28 +458,104 @@ def test_random_hasher():
 
 def test_parallel_train():
     rng = np.random.RandomState(12321)
-    X = rng.randn(100, 1000)
-    y = rng.randint(0, 2, 100)
+    n_samples, n_features = 80, 30
+    X_train = rng.randn(n_samples, n_features)
+    y_train = rng.randint(0, 2, n_samples)
 
     clfs = [
         RandomForestClassifier(n_estimators=20,
                                n_jobs=n_jobs,
                                random_state=12345)
-        for n_jobs in range(1, 9)
+        for n_jobs in [1, 2, 3, 8, 16, 32]
     ]
 
     for clf in clfs:
-        clf.fit(X, y)
+        clf.fit(X_train, y_train)
 
-    X2 = rng.randn(100, 1000)
+    X_test = rng.randn(n_samples, n_features)
 
     probas = []
     for clf in clfs:
-        proba = clf.predict_proba(X2)
+        proba = clf.predict_proba(X_test)
         probas.append(proba)
 
     for proba1, proba2 in zip(probas, probas[1:]):
-        assert_true(np.allclose(proba1, proba2))
+        assert_array_almost_equal(proba1, proba2)
+
+
+def test_distribution():
+    rng = np.random.RandomState(12321)
+
+    # Single variable with 4 values
+    X = rng.randint(0, 4, size=(1000, 1))
+    y = rng.rand(1000)
+    n_trees = 500
+
+    clf = ExtraTreesRegressor(n_estimators=n_trees, random_state=42).fit(X, y)
+
+    uniques = defaultdict(int)
+    for tree in clf.estimators_:
+        tree = "".join(("%d,%d/" % (f, int(t)) if f >= 0 else "-")
+                       for f, t in zip(tree.tree_.feature,
+                                       tree.tree_.threshold))
+
+        uniques[tree] += 1
+
+    uniques = sorted([(1. * count / n_trees, tree)
+                      for tree, count in uniques.items()])
+
+    # On a single variable problem where X_0 has 4 equiprobable values, there
+    # are 5 ways to build a random tree. The more compact (0,1/0,0/--0,2/--) of
+    # them has probability 1/3 while the 4 others have probability 1/6.
+
+    assert_equal(len(uniques), 5)
+    assert_greater(0.20, uniques[0][0])  # Rough approximation of 1/6.
+    assert_greater(0.20, uniques[1][0])
+    assert_greater(0.20, uniques[2][0])
+    assert_greater(0.20, uniques[3][0])
+    assert_greater(uniques[4][0], 0.3)
+    assert_equal(uniques[4][1], "0,1/0,0/--0,2/--")
+
+    # Two variables, one with 2 values, one with 3 values
+    X = np.empty((1000, 2))
+    X[:, 0] = np.random.randint(0, 2, 1000)
+    X[:, 1] = np.random.randint(0, 3, 1000)
+    y = rng.rand(1000)
+
+    clf = ExtraTreesRegressor(n_estimators=100,
+                              max_features=1,
+                              random_state=1).fit(X, y)
+
+    uniques = defaultdict(int)
+    for tree in clf.estimators_:
+        tree = "".join(("%d,%d/" % (f, int(t)) if f >= 0 else "-")
+                       for f, t in zip(tree.tree_.feature,
+                                       tree.tree_.threshold))
+
+        uniques[tree] += 1
+
+    uniques = [(count, tree) for tree, count in uniques.items()]
+    assert_equal(len(uniques), 8)
+
+
+def test_max_leaf_nodes_max_depth():
+    """Test preceedence of max_leaf_nodes over max_depth. """
+    X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
+    all_forests = [RandomForestClassifier,
+                   RandomForestRegressor,
+                   RandomTreesEmbedding,
+                   ExtraTreesClassifier,
+                   ExtraTreesRegressor]
+
+    k = 4
+    for ForestEstimator in all_forests:
+        est = ForestEstimator(max_depth=1, max_leaf_nodes=k).fit(X, y)
+        tree = est.estimators_[0].tree_
+        assert_greater(tree.max_depth, 1)
+
+        est = ForestEstimator(max_depth=1).fit(X, y)
+        tree = est.estimators_[0].tree_
+        assert_equal(tree.max_depth, 1)
 
 
 if __name__ == "__main__":

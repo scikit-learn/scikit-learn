@@ -10,6 +10,11 @@ The plot show the sequence of observations generated with the transitions
 between them. We can see that, as specified by our transition matrix,
 there are no transition between component 1 and 3.
 
+.. warning::
+
+       The HMM module and its functions will be removed in 0.17
+       as it no longer falls within the project's scope and API.
+
 """
 print(__doc__)
 

@@ -11,6 +11,35 @@ Who is using scikit-learn?
 
 .. to add a testimonials, just XXX
 
+`Spotify <http://www.spotify.com>`_
+------------------------------------
+
+.. raw:: html
+
+    <div class="logo">
+
+.. image:: images/spotify.png
+    :target: http://www.spotify.com
+
+.. raw:: html
+
+    </div>
+
+Scikit-learn provides a toolbox with solid implementations of a bunch of
+state-of-the-art models and makes it easy to plug them into existing
+applications. We've been using it quite a lot for music recommendations at
+Spotify and I think it's the most well-designed ML package I've seen so
+far.
+
+.. raw:: html
+
+   <span class="testimonial-author">
+
+Erik Bernhardsson, Engineering Manager Music Discovery & Machine Learning, Spotify
+
+.. raw:: html
+
+   </span>
 
 `Inria <http://www.inria.fr>`_
 -------------------------------
@@ -19,7 +48,7 @@ Who is using scikit-learn?
 
   <div class="logo">
 
-.. image:: images/inria.jpg
+.. image:: images/inria.png
    :target: http://www.inria.fr
 
 .. raw:: html
@@ -154,7 +183,6 @@ Michael Becker, Software Engineer, Data Analysis and Management Ninjas
 
    </span>
 
-
 `Yhat <http://yhathq.com/>`_
 ------------------------------------------
 
@@ -187,3 +215,232 @@ Greg Lamp, Co-founder Yhat
 
    </span>
 
+`Rangespan <https://www.rangespan.com>`_
+------------------------------------------
+
+.. raw:: html
+
+  <div class="logo">
+
+.. image:: images/rangespan.png
+   :target: https://www.rangespan.com
+
+.. raw:: html
+
+  </div>
+
+The Python scikit-learn toolkit is a core tool in the data science
+group at Rangespan. Its large collection of well documented models and
+algorithms allow our team of data scientists to prototype fast and
+quickly iterate to find the right solution to our learning problems.
+We find that scikit-learn is not only the right tool for prototyping,
+but its careful and well tested implementation give us the confidence
+to run scikit-learn models in production.
+
+.. raw:: html
+
+   <span class="testimonial-author">
+
+Jurgen Van Gael, Data Science Director at Rangespan Ltd
+
+.. raw:: html
+
+   </span>
+
+`Birchbox <https://www.birchbox.com>`_
+------------------------------------------
+
+.. raw:: html
+
+  <div class="logo">
+
+.. image:: images/birchbox.jpg
+   :target: https://www.birchbox.com
+
+.. raw:: html
+
+  </div>
+
+At Birchbox, we face a range of machine learning problems typical to
+E-commerce: product recommendation, user clustering, inventory prediction,
+trends detection, etc. Scikit-learn lets us experiment with many models,
+especially in the exploration phase of a new project: the data can be passed
+around in a consistent way; models are easy to save and reuse; updates keep us
+informed of new developments from the pattern discovery research community.
+Scikit-learn is an important tool for our team, built the right way in the
+right language.
+
+.. raw:: html
+
+   <span class="testimonial-author">
+
+Thierry Bertin-Mahieux, Birchbox, Data Scientist
+
+.. raw:: html
+
+   </span>
+
+
+`Bestofmedia Group <http://www.bestofmedia.com>`_
+--------------------------------------------------
+
+.. raw:: html
+
+  <div class="logo">
+
+.. image:: images/bestofmedia-logo.gif
+   :target: http://www.bestofmedia.com
+
+.. raw:: html
+
+  </div>
+
+Scikit-learn is our #1 toolkit for all things machine learning
+at Bestofmedia. We use it for a variety of tasks (e.g. spam fighting,
+ad click prediction, various ranking models) thanks to the varied,
+state-of-the-art algorithm implementations packaged into it.
+In the lab it accelerates prototyping of complex pipelines. In
+production I can say it has proven to be robust and efficient enough
+to be deployed for business critical components.
+
+.. raw:: html
+
+   <span class="testimonial-author">
+
+Eustache Diemert, Lead Scientist Bestofmedia Group
+
+.. raw:: html
+
+   </span>
+
+`Change.org <http://www.change.org>`_
+--------------------------------------------------
+
+.. raw:: html
+
+  <div class="logo">
+
+.. image:: images/change-logo.png
+   :target: http://www.change.org
+
+.. raw:: html
+
+  </div>
+
+At change.org we automate the use of scikit-learn's RandomForestClassifier
+in our production systems to drive email targeting that reaches millions
+of users across the world each week. In the lab, scikit-learn's ease-of-use,
+performance, and overall variety of algorithms implemented has proved invaluable
+in giving us a single reliable source to turn to for our machine-learning needs.
+
+.. raw:: html
+
+   <span class="testimonial-author">
+
+Vijay Ramesh, Software Engineer in Data/science at Change.org
+
+.. raw:: html
+
+   </span>
+
+`PHIMECA Engineering <http://www.phimeca.com/?lang=en>`_
+----------------------------------------------------------
+
+.. raw:: html
+
+  <div class="logo">
+
+.. image:: images/phimeca.png
+   :target: http://www.phimeca.com/?lang=en
+
+.. raw:: html
+
+  </div>
+
+At PHIMECA Engineering, we use scikit-learn estimators as surrogates for
+expensive-to-evaluate numerical models (mostly but not exclusively
+finite-element mechanical models) for speeding up the intensive post-processing
+operations involved in our simulation-based decision making framework.
+Scikit-learn's fit/predict API together with its efficient cross-validation
+tools considerably eases the task of selecting the best-fit estimator. We are
+also using scikit-learn for illustrating concepts in our training sessions.
+Trainees are always impressed by the ease-of-use of scikit-learn despite the
+apparent theoretical complexity of machine learning.
+
+.. raw:: html
+
+   <span class="testimonial-author">
+
+Vincent Dubourg, PHIMECA Engineering, PhD Engineer
+
+.. raw:: html
+
+   </span>
+
+`HowAboutWe <http://www.howaboutwe.com/>`_
+----------------------------------------------------------
+
+.. raw:: html
+
+  <div class="logo">
+
+.. image:: images/howaboutwe.png
+   :target: http://www.howaboutwe.com/
+
+.. raw:: html
+
+  </div>
+
+At HowAboutWe, scikit-learn lets us implement a wide array of machine learning
+techniques in analysis and in production, despite having a small team.  We use
+scikit-learn’s classification algorithms to predict user behavior, enabling us
+to (for example) estimate the value of leads from a given traffic source early
+in the lead’s tenure on our site. Also, our users' profiles consist of
+primarily unstructured data (answers to open-ended questions), so we use
+scikit-learn’s feature extraction and dimensionality reduction tools to
+translate these unstructured data into inputs for our matchmaking system.
+
+.. raw:: html
+
+   <span class="testimonial-author">
+
+Daniel Weitzenfeld, Senior Data Scientist at HowAboutWe
+
+.. raw:: html
+
+   </span>
+
+
+`PeerIndex <http://www.peerindex.com/>`_
+----------------------------------------
+
+.. raw:: html
+
+  <div class="logo">
+
+.. image:: images/peerindex.png
+   :target: http://www.peerindex.com/
+
+.. raw:: html
+
+  </div>
+
+At PeerIndex we use scientific methodology to build the Influence Graph - a
+unique dataset that allows us to identify who’s really influential and in which
+context. To do this, we have to tackle a range of machine learning and
+predictive modeling problems. Scikit-learn has emerged as our primary tool for
+developing prototypes and making quick progress. From predicting missing data
+and classifying tweets to clustering communities of social media users, scikit-
+learn proved useful in a variety of applications. Its very intuitive interface
+and excellent compatibility with other python tools makes it and indispensable
+tool in our daily research efforts.
+
+.. raw:: html
+
+   <span class="testimonial-author">
+
+Ferenc Huszar - Senior Data Scientist at Peerindex
+
+.. raw:: html
+
+   </span>

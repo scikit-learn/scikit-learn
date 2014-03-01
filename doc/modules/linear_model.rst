@@ -270,7 +270,7 @@ Elastic Net
 ===========
 :class:`ElasticNet` is a linear model trained with L1 and L2 prior as
 regularizer. This combination allows for learning a sparse model where
-few of the weights are non-zero like :class:`Lasso`, while still maintaining the
+few of the weights are non-zero like :class:`Lasso`, while still maintaining
 the regularization properties of :class:`Ridge`. We control this tradeoff
 using the `l1_ratio` parameter.
 
@@ -676,11 +676,14 @@ Stochastic Gradient Descent - SGD
 Stochastic gradient descent is a simple yet very efficient approach
 to fit linear models. It is particularly useful when the number of samples
 (and the number of features) is very large.
-
+The ``partial_fit`` method allows only/out-of-core learning.
 
 The classes :class:`SGDClassifier` and :class:`SGDRegressor` provide
 functionality to fit linear models for classification and regression
 using different (convex) loss functions and different penalties.
+E.g., with ``loss="log"``, :class:`SGDClassifier`
+fits a logistic regression model,
+while with ``loss="hinge"`` it fits a linear support vector machine (SVM).
 
 .. topic:: References
 
@@ -725,3 +728,154 @@ For classification, :class:`PassiveAggressiveClassifier` can be used with
    <http://jmlr.csail.mit.edu/papers/volume7/crammer06a/crammer06a.pdf>`_
    K. Crammer, O. Dekel, J. Keshat, S. Shalev-Shwartz, Y. Singer - JMLR 7 (2006)
 
+Robustness to outliers: RANSAC
+==============================
+
+The RANSAC (RANdom SAmple Consensus) is an iterative algorithm for the robust
+estimation of parameters from a subset of inliers from the complete data set.
+
+It is an iterative method to estimate the parameters of a mathematical model.
+RANSAC is a non-deterministic algorithm producing only a reasonable result with
+a certain probability, which is dependent on the number of iterations (see
+`max_trials` parameter). It is typically used for linear and non-linear
+regression problems and is especially popular in the fields of photogrammetric
+computer vision.
+
+The algorithm splits the complete input sample data into a set of inliers,
+which may be subject to noise, and outliers, which are e.g. caused by erroneous
+measurements or invalid hypotheses about the data. The resulting model is then
+estimated only from the determined inliers.
+
+.. figure:: ../auto_examples/linear_model/images/plot_ransac_1.png
+   :target: ../auto_examples/linear_model/plot_ransac.html
+   :align: center
+   :scale: 50%
+
+Each iteration performs the following steps:
+
+1. Select `min_samples` random samples from the original data and check
+   whether the set of data is valid (see `is_data_valid`).
+2. Fit a model to the random subset (`base_estimator.fit`) and check
+   whether the estimated model is valid (see `is_model_valid`).
+3. Classify all data as inliers or outliers by calculating the residuals
+   to the estimated model (`base_estimator.predict(X) - y`) - all data
+   samples with absolute residuals smaller than the `residual_threshold`
+   are considered as inliers.
+4. Save fitted model as best model if number of inlier samples is
+   maximal. In case the current estimated model has the same number of
+   inliers, it is only considered as the best model if it has better score.
+
+These steps are performed either a maximum number of times (`max_trials`) or
+until one of the special stop criteria are met (see `stop_n_inliers` and
+`stop_score`). The final model is estimated using all inlier samples (consensus
+set) of the previously determined best model.
+
+The `is_data_valid` and `is_model_valid` functions allow to identify and reject
+degenerate combinations of random sub-samples. If the estimated model is not
+needed for identifying degenerate cases, `is_data_valid` should be used as it
+is called prior to fitting the model and thus leading to better computational
+performance.
+
+
+.. topic:: Examples:
+
+  * :ref:`example_linear_model_plot_ransac.py`
+
+.. topic:: References:
+
+ * http://en.wikipedia.org/wiki/RANSAC
+ * `"Random Sample Consensus: A Paradigm for Model Fitting with Applications to
+   Image Analysis and Automated Cartography"
+   <http://www.cs.columbia.edu/~belhumeur/courses/compPhoto/ransac.pdf>`_
+   Martin A. Fischler and Robert C. Bolles - SRI International (1981)
+ * `"Performance Evaluation of RANSAC Family"
+   <http://www.bmva.org/bmvc/2009/Papers/Paper355/Paper355.pdf>`_
+   Sunglok Choi, Taemin Kim and Wonpil Yu - BMVC (2009)
+
+
+.. _polynomial_regression:
+
+Polynomial Regression: Extending Linear Models with Basis Functions
+===================================================================
+
+.. currentmodule:: sklearn.preprocessing
+
+One common pattern within machine learning is to use linear models trained
+on nonlinear functions of the data.  This approach maintains the generally
+fast performance of linear methods, while allowing them to fit a much wider
+range of data.
+
+For example, a simple linear regression can be extended by constructing
+**polynomial features** from the coefficients.  In the standard linear
+regression case, you might have a model that looks like this for
+two-dimensional data:
+
+.. math::    \hat{y}(w, x) = w_0 + w_1 x_1 + w_2 x_2
+
+If we want to fit a paraboloid to the data instead of a plane, we can combine
+the features in second-order polynomials, so that the model looks like this:
+
+.. math::    \hat{y}(w, x) = w_0 + w_1 x_1 + w_2 x_2 + w_3 x_1 x_2 + w_4 x_1^2 + w_5 x_2^2
+
+The (sometimes surprising) observation is that this is *still a linear model*:
+to see this, imagine creating a new variable
+
+.. math::  z = [x_1, x_2, x_1 x_2, x_1^2, x_2^2]
+
+With this re-labeling of the data, our problem can be written
+
+.. math::    \hat{y}(w, x) = w_0 + w_1 z_1 + w_2 z_2 + w_3 z_3 + w_4 z_4 + w_5 z_5
+
+We see that the resulting *polynomial regression* is in the same class of
+linear models we'd considered above (i.e. the model is linear in :math:`w`)
+and can be solved by the same techniques.  By considering linear fits within
+a higher-dimensional space built with these basis functions, the model has the
+flexibility to fit a much broader range of data.
+
+Here is an example of applying this idea to one-dimensional data, using
+polynomial features of varying degrees:
+
+.. figure:: ../auto_examples/linear_model/images/plot_polynomial_interpolation_1.png
+   :target: ../auto_examples/linear_model/plot_polynomial_interpolation.html
+   :align: center
+   :scale: 50%
+
+This figure is created using the :class:`PolynomialFeatures` preprocessor.
+This preprocessor transforms an input data matrix into a new data matrix
+of a given degree.  It can be used as follows:
+
+    >>> from sklearn.preprocessing import PolynomialFeatures
+    >>> import numpy as np
+    >>> X = np.arange(6).reshape(3, 2)
+    >>> X
+    array([[0, 1],
+           [2, 3],
+           [4, 5]])
+    >>> poly = PolynomialFeatures(degree=2)
+    >>> poly.fit_transform(X)
+    array([[ 1,  0,  1,  0,  0,  1],
+           [ 1,  2,  3,  4,  6,  9],
+           [ 1,  4,  5, 16, 20, 25]])
+
+The features of ``X`` have been transformed from :math:`[x_1, x_2]` to
+:math:`[1, x_1, x_2, x_1^2, x_1 x_2, x_2^2]`, and can now be used within
+any linear model.
+
+This sort of preprocessing can be streamlined with the
+:ref:`Pipeline <pipeline>` tools. A single object representing a simple
+polynomial regression can be created and used as follows:
+
+    >>> from sklearn.preprocessing import PolynomialFeatures
+    >>> from sklearn.linear_model import LinearRegression
+    >>> from sklearn.pipeline import Pipeline
+    >>> model = Pipeline([('poly', PolynomialFeatures(degree=3)),
+    ...                   ('linear', LinearRegression(fit_intercept=False))])
+    >>> # fit to an order-3 polynomial data
+    >>> x = np.arange(5)
+    >>> y = 3 - 2 * x + x ** 2 - x ** 3
+    >>> model = model.fit(x[:, np.newaxis], y)
+    >>> model.named_steps['linear'].coef_
+    array([ 3., -2.,  1., -1.])
+
+The linear model trained on polynomial features is able to exactly recover
+the input polynomial coefficients.

@@ -1,5 +1,10 @@
 """Utilities for input validation"""
-# Authors: Olivier Grisel and Gael Varoquaux and others (please update me)
+# Authors: Olivier Grisel
+#          Gael Varoquaux
+#          Andreas Mueller
+#          Lars Buitinck
+#          Alexandre Gramfort
+#          Nicolas Tresegnie
 # License: BSD 3 clause
 
 import warnings
@@ -16,15 +21,25 @@ class DataConversionWarning(UserWarning):
     "A warning on implicit data conversions happening in the code"
     pass
 
-
 warnings.simplefilter("always", DataConversionWarning)
+
+
+class NonBLASDotWarning(UserWarning):
+    "A warning on implicit dispatch to numpy.dot"
+    pass
+
+
+# Silenced by default to reduce verbosity. Turn on at runtime for
+# performance profiling.
+warnings.simplefilter('ignore', NonBLASDotWarning)
 
 
 def _assert_all_finite(X):
     """Like assert_all_finite, but only for ndarray."""
     if (X.dtype.char in np.typecodes['AllFloat'] and not np.isfinite(X.sum())
             and not np.isfinite(X).all()):
-        raise ValueError("Array contains NaN or infinity.")
+        raise ValueError("Input contains NaN, infinity"
+                         " or a value too large for %r." % X.dtype)
 
 
 def assert_all_finite(X):
@@ -38,21 +53,25 @@ def assert_all_finite(X):
     _assert_all_finite(X.data if sparse.issparse(X) else X)
 
 
-def safe_asarray(X, dtype=None, order=None, copy=False):
+def safe_asarray(X, dtype=None, order=None, copy=False, force_all_finite=True):
     """Convert X to an array or sparse matrix.
 
     Prevents copying X when possible; sparse matrices are passed through."""
     if sparse.issparse(X):
         if copy:
             X = X.copy()
-        assert_all_finite(X.data)
+        if force_all_finite:
+            _assert_all_finite(X.data)
+        # enforces dtype on data array (order should be kept the same).
+        X.data = np.asarray(X.data, dtype=dtype)
     else:
         X = np.array(X, dtype=dtype, order=order, copy=copy)
-        assert_all_finite(X)
+        if force_all_finite:
+            _assert_all_finite(X)
     return X
 
 
-def as_float_array(X, copy=True):
+def as_float_array(X, copy=True, force_all_finite=True):
     """Converts an array-like to an array of floats
 
     The new dtype will be np.float32 or np.float64, depending on the original
@@ -74,7 +93,8 @@ def as_float_array(X, copy=True):
     """
     if isinstance(X, np.matrix) or (not isinstance(X, np.ndarray)
                                     and not sparse.issparse(X)):
-        return safe_asarray(X, dtype=np.float64, copy=copy)
+        return safe_asarray(X, dtype=np.float64, copy=copy,
+                            force_all_finite=force_all_finite)
     elif sparse.issparse(X) and X.dtype in [np.float32, np.float64]:
         return X.copy() if copy else X
     elif X.dtype in [np.float32, np.float64]:  # is numpy array
@@ -109,8 +129,6 @@ def _atleast2d_or_sparse(X, dtype, order, copy, sparse_class, convmethod,
     else:
         X = array2d(X, dtype=dtype, order=order, copy=copy,
                     force_all_finite=force_all_finite)
-        if force_all_finite:
-            _assert_all_finite(X)
     return X
 
 

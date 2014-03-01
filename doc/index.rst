@@ -269,6 +269,7 @@
             <div class="span4">
                 <h4>Community</h4>
                 <ul>
+		<li><em>About us</em> See <a href="about.html">authors</a> # scikit-learn</li>
                 <li><em>Questions?</em> See <a href="http://stackoverflow.com/questions/tagged/scikit-learn">stackoverflow</a> # scikit-learn</li>
                 <li><em>Mailing list:</em> <a href="https://lists.sourceforge.net/lists/listinfo/scikit-learn-general">scikit-learn-general@lists.sourceforge.net</a></li>
                 <li><em>IRC:</em> #scikit-learn @ <a href="http://webchat.freenode.net/">freenode</a></li>
@@ -292,9 +293,21 @@
                 <div id="testimonials_carousel" class="carousel slide">
                     <div class="carousel-inner">
                         <div class="active item">
-                          <img src="_images/inria.jpg" class="thumbnail" />
+                          <img src="_images/inria.png" class="thumbnail" />
                           <p>
                           <em>"We use scikit-learn to support leading-edge basic research [...]"</em>
+                          </p>
+                        </div>
+                        <div class="item">
+                          <img src="_images/spotify.png" class="thumbnail" />
+                          <p>
+                          <em>"I think it's the most well-designed ML package I've seen so far."</em>
+                          </p>
+                        </div>
+                        <div class="item">
+                          <img src="_images/change-logo.png" class="thumbnail" />
+                          <p>
+                          <em>"scikit-learn's ease-of-use, performance and overall variety of algorithms implemented has proved invaluable [...]."</em>
                           </p>
                         </div>
                         <div class="item">
@@ -333,6 +346,31 @@
 
         </div>
     </div>
+
+    <!--Bottom of index page contributions logos-->
+    <div class="container index-upper" >
+	<div class="row-fluid">
+	  <div class="footer">
+	      <div class="span4">
+	        Generous funding provided by INRIA, Google and others.
+	      </div>
+	      <div class="span4">
+   	         <a class="reference internal" href="about.html#funding" style="text-decoration: none" >
+    	           <img id="index-funding-logo-big" src="_static/img/inria-small.png" title="INRIA">
+	           <img id="index-funding-logo-small" src="_static/img/google.png" title="Google">
+	           <!--Due to Télécom ParisTech's logo text being smaller, a style has been added to improve readability-->
+	           <img id="index-funding-logo-small" src="_static/img/telecom.png" title="Télécom ParisTech" style="max-height: 36px">
+	           <img id="index-funding-logo-small" src="_static/img/FNRS-logo.png" title="FNRS">
+	         </a>
+	     </div>
+	     <div class="span4">
+	        <a class="reference internal" href="about.html#funding">
+	           More information on our contributors
+	        </a>
+	     </div>
+	  </div>
+	</div>
+      </div>
     </div>
 
 

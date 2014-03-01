@@ -143,12 +143,12 @@ estimator during the construction and exposes an estimator API::
     >>> gammas = np.logspace(-6, -1, 10)
     >>> clf = GridSearchCV(estimator=svc, param_grid=dict(gamma=gammas),
     ...                    n_jobs=-1)
-    >>> clf.fit(X_digits[:1000], y_digits[:1000]) # doctest: +ELLIPSIS
+    >>> clf.fit(X_digits[:1000], y_digits[:1000])        # doctest: +ELLIPSIS
     GridSearchCV(cv=None,...
-    >>> clf.best_score_   # doctest: +ELLIPSIS
-    0.9889...
-    >>> clf.best_estimator_.gamma
-    9.9999999999999995e-07
+    >>> clf.best_score_                                  # doctest: +ELLIPSIS
+    0.924...
+    >>> clf.best_estimator_.gamma == 1e-6
+    True
 
     >>> # Prediction performance on test set is not as good as on train set
     >>> clf.score(X_digits[1000:], y_digits[1000:])
@@ -163,8 +163,9 @@ a stratified 3-fold.
 
     ::
 
-        >>> cross_validation.cross_val_score(clf, X_digits, y_digits)
-	array([ 0.97996661,  0.98163606,  0.98330551])
+    >>> cross_validation.cross_val_score(clf, X_digits, y_digits)
+    ...                                                  # doctest: +ELLIPSIS
+    array([ 0.935...,  0.958...,  0.937...])
 
     Two cross-validation loops are performed in parallel: one by the
     :class:`GridSearchCV` estimator to set `gamma` and the other one by
@@ -194,8 +195,8 @@ automatically by cross-validation::
     >>> y_diabetes = diabetes.target
     >>> lasso.fit(X_diabetes, y_diabetes)
     LassoCV(alphas=None, copy_X=True, cv=None, eps=0.001, fit_intercept=True,
-        max_iter=1000, n_alphas=100, normalize=False, precompute='auto',
-        tol=0.0001, verbose=False)
+        max_iter=1000, n_alphas=100, n_jobs=1, normalize=False, positive=False,
+        precompute='auto', tol=0.0001, verbose=False)
     >>> # The estimator chose automatically its lambda:
     >>> lasso.alpha_ # doctest: +ELLIPSIS
     0.01229...

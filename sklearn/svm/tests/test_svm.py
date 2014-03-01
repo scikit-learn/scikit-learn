@@ -4,7 +4,6 @@ Testing for Support Vector Machine module (sklearn.svm)
 TODO: remove hard coded numerical results when possible
 """
 
-import warnings
 import numpy as np
 from numpy.testing import (assert_array_equal, assert_array_almost_equal,
                            assert_almost_equal)
@@ -17,7 +16,9 @@ from sklearn.metrics import f1_score
 from sklearn.utils import check_random_state
 from sklearn.utils import ConvergenceWarning
 from sklearn.utils.fixes import unique
-from sklearn.utils.testing import assert_greater, assert_less
+from sklearn.utils.testing import assert_greater, assert_in, assert_less
+from sklearn.utils.testing import assert_warns
+
 
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
@@ -357,8 +358,8 @@ def test_auto_weight():
     X, y = iris.data[:, :2], iris.target + 1
     unbalanced = np.delete(np.arange(y.size), np.where(y > 2)[0][::2])
 
-    classes, y_ind = unique(y[unbalanced], return_inverse=True)
-    class_weights = compute_class_weight('auto', classes, y_ind)
+    classes = unique(y[unbalanced])
+    class_weights = compute_class_weight('auto', classes, y[unbalanced])
     assert_true(np.argmax(class_weights) == 2)
 
     for clf in (svm.SVC(kernel='linear'), svm.LinearSVC(random_state=0),
@@ -415,6 +416,16 @@ def test_bad_input():
     clf = svm.SVC()
     clf.fit(X, Y)
     assert_raises(ValueError, clf.predict, Xt)
+
+
+def test_sparse_precomputed():
+    clf = svm.SVC(kernel='precomputed')
+    sparse_gram = sparse.csr_matrix([[1, 0], [0, 1]])
+    try:
+        clf.fit(sparse_gram, [0, 1])
+        assert not "reached"
+    except TypeError as e:
+        assert_in("Sparse precomputed", str(e))
 
 
 def test_linearsvc_parameters():
@@ -490,7 +501,6 @@ def test_linearsvc_crammer_singer():
     assert_array_almost_equal(dec_func, cs_clf.decision_function(iris.data))
 
 
-
 def test_crammer_singer_binary():
     """Test Crammer-Singer formulation in the binary case"""
     X, y = make_classification(n_classes=2, random_state=0)
@@ -499,8 +509,7 @@ def test_crammer_singer_binary():
         acc = svm.LinearSVC(fit_intercept=fit_intercept,
                             multi_class="crammer_singer",
                             random_state=0).fit(X, y).score(X, y)
-        assert_almost_equal(acc, 0.68)
-
+        assert_greater(acc, 0.9)
 
 
 def test_linearsvc_iris():
@@ -655,14 +664,7 @@ def test_svc_bad_kernel():
 def test_timeout():
     a = svm.SVC(kernel=lambda x, y: np.dot(x, y.T), probability=True,
                 random_state=0, max_iter=1)
-    with warnings.catch_warnings(record=True) as foo:
-        # Hackish way to reset the  warning counter
-        from sklearn.svm import base
-        base.__warningregistry__ = {}
-        warnings.simplefilter("always")
-        a.fit(X, Y)
-        assert_equal(len(foo), 1, msg=foo)
-        assert_equal(foo[0].category, ConvergenceWarning, msg=foo[0].category)
+    assert_warns(ConvergenceWarning, a.fit, X, Y)
 
 
 def test_consistent_proba():

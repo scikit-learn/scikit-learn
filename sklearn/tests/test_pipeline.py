@@ -12,14 +12,24 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 
 from sklearn.base import BaseEstimator, clone
-from sklearn.pipeline import Pipeline, FeatureUnion
+from sklearn.pipeline import Pipeline, FeatureUnion, make_pipeline, make_union
 from sklearn.svm import SVC
 from sklearn.linear_model import LogisticRegression
 from sklearn.feature_selection import SelectKBest, f_classif
-from sklearn.decomposition.pca import PCA, RandomizedPCA
+from sklearn.decomposition import PCA, RandomizedPCA, TruncatedSVD
 from sklearn.datasets import load_iris
 from sklearn.preprocessing import StandardScaler
 from sklearn.feature_extraction.text import CountVectorizer
+
+
+JUNK_FOOD_DOCS = (
+    "the pizza pizza beer copyright",
+    "the pizza burger beer copyright",
+    "the the pizza beer beer copyright",
+    "the burger beer beer copyright",
+    "the coke burger coke copyright",
+    "the coke burger burger",
+)
 
 
 class IncorrectT(BaseEstimator):
@@ -81,6 +91,9 @@ def test_pipeline_init():
     clf = SVC()
     filter1 = SelectKBest(f_classif)
     pipe = Pipeline([('anova', filter1), ('svc', clf)])
+
+    # Check that we can't use the same stage name twice
+    assert_raises(ValueError, Pipeline, [('svc', SVC()), ('svc', SVC())])
 
     # Check that params are set
     pipe.set_params(svc__C=0.1)
@@ -188,21 +201,21 @@ def test_feature_union():
     X = iris.data
     X -= X.mean(axis=0)
     y = iris.target
-    pca = RandomizedPCA(n_components=2, random_state=0)
+    svd = TruncatedSVD(n_components=2, random_state=0)
     select = SelectKBest(k=1)
-    fs = FeatureUnion([("pca", pca), ("select", select)])
+    fs = FeatureUnion([("svd", svd), ("select", select)])
     fs.fit(X, y)
     X_transformed = fs.transform(X)
     assert_equal(X_transformed.shape, (X.shape[0], 3))
 
     # check if it does the expected thing
-    assert_array_almost_equal(X_transformed[:, :-1], pca.fit_transform(X))
+    assert_array_almost_equal(X_transformed[:, :-1], svd.fit_transform(X))
     assert_array_equal(X_transformed[:, -1],
                        select.fit_transform(X, y).ravel())
 
     # test if it also works for sparse input
-    # We use a different pca object to control the random_state stream
-    fs = FeatureUnion([("pca", pca), ("select", select)])
+    # We use a different svd object to control the random_state stream
+    fs = FeatureUnion([("svd", svd), ("select", select)])
     X_sp = sparse.csr_matrix(X)
     X_sp_transformed = fs.fit_transform(X_sp, y)
     assert_array_almost_equal(X_transformed, X_sp_transformed.toarray())
@@ -212,9 +225,18 @@ def test_feature_union():
     assert_equal(fs.fit_transform(X, y).shape, (X.shape[0], 4))
 
     # test it works with transformers missing fit_transform
-    fs = FeatureUnion([("mock", TransfT()), ("pca", pca), ("select", select)])
+    fs = FeatureUnion([("mock", TransfT()), ("svd", svd), ("select", select)])
     X_transformed = fs.fit_transform(X, y)
     assert_equal(X_transformed.shape, (X.shape[0], 8))
+
+
+def test_make_union():
+    pca = PCA()
+    mock = TransfT()
+    fu = make_union(pca, mock)
+    names, transformers = zip(*fu.transformer_list)
+    assert_equal(names, ("pca", "transft"))
+    assert_equal(transformers, (pca, mock))
 
 
 def test_pipeline_transform():
@@ -251,6 +273,22 @@ def test_pipeline_fit_transform():
     assert_array_almost_equal(X_trans, X_trans2)
 
 
+def test_make_pipeline():
+    t1 = TransfT()
+    t2 = TransfT()
+
+    pipe = make_pipeline(t1, t2)
+    assert_true(isinstance(pipe, Pipeline))
+    assert_equal(pipe.steps[0][0], "transft-1")
+    assert_equal(pipe.steps[1][0], "transft-2")
+
+    pipe = make_pipeline(t1, t2, FitParamT())
+    assert_true(isinstance(pipe, Pipeline))
+    assert_equal(pipe.steps[0][0], "transft-1")
+    assert_equal(pipe.steps[1][0], "transft-2")
+    assert_equal(pipe.steps[2][0], "fitparamt")
+
+
 def test_feature_union_weights():
     # test feature union with transformer weights
     iris = load_iris()
@@ -284,15 +322,53 @@ def test_feature_union_weights():
     assert_equal(X_fit_transformed_wo_method.shape, (X.shape[0], 7))
 
 
-def test_feature_union_feature_names():
-    JUNK_FOOD_DOCS = (
-        "the pizza pizza beer copyright",
-        "the pizza burger beer copyright",
-        "the the pizza beer beer copyright",
-        "the burger beer beer copyright",
-        "the coke burger coke copyright",
-        "the coke burger burger",
+def test_feature_union_parallel():
+    # test that n_jobs work for FeatureUnion
+    X = JUNK_FOOD_DOCS
+
+    fs = FeatureUnion([
+        ("words", CountVectorizer(analyzer='word')),
+        ("chars", CountVectorizer(analyzer='char')),
+    ])
+
+    fs_parallel = FeatureUnion([
+        ("words", CountVectorizer(analyzer='word')),
+        ("chars", CountVectorizer(analyzer='char')),
+    ], n_jobs=2)
+
+    fs_parallel2 = FeatureUnion([
+        ("words", CountVectorizer(analyzer='word')),
+        ("chars", CountVectorizer(analyzer='char')),
+    ], n_jobs=2)
+
+    fs.fit(X)
+    X_transformed = fs.transform(X)
+    assert_equal(X_transformed.shape[0], len(X))
+
+    fs_parallel.fit(X)
+    X_transformed_parallel = fs_parallel.transform(X)
+    assert_equal(X_transformed.shape, X_transformed_parallel.shape)
+    assert_array_equal(
+        X_transformed.toarray(),
+        X_transformed_parallel.toarray()
     )
+
+    # fit_transform should behave the same
+    X_transformed_parallel2 = fs_parallel2.fit_transform(X)
+    assert_array_equal(
+        X_transformed.toarray(),
+        X_transformed_parallel2.toarray()
+    )
+
+    # transformers should stay fit after fit_transform
+    X_transformed_parallel2 = fs_parallel2.transform(X)
+    assert_array_equal(
+        X_transformed.toarray(),
+        X_transformed_parallel2.toarray()
+    )
+
+
+def test_feature_union_feature_names():
     word_vect = CountVectorizer(analyzer="word")
     char_vect = CountVectorizer(analyzer="char_wb", ngram_range=(3, 3))
     ft = FeatureUnion([("chars", char_vect), ("words", word_vect)])

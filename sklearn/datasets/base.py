@@ -404,8 +404,7 @@ def load_boston():
     data : Bunch
         Dictionary-like object, the interesting attributes are:
         'data', the data to learn, 'target', the regression targets,
-        'target_names', the meaning of the labels, and 'DESCR', the
-        full description of the dataset.
+        and 'DESCR', the full description of the dataset.
 
     Examples
     --------
@@ -432,7 +431,8 @@ def load_boston():
 
     return Bunch(data=data,
                  target=target,
-                 feature_names=feature_names,
+                 # last column is target value
+                 feature_names=feature_names[:-1],
                  DESCR=fdescr.read())
 
 

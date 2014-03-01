@@ -13,8 +13,8 @@ from scipy.linalg.lapack import get_lapack_funcs
 
 from .base import LinearModel, _pre_fit
 from ..base import RegressorMixin
-from ..utils import array2d, as_float_array
-from ..cross_validation import check_cv
+from ..utils import array2d, as_float_array, check_arrays
+from ..cross_validation import _check_cv as check_cv
 from ..externals.joblib import Parallel, delayed
 from ..utils.arrayfuncs import solve_triangular
 
@@ -199,14 +199,14 @@ def _gram_omp(Gram, Xy, n_nonzero_coefs, tol_0=None, tol=None,
         lam = np.argmax(np.abs(alpha))
         if lam < n_active or alpha[lam] ** 2 < min_float:
             # selected same atom twice, or inner product too small
-            warnings.warn(premature, RuntimeWarning, stacklevel=2)
+            warnings.warn(premature, RuntimeWarning, stacklevel=3)
             break
         if n_active > 0:
             L[n_active, :n_active] = Gram[lam, :n_active]
             solve_triangular(L[:n_active, :n_active], L[n_active, :n_active])
             v = nrm2(L[n_active, :n_active]) ** 2
             if 1 - v <= min_float:  # selected atoms are dependent
-                warnings.warn(premature, RuntimeWarning, stacklevel=2)
+                warnings.warn(premature, RuntimeWarning, stacklevel=3)
                 break
             L[n_active, n_active] = np.sqrt(1 - v)
         Gram[n_active], Gram[lam] = swap(Gram[n_active], Gram[lam])
@@ -225,7 +225,7 @@ def _gram_omp(Gram, Xy, n_nonzero_coefs, tol_0=None, tol=None,
             tol_curr += delta
             delta = np.inner(gamma, beta[:n_active])
             tol_curr -= delta
-            if tol_curr <= tol:
+            if abs(tol_curr) <= tol:
                 break
         elif n_active == max_features:
             break
@@ -524,7 +524,7 @@ class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
     Attributes
     ----------
     `coef_` : array, shape (n_features,) or (n_features, n_targets)
-        parameter vector (w in the fomulation formula)
+        parameter vector (w in the formula)
 
     `intercept_` : float or array, shape (n_targets,)
         independent term in decision function.
@@ -840,6 +840,7 @@ class OrthogonalMatchingPursuitCV(LinearModel, RegressorMixin):
             returns an instance of self.
         """
         X = array2d(X)
+        X, y = check_arrays(X, y)
         cv = check_cv(self.cv, X, y, classifier=False)
         max_iter = (min(max(int(0.1 * X.shape[1]), 5), X.shape[1])
                     if not self.max_iter

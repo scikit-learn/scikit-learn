@@ -1,4 +1,3 @@
-
 .. _dpgmm_derivation:
 
 .. currentmodule:: sklearn.mixture
@@ -49,7 +48,7 @@ proportion :math:`\phi_k`, the mean parameters :math:`\mu_k`, the
 covariance parameters :math:`\Sigma_k`, which is characterized by
 variational Wishart density, :math:`Wishart(a_k, \mathbf{B_k})`, where
 :math:`a` is the degrees of freedom, and :math:`B` is the
-scale matrix. Depending on the covariance parameterization,
+scale matrix. Depending on the covariance parametrization,
 :math:`B_k` can be a positive scalar, a positive vector or a Symmetric
 Positive Definite matrix.
 
@@ -157,7 +156,7 @@ distribution.
   && E_q[\log P(z)] - E_q[\log Q(z)] \\
   &=&
   \sum_{k} \left( 
-       \left(\sum_{j=k+1}^K  \nu_{z_{i,j}}\right)(\Psi(\gamma{k,1})-\Psi(\gamma{k,1}+\gamma_{k,2})) 
+       \left(\sum_{j=k+1}^K  \nu_{z_{i,j}}\right)(\Psi(\gamma_{k,2})-\Psi(\gamma_{k,1}+\gamma_{k,2})) 
    +  \nu_{z_{i,k}}(\Psi(\gamma_{k,1})-\Psi(\gamma_{k,1}+\gamma_{k,2}))
    - \log \nu_{z_{i,k}} \right)
   \end{array}
@@ -195,8 +194,8 @@ The updates
 
 The updates for mu essentially are just weighted expectations of
 :math:`X` regularized by the prior. We can see this by taking the
-gradient of the bound w.r.t. :math:`\nu_{\mu}` and setting it to zero. The
-gradient is
+gradient of the bound with regards to :math:`\nu_{\mu}` and setting it to zero.
+The gradient is
 
 .. math::
 

@@ -16,7 +16,8 @@ from .least_angle import (Lars, LassoLars, lars_path, LarsCV, LassoLarsCV,
                           LassoLarsIC)
 from .coordinate_descent import (Lasso, ElasticNet, LassoCV, ElasticNetCV,
                                  lasso_path, enet_path, MultiTaskLasso,
-                                 MultiTaskElasticNet)
+                                 MultiTaskElasticNet, MultiTaskElasticNetCV,
+                                 MultiTaskLassoCV)
 from .sgd_fast import Hinge, Log, ModifiedHuber, SquaredLoss, Huber
 from .stochastic_gradient import SGDClassifier, SGDRegressor
 from .ridge import (Ridge, RidgeCV, RidgeClassifier, RidgeClassifierCV,
@@ -29,6 +30,7 @@ from .passive_aggressive import PassiveAggressiveRegressor
 from .perceptron import Perceptron
 from .randomized_l1 import (RandomizedLasso, RandomizedLogisticRegression,
                             lasso_stability_path)
+from .ransac import RANSACRegressor
 
 __all__ = ['ARDRegression',
            'BayesianRidge',
@@ -48,7 +50,9 @@ __all__ = ['ARDRegression',
            'LogisticRegression',
            'ModifiedHuber',
            'MultiTaskElasticNet',
+           'MultiTaskElasticNetCV',
            'MultiTaskLasso',
+           'MultiTaskLassoCV',
            'OrthogonalMatchingPursuit',
            'OrthogonalMatchingPursuitCV',
            'PassiveAggressiveClassifier',
@@ -69,4 +73,5 @@ __all__ = ['ARDRegression',
            'lasso_stability_path',
            'orthogonal_mp',
            'orthogonal_mp_gram',
-           'ridge_regression']
+           'ridge_regression',
+           'RANSACRegressor']

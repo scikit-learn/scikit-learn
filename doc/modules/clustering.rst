@@ -154,7 +154,7 @@ initializations of the centroids. One method to help address this issue is the
 k-means++ initialization scheme, which has been implemented in scikit-learn
 (use the ``init='kmeans++'`` parameter). This initializes the centroids to be
 (generally) distant from each other, leading to provably better results than
-random initialization.
+random initialization, as shown in the reference.
 
 A parameter can be given to allow K-means to be run in parallel, called
 `n_jobs`. Giving this parameter a positive value uses that many processors
@@ -177,6 +177,13 @@ transform method of a trained model of :class:`KMeans`.
 
  * :ref:`example_cluster_plot_kmeans_digits.py`: Clustering handwritten digits
 
+.. topic:: References:
+
+ * `"k-means++: The advantages of careful seeding"
+   <http://ilpubs.stanford.edu:8090/778/1/2006-13.pdf>`_
+   Arthur, David, and Sergei Vassilvitskii,
+   *Proceedings of the eighteenth annual ACM-SIAM symposium on Discrete
+   algorithms*, Society for Industrial and Applied Mathematics (2007)
 
 .. _mini_batch_kmeans:
 
@@ -302,12 +309,44 @@ of each iterates until convergence.
 
 Mean Shift
 ==========
+:class:`MeanShift` clustering aims to discover *blobs* in a smooth density of
+samples. It is a centroid based algorithm, which works by updating candidates
+for centroids to be the mean of the points within a given region. These
+candidates are then filtered in a
+post-processing stage to eliminate near-duplicates to form the final set of
+centroids.
 
-:class:`MeanShift` clusters data by estimating *blobs* in a smooth
-density of points matrix. This algorithm automatically sets its numbers
-of cluster. It will have difficulties scaling to thousands of samples.
-The utility function :func:`estimate_bandwidth` can be used to guess
-the optimal bandwidth for :class:`MeanShift` from the data.
+Given a candidate centroid :math:`x_i` for iteration :math:`t`, the candidate
+is updated according to the following equation:
+
+.. math::
+
+    x_i^{t+1} = x_i^t + m(x_i^t)
+
+Where :math:`N(x_i)` is the neighborhood of samples within a given distance
+around :math:`x_i` and :math:`m` is the *mean shift* vector that is computed
+for each centroid that
+points towards a region of the maximum increase in the density of points. This
+is computed using the following equation, effectively updating a centroid to be
+the mean of the samples within its neighborhood:
+
+.. math::
+
+    m(x_i) = \frac{\sum_{x_j \in N(x_i)}K(x_j - x_i)x_j}{\sum_{x_j \in N(x_i)}K(x_j - x_i)}
+
+The algorithm automatically sets the number of clusters, instead of relying on a
+parameter `bandwidth`, which dictates the size of the region to search through.
+This parameter can be set manually, but can be estimated using the provided
+`estimate_bandwidth` function, which is called if the bandwidth is not set.
+
+The algorithm is not highly scalable, as it requires multiple nearest neighbor
+searches during the execution of the algorithm. The algorithm is guaranteed to
+converge, however the algorithm will stop iterating when the change in centroids
+is small.
+
+Labelling a new sample is performed by finding the nearest centroid for a
+given sample.
+
 
 .. figure:: ../auto_examples/cluster/images/plot_mean_shift_1.png
    :target: ../auto_examples/cluster/plot_mean_shift.html
@@ -320,6 +359,13 @@ the optimal bandwidth for :class:`MeanShift` from the data.
  * :ref:`example_cluster_plot_mean_shift.py`: Mean Shift clustering
    on a synthetic 2D datasets with 3 classes.
 
+.. topic:: References:
+
+ * `"Mean shift: A robust approach toward feature space analysis."
+   <http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.76.8968&rep=rep1&type=pdf>`_
+   D. Comaniciu, & P. Meer *IEEE Transactions on Pattern Analysis and Machine Intelligence* (2002)
+
+
 .. _spectral_clustering:
 
 Spectral clustering
@@ -328,15 +374,15 @@ Spectral clustering
 :class:`SpectralClustering` does a low-dimension embedding of the
 affinity matrix between samples, followed by a KMeans in the low
 dimensional space. It is especially efficient if the affinity matrix is
-sparse and the `pyamg <http://code.google.com/p/pyamg/>`_ module is
-installed. SpectralClustering requires the number of clusters to be
-specified. It works well for a small number of clusters but is not
-advised when using many clusters.
+sparse and the `pyamg <http://pyamg.org/>`_ module is installed.
+SpectralClustering requires the number of clusters to be specified. It
+works well for a small number of clusters but is not advised when using
+many clusters.
 
 For two clusters, it solves a convex relaxation of the `normalised
 cuts <http://www.cs.berkeley.edu/~malik/papers/SM-ncut.pdf>`_ problem on
 the similarity graph: cutting the graph in two so that the weight of the
-edges cut is small compared to the weights in of edges inside each
+edges cut is small compared to the weights of the edges inside each
 cluster. This criteria is especially interesting when working on images:
 graph vertices are pixels, and edges of the similarity graph are a
 function of the gradient of the image.
@@ -544,24 +590,24 @@ by black points below.
 
 .. topic:: Implementation
 
-    The algorithm is non-deterministic, however the core samples themselves will
-    always belong to the same clusters (although the labels themselves may be
-    different). The non-determinism comes from deciding on which cluster a
-    non-core sample belongs to. A non-core sample can have a distance lower
-    than `eps` to two core samples in different classes. Following from the
-    triangular inequality, those two core samples would be more distant than
-    `eps` from each other -- else they would be in the same class. The non-core
-    sample is simply assigned to which ever cluster is generated first, where
-    the order is determined randomly within the code. Other than the ordering of,
+    The algorithm is non-deterministic, but the core samples will
+    always belong to the same clusters (although the labels may be
+    different). The non-determinism comes from deciding to which cluster a
+    non-core sample belongs. A non-core sample can have a distance lower
+    than `eps` to two core samples in different clusters. By the
+    triangular inequality, those two core samples must be more distant than
+    `eps` from each other, or they would be in the same cluster. The non-core
+    sample is assigned to whichever cluster is generated first, where
+    the order is determined randomly. Other than the ordering of
     the dataset, the algorithm is deterministic, making the results relatively
-    stable between iterations on the same data.
+    stable between runs on the same data.
 
-    The current implementation relies heavily on :class:`NearestNeighbors` 
-    to determine the number of samples within distance eps. This is to take
-    advantage of the ball tree and kd-tree methods of speeding up neighbor
-    searching and to avoid calculating the full distance matrix.
-    We also retain the flexibility of custom metrics -- for details, 
-    see :class:`NearestNeighbors`.
+    The current implementation uses ball trees and kd-trees
+    to determine the neighborhood of points,
+    which avoids calculating the full distance matrix
+    (as was done in scikit-learn versions before 0.14).
+    The possibility to use custom metrics is retained;
+    for details, see :class:`NearestNeighbors`.
 
 .. topic:: References:
 
@@ -988,8 +1034,8 @@ Advantages
 Drawbacks
 ~~~~~~~~~
 
-- The previously introduced metrics are **not normalized w.r.t. random
-  labeling**: this means that depending on the number of samples,
+- The previously introduced metrics are **not normalized with regards to
+  random labeling**: this means that depending on the number of samples,
   clusters and ground truth classes, a completely random labeling will
   not always yield the same values for homogeneity, completeness and
   hence v-measure. In particular **random labeling won't yield zero

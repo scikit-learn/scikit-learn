@@ -1,9 +1,11 @@
-# encoding: utf-8
 # cython: cdivision=True
 # cython: boundscheck=False
 # cython: wraparound=False
 #
 # Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
+#         Mathieu Blondel (partial_fit support)
+#         Rob Zinkov (passive-aggressive)
+#         Lars Buitinck
 #
 # Licence: BSD 3 clause
 
@@ -12,9 +14,11 @@ import numpy as np
 import sys
 from time import time
 
+cimport cython
 from libc.math cimport exp, log, sqrt, pow, fabs
 cimport numpy as np
-cimport cython
+cdef extern from "numpy/npy_math.h":
+    bint isfinite "npy_isfinite"(double) nogil
 
 from sklearn.utils.weight_vector cimport WeightVector
 from sklearn.utils.seq_dataset cimport SequentialDataset
@@ -22,11 +26,7 @@ from sklearn.utils.seq_dataset cimport SequentialDataset
 np.import_array()
 
 
-ctypedef np.float64_t DOUBLE
-ctypedef np.int32_t INTEGER
-
-
-# Penalty constans
+# Penalty constants
 DEF NO_PENALTY = 0
 DEF L1 = 1
 DEF L2 = 2
@@ -76,7 +76,7 @@ cdef class LossFunction:
         Returns
         -------
         double
-            The derivative of the loss function w.r.t. `p`.
+            The derivative of the loss function with regards to `p`.
         """
         raise NotImplementedError()
 
@@ -324,12 +324,12 @@ cdef class SquaredEpsilonInsensitive(Regression):
         return SquaredEpsilonInsensitive, (self.epsilon,)
 
 
-def plain_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
+def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
               double intercept,
               LossFunction loss,
               int penalty_type,
               double alpha, double C,
-              double rho,
+              double l1_ratio,
               SequentialDataset dataset,
               int n_iter, int fit_intercept,
               int verbose, int shuffle, seed,
@@ -352,8 +352,11 @@ def plain_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
         The penalty 2 for L2, 1 for L1, and 3 for Elastic-Net.
     alpha : float
         The regularization parameter.
-    rho : float
-        The elastic net hyperparameter.
+    C : float
+        Maximum step size for passive aggressive.
+    l1_ratio : float
+        The Elastic Net mixing parameter, with 0 <= l1_ratio <= 1.
+        l1_ratio=0 corresponds to L2 penalty, l1_ratio=1 to L1.
     dataset : SequentialDataset
         A concrete ``SequentialDataset`` object.
     n_iter : int
@@ -402,8 +405,8 @@ def plain_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
 
     cdef WeightVector w = WeightVector(weights)
 
-    cdef DOUBLE * x_data_ptr = NULL
-    cdef INTEGER * x_ind_ptr = NULL
+    cdef double *x_data_ptr = NULL
+    cdef int *x_ind_ptr = NULL
 
     # helper variable
     cdef int xnnz
@@ -411,8 +414,8 @@ def plain_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
     cdef double p = 0.0
     cdef double update = 0.0
     cdef double sumloss = 0.0
-    cdef DOUBLE y = 0.0
-    cdef DOUBLE sample_weight
+    cdef double y = 0.0
+    cdef double sample_weight
     cdef double class_weight = 1.0
     cdef unsigned int count = 0
     cdef unsigned int epoch = 0
@@ -420,17 +423,17 @@ def plain_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
     cdef int is_hinge = isinstance(loss, Hinge)
 
     # q vector is only used for L1 regularization
-    cdef np.ndarray[DOUBLE, ndim = 1, mode = "c"] q = None
-    cdef DOUBLE * q_data_ptr = NULL
+    cdef np.ndarray[double, ndim = 1, mode = "c"] q = None
+    cdef double * q_data_ptr = NULL
     if penalty_type == L1 or penalty_type == ELASTICNET:
         q = np.zeros((n_features,), dtype=np.float64, order="c")
-        q_data_ptr = <DOUBLE * > q.data
+        q_data_ptr = <double * > q.data
     cdef double u = 0.0
 
     if penalty_type == L2:
-        rho = 1.0
+        l1_ratio = 0.0
     elif penalty_type == L1:
-        rho = 0.0
+        l1_ratio = 1.0
 
     eta = eta0
 
@@ -481,14 +484,14 @@ def plain_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
             update *= class_weight * sample_weight
 
             if penalty_type >= L2:
-                w.scale(1.0 - (rho * eta * alpha))
+                w.scale(1.0 - ((1.0 - l1_ratio) * eta * alpha))
             if update != 0.0:
                 w.add(x_data_ptr, x_ind_ptr, xnnz, update)
                 if fit_intercept == 1:
                     intercept += update * intercept_decay
 
             if penalty_type == L1 or penalty_type == ELASTICNET:
-                u += ((1.0 - rho) * eta * alpha)
+                u += (l1_ratio * eta * alpha)
                 l1penalty(w, q_data_ptr, x_ind_ptr, xnnz, u)
             t += 1
             count += 1
@@ -503,8 +506,8 @@ def plain_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
             print("Total training time: %.2f seconds." % (time() - t_start))
 
         # floating-point under-/overflow check.
-        if np.any(np.isinf(weights)) or np.any(np.isnan(weights)) \
-           or np.isnan(intercept) or np.isinf(intercept):
+        if (not isfinite(intercept)
+            or any_nonfinite(<double *>weights.data, n_features)):
             raise ValueError("floating-point under-/overflow occurred.")
 
     w.reset_wscale()
@@ -512,14 +515,16 @@ def plain_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
     return weights, intercept
 
 
-cdef inline double max(double a, double b):
-    return a if a >= b else b
+cdef bint any_nonfinite(double *w, int n):
+    cdef int i
+
+    for i in range(n):
+        if not isfinite(w[i]):
+            return True
+    return 0
 
 
-cdef inline double min(double a, double b):
-    return a if a <= b else b
-
-cdef double sqnorm(DOUBLE * x_data_ptr, INTEGER * x_ind_ptr, int xnnz):
+cdef double sqnorm(double * x_data_ptr, int * x_ind_ptr, int xnnz) nogil:
     cdef double x_norm = 0.0
     cdef int j
     cdef double z
@@ -528,8 +533,9 @@ cdef double sqnorm(DOUBLE * x_data_ptr, INTEGER * x_ind_ptr, int xnnz):
         x_norm += z * z
     return x_norm
 
-cdef void l1penalty(WeightVector w, DOUBLE * q_data_ptr,
-                    INTEGER * x_ind_ptr, int xnnz, double u):
+
+cdef void l1penalty(WeightVector w, double * q_data_ptr,
+                    int *x_ind_ptr, int xnnz, double u) nogil:
     """Apply the L1 penalty to each updated feature
 
     This implements the truncated gradient approach by
@@ -539,16 +545,16 @@ cdef void l1penalty(WeightVector w, DOUBLE * q_data_ptr,
     cdef int j = 0
     cdef int idx = 0
     cdef double wscale = w.wscale
-    cdef double * w_data_ptr = w.w_data_ptr
+    cdef double *w_data_ptr = w.w_data_ptr
     for j in range(xnnz):
         idx = x_ind_ptr[j]
         z = w_data_ptr[idx]
-        if (wscale * w_data_ptr[idx]) > 0.0:
+        if wscale * w_data_ptr[idx] > 0.0:
             w_data_ptr[idx] = max(
                 0.0, w_data_ptr[idx] - ((u + q_data_ptr[idx]) / wscale))
 
-        elif (wscale * w_data_ptr[idx]) < 0.0:
+        elif wscale * w_data_ptr[idx] < 0.0:
             w_data_ptr[idx] = min(
                 0.0, w_data_ptr[idx] + ((u - q_data_ptr[idx]) / wscale))
 
-        q_data_ptr[idx] += (wscale * (w_data_ptr[idx] - z))
+        q_data_ptr[idx] += wscale * (w_data_ptr[idx] - z)

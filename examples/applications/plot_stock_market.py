@@ -78,8 +78,8 @@ from sklearn import cluster, covariance, manifold
 
 # Choose a time period reasonnably calm (not too long ago so that we get
 # high-tech firms, and before the 2008 crash)
-d1 = datetime.datetime(2003, 01, 01)
-d2 = datetime.datetime(2008, 01, 01)
+d1 = datetime.datetime(2003, 1, 1)
+d2 = datetime.datetime(2008, 1, 1)
 
 # kraft symbol has now changed from KFT to MDLZ in yahoo
 symbol_dict = {
@@ -116,7 +116,6 @@ symbol_dict = {
     'MAR': 'Marriott',
     'PG': 'Procter Gamble',
     'CL': 'Colgate-Palmolive',
-    'NWS': 'News Corp',
     'GE': 'General Electrics',
     'WFC': 'Wells Fargo',
     'JPM': 'JPMorgan Chase',
@@ -145,7 +144,7 @@ symbol_dict = {
     'CAT': 'Caterpillar',
     'DD': 'DuPont de Nemours'}
 
-symbols, names = np.array(symbol_dict.items()).T
+symbols, names = np.array(list(symbol_dict.items())).T
 
 quotes = [finance.quotes_historical_yahoo(symbol, d1, d2, asobject=True)
           for symbol in symbols]

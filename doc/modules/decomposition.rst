@@ -31,11 +31,6 @@ the case for Support Vector Machines with the RBF kernel and the K-Means
 clustering algorithm. However in that case the inverse transform is no
 longer exact since some information is lost while forward transforming.
 
-In addition, the :class:`ProbabilisticPCA` object provides a
-probabilistic interpretation of the PCA that can give a likelihood of
-data based on the amount of variance it explains. As such it implements a
-`score` method that can be used in cross-validation.
-
 Below is an example of the iris dataset, which is comprised of 4
 features, projected on the 2 dimensions that explain most variance:
 
@@ -44,9 +39,22 @@ features, projected on the 2 dimensions that explain most variance:
     :align: center
     :scale: 75%
 
+
+The :class:`PCA` object also provides a
+probabilistic interpretation of the PCA that can give a likelihood of
+data based on the amount of variance it explains. As such it implements a
+`score` method that can be used in cross-validation:
+
+.. figure:: ../auto_examples/decomposition/images/plot_pca_vs_fa_model_selection_1.png
+    :target: ../auto_examples/decomposition/plot_pca_vs_fa_model_selection.html
+    :align: center
+    :scale: 75%
+
+
 .. topic:: Examples:
 
     * :ref:`example_decomposition_plot_pca_vs_lda.py`
+    * :ref:`example_decomposition_plot_pca_vs_fa_model_selection.py`
 
 
 .. _RandomizedPCA:
@@ -509,7 +517,7 @@ of these two parameters. A simple additional assumption regards the
 structure of the error covariance :math:`\Psi`:
 
 * :math:`\Psi = \sigma^2 \mathbf{I}`: This assumption leads to
-  :class:`ProbabilisticPCA`.
+  the probabilistic model of :class:`PCA`.
 
 * :math:`\Psi = diag(\psi_1, \psi_2, \dots, \psi_n)`: This model is called Factor
   Analysis, a classical statistical model. The matrix W is sometimes called
@@ -534,13 +542,27 @@ about these components (e.g. whether they are orthogonal):
 
 .. centered:: |pca_img3| |fa_img3|
 
-The main advantage for Factor Analysis (over :class:`ProbabilisticPCA` is that
-it can model the variance in every direction of the input space independently:
+The main advantage for Factor Analysis (over :class:`PCA` is that
+it can model the variance in every direction of the input space independently
+(heteroscedastic noise):
 
 .. figure:: ../auto_examples/decomposition/images/plot_faces_decomposition_8.png
     :target: ../auto_examples/decomposition/plot_faces_decomposition.html
     :align: center
     :scale: 75%
+
+This allows better model selection than probabilistic PCA in the presence
+of heteroscedastic noise:
+
+.. figure:: ../auto_examples/decomposition/images/plot_pca_vs_fa_model_selection_2.png
+    :target: ../auto_examples/decomposition/plot_pca_vs_fa_model_selection.html
+    :align: center
+    :scale: 75%
+
+
+.. topic:: Examples:
+
+    * :ref:`example_decomposition_plot_pca_vs_fa_model_selection.py`
 
 .. _ICA:
 
@@ -594,6 +616,17 @@ Non-negative matrix factorization (NMF or NNMF)
 data and the components are non-negative. :class:`NMF` can be plugged in
 instead of :class:`PCA` or its variants, in the cases where the data matrix
 does not contain negative values.
+It finds a decomposition of samples :math:`X`
+into two matrices :math:`V` and :math:`H` of non-negative elements,
+by optimizing for the squared Frobenius norm::
+
+.. math::
+    \arg\min_{W,H} ||X - WH||^2 = \sum_{i,j} X_{ij} - {WH}_{ij}
+
+This norm is an obvious extension of the Euclidean norm to matrices.
+(Other optimization objectives have been suggested in the NMF literature,
+in particular Kullback-Leibler divergence,
+but these are not currently implemented.)
 
 Unlike :class:`PCA`, the representation of a vector is obtained in an additive
 fashion, by superimposing the components, without subtracting. Such additive
