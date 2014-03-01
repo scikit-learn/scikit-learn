@@ -539,7 +539,7 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
 
         if self.class_weight:
             cw = compute_class_weight(self.class_weight,
-                                      self.classes_, Y)
+                                      self.classes_, y)
             # get the class weight corresponding to each sample
             sample_weight = cw[np.searchsorted(self.classes_, y)]
         else:
