@@ -68,11 +68,6 @@ def unique_labels(*ys):
     array([1, 2, 3, 4])
     >>> unique_labels([1, 2, 10], [5, 11])
     array([ 1,  2,  5, 10, 11])
-    >>> unique_labels(np.array([[0.0, 1.0], [1.0, 1.0]]), np.zeros((2, 2)))
-    array([0, 1])
-    >>> unique_labels([(1, 2), (3,)], [(1, 2), tuple()])
-    array([1, 2, 3])
-
     """
     if not ys:
         raise ValueError('No argument has been passed.')
@@ -152,6 +147,8 @@ def is_label_indicator_matrix(y):
 def is_sequence_of_sequences(y):
     """ Check if ``y`` is in the sequence of sequences format (multilabel).
 
+    This format is DEPRECATED.
+
     Parameters
     ----------
     y : sequence or array.
@@ -160,22 +157,6 @@ def is_sequence_of_sequences(y):
     -------
     out : bool,
         Return ``True``, if ``y`` is a sequence of sequences else ``False``.
-
-    >>> import numpy as np
-    >>> is_sequence_of_sequences([0, 1, 0, 1])
-    False
-    >>> is_sequence_of_sequences([[1], [0, 2], []])
-    True
-    >>> is_sequence_of_sequences(np.array([[1], [0, 2], []], dtype=object))
-    True
-    >>> is_sequence_of_sequences([(1,), (0, 2), ()])
-    True
-    >>> is_sequence_of_sequences(np.array([[1, 0], [0, 0]]))
-    False
-    >>> is_sequence_of_sequences(np.array([[1], [0], [0]]))
-    False
-    >>> is_sequence_of_sequences(np.array([[1, 0, 0]]))
-    False
     """
     # the explicit check for ndarray is for forward compatibility; future
     # versions of Numpy might want to register ndarray as a Sequence
@@ -213,8 +194,6 @@ def is_multilabel(y):
     >>> from sklearn.utils.multiclass import is_multilabel
     >>> is_multilabel([0, 1, 0, 1])
     False
-    >>> is_multilabel([[1], [0, 2], []])
-    True
     >>> is_multilabel(np.array([[1, 0], [0, 0]]))
     True
     >>> is_multilabel(np.array([[1], [0], [0]]))
@@ -273,10 +252,6 @@ def type_of_target(y):
     'multiclass-multioutput'
     >>> type_of_target(np.array([[1.5, 2.0], [3.0, 1.6]]))
     'continuous-multioutput'
-    >>> type_of_target([['a', 'b'], ['c'], []])
-    'multilabel-sequences'
-    >>> type_of_target([[]])
-    'multilabel-sequences'
     >>> type_of_target(np.array([[0, 1], [1, 1]]))
     'multilabel-indicator'
     """

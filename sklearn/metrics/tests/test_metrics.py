@@ -1682,7 +1682,7 @@ def test_multilabel_representation_invariance():
             metric.__module__ = 'tmp'
             metric.__name__ = name
         metric = ignore_warnings(metric)
-        measure = metric(y1, y2)
+        measure = assert_warns(DeprecationWarning, metric, y1, y2)
 
         # Check representation invariance
         assert_almost_equal(metric(y1_binary_indicator,
@@ -1894,7 +1894,8 @@ def test_normalize_option_multilabel_classification():
         metrics = ALL_METRICS[name]
 
         # List of list of labels
-        measure = metrics(y_true, y_pred, normalize=True)
+        measure = assert_warns(DeprecationWarning, metrics, y_true, y_pred,
+                               normalize=True)
         assert_greater(measure, 0,
                        msg="We failed to test correctly the normalize option")
         assert_almost_equal(metrics(y_true, y_pred, normalize=False)
