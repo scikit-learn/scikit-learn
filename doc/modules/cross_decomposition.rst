@@ -35,7 +35,7 @@ Classes included in this module are :class:`PLSRegression`
 .. topic:: Reference:
 
    * JA Wegelin
-     `A survey of Partial Least Squares (PLS) methods, with emphasis on the two-block case <https://www.stat.washington.edu/www/research/reports/2000/tr371.pdf>`_
+     `A survey of Partial Least Squares (PLS) methods, with emphasis on the two-block case <https://www.stat.washington.edu/research/reports/2000/tr371.pdf>`_
 
 .. topic:: Examples:
 
