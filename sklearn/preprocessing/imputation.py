@@ -62,6 +62,7 @@ def _get_median(negative_elements, n_zeros, positive_elements):
 def _get_elem_at_rank(negative_elements, n_zeros, positive_elements, k):
     """Compute the kth largest element of the array formed by
        negative_elements, n_zeros zeros and positive_elements."""
+    k = int(k)
     len_neg = len(negative_elements)
     if k < len_neg:
         return negative_elements[k]
@@ -108,6 +109,8 @@ class Imputer(BaseEstimator, TransformerMixin):
         The placeholder for the missing values. All occurrences of
         `missing_values` will be imputed. For missing values encoded as np.nan,
         use the string value "NaN".
+        If missing_values=0, for sparse matrices, only implicit zeros will be
+        imputed.
 
     strategy : string, optional (default="mean")
         The imputation strategy.
@@ -211,7 +214,7 @@ class Imputer(BaseEstimator, TransformerMixin):
 
         # Count the zeros
         if missing_values == 0:
-            n_zeros_axis = np.zeros(X.shape[not axis])
+            n_zeros_axis = np.zeros(X.shape[not axis], dtype=int)
         else:
             n_zeros_axis = X.shape[axis] - np.diff(X.indptr)
 
@@ -257,14 +260,13 @@ class Imputer(BaseEstimator, TransformerMixin):
             mask_valids = np.hsplit(np.logical_not(mask_missing_values),
                                     X.indptr[1:-1])
 
-            columns = [col[mask.astype(np.bool)]
+            columns = [col.compress(mask)
                        for col, mask in zip(columns_all, mask_valids)]
 
             # Median
             if strategy == "median":
                 median = np.empty(len(columns))
                 for i, column in enumerate(columns):
-
                     negatives = column[column < 0]
                     positives = column[column > 0]
                     median[i] = _get_median(negatives,
