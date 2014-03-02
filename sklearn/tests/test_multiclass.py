@@ -7,6 +7,7 @@ from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_warns
 
 from sklearn.utils.testing import assert_greater
 from sklearn.multiclass import OneVsRestClassifier
@@ -86,7 +87,9 @@ def test_ovr_multilabel():
                      LinearRegression(), Ridge(),
                      ElasticNet(), Lasso(alpha=0.5)):
         # test input as lists of tuples
-        clf = OneVsRestClassifier(base_clf).fit(X, y)
+        clf = assert_warns(DeprecationWarning,
+                           OneVsRestClassifier(base_clf).fit,
+                           X, y)
         assert_equal(set(clf.classes_), classes)
         y_pred = clf.predict([[0, 4, 4]])[0]
         assert_equal(set(y_pred), set(["spam", "eggs"]))
@@ -115,6 +118,7 @@ def test_ovr_multilabel_dataset():
                                                        n_labels=2,
                                                        length=50,
                                                        allow_unlabeled=au,
+                                                       return_indicator=True,
                                                        random_state=0)
         X_train, Y_train = X[:80], Y[:80]
         X_test, Y_test = X[80:], Y[80:]
@@ -138,6 +142,7 @@ def test_ovr_multilabel_predict_proba():
                                                        n_labels=3,
                                                        length=50,
                                                        allow_unlabeled=au,
+                                                       return_indicator=True,
                                                        random_state=0)
         X_train, Y_train = X[:80], Y[:80]
         X_test, Y_test = X[80:], Y[80:]
@@ -157,8 +162,8 @@ def test_ovr_multilabel_predict_proba():
 
         # predict assigns a label if the probability that the
         # sample has the label is greater than 0.5.
-        pred = [tuple(l.nonzero()[0]) for l in (Y_proba > 0.5)]
-        assert_equal(pred, Y_pred)
+        pred = Y_proba > .5
+        assert_array_equal(pred, Y_pred)
 
 
 def test_ovr_single_label_predict_proba():
@@ -189,12 +194,13 @@ def test_ovr_multilabel_decision_function():
                                                    n_labels=3,
                                                    length=50,
                                                    allow_unlabeled=True,
+                                                   return_indicator=True,
                                                    random_state=0)
     X_train, Y_train = X[:80], Y[:80]
     X_test, Y_test = X[80:], Y[80:]
     clf = OneVsRestClassifier(svm.SVC()).fit(X_train, Y_train)
-    assert_array_equal((clf.decision_function(X_test) > 0).nonzero()[1],
-                       np.hstack(clf.predict(X_test)))
+    assert_array_equal((clf.decision_function(X_test) > 0).astype(int),
+                       clf.predict(X_test))
 
 
 def test_ovr_single_label_decision_function():

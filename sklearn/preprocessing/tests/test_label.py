@@ -6,6 +6,8 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
+from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import ignore_warnings
 
 from sklearn.preprocessing.label import LabelBinarizer
 from sklearn.preprocessing.label import MultiLabelBinarizer
@@ -51,6 +53,7 @@ def test_label_binarizer():
     assert_array_equal(lb.inverse_transform(got), inp)
 
 
+@ignore_warnings
 def test_label_binarizer_column_y():
     # first for binary classification vs multi-label with 1 possible class
     # lists are multi-label, array is multi-class :-/
@@ -125,7 +128,7 @@ def test_label_binarizer_multilabel():
     indicator_mat = np.array([[0, 1, 1],
                               [1, 0, 0],
                               [1, 1, 0]])
-    got = lb.fit_transform(inp)
+    got = assert_warns(DeprecationWarning, lb.fit_transform, inp)
     assert_true(lb.multilabel_)
     assert_array_equal(indicator_mat, got)
     assert_equal(lb.inverse_transform(got), inp)
@@ -142,7 +145,7 @@ def test_label_binarizer_multilabel():
                          [1, 0],
                          [0, 1],
                          [1, 1]])
-    got = lb.fit_transform(inp)
+    got = assert_warns(DeprecationWarning, lb.fit_transform, inp)
     assert_true(lb.multilabel_)
     assert_array_equal(expected, got)
     assert_equal([set(x) for x in lb.inverse_transform(got)],
@@ -155,7 +158,7 @@ def test_label_binarizer_errors():
     lb = LabelBinarizer().fit(one_class)
     assert_false(lb.multilabel_)
 
-    multi_label = [(2, 3), (0,), (0, 2)]
+    multi_label = np.array([[0, 0, 1, 0], [1, 0, 1, 0]])
     assert_raises(ValueError, lb.transform, multi_label)
 
     lb = LabelBinarizer()
@@ -229,7 +232,8 @@ def test_label_binarizer_multilabel_unlabeled():
     Y = np.array([[1, 1],
                   [1, 0],
                   [0, 0]])
-    assert_array_equal(lb.fit_transform(y), Y)
+    assert_array_equal(assert_warns(DeprecationWarning,
+                                    lb.fit_transform, y), Y)
 
 
 def test_label_binarize_with_multilabel_indicator():

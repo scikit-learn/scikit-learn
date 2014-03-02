@@ -13,6 +13,7 @@ from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_warns
 
 from sklearn.datasets import make_classification
 from sklearn.datasets import make_multilabel_classification
@@ -131,11 +132,11 @@ def test_make_classification_informative_features():
                   n_clusters_per_class=2)
 
 
-def test_make_multilabel_classification():
+def test_make_multilabel_classification_return_sequences():
     for allow_unlabeled, min_length in zip((True, False), (0, 1)):
-        X, Y = make_multilabel_classification(n_samples=100, n_features=20,
-                                              n_classes=3, random_state=0,
-                                              allow_unlabeled=allow_unlabeled)
+        X, Y = assert_warns(DeprecationWarning, make_multilabel_classification,
+                            n_samples=100, n_features=20, n_classes=3,
+                            random_state=0, allow_unlabeled=allow_unlabeled)
         assert_equal(X.shape, (100, 20), "X shape mismatch")
         if not allow_unlabeled:
             assert_equal(max([max(y) for y in Y]), 2)
