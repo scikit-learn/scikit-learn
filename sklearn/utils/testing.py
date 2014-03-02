@@ -15,6 +15,7 @@ import sys
 import re
 
 import scipy as sp
+import scipy.io
 from functools import wraps
 try:
     # Python 2
@@ -27,7 +28,6 @@ except ImportError:
 
 import sklearn
 from sklearn.base import BaseEstimator
-from .fixes import savemat
 
 # Conveniently import all assertions in one place.
 from nose.tools import assert_equal
@@ -384,7 +384,7 @@ def fake_mldata(columns_dict, dataname, matfile, ordering=None):
     for i, name in enumerate(ordering):
         datasets['mldata_descr_ordering'][0, i] = name
 
-    savemat(matfile, datasets, oned_as='column')
+    scipy.io.savemat(matfile, datasets, oned_as='column')
 
 
 class mock_mldata_urlopen(object):

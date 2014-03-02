@@ -14,7 +14,7 @@ from scipy import linalg
 from scipy.sparse import issparse
 
 from . import check_random_state, deprecated
-from .fixes import np_version, qr_economic
+from .fixes import np_version
 from ._logistic_sigmoid import _log_logistic_sigmoid
 from ..externals.six.moves import xrange
 from .sparsefuncs import csr_row_norms
@@ -205,7 +205,7 @@ def randomized_range_finder(A, size, n_iter, random_state=None):
         Y = safe_sparse_dot(A, safe_sparse_dot(A.T, Y))
 
     # extracting an orthonormal basis of the A range samples
-    Q, R = qr_economic(Y)
+    Q, R = linalg.qr(Y, mode='economic')
     return Q
 
 

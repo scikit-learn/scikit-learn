@@ -26,24 +26,27 @@ def test_simple():
     from sklearn.externals.six.moves import cStringIO as StringIO
     import sys
     old_stdout = sys.stdout
-    sys.stdout = StringIO()
+    try:
+        sys.stdout = StringIO()
 
-    alphas_, active, coef_path_ = linear_model.lars_path(
-        diabetes.data, diabetes.target, method="lar", verbose=10)
+        alphas_, active, coef_path_ = linear_model.lars_path(
+            diabetes.data, diabetes.target, method="lar", verbose=10)
 
-    sys.stdout = old_stdout
+        sys.stdout = old_stdout
 
-    for (i, coef_) in enumerate(coef_path_.T):
-        res = y - np.dot(X, coef_)
-        cov = np.dot(X.T, res)
-        C = np.max(abs(cov))
-        eps = 1e-3
-        ocur = len(cov[C - eps < abs(cov)])
-        if i < X.shape[1]:
-            assert_true(ocur == i + 1)
-        else:
-            # no more than max_pred variables can go into the active set
-            assert_true(ocur == X.shape[1])
+        for (i, coef_) in enumerate(coef_path_.T):
+            res = y - np.dot(X, coef_)
+            cov = np.dot(X.T, res)
+            C = np.max(abs(cov))
+            eps = 1e-3
+            ocur = len(cov[C - eps < abs(cov)])
+            if i < X.shape[1]:
+                assert_true(ocur == i + 1)
+            else:
+                # no more than max_pred variables can go into the active set
+                assert_true(ocur == X.shape[1])
+    finally:
+        sys.stdout = old_stdout
 
 
 def test_simple_precomputed():
