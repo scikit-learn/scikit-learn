@@ -15,8 +15,7 @@ from ..externals.joblib import Parallel, delayed
 from .base import LinearClassifierMixin, SparseCoefMixin
 from ..base import BaseEstimator, RegressorMixin
 from ..feature_selection.from_model import _LearntSelectorMixin
-from ..utils import (array2d, atleast2d_or_csr, check_arrays, deprecated,
-                     column_or_1d)
+from ..utils import atleast2d_or_csr, check_arrays, deprecated, column_or_1d
 from ..utils.extmath import safe_sparse_dot
 from ..utils.multiclass import _check_partial_fit_first_call
 from ..externals import six
@@ -540,7 +539,7 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
     penalty : str, 'l2' or 'l1' or 'elasticnet'
         The penalty (aka regularization term) to be used. Defaults to 'l2'
         which is the standard regularizer for linear SVM models. 'l1' and
-        'elasticnet' migh bring sparsity to the model (feature selection)
+        'elasticnet' might bring sparsity to the model (feature selection)
         not achievable with 'l2'.
 
     alpha : float
@@ -655,8 +654,16 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
             power_t=power_t, class_weight=class_weight, warm_start=warm_start,
             seed=seed)
 
-    def predict_proba(self, X):
+    def _check_proba(self):
+        if self.loss not in ("log", "modified_huber"):
+            raise AttributeError("probability estimates are not available for"
+                                 " loss=%r" % self.loss)
+
+    @property
+    def predict_proba(self):
         """Probability estimates.
+
+        This method is only available for log loss and modified Huber loss.
 
         Multiclass probability estimates are derived from binary (one-vs.-rest)
         estimates by simple normalization, as recommended by Zadrozny and
@@ -685,6 +692,10 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
         case is in the appendix B in:
         http://jmlr.csail.mit.edu/papers/volume2/zhang02c/zhang02c.pdf
         """
+        self._check_proba()
+        return self._predict_proba
+
+    def _predict_proba(self, X):
         if self.loss == "log":
             return self._predict_proba_lr(X)
 
@@ -725,11 +736,16 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
                                       " loss='log' or loss='modified_huber' "
                                       "(%r given)" % self.loss)
 
-    def predict_log_proba(self, X):
+    @property
+    def predict_log_proba(self):
         """Log of probability estimates.
+
+        This method is only available for log loss and modified Huber loss.
 
         When loss="modified_huber", probability estimates may be hard zeros
         and ones, so taking the logarithm is not possible.
+
+        See ``predict_proba`` for details.
 
         Parameters
         ----------
@@ -742,6 +758,10 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
             model, where classes are ordered as they are in
             `self.classes_`.
         """
+        self._check_proba()
+        return self._predict_log_proba
+
+    def _predict_log_proba(self, X):
         return np.log(self.predict_proba(X))
 
 

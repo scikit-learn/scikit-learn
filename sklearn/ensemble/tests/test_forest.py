@@ -207,15 +207,29 @@ def test_importances():
     X_new = clf.transform(X, threshold="mean")
     assert_less(0 < X_new.shape[1], X.shape[1])
 
+    # Check with sample weights
+    sample_weight = np.ones(y.shape)
+    sample_weight[y == 1] *= 100
+
+    clf = RandomForestClassifier(n_estimators=50, random_state=0)
+    clf.fit(X, y, sample_weight=sample_weight)
+    importances = clf.feature_importances_
+    assert np.all(importances >= 0.0)
+
+    clf = RandomForestClassifier(n_estimators=50, random_state=0)
+    clf.fit(X, y, sample_weight=3*sample_weight)
+    importances_bis = clf.feature_importances_
+    assert_almost_equal(importances, importances_bis)
+
 
 def test_oob_score_classification():
     """Check that oob prediction is a good estimation of the generalization
     error."""
     clf = RandomForestClassifier(oob_score=True, random_state=rng)
     n_samples = iris.data.shape[0]
-    clf.fit(iris.data[:n_samples / 2, :], iris.target[:n_samples / 2])
-    test_score = clf.score(iris.data[n_samples / 2:, :],
-                           iris.target[n_samples / 2:])
+    clf.fit(iris.data[:n_samples // 2, :], iris.target[:n_samples // 2])
+    test_score = clf.score(iris.data[n_samples // 2:, :],
+                           iris.target[n_samples // 2:])
     assert_less(abs(test_score - clf.oob_score_), 0.1)
 
 
@@ -226,9 +240,9 @@ def test_oob_score_classification_for_non_contiguous_target():
     clf = RandomForestClassifier(n_estimators=50,
                                  oob_score=True, random_state=rng)
     n_samples = iris.data.shape[0]
-    clf.fit(iris.data[:n_samples / 2, :], iris_target[:n_samples / 2])
-    test_score = clf.score(iris.data[n_samples / 2:, :],
-                           iris_target[n_samples / 2:])
+    clf.fit(iris.data[:n_samples // 2, :], iris_target[:n_samples // 2])
+    test_score = clf.score(iris.data[n_samples // 2:, :],
+                           iris_target[n_samples // 2:])
     assert_less(abs(test_score - clf.oob_score_), 0.1)
 
 
@@ -238,9 +252,9 @@ def test_oob_score_regression():
     clf = RandomForestRegressor(n_estimators=50, oob_score=True,
                                 random_state=rng)
     n_samples = boston.data.shape[0]
-    clf.fit(boston.data[:n_samples / 2, :], boston.target[:n_samples / 2])
-    test_score = clf.score(boston.data[n_samples / 2:, :],
-                           boston.target[n_samples / 2:])
+    clf.fit(boston.data[:n_samples // 2, :], boston.target[:n_samples // 2])
+    test_score = clf.score(boston.data[n_samples // 2:, :],
+                           boston.target[n_samples // 2:])
     assert_greater(test_score, clf.oob_score_)
     assert_greater(clf.oob_score_, .8)
 

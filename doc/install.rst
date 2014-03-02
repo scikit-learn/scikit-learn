@@ -35,7 +35,7 @@ Getting the dependencies
 ------------------------
 
 Installing from source requires you to have installed Python (>= 2.6),
-NumPy (>= 1.3), SciPy (>= 0.7), setuptools, Python development headers
+NumPy (>= 1.6.1), SciPy (>= 0.9), setuptools, Python development headers
 and a working C++ compiler.
 Under Debian-based operating systems, which include Ubuntu,
 you can install all these requirements by issuing::
@@ -250,6 +250,20 @@ NetBSD
 scikit-learn is available via `pkgsrc-wip <http://pkgsrc-wip.sourceforge.net/>`_:
 
     http://pkgsrc.se/wip/py-scikit_learn
+
+Fedora
+------
+
+The Fedora package is called `python-scikit-learn` for the Python 2 version
+and `python3-scikit-learn` for the Python 3 version. Both versions can
+be installed using `yum`::
+
+    $ sudo yum install python-scikit-learn
+
+or::
+
+    $ sudo yum install python3-scikit-learn
+
 
 .. _install_bleeding_edge:
 

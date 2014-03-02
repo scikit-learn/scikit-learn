@@ -244,7 +244,7 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
     This text vectorizer implementation uses the hashing trick to find the
     token string name to feature integer index mapping.
 
-    This strategy has several advantage:
+    This strategy has several advantages:
 
     - it is very low memory scalable to large datasets as there is no need to
       store a vocabulary dictionary in memory
@@ -455,8 +455,11 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
 
 
 def _document_frequency(X):
-    """Count the number of non-zero values for each feature in csc_matrix X."""
-    return np.diff(X.indptr)
+    """Count the number of non-zero values for each feature in sparse X."""
+    if sp.isspmatrix_csr(X):
+        return np.bincount(X.indices, minlength=X.shape[1])
+    else:
+        return np.diff(sp.csc_matrix(X, copy=False).indptr)
 
 
 class CountVectorizer(BaseEstimator, VectorizerMixin):
@@ -652,7 +655,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
                 for i in xrange(len(vocabulary)):
                     if i not in indices:
                         msg = ("Vocabulary of size %d doesn't contain index "
-                                "%d." % (len(vocabulary), i))
+                               "%d." % (len(vocabulary), i))
                         raise ValueError(msg)
             if not vocabulary:
                 raise ValueError("empty vocabulary passed to fit")
@@ -663,7 +666,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         self.binary = binary
         self.dtype = dtype
 
-    def _sort_features(self, cscmatrix, vocabulary):
+    def _sort_features(self, X, vocabulary):
         """Sort features by name
 
         Returns a reordered matrix and modifies the vocabulary in place
@@ -673,9 +676,9 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         for new_val, (term, old_val) in enumerate(sorted_features):
             map_index[new_val] = old_val
             vocabulary[term] = new_val
-        return cscmatrix[:, map_index]
+        return X[:, map_index]
 
-    def _limit_features(self, cscmatrix, vocabulary, high=None, low=None,
+    def _limit_features(self, X, vocabulary, high=None, low=None,
                         limit=None):
         """Remove too rare or too common features.
 
@@ -686,11 +689,11 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         This does not prune samples with zero features.
         """
         if high is None and low is None and limit is None:
-            return cscmatrix, set()
+            return X, set()
 
         # Calculate a mask based on document frequencies
-        dfs = _document_frequency(cscmatrix)
-        tfs = np.asarray(cscmatrix.sum(axis=0)).ravel()
+        dfs = _document_frequency(X)
+        tfs = np.asarray(X.sum(axis=0)).ravel()
         mask = np.ones(len(dfs), dtype=bool)
         if high is not None:
             mask &= dfs <= high
@@ -714,7 +717,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         if len(kept_indices) == 0:
             raise ValueError("After pruning, no terms remain. Try a lower"
                              " min_df or a higher max_df.")
-        return cscmatrix[:, kept_indices], removed_terms
+        return X[:, kept_indices], removed_terms
 
     def _count_vocab(self, raw_documents, fixed_vocab):
         """Create sparse feature matrix, and vocabulary where fixed_vocab=False
@@ -797,7 +800,6 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         max_features = self.max_features
 
         vocabulary, X = self._count_vocab(raw_documents, self.fixed_vocabulary)
-        X = X.tocsc()
 
         if self.binary:
             X.data.fill(1)
@@ -905,7 +907,7 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
     variants:
 
     Tf is "n" (natural) by default, "l" (logarithmic) when sublinear_tf=True.
-    Idf is "t" idf is "t" when use_idf is given, "n" (none) otherwise.
+    Idf is "t" when use_idf is given, "n" (none) otherwise.
     Normalization is "c" (cosine) when norm='l2', "n" (none) when norm=None.
 
     Parameters
@@ -930,9 +932,9 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
     .. [Yates2011] `R. Baeza-Yates and B. Ribeiro-Neto (2011). Modern
                    Information Retrieval. Addison Wesley, pp. 68-74.`
 
-    .. [MSR2008] `C.D. Manning, H. Schuetze and P. Raghavan (2008).
+    .. [MRS2008] `C.D. Manning, P. Raghavan and H. Schuetze  (2008).
                    Introduction to Information Retrieval. Cambridge University
-                   Press, pp. 121-125.`
+                   Press, pp. 118-120.`
     """
 
     def __init__(self, norm='l2', use_idf=True, smooth_idf=True,
@@ -950,7 +952,7 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
         X : sparse matrix, [n_samples, n_features]
             a matrix of term/token counts
         """
-        if not sp.isspmatrix_csc(X):
+        if not sp.issparse(X):
             X = sp.csc_matrix(X)
         if self.use_idf:
             n_samples, n_features = X.shape

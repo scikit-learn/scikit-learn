@@ -181,5 +181,5 @@ def test_load_boston():
     res = load_boston()
     assert_equal(res.data.shape, (506, 13))
     assert_equal(res.target.size, 506)
-    assert_equal(res.feature_names.size, 14)
+    assert_equal(res.feature_names.size, 13)
     assert_true(res.DESCR)

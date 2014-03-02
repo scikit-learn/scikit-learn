@@ -14,10 +14,13 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_in
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_less
+from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import raises
+from sklearn.utils.validation import check_random_state
 
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.tree import DecisionTreeRegressor
@@ -26,7 +29,6 @@ from sklearn.tree import ExtraTreeRegressor
 
 from sklearn import tree
 from sklearn import datasets
-from sklearn.utils.fixes import bincount
 
 from sklearn.preprocessing._weights import _balance_weights
 
@@ -280,6 +282,27 @@ def test_importances_raises():
     """Check if variable importance before fit raises ValueError. """
     clf = DecisionTreeClassifier()
     clf.feature_importances_
+
+
+def test_importances_gini_equal_mse():
+    """Check that gini is equivalent to mse for binary output variable"""
+
+    X, y = datasets.make_classification(n_samples=2000,
+                                        n_features=10,
+                                        n_informative=3,
+                                        n_redundant=0,
+                                        n_repeated=0,
+                                        shuffle=False,
+                                        random_state=0)
+
+    clf = DecisionTreeClassifier(criterion="gini", random_state=0).fit(X, y)
+    reg = DecisionTreeRegressor(criterion="mse", random_state=0).fit(X, y)
+
+    assert_almost_equal(clf.feature_importances_, reg.feature_importances_)
+    assert_array_equal(clf.tree_.feature, reg.tree_.feature)
+    assert_array_equal(clf.tree_.children_left, reg.tree_.children_left)
+    assert_array_equal(clf.tree_.children_right, reg.tree_.children_right)
+    assert_array_equal(clf.tree_.n_node_samples, reg.tree_.n_node_samples)
 
 
 def test_max_features():
@@ -600,7 +623,7 @@ def test_sample_weight():
     clf = DecisionTreeClassifier(random_state=1)
     clf.fit(X[duplicates], y[duplicates])
 
-    sample_weight = bincount(duplicates, minlength=X.shape[0])
+    sample_weight = np.bincount(duplicates, minlength=X.shape[0])
     clf2 = DecisionTreeClassifier(random_state=1)
     clf2.fit(X, y, sample_weight=sample_weight)
 
@@ -614,7 +637,6 @@ def test_sample_weight_invalid():
     X = np.arange(100)[:, np.newaxis]
     y = np.ones(100)
     y[:50] = 0.0
-
 
     clf = DecisionTreeClassifier(random_state=0)
 
@@ -639,8 +661,7 @@ def test_max_leaf_nodes():
     for name, TreeEstimator in ALL_TREES.items():
         est = TreeEstimator(max_depth=None, max_leaf_nodes=k + 1).fit(X, y)
         tree = est.tree_
-        assert_equal(tree.children_left[tree.children_left == TREE_LEAF].shape[0],
-                     k + 1)
+        assert_equal((tree.children_left == TREE_LEAF).sum(), k + 1)
 
         # max_leaf_nodes in (0, 1) should raise ValueError
         est = TreeEstimator(max_depth=None, max_leaf_nodes=0)
@@ -659,3 +680,54 @@ def test_max_leaf_nodes_max_depth():
         est = TreeEstimator(max_depth=1, max_leaf_nodes=k).fit(X, y)
         tree = est.tree_
         assert_greater(tree.max_depth, 1)
+
+
+def test_arrays_persist():
+    """Ensure property arrays' memory stays alive when tree disappears
+
+    non-regression for #2726
+    """
+    for attr in ['n_classes', 'value', 'children_left', 'children_right',
+                 'threshold', 'impurity', 'feature', 'n_node_samples']:
+        value = getattr(DecisionTreeClassifier().fit([[0]], [0]).tree_, attr)
+        # if pointing to freed memory, contents may be arbitrary
+        assert_true(-2 <= value.flat[0] < 2,
+                    'Array points to arbitrary memory')
+
+
+def test_only_constant_features():
+    random_state = check_random_state(0)
+    X = np.zeros((10, 20))
+    y = random_state.randint(0, 2, (10, ))
+    for name, TreeEstimator in ALL_TREES.items():
+        est = TreeEstimator(random_state=0)
+        est.fit(X, y)
+        assert_equal(est.tree_.max_depth, 0)
+
+
+def test_with_only_one_non_constant_features():
+    X = np.hstack([np.array([[1.], [1.], [0.], [0.]]),
+                   np.zeros((4, 1000))])
+
+    y = np.array([0., 1., 0., 1.0])
+    for name, TreeEstimator in CLF_TREES.items():
+        est = TreeEstimator(random_state=0, max_features=1)
+        est.fit(X, y)
+        assert_equal(est.tree_.max_depth, 1)
+        assert_array_equal(est.predict_proba(X), 0.5 * np.ones((4, 2)))
+
+    for name, TreeEstimator in REG_TREES.items():
+        est = TreeEstimator(random_state=0, max_features=1)
+        est.fit(X, y)
+        assert_equal(est.tree_.max_depth, 1)
+        assert_array_equal(est.predict(X), 0.5 * np.ones((4, )))
+
+
+def test_big_input():
+    """Test if the warning for too large inputs is appropriate."""
+    X = np.repeat(10 ** 40., 4).astype(np.float64).reshape(-1, 1)
+    clf = DecisionTreeClassifier()
+    try:
+        clf.fit(X, [0, 1, 0, 1])
+    except ValueError as e:
+        assert_in("float32", str(e))

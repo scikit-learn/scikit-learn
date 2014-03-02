@@ -31,6 +31,7 @@ citations to the following paper:
     year={2011}
    }
 
+
 Funding
 -------
 
@@ -60,6 +61,7 @@ The `PSF <http://www.python.org/psf/>`_ helped find and manage funding for our
 
 `tinyclues <http://www.tinyclues.com/>`_ funded the 2011 international Granada
 sprint.
+
 
 Donating to the project
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -101,11 +103,8 @@ for code sprints, as well as towards the organization budget of the project [#f1
 .. [#f1] Regarding the organization budget in particular, we might use some of the donated funds to pay for other project expenses such as DNS, hosting or continuous integration services.
 
 
-
-
-
 The 2013' Paris international sprint
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 |center-div|   |telecom|   |tinyclues|   |afpy| |FNRS|
 
@@ -152,3 +151,18 @@ The 2013' Paris international sprint
   </div>
 
 *For more information on this sprint, see* `here <https://github.com/scikit-learn/administrative/blob/master/sprint_paris_2013/proposal.rst>`_
+
+
+Infrastructure support
+----------------------
+
+- We would like to thank `Rackspace <http://www.rackspace.com>`_ for providing
+  us with a free `Rackspace Cloud <http://www.rackspace.com/cloud/>`_ account to
+  automatically build the documentation and the example gallery from for the
+  development version of scikit-learn using `this tool
+  <https://github.com/scikit-learn/sklearn-docbuilder>`_.
+
+- We would also like to thank `Shining Panda
+  <https://www.shiningpanda-ci.com/>`_ for free CPU time on their Continuous
+  Integration server.
+

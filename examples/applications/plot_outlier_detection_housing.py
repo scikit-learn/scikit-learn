@@ -75,7 +75,7 @@ legend2 = {}
 # Learn a frontier for outlier detection with several classifiers
 xx1, yy1 = np.meshgrid(np.linspace(-8, 28, 500), np.linspace(3, 40, 500))
 xx2, yy2 = np.meshgrid(np.linspace(3, 10, 500), np.linspace(-5, 45, 500))
-for i, (clf_name, clf) in enumerate(classifiers.iteritems()):
+for i, (clf_name, clf) in enumerate(classifiers.items()):
     plt.figure(1)
     clf.fit(X1)
     Z1 = clf.decision_function(np.c_[xx1.ravel(), yy1.ravel()])
@@ -89,6 +89,9 @@ for i, (clf_name, clf) in enumerate(classifiers.iteritems()):
     legend2[clf_name] = plt.contour(
         xx2, yy2, Z2, levels=[0], linewidths=2, colors=colors[i])
 
+legend1_values_list = list( legend1.values() )
+legend1_keys_list = list( legend1.keys() )
+
 # Plot the results (= shape of the data points cloud)
 plt.figure(1)  # two clusters
 plt.title("Outlier detection on a real data set (boston housing)")
@@ -100,24 +103,27 @@ plt.annotate("several confounded points", xy=(24, 19),
              xytext=(13, 10), bbox=bbox_args, arrowprops=arrow_args)
 plt.xlim((xx1.min(), xx1.max()))
 plt.ylim((yy1.min(), yy1.max()))
-plt.legend((legend1.values()[0].collections[0],
-            legend1.values()[1].collections[0],
-            legend1.values()[2].collections[0]),
-           (legend1.keys()[0], legend1.keys()[1], legend1.keys()[2]),
+plt.legend((legend1_values_list[0].collections[0],
+            legend1_values_list[1].collections[0],
+            legend1_values_list[2].collections[0]),
+           (legend1_keys_list[0], legend1_keys_list[1], legend1_keys_list[2]),
            loc="upper center",
            prop=matplotlib.font_manager.FontProperties(size=12))
 plt.ylabel("accessibility to radial highways")
 plt.xlabel("pupil-teatcher ratio by town")
+
+legend2_values_list = list( legend2.values() )
+legend2_keys_list = list( legend2.keys() )
 
 plt.figure(2)  # "banana" shape
 plt.title("Outlier detection on a real data set (boston housing)")
 plt.scatter(X2[:, 0], X2[:, 1], color='black')
 plt.xlim((xx2.min(), xx2.max()))
 plt.ylim((yy2.min(), yy2.max()))
-plt.legend((legend2.values()[0].collections[0],
-            legend2.values()[1].collections[0],
-            legend2.values()[2].collections[0]),
-           (legend2.keys()[0], legend2.keys()[1], legend2.keys()[2]),
+plt.legend((legend2_values_list[0].collections[0],
+            legend2_values_list[1].collections[0],
+            legend2_values_list[2].collections[0]),
+           (legend2_values_list[0], legend2_values_list[1], legend2_values_list[2]),
            loc="upper center",
            prop=matplotlib.font_manager.FontProperties(size=12))
 plt.ylabel("% lower status of the population")

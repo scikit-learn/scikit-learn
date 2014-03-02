@@ -19,7 +19,6 @@ from ..metrics import pairwise_distances
 from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
 from ..utils import safe_asarray, atleast2d_or_csr, check_arrays
 from ..utils.validation import DataConversionWarning
-from ..utils.fixes import unique
 from ..externals import six
 
 
@@ -620,7 +619,7 @@ class SupervisedIntegerMixin(object):
         self.classes_ = []
         self._y = np.empty(y.shape, dtype=np.int)
         for k in range(self._y.shape[1]):
-            classes, self._y[:, k] = unique(y[:, k], return_inverse=True)
+            classes, self._y[:, k] = np.unique(y[:, k], return_inverse=True)
             self.classes_.append(classes)
 
         if not self.outputs_2d_:

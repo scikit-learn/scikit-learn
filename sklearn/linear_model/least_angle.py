@@ -325,7 +325,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
         z_pos = arrayfuncs.min_pos(z)
         if z_pos < gamma_:
             # some coefficients have changed sign
-            idx = np.where(z == z_pos)[0]
+            idx = np.where(z == z_pos)[0][::-1]
 
             # update the sign, important for LAR
             sign_active[idx] = -sign_active[idx]
@@ -361,18 +361,22 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
         # See if any coefficient has changed sign
         if drop and method == 'lasso':
 
-            arrayfuncs.cholesky_delete(L[:n_active, :n_active], idx)
+            # handle the case when idx is not length of 1
+            [arrayfuncs.cholesky_delete(L[:n_active, :n_active], ii) for ii in
+                idx]
 
             n_active -= 1
             m, n = idx, n_active
-            drop_idx = active.pop(idx)
+            # handle the case when idx is not length of 1
+            drop_idx = [active.pop(ii) for ii in idx]
 
             if Gram is None:
                 # propagate dropped variable
-                for i in range(idx, n_active):
-                    X.T[i], X.T[i + 1] = swap(X.T[i], X.T[i + 1])
-                    # yeah this is stupid
-                    indices[i], indices[i + 1] = indices[i + 1], indices[i]
+                for ii in idx:
+                    for i in range(ii, n_active):
+                        X.T[i], X.T[i + 1] = swap(X.T[i], X.T[i + 1])
+                        # yeah this is stupid
+                        indices[i], indices[i + 1] = indices[i + 1], indices[i]
 
                 # TODO: this could be updated
                 residual = y - np.dot(X[:, :n_active], coef[active])
@@ -380,11 +384,12 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
 
                 Cov = np.r_[temp, Cov]
             else:
-                for i in range(idx, n_active):
-                    indices[i], indices[i + 1] = indices[i + 1], indices[i]
-                    Gram[i], Gram[i + 1] = swap(Gram[i], Gram[i + 1])
-                    Gram[:, i], Gram[:, i + 1] = swap(Gram[:, i],
-                                                      Gram[:, i + 1])
+                for ii in idx:
+                    for i in range(ii, n_active):
+                        indices[i], indices[i + 1] = indices[i + 1], indices[i]
+                        Gram[i], Gram[i + 1] = swap(Gram[i], Gram[i+1])
+                        Gram[:, i], Gram[:, i + 1] = swap(Gram[:, i],
+                                                          Gram[:, i + 1])
 
                 # Cov_n = Cov_j + x_j * X + increment(betas) TODO:
                 # will this still work with multiple drops ?

@@ -576,7 +576,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         Precompute distances (faster but takes more memory).
 
     tol : float, optional default: 1e-4
-        Relative tolerance w.r.t. inertia to declare convergence
+        Relative tolerance with regards to inertia to declare convergence
 
     n_jobs : int
         The number of jobs to use for the computation. This works by breaking

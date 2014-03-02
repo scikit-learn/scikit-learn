@@ -377,3 +377,70 @@ Vincent Dubourg, PHIMECA Engineering, PhD Engineer
 
    </span>
 
+`HowAboutWe <http://www.howaboutwe.com/>`_
+----------------------------------------------------------
+
+.. raw:: html
+
+  <div class="logo">
+
+.. image:: images/howaboutwe.png
+   :target: http://www.howaboutwe.com/
+
+.. raw:: html
+
+  </div>
+
+At HowAboutWe, scikit-learn lets us implement a wide array of machine learning
+techniques in analysis and in production, despite having a small team.  We use
+scikit-learn’s classification algorithms to predict user behavior, enabling us
+to (for example) estimate the value of leads from a given traffic source early
+in the lead’s tenure on our site. Also, our users' profiles consist of
+primarily unstructured data (answers to open-ended questions), so we use
+scikit-learn’s feature extraction and dimensionality reduction tools to
+translate these unstructured data into inputs for our matchmaking system.
+
+.. raw:: html
+
+   <span class="testimonial-author">
+
+Daniel Weitzenfeld, Senior Data Scientist at HowAboutWe
+
+.. raw:: html
+
+   </span>
+
+
+`PeerIndex <http://www.peerindex.com/>`_
+----------------------------------------
+
+.. raw:: html
+
+  <div class="logo">
+
+.. image:: images/peerindex.png
+   :target: http://www.peerindex.com/
+
+.. raw:: html
+
+  </div>
+
+At PeerIndex we use scientific methodology to build the Influence Graph - a
+unique dataset that allows us to identify who’s really influential and in which
+context. To do this, we have to tackle a range of machine learning and
+predictive modeling problems. Scikit-learn has emerged as our primary tool for
+developing prototypes and making quick progress. From predicting missing data
+and classifying tweets to clustering communities of social media users, scikit-
+learn proved useful in a variety of applications. Its very intuitive interface
+and excellent compatibility with other python tools makes it and indispensable
+tool in our daily research efforts.
+
+.. raw:: html
+
+   <span class="testimonial-author">
+
+Ferenc Huszar - Senior Data Scientist at Peerindex
+
+.. raw:: html
+
+   </span>

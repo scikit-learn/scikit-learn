@@ -85,7 +85,6 @@ def export_graphviz(decision_tree, out_file="tree.dot", feature_names=None,
                       tree.impurity[node_id],
                       tree.n_node_samples[node_id])
 
-
     def recurse(tree, node_id, criterion, parent=None, depth=0):
         if node_id == _tree.TREE_LEAF:
             raise ValueError("Invalid node_id %s" % _tree.TREE_LEAF)

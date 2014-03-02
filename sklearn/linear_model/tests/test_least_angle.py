@@ -26,24 +26,27 @@ def test_simple():
     from sklearn.externals.six.moves import cStringIO as StringIO
     import sys
     old_stdout = sys.stdout
-    sys.stdout = StringIO()
+    try:
+        sys.stdout = StringIO()
 
-    alphas_, active, coef_path_ = linear_model.lars_path(
-        diabetes.data, diabetes.target, method="lar", verbose=10)
+        alphas_, active, coef_path_ = linear_model.lars_path(
+            diabetes.data, diabetes.target, method="lar", verbose=10)
 
-    sys.stdout = old_stdout
+        sys.stdout = old_stdout
 
-    for (i, coef_) in enumerate(coef_path_.T):
-        res = y - np.dot(X, coef_)
-        cov = np.dot(X.T, res)
-        C = np.max(abs(cov))
-        eps = 1e-3
-        ocur = len(cov[C - eps < abs(cov)])
-        if i < X.shape[1]:
-            assert_true(ocur == i + 1)
-        else:
-            # no more than max_pred variables can go into the active set
-            assert_true(ocur == X.shape[1])
+        for (i, coef_) in enumerate(coef_path_.T):
+            res = y - np.dot(X, coef_)
+            cov = np.dot(X.T, res)
+            C = np.max(abs(cov))
+            eps = 1e-3
+            ocur = len(cov[C - eps < abs(cov)])
+            if i < X.shape[1]:
+                assert_true(ocur == i + 1)
+            else:
+                # no more than max_pred variables can go into the active set
+                assert_true(ocur == X.shape[1])
+    finally:
+        sys.stdout = old_stdout
 
 
 def test_simple_precomputed():
@@ -319,6 +322,7 @@ def test_lasso_lars_vs_lasso_cd_ill_conditioned():
     y = y.squeeze()
 
     f = assert_warns_message
+
     def in_warn_message(msg):
         return 'Early stopping' in msg or 'Dropping regressor' in msg
     lars_alphas, _, lars_coef = f(UserWarning,
@@ -332,11 +336,11 @@ def test_lasso_lars_vs_lasso_cd_ill_conditioned():
                                                     fit_intercept=False)
 
         lasso_coef = np.zeros((w.shape[0], len(lars_alphas)))
-        iter_models =  enumerate(linear_model.lasso_path(X, y,
-                                                         alphas=lars_alphas,
-                                                         tol=1e-6,
-                                                         return_models=True,
-                                                         fit_intercept=False))
+        iter_models = enumerate(linear_model.lasso_path(X, y,
+                                                        alphas=lars_alphas,
+                                                        tol=1e-6,
+                                                        return_models=True,
+                                                        fit_intercept=False))
         for i, model in iter_models:
             lasso_coef[:, i] = model.coef_
 

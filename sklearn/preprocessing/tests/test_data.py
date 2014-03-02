@@ -622,7 +622,7 @@ def test_add_dummy_feature_csr():
     assert_array_equal(X.toarray(), [[1, 1, 0], [1, 0, 1], [1, 0, 1]])
 
 
-def test_one_hot_encoder():
+def test_one_hot_encoder_sparse():
     """Test OneHotEncoder's fit and transform."""
     X = [[3, 2, 1], [0, 1, 1]]
     enc = OneHotEncoder()
@@ -654,9 +654,10 @@ def test_one_hot_encoder():
     X = np.array([[2, 0, 1], [0, 1, 1]])
     enc.transform(X)
 
-    # test that an error is raise when out of bounds:
+    # test that an error is raised when out of bounds:
     X_too_large = [[0, 2, 1], [0, 1, 1]]
     assert_raises(ValueError, enc.transform, X_too_large)
+    assert_raises(ValueError, OneHotEncoder(n_values=2).fit_transform, X)
 
     # test that error is raised when wrong number of features
     assert_raises(ValueError, enc.transform, X[:, :-1])
@@ -673,6 +674,22 @@ def test_one_hot_encoder():
     # test negative input to transform
     enc.fit([[0], [1]])
     assert_raises(ValueError, enc.transform, [[0], [-1]])
+    
+def test_one_hot_encoder_dense():    
+    """check for sparse=False"""
+    X = [[3, 2, 1], [0, 1, 1]]
+    enc = OneHotEncoder(sparse=False)
+    # discover max values automatically
+    X_trans = enc.fit_transform(X)
+    assert_equal(X_trans.shape, (2, 5))
+    assert_array_equal(enc.active_features_,
+                       np.where([1, 0, 0, 1, 0, 1, 1, 0, 1])[0])
+    assert_array_equal(enc.feature_indices_, [0, 4, 7, 9])
+
+    # check outcome
+    assert_array_equal(X_trans,
+                       np.array([[0., 1., 0., 1., 1.],
+                                 [1., 0., 1., 0., 1.]]))
 
 
 def _check_transform_selected(X, X_expected, sel):

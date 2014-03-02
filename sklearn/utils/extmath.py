@@ -12,10 +12,9 @@ import warnings
 import numpy as np
 from scipy import linalg
 from scipy.sparse import issparse
-from distutils.version import LooseVersion
 
-from . import check_random_state
-from .fixes import qr_economic
+from . import check_random_state, deprecated
+from .fixes import np_version
 from ._logistic_sigmoid import _log_logistic_sigmoid
 from ..externals.six.moves import xrange
 from .sparsefuncs import csr_row_norms
@@ -33,50 +32,25 @@ def norm(x):
     return nrm2(x)
 
 
-_have_einsum = hasattr(np, "einsum")
-
-
 def row_norms(X, squared=False):
     """Row-wise (squared) Euclidean norm of X.
 
-    Equivalent to (X * X).sum(axis=1), but also supports CSR sparse matrices.
-    With newer NumPy versions, prevents an X.shape-sized temporary.
+    Equivalent to (X * X).sum(axis=1), but also supports CSR sparse matrices
+    and does not create an X.shape-sized temporary.
 
     Performs no input validation.
     """
     if issparse(X):
         norms = csr_row_norms(X)
-    elif _have_einsum:
-        # einsum avoids the creation of a temporary the size of X,
-        # but it's only available in NumPy >= 1.6.
-        norms = np.einsum('ij,ij->i', X, X)
     else:
-        norms = (X * X).sum(axis=1)
+        norms = np.einsum('ij,ij->i', X, X)
 
     if not squared:
         np.sqrt(norms, norms)
     return norms
 
 
-def _fast_logdet(A):
-    """Compute log(det(A)) for A symmetric
-
-    Equivalent to : np.log(np.linalg.det(A)) but more robust.
-    It returns -Inf if det(A) is non positive or is not defined.
-    """
-    # XXX: Should be implemented as in numpy, using ATLAS
-    # http://projects.scipy.org/numpy/browser/ \
-    #        trunk/numpy/linalg/linalg.py#L1559
-    ld = np.sum(np.log(np.diag(A)))
-    a = np.exp(ld / A.shape[0])
-    d = np.linalg.det(A / a)
-    ld += np.log(d)
-    if not np.isfinite(ld):
-        return -np.inf
-    return ld
-
-
-def _fast_logdet_numpy(A):
+def fast_logdet(A):
     """Compute log(det(A)) for A symmetric
 
     Equivalent to : np.log(nl.det(A)) but more robust.
@@ -86,13 +60,6 @@ def _fast_logdet_numpy(A):
     if not sign > 0:
         return -np.inf
     return ld
-
-
-# Numpy >= 1.5 provides a fast logdet
-if hasattr(np.linalg, 'slogdet'):
-    fast_logdet = _fast_logdet_numpy
-else:
-    fast_logdet = _fast_logdet
 
 
 def _impose_f_order(X):
@@ -136,7 +103,7 @@ def _have_blas_gemm():
 
 
 # Only use fast_dot for older NumPy; newer ones have tackled the speed issue.
-if LooseVersion(np.__version__) < '1.7.2' and _have_blas_gemm():
+if np_version < (1, 7, 2) and _have_blas_gemm():
     def fast_dot(A, B):
         """Compute fast dot products directly calling BLAS.
 
@@ -238,7 +205,7 @@ def randomized_range_finder(A, size, n_iter, random_state=None):
         Y = safe_sparse_dot(A, safe_sparse_dot(A.T, Y))
 
     # extracting an orthonormal basis of the A range samples
-    Q, R = qr_economic(Y)
+    Q, R = linalg.qr(Y, mode='economic')
     return Q
 
 
@@ -462,13 +429,13 @@ def pinvh(a, cond=None, rcond=None, lower=True):
 
     Examples
     --------
-    >>> from numpy import *
-    >>> a = random.randn(9, 6)
+    >>> import numpy as np
+    >>> a = np.random.randn(9, 6)
     >>> a = np.dot(a, a.T)
     >>> B = pinvh(a)
-    >>> allclose(a, dot(a, dot(B, a)))
+    >>> np.allclose(a, np.dot(a, np.dot(B, a)))
     True
-    >>> allclose(B, dot(B, dot(a, B)))
+    >>> np.allclose(B, np.dot(B, np.dot(a, B)))
     True
 
     """
@@ -567,28 +534,30 @@ def svd_flip(u, v):
     return u, v
 
 
+@deprecated('to be removed in 0.17; use scipy.special.expit or log_logistic')
 def logistic_sigmoid(X, log=False, out=None):
-    """
-    Implements the logistic function, ``1 / (1 + e ** -x)`` and its log.
+    """Logistic function, ``1 / (1 + e ** (-x))``, or its log."""
+    from .fixes import expit
+    fn = log_logistic if log else expit
+    return fn(X, out)
 
-    This implementation is more stable by splitting on positive and negative
-    values and computing::
 
-        1 / (1 + exp(-x_i)) if x_i > 0
-        exp(x_i) / (1 + exp(x_i)) if x_i <= 0
 
-    The log is computed using::
+def log_logistic(X, out=None):
+    """Compute the log of the logistic function, ``log(1 / (1 + e ** -x))``.
 
-        -log(1 + exp(-x_i)) if x_i > 0
+    This implementation is numerically stable because it splits positive and
+    negative values::
+
+        -log(1 + exp(-x_i))     if x_i > 0
         x_i - log(1 + exp(x_i)) if x_i <= 0
+
+    For the ordinary logistic function, use ``sklearn.utils.fixes.expit``.
 
     Parameters
     ----------
     X: array-like, shape (M, N)
         Argument to the logistic function
-
-    log: boolean, default: False
-        Whether to compute the logarithm of the logistic function.
 
     out: array-like, shape: (M, N), optional:
         Preallocated output array.
@@ -596,7 +565,7 @@ def logistic_sigmoid(X, log=False, out=None):
     Returns
     -------
     out: array, shape (M, N)
-        Value of the logistic function evaluated at every point in x
+        Log of the logistic function evaluated at every point in x
 
     Notes
     -----
@@ -611,15 +580,7 @@ def logistic_sigmoid(X, log=False, out=None):
     if out is None:
         out = np.empty_like(X)
 
-    if log:
-        _log_logistic_sigmoid(n_samples, n_features, X, out)
-    else:
-        # logistic(x) = (1 + tanh(x / 2)) / 2
-        out[:] = X
-        out *= .5
-        np.tanh(out, out)
-        out += 1
-        out *= .5
+    _log_logistic_sigmoid(n_samples, n_features, X, out)
 
     if is_1d:
         return np.squeeze(out)

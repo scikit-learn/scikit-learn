@@ -26,7 +26,7 @@ from sklearn.utils.seq_dataset cimport SequentialDataset
 np.import_array()
 
 
-# Penalty constans
+# Penalty constants
 DEF NO_PENALTY = 0
 DEF L1 = 1
 DEF L2 = 2
@@ -76,7 +76,7 @@ cdef class LossFunction:
         Returns
         -------
         double
-            The derivative of the loss function w.r.t. `p`.
+            The derivative of the loss function with regards to `p`.
         """
         raise NotImplementedError()
 

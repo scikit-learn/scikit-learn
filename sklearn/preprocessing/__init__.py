@@ -37,6 +37,7 @@ __all__ = [
     'StandardScaler',
     'add_dummy_feature',
     'PolynomialFeatures',
+    'balance_weights',
     'binarize',
     'normalize',
     'scale',

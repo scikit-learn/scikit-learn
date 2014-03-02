@@ -8,12 +8,15 @@
 #          Noel Dawe <noel@dawe.me>
 #          Satrajit Gosh <satrajit.ghosh@gmail.com>
 #          Lars Buitinck <L.J.Buitinck@uva.nl>
+#          Arnaud Joly <arnaud.v.joly@gmail.com>
+#          Joel Nothman <joel.nothman@gmail.com>
 #
 # Licence: BSD 3 clause
 
 from libc.stdlib cimport calloc, free, malloc, realloc
 from libc.string cimport memcpy, memset
 from libc.math cimport log as ln
+from cpython cimport Py_INCREF, PyObject
 
 from sklearn.tree._utils cimport Stack, StackRecord
 from sklearn.tree._utils cimport PriorityHeap, PriorityHeapRecord
@@ -22,6 +25,11 @@ import numpy as np
 cimport numpy as np
 np.import_array()
 
+
+cdef extern from "numpy/arrayobject.h":
+    object PyArray_NewFromDescr(object subtype, np.dtype descr,
+                                int nd, np.npy_intp* dims, np.npy_intp* strides,
+                                void* data, int flags, object obj)
 
 # =============================================================================
 # Types and constants
@@ -50,6 +58,23 @@ cdef enum:
     # We don't use RAND_MAX because it's different across platforms and
     # particularly tiny on Windows/MSVC.
     RAND_R_MAX = 0x7FFFFFFF
+
+# Repeat struct definition for numpy
+NODE_DTYPE = np.dtype({
+    'names': ['left_child', 'right_child', 'feature', 'threshold', 'impurity',
+              'n_samples', 'weighted_n_samples'],
+    'formats': [np.intp, np.intp, np.intp, np.float64, np.float64, np.intp,
+                np.float64],
+    'offsets': [
+        <Py_ssize_t> &(<Node*> NULL).left_child,
+        <Py_ssize_t> &(<Node*> NULL).right_child,
+        <Py_ssize_t> &(<Node*> NULL).feature,
+        <Py_ssize_t> &(<Node*> NULL).threshold,
+        <Py_ssize_t> &(<Node*> NULL).impurity,
+        <Py_ssize_t> &(<Node*> NULL).n_samples,
+        <Py_ssize_t> &(<Node*> NULL).weighted_n_samples
+    ]
+})
 
 
 # =============================================================================
@@ -273,14 +298,12 @@ cdef class ClassificationCriterion(Criterion):
         cdef double* label_count_left = self.label_count_left
         cdef double* label_count_right = self.label_count_right
 
-        cdef double weighted_n_left = self.weighted_n_left
-        cdef double weighted_n_right = self.weighted_n_right
-
         cdef SIZE_t i
         cdef SIZE_t p
         cdef SIZE_t k
         cdef SIZE_t label_index
         cdef DOUBLE_t w = 1.0
+        cdef DOUBLE_t diff_w = 0.0
 
         # Note: We assume start <= pos < new_pos <= end
 
@@ -296,11 +319,10 @@ cdef class ClassificationCriterion(Criterion):
                 label_count_left[label_index] += w
                 label_count_right[label_index] -= w
 
-            weighted_n_left += w
-            weighted_n_right -= w
+            diff_w += w
 
-        self.weighted_n_left = weighted_n_left
-        self.weighted_n_right = weighted_n_right
+        self.weighted_n_left += diff_w
+        self.weighted_n_right -= diff_w
 
         self.pos = new_pos
 
@@ -635,25 +657,29 @@ cdef class RegressionCriterion(Criterion):
         cdef double* sq_sum_total = self.sq_sum_total
         cdef double* var_left = self.var_left
         cdef double* var_right = self.var_right
+        cdef double* sum_left = self.sum_left
+        cdef double* sum_right = self.sum_right
+        cdef double* sum_total = self.sum_total
 
         cdef SIZE_t i = 0
         cdef SIZE_t p = 0
         cdef SIZE_t k = 0
         cdef DOUBLE_t y_ik = 0.0
+        cdef DOUBLE_t w_y_ik = 0.0
         cdef DOUBLE_t w = 1.0
 
-        for k in range(n_outputs):
-            mean_left[k] = 0.0
-            mean_right[k] = 0.0
-            mean_total[k] = 0.0
-            sq_sum_right[k] = 0.0
-            sq_sum_left[k] = 0.0
-            sq_sum_total[k] = 0.0
-            var_left[k] = 0.0
-            var_right[k] = 0.0
-            self.sum_left[k] = 0.0
-            self.sum_right[k] = 0.0
-            self.sum_total[k] = 0.0
+        cdef SIZE_t n_bytes = n_outputs * sizeof(double)
+        memset(mean_left, 0, n_bytes)
+        memset(mean_right, 0, n_bytes)
+        memset(mean_total, 0, n_bytes)
+        memset(sq_sum_left, 0, n_bytes)
+        memset(sq_sum_right, 0, n_bytes)
+        memset(sq_sum_total, 0, n_bytes)
+        memset(var_left, 0, n_bytes)
+        memset(var_right, 0, n_bytes)
+        memset(sum_left, 0, n_bytes)
+        memset(sum_right, 0, n_bytes)
+        memset(sum_total, 0, n_bytes)
 
         for p in range(start, end):
             i = samples[p]
@@ -663,16 +689,16 @@ cdef class RegressionCriterion(Criterion):
 
             for k in range(n_outputs):
                 y_ik = y[i * y_stride + k]
-                sq_sum_total[k] += w * y_ik * y_ik
-                mean_total[k] += w * y_ik
-                self.sum_total[k] += w * y_ik
+                w_y_ik = w * y_ik
+                sum_total[k] += w_y_ik
+                sq_sum_total[k] += w_y_ik * y_ik
 
             weighted_n_node_samples += w
 
         self.weighted_n_node_samples = weighted_n_node_samples
 
         for k in range(n_outputs):
-            mean_total[k] /= weighted_n_node_samples
+            mean_total[k] = sum_total[k] / weighted_n_node_samples
 
         # Reset to pos=start
         self.reset()
@@ -705,9 +731,9 @@ cdef class RegressionCriterion(Criterion):
             mean_left[k] = 0.0
             sq_sum_right[k] = sq_sum_total[k]
             sq_sum_left[k] = 0.0
-            var_left[k] = 0.0
             var_right[k] = (sq_sum_right[k] / weighted_n_node_samples -
                             mean_right[k] * mean_right[k])
+            var_left[k] = 0.0
             sum_right[k] = sum_total[k]
             sum_left[k] = 0.0
 
@@ -738,10 +764,10 @@ cdef class RegressionCriterion(Criterion):
         cdef SIZE_t p
         cdef SIZE_t k
         cdef DOUBLE_t w = 1.0
+        cdef DOUBLE_t diff_w = 0.0
         cdef DOUBLE_t y_ik, w_y_ik
 
         # Note: We assume start <= pos < new_pos <= end
-
         for p in range(pos, new_pos):
             i = samples[p]
 
@@ -752,21 +778,20 @@ cdef class RegressionCriterion(Criterion):
                 y_ik = y[i * y_stride + k]
                 w_y_ik = w * y_ik
 
-                sq_sum_left[k] += w_y_ik * y_ik
-                sq_sum_right[k] -= w_y_ik * y_ik
-
                 sum_left[k] += w_y_ik
                 sum_right[k] -= w_y_ik
 
-                mean_left[k] = ((weighted_n_left * mean_left[k] + w_y_ik) /
-                                (weighted_n_left + w))
-                mean_right[k] = ((weighted_n_right * mean_right[k] - w_y_ik) /
-                                 (weighted_n_right - w))
+                sq_sum_left[k] += w_y_ik * y_ik
+                sq_sum_right[k] -= w_y_ik * y_ik
 
-            weighted_n_left += w
-            weighted_n_right -= w
+            diff_w += w
+
+        weighted_n_left += diff_w
+        weighted_n_right -= diff_w
 
         for k in range(n_outputs):
+            mean_left[k] = sum_left[k] / weighted_n_left
+            mean_right[k] = sum_right[k] / weighted_n_right
             var_left[k] = (sq_sum_left[k] / weighted_n_left -
                            mean_left[k] * mean_left[k])
             var_right[k] = (sq_sum_right[k] / weighted_n_right -
@@ -854,7 +879,8 @@ cdef class FriedmanMSE(MSE):
 
         total_sum_left = total_sum_left / n_outputs
         total_sum_right = total_sum_right / n_outputs
-        diff = (total_sum_left / weighted_n_left) - (total_sum_right / weighted_n_right)
+        diff = ((total_sum_left / weighted_n_left) -
+                (total_sum_right / weighted_n_right))
 
         return (weighted_n_left * weighted_n_right * diff * diff) / (weighted_n_left + weighted_n_right)
 
@@ -864,16 +890,15 @@ cdef class FriedmanMSE(MSE):
 # =============================================================================
 
 cdef class Splitter:
-    def __cinit__(self, Criterion criterion,
-                        SIZE_t max_features,
-                        SIZE_t min_samples_leaf,
-                        object random_state):
+    def __cinit__(self, Criterion criterion, SIZE_t max_features,
+                  SIZE_t min_samples_leaf, object random_state):
         self.criterion = criterion
 
         self.samples = NULL
         self.n_samples = 0
         self.features = NULL
         self.n_features = 0
+        self.feature_values = NULL
 
         self.X = NULL
         self.X_sample_stride = 0
@@ -890,6 +915,7 @@ cdef class Splitter:
         """Destructor."""
         free(self.samples)
         free(self.features)
+        free(self.feature_values)
 
     def __getstate__(self):
         return {}
@@ -897,20 +923,18 @@ cdef class Splitter:
     def __setstate__(self, d):
         pass
 
-    cdef void init(self, np.ndarray[DTYPE_t, ndim=2] X,
-                         np.ndarray[DOUBLE_t, ndim=2, mode="c"] y,
-                         DOUBLE_t* sample_weight):
+    cdef void init(self,
+                   np.ndarray[DTYPE_t, ndim=2] X,
+                   np.ndarray[DOUBLE_t, ndim=2, mode="c"] y,
+                   DOUBLE_t* sample_weight):
         """Initialize the splitter."""
-        # Free old structures, if any
-        free(self.samples)
-        free(self.features)
-
         # Reset random state
         self.rand_r_state = self.random_state.randint(0, RAND_R_MAX)
 
         # Initialize samples and features structures
         cdef SIZE_t n_samples = X.shape[0]
-        cdef SIZE_t* samples = <SIZE_t*> malloc(n_samples * sizeof(SIZE_t))
+        cdef SIZE_t* samples = <SIZE_t*> realloc(self.samples,
+                                                 n_samples * sizeof(SIZE_t))
         if samples == NULL:
             raise MemoryError()
 
@@ -927,7 +951,8 @@ cdef class Splitter:
         self.n_samples = j
 
         cdef SIZE_t n_features = X.shape[1]
-        cdef SIZE_t* features = <SIZE_t*> malloc(n_features * sizeof(SIZE_t))
+        cdef SIZE_t* features = <SIZE_t*> realloc(self.features,
+                                                  n_features * sizeof(SIZE_t))
         if features == NULL:
             raise MemoryError()
 
@@ -936,6 +961,12 @@ cdef class Splitter:
 
         self.features = features
         self.n_features = n_features
+
+        cdef DTYPE_t* fv = <DTYPE_t*> realloc(self.feature_values,
+                                              n_samples * sizeof(DTYPE_t))
+        if fv == NULL:
+            raise MemoryError()
+        self.feature_values = fv
 
         # Initialize X, y, sample_weight
         self.X = <DTYPE_t*> X.data
@@ -991,6 +1022,7 @@ cdef class BestSplitter(Splitter):
         cdef SIZE_t n_features = self.n_features
 
         cdef DTYPE_t* X = self.X
+        cdef DTYPE_t* Xf = self.feature_values
         cdef SIZE_t X_sample_stride = self.X_sample_stride
         cdef SIZE_t X_fx_stride = self.X_fx_stride
         cdef SIZE_t max_features = self.max_features
@@ -1012,86 +1044,85 @@ cdef class BestSplitter(Splitter):
         cdef SIZE_t current_feature
         cdef double current_threshold
 
-        cdef SIZE_t f_idx, f_i, f_j, p, tmp
-        cdef SIZE_t visited_features = 0
-
-        cdef SIZE_t partition_start
+        cdef SIZE_t f_i = n_features
+        cdef SIZE_t f_j, p, tmp
+        cdef SIZE_t n_visited_features = 0
+        cdef SIZE_t n_constant_features = 0
+        cdef DTYPE_t current_feature_value
         cdef SIZE_t partition_end
 
-        for f_idx in range(n_features):
+        while (f_i > 0 and (n_visited_features < max_features or
+                            n_visited_features <= n_constant_features)):
+            n_visited_features += 1
+
             # Draw a feature at random
-            f_i = n_features - f_idx - 1
-            f_j = rand_int(n_features - f_idx, random_state)
-
-            tmp = features[f_i]
-            features[f_i] = features[f_j]
-            features[f_j] = tmp
-
+            f_j = rand_int(f_i, random_state)
+            f_i -= 1
+            features[f_i], features[f_j] = features[f_j], features[f_i]
             current_feature = features[f_i]
 
-            # Sort samples along that feature
-            sort(X, X_sample_stride, X_fx_stride, current_feature, samples + start, end - start)
+            # Sort samples along that feature; first copy the feature values
+            # for the active samples into Xf, s.t. Xf[i] == X[samples[i], j],
+            # so the sort uses the cache more effectively.
+            for p in range(start, end):
+                Xf[p] = X[X_sample_stride * samples[p] +
+                          X_fx_stride * current_feature]
 
-            # Evaluate all splits
-            self.criterion.reset()
-            p = start
+            sort(Xf + start, samples + start, end - start)
 
-            while p < end:
-                while ((p + 1 < end) and
-                       (X[X_sample_stride * samples[p + 1] + X_fx_stride * current_feature] <=
-                        X[X_sample_stride * samples[p] + X_fx_stride * current_feature] + EPSILON_FLT)):
+            if Xf[end - 1] <= Xf[start] + EPSILON_FLT:
+                n_constant_features += 1
+
+            else:
+                # Evaluate all splits
+                self.criterion.reset()
+                p = start
+
+                while p < end:
+                    while p + 1 < end and Xf[p + 1] <= Xf[p] + EPSILON_FLT:
+                        p += 1
+
+                    # (p + 1 >= end) or (X[samples[p + 1], current_feature] >
+                    #                    X[samples[p], current_feature])
                     p += 1
+                    # (p >= end) or (X[samples[p], current_feature] >
+                    #                X[samples[p - 1], current_feature])
 
-                # (p + 1 >= end) or (X[samples[p + 1], current_feature] >
-                #                    X[samples[p], current_feature])
-                p += 1
-                # (p >= end) or (X[samples[p], current_feature] >
-                #                X[samples[p - 1], current_feature])
+                    if p < end:
+                        current_pos = p
 
-                if p < end:
-                    current_pos = p
+                        # Reject if min_samples_leaf is not guaranteed
+                        if (((current_pos - start) < min_samples_leaf) or
+                                ((end - current_pos) < min_samples_leaf)):
+                           continue
 
-                    # Reject if min_samples_leaf is not guaranteed
-                    if (((current_pos - start) < min_samples_leaf) or
-                        ((end - current_pos) < min_samples_leaf)):
-                       continue
+                        self.criterion.update(current_pos)
+                        current_improvement = self.criterion.impurity_improvement(impurity)
 
-                    self.criterion.update(current_pos)
-                    current_improvement = self.criterion.impurity_improvement(impurity)
+                        if current_improvement > best_improvement:
+                            self.criterion.children_impurity(&current_impurity_left,
+                                                             &current_impurity_right)
+                            best_impurity_left = current_impurity_left
+                            best_impurity_right = current_impurity_right
+                            best_improvement = current_improvement
+                            best_pos = current_pos
+                            best_feature = current_feature
 
-                    if current_improvement > best_improvement:
-                        self.criterion.children_impurity(&current_impurity_left, &current_impurity_right)
-                        best_impurity_left = current_impurity_left
-                        best_impurity_right = current_impurity_right
-                        best_improvement = current_improvement
-                        best_pos = current_pos
-                        best_feature = current_feature
+                            current_threshold = (Xf[p - 1] + Xf[p]) / 2.0
 
-                        current_threshold = (X[X_sample_stride * samples[p - 1] + X_fx_stride * current_feature] +
-                                             X[X_sample_stride * samples[p] + X_fx_stride * current_feature]) / 2.0
+                            if current_threshold == Xf[p]:
+                                current_threshold = Xf[p - 1]
 
-                        if current_threshold == X[X_sample_stride * samples[p] + X_fx_stride * current_feature]:
-                            current_threshold = X[X_sample_stride * samples[p - 1] + X_fx_stride * current_feature]
-
-                        best_threshold = current_threshold
-
-            if best_pos == end: # No valid split was ever found
-                continue
-
-            # Count one more visited feature
-            visited_features += 1
-
-            if visited_features >= max_features:
-                break
+                            best_threshold = current_threshold
 
         # Reorganize into samples[start:best_pos] + samples[best_pos:end]
         if best_pos < end:
-            partition_start = start
             partition_end = end
             p = start
 
             while p < partition_end:
-                if X[X_sample_stride * samples[p] + X_fx_stride * best_feature] <= best_threshold:
+                if X[X_sample_stride * samples[p] +
+                     X_fx_stride * best_feature] <= best_threshold:
                     p += 1
 
                 else:
@@ -1109,46 +1140,115 @@ cdef class BestSplitter(Splitter):
         impurity_right[0] = best_impurity_right
         impurity_improvement[0] = best_improvement
 
-cdef inline void sort(DTYPE_t* X, SIZE_t X_sample_stride, SIZE_t X_fx_stride, SIZE_t current_feature,
-                      SIZE_t* samples, SIZE_t length) nogil:
-    """In-place sorting of samples[start:end] using
-      X[sample[i], current_feature] as key."""
-    # Heapsort, adapted from Numerical Recipes in C
-    cdef SIZE_t tmp
-    cdef DOUBLE_t tmp_value
-    cdef SIZE_t n = length
-    cdef SIZE_t parent = length / 2
-    cdef SIZE_t index, child
 
-    while True:
-        if parent > 0:
-            parent -= 1
-            tmp = samples[parent]
+# Sort n-element arrays pointed to by Xf and samples, simultaneously,
+# by the values in Xf. Algorithm: Introsort (Musser, SP&E, 1997).
+cdef inline void sort(DTYPE_t* Xf, SIZE_t* samples, SIZE_t n) nogil:
+    cdef int maxd = 2 * <int>log(n)
+    introsort(Xf, samples, n, maxd)
+
+
+cdef inline void swap(DTYPE_t* Xf, SIZE_t* samples, SIZE_t i, SIZE_t j) nogil:
+    # Helper for sort
+    Xf[i], Xf[j] = Xf[j], Xf[i]
+    samples[i], samples[j] = samples[j], samples[i]
+
+
+cdef inline DTYPE_t median3(DTYPE_t* Xf, SIZE_t n) nogil:
+    # Median of three pivot selection, after Bentley and McIlroy (1993).
+    # Engineering a sort function. SP&E. Requires 8/3 comparisons on average.
+    cdef DTYPE_t a = Xf[0], b = Xf[n / 2], c = Xf[n - 1]
+    if a < b:
+        if b < c:
+            return b
+        elif a < c:
+            return c
         else:
-            n -= 1
-            if n == 0:
-                return
-            tmp = samples[n]
-            samples[n] = samples[0]
+            return a
+    elif b < c:
+        if a < c:
+            return a
+        else:
+            return c
+    else:
+        return b
 
-        tmp_value = X[X_sample_stride * tmp + X_fx_stride * current_feature]
-        index = parent
-        child = index * 2 + 1
 
-        while child < n:
-            if ((child + 1 < n) and
-                (X[X_sample_stride * samples[child + 1] + X_fx_stride * current_feature] > X[X_sample_stride * samples[child] + X_fx_stride * current_feature])):
-                child += 1
+# Introsort with median of 3 pivot selection and 3-way partition function
+# (robust to repeated elements, e.g. lots of zero features).
+cdef void introsort(DTYPE_t* Xf, SIZE_t *samples, SIZE_t n, int maxd) nogil:
+    cdef DTYPE_t pivot
+    cdef SIZE_t i, l, r
 
-            if X[X_sample_stride * samples[child] + X_fx_stride * current_feature] > tmp_value:
-                samples[index] = samples[child]
-                index = child
-                child = index * 2 + 1
+    while n > 1:
+        if maxd <= 0:   # max depth limit exceeded ("gone quadratic")
+            heapsort(Xf, samples, n)
+            return
+        maxd -= 1
 
+        pivot = median3(Xf, n)
+
+        # Three-way partition.
+        i = l = 0
+        r = n
+        while i < r:
+            if Xf[i] < pivot:
+                swap(Xf, samples, i, l)
+                i += 1
+                l += 1
+            elif Xf[i] > pivot:
+                r -= 1
+                swap(Xf, samples, i, r)
             else:
-                break
+                i += 1
 
-        samples[index] = tmp
+        introsort(Xf, samples, l, maxd)
+        Xf += r
+        samples += r
+        n -= r
+
+
+cdef inline void sift_down(DTYPE_t* Xf, SIZE_t* samples,
+                          SIZE_t start, SIZE_t end) nogil:
+    # Restore heap order in Xf[start:end] by moving the max element to start.
+    cdef SIZE_t child, maxind, root
+
+    root = start
+    while True:
+        child = root * 2 + 1
+
+        # find max of root, left child, right child
+        maxind = root
+        if child < end and Xf[maxind] < Xf[child]:
+            maxind = child
+        if child + 1 < end and Xf[maxind] < Xf[child + 1]:
+            maxind = child + 1
+
+        if maxind == root:
+            break
+        else:
+            swap(Xf, samples, root, maxind)
+            root = maxind
+
+
+cdef void heapsort(DTYPE_t* Xf, SIZE_t* samples, SIZE_t n) nogil:
+    cdef SIZE_t start, end
+
+    # heapify
+    start = (n - 2) / 2
+    end = n
+    while True:
+        sift_down(Xf, samples, start, end)
+        if start == 0:
+            break
+        start -= 1
+
+    # sort by shrinking the heap, putting the max element immediately after it
+    end = n - 1
+    while end > 0:
+        swap(Xf, samples, 0, end)
+        sift_down(Xf, samples, 0, end)
+        end = end - 1
 
 
 cdef class RandomSplitter(Splitter):
@@ -1173,6 +1273,7 @@ cdef class RandomSplitter(Splitter):
         cdef SIZE_t n_features = self.n_features
 
         cdef DTYPE_t* X = self.X
+        cdef DTYPE_t* Xf = self.feature_values
         cdef SIZE_t X_sample_stride = self.X_sample_stride
         cdef SIZE_t X_fx_stride = self.X_fx_stride
         cdef SIZE_t max_features = self.max_features
@@ -1194,103 +1295,102 @@ cdef class RandomSplitter(Splitter):
         cdef SIZE_t current_feature
         cdef double current_threshold
 
-        cdef SIZE_t f_idx, f_i, f_j, p, tmp
-        cdef SIZE_t visited_features = 0
+        cdef SIZE_t f_i = n_features
+        cdef SIZE_t f_j, p, tmp
+        cdef SIZE_t n_constant_features = 0
+        cdef SIZE_t n_visited_features = 0
         cdef DTYPE_t min_feature_value
         cdef DTYPE_t max_feature_value
         cdef DTYPE_t current_feature_value
-
-        cdef SIZE_t partition_start
         cdef SIZE_t partition_end
 
-        for f_idx in range(n_features):
+        while (f_i > 0 and (n_visited_features < max_features or
+                            n_visited_features <= n_constant_features)):
+            n_visited_features += 1
+
             # Draw a feature at random
-            f_i = n_features - f_idx - 1
-            f_j = rand_int(n_features - f_idx, random_state)
-
-            tmp = features[f_i]
-            features[f_i] = features[f_j]
-            features[f_j] = tmp
-
+            f_j = rand_int(f_i, random_state)
+            f_i -= 1
+            features[f_i], features[f_j] = features[f_j], features[f_i]
             current_feature = features[f_i]
 
             # Find min, max
-            min_feature_value = max_feature_value = \
-                X[X_sample_stride * samples[start]
-                  + X_fx_stride * current_feature]
+            min_feature_value = X[X_sample_stride * samples[start] +
+                                  X_fx_stride * current_feature]
+            max_feature_value = min_feature_value
+            Xf[start] = min_feature_value
 
             for p in range(start + 1, end):
-                current_feature_value = X[X_sample_stride * samples[p]
-                                          + X_fx_stride * current_feature]
+                current_feature_value = X[X_sample_stride * samples[p] +
+                                          X_fx_stride * current_feature]
+                Xf[p] = current_feature_value
 
                 if current_feature_value < min_feature_value:
                     min_feature_value = current_feature_value
                 elif current_feature_value > max_feature_value:
                     max_feature_value = current_feature_value
 
-            if min_feature_value == max_feature_value:
-                continue
+            if max_feature_value <= min_feature_value + EPSILON_FLT:
+                n_constant_features += 1
 
-            # Draw a random threshold
-            current_threshold = (min_feature_value
-                                 + rand_double(random_state)
-                                 * (max_feature_value - min_feature_value))
+            else:
+                # Draw a random threshold
+                current_threshold = (min_feature_value +
+                                     rand_double(random_state) *
+                                     (max_feature_value - min_feature_value))
 
-            if current_threshold == max_feature_value:
-                current_threshold = min_feature_value
+                if current_threshold == max_feature_value:
+                    current_threshold = min_feature_value
 
-            # Partition
-            partition_start = start
-            partition_end = end
-            p = start
+                # Partition
+                partition_end = end
+                p = start
 
-            while p < partition_end:
-                if X[X_sample_stride * samples[p]
-                     + X_fx_stride * current_feature] <= current_threshold:
-                    p += 1
+                while p < partition_end:
+                    current_feature_value = Xf[p]
+                    if current_feature_value <= current_threshold:
+                        p += 1
 
-                else:
-                    partition_end -= 1
+                    else:
+                        partition_end -= 1
 
-                    tmp = samples[partition_end]
-                    samples[partition_end] = samples[p]
-                    samples[p] = tmp
+                        Xf[p] = Xf[partition_end]
+                        Xf[partition_end] = current_feature_value
 
-            current_pos = partition_end
+                        tmp = samples[partition_end]
+                        samples[partition_end] = samples[p]
+                        samples[p] = tmp
 
-            # Reject if min_samples_leaf is not guaranteed
-            if (((current_pos - start) < min_samples_leaf) or
-                ((end - current_pos) < min_samples_leaf)):
-               continue
+                current_pos = partition_end
 
-            # Evaluate split
-            self.criterion.reset()
-            self.criterion.update(current_pos)
-            current_improvement = self.criterion.impurity_improvement(impurity)
+                # Reject if min_samples_leaf is not guaranteed
+                if (((current_pos - start) < min_samples_leaf) or
+                        ((end - current_pos) < min_samples_leaf)):
+                   continue
 
-            if current_improvement > best_improvement:
-                self.criterion.children_impurity(&current_impurity_left, &current_impurity_right)
-                best_impurity_left = current_impurity_left
-                best_impurity_right = current_impurity_right
-                best_improvement = current_improvement
-                best_pos = current_pos
-                best_feature = current_feature
-                best_threshold = current_threshold
+                # Evaluate split
+                self.criterion.reset()
+                self.criterion.update(current_pos)
+                current_improvement = self.criterion.impurity_improvement(impurity)
 
-            # Count one more visited feature
-            visited_features += 1
-
-            if visited_features >= max_features:
-                break
+                if current_improvement > best_improvement:
+                    self.criterion.children_impurity(&current_impurity_left,
+                                                     &current_impurity_right)
+                    best_impurity_left = current_impurity_left
+                    best_impurity_right = current_impurity_right
+                    best_improvement = current_improvement
+                    best_pos = current_pos
+                    best_feature = current_feature
+                    best_threshold = current_threshold
 
         # Reorganize into samples[start:best_pos] + samples[best_pos:end]
         if best_pos < end and current_feature != best_feature:
-            partition_start = start
             partition_end = end
             p = start
 
             while p < partition_end:
-                if X[X_sample_stride * samples[p] + X_fx_stride * best_feature] <= best_threshold:
+                if X[X_sample_stride * samples[p] +
+                     X_fx_stride * best_feature] <= best_threshold:
                     p += 1
 
                 else:
@@ -1319,10 +1419,8 @@ cdef class PresortBestSplitter(Splitter):
     cdef SIZE_t n_total_samples
     cdef unsigned char* sample_mask
 
-    def __cinit__(self, Criterion criterion,
-                        SIZE_t max_features,
-                        SIZE_t min_samples_leaf,
-                        object random_state):
+    def __cinit__(self, Criterion criterion, SIZE_t max_features,
+                  SIZE_t min_samples_leaf, object random_state):
         # Initialize pointers
         self.X_old = NULL
         self.X_argsorted_ptr = NULL
@@ -1350,10 +1448,9 @@ cdef class PresortBestSplitter(Splitter):
         # Pre-sort X
         if self.X_old != self.X:
             self.X_old = self.X
-            self.X_argsorted = \
-                np.asfortranarray(np.argsort(X, axis=0), dtype=np.int32)
-
-            self.X_argsorted_ptr = <INT32_t*>self.X_argsorted.data
+            self.X_argsorted = np.asfortranarray(np.argsort(X, axis=0),
+                                                 dtype=np.int32)
+            self.X_argsorted_ptr = <INT32_t*> self.X_argsorted.data
             self.X_argsorted_stride = (<SIZE_t> self.X_argsorted.strides[1] /
                                        <SIZE_t> self.X_argsorted.itemsize)
 
@@ -1363,7 +1460,7 @@ cdef class PresortBestSplitter(Splitter):
                 raise MemoryError("failed to allocate %d bytes"
                                   % self.n_total_samples)
             memset(sample_mask, 0, self.n_total_samples)
-            self.sample_mask = <unsigned char *>sample_mask
+            self.sample_mask = <unsigned char*> sample_mask
 
     cdef void node_split(self, double impurity, SIZE_t* pos,
                          SIZE_t* feature, double* threshold,
@@ -1379,7 +1476,7 @@ cdef class PresortBestSplitter(Splitter):
         cdef SIZE_t n_features = self.n_features
 
         cdef DTYPE_t* X = self.X
-        cdef DTYPE_t* X_fx
+        cdef DTYPE_t* Xf = self.feature_values
         cdef SIZE_t X_sample_stride = self.X_sample_stride
         cdef SIZE_t X_fx_stride = self.X_fx_stride
         cdef INT32_t* X_argsorted = self.X_argsorted_ptr
@@ -1406,12 +1503,11 @@ cdef class PresortBestSplitter(Splitter):
         cdef SIZE_t current_feature
         cdef double current_threshold
 
-        cdef SIZE_t f_idx, f_i, f_j, p, tmp
-        cdef SIZE_t visited_features = 0
-
-        cdef SIZE_t partition_start
+        cdef SIZE_t f_i = n_features
+        cdef SIZE_t f_j, p
+        cdef SIZE_t n_constant_features = 0
+        cdef SIZE_t n_visited_features = 0
         cdef SIZE_t partition_end
-
         cdef SIZE_t i, j
 
         # Set sample mask
@@ -1419,18 +1515,15 @@ cdef class PresortBestSplitter(Splitter):
             sample_mask[samples[p]] = 1
 
         # Look for splits
-        for f_idx in range(n_features):
+        while (f_i > 0 and (n_visited_features < max_features or
+                            n_visited_features <= n_constant_features)):
+            n_visited_features += 1
+
             # Draw a feature at random
-            f_i = n_features - f_idx - 1
-            f_j = rand_int(n_features - f_idx, random_state)
-
-            tmp = features[f_i]
-            features[f_i] = features[f_j]
-            features[f_j] = tmp
-
+            f_j = rand_int(f_i, random_state)
+            f_i -= 1
+            features[f_i], features[f_j] = features[f_j], features[f_i]
             current_feature = features[f_i]
-
-            X_fx = X + (X_fx_stride * current_feature)
 
             # Extract ordering from X_argsorted
             p = start
@@ -1439,68 +1532,63 @@ cdef class PresortBestSplitter(Splitter):
                 j = X_argsorted[X_argsorted_stride * current_feature + i]
                 if sample_mask[j] == 1:
                     samples[p] = j
+                    Xf[p] = X[X_sample_stride * j +
+                              X_fx_stride * current_feature]
                     p += 1
 
             # Evaluate all splits
-            self.criterion.reset()
-            p = start
+            if Xf[end - 1] <= Xf[start] + EPSILON_FLT:
+                n_constant_features += 1
 
-            while p < end:
-                while ((p + 1 < end) and
-                       (X_fx[X_sample_stride * samples[p + 1]] <=
-                        X_fx[X_sample_stride * samples[p]] + EPSILON_FLT)):
+            else:
+                self.criterion.reset()
+                p = start
+
+                while p < end:
+                    while p + 1 < end and Xf[p + 1] <= Xf[p] + EPSILON_FLT:
+                        p += 1
+
+                    # (p + 1 >= end) or (X[samples[p + 1], current_feature] >
+                    #                    X[samples[p], current_feature])
                     p += 1
+                    # (p >= end) or (X[samples[p], current_feature] >
+                    #                X[samples[p - 1], current_feature])
 
-                # (p + 1 >= end) or (X[samples[p + 1], current_feature] >
-                #                    X[samples[p], current_feature])
-                p += 1
-                # (p >= end) or (X[samples[p], current_feature] >
-                #                X[samples[p - 1], current_feature])
+                    if p < end:
+                        current_pos = p
 
-                if p < end:
-                    current_pos = p
+                        # Reject if min_samples_leaf is not guaranteed
+                        if (((current_pos - start) < min_samples_leaf) or
+                                ((end - current_pos) < min_samples_leaf)):
+                           continue
 
-                    # Reject if min_samples_leaf is not guaranteed
-                    if (((current_pos - start) < min_samples_leaf) or
-                        ((end - current_pos) < min_samples_leaf)):
-                        continue
+                        self.criterion.update(current_pos)
+                        current_improvement = self.criterion.impurity_improvement(impurity)
 
-                    self.criterion.update(current_pos)
-                    current_improvement = self.criterion.impurity_improvement(impurity)
+                        if current_improvement > best_improvement:
+                            self.criterion.children_impurity(&current_impurity_left,
+                                                             &current_impurity_right)
+                            best_impurity_left = current_impurity_left
+                            best_impurity_right = current_impurity_right
+                            best_improvement = current_improvement
+                            best_pos = current_pos
+                            best_feature = current_feature
 
-                    if current_improvement > best_improvement:
-                        self.criterion.children_impurity(&current_impurity_left, &current_impurity_right)
-                        best_impurity_left = current_impurity_left
-                        best_impurity_right = current_impurity_right
-                        best_improvement = current_improvement
-                        best_pos = current_pos
-                        best_feature = current_feature
+                            current_threshold = (Xf[p - 1] + Xf[p]) / 2.0
 
-                        current_threshold = (X_fx[X_sample_stride * samples[p - 1]] +
-                                             X_fx[X_sample_stride * samples[p]]) / 2.0
+                            if current_threshold == Xf[p]:
+                                current_threshold = Xf[p - 1]
 
-                        if current_threshold == X_fx[X_sample_stride * samples[p]]:
-                            current_threshold = X_fx[X_sample_stride * samples[p - 1]]
-
-                        best_threshold = current_threshold
-
-            if best_pos == end: # No valid split was ever found
-                continue
-
-            # Count one more visited feature
-            visited_features += 1
-
-            if visited_features >= max_features:
-                break
+                            best_threshold = current_threshold
 
         # Reorganize into samples[start:best_pos] + samples[best_pos:end]
         if best_pos < end:
-            partition_start = start
             partition_end = end
             p = start
 
             while p < partition_end:
-                if X[X_sample_stride * samples[p] + X_fx_stride * best_feature] <= best_threshold:
+                if X[X_sample_stride * samples[p] +
+                     X_fx_stride * best_feature] <= best_threshold:
                     p += 1
 
                 else:
@@ -1580,6 +1668,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         cdef SIZE_t parent
         cdef bint is_left
         cdef SIZE_t n_node_samples = splitter.n_samples
+        cdef double weighted_n_node_samples
         cdef SIZE_t pos
         cdef SIZE_t feature
         cdef SIZE_t node_id
@@ -1620,6 +1709,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                            (n_node_samples < 2 * tree.min_samples_leaf))
 
                 splitter.node_reset(start, end)  # calls criterion.init
+                weighted_n_node_samples = splitter.criterion.weighted_n_node_samples
 
                 if first:
                     impurity = splitter.criterion.node_impurity()
@@ -1635,7 +1725,8 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                     is_leaf = is_leaf or (pos >= end)
 
                 node_id = tree._add_node(parent, is_left, is_leaf, feature,
-                                         threshold, impurity, n_node_samples)
+                                         threshold, impurity, n_node_samples,
+                                         weighted_n_node_samples)
 
                 if is_leaf:
                     # Don't store value for internal nodes
@@ -1664,14 +1755,15 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         if rc == -1:
             raise MemoryError()
 
-        tree.splitter = None  # Release memory
+        # release memory
+        tree.splitter = None
 
 
 # Best first builder ----------------------------------------------------------
 
 cdef int _add_split_node(Splitter splitter, Tree tree,
                          SIZE_t start, SIZE_t end, double impurity,
-                         bint is_first, bint is_left, SIZE_t parent_id,
+                         bint is_first, bint is_left, Node* parent,
                          SIZE_t depth, PriorityHeapRecord* res) nogil:
     """Adds node w/ partition ``[start, end)`` to the frontier. """
     cdef SIZE_t pos
@@ -1682,11 +1774,14 @@ cdef int _add_split_node(Splitter splitter, Tree tree,
     cdef double split_impurity_right
     cdef double split_improvement
     cdef SIZE_t n_node_samples
+    cdef double weighted_n_node_samples
     cdef bint is_leaf
     cdef SIZE_t n_left, n_right
     cdef double imp_diff
 
     splitter.node_reset(start, end)  # calls criterion.init
+    weighted_n_node_samples = splitter.criterion.weighted_n_node_samples
+
     if is_first:
         impurity = splitter.criterion.node_impurity()
 
@@ -1701,8 +1796,11 @@ cdef int _add_split_node(Splitter splitter, Tree tree,
                             &split_improvement)
         is_leaf = is_leaf or (pos >= end)
 
-    node_id = tree._add_node(parent_id, is_left, is_leaf, feature,
-                             threshold, impurity, n_node_samples)
+    node_id = tree._add_node(parent - tree.nodes if parent != NULL
+                                                 else _TREE_UNDEFINED,
+                             is_left, is_leaf,
+                             feature, threshold, impurity, n_node_samples,
+                             weighted_n_node_samples)
     if node_id == <SIZE_t>(-1):
         return -1
 
@@ -1779,7 +1877,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         cdef bint is_leaf
         cdef SIZE_t max_depth_seen = -1
         cdef int rc = 0
-        cdef SIZE_t node_id
+        cdef Node* node
 
         # Initial capacity
         cdef int init_capacity = max_split_nodes + max_leaf_nodes
@@ -1789,7 +1887,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
             # add root to frontier
             rc = _add_split_node(splitter, tree,
                                  0, n_node_samples, INFINITY, IS_FIRST,
-                                 IS_LEFT, _TREE_UNDEFINED, 0, &split_node_left)
+                                 IS_LEFT, NULL, 0, &split_node_left)
             if rc >= 0:
                 rc = _add_to_frontier(&split_node_left, frontier)
         if rc == -1:
@@ -1799,15 +1897,15 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
             while not frontier.is_empty():
                 frontier.pop(&record)
 
-                node_id = record.node_id
+                node = &tree.nodes[record.node_id]
                 is_leaf = (record.is_leaf or max_split_nodes <= 0)
 
                 if is_leaf:
                     # Node is not expandable; set node as leaf
-                    tree.children_left[node_id] = _TREE_LEAF
-                    tree.children_right[node_id] = _TREE_LEAF
-                    tree.feature[node_id] = _TREE_UNDEFINED
-                    tree.threshold[node_id] = _TREE_UNDEFINED
+                    node.left_child = _TREE_LEAF
+                    node.right_child = _TREE_LEAF
+                    node.feature = _TREE_UNDEFINED
+                    node.threshold = _TREE_UNDEFINED
 
                 else:
                     # Node is expandable
@@ -1819,15 +1917,18 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                     rc = _add_split_node(splitter, tree,
                                          record.start, record.pos,
                                          record.impurity, IS_NOT_FIRST,
-                                         IS_LEFT, node_id, record.depth + 1,
+                                         IS_LEFT, node, record.depth + 1,
                                          &split_node_left)
                     if rc == -1:
                         break
 
+                    # tree.nodes may have changed
+                    node = &tree.nodes[record.node_id]
+
                     # Compute right split node
                     rc = _add_split_node(splitter, tree, record.pos,
                                          record.end, record.impurity,
-                                         IS_NOT_FIRST, IS_NOT_LEFT, node_id,
+                                         IS_NOT_FIRST, IS_NOT_LEFT, node,
                                          record.depth + 1, &split_node_right)
                     if rc == -1:
                         break
@@ -1852,7 +1953,8 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         if rc == -1:
             raise MemoryError()
 
-        tree.splitter = None  # Release memory
+        # release memory
+        tree.splitter = None
 
 
 # =============================================================================
@@ -1860,7 +1962,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
 # =============================================================================
 
 cdef class Tree:
-    """Struct-of-arrays representation of a binary decision tree.
+    """Array-based representation of a binary decision tree.
 
     The binary tree is represented as a number of parallel arrays. The i-th
     element of each array holds information about the node `i`. Node 0 is the
@@ -1875,75 +1977,81 @@ cdef class Tree:
         The number of nodes (internal nodes + leaves) in the tree.
 
     capacity : int
-        The current capacity (i.e., size) of the arrays.
+        The current capacity (i.e., size) of the arrays, which is at least as
+        great as `node_count`.
 
-    children_left : int*
+    children_left : array of int, shape [node_count]
         children_left[i] holds the node id of the left child of node i.
         For leaves, children_left[i] == TREE_LEAF. Otherwise,
         children_left[i] > i. This child handles the case where
         X[:, feature[i]] <= threshold[i].
 
-    children_right : int*
+    children_right : array of int, shape [node_count]
         children_right[i] holds the node id of the right child of node i.
         For leaves, children_right[i] == TREE_LEAF. Otherwise,
         children_right[i] > i. This child handles the case where
         X[:, feature[i]] > threshold[i].
 
-    feature : int*
+    feature : array of int, shape [node_count]
         feature[i] holds the feature to split on, for the internal node i.
 
-    threshold : double*
+    threshold : array of double, shape [node_count]
         threshold[i] holds the threshold for the internal node i.
 
-    value : double*
+    value : array of double, shape [node_count, n_outputs, ]
         Contains the constant prediction value of each node.
 
-    impurity : double*
+    impurity : array of double, shape [node_count]
         impurity[i] holds the impurity (i.e., the value of the splitting
         criterion) at node i.
 
-    n_node_samples : int*
-        n_samples[i] holds the number of training samples reaching node i.
+    n_node_samples : array of int, shape [node_count]
+        n_node_samples[i] holds the number of training samples reaching node i.
+
+    weighted_n_node_samples : array of int, shape [node_count]
+        weighted_n_samples[i] holds the weighted number of training samples
+        reaching node i.
     """
-    # Wrap for outside world
+    # Wrap for outside world.
+    # WARNING: these reference the current `nodes` and `value` buffers, which
+    # must not be be freed by a subsequent memory allocation.
+    # (i.e. through `_resize` or `__setstate__`)
     property n_classes:
         def __get__(self):
-            return sizet_ptr_to_ndarray(self.n_classes, self.n_outputs)
+            # it's small; copy for memory safety
+            return sizet_ptr_to_ndarray(self.n_classes, self.n_outputs).copy()
 
     property children_left:
         def __get__(self):
-            return sizet_ptr_to_ndarray(self.children_left, self.node_count)
+            return self._get_node_ndarray()['left_child'][:self.node_count]
 
     property children_right:
         def __get__(self):
-            return sizet_ptr_to_ndarray(self.children_right, self.node_count)
+            return self._get_node_ndarray()['right_child'][:self.node_count]
 
     property feature:
         def __get__(self):
-            return sizet_ptr_to_ndarray(self.feature, self.node_count)
+            return self._get_node_ndarray()['feature'][:self.node_count]
 
     property threshold:
         def __get__(self):
-            return double_ptr_to_ndarray(self.threshold, self.node_count)
-
-    property value:
-        def __get__(self):
-            cdef np.npy_intp shape[3]
-
-            shape[0] = <np.npy_intp> self.node_count
-            shape[1] = <np.npy_intp> self.n_outputs
-            shape[2] = <np.npy_intp> self.max_n_classes
-
-            return np.PyArray_SimpleNewFromData(
-                3, shape, np.NPY_DOUBLE, self.value)
+            return self._get_node_ndarray()['threshold'][:self.node_count]
 
     property impurity:
         def __get__(self):
-            return double_ptr_to_ndarray(self.impurity, self.node_count)
+            return self._get_node_ndarray()['impurity'][:self.node_count]
 
     property n_node_samples:
         def __get__(self):
-            return sizet_ptr_to_ndarray(self.n_node_samples, self.node_count)
+            return self._get_node_ndarray()['n_samples'][:self.node_count]
+
+    property weighted_n_node_samples:
+        def __get__(self):
+            return self._get_node_ndarray()['weighted_n_samples'][:self.node_count]
+
+    property value:
+        def __get__(self):
+            return self._get_value_ndarray()[:self.node_count]
 
     def __cinit__(self, int n_features, np.ndarray[SIZE_t, ndim=1] n_classes,
                   int n_outputs, Splitter splitter, SIZE_t max_depth,
@@ -1953,13 +2061,7 @@ cdef class Tree:
         # Inner structures
         self.node_count = 0
         self.capacity = 0
-        self.children_left = NULL
-        self.children_right = NULL
-        self.feature = NULL
-        self.threshold = NULL
         self.value = NULL
-        self.impurity = NULL
-        self.n_node_samples = NULL
 
         # Input/Output layout
         self.n_features = n_features
@@ -1970,7 +2072,7 @@ cdef class Tree:
             raise MemoryError()
 
         self.max_n_classes = np.max(n_classes)
-        self.value_stride = self.n_outputs * self.max_n_classes
+        self.value_stride = n_outputs * self.max_n_classes
 
         cdef SIZE_t k
 
@@ -1985,17 +2087,18 @@ cdef class Tree:
         self.random_state = random_state
         self.max_leaf_nodes = max_leaf_nodes
 
+        # Inner structures
+        self.node_count = 0
+        self.capacity = 0
+        self.value = NULL
+        self.nodes = NULL
+
     def __dealloc__(self):
         """Destructor."""
         # Free all inner structures
         free(self.n_classes)
-        free(self.children_left)
-        free(self.children_right)
-        free(self.feature)
-        free(self.threshold)
         free(self.value)
-        free(self.impurity)
-        free(self.n_node_samples)
+        free(self.nodes)
 
     def __reduce__(self):
         """Reduce re-implementation, for pickling."""
@@ -2012,51 +2115,48 @@ cdef class Tree:
     def __getstate__(self):
         """Getstate re-implementation, for pickling."""
         d = {}
-
         d["node_count"] = self.node_count
-        d["capacity"] = self.capacity
-        d["children_left"] = sizet_ptr_to_ndarray(self.children_left, self.capacity)
-        d["children_right"] = sizet_ptr_to_ndarray(self.children_right, self.capacity)
-        d["feature"] = sizet_ptr_to_ndarray(self.feature, self.capacity)
-        d["threshold"] = double_ptr_to_ndarray(self.threshold, self.capacity)
-        d["value"] = double_ptr_to_ndarray(self.value, self.capacity * self.value_stride)
-        d["impurity"] = double_ptr_to_ndarray(self.impurity, self.capacity)
-        d["n_node_samples"] = sizet_ptr_to_ndarray(self.n_node_samples, self.capacity)
-
+        d["nodes"] = self._get_node_ndarray()
+        d["values"] = self._get_value_ndarray()
         return d
 
     def __setstate__(self, d):
         """Setstate re-implementation, for unpickling."""
-        self._resize(d["capacity"])
         self.node_count = d["node_count"]
 
-        cdef SIZE_t* children_left = <SIZE_t*> (<np.ndarray> d["children_left"]).data
-        cdef SIZE_t* children_right =  <SIZE_t*> (<np.ndarray> d["children_right"]).data
-        cdef SIZE_t* feature = <SIZE_t*> (<np.ndarray> d["feature"]).data
-        cdef double* threshold = <double*> (<np.ndarray> d["threshold"]).data
-        cdef double* value = <double*> (<np.ndarray> d["value"]).data
-        cdef double* impurity = <double*> (<np.ndarray> d["impurity"]).data
-        cdef SIZE_t* n_node_samples = <SIZE_t*> (<np.ndarray> d["n_node_samples"]).data
+        if 'nodes' not in d:
+            raise ValueError('You have loaded Tree version which '
+                             'cannot be imported')
 
-        memcpy(self.children_left, children_left, self.capacity * sizeof(SIZE_t))
-        memcpy(self.children_right, children_right, self.capacity * sizeof(SIZE_t))
-        memcpy(self.feature, feature, self.capacity * sizeof(SIZE_t))
-        memcpy(self.threshold, threshold, self.capacity * sizeof(double))
-        memcpy(self.value, value, self.capacity * self.value_stride * sizeof(double))
-        memcpy(self.impurity, impurity, self.capacity * sizeof(double))
-        memcpy(self.n_node_samples, n_node_samples, self.capacity * sizeof(SIZE_t))
+        node_ndarray = d['nodes']
+        value_ndarray = d['values']
+
+        value_shape = (node_ndarray.shape[0], self.n_outputs, self.max_n_classes)
+        if (node_ndarray.ndim != 1
+         or node_ndarray.dtype != NODE_DTYPE
+         or not node_ndarray.flags.c_contiguous
+         or value_ndarray.shape != value_shape
+         or not value_ndarray.flags.c_contiguous
+         or value_ndarray.dtype != np.float64):
+            raise ValueError('Did not recognise loaded array layout')
+
+        self.capacity = node_ndarray.shape[0]
+        if self._resize_c(self.capacity) != 0:
+            raise MemoryError("resizing tree to %d" % self.capacity)
+        nodes = memcpy(self.nodes, (<np.ndarray> node_ndarray).data, self.capacity * sizeof(Node))
+        value = memcpy(self.value, (<np.ndarray> value_ndarray).data, self.capacity * self.value_stride * sizeof(double))
 
     cdef void _resize(self, SIZE_t capacity):
         """Resize all inner arrays to `capacity`, if `capacity` == -1, then
            double the size of the inner arrays."""
-        if self._resize_c(capacity) != 0:
+        if self._resize_c(capacity)!= 0:
             raise MemoryError()
 
     # XXX using (size_t)(-1) is ugly, but SIZE_MAX is not available in C89
     # (i.e., older MSVC).
     cdef int _resize_c(self, SIZE_t capacity=<SIZE_t>(-1)) nogil:
         """Guts of _resize. Returns 0 for success, -1 for error."""
-        if capacity == self.capacity:
+        if capacity == self.capacity and self.nodes != NULL:
             return 0
 
         if capacity == <SIZE_t>(-1):
@@ -2065,47 +2165,26 @@ cdef class Tree:
             else:
                 capacity = 2 * self.capacity
 
-        self.capacity = capacity
-
-        cdef void* tmp = realloc(self.children_left, capacity * sizeof(SIZE_t))
-        if tmp == NULL:
+        cdef void* ptr = realloc(self.nodes, capacity * sizeof(Node))
+        if ptr == NULL:
             return -1
-        self.children_left = <SIZE_t*>tmp
-
-        tmp = realloc(self.children_right, capacity * sizeof(SIZE_t))
-        if tmp == NULL:
+        self.nodes = <Node*> ptr
+        ptr = realloc(self.value,
+                      capacity * self.value_stride * sizeof(double))
+        if ptr == NULL:
             return -1
-        self.children_right = <SIZE_t*>tmp
+        self.value = <double*> ptr
 
-        tmp = realloc(self.feature, capacity * sizeof(SIZE_t))
-        if tmp == NULL:
-            return -1
-        self.feature = <SIZE_t*>tmp
-
-        tmp = realloc(self.threshold, capacity * sizeof(double))
-        if tmp == NULL:
-            return -1
-        self.threshold = <double*>tmp
-
-        tmp = realloc(self.value, capacity * self.value_stride * sizeof(double))
-        if tmp == NULL:
-            return -1
-        self.value = <double*>tmp
-
-        tmp = realloc(self.impurity, capacity * sizeof(double))
-        if tmp == NULL:
-            return -1
-        self.impurity = <double*>tmp
-
-        tmp = realloc(self.n_node_samples, capacity * sizeof(SIZE_t))
-        if tmp == NULL:
-            return -1
-        self.n_node_samples = <SIZE_t*>tmp
+        # value memory is initialised to 0 to enable classifier argmax
+        if capacity > self.capacity:
+            memset((<void*> self.value) + self.capacity * self.value_stride * sizeof(double), 0,
+                   (capacity - self.capacity) * self.value_stride * sizeof(double))
 
         # if capacity smaller than node_count, adjust the counter
         if capacity < self.node_count:
             self.node_count = capacity
 
+        self.capacity = capacity
         return 0
 
     cdef SIZE_t _add_node(self, SIZE_t parent,
@@ -2114,7 +2193,8 @@ cdef class Tree:
                                 SIZE_t feature,
                                 double threshold,
                                 double impurity,
-                                SIZE_t n_node_samples) nogil:
+                                SIZE_t n_samples,
+                                double weighted_n_samples) nogil:
         """Add a node to the tree.
 
         The new node registers itself as the child of its parent.
@@ -2127,161 +2207,87 @@ cdef class Tree:
             if self._resize_c() != 0:
                 return <SIZE_t>(-1)
 
-        self.impurity[node_id] = impurity
-        self.n_node_samples[node_id] = n_node_samples
+        cdef Node* node = &self.nodes[node_id]
+        node.impurity = impurity
+        node.n_samples = n_samples
+        node.weighted_n_samples = weighted_n_samples
 
         if parent != _TREE_UNDEFINED:
             if is_left:
-                self.children_left[parent] = node_id
+                self.nodes[parent].left_child = node_id
             else:
-                self.children_right[parent] = node_id
+                self.nodes[parent].right_child = node_id
 
         if is_leaf:
-            self.children_left[node_id] = _TREE_LEAF
-            self.children_right[node_id] = _TREE_LEAF
-            self.feature[node_id] = _TREE_UNDEFINED
-            self.threshold[node_id] = _TREE_UNDEFINED
+            node.left_child = _TREE_LEAF
+            node.right_child = _TREE_LEAF
+            node.feature = _TREE_UNDEFINED
+            node.threshold = _TREE_UNDEFINED
 
         else:
-            # children_left and children_right will be set later
-            self.feature[node_id] = feature
-            self.threshold[node_id] = threshold
+            # left_child and right_child will be set later
+            node.feature = feature
+            node.threshold = threshold
 
         self.node_count += 1
 
         return node_id
 
-    cpdef predict(self, np.ndarray[DTYPE_t, ndim=2] X):
+    cpdef np.ndarray predict(self, np.ndarray[DTYPE_t, ndim=2] X):
         """Predict target for X."""
-        cdef SIZE_t* children_left = self.children_left
-        cdef SIZE_t* children_right = self.children_right
-        cdef SIZE_t* feature = self.feature
-        cdef double* threshold = self.threshold
-        cdef double* value = self.value
+        out = self._get_value_ndarray().take(self.apply(X), axis=0, mode='clip')
+        if self.n_outputs == 1:
+            out = out.reshape(X.shape[0], self.max_n_classes)
+        return out
 
-        cdef SIZE_t n_samples = X.shape[0]
-        cdef SIZE_t* n_classes = self.n_classes
-        cdef SIZE_t n_outputs = self.n_outputs
-        cdef SIZE_t max_n_classes = self.max_n_classes
-        cdef SIZE_t value_stride = self.value_stride
-
-        cdef SIZE_t node_id = 0
-        cdef SIZE_t offset
-        cdef SIZE_t i
-        cdef SIZE_t k
-        cdef SIZE_t c
-
-        cdef np.ndarray[np.float64_t, ndim=2] out
-        cdef np.ndarray[np.float64_t, ndim=3] out_multi
-
-        if n_outputs == 1:
-            out = np.zeros((n_samples, max_n_classes), dtype=np.float64)
-
-            with nogil:
-                for i in range(n_samples):
-                    node_id = 0
-
-                    # While node_id not a leaf
-                    while children_left[node_id] != _TREE_LEAF:
-                        # ... and children_right[node_id] != _TREE_LEAF:
-                        if X[i, feature[node_id]] <= threshold[node_id]:
-                            node_id = children_left[node_id]
-                        else:
-                            node_id = children_right[node_id]
-
-                    offset = node_id * value_stride
-
-                    for c in range(n_classes[0]):
-                        out[i, c] = value[offset + c]
-
-            return out
-
-        else: # n_outputs > 1
-            out_multi = np.zeros((n_samples,
-                                  n_outputs,
-                                  max_n_classes), dtype=np.float64)
-
-            with nogil:
-                for i in range(n_samples):
-                    node_id = 0
-
-                    # While node_id not a leaf
-                    while children_left[node_id] != _TREE_LEAF:
-                        # ... and children_right[node_id] != _TREE_LEAF:
-                        if X[i, feature[node_id]] <= threshold[node_id]:
-                            node_id = children_left[node_id]
-                        else:
-                            node_id = children_right[node_id]
-
-                    offset = node_id * value_stride
-
-                    for k in range(n_outputs):
-                        for c in range(n_classes[k]):
-                            out_multi[i, k, c] = value[offset + c]
-                        offset += max_n_classes
-
-            return out_multi
-
-    cpdef apply(self, np.ndarray[DTYPE_t, ndim=2] X):
+    cpdef np.ndarray apply(self, np.ndarray[DTYPE_t, ndim=2] X):
         """Finds the terminal region (=leaf node) for each sample in X."""
-        cdef SIZE_t* children_left = self.children_left
-        cdef SIZE_t* children_right = self.children_right
-        cdef SIZE_t* feature = self.feature
-        cdef double* threshold = self.threshold
-
         cdef SIZE_t n_samples = X.shape[0]
-        cdef SIZE_t node_id = 0
+        cdef Node* node = NULL
         cdef SIZE_t i = 0
 
-        cdef np.ndarray[np.int32_t, ndim=1] out
-        out = np.zeros((n_samples,), dtype=np.int32)
+        cdef np.ndarray[SIZE_t] out = np.zeros((n_samples,), dtype=np.intp)
+        cdef SIZE_t* out_data = <SIZE_t*> out.data
 
         with nogil:
             for i in range(n_samples):
-                node_id = 0
+                node = self.nodes
 
-                # While node_id not a leaf
-                while children_left[node_id] != _TREE_LEAF:
-                    # ... and children_right[node_id] != _TREE_LEAF:
-                    if X[i, feature[node_id]] <= threshold[node_id]:
-                        node_id = children_left[node_id]
+                # While node not a leaf
+                while node.left_child != _TREE_LEAF:
+                    # ... and node.right_child != _TREE_LEAF:
+                    if X[i, node.feature] <= node.threshold:
+                        node = &self.nodes[node.left_child]
                     else:
-                        node_id = children_right[node_id]
+                        node = &self.nodes[node.right_child]
 
-                out[i] = node_id
+                out_data[i] = <SIZE_t>(node - self.nodes)  # node offset
 
         return out
 
     cpdef compute_feature_importances(self, normalize=True):
         """Computes the importance of each feature (aka variable)."""
-        cdef SIZE_t* children_left = self.children_left
-        cdef SIZE_t* children_right = self.children_right
-        cdef SIZE_t* feature = self.feature
-        cdef double* impurity = self.impurity
-        cdef SIZE_t* n_node_samples = self.n_node_samples
-
-        cdef SIZE_t n_features = self.n_features
-        cdef SIZE_t node_count = self.node_count
-
-        cdef SIZE_t n_left
-        cdef SIZE_t n_right
-        cdef SIZE_t node
+        cdef Node* left
+        cdef Node* right
+        cdef Node* nodes = self.nodes
+        cdef Node* node = nodes
+        cdef Node* end_node = node + self.node_count
 
         cdef np.ndarray[np.float64_t, ndim=1] importances
         importances = np.zeros((self.n_features,))
 
-        for node in range(node_count):
-            if children_left[node] != _TREE_LEAF:
-                # ... and children_right[node] != _TREE_LEAF:
-                n_left = n_node_samples[children_left[node]]
-                n_right = n_node_samples[children_right[node]]
+        while node != end_node:
+            if node.left_child != _TREE_LEAF:
+                # ... and node.right_child != _TREE_LEAF:
+                left = &nodes[node.left_child]
+                right = &nodes[node.right_child]
 
-                importances[feature[node]] += \
-                    n_node_samples[node] * impurity[node] \
-                        - n_left * impurity[children_left[node]] \
-                        - n_right * impurity[children_right[node]]
+                importances[node.feature] += (node.weighted_n_samples * node.impurity -
+                                              left.weighted_n_samples * left.impurity -
+                                              right.weighted_n_samples * right.impurity)
+            node += 1
 
-        importances = importances / self.n_node_samples[0]
+        importances = importances / nodes[0].weighted_n_samples
         cdef double normalizer
 
         if normalize:
@@ -2292,6 +2298,42 @@ cdef class Tree:
                 importances /= normalizer
 
         return importances
+
+    cdef np.ndarray _get_value_ndarray(self):
+        """Wraps value as a 3-d NumPy array
+
+        The array keeps a reference to this Tree, which manages the underlying
+        memory.
+        """
+        cdef np.npy_intp shape[3]
+        shape[0] = <np.npy_intp> self.node_count
+        shape[1] = <np.npy_intp> self.n_outputs
+        shape[2] = <np.npy_intp> self.max_n_classes
+        cdef np.ndarray arr
+        arr = np.PyArray_SimpleNewFromData(3, shape, np.NPY_DOUBLE, self.value)
+        Py_INCREF(self)
+        arr.base = <PyObject*> self
+        return arr
+
+    cdef np.ndarray _get_node_ndarray(self):
+        """Wraps nodes as a NumPy struct array
+
+        The array keeps a reference to this Tree, which manages the underlying
+        memory. Individual fields are publicly accessible as properties of the
+        Tree.
+        """
+        cdef np.npy_intp shape[1]
+        shape[0] = <np.npy_intp> self.node_count
+        cdef np.npy_intp strides[1]
+        strides[0] = sizeof(Node)
+        cdef np.ndarray arr
+        Py_INCREF(NODE_DTYPE)
+        arr = PyArray_NewFromDescr(np.ndarray, <np.dtype> NODE_DTYPE, 1, shape,
+                                   strides, <void*> self.nodes,
+                                   np.NPY_DEFAULT, None)
+        Py_INCREF(self)
+        arr.base = <PyObject*> self
+        return arr
 
 
 # =============================================================================
@@ -2307,23 +2349,11 @@ cdef inline UINT32_t our_rand_r(UINT32_t* seed) nogil:
 
     return seed[0] % (<UINT32_t>RAND_R_MAX + 1)
 
-cdef inline np.ndarray int_ptr_to_ndarray(int* data, SIZE_t size):
-    """Encapsulate data into a 1D numpy array of int's."""
-    cdef np.npy_intp shape[1]
-    shape[0] = <np.npy_intp> size
-    return np.PyArray_SimpleNewFromData(1, shape, np.NPY_INT, data)
-
 cdef inline np.ndarray sizet_ptr_to_ndarray(SIZE_t* data, SIZE_t size):
     """Encapsulate data into a 1D numpy array of intp's."""
     cdef np.npy_intp shape[1]
     shape[0] = <np.npy_intp> size
     return np.PyArray_SimpleNewFromData(1, shape, np.NPY_INTP, data)
-
-cdef inline np.ndarray double_ptr_to_ndarray(double* data, SIZE_t size):
-    """Encapsulate data into a 1D numpy array of double's."""
-    cdef np.npy_intp shape[1]
-    shape[0] = <np.npy_intp> size
-    return np.PyArray_SimpleNewFromData(1, shape, np.NPY_DOUBLE, data)
 
 cdef inline SIZE_t rand_int(SIZE_t end, UINT32_t* random_state) nogil:
     """Generate a random integer in [0; end)."""

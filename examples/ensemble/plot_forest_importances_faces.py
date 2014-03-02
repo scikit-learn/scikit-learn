@@ -13,7 +13,7 @@ of the predictions can be parallelized within multiple jobs.
 print(__doc__)
 
 from time import time
-import pylab as pl
+import matplotlib.pyplot as plt
 
 from sklearn.datasets import fetch_olivetti_faces
 from sklearn.ensemble import ExtraTreesClassifier
@@ -44,6 +44,6 @@ importances = forest.feature_importances_
 importances = importances.reshape(data.images[0].shape)
 
 # Plot pixel importances
-pl.matshow(importances, cmap=pl.cm.hot)
-pl.title("Pixel importances with forests of trees")
-pl.show()
+plt.matshow(importances, cmap=plt.cm.hot)
+plt.title("Pixel importances with forests of trees")
+plt.show()

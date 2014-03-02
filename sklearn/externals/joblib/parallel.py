@@ -143,8 +143,38 @@ class CallBack(object):
 
     def __call__(self, out):
         self.parallel.print_progress(self.index)
-        if self.parallel._iterable:
+        if self.parallel._original_iterable:
             self.parallel.dispatch_next()
+
+
+class LockedIterator(object):
+    """Wrapper to protect a thread-unsafe iterable against concurrent access.
+
+    A Python generator is not thread-safe by default and will raise
+    ValueError("generator already executing") if two threads consume it
+    concurrently.
+
+    In joblib this could typically happen when the passed iterator is a
+    generator expression and pre_dispatch != 'all'. In that case a callback is
+    passed to the multiprocessing apply_async call and helper threads will
+    trigger the consumption of the source iterable in the dispatch_next
+    method.
+
+    """
+    def __init__(self, it):
+        self._lock = threading.Lock()
+        self._it = iter(it)
+
+    def __iter__(self):
+        return self
+
+    def next(self):
+        with self._lock:
+            return next(self._it)
+
+    # For Python 3 compat
+    __next__ = next
+
 
 
 ###############################################################################
@@ -198,9 +228,6 @@ class Parallel(Logger):
             in Bytes, or a human-readable string, e.g., '1M' for 1 megabyte.
             Use None to disable memmaping of large arrays.
             Only active when backend="multiprocessing".
-        verbose: int, optional
-            Make it possible to monitor how the communication of numpy arrays
-            with the subprocess is handled (pickling or memmaping)
 
         Notes
         -----
@@ -393,7 +420,7 @@ class Parallel(Logger):
             try:
                 # XXX: possible race condition shuffling the order of
                 # dispatches in the next two lines.
-                func, args, kwargs = next(self._iterable)
+                func, args, kwargs = next(self._original_iterable)
                 self.dispatch(func, args, kwargs)
                 self._dispatch_amount -= 1
             except ValueError:
@@ -401,7 +428,8 @@ class Parallel(Logger):
                     the dispatch will be done later.
                 """
             except StopIteration:
-                self._iterable = None
+                self._iterating = False
+                self._original_iterable = None
                 return
 
     def _print(self, msg, msg_args):
@@ -428,7 +456,7 @@ class Parallel(Logger):
 
         # This is heuristic code to print only 'verbose' times a messages
         # The challenge is that we may not know the queue length
-        if self._iterable:
+        if self._original_iterable:
             if _verbosity_filter(index, self.verbose):
                 return
             self._print('Done %3i jobs       | elapsed: %s',
@@ -459,7 +487,11 @@ class Parallel(Logger):
 
     def retrieve(self):
         self._output = list()
-        while self._jobs:
+        while self._iterating or len(self._jobs) > 0:
+            if len(self._jobs) == 0:
+                # Wait for an async callback to dispatch new jobs
+                time.sleep(0.01)
+                continue
             # We need to be careful: the job queue can be filling up as
             # we empty it
             if hasattr(self, '_lock'):
@@ -516,6 +548,10 @@ class Parallel(Logger):
         # The list of exceptions that we will capture
         self.exceptions = [TransportableException]
         self._lock = threading.Lock()
+
+        # Whether or not to set an environment flag to track
+        # multiple process spawning
+        set_environ_flag = False
         if (n_jobs is None or mp is None or n_jobs == 1):
             n_jobs = 1
             self._pool = None
@@ -554,7 +590,7 @@ class Parallel(Logger):
                 gc.collect()
 
                 # Set an environment variable to avoid infinite loops
-                os.environ[JOBLIB_SPAWNED_PROCESS] = '1'
+                set_environ_flag = True
                 poolargs = dict(
                     max_nbytes=self._max_nbytes,
                     mmap_mode=self._mmap_mode,
@@ -578,22 +614,40 @@ class Parallel(Logger):
             pre_dispatch = 'all'
 
         if pre_dispatch == 'all' or n_jobs == 1:
-            self._iterable = None
+            self._original_iterable = None
             self._pre_dispatch_amount = 0
         else:
-            self._iterable = iterable
+            # The dispatch mechanism relies on multiprocessing helper threads
+            # to dispatch tasks from the original iterable concurrently upon
+            # job completions. As Python generators are not thread-safe we
+            # need to wrap it with a lock
+            iterable = LockedIterator(iterable)
+            self._original_iterable = iterable
             self._dispatch_amount = 0
             if hasattr(pre_dispatch, 'endswith'):
                 pre_dispatch = eval(pre_dispatch)
             self._pre_dispatch_amount = pre_dispatch = int(pre_dispatch)
+
+            # The main thread will consume the first pre_dispatch items and
+            # the remaining items will later be lazily dispatched by async
+            # callbacks upon task completions
             iterable = itertools.islice(iterable, pre_dispatch)
 
         self._start_time = time.time()
         self.n_dispatched = 0
         try:
+            if set_environ_flag:
+                # Set an environment variable to avoid infinite loops
+                os.environ[JOBLIB_SPAWNED_PROCESS] = '1'
+            self._iterating = True
             for function, args, kwargs in iterable:
                 self.dispatch(function, args, kwargs)
 
+            if pre_dispatch == "all" or n_jobs == 1:
+                # The iterable was consumed all at once by the above for loop.
+                # No need to wait for async callbacks to trigger to
+                # consumption.
+                self._iterating = False
             self.retrieve()
             # Make sure that we get a last message telling us we are done
             elapsed_time = time.time() - self._start_time

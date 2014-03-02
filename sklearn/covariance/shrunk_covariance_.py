@@ -22,7 +22,6 @@ from ..externals.six.moves import xrange
 from ..utils import array2d
 
 
-###############################################################################
 # ShrunkCovariance estimator
 
 def shrunk_covariance(emp_cov, shrinkage=0.1):
@@ -141,7 +140,6 @@ class ShrunkCovariance(EmpiricalCovariance):
         return self
 
 
-###############################################################################
 # Ledoit-Wolf estimator
 
 def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
@@ -399,7 +397,6 @@ class LedoitWolf(EmpiricalCovariance):
         return self
 
 
-###############################################################################
 # OAS estimator
 
 def oas(X, assume_centered=False):
@@ -521,6 +518,7 @@ class OAS(EmpiricalCovariance):
     Chen et al., IEEE Trans. on Sign. Proc., Volume 58, Issue 10, October 2010.
 
     """
+
     def fit(self, X, y=None):
         """ Fits the Oracle Approximating Shrinkage covariance model
         according to the given training data and parameters.

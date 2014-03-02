@@ -15,7 +15,6 @@ import numpy as np
 from scipy import sparse
 from numpy.lib.stride_tricks import as_strided
 
-from ..utils.fixes import in1d
 from ..utils import array2d, check_random_state
 from ..base import BaseEstimator
 
@@ -68,8 +67,8 @@ def _mask_edges_weights(mask, edges, weights=None):
     """Apply a mask to edges (weighted or not)"""
     inds = np.arange(mask.size)
     inds = inds[mask.ravel()]
-    ind_mask = np.logical_and(in1d(edges[0], inds),
-                              in1d(edges[1], inds))
+    ind_mask = np.logical_and(np.in1d(edges[0], inds),
+                              np.in1d(edges[1], inds))
     edges = edges[:, ind_mask]
     if weights is not None:
         weights = weights[ind_mask]

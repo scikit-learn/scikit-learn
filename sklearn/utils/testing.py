@@ -12,8 +12,10 @@ import inspect
 import pkgutil
 import warnings
 import sys
+import re
 
 import scipy as sp
+import scipy.io
 from functools import wraps
 try:
     # Python 2
@@ -26,7 +28,6 @@ except ImportError:
 
 import sklearn
 from sklearn.base import BaseEstimator
-from .fixes import savemat
 
 # Conveniently import all assertions in one place.
 from nose.tools import assert_equal
@@ -47,10 +48,10 @@ import numpy as np
 from sklearn.base import (ClassifierMixin, RegressorMixin, TransformerMixin,
                           ClusterMixin)
 
-__all__ = ["assert_equal", "assert_not_equal", "assert_raises", "raises",
-           "with_setup", "assert_true", "assert_false", "assert_almost_equal",
-           "assert_array_equal", "assert_array_almost_equal",
-           "assert_array_less"]
+__all__ = ["assert_equal", "assert_not_equal", "assert_raises",
+           "assert_raises_regexp", "raises", "with_setup", "assert_true",
+           "assert_false", "assert_almost_equal", "assert_array_equal",
+           "assert_array_almost_equal", "assert_array_less"]
 
 
 try:
@@ -63,6 +64,28 @@ except ImportError:
 
     def assert_not_in(x, container):
         assert_false(x in container, msg="%r in %r" % (x, container))
+
+try:
+    from nose.tools import assert_raises_regexp
+except ImportError:
+    # for Py 2.6
+    def assert_raises_regexp(expected_exception, expected_regexp,
+                             callable_obj=None, *args, **kwargs):
+        """Helper function to check for message patterns in exceptions"""
+
+        not_raised = False
+        try:
+            callable_obj(*args, **kwargs)
+            not_raised = True
+        except Exception as e:
+            error_message = str(e)
+            if not re.compile(expected_regexp).match(error_message):
+                raise AssertionError("Error message should match pattern "
+                                     "'%s'. '%s' does not." %
+                                     (expected_regexp, error_message))
+        if not_raised:
+            raise AssertionError("Should have raised %r" %
+                                 expected_exception(expected_regexp))
 
 
 def _assert_less(a, b, msg=None):
@@ -77,7 +100,6 @@ def _assert_greater(a, b, msg=None):
     if msg is not None:
         message += ": " + msg
     assert a > b, message
-
 
 
 # To remove when we support numpy 1.7
@@ -172,12 +194,12 @@ def assert_warns_message(warning_class, message, func, *args, **kw):
         if callable(message):  # add support for certain tests
             check_in_message = message
         else:
-            check_in_message = lambda msg : message in msg
+            check_in_message = lambda msg: message in msg
         if not check_in_message(msg):
             raise AssertionError("The message received ('%s') for <%s> is "
                                  "not the one you expected ('%s')"
                                  % (msg, func.__name__,  message
-                                 ))
+                                    ))
     return result
 
 
@@ -278,6 +300,7 @@ class _IgnoreWarnings(object):
         self._showwarning = self._module.showwarning
         if self._record:
             self.log = []
+
             def showwarning(*args, **kwargs):
                 self.log.append(warnings.WarningMessage(*args, **kwargs))
             self._module.showwarning = showwarning
@@ -291,7 +314,7 @@ class _IgnoreWarnings(object):
         self._module.filters = self._filters
         self._module.showwarning = self._showwarning
         self.log[:] = []
-        clean_warning_registry() # be safe and not propagate state + chaos
+        clean_warning_registry()  # be safe and not propagate state + chaos
 
 
 try:
@@ -361,7 +384,7 @@ def fake_mldata(columns_dict, dataname, matfile, ordering=None):
     for i, name in enumerate(ordering):
         datasets['mldata_descr_ordering'][0, i] = name
 
-    savemat(matfile, datasets, oned_as='column')
+    scipy.io.savemat(matfile, datasets, oned_as='column')
 
 
 class mock_mldata_urlopen(object):

@@ -16,13 +16,6 @@ from . import regression_models as regression
 from . import correlation_models as correlation
 
 MACHINE_EPSILON = np.finfo(np.double).eps
-if hasattr(linalg, 'solve_triangular'):
-    # only in scipy since 0.9
-    solve_triangular = linalg.solve_triangular
-else:
-    # slower, but works
-    def solve_triangular(x, y, lower=True):
-        return linalg.solve(x, y)
 
 
 def l1_cross_distances(X):
@@ -48,7 +41,7 @@ def l1_cross_distances(X):
     """
     X = array2d(X)
     n_samples, n_features = X.shape
-    n_nonzero_cross_dist = n_samples * (n_samples - 1) / 2
+    n_nonzero_cross_dist = n_samples * (n_samples - 1) // 2
     ij = np.zeros((n_nonzero_cross_dist, 2), dtype=np.int)
     D = np.zeros((n_nonzero_cross_dist, n_features))
     ll_1 = 0
@@ -428,8 +421,9 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
         if X.shape[1] != n_features:
             raise ValueError(("The number of features in X (X.shape[1] = %d) "
-                             "should match the number of features used for fit() "
-                             "which is %d.") % (X.shape[1], n_features))
+                              "should match the number of features used "
+                              "for fit() "
+                              "which is %d.") % (X.shape[1], n_features))
 
         if batch_size is None:
             # No memory management
@@ -473,12 +467,12 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                     self.Ft = par['Ft']
                     self.G = par['G']
 
-                rt = solve_triangular(self.C, r.T, lower=True)
+                rt = linalg.solve_triangular(self.C, r.T, lower=True)
 
                 if self.beta0 is None:
                     # Universal Kriging
-                    u = solve_triangular(self.G.T,
-                                         np.dot(self.Ft.T, rt) - f.T)
+                    u = linalg.solve_triangular(self.G.T,
+                                                np.dot(self.Ft.T, rt) - f.T)
                 else:
                     # Ordinary Kriging
                     u = np.zeros((n_targets, n_eval))
@@ -610,7 +604,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             return reduced_likelihood_function_value, par
 
         # Get generalized least squares solution
-        Ft = solve_triangular(C, F, lower=True)
+        Ft = linalg.solve_triangular(C, F, lower=True)
         try:
             Q, G = linalg.qr(Ft, econ=True)
         except:
@@ -634,10 +628,10 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                 # Ft is too ill conditioned, get out (try different theta)
                 return reduced_likelihood_function_value, par
 
-        Yt = solve_triangular(C, self.y, lower=True)
+        Yt = linalg.solve_triangular(C, self.y, lower=True)
         if self.beta0 is None:
             # Universal Kriging
-            beta = solve_triangular(G, np.dot(Q.T, Yt))
+            beta = linalg.solve_triangular(G, np.dot(Q.T, Yt))
         else:
             # Ordinary Kriging
             beta = np.array(self.beta0)
@@ -652,7 +646,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         reduced_likelihood_function_value = - sigma2.sum() * detR
         par['sigma2'] = sigma2 * self.y_std ** 2.
         par['beta'] = beta
-        par['gamma'] = solve_triangular(C.T, rho)
+        par['gamma'] = linalg.solve_triangular(C.T, rho)
         par['C'] = C
         par['Ft'] = Ft
         par['G'] = G
