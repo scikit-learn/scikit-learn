@@ -232,6 +232,6 @@ def test_theilsen_parallel():
     lstq = LinearRegression().fit(X, y)
     assert np.linalg.norm(lstq.coef_ - w) > 1.0
     # Check that Theil-Sen works
-    theilsen = TheilSen(n_jobs=-1).fit(X, y)
+    theilsen = TheilSen(n_jobs=2).fit(X, y)
     nptest.assert_array_almost_equal(theilsen.coef_, w, 1)
     nptest.assert_array_almost_equal(theilsen.intercept_, c, 1)
