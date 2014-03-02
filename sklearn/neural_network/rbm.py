@@ -153,8 +153,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
             Values of the hidden layer.
         """
         p = self._mean_hiddens(v)
-        p[rng.uniform(size=p.shape) < p] = 1.
-        return np.floor(p, p)
+        return (rng.random_sample(size=p.shape) < p)
 
     def _sample_visibles(self, h, rng):
         """Sample from the distribution P(v|h).
@@ -175,8 +174,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         p = np.dot(h, self.components_)
         p += self.intercept_visible_
         expit(p, out=p)
-        p[rng.uniform(size=p.shape) < p] = 1.
-        return np.floor(p, p)
+        return (rng.random_sample(size=p.shape) < p)
 
     def _free_energy(self, v):
         """Computes the free energy F(v) = - log sum_h exp(-E(v,h)).
@@ -234,7 +232,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
 
         lr = float(self.learning_rate) / v_pos.shape[0]
         update = safe_sparse_dot(v_pos.T, h_pos, dense_output=True).T
-        update -= np.dot(v_neg.T, h_neg).T
+        update -= np.dot(h_neg.T, v_neg)
         self.components_ += lr * update
         self.intercept_hidden_ += lr * (h_pos.sum(axis=0) - h_neg.sum(axis=0))
         self.intercept_visible_ += lr * (np.asarray(
