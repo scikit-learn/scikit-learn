@@ -152,8 +152,7 @@ def safe_sparse_dot(a, b, dense_output=False):
     Uses BLAS GEMM as replacement for numpy.dot where possible
     to avoid unnecessary copies.
     """
-    from scipy import sparse
-    if sparse.issparse(a) or sparse.issparse(b):
+    if issparse(a) or issparse(b):
         ret = a * b
         if dense_output and hasattr(ret, "toarray"):
             ret = ret.toarray()
