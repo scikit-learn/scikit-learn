@@ -184,10 +184,6 @@ Backports
 - :func:`fixes.expit`: Logistic sigmoid function. Replacement for SciPy 0.10's
   ``scipy.special.expit``.
 
-- :func:`fixes.savemat` (backport of ``scipy.io.savemat`` from scipy 0.7.2).
-  Save an array in MATLAB-format. In earlier versions, the keyword
-  ``oned_as`` is not available.
-
 - :func:`arrayfuncs.solve_triangular`
   (Back-ported from scipy v0.9)  Used in ``sklearn.linear_model.omp``,
   independent back-ports in ``sklearn.mixture.gmm`` and

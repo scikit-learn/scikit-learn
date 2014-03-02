@@ -15,27 +15,6 @@ import inspect
 import numpy as np
 
 
-def lsqr(X, y, tol=1e-3):
-    import scipy.sparse.linalg as sp_linalg
-    from ..utils.extmath import safe_sparse_dot
-
-    if hasattr(sp_linalg, 'lsqr'):
-        # scipy 0.8 or greater
-        return sp_linalg.lsqr(X, y)
-    else:
-        n_samples, n_features = X.shape
-        if n_samples > n_features:
-            coef, _ = sp_linalg.cg(safe_sparse_dot(X.T, X),
-                                   safe_sparse_dot(X.T, y),
-                                   tol=tol)
-        else:
-            coef, _ = sp_linalg.cg(safe_sparse_dot(X, X.T), y, tol=tol)
-            coef = safe_sparse_dot(X.T, coef)
-
-        residues = y - safe_sparse_dot(X, coef)
-        return coef, None, None, residues
-
-
 np_version = []
 for x in np.__version__.split('.'):
     try:
@@ -66,35 +45,6 @@ except ImportError:
 
         return out
 
-
-def qr_economic(A, **kwargs):
-    """Compat function for the QR-decomposition in economic mode
-
-    Scipy 0.9 changed the keyword econ=True to mode='economic'
-    """
-    import scipy.linalg
-    # trick: triangular solve has introduced in 0.9
-    if hasattr(scipy.linalg, 'solve_triangular'):
-        return scipy.linalg.qr(A, mode='economic', **kwargs)
-    else:
-        import warnings
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", DeprecationWarning)
-            return scipy.linalg.qr(A, econ=True, **kwargs)
-
-
-def savemat(file_name, mdict, oned_as="column", **kwargs):
-    """MATLAB-format output routine that is compatible with SciPy 0.7's.
-
-    0.7.2 (or .1?) added the oned_as keyword arg with 'column' as the default
-    value. It issues a warning if this is not provided, stating that "This will
-    change to 'row' in future versions."
-    """
-    import scipy.io
-    try:
-        return scipy.io.savemat(file_name, mdict, oned_as=oned_as, **kwargs)
-    except TypeError:
-        return scipy.io.savemat(file_name, mdict, **kwargs)
 
 # little danse to see if np.copy has an 'order' keyword argument
 if 'order' in inspect.getargspec(np.copy)[0]:
