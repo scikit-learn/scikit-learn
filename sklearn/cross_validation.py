@@ -26,6 +26,7 @@ from .utils import check_arrays, check_random_state, safe_mask
 from .utils.validation import _num_samples
 from .externals.joblib import Parallel, delayed, logger
 from .externals.six import with_metaclass
+from .externals.six.moves import zip
 from .metrics.scorer import check_scoring
 
 __all__ = ['Bootstrap',
