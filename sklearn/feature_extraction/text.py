@@ -789,7 +789,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
                 num_workers = multiprocessing.cpu_count() + num_workers + 1
             # Only support list for multiprocessing
             raw_documents = list(raw_documents)
-            batch_size = len(raw_documents)/num_workers
+            batch_size = len(raw_documents) // num_workers
             workers = []
             result_pipes = []
             for i in range(num_workers):
