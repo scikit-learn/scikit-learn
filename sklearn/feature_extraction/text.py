@@ -5,6 +5,7 @@
 #          Robert Layton <robertlayton@gmail.com>
 #          Jochen Wersdörfer <jochen@wersdoerfer.de>
 #          Roman Sinayev <roman.sinayev@gmail.com>
+#          Aldrian Obaja <aldrian_math@yahoo.co.id>
 #
 # License: BSD 3 clause
 """
@@ -20,11 +21,13 @@ from operator import itemgetter
 import re
 import unicodedata
 import warnings
+import multiprocessing
 
 import numpy as np
 import scipy.sparse as sp
 
 from ..base import BaseEstimator, TransformerMixin
+from .dict_vectorizer import DictVectorizer
 from ..externals.six.moves import xrange
 from ..preprocessing import normalize
 from .hashing import FeatureHasher
@@ -540,7 +543,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
 
     token_pattern : string
         Regular expression denoting what constitutes a "token", only used
-        if `tokenize == 'word'`. The default regexp select tokens of 2
+        if `analyzer == 'word'`. The default regexp select tokens of 2
         or more alphanumeric characters (punctuation is completely ignored
         and always treated as a token separator).
 
@@ -581,6 +584,12 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
     dtype : type, optional
         Type of the matrix returned by fit_transform() or transform().
 
+    n_jobs : integer, optional
+        The number of CPUs to use to do the computation.
+        If n_jobs < 0, then the number of CPUs used is calculated according
+        to the formula cpu_used = number_of_cores + (n_jobs+1)
+        So putting n_jobs=-1 will use all available CPUs.
+
     Attributes
     ----------
     `vocabulary_` : dict
@@ -604,7 +613,8 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
                  stop_words=None, token_pattern=r"(?u)\b\w\w+\b",
                  ngram_range=(1, 1), analyzer='word',
                  max_df=1.0, min_df=1, max_features=None,
-                 vocabulary=None, binary=False, dtype=np.int64):
+                 vocabulary=None, binary=False, dtype=np.int64,
+                 n_jobs=1):
         self.input = input
         self.encoding = encoding
         self.decode_error = decode_error
@@ -665,6 +675,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
             self.fixed_vocabulary = False
         self.binary = binary
         self.dtype = dtype
+        self.n_jobs = n_jobs
 
     def _sort_features(self, X, vocabulary):
         """Sort features by name
@@ -724,44 +735,94 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         """
         if fixed_vocab:
             vocabulary = self.vocabulary_
-        else:
+        elif self.n_jobs == 1:
             # Add a new value when a new vocabulary item is seen
             vocabulary = defaultdict()
             vocabulary.default_factory = vocabulary.__len__
 
         analyze = self.build_analyzer()
-        j_indices = _make_int_array()
-        indptr = _make_int_array()
-        indptr.append(0)
-        for doc in raw_documents:
-            for feature in analyze(doc):
-                try:
-                    j_indices.append(vocabulary[feature])
-                except KeyError:
-                    # Ignore out-of-vocabulary items for fixed_vocab=True
-                    continue
-            indptr.append(len(j_indices))
+        if self.n_jobs == 1:
+            j_indices = _make_int_array()
+            indptr = _make_int_array()
+            indptr.append(0)
+            for doc in raw_documents:
+                for feature in analyze(doc):
+                    try:
+                        j_indices.append(vocabulary[feature])
+                    except KeyError:
+                        # Ignore out-of-vocabulary items for fixed_vocab=True
+                        continue
+                indptr.append(len(j_indices))
 
-        if not fixed_vocab:
-            # disable defaultdict behaviour
-            vocabulary = dict(vocabulary)
-            if not vocabulary:
-                raise ValueError("empty vocabulary; perhaps the documents only"
-                                 " contain stop words")
+            if not fixed_vocab:
+                # disable defaultdict behaviour
+                vocabulary = dict(vocabulary)
+                if not vocabulary:
+                    raise ValueError("empty vocabulary; perhaps the documents"
+                                     " only contain stop words")
 
-        # some Python/Scipy versions won't accept an array.array:
-        if j_indices:
-            j_indices = np.frombuffer(j_indices, dtype=np.intc)
+            # some Python/Scipy versions won't accept an array.array:
+            if j_indices:
+                j_indices = np.frombuffer(j_indices, dtype=np.intc)
+            else:
+                j_indices = np.array([], dtype=np.int32)
+            indptr = np.frombuffer(indptr, dtype=np.intc)
+            values = np.ones(len(j_indices))
+
+            X = sp.csr_matrix((values, j_indices, indptr),
+                              shape=(len(indptr) - 1, len(vocabulary)),
+                              dtype=self.dtype)
+            X.sum_duplicates()
+            return vocabulary, X
         else:
-            j_indices = np.array([], dtype=np.int32)
-        indptr = np.frombuffer(indptr, dtype=np.intc)
-        values = np.ones(len(j_indices))
+            def _count_vocab_process(documents, result_pipe):
+                result = []
+                for doc in documents:
+                    doc_term_cnt = {}
+                    for feat in analyze(doc):
+                        doc_term_cnt[feat] = doc_term_cnt.get(feat, 0) + 1
+                    result.append(doc_term_cnt)
+                result_pipe.send(result)
 
-        X = sp.csr_matrix((values, j_indices, indptr),
-                          shape=(len(indptr) - 1, len(vocabulary)),
-                          dtype=self.dtype)
-        X.sum_duplicates()
-        return vocabulary, X
+            num_workers = self.n_jobs
+            if num_workers < 0:
+                num_workers = multiprocessing.cpu_count() + num_workers + 1
+            # Only support list for multiprocessing
+            raw_documents = list(raw_documents)
+            batch_size = len(raw_documents)/num_workers
+            workers = []
+            result_pipes = []
+            for i in range(num_workers):
+                parent_pipe, child_pipe = multiprocessing.Pipe()
+                result_pipes.append(parent_pipe)
+                start_idx = i*batch_size
+                end_idx = (i+1) * batch_size
+                if i == num_workers-1:
+                    end_idx = len(raw_documents)
+                worker = multiprocessing.Process(
+                    target=_count_vocab_process,
+                    args=(raw_documents[start_idx:end_idx], child_pipe)
+                    )
+                worker.start()
+                workers.append(worker)
+            doc_list = []
+            for worker, result_pipe in zip(workers, result_pipes):
+                doc_list.extend(result_pipe.recv())
+                worker.join()
+            dict_vectorizer = DictVectorizer(dtype=self.dtype, sparse=True)
+            if fixed_vocab:
+                dict_vectorizer.vocabulary_ = vocabulary
+                dict_vectorizer.feature_names_ = set()
+                X = dict_vectorizer.transform(doc_list)
+            else:
+                X = dict_vectorizer.fit_transform(doc_list)
+                vocabulary = dict_vectorizer.vocabulary_
+
+            if not fixed_vocab:
+                if not vocabulary:
+                    raise ValueError("empty vocabulary; perhaps the documents"
+                                     " only contain stop words")
+            return vocabulary, X
 
     def fit(self, raw_documents, y=None):
         """Learn a vocabulary dictionary of all tokens in the raw documents.
@@ -802,6 +863,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         max_features = self.max_features
 
         vocabulary, X = self._count_vocab(raw_documents, self.fixed_vocabulary)
+        X = X.tocsc()
 
         if self.binary:
             X.data.fill(1)
@@ -888,6 +950,13 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
 
         return [t for t, i in sorted(six.iteritems(self.vocabulary_),
                                      key=itemgetter(1))]
+
+    @property
+    def max_df_stop_words_(self):
+        warnings.warn(
+            "The 'stop_words_ attribute was renamed to 'max_df_stop_words'. "
+            "The old attribute will be removed in 0.15.", DeprecationWarning)
+        return self.stop_words_
 
 
 def _make_int_array():
@@ -1176,7 +1245,7 @@ class TfidfVectorizer(CountVectorizer):
                  ngram_range=(1, 1), max_df=1.0, min_df=1,
                  max_features=None, vocabulary=None, binary=False,
                  dtype=np.int64, norm='l2', use_idf=True, smooth_idf=True,
-                 sublinear_tf=False):
+                 sublinear_tf=False, n_jobs=1):
 
         super(TfidfVectorizer, self).__init__(
             input=input, charset=charset, charset_error=charset_error,
@@ -1186,7 +1255,7 @@ class TfidfVectorizer(CountVectorizer):
             stop_words=stop_words, token_pattern=token_pattern,
             ngram_range=ngram_range, max_df=max_df, min_df=min_df,
             max_features=max_features, vocabulary=vocabulary, binary=binary,
-            dtype=dtype)
+            dtype=dtype, n_jobs=n_jobs)
 
         self._tfidf = TfidfTransformer(norm=norm, use_idf=use_idf,
                                        smooth_idf=smooth_idf,
