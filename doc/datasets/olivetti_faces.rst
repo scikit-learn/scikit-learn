@@ -10,7 +10,7 @@ This dataset contains a set of face images taken between April 1992 and April
 dataset is now defunct, but archived copies can be accessed through
 `the Internet Archive's Wayback Machine`_. The ``sklearn.datasets.fetch_olivetti_faces``
 function is the data fetching / caching function that downloads the data archive from
-from AT&T.
+AT&T.
 
 .. _the Internet Archive's Wayback Machine: http://wayback.archive.org/web/*/http://www.uk.research.att.com/facedatabase.html
 
