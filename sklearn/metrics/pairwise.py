@@ -116,10 +116,14 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
 
         dist(x, y) = sqrt(dot(x, x) - 2 * dot(x, y) + dot(y, y))
 
-    This formulation has two main advantages. First, it is computationally
-    efficient when dealing with sparse data. Second, if x varies but y
-    remains unchanged, then the right-most dot-product `dot(y, y)` can be
-    pre-computed.
+    This formulation has two advantages over other ways of computing distances.
+    First, it is computationally efficient when dealing with sparse data.
+    Second, if x varies but y remains unchanged, then the right-most dot
+    product `dot(y, y)` can be pre-computed.
+
+    However, this is not the most precise way of doing this computation, and
+    the distance matrix returned by this function may not be exactly
+    symmetric as required by, e.g., ``scipy.spatial.distance`` functions.
 
     Parameters
     ----------

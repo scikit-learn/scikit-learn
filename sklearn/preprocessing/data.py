@@ -397,7 +397,7 @@ class Scaler(StandardScaler):
 
 
 class PolynomialFeatures(BaseEstimator, TransformerMixin):
-    """Transform to Polynomial Features
+    """Generate polynomial (interaction) features.
 
     Generate a new feature matrix consisting of all polynomial combinations
     of the features with degree less than or equal to the specified degree.
@@ -927,6 +927,9 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
     dtype : number type, default=np.float
         Desired dtype of output.
 
+    sparse : boolean, default=True
+        Will return sparse matrix if set True else will return an array.
+
     Attributes
     ----------
     `active_features_` : array
@@ -953,7 +956,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
     >>> enc.fit([[0, 0, 3], [1, 1, 0], [0, 2, 1], \
 [1, 0, 2]])  # doctest: +ELLIPSIS
     OneHotEncoder(categorical_features='all', dtype=<... 'float'>,
-           n_values='auto')
+           n_values='auto', sparse=True)
     >>> enc.n_values_
     array([2, 3, 4])
     >>> enc.feature_indices_
@@ -969,10 +972,11 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
       encoding of dictionary items or strings.
     """
     def __init__(self, n_values="auto", categorical_features="all",
-                 dtype=np.float):
+                 dtype=np.float, sparse=True):
         self.n_values = n_values
         self.categorical_features = categorical_features
         self.dtype = dtype
+        self.sparse = sparse
 
     def fit(self, X, y=None):
         """Fit OneHotEncoder to X.
@@ -998,6 +1002,9 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         if self.n_values == 'auto':
             n_values = np.max(X, axis=0) + 1
         elif isinstance(self.n_values, numbers.Integral):
+            if (np.max(X, axis=0) >= self.n_values).any():
+                raise ValueError("Feature out of bounds for n_values=%d"
+                                 % self.n_values)
             n_values = np.empty(n_features, dtype=np.int)
             n_values.fill(self.n_values)
         else:
@@ -1010,6 +1017,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
             if n_values.ndim < 1 or n_values.shape[0] != X.shape[1]:
                 raise ValueError("Shape mismatch: if n_values is an array,"
                                  " it has to be of shape (n_features,).")
+
         self.n_values_ = n_values
         n_values = np.hstack([[0], n_values])
         indices = np.cumsum(n_values)
@@ -1029,7 +1037,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
             out = out[:, active_features]
             self.active_features_ = active_features
 
-        return out
+        return out if self.sparse else out.toarray()
 
     def fit_transform(self, X, y=None):
         """Fit OneHotEncoder to X, then transform X.
@@ -1041,7 +1049,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
                                    self.categorical_features, copy=True)
 
     def _transform(self, X):
-        """Asssumes X contains only categorical features."""
+        """Assumes X contains only categorical features."""
         X = check_arrays(X, sparse_format='dense', dtype=np.int)[0]
         if np.any(X < 0):
             raise ValueError("X needs to contain only non-negative integers.")
@@ -1053,8 +1061,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
                              " Expected %d, got %d."
                              % (indices.shape[0] - 1, n_features))
 
-        n_values_check = np.max(X, axis=0) + 1
-        if (n_values_check > self.n_values_).any():
+        if (np.max(X, axis=0) >= self.n_values_).any():
             raise ValueError("Feature out of bounds. Try setting n_values.")
 
         column_indices = (X + indices[:-1]).ravel()
@@ -1066,7 +1073,8 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
                                 dtype=self.dtype).tocsr()
         if self.n_values == 'auto':
             out = out[:, self.active_features_]
-        return out
+
+        return out if self.sparse else out.toarray()
 
     def transform(self, X):
         """Transform X using one-hot encoding.
@@ -1078,7 +1086,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
 
         Returns
         -------
-        X_out : sparse matrix, dtype=int
+        X_out : sparse matrix if sparse=True else a 2-d array, dtype=int
             Transformed input.
         """
         return _transform_selected(X, self._transform,

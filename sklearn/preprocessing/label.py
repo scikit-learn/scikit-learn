@@ -8,7 +8,7 @@ import numpy as np
 
 from ..base import BaseEstimator, TransformerMixin
 
-from ..utils.fixes import unique, np_version
+from ..utils.fixes import np_version
 from ..utils import deprecated, column_or_1d
 
 from ..utils.multiclass import unique_labels
@@ -113,7 +113,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         """
         y = column_or_1d(y, warn=True)
         _check_numpy_unicode_bug(y)
-        self.classes_, y = unique(y, return_inverse=True)
+        self.classes_, y = np.unique(y, return_inverse=True)
         return y
 
     def transform(self, y):

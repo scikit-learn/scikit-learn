@@ -15,6 +15,7 @@ detail.
 print(__doc__)
 
 import numpy as np
+import matplotlib.pyplot as plt
 
 # Create a the dataset
 rng = np.random.RandomState(1)
@@ -38,14 +39,12 @@ y_1 = clf_1.predict(X)
 y_2 = clf_2.predict(X)
 
 # Plot the results
-import pylab as pl
-
-pl.figure()
-pl.scatter(X, y, c="k", label="training samples")
-pl.plot(X, y_1, c="g", label="n_estimators=1", linewidth=2)
-pl.plot(X, y_2, c="r", label="n_estimators=300", linewidth=2)
-pl.xlabel("data")
-pl.ylabel("target")
-pl.title("Boosted Decision Tree Regression")
-pl.legend()
-pl.show()
+plt.figure()
+plt.scatter(X, y, c="k", label="training samples")
+plt.plot(X, y_1, c="g", label="n_estimators=1", linewidth=2)
+plt.plot(X, y_2, c="r", label="n_estimators=300", linewidth=2)
+plt.xlabel("data")
+plt.ylabel("target")
+plt.title("Boosted Decision Tree Regression")
+plt.legend()
+plt.show()

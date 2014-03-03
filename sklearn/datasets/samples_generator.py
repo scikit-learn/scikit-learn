@@ -937,9 +937,8 @@ def make_low_rank_matrix(n_samples=100, n_features=100, effective_rank=10,
     n = min(n_samples, n_features)
 
     # Random (ortho normal) vectors
-    from ..utils.fixes import qr_economic
-    u, _ = qr_economic(generator.randn(n_samples, n))
-    v, _ = qr_economic(generator.randn(n_features, n))
+    u, _ = linalg.qr(generator.randn(n_samples, n), mode='economic')
+    v, _ = linalg.qr(generator.randn(n_features, n), mode='economic')
 
     # Index of the singular values
     singular_ind = np.arange(n, dtype=np.float64)

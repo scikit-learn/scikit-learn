@@ -18,8 +18,6 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import ignore_warnings
 
-from sklearn.utils.fixes import unique
-
 from sklearn import cross_validation as cval
 from sklearn.base import BaseEstimator
 from sklearn.datasets import make_regression
@@ -374,12 +372,12 @@ def test_stratified_shuffle_split_iter():
         sss = cval.StratifiedShuffleSplit(y, 6, test_size=0.33,
                                           random_state=0)
         for train, test in sss:
-            assert_array_equal(unique(y[train]), unique(y[test]))
+            assert_array_equal(np.unique(y[train]), np.unique(y[test]))
             # Checks if folds keep classes proportions
-            p_train = (np.bincount(unique(y[train], return_inverse=True)[1]) /
-                       float(len(y[train])))
-            p_test = (np.bincount(unique(y[test], return_inverse=True)[1]) /
-                      float(len(y[test])))
+            p_train = (np.bincount(np.unique(y[train], return_inverse=True)[1])
+                       / float(len(y[train])))
+            p_test = (np.bincount(np.unique(y[test], return_inverse=True)[1])
+                      / float(len(y[test])))
             assert_array_almost_equal(p_train, p_test, 1)
             assert_equal(y[train].size + y[test].size, y.size)
             assert_array_equal(np.lib.arraysetops.intersect1d(train, test), [])

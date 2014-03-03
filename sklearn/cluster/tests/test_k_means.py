@@ -16,7 +16,6 @@ from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_warns
 
 from sklearn.utils.extmath import row_norms
-from sklearn.utils.fixes import unique
 from sklearn.metrics.cluster import v_measure_score
 from sklearn.cluster import KMeans, k_means
 from sklearn.cluster import MiniBatchKMeans
@@ -192,7 +191,7 @@ def test_k_means_new_centers():
         this_labels = km.labels_
         # Reorder the labels so that the first instance is in cluster 0,
         # the second in cluster 1, ...
-        this_labels = unique(this_labels, return_index=True)[1][this_labels]
+        this_labels = np.unique(this_labels, return_index=True)[1][this_labels]
         np.testing.assert_array_equal(this_labels, labels)
 
 

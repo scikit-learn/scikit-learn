@@ -11,7 +11,6 @@ from ..base import BaseEstimator, ClassifierMixin
 from ..preprocessing import LabelEncoder
 from ..utils import atleast2d_or_csr, array2d, check_random_state, column_or_1d
 from ..utils import ConvergenceWarning, compute_class_weight
-from ..utils.fixes import unique
 from ..utils.extmath import safe_sparse_dot
 from ..externals import six
 
@@ -436,9 +435,9 @@ class BaseSVC(BaseLibSVM, ClassifierMixin):
     """ABC for LibSVM-based classifiers."""
 
     def _validate_targets(self, y):
-        y = column_or_1d(y, warn=True)
-        cls, y = unique(y, return_inverse=True)
-        self.class_weight_ = compute_class_weight(self.class_weight, cls, y)
+        y_ = column_or_1d(y, warn=True)
+        cls, y = np.unique(y_, return_inverse=True)
+        self.class_weight_ = compute_class_weight(self.class_weight, cls, y_)
         if len(cls) < 2:
             raise ValueError(
                 "The number of classes has to be greater than one; got %d"
@@ -465,7 +464,20 @@ class BaseSVC(BaseLibSVM, ClassifierMixin):
         y = super(BaseSVC, self).predict(X)
         return self.classes_.take(np.asarray(y, dtype=np.intp))
 
-    def predict_proba(self, X):
+    # Hacky way of getting predict_proba to raise an AttributeError when
+    # probability=False using properties. Do not use this in new code; when
+    # probabilities are not available depending on a setting, introduce two
+    # estimators.
+    def _check_proba(self):
+        if not self.probability:
+            raise AttributeError("predict_proba is not available when"
+                                 " probability=%r" % self.probability)
+        if self._impl not in ('c_svc', 'nu_svc'):
+            raise AttributeError("predict_proba only implemented for SVC"
+                                 " and NuSVC")
+
+    @property
+    def predict_proba(self):
         """Compute probabilities of possible outcomes for samples in X.
 
         The model need to have probability information computed at training
@@ -477,7 +489,7 @@ class BaseSVC(BaseLibSVM, ClassifierMixin):
 
         Returns
         -------
-        X : array-like, shape = [n_samples, n_classes]
+        T : array-like, shape = [n_samples, n_classes]
             Returns the probability of the sample for each class in
             the model. The columns correspond to the classes in sorted
             order, as they appear in the attribute `classes_`.
@@ -489,20 +501,17 @@ class BaseSVC(BaseLibSVM, ClassifierMixin):
         predict. Also, it will produce meaningless results on very small
         datasets.
         """
-        if not self.probability:
-            raise NotImplementedError(
-                "probability estimates must be enabled to use this method")
+        self._check_proba()
+        return self._predict_proba
 
-        if self._impl not in ('c_svc', 'nu_svc'):
-            raise NotImplementedError("predict_proba only implemented for SVC "
-                                      "and NuSVC")
-
+    def _predict_proba(self, X):
         X = self._validate_for_predict(X)
         pred_proba = (self._sparse_predict_proba
                       if self._sparse else self._dense_predict_proba)
         return pred_proba(X)
 
-    def predict_log_proba(self, X):
+    @property
+    def predict_log_proba(self):
         """Compute log probabilities of possible outcomes for samples in X.
 
         The model need to have probability information computed at training
@@ -514,7 +523,7 @@ class BaseSVC(BaseLibSVM, ClassifierMixin):
 
         Returns
         -------
-        X : array-like, shape = [n_samples, n_classes]
+        T : array-like, shape = [n_samples, n_classes]
             Returns the log-probabilities of the sample for each class in
             the model. The columns correspond to the classes in sorted
             order, as they appear in the attribute `classes_`.
@@ -526,6 +535,10 @@ class BaseSVC(BaseLibSVM, ClassifierMixin):
         predict. Also, it will produce meaningless results on very small
         datasets.
         """
+        self._check_proba()
+        return self._predict_log_proba
+
+    def _predict_log_proba(self, X):
         return np.log(self.predict_proba(X))
 
     def _dense_predict_proba(self, X):
@@ -655,7 +668,7 @@ class BaseLibLinear(six.with_metaclass(ABCMeta, BaseEstimator)):
             Returns self.
         """
         self._enc = LabelEncoder()
-        y = self._enc.fit_transform(y)
+        y_ind = self._enc.fit_transform(y)
         if len(self.classes_) < 2:
             raise ValueError("The number of classes has to be greater than"
                              " one.")
@@ -665,7 +678,7 @@ class BaseLibLinear(six.with_metaclass(ABCMeta, BaseEstimator)):
         self.class_weight_ = compute_class_weight(self.class_weight,
                                                   self.classes_, y)
 
-        if X.shape[0] != y.shape[0]:
+        if X.shape[0] != y_ind.shape[0]:
             raise ValueError("X and y have incompatible shapes.\n"
                              "X has %s samples, but y has %s." %
                              (X.shape[0], y.shape[0]))
@@ -677,8 +690,8 @@ class BaseLibLinear(six.with_metaclass(ABCMeta, BaseEstimator)):
             print('[LibLinear]', end='')
 
         # LibLinear wants targets as doubles, even for classification
-        y = np.asarray(y, dtype=np.float64).ravel()
-        self.raw_coef_ = liblinear.train_wrap(X, y,
+        y_ind = np.asarray(y_ind, dtype=np.float64).ravel()
+        self.raw_coef_ = liblinear.train_wrap(X, y_ind,
                                               sp.isspmatrix(X),
                                               self._get_solver_type(),
                                               self.tol, self._get_bias(),
