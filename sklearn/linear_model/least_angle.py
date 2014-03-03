@@ -233,8 +233,13 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
                 L[n_active, :n_active] = Gram[n_active, :n_active]
 
             # Update the cholesky decomposition for the Gram matrix
-            arrayfuncs.solve_triangular(L[:n_active, :n_active],
-                                        L[n_active, :n_active])
+            if n_active:
+                linalg.solve_triangular(L[:n_active, :n_active],
+                                        L[n_active, :n_active],
+                                        trans=0, lower=1,
+                                        overwrite_b=True,
+                                        check_finite=False)
+
             v = np.dot(L[n_active, :n_active], L[n_active, :n_active])
             diag = max(np.sqrt(np.abs(c - v)), eps)
             L[n_active, n_active] = diag
