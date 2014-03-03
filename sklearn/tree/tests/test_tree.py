@@ -731,3 +731,27 @@ def test_big_input():
         clf.fit(X, [0, 1, 0, 1])
     except ValueError as e:
         assert_in("float32", str(e))
+
+        
+def test_tree_paths_toy():
+    """Prediction by following tree paths and summing up feature contributoins"""
+    for name, Tree in REG_TREES.items():
+        clf = Tree(random_state=0)
+        clf.fit(X, y)
+        straight_predictions = clf.predict(T)
+        paths = clf.predict(T, return_paths = True)
+        path_predictions = []
+        for path in paths:
+            base = 0
+            pred = 0
+            for i in range(len(path)):
+                if path[i] == -1:
+                    break
+                node_id = path[i]
+                pred +=  clf.tree_.value[node_id][0][0] - base
+                base = clf.tree_.value[node_id][0][0]
+            path_predictions.append(pred)
+        
+        assert_array_equal(straight_predictions, path_predictions,
+                           "Failed with {0}".format(name))
+
