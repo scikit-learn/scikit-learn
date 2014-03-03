@@ -40,7 +40,18 @@ and a working C++ compiler.
 Under Debian-based operating systems, which include Ubuntu,
 you can install all these requirements by issuing::
 
-    sudo apt-get install build-essential python-dev python-numpy python-setuptools python-scipy libatlas-dev libatlas3-base
+    sudo apt-get install build-essential python-dev python-setuptools \
+                         python-numpy python-scipy \
+                         libatlas-dev libatlas3gf-base
+
+On recent Debian and Ubuntu (e.g. Ubuntu 13.04 or later) make sure that ATLAS
+is used to provide the implementation of the BLAS and LAPACK linear algebra
+routines::
+
+    sudo update-alternatives --set libblas.so.3 \
+        /usr/lib/atlas-base/atlas/libblas.so.3
+    sudo update-alternatives --set liblapack.so.3 \
+        /usr/lib/atlas-base/atlas/liblapack.so.3
 
 .. note::
 
@@ -51,29 +62,25 @@ you can install all these requirements by issuing::
 
 .. note::
 
-    On older versions of Ubuntu,
-    you might need to ``apt-get install python-numpy-dev``
-    to get the header files for NumPy.
-
-    On Ubuntu 10.04 LTS, the package `libatlas-dev` is called `libatlas-headers`.
-
-.. note::
-
     The above installs the ATLAS implementation of BLAS
     (the Basic Linear Algebra Subprograms library).
     Ubuntu 11.10 and later, and recent (testing) versions of Debian,
     offer an alternative implementation called OpenBLAS.
 
     Using OpenBLAS can give speedups in some scikit-learn modules,
-    but it doesn't play nicely with joblib/multiprocessing,
+    but can freeze joblib/multiprocessing prior to OpenBLAS version 0.2.8-4,
     so using it is not recommended unless you know what you're doing.
 
-    If you do want to use OpenBLAS, then replacing ATLAS
-    only requires two commands.
-    ATLAS has to be removed, otherwise NumPy may not work::
+    If you do want to use OpenBLAS, then replacing ATLAS only requires a couple
+    of commands. ATLAS has to be removed, otherwise NumPy may not work::
 
         sudo apt-get remove libatlas3gf-base libatlas-dev
         sudo apt-get install libopenblas-dev
+
+        sudo update-alternatives  --set libblas.so.3 \
+            /usr/lib/openblas-base/libopenblas.so.0
+        sudo update-alternatives --set liblapack.so.3 \
+            /usr/lib/lapack/liblapack.so.3
 
 On Red Hat and clones (e.g. CentOS), install the dependencies using::
 
