@@ -43,8 +43,6 @@ def _check_statistics(X, X_true,
         assert_raises(ValueError, imputer.transform, X.copy().transpose())
     else:
         X_trans = imputer.transform(X.copy().transpose())
-        assert_array_equal(imputer.statistics_, statistics,
-                           err_msg.format(1, False))
         assert_array_equal(X_trans, X_true.transpose(),
                            err_msg.format(1, False))
 
@@ -72,8 +70,6 @@ def _check_statistics(X, X_true,
         if sparse.issparse(X_trans):
             X_trans = X_trans.toarray()
 
-        assert_array_equal(imputer.statistics_, statistics,
-                           err_msg.format(1, True))
         assert_array_equal(X_trans, X_true.transpose(),
                            err_msg.format(1, True))
 
@@ -109,16 +105,20 @@ def test_imputation_mean_median_only_zero():
     ])
     statistics_mean = [np.nan, 3, np.nan, np.nan, 7]
 
+    # Behaviour of median with NaN is undefined, e.g. different results in
+    # np.median and np.ma.median
+    X_for_median = X[:, [0, 1, 2, 4]]
     X_imputed_median = np.array([
-        [2, 5,  5],
-        [1, np.nan,  3],
-        [2, 5, 5],
-        [6, 5,  13],
+        [2, 5],
+        [1, 3],
+        [2, 5],
+        [6, 13],
     ])
-    statistics_median = [np.nan, 2, np.nan, 5, 5]
+    statistics_median = [np.nan, 2, np.nan, 5]
 
     _check_statistics(X, X_imputed_mean, "mean", statistics_mean, 0)
-    _check_statistics(X, X_imputed_median, "median", statistics_median, 0)
+    _check_statistics(X_for_median, X_imputed_median, "median",
+                      statistics_median, 0)
 
 
 def test_imputation_mean_median():
@@ -189,6 +189,36 @@ def test_imputation_mean_median():
 
         _check_statistics(X, X_true, strategy,
                           true_statistics, test_missing_values)
+
+
+def test_imputation_median_special_cases():
+    """Test median imputation with sparse boundary cases
+    """
+    X = np.array([
+        [0, np.nan, np.nan],  # odd: implicit zero
+        [5, np.nan, np.nan],  # odd: explicit nonzero
+        [0, 0, np.nan],    # even: average two zeros
+        [-5, 0, np.nan],   # even: avg zero and neg
+        [0, 5, np.nan],    # even: avg zero and pos
+        [4, 5, np.nan],    # even: avg nonzeros
+        [-4, -5, np.nan],  # even: avg negatives
+        [-1, 2, np.nan],   # even: crossing neg and pos
+    ]).transpose()
+
+    X_imputed_median = np.array([
+        [0, 0, 0],
+        [5, 5, 5],
+        [0, 0, 0],
+        [-5, 0, -2.5],
+        [0, 5, 2.5],
+        [4, 5, 4.5],
+        [-4, -5, -4.5],
+        [-1, 2, .5],
+    ]).transpose()
+    statistics_median = [0, 5, 0, -2.5, 2.5, 4.5, -4.5, .5]
+
+    _check_statistics(X, X_imputed_median, "median",
+                      statistics_median, 'NaN')
 
 
 def test_imputation_most_frequent():

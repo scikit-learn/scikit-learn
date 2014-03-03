@@ -33,43 +33,46 @@ def _get_mask(X, value_to_mask):
         return X == value_to_mask
 
 
-def _get_median(negative_elements, n_zeros, positive_elements):
-    """Compute the median of the array formed by negative_elements,
-       n_zeros zeros and positive_elements. This function is used
-       to support sparse matrices."""
-    negative_elements = np.sort(negative_elements, kind='heapsort')
-    positive_elements = np.sort(positive_elements, kind='heapsort')
+def _get_median(data, n_zeros):
+    """Compute the median of data with n_zeros additional zeros.
 
-    n_elems = len(negative_elements) + n_zeros + len(positive_elements)
+    This function is used to support sparse matrices; it modifies data in-place
+    """
+    n_elems = len(data) + n_zeros
     if not n_elems:
         return np.nan
+    n_negative = np.count_nonzero(data < 0)
+    middle, is_odd = divmod(n_elems, 2)
+    assert middle == n_elems // 2
 
-    median_position = (n_elems - 1) / 2.0
+    if is_odd:
+        ind = _partition_ind_for_rank(middle, data, n_negative, n_zeros)
+        if ind is None:
+            return 0.
+        data.partition(ind)
+        return data[ind]
 
-    if round(median_position) == median_position:
-        median = _get_elem_at_rank(negative_elements, n_zeros,
-                                   positive_elements, median_position)
-    else:
-        a = _get_elem_at_rank(negative_elements, n_zeros,
-                              positive_elements, math.floor(median_position))
-        b = _get_elem_at_rank(negative_elements, n_zeros,
-                              positive_elements, math.ceil(median_position))
-        median = (a + b) / 2.0
+    ind1 = _partition_ind_for_rank(middle - 1, data, n_negative, n_zeros)
+    ind2 = _partition_ind_for_rank(middle, data, n_negative, n_zeros)
+    if ind1 is not None and ind2 is not None:
+        data.partition((ind1, ind2))
+        return (data[ind1] + data[ind2]) / 2.
+    elif ind1 is not None:
+        data.partition(ind1)
+        return data[ind1] / 2.
+    elif ind2 is not None:
+        data.partition(ind2)
+        return data[ind2] / 2.
+    return 0.
 
-    return median
 
-
-def _get_elem_at_rank(negative_elements, n_zeros, positive_elements, k):
-    """Compute the kth largest element of the array formed by
-       negative_elements, n_zeros zeros and positive_elements."""
-    k = int(k)
-    len_neg = len(negative_elements)
-    if k < len_neg:
-        return negative_elements[k]
-    elif k >= len_neg + n_zeros:
-        return positive_elements[k - len_neg - n_zeros]
-    else:
-        return 0
+def _partition_ind_for_rank(rank, data, n_negative, n_zeros):
+    """Find the index in data for the given rank, or None if a zero"""
+    if rank < n_negative:
+        return rank
+    if rank - n_negative < n_zeros:
+        return None
+    return rank - n_zeros
 
 
 def _most_frequent(array, extra_value, n_repeat):
@@ -109,8 +112,6 @@ class Imputer(BaseEstimator, TransformerMixin):
         The placeholder for the missing values. All occurrences of
         `missing_values` will be imputed. For missing values encoded as np.nan,
         use the string value "NaN".
-        If missing_values=0, for sparse matrices, only implicit zeros will be
-        imputed.
 
     strategy : string, optional (default="mean")
         The imputation strategy.
@@ -140,8 +141,8 @@ class Imputer(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-    `statistics_` : array of shape (n_features,) or (n_samples,)
-        The statistics along the imputation axis.
+    `statistics_` : array of shape (n_features,)
+        The imputation fill value for each feature if axis == 0.
 
     Notes
     -----
@@ -267,11 +268,7 @@ class Imputer(BaseEstimator, TransformerMixin):
             if strategy == "median":
                 median = np.empty(len(columns))
                 for i, column in enumerate(columns):
-                    negatives = column[column < 0]
-                    positives = column[column > 0]
-                    median[i] = _get_median(negatives,
-                                            n_zeros_axis[i],
-                                            positives)
+                    median[i] = _get_median(column, n_zeros_axis[i])
 
                 return median
 
