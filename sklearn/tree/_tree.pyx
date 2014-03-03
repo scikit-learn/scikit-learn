@@ -1728,12 +1728,12 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                                          threshold, impurity, n_node_samples,
                                          weighted_n_node_samples)
 
-                if is_leaf:
-                    # Don't store value for internal nodes
-                    splitter.node_value(tree.value
-                                        + node_id * tree.value_stride)
+                
+                # Store value for all nodes, to facilitate tree/model inspection and interpretation
+                splitter.node_value(tree.value
+                                    + node_id * tree.value_stride)
 
-                else:
+                if not is_leaf:
                     # Push right child on stack
                     rc = stack.push(pos, end, depth + 1, node_id, 0, split_impurity_right)
                     if rc == -1:
@@ -2233,13 +2233,47 @@ cdef class Tree:
 
         return node_id
 
-    cpdef np.ndarray predict(self, np.ndarray[DTYPE_t, ndim=2] X):
+    cpdef np.ndarray predict(self, np.ndarray[DTYPE_t, ndim=2] X, return_paths = False):
         """Predict target for X."""
+        if return_paths:
+            return self._get_paths(X)
         out = self._get_value_ndarray().take(self.apply(X), axis=0, mode='clip')
         if self.n_outputs == 1:
             out = out.reshape(X.shape[0], self.max_n_classes)
         return out
 
+    cpdef np.ndarray _get_paths(self, np.ndarray[DTYPE_t, ndim=2] X):
+        """Finds the path through tree for each sample in X."""
+        cdef SIZE_t n_samples = X.shape[0]
+        cdef Node* node = NULL
+        cdef SIZE_t i = 0
+
+        cdef SIZE_t path_idx = 0
+
+        cdef np.ndarray[np.int32_t, ndim=2] paths 
+        paths = np.zeros((n_samples, self.max_depth+1), dtype=np.intp)
+        paths.fill(-1)
+        
+        
+        
+        with nogil:
+            for i in range(n_samples):
+                node = self.nodes
+
+                path_idx = 0
+                # While node not a leaf
+                while node.left_child != _TREE_LEAF:
+                    paths[i, path_idx] = <SIZE_t>(node - self.nodes)
+                    if X[i, node.feature] <= node.threshold:
+                        node = &self.nodes[node.left_child]
+                    else:
+                        node = &self.nodes[node.right_child]
+                    path_idx += 1
+
+                paths[i, path_idx] = <SIZE_t>(node - self.nodes)
+
+        return paths    
+        
     cpdef np.ndarray apply(self, np.ndarray[DTYPE_t, ndim=2] X):
         """Finds the terminal region (=leaf node) for each sample in X."""
         cdef SIZE_t n_samples = X.shape[0]
