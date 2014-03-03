@@ -3,7 +3,7 @@
 # Author: Vincent Dubourg <vincent.dubourg@gmail.com>
 #         (mostly translation, see implementation details)
 #         Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
-#         optionional learning of the nugget
+#         optional learning of the nugget
 # Licence: BSD 3 clause
 
 from __future__ import print_function
