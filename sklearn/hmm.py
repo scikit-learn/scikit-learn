@@ -582,7 +582,7 @@ class _BaseHMM(BaseEstimator):
                 _hmmc._compute_lneta(n_observations, n_components, fwdlattice,
                                      self._log_transmat, bwdlattice, framelogprob,
                                      lnP, lneta)
-                stats["trans"] += np.exp(logsumexp(lneta, 0))
+                stats['trans'] += np.exp(np.minimum(logsumexp(lneta, 0), 700))
 
     def _do_mstep(self, stats, params):
         # Based on Huang, Acero, Hon, "Spoken Language Processing",
