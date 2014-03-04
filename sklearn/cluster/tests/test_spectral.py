@@ -63,8 +63,8 @@ def test_spectral_lobpcg_mode():
     # The cluster_std parameter has been selected to have the blob close enough
     # to get stable results both with the ATLAS and the reference
     # implementations of LAPACK.
-    X, true_labels = make_blobs(n_samples=100, centers=centers,
-                                cluster_std=10.0, random_state=42)
+    X, true_labels = make_blobs(n_samples=300, centers=centers,
+                                cluster_std=20.0, random_state=42)
     D = pairwise_distances(X)  # Distance matrix
     S = np.max(D) - D  # Similarity matrix
     labels = spectral_clustering(S, n_clusters=len(centers),
