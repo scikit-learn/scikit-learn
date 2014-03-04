@@ -10,7 +10,7 @@ from __future__ import division, print_function, absolute_import
 
 import logging
 import tempfile
-from itertools import combinations, islice
+from itertools import combinations
 
 import numpy as np
 from numpy.linalg import norm, lstsq
@@ -112,8 +112,8 @@ def breakdown_point(n_samples, n_subsamples):
     breakdown_point : float
         Approximation of breakdown point.
     """
-    return 1 - 0.5 ** (1 / n_subsamples) * (
-        n_samples - n_subsamples + 1) / n_samples
+    return 1 - (0.5 ** (1 / n_subsamples) * (n_samples - n_subsamples + 1) +
+                n_subsamples - 1) / n_samples
 
 
 class TheilSen(LinearModel, RegressorMixin):
@@ -128,14 +128,14 @@ class TheilSen(LinearModel, RegressorMixin):
     copy_X : boolean, optional, default True
         If True, X will be copied; else, it may be overwritten.
 
-    n_subpopulation : int, optional, default None
+    max_subpopulation : int, optional, default 1e5
         Instead of computing with a set of cardinality 'n choose k', where n is
-        the number of samples and k is min_subsamples (at least number of
-        features), consider only a stochastic subpopulation of cardinality
-        n_subpopulation. If None, no stochastic sampling of subpopulation is
-        done.
+        the number of samples and k is the number of subsamples (at least
+        number of features), consider only a stochastic subpopulation of a
+        given maximal size. If None, no stochastic sampling of subpopulation
+        is done. This can be computationally intractible.
 
-    min_subsamples : int, optional, default None
+    n_subsamples : int, optional, default None
         Number of samples to calculate the parameters. This is at least the
         number of features (plus 1 if fit_intercept=True) and the number of
         samples as a maximum. A lower number leads to a higher breakdown
@@ -155,7 +155,7 @@ class TheilSen(LinearModel, RegressorMixin):
 
     n_jobs : integer, optional, default 1
         Number of CPUs to use during the cross validation. If ``-1``, use
-        all the CPUs
+        all the CPUs.
 
     verbose : boolean, optional, default False
         Verbose mode when fitting the model.
@@ -176,11 +176,11 @@ class TheilSen(LinearModel, RegressorMixin):
     """
 
     def __init__(self, fit_intercept=True, copy_X=True,
-                 n_subpopulation=None, n_subsamples=None, n_iter=300,
+                 max_subpopulation=1e5, n_subsamples=None, n_iter=300,
                  tol=1.e-3, random_state=None, n_jobs=1, verbose=False):
         self.fit_intercept = fit_intercept
         self.copy_X = copy_X
-        self.n_subpopulation = n_subpopulation
+        self.max_subpopulation = int(max_subpopulation)
         self.n_subsamples = n_subsamples
         self.n_iter = n_iter
         self.tol = tol
@@ -188,60 +188,77 @@ class TheilSen(LinearModel, RegressorMixin):
         self.n_jobs = n_jobs
         self.verbose = verbose
 
-    def _print_verbose(self, n_samples, n_subpopulation):
+    def _print_verbose(self, n_samples, n_sp):
         if self.verbose:
             print("Breakdown point: {}".format(self.breakdown_))
+            print("Number of samples: {}".format(n_samples))
             tol_outliers = int(self.breakdown_ * n_samples)
             print("Tolerable outliers: {}".format(tol_outliers))
-            print("Number of subpopulations: {}".format(n_subpopulation))
+            print("Number of subpopulations: {}".format(n_sp))
 
     def _check_subparams(self, n_samples, n_features):
         if self.fit_intercept:
             n_dim = n_features + 1
         else:
             n_dim = n_features
-        n_subpopulation = self.n_subpopulation
         n_subsamples = self.n_subsamples
         if n_subsamples is not None:
             assert n_dim <= n_subsamples <= n_samples
         else:
             n_subsamples = n_dim
-        if n_subpopulation is not None:
-            assert n_subpopulation <= binom(n_samples, n_subsamples)
+        if self.max_subpopulation <= 0:
+            raise ValueError("Subpopulation must be positive.")
+        n_sp = int(binom(n_samples, n_subsamples))
+        if self.max_subpopulation is not None:
+            n_sp = min(self.max_subpopulation, n_sp)
+        return n_dim, n_subsamples, n_sp
+
+    def _get_n_jobs(self):
+        if self.n_jobs < 0:
+            return max(cpu_count() + 1 + self.n_jobs, 1)
+        elif self.n_jobs == 0:
+            raise ValueError('Parameter n_jobs == 0 has no meaning.')
         else:
-            n_subpopulation = int(binom(n_samples, n_subsamples))
+            return self.n_jobs
 
-        return n_dim, n_subsamples, n_subpopulation
-
-    def _subpop_iter(self, n_samples, n_ss):
-        for s in xrange(self.n_subpopulation):
+    def _subpop_iter(self, n_samples, n_ss, n_sp):
+        for s in xrange(n_sp):
             yield self.random_state_.randint(0, n_samples, n_ss)
 
-    def _get_indices(self, n_samples, n_ss):
-        if self.n_subpopulation is None:
+    def _get_indices(self, n_samples, n_ss, n_sp):
+        if self.max_subpopulation is None:
+            return combinations(xrange(n_samples), n_ss)
+        elif int(binom(n_samples, n_ss)) <= self.max_subpopulation:
             return combinations(xrange(n_samples), n_ss)
         else:
-            return self._subpop_iter(n_samples, n_ss)
+            return self._subpop_iter(n_samples, n_ss, n_sp)
+
+    def _split_indices(self, indices, n):
+        idx_lst = np.array_split(np.array(list(indices)), n)
+        starts = [0] + [arr.shape[0] for arr in idx_lst]
+        starts = np.cumsum(starts)
+        return idx_lst, starts
 
     def fit(self, X, y):
         self.random_state_ = check_random_state(self.random_state)
         X, y = check_arrays(X, y, sparse_format='dense', dtype=np.float)
         n_samples, n_features = X.shape
         n_dim, n_ss, n_sp = self._check_subparams(n_samples, n_features)
-        self.breakdown_ = breakdown_point(n_samples, n_dim)
+        self.breakdown_ = breakdown_point(n_samples, n_ss)
         self._print_verbose(n_samples, n_sp)
-        indices = np.array(list(self._get_indices(n_samples, n_ss)))
-        n_cpu = cpu_count() if self.n_jobs == -1 else self.n_jobs
+        indices = self._get_indices(n_samples, n_ss, n_sp)
+        n_jobs = self._get_n_jobs()
+        idx_list, starts = self._split_indices(indices, n_jobs)
 
         with tempfile.NamedTemporaryFile() as fh:
             weights = np.memmap(fh.name, dtype=np.float, shape=(n_sp, n_dim),
                                 mode="w+")
-            Parallel(n_jobs=self.n_jobs,
+            Parallel(n_jobs=n_jobs,
                      backend="multiprocessing",
                      max_nbytes=10e6,
                      verbose=self.verbose)(
-                delayed(_lse)(weights, X, y, indices, cpu, n_cpu,
-                              self.fit_intercept) for cpu in xrange(n_cpu))
+                delayed(_lse)(weights, X, y, idx_list[job], starts[job],
+                              self.fit_intercept) for job in xrange(n_jobs))
             coefs = spatial_median(weights, n_iter=self.n_iter, tol=self.tol)
 
         if self.fit_intercept:
@@ -254,7 +271,7 @@ class TheilSen(LinearModel, RegressorMixin):
         return self
 
 
-def _lse(weights, X, y, indices, start, step, intercept):
+def _lse(weights, X, y, indices, start, intercept):
     """Least Squares Estimator for TheilSen class.
 
     Parameters
@@ -267,17 +284,14 @@ def _lse(weights, X, y, indices, start, step, intercept):
         n_features is the number of features.
 
     y : array, shape = [n_samples]
-        Target vector, where n_samples is the number of samples
+        Target vector, where n_samples is the number of samples.
 
     indices : array, shape = [n_subpopulation, n_ss]
         Indices of all subsamples with respect to the chosen subpopulation.
         n_ss is the number of subsamples used to calculate least squares.
 
     start : int
-        Start index when traversing indices
-
-    step : int
-        Step for index when traversing indices
+        Start index for storing results in weights array.
 
     intercept : bool
         Fit intercept or not.
@@ -285,8 +299,7 @@ def _lse(weights, X, y, indices, start, step, intercept):
     fst = 1 if intercept else 0
     n_dim = weights.shape[1]
     n_ss = indices.shape[1]
-    for i, ix in islice(enumerate(indices), start, None, step):
+    for i, ix in enumerate(indices, start):
         X_sub = np.ones((n_ss, n_dim))
         X_sub[:, fst:] = X[list(ix), :]
         weights[i, :] = lstsq(X_sub, y[list(ix)])[0]
-

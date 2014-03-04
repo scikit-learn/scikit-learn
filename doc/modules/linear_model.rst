@@ -888,18 +888,27 @@ Theil-Sen Regression
 
 :class:`TheilSen` is comparable to the Ordinary Least Squares (OLS) estimator
 :ref:`ordinary_least_squares` in terms of asymptotic efficiency and as
-an unbiased estimator. In contrast to OLS, :class:`TheilSen` is a
+an unbiased estimator. In contrast to OLS, Theil-Sen is a
 non-parametric method which means it makes no assumption about the underlying
 distribution of the data. This fact makes it more robust against corrupted
-data aka outliers. :class:`TheilSen` has a breakdown point of about 29.3%
+data aka outliers. Theil-Sen has a breakdown point of about 29.3%
 in case of a simple linear regression which means that it can tolerate
-arbitrary corrupted data of up to 29.3%.
+arbitrary corrupted data of up to 29.3% in the two-dimensional case.
 
 The original Theil-Sen regression was defined for a simple linear
 regression model in 1968. This implementation follows a more recent
 generalization to a multiple linear regression model [1] using the spatial
 median which is a generalization of the median to multiple dimensions [2].
 
+In terms of time and space complexity, Theil-Sen scales according to
+
+.. math::
+    \binom{n_samples}{n_subsamples}
+
+which makes it infeasible to be applied exhaustively to problems with a
+large number of samples and features. Therefore, the magnitude of the
+subpopulation limits the time and space complexity by considering only a
+random subset of all possible combinations.
 
 .. figure:: ../auto_examples/linear_model/images/plot_theilsen_1.png
    :target: ../auto_examples/linear_model/plot_theilsen.html

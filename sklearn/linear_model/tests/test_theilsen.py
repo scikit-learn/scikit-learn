@@ -58,7 +58,7 @@ def gen_toy_problem_1d_no_intercept():
 
 def gen_toy_problem_2d():
     np.random.seed(0)
-    n_samples=100
+    n_samples = 100
     # Linear model y = 5*x_1 + 10*x_2 + N(1, 0.1**2)
     X = np.random.randn(2*n_samples).reshape(n_samples, 2)
     w = np.array([5., 10.])
@@ -184,13 +184,13 @@ def test_theilsen_2d():
 
 def test_calc_breakdown_point():
     bp = breakdown_point(1e10, 2)
-    assert np.abs(bp - (1 - 1/(np.sqrt(2)))) <= 1.e-6
+    assert np.abs(bp - 1 + 1/(np.sqrt(2))) <= 1.e-6
 
 
-@raises(AssertionError)
-def test__checksubparams_too_large_subpopulation():
+@raises(ValueError)
+def test__checksubparams_negative_subpopulation():
     X, y, w, c = gen_toy_problem_1d()
-    TheilSen(n_subpopulation=100000).fit(X, y)
+    TheilSen(max_subpopulation=-1).fit(X, y)
 
 
 @raises(AssertionError)
@@ -207,14 +207,14 @@ def test__checksubparams_too_many_subsamples():
 
 def test_subpopulation():
     X, y, w, c = gen_toy_problem_4d()
-    theilsen = TheilSen(n_subpopulation=1000, random_state=0).fit(X, y)
+    theilsen = TheilSen(max_subpopulation=1000, random_state=0).fit(X, y)
     nptest.assert_array_almost_equal(theilsen.coef_, w, 1)
     nptest.assert_array_almost_equal(theilsen.intercept_, c, 1)
 
 
 def test_subsamples():
     X, y, w, c = gen_toy_problem_4d()
-    theilsen = TheilSen(n_subsamples=X.shape[0]).fit(X, y)
+    theilsen = TheilSen(n_subsamples=X.shape[0], verbose=True).fit(X, y)
     lstq = LinearRegression().fit(X, y)
     # Check for exact the same results as Least Squares
     nptest.assert_array_almost_equal(theilsen.coef_, lstq.coef_, 9)
@@ -224,14 +224,43 @@ def test_verbosity():
     X, y, w, c = gen_toy_problem_1d()
     # Check that Theil-Sen can be verbose
     TheilSen(verbose=True).fit(X, y)
+    TheilSen(verbose=True, max_subpopulation=10).fit(X, y)
 
 
-def test_theilsen_parallel():
+def test_theilsen_parallel_all_CPUs():
     X, y, w, c = gen_toy_problem_2d()
     # Check that Least Squares fails
     lstq = LinearRegression().fit(X, y)
     assert np.linalg.norm(lstq.coef_ - w) > 1.0
     # Check that Theil-Sen works
-    theilsen = TheilSen(n_jobs=2).fit(X, y)
+    theilsen = TheilSen(n_jobs=-1).fit(X, y)
     nptest.assert_array_almost_equal(theilsen.coef_, w, 1)
     nptest.assert_array_almost_equal(theilsen.intercept_, c, 1)
+
+
+def test_theilsen_parallel_2_CPUs():
+    X, y, w, c = gen_toy_problem_1d()
+    # Check that Least Squares fails
+    lstq = LinearRegression().fit(X, y)
+    assert np.abs(lstq.coef_ - w) > 0.9
+    # Check that Theil-Sen works
+    theilsen = TheilSen(n_jobs=2).fit(X, y)
+    nptest.assert_array_almost_equal(theilsen.coef_, w, 2)
+    nptest.assert_array_almost_equal(theilsen.intercept_, c, 2)
+
+
+def test_theilsen_parallel_all_but_one_CPUs():
+    X, y, w, c = gen_toy_problem_1d()
+    # Check that Least Squares fails
+    lstq = LinearRegression().fit(X, y)
+    assert np.abs(lstq.coef_ - w) > 0.9
+    # Check that Theil-Sen works
+    theilsen = TheilSen(n_jobs=-2).fit(X, y)
+    nptest.assert_array_almost_equal(theilsen.coef_, w, 2)
+    nptest.assert_array_almost_equal(theilsen.intercept_, c, 2)
+
+
+@raises(ValueError)
+def test_theilsen_parallel_no_CPUs():
+    X, y, w, c = gen_toy_problem_1d()
+    TheilSen(n_jobs=0).fit(X, y)

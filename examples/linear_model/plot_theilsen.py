@@ -10,12 +10,14 @@ See :ref:`theil_sen_regression` for more information on the regressor.
 Compared to the OLS (ordinary least squares) estimator, the Theil-Sen
 estimator is robust against outliers. It has a breakdown point of about 29.3%
 in case of a simple linear regression which means that it can tolerate
-arbitrary corrupted data (outliers) of up to 29.3%.
+arbitrary corrupted data (outliers) of up to 29.3% in the two-dimensional
+case.
 
 The estimation of the model is done by calculating the slopes and intercepts
-of a subpopulation of all possible combinations of p+1 sample points given
-that p is the number of features. The final slope and intercept is then
-defined as the spatial median of these slopes and intercepts.
+of a subpopulation of all possible combinations of p subsample points. If an
+intercept is fitted, p must be larger than n_features + 1. The final slope
+and intercept is then defined as the spatial median of these slopes and
+intercepts.
 """
 
 # Author: Florian Wilhelm -- <florian.wilhelm@gmail.com>
