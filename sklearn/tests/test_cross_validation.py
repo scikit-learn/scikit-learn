@@ -841,7 +841,7 @@ def test_safe_split_with_precomputed_kernel():
     K = np.dot(X, X.T)
 
     cv = cval.ShuffleSplit(X.shape[0], test_size=0.25, random_state=0)
-    tr, te = iter(cv).next()
+    tr, te = list(cv)[0]
 
     X_tr, y_tr = cval._safe_split(clf, X, y, tr)
     K_tr, y_tr2 = cval._safe_split(clfp, K, y, tr)
