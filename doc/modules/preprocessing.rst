@@ -521,3 +521,10 @@ similarly.
    * :ref:`example_cluster_plot_feature_agglomeration_vs_univariate_selection.py`
    * :ref:`example_cluster_plot_digits_agglomeration.py`
 
+.. topic:: **Feature scaling**
+
+   Note that if features have very different scaling or statistical
+   properties, :class:`cluster.FeatureAgglomeration` maye not be able to
+   capture the links between related features. Using a 
+   :class:`preprocessing.StandardScaler` can be useful in these settings.
+
