@@ -295,23 +295,33 @@ def test_select_fdr_classif():
                                n_repeated=0, n_classes=8,
                                n_clusters_per_class=1, flip_y=0.0,
                                class_sep=10, shuffle=False, random_state=0)
-
-    univariate_filter = SelectFdr(f_classif, alpha=0.0001)
+    alpha = 0.01
+    univariate_filter = SelectFdr(f_classif, alpha=alpha)
     X_r = univariate_filter.fit(X, y).transform(X)
     X_r2 = GenericUnivariateSelect(
-        f_classif, mode='fdr', param=0.0001).fit(X, y).transform(X)
+        f_classif, mode='fdr', param=alpha).fit(X, y).transform(X)
     assert_array_equal(X_r, X_r2)
     support = univariate_filter.get_support()
     gtruth = np.zeros(20)
     gtruth[:5] = 1
     assert_array_equal(support, gtruth)
 
+    num_false_positives = np.sum(support[5:] == 1)
+    num_true_positives = np.sum(support[:5] == 1)
+
+    false_discovery_rate = float(num_false_positives) / \
+        (num_true_positives + num_false_positives)
+    # We have that
+    #  FDR = E(num_false_positives / (true_positives + false_positives))
+    #      <= alpha
+    assert(false_discovery_rate < alpha)
+
 
 def test_select_fwe_classif():
     """
     Test whether the relative univariate feature selection
     gets the correct items in a simple classification problem
-    with the fpr heuristic
+    with the fwe heuristic
     """
     X, y = make_classification(n_samples=200, n_features=20,
                                n_informative=3, n_redundant=2,
@@ -445,20 +455,34 @@ def test_select_fdr_regression():
     """
     Test whether the relative univariate feature selection
     gets the correct items in a simple regression problem
-    with the fdr heuristic
-    """
-    X, y = make_regression(n_samples=200, n_features=20,
-                           n_informative=5, shuffle=False, random_state=0)
+    with the fdr heuristic.
 
-    univariate_filter = SelectFdr(f_regression, alpha=0.01)
-    X_r = univariate_filter.fit(X, y).transform(X)
-    X_r2 = GenericUnivariateSelect(
-        f_regression, mode='fdr', param=0.01).fit(X, y).transform(X)
-    assert_array_equal(X_r, X_r2)
-    support = univariate_filter.get_support()
-    gtruth = np.zeros(20)
-    gtruth[:5] = 1
-    assert_array_equal(support, gtruth)
+    Tests that the scaling factors
+    """
+    def scale_invariance(n_samples, n_features, n_informative, alpha):
+        X, y = make_regression(n_samples=n_samples, n_features=n_features,
+                               n_informative=n_informative, shuffle=False,
+                               random_state=0)
+
+        univariate_filter = SelectFdr(f_regression, alpha=alpha)
+        X_r = univariate_filter.fit(X, y).transform(X)
+        X_r2 = GenericUnivariateSelect(
+            f_regression, mode='fdr', param=alpha).fit(X, y).transform(X)
+        assert_array_equal(X_r, X_r2)
+        support = univariate_filter.get_support()
+        num_false_positives = np.sum(support[n_informative:] == 1)
+        num_true_positives = np.sum(support[:n_informative] == 1)
+
+        false_discovery_rate = float(num_false_positives) / \
+            (num_true_positives + num_false_positives)
+        # We have that
+        #  FDR = E(num_false_positives / (true_positives + false_positives))
+        #      <= alpha
+        assert(false_discovery_rate < alpha)
+
+    feature_scaling_factors = (5, 10, 20)
+    for scale_factor in feature_scaling_factors:
+        scale_invariance(2000, 5 * scale_factor, 1 * scale_factor, 0.05)
 
 
 def test_select_fwe_regression():
