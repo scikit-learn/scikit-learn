@@ -681,7 +681,7 @@ class BaseLibLinear(six.with_metaclass(ABCMeta, BaseEstimator)):
         if X.shape[0] != y_ind.shape[0]:
             raise ValueError("X and y have incompatible shapes.\n"
                              "X has %s samples, but y has %s." %
-                             (X.shape[0], y.shape[0]))
+                             (X.shape[0], y_ind.shape[0]))
 
         liblinear.set_verbosity_wrap(self.verbose)
 
