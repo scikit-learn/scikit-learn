@@ -1503,8 +1503,8 @@ def test_invariance_string_vs_numbers_labels():
             measure_with_number = metric(y1, y2)
             measure_with_str = metric(y1_str, y2)
             assert_array_equal(measure_with_number, measure_with_str,
-                               err_msg="{0} failed string vs number invariance "
-                                       "test".format(name))
+                               err_msg="{0} failed string vs number "
+                               "invariance test".format(name))
 
             measure_with_strobj = metric(y1_str.astype('O'), y2)
             assert_array_equal(measure_with_number, measure_with_strobj,

@@ -111,7 +111,7 @@ def test_gibbs_smoke():
 def test_score_samples():
     """Test score_samples (pseudo-likelihood) method."""
     # Assert that pseudo-likelihood is computed without clipping.
-    # http://fa.bianp.net/blog/2013/numerical-optimizers-for-logistic-regression
+    # See Fabian's blog, http://bit.ly/1iYefRk
     rng = np.random.RandomState(42)
     X = np.vstack([np.zeros(1000), np.ones(1000)])
     rbm1 = BernoulliRBM(n_components=10, batch_size=2,
@@ -126,6 +126,11 @@ def test_score_samples():
     rbm1.random_state = 42
     s_score = rbm1.score_samples(lil_matrix(X))
     assert_almost_equal(d_score, s_score)
+
+    # Test numerical stability (#2785): would previously generate infinities
+    # and crash with an exception.
+    with np.errstate(under='ignore'):
+        rbm1.score_samples(np.arange(1000) * 100)
 
 
 def test_rbm_verbose():

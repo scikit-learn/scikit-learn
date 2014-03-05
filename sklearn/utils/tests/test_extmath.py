@@ -3,6 +3,8 @@
 #          Denis Engemann <d.engemann@fz-juelich.de>
 #
 # License: BSD 3 clause
+import warnings
+
 import numpy as np
 from scipy import sparse
 from scipy import linalg
@@ -14,8 +16,7 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_greater
-from sklearn.utils.testing import assert_raises, assert_raise_message
-from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import assert_raises
 
 from sklearn.utils.extmath import density
 from sklearn.utils.extmath import logsumexp
@@ -23,9 +24,8 @@ from sklearn.utils.extmath import randomized_svd
 from sklearn.utils.extmath import row_norms
 from sklearn.utils.extmath import weighted_mode
 from sklearn.utils.extmath import cartesian
-from sklearn.utils.extmath import logistic_sigmoid
+from sklearn.utils.extmath import log_logistic, logistic_sigmoid
 from sklearn.utils.extmath import fast_dot, _fast_dot
-from sklearn.utils.validation import NonBLASDotWarning
 from sklearn.datasets.samples_generator import make_low_rank_matrix
 
 
@@ -71,8 +71,8 @@ def test_random_weights():
 
     mode, score = weighted_mode(x, w, axis=1)
 
-    assert_true(np.all(mode == mode_result))
-    assert_true(np.all(score.ravel() == w[:, :5].sum(1)))
+    np.testing.assert_array_equal(mode, mode_result)
+    np.testing.assert_array_almost_equal(score.ravel(), w[:, :5].sum(1))
 
 
 def test_logsumexp():
@@ -275,32 +275,16 @@ def test_cartesian():
 
 def test_logistic_sigmoid():
     """Check correctness and robustness of logistic sigmoid implementation"""
-    naive_logsig = lambda x: 1 / (1 + np.exp(-x))
-    naive_log_logsig = lambda x: np.log(naive_logsig(x))
-
-    # Simulate the previous Cython implementations of logistic_sigmoid based on
-    #http://fa.bianp.net/blog/2013/numerical-optimizers-for-logistic-regression
-    def stable_logsig(x):
-        out = np.zeros_like(x)
-        positive = x > 0
-        negative = x <= 0
-        out[positive] = 1. / (1 + np.exp(-x[positive]))
-        out[negative] = np.exp(x[negative]) / (1. + np.exp(x[negative]))
-        return out
+    naive_logistic = lambda x: 1 / (1 + np.exp(-x))
+    naive_log_logistic = lambda x: np.log(naive_logistic(x))
 
     x = np.linspace(-2, 2, 50)
-    assert_array_almost_equal(logistic_sigmoid(x), naive_logsig(x))
-    assert_array_almost_equal(logistic_sigmoid(x, log=True),
-                              naive_log_logsig(x))
-    assert_array_almost_equal(logistic_sigmoid(x), stable_logsig(x),
-                              decimal=16)
+    with warnings.catch_warnings(record=True):
+        assert_array_almost_equal(logistic_sigmoid(x), naive_logistic(x))
+    assert_array_almost_equal(log_logistic(x), naive_log_logistic(x))
 
-    extreme_x = np.array([-100, 100], dtype=np.float)
-    assert_array_almost_equal(logistic_sigmoid(extreme_x), [0, 1])
-    assert_array_almost_equal(logistic_sigmoid(extreme_x, log=True), [-100, 0])
-    assert_array_almost_equal(logistic_sigmoid(extreme_x),
-                              stable_logsig(extreme_x),
-                              decimal=16)
+    extreme_x = np.array([-100., 100.])
+    assert_array_almost_equal(log_logistic(extreme_x), [-100, 0])
 
 
 def test_fast_dot():

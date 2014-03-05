@@ -33,7 +33,6 @@ from sklearn.svm.classes import NuSVR
 from sklearn.ensemble.gradient_boosting import GradientBoostingRegressor
 from sklearn.linear_model.stochastic_gradient import SGDClassifier
 from sklearn.metrics.metrics import hamming_loss
-from sklearn.utils.fixes import count_nonzero
 
 ###############################################################################
 # Routines
@@ -121,7 +120,7 @@ def plot_influence(conf, mse_values, prediction_times, complexities):
 
 def _count_nonzero_coefficients(estimator):
     a = estimator.coef_.todense()
-    return count_nonzero(a)
+    return np.count_nonzero(a)
 
 ###############################################################################
 # main code

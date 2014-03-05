@@ -372,13 +372,13 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
 
         out = Parallel(
             n_jobs=self.n_jobs, verbose=self.verbose,
-            pre_dispatch=pre_dispatch)(
-                delayed(_fit_and_score)(
-                    clone(base_estimator), X, y, self.scorer_, train, test,
-                    self.verbose, parameters, self.fit_params,
-                    return_parameters=True)
-                for parameters in parameter_iterable
-                for train, test in cv)
+            pre_dispatch=pre_dispatch
+        )(
+            delayed(_fit_and_score)(clone(base_estimator), X, y, self.scorer_,
+                                    train, test, self.verbose, parameters,
+                                    self.fit_params, return_parameters=True)
+            for parameters in parameter_iterable
+            for train, test in cv)
 
         # Out is a list of triplet: score, estimator, n_test_samples
         n_fits = len(out)

@@ -23,7 +23,6 @@ from ..externals import six
 from ..externals.six.moves import xrange
 from ..feature_selection.from_model import _LearntSelectorMixin
 from ..utils import array2d, check_random_state
-from ..utils.fixes import unique
 from ..utils.validation import check_arrays
 
 from ._tree import Criterion
@@ -158,7 +157,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
             self.n_classes_ = []
 
             for k in xrange(self.n_outputs_):
-                classes_k, y[:, k] = unique(y[:, k], return_inverse=True)
+                classes_k, y[:, k] = np.unique(y[:, k], return_inverse=True)
                 self.classes_.append(classes_k)
                 self.n_classes_.append(classes_k.shape[0])
 
@@ -172,8 +171,10 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
             y = np.ascontiguousarray(y, dtype=DOUBLE)
 
         # Check parameters
-        max_depth = (2 ** 31) - 1 if self.max_depth is None else self.max_depth
-        max_leaf_nodes = -1 if self.max_leaf_nodes is None else self.max_leaf_nodes
+        max_depth = ((2 ** 31) - 1 if self.max_depth is None
+                     else self.max_depth)
+        max_leaf_nodes = (-1 if self.max_leaf_nodes is None
+                          else self.max_leaf_nodes)
 
         if isinstance(self.max_features, six.string_types):
             if self.max_features == "auto":
@@ -495,8 +496,8 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         -------
         p : array of shape = [n_samples, n_classes], or a list of n_outputs
             such arrays if n_outputs > 1.
-            The class probabilities of the input samples. Classes are ordered
-            by arithmetical order.
+            The class probabilities of the input samples. The order of the
+            classes corresponds to that in the attribute `classes_`.
         """
         if getattr(X, "dtype", None) != DTYPE or X.ndim != 2:
             X = array2d(X, dtype=DTYPE)
@@ -546,8 +547,8 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         -------
         p : array of shape = [n_samples, n_classes], or a list of n_outputs
             such arrays if n_outputs > 1.
-            The class log-probabilities of the input samples. Classes are
-            ordered by arithmetical order.
+            The class log-probabilities of the input samples. The order of the
+            classes corresponds to that in the attribute `classes_`.
         """
         proba = self.predict_proba(X)
 

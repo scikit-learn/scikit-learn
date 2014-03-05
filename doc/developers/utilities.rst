@@ -181,25 +181,8 @@ Graph Routines
 Backports
 =========
 
-- :func:`fixes.unique`: (backport of ``np.unique`` from numpy 1.4).  Find the
-  unique entries in an array.  In numpy versions < 1.4, ``np.unique`` is less
-  flexible.  Used in :mod:`sklearn.cross_validation`.
-
-- :func:`fixes.copysign`: (backport of ``np.copysign`` from numpy 1.4).
-  Change the sign of ``x1`` to that of ``x2``, element-wise.
-
-- :func:`fixes.in1d`: (backport of ``np.in1d`` from numpy 1.4).
-  Test whether each element of an array is in a second array.  Used in
-  ``sklearn.datasets.twenty_newsgroups`` and
-  ``sklearn.feature_extraction.image``.
-
-- :func:`fixes.savemat` (backport of ``scipy.io.savemat`` from scipy 0.7.2).
-  Save an array in MATLAB-format. In earlier versions, the keyword
-  ``oned_as`` is not available.
-
-- :func:`fixes.count_nonzero` (backport of ``np.count_nonzero`` from
-  numpy 1.6).  Count the nonzero elements of a matrix.  Used in
-  tests of :mod:`sklearn.linear_model`.
+- :func:`fixes.expit`: Logistic sigmoid function. Replacement for SciPy 0.10's
+  ``scipy.special.expit``.
 
 - :func:`arrayfuncs.solve_triangular`
   (Back-ported from scipy v0.9)  Used in ``sklearn.linear_model.omp``,

@@ -6,7 +6,7 @@ Testing for the base module (sklearn.ensemble.base).
 # License: BSD 3 clause
 
 from numpy.testing import assert_equal
-from nose.tools import assert_raises, assert_true
+from nose.tools import assert_true
 
 from sklearn.datasets import load_iris
 from sklearn.ensemble import BaggingClassifier

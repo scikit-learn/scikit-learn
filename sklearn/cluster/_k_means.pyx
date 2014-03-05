@@ -4,6 +4,7 @@
 
 # Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
 #         Olivier Grisel <olivier.grisel@ensta.org>
+#         Lars Buitinck <larsmans@gmail.com>
 #
 # Licence: BSD 3 clause
 
@@ -14,7 +15,6 @@ cimport numpy as np
 cimport cython
 
 from ..utils.extmath import norm
-from ..utils.fixes import bincount
 from sklearn.utils.sparsefuncs cimport add_row_csr
 
 ctypedef np.float64_t DOUBLE
@@ -202,8 +202,8 @@ def _mini_batch_update_csr(X, np.ndarray[DOUBLE, ndim=1] x_squared_norms,
             # no new sample: leave this center as it stands
             continue
 
-        # rescale the old center to reflect it previous accumulated
-        # weight w.r.t. the new data that will be incrementally contributed
+        # rescale the old center to reflect it previous accumulated weight
+        # with regards to the new data that will be incrementally contributed
         if compute_squared_diff:
             old_center[:] = centers[center_idx]
         centers[center_idx] *= old_count
@@ -272,7 +272,7 @@ def _centers_dense(np.ndarray[DOUBLE, ndim=2] X,
     n_features = X.shape[1]
     cdef int i, j, c
     cdef np.ndarray[DOUBLE, ndim=2] centers = np.zeros((n_clusters, n_features))
-    n_samples_in_cluster = bincount(labels, minlength=n_clusters)
+    n_samples_in_cluster = np.bincount(labels, minlength=n_clusters)
     empty_clusters = np.where(n_samples_in_cluster == 0)[0]
     # maybe also relocate small clusters?
 
@@ -331,7 +331,7 @@ def _centers_sparse(X, np.ndarray[INT, ndim=1] labels, n_clusters,
         np.zeros((n_clusters, n_features))
     cdef np.ndarray[np.npy_intp, ndim=1] far_from_centers
     cdef np.ndarray[np.npy_intp, ndim=1, mode="c"] n_samples_in_cluster = \
-        bincount(labels, minlength=n_clusters)
+        np.bincount(labels, minlength=n_clusters)
     cdef np.ndarray[np.npy_intp, ndim=1, mode="c"] empty_clusters = \
         np.where(n_samples_in_cluster == 0)[0]
 

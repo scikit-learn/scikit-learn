@@ -11,7 +11,7 @@ from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import raises
 from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_false, assert_true
 from sklearn.utils.testing import assert_equal
 
 from sklearn import linear_model, datasets, metrics
@@ -24,23 +24,19 @@ class SparseSGDClassifier(SGDClassifier):
 
     def fit(self, X, y, *args, **kw):
         X = sp.csr_matrix(X)
-        return SGDClassifier.fit(self, X, y, *args, **kw)
+        return super(SparseSGDClassifier, self).fit(X, y, *args, **kw)
 
     def partial_fit(self, X, y, *args, **kw):
         X = sp.csr_matrix(X)
-        return SGDClassifier.partial_fit(self, X, y, *args, **kw)
+        return super(SparseSGDClassifier, self).partial_fit(X, y, *args, **kw)
 
-    def decision_function(self, X, *args, **kw):
+    def decision_function(self, X):
         X = sp.csr_matrix(X)
-        return SGDClassifier.decision_function(self, X, *args, **kw)
+        return super(SparseSGDClassifier, self).decision_function(X)
 
-    def predict_proba(self, X, *args, **kw):
+    def predict_proba(self, X):
         X = sp.csr_matrix(X)
-        return SGDClassifier.predict_proba(self, X, *args, **kw)
-
-    def predict_log_proba(self, X, *args, **kw):
-        X = sp.csr_matrix(X)
-        return SGDClassifier.predict_log_proba(self, X, *args, **kw)
+        return super(SparseSGDClassifier, self).predict_proba(X)
 
 
 class SparseSGDRegressor(SGDRegressor):
@@ -301,9 +297,12 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
     def test_sgd_proba(self):
         """Check SGD.predict_proba"""
 
-        # hinge loss does not allow for conditional prob estimate
-        clf = self.factory(loss="hinge", alpha=0.01, n_iter=10).fit(X, Y)
-        assert_raises(NotImplementedError, clf.predict_proba, [3, 2])
+        # Hinge loss does not allow for conditional prob estimate.
+        # We cannot use the factory here, because it defines predict_proba
+        # anyway.
+        clf = SGDClassifier(loss="hinge", alpha=0.01, n_iter=10).fit(X, Y)
+        assert_false(hasattr(clf, "predict_proba"))
+        assert_false(hasattr(clf, "predict_log_proba"))
 
         # log and modified_huber losses can output probability estimates
         # binary case
@@ -360,7 +359,7 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         d = clf.decision_function(x)
         if np.all(d < -1):  # XXX not true in sparse test case (why?)
             p = clf.predict_proba(x)
-            assert_array_almost_equal(p[0], [1/3.] * 3)
+            assert_array_almost_equal(p[0], [1 / 3.] * 3)
 
     def test_sgd_l1(self):
         """Test L1 regularization"""
@@ -815,15 +814,18 @@ class SparseSGDRegressorTestCase(DenseSGDRegressorTestCase):
 
 def test_l1_ratio():
     """Test if l1 ratio extremes match L1 and L2 penalty settings. """
-    X, y = datasets.make_classification(n_samples=1000, n_features=100, n_informative=20,
+    X, y = datasets.make_classification(n_samples=1000,
+                                        n_features=100, n_informative=20,
                                         random_state=1234)
 
     # test if elasticnet with l1_ratio near 1 gives same result as pure l1
-    est_en = SGDClassifier(alpha=0.001, penalty='elasticnet', l1_ratio=0.9999999999).fit(X, y)
+    est_en = SGDClassifier(alpha=0.001, penalty='elasticnet',
+                           l1_ratio=0.9999999999).fit(X, y)
     est_l1 = SGDClassifier(alpha=0.001, penalty='l1').fit(X, y)
     assert_array_almost_equal(est_en.coef_, est_l1.coef_)
 
     # test if elasticnet with l1_ratio near 0 gives same result as pure l2
-    est_en = SGDClassifier(alpha=0.001, penalty='elasticnet', l1_ratio=0.0000000001).fit(X, y)
+    est_en = SGDClassifier(alpha=0.001, penalty='elasticnet',
+                           l1_ratio=0.0000000001).fit(X, y)
     est_l2 = SGDClassifier(alpha=0.001, penalty='l2').fit(X, y)
     assert_array_almost_equal(est_en.coef_, est_l2.coef_)

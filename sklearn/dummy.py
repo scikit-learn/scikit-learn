@@ -1,4 +1,3 @@
-
 # Author: Mathieu Blondel <mathieu@mblondel.org>
 #         Arnaud Joly <a.joly@ulg.ac.be>
 # License: BSD 3 clause
@@ -8,7 +7,6 @@ import numpy as np
 from .base import BaseEstimator, ClassifierMixin, RegressorMixin
 from .externals.six.moves import xrange
 from .utils import check_random_state
-from .utils.fixes import unique
 from .utils.validation import safe_asarray
 
 
@@ -107,13 +105,13 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
                                      "shape (%d, 1)." % self.n_outputs_)
 
         for k in xrange(self.n_outputs_):
-            classes, y_k = unique(y[:, k], return_inverse=True)
+            classes, y_k = np.unique(y[:, k], return_inverse=True)
             self.classes_.append(classes)
             self.n_classes_.append(classes.shape[0])
             self.class_prior_.append(np.bincount(y_k) / float(y_k.shape[0]))
 
             # Checking in case of constant strategy if the constant provided
-            # by the user is in y. 
+            # by the user is in y.
             if self.strategy == "constant":
                 if constant[k] not in self.classes_[k]:
                     raise ValueError("The constant target value must be "
@@ -177,7 +175,7 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
 
             elif self.strategy == "constant":
                 ret = np.ones(n_samples, dtype=int) * (
-                      np.where(classes_[k] == constant[k]))
+                    np.where(classes_[k] == constant[k]))
 
             y.append(classes_[k][ret])
 

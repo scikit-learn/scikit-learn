@@ -10,7 +10,6 @@ from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import ignore_warnings
 
-
 from sklearn.linear_model.coordinate_descent import (Lasso, ElasticNet,
                                                      LassoCV, ElasticNetCV)
 

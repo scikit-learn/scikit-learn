@@ -109,7 +109,7 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski',
         neighborhoods = [np.where(x <= eps)[0] for x in D]
 
     # Initially, all samples are noise.
-    labels = -np.ones(n)
+    labels = -np.ones(n, dtype=np.int)
 
     # A list of all core samples found.
     core_samples = []

@@ -1121,14 +1121,15 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
             n_components = self.n_components
 
         U, (A, B) = dict_learning_online(X, n_components, self.alpha,
-                                 n_iter=self.n_iter, return_code=False,
-                                 method=self.fit_algorithm,
-                                 n_jobs=self.n_jobs,
-                                 dict_init=self.dict_init,
-                                 batch_size=self.batch_size,
-                                 shuffle=self.shuffle, verbose=self.verbose,
-                                 random_state=random_state,
-                                 return_inner_stats=True)
+                                         n_iter=self.n_iter, return_code=False,
+                                         method=self.fit_algorithm,
+                                         n_jobs=self.n_jobs,
+                                         dict_init=self.dict_init,
+                                         batch_size=self.batch_size,
+                                         shuffle=self.shuffle,
+                                         verbose=self.verbose,
+                                         random_state=random_state,
+                                         return_inner_stats=True)
         self.components_ = U
         # Keep track of the state of the algorithm to be able to do
         # some online fitting (partial_fit)
@@ -1167,15 +1168,17 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
         if iter_offset is None:
             iter_offset = getattr(self, 'iter_offset_', 0)
         U, (A, B) = dict_learning_online(X, self.n_components, self.alpha,
-                                 n_iter=self.n_iter,
-                                 method=self.fit_algorithm,
-                                 n_jobs=self.n_jobs, dict_init=dict_init,
-                                 batch_size=len(X), shuffle=False,
-                                 verbose=self.verbose, return_code=False,
-                                 iter_offset=iter_offset,
-                                 random_state=self.random_state_,
-                                 return_inner_stats=True,
-                                 inner_stats=inner_stats)
+                                         n_iter=self.n_iter,
+                                         method=self.fit_algorithm,
+                                         n_jobs=self.n_jobs,
+                                         dict_init=dict_init,
+                                         batch_size=len(X), shuffle=False,
+                                         verbose=self.verbose,
+                                         return_code=False,
+                                         iter_offset=iter_offset,
+                                         random_state=self.random_state_,
+                                         return_inner_stats=True,
+                                         inner_stats=inner_stats)
         self.components_ = U
 
         # Keep track of the state of the algorithm to be able to do

@@ -74,7 +74,8 @@ op.add_option("--classifiers",
               dest="classifiers", default='liblinear,GaussianNB,SGD,CART',
               help="comma-separated list of classifiers to benchmark. "
                    "default: %default. available: "
-                   "liblinear,GaussianNB,SGD,CART,ExtraTrees,RandomForest")
+                   "liblinear, GaussianNB, SGD, CART, ExtraTrees,\n"
+                   "RandomForest, GBRT")
 
 op.add_option("--n-jobs",
               dest="n_jobs", default=1, type=int,

@@ -263,12 +263,6 @@ class BaseEstimator(object):
         return '%s(%s)' % (class_name, _pprint(self.get_params(deep=False),
                                                offset=len(class_name),),)
 
-    def __str__(self):
-        class_name = self.__class__.__name__
-        return '%s(%s)' % (class_name,
-                           _pprint(self.get_params(deep=True),
-                                   offset=len(class_name), printer=str,),)
-
 
 ###############################################################################
 class ClassifierMixin(object):

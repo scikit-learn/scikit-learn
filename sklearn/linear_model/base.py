@@ -19,13 +19,13 @@ import numpy as np
 import scipy.sparse as sp
 from scipy import linalg
 from scipy import sparse
+from scipy.sparse.linalg import lsqr
 
 from ..externals import six
 from ..externals.joblib import Parallel, delayed
 from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
 from ..utils import as_float_array, atleast2d_or_csr, safe_asarray
 from ..utils.extmath import safe_sparse_dot
-from ..utils.fixes import lsqr
 from ..utils.sparsefuncs import (csc_mean_variance_axis0,
                                  inplace_csc_column_scale)
 from .cd_fast import sparse_std

@@ -1,5 +1,6 @@
 import numpy as np
 import scipy.sparse as sp
+from scipy import linalg
 
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_almost_equal
@@ -127,6 +128,33 @@ def test_ridge_sample_weights():
                     y * np.sqrt(sample_weight),
                     alpha=alpha, solver=solver)
                 assert_array_almost_equal(coefs, coefs2)
+
+                # Test for fit_intercept = True
+                est = Ridge(alpha=alpha, solver=solver)
+                est.fit(X, y, sample_weight=sample_weight)
+
+                # Check using Newton's Method
+                # Quadratic function should be solved in a single step.
+                # Initialize
+                sample_weight = np.sqrt(sample_weight)
+                X_weighted = sample_weight[:, np.newaxis] * (
+                    np.column_stack((np.ones(n_samples), X)))
+                y_weighted = y * sample_weight
+
+                # Gradient is (X*coef-y)*X + alpha*coef_[1:]
+                # Remove coef since it is initialized to zero.
+                grad = -np.dot(y_weighted, X_weighted)
+
+                # Hessian is (X.T*X) + alpha*I except that the first
+                # diagonal element should be zero, since there is no
+                # penalization of intercept.
+                diag = alpha * np.ones(n_features + 1)
+                diag[0] = 0.
+                hess = np.dot(X_weighted.T, X_weighted)
+                hess.flat[::n_features + 2] += diag
+                coef_ = - np.dot(linalg.inv(hess), grad)
+                assert_almost_equal(coef_[0], est.intercept_)
+                assert_array_almost_equal(coef_[1:], est.coef_)
 
 
 def test_ridge_shapes():
@@ -437,6 +465,23 @@ def test_class_weights():
     # now the hyperplane should rotate clock-wise and
     # the prediction on this point should shift
     assert_array_equal(clf.predict([[0.2, -1.0]]), np.array([-1]))
+
+    # check if class_weight = 'auto' can handle negative labels.
+    clf = RidgeClassifier(class_weight='auto')
+    clf.fit(X, y)
+    assert_array_equal(clf.predict([[0.2, -1.0]]), np.array([1]))
+
+    # class_weight = 'auto', and class_weight = None should return
+    # same values when y has equal number of all labels
+    X = np.array([[-1.0, -1.0], [-1.0, 0], [-.8, -1.0], [1.0, 1.0]])
+    y = [1, 1, -1, -1]
+    clf = RidgeClassifier(class_weight=None)
+    clf.fit(X, y)
+    clfa = RidgeClassifier(class_weight='auto')
+    clfa.fit(X, y)
+    assert_equal(len(clfa.classes_), 2)
+    assert_array_almost_equal(clf.coef_, clfa.coef_)
+    assert_array_almost_equal(clf.intercept_, clfa.intercept_)
 
 
 def test_class_weights_cv():

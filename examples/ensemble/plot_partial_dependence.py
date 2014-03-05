@@ -47,7 +47,7 @@ on age.
 print(__doc__)
 
 import numpy as np
-import pylab as pl
+import matplotlib.pyplot as plt
 
 from mpl_toolkits.mplot3d import Axes3D
 
@@ -84,12 +84,12 @@ fig, axs = plot_partial_dependence(clf, X_train, features, feature_names=names,
                                    n_jobs=3, grid_resolution=50)
 fig.suptitle('Partial dependence of house value on nonlocation features\n'
              'for the California housing dataset')
-pl.subplots_adjust(top=0.9)  # tight_layout causes overlap with suptitle
+plt.subplots_adjust(top=0.9)  # tight_layout causes overlap with suptitle
 
 print('_' * 80)
 print('Custom 3d plot via ``partial_dependence``')
 print
-fig = pl.figure()
+fig = plt.figure()
 
 target_feature = (1, 5)
 pdp, (x_axis, y_axis) = partial_dependence(clf, target_feature,
@@ -97,15 +97,15 @@ pdp, (x_axis, y_axis) = partial_dependence(clf, target_feature,
 XX, YY = np.meshgrid(x_axis, y_axis)
 Z = pdp.T.reshape(XX.shape).T
 ax = Axes3D(fig)
-surf = ax.plot_surface(XX, YY, Z, rstride=1, cstride=1, cmap=pl.cm.BuPu)
+surf = ax.plot_surface(XX, YY, Z, rstride=1, cstride=1, cmap=plt.cm.BuPu)
 ax.set_xlabel(names[target_feature[0]])
 ax.set_ylabel(names[target_feature[1]])
 ax.set_zlabel('Partial dependence')
 #  pretty init view
 ax.view_init(elev=22, azim=122)
-pl.colorbar(surf)
-pl.suptitle('Partial dependence of house value on median age and '
+plt.colorbar(surf)
+plt.suptitle('Partial dependence of house value on median age and '
             'average occupancy')
-pl.subplots_adjust(top=0.9)
+plt.subplots_adjust(top=0.9)
 
-pl.show()
+plt.show()

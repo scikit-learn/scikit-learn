@@ -25,7 +25,6 @@ import numpy as np
 import scipy.sparse as sp
 
 from ..base import BaseEstimator, TransformerMixin
-from ..utils.fixes import bincount
 from ..externals.six.moves import xrange
 from ..preprocessing import normalize
 from .hashing import FeatureHasher
@@ -458,7 +457,7 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
 def _document_frequency(X):
     """Count the number of non-zero values for each feature in sparse X."""
     if sp.isspmatrix_csr(X):
-        return bincount(X.indices, minlength=X.shape[1])
+        return np.bincount(X.indices, minlength=X.shape[1])
     else:
         return np.diff(sp.csc_matrix(X, copy=False).indptr)
 
@@ -656,7 +655,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
                 for i in xrange(len(vocabulary)):
                     if i not in indices:
                         msg = ("Vocabulary of size %d doesn't contain index "
-                                "%d." % (len(vocabulary), i))
+                               "%d." % (len(vocabulary), i))
                         raise ValueError(msg)
             if not vocabulary:
                 raise ValueError("empty vocabulary passed to fit")
@@ -933,9 +932,9 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
     .. [Yates2011] `R. Baeza-Yates and B. Ribeiro-Neto (2011). Modern
                    Information Retrieval. Addison Wesley, pp. 68-74.`
 
-    .. [MSR2008] `C.D. Manning, H. Schuetze and P. Raghavan (2008).
+    .. [MRS2008] `C.D. Manning, P. Raghavan and H. Schuetze  (2008).
                    Introduction to Information Retrieval. Cambridge University
-                   Press, pp. 121-125.`
+                   Press, pp. 118-120.`
     """
 
     def __init__(self, norm='l2', use_idf=True, smooth_idf=True,

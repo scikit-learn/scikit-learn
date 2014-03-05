@@ -550,8 +550,8 @@ def make_circles(n_samples=100, shuffle=True, noise=None, random_state=None,
 
     X = np.vstack((np.append(outer_circ_x, inner_circ_x),
                    np.append(outer_circ_y, inner_circ_y))).T
-    y = np.hstack([np.zeros(n_samples / 2, dtype=np.intp),
-                   np.ones(n_samples / 2, dtype=np.intp)])
+    y = np.hstack([np.zeros(n_samples // 2, dtype=np.intp),
+                   np.ones(n_samples // 2, dtype=np.intp)])
     if shuffle:
         X, y = util_shuffle(X, y, random_state=generator)
 
@@ -937,9 +937,8 @@ def make_low_rank_matrix(n_samples=100, n_features=100, effective_rank=10,
     n = min(n_samples, n_features)
 
     # Random (ortho normal) vectors
-    from ..utils.fixes import qr_economic
-    u, _ = qr_economic(generator.randn(n_samples, n))
-    v, _ = qr_economic(generator.randn(n_features, n))
+    u, _ = linalg.qr(generator.randn(n_samples, n), mode='economic')
+    v, _ = linalg.qr(generator.randn(n_features, n), mode='economic')
 
     # Index of the singular values
     singular_ind = np.arange(n, dtype=np.float64)

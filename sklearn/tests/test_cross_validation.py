@@ -18,8 +18,6 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import ignore_warnings
 
-from sklearn.utils.fixes import unique
-
 from sklearn import cross_validation as cval
 from sklearn.base import BaseEstimator
 from sklearn.datasets import make_regression
@@ -92,6 +90,7 @@ y = np.arange(10) // 2
 
 ##############################################################################
 # Tests
+
 
 def check_valid_split(train, test, n_samples=None):
     # Use python sets to get more informative assertion failure messages
@@ -300,7 +299,7 @@ def test_kfold_can_detect_dependent_samples_on_digits():  # see #2372
     assert_greater(mean_score, 0.85)
 
     # Shuffling the data artificially breaks the dependency and hides the
-    # overfitting of the model w.r.t. the writing style of the authors
+    # overfitting of the model with regards to the writing style of the authors
     # by yielding a seriously overestimated score:
 
     cv = cval.KFold(n, 5, shuffle=True, random_state=0)
@@ -373,12 +372,12 @@ def test_stratified_shuffle_split_iter():
         sss = cval.StratifiedShuffleSplit(y, 6, test_size=0.33,
                                           random_state=0)
         for train, test in sss:
-            assert_array_equal(unique(y[train]), unique(y[test]))
+            assert_array_equal(np.unique(y[train]), np.unique(y[test]))
             # Checks if folds keep classes proportions
-            p_train = (np.bincount(unique(y[train], return_inverse=True)[1]) /
-                       float(len(y[train])))
-            p_test = (np.bincount(unique(y[test], return_inverse=True)[1]) /
-                      float(len(y[test])))
+            p_train = (np.bincount(np.unique(y[train], return_inverse=True)[1])
+                       / float(len(y[train])))
+            p_test = (np.bincount(np.unique(y[test], return_inverse=True)[1])
+                      / float(len(y[test])))
             assert_array_almost_equal(p_train, p_test, 1)
             assert_equal(y[train].size + y[test].size, y.size)
             assert_array_equal(np.lib.arraysetops.intersect1d(train, test), [])
@@ -417,7 +416,8 @@ def test_stratified_shuffle_split_even():
     for n_samples in (6, 22):
         labels = np.array((n_samples // 2) * [0, 1])
         splits = cval.StratifiedShuffleSplit(labels, n_iter=n_iter,
-                                    test_size=1./n_folds, random_state=0)
+                                             test_size=1./n_folds,
+                                             random_state=0)
 
         train_counts = [0] * n_samples
         test_counts = [0] * n_samples
@@ -830,3 +830,23 @@ def test_cross_indices_exception():
     assert_raises(ValueError, cval.check_cv, skf, X, y)
     assert_raises(ValueError, cval.check_cv, lolo, X, y)
     assert_raises(ValueError, cval.check_cv, lopo, X, y)
+
+
+def test_safe_split_with_precomputed_kernel():
+    clf = SVC()
+    clfp = SVC(kernel="precomputed")
+
+    iris = load_iris()
+    X, y = iris.data, iris.target
+    K = np.dot(X, X.T)
+
+    cv = cval.ShuffleSplit(X.shape[0], test_size=0.25, random_state=0)
+    tr, te = list(cv)[0]
+
+    X_tr, y_tr = cval._safe_split(clf, X, y, tr)
+    K_tr, y_tr2 = cval._safe_split(clfp, K, y, tr)
+    assert_array_almost_equal(K_tr, np.dot(X_tr, X_tr.T))
+
+    X_te, y_te = cval._safe_split(clf, X, y, te, tr)
+    K_te, y_te2 = cval._safe_split(clfp, K, y, te, tr)
+    assert_array_almost_equal(K_te, np.dot(X_te, X_tr.T))
