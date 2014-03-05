@@ -254,7 +254,7 @@ def test_countvectorizer_custom_vocabulary_multiprocess():
     # Try a few of the supported types.
     for typ in [dict, list, iter, partial(defaultdict, int)]:
         v = typ(vocab)
-        vect = CountVectorizer(vocabulary=v, n_jobs=-1)
+        vect = CountVectorizer(vocabulary=v, n_jobs=2)
         vect.fit(JUNK_FOOD_DOCS)
         if isinstance(v, Mapping):
             assert_equal(vect.vocabulary_, vocab)
@@ -278,7 +278,7 @@ def test_countvectorizer_custom_vocabulary_pipeline():
 def test_countvectorizer_custom_vocabulary_pipeline_multiprocess():
     what_we_like = ["pizza", "beer"]
     pipe = Pipeline([
-        ('count', CountVectorizer(vocabulary=what_we_like, n_jobs=-1)),
+        ('count', CountVectorizer(vocabulary=what_we_like, n_jobs=2)),
         ('tfidf', TfidfTransformer())])
     X = pipe.fit_transform(ALL_FOOD_DOCS)
     assert_equal(set(pipe.named_steps['count'].vocabulary_),
@@ -297,7 +297,7 @@ def test_countvectorizer_custom_vocabulary_repeated_indices():
 def test_countvectorizer_custom_vocabulary_repeated_indices_multiprocess():
     vocab = {"pizza": 0, "beer": 0}
     try:
-        CountVectorizer(vocabulary=vocab, n_jobs=-1)
+        CountVectorizer(vocabulary=vocab, n_jobs=2)
     except ValueError as e:
         assert_in("vocabulary contains repeated indices", str(e).lower())
 
@@ -313,7 +313,7 @@ def test_countvectorizer_custom_vocabulary_gap_index():
 def test_countvectorizer_custom_vocabulary_gap_index_multiprocess():
     vocab = {"pizza": 1, "beer": 2}
     try:
-        CountVectorizer(vocabulary=vocab, n_jobs=-1)
+        CountVectorizer(vocabulary=vocab, n_jobs=2)
     except ValueError as e:
         assert_in("doesn't contain index", str(e).lower())
 
@@ -332,7 +332,7 @@ def test_countvectorizer_stop_words():
 
 
 def test_countvectorizer_stop_words_multiprocess():
-    cv = CountVectorizer(n_jobs=-1)
+    cv = CountVectorizer(n_jobs=2)
     cv.set_params(stop_words='english')
     assert_equal(cv.get_stop_words(), ENGLISH_STOP_WORDS)
     cv.set_params(stop_words='_bad_str_stop_')
@@ -362,13 +362,13 @@ def test_countvectorizer_empty_vocabulary():
 
 def test_countvectorizer_empty_vocabulary_multiprocess():
     try:
-        CountVectorizer(vocabulary=[], n_jobs=-1)
+        CountVectorizer(vocabulary=[], n_jobs=2)
         assert False, "we shouldn't get here"
     except ValueError as e:
         assert_in("empty vocabulary", str(e).lower())
 
     try:
-        v = CountVectorizer(max_df=1.0, stop_words="english", n_jobs=-1)
+        v = CountVectorizer(max_df=1.0, stop_words="english", n_jobs=2)
         # fit on stopwords only
         v.fit(["to be or not to be", "and me too", "and so do you"])
         assert False, "we shouldn't get here"
@@ -384,7 +384,7 @@ def test_fit_countvectorizer_twice():
 
 
 def test_fit_countvectorizer_twice_multiprocess():
-    cv = CountVectorizer(n_jobs=-1)
+    cv = CountVectorizer(n_jobs=2)
     X1 = cv.fit_transform(ALL_FOOD_DOCS[:5])
     X2 = cv.fit_transform(ALL_FOOD_DOCS[5:])
     assert_not_equal(X1.shape[1], X2.shape[1])
@@ -561,14 +561,14 @@ def test_vectorizer_multiprocess():
     n_train = len(ALL_FOOD_DOCS) - 1
 
     # test without vocabulary
-    v1 = CountVectorizer(max_df=0.5, n_jobs=-1)
+    v1 = CountVectorizer(max_df=0.5, n_jobs=2)
     counts_train = v1.fit_transform(train_data)
     if hasattr(counts_train, 'tocsr'):
         counts_train = counts_train.tocsr()
     assert_equal(counts_train[0, v1.vocabulary_["pizza"]], 2)
 
     # build a vectorizer v1 with the same vocabulary as the one fitted by v1
-    v2 = CountVectorizer(vocabulary=v1.vocabulary_, n_jobs=-1)
+    v2 = CountVectorizer(vocabulary=v1.vocabulary_, n_jobs=2)
 
     # compare that the two vectorizer give the same output on the test sample
     for v in (v1, v2):
@@ -629,7 +629,7 @@ def test_vectorizer_multiprocess():
     # test the direct tfidf vectorizer
     # (equivalent to term count vectorizer + tfidf transformer)
     train_data = iter(ALL_FOOD_DOCS[:-1])
-    tv = TfidfVectorizer(norm='l1', n_jobs=-1)
+    tv = TfidfVectorizer(norm='l1', n_jobs=2)
     assert_false(tv.fixed_vocabulary)
 
     tv.max_df = v1.max_df
@@ -641,7 +641,7 @@ def test_vectorizer_multiprocess():
     assert_array_almost_equal(tfidf_test, tfidf_test2)
 
     # test transform on unfitted vectorizer with empty vocabulary
-    v3 = CountVectorizer(vocabulary=None, n_jobs=-1)
+    v3 = CountVectorizer(vocabulary=None, n_jobs=2)
     assert_raises(ValueError, v3.transform, train_data)
 
     # ascii preprocessor?
@@ -729,7 +729,7 @@ def test_feature_names():
 
 
 def test_feature_names_multiprocess():
-    cv = CountVectorizer(max_df=0.5, n_jobs=-1)
+    cv = CountVectorizer(max_df=0.5, n_jobs=2)
 
     # test for Value error on unfitted/empty vocabulary
     assert_raises(ValueError, cv.get_feature_names)
@@ -778,7 +778,7 @@ def test_vectorizer_max_features_multiprocess():
 
     for vec_factory in vec_factories:
         # test bounded number of extracted features
-        vectorizer = vec_factory(max_df=0.6, max_features=4, n_jobs=-1)
+        vectorizer = vec_factory(max_df=0.6, max_features=4, n_jobs=2)
         vectorizer.fit(ALL_FOOD_DOCS)
         assert_equal(set(vectorizer.vocabulary_), expected_vocabulary)
         assert_equal(vectorizer.stop_words_, expected_stop_words)
@@ -813,9 +813,9 @@ def test_count_vectorizer_max_features():
 def test_count_vectorizer_max_features_multiprocess():
     """Regression test: max_features didn't work correctly in 0.14."""
 
-    cv_1 = CountVectorizer(max_features=1, n_jobs=-1)
-    cv_3 = CountVectorizer(max_features=3, n_jobs=-1)
-    cv_None = CountVectorizer(max_features=None, n_jobs=-1)
+    cv_1 = CountVectorizer(max_features=1, n_jobs=2)
+    cv_3 = CountVectorizer(max_features=3, n_jobs=2)
+    cv_None = CountVectorizer(max_features=None, n_jobs=2)
 
     counts_1 = cv_1.fit_transform(JUNK_FOOD_DOCS).sum(axis=0)
     counts_3 = cv_3.fit_transform(JUNK_FOOD_DOCS).sum(axis=0)
@@ -861,7 +861,7 @@ def test_vectorizer_max_df():
 
 def test_vectorizer_max_df_multiprocess():
     test_data = ['abc', 'dea', 'eat']
-    vect = CountVectorizer(analyzer='char', max_df=1.0, n_jobs=-1)
+    vect = CountVectorizer(analyzer='char', max_df=1.0, n_jobs=2)
     vect.fit(test_data)
     assert_true('a' in vect.vocabulary_.keys())
     assert_equal(len(vect.vocabulary_.keys()), 6)
@@ -907,7 +907,7 @@ def test_vectorizer_min_df():
 
 def test_vectorizer_min_df_multiprocess():
     test_data = ['abc', 'dea', 'eat']  # the letter a occurs in both strings
-    vect = CountVectorizer(analyzer='char', max_df=1.0, min_df=1, n_jobs=-1)
+    vect = CountVectorizer(analyzer='char', max_df=1.0, min_df=1, n_jobs=2)
     vect.fit(test_data)
     assert_true('a' in vect.vocabulary_.keys())
     assert_equal(len(vect.vocabulary_.keys()), 6)
@@ -998,7 +998,7 @@ def test_vectorizer_inverse_transform():
 def test_vectorizer_inverse_transform_multiprocess():
     # raw documents
     data = ALL_FOOD_DOCS
-    for vectorizer in (TfidfVectorizer(n_jobs=-1), CountVectorizer(n_jobs=-1)):
+    for vectorizer in (TfidfVectorizer(n_jobs=2), CountVectorizer(n_jobs=2)):
         transformed_data = vectorizer.fit_transform(data)
         inversed_data = vectorizer.inverse_transform(transformed_data)
         analyze = vectorizer.build_analyzer()
@@ -1065,7 +1065,7 @@ def test_count_vectorizer_pipeline_grid_selection_multiprocess():
     y_train = y[1:-1]
     y_test = np.array([y[0], y[-1]])
 
-    pipeline = Pipeline([('vect', CountVectorizer(n_jobs=-1)),
+    pipeline = Pipeline([('vect', CountVectorizer(n_jobs=2)),
                          ('svc', LinearSVC())])
 
     parameters = {
@@ -1144,7 +1144,7 @@ def test_vectorizer_pipeline_grid_selection_multiprocess():
     y_train = y[1:-1]
     y_test = np.array([y[0], y[-1]])
 
-    pipeline = Pipeline([('vect', TfidfVectorizer(n_jobs=-1)),
+    pipeline = Pipeline([('vect', TfidfVectorizer(n_jobs=2)),
                          ('svc', LinearSVC())])
 
     parameters = {
@@ -1226,7 +1226,7 @@ def test_vectorizer_unicode_multiprocess():
         "\xd0\xbe\xd0\xb1\xd1\x83\xd1\x87\xd0\xb0\xd1\x82\xd1\x8c\xd1\x81\xd1"
         "\x8f.")
 
-    vect = CountVectorizer(n_jobs=-1)
+    vect = CountVectorizer(n_jobs=2)
     X_counted = vect.fit_transform([document])
     assert_equal(X_counted.shape, (1, 15))
 
@@ -1260,7 +1260,7 @@ def test_pickling_vectorizer():
         HashingVectorizer(binary=True),
         HashingVectorizer(ngram_range=(1, 2)),
         CountVectorizer(),
-        CountVectorizer(n_jobs=-1),
+        CountVectorizer(n_jobs=2),
         CountVectorizer(preprocessor=strip_tags),
         CountVectorizer(analyzer=lazy_analyze),
         CountVectorizer(preprocessor=strip_tags).fit(JUNK_FOOD_DOCS),
