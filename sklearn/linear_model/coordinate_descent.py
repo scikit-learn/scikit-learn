@@ -568,7 +568,7 @@ class ElasticNet(LinearModel, RegressorMixin):
         matrix can also be passed as argument. For sparse input
         this option is always ``True`` to preserve sparsity.
 
-    max_iter: int, optional
+    max_iter : int, optional
         The maximum number of iterations
 
     copy_X : boolean, optional, default False
@@ -760,7 +760,7 @@ class Lasso(ElasticNet):
         matrix can also be passed as argument. For sparse input
         this option is always ``True`` to preserve sparsity.
 
-    max_iter: int, optional
+    max_iter : int, optional
         The maximum number of iterations
 
     tol : float, optional
