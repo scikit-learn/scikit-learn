@@ -24,6 +24,7 @@ from sklearn.utils.testing import assert_array_almost_equal
 
 from scipy.stats import distributions
 
+from sklearn.externals.six.moves import zip
 from sklearn.base import BaseEstimator
 from sklearn.datasets import make_classification
 from sklearn.datasets import make_blobs

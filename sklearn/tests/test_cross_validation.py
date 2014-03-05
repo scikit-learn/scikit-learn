@@ -30,6 +30,8 @@ from sklearn.metrics import fbeta_score
 from sklearn.metrics import make_scorer
 
 from sklearn.externals import six
+from sklearn.externals.six.moves import zip
+
 from sklearn.linear_model import Ridge
 from sklearn.svm import SVC
 
