@@ -169,6 +169,7 @@ def test_nystroem_callable():
         return np.minimum(x, y).sum()
 
     kernel_log = []
+    X = list(X)     # test input validation
     Nystroem(kernel=logging_histogram_kernel,
              n_components=(n_samples - 1),
              kernel_params={'log': kernel_log}).fit(X)
