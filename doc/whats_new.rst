@@ -146,12 +146,9 @@ Changelog
    - Added :class:`linear_model.MultiTaskElasticNetCV` and
      :class:`linear_model.MultiTaskLassoCV`. By `Manoj Kumar`_.
 
-   - :mod:`sklearn.hmm` is deprecated. Its removal is planned
-     for the 0.17 release.
-
-   - Use of :class:`covariance.EllipticEnvelop` has now been removed after
-     deprecation.
-     Please use :class:`covariance.EllipticEnvelope` instead.
+   - Added :class:`cluster.AgglomerativeClustering` for hierarchical
+     agglomerative clustering with average linkage, complete linkage and
+     ward strategies, by  `Nelle Varoquaux`_ and `Gael Varoquaux`_.
 
    - Fixed incorrect estimation of the degrees of freedom in
      :func:`feature_selection.f_regression` when variates are not centered.
@@ -160,6 +157,19 @@ Changelog
 
 API changes summary
 -------------------
+
+   - :mod:`sklearn.hmm` is deprecated. Its removal is planned
+     for the 0.17 release.
+
+   - Use of :class:`covariance.EllipticEnvelop` has now been removed after
+     deprecation.
+     Please use :class:`covariance.EllipticEnvelope` instead.
+
+   - :class:`cluster.Ward` is deprecated. Use
+     :class:`cluster.AgglomerativeClustering` instead.
+
+   - :class:`cluster.WardClustering` is deprecated. Use
+   - :class:`cluster.AgglomerativeClustering` instead.
 
    - Add score method to :class:`PCA <decomposition.PCA>` following the model of
      probabilistic PCA and deprecate

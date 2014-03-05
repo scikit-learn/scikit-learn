@@ -12,6 +12,8 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_true
 
+from sklearn.externals.six import iteritems
+
 from sklearn.metrics.pairwise import euclidean_distances
 from sklearn.metrics.pairwise import manhattan_distances
 from sklearn.metrics.pairwise import linear_kernel
@@ -26,8 +28,14 @@ from sklearn.metrics.pairwise import pairwise_distances_argmin_min
 from sklearn.metrics.pairwise import pairwise_distances_argmin
 from sklearn.metrics.pairwise import pairwise_kernels
 from sklearn.metrics.pairwise import PAIRWISE_KERNEL_FUNCTIONS
+from sklearn.metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
+from sklearn.metrics.pairwise import PAIRED_DISTANCES
 from sklearn.metrics.pairwise import check_pairwise_arrays
+from sklearn.metrics.pairwise import check_paired_arrays
 from sklearn.metrics.pairwise import _parallel_pairwise
+from sklearn.metrics.pairwise import paired_distances
+from sklearn.metrics.pairwise import paired_euclidean_distances
+from sklearn.metrics.pairwise import paired_manhattan_distances
 from sklearn.preprocessing import normalize
 
 
@@ -103,6 +111,9 @@ def test_pairwise_distances():
     assert_raises(TypeError, pairwise_distances, X_sparse, metric="minkowski")
     assert_raises(TypeError, pairwise_distances, X, Y_sparse,
                   metric="minkowski")
+
+    # Test that a value error is raised if the metric is unkown
+    assert_raises(ValueError, pairwise_distances, X, Y, metric="blah")
 
 
 def test_pairwise_parallel():
@@ -186,6 +197,37 @@ def test_pairwise_kernels_filter_param():
     assert_raises(TypeError, pairwise_kernels, X, Y, "rbf", **params)
 
 
+def test_paired_distances():
+    """ Test the pairwise_distance helper function. """
+    rng = np.random.RandomState(0)
+    # Euclidean distance should be equivalent to calling the function.
+    X = rng.random_sample((5, 4))
+    # Euclidean distance, with Y != X.
+    Y = rng.random_sample((5, 4))
+    for metric, func in iteritems(PAIRED_DISTANCES):
+        S = paired_distances(X, Y, metric=metric)
+        S2 = func(X, Y)
+        assert_array_almost_equal(S, S2)
+        if metric in PAIRWISE_DISTANCE_FUNCTIONS:
+            # Check the the pairwise_distances implementation
+            # gives the same value
+            distances = PAIRWISE_DISTANCE_FUNCTIONS[metric](X, Y)
+            distances = np.diag(distances)
+            assert_array_almost_equal(distances, S)
+
+    # Check the callable implementation
+    S = paired_distances(X, Y, metric='manhattan')
+    S2 = paired_distances(X, Y,
+        metric=lambda x, y: np.abs(x -y).sum(axis=0))
+    assert_array_almost_equal(S, S2)
+
+    # Test that a value error is raised when the lengths of X and Y should not
+    # differ
+    Y = rng.random_sample((3, 4))
+    assert_raises(ValueError, paired_distances, X, Y)
+
+
+
 def test_pairwise_distances_argmin_min():
     """ Check pairwise minimum distances computation for any metric"""
     X = [[0], [1]]
@@ -259,6 +301,24 @@ def test_euclidean_distances():
     Y = csr_matrix(Y)
     D = euclidean_distances(X, Y)
     assert_array_almost_equal(D, [[1., 2.]])
+
+
+# Paired distances
+
+def test_paired_euclidean_distances():
+    """ Check the paired Euclidean distances computation"""
+    X = [[0], [0]]
+    Y = [[1], [2]]
+    D = paired_euclidean_distances(X, Y)
+    assert_array_almost_equal(D, [1., 2.])
+
+
+def test_paired_manhattan_distances():
+    """ Check the paired manhattan distances computation"""
+    X = [[0], [0]]
+    Y = [[1], [2]]
+    D = paired_manhattan_distances(X, Y)
+    assert_array_almost_equal(D, [1., 2.])
 
 
 def test_chi_square_kernel():
@@ -393,12 +453,20 @@ def test_check_XB_returned():
     assert_array_equal(XA, XA_checked)
     assert_array_equal(XB, XB_checked)
 
+    XB = np.resize(np.arange(40), (5, 8))
+    XA_checked, XB_checked = check_paired_arrays(XA, XB)
+    assert_array_equal(XA, XA_checked)
+    assert_array_equal(XB, XB_checked)
+
 
 def test_check_different_dimensions():
     """ Ensure an error is raised if the dimensions are different. """
     XA = np.resize(np.arange(45), (5, 9))
     XB = np.resize(np.arange(32), (4, 8))
     assert_raises(ValueError, check_pairwise_arrays, XA, XB)
+
+    XB = np.resize(np.arange(4 * 9), (4, 9))
+    assert_raises(ValueError, check_paired_arrays, XA, XB)
 
 
 def test_check_invalid_dimensions():
