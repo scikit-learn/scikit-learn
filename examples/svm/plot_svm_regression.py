@@ -8,10 +8,12 @@ Toy example of 1D regression using linear, polynomial and RBF kernels.
 """
 print(__doc__)
 
+import numpy as np
+from sklearn.svm import SVR
+import pylab as pl
+
 ###############################################################################
 # Generate sample data
-import numpy as np
-
 X = np.sort(5 * np.random.rand(40, 1), axis=0)
 y = np.sin(X).ravel()
 
@@ -21,8 +23,6 @@ y[::5] += 3 * (0.5 - np.random.rand(8))
 
 ###############################################################################
 # Fit regression model
-from sklearn.svm import SVR
-
 svr_rbf = SVR(kernel='rbf', C=1e3, gamma=0.1)
 svr_lin = SVR(kernel='linear', C=1e3)
 svr_poly = SVR(kernel='poly', C=1e3, degree=2)
@@ -32,7 +32,6 @@ y_poly = svr_poly.fit(X, y).predict(X)
 
 ###############################################################################
 # look at the results
-import pylab as pl
 pl.scatter(X, y, c='k', label='data')
 pl.hold('on')
 pl.plot(X, y_rbf, c='g', label='RBF model')
