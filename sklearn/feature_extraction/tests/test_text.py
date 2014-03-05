@@ -152,58 +152,9 @@ def test_word_analyzer_unigrams():
         assert_equal(wa(text), expected)
 
 
-def test_word_analyzer_unigram_multiprocess():
-    wa = CountVectorizer(strip_accents='ascii', n_jobs=-1).build_analyzer()
-    text = ("J'ai mang\xe9 du kangourou  ce midi, "
-            "c'\xe9tait pas tr\xeas bon.")
-    expected = ['ai', 'mange', 'du', 'kangourou', 'ce', 'midi',
-                'etait', 'pas', 'tres', 'bon']
-    assert_equal(wa(text), expected)
-
-    text = "This is a test, really.\n\n I met Harry yesterday."
-    expected = ['this', 'is', 'test', 'really', 'met', 'harry',
-                'yesterday']
-    assert_equal(wa(text), expected)
-
-    wa = CountVectorizer(input='file', n_jobs=-1).build_analyzer()
-    text = StringIO("This is a test with a file-like object!")
-    expected = ['this', 'is', 'test', 'with', 'file', 'like',
-                'object']
-    assert_equal(wa(text), expected)
-
-    # with custom preprocessor
-    wa = CountVectorizer(preprocessor=uppercase, n_jobs=-1).build_analyzer()
-    text = ("J'ai mang\xe9 du kangourou  ce midi, "
-            " c'\xe9tait pas tr\xeas bon.")
-    expected = ['AI', 'MANGE', 'DU', 'KANGOUROU', 'CE', 'MIDI',
-                'ETAIT', 'PAS', 'TRES', 'BON']
-    assert_equal(wa(text), expected)
-
-    # with custom tokenizer
-    wa = CountVectorizer(tokenizer=split_tokenize,
-                         strip_accents='ascii', n_jobs=-1).build_analyzer()
-    text = ("J'ai mang\xe9 du kangourou  ce midi, "
-            "c'\xe9tait pas tr\xeas bon.")
-    expected = ["j'ai", 'mange', 'du', 'kangourou', 'ce', 'midi,',
-                "c'etait", 'pas', 'tres', 'bon.']
-    assert_equal(wa(text), expected)
-
-
 def test_word_analyzer_unigrams_and_bigrams():
     wa = CountVectorizer(analyzer="word", strip_accents='unicode',
                          ngram_range=(1, 2)).build_analyzer()
-
-    text = "J'ai mang\xe9 du kangourou  ce midi, c'\xe9tait pas tr\xeas bon."
-    expected = ['ai', 'mange', 'du', 'kangourou', 'ce', 'midi',
-                'etait', 'pas', 'tres', 'bon', 'ai mange', 'mange du',
-                'du kangourou', 'kangourou ce', 'ce midi', 'midi etait',
-                'etait pas', 'pas tres', 'tres bon']
-    assert_equal(wa(text), expected)
-
-
-def test_word_analyzer_unigrams_and_bigrams_multiprocess():
-    wa = CountVectorizer(analyzer="word", strip_accents='unicode',
-                         ngram_range=(1, 2), n_jobs=-1).build_analyzer()
 
     text = "J'ai mang\xe9 du kangourou  ce midi, c'\xe9tait pas tr\xeas bon."
     expected = ['ai', 'mange', 'du', 'kangourou', 'ce', 'midi',
@@ -261,51 +212,9 @@ def test_char_ngram_analyzer():
     assert_equal(cnga(text)[:5], expected)
 
 
-def test_char_ngram_analyzer_multiprocess():
-    cnga = CountVectorizer(analyzer='char', strip_accents='unicode',
-                           ngram_range=(3, 6), n_jobs=-1).build_analyzer()
-
-    text = "J'ai mang\xe9 du kangourou  ce midi, c'\xe9tait pas tr\xeas bon"
-    expected = ["j'a", "'ai", 'ai ', 'i m', ' ma']
-    assert_equal(cnga(text)[:5], expected)
-    expected = ['s tres', ' tres ', 'tres b', 'res bo', 'es bon']
-    assert_equal(cnga(text)[-5:], expected)
-
-    text = "This \n\tis a test, really.\n\n I met Harry yesterday"
-    expected = ['thi', 'his', 'is ', 's i', ' is']
-    assert_equal(cnga(text)[:5], expected)
-
-    expected = [' yeste', 'yester', 'esterd', 'sterda', 'terday']
-    assert_equal(cnga(text)[-5:], expected)
-
-    cnga = CountVectorizer(input='file', analyzer='char',
-                           ngram_range=(3, 6)).build_analyzer()
-    text = StringIO("This is a test with a file-like object!")
-    expected = ['thi', 'his', 'is ', 's i', ' is']
-    assert_equal(cnga(text)[:5], expected)
-
-
 def test_char_wb_ngram_analyzer():
     cnga = CountVectorizer(analyzer='char_wb', strip_accents='unicode',
                            ngram_range=(3, 6)).build_analyzer()
-
-    text = "This \n\tis a test, really.\n\n I met Harry yesterday"
-    expected = [' th', 'thi', 'his', 'is ', ' thi']
-    assert_equal(cnga(text)[:5], expected)
-
-    expected = ['yester', 'esterd', 'sterda', 'terday', 'erday ']
-    assert_equal(cnga(text)[-5:], expected)
-
-    cnga = CountVectorizer(input='file', analyzer='char_wb',
-                           ngram_range=(3, 6)).build_analyzer()
-    text = StringIO("A test with a file-like object!")
-    expected = [' a ', ' te', 'tes', 'est', 'st ', ' tes']
-    assert_equal(cnga(text)[:6], expected)
-
-
-def test_char_wb_ngram_analyzer_multiprocess():
-    cnga = CountVectorizer(analyzer='char_wb', strip_accents='unicode',
-                           ngram_range=(3, 6), n_jobs=-1).build_analyzer()
 
     text = "This \n\tis a test, really.\n\n I met Harry yesterday"
     expected = [' th', 'thi', 'his', 'is ', ' thi']
@@ -524,11 +433,11 @@ def test_tfidf_no_smoothing():
         1. / np.array([0.])
         numpy_provides_div0_warning = len(w) == 1
 
+    if not numpy_provides_div0_warning:
+        raise SkipTest("Numpy does not provide div 0 warnings.")
     in_warning_message = 'divide by zero'
     tfidf = assert_warns_message(RuntimeWarning, in_warning_message,
                                  tr.fit_transform, X).toarray()
-    if not numpy_provides_div0_warning:
-        raise SkipTest("Numpy does not provide div 0 warnings.")
 
 
 def test_sublinear_tf():
