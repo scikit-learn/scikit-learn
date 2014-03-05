@@ -432,7 +432,8 @@ class Nystroem(BaseEstimator, TransformerMixin):
         """
 
         rnd = check_random_state(self.random_state)
-        X = np.asarray(X)
+        if not sp.issparse(X):
+            X = np.asarray(X)
         n_samples = X.shape[0]
 
         # get basis vectors
