@@ -605,11 +605,11 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
     dtype : type, optional
         Type of the matrix returned by fit_transform() or transform().
 
-    n_jobs : integer, optional
-        The number of CPUs to use to do the computation.
-        If n_jobs < 0, then the number of CPUs used is calculated according
-        to the formula cpu_used = number_of_cores + (n_jobs+1)
-        So putting n_jobs=-1 will use all available CPUs.
+    n_jobs : int, optional, 1 by default
+        The number of jobs to use for the computation. If -1 all CPUs
+        are used. If 1 is given, no parallel computing code is used
+        at all. For n_jobs below -1, (n_cpus + 1 + n_jobs) are used.
+        Thus for n_jobs = -2, all CPUs but one are used.
 
     Attributes
     ----------
@@ -621,6 +621,28 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         they occurred in either too many
         (`max_df`) or in too few (`min_df`) documents.
         This is only available if no vocabulary was given.
+
+    Notes
+    -----
+
+    As it currently stands, the parallelism instantiated by n_jobs!=1 is
+    beneficial only if the analyzer is expected to run for a long time.
+    All the default analyzers (e.g., analyzer='word') provided here do not
+    benefit from the use of multiple cores, due to the overhead in inter
+    process communication, which involves pickling and unpickling of the
+    vocabulary.
+
+    For example, when n_jobs=2 and analyzer is set such that it will stem
+    the text (e.g., using nltk.stem.porter.PorterStemmer()), the vectorizer
+    is able to process Brown corpus (500 documents) faster (almost 2x)
+    compared to the n_jobs=1 version.
+
+    However, when analyzer='word' is used for the same dataset, the multi
+    process version runs almost two times slower compared to the n_jobs=1
+    version.
+
+    Therefore users are adviced to do your own benchmarks for your use case.
+    Run the benchmark scripts for more information.
 
     See also
     --------
