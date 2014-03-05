@@ -134,6 +134,10 @@ def _parallel_predict_proba(trees, X, n_classes, n_outputs):
 
     return proba
 
+def _parallel_predict_paths(trees, X):
+    """Private function used to compute a batch of prediction paths within a job."""
+    return [tree.predict(X, return_paths = True) for tree in trees]
+      
 
 def _parallel_predict_regression(trees, X):
     """Private function used to compute a batch of predictions within a job."""
@@ -400,7 +404,7 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
 
         return y
 
-    def predict(self, X):
+    def predict(self, X, return_paths = True):
         """Predict class for X.
 
         The predicted class of an input sample is computed as the majority
@@ -416,6 +420,25 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
         y : array of shape = [n_samples] or [n_samples, n_outputs]
             The predicted classes.
         """
+        
+        
+        if return_paths:
+            # Check data
+            if getattr(X, "dtype", None) != DTYPE or X.ndim != 2:
+                X = array2d(X, dtype=DTYPE)
+
+            # Assign chunk of trees to jobs
+            n_jobs, n_trees, starts = _partition_estimators(self)
+
+            # Parallel loop
+            path_list = Parallel(n_jobs=n_jobs, verbose=self.verbose,
+                                     backend="threading")(
+                    delayed(_parallel_predict_paths)(
+                        self.estimators_[starts[i]:starts[i + 1]], X)
+                    for i in range(n_jobs))
+            #unpack the nested list and return
+            return [lst for med_lst in path_list for lst in med_lst]
+        
         n_samples = len(X)
         proba = self.predict_proba(X)
 
@@ -544,7 +567,7 @@ class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
             random_state=random_state,
             verbose=verbose)
 
-    def predict(self, X):
+    def predict(self, X, return_paths = False):
         """Predict regression target for X.
 
         The predicted regression target of an input sample is computed as the
@@ -568,16 +591,27 @@ class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
         n_jobs, n_trees, starts = _partition_estimators(self)
 
         # Parallel loop
-        all_y_hat = Parallel(n_jobs=n_jobs, verbose=self.verbose,
-                             backend="threading")(
-            delayed(_parallel_predict_regression)(
-                self.estimators_[starts[i]:starts[i + 1]], X)
-            for i in range(n_jobs))
+        if return_paths:
+            path_list = Parallel(n_jobs=n_jobs, verbose=self.verbose,
+                                     backend="threading")(
+                    delayed(_parallel_predict_paths)(
+                        self.estimators_[starts[i]:starts[i + 1]], X)
+                    for i in range(n_jobs))
+            #unpack the nested list and return
+            return [lst for med_lst in path_list for lst in med_lst]
+        else:
+            all_y_hat = Parallel(n_jobs=n_jobs, verbose=self.verbose,
+                                 backend="threading")(
+                delayed(_parallel_predict_regression)(
+                    self.estimators_[starts[i]:starts[i + 1]], X)
+                for i in range(n_jobs))
+                # Reduce    
+            y_hat = sum(all_y_hat) / len(self.estimators_)
+    
+            return y_hat
 
-        # Reduce
-        y_hat = sum(all_y_hat) / len(self.estimators_)
-
-        return y_hat
+        
+        
 
     def _set_oob_score(self, X, y):
         n_samples = y.shape[0]
