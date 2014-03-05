@@ -13,6 +13,7 @@ from __future__ import print_function
 from math import log
 import sys
 import warnings
+from distutils.version import LooseVersion
 
 import numpy as np
 from scipy import linalg, interpolate
@@ -24,6 +25,11 @@ from ..utils import array2d, arrayfuncs, as_float_array, check_arrays
 from ..cross_validation import _check_cv as check_cv
 from ..externals.joblib import Parallel, delayed
 from ..externals.six.moves import xrange
+
+import scipy
+solve_triangular_args = {}
+if LooseVersion(scipy.__version__) >= LooseVersion('0.12'):
+    solve_triangular_args = {'check_finite': False}
 
 
 def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
@@ -233,8 +239,13 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
                 L[n_active, :n_active] = Gram[n_active, :n_active]
 
             # Update the cholesky decomposition for the Gram matrix
-            arrayfuncs.solve_triangular(L[:n_active, :n_active],
-                                        L[n_active, :n_active])
+            if n_active:
+                linalg.solve_triangular(L[:n_active, :n_active],
+                                        L[n_active, :n_active],
+                                        trans=0, lower=1,
+                                        overwrite_b=True,
+                                        **solve_triangular_args)
+
             v = np.dot(L[n_active, :n_active], L[n_active, :n_active])
             diag = max(np.sqrt(np.abs(c - v)), eps)
             L[n_active, n_active] = diag
