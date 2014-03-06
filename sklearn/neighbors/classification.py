@@ -214,7 +214,9 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
             # normalize 'votes' into real [0,1] probabilities
             normalizer = proba_k.sum(axis=1)[:, np.newaxis]
             normalizer[normalizer == 0.0] = 1.0
-            proba_k /= normalizer
+            with np.errstate(divide='ignore'):
+                proba_k /= normalizer
+            proba_k[np.isnan(proba_k)] = 1.0
 
             probabilities.append(proba_k)
 
