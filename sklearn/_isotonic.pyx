@@ -17,42 +17,35 @@ def _isotonic_regression(np.ndarray[DOUBLE, ndim=1] y,
                          np.ndarray[DOUBLE, ndim=1] solution):
 
     cdef:
-        Py_ssize_t current, i
-        unsigned int len_active_set
-        DOUBLE v, w
+        DOUBLE numerator, denominator
+        Py_ssize_t i, pooled, n, k
 
-    len_active_set = y.shape[0]
-    active_set = [[weight[i] * y[i], weight[i], [i, ]]
-                  for i in range(len_active_set)]
-    current = 0
+    n = y.shape[0]
+    for i in range(n):
+        solution[i] = y[i]
 
-    while current < len_active_set - 1:
-        while current < len_active_set -1 and \
-              (active_set[current][0] * active_set[current + 1][1] <= 
-               active_set[current][1] * active_set[current + 1][0]):
-            current += 1
+    if n <= 1:
+        return solution
 
-        if current == len_active_set - 1:
+    n -= 1
+    while 1:
+        i = 0
+        pooled = 0
+        while i < n:
+            k = i
+            while k < n and solution[k] >= solution[k+1]:
+                k += 1
+            if solution[i] != solution[k]:
+                numerator = 0.0
+                denominator = 0.0
+                for alpha in range(i, k+1):
+                    numerator += solution[alpha] * weight[alpha]
+                    denominator += weight[alpha]
+                for alpha in range(i, k+1):
+                    solution[alpha] = numerator / denominator
+                pooled = 1
+            i = k + 1
+
+        if pooled == 0:
             break
-
-        # merge two groups
-        active_set[current][0] += active_set[current + 1][0]
-        active_set[current][1] += active_set[current + 1][1]
-        active_set[current][2] += active_set[current + 1][2]
-
-        active_set.pop(current + 1)
-        len_active_set -= 1
-        while current > 0 and \
-              (active_set[current - 1][0] * active_set[current][1] > 
-               active_set[current - 1][1] * active_set[current][0]):
-            current -= 1
-            active_set[current][0] += active_set[current + 1][0]
-            active_set[current][1] += active_set[current + 1][1]
-            active_set[current][2] += active_set[current + 1][2]
-
-            active_set.pop(current + 1)
-            len_active_set -= 1
-
-    for v, w, idx in active_set:
-        solution[idx] = v / w
     return solution
