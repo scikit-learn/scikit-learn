@@ -201,6 +201,13 @@ def test_kneighbors_classifier_predict_proba():
     cls.fit(X, y.astype(str))
     y_prob = cls.predict_proba(X)
     assert_array_equal(real_prob, y_prob)
+    # Check that it works with weights='distance'
+    cls = neighbors.KNeighborsClassifier(n_neighbors=2, p=1, weights='distance')
+    cls.fit(X, y)
+    y_prob = cls.predict_proba(np.array([[0,2,0],[2,2,2]]))
+    real_prob = np.array([[0,1,0],[0,0.4,0.6]])
+    assert_array_almost_equal(real_prob, y_prob)
+
 
 
 def test_radius_neighbors_classifier(n_samples=40,
