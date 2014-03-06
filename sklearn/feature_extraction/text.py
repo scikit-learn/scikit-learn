@@ -767,7 +767,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         doc_list = Parallel(n_jobs=self.n_jobs)(
             delayed(_count_vocab_process)(docs, clone(self))
             for docs in _batch_iter(raw_documents, 10))
-        doc_list = list(chain(*doc_list))
+        doc_list = chain(*doc_list)
         dict_vectorizer = DictVectorizer(dtype=self.dtype, sparse=True)
         if fixed_vocab:
             vocabulary = self.vocabulary_
@@ -775,12 +775,11 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
             dict_vectorizer.feature_names_ = set()
             X = dict_vectorizer.transform(doc_list)
         else:
-            dict_vectorizer = dict_vectorizer.fit(doc_list)
+            X = dict_vectorizer.fit_transform(doc_list)
             vocabulary = dict_vectorizer.vocabulary_
             if not vocabulary:
                 raise ValueError("empty vocabulary; perhaps the documents"
                                  " only contain stop words")
-            X = dict_vectorizer.transform(doc_list)
         return vocabulary, X
 
     def fit(self, raw_documents, y=None):
