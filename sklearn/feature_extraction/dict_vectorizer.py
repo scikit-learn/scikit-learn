@@ -111,6 +111,8 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         # sort the feature names to define the mapping
         feature_names = sorted(feature_names)
         self.vocabulary_ = dict((f, i) for i, f in enumerate(feature_names))
+        if not self.vocabulary_:
+            raise ValueError('empty vocabulary; no feature was passed to fit')
         self.feature_names_ = feature_names
 
         return self

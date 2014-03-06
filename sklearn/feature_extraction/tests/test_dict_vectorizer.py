@@ -102,3 +102,18 @@ def test_deterministic_vocabulary():
     v_2 = DictVectorizer().fit([d_shuffled])
 
     assert_equal(v_1.vocabulary_, v_2.vocabulary_)
+
+
+def test_empty_vocabulary():
+    d = DictVectorizer()
+    try:
+        d.fit([{}])
+        assert False, "we shouldn't get here"
+    except ValueError as e:
+        assert_in("empty vocabulary", str(e).lower())
+
+    try:
+        d.fit_transform([{}])
+        assert False, "we shouldn't get here"
+    except ValueError as e:
+        assert_in("empty vocabulary", str(e).lower())
