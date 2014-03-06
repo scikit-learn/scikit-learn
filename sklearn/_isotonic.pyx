@@ -22,7 +22,7 @@ def _isotonic_regression(np.ndarray[DOUBLE, ndim=1] y,
         DOUBLE v, w
 
     len_active_set = y.shape[0]
-    active_set = [[weight[i] * y[i], weight[i], [i, ]]
+    active_set = [[weight[i] * y[i], weight[i], i, i + 1]
                   for i in range(len_active_set)]
     current = 0
 
@@ -38,7 +38,7 @@ def _isotonic_regression(np.ndarray[DOUBLE, ndim=1] y,
         # merge two groups
         active_set[current][0] += active_set[current + 1][0]
         active_set[current][1] += active_set[current + 1][1]
-        active_set[current][2] += active_set[current + 1][2]
+        active_set[current][3] = active_set[current + 1][3]
 
         active_set.pop(current + 1)
         len_active_set -= 1
@@ -48,11 +48,11 @@ def _isotonic_regression(np.ndarray[DOUBLE, ndim=1] y,
             current -= 1
             active_set[current][0] += active_set[current + 1][0]
             active_set[current][1] += active_set[current + 1][1]
-            active_set[current][2] += active_set[current + 1][2]
+            active_set[current][3] = active_set[current + 1][3]
 
             active_set.pop(current + 1)
             len_active_set -= 1
 
-    for v, w, idx in active_set:
-        solution[idx] = v / w
+    for v, w, lower, upper in active_set:
+        solution[lower:upper] = v / w
     return solution
