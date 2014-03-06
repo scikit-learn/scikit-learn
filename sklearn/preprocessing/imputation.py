@@ -43,7 +43,6 @@ def _get_median(data, n_zeros):
         return np.nan
     n_negative = np.count_nonzero(data < 0)
     middle, is_odd = divmod(n_elems, 2)
-    assert middle == n_elems // 2
 
     if is_odd:
         ind = _partition_ind_for_rank(middle, data, n_negative, n_zeros)
