@@ -6,10 +6,6 @@ from datetime import datetime
 from sklearn.isotonic import IsotonicRegression
 from sklearn.utils.bench import total_seconds
 import sys
-import matplotlib.pyplot as plt
-import json
-
-plt.ioff()
 
 
 def bench_isotonic_regression(X, Y):
@@ -32,8 +28,4 @@ if __name__ == '__main__':
         times = [bench_isotonic_regression(X, Y) for i in range(iters)]
         timing = (n, np.mean(times))
         timings.append(timing)
-    print(json.dumps(timings))
-
-    xs, ys = zip(*timings)
-    plt.plot(xs, ys)
-    plt.show()
+        print(n, np.mean(times))
