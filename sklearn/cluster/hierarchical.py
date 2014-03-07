@@ -517,7 +517,6 @@ def _hc_cut(n_clusters, children, n_leaves):
 ###############################################################################
 
 class AgglomerativeClustering(BaseEstimator, ClusterMixin):
-
     """
     Agglomerative Clustering
 
