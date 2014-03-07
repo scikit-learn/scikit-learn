@@ -235,7 +235,6 @@ API changes summary
      Previously it was broken for input of non-int dtype and the weighted
      array that was returned was wrong. By `Manoj Kumar`_.
 
-
 .. _changes_0_14:
 
 0.14
