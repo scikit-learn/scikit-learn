@@ -212,7 +212,7 @@ def ward_tree(X, connectivity=None, n_components=None, copy=None,
         # identify the merge
         while True:
             if len(inertia) == 0:
-                raise Exception(
+                raise ValueError(
                     "Couldn't create clusters due to too few nearst neighbours specified.")
             inert, i, j = heappop(inertia)
             if used_node[i] and used_node[j]:
