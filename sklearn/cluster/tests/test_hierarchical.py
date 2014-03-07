@@ -29,6 +29,8 @@ from sklearn.cluster._hierarchical import average_merge, max_merge
 from sklearn.utils.fast_dict import IntFloatDict
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_warns
+import sklearn.datasets
+import sklearn.neighbors
 
 
 def test_linkage_misc():
@@ -94,9 +96,9 @@ def test_unstructured_linkage_tree():
         with warnings.catch_warnings(record=True) as warning_list:
             warnings.simplefilter("ignore", DeprecationWarning)
             children, n_nodes, n_leaves, parent = assert_warns(UserWarning,
-                                                           ward_tree,
-                                                           this_X.T,
-                                                           n_clusters=10)
+                                                               ward_tree,
+                                                               this_X.T,
+                                                               n_clusters=10)
         n_nodes = 2 * X.shape[1] - 1
         assert_equal(len(children) + n_leaves, n_nodes)
 
@@ -154,7 +156,7 @@ def test_agglomerative_clustering():
         assert_true(np.size(np.unique(labels)) == 10)
         # Turn caching off now
         clustering = AgglomerativeClustering(n_clusters=10,
-                            connectivity=connectivity, linkage=linkage)
+                                             connectivity=connectivity, linkage=linkage)
         # Check that we obtain the same solution with early-stopping of the
         # tree building
         clustering.compute_full_tree = False
@@ -198,6 +200,12 @@ def test_agglomerative_clustering():
         assert_almost_equal(normalized_mutual_info_score(
                             clustering2.labels_,
                             clustering.labels_), 1)
+
+    X = sklearn.datasets.load_digits().data
+    connectivity = sklearn.neighbors.kneighbors_graph(X, n_neighbors=10)
+    n_clusters = 2
+    _Ward = Ward(n_clusters=n_clusters, connectivity=connectivity)
+    assert_raises(ValueError, _Ward.fit, X)
 
 
 def test_ward_agglomeration():
