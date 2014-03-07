@@ -45,7 +45,7 @@ def _isotonic_regression(np.ndarray[DOUBLE, ndim=1] y,
             while k < n and solution[k] >= solution[k + 1]:
                 k += 1
             if solution[i] != solution[k]:
-                # solution[i:k+1] is a decreasing subsequence replace
+                # solution[i:k + 1] is a decreasing subsequence replace
                 # each point with the weighted average of the
                 # subsequence.
 
@@ -56,10 +56,10 @@ def _isotonic_regression(np.ndarray[DOUBLE, ndim=1] y,
                 # initial experiments weren't promising.
                 numerator = 0.0
                 denominator = 0.0
-                for j in range(i, k+1):
+                for j in range(i, k + 1):
                     numerator += solution[j] * weight[j]
                     denominator += weight[j]
-                for j in range(i, k+1):
+                for j in range(i, k + 1):
                     solution[j] = numerator / denominator
                 pooled = 1
             i = k + 1
