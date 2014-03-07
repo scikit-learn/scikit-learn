@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import numpy as np
 import gc
 from datetime import datetime
@@ -6,17 +8,17 @@ from sklearn.utils.bench import total_seconds
 import sys
 import matplotlib.pyplot as plt
 import json
+
 plt.ioff()
 
 
 def bench_isotonic_regression(X, Y):
     gc.collect()
 
-    # start time
     tstart = datetime.now()
     clf = IsotonicRegression()
     clf.fit(X, Y)
-    delta = (datetime.now() - tstart)
+    delta = datetime.now() - tstart
     return total_seconds(delta)
 
 if __name__ == '__main__':
@@ -30,7 +32,8 @@ if __name__ == '__main__':
         times = [bench_isotonic_regression(X, Y) for i in range(iters)]
         timing = (n, np.mean(times))
         timings.append(timing)
+    print(json.dumps(timings))
+
     xs, ys = zip(*timings)
-    print json.dumps(timings)
     plt.plot(xs, ys)
     plt.show()

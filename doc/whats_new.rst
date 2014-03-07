@@ -154,6 +154,10 @@ Changelog
      :func:`feature_selection.f_regression` when variates are not centered.
      By `VirgileFritsch`_.
 
+   - Significant performance improvements (more than 100x speedup for
+     large problems) in :class:`isotonic.IsotonicRegression` by
+     `Andrew Tulloch`_.
+
 
 API changes summary
 -------------------
@@ -230,6 +234,7 @@ API changes summary
    - Fix :func:`utils.compute_class_weight` when class_weight is "auto".
      Previously it was broken for input of non-int dtype and the weighted
      array that was returned was wrong. By `Manoj Kumar`_.
+
 
 .. _changes_0_14:
 
