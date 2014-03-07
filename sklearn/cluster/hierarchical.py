@@ -213,7 +213,7 @@ def ward_tree(X, connectivity=None, n_components=None, copy=None,
         while True:
             if len(inertia) == 0:
                 raise ValueError(
-                    "Couldn't create clusters due to too few nearst neighbours specified.")
+                    "Couldn't create clusters due to too few nearest neighbours specified.")
             inert, i, j = heappop(inertia)
             if used_node[i] and used_node[j]:
                 break
