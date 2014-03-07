@@ -45,12 +45,12 @@ def _isotonic_regression(np.ndarray[DOUBLE, ndim=1] y,
             while k < n and solution[k] >= solution[k + 1]:
                 k += 1
             if solution[i] != solution[k]:
-                # solution[i:k + 1] is a decreasing subsequence replace
-                # each point with the weighted average of the
-                # subsequence.
+                # solution[i:k + 1] is a decreasing subsequence, so
+                # replace each point in the subsequence with the
+                # weighted average of the subsequence.
 
                 # TODO: explore replacing each subsequence with a
-                # single weighted point, and reconstruct the whole
+                # _single_ weighted point, and reconstruct the whole
                 # sequence from the sequence of collapsed points.
                 # Theoretically should reduce running time, though
                 # initial experiments weren't promising.
