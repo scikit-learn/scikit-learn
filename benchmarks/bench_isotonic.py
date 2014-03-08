@@ -15,32 +15,30 @@ from __future__ import print_function
 import numpy as np
 import gc
 from datetime import datetime
-from sklearn.isotonic import IsotonicRegression
+from sklearn.isotonic import isotonic_regression
 from sklearn.utils.bench import total_seconds
 import matplotlib.pyplot as plt
 import argparse
 
 
 def generate_perturbed_logarithm_dataset(size):
-    X = np.arange(n)
-    Y = np.random.randint(-50, 50, size=(n,)) \
+    return np.random.randint(-50, 50, size=n) \
         + 50. * np.log(1 + np.arange(n))
-    return (X, Y)
 
 
 def generate_logistic_dataset(size):
     X = np.sort(np.random.normal(size=size))
     Y = np.random.random(size=size) < 1.0 / (1.0 + np.exp(-X))
-    return (X, Y)
+    return Y
 
 
 DATASET_GENERATORS = {
-    'peturbed_logarithm': generate_perturbed_logarithm_dataset,
+    'perturbed_logarithm': generate_perturbed_logarithm_dataset,
     'logistic': generate_logistic_dataset
 }
 
 
-def bench_isotonic_regression(X, Y):
+def bench_isotonic_regression(Y):
     """
     Runs a single iteration of isotonic regression on the input data,
     and reports the total time taken (in seconds).
@@ -48,8 +46,7 @@ def bench_isotonic_regression(X, Y):
     gc.collect()
 
     tstart = datetime.now()
-    clf = IsotonicRegression()
-    clf.fit(X, Y)
+    isotonic_regression(Y)
     delta = datetime.now() - tstart
     return total_seconds(delta)
 
@@ -77,9 +74,9 @@ if __name__ == '__main__':
 
         # Generate a synthetic dataset used in the unit tests for
         # isotonic regression.
-        X, Y = DATASET_GENERATORS[args.dataset](n)
+        Y = DATASET_GENERATORS[args.dataset](n)
         time_per_iteration = \
-            [bench_isotonic_regression(X, Y) for i in range(args.iterations)]
+            [bench_isotonic_regression(Y) for i in range(args.iterations)]
         timing = (n, np.mean(time_per_iteration))
         timings.append(timing)
 
