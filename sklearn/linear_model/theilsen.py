@@ -132,8 +132,9 @@ class TheilSen(LinearModel, RegressorMixin):
         Instead of computing with a set of cardinality 'n choose k', where n is
         the number of samples and k is the number of subsamples (at least
         number of features), consider only a stochastic subpopulation of a
-        given maximal size. If None, no stochastic sampling of subpopulation
-        is done. This can be computationally intractible.
+        given maximal size if 'n choose k' is larger than max_subpopulation.
+        For other than small problem sizes this parameter will determine
+        memory usage and runtime if n_subsamples is not changed.
 
     n_subsamples : int, optional, default None
         Number of samples to calculate the parameters. This is at least the
@@ -142,6 +143,8 @@ class TheilSen(LinearModel, RegressorMixin):
         point and a low efficiency while a high number leads to a low
         breakdown point and a high efficiency. If None, take the
         minimum number of subsamples leading to maximal robustness.
+        If n_subsamples is set to n_samples, Theil-Sen is identical to least
+        squares.
 
     n_iter : int, optional, default 300
         Maximum number of iterations for the calculation of spatial median.
@@ -208,9 +211,8 @@ class TheilSen(LinearModel, RegressorMixin):
             n_subsamples = n_dim
         if self.max_subpopulation <= 0:
             raise ValueError("Subpopulation must be positive.")
-        n_sp = int(binom(n_samples, n_subsamples))
-        if self.max_subpopulation is not None:
-            n_sp = min(self.max_subpopulation, n_sp)
+        n_all = binom(n_samples, n_subsamples)
+        n_sp = int(min(self.max_subpopulation, n_all))
         return n_dim, n_subsamples, n_sp
 
     def _get_n_jobs(self):
@@ -226,9 +228,7 @@ class TheilSen(LinearModel, RegressorMixin):
             yield self.random_state_.randint(0, n_samples, n_ss)
 
     def _get_indices(self, n_samples, n_ss, n_sp):
-        if self.max_subpopulation is None:
-            return combinations(xrange(n_samples), n_ss)
-        elif int(binom(n_samples, n_ss)) <= self.max_subpopulation:
+        if binom(n_samples, n_ss) <= self.max_subpopulation:
             return combinations(xrange(n_samples), n_ss)
         else:
             return self._subpop_iter(n_samples, n_ss, n_sp)

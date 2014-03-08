@@ -903,12 +903,12 @@ median which is a generalization of the median to multiple dimensions [2].
 In terms of time and space complexity, Theil-Sen scales according to
 
 .. math::
-    \binom{n_samples}{n_subsamples}
+    \binom{n_{samples}}{n_{subsamples}}
 
 which makes it infeasible to be applied exhaustively to problems with a
-large number of samples and features. Therefore, the magnitude of the
-subpopulation limits the time and space complexity by considering only a
-random subset of all possible combinations.
+large number of samples and features. Therefore, the magnitude of a
+subpopulation can be shosen to limit the time and space complexity by
+considering only a random subset of all possible combinations.
 
 .. figure:: ../auto_examples/linear_model/images/plot_theilsen_1.png
    :target: ../auto_examples/linear_model/plot_theilsen.html
