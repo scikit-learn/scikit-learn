@@ -43,35 +43,22 @@ def _get_median(data, n_zeros):
         return np.nan
     n_negative = np.count_nonzero(data < 0)
     middle, is_odd = divmod(n_elems, 2)
+    data.sort()
 
     if is_odd:
-        ind = _partition_ind_for_rank(middle, data, n_negative, n_zeros)
-        if ind is None:
-            return 0.
-        data.partition(ind)
-        return data[ind]
+        return _get_elem_at_rank(middle, data, n_negative, n_zeros)
 
-    ind1 = _partition_ind_for_rank(middle - 1, data, n_negative, n_zeros)
-    ind2 = _partition_ind_for_rank(middle, data, n_negative, n_zeros)
-    if ind1 is not None and ind2 is not None:
-        data.partition((ind1, ind2))
-        return (data[ind1] + data[ind2]) / 2.
-    elif ind1 is not None:
-        data.partition(ind1)
-        return data[ind1] / 2.
-    elif ind2 is not None:
-        data.partition(ind2)
-        return data[ind2] / 2.
-    return 0.
+    return (_get_elem_at_rank(middle - 1, data, n_negative, n_zeros) +
+            _get_elem_at_rank(middle, data, n_negative, n_zeros)) / 2.
 
 
-def _partition_ind_for_rank(rank, data, n_negative, n_zeros):
-    """Find the index in data for the given rank, or None if a zero"""
+def _get_elem_at_rank(rank, data, n_negative, n_zeros):
+    """Find the value in data augmented with n_zeros for the given rank"""
     if rank < n_negative:
-        return rank
+        return data[rank]
     if rank - n_negative < n_zeros:
-        return None
-    return rank - n_zeros
+        return 0
+    return data[rank - n_zeros]
 
 
 def _most_frequent(array, extra_value, n_repeat):
@@ -260,7 +247,8 @@ class Imputer(BaseEstimator, TransformerMixin):
             mask_valids = np.hsplit(np.logical_not(mask_missing_values),
                                     X.indptr[1:-1])
 
-            columns = [col.compress(mask)
+            # astype necessary for bug in numpy.hsplit before v1.9
+            columns = [col[mask.astype(bool, copy=False)]
                        for col, mask in zip(columns_all, mask_valids)]
 
             # Median
