@@ -28,8 +28,7 @@ def generate_perturbed_logarithm_dataset(size):
 
 def generate_logistic_dataset(size):
     X = np.sort(np.random.normal(size=size))
-    Y = np.random.random(size=size) < 1.0 / (1.0 + np.exp(-X))
-    return Y
+    return np.random.random(size=size) < 1.0 / (1.0 + np.exp(-X))
 
 
 DATASET_GENERATORS = {
@@ -71,9 +70,6 @@ if __name__ == '__main__':
     for exponent in range(args.log_min_problem_size,
                           args.log_max_problem_size):
         n = 10 ** exponent
-
-        # Generate a synthetic dataset used in the unit tests for
-        # isotonic regression.
         Y = DATASET_GENERATORS[args.dataset](n)
         time_per_iteration = \
             [bench_isotonic_regression(Y) for i in range(args.iterations)]
