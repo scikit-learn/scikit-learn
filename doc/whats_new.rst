@@ -154,6 +154,10 @@ Changelog
      :func:`feature_selection.f_regression` when variates are not centered.
      By `VirgileFritsch`_.
 
+   - Significant performance improvements (more than 100x speedup for
+     large problems) in :class:`isotonic.IsotonicRegression` by
+     `Andrew Tulloch`_.
+
 
 API changes summary
 -------------------
@@ -2461,3 +2465,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Johannes Schönberger: https://github.com/ahojnnes
 
 .. _Manoj Kumar: https://github.com/Manoj-Kumar-S
+
+.. _Andrew Tulloch: http://tullo.ch
