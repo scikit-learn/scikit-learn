@@ -19,6 +19,7 @@ from .base import LinearModel
 from ..base import RegressorMixin
 from ..utils import check_arrays, check_random_state
 from ..externals.joblib import Parallel, delayed, cpu_count
+from ..externals.six.moves import xrange
 
 _logger = logging.getLogger(__name__)
 
