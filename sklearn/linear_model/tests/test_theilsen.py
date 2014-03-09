@@ -15,6 +15,8 @@ import numpy.testing as nptest
 from scipy.linalg import norm
 from scipy.optimize import fmin_bfgs
 from nose.tools import raises
+from sklearn.externals.joblib import cpu_count
+from sklearn.externals.six.moves import xrange
 from sklearn.linear_model import LinearRegression, TheilSen
 from sklearn.linear_model.theilsen import _spatial_median, _modweiszfeld_step,\
     _breakdown_point
@@ -236,7 +238,7 @@ def test_verbosity():
     TheilSen(verbose=True, max_subpopulation=10).fit(X, y)
 
 
-def test_theilsen_parallel_all_CPUs():
+def test_theilsen_parallel():
     X, y, w, c = gen_toy_problem_2d()
     # Check that Least Squares fails
     lstq = LinearRegression().fit(X, y)
@@ -247,32 +249,40 @@ def test_theilsen_parallel_all_CPUs():
     nptest.assert_array_almost_equal(theilsen.intercept_, c, 1)
 
 
-def test_theilsen_parallel_2_CPUs():
-    X, y, w, c = gen_toy_problem_1d()
-    # Check that Least Squares fails
-    lstq = LinearRegression().fit(X, y)
-    assert np.abs(lstq.coef_ - w) > 0.9
-    # Check that Theil-Sen works
-    theilsen = TheilSen(n_jobs=2).fit(X, y)
-    nptest.assert_array_almost_equal(theilsen.coef_, w, 2)
-    nptest.assert_array_almost_equal(theilsen.intercept_, c, 2)
-
-
-def test_theilsen_parallel_all_but_one_CPUs():
-    X, y, w, c = gen_toy_problem_1d()
-    # Check that Least Squares fails
-    lstq = LinearRegression().fit(X, y)
-    assert np.abs(lstq.coef_ - w) > 0.9
-    # Check that Theil-Sen works
-    theilsen = TheilSen(n_jobs=-2).fit(X, y)
-    nptest.assert_array_almost_equal(theilsen.coef_, w, 2)
-    nptest.assert_array_almost_equal(theilsen.intercept_, c, 2)
-
-
 @raises(ValueError)
-def test_theilsen_parallel_no_CPUs():
-    X, y, w, c = gen_toy_problem_1d()
-    TheilSen(n_jobs=0).fit(X, y)
+def test__get_n_jobs_with_0_CPUs():
+    TheilSen(n_jobs=0)._get_n_jobs()
+
+
+def test__get_n_jobs():
+    n_jobs = TheilSen(n_jobs=2)._get_n_jobs()
+    assert n_jobs == 2
+    n_jobs = TheilSen(n_jobs=-2)._get_n_jobs()
+    assert n_jobs == cpu_count() - 1
+
+
+def test__split_indices():
+    np.random.seed(0)
+
+    def gen_indices(n):
+        for _ in xrange(n):
+            yield np.random.randint(n, size=10)
+
+    theilsen = TheilSen()
+    indices, starts = theilsen._split_indices(gen_indices(10), 3)
+    assert len(indices) == 3
+    assert indices[0].shape[0] == 4
+    assert indices[1].shape[0] == 3
+    assert indices[2].shape[0] == 3
+    nptest.assert_array_equal(starts, np.array([0, 4, 7]))
+
+    # Test if more splits than elements in indices
+    indices, starts = theilsen._split_indices(gen_indices(2), 4)
+    assert indices[0].shape[0] == 1
+    assert indices[1].shape[0] == 1
+    assert indices[2].shape[0] == 0
+    assert indices[2].shape[0] == 0
+    nptest.assert_array_equal(starts, np.array([0, 1, 2, 2]))
 
 
 def test_less_samples_than_features():

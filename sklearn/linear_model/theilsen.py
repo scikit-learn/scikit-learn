@@ -274,7 +274,7 @@ class TheilSen(LinearModel, RegressorMixin):
 
     def _split_indices(self, indices, n):
         idx_lst = np.array_split(np.array(list(indices)), n)
-        starts = [0] + [arr.shape[0] for arr in idx_lst]
+        starts = [0] + [arr.shape[0] for arr in idx_lst[:-1]]
         starts = np.cumsum(starts)
         return idx_lst, starts
 
