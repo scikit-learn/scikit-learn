@@ -228,11 +228,11 @@ class TheilSen(LinearModel, RegressorMixin):
 
     def _print_verbose(self, n_samples, n_sp):
         if self.verbose:
-            print("Breakdown point: {}".format(self.breakdown_))
-            print("Number of samples: {}".format(n_samples))
+            print("Breakdown point: {0}".format(self.breakdown_))
+            print("Number of samples: {0}".format(n_samples))
             tol_outliers = int(self.breakdown_ * n_samples)
-            print("Tolerable outliers: {}".format(tol_outliers))
-            print("Number of subpopulations: {}".format(n_sp))
+            print("Tolerable outliers: {0}".format(tol_outliers))
+            print("Number of subpopulations: {0}".format(n_sp))
 
     def _check_subparams(self, n_samples, n_features):
         if self.fit_intercept:
