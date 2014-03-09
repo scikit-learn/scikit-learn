@@ -205,6 +205,15 @@ def test__checksubparams_too_many_subsamples():
     TheilSen(n_subsamples=101).fit(X, y)
 
 
+@raises(AssertionError)
+def test__checksubparams_n_subsamples_if_less_samples_than_features():
+    np.random.seed(0)
+    n_samples, n_features = 10, 20
+    X = np.random.randn(n_samples*n_features).reshape(n_samples, n_features)
+    y = np.random.randn(n_samples)
+    TheilSen(n_subsamples=9).fit(X, y)
+
+
 def test_subpopulation():
     X, y, w, c = gen_toy_problem_4d()
     theilsen = TheilSen(max_subpopulation=1000, random_state=0).fit(X, y)
@@ -264,3 +273,19 @@ def test_theilsen_parallel_all_but_one_CPUs():
 def test_theilsen_parallel_no_CPUs():
     X, y, w, c = gen_toy_problem_1d()
     TheilSen(n_jobs=0).fit(X, y)
+
+
+def test_less_samples_than_features():
+    np.random.seed(0)
+    n_samples, n_features = 10, 20
+    X = np.random.randn(n_samples*n_features).reshape(n_samples, n_features)
+    y = np.random.randn(n_samples)
+    # Check that Theil-Sen falls back to Least Squares if fit_intercept=False
+    theilsen = TheilSen(fit_intercept=False).fit(X, y)
+    lstq = LinearRegression(fit_intercept=False).fit(X, y)
+    nptest.assert_array_almost_equal(theilsen.coef_, lstq.coef_, 12)
+    # Check fit_intercept=True case. This will not be equal to the Least
+    # Squares solution since the intercept is calculated differently.
+    theilsen = TheilSen(fit_intercept=True).fit(X, y)
+    y_pred = theilsen.predict(X)
+    nptest.assert_array_almost_equal(y_pred, y, 12)

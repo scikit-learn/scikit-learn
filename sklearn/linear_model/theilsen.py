@@ -241,12 +241,16 @@ class TheilSen(LinearModel, RegressorMixin):
             n_dim = n_features
         n_subsamples = self.n_subsamples
         if n_subsamples is not None:
-            assert n_dim <= n_subsamples <= n_samples
+            assert n_subsamples <= n_samples
+            if n_samples >= n_features:
+                assert n_dim <= n_subsamples
+            else:  # if n_samples < n_features
+                assert n_subsamples == n_samples
         else:
-            n_subsamples = n_dim
+            n_subsamples = min(n_dim, n_samples)
         if self.max_subpopulation <= 0:
             raise ValueError("Subpopulation must be positive.")
-        n_all = binom(n_samples, n_subsamples)
+        n_all = max(1, binom(n_samples, n_subsamples))
         n_sp = int(min(self.max_subpopulation, n_all))
         return n_dim, n_subsamples, n_sp
 
