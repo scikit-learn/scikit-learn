@@ -104,6 +104,7 @@ def fetch_mldata(dataname, target_name='label', data_name='data',
 
     Load the 'leukemia' dataset from mldata.org, which needs to be transposed
     to respects the sklearn axes convention:
+
     >>> leuk = fetch_mldata('leukemia', transpose_data=True,
     ...                     data_home=test_data_home)
     >>> leuk.data.shape
