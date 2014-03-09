@@ -13,7 +13,8 @@ import tempfile
 from itertools import combinations
 
 import numpy as np
-from scipy.linalg import norm, lstsq
+from numpy.linalg import norm
+from scipy.linalg import lstsq
 from scipy.special import binom
 from .base import LinearModel
 from ..base import RegressorMixin
@@ -42,19 +43,18 @@ def _modweiszfeld_step(X, y):
         New iteration step.
     """
     X, y = check_arrays(X.T, y, sparse_format='dense', dtype=np.float)
-    eta = 0.
-    res = np.zeros(y.shape)
-    T_nom = np.zeros(y.shape)
-    T_denom = 0.
-    for x in X.T:
-        diff = x - y
-        normdiff = norm(diff)
-        if normdiff < 1.e-6:
-            eta = 1.
-            continue
-        res += diff / normdiff
-        T_denom += 1. / normdiff
-        T_nom += x / normdiff
+    diff = X.T - y
+    normdiff = norm(diff, axis=1)
+    mask = normdiff >= 1e-6
+    if mask.sum() < X.shape[1]:
+        eta = 1.
+    else:
+        eta = 0.
+    diff = diff[mask, :]
+    normdiff = normdiff[mask][:, np.newaxis]
+    res = np.sum(diff / normdiff, axis=0)
+    T_denom = np.sum(1 / normdiff, axis=0)
+    T_nom = np.sum(X.T[mask, :] / normdiff, axis=0)
     if T_denom != 0.:
         T = T_nom / T_denom
     else:
