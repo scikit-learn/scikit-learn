@@ -24,7 +24,7 @@ from ..externals.six.moves import xrange
 _logger = logging.getLogger(__name__)
 
 
-def modweiszfeld_step(X, y):
+def _modweiszfeld_step(X, y):
     """Modified Weiszfeld step.
 
     Parameters
@@ -65,7 +65,7 @@ def modweiszfeld_step(X, y):
     return max(0., 1. - eta / r) * T + min(1., eta / r) * y
 
 
-def spatial_median(X, n_iter=300, tol=1.e-3):
+def _spatial_median(X, n_iter=300, tol=1.e-3):
     """Spatial median (L1 median).
 
     Parameters
@@ -88,7 +88,7 @@ def spatial_median(X, n_iter=300, tol=1.e-3):
     X = check_arrays(X, sparse_format='dense', dtype=np.float)[0]
     spmed_old = np.mean(X, axis=0)
     for _ in xrange(n_iter):
-        spmed = modweiszfeld_step(X, spmed_old)
+        spmed = _modweiszfeld_step(X, spmed_old)
         if norm(spmed_old - spmed) < tol:
             return spmed
         else:
@@ -97,7 +97,7 @@ def spatial_median(X, n_iter=300, tol=1.e-3):
     return spmed
 
 
-def breakdown_point(n_samples, n_subsamples):
+def _breakdown_point(n_samples, n_subsamples):
     """Approximation of the breakdown point.
 
     Parameters
@@ -115,6 +115,40 @@ def breakdown_point(n_samples, n_subsamples):
     """
     return 1 - (0.5 ** (1 / n_subsamples) * (n_samples - n_subsamples + 1) +
                 n_subsamples - 1) / n_samples
+
+
+def _lse(weights, X, y, indices, start, intercept):
+    """Least Squares Estimator for TheilSen class.
+
+    Parameters
+    ----------
+    weights : array, shape = [n_subpopulation, n_dim]
+        Weights array that holds the coefficients of i-th subpopulation.
+
+    X : array, shape = [n_samples, n_features]
+        Design matrix, where n_samples is the number of samples and
+        n_features is the number of features.
+
+    y : array, shape = [n_samples]
+        Target vector, where n_samples is the number of samples.
+
+    indices : array, shape = [n_subpopulation, n_ss]
+        Indices of all subsamples with respect to the chosen subpopulation.
+        n_ss is the number of subsamples used to calculate least squares.
+
+    start : int
+        Start index for storing results in weights array.
+
+    intercept : bool
+        Fit intercept or not.
+    """
+    fst = 1 if intercept else 0
+    n_dim = weights.shape[1]
+    n_ss = indices.shape[1]
+    for i, ix in enumerate(indices, start):
+        X_sub = np.ones((n_ss, n_dim))
+        X_sub[:, fst:] = X[list(ix), :]
+        weights[i, :] = lstsq(X_sub, y[list(ix)])[0]
 
 
 class TheilSen(LinearModel, RegressorMixin):
@@ -245,7 +279,7 @@ class TheilSen(LinearModel, RegressorMixin):
         X, y = check_arrays(X, y, sparse_format='dense', dtype=np.float)
         n_samples, n_features = X.shape
         n_dim, n_ss, n_sp = self._check_subparams(n_samples, n_features)
-        self.breakdown_ = breakdown_point(n_samples, n_ss)
+        self.breakdown_ = _breakdown_point(n_samples, n_ss)
         self._print_verbose(n_samples, n_sp)
         indices = self._get_indices(n_samples, n_ss, n_sp)
         n_jobs = self._get_n_jobs()
@@ -260,7 +294,7 @@ class TheilSen(LinearModel, RegressorMixin):
                      verbose=self.verbose)(
                 delayed(_lse)(weights, X, y, idx_list[job], starts[job],
                               self.fit_intercept) for job in xrange(n_jobs))
-            coefs = spatial_median(weights, n_iter=self.n_iter, tol=self.tol)
+            coefs = _spatial_median(weights, n_iter=self.n_iter, tol=self.tol)
 
         if self.fit_intercept:
             self.intercept_ = coefs[0]
@@ -270,37 +304,3 @@ class TheilSen(LinearModel, RegressorMixin):
             self.coef_ = coefs
 
         return self
-
-
-def _lse(weights, X, y, indices, start, intercept):
-    """Least Squares Estimator for TheilSen class.
-
-    Parameters
-    ----------
-    weights : array, shape = [n_subpopulation, n_dim]
-        Weights array that holds the coefficients of i-th subpopulation.
-
-    X : array, shape = [n_samples, n_features]
-        Design matrix, where n_samples is the number of samples and
-        n_features is the number of features.
-
-    y : array, shape = [n_samples]
-        Target vector, where n_samples is the number of samples.
-
-    indices : array, shape = [n_subpopulation, n_ss]
-        Indices of all subsamples with respect to the chosen subpopulation.
-        n_ss is the number of subsamples used to calculate least squares.
-
-    start : int
-        Start index for storing results in weights array.
-
-    intercept : bool
-        Fit intercept or not.
-    """
-    fst = 1 if intercept else 0
-    n_dim = weights.shape[1]
-    n_ss = indices.shape[1]
-    for i, ix in enumerate(indices, start):
-        X_sub = np.ones((n_ss, n_dim))
-        X_sub[:, fst:] = X[list(ix), :]
-        weights[i, :] = lstsq(X_sub, y[list(ix)])[0]

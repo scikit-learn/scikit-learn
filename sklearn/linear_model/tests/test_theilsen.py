@@ -16,8 +16,8 @@ from numpy.linalg import norm
 from scipy.optimize import fmin_bfgs
 from nose.tools import raises
 from sklearn.linear_model import LinearRegression, TheilSen
-from sklearn.linear_model.theilsen import spatial_median, modweiszfeld_step,\
-    breakdown_point
+from sklearn.linear_model.theilsen import _spatial_median, _modweiszfeld_step,\
+    _breakdown_point
 
 
 def gen_toy_problem_1d():
@@ -88,57 +88,57 @@ def gen_toy_problem_4d():
     return X, y, w, c
 
 
-def test_modweiszfeld_step_1d():
+def test__modweiszfeld_step_1d():
     X = np.array([1., 2., 3.]).reshape(3, 1)
     # Check startvalue is element of X and solution
     median = np.array([2.])
-    new_y = modweiszfeld_step(X, median)
+    new_y = _modweiszfeld_step(X, median)
     nptest.assert_array_almost_equal(new_y, median)
     # Check startvalue is not the solution
     y = np.array([2.5])
-    new_y = modweiszfeld_step(X, y)
+    new_y = _modweiszfeld_step(X, y)
     nptest.assert_array_less(median, new_y)
     nptest.assert_array_less(new_y, y)
     # Check startvalue is not the solution but element of X
     y = np.array([3.])
-    new_y = modweiszfeld_step(X, y)
+    new_y = _modweiszfeld_step(X, y)
     nptest.assert_array_less(median, new_y)
     nptest.assert_array_less(new_y, y)
     # Check that a single vector is identity
     X = np.array([1., 2., 3.]).reshape(1, 3)
     y = X[0, ]
-    new_y = modweiszfeld_step(X, y)
+    new_y = _modweiszfeld_step(X, y)
     nptest.assert_array_equal(y, new_y)
 
 
-def test_modweiszfeld_step_2d():
+def test__modweiszfeld_step_2d():
     X = np.array([0., 0., 1., 1., 0., 1.]).reshape(3, 2)
     y = np.array([0.5, 0.5])
     # Check first two iterations
-    new_y = modweiszfeld_step(X, y)
+    new_y = _modweiszfeld_step(X, y)
     nptest.assert_array_almost_equal(new_y, np.array([1 / 3, 2 / 3]))
-    new_y = modweiszfeld_step(X, new_y)
+    new_y = _modweiszfeld_step(X, new_y)
     nptest.assert_array_almost_equal(new_y, np.array([0.2792408, 0.7207592]))
     # Check fix point
     y = np.array([0.21132505, 0.78867497])
-    new_y = modweiszfeld_step(X, y)
+    new_y = _modweiszfeld_step(X, y)
     nptest.assert_array_almost_equal(new_y, y)
 
 
-def test_spatial_median_1d():
+def test__spatial_median_1d():
     X = np.array([1., 2., 3.]).reshape(3, 1)
     true_median = np.array([2.])
-    median = spatial_median(X)
+    median = _spatial_median(X)
     nptest.assert_array_almost_equal(median, true_median)
     # Check when maximum iteration is exceeded
     logging.basicConfig(filename=devnull)
-    median = spatial_median(X, n_iter=30, tol=0.)
+    median = _spatial_median(X, n_iter=30, tol=0.)
     nptest.assert_array_almost_equal(median, true_median)
 
 
-def test_spatial_median_2d():
+def test__spatial_median_2d():
     X = np.array([0., 0., 1., 1., 0., 1.]).reshape(3, 2)
-    median = spatial_median(X, n_iter=100, tol=1.e-6)
+    median = _spatial_median(X, n_iter=100, tol=1.e-6)
 
     def cost_func(y):
         dists = np.array([norm(x - y) for x in X])
@@ -183,7 +183,7 @@ def test_theilsen_2d():
 
 
 def test_calc_breakdown_point():
-    bp = breakdown_point(1e10, 2)
+    bp = _breakdown_point(1e10, 2)
     assert np.abs(bp - 1 + 1/(np.sqrt(2))) <= 1.e-6
 
 
