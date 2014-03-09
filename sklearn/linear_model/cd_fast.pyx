@@ -32,6 +32,14 @@ cdef inline double fsign(double f):
         return -1.0
 
 
+cdef fdot(np.ndarray[np.float64_t, ndim=1] w, int length):
+    cdef double sum = 0.0
+    cdef unsigned int i
+    for i in xrange(length):
+        sum += w[i]**2
+    return sum
+
+
 cdef extern from "cblas.h":
     enum CBLAS_ORDER:
         CblasRowMajor=101
@@ -250,10 +258,9 @@ def sparse_enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
     cdef unsigned int ii
     cdef np.ndarray[DOUBLE, ndim = 1] norm_cols_X = np.zeros(n_features,
                                                            np.float64)
-    for ii in xrange(n_features):
-        norm_cols_X[ii] = ((X_data[X_indptr[ii]:X_indptr[ii + 1]] - \
-        X_mean[ii]) ** 2).sum() + \
-        (n_samples - X_indptr[ii + 1] + X_indptr[ii]) * X_mean[ii] ** 2
+
+    cdef unsigned int startptr = X_indptr[0]
+    cdef unsigned int endptr
 
     # initial value of the residuals
     cdef np.ndarray[DOUBLE, ndim = 1] R
@@ -265,6 +272,7 @@ def sparse_enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
     cdef double d_w_ii
     cdef double X_mean_ii
     cdef double R_sum
+    cdef double normalize_sum
     cdef double gap = tol + 1.0
     cdef double d_w_tol = tol
     cdef unsigned int jj
@@ -275,38 +283,50 @@ def sparse_enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
     R = y.copy()
 
     for ii in xrange(n_features):
-        # sparse X column / dense w dot product
-        for jj in xrange(X_indptr[ii], X_indptr[ii + 1]):
-            R[X_indices[jj]] -= X_data[jj] * w[ii]
-        if center:
-            R += X_mean[ii] * w[ii]
+        X_mean_ii = X_mean[ii]
+        endptr = X_indptr[ii + 1]
+        normalize_sum = 0.0
+        w_ii = w[ii]
 
-    tol = tol * np.dot(y, y)
+        for jj in xrange(startptr, endptr):
+            normalize_sum += (X_data[jj] - X_mean_ii) ** 2
+            R[X_indices[jj]] -= X_data[jj] * w_ii
+        norm_cols_X[ii] = normalize_sum + \
+            (n_samples - endptr + startptr) * X_mean_ii ** 2
+
+        if center:
+            for jj in xrange(n_samples):
+                R[jj] += X_mean_ii * w_ii
+        startptr = endptr
+
+    tol = tol * fdot(y, n_samples)
 
     for n_iter in range(max_iter):
 
         w_max = 0.0
         d_w_max = 0.0
+        startptr = X_indptr[0]
 
         for ii in xrange(n_features):  # Loop over coordinates
 
             if norm_cols_X[ii] == 0.0:
                 continue
 
+            endptr = X_indptr[ii + 1]
             w_ii = w[ii]  # Store previous value
             X_mean_ii = X_mean[ii]
 
             if w_ii != 0.0:
                 # R += w_ii * X[:,ii]
-                for jj in xrange(X_indptr[ii], X_indptr[ii + 1]):
+                for jj in xrange(startptr, endptr):
                     R[X_indices[jj]] += X_data[jj] * w_ii
                 if center:
                     for jj in xrange(n_samples):
-                        R[jj] -= X_mean_ii * w[ii]
+                        R[jj] -= X_mean_ii * w_ii
 
             # tmp = (X[:,ii] * R).sum()
             tmp = 0.0
-            for jj in xrange(X_indptr[ii], X_indptr[ii + 1]):
+            for jj in xrange(startptr, endptr):
                 tmp += R[X_indices[jj]] * X_data[jj]
 
             if center:
@@ -323,7 +343,7 @@ def sparse_enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
 
             if w[ii] != 0.0:
                 # R -=  w[ii] * X[:,ii] # Update residual
-                for jj in xrange(X_indptr[ii], X_indptr[ii + 1]):
+                for jj in xrange(startptr, endptr):
                     R[X_indices[jj]] -= X_data[jj] * w[ii]
 
                 if center:
@@ -337,7 +357,7 @@ def sparse_enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
 
             if w[ii] > w_max:
                 w_max = w[ii]
-
+            startptr = endptr
         if w_max == 0.0 or d_w_max / w_max < d_w_tol or n_iter == max_iter - 1:
             # the biggest coordinate update of this iteration was smaller than
             # the tolerance: check the duality gap as ultimate stopping
@@ -356,8 +376,8 @@ def sparse_enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
             else:
                 dual_norm_XtA = linalg.norm(XtA, np.inf)
 
-            R_norm2 = np.dot(R, R)
-            w_norm2 = np.dot(w, w)
+            R_norm2 = fdot(R, n_samples)
+            w_norm2 = fdot(w, n_features)
             if (dual_norm_XtA > alpha):
                 const = alpha / dual_norm_XtA
                 A_norm2 = R_norm2 * const**2
