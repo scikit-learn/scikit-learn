@@ -12,7 +12,7 @@ from os import devnull
 
 import numpy as np
 import numpy.testing as nptest
-from numpy.linalg import norm
+from scipy.linalg import norm
 from scipy.optimize import fmin_bfgs
 from nose.tools import raises
 from sklearn.linear_model import LinearRegression, TheilSen
@@ -175,7 +175,7 @@ def test_theilsen_2d():
     X, y, w, c = gen_toy_problem_2d()
     # Check that Least Squares fails
     lstq = LinearRegression().fit(X, y)
-    assert np.linalg.norm(lstq.coef_ - w) > 1.0
+    assert norm(lstq.coef_ - w) > 1.0
     # Check that Theil-Sen works
     theilsen = TheilSen().fit(X, y)
     nptest.assert_array_almost_equal(theilsen.coef_, w, 1)
@@ -231,7 +231,7 @@ def test_theilsen_parallel_all_CPUs():
     X, y, w, c = gen_toy_problem_2d()
     # Check that Least Squares fails
     lstq = LinearRegression().fit(X, y)
-    assert np.linalg.norm(lstq.coef_ - w) > 1.0
+    assert norm(lstq.coef_ - w) > 1.0
     # Check that Theil-Sen works
     theilsen = TheilSen(n_jobs=-1).fit(X, y)
     nptest.assert_array_almost_equal(theilsen.coef_, w, 1)

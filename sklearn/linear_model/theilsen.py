@@ -13,7 +13,7 @@ import tempfile
 from itertools import combinations
 
 import numpy as np
-from numpy.linalg import norm, lstsq
+from scipy.linalg import norm, lstsq
 from scipy.special import binom
 from .base import LinearModel
 from ..base import RegressorMixin
