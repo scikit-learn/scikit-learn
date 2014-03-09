@@ -13,7 +13,7 @@ from os import devnull
 import numpy as np
 import numpy.testing as nptest
 from numpy.linalg import norm
-from scipy.optimize import minimize
+from scipy.optimize import fmin_bfgs
 from nose.tools import raises
 from sklearn.linear_model import LinearRegression, TheilSen
 from sklearn.linear_model.theilsen import spatial_median, modweiszfeld_step,\
@@ -145,7 +145,7 @@ def test_spatial_median_2d():
         return np.sum(dists)
 
     # Check if median is solution of the Fermat-Weber location problem
-    fermat_weber = minimize(cost_func, median)['x']
+    fermat_weber = fmin_bfgs(cost_func, median, disp=False)
     nptest.assert_array_almost_equal(median, fermat_weber)
 
 
