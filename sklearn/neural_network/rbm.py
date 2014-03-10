@@ -193,7 +193,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         """
         return (- safe_sparse_dot(v, self.intercept_visible_)
                 - np.logaddexp(0, safe_sparse_dot(v, self.components_.T)
-                                  + self.intercept_hidden_).sum(axis=1))
+                               + self.intercept_hidden_).sum(axis=1))
 
     def gibbs(self, v):
         """Perform one Gibbs sampling step.
