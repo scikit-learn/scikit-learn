@@ -53,7 +53,7 @@ from ..externals.joblib import Parallel
 from ..externals.joblib import delayed
 from ..externals.joblib.parallel import cpu_count
 
-from .pairwise_fast import _chi2_kernel_fast
+from .pairwise_fast import _chi2_kernel_fast, _sparse_manhattan
 
 
 # Utility Functions
@@ -472,10 +472,21 @@ def manhattan_distances(X, Y=None, sum_over_features=True,
     array([[ 1.,  1.],
            [ 1.,  1.]]...)
     """
-    if issparse(X) or issparse(Y):
-        raise ValueError("manhattan_distance does not support sparse"
-                         " matrices.")
     X, Y = check_pairwise_arrays(X, Y)
+
+    if issparse(X) or issparse(Y):
+        if not sum_over_features:
+            raise TypeError("sum_over_features=%r not supported"
+                            " for sparse matrices" % sum_over_features)
+
+        X = csr_matrix(X, copy=False)
+        Y = csr_matrix(Y, copy=False)
+        D = np.zeros((X.shape[0], Y.shape[0]))
+        _sparse_manhattan(X.data, X.indices, X.indptr,
+                          Y.data, Y.indices, Y.indptr,
+                          X.shape[1], D)
+        return D
+
     temporary_size = X.size * Y.shape[-1]
     # Convert to bytes
     temporary_size *= X.itemsize

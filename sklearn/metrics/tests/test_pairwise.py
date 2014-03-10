@@ -69,9 +69,6 @@ def test_pairwise_distances():
     assert_equal(S.shape[0], X.shape[0])
     assert_equal(S.shape[1], Y.shape[0])
     assert_array_almost_equal(S, S2)
-    # manhattan does not support sparse matrices atm.
-    assert_raises(ValueError, pairwise_distances, csr_matrix(X),
-                  metric="manhattan")
     # Low-level function for manhattan can divide in blocks to avoid
     # using too much memory during the broadcasting
     S3 = manhattan_distances(X, Y, size_threshold=10)
@@ -88,7 +85,7 @@ def test_pairwise_distances():
     S2 = pairwise_distances(S, metric="precomputed")
     assert_true(S is S2)
     # Test with sparse X and Y,
-    # currently only supported for euclidean and cosine
+    # currently only supported for Euclidean, L1 and cosine.
     X_sparse = csr_matrix(X)
     Y_sparse = csr_matrix(Y)
     S = pairwise_distances(X_sparse, Y_sparse, metric="euclidean")
@@ -96,6 +93,11 @@ def test_pairwise_distances():
     assert_array_almost_equal(S, S2)
     S = pairwise_distances(X_sparse, Y_sparse, metric="cosine")
     S2 = cosine_distances(X_sparse, Y_sparse)
+    assert_array_almost_equal(S, S2)
+    S = pairwise_distances(X_sparse, Y_sparse.tocsc(), metric="manhattan")
+    S2 = manhattan_distances(X_sparse.tobsr(), Y_sparse.tocoo())
+    assert_array_almost_equal(S, S2)
+    S2 = manhattan_distances(X, Y)
     assert_array_almost_equal(S, S2)
     # Test with scipy.spatial.distance metric, with a kwd
     kwds = {"p": 2.0}
@@ -234,7 +236,7 @@ def test_pairwise_distances_argmin_min():
     Y = [[-1], [2]]
 
     Xsp = dok_matrix(X)
-    Ysp = csr_matrix(Y)
+    Ysp = csr_matrix(Y, dtype=np.float32)
 
     # euclidean metric
     D, E = pairwise_distances_argmin_min(X, Y, metric="euclidean")
@@ -258,10 +260,10 @@ def test_pairwise_distances_argmin_min():
     assert_array_almost_equal(D, [0, 1])
     assert_array_almost_equal(D2, [0, 1])
     assert_array_almost_equal(E, [1., 1.])
-
-    # sparse matrix case
-    assert_raises(ValueError,
-                  pairwise_distances_argmin_min, Xsp, Ysp, metric="manhattan")
+    D, E = pairwise_distances_argmin_min(Xsp, Ysp, metric="manhattan")
+    D2 = pairwise_distances_argmin(Xsp, Ysp, metric="manhattan")
+    assert_array_almost_equal(D, [0, 1])
+    assert_array_almost_equal(E, [1., 1.])
 
     # Non-euclidean Scipy distance (callable)
     D, E = pairwise_distances_argmin_min(X, Y, metric=minkowski,
