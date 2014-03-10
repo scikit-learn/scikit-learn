@@ -1056,7 +1056,8 @@ cdef class BestSplitter(Splitter):
         cdef SIZE_t n_found_constants = 0
         cdef SIZE_t n_drawn_constants = 0
         cdef SIZE_t n_known_constants = n_constant_features[0]
-        cdef SIZE_t n_total_constants = n_known_constants # n_total_constants = n_known_constants + n_found_constants
+        # n_total_constants = n_known_constants + n_found_constants
+        cdef SIZE_t n_total_constants = n_known_constants
         cdef DTYPE_t current_feature_value
         cdef SIZE_t partition_end
 
@@ -1342,7 +1343,8 @@ cdef class RandomSplitter(Splitter):
         cdef SIZE_t n_found_constants = 0
         cdef SIZE_t n_drawn_constants = 0
         cdef SIZE_t n_known_constants = n_constant_features[0]
-        cdef SIZE_t n_total_constants = n_known_constants # n_total_constants = n_known_constants + n_found_constants
+        # n_total_constants = n_known_constants + n_found_constants
+        cdef SIZE_t n_total_constants = n_known_constants
         cdef SIZE_t n_visited_features = 0
         cdef DTYPE_t min_feature_value
         cdef DTYPE_t max_feature_value
@@ -1585,7 +1587,8 @@ cdef class PresortBestSplitter(Splitter):
         cdef SIZE_t n_found_constants = 0
         cdef SIZE_t n_drawn_constants = 0
         cdef SIZE_t n_known_constants = n_constant_features[0]
-        cdef SIZE_t n_total_constants = n_known_constants # n_total_constants = n_known_constants + n_found_constants
+        # n_total_constants = n_known_constants + n_found_constants
+        cdef SIZE_t n_total_constants = n_known_constants
         cdef SIZE_t n_visited_features = 0
         cdef SIZE_t partition_end
         cdef SIZE_t i, j
