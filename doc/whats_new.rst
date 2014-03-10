@@ -115,6 +115,10 @@ Changelog
    - :class:`dummy.DummyClassifier` can now be used to predict a constant
      output value. By `Manoj Kumar`_.
 
+   - :class:`dummy.DummyRegressor` have now a strategy parameters which allows
+     to predict the mean, the median of the training set or a constant
+     output value. By `Maheshakya Wijewardena`_.
+
    - Fixed bug in :class:`decomposition.MiniBatchDictionaryLearning` :
      partial_fit was not working properly.
 
@@ -2467,3 +2471,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Manoj Kumar: https://github.com/Manoj-Kumar-S
 
 .. _Andrew Tulloch: http://tullo.ch
+
+.. _Maheshakya Wijewardena: https://github.com/maheshakya
