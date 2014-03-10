@@ -2233,16 +2233,14 @@ cdef class Tree:
 
         return node_id
 
-    cpdef np.ndarray predict(self, np.ndarray[DTYPE_t, ndim=2] X, return_paths = False):
+    cpdef np.ndarray predict(self, np.ndarray[DTYPE_t, ndim=2] X):
         """Predict target for X."""
-        if return_paths:
-            return self._get_paths(X)
         out = self._get_value_ndarray().take(self.apply(X), axis=0, mode='clip')
         if self.n_outputs == 1:
             out = out.reshape(X.shape[0], self.max_n_classes)
         return out
 
-    cpdef np.ndarray _get_paths(self, np.ndarray[DTYPE_t, ndim=2] X):
+    cpdef np.ndarray decision_paths(self, np.ndarray[DTYPE_t, ndim=2] X):
         """Finds the path through tree for each sample in X."""
         cdef SIZE_t n_samples = X.shape[0]
         cdef Node* node = NULL
@@ -2250,11 +2248,9 @@ cdef class Tree:
 
         cdef SIZE_t path_idx = 0
 
-        cdef np.ndarray[np.int32_t, ndim=2] paths 
+        cdef np.ndarray[SIZE_t, ndim=2] paths 
         paths = np.zeros((n_samples, self.max_depth+1), dtype=np.intp)
         paths.fill(-1)
-        
-        
         
         with nogil:
             for i in range(n_samples):

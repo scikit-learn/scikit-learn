@@ -270,7 +270,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
 
         return self
 
-    def predict(self, X, return_paths = False):
+    def predict(self, X):
         """Predict class or regression value for X.
 
         For a classification model, the predicted class for each sample in X is
@@ -301,11 +301,8 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
                              " input n_features is %s "
                              % (self.n_features_, n_features))
 
-        proba = self.tree_.predict(X, return_paths = return_paths)
-        
-        if return_paths:
-            return proba
-        
+        proba = self.tree_.predict(X)
+
         # Classification
         if isinstance(self, ClassifierMixin):
             if self.n_outputs_ == 1:
@@ -328,6 +325,37 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
 
             else:
                 return proba[:, :, 0]
+
+    def decision_paths(self, X):
+        """Predict class or regression value for X and return decision paths leading to the prediction.
+        
+
+        Parameters
+        ----------
+        X : array-like of shape = [n_samples, n_features]
+            The input samples.
+
+        Returns
+        -------
+        y : array of shape = [n_samples, max_depth + 1]
+            Decision paths, where each path is an array of node ids, starting with the root node id.
+            If a path is shorter than max_depth + 1, it is padded with -1 on the right.
+        """
+        if getattr(X, "dtype", None) != DTYPE or X.ndim != 2:
+            X = array2d(X, dtype=DTYPE)
+
+        n_samples, n_features = X.shape
+
+        if self.tree_ is None:
+            raise Exception("Tree not initialized. Perform a fit first")
+
+        if self.n_features_ != n_features:
+            raise ValueError("Number of features of the model must "
+                             " match the input. Model n_features is %s and "
+                             " input n_features is %s "
+                             % (self.n_features_, n_features))
+
+        return self.tree_.decision_paths(X)
 
     @property
     def feature_importances_(self):

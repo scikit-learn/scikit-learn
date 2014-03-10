@@ -739,7 +739,7 @@ def test_tree_paths_toy():
         clf = Tree(random_state=0)
         clf.fit(X, y)
         straight_predictions = clf.predict(T)
-        paths = clf.predict(T, return_paths = True)
+        paths = clf.decision_paths(T)
         path_predictions = []
         for path in paths:
             base = 0
