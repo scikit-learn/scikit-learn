@@ -43,9 +43,10 @@ TREE_LEAF = -1
 TREE_UNDEFINED = -2
 cdef SIZE_t _TREE_LEAF = TREE_LEAF
 cdef SIZE_t _TREE_UNDEFINED = TREE_UNDEFINED
-cdef float EPSILON_FLOAT = 1e-7  # Mitigate precision differences between 32
-                                 # bit and 64 bit
 cdef SIZE_t INITIAL_STACK_SIZE = 10
+
+# Mitigate precision differences between 32 bit and 64 bit
+cdef DTYPE_t CONSTANT_FEATURE_THRESHOLD = 1e-7
 
 # Some handy constants (BestFirstTreeBuilder)
 cdef int IS_FIRST = 1
@@ -1053,7 +1054,9 @@ cdef class BestSplitter(Splitter):
         cdef SIZE_t f_i = n_features
         cdef SIZE_t f_j, p, tmp
         cdef SIZE_t n_visited_features = 0
+        # Number of features discovered to be constant during the split search
         cdef SIZE_t n_found_constants = 0
+        # Number of features known to be constant and drawn without replacement
         cdef SIZE_t n_drawn_constants = 0
         cdef SIZE_t n_known_constants = n_constant_features[0]
         # n_total_constants = n_known_constants + n_found_constants
@@ -1095,7 +1098,7 @@ cdef class BestSplitter(Splitter):
 
                 sort(Xf + start, samples + start, end - start)
 
-                if Xf[end - 1] <= Xf[start] + EPSILON_FLOAT:
+                if Xf[end - 1] <= Xf[start] + CONSTANT_FEATURE_THRESHOLD:
                     features[f_j] = features[n_total_constants]
                     features[n_total_constants] = current_feature
 
@@ -1112,7 +1115,7 @@ cdef class BestSplitter(Splitter):
 
                     while p < end:
                         while (p + 1 < end and
-                               Xf[p + 1] <= Xf[p] + EPSILON_FLOAT):
+                               Xf[p + 1] <= Xf[p] + CONSTANT_FEATURE_THRESHOLD):
                             p += 1
 
                         # (p + 1 >= end) or (X[samples[p + 1], current_feature] >
@@ -1341,7 +1344,9 @@ cdef class RandomSplitter(Splitter):
 
         cdef SIZE_t f_i = n_features
         cdef SIZE_t f_j, p, tmp
+        # Number of features discovered to be constant during the split search
         cdef SIZE_t n_found_constants = 0
+        # Number of features known to be constant and drawn without replacement
         cdef SIZE_t n_drawn_constants = 0
         cdef SIZE_t n_known_constants = n_constant_features[0]
         # n_total_constants = n_known_constants + n_found_constants
@@ -1393,7 +1398,7 @@ cdef class RandomSplitter(Splitter):
                     elif current_feature_value > max_feature_value:
                         max_feature_value = current_feature_value
 
-                if max_feature_value <= min_feature_value + EPSILON_FLOAT:
+                if max_feature_value <= min_feature_value + CONSTANT_FEATURE_THRESHOLD:
                     features[f_j] = features[n_total_constants]
                     features[n_total_constants] = current_feature
 
@@ -1585,7 +1590,9 @@ cdef class PresortBestSplitter(Splitter):
 
         cdef SIZE_t f_i = n_features
         cdef SIZE_t f_j, p
+        # Number of features discovered to be constant during the split search
         cdef SIZE_t n_found_constants = 0
+        # Number of features known to be constant and drawn without replacement
         cdef SIZE_t n_drawn_constants = 0
         cdef SIZE_t n_known_constants = n_constant_features[0]
         # n_total_constants = n_known_constants + n_found_constants
@@ -1634,7 +1641,7 @@ cdef class PresortBestSplitter(Splitter):
                         p += 1
 
                 # Evaluate all splits
-                if Xf[end - 1] <= Xf[start] + EPSILON_FLOAT:
+                if Xf[end - 1] <= Xf[start] + CONSTANT_FEATURE_THRESHOLD:
                     features[f_j] = features[n_total_constants]
                     features[n_total_constants] = current_feature
 
@@ -1650,7 +1657,7 @@ cdef class PresortBestSplitter(Splitter):
 
                     while p < end:
                         while (p + 1 < end and
-                               Xf[p + 1] <= Xf[p] + EPSILON_FLOAT):
+                               Xf[p + 1] <= Xf[p] + CONSTANT_FEATURE_THRESHOLD):
                             p += 1
 
                         # (p + 1 >= end) or (X[samples[p + 1], current_feature] >
@@ -1831,7 +1838,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                     first = 0
 
 
-                is_leaf = is_leaf or (impurity < EPSILON_FLOAT)
+                is_leaf = is_leaf or (impurity < CONSTANT_FEATURE_THRESHOLD)
 
                 if not is_leaf:
                     splitter.node_split(impurity, &pos, &feature, &threshold,
