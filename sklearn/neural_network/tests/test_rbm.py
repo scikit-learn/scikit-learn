@@ -38,11 +38,11 @@ def test_partial_fit():
                        batch_size=10, random_state=9)
     n_samples = X.shape[0]
     n_batches = int(np.ceil(float(n_samples) / rbm.batch_size))
-    batch_slices = list(gen_even_slices(n_batches * rbm.batch_size,
-                                            n_batches))
+    batch_slices = np.array_split(X, n_batches)
+    
     for i in range(n):
         for batch in batch_slices:
-            rbm.partial_fit(X[batch])
+            rbm.partial_fit(batch)
 
     assert_almost_equal(rbm.score_samples(X).mean(), -21., decimal=0)
     assert_array_equal(X, Xdigits)
