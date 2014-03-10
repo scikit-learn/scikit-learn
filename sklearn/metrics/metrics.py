@@ -248,31 +248,23 @@ def hinge_loss(y_true, pred_decision, pos_label=None, neg_label=None):
     0.30...
 
     """
-    if pos_label is not None:
-        warnings.warn("'pos_label' is deprecated and will be removed in "
-                      "release 0.15.", DeprecationWarning)
-    if neg_label is not None:
-        warnings.warn("'neg_label' is unused and will be removed in "
-                      "release 0.15.", DeprecationWarning)
-
     # TODO: multi-class hinge-loss
     y_true, pred_decision = check_arrays(y_true, pred_decision)
 
     # the rest of the code assumes that positive and negative labels
     # are encoded as +1 and -1 respectively
-    if pos_label is not None:
-        y_true = (np.asarray(y_true) == pos_label) * 2 - 1
-    else:
-        y_true = LabelBinarizer(neg_label=-1).fit_transform(y_true)[:, 0]
+    lbin = LabelBinarizer(neg_label=-1)
+    y_true = lbin.fit_transform(y_true)[:, 0]
 
-    if pred_decision.ndim == 2 and pred_decision.shape[1] != 1:
+    if len(lbin.classes_) > 2 or (pred_decision.ndim == 2
+                                  and pred_decision.shape[1] != 1):
         raise ValueError("Multi-class hinge loss not supported")
     pred_decision = np.ravel(pred_decision)
 
     try:
         margin = y_true * pred_decision
     except TypeError:
-        raise ValueError("pred_decision should be an array of floats.")
+        raise TypeError("pred_decision should be an array of floats.")
     losses = 1 - margin
     # The hinge doesn't penalize good enough predictions.
     losses[losses <= 0] = 0
