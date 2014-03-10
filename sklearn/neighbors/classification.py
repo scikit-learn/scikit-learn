@@ -200,6 +200,10 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         weights = _get_weights(neigh_dist, self.weights)
         if weights is None:
             weights = np.ones_like(neigh_ind)
+        else:
+            # Some weights may be infinite (zero distance), which can cause
+            # downstream NaN values when used for normalization.
+            weights[np.isinf(weights)] = np.finfo('f').max
 
         all_rows = np.arange(X.shape[0])
         probabilities = []
@@ -214,9 +218,7 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
             # normalize 'votes' into real [0,1] probabilities
             normalizer = proba_k.sum(axis=1)[:, np.newaxis]
             normalizer[normalizer == 0.0] = 1.0
-            with np.errstate(invalid='ignore'):
-                proba_k /= normalizer
-            proba_k[np.isnan(proba_k)] = 1.0
+            proba_k /= normalizer
 
             probabilities.append(proba_k)
 
