@@ -624,6 +624,9 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
 
     Notes
     -----
+    When using n_jobs != 1 (that is, enabling multiprocessing), the analyzer
+    function should be pickleable. That means you can't pass lambda functions
+    as the analyzer if you want to use the multiprocessing feature.
 
     As it currently stands, the parallelism instantiated by n_jobs!=1 is
     beneficial only if the analyzer is expected to run for a long time.
