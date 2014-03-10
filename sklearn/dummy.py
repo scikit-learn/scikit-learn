@@ -275,11 +275,24 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
 
 class DummyRegressor(BaseEstimator, RegressorMixin):
     """
-    DummyRegressor is a regressor that always predicts the mean of the training
-    targets.
+    DummyRegressor is a regressor is a regressor that make predictions
+    using simple rules.
 
     This regressor is useful as a simple baseline to compare with other
     (real) regressors. Do not use it for real problems.
+
+    Parameters
+    ----------
+    strategy: str
+        Strategy to use to generate predictions.
+            * "mean": always predicts the mean of the training set
+            * "median": always predicts the median of the training set
+            * "constant": always predicts a constant value that is provided by
+              the user.
+
+    constant: int or float or array of shape = [n_outputs]
+        The explicit constant as predicted by the "constant" strategy. This
+        parameter is useful only for the "constant" strategy.
 
     Attributes
     ----------
