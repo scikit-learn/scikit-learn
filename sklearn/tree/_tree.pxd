@@ -92,12 +92,15 @@ cdef class Splitter:
     # split reorganizes the node samples `samples[start:end]` in two
     # subsets `samples[start:pos]` and `samples[pos:end]`.
 
-    # The `features` array contains the features indices and allows fast
-    # sampling without replacement of features.
+    # The 1-d  `features` array of size n_features contains the features
+    # indices and allows fast sampling without replacement of features.
 
-    # The `constant_features` array contains in `[:n_constant_features]` the
-    # order and index of the constant features found at a given node. The value
-    # `n_constant_features` is given by the the parent node to its child nodes.
+    # The 1-d `constant_features` array of size n_features holds in
+    # `constant_features[:n_constant_features]` the feature ids with
+    # constant values for all the samples that reached a specific node.
+    # The value `n_constant_features` is given by the the parent node to its
+    # child nodes.  The content of the range `[n_constant_features:]` is left
+    # undefined, but preallocated for performance reasons
     # This allows optimisation with depth-based tree building.
 
     # Methods
