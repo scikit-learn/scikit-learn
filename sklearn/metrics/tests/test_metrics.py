@@ -8,7 +8,7 @@ import warnings
 from sklearn import datasets
 from sklearn import svm
 
-from sklearn.preprocessing import LabelBinarizer
+from sklearn.preprocessing import LabelBinarizer, MultiLabelBinarizer
 from sklearn.datasets import make_multilabel_classification
 from sklearn.utils import check_random_state, shuffle
 from sklearn.utils.multiclass import unique_labels
@@ -1061,14 +1061,12 @@ def test_multilabel_classification_report():
 
     n_classes = 4
     n_samples = 50
-    _, y_true_ll = make_multilabel_classification(n_features=1,
-                                                  n_classes=n_classes,
-                                                  random_state=0,
-                                                  n_samples=n_samples)
-    _, y_pred_ll = make_multilabel_classification(n_features=1,
-                                                  n_classes=n_classes,
-                                                  random_state=1,
-                                                  n_samples=n_samples)
+    # using sequence of sequences is deprecated, but still tested
+    make_ml = ignore_warnings(make_multilabel_classification)
+    _, y_true_ll = make_ml(n_features=1, n_classes=n_classes, random_state=0,
+                           n_samples=n_samples)
+    _, y_pred_ll = make_ml(n_features=1, n_classes=n_classes, random_state=1,
+                           n_samples=n_samples)
 
     expected_report = """\
              precision    recall  f1-score   support
@@ -1081,7 +1079,7 @@ def test_multilabel_classification_report():
 avg / total       0.45      0.54      0.47        85
 """
 
-    lb = LabelBinarizer()
+    lb = MultiLabelBinarizer()
     lb.fit([range(4)])
     y_true_bi = lb.transform(y_true_ll)
     y_pred_bi = lb.transform(y_pred_ll)
@@ -1646,10 +1644,12 @@ def test_multilabel_representation_invariance():
     # Generate some data
     n_classes = 4
     n_samples = 50
-    _, y1 = make_multilabel_classification(n_features=1, n_classes=n_classes,
-                                           random_state=0, n_samples=n_samples)
-    _, y2 = make_multilabel_classification(n_features=1, n_classes=n_classes,
-                                           random_state=1, n_samples=n_samples)
+    # using sequence of sequences is deprecated, but still tested
+    make_ml = ignore_warnings(make_multilabel_classification)
+    _, y1 = make_ml(n_features=1, n_classes=n_classes, random_state=0,
+                    n_samples=n_samples)
+    _, y2 = make_ml(n_features=1, n_classes=n_classes, random_state=1,
+                    n_samples=n_samples)
 
     # Be sure to have at least one empty label
     y1 += ([], )
@@ -1667,7 +1667,7 @@ def test_multilabel_representation_invariance():
     y2_redundant = [x * rng.randint(1, 4) for x in y2]
 
     # Binary indicator matrix format
-    lb = LabelBinarizer().fit([range(n_classes)])
+    lb = MultiLabelBinarizer().fit([range(n_classes)])
     y1_binary_indicator = lb.transform(y1)
     y2_binary_indicator = lb.transform(y2)
 
@@ -1872,21 +1872,19 @@ def test_normalize_option_multilabel_classification():
     # Test in the multilabel case
     n_classes = 4
     n_samples = 100
-    _, y_true = make_multilabel_classification(n_features=1,
-                                               n_classes=n_classes,
-                                               random_state=0,
-                                               n_samples=n_samples)
-    _, y_pred = make_multilabel_classification(n_features=1,
-                                               n_classes=n_classes,
-                                               random_state=1,
-                                               n_samples=n_samples)
+    # using sequence of sequences is deprecated, but still tested
+    make_ml = ignore_warnings(make_multilabel_classification)
+    _, y_true = make_ml(n_features=1, n_classes=n_classes,
+                        random_state=0, n_samples=n_samples)
+    _, y_pred = make_ml(n_features=1, n_classes=n_classes,
+                        random_state=1, n_samples=n_samples)
 
     # Be sure to have at least one empty label
     y_true += ([], )
     y_pred += ([], )
     n_samples += 1
 
-    lb = LabelBinarizer().fit([range(n_classes)])
+    lb = MultiLabelBinarizer().fit([range(n_classes)])
     y_true_binary_indicator = lb.transform(y_true)
     y_pred_binary_indicator = lb.transform(y_pred)
 
