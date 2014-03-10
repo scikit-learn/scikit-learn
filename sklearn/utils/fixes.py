@@ -27,8 +27,9 @@ np_version = tuple(np_version)
 
 try:
     from scipy.special import expit     # SciPy >= 0.10
-    if np.isnan(expit(1000)):           # SciPy < 0.14
-        raise ImportError("no stable expit in scipy.special")
+    with np.errstate(invalid='ignore', over='ignore'):
+        if np.isnan(expit(1000)):       # SciPy < 0.14
+            raise ImportError("no stable expit in scipy.special")
 except ImportError:
     def expit(x, out=None):
         """Logistic sigmoid function, ``1 / (1 + exp(-x))``.
