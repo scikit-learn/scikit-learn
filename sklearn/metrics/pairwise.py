@@ -53,7 +53,7 @@ from ..externals.joblib import Parallel
 from ..externals.joblib import delayed
 from ..externals.joblib.parallel import cpu_count
 
-from .pairwise_fast import _chi2_kernel_fast
+from .pairwise_fast import _chi2_kernel_fast, _sparse_manhattan
 
 
 # Utility Functions
@@ -437,6 +437,7 @@ def manhattan_distances(X, Y=None, sum_over_features=True,
     sum_over_features : bool, default=True
         If True the function returns the pairwise distance matrix
         else it returns the componentwise L1 pairwise-distances.
+        Not supported for sparse matrix inputs.
 
     size_threshold : int, default=5e8
         Avoid creating temporary matrices bigger than size_threshold (in
@@ -450,7 +451,7 @@ def manhattan_distances(X, Y=None, sum_over_features=True,
         (n_samples_X * n_samples_Y, n_features) and D contains the
         componentwise L1 pairwise-distances (ie. absolute difference),
         else shape is (n_samples_X, n_samples_Y) and D contains
-        the pairwise l1 distances.
+        the pairwise L1 distances.
 
     Examples
     --------
@@ -472,10 +473,21 @@ def manhattan_distances(X, Y=None, sum_over_features=True,
     array([[ 1.,  1.],
            [ 1.,  1.]]...)
     """
-    if issparse(X) or issparse(Y):
-        raise ValueError("manhattan_distance does not support sparse"
-                         " matrices.")
     X, Y = check_pairwise_arrays(X, Y)
+
+    if issparse(X) or issparse(Y):
+        if not sum_over_features:
+            raise TypeError("sum_over_features=%r not supported"
+                            " for sparse matrices" % sum_over_features)
+
+        X = csr_matrix(X, copy=False)
+        Y = csr_matrix(Y, copy=False)
+        D = np.zeros((X.shape[0], Y.shape[0]))
+        _sparse_manhattan(X.data, X.indices, X.indptr,
+                          Y.data, Y.indices, Y.indptr,
+                          X.shape[1], D)
+        return D
+
     temporary_size = X.size * Y.shape[-1]
     # Convert to bytes
     temporary_size *= X.itemsize
