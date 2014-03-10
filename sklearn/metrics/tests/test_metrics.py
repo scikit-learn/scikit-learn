@@ -1681,8 +1681,9 @@ def test_multilabel_representation_invariance():
         if isinstance(metric, partial):
             metric.__module__ = 'tmp'
             metric.__name__ = name
-        metric = ignore_warnings(metric)
+        # Check warning for sequence of sequences
         measure = assert_warns(DeprecationWarning, metric, y1, y2)
+        metric = ignore_warnings(metric)
 
         # Check representation invariance
         assert_almost_equal(metric(y1_binary_indicator,
