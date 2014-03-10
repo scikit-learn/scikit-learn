@@ -13,12 +13,11 @@ import tempfile
 from itertools import combinations
 
 import numpy as np
-from numpy.linalg import norm
-from scipy.linalg import lstsq
+from scipy.linalg import lstsq, norm
 from scipy.special import binom
 from .base import LinearModel
 from ..base import RegressorMixin
-from ..utils import check_arrays, check_random_state
+from ..utils import check_arrays, check_random_state, column_or_1d
 from ..externals.joblib import Parallel, delayed, cpu_count
 from ..externals.six.moves import xrange
 
@@ -44,7 +43,7 @@ def _modweiszfeld_step(X, y):
     """
     X, y = check_arrays(X.T, y, sparse_format='dense', dtype=np.float)
     diff = X.T - y
-    normdiff = norm(diff, axis=1)
+    normdiff = np.apply_along_axis(norm, 1, diff)
     mask = normdiff >= 1e-6
     if mask.sum() < X.shape[1]:
         eta = 1.
@@ -148,7 +147,7 @@ def _lse(weights, X, y, indices, start, intercept):
     for i, ix in enumerate(indices, start):
         X_sub = np.ones((n_ss, n_dim))
         X_sub[:, fst:] = X[list(ix), :]
-        weights[i, :] = lstsq(X_sub, y[list(ix)])[0]
+        weights[i, :] = column_or_1d(lstsq(X_sub, y[list(ix)])[0])
 
 
 class TheilSen(LinearModel, RegressorMixin):
@@ -250,7 +249,7 @@ class TheilSen(LinearModel, RegressorMixin):
             n_subsamples = min(n_dim, n_samples)
         if self.max_subpopulation <= 0:
             raise ValueError("Subpopulation must be positive.")
-        n_all = max(1, binom(n_samples, n_subsamples))
+        n_all = max(1, np.rint(binom(n_samples, n_subsamples)))
         n_sp = int(min(self.max_subpopulation, n_all))
         return n_dim, n_subsamples, n_sp
 
@@ -267,7 +266,7 @@ class TheilSen(LinearModel, RegressorMixin):
             yield self.random_state_.randint(0, n_samples, n_ss)
 
     def _get_indices(self, n_samples, n_ss, n_sp):
-        if binom(n_samples, n_ss) <= self.max_subpopulation:
+        if np.rint(binom(n_samples, n_ss)) <= self.max_subpopulation:
             return combinations(xrange(n_samples), n_ss)
         else:
             return self._subpop_iter(n_samples, n_ss, n_sp)
