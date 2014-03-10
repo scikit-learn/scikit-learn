@@ -275,8 +275,8 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
 
 class DummyRegressor(BaseEstimator, RegressorMixin):
     """
-    DummyRegressor is a regressor is a regressor that make predictions
-    using simple rules.
+    DummyRegressor is a regressor that makes predictions using
+    simple rules.
 
     This regressor is useful as a simple baseline to compare with other
     (real) regressors. Do not use it for real problems.
