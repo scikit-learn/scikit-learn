@@ -1168,10 +1168,12 @@ cdef class BestSplitter(Splitter):
                     samples[partition_end] = samples[p]
                     samples[p] = tmp
 
-        # Respect invariant for constant features
+        # Respect invariant for constant features: the original order of
+        # element in features[:n_known_constants] must be preserved for sibling
+        # and child nodes
         memcpy(features, constant_features, sizeof(SIZE_t) * n_known_constants)
 
-        # Copy constant features
+        # Copy newly found constant features
         memcpy(constant_features + n_known_constants,
                features + n_known_constants,
                sizeof(SIZE_t) * n_found_constants)
@@ -1474,10 +1476,12 @@ cdef class RandomSplitter(Splitter):
                     samples[partition_end] = samples[p]
                     samples[p] = tmp
 
-        # Respect invariant for constant features
+        # Respect invariant for constant features: the original order of
+        # element in features[:n_known_constants] must be preserved for sibling
+        # and child nodes
         memcpy(features, constant_features, sizeof(SIZE_t) * n_known_constants)
 
-        # Copy constant features
+        # Copy newly found constant features
         memcpy(constant_features + n_known_constants,
                features + n_known_constants,
                sizeof(SIZE_t) * n_found_constants)
@@ -1714,10 +1718,12 @@ cdef class PresortBestSplitter(Splitter):
         for p in range(start, end):
             sample_mask[samples[p]] = 0
 
-        # Respect invariant for constant features
+        # Respect invariant for constant features: the original order of
+        # element in features[:n_known_constants] must be preserved for sibling
+        # and child nodes
         memcpy(features, constant_features, sizeof(SIZE_t) * n_known_constants)
 
-        # Copy constant features
+        # Copy newly found constant features
         memcpy(constant_features + n_known_constants,
                features + n_known_constants,
                sizeof(SIZE_t) * n_found_constants)
