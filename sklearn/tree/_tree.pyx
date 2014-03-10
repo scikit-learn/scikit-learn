@@ -1064,11 +1064,33 @@ cdef class BestSplitter(Splitter):
         cdef DTYPE_t current_feature_value
         cdef SIZE_t partition_end
 
-        # Look for splits
-        while (f_i > n_total_constants and
+        # Sample up to max_features without replacement using a
+        # Fisher-Yates-based algorithm (using the local variables `f_i` and
+        # `f_j` to compute a permutation of the `features` array).
+        #
+        # Skip the CPU intensive evaluation of the impurity criterion for
+        # features that were already detected as constant (hence not suitable
+        # for good splitting) by ancestor nodes and save the information on
+        # newly discovered constant features to spare computation on descendant
+        # nodes.
+        while (f_i > n_total_constants and  # Stop early if remaining features
+                                            # are constant
                 (n_visited_features < max_features or
+                 # At least one drawn features must be non constant
                  n_visited_features <= n_found_constants + n_drawn_constants)):
+
             n_visited_features += 1
+
+            # Loop invariant: elements of features in
+            # - [:n_drawn_constant[ holds drawn and known constant features;
+            # - [n_drawn_constant:n_known_constant[ holds known constant
+            #   features that haven't been drawn yet;
+            # - [n_known_constant:n_total_constant[ holds newly found constant
+            #   features;
+            # - [n_total_constant:f_i[ holds features that haven't been drawn
+            #   yet and aren't constant apriori.
+            # - [f_i:n_features[ holds features that have been drawn
+            #   and aren't constant.
 
             # Draw a feature at random
             f_j = rand_int(f_i - n_drawn_constants - n_found_constants,
@@ -1359,11 +1381,32 @@ cdef class RandomSplitter(Splitter):
         cdef DTYPE_t current_feature_value
         cdef SIZE_t partition_end
 
-        # Look for splits
-        while (f_i > n_total_constants and
+        # Sample up to max_features without replacement using a
+        # Fisher-Yates-based algorithm (using the local variables `f_i` and
+        # `f_j` to compute a permutation of the `features` array).
+        #
+        # Skip the CPU intensive evaluation of the impurity criterion for
+        # features that were already detected as constant (hence not suitable
+        # for good splitting) by ancestor nodes and save the information on
+        # newly discovered constant features to spare computation on descendant
+        # nodes.
+        while (f_i > n_total_constants and  # Stop early if remaining features
+                                            # are constant
                 (n_visited_features < max_features or
+                 # At least one drawn features must be non constant
                  n_visited_features <= n_found_constants + n_drawn_constants)):
             n_visited_features += 1
+
+            # Loop invariant: elements of features in
+            # - [:n_drawn_constant[ holds drawn and known constant features;
+            # - [n_drawn_constant:n_known_constant[ holds known constant
+            #   features that haven't been drawn yet;
+            # - [n_known_constant:n_total_constant[ holds newly found constant
+            #   features;
+            # - [n_total_constant:f_i[ holds features that haven't been drawn
+            #   yet and aren't constant apriori.
+            # - [f_i:n_features[ holds features that have been drawn
+            #   and aren't constant.
 
             # Draw a feature at random
             f_j = rand_int(f_i - n_drawn_constants - n_found_constants,
@@ -1609,15 +1652,37 @@ cdef class PresortBestSplitter(Splitter):
         for p in range(start, end):
             sample_mask[samples[p]] = 1
 
-        # Look for splits
-        while (f_i > n_total_constants and
+        # Sample up to max_features without replacement using a
+        # Fisher-Yates-based algorithm (using the local variables `f_i` and
+        # `f_j` to compute a permutation of the `features` array).
+        #
+        # Skip the CPU intensive evaluation of the impurity criterion for
+        # features that were already detected as constant (hence not suitable
+        # for good splitting) by ancestor nodes and save the information on
+        # newly discovered constant features to spare computation on descendant
+        # nodes.
+        while (f_i > n_total_constants and  # Stop early if remaining features
+                                            # are constant
                 (n_visited_features < max_features or
+                 # At least one drawn features must be non constant
                  n_visited_features <= n_found_constants + n_drawn_constants)):
             n_visited_features += 1
+
+            # Loop invariant: elements of features in
+            # - [:n_drawn_constant[ holds drawn and known constant features;
+            # - [n_drawn_constant:n_known_constant[ holds known constant
+            #   features that haven't been drawn yet;
+            # - [n_known_constant:n_total_constant[ holds newly found constant
+            #   features;
+            # - [n_total_constant:f_i[ holds features that haven't been drawn
+            #   yet and aren't constant apriori.
+            # - [f_i:n_features[ holds features that have been drawn
+            #   and aren't constant.
 
             # Draw a feature at random
             f_j = rand_int(f_i - n_drawn_constants - n_found_constants,
                            random_state) + n_drawn_constants
+
             if f_j < n_known_constants:
                 # f_j is in [n_drawn_constants, n_known_constants[
                 tmp = features[f_j]
