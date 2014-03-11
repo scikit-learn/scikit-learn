@@ -250,7 +250,7 @@ def check_arrays(*arrays, **options):
                     array = np.asarray(array, dtype=dtype)
                 _assert_all_finite(array)
 
-            if array.ndim > 2:
+            if array.ndim >= 3:
                 raise ValueError("Found array with dim %d. Expected <= 2" %
                                  array.ndim)
 
