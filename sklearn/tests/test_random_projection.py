@@ -349,26 +349,26 @@ def test_n_components_as_percentage_string():
     X, _ = make_sparse_random_data(5, n_features, int(n_features / 4))
 
     for RandomProjection in all_RandomProjection:
-            rp = RandomProjection(n_components="50%").fit(X)
-            assert_equal(rp.n_components_, 10)
+        rp = RandomProjection(n_components="50%").fit(X)
+        assert_equal(rp.n_components_, 10)
 
-            rp = RandomProjection(n_components="150%").fit(X)
-            assert_equal(rp.n_components_, 30)
+        rp = RandomProjection(n_components="150%").fit(X)
+        assert_equal(rp.n_components_, 30)
 
-            rp = RandomProjection(n_components="105%").fit(X)
-            assert_equal(rp.n_components_, 21)
+        rp = RandomProjection(n_components="105%").fit(X)
+        assert_equal(rp.n_components_, 21)
 
-            rp = RandomProjection(n_components="102.5%").fit(X)
-            assert_equal(rp.n_components_, 20)
+        rp = RandomProjection(n_components="102.5%").fit(X)
+        assert_equal(rp.n_components_, 20)
 
-            rp = RandomProjection(n_components="100%").fit(X)
-            assert_equal(rp.n_components_, 20)
+        rp = RandomProjection(n_components="100%").fit(X)
+        assert_equal(rp.n_components_, 20)
 
-            assert_raises(ValueError,
-                          RandomProjection(n_components="-10%").fit, X)
-            assert_raises(ValueError,
-                          RandomProjection(n_components="0%").fit, X)
-            assert_raises(ValueError,
-                          RandomProjection(n_components="garbage").fit, X)
-            assert_raises(ValueError,
-                          RandomProjection(n_components="garbage%").fit, X)
+        assert_raises(ValueError,
+                      RandomProjection(n_components="-10%").fit, X)
+        assert_raises(ValueError,
+                      RandomProjection(n_components="0%").fit, X)
+        assert_raises(ValueError,
+                      RandomProjection(n_components="garbage").fit, X)
+        assert_raises(ValueError,
+                      RandomProjection(n_components="garbage%").fit, X)
