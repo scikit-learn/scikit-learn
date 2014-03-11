@@ -5,7 +5,7 @@ from .... import datasets
 from ..unsupervised import silhouette_score
 from ... import pairwise_distances
 from sklearn.utils.testing import assert_false, assert_almost_equal
-from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_raises_regexp
 
 
 def test_silhouette():
@@ -59,8 +59,16 @@ def test_correct_labelsize():
 
     # n_labels = n_samples
     y = np.arange(X.shape[0])
-    assert_raises(ValueError, silhouette_score, X, y)
+    assert_raises_regexp(ValueError,
+                         "Number of labels is %d "
+                         "but should be more than 2"
+                         "and less than n_samples - 1" % len(np.unique(y)),
+                         silhouette_score, X, y)
 
     # n_labels = 1
     y = np.zeros(X.shape[0])
-    assert_raises(ValueError, silhouette_score, X, y)
+    assert_raises_regexp(ValueError,
+                         "Number of labels is %d "
+                         "but should be more than 2"
+                         "and less than n_samples - 1" % len(np.unique(y)),
+                         silhouette_score, X, y)

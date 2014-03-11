@@ -79,8 +79,9 @@ def silhouette_score(X, labels, metric='euclidean', sample_size=None,
     n_labels = len(np.unique(labels))
     n_samples = X.shape[0]
     if not 2 <= n_labels <= n_samples-1:
-        raise ValueError("Number of labels should be more than 2 \
-                         and less than n_samples - 1")
+        raise ValueError("Number of labels is %d "
+                         "but should be more than 2"
+                         "and less than n_samples - 1" % n_labels)
 
     if sample_size is not None:
         random_state = check_random_state(random_state)
