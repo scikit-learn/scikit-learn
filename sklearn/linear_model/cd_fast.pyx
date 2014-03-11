@@ -32,14 +32,6 @@ cdef inline double fsign(double f):
         return -1.0
 
 
-cdef fdot(np.ndarray[np.float64_t, ndim=1] w, int length):
-    cdef double sum = 0.0
-    cdef unsigned int i
-    for i in xrange(length):
-        sum += w[i]**2
-    return sum
-
-
 cdef extern from "cblas.h":
     enum CBLAS_ORDER:
         CblasRowMajor=101
@@ -299,7 +291,8 @@ def sparse_enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                 R[jj] += X_mean_ii * w_ii
         startptr = endptr
 
-    tol = tol * fdot(y, n_samples)
+    #tol *= np.dot(y, y)
+    tol *= ddot(n_samples, <DOUBLE*>y.data, 1, <DOUBLE*>y.data, 1)
 
     for n_iter in range(max_iter):
 
@@ -376,8 +369,11 @@ def sparse_enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
             else:
                 dual_norm_XtA = linalg.norm(XtA, np.inf)
 
-            R_norm2 = fdot(R, n_samples)
-            w_norm2 = fdot(w, n_features)
+            #R_norm2 = np.dot(R, R)
+            R_norm2 = ddot(n_samples, <DOUBLE*>R.data, 1, <DOUBLE*>R.data, 1)
+
+            #w_norm2 = np.dot(w, w)
+            w_norm2 = ddot(n_features, <DOUBLE*>w.data, 1, <DOUBLE*>w.data, 1)
             if (dual_norm_XtA > alpha):
                 const = alpha / dual_norm_XtA
                 A_norm2 = R_norm2 * const**2
