@@ -1,5 +1,7 @@
 # Authors: Gilles Louppe <g.louppe@gmail.com>
 #          Peter Prettenhofer <peter.prettenhofer@gmail.com>
+#          Arnaud Joly <arnaud.v.joly@gmail.com>
+#
 # Licence: BSD 3 clause
 
 # See _utils.pyx for details.
@@ -22,6 +24,7 @@ cdef struct StackRecord:
     SIZE_t parent
     bint is_left
     double impurity
+    SIZE_t n_constant_features
 
 cdef class Stack:
     cdef SIZE_t capacity
@@ -30,7 +33,8 @@ cdef class Stack:
 
     cdef bint is_empty(self) nogil
     cdef int push(self, SIZE_t start, SIZE_t end, SIZE_t depth, SIZE_t parent,
-                   bint is_left, double impurity) nogil
+                   bint is_left, double impurity,
+                   SIZE_t n_constant_features) nogil
     cdef int pop(self, StackRecord* res) nogil
 
 
