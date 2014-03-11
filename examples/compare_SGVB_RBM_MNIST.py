@@ -7,18 +7,21 @@
 """Demonstration comparing SGVB to RBM for feature extraction and classification"""
 
 import numpy as np
-import gzip,cPickle
 from sklearn import neural_network, linear_model
+from sklearn.datasets import fetch_mldata
 
 print "Loading data"
-#Retrieved from: http://deeplearning.net/data/mnist/mnist.pkl.gz
+mnist = fetch_mldata('MNIST original')
 
-f = gzip.open('mnist.pkl.gz', 'rb')
-(x_train, t_train), (x_valid, t_valid), (x_test, t_test)  = cPickle.load(f)
-f.close()
+#Normalize to 0-1
+mnist["data"] = mnist["data"]/255.
 
-data_train, data_test = x_valid[:1000], x_test[:1000]
-t_train, t_test = t_valid[:1000], t_test[:1000]
+#Take the standard MNIST training set size for the RBM and auto-encoder
+x_train, t_train = mnist["data"][:50000], mnist["target"][:50000]
+
+#Reduced training sample for logistic regression to show effect of RBM and the variational auto-encoder on this problem.
+data_train, data_test = mnist["data"][50000:51000], mnist["data"][51000:52000]
+t_train, t_test = mnist["target"][50000:51000], mnist["target"][51000:52000]
 
 print 'extracting features with SGVB auto-encoder, default is 40 iterations...'
 encoder = neural_network.SGVB(verbose=True)
