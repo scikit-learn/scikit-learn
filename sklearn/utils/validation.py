@@ -249,6 +249,11 @@ def check_arrays(*arrays, **options):
                 else:
                     array = np.asarray(array, dtype=dtype)
                 _assert_all_finite(array)
+            n_dim = array.ndim
+
+            if n_dim > 2:
+                raise ValueError("Found array with n_dim %d. Expected <= 2" %
+                                (n_dim))
 
         if copy and array is array_orig:
             array = array.copy()
