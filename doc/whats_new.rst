@@ -64,6 +64,14 @@ Changelog
      when fit with ``sample_weight != None`` and/or with ``bootstrap=True``.
      By `Gilles Louppe`_.
 
+   - Faster :class:`sklearn.ensemble.ExtraTrees` by caching feature values.
+     By `Arnaud Joly`_.
+
+   - Faster depth-based tree building algorithm such as decision tree,
+     random forest, extra trees or gradient tree boosting (with depth based
+     growing strategy) by avoiding trying to split on found constant features
+     in the sample subset. By `Arnaud Joly`_.
+
    - Added :func:`metrics.pairwise_distances_argmin_min`, by Philippe Gervais.
 
    - Added predict method to :class:`cluster.AffinityPropagation` and
@@ -115,7 +123,7 @@ Changelog
    - :class:`dummy.DummyClassifier` can now be used to predict a constant
      output value. By `Manoj Kumar`_.
 
-   - :class:`dummy.DummyRegressor` have now a strategy parameters which allows
+   - :class:`dummy.DummyRegressor` has now a strategy parameter which allows
      to predict the mean, the median of the training set or a constant
      output value. By `Maheshakya Wijewardena`_.
 
