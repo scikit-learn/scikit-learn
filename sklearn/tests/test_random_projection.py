@@ -21,7 +21,8 @@ from sklearn.utils.testing import (
     assert_equal,
     assert_almost_equal,
     assert_in,
-    assert_array_almost_equal)
+    assert_array_almost_equal,
+    ignore_warnings)
 
 all_sparse_random_matrix = [sparse_random_matrix]
 all_dense_random_matrix = [gaussian_random_matrix]
@@ -345,28 +346,32 @@ def test_warning_n_components_greater_than_n_features():
             assert issubclass(w[-1].category, UserWarning)
 
 
-def test_n_components_as_float():
+@ignore_warnings
+def test_n_components_as_percentage_string():
     n_features = 20
     X, _ = make_sparse_random_data(5, n_features, int(n_features / 4))
 
     for RandomProjection in all_RandomProjection:
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter("always")
-
-            rp = RandomProjection(n_components=0.5).fit(X)
+            rp = RandomProjection(n_components="50%").fit(X)
             assert_equal(rp.n_components_, 10)
 
-            rp = RandomProjection(n_components=1.5).fit(X)
+            rp = RandomProjection(n_components="150%").fit(X)
             assert_equal(rp.n_components_, 30)
 
-            rp = RandomProjection(n_components=1.).fit(X)
+            rp = RandomProjection(n_components="105%").fit(X)
+            assert_equal(rp.n_components_, 21)
+
+            rp = RandomProjection(n_components="102.4%").fit(X)
             assert_equal(rp.n_components_, 20)
 
-            rp = RandomProjection(n_components=1).fit(X)
-            assert_equal(rp.n_components_, 1)
+            rp = RandomProjection(n_components="100%").fit(X)
+            assert_equal(rp.n_components_, 20)
 
-            assert_raises(ValueError, RandomProjection(n_components=-0.1).fit,
-                          X)
-
-            assert_raises(ValueError, RandomProjection(n_components=0.).fit,
-                          X)
+            assert_raises(ValueError,
+                          RandomProjection(n_components="-10%").fit, X)
+            assert_raises(ValueError,
+                          RandomProjection(n_components="0%").fit, X)
+            assert_raises(ValueError,
+                          RandomProjection(n_components="garbage").fit, X)
+            assert_raises(ValueError,
+                          RandomProjection(n_components="garbage%").fit, X)

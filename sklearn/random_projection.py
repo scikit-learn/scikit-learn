@@ -29,9 +29,8 @@ The main theoretical result behind the efficiency of random projection is the
 
 from __future__ import division
 import warnings
-import numbers
 from abc import ABCMeta, abstractmethod
-
+import numbers
 import numpy as np
 from numpy.testing import assert_equal
 import scipy.sparse as sp
@@ -39,6 +38,7 @@ import scipy.sparse as sp
 from .base import BaseEstimator, TransformerMixin
 from .externals import six
 from .externals.six.moves import xrange as range
+from .externals.six import string_types
 from .utils import check_random_state
 from .utils.extmath import safe_sparse_dot
 from .utils.random import sample_without_replacement
@@ -359,10 +359,15 @@ class BaseRandomProjection(six.with_metaclass(ABCMeta, BaseEstimator,
                     'n_features=%d' % (self.eps, n_samples, self.n_components_,
                                        n_features))
         else:
-            if isinstance(self.n_components, (numbers.Integral, np.integer)):
+            if (isinstance(self.n_components, string_types) and
+                    self.n_components[-1] == "%"):
+                n_components = int(float(self.n_components[:-1]) / 100 *
+                                   n_features)
+            elif isinstance(self.n_components, (numbers.Integral, np.integer)):
                 n_components = self.n_components
-            else:  # float
-                n_components = int(self.n_components * n_features)
+            else:
+                raise ValueError("n_components must be an integer or set "
+                                 "as a percentage of n_features as 'XX%'")
 
             if n_components <= 0:
                 raise ValueError("n_components must be greater than 0, got %s"
@@ -432,7 +437,7 @@ class GaussianRandomProjection(BaseRandomProjection):
 
     Parameters
     ----------
-    n_components : int, float or 'auto', optional (default = 'auto')
+    n_components : int, string or 'auto', optional (default = 'auto')
         Dimensionality of the target projection space.
 
         n_components can be automatically adjusted according to the
@@ -444,16 +449,17 @@ class GaussianRandomProjection(BaseRandomProjection):
         very conservative estimated of the required number of components
         as it makes no assumption on the structure of the dataset.
 
-        If float, then `n_components` is a percentage and
-        `int(n_components * n_features)`.
+        If string with ``n_components[-1] == "%"``, then the number of
+        components is equal to ``int(float(self.n_components[:-1]) / 100 *
+        n_features)``.
 
     eps : strictly positive float, optional (default=0.1)
         Parameter to control the quality of the embedding according to
         the Johnson-Lindenstrauss lemma when n_components is set to
-        'auto'.
+        ``'auto'``.
 
         Smaller values lead to better embedding and higher number of
-        dimensions (n_components) in the target projection space.
+        dimensions (``n_components``) in the target projection space.
 
     random_state : integer, RandomState instance or None (default=None)
         Control the pseudo random number generator used to generate the
@@ -462,8 +468,9 @@ class GaussianRandomProjection(BaseRandomProjection):
     Attributes
     ----------
     ``n_component_`` : int
-        Concrete number of components computed when n_components="auto"
-        or n_components is a float.
+        Concrete number of components computed when ``n_components="auto"``
+        or ``n_components`` is specified as a string.
+
 
     ``components_`` : numpy array of shape [n_components, n_features]
         Random matrix used for the projection.
@@ -520,7 +527,7 @@ class SparseRandomProjection(BaseRandomProjection):
 
     Parameters
     ----------
-    n_components : int, float or 'auto', optional (default = 'auto')
+    n_components : int, string or 'auto', optional (default = 'auto')
         Dimensionality of the target projection space.
 
         n_components can be automatically adjusted according to the
@@ -532,8 +539,9 @@ class SparseRandomProjection(BaseRandomProjection):
         very conservative estimated of the required number of components
         as it makes no assumption on the structure of the dataset.
 
-        If float, then `n_components` is a percentage and
-        `int(n_components * n_features)`.
+        If string with ``n_components[-1] == "%"``, then the number of
+        components is equal to ``int(float(self.n_components[:-1]) / 100 *
+        n_features)``.
 
     density : float in range ]0, 1], optional (default='auto')
         Ratio of non-zero component in the random projection matrix.
@@ -547,7 +555,7 @@ class SparseRandomProjection(BaseRandomProjection):
     eps : strictly positive float, optional, (default=0.1)
         Parameter to control the quality of the embedding according to
         the Johnson-Lindenstrauss lemma when n_components is set to
-        'auto'.
+        ``'auto'`.
 
         Smaller values lead to better embedding and higher number of
         dimensions (n_components) in the target projection space.
@@ -570,8 +578,8 @@ class SparseRandomProjection(BaseRandomProjection):
     Attributes
     ----------
     ``n_component_`` : int
-        Concrete number of components computed when n_components="auto"
-        or n_components is a float.
+        Concrete number of components computed when ``n_components="auto"``
+        or ``n_components`` is specified as a string.
 
     ``components_`` : CSR matrix with shape [n_components, n_features]
         Random matrix used for the projection.
