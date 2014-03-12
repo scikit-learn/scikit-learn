@@ -15,12 +15,13 @@ from ..externals.joblib import Parallel, delayed
 from .base import LinearClassifierMixin, SparseCoefMixin
 from ..base import BaseEstimator, RegressorMixin
 from ..feature_selection.from_model import _LearntSelectorMixin
-from ..utils import atleast2d_or_csr, check_arrays, column_or_1d
+from ..utils import (atleast2d_or_csr, check_arrays, check_random_state,
+                     column_or_1d)
 from ..utils.extmath import safe_sparse_dot
 from ..utils.multiclass import _check_partial_fit_first_call
 from ..externals import six
 
-from .sgd_fast import plain_sgd as plain_sgd
+from .sgd_fast import plain_sgd
 from ..utils.seq_dataset import ArrayDataset, CSRDataset
 from ..utils import compute_class_weight
 from .sgd_fast import Hinge
@@ -261,10 +262,14 @@ def fit_binary(est, i, X, y, alpha, C, learning_rate, n_iter,
     penalty_type = est._get_penalty_type(est.penalty)
     learning_rate_type = est._get_learning_rate_type(learning_rate)
 
+    # XXX should have random_state_!
+    random_state = check_random_state(est.random_state)
+    seed = random_state.randint(0, 2 ** 32)
+
     return plain_sgd(coef, intercept, est.loss_function,
                      penalty_type, alpha, C, est.l1_ratio,
                      dataset, n_iter, int(est.fit_intercept),
-                     int(est.verbose), int(est.shuffle), est.random_state,
+                     int(est.verbose), int(est.shuffle), seed,
                      pos_weight, neg_weight,
                      learning_rate_type, est.eta0,
                      est.power_t, est.t_, intercept_decay)
@@ -403,15 +408,15 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
         Each binary classifier predicts one class versus all others. This
         strategy is called OVA: One Versus All.
         """
-        # Use joblib to fit OvA in parallel
-        result = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
+        # Use joblib to fit OvA in parallel.
+        result = Parallel(n_jobs=self.n_jobs, backend="threading",
+                          verbose=self.verbose)(
             delayed(fit_binary)(self, i, X, y, alpha, C, learning_rate,
                                 n_iter, self._expanded_class_weight[i], 1.,
                                 sample_weight)
             for i in range(len(self.classes_)))
 
-        for i, (coef, intercept) in enumerate(result):
-            self.coef_[i] = coef
+        for i, (_, intercept) in enumerate(result):
             self.intercept_[i] = intercept
 
     def partial_fit(self, X, y, classes=None, sample_weight=None):
@@ -911,6 +916,9 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         if self.t_ is None:
             self._init_t(loss_function)
 
+        random_state = check_random_state(self.random_state)
+        seed = random_state.randint(0, 2 ** 32)
+
         self.coef_, intercept = plain_sgd(self.coef_,
                                           self.intercept_[0],
                                           loss_function,
@@ -922,7 +930,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
                                           int(self.fit_intercept),
                                           int(self.verbose),
                                           int(self.shuffle),
-                                          self.random_state,
+                                          seed,
                                           1.0, 1.0,
                                           learning_rate_type,
                                           self.eta0, self.power_t, self.t_,

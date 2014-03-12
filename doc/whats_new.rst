@@ -128,7 +128,7 @@ Changelog
      output value. By `Maheshakya Wijewardena`_.
 
    - Fixed bug in :class:`decomposition.MiniBatchDictionaryLearning` :
-     partial_fit was not working properly.
+     ``partial_fit`` was not working properly.
 
    - Multi-label classification output in multilabel indicator format
      is now supported by :func:`metrics.roc_auc_score` and
@@ -169,6 +169,10 @@ Changelog
    - Significant performance improvements (more than 100x speedup for
      large problems) in :class:`isotonic.IsotonicRegression` by
      `Andrew Tulloch`_.
+
+   - Speed and memory usage improvements to the SGD algorithm for linear
+     models: it now uses threads, not separate processes, when ``n_jobs>1``.
+     By `Lars Buitinck`_.
 
 
 API changes summary
