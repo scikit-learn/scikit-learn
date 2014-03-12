@@ -84,3 +84,15 @@ except TypeError:
         if out_orig is None and np.isscalar(x1):
             out = np.asscalar(out)
         return out
+
+
+try:
+    np.array(5).astype(float, copy=False)
+except TypeError:
+    # Compat where astype accepted no copy argument
+    def astype(array, dtype, copy=True):
+        if array.dtype == dtype:
+            return array
+        return array.astype(dtype)
+else:
+    astype = np.ndarray.astype

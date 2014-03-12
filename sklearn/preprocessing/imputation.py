@@ -14,6 +14,7 @@ from ..utils import array2d
 from ..utils import atleast2d_or_csr
 from ..utils import atleast2d_or_csc
 from ..utils import as_float_array
+from ..utils.fixes import astype
 
 from ..externals import six
 
@@ -248,7 +249,7 @@ class Imputer(BaseEstimator, TransformerMixin):
                                     X.indptr[1:-1])
 
             # astype necessary for bug in numpy.hsplit before v1.9
-            columns = [col[mask.astype(bool, copy=False)]
+            columns = [col[astype(mask, bool, copy=False)]
                        for col, mask in zip(columns_all, mask_valids)]
 
             # Median
