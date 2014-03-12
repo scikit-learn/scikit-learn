@@ -224,14 +224,12 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-def sparse_enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
+def sparse_enet_coordinate_descent(double[:] w,
                             double alpha, double beta,
-                            np.ndarray[DOUBLE, ndim=1] X_data,
-                            np.ndarray[INTEGER, ndim=1] X_indices,
-                            np.ndarray[INTEGER, ndim=1] X_indptr,
-                            np.ndarray[DOUBLE, ndim=1] y,
-                            np.ndarray[DOUBLE, ndim=1] X_mean,
-                            int max_iter, double tol, bint positive=False):
+                            double[:] X_data, int[:] X_indices,
+                            int[:] X_indptr, double[:] y,
+                            double[:] X_mean, int max_iter,
+                            double tol, bint positive=False):
     """Cython version of the coordinate descent algorithm for Elastic-Net
 
     We minimize:
@@ -248,14 +246,16 @@ def sparse_enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
 
     # compute norms of the columns of X
     cdef unsigned int ii
-    cdef np.ndarray[DOUBLE, ndim = 1] norm_cols_X = np.zeros(n_features,
-                                                           np.float64)
+    cdef double[:] norm_cols_X = np.zeros(n_features, np.float64)
 
     cdef unsigned int startptr = X_indptr[0]
     cdef unsigned int endptr
 
     # initial value of the residuals
-    cdef np.ndarray[DOUBLE, ndim = 1] R
+    cdef double[:] R = y.copy()
+
+    cdef double[:] X_T_R = np.zeros(n_features)
+    cdef double[:] XtA = np.zeros(n_features)
 
     cdef double tmp
     cdef double w_ii
@@ -269,10 +269,13 @@ def sparse_enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
     cdef double d_w_tol = tol
     cdef unsigned int jj
     cdef unsigned int n_iter
-    cdef bint center = (X_mean != 0).any()
+    cdef bint center = False
 
-    # initialize the residuals
-    R = y.copy()
+    # center = (X_mean != 0).any()
+    for ii in xrange(n_samples):
+        if X_mean[ii]:
+           center = True
+           break
 
     for ii in xrange(n_features):
         X_mean_ii = X_mean[ii]
@@ -292,7 +295,7 @@ def sparse_enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
         startptr = endptr
 
     #tol *= np.dot(y, y)
-    tol *= ddot(n_samples, <DOUBLE*>y.data, 1, <DOUBLE*>y.data, 1)
+    tol *= ddot(n_samples, <DOUBLE*>&y[0], 1, <DOUBLE*>&y[0], 1)
 
     for n_iter in range(max_iter):
 
@@ -357,23 +360,26 @@ def sparse_enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
             # criterion
 
             # sparse X.T / dense R dot product
-            X_T_R = np.zeros(n_features)
             for ii in xrange(n_features):
                 for jj in xrange(X_indptr[ii], X_indptr[ii + 1]):
                     X_T_R[ii] += X_data[jj] * R[X_indices[jj]]
-                X_T_R[ii] -= X_mean[ii] * R.sum()
+                R_sum = 0.0
+                for jj in xrange(n_samples):
+                    R_sum += R[jj]
+                X_T_R[ii] -= X_mean[ii] * R_sum
 
-            XtA = X_T_R - beta * w
+            for jj in xrange(n_features):
+                XtA[jj] = X_T_R[jj] - beta * w[jj]
             if positive:
                 dual_norm_XtA = np.max(XtA)
             else:
                 dual_norm_XtA = linalg.norm(XtA, np.inf)
 
             #R_norm2 = np.dot(R, R)
-            R_norm2 = ddot(n_samples, <DOUBLE*>R.data, 1, <DOUBLE*>R.data, 1)
+            R_norm2 = ddot(n_samples, <DOUBLE*>&R[0], 1, <DOUBLE*>&R[0], 1)
 
             #w_norm2 = np.dot(w, w)
-            w_norm2 = ddot(n_features, <DOUBLE*>w.data, 1, <DOUBLE*>w.data, 1)
+            w_norm2 = ddot(n_features, <DOUBLE*>&w[0], 1, <DOUBLE*>&w[0], 1)
             if (dual_norm_XtA > alpha):
                 const = alpha / dual_norm_XtA
                 A_norm2 = R_norm2 * const**2
