@@ -32,7 +32,6 @@ __all__ = [
     'MinMaxScaler',
     'Normalizer',
     'OneHotEncoder',
-    'Scaler',
     'StandardScaler',
     'add_dummy_feature',
     'PolynomialFeatures',
