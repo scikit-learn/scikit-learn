@@ -213,7 +213,7 @@ computes the coefficients along the full path of possible values.
 Setting regularization parameter
 --------------------------------
 
-The `alpha` parameter control the degree of sparsity of the coefficients
+The `alpha` parameter controls the degree of sparsity of the coefficients
 estimated.
 
 Using cross-validation
