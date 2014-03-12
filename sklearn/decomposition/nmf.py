@@ -392,15 +392,7 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
             else:
                 init = 'random'
 
-        if isinstance(init, (numbers.Integral, np.random.RandomState)):
-            random_state = check_random_state(init)
-            init = "random"
-            warnings.warn("Passing a random seed or generator as init "
-                          "is deprecated and will be removed in 0.15. Use "
-                          "init='random' and random_state instead.",
-                          DeprecationWarning)
-        else:
-            random_state = self.random_state
+        random_state = self.random_state
 
         if init == 'nndsvd':
             W, H = _initialize_nmf(X, self.n_components_)

@@ -34,7 +34,6 @@ __all__ = [
     'MinMaxScaler',
     'Normalizer',
     'OneHotEncoder',
-    'Scaler',
     'StandardScaler',
     'add_dummy_feature',
     'binarize',
@@ -387,13 +386,6 @@ class StandardScaler(BaseEstimator, TransformerMixin):
             if self.with_mean:
                 X += self.mean_
         return X
-
-
-class Scaler(StandardScaler):
-    def __init__(self, copy=True, with_mean=True, with_std=True):
-        warnings.warn("Scaler was renamed to StandardScaler. The old name "
-                      " will be removed in 0.15.", DeprecationWarning)
-        super(Scaler, self).__init__(copy, with_mean, with_std)
 
 
 class PolynomialFeatures(BaseEstimator, TransformerMixin):

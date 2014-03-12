@@ -580,7 +580,7 @@ class GridSearchCV(BaseSearchCV):
         self.param_grid = param_grid
         _check_param_grid(param_grid)
 
-    def fit(self, X, y=None, **params):
+    def fit(self, X, y=None):
         """Run fit with all sets of parameters.
 
         Parameters
@@ -595,10 +595,6 @@ class GridSearchCV(BaseSearchCV):
             None for unsupervised learning.
 
         """
-        if params:
-            warnings.warn("Additional parameters to GridSearchCV are ignored!"
-                          " The params argument will be removed in 0.15.",
-                          DeprecationWarning)
         return self._fit(X, y, ParameterGrid(self.param_grid))
 
 

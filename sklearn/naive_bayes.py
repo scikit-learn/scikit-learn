@@ -287,7 +287,7 @@ class BaseDiscreteNB(BaseNB):
         self._update_class_log_prior()
         return self
 
-    def fit(self, X, y, sample_weight=None, class_prior=None):
+    def fit(self, X, y, sample_weight=None):
         """Fit Naive Bayes classifier according to X, y
 
         Parameters
@@ -323,12 +323,7 @@ class BaseDiscreteNB(BaseNB):
         if sample_weight is not None:
             Y *= array2d(sample_weight).T
 
-        if class_prior is not None:
-            warnings.warn('class_prior has been made an ``__init__`` parameter'
-                          ' and will be removed from fit in version 0.15.',
-                          DeprecationWarning)
-        else:
-            class_prior = self.class_prior
+        class_prior = self.class_prior
 
         # Count raw events from data before updating the class log prior
         # and feature log probas
