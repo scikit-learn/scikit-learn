@@ -1186,7 +1186,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         return self.classes_.take(np.argmax(proba, axis=1), axis=0)
 
     def staged_predict(self, X):
-        """Predict class probabilities at each stage for X.
+        """Predict classes at each stage for X.
 
         This method allows monitoring (i.e. determine error on testing set)
         after each stage.
