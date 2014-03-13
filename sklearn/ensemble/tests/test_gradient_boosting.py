@@ -17,6 +17,7 @@ from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_greater
+from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_warns
@@ -226,6 +227,9 @@ def test_feature_importances():
     clf.fit(X, y)
     #feature_importances = clf.feature_importances_
     assert_true(hasattr(clf, 'feature_importances_'))
+
+    X_new = clf.transform(X, threshold="mean")
+    assert_less(0 < X_new.shape[1], X.shape[1])
 
     # true feature importance ranking
     # true_ranking = np.array([3, 1, 8, 2, 10, 9, 4, 11, 0, 6, 7, 5, 12])
