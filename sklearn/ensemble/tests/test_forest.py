@@ -125,29 +125,29 @@ def test_boston():
                                     random_state=1)
         clf.fit(boston.data, boston.target)
         score = clf.score(boston.data, boston.target)
-        assert score < 3, ("Failed with max_features=None, "
-                           "criterion %s and score = %f" % (c, score))
+        assert score > 0.95, ("Failed with max_features=None, "
+                              "criterion %s and score = %f" % (c, score))
 
         clf = RandomForestRegressor(n_estimators=5, criterion=c,
                                     max_features=6, random_state=1)
         clf.fit(boston.data, boston.target)
         score = clf.score(boston.data, boston.target)
-        assert score < 3, ("Failed with max_features=None, "
-                           "criterion %s and score = %f" % (c, score))
+        assert score > 0.95, ("Failed with max_features=6, "
+                              "criterion %s and score = %f" % (c, score))
 
         # Extra-trees
         clf = ExtraTreesRegressor(n_estimators=5, criterion=c, random_state=1)
         clf.fit(boston.data, boston.target)
         score = clf.score(boston.data, boston.target)
-        assert score < 3, ("Failed with max_features=None, "
-                           "criterion %s and score = %f" % (c, score))
+        assert score > 0.95, ("Failed with max_features=None, "
+                              "criterion %s and score = %f" % (c, score))
 
         clf = ExtraTreesRegressor(n_estimators=5, criterion=c, max_features=6,
                                   random_state=1)
         clf.fit(boston.data, boston.target)
         score = clf.score(boston.data, boston.target)
-        assert score < 3, ("Failed with max_features=None, "
-                           "criterion %s and score = %f" % (c, score))
+        assert score > 0.95, ("Failed with max_features=6, "
+                              "criterion %s and score = %f" % (c, score))
 
 
 def test_regressor_attributes():
