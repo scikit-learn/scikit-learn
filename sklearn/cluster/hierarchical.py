@@ -32,6 +32,7 @@ if sys.version_info[0] > 2:
 ###############################################################################
 # For non fully-connected graphs
 
+
 def _fix_connectivity(X, connectivity, n_components=None,
                       affinity="euclidean"):
     """
@@ -44,7 +45,7 @@ def _fix_connectivity(X, connectivity, n_components=None,
     """
     n_samples = X.shape[0]
     if (connectivity.shape[0] != n_samples or
-        connectivity.shape[1] != n_samples):
+            connectivity.shape[1] != n_samples):
         raise ValueError('Wrong shape for connectivity matrix: %s '
                          'when X is %s' % (connectivity.shape, X.shape))
 
@@ -169,8 +170,8 @@ def ward_tree(X, connectivity=None, n_components=None, copy=None,
     else:
         if n_clusters > n_samples:
             raise ValueError('Cannot provide more clusters than samples. '
-                '%i n_clusters was asked, and there are %i samples.'
-                % (n_clusters, n_samples))
+                             '%i n_clusters was asked, and there are %i samples.'
+                             % (n_clusters, n_samples))
         n_nodes = 2 * n_samples - n_clusters
 
     # create inertia matrix
@@ -210,6 +211,9 @@ def ward_tree(X, connectivity=None, n_components=None, copy=None,
     for k in range(n_samples, n_nodes):
         # identify the merge
         while True:
+            if len(inertia) == 0:
+                raise ValueError(
+                    "Couldn't create clusters due to too few Nearest Neighbours.")
             inert, i, j = heappop(inertia)
             if used_node[i] and used_node[j]:
                 break
@@ -399,7 +403,7 @@ def linkage_tree(X, connectivity=None, n_components=None,
         # We keep only the upper triangular for the heap
         # Generator expressions are faster than arrays on the following
         inertia.extend(_hierarchical.WeightedEdge(d, ind, r)
-            for r, d in zip(row, data) if r < ind)
+                       for r, d in zip(row, data) if r < ind)
     del connectivity
 
     heapify(inertia)
@@ -460,7 +464,7 @@ _TREE_BUILDERS = dict(
     ward=ward_tree,
     complete=_complete_linkage,
     average=_average_linkage,
-    )
+)
 
 
 ###############################################################################
@@ -513,6 +517,7 @@ def _hc_cut(n_clusters, children, n_leaves):
 ###############################################################################
 
 class AgglomerativeClustering(BaseEstimator, ClusterMixin):
+
     """
     Agglomerative Clustering
 
@@ -662,6 +667,7 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
 
 
 class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
+
     def fit(self, X, y=None, **params):
         """Fit the hierarchical clustering on the data
 
@@ -681,6 +687,7 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
 # Backward compatibility: class for Ward hierarchical clustering
 
 class Ward(AgglomerativeClustering):
+
     """Ward hierarchical clustering: constructs a tree and cuts it.
 
     Recursively merges the pair of clusters that minimally increases
@@ -760,6 +767,7 @@ class Ward(AgglomerativeClustering):
 
 
 class WardAgglomeration(AgglomerationTransform, Ward):
+
     """Feature agglomeration based on Ward hierarchical clustering
 
     Parameters
