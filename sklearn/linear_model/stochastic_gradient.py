@@ -15,7 +15,7 @@ from ..externals.joblib import Parallel, delayed
 from .base import LinearClassifierMixin, SparseCoefMixin
 from ..base import BaseEstimator, RegressorMixin
 from ..feature_selection.from_model import _LearntSelectorMixin
-from ..utils import atleast2d_or_csr, check_arrays, deprecated, column_or_1d
+from ..utils import atleast2d_or_csr, check_arrays, column_or_1d
 from ..utils.extmath import safe_sparse_dot
 from ..utils.multiclass import _check_partial_fit_first_call
 from ..externals import six
@@ -291,13 +291,7 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
                  fit_intercept=True, n_iter=5, shuffle=False, verbose=0,
                  epsilon=DEFAULT_EPSILON, n_jobs=1, random_state=None,
                  learning_rate="optimal", eta0=0.0, power_t=0.5,
-                 class_weight=None, warm_start=False, seed=None):
-
-        if seed is not None:
-            warnings.warn("Parameter 'seed' was renamed to 'random_state' for"
-                          " consistency and will be removed in 0.15",
-                          DeprecationWarning)
-            random_state = seed
+                 class_weight=None, warm_start=False):
 
         super(BaseSGDClassifier, self).__init__(loss=loss, penalty=penalty,
                                                 alpha=alpha, l1_ratio=l1_ratio,
@@ -312,12 +306,6 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
         self.class_weight = class_weight
         self.classes_ = None
         self.n_jobs = int(n_jobs)
-
-    @property
-    @deprecated("Parameter 'seed' was renamed to 'random_state' for"
-                " consistency and will be removed in 0.15")
-    def seed(self):
-        return self.random_state
 
     def _partial_fit(self, X, y, alpha, C,
                      loss, learning_rate, n_iter,
@@ -366,19 +354,10 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
 
         return self
 
-    def _fit(self, X, y, alpha, C, loss, learning_rate,
-             coef_init=None, intercept_init=None, class_weight=None,
-             sample_weight=None):
+    def _fit(self, X, y, alpha, C, loss, learning_rate, coef_init=None,
+             intercept_init=None, sample_weight=None):
         if hasattr(self, "classes_"):
             self.classes_ = None
-
-        if class_weight is not None:
-            warnings.warn("Using 'class_weight' as a parameter to the 'fit'"
-                          " method is deprecated and will be removed in 0.13. "
-                          "Set it on initialization instead.",
-                          DeprecationWarning, stacklevel=2)
-
-            self.class_weight = class_weight
 
         X = atleast2d_or_csr(X, dtype=np.float64, order="C")
         n_samples, n_features = X.shape
@@ -496,7 +475,6 @@ class BaseSGDClassifier(six.with_metaclass(ABCMeta, BaseSGD,
         return self._fit(X, y, alpha=self.alpha, C=1.0,
                          loss=self.loss, learning_rate=self.learning_rate,
                          coef_init=coef_init, intercept_init=intercept_init,
-                         class_weight=class_weight,
                          sample_weight=sample_weight)
 
 
@@ -645,14 +623,13 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
                  fit_intercept=True, n_iter=5, shuffle=False, verbose=0,
                  epsilon=DEFAULT_EPSILON, n_jobs=1, random_state=None,
                  learning_rate="optimal", eta0=0.0, power_t=0.5,
-                 class_weight=None, warm_start=False, seed=None):
+                 class_weight=None, warm_start=False):
         super(SGDClassifier, self).__init__(
             loss=loss, penalty=penalty, alpha=alpha, l1_ratio=l1_ratio,
             fit_intercept=fit_intercept, n_iter=n_iter, shuffle=shuffle,
             verbose=verbose, epsilon=epsilon, n_jobs=n_jobs,
             random_state=random_state, learning_rate=learning_rate, eta0=eta0,
-            power_t=power_t, class_weight=class_weight, warm_start=warm_start,
-            seed=seed)
+            power_t=power_t, class_weight=class_weight, warm_start=warm_start)
 
     def _check_proba(self):
         if self.loss not in ("log", "modified_huber"):
