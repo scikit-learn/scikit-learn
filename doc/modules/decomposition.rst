@@ -23,7 +23,7 @@ scikit-learn, :class:`PCA` is implemented as a `transformer` object
 that learns n components in its `fit` method, and can be used on new data
 to project it on these components.
 
-The optional parameter `whiten=True` parameter make it possible to
+The optional parameter `whiten=True` makes it possible to
 project the data onto the singular space while scaling each component
 to unit variance. This is often useful if the models down-stream make
 strong assumptions on the isotropy of the signal: this is for example
