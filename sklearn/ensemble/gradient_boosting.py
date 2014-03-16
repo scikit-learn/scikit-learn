@@ -64,6 +64,8 @@ class QuantileEstimator(BaseEstimator):
         y.fill(self.quantile)
         return y
 
+    def predict_single(self):
+        return self.quantile
 
 class MeanEstimator(BaseEstimator):
     """An estimator predicting the mean of the training targets."""
@@ -74,6 +76,9 @@ class MeanEstimator(BaseEstimator):
         y = np.empty((X.shape[0], 1), dtype=np.float64)
         y.fill(self.mean)
         return y
+
+    def predict_single(self):
+        return self.mean
 
 
 class LogOddsEstimator(BaseEstimator):
@@ -90,6 +95,8 @@ class LogOddsEstimator(BaseEstimator):
         y.fill(self.prior)
         return y
 
+    def predict_single(self):
+        return self.prior
 
 class PriorProbabilityEstimator(BaseEstimator):
     """An estimator predicting the probability of each
@@ -103,6 +110,9 @@ class PriorProbabilityEstimator(BaseEstimator):
         y = np.empty((X.shape[0], self.priors.shape[0]), dtype=np.float64)
         y[:] = self.priors
         return y
+
+    def predict_single(self):
+        return self.priors
 
 
 class ZeroEstimator(BaseEstimator):
@@ -123,6 +133,8 @@ class ZeroEstimator(BaseEstimator):
         y.fill(0.0)
         return y
 
+    def predict_single(self):
+        return 0.0
 
 class LossFunction(six.with_metaclass(ABCMeta, object)):
     """Abstract base class for various loss functions.
@@ -865,6 +877,10 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
                 self.n_features, X.shape[1]))
         score = self.init_.predict(X).astype(np.float64)
         return score
+
+    @property
+    def _init_decision_function_single(self):
+        return self.init_.predict_single()
 
     def decision_function(self, X):
         """Compute the decision function of ``X``.
