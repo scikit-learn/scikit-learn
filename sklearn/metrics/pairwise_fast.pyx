@@ -49,8 +49,8 @@ def _manhattan_distances_coo(X, Y):
         int i, j, r_, r, idx
         int n_x = len(X.data)
         int n_y = len(Y.data)
-        int n_clusters = Y.shape[0]
-        int n_documents = X.shape[0]
+        int n_samples_Y = Y.shape[0]
+        int n_samples_X = X.shape[0]
 
         np.ndarray[double_t, ndim=1] xdata = X.data
         np.ndarray[int, ndim=1] xrow = X.row
@@ -66,8 +66,8 @@ def _manhattan_distances_coo(X, Y):
 
     idx = 0
     for i in xrange(n_x):
-        r_ = xrow[i] * n_clusters
-        for j in xrange(n_clusters):
+        r_ = xrow[i] * n_samples_Y
+        for j in xrange(n_samples_Y):
             r = r_ + j
             rows[idx] = r
             cols[idx] = xcol[i]
@@ -75,8 +75,8 @@ def _manhattan_distances_coo(X, Y):
             idx += 1
 
     for i in xrange(n_y):
-        for j in xrange(n_documents):
-            r = j * n_clusters + yrow[i]
+        for j in xrange(n_samples_X):
+            r = j * n_samples_Y + yrow[i]
             rows[idx] = r
             cols[idx] = ycol[i]
             data[idx] = -ydata[i]
@@ -93,8 +93,8 @@ def _manhattan_distances_csr(X, Y):
         int xstart, xstop, ystart, ystop, xcol, ycol
         int n_x = len(X.data)
         int n_y = len(Y.data)
-        int n_clusters = Y.shape[0]
-        int n_documents = X.shape[0]
+        int n_samples_Y = Y.shape[0]
+        int n_samples_X = X.shape[0]
 
         np.ndarray[np.float64_t, ndim=1] xdata = X.data
         np.ndarray[int, ndim=1] x_indptr = X.indptr
@@ -112,10 +112,10 @@ def _manhattan_distances_csr(X, Y):
 
     idx = 0
     indptr[0] = 0
-    for i in xrange(n_documents):
-        r_ = i * n_clusters
+    for i in xrange(n_samples_X):
+        r_ = i * n_samples_Y
         xstart, xstop = x_indptr[i], x_indptr[i+1]
-        for j in xrange(n_clusters):
+        for j in xrange(n_samples_Y):
             ystart, ystop = y_indptr[j], y_indptr[j+1]
             r = r_ + j
             nnz = (xstop - xstart) + (ystop - ystart)
