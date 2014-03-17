@@ -252,15 +252,16 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
                                                 random_state)
 
         self.tree_ = Tree(self.n_features_, self.n_classes_,
-                          self.n_outputs_, splitter, max_depth,
-                          min_samples_split, self.min_samples_leaf,
-                          max_leaf_nodes, random_state)
+                          self.n_outputs_, random_state)
 
         # Use BestFirst if max_leaf_nodes given; use DepthFirst otherwise
         if max_leaf_nodes < 0:
-            builder = DepthFirstTreeBuilder()
+            builder = DepthFirstTreeBuilder(splitter, min_samples_split,
+                                            self.min_samples_leaf, max_depth)
         else:
-            builder = BestFirstTreeBuilder()
+            builder = BestFirstTreeBuilder(splitter, min_samples_split,
+                                           self.min_samples_leaf, max_depth,
+                                           max_leaf_nodes)
 
         builder.build(self.tree_, X, y, sample_weight)
 

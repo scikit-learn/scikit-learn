@@ -188,6 +188,12 @@ cdef class Tree:
 # =============================================================================
 
 cdef class TreeBuilder:
-     cpdef build(self, Tree tree, np.ndarray X, np.ndarray y,
-                 np.ndarray sample_weight=*)
+    cdef Splitter splitter          # Splitting algorithm
+
+    cdef SIZE_t min_samples_split   # Minimum number of samples in an internal node
+    cdef SIZE_t min_samples_leaf    # Minimum number of samples in a leaf
+    cdef SIZE_t max_depth
+
+    cpdef build(self, Tree tree, np.ndarray X, np.ndarray y,
+                np.ndarray sample_weight=*)
 
