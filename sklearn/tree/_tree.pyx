@@ -1990,7 +1990,6 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
     def __cinit__(self, Splitter splitter, SIZE_t min_samples_split,
                   SIZE_t min_samples_leaf, SIZE_t max_depth,
                   SIZE_t max_leaf_nodes):
-
         self.splitter = splitter
         self.min_samples_split = min_samples_split
         self.min_samples_leaf = min_samples_leaf
@@ -2277,7 +2276,7 @@ cdef class Tree:
             return self._get_value_ndarray()[:self.node_count]
 
     def __cinit__(self, int n_features, np.ndarray[SIZE_t, ndim=1] n_classes,
-                  int n_outputs, object random_state):
+                  int n_outputs):
         """Constructor."""
         # Inner structures
         self.node_count = 0
@@ -2300,9 +2299,6 @@ cdef class Tree:
         for k in range(n_outputs):
             self.n_classes[k] = n_classes[k]
 
-        # Parameters
-        self.random_state = random_state
-
         # Inner structures
         self.node_count = 0
         self.capacity = 0
@@ -2320,8 +2316,7 @@ cdef class Tree:
         """Reduce re-implementation, for pickling."""
         return (Tree, (self.n_features,
                        sizet_ptr_to_ndarray(self.n_classes, self.n_outputs),
-                       self.n_outputs,
-                       self.random_state), self.__getstate__())
+                       self.n_outputs), self.__getstate__())
 
     def __getstate__(self):
         """Getstate re-implementation, for pickling."""

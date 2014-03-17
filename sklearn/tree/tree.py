@@ -251,8 +251,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
                                                 self.min_samples_leaf,
                                                 random_state)
 
-        self.tree_ = Tree(self.n_features_, self.n_classes_,
-                          self.n_outputs_, random_state)
+        self.tree_ = Tree(self.n_features_, self.n_classes_, self.n_outputs_)
 
         # Use BestFirst if max_leaf_nodes given; use DepthFirst otherwise
         if max_leaf_nodes < 0:
