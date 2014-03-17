@@ -39,8 +39,8 @@ class SelfOrganizingMap(BaseEstimator):
 
         'random': randomly points choosed
 
-        'matrix': interpret the w parameter as a w by M array
-         of initial centroids.
+        'matrix': interpret the size parameter as a size by M array
+         of initial neurons.
 
     Methods
     -------
@@ -81,7 +81,6 @@ class SelfOrganizingMap(BaseEstimator):
         if self.init == 'random':
             self.neurons_ = np.random.rand(self.size, self.size, dim)
         elif self.init == 'matrix':
-            # XXX : untested
             assert len(self.size.shape) == 3
             self.neurons_ = self.size
             self.size = self.neurons_.shape[0]

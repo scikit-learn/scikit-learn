@@ -3,8 +3,9 @@
 A demo of Self-Organising Map and KMeans on the handwritten digits data
 =======================================================================
 
-XXX : Should add text to describe what the example and what to expect
-from the output. Would it be possible to plot something?
+Comparing various SOM and Kmeans clustering on the handwritten digits data
+with the pseudo_F index
+ 
 """
 from __future__ import division
 print __doc__
@@ -14,34 +15,29 @@ import numpy as np
 
 from scikits.learn.cluster import KMeans
 from scikits.learn.cluster import SelfOrganizingMap
-from scikits.learn.cluster import calinski_index
-
+from scikits.learn.cluster import pseudo_F
 from scikits.learn.datasets import load_digits
 from scikits.learn.preprocessing import scale
-
-
-def display(labels, digits, n_clusters):
-    # XXX : n_clusters unused
-    r = {0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: [], 7: [], 8: [], 9: []}
-    for i, v in enumerate(labels):
-        r[digits.target[i]].append(v)
-
-    for k, v in r.items():
-        s = set(v)
-        print 'target %i | nb cluster %i |' % (k, len(s)), s
-
+from scikits.learn.metrics import confusion_matrix
+    
 np.random.seed(42)
+
+################################################################################
+# Load dataset 
 
 digits = load_digits()
 data = scale(digits.data)
-
 n_samples, n_features = data.shape
 n_digits = len(np.unique(digits.target))
 
-print "n_digits: %d" % n_digits
-print "n_features: %d" % n_features
-print "n_samples: %d" % n_samples
+print "Digits dataset"
+print "n_digits   : %d" % n_digits
+print "n_features : %d" % n_features
+print "n_samples  : %d" % n_samples
 print
+
+################################################################################
+# Digits dataset clustering using Self-Organizing Map
 
 print "Self-Organizing Map "
 t0 = time()
@@ -52,10 +48,12 @@ som.fit(data)
 print "done in %0.3fs" % (time() - t0)
 print
 
-display(som.labels_, digits, grid_width**2)
-C = calinski_index(data, som.labels_, som.neurons_)
-print 'calinski index %0.2f | %0.2f%%' % (C, 100 * (C / (1 + C)))
+F = pseudo_F(data, som.labels_, som.neurons_)
+print 'pseudo_F %0.2f | %0.2f%%' % (F, 100 * (F / (1 + F)))
 print
+
+################################################################################
+# Digits dataset clustering using Kmeans
 
 print "KMeans "
 t0 = time()
@@ -64,6 +62,5 @@ km.fit(data)
 print "done in %0.3fs" % (time() - t0)
 print
 
-display(km.labels_, digits, n_digits)
-C = calinski_index(data, km.labels_, km.cluster_centers_)
-print 'calinski index %0.2f | %0.2f%%' % (C, 100 * (C / (1 + C)))
+F = pseudo_F(data, km.labels_, km.cluster_centers_)
+print 'pseudo_F %0.2f | %0.2f%%' % (F, 100 * (F / (1 + F)))
