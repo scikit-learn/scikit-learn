@@ -13,6 +13,9 @@ from .k_means_ import k_means, KMeans, MiniBatchKMeans
 from .dbscan_ import dbscan, DBSCAN
 from .bicluster import SpectralBiclustering, SpectralCoclustering
 from .birch import Birch
+from .som_ import SelfOrganizingMap
+
+import numpy as np
 
 __all__ = ['AffinityPropagation',
            'AgglomerativeClustering',
@@ -34,3 +37,13 @@ __all__ = ['AffinityPropagation',
            'ward_tree',
            'SpectralBiclustering',
            'SpectralCoclustering']
+
+def calinski_index(X,labels,centroids):
+    mean = np.mean(X,axis=0) 
+    B = np.sum([ (c - mean)**2 for c in centroids])
+    W = np.sum([ (x-centroids[labels[i]])**2 
+                 for i,x in enumerate(X)])
+    c = len(centroids)
+    n = len(X)
+    return (B /(c-1))/(W/ (n-c))
+    
