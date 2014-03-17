@@ -148,12 +148,7 @@ cdef class Tree:
     cdef public SIZE_t max_n_classes     # max(n_classes)
 
     # Parameters
-    cdef public Splitter splitter        # Splitting algorithm
     cdef public SIZE_t max_depth         # Max depth of the tree
-    cdef public SIZE_t min_samples_split # Minimum number of samples in an internal node
-    cdef public SIZE_t min_samples_leaf  # Minimum number of samples in a leaf
-    cdef public object random_state      # Random state
-    cdef public int max_leaf_nodes       # Number of leafs to grow
 
     # Inner structures: values are stored separately from node structure,
     # since size is determined at runtime.
