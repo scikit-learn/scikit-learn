@@ -379,12 +379,14 @@ def pairwise_distances_argmin(X, Y, axis=1, metric="euclidean",
 
 
 def manhattan_distances(X, Y=None, sum_over_features=True,
-                        size_threshold=5e8):
+                        size_threshold=5e8, copy=False):
     """ Compute the L1 distances between the vectors in X and Y.
 
-    With sum_over_features equal to False it returns the componentwise
-    distances. If either the X or Y input matrix is sparse, they will both be
-    converted to sparse (coo) matrices to carry out the computation.
+    With sum_over_features equal to False it returns the component wise
+    distances. If either the X or Y input matrix is sparse, they will *BOTH* be
+    converted to sparse (csr) matrices to carry out the computation. Setting
+    'copy' to 'True' will leave the original passed in matrices unchanged in
+    this case.
 
     Parameters
     ----------
@@ -405,14 +407,20 @@ def manhattan_distances(X, Y=None, sum_over_features=True,
         bytes). If the problem size gets too big, the implementation then
         breaks it down in smaller problems.
 
+    copy : boolean (False)
+        If True the X and Y matrices will be copied before they are converted to
+        sparse csr matrices (in the case one of them is sparse). If copy is
+        False the matrices will be modified in place. If both input matrices
+        are dense they will not be converted to sparse.
+
     Returns
     -------
     D : array or csr sparse matrix
         If sum_over_features is False shape is
         (n_samples_X * n_samples_Y, n_features) and D contains the
-        componentwise L1 pairwise-distances (ie. absolute difference),
+        component wise L1 pairwise-distances (ie. absolute difference),
         else shape is (n_samples_X, n_samples_Y) and D contains
-        the pairwise l1 distances.
+        the pairwise L1 distances.
 
     Examples
     --------
@@ -439,8 +447,15 @@ def manhattan_distances(X, Y=None, sum_over_features=True,
     sparse_input = False
     if issparse(X) or issparse(Y):
         sparse_input = True
-        X = csr_matrix(X, copy=False)
-        Y = csr_matrix(Y, copy=False)
+        X = csr_matrix(X, copy=copy)
+        Y = csr_matrix(Y, copy=copy)
+        if not X.has_sorted_indices:
+            X.sum_duplicates()
+            X.sort_indices()
+
+        if not Y.has_sorted_indices:
+            Y.sum_duplicates()
+            Y.sort_indices()
 
     temporary_size = X.size * Y.shape[-1]
     # Convert to bytes
