@@ -1958,10 +1958,10 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
 
 # Best first builder ----------------------------------------------------------
 
-cdef int _add_split_node(Splitter splitter, Tree tree,
-                         SIZE_t start, SIZE_t end, double impurity,
-                         bint is_first, bint is_left, Node* parent,
-                         SIZE_t depth, PriorityHeapRecord* res) nogil:
+cdef inline int _add_split_node(Splitter splitter, Tree tree,
+                                SIZE_t start, SIZE_t end, double impurity,
+                                bint is_first, bint is_left, Node* parent,
+                                SIZE_t depth, PriorityHeapRecord* res) nogil:
     """Adds node w/ partition ``[start, end)`` to the frontier. """
     cdef SIZE_t pos
     cdef SIZE_t feature
@@ -2025,8 +2025,10 @@ cdef int _add_split_node(Splitter splitter, Tree tree,
     return 0
 
 
-cdef int _add_to_frontier(PriorityHeapRecord* rec, PriorityHeap frontier) nogil:
-    """Adds record ``rec`` to the priority queue ``frontier``; returns -1 on memory-error. """
+cdef inline int _add_to_frontier(PriorityHeapRecord* rec,
+                                 PriorityHeap frontier) nogil:
+    """Adds record ``rec`` to the priority queue ``frontier``; returns -1
+    on memory-error. """
     return frontier.push(rec.node_id, rec.start, rec.end, rec.pos, rec.depth,
                          rec.is_leaf, rec.improvement, rec.impurity)
 
