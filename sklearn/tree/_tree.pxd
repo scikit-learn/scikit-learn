@@ -191,12 +191,3 @@ cdef class TreeBuilder:
      cpdef build(self, Tree tree, np.ndarray X, np.ndarray y,
                  np.ndarray sample_weight=*)
 
-
-cdef class DepthFirstTreeBuilder(TreeBuilder):
-     cpdef build(self, Tree tree, np.ndarray X, np.ndarray y,
-                 np.ndarray sample_weight=*)
-
-
-cdef class BestFirstTreeBuilder(TreeBuilder):
-     cpdef build(self, Tree tree, np.ndarray X, np.ndarray y,
-                 np.ndarray sample_weight=*)
