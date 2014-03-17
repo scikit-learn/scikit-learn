@@ -2,7 +2,6 @@
 #
 # Licence: BSD 3 clause
 
-from libc.stdint cimport int64_t, int32_t
 cimport numpy as np
 import numpy as np
 import cython
@@ -59,10 +58,10 @@ def _manhattan_distances_coo(X, Y):
         np.ndarray[int, ndim=1] yrow = Y.row
         np.ndarray[int, ndim=1] ycol = Y.col
 
-        int64_t nnz = X.nnz * Y.shape[0] + Y.nnz * X.shape[0]
+        np.npy_intp nnz = X.nnz * Y.shape[0] + Y.nnz * X.shape[0]
         np.ndarray[double_t, ndim=1] data = np.empty(nnz, dtype=np.float64)
-        np.ndarray[int32_t, ndim=1] rows = np.empty(nnz, dtype=np.int32)
-        np.ndarray[int32_t, ndim=1] cols = np.empty(nnz, dtype=np.int32)
+        np.ndarray[np.npy_intp, ndim=1] rows = np.empty(nnz, dtype=np.intp)
+        np.ndarray[np.npy_intp, ndim=1] cols = np.empty(nnz, dtype=np.intp)
 
     idx = 0
     for i in xrange(n_x):
@@ -103,12 +102,12 @@ def _manhattan_distances_csr(X, Y):
         np.ndarray[int, ndim=1] y_indptr = Y.indptr
         np.ndarray[int, ndim=1] y_indices = Y.indices
 
-        np.int64_t nnz = X.nnz * Y.shape[0] + Y.nnz * X.shape[0]
-        int ptr_size = X.shape[0] * Y.shape[0] + 1
+        np.npy_intp nnz = X.nnz * Y.shape[0] + Y.nnz * X.shape[0]
+        np.npy_intp ptr_size = X.shape[0] * Y.shape[0] + 1
         np.ndarray[np.float64_t, ndim=1] data = np.empty(nnz, dtype=np.float64)
-        np.ndarray[np.int32_t, ndim=1] indices = np.empty(nnz, dtype=np.int32)
-        np.ndarray[np.int32_t, ndim=1] indptr = np.empty(ptr_size,
-                                                         dtype=np.int32)
+        np.ndarray[np.npy_intp, ndim=1] indices = np.empty(nnz, dtype=np.intp)
+        np.ndarray[np.npy_intp, ndim=1] indptr = np.empty(ptr_size,
+                                                          dtype=np.intp)
 
     idx = 0
     indptr[0] = 0
