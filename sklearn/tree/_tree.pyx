@@ -1958,6 +1958,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
 
             if rc >= 0:
                 rc = tree._resize_c(tree.node_count)
+
             if rc >= 0:
                 tree.max_depth = max_depth_seen
 
@@ -2105,6 +2106,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
 
             if rc >= 0:
                 rc = tree._resize_c(tree.node_count)
+
             if rc >= 0:
                 tree.max_depth = max_depth_seen
 
@@ -2278,11 +2280,6 @@ cdef class Tree:
     def __cinit__(self, int n_features, np.ndarray[SIZE_t, ndim=1] n_classes,
                   int n_outputs):
         """Constructor."""
-        # Inner structures
-        self.node_count = 0
-        self.capacity = 0
-        self.value = NULL
-
         # Input/Output layout
         self.n_features = n_features
         self.n_outputs = n_outputs
@@ -2295,11 +2292,11 @@ cdef class Tree:
         self.value_stride = n_outputs * self.max_n_classes
 
         cdef SIZE_t k
-
         for k in range(n_outputs):
             self.n_classes[k] = n_classes[k]
 
         # Inner structures
+        self.max_depth = 0
         self.node_count = 0
         self.capacity = 0
         self.value = NULL

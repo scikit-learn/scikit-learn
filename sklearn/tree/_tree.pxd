@@ -147,11 +147,9 @@ cdef class Tree:
     cdef public SIZE_t n_outputs         # Number of outputs in y
     cdef public SIZE_t max_n_classes     # max(n_classes)
 
-    # Parameters
-    cdef public SIZE_t max_depth         # Max depth of the tree
-
     # Inner structures: values are stored separately from node structure,
     # since size is determined at runtime.
+    cdef public SIZE_t max_depth         # Max depth of the tree
     cdef public SIZE_t node_count        # Counter for node IDs
     cdef public SIZE_t capacity          # Capacity of tree, in terms of nodes
     cdef Node* nodes                     # Array of nodes
