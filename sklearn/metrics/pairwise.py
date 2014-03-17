@@ -36,6 +36,7 @@ kernel:
 #          Andreas Mueller <amueller@ais.uni-bonn.de>
 #          Philippe Gervais <philippe.gervais@inria.fr>
 #          Lars Buitinck <larsmans@gmail.com>
+#          Matti Lyra <matti.lyra@gmail.com>
 # License: BSD 3 clause
 
 import numpy as np

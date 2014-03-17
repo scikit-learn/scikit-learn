@@ -1,4 +1,5 @@
-# Author: Andreas Mueller <amueller@ais.uni-bonn.de>
+# Authors: Andreas Mueller <amueller@ais.uni-bonn.de>
+#          Matti Lyra <matti.lyra@gmail.com>
 #
 # Licence: BSD 3 clause
 
