@@ -646,6 +646,9 @@ class RandomForestClassifier(ForestClassifier):
           - If "log2", then `max_features=log2(n_features)`.
           - If None, then `max_features=n_features`.
 
+        Note: the search for a split does not stop until at least one
+        valid partition of the node samples is found, even if it requires to
+        effectively inspect more than ``max_features`` features.
         Note: this parameter is tree-specific.
 
     max_depth : integer or None, optional (default=None)
@@ -800,6 +803,9 @@ class RandomForestRegressor(ForestRegressor):
           - If "log2", then `max_features=log2(n_features)`.
           - If None, then `max_features=n_features`.
 
+        Note: the search for a split does not stop until at least one
+        valid partition of the node samples is found, even if it requires to
+        effectively inspect more than ``max_features`` features.
         Note: this parameter is tree-specific.
 
     max_depth : integer or None, optional (default=None)
@@ -944,6 +950,9 @@ class ExtraTreesClassifier(ForestClassifier):
           - If "log2", then `max_features=log2(n_features)`.
           - If None, then `max_features=n_features`.
 
+        Note: the search for a split does not stop until at least one
+        valid partition of the node samples is found, even if it requires to
+        effectively inspect more than ``max_features`` features.
         Note: this parameter is tree-specific.
 
     max_depth : integer or None, optional (default=None)
@@ -1102,6 +1111,9 @@ class ExtraTreesRegressor(ForestRegressor):
           - If "log2", then `max_features=log2(n_features)`.
           - If None, then `max_features=n_features`.
 
+        Note: the search for a split does not stop until at least one
+        valid partition of the node samples is found, even if it requires to
+        effectively inspect more than ``max_features`` features.
         Note: this parameter is tree-specific.
 
     max_depth : integer or None, optional (default=None)

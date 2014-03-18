@@ -374,6 +374,10 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
           - If "log2", then `max_features=log2(n_features)`.
           - If None, then `max_features=n_features`.
 
+        Note: the search for a split does not stop until at least one
+        valid partition of the node samples is found, even if it requires to
+        effectively inspect more than ``max_features`` features.
+
     max_depth : int or None, optional (default=None)
         The maximum depth of the tree. If None, then nodes are expanded until
         all leaves are pure or until all leaves contain less than
@@ -586,6 +590,10 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
           - If "sqrt", then `max_features=sqrt(n_features)`.
           - If "log2", then `max_features=log2(n_features)`.
           - If None, then `max_features=n_features`.
+
+        Note: the search for a split does not stop until at least one
+        valid partition of the node samples is found, even if it requires to
+        effectively inspect more than ``max_features`` features.
 
     max_depth : int or None, optional (default=None)
         The maximum depth of the tree. If None, then nodes are expanded until

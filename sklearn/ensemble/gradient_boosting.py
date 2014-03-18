@@ -1006,6 +1006,10 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         Choosing `max_features < n_features` leads to a reduction of variance
         and an increase in bias.
 
+        Note: the search for a split does not stop until at least one
+        valid partition of the node samples is found, even if it requires to
+        effectively inspect more than ``max_features`` features.
+
     max_leaf_nodes : int or None, optional (default=None)
         Grow trees with ``max_leaf_nodes`` in best-first fashion.
         Best nodes are defined as relative reduction in impurity.
@@ -1263,6 +1267,10 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
 
         Choosing `max_features < n_features` leads to a reduction of variance
         and an increase in bias.
+
+        Note: the search for a split does not stop until at least one
+        valid partition of the node samples is found, even if it requires to
+        effectively inspect more than ``max_features`` features.
 
     max_leaf_nodes : int or None, optional (default=None)
         Grow trees with ``max_leaf_nodes`` in best-first fashion.
