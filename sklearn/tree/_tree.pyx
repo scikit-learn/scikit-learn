@@ -45,9 +45,10 @@ cdef SIZE_t _TREE_LEAF = TREE_LEAF
 cdef SIZE_t _TREE_UNDEFINED = TREE_UNDEFINED
 cdef SIZE_t INITIAL_STACK_SIZE = 10
 
+cdef DTYPE_t MIN_IMPURITY_SPLIT = 1e-7
+
 # Mitigate precision differences between 32 bit and 64 bit
 cdef DTYPE_t CONSTANT_FEATURE_THRESHOLD = 1e-7
-cdef DTYPE_t MIN_IMPURITY_SPLIT = 1e-7
 
 # Some handy constants (BestFirstTreeBuilder)
 cdef int IS_FIRST = 1
@@ -1924,7 +1925,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                     first = 0
 
 
-                is_leaf = is_leaf or (impurity < MIN_IMPURITY_SPLIT)
+                is_leaf = is_leaf or (impurity <= MIN_IMPURITY_SPLIT)
 
                 if not is_leaf:
                     splitter.node_split(impurity, &pos, &feature, &threshold,
@@ -2144,7 +2145,8 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         n_node_samples = end - start
         is_leaf = ((depth > self.max_depth) or
                    (n_node_samples < self.min_samples_split) or
-                   (n_node_samples < 2 * self.min_samples_leaf))
+                   (n_node_samples < 2 * self.min_samples_leaf) or
+                   (impurity <= MIN_IMPURITY_SPLIT))
 
         if not is_leaf:
             splitter.node_split(impurity, &pos, &feature, &threshold,
