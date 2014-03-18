@@ -1009,6 +1009,10 @@ cdef class Splitter:
         """Copy the value of node samples[start:end] into dest."""
         self.criterion.node_value(dest)
 
+    cdef double node_impurity(self) nogil:
+        """Copy the impurity of node samples[start:end."""
+        return self.criterion.node_impurity()
+
 
 cdef class BestSplitter(Splitter):
     """Splitter for finding the best split."""
@@ -1921,7 +1925,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                 splitter.node_reset(start, end, &weighted_n_node_samples)
 
                 if first:
-                    impurity = splitter.criterion.node_impurity()
+                    impurity = splitter.node_impurity()
                     first = 0
 
 
@@ -2140,7 +2144,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         splitter.node_reset(start, end, &weighted_n_node_samples)
 
         if is_first:
-            impurity = splitter.criterion.node_impurity()
+            impurity = splitter.node_impurity()
 
         n_node_samples = end - start
         is_leaf = ((depth > self.max_depth) or
