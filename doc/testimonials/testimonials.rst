@@ -444,3 +444,30 @@ Ferenc Huszar - Senior Data Scientist at Peerindex
 .. raw:: html
 
    </span>
+
+
+`DataRobot <http://www.datarobot.com>`_
+------------------------------------
+
+.. raw:: html
+
+    <div class="logo">
+
+.. image:: images/datarobot.png
+    :target: http://www.datarobot.com
+
+.. raw:: html
+
+    </div>
+
+DataRobot is building next generation predictive analytics software to make data scientists more productive, and scikit-learn is an integral part of our system. The variety of machine learning techniques in combination with the solid implementations that scikit-learn offers makes it a one-stop-shopping library for machine learning in Python. Moreover, its consistent API, well-tested code and permissive licensing allow us to use it in a production environment. Scikit-learn has literally saved us years of work we would have had to do ourselves to bring our product to market.
+
+.. raw:: html
+
+   <span class="testimonial-author">
+
+Jeremy Achin, CEO & Co-founder DataRobot Inc.
+
+.. raw:: html
+
+   </span>
