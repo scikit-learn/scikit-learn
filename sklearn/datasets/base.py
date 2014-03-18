@@ -84,7 +84,7 @@ def load_files(container_path, description=None, categories=None,
                 file_44.txt
                 ...
 
-    The folder names are used has supervised signal label names. The
+    The folder names are used as supervised signal label names. The
     individual file names are not important.
 
     This function does not try to extract features into a numpy array or
