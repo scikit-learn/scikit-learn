@@ -2206,6 +2206,9 @@ cdef class Tree:
         The current capacity (i.e., size) of the arrays, which is at least as
         great as `node_count`.
 
+    max_depth : int
+        The maximal depth of the tree.
+
     children_left : array of int, shape [node_count]
         children_left[i] holds the node id of the left child of node i.
         For leaves, children_left[i] == TREE_LEAF. Otherwise,
