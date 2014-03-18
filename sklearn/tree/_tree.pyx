@@ -980,7 +980,8 @@ cdef class Splitter:
         self.y_stride = <SIZE_t> y.strides[0] / <SIZE_t> y.itemsize
         self.sample_weight = sample_weight
 
-    cdef void node_reset(self, SIZE_t start, SIZE_t end) nogil:
+    cdef void node_reset(self, SIZE_t start, SIZE_t end,
+                         double* weighted_n_node_samples) nogil:
         """Reset splitter on node samples[start:end]."""
         self.start = start
         self.end = end
@@ -991,6 +992,8 @@ cdef class Splitter:
                             self.samples,
                             start,
                             end)
+
+        weighted_n_node_samples[0] = self.criterion.weighted_n_node_samples
 
     cdef void node_split(self, double impurity, SIZE_t* pos, SIZE_t* feature,
                          double* threshold, double* impurity_left,
@@ -1913,8 +1916,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                            (n_node_samples < min_samples_split) or
                            (n_node_samples < 2 * min_samples_leaf))
 
-                splitter.node_reset(start, end)  # calls criterion.init
-                weighted_n_node_samples = splitter.criterion.weighted_n_node_samples
+                splitter.node_reset(start, end, &weighted_n_node_samples)
 
                 if first:
                     impurity = splitter.criterion.node_impurity()
@@ -2133,8 +2135,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         cdef SIZE_t n_left, n_right
         cdef double imp_diff
 
-        splitter.node_reset(start, end)  # calls criterion.init
-        weighted_n_node_samples = splitter.criterion.weighted_n_node_samples
+        splitter.node_reset(start, end, &weighted_n_node_samples)
 
         if is_first:
             impurity = splitter.criterion.node_impurity()

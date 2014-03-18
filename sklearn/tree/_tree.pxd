@@ -108,7 +108,8 @@ cdef class Splitter:
                          np.ndarray y,
                          DOUBLE_t* sample_weight)
 
-    cdef void node_reset(self, SIZE_t start, SIZE_t end) nogil
+    cdef void node_reset(self, SIZE_t start, SIZE_t end,
+                         double* weighted_n_node_samples) nogil
 
     cdef void node_split(self, double impurity,  # Impurity of the node
                                SIZE_t* pos, # Set to >= end if the node is a leaf
