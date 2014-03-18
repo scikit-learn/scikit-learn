@@ -47,6 +47,7 @@ cdef SIZE_t INITIAL_STACK_SIZE = 10
 
 # Mitigate precision differences between 32 bit and 64 bit
 cdef DTYPE_t CONSTANT_FEATURE_THRESHOLD = 1e-7
+cdef DTYPE_t MIN_IMPURITY_SPLIT = 1e-7
 
 # Some handy constants (BestFirstTreeBuilder)
 cdef int IS_FIRST = 1
@@ -1923,7 +1924,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                     first = 0
 
 
-                is_leaf = is_leaf or (impurity < CONSTANT_FEATURE_THRESHOLD)
+                is_leaf = is_leaf or (impurity < MIN_IMPURITY_SPLIT)
 
                 if not is_leaf:
                     splitter.node_split(impurity, &pos, &feature, &threshold,
