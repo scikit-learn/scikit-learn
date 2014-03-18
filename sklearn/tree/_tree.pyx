@@ -28,7 +28,8 @@ np.import_array()
 
 cdef extern from "numpy/arrayobject.h":
     object PyArray_NewFromDescr(object subtype, np.dtype descr,
-                                int nd, np.npy_intp* dims, np.npy_intp* strides,
+                                int nd, np.npy_intp* dims,
+                                np.npy_intp* strides,
                                 void* data, int flags, object obj)
 
 # =============================================================================
@@ -87,12 +88,8 @@ NODE_DTYPE = np.dtype({
 cdef class Criterion:
     """Interface for impurity criteria."""
 
-    cdef void init(self, DOUBLE_t* y,
-                         SIZE_t y_stride,
-                         DOUBLE_t* sample_weight,
-                         SIZE_t* samples,
-                         SIZE_t start,
-                         SIZE_t end) nogil:
+    cdef void init(self, DOUBLE_t* y, SIZE_t y_stride, DOUBLE_t* sample_weight,
+                   SIZE_t* samples, SIZE_t start, SIZE_t end) nogil:
         """Initialize the criterion at node samples[start:end] and
            children samples[start:start] and samples[start:end]."""
         pass
@@ -111,7 +108,8 @@ cdef class Criterion:
            samples[start:end]."""
         pass
 
-    cdef void children_impurity(self, double* impurity_left, double* impurity_right) nogil:
+    cdef void children_impurity(self, double* impurity_left,
+                                double* impurity_right) nogil:
         """Evaluate the impurity in children nodes, i.e. the impurity of
            samples[start:pos] + the impurity of samples[pos:end]."""
         pass
@@ -128,9 +126,11 @@ cdef class Criterion:
 
         self.children_impurity(&impurity_left, &impurity_right)
 
-        return  impurity \
-                  - (self.weighted_n_right / self.weighted_n_node_samples * impurity_right) \
-                  - (self.weighted_n_left / self.weighted_n_node_samples * impurity_left)
+        return (impurity -
+                (self.weighted_n_right /
+                 self.weighted_n_node_samples *impurity_right) -
+                (self.weighted_n_left /
+                 self.weighted_n_node_samples * impurity_left))
 
 
 cdef class ClassificationCriterion(Criterion):
@@ -141,7 +141,8 @@ cdef class ClassificationCriterion(Criterion):
     cdef double* label_count_right
     cdef double* label_count_total
 
-    def __cinit__(self, SIZE_t n_outputs, np.ndarray[SIZE_t, ndim=1] n_classes):
+    def __cinit__(self, SIZE_t n_outputs,
+                  np.ndarray[SIZE_t, ndim=1] n_classes):
         # Default values
         self.y = NULL
         self.y_stride = 0
@@ -179,14 +180,15 @@ cdef class ClassificationCriterion(Criterion):
         self.label_count_stride = label_count_stride
 
         # Allocate counters
-        self.label_count_left = <double*> calloc(n_outputs * label_count_stride, sizeof(double))
-        self.label_count_right = <double*> calloc(n_outputs * label_count_stride, sizeof(double))
-        self.label_count_total = <double*> calloc(n_outputs * label_count_stride, sizeof(double))
+        cdef SIZE_t n_elements = n_outputs * label_count_stride
+        self.label_count_left = <double*> calloc(n_elements, sizeof(double))
+        self.label_count_right = <double*> calloc(n_elements, sizeof(double))
+        self.label_count_total = <double*> calloc(n_elements, sizeof(double))
 
         # Check for allocation errors
-        if (self.label_count_left == NULL
-         or self.label_count_right == NULL
-         or self.label_count_total == NULL):
+        if (self.label_count_left == NULL or
+                self.label_count_right == NULL or
+                self.label_count_total == NULL):
             raise MemoryError()
 
     def __dealloc__(self):
@@ -208,12 +210,9 @@ cdef class ClassificationCriterion(Criterion):
     def __setstate__(self, d):
         pass
 
-    cdef void init(self, DOUBLE_t* y,
-                         SIZE_t y_stride,
-                         DOUBLE_t* sample_weight,
-                         SIZE_t* samples,
-                         SIZE_t start,
-                         SIZE_t end) nogil:
+    cdef void init(self, DOUBLE_t* y, SIZE_t y_stride,
+                   DOUBLE_t* sample_weight, SIZE_t* samples,
+                   SIZE_t start, SIZE_t end) nogil:
         """Initialize the criterion at node samples[start:end] and
            children samples[start:start] and samples[start:end]."""
         # Initialize fields
@@ -240,7 +239,8 @@ cdef class ClassificationCriterion(Criterion):
         cdef SIZE_t offset = 0
 
         for k in range(n_outputs):
-            memset(label_count_total + offset, 0, n_classes[k] * sizeof(double))
+            memset(label_count_total + offset, 0,
+                   n_classes[k] * sizeof(double))
             offset += label_count_stride
 
         for p in range(start, end):
@@ -278,7 +278,8 @@ cdef class ClassificationCriterion(Criterion):
 
         for k in range(n_outputs):
             memset(label_count_left, 0, n_classes[k] * sizeof(double))
-            memcpy(label_count_right, label_count_total, n_classes[k] * sizeof(double))
+            memcpy(label_count_right, label_count_total,
+                   n_classes[k] * sizeof(double))
 
             label_count_total += label_count_stride
             label_count_left += label_count_stride
@@ -314,7 +315,7 @@ cdef class ClassificationCriterion(Criterion):
             i = samples[p]
 
             if sample_weight != NULL:
-                w  = sample_weight[i]
+                w = sample_weight[i]
 
             for k in range(n_outputs):
                 label_index = (k * label_count_stride +
@@ -332,7 +333,8 @@ cdef class ClassificationCriterion(Criterion):
     cdef double node_impurity(self) nogil:
         pass
 
-    cdef void children_impurity(self, double* impurity_left, double* impurity_right) nogil:
+    cdef void children_impurity(self, double* impurity_left,
+                                double* impurity_right) nogil:
         pass
 
     cdef void node_value(self, double* dest) nogil:
@@ -393,7 +395,8 @@ cdef class Entropy(ClassificationCriterion):
 
         return total / n_outputs
 
-    cdef void children_impurity(self, double* impurity_left, double* impurity_right) nogil:
+    cdef void children_impurity(self, double* impurity_left,
+                                double* impurity_right) nogil:
         """Evaluate the impurity in children nodes, i.e. the impurity of the
            left child (samples[start:pos]) and the impurity the right child
            (samples[pos:end])."""
@@ -485,7 +488,8 @@ cdef class Gini(ClassificationCriterion):
 
         return total / n_outputs
 
-    cdef void children_impurity(self, double* impurity_left, double* impurity_right) nogil:
+    cdef void children_impurity(self, double* impurity_left,
+                                double* impurity_right) nogil:
         """Evaluate the impurity in children nodes, i.e. the impurity of the
            left child (samples[start:pos]) and the impurity the right child
            (samples[pos:end])."""
@@ -596,17 +600,17 @@ cdef class RegressionCriterion(Criterion):
         self.sum_right = <double*> calloc(n_outputs, sizeof(double))
         self.sum_total = <double*> calloc(n_outputs, sizeof(double))
 
-        if (self.mean_left == NULL
-         or self.mean_right == NULL
-         or self.mean_total == NULL
-         or self.sq_sum_left == NULL
-         or self.sq_sum_right == NULL
-         or self.sq_sum_total == NULL
-         or self.var_left == NULL
-         or self.var_right == NULL
-         or self.sum_left == NULL
-         or self.sum_right == NULL
-         or self.sum_total == NULL):
+        if (self.mean_left == NULL or
+                self.mean_right == NULL or
+                self.mean_total == NULL or
+                self.sq_sum_left == NULL or
+                self.sq_sum_right == NULL or
+                self.sq_sum_total == NULL or
+                self.var_left == NULL or
+                self.var_right == NULL or
+                self.sum_left == NULL or
+                self.sum_right == NULL or
+                self.sum_total == NULL):
             raise MemoryError()
 
     def __dealloc__(self):
@@ -632,12 +636,8 @@ cdef class RegressionCriterion(Criterion):
     def __setstate__(self, d):
         pass
 
-    cdef void init(self, DOUBLE_t* y,
-                         SIZE_t y_stride,
-                         DOUBLE_t* sample_weight,
-                         SIZE_t* samples,
-                         SIZE_t start,
-                         SIZE_t end) nogil:
+    cdef void init(self, DOUBLE_t* y, SIZE_t y_stride, DOUBLE_t* sample_weight,
+                   SIZE_t* samples, SIZE_t start, SIZE_t end) nogil:
         """Initialize the criterion at node samples[start:end] and
            children samples[start:start] and samples[start:end]."""
         # Initialize fields
@@ -775,7 +775,7 @@ cdef class RegressionCriterion(Criterion):
             i = samples[p]
 
             if sample_weight != NULL:
-                w  = sample_weight[i]
+                w = sample_weight[i]
 
             for k in range(n_outputs):
                 y_ik = y[i * y_stride + k]
@@ -808,7 +808,8 @@ cdef class RegressionCriterion(Criterion):
     cdef double node_impurity(self) nogil:
         pass
 
-    cdef void children_impurity(self, double* impurity_left, double* impurity_right) nogil:
+    cdef void children_impurity(self, double* impurity_left,
+                                double* impurity_right) nogil:
         pass
 
     cdef void node_value(self, double* dest) nogil:
@@ -837,7 +838,8 @@ cdef class MSE(RegressionCriterion):
 
         return total / n_outputs
 
-    cdef void children_impurity(self, double* impurity_left, double* impurity_right) nogil:
+    cdef void children_impurity(self, double* impurity_left,
+                                double* impurity_right) nogil:
         """Evaluate the impurity in children nodes, i.e. the impurity of the
            left child (samples[start:pos]) and the impurity the right child
            (samples[pos:end])."""
@@ -857,7 +859,7 @@ cdef class MSE(RegressionCriterion):
 
 
 cdef class FriedmanMSE(MSE):
-    """Mean squared error impurity criterion with improvement score by Friedman.
+    """Mean squared error impurity criterion with improvement score by Friedman
 
     Uses the formula (35) in Friedmans original Gradient Boosting paper:
 
@@ -885,7 +887,8 @@ cdef class FriedmanMSE(MSE):
         diff = ((total_sum_left / weighted_n_left) -
                 (total_sum_right / weighted_n_right))
 
-        return (weighted_n_left * weighted_n_right * diff * diff) / (weighted_n_left + weighted_n_right)
+        return (weighted_n_left * weighted_n_right * diff * diff /
+                (weighted_n_left + weighted_n_right))
 
 
 # =============================================================================
@@ -1114,15 +1117,17 @@ cdef class BestSplitter(Splitter):
                 n_drawn_constants += 1
 
             else:
-                # f_j in the interval [n_known_constants, f_i - n_found_constants[
+                # f_j in the interval [n_known_constants,
+                #                      f_i - n_found_constants[
                 f_j += n_found_constants
                 # f_j in the interval [n_total_constants, f_i[
 
                 current_feature = features[f_j]
 
-                # Sort samples along that feature; first copy the feature values
-                # for the active samples into Xf, s.t. Xf[i] == X[samples[i], j],
-                # so the sort uses the cache more effectively.
+                # Sort samples along that feature; first copy the feature
+                # values for the active samples into Xf, s.t.
+                # Xf[i] == X[samples[i], j], so the sort uses the cache more
+                # effectively.
                 for p in range(start, end):
                     Xf[p] = X[X_sample_stride * samples[p] +
                               X_fx_stride * current_feature]
@@ -1146,11 +1151,13 @@ cdef class BestSplitter(Splitter):
 
                     while p < end:
                         while (p + 1 < end and
-                               Xf[p + 1] <= Xf[p] + CONSTANT_FEATURE_THRESHOLD):
+                               Xf[p + 1] <= (Xf[p] +
+                                             CONSTANT_FEATURE_THRESHOLD)):
                             p += 1
 
-                        # (p + 1 >= end) or (X[samples[p + 1], current_feature] >
-                        #                    X[samples[p], current_feature])
+                        # (p + 1 >= end) or
+                        #  (X[samples[p + 1], current_feature] >
+                        #   X[samples[p], current_feature])
                         p += 1
                         # (p >= end) or (X[samples[p], current_feature] >
                         #                X[samples[p - 1], current_feature])
@@ -1161,14 +1168,15 @@ cdef class BestSplitter(Splitter):
                             # Reject if min_samples_leaf is not guaranteed
                             if (((current_pos - start) < min_samples_leaf) or
                                     ((end - current_pos) < min_samples_leaf)):
-                               continue
+                                continue
 
                             self.criterion.update(current_pos)
                             current_improvement = self.criterion.impurity_improvement(impurity)
 
                             if current_improvement > best_improvement:
-                                self.criterion.children_impurity(&current_impurity_left,
-                                                                 &current_impurity_right)
+                                self.criterion.children_impurity(
+                                    &current_impurity_left,
+                                    &current_impurity_right)
                                 best_impurity_left = current_impurity_left
                                 best_impurity_right = current_impurity_right
                                 best_improvement = current_improvement
@@ -1287,7 +1295,7 @@ cdef void introsort(DTYPE_t* Xf, SIZE_t *samples, SIZE_t n, int maxd) nogil:
 
 
 cdef inline void sift_down(DTYPE_t* Xf, SIZE_t* samples,
-                          SIZE_t start, SIZE_t end) nogil:
+                           SIZE_t start, SIZE_t end) nogil:
     # Restore heap order in Xf[start:end] by moving the max element to start.
     cdef SIZE_t child, maxind, root
 
@@ -1430,7 +1438,8 @@ cdef class RandomSplitter(Splitter):
                 n_drawn_constants += 1
 
             else:
-                # f_j in the interval [n_known_constants, f_i - n_found_constants[
+                # f_j in the interval [n_known_constants,
+                #                      f_i - n_found_constants[
                 f_j += n_found_constants
                 # f_j in the interval [n_total_constants, f_i[
 
@@ -1452,7 +1461,8 @@ cdef class RandomSplitter(Splitter):
                     elif current_feature_value > max_feature_value:
                         max_feature_value = current_feature_value
 
-                if max_feature_value <= min_feature_value + CONSTANT_FEATURE_THRESHOLD:
+                if (max_feature_value <= (min_feature_value +
+                                          CONSTANT_FEATURE_THRESHOLD)):
                     features[f_j] = features[n_total_constants]
                     features[n_total_constants] = current_feature
 
@@ -1494,7 +1504,7 @@ cdef class RandomSplitter(Splitter):
                     # Reject if min_samples_leaf is not guaranteed
                     if (((current_pos - start) < min_samples_leaf) or
                             ((end - current_pos) < min_samples_leaf)):
-                       continue
+                        continue
 
                     # Evaluate split
                     self.criterion.reset()
@@ -1502,8 +1512,8 @@ cdef class RandomSplitter(Splitter):
                     current_improvement = self.criterion.impurity_improvement(impurity)
 
                     if current_improvement > best_improvement:
-                        self.criterion.children_impurity(&current_impurity_left,
-                                                         &current_impurity_right)
+                        self.criterion.children_impurity(
+                            &current_impurity_left, &current_impurity_right)
                         best_impurity_left = current_impurity_left
                         best_impurity_right = current_impurity_right
                         best_improvement = current_improvement
@@ -1576,9 +1586,10 @@ cdef class PresortBestSplitter(Splitter):
                                       self.min_samples_leaf,
                                       self.random_state), self.__getstate__())
 
-    cdef void init(self, np.ndarray[DTYPE_t, ndim=2] X,
-                         np.ndarray[DOUBLE_t, ndim=2, mode="c"] y,
-                         DOUBLE_t* sample_weight):
+    cdef void init(self,
+                   np.ndarray[DTYPE_t, ndim=2] X,
+                   np.ndarray[DOUBLE_t, ndim=2, mode="c"] y,
+                   DOUBLE_t* sample_weight):
         cdef void* sample_mask = NULL
 
         # Call parent initializer
@@ -1701,7 +1712,8 @@ cdef class PresortBestSplitter(Splitter):
                 n_drawn_constants += 1
 
             else:
-                # f_j in the interval [n_known_constants, f_i - n_found_constants[
+                # f_j in the interval [n_known_constants,
+                #                      f_i - n_found_constants[
                 f_j += n_found_constants
                 # f_j in the interval [n_total_constants, f_i[
 
@@ -1735,11 +1747,13 @@ cdef class PresortBestSplitter(Splitter):
 
                     while p < end:
                         while (p + 1 < end and
-                               Xf[p + 1] <= Xf[p] + CONSTANT_FEATURE_THRESHOLD):
+                               Xf[p + 1] <= (Xf[p] +
+                                             CONSTANT_FEATURE_THRESHOLD)):
                             p += 1
 
-                        # (p + 1 >= end) or (X[samples[p + 1], current_feature] >
-                        #                    X[samples[p], current_feature])
+                        # (p + 1 >= end) or
+                        #  (X[samples[p + 1], current_feature] >
+                        #   X[samples[p], current_feature])
                         p += 1
                         # (p >= end) or (X[samples[p], current_feature] >
                         #                X[samples[p - 1], current_feature])
@@ -1750,14 +1764,15 @@ cdef class PresortBestSplitter(Splitter):
                             # Reject if min_samples_leaf is not guaranteed
                             if (((current_pos - start) < min_samples_leaf) or
                                     ((end - current_pos) < min_samples_leaf)):
-                               continue
+                                continue
 
                             self.criterion.update(current_pos)
                             current_improvement = self.criterion.impurity_improvement(impurity)
 
                             if current_improvement > best_improvement:
-                                self.criterion.children_impurity(&current_impurity_left,
-                                                                 &current_impurity_right)
+                                self.criterion.children_impurity(
+                                    &current_impurity_left,
+                                    &current_impurity_right)
                                 best_impurity_left = current_impurity_left
                                 best_impurity_right = current_impurity_right
                                 best_improvement = current_improvement
@@ -1850,7 +1865,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         cdef DOUBLE_t* sample_weight_ptr = NULL
         if sample_weight is not None:
             if ((sample_weight.dtype != DOUBLE) or
-                (not sample_weight.flags.contiguous)):
+                    (not sample_weight.flags.contiguous)):
                 sample_weight = np.asarray(sample_weight,
                                            dtype=DOUBLE, order="C")
             sample_weight_ptr = <DOUBLE_t*> sample_weight.data
@@ -1928,7 +1943,6 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                     impurity = splitter.node_impurity()
                     first = 0
 
-
                 is_leaf = is_leaf or (impurity <= MIN_IMPURITY_SPLIT)
 
                 if not is_leaf:
@@ -1976,14 +1990,12 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
 
 # Best first builder ----------------------------------------------------------
 
-
 cdef inline int _add_to_frontier(PriorityHeapRecord* rec,
                                  PriorityHeap frontier) nogil:
     """Adds record ``rec`` to the priority queue ``frontier``; returns -1
     on memory-error. """
     return frontier.push(rec.node_id, rec.start, rec.end, rec.pos, rec.depth,
                          rec.is_leaf, rec.improvement, rec.impurity)
-
 
 
 cdef class BestFirstTreeBuilder(TreeBuilder):
@@ -2019,7 +2031,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         cdef DOUBLE_t* sample_weight_ptr = NULL
         if sample_weight is not None:
             if ((sample_weight.dtype != DOUBLE) or
-                (not sample_weight.flags.contiguous)):
+                    (not sample_weight.flags.contiguous)):
                 sample_weight = np.asarray(sample_weight,
                                            dtype=DOUBLE, order="C")
             sample_weight_ptr = <DOUBLE_t*> sample_weight.data
@@ -2158,8 +2170,9 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                                 &split_improvement, &n_constant_features)
             is_leaf = is_leaf or (pos >= end)
 
-        node_id = tree._add_node(parent - tree.nodes if parent != NULL
-                                                     else _TREE_UNDEFINED,
+        node_id = tree._add_node(parent - tree.nodes
+                                 if parent != NULL
+                                 else _TREE_UNDEFINED,
                                  is_left, is_leaf,
                                  feature, threshold, impurity, n_node_samples,
                                  weighted_n_node_samples)
@@ -2345,20 +2358,23 @@ cdef class Tree:
         node_ndarray = d['nodes']
         value_ndarray = d['values']
 
-        value_shape = (node_ndarray.shape[0], self.n_outputs, self.max_n_classes)
-        if (node_ndarray.ndim != 1
-         or node_ndarray.dtype != NODE_DTYPE
-         or not node_ndarray.flags.c_contiguous
-         or value_ndarray.shape != value_shape
-         or not value_ndarray.flags.c_contiguous
-         or value_ndarray.dtype != np.float64):
+        value_shape = (node_ndarray.shape[0], self.n_outputs,
+                       self.max_n_classes)
+        if (node_ndarray.ndim != 1 or
+                node_ndarray.dtype != NODE_DTYPE or
+                not node_ndarray.flags.c_contiguous or
+                value_ndarray.shape != value_shape or
+                not value_ndarray.flags.c_contiguous or
+                value_ndarray.dtype != np.float64):
             raise ValueError('Did not recognise loaded array layout')
 
         self.capacity = node_ndarray.shape[0]
         if self._resize_c(self.capacity) != 0:
             raise MemoryError("resizing tree to %d" % self.capacity)
-        nodes = memcpy(self.nodes, (<np.ndarray> node_ndarray).data, self.capacity * sizeof(Node))
-        value = memcpy(self.value, (<np.ndarray> value_ndarray).data, self.capacity * self.value_stride * sizeof(double))
+        nodes = memcpy(self.nodes, (<np.ndarray> node_ndarray).data,
+                       self.capacity * sizeof(Node))
+        value = memcpy(self.value, (<np.ndarray> value_ndarray).data,
+                       self.capacity * self.value_stride * sizeof(double))
 
     cdef void _resize(self, SIZE_t capacity):
         """Resize all inner arrays to `capacity`, if `capacity` == -1, then
@@ -2375,7 +2391,7 @@ cdef class Tree:
 
         if capacity == <SIZE_t>(-1):
             if self.capacity == 0:
-                capacity = 3 # default initial value
+                capacity = 3  # default initial value
             else:
                 capacity = 2 * self.capacity
 
@@ -2391,8 +2407,10 @@ cdef class Tree:
 
         # value memory is initialised to 0 to enable classifier argmax
         if capacity > self.capacity:
-            memset((<void*> self.value) + self.capacity * self.value_stride * sizeof(double), 0,
-                   (capacity - self.capacity) * self.value_stride * sizeof(double))
+            memset((<void*> self.value) + self.capacity *
+                   self.value_stride * sizeof(double), 0,
+                   (capacity - self.capacity) * self.value_stride *
+                   sizeof(double))
 
         # if capacity smaller than node_count, adjust the counter
         if capacity < self.node_count:
@@ -2401,14 +2419,9 @@ cdef class Tree:
         self.capacity = capacity
         return 0
 
-    cdef SIZE_t _add_node(self, SIZE_t parent,
-                                bint is_left,
-                                bint is_leaf,
-                                SIZE_t feature,
-                                double threshold,
-                                double impurity,
-                                SIZE_t n_samples,
-                                double weighted_n_samples) nogil:
+    cdef SIZE_t _add_node(self, SIZE_t parent, bint is_left, bint is_leaf,
+                          SIZE_t feature, double threshold, double impurity,
+                          SIZE_t n_samples, double weighted_n_samples) nogil:
         """Add a node to the tree.
 
         The new node registers itself as the child of its parent.
@@ -2449,7 +2462,8 @@ cdef class Tree:
 
     cpdef np.ndarray predict(self, np.ndarray[DTYPE_t, ndim=2] X):
         """Predict target for X."""
-        out = self._get_value_ndarray().take(self.apply(X), axis=0, mode='clip')
+        out = self._get_value_ndarray().take(self.apply(X), axis=0,
+                                             mode='clip')
         if self.n_outputs == 1:
             out = out.reshape(X.shape[0], self.max_n_classes)
         return out
@@ -2496,9 +2510,10 @@ cdef class Tree:
                 left = &nodes[node.left_child]
                 right = &nodes[node.right_child]
 
-                importances[node.feature] += (node.weighted_n_samples * node.impurity -
-                                              left.weighted_n_samples * left.impurity -
-                                              right.weighted_n_samples * right.impurity)
+                importances[node.feature] += (
+                    node.weighted_n_samples * node.impurity -
+                    left.weighted_n_samples * left.impurity -
+                    right.weighted_n_samples * right.impurity)
             node += 1
 
         importances = importances / nodes[0].weighted_n_samples
