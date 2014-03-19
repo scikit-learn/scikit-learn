@@ -176,7 +176,7 @@ cdef class TreeBuilder:
 
     cdef SIZE_t min_samples_split   # Minimum number of samples in an internal node
     cdef SIZE_t min_samples_leaf    # Minimum number of samples in a leaf
-    cdef SIZE_t max_depth
+    cdef SIZE_t max_depth           # Maximal tree depth
 
     cpdef build(self, Tree tree, np.ndarray X, np.ndarray y,
                 np.ndarray sample_weight=*)
