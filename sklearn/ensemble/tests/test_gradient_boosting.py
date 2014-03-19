@@ -229,7 +229,10 @@ def test_feature_importances():
     assert_true(hasattr(clf, 'feature_importances_'))
 
     X_new = clf.transform(X, threshold="mean")
-    assert_less(0 < X_new.shape[1], X.shape[1])
+    assert_less(X_new.shape[1], X.shape[1])
+
+    feature_mask = clf.feature_importances_ > clf.feature_importances_.mean()
+    assert_array_almost_equal(X_new, X[:, feature_mask])
 
     # true feature importance ranking
     # true_ranking = np.array([3, 1, 8, 2, 10, 9, 4, 11, 0, 6, 7, 5, 12])
