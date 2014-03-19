@@ -38,6 +38,7 @@ from ..base import RegressorMixin
 from ..utils import check_random_state, array2d, check_arrays, column_or_1d
 from ..utils.extmath import logsumexp
 from ..externals import six
+from ..feature_selection.from_model import _LearntSelectorMixin
 
 from ..tree.tree import DecisionTreeRegressor
 from ..tree._tree import DTYPE, TREE_LEAF
@@ -513,7 +514,8 @@ class VerboseReporter(object):
                 self.verbose_mod *= 10
 
 
-class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
+class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
+                                              _LearntSelectorMixin)):
     """Abstract base class for Gradient Boosting. """
 
     @abstractmethod
