@@ -255,8 +255,8 @@ def test_sparse_randomized_pca_inverse():
                        whiten=True, random_state=0).fit, X)
     Y = pca.transform(X)
     Y_inverse = pca.inverse_transform(Y)
-    relative_max_delta = (np.abs(X.todense() - Y_inverse)
-                          / np.abs(X).mean()).max()
+    relative_max_delta = (np.abs(X.toarray() - Y_inverse)
+                          / np.abs(X.toarray()).mean()).max()
     # XXX: this does not seam to work as expected:
     assert_almost_equal(relative_max_delta, 0.91, decimal=2)
 
