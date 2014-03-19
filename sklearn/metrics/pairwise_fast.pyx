@@ -148,4 +148,4 @@ def _manhattan_distances_csr(X, Y):
                 idx += 1
             indptr[r+1] = idx
 
-    return data, indices, indptr
+    return data, indices, indptr[:r+1]
