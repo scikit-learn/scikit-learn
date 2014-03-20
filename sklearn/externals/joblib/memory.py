@@ -408,7 +408,7 @@ class MemorizedFunc(Logger):
             mkdirp(output_dir)
             json.dump(
                 input_repr,
-                file(os.path.join(output_dir, 'input_args.json'), 'w'),
+                open(os.path.join(output_dir, 'input_args.json'), 'w'),
                 )
         except:
             pass
