@@ -17,7 +17,7 @@ from . import _tree
 
 
 def export_graphviz(decision_tree, out_file="tree.dot", feature_names=None,
-                    max_depth=None, close=None):
+                    max_depth=None, target_names=None, close=None):
     """Export a decision tree in DOT format.
 
     This function generates a GraphViz representation of the decision tree,
@@ -41,7 +41,10 @@ def export_graphviz(decision_tree, out_file="tree.dot", feature_names=None,
     max_depth : int, optional (default=None)
         The maximum depth of the representation. If None, the tree is fully
         generated.
-
+        
+    target_names : list of strings, optional (default=None)
+        Names of each of the targets.
+    
     Examples
     --------
     >>> from sklearn.datasets import load_iris
@@ -67,6 +70,9 @@ def export_graphviz(decision_tree, out_file="tree.dot", feature_names=None,
             value = value[0, :]
 
         if tree.children_left[node_id] == _tree.TREE_LEAF:
+            if target_names is not None:
+                target_index = [index for index,data in enumerate(tree.value[node_id][0]) if data][0]
+                value = target_names[target_index]        
             return "%s = %.4f\\nsamples = %s\\nvalue = %s" \
                    % (criterion,
                       tree.impurity[node_id],
