@@ -20,13 +20,13 @@ ctypedef np.float64_t DOUBLE
 np.import_array()
 
 
-cdef inline double fmax(double x, double y):
+cdef inline double fmax(double x, double y) nogil:
     if x > y:
         return x
     return y
 
 
-cdef inline double fsign(double f):
+cdef inline double fsign(double f) nogil:
     if f == 0:
         return 0
     elif f > 0:
@@ -46,8 +46,9 @@ cdef extern from "cblas.h":
         AtlasConj=114
 
     void daxpy "cblas_daxpy"(int N, double alpha, double *X, int incX,
-                             double *Y, int incY)
-    double ddot "cblas_ddot"(int N, double *X, int incX, double *Y, int incY)
+                             double *Y, int incY) nogil
+    double ddot "cblas_ddot"(int N, double *X, int incX, double *Y, int incY
+                             ) nogil
     void dger "cblas_dger"(CBLAS_ORDER Order, int M, int N, double alpha,
                 double *X, int incX, double *Y, int incY, double *A, int lda)
     void dgemv "cblas_dgemv"(CBLAS_ORDER Order,
@@ -67,7 +68,7 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                             double alpha, double beta,
                             np.ndarray[DOUBLE, ndim=2] X,
                             np.ndarray[DOUBLE, ndim=1] y,
-                            int max_iter, double tol, bool positive=False):
+                            int max_iter, double tol, bint positive=0):
     """Cython version of the coordinate descent algorithm
         for Elastic-Net regression
 
@@ -107,73 +108,80 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
 
     tol = tol * np.dot(y, y)
 
-    for n_iter in range(max_iter):
-        w_max = 0.0
-        d_w_max = 0.0
-        for ii in xrange(n_features):  # Loop over coordinates
-            if norm_cols_X[ii] == 0.0:
-                continue
+    with nogil:
+        for n_iter in range(max_iter):
+            w_max = 0.0
+            d_w_max = 0.0
+            for ii in xrange(n_features):  # Loop over coordinates
+                if norm_cols_X[ii] == 0.0:
+                    continue
 
-            w_ii = w[ii]  # Store previous value
+                w_ii = w[ii]  # Store previous value
 
-            if w_ii != 0.0:
-                # R += w_ii * X[:,ii]
-                daxpy(n_samples, w_ii,
-                      <DOUBLE*>(X.data + ii * n_samples * sizeof(DOUBLE)), 1,
-                      <DOUBLE*>R.data, 1)
+                if w_ii != 0.0:
+                    # R += w_ii * X[:,ii]
+                    daxpy(n_samples, w_ii,
+                          <DOUBLE*>(X.data + ii * n_samples * sizeof(DOUBLE)),
+                          1, <DOUBLE*>R.data, 1)
 
-            # tmp = (X[:,ii]*R).sum()
-            tmp = ddot(n_samples,
-                       <DOUBLE*>(X.data + ii * n_samples * sizeof(DOUBLE)), 1,
-                       <DOUBLE*>R.data, 1)
+                # tmp = (X[:,ii]*R).sum()
+                tmp = ddot(n_samples,
+                           <DOUBLE*>(X.data + ii * n_samples * sizeof(DOUBLE)),
+                           1, <DOUBLE*>R.data, 1)
 
-            if positive and tmp < 0:
-                w[ii] = 0.0
-            else:
-                w[ii] = fsign(tmp) * fmax(fabs(tmp) - alpha, 0) \
-                    / (norm_cols_X[ii] + beta)
+                if positive and tmp < 0:
+                    w[ii] = 0.0
+                else:
+                    w[ii] = (fsign(tmp) * fmax(fabs(tmp) - alpha, 0)
+                             / (norm_cols_X[ii] + beta))
 
-            if w[ii] != 0.0:
-                # R -=  w[ii] * X[:,ii] # Update residual
-                daxpy(n_samples, -w[ii],
-                      <DOUBLE*>(X.data + ii * n_samples * sizeof(DOUBLE)), 1,
-                      <DOUBLE*>R.data, 1)
+                if w[ii] != 0.0:
+                    # R -=  w[ii] * X[:,ii] # Update residual
+                    daxpy(n_samples, -w[ii],
+                          <DOUBLE*>(X.data + ii * n_samples * sizeof(DOUBLE)),
+                          1, <DOUBLE*>R.data, 1)
 
-            # update the maximum absolute coefficient update
-            d_w_ii = fabs(w[ii] - w_ii)
-            if d_w_ii > d_w_max:
-                d_w_max = d_w_ii
+                # update the maximum absolute coefficient update
+                d_w_ii = fabs(w[ii] - w_ii)
+                if d_w_ii > d_w_max:
+                    d_w_max = d_w_ii
 
-            if fabs(w[ii]) > w_max:
-                w_max = fabs(w[ii])
+                if fabs(w[ii]) > w_max:
+                    w_max = fabs(w[ii])
 
-        if w_max == 0.0 or d_w_max / w_max < d_w_tol or n_iter == max_iter - 1:
-            # the biggest coordinate update of this iteration was smaller than
-            # the tolerance: check the duality gap as ultimate stopping
-            # criterion
+            if (w_max == 0.0
+                    or d_w_max / w_max < d_w_tol
+                    or n_iter == max_iter - 1):
+                # the biggest coordinate update of this iteration was smaller
+                # than the tolerance: check the duality gap as ultimate
+                # stopping criterion
 
-            XtA = np.dot(X.T, R) - beta * w
-            if positive:
-                dual_norm_XtA = np.max(XtA)
-            else:
-                dual_norm_XtA = linalg.norm(XtA, np.inf)
+                with gil:
+                    # TODO: investigate whether it's worth replacing calls to
+                    # dot and linalg.norm by BLAS functions that do not
+                    # require the GIL
+                    XtA = np.dot(X.T, R) - beta * w
+                    if positive:
+                        dual_norm_XtA = np.max(XtA)
+                    else:
+                        dual_norm_XtA = linalg.norm(XtA, np.inf)
 
-            R_norm2 = np.dot(R, R)
-            w_norm2 = np.dot(w, w)
-            if (dual_norm_XtA > alpha):
-                const = alpha / dual_norm_XtA
-                A_norm2 = R_norm2 * (const**2)
-                gap = 0.5 * (R_norm2 + A_norm2)
-            else:
-                const = 1.0
-                gap = R_norm2
+                    R_norm2 = np.dot(R, R)
+                    w_norm2 = np.dot(w, w)
+                    if (dual_norm_XtA > alpha):
+                        const = alpha / dual_norm_XtA
+                        A_norm2 = R_norm2 * (const ** 2)
+                        gap = 0.5 * (R_norm2 + A_norm2)
+                    else:
+                        const = 1.0
+                        gap = R_norm2
 
-            gap += alpha * linalg.norm(w, 1) - const * np.dot(R.T, y) + \
-                  0.5 * beta * (1 + const ** 2) * (w_norm2)
+                    gap += (alpha * linalg.norm(w, 1) - const * np.dot(R.T, y)
+                            + 0.5 * beta * (1 + const ** 2) * (w_norm2))
 
-            if gap < tol:
-                # return if we reached desired tolerance
-                break
+                    if gap < tol:
+                        # return if we reached desired tolerance
+                        break
 
     return w, gap, tol
 
@@ -186,7 +194,7 @@ def sparse_enet_coordinate_descent(double[:] w,
                             double[:] X_data, int[:] X_indices,
                             int[:] X_indptr, double[:] y,
                             double[:] X_mean, int max_iter,
-                            double tol, bint positive=False):
+                            double tol, bool positive=False):
     """Cython version of the coordinate descent algorithm for Elastic-Net
 
     We minimize:
@@ -363,7 +371,7 @@ def enet_coordinate_descent_gram(np.ndarray[DOUBLE, ndim=1] w,
                             np.ndarray[DOUBLE, ndim=2] Q,
                             np.ndarray[DOUBLE, ndim=1] q,
                             np.ndarray[DOUBLE, ndim=1] y,
-                            int max_iter, double tol, bool positive=False):
+                            int max_iter, double tol, bint positive=0):
     """Cython version of the coordinate descent algorithm
         for Elastic-Net regression
 
