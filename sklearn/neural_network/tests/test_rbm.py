@@ -65,6 +65,19 @@ def test_small_sparse():
     X = csr_matrix(Xdigits[:4])
     BernoulliRBM().fit(X)       # no exception
 
+def test_small_sparse_partial_fit():
+    X_sparse = csr_matrix(Xdigits.copy())
+    X = Xdigits.copy()
+
+    rbm1 = BernoulliRBM(n_components=64, learning_rate=0.1,
+                       batch_size=10, random_state=9)
+    rbm2 = BernoulliRBM(n_components=64, learning_rate=0.1,
+                       batch_size=10, random_state=9)
+    
+    rbm1.partial_fit(X_sparse)
+    rbm2.partial_fit(X)
+    
+    assert_almost_equal(rbm1.score_samples(X).mean(), rbm2.score_samples(X).mean(), decimal=0)
 
 def test_sample_hiddens():
     rng = np.random.RandomState(0)
