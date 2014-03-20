@@ -405,11 +405,9 @@ class MemorizedFunc(Logger):
         # This can fail do to race-conditions with multiple
         # concurrent joblibs removing the file or the directory
         try:
-            mkdirp(output_dir)
-            json.dump(
-                input_repr,
-                file(os.path.join(output_dir, 'input_args.json'), 'w'),
-                )
+            with open(os.path.join(input_dir, 'input_args.json'), 'w') as f:
+                mkdirp(output_dir)
+                json.dump(input_repr, f)
         except:
             pass
         return input_repr
