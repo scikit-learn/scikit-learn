@@ -338,7 +338,7 @@ def test_parallel():
 
     for n_jobs in [-1, 3]:
         ensemble = BaggingRegressor(DecisionTreeRegressor(),
-                                    n_jobs=3,
+                                    n_jobs=n_jobs,
                                     random_state=0).fit(X_train, y_train)
 
         ensemble.set_params(n_jobs=1)
