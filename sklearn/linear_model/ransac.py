@@ -12,6 +12,13 @@ from ..utils.random import sample_without_replacement
 from .base import LinearRegression
 
 
+def _dynamic_max_trials(n_inliers, n_samples, min_samples, probability):
+  e = 1 - n_inliers / float(n_samples)
+  nom = max(np.spacing(1), 1 - probability)
+  denom = max(np.spacing(1), 1 - (1 - e) ** min_samples)
+  return np.ceil(np.log(nom) / np.log(denom))
+
+
 class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
     """RANSAC (RANdom SAmple Consensus) algorithm.
 
@@ -75,6 +82,15 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
     stop_score : float, optional
         Stop iteration if score is greater equal than this threshold.
 
+    stop_probability : float, optional
+        RANSAC iteration stops if at least one outlier-free set of the training
+        data is sampled in RANSAC. This requires to generate at least N
+        samples (iterations)::
+
+            N > log(1 - probability) / log(1 - (1 - e)**m)
+
+        where the probability (confidence) is typically set to > 0.95 and e is
+        the current fraction of outliers w.r.t. the total number of samples.
     residual_metric : callable, optional
         Metric to reduce the dimensionality of the residuals to 1 for
         multi-dimensional target values ``y.shape[1] > 1``. By default the sum
@@ -110,7 +126,8 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
                  residual_threshold=None, is_data_valid=None,
                  is_model_valid=None, max_trials=100,
                  stop_n_inliers=np.inf, stop_score=np.inf,
-                 residual_metric=None, random_state=None):
+                 residual_metric=None, random_state=None,
+                 stop_probability=0.99):
 
         self.base_estimator = base_estimator
         self.min_samples = min_samples
@@ -122,6 +139,7 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
         self.stop_score = stop_score
         self.residual_metric = residual_metric
         self.random_state = random_state
+        self.stop_probability = stop_probability
 
     def fit(self, X, y):
         """Fit estimator using RANSAC algorithm.
@@ -258,7 +276,11 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
 
             # break if sufficient number of inliers or score is reached
             if (n_inliers_best >= self.stop_n_inliers
-                    or score_best >= self.stop_score):
+                    or score_best >= self.stop_score
+                    or self.n_trials_
+                       >= _dynamic_max_trials(n_inliers_best, n_samples,
+                                              min_samples,
+                                              self.stop_probability)):
                 break
 
         # if none of the iterations met the required criteria
