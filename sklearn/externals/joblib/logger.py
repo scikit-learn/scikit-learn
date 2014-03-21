@@ -142,7 +142,7 @@ class PrintTime(object):
         if self.logfile is not None:
             try:
                 with open(self.logfile, 'a') as logfile:
-                    logfile.write(full_msg)
+                    print(full_msg, file=logfile)
             except:
                 """ Multiprocessing writing to files can create race
                     conditions. Rather fail silently than crash the
