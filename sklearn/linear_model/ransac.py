@@ -87,7 +87,7 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
         data is sampled in RANSAC. This requires to generate at least N
         samples (iterations)::
 
-            N > log(1 - probability) / log(1 - (1 - e)**m)
+            N >= log(1 - probability) / log(1 - (1 - e)**m)
 
         where the probability (confidence) is typically set to > 0.95 and e is
         the current fraction of outliers w.r.t. the total number of samples.
