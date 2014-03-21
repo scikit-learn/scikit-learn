@@ -12,11 +12,37 @@ from ..utils.random import sample_without_replacement
 from .base import LinearRegression
 
 
+EPS = np.spacing(1)
+
+
 def _dynamic_max_trials(n_inliers, n_samples, min_samples, probability):
-  e = 1 - n_inliers / float(n_samples)
-  nom = max(np.spacing(1), 1 - probability)
-  denom = max(np.spacing(1), 1 - (1 - e) ** min_samples)
-  return np.ceil(np.log(nom) / np.log(denom))
+    """Determine number trials such that at least one outlier-free subset is
+    sampled for the given inlier/outlier ratio.
+
+    Parameters
+    ----------
+    n_inliers : int
+        Number of inliers in the data.
+
+    n_samples : int
+        Total number of samples in the data.
+
+    min_samples : int
+        Minimum number of samples chosen randomly from original data.
+
+    probability : float
+        Probability (confidence) that one outlier-free sample is generated.
+
+    Returns
+    -------
+    trials : int
+        Number of trials.
+
+    """
+    e = n_inliers / float(n_samples)
+    nom = max(EPS, 1 - probability)
+    denom = max(EPS, 1 - e ** min_samples)
+    return int(np.ceil(np.log(nom) / np.log(denom)))
 
 
 class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
@@ -51,7 +77,8 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
         Minimum number of samples chosen randomly from original data. Treated
         as an absolute number of samples for `min_samples >= 1`, treated as a
         relative number `ceil(min_samples * X.shape[0]`) for
-        `min_samples < 1`. By default a
+        `min_samples < 1`. This is typically chosen as the minimal number of
+        samples necessary to estimate the given `base_estimator`. By default a
         ``sklearn.linear_model.LinearRegression()`` estimator is assumed and
         `min_samples` is chosen as ``X.shape[1] + 1``.
 
@@ -87,10 +114,11 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
         data is sampled in RANSAC. This requires to generate at least N
         samples (iterations)::
 
-            N >= log(1 - probability) / log(1 - (1 - e)**m)
+            N >= log(1 - probability) / log(1 - e**m)
 
         where the probability (confidence) is typically set to > 0.95 and e is
-        the current fraction of outliers w.r.t. the total number of samples.
+        the current fraction of inliers w.r.t. the total number of samples.
+
     residual_metric : callable, optional
         Metric to reduce the dimensionality of the residuals to 1 for
         multi-dimensional target values ``y.shape[1] > 1``. By default the sum
@@ -126,8 +154,8 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
                  residual_threshold=None, is_data_valid=None,
                  is_model_valid=None, max_trials=100,
                  stop_n_inliers=np.inf, stop_score=np.inf,
-                 residual_metric=None, random_state=None,
-                 stop_probability=0.99):
+                 stop_probability=0.99, residual_metric=None,
+                 random_state=None):
 
         self.base_estimator = base_estimator
         self.min_samples = min_samples
@@ -137,9 +165,9 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
         self.max_trials = max_trials
         self.stop_n_inliers = stop_n_inliers
         self.stop_score = stop_score
+        self.stop_probability = stop_probability
         self.residual_metric = residual_metric
         self.random_state = random_state
-        self.stop_probability = stop_probability
 
     def fit(self, X, y):
         """Fit estimator using RANSAC algorithm.
