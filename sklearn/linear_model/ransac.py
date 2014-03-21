@@ -39,9 +39,9 @@ def _dynamic_max_trials(n_inliers, n_samples, min_samples, probability):
         Number of trials.
 
     """
-    e = n_inliers / float(n_samples)
+    inlier_ratio = n_inliers / float(n_samples)
     nom = max(EPS, 1 - probability)
-    denom = max(EPS, 1 - e ** min_samples)
+    denom = max(EPS, 1 - inlier_ratio ** min_samples)
     return int(np.ceil(np.log(nom) / np.log(denom)))
 
 
