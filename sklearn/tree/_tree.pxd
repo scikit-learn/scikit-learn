@@ -21,6 +21,7 @@ ctypedef np.npy_uint32 UINT32_t          # Unsigned 32 bit integer
 # =============================================================================
 # Criterion
 # =============================================================================
+
 cdef class Criterion:
     # Internal structures
     cdef DOUBLE_t* y                     # Values of y
@@ -122,6 +123,7 @@ cdef class Splitter:
 # =============================================================================
 # Tree
 # =============================================================================
+
 cdef struct Node:
     # The main storage for Tree, excluding values at each node, which are
     # stored separately as their size is not known at compile time.
@@ -171,6 +173,7 @@ cdef class Tree:
 # =============================================================================
 # Tree builder
 # =============================================================================
+
 cdef class TreeBuilder:
     cdef Splitter splitter          # Splitting algorithm
 
