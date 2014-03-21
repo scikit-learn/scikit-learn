@@ -49,7 +49,7 @@ cdef SIZE_t INITIAL_STACK_SIZE = 10
 cdef DTYPE_t MIN_IMPURITY_SPLIT = 1e-7
 
 # Mitigate precision differences between 32 bit and 64 bit
-cdef DTYPE_t CONSTANT_FEATURE_THRESHOLD = 1e-7
+cdef DTYPE_t FEATURE_THRESHOLD = 1e-7
 
 # Some handy constants (BestFirstTreeBuilder)
 cdef int IS_FIRST = 1
@@ -127,10 +127,10 @@ cdef class Criterion:
         self.children_impurity(&impurity_left, &impurity_right)
 
         return (impurity -
-                (self.weighted_n_right /
-                 self.weighted_n_node_samples *impurity_right) -
-                (self.weighted_n_left /
-                 self.weighted_n_node_samples * impurity_left))
+                (self.weighted_n_right / self.weighted_n_node_samples *
+                 impurity_right) -
+                (self.weighted_n_left / self.weighted_n_node_samples *
+                 impurity_left))
 
 
 cdef class ClassificationCriterion(Criterion):
@@ -1117,8 +1117,7 @@ cdef class BestSplitter(Splitter):
                 n_drawn_constants += 1
 
             else:
-                # f_j in the interval [n_known_constants,
-                #                      f_i - n_found_constants[
+                # f_j in the interval [n_known_constants, f_i - n_found_constants[
                 f_j += n_found_constants
                 # f_j in the interval [n_total_constants, f_i[
 
@@ -1134,7 +1133,7 @@ cdef class BestSplitter(Splitter):
 
                 sort(Xf + start, samples + start, end - start)
 
-                if Xf[end - 1] <= Xf[start] + CONSTANT_FEATURE_THRESHOLD:
+                if Xf[end - 1] <= Xf[start] + FEATURE_THRESHOLD:
                     features[f_j] = features[n_total_constants]
                     features[n_total_constants] = current_feature
 
@@ -1151,13 +1150,11 @@ cdef class BestSplitter(Splitter):
 
                     while p < end:
                         while (p + 1 < end and
-                               Xf[p + 1] <= (Xf[p] +
-                                             CONSTANT_FEATURE_THRESHOLD)):
+                               Xf[p + 1] <= Xf[p] + FEATURE_THRESHOLD):
                             p += 1
 
-                        # (p + 1 >= end) or
-                        #  (X[samples[p + 1], current_feature] >
-                        #   X[samples[p], current_feature])
+                        # (p + 1 >= end) or (X[samples[p + 1], current_feature] >
+                        #                    X[samples[p], current_feature])
                         p += 1
                         # (p >= end) or (X[samples[p], current_feature] >
                         #                X[samples[p - 1], current_feature])
@@ -1174,9 +1171,8 @@ cdef class BestSplitter(Splitter):
                             current_improvement = self.criterion.impurity_improvement(impurity)
 
                             if current_improvement > best_improvement:
-                                self.criterion.children_impurity(
-                                    &current_impurity_left,
-                                    &current_impurity_right)
+                                self.criterion.children_impurity(&current_impurity_left,
+                                                                 &current_impurity_right)
                                 best_impurity_left = current_impurity_left
                                 best_impurity_right = current_impurity_right
                                 best_improvement = current_improvement
@@ -1438,8 +1434,7 @@ cdef class RandomSplitter(Splitter):
                 n_drawn_constants += 1
 
             else:
-                # f_j in the interval [n_known_constants,
-                #                      f_i - n_found_constants[
+                # f_j in the interval [n_known_constants, f_i - n_found_constants[
                 f_j += n_found_constants
                 # f_j in the interval [n_total_constants, f_i[
 
@@ -1461,8 +1456,7 @@ cdef class RandomSplitter(Splitter):
                     elif current_feature_value > max_feature_value:
                         max_feature_value = current_feature_value
 
-                if (max_feature_value <= (min_feature_value +
-                                          CONSTANT_FEATURE_THRESHOLD)):
+                if max_feature_value <= min_feature_value + FEATURE_THRESHOLD:
                     features[f_j] = features[n_total_constants]
                     features[n_total_constants] = current_feature
 
@@ -1512,8 +1506,8 @@ cdef class RandomSplitter(Splitter):
                     current_improvement = self.criterion.impurity_improvement(impurity)
 
                     if current_improvement > best_improvement:
-                        self.criterion.children_impurity(
-                            &current_impurity_left, &current_impurity_right)
+                        self.criterion.children_impurity(&current_impurity_left,
+                                                         &current_impurity_right)
                         best_impurity_left = current_impurity_left
                         best_impurity_right = current_impurity_right
                         best_improvement = current_improvement
@@ -1712,8 +1706,7 @@ cdef class PresortBestSplitter(Splitter):
                 n_drawn_constants += 1
 
             else:
-                # f_j in the interval [n_known_constants,
-                #                      f_i - n_found_constants[
+                # f_j in the interval [n_known_constants, f_i - n_found_constants[
                 f_j += n_found_constants
                 # f_j in the interval [n_total_constants, f_i[
 
@@ -1731,7 +1724,7 @@ cdef class PresortBestSplitter(Splitter):
                         p += 1
 
                 # Evaluate all splits
-                if Xf[end - 1] <= Xf[start] + CONSTANT_FEATURE_THRESHOLD:
+                if Xf[end - 1] <= Xf[start] + FEATURE_THRESHOLD:
                     features[f_j] = features[n_total_constants]
                     features[n_total_constants] = current_feature
 
@@ -1747,13 +1740,11 @@ cdef class PresortBestSplitter(Splitter):
 
                     while p < end:
                         while (p + 1 < end and
-                               Xf[p + 1] <= (Xf[p] +
-                                             CONSTANT_FEATURE_THRESHOLD)):
+                               Xf[p + 1] <= Xf[p] + FEATURE_THRESHOLD):
                             p += 1
 
-                        # (p + 1 >= end) or
-                        #  (X[samples[p + 1], current_feature] >
-                        #   X[samples[p], current_feature])
+                        # (p + 1 >= end) or (X[samples[p + 1], current_feature] >
+                        #                    X[samples[p], current_feature])
                         p += 1
                         # (p >= end) or (X[samples[p], current_feature] >
                         #                X[samples[p - 1], current_feature])
@@ -1770,9 +1761,8 @@ cdef class PresortBestSplitter(Splitter):
                             current_improvement = self.criterion.impurity_improvement(impurity)
 
                             if current_improvement > best_improvement:
-                                self.criterion.children_impurity(
-                                    &current_impurity_left,
-                                    &current_impurity_right)
+                                self.criterion.children_impurity(&current_impurity_left,
+                                                                 &current_impurity_right)
                                 best_impurity_left = current_impurity_left
                                 best_impurity_right = current_impurity_right
                                 best_improvement = current_improvement
