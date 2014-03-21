@@ -18,12 +18,15 @@ ctypedef np.npy_int32 INT32_t            # Signed 32 bit integer
 ctypedef np.npy_uint32 UINT32_t          # Unsigned 32 bit integer
 
 
-
 # =============================================================================
 # Criterion
 # =============================================================================
 
 cdef class Criterion:
+    # The criterion compute the impurity and reduction of impurity of the
+    # output space. It's also compute the output statistics such as the mean
+    # in regression and classes statistics in classification.
+
     # Internal structures
     cdef DOUBLE_t* y                     # Values of y
     cdef SIZE_t y_stride                 # Stride in y (since n_outputs >= 1)
@@ -44,16 +47,13 @@ cdef class Criterion:
     # statistics correspond to samples[start:pos] and samples[pos:end].
 
     # Methods
-    cdef void init(self, DOUBLE_t* y,
-                         SIZE_t y_stride,
-                         DOUBLE_t* sample_weight,
-                         SIZE_t* samples,
-                         SIZE_t start,
-                         SIZE_t end) nogil
+    cdef void init(self, DOUBLE_t* y, SIZE_t y_stride, DOUBLE_t* sample_weight,
+                   SIZE_t* samples, SIZE_t start, SIZE_t end) nogil
     cdef void reset(self) nogil
     cdef void update(self, SIZE_t new_pos) nogil
     cdef double node_impurity(self) nogil
-    cdef void children_impurity(self, double* impurity_left, double* impurity_right) nogil
+    cdef void children_impurity(self, double* impurity_left,
+                                double* impurity_right) nogil
     cdef void node_value(self, double* dest) nogil
     cdef double impurity_improvement(self, double impurity) nogil
 
@@ -63,6 +63,12 @@ cdef class Criterion:
 # =============================================================================
 
 cdef class Splitter:
+    # The splitter searches in the input space for a feature and a threshold
+    # to split the samples samples[start:end] as to maximize the reduction of
+    # an impurity criterion.
+    #
+    # The impurity computations are delegated to a criterion object.
+
     # Internal structures
     cdef public Criterion criterion      # Impurity criterion
     cdef public SIZE_t max_features      # Number of features to test
@@ -101,25 +107,27 @@ cdef class Splitter:
     # The value `n_constant_features` is given by the the parent node to its
     # child nodes.  The content of the range `[n_constant_features:]` is left
     # undefined, but preallocated for performance reasons
-    # This allows optimisation with depth-based tree building.
+    # This allows optimization with depth-based tree building.
 
     # Methods
-    cdef void init(self, np.ndarray X,
-                         np.ndarray y,
-                         DOUBLE_t* sample_weight)
+    cdef void init(self, np.ndarray X, np.ndarray y, DOUBLE_t* sample_weight)
 
-    cdef void node_reset(self, SIZE_t start, SIZE_t end) nogil
+    cdef void node_reset(self, SIZE_t start, SIZE_t end,
+                         double* weighted_n_node_samples) nogil
 
-    cdef void node_split(self, double impurity,  # Impurity of the node
-                               SIZE_t* pos, # Set to >= end if the node is a leaf
-                               SIZE_t* feature,
-                               double* threshold,
-                               double* impurity_left,
-                               double* impurity_right,
-                               double* impurity_improvement,
-                               SIZE_t* n_constant_features) nogil
+    cdef void node_split(self,
+                         double impurity,   # Impurity of the node
+                         SIZE_t* pos,       # Set to >= end if the node is a leaf
+                         SIZE_t* feature,
+                         double* threshold,
+                         double* impurity_left,
+                         double* impurity_right,
+                         double* impurity_improvement,
+                         SIZE_t* n_constant_features) nogil
 
     cdef void node_value(self, double* dest) nogil
+
+    cdef double node_impurity(self) nogil
 
 
 # =============================================================================
@@ -141,22 +149,19 @@ cdef struct Node:
 
 
 cdef class Tree:
+    # The Tree object is a binary tree structure constructed by the
+    # TreeBuilder. The tree structure is used for predictions and
+    # feature importances.
+
     # Input/Output layout
     cdef public SIZE_t n_features        # Number of features in X
     cdef SIZE_t* n_classes               # Number of classes in y[:, k]
     cdef public SIZE_t n_outputs         # Number of outputs in y
     cdef public SIZE_t max_n_classes     # max(n_classes)
 
-    # Parameters
-    cdef public Splitter splitter        # Splitting algorithm
-    cdef public SIZE_t max_depth         # Max depth of the tree
-    cdef public SIZE_t min_samples_split # Minimum number of samples in an internal node
-    cdef public SIZE_t min_samples_leaf  # Minimum number of samples in a leaf
-    cdef public object random_state      # Random state
-    cdef public int max_leaf_nodes       # Number of leafs to grow
-
     # Inner structures: values are stored separately from node structure,
     # since size is determined at runtime.
+    cdef public SIZE_t max_depth         # Max depth of the tree
     cdef public SIZE_t node_count        # Counter for node IDs
     cdef public SIZE_t capacity          # Capacity of tree, in terms of nodes
     cdef Node* nodes                     # Array of nodes
@@ -164,14 +169,10 @@ cdef class Tree:
     cdef SIZE_t value_stride             # = n_outputs * max_n_classes
 
     # Methods
-    cdef SIZE_t _add_node(self, SIZE_t parent,
-                                bint is_left,
-                                bint is_leaf,
-                                SIZE_t feature,
-                                double threshold,
-                                double impurity,
-                                SIZE_t n_node_samples,
-                                double weighted_n_samples) nogil
+    cdef SIZE_t _add_node(self, SIZE_t parent, bint is_left, bint is_leaf,
+                          SIZE_t feature, double threshold, double impurity,
+                          SIZE_t n_node_samples,
+                          double weighted_n_samples) nogil
     cdef void _resize(self, SIZE_t capacity)
     cdef int _resize_c(self, SIZE_t capacity=*) nogil
 
@@ -188,15 +189,19 @@ cdef class Tree:
 # =============================================================================
 
 cdef class TreeBuilder:
-     cpdef build(self, Tree tree, np.ndarray X, np.ndarray y,
-                 np.ndarray sample_weight=*)
+    # The TreeBuilder builds recursively a Tree object from the data
+    # by managing a splitter object to find features and thresholds to
+    # split on for internal nodes and to compute leaf values for external
+    # nodes.
+    #
+    # This class manages the various stopping criterion and the node splitting
+    # evaluation order, e.g. depth-first or best-first.
 
+    cdef Splitter splitter          # Splitting algorithm
 
-cdef class DepthFirstTreeBuilder(TreeBuilder):
-     cpdef build(self, Tree tree, np.ndarray X, np.ndarray y,
-                 np.ndarray sample_weight=*)
+    cdef SIZE_t min_samples_split   # Minimum number of samples in an internal node
+    cdef SIZE_t min_samples_leaf    # Minimum number of samples in a leaf
+    cdef SIZE_t max_depth           # Maximal tree depth
 
-
-cdef class BestFirstTreeBuilder(TreeBuilder):
-     cpdef build(self, Tree tree, np.ndarray X, np.ndarray y,
-                 np.ndarray sample_weight=*)
+    cpdef build(self, Tree tree, np.ndarray X, np.ndarray y,
+                np.ndarray sample_weight=*)
