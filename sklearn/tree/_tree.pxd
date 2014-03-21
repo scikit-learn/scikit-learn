@@ -25,7 +25,7 @@ ctypedef np.npy_uint32 UINT32_t          # Unsigned 32 bit integer
 cdef class Criterion:
     # The criterion compute the impurity and reduction of impurity of the
     # output space. It's also compute the output statistics such as the mean
-    # in regression and classes statistics.
+    # in regression and classes statistics in classification.
 
     # Internal structures
     cdef DOUBLE_t* y                     # Values of y
@@ -67,7 +67,7 @@ cdef class Splitter:
     # to split the samples samples[start:end] as to maximize the reduction of
     # an impurity criterion.
     #
-    # The impurity computation is delegated to a criterion object.
+    # The impurity computations are delegated to a criterion object.
 
     # Internal structures
     cdef public Criterion criterion      # Impurity criterion
@@ -107,7 +107,7 @@ cdef class Splitter:
     # The value `n_constant_features` is given by the the parent node to its
     # child nodes.  The content of the range `[n_constant_features:]` is left
     # undefined, but preallocated for performance reasons
-    # This allows optimisation with depth-based tree building.
+    # This allows optimization with depth-based tree building.
 
     # Methods
     cdef void init(self, np.ndarray X, np.ndarray y, DOUBLE_t* sample_weight)
@@ -194,8 +194,8 @@ cdef class TreeBuilder:
     # split on for internal nodes and to compute leaf values for external
     # nodes.
     #
-    # This class manages the various stopping criterion and node splitting
-    # order, e.g. depth-first or best-first.
+    # This class manages the various stopping criterion and the node splitting
+    # evaluation order, e.g. depth-first or best-first.
 
     cdef Splitter splitter          # Splitting algorithm
 
