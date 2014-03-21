@@ -101,10 +101,9 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
             efficiency.
 
         y : array-like, shape = [n_samples] or [n_samples, n_outputs]
-            The target values (integers that correspond to classes in
-            classification, real numbers in regression).
-            Use ``dtype=np.float64`` and ``order='C'`` for maximum
-            efficiency.
+            The target values (class labels in classification, real numbers in
+            regression). In the regression case, use ``dtype=np.float64`` and
+            ``order='C'`` for maximum efficiency.
 
         sample_weight : array-like, shape = [n_samples] or None
             Sample weights. If None, then samples are equally weighted. Splits
