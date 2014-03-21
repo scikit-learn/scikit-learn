@@ -23,6 +23,10 @@ ctypedef np.npy_uint32 UINT32_t          # Unsigned 32 bit integer
 # =============================================================================
 
 cdef class Criterion:
+    # The criterion compute the impurity and reduction of impurity of the
+    # output space. It's also compute the output statistics such as the mean
+    # in regression and classes statistics.
+
     # Internal structures
     cdef DOUBLE_t* y                     # Values of y
     cdef SIZE_t y_stride                 # Stride in y (since n_outputs >= 1)
@@ -59,6 +63,12 @@ cdef class Criterion:
 # =============================================================================
 
 cdef class Splitter:
+    # The splitter searches in the input space for a feature and a threshold
+    # to split the samples samples[start:end] as to maximize the reduction of
+    # an impurity criterion.
+    #
+    # The impurity computation is delegated to a criterion object.
+
     # Internal structures
     cdef public Criterion criterion      # Impurity criterion
     cdef public SIZE_t max_features      # Number of features to test
@@ -139,6 +149,10 @@ cdef struct Node:
 
 
 cdef class Tree:
+    # The Tree object is a binary tree structure constructed by the
+    # TreeBuilder. The tree structure is used for predictions and
+    # feature importances.
+
     # Input/Output layout
     cdef public SIZE_t n_features        # Number of features in X
     cdef SIZE_t* n_classes               # Number of classes in y[:, k]
@@ -175,6 +189,14 @@ cdef class Tree:
 # =============================================================================
 
 cdef class TreeBuilder:
+    # The TreeBuilder builds recursively a Tree object from the data
+    # by managing a splitter object to find features and thresholds to
+    # split on for internal nodes and to compute leaf values for external
+    # nodes.
+    #
+    # This class manages the various stopping criterion and node splitting
+    # order, e.g. depth-first or best-first.
+
     cdef Splitter splitter          # Splitting algorithm
 
     cdef SIZE_t min_samples_split   # Minimum number of samples in an internal node
