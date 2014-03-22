@@ -23,9 +23,9 @@ ctypedef np.npy_uint32 UINT32_t          # Unsigned 32 bit integer
 # =============================================================================
 
 cdef class Criterion:
-    # The criterion compute the impurity and reduction of impurity of the
-    # output space. It's also compute the output statistics such as the mean
-    # in regression and classes statistics in classification.
+    # The criterion computes the impurity of a node and the reduction of
+    # impurity of a split on that node. It also computes the output statistics
+    # such as the mean in regression and class probabilities in classification.
 
     # Internal structures
     cdef DOUBLE_t* y                     # Values of y
@@ -64,8 +64,7 @@ cdef class Criterion:
 
 cdef class Splitter:
     # The splitter searches in the input space for a feature and a threshold
-    # to split the samples samples[start:end] as to maximize the reduction of
-    # an impurity criterion.
+    # to split the samples samples[start:end].
     #
     # The impurity computations are delegated to a criterion object.
 
@@ -95,7 +94,7 @@ cdef class Splitter:
 
     # The samples vector `samples` is maintained by the Splitter object such
     # that the samples contained in a node are contiguous. With this setting,
-    # split reorganizes the node samples `samples[start:end]` in two
+    # `node_split` reorganizes the node samples `samples[start:end]` in two
     # subsets `samples[start:pos]` and `samples[pos:end]`.
 
     # The 1-d  `features` array of size n_features contains the features
@@ -135,18 +134,15 @@ cdef class Splitter:
 # =============================================================================
 
 cdef struct Node:
-    # The main storage for Tree, excluding values at each node, which are
-    # stored separately as their size is not known at compile time.
-    # An array of each field is publicly accessible from Tree, and its
-    # semantics is documented there.
-    SIZE_t left_child
-    SIZE_t right_child
-    SIZE_t feature
-    DOUBLE_t threshold
-    DOUBLE_t impurity
-    SIZE_t n_samples
-    DOUBLE_t weighted_n_samples
+    # Base storage structure for the nodes in a Tree object
 
+    SIZE_t left_child               # id of the left child of the node
+    SIZE_t right_child              # id of the right child of the node
+    SIZE_t feature                  # Feature used for splitting the node
+    DOUBLE_t threshold              # Threshold value at the node
+    DOUBLE_t impurity               # Impurity of the node (i.e., the value of the criterion)
+    SIZE_t n_samples                # Number of samples at the node
+    DOUBLE_t weighted_n_samples     # Weighted number of samples at the node
 
 cdef class Tree:
     # The Tree object is a binary tree structure constructed by the
@@ -189,12 +185,11 @@ cdef class Tree:
 # =============================================================================
 
 cdef class TreeBuilder:
-    # The TreeBuilder builds recursively a Tree object from the data
-    # by managing a splitter object to find features and thresholds to
-    # split on for internal nodes and to compute leaf values for external
-    # nodes.
+    # The TreeBuilder recursively builds a Tree object from training samples,
+    # using a Splitter object for splitting internal nodes and assigning
+    # values to leaves.
     #
-    # This class manages the various stopping criterion and the node splitting
+    # This class controls the various stopping criteria and the node splitting
     # evaluation order, e.g. depth-first or best-first.
 
     cdef Splitter splitter          # Splitting algorithm
