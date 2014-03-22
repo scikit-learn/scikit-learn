@@ -11,7 +11,8 @@ import logging
 from os import devnull
 
 import numpy as np
-import numpy.testing as nptest
+from numpy.testing import assert_array_equal, assert_array_less, \
+    assert_array_almost_equal
 from scipy.linalg import norm
 from scipy.optimize import fmin_bfgs
 from nose.tools import raises
@@ -90,55 +91,55 @@ def gen_toy_problem_4d():
     return X, y, w, c
 
 
-def test__modweiszfeld_step_1d():
+def test_modweiszfeld_step_1d():
     X = np.array([1., 2., 3.]).reshape(3, 1)
     # Check startvalue is element of X and solution
     median = np.array([2.])
     new_y = _modweiszfeld_step(X, median)
-    nptest.assert_array_almost_equal(new_y, median)
+    assert_array_almost_equal(new_y, median)
     # Check startvalue is not the solution
     y = np.array([2.5])
     new_y = _modweiszfeld_step(X, y)
-    nptest.assert_array_less(median, new_y)
-    nptest.assert_array_less(new_y, y)
+    assert_array_less(median, new_y)
+    assert_array_less(new_y, y)
     # Check startvalue is not the solution but element of X
     y = np.array([3.])
     new_y = _modweiszfeld_step(X, y)
-    nptest.assert_array_less(median, new_y)
-    nptest.assert_array_less(new_y, y)
+    assert_array_less(median, new_y)
+    assert_array_less(new_y, y)
     # Check that a single vector is identity
     X = np.array([1., 2., 3.]).reshape(1, 3)
     y = X[0, ]
     new_y = _modweiszfeld_step(X, y)
-    nptest.assert_array_equal(y, new_y)
+    assert_array_equal(y, new_y)
 
 
-def test__modweiszfeld_step_2d():
+def test_modweiszfeld_step_2d():
     X = np.array([0., 0., 1., 1., 0., 1.]).reshape(3, 2)
     y = np.array([0.5, 0.5])
     # Check first two iterations
     new_y = _modweiszfeld_step(X, y)
-    nptest.assert_array_almost_equal(new_y, np.array([1 / 3, 2 / 3]))
+    assert_array_almost_equal(new_y, np.array([1 / 3, 2 / 3]))
     new_y = _modweiszfeld_step(X, new_y)
-    nptest.assert_array_almost_equal(new_y, np.array([0.2792408, 0.7207592]))
+    assert_array_almost_equal(new_y, np.array([0.2792408, 0.7207592]))
     # Check fix point
     y = np.array([0.21132505, 0.78867497])
     new_y = _modweiszfeld_step(X, y)
-    nptest.assert_array_almost_equal(new_y, y)
+    assert_array_almost_equal(new_y, y)
 
 
-def test__spatial_median_1d():
+def test_spatial_median_1d():
     X = np.array([1., 2., 3.]).reshape(3, 1)
     true_median = np.array([2.])
     median = _spatial_median(X)
-    nptest.assert_array_almost_equal(median, true_median)
+    assert_array_almost_equal(median, true_median)
     # Check when maximum iteration is exceeded
     logging.basicConfig(filename=devnull)
     median = _spatial_median(X, n_iter=30, tol=0.)
-    nptest.assert_array_almost_equal(median, true_median)
+    assert_array_almost_equal(median, true_median)
 
 
-def test__spatial_median_2d():
+def test_spatial_median_2d():
     X = np.array([0., 0., 1., 1., 0., 1.]).reshape(3, 2)
     median = _spatial_median(X, n_iter=100, tol=1.e-6)
 
@@ -148,7 +149,7 @@ def test__spatial_median_2d():
 
     # Check if median is solution of the Fermat-Weber location problem
     fermat_weber = fmin_bfgs(cost_func, median, disp=False)
-    nptest.assert_array_almost_equal(median, fermat_weber)
+    assert_array_almost_equal(median, fermat_weber)
 
 
 def test_theilsen_1d():
@@ -158,8 +159,8 @@ def test_theilsen_1d():
     assert np.abs(lstq.coef_ - w) > 0.9
     # Check that Theil-Sen works
     theilsen = TheilSen().fit(X, y)
-    nptest.assert_array_almost_equal(theilsen.coef_, w, 2)
-    nptest.assert_array_almost_equal(theilsen.intercept_, c, 2)
+    assert_array_almost_equal(theilsen.coef_, w, 2)
+    assert_array_almost_equal(theilsen.intercept_, c, 2)
 
 
 def test_theilsen_1d_no_intercept():
@@ -169,7 +170,7 @@ def test_theilsen_1d_no_intercept():
     assert np.abs(lstq.coef_ - w - c) > 0.5
     # Check that Theil-Sen works
     theilsen = TheilSen(fit_intercept=False).fit(X, y)
-    nptest.assert_array_almost_equal(theilsen.coef_, w + c, 1)
+    assert_array_almost_equal(theilsen.coef_, w + c, 1)
     assert theilsen.intercept_ == 0.
 
 
@@ -180,8 +181,8 @@ def test_theilsen_2d():
     assert norm(lstq.coef_ - w) > 1.0
     # Check that Theil-Sen works
     theilsen = TheilSen().fit(X, y)
-    nptest.assert_array_almost_equal(theilsen.coef_, w, 1)
-    nptest.assert_array_almost_equal(theilsen.intercept_, c, 1)
+    assert_array_almost_equal(theilsen.coef_, w, 1)
+    assert_array_almost_equal(theilsen.intercept_, c, 1)
 
 
 def test_calc_breakdown_point():
@@ -190,25 +191,25 @@ def test_calc_breakdown_point():
 
 
 @raises(ValueError)
-def test__checksubparams_negative_subpopulation():
+def test_checksubparams_negative_subpopulation():
     X, y, w, c = gen_toy_problem_1d()
     TheilSen(max_subpopulation=-1).fit(X, y)
 
 
 @raises(AssertionError)
-def test__checksubparams_too_few_subsamples():
+def test_checksubparams_too_few_subsamples():
     X, y, w, c = gen_toy_problem_1d()
     TheilSen(n_subsamples=1).fit(X, y)
 
 
 @raises(AssertionError)
-def test__checksubparams_too_many_subsamples():
+def test_checksubparams_too_many_subsamples():
     X, y, w, c = gen_toy_problem_1d()
     TheilSen(n_subsamples=101).fit(X, y)
 
 
 @raises(AssertionError)
-def test__checksubparams_n_subsamples_if_less_samples_than_features():
+def test_checksubparams_n_subsamples_if_less_samples_than_features():
     np.random.seed(0)
     n_samples, n_features = 10, 20
     X = np.random.randn(n_samples*n_features).reshape(n_samples, n_features)
@@ -219,8 +220,8 @@ def test__checksubparams_n_subsamples_if_less_samples_than_features():
 def test_subpopulation():
     X, y, w, c = gen_toy_problem_4d()
     theilsen = TheilSen(max_subpopulation=1000, random_state=0).fit(X, y)
-    nptest.assert_array_almost_equal(theilsen.coef_, w, 1)
-    nptest.assert_array_almost_equal(theilsen.intercept_, c, 1)
+    assert_array_almost_equal(theilsen.coef_, w, 1)
+    assert_array_almost_equal(theilsen.intercept_, c, 1)
 
 
 def test_subsamples():
@@ -228,7 +229,7 @@ def test_subsamples():
     theilsen = TheilSen(n_subsamples=X.shape[0], verbose=True).fit(X, y)
     lstq = LinearRegression().fit(X, y)
     # Check for exact the same results as Least Squares
-    nptest.assert_array_almost_equal(theilsen.coef_, lstq.coef_, 9)
+    assert_array_almost_equal(theilsen.coef_, lstq.coef_, 9)
 
 
 def test_verbosity():
@@ -245,23 +246,23 @@ def test_theilsen_parallel():
     assert norm(lstq.coef_ - w) > 1.0
     # Check that Theil-Sen works
     theilsen = TheilSen(n_jobs=-1).fit(X, y)
-    nptest.assert_array_almost_equal(theilsen.coef_, w, 1)
-    nptest.assert_array_almost_equal(theilsen.intercept_, c, 1)
+    assert_array_almost_equal(theilsen.coef_, w, 1)
+    assert_array_almost_equal(theilsen.intercept_, c, 1)
 
 
 @raises(ValueError)
-def test__get_n_jobs_with_0_CPUs():
+def test_get_n_jobs_with_0_CPUs():
     TheilSen(n_jobs=0)._get_n_jobs()
 
 
-def test__get_n_jobs():
+def test_get_n_jobs():
     n_jobs = TheilSen(n_jobs=2)._get_n_jobs()
     assert n_jobs == 2
     n_jobs = TheilSen(n_jobs=-2)._get_n_jobs()
     assert n_jobs == cpu_count() - 1
 
 
-def test__split_indices():
+def test_split_indices():
     np.random.seed(0)
 
     def gen_indices(n):
@@ -274,7 +275,7 @@ def test__split_indices():
     assert indices[0].shape[0] == 4
     assert indices[1].shape[0] == 3
     assert indices[2].shape[0] == 3
-    nptest.assert_array_equal(starts, np.array([0, 4, 7]))
+    assert_array_equal(starts, np.array([0, 4, 7]))
 
     # Test if more splits than elements in indices
     indices, starts = theilsen._split_indices(gen_indices(2), 4)
@@ -282,7 +283,7 @@ def test__split_indices():
     assert indices[1].shape[0] == 1
     assert indices[2].shape[0] == 0
     assert indices[2].shape[0] == 0
-    nptest.assert_array_equal(starts, np.array([0, 1, 2, 2]))
+    assert_array_equal(starts, np.array([0, 1, 2, 2]))
 
 
 def test_less_samples_than_features():
@@ -293,9 +294,9 @@ def test_less_samples_than_features():
     # Check that Theil-Sen falls back to Least Squares if fit_intercept=False
     theilsen = TheilSen(fit_intercept=False).fit(X, y)
     lstq = LinearRegression(fit_intercept=False).fit(X, y)
-    nptest.assert_array_almost_equal(theilsen.coef_, lstq.coef_, 12)
+    assert_array_almost_equal(theilsen.coef_, lstq.coef_, 12)
     # Check fit_intercept=True case. This will not be equal to the Least
     # Squares solution since the intercept is calculated differently.
     theilsen = TheilSen(fit_intercept=True).fit(X, y)
     y_pred = theilsen.predict(X)
-    nptest.assert_array_almost_equal(y_pred, y, 12)
+    assert_array_almost_equal(y_pred, y, 12)
