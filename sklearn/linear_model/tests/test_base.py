@@ -9,7 +9,7 @@ from scipy import sparse
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_equal
 
-from sklearn.linear_model.base import LinearRegression
+from sklearn.linear_model.base import LinearRegression, sparse_center_data
 from sklearn.utils import check_random_state
 from sklearn.datasets.samples_generator import make_sparse_uncorrelated
 from sklearn.datasets.samples_generator import make_regression
@@ -110,3 +110,12 @@ def test_linear_regression_sparse_multiple_outcome(random_state=0):
     ols.fit(X, y.ravel())
     y_pred = ols.predict(X)
     assert_array_almost_equal(np.vstack((y_pred, y_pred)).T, Y_pred, decimal=3)
+
+
+def test_csr_sparse_center_data():
+    """Test output format of sparse_center_data, when input is csr"""
+    X, y = make_regression()
+    X[X < 2.5] = 0.0
+    csr = sparse.csr_matrix(X)
+    csr_, y, _, _, _ = sparse_center_data(csr, y, True)
+    assert_equal(csr_.getformat(), 'csr')
