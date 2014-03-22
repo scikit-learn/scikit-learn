@@ -20,7 +20,7 @@ and intercept is then defined as the spatial median of these slopes and
 intercepts.
 
 In certain cases Theil-Sen performs better than :ref:`RANSAC
-<ransac_regression>` which is also a robut method.
+<ransac_regression>` which is also a robust method.
 """
 
 # Author: Florian Wilhelm -- <florian.wilhelm@gmail.com>
