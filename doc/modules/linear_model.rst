@@ -728,6 +728,8 @@ For classification, :class:`PassiveAggressiveClassifier` can be used with
    <http://jmlr.csail.mit.edu/papers/volume7/crammer06a/crammer06a.pdf>`_
    K. Crammer, O. Dekel, J. Keshat, S. Shalev-Shwartz, Y. Singer - JMLR 7 (2006)
 
+ .. _ransac_regression:
+
 Robustness to outliers: RANSAC
 ==============================
 
@@ -884,10 +886,10 @@ the input polynomial coefficients.
 .. _theil_sen_regression:
 
 Theil-Sen Regression
---------------------
+====================
 
-:class:`TheilSen` is comparable to the Ordinary Least Squares (OLS) estimator
-:ref:`ordinary_least_squares` in terms of asymptotic efficiency and as
+:class:`TheilSen` is comparable to the :ref:`Ordinary Least Squares (OLS)
+<ordinary_least_squares>` in terms of asymptotic efficiency and as
 an unbiased estimator. In contrast to OLS, Theil-Sen is a
 non-parametric method which means it makes no assumption about the underlying
 distribution of the data. This fact makes it more robust against corrupted
@@ -895,10 +897,15 @@ data aka outliers. Theil-Sen has a breakdown point of about 29.3%
 in case of a simple linear regression which means that it can tolerate
 arbitrary corrupted data of up to 29.3% in the two-dimensional case.
 
+.. figure:: ../auto_examples/linear_model/images/plot_theilsen_1.png
+   :target: ../auto_examples/linear_model/plot_theilsen.html
+   :align: center
+   :scale: 50%
+
 The original Theil-Sen regression was defined for a simple linear
 regression model in 1968. This implementation follows a more recent
-generalization to a multiple linear regression model [1] using the spatial
-median which is a generalization of the median to multiple dimensions [2].
+generalization to a multiple linear regression model [#f1]_ using the spatial
+median which is a generalization of the median to multiple dimensions [#f2]_.
 
 In terms of time and space complexity, Theil-Sen scales according to
 
@@ -907,14 +914,26 @@ In terms of time and space complexity, Theil-Sen scales according to
 
 which makes it infeasible to be applied exhaustively to problems with a
 large number of samples and features. Therefore, the magnitude of a
-subpopulation can be shosen to limit the time and space complexity by
+subpopulation can be chosen to limit the time and space complexity by
 considering only a random subset of all possible combinations.
 
-.. figure:: ../auto_examples/linear_model/images/plot_theilsen_1.png
+Besides Theil-Sen, there is the :ref:`RANSAC (RANdom SAmple Consensus)
+<ransac_regression>` method which is also a robust method but follows a
+different approach in order to deal with outliers.
+Depending on the given data and the definition of outliers,
+the Theil-Sen regression might be superior or inferior to RANSAC.
+An advantage of Theil-Sen over RANSAC are its parameters. While the
+parameters of RANSAC strongly depend on the given data and therefore should
+be chosen with care, the parameters of Theil-Sen depend only
+on the problem size and not on the data itself. Since RANSAC is
+computationally more efficient than Theil-Sen, a general recommendation is
+to use Theil-Sen only for small to medium sized data and RANSAC for
+medium to large sized data.
+
+.. figure:: ../auto_examples/linear_model/images/plot_theilsen_2.png
    :target: ../auto_examples/linear_model/plot_theilsen.html
    :align: center
    :scale: 50%
-
 
 .. topic:: Examples:
 
@@ -922,6 +941,6 @@ considering only a random subset of all possible combinations.
 
 .. topic:: References:
 
-    .. [1] Xin Dang, Hanxiang Peng, Xueqin Wang and Heping Zhang: `Theil-Sen Estimators in a Multiple Linear Regression Model. <http://www.math.iupui.edu/~hpeng/MTSE_0908.pdf>`_
+    .. [#f1] Xin Dang, Hanxiang Peng, Xueqin Wang and Heping Zhang: `Theil-Sen Estimators in a Multiple Linear Regression Model. <http://www.math.iupui.edu/~hpeng/MTSE_0908.pdf>`_
 
-    .. [2] T. Kärkkäinen and S. Äyrämö: `On Computation of Spatial Median for Robust Data Mining. <http://users.jyu.fi/~samiayr/pdf/ayramo_eurogen05.pdf>`_
+    .. [#f2] T. Kärkkäinen and S. Äyrämö: `On Computation of Spatial Median for Robust Data Mining. <http://users.jyu.fi/~samiayr/pdf/ayramo_eurogen05.pdf>`_

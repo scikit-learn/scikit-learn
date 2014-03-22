@@ -3,7 +3,7 @@ Testing for Theil-Sen module (sklearn.linear_model.theilsen)
 """
 
 # Author: Florian Wilhelm <florian.wilhelm@gmail.com>
-# Licence: BSD 3 clause
+# License: BSD 3 clause
 
 from __future__ import division, print_function, absolute_import
 

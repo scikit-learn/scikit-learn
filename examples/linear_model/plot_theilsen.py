@@ -18,6 +18,9 @@ of a subpopulation of all possible combinations of p subsample points. If an
 intercept is fitted, p must be larger than n_features + 1. The final slope
 and intercept is then defined as the spatial median of these slopes and
 intercepts.
+
+In certain cases Theil-Sen performs better than :ref:`RANSAC
+<ransac_regression>` which is also a robut method.
 """
 
 # Author: Florian Wilhelm -- <florian.wilhelm@gmail.com>
@@ -25,10 +28,14 @@ intercepts.
 
 from __future__ import division, print_function, absolute_import
 import numpy as np
-import matplotlib.pylab as plt
-from sklearn.linear_model import LinearRegression, TheilSen
+import matplotlib.pylab as pl
+from sklearn.linear_model import LinearRegression, TheilSen, RANSACRegressor
 
 print(__doc__)
+
+###################
+# Theil-Sen / OLS #
+###################
 
 # Generate 1d toy problem
 np.random.seed(0)
@@ -55,10 +62,33 @@ y_pred_lstq = lstq.predict(line_x.reshape(2, 1))
 theilsen = TheilSen().fit(X, y)
 y_pred_theilsen = theilsen.predict(line_x.reshape(2, 1))
 # Plot
-fig, ax = plt.subplots(figsize=(6, 5))
-plt.scatter(X, y)
-plt.plot(line_x, y_pred_lstq, label='OLS')
-plt.plot(line_x, y_pred_theilsen, label='Theil-Sen')
+fig, ax = pl.subplots()
+pl.scatter(X, y)
+pl.plot(line_x, y_pred_lstq, label='OLS')
+pl.plot(line_x, y_pred_theilsen, label='Theil-Sen')
 ax.set_xlim(line_x)
-plt.legend()
-plt.show()
+pl.legend(loc=2)
+
+######################
+# Theil-Sen / RANSAC #
+######################
+x = np.array([0.16, 0.16, 0.06, 0.87, 0.29,
+              0.28, 0.22, 0.11, 0.86, 0.34])
+y = np.array([23.46, 29.91, 6.66, 99, 52.55,
+              44.9, 34.44, 15.31, 98, 61.34])
+X = x[:, np.newaxis]
+pred_X = np.array([0., 1.]).reshape(2, 1)
+pl.figure()
+pl.ylim(0, 100)
+pl.plot(x, y, 'bo')
+# RANSAC
+rs = RANSACRegressor(random_state=42).fit(X, y)
+pred_y = rs.predict(pred_X)
+pl.plot(pred_X, pred_y, label="RANSAC")
+# Theil-Sen
+ts = TheilSen(random_state=42).fit(X, y)
+pred_y = ts.predict(pred_X)
+pl.plot(pred_X, pred_y, label="Theil-Sen")
+
+pl.legend(loc=2)
+pl.show()
