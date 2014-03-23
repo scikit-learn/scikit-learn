@@ -25,7 +25,7 @@ from sklearn.linear_model.theilsen import _spatial_median, _modweiszfeld_step,\
 
 def gen_toy_problem_1d():
     np.random.seed(0)
-    n_samples = 100
+    n_samples = 50
     # Linear model y = 3*x + N(2, 0.1**2)
     x = np.random.randn(n_samples)
     w = np.array([3.])
@@ -35,9 +35,8 @@ def gen_toy_problem_1d():
     # Add some outliers
     x[42], y[42] = (-2, 4)
     x[43], y[43] = (-2.5, 8)
-    x[53], y[53] = (2.5, 1)
-    x[60], y[60] = (2.1, 2)
-    x[72], y[72] = (1.8, -7)
+    x[33], y[33] = (2.5, 1)
+    x[49], y[49] = (2.1, 2)
     return x[:, np.newaxis], y, w, c
 
 
@@ -159,7 +158,7 @@ def test_theilsen_1d():
     assert np.abs(lstq.coef_ - w) > 0.9
     # Check that Theil-Sen works
     theilsen = TheilSen().fit(X, y)
-    assert_array_almost_equal(theilsen.coef_, w, 2)
+    assert_array_almost_equal(theilsen.coef_, w, 1)
     assert_array_almost_equal(theilsen.intercept_, c, 2)
 
 
@@ -180,7 +179,7 @@ def test_theilsen_2d():
     lstq = LinearRegression().fit(X, y)
     assert norm(lstq.coef_ - w) > 1.0
     # Check that Theil-Sen works
-    theilsen = TheilSen().fit(X, y)
+    theilsen = TheilSen(max_subpopulation=1e3, random_state=0).fit(X, y)
     assert_array_almost_equal(theilsen.coef_, w, 1)
     assert_array_almost_equal(theilsen.intercept_, c, 1)
 
@@ -245,7 +244,9 @@ def test_theilsen_parallel():
     lstq = LinearRegression().fit(X, y)
     assert norm(lstq.coef_ - w) > 1.0
     # Check that Theil-Sen works
-    theilsen = TheilSen(n_jobs=-1).fit(X, y)
+    theilsen = TheilSen(n_jobs=-1,
+                        random_state=0,
+                        max_subpopulation=2e3).fit(X, y)
     assert_array_almost_equal(theilsen.coef_, w, 1)
     assert_array_almost_equal(theilsen.intercept_, c, 1)
 

@@ -162,7 +162,7 @@ class TheilSen(LinearModel, RegressorMixin):
     copy_X : boolean, optional, default True
         If True, X will be copied; else, it may be overwritten.
 
-    max_subpopulation : int, optional, default 1e5
+    max_subpopulation : int, optional, default 1e4
         Instead of computing with a set of cardinality 'n choose k', where n is
         the number of samples and k is the number of subsamples (at least
         number of features), consider only a stochastic subpopulation of a
@@ -213,7 +213,7 @@ class TheilSen(LinearModel, RegressorMixin):
     """
 
     def __init__(self, fit_intercept=True, copy_X=True,
-                 max_subpopulation=1e5, n_subsamples=None, n_iter=300,
+                 max_subpopulation=1e4, n_subsamples=None, n_iter=300,
                  tol=1.e-3, random_state=None, n_jobs=1, verbose=False):
         self.fit_intercept = fit_intercept
         self.copy_X = copy_X
