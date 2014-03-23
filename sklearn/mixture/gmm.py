@@ -578,7 +578,6 @@ def _log_multivariate_normal_density_spherical(X, means=0.0, covars=1.0):
 
 def _log_multivariate_normal_density_tied(X, means, covars):
     """Compute Gaussian log-density at X for a tied model"""
-    from scipy import linalg
     n_samples, n_dim = X.shape
     icv = pinvh(covars)
     lpr = -0.5 * (n_dim * np.log(2 * np.pi) + np.log(linalg.det(covars) + 0.1)
