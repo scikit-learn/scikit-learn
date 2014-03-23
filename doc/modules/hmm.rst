@@ -10,8 +10,10 @@ Hidden Markov Models
 
    The `sklearn.hmm` module has now been deprecated due to it no longer matching
    the scope and the API of the project. It is scheduled for removal in the
-   0.17 release of the project. Discussions are still underway regarding
-   moving this module to a seperate repository.
+   0.17 release of the project.
+
+   This module has been moved to a seperate repository:
+   https://github.com/hmmlearn/hmmlearn
 
 
 `sklearn.hmm` implements the Hidden Markov Models (HMMs).

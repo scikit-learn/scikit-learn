@@ -10,8 +10,13 @@ to date_demo1.py of matplotlib.
 
 .. warning::
 
-       The HMM module and its functions will be removed in 0.17
-       as it no longer falls within the project's scope and API.
+    The HMM module and its functions will be removed in 0.17
+    as it no longer falls within the project's scope and API.
+
+    This module has been moved to a seperate repository:
+    https://github.com/hmmlearn/hmmlearn
+
+
 
 """
 
