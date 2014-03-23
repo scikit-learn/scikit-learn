@@ -13,11 +13,13 @@ import tempfile
 from itertools import combinations
 
 import numpy as np
-from scipy.linalg import lstsq, norm
+from scipy import linalg
 from scipy.special import binom
+from scipy.linalg.lapack import get_lapack_funcs
+
 from .base import LinearModel
 from ..base import RegressorMixin
-from ..utils import check_arrays, check_random_state, column_or_1d
+from ..utils import check_arrays, check_random_state
 from ..externals.joblib import Parallel, delayed, cpu_count
 from ..externals.six.moves import xrange
 
@@ -41,9 +43,9 @@ def _modweiszfeld_step(X, y):
     new_y : array, shape = [n_features]
         New iteration step.
     """
-    X, y = check_arrays(X.T, y, sparse_format='dense', dtype=np.float)
+    X = X.T
     diff = X.T - y
-    normdiff = np.apply_along_axis(norm, 1, diff)
+    normdiff = np.sqrt(np.sum(diff ** 2, axis=1))
     mask = normdiff >= 1e-6
     if mask.sum() < X.shape[1]:
         eta = 1.
@@ -58,7 +60,7 @@ def _modweiszfeld_step(X, y):
         T = T_nom / T_denom
     else:
         T = T_nom
-    r = norm(res)
+    r = linalg.norm(res)
     if r < 1.e-6:
         r = 1.
     return max(0., 1. - eta / r) * T + min(1., eta / r) * y
@@ -84,11 +86,12 @@ def _spatial_median(X, n_iter=300, tol=1.e-3):
     spmed : array, shape = [n_features]
         Spatial median.
     """
-    X = check_arrays(X, sparse_format='dense', dtype=np.float)[0]
+    # We are computing the tol on the squared norm
+    tol = tol ** 2
     spmed_old = np.mean(X, axis=0)
     for _ in xrange(n_iter):
         spmed = _modweiszfeld_step(X, spmed_old)
-        if norm(spmed_old - spmed) < tol:
+        if np.sum((spmed_old - spmed) ** 2) < tol:
             return spmed
         else:
             spmed_old = spmed
@@ -144,10 +147,15 @@ def _lse(weights, X, y, indices, start, intercept):
     fst = 1 if intercept else 0
     n_dim = weights.shape[1]
     n_ss = indices.shape[1]
+    X_sub = np.ones((n_ss, n_dim))
+    # gelss need to pad y to be of the max dim of X
+    this_y = np.zeros((max(n_ss, n_dim)))
+    lstsq, = get_lapack_funcs(('gelss',), (X_sub, this_y))
     for i, ix in enumerate(indices, start):
-        X_sub = np.ones((n_ss, n_dim))
-        X_sub[:, fst:] = X[list(ix), :]
-        weights[i, :] = column_or_1d(lstsq(X_sub, y[list(ix)])[0])
+        ix = list(ix)
+        X_sub[:, fst:] = X[ix, :]
+        this_y[:n_ss] = y[ix]
+        weights[i, :] = lstsq(X_sub, this_y)[1][:n_dim]
 
 
 class TheilSen(LinearModel, RegressorMixin):
