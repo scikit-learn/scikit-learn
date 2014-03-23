@@ -15,12 +15,19 @@ case.
 
 The estimation of the model is done by calculating the slopes and intercepts
 of a subpopulation of all possible combinations of p subsample points. If an
-intercept is fitted, p must be larger than n_features + 1. The final slope
-and intercept is then defined as the spatial median of these slopes and
-intercepts.
+intercept is fitted, p must be greater than or equal to n_features + 1. The
+final slope and intercept is then defined as the spatial median of these
+slopes and intercepts.
 
 In certain cases Theil-Sen performs better than :ref:`RANSAC
-<ransac_regression>` which is also a robust method.
+<ransac_regression>` which is also a robust method. Due to the computational
+complexity of Theil-Sen it is recommended to use it only for small problems in
+terms of number of samples and features. For larger problems the
+``max_subpopulation`` parameter restricts the magnitude of all possible
+combinations of p subsample points to a randomly chosen subset and therefore
+also limits the runtime. Therefore, Theil-Sen is applicable to larger problems
+with the drawback of losing some of its mathematical properties since it works
+on a random subset.
 """
 
 # Author: Florian Wilhelm -- <florian.wilhelm@gmail.com>
@@ -72,6 +79,8 @@ pl.legend(loc=2)
 ######################
 # Theil-Sen / RANSAC #
 ######################
+
+# Construct special case
 x = np.array([0.16, 0.16, 0.06, 0.87, 0.29,
               0.28, 0.22, 0.11, 0.86, 0.34])
 y = np.array([23.46, 29.91, 6.66, 99, 52.55,
@@ -81,14 +90,13 @@ pred_X = np.array([0., 1.]).reshape(2, 1)
 pl.figure()
 pl.ylim(0, 100)
 pl.plot(x, y, 'bo')
-# RANSAC
+# RANSAC fit
 rs = RANSACRegressor(random_state=42).fit(X, y)
 pred_y = rs.predict(pred_X)
 pl.plot(pred_X, pred_y, label="RANSAC")
-# Theil-Sen
+# Theil-Sen fit
 ts = TheilSen(random_state=42).fit(X, y)
 pred_y = ts.predict(pred_X)
 pl.plot(pred_X, pred_y, label="Theil-Sen")
-
 pl.legend(loc=2)
 pl.show()

@@ -927,8 +927,10 @@ parameters of RANSAC strongly depend on the given data and therefore should
 be chosen with care, the parameters of Theil-Sen depend only
 on the problem size and not on the data itself. Since RANSAC is
 computationally more efficient than Theil-Sen, a general recommendation is
-to use Theil-Sen only for small to medium sized data and RANSAC for
-medium to large sized data.
+to use Theil-Sen only for small problems and RANSAC for medium to large
+problems in terms of sample and feature size. Nevertheless, Theil-Sen is also
+applicable to larger problems with the drawback of losing some of its
+mathematical properties since it works on a random subset.
 
 .. figure:: ../auto_examples/linear_model/images/plot_theilsen_2.png
    :target: ../auto_examples/linear_model/plot_theilsen.html
