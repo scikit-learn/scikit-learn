@@ -3,6 +3,7 @@
 """
 
 # Authors: Sebastien Campion <sebastien.campion@inria.fr>
+#          naught101 <naught101@gmail.com>
 # License: BSD
 
 from __future__ import division
@@ -74,11 +75,11 @@ class SelfOrganizingMap(BaseEstimator):
 
     Parameters
     ----------
-    size : int
-        Width and height of the square map as well as the number of
-        centroids to generate. If init initialization string is
-        'matrix', or if a ndarray is given instead, it is
-        interpreted as initial cluster to use instead.
+    affinity : tuple of integers, or ndarray, default: (4,4)
+        Form of the SOM grid to use. If a tuple of integers is passed,
+        a orthotopic grid topology will be generated with those dimensions.
+        If an ndarray is passed, it should be an adjacency matrix of the
+        SOM grid, of dimension [n_centres, n_centres].
 
     n_iterations : int
         Number of iterations of the SOM algorithm to run
@@ -86,13 +87,12 @@ class SelfOrganizingMap(BaseEstimator):
     learning_rate : float
         Learning rate (alpha in Kohonen [1990])
 
-    init : {'random', 'matrix'}
+    init : 'random' or ndarray
         Method for initialization, defaults to 'random':
 
         'random' : use randomly chosen cluster centres.
 
-        'matrix': interpret the size parameter as a size by M array
-         of initial centres.
+        ndarray : an array of initial cluster centres [n_centres, n_features].
 
 
     Attributes
@@ -105,14 +105,27 @@ class SelfOrganizingMap(BaseEstimator):
 
     Notes
     ------
-    Reference :
-    Kohonen, T.; , "The self-organizing map,"
-    Proceedings of the IEEE , vol.78, no.9, pp.1464-1480, Sep 1990
+    References :
+    - Kohonen, T., 1990. The Self-Organizing Map. Proceedings of the IEEE, 78(9), pp.1464-1480. doi://10.1109/5.58325
+    - Kohonen, T., 2013. Essentials of the self-organizing map. Neural Networks, 37, pp.52-65. doi://10.1016/j.neunet.2012.09.018
     """
 
-    def __init__(self, size=16, init='random', n_iterations=64,
+    def __init__(self, affinity=(4,4), init='random', n_iterations=64,
                  learning_rate=1, callback=None):
-        self.size = size
+        if isinstance(affinity, int):
+            affinity = (affinity,)
+
+        if isinstance(affinity, tuple):
+            n_centres = np.prod(affinity)
+            if isinstance(init, np.ndarray) and (n_centres != init.shape[0]):
+                raise ValueError("'init' contains %d centres, but 'affinity' specifies %d clusters" % (init.shape[0], np.prod(affinity)))
+
+            affinity = _generate_adjacency_matrix(affinity)
+
+        self.adjacency_matrix = affinity
+        self.distance_matrix = _get_minimum_distances(self.adjacency_matrix)
+        self.graph_diameter = self.distance_matrix.max()
+        self.n_centres = n_centres
         self.init = init
         self.n_iterations = n_iterations
         self.learning_rate = learning_rate
@@ -131,22 +144,25 @@ class SelfOrganizingMap(BaseEstimator):
             Sample data array.
 
         """
-        X = np.asanyarray(X)
+        assert isinstance(X, np.ndarray), 'X is not an array!'
         self.centres_ = None
         self.dim = X.shape[-1]
 
         # init centres_
         if self.init == 'random':
-            self.centres_ = np.random.rand(self.size, self.size, self.dim)
-        elif self.init == 'matrix':
-            assert len(self.size.shape) == 3
-            self.centres_ = self.size
-            self.size = self.centres_.shape[0]
+            self.centres_ = np.random.rand(self.n_centres, self.dim)
+        elif isinstance(self.init, np.ndarray):
+            assert self.init.shape[-1] == self.dim
+            self.centres_ = self.init
 
         # iteration loop
         iteration = 0
+        # This can have duplicates. Would it make more sense to use np.random.permutation(X)?
         indices = np.random.random_integers(0, len(X)-1, self.n_iterations)
-        l = self.n_iterations / self.size
+        # TODO: this *was* based on the length of a square grid, now it's the
+        # maximum diameter of the SOM topology. Is this OK?
+        # See Kohonen (2013, p56)
+        l = self.n_iterations / self.graph_diameter
         for i in indices:
             lr = self.learning_rate * np.exp(-iteration / l)
             self._learn_x(X[i], lr, iteration)
@@ -161,34 +177,20 @@ class SelfOrganizingMap(BaseEstimator):
     def _learn_x(self, x, lr, iteration):
         winner = self.best_matching_centre(x)
         radius = self.radius_of_the_neighborhood(iteration)
-        for n in self.centres_in_radius(winner, radius):
-            nx, ny = n
-            wt = self.centres_[nx][ny]
-            dr = self.dist(winner, n, radius)
-            self.centres_[nx][ny] = wt + dr * lr * (x - wt)
+        updatable = self.centres_in_radius(winner, radius)
+        # See Kohonen (2013, p56)
+        neighborhood = np.exp(-np.sum((self.centres_[winner] - self.centres_[updatable])**2, axis=1)/(2*radius**2))
+        self.centres_[updatable] = self.centres_[updatable] + lr * np.asmatrix(neighborhood).T * np.asmatrix(x - self.centres_[winner])
 
     def best_matching_centre(self, x):
-        assert x.shape[0] == self.centres_.shape[-1]
-        x = np.resize(x, self.centres_.shape)
-        dists = np.sum((x - self.centres_)**2, axis=-1)
-        min = dists.argmin()
-        #w = np.unravel_index(min,dists.shape)
-        return divmod(min, self.size)
-
-    def dist(self, w, n, radius):
-        wx, wy = w
-        nx, ny = n
-        d = (wx - nx)**2 + (wy - ny)**2
-        # Official paper implementation : return np.exp(-d/2*radius**2)
-        return np.exp(-d / radius)
+        assert x.shape == self.centres_[1].shape
+        distances = np.sum((x - self.centres_)**2, axis=1)
+        return(distances.argmin())
 
     def centres_in_radius(self, winner, radius):
-        wi, wj = winner
-        x = y = np.arange(self.size)
-        xx, yy = np.meshgrid(x, y)
-        v = np.sqrt((xx - wi)**2 + (yy - wj)**2) < radius
-        return np.c_[np.nonzero(v)]
+        return(np.where(self.distance_matrix[winner] < radius))
 
     def radius_of_the_neighborhood(self, iteration):
-        l = self.n_iterations / self.size
-        return self.size * np.exp(-iteration / l)
+        # TODO: see TODO above. This should initially cover about half the grid.
+        l = self.n_iterations / self.graph_diameter
+        return self.n_centres * np.exp(-iteration / l)
