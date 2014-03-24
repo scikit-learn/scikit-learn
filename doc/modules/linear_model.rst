@@ -1,7 +1,7 @@
 .. _linear_model:
 
 =========================
-Generalized Linear Models
+General Linear Models
 =========================
 
 .. currentmodule:: sklearn.linear_model

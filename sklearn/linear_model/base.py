@@ -1,5 +1,5 @@
 """
-Generalized Linear models.
+General Linear models.
 """
 
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>

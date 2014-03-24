@@ -1,6 +1,6 @@
 """
 Least Angle Regression algorithm. See the documentation on the
-Generalized Linear Model for a complete discussion.
+General Linear Model for a complete discussion.
 """
 from __future__ import print_function
 
