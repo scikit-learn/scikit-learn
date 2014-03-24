@@ -117,7 +117,7 @@ class SelfOrganizingMap(BaseEstimator):
         self.learning_rate = learning_rate
         self.callback = callback
 
-    def fit(self, X, **params):
+    def fit(self, X):
         """Perform Self Organising Map clustering from features.
 
         Given an sample of X, we randomly choose one of them for each
@@ -131,7 +131,6 @@ class SelfOrganizingMap(BaseEstimator):
 
         """
         X = np.asanyarray(X)
-        self._set_params(**params)
         self.centres_ = None
         self.dim = X.shape[-1]
 
