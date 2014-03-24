@@ -10,6 +10,7 @@ from __future__ import division
 import numpy as np
 from ..base import BaseEstimator
 
+
 def _unserialise_coordinate(serial, spacing):
     coord = []
     for i in range(len(spacing)):
@@ -18,8 +19,10 @@ def _unserialise_coordinate(serial, spacing):
 
     return(coord)
 
+
 def _serialise_coordinate(coord, spacing):
     return(np.dot(coord, spacing))
+
 
 def _generate_adjacency_matrix(grid_dimensions):
     """Generate an adjacency matrix for nodes of an orthotopic grid with
@@ -32,7 +35,8 @@ def _generate_adjacency_matrix(grid_dimensions):
     adjacency.fill(np.inf)
     np.fill_diagonal(adjacency, 0)
 
-    spacing = [int(np.prod(grid_dimensions[(k+1):])) for k in range(len(grid_dimensions))]
+    spacing = [int(np.prod(grid_dimensions[(k+1):]))
+               for k in range(len(grid_dimensions))]
 
     for i in range(n_centres):
         coord = _unserialise_coordinate(i, spacing)
@@ -49,33 +53,37 @@ def _generate_adjacency_matrix(grid_dimensions):
 
         for neighbour in neighbours:
             serial = _serialise_coordinate(neighbour, spacing)
-            adjacency[i,serial] = 1
+            adjacency[i, serial] = 1
 
     return(adjacency)
+
 
 def _get_minimum_distances(adjacency):
     """Finds the shortest path between pairs of graph nodes, given an adjacency
     graph.
 
-    Based on the [Floyd-Warshall algorithm](https://en.wikipedia.org/wiki/Floyd-Warshall_algorithm)
+    Based on the `Floyd-Warshall algorithm
+    <https://en.wikipedia.org/wiki/Floyd-Warshall_algorithm>`_.
     """
-    assert (len(adjacency.shape) == 2 and adjacency.shape[0] == adjacency.shape[1]), "adjacency isn't a square matrix"
+    assert (len(adjacency.shape) == 2 and adjacency.shape[0] == adjacency.shape[1]), \
+        "adjacency isn't a square matrix"
     n_nodes = adjacency.shape[0]
     distance = adjacency.copy()
     for k in range(n_nodes):
         for i in range(n_nodes):
             for j in range(n_nodes):
-                if distance[i,j] > distance[i,k] + distance[k,j]:
-                    distance[i,j] = distance[i,k] + distance[k,j]
+                if distance[i, j] > distance[i, k] + distance[k, j]:
+                    distance[i, j] = distance[i, k] + distance[k, j]
 
     return(distance)
+
 
 class SelfOrganizingMap(BaseEstimator):
     """Self-Organizing Map
 
     Parameters
     ----------
-    affinity : tuple of integers, or ndarray, default: (4,4)
+    affinity : tuple of integers, or ndarray, default: (4, 4)
         Form of the SOM grid to use. If a tuple of integers is passed,
         a orthotopic grid topology will be generated with those dimensions.
         If an ndarray is passed, it should be an adjacency matrix of the
@@ -97,7 +105,7 @@ class SelfOrganizingMap(BaseEstimator):
 
     Attributes
     ----------
-    centres_ : array, [(x,y), n_features]
+    centres_ : array, [(x, y), n_features]
         Coordinates of centres and value
 
     labels_ :
@@ -106,11 +114,13 @@ class SelfOrganizingMap(BaseEstimator):
     Notes
     ------
     References :
-    - Kohonen, T., 1990. The Self-Organizing Map. Proceedings of the IEEE, 78(9), pp.1464-1480. doi://10.1109/5.58325
-    - Kohonen, T., 2013. Essentials of the self-organizing map. Neural Networks, 37, pp.52-65. doi://10.1016/j.neunet.2012.09.018
+    - Kohonen, T., 1990. The Self-Organizing Map. Proceedings of the IEEE,
+      78(9), pp.1464-1480. doi://10.1109/5.58325
+    - Kohonen, T., 2013. Essentials of the self-organizing map. Neural
+      Networks, 37, pp.52-65. doi://10.1016/j.neunet.2012.09.018
     """
 
-    def __init__(self, affinity=(4,4), init='random', n_iterations=64,
+    def __init__(self, affinity=(4, 4), init='random', n_iterations=64,
                  learning_rate=1, callback=None):
         if isinstance(affinity, int):
             affinity = (affinity,)
@@ -118,7 +128,8 @@ class SelfOrganizingMap(BaseEstimator):
         if isinstance(affinity, tuple):
             n_centres = np.prod(affinity)
             if isinstance(init, np.ndarray) and (n_centres != init.shape[0]):
-                raise ValueError("'init' contains %d centres, but 'affinity' specifies %d clusters" % (init.shape[0], np.prod(affinity)))
+                raise ValueError("'init' contains %d centres, but 'affinity' specifies %d clusters"
+                                 % (init.shape[0], np.prod(affinity)))
 
             affinity = _generate_adjacency_matrix(affinity)
 
@@ -157,7 +168,8 @@ class SelfOrganizingMap(BaseEstimator):
 
         # iteration loop
         iteration = 0
-        # This can have duplicates. Would it make more sense to use np.random.permutation(X)?
+        # This can have duplicates. Would it make more sense to use
+        # np.random.permutation(X)?
         indices = np.random.random_integers(0, len(X)-1, self.n_iterations)
         # TODO: this *was* based on the length of a square grid, now it's the
         # maximum diameter of the SOM topology. Is this OK?
@@ -167,7 +179,7 @@ class SelfOrganizingMap(BaseEstimator):
             lr = self.learning_rate * np.exp(-iteration / l)
             self._learn_x(X[i], lr, iteration)
             iteration += 1
-            if self.callback != None:
+            if self.callback is not None:
                 self.callback(self, iteration)
 
         # assign labels
@@ -180,7 +192,8 @@ class SelfOrganizingMap(BaseEstimator):
         updatable = self.centres_in_radius(winner, radius)
         # See Kohonen (2013, p56)
         neighborhood = np.exp(-np.sum((self.centres_[winner] - self.centres_[updatable])**2, axis=1)/(2*radius**2))
-        self.centres_[updatable] = self.centres_[updatable] + lr * np.asmatrix(neighborhood).T * np.asmatrix(x - self.centres_[winner])
+        self.centres_[updatable] = self.centres_[updatable] + \
+            lr * np.asmatrix(neighborhood).T * np.asmatrix(x - self.centres_[winner])
 
     def best_matching_centre(self, x):
         assert x.shape == self.centres_[1].shape
@@ -191,6 +204,6 @@ class SelfOrganizingMap(BaseEstimator):
         return(np.where(self.distance_matrix[winner] < radius))
 
     def radius_of_the_neighborhood(self, iteration):
-        # TODO: see TODO above. This should initially cover about half the grid.
+        # TODO: see above. This should initially cover about half the grid.
         l = self.n_iterations / self.graph_diameter
         return self.n_centres * np.exp(-iteration / l)
