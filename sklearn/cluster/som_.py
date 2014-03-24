@@ -91,13 +91,13 @@ class SelfOrganizingMap(BaseEstimator):
         'random' : use randomly chosen cluster centres.
 
         'matrix': interpret the size parameter as a size by M array
-         of initial neurons.
+         of initial centres.
 
 
     Attributes
     ----------
-    neurons_ : array, [(x,y), n_features]
-        Coordinates of neurons and value
+    centres_ : array, [(x,y), n_features]
+        Coordinates of centres and value
 
     labels_ :
         Labels of each point
@@ -132,16 +132,16 @@ class SelfOrganizingMap(BaseEstimator):
         """
         X = np.asanyarray(X)
         self._set_params(**params)
-        self.neurons_ = None
+        self.centres_ = None
         self.dim = X.shape[-1]
 
-        # init neurons_
+        # init centres_
         if self.init == 'random':
-            self.neurons_ = np.random.rand(self.size, self.size, self.dim)
+            self.centres_ = np.random.rand(self.size, self.size, self.dim)
         elif self.init == 'matrix':
             assert len(self.size.shape) == 3
-            self.neurons_ = self.size
-            self.size = self.neurons_.shape[0]
+            self.centres_ = self.size
+            self.size = self.centres_.shape[0]
 
         # iteration loop
         iteration = 0
@@ -149,7 +149,7 @@ class SelfOrganizingMap(BaseEstimator):
         l = self.n_iterations / self.size
         for i in indices:
             lr = self.learning_rate * np.exp(-iteration / l)
-            self._learn_vector(X[i], lr, iteration)
+            self._learn_x(X[i], lr, iteration)
             iteration += 1
             if self.callback != None:
                 self.callback(self, iteration)
@@ -158,19 +158,19 @@ class SelfOrganizingMap(BaseEstimator):
         self.labels_ = [self.best_matching_centre(x) for x in X]
         return self
 
-    def _learn_vector(self, vector, lr, iteration):
-        winner = self.best_matching_centre(vector)
+    def _learn_x(self, x, lr, iteration):
+        winner = self.best_matching_centre(x)
         radius = self.radius_of_the_neighborhood(iteration)
-        for n in self.neurons_in_radius(winner, radius):
+        for n in self.centres_in_radius(winner, radius):
             nx, ny = n
-            wt = self.neurons_[nx][ny]
+            wt = self.centres_[nx][ny]
             dr = self.dist(winner, n, radius)
-            self.neurons_[nx][ny] = wt + dr * lr * (vector - wt)
+            self.centres_[nx][ny] = wt + dr * lr * (x - wt)
 
-    def best_matching_centre(self, vector):
-        assert vector.shape[0] == self.neurons_.shape[-1]
-        vector = np.resize(vector, self.neurons_.shape)
-        dists = np.sum((vector - self.neurons_)**2, axis=-1)
+    def best_matching_centre(self, x):
+        assert x.shape[0] == self.centres_.shape[-1]
+        x = np.resize(x, self.centres_.shape)
+        dists = np.sum((x - self.centres_)**2, axis=-1)
         min = dists.argmin()
         #w = np.unravel_index(min,dists.shape)
         return divmod(min, self.size)
@@ -182,7 +182,7 @@ class SelfOrganizingMap(BaseEstimator):
         # Official paper implementation : return np.exp(-d/2*radius**2)
         return np.exp(-d / radius)
 
-    def neurons_in_radius(self, winner, radius):
+    def centres_in_radius(self, winner, radius):
         wi, wj = winner
         x = y = np.arange(self.size)
         xx, yy = np.meshgrid(x, y)
