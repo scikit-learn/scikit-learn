@@ -1120,9 +1120,9 @@ class TfidfVectorizer(CountVectorizer):
         given, a vocabulary is determined from the input documents.
 
     binary : boolean, False by default.
-        If True, all non zero counts are set to 1. This is useful for discrete
-        probabilistic models that model binary events rather than integer
-        counts.
+        If True, all non-zero term counts are set to 1. This does not mean
+        outputs will have only 0/1 values, only that the tf term in tf-idf
+        is binary. (Set idf and normalization to False to get 0/1 outputs.)
 
     dtype : type, optional
         Type of the matrix returned by fit_transform() or transform().
@@ -1170,7 +1170,7 @@ class TfidfVectorizer(CountVectorizer):
             preprocessor=preprocessor, tokenizer=tokenizer, analyzer=analyzer,
             stop_words=stop_words, token_pattern=token_pattern,
             ngram_range=ngram_range, max_df=max_df, min_df=min_df,
-            max_features=max_features, vocabulary=vocabulary, binary=False,
+            max_features=max_features, vocabulary=vocabulary, binary=binary,
             dtype=dtype)
 
         self._tfidf = TfidfTransformer(norm=norm, use_idf=use_idf,
@@ -1249,4 +1249,4 @@ class TfidfVectorizer(CountVectorizer):
         vectors : sparse matrix, [n_samples, n_features]
         """
         X = super(TfidfVectorizer, self).transform(raw_documents)
-        return self._tfidf.transform(X, copy)
+        return self._tfidf.transform(X, copy=False)

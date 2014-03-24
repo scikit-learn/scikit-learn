@@ -866,3 +866,14 @@ def test_pickling_transformer():
 def test_non_unique_vocab():
     vocab = ['a', 'b', 'c', 'a', 'a']
     assert_raises(ValueError, CountVectorizer, vocabulary=vocab)
+
+
+def test_tfidfvectorizer_binary():
+    # Non-regression test: TfidfVectorizer used to ignore its "binary" param.
+    v = TfidfVectorizer(binary=True, use_idf=False, norm=None)
+    assert_true(v.binary)
+
+    X = v.fit_transform(['hello world', 'hello hello']).toarray()
+    assert_array_equal(X.ravel(), [1, 1, 1, 0])
+    X2 = v.transform(['hello world', 'hello hello']).toarray()
+    assert_array_equal(X2.ravel(), [1, 1, 1, 0])
