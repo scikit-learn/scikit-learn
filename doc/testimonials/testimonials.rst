@@ -471,3 +471,36 @@ Jeremy Achin, CEO & Co-founder DataRobot Inc.
 .. raw:: html
 
    </span>
+
+
+`OkCupid <https://www.okcupid.com/>`_
+--------------------------------------
+
+.. raw:: html
+
+    <div class="logo">
+
+.. image:: images/okcupid.png
+    :target: https://www.okcupid.com
+
+.. raw:: html
+
+    </div>
+
+We're using scikit-learn at OkCupid to evaluate and improve our matchmaking
+system. The range of features it has, especially preprocessing utilities, means
+we can use it for a wide variety of projects, and it's performant enough to
+handle the volume of data that we need to sort through. The documentation is
+really thorough, as well, which makes the library quite easy to use.
+
+.. raw:: html
+
+   <span class="testimonial-author">
+
+David Koh - Senior Data Scientist at OkCupid
+
+.. raw:: html
+
+   </span>
+
+
