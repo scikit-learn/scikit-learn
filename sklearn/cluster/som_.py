@@ -1,14 +1,11 @@
 """
  Self-organizing map
-
- Reference : (to check)
- Kohonen, T.; , "The self-organizing map,"
- Proceedings of the IEEE , vol.78, no.9, pp.1464-1480, Sep 1990
 """
+
 # Authors: Sebastien Campion <sebastien.campion@inria.fr>
 # License: BSD
+
 from __future__ import division
-import math
 import numpy as np
 from ..base import BaseEstimator
 
@@ -57,10 +54,6 @@ class SelfOrganizingMap(BaseEstimator):
 
     Parameters
     ----------
-    X : ndarray
-        A M by N array of M observations in N dimensions or a length
-        M array of N one-dimensional observations.
-
     size : int
         Width and height of the square map as well as the number of
         centroids to generate. If init initialization string is
@@ -68,35 +61,33 @@ class SelfOrganizingMap(BaseEstimator):
         interpreted as initial cluster to use instead.
 
     n_iterations : int
-        Number of iterations of the som algrithm to run
+        Number of iterations of the SOM algorithm to run
 
     learning_rate : float
-        Learning rate
+        Learning rate (alpha in Kohonen [1990])
 
     init : {'random', 'matrix'}
         Method for initialization, defaults to 'random':
 
-        'random': randomly points choosed
+        'random' : use randomly chosen cluster centres.
 
         'matrix': interpret the size parameter as a size by M array
          of initial neurons.
 
-    Methods
-    -------
-    fit(X):
-        Compute SOM
 
     Attributes
     ----------
-    neurons_: array, [(x,y), n_features]
+    neurons_ : array, [(x,y), n_features]
         Coordinates of neurons and value
 
-    labels_:
+    labels_ :
         Labels of each point
 
     Notes
     ------
-
+    Reference :
+    Kohonen, T.; , "The self-organizing map,"
+    Proceedings of the IEEE , vol.78, no.9, pp.1464-1480, Sep 1990
     """
 
     def __init__(self, size=16, init='random', n_iterations=64,
@@ -108,49 +99,56 @@ class SelfOrganizingMap(BaseEstimator):
         self.callback = callback
 
     def fit(self, X, **params):
-        """Given an sample of X, we randomly choose one of them for each
+        """Perform Self Organising Map clustering from features.
+
+        Given an sample of X, we randomly choose one of them for each
         iteration.
-        A good ratio, nb X = 2 or 3 x nbiter"""
+        A good ratio, nb X = 2 or 3 x nbiter
+
+        Parameters
+        ----------
+        X : ndarray [n_samples, n_features]
+            Sample data array.
+
+        """
         X = np.asanyarray(X)
         self._set_params(**params)
         self.neurons_ = None
-        dim = X.shape[-1]
+        self.dim = X.shape[-1]
 
         # init neurons_
         if self.init == 'random':
-            self.neurons_ = np.random.rand(self.size, self.size, dim)
+            self.neurons_ = np.random.rand(self.size, self.size, self.dim)
         elif self.init == 'matrix':
             assert len(self.size.shape) == 3
             self.neurons_ = self.size
             self.size = self.neurons_.shape[0]
 
         # iteration loop
-        iteration = 0 
+        iteration = 0
         indices = np.random.random_integers(0, len(X)-1, self.n_iterations)
+        l = self.n_iterations / self.size
         for i in indices:
-            l = self.n_iterations / self.size
-            lr = self.learning_rate * math.exp(-iteration / l)
+            lr = self.learning_rate * np.exp(-iteration / l)
             self._learn_vector(X[i], lr, iteration)
             iteration += 1
             if self.callback != None:
                 self.callback(self, iteration)
 
         # assign labels
-        self.labels_ = [self.bmu(x) for x in X]
+        self.labels_ = [self.best_matching_centre(x) for x in X]
         return self
 
     def _learn_vector(self, vector, lr, iteration):
-        winner = self.bmu(vector)
-        radius = self.radius_of_the_neighbordhood(iteration)
+        winner = self.best_matching_centre(vector)
+        radius = self.radius_of_the_neighborhood(iteration)
         for n in self.neurons_in_radius(winner, radius):
             nx, ny = n
             wt = self.neurons_[nx][ny]
             dr = self.dist(winner, n, radius)
             self.neurons_[nx][ny] = wt + dr * lr * (vector - wt)
 
-    def bmu(self, vector):
-        """Best matching unit
-        """
+    def best_matching_centre(self, vector):
         assert vector.shape[0] == self.neurons_.shape[-1]
         vector = np.resize(vector, self.neurons_.shape)
         dists = np.sum((vector - self.neurons_)**2, axis=-1)
@@ -162,8 +160,8 @@ class SelfOrganizingMap(BaseEstimator):
         wx, wy = w
         nx, ny = n
         d = (wx - nx)**2 + (wy - ny)**2
-        # offcial paper implementation : return math.exp(-d/2*radius**2)
-        return math.exp(-d / radius)
+        # Official paper implementation : return np.exp(-d/2*radius**2)
+        return np.exp(-d / radius)
 
     def neurons_in_radius(self, winner, radius):
         wi, wj = winner
@@ -172,6 +170,6 @@ class SelfOrganizingMap(BaseEstimator):
         v = np.sqrt((xx - wi)**2 + (yy - wj)**2) < radius
         return np.c_[np.nonzero(v)]
 
-    def radius_of_the_neighbordhood(self, iteration):
+    def radius_of_the_neighborhood(self, iteration):
         l = self.n_iterations / self.size
-        return self.size * math.exp(-iteration / l)
+        return self.size * np.exp(-iteration / l)
