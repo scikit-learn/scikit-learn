@@ -14,6 +14,7 @@ from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import if_not_mac_os
 
 from sklearn.utils.extmath import row_norms
 from sklearn.metrics.cluster import v_measure_score
@@ -195,22 +196,13 @@ def test_k_means_new_centers():
         np.testing.assert_array_equal(this_labels, labels)
 
 
-def _is_mac_os_version(version):
-    """Returns True iff Mac OS X and newer than specified version."""
-    import platform
-    mac_version, _, _ = platform.mac_ver()
-    return mac_version.split('.')[:2] == version.split('.')[:2]
-
-
 def _has_blas_lib(libname):
     from numpy.distutils.system_info import get_info
     return libname in get_info('blas_opt').get('libraries', [])
 
 
+@if_not_mac_os()
 def test_k_means_plus_plus_init_2_jobs():
-    if _is_mac_os_version('10.7') or _is_mac_os_version('10.8'):
-        raise SkipTest('Multi-process bug in Mac OS X Lion (see issue #636)')
-
     if _has_blas_lib('openblas'):
         raise SkipTest('Multi-process bug with OpenBLAS (see issue #636)')
 

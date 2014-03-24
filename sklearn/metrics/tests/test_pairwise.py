@@ -125,11 +125,11 @@ def test_pairwise_parallel():
         Y = func(rng.random_sample((3, 4)))
 
         S = euclidean_distances(X)
-        S2 = _parallel_pairwise(X, None, euclidean_distances, n_jobs=-1)
+        S2 = _parallel_pairwise(X, None, euclidean_distances, n_jobs=3)
         assert_array_almost_equal(S, S2)
 
         S = euclidean_distances(X, Y)
-        S2 = _parallel_pairwise(X, Y, euclidean_distances, n_jobs=-1)
+        S2 = _parallel_pairwise(X, Y, euclidean_distances, n_jobs=3)
         assert_array_almost_equal(S, S2)
 
 
