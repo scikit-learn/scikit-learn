@@ -27,8 +27,9 @@ def _generate_adjacency_matrix(grid_dimensions):
     n_centres = np.prod(grid_dimensions)
 
     # initialise to 0 for self-distances, infinity non-connections
-    adjacency = np.identity(n_centres)
-    adjacency = 1/adjacency - 1
+    adjacency = np.empty((n_centres, n_centres), dtype=float)
+    adjacency.fill(np.inf)
+    np.fill_diagonal(adjacency, 0)
 
     spacing = [int(np.prod(grid_dimensions[(k+1):])) for k in range(len(grid_dimensions))]
 
@@ -37,11 +38,11 @@ def _generate_adjacency_matrix(grid_dimensions):
         neighbours = []
         for d in range(len(grid_dimensions)):
             if coord[d] > 0:
-                down = coord.copy()
+                down = coord[:]
                 down[d] -= 1
                 neighbours.append(down)
             if coord[d] < (grid_dimensions[d] - 1):
-                up = coord.copy()
+                up = coord[:]
                 up[d] += 1
                 neighbours.append(up)
 
