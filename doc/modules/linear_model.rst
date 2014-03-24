@@ -892,10 +892,11 @@ Theil-Sen Regression
 <ordinary_least_squares>` in terms of asymptotic efficiency and as
 an unbiased estimator. In contrast to OLS, Theil-Sen is a
 non-parametric method which means it makes no assumption about the underlying
-distribution of the data. This fact makes it more robust against corrupted
-data aka outliers. Theil-Sen has a breakdown point of about 29.3%
-in case of a simple linear regression which means that it can tolerate
-arbitrary corrupted data of up to 29.3% in the two-dimensional case.
+distribution of the data. Since Theil-Sen is a median-based estimator, it is
+more robust against corrupted data aka outliers.
+Theil-Sen has a breakdown point of about 29.3% in case of a simple linear
+regression which means that it can tolerate arbitrary corrupted data of up to
+29.3% in the two-dimensional case.
 
 .. figure:: ../auto_examples/linear_model/images/plot_theilsen_1.png
    :target: ../auto_examples/linear_model/plot_theilsen.html
@@ -921,7 +922,9 @@ Besides Theil-Sen, there is the :ref:`RANSAC (RANdom SAmple Consensus)
 <ransac_regression>` method which is also a robust method but follows a
 different approach in order to deal with outliers.
 Depending on the given data and the definition of outliers,
-the Theil-Sen regression might be superior or inferior to RANSAC.
+the Theil-Sen regression might be superior or inferior to RANSAC. The figure
+below demonstrates a dataset including outliers with respect to the x-axis
+which perturb RANSAC.
 An advantage of Theil-Sen over RANSAC are its parameters. While the
 parameters of RANSAC strongly depend on the given data and therefore should
 be chosen with care, the parameters of Theil-Sen depend only
@@ -930,7 +933,7 @@ computationally more efficient than Theil-Sen, a general recommendation is
 to use Theil-Sen only for small problems and RANSAC for medium to large
 problems in terms of sample and feature size. Nevertheless, Theil-Sen is also
 applicable to larger problems with the drawback of losing some of its
-mathematical properties since it works on a random subset.
+mathematical properties since it can work on a random subset.
 
 .. figure:: ../auto_examples/linear_model/images/plot_theilsen_2.png
    :target: ../auto_examples/linear_model/plot_theilsen.html
