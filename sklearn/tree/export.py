@@ -67,7 +67,7 @@ def export_graphviz(decision_tree, out_file="tree.dot", feature_names=None,
             value = value[0, :]
 
         if tree.children_left[node_id] == _tree.TREE_LEAF:
-            target_index = [index for index,data in enumerate(tree.value[node_id][0]) if data][0]
+            target_index = [index for index,data in enumerate(tree.value[node_id][0]) if data]
             value = decision_tree.classes_[target_index]      
             return "%s = %.4f\\nsamples = %s\\nvalue = %s" \
                    % (criterion,
