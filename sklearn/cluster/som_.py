@@ -26,7 +26,9 @@ def _generate_adjacency_matrix(grid_dimensions):
     """
     n_centres = np.prod(grid_dimensions)
 
-    adjacency = np.zeros((n_centres, n_centres))
+    # initialise to 0 for self-distances, infinity non-connections
+    adjacency = np.identity(n_centres)
+    adjacency = 1/adjacency - 1
 
     spacing = [int(np.prod(grid_dimensions[(k+1):])) for k in range(len(grid_dimensions))]
 
@@ -48,6 +50,23 @@ def _generate_adjacency_matrix(grid_dimensions):
             adjacency[i,serial] = 1
 
     return(adjacency)
+
+def _get_minimum_distances(adjacency):
+    """Finds the shortest path between pairs of graph nodes, given an adjacency
+    graph.
+
+    Based on the [Floyd-Warshall algorithm](https://en.wikipedia.org/wiki/Floyd-Warshall_algorithm)
+    """
+    assert (len(adjacency.shape) == 2 and adjacency.shape[0] == adjacency.shape[1]), "adjacency isn't a square matrix"
+    n_nodes = adjacency.shape[0]
+    distance = adjacency.copy()
+    for k in range(n_nodes):
+        for i in range(n_nodes):
+            for j in range(n_nodes):
+                if distance[i,j] > distance[i,k] + distance[k,j]:
+                    distance[i,j] = distance[i,k] + distance[k,j]
+
+    return(distance)
 
 class SelfOrganizingMap(BaseEstimator):
     """Self-Organizing Map
