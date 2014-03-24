@@ -12,6 +12,45 @@ import math
 import numpy as np
 from ..base import BaseEstimator
 
+def _unserialise_coordinate(serial, spacing):
+    coord = []
+    for i in range(len(spacing)):
+        coord.append(int(np.floor(serial/spacing[i])))
+        serial = int(serial % spacing[i])
+
+    return(coord)
+
+def _serialise_coordinate(coord, spacing):
+    return(np.dot(coord, spacing))
+
+def _generate_adjacency_matrix(grid_dimensions):
+    """Generate an adjacency matrix for nodes of an orthotopic grid with
+    dimensions given by grid_dimensions
+    """
+    n_centres = np.prod(grid_dimensions)
+
+    adjacency = np.zeros((n_centres, n_centres))
+
+    spacing = [int(np.prod(grid_dimensions[(k+1):])) for k in range(len(grid_dimensions))]
+
+    for i in range(n_centres):
+        coord = _unserialise_coordinate(i, spacing)
+        neighbours = []
+        for d in range(len(grid_dimensions)):
+            if coord[d] > 0:
+                down = coord.copy()
+                down[d] -= 1
+                neighbours.append(down)
+            if coord[d] < (grid_dimensions[d] - 1):
+                up = coord.copy()
+                up[d] += 1
+                neighbours.append(up)
+
+        for neighbour in neighbours:
+            serial = _serialise_coordinate(neighbour, spacing)
+            adjacency[i,serial] = 1
+
+    return(adjacency)
 
 class SelfOrganizingMap(BaseEstimator):
     """Self-Organizing Map
