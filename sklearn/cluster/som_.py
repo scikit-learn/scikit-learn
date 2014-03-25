@@ -177,13 +177,8 @@ class SelfOrganizingMap(BaseEstimator):
         # This can have duplicates. Would it make more sense to use
         # np.random.permutation(X)?
         indices = np.random.random_integers(0, len(X)-1, self.n_iterations)
-        # TODO: this *was* based on the length of a square grid, now it's the
-        # maximum diameter of the SOM topology. Is this OK?
-        # See Kohonen (2013, p56)
-        l = self.n_iterations / float(self.graph_diameter)
         for i in indices:
-            lr = self.learning_rate * np.exp(-iteration / l)
-            self._learn_x(X[i], lr, iteration)
+            self._learn_x(X[i], iteration)
             iteration += 1
             if self.callback is not None:
                 self.callback(self, iteration)
@@ -192,15 +187,20 @@ class SelfOrganizingMap(BaseEstimator):
         self.labels_ = np.array([self.best_matching_center(x) for x in X])
         return self
 
-    def _learn_x(self, x, lr, iteration):
+    def _learn_x(self, x, iteration):
+        # alpha to suit Kohonen (2013, p56)
+        # TODO: this *was* based on the length of a square grid, now it's the
+        # maximum diameter of the SOM topology. Is this OK?
+        l = self.n_iterations / float(self.graph_diameter)
+        alpha = self.learning_rate * np.exp(-iteration / l)
         winner = self.best_matching_center(x)
         radius = self.radius_of_the_neighborhood(iteration)
         updatable = self.cluster_centers_in_radius(winner, radius)
-        # See Kohonen (2013, p56)
-        neighborhood = np.exp(-np.sum((self.cluster_centers_[winner] -
-            self.cluster_centers_[updatable])**2, axis=1)/(2*radius**2))
+        distances = np.sum((self.cluster_centers_[winner] - self.cluster_centers_[updatable])**2, axis=1)
+        # neighborhood function from Kohonen (2013, p56)
+        neighborhood = np.exp(-distances/(2*radius**2))
         self.cluster_centers_[updatable] = self.cluster_centers_[updatable] + \
-            lr * np.asmatrix(neighborhood).T * np.asmatrix(x - self.cluster_centers_[winner])
+            alpha * np.asmatrix(neighborhood).T * np.asmatrix(x - self.cluster_centers_[winner])
 
     def best_matching_center(self, x):
         assert x.shape == self.cluster_centers_[1].shape
