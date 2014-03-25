@@ -105,7 +105,7 @@ class SelfOrganizingMap(BaseEstimator):
 
     Attributes
     ----------
-    centers_ : array, [(x, y), n_features]
+    cluster_centers_ : array, [(x, y), n_features]
         Coordinates of centers and value
 
     labels_ :
@@ -156,15 +156,15 @@ class SelfOrganizingMap(BaseEstimator):
 
         """
         assert isinstance(X, np.ndarray), 'X is not an array!'
-        self.centers_ = None
+        self.cluster_centers_ = None
         self.dim = X.shape[-1]
 
-        # init centers_
+        # init cluster_centers_
         if self.init == 'random':
-            self.centers_ = np.random.rand(self.n_centers, self.dim)
+            self.cluster_centers_ = np.random.rand(self.n_centers, self.dim)
         elif isinstance(self.init, np.ndarray):
             assert self.init.shape[-1] == self.dim
-            self.centers_ = self.init
+            self.cluster_centers_ = self.init
 
         # iteration loop
         iteration = 0
@@ -183,24 +183,25 @@ class SelfOrganizingMap(BaseEstimator):
                 self.callback(self, iteration)
 
         # assign labels
-        self.labels_ = [self.best_matching_center(x) for x in X]
+        self.labels_ = np.array([self.best_matching_center(x) for x in X])
         return self
 
     def _learn_x(self, x, lr, iteration):
         winner = self.best_matching_center(x)
         radius = self.radius_of_the_neighborhood(iteration)
-        updatable = self.centers_in_radius(winner, radius)
+        updatable = self.cluster_centers_in_radius(winner, radius)
         # See Kohonen (2013, p56)
-        neighborhood = np.exp(-np.sum((self.centers_[winner] - self.centers_[updatable])**2, axis=1)/(2*radius**2))
-        self.centers_[updatable] = self.centers_[updatable] + \
-            lr * np.asmatrix(neighborhood).T * np.asmatrix(x - self.centers_[winner])
+        neighborhood = np.exp(-np.sum((self.cluster_centers_[winner] -
+            self.cluster_centers_[updatable])**2, axis=1)/(2*radius**2))
+        self.cluster_centers_[updatable] = self.cluster_centers_[updatable] + \
+            lr * np.asmatrix(neighborhood).T * np.asmatrix(x - self.cluster_centers_[winner])
 
     def best_matching_center(self, x):
-        assert x.shape == self.centers_[1].shape
-        distances = np.sum((x - self.centers_)**2, axis=1)
+        assert x.shape == self.cluster_centers_[1].shape
+        distances = np.sum((x - self.cluster_centers_)**2, axis=1)
         return(distances.argmin())
 
-    def centers_in_radius(self, winner, radius):
+    def cluster_centers_in_radius(self, winner, radius):
         return(np.where(self.distance_matrix[winner] < radius))
 
     def radius_of_the_neighborhood(self, iteration):

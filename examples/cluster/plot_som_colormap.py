@@ -46,7 +46,7 @@ som = SelfOrganizingMap(adjacency=(16, 16), n_iterations=1024,
 som.fit(train)
 
 plt.subplot(1, 2, 2, aspect='equal')
-plot(som.centers_)
+plot(som.cluster_centers_)
 plt.title('Organized Map')
 F = plt.gcf()
 F.set_size_inches((40, 20))

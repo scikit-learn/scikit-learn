@@ -70,7 +70,7 @@ som.fit(data)
 print("done in %0.3fs" % (time() - t0))
 print()
 
-F = Calinski_Harabasz_criterion(data, som.labels_, som.centers_)
+F = Calinski_Harabasz_criterion(data, som.labels_, som.cluster_centers_)
 print('Caliński-Harabasz criterion (pseudo F): %0.2f | %0.2f%%' %
       (F, 100 * (F / (1 + F))))
 print()
