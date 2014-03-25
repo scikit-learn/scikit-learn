@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 =======================================================================
 A demo of Self-Organising Map and KMeans on the handwritten digits data
