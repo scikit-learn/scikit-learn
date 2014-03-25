@@ -25,8 +25,11 @@ def _serialise_coordinate(coord, spacing):
 
 
 def _generate_adjacency_matrix(grid_dimensions):
-    """Generate an adjacency matrix for nodes of an n-dimensional rectangular
-    grid with dimensions given by grid_dimensions.
+    """Generate an adjacency matrix of a rectangular grid.
+
+    grid_dimensions : tuple of integers
+    Specifies the dimensions of the grid for which to generate an adjacency
+    matrix.
     """
     n_centers = np.prod(grid_dimensions)
 
@@ -59,8 +62,11 @@ def _generate_adjacency_matrix(grid_dimensions):
 
 
 def _get_minimum_distances(adjacency):
-    """Finds the shortest path between pairs of graph nodes, given an adjacency
-    graph.
+    """Generate an all-pairs shortest path matrix from an adjacency matrix.
+
+    adjacency : symmetric square ndarray
+    Matrix with distances between pairs of graph nodes (usually 1s), or np.inf
+    for no connection.
 
     Based on the `Floyd-Warshall algorithm
     <https://en.wikipedia.org/wiki/Floyd-Warshall_algorithm>`_.

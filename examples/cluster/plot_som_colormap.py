@@ -8,7 +8,7 @@ with 8 colors (black, white, red, green, blue, yellow, cyan, magenta)
 
 """
 
-print __doc__
+print(__doc__)
 
 import matplotlib.pyplot as plt
 import numpy as np
