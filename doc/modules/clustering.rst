@@ -103,6 +103,12 @@ Overview of clustering methods
      - Large dataset, outlier removal, data reduction.
      - Euclidean distance between points
 
+   * - :ref:`Self-Organizing Map <som>`
+     - Map topology, n_iterations
+     - Very large n_samples, large n_clusters
+     - General-purpose, non-linear dimensionality reduction
+     - Distances between points
+
 Non-flat geometry clustering is useful when the clusters have a specific
 shape, i.e. a non-flat manifold, and the standard euclidean distance is
 not the right metric. This case arises in the two top rows of the figure
@@ -791,6 +797,7 @@ by black points below.
    In Proceedings of the 2nd International Conference on Knowledge Discovery
    and Data Mining, Portland, OR, AAAI Press, pp. 226–231. 1996
 
+<<<<<<< HEAD
 .. _birch:
 
 Birch
@@ -879,6 +886,39 @@ the user is advised
  * Roberto Perdisci
    JBirch - Java implementation of BIRCH clustering algorithm
    https://code.google.com/p/jbirch/
+=======
+
+.. _som:
+
+Self-Organizing Map
+===================
+
+The :class:`SelfOrganizingMap` algorithm starts out with an map, or graph of
+connected nodes, and then selects random data points, and "pulls" the closest
+nodes in the graph toward the data point. As the graph iterates, the map is
+stretched into a space filling curve/surface/etc. The number of map nodes
+pulled in each iteration, and the strength of the pull reduce over time. Once
+the map after n_iterations, the data points are assigned to a cluster centred
+about their closest map node.
+
+Rectangular or hexagonal 2D grids are commonly used, as they allow semantic 2D
+grid plotting of statistics derived from the data. However, one dimensional
+lines, higher dimensional grids, and even arbitrary graphs can all be used.
+The `adjacency` parameter takes an adjacency matrix of an arbitrary graph,
+however, a tuple of integers can be passed, and the adjaceny matrix of a
+hyperrectangular grid of those dimensions will be used.
+
+.. topic:: Examples:
+
+    * :ref:`example_cluster_plot_som_colormap.py`
+
+.. topic:: References:
+
+  * Kohonen, T., 1990. The Self-Organizing Map. Proceedings of the IEEE,
+    78(9), pp.1464-1480. doi://10.1109/5.58325
+  * Kohonen, T., 2013. Essentials of the self-organizing map. Neural
+    Networks, 37, pp.52-65. doi://10.1016/j.neunet.2012.09.018
+>>>>>>> Add basic description to the clustering chapter
 
 
 .. _clustering_evaluation:
