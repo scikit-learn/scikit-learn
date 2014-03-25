@@ -7,6 +7,7 @@ Comparing various SOM and Kmeans clustering on the handwritten digits data
 with the variance ratio criterion index (Caliński & Harabasz 1974).
 
 """
+
 from __future__ import division
 print __doc__
 

@@ -174,7 +174,7 @@ class SelfOrganizingMap(BaseEstimator):
         # TODO: this *was* based on the length of a square grid, now it's the
         # maximum diameter of the SOM topology. Is this OK?
         # See Kohonen (2013, p56)
-        l = self.n_iterations / self.graph_diameter
+        l = self.n_iterations / float(self.graph_diameter)
         for i in indices:
             lr = self.learning_rate * np.exp(-iteration / l)
             self._learn_x(X[i], lr, iteration)
