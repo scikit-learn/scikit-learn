@@ -3,46 +3,51 @@
 A demo of SelfOrganisingMap with colored neurons
 ===========================================================
 
-Example for SOM clustering using 3 dimensionals vectors (RGB)
+Exaplte for SOM clustering using 3 dimensionals vectors (RGB)
 with 8 colors (black, white, red, green, blue, yellow, cyan, magenta)
 
 """
+
 print __doc__
-import pylab as pl
-from matplotlib.colors import ListedColormap, NoNorm, rgb2hex
+
+import matplotlib.pyplot as plt
 import numpy as np
-from scikits.learn.cluster import SelfOrganizingMap
+from matplotlib.colors import ListedColormap, NoNorm, rgb2hex
+from sklearn.cluster import SelfOrganizingMap
 
 
 def plot(neurons):
     assert neurons.shape[-1] == 3
-    h, w, d = neurons.shape
-    hexmap = np.apply_along_axis(rgb2hex, 1, neurons.reshape(-1, 3) / 256)
-    index = np.arange(h * w).reshape(h, w)
-    pl.pcolor(index, cmap=ListedColormap(hexmap), norm=NoNorm())
+    n_centres, dim = neurons.shape
+    neurons[np.where(neurons > 256)] = 256
+    neurons[np.where(neurons < 0)] = 0
+    hexmap = np.apply_along_axis(rgb2hex, 1, neurons / 256)
+    index = np.arange(n_centres).reshape(np.floor(np.sqrt(n_centres)),
+                                         n_centres/np.floor(np.sqrt(n_centres)))
+    plt.pcolor(index, cmap=ListedColormap(hexmap), norm=NoNorm())
 
-train = np.array([[0, 0, 0],       # black
-                  [255, 255, 255], # white
-                  [255, 0, 0],     # red
-                  [0, 255, 0],     # green
-                  [0, 0, 255],     # blue
-                  [255, 255, 0],   # yellow
-                  [0, 255, 255],   # cyan
-                  [255, 0, 255]])  # magenta
+train = np.array([[0, 0, 0],        # black
+                  [255, 255, 255],  # white
+                  [255, 0, 0],      # red
+                  [0, 255, 0],      # green
+                  [0, 0, 255],      # blue
+                  [255, 255, 0],    # yellow
+                  [0, 255, 255],    # cyan
+                  [255, 0, 255]])   # magenta
 
-init = np.random.rand(16, 16, 3) * 255
+init = np.random.rand(256, 3) * 255
 
-pl.subplot(1, 2, 1, aspect='equal')
+plt.subplot(1, 2, 1, aspect='equal')
 plot(init)
-pl.title('Initial map')
+plt.title('Initial map')
 
-som = SelfOrganizingMap(init, n_iterations=1024,
-                        init='matrix', learning_rate=1)
+som = SelfOrganizingMap(affinity=(16,16), n_iterations=1024,
+                        init=init, learning_rate=1)
 som.fit(train)
 
-pl.subplot(1, 2, 2, aspect='equal')
-plot(som.neurons_)
-pl.title('Organized Map')
-F = pl.gcf()
+plt.subplot(1, 2, 2, aspect='equal')
+plot(som.centres_)
+plt.title('Organized Map')
+F = plt.gcf()
 F.set_size_inches((40, 20))
-pl.show()
+plt.show()
