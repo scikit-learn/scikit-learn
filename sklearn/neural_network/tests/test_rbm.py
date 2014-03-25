@@ -2,7 +2,7 @@ import sys
 import re
 
 import numpy as np
-from scipy.sparse import csr_matrix, lil_matrix
+from scipy.sparse import csc_matrix, csr_matrix, lil_matrix
 from sklearn.utils.testing import (assert_almost_equal, assert_array_equal,
                                    assert_true)
 
@@ -67,20 +67,21 @@ def test_small_sparse():
 
 
 def test_small_sparse_partial_fit():
-    X_sparse = csr_matrix(Xdigits)
-    X = Xdigits.copy()
+    for sparse in [csc_matrix, csr_matrix]:
+        X_sparse = sparse(Xdigits[:100])
+        X = Xdigits[:100].copy()
 
-    rbm1 = BernoulliRBM(n_components=64, learning_rate=0.1,
-                        batch_size=10, random_state=9)
-    rbm2 = BernoulliRBM(n_components=64, learning_rate=0.1,
-                        batch_size=10, random_state=9)
+        rbm1 = BernoulliRBM(n_components=64, learning_rate=0.1,
+                            batch_size=10, random_state=9)
+        rbm2 = BernoulliRBM(n_components=64, learning_rate=0.1,
+                            batch_size=10, random_state=9)
 
-    rbm1.partial_fit(X_sparse)
-    rbm2.partial_fit(X)
+        rbm1.partial_fit(X_sparse)
+        rbm2.partial_fit(X)
 
-    assert_almost_equal(rbm1.score_samples(X).mean(),
-                        rbm2.score_samples(X).mean(),
-                        decimal=0)
+        assert_almost_equal(rbm1.score_samples(X).mean(),
+                            rbm2.score_samples(X).mean(),
+                            decimal=0)
 
 
 def test_sample_hiddens():
