@@ -25,20 +25,20 @@ def _serialise_coordinate(coord, spacing):
 
 
 def _generate_adjacency_matrix(grid_dimensions):
-    """Generate an adjacency matrix for nodes of an orthotopic grid with
-    dimensions given by grid_dimensions
+    """Generate an adjacency matrix for nodes of an n-dimensional rectangular
+    grid with dimensions given by grid_dimensions.
     """
-    n_centres = np.prod(grid_dimensions)
+    n_centers = np.prod(grid_dimensions)
 
     # initialise to 0 for self-distances, infinity non-connections
-    adjacency = np.empty((n_centres, n_centres), dtype=float)
+    adjacency = np.empty((n_centers, n_centers), dtype=float)
     adjacency.fill(np.inf)
     np.fill_diagonal(adjacency, 0)
 
     spacing = [int(np.prod(grid_dimensions[(k+1):]))
                for k in range(len(grid_dimensions))]
 
-    for i in range(n_centres):
+    for i in range(n_centers):
         coord = _unserialise_coordinate(i, spacing)
         neighbours = []
         for d in range(len(grid_dimensions)):
@@ -87,7 +87,7 @@ class SelfOrganizingMap(BaseEstimator):
         Form of the SOM grid to use. If a tuple of integers is passed,
         a orthotopic grid topology will be generated with those dimensions.
         If an ndarray is passed, it should be an adjacency matrix of the
-        SOM grid, of dimension [n_centres, n_centres].
+        SOM grid, of dimension [n_centers, n_centers].
 
     n_iterations : int
         Number of iterations of the SOM algorithm to run
@@ -98,15 +98,15 @@ class SelfOrganizingMap(BaseEstimator):
     init : 'random' or ndarray
         Method for initialization, defaults to 'random':
 
-        'random' : use randomly chosen cluster centres.
+        'random' : use randomly chosen cluster centers.
 
-        ndarray : an array of initial cluster centres [n_centres, n_features].
+        ndarray : an array of initial cluster centers [n_centers, n_features].
 
 
     Attributes
     ----------
-    centres_ : array, [(x, y), n_features]
-        Coordinates of centres and value
+    centers_ : array, [(x, y), n_features]
+        Coordinates of centers and value
 
     labels_ :
         Labels of each point
@@ -126,9 +126,9 @@ class SelfOrganizingMap(BaseEstimator):
             affinity = (affinity,)
 
         if isinstance(affinity, tuple):
-            n_centres = np.prod(affinity)
-            if isinstance(init, np.ndarray) and (n_centres != init.shape[0]):
-                raise ValueError("'init' contains %d centres, but 'affinity' specifies %d clusters"
+            n_centers = np.prod(affinity)
+            if isinstance(init, np.ndarray) and (n_centers != init.shape[0]):
+                raise ValueError("'init' contains %d centers, but 'affinity' specifies %d clusters"
                                  % (init.shape[0], np.prod(affinity)))
 
             affinity = _generate_adjacency_matrix(affinity)
@@ -136,7 +136,7 @@ class SelfOrganizingMap(BaseEstimator):
         self.adjacency_matrix = affinity
         self.distance_matrix = _get_minimum_distances(self.adjacency_matrix)
         self.graph_diameter = self.distance_matrix.max()
-        self.n_centres = n_centres
+        self.n_centers = n_centers
         self.init = init
         self.n_iterations = n_iterations
         self.learning_rate = learning_rate
@@ -156,15 +156,15 @@ class SelfOrganizingMap(BaseEstimator):
 
         """
         assert isinstance(X, np.ndarray), 'X is not an array!'
-        self.centres_ = None
+        self.centers_ = None
         self.dim = X.shape[-1]
 
-        # init centres_
+        # init centers_
         if self.init == 'random':
-            self.centres_ = np.random.rand(self.n_centres, self.dim)
+            self.centers_ = np.random.rand(self.n_centers, self.dim)
         elif isinstance(self.init, np.ndarray):
             assert self.init.shape[-1] == self.dim
-            self.centres_ = self.init
+            self.centers_ = self.init
 
         # iteration loop
         iteration = 0
@@ -183,27 +183,27 @@ class SelfOrganizingMap(BaseEstimator):
                 self.callback(self, iteration)
 
         # assign labels
-        self.labels_ = [self.best_matching_centre(x) for x in X]
+        self.labels_ = [self.best_matching_center(x) for x in X]
         return self
 
     def _learn_x(self, x, lr, iteration):
-        winner = self.best_matching_centre(x)
+        winner = self.best_matching_center(x)
         radius = self.radius_of_the_neighborhood(iteration)
-        updatable = self.centres_in_radius(winner, radius)
+        updatable = self.centers_in_radius(winner, radius)
         # See Kohonen (2013, p56)
-        neighborhood = np.exp(-np.sum((self.centres_[winner] - self.centres_[updatable])**2, axis=1)/(2*radius**2))
-        self.centres_[updatable] = self.centres_[updatable] + \
-            lr * np.asmatrix(neighborhood).T * np.asmatrix(x - self.centres_[winner])
+        neighborhood = np.exp(-np.sum((self.centers_[winner] - self.centers_[updatable])**2, axis=1)/(2*radius**2))
+        self.centers_[updatable] = self.centers_[updatable] + \
+            lr * np.asmatrix(neighborhood).T * np.asmatrix(x - self.centers_[winner])
 
-    def best_matching_centre(self, x):
-        assert x.shape == self.centres_[1].shape
-        distances = np.sum((x - self.centres_)**2, axis=1)
+    def best_matching_center(self, x):
+        assert x.shape == self.centers_[1].shape
+        distances = np.sum((x - self.centers_)**2, axis=1)
         return(distances.argmin())
 
-    def centres_in_radius(self, winner, radius):
+    def centers_in_radius(self, winner, radius):
         return(np.where(self.distance_matrix[winner] < radius))
 
     def radius_of_the_neighborhood(self, iteration):
         # TODO: see above. This should initially cover about half the grid.
         l = self.n_iterations / self.graph_diameter
-        return self.n_centres * np.exp(-iteration / l)
+        return self.n_centers * np.exp(-iteration / l)

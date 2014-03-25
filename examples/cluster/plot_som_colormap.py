@@ -18,12 +18,12 @@ from sklearn.cluster import SelfOrganizingMap
 
 def plot(neurons):
     assert neurons.shape[-1] == 3
-    n_centres, dim = neurons.shape
+    n_centers, dim = neurons.shape
     neurons[np.where(neurons > 256)] = 256
     neurons[np.where(neurons < 0)] = 0
     hexmap = np.apply_along_axis(rgb2hex, 1, neurons / 256)
-    index = np.arange(n_centres).reshape(np.floor(np.sqrt(n_centres)),
-                                         n_centres/np.floor(np.sqrt(n_centres)))
+    index = np.arange(n_centers).reshape(np.floor(np.sqrt(n_centers)),
+                                         n_centers/np.floor(np.sqrt(n_centers)))
     plt.pcolor(index, cmap=ListedColormap(hexmap), norm=NoNorm())
 
 train = np.array([[0, 0, 0],        # black
@@ -46,7 +46,7 @@ som = SelfOrganizingMap(affinity=(16,16), n_iterations=1024,
 som.fit(train)
 
 plt.subplot(1, 2, 2, aspect='equal')
-plot(som.centres_)
+plot(som.centers_)
 plt.title('Organized Map')
 F = plt.gcf()
 F.set_size_inches((40, 20))

@@ -45,7 +45,7 @@ som.fit(data)
 print "done in %0.3fs" % (time() - t0)
 print
 
-F = pseudo_F(data, som.labels_, som.centres_)
+F = pseudo_F(data, som.labels_, som.centers_)
 print 'pseudo_F %0.2f | %0.2f%%' % (F, 100 * (F / (1 + F)))
 print
 
