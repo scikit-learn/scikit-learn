@@ -5,7 +5,7 @@ A demo of Self-Organising Map and KMeans on the handwritten digits data
 =======================================================================
 
 Comparing various SOM and Kmeans clustering on the handwritten digits data
-with the variance ratio criterion index (Caliński & Harabasz 1974).
+with the Caliński-Harabasz criterion (Caliński & Harabasz 1974).
 
 """
 
@@ -23,15 +23,15 @@ from sklearn.preprocessing import scale
 np.random.seed(42)
 
 
-def variance_ratio_criterion(X, labels, centroids):
-    ''' Variance ratio criterion (pseudo F) statistic
+def Calinski_Harabasz_criterion(X, labels, centroids):
+    '''Caliński-Harabasz criterion (pseudo F) statistic
 
     Ratio between the Between-group Sum of Squares (BGSS) and the
     Within-group Sum of Squares (WGSS), which acts similarly to an F statistic.
     The use is suggested by (Caliński & Harabasz 1974, p10) as an informal
     indicator of the best number of clusters (k) for a given sample (size n).
 
-    VRC = [BGSS/(k - 1)] / [WGSS/(n - k)]
+    C-H criterion = [BGSS/(k - 1)] / [WGSS/(n - k)]
 
     - Caliński, T. & Harabasz, J., 1974. A dendrite method for cluster
       analysis. Communications in Statistics, 3(1), pp.1-27.
@@ -69,8 +69,8 @@ som.fit(data)
 print "done in %0.3fs" % (time() - t0)
 print
 
-F = variance_ratio_criterion(data, som.labels_, som.centers_)
-print('Variance ratio criterion (pseudo F): %0.2f | %0.2f%%' %
+F = Calinski_Harabasz_criterion(data, som.labels_, som.centers_)
+print('Caliński-Harabasz criterion (pseudo F): %0.2f | %0.2f%%' %
       (F, 100 * (F / (1 + F))))
 print
 
@@ -83,6 +83,6 @@ km.fit(data)
 print "done in %0.3fs" % (time() - t0)
 print
 
-F = variance_ratio_criterion(data, km.labels_, km.cluster_centers_)
-print('Variance ratio criterion (pseudo F): %0.2f | %0.2f%%' %
+F = Calinski_Harabasz_criterion(data, km.labels_, km.cluster_centers_)
+print('Caliński-Harabasz criterion (pseudo F): %0.2f | %0.2f%%' %
       (F, 100 * (F / (1 + F))))
