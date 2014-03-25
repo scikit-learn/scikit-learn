@@ -2,7 +2,7 @@ import sys
 import re
 
 import numpy as np
-from scipy.sparse import csr_matrix, lil_matrix
+from scipy.sparse import csc_matrix, csr_matrix, lil_matrix
 from sklearn.utils.testing import (assert_almost_equal, assert_array_equal,
                                    assert_true)
 
@@ -10,7 +10,7 @@ from sklearn.datasets import load_digits
 from sklearn.externals.six.moves import cStringIO as StringIO
 from sklearn.neural_network import BernoulliRBM
 from sklearn.utils.validation import assert_all_finite
-
+from sklearn.utils import gen_even_slices
 np.seterr(all='warn')
 
 Xdigits = load_digits().data
@@ -31,6 +31,23 @@ def test_fit():
     assert_array_equal(X, Xdigits)
 
 
+def test_partial_fit():
+    X = Xdigits.copy()
+    n = 7
+    rbm = BernoulliRBM(n_components=64, learning_rate=0.1,
+                       batch_size=10, random_state=9)
+    n_samples = X.shape[0]
+    n_batches = int(np.ceil(float(n_samples) / rbm.batch_size))
+    batch_slices = np.array_split(X, n_batches)
+
+    for i in range(n):
+        for batch in batch_slices:
+            rbm.partial_fit(batch)
+
+    assert_almost_equal(rbm.score_samples(X).mean(), -21., decimal=0)
+    assert_array_equal(X, Xdigits)
+
+
 def test_transform():
     X = Xdigits[:100]
     rbm1 = BernoulliRBM(n_components=16, batch_size=5,
@@ -47,6 +64,24 @@ def test_small_sparse():
     """BernoulliRBM should work on small sparse matrices."""
     X = csr_matrix(Xdigits[:4])
     BernoulliRBM().fit(X)       # no exception
+
+
+def test_small_sparse_partial_fit():
+    for sparse in [csc_matrix, csr_matrix]:
+        X_sparse = sparse(Xdigits[:100])
+        X = Xdigits[:100].copy()
+
+        rbm1 = BernoulliRBM(n_components=64, learning_rate=0.1,
+                            batch_size=10, random_state=9)
+        rbm2 = BernoulliRBM(n_components=64, learning_rate=0.1,
+                            batch_size=10, random_state=9)
+
+        rbm1.partial_fit(X_sparse)
+        rbm2.partial_fit(X)
+
+        assert_almost_equal(rbm1.score_samples(X).mean(),
+                            rbm2.score_samples(X).mean(),
+                            decimal=0)
 
 
 def test_sample_hiddens():
