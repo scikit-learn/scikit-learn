@@ -64,7 +64,7 @@ print()
 print("Self-Organizing Map ")
 t0 = time()
 grid_width = 4
-som = SelfOrganizingMap(affinity=(grid_width, grid_width),
+som = SelfOrganizingMap(adjacency=(grid_width, grid_width),
                         n_iterations=n_samples*5, learning_rate=1)
 som.fit(data)
 print("done in %0.3fs" % (time() - t0))

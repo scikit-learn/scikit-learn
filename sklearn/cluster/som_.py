@@ -83,7 +83,7 @@ class SelfOrganizingMap(BaseEstimator):
 
     Parameters
     ----------
-    affinity : tuple of integers, or ndarray, default: (4, 4)
+    adjacency : tuple of integers, or ndarray, default: (4, 4)
         Form of the SOM grid to use. If a tuple of integers is passed,
         a orthotopic grid topology will be generated with those dimensions.
         If an ndarray is passed, it should be an adjacency matrix of the
@@ -120,20 +120,20 @@ class SelfOrganizingMap(BaseEstimator):
       Networks, 37, pp.52-65. doi://10.1016/j.neunet.2012.09.018
     """
 
-    def __init__(self, affinity=(4, 4), init='random', n_iterations=64,
+    def __init__(self, adjacency=(4, 4), init='random', n_iterations=64,
                  learning_rate=1, callback=None):
-        if isinstance(affinity, int):
-            affinity = (affinity,)
+        if isinstance(adjacency, int):
+            adjacency = (adjacency,)
 
-        if isinstance(affinity, tuple):
-            n_centers = np.prod(affinity)
+        if isinstance(adjacency, tuple):
+            n_centers = np.prod(adjacency)
             if isinstance(init, np.ndarray) and (n_centers != init.shape[0]):
-                raise ValueError("'init' contains %d centers, but 'affinity' specifies %d clusters"
-                                 % (init.shape[0], np.prod(affinity)))
+                raise ValueError("'init' contains %d centers, but 'adjacency' specifies %d clusters"
+                                 % (init.shape[0], np.prod(adjacency)))
 
-            affinity = _generate_adjacency_matrix(affinity)
+            adjacency = _generate_adjacency_matrix(adjacency)
 
-        self.adjacency_matrix = affinity
+        self.adjacency_matrix = adjacency
         self.distance_matrix = _get_minimum_distances(self.adjacency_matrix)
         self.graph_diameter = self.distance_matrix.max()
         self.n_centers = n_centers

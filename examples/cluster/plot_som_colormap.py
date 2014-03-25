@@ -41,7 +41,7 @@ plt.subplot(1, 2, 1, aspect='equal')
 plot(init)
 plt.title('Initial map')
 
-som = SelfOrganizingMap(affinity=(16, 16), n_iterations=1024,
+som = SelfOrganizingMap(adjacency=(16, 16), n_iterations=1024,
                         init=init, learning_rate=1)
 som.fit(train)
 
