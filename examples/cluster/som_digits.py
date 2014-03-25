@@ -4,7 +4,7 @@ A demo of Self-Organising Map and KMeans on the handwritten digits data
 =======================================================================
 
 Comparing various SOM and Kmeans clustering on the handwritten digits data
-with the pseudo_F index
+with the variance ratio criterion index (Caliński & Harabasz 1974).
 
 """
 from __future__ import division
@@ -15,11 +15,33 @@ import numpy as np
 
 from sklearn.cluster import KMeans
 from sklearn.cluster import SelfOrganizingMap
-from sklearn.cluster import pseudo_F
 from sklearn.datasets import load_digits
 from sklearn.preprocessing import scale
 
 np.random.seed(42)
+
+
+def variance_ratio_criterion(X, labels, centroids):
+    ''' Variance ratio criterion (pseudo F) statistic
+
+    Ratio between the Between-group Sum of Squares (BGSS) and the
+    Within-group Sum of Squares (WGSS), which acts similarly to an F statistic.
+    The use is suggested by (Caliński & Harabasz 1974, p10) as an informal
+    indicator of the best number of clusters (k) for a given sample (size n).
+
+    VRC = [BGSS/(k - 1)] / [WGSS/(n - k)]
+
+    - Caliński, T. & Harabasz, J., 1974. A dendrite method for cluster
+      analysis. Communications in Statistics, 3(1), pp.1-27.
+      doi://10.1080/03610927408827101
+    '''
+    mean = np.mean(X, axis=0)
+    BGSS = np.sum([(k - mean)**2 for k in centroids])
+    WGSS = np.sum([(x - centroids[labels[i]])**2 for i, x in enumerate(X)])
+    k = len(centroids)
+    n = len(X)
+    return (BGSS / (k-1)) / (WGSS / (n-k))
+
 
 # Load dataset
 
@@ -45,8 +67,9 @@ som.fit(data)
 print "done in %0.3fs" % (time() - t0)
 print
 
-F = pseudo_F(data, som.labels_, som.centers_)
-print 'pseudo_F %0.2f | %0.2f%%' % (F, 100 * (F / (1 + F)))
+F = variance_ratio_criterion(data, som.labels_, som.centers_)
+print('Variance ratio criterion (pseudo F): %0.2f | %0.2f%%' %
+      (F, 100 * (F / (1 + F))))
 print
 
 # Digits dataset clustering using Kmeans
@@ -58,5 +81,6 @@ km.fit(data)
 print "done in %0.3fs" % (time() - t0)
 print
 
-F = pseudo_F(data, km.labels_, km.cluster_centers_)
-print 'pseudo_F %0.2f | %0.2f%%' % (F, 100 * (F / (1 + F)))
+F = variance_ratio_criterion(data, km.labels_, km.cluster_centers_)
+print('Variance ratio criterion (pseudo F): %0.2f | %0.2f%%' %
+      (F, 100 * (F / (1 + F))))
