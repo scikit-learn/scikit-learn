@@ -15,6 +15,7 @@ np.import_array()
 
 
 ctypedef np.float64_t DOUBLE
+ctypedef np.int32_t INTEGER
 
 
 @cython.boundscheck(False)
@@ -99,6 +100,7 @@ def csr_mean_variance_axis0(X):
     variances /= n_samples
 
     return means, variances
+
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
@@ -281,6 +283,29 @@ def inplace_csc_column_scale(X, np.ndarray[DOUBLE, ndim=1] scale):
         for j in xrange(X_indptr[i], X_indptr[i + 1]):
             X_data[j] *= scale[i]
 
+
+def inplace_column_scale(X, np.ndarray[DOUBLE, ndim=1] scale):
+    """Inplace column scaling of a CSC or a CSR matrix.
+
+    Scale each feature of the data matrix by multiplying with specific scale
+    provided by the caller assuming a (n_samples, n_features) shape.
+
+    Parameters
+    ----------
+    X: CSC or CSR matrix with shape (n_samples, n_features)
+        Matrix to normalize using the variance of the features.
+
+    scale: float array with shape (n_features,)
+        Array of precomputed feature-wise values to use for scaling.
+    """
+    if isinstance(X, sp.csr_matrix):
+        return inplace_csr_column_scale(X, scale)
+    elif isinstance(X, sp.csc_matrix):
+        return inplace_csc_column_scale(X, scale)
+    else:
+        raise NotImplementedError("Only CSR and CSC matrices are supported")
+
+
 def mean_variance_axis0(X):
     """Compute mean and variance along axis 0 on a CSR or CSC matrix
 
@@ -363,3 +388,128 @@ def assign_rows_csr(X,
         for ind in range(indptr[rX], indptr[rX + 1]):
             j = indices[ind]
             out[out_rows[i], j] = data[ind]
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.cdivision(True)
+def csc_sparse_std(X, np.ndarray[DOUBLE, ndim=1] X_mean=None):
+    """Finds the std of a CSC matrix
+
+    Parameters
+    ----------
+    X : scipy.sparse.csr_matrix, shape=(n_samples, n_features)
+    X_mean : array(optional), shape=(n_features,)
+
+    Returns
+    -------
+    X_std: array = (n_features,)
+    """
+    cdef unsigned int n_samples = X.shape[0]
+    cdef unsigned int n_features = X.shape[1]
+    cdef np.ndarray[DOUBLE, ndim=1] X_data = X.data
+    cdef np.ndarray[INTEGER, ndim=1] X_indices = X.indices
+    cdef np.ndarray[INTEGER, ndim=1] X_indptr = X.indptr
+    cdef unsigned int ii
+    cdef unsigned int jj
+    cdef unsigned int nnz_ii
+    cdef double X_sum_ii
+    cdef double X_mean_ii
+    cdef double diff
+
+    cdef np.ndarray[DOUBLE, ndim = 1] X_std = np.zeros(n_features, np.float64)
+
+    if X_mean is None:
+        X_mean = np.zeros(n_features, np.float64)
+
+        for ii in xrange(n_features):
+            # Computes the mean
+            X_sum_ii = 0.0
+            for jj in xrange(X_indptr[ii], X_indptr[ii + 1]):
+                X_sum_ii += X_data[jj]
+            X_mean[ii] = X_sum_ii / n_samples
+
+    for ii in xrange(n_features):
+        X_mean_ii = X_mean[ii]
+        X_sum_ii = 0.0
+        nnz_ii = 0
+        for jj in xrange(X_indptr[ii], X_indptr[ii + 1]):
+            diff = X_data[jj] - X_mean_ii
+            X_sum_ii += diff * diff
+            nnz_ii += 1
+
+        X_std[ii] = sqrt(X_sum_ii + (n_samples - nnz_ii) * X_mean_ii * X_mean_ii)
+    return X_std
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.cdivision(True)
+def csr_sparse_std(X, np.ndarray[DOUBLE, ndim=1] X_mean=None):
+    """Finds the std of a CSR matrix
+
+    Parameters
+    ----------
+    X : scipy.sparse.csr_matrix, shape=(n_samples, n_features)
+    X_mean : array(optional), shape=(n_features,)
+
+    Returns
+    -------
+    X_std: array = (n_features,)
+    """
+
+    cdef unsigned int n_samples = X.shape[0]
+    cdef unsigned int n_features = X.shape[1]
+    cdef np.ndarray[DOUBLE, ndim=1] X_data = X.data
+    cdef np.ndarray[INTEGER, ndim=1] X_indices = X.indices
+    cdef np.ndarray[INTEGER, ndim=1] X_indptr = X.indptr
+    cdef unsigned int ii
+    cdef unsigned int col_ind
+    cdef double X_mean_ii
+    cdef double diff
+
+    # To store the number of non-zero occurences across each column
+    cdef np.ndarray[DOUBLE, ndim = 1] counts = np.zeros(n_features,
+                                                        np.float64)
+    cdef np.ndarray[DOUBLE, ndim = 1] X_std = np.zeros(n_features, np.float64)
+
+    if X_mean is None:
+        X_mean = np.zeros(n_features, np.float64)
+        # X_indices contains the indices of columns that have non zero values.
+        for ind, col_ind in enumerate(X_indices):
+            X_mean[col_ind] += X_data[ind]
+        for ii in xrange(n_features):
+            X_mean[ii] /= n_samples
+
+    for ind, col_ind in enumerate(X_indices):
+        diff = X_data[ind] - X_mean[col_ind]
+        X_std[col_ind] += diff * diff
+        counts[col_ind] += 1
+
+    for ii in xrange(n_features):
+        X_mean_ii = X_mean[ii]
+        X_std[ii] = sqrt(X_std[ii] + (
+            n_samples - counts[ii]) * X_mean_ii * X_mean_ii)
+    return X_std
+
+
+def sparse_std(X, np.ndarray[DOUBLE, ndim=1] X_mean=None):
+    """Finds the std of a CSC or CSR matrix
+
+    Parameters
+    ----------
+    X : scipy.sparse.csr_matrix or scipy.sparse.csr_matrix,
+        shape=(n_samples, n_features)
+    X_mean : array(optional), shape=(n_features,)
+
+    Returns
+    -------
+    X_std: array = (n_features,)
+    """
+
+    if isinstance(X, sp.csr_matrix):
+        return csr_sparse_std(X, X_mean)
+    elif isinstance(X, sp.csc_matrix):
+        return csc_sparse_std(X, X_mean)
+    else:
+        raise NotImplementedError("Only CSR and CSC matrices are supported")

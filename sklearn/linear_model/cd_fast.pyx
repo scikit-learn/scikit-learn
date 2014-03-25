@@ -64,48 +64,6 @@ ctypedef np.int32_t INTEGER
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-def sparse_std(unsigned int n_samples,
-               unsigned int n_features,
-               np.ndarray[DOUBLE, ndim=1] X_data,
-               np.ndarray[INTEGER, ndim=1] X_indices,
-               np.ndarray[INTEGER, ndim=1] X_indptr,
-               np.ndarray[DOUBLE, ndim=1] X_mean=None):
-    cdef unsigned int ii
-    cdef unsigned int jj
-    cdef unsigned int nnz_ii
-    cdef double X_sum_ii
-    cdef double X_mean_ii
-    cdef double diff
-    cdef double X_std_ii
-
-    cdef np.ndarray[DOUBLE, ndim = 1] X_std = np.zeros(n_features, np.float64)
-
-    if X_mean is None:
-        X_mean = np.zeros(n_features, np.float64)
-
-        for ii in xrange(n_features):
-            # Computes the mean
-            X_sum_ii = 0.0
-            for jj in xrange(X_indptr[ii], X_indptr[ii + 1]):
-                X_sum_ii += X_data[jj]
-            X_mean[ii] = X_sum_ii / n_samples
-
-    for ii in xrange(n_features):
-        X_mean_ii = X_mean[ii]
-        X_sum_ii = 0.0
-        nnz_ii = 0
-        for jj in xrange(X_indptr[ii], X_indptr[ii + 1]):
-            diff = X_data[jj] - X_mean_ii
-            X_sum_ii += diff * diff
-            nnz_ii += 1
-
-        X_std[ii] = (X_sum_ii + (n_samples - nnz_ii) * X_mean_ii * X_mean_ii)
-    return np.sqrt(X_std)
-
-
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
 def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                             double alpha, double beta,
                             np.ndarray[DOUBLE, ndim=2] X,
@@ -274,8 +232,8 @@ def sparse_enet_coordinate_descent(double[:] w,
     # center = (X_mean != 0).any()
     for ii in xrange(n_samples):
         if X_mean[ii]:
-           center = True
-           break
+            center = True
+            break
 
     for ii in xrange(n_features):
         X_mean_ii = X_mean[ii]
@@ -294,7 +252,7 @@ def sparse_enet_coordinate_descent(double[:] w,
                 R[jj] += X_mean_ii * w_ii
         startptr = endptr
 
-    #tol *= np.dot(y, y)
+    # tol *= np.dot(y, y)
     tol *= ddot(n_samples, <DOUBLE*>&y[0], 1, <DOUBLE*>&y[0], 1)
 
     for n_iter in range(max_iter):
@@ -375,10 +333,10 @@ def sparse_enet_coordinate_descent(double[:] w,
             else:
                 dual_norm_XtA = linalg.norm(XtA, np.inf)
 
-            #R_norm2 = np.dot(R, R)
+            # R_norm2 = np.dot(R, R)
             R_norm2 = ddot(n_samples, <DOUBLE*>&R[0], 1, <DOUBLE*>&R[0], 1)
 
-            #w_norm2 = np.dot(w, w)
+            # w_norm2 = np.dot(w, w)
             w_norm2 = ddot(n_features, <DOUBLE*>&w[0], 1, <DOUBLE*>&w[0], 1)
             if (dual_norm_XtA > alpha):
                 const = alpha / dual_norm_XtA
@@ -660,7 +618,7 @@ def enet_coordinate_descent_multi_task(np.ndarray[DOUBLE, ndim=2, mode='fortran'
             R_norm = dnrm2(n_samples * n_tasks, <DOUBLE*>R.data, 1)
             w_norm = dnrm2(n_features * n_tasks, <DOUBLE*>W.data, 1)
             if (dual_norm_XtA > l1_reg):
-                const =  l1_reg / dual_norm_XtA
+                const = l1_reg / dual_norm_XtA
                 A_norm = R_norm * const
                 gap = 0.5 * (R_norm ** 2 + A_norm ** 2)
             else:
