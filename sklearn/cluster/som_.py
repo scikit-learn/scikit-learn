@@ -99,7 +99,7 @@ class SelfOrganizingMap(BaseEstimator):
         Number of iterations of the SOM algorithm to run
 
     learning_rate : float
-        Learning rate (alpha in Kohonen [1990])
+        Learning rate (initial alpha in Kohonen [1990])
 
     init : 'random' or ndarray
         Method for initialization, defaults to 'random':
@@ -170,7 +170,7 @@ class SelfOrganizingMap(BaseEstimator):
             self.cluster_centers_ = np.random.rand(self.n_centers, self.dim)
         elif isinstance(self.init, np.ndarray):
             assert self.init.shape[-1] == self.dim
-            self.cluster_centers_ = self.init
+            self.cluster_centers_ = self.init.copy()
 
         # iteration loop
         iteration = 0
@@ -208,9 +208,14 @@ class SelfOrganizingMap(BaseEstimator):
         return(distances.argmin())
 
     def cluster_centers_in_radius(self, winner, radius):
-        return(np.where(self.distance_matrix[winner] < radius))
+        return(np.where(self.distance_matrix[winner] < radius)[0])
 
     def radius_of_the_neighborhood(self, iteration):
+        """Kohonen's sigma.
+
+        Monotonically decreasing function of iteration. Kohonen (1990) doesn't
+        specify a particular form.
+        """
         # TODO: see above. This should initially cover about half the grid.
         l = self.n_iterations / self.graph_diameter
         return self.n_centers * np.exp(-iteration / l)
