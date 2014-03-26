@@ -174,6 +174,10 @@ Changelog
      models: it now uses threads, not separate processes, when ``n_jobs>1``.
      By `Lars Buitinck`_.
 
+   - Added ``partial_fit`` to :class:`BernoulliRBM
+     <neural_network.BernoulliRBM>`
+     By `Danny Sullivan`_.
+
 
 API changes summary
 -------------------
@@ -2485,3 +2489,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Andrew Tulloch: http://tullo.ch
 
 .. _Maheshakya Wijewardena: https://github.com/maheshakya
+
+.. _Danny Sullivan: http://dannysullivan.co
