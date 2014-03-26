@@ -83,6 +83,8 @@ def center_data(X, y, fit_intercept, normalize=False, copy=True,
     """
     X = as_float_array(X, copy)
     if fit_intercept:
+        if isinstance(sample_weight, numbers.Number):
+            sample_weight = None
         if sp.issparse(X):
             X_mean = np.zeros(X.shape[1])
             X_std = np.ones(X.shape[1])
