@@ -196,11 +196,11 @@ class SelfOrganizingMap(BaseEstimator):
         winner = self.best_matching_center(x)
         radius = self.radius_of_the_neighborhood(iteration)
         updatable = self.cluster_centers_in_radius(winner, radius)
-        distances = np.sum((self.cluster_centers_[winner] - self.cluster_centers_[updatable])**2, axis=1)
+        distances = self.distance_matrix[winner][updatable]
         # neighborhood function from Kohonen (2013, p56)
-        neighborhood = np.exp(-distances/(2*radius**2))
+        neighborhood = alpha * np.exp(-distances/(2*radius**2))
         self.cluster_centers_[updatable] = self.cluster_centers_[updatable] + \
-            alpha * np.asmatrix(neighborhood).T * np.asmatrix(x - self.cluster_centers_[winner])
+            np.multiply(neighborhood, (x - self.cluster_centers_[updatable]).T).T
 
     def best_matching_center(self, x):
         assert x.shape == self.cluster_centers_[1].shape
