@@ -54,7 +54,7 @@ def assert_all_finite(X):
 
 
 def safe_asarray(X, dtype=None, order=None, copy=False, force_all_finite=True):
-    """Convert X to an array or sparse matrix.
+    """Convert X to an array or CSC/CSR/COO sparse matrix.
 
     Prevents copying X when possible; sparse matrices are passed through."""
     if sparse.issparse(X):
