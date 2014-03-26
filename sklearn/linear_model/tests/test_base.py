@@ -9,7 +9,8 @@ from scipy import sparse
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_equal
 
-from sklearn.linear_model.base import LinearRegression, sparse_center_data
+from sklearn.linear_model.base import LinearRegression
+from sklearn.linear_model.base import center_data, sparse_center_data
 from sklearn.utils import check_random_state
 from sklearn.datasets.samples_generator import make_sparse_uncorrelated
 from sklearn.datasets.samples_generator import make_regression
@@ -110,6 +111,144 @@ def test_linear_regression_sparse_multiple_outcome(random_state=0):
     ols.fit(X, y.ravel())
     y_pred = ols.predict(X)
     assert_array_almost_equal(np.vstack((y_pred, y_pred)).T, Y_pred, decimal=3)
+
+
+def test_center_data():
+    n_samples = 200
+    n_features = 2
+    rng = check_random_state(0)
+    X = rng.rand(n_samples, n_features)
+    y = rng.rand(n_samples)
+    expected_X_mean = np.mean(X, axis=0)
+    # XXX: currently scaled to variance=n_samples
+    expected_X_std = np.std(X, axis=0) * np.sqrt(X.shape[0])
+    expected_y_mean = np.mean(y, axis=0)
+
+    Xt, yt, X_mean, y_mean, X_std = center_data(X, y, fit_intercept=False,
+                                                normalize=False)
+    assert_array_almost_equal(X_mean, np.zeros(n_features))
+    assert_array_almost_equal(y_mean, 0)
+    assert_array_almost_equal(X_std, np.ones(n_features))
+    assert_array_almost_equal(Xt, X)
+    assert_array_almost_equal(yt, y)
+
+    Xt, yt, X_mean, y_mean, X_std = center_data(X, y, fit_intercept=True,
+                                                normalize=False)
+    assert_array_almost_equal(X_mean, expected_X_mean)
+    assert_array_almost_equal(y_mean, expected_y_mean)
+    assert_array_almost_equal(X_std, np.ones(n_features))
+    assert_array_almost_equal(Xt, X - expected_X_mean)
+    assert_array_almost_equal(yt, y - expected_y_mean)
+
+    Xt, yt, X_mean, y_mean, X_std = center_data(X, y, fit_intercept=True,
+                                                normalize=True)
+    assert_array_almost_equal(X_mean, expected_X_mean)
+    assert_array_almost_equal(y_mean, expected_y_mean)
+    assert_array_almost_equal(X_std, expected_X_std)
+    assert_array_almost_equal(Xt, (X - expected_X_mean) / expected_X_std)
+    assert_array_almost_equal(yt, y - expected_y_mean)
+
+
+def test_center_data_multioutput():
+    n_samples = 200
+    n_features = 3
+    n_outputs = 2
+    rng = check_random_state(0)
+    X = rng.rand(n_samples, n_features)
+    y = rng.rand(n_samples, n_outputs)
+    expected_y_mean = np.mean(y, axis=0)
+
+    args = [(center_data, X), (sparse_center_data, sparse.csc_matrix(X))]
+    for center, X in args:
+        _, yt, _, y_mean, _ = center(X, y, fit_intercept=False,
+                                     normalize=False)
+        assert_array_almost_equal(y_mean, np.zeros(n_outputs))
+        assert_array_almost_equal(yt, y)
+
+        _, yt, _, y_mean, _ = center(X, y, fit_intercept=True,
+                                     normalize=False)
+        assert_array_almost_equal(y_mean, expected_y_mean)
+        assert_array_almost_equal(yt, y - y_mean)
+
+        _, yt, _, y_mean, _ = center(X, y, fit_intercept=True,
+                                     normalize=True)
+        assert_array_almost_equal(y_mean, expected_y_mean)
+        assert_array_almost_equal(yt, y - y_mean)
+
+
+def test_center_data_weighted():
+    n_samples = 200
+    n_features = 2
+    rng = check_random_state(0)
+    X = rng.rand(n_samples, n_features)
+    y = rng.rand(n_samples)
+    sample_weight = rng.rand(n_samples)
+    expected_X_mean = np.average(X, axis=0, weights=sample_weight)
+    expected_y_mean = np.average(y, axis=0, weights=sample_weight)
+
+    # XXX: if normalize=True, should we expect a weighted standard deviation?
+    #      Currently not weighted, but calculated with respect to weighted mean
+    # XXX: currently scaled to variance=n_samples
+    expected_X_std = (np.sqrt(X.shape[0]) *
+                      np.mean((X - expected_X_mean) ** 2, axis=0) ** .5)
+
+    Xt, yt, X_mean, y_mean, X_std = center_data(X, y, fit_intercept=True,
+                                                normalize=False,
+                                                sample_weight=sample_weight)
+    assert_array_almost_equal(X_mean, expected_X_mean)
+    assert_array_almost_equal(y_mean, expected_y_mean)
+    assert_array_almost_equal(X_std, np.ones(n_features))
+    assert_array_almost_equal(Xt, X - expected_X_mean)
+    assert_array_almost_equal(yt, y - expected_y_mean)
+
+    Xt, yt, X_mean, y_mean, X_std = center_data(X, y, fit_intercept=True,
+                                                normalize=True,
+                                                sample_weight=sample_weight)
+    assert_array_almost_equal(X_mean, expected_X_mean)
+    assert_array_almost_equal(y_mean, expected_y_mean)
+    assert_array_almost_equal(X_std, expected_X_std)
+    assert_array_almost_equal(Xt, (X - expected_X_mean) / expected_X_std)
+    assert_array_almost_equal(yt, y - expected_y_mean)
+
+
+def test_sparse_center_data():
+    n_samples = 200
+    n_features = 2
+    rng = check_random_state(0)
+    # random_state not supported yet in sparse.rand
+    X = sparse.rand(n_samples, n_features, density=.5)  # , random_state=rng
+    X = X.tolil()
+    y = rng.rand(n_samples)
+    XA = X.toarray()
+    # XXX: currently scaled to variance=n_samples
+    expected_X_std = np.std(XA, axis=0) * np.sqrt(X.shape[0])
+
+    Xt, yt, X_mean, y_mean, X_std = sparse_center_data(X, y,
+                                                       fit_intercept=False,
+                                                       normalize=False)
+    assert_array_almost_equal(X_mean, np.zeros(n_features))
+    assert_array_almost_equal(y_mean, 0)
+    assert_array_almost_equal(X_std, np.ones(n_features))
+    assert_array_almost_equal(Xt.A, XA)
+    assert_array_almost_equal(yt, y)
+
+    Xt, yt, X_mean, y_mean, X_std = sparse_center_data(X, y,
+                                                       fit_intercept=True,
+                                                       normalize=False)
+    assert_array_almost_equal(X_mean, np.mean(XA, axis=0))
+    assert_array_almost_equal(y_mean, np.mean(y, axis=0))
+    assert_array_almost_equal(X_std, np.ones(n_features))
+    assert_array_almost_equal(Xt.A, XA)
+    assert_array_almost_equal(yt, y - np.mean(y, axis=0))
+
+    Xt, yt, X_mean, y_mean, X_std = sparse_center_data(X, y,
+                                                       fit_intercept=True,
+                                                       normalize=True)
+    assert_array_almost_equal(X_mean, np.mean(XA, axis=0))
+    assert_array_almost_equal(y_mean, np.mean(y, axis=0))
+    assert_array_almost_equal(X_std, expected_X_std)
+    assert_array_almost_equal(Xt.A, XA / expected_X_std)
+    assert_array_almost_equal(yt, y - np.mean(y, axis=0))
 
 
 def test_csr_sparse_center_data():

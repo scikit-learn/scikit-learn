@@ -14,6 +14,9 @@ cimport cython
 from cpython cimport bool
 import warnings
 
+ctypedef np.float64_t DOUBLE
+
+
 np.import_array()
 
 
@@ -55,52 +58,6 @@ cdef extern from "cblas.h":
     double dnrm2 "cblas_dnrm2"(int N, double *X, int incX)
     void dcopy "cblas_dcopy"(int N, double *X, int incX, double *Y, int incY)
     void dscal "cblas_dscal"(int N, double alpha, double *X, int incX)
-
-
-ctypedef np.float64_t DOUBLE
-ctypedef np.int32_t INTEGER
-
-
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
-def sparse_std(unsigned int n_samples,
-               unsigned int n_features,
-               np.ndarray[DOUBLE, ndim=1] X_data,
-               np.ndarray[INTEGER, ndim=1] X_indices,
-               np.ndarray[INTEGER, ndim=1] X_indptr,
-               np.ndarray[DOUBLE, ndim=1] X_mean=None):
-    cdef unsigned int ii
-    cdef unsigned int jj
-    cdef unsigned int nnz_ii
-    cdef double X_sum_ii
-    cdef double X_mean_ii
-    cdef double diff
-    cdef double X_std_ii
-
-    cdef np.ndarray[DOUBLE, ndim = 1] X_std = np.zeros(n_features, np.float64)
-
-    if X_mean is None:
-        X_mean = np.zeros(n_features, np.float64)
-
-        for ii in xrange(n_features):
-            # Computes the mean
-            X_sum_ii = 0.0
-            for jj in xrange(X_indptr[ii], X_indptr[ii + 1]):
-                X_sum_ii += X_data[jj]
-            X_mean[ii] = X_sum_ii / n_samples
-
-    for ii in xrange(n_features):
-        X_mean_ii = X_mean[ii]
-        X_sum_ii = 0.0
-        nnz_ii = 0
-        for jj in xrange(X_indptr[ii], X_indptr[ii + 1]):
-            diff = X_data[jj] - X_mean_ii
-            X_sum_ii += diff * diff
-            nnz_ii += 1
-
-        X_std[ii] = (X_sum_ii + (n_samples - nnz_ii) * X_mean_ii * X_mean_ii)
-    return np.sqrt(X_std)
 
 
 @cython.boundscheck(False)
