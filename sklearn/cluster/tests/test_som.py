@@ -34,7 +34,7 @@ def test_som_init_matrix():
     init_nodes = X2[random_ind]
 
     som = SelfOrganizingMap(adjacency=(2, 2), init=init_nodes,
-                            n_iterations=2000, learning_rate=0.1)
+                            learning_rate=0.1)
 
     som.fit(X2)
     labels = som.labels_
@@ -48,7 +48,7 @@ def test_som_init_matrix():
 def test_som_one_dimensional():
     np.random.seed(1)
 
-    som = SelfOrganizingMap(adjacency=(4,), n_iterations=2000)
+    som = SelfOrganizingMap(adjacency=(4,))
 
     som.fit(X2)
     labels = som.labels_
@@ -62,7 +62,7 @@ def test_som_one_dimensional():
 def test_som_3_dimensional():
     np.random.seed(1)
 
-    som = SelfOrganizingMap(adjacency=(2, 2, 2), n_iterations=2000)
+    som = SelfOrganizingMap(adjacency=(2, 2, 2), n_iterations=200)
 
     som.fit(X3)
     labels = som.labels_
