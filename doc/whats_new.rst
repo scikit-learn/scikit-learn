@@ -157,6 +157,9 @@ Changelog
      :func:`feature_selection.f_regression` when variates are not centered.
      By `VirgileFritsch`_.
 
+   - Added ``partial_fit`` to :class:`BernoulliRBM
+     <neural_network.BernoulliRBM>`
+     By `Danny Sullivan`_.
 
 API changes summary
 -------------------
@@ -2451,3 +2454,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Johannes Schönberger: https://github.com/ahojnnes
 
 .. _Manoj Kumar: https://github.com/Manoj-Kumar-S
+
+.. _Danny Sullivan: http://dannysullivan.co
