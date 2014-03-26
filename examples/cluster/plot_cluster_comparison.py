@@ -100,7 +100,6 @@ for i_dataset, dataset in enumerate(datasets):
         algorithm.fit(X)
         t1 = time.time()
         if hasattr(algorithm, 'labels_'):
-            print(name,': ', type(algorithm.labels_), algorithm.labels_.shape)
             y_pred = algorithm.labels_.astype(np.int)
         else:
             y_pred = algorithm.predict(X)
