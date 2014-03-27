@@ -80,6 +80,9 @@ def test_structured_linkage_tree():
         # of the wrong shape
         assert_raises(ValueError,
                       tree_builder, X.T, np.ones((4, 4)))
+        # Check that fitting with no samples raises an error
+        assert_raises(ValueError,
+                      tree_builder, X.T[:0], connectivity)
 
 
 def test_unstructured_linkage_tree():
@@ -221,6 +224,9 @@ def test_ward_agglomeration():
     X_full = agglo.inverse_transform(X_red)
     assert_true(np.unique(X_full[0]).size == 5)
     assert_array_almost_equal(agglo.transform(X_full), X_red)
+
+    # Check that fitting with no samples raises a ValueError
+    assert_raises(ValueError, agglo.fit, X[:0])
 
 
 def assess_same_labelling(cut1, cut2):
