@@ -264,7 +264,9 @@ def fit_binary(est, i, X, y, alpha, C, learning_rate, n_iter,
 
     # XXX should have random_state_!
     random_state = check_random_state(est.random_state)
-    seed = random_state.randint(0, 2 ** 32)
+    # numpy mtrand expects a C long which is a signed 32 bit integer under
+    # Windows
+    seed = random_state.randint(0, np.iinfo(np.int32).max)
 
     return plain_sgd(coef, intercept, est.loss_function,
                      penalty_type, alpha, C, est.l1_ratio,
@@ -917,7 +919,9 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
             self._init_t(loss_function)
 
         random_state = check_random_state(self.random_state)
-        seed = random_state.randint(0, 2 ** 32)
+        # numpy mtrand expects a C long which is a signed 32 bit integer under
+        # Windows
+        seed = random_state.randint(0, np.iinfo(np.int32).max)
 
         self.coef_, intercept = plain_sgd(self.coef_,
                                           self.intercept_[0],

@@ -4,6 +4,7 @@ import scipy.sparse as sp
 from nose.tools import assert_raises, assert_true
 
 from sklearn.utils.testing import assert_less
+from sklearn.utils.testing import assert_greater
 
 from sklearn.datasets import load_iris
 from sklearn.linear_model import LogisticRegression
@@ -16,7 +17,7 @@ iris = load_iris()
 def test_transform_linear_model():
     for clf in (LogisticRegression(C=0.1),
                 LinearSVC(C=0.01, dual=False),
-                SGDClassifier(alpha=0.1, n_iter=10, shuffle=True,
+                SGDClassifier(alpha=0.001, n_iter=50, shuffle=True,
                               random_state=0)):
         for thresh in (None, ".09*mean", "1e-5 * median"):
             for func in (np.array, sp.csr_matrix):
@@ -31,7 +32,7 @@ def test_transform_linear_model():
                 clf.set_params(penalty="l2")
                 clf.fit(X_new, iris.target)
                 pred = clf.predict(X_new)
-                assert_true(np.mean(pred == iris.target) >= 0.7)
+                assert_greater(np.mean(pred == iris.target), 0.7)
 
 
 def test_invalid_input():
