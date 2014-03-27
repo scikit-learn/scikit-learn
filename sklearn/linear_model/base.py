@@ -26,10 +26,7 @@ from ..externals.joblib import Parallel, delayed
 from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
 from ..utils import as_float_array, atleast2d_or_csr, safe_asarray
 from ..utils.extmath import safe_sparse_dot
-from ..utils.sparsefuncs import (csc_mean_variance_axis0,
-                                 csr_mean_variance_axis0,
-                                 inplace_csr_column_scale,
-                                 inplace_csc_column_scale)
+from ..utils.sparsefuncs import mean_variance_axis0, inplace_column_scale
 from .cd_fast import sparse_std
 
 
@@ -57,20 +54,16 @@ def sparse_center_data(X, y, fit_intercept, normalize=False):
         # store a copy if normalize is True.
         if sp.isspmatrix(X) and X.getformat() == 'csr':
             X = sp.csr_matrix(X, copy=normalize)
-            sparse_mean_var_axis0 = csr_mean_variance_axis0
-            sparse_column_scale = inplace_csr_column_scale 
         else:
             X = sp.csc_matrix(X, copy=normalize)
-            sparse_mean_var_axis0 = csc_mean_variance_axis0
-            sparse_column_scale = inplace_csc_column_scale
 
-        X_mean, X_std = sparse_mean_var_axis0(X)
+        X_mean, X_std = mean_variance_axis0(X)
         if normalize:
             X_std = sparse_std(
                 X.shape[0], X.shape[1],
                 X_data, X.indices, X.indptr, X_mean)
             X_std[X_std == 0] = 1
-            sparse_column_scale(X, 1. / X_std)
+            inplace_column_scale(X, 1. / X_std)
         else:
             X_std = np.ones(X.shape[1])
         y_mean = y.mean(axis=0)

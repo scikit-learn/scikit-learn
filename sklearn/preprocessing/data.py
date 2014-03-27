@@ -20,9 +20,9 @@ from ..utils import atleast2d_or_csr
 from ..utils import safe_asarray
 from ..utils import warn_if_not_float
 from ..utils.extmath import row_norms
-from ..utils.sparsefuncs import inplace_csr_row_normalize_l1
-from ..utils.sparsefuncs import inplace_csr_row_normalize_l2
-from ..utils.sparsefuncs import inplace_csr_column_scale
+from ..utils.sparsefuncs_fast import inplace_csr_row_normalize_l1
+from ..utils.sparsefuncs_fast import inplace_csr_row_normalize_l2
+from ..utils.sparsefuncs_fast import inplace_csr_column_scale
 from ..utils.sparsefuncs import mean_variance_axis0
 
 zip = six.moves.zip
