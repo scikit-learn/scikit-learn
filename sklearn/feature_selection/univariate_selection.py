@@ -420,8 +420,7 @@ class SelectKBest(_ScoreFilter):
         mask = np.zeros(scores.shape, dtype=bool)
 
         # Request a stable sort. Mergesort takes more memory (~40MB per
-        # megafeature on x86-64), but blows heapsort out of the water in
-        # terms of speed.
+        # megafeature on x86-64).
         mask[np.argsort(scores, kind="mergesort")[-k:]] = 1
         return mask
 
