@@ -1816,6 +1816,114 @@ static void solve_nu_svr(
 	delete[] y;
 }
 
+static void solve_svdd(
+	const svm_problem *prob, const svm_parameter *param,
+	double *alpha, Solver::SolutionInfo* si) 
+{
+	int l = prob->l; 
+	int i,j;
+	double r_square;
+	double C = param->C;
+	double *QD = new double[l];
+	double *linear_term = new double[l];
+	schar *ones = new schar[l];
+	
+	ONE_CLASS_Q Q = ONE_CLASS_Q(*prob, *param); 
+	for(i=0;i<l;i++)
+	{
+		QD[i] = Q.get_QD()[i];
+		linear_term[i] = -0.5 * Q.get_QD()[i];
+	}	
+
+	if(C > (double)1/l)
+	{
+		double sum_alpha = 1;
+		for(i=0;i<l;i++)
+		{
+			alpha[i] = min(C,sum_alpha);
+			sum_alpha -= alpha[i];
+			
+			ones[i] = 1;
+		}
+
+		Solver s;
+		s.Solve(l, Q, linear_term, ones, alpha, C, C,
+			param->eps, si, param->shrinking);
+		
+		// \bar{R} = 2(obj-rho) + sum K_{ii}*alpha_i
+		// because rho = (a^Ta - \bar{R})/2
+		r_square = 2*(si->obj-si->rho);
+		for(i=0;i<l;i++)
+			r_square += alpha[i]*QD[i];
+	}
+	else
+	{
+		r_square = 0.0;
+		double rho = 0;
+		double obj = 0;
+				
+		// rho = aTa/2 = sum sum Q_ij /l/l/2
+		// obj = 0.5*(-sum Q_ii + sum sum Q_ij /l)*C
+		// 0.5 for consistency with C > 1/l, where dual is divided by 2
+		for(i=0;i<l;i++)
+		{		
+			obj -= QD[i]/2;
+			rho += QD[i]/2;
+			for(j=i+1;j<l;j++)
+				rho += Kernel::k_function(prob->x[i],prob->x[j],*param);
+		}
+		si->obj = (obj + rho/l)*C;
+		si->rho = rho / (l*l);
+
+	}	
+
+	info("R^2 = %f\n",r_square);
+	
+	delete[] linear_term;
+	delete[] QD;
+	delete[] ones;
+
+}
+
+static void solve_r2(
+		const svm_problem *prob, const svm_parameter *param,
+		double *alpha, Solver::SolutionInfo* si)
+{
+	svm_parameter svdd_param = *param;	
+	svdd_param.C = 2;
+	
+	solve_svdd(prob,&svdd_param,alpha,si);
+}
+
+static void solve_r2q(
+		const svm_problem *prob, const svm_parameter *param,
+		double *alpha, Solver::SolutionInfo* si)
+{
+	int l = prob->l; 
+	double *linear_term = new double[l];
+	schar *ones = new schar[l];
+	int i;
+
+	alpha[0] = 1;
+	for(i=1;i<l;i++)
+		alpha[i] = 0;
+
+	for(i=0;i<l;i++)
+	{
+		linear_term[i]=-0.5*(Kernel::k_function(prob->x[i],prob->x[i],*param) + 1.0/param->C);
+		ones[i] = 1;
+	}
+
+	Solver s;
+	s.Solve(l, R2_Qq(*prob,*param), linear_term, ones,
+			alpha, INF, INF, param->eps, si, param->shrinking);
+
+	info("R^2 = %f\n", -2 *si->obj);
+
+	delete[] linear_term;
+	delete[] ones;
+}
+
 //
 // decision_function
 //
@@ -1853,6 +1961,18 @@ static decision_function svm_train_one(
 			si.upper_bound = Malloc(double,2*prob->l); 
  			solve_nu_svr(prob,param,alpha,&si);
  			break;
+        case SVDD:
+			si.upper_bound = Malloc(double,2*prob->l); 
+            solve_svdd(prob,param,alpha,&si);
+            break;
+        case R2:
+			si.upper_bound = Malloc(double,2*prob->l); 
+            solve_r2(prob,param,alpha,&si);
+            break;
+        case R2q:
+			si.upper_bound = Malloc(double,2*prob->l); 
+            solve_r2q(prob,param,alpha,&si);
+            break;
 	}
 
         *status |= si.solve_timed_out;
