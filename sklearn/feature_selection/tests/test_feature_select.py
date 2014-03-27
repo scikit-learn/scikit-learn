@@ -235,6 +235,18 @@ def test_select_kbest_all():
     X_r = univariate_filter.fit(X, y).transform(X)
     assert_array_equal(X, X_r)
 
+def test_select_kbest_zero():
+    """
+    Test whether k=0 correctly returns no features.
+    """
+    X, y = make_classification(n_samples=20, n_features=10,
+                               shuffle=False, random_state=0)
+
+    univariate_filter = SelectKBest(f_classif, k=0)
+    univariate_filter.fit(X, y).transform(X)
+    support = univariate_filter.get_support()
+    gtruth= np.zeros(10, dtype=bool)
+    assert_array_equal(support, gtruth)
 
 def test_select_fpr_classif():
     """
