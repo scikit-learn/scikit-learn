@@ -1098,7 +1098,9 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
         Array of scores of the estimator for each run of the cross validation.
     """
     X, y = check_arrays(X, y, sparse_format='csr', allow_lists=True)
-    y = np.asarray(y)
+    if y is not None:
+        y = np.asarray(y)
+
     cv = _check_cv(cv, X, y, classifier=is_classifier(estimator))
     scorer = check_scoring(estimator, score_func=score_func, scoring=scoring)
     # We clone the estimator to make sure that all the folds are
