@@ -3,8 +3,9 @@ import scipy.sparse as sp
 from numpy.testing import assert_array_almost_equal, assert_array_equal
 
 from sklearn.datasets import make_classification
-from sklearn.utils.sparsefuncs import assign_rows_csr, mean_variance_axis0
-
+from sklearn.utils.sparsefuncs import (assign_rows_csr, mean_variance_axis0,
+                                       inplace_csc_column_scale,
+                                       inplace_csr_column_scale)
 
 def test_mean_variance_axis0():
     X, _ = make_classification(5, 4, random_state=0)
@@ -39,3 +40,19 @@ def test_densify_rows():
 
     assign_rows_csr(X, rows, np.arange(out.shape[0])[::-1], out)
     assert_array_equal(out, X[rows].toarray()[::-1])
+
+
+def test_inplace_column_scale():
+    rng = np.random.RandomState(0)
+    X = sp.rand(100, 200, 0.05)
+    Xr = X.tocsr()
+    Xc = X.tocsc()
+    XA = X.toarray()
+    scale = rng.rand(200)
+    XA *= scale
+
+    inplace_csc_column_scale(Xc, scale)
+    inplace_csr_column_scale(Xr, scale)
+    assert_array_almost_equal(Xr.toarray(), Xc.toarray())
+    assert_array_almost_equal(XA, Xc.toarray())
+    assert_array_almost_equal(XA, Xr.toarray())
