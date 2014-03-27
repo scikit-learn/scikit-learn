@@ -145,7 +145,9 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
             raise ValueError("DummyClassifier not fitted.")
 
         X = safe_asarray(X)
-        n_samples = X.shape[0]
+        # numpy random_state expects Python int and not long as size argument
+        # under Windows
+        n_samples = int(X.shape[0])
         rs = check_random_state(self.random_state)
 
         n_classes_ = self.n_classes_
@@ -208,7 +210,9 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
             raise ValueError("DummyClassifier not fitted.")
 
         X = safe_asarray(X)
-        n_samples = X.shape[0]
+        # numpy random_state expects Python int and not long as size argument
+        # under Windows
+        n_samples = int(X.shape[0])
         rs = check_random_state(self.random_state)
 
         n_classes_ = self.n_classes_
