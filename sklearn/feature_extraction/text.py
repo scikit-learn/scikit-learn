@@ -94,6 +94,7 @@ class VectorizerMixin(object):
     """Provides common code for text vectorizers (tokenization logic)."""
 
     _white_spaces = re.compile(r"\s\s+")
+    normalize_whitespace = True
 
     def decode(self, doc):
         """Decode the input into a string of unicode symbols
@@ -133,7 +134,8 @@ class VectorizerMixin(object):
     def _char_ngrams(self, text_document):
         """Tokenize text_document into a sequence of character n-grams"""
         # normalize white spaces
-        text_document = self._white_spaces.sub(" ", text_document)
+        if self.normalize_whitespace:
+            text_document = self._white_spaces.sub(" ", text_document)
 
         text_len = len(text_document)
         ngrams = []
@@ -580,6 +582,10 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
 
     dtype : type, optional
         Type of the matrix returned by fit_transform() or transform().
+    
+    normalize_whitespace: boolean, True by default
+        If True, whitespace in the document is normalized. If False, no such
+        normalization occurs.
 
     Attributes
     ----------
@@ -604,7 +610,8 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
                  stop_words=None, token_pattern=r"(?u)\b\w\w+\b",
                  ngram_range=(1, 1), analyzer='word',
                  max_df=1.0, min_df=1, max_features=None,
-                 vocabulary=None, binary=False, dtype=np.int64):
+                 vocabulary=None, binary=False, dtype=np.int64,
+                 normalize_whitespace=True):
         self.input = input
         self.encoding = encoding
         self.decode_error = decode_error
@@ -665,6 +672,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
             self.fixed_vocabulary = False
         self.binary = binary
         self.dtype = dtype
+        self.normalize_whitespace = normalize_whitespace
 
     def _sort_features(self, X, vocabulary):
         """Sort features by name
@@ -1140,6 +1148,10 @@ class TfidfVectorizer(CountVectorizer):
 
     sublinear_tf : boolean, optional
         Apply sublinear tf scaling, i.e. replace tf with 1 + log(tf).
+    
+    normalize_whitespace: boolean, True by default
+        If True, whitespace in the document is normalized. If False, no such
+        normalization occurs.
 
     See also
     --------
@@ -1161,7 +1173,7 @@ class TfidfVectorizer(CountVectorizer):
                  ngram_range=(1, 1), max_df=1.0, min_df=1,
                  max_features=None, vocabulary=None, binary=False,
                  dtype=np.int64, norm='l2', use_idf=True, smooth_idf=True,
-                 sublinear_tf=False):
+                 sublinear_tf=False, normalize_whitespace=True):
 
         super(TfidfVectorizer, self).__init__(
             input=input, charset=charset, charset_error=charset_error,
@@ -1171,7 +1183,7 @@ class TfidfVectorizer(CountVectorizer):
             stop_words=stop_words, token_pattern=token_pattern,
             ngram_range=ngram_range, max_df=max_df, min_df=min_df,
             max_features=max_features, vocabulary=vocabulary, binary=binary,
-            dtype=dtype)
+            dtype=dtype, normalize_whitespace=normalize_whitespace)
 
         self._tfidf = TfidfTransformer(norm=norm, use_idf=use_idf,
                                        smooth_idf=smooth_idf,
