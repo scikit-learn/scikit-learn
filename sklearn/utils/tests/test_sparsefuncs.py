@@ -3,9 +3,10 @@ import scipy.sparse as sp
 from numpy.testing import assert_array_almost_equal, assert_array_equal
 
 from sklearn.datasets import make_classification
-from sklearn.utils.sparsefuncs import (assign_rows_csr, mean_variance_axis0,
-                                       inplace_csc_column_scale,
-                                       inplace_csr_column_scale)
+from sklearn.utils.sparsefuncs import mean_variance_axis0
+from sklearn.utils.sparsefuncs_fast import (assign_rows_csr,
+                                            inplace_csc_column_scale,
+                                            inplace_csr_column_scale)
 
 def test_mean_variance_axis0():
     X, _ = make_classification(5, 4, random_state=0)
