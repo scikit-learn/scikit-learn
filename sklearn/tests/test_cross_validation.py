@@ -481,9 +481,9 @@ def test_cross_val_score():
         scores = cval.cross_val_score(clf, X_sparse, X)
         assert_array_equal(scores, clf.score(X_sparse, X))
 
-    # test with X as list
+    # test with X and y as list
     clf = MockListClassifier()
-    scores = cval.cross_val_score(clf, X.tolist(), y)
+    scores = cval.cross_val_score(clf, X.tolist(), y.tolist())
 
     assert_raises(ValueError, cval.cross_val_score, clf, X, y,
                   scoring="sklearn")
