@@ -408,6 +408,8 @@ class SelectKBest(_ScoreFilter):
         k = self.k
         if k == 'all':
             return np.ones(self.scores_.shape, dtype=bool)
+        elif k == 0:
+            return np.zeros(self.scores_.shape, dtype=bool)
         if k > len(self.scores_):
             raise ValueError("Cannot select %d features among %d. "
                              "Use k='all' to return all features."
