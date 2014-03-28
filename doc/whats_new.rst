@@ -178,6 +178,10 @@ Changelog
      <neural_network.BernoulliRBM>`
      By `Danny Sullivan`_.
 
+   - Raise error in :class:`cluster.FeatureAgglomeration` and
+     :class:`cluster.WardAgglomeration` when no samples are given,
+     rather than returning meaningless clustering.
+
 
 API changes summary
 -------------------
