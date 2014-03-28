@@ -1494,11 +1494,60 @@ private:
 	double *QD;
 };
 
+class R2_Qq: public Kernel
+{
+    public:
+        R2_Qq(const PREFIX(problem) & prob, const svm_parameter& param) 
+            :Kernel(prob.l, prob.x, param) 
+        {
+            cache = new Cache(prob.l,(int)(param.cache_size*(1<<20)));
+            this->C = param.C;
+            QD = new double[prob.l];
+            for(int i=0;i<prob.l;i++)
+                QD[i]= (Qfloat)(this->*kernel_function)(i,i) + 1/C;
+        }
+
+        Qfloat *get_Q(int i, int len) const
+        {
+            Qfloat *data;
+            int start;
+            if((start = cache->get_data(i,&data,len)) < len)
+            {
+                for(int j=start;j<len;j++)
+                    data[j] = (Qfloat)(this->*kernel_function)(i,j);
+                if(i >= start && i < len)
+                    data[i] += 1/C; 
+            }
+            return data;
+        }
+
+        double *get_QD() const
+        {
+            return QD;
+        }
+
+        void swap_index(int i, int j) const
+        {
+            cache->swap_index(i,j);
+            Kernel::swap_index(i,j);
+            swap(QD[i],QD[j]);
+        }
+
+        ~R2_Qq() 
+        {
+            delete cache;
+        }
+    private:
+        Cache *cache;
+        double C;
+        double *QD;
+};
+
 class SVR_Q: public Kernel
 { 
-public:
-	SVR_Q(const PREFIX(problem)& prob, const svm_parameter& param)
-	:Kernel(prob.l, prob.x, param)
+    public:
+        SVR_Q(const PREFIX(problem)& prob, const svm_parameter& param)
+            :Kernel(prob.l, prob.x, param)
 	{
 		l = prob.l;
 		cache = new Cache(l,(long int)(param.cache_size*(1<<20)));
@@ -1817,38 +1866,43 @@ static void solve_nu_svr(
 }
 
 static void solve_svdd(
-	const svm_problem *prob, const svm_parameter *param,
+	const PREFIX(problem) *prob, const svm_parameter *param,
 	double *alpha, Solver::SolutionInfo* si) 
 {
 	int l = prob->l; 
 	int i,j;
 	double r_square;
-	double C = param->C;
+	double *C = new double[2*l];
 	double *QD = new double[l];
 	double *linear_term = new double[l];
 	schar *ones = new schar[l];
+    double sum;
 	
 	ONE_CLASS_Q Q = ONE_CLASS_Q(*prob, *param); 
+    sum = 0;
 	for(i=0;i<l;i++)
 	{
 		QD[i] = Q.get_QD()[i];
 		linear_term[i] = -0.5 * Q.get_QD()[i];
+        C[i] = prob->W[i]*param->C;
+        sum += C[i];
 	}	
+    sum /= l;
 
-	if(C > (double)1/l)
+	if(sum > (double)1/l)
 	{
 		double sum_alpha = 1;
 		for(i=0;i<l;i++)
 		{
-			alpha[i] = min(C,sum_alpha);
+			alpha[i] = min(C[i],sum_alpha);
 			sum_alpha -= alpha[i];
 			
 			ones[i] = 1;
 		}
 
 		Solver s;
-		s.Solve(l, Q, linear_term, ones, alpha, C, C,
-			param->eps, si, param->shrinking);
+		s.Solve(l, Q, linear_term, ones, alpha, C,
+			param->eps, si, param->shrinking, param->max_iter);
 		
 		// \bar{R} = 2(obj-rho) + sum K_{ii}*alpha_i
 		// because rho = (a^Ta - \bar{R})/2
@@ -1870,9 +1924,9 @@ static void solve_svdd(
 			obj -= QD[i]/2;
 			rho += QD[i]/2;
 			for(j=i+1;j<l;j++)
-				rho += Kernel::k_function(prob->x[i],prob->x[j],*param);
+				rho += Kernel::k_function(prob->x+i, prob->x+j,*param);
 		}
-		si->obj = (obj + rho/l)*C;
+		si->obj = (obj + rho/l)*sum;
 		si->rho = rho / (l*l);
 
 	}	
@@ -1882,11 +1936,12 @@ static void solve_svdd(
 	delete[] linear_term;
 	delete[] QD;
 	delete[] ones;
+    delete[] C;
 
 }
 
 static void solve_r2(
-		const svm_problem *prob, const svm_parameter *param,
+		const PREFIX(problem) *prob, const svm_parameter *param,
 		double *alpha, Solver::SolutionInfo* si)
 {
 	svm_parameter svdd_param = *param;	
@@ -1896,11 +1951,12 @@ static void solve_r2(
 }
 
 static void solve_r2q(
-		const svm_problem *prob, const svm_parameter *param,
+		const PREFIX(problem) *prob, const svm_parameter *param,
 		double *alpha, Solver::SolutionInfo* si)
 {
 	int l = prob->l; 
 	double *linear_term = new double[l];
+    double *C=new double[l];
 	schar *ones = new schar[l];
 	int i;
 
@@ -1910,18 +1966,20 @@ static void solve_r2q(
 
 	for(i=0;i<l;i++)
 	{
-		linear_term[i]=-0.5*(Kernel::k_function(prob->x[i],prob->x[i],*param) + 1.0/param->C);
+        C[i] = INF;
+		linear_term[i]=-0.5*(Kernel::k_function(prob->x+i,prob->x+i,*param) + 1.0/param->C);
 		ones[i] = 1;
 	}
 
 	Solver s;
 	s.Solve(l, R2_Qq(*prob,*param), linear_term, ones,
-			alpha, INF, INF, param->eps, si, param->shrinking);
+			alpha, C, param->eps, si, param->shrinking, param->max_iter);
 
 	info("R^2 = %f\n", -2 *si->obj);
 
 	delete[] linear_term;
 	delete[] ones;
+    delete[] C;
 }
 
 //
@@ -1962,15 +2020,15 @@ static decision_function svm_train_one(
  			solve_nu_svr(prob,param,alpha,&si);
  			break;
         case SVDD:
-			si.upper_bound = Malloc(double,2*prob->l); 
+			si.upper_bound = Malloc(double,prob->l); 
             solve_svdd(prob,param,alpha,&si);
             break;
         case R2:
-			si.upper_bound = Malloc(double,2*prob->l); 
+			si.upper_bound = Malloc(double,prob->l); 
             solve_r2(prob,param,alpha,&si);
             break;
         case R2q:
-			si.upper_bound = Malloc(double,2*prob->l); 
+			si.upper_bound = Malloc(double,prob->l); 
             solve_r2q(prob,param,alpha,&si);
             break;
 	}
