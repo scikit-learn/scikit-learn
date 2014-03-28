@@ -61,7 +61,7 @@ def fetch_covtype(data_home=None, download_if_missing=True,
     """
 
     data_home = get_data_home(data_home=data_home)
-    if sys.version_info.major == 3:
+    if sys.version_info[0] == 3:
         # The zlib compression format use by joblib is not compatible when
         # switching from Python 2 to Python 3, let us use a separate folder
         # under Python 3:
