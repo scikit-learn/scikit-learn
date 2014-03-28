@@ -69,7 +69,9 @@ class CleanCommand(Clean):
                              or filename.endswith('.dll')
                              or filename.endswith('.pyc')):
                     os.unlink(os.path.join(dirpath, filename))
-
+            for dirname in dirnames:
+                if dirname == '__pycache__':
+                    shutil.rmtree(os.path.join(dirpath, dirname))
 
 
 ###############################################################################
