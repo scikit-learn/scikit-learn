@@ -1924,7 +1924,11 @@ static void solve_svdd(
 			obj -= QD[i]/2;
 			rho += QD[i]/2;
 			for(j=i+1;j<l;j++)
+#ifdef _DENSE_REP
 				rho += Kernel::k_function(prob->x+i, prob->x+j,*param);
+#else
+				rho += Kernel::k_function(prob->x[i], prob->x[j],*param);
+#endif
 		}
 		si->obj = (obj + rho/l)*sum;
 		si->rho = rho / (l*l);
@@ -1967,7 +1971,11 @@ static void solve_r2q(
 	for(i=0;i<l;i++)
 	{
         C[i] = INF;
+#ifdef _DENSE_REP
 		linear_term[i]=-0.5*(Kernel::k_function(prob->x+i,prob->x+i,*param) + 1.0/param->C);
+#else
+		linear_term[i]=-0.5*(Kernel::k_function(prob->x[i],prob->x[i],*param) + 1.0/param->C);
+#endif
 		ones[i] = 1;
 	}
 
