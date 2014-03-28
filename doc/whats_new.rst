@@ -174,6 +174,10 @@ Changelog
      models: it now uses threads, not separate processes, when ``n_jobs>1``.
      By `Lars Buitinck`_.
 
+   - Raise error in :class:`cluster.FeatureAgglomeration` and
+     :class:`cluster.WardAgglomeration` when no samples are given,
+     rather than returning meaningless clustering.
+
 
 API changes summary
 -------------------

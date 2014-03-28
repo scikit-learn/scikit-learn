@@ -19,7 +19,7 @@ from ..base import BaseEstimator, ClusterMixin
 from ..externals.joblib import Memory
 from ..externals import six
 from ..metrics.pairwise import paired_distances, pairwise_distances
-from ..utils import array2d
+from ..utils import array2d, safe_asarray
 from ..utils.sparsetools import connected_components
 
 from . import _hierarchical
@@ -674,6 +674,11 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         -------
         self
         """
+        X = safe_asarray(X)
+        if not (len(X.shape) == 2 and X.shape[0] > 0):
+            raise ValueError('At least one sample is required to fit the '
+                'model. A data matrix of shape %s was given.'
+                % (X.shape, ))
         return AgglomerativeClustering.fit(self, X.T, **params)
 
 
