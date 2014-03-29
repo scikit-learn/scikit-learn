@@ -6,7 +6,7 @@ import scipy.sparse as sp
 from .sparsefuncs_fast import (csr_mean_variance_axis0,
                                csc_mean_variance_axis0,
                                inplace_csr_column_scale,
-                               inplace_csc_column_scale)                
+                               inplace_csc_column_scale)
 
 def mean_variance_axis0(X):
     """Compute mean and variance along axis 0 on a CSR or CSC matrix

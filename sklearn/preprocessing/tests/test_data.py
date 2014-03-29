@@ -674,8 +674,8 @@ def test_one_hot_encoder_sparse():
     # test negative input to transform
     enc.fit([[0], [1]])
     assert_raises(ValueError, enc.transform, [[0], [-1]])
-    
-def test_one_hot_encoder_dense():    
+
+def test_one_hot_encoder_dense():
     """check for sparse=False"""
     X = [[3, 2, 1], [0, 1, 1]]
     enc = OneHotEncoder(sparse=False)
