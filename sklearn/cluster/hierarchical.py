@@ -405,7 +405,7 @@ def linkage_tree(X, connectivity=None, n_components=None,
     heapify(inertia)
 
     # prepare the main fields
-    parent = np.arange(n_nodes, dtype=np.int)
+    parent = np.arange(n_nodes, dtype=np.intp)
     used_node = np.ones(n_nodes, dtype=np.intp)
     children = []
 
