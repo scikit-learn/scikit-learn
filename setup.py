@@ -28,6 +28,16 @@ ISRELEASED          = False
 VERSION             = '%d.%d.%d' % (MAJOR, MINOR, MICRO)
 
 
+if sys.version_info[0] < 3:
+    import __builtin__ as builtins
+else:
+    import builtins
+
+# This is a bit (!) hackish: we are setting a global variable so that the main
+# sklearn __init__ can detect if it is being loaded by the setup routine, to
+# avoid attempting to load components that aren't built yet.
+builtins.__SKLEARN_SETUP__ = True
+
 # Return the git revision as a string
 def git_version():
     def _minimal_ext_cmd(cmd):

@@ -15,20 +15,30 @@ See http://scikit-learn.org for complete documentation.
 import sys
 import re
 import warnings
-from . import __check_build
-from .base import clone
-from .version import full_version as __version__
 
 # Make sure that DeprecationWarning within this package always gets printed
 warnings.filterwarnings('always', category=DeprecationWarning,
                         module='^{0}\.'.format(re.escape(__name__)))
 
+try:
+    # This builtins variable is defined by setup.py when building the project.
+    in_setup = __SKLEARN_SETUP__
+except NameError:
+    in_setup = False
 
-def test(*args, **kwargs):
-    import warnings
-    # Not using a DeprecationWarning, as they are turned off by
-    # default
-    warnings.warn("""sklearn.test() is no longer supported to run the
+if not in_setup:
+    # Trigger the build check only when run once the build is actually
+    # complete.
+    from . import __check_build
+    from .base import clone
+    from .version import full_version as __version__
+
+
+    def test(*args, **kwargs):
+        import warnings
+        # Not using a DeprecationWarning, as they are turned off by
+        # default
+        warnings.warn("""sklearn.test() is no longer supported to run the
 scikit-learn test suite.
 
 After installation, you can launch the test suite from outside the
@@ -43,18 +53,18 @@ This function, `sklearn.test()` does not do anything. It does not run
 the tests and will be removed in release 0.16.
 """, stacklevel=2)
 
-# The following line is useful so that nosetests doesn't consider
-# "test" as a test function
-test.__test__ = False
+    # The following line is useful so that nosetests doesn't consider
+    # "test" as a test function
+    test.__test__ = False
 
-__all__ = ['cross_validation', 'cluster', 'covariance',
-           'datasets', 'decomposition', 'feature_extraction',
-           'feature_selection', 'semi_supervised',
-           'gaussian_process', 'grid_search', 'hmm', 'lda', 'linear_model',
-           'metrics', 'mixture', 'naive_bayes', 'neighbors', 'pipeline',
-           'preprocessing', 'qda', 'svm', 'clone',
-           'cross_decomposition',
-           'isotonic', 'pls']
+    __all__ = ['cross_validation', 'cluster', 'covariance',
+               'datasets', 'decomposition', 'feature_extraction',
+               'feature_selection', 'semi_supervised',
+               'gaussian_process', 'grid_search', 'hmm', 'lda', 'linear_model',
+               'metrics', 'mixture', 'naive_bayes', 'neighbors', 'pipeline',
+               'preprocessing', 'qda', 'svm', 'clone',
+               'cross_decomposition',
+               'isotonic', 'pls']
 
 
 def setup_module(module):
