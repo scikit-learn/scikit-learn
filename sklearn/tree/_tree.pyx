@@ -2397,8 +2397,7 @@ cdef class Tree:
 
         # value memory is initialised to 0 to enable classifier argmax
         if capacity > self.capacity:
-            memset((<void*> self.value) + self.capacity *
-                   self.value_stride * sizeof(double), 0,
+            memset(<void*>(self.value + self.capacity * self.value_stride), 0,
                    (capacity - self.capacity) * self.value_stride *
                    sizeof(double))
 
