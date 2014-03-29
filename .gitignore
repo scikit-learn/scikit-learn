@@ -52,3 +52,6 @@ benchmarks/bench_covertype_data/
 *.prefs
 .pydevproject
 .idea
+
+# Generated when running setup.py
+sklearn/version.py
