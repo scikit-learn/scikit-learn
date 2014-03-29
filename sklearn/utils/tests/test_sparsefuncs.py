@@ -37,10 +37,11 @@ def test_densify_rows():
                        [0, 0, 0],
                        [9, 8, 7],
                        [4, 0, 5]], dtype=np.float64)
-    rows = np.array([0, 2, 3], dtype=np.int)
+    rows = np.array([0, 2, 3], dtype=np.intp)
     out = np.ones((rows.shape[0], X.shape[1]), dtype=np.float64)
 
-    assign_rows_csr(X, rows, np.arange(out.shape[0])[::-1], out)
+    assign_rows_csr(X, rows, 
+                    np.arange(out.shape[0], dtype=np.intp)[::-1], out)
     assert_array_equal(out, X[rows].toarray()[::-1])
 
 
