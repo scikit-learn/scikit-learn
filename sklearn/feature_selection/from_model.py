@@ -9,18 +9,81 @@ from ..utils import safe_mask, atleast2d_or_csc, deprecated
 from .base import SelectorMixin
 
 
+def _get_feature_importances(estimator, X):
+    """Retrieve or aggregate feature importances from estimator"""
+    if hasattr(estimator, "feature_importances_"):
+        importances = estimator.feature_importances_
+        if importances is None:
+            raise ValueError("Importance weights not computed. Please set "
+                             "the compute_importances parameter before fit.")
+
+    elif hasattr(estimator, "coef_"):
+        if estimator.coef_.ndim == 1:
+            importances = np.abs(estimator.coef_)
+
+        else:
+            importances = np.sum(np.abs(estimator.coef_), axis=0)
+
+    else:
+        raise ValueError("Missing `feature_importances_` or `coef_`"
+                         " attribute, did you forget to set the "
+                         "estimator's parameter to compute it?")
+    if len(importances) != X.shape[1]:
+        raise ValueError("X has different number of features than"
+                         " during model fitting.")
+
+    return importances
+
+
+def _calculate_threshold(estimator, importances, threshold):
+    """Interpret the threshold value"""
+
+    if threshold is None:
+        # determine default from estimator
+        if hasattr(estimator, "penalty") and estimator.penalty == "l1":
+            # the natural default threshold is 0 when l1 penalty was used
+            threshold = 1e-5
+        else:
+            threshold = "mean"
+
+    if isinstance(threshold, six.string_types):
+        if "*" in threshold:
+            scale, reference = threshold.split("*")
+            scale = float(scale.strip())
+            reference = reference.strip()
+
+            if reference == "median":
+                reference = np.median(importances)
+            elif reference == "mean":
+                reference = np.mean(importances)
+            else:
+                raise ValueError("Unknown reference: " + reference)
+
+            threshold = scale * reference
+
+        elif threshold == "median":
+            threshold = np.median(importances)
+
+        elif threshold == "mean":
+            threshold = np.mean(importances)
+
+    else:
+        threshold = float(threshold)
+
+    return threshold
+
+
 class _LearntSelectorMixin(TransformerMixin):
     # Note because of the extra threshold parameter in transform, this does
     # not naturally extend from SelectorMixin
-
     """Transformer mixin selecting features based on importance weights.
 
     This implementation can be mixin on any estimator that exposes a
     ``feature_importances_`` or ``coef_`` attribute to evaluate the relative
     importance of individual features for feature selection.
     """
-    @deprecated('Support to use directly on estimators '
-                'will be removed in version 0.17')
+    @deprecated('Support to use estimators as feature selectors will be '
+                'removed in version 0.17. Use SelectFromModel instead.')
     def transform(self, X, threshold=None):
         """Reduce X to its most important features.
 
@@ -44,40 +107,11 @@ class _LearntSelectorMixin(TransformerMixin):
             The input samples with only the selected features.
         """
         X = atleast2d_or_csc(X)
+        importances = _get_feature_importances(self, X)
 
-        if isinstance(self, SelectorMixin
-                      ) and isinstance(self, TransformerMixin):
-            importances = self._set_importances(self.estimator, X)
-            threshold = self._set_threshold(self.estimator, self.threshold)
-        else:
-            importances = self._set_importances(self, X)
-            threshold = self._set_threshold(self, threshold)
-
-        if isinstance(threshold, six.string_types):
-            if "*" in threshold:
-                scale, reference = threshold.split("*")
-                scale = float(scale.strip())
-                reference = reference.strip()
-
-                if reference == "median":
-                    reference = np.median(importances)
-                elif reference == "mean":
-                    reference = np.mean(importances)
-                else:
-                    raise ValueError("Unknown reference: " + reference)
-
-                threshold = scale * reference
-
-            elif threshold == "median":
-                threshold = np.median(importances)
-
-            elif threshold == "mean":
-                threshold = np.mean(importances)
-
-        else:
-            threshold = float(threshold)
-
-        self.threshold_ = threshold
+        if threshold is None:
+            threshold = getattr(self, 'threshold', None)
+        threshold = _calculate_threshold(self, importances, threshold)
 
         # Selection
         try:
@@ -89,54 +123,12 @@ class _LearntSelectorMixin(TransformerMixin):
 
         if np.any(mask):
             mask = safe_mask(X, mask)
-            self._support_mask = mask
             return X[:, mask]
         else:
             raise ValueError("Invalid threshold: all features are discarded.")
 
-    @staticmethod
-    def _set_importances(estimator, X):
-        # Retrieve importance vector
-        if hasattr(estimator, "feature_importances_"):
-            importances = estimator.feature_importances_
-            if importances is None:
-                raise ValueError("Importance weights not computed. Please set"
-                                 " the compute_importances parameter before "
-                                 "fit.")
 
-        elif hasattr(estimator, "coef_"):
-            if estimator.coef_.ndim == 1:
-                importances = np.abs(estimator.coef_)
-
-            else:
-                importances = np.sum(np.abs(estimator.coef_), axis=0)
-
-        else:
-            raise ValueError("Missing `feature_importances_` or `coef_`"
-                             " attribute, did you forget to set the "
-                             "estimator's parameter to compute it?")
-        if len(importances) != X.shape[1]:
-            raise ValueError("X has different number of features than"
-                             " during model fitting.")
-
-        return importances
-
-    @staticmethod
-    def _set_threshold(estimator, threshold):
-        # Retrieve threshold
-        if threshold is None:
-            if hasattr(estimator, "penalty") and estimator.penalty == "l1":
-                # the natural default threshold is 0 when l1 penalty was used
-                threshold = getattr(estimator, "threshold", 1e-5)
-            else:
-                threshold = getattr(estimator, "threshold", "mean")
-
-        return threshold
-
-
-class SelectFromModel(BaseEstimator, _LearntSelectorMixin,
-                      SelectorMixin):
-
+class SelectFromModel(BaseEstimator, SelectorMixin):
     """Meta-transformer for selecting features based on importance
        weights.
 
@@ -160,6 +152,9 @@ class SelectFromModel(BaseEstimator, _LearntSelectorMixin,
     `estimator_`: an estimator
         The base estimator from which the transformer is built.
 
+    `scores_`: array, shape=(n_features,)
+        The importance of each feature according to the fit model.
+
     `threshold_`: float
         The threshold value used for feature selection.
     """
@@ -169,7 +164,9 @@ class SelectFromModel(BaseEstimator, _LearntSelectorMixin,
         self.threshold = threshold
 
     def _get_support_mask(self):
-        return self._support_mask
+        self.threshold_ = _calculate_threshold(self.estimator, self.scores_,
+                                               self.threshold)
+        return self.scores_ >= self.threshold_
 
     def fit(self, X, y, **fit_params):
         """Trains the estimator in order to perform transformation
@@ -191,16 +188,7 @@ class SelectFromModel(BaseEstimator, _LearntSelectorMixin,
         self : object
             Returns self.
         """
-
-        # Validate and make estimator
-        if self.estimator is not None:
-            self.estimator_ = self.estimator
-        else:
-            raise ValueError("estimator cannot be None")
-
-        self.estimator = clone(self.estimator_)
-
-        # Fit the estimator
-        self.estimator.fit(X, y, **fit_params)
-
+        self.estimator_ = clone(self.estimator)
+        self.estimator_.fit(X, y, **fit_params)
+        self.scores_ = _get_feature_importances(self.estimator_, X)
         return self
