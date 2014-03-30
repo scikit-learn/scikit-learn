@@ -903,8 +903,11 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
     informative than features that occur in a small fraction of the training
     corpus.
 
-    In the SMART notation used in IR, this class implements several tf-idf
-    variants:
+    The actual formula used for tf-idf is tf * (idf + 1) = tf + tf * idf,
+    instead of tf * idf. The effect of this is that terms with zero idf, i.e.
+    that occur in all documents of a training set, will not be entirely
+    ignored. The formulas used to compute tf and idf depend on parameter
+    settings that correspond to the SMART notation used in IR, as follows:
 
     Tf is "n" (natural) by default, "l" (logarithmic) when sublinear_tf=True.
     Idf is "t" when use_idf is given, "n" (none) otherwise.
@@ -962,7 +965,8 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
             df += int(self.smooth_idf)
             n_samples += int(self.smooth_idf)
 
-            # avoid division by zeros for features that occur in all documents
+            # log1p instead of log makes sure terms with zero idf don't get
+            # suppressed entirely
             idf = np.log(float(n_samples) / df) + 1.0
             self._idf_diag = sp.spdiags(idf,
                                         diags=0, m=n_features, n=n_features)
