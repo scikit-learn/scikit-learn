@@ -3,30 +3,31 @@
 
 import numpy as np
 
-from ..base import TransformerMixin, BaseEstimator, clone
+from ..base import TransformerMixin, MetaEstimatorMixin, BaseEstimator, clone
 from ..externals import six
-from ..utils import safe_mask, atleast2d_or_csc, check_arrays
+from ..utils import safe_mask, atleast2d_or_csc, check_arrays, deprecated
 from .base import SelectorMixin
 
 
 class _LearntSelectorMixin(TransformerMixin):
     # Note because of the extra threshold parameter in transform, this does
     # not naturally extend from SelectorMixin
+
     """Transformer mixin selecting features based on importance weights.
 
     This implementation can be mixin on any estimator that exposes a
     ``feature_importances_`` or ``coef_`` attribute to evaluate the relative
     importance of individual features for feature selection.
-    
+
     Attributes
     ----------
     `threshold_`: float
         The threshold value used for feature selection.
-        
+
     `support_mask_`: an estimator
         An index that selected the retained features from the feature vector.
     """
-    
+
     def transform(self, X, threshold=None):
         """Reduce X to its most important features.
 
@@ -50,12 +51,13 @@ class _LearntSelectorMixin(TransformerMixin):
             The input samples with only the selected features.
         """
         X = atleast2d_or_csc(X)
-        
+
         if isinstance(self, MetaEstimatorMixin):
-            importances, threshold = self._set_parameters_meta_transfomer(X, self.threshold)
+            importances, threshold = self._set_parameters_meta_transfomer(
+                X, self.threshold)
         else:
             importances, threshold = self._set_parameters(X, threshold)
-            
+
         if isinstance(threshold, six.string_types):
             if "*" in threshold:
                 scale, reference = threshold.split("*")
@@ -79,7 +81,7 @@ class _LearntSelectorMixin(TransformerMixin):
 
         else:
             threshold = float(threshold)
-        
+
         self.threshold_ = threshold
 
         # Selection
@@ -96,9 +98,8 @@ class _LearntSelectorMixin(TransformerMixin):
             return X[:, mask]
         else:
             raise ValueError("Invalid threshold: all features are discarded.")
-            
 
-    @deprecated('This will be removed in version 0.17')    
+    @deprecated('This will be removed in version 0.17')
     def _set_parameters(self, X, threshold):
         # Retrieve importance vector
         if hasattr(self, "feature_importances_"):
@@ -130,10 +131,9 @@ class _LearntSelectorMixin(TransformerMixin):
                 threshold = getattr(self, "threshold", 1e-5)
             else:
                 threshold = getattr(self, "threshold", "mean")
-        
-        return importances, threshold        
-        
-    
+
+        return importances, threshold
+
     def _set_parameters_meta_transfomer(self, X, threshold):
         # Retrieve importance vector
         if hasattr(self.estimator, "feature_importances_"):
@@ -160,17 +160,19 @@ class _LearntSelectorMixin(TransformerMixin):
 
         # Retrieve threshold
         if threshold is None:
-            if hasattr(self.estimator, "penalty") and self.estimator.penalty == "l1":
+            if (hasattr(self.estimator,
+                        "penalty") and self.estimator.penalty == "l1"):
                 # the natural default threshold is 0 when l1 penalty was used
                 threshold = getattr(self.estimator, "threshold", 1e-5)
             else:
                 threshold = getattr(self.estimator, "threshold", "mean")
-                
-        return importances, threshold
-    
 
-class SelectFromModel(BaseEstimator, _LearntSelectorMixin, 
+        return importances, threshold
+
+
+class SelectFromModel(BaseEstimator, _LearntSelectorMixin,
                       MetaEstimatorMixin, SelectorMixin):
+
     """Meta-transformer for selecting features based on importance
        weights.
 
@@ -215,7 +217,7 @@ class SelectFromModel(BaseEstimator, _LearntSelectorMixin,
     def __init__(self, estimator=None, threshold=None):
         self.estimator = estimator
         self.threshold = threshold
-        
+
     def _get_support_mask(self):
         return self.support_mask_
 
@@ -239,8 +241,8 @@ class SelectFromModel(BaseEstimator, _LearntSelectorMixin,
         self : object
             Returns self.
         """
-        
-        #Validate and make estimator
+
+        # Validate and make estimator
         self._validate_estimator()
         self.estimator = self._make_estimator()
 
@@ -251,4 +253,3 @@ class SelectFromModel(BaseEstimator, _LearntSelectorMixin,
         self.estimator.fit(X, y, **fit_params)
 
         return self
-        
