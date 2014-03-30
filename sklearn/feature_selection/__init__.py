@@ -34,5 +34,5 @@ __all__ = ['GenericUnivariateSelect',
            'chi2',
            'f_classif',
            'f_oneway',
-           'f_regression'
+           'f_regression',
            'SelectFromModel']

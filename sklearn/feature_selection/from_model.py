@@ -52,7 +52,10 @@ class _LearntSelectorMixin(TransformerMixin):
         """
         X = atleast2d_or_csc(X)
 
-        if isinstance(self, MetaEstimatorMixin):
+        if isinstance(self, MetaEstimatorMixin
+                      ) and isinstance(self, SelectorMixin
+                                       ) and isinstance(self,
+                                                        TransformerMixin):
             importances, threshold = self._set_parameters_meta_transfomer(
                 X, self.threshold)
         else:
