@@ -289,6 +289,9 @@ def test_logistic_sigmoid():
 
 def test_fast_dot():
     """Check fast dot blas wrapper function"""
+    if fast_dot is np.dot:
+        return
+
     rng = np.random.RandomState(42)
     A = rng.random_sample([2, 10])
     B = rng.random_sample([2, 10])
@@ -302,28 +305,28 @@ def test_fast_dot():
     if has_blas:
         # Test _fast_dot for invalid input.
 
-            # Maltyped data.
-            for dt1, dt2 in [['f8', 'f4'], ['i4', 'i4']]:
-                assert_raises(ValueError, _fast_dot, A.astype(dt1),
-                              B.astype(dt2).T)
+        # Maltyped data.
+        for dt1, dt2 in [['f8', 'f4'], ['i4', 'i4']]:
+            assert_raises(ValueError, _fast_dot, A.astype(dt1),
+                          B.astype(dt2).T)
 
-            # Malformed data.
+        # Malformed data.
 
-            ## ndim == 0
-            E = np.empty(0)
-            assert_raises(ValueError, _fast_dot, E, E)
+        ## ndim == 0
+        E = np.empty(0)
+        assert_raises(ValueError, _fast_dot, E, E)
 
-            ## ndim == 1
-            assert_raises(ValueError, _fast_dot, A, A[0])
+        ## ndim == 1
+        assert_raises(ValueError, _fast_dot, A, A[0])
 
-            ## ndim > 2
-            assert_raises(ValueError, _fast_dot, A.T, np.array([A, A]))
+        ## ndim > 2
+        assert_raises(ValueError, _fast_dot, A.T, np.array([A, A]))
 
-            ## min(shape) == 1
-            assert_raises(ValueError, _fast_dot, A, A[0, :][None, :])
+        ## min(shape) == 1
+        assert_raises(ValueError, _fast_dot, A, A[0, :][None, :])
 
-            # test for matrix mismatch error
-            assert_raises(ValueError, _fast_dot, A, A)
+        # test for matrix mismatch error
+        assert_raises(ValueError, _fast_dot, A, A)
 
     # Test cov-like use case + dtypes.
     for dtype in ['f8', 'f4']:
