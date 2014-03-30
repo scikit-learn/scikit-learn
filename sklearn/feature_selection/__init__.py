@@ -20,7 +20,7 @@ from .variance_threshold import VarianceThreshold
 from .rfe import RFE
 from .rfe import RFECV
 
-from .select_from_model import SelectFromModel
+from .from_model import SelectFromModel
 
 __all__ = ['GenericUnivariateSelect',
            'RFE',
