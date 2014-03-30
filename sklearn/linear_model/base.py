@@ -53,8 +53,9 @@ def sparse_center_data(X, y, fit_intercept, normalize=False):
         else:
             X = sp.csc_matrix(X, copy=normalize)
 
-        X_mean, X_std = mean_variance_axis0(X)
+        X_mean, X_var = mean_variance_axis0(X)
         if normalize:
+            # transform variance to std in-place
             # XXX: currently scaled to variance=n_samples to match center_data
             X_var *= X.shape[0]
             X_std = np.sqrt(X_var, X_var)
