@@ -200,6 +200,10 @@ class SelectFromModel(BaseEstimator, _LearntSelectorMixin,
         The base estimator from which the transformer is built.
     """
 
+    def __init__(self, estimator, threshold=None):
+        self.estimator = estimator
+        self.threshold = threshold
+
     def _validate_estimator(self, default=None):
         """Check the estimator and set the `estimator_` attribute."""
         if self.estimator is not None:
@@ -216,10 +220,6 @@ class SelectFromModel(BaseEstimator, _LearntSelectorMixin,
         estimator = clone(self.estimator_)
 
         return estimator
-
-    def __init__(self, estimator=None, threshold=None):
-        self.estimator = estimator
-        self.threshold = threshold
 
     def _get_support_mask(self):
         return self.support_mask_
