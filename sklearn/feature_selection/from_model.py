@@ -3,9 +3,9 @@
 
 import numpy as np
 
-from ..base import TransformerMixin, MetaEstimatorMixin, BaseEstimator, clone
+from ..base import TransformerMixin, BaseEstimator, clone
 from ..externals import six
-from ..utils import safe_mask, atleast2d_or_csc, check_arrays, deprecated
+from ..utils import safe_mask, atleast2d_or_csc, deprecated
 from .base import SelectorMixin
 
 
@@ -18,16 +18,9 @@ class _LearntSelectorMixin(TransformerMixin):
     This implementation can be mixin on any estimator that exposes a
     ``feature_importances_`` or ``coef_`` attribute to evaluate the relative
     importance of individual features for feature selection.
-
-    Attributes
-    ----------
-    `threshold_`: float
-        The threshold value used for feature selection.
-
-    `support_mask_`: an estimator
-        An index that selected the retained features from the feature vector.
     """
-
+    @deprecated('Support to use directly on estimators '
+                'will be removed in version 0.17')
     def transform(self, X, threshold=None):
         """Reduce X to its most important features.
 
@@ -52,14 +45,13 @@ class _LearntSelectorMixin(TransformerMixin):
         """
         X = atleast2d_or_csc(X)
 
-        if isinstance(self, MetaEstimatorMixin
-                      ) and isinstance(self, SelectorMixin
-                                       ) and isinstance(self,
-                                                        TransformerMixin):
-            importances, threshold = self._set_parameters_meta_transfomer(
-                X, self.threshold)
+        if isinstance(self, SelectorMixin
+                      ) and isinstance(self, TransformerMixin):
+            importances = self._set_importances(self.estimator, X)
+            threshold = self._set_threshold(self.estimator, self.threshold)
         else:
-            importances, threshold = self._set_parameters(X, threshold)
+            importances = self._set_importances(self.estimator, X)
+            threshold = self._set_threshold(self, threshold)
 
         if isinstance(threshold, six.string_types):
             if "*" in threshold:
@@ -97,27 +89,27 @@ class _LearntSelectorMixin(TransformerMixin):
 
         if np.any(mask):
             mask = safe_mask(X, mask)
-            self.support_mask_ = mask
+            self._support_mask = mask
             return X[:, mask]
         else:
             raise ValueError("Invalid threshold: all features are discarded.")
 
-    @deprecated('This will be removed in version 0.17')
-    def _set_parameters(self, X, threshold):
+    @staticmethod
+    def _set_importances(estimator, X):
         # Retrieve importance vector
-        if hasattr(self, "feature_importances_"):
-            importances = self.feature_importances_
+        if hasattr(estimator, "feature_importances_"):
+            importances = estimator.feature_importances_
             if importances is None:
                 raise ValueError("Importance weights not computed. Please set"
                                  " the compute_importances parameter before "
                                  "fit.")
 
-        elif hasattr(self, "coef_"):
-            if self.coef_.ndim == 1:
-                importances = np.abs(self.coef_)
+        elif hasattr(estimator, "coef_"):
+            if estimator.coef_.ndim == 1:
+                importances = np.abs(estimator.coef_)
 
             else:
-                importances = np.sum(np.abs(self.coef_), axis=0)
+                importances = np.sum(np.abs(estimator.coef_), axis=0)
 
         else:
             raise ValueError("Missing `feature_importances_` or `coef_`"
@@ -127,54 +119,23 @@ class _LearntSelectorMixin(TransformerMixin):
             raise ValueError("X has different number of features than"
                              " during model fitting.")
 
+        return importances
+
+    @staticmethod
+    def _set_threshold(estimator, threshold):
         # Retrieve threshold
         if threshold is None:
-            if hasattr(self, "penalty") and self.penalty == "l1":
+            if hasattr(estimator, "penalty") and estimator.penalty == "l1":
                 # the natural default threshold is 0 when l1 penalty was used
-                threshold = getattr(self, "threshold", 1e-5)
+                threshold = getattr(estimator, "threshold", 1e-5)
             else:
-                threshold = getattr(self, "threshold", "mean")
+                threshold = getattr(estimator, "threshold", "mean")
 
-        return importances, threshold
-
-    def _set_parameters_meta_transfomer(self, X, threshold):
-        # Retrieve importance vector
-        if hasattr(self.estimator, "feature_importances_"):
-            importances = self.estimator.feature_importances_
-            if importances is None:
-                raise ValueError("Importance weights not computed. Please set"
-                                 " the compute_importances parameter before "
-                                 "fit.")
-
-        elif hasattr(self.estimator, "coef_"):
-            if self.coef_.ndim == 1:
-                importances = np.abs(self.coef_)
-
-            else:
-                importances = np.sum(np.abs(self.coef_), axis=0)
-
-        else:
-            raise ValueError("Missing `feature_importances_` or `coef_`"
-                             " attribute, did you forget to set the "
-                             "estimator's parameter to compute it?")
-        if len(importances) != X.shape[1]:
-            raise ValueError("X has different number of features than"
-                             " during model fitting.")
-
-        # Retrieve threshold
-        if threshold is None:
-            if (hasattr(self.estimator,
-                        "penalty") and self.estimator.penalty == "l1"):
-                # the natural default threshold is 0 when l1 penalty was used
-                threshold = getattr(self.estimator, "threshold", 1e-5)
-            else:
-                threshold = getattr(self.estimator, "threshold", "mean")
-
-        return importances, threshold
+        return threshold
 
 
 class SelectFromModel(BaseEstimator, _LearntSelectorMixin,
-                      MetaEstimatorMixin, SelectorMixin):
+                      SelectorMixin):
 
     """Meta-transformer for selecting features based on importance
        weights.
@@ -198,31 +159,17 @@ class SelectFromModel(BaseEstimator, _LearntSelectorMixin,
     ----------
     `estimator_`: an estimator
         The base estimator from which the transformer is built.
+
+    `threshold_`: float
+        The threshold value used for feature selection.
     """
 
     def __init__(self, estimator, threshold=None):
         self.estimator = estimator
         self.threshold = threshold
 
-    def _validate_estimator(self, default=None):
-        """Check the estimator and set the `estimator_` attribute."""
-        if self.estimator is not None:
-            self.estimator_ = self.estimator
-        else:
-            self.estimator_ = default
-
-        if self.estimator_ is None:
-            raise ValueError("estimator cannot be None")
-
-    def _make_estimator(self):
-        """Make and configure a copy of the `estimator_` attribute."""
-
-        estimator = clone(self.estimator_)
-
-        return estimator
-
     def _get_support_mask(self):
-        return self.support_mask_
+        return self._support_mask
 
     def fit(self, X, y, **fit_params):
         """Trains the estimator in order to perform transformation
@@ -246,11 +193,12 @@ class SelectFromModel(BaseEstimator, _LearntSelectorMixin,
         """
 
         # Validate and make estimator
-        self._validate_estimator()
-        self.estimator = self._make_estimator()
+        if self.estimator is not None:
+            self.estimator_ = self.estimator
+        else:
+            raise ValueError("estimator cannot be None")
 
-        # Convert data
-        X, y = check_arrays(X, y)
+        self.estimator = clone(self.estimator_)
 
         # Fit the estimator
         self.estimator.fit(X, y, **fit_params)
