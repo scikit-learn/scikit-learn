@@ -25,9 +25,6 @@ def test_validate_estimator():
     transformer = SelectFromModel(estimator=None)
     assert_raises(ValueError, transformer.fit, X, y)
 
-    transformer = SelectFromModel()
-    assert_raises(ValueError, transformer.fit, X, y)
-
     est = AdaBoostClassifier()
     transformer = SelectFromModel(estimator=est)
     transformer.fit(X, y)
