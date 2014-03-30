@@ -28,7 +28,6 @@ from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
 from ..utils import as_float_array, atleast2d_or_csr, safe_asarray
 from ..utils.extmath import safe_sparse_dot
 from ..utils.sparsefuncs import mean_variance_axis0, inplace_column_scale
-from .cd_fast import sparse_std
 
 
 ###
