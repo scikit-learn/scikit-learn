@@ -50,7 +50,7 @@ class _LearntSelectorMixin(TransformerMixin):
             importances = self._set_importances(self.estimator, X)
             threshold = self._set_threshold(self.estimator, self.threshold)
         else:
-            importances = self._set_importances(self.estimator, X)
+            importances = self._set_importances(self, X)
             threshold = self._set_threshold(self, threshold)
 
         if isinstance(threshold, six.string_types):
