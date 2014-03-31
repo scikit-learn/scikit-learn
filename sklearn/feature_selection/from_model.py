@@ -13,9 +13,6 @@ def _get_feature_importances(estimator, X):
     """Retrieve or aggregate feature importances from estimator"""
     if hasattr(estimator, "feature_importances_"):
         importances = estimator.feature_importances_
-        if importances is None:
-            raise ValueError("Importance weights not computed. Please set "
-                             "the compute_importances parameter before fit.")
 
     elif hasattr(estimator, "coef_"):
         if estimator.coef_.ndim == 1:

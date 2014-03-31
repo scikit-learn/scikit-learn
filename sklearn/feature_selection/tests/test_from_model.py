@@ -5,11 +5,16 @@ from nose.tools import assert_raises, assert_true
 
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_greater
+from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_array_almost_equal
+
 
 from sklearn.datasets import load_iris
 from sklearn.linear_model import LogisticRegression
 from sklearn.linear_model import SGDClassifier
 from sklearn.svm import LinearSVC
+from sklearn.feature_selection import SelectFromModel
+from sklearn.ensemble import AdaBoostClassifier
 
 iris = load_iris()
 
@@ -41,3 +46,25 @@ def test_invalid_input():
     clf.fit(iris.data, iris.target)
     assert_raises(ValueError, clf.transform, iris.data, "gobbledigook")
     assert_raises(ValueError, clf.transform, iris.data, ".5 * gobbledigook")
+
+
+def test_validate_estimator():
+    est = AdaBoostClassifier()
+    transformer = SelectFromModel(estimator=est)
+    transformer.fit(iris.data, iris.target)
+    assert_equal(transformer.estimator, est)
+
+
+def test_feature_importances():
+    est = AdaBoostClassifier()
+    transformer = SelectFromModel(estimator=est)
+
+    transformer.fit(iris.data, iris.target)
+    assert_true(hasattr(transformer.estimator_, 'feature_importances_'))
+
+    X_new = transformer.transform(iris.data)
+    assert_less(X_new.shape[1], iris.data.shape[1])
+
+    feature_mask = (transformer.estimator_.feature_importances_ >
+                    transformer.estimator_.feature_importances_.mean())
+    assert_array_almost_equal(X_new, iris.data[:, feature_mask])
