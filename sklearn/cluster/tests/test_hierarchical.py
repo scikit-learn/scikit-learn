@@ -8,6 +8,7 @@ from tempfile import mkdtemp
 import warnings
 
 import numpy as np
+import scipy as sp
 from scipy import sparse
 from scipy.cluster import hierarchy
 
@@ -30,6 +31,8 @@ from sklearn.utils.fast_dict import IntFloatDict
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_warns
 
+from nose import SkipTest
+
 
 def test_linkage_misc():
     # Misc tests on linkage
@@ -50,6 +53,9 @@ def test_linkage_misc():
     # We should be getting 2 warnings: one for using Ward that is
     # deprecated, one for using the copy argument
     assert_equal(len(warning_list), 2)
+
+    if sp.__version__ == "0.11.0":
+        raise SkipTest("Known hiearchical clustering bug in scipy 0.11.0")
 
     # test hiearchical clustering on a precomputed distances matrix
     dis = cosine_distances(X)
