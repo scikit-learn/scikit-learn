@@ -374,7 +374,6 @@ def test_lars_drop_for_good():
     cd_obj =  objective_function(cd_coef_)
 
     assert_array_almost_equal(lars_obj / cd_obj, 1.0, decimal=3)
-    assert_array_almost_equal(lars_coef_, cd_coef_, decimal=3)
 
 
 def test_lars_add_features():
