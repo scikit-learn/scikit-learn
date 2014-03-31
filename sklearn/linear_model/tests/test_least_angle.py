@@ -350,22 +350,31 @@ def test_lasso_lars_vs_lasso_cd_ill_conditioned():
 
 
 def test_lars_drop_for_good():
-    # Create an ill-conditioned situation in which the LARS has to good
+    # Create an ill-conditioned situation in which the LARS has to go
     # far in the path to converge, and check that LARS and coordinate
     # descent give the same answers
     X = [[10,     10,  0],
          [-1e-32,  0,  0],
          [1,       1,  1]]
     y = [100, -100, 1]
-    lars = linear_model.LassoLars(.001, normalize=False)
+    alpha = .001
+
+    def objective_function(coef):
+        return (1. / (2. * len(X)) * linalg.norm(y - np.dot(X, coef)) ** 2
+                + alpha * linalg.norm(coef, 1))
+
+    # TODO: raise a specific warning class when drop for good kicks in and
+    # catch it in this test
+    lars = linear_model.LassoLars(alpha=alpha, normalize=False)
     lars_coef_ = lars.fit(X, y).coef_
-    lars_obj = ((1. / (2. * 3.)) * linalg.norm(y - np.dot(X, lars_coef_)) ** 2
-                + .1 * linalg.norm(lars_coef_, 1))
-    coord_descent = linear_model.Lasso(.001, tol=1e-10, normalize=False)
+    lars_obj = objective_function(lars_coef_)
+
+    coord_descent = linear_model.Lasso(alpha=alpha, tol=1e-10, normalize=False)
     cd_coef_ = coord_descent.fit(X, y).coef_
-    cd_obj = ((1. / (2. * 3.)) * linalg.norm(y - np.dot(X, cd_coef_)) ** 2
-              + .1 * linalg.norm(cd_coef_, 1))
+    cd_obj =  objective_function(cd_coef_)
+
     assert_array_almost_equal(lars_obj / cd_obj, 1.0, decimal=3)
+    assert_array_almost_equal(lars_coef_, cd_coef_, decimal=3)
 
 
 def test_lars_add_features():
