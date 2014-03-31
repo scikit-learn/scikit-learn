@@ -9,6 +9,19 @@ from ..utils import safe_mask, atleast2d_or_csc, deprecated
 from .base import SelectorMixin
 
 
+def method_once(method):
+    "A decorator that runs a method only once."
+    attrname = "_%s_once_result" % id(method)
+
+    def decorated(self, *args, **kwargs):
+        try:
+            return getattr(self, attrname)
+        except AttributeError:
+            setattr(self, attrname, method(self, *args, **kwargs))
+            return getattr(self, attrname)
+    return decorated
+
+
 def _get_feature_importances(estimator, X):
     """Retrieve or aggregate feature importances from estimator"""
     if hasattr(estimator, "feature_importances_"):
@@ -156,14 +169,19 @@ class SelectFromModel(BaseEstimator, SelectorMixin):
         The threshold value used for feature selection.
     """
 
-    def __init__(self, estimator, threshold=None):
+    def __init__(self, estimator, threshold=None, warm_start=False):
         self.estimator = estimator
         self.threshold = threshold
+        self.warm_start = warm_start
 
     def _get_support_mask(self):
         self.threshold_ = _calculate_threshold(self.estimator, self.scores_,
                                                self.threshold)
         return self.scores_ >= self.threshold_
+
+    @method_once
+    def _make_estimator(self):
+        return clone(self.estimator)
 
     def fit(self, X, y, **fit_params):
         """Trains the estimator in order to perform transformation
@@ -185,7 +203,38 @@ class SelectFromModel(BaseEstimator, SelectorMixin):
         self : object
             Returns self.
         """
-        self.estimator_ = clone(self.estimator)
+        if not self.warm_start or not hasattr(self, "estimator_"):
+            self.estimator_ = clone(self.estimator)
+
         self.estimator_.fit(X, y, **fit_params)
+        self.scores_ = _get_feature_importances(self.estimator_, X)
+        return self
+
+    def partial_fit(self, X, y, **fit_params):
+        """Trains the estimator in order to perform transformation
+           set (X, y). An estimator is created only once.
+
+        Parameters
+        ----------
+        X : array-like of shape = [n_samples, n_features]
+            The training input samples.
+
+        y : array-like, shape = [n_samples]
+            The target values (integers that correspond to classes in
+            classification, real numbers in regression).
+
+        **fit_params : Other estimator specific parameters
+
+        Returns
+        -------
+        self : object
+            Returns self.
+        """
+        if not hasattr(self.estimator, "partial_fit"):
+            raise(AttributeError, "estimator does not have"
+                                  "`partial_fit` function.")
+
+        self.estimator_ = self._make_estimator()
+        self.estimator_.partial_fit(X, y, **fit_params)
         self.scores_ = _get_feature_importances(self.estimator_, X)
         return self
