@@ -8,7 +8,6 @@ Build-Depends: debhelper (>= 7.0.50), dh-autoreconf,
                cython (>= 0.12~),
                python-setuptools,
                python-numpy, python-scipy,
-               libsvm-dev (>= 2.84.0),
                python-nose,
                python-matplotlib,
                python-joblib (>= 0.4.5), python-support
