@@ -70,10 +70,10 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
     """Perform MeanShift Clustering of data using a flat kernel
 
     MeanShift clustering aims to discover *blobs* in a smooth density of
-    samples. It is a centroid based algorithm, which works by updating candidates
-    for centroids to be the mean of the points within a given region. These
-    candidates are then filtered in a post-processing stage to eliminate
-    near-duplicates to form the final set of centroids.
+    samples. It is a centroid based algorithm, which works by updating
+    candidates for centroids to be the mean of the points within a given
+    region. These candidates are then filtered in a post-processing stage
+    to eliminate near-duplicates to form the final set of centroids.
 
     Seeding is performed using a binning technique for scalability.
 
@@ -106,12 +106,12 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
     min_bin_freq : int, optional
         To speed up the algorithm, accept only those bins with at least
         min_bin_freq points as seeds. If not defined, set to 1.
-    
-    kernel : string, optional (default='flat')
+
+    kernel : string, optional, default 'flat'
         The kernel used to update the centroid candidates. Implemented kernels
         are 'flat', 'rbf', 'Epanechnikov' and 'biweight'.
-    
-    beta : float, optional (default='1.0')
+
+    beta : float, optional, default 1.0
         Kernel coefficient for 'rbf'. Higher values make it prefer more
         datapoints in the center of the cluster, lower values make the kernel
         more like the flat kernel.
@@ -153,7 +153,7 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
             if len(points_within) == 0:
                 break  # Depending on seeding strategy this condition may occur
             my_old_mean = my_mean  # save the old mean
-            my_mean = _kernel_update(my_old_mean, points_within, bandwidth, 
+            my_mean = _kernel_update(my_old_mean, points_within, bandwidth,
                                      kernel, beta)
             # If converged or at max_iterations, addS the cluster
             if (extmath.norm(my_mean - my_old_mean) < stop_thresh or
@@ -234,69 +234,71 @@ def get_bin_seeds(X, bin_size, min_bin_freq=1):
     bin_seeds = bin_seeds * bin_size
     return bin_seeds
 
+
 def _kernel_update(old_cluster_center, points, bandwidth, kernel, beta):
     """ Update cluster center according to kernel used
-    
+
     Parameters
     ----------
     old_window_center : array_like
         The location of the old centroid candidate.
-    
+
     points : array_like
         All data points that fall within the window of which the new mean
         is to be computed.
-    
+
     bandwidth : float
         Size of the kernel. All points within this range are used to
         compute the new mean. There should be no points outside this range
         in the points variable.
-    
+
     kernel : string
         The kernel used for updating the window center. Available are:
         'flat', 'rbf', 'Epanechnikov' and 'biweight'
-    
+
     beta : float
         Controls the width of the rbf kernel. Only used with rbf kernel
         Lower values make it more like the flat kernel, higher values give
         points closer to the old center more weights.
-    
+
     Notes
     -----
     Kernels as mentioned in the paper "Mean Shift, Mode Seeking, and
     Clustering" by Yizong Cheng, published in IEEE Transaction On Pattern
     Analysis and Machine Intelligence, vol. 17, no. 8, august 1995.
-    
+
     The rbf or Gaussian kernel is a truncated version, since in this
     implementation of Mean Shift clustering only the points within the
     range of bandwidth around old_cluster_center are fed into the points
     variable.
-    
     """
+    
     if kernel not in ['flat', 'rbf', 'Epanechnikov', 'biweight']:
         # Raise error here
         pass
-    
+
     # The flat kernel gives all points within range equal weight
     # No extra calculations needed
     if kernel == 'flat':
         return np.mean(points, axis=0)
-    
+
     # Define the weights function for each kernel
     if kernel == 'rbf':
-        compute_weights = lambda p, band, beta: np.exp(-1 * beta * \
+        compute_weights = lambda p, band, beta: np.exp(-1 * beta *
                                                 (p ** 2 / band ** 2))
-    
+
     if kernel == 'Epanechnikov':
-        compute_weights = lambda p, b: 1.0 - (p ** 2 / b ** 2))
-    
+        compute_weights = lambda p, b: 1.0 - (p ** 2 / b ** 2)
+
     if kernel == 'biweight':
         compute_weights = lambda p, b: (1.0 - (p ** 2 / b ** 2)) ** 2
-    
+
     # Compute new mean
-    distances = euclidian_distances(points, old_cluster_center)
+    distances = euclidean_distances(points, old_cluster_center)
     weights = compute_weights(distances, bandwidth)
     weighted_mean = np.sum(points * weights, axis=0) / np.sum(weights)
     return weighted_mean
+
 
 class MeanShift(BaseEstimator, ClusterMixin):
     """MeanShift clustering
@@ -304,7 +306,7 @@ class MeanShift(BaseEstimator, ClusterMixin):
     Parameters
     ----------
     bandwidth : float, optional
-        Bandwidth used in the RBF kernel.
+        Window size around centroid candidates used to compute new centroids.
 
         If not given, the bandwidth is estimated using
         sklearn.cluster.estimate_bandwidth; see the documentation for that
@@ -333,6 +335,15 @@ class MeanShift(BaseEstimator, ClusterMixin):
         If true, then all points are clustered, even those orphans that are
         not within any kernel. Orphans are assigned to the nearest kernel.
         If false, then orphans are given cluster label -1.
+
+    kernel : string, optional, default 'flat'
+        The kernel used to update the centroid candidates. Implemented kernels
+        are 'flat', 'rbf', 'Epanechnikov' and 'biweight'.
+
+    beta : float, optional, default 1.0
+        Kernel coefficient for 'rbf'. Higher values make it prefer more
+        datapoints in the center of the cluster, lower values make the kernel
+        more like the flat kernel.
 
     Attributes
     ----------
@@ -368,12 +379,15 @@ class MeanShift(BaseEstimator, ClusterMixin):
 
     """
     def __init__(self, bandwidth=None, seeds=None, bin_seeding=False,
-                 min_bin_freq=1, cluster_all=True):
+                 min_bin_freq=1, cluster_all=True, kernel='flat',
+                 beta=1.0):
         self.bandwidth = bandwidth
         self.seeds = seeds
         self.bin_seeding = bin_seeding
         self.cluster_all = cluster_all
         self.min_bin_freq = min_bin_freq
+        self.kernel = kernel
+        self.beta = beta
 
     def fit(self, X):
         """Perform clustering.
