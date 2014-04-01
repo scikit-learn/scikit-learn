@@ -4,7 +4,7 @@ Upstream-Contact: Fabian Pedregosa <fabian.pedregosa@inria.fr>
 Source: http://github.com/scikit-learn/scikit-learn
 
 Files: *
-Copyright: 2007-2012, Scikit-Learn Developers
+Copyright: 2007-2014, scikit-learn developers
 License: BSD-3
 
 Files: doc/sphinxext/*

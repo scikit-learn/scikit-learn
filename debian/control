@@ -16,7 +16,7 @@ Build-Depends-Indep:
                python-sphinx (>= 1.0), python-imaging, graphviz,
 Standards-Version: 3.9.4
 XS-Python-Version: >= 2.6
-Homepage: http://scikit-learn.sourceforge.net
+Homepage: http://scikit-learn.org
 Vcs-Browser: http://github.com/yarikoptic/scikit-learn
 Vcs-Git: git://github.com/yarikoptic/scikit-learn.git
 
