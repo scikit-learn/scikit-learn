@@ -5,7 +5,7 @@ Maintainer: NeuroDebian Team <team@neuro.debian.net>
 Uploaders: Yaroslav Halchenko <debian@onerussian.com>, Michael Hanke <michael.hanke@gmail.com>
 Build-Depends: debhelper (>= 7.0.50), dh-autoreconf,
                python-all-dev (>= 2.5),
-               cython (>= 0.12~),
+               cython (>= 0.20~),
                python-setuptools,
                python-numpy, python-scipy,
                python-nose,
