@@ -9,19 +9,6 @@ from ..utils import safe_mask, atleast2d_or_csc, deprecated
 from .base import SelectorMixin
 
 
-def method_once(method):
-    "A decorator that runs a method only once."
-    attrname = "_%s_once_result" % id(method)
-
-    def decorated(self, *args, **kwargs):
-        try:
-            return getattr(self, attrname)
-        except AttributeError:
-            setattr(self, attrname, method(self, *args, **kwargs))
-            return getattr(self, attrname)
-    return decorated
-
-
 def _get_feature_importances(estimator, X):
     """Retrieve or aggregate feature importances from estimator"""
     if hasattr(estimator, "feature_importances_"):
@@ -157,6 +144,10 @@ class SelectFromModel(BaseEstimator, SelectorMixin):
             available, the object attribute ``threshold`` is used. Otherwise,
             "mean" is used by default.
 
+    warm_start : bool, optional
+        When set to True, reuse the solution of the previous call to fit as
+        initialization, otherwise, just erase the previous solution.
+
     Attributes
     ----------
     `estimator_`: an estimator
@@ -179,13 +170,8 @@ class SelectFromModel(BaseEstimator, SelectorMixin):
                                                self.threshold)
         return self.scores_ >= self.threshold_
 
-    @method_once
-    def _make_estimator(self):
-        return clone(self.estimator)
-
     def fit(self, X, y, **fit_params):
-        """Trains the estimator in order to perform transformation
-           set (X, y).
+        """Fit the SelectFromModel meta-transformer.
 
         Parameters
         ----------
@@ -211,8 +197,7 @@ class SelectFromModel(BaseEstimator, SelectorMixin):
         return self
 
     def partial_fit(self, X, y, **fit_params):
-        """Trains the estimator in order to perform transformation
-           set (X, y). An estimator is created only once.
+        """Fit the SelectFromModel meta-transformer only once.
 
         Parameters
         ----------
@@ -234,7 +219,8 @@ class SelectFromModel(BaseEstimator, SelectorMixin):
             raise(AttributeError, "estimator does not have"
                                   "`partial_fit` function.")
 
-        self.estimator_ = self._make_estimator()
+        if not hasattr(self, "estimator_"):
+            self.estimator_ = clone(self.estimator)
         self.estimator_.partial_fit(X, y, **fit_params)
         self.scores_ = _get_feature_importances(self.estimator_, X)
         return self
