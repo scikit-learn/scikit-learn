@@ -39,7 +39,8 @@ cdef class Criterion:
 
     cdef SIZE_t n_outputs                # Number of outputs
     cdef SIZE_t n_node_samples           # Number of samples in the node (end-start)
-    cdef double weighted_n_node_samples  # Weighted number of samples
+    cdef double weighted_n_samples       # Weighted number of samples (in total)
+    cdef double weighted_n_node_samples  # Weighted number of samples in the node
     cdef double weighted_n_left          # Weighted number of samples in the left node
     cdef double weighted_n_right         # Weighted number of samples in the right node
 
@@ -48,7 +49,8 @@ cdef class Criterion:
 
     # Methods
     cdef void init(self, DOUBLE_t* y, SIZE_t y_stride, DOUBLE_t* sample_weight,
-                   SIZE_t* samples, SIZE_t start, SIZE_t end) nogil
+                   double weighted_n_samples, SIZE_t* samples, SIZE_t start,
+                   SIZE_t end) nogil
     cdef void reset(self) nogil
     cdef void update(self, SIZE_t new_pos) nogil
     cdef double node_impurity(self) nogil
@@ -78,6 +80,7 @@ cdef class Splitter:
 
     cdef SIZE_t* samples                 # Sample indices in X, y
     cdef SIZE_t n_samples                # X.shape[0]
+    cdef double weighted_n_samples       # Weighted number of samples
     cdef SIZE_t* features                # Feature indices in X
     cdef SIZE_t* constant_features       # Constant features indices
     cdef SIZE_t n_features               # X.shape[1]
@@ -136,13 +139,13 @@ cdef class Splitter:
 cdef struct Node:
     # Base storage structure for the nodes in a Tree object
 
-    SIZE_t left_child               # id of the left child of the node
-    SIZE_t right_child              # id of the right child of the node
-    SIZE_t feature                  # Feature used for splitting the node
-    DOUBLE_t threshold              # Threshold value at the node
-    DOUBLE_t impurity               # Impurity of the node (i.e., the value of the criterion)
-    SIZE_t n_samples                # Number of samples at the node
-    DOUBLE_t weighted_n_samples     # Weighted number of samples at the node
+    SIZE_t left_child                    # id of the left child of the node
+    SIZE_t right_child                   # id of the right child of the node
+    SIZE_t feature                       # Feature used for splitting the node
+    DOUBLE_t threshold                   # Threshold value at the node
+    DOUBLE_t impurity                    # Impurity of the node (i.e., the value of the criterion)
+    SIZE_t n_node_samples                # Number of samples at the node
+    DOUBLE_t weighted_n_node_samples     # Weighted number of samples at the node
 
 cdef class Tree:
     # The Tree object is a binary tree structure constructed by the

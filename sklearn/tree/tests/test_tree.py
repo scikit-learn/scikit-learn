@@ -276,6 +276,16 @@ def test_importances():
         assert_less(0, X_new.shape[1], "Failed with {0}".format(name))
         assert_less(X_new.shape[1], X.shape[1], "Failed with {0}".format(name))
 
+    # Check on iris that importances are the same for all builders
+    clf = DecisionTreeClassifier(random_state=0)
+    clf.fit(iris.data, iris.target)
+    clf2 = DecisionTreeClassifier(random_state=0,
+                                  max_leaf_nodes=len(iris.data))
+    clf2.fit(iris.data, iris.target)
+
+    assert_array_equal(clf.feature_importances_,
+                       clf2.feature_importances_)
+
 
 @raises(ValueError)
 def test_importances_raises():
@@ -295,8 +305,13 @@ def test_importances_gini_equal_mse():
                                         shuffle=False,
                                         random_state=0)
 
-    clf = DecisionTreeClassifier(criterion="gini", random_state=0).fit(X, y)
-    reg = DecisionTreeRegressor(criterion="mse", random_state=0).fit(X, y)
+    # The gini index and the mean square error (variance) might differ due
+    # to numerical instability. Since those instabilities mainly occurs at
+    # high tree depth, we restrict this maximal depth.
+    clf = DecisionTreeClassifier(criterion="gini", max_depth=8,
+                                 random_state=0).fit(X, y)
+    reg = DecisionTreeRegressor(criterion="mse", max_depth=8,
+                                random_state=0).fit(X, y)
 
     assert_almost_equal(clf.feature_importances_, reg.feature_importances_)
     assert_array_equal(clf.tree_.feature, reg.tree_.feature)
@@ -609,7 +624,7 @@ def test_sample_weight():
     clf.fit(X, y, sample_weight=sample_weight)
     assert_equal(clf.tree_.threshold[0], 149.5)
 
-    sample_weight[y == 2] = .50  # Samples of class '2' are no longer weightier
+    sample_weight[y == 2] = .5  # Samples of class '2' are no longer weightier
     clf = DecisionTreeClassifier(max_depth=1, random_state=0)
     clf.fit(X, y, sample_weight=sample_weight)
     assert_equal(clf.tree_.threshold[0], 49.5)  # Threshold should have moved

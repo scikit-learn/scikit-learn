@@ -119,6 +119,8 @@ cdef inline void copy_heap(PriorityHeapRecord* a, PriorityHeapRecord* b) nogil:
     a.depth = b.depth
     a.is_leaf = b.is_leaf
     a.impurity = b.impurity
+    a.impurity_left = b.impurity_left
+    a.impurity_right = b.impurity_right
     a.improvement = b.improvement
 
 
@@ -199,7 +201,8 @@ cdef class PriorityHeap:
 
     cdef int push(self, SIZE_t node_id, SIZE_t start, SIZE_t end, SIZE_t pos,
                   SIZE_t depth, bint is_leaf, double improvement,
-                  double impurity) nogil:
+                  double impurity, double impurity_left,
+                  double impurity_right) nogil:
         """Push record on the priority heap.
 
         Returns 0 if successful; -1 on out of memory error.
@@ -227,6 +230,8 @@ cdef class PriorityHeap:
         heap[heap_ptr].depth = depth
         heap[heap_ptr].is_leaf = is_leaf
         heap[heap_ptr].impurity = impurity
+        heap[heap_ptr].impurity_left = impurity_left
+        heap[heap_ptr].impurity_right = impurity_right
         heap[heap_ptr].improvement = improvement
 
         # Heapify up

@@ -189,7 +189,7 @@ class SelectFromModel(BaseEstimator, SelectorMixin):
         self : object
             Returns self.
         """
-        if not (self.warm_start and hasattr(self,"estimator_")):
+        if not (self.warm_start and hasattr(self, "estimator_")):
             self.estimator_ = clone(self.estimator)
 
         self.estimator_.fit(X, y, **fit_params)

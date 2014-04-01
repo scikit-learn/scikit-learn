@@ -36,6 +36,11 @@ def test_safe_asarray():
     Y = safe_asarray(X, dtype=np.int)
     assert_equal(Y.dtype, np.int)
 
+    # Non-regression: LIL and DOK used to fail for lack of a .data attribute
+    X = np.ones([2, 3])
+    safe_asarray(sp.dok_matrix(X))
+    safe_asarray(sp.lil_matrix(X), dtype=X.dtype)
+
 
 def test_as_float_array():
     """Test function for as_float_array"""
@@ -68,6 +73,25 @@ def test_as_float_array():
         N = as_float_array(M, copy=True)
         N[0, 0] = np.nan
         assert_false(np.isnan(M).any())
+
+
+def test_atleast2d_or_sparse():
+    for typ in [sp.csr_matrix, sp.dok_matrix, sp.lil_matrix, sp.coo_matrix]:
+        X = typ(np.arange(9, dtype=float).reshape(3, 3))
+
+        Y = atleast2d_or_csr(X, copy=True)
+        assert_true(isinstance(Y, sp.csr_matrix))
+        Y.data[:] = 1
+        assert_array_equal(X.toarray().ravel(), np.arange(9))
+
+        Y = atleast2d_or_csc(X, copy=False)
+        Y.data[:] = 4
+        assert_true(np.all(X.data == 4)
+                    if isinstance(X, sp.csc_matrix)
+                    else np.all(X.toarray().ravel() == np.arange(9)))
+
+        Y = atleast2d_or_csr(X, dtype=np.float32)
+        assert_true(Y.dtype == np.float32)
 
 
 def test_check_arrays_exceptions():
