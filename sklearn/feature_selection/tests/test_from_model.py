@@ -15,7 +15,6 @@ from sklearn.linear_model import SGDClassifier
 from sklearn.svm import LinearSVC
 from sklearn.feature_selection import SelectFromModel
 from sklearn.ensemble import AdaBoostClassifier
-from sklearn.dummy import DummyClassifier
 from sklearn.linear_model import PassiveAggressiveClassifier
 
 iris = load_iris()
@@ -73,11 +72,6 @@ def test_feature_importances():
 
 
 def test_partial_fit():
-    est = DummyClassifier()
-    transformer = SelectFromModel(estimator=est)
-    assert_raises(ValueError, transformer.partial_fit,
-                  iris.data, iris.target)
-
     est = PassiveAggressiveClassifier()
     transformer = SelectFromModel(estimator=est)
     transformer.partial_fit(iris.data, iris.target,

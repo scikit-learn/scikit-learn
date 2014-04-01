@@ -215,10 +215,6 @@ class SelectFromModel(BaseEstimator, SelectorMixin):
         self : object
             Returns self.
         """
-        if not hasattr(self.estimator, "partial_fit"):
-            raise(ValueError, "estimator does not have"
-                                  "`partial_fit` function.")
-
         if not hasattr(self, "estimator_"):
             self.estimator_ = clone(self.estimator)
         self.estimator_.partial_fit(X, y, **fit_params)
