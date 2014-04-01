@@ -75,7 +75,7 @@ def test_feature_importances():
 def test_partial_fit():
     est = DummyClassifier()
     transformer = SelectFromModel(estimator=est)
-    assert_raises(AttributeError, transformer.partial_fit,
+    assert_raises(ValueError, transformer.partial_fit,
                   iris.data, iris.target)
 
     est = PassiveAggressiveClassifier()

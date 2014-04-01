@@ -189,7 +189,7 @@ class SelectFromModel(BaseEstimator, SelectorMixin):
         self : object
             Returns self.
         """
-        if not self.warm_start or not hasattr(self, "estimator_"):
+        if not (self.warm_start and hasattr(self,"estimator_")):
             self.estimator_ = clone(self.estimator)
 
         self.estimator_.fit(X, y, **fit_params)
@@ -216,7 +216,7 @@ class SelectFromModel(BaseEstimator, SelectorMixin):
             Returns self.
         """
         if not hasattr(self.estimator, "partial_fit"):
-            raise(AttributeError, "estimator does not have"
+            raise(ValueError, "estimator does not have"
                                   "`partial_fit` function.")
 
         if not hasattr(self, "estimator_"):
