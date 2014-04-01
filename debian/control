@@ -10,7 +10,8 @@ Build-Depends: debhelper (>= 7.0.50), dh-autoreconf,
                python-numpy, python-scipy,
                python-nose,
                python-matplotlib,
-               python-joblib (>= 0.4.5), python-support
+               python-joblib (>= 0.4.5), python-support,
+               libatlas-dev
 Build-Depends-Indep:
                python-sphinx (>= 1.0), python-imaging, graphviz,
 Standards-Version: 3.9.4
