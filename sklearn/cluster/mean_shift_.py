@@ -114,7 +114,7 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
     gamma : float, optional, default 1.0
         Kernel coefficient for 'rbf'. Higher values make it prefer more
         datapoints in the center of the cluster, lower values make the kernel
-        more like the flat kernel.
+        behave more like the flat kernel.
 
     Returns
     -------
@@ -285,6 +285,8 @@ def _kernel_update(old_cluster_center, points, bandwidth, kernel, gamma):
 
     # Define the weights function for each kernel
     if kernel == 'rbf':
+        print "rbf used!"
+        exit()
         compute_weights = lambda p, b: np.exp(-1 * gamma *
                                               (p ** 2 / b ** 2))
 
@@ -344,7 +346,7 @@ class MeanShift(BaseEstimator, ClusterMixin):
     gamma : float, optional, default 1.0
         Kernel coefficient for 'rbf'. Higher values make it prefer more
         datapoints in the center of the cluster, lower values make the kernel
-        more like the flat kernel.
+        behave more like the flat kernel.
 
     Attributes
     ----------
@@ -402,7 +404,9 @@ class MeanShift(BaseEstimator, ClusterMixin):
             mean_shift(X, bandwidth=self.bandwidth, seeds=self.seeds,
                        min_bin_freq=self.min_bin_freq,
                        bin_seeding=self.bin_seeding,
-                       cluster_all=self.cluster_all)
+                       cluster_all=self.cluster_all,
+                       kernel=self.kernel,
+                       gamma=self.gamma)
         return self
 
     def predict(self, X):
