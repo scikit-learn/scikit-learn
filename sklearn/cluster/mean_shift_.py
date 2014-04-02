@@ -240,10 +240,10 @@ def _kernel_update(old_cluster_center, points, bandwidth, kernel, gamma):
 
     Parameters
     ----------
-    old_window_center : array_like
+    old_window_center : array_like, shape=[n_features]
         The location of the old centroid candidate.
 
-    points : array_like
+    points : array_like, shape=[n_samples, n_features]
         All data points that fall within the window of which the new mean
         is to be computed.
 
