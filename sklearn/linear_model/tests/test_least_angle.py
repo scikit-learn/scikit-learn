@@ -355,7 +355,7 @@ def test_lars_drop_for_good():
     # Create an ill-conditioned situation in which the LARS has to go
     # far in the path to converge, and check that LARS and coordinate
     # descent give the same answers
-    X = [[1e10,  1e10,  0],
+    X = [[1e20,  1e20,  0],
          [-1e-32,  0,  0],
          [1,       1,  1]]
     y = [10, 10, 1]
