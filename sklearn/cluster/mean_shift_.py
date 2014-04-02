@@ -66,7 +66,7 @@ def estimate_bandwidth(X, quantile=0.3, n_samples=None, random_state=0):
 
 def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
                min_bin_freq=1, cluster_all=True, max_iterations=300,
-               kernel='flat', beta=1.0):
+               kernel='flat', gamma=1.0):
     """Perform MeanShift Clustering of data using a flat kernel
 
     MeanShift clustering aims to discover *blobs* in a smooth density of
@@ -109,9 +109,9 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
 
     kernel : string, optional, default 'flat'
         The kernel used to update the centroid candidates. Implemented kernels
-        are 'flat', 'rbf', 'Epanechnikov' and 'biweight'.
+        are 'flat', 'rbf', 'epanechnikov' and 'biweight'.
 
-    beta : float, optional, default 1.0
+    gamma : float, optional, default 1.0
         Kernel coefficient for 'rbf'. Higher values make it prefer more
         datapoints in the center of the cluster, lower values make the kernel
         more like the flat kernel.
@@ -154,7 +154,7 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
                 break  # Depending on seeding strategy this condition may occur
             my_old_mean = my_mean  # save the old mean
             my_mean = _kernel_update(my_old_mean, points_within, bandwidth,
-                                     kernel, beta)
+                                     kernel, gamma)
             # If converged or at max_iterations, addS the cluster
             if (extmath.norm(my_mean - my_old_mean) < stop_thresh or
                     completed_iterations == max_iterations):
@@ -235,7 +235,7 @@ def get_bin_seeds(X, bin_size, min_bin_freq=1):
     return bin_seeds
 
 
-def _kernel_update(old_cluster_center, points, bandwidth, kernel, beta):
+def _kernel_update(old_cluster_center, points, bandwidth, kernel, gamma):
     """ Update cluster center according to kernel used
 
     Parameters
@@ -254,9 +254,9 @@ def _kernel_update(old_cluster_center, points, bandwidth, kernel, beta):
 
     kernel : string
         The kernel used for updating the window center. Available are:
-        'flat', 'rbf', 'Epanechnikov' and 'biweight'
+        'flat', 'rbf', 'epanechnikov' and 'biweight'
 
-    beta : float
+    gamma : float
         Controls the width of the rbf kernel. Only used with rbf kernel
         Lower values make it more like the flat kernel, higher values give
         points closer to the old center more weights.
@@ -272,10 +272,11 @@ def _kernel_update(old_cluster_center, points, bandwidth, kernel, beta):
     range of bandwidth around old_cluster_center are fed into the points
     variable.
     """
-    
-    if kernel not in ['flat', 'rbf', 'Epanechnikov', 'biweight']:
-        # Raise error here
-        pass
+
+    implemented_kernels = ['flat', 'rbf', 'epanechnikov', 'biweight']
+    if kernel not in implemented_kernels:
+        raise ValueError("Unknown kernel, please use one of: %s" %
+                         ", ".join(implemented_kernels))
 
     # The flat kernel gives all points within range equal weight
     # No extra calculations needed
@@ -284,10 +285,10 @@ def _kernel_update(old_cluster_center, points, bandwidth, kernel, beta):
 
     # Define the weights function for each kernel
     if kernel == 'rbf':
-        compute_weights = lambda p, band, beta: np.exp(-1 * beta *
-                                                (p ** 2 / band ** 2))
+        compute_weights = lambda p, b: np.exp(-1 * gamma *
+                                              (p ** 2 / b ** 2))
 
-    if kernel == 'Epanechnikov':
+    if kernel == 'epanechnikov':
         compute_weights = lambda p, b: 1.0 - (p ** 2 / b ** 2)
 
     if kernel == 'biweight':
@@ -338,9 +339,9 @@ class MeanShift(BaseEstimator, ClusterMixin):
 
     kernel : string, optional, default 'flat'
         The kernel used to update the centroid candidates. Implemented kernels
-        are 'flat', 'rbf', 'Epanechnikov' and 'biweight'.
+        are 'flat', 'rbf', 'epanechnikov' and 'biweight'.
 
-    beta : float, optional, default 1.0
+    gamma : float, optional, default 1.0
         Kernel coefficient for 'rbf'. Higher values make it prefer more
         datapoints in the center of the cluster, lower values make the kernel
         more like the flat kernel.
@@ -380,14 +381,14 @@ class MeanShift(BaseEstimator, ClusterMixin):
     """
     def __init__(self, bandwidth=None, seeds=None, bin_seeding=False,
                  min_bin_freq=1, cluster_all=True, kernel='flat',
-                 beta=1.0):
+                 gamma=1.0):
         self.bandwidth = bandwidth
         self.seeds = seeds
         self.bin_seeding = bin_seeding
         self.cluster_all = cluster_all
         self.min_bin_freq = min_bin_freq
         self.kernel = kernel
-        self.beta = beta
+        self.gamma = gamma
 
     def fit(self, X):
         """Perform clustering.
