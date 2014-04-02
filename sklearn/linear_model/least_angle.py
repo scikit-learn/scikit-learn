@@ -23,6 +23,7 @@ from .base import LinearModel
 from ..base import RegressorMixin
 from ..utils import array2d, arrayfuncs, as_float_array, check_arrays
 from ..cross_validation import _check_cv as check_cv
+from ..utils import ConvergenceWarning
 from ..externals.joblib import Parallel, delayed
 from ..externals.six.moves import xrange
 
@@ -265,7 +266,8 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
                               'i.e. alpha=%.3e, '
                               'with an active set of %i regressors, and '
                               'the smallest cholesky pivot element being %.3e'
-                              % (n_iter, alpha, n_active, diag))
+                              % (n_iter, alpha, n_active, diag),
+                              ConvergenceWarning)
                 # XXX: need to figure a 'drop for good' way
                 Cov = Cov_not_shortened
                 Cov[0] = 0
@@ -289,7 +291,8 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
                           'longer well controlled. %i iterations, alpha=%.3e, '
                           'previous alpha=%.3e, with an active set of %i '
                           'regressors.'
-                          % (n_iter, alpha, prev_alpha, n_active))
+                          % (n_iter, alpha, prev_alpha, n_active),
+                          ConvergenceWarning)
             break
 
         # least squares solution
