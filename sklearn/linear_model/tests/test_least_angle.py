@@ -371,8 +371,9 @@ def test_lars_drop_for_good():
     lars_obj = objective_function(lars_coef_)
 
     coord_descent = linear_model.Lasso(alpha=alpha, tol=1e-10, normalize=False)
-    cd_coef_ = coord_descent.fit(X, y).coef_
-    cd_obj =  objective_function(cd_coef_)
+    with ignore_warnings():
+        cd_coef_ = coord_descent.fit(X, y).coef_
+    cd_obj = objective_function(cd_coef_)
 
     assert_less(lars_obj, cd_obj * (1. + 1e-8))
 
