@@ -3,6 +3,12 @@
 A demo of the mean-shift clustering algorithm
 =============================================
 
+MeanShift clustering aims to discover *blobs* in a smooth density of
+samples. It is a centroid based algorithm, which works by updating
+candidates for centroids to be the mean of the points within a given
+region. These candidates are then filtered in a post-processing stage
+to eliminate near-duplicates to form the final set of centroids.
+
 Reference:
 
 Dorin Comaniciu and Peter Meer, "Mean Shift: A robust approach toward
