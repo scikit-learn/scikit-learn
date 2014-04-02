@@ -9,6 +9,8 @@ from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import ignore_warnings, assert_warns_message
+from sklearn.utils.testing import assert_warns
+from sklearn.utils import ConvergenceWarning
 from sklearn import linear_model, datasets
 
 diabetes = datasets.load_diabetes()
@@ -187,7 +189,7 @@ def test_singular_matrix():
     y1 = np.array([1, 1])
     in_warn_message = 'Dropping a regressor'
     f = assert_warns_message
-    alphas, active, coef_path = f(UserWarning, in_warn_message,
+    alphas, active, coef_path = f(ConvergenceWarning, in_warn_message,
                                   linear_model.lars_path, X1, y1)
     assert_array_almost_equal(coef_path.T, [[0, 0], [1, 0]])
 
@@ -216,7 +218,7 @@ def test_rank_deficient_design():
         coef_cd_ = coord_descent.fit(X, y).coef_
         obj_cd = ((1. / (2. * 3.)) * linalg.norm(y - np.dot(X, coef_cd_)) ** 2
                   + .1 * linalg.norm(coef_cd_, 1))
-        assert_array_almost_equal(obj_lars, obj_cd)
+        assert_less(obj_lars, obj_cd * (1. + 1e-8))
 
 
 def test_lasso_lars_vs_lasso_cd(verbose=False):
@@ -325,7 +327,7 @@ def test_lasso_lars_vs_lasso_cd_ill_conditioned():
 
     def in_warn_message(msg):
         return 'Early stopping' in msg or 'Dropping regressor' in msg
-    lars_alphas, _, lars_coef = f(UserWarning,
+    lars_alphas, _, lars_coef = f(ConvergenceWarning,
                                   in_warn_message,
                                   linear_model.lars_path, X, y, method='lasso')
 
@@ -353,27 +355,27 @@ def test_lars_drop_for_good():
     # Create an ill-conditioned situation in which the LARS has to go
     # far in the path to converge, and check that LARS and coordinate
     # descent give the same answers
-    X = [[10,     10,  0],
+    X = [[1e20,  1e20,  0],
          [-1e-32,  0,  0],
          [1,       1,  1]]
-    y = [100, -100, 1]
-    alpha = .001
+    y = [10, 10, 1]
+    alpha = .0001
 
     def objective_function(coef):
         return (1. / (2. * len(X)) * linalg.norm(y - np.dot(X, coef)) ** 2
                 + alpha * linalg.norm(coef, 1))
 
-    # TODO: raise a specific warning class when drop for good kicks in and
-    # catch it in this test
     lars = linear_model.LassoLars(alpha=alpha, normalize=False)
-    lars_coef_ = lars.fit(X, y).coef_
+    assert_warns(ConvergenceWarning, lars.fit, X, y)
+    lars_coef_ = lars.coef_
     lars_obj = objective_function(lars_coef_)
 
     coord_descent = linear_model.Lasso(alpha=alpha, tol=1e-10, normalize=False)
-    cd_coef_ = coord_descent.fit(X, y).coef_
-    cd_obj =  objective_function(cd_coef_)
+    with ignore_warnings():
+        cd_coef_ = coord_descent.fit(X, y).coef_
+    cd_obj = objective_function(cd_coef_)
 
-    assert_array_almost_equal(lars_obj / cd_obj, 1.0, decimal=3)
+    assert_less(lars_obj, cd_obj * (1. + 1e-8))
 
 
 def test_lars_add_features():

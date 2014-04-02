@@ -21,6 +21,7 @@ from ..externals.joblib import Parallel, delayed
 from ..externals import six
 from ..externals.six.moves import xrange
 from ..utils.extmath import safe_sparse_dot
+from ..utils import ConvergenceWarning
 
 from . import cd_fast
 
@@ -478,7 +479,8 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
         if dual_gap_ > eps_:
             warnings.warn('Objective did not converge.' +
                           ' You might want' +
-                          ' to increase the number of iterations')
+                          ' to increase the number of iterations',
+                          ConvergenceWarning)
 
         if return_models:
             if not multi_output:
