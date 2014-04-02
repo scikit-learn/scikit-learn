@@ -21,6 +21,7 @@ from operator import itemgetter
 import re
 import unicodedata
 import warnings
+from itertools import chain, count, groupby
 
 import numpy as np
 import scipy.sparse as sp
@@ -34,7 +35,6 @@ from .stop_words import ENGLISH_STOP_WORDS
 from sklearn.base import clone
 from sklearn.externals import six
 from sklearn.externals.joblib import Parallel, delayed
-from itertools import chain, count, groupby
 
 __all__ = ['CountVectorizer',
            'ENGLISH_STOP_WORDS',

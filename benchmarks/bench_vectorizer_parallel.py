@@ -38,7 +38,7 @@ from sklearn.feature_extraction.text import CountVectorizer
 import sys
 
 
-class Unbuffered():
+class Unbuffered(object):
 
     def __init__(self, stream):
         self.stream = stream
