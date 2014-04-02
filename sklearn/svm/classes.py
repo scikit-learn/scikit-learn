@@ -125,12 +125,9 @@ class LinearSVC(BaseLibLinear, LinearClassifierMixin, _LearntSelectorMixin,
 
     sklearn.linear_model.SGDClassifier
         SGDClassifier can optimize the same cost function as LinearSVC
-        by adjusting the penalty and loss parameters. Furthermore
-        SGDClassifier is scalable to large number of samples as it uses
-        a Stochastic Gradient Descent optimizer.
-
-        Finally SGDClassifier can fit both dense and sparse data without
-        memory copy if the input is C-contiguous or CSR.
+        by adjusting the penalty and loss parameters. In addition it requires
+        less memory, allows incremental (online) learning, and implements
+        various loss functions and regularization regimes.
 
     """
 
