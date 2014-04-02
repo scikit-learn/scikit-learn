@@ -9,6 +9,8 @@ from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import ignore_warnings, assert_warns_message
+from sklearn.utils.testing import assert_warns
+from sklearn.utils import ConvergenceWarning
 from sklearn import linear_model, datasets
 
 diabetes = datasets.load_diabetes()
@@ -187,7 +189,7 @@ def test_singular_matrix():
     y1 = np.array([1, 1])
     in_warn_message = 'Dropping a regressor'
     f = assert_warns_message
-    alphas, active, coef_path = f(UserWarning, in_warn_message,
+    alphas, active, coef_path = f(ConvergenceWarning, in_warn_message,
                                   linear_model.lars_path, X1, y1)
     assert_array_almost_equal(coef_path.T, [[0, 0], [1, 0]])
 
@@ -325,7 +327,7 @@ def test_lasso_lars_vs_lasso_cd_ill_conditioned():
 
     def in_warn_message(msg):
         return 'Early stopping' in msg or 'Dropping regressor' in msg
-    lars_alphas, _, lars_coef = f(UserWarning,
+    lars_alphas, _, lars_coef = f(ConvergenceWarning,
                                   in_warn_message,
                                   linear_model.lars_path, X, y, method='lasso')
 
@@ -353,7 +355,7 @@ def test_lars_drop_for_good():
     # Create an ill-conditioned situation in which the LARS has to go
     # far in the path to converge, and check that LARS and coordinate
     # descent give the same answers
-    X = [[1e9,     1e9,  0],
+    X = [[1e10,  1e10,  0],
          [-1e-32,  0,  0],
          [1,       1,  1]]
     y = [10, 10, 1]
@@ -364,7 +366,7 @@ def test_lars_drop_for_good():
                 + alpha * linalg.norm(coef, 1))
 
     lars = linear_model.LassoLars(alpha=alpha, normalize=False)
-    assert_warns_message(UserWarning, 'Dropping a regressor', lars.fit, X, y)
+    assert_warns(ConvergenceWarning, lars.fit, X, y)
     lars_coef_ = lars.coef_
     lars_obj = objective_function(lars_coef_)
 
