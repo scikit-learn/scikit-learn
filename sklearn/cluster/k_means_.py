@@ -653,6 +653,11 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
 
     def _check_fit_data(self, X):
         """Verify that the number of samples given is larger than k"""
+        try:
+            if X.ndim == 1:
+                X = X[:, np.newaxis]
+        except AttributeError:
+            pass
         X = atleast2d_or_csr(X, dtype=np.float64)
         if X.shape[0] < self.n_clusters:
             raise ValueError("n_samples=%d should be >= n_clusters=%d" % (
@@ -660,6 +665,11 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         return X
 
     def _check_test_data(self, X):
+        try:
+            if X.ndim == 1:
+                X = X[:, np.newaxis]
+        except AttributeError:
+            pass
         X = atleast2d_or_csr(X)
         n_samples, n_features = X.shape
         expected_n_features = self.cluster_centers_.shape[1]
