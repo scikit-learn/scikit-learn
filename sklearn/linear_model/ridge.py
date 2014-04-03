@@ -84,13 +84,21 @@ def _solve_lsqr(X, y, alpha, max_iter=None, tol=1e-3):
     return coefs
 
 
-def _solve_dense_cholesky(X, y, alpha):
+def _solve_dense_cholesky(X, y, alpha, sample_weight=None):
     # w = inv(X^t X + alpha*Id) * X.T y
     n_samples, n_features = X.shape
     n_targets = y.shape[1]
 
-    A = safe_sparse_dot(X.T, X, dense_output=True)
-    Xy = safe_sparse_dot(X.T, y, dense_output=True)
+    has_sw = (sample_weight is not None) and (
+        isinstance(sample_weight, np.ndarray) or sample_weight != 1.)
+
+    if has_sw:
+        sample_weight = np.atleast_1d(sample_weight).ravel()
+        A = safe_sparse_dot(X.T * sample_weight, X, dense_output=True)
+        Xy = safe_sparse_dot(X.T * sample_weight, y, dense_output=True)
+    else:
+        A = safe_sparse_dot(X.T, X, dense_output=True)
+        Xy = safe_sparse_dot(X.T, y, dense_output=True)
 
     one_alpha = np.array_equal(alpha, len(alpha) * [alpha[0]])
 
@@ -282,7 +290,7 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
         coef = _solve_lsqr(X, y, alpha, max_iter, tol)
 
     elif solver == 'dense_cholesky':
-        if n_features > n_samples or has_sw:
+        if n_features > n_samples:
             K = safe_sparse_dot(X, X.T, dense_output=True)
             try:
                 dual_coef = _solve_dense_cholesky_kernel(K, y, alpha,
@@ -295,7 +303,7 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
 
         else:
             try:
-                coef = _solve_dense_cholesky(X, y, alpha)
+                coef = _solve_dense_cholesky(X, y, alpha, sample_weight)
             except linalg.LinAlgError:
                 # use SVD solver if matrix is singular
                 solver = 'svd'
