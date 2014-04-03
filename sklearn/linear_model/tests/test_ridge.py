@@ -692,3 +692,29 @@ def test_raises_value_error_if_sample_weights_greater_than_1d():
                               "Sample Weights must be 1D array or scalar",
                               fit_ridge_not_ok_2)
 
+
+def test_sparse_design_with_sample_weights():
+    """Sample weights must work with sparse matrices"""
+
+    n_sampless = [2, 3]
+    n_featuress = [3, 2]
+
+    rng = np.random.RandomState(42)
+
+    sparse_matrix_converters = [sp.coo_matrix,
+                                sp.csr_matrix,
+                                sp.csc_matrix,
+                                # sp.lil_matrix,
+                                # sp.dok_matrix
+                                ]
+
+    ridge = Ridge(alpha=1.)
+
+    for n_samples, n_features in zip(n_sampless, n_featuress):
+        X = rng.randn(n_samples, n_features)
+        y = rng.randn(n_samples)
+        sample_weights = rng.randn(n_samples) ** 2 + 1
+        for sparse_converter in sparse_matrix_converters:
+            X_sparse = sparse_converter(X)
+            ridge.fit(X_sparse, y, sample_weight=sample_weights)
+
