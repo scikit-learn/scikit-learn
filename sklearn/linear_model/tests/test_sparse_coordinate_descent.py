@@ -249,20 +249,20 @@ def test_path_parameters():
 
 
 def test_same_output_sparse_dense_lasso_and_enet_cv():
-    X, y = make_sparse_data(n_samples=50, n_features=10)
+    X, y = make_sparse_data(n_samples=40, n_features=10)
     for normalize in [True, False]:
-        clfs = ElasticNetCV(max_iter=100, cv=10, normalize=normalize)
+        clfs = ElasticNetCV(max_iter=100, cv=5, normalize=normalize)
         ignore_warnings(clfs.fit)(X, y)
-        clfd = ElasticNetCV(max_iter=100, cv=10, normalize=normalize)
+        clfd = ElasticNetCV(max_iter=100, cv=5, normalize=normalize)
         ignore_warnings(clfd.fit)(X.todense(), y)
         assert_almost_equal(clfs.alpha_, clfd.alpha_, 7)
         assert_almost_equal(clfs.intercept_, clfd.intercept_, 7)
         assert_array_almost_equal(clfs.mse_path_, clfd.mse_path_)
         assert_array_almost_equal(clfs.alphas_, clfd.alphas_)
 
-        clfs = LassoCV(max_iter=100, cv=10, normalize=normalize)
+        clfs = LassoCV(max_iter=100, cv=4, normalize=normalize)
         ignore_warnings(clfs.fit)(X, y)
-        clfd = LassoCV(max_iter=100, cv=10, normalize=normalize)
+        clfd = LassoCV(max_iter=100, cv=4, normalize=normalize)
         ignore_warnings(clfd.fit)(X.todense(), y)
         assert_almost_equal(clfs.alpha_, clfd.alpha_, 7)
         assert_almost_equal(clfs.intercept_, clfd.intercept_, 7)

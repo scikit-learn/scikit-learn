@@ -18,13 +18,13 @@ from sklearn.datasets.samples_generator import make_blobs
 
 n_clusters = 3
 centers = np.array([[1, 1], [-1, -1], [1, -1]]) + 10
-X, _ = make_blobs(n_samples=500, n_features=2, centers=centers,
-                  cluster_std=0.4, shuffle=True, random_state=0)
+X, _ = make_blobs(n_samples=300, n_features=2, centers=centers,
+                  cluster_std=0.4, shuffle=True, random_state=11)
 
 
 def test_estimate_bandwidth():
     """Test estimate_bandwidth"""
-    bandwidth = estimate_bandwidth(X, n_samples=300)
+    bandwidth = estimate_bandwidth(X, n_samples=200)
     assert_true(0.9 <= bandwidth <= 1.5)
 
 

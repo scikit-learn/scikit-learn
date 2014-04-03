@@ -52,7 +52,7 @@ def test_classification():
                                                         iris.target,
                                                         random_state=rng)
     grid = ParameterGrid({"max_samples": [0.5, 1.0],
-                          "max_features": [1, 2, 3, 4],
+                          "max_features": [1, 2, 4],
                           "bootstrap": [True, False],
                           "bootstrap_features": [True, False]})
 
@@ -71,8 +71,8 @@ def test_classification():
 def test_regression():
     """Check regression for various parameter settings."""
     rng = check_random_state(0)
-    X_train, X_test, y_train, y_test = train_test_split(boston.data,
-                                                        boston.target,
+    X_train, X_test, y_train, y_test = train_test_split(boston.data[:50],
+                                                        boston.target[:50],
                                                         random_state=rng)
     grid = ParameterGrid({"max_samples": [0.5, 1.0],
                           "max_features": [0.5, 1.0],

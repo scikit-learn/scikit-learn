@@ -33,14 +33,13 @@ def test_fit():
 
 def test_partial_fit():
     X = Xdigits.copy()
-    n = 7
     rbm = BernoulliRBM(n_components=64, learning_rate=0.1,
-                       batch_size=10, random_state=9)
+                       batch_size=20, random_state=9)
     n_samples = X.shape[0]
     n_batches = int(np.ceil(float(n_samples) / rbm.batch_size))
     batch_slices = np.array_split(X, n_batches)
 
-    for i in range(n):
+    for i in range(7):
         for batch in batch_slices:
             rbm.partial_fit(batch)
 
@@ -133,10 +132,10 @@ def test_fit_gibbs_sparse():
 
 
 def test_gibbs_smoke():
-    """ just seek if we don't get NaNs sampling the full digits dataset """
+    """Check if we don't get NaNs sampling the full digits dataset."""
     rng = np.random.RandomState(42)
     X = Xdigits
-    rbm1 = BernoulliRBM(n_components=42, batch_size=10,
+    rbm1 = BernoulliRBM(n_components=42, batch_size=40,
                         n_iter=20, random_state=rng)
     rbm1.fit(X)
     X_sampled = rbm1.gibbs(X)

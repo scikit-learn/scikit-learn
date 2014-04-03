@@ -235,15 +235,15 @@ def test_lasso_lars_vs_lasso_cd(verbose=False):
             continue
         lasso_cd.alpha = a
         lasso_cd.fit(X, y)
-        error = np.linalg.norm(c - lasso_cd.coef_)
+        error = linalg.norm(c - lasso_cd.coef_)
         assert_less(error, 0.01)
 
     # similar test, with the classifiers
-    for alpha in np.linspace(1e-2, 1 - 1e-2):
+    for alpha in np.linspace(1e-2, 1 - 1e-2, 20):
         clf1 = linear_model.LassoLars(alpha=alpha, normalize=False).fit(X, y)
         clf2 = linear_model.Lasso(alpha=alpha, tol=1e-8,
                                   normalize=False).fit(X, y)
-        err = np.linalg.norm(clf1.coef_ - clf2.coef_)
+        err = linalg.norm(clf1.coef_ - clf2.coef_)
         assert_less(err, 1e-3)
 
     # same test, with normalized data
@@ -256,7 +256,7 @@ def test_lasso_lars_vs_lasso_cd(verbose=False):
             continue
         lasso_cd.alpha = a
         lasso_cd.fit(X, y)
-        error = np.linalg.norm(c - lasso_cd.coef_)
+        error = linalg.norm(c - lasso_cd.coef_)
         assert_less(error, 0.01)
 
 
@@ -273,7 +273,7 @@ def test_lasso_lars_vs_lasso_cd_early_stopping(verbose=False):
         lasso_cd = linear_model.Lasso(fit_intercept=False, tol=1e-8)
         lasso_cd.alpha = alphas[-1]
         lasso_cd.fit(X, y)
-        error = np.linalg.norm(lasso_path[:, -1] - lasso_cd.coef_)
+        error = linalg.norm(lasso_path[:, -1] - lasso_cd.coef_)
         assert_less(error, 0.01)
 
     alphas_min = [10, 0.9, 1e-4]
@@ -285,7 +285,7 @@ def test_lasso_lars_vs_lasso_cd_early_stopping(verbose=False):
                                       tol=1e-8)
         lasso_cd.alpha = alphas[-1]
         lasso_cd.fit(X, y)
-        error = np.linalg.norm(lasso_path[:, -1] - lasso_cd.coef_)
+        error = linalg.norm(lasso_path[:, -1] - lasso_cd.coef_)
         assert_less(error, 0.01)
 
 
@@ -310,7 +310,7 @@ def test_lasso_lars_vs_lasso_cd_ill_conditioned():
     rng = np.random.RandomState(42)
 
     # Generate data
-    n, m = 80, 100
+    n, m = 70, 100
     k = 5
     X = rng.randn(n, m)
     w = np.zeros((m, 1))
