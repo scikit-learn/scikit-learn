@@ -84,18 +84,20 @@ def _solve_lsqr(X, y, alpha, max_iter=None, tol=1e-3):
     return coefs
 
 
-def _solve_dense_cholesky(X, y, alpha, sample_weight=None):
+def _solve_cholesky(X, y, alpha, sample_weight=None):
     # w = inv(X^t X + alpha*Id) * X.T y
     n_samples, n_features = X.shape
     n_targets = y.shape[1]
 
-    has_sw = (sample_weight is not None) and (
-        isinstance(sample_weight, np.ndarray) or sample_weight != 1.)
+    has_sw = sample_weight is not None
 
     if has_sw:
-        sample_weight = np.atleast_1d(sample_weight).ravel()
-        A = safe_sparse_dot(X.T * sample_weight, X, dense_output=True)
-        Xy = safe_sparse_dot(X.T * sample_weight, y, dense_output=True)
+        sample_weight = sample_weight * np.ones(n_samples)
+        sample_weight_matrix = sparse.dia_matrix((sample_weight, 0),
+            shape=(n_samples, n_samples))
+        weighted_X = safe_sparse_dot(sample_weight_matrix, X)
+        A = safe_sparse_dot(weighted_X.T, X, dense_output=True)
+        Xy = safe_sparse_dot(weighted_X.T, y, dense_output=True)
     else:
         A = safe_sparse_dot(X.T, X, dense_output=True)
         Xy = safe_sparse_dot(X.T, y, dense_output=True)
@@ -116,16 +118,17 @@ def _solve_dense_cholesky(X, y, alpha, sample_weight=None):
         return coefs
 
 
-def _solve_dense_cholesky_kernel(K, y, alpha, sample_weight=1.0):
+def _solve_cholesky_kernel(K, y, alpha, sample_weight=None):
     # dual_coef = inv(X X^t + alpha*Id) y
     n_samples = K.shape[0]
     n_targets = y.shape[1]
 
     one_alpha = np.array_equal(alpha, len(alpha) * [alpha[0]])
-    has_sw = isinstance(sample_weight, np.ndarray) or sample_weight != 1.0
+
+    has_sw = sample_weight is not None
 
     if has_sw:
-        sw = np.sqrt(sample_weight)
+        sw = np.sqrt(np.atleast_1d(sample_weight))
         y = y * sw[:, np.newaxis]
         K *= np.outer(sw, sw)
 
@@ -172,7 +175,18 @@ def _solve_svd(X, y, alpha):
     return np.dot(Vt.T, d_UT_y).T
 
 
-def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
+def _deprecate_dense_cholesky(solver):
+    if solver == 'dense_cholesky':
+        import warnings
+        warnings.warn(DeprecationWarning("The name 'dense_cholesky' is "
+                                         "deprecated. Using 'cholesky' "
+                                         "instead. Changed in 0.15"))
+        solver = 'cholesky'
+
+    return solver
+
+
+def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
                      max_iter=None, tol=1e-3):
     """Solve the ridge equation by the method of normal equations.
 
@@ -195,24 +209,25 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
         The default value is determined by scipy.sparse.linalg.
 
     sample_weight : float or numpy array of shape [n_samples]
-        Individual weights for each sample
+        Individual weights for each sample. If sample_weight is set, then
+        the solver will automatically be set to 'cholesky'
 
-    solver : {'auto', 'svd', 'dense_cholesky', 'lsqr', 'sparse_cg'}
+    solver : {'auto', 'svd', 'cholesky', 'lsqr', 'sparse_cg'}
         Solver to use in the computational routines:
 
         - 'auto' chooses the solver automatically based on the type of data.
 
         - 'svd' uses a Singular Value Decomposition of X to compute the Ridge
           coefficients. More stable for singular matrices than
-          'dense_cholesky'.
+          'cholesky'.
 
-        - 'dense_cholesky' uses the standard scipy.linalg.solve function to
+        - 'cholesky' uses the standard scipy.linalg.solve function to
           obtain a closed-form solution via a Cholesky decomposition of
           dot(X.T, X)
 
         - 'sparse_cg' uses the conjugate gradient solver as found in
           scipy.sparse.linalg.cg. As an iterative algorithm, this solver is
-          more appropriate than 'dense_cholesky' for large-scale data
+          more appropriate than 'cholesky' for large-scale data
           (possibility to set `tol` and `max_iter`).
 
         - 'lsqr' uses the dedicated regularized least-squares routine
@@ -250,13 +265,15 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
         raise ValueError("Number of samples in X and y does not correspond:"
                          " %d != %d" % (n_samples, n_samples_))
 
-    has_sw = isinstance(sample_weight, np.ndarray) or sample_weight != 1.0
+    has_sw = sample_weight is not None
+
+    solver = _deprecate_dense_cholesky(solver)
 
     if solver == 'auto':
         # cholesky if it's a dense array and cg in
         # any other case
-        if hasattr(X, '__array__'):
-            solver = 'dense_cholesky'
+        if not sparse.issparse(X) or has_sw:
+            solver = 'cholesky'
         else:
             solver = 'sparse_cg'
 
@@ -265,10 +282,15 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
                       to sparse_cg.""")
         solver = 'sparse_cg'
 
-    if has_sw and solver != "dense_cholesky":
-        warnings.warn("""sample_weight and class_weight not supported in %s,
-                      fall back to dense_cholesky.""" % solver)
-        solver = 'dense_cholesky'
+    if has_sw:
+        if np.atleast_1d(sample_weight).ndim > 1:
+            raise ValueError("Sample weights must be 1D array or scalar")
+
+        if solver != "cholesky":
+            warnings.warn("sample_weight and class_weight not"
+                          " supported in %s, fall back to "
+                          "cholesky." % solver)
+            solver = 'cholesky'
 
     # There should be either 1 or n_targets penalties
     alpha = safe_asarray(alpha).ravel()
@@ -280,7 +302,7 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
     if alpha.size == 1 and n_targets > 1:
         alpha = np.repeat(alpha, n_targets)
 
-    if solver not in ('sparse_cg', 'dense_cholesky', 'svd', 'lsqr'):
+    if solver not in ('sparse_cg', 'cholesky', 'svd', 'lsqr'):
         ValueError('Solver %s not understood' % solver)
 
     if solver == 'sparse_cg':
@@ -289,11 +311,11 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
     elif solver == "lsqr":
         coef = _solve_lsqr(X, y, alpha, max_iter, tol)
 
-    elif solver == 'dense_cholesky':
+    elif solver == 'cholesky':
         if n_features > n_samples:
             K = safe_sparse_dot(X, X.T, dense_output=True)
             try:
-                dual_coef = _solve_dense_cholesky_kernel(K, y, alpha,
+                dual_coef = _solve_cholesky_kernel(K, y, alpha,
                                                          sample_weight)
 
                 coef = safe_sparse_dot(X.T, dual_coef, dense_output=True).T
@@ -303,7 +325,7 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
 
         else:
             try:
-                coef = _solve_dense_cholesky(X, y, alpha, sample_weight)
+                coef = _solve_cholesky(X, y, alpha, sample_weight)
             except linalg.LinAlgError:
                 # use SVD solver if matrix is singular
                 solver = 'svd'
@@ -331,20 +353,26 @@ class _BaseRidge(six.with_metaclass(ABCMeta, LinearModel)):
         self.tol = tol
         self.solver = solver
 
-    def fit(self, X, y, sample_weight=1.0):
+    def fit(self, X, y, sample_weight=None):
         X = safe_asarray(X, dtype=np.float)
         y = np.asarray(y, dtype=np.float)
+
+        if ((sample_weight is not None) and
+            np.atleast_1d(sample_weight).ndim > 1):
+            raise ValueError("Sample weights must be 1D array or scalar")
 
         X, y, X_mean, y_mean, X_std = self._center_data(
             X, y, self.fit_intercept, self.normalize, self.copy_X,
             sample_weight=sample_weight)
+
+        solver = _deprecate_dense_cholesky(self.solver)
 
         self.coef_ = ridge_regression(X, y,
                                       alpha=self.alpha,
                                       sample_weight=sample_weight,
                                       max_iter=self.max_iter,
                                       tol=self.tol,
-                                      solver=self.solver)
+                                      solver=solver)
         self._set_intercept(X_mean, y_mean, X_std)
         return self
 
@@ -383,21 +411,21 @@ class Ridge(_BaseRidge, RegressorMixin):
     normalize : boolean, optional, default False
         If True, the regressors X will be normalized before regression.
 
-    solver : {'auto', 'svd', 'dense_cholesky', 'lsqr', 'sparse_cg'}
+    solver : {'auto', 'svd', 'cholesky', 'lsqr', 'sparse_cg'}
         Solver to use in the computational routines:
 
         - 'auto' chooses the solver automatically based on the type of data.
 
         - 'svd' uses a Singular Value Decomposition of X to compute the Ridge
           coefficients. More stable for singular matrices than
-          'dense_cholesky'.
+          'cholesky'.
 
-        - 'dense_cholesky' uses the standard scipy.linalg.solve function to
+        - 'cholesky' uses the standard scipy.linalg.solve function to
           obtain a closed-form solution.
 
         - 'sparse_cg' uses the conjugate gradient solver as found in
           scipy.sparse.linalg.cg. As an iterative algorithm, this solver is
-          more appropriate than 'dense_cholesky' for large-scale data
+          more appropriate than 'cholesky' for large-scale data
           (possibility to set `tol` and `max_iter`).
 
         - 'lsqr' uses the dedicated regularized least-squares routine
@@ -437,7 +465,7 @@ class Ridge(_BaseRidge, RegressorMixin):
                                     normalize=normalize, copy_X=copy_X,
                                     max_iter=max_iter, tol=tol, solver=solver)
 
-    def fit(self, X, y, sample_weight=1.0):
+    def fit(self, X, y, sample_weight=None):
         """Fit Ridge regression model
 
         Parameters
@@ -489,10 +517,10 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
     normalize : boolean, optional, default False
         If True, the regressors X will be normalized before regression.
 
-    solver : {'auto', 'svd', 'dense_cholesky', 'lsqr', 'sparse_cg'}
+    solver : {'auto', 'svd', 'cholesky', 'lsqr', 'sparse_cg'}
         Solver to use in the computational
         routines. 'svd' will use a Singular value decomposition to obtain
-        the solution, 'dense_cholesky' will use the standard
+        the solution, 'cholesky' will use the standard
         scipy.linalg.solve function, 'sparse_cg' will use the
         conjugate gradient solver as found in
         scipy.sparse.linalg.cg while 'auto' will chose the most
@@ -551,7 +579,7 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
             # get the class weight corresponding to each sample
             sample_weight = cw[np.searchsorted(self.classes_, y)]
         else:
-            sample_weight = 1.0
+            sample_weight = None
 
         super(RidgeClassifier, self).fit(X, Y, sample_weight=sample_weight)
         return self
@@ -679,7 +707,7 @@ class _RidgeGCV(LinearModel):
             G_diag = G_diag[:, np.newaxis]
         return y - (c / G_diag), c
 
-    def fit(self, X, y, sample_weight=1.0):
+    def fit(self, X, y, sample_weight=None):
         """Fit Ridge regression model
 
         Parameters
@@ -744,10 +772,13 @@ class _RidgeGCV(LinearModel):
         error = scorer is None
 
         for i, alpha in enumerate(self.alphas):
+            weighted_alpha = (sample_weight * alpha
+                              if sample_weight is not None
+                              else alpha)
             if error:
-                out, c = _errors(sample_weight * alpha, y, v, Q, QT_y)
+                out, c = _errors(weighted_alpha, y, v, Q, QT_y)
             else:
-                out, c = _values(sample_weight * alpha, y, v, Q, QT_y)
+                out, c = _values(weighted_alpha, y, v, Q, QT_y)
             cv_values[:, i] = out.ravel()
             C.append(c)
 
@@ -797,7 +828,7 @@ class _BaseRidgeCV(LinearModel):
         self.gcv_mode = gcv_mode
         self.store_cv_values = store_cv_values
 
-    def fit(self, X, y, sample_weight=1.0):
+    def fit(self, X, y, sample_weight=None):
         """Fit Ridge regression model
 
         Parameters
@@ -1002,7 +1033,7 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
             score_func=score_func, loss_func=loss_func, cv=cv)
         self.class_weight = class_weight
 
-    def fit(self, X, y, sample_weight=1.0, class_weight=None):
+    def fit(self, X, y, sample_weight=None, class_weight=None):
         """Fit the ridge classifier.
 
         Parameters
@@ -1035,6 +1066,8 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
                           " Using it in the 'fit' method is deprecated and "
                           "will be removed in 0.15.", DeprecationWarning,
                           stacklevel=2)
+        if sample_weight is None:
+            sample_weight = 1.
 
         self._label_binarizer = LabelBinarizer(pos_label=1, neg_label=-1)
         Y = self._label_binarizer.fit_transform(y)
