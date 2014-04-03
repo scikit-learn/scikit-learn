@@ -19,6 +19,8 @@ The module structure is the following:
 # Authors: Noel Dawe <noel@dawe.me>
 #          Gilles Louppe <g.louppe@gmail.com>
 #          Hamzeh Alsalhi <ha258@cornell.edu>
+#          Arnaud Joly <arnaud.v.joly@gmail.com>
+#
 # Licence: BSD 3 clause
 
 from abc import ABCMeta, abstractmethod
@@ -29,7 +31,8 @@ from numpy.core.umath_tests import inner1d
 from .base import BaseEnsemble
 from ..base import ClassifierMixin, RegressorMixin
 from ..externals import six
-from ..externals.six.moves import xrange, zip
+from ..externals.six.moves import zip
+from ..externals.six.moves import xrange as range
 from .forest import BaseForest
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
 from ..tree.tree import BaseDecisionTree
@@ -95,13 +98,17 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         if self.learning_rate <= 0:
             raise ValueError("learning_rate must be greater than zero")
 
-        if(self.base_estimator is None or
-           isinstance(self.base_estimator, (BaseDecisionTree, BaseForest))):
+        if (self.base_estimator is None or
+                isinstance(self.base_estimator, (BaseDecisionTree,
+                                                 BaseForest))):
             dtype = DTYPE
+            accept_sparse = 'csc'
         else:
             dtype = None
+            accept_sparse = ['csr', 'csc']
 
-        X, y = check_X_y(X, y, ['csr', 'csc'], dtype=dtype, order='C')
+        X, y = check_X_y(X, y, accept_sparse=accept_sparse, dtype=dtype,
+                         order='C')
 
         if sample_weight is None:
             # Initialize weights to 1 / n_samples
@@ -125,7 +132,7 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         self.estimator_weights_ = np.zeros(self.n_estimators, dtype=np.float)
         self.estimator_errors_ = np.ones(self.n_estimators, dtype=np.float)
 
-        for iboost in xrange(self.n_estimators):
+        for iboost in range(self.n_estimators):
             # Boosting step
             sample_weight, estimator_weight, estimator_error = self._boost(
                 iboost,
@@ -255,6 +262,17 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             raise ValueError("%s doesn't support sample_weight."
                              % self.base_estimator_.__class__.__name__)
 
+    def _validate_X_predict(self, X):
+        """Ensure that X is in the proper format"""
+        if (self.base_estimator is None or
+                isinstance(self.base_estimator,
+                           (BaseDecisionTree, BaseForest))):
+            X = check_array(X, accept_sparse='csr', dtype=DTYPE)
+
+        else:
+            X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
+
+        return X
 
 def _samme_proba(estimator, n_classes, X):
     """Calculate algorithm 4, step 2, equation c) of Zhu et al [1].
@@ -387,8 +405,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         """
         # Check that algorithm is supported
         if self.algorithm not in ('SAMME', 'SAMME.R'):
-            raise ValueError("algorithm %s is not supported"
-                             % self.algorithm)
+            raise ValueError("algorithm %s is not supported" % self.algorithm)
 
         # Fit
         return super(AdaBoostClassifier, self).fit(X, y, sample_weight)
@@ -638,7 +655,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             class in ``classes_``, respectively.
         """
         self._check_fitted()
-        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
+        X = self._validate_X_predict(X)
 
         n_classes = self.n_classes_
         classes = self.classes_[:, np.newaxis]
@@ -682,7 +699,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             class in ``classes_``, respectively.
         """
         self._check_fitted()
-        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
+        X = self._validate_X_predict(X)
 
         n_classes = self.n_classes_
         classes = self.classes_[:, np.newaxis]
@@ -732,7 +749,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             outputs is the same of that of the `classes_` attribute.
         """
         n_classes = self.n_classes_
-        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
+        X = self._validate_X_predict(X)
 
         if self.algorithm == 'SAMME.R':
             # The weights are all 1. for SAMME.R
@@ -775,6 +792,8 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             The class probabilities of the input samples. The order of
             outputs is the same of that of the `classes_` attribute.
         """
+        X = self._validate_X_predict(X)
+
         n_classes = self.n_classes_
         proba = None
         norm = 0.
@@ -1066,8 +1085,7 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
         y : array of shape = [n_samples]
             The predicted regression values.
         """
-        self._check_fitted()
-        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
+        X = self._validate_X_predict(X)
 
         return self._get_median_predict(X, len(self.estimators_))
 
@@ -1093,7 +1111,7 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
             The predicted regression values.
         """
         self._check_fitted()
-        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
+        X = self._validate_X_predict(X)
 
         for i, _ in enumerate(self.estimators_, 1):
             yield self._get_median_predict(X, limit=i)

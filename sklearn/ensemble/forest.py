@@ -34,19 +34,25 @@ Single and multi-output problems are both handled.
 
 # Authors: Gilles Louppe <g.louppe@gmail.com>
 #          Brian Holt <bdholt1@gmail.com>
+#          Joly Arnaud <arnaud.v.joly@gmail.com>
+#          Fares Hedayati <fares.hedayati@gmail.com>
+#
 # License: BSD 3 clause
 
 from __future__ import division
 
 from itertools import chain
 import numpy as np
+
 from warnings import warn
 from abc import ABCMeta, abstractmethod
+
+import numpy as np
+from scipy.sparse import issparse
 
 from ..base import ClassifierMixin, RegressorMixin
 from ..externals.joblib import Parallel, delayed
 from ..externals import six
-from ..externals.six.moves import xrange
 from ..feature_selection.from_model import _LearntSelectorMixin
 from ..metrics import r2_score
 from ..preprocessing import OneHotEncoder
@@ -55,7 +61,6 @@ from ..tree import (DecisionTreeClassifier, DecisionTreeRegressor,
 from ..tree._tree import DTYPE, DOUBLE
 from ..utils import check_random_state, check_array
 from ..utils.validation import DataConversionWarning
-
 from .base import BaseEnsemble, _partition_estimators
 
 __all__ = ["RandomForestClassifier",
@@ -84,16 +89,12 @@ def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
         sample_counts = np.bincount(indices, minlength=n_samples)
         curr_sample_weight *= sample_counts
 
-        tree.fit(X, y,
-                 sample_weight=curr_sample_weight,
-                 check_input=False)
+        tree.fit(X, y, sample_weight=curr_sample_weight, check_input=False)
 
         tree.indices_ = sample_counts > 0.
 
     else:
-        tree.fit(X, y,
-                 sample_weight=sample_weight,
-                 check_input=False)
+        tree.fit(X, y, sample_weight=sample_weight, check_input=False)
 
     return tree
 
@@ -139,8 +140,10 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
-            Input data.
+        X : array-like or sparse matrix, shape = [n_samples, n_features]
+            The input samples. Internally, it will be converted to
+            ``dtype=np.float32`` and if a sparse matrix is provided
+            to a sparse ``csr_matrix``.
 
         Returns
         -------
@@ -148,11 +151,12 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
             For each datapoint x in X and for each tree in the forest,
             return the index of the leaf x ends up in.
         """
-        X = check_array(X, dtype=DTYPE)
+        X = check_array(X, dtype=DTYPE, accept_sparse="csr")
         results = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
                            backend="threading")(
             delayed(_parallel_helper)(tree.tree_, 'apply', X)
             for tree in self.estimators_)
+
         return np.array(results).T
 
     def fit(self, X, y, sample_weight=None):
@@ -160,8 +164,10 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
 
         Parameters
         ----------
-        X : array-like of shape = [n_samples, n_features]
-            The training input samples.
+        X : array-like or sparse matrix of shape = [n_samples, n_features]
+            The training input samples. Internally, it will be converted to
+            ``dtype=np.float32`` and if a sparse matrix is provided
+            to a sparse ``csc_matrix``.
 
         y : array-like, shape = [n_samples] or [n_samples, n_outputs]
             The target values (class labels in classification, real numbers in
@@ -182,7 +188,9 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
         # Convert data
         # ensure_2d=False because there are actually unit test checking we fail
         # for 1d. FIXME make this consistent in the future.
-        X = check_array(X, dtype=DTYPE, ensure_2d=False)
+        X = check_array(X, dtype=DTYPE, ensure_2d=False, accept_sparse="csc")
+        if issparse(X):
+            X.sort_indices()
 
         # Remap output
         n_samples, self.n_features_ = X.shape
@@ -324,6 +332,7 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
             warm_start=warm_start)
 
     def _set_oob_score(self, X, y):
+        """Compute out-of-bag score"""
         n_classes_ = self.n_classes_
         n_samples = y.shape[0]
 
@@ -331,22 +340,23 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
         oob_score = 0.0
         predictions = []
 
-        for k in xrange(self.n_outputs_):
-            predictions.append(np.zeros((n_samples,
-                                         n_classes_[k])))
+        for k in range(self.n_outputs_):
+            predictions.append(np.zeros((n_samples, n_classes_[k])))
 
+        sample_indices = np.arange(n_samples)
         for estimator in self.estimators_:
             mask = np.ones(n_samples, dtype=np.bool)
             mask[estimator.indices_] = False
-            p_estimator = estimator.predict_proba(X[mask, :])
+            mask_indices = sample_indices[mask]
+            p_estimator = estimator.predict_proba(X[mask_indices, :])
 
             if self.n_outputs_ == 1:
                 p_estimator = [p_estimator]
 
-            for k in xrange(self.n_outputs_):
-                predictions[k][mask, :] += p_estimator[k]
+            for k in range(self.n_outputs_):
+                predictions[k][mask_indices, :] += p_estimator[k]
 
-        for k in xrange(self.n_outputs_):
+        for k in range(self.n_outputs_):
             if (predictions[k].sum(axis=1) == 0).any():
                 warn("Some inputs do not have OOB scores. "
                      "This probably means too few trees were used "
@@ -371,7 +381,7 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
         self.classes_ = []
         self.n_classes_ = []
 
-        for k in xrange(self.n_outputs_):
+        for k in range(self.n_outputs_):
             classes_k, y[:, k] = np.unique(y[:, k], return_inverse=True)
             self.classes_.append(classes_k)
             self.n_classes_.append(classes_k.shape[0])
@@ -386,8 +396,10 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
 
         Parameters
         ----------
-        X : array-like of shape = [n_samples, n_features]
-            The input samples.
+        X : array-like or sparse matrix of shape = [n_samples, n_features]
+            The input samples. Internally, it will be converted to
+            ``dtype=np.float32`` and if a sparse matrix is provided
+            to a sparse ``csr_matrix``.
 
         Returns
         -------
@@ -396,17 +408,17 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
         """
         # ensure_2d=False because there are actually unit test checking we fail
         # for 1d.
-        X = check_array(X, ensure_2d=False)
-        n_samples = len(X)
+        X = check_array(X, ensure_2d=False, accept_sparse="csr")
         proba = self.predict_proba(X)
 
         if self.n_outputs_ == 1:
             return self.classes_.take(np.argmax(proba, axis=1), axis=0)
 
         else:
+            n_samples = proba[0].shape[0]
             predictions = np.zeros((n_samples, self.n_outputs_))
 
-            for k in xrange(self.n_outputs_):
+            for k in range(self.n_outputs_):
                 predictions[:, k] = self.classes_[k].take(np.argmax(proba[k],
                                                                     axis=1),
                                                           axis=0)
@@ -421,8 +433,10 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
 
         Parameters
         ----------
-        X : array-like of shape = [n_samples, n_features]
-            The input samples.
+        X : array-like or sparse matrix of shape = [n_samples, n_features]
+            The input samples. Internally, it will be converted to
+            ``dtype=np.float32`` and if a sparse matrix is provided
+            to a sparse ``csr_matrix``.
 
         Returns
         -------
@@ -432,8 +446,7 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
             classes corresponds to that in the attribute `classes_`.
         """
         # Check data
-        if getattr(X, "dtype", None) != DTYPE or X.ndim != 2:
-            X = check_array(X, dtype=DTYPE)
+        X = check_array(X, dtype=DTYPE, accept_sparse="csr")
 
         # Assign chunk of trees to jobs
         n_jobs, n_trees, starts = _partition_estimators(self.n_estimators,
@@ -449,17 +462,17 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
         proba = all_proba[0]
 
         if self.n_outputs_ == 1:
-            for j in xrange(1, len(all_proba)):
+            for j in range(1, len(all_proba)):
                 proba += all_proba[j]
 
             proba /= len(self.estimators_)
 
         else:
-            for j in xrange(1, len(all_proba)):
-                for k in xrange(self.n_outputs_):
+            for j in range(1, len(all_proba)):
+                for k in range(self.n_outputs_):
                     proba[k] += all_proba[j][k]
 
-            for k in xrange(self.n_outputs_):
+            for k in range(self.n_outputs_):
                 proba[k] /= self.n_estimators
 
         return proba
@@ -473,8 +486,10 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
 
         Parameters
         ----------
-        X : array-like of shape = [n_samples, n_features]
-            The input samples.
+        X : array-like or sparse matrix of shape = [n_samples, n_features]
+            The input samples. Internally, it will be converted to
+            ``dtype=np.float32`` and if a sparse matrix is provided
+            to a sparse ``csr_matrix``.
 
         Returns
         -------
@@ -489,7 +504,7 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
             return np.log(proba)
 
         else:
-            for k in xrange(self.n_outputs_):
+            for k in range(self.n_outputs_):
                 proba[k] = np.log(proba[k])
 
             return proba
@@ -532,8 +547,10 @@ class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
 
         Parameters
         ----------
-        X : array-like of shape = [n_samples, n_features]
-            The input samples.
+        X : array-like or sparse matrix of shape = [n_samples, n_features]
+            The input samples. Internally, it will be converted to
+            ``dtype=np.float32`` and if a sparse matrix is provided
+            to a sparse ``csr_matrix``.
 
         Returns
         -------
@@ -541,8 +558,7 @@ class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
             The predicted values.
         """
         # Check data
-        if getattr(X, "dtype", None) != DTYPE or X.ndim != 2:
-            X = check_array(X, dtype=DTYPE)
+        X = check_array(X, dtype=DTYPE, accept_sparse="csr")
 
         # Assign chunk of trees to jobs
         n_jobs, n_trees, starts = _partition_estimators(self.n_estimators,
@@ -560,21 +576,24 @@ class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
         return y_hat
 
     def _set_oob_score(self, X, y):
+        """Compute out-of-bag scores"""
         n_samples = y.shape[0]
 
         predictions = np.zeros((n_samples, self.n_outputs_))
         n_predictions = np.zeros((n_samples, self.n_outputs_))
 
+        sample_indices = np.arange(n_samples)
         for estimator in self.estimators_:
             mask = np.ones(n_samples, dtype=np.bool)
             mask[estimator.indices_] = False
-            p_estimator = estimator.predict(X[mask, :])
+            mask_indices = sample_indices[mask]
+            p_estimator = estimator.predict(X[mask_indices, :])
 
             if self.n_outputs_ == 1:
                 p_estimator = p_estimator[:, np.newaxis]
 
-            predictions[mask, :] += p_estimator
-            n_predictions[mask, :] += 1
+            predictions[mask_indices, :] += p_estimator
+            n_predictions[mask_indices, :] += 1
 
         if (n_predictions == 0).any():
             warn("Some inputs do not have OOB scores. "
@@ -591,7 +610,7 @@ class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
 
         self.oob_score_ = 0.0
 
-        for k in xrange(self.n_outputs_):
+        for k in range(self.n_outputs_):
             self.oob_score_ += r2_score(y[:, k],
                                         predictions[:, k])
 
@@ -1347,13 +1366,16 @@ class RandomTreesEmbedding(BaseForest):
 
         Parameters
         ----------
-        X : array-like, shape=(n_samples, n_features)
-            Input data used to build forests.
+        X : array-like or sparse matrix, shape=(n_samples, n_features)
+            The input samples. Use ``dtype=np.float32`` for maximum
+            efficiency. Sparse matrices are also supported, use sparse
+            ``csc_matrix`` for maximum efficieny.
 
         Returns
         -------
         self : object
             Returns self.
+
         """
         self.fit_transform(X, y, sample_weight=sample_weight)
         return self
@@ -1363,8 +1385,9 @@ class RandomTreesEmbedding(BaseForest):
 
         Parameters
         ----------
-        X : array-like, shape=(n_samples, n_features)
-            Input data used to build forests.
+        X : array-like or sparse matrix, shape=(n_samples, n_features)
+            Input data used to build forests. Use ``dtype=np.float32`` for
+            maximum efficiency.
 
         Returns
         -------
@@ -1373,11 +1396,17 @@ class RandomTreesEmbedding(BaseForest):
         """
         # ensure_2d=False because there are actually unit test checking we fail
         # for 1d.
-        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'], ensure_2d=False)
+        X = check_array(X, accept_sparse=['csc'], ensure_2d=False)
+        if issparse(X):
+            X.sort_indices()
+
         rnd = check_random_state(self.random_state)
         y = rnd.uniform(size=X.shape[0])
         super(RandomTreesEmbedding, self).fit(X, y,
                                               sample_weight=sample_weight)
+        if issparse(X):
+            X = X.tocsr()
+
         self.one_hot_encoder_ = OneHotEncoder(sparse=self.sparse_output)
         return self.one_hot_encoder_.fit_transform(self.apply(X))
 
@@ -1386,8 +1415,10 @@ class RandomTreesEmbedding(BaseForest):
 
         Parameters
         ----------
-        X : array-like, shape=(n_samples, n_features)
-            Input data to be transformed.
+        X : array-like or sparse matrix, shape=(n_samples, n_features)
+            Input data to be transformed. Use ``dtype=np.float32`` for maximum
+            efficiency. Sparse matrices are also supported, use sparse
+            ``csc_matrix`` for maximum efficieny.
 
         Returns
         -------

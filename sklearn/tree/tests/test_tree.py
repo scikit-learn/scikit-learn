@@ -2,11 +2,17 @@
 Testing for the tree module (sklearn.tree).
 """
 import pickle
-import numpy as np
-
 from functools import partial
 from itertools import product
 import platform
+
+import numpy as np
+from scipy.sparse import csc_matrix
+from scipy.sparse import csr_matrix
+from scipy.sparse import coo_matrix
+
+from sklearn.random_projection import sparse_random_matrix
+from sklearn.utils.random import sample_without_replacement
 
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import mean_squared_error
@@ -30,6 +36,8 @@ from sklearn.tree import ExtraTreeClassifier
 from sklearn.tree import ExtraTreeRegressor
 
 from sklearn import tree
+from sklearn.tree.tree import SPARSE_SPLITTERS
+from sklearn.tree._tree import TREE_LEAF
 from sklearn import datasets
 
 from sklearn.preprocessing._weights import _balance_weights
@@ -56,6 +64,39 @@ ALL_TREES = dict()
 ALL_TREES.update(CLF_TREES)
 ALL_TREES.update(REG_TREES)
 
+SPARSE_TREES = [name for name, Tree in ALL_TREES.items()
+                if Tree().splitter in SPARSE_SPLITTERS]
+
+
+X_small = np.array([
+    [0, 0, 4, 0, 0, 0, 1, -14, 0, -4, 0, 0, 0, 0, ],
+    [0, 0, 5, 3, 0, -4, 0, 0, 1, -5, 0.2, 0, 4, 1, ],
+    [-1, -1, 0, 0, -4.5, 0, 0, 2.1, 1, 0, 0, -4.5, 0, 1, ],
+    [-1, -1, 0, -1.2, 0, 0, 0, 0, 0, 0, 0.2, 0, 0, 1, ],
+    [-1, -1, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 1, ],
+    [-1, -2, 0, 4, -3, 10, 4, 0, -3.2, 0, 4, 3, -4, 1, ],
+    [2.11, 0, -6, -0.5, 0, 11, 0, 0, -3.2, 6, 0.5, 0, -3, 1, ],
+    [2.11, 0, -6, -0.5, 0, 11, 0, 0, -3.2, 6, 0, 0, -2, 1, ],
+    [2.11, 8, -6, -0.5, 0, 11, 0, 0, -3.2, 6, 0, 0, -2, 1, ],
+    [2.11, 8, -6, -0.5, 0, 11, 0, 0, -3.2, 6, 0.5, 0, -1, 0, ],
+    [2, 8, 5, 1, 0.5, -4, 10, 0, 1, -5, 3, 0, 2, 0, ],
+    [2, 0, 1, 1, 1, -1, 1, 0, 0, -2, 3, 0, 1, 0, ],
+    [2, 0, 1, 2, 3, -1, 10, 2, 0, -1, 1, 2, 2, 0, ],
+    [1, 1, 0, 2, 2, -1, 1, 2, 0, -5, 1, 2, 3, 0, ],
+    [3, 1, 0, 3, 0, -4, 10, 0, 1, -5, 3, 0, 3, 1, ],
+    [2.11, 8, -6, -0.5, 0, 1, 0, 0, -3.2, 6, 0.5, 0, -3, 1, ],
+    [2.11, 8, -6, -0.5, 0, 1, 0, 0, -3.2, 6, 1.5, 1, -1, -1, ],
+    [2.11, 8, -6, -0.5, 0, 10, 0, 0, -3.2, 6, 0.5, 0, -1, -1, ],
+    [2, 0, 5, 1, 0.5, -2, 10, 0, 1, -5, 3, 1, 0, -1, ],
+    [2, 0, 1, 1, 1, -2, 1, 0, 0, -2, 0, 0, 0, 1, ],
+    [2, 1, 1, 1, 2, -1, 10, 2, 0, -1, 0, 2, 1, 1, ],
+    [1, 1, 0, 0, 1, -3, 1, 2, 0, -5, 1, 2, 1, 1, ],
+    [3, 1, 0, 1, 0, -4, 1, 0, 1, -2, 0, 0, 1, 0, ]])
+
+y_small = [1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0,
+           0, 0]
+y_small_reg = [1.0, 2.1, 1.2, 0.05, 10, 2.4, 3.1, 1.01, 0.01, 2.98, 3.1, 1.1,
+               0.0, 1.2, 2, 11, 0, 0, 4.5, 0.201, 1.06, 0.9, 0]
 
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
@@ -77,6 +118,67 @@ boston = datasets.load_boston()
 perm = rng.permutation(boston.target.size)
 boston.data = boston.data[perm]
 boston.target = boston.target[perm]
+
+digits = datasets.load_digits()
+perm = rng.permutation(digits.target.size)
+digits.data = digits.data[perm]
+digits.target = digits.target[perm]
+
+random_state = check_random_state(0)
+X_multilabel, y_multilabel = datasets.make_multilabel_classification(
+    random_state=0, return_indicator=True, n_samples=30, n_features=10)
+
+X_sparse_pos = random_state.uniform(size=(20, 5))
+X_sparse_pos[X_sparse_pos <= 0.8] = 0.
+y_random = random_state.randint(0, 4, size=(20, ))
+X_sparse_mix = sparse_random_matrix(20, 10, density=0.25, random_state=0)
+
+
+DATASETS = {
+    "iris": {"X": iris.data, "y": iris.target},
+    "boston": {"X": boston.data, "y": boston.target},
+    "digits": {"X": digits.data, "y": digits.target},
+    "toy": {"X": X, "y": y},
+    "clf_small": {"X": X_small, "y": y_small},
+    "reg_small": {"X": X_small, "y": y_small_reg},
+    "multilabel": {"X": X_multilabel, "y": y_multilabel},
+    "sparse-pos": {"X": X_sparse_pos, "y": y_random},
+    "sparse-neg": {"X": - X_sparse_pos, "y": y_random},
+    "sparse-mix": {"X": X_sparse_mix, "y": y_random},
+    "zeros": {"X": np.zeros((20, 3)), "y": y_random}
+}
+
+for name in DATASETS:
+    DATASETS[name]["X_sparse"] = csc_matrix(DATASETS[name]["X"])
+
+
+def assert_tree_equal(d, s, message):
+    assert_equal(s.node_count, d.node_count,
+                 "{0}: inequal number of node ({1} != {2})"
+                 "".format(message, s.node_count, d.node_count))
+
+    assert_array_equal(d.children_right, s.children_right,
+                       message + ": inequal children_right")
+    assert_array_equal(d.children_left, s.children_left,
+                       message + ": inequal children_left")
+
+    external = d.children_right == TREE_LEAF
+    internal = np.logical_not(external)
+
+    assert_array_equal(d.feature[internal], s.feature[internal],
+                       message + ": inequal features")
+    assert_array_equal(d.threshold[internal], s.threshold[internal],
+                       message + ": inequal threshold")
+    assert_array_equal(d.n_node_samples.sum(), s.n_node_samples.sum(),
+                       message + ": inequal sum(n_node_samples)")
+    assert_array_equal(d.n_node_samples, s.n_node_samples,
+                       message + ": inequal n_node_samples")
+
+    assert_almost_equal(d.impurity, s.impurity,
+                        err_msg=message + ": inequal impurity")
+
+    assert_array_almost_equal(d.value[external], s.value[external],
+                              err_msg=message + ": inequal value")
 
 
 def test_classification_toy():
@@ -639,6 +741,17 @@ def test_memory_layout():
         y = iris.target
         assert_array_equal(est.fit(X, y).predict(X), y)
 
+        if est.splitter in SPARSE_SPLITTERS:
+            # csr matrix
+            X = csr_matrix(iris.data, dtype=dtype)
+            y = iris.target
+            assert_array_equal(est.fit(X, y).predict(X), y)
+
+            # csc_matrix
+            X = csc_matrix(iris.data, dtype=dtype)
+            y = iris.target
+            assert_array_equal(est.fit(X, y).predict(X), y)
+
         # Strided
         X = np.asarray(iris.data[::3], dtype=dtype)
         y = iris.target[::3]
@@ -819,3 +932,219 @@ def test_huge_allocations():
     huge = 2 ** (n_bits - 1) - 1
     clf = DecisionTreeClassifier(splitter='best', max_leaf_nodes=huge)
     assert_raises(MemoryError, clf.fit, X, y)
+
+
+def check_sparse_input(tree, dataset, max_depth=None):
+    TreeEstimator = ALL_TREES[tree]
+    X = DATASETS[dataset]["X"]
+    X_sparse = DATASETS[dataset]["X_sparse"]
+    y = DATASETS[dataset]["y"]
+
+    # Gain testing time
+    if dataset in ["digits", "boston"]:
+        n_samples = X.shape[0] // 5
+        X = X[:n_samples]
+        X_sparse = X_sparse[:n_samples]
+        y = y[:n_samples]
+
+    for sparse_format in (csr_matrix, csc_matrix, coo_matrix):
+        X_sparse = sparse_format(X_sparse)
+
+        # Check the default (depth first search)
+        d = TreeEstimator(random_state=0, max_depth=max_depth).fit(X, y)
+        s = TreeEstimator(random_state=0, max_depth=max_depth).fit(X_sparse, y)
+
+        assert_tree_equal(d.tree_, s.tree_,
+                          "{0} with dense and sparse format gave different "
+                          "trees".format(tree))
+
+        y_pred = d.predict(X)
+        if tree in CLF_TREES:
+            y_proba = d.predict_proba(X)
+            y_log_proba = d.predict_log_proba(X)
+
+        for sparse_matrix in (csr_matrix, csc_matrix, coo_matrix):
+            X_sparse_test = sparse_matrix(X_sparse, dtype=np.float32)
+
+            assert_array_almost_equal(s.predict(X_sparse_test), y_pred)
+
+            if tree in CLF_TREES:
+                assert_array_almost_equal(s.predict_proba(X_sparse_test),
+                                                          y_proba)
+                assert_array_almost_equal(s.predict_log_proba(X_sparse_test),
+                                          y_log_proba)
+
+
+def test_sparse_input():
+    for tree, dataset in product(SPARSE_TREES,
+                                 ("clf_small", "toy", "digits", "multilabel",
+                                  "sparse-pos", "sparse-neg", "sparse-mix",
+                                  "zeros")):
+        max_depth = 3 if dataset == "digits" else None
+        yield (check_sparse_input, tree, dataset, max_depth)
+
+    # Due to numerical instability of MSE and too strict test, we limit the
+    # maximal depth
+    for tree, dataset in product(REG_TREES, ["boston", "reg_small"]):
+        if tree in SPARSE_TREES:
+            yield (check_sparse_input, tree, dataset, 2)
+
+
+def check_sparse_parameters(tree, dataset):
+    TreeEstimator = ALL_TREES[tree]
+    X = DATASETS[dataset]["X"]
+    X_sparse = DATASETS[dataset]["X_sparse"]
+    y = DATASETS[dataset]["y"]
+
+    # Check max_features
+    d = TreeEstimator(random_state=0, max_features=1, max_depth=2).fit(X, y)
+    s = TreeEstimator(random_state=0, max_features=1,
+                      max_depth=2).fit(X_sparse, y)
+    assert_tree_equal(d.tree_, s.tree_,
+                      "{0} with dense and sparse format gave different "
+                      "trees".format(tree))
+    assert_array_almost_equal(s.predict(X), d.predict(X))
+
+    # Check min_samples_split
+    d = TreeEstimator(random_state=0, max_features=1,
+                      min_samples_split=10).fit(X, y)
+    s = TreeEstimator(random_state=0, max_features=1,
+                      min_samples_split=10).fit(X_sparse, y)
+    assert_tree_equal(d.tree_, s.tree_,
+                      "{0} with dense and sparse format gave different "
+                      "trees".format(tree))
+    assert_array_almost_equal(s.predict(X), d.predict(X))
+
+    # Check min_samples_leaf
+    d = TreeEstimator(random_state=0,
+                      min_samples_leaf=X_sparse.shape[0] // 2).fit(X, y)
+    s = TreeEstimator(random_state=0,
+                      min_samples_leaf=X_sparse.shape[0] // 2).fit(X_sparse, y)
+    assert_tree_equal(d.tree_, s.tree_,
+                      "{0} with dense and sparse format gave different "
+                      "trees".format(tree))
+    assert_array_almost_equal(s.predict(X), d.predict(X))
+
+    # Check best-first search
+    d = TreeEstimator(random_state=0, max_leaf_nodes=3).fit(X, y)
+    s = TreeEstimator(random_state=0, max_leaf_nodes=3).fit(X_sparse, y)
+    assert_tree_equal(d.tree_, s.tree_,
+                      "{0} with dense and sparse format gave different "
+                      "trees".format(tree))
+    assert_array_almost_equal(s.predict(X), d.predict(X))
+
+
+def test_sparse_parameters():
+    for tree, dataset in product(SPARSE_TREES,
+                                 ["sparse-pos", "sparse-neg", "sparse-mix",
+                                  "zeros"]):
+        yield (check_sparse_parameters, tree, dataset)
+
+
+def check_sparse_criterion(tree, dataset):
+    TreeEstimator = ALL_TREES[tree]
+    X = DATASETS[dataset]["X"]
+    X_sparse = DATASETS[dataset]["X_sparse"]
+    y = DATASETS[dataset]["y"]
+
+    # Check various criterion
+    CRITERIONS = REG_CRITERIONS if tree in REG_TREES else CLF_CRITERIONS
+    for criterion in CRITERIONS:
+        d = TreeEstimator(random_state=0, max_depth=3,
+                          criterion=criterion).fit(X, y)
+        s = TreeEstimator(random_state=0, max_depth=3,
+                          criterion=criterion).fit(X_sparse, y)
+
+        assert_tree_equal(d.tree_, s.tree_,
+                          "{0} with dense and sparse format gave different "
+                          "trees".format(tree))
+        assert_array_almost_equal(s.predict(X), d.predict(X))
+
+def test_sparse_criterion():
+    for tree, dataset in product(SPARSE_TREES,
+                                 ["sparse-pos", "sparse-neg", "sparse-mix",
+                                  "zeros"]):
+        yield (check_sparse_criterion, tree, dataset)
+
+
+def check_explicit_sparse_zeros(tree, max_depth=3,
+                                n_features=10):
+    TreeEstimator = ALL_TREES[tree]
+
+    # n_samples set n_feature to ease construction of a simultaneous
+    # construction of a csr and csc matrix
+    n_samples = n_features
+    samples = np.arange(n_samples)
+
+    # Generate X, y
+    random_state = check_random_state(0)
+    indices = []
+    data = []
+    offset = 0
+    indptr = [offset]
+    for i in range(n_features):
+        n_nonzero_i = random_state.binomial(n_samples, 0.5)
+        indices_i = random_state.permutation(samples)[:n_nonzero_i]
+        indices.append(indices_i)
+        data_i = random_state.binomial(3, 0.5, size=(n_nonzero_i, ))  - 1
+        data.append(data_i)
+        offset += n_nonzero_i
+        indptr.append(offset)
+
+    indices = np.concatenate(indices)
+    data = np.array(np.concatenate(data), dtype=np.float32)
+    X_sparse = csc_matrix((data, indices, indptr),
+                          shape=(n_samples, n_features))
+    X = X_sparse.toarray()
+    X_sparse_test = csr_matrix((data, indices, indptr),
+                               shape=(n_samples, n_features))
+    X_test = X_sparse_test.toarray()
+    y = random_state.randint(0, 3, size=(n_samples, ))
+
+    # Ensure that X_sparse_test owns its data, indices and indptr array
+    X_sparse_test = X_sparse_test.copy()
+
+    # Ensure that we have explicit zeros
+    assert_greater((X_sparse.data == 0.).sum(), 0)
+    assert_greater((X_sparse_test.data == 0.).sum(), 0)
+
+    # Perform the comparison
+    d = TreeEstimator(random_state=0, max_depth=max_depth).fit(X, y)
+    s = TreeEstimator(random_state=0, max_depth=max_depth).fit(X_sparse, y)
+
+    assert_tree_equal(d.tree_, s.tree_,
+                      "{0} with dense and sparse format gave different "
+                      "trees".format(tree))
+
+    Xs = (X_test, X_sparse_test)
+    for X1, X2 in product(Xs, Xs):
+        assert_array_almost_equal(s.tree_.apply(X1), d.tree_.apply(X2))
+        assert_array_almost_equal(s.predict(X1), d.predict(X2))
+
+        if tree in CLF_TREES:
+            assert_array_almost_equal(s.predict_proba(X1),
+                                      d.predict_proba(X2))
+
+
+def test_explicit_sparse_zeros():
+    for tree in SPARSE_TREES:
+        yield (check_explicit_sparse_zeros, tree)
+
+
+def check_raise_error_on_1d_input(name):
+    TreeEstimator = ALL_TREES[name]
+
+    X = iris.data[:, 0].ravel()
+    X_2d = iris.data[:, 0].reshape((-1, 1))
+    y = iris.target
+
+    assert_raises(ValueError, TreeEstimator(random_state=0).fit, X, y)
+
+    est = TreeEstimator(random_state=0)
+    est.fit(X_2d, y)
+    assert_raises(ValueError, est.predict, X)
+
+
+def test_1d_input():
+    for name in ALL_TREES:
+        yield check_raise_error_on_1d_input, name
