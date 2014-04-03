@@ -25,7 +25,6 @@ from sklearn.linear_model.ridge import RidgeClassifierCV
 from sklearn.linear_model.ridge import _solve_dense_cholesky
 from sklearn.linear_model.ridge import _solve_dense_cholesky_kernel
 
-
 from sklearn.cross_validation import KFold
 
 diabetes = datasets.load_diabetes()
@@ -526,3 +525,65 @@ def test_ridgecv_store_cv_values():
     y = rng.randn(n_samples, n_responses)
     r.fit(x, y)
     assert_equal(r.cv_values_.shape, (n_samples, n_responses, n_alphas))
+
+
+def test_ridge_sample_weights_in_feature_space():
+    """
+    Check that Cholesky solver in feature space applies sample_weights
+    correctly
+    """
+
+    rng = np.random.RandomState(42)
+
+    n_sampless = [5, 6, 7] * 2
+    n_featuress = [7, 6, 5] * 2
+    n_targetss = [1, 1, 1, 2, 2, 2]
+    noise = 1.
+    alpha = 2.
+    alpha = np.atleast_1d(alpha)
+
+    for n_samples, n_features, n_targets in zip(n_sampless,
+                                                n_featuress,
+                                                n_targetss):
+        X = rng.randn(n_samples, n_features)
+        beta = rng.randn(n_features, n_targets)
+        Y = X.dot(beta)
+        Y_noisy = Y + rng.randn(*Y.shape) * np.sqrt((Y ** 2).sum(0)) * noise
+
+        K = X.dot(X.T)
+        sample_weights = 1. + (rng.randn(n_samples) ** 2) * 10
+
+        coef_sample_space = _solve_dense_cholesky_kernel(K, Y, alpha,
+                                         sample_weight=sample_weights)
+
+        coef_feature_space = _solve_dense_cholesky(X, Y, alpha,
+                                         sample_weight=sample_weights)
+
+        assert_array_almost_equal(X.T.dot(coef_sample_space),
+                                  coef_feature_space.T)
+
+
+def test_branches_to_sample_weights_in_feature_space():
+    """
+    Check correct branching to feature space treatment if
+    n_samples > n_features, even if sample_weights are given.
+    This test is constructed to cause a MemoryError if the
+    decision branches to a treatment in sample space
+    """
+
+    # cause a memory error
+    theoretical_memory_usage = 2 # Terabytes
+    n_samples = int(
+        np.ceil(np.sqrt(theoretical_memory_usage * 8 * 1024 ** 4)))
+
+    n_features = 2
+    rng = np.random.RandomState(42)
+    X = rng.randn(n_samples, n_features)
+    beta = np.array([1., 2.])
+    y = X.dot(beta)
+
+    sample_weights = rng.randn(n_samples) ** 2 + 1
+    ridge = Ridge(alpha=1.)
+
+    ridge.fit(X, y, sample_weight=sample_weights)
+
