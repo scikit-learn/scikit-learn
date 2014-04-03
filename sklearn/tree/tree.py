@@ -9,10 +9,11 @@ randomized trees. Single and multi-output problems are both handled.
 #          Noel Dawe <noel@dawe.me>
 #          Satrajit Gosh <satrajit.ghosh@gmail.com>
 #          Joly Arnaud <arnaud.v.joly@gmail.com>
+#          Fares Hedayati <fareshedayat@yahoo.com>
 # Licence: BSD 3 clause
 
 from __future__ import division
-
+from scipy.sparse import csc_matrix, csr_matrix, coo_matrix
 import numbers
 import numpy as np
 from abc import ABCMeta, abstractmethod
@@ -48,7 +49,9 @@ CRITERIA_CLF = {"gini": _tree.Gini, "entropy": _tree.Entropy}
 CRITERIA_REG = {"mse": _tree.MSE, "friedman_mse": _tree.FriedmanMSE}
 SPLITTERS = {"best": _tree.BestSplitter,
              "presort-best": _tree.PresortBestSplitter,
-             "random": _tree.RandomSplitter}
+             "random": _tree.RandomSplitter,
+             "best-sparse": _tree.BestSparseSplitter}
+
 
 
 # =============================================================================
@@ -132,8 +135,17 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
             warn("The X_argsorted parameter is deprecated as of version 0.14 "
                  "and will be removed in 0.16.", DeprecationWarning)
 
+        # Convert to csc format if the matrix is sparse and is coo or csr
+        if isinstance(X, csr_matrix) or isinstance(X, coo_matrix):
+            X = X.tocsc()
+            if not X.has_sorted_indices:
+                X = X.sort_indices()
+
+        if isinstance(X, csc_matrix):
+            self.splitter = "best-sparse"
+
         # Convert data
-        if check_input:
+        if check_input and not isinstance(X, csc_matrix):
             X, = check_arrays(X, dtype=DTYPE, sparse_format="dense")
 
         # Determine output settings
@@ -252,6 +264,10 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
 
         self.tree_ = Tree(self.n_features_, self.n_classes_, self.n_outputs_)
 
+        if isinstance(X, csc_matrix):
+             splitter.pack_sparse_data(X.data, X.indices, X.indptr, X.shape[1])
+             X = None
+
         # Use BestFirst if max_leaf_nodes given; use DepthFirst otherwise
         if max_leaf_nodes < 0:
             builder = DepthFirstTreeBuilder(splitter, min_samples_split,
@@ -286,6 +302,10 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         y : array of shape = [n_samples] or [n_samples, n_outputs]
             The predicted classes, or the predict values.
         """
+        if isinstance(X, csr_matrix) or isinstance(X, coo_matrix) or \
+                isinstance(X, csc_matrix):
+            X = X.todense()
+
         if getattr(X, "dtype", None) != DTYPE or X.ndim != 2:
             X = array2d(X, dtype=DTYPE)
 
@@ -502,6 +522,10 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
             The class probabilities of the input samples. The order of the
             classes corresponds to that in the attribute `classes_`.
         """
+        if isinstance(X, csr_matrix) or isinstance(X, coo_matrix) or \
+                isinstance(X, csc_matrix):
+            X = X.todense()
+
         if getattr(X, "dtype", None) != DTYPE or X.ndim != 2:
             X = array2d(X, dtype=DTYPE)
 

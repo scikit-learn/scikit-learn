@@ -10,6 +10,7 @@
 #          Lars Buitinck <L.J.Buitinck@uva.nl>
 #          Arnaud Joly <arnaud.v.joly@gmail.com>
 #          Joel Nothman <joel.nothman@gmail.com>
+#          Fares Hedayati <fareshedayat@yahoo.com>
 #
 # Licence: BSD 3 clause
 
@@ -906,12 +907,22 @@ cdef class Splitter:
         self.n_features = 0
         self.feature_values = NULL
 
+        self.tmp_indices = NULL
+        self.current_col = NULL
+        self.index_to_color = NULL
+        self.hyper_indices = NULL
+
+
         self.X = NULL
         self.X_sample_stride = 0
         self.X_fx_stride = 0
         self.y = NULL
         self.y_stride = 0
         self.sample_weight = NULL
+
+        self.data = NULL
+        self.data_stride = 0
+        self.current_color = 0
 
         self.max_features = max_features
         self.min_samples_leaf = min_samples_leaf
@@ -1015,6 +1026,571 @@ cdef class Splitter:
     cdef double node_impurity(self) nogil:
         """Copy the impurity of node samples[start:end."""
         return self.criterion.node_impurity()
+cdef class BestSparseSplitter(Splitter):
+
+    """Splitter for finding the best split, using the sparse data."""
+    def __reduce__(self):
+        return (BestSparseSplitter, (self.criterion,
+                                     self.max_features,
+                                     self.min_samples_leaf,
+                                     self.random_state), self.__getstate__())
+
+
+    cpdef pack_sparse_data(self, np.ndarray data, np.ndarray indices,
+                       np.ndarray indptr, SIZE_t number_of_features):
+        """pack sparse data."""
+
+        self.n_features = number_of_features
+
+        self._data = np.asfortranarray(data, dtype=DTYPE)
+        self._indptr  = np.asfortranarray(indptr, dtype=np.intp)
+        self._indices = np.asfortranarray(indices, dtype=np.intp)
+
+        self.data = <DTYPE_t*> self._data.data
+        self.data_stride = <SIZE_t> self._data.strides[0] / \
+                           <SIZE_t> self._data.itemsize
+
+        self.indptr = <SIZE_t*> self._indptr.data
+        self.indptr_stride = <SIZE_t> self._indptr.strides[0] / \
+                             <SIZE_t> self._indptr.itemsize
+        self.indices = <SIZE_t*> self._indices.data
+        self.indices_stride = <SIZE_t> self._indices.strides[0] / \
+                              <SIZE_t> self._indices.itemsize
+
+
+    cdef void init(self,
+                   np.ndarray[DTYPE_t, ndim=2] X,
+                   np.ndarray[DOUBLE_t, ndim=2, mode="c"] y,
+                   DOUBLE_t* sample_weight):
+        """Initialize the splitter, using sparse data.
+
+        Parameters
+        ----------
+
+        y : array-like, shape = [n_samples] or [n_samples, n_outputs]
+            The target values (integers that correspond to classes in
+            classification, real numbers in regression).
+            Use ``dtype=np.float64`` and ``order='C'`` for maximum
+            efficiency.
+
+        X : array-like, shape = [n_samples, n_features]
+            The training input samples. Use ``dtype=np.float32`` for maximum
+            efficiency.
+
+        sample_weight : array-like, shape = [n_samples] or None
+            Sample weights. If None, then samples are equally weighted. Splits
+            that would create child nodes with net zero or negative weight are
+            ignored while searching for a split in each node. In the case of
+            classification, splits are also ignored if they would result in any
+            single class carrying a negative weight in either child node.
+
+        data : array-like
+            Non-zero values of feature i of the data are stored in
+            `data[indptr[i]:indptr[i+1]]`
+
+        indices : array-like
+            Indices corresponding to non-zero values of feature i,
+            (i.e. `data[indptr[i]:indptr[i+1]]`) are stored in
+            `indices[indptr[i]:indptr[i+1]]`
+
+        indptr : array-like
+            Indices of `data` and `indices` of feature i are in arrays `indptr`,
+            refer to `data` and `indices` for more information
+
+        number_of_features : int
+            number of features of data
+        """
+        # Reset random state
+        self.rand_r_state = self.random_state.randint(0, RAND_R_MAX)
+
+        # Initialize samples and features structures
+
+        cdef SIZE_t n_samples = 0
+        n_samples = y.shape[0]
+        cdef SIZE_t* samples = <SIZE_t*> realloc(self.samples,
+                                                 n_samples * sizeof(SIZE_t))
+        if samples == NULL:
+            raise MemoryError()
+
+        cdef SIZE_t i, j
+        j = 0
+
+        for i in range(n_samples):
+            # Only work with positively weighted samples
+            if sample_weight == NULL or sample_weight[i] != 0.0:
+                samples[j] = i
+                j += 1
+
+        self.samples = samples
+        self.n_samples = j
+
+        cdef SIZE_t n_features = self.n_features
+
+        cdef SIZE_t* features = <SIZE_t*> realloc(self.features,
+                                                  n_features * sizeof(SIZE_t))
+        if features == NULL:
+            raise MemoryError()
+
+        #These are tmp arrays used in node_split_sparse
+
+        cdef DTYPE_t* current_col = <DTYPE_t*> realloc(self.current_col,
+                                                 n_samples * sizeof(DTYPE_t))
+        cdef UINT32_t* index_to_color = <UINT32_t*> realloc(self.index_to_color,
+                                                 n_samples * sizeof(UINT32_t))
+        cdef SIZE_t* tmp_indices = <SIZE_t*> realloc(self.tmp_indices,
+                                                    n_samples * sizeof(SIZE_t))
+        cdef DTYPE_t* sorted_samples = <DTYPE_t*> realloc(self.sorted_samples,
+                                                    n_samples * sizeof(DTYPE_t))
+        cdef SIZE_t* hyper_indices = <SIZE_t*> realloc(self.hyper_indices,
+                                                 n_samples * sizeof(SIZE_t))
+
+        if current_col == NULL:
+            raise MemoryError()
+        if tmp_indices == NULL:
+            raise MemoryError()
+        if sorted_samples == NULL:
+            raise MemoryError()
+        if hyper_indices == NULL:
+            raise MemoryError()
+        if index_to_color == NULL:
+            raise MemoryError()
+
+        self.current_col = current_col
+        self.sorted_samples = sorted_samples
+        self.tmp_indices = tmp_indices
+        self.hyper_indices = hyper_indices
+        self.index_to_color = index_to_color
+
+        for i in range(n_features):
+            features[i] = i
+        for i in range(n_samples):
+            index_to_color[i] = -1
+
+        self.features = features
+        #self.n_features = n_features
+
+        self.constant_features = <SIZE_t*> realloc(self.constant_features,
+                                                   n_features * sizeof(SIZE_t))
+
+        cdef DTYPE_t* fv = <DTYPE_t*> realloc(self.feature_values,
+                                              n_samples * sizeof(DTYPE_t))
+        if fv == NULL:
+            raise MemoryError()
+        self.feature_values = fv
+
+        # Initialize sparse X (represented in data, indices and indptr),
+
+        self.y = <DOUBLE_t*> y.data
+        self.y_stride = <SIZE_t> y.strides[0] / <SIZE_t> y.itemsize
+        self.sample_weight = sample_weight
+
+    cdef void node_split(self, double impurity, SIZE_t* pos,
+                                SIZE_t* feature, double* threshold,
+                                double* impurity_left, double* impurity_right,
+                                double* impurity_improvement,
+                                SIZE_t* n_constant_features) nogil:
+        """Find the best split on node samples[start:end], using sparse
+           features.
+        """
+        # Find the best split
+        cdef SIZE_t* samples = self.samples
+        cdef SIZE_t start = self.start
+        cdef SIZE_t end = self.end
+
+
+        cdef SIZE_t* indices = self.indices
+        cdef SIZE_t* indptr = self.indptr
+        cdef DTYPE_t* data = self.data
+
+        cdef SIZE_t inds = self.indices_stride
+        cdef SIZE_t ptrs  = self.indptr_stride
+        cdef SIZE_t ds    = self.data_stride
+
+        cdef SIZE_t* features = self.features
+        cdef SIZE_t* constant_features = self.constant_features
+        cdef SIZE_t n_features = self.n_features
+
+        cdef DTYPE_t* Xf = self.feature_values
+        cdef DTYPE_t* column = self.current_col
+        cdef SIZE_t* tmp_indices = self.tmp_indices
+        cdef DTYPE_t* sorted_samples = self.sorted_samples
+        cdef SIZE_t* hyper_indices = self.hyper_indices
+        cdef UINT32_t* index_to_color = self.index_to_color
+        cdef SIZE_t max_features = self.max_features
+        cdef SIZE_t min_samples_leaf = self.min_samples_leaf
+        cdef UINT32_t* random_state = &self.rand_r_state
+
+        cdef double best_impurity_left = INFINITY
+        cdef double best_impurity_right = INFINITY
+        cdef SIZE_t best_pos = end
+        cdef SIZE_t best_feature = 0
+        cdef double best_threshold = 0.
+        cdef double best_improvement = -INFINITY
+
+        cdef double current_improvement
+        cdef double current_impurity
+        cdef double current_impurity_left
+        cdef double current_impurity_right
+        cdef SIZE_t current_pos
+        cdef SIZE_t current_feature
+        cdef double current_threshold
+
+        cdef SIZE_t f_i = n_features
+        cdef SIZE_t f_j, p, tmp
+        cdef SIZE_t n_visited_features = 0
+        # Number of features discovered to be constant during the split search
+        cdef SIZE_t n_found_constants = 0
+        # Number of features known to be constant and drawn without replacement
+        cdef SIZE_t n_drawn_constants = 0
+        cdef SIZE_t n_known_constants = n_constant_features[0]
+        # n_total_constants = n_known_constants + n_found_constants
+        cdef SIZE_t n_total_constants = n_known_constants
+        cdef DTYPE_t current_feature_value
+        cdef SIZE_t partition_end
+        cdef int k_ = 0
+        cdef int n_nonzero_values = 0
+        cdef int j_ = 0
+        cdef int i_ = 0
+        cdef int is_ftr_const = 0
+        cdef DTYPE_t prev_ftr = 0.0
+        cdef int const_nonzero_ftr = 0
+        cdef int const_ftr = 0
+        cdef int pos_index = 0
+        cdef int neg_index = 0
+        cdef int index_ = 0
+        cdef int first_zero_p = -1
+        cdef int second_zero_p = -1
+        cdef int b_first_zero_p = 0
+        cdef int b_second_zero_p = 0
+        cdef int samples_sorted = 0
+        cdef int n_ = end - start
+        cdef int m_ = 0
+        cdef int l_ = 0
+        cdef int mid = 0
+        cdef int tmp_start = 0
+        cdef int tmp_end = 0
+        cdef int ftr_start = 0
+        cdef int ftr_end = 0
+
+
+
+        # Marking samples that are in the current node (samples[start:end]) with
+        # current_color, current_color is changed each time to avoid zeroing
+        # the whole `index_to_color` matrix.
+        self.current_color += 1
+        for p in xrange(start, end):
+            hyper_indices[samples[p]] = p
+            index_to_color[samples[p]] = self.current_color
+
+        # Sample up to max_features without replacement using a
+        # Fisher-Yates-based algorithm (using the local variables `f_i` and
+        # `f_j` to compute a permutation of the `features` array).
+        #
+        # Skip the CPU intensive evaluation of the impurity criterion for
+        # features that were already detected as constant (hence not suitable
+        # for good splitting) by ancestor nodes and save the information on
+        # newly discovered constant features to spare computation on descendant
+        # nodes.
+        while (f_i > n_total_constants and  # Stop early if remaining features
+                                            # are constant
+                (n_visited_features < max_features or
+                 # At least one drawn features must be non constant
+                 n_visited_features <= n_found_constants + n_drawn_constants)):
+
+            n_visited_features += 1
+
+            # Loop invariant: elements of features in
+            # - [:n_drawn_constant[ holds drawn and known constant features;
+            # - [n_drawn_constant:n_known_constant[ holds known constant
+            #   features that haven't been drawn yet;
+            # - [n_known_constant:n_total_constant[ holds newly found constant
+            #   features;
+            # - [n_total_constant:f_i[ holds features that haven't been drawn
+            #   yet and aren't constant apriori.
+            # - [f_i:n_features[ holds features that have been drawn
+            #   and aren't constant.
+
+            # Draw a feature at random
+            f_j = rand_int(f_i - n_drawn_constants - n_found_constants,
+                           random_state) + n_drawn_constants
+
+            if f_j < n_known_constants:
+                # f_j in the interval [n_drawn_constants, n_known_constants[
+                tmp = features[f_j]
+                features[f_j] = features[n_drawn_constants]
+                features[n_drawn_constants] = tmp
+
+                n_drawn_constants += 1
+
+            else:
+                # f_j in the interval [n_known_constants, f_i - n_found_constants[
+                f_j += n_found_constants
+                # f_j in the interval [n_total_constants, f_i[
+
+                current_feature = features[f_j]
+
+                n_nonzero_values = 0
+                pos_index = end - 1
+                neg_index = start
+                prev_ftr = 0
+                const_nonzero_ftr = 1
+
+                m_ = indptr[ptrs*current_feature+1] - indptr[ptrs* current_feature]
+                if samples_sorted==0 and n_*log(m_) < m_:
+                    for p in xrange(start, end):
+                        sorted_samples[p] = samples[p]
+                    sort(sorted_samples + start, tmp_indices + start, end - start)
+                    samples_sorted = 1
+
+                # Use binary search to if nlog(m) < m and coloring technique
+                # otherwise. O(nlog(m)) is the running time of binary search and
+                # O(m) is the running time of coloring technique.
+
+                if samples_sorted == 1 and n_*log(m_) < m_:
+                    i_ = start
+                    ftr_start = indptr[ptrs*current_feature]
+                    ftr_end = indptr[ptrs*current_feature+1] - 1
+
+                    while i_ < end and ftr_start < indptr[ptrs*current_feature+1]:
+
+                        if indices[inds*ftr_end] < sorted_samples[i_]:
+                            break
+                        if indices[inds*ftr_start] > sorted_samples[i_]:
+                            i_ += 1
+                            continue
+
+                        # Start of binary search
+                        # the goal is to find sorted_samples[i] in indices
+                        k_ = -1
+                        tmp_start = ftr_start
+                        tmp_end = ftr_end
+                        mid = ftr_start
+                        while tmp_start <= tmp_end:
+                            mid = (tmp_start + tmp_end) / 2
+                            if indices[inds*mid] == sorted_samples[i_]:
+                                k_ = mid
+                                mid += 1
+                                break
+                            if indices[inds*mid] < sorted_samples[i_]:
+                                tmp_start = mid + 1
+                            else:
+                                tmp_end = mid - 1
+                        ftr_start = mid
+                        # End of binary search
+
+                        if k_ != -1:
+                             # if k_ is not -1, then we are sure that the index
+                             # was found otherwise the index does not exist
+                             # meaning the corresponding data is 0.
+                             # Put positive values of the current feature
+                             # at the end of `Xf` and its negative values at
+                             # the beginning of it, and their corresponding
+                             # incides in `tmp_indices`
+
+                            if data[ds*k_] > 0:
+                                Xf[pos_index] = data[ds*k_]
+                                tmp_indices[pos_index] = indices[inds*k_]
+                                pos_index -= 1
+
+                            elif data[ds*k_] < 0:
+                                Xf[neg_index] = data[ds*k_]
+                                tmp_indices[neg_index] = indices[inds*k_]
+                                neg_index += 1
+
+                            if const_nonzero_ftr == 1:
+                                if n_nonzero_values==0:
+                                    prev_ftr = data[ds*k_]
+                                elif prev_ftr != data[ds*k_]:
+                                    const_nonzero_ftr = 0
+                            n_nonzero_values +=1
+
+                        i_ += 1
+                else:
+                    # Using coloring technique : Put positive values of the
+                    # current feature at the end of `Xf` and its negative
+                    # values at the beginning of it, and their corresponding
+                    # incides in `tmp_indices`
+                    for k_ in xrange(indptr[ptrs*current_feature],
+                                     indptr[ptrs* current_feature+1]):
+                        if index_to_color[indices[inds*k_]] == self.current_color:
+                            if data[ds*k_] > 0:
+                                Xf[pos_index] = data[ds*k_]
+                                tmp_indices[pos_index] = indices[inds*k_]
+                                pos_index -= 1
+
+                            elif data[ds*k_] < 0:
+                                Xf[neg_index] = data[ds*k_]
+                                tmp_indices[neg_index] = indices[inds*k_]
+                                neg_index += 1
+
+                            if const_nonzero_ftr == 1:
+                                if n_nonzero_values==0:
+                                    prev_ftr = data[ds*k_]
+                                elif prev_ftr != data[ds*k_]:
+                                    const_nonzero_ftr = 0
+                            n_nonzero_values +=1
+                    if pos_index < neg_index - 1:
+                        with gil:
+                            raise AssertionError("The format of the sparse matrix is corrupted")
+                    # If the current feature is constant (all zeros or all non-zeros and
+                    # constant) then go to the next feature
+
+                const_ftr = 0
+                if n_nonzero_values == 0 \
+                        or (const_nonzero_ftr==1 and end - start == n_nonzero_values):
+                    const_ftr = 1
+
+                # Sort the positive and negative parts of `Xf` while rearranging
+                # their corresponding indices in `tmp_indices`
+                if const_ftr==0:
+                    if neg_index > start:
+                        sort(Xf + start, tmp_indices + start, neg_index - start)
+                    if pos_index < end - 1:
+                        sort(Xf + pos_index + 1, tmp_indices + pos_index + 1,
+                             end - (pos_index + 1))
+                    # Make sure that the indices corresponding to the positive and
+                    # negative parts of `tmp_indices` are the same as the corresponding
+                    # indices in samples, if not reaarange `samples`. For example
+                    # the index of the most negative number should be in samples[start]
+                    # and the index of the most positive number in samples[end-1], if
+                    # not samples are rearranged to make this happen.
+
+                    for k_ in xrange(start, neg_index):
+                        p = hyper_indices[tmp_indices[k_]]
+                        if p != k_:
+                            tmp = samples[k_]
+                            samples[k_] = samples[p]
+                            samples[p] = tmp
+                            hyper_indices[samples[k_]] = k_
+                            hyper_indices[samples[p]] =  p
+
+                    for k_ in xrange (end - 1, pos_index, -1):
+                        p = hyper_indices[tmp_indices[k_]]
+                        if p != k_:
+                            tmp = samples[k_]
+                            samples[k_] = samples[p]
+                            samples[p] = tmp
+                            hyper_indices[samples[k_]] = k_
+                            hyper_indices[samples[p]] =  p
+
+                if n_nonzero_values != (end - start):
+                    first_zero_p = neg_index
+                    second_zero_p = pos_index
+                    Xf[first_zero_p] = 0
+                    Xf[second_zero_p] = 0
+                else:
+                    first_zero_p = -1
+                    second_zero_p = -1
+
+                if Xf[end - 1] <= Xf[start] + FEATURE_THRESHOLD:
+                    features[f_j] = features[n_total_constants]
+                    features[n_total_constants] = current_feature
+
+                    n_found_constants += 1
+                    n_total_constants += 1
+
+                else:
+                    f_i -= 1
+                    features[f_i], features[f_j] = features[f_j], features[f_i]
+                    # Evaluate all splits
+                    self.criterion.reset()
+                    p = start
+                    if p == first_zero_p:
+                        p = second_zero_p
+
+                    while p < end:
+                        while (p + 1 < end and p + 1 != first_zero_p and
+                               Xf[p + 1] <= Xf[p] + FEATURE_THRESHOLD):
+                            p += 1
+
+                        # (p + 1 >= end) or (X[samples[p + 1], current_feature] >
+                        #                    X[samples[p], current_feature])
+                        p += 1
+                        # (p >= end) or (X[samples[p], current_feature] >
+                        #                X[samples[p - 1], current_feature])
+
+                        if p < end:
+                            current_pos = p
+
+                            # Reject if min_samples_leaf is not guaranteed
+                            if (((current_pos - start) < min_samples_leaf) or
+                                    ((end - current_pos) < min_samples_leaf)):
+                                if p==first_zero_p:
+                                    p = second_zero_p
+                                continue
+
+                            self.criterion.update(current_pos)
+                            current_improvement = self.criterion.impurity_improvement(impurity)
+
+                            if current_improvement > best_improvement:
+                                self.criterion.children_impurity(&current_impurity_left,
+                                                                 &current_impurity_right)
+                                best_impurity_left = current_impurity_left
+                                best_impurity_right = current_impurity_right
+                                best_improvement = current_improvement
+                                best_pos = current_pos
+                                best_feature = current_feature
+
+                                current_threshold = (Xf[p - 1] + Xf[p]) / 2.0
+
+                                if current_threshold == Xf[p]:
+                                    current_threshold = Xf[p - 1]
+
+                                best_threshold = current_threshold
+                            if p==first_zero_p:
+                                p = second_zero_p
+
+        # Reorganize into samples[start:best_pos] + samples[best_pos:end]
+        if best_pos < end:
+            partition_end = end
+            p = start
+
+            for k_ in xrange(start , end):
+                column[samples[k_]] = 0
+
+            for k_ in xrange(indptr[ptrs*best_feature],
+                             indptr[ptrs* best_feature+1]):
+                column[indices[inds*k_]] = data[ds*k_]
+
+            while p < partition_end:
+                if column[samples[p]] <= best_threshold:
+                    p += 1
+
+                else:
+                    partition_end -= 1
+
+                    tmp = samples[partition_end]
+                    samples[partition_end] = samples[p]
+                    samples[p] = tmp
+
+        # Respect invariant for constant features: the original order of
+        # element in features[:n_known_constants] must be preserved for sibling
+        # and child nodes
+
+        memcpy(features, constant_features, sizeof(SIZE_t) * n_known_constants)
+
+        # Copy newly found constant features
+
+        memcpy(constant_features + n_known_constants,
+               features + n_known_constants,
+               sizeof(SIZE_t) * n_found_constants)
+
+        # Return values
+        pos[0] = best_pos
+        feature[0] = best_feature
+        threshold[0] = best_threshold
+        impurity_left[0] = best_impurity_left
+        impurity_right[0] = best_impurity_right
+        impurity_improvement[0] = best_improvement
+        n_constant_features[0] = n_total_constants
+
+    def __dealloc__(self):
+        """Destructor."""
+        free(self.current_col)
+        free(self.index_to_color)
+        free(self.tmp_indices)
+        free(self.sorted_samples)
+        free(self.hyper_indices)
 
 
 cdef class BestSplitter(Splitter):
@@ -1845,7 +2421,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                 np.ndarray sample_weight=None):
         """Build a decision tree from the training set (X, y)."""
         # check if dtype is correct
-        if X.dtype != DTYPE:
+        if X is not None and X.dtype != DTYPE:
             # since we have to copy we will make it fortran for efficiency
             X = np.asfortranarray(X, dtype=DTYPE)
 
@@ -2011,7 +2587,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                 np.ndarray sample_weight=None):
         """Build a decision tree from the training set (X, y)."""
         # Check if dtype is correct
-        if X.dtype != DTYPE:
+        if X is not None and X.dtype != DTYPE:
             # since we have to copy we will make it fortran for efficiency
             X = np.asfortranarray(X, dtype=DTYPE)
 
