@@ -119,13 +119,15 @@ def _solve_dense_cholesky(X, y, alpha, sample_weight=None):
         return coefs
 
 
-def _solve_dense_cholesky_kernel(K, y, alpha, sample_weight=1.0):
+def _solve_dense_cholesky_kernel(K, y, alpha, sample_weight=None):
     # dual_coef = inv(X X^t + alpha*Id) y
     n_samples = K.shape[0]
     n_targets = y.shape[1]
 
     one_alpha = np.array_equal(alpha, len(alpha) * [alpha[0]])
-    has_sw = isinstance(sample_weight, np.ndarray) or sample_weight != 1.0
+
+    has_sw = (sample_weight is not None) and (
+        isinstance(sample_weight, np.ndarray) or sample_weight != 1.0)
 
     if has_sw:
         sw = np.sqrt(np.atleast_1d(sample_weight))
@@ -341,10 +343,12 @@ class _BaseRidge(six.with_metaclass(ABCMeta, LinearModel)):
         self.tol = tol
         self.solver = solver
 
-    def fit(self, X, y, sample_weight=1.0):
+    def fit(self, X, y, sample_weight=None):
         X = safe_asarray(X, dtype=np.float)
         y = np.asarray(y, dtype=np.float)
 
+        if sample_weight is None:
+            sample_weight = 1.
         if np.atleast_1d(sample_weight).ndim > 1:
             raise ValueError("Sample Weights must be 1D array or scalar")
 
