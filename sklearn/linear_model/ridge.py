@@ -93,8 +93,12 @@ def _solve_dense_cholesky(X, y, alpha, sample_weight=None):
         isinstance(sample_weight, np.ndarray) or sample_weight != 1.)
 
     if has_sw:
-        A = safe_sparse_dot(X.T * sample_weight, X, dense_output=True)
-        Xy = safe_sparse_dot(X.T * sample_weight, y, dense_output=True)
+        sample_weight = sample_weight * np.ones(n_samples)
+        sample_weight_matrix = sparse.dia_matrix((sample_weight, 0),
+            shape=(n_samples, n_samples))
+        weighted_X = safe_sparse_dot(sample_weight_matrix, X)
+        A = safe_sparse_dot(weighted_X.T, X, dense_output=True)
+        Xy = safe_sparse_dot(weighted_X.T, y, dense_output=True)
     else:
         A = safe_sparse_dot(X.T, X, dense_output=True)
         Xy = safe_sparse_dot(X.T, y, dense_output=True)
