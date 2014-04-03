@@ -366,6 +366,9 @@ given sample.
  * :ref:`example_cluster_plot_mean_shift.py`: Mean Shift clustering
    on a synthetic 2D datasets with 3 classes.
 
+ * :ref:`example_cluster_plot_mean_shift_kernels.py`: An example of a situation
+   where the rbf and flat kernel give a different clustering result.
+
 .. topic:: References:
 
  * `"Mean shift: A robust approach toward feature space analysis."
