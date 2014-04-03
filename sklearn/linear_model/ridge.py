@@ -93,7 +93,6 @@ def _solve_dense_cholesky(X, y, alpha, sample_weight=None):
         isinstance(sample_weight, np.ndarray) or sample_weight != 1.)
 
     if has_sw:
-        sample_weight = np.atleast_1d(sample_weight).ravel()
         A = safe_sparse_dot(X.T * sample_weight, X, dense_output=True)
         Xy = safe_sparse_dot(X.T * sample_weight, y, dense_output=True)
     else:
@@ -125,7 +124,7 @@ def _solve_dense_cholesky_kernel(K, y, alpha, sample_weight=1.0):
     has_sw = isinstance(sample_weight, np.ndarray) or sample_weight != 1.0
 
     if has_sw:
-        sw = np.sqrt(sample_weight)
+        sw = np.sqrt(np.atleast_1d(sample_weight))
         y = y * sw[:, np.newaxis]
         K *= np.outer(sw, sw)
 
@@ -172,7 +171,7 @@ def _solve_svd(X, y, alpha):
     return np.dot(Vt.T, d_UT_y).T
 
 
-def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
+def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
                      max_iter=None, tol=1e-3):
     """Solve the ridge equation by the method of normal equations.
 
@@ -250,6 +249,8 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
         raise ValueError("Number of samples in X and y does not correspond:"
                          " %d != %d" % (n_samples, n_samples_))
 
+    if sample_weight is None:
+        sample_weight = 1.
     has_sw = isinstance(sample_weight, np.ndarray) or sample_weight != 1.0
 
     if solver == 'auto':
@@ -265,10 +266,15 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
                       to sparse_cg.""")
         solver = 'sparse_cg'
 
-    if has_sw and solver != "dense_cholesky":
-        warnings.warn("""sample_weight and class_weight not supported in %s,
-                      fall back to dense_cholesky.""" % solver)
-        solver = 'dense_cholesky'
+    if has_sw:
+        if np.atleast_1d(sample_weight).ndim > 1:
+            raise ValueError("Sample Weights must be 1D array or scalar")
+
+        if solver != "dense_cholesky":
+            warnings.warn("sample_weight and class_weight not"
+                          " supported in %s, fall back to "
+                          "dense_cholesky." % solver)
+            solver = 'dense_cholesky'
 
     # There should be either 1 or n_targets penalties
     alpha = safe_asarray(alpha).ravel()
@@ -334,6 +340,9 @@ class _BaseRidge(six.with_metaclass(ABCMeta, LinearModel)):
     def fit(self, X, y, sample_weight=1.0):
         X = safe_asarray(X, dtype=np.float)
         y = np.asarray(y, dtype=np.float)
+
+        if np.atleast_1d(sample_weight).ndim > 1:
+            raise ValueError("Sample Weights must be 1D array or scalar")
 
         X, y, X_mean, y_mean, X_std = self._center_data(
             X, y, self.fit_intercept, self.normalize, self.copy_X,
