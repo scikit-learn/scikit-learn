@@ -564,31 +564,6 @@ def test_ridge_sample_weights_in_feature_space():
                                   coef_feature_space.T)
 
 
-def test_branches_to_sample_weights_in_feature_space():
-    """Check correct branching to feature space treatment if
-    n_samples > n_features, even if sample_weights are given.
-    This test is constructed to cause a MemoryError if the
-    decision branches to a treatment in sample space.
-    Ridge should automatically branch to processing in feature
-    space in this situation.
-    """
-
-    # cause a memory error
-    theoretical_memory_usage = 2  # Terabytes
-    n_samples = int(np.ceil(np.sqrt(theoretical_memory_usage * 8 * 1024 ** 4)))
-
-    n_features = 2
-    rng = np.random.RandomState(42)
-    X = rng.randn(n_samples, n_features)
-    beta = np.array([1., 2.])
-    y = X.dot(beta)
-
-    sample_weights = rng.randn(n_samples) ** 2 + 1
-    ridge = Ridge(alpha=1.)
-
-    ridge.fit(X, y, sample_weight=sample_weights)
-
-
 def test_raises_value_error_if_sample_weights_greater_than_1d():
     """Sample weights must be either scalar or 1D"""
 
