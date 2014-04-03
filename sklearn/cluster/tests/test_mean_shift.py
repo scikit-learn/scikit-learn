@@ -33,17 +33,19 @@ def test_estimate_bandwidth():
 def test_mean_shift():
     # Test MeanShift algorithm
     bandwidth = 1.2
+    implemented_kernels = ['flat', 'rbf', 'epanechnikov', 'biweight']
+    for kernel in implemented_kernels:
+        ms = MeanShift(bandwidth=bandwidth, kernel=kernel)
+        labels = ms.fit(X).labels_
+        labels_unique = np.unique(labels)
+        n_clusters_ = len(labels_unique)
+        assert_equal(n_clusters_, n_clusters)
 
-    ms = MeanShift(bandwidth=bandwidth)
-    labels = ms.fit(X).labels_
-    labels_unique = np.unique(labels)
-    n_clusters_ = len(labels_unique)
-    assert_equal(n_clusters_, n_clusters)
-
-    cluster_centers, labels = mean_shift(X, bandwidth=bandwidth)
-    labels_unique = np.unique(labels)
-    n_clusters_ = len(labels_unique)
-    assert_equal(n_clusters_, n_clusters)
+        cluster_centers, labels = mean_shift(X, bandwidth=bandwidth,
+                                             kernel=kernel)
+        labels_unique = np.unique(labels)
+        n_clusters_ = len(labels_unique)
+        assert_equal(n_clusters_, n_clusters)
 
 
 def test_meanshift_predict():
