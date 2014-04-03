@@ -833,12 +833,11 @@ def test_l1_ratio():
 
 
 def test_underflow_or_overlow():
-    # Generate some weird data
+    # Generate some weird data with unscaled features
     rng = np.random.RandomState(42)
     n_samples = 100
     n_features = 10
 
-    # Data with unscaled features
     X = rng.normal(size=(n_samples, n_features))
     X[:, 0] *= 100
 
