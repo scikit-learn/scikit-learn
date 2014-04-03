@@ -1213,7 +1213,7 @@ if __name__ == '__main__':
     test_classification_X_small()
     test_regression__X_small()
     test_random_sparse_matrix_DepthFirstSearch()
-    # test_equality_of_sparse_and_dense_tree_with_boston()
+    test_equality_of_sparse_and_dense_tree_with_boston()
     # test_equality_of_sparse_and_dense_tree_with_digits()
     # test_equality_of_sparse_and_dense_tree_with_iris()
     # test_equality_of_sparse_and_dense_tree_with_small_data()
