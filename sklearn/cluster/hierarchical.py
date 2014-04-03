@@ -13,7 +13,6 @@ import sys
 
 import numpy as np
 from scipy import sparse
-from scipy.cluster import hierarchy
 
 from ..base import BaseEstimator, ClusterMixin
 from ..externals.joblib import Memory
@@ -150,6 +149,8 @@ def ward_tree(X, connectivity=None, n_components=None, copy=None,
     n_samples, n_features = X.shape
 
     if connectivity is None:
+        from scipy.cluster import hierarchy     # imports PIL
+
         if n_clusters is not None:
             warnings.warn('Partial build of the tree is implemented '
                           'only for structured clustering (i.e. with '
@@ -332,6 +333,8 @@ def linkage_tree(X, connectivity=None, n_components=None,
             'of %s, but %s was given' % (linkage_choices.keys(), linkage))
 
     if connectivity is None:
+        from scipy.cluster import hierarchy     # imports PIL
+
         if n_clusters is not None:
             warnings.warn('Partial build of the tree is implemented '
                           'only for structured clustering (i.e. with '
