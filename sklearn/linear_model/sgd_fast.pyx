@@ -519,7 +519,9 @@ def plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                 break
 
     if infinity:
-        raise ValueError("floating-point under-/overflow occurred.")
+        raise ValueError(("Floating-point under-/overflow occurred at epoch"
+                          " #%d. Scaling input data with StandardScaler or"
+                          " MinMaxScaler might help.") % (epoch + 1))
 
     w.reset_wscale()
 
