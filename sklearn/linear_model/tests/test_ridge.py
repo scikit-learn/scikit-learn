@@ -616,8 +616,8 @@ def test_sparse_design_with_sample_weights():
     sparse_matrix_converters = [sp.coo_matrix,
                                 sp.csr_matrix,
                                 sp.csc_matrix,
-                                # sp.lil_matrix,
-                                # sp.dok_matrix
+                                sp.lil_matrix,
+                                sp.dok_matrix
                                 ]
 
     sparse_ridge = Ridge(alpha=1., fit_intercept=False)
