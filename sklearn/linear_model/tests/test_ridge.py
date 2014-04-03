@@ -9,6 +9,7 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import ignore_warnings
 
 from sklearn import datasets
@@ -586,4 +587,44 @@ def test_branches_to_sample_weights_in_feature_space():
     ridge = Ridge(alpha=1.)
 
     ridge.fit(X, y, sample_weight=sample_weights)
+
+
+def test_raises_value_error_if_sample_weights_greater_than_1d():
+    """Sample weights must be either scalar or 1D"""
+
+    n_sampless = [2, 3]
+    n_featuress = [3, 2]
+
+    rng = np.random.RandomState(42)
+
+
+    for n_samples, n_features in zip(n_sampless, n_featuress):
+        X = rng.randn(n_samples, n_features)
+        y = rng.randn(n_samples)
+        sample_weights_OK = rng.randn(n_samples) ** 2 + 1
+        sample_weights_OK_1 = 1.
+        sample_weights_OK_2 = 2.
+        sample_weights_not_OK = sample_weights_OK[:, np.newaxis]
+        sample_weights_not_OK_2 = sample_weights_OK[np.newaxis, :]
+
+        ridge = Ridge(alpha=1)
+
+        # make sure the "OK" sample weights actually work
+        ridge.fit(X, y, sample_weights_OK)
+        ridge.fit(X, y, sample_weights_OK_1)
+        ridge.fit(X, y, sample_weights_OK_2)
+
+        def fit_ridge_not_ok():
+            ridge.fit(X, y, sample_weights_not_OK)
+
+        def fit_ridge_not_ok_2():
+            ridge.fit(X, y, sample_weights_not_OK_2)
+
+        assert_raise_message(ValueError,
+                              "Sample Weights must be 1D array or scalar",
+                              fit_ridge_not_ok)
+
+        assert_raise_message(ValueError,
+                              "Sample Weights must be 1D array or scalar",
+                              fit_ridge_not_ok_2)
 
