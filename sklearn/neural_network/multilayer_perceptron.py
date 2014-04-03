@@ -194,11 +194,19 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         """Initialize weight and bias parameters."""
         rng = check_random_state(self.random_state)
 
+
+
+        if self.activation == 'tanh':
+            interval = np.sqrt(6./(self.n_features + self.n_hidden))
+
+        elif self.activation == 'logistic':
+            interval = 4 * np.sqrt(6./(self.n_features + self.n_hidden))
+
         self.coef_hidden_ = rng.uniform(
-            -1, 1, (self.n_features, self.n_hidden))
-        self.coef_output_ = rng.uniform(-1, 1, (self.n_hidden, self.n_outputs))
-        self.intercept_hidden_ = rng.uniform(-1, 1, self.n_hidden)
-        self.intercept_output_ = rng.uniform(-1, 1, self.n_outputs)
+            -interval, interval, (self.n_features, self.n_hidden))
+        self.coef_output_ = rng.uniform(-interval, interval, (self.n_hidden, self.n_outputs))
+        self.intercept_hidden_ = rng.uniform(-interval, interval, self.n_hidden)
+        self.intercept_output_ = rng.uniform(-interval, interval, self.n_outputs)
 
     def _init_param(self):
         """Sets the activation, derivative, loss and output functions."""
@@ -413,7 +421,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
             Number of samples.
 
         """
-        initial_theta = self._pack(
+        packed_parameters = self._pack(
             self.coef_hidden_,
             self.coef_output_,
             self.intercept_hidden_,
@@ -426,7 +434,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         optTheta, _, _ = fmin_l_bfgs_b(
             func=self._cost_grad,
-            x0=initial_theta,
+            x0=packed_parameters,
             maxfun=self.max_iter,
             iprint=iprint,
             pgtol=self.tol,
@@ -558,7 +566,7 @@ class MultilayerPerceptronClassifier(BaseMultilayerPerceptron,
     n_hidden : int, default 100
         Number of units in the hidden layer.
 
-    activation : {'logistic', 'tanh'}, default 'logistic'
+    activation : {'logistic', 'tanh'}, default 'tanh'
         Activation function for the hidden layer.
 
          - 'logistic' for 1 / (1 + exp(x)).
@@ -627,7 +635,7 @@ class MultilayerPerceptronClassifier(BaseMultilayerPerceptron,
     """
 
     def __init__(
-            self, n_hidden=100, activation="logistic",
+            self, n_hidden=100, activation="tanh",
             algorithm='l-bfgs', alpha=0.00001,
             batch_size=200, learning_rate="constant", eta0=0.5,
             power_t=0.25, max_iter=200, shuffle=False,
@@ -821,7 +829,7 @@ class MultilayerPerceptronRegressor(BaseMultilayerPerceptron, RegressorMixin):
     n_hidden : int, default 100
         Number of units in the hidden layer.
 
-    activation : {'logistic', 'tanh'}, default 'logistic'
+    activation : {'logistic', 'tanh'}, default 'tanh'
         Activation function for the hidden layer.
 
          - 'logistic' for 1 / (1 + exp(x)).
@@ -890,7 +898,7 @@ class MultilayerPerceptronRegressor(BaseMultilayerPerceptron, RegressorMixin):
     """
 
     def __init__(
-            self, n_hidden=100, activation="logistic",
+            self, n_hidden=100, activation="tanh",
             algorithm='l-bfgs', alpha=0.00001,
             batch_size=200, learning_rate="constant", eta0=0.1,
             power_t=0.25, max_iter=100, shuffle=False,

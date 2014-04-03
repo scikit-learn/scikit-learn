@@ -364,7 +364,6 @@ def test_partial_fit_regression():
             mlp.partial_fit(X, y)
         pred2 = mlp.predict(X)
         assert_almost_equal(pred1, pred2, decimal=2)
-        print mlp.score(X, y)
         assert_greater(mlp.score(X, y), 0.9)
 
 

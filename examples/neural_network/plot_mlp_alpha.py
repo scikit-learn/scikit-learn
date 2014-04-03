@@ -3,7 +3,7 @@
 Varying regularization in Multi-layer Perceptron
 ================================================
 
-A comparison of different regulaization term 'alpha' values on synthetic
+A comparison of different regularization term 'alpha' values on synthetic
 datasets. The plot shows that different alphas yield different decision
 functions.
 
