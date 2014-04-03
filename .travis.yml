@@ -1,34 +1,16 @@
 language: python
-env:
-    - COVERAGE=--with-coverage
-python:
-    - "2.7"
-    - "2.6"
-    - "3.3"
 virtualenv:
   system_site_packages: true
-before_install:
-    - if [[ $TRAVIS_PYTHON_VERSION != '2.7' ]]; then wget http://repo.continuum.io/miniconda/Miniconda-2.2.2-Linux-x86_64.sh -O miniconda.sh ; fi
-    - if [[ $TRAVIS_PYTHON_VERSION != '2.7' ]]; then chmod +x miniconda.sh ; fi
-    - if [[ $TRAVIS_PYTHON_VERSION != '2.7' ]]; then ./miniconda.sh -b ; fi
-    - if [[ $TRAVIS_PYTHON_VERSION != '2.7' ]]; then export PATH=/home/travis/anaconda/bin:$PATH ; fi
-    - if [[ $TRAVIS_PYTHON_VERSION != '2.7' ]]; then conda update --yes conda ; fi
-    - if [[ $TRAVIS_PYTHON_VERSION != '2.7' ]]; then conda update --yes conda ; fi
-    - if [[ $TRAVIS_PYTHON_VERSION != '2.7' ]]; then conda create -n testenv --yes pip python=$TRAVIS_PYTHON_VERSION ; fi
-    - if [[ $TRAVIS_PYTHON_VERSION != '2.7' ]]; then source activate testenv ; fi
-    - if [[ $TRAVIS_PYTHON_VERSION != '2.7' ]]; then conda install --yes numpy scipy nose ; fi
-    - if [[ $TRAVIS_PYTHON_VERSION == '2.7' ]]; then sudo apt-get update -qq ; fi
-    - if [[ $TRAVIS_PYTHON_VERSION == '2.7' ]]; then sudo apt-get install -qq python-scipy python-nose python-pip ; fi
-install:
-    - python setup.py build_ext --inplace
-    - if [ "${COVERAGE}" == "--with-coverage" ]; then sudo pip install coverage; fi
-    - if [ "${COVERAGE}" == "--with-coverage" ]; then sudo pip install coveralls; fi
-script:
-    - if [ "${COVERAGE}" == "--with-coverage" ]; then
-    -   make test-coverage;
-    - else
-    -   make test;
-    - fi
+env:
+  matrix:
+    - DISTRIB="ubuntu" PYTHON_VERSION="2.7" INSTALL_ATLAS="true"
+      COVERAGE="true"
+    - DISTRIB="conda" PYTHON_VERSION="2.6" INSTALL_MKL="false"
+      NUMPY_VERSION="1.6.2" SCIPY_VERSION="0.11.0"
+    - DISTRIB="conda" PYTHON_VERSION="3.3" INSTALL_MKL="true"
+      NUMPY_VERSION="1.8.1" SCIPY_VERSION="0.13.3"
+install: source continuous_integration/install.sh
+script: bash continuous_integration/test_script.sh
 after_success:
-    - if [ "${COVERAGE}" == "--with-coverage" ]; then coveralls; fi
-
+    - if [[ "$COVERAGE" == "true" ]]; then coveralls; fi
+cache: apt
