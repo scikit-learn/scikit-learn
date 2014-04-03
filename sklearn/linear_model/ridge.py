@@ -200,7 +200,8 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         The default value is determined by scipy.sparse.linalg.
 
     sample_weight : float or numpy array of shape [n_samples]
-        Individual weights for each sample
+        Individual weights for each sample. If sample_weight is set, then
+        the solver will automatically be set to 'dense_cholesky'
 
     solver : {'auto', 'svd', 'dense_cholesky', 'lsqr', 'sparse_cg'}
         Solver to use in the computational routines:
