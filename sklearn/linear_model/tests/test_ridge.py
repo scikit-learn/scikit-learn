@@ -529,9 +529,8 @@ def test_ridgecv_store_cv_values():
 
 
 def test_ridge_sample_weights_in_feature_space():
-    """
-    Check that Cholesky solver in feature space applies sample_weights
-    correctly
+    """Check that Cholesky solver in feature space applies sample_weights
+    correctly.
     """
 
     rng = np.random.RandomState(42)
@@ -554,10 +553,10 @@ def test_ridge_sample_weights_in_feature_space():
         K = X.dot(X.T)
         sample_weights = 1. + (rng.randn(n_samples) ** 2) * 10
 
-        coef_sample_space = _solve_dense_cholesky_kernel(K, Y, alpha,
+        coef_sample_space = _solve_dense_cholesky_kernel(K, Y_noisy, alpha,
                                          sample_weight=sample_weights)
 
-        coef_feature_space = _solve_dense_cholesky(X, Y, alpha,
+        coef_feature_space = _solve_dense_cholesky(X, Y_noisy, alpha,
                                          sample_weight=sample_weights)
 
         assert_array_almost_equal(X.T.dot(coef_sample_space),
@@ -565,17 +564,17 @@ def test_ridge_sample_weights_in_feature_space():
 
 
 def test_branches_to_sample_weights_in_feature_space():
-    """
-    Check correct branching to feature space treatment if
+    """Check correct branching to feature space treatment if
     n_samples > n_features, even if sample_weights are given.
     This test is constructed to cause a MemoryError if the
-    decision branches to a treatment in sample space
+    decision branches to a treatment in sample space.
+    Ridge should automatically branch to processing in feature
+    space in this situation.
     """
 
     # cause a memory error
-    theoretical_memory_usage = 2 # Terabytes
-    n_samples = int(
-        np.ceil(np.sqrt(theoretical_memory_usage * 8 * 1024 ** 4)))
+    theoretical_memory_usage = 2  # Terabytes
+    n_samples = int(np.ceil(np.sqrt(theoretical_memory_usage * 8 * 1024 ** 4)))
 
     n_features = 2
     rng = np.random.RandomState(42)
