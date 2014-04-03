@@ -13,6 +13,7 @@ from sklearn.utils.testing import raises
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_false, assert_true
 from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_raises_regexp
 
 from sklearn import linear_model, datasets, metrics
 from sklearn.base import clone
@@ -829,3 +830,29 @@ def test_l1_ratio():
                            l1_ratio=0.0000000001).fit(X, y)
     est_l2 = SGDClassifier(alpha=0.001, penalty='l2').fit(X, y)
     assert_array_almost_equal(est_en.coef_, est_l2.coef_)
+
+
+def test_underflow_or_overlow():
+    # Generate some weird data with unscaled features
+    rng = np.random.RandomState(42)
+    n_samples = 100
+    n_features = 10
+
+    X = rng.normal(size=(n_samples, n_features))
+    X[:, 0] *= 100
+
+    # Define a ground truth on the scaled data
+    ground_truth = rng.normal(size=n_features)
+    y = (np.dot(scale(X), ground_truth) > 0.).astype(np.int32)
+    assert_array_equal(np.unique(y), [0, 1])
+
+    model = SGDClassifier(alpha=0.1, loss='squared_hinge', n_iter=500)
+    
+    # smoke test: model is stable on scaled data
+    model.fit(scale(X), y)
+
+    # model is numerically unstable on unscaled data
+    msg_regxp = (r"Floating-point under-/overflow occurred at epoch #.*"
+                  " Scaling input data with StandardScaler or MinMaxScaler"
+                  " might help.")
+    assert_raises_regexp(ValueError, msg_regxp, model.fit, X, y)
