@@ -746,7 +746,7 @@ def roc_curve(y_true, y_score, pos_label=None):
 
     y_score : array, shape = [n_samples]
         Target scores, can either be probability estimates of the positive
-        class, confidence values, or binary decisions.
+        class or confidence values.
 
     pos_label : int
         Label considered as positive and others are considered negative.
