@@ -38,19 +38,6 @@ from sklearn.feature_extraction.text import CountVectorizer
 import sys
 
 
-class Unbuffered(object):
-
-    def __init__(self, stream):
-        self.stream = stream
-
-    def write(self, data):
-        self.stream.write(data)
-        self.stream.flush()
-
-    def __getattr__(self, attr):
-        return getattr(self.stream, attr)
-sys.stdout = Unbuffered(sys.stdout)
-
 stemmer = nltk.stem.porter.PorterStemmer()
 
 
@@ -74,6 +61,7 @@ def plot(Vectorizer, corpora, analyzers,
     for corpus, analyzer in zip(corpora, analyzers):
         vectorizer = Vectorizer(analyzer=analyzer)
         print 'Testing one-core...',
+        sys.stdout.flush()
         start = time.time()
         vectorizer.fit_transform(corpus)
         one_core.append(time.time() - start)
@@ -81,6 +69,7 @@ def plot(Vectorizer, corpora, analyzers,
 
         vectorizer = Vectorizer(analyzer=analyzer, n_jobs=2)
         print 'Testing multi-core...',
+        sys.stdout.flush()
         start = time.time()
         vectorizer.fit_transform(corpus)
         multi_core.append(time.time() - start)
