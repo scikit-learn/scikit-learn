@@ -33,11 +33,10 @@ from sklearn.utils.testing import assert_warns
 
 def test_linkage_misc():
     # Misc tests on linkage
-    X = np.ones((5, 5))
-    assert_raises(ValueError,
-                  AgglomerativeClustering(linkage='foobar').fit,
-                  X)
-    assert_raises(ValueError, linkage_tree, X, linkage='foobar')
+    rnd = np.random.RandomState(42)
+    X = rnd.normal(size=(5, 5))
+    assert_raises(ValueError, AgglomerativeClustering(linkage='foo').fit, X)
+    assert_raises(ValueError, linkage_tree, X, linkage='foo')
     assert_raises(ValueError, linkage_tree, X, connectivity=np.ones((4, 4)))
 
     # Smoke test FeatureAgglomeration
@@ -96,10 +95,8 @@ def test_unstructured_linkage_tree():
         # raising a warning and testing the warning code
         with warnings.catch_warnings(record=True) as warning_list:
             warnings.simplefilter("ignore", DeprecationWarning)
-            children, n_nodes, n_leaves, parent = assert_warns(UserWarning,
-                                                           ward_tree,
-                                                           this_X.T,
-                                                           n_clusters=10)
+            children, n_nodes, n_leaves, parent = assert_warns(
+                UserWarning, ward_tree, this_X.T, n_clusters=10)
         n_nodes = 2 * X.shape[1] - 1
         assert_equal(len(children) + n_leaves, n_nodes)
 
@@ -156,8 +153,8 @@ def test_agglomerative_clustering():
         labels = clustering.labels_
         assert_true(np.size(np.unique(labels)) == 10)
         # Turn caching off now
-        clustering = AgglomerativeClustering(n_clusters=10,
-                            connectivity=connectivity, linkage=linkage)
+        clustering = AgglomerativeClustering(
+            n_clusters=10, connectivity=connectivity, linkage=linkage)
         # Check that we obtain the same solution with early-stopping of the
         # tree building
         clustering.compute_full_tree = False
@@ -212,8 +209,11 @@ def test_ward_agglomeration():
     X = rnd.randn(50, 100)
     connectivity = grid_to_graph(*mask.shape)
     assert_warns(DeprecationWarning, WardAgglomeration)
-    ward = WardAgglomeration(n_clusters=5, connectivity=connectivity)
-    ward.fit(X)
+    with warnings.catch_warnings(record=True) as warning_list:
+        warnings.simplefilter("always", DeprecationWarning)
+        ward = WardAgglomeration(n_clusters=5, connectivity=connectivity)
+        ward.fit(X)
+        assert_equal(len(warning_list), 1)
     agglo = FeatureAgglomeration(n_clusters=5, connectivity=connectivity)
     agglo.fit(X)
     assert_array_equal(agglo.labels_, ward.labels_)
@@ -283,7 +283,8 @@ def test_connectivity_popagation():
                   (.018, .152), (.018, .149), (.018, .144),
                   ])
     connectivity = kneighbors_graph(X, 10)
-    ward = Ward(n_clusters=4, connectivity=connectivity)
+    ward = AgglomerativeClustering(
+        n_clusters=4, connectivity=connectivity, linkage='ward')
     # If changes are not propagated correctly, fit crashes with an
     # IndexError
     ward.fit(X)
@@ -299,7 +300,7 @@ def test_connectivity_fixing_non_lil():
     # create a mask with several components to force connectivity fixing
     m = np.array([[True, False], [False, True]])
     c = grid_to_graph(n_x=2, n_y=2, mask=m)
-    w = Ward(connectivity=c)
+    w = AgglomerativeClustering(connectivity=c, linkage='ward')
     assert_warns(UserWarning, w.fit, x)
 
 
