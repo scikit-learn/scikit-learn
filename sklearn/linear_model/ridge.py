@@ -270,7 +270,7 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
     if solver == 'auto':
         # cholesky if it's a dense array and cg in
         # any other case
-        if hasattr(X, '__array__') or has_sw:
+        if not sparse.issparse(X) or has_sw:
             solver = 'cholesky'
         else:
             solver = 'sparse_cg'
