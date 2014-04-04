@@ -1342,9 +1342,8 @@ cdef class BestSparseSplitter(Splitter):
                 if n_samples * log(n_indices) < n_indices:
 
                     if not is_samples_sorted:
-                        for p in range(start, end):
-                            sorted_samples[p] = samples[p]
-
+                        memcpy(sorted_samples + start, samples + start,
+                               n_samples * sizeof(SIZE_t))
                         qsort(sorted_samples + start, n_samples,
                               sizeof(SIZE_t), compare_SIZE_t)
                         is_samples_sorted = 1
