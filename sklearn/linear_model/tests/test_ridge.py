@@ -632,7 +632,8 @@ def test_sparse_design_with_sample_weights():
             sparse_ridge.fit(X_sparse, y, sample_weight=sample_weights)
             dense_ridge.fit(X, y, sample_weight=sample_weights)
 
-            assert_array_equal(sparse_ridge.coef_, dense_ridge.coef_)
+            assert_array_almost_equal(sparse_ridge.coef_, dense_ridge.coef_,
+                                      decimal=6)
 
 
 def test_deprecation_warning_dense_cholesky():
