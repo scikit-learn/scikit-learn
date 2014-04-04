@@ -84,7 +84,7 @@ def _solve_lsqr(X, y, alpha, max_iter=None, tol=1e-3):
     return coefs
 
 
-def _solve_dense_cholesky(X, y, alpha, sample_weight=None):
+def _solve_cholesky(X, y, alpha, sample_weight=None):
     # w = inv(X^t X + alpha*Id) * X.T y
     n_samples, n_features = X.shape
     n_targets = y.shape[1]
@@ -119,7 +119,7 @@ def _solve_dense_cholesky(X, y, alpha, sample_weight=None):
         return coefs
 
 
-def _solve_dense_cholesky_kernel(K, y, alpha, sample_weight=None):
+def _solve_cholesky_kernel(K, y, alpha, sample_weight=None):
     # dual_coef = inv(X X^t + alpha*Id) y
     n_samples = K.shape[0]
     n_targets = y.shape[1]
@@ -201,24 +201,24 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
 
     sample_weight : float or numpy array of shape [n_samples]
         Individual weights for each sample. If sample_weight is set, then
-        the solver will automatically be set to 'dense_cholesky'
+        the solver will automatically be set to 'cholesky'
 
-    solver : {'auto', 'svd', 'dense_cholesky', 'lsqr', 'sparse_cg'}
+    solver : {'auto', 'svd', 'cholesky', 'lsqr', 'sparse_cg'}
         Solver to use in the computational routines:
 
         - 'auto' chooses the solver automatically based on the type of data.
 
         - 'svd' uses a Singular Value Decomposition of X to compute the Ridge
           coefficients. More stable for singular matrices than
-          'dense_cholesky'.
+          'cholesky'.
 
-        - 'dense_cholesky' uses the standard scipy.linalg.solve function to
+        - 'cholesky' uses the standard scipy.linalg.solve function to
           obtain a closed-form solution via a Cholesky decomposition of
           dot(X.T, X)
 
         - 'sparse_cg' uses the conjugate gradient solver as found in
           scipy.sparse.linalg.cg. As an iterative algorithm, this solver is
-          more appropriate than 'dense_cholesky' for large-scale data
+          more appropriate than 'cholesky' for large-scale data
           (possibility to set `tol` and `max_iter`).
 
         - 'lsqr' uses the dedicated regularized least-squares routine
@@ -260,11 +260,18 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         sample_weight = 1.
     has_sw = isinstance(sample_weight, np.ndarray) or sample_weight != 1.0
 
+    if solver == 'dense_cholesky':
+        import warnings
+        warnings.warn(DeprecationWarning("The name 'dense_cholesky' is "
+                                         "deprecated. Using 'cholesky' "
+                                         "instead"))
+        solver = 'cholesky'
+
     if solver == 'auto':
         # cholesky if it's a dense array and cg in
         # any other case
         if hasattr(X, '__array__') or has_sw:
-            solver = 'dense_cholesky'
+            solver = 'cholesky'
         else:
             solver = 'sparse_cg'
 
@@ -277,11 +284,11 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         if np.atleast_1d(sample_weight).ndim > 1:
             raise ValueError("Sample Weights must be 1D array or scalar")
 
-        if solver != "dense_cholesky":
+        if solver != "cholesky":
             warnings.warn("sample_weight and class_weight not"
                           " supported in %s, fall back to "
-                          "dense_cholesky." % solver)
-            solver = 'dense_cholesky'
+                          "cholesky." % solver)
+            solver = 'cholesky'
 
     # There should be either 1 or n_targets penalties
     alpha = safe_asarray(alpha).ravel()
@@ -293,7 +300,7 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
     if alpha.size == 1 and n_targets > 1:
         alpha = np.repeat(alpha, n_targets)
 
-    if solver not in ('sparse_cg', 'dense_cholesky', 'svd', 'lsqr'):
+    if solver not in ('sparse_cg', 'cholesky', 'svd', 'lsqr'):
         ValueError('Solver %s not understood' % solver)
 
     if solver == 'sparse_cg':
@@ -302,11 +309,11 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
     elif solver == "lsqr":
         coef = _solve_lsqr(X, y, alpha, max_iter, tol)
 
-    elif solver == 'dense_cholesky':
+    elif solver == 'cholesky':
         if n_features > n_samples:
             K = safe_sparse_dot(X, X.T, dense_output=True)
             try:
-                dual_coef = _solve_dense_cholesky_kernel(K, y, alpha,
+                dual_coef = _solve_cholesky_kernel(K, y, alpha,
                                                          sample_weight)
 
                 coef = safe_sparse_dot(X.T, dual_coef, dense_output=True).T
@@ -316,7 +323,7 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
 
         else:
             try:
-                coef = _solve_dense_cholesky(X, y, alpha, sample_weight)
+                coef = _solve_cholesky(X, y, alpha, sample_weight)
             except linalg.LinAlgError:
                 # use SVD solver if matrix is singular
                 solver = 'svd'
@@ -342,6 +349,13 @@ class _BaseRidge(six.with_metaclass(ABCMeta, LinearModel)):
         self.copy_X = copy_X
         self.max_iter = max_iter
         self.tol = tol
+        if solver == 'dense_cholesky':
+            import warnings
+            warnings.warn(
+                DeprecationWarning("The name 'dense_cholesky' is "
+                                   "deprecated. Using 'cholesky' "
+                                   "instead"))
+            solver = 'cholesky'
         self.solver = solver
 
     def fit(self, X, y, sample_weight=None):
@@ -401,21 +415,21 @@ class Ridge(_BaseRidge, RegressorMixin):
     normalize : boolean, optional, default False
         If True, the regressors X will be normalized before regression.
 
-    solver : {'auto', 'svd', 'dense_cholesky', 'lsqr', 'sparse_cg'}
+    solver : {'auto', 'svd', 'cholesky', 'lsqr', 'sparse_cg'}
         Solver to use in the computational routines:
 
         - 'auto' chooses the solver automatically based on the type of data.
 
         - 'svd' uses a Singular Value Decomposition of X to compute the Ridge
           coefficients. More stable for singular matrices than
-          'dense_cholesky'.
+          'cholesky'.
 
-        - 'dense_cholesky' uses the standard scipy.linalg.solve function to
+        - 'cholesky' uses the standard scipy.linalg.solve function to
           obtain a closed-form solution.
 
         - 'sparse_cg' uses the conjugate gradient solver as found in
           scipy.sparse.linalg.cg. As an iterative algorithm, this solver is
-          more appropriate than 'dense_cholesky' for large-scale data
+          more appropriate than 'cholesky' for large-scale data
           (possibility to set `tol` and `max_iter`).
 
         - 'lsqr' uses the dedicated regularized least-squares routine
@@ -507,10 +521,10 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
     normalize : boolean, optional, default False
         If True, the regressors X will be normalized before regression.
 
-    solver : {'auto', 'svd', 'dense_cholesky', 'lsqr', 'sparse_cg'}
+    solver : {'auto', 'svd', 'cholesky', 'lsqr', 'sparse_cg'}
         Solver to use in the computational
         routines. 'svd' will use a Singular value decomposition to obtain
-        the solution, 'dense_cholesky' will use the standard
+        the solution, 'cholesky' will use the standard
         scipy.linalg.solve function, 'sparse_cg' will use the
         conjugate gradient solver as found in
         scipy.sparse.linalg.cg while 'auto' will chose the most
