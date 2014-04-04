@@ -1263,7 +1263,7 @@ cdef class BestSparseSplitter(Splitter):
         cdef int second_zero_p = -1
         cdef int b_first_zero_p = 0
         cdef int b_second_zero_p = 0
-        cdef int samples_sorted = 0
+        cdef bint samples_sorted = 0
         cdef int n_samples = end - start
         cdef int n_indices
         cdef int mid = 0
@@ -1336,17 +1336,21 @@ cdef class BestSparseSplitter(Splitter):
 
                 n_indices = (X_indptr[current_feature + 1] -
                              X_indptr[current_feature])
-                if (samples_sorted == 0 and n_samples * log(n_indices) < n_indices):
-                    for p in range(start, end):
-                        sorted_samples[p] = samples[p]
-                    sort(sorted_samples + start, tmp_indices + start,
-                         end - start)
-                    samples_sorted = 1
 
                 # Use binary search to if nlog(m) < m and coloring technique
                 # otherwise. O(nlog(m)) is the running time of binary search and
                 # O(m) is the running time of coloring technique.
-                if samples_sorted == 1 and n_samples * log(n_indices) < n_indices:
+                if n_samples * log(n_indices) < n_indices:
+
+                    if not samples_sorted:
+                        for p in range(start, end):
+                            sorted_samples[p] = samples[p]
+
+                        sort(sorted_samples + start, tmp_indices + start,
+                             end - start)
+                        samples_sorted = 1
+
+
                     p = start
                     ftr_start = X_indptr[current_feature]
                     ftr_end = X_indptr[current_feature + 1] - 1
