@@ -1251,11 +1251,10 @@ cdef class BestSparseSplitter(Splitter):
         cdef SIZE_t n_total_constants = n_known_constants
         cdef DTYPE_t current_feature_value
         cdef SIZE_t partition_end
+
         cdef int k_ = 0
         cdef int n_nonzero_values = 0
-        cdef int j_ = 0
         cdef int i_ = 0
-        cdef int is_ftr_const = 0
         cdef DTYPE_t prev_ftr = 0.0
         cdef int const_nonzero_ftr = 0
         cdef int const_ftr = 0
@@ -1267,9 +1266,8 @@ cdef class BestSparseSplitter(Splitter):
         cdef int b_first_zero_p = 0
         cdef int b_second_zero_p = 0
         cdef int samples_sorted = 0
-        cdef int n_ = end - start
-        cdef int m_ = 0
-        cdef int l_ = 0
+        cdef int n_samples = end - start
+        cdef int n_indices
         cdef int mid = 0
         cdef int tmp_start = 0
         cdef int tmp_end = 0
@@ -1338,9 +1336,10 @@ cdef class BestSparseSplitter(Splitter):
                 prev_ftr = 0
                 const_nonzero_ftr = 1
 
-                m_ = X_indptr[current_feature + 1] - X_indptr[current_feature]
-                if samples_sorted == 0 and n_ * log(m_) < m_:
-                    for p in xrange(start, end):
+                n_indices = (X_indptr[current_feature + 1] -
+                             X_indptr[current_feature])
+                if (samples_sorted == 0 and n_samples * log(n_indices) < n_indices):
+                    for p in range(start, end):
                         sorted_samples[p] = samples[p]
                     sort(sorted_samples + start, tmp_indices + start,
                          end - start)
@@ -1349,7 +1348,7 @@ cdef class BestSparseSplitter(Splitter):
                 # Use binary search to if nlog(m) < m and coloring technique
                 # otherwise. O(nlog(m)) is the running time of binary search and
                 # O(m) is the running time of coloring technique.
-                if samples_sorted == 1 and n_ * log(m_) < m_:
+                if samples_sorted == 1 and n_samples * log(n_indices) < n_indices:
                     i_ = start
                     ftr_start = X_indptr[current_feature]
                     ftr_end = X_indptr[current_feature + 1] - 1
