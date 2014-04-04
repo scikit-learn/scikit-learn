@@ -1254,7 +1254,6 @@ cdef class BestSparseSplitter(Splitter):
 
         cdef int k_ = 0
         cdef int n_nonzero_values = 0
-        cdef int i_ = 0
         cdef DTYPE_t prev_ftr = 0.0
         cdef int const_nonzero_ftr = 0
         cdef int const_ftr = 0
@@ -1349,17 +1348,17 @@ cdef class BestSparseSplitter(Splitter):
                 # otherwise. O(nlog(m)) is the running time of binary search and
                 # O(m) is the running time of coloring technique.
                 if samples_sorted == 1 and n_samples * log(n_indices) < n_indices:
-                    i_ = start
+                    p = start
                     ftr_start = X_indptr[current_feature]
                     ftr_end = X_indptr[current_feature + 1] - 1
 
-                    while (i_ < end and
+                    while (p < end and
                            ftr_start < X_indptr[current_feature + 1]):
 
-                        if X_indices[ftr_end] < sorted_samples[i_]:
+                        if X_indices[ftr_end] < sorted_samples[p]:
                             break
-                        if X_indices[ftr_start] > sorted_samples[i_]:
-                            i_ += 1
+                        if X_indices[ftr_start] > sorted_samples[p]:
+                            p += 1
                             continue
 
                         # Start of binary search
@@ -1370,11 +1369,11 @@ cdef class BestSparseSplitter(Splitter):
                         mid = ftr_start
                         while tmp_start <= tmp_end:
                             mid = (tmp_start + tmp_end) / 2
-                            if X_indices[mid] == sorted_samples[i_]:
+                            if X_indices[mid] == sorted_samples[p]:
                                 k_ = mid
                                 mid += 1
                                 break
-                            if X_indices[mid] < sorted_samples[i_]:
+                            if X_indices[mid] < sorted_samples[p]:
                                 tmp_start = mid + 1
                             else:
                                 tmp_end = mid - 1
@@ -1407,7 +1406,7 @@ cdef class BestSparseSplitter(Splitter):
                                     const_nonzero_ftr = 0
                             n_nonzero_values +=1
 
-                        i_ += 1
+                        p += 1
                 else:
                     # Using coloring technique : Put positive values of the
                     # current feature at the end of `Xf` and its negative
