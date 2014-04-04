@@ -926,12 +926,13 @@ cdef class Splitter:
         self.X_data = NULL
         self.X_indices = NULL
         self.X_indptr = NULL
+
         self.current_color = 0
         self.index_to_color = NULL
         self.tmp_indices = NULL
         self.sorted_samples = NULL
         self.hyper_indices = NULL
-        self.current_color = NULL
+        self.current_col = NULL
 
     def __dealloc__(self):
         """Destructor."""
@@ -1034,8 +1035,16 @@ cdef class Splitter:
 
 
 cdef class BestSparseSplitter(Splitter):
-
     """Splitter for finding the best split, using the sparse data."""
+
+    def __dealloc__(self):
+        """Deallocate memory"""
+        free(self.current_col)
+        free(self.index_to_color)
+        free(self.tmp_indices)
+        free(self.sorted_samples)
+        free(self.hyper_indices)
+
     def __reduce__(self):
         return (BestSparseSplitter, (self.criterion,
                                      self.max_features,
