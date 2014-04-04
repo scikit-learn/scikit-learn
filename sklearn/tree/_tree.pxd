@@ -82,7 +82,9 @@ cdef class Splitter:
     cdef SIZE_t* features                # Feature indices in X
     cdef SIZE_t* constant_features       # Constant features indices
     cdef SIZE_t n_features               # X.shape[1]
-    cdef DTYPE_t* feature_values         # temp. array holding feature values
+        cdef DTYPE_t* feature_values     # temp. array holding feature values
+
+
     cdef DTYPE_t* current_col            # temp. array holding feature values
     cdef UINT32_t* index_to_color
     cdef SIZE_t* tmp_indices              # temp. array of indices
@@ -108,9 +110,6 @@ cdef class Splitter:
     cdef np.ndarray _indices
     cdef np.ndarray _indptr
 
-    cdef SIZE_t data_stride
-    cdef SIZE_t indices_stride
-    cdef SIZE_t indptr_stride
 
     # The samples vector `samples` is maintained by the Splitter object such
     # that the samples contained in a node are contiguous. With this setting,
