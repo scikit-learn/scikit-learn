@@ -36,6 +36,11 @@ def test_safe_asarray():
     Y = safe_asarray(X, dtype=np.int)
     assert_equal(Y.dtype, np.int)
 
+    # Non-regression: LIL and DOK used to fail for lack of a .data attribute
+    X = np.ones([2, 3])
+    safe_asarray(sp.dok_matrix(X))
+    safe_asarray(sp.lil_matrix(X), dtype=X.dtype)
+
 
 def test_as_float_array():
     """Test function for as_float_array"""
