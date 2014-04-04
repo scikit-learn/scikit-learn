@@ -82,7 +82,7 @@ cdef class Splitter:
     cdef SIZE_t* features                # Feature indices in X
     cdef SIZE_t* constant_features       # Constant features indices
     cdef SIZE_t n_features               # X.shape[1]
-        cdef DTYPE_t* feature_values     # temp. array holding feature values
+    cdef DTYPE_t* feature_values     # temp. array holding feature values
 
 
     cdef DTYPE_t* current_col            # temp. array holding feature values
@@ -102,9 +102,9 @@ cdef class Splitter:
     cdef SIZE_t y_stride
     cdef DOUBLE_t* sample_weight
 
-    cdef DTYPE_t* data
-    cdef SIZE_t* indices
-    cdef SIZE_t* indptr
+    cdef DTYPE_t* X_data
+    cdef SIZE_t* X_indices
+    cdef SIZE_t* X_indptr
 
     cdef np.ndarray _data
     cdef np.ndarray _indices
