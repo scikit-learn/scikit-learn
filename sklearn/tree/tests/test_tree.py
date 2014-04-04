@@ -1,9 +1,6 @@
 """
 Testing for the tree module (sklearn.tree).
 """
-import time
-import sys
-sys.path.insert(0, '../../../')
 
 import pickle
 import numpy as np
@@ -798,17 +795,33 @@ def test_regression__X_small():
     d = clf.tree_
     assert_tree_enquality(s, d, "X_small dense and sparse not equal, reg")
 
-def assert_tree_enquality(d, s, message):
 
-    assert_true((False not in (d.feature == s.feature)) and
-                (False not in (d.threshold == s.threshold))and
-                (False not in (d.n_node_samples == s.n_node_samples)) and
-                (False not in (d.value == s.value)) and
-                (False not in (d.children_right == s.children_right)) and
-                (False not in (d.children_left == s.children_left))
-                , message)
-    assert_array_equal(d.value, s.value, message)
-    assert_almost_equal(d.impurity, s.impurity)
+def assert_tree_enquality(d, s, message):
+    from sklearn.tree._tree import TREE_LEAF
+    assert_equal(d.node_count, s.node_count,
+                 message + ": inequal number of node")
+
+    assert_array_equal(d.children_right, s.children_right,
+                       message + ": inequal n_node_samples")
+    assert_array_equal(d.children_left, s.children_left,
+                       message + ": inequal children_left")
+
+    external = d.children_right == TREE_LEAF
+    internal = np.logical_not(external)
+
+    assert_array_equal(d.feature[internal], s.feature[internal],
+                       message + ": inequal features")
+    assert_array_equal(d.threshold[internal], s.threshold[internal],
+                       message + ": inequal threshold")
+    assert_array_equal(d.n_node_samples, s.n_node_samples,
+                       message + ": inequal n_node_samples")
+
+    assert_almost_equal(d.impurity, s.impurity,
+                        err_msg=message + ": inequal impurity")
+
+    assert_array_almost_equal(d.value[external], s.value[external],
+                              err_msg=message + ": inequal value")
+
 
 
 def test_equality_of_sparse_and_dense_tree_with_boston():
