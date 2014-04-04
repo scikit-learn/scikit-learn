@@ -1287,7 +1287,7 @@ cdef class BestSparseSplitter(Splitter):
         cdef int second_zero_p = -1
         cdef int b_first_zero_p = 0
         cdef int b_second_zero_p = 0
-        cdef bint samples_sorted = 0
+        cdef bint is_samples_sorted = 0
         cdef int n_samples = end - start
         cdef int n_indices
         cdef int mid = 0
@@ -1366,16 +1366,13 @@ cdef class BestSparseSplitter(Splitter):
                 # O(m) is the running time of coloring technique.
                 if n_samples * log(n_indices) < n_indices:
 
-                    if not samples_sorted:
+                    if not is_samples_sorted:
                         for p in range(start, end):
                             sorted_samples[p] = samples[p]
 
-
                         qsort(sorted_samples + start, n_samples, sizeof(SIZE_t),
                               compare_SIZE_t)
-                        # sort(sorted_samples + start, tmp_indices + start,
-                        #      end - start)
-                        samples_sorted = 1
+                        is_samples_sorted = 1
 
 
                     p = start
