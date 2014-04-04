@@ -1034,30 +1034,6 @@ cdef class Splitter:
         return self.criterion.node_impurity()
 
 
-cdef inline SIZE_t binary_search(SIZE_t* sorted_array, SIZE_t n_elements,
-                                 SIZE_t key) nogil:
-    """Return the index of key using a binary search in the sorted array
-
-    If not found, return -1
-    """
-    cdef SIZE_t start = 0
-    cdef SIZE_t pivot
-    cdef SIZE_t end = n_elements
-
-    while start < end:
-        pivot = (end - start) / 2 + start
-
-        if sorted_array[pivot] < key:
-            start = pivot + 1
-        else:
-            end = pivot
-
-    if start == end and sorted_array[start] == key:
-        return start
-    else:
-        return -1
-
-
 cdef class BestSparseSplitter(Splitter):
     """Splitter for finding the best split, using the sparse data."""
 
@@ -1276,25 +1252,22 @@ cdef class BestSparseSplitter(Splitter):
         cdef DTYPE_t current_feature_value
         cdef SIZE_t partition_end
 
-        cdef int k_ = 0
-        cdef int n_nonzero_values = 0
+        cdef SIZE_t k_
+        cdef SIZE_t n_nonzero_values = 0
         cdef DTYPE_t prev_ftr = 0.0
-        cdef int const_nonzero_ftr = 0
-        cdef int const_ftr = 0
-        cdef int pos_index = 0
-        cdef int neg_index = 0
-        cdef int first_zero_p = -1
-        cdef int second_zero_p = -1
-        cdef int b_first_zero_p = 0
-        cdef int b_second_zero_p = 0
+        cdef SIZE_t const_nonzero_ftr = 0
+        cdef SIZE_t const_ftr = 0
+        cdef SIZE_t pos_index = 0
+        cdef SIZE_t neg_index = 0
+        cdef SIZE_t first_zero_p = -1
+        cdef SIZE_t second_zero_p = -1
+        cdef SIZE_t b_first_zero_p = 0
+        cdef SIZE_t b_second_zero_p = 0
         cdef bint is_samples_sorted = 0
-        cdef int n_samples = end - start
-        cdef int n_indices
-        cdef int mid = 0
-        cdef int tmp_start = 0
-        cdef int tmp_end = 0
-        cdef int ftr_start = 0
-        cdef int ftr_end = 0
+        cdef SIZE_t n_samples = end - start
+        cdef SIZE_t n_indices
+        cdef SIZE_t ftr_start = 0
+        cdef SIZE_t ftr_end = 0
 
 
         # Marking samples that are in the current node (samples[start:end]) with
@@ -1361,51 +1334,30 @@ cdef class BestSparseSplitter(Splitter):
                 n_indices = (X_indptr[current_feature + 1] -
                              X_indptr[current_feature])
 
-                # Use binary search to if nlog(m) < m and coloring technique
-                # otherwise. O(nlog(m)) is the running time of binary search and
-                # O(m) is the running time of coloring technique.
+                # Use binary search to if n_samples * log(n_indices) <
+                # n_indices and coloring technique otherwise.
+                # O(n_samples * log(n_indices)) is the running time of binary
+                # search and O(n_indices) is the running time of coloring
+                # technique.
                 if n_samples * log(n_indices) < n_indices:
 
                     if not is_samples_sorted:
                         for p in range(start, end):
                             sorted_samples[p] = samples[p]
 
-                        qsort(sorted_samples + start, n_samples, sizeof(SIZE_t),
-                              compare_SIZE_t)
+                        qsort(sorted_samples + start, n_samples,
+                              sizeof(SIZE_t), compare_SIZE_t)
                         is_samples_sorted = 1
 
 
                     p = start
                     ftr_start = X_indptr[current_feature]
-                    ftr_end = X_indptr[current_feature + 1] - 1
+                    ftr_end = X_indptr[current_feature + 1]
 
-                    while (p < end and
-                           ftr_start < X_indptr[current_feature + 1]):
-
-                        if X_indices[ftr_end] < sorted_samples[p]:
-                            break
-                        if X_indices[ftr_start] > sorted_samples[p]:
-                            p += 1
-                            continue
-
-                        # Start of binary search
-                        # the goal is to find sorted_samples[i] in indices
-                        k_ = -1
-                        tmp_start = ftr_start
-                        tmp_end = ftr_end
-                        mid = ftr_start
-                        while tmp_start <= tmp_end:
-                            mid = (tmp_start + tmp_end) / 2
-                            if X_indices[mid] == sorted_samples[p]:
-                                k_ = mid
-                                mid += 1
-                                break
-                            if X_indices[mid] < sorted_samples[p]:
-                                tmp_start = mid + 1
-                            else:
-                                tmp_end = mid - 1
-                        ftr_start = mid
-                        # End of binary search
+                    while (p < end and ftr_start < ftr_end):
+                        # Find index of sorted_samples[p] in X_indices
+                        binary_search(X_indices, ftr_start, ftr_end,
+                                      sorted_samples[p], &k_, &ftr_start)
 
                         if k_ != -1:
                              # if k_ is not -1, then we are sure that the index
@@ -1427,10 +1379,11 @@ cdef class BestSparseSplitter(Splitter):
                                 neg_index += 1
 
                             if const_nonzero_ftr == 1:
-                                if n_nonzero_values==0:
+                                if n_nonzero_values == 0:
                                     prev_ftr = X_data[k_]
                                 elif prev_ftr != X_data[k_]:
                                     const_nonzero_ftr = 0
+
                             n_nonzero_values +=1
 
                         p += 1
@@ -3195,4 +3148,41 @@ cdef inline double log(double x) nogil:
 cdef int compare_SIZE_t(const void * a, const void * b) nogil:
     """Comparison function for sort"""
     return <int>((<SIZE_t*>a)[0] - (<SIZE_t*>b)[0])
+
+
+cdef void binary_search(SIZE_t* sorted_array, SIZE_t start, SIZE_t end,
+                        SIZE_t value, SIZE_t* index, SIZE_t* new_start) nogil:
+    """Return the index of value in the sorted array
+
+    If not found, return -1. new_start is the last pivot + 1
+    """
+    cdef SIZE_t pivot
+
+    # Early stopping if not in range
+    if value < sorted_array[start]:
+        index[0] = -1
+        new_start[0] = start
+        return
+
+    if sorted_array[end - 1] < value:
+        index[0] = -1
+        new_start[0] = end + 1
+        return
+
+    while start < end:
+        pivot = (start + end) / 2
+
+        if sorted_array[pivot] < value:
+            start = pivot + 1
+        else:
+            end = pivot
+
+    if start == end and sorted_array[start] == value:
+        index[0] = start
+    else:
+        index[0] = -1
+    new_start[0] = start
+
+
+
 
