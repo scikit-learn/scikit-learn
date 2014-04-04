@@ -85,11 +85,11 @@ cdef class Splitter:
     cdef DTYPE_t* feature_values         # temp. array holding feature values
 
     cdef DTYPE_t* current_col
-    cdef UINT32_t* index_to_color
+    cdef SIZE_t* index_to_color
     cdef SIZE_t* tmp_indices
-    cdef DTYPE_t* sorted_samples
+    cdef SIZE_t* sorted_samples
     cdef SIZE_t* hyper_indices
-    cdef UINT32_t current_color
+    cdef SIZE_t current_color
 
     cdef SIZE_t start                    # Start position for the current node
     cdef SIZE_t end                      # End position for the current node

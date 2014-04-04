@@ -14,7 +14,7 @@
 #
 # Licence: BSD 3 clause
 
-from libc.stdlib cimport calloc, free, malloc, realloc
+from libc.stdlib cimport calloc, free, malloc, realloc, qsort
 from libc.string cimport memcpy, memset
 from libc.math cimport log as ln
 from cpython cimport Py_INCREF, PyObject
@@ -1034,6 +1034,30 @@ cdef class Splitter:
         return self.criterion.node_impurity()
 
 
+cdef inline SIZE_t binary_search(SIZE_t* sorted_array, SIZE_t n_elements,
+                                 SIZE_t key) nogil:
+    """Return the index of key using a binary search in the sorted array
+
+    If not found, return -1
+    """
+    cdef SIZE_t start = 0
+    cdef SIZE_t pivot
+    cdef SIZE_t end = n_elements
+
+    while start < end:
+        pivot = (end - start) / 2 + start
+
+        if sorted_array[pivot] < key:
+            start = pivot + 1
+        else:
+            end = pivot
+
+    if start == end and sorted_array[start] == key:
+        return start
+    else:
+        return -1
+
+
 cdef class BestSparseSplitter(Splitter):
     """Splitter for finding the best split, using the sparse data."""
 
@@ -1144,12 +1168,12 @@ cdef class BestSparseSplitter(Splitter):
 
         cdef DTYPE_t* current_col = <DTYPE_t*> realloc(self.current_col,
                                                  n_samples * sizeof(DTYPE_t))
-        cdef UINT32_t* index_to_color = <UINT32_t*> realloc(self.index_to_color,
-                                                 n_samples * sizeof(UINT32_t))
+        cdef SIZE_t* index_to_color = <SIZE_t*> realloc(self.index_to_color,
+                                                 n_samples * sizeof(SIZE_t))
         cdef SIZE_t* tmp_indices = <SIZE_t*> realloc(self.tmp_indices,
                                                     n_samples * sizeof(SIZE_t))
-        cdef DTYPE_t* sorted_samples = <DTYPE_t*> realloc(self.sorted_samples,
-                                                    n_samples * sizeof(DTYPE_t))
+        cdef SIZE_t* sorted_samples = <SIZE_t*> realloc(self.sorted_samples,
+                                                    n_samples * sizeof(SIZE_t))
         cdef SIZE_t* hyper_indices = <SIZE_t*> realloc(self.hyper_indices,
                                                  n_samples * sizeof(SIZE_t))
 
@@ -1217,9 +1241,9 @@ cdef class BestSparseSplitter(Splitter):
         cdef DTYPE_t* Xf = self.feature_values
         cdef DTYPE_t* column = self.current_col
         cdef SIZE_t* tmp_indices = self.tmp_indices
-        cdef DTYPE_t* sorted_samples = self.sorted_samples
+        cdef SIZE_t* sorted_samples = self.sorted_samples
         cdef SIZE_t* hyper_indices = self.hyper_indices
-        cdef UINT32_t* index_to_color = self.index_to_color
+        cdef SIZE_t* index_to_color = self.index_to_color
         cdef SIZE_t max_features = self.max_features
         cdef SIZE_t min_samples_leaf = self.min_samples_leaf
         cdef UINT32_t* random_state = &self.rand_r_state
@@ -1346,8 +1370,11 @@ cdef class BestSparseSplitter(Splitter):
                         for p in range(start, end):
                             sorted_samples[p] = samples[p]
 
-                        sort(sorted_samples + start, tmp_indices + start,
-                             end - start)
+
+                        qsort(sorted_samples + start, n_samples, sizeof(SIZE_t),
+                              compare_SIZE_t)
+                        # sort(sorted_samples + start, tmp_indices + start,
+                        #      end - start)
                         samples_sorted = 1
 
 
@@ -3166,3 +3193,9 @@ cdef inline double rand_double(UINT32_t* random_state) nogil:
 
 cdef inline double log(double x) nogil:
     return ln(x) / ln(2.0)
+
+
+cdef int compare_SIZE_t(const void * a, const void * b) nogil:
+    """Comparison function for sort"""
+    return <int>((<SIZE_t*>a)[0] - (<SIZE_t*>b)[0])
+
