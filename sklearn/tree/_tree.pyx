@@ -1278,7 +1278,7 @@ cdef class BestSparseSplitter(Splitter):
         # current_color, current_color is changed each time to avoid zeroing
         # the whole `index_to_color` matrix.
         self.current_color += 1
-        for p in xrange(start, end):
+        for p in range(start, end):
             hyper_indices[samples[p]] = p
             index_to_color[samples[p]] = self.current_color
 
@@ -1459,7 +1459,7 @@ cdef class BestSparseSplitter(Splitter):
                     # the index of the most negative number should be in samples[start]
                     # and the index of the most positive number in samples[end-1], if
                     # not samples are rearranged to make this happen.
-                    for k_ in xrange(start, neg_index):
+                    for k_ in range(start, neg_index):
                         p = hyper_indices[tmp_indices[k_]]
                         if p != k_:
                             tmp = samples[k_]
@@ -1468,7 +1468,7 @@ cdef class BestSparseSplitter(Splitter):
                             hyper_indices[samples[k_]] = k_
                             hyper_indices[samples[p]] =  p
 
-                    for k_ in xrange (end - 1, pos_index, -1):
+                    for k_ in range (end - 1, pos_index, -1):
                         p = hyper_indices[tmp_indices[k_]]
                         if p != k_:
                             tmp = samples[k_]
@@ -1550,11 +1550,11 @@ cdef class BestSparseSplitter(Splitter):
             partition_end = end
             p = start
 
-            for k_ in xrange(start , end):
+            for k_ in range(start, end):
                 column[samples[k_]] = 0
 
-            for k_ in xrange(X_indptr[best_feature],
-                             X_indptr[best_feature + 1]):
+            for k_ in range(X_indptr[best_feature],
+                            X_indptr[best_feature + 1]):
                 column[X_indices[k_]] = X_data[k_]
 
             while p < partition_end:
