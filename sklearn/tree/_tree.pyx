@@ -919,12 +919,19 @@ cdef class Splitter:
         self.y_stride = 0
         self.sample_weight = NULL
 
-        self.X_data = NULL
-        self.current_color = 0
-
         self.max_features = max_features
         self.min_samples_leaf = min_samples_leaf
         self.random_state = random_state
+
+        self.X_data = NULL
+        self.X_indices = NULL
+        self.X_indptr = NULL
+        self.current_color = 0
+        self.index_to_color = NULL
+        self.tmp_indices = NULL
+        self.sorted_samples = NULL
+        self.hyper_indices = NULL
+        self.current_color = NULL
 
     def __dealloc__(self):
         """Destructor."""
