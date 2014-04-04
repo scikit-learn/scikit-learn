@@ -295,8 +295,13 @@ def test_importances_gini_equal_mse():
                                         shuffle=False,
                                         random_state=0)
 
-    clf = DecisionTreeClassifier(criterion="gini", random_state=0).fit(X, y)
-    reg = DecisionTreeRegressor(criterion="mse", random_state=0).fit(X, y)
+    # The gini index and the mean square error (variance) might differ due
+    # to numerical instability. Since those instabilities mainly occurs at
+    # high tree depth, we restrict this maximal depth.
+    clf = DecisionTreeClassifier(criterion="gini", max_depth=8,
+                                 random_state=0).fit(X, y)
+    reg = DecisionTreeRegressor(criterion="mse", max_depth=8,
+                                random_state=0).fit(X, y)
 
     assert_almost_equal(clf.feature_importances_, reg.feature_importances_)
     assert_array_equal(clf.tree_.feature, reg.tree_.feature)
