@@ -620,7 +620,8 @@ def test_sparse_design_with_sample_weights():
                                 # sp.dok_matrix
                                 ]
 
-    ridge = Ridge(alpha=1.)
+    sparse_ridge = Ridge(alpha=1., fit_intercept=False)
+    dense_ridge = Ridge(alpha=1., fit_intercept=False)
 
     for n_samples, n_features in zip(n_sampless, n_featuress):
         X = rng.randn(n_samples, n_features)
@@ -628,7 +629,10 @@ def test_sparse_design_with_sample_weights():
         sample_weights = rng.randn(n_samples) ** 2 + 1
         for sparse_converter in sparse_matrix_converters:
             X_sparse = sparse_converter(X)
-            ridge.fit(X_sparse, y, sample_weight=sample_weights)
+            sparse_ridge.fit(X_sparse, y, sample_weight=sample_weights)
+            dense_ridge.fit(X, y, sample_weight=sample_weights)
+
+            assert_array_equal(sparse_ridge.coef_, dense_ridge.coef_)
 
 
 def test_deprecation_warning_dense_cholesky():
