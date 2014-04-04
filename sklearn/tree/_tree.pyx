@@ -1259,7 +1259,6 @@ cdef class BestSparseSplitter(Splitter):
         cdef int const_ftr = 0
         cdef int pos_index = 0
         cdef int neg_index = 0
-        cdef int index_ = 0
         cdef int first_zero_p = -1
         cdef int second_zero_p = -1
         cdef int b_first_zero_p = 0
@@ -1547,16 +1546,15 @@ cdef class BestSparseSplitter(Splitter):
 
         # Reorganize into samples[start:best_pos] + samples[best_pos:end]
         if best_pos < end:
+            for p in range(start, end):
+                column[samples[p]] = 0
+
+            for p in range(X_indptr[best_feature],
+                            X_indptr[best_feature + 1]):
+                column[X_indices[p]] = X_data[p]
+
             partition_end = end
             p = start
-
-            for k_ in range(start, end):
-                column[samples[k_]] = 0
-
-            for k_ in range(X_indptr[best_feature],
-                            X_indptr[best_feature + 1]):
-                column[X_indices[k_]] = X_data[k_]
-
             while p < partition_end:
                 if column[samples[p]] <= best_threshold:
                     p += 1
