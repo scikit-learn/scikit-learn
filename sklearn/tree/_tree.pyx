@@ -1257,18 +1257,18 @@ cdef class BestSparseSplitter(Splitter):
         cdef DTYPE_t prev_ftr = 0.0
         cdef SIZE_t const_nonzero_ftr = 0
         cdef SIZE_t const_ftr = 0
-        cdef SIZE_t pos_index = 0
-        cdef SIZE_t neg_index = 0
-        cdef SIZE_t first_zero_p = -1
-        cdef SIZE_t second_zero_p = -1
-        cdef SIZE_t b_first_zero_p = 0
-        cdef SIZE_t b_second_zero_p = 0
+
+
         cdef bint is_samples_sorted = 0
         cdef SIZE_t n_samples = end - start
         cdef SIZE_t n_indices
         cdef SIZE_t ftr_start = 0
         cdef SIZE_t ftr_end = 0
 
+        # We assume implicitely that end_positive = end and
+        # start_negative = start
+        cdef SIZE_t start_positive = end
+        cdef SIZE_t end_negative = start
 
         # Marking samples that are in the current node (samples[start:end]) with
         # current_color, current_color is changed each time to avoid zeroing
@@ -1326,8 +1326,6 @@ cdef class BestSparseSplitter(Splitter):
                 current_feature = features[f_j]
 
                 n_nonzero_values = 0
-                pos_index = end - 1
-                neg_index = start
                 prev_ftr = 0
                 const_nonzero_ftr = 1
 
@@ -1368,14 +1366,14 @@ cdef class BestSparseSplitter(Splitter):
                              # incides in `tmp_indices`
 
                             if X_data[k_] > 0:
-                                Xf[pos_index] = X_data[k_]
-                                tmp_indices[pos_index] = X_indices[k_]
-                                pos_index -= 1
+                                start_positive -= 1
+                                Xf[start_positive] = X_data[k_]
+                                tmp_indices[start_positive] = X_indices[k_]
 
                             elif X_data[k_] < 0:
-                                Xf[neg_index] = X_data[k_]
-                                tmp_indices[neg_index] = X_indices[k_]
-                                neg_index += 1
+                                Xf[end_negative] = X_data[k_]
+                                tmp_indices[end_negative] = X_indices[k_]
+                                end_negative += 1
 
                             if const_nonzero_ftr == 1:
                                 if n_nonzero_values == 0:
@@ -1395,14 +1393,14 @@ cdef class BestSparseSplitter(Splitter):
                                     X_indptr[current_feature + 1]):
                         if index_to_color[X_indices[k_]] == self.current_color:
                             if X_data[k_] > 0:
-                                Xf[pos_index] = X_data[k_]
-                                tmp_indices[pos_index] = X_indices[k_]
-                                pos_index -= 1
+                                start_positive -= 1
+                                Xf[start_positive] = X_data[k_]
+                                tmp_indices[start_positive] = X_indices[k_]
 
                             elif X_data[k_] < 0:
-                                Xf[neg_index] = X_data[k_]
-                                tmp_indices[neg_index] = X_indices[k_]
-                                neg_index += 1
+                                Xf[end_negative] = X_data[k_]
+                                tmp_indices[end_negative] = X_indices[k_]
+                                end_negative += 1
 
                             if const_nonzero_ftr == 1:
                                 if n_nonzero_values==0:
@@ -1411,9 +1409,10 @@ cdef class BestSparseSplitter(Splitter):
                                     const_nonzero_ftr = 0
                             n_nonzero_values +=1
 
-                    if pos_index < neg_index - 1:
-                        with gil:
-                            raise AssertionError("The format of the sparse matrix is corrupted")
+                    # TODO FIX this
+                    # if pos_index < neg_index - 1:
+                    #     with gil:
+                    #         raise AssertionError("The format of the sparse matrix is corrupted")
                     # If the current feature is constant (all zeros or all non-zeros and
                     # constant) then go to the next feature
 
@@ -1424,13 +1423,14 @@ cdef class BestSparseSplitter(Splitter):
 
                 # Sort the positive and negative parts of `Xf` while rearranging
                 # their corresponding indices in `tmp_indices`
-                if const_ftr==0:
-                    if neg_index > start:
-                        sort(Xf + start, tmp_indices + start, neg_index - start)
+                if const_ftr == 0:
+                    if end_negative > start:
+                        sort(Xf + start, tmp_indices + start,
+                             end_negative - start)
 
-                    if pos_index < end - 1:
-                        sort(Xf + pos_index + 1, tmp_indices + pos_index + 1,
-                             end - (pos_index + 1))
+                    if start_positive < end:
+                        sort(Xf + start_positive, tmp_indices + start_positive,
+                             end - start_positive)
 
                     # Make sure that the indices corresponding to the positive and
                     # negative parts of `tmp_indices` are the same as the corresponding
@@ -1438,7 +1438,7 @@ cdef class BestSparseSplitter(Splitter):
                     # the index of the most negative number should be in samples[start]
                     # and the index of the most positive number in samples[end-1], if
                     # not samples are rearranged to make this happen.
-                    for k_ in range(start, neg_index):
+                    for k_ in range(start, end_negative):
                         p = hyper_indices[tmp_indices[k_]]
                         if p != k_:
                             tmp = samples[k_]
@@ -1447,7 +1447,7 @@ cdef class BestSparseSplitter(Splitter):
                             hyper_indices[samples[k_]] = k_
                             hyper_indices[samples[p]] =  p
 
-                    for k_ in range (end - 1, pos_index, -1):
+                    for k_ in range(start_positive, end):
                         p = hyper_indices[tmp_indices[k_]]
                         if p != k_:
                             tmp = samples[k_]
@@ -1456,14 +1456,19 @@ cdef class BestSparseSplitter(Splitter):
                             hyper_indices[samples[k_]] = k_
                             hyper_indices[samples[p]] =  p
 
-                if n_nonzero_values != (end - start):
-                    first_zero_p = neg_index
-                    second_zero_p = pos_index
-                    Xf[first_zero_p] = 0
-                    Xf[second_zero_p] = 0
-                else:
-                    first_zero_p = -1
-                    second_zero_p = -1
+                # Add a zero in Xf, if there is any zero
+                if end_negative != start_positive:
+                    Xf[end_negative] = 0.
+                    end_negative += 1
+
+                # if n_nonzero_values != (end - start):
+                #     first_zero_p = neg_index
+                #     second_zero_p = pos_index
+                #     Xf[first_zero_p] = 0
+                #     Xf[second_zero_p] = 0
+                # else:
+                #     first_zero_p = -1
+                #     second_zero_p = -1
 
                 if Xf[end - 1] <= Xf[start] + FEATURE_THRESHOLD:
                     features[f_j] = features[n_total_constants]
@@ -1475,14 +1480,16 @@ cdef class BestSparseSplitter(Splitter):
                 else:
                     f_i -= 1
                     features[f_i], features[f_j] = features[f_j], features[f_i]
+
                     # Evaluate all splits
                     self.criterion.reset()
                     p = start
-                    if p == first_zero_p:
-                        p = second_zero_p
 
                     while p < end:
-                        while (p + 1 < end and p + 1 != first_zero_p and
+                        if p == end_negative:
+                            p = start_positive
+
+                        while (p + 1 < end and p + 1 != end_negative and
                                Xf[p + 1] <= Xf[p] + FEATURE_THRESHOLD):
                             p += 1
 
@@ -1498,8 +1505,6 @@ cdef class BestSparseSplitter(Splitter):
                             # Reject if min_samples_leaf is not guaranteed
                             if (((current_pos - start) < min_samples_leaf) or
                                     ((end - current_pos) < min_samples_leaf)):
-                                if p == first_zero_p:
-                                    p = second_zero_p
                                 continue
 
                             self.criterion.update(current_pos)
@@ -1521,8 +1526,6 @@ cdef class BestSparseSplitter(Splitter):
 
                                 best_threshold = current_threshold
 
-                            if p == first_zero_p:
-                                p = second_zero_p
 
         # Reorganize into samples[start:best_pos] + samples[best_pos:end]
         if best_pos < end:
