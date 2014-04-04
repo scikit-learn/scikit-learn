@@ -23,6 +23,8 @@ from ..utils import check_random_state
 #   (A Fast Algorithm for the Minimum Covariance Determinant Estimator,
 #   1999, American Statistical Association and the American Society
 #   for Quality, TECHNOMETRICS)
+# XXX Is this really a public function? It's not listed in the docs or
+# exported by sklearn.covariance. Deprecate?
 def c_step(X, n_support, remaining_iterations=30, initial_estimates=None,
            verbose=False, cov_computation_method=empirical_covariance,
            random_state=None):
@@ -76,6 +78,17 @@ def c_step(X, n_support, remaining_iterations=30, initial_estimates=None,
         Society for Quality, TECHNOMETRICS
 
     """
+    X = np.asarray(X)
+    random_state = check_random_state(random_state)
+    return _c_step(X, n_support, remaining_iterations=remaining_iterations,
+                   initial_estimates=initial_estimates, verbose=verbose,
+                   cov_computation_method=cov_computation_method,
+                   random_state=random_state)
+
+
+def _c_step(X, n_support, random_state, remaining_iterations=30,
+            initial_estimates=None, verbose=False,
+            cov_computation_method=empirical_covariance):
     n_samples, n_features = X.shape
 
     # Initialisation
@@ -245,7 +258,7 @@ def select_candidates(X, n_support, n_trials, select=1, n_iter=30,
         # perform `n_trials` computations from random initial supports
         for j in range(n_trials):
             all_estimates.append(
-                c_step(
+                _c_step(
                     X, n_support, remaining_iterations=n_iter, verbose=verbose,
                     cov_computation_method=cov_computation_method,
                     random_state=random_state))
@@ -253,7 +266,7 @@ def select_candidates(X, n_support, n_trials, select=1, n_iter=30,
         # perform computations from every given initial estimates
         for j in range(n_trials):
             initial_estimates = (estimates_list[0][j], estimates_list[1][j])
-            all_estimates.append(c_step(
+            all_estimates.append(_c_step(
                 X, n_support, remaining_iterations=n_iter,
                 initial_estimates=initial_estimates, verbose=verbose,
                 cov_computation_method=cov_computation_method,
