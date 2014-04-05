@@ -2874,6 +2874,14 @@ cdef class Tree:
         self.capacity = 0
         self.value = NULL
         self.nodes = NULL
+        self.X_testing_data = NULL
+        self.X_testing_indices = NULL
+        self.X_testing_indptr = NULL
+        self._testing_data = None
+        self._testing_indices = None
+        self._testing_indptr = None
+        self.n_testing_samples = 0
+        self.current_color = -1
 
     def __dealloc__(self):
         """Destructor."""
@@ -2881,6 +2889,8 @@ cdef class Tree:
         free(self.n_classes)
         free(self.value)
         free(self.nodes)
+        if(self.feature_values != NULL): free(self.feature_values)
+        if(self.feature_to_color != NULL): free(self.feature_to_color)
 
     def __reduce__(self):
         """Reduce re-implementation, for pickling."""
@@ -3013,12 +3023,34 @@ cdef class Tree:
         out = self._get_value_ndarray().take(self.apply(X), axis=0,
                                              mode='clip')
         if self.n_outputs == 1:
-            out = out.reshape(X.shape[0], self.max_n_classes)
+            if X != None:
+                out = out.reshape(X.shape[0], self.max_n_classes)
+            else:
+                out = out.reshape(self.n_testing_samples, self.max_n_classes)
         return out
 
     cpdef np.ndarray apply(self, np.ndarray[DTYPE_t, ndim=2] X):
         """Finds the terminal region (=leaf node) for each sample in X."""
-        cdef SIZE_t n_samples = X.shape[0]
+        cdef SIZE_t n_samples = 0
+        cdef DTYPE_t feature_val = 0
+        cdef SIZE_t p = 0
+        cdef bint is_input_sparse = 0
+
+        cdef DTYPE_t* X_testing_data = self.X_testing_data
+        cdef SIZE_t* X_testing_indices = self.X_testing_indices
+        cdef SIZE_t* X_testing_indptr = self.X_testing_indptr
+
+        cdef DTYPE_t* feature_values = self.feature_values
+        cdef SIZE_t* feature_to_color = self.feature_to_color
+
+        if X == None:
+            is_input_sparse = 1
+
+        if is_input_sparse == 0:
+            n_samples = X.shape[0]
+        else:
+            n_samples = self.n_testing_samples
+
         cdef Node* node = NULL
         cdef SIZE_t i = 0
 
@@ -3028,11 +3060,23 @@ cdef class Tree:
         with nogil:
             for i in range(n_samples):
                 node = self.nodes
+                if is_input_sparse == 1 :
+
+                    self.current_color += 1
+                    for p in range(X_testing_indptr[i], X_testing_indptr[i+1]):
+                        feature_to_color[X_testing_indices[p]] = self.current_color
+                        feature_values[X_testing_indices[p]] = X_testing_data[p]
 
                 # While node not a leaf
                 while node.left_child != _TREE_LEAF:
                     # ... and node.right_child != _TREE_LEAF:
-                    if X[i, node.feature] <= node.threshold:
+                    feature_val = 0
+                    if is_input_sparse == 0 :
+                        feature_val = X[i, node.feature]
+                    else :
+                        if feature_to_color[node.feature] == self.current_color:
+                            feature_val = feature_values[node.feature]
+                    if feature_val <= node.threshold:
                         node = &self.nodes[node.left_child]
                     else:
                         node = &self.nodes[node.right_child]
@@ -3112,6 +3156,25 @@ cdef class Tree:
         arr.base = <PyObject*> self
         return arr
 
+    cpdef pack_testing_sparse_data(self, np.ndarray data, np.ndarray indices,
+                           np.ndarray indptr,
+                           SIZE_t number_of_testing_samples):
+        """pack sparse data."""
+        self.n_testing_samples = number_of_testing_samples
+
+        self._testing_data = np.asfortranarray(data, dtype=DTYPE)
+        self._testing_indptr  = np.asfortranarray(indptr, dtype=np.intp)
+        self._testing_indices = np.asfortranarray(indices, dtype=np.intp)
+
+        self.X_testing_data = <DTYPE_t*> self._testing_data.data
+        self.X_testing_indptr = <SIZE_t*> self._testing_indptr.data
+        self.X_testing_indices = <SIZE_t*> self._testing_indices.data
+
+        self.feature_values = <DTYPE_t*> malloc(self.n_features *
+                                                sizeof(DTYPE_t))
+
+        self.feature_to_color = <SIZE_t*> malloc(self.n_features *
+                                                sizeof(SIZE_t))
 
 # =============================================================================
 # Utils

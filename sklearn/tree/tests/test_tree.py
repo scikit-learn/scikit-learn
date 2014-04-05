@@ -1095,7 +1095,7 @@ def test_random_sparse_matrix_BestFirstSearch():
     nr = 400
     nf = 200
 
-    n_test = 20
+    n_test = 200
     for it in range(5):
         X_ = np.random.randint(100, size=(nr, nf))
         y_ = np.random.randint(2, size=nr)
@@ -1115,6 +1115,12 @@ def test_random_sparse_matrix_BestFirstSearch():
                                    max_leaf_nodes = 5).fit(X_, y_)
         assert_equal(np.array_equal(s.predict(X_test),
                                        d.predict(X_test)), True)
+
+        assert_equal(np.array_equal(d.predict(X_test),
+                                       d.predict(X_test.todense())), True)
+
+        assert_equal(np.array_equal(s.predict_proba(X_test.todense()),
+                                       s.predict_proba(X_test)), True)
 
         assert_equal(np.array_equal(s.predict_proba(X_test),
                                        d.predict_proba(X_test)), True)

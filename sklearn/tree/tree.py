@@ -304,12 +304,20 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         """
         if isinstance(X, csr_matrix) or isinstance(X, coo_matrix) or \
                 isinstance(X, csc_matrix):
-            X = X.todense()
+            if not isinstance(X, csr_matrix):
+                X = csr_matrix(X)
+            n_samples, n_features = X.shape
+            self.tree_.pack_testing_sparse_data(X.data,
+                                                X.indices,
+                                                X.indptr,
+                                                n_samples)
+            X = None
 
-        if getattr(X, "dtype", None) != DTYPE or X.ndim != 2:
-            X = array2d(X, dtype=DTYPE)
+        else:
+            if getattr(X, "dtype", None) != DTYPE or X.ndim != 2:
+                X = array2d(X, dtype=DTYPE)
+            n_samples, n_features = X.shape
 
-        n_samples, n_features = X.shape
 
         if self.tree_ is None:
             raise Exception("Tree not initialized. Perform a fit first")
@@ -524,12 +532,18 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         """
         if isinstance(X, csr_matrix) or isinstance(X, coo_matrix) or \
                 isinstance(X, csc_matrix):
-            X = X.todense()
-
-        if getattr(X, "dtype", None) != DTYPE or X.ndim != 2:
-            X = array2d(X, dtype=DTYPE)
-
-        n_samples, n_features = X.shape
+            if not isinstance(X, csr_matrix):
+                X = csr_matrix(X)
+            n_samples, n_features = X.shape
+            self.tree_.pack_testing_sparse_data(X.data,
+                                                X.indices,
+                                                X.indptr,
+                                                n_samples)
+            X = None
+        else:
+            if getattr(X, "dtype", None) != DTYPE or X.ndim != 2:
+                X = array2d(X, dtype=DTYPE)
+            n_samples, n_features = X.shape
 
         if self.tree_ is None:
             raise Exception("Tree not initialized. Perform a fit first.")

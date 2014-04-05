@@ -110,6 +110,7 @@ cdef class Splitter:
     cdef np.ndarray _indptr
 
 
+
     # The samples vector `samples` is maintained by the Splitter object such
     # that the samples contained in a node are contiguous. With this setting,
     # `node_split` reorganizes the node samples `samples[start:end]` in two
@@ -182,6 +183,20 @@ cdef class Tree:
     cdef double* value                   # (capacity, n_outputs, max_n_classes) array of values
     cdef SIZE_t value_stride             # = n_outputs * max_n_classes
 
+    cdef SIZE_t n_testing_samples
+
+    cdef DTYPE_t* X_testing_data
+    cdef SIZE_t* X_testing_indices
+    cdef SIZE_t* X_testing_indptr
+
+    cdef np.ndarray _testing_data
+    cdef np.ndarray _testing_indices
+    cdef np.ndarray _testing_indptr
+
+    cdef DTYPE_t* feature_values         # temp. array holding feature values
+    cdef SIZE_t* feature_to_color
+    cdef SIZE_t current_color
+
     # Methods
     cdef SIZE_t _add_node(self, SIZE_t parent, bint is_left, bint is_leaf,
                           SIZE_t feature, double threshold, double impurity,
@@ -196,6 +211,10 @@ cdef class Tree:
     cpdef np.ndarray predict(self, np.ndarray[DTYPE_t, ndim=2] X)
     cpdef np.ndarray apply(self, np.ndarray[DTYPE_t, ndim=2] X)
     cpdef compute_feature_importances(self, normalize=*)
+
+    cpdef pack_testing_sparse_data(self, np.ndarray data, np.ndarray indices,
+                           np.ndarray indptr, SIZE_t number_of_testing_samples)
+
 
 
 # =============================================================================
