@@ -2874,6 +2874,8 @@ cdef class Tree:
         self.capacity = 0
         self.value = NULL
         self.nodes = NULL
+        self.feature_to_color = NULL
+        self.feature_values = NULL
         self.X_testing_data = NULL
         self.X_testing_indices = NULL
         self.X_testing_indptr = NULL
