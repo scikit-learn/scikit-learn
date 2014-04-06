@@ -1146,7 +1146,8 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
     return np.array(scores)[:, 0]
 
 
-def _fit_and_score(estimator, X, y, scorer, train, test, verbose, parameters,
+def _fit_and_score(estimator, X, y, sample_weight,
+                   scorer, train, test, verbose, parameters,
                    fit_params, return_train_score=False,
                    return_parameters=False):
     """Fit estimator and compute scores for a given dataset split.
@@ -1159,9 +1160,12 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose, parameters,
     X : array-like of shape at least 2D
         The data to fit.
 
-    y : array-like, optional, default: None
+    y : array-like or None
         The target variable to try to predict in the case of
         supervised learning.
+
+    sample_weight : array-like or None
+        Sample weights.
 
     scoring : callable
         A scorer callable object / function with signature
@@ -1227,13 +1231,26 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose, parameters,
 
     X_train, y_train = _safe_split(estimator, X, y, train)
     X_test, y_test = _safe_split(estimator, X, y, test, train)
+
+    test_score_params = dict()
+    train_score_params = dict()
+    if sample_weight is not None:
+        # move to _safe_split?
+        sample_weight_train = sample_weight[safe_mask(sample_weight, train)]
+        sample_weight_test = sample_weight[safe_mask(sample_weight, test)]
+        fit_params['sample_weight'] = sample_weight_train
+        test_score_params['sample_weight'] = sample_weight_test
+        train_score_params['sample_weight'] = sample_weight_train
+
     if y_train is None:
         estimator.fit(X_train, **fit_params)
     else:
         estimator.fit(X_train, y_train, **fit_params)
-    test_score = _score(estimator, X_test, y_test, scorer)
+    test_score = _score(estimator, X_test, y_test, scorer,
+                        **test_score_params)
     if return_train_score:
-        train_score = _score(estimator, X_train, y_train, scorer)
+        train_score = _score(estimator, X_train, y_train, scorer,
+                             **train_score_params)
 
     scoring_time = time.time() - start_time
 
@@ -1282,12 +1299,12 @@ def _safe_split(estimator, X, y, indices, train_indices=None):
     return X_subset, y_subset
 
 
-def _score(estimator, X_test, y_test, scorer):
+def _score(estimator, X_test, y_test, scorer, **params):
     """Compute the score of an estimator on a given test set."""
     if y_test is None:
-        score = scorer(estimator, X_test)
+        score = scorer(estimator, X_test, **params)
     else:
-        score = scorer(estimator, X_test, y_test)
+        score = scorer(estimator, X_test, y_test, **params)
     if not isinstance(score, numbers.Number):
         raise ValueError("scoring must return a number, got %s (%s) instead."
                          % (str(score), type(score)))
