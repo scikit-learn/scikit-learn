@@ -51,8 +51,13 @@ class MockClassifier(object):
     def __init__(self, foo_param=0):
         self.foo_param = foo_param
 
-    def fit(self, X, Y):
+    def fit(self, X, Y, sample_weight=None):
         assert_true(len(X) == len(Y))
+        if sample_weight is not None:
+            assert_true(len(sample_weight) == len(X),
+                        'MockClassifier sample_weight.shape[0]'
+                        ' is {0}, should be {1}'.format(len(sample_weight),
+                                                        len(X)))
         return self
 
     def predict(self, T):
@@ -62,7 +67,12 @@ class MockClassifier(object):
     decision_function = predict
     transform = predict
 
-    def score(self, X=None, Y=None):
+    def score(self, X=None, Y=None, sample_weight=None):
+        if X is not None and sample_weight is not None:
+            assert_true(len(sample_weight) == len(X),
+                        'MockClassifier sample_weight.shape[0]'
+                        ' is {0}, should be {1}'.format(len(sample_weight),
+                                                        len(X)))
         if self.foo_param > 1:
             score = 1.
         else:
@@ -85,6 +95,7 @@ class LinearSVCNoScore(LinearSVC):
 
 X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1]])
 y = np.array([1, 1, 2, 2])
+sample_weight = np.array([1, 2, 3, 4])
 
 
 def test_parameter_grid():
@@ -638,3 +649,15 @@ def test_grid_search_allows_nans():
         ('classifier', MockClassifier()),
     ])
     GridSearchCV(p, {'classifier__foo_param': [1, 2, 3]}, cv=2).fit(X, y)
+
+
+def test_grid_search_with_sample_weights():
+    """Test grid searching with sample weights"""
+    est_parameters = {"foo_param": [1, 2, 3]}
+    cv = KFold(y.shape[0], n_folds=2, random_state=0)
+    for search_cls in (GridSearchCV, RandomizedSearchCV):
+        grid_search = search_cls(MockClassifier(), est_parameters, cv=cv)
+        grid_search.fit(X, y, sample_weight=sample_weight)
+        # check that sample_weight can be a list
+        grid_search = GridSearchCV(MockClassifier(), est_parameters, cv=cv)
+        grid_search.fit(X, y, sample_weight=sample_weight.tolist())
