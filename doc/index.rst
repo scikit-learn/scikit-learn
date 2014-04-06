@@ -161,7 +161,7 @@
     <strong>Applications</strong>: Visualization, Increased efficiency</br>
     <strong>Algorithms</strong>:&nbsp;
 
-:ref:`PCA<PCA>`, :ref:`Isomap<isomap>`, :ref:`non-negative matrix factorization<NMF>`.
+:ref:`PCA<PCA>`, :ref:`feature selection<feature_selection>`, :ref:`non-negative matrix factorization<NMF>`.
 
 .. raw:: html
 
