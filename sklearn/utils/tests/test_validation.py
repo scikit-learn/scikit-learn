@@ -70,6 +70,25 @@ def test_as_float_array():
         assert_false(np.isnan(M).any())
 
 
+def test_atleast2d_or_sparse():
+    for typ in [sp.csr_matrix, sp.dok_matrix, sp.lil_matrix, sp.coo_matrix]:
+        X = typ(np.arange(9, dtype=float).reshape(3, 3))
+
+        Y = atleast2d_or_csr(X, copy=True)
+        assert_true(isinstance(Y, sp.csr_matrix))
+        Y.data[:] = 1
+        assert_array_equal(X.toarray().ravel(), np.arange(9))
+
+        Y = atleast2d_or_csc(X, copy=False)
+        Y.data[:] = 4
+        assert_true(np.all(X.data == 4)
+                    if isinstance(X, sp.csc_matrix)
+                    else np.all(X.toarray().ravel() == np.arange(9)))
+
+        Y = atleast2d_or_csr(X, dtype=np.float32)
+        assert_true(Y.dtype == np.float32)
+
+
 def test_check_arrays_exceptions():
     """Check that invalid arguments raise appropriate exceptions"""
     assert_raises(ValueError, check_arrays, [0], [0, 1])
