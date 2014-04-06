@@ -117,9 +117,11 @@ def array2d(X, dtype=None, order=None, copy=False, force_all_finite=True):
 
 
 def _atleast2d_or_sparse(X, dtype, order, copy, sparse_class, convmethod,
-                         force_all_finite):
+                         check_same_type, force_all_finite):
     if sparse.issparse(X):
-        if dtype is None or X.dtype == dtype:
+        if check_same_type(X) and X.dtype == dtype:
+            X = getattr(X, convmethod)(copy=copy)
+        elif dtype is None or X.dtype == dtype:
             X = getattr(X, convmethod)()
         else:
             X = sparse_class(X, dtype=dtype)
@@ -139,7 +141,8 @@ def atleast2d_or_csc(X, dtype=None, order=None, copy=False,
     Also, converts np.matrix to np.ndarray.
     """
     return _atleast2d_or_sparse(X, dtype, order, copy, sparse.csc_matrix,
-                                "tocsc", force_all_finite)
+                                "tocsc", sparse.isspmatrix_csc,
+                                force_all_finite)
 
 
 def atleast2d_or_csr(X, dtype=None, order=None, copy=False,
@@ -149,7 +152,8 @@ def atleast2d_or_csr(X, dtype=None, order=None, copy=False,
     Also, converts np.matrix to np.ndarray.
     """
     return _atleast2d_or_sparse(X, dtype, order, copy, sparse.csr_matrix,
-                                "tocsr", force_all_finite)
+                                "tocsr", sparse.isspmatrix_csr,
+                                force_all_finite)
 
 
 def _num_samples(x):

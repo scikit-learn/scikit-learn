@@ -173,10 +173,7 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
             self._fit_method = 'kd_tree'
             return self
 
-        X = safe_asarray(X)
-
-        if X.ndim != 2:
-            raise ValueError("data type not understood")
+        X = atleast2d_or_csr(X, copy=False)
 
         n_samples = X.shape[0]
         if n_samples == 0:
@@ -189,7 +186,7 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
             if self.effective_metric_ not in VALID_METRICS_SPARSE['brute']:
                 raise ValueError("metric '%s' not valid for sparse input"
                                  % self.effective_metric_)
-            self._fit_X = X.tocsr()
+            self._fit_X = X.copy()
             self._tree = None
             self._fit_method = 'brute'
             return self
