@@ -118,15 +118,37 @@ K-means
 
 The :class:`KMeans` algorithm clusters data by trying to separate samples
 in n groups of equal variance, minimizing a criterion known as the
-'inertia' of the groups. This algorithm requires the number of clusters to
-be specified. It scales well to large number of samples and has been used
-across a large range of application areas in many different fields. It is
-also equivalent to the expectation-maximization algorithm when setting the
-covariance matrix to be diagonal, equal and small. The K-means algorithm
-aims to choose centroids :math:`C` that minimise the within cluster sum of
-squares objective function with a dataset :math:`X` with :math:`n` samples:
+`inertia<inertia>` or within-cluster sum-of-squares.
+This algorithm requires the number of clusters to be specified.
+It scales well to large number of samples and has been used
+across a large range of application areas in many different fields.
 
-.. math:: J(X, C) = \sum_{i=0}^{n}\min_{\mu_j \in C}(||x_j - \mu_i||^2)
+The k-means algorithm divides a set of :math:`N` samples :math:`X`:
+into :math:`K` disjoint clusters :math:`C`,
+each described by the mean :math:`\mu_j` of the samples in the cluster.
+The means are commonly called the cluster "centroids";
+note that they are not, in general, points from :math:`X`,
+although they live in the same space.
+The K-means algorithm aims to choose centroids
+that minimise the *inertia*, or within-cluster sum of squared criterion:
+
+.. math:: \sum_{i=0}^{n}\min_{\mu_j \in C}(||x_j - \mu_i||^2)
+
+Inertia, or the within-cluster sum of squares criterion,
+can be recognized as a measure of how internally coherent clusters are.
+It suffers from various drawbacks:
+
+- Inertia makes the assumption that clusters are convex and isotropic,
+  which is not always the case. It responds poorly to elongated clusters,
+  or manifolds with irregular shapes.
+
+- Inertia is not a normalized metric: we just know that lower values are
+  better and zero is optimal. But in very high-dimensional spaces, Euclidean
+  distances tend to become inflated
+  (this is an instance of the so-called "curse of dimensionality").
+  Running a dimensionality reduction algorithm such as `PCA<PCA>`
+  prior to k-means clustering can alleviate this problem
+  and speed up the computations.
 
 K-means is often referred to as Lloyd's algorithm. In basic terms, the
 algorithm has three steps. The first step chooses the initial centroids, with
@@ -144,7 +166,10 @@ until the centroids do not move significantly.
    :align: right
    :scale: 35
 
-The algorithm can be understood through the concept of `Voronoi diagrams
+K-means is equivalent to the expectation-maximization algorithm
+with a small, all-equal, diagonal covariance matrix.
+
+The algorithm can also be understood through the concept of `Voronoi diagrams
 <https://en.wikipedia.org/wiki/Voronoi_diagram>`_. First the Voronoi diagram of
 the points is calculated using the current centroids. Each segment in the
 Voronoi diagram becomes a separate cluster. Secondly, the centroids are updated
@@ -752,33 +777,6 @@ belong to the same class are more similar that members of different
 classes according to some similarity metric.
 
 .. currentmodule:: sklearn.metrics
-
-Inertia
--------
-
-Presentation and usage
-~~~~~~~~~~~~~~~~~~~~~~
-
-TODO: factorize inertia computation out of kmeans and then write me!
-
-
-Advantages
-~~~~~~~~~~
-
-- No need for the ground truth knowledge of the "real" classes.
-
-Drawbacks
-~~~~~~~~~
-
-- Inertia makes the assumption that clusters are convex and isotropic
-  which is not always the case especially of the clusters are manifolds
-  with weird shapes: for instance inertia is a useless metrics to evaluate
-  clustering algorithm that tries to identify nested circles on a 2D plane.
-
-- Inertia is not a normalized metrics: we just know that lower values are
-  better and bounded by zero. One potential solution would be to adjust
-  inertia for random clustering (assuming the number of ground truth classes
-  is known).
 
 
 Adjusted Rand index
