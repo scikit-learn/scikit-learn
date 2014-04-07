@@ -1262,8 +1262,8 @@ cdef class BestSparseSplitter(Splitter):
         cdef bint is_samples_sorted = 0
         cdef SIZE_t n_samples = end - start
         cdef SIZE_t n_indices
-        cdef SIZE_t ftr_start = 0
-        cdef SIZE_t ftr_end = 0
+        cdef SIZE_t start_indices = 0
+        cdef SIZE_t end_indices = 0
 
 
 
@@ -1346,13 +1346,13 @@ cdef class BestSparseSplitter(Splitter):
 
 
                     p = start
-                    ftr_start = X_indptr[current_feature]
-                    ftr_end = X_indptr[current_feature + 1]
+                    start_indices = X_indptr[current_feature]
+                    end_indices = X_indptr[current_feature + 1]
 
-                    while (p < end and ftr_start < ftr_end):
+                    while (p < end and start_indices < end_indices):
                         # Find index of sorted_samples[p] in X_indices
-                        binary_search(X_indices, ftr_start, ftr_end,
-                                      sorted_samples[p], &k_, &ftr_start)
+                        binary_search(X_indices, start_indices, end_indices,
+                                      sorted_samples[p], &k_, &start_indices)
 
                         if k_ != -1:
                              # if k_ is not -1, then we are sure that the index
