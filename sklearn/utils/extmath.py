@@ -8,7 +8,9 @@ Extended math utilities.
 #          Lars Buitinck
 # License: BSD 3 clause
 
+from functools import partial
 import warnings
+
 import numpy as np
 from scipy import linalg
 from scipy.sparse import issparse
@@ -25,11 +27,28 @@ def norm(x):
     """Compute the Euclidean or Frobenius norm of x.
 
     Returns the Euclidean norm when x is a vector, the Frobenius norm when x
-    is a matrix (2-d array).
+    is a matrix (2-d array). More precise than sqrt(squared_norm(x)).
     """
     x = np.asarray(x)
     nrm2, = linalg.get_blas_funcs(['nrm2'], [x])
     return nrm2(x)
+
+
+# Newer NumPy has a ravel that needs less copying.
+if np_version < (1, 7, 1):
+    _ravel = np.ravel
+else:
+    _ravel = partial(np.ravel, order='K')
+
+
+def squared_norm(x):
+    """Squared Euclidean or Frobenius norm of x.
+
+    Returns the Euclidean norm when x is a vector, the Frobenius norm when x
+    is a matrix (2-d array). Faster than norm(x) ** 2.
+    """
+    x = _ravel(x)
+    return np.dot(x, x)
 
 
 def row_norms(X, squared=False):

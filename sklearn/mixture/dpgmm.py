@@ -17,13 +17,9 @@ from scipy.spatial.distance import cdist
 
 from ..externals.six.moves import xrange
 from ..utils import check_random_state, deprecated
-from ..utils.extmath import norm, logsumexp, pinvh
+from ..utils.extmath import logsumexp, pinvh, squared_norm
 from .. import cluster
 from .gmm import GMM
-
-
-def sqnorm(v):
-    return norm(v) ** 2
 
 
 def digamma(x):
@@ -412,7 +408,7 @@ class DPGMM(GMM):
     def _bound_means(self):
         "The variational lower bound for the mean parameters"
         logprior = 0.
-        logprior -= 0.5 * sqnorm(self.means_)
+        logprior -= 0.5 * squared_norm(self.means_)
         logprior -= 0.5 * self.means_.shape[1] * self.n_components
         return logprior
 

@@ -20,7 +20,7 @@ from scipy.optimize import nnls
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import atleast2d_or_csr, check_random_state, check_arrays
-from ..utils.extmath import randomized_svd, safe_sparse_dot
+from ..utils.extmath import randomized_svd, safe_sparse_dot, squared_norm
 
 
 def safe_vstack(Xs):
@@ -35,8 +35,7 @@ def norm(x):
 
     See: http://fseoane.net/blog/2011/computing-the-vector-norm/
     """
-    x = x.ravel()
-    return np.sqrt(np.dot(x, x))
+    return sqrt(squared_norm(x))
 
 
 def trace_dot(X, Y):
