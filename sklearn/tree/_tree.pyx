@@ -1306,12 +1306,10 @@ cdef class BestSparseSplitter(Splitter):
 
 
                 # Sort the positive and negative parts of `Xf`
-                if end_negative > start:
-                    sort(Xf + start, samples + start, end_negative - start)
+                sort(Xf + start, samples + start, end_negative - start)
 
-                if start_positive < end:
-                    sort(Xf + start_positive, samples + start_positive,
-                         end - start_positive)
+                sort(Xf + start_positive, samples + start_positive,
+                     end - start_positive)
 
                 # Update index_to_samples to take into account the sort
                 for p in range(start, end_negative):
