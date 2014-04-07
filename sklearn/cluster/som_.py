@@ -128,21 +128,8 @@ class SelfOrganizingMap(BaseEstimator):
 
     def __init__(self, adjacency=(4, 4), init='random', n_iterations=64,
                  learning_rate=1, callback=None):
-        if isinstance(adjacency, int):
-            adjacency = (adjacency,)
 
-        if isinstance(adjacency, tuple):
-            n_centers = np.prod(adjacency)
-            if isinstance(init, np.ndarray) and (n_centers != init.shape[0]):
-                raise ValueError("'init' contains %d centers, but 'adjacency' specifies %d clusters"
-                                 % (init.shape[0], np.prod(adjacency)))
-
-            adjacency = _generate_adjacency_matrix(adjacency)
-
-        self.adjacency_matrix = adjacency
-        self.distance_matrix = _get_minimum_distances(self.adjacency_matrix)
-        self.graph_diameter = self.distance_matrix.max()
-        self.n_centers = n_centers
+        self.adjacency = adjacency
         self.init = init
         self.n_iterations = n_iterations
         self.learning_rate = learning_rate
@@ -161,6 +148,28 @@ class SelfOrganizingMap(BaseEstimator):
             Sample data array.
 
         """
+        # If adjacency is an int or tuple, we generate an adjacency matrix
+        # of the specified dimensions. Otherwise
+        if isinstance(self.adjacency, int):
+            self.adjacency = (self.adjacency,)
+
+        if isinstance(self.adjacency, tuple):
+            n_centers = np.prod(self.adjacency)
+            adjacency_matrix = _generate_adjacency_matrix(self.adjacency)
+        else:
+            assert isinstance(self.adjacency, np.ndarray), "'adjacency' is not an int, tuple or array!"
+            adjacency_matrix = self.adjacency
+            n_centers = adjacency_matrix.shape[0]
+
+        if isinstance(self.init, np.ndarray) and (n_centers != self.init.shape[0]):
+            raise ValueError("'init' contains %d centers, but 'adjacency' specifies %d clusters"
+                             % (self.init.shape[0], n_centers))
+
+        self.adjacency_matrix = adjacency_matrix
+        self.distance_matrix = _get_minimum_distances(self.adjacency_matrix)
+        self.graph_diameter = self.distance_matrix.max()
+        self.n_centers = n_centers
+
         assert isinstance(X, np.ndarray), 'X is not an array!'
         self.cluster_centers_ = None
         self.dim_ = X.shape[-1]
