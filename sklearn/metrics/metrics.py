@@ -1622,6 +1622,13 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     ### Select labels to keep ###
 
     if y_type == 'binary' and average is not None and pos_label is not None:
+        if label_order is not None and len(label_order) == 2:
+            warnings.warn('In the future, providing two `labels` values, as '
+                          'well as `average` will average over those '
+                          'labels. For now, please use `labels=None` with '
+                          '`pos_label` to evaluate precision, recall and '
+                          'F-score for the positive label only.',
+                          FutureWarning)
         if pos_label not in labels:
             if len(labels) == 1:
                 # Only negative labels
