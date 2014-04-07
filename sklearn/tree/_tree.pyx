@@ -3097,7 +3097,7 @@ cdef inline void binary_search(SIZE_t* sorted_array, SIZE_t start, SIZE_t end,
     cdef SIZE_t pivot
 
     while start < end:
-        pivot = (start + end) / 2
+        pivot = start + (end - start) / 2
 
         if sorted_array[pivot] < value:
             start = pivot + 1
