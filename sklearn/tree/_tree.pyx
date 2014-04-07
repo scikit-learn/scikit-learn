@@ -1426,7 +1426,6 @@ cdef class BestSparseSplitter(Splitter):
         memcpy(features, constant_features, sizeof(SIZE_t) * n_known_constants)
 
         # Copy newly found constant features
-
         memcpy(constant_features + n_known_constants,
                features + n_known_constants,
                sizeof(SIZE_t) * n_found_constants)
