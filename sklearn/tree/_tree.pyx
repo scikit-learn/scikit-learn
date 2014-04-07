@@ -1143,6 +1143,9 @@ cdef class BestSparseSplitter(Splitter):
                 index_to_color == NULL):
             raise MemoryError()
 
+        for p in range(n_samples):
+            index_to_samples[samples[p]] = p
+
         self.sorted_samples = sorted_samples
         self.index_to_samples = index_to_samples
         self.index_to_color = index_to_color
@@ -1241,7 +1244,6 @@ cdef class BestSparseSplitter(Splitter):
         # the whole `index_to_color` matrix.
         self.current_color += 1
         for p in range(start, end):
-            index_to_samples[samples[p]] = p
             index_to_color[samples[p]] = self.current_color
 
         # Sample up to max_features without replacement using a
@@ -1414,6 +1416,9 @@ cdef class BestSparseSplitter(Splitter):
                         tmp = samples[partition_end]
                         samples[partition_end] = samples[p]
                         samples[p] = tmp
+
+                        index_to_samples[samples[partition_end]] = partition_end
+                        index_to_samples[samples[p]] = p
 
         # Respect invariant for constant features: the original order of
         # element in features[:n_known_constants] must be preserved for sibling
