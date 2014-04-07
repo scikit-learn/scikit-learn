@@ -140,7 +140,7 @@ def _average_and_variance(values, sample_weight=None):
     ----------
     values : array-like of shape = [n_samples] or [n_samples, n_outputs]
 
-    sample_weight : array-like of shape = [n_samples], optional (default=None)
+    sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
 
     Returns
@@ -336,7 +336,7 @@ def average_precision_score(y_true, y_score, average="macro",
         ``'samples'``:
             Calculate metrics for each instance, and find their average.
 
-    sample_weight : array-like of shape = [n_samples], optional (default=None)
+    sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
 
     Returns
@@ -448,7 +448,7 @@ def _average_binary_score(binary_metric, y_true, y_score, average,
         ``'samples'``:
             Calculate metrics for each instance, and find their average.
 
-    sample_weight : array-like of shape = [n_samples], optional (default=None)
+    sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
 
     Return
@@ -537,7 +537,7 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None):
         ``'samples'``:
             Calculate metrics for each instance, and find their average.
 
-    sample_weight : array-like of shape = [n_samples], optional (default=None)
+    sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
 
     Returns
@@ -658,7 +658,7 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
     pos_label : int, optional (default=1)
         The label of the positive class
 
-    sample_weight : array-like of shape = [n_samples], optional (default=None)
+    sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
 
     Returns
@@ -753,7 +753,7 @@ def precision_recall_curve(y_true, probas_pred, pos_label=None,
     pos_label : int, optional (default=1)
         The label of the positive class
 
-    sample_weight : array-like of shape = [n_samples], optional (default=None)
+    sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
 
     Returns
@@ -818,7 +818,7 @@ def roc_curve(y_true, y_score, pos_label=None, sample_weight=None):
     pos_label : int
         Label considered as positive and others are considered negative.
 
-    sample_weight : array-like of shape = [n_samples], optional (default=None)
+    sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
 
     Returns
@@ -985,7 +985,7 @@ def zero_one_loss(y_true, y_pred, normalize=True, sample_weight=None):
         If ``False``, return the number of misclassifications.
         Otherwise, return the fraction of misclassifications.
 
-    sample_weight : array-like of shape = [n_samples], optional (default=None)
+    sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
 
     Returns
@@ -1251,7 +1251,7 @@ def accuracy_score(y_true, y_pred, normalize=True, sample_weight=None):
         If ``False``, return the number of correctly classified samples.
         Otherwise, return the fraction of correctly classified samples.
 
-    sample_weight : array-like of shape = [n_samples], optional (default=None)
+    sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
 
     Returns
@@ -1366,7 +1366,7 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='weighted',
             meaningful for multilabel classification where this differs from
             :func:`accuracy_score`).
 
-    sample_weight : array-like of shape = [n_samples], optional (default=None)
+    sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
 
     Returns
@@ -1452,7 +1452,7 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
             meaningful for multilabel classification where this differs from
             :func:`accuracy_score`).
 
-    sample_weight : array-like of shape = [n_samples], optional (default=None)
+    sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
 
     Returns
@@ -1615,7 +1615,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
         This determines which warnings will be made in the case that this
         function is being used to return only one of its metrics.
 
-    sample_weight : array-like of shape = [n_samples], optional (default=None)
+    sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
 
     Returns
@@ -1852,7 +1852,7 @@ def precision_score(y_true, y_pred, labels=None, pos_label=1,
             meaningful for multilabel classification where this differs from
             :func:`accuracy_score`).
 
-    sample_weight : array-like of shape = [n_samples], optional (default=None)
+    sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
 
     Returns
@@ -1934,7 +1934,7 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='weighted',
             meaningful for multilabel classification where this differs from
             :func:`accuracy_score`).
 
-    sample_weight : array-like of shape = [n_samples], optional (default=None)
+    sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
 
     Returns
@@ -1987,7 +1987,7 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
     target_names : list of strings
         Optional display names matching the labels (same order).
 
-    sample_weight : array-like of shape = [n_samples], optional (default=None)
+    sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
 
     Returns
@@ -2166,7 +2166,7 @@ def mean_absolute_error(y_true, y_pred, sample_weight=None):
     y_pred : array-like of shape = [n_samples] or [n_samples, n_outputs]
         Estimated target values.
 
-    sample_weight : array-like of shape = [n_samples], optional (default=None)
+    sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
 
     Returns
@@ -2206,7 +2206,7 @@ def mean_squared_error(y_true, y_pred, sample_weight=None):
     y_pred : array-like of shape = [n_samples] or [n_samples, n_outputs]
         Estimated target values.
 
-    sample_weight : array-like of shape = [n_samples], optional (default=None)
+    sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
 
     Returns
@@ -2251,7 +2251,7 @@ def explained_variance_score(y_true, y_pred, sample_weight=None):
     y_pred : array-like
         Estimated target values.
 
-    sample_weight : array-like of shape = [n_samples], optional (default=None)
+    sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
 
     Returns
@@ -2302,7 +2302,7 @@ def r2_score(y_true, y_pred, sample_weight=None):
     y_pred : array-like of shape = [n_samples] or [n_samples, n_outputs]
         Estimated target values.
 
-    sample_weight : array-like of shape = [n_samples], optional (default=None)
+    sample_weight : array-like of shape = [n_samples], optional
         Sample weights.
 
     Returns
