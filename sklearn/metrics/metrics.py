@@ -2341,11 +2341,9 @@ def r2_score(y_true, y_pred, sample_weight=None):
     else:
         weight = 1.
 
-    numerator = (
-        weight * (y_true - y_pred) ** 2).sum(dtype=np.float64)
-    denominator = (
-        weight * (y_true - np.average(
-            y_true, axis=0, weights=sample_weight)) ** 2).sum(dtype=np.float64)
+    numerator = (weight * (y_true - y_pred) ** 2).sum(dtype=np.float64)
+    denominator = (weight * (y_true - np.average(
+        y_true, axis=0, weights=sample_weight)) ** 2).sum(dtype=np.float64)
 
     if denominator == 0.0:
         if numerator == 0.0:
