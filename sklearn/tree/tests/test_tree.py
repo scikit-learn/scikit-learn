@@ -6,7 +6,7 @@ import pickle
 import sys
 sys.path.insert(0, "../../..")
 import numpy as np
-from scipy.sparse import hstack, csc_matrix, csr_matrix, coo_matrix
+from scipy.sparse import csc_matrix, csr_matrix
 from functools import partial
 from itertools import product
 
