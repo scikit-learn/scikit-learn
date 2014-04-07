@@ -908,7 +908,6 @@ cdef class Splitter:
         self.feature_values = NULL
 
         self.tmp_indices = NULL
-        self.current_col = NULL
         self.index_to_color = NULL
         self.index_to_samples = NULL
 
@@ -932,7 +931,6 @@ cdef class Splitter:
         self.tmp_indices = NULL
         self.sorted_samples = NULL
         self.index_to_samples = NULL
-        self.current_col = NULL
 
     def __dealloc__(self):
         """Destructor."""
@@ -1039,7 +1037,6 @@ cdef class BestSparseSplitter(Splitter):
 
     def __dealloc__(self):
         """Deallocate memory"""
-        free(self.current_col)
         free(self.index_to_color)
         free(self.tmp_indices)
         free(self.sorted_samples)
@@ -1141,9 +1138,6 @@ cdef class BestSparseSplitter(Splitter):
             raise MemoryError()
 
         #These are tmp arrays used in node_split_sparse
-
-        cdef DTYPE_t* current_col = <DTYPE_t*> realloc(self.current_col,
-                                                 n_samples * sizeof(DTYPE_t))
         cdef SIZE_t* index_to_color = <SIZE_t*> realloc(self.index_to_color,
                                                  n_samples * sizeof(SIZE_t))
         cdef SIZE_t* tmp_indices = <SIZE_t*> realloc(self.tmp_indices,
@@ -1153,18 +1147,12 @@ cdef class BestSparseSplitter(Splitter):
         cdef SIZE_t* index_to_samples = <SIZE_t*> realloc(self.index_to_samples,
                                                  n_samples * sizeof(SIZE_t))
 
-        if current_col == NULL:
-            raise MemoryError()
-        if tmp_indices == NULL:
-            raise MemoryError()
-        if sorted_samples == NULL:
-            raise MemoryError()
-        if index_to_samples == NULL:
-            raise MemoryError()
-        if index_to_color == NULL:
+        if (tmp_indices == NULL or
+                sorted_samples == NULL or
+                index_to_samples == NULL or
+                index_to_color == NULL):
             raise MemoryError()
 
-        self.current_col = current_col
         self.sorted_samples = sorted_samples
         self.tmp_indices = tmp_indices
         self.index_to_samples = index_to_samples
@@ -1214,7 +1202,6 @@ cdef class BestSparseSplitter(Splitter):
         cdef SIZE_t n_features = self.n_features
 
         cdef DTYPE_t* Xf = self.feature_values
-        cdef DTYPE_t* column = self.current_col
         cdef SIZE_t* tmp_indices = self.tmp_indices
         cdef SIZE_t* sorted_samples = self.sorted_samples
         cdef SIZE_t* index_to_samples = self.index_to_samples
@@ -1263,8 +1250,6 @@ cdef class BestSparseSplitter(Splitter):
         cdef SIZE_t n_indices
         cdef SIZE_t start_indices = 0
         cdef SIZE_t end_indices = 0
-
-
 
         # Marking samples that are in the current node (samples[start:end]) with
         # current_color, current_color is changed each time to avoid zeroing
@@ -1514,16 +1499,15 @@ cdef class BestSparseSplitter(Splitter):
         # Reorganize into samples[start:best_pos] + samples[best_pos:end]
         if best_pos < end:
             for p in range(start, end):
-                column[samples[p]] = 0
+                Xf[samples[p]] = 0
 
-            for p in range(X_indptr[best_feature],
-                            X_indptr[best_feature + 1]):
-                column[X_indices[p]] = X_data[p]
+            for p in range(X_indptr[best_feature], X_indptr[best_feature + 1]):
+                Xf[X_indices[p]] = X_data[p]
 
             partition_end = end
             p = start
             while p < partition_end:
-                if column[samples[p]] <= best_threshold:
+                if Xf[samples[p]] <= best_threshold:
                     p += 1
 
                 else:
@@ -1556,7 +1540,6 @@ cdef class BestSparseSplitter(Splitter):
 
     def __dealloc__(self):
         """Destructor."""
-        free(self.current_col)
         free(self.index_to_color)
         free(self.tmp_indices)
         free(self.sorted_samples)
