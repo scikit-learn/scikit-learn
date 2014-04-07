@@ -163,13 +163,13 @@ class SelfOrganizingMap(BaseEstimator):
         """
         assert isinstance(X, np.ndarray), 'X is not an array!'
         self.cluster_centers_ = None
-        self.dim = X.shape[-1]
+        self.dim_ = X.shape[-1]
 
         # init cluster_centers_
         if self.init == 'random':
-            self.cluster_centers_ = np.random.rand(self.n_centers, self.dim)
+            self.cluster_centers_ = np.random.rand(self.n_centers, self.dim_)
         elif isinstance(self.init, np.ndarray):
-            assert self.init.shape[-1] == self.dim
+            assert self.init.shape[-1] == self.dim_
             self.cluster_centers_ = self.init.copy()
 
         # iteration loop

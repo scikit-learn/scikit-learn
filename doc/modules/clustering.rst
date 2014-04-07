@@ -911,6 +911,7 @@ hyperrectangular grid of those dimensions will be used.
 .. topic:: Examples:
 
     * :ref:`example_cluster_plot_som_colormap.py`
+    * :ref:`example_cluster_som_digits.py`
 
 .. topic:: References:
 

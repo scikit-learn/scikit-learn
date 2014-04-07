@@ -24,7 +24,7 @@ from sklearn.preprocessing import scale
 np.random.seed(42)
 
 
-def Calinski_Harabasz_criterion(X, labels, centroids):
+def calinski_harabasz_criterion(X, labels, centroids):
     '''Caliński-Harabasz criterion (pseudo F) statistic
 
     Ratio between the Between-group Sum of Squares (BGSS) and the
@@ -70,7 +70,7 @@ som.fit(data)
 print("done in %0.3fs" % (time() - t0))
 print()
 
-F = Calinski_Harabasz_criterion(data, som.labels_, som.cluster_centers_)
+F = calinski_harabasz_criterion(data, som.labels_, som.cluster_centers_)
 print('Caliński-Harabasz criterion (pseudo F): %0.2f | %0.2f%%' %
       (F, 100 * (F / (1 + F))))
 print()
@@ -84,6 +84,6 @@ km.fit(data)
 print("done in %0.3fs" % (time() - t0))
 print()
 
-F = Calinski_Harabasz_criterion(data, km.labels_, km.cluster_centers_)
+F = calinski_harabasz_criterion(data, km.labels_, km.cluster_centers_)
 print('Caliński-Harabasz criterion (pseudo F): %0.2f | %0.2f%%' %
       (F, 100 * (F / (1 + F))))

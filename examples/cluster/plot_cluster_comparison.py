@@ -91,8 +91,7 @@ for i_dataset, dataset in enumerate(datasets):
         two_means, affinity_propagation, ms, spectral, ward, average_linkage,
         dbscan, birch, som]
 
-    som = cluster.SelfOrganizingMap(adjacency=(2, 2),
-                                    n_iterations= 1000)
+    som = cluster.SelfOrganizingMap(adjacency=(2, 2), n_iterations=1000)
 
     for name, algorithm in zip(clustering_names, clustering_algorithms):
         # predict cluster memberships
