@@ -183,16 +183,6 @@ cdef class Tree:
     cdef double* value                   # (capacity, n_outputs, max_n_classes) array of values
     cdef SIZE_t value_stride             # = n_outputs * max_n_classes
 
-    cdef SIZE_t n_testing_samples
-
-    cdef DTYPE_t* X_testing_data
-    cdef SIZE_t* X_testing_indices
-    cdef SIZE_t* X_testing_indptr
-
-    cdef np.ndarray _testing_data
-    cdef np.ndarray _testing_indices
-    cdef np.ndarray _testing_indptr
-
     cdef DTYPE_t* feature_values         # temp. array holding feature values
     cdef SIZE_t* feature_to_color
     cdef SIZE_t current_color
@@ -212,9 +202,16 @@ cdef class Tree:
     cpdef np.ndarray apply(self, np.ndarray[DTYPE_t, ndim=2] X)
     cpdef compute_feature_importances(self, normalize=*)
 
-    cpdef pack_testing_sparse_data(self, np.ndarray data, np.ndarray indices,
-                           np.ndarray indptr, SIZE_t number_of_testing_samples)
-
+    cpdef np.ndarray predict_sparse(self,
+                                    np.ndarray X_data,
+                                    np.ndarray X_indices,
+                                    np.ndarray X_indptr,
+                                    SIZE_t n_samples)
+    cpdef np.ndarray apply_sparse(self,
+                                  np.ndarray X_data_,
+                                  np.ndarray X_indices_,
+                                  np.ndarray X_indptr_,
+                                  SIZE_t n_samples)
 
 
 # =============================================================================

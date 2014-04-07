@@ -13,7 +13,7 @@ randomized trees. Single and multi-output problems are both handled.
 # Licence: BSD 3 clause
 
 from __future__ import division
-from scipy.sparse import csc_matrix, csr_matrix, coo_matrix
+from scipy.sparse import csc_matrix, csr_matrix, coo_matrix, issparse
 import numbers
 import numpy as np
 from abc import ABCMeta, abstractmethod
@@ -51,12 +51,10 @@ SPLITTERS = {"best": _tree.BestSplitter,
              "presort-best": _tree.PresortBestSplitter,
              "random": _tree.RandomSplitter,
              "best-sparse": _tree.BestSparseSplitter}
-
-
-
 # =============================================================================
 # Base decision tree
 # =============================================================================
+
 
 class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
                                           _LearntSelectorMixin)):
@@ -265,8 +263,8 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         self.tree_ = Tree(self.n_features_, self.n_classes_, self.n_outputs_)
 
         if isinstance(X, csc_matrix):
-             splitter.pack_sparse_data(X.data, X.indices, X.indptr, X.shape[1])
-             X = None
+            splitter.pack_sparse_data(X.data, X.indices, X.indptr, X.shape[1])
+            X = None
 
         # Use BestFirst if max_leaf_nodes given; use DepthFirst otherwise
         if max_leaf_nodes < 0:
@@ -302,22 +300,13 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         y : array of shape = [n_samples] or [n_samples, n_outputs]
             The predicted classes, or the predict values.
         """
-        if isinstance(X, csr_matrix) or isinstance(X, coo_matrix) or \
-                isinstance(X, csc_matrix):
+        if issparse(X):
             if not isinstance(X, csr_matrix):
                 X = csr_matrix(X)
-            n_samples, n_features = X.shape
-            self.tree_.pack_testing_sparse_data(X.data,
-                                                X.indices,
-                                                X.indptr,
-                                                n_samples)
-            X = None
-
         else:
             if getattr(X, "dtype", None) != DTYPE or X.ndim != 2:
                 X = array2d(X, dtype=DTYPE)
-            n_samples, n_features = X.shape
-
+        n_samples, n_features = X.shape
 
         if self.tree_ is None:
             raise Exception("Tree not initialized. Perform a fit first")
@@ -328,7 +317,11 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
                              " input n_features is %s "
                              % (self.n_features_, n_features))
 
-        proba = self.tree_.predict(X)
+        if issparse(X):
+            proba = self.tree_.predict_sparse(X.data, X.indices, X.indptr,
+                                              n_samples)
+        else:
+            proba = self.tree_.predict(X)
 
         # Classification
         if isinstance(self, ClassifierMixin):
@@ -530,20 +523,13 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
             The class probabilities of the input samples. The order of the
             classes corresponds to that in the attribute `classes_`.
         """
-        if isinstance(X, csr_matrix) or isinstance(X, coo_matrix) or \
-                isinstance(X, csc_matrix):
+        if issparse(X):
             if not isinstance(X, csr_matrix):
                 X = csr_matrix(X)
-            n_samples, n_features = X.shape
-            self.tree_.pack_testing_sparse_data(X.data,
-                                                X.indices,
-                                                X.indptr,
-                                                n_samples)
-            X = None
         else:
             if getattr(X, "dtype", None) != DTYPE or X.ndim != 2:
                 X = array2d(X, dtype=DTYPE)
-            n_samples, n_features = X.shape
+        n_samples, n_features = X.shape
 
         if self.tree_ is None:
             raise Exception("Tree not initialized. Perform a fit first.")
@@ -554,7 +540,11 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
                              " input n_features is %s "
                              % (self.n_features_, n_features))
 
-        proba = self.tree_.predict(X)
+        if issparse(X):
+            proba = self.tree_.predict_sparse(X.data, X.indices, X.indptr,
+                                              n_samples)
+        else:
+            proba = self.tree_.predict(X)
 
         if self.n_outputs_ == 1:
             proba = proba[:, :self.n_classes_]

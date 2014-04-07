@@ -2876,13 +2876,6 @@ cdef class Tree:
         self.nodes = NULL
         self.feature_to_color = NULL
         self.feature_values = NULL
-        self.X_testing_data = NULL
-        self.X_testing_indices = NULL
-        self.X_testing_indptr = NULL
-        self._testing_data = None
-        self._testing_indices = None
-        self._testing_indptr = None
-        self.n_testing_samples = 0
         self.current_color = -1
 
     def __dealloc__(self):
@@ -3025,34 +3018,12 @@ cdef class Tree:
         out = self._get_value_ndarray().take(self.apply(X), axis=0,
                                              mode='clip')
         if self.n_outputs == 1:
-            if X != None:
-                out = out.reshape(X.shape[0], self.max_n_classes)
-            else:
-                out = out.reshape(self.n_testing_samples, self.max_n_classes)
+            out = out.reshape(X.shape[0], self.max_n_classes)
         return out
 
     cpdef np.ndarray apply(self, np.ndarray[DTYPE_t, ndim=2] X):
         """Finds the terminal region (=leaf node) for each sample in X."""
-        cdef SIZE_t n_samples = 0
-        cdef DTYPE_t feature_val = 0
-        cdef SIZE_t p = 0
-        cdef bint is_input_sparse = 0
-
-        cdef DTYPE_t* X_testing_data = self.X_testing_data
-        cdef SIZE_t* X_testing_indices = self.X_testing_indices
-        cdef SIZE_t* X_testing_indptr = self.X_testing_indptr
-
-        cdef DTYPE_t* feature_values = self.feature_values
-        cdef SIZE_t* feature_to_color = self.feature_to_color
-
-        if X == None:
-            is_input_sparse = 1
-
-        if is_input_sparse == 0:
-            n_samples = X.shape[0]
-        else:
-            n_samples = self.n_testing_samples
-
+        n_samples = X.shape[0]
         cdef Node* node = NULL
         cdef SIZE_t i = 0
 
@@ -3062,22 +3033,79 @@ cdef class Tree:
         with nogil:
             for i in range(n_samples):
                 node = self.nodes
-                if is_input_sparse == 1 :
+                # While node not a leaf
+                while node.left_child != _TREE_LEAF:
+                    # ... and node.right_child != _TREE_LEAF:
+                    if X[i, node.feature] <= node.threshold:
+                        node = &self.nodes[node.left_child]
+                    else:
+                        node = &self.nodes[node.right_child]
 
-                    self.current_color += 1
-                    for p in range(X_testing_indptr[i], X_testing_indptr[i+1]):
-                        feature_to_color[X_testing_indices[p]] = self.current_color
-                        feature_values[X_testing_indices[p]] = X_testing_data[p]
+                out_data[i] = <SIZE_t>(node - self.nodes)  # node offset
+
+        return out
+
+    cpdef np.ndarray predict_sparse(self,
+                                    np.ndarray X_data,
+                                    np.ndarray X_indices,
+                                    np.ndarray X_indptr,
+                                    SIZE_t n_samples):
+        """Predict target for sparse X."""
+
+        out = self._get_value_ndarray().take(self.apply_sparse(X_data,
+                                                               X_indices,
+                                                               X_indptr,
+                                                               n_samples),
+                                             axis=0,
+                                             mode='clip')
+        if self.n_outputs == 1:
+            out = out.reshape(n_samples, self.max_n_classes)
+        return out
+
+    cpdef np.ndarray apply_sparse(self,
+                                  np.ndarray X_data,
+                                  np.ndarray X_indices,
+                                  np.ndarray X_indptr,
+                                  SIZE_t n_samples):
+        """Finds the terminal region (=leaf node) for each sample in sparse X."""
+        cdef DTYPE_t feature_val = 0
+        cdef SIZE_t p = 0
+
+        cdef Node* node = NULL
+        cdef SIZE_t i = 0
+
+        cdef np.ndarray[SIZE_t] out = np.zeros((n_samples,), dtype=np.intp)
+        cdef SIZE_t* out_data = <SIZE_t*> out.data
+
+        X_data = np.asfortranarray(X_data, dtype=DTYPE)
+        X_indptr  = np.asfortranarray(X_indptr, dtype=np.intp)
+        X_indices = np.asfortranarray(X_indices, dtype=np.intp)
+
+        cdef DTYPE_t* _data = <DTYPE_t*> X_data.data
+        cdef SIZE_t* _indices = <SIZE_t*> X_indices.data
+        cdef SIZE_t* _indptr = <SIZE_t*> X_indptr.data
+        if self.feature_values == NULL:
+            self.feature_values = <DTYPE_t*> malloc(self.n_features * sizeof(DTYPE_t))
+        if self.feature_to_color == NULL:
+            self.feature_to_color = <SIZE_t*> malloc(self.n_features * sizeof(SIZE_t))
+        cdef DTYPE_t* feature_values = self.feature_values
+        cdef SIZE_t* feature_to_color = self.feature_to_color
+
+
+        with nogil:
+            for i in range(n_samples):
+                node = self.nodes
+                self.current_color += 1
+                for p in range(_indptr[i], _indptr[i+1]):
+                    feature_to_color[_indices[p]] = self.current_color
+                    feature_values[_indices[p]] = _data[p]
 
                 # While node not a leaf
                 while node.left_child != _TREE_LEAF:
                     # ... and node.right_child != _TREE_LEAF:
                     feature_val = 0
-                    if is_input_sparse == 0 :
-                        feature_val = X[i, node.feature]
-                    else :
-                        if feature_to_color[node.feature] == self.current_color:
-                            feature_val = feature_values[node.feature]
+                    if feature_to_color[node.feature] == self.current_color:
+                        feature_val = feature_values[node.feature]
                     if feature_val <= node.threshold:
                         node = &self.nodes[node.left_child]
                     else:
@@ -3157,26 +3185,6 @@ cdef class Tree:
         Py_INCREF(self)
         arr.base = <PyObject*> self
         return arr
-
-    cpdef pack_testing_sparse_data(self, np.ndarray data, np.ndarray indices,
-                           np.ndarray indptr,
-                           SIZE_t number_of_testing_samples):
-        """pack sparse data."""
-        self.n_testing_samples = number_of_testing_samples
-
-        self._testing_data = np.asfortranarray(data, dtype=DTYPE)
-        self._testing_indptr  = np.asfortranarray(indptr, dtype=np.intp)
-        self._testing_indices = np.asfortranarray(indices, dtype=np.intp)
-
-        self.X_testing_data = <DTYPE_t*> self._testing_data.data
-        self.X_testing_indptr = <SIZE_t*> self._testing_indptr.data
-        self.X_testing_indices = <SIZE_t*> self._testing_indices.data
-
-        self.feature_values = <DTYPE_t*> malloc(self.n_features *
-                                                sizeof(DTYPE_t))
-
-        self.feature_to_color = <SIZE_t*> malloc(self.n_features *
-                                                sizeof(SIZE_t))
 
 # =============================================================================
 # Utils
