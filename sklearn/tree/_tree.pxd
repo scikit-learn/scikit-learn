@@ -88,7 +88,7 @@ cdef class Splitter:
     cdef SIZE_t* index_to_color
     cdef SIZE_t* tmp_indices
     cdef SIZE_t* sorted_samples
-    cdef SIZE_t* hyper_indices
+    cdef SIZE_t* index_to_samples
     cdef SIZE_t current_color
 
     cdef SIZE_t start                    # Start position for the current node

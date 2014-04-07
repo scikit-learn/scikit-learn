@@ -910,7 +910,7 @@ cdef class Splitter:
         self.tmp_indices = NULL
         self.current_col = NULL
         self.index_to_color = NULL
-        self.hyper_indices = NULL
+        self.index_to_samples = NULL
 
         self.X = NULL
         self.X_sample_stride = 0
@@ -931,7 +931,7 @@ cdef class Splitter:
         self.index_to_color = NULL
         self.tmp_indices = NULL
         self.sorted_samples = NULL
-        self.hyper_indices = NULL
+        self.index_to_samples = NULL
         self.current_col = NULL
 
     def __dealloc__(self):
@@ -1043,7 +1043,7 @@ cdef class BestSparseSplitter(Splitter):
         free(self.index_to_color)
         free(self.tmp_indices)
         free(self.sorted_samples)
-        free(self.hyper_indices)
+        free(self.index_to_samples)
 
     def __reduce__(self):
         return (BestSparseSplitter, (self.criterion,
@@ -1150,7 +1150,7 @@ cdef class BestSparseSplitter(Splitter):
                                                     n_samples * sizeof(SIZE_t))
         cdef SIZE_t* sorted_samples = <SIZE_t*> realloc(self.sorted_samples,
                                                     n_samples * sizeof(SIZE_t))
-        cdef SIZE_t* hyper_indices = <SIZE_t*> realloc(self.hyper_indices,
+        cdef SIZE_t* index_to_samples = <SIZE_t*> realloc(self.index_to_samples,
                                                  n_samples * sizeof(SIZE_t))
 
         if current_col == NULL:
@@ -1159,7 +1159,7 @@ cdef class BestSparseSplitter(Splitter):
             raise MemoryError()
         if sorted_samples == NULL:
             raise MemoryError()
-        if hyper_indices == NULL:
+        if index_to_samples == NULL:
             raise MemoryError()
         if index_to_color == NULL:
             raise MemoryError()
@@ -1167,7 +1167,7 @@ cdef class BestSparseSplitter(Splitter):
         self.current_col = current_col
         self.sorted_samples = sorted_samples
         self.tmp_indices = tmp_indices
-        self.hyper_indices = hyper_indices
+        self.index_to_samples = index_to_samples
         self.index_to_color = index_to_color
 
         for i in range(n_features):
@@ -1217,7 +1217,7 @@ cdef class BestSparseSplitter(Splitter):
         cdef DTYPE_t* column = self.current_col
         cdef SIZE_t* tmp_indices = self.tmp_indices
         cdef SIZE_t* sorted_samples = self.sorted_samples
-        cdef SIZE_t* hyper_indices = self.hyper_indices
+        cdef SIZE_t* index_to_samples = self.index_to_samples
         cdef SIZE_t* index_to_color = self.index_to_color
         cdef SIZE_t max_features = self.max_features
         cdef SIZE_t min_samples_leaf = self.min_samples_leaf
@@ -1271,7 +1271,7 @@ cdef class BestSparseSplitter(Splitter):
         # the whole `index_to_color` matrix.
         self.current_color += 1
         for p in range(start, end):
-            hyper_indices[samples[p]] = p
+            index_to_samples[samples[p]] = p
             index_to_color[samples[p]] = self.current_color
 
         # Sample up to max_features without replacement using a
@@ -1410,8 +1410,7 @@ cdef class BestSparseSplitter(Splitter):
                 # Sort the positive and negative parts of `Xf` while rearranging
                 # their corresponding indices in `tmp_indices`
                 if end_negative > start:
-                    sort(Xf + start, tmp_indices + start,
-                         end_negative - start)
+                    sort(Xf + start, tmp_indices + start, end_negative - start)
 
                 if start_positive < end:
                     sort(Xf + start_positive, tmp_indices + start_positive,
@@ -1424,23 +1423,23 @@ cdef class BestSparseSplitter(Splitter):
                 # and the index of the most positive number in samples[end-1], if
                 # not samples are rearranged to make this happen.
                 for k_ in range(start, end_negative):
-                    p = hyper_indices[tmp_indices[k_]]
+                    p = index_to_samples[tmp_indices[k_]]
 
                     if p != k_:
                         tmp = samples[k_]
                         samples[k_] = samples[p]
                         samples[p] = tmp
-                        hyper_indices[samples[k_]] = k_
-                        hyper_indices[samples[p]] =  p
+                        index_to_samples[samples[k_]] = k_
+                        index_to_samples[samples[p]] =  p
 
                 for k_ in range(start_positive, end):
-                    p = hyper_indices[tmp_indices[k_]]
+                    p = index_to_samples[tmp_indices[k_]]
                     if p != k_:
                         tmp = samples[k_]
                         samples[k_] = samples[p]
                         samples[p] = tmp
-                        hyper_indices[samples[k_]] = k_
-                        hyper_indices[samples[p]] =  p
+                        index_to_samples[samples[k_]] = k_
+                        index_to_samples[samples[p]] =  p
 
                 # Add a zero in Xf, if there is any zeros
                 if end_negative != start_positive:
@@ -1561,7 +1560,7 @@ cdef class BestSparseSplitter(Splitter):
         free(self.index_to_color)
         free(self.tmp_indices)
         free(self.sorted_samples)
-        free(self.hyper_indices)
+        free(self.index_to_samples)
 
 
 cdef class BestSplitter(Splitter):
