@@ -1104,7 +1104,6 @@ cdef class BestSparseSplitter(Splitter):
         self.rand_r_state = self.random_state.randint(0, RAND_R_MAX)
 
         # Initialize samples and features structures
-
         cdef SIZE_t n_samples = 0
         n_samples = y.shape[0]
         cdef SIZE_t* samples = <SIZE_t*> realloc(self.samples,
@@ -1307,7 +1306,6 @@ cdef class BestSparseSplitter(Splitter):
 
                 # Sort the positive and negative parts of `Xf`
                 sort(Xf + start, samples + start, end_negative - start)
-
                 sort(Xf + start_positive, samples + start_positive,
                      end - start_positive)
 
@@ -1386,32 +1384,40 @@ cdef class BestSparseSplitter(Splitter):
 
                                 best_threshold = current_threshold
 
-
         # Reorganize into samples[start:best_pos] + samples[best_pos:end]
         if best_pos < end:
-            for p in range(start, end):
-                Xf[samples[p]] = 0
+            extract_nnz(X_indices, X_data, X_indptr[best_feature],
+                        X_indptr[best_feature + 1],
+                        index_to_color, self.current_color,
+                        samples, start, end, index_to_samples,  Xf,
+                        &end_negative, &start_positive, sorted_samples,
+                        &is_samples_sorted)
 
-            for p in range(X_indptr[best_feature], X_indptr[best_feature + 1]):
-                Xf[X_indices[p]] = X_data[p]
-
-            partition_end = end
-            p = start
-            while p < partition_end:
-                if Xf[samples[p]] <= best_threshold:
-                    p += 1
-
+            if (best_pos >= start_positive or best_pos < end_negative):
+                if best_pos >= start_positive:
+                    p = start_positive
+                    partition_end = end
                 else:
-                    partition_end -= 1
+                    p = start
+                    partition_end = end_negative
 
-                    tmp = samples[partition_end]
-                    samples[partition_end] = samples[p]
-                    samples[p] = tmp
+                while p < partition_end:
+                    current_feature_value = Xf[p]
+                    if current_feature_value <= current_threshold:
+                        p += 1
+                    else:
+                        partition_end -= 1
+
+                        Xf[p] = Xf[partition_end]
+                        Xf[partition_end] = current_feature_value
+
+                        tmp = samples[partition_end]
+                        samples[partition_end] = samples[p]
+                        samples[p] = tmp
 
         # Respect invariant for constant features: the original order of
         # element in features[:n_known_constants] must be preserved for sibling
         # and child nodes
-
         memcpy(features, constant_features, sizeof(SIZE_t) * n_known_constants)
 
         # Copy newly found constant features
