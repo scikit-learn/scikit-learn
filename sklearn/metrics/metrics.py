@@ -2187,7 +2187,7 @@ def mean_absolute_error(y_true, y_pred, sample_weight=None):
     """
     y_type, y_true, y_pred = _check_reg_targets(y_true, y_pred)
     if sample_weight is not None:
-        sample_weight = np.atleast_2d(sample_weight).reshape((-1, 1))
+        sample_weight = np.reshape(sample_weight, (-1, 1))
         if y_type == 'continuous-multioutput':
             sample_weight = np.repeat(sample_weight, y_true.shape[1], axis=1)
     return np.average(np.abs(y_pred - y_true), weights=sample_weight)
@@ -2227,7 +2227,7 @@ def mean_squared_error(y_true, y_pred, sample_weight=None):
     """
     y_type, y_true, y_pred = _check_reg_targets(y_true, y_pred)
     if sample_weight is not None:
-        sample_weight = np.atleast_2d(sample_weight).reshape((-1, 1))
+        sample_weight = np.reshape(sample_weight, (-1, 1))
         if y_type == 'continuous-multioutput':
             sample_weight = np.repeat(sample_weight, y_true.shape[1], axis=1)
     return np.average((y_pred - y_true) ** 2, weights=sample_weight)
