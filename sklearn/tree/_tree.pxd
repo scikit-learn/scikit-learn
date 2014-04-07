@@ -85,7 +85,6 @@ cdef class Splitter:
     cdef DTYPE_t* feature_values         # temp. array holding feature values
 
     cdef SIZE_t* index_to_color
-    cdef SIZE_t* tmp_indices
     cdef SIZE_t* sorted_samples
     cdef SIZE_t* index_to_samples
     cdef SIZE_t current_color
