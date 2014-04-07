@@ -806,8 +806,9 @@ def test_regression__X_small():
 
 def assert_tree_enquality(d, s, message):
     from sklearn.tree._tree import TREE_LEAF
-    assert_equal(d.node_count, s.node_count,
-                 message + ": inequal number of node")
+    assert_equal(s.node_count, d.node_count,
+                 "{0}: inequal number of node ({1} != {2})"
+                 "".format(message, s.node_count, d.node_count))
 
     assert_array_equal(d.children_right, s.children_right,
                        message + ": inequal n_node_samples")
