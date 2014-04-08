@@ -472,16 +472,30 @@ def _average_binary_score(binary_metric, y_true, y_score, average,
 
     y_true, y_score = check_arrays(y_true, y_score)
 
+    not_average_axis = 1
+    score_weight = sample_weight
+    average_weight = None
+
     if average == "micro":
+        if score_weight is not None:
+            score_weight = np.repeat(score_weight, y_true.shape[1])
         y_true = y_true.ravel()
         y_score = y_score.ravel()
 
-    if average == 'weighted':
-        weights = np.sum(y_true, axis=0)
-        if weights.sum() == 0:
+    elif average == 'weighted':
+        if score_weight is not None:
+            average_weight = np.sum(np.multiply(
+                y_true, np.reshape(score_weight, (-1, 1))), axis=0)
+        else:
+            average_weight = np.sum(y_true, axis=0)
+        if average_weight.sum() == 0:
             return 0
-    else:
-        weights = None
+
+    elif average == 'samples':
+        # swap average_weight <-> score_weight
+        average_weight = score_weight
+        score_weight = None
+        not_average_axis = 0
 
     if y_true.ndim == 1:
         y_true = y_true.reshape((-1, 1))
@@ -489,17 +503,17 @@ def _average_binary_score(binary_metric, y_true, y_score, average,
     if y_score.ndim == 1:
         y_score = y_score.reshape((-1, 1))
 
-    not_average_axis = 0 if average == 'samples' else 1
     n_classes = y_score.shape[not_average_axis]
     score = np.zeros((n_classes,))
     for c in range(n_classes):
         y_true_c = y_true.take([c], axis=not_average_axis).ravel()
         y_score_c = y_score.take([c], axis=not_average_axis).ravel()
-        score[c] = binary_metric(y_true_c, y_score_c)
+        score[c] = binary_metric(y_true_c, y_score_c,
+                                 sample_weight=score_weight)
 
     # Average the results
     if average is not None:
-        return np.average(score, weights=weights)
+        return np.average(score, weights=average_weight)
     else:
         return score
 
@@ -1687,20 +1701,20 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
             y_pred = y_pred == 1
 
         if sample_weight is None:
-            sample_weight = 1
+            sum_weight = 1
             dtype = int
         else:
-            sample_weight = np.expand_dims(sample_weight, 1)
+            sum_weight = np.expand_dims(sample_weight, 1)
             dtype = float
 
         sum_axis = 1 if average == 'samples' else 0
         tp_sum = np.sum(
-            np.multiply(np.logical_and(y_true, y_pred), sample_weight),
+            np.multiply(np.logical_and(y_true, y_pred), sum_weight),
             axis=sum_axis)
         pred_sum = np.sum(
-            np.multiply(y_pred, sample_weight), axis=sum_axis, dtype=dtype)
+            np.multiply(y_pred, sum_weight), axis=sum_axis, dtype=dtype)
         true_sum = np.sum(
-            np.multiply(y_true, sample_weight), axis=sum_axis, dtype=dtype)
+            np.multiply(y_true, sum_weight), axis=sum_axis, dtype=dtype)
 
     elif average == 'samples':
         raise ValueError("Sample-based precision, recall, fscore is "
@@ -1785,6 +1799,8 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
         weights = true_sum
         if weights.sum() == 0:
             return 0, 0, 0, None
+    elif average == 'samples':
+        weights = sample_weight
     else:
         weights = None
 
