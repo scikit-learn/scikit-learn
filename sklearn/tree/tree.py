@@ -138,20 +138,19 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         # Convert X data
         if check_input:
             if issparse(X):
-                if not isinstance(X, csc_matrix):
-                    X = X.tocsc()
+                X = X.tocsc()
 
                 if not X.has_sorted_indices:
                     X = X.sort_indices()
 
-                if getattr(X.data, "dtype", None) != DTYPE:
+                if X.data.dtype != DTYPE:
                     X.data = np.ascontiguousarray(X.data, dtype=DTYPE)
 
-                if getattr(X.indices, "dtype", None) != np.intp:
-                    X.indices = np.ascontiguousarray(X.indices, dtype=np.intp)
+                if X.indices.dtype != np.int32:
+                    X.indices = np.ascontiguousarray(X.indices, dtype=np.int32)
 
-                if getattr(X.indptr, "dtype", None) != np.intp:
-                    X.indptr = np.ascontiguousarray(X.indptr, dtype=np.intp)
+                if X.indptr.dtype != np.int32:
+                    X.indptr = np.ascontiguousarray(X.indptr, dtype=np.int32)
 
             else:
                 X, = check_arrays(X, dtype=DTYPE, sparse_format="dense")
@@ -309,17 +308,17 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
             The predicted classes, or the predict values.
         """
         if issparse(X):
-            if not isinstance(X, csr_matrix):
-                X = csr_matrix(X)
+            X = X.tocsr()
 
-            if getattr(X.data, "dtype", None) != DTYPE:
+            if X.data.dtype != DTYPE:
                 X.data = np.ascontiguousarray(X.data, dtype=DTYPE)
 
-            if getattr(X.indices, "dtype", None) != np.intp:
-                X.indices = np.ascontiguousarray(X.indices, dtype=np.intp)
+            if X.indices.dtype != np.int32:
+                X.indices = np.ascontiguousarray(X.indices, dtype=np.int32)
 
-            if getattr(X.indptr, "dtype", None) != np.intp:
-                X.indptr = np.ascontiguousarray(X.indptr, dtype=np.intp)
+            if X.indptr.dtype != np.int32:
+                X.indptr = np.ascontiguousarray(X.indptr, dtype=np.int32)
+
 
         elif getattr(X, "dtype", None) != DTYPE or X.ndim != 2:
             X = array2d(X, dtype=DTYPE)
@@ -539,17 +538,16 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
             classes corresponds to that in the attribute `classes_`.
         """
         if issparse(X):
-            if not isinstance(X, csr_matrix):
-                X = csr_matrix(X)
+            X = X.tocsr()
 
-            if getattr(X.data, "dtype", None) != DTYPE:
+            if X.data.dtype != DTYPE:
                 X.data = np.ascontiguousarray(X.data, dtype=DTYPE)
 
-            if getattr(X.indices, "dtype", None) != np.intp:
-                X.indices = np.ascontiguousarray(X.indices, dtype=np.intp)
+            if X.indices.dtype != np.int32:
+                X.indices = np.ascontiguousarray(X.indices, dtype=np.int32)
 
-            if getattr(X.indptr, "dtype", None) != np.intp:
-                X.indptr = np.ascontiguousarray(X.indptr, dtype=np.intp)
+            if X.indptr.dtype != np.int32:
+                X.indptr = np.ascontiguousarray(X.indptr, dtype=np.int32)
 
         elif getattr(X, "dtype", None) != DTYPE or X.ndim != 2:
             X = array2d(X, dtype=DTYPE)

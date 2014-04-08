@@ -1049,8 +1049,8 @@ cdef class DenseSplitter(Splitter):
 cdef class SparseSplitter(Splitter):
 
     cdef DTYPE_t* X_data
-    cdef SIZE_t* X_indices
-    cdef SIZE_t* X_indptr
+    cdef INT32_t* X_indices
+    cdef INT32_t* X_indptr
 
     cdef SIZE_t current_color
     cdef SIZE_t* index_to_color
@@ -1088,13 +1088,13 @@ cdef class SparseSplitter(Splitter):
         cdef SIZE_t n_samples = X.shape[0]
 
         # Initialize X
-        cdef np.ndarray data = X.data
-        cdef np.ndarray indices = X.indices
-        cdef np.ndarray indptr = X.indptr
+        cdef np.ndarray[dtype=DTYPE_t, ndim=1] data = X.data
+        cdef np.ndarray[dtype=INT32_t, ndim=1] indices = X.indices
+        cdef np.ndarray[dtype=INT32_t, ndim=1] indptr = X.indptr
 
         self.X_data = <DTYPE_t*> data.data
-        self.X_indices = <SIZE_t*> indices.data
-        self.X_indptr = <SIZE_t*> indptr.data
+        self.X_indices = <INT32_t*> indices.data
+        self.X_indptr = <INT32_t*> indptr.data
 
         # Initialize auxiliary array used to perform split
         cdef SIZE_t* index_to_color
@@ -1147,8 +1147,8 @@ cdef class BestSparseSplitter(SparseSplitter):
         cdef SIZE_t start = self.start
         cdef SIZE_t end = self.end
 
-        cdef SIZE_t* X_indices = self.X_indices
-        cdef SIZE_t* X_indptr = self.X_indptr
+        cdef INT32_t* X_indices = self.X_indices
+        cdef INT32_t* X_indptr = self.X_indptr
         cdef DTYPE_t* X_data = self.X_data
 
         cdef SIZE_t* features = self.features
@@ -2226,14 +2226,19 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
 
         # check if dtype is correct
         if issparse(X):
+            X = X.tocsc()
+
+            if not X.has_sorted_indices:
+                X = X.sort_indices()
+
             if X.data.dtype != DTYPE:
                 X.data = np.ascontiguousarray(X.data, dtype=DTYPE)
 
-            if X.indices.dtype != np.intp:
-                X.indices = np.ascontiguousarray(X.indices, dtype=np.intp)
+            if X.indices.dtype != np.int32:
+                X.indices = np.ascontiguousarray(X.indices, dtype=np.int32)
 
-            if X.indptr.dtype != np.intp:
-                X.indptr = np.ascontiguousarray(X.indptr, dtype=np.intp)
+            if X.indptr.dtype != np.int32:
+                X.indptr = np.ascontiguousarray(X.indptr, dtype=np.int32)
 
         elif X.dtype != DTYPE:
             # since we have to copy we will make it fortran for efficiency
@@ -2402,14 +2407,19 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
 
         # check if dtype is correct
         if issparse(X):
+            X = X.tocsc()
+
+            if not X.has_sorted_indices:
+                X = X.sort_indices()
+
             if X.data.dtype != DTYPE:
                 X.data = np.ascontiguousarray(X.data, dtype=DTYPE)
 
-            if X.indices.dtype != np.intp:
-                X.indices = np.ascontiguousarray(X.indices, dtype=np.intp)
+            if X.indices.dtype != np.int32:
+                X.indices = np.ascontiguousarray(X.indices, dtype=np.int32)
 
-            if X.indptr.dtype != np.intp:
-                X.indptr = np.ascontiguousarray(X.indptr, dtype=np.intp)
+            if X.indptr.dtype != np.int32:
+                X.indptr = np.ascontiguousarray(X.indptr, dtype=np.int32)
 
         elif X.dtype != DTYPE:
             # since we have to copy we will make it fortran for efficiency
@@ -2902,13 +2912,13 @@ cdef class Tree:
         """Finds the terminal region (=leaf node) for each sample in sparse X."""
 
         # Extract input
-        cdef np.ndarray X_data_ndarray = X.data
-        cdef np.ndarray X_indices_ndarray  = X.indices
-        cdef np.ndarray X_indptr_ndarray  = X.indptr
+        cdef np.ndarray[ndim=1, dtype=DTYPE_t] X_data_ndarray = X.data
+        cdef np.ndarray[ndim=1, dtype=INT32_t] X_indices_ndarray  = X.indices
+        cdef np.ndarray[ndim=1, dtype=INT32_t] X_indptr_ndarray  = X.indptr
 
         cdef DTYPE_t* X_data = <DTYPE_t*>X_data_ndarray.data
-        cdef SIZE_t* X_indices = <SIZE_t*>X_indices_ndarray.data
-        cdef SIZE_t* X_indptr = <SIZE_t*>X_indptr_ndarray.data
+        cdef INT32_t* X_indices = <INT32_t*>X_indices_ndarray.data
+        cdef INT32_t* X_indptr = <INT32_t*>X_indptr_ndarray.data
 
         cdef SIZE_t n_samples = X.shape[0]
         cdef SIZE_t n_features = X.shape[1]
@@ -2926,7 +2936,7 @@ cdef class Tree:
         cdef DTYPE_t* feature_to_sample = NULL
 
         cdef SIZE_t i = 0
-        cdef SIZE_t p = 0
+        cdef INT32_t k = 0
 
         with nogil:
             X_sample = <DTYPE_t*> malloc(n_features * sizeof(DTYPE_t))
@@ -2936,9 +2946,9 @@ cdef class Tree:
             for i in range(n_samples):
                 node = self.nodes
 
-                for p in range(X_indptr[i], X_indptr[i + 1]):
-                    feature_to_sample[X_indices[p]] = i
-                    X_sample[X_indices[p]] = X_data[p]
+                for k in range(X_indptr[i], X_indptr[i + 1]):
+                    feature_to_sample[X_indices[k]] = i
+                    X_sample[X_indices[k]] = X_data[k]
 
                 # While node not a leaf
                 while node.left_child != _TREE_LEAF:
@@ -3071,14 +3081,14 @@ cdef int compare_SIZE_t(const void * a, const void * b) nogil:
     return <int>((<SIZE_t*>a)[0] - (<SIZE_t*>b)[0])
 
 
-cdef inline void binary_search(SIZE_t* sorted_array, SIZE_t start, SIZE_t end,
+cdef inline void binary_search(INT32_t* sorted_array, INT32_t start, INT32_t end,
                                SIZE_t value, SIZE_t* index,
-                               SIZE_t* new_start) nogil:
+                               INT32_t* new_start) nogil:
     """Return the index of value in the sorted array
 
     If not found, return -1. new_start is the last pivot + 1
     """
-    cdef SIZE_t pivot
+    cdef INT32_t pivot
 
     while start < end:
         pivot = start + (end - start) / 2
@@ -3095,10 +3105,10 @@ cdef inline void binary_search(SIZE_t* sorted_array, SIZE_t start, SIZE_t end,
     new_start[0] = start
 
 
-cdef inline void  extra_nnz_color(SIZE_t* X_indices,
+cdef inline void  extra_nnz_color(INT32_t* X_indices,
                                   DTYPE_t* X_data,
-                                  SIZE_t indptr_start,
-                                  SIZE_t indptr_end,
+                                  INT32_t indptr_start,
+                                  INT32_t indptr_end,
                                   SIZE_t* index_to_color,
                                   SIZE_t color,
                                   SIZE_t* samples,
@@ -3112,7 +3122,7 @@ cdef inline void  extra_nnz_color(SIZE_t* X_indices,
     and samples[start:end] using a color approach which is
     O(indptr_end - indptr_start).
     """
-    cdef SIZE_t k_
+    cdef INT32_t k_
     cdef SIZE_t index
     cdef SIZE_t end_negative_ = start
     cdef SIZE_t start_positive_ = end
@@ -3149,10 +3159,10 @@ cdef inline void  extra_nnz_color(SIZE_t* X_indices,
     start_positive[0] = start_positive_
 
 
-cdef inline void  extract_nnz_binary_search(SIZE_t* X_indices,
+cdef inline void  extract_nnz_binary_search(INT32_t* X_indices,
                                             DTYPE_t* X_data,
-                                            SIZE_t indptr_start,
-                                            SIZE_t indptr_end,
+                                            INT32_t indptr_start,
+                                            INT32_t indptr_end,
                                             SIZE_t* samples,
                                             SIZE_t start,
                                             SIZE_t end,
@@ -3231,10 +3241,10 @@ cdef inline void  extract_nnz_binary_search(SIZE_t* X_indices,
     start_positive[0] = start_positive_
 
 
-cdef inline void  extract_nnz(SIZE_t* X_indices,
+cdef inline void  extract_nnz(INT32_t* X_indices,
                               DTYPE_t* X_data,
-                              SIZE_t indptr_start,
-                              SIZE_t indptr_end,
+                              INT32_t indptr_start,
+                              INT32_t indptr_end,
                               SIZE_t* index_to_color,
                               SIZE_t color,
                               SIZE_t* samples,
@@ -3247,9 +3257,8 @@ cdef inline void  extract_nnz(SIZE_t* X_indices,
                               SIZE_t* sorted_samples,
                               bint* is_samples_sorted) nogil:
 
-    cdef SIZE_t n_indices = indptr_end - indptr_start
+    cdef SIZE_t n_indices = <SIZE_t>(indptr_end - indptr_start)
     cdef SIZE_t n_samples = end - start
-
 
     # Use binary search to if n_samples * log(n_indices) <
     # n_indices and coloring technique otherwise.
