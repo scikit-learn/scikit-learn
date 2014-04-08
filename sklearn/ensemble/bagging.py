@@ -243,7 +243,7 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
         random_state = check_random_state(self.random_state)
 
         # Convert data
-        X, y = check_arrays(X, y)
+        X, y = check_arrays(X, y, format="dense")
 
         # Remap output
         n_samples, self.n_features_ = X.shape
