@@ -84,32 +84,12 @@ cdef class Splitter:
     cdef SIZE_t n_features               # X.shape[1]
     cdef DTYPE_t* feature_values         # temp. array holding feature values
 
-    cdef DTYPE_t* current_col
-    cdef SIZE_t* index_to_color
-    cdef SIZE_t* tmp_indices
-    cdef SIZE_t* sorted_samples
-    cdef SIZE_t* hyper_indices
-    cdef SIZE_t current_color
-
     cdef SIZE_t start                    # Start position for the current node
     cdef SIZE_t end                      # End position for the current node
 
-    cdef DTYPE_t* X
-    cdef SIZE_t X_sample_stride
-    cdef SIZE_t X_fx_stride
     cdef DOUBLE_t* y
     cdef SIZE_t y_stride
     cdef DOUBLE_t* sample_weight
-
-    cdef DTYPE_t* X_data
-    cdef SIZE_t* X_indices
-    cdef SIZE_t* X_indptr
-
-    cdef np.ndarray _data
-    cdef np.ndarray _indices
-    cdef np.ndarray _indptr
-
-
 
     # The samples vector `samples` is maintained by the Splitter object such
     # that the samples contained in a node are contiguous. With this setting,
@@ -128,7 +108,7 @@ cdef class Splitter:
     # This allows optimization with depth-based tree building.
 
     # Methods
-    cdef void init(self, np.ndarray X, np.ndarray y, DOUBLE_t* sample_weight)
+    cdef void init(self, object X, np.ndarray y, DOUBLE_t* sample_weight)
 
     cdef void node_reset(self, SIZE_t start, SIZE_t end,
                          double* weighted_n_node_samples) nogil
@@ -163,6 +143,7 @@ cdef struct Node:
     SIZE_t n_samples                # Number of samples at the node
     DOUBLE_t weighted_n_samples     # Weighted number of samples at the node
 
+
 cdef class Tree:
     # The Tree object is a binary tree structure constructed by the
     # TreeBuilder. The tree structure is used for predictions and
@@ -183,10 +164,6 @@ cdef class Tree:
     cdef double* value                   # (capacity, n_outputs, max_n_classes) array of values
     cdef SIZE_t value_stride             # = n_outputs * max_n_classes
 
-    cdef DTYPE_t* feature_values         # temp. array holding feature values
-    cdef SIZE_t* feature_to_color
-    cdef SIZE_t current_color
-
     # Methods
     cdef SIZE_t _add_node(self, SIZE_t parent, bint is_left, bint is_leaf,
                           SIZE_t feature, double threshold, double impurity,
@@ -198,20 +175,12 @@ cdef class Tree:
     cdef np.ndarray _get_value_ndarray(self)
     cdef np.ndarray _get_node_ndarray(self)
 
-    cpdef np.ndarray predict(self, np.ndarray[DTYPE_t, ndim=2] X)
-    cpdef np.ndarray apply(self, np.ndarray[DTYPE_t, ndim=2] X)
-    cpdef compute_feature_importances(self, normalize=*)
+    cpdef np.ndarray predict(self, object X)
+    cpdef np.ndarray apply(self, object X)
+    cdef np.ndarray _apply_dense(self, object X)
+    cdef np.ndarray _apply_sparse_csr(self, object X)
 
-    cpdef np.ndarray predict_sparse(self,
-                                    np.ndarray X_data,
-                                    np.ndarray X_indices,
-                                    np.ndarray X_indptr,
-                                    SIZE_t n_samples)
-    cpdef np.ndarray apply_sparse(self,
-                                  np.ndarray X_data_,
-                                  np.ndarray X_indices_,
-                                  np.ndarray X_indptr_,
-                                  SIZE_t n_samples)
+    cpdef compute_feature_importances(self, normalize=*)
 
 
 # =============================================================================
@@ -232,5 +201,5 @@ cdef class TreeBuilder:
     cdef SIZE_t min_samples_leaf    # Minimum number of samples in a leaf
     cdef SIZE_t max_depth           # Maximal tree depth
 
-    cpdef build(self, Tree tree, np.ndarray X, np.ndarray y,
+    cpdef build(self, Tree tree, object X, np.ndarray y,
                 np.ndarray sample_weight=*)

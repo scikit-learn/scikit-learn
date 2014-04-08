@@ -13,7 +13,7 @@ randomized trees. Single and multi-output problems are both handled.
 # Licence: BSD 3 clause
 
 from __future__ import division
-from scipy.sparse import csc_matrix, csr_matrix, coo_matrix, issparse
+from scipy.sparse import csc_matrix, issparse, csr_matrix
 import numbers
 import numpy as np
 from abc import ABCMeta, abstractmethod
@@ -47,10 +47,12 @@ DOUBLE = _tree.DOUBLE
 
 CRITERIA_CLF = {"gini": _tree.Gini, "entropy": _tree.Entropy}
 CRITERIA_REG = {"mse": _tree.MSE, "friedman_mse": _tree.FriedmanMSE}
-SPLITTERS = {"best": _tree.BestSplitter,
-             "presort-best": _tree.PresortBestSplitter,
-             "random": _tree.RandomSplitter,
-             "best-sparse": _tree.BestSparseSplitter}
+DENSE_SPLITTERS = {"best": _tree.BestSplitter,
+                   "presort-best": _tree.PresortBestSplitter,
+                   "random": _tree.RandomSplitter}
+
+SPARSE_SPLITTER = {"best": _tree.BestSparseSplitter}
+
 # =============================================================================
 # Base decision tree
 # =============================================================================
@@ -133,18 +135,26 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
             warn("The X_argsorted parameter is deprecated as of version 0.14 "
                  "and will be removed in 0.16.", DeprecationWarning)
 
-        # Convert to csc format if the matrix is sparse and is coo or csr
-        if isinstance(X, csr_matrix) or isinstance(X, coo_matrix):
-            X = X.tocsc()
-            if not X.has_sorted_indices:
-                X = X.sort_indices()
+        # Convert X data
+        if check_input:
+            if issparse(X):
+                if not isinstance(X, csc_matrix):
+                    X = X.tocsc()
 
-        if isinstance(X, csc_matrix):
-            self.splitter = "best-sparse"
+                if not X.has_sorted_indices:
+                    X = X.sort_indices()
 
-        # Convert data
-        if check_input and not isinstance(X, csc_matrix):
-            X, = check_arrays(X, dtype=DTYPE, sparse_format="dense")
+                if getattr(X.data, "dtype", None) != DTYPE:
+                    X.data = np.ascontiguousarray(X.data, dtype=DTYPE)
+
+                if getattr(X.indices, "dtype", None) != np.intp:
+                    X.indices = np.ascontiguousarray(X.indices, dtype=np.intp)
+
+                if getattr(X.indptr, "dtype", None) != np.intp:
+                    X.indptr = np.ascontiguousarray(X.indptr, dtype=np.intp)
+
+            else:
+                X, = check_arrays(X, dtype=DTYPE, sparse_format="dense")
 
         # Determine output settings
         n_samples, self.n_features_ = X.shape
@@ -253,6 +263,8 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
             else:
                 criterion = CRITERIA_REG[self.criterion](self.n_outputs_)
 
+        SPLITTERS = SPARSE_SPLITTER if issparse(X) else DENSE_SPLITTERS
+
         splitter = self.splitter
         if not isinstance(self.splitter, Splitter):
             splitter = SPLITTERS[self.splitter](criterion,
@@ -261,10 +273,6 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
                                                 random_state)
 
         self.tree_ = Tree(self.n_features_, self.n_classes_, self.n_outputs_)
-
-        if isinstance(X, csc_matrix):
-            splitter.pack_sparse_data(X.data, X.indices, X.indptr, X.shape[1])
-            X = None
 
         # Use BestFirst if max_leaf_nodes given; use DepthFirst otherwise
         if max_leaf_nodes < 0:
@@ -303,9 +311,19 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         if issparse(X):
             if not isinstance(X, csr_matrix):
                 X = csr_matrix(X)
-        else:
-            if getattr(X, "dtype", None) != DTYPE or X.ndim != 2:
-                X = array2d(X, dtype=DTYPE)
+
+            if getattr(X.data, "dtype", None) != DTYPE:
+                X.data = np.ascontiguousarray(X.data, dtype=DTYPE)
+
+            if getattr(X.indices, "dtype", None) != np.intp:
+                X.indices = np.ascontiguousarray(X.indices, dtype=np.intp)
+
+            if getattr(X.indptr, "dtype", None) != np.intp:
+                X.indptr = np.ascontiguousarray(X.indptr, dtype=np.intp)
+
+        elif getattr(X, "dtype", None) != DTYPE or X.ndim != 2:
+            X = array2d(X, dtype=DTYPE)
+
         n_samples, n_features = X.shape
 
         if self.tree_ is None:
@@ -317,11 +335,8 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
                              " input n_features is %s "
                              % (self.n_features_, n_features))
 
-        if issparse(X):
-            proba = self.tree_.predict_sparse(X.data, X.indices, X.indptr,
-                                              n_samples)
-        else:
-            proba = self.tree_.predict(X)
+
+        proba = self.tree_.predict(X)
 
         # Classification
         if isinstance(self, ClassifierMixin):
@@ -526,9 +541,19 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         if issparse(X):
             if not isinstance(X, csr_matrix):
                 X = csr_matrix(X)
-        else:
-            if getattr(X, "dtype", None) != DTYPE or X.ndim != 2:
-                X = array2d(X, dtype=DTYPE)
+
+            if getattr(X.data, "dtype", None) != DTYPE:
+                X.data = np.ascontiguousarray(X.data, dtype=DTYPE)
+
+            if getattr(X.indices, "dtype", None) != np.intp:
+                X.indices = np.ascontiguousarray(X.indices, dtype=np.intp)
+
+            if getattr(X.indptr, "dtype", None) != np.intp:
+                X.indptr = np.ascontiguousarray(X.indptr, dtype=np.intp)
+
+        elif getattr(X, "dtype", None) != DTYPE or X.ndim != 2:
+            X = array2d(X, dtype=DTYPE)
+
         n_samples, n_features = X.shape
 
         if self.tree_ is None:
@@ -540,11 +565,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
                              " input n_features is %s "
                              % (self.n_features_, n_features))
 
-        if issparse(X):
-            proba = self.tree_.predict_sparse(X.data, X.indices, X.indptr,
-                                              n_samples)
-        else:
-            proba = self.tree_.predict(X)
+        proba = self.tree_.predict(X)
 
         if self.n_outputs_ == 1:
             proba = proba[:, :self.n_classes_]
