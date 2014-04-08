@@ -53,6 +53,12 @@ perm = rng.permutation(boston.target.size)
 boston.data = boston.data[perm]
 boston.target = boston.target[perm]
 
+ALL_FORESTS = {
+    "RandomForestClassifier": RandomForestClassifier,
+    "RandomForestRegressor": RandomForestRegressor,
+    "ExtraTreesClassifier": ExtraTreesClassifier,
+    "ExtraTreesRegressor": ExtraTreesRegressor,
+}
 
 def test_classification_toy():
     """Check classification on a toy dataset."""
@@ -559,16 +565,27 @@ def test_max_leaf_nodes_max_depth():
         tree = est.estimators_[0].tree_
         assert_equal(tree.max_depth, 1)
 
+def test_sparse_input():
+    rng = np.random.RandomState(0)
+    X = rng.rand(40, 10)
+    X[X < .8] = 0
+    X = csr_matrix(X)
+    y = (4 * rng.rand(40)).astype(np.int)
+
+
+    for name, ForestEstimator in ALL_FORESTS.items():
+        est = ForestEstimator(random_state=0)
+
+        if est.base_estimator.splitter in SPARSE_SPLITTER:
+            est.fit(X, y)
+            est.predict(X)
+
 
 def test_memory_layout():
     """Check that it works no matter the memory layout"""
-    all_forests = [RandomForestClassifier,
-                   RandomForestRegressor,
-                   ExtraTreesClassifier,
-                   ExtraTreesRegressor]
 
-    for ForestEstimator, dtype in product(all_forests,
-                                          [np.float64, np.float32]):
+    for (name, ForestEstimator), dtype in product(ALL_FORESTS.items(),
+                                                  [np.float64, np.float32]):
         est = ForestEstimator(random_state=0, bootstrap=False)
 
         # Nothing

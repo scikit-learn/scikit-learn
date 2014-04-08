@@ -1052,6 +1052,8 @@ cdef class SparseSplitter(Splitter):
     cdef INT32_t* X_indices
     cdef INT32_t* X_indptr
 
+    cdef SIZE_t n_total_samples
+
     cdef SIZE_t current_color
     cdef SIZE_t* index_to_color
     cdef SIZE_t* index_to_samples
@@ -1064,6 +1066,8 @@ cdef class SparseSplitter(Splitter):
         self.X_data = NULL
         self.X_indices = NULL
         self.X_indptr = NULL
+
+        self.n_total_samples = 0
 
         self.current_color = 0
         self.index_to_color = NULL
@@ -1095,6 +1099,8 @@ cdef class SparseSplitter(Splitter):
         self.X_data = <DTYPE_t*> data.data
         self.X_indices = <INT32_t*> indices.data
         self.X_indptr = <INT32_t*> indptr.data
+        cdef SIZE_t n_total_samples = X.shape[0]
+        self.n_total_samples = n_total_samples
 
         # Initialize auxiliary array used to perform split
         cdef SIZE_t* index_to_color
@@ -1102,9 +1108,9 @@ cdef class SparseSplitter(Splitter):
         cdef SIZE_t* sorted_samples
 
         index_to_color = <SIZE_t*> realloc(self.index_to_color,
-                                           n_samples * sizeof(SIZE_t))
+                                           n_total_samples * sizeof(SIZE_t))
         index_to_samples = <SIZE_t*> realloc(self.index_to_samples,
-                                             n_samples * sizeof(SIZE_t))
+                                             n_total_samples * sizeof(SIZE_t))
         sorted_samples = <SIZE_t*> realloc(self.sorted_samples,
                                            n_samples * sizeof(SIZE_t))
 
@@ -1114,7 +1120,7 @@ cdef class SparseSplitter(Splitter):
             raise MemoryError()
 
         cdef SIZE_t p
-        for p in range(n_samples):
+        for p in range(n_total_samples):
             index_to_color[p] = -1
 
         for p in range(self.n_samples):
