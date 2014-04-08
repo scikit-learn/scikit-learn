@@ -607,6 +607,17 @@ def test_memory_layout():
         y = iris.target
         assert_array_equal(est.fit(X, y).predict(X), y)
 
+        if est.splitter == "best":
+            # csr matrix
+            X = csr_matrix(iris.data, dtype=dtype)
+            y = iris.target
+            assert_array_equal(est.fit(X, y).predict(X), y)
+
+            # csc_matrix
+            X = csc_matrix(iris.data, dtype=dtype)
+            y = iris.target
+            assert_array_equal(est.fit(X, y).predict(X), y)
+
         # Strided
         X = np.asarray(iris.data[::3], dtype=dtype)
         y = iris.target[::3]
