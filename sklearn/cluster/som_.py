@@ -14,7 +14,7 @@ from ..base import BaseEstimator
 def _unserialise_coordinate(serial, spacing):
     coord = []
     for i in range(len(spacing)):
-        coord.append(int(np.floor(serial/spacing[i])))
+        coord.append(int(np.floor(serial / spacing[i])))
         serial = int(serial % spacing[i])
 
     return(coord)
@@ -38,7 +38,7 @@ def _generate_adjacency_matrix(grid_dimensions):
     adjacency.fill(np.inf)
     np.fill_diagonal(adjacency, 0)
 
-    spacing = [int(np.prod(grid_dimensions[(k+1):]))
+    spacing = [int(np.prod(grid_dimensions[(k + 1):]))
                for k in range(len(grid_dimensions))]
 
     for i in range(n_centers):
@@ -185,7 +185,7 @@ class SelfOrganizingMap(BaseEstimator):
         iteration = 0
         # This can have duplicates. Would it make more sense to use
         # np.random.permutation(X)?
-        indices = np.random.random_integers(0, len(X)-1, self.n_iterations)
+        indices = np.random.random_integers(0, len(X) - 1, self.n_iterations)
         for i in indices:
             self._learn_x(X[i], iteration)
             iteration += 1
@@ -207,13 +207,13 @@ class SelfOrganizingMap(BaseEstimator):
         updatable = self.cluster_centers_in_radius(winner, radius)
         distances = self.distance_matrix[winner][updatable]
         # neighborhood function from Kohonen (2013, p56)
-        neighborhood = alpha * np.exp(-distances/(2*radius**2))
+        neighborhood = alpha * np.exp(-distances / (2 * radius ** 2))
         self.cluster_centers_[updatable] = self.cluster_centers_[updatable] + \
             np.multiply(neighborhood, (x - self.cluster_centers_[updatable]).T).T
 
     def best_matching_center(self, x):
         assert x.shape == self.cluster_centers_[1].shape
-        distances = np.sum((x - self.cluster_centers_)**2, axis=1)
+        distances = np.sum((x - self.cluster_centers_) ** 2, axis=1)
         return(distances.argmin())
 
     def cluster_centers_in_radius(self, winner, radius):
