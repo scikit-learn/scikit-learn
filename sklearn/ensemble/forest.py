@@ -55,7 +55,7 @@ from ..tree import (DecisionTreeClassifier, DecisionTreeRegressor,
 from ..tree._tree import DTYPE, DOUBLE
 from ..utils import array2d, check_random_state, check_arrays, safe_asarray
 from ..utils.validation import DataConversionWarning
-
+from scipy.sparse import issparse
 from .base import BaseEnsemble, _partition_estimators
 
 __all__ = ["RandomForestClassifier",
@@ -221,7 +221,8 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
         random_state = check_random_state(self.random_state)
 
         # Convert data
-        X, = check_arrays(X, dtype=DTYPE, sparse_format="dense")
+        if not issparse(X):
+            X, = check_arrays(X, dtype=DTYPE, sparse_format="dense")
 
         # Remap output
         n_samples, self.n_features_ = X.shape
@@ -416,7 +417,10 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
         y : array of shape = [n_samples] or [n_samples, n_outputs]
             The predicted classes.
         """
-        n_samples = len(X)
+        if issparse(X):
+            n_samples = X.shape[0]
+        else:
+            n_samples = len(X)
         proba = self.predict_proba(X)
 
         if self.n_outputs_ == 1:
@@ -451,7 +455,7 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
             classes corresponds to that in the attribute `classes_`.
         """
         # Check data
-        if getattr(X, "dtype", None) != DTYPE or X.ndim != 2:
+        if not issparse(X) and getattr(X, "dtype", None) != DTYPE or X.ndim != 2:
             X = array2d(X, dtype=DTYPE)
 
         # Assign chunk of trees to jobs
@@ -561,7 +565,7 @@ class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
             The predicted values.
         """
         # Check data
-        if getattr(X, "dtype", None) != DTYPE or X.ndim != 2:
+        if not issparse(X) and getattr(X, "dtype", None) != DTYPE or X.ndim != 2:
             X = array2d(X, dtype=DTYPE)
 
         # Assign chunk of trees to jobs
