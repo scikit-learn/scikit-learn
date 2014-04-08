@@ -13,7 +13,7 @@ randomized trees. Single and multi-output problems are both handled.
 # Licence: BSD 3 clause
 
 from __future__ import division
-from scipy.sparse import csc_matrix, csr_matrix, coo_matrix, issparse
+from scipy.sparse import csc_matrix, issparse, csr_matrix
 import numbers
 import numpy as np
 from abc import ABCMeta, abstractmethod
@@ -47,10 +47,12 @@ DOUBLE = _tree.DOUBLE
 
 CRITERIA_CLF = {"gini": _tree.Gini, "entropy": _tree.Entropy}
 CRITERIA_REG = {"mse": _tree.MSE, "friedman_mse": _tree.FriedmanMSE}
-SPLITTERS = {"best": _tree.BestSplitter,
-             "presort-best": _tree.PresortBestSplitter,
-             "random": _tree.RandomSplitter,
-             "best-sparse": _tree.BestSparseSplitter}
+DENSE_SPLITTERS = {"best": _tree.BestSplitter,
+                   "presort-best": _tree.PresortBestSplitter,
+                   "random": _tree.RandomSplitter}
+
+SPARSE_SPLITTER = {"best": _tree.BestSparseSplitter}
+
 # =============================================================================
 # Base decision tree
 # =============================================================================
@@ -133,18 +135,29 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
             warn("The X_argsorted parameter is deprecated as of version 0.14 "
                  "and will be removed in 0.16.", DeprecationWarning)
 
-        # Convert to csc format if the matrix is sparse and is coo or csr
-        if isinstance(X, csr_matrix) or isinstance(X, coo_matrix):
-            X = X.tocsc()
-            if not X.has_sorted_indices:
-                X = X.sort_indices()
+        # Convert X data
+        if check_input:
+            if issparse(X):
+                if not isinstance(X, csc_matrix):
+                    X = X.tocsc()
 
-        if isinstance(X, csc_matrix):
-            self.splitter = "best-sparse"
+                if not X.has_sorted_indices:
+                    X = X.sort_indices()
 
-        # Convert data
-        if check_input and not isinstance(X, csc_matrix):
-            X, = check_arrays(X, dtype=DTYPE, sparse_format="dense")
+                if (getattr(X.data, "dtype", None) != DTYPE or
+                        not X.data.flags.contiguous):
+                    X.data = np.ascontiguousarray(X.data, dtype=DTYPE)
+
+                if (getattr(X.indices, "dtype", None) != np.intp or
+                        not X.indices.flags.contiguous):
+                    X.indices = np.ascontiguousarray(X.indices, dtype=np.intp)
+
+                if (getattr(X.indptr, "dtype", None) != np.intp or
+                        not X.indptr.flags.contiguous):
+                    X.indptr = np.ascontiguousarray(X.indptr, dtype=np.intp)
+
+            else:
+                X, = check_arrays(X, dtype=DTYPE, sparse_format="dense")
 
         # Determine output settings
         n_samples, self.n_features_ = X.shape
@@ -252,6 +265,8 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
                                                          self.n_classes_)
             else:
                 criterion = CRITERIA_REG[self.criterion](self.n_outputs_)
+
+        SPLITTERS = SPARSE_SPLITTER if issparse(X) else DENSE_SPLITTERS
 
         splitter = self.splitter
         if not isinstance(self.splitter, Splitter):
