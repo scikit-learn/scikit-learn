@@ -19,12 +19,15 @@ from libc.string cimport memcpy, memset
 from libc.math cimport log as ln
 from cpython cimport Py_INCREF, PyObject
 
-from sklearn.tree._utils cimport Stack, StackRecord
-from sklearn.tree._utils cimport PriorityHeap, PriorityHeapRecord
-
 import numpy as np
 cimport numpy as np
 np.import_array()
+
+from scipy.sparse import issparse
+
+from sklearn.tree._utils cimport Stack, StackRecord
+from sklearn.tree._utils cimport PriorityHeap, PriorityHeapRecord
+
 
 
 cdef extern from "numpy/arrayobject.h":
@@ -907,9 +910,6 @@ cdef class Splitter:
         self.n_features = 0
         self.feature_values = NULL
 
-        self.X = NULL
-        self.X_sample_stride = 0
-        self.X_fx_stride = 0
         self.y = NULL
         self.y_stride = 0
         self.sample_weight = NULL
@@ -917,15 +917,6 @@ cdef class Splitter:
         self.max_features = max_features
         self.min_samples_leaf = min_samples_leaf
         self.random_state = random_state
-
-        self.X_data = NULL
-        self.X_indices = NULL
-        self.X_indptr = NULL
-
-        self.current_color = 0
-        self.index_to_color = NULL
-        self.sorted_samples = NULL
-        self.index_to_samples = NULL
 
     def __dealloc__(self):
         """Destructor."""
@@ -941,7 +932,7 @@ cdef class Splitter:
         pass
 
     cdef void init(self,
-                   np.ndarray[DTYPE_t, ndim=2] X,
+                   object X,
                    np.ndarray[DOUBLE_t, ndim=2, mode="c"] y,
                    DOUBLE_t* sample_weight):
         """Initialize the splitter."""
@@ -987,10 +978,7 @@ cdef class Splitter:
             raise MemoryError()
         self.feature_values = fv
 
-        # Initialize X, y, sample_weight
-        self.X = <DTYPE_t*> X.data
-        self.X_sample_stride = <SIZE_t> X.strides[0] / <SIZE_t> X.itemsize
-        self.X_fx_stride = <SIZE_t> X.strides[1] / <SIZE_t> X.itemsize
+        # Initialize y, sample_weight
         self.y = <DOUBLE_t*> y.data
         self.y_stride = <SIZE_t> y.strides[0] / <SIZE_t> y.itemsize
         self.sample_weight = sample_weight
@@ -1027,150 +1015,125 @@ cdef class Splitter:
         return self.criterion.node_impurity()
 
 
-cdef class BestSparseSplitter(Splitter):
-    """Splitter for finding the best split, using the sparse data."""
+cdef class DenseSplitter(Splitter):
+
+    cdef DTYPE_t* X
+    cdef SIZE_t X_sample_stride
+    cdef SIZE_t X_fx_stride
+
+    def __cinit__(self, Criterion criterion, SIZE_t max_features,
+                  SIZE_t min_samples_leaf, object random_state):
+        # Parent __cinit__ is automatically called
+
+        self.X = NULL
+        self.X_sample_stride = 0
+        self.X_fx_stride = 0
+
+    cdef void init(self,
+                   object X,
+                   np.ndarray[DOUBLE_t, ndim=2, mode="c"] y,
+                   DOUBLE_t* sample_weight):
+        """Initialize the splitter."""
+
+        # Call parent init
+        Splitter.init(self, X, y, sample_weight)
+
+        # Initialize X
+        cdef np.ndarray np_X = X
+
+        self.X = <DTYPE_t*> np_X.data
+        self.X_sample_stride = <SIZE_t> X.strides[0] / <SIZE_t> X.itemsize
+        self.X_fx_stride = <SIZE_t> X.strides[1] / <SIZE_t> X.itemsize
+
+
+cdef class SparseSplitter(Splitter):
+
+    cdef DTYPE_t* X_data
+    cdef SIZE_t* X_indices
+    cdef SIZE_t* X_indptr
+
+    cdef SIZE_t current_color
+    cdef SIZE_t* index_to_color
+    cdef SIZE_t* index_to_samples
+    cdef SIZE_t* sorted_samples
+
+    def __cinit__(self, Criterion criterion, SIZE_t max_features,
+                  SIZE_t min_samples_leaf, object random_state):
+        # Parent __cinit__ is automatically called
+
+        self.X_data = NULL
+        self.X_indices = NULL
+        self.X_indptr = NULL
+
+        self.current_color = 0
+        self.index_to_color = NULL
+        self.index_to_samples = NULL
+        self.sorted_samples = NULL
 
     def __dealloc__(self):
         """Deallocate memory"""
         free(self.index_to_color)
-        free(self.sorted_samples)
         free(self.index_to_samples)
+        free(self.sorted_samples)
+
+    cdef void init(self,
+                   object X,
+                   np.ndarray[DOUBLE_t, ndim=2, mode="c"] y,
+                   DOUBLE_t* sample_weight):
+        """Initialize the splitter."""
+
+        # Call parent init
+        Splitter.init(self, X, y, sample_weight)
+
+        cdef SIZE_t* samples = self.samples
+        cdef SIZE_t n_samples = self.n_samples
+
+        # Initialize X
+        cdef np.ndarray data = X.data
+        cdef np.ndarray indices = X.indices
+        cdef np.ndarray indptr = X.indptr
+
+        self.X_data = <DTYPE_t*> data.data
+        self.X_indices = <SIZE_t*> indices.data
+        self.X_indptr = <SIZE_t*> indptr.data
+
+        # Initialize auxiliary array used to perform split
+        cdef SIZE_t* index_to_color
+        cdef SIZE_t* index_to_samples
+        cdef SIZE_t* sorted_samples
+
+        index_to_color = <SIZE_t*> realloc(self.index_to_color,
+                                           n_samples * sizeof(SIZE_t))
+        index_to_samples = <SIZE_t*> realloc(self.index_to_samples,
+                                             n_samples * sizeof(SIZE_t))
+        sorted_samples = <SIZE_t*> realloc(self.sorted_samples,
+                                           n_samples * sizeof(SIZE_t))
+
+        if (index_to_color == NULL or
+                index_to_samples == NULL or
+                sorted_samples == NULL):
+            raise MemoryError()
+
+        cdef SIZE_t p
+        for p in range(n_samples):
+            index_to_color[p] = -1
+
+        for p in range(n_samples):
+            index_to_samples[samples[p]] = p
+
+        self.index_to_color = index_to_color
+        self.index_to_samples = index_to_samples
+        self.sorted_samples = sorted_samples
+
+
+cdef class BestSparseSplitter(SparseSplitter):
+    """Splitter for finding the best split, using the sparse data."""
 
     def __reduce__(self):
         return (BestSparseSplitter, (self.criterion,
                                      self.max_features,
                                      self.min_samples_leaf,
                                      self.random_state), self.__getstate__())
-
-
-    cpdef pack_sparse_data(self, np.ndarray data, np.ndarray indices,
-                           np.ndarray indptr, SIZE_t number_of_features):
-        """pack sparse data."""
-
-        self.n_features = number_of_features
-
-        self._data = np.asfortranarray(data, dtype=DTYPE)
-        self._indptr  = np.asfortranarray(indptr, dtype=np.intp)
-        self._indices = np.asfortranarray(indices, dtype=np.intp)
-
-        self.X_data = <DTYPE_t*> self._data.data
-        self.X_indptr = <SIZE_t*> self._indptr.data
-        self.X_indices = <SIZE_t*> self._indices.data
-
-
-    cdef void init(self,
-                   np.ndarray[DTYPE_t, ndim=2] X,
-                   np.ndarray[DOUBLE_t, ndim=2, mode="c"] y,
-                   DOUBLE_t* sample_weight):
-        """Initialize the splitter, using sparse data.
-
-        Parameters
-        ----------
-
-        y : array-like, shape = [n_samples] or [n_samples, n_outputs]
-            The target values (integers that correspond to classes in
-            classification, real numbers in regression).
-            Use ``dtype=np.float64`` and ``order='C'`` for maximum
-            efficiency.
-
-        X : array-like, shape = [n_samples, n_features]
-            The training input samples. Use ``dtype=np.float32`` for maximum
-            efficiency.
-
-        sample_weight : array-like, shape = [n_samples] or None
-            Sample weights. If None, then samples are equally weighted. Splits
-            that would create child nodes with net zero or negative weight are
-            ignored while searching for a split in each node. In the case of
-            classification, splits are also ignored if they would result in any
-            single class carrying a negative weight in either child node.
-
-        data : array-like
-            Non-zero values of feature i of the data are stored in
-            `data[indptr[i]:indptr[i+1]]`
-
-        indices : array-like
-            Indices corresponding to non-zero values of feature i,
-            (i.e. `data[indptr[i]:indptr[i+1]]`) are stored in
-            `indices[indptr[i]:indptr[i+1]]`
-
-        indptr : array-like
-            Indices of `data` and `indices` of feature i are in arrays `indptr`,
-            refer to `data` and `indices` for more information
-
-        number_of_features : int
-            number of features of data
-        """
-        # Reset random state
-        self.rand_r_state = self.random_state.randint(0, RAND_R_MAX)
-
-        # Initialize samples and features structures
-        cdef SIZE_t n_samples = 0
-        n_samples = y.shape[0]
-        cdef SIZE_t* samples = <SIZE_t*> realloc(self.samples,
-                                                 n_samples * sizeof(SIZE_t))
-        if samples == NULL:
-            raise MemoryError()
-
-        cdef SIZE_t i, j
-        j = 0
-
-        for i in range(n_samples):
-            # Only work with positively weighted samples
-            if sample_weight == NULL or sample_weight[i] != 0.0:
-                samples[j] = i
-                j += 1
-
-        self.samples = samples
-        self.n_samples = j
-
-        cdef SIZE_t n_features = self.n_features
-
-        cdef SIZE_t* features = <SIZE_t*> realloc(self.features,
-                                                  n_features * sizeof(SIZE_t))
-        if features == NULL:
-            raise MemoryError()
-
-        #These are tmp arrays used in node_split_sparse
-        cdef SIZE_t* index_to_color = <SIZE_t*> realloc(self.index_to_color,
-                                                 n_samples * sizeof(SIZE_t))
-        cdef SIZE_t* sorted_samples = <SIZE_t*> realloc(self.sorted_samples,
-                                                    n_samples * sizeof(SIZE_t))
-        cdef SIZE_t* index_to_samples = <SIZE_t*> realloc(self.index_to_samples,
-                                                 n_samples * sizeof(SIZE_t))
-
-        if (sorted_samples == NULL or
-                index_to_samples == NULL or
-                index_to_color == NULL):
-            raise MemoryError()
-
-        for p in range(n_samples):
-            index_to_samples[samples[p]] = p
-
-        self.sorted_samples = sorted_samples
-        self.index_to_samples = index_to_samples
-        self.index_to_color = index_to_color
-
-        for i in range(n_features):
-            features[i] = i
-        for i in range(n_samples):
-            index_to_color[i] = -1
-
-        self.features = features
-        #self.n_features = n_features
-
-        self.constant_features = <SIZE_t*> realloc(self.constant_features,
-                                                   n_features * sizeof(SIZE_t))
-
-        cdef DTYPE_t* fv = <DTYPE_t*> realloc(self.feature_values,
-                                              n_samples * sizeof(DTYPE_t))
-        if fv == NULL:
-            raise MemoryError()
-        self.feature_values = fv
-
-        self.y = <DOUBLE_t*> y.data
-        self.y_stride = <SIZE_t> y.strides[0] / <SIZE_t> y.itemsize
-        self.sample_weight = sample_weight
-
 
     cdef void node_split(self, double impurity, SIZE_t* pos,
                                 SIZE_t* feature, double* threshold,
@@ -1439,14 +1402,8 @@ cdef class BestSparseSplitter(Splitter):
         impurity_improvement[0] = best_improvement
         n_constant_features[0] = n_total_constants
 
-    def __dealloc__(self):
-        """Destructor."""
-        free(self.index_to_color)
-        free(self.sorted_samples)
-        free(self.index_to_samples)
 
-
-cdef class BestSplitter(Splitter):
+cdef class BestSplitter(DenseSplitter):
     """Splitter for finding the best split."""
     def __reduce__(self):
         return (BestSplitter, (self.criterion,
@@ -1762,7 +1719,7 @@ cdef void heapsort(DTYPE_t* Xf, SIZE_t* samples, SIZE_t n) nogil:
         end = end - 1
 
 
-cdef class RandomSplitter(Splitter):
+cdef class RandomSplitter(DenseSplitter):
     """Splitter for finding the best random split."""
     def __reduce__(self):
         return (RandomSplitter, (self.criterion,
@@ -1981,7 +1938,7 @@ cdef class RandomSplitter(Splitter):
         n_constant_features[0] = n_total_constants
 
 
-cdef class PresortBestSplitter(Splitter):
+cdef class PresortBestSplitter(DenseSplitter):
     """Splitter for finding the best split, using presorting."""
     cdef DTYPE_t* X_old
     cdef np.ndarray X_argsorted
@@ -2009,19 +1966,21 @@ cdef class PresortBestSplitter(Splitter):
                                       self.min_samples_leaf,
                                       self.random_state), self.__getstate__())
 
-    cdef void init(self,
-                   np.ndarray[DTYPE_t, ndim=2] X,
+    cdef void init(self, object X,
                    np.ndarray[DOUBLE_t, ndim=2, mode="c"] y,
                    DOUBLE_t* sample_weight):
+
         cdef void* sample_mask = NULL
 
         # Call parent initializer
-        Splitter.init(self, X, y, sample_weight)
+        DenseSplitter.init(self, X, y, sample_weight)
+
+        cdef np.ndarray np_X = X
 
         # Pre-sort X
         if self.X_old != self.X:
             self.X_old = self.X
-            self.X_argsorted = np.asfortranarray(np.argsort(X, axis=0),
+            self.X_argsorted = np.asfortranarray(np.argsort(np_X, axis=0),
                                                  dtype=np.int32)
             self.X_argsorted_ptr = <INT32_t*> self.X_argsorted.data
             self.X_argsorted_stride = (<SIZE_t> self.X_argsorted.strides[1] /
@@ -2252,7 +2211,7 @@ cdef class PresortBestSplitter(Splitter):
 cdef class TreeBuilder:
     """Interface for different tree building strategies. """
 
-    cpdef build(self, Tree tree, np.ndarray X, np.ndarray y,
+    cpdef build(self, Tree tree, object X, np.ndarray y,
                 np.ndarray sample_weight=None):
         """Build a decision tree from the training set (X, y)."""
         pass
@@ -2270,11 +2229,22 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         self.min_samples_leaf = min_samples_leaf
         self.max_depth = max_depth
 
-    cpdef build(self, Tree tree, np.ndarray X, np.ndarray y,
+    cpdef build(self, Tree tree, object X, np.ndarray y,
                 np.ndarray sample_weight=None):
         """Build a decision tree from the training set (X, y)."""
+
         # check if dtype is correct
-        if X is not None and X.dtype != DTYPE:
+        if issparse(X):
+            if X.data.dtype != DTYPE:
+                X.data = np.ascontiguousarray(X.data, dtype=DTYPE)
+
+            if X.indices.dtype != np.intp:
+                X.indices = np.ascontiguousarray(X.indices, dtype=np.intp)
+
+            if X.indptr.dtype != np.intp:
+                X.indptr = np.ascontiguousarray(X.indptr, dtype=np.intp)
+
+        elif X.dtype != DTYPE:
             # since we have to copy we will make it fortran for efficiency
             X = np.asfortranarray(X, dtype=DTYPE)
 
@@ -2436,11 +2406,22 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         self.max_depth = max_depth
         self.max_leaf_nodes = max_leaf_nodes
 
-    cpdef build(self, Tree tree, np.ndarray X, np.ndarray y,
+    cpdef build(self, Tree tree, object X, np.ndarray y,
                 np.ndarray sample_weight=None):
         """Build a decision tree from the training set (X, y)."""
-        # Check if dtype is correct
-        if X is not None and X.dtype != DTYPE:
+
+        # check if dtype is correct
+        if issparse(X):
+            if X.data.dtype != DTYPE:
+                X.data = np.ascontiguousarray(X.data, dtype=DTYPE)
+
+            if X.indices.dtype != np.intp:
+                X.indices = np.ascontiguousarray(X.indices, dtype=np.intp)
+
+            if X.indptr.dtype != np.intp:
+                X.indptr = np.ascontiguousarray(X.indptr, dtype=np.intp)
+
+        elif X.dtype != DTYPE:
             # since we have to copy we will make it fortran for efficiency
             X = np.asfortranarray(X, dtype=DTYPE)
 
@@ -3087,13 +3068,13 @@ cdef inline double log(double x) nogil:
     return ln(x) / ln(2.0)
 
 
+# =============================================================================
+# Non zero value extraction with sparse matrices
+# =============================================================================
 cdef int compare_SIZE_t(const void * a, const void * b) nogil:
     """Comparison function for sort"""
     return <int>((<SIZE_t*>a)[0] - (<SIZE_t*>b)[0])
 
-# =============================================================================
-# Non zero value extraction with sparse matrices
-# =============================================================================
 
 cdef inline void binary_search(SIZE_t* sorted_array, SIZE_t start, SIZE_t end,
                                SIZE_t value, SIZE_t* index,

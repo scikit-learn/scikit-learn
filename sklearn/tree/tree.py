@@ -277,10 +277,6 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
 
         self.tree_ = Tree(self.n_features_, self.n_classes_, self.n_outputs_)
 
-        if isinstance(X, csc_matrix):
-            splitter.pack_sparse_data(X.data, X.indices, X.indptr, X.shape[1])
-            X = None
-
         # Use BestFirst if max_leaf_nodes given; use DepthFirst otherwise
         if max_leaf_nodes < 0:
             builder = DepthFirstTreeBuilder(splitter, min_samples_split,

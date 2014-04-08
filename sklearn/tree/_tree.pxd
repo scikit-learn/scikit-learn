@@ -84,30 +84,12 @@ cdef class Splitter:
     cdef SIZE_t n_features               # X.shape[1]
     cdef DTYPE_t* feature_values         # temp. array holding feature values
 
-    cdef SIZE_t* index_to_color
-    cdef SIZE_t* sorted_samples
-    cdef SIZE_t* index_to_samples
-    cdef SIZE_t current_color
-
     cdef SIZE_t start                    # Start position for the current node
     cdef SIZE_t end                      # End position for the current node
 
-    cdef DTYPE_t* X
-    cdef SIZE_t X_sample_stride
-    cdef SIZE_t X_fx_stride
     cdef DOUBLE_t* y
     cdef SIZE_t y_stride
     cdef DOUBLE_t* sample_weight
-
-    cdef DTYPE_t* X_data
-    cdef SIZE_t* X_indices
-    cdef SIZE_t* X_indptr
-
-    cdef np.ndarray _data
-    cdef np.ndarray _indices
-    cdef np.ndarray _indptr
-
-
 
     # The samples vector `samples` is maintained by the Splitter object such
     # that the samples contained in a node are contiguous. With this setting,
@@ -126,7 +108,7 @@ cdef class Splitter:
     # This allows optimization with depth-based tree building.
 
     # Methods
-    cdef void init(self, np.ndarray X, np.ndarray y, DOUBLE_t* sample_weight)
+    cdef void init(self, object X, np.ndarray y, DOUBLE_t* sample_weight)
 
     cdef void node_reset(self, SIZE_t start, SIZE_t end,
                          double* weighted_n_node_samples) nogil
@@ -160,6 +142,7 @@ cdef struct Node:
     DOUBLE_t impurity               # Impurity of the node (i.e., the value of the criterion)
     SIZE_t n_samples                # Number of samples at the node
     DOUBLE_t weighted_n_samples     # Weighted number of samples at the node
+
 
 cdef class Tree:
     # The Tree object is a binary tree structure constructed by the
@@ -230,5 +213,5 @@ cdef class TreeBuilder:
     cdef SIZE_t min_samples_leaf    # Minimum number of samples in a leaf
     cdef SIZE_t max_depth           # Maximal tree depth
 
-    cpdef build(self, Tree tree, np.ndarray X, np.ndarray y,
+    cpdef build(self, Tree tree, object X, np.ndarray y,
                 np.ndarray sample_weight=*)
