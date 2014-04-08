@@ -352,6 +352,14 @@ MULTILABEL_METRICS_WITH_SAMPLE_WEIGHT = [
     "samples_precision_score", "samples_recall_score",
 ]
 
+MULTILABEL_INDICATOR_METRICS_WITH_SAMPLE_WEIGHT = [
+    "average_precision_score",
+    "weighted_average_precision_score",
+    "micro_average_precision_score",
+    "macro_average_precision_score",
+    "samples_average_precision_score",
+]
+
 # Regression metrics that support multioutput and weighted samples
 MULTIOUTPUT_METRICS_WITH_SAMPLE_WEIGHT = [
     "mean_squared_error",
@@ -2565,7 +2573,7 @@ def test_averaging_multilabel_all_ones():
 @ignore_warnings
 def check_sample_weight_invariance(name, metric, y1, y2):
     rng = np.random.RandomState(0)
-    sample_weight = rng.randint(10, size=len(y1))
+    sample_weight = rng.randint(1, 10, size=len(y1))
 
     # check that unit weights gives the same score as no weight
     unweighted_score = metric(y1, y2, sample_weight=None)
@@ -2591,14 +2599,13 @@ def check_sample_weight_invariance(name, metric, y1, y2):
             "not equal (%f != %f) for %s" % (
                 weighted_score, weighted_score_list, name))
 
-    if not name.startswith('samples'):
-        # check that integer weights is the same as repeated samples
-        repeat_weighted_score = metric(
-            np.repeat(y1, sample_weight, axis=0),
-            np.repeat(y2, sample_weight, axis=0), sample_weight=None)
-        assert_almost_equal(
-            weighted_score, repeat_weighted_score,
-            err_msg="Weighting %s is not equal to repeating samples" % name)
+    # check that integer weights is the same as repeated samples
+    repeat_weighted_score = metric(
+        np.repeat(y1, sample_weight, axis=0),
+        np.repeat(y2, sample_weight, axis=0), sample_weight=None)
+    assert_almost_equal(
+        weighted_score, repeat_weighted_score,
+        err_msg="Weighting %s is not equal to repeating samples" % name)
 
     if not name.startswith('unnormalized'):
         # check that the score is invariant under scaling of the weights by a
@@ -2612,33 +2619,34 @@ def check_sample_weight_invariance(name, metric, y1, y2):
 
 
 def test_sample_weight_invariance():
-    # generate some data
+    # binary
     y1, y2, _ = make_prediction(binary=True)
-
     for name in METRICS_WITH_SAMPLE_WEIGHT:
         metric = ALL_METRICS[name]
         yield check_sample_weight_invariance, name, metric, y1, y2
 
-    # multilabel
+    # multilabel sequence
     n_classes = 3
     n_samples = 10
-    _, y1_multilabel = make_multilabel_classification(
+    _, y1 = make_multilabel_classification(
         n_features=1, n_classes=n_classes,
         random_state=0, n_samples=n_samples)
-    _, y2_multilabel = make_multilabel_classification(
+    _, y2 = make_multilabel_classification(
         n_features=1, n_classes=n_classes,
         random_state=1, n_samples=n_samples)
-
     for name in MULTILABEL_METRICS_WITH_SAMPLE_WEIGHT:
         metric = ALL_METRICS[name]
-        yield (check_sample_weight_invariance,
-               name, metric, y1_multilabel, y2_multilabel)
+        yield (check_sample_weight_invariance, name, metric, y1, y2)
+
+    # multilabel indicator
+    y1 = np.array([[1, 0, 0, 1], [0, 1, 1, 1], [1, 1, 0, 1]])
+    y2 = np.array([[0, 0, 1, 1], [1, 0, 1, 1], [1, 1, 0, 1]])
+    for name in MULTILABEL_INDICATOR_METRICS_WITH_SAMPLE_WEIGHT:
+        metric = ALL_METRICS[name]
+        yield (check_sample_weight_invariance, name, metric, y1, y2)
 
     # multioutput
-    y1_multioutput = np.array([[1, 0, 0, 1], [0, 1, 1, 1], [1, 1, 0, 1]])
-    y2_multioutput = np.array([[0, 0, 1, 1], [1, 0, 1, 1], [1, 1, 0, 1]])
-
     for name in MULTIOUTPUT_METRICS_WITH_SAMPLE_WEIGHT:
         metric = ALL_METRICS[name]
         yield (check_sample_weight_invariance,
-               name, metric, y1_multioutput, y2_multioutput)
+               name, metric, y1, y2)
