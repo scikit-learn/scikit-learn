@@ -1039,9 +1039,9 @@ cdef class DenseSplitter(Splitter):
         Splitter.init(self, X, y, sample_weight)
 
         # Initialize X
-        cdef np.ndarray np_X = X
+        cdef np.ndarray X_ndarray = X
 
-        self.X = <DTYPE_t*> np_X.data
+        self.X = <DTYPE_t*> X_ndarray.data
         self.X_sample_stride = <SIZE_t> X.strides[0] / <SIZE_t> X.itemsize
         self.X_fx_stride = <SIZE_t> X.strides[1] / <SIZE_t> X.itemsize
 
@@ -1975,12 +1975,12 @@ cdef class PresortBestSplitter(DenseSplitter):
         # Call parent initializer
         DenseSplitter.init(self, X, y, sample_weight)
 
-        cdef np.ndarray np_X = X
+        cdef np.ndarray X_ndarray = X
 
         # Pre-sort X
         if self.X_old != self.X:
             self.X_old = self.X
-            self.X_argsorted = np.asfortranarray(np.argsort(np_X, axis=0),
+            self.X_argsorted = np.asfortranarray(np.argsort(X_ndarray, axis=0),
                                                  dtype=np.int32)
             self.X_argsorted_ptr = <INT32_t*> self.X_argsorted.data
             self.X_argsorted_stride = (<SIZE_t> self.X_argsorted.strides[1] /
@@ -2725,9 +2725,6 @@ cdef class Tree:
         self.capacity = 0
         self.value = NULL
         self.nodes = NULL
-        self.feature_to_color = NULL
-        self.feature_values = NULL
-        self.current_color = -1
 
     def __dealloc__(self):
         """Destructor."""
@@ -2735,8 +2732,6 @@ cdef class Tree:
         free(self.n_classes)
         free(self.value)
         free(self.nodes)
-        if(self.feature_values != NULL): free(self.feature_values)
-        if(self.feature_to_color != NULL): free(self.feature_to_color)
 
     def __reduce__(self):
         """Reduce re-implementation, for pickling."""
@@ -2864,7 +2859,7 @@ cdef class Tree:
 
         return node_id
 
-    cpdef np.ndarray predict(self, np.ndarray[DTYPE_t, ndim=2] X):
+    cpdef np.ndarray predict(self, object X):
         """Predict target for X."""
         out = self._get_value_ndarray().take(self.apply(X), axis=0,
                                              mode='clip')
@@ -2872,14 +2867,30 @@ cdef class Tree:
             out = out.reshape(X.shape[0], self.max_n_classes)
         return out
 
-    cpdef np.ndarray apply(self, np.ndarray[DTYPE_t, ndim=2] X):
+    cpdef np.ndarray apply(self, object X):
+        if issparse(X):
+            return self._apply_sparse_csr(X)
+        else:
+            return self._apply_dense(X)
+
+
+    cdef inline np.ndarray _apply_dense(self, object X):
         """Finds the terminal region (=leaf node) for each sample in X."""
-        n_samples = X.shape[0]
+
+        # Extract input
+        cdef np.ndarray X_ndarray = X
+        cdef DTYPE_t* X_ptr = <DTYPE_t*> X_ndarray.data
+        cdef SIZE_t X_sample_stride = <SIZE_t> X.strides[0] / <SIZE_t> X.itemsize
+        cdef SIZE_t X_fx_stride = <SIZE_t> X.strides[1] / <SIZE_t> X.itemsize
+        cdef SIZE_t n_samples = X.shape[0]
+
+        # Initialize output
+        cdef np.ndarray[SIZE_t] out = np.zeros((n_samples,), dtype=np.intp)
+        cdef SIZE_t* out_ptr = <SIZE_t*> out.data
+
+        # Initialize auxiliary data-structure
         cdef Node* node = NULL
         cdef SIZE_t i = 0
-
-        cdef np.ndarray[SIZE_t] out = np.zeros((n_samples,), dtype=np.intp)
-        cdef SIZE_t* out_data = <SIZE_t*> out.data
 
         with nogil:
             for i in range(n_samples):
@@ -2887,82 +2898,76 @@ cdef class Tree:
                 # While node not a leaf
                 while node.left_child != _TREE_LEAF:
                     # ... and node.right_child != _TREE_LEAF:
-                    if X[i, node.feature] <= node.threshold:
+                    if X_ptr[X_sample_stride * i +
+                             X_fx_stride * node.feature] <= node.threshold:
                         node = &self.nodes[node.left_child]
                     else:
                         node = &self.nodes[node.right_child]
 
-                out_data[i] = <SIZE_t>(node - self.nodes)  # node offset
+                out_ptr[i] = <SIZE_t>(node - self.nodes)  # node offset
 
         return out
 
-    cpdef np.ndarray predict_sparse(self,
-                                    np.ndarray X_data,
-                                    np.ndarray X_indices,
-                                    np.ndarray X_indptr,
-                                    SIZE_t n_samples):
-        """Predict target for sparse X."""
-
-        out = self._get_value_ndarray().take(self.apply_sparse(X_data,
-                                                               X_indices,
-                                                               X_indptr,
-                                                               n_samples),
-                                             axis=0,
-                                             mode='clip')
-        if self.n_outputs == 1:
-            out = out.reshape(n_samples, self.max_n_classes)
-        return out
-
-    cpdef np.ndarray apply_sparse(self,
-                                  np.ndarray X_data,
-                                  np.ndarray X_indices,
-                                  np.ndarray X_indptr,
-                                  SIZE_t n_samples):
+    cdef inline np.ndarray _apply_sparse_csr(self, object X):
         """Finds the terminal region (=leaf node) for each sample in sparse X."""
-        cdef DTYPE_t feature_val = 0
+
+        # Extract input
+        cdef np.ndarray X_data_ndarray = X.data
+        cdef np.ndarray X_indices_ndarray  = X.indices
+        cdef np.ndarray X_indptr_ndarray  = X.indptr
+
+        cdef DTYPE_t* X_data = <DTYPE_t*>X_data_ndarray.data
+        cdef SIZE_t* X_indices = <SIZE_t*>X_indices_ndarray.data
+        cdef SIZE_t* X_indptr = <SIZE_t*>X_indptr_ndarray.data
+
+        cdef SIZE_t n_samples = X.shape[0]
+        cdef SIZE_t n_features = X.shape[1]
+
+        # Initialize output
+        cdef np.ndarray[SIZE_t, ndim=1] out = np.zeros((n_samples,),
+                                                       dtype=np.intp)
+        cdef SIZE_t* out_ptr = <SIZE_t*> out.data
+
+        # Initialize auxiliary data-structure
+        cdef DTYPE_t feature_value = 0
+        cdef Node* node = NULL
+
+        cdef DTYPE_t* X_sample = NULL
+        cdef DTYPE_t* feature_to_sample = NULL
+
+        cdef SIZE_t i = 0
         cdef SIZE_t p = 0
 
-        cdef Node* node = NULL
-        cdef SIZE_t i = 0
-
-        cdef np.ndarray[SIZE_t] out = np.zeros((n_samples,), dtype=np.intp)
-        cdef SIZE_t* out_data = <SIZE_t*> out.data
-
-        X_data = np.asfortranarray(X_data, dtype=DTYPE)
-        X_indptr  = np.asfortranarray(X_indptr, dtype=np.intp)
-        X_indices = np.asfortranarray(X_indices, dtype=np.intp)
-
-        cdef DTYPE_t* _data = <DTYPE_t*> X_data.data
-        cdef SIZE_t* _indices = <SIZE_t*> X_indices.data
-        cdef SIZE_t* _indptr = <SIZE_t*> X_indptr.data
-        if self.feature_values == NULL:
-            self.feature_values = <DTYPE_t*> malloc(self.n_features * sizeof(DTYPE_t))
-        if self.feature_to_color == NULL:
-            self.feature_to_color = <SIZE_t*> malloc(self.n_features * sizeof(SIZE_t))
-        cdef DTYPE_t* feature_values = self.feature_values
-        cdef SIZE_t* feature_to_color = self.feature_to_color
-
-
         with nogil:
+            X_sample = <DTYPE_t*> malloc(n_features * sizeof(DTYPE_t))
+            feature_to_sample = <DTYPE_t*> malloc(n_features * sizeof(DTYPE_t))
+            memset(feature_to_sample, -1, n_features * sizeof(DTYPE_t))
+
             for i in range(n_samples):
                 node = self.nodes
-                self.current_color += 1
-                for p in range(_indptr[i], _indptr[i+1]):
-                    feature_to_color[_indices[p]] = self.current_color
-                    feature_values[_indices[p]] = _data[p]
+
+                for p in range(X_indptr[i], X_indptr[i + 1]):
+                    feature_to_sample[X_indices[p]] = i
+                    X_sample[X_indices[p]] = X_data[p]
 
                 # While node not a leaf
                 while node.left_child != _TREE_LEAF:
                     # ... and node.right_child != _TREE_LEAF:
-                    feature_val = 0
-                    if feature_to_color[node.feature] == self.current_color:
-                        feature_val = feature_values[node.feature]
-                    if feature_val <= node.threshold:
+                    if feature_to_sample[node.feature] == i:
+                        feature_value = X_sample[node.feature]
+                    else:
+                        feature_value = 0
+
+                    if feature_value <= node.threshold:
                         node = &self.nodes[node.left_child]
                     else:
                         node = &self.nodes[node.right_child]
 
-                out_data[i] = <SIZE_t>(node - self.nodes)  # node offset
+                out_ptr[i] = <SIZE_t>(node - self.nodes)  # node offset
+
+            # Free auxiliary arrays
+            free(X_sample)
+            free(feature_to_sample)
 
         return out
 
