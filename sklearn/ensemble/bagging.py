@@ -243,7 +243,7 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
         random_state = check_random_state(self.random_state)
 
         # Convert data
-        X, y = check_arrays(X, y, format="dense")
+        X, y = check_arrays(X, y, sparse_format="dense")
 
         # Remap output
         n_samples, self.n_features_ = X.shape
@@ -537,7 +537,7 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
             classes corresponds to that in the attribute `classes_`.
         """
         # Check data
-        X, = check_arrays(X)
+        X, = check_arrays(X, sparse_format="dense")
 
         if self.n_features_ != X.shape[1]:
             raise ValueError("Number of features of the model must "
