@@ -40,6 +40,7 @@ from __future__ import division
 
 import itertools
 import numpy as np
+from scipy.sparse import issparse, csr_matrix, csc_matrix
 from warnings import warn
 from abc import ABCMeta, abstractmethod
 
@@ -188,7 +189,22 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
             For each datapoint x in X and for each tree in the forest,
             return the index of the leaf x ends up in.
         """
-        X = array2d(X, dtype=DTYPE)
+        if issparse(X):
+            if not isinstance(X, csr_matrix):
+                X = csr_matrix(X)
+
+            if getattr(X.data, "dtype", None) != DTYPE:
+                X.data = np.ascontiguousarray(X.data, dtype=DTYPE)
+
+            if getattr(X.indices, "dtype", None) != np.intp:
+                X.indices = np.ascontiguousarray(X.indices, dtype=np.intp)
+
+            if getattr(X.indptr, "dtype", None) != np.intp:
+                X.indptr = np.ascontiguousarray(X.indptr, dtype=np.intp)
+
+        elif getattr(X, "dtype", None) != DTYPE or X.ndim != 2:
+            X = array2d(X, dtype=DTYPE)
+
         results = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
                            backend="threading")(
             delayed(_parallel_apply)(tree, X) for tree in self.estimators_)
@@ -221,7 +237,23 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
         random_state = check_random_state(self.random_state)
 
         # Convert data
-        if not issparse(X):
+        if issparse(X):
+            if not isinstance(X, csc_matrix):
+                X = X.tocsc()
+
+            if not X.has_sorted_indices:
+                X = X.sort_indices()
+
+            if getattr(X.data, "dtype", None) != DTYPE:
+                X.data = np.ascontiguousarray(X.data, dtype=DTYPE)
+
+            if getattr(X.indices, "dtype", None) != np.intp:
+                X.indices = np.ascontiguousarray(X.indices, dtype=np.intp)
+
+            if getattr(X.indptr, "dtype", None) != np.intp:
+                X.indptr = np.ascontiguousarray(X.indptr, dtype=np.intp)
+
+        else:
             X, = check_arrays(X, dtype=DTYPE, sparse_format="dense")
 
         # Remap output
@@ -455,7 +487,20 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
             classes corresponds to that in the attribute `classes_`.
         """
         # Check data
-        if not issparse(X) and getattr(X, "dtype", None) != DTYPE or X.ndim != 2:
+        if issparse(X):
+            if not isinstance(X, csr_matrix):
+                X = csr_matrix(X)
+
+            if getattr(X.data, "dtype", None) != DTYPE:
+                X.data = np.ascontiguousarray(X.data, dtype=DTYPE)
+
+            if getattr(X.indices, "dtype", None) != np.intp:
+                X.indices = np.ascontiguousarray(X.indices, dtype=np.intp)
+
+            if getattr(X.indptr, "dtype", None) != np.intp:
+                X.indptr = np.ascontiguousarray(X.indptr, dtype=np.intp)
+
+        elif getattr(X, "dtype", None) != DTYPE or X.ndim != 2:
             X = array2d(X, dtype=DTYPE)
 
         # Assign chunk of trees to jobs
