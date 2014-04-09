@@ -581,8 +581,8 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None):
         if len(np.unique(y_true)) != 2:
             raise ValueError("ROC AUC score is not defined")
 
-        fpr, tpr, tresholds = roc_curve(
-            y_true, y_score, sample_weight=sample_weight)
+        fpr, tpr, tresholds = roc_curve(y_true, y_score,
+                                        sample_weight=sample_weight)
         return auc(fpr, tpr, reorder=True)
 
     return _average_binary_score(
@@ -667,7 +667,7 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
     y_score : array, shape = [n_samples]
         Estimated probabilities or decision function
 
-    pos_label : int, optional (default=1)
+    pos_label : int, optional (default=None)
         The label of the positive class
 
     sample_weight : array-like of shape = [n_samples], optional
@@ -798,8 +798,8 @@ def precision_recall_curve(y_true, probas_pred, pos_label=None,
     array([ 0.35,  0.4 ,  0.8 ])
 
     """
-    fps, tps, thresholds = _binary_clf_curve(
-        y_true, probas_pred, sample_weight=sample_weight)
+    fps, tps, thresholds = _binary_clf_curve(y_true, probas_pred,
+                                             sample_weight=sample_weight)
 
     precision = tps / (tps + fps)
     recall = tps / tps[-1]
@@ -1708,13 +1708,11 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
             dtype = float
 
         sum_axis = 1 if average == 'samples' else 0
-        tp_sum = np.sum(
-            np.multiply(np.logical_and(y_true, y_pred), sum_weight),
-            axis=sum_axis)
-        pred_sum = np.sum(
-            np.multiply(y_pred, sum_weight), axis=sum_axis, dtype=dtype)
-        true_sum = np.sum(
-            np.multiply(y_true, sum_weight), axis=sum_axis, dtype=dtype)
+        tp_sum = np.multiply(np.logical_and(y_true, y_pred),
+                             sum_weight).sum(axis=sum_axis, dtype=dtype))
+        pred_sum = y_pred.multiply(sum_weight).sum(axis=sum_axis, dtype=dtype)
+        true_sum = y_true.multiply(sum_weight).sum(axis=sum_axis, dtype=dtype)
+
 
     elif average == 'samples':
         raise ValueError("Sample-based precision, recall, fscore is "
