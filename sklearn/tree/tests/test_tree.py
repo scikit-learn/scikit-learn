@@ -842,12 +842,18 @@ def test_sparse_input_on_random_data():
     X = csr_matrix(X)
     y = (4 * rng.rand(40)).astype(np.int)
 
-    s = DecisionTreeRegressor(random_state=0).fit(X, y)
-    d = DecisionTreeRegressor(random_state=0).fit(X.toarray(), y)
+    for name, TreeEstimator in ALL_TREES.items():
 
-    assert_tree_equal(d.tree_, s.tree_,
-                      "dense and sparse format gave different trees")
-    assert_array_almost_equal(s.predict(X), d.predict(X))
+        d = TreeEstimator(random_state=0).fit(X.toarray(), y)
+        if d.splitter not in SPARSE_SPLITTER:
+            continue
+
+        s = TreeEstimator(random_state=0).fit(X, y)
+
+        assert_tree_equal(d.tree_, s.tree_,
+                          "{0} with dense and sparse format gave different "
+                          "trees".format(name))
+        assert_array_almost_equal(s.predict(X), d.predict(X))
 
 
 def test_sparse_input_boston():

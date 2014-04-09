@@ -1079,6 +1079,7 @@ cdef class SparseSplitter(Splitter):
         free(self.index_to_color)
         free(self.index_to_samples)
         free(self.sorted_samples)
+
     cdef void init(self,
                    object X,
                    np.ndarray[DOUBLE_t, ndim=2, mode="c"] y,
@@ -1089,17 +1090,17 @@ cdef class SparseSplitter(Splitter):
         Splitter.init(self, X, y, sample_weight)
 
         cdef SIZE_t* samples = self.samples
-        cdef SIZE_t n_total_samples = X.shape[0]
+        cdef SIZE_t n_samples = self.n_samples
 
         # Initialize X
         cdef np.ndarray[dtype=DTYPE_t, ndim=1] data = X.data
         cdef np.ndarray[dtype=INT32_t, ndim=1] indices = X.indices
         cdef np.ndarray[dtype=INT32_t, ndim=1] indptr = X.indptr
+        cdef SIZE_t n_total_samples = X.shape[0]
 
         self.X_data = <DTYPE_t*> data.data
         self.X_indices = <INT32_t*> indices.data
         self.X_indptr = <INT32_t*> indptr.data
-        cdef SIZE_t n_total_samples = X.shape[0]
         self.n_total_samples = n_total_samples
 
         # Initialize auxiliary array used to perform split
@@ -1367,7 +1368,300 @@ cdef class BestSparseSplitter(SparseSplitter):
                 while p < partition_end:
                     current_feature_value = Xf[p]
 
-                    if current_feature_value <= current_threshold:
+                    if current_feature_value <= best_threshold:
+                        p += 1
+
+                    else:
+                        partition_end -= 1
+
+                        Xf[p] = Xf[partition_end]
+                        Xf[partition_end] = current_feature_value
+
+                        tmp = samples[partition_end]
+                        samples[partition_end] = samples[p]
+                        samples[p] = tmp
+
+                        index_to_samples[samples[partition_end]] = partition_end
+                        index_to_samples[samples[p]] = p
+
+        # Respect invariant for constant features: the original order of
+        # element in features[:n_known_constants] must be preserved for sibling
+        # and child nodes
+        memcpy(features, constant_features, sizeof(SIZE_t) * n_known_constants)
+
+        # Copy newly found constant features
+        memcpy(constant_features + n_known_constants,
+               features + n_known_constants,
+               sizeof(SIZE_t) * n_found_constants)
+
+        # Return values
+        pos[0] = best_pos
+        feature[0] = best_feature
+        threshold[0] = best_threshold
+        impurity_left[0] = best_impurity_left
+        impurity_right[0] = best_impurity_right
+        impurity_improvement[0] = best_improvement
+        n_constant_features[0] = n_total_constants
+
+
+cdef class RandomSparseSplitter(SparseSplitter):
+    """Splitter for finding the best split, using the sparse data."""
+
+    def __reduce__(self):
+        return (RandomSparseSplitter, (self.criterion,
+                                       self.max_features,
+                                       self.min_samples_leaf,
+                                       self.random_state), self.__getstate__())
+
+    cdef void node_split(self, double impurity, SIZE_t* pos,
+                         SIZE_t* feature, double* threshold,
+                         double* impurity_left, double* impurity_right,
+                         double* impurity_improvement,
+                         SIZE_t* n_constant_features) nogil:
+        """Find the best split on node samples[start:end], using sparse
+           features.
+        """
+        # Find the best split
+        cdef SIZE_t* samples = self.samples
+        cdef SIZE_t start = self.start
+        cdef SIZE_t end = self.end
+
+        cdef INT32_t* X_indices = self.X_indices
+        cdef INT32_t* X_indptr = self.X_indptr
+        cdef DTYPE_t* X_data = self.X_data
+
+        cdef SIZE_t* features = self.features
+        cdef SIZE_t* constant_features = self.constant_features
+        cdef SIZE_t n_features = self.n_features
+
+        cdef DTYPE_t* Xf = self.feature_values
+        cdef SIZE_t* sorted_samples = self.sorted_samples
+        cdef SIZE_t* index_to_samples = self.index_to_samples
+        cdef SIZE_t* index_to_color = self.index_to_color
+        cdef SIZE_t max_features = self.max_features
+        cdef SIZE_t min_samples_leaf = self.min_samples_leaf
+        cdef UINT32_t* random_state = &self.rand_r_state
+
+        cdef double best_impurity_left = INFINITY
+        cdef double best_impurity_right = INFINITY
+        cdef SIZE_t best_pos = end
+        cdef SIZE_t best_feature = 0
+        cdef double best_threshold = 0.
+        cdef double best_improvement = -INFINITY
+
+        cdef DTYPE_t current_feature_value
+        cdef double current_improvement
+        cdef double current_impurity
+        cdef double current_impurity_left
+        cdef double current_impurity_right
+        cdef SIZE_t current_pos
+        cdef SIZE_t current_feature
+        cdef double current_threshold
+
+        cdef SIZE_t f_i = n_features
+        cdef SIZE_t f_j, p, tmp
+        cdef SIZE_t n_visited_features = 0
+        # Number of features discovered to be constant during the split search
+        cdef SIZE_t n_found_constants = 0
+        # Number of features known to be constant and drawn without replacement
+        cdef SIZE_t n_drawn_constants = 0
+        cdef SIZE_t n_known_constants = n_constant_features[0]
+        # n_total_constants = n_known_constants + n_found_constants
+        cdef SIZE_t n_total_constants = n_known_constants
+        cdef SIZE_t partition_end
+
+        cdef DTYPE_t min_feature_value
+        cdef DTYPE_t max_feature_value
+
+        cdef SIZE_t k_
+        cdef SIZE_t p_next
+        cdef bint is_samples_sorted = 0  # indicate that sorted_samples is
+                                         # inititialized
+
+        # We assume implicitely that end_positive = end and
+        # start_negative = start
+        cdef SIZE_t start_positive
+        cdef SIZE_t end_negative
+
+        # Marking samples that are in the current node (samples[start:end]) with
+        # current_color, current_color is changed each time to avoid zeroing
+        # the whole `index_to_color` matrix.
+        self.current_color += 1
+        for p in range(start, end):
+            index_to_color[samples[p]] = self.current_color
+
+        # Sample up to max_features without replacement using a
+        # Fisher-Yates-based algorithm (using the local variables `f_i` and
+        # `f_j` to compute a permutation of the `features` array).
+        #
+        # Skip the CPU intensive evaluation of the impurity criterion for
+        # features that were already detected as constant (hence not suitable
+        # for good splitting) by ancestor nodes and save the information on
+        # newly discovered constant features to spare computation on descendant
+        # nodes.
+        while (f_i > n_total_constants and  # Stop early if remaining features
+                                            # are constant
+                (n_visited_features < max_features or
+                 # At least one drawn features must be non constant
+                 n_visited_features <= n_found_constants + n_drawn_constants)):
+
+            n_visited_features += 1
+
+            # Loop invariant: elements of features in
+            # - [:n_drawn_constant[ holds drawn and known constant features;
+            # - [n_drawn_constant:n_known_constant[ holds known constant
+            #   features that haven't been drawn yet;
+            # - [n_known_constant:n_total_constant[ holds newly found constant
+            #   features;
+            # - [n_total_constant:f_i[ holds features that haven't been drawn
+            #   yet and aren't constant apriori.
+            # - [f_i:n_features[ holds features that have been drawn
+            #   and aren't constant.
+
+            # Draw a feature at random
+            f_j = rand_int(f_i - n_drawn_constants - n_found_constants,
+                           random_state) + n_drawn_constants
+
+            if f_j < n_known_constants:
+                # f_j in the interval [n_drawn_constants, n_known_constants[
+                tmp = features[f_j]
+                features[f_j] = features[n_drawn_constants]
+                features[n_drawn_constants] = tmp
+
+                n_drawn_constants += 1
+
+            else:
+                # f_j in the interval [n_known_constants, f_i - n_found_constants[
+                f_j += n_found_constants
+                # f_j in the interval [n_total_constants, f_i[
+
+                current_feature = features[f_j]
+
+                extract_nnz(X_indices, X_data, X_indptr[current_feature],
+                            X_indptr[current_feature + 1],
+                            index_to_color, self.current_color,
+                            samples, start, end, index_to_samples,  Xf,
+                            &end_negative, &start_positive, sorted_samples,
+                            &is_samples_sorted)
+
+                # Add one or two zeros in Xf, if there is any
+                if end_negative != start_positive:
+                    Xf[end_negative] = 0.
+                    Xf[start_positive - 1] = 0.
+                    end_negative += 1
+
+                # Find min, max
+                p = (start if start != end_negative else start_positive)
+                min_feature_value = Xf[p]
+                max_feature_value = min_feature_value
+                p = (p + 1 if p + 1 != end_negative else start_positive)
+
+                while p < end:
+                    current_feature_value = Xf[p]
+
+                    if current_feature_value < min_feature_value:
+                        min_feature_value = current_feature_value
+                    elif current_feature_value > max_feature_value:
+                        max_feature_value = current_feature_value
+
+                    p = (p + 1 if p + 1 != end_negative else start_positive)
+
+                if max_feature_value <= min_feature_value + FEATURE_THRESHOLD:
+                    features[f_j] = features[n_total_constants]
+                    features[n_total_constants] = current_feature
+
+                    n_found_constants += 1
+                    n_total_constants += 1
+
+                else:
+                    f_i -= 1
+                    features[f_i], features[f_j] = features[f_j], features[f_i]
+
+                   # Draw a random threshold
+                    current_threshold = (min_feature_value +
+                                         rand_double(random_state) *
+                                         (max_feature_value -
+                                          min_feature_value))
+
+                    if current_threshold == max_feature_value:
+                        current_threshold = min_feature_value
+
+                    # Partition
+                    if current_threshold != 0.:
+                        if current_threshold > 0.:
+                            p = start_positive
+                            partition_end = end
+
+                        else:
+                            p = start
+                            partition_end = end_negative
+
+                        while p < partition_end:
+                            current_feature_value = Xf[p]
+
+                            if current_feature_value <= current_threshold:
+                                p += 1
+
+                            else:
+                                partition_end -= 1
+
+                                Xf[p] = Xf[partition_end]
+                                Xf[partition_end] = current_feature_value
+
+                                tmp = samples[partition_end]
+                                samples[partition_end] = samples[p]
+                                samples[p] = tmp
+
+                                index_to_samples[samples[partition_end]] = partition_end
+                                index_to_samples[samples[p]] = p
+
+                        current_pos = partition_end
+
+                    else:
+                        current_pos = start_positive
+
+                    # Reject if min_samples_leaf is not guaranteed
+                    if (((current_pos - start) < min_samples_leaf) or
+                            ((end - current_pos) < min_samples_leaf)):
+                        continue
+
+                    # Evaluate split
+                    self.criterion.reset()
+                    self.criterion.update(current_pos)
+                    current_improvement = self.criterion.impurity_improvement(impurity)
+
+                    if current_improvement > best_improvement:
+                        self.criterion.children_impurity(&current_impurity_left,
+                                                         &current_impurity_right)
+                        best_impurity_left = current_impurity_left
+                        best_impurity_right = current_impurity_right
+                        best_improvement = current_improvement
+                        best_pos = current_pos
+                        best_feature = current_feature
+                        best_threshold = current_threshold
+
+        # Reorganize into samples[start:best_pos] + samples[best_pos:end]
+        if best_pos < end and current_feature != best_feature:
+            extract_nnz(X_indices, X_data, X_indptr[best_feature],
+                        X_indptr[best_feature + 1],
+                        index_to_color, self.current_color,
+                        samples, start, end, index_to_samples,  Xf,
+                        &end_negative, &start_positive, sorted_samples,
+                        &is_samples_sorted)
+
+            if (best_pos >= start_positive or best_pos < end_negative):
+                if best_pos >= start_positive:
+                    p = start_positive
+                    partition_end = end
+
+                else:
+                    p = start
+                    partition_end = end_negative
+
+                while p < partition_end:
+                    current_feature_value = Xf[p]
+
+                    if current_feature_value <= best_threshold:
                         p += 1
 
                     else:
