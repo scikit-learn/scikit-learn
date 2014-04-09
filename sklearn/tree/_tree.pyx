@@ -1089,7 +1089,7 @@ cdef class SparseSplitter(Splitter):
         Splitter.init(self, X, y, sample_weight)
 
         cdef SIZE_t* samples = self.samples
-        cdef SIZE_t n_samples = X.shape[0]
+        cdef SIZE_t n_total_samples = X.shape[0]
 
         # Initialize X
         cdef np.ndarray[dtype=DTYPE_t, ndim=1] data = X.data
@@ -1123,7 +1123,7 @@ cdef class SparseSplitter(Splitter):
         for p in range(n_total_samples):
             index_to_color[p] = -1
 
-        for p in range(self.n_samples):
+        for p in range(n_samples):
             index_to_samples[samples[p]] = p
 
         self.index_to_color = index_to_color
@@ -1141,10 +1141,10 @@ cdef class BestSparseSplitter(SparseSplitter):
                                      self.random_state), self.__getstate__())
 
     cdef void node_split(self, double impurity, SIZE_t* pos,
-                                SIZE_t* feature, double* threshold,
-                                double* impurity_left, double* impurity_right,
-                                double* impurity_improvement,
-                                SIZE_t* n_constant_features) nogil:
+                         SIZE_t* feature, double* threshold,
+                         double* impurity_left, double* impurity_right,
+                         double* impurity_improvement,
+                         SIZE_t* n_constant_features) nogil:
         """Find the best split on node samples[start:end], using sparse
            features.
         """
@@ -1202,6 +1202,7 @@ cdef class BestSparseSplitter(SparseSplitter):
         cdef SIZE_t p_prev
         cdef bint is_samples_sorted = 0  # indicate is sorted_samples is
                                          # inititialized
+
         # We assume implicitely that end_positive = end and
         # start_negative = start
         cdef SIZE_t start_positive
@@ -1213,6 +1214,7 @@ cdef class BestSparseSplitter(SparseSplitter):
         self.current_color += 1
         for p in range(start, end):
             index_to_color[samples[p]] = self.current_color
+
         # Sample up to max_features without replacement using a
         # Fisher-Yates-based algorithm (using the local variables `f_i` and
         # `f_j` to compute a permutation of the `features` array).
@@ -1265,11 +1267,6 @@ cdef class BestSparseSplitter(SparseSplitter):
                             samples, start, end, index_to_samples,  Xf,
                             &end_negative, &start_positive, sorted_samples,
                             &is_samples_sorted)
-                # TODO FIX this
-                # if pos_index < neg_index - 1:
-                #     with gil:
-                #         raise AssertionError("The format of the sparse matrix is corrupted")
-
 
                 # Sort the positive and negative parts of `Xf`
                 sort(Xf + start, samples + start, end_negative - start)
@@ -1281,7 +1278,8 @@ cdef class BestSparseSplitter(SparseSplitter):
                     index_to_samples[samples[p]] = p
                 for p in range(start_positive, end):
                     index_to_samples[samples[p]] = p
-                # Add a zero in Xf, if there is any zeros
+
+                # Add one or two zeros in Xf, if there is any
                 if end_negative != start_positive:
                     Xf[end_negative] = 0.
                     Xf[start_positive - 1] = 0.
@@ -1347,6 +1345,7 @@ cdef class BestSparseSplitter(SparseSplitter):
                                     current_threshold = Xf[p_prev]
 
                                 best_threshold = current_threshold
+
         # Reorganize into samples[start:best_pos] + samples[best_pos:end]
         if best_pos < end:
             extract_nnz(X_indices, X_data, X_indptr[best_feature],
@@ -1355,18 +1354,22 @@ cdef class BestSparseSplitter(SparseSplitter):
                         samples, start, end, index_to_samples,  Xf,
                         &end_negative, &start_positive, sorted_samples,
                         &is_samples_sorted)
+
             if (best_pos >= start_positive or best_pos < end_negative):
                 if best_pos >= start_positive:
                     p = start_positive
                     partition_end = end
+
                 else:
                     p = start
                     partition_end = end_negative
 
                 while p < partition_end:
                     current_feature_value = Xf[p]
+
                     if current_feature_value <= current_threshold:
                         p += 1
+
                     else:
                         partition_end -= 1
 
