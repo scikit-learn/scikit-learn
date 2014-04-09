@@ -1075,7 +1075,6 @@ cdef class SparseSplitter(Splitter):
         free(self.index_to_color)
         free(self.index_to_samples)
         free(self.sorted_samples)
-
     cdef void init(self,
                    object X,
                    np.ndarray[DOUBLE_t, ndim=2, mode="c"] y,
@@ -1086,7 +1085,7 @@ cdef class SparseSplitter(Splitter):
         Splitter.init(self, X, y, sample_weight)
 
         cdef SIZE_t* samples = self.samples
-        cdef SIZE_t n_samples = self.n_samples
+        cdef SIZE_t n_samples = X.shape[0]
 
         # Initialize X
         cdef np.ndarray data = X.data
@@ -1118,7 +1117,7 @@ cdef class SparseSplitter(Splitter):
         for p in range(n_samples):
             index_to_color[p] = -1
 
-        for p in range(n_samples):
+        for p in range(self.n_samples):
             index_to_samples[samples[p]] = p
 
         self.index_to_color = index_to_color
@@ -1208,7 +1207,6 @@ cdef class BestSparseSplitter(SparseSplitter):
         self.current_color += 1
         for p in range(start, end):
             index_to_color[samples[p]] = self.current_color
-
         # Sample up to max_features without replacement using a
         # Fisher-Yates-based algorithm (using the local variables `f_i` and
         # `f_j` to compute a permutation of the `features` array).
@@ -1255,14 +1253,12 @@ cdef class BestSparseSplitter(SparseSplitter):
                 # f_j in the interval [n_total_constants, f_i[
 
                 current_feature = features[f_j]
-
                 extract_nnz(X_indices, X_data, X_indptr[current_feature],
                             X_indptr[current_feature + 1],
                             index_to_color, self.current_color,
                             samples, start, end, index_to_samples,  Xf,
                             &end_negative, &start_positive, sorted_samples,
                             &is_samples_sorted)
-
                 # TODO FIX this
                 # if pos_index < neg_index - 1:
                 #     with gil:
@@ -1277,10 +1273,8 @@ cdef class BestSparseSplitter(SparseSplitter):
                 # Update index_to_samples to take into account the sort
                 for p in range(start, end_negative):
                     index_to_samples[samples[p]] = p
-
                 for p in range(start_positive, end):
                     index_to_samples[samples[p]] = p
-
                 # Add a zero in Xf, if there is any zeros
                 if end_negative != start_positive:
                     Xf[end_negative] = 0.
@@ -1304,7 +1298,6 @@ cdef class BestSparseSplitter(SparseSplitter):
                     p_next = (p + 1 if p + 1 != end_negative
                               else start_positive)
                     current_feature_value = Xf[p]
-
                     while p < end:
                         while (p_next < end and
                                Xf[p_next] <= Xf[p] + FEATURE_THRESHOLD):
@@ -1348,7 +1341,6 @@ cdef class BestSparseSplitter(SparseSplitter):
                                     current_threshold = Xf[p_prev]
 
                                 best_threshold = current_threshold
-
         # Reorganize into samples[start:best_pos] + samples[best_pos:end]
         if best_pos < end:
             extract_nnz(X_indices, X_data, X_indptr[best_feature],
@@ -1357,7 +1349,6 @@ cdef class BestSparseSplitter(SparseSplitter):
                         samples, start, end, index_to_samples,  Xf,
                         &end_negative, &start_positive, sorted_samples,
                         &is_samples_sorted)
-
             if (best_pos >= start_positive or best_pos < end_negative):
                 if best_pos >= start_positive:
                     p = start_positive
@@ -2372,7 +2363,6 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
 
             if rc >= 0:
                 tree.max_depth = max_depth_seen
-
         if rc == -1:
             raise MemoryError()
 
@@ -3132,16 +3122,13 @@ cdef inline void  extra_nnz_color(SIZE_t* X_indices,
             if X_data[k_] > 0:
                 start_positive_ -= 1
                 Xf[start_positive_] = X_data[k_]
-
                 index = index_to_samples[X_indices[k_]]
 
                 tmp = samples[index]
                 samples[index] = samples[start_positive_]
                 samples[start_positive_] = tmp
-
                 index_to_samples[samples[index]] = index
                 index_to_samples[samples[start_positive_]] = start_positive_
-
 
             elif X_data[k_] < 0:
                 Xf[end_negative_] = X_data[k_]
