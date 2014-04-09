@@ -189,9 +189,11 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
             For each datapoint x in X and for each tree in the forest,
             return the index of the leaf x ends up in.
         """
+        X_old_data = None
+
         if issparse(X):
-            if not isinstance(X, csr_matrix):
-                X = csr_matrix(X)
+            X.tocsr()
+            X_old_data = X.data
 
             if getattr(X.data, "dtype", None) != DTYPE:
                 X.data = np.ascontiguousarray(X.data, dtype=DTYPE)
@@ -208,6 +210,10 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
         results = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
                            backend="threading")(
             delayed(_parallel_apply)(tree, X) for tree in self.estimators_)
+
+        if X_old_data is not None:
+            X_old_data = X.data
+
         return np.array(results).T
 
     def fit(self, X, y, sample_weight=None):
@@ -237,8 +243,11 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
         random_state = check_random_state(self.random_state)
 
         # Convert data
+        X_old_data = None
+
         if issparse(X):
             X = X.tocsc()
+            X_old_data = X.data
 
             if not X.has_sorted_indices:
                 X = X.sort_indices()
@@ -320,6 +329,10 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
         if hasattr(self, "classes_") and self.n_outputs_ == 1:
             self.n_classes_ = self.n_classes_[0]
             self.classes_ = self.classes_[0]
+
+        # Revert previous X.data
+        if X_old_data is not None:
+            X.data = X_old_data
 
         return self
 
@@ -486,8 +499,10 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
             classes corresponds to that in the attribute `classes_`.
         """
         # Check data
+        X_old_data = None
         if issparse(X):
             X = X.tocsr()
+            X_old_data = X.data
 
             if X.data.dtype != DTYPE:
                 X.data = np.ascontiguousarray(X.data, dtype=DTYPE)
@@ -530,6 +545,10 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
 
             for k in xrange(self.n_outputs_):
                 proba[k] /= self.n_estimators
+
+        # Revert previous X.data
+        if X_old_data is not None:
+            X.data = X_old_data
 
         return proba
 
@@ -608,8 +627,11 @@ class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
             The predicted values.
         """
         # Check data
+        X_old_data = None
+
         if issparse(X):
             X = X.tocsr()
+            X_old_data = X.data
 
             if X.data.dtype != DTYPE:
                 X.data = np.ascontiguousarray(X.data, dtype=DTYPE)
@@ -635,6 +657,10 @@ class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
 
         # Reduce
         y_hat = sum(all_y_hat) / len(self.estimators_)
+
+        # Revert previous X.data
+        if X_old_data is not None:
+            X.data = X_old_data
 
         return y_hat
 

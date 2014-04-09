@@ -136,10 +136,13 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
             warn("The X_argsorted parameter is deprecated as of version 0.14 "
                  "and will be removed in 0.16.", DeprecationWarning)
 
-        # Convert X data
+        # Convert X to the proper type
+        X_old_data = None
+
         if check_input:
             if issparse(X):
                 X = X.tocsc()
+                X_old_data = X.data
 
                 if not X.has_sorted_indices:
                     X = X.sort_indices()
@@ -289,6 +292,9 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
             self.n_classes_ = self.n_classes_[0]
             self.classes_ = self.classes_[0]
 
+        if X_old_data is not None:
+            X.data = X_old_data
+
         return self
 
     def predict(self, X):
@@ -308,8 +314,12 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         y : array of shape = [n_samples] or [n_samples, n_outputs]
             The predicted classes, or the predict values.
         """
+        X_old_data = None  # This variable is used to avoid inplace
+                           # of the data.
+
         if issparse(X):
             X = X.tocsr()
+            X_old_data = X.data
 
             if X.data.dtype != DTYPE:
                 X.data = np.ascontiguousarray(X.data, dtype=DTYPE)
@@ -337,6 +347,10 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
 
 
         proba = self.tree_.predict(X)
+
+        # Revert previous X.data
+        if X_old_data is not None:
+            X.data = X_old_data
 
         # Classification
         if isinstance(self, ClassifierMixin):
@@ -538,8 +552,11 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
             The class probabilities of the input samples. The order of the
             classes corresponds to that in the attribute `classes_`.
         """
+        X_old_data = None
+
         if issparse(X):
             X = X.tocsr()
+            X_old_data = X.data
 
             if X.data.dtype != DTYPE:
                 X.data = np.ascontiguousarray(X.data, dtype=DTYPE)
@@ -565,6 +582,9 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
                              % (self.n_features_, n_features))
 
         proba = self.tree_.predict(X)
+
+        if X_old_data is not None:
+            X.data = X_old_data
 
         if self.n_outputs_ == 1:
             proba = proba[:, :self.n_classes_]
