@@ -902,7 +902,6 @@ def test_sparse_input_digits():
 
 
 def test_sparse_with_various_criterion():
-
     B = datasets.load_digits()
     X_ = B.data
     y_ = B.target

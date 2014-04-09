@@ -3271,7 +3271,8 @@ cdef inline void  extract_nnz(INT32_t* X_indices,
     # O(n_samples * log(n_indices)) is the running time of binary
     # search and O(n_indices) is the running time of coloring
     # technique.
-    if n_samples * log(n_indices) < n_indices:
+    if (is_samples_sorted[0] * n_samples * log(n_samples) +
+            n_samples * log(n_indices) < n_indices):
         extract_nnz_binary_search(X_indices, X_data, indptr_start, indptr_end,
                                   samples, start, end, index_to_samples,
                                   Xf, end_negative, start_positive,
