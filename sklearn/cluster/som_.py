@@ -149,7 +149,8 @@ class SelfOrganizingMap(BaseEstimator):
 
         """
         # If adjacency is an int or tuple, we generate an adjacency matrix
-        # of the specified dimensions. Otherwise
+        # of the specified dimensions. Otherwise if it's an adjacency matrix,
+        # use that.
         if isinstance(self.adjacency, int):
             self.adjacency = (self.adjacency,)
 
@@ -165,10 +166,10 @@ class SelfOrganizingMap(BaseEstimator):
             raise ValueError("'init' contains %d centers, but 'adjacency' specifies %d clusters"
                              % (self.init.shape[0], n_centers))
 
-        self.adjacency_matrix = adjacency_matrix
-        self.distance_matrix = _get_minimum_distances(self.adjacency_matrix)
-        self.graph_diameter = self.distance_matrix.max()
-        self.n_centers = n_centers
+        self.adjacency_matrix_ = adjacency_matrix
+        self.distance_matrix_ = _get_minimum_distances(self.adjacency_matrix_)
+        self.graph_diameter_ = self.distance_matrix_.max()
+        self.n_centers_ = n_centers
 
         assert isinstance(X, np.ndarray), 'X is not an array!'
         self.cluster_centers_ = None
@@ -176,7 +177,7 @@ class SelfOrganizingMap(BaseEstimator):
 
         # init cluster_centers_
         if self.init == 'random':
-            self.cluster_centers_ = np.random.rand(self.n_centers, self.dim_)
+            self.cluster_centers_ = np.random.rand(self.n_centers_, self.dim_)
         elif isinstance(self.init, np.ndarray):
             assert self.init.shape[-1] == self.dim_
             self.cluster_centers_ = self.init.copy()
@@ -200,14 +201,14 @@ class SelfOrganizingMap(BaseEstimator):
         # alpha to suit Kohonen (2013, p56)
         # TODO: this *was* based on the length of a square grid, now it's the
         # maximum diameter of the SOM topology. Is this OK?
-        l = self.n_iterations / float(self.graph_diameter)
-        alpha = self.learning_rate * np.exp(-iteration / l)
+        l = self.n_iterations / float(self.graph_diameter_)
+        self.alpha_ = self.learning_rate * np.exp(-iteration / l)
         winner = self.best_matching_center(x)
         radius = self.radius_of_the_neighborhood(iteration)
         updatable = self.cluster_centers_in_radius(winner, radius)
-        distances = self.distance_matrix[winner][updatable]
+        distances = self.distance_matrix_[winner][updatable]
         # neighborhood function from Kohonen (2013, p56)
-        neighborhood = alpha * np.exp(-distances / (2 * radius ** 2))
+        neighborhood = self.alpha_ * np.exp(-distances / (2 * radius ** 2))
         self.cluster_centers_[updatable] = self.cluster_centers_[updatable] + \
             np.multiply(neighborhood, (x - self.cluster_centers_[updatable]).T).T
 
@@ -217,7 +218,7 @@ class SelfOrganizingMap(BaseEstimator):
         return(distances.argmin())
 
     def cluster_centers_in_radius(self, winner, radius):
-        return(np.where(self.distance_matrix[winner] < radius)[0])
+        return(np.where(self.distance_matrix_[winner] < radius)[0])
 
     def radius_of_the_neighborhood(self, iteration):
         """Kohonen's sigma.
@@ -226,5 +227,5 @@ class SelfOrganizingMap(BaseEstimator):
         specify a particular form.
         """
         # TODO: see above. This should initially cover about half the grid.
-        l = self.n_iterations / self.graph_diameter
-        return self.n_centers * np.exp(-iteration / l)
+        l = self.n_iterations / self.graph_diameter_
+        return self.n_centers_ * np.exp(-iteration / l)
