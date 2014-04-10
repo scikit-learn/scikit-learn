@@ -9,6 +9,7 @@
 from __future__ import division
 import numpy as np
 from ..base import BaseEstimator
+from ..decomposition import PCA
 
 
 def _unserialise_coordinate(serial, spacing):
@@ -106,6 +107,11 @@ class SelfOrganizingMap(BaseEstimator):
 
         'random' : use randomly chosen cluster centers.
 
+        'pca' : perform a PCA analysis, and use an initialisation of centers
+        evenly spaced over the basis vectors. If 'adjacency' is an n-tuple, use
+        the first n PCA basis vectors, otherwise, just space the initialisation
+        centers evenly along the first PCA basis vectors.
+
         ndarray : an array of initial cluster centers [n_centers, n_features].
 
 
@@ -152,7 +158,7 @@ class SelfOrganizingMap(BaseEstimator):
         # of the specified dimensions. Otherwise if it's an adjacency matrix,
         # use that.
         if isinstance(self.adjacency, int):
-            self.adjacency = (self.adjacency,)
+            self.adjacency = (self.adjacency, 1)
 
         if isinstance(self.adjacency, tuple):
             n_centers = np.prod(self.adjacency)
@@ -178,6 +184,17 @@ class SelfOrganizingMap(BaseEstimator):
         # init cluster_centers_
         if self.init == 'random':
             self.cluster_centers_ = np.random.rand(self.n_centers_, self.dim_)
+        elif self.init == 'pca':
+            pca = PCA()
+            pca.fit(X)
+            if isinstance(self.adjacency, tuple):
+                adjacency_full_dim = (self.adjacency[x] if x < len(self.adjacency) else 1 for x in range(pca.n_components_))
+            else:  # adjacency is an arbitrary graph, so just use first PCA component
+                adjacency_full_dim = (len(self.adjacency) if x < 1 else 1 for x in range(pca.n_components_))
+            grid_coords = [(2 * np.arange(x) / (x - 1) - 1) if x > 1 else [0] for x in adjacency_full_dim]
+            grid = np.array(list(np.broadcast(*np.ix_(*grid_coords))))
+            self.cluster_centers_ = pca.inverse_transform(grid)
+
         elif isinstance(self.init, np.ndarray):
             assert self.init.shape[-1] == self.dim_
             self.cluster_centers_ = self.init.copy()
