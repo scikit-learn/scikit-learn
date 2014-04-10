@@ -1049,8 +1049,10 @@ cdef class DenseSplitter(Splitter):
 cdef class SparseSplitter(Splitter):
 
     cdef DTYPE_t* X_data
-    cdef SIZE_t* X_indices
-    cdef SIZE_t* X_indptr
+    cdef INT32_t* X_indices
+    cdef INT32_t* X_indptr
+
+    cdef SIZE_t n_total_samples
 
     cdef SIZE_t current_color
     cdef SIZE_t* index_to_color
@@ -1065,6 +1067,8 @@ cdef class SparseSplitter(Splitter):
         self.X_indices = NULL
         self.X_indptr = NULL
 
+        self.n_total_samples = 0
+
         self.current_color = 0
         self.index_to_color = NULL
         self.index_to_samples = NULL
@@ -1075,6 +1079,7 @@ cdef class SparseSplitter(Splitter):
         free(self.index_to_color)
         free(self.index_to_samples)
         free(self.sorted_samples)
+
     cdef void init(self,
                    object X,
                    np.ndarray[DOUBLE_t, ndim=2, mode="c"] y,
@@ -1085,16 +1090,18 @@ cdef class SparseSplitter(Splitter):
         Splitter.init(self, X, y, sample_weight)
 
         cdef SIZE_t* samples = self.samples
-        cdef SIZE_t n_samples = X.shape[0]
+        cdef SIZE_t n_samples = self.n_samples
 
         # Initialize X
-        cdef np.ndarray data = X.data
-        cdef np.ndarray indices = X.indices
-        cdef np.ndarray indptr = X.indptr
+        cdef np.ndarray[dtype=DTYPE_t, ndim=1] data = X.data
+        cdef np.ndarray[dtype=INT32_t, ndim=1] indices = X.indices
+        cdef np.ndarray[dtype=INT32_t, ndim=1] indptr = X.indptr
+        cdef SIZE_t n_total_samples = X.shape[0]
 
         self.X_data = <DTYPE_t*> data.data
-        self.X_indices = <SIZE_t*> indices.data
-        self.X_indptr = <SIZE_t*> indptr.data
+        self.X_indices = <INT32_t*> indices.data
+        self.X_indptr = <INT32_t*> indptr.data
+        self.n_total_samples = n_total_samples
 
         # Initialize auxiliary array used to perform split
         cdef SIZE_t* index_to_color
@@ -1102,9 +1109,9 @@ cdef class SparseSplitter(Splitter):
         cdef SIZE_t* sorted_samples
 
         index_to_color = <SIZE_t*> realloc(self.index_to_color,
-                                           n_samples * sizeof(SIZE_t))
+                                           n_total_samples * sizeof(SIZE_t))
         index_to_samples = <SIZE_t*> realloc(self.index_to_samples,
-                                             n_samples * sizeof(SIZE_t))
+                                             n_total_samples * sizeof(SIZE_t))
         sorted_samples = <SIZE_t*> realloc(self.sorted_samples,
                                            n_samples * sizeof(SIZE_t))
 
@@ -1114,10 +1121,10 @@ cdef class SparseSplitter(Splitter):
             raise MemoryError()
 
         cdef SIZE_t p
-        for p in range(n_samples):
+        for p in range(n_total_samples):
             index_to_color[p] = -1
 
-        for p in range(self.n_samples):
+        for p in range(n_samples):
             index_to_samples[samples[p]] = p
 
         self.index_to_color = index_to_color
@@ -1135,10 +1142,10 @@ cdef class BestSparseSplitter(SparseSplitter):
                                      self.random_state), self.__getstate__())
 
     cdef void node_split(self, double impurity, SIZE_t* pos,
-                                SIZE_t* feature, double* threshold,
-                                double* impurity_left, double* impurity_right,
-                                double* impurity_improvement,
-                                SIZE_t* n_constant_features) nogil:
+                         SIZE_t* feature, double* threshold,
+                         double* impurity_left, double* impurity_right,
+                         double* impurity_improvement,
+                         SIZE_t* n_constant_features) nogil:
         """Find the best split on node samples[start:end], using sparse
            features.
         """
@@ -1147,8 +1154,8 @@ cdef class BestSparseSplitter(SparseSplitter):
         cdef SIZE_t start = self.start
         cdef SIZE_t end = self.end
 
-        cdef SIZE_t* X_indices = self.X_indices
-        cdef SIZE_t* X_indptr = self.X_indptr
+        cdef INT32_t* X_indices = self.X_indices
+        cdef INT32_t* X_indptr = self.X_indptr
         cdef DTYPE_t* X_data = self.X_data
 
         cdef SIZE_t* features = self.features
@@ -1196,6 +1203,7 @@ cdef class BestSparseSplitter(SparseSplitter):
         cdef SIZE_t p_prev
         cdef bint is_samples_sorted = 0  # indicate is sorted_samples is
                                          # inititialized
+
         # We assume implicitely that end_positive = end and
         # start_negative = start
         cdef SIZE_t start_positive
@@ -1207,6 +1215,7 @@ cdef class BestSparseSplitter(SparseSplitter):
         self.current_color += 1
         for p in range(start, end):
             index_to_color[samples[p]] = self.current_color
+
         # Sample up to max_features without replacement using a
         # Fisher-Yates-based algorithm (using the local variables `f_i` and
         # `f_j` to compute a permutation of the `features` array).
@@ -1259,11 +1268,6 @@ cdef class BestSparseSplitter(SparseSplitter):
                             samples, start, end, index_to_samples,  Xf,
                             &end_negative, &start_positive, sorted_samples,
                             &is_samples_sorted)
-                # TODO FIX this
-                # if pos_index < neg_index - 1:
-                #     with gil:
-                #         raise AssertionError("The format of the sparse matrix is corrupted")
-
 
                 # Sort the positive and negative parts of `Xf`
                 sort(Xf + start, samples + start, end_negative - start)
@@ -1275,7 +1279,8 @@ cdef class BestSparseSplitter(SparseSplitter):
                     index_to_samples[samples[p]] = p
                 for p in range(start_positive, end):
                     index_to_samples[samples[p]] = p
-                # Add a zero in Xf, if there is any zeros
+
+                # Add one or two zeros in Xf, if there is any
                 if end_negative != start_positive:
                     Xf[end_negative] = 0.
                     Xf[start_positive - 1] = 0.
@@ -1341,6 +1346,7 @@ cdef class BestSparseSplitter(SparseSplitter):
                                     current_threshold = Xf[p_prev]
 
                                 best_threshold = current_threshold
+
         # Reorganize into samples[start:best_pos] + samples[best_pos:end]
         if best_pos < end:
             extract_nnz(X_indices, X_data, X_indptr[best_feature],
@@ -1349,18 +1355,315 @@ cdef class BestSparseSplitter(SparseSplitter):
                         samples, start, end, index_to_samples,  Xf,
                         &end_negative, &start_positive, sorted_samples,
                         &is_samples_sorted)
+
             if (best_pos >= start_positive or best_pos < end_negative):
                 if best_pos >= start_positive:
                     p = start_positive
                     partition_end = end
+
                 else:
                     p = start
                     partition_end = end_negative
 
                 while p < partition_end:
                     current_feature_value = Xf[p]
-                    if current_feature_value <= current_threshold:
+
+                    if current_feature_value <= best_threshold:
                         p += 1
+
+                    else:
+                        partition_end -= 1
+
+                        Xf[p] = Xf[partition_end]
+                        Xf[partition_end] = current_feature_value
+
+                        tmp = samples[partition_end]
+                        samples[partition_end] = samples[p]
+                        samples[p] = tmp
+
+                        index_to_samples[samples[partition_end]] = partition_end
+                        index_to_samples[samples[p]] = p
+
+        # Respect invariant for constant features: the original order of
+        # element in features[:n_known_constants] must be preserved for sibling
+        # and child nodes
+        memcpy(features, constant_features, sizeof(SIZE_t) * n_known_constants)
+
+        # Copy newly found constant features
+        memcpy(constant_features + n_known_constants,
+               features + n_known_constants,
+               sizeof(SIZE_t) * n_found_constants)
+
+        # Return values
+        pos[0] = best_pos
+        feature[0] = best_feature
+        threshold[0] = best_threshold
+        impurity_left[0] = best_impurity_left
+        impurity_right[0] = best_impurity_right
+        impurity_improvement[0] = best_improvement
+        n_constant_features[0] = n_total_constants
+
+
+cdef class RandomSparseSplitter(SparseSplitter):
+    """Splitter for finding the best split, using the sparse data."""
+
+    def __reduce__(self):
+        return (RandomSparseSplitter, (self.criterion,
+                                       self.max_features,
+                                       self.min_samples_leaf,
+                                       self.random_state), self.__getstate__())
+
+    cdef void node_split(self, double impurity, SIZE_t* pos,
+                         SIZE_t* feature, double* threshold,
+                         double* impurity_left, double* impurity_right,
+                         double* impurity_improvement,
+                         SIZE_t* n_constant_features) nogil:
+        """Find the best split on node samples[start:end], using sparse
+           features.
+        """
+        # Find the best split
+        cdef SIZE_t* samples = self.samples
+        cdef SIZE_t start = self.start
+        cdef SIZE_t end = self.end
+
+        cdef INT32_t* X_indices = self.X_indices
+        cdef INT32_t* X_indptr = self.X_indptr
+        cdef DTYPE_t* X_data = self.X_data
+
+        cdef SIZE_t* features = self.features
+        cdef SIZE_t* constant_features = self.constant_features
+        cdef SIZE_t n_features = self.n_features
+
+        cdef DTYPE_t* Xf = self.feature_values
+        cdef SIZE_t* sorted_samples = self.sorted_samples
+        cdef SIZE_t* index_to_samples = self.index_to_samples
+        cdef SIZE_t* index_to_color = self.index_to_color
+        cdef SIZE_t max_features = self.max_features
+        cdef SIZE_t min_samples_leaf = self.min_samples_leaf
+        cdef UINT32_t* random_state = &self.rand_r_state
+
+        cdef double best_impurity_left = INFINITY
+        cdef double best_impurity_right = INFINITY
+        cdef SIZE_t best_pos = end
+        cdef SIZE_t best_feature = 0
+        cdef double best_threshold = 0.
+        cdef double best_improvement = -INFINITY
+
+        cdef DTYPE_t current_feature_value
+        cdef double current_improvement
+        cdef double current_impurity
+        cdef double current_impurity_left
+        cdef double current_impurity_right
+        cdef SIZE_t current_pos
+        cdef SIZE_t current_feature
+        cdef double current_threshold
+
+        cdef SIZE_t f_i = n_features
+        cdef SIZE_t f_j, p, tmp
+        cdef SIZE_t n_visited_features = 0
+        # Number of features discovered to be constant during the split search
+        cdef SIZE_t n_found_constants = 0
+        # Number of features known to be constant and drawn without replacement
+        cdef SIZE_t n_drawn_constants = 0
+        cdef SIZE_t n_known_constants = n_constant_features[0]
+        # n_total_constants = n_known_constants + n_found_constants
+        cdef SIZE_t n_total_constants = n_known_constants
+        cdef SIZE_t partition_end
+
+        cdef DTYPE_t min_feature_value
+        cdef DTYPE_t max_feature_value
+
+        cdef SIZE_t k_
+        cdef SIZE_t p_next
+        cdef bint is_samples_sorted = 0  # indicate that sorted_samples is
+                                         # inititialized
+
+        # We assume implicitely that end_positive = end and
+        # start_negative = start
+        cdef SIZE_t start_positive
+        cdef SIZE_t end_negative
+
+        # Marking samples that are in the current node (samples[start:end]) with
+        # current_color, current_color is changed each time to avoid zeroing
+        # the whole `index_to_color` matrix.
+        self.current_color += 1
+        for p in range(start, end):
+            index_to_color[samples[p]] = self.current_color
+
+        # Sample up to max_features without replacement using a
+        # Fisher-Yates-based algorithm (using the local variables `f_i` and
+        # `f_j` to compute a permutation of the `features` array).
+        #
+        # Skip the CPU intensive evaluation of the impurity criterion for
+        # features that were already detected as constant (hence not suitable
+        # for good splitting) by ancestor nodes and save the information on
+        # newly discovered constant features to spare computation on descendant
+        # nodes.
+        while (f_i > n_total_constants and  # Stop early if remaining features
+                                            # are constant
+                (n_visited_features < max_features or
+                 # At least one drawn features must be non constant
+                 n_visited_features <= n_found_constants + n_drawn_constants)):
+
+            n_visited_features += 1
+
+            # Loop invariant: elements of features in
+            # - [:n_drawn_constant[ holds drawn and known constant features;
+            # - [n_drawn_constant:n_known_constant[ holds known constant
+            #   features that haven't been drawn yet;
+            # - [n_known_constant:n_total_constant[ holds newly found constant
+            #   features;
+            # - [n_total_constant:f_i[ holds features that haven't been drawn
+            #   yet and aren't constant apriori.
+            # - [f_i:n_features[ holds features that have been drawn
+            #   and aren't constant.
+
+            # Draw a feature at random
+            f_j = rand_int(f_i - n_drawn_constants - n_found_constants,
+                           random_state) + n_drawn_constants
+
+            if f_j < n_known_constants:
+                # f_j in the interval [n_drawn_constants, n_known_constants[
+                tmp = features[f_j]
+                features[f_j] = features[n_drawn_constants]
+                features[n_drawn_constants] = tmp
+
+                n_drawn_constants += 1
+
+            else:
+                # f_j in the interval [n_known_constants, f_i - n_found_constants[
+                f_j += n_found_constants
+                # f_j in the interval [n_total_constants, f_i[
+
+                current_feature = features[f_j]
+
+                extract_nnz(X_indices, X_data, X_indptr[current_feature],
+                            X_indptr[current_feature + 1],
+                            index_to_color, self.current_color,
+                            samples, start, end, index_to_samples,  Xf,
+                            &end_negative, &start_positive, sorted_samples,
+                            &is_samples_sorted)
+
+                # Add one or two zeros in Xf, if there is any
+                if end_negative != start_positive:
+                    Xf[end_negative] = 0.
+                    Xf[start_positive - 1] = 0.
+                    end_negative += 1
+
+                # Find min, max
+                p = (start if start != end_negative else start_positive)
+                min_feature_value = Xf[p]
+                max_feature_value = min_feature_value
+                p = (p + 1 if p + 1 != end_negative else start_positive)
+
+                while p < end:
+                    current_feature_value = Xf[p]
+
+                    if current_feature_value < min_feature_value:
+                        min_feature_value = current_feature_value
+                    elif current_feature_value > max_feature_value:
+                        max_feature_value = current_feature_value
+
+                    p = (p + 1 if p + 1 != end_negative else start_positive)
+
+                if max_feature_value <= min_feature_value + FEATURE_THRESHOLD:
+                    features[f_j] = features[n_total_constants]
+                    features[n_total_constants] = current_feature
+
+                    n_found_constants += 1
+                    n_total_constants += 1
+
+                else:
+                    f_i -= 1
+                    features[f_i], features[f_j] = features[f_j], features[f_i]
+
+                   # Draw a random threshold
+                    current_threshold = (min_feature_value +
+                                         rand_double(random_state) *
+                                         (max_feature_value -
+                                          min_feature_value))
+
+                    if current_threshold == max_feature_value:
+                        current_threshold = min_feature_value
+
+                    # Partition
+                    if current_threshold != 0.:
+                        if current_threshold > 0.:
+                            p = start_positive
+                            partition_end = end
+
+                        else:
+                            p = start
+                            partition_end = end_negative
+
+                        while p < partition_end:
+                            current_feature_value = Xf[p]
+
+                            if current_feature_value <= current_threshold:
+                                p += 1
+
+                            else:
+                                partition_end -= 1
+
+                                Xf[p] = Xf[partition_end]
+                                Xf[partition_end] = current_feature_value
+
+                                tmp = samples[partition_end]
+                                samples[partition_end] = samples[p]
+                                samples[p] = tmp
+
+                                index_to_samples[samples[partition_end]] = partition_end
+                                index_to_samples[samples[p]] = p
+
+                        current_pos = partition_end
+
+                    else:
+                        current_pos = start_positive
+
+                    # Reject if min_samples_leaf is not guaranteed
+                    if (((current_pos - start) < min_samples_leaf) or
+                            ((end - current_pos) < min_samples_leaf)):
+                        continue
+
+                    # Evaluate split
+                    self.criterion.reset()
+                    self.criterion.update(current_pos)
+                    current_improvement = self.criterion.impurity_improvement(impurity)
+
+                    if current_improvement > best_improvement:
+                        self.criterion.children_impurity(&current_impurity_left,
+                                                         &current_impurity_right)
+                        best_impurity_left = current_impurity_left
+                        best_impurity_right = current_impurity_right
+                        best_improvement = current_improvement
+                        best_pos = current_pos
+                        best_feature = current_feature
+                        best_threshold = current_threshold
+
+        # Reorganize into samples[start:best_pos] + samples[best_pos:end]
+        if best_pos < end and current_feature != best_feature:
+            extract_nnz(X_indices, X_data, X_indptr[best_feature],
+                        X_indptr[best_feature + 1],
+                        index_to_color, self.current_color,
+                        samples, start, end, index_to_samples,  Xf,
+                        &end_negative, &start_positive, sorted_samples,
+                        &is_samples_sorted)
+
+            if (best_pos >= start_positive or best_pos < end_negative):
+                if best_pos >= start_positive:
+                    p = start_positive
+                    partition_end = end
+
+                else:
+                    p = start
+                    partition_end = end_negative
+
+                while p < partition_end:
+                    current_feature_value = Xf[p]
+
+                    if current_feature_value <= best_threshold:
+                        p += 1
+
                     else:
                         partition_end -= 1
 
@@ -2226,14 +2529,19 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
 
         # check if dtype is correct
         if issparse(X):
+            X = X.tocsc()
+
+            if not X.has_sorted_indices:
+                X = X.sort_indices()
+
             if X.data.dtype != DTYPE:
                 X.data = np.ascontiguousarray(X.data, dtype=DTYPE)
 
-            if X.indices.dtype != np.intp:
-                X.indices = np.ascontiguousarray(X.indices, dtype=np.intp)
+            if X.indices.dtype != np.int32:
+                X.indices = np.ascontiguousarray(X.indices, dtype=np.int32)
 
-            if X.indptr.dtype != np.intp:
-                X.indptr = np.ascontiguousarray(X.indptr, dtype=np.intp)
+            if X.indptr.dtype != np.int32:
+                X.indptr = np.ascontiguousarray(X.indptr, dtype=np.int32)
 
         elif X.dtype != DTYPE:
             # since we have to copy we will make it fortran for efficiency
@@ -2402,14 +2710,19 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
 
         # check if dtype is correct
         if issparse(X):
+            X = X.tocsc()
+
+            if not X.has_sorted_indices:
+                X = X.sort_indices()
+
             if X.data.dtype != DTYPE:
                 X.data = np.ascontiguousarray(X.data, dtype=DTYPE)
 
-            if X.indices.dtype != np.intp:
-                X.indices = np.ascontiguousarray(X.indices, dtype=np.intp)
+            if X.indices.dtype != np.int32:
+                X.indices = np.ascontiguousarray(X.indices, dtype=np.int32)
 
-            if X.indptr.dtype != np.intp:
-                X.indptr = np.ascontiguousarray(X.indptr, dtype=np.intp)
+            if X.indptr.dtype != np.int32:
+                X.indptr = np.ascontiguousarray(X.indptr, dtype=np.int32)
 
         elif X.dtype != DTYPE:
             # since we have to copy we will make it fortran for efficiency
@@ -2902,13 +3215,13 @@ cdef class Tree:
         """Finds the terminal region (=leaf node) for each sample in sparse X."""
 
         # Extract input
-        cdef np.ndarray X_data_ndarray = X.data
-        cdef np.ndarray X_indices_ndarray  = X.indices
-        cdef np.ndarray X_indptr_ndarray  = X.indptr
+        cdef np.ndarray[ndim=1, dtype=DTYPE_t] X_data_ndarray = X.data
+        cdef np.ndarray[ndim=1, dtype=INT32_t] X_indices_ndarray  = X.indices
+        cdef np.ndarray[ndim=1, dtype=INT32_t] X_indptr_ndarray  = X.indptr
 
         cdef DTYPE_t* X_data = <DTYPE_t*>X_data_ndarray.data
-        cdef SIZE_t* X_indices = <SIZE_t*>X_indices_ndarray.data
-        cdef SIZE_t* X_indptr = <SIZE_t*>X_indptr_ndarray.data
+        cdef INT32_t* X_indices = <INT32_t*>X_indices_ndarray.data
+        cdef INT32_t* X_indptr = <INT32_t*>X_indptr_ndarray.data
 
         cdef SIZE_t n_samples = X.shape[0]
         cdef SIZE_t n_features = X.shape[1]
@@ -2926,7 +3239,7 @@ cdef class Tree:
         cdef DTYPE_t* feature_to_sample = NULL
 
         cdef SIZE_t i = 0
-        cdef SIZE_t p = 0
+        cdef INT32_t k = 0
 
         with nogil:
             X_sample = <DTYPE_t*> malloc(n_features * sizeof(DTYPE_t))
@@ -2936,9 +3249,9 @@ cdef class Tree:
             for i in range(n_samples):
                 node = self.nodes
 
-                for p in range(X_indptr[i], X_indptr[i + 1]):
-                    feature_to_sample[X_indices[p]] = i
-                    X_sample[X_indices[p]] = X_data[p]
+                for k in range(X_indptr[i], X_indptr[i + 1]):
+                    feature_to_sample[X_indices[k]] = i
+                    X_sample[X_indices[k]] = X_data[k]
 
                 # While node not a leaf
                 while node.left_child != _TREE_LEAF:
@@ -3071,14 +3384,14 @@ cdef int compare_SIZE_t(const void * a, const void * b) nogil:
     return <int>((<SIZE_t*>a)[0] - (<SIZE_t*>b)[0])
 
 
-cdef inline void binary_search(SIZE_t* sorted_array, SIZE_t start, SIZE_t end,
+cdef inline void binary_search(INT32_t* sorted_array, INT32_t start, INT32_t end,
                                SIZE_t value, SIZE_t* index,
-                               SIZE_t* new_start) nogil:
+                               INT32_t* new_start) nogil:
     """Return the index of value in the sorted array
 
     If not found, return -1. new_start is the last pivot + 1
     """
-    cdef SIZE_t pivot
+    cdef INT32_t pivot
 
     while start < end:
         pivot = start + (end - start) / 2
@@ -3095,10 +3408,10 @@ cdef inline void binary_search(SIZE_t* sorted_array, SIZE_t start, SIZE_t end,
     new_start[0] = start
 
 
-cdef inline void  extra_nnz_color(SIZE_t* X_indices,
+cdef inline void  extra_nnz_color(INT32_t* X_indices,
                                   DTYPE_t* X_data,
-                                  SIZE_t indptr_start,
-                                  SIZE_t indptr_end,
+                                  INT32_t indptr_start,
+                                  INT32_t indptr_end,
                                   SIZE_t* index_to_color,
                                   SIZE_t color,
                                   SIZE_t* samples,
@@ -3112,7 +3425,7 @@ cdef inline void  extra_nnz_color(SIZE_t* X_indices,
     and samples[start:end] using a color approach which is
     O(indptr_end - indptr_start).
     """
-    cdef SIZE_t k_
+    cdef INT32_t k_
     cdef SIZE_t index
     cdef SIZE_t end_negative_ = start
     cdef SIZE_t start_positive_ = end
@@ -3149,10 +3462,10 @@ cdef inline void  extra_nnz_color(SIZE_t* X_indices,
     start_positive[0] = start_positive_
 
 
-cdef inline void  extract_nnz_binary_search(SIZE_t* X_indices,
+cdef inline void  extract_nnz_binary_search(INT32_t* X_indices,
                                             DTYPE_t* X_data,
-                                            SIZE_t indptr_start,
-                                            SIZE_t indptr_end,
+                                            INT32_t indptr_start,
+                                            INT32_t indptr_end,
                                             SIZE_t* samples,
                                             SIZE_t start,
                                             SIZE_t end,
@@ -3231,10 +3544,10 @@ cdef inline void  extract_nnz_binary_search(SIZE_t* X_indices,
     start_positive[0] = start_positive_
 
 
-cdef inline void  extract_nnz(SIZE_t* X_indices,
+cdef inline void  extract_nnz(INT32_t* X_indices,
                               DTYPE_t* X_data,
-                              SIZE_t indptr_start,
-                              SIZE_t indptr_end,
+                              INT32_t indptr_start,
+                              INT32_t indptr_end,
                               SIZE_t* index_to_color,
                               SIZE_t color,
                               SIZE_t* samples,
@@ -3247,16 +3560,16 @@ cdef inline void  extract_nnz(SIZE_t* X_indices,
                               SIZE_t* sorted_samples,
                               bint* is_samples_sorted) nogil:
 
-    cdef SIZE_t n_indices = indptr_end - indptr_start
+    cdef SIZE_t n_indices = <SIZE_t>(indptr_end - indptr_start)
     cdef SIZE_t n_samples = end - start
-
 
     # Use binary search to if n_samples * log(n_indices) <
     # n_indices and coloring technique otherwise.
     # O(n_samples * log(n_indices)) is the running time of binary
     # search and O(n_indices) is the running time of coloring
     # technique.
-    if n_samples * log(n_indices) < n_indices:
+    if (is_samples_sorted[0] * n_samples * log(n_samples) +
+            n_samples * log(n_indices) < n_indices):
         extract_nnz_binary_search(X_indices, X_data, indptr_start, indptr_end,
                                   samples, start, end, index_to_samples,
                                   Xf, end_negative, start_positive,

@@ -810,7 +810,7 @@ def test_big_input():
         assert_in("float32", str(e))
 
 
-def test_classification_X_small():
+def test_sparse_input_on_X_small():
 
     for max_features in [1, None]:
         s = DecisionTreeClassifier(random_state=0, max_features=max_features)
@@ -823,8 +823,6 @@ def test_classification_X_small():
                           "dense and sparse format gave different trees")
         assert_array_almost_equal(s.predict(X_small), d.predict(X_small))
 
-
-def test_regression__X_small():
     for max_features in [1, None]:
         s = DecisionTreeRegressor(random_state=0, max_features=max_features)
         s.fit(csc_matrix(X_small), y_small)
@@ -835,6 +833,27 @@ def test_regression__X_small():
         assert_tree_equal(d.tree_, s.tree_,
                           "dense and sparse format gave different trees")
         assert_array_almost_equal(s.predict(X_small), d.predict(X_small))
+
+
+def test_sparse_input_on_random_data():
+    rng = np.random.RandomState(0)
+    X = rng.rand(40, 10)
+    X[X < .8] = 0
+    X = csr_matrix(X)
+    y = (4 * rng.rand(40)).astype(np.int)
+
+    for name, TreeEstimator in ALL_TREES.items():
+
+        d = TreeEstimator(random_state=0).fit(X.toarray(), y)
+        if d.splitter not in SPARSE_SPLITTER:
+            continue
+
+        s = TreeEstimator(random_state=0).fit(X, y)
+
+        assert_tree_equal(d.tree_, s.tree_,
+                          "{0} with dense and sparse format gave different "
+                          "trees".format(name))
+        assert_array_almost_equal(s.predict(X), d.predict(X))
 
 
 def test_sparse_input_boston():
@@ -863,8 +882,6 @@ def test_sparse_input_boston():
                                   d.predict(boston.data))
 
 def test_sparse_input_digits():
-    X
-
     for max_leaf_nodes in [None, 10, 20]:
         d = DecisionTreeClassifier(random_state=0,
                                    max_leaf_nodes=max_leaf_nodes)
@@ -891,7 +908,6 @@ def test_sparse_input_digits():
 
 
 def test_sparse_with_various_criterion():
-
     B = datasets.load_digits()
     X_ = B.data
     y_ = B.target
