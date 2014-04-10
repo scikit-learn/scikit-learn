@@ -1985,7 +1985,7 @@ cdef inline int _add_to_frontier(PriorityHeapRecord* rec,
     """Adds record ``rec`` to the priority queue ``frontier``; returns -1
     on memory-error. """
     return frontier.push(rec.node_id, rec.start, rec.end, rec.pos, rec.depth,
-                         rec.is_leaf, rec.improvement, rec.impurity)
+                         rec.is_leaf, rec.improvement, rec.impurity, rec.impurity_left, rec.impurity_right)
 
 
 cdef class BestFirstTreeBuilder(TreeBuilder):
@@ -2084,8 +2084,9 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                     # Compute left split node
                     rc = self._add_split_node(splitter, tree,
                                               record.start, record.pos,
-                                              record.impurity, IS_NOT_FIRST,
-                                              IS_LEFT, node, record.depth + 1,
+                                              record.impurity_left,
+                                              IS_NOT_FIRST, IS_LEFT, node,
+                                              record.depth + 1,
                                               &split_node_left)
                     if rc == -1:
                         break
@@ -2095,7 +2096,8 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
 
                     # Compute right split node
                     rc = self._add_split_node(splitter, tree, record.pos,
-                                              record.end, record.impurity,
+                                              record.end,
+                                              record.impurity_right,
                                               IS_NOT_FIRST, IS_NOT_LEFT, node,
                                               record.depth + 1,
                                               &split_node_right)
@@ -2183,11 +2185,16 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
             res.pos = pos
             res.is_leaf = 0
             res.improvement = split_improvement
+            res.impurity_left = split_impurity_left
+            res.impurity_right = split_impurity_right
+
         else:
             # is leaf => 0 improvement
             res.pos = end
             res.is_leaf = 1
             res.improvement = 0.0
+            res.impurity_left = impurity
+            res.impurity_right = impurity
 
         return 0
 
