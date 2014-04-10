@@ -1985,7 +1985,8 @@ cdef inline int _add_to_frontier(PriorityHeapRecord* rec,
     """Adds record ``rec`` to the priority queue ``frontier``; returns -1
     on memory-error. """
     return frontier.push(rec.node_id, rec.start, rec.end, rec.pos, rec.depth,
-                         rec.is_leaf, rec.improvement, rec.impurity, rec.impurity_left, rec.impurity_right)
+                         rec.is_leaf, rec.improvement, rec.impurity,
+                         rec.impurity_left, rec.impurity_right)
 
 
 cdef class BestFirstTreeBuilder(TreeBuilder):
