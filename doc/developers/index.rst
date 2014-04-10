@@ -647,9 +647,11 @@ To summarize, a `__init__` should look like::
         self.param1 = param1
         self.param2 = param2
 
-There should be no logic, and the parameters should not be changed.
-The corresponding logic should be put where the parameters are used. The
-following is wrong::
+There should be no logic, not even input validation,
+and the parameters should not be changed.
+The corresponding logic should be put where the parameters are used,
+typically in ``fit``.
+The following is wrong::
 
     def __init__(self, param1=1, param2=2, param3=3):
         # WRONG: parameters should not be modified
@@ -660,8 +662,9 @@ following is wrong::
         # the argument in the constructor
         self.param3 = param2
 
-Scikit-learn relies on this mechanism to introspect objects to set
-their parameters by cross-validation.
+The reason for postponing the validation is that the same validation
+would have to be performed in ``set_params``,
+which is used in algorithms like ``GridSearchCV``.
 
 Fitting
 ^^^^^^^
