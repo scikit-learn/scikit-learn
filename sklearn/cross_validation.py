@@ -1097,7 +1097,8 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
     scores : array of float, shape=(len(list(cv)),)
         Array of scores of the estimator for each run of the cross validation.
     """
-    X, y = check_arrays(X, y, sparse_format='csr', allow_lists=True)
+    X, y = check_arrays(X, y, sparse_format='csr', allow_lists=True,
+                        allow_nans=True)
     if y is not None:
         y = np.asarray(y)
 
@@ -1408,7 +1409,7 @@ def permutation_test_score(estimator, X, y, score_func=None, cv=None,
         vol. 11
 
     """
-    X, y = check_arrays(X, y, sparse_format='csr')
+    X, y = check_arrays(X, y, sparse_format='csr', allow_nans=True)
     cv = _check_cv(cv, X, y, classifier=is_classifier(estimator))
     scorer = check_scoring(estimator, scoring=scoring, score_func=score_func)
     random_state = check_random_state(random_state)
@@ -1505,6 +1506,7 @@ def train_test_split(*arrays, **options):
     train_size = options.pop('train_size', None)
     random_state = options.pop('random_state', None)
     options['sparse_format'] = 'csr'
+    options['allow_nans'] = True
 
     if test_size is None and train_size is None:
         test_size = 0.25

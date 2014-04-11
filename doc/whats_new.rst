@@ -182,6 +182,11 @@ Changelog
      :class:`cluster.WardAgglomeration` when no samples are given,
      rather than returning meaningless clustering.
 
+   - Grid search and cross validation allow NaNs in the input arrays so that
+     preprocessors such as :class:`preprocessing.Imputer
+     <preprocessing.Imputer>` can be trained within the cross validation loop,
+     avoiding potentially skewed results.
+
 
 API changes summary
 -------------------
