@@ -211,6 +211,9 @@ def check_arrays(*arrays, **options):
     allow_lists : bool
         Allow lists of arbitrary objects as input, just check their length.
         Disables
+
+    allow_nans : boolean, False by default
+        Allows nans in the arrays
     """
     sparse_format = options.pop('sparse_format', None)
     if sparse_format not in (None, 'csr', 'csc', 'dense'):
@@ -219,6 +222,8 @@ def check_arrays(*arrays, **options):
     check_ccontiguous = options.pop('check_ccontiguous', False)
     dtype = options.pop('dtype', None)
     allow_lists = options.pop('allow_lists', False)
+    allow_nans = options.pop('allow_nans', False)
+
     if options:
         raise TypeError("Unexpected keyword arguments: %r" % options.keys())
 
@@ -254,13 +259,15 @@ def check_arrays(*arrays, **options):
                     array.data = np.ascontiguousarray(array.data, dtype=dtype)
                 else:
                     array.data = np.asarray(array.data, dtype=dtype)
-                _assert_all_finite(array.data)
+                if not allow_nans:
+                    _assert_all_finite(array.data)
             else:
                 if check_ccontiguous:
                     array = np.ascontiguousarray(array, dtype=dtype)
                 else:
                     array = np.asarray(array, dtype=dtype)
-                _assert_all_finite(array)
+                if not allow_nans:
+                    _assert_all_finite(array)
 
             if array.ndim >= 3:
                 raise ValueError("Found array with dim %d. Expected <= 2" %
