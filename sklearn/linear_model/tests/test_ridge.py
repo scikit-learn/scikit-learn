@@ -731,8 +731,11 @@ def test_deprecation_warning_dense_cholesky():
     warning_class = DeprecationWarning
     warning_message = ("The name 'dense_cholesky' is deprecated."
                        " Using 'cholesky' instead")
-    func1 = lambda: Ridge(solver='dense_cholesky')
-    func2 = lambda: RidgeClassifier(solver='dense_cholesky')
+
+    X = np.ones([2, 3])
+    y = np.ones(2)
+    func1 = lambda: Ridge(solver='dense_cholesky').fit(X, y)
+    func2 = lambda: RidgeClassifier(solver='dense_cholesky').fit(X, y)
     X = np.ones([3, 2])
     y = np.zeros(3)
     func3 = lambda: ridge_regression(X, y, alpha=1, solver='dense_cholesky')

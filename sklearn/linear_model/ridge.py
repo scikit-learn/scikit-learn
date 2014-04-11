@@ -177,6 +177,17 @@ def _solve_svd(X, y, alpha):
     return np.dot(Vt.T, d_UT_y).T
 
 
+def _deprecate_dense_cholesky(solver):
+    if solver == 'dense_cholesky':
+        import warnings
+        warnings.warn(DeprecationWarning("The name 'dense_cholesky' is "
+                                         "deprecated. Using 'cholesky' "
+                                         "instead. Changed in 0.15"))
+        solver = 'cholesky'
+
+    return solver
+
+
 def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
                      max_iter=None, tol=1e-3):
     """Solve the ridge equation by the method of normal equations.
@@ -260,12 +271,7 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         sample_weight = 1.
     has_sw = isinstance(sample_weight, np.ndarray) or sample_weight != 1.0
 
-    if solver == 'dense_cholesky':
-        import warnings
-        warnings.warn(DeprecationWarning("The name 'dense_cholesky' is "
-                                         "deprecated. Using 'cholesky' "
-                                         "instead. Changed in 0.15"))
-        solver = 'cholesky'
+    solver = _deprecate_dense_cholesky(solver)
 
     if solver == 'auto':
         # cholesky if it's a dense array and cg in
@@ -349,13 +355,6 @@ class _BaseRidge(six.with_metaclass(ABCMeta, LinearModel)):
         self.copy_X = copy_X
         self.max_iter = max_iter
         self.tol = tol
-        if solver == 'dense_cholesky':
-            import warnings
-            warnings.warn(
-                DeprecationWarning("The name 'dense_cholesky' is "
-                                   "deprecated. Using 'cholesky' "
-                                   "instead"))
-            solver = 'cholesky'
         self.solver = solver
 
     def fit(self, X, y, sample_weight=None):
@@ -371,12 +370,14 @@ class _BaseRidge(six.with_metaclass(ABCMeta, LinearModel)):
             X, y, self.fit_intercept, self.normalize, self.copy_X,
             sample_weight=sample_weight)
 
+        solver = _deprecate_dense_cholesky(self.solver)
+
         self.coef_ = ridge_regression(X, y,
                                       alpha=self.alpha,
                                       sample_weight=sample_weight,
                                       max_iter=self.max_iter,
                                       tol=self.tol,
-                                      solver=self.solver)
+                                      solver=solver)
         self._set_intercept(X_mean, y_mean, X_std)
         return self
 
