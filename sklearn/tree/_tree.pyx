@@ -1054,8 +1054,6 @@ cdef class SparseSplitter(Splitter):
 
     cdef SIZE_t n_total_samples
 
-    cdef SIZE_t current_color
-    cdef SIZE_t* index_to_color
     cdef SIZE_t* index_to_samples
     cdef SIZE_t* sorted_samples
 
@@ -1069,14 +1067,11 @@ cdef class SparseSplitter(Splitter):
 
         self.n_total_samples = 0
 
-        self.current_color = 0
-        self.index_to_color = NULL
         self.index_to_samples = NULL
         self.sorted_samples = NULL
 
     def __dealloc__(self):
         """Deallocate memory"""
-        free(self.index_to_color)
         free(self.index_to_samples)
         free(self.sorted_samples)
 
@@ -1104,30 +1099,26 @@ cdef class SparseSplitter(Splitter):
         self.n_total_samples = n_total_samples
 
         # Initialize auxiliary array used to perform split
-        cdef SIZE_t* index_to_color
         cdef SIZE_t* index_to_samples
         cdef SIZE_t* sorted_samples
 
-        index_to_color = <SIZE_t*> realloc(self.index_to_color,
-                                           n_total_samples * sizeof(SIZE_t))
         index_to_samples = <SIZE_t*> realloc(self.index_to_samples,
                                              n_total_samples * sizeof(SIZE_t))
         sorted_samples = <SIZE_t*> realloc(self.sorted_samples,
                                            n_samples * sizeof(SIZE_t))
 
-        if (index_to_color == NULL or
-                index_to_samples == NULL or
+        if (index_to_samples == NULL or
                 sorted_samples == NULL):
             raise MemoryError()
 
         cdef SIZE_t p
+
         for p in range(n_total_samples):
-            index_to_color[p] = -1
+            index_to_samples[p] = -1
 
         for p in range(n_samples):
             index_to_samples[samples[p]] = p
 
-        self.index_to_color = index_to_color
         self.index_to_samples = index_to_samples
         self.sorted_samples = sorted_samples
 
@@ -1165,7 +1156,6 @@ cdef class BestSparseSplitter(SparseSplitter):
         cdef DTYPE_t* Xf = self.feature_values
         cdef SIZE_t* sorted_samples = self.sorted_samples
         cdef SIZE_t* index_to_samples = self.index_to_samples
-        cdef SIZE_t* index_to_color = self.index_to_color
         cdef SIZE_t max_features = self.max_features
         cdef SIZE_t min_samples_leaf = self.min_samples_leaf
         cdef UINT32_t* random_state = &self.rand_r_state
@@ -1209,12 +1199,7 @@ cdef class BestSparseSplitter(SparseSplitter):
         cdef SIZE_t start_positive
         cdef SIZE_t end_negative
 
-        # Marking samples that are in the current node (samples[start:end]) with
-        # current_color, current_color is changed each time to avoid zeroing
-        # the whole `index_to_color` matrix.
-        self.current_color += 1
-        for p in range(start, end):
-            index_to_color[samples[p]] = self.current_color
+
 
         # Sample up to max_features without replacement using a
         # Fisher-Yates-based algorithm (using the local variables `f_i` and
@@ -1264,7 +1249,6 @@ cdef class BestSparseSplitter(SparseSplitter):
                 current_feature = features[f_j]
                 extract_nnz(X_indices, X_data, X_indptr[current_feature],
                             X_indptr[current_feature + 1],
-                            index_to_color, self.current_color,
                             samples, start, end, index_to_samples,  Xf,
                             &end_negative, &start_positive, sorted_samples,
                             &is_samples_sorted)
@@ -1351,7 +1335,6 @@ cdef class BestSparseSplitter(SparseSplitter):
         if best_pos < end:
             extract_nnz(X_indices, X_data, X_indptr[best_feature],
                         X_indptr[best_feature + 1],
-                        index_to_color, self.current_color,
                         samples, start, end, index_to_samples,  Xf,
                         &end_negative, &start_positive, sorted_samples,
                         &is_samples_sorted)
@@ -1437,7 +1420,6 @@ cdef class RandomSparseSplitter(SparseSplitter):
         cdef DTYPE_t* Xf = self.feature_values
         cdef SIZE_t* sorted_samples = self.sorted_samples
         cdef SIZE_t* index_to_samples = self.index_to_samples
-        cdef SIZE_t* index_to_color = self.index_to_color
         cdef SIZE_t max_features = self.max_features
         cdef SIZE_t min_samples_leaf = self.min_samples_leaf
         cdef UINT32_t* random_state = &self.rand_r_state
@@ -1482,13 +1464,6 @@ cdef class RandomSparseSplitter(SparseSplitter):
         # start_negative = start
         cdef SIZE_t start_positive
         cdef SIZE_t end_negative
-
-        # Marking samples that are in the current node (samples[start:end]) with
-        # current_color, current_color is changed each time to avoid zeroing
-        # the whole `index_to_color` matrix.
-        self.current_color += 1
-        for p in range(start, end):
-            index_to_color[samples[p]] = self.current_color
 
         # Sample up to max_features without replacement using a
         # Fisher-Yates-based algorithm (using the local variables `f_i` and
@@ -1539,7 +1514,6 @@ cdef class RandomSparseSplitter(SparseSplitter):
 
                 extract_nnz(X_indices, X_data, X_indptr[current_feature],
                             X_indptr[current_feature + 1],
-                            index_to_color, self.current_color,
                             samples, start, end, index_to_samples,  Xf,
                             &end_negative, &start_positive, sorted_samples,
                             &is_samples_sorted)
@@ -1644,7 +1618,6 @@ cdef class RandomSparseSplitter(SparseSplitter):
         if best_pos < end and current_feature != best_feature:
             extract_nnz(X_indices, X_data, X_indptr[best_feature],
                         X_indptr[best_feature + 1],
-                        index_to_color, self.current_color,
                         samples, start, end, index_to_samples,  Xf,
                         &end_negative, &start_positive, sorted_samples,
                         &is_samples_sorted)
@@ -3412,8 +3385,6 @@ cdef inline void  extra_nnz_color(INT32_t* X_indices,
                                   DTYPE_t* X_data,
                                   INT32_t indptr_start,
                                   INT32_t indptr_end,
-                                  SIZE_t* index_to_color,
-                                  SIZE_t color,
                                   SIZE_t* samples,
                                   SIZE_t start,
                                   SIZE_t end,
@@ -3431,7 +3402,7 @@ cdef inline void  extra_nnz_color(INT32_t* X_indices,
     cdef SIZE_t start_positive_ = end
 
     for k_ in range(indptr_start, indptr_end):
-        if index_to_color[X_indices[k_]] == color:
+        if start <= index_to_samples[X_indices[k_]] < end:
             if X_data[k_] > 0:
                 start_positive_ -= 1
                 Xf[start_positive_] = X_data[k_]
@@ -3548,8 +3519,6 @@ cdef inline void  extract_nnz(INT32_t* X_indices,
                               DTYPE_t* X_data,
                               INT32_t indptr_start,
                               INT32_t indptr_end,
-                              SIZE_t* index_to_color,
-                              SIZE_t color,
                               SIZE_t* samples,
                               SIZE_t start,
                               SIZE_t end,
@@ -3579,6 +3548,5 @@ cdef inline void  extract_nnz(INT32_t* X_indices,
     # Using coloring technique to extract non zero values
     else:
         extra_nnz_color(X_indices, X_data, indptr_start, indptr_end,
-                        index_to_color, color,
                         samples, start, end, index_to_samples,
                         Xf, end_negative, start_positive)
