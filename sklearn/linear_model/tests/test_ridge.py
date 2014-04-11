@@ -537,16 +537,16 @@ def test_ridge_sample_weights_in_feature_space():
 
     rng = np.random.RandomState(42)
 
-    n_sampless = [5, 6, 7] * 2
-    n_featuress = [7, 6, 5] * 2
-    n_targetss = [1, 1, 1, 2, 2, 2]
+    n_samples_list = [5, 6, 7] * 2
+    n_features_list = [7, 6, 5] * 2
+    n_targets_list = [1, 1, 1, 2, 2, 2]
     noise = 1.
     alpha = 2.
     alpha = np.atleast_1d(alpha)
 
-    for n_samples, n_features, n_targets in zip(n_sampless,
-                                                n_featuress,
-                                                n_targetss):
+    for n_samples, n_features, n_targets in zip(n_samples_list,
+                                                n_features_list,
+                                                n_targets_list):
         X = rng.randn(n_samples, n_features)
         beta = rng.randn(n_features, n_targets)
         Y = X.dot(beta)
