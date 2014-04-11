@@ -264,7 +264,7 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         import warnings
         warnings.warn(DeprecationWarning("The name 'dense_cholesky' is "
                                          "deprecated. Using 'cholesky' "
-                                         "instead"))
+                                         "instead. Changed in 0.15"))
         solver = 'cholesky'
 
     if solver == 'auto':
