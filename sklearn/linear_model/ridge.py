@@ -282,7 +282,7 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
 
     if has_sw:
         if np.atleast_1d(sample_weight).ndim > 1:
-            raise ValueError("Sample Weights must be 1D array or scalar")
+            raise ValueError("Sample weights must be 1D array or scalar")
 
         if solver != "cholesky":
             warnings.warn("sample_weight and class_weight not"
