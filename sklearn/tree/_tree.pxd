@@ -80,7 +80,7 @@ cdef class Splitter:
 
     cdef SIZE_t* samples                 # Sample indices in X, y
     cdef SIZE_t n_samples                # X.shape[0]
-    cdef double weighted_n_samples       # Weighter number of samples
+    cdef double weighted_n_samples       # Weighted number of samples
     cdef SIZE_t* features                # Feature indices in X
     cdef SIZE_t* constant_features       # Constant features indices
     cdef SIZE_t n_features               # X.shape[1]
