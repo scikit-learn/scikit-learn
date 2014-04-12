@@ -294,6 +294,11 @@ def test_ransac_default_residual_threshold():
 
 
 def test_ransac_dynamic_max_trials():
+    # Numbers hand-calculated and confirmed on page 119 (Table 4.3) in
+    #   Hartley, R.~I. and Zisserman, A., 2004,
+    #   Multiple View Geometry in Computer Vision, Second Edition,
+    #   Cambridge University Press, ISBN: 0521540518
+
     # e = 0%, min_samples = X
     assert_equal(_dynamic_max_trials(100, 100, 2, 0.99), 1)
 
