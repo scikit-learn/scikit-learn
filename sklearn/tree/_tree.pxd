@@ -31,7 +31,6 @@ cdef class Criterion:
     cdef DOUBLE_t* y                     # Values of y
     cdef SIZE_t y_stride                 # Stride in y (since n_outputs >= 1)
     cdef DOUBLE_t* sample_weight         # Sample weights
-    cdef double weighted_n_samples
 
     cdef SIZE_t* samples                 # Sample indices in X, y
     cdef SIZE_t start                    # samples[start:pos] are the samples in the left node
@@ -139,13 +138,13 @@ cdef class Splitter:
 cdef struct Node:
     # Base storage structure for the nodes in a Tree object
 
-    SIZE_t left_child               # id of the left child of the node
-    SIZE_t right_child              # id of the right child of the node
-    SIZE_t feature                  # Feature used for splitting the node
-    DOUBLE_t threshold              # Threshold value at the node
-    DOUBLE_t impurity               # Impurity of the node (i.e., the value of the criterion)
-    SIZE_t n_samples                # Number of samples at the node
-    DOUBLE_t weighted_n_samples     # Weighted number of samples at the node
+    SIZE_t left_child                    # id of the left child of the node
+    SIZE_t right_child                   # id of the right child of the node
+    SIZE_t feature                       # Feature used for splitting the node
+    DOUBLE_t threshold                   # Threshold value at the node
+    DOUBLE_t impurity                    # Impurity of the node (i.e., the value of the criterion)
+    SIZE_t n_node_samples                # Number of samples at the node
+    DOUBLE_t weighted_n_node_samples     # Weighted number of samples at the node
 
 cdef class Tree:
     # The Tree object is a binary tree structure constructed by the
