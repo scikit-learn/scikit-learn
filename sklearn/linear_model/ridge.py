@@ -707,7 +707,7 @@ class _RidgeGCV(LinearModel):
             G_diag = G_diag[:, np.newaxis]
         return y - (c / G_diag), c
 
-    def fit(self, X, y, sample_weight=1.0):
+    def fit(self, X, y, sample_weight=None):
         """Fit Ridge regression model
 
         Parameters
@@ -772,10 +772,13 @@ class _RidgeGCV(LinearModel):
         error = scorer is None
 
         for i, alpha in enumerate(self.alphas):
+            weighted_alpha = (sample_weight * alpha
+                              if sample_weight is not None
+                              else alpha)
             if error:
-                out, c = _errors(sample_weight * alpha, y, v, Q, QT_y)
+                out, c = _errors(weighted_alpha, y, v, Q, QT_y)
             else:
-                out, c = _values(sample_weight * alpha, y, v, Q, QT_y)
+                out, c = _values(weighted_alpha, y, v, Q, QT_y)
             cv_values[:, i] = out.ravel()
             C.append(c)
 
@@ -825,7 +828,7 @@ class _BaseRidgeCV(LinearModel):
         self.gcv_mode = gcv_mode
         self.store_cv_values = store_cv_values
 
-    def fit(self, X, y, sample_weight=1.0):
+    def fit(self, X, y, sample_weight=None):
         """Fit Ridge regression model
 
         Parameters
@@ -1030,7 +1033,7 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
             score_func=score_func, loss_func=loss_func, cv=cv)
         self.class_weight = class_weight
 
-    def fit(self, X, y, sample_weight=1.0, class_weight=None):
+    def fit(self, X, y, sample_weight=None, class_weight=None):
         """Fit the ridge classifier.
 
         Parameters
@@ -1063,6 +1066,8 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
                           " Using it in the 'fit' method is deprecated and "
                           "will be removed in 0.15.", DeprecationWarning,
                           stacklevel=2)
+        if sample_weight is None:
+            sample_weight = 1.
 
         self._label_binarizer = LabelBinarizer(pos_label=1, neg_label=-1)
         Y = self._label_binarizer.fit_transform(y)
