@@ -119,8 +119,14 @@ cdef class Criterion:
         pass
 
     cdef double impurity_improvement(self, double impurity, double normalizer) nogil:
-        """Impurity improvement, i.e.
-           p(t) * (impurity - (left impurity + right impurity))."""
+        """Weighted impurity improvement, i.e.
+
+           N_t / N * (impurity - N_t_L / N_t * left impurity
+                               - N_t_L / N_t * right impurity),
+
+           where N is the total number of samples, N_t is the number of samples
+           in the current node, N_t_L is the number of samples in the left
+           child and N_t_R is the number of samples in the right child."""
         cdef double impurity_left
         cdef double impurity_right
 
@@ -945,7 +951,7 @@ cdef class Splitter:
             raise MemoryError()
 
         cdef SIZE_t i, j
-        cdef double weighted_n_samples = 0
+        cdef double weighted_n_samples = 0.0
         j = 0
 
         for i in range(n_samples):
@@ -957,7 +963,7 @@ cdef class Splitter:
             if sample_weight != NULL:
                 weighted_n_samples += sample_weight[i]
             else:
-                weighted_n_samples += 1
+                weighted_n_samples += 1.0
 
         self.samples = samples
         self.n_samples = j
