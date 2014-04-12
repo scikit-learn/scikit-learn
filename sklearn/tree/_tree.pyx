@@ -1056,6 +1056,7 @@ cdef class BestSplitter(Splitter):
         cdef DTYPE_t* Xf = self.feature_values
         cdef SIZE_t X_sample_stride = self.X_sample_stride
         cdef SIZE_t X_fx_stride = self.X_fx_stride
+        cdef double weighted_n_samples = self.weighted_n_samples
         cdef SIZE_t max_features = self.max_features
         cdef SIZE_t min_samples_leaf = self.min_samples_leaf
         cdef UINT32_t* random_state = &self.rand_r_state
@@ -1180,7 +1181,7 @@ cdef class BestSplitter(Splitter):
                                 continue
 
                             self.criterion.update(current_pos)
-                            current_improvement = self.criterion.impurity_improvement(impurity, self.weighted_n_samples)
+                            current_improvement = self.criterion.impurity_improvement(impurity, weighted_n_samples)
 
                             if current_improvement > best_improvement:
                                 self.criterion.children_impurity(&current_impurity_left,
@@ -1372,6 +1373,7 @@ cdef class RandomSplitter(Splitter):
         cdef DTYPE_t* Xf = self.feature_values
         cdef SIZE_t X_sample_stride = self.X_sample_stride
         cdef SIZE_t X_fx_stride = self.X_fx_stride
+        cdef double weighted_n_samples = self.weighted_n_samples
         cdef SIZE_t max_features = self.max_features
         cdef SIZE_t min_samples_leaf = self.min_samples_leaf
         cdef UINT32_t* random_state = &self.rand_r_state
@@ -1515,7 +1517,7 @@ cdef class RandomSplitter(Splitter):
                     # Evaluate split
                     self.criterion.reset()
                     self.criterion.update(current_pos)
-                    current_improvement = self.criterion.impurity_improvement(impurity, self.weighted_n_samples)
+                    current_improvement = self.criterion.impurity_improvement(impurity, weighted_n_samples)
 
                     if current_improvement > best_improvement:
                         self.criterion.children_impurity(&current_impurity_left,
@@ -1641,6 +1643,7 @@ cdef class PresortBestSplitter(Splitter):
         cdef SIZE_t X_argsorted_stride = self.X_argsorted_stride
         cdef SIZE_t n_total_samples = self.n_total_samples
         cdef unsigned char* sample_mask = self.sample_mask
+        cdef double weighted_n_samples = self.weighted_n_samples
 
         cdef SIZE_t max_features = self.max_features
         cdef SIZE_t min_samples_leaf = self.min_samples_leaf
@@ -1770,7 +1773,7 @@ cdef class PresortBestSplitter(Splitter):
                                 continue
 
                             self.criterion.update(current_pos)
-                            current_improvement = self.criterion.impurity_improvement(impurity, self.weighted_n_samples)
+                            current_improvement = self.criterion.impurity_improvement(impurity, weighted_n_samples)
 
                             if current_improvement > best_improvement:
                                 self.criterion.children_impurity(&current_impurity_left,
