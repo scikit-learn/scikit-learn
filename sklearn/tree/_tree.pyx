@@ -118,19 +118,17 @@ cdef class Criterion:
         """Compute the node value of samples[start:end] into dest."""
         pass
 
-    cdef double impurity_improvement(self, double impurity) nogil:
+    cdef double impurity_improvement(self, double impurity, double normalizer) nogil:
         """Impurity improvement, i.e.
-           impurity - (left impurity + right impurity)."""
+           p(t) * (impurity - (left impurity + right impurity))."""
         cdef double impurity_left
         cdef double impurity_right
 
         self.children_impurity(&impurity_left, &impurity_right)
 
-        return (impurity -
-                (self.weighted_n_right / self.weighted_n_node_samples *
-                 impurity_right) -
-                (self.weighted_n_left / self.weighted_n_node_samples *
-                 impurity_left))
+        return ((self.weighted_n_node_samples / normalizer) *
+                (impurity - self.weighted_n_right / self.weighted_n_node_samples * impurity_right
+                          - self.weighted_n_left / self.weighted_n_node_samples * impurity_left))
 
 
 cdef class ClassificationCriterion(Criterion):
@@ -477,7 +475,7 @@ cdef class Gini(ClassificationCriterion):
             gini = 0.0
 
             for c in range(n_classes[k]):
-                tmp = label_count_total[c]  # TODO: use weighted count instead
+                tmp = label_count_total[c]
                 gini += tmp * tmp
 
             gini = 1.0 - gini / (weighted_n_node_samples *
@@ -517,7 +515,7 @@ cdef class Gini(ClassificationCriterion):
             gini_right = 0.0
 
             for c in range(n_classes[k]):
-                tmp = label_count_left[c]   # TODO: use weighted count instead
+                tmp = label_count_left[c]
                 gini_left += tmp * tmp
                 tmp = label_count_right[c]
                 gini_right += tmp * tmp
@@ -867,7 +865,8 @@ cdef class FriedmanMSE(MSE):
         improvement = n_left * n_right * diff^2 / (n_left + n_right)
     """
 
-    cdef double impurity_improvement(self, double impurity) nogil:
+    cdef double impurity_improvement(self, double impurity,
+                                     double normalizer) nogil:
         cdef SIZE_t n_outputs = self.n_outputs
         cdef SIZE_t k
         cdef double* sum_left = self.sum_left
@@ -946,6 +945,7 @@ cdef class Splitter:
             raise MemoryError()
 
         cdef SIZE_t i, j
+        cdef double weighted_n_samples = 0
         j = 0
 
         for i in range(n_samples):
@@ -954,8 +954,14 @@ cdef class Splitter:
                 samples[j] = i
                 j += 1
 
+            if sample_weight != NULL:
+                weighted_n_samples += sample_weight[i]
+            else:
+                weighted_n_samples += 1
+
         self.samples = samples
         self.n_samples = j
+        self.weighted_n_samples = weighted_n_samples
 
         cdef SIZE_t n_features = X.shape[1]
         cdef SIZE_t* features = <SIZE_t*> realloc(self.features,
@@ -1168,7 +1174,7 @@ cdef class BestSplitter(Splitter):
                                 continue
 
                             self.criterion.update(current_pos)
-                            current_improvement = self.criterion.impurity_improvement(impurity)
+                            current_improvement = self.criterion.impurity_improvement(impurity, self.weighted_n_samples)
 
                             if current_improvement > best_improvement:
                                 self.criterion.children_impurity(&current_impurity_left,
@@ -1503,7 +1509,7 @@ cdef class RandomSplitter(Splitter):
                     # Evaluate split
                     self.criterion.reset()
                     self.criterion.update(current_pos)
-                    current_improvement = self.criterion.impurity_improvement(impurity)
+                    current_improvement = self.criterion.impurity_improvement(impurity, self.weighted_n_samples)
 
                     if current_improvement > best_improvement:
                         self.criterion.children_impurity(&current_impurity_left,
@@ -1758,7 +1764,7 @@ cdef class PresortBestSplitter(Splitter):
                                 continue
 
                             self.criterion.update(current_pos)
-                            current_improvement = self.criterion.impurity_improvement(impurity)
+                            current_improvement = self.criterion.impurity_improvement(impurity, self.weighted_n_samples)
 
                             if current_improvement > best_improvement:
                                 self.criterion.children_impurity(&current_impurity_left,

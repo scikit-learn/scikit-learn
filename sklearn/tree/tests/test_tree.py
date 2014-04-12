@@ -624,7 +624,7 @@ def test_sample_weight():
     clf.fit(X, y, sample_weight=sample_weight)
     assert_equal(clf.tree_.threshold[0], 149.5)
 
-    sample_weight[y == 2] = .50  # Samples of class '2' are no longer weightier
+    sample_weight[y == 2] = .5  # Samples of class '2' are no longer weightier
     clf = DecisionTreeClassifier(max_depth=1, random_state=0)
     clf.fit(X, y, sample_weight=sample_weight)
     assert_equal(clf.tree_.threshold[0], 49.5)  # Threshold should have moved
