@@ -39,6 +39,7 @@ cdef class Criterion:
 
     cdef SIZE_t n_outputs                # Number of outputs
     cdef SIZE_t n_node_samples           # Number of samples in the node (end-start)
+    cdef double weighted_n_samples       # Weighted number of samples (in total)
     cdef double weighted_n_node_samples  # Weighted number of samples in the node
     cdef double weighted_n_left          # Weighted number of samples in the left node
     cdef double weighted_n_right         # Weighted number of samples in the right node
@@ -48,15 +49,15 @@ cdef class Criterion:
 
     # Methods
     cdef void init(self, DOUBLE_t* y, SIZE_t y_stride, DOUBLE_t* sample_weight,
-                   SIZE_t* samples, SIZE_t start, SIZE_t end) nogil
+                   double weighted_n_samples, SIZE_t* samples, SIZE_t start,
+                   SIZE_t end) nogil
     cdef void reset(self) nogil
     cdef void update(self, SIZE_t new_pos) nogil
     cdef double node_impurity(self) nogil
     cdef void children_impurity(self, double* impurity_left,
                                 double* impurity_right) nogil
     cdef void node_value(self, double* dest) nogil
-    cdef double impurity_improvement(self, double impurity,
-                                     double weighted_n_samples) nogil
+    cdef double impurity_improvement(self, double impurity) nogil
 
 
 # =============================================================================
