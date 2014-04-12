@@ -42,7 +42,11 @@ def _dynamic_max_trials(n_inliers, n_samples, min_samples, probability):
     inlier_ratio = n_inliers / float(n_samples)
     nom = max(EPS, 1 - probability)
     denom = max(EPS, 1 - inlier_ratio ** min_samples)
-    return int(np.ceil(np.log(nom) / np.log(denom)))
+    if nom == 1:
+        return 0
+    if denom == 1:
+        return float('inf')
+    return abs(float(np.ceil(np.log(nom) / np.log(denom))))
 
 
 class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
@@ -109,7 +113,7 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
     stop_score : float, optional
         Stop iteration if score is greater equal than this threshold.
 
-    stop_probability : float, optional
+    stop_probability : float in range [0, 1], optional
         RANSAC iteration stops if at least one outlier-free set of the training
         data is sampled in RANSAC. This requires to generate at least N
         samples (iterations)::
@@ -209,6 +213,9 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
         if min_samples > X.shape[0]:
             raise ValueError("`min_samples` may not be larger than number "
                              "of samples ``X.shape[0]``.")
+
+        if self.stop_probability < 0 or self.stop_probability > 1:
+            raise ValueError("`stop_probability` must be in range [0, 1].")
 
         if self.residual_threshold is None:
             # MAD (median absolute deviation)

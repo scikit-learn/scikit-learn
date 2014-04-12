@@ -320,6 +320,18 @@ def test_ransac_dynamic_max_trials():
     # e = 50%, min_samples = 8
     assert_equal(_dynamic_max_trials(50, 100, 8, 0.99), 1177)
 
+    # e = 0%, min_samples = 10
+    assert_equal(_dynamic_max_trials(1, 100, 10, 0), 0)
+    assert_equal(_dynamic_max_trials(1, 100, 10, 1), float('inf'))
+
+    base_estimator = LinearRegression()
+    ransac_estimator = RANSACRegressor(base_estimator, min_samples=2,
+                                       stop_probability=-0.1)
+    assert_raises(ValueError, ransac_estimator.fit, X, y)
+    ransac_estimator = RANSACRegressor(base_estimator, min_samples=2,
+                                       stop_probability=1.1)
+    assert_raises(ValueError, ransac_estimator.fit, X, y)
+
 
 if __name__ == "__main__":
     np.testing.run_module_suite()
