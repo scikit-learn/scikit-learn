@@ -2530,14 +2530,14 @@ cdef class Tree:
             node += 1
 
         importances = importances / nodes[0].weighted_n_node_samples
-        cdef double weighted_n_samples
+        cdef double normalizer
 
         if normalize:
-            weighted_n_samples = np.sum(importances)
+            normalizer = np.sum(importances)
 
-            if weighted_n_samples > 0.0:
+            if normalizer > 0.0:
                 # Avoid dividing by zero (e.g., when root is pure)
-                importances /= weighted_n_samples
+                importances /= normalizer
 
         return importances
 
