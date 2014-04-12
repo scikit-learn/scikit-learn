@@ -89,7 +89,8 @@ cdef class Criterion:
     """Interface for impurity criteria."""
 
     cdef void init(self, DOUBLE_t* y, SIZE_t y_stride, DOUBLE_t* sample_weight,
-                   SIZE_t* samples, SIZE_t start, SIZE_t end) nogil:
+                   double weighted_n_samples, SIZE_t* samples, SIZE_t start,
+                   SIZE_t end) nogil:
         """Initialize the criterion at node samples[start:end] and
            children samples[start:start] and samples[start:end]."""
         pass
@@ -118,8 +119,7 @@ cdef class Criterion:
         """Compute the node value of samples[start:end] into dest."""
         pass
 
-    cdef double impurity_improvement(self, double impurity,
-                                     double weighted_n_samples) nogil:
+    cdef double impurity_improvement(self, double impurity) nogil:
         """Weighted impurity improvement, i.e.
 
            N_t / N * (impurity - N_t_L / N_t * left impurity
@@ -133,7 +133,7 @@ cdef class Criterion:
 
         self.children_impurity(&impurity_left, &impurity_right)
 
-        return ((self.weighted_n_node_samples / weighted_n_samples) *
+        return ((self.weighted_n_node_samples / self.weighted_n_samples) *
                 (impurity - self.weighted_n_right / self.weighted_n_node_samples * impurity_right
                           - self.weighted_n_left / self.weighted_n_node_samples * impurity_left))
 
@@ -216,8 +216,8 @@ cdef class ClassificationCriterion(Criterion):
         pass
 
     cdef void init(self, DOUBLE_t* y, SIZE_t y_stride,
-                   DOUBLE_t* sample_weight, SIZE_t* samples,
-                   SIZE_t start, SIZE_t end) nogil:
+                   DOUBLE_t* sample_weight, double weighted_n_samples,
+                   SIZE_t* samples, SIZE_t start, SIZE_t end) nogil:
         """Initialize the criterion at node samples[start:end] and
            children samples[start:start] and samples[start:end]."""
         # Initialize fields
@@ -228,6 +228,7 @@ cdef class ClassificationCriterion(Criterion):
         self.start = start
         self.end = end
         self.n_node_samples = end - start
+        self.weighted_n_samples = weighted_n_samples
         cdef double weighted_n_node_samples = 0.0
 
         # Initialize label_count_total and weighted_n_node_samples
@@ -642,7 +643,8 @@ cdef class RegressionCriterion(Criterion):
         pass
 
     cdef void init(self, DOUBLE_t* y, SIZE_t y_stride, DOUBLE_t* sample_weight,
-                   SIZE_t* samples, SIZE_t start, SIZE_t end) nogil:
+                   double weighted_n_samples, SIZE_t* samples, SIZE_t start,
+                   SIZE_t end) nogil:
         """Initialize the criterion at node samples[start:end] and
            children samples[start:start] and samples[start:end]."""
         # Initialize fields
@@ -653,6 +655,7 @@ cdef class RegressionCriterion(Criterion):
         self.start = start
         self.end = end
         self.n_node_samples = end - start
+        self.weighted_n_samples = weighted_n_samples
         cdef double weighted_n_node_samples = 0.
 
         # Initialize accumulators
@@ -872,8 +875,7 @@ cdef class FriedmanMSE(MSE):
         improvement = n_left * n_right * diff^2 / (n_left + n_right)
     """
 
-    cdef double impurity_improvement(self, double impurity,
-                                     double weighted_n_samples) nogil:
+    cdef double impurity_improvement(self, double impurity) nogil:
         cdef SIZE_t n_outputs = self.n_outputs
         cdef SIZE_t k
         cdef double* sum_left = self.sum_left
@@ -1007,6 +1009,7 @@ cdef class Splitter:
         self.criterion.init(self.y,
                             self.y_stride,
                             self.sample_weight,
+                            self.weighted_n_samples,
                             self.samples,
                             start,
                             end)
@@ -1182,7 +1185,7 @@ cdef class BestSplitter(Splitter):
                                 continue
 
                             self.criterion.update(current_pos)
-                            current_improvement = self.criterion.impurity_improvement(impurity, weighted_n_samples)
+                            current_improvement = self.criterion.impurity_improvement(impurity)
 
                             if current_improvement > best_improvement:
                                 self.criterion.children_impurity(&current_impurity_left,
@@ -1518,7 +1521,7 @@ cdef class RandomSplitter(Splitter):
                     # Evaluate split
                     self.criterion.reset()
                     self.criterion.update(current_pos)
-                    current_improvement = self.criterion.impurity_improvement(impurity, weighted_n_samples)
+                    current_improvement = self.criterion.impurity_improvement(impurity)
 
                     if current_improvement > best_improvement:
                         self.criterion.children_impurity(&current_impurity_left,
@@ -1774,7 +1777,7 @@ cdef class PresortBestSplitter(Splitter):
                                 continue
 
                             self.criterion.update(current_pos)
-                            current_improvement = self.criterion.impurity_improvement(impurity, weighted_n_samples)
+                            current_improvement = self.criterion.impurity_improvement(impurity)
 
                             if current_improvement > best_improvement:
                                 self.criterion.children_impurity(&current_impurity_left,
