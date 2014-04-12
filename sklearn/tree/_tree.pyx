@@ -118,7 +118,8 @@ cdef class Criterion:
         """Compute the node value of samples[start:end] into dest."""
         pass
 
-    cdef double impurity_improvement(self, double impurity, double normalizer) nogil:
+    cdef double impurity_improvement(self, double impurity,
+                                     double weighted_n_samples) nogil:
         """Weighted impurity improvement, i.e.
 
            N_t / N * (impurity - N_t_L / N_t * left impurity
@@ -132,7 +133,7 @@ cdef class Criterion:
 
         self.children_impurity(&impurity_left, &impurity_right)
 
-        return ((self.weighted_n_node_samples / normalizer) *
+        return ((self.weighted_n_node_samples / weighted_n_samples) *
                 (impurity - self.weighted_n_right / self.weighted_n_node_samples * impurity_right
                           - self.weighted_n_left / self.weighted_n_node_samples * impurity_left))
 
@@ -872,7 +873,7 @@ cdef class FriedmanMSE(MSE):
     """
 
     cdef double impurity_improvement(self, double impurity,
-                                     double normalizer) nogil:
+                                     double weighted_n_samples) nogil:
         cdef SIZE_t n_outputs = self.n_outputs
         cdef SIZE_t k
         cdef double* sum_left = self.sum_left
@@ -2529,14 +2530,14 @@ cdef class Tree:
             node += 1
 
         importances = importances / nodes[0].weighted_n_node_samples
-        cdef double normalizer
+        cdef double weighted_n_samples
 
         if normalize:
-            normalizer = np.sum(importances)
+            weighted_n_samples = np.sum(importances)
 
-            if normalizer > 0.0:
+            if weighted_n_samples > 0.0:
                 # Avoid dividing by zero (e.g., when root is pure)
-                importances /= normalizer
+                importances /= weighted_n_samples
 
         return importances
 
