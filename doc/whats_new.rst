@@ -182,6 +182,10 @@ Changelog
      :class:`cluster.WardAgglomeration` when no samples are given,
      rather than returning meaningless clustering.
 
+   - Ridge regression can now deal with sample weights in feature space 
+     (only sample space until then). By `Michael Eickenberg`_. 
+     Both solutions are provided by the Cholesky solver. 
+
 
 API changes summary
 -------------------
