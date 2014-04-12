@@ -120,8 +120,9 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
 
             N >= log(1 - probability) / log(1 - e**m)
 
-        where the probability (confidence) is typically set to > 0.95 and e is
-        the current fraction of inliers w.r.t. the total number of samples.
+        where the probability (confidence) is typically set to high value such
+        as 0.99 (the default) and e is the current fraction of inliers w.r.t.
+        the total number of samples.
 
     residual_metric : callable, optional
         Metric to reduce the dimensionality of the residuals to 1 for
