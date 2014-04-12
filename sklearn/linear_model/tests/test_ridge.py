@@ -597,11 +597,11 @@ def test_raises_value_error_if_sample_weights_greater_than_1d():
             ridge.fit(X, y, sample_weights_not_OK_2)
 
         assert_raise_message(ValueError,
-                              "Sample Weights must be 1D array or scalar",
+                              "Sample weights must be 1D array or scalar",
                               fit_ridge_not_ok)
 
         assert_raise_message(ValueError,
-                              "Sample Weights must be 1D array or scalar",
+                              "Sample weights must be 1D array or scalar",
                               fit_ridge_not_ok_2)
 
 
@@ -685,11 +685,11 @@ def test_raises_value_error_if_sample_weights_greater_than_1d():
             ridge.fit(X, y, sample_weights_not_OK_2)
 
         assert_raise_message(ValueError,
-                              "Sample Weights must be 1D array or scalar",
+                              "Sample weights must be 1D array or scalar",
                               fit_ridge_not_ok)
 
         assert_raise_message(ValueError,
-                              "Sample Weights must be 1D array or scalar",
+                              "Sample weights must be 1D array or scalar",
                               fit_ridge_not_ok_2)
 
 

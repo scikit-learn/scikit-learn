@@ -89,8 +89,7 @@ def _solve_cholesky(X, y, alpha, sample_weight=None):
     n_samples, n_features = X.shape
     n_targets = y.shape[1]
 
-    has_sw = (sample_weight is not None) and (
-        isinstance(sample_weight, np.ndarray) or sample_weight != 1.)
+    has_sw = sample_weight is not None
 
     if has_sw:
         sample_weight = sample_weight * np.ones(n_samples)
@@ -126,8 +125,7 @@ def _solve_cholesky_kernel(K, y, alpha, sample_weight=None):
 
     one_alpha = np.array_equal(alpha, len(alpha) * [alpha[0]])
 
-    has_sw = (sample_weight is not None) and (
-        isinstance(sample_weight, np.ndarray) or sample_weight != 1.0)
+    has_sw = sample_weight is not None
 
     if has_sw:
         sw = np.sqrt(np.atleast_1d(sample_weight))
@@ -267,9 +265,7 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         raise ValueError("Number of samples in X and y does not correspond:"
                          " %d != %d" % (n_samples, n_samples_))
 
-    if sample_weight is None:
-        sample_weight = 1.
-    has_sw = isinstance(sample_weight, np.ndarray) or sample_weight != 1.0
+    has_sw = sample_weight is not None
 
     solver = _deprecate_dense_cholesky(solver)
 
@@ -361,10 +357,9 @@ class _BaseRidge(six.with_metaclass(ABCMeta, LinearModel)):
         X = safe_asarray(X, dtype=np.float)
         y = np.asarray(y, dtype=np.float)
 
-        if sample_weight is None:
-            sample_weight = 1.
-        if np.atleast_1d(sample_weight).ndim > 1:
-            raise ValueError("Sample Weights must be 1D array or scalar")
+        if ((sample_weight is not None) and
+            np.atleast_1d(sample_weight).ndim > 1):
+            raise ValueError("Sample weights must be 1D array or scalar")
 
         X, y, X_mean, y_mean, X_std = self._center_data(
             X, y, self.fit_intercept, self.normalize, self.copy_X,
@@ -470,7 +465,7 @@ class Ridge(_BaseRidge, RegressorMixin):
                                     normalize=normalize, copy_X=copy_X,
                                     max_iter=max_iter, tol=tol, solver=solver)
 
-    def fit(self, X, y, sample_weight=1.0):
+    def fit(self, X, y, sample_weight=None):
         """Fit Ridge regression model
 
         Parameters
@@ -584,7 +579,7 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
             # get the class weight corresponding to each sample
             sample_weight = cw[np.searchsorted(self.classes_, y)]
         else:
-            sample_weight = 1.0
+            sample_weight = None
 
         super(RidgeClassifier, self).fit(X, Y, sample_weight=sample_weight)
         return self
