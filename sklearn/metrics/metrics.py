@@ -762,7 +762,7 @@ def precision_recall_curve(y_true, probas_pred, pos_label=None,
     probas_pred : array, shape = [n_samples]
         Estimated probabilities or decision function.
 
-    pos_label : int, optional (default=1)
+    pos_label : int, optional (default=None)
         The label of the positive class
 
     sample_weight : array-like of shape = [n_samples], optional
