@@ -661,7 +661,7 @@ def test_predict_proba_disabled():
 def test_grid_search_allows_nans():
     """ Test GridSearchCV with Imputer """
     X = np.arange(20, dtype=np.float64).reshape(5, -1)
-    X[2, :] = np.inf
+    X[2, :] = np.nan
     y = [0, 0, 1, 1, 1]
     p = Pipeline([
         ('imputer', Imputer(strategy='mean', missing_values='NaN')),
