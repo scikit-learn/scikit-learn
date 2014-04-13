@@ -66,7 +66,7 @@ cdef enum:
 # Repeat struct definition for numpy
 NODE_DTYPE = np.dtype({
     'names': ['left_child', 'right_child', 'feature', 'threshold', 'impurity',
-              'n_samples', 'weighted_n_samples'],
+              'n_node_samples', 'weighted_n_node_samples'],
     'formats': [np.intp, np.intp, np.intp, np.float64, np.float64, np.intp,
                 np.float64],
     'offsets': [
@@ -75,8 +75,8 @@ NODE_DTYPE = np.dtype({
         <Py_ssize_t> &(<Node*> NULL).feature,
         <Py_ssize_t> &(<Node*> NULL).threshold,
         <Py_ssize_t> &(<Node*> NULL).impurity,
-        <Py_ssize_t> &(<Node*> NULL).n_samples,
-        <Py_ssize_t> &(<Node*> NULL).weighted_n_samples
+        <Py_ssize_t> &(<Node*> NULL).n_node_samples,
+        <Py_ssize_t> &(<Node*> NULL).weighted_n_node_samples
     ]
 })
 
@@ -89,7 +89,8 @@ cdef class Criterion:
     """Interface for impurity criteria."""
 
     cdef void init(self, DOUBLE_t* y, SIZE_t y_stride, DOUBLE_t* sample_weight,
-                   SIZE_t* samples, SIZE_t start, SIZE_t end) nogil:
+                   double weighted_n_samples, SIZE_t* samples, SIZE_t start,
+                   SIZE_t end) nogil:
         """Initialize the criterion at node samples[start:end] and
            children samples[start:start] and samples[start:end]."""
         pass
@@ -119,18 +120,22 @@ cdef class Criterion:
         pass
 
     cdef double impurity_improvement(self, double impurity) nogil:
-        """Impurity improvement, i.e.
-           impurity - (left impurity + right impurity)."""
+        """Weighted impurity improvement, i.e.
+
+           N_t / N * (impurity - N_t_L / N_t * left impurity
+                               - N_t_L / N_t * right impurity),
+
+           where N is the total number of samples, N_t is the number of samples
+           in the current node, N_t_L is the number of samples in the left
+           child and N_t_R is the number of samples in the right child."""
         cdef double impurity_left
         cdef double impurity_right
 
         self.children_impurity(&impurity_left, &impurity_right)
 
-        return (impurity -
-                (self.weighted_n_right / self.weighted_n_node_samples *
-                 impurity_right) -
-                (self.weighted_n_left / self.weighted_n_node_samples *
-                 impurity_left))
+        return ((self.weighted_n_node_samples / self.weighted_n_samples) *
+                (impurity - self.weighted_n_right / self.weighted_n_node_samples * impurity_right
+                          - self.weighted_n_left / self.weighted_n_node_samples * impurity_left))
 
 
 cdef class ClassificationCriterion(Criterion):
@@ -211,8 +216,8 @@ cdef class ClassificationCriterion(Criterion):
         pass
 
     cdef void init(self, DOUBLE_t* y, SIZE_t y_stride,
-                   DOUBLE_t* sample_weight, SIZE_t* samples,
-                   SIZE_t start, SIZE_t end) nogil:
+                   DOUBLE_t* sample_weight, double weighted_n_samples,
+                   SIZE_t* samples, SIZE_t start, SIZE_t end) nogil:
         """Initialize the criterion at node samples[start:end] and
            children samples[start:start] and samples[start:end]."""
         # Initialize fields
@@ -223,6 +228,7 @@ cdef class ClassificationCriterion(Criterion):
         self.start = start
         self.end = end
         self.n_node_samples = end - start
+        self.weighted_n_samples = weighted_n_samples
         cdef double weighted_n_node_samples = 0.0
 
         # Initialize label_count_total and weighted_n_node_samples
@@ -477,7 +483,7 @@ cdef class Gini(ClassificationCriterion):
             gini = 0.0
 
             for c in range(n_classes[k]):
-                tmp = label_count_total[c]  # TODO: use weighted count instead
+                tmp = label_count_total[c]
                 gini += tmp * tmp
 
             gini = 1.0 - gini / (weighted_n_node_samples *
@@ -517,7 +523,7 @@ cdef class Gini(ClassificationCriterion):
             gini_right = 0.0
 
             for c in range(n_classes[k]):
-                tmp = label_count_left[c]   # TODO: use weighted count instead
+                tmp = label_count_left[c]
                 gini_left += tmp * tmp
                 tmp = label_count_right[c]
                 gini_right += tmp * tmp
@@ -637,7 +643,8 @@ cdef class RegressionCriterion(Criterion):
         pass
 
     cdef void init(self, DOUBLE_t* y, SIZE_t y_stride, DOUBLE_t* sample_weight,
-                   SIZE_t* samples, SIZE_t start, SIZE_t end) nogil:
+                   double weighted_n_samples, SIZE_t* samples, SIZE_t start,
+                   SIZE_t end) nogil:
         """Initialize the criterion at node samples[start:end] and
            children samples[start:start] and samples[start:end]."""
         # Initialize fields
@@ -648,6 +655,7 @@ cdef class RegressionCriterion(Criterion):
         self.start = start
         self.end = end
         self.n_node_samples = end - start
+        self.weighted_n_samples = weighted_n_samples
         cdef double weighted_n_node_samples = 0.
 
         # Initialize accumulators
@@ -946,6 +954,7 @@ cdef class Splitter:
             raise MemoryError()
 
         cdef SIZE_t i, j
+        cdef double weighted_n_samples = 0.0
         j = 0
 
         for i in range(n_samples):
@@ -954,8 +963,14 @@ cdef class Splitter:
                 samples[j] = i
                 j += 1
 
+            if sample_weight != NULL:
+                weighted_n_samples += sample_weight[i]
+            else:
+                weighted_n_samples += 1.0
+
         self.samples = samples
         self.n_samples = j
+        self.weighted_n_samples = weighted_n_samples
 
         cdef SIZE_t n_features = X.shape[1]
         cdef SIZE_t* features = <SIZE_t*> realloc(self.features,
@@ -994,6 +1009,7 @@ cdef class Splitter:
         self.criterion.init(self.y,
                             self.y_stride,
                             self.sample_weight,
+                            self.weighted_n_samples,
                             self.samples,
                             start,
                             end)
@@ -2255,7 +2271,7 @@ cdef class Tree:
         n_node_samples[i] holds the number of training samples reaching node i.
 
     weighted_n_node_samples : array of int, shape [node_count]
-        weighted_n_samples[i] holds the weighted number of training samples
+        weighted_n_node_samples[i] holds the weighted number of training samples
         reaching node i.
     """
     # Wrap for outside world.
@@ -2289,11 +2305,11 @@ cdef class Tree:
 
     property n_node_samples:
         def __get__(self):
-            return self._get_node_ndarray()['n_samples'][:self.node_count]
+            return self._get_node_ndarray()['n_node_samples'][:self.node_count]
 
     property weighted_n_node_samples:
         def __get__(self):
-            return self._get_node_ndarray()['weighted_n_samples'][:self.node_count]
+            return self._get_node_ndarray()['weighted_n_node_samples'][:self.node_count]
 
     property value:
         def __get__(self):
@@ -2418,7 +2434,7 @@ cdef class Tree:
 
     cdef SIZE_t _add_node(self, SIZE_t parent, bint is_left, bint is_leaf,
                           SIZE_t feature, double threshold, double impurity,
-                          SIZE_t n_samples, double weighted_n_samples) nogil:
+                          SIZE_t n_node_samples, double weighted_n_node_samples) nogil:
         """Add a node to the tree.
 
         The new node registers itself as the child of its parent.
@@ -2433,8 +2449,8 @@ cdef class Tree:
 
         cdef Node* node = &self.nodes[node_id]
         node.impurity = impurity
-        node.n_samples = n_samples
-        node.weighted_n_samples = weighted_n_samples
+        node.n_node_samples = n_node_samples
+        node.weighted_n_node_samples = weighted_n_node_samples
 
         if parent != _TREE_UNDEFINED:
             if is_left:
@@ -2508,12 +2524,12 @@ cdef class Tree:
                 right = &nodes[node.right_child]
 
                 importances[node.feature] += (
-                    node.weighted_n_samples * node.impurity -
-                    left.weighted_n_samples * left.impurity -
-                    right.weighted_n_samples * right.impurity)
+                    node.weighted_n_node_samples * node.impurity -
+                    left.weighted_n_node_samples * left.impurity -
+                    right.weighted_n_node_samples * right.impurity)
             node += 1
 
-        importances = importances / nodes[0].weighted_n_samples
+        importances = importances / nodes[0].weighted_n_node_samples
         cdef double normalizer
 
         if normalize:
