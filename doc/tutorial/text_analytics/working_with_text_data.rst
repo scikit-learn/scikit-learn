@@ -25,7 +25,7 @@ Tutorial setup
 --------------
 
 To get started with this tutorial, you firstly must have the
-*scikit-learn* and all of its requiered dependencies installed.
+*scikit-learn* and all of its required dependencies installed.
 
 Please refer to the `scikit-learn install`_ page for more information
 and for per-system instructions.
