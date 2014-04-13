@@ -331,7 +331,7 @@ METRICS_WITH_SAMPLE_WEIGHT = [
 ]
 
 # Classification metrics that support multilabel and weighted samples
-MULTILABEL_METRICS_WITH_SAMPLE_WEIGHT = [
+MULTILABEL_SEQUENCE_METRICS_WITH_SAMPLE_WEIGHT = [
     "accuracy_score", "unnormalized_accuracy_score",
     "zero_one_loss", "unnormalized_zero_one_loss",
 
@@ -357,7 +357,9 @@ MULTILABEL_INDICATOR_METRICS_WITH_SAMPLE_WEIGHT = [
     "weighted_average_precision_score",
     "micro_average_precision_score",
     "macro_average_precision_score",
-    "samples_average_precision_score",
+    #"samples_average_precision_score",
+    #"samples_roc_auc",
+    "micro_roc_auc",
 ]
 
 # Regression metrics that support multioutput and weighted samples
@@ -2607,6 +2609,23 @@ def check_sample_weight_invariance(name, metric, y1, y2):
         weighted_score, repeat_weighted_score,
         err_msg="Weighting %s is not equal to repeating samples" % name)
 
+    # check that ignoring a fraction of the samples is equivalent to setting
+    # the corresponding weights to zero
+    sample_weight_subset = sample_weight[1::2]
+    sample_weight_zeroed = np.copy(sample_weight)
+    sample_weight_zeroed[::2] = 0
+    y1_subset = y1[1::2]
+    y2_subset = y2[1::2]
+    weighted_score_subset = metric(y1_subset, y2_subset,
+                                   sample_weight=sample_weight_subset)
+    weighted_score_zeroed = metric(y1, y2,
+                                   sample_weight=sample_weight_zeroed)
+    assert_equal(
+        weighted_score_subset, weighted_score_zeroed,
+        msg="Zeroing weights does not give the same result as "
+            "removing the corresponding samples (%f != %f) for %s" % (
+                weighted_score_zeroed, weighted_score_subset, name))
+
     if not name.startswith('unnormalized'):
         # check that the score is invariant under scaling of the weights by a
         # common factor
@@ -2626,21 +2645,25 @@ def test_sample_weight_invariance():
         yield check_sample_weight_invariance, name, metric, y1, y2
 
     # multilabel sequence
-    n_classes = 3
-    n_samples = 10
     _, y1 = make_multilabel_classification(
-        n_features=1, n_classes=n_classes,
-        random_state=0, n_samples=n_samples)
+        n_features=1, n_classes=3,
+        random_state=0, n_samples=10)
     _, y2 = make_multilabel_classification(
-        n_features=1, n_classes=n_classes,
-        random_state=1, n_samples=n_samples)
-    for name in MULTILABEL_METRICS_WITH_SAMPLE_WEIGHT:
+        n_features=1, n_classes=3,
+        random_state=1, n_samples=10)
+    for name in MULTILABEL_SEQUENCE_METRICS_WITH_SAMPLE_WEIGHT:
         metric = ALL_METRICS[name]
         yield (check_sample_weight_invariance, name, metric, y1, y2)
 
     # multilabel indicator
-    y1 = np.array([[1, 0, 0, 1], [0, 1, 1, 1], [1, 1, 0, 1]])
-    y2 = np.array([[0, 0, 1, 1], [1, 0, 1, 1], [1, 1, 0, 1]])
+    _, y1 = make_multilabel_classification(
+        n_features=1, n_classes=3,
+        random_state=0, n_samples=10,
+        return_indicator=True)
+    _, y2 = make_multilabel_classification(
+        n_features=1, n_classes=3,
+        random_state=1, n_samples=10,
+        return_indicator=True)
     for name in MULTILABEL_INDICATOR_METRICS_WITH_SAMPLE_WEIGHT:
         metric = ALL_METRICS[name]
         yield (check_sample_weight_invariance, name, metric, y1, y2)
