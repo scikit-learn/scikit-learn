@@ -840,7 +840,7 @@ def _mini_batch_step(X, x_squared_norms, centers, counts,
         # Reassign clusters that have very low counts
         to_reassign = np.logical_or(
             (counts <= 1), counts <= reassignment_ratio * counts.max())
-        n_reassigns = min(to_reassign.sum(), X.shape[0])
+        n_reassigns = to_reassign.sum()
         if n_reassigns:
             # Pick new clusters amongst observations with probability
             # proportional to their closeness to their center.
