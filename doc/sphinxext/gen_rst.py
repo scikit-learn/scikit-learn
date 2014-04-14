@@ -393,22 +393,15 @@ carousel_thumbs = {'plot_classifier_comparison_1.png': (1, 600),
 def extract_docstring(filename, ignore_heading=False):
     """ Extract a module-level docstring, if any
     """
-    # file is replaced by open in Python 3
-    try:
-        lines = file(filename).readlines()
-    except:
-        lines = open(filename).readlines()
+    lines = open(filename).readlines()
     start_row = 0
     if lines[0].startswith('#!'):
         lines.pop(0)
         start_row = 1
     docstring = ''
     first_par = ''
-    # Python 2 uses .next, Python 3 .__next__
-    try:
-        tokens = tokenize.generate_tokens(iter(lines).next)
-    except:
-        tokens = tokenize.generate_tokens(iter(lines).__next__)
+    line_iterator = iter(lines)
+    tokens = tokenize.generate_tokens(lambda: next(line_iterator))
     for tok_type, tok_content, _, (erow, _), _ in tokens:
         tok_type = token.tok_name[tok_type]
         if tok_type in ('NEWLINE', 'COMMENT', 'NL', 'INDENT', 'DEDENT'):
@@ -453,11 +446,7 @@ def generate_example_rst(app):
         os.makedirs(root_dir)
 
     # we create an index.rst with all examples
-    # file is replaced by open in Python 3
-    try:
-        fhindex = file(os.path.join(root_dir, 'index.rst'), 'w')
-    except:
-        fhindex = open(os.path.join(root_dir, 'index.rst'), 'w')
+    fhindex = open(os.path.join(root_dir, 'index.rst'), 'w')
     #Note: The sidebar button has been removed from the examples page for now
     #      due to how it messes up the layout. Will be fixed at a later point
     fhindex.write("""\
@@ -609,11 +598,7 @@ Examples
 def extract_line_count(filename, target_dir):
     # Extract the line count of a file
     example_file = os.path.join(target_dir, filename)
-    # file is replaced by open in Python 3
-    try:
-        lines = file(example_file).readlines()
-    except:
-        lines = open(example_file).readlines()
+    lines = open(example_file).readlines()
     start_row = 0
     if lines and lines[0].startswith('#!'):
         lines.pop(0)
@@ -667,17 +652,8 @@ def generate_dir_rst(dir, fhindex, example_dir, root_dir, plot_gallery):
         print('Skipping this directory')
         print(80 * '_')
         return
-    # file is replaced by open in Python 3
-    if sys.version_info < (3,0):
-        fhindex.write("""
 
-
-%s
-
-
-""" % file(os.path.join(src_dir, 'README.txt')).read())
-    else:
-        fhindex.write("""
+    fhindex.write("""
 
 
 %s

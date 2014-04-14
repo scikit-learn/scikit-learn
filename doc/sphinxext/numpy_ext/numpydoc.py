@@ -42,11 +42,10 @@ def mangle_docstrings(app, what, name, obj, options, lines,
         lines[:] = title_re.sub('', "\n".join(lines)).split("\n")
     else:
         doc = get_doc_object(obj, what, "\n".join(lines), config=cfg)
-        # Python 2 uses unicode, Python 3 uses str
-        try:
-            lines[:] = unicode(doc).split("\n")
-        except:
-            lines[:] = str(doc).split("\n")
+        if sys.version_info[0] < 3:
+            lines[:] = unicode(doc).splitlines()
+        else:
+            lines[:] = str(doc).splitlines()
 
     if app.config.numpydoc_edit_link and hasattr(obj, '__name__') and \
            obj.__name__:
@@ -54,8 +53,8 @@ def mangle_docstrings(app, what, name, obj, options, lines,
             v = dict(full_name="%s.%s" % (obj.__module__, obj.__name__))
         else:
             v = dict(full_name=obj.__name__)
-        lines += ['', '.. htmlonly::', '']
-        lines += ['    %s' % x for x in
+        lines += [u'', u'.. htmlonly::', '']
+        lines += [u'    %s' % x for x in
                   (app.config.numpydoc_edit_link % v).split("\n")]
 
     # replace reference numbers so that there are no duplicates
@@ -74,11 +73,11 @@ def mangle_docstrings(app, what, name, obj, options, lines,
                 if re.match(r'^\d+$', r):
                     new_r = "R%d" % (reference_offset[0] + int(r))
                 else:
-                    new_r = "%s%d" % (r, reference_offset[0])
-                lines[i] = lines[i].replace('[%s]_' % r,
-                                            '[%s]_' % new_r)
-                lines[i] = lines[i].replace('.. [%s]' % r,
-                                            '.. [%s]' % new_r)
+                    new_r = u"%s%d" % (r, reference_offset[0])
+                lines[i] = lines[i].replace(u'[%s]_' % r,
+                                            u'[%s]_' % new_r)
+                lines[i] = lines[i].replace(u'.. [%s]' % r,
+                                            u'.. [%s]' % new_r)
 
     reference_offset[0] += len(references)
 
@@ -106,7 +105,7 @@ def setup(app, get_doc_object_=get_doc_object):
     global get_doc_object
     get_doc_object = get_doc_object_
 
-    if sys.version_info < (3,0):
+    if sys.version_info[0] < 3:
         app.connect(b'autodoc-process-docstring', mangle_docstrings)
         app.connect(b'autodoc-process-signature', mangle_signature)
     else:

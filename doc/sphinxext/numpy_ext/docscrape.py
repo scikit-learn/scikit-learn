@@ -14,7 +14,6 @@ except:
     from io import StringIO
 
 
-
 class Reader(object):
     """A line-based string reader.
 
