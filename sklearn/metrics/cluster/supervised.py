@@ -596,11 +596,9 @@ def adjusted_mutual_info_score(labels_true, labels_pred):
     Returns
     -------
     ami: float(upperlimited by 1.0)
-       The AMI returns a value of 1 when the two partitions
-       are identical (ie perfectly matched), and a value of 0 is expected 
-       for random partitions. A negative value greater than may also 
-       be returned if the actual mutual information is less than the 
-       expectation value of the mutual information (independent labelling).
+       The AMI returns a value of 1 when the two partitions are identical 
+       (ie perfectly matched). Random partitions (independent labellings) have 
+       an expected AMI around 0 on average hence can be negative.
 
     See also
     --------
