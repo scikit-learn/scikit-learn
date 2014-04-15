@@ -73,7 +73,7 @@ def _get_data(url):
         try:
             resp = urllib.urlopen(url)
             encoding = resp.headers.dict.get('content-encoding', 'plain')
-        except:
+        except AttributeError:
             resp = urllib.request.urlopen(url)
             encoding = resp.headers.get('content-encoding', 'plain')
         data = resp.read()
@@ -603,11 +603,8 @@ def extract_line_count(filename, target_dir):
     if lines and lines[0].startswith('#!'):
         lines.pop(0)
         start_row = 1
-    # Python 2 uses .next, Python 3 .__next__
-    try:
-        tokens = tokenize.generate_tokens(lines.__iter__().next)
-    except:
-        tokens = tokenize.generate_tokens(lines.__iter__().__next__)
+    line_iterator = iter(lines)
+    tokens = tokenize.generate_tokens(lambda: next(line_iterator))
     check_docstring = True
     erow_docstring = 0
     for tok_type, _, _, (erow, _), _ in tokens:
