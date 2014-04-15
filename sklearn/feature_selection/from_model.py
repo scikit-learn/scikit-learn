@@ -158,6 +158,27 @@ class SelectFromModel(BaseEstimator, SelectorMixin):
 
     `threshold_`: float
         The threshold value used for feature selection.
+
+    Examples
+    --------
+    The following example shows how SelectFromModel meta-transformer can be
+    used to compute feature importances and discard irrelevant features
+    using the ExtraTreesClassifier as the base estimator.
+
+    >>> from sklearn.feature_selection import SelectFromModel
+    >>> from sklearn.ensemble import ExtraTreesClassifier
+    >>> from sklearn.datasets import load_iris
+    >>> iris = load_iris()
+    >>> X, y = iris.data, iris.target
+    >>> X.shape
+    (150, 4)
+    >>> est = ExtraTreesClassifier()
+    >>> transformer = SelectFromModel(estimator=est)
+    >>> X_new = transformer.fit(X,y).transform(X)
+    >>> transformer.estimator_.feature_importances_
+    array([ 0.10011014,  0.06735519,  0.56063362,  0.27190106])
+    >>> X_new.shape
+    (150, 2)
     """
 
     def __init__(self, estimator, threshold=None, warm_start=False):
