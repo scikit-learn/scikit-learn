@@ -442,7 +442,8 @@ meta_estimators = ["OneVsOneClassifier",
                    "OutputCodeClassifier", "OneVsRestClassifier", "RFE",
                    "RFECV", "BaseEnsemble"]
 # estimators that there is no way to default-construct sensibly
-other = ["Pipeline", "FeatureUnion", "GridSearchCV", "RandomizedSearchCV"]
+other = ["Pipeline", "FeatureUnion",
+         "GridSearchCV", "RandomizedSearchCV", "SelectFromModel"]
 
 
 def all_estimators(include_meta_estimators=False, include_other=False,
