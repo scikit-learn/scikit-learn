@@ -187,6 +187,10 @@ Changelog
      <preprocessing.Imputer>` can be trained within the cross validation loop,
      avoiding potentially skewed results.
 
+   - Ridge regression can now deal with sample weights in feature space 
+     (only sample space until then). By `Michael Eickenberg`_. 
+     Both solutions are provided by the Cholesky solver. 
+
 
 API changes summary
 -------------------
@@ -2500,3 +2504,6 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Maheshakya Wijewardena: https://github.com/maheshakya
 
 .. _Danny Sullivan: http://dannysullivan.co
+
+.. _Michael Eickenberg: https://github.com/eickenberg
+
