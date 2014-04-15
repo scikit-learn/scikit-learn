@@ -573,7 +573,7 @@ class ElasticNet(LinearModel, RegressorMixin):
     max_iter : int, optional
         The maximum number of iterations
 
-    copy_X : boolean, optional, default False
+    copy_X : boolean, optional, default True
         If ``True``, X will be copied; else, it may be overwritten.
 
     tol: float, optional
