@@ -233,22 +233,25 @@ or::
     sudo port install py27-scikit-learn
 
 
-Archlinux
+Arch Linux
 ---------
 
-Archlinux's package is provided at 
-`Arch User Repository (AUR) <https://aur.archlinux.org/>`_ with name
-`python2-scikit-learn` for latest stable version and `python2-scikit-learn-git`
-for building from git version. If `yaourt` is available, it can be installed
-by typing the following command::
+Arch Linux's package is provided through the `official repositories
+<https://www.archlinux.org/packages/?q=scikit-learn>`_ as `python-scikit-learn`
+for Python 3 and `python2-scikit-learn` for Python 2. It can be installed
+by typing the following command:
 
-     sudo yaourt -S python2-scikit-learn
+.. code-block:: none
 
-or::
+     # pacman -S python-scikit-learn
 
-     sudo yaourt -S python2-scikit-learn-git
+or:
 
-depending on the version of scikit-learn you want to use.
+.. code-block:: none
+
+     # pacman -S python2-scikit-learn
+
+depending on the version of Python you use.
 
 
 NetBSD
