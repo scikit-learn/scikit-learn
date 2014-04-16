@@ -2,6 +2,7 @@ import numpy as np
 from scipy.sparse import csr_matrix
 
 from sklearn.utils.testing import assert_array_equal, assert_equal
+from sklearn.utils.testing import assert_not_equal
 from sklearn.utils.testing import assert_array_almost_equal, assert_raises
 
 from sklearn.metrics.pairwise import kernel_metrics
@@ -55,6 +56,26 @@ def test_additive_chi2_sampler():
     # test error on invalid sample_steps
     transform = AdditiveChi2Sampler(sample_steps=4)
     assert_raises(ValueError, transform.fit, X)
+    
+    # test that the sample interval is set correctly
+    sample_steps_available = [1,2,3]
+    for sample_steps in sample_steps_available:
+        
+        # test that the sample_interval is initialized correctly
+        transform = AdditiveChi2Sampler(sample_steps=sample_steps)
+        assert_equal(transform.sample_interval, None)
+        
+        # test that the sample_interval is changed in the fit method
+        transform.fit(X)
+        assert_not_equal(transform.sample_interval_, None)
+        
+    # test that the sample_interval is set correctly
+    sample_interval = 0.3
+    transform = AdditiveChi2Sampler(sample_steps=4, 
+                                    sample_interval=sample_interval)
+    assert_equal(transform.sample_interval, sample_interval)
+    transform.fit(X)
+    assert_equal(transform.sample_interval_, sample_interval)
 
 
 def test_skewed_chi2_sampler():
