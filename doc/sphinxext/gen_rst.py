@@ -908,8 +908,7 @@ def generate_file_rst(fname, target_dir, src_dir, root_dir, plot_gallery):
                     # save the dictionary, so we can later add hyperlinks
                     codeobj_fname = example_file[:-3] + '_codeobj.pickle'
                     with open(codeobj_fname, 'wb') as fid:
-                        cPickle.dump(example_code_obj, fid,
-                                     cPickle.HIGHEST_PROTOCOL)
+                        pickle.dump(example_code_obj, fid, cpickle.HIGHEST_PROTOCOL)
                     fid.close()
 
                 if '__doc__' in my_globals:
