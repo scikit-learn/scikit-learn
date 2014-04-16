@@ -28,6 +28,8 @@ from sklearn.cross_validation import train_test_split
 from sklearn.datasets import load_boston, load_iris
 from sklearn.utils import check_random_state
 
+from scipy.sparse import csc_matrix, csr_matrix
+
 rng = check_random_state(0)
 
 # also load the iris dataset
@@ -68,6 +70,32 @@ def test_classification():
                               **params).fit(X_train, y_train).predict(X_test)
 
 
+def test_sparse_classification():
+    """Check classification for various parameter settings on sparse input."""
+    rng = check_random_state(0)
+    X_train, X_test, y_train, y_test = train_test_split(iris.data,
+                                                        iris.target,
+                                                        random_state=rng)
+    grid = ParameterGrid({"max_samples": [0.5, 1.0],
+                          "max_features": [1, 2, 4],
+                          "bootstrap": [True, False],
+                          "bootstrap_features": [True, False]})
+
+    for base_estimator in [DummyClassifier(),
+                           Perceptron(),
+                           KNeighborsClassifier(),
+                           SVC()]:
+        for params in grid:
+            for sparse_format in [csc_matrix, csr_matrix]:
+                X_train_sparse = sparse_format(X_train)
+                X_test_sparse = sparse_format(X_test)
+                BaggingClassifier(
+                    base_estimator=base_estimator,
+                    random_state=rng,
+                    **params
+                ).fit(X_train_sparse, y_train).predict(X_test_sparse)
+
+
 def test_regression():
     """Check regression for various parameter settings."""
     rng = check_random_state(0)
@@ -88,6 +116,31 @@ def test_regression():
             BaggingRegressor(base_estimator=base_estimator,
                              random_state=rng,
                              **params).fit(X_train, y_train).predict(X_test)
+
+
+def test_sparse_regression():
+    """Check regression for various parameter settings on sparse input."""
+    rng = check_random_state(0)
+    X_train, X_test, y_train, y_test = train_test_split(boston.data[:50],
+                                                        boston.target[:50],
+                                                        random_state=rng)
+    grid = ParameterGrid({"max_samples": [0.5, 1.0],
+                          "max_features": [0.5, 1.0],
+                          "bootstrap": [True, False],
+                          "bootstrap_features": [True, False]})
+
+    for base_estimator in [DummyRegressor(),
+                           KNeighborsRegressor(),
+                           SVR()]:
+        for params in grid:
+            for sparse_format in [csc_matrix, csr_matrix]:
+                X_train_sparse = sparse_format(X_train)
+                X_test_sparse = sparse_format(X_test)
+                BaggingRegressor(
+                    base_estimator=base_estimator,
+                    random_state=rng,
+                    **params
+                ).fit(X_train_sparse, y_train).predict(X_test_sparse)
 
 
 def test_bootstrap_samples():
