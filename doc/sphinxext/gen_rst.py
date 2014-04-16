@@ -7,6 +7,7 @@ example files.
 Files that generate images should start with 'plot'
 
 """
+from __future__ import division
 from time import time
 import os
 import re
@@ -23,7 +24,7 @@ try:
     import cPickle as pickle
     import urllib2 as urllib
     from urllib2 import HTTPError, URLError
-except:
+except ImportError:
     from io import StringIO
     import pickle
     import urllib.request
@@ -33,7 +34,7 @@ except:
     
 try:
     from PIL import Image
-except:
+except ImportError:
     import Image
 
 import matplotlib
@@ -738,7 +739,7 @@ def make_thumbnail(in_fname, out_fname, width, height):
 
     # insert centered
     thumb = Image.new('RGB', (width, height), (255, 255, 255))
-    pos_insert = ((width - width_sc) / 2, (height - height_sc) / 2)
+    pos_insert = ((width - width_sc) // 2, (height - height_sc) // 2)
     thumb.paste(img, pos_insert)
 
     thumb.save(out_fname)
@@ -839,7 +840,7 @@ def generate_file_rst(fname, target_dir, src_dir, root_dir, plot_gallery):
 
                 # get variables so we can later add links to the documentation
                 example_code_obj = {}
-                for var_name, var in my_globals.iteritems():
+                for var_name, var in my_globals.items():
                     if not hasattr(var, '__module__'):
                         continue
                     if not isinstance(var.__module__, basestring):
@@ -1041,11 +1042,11 @@ def embed_code_links(app, exception):
                 if os.path.exists(pickle_fname):
                     # we have a pickle file with the objects to embed links for
                     with open(pickle_fname, 'rb') as fid:
-                        example_code_obj = cPickle.load(fid)
+                        example_code_obj = pickle.load(fid)
                     fid.close()
                     str_repl = {}
                     # generate replacement strings with the links
-                    for name, cobj in example_code_obj.iteritems():
+                    for name, cobj in example_code_obj.items():
                         this_module = cobj['module'].split('.')[0]
 
                         if this_module not in doc_resolvers:
