@@ -36,11 +36,24 @@ persistence model, namely `pickle <http://docs.python.org/library/pickle.html>`_
 
 In the specific case of the scikit, it may be more interesting to use
 joblib's replacement of pickle (``joblib.dump`` & ``joblib.load``),
-which is more efficient on big data, but can only pickle to the disk
-and not to a string::
+which is more efficient on objects that carry large numpy arrays internally as
+is often the case for fitted scikit-learn estimators, but can only pickle to the
+disk and not to a string::
 
   >>> from sklearn.externals import joblib
   >>> joblib.dump(clf, 'filename.pkl') # doctest: +SKIP
+  
+Later you can load back the pickled model (possibly in another Python process)
+with::
+  
+  >>> clf = joblib.load('filename.pkl') # doctest:+SKIP
+
+.. note::
+
+   joblib.dump returns a list of filenames. Each individual numpy array
+   contained in the `clf` object is serialized as a separate file on the
+   filesystem. All files are required in the same folder when reloading the
+   model with joblib.load.
 
 
 Security & maintainability limitations
