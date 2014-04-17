@@ -24,8 +24,8 @@ from sklearn.datasets import load_digits
 from sklearn.learning_curve import learning_curve
 
 
-def plot_learning_curve(estimator, title, X, y, ylim=(0.7,1.01), cv=None, 
-    n_jobs=1, train_sizes=np.linspace(.1, 1.0, 5)):
+def plot_learning_curve(estimator, title, X, y, ylim=None, cv=None,
+                        n_jobs=1, train_sizes=np.linspace(.1, 1.0, 5)):
     """
     Generate a simple plot of the test and traning learning curve.
 
@@ -46,8 +46,7 @@ def plot_learning_curve(estimator, title, X, y, ylim=(0.7,1.01), cv=None,
         None for unsupervised learning.
 
     ylim : tuple, shape (ymin, ymax), optional
-        Defines minimum and maximum yvalues plotted.  Defaults to (0.7, 1.01)
-        for easy comparison of plots.
+        Defines minimum and maximum yvalues plotted.
 
     cv : integer, cross-validation generator, optional
         If an integer is passed, it is the number of folds (defaults to 3).
@@ -59,7 +58,8 @@ def plot_learning_curve(estimator, title, X, y, ylim=(0.7,1.01), cv=None,
     """
     plt.figure()
     plt.title(title)
-    plt.ylim( *ylim )
+    if ylim is not None:
+        plt.ylim(*ylim)
     plt.xlabel("Training examples")
     plt.ylabel("Score")
     train_sizes, train_scores, test_scores = learning_curve(
@@ -71,7 +71,8 @@ def plot_learning_curve(estimator, title, X, y, ylim=(0.7,1.01), cv=None,
     plt.grid()
 
     plt.fill_between(train_sizes, train_scores_mean - train_scores_std,
-                     train_scores_mean + train_scores_std, alpha=0.1, color="r")
+                     train_scores_mean + train_scores_std, alpha=0.1,
+                     color="r")
     plt.fill_between(train_sizes, test_scores_mean - test_scores_std,
                      test_scores_mean + test_scores_std, alpha=0.1, color="g")
     plt.plot(train_sizes, train_scores_mean, 'o-', color="r",
@@ -87,20 +88,20 @@ digits = load_digits()
 X, y = digits.data, digits.target
 
 
-title="Learning Curve (Naive Bayes)"
-# Cross validation with 100 iterations to get smoother mean test and train 
-# score curves, each time with 20% data randomly selected as the validation set.
+title = "Learning Curve (Naive Bayes)"
+# Cross validation with 100 iterations to get smoother mean test and train
+# score curves, each time with 20% data randomly selected as a validation set.
 cv = cross_validation.ShuffleSplit(digits.data.shape[0], n_iter=100,
                                    test_size=0.2, random_state=0)
 
-estimator=GaussianNB()
-plot_learning_curve(estimator, title, X, y, cv=cv, n_jobs=4)
+estimator = GaussianNB()
+plot_learning_curve(estimator, title, X, y, ylim=(0.7, 1.01), cv=cv, n_jobs=4)
 
-title="Learning Curve (SVM, RBF kernel, $\gamma=0.001$)"
+title = "Learning Curve (SVM, RBF kernel, $\gamma=0.001$)"
 # SVC is more expensive so we do a lower number of CV iterations:
 cv = cross_validation.ShuffleSplit(digits.data.shape[0], n_iter=10,
                                    test_size=0.2, random_state=0)
-estimator=SVC(gamma=0.001)
-plot_learning_curve(estimator, title, X, y, cv=cv, n_jobs=4)
+estimator = SVC(gamma=0.001)
+plot_learning_curve(estimator, title, X, y, (0.7, 1.01), cv=cv, n_jobs=4)
 
 plt.show()
