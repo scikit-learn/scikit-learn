@@ -30,7 +30,7 @@ To get started with this tutorial, you firstly must have the
 Please refer to the `scikit-learn install`_ page for more information
 and for per-system instructions.
 
-.. _`scikit-learn install`: http://scikit-learn.sourceforge.net/install.html
+.. _`scikit-learn install`: http://scikit-learn.org/stable/install.html
 
 The source of this tutorial can be found within your
 scikit-learn folder::
