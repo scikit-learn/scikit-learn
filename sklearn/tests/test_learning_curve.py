@@ -84,8 +84,8 @@ def test_learning_curve():
                                n_redundant=0, n_classes=2,
                                n_clusters_per_class=1, random_state=0)
     estimator = MockImprovingEstimator(20)
-    train_sizes, train_scores, test_scores = learning_curve(estimator, X, y,
-                                                            cv=3)
+    train_sizes, train_scores, test_scores = learning_curve(
+        estimator, X, y, cv=3, train_sizes=np.linspace(0.1, 1.0, 10))
     assert_equal(train_scores.shape, (10, 3))
     assert_equal(test_scores.shape, (10, 3))
     assert_array_equal(train_sizes, np.linspace(2, 20, 10))
@@ -100,8 +100,8 @@ def test_learning_curve_unsupervised():
                                n_redundant=0, n_classes=2,
                                n_clusters_per_class=1, random_state=0)
     estimator = MockImprovingEstimator(20)
-    train_sizes, train_scores, test_scores = learning_curve(estimator, X,
-                                                            y=None, cv=3)
+    train_sizes, train_scores, test_scores = learning_curve(
+        estimator, X, y=None, cv=3, train_sizes=np.linspace(0.1, 1.0, 10))
     assert_array_equal(train_sizes, np.linspace(2, 20, 10))
     assert_array_almost_equal(train_scores.mean(axis=1),
                               np.linspace(1.9, 1.0, 10))
@@ -144,7 +144,8 @@ def test_learning_curve_incremental_learning():
                                n_clusters_per_class=1, random_state=0)
     estimator = MockIncrementalImprovingEstimator(20)
     train_sizes, train_scores, test_scores = learning_curve(
-        estimator, X, y, cv=3, exploit_incremental_learning=True)
+        estimator, X, y, cv=3, exploit_incremental_learning=True,
+        train_sizes=np.linspace(0.1, 1.0, 10))
     assert_array_equal(train_sizes, np.linspace(2, 20, 10))
     assert_array_almost_equal(train_scores.mean(axis=1),
                               np.linspace(1.9, 1.0, 10))
@@ -158,7 +159,8 @@ def test_learning_curve_incremental_learning_unsupervised():
                                n_clusters_per_class=1, random_state=0)
     estimator = MockIncrementalImprovingEstimator(20)
     train_sizes, train_scores, test_scores = learning_curve(
-        estimator, X, y=None, cv=3, exploit_incremental_learning=True)
+        estimator, X, y=None, cv=3, exploit_incremental_learning=True,
+        train_sizes=np.linspace(0.1, 1.0, 10))
     assert_array_equal(train_sizes, np.linspace(2, 20, 10))
     assert_array_almost_equal(train_scores.mean(axis=1),
                               np.linspace(1.9, 1.0, 10))
@@ -223,8 +225,8 @@ def test_learning_curve_with_boolean_indices():
                                n_clusters_per_class=1, random_state=0)
     estimator = MockImprovingEstimator(20)
     cv = KFold(n=30, n_folds=3, indices=False)
-    train_sizes, train_scores, test_scores = learning_curve(estimator, X, y,
-                                                            cv=cv)
+    train_sizes, train_scores, test_scores = learning_curve(
+        estimator, X, y, cv=cv, train_sizes=np.linspace(0.1, 1.0, 10))
     assert_array_equal(train_sizes, np.linspace(2, 20, 10))
     assert_array_almost_equal(train_scores.mean(axis=1),
                               np.linspace(1.9, 1.0, 10))
