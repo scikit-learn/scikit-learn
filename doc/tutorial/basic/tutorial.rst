@@ -234,3 +234,7 @@ and not to a string::
   >>> from sklearn.externals import joblib
   >>> joblib.dump(clf, 'filename.pkl') # doctest: +SKIP
 
+It's important for you to know that pickle has some security and maintainability
+issues. Please refer to section :ref:`model_persistence` for more detailed
+information about model persistence with scikit-learn.
+

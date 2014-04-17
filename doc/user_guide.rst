@@ -22,3 +22,4 @@
    Dataset loading utilities <datasets/index.rst>
    modules/scaling_strategies.rst
    modules/computational_performance.rst
+   model_persistence.rst
