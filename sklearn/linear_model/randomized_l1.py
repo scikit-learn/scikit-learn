@@ -14,7 +14,7 @@ from scipy.sparse import issparse
 from scipy import sparse
 from scipy.interpolate import interp1d
 
-from .base import center_data
+from .base import center_data, sparse_center_data
 from ..base import BaseEstimator, TransformerMixin
 from ..externals import six
 from ..externals.joblib import Memory, Parallel, delayed
@@ -68,7 +68,13 @@ class BaseRandomizedLinearModel(six.with_metaclass(ABCMeta, BaseEstimator,
     def __init__(self):
         pass
 
-    _center_data = staticmethod(center_data)
+    @staticmethod
+    def _center_data(X, y, fit_intercept, normalize):
+        if sparse.issparse(X):
+            return sparse_center_data(X, y, fit_intercept, normalize)
+        else:
+            return center_data(X, y, fit_intercept, normalize)
+
 
     def fit(self, X, y):
         """Fit the model using X, y as training data.
