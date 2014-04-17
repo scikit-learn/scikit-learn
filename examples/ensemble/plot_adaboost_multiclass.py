@@ -35,7 +35,6 @@ import matplotlib.pyplot as plt
 
 from sklearn.datasets import make_gaussian_quantiles
 from sklearn.ensemble import AdaBoostClassifier
-from sklearn.externals.six.moves import xrange
 from sklearn.metrics import accuracy_score
 from sklearn.tree import DecisionTreeClassifier
 
@@ -84,9 +83,9 @@ discrete_estimator_weights = bdt_discrete.estimator_weights_[:n_trees_discrete]
 plt.figure(figsize=(15, 5))
 
 plt.subplot(131)
-plt.plot(xrange(1, n_trees_discrete + 1),
+plt.plot(range(1, n_trees_discrete + 1),
          discrete_test_errors, c='black', label='SAMME')
-plt.plot(xrange(1, n_trees_real + 1),
+plt.plot(range(1, n_trees_real + 1),
          real_test_errors, c='black',
          linestyle='dashed', label='SAMME.R')
 plt.legend()
@@ -95,9 +94,9 @@ plt.ylabel('Test Error')
 plt.xlabel('Number of Trees')
 
 plt.subplot(132)
-plt.plot(xrange(1, n_trees_discrete + 1), discrete_estimator_errors,
+plt.plot(range(1, n_trees_discrete + 1), discrete_estimator_errors,
          "b", label='SAMME', alpha=.5)
-plt.plot(xrange(1, n_trees_real + 1), real_estimator_errors,
+plt.plot(range(1, n_trees_real + 1), real_estimator_errors,
          "r", label='SAMME.R', alpha=.5)
 plt.legend()
 plt.ylabel('Error')
@@ -108,7 +107,7 @@ plt.ylim((.2,
 plt.xlim((-20, len(bdt_discrete) + 20))
 
 plt.subplot(133)
-plt.plot(xrange(1, n_trees_discrete + 1), discrete_estimator_weights,
+plt.plot(range(1, n_trees_discrete + 1), discrete_estimator_weights,
          "b", label='SAMME')
 plt.legend()
 plt.ylabel('Weight')
