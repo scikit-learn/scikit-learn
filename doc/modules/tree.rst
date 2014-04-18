@@ -111,7 +111,7 @@ labels are [-1, 1]) classification and multiclass (where the labels are
 [0, ..., K-1]) classification.
 
 Note that sparsity is supported by :class:`DecisionTreeClassifier`, i.e. 
-the input matrix X can be sparse and both `predict` and `fit` can take sparse inputs:
+the input matrix X can be sparse and both ``predict`` and ``fit`` can take sparse inputs:
 
 >>> from scipy import sparse
 >>> from numpy import array
@@ -215,7 +215,7 @@ instead of integer values::
     >>> clf.predict([[1, 1]])
     array([ 0.5])
 
-Note that sparsity is also supported by :class:`DecisionTreeClassifier` as in classification, i.e. the input matrix X can be sparse and both `predict` and `fit` can take sparse inputs.
+Note that sparsity is also supported by :class:`DecisionTreeClassifier` as in classification, i.e. the input matrix X can be sparse and both ``predict`` and ``fit`` can take sparse inputs.
 
 
 .. topic:: Examples:

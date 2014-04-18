@@ -120,7 +120,7 @@ target values (class labels) for the training samples::
 
 Like :ref:`decision trees <tree>`, forests of trees also extend
 to :ref:`multi-output problems <tree_multioutput>`  (if Y is an array of size
-``[n_samples, n_outputs]``).
+``[n_samples, n_outputs]``). Note that X can be a sparse matrix. Sparsity is supported the same way as in trees, i.e. both ``fit`` and ``predict`` can take sparse matrices. 
 
 Random Forests
 --------------
