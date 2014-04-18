@@ -2,6 +2,8 @@
 """
 
 # Author: Lars Buitinck <L.J.Buitinck@uva.nl>
+#         Olivier Grisel <olivier.grisel@ensta.org>
+#         Michael Becker <mike@beckerfuffle.com>
 # License: 3-clause BSD.
 
 import warnings
