@@ -61,7 +61,7 @@ def inplace_column_scale(X, scale):
 
 def swap_row(X, m, n):
     """
-    Swaps two rows of a CSC/CSR matrix.
+    Swaps two rows of a CSC/CSR matrix in-place.
 
     Parameters
     ----------

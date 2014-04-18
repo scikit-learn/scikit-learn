@@ -352,7 +352,7 @@ def assign_rows_csr(X,
 @cython.wraparound(False)
 def swap_row_csc(X, int m, int n):
     """
-    Swaps two rows of a CSC matrix.
+    Swaps two rows of a CSC matrix in-place.
 
     Parameters
     ----------
@@ -361,7 +361,7 @@ def swap_row_csc(X, int m, int n):
     n : int, index of second_sample
     """
     cdef np.ndarray[int, ndim=1] indices = X.indices
-    cdef unsigned int ii
+    cdef unsigned int i
     cdef unsigned nonzero = indices.shape[0]
 
     if m < 0:
@@ -369,18 +369,18 @@ def swap_row_csc(X, int m, int n):
     if n < 0:
         n += X.shape[0]
 
-    for ii in xrange(nonzero):
-        if indices[ii] == m:
-            indices[ii] = n
-        elif indices[ii] == n:
-            indices[ii] = m
+    for i in range(nonzero):
+        if indices[i] == m:
+            indices[i] = n
+        elif indices[i] == n:
+            indices[i] = m
 
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
 def swap_row_csr(X, int m, int n):
     """
-    Swaps two rows of a CSC matrix.
+    Swaps two rows of a CSC matrix in-place.
 
     Parameters
     ----------
