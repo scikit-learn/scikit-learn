@@ -102,7 +102,8 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         ----------
         X : array-like, shape = [n_samples, n_features]
             The training input samples. Use ``dtype=np.float32`` for maximum
-            efficiency.
+            efficiency. Sparse matrices are also supported, use csc_matrix for
+            maximum efficieny.
 
         y : array-like, shape = [n_samples] or [n_samples, n_outputs]
             The target values (class labels in classification, real numbers in
@@ -307,7 +308,8 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         Parameters
         ----------
         X : array-like of shape = [n_samples, n_features]
-            The input samples.
+            The input samples. Sparse matrices are also supported.
+            Use csr_matrix in case of sparse data.
 
         Returns
         -------
