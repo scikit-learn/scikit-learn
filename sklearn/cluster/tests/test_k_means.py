@@ -360,14 +360,18 @@ def test_minibatch_reassign():
 def test_minibatch_with_many_reassignments():
     # Test for the case that the number of clusters to reassign is bigger
     # than the batch_size
-    X = np.random.rand(500, 250)
+    n_samples = 550
+    rnd = np.random.RandomState(42)
+    X = rnd.uniform(size=(n_samples, 10))
     # Check that the fit works if n_clusters is bigger than the batch_size.
-    # Run the test multiple times with different values for n_clusters
-    # to ensure that at least in one case we need to reassign enough clusters
-    for n_clusters in [200, 250, 300]:
-        MiniBatchKMeans(n_clusters=n_clusters,
-                        batch_size=100,
-                        init_size=500).fit(X)
+    # Run the test with 550 clusters and 550 samples, because it turned out
+    # that this values ensure that the number of clusters to reassign
+    # is always bigger than the batch_size
+    n_clusters = 550
+    MiniBatchKMeans(n_clusters=n_clusters,
+                    batch_size=100,
+                    init_size=n_samples,
+                    random_state=42).fit(X)
 
 
 def test_sparse_mb_k_means_callable_init():
