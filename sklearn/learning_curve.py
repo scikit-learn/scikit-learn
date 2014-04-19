@@ -132,7 +132,7 @@ def learning_curve(estimator, X, y, train_sizes=np.linspace(0.1, 1.0, 5),
             verbose, parameters=None, fit_params=None, return_train_score=True)
             for train, test in cv for n_train_samples in train_sizes_abs)
         out = np.array(out)[:, :2]
-        n_cv_folds = out.shape[0] / n_unique_ticks
+        n_cv_folds = out.shape[0] // n_unique_ticks
         out = out.reshape(n_cv_folds, n_unique_ticks, 2)
 
     out = np.asarray(out).transpose((2, 1, 0))
@@ -297,7 +297,7 @@ def validation_curve(estimator, X, y, param_name, param_range, cv=None,
 
     out = np.asarray(out)[:, :2]
     n_params = len(param_range)
-    n_cv_folds = out.shape[0] / n_params
+    n_cv_folds = out.shape[0] // n_params
     out = out.reshape(n_cv_folds, n_params, 2).transpose((2, 1, 0))
 
     return out[0], out[1]
