@@ -76,8 +76,10 @@ class NearestNeighbors(NeighborsBase, KNeighborsMixin,
     """
 
     def __init__(self, n_neighbors=5, radius=1.0,
-                 algorithm='auto', leaf_size=30, metric='minkowski', **kwargs):
+                 algorithm='auto', leaf_size=30, metric='minkowski', 
+                 metric_kwds=None, **kwargs):
         self._init_params(n_neighbors=n_neighbors,
                           radius=radius,
                           algorithm=algorithm,
-                          leaf_size=leaf_size, metric=metric, **kwargs)
+                          leaf_size=leaf_size, metric=metric, 
+                          metric_kwds=metric_kwds, **kwargs)

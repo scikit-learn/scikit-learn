@@ -115,7 +115,8 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
 
     def __init__(self, n_neighbors=5,
                  weights='uniform', algorithm='auto', leaf_size=30,
-                 p=2, metric='minkowski', **kwargs):
+                 p=2, metric='minkowski', metric_kwds=None, **kwargs):
+
         if kwargs:
             if 'warn_on_equidistant' in kwargs:
                 kwargs.pop('warn_on_equidistant')
@@ -123,9 +124,11 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
                               "deprecated and will be removed in 0.16.",
                               DeprecationWarning,
                               stacklevel=2)
+
         self._init_params(n_neighbors=n_neighbors,
                           algorithm=algorithm,
-                          leaf_size=leaf_size, metric=metric, p=p, **kwargs)
+                          leaf_size=leaf_size, metric=metric, p=p,
+                          metric_kwds=metric_kwds, **kwargs)
         self.weights = _check_weights(weights)
 
     def predict(self, X):
@@ -318,11 +321,11 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
 
     def __init__(self, radius=1.0, weights='uniform',
                  algorithm='auto', leaf_size=30, p=2, metric='minkowski',
-                 outlier_label=None, **kwargs):
+                 outlier_label=None, metric_kwds=None, **kwargs):
         self._init_params(radius=radius,
                           algorithm=algorithm,
                           leaf_size=leaf_size,
-                          metric=metric, p=p, **kwargs)
+                          metric=metric, p=p, metric_kwds=metric_kwds, **kwargs)
         self.weights = _check_weights(weights)
         self.outlier_label = outlier_label
 

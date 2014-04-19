@@ -97,13 +97,22 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
 
     def _init_params(self, n_neighbors=None, radius=None,
                      algorithm='auto', leaf_size=30, metric='minkowski',
-                     p=2, **kwargs):
+                     p=2, metric_kwds={}, **kwargs):
+        if metric_kwds is None:
+            metric_kwds = {}
+        if kwargs:
+            warnings.warn("Passing additional arguments to distance function "
+                          "as **kwargs is deprecated.",
+                          DeprecationWarning,
+                          stacklevel=3)
+            metric_kwds.update(kwargs)
+
         self.n_neighbors = n_neighbors
         self.radius = radius
         self.algorithm = algorithm
         self.leaf_size = leaf_size
         self.metric = metric
-        self.metric_kwds = kwargs
+        self.metric_kwds = metric_kwds
         self.p = p
 
         if algorithm not in ['auto', 'brute',
@@ -125,17 +134,16 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
             raise ValueError("Metric '%s' not valid for algorithm '%s'"
                              % (metric, algorithm))
 
-        if self.metric in ['wminkowski', 'minkowski']:
-            self.metric_kwds['p'] = p
-            if p < 1:
-                raise ValueError("p must be greater than one "
-                                 "for minkowski metric")
+        if self.metric in ['wminkowski', 'minkowski'] and self.p < 1:
+            raise ValueError("p must be greater than one for minkowski metric")
 
         self._fit_X = None
         self._tree = None
         self._fit_method = None
 
     def _fit(self, X):
+        if self.metric in ['wminkowski', 'minkowski']:
+            self.metric_kwds['p'] = self.p
         self.effective_metric_ = self.metric
         self.effective_metric_kwds_ = self.metric_kwds
 
