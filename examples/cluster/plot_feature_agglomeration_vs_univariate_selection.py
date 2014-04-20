@@ -27,7 +27,7 @@ from scipy import linalg, ndimage
 
 from sklearn.feature_extraction.image import grid_to_graph
 from sklearn import feature_selection
-from sklearn.cluster import WardAgglomeration
+from sklearn.cluster import FeatureAgglomeration
 from sklearn.linear_model import BayesianRidge
 from sklearn.pipeline import Pipeline
 from sklearn.grid_search import GridSearchCV
@@ -66,9 +66,9 @@ cachedir = tempfile.mkdtemp()
 mem = Memory(cachedir=cachedir, verbose=1)
 
 # Ward agglomeration followed by BayesianRidge
-A = grid_to_graph(n_x=size, n_y=size)
-ward = WardAgglomeration(n_clusters=10, connectivity=A, memory=mem,
-                         n_components=1)
+connectivity = grid_to_graph(n_x=size, n_y=size)
+ward = FeatureAgglomeration(n_clusters=10, connectivity=connectivity,
+                            memory=mem, n_components=1)
 clf = Pipeline([('ward', ward), ('ridge', ridge)])
 # Select the optimal number of parcels with grid search
 clf = GridSearchCV(clf, {'ward__n_clusters': [10, 20, 30]}, n_jobs=1, cv=cv)

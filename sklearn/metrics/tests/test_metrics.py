@@ -1503,8 +1503,8 @@ def test_invariance_string_vs_numbers_labels():
             measure_with_number = metric(y1, y2)
             measure_with_str = metric(y1_str, y2)
             assert_array_equal(measure_with_number, measure_with_str,
-                               err_msg="{0} failed string vs number invariance "
-                                       "test".format(name))
+                               err_msg="{0} failed string vs number "
+                               "invariance test".format(name))
 
             measure_with_strobj = metric(y1_str.astype('O'), y2)
             assert_array_equal(measure_with_number, measure_with_strobj,
@@ -1556,15 +1556,9 @@ def test_hinge_loss_binary():
     pred_decision = np.array([-8.5, 0.5, 1.5, -0.3])
     assert_equal(hinge_loss(y_true, pred_decision), 1.2 / 4)
 
-    f = ignore_warnings(hinge_loss)
-    assert_equal(f(-y_true, pred_decision),
-                 f(y_true, pred_decision, pos_label=-1, neg_label=1))
-
     y_true = np.array([0, 2, 2, 0])
     pred_decision = np.array([-8.5, 0.5, 1.5, -0.3])
     assert_equal(hinge_loss(y_true, pred_decision), 1.2 / 4)
-
-    assert_equal(f(y_true, pred_decision, pos_label=2, neg_label=0), 1.2 / 4)
 
 
 def test_multioutput_regression():

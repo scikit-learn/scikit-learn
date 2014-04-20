@@ -8,8 +8,6 @@ from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_equal
 from nose.tools import assert_raises
 
-from sklearn.dummy import DummyClassifier
-from sklearn.dummy import DummyRegressor
 from sklearn.grid_search import GridSearchCV
 from sklearn.ensemble import AdaBoostClassifier
 from sklearn.ensemble import AdaBoostRegressor
@@ -54,7 +52,6 @@ def test_classification_toy():
 def test_regression_toy():
     """Check classification on a toy dataset."""
     clf = AdaBoostRegressor(random_state=0)
-    clf = AdaBoostRegressor()
     clf.fit(X, y_regr)
     assert_array_equal(clf.predict(T), y_t_regr)
 

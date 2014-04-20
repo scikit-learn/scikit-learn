@@ -6,6 +6,7 @@
 # License: BSD 3 clause
 
 import warnings
+from distutils.version import LooseVersion
 
 import numpy as np
 from scipy import linalg
@@ -16,7 +17,13 @@ from ..base import RegressorMixin
 from ..utils import array2d, as_float_array, check_arrays
 from ..cross_validation import _check_cv as check_cv
 from ..externals.joblib import Parallel, delayed
-from ..utils.arrayfuncs import solve_triangular
+
+import scipy
+solve_triangular_args = {}
+if LooseVersion(scipy.__version__) >= LooseVersion('0.12'):
+    solve_triangular_args = {'check_finite': False}
+
+
 
 premature = """ Orthogonal matching pursuit ended prematurely due to linear
 dependence in the dictionary. The requested precision might not have been met.
@@ -95,7 +102,11 @@ def _cholesky_omp(X, y, n_nonzero_coefs, tol=None, copy_X=True,
         if n_active > 0:
             # Updates the Cholesky decomposition of X' X
             L[n_active, :n_active] = np.dot(X[:, :n_active].T, X[:, lam])
-            solve_triangular(L[:n_active, :n_active], L[n_active, :n_active])
+            linalg.solve_triangular(L[:n_active, :n_active],
+                                    L[n_active, :n_active],
+                                    trans=0, lower=1,
+                                    overwrite_b=True,
+                                    **solve_triangular_args)
             v = nrm2(L[n_active, :n_active]) ** 2
             if 1 - v <= min_float:  # selected atoms are dependent
                 warnings.warn(premature, RuntimeWarning, stacklevel=2)
@@ -203,7 +214,11 @@ def _gram_omp(Gram, Xy, n_nonzero_coefs, tol_0=None, tol=None,
             break
         if n_active > 0:
             L[n_active, :n_active] = Gram[lam, :n_active]
-            solve_triangular(L[:n_active, :n_active], L[n_active, :n_active])
+            linalg.solve_triangular(L[:n_active, :n_active],
+                                    L[n_active, :n_active],
+                                    trans=0, lower=1,
+                                    overwrite_b=True,
+                                    **solve_triangular_args)
             v = nrm2(L[n_active, :n_active]) ** 2
             if 1 - v <= min_float:  # selected atoms are dependent
                 warnings.warn(premature, RuntimeWarning, stacklevel=3)

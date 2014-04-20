@@ -255,9 +255,9 @@ def f_regression(X, y, center=True):
     corr /= norm(y)
 
     # convert to p-value
-    dof = y.size - 2
-    F = corr ** 2 / (1 - corr ** 2) * dof
-    pv = stats.f.sf(F, 1, dof)
+    degrees_of_freedom = y.size - (2 if center else 1)
+    F = corr ** 2 / (1 - corr ** 2) * degrees_of_freedom
+    pv = stats.f.sf(F, 1, degrees_of_freedom)
     return F, pv
 
 
@@ -408,6 +408,8 @@ class SelectKBest(_ScoreFilter):
         k = self.k
         if k == 'all':
             return np.ones(self.scores_.shape, dtype=bool)
+        elif k == 0:
+            return np.zeros(self.scores_.shape, dtype=bool)
         if k > len(self.scores_):
             raise ValueError("Cannot select %d features among %d. "
                              "Use k='all' to return all features."
@@ -420,8 +422,7 @@ class SelectKBest(_ScoreFilter):
         mask = np.zeros(scores.shape, dtype=bool)
 
         # Request a stable sort. Mergesort takes more memory (~40MB per
-        # megafeature on x86-64), but blows heapsort out of the water in
-        # terms of speed.
+        # megafeature on x86-64).
         mask[np.argsort(scores, kind="mergesort")[-k:]] = 1
         return mask
 

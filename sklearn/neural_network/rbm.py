@@ -1,10 +1,11 @@
 """Restricted Boltzmann Machine
 """
 
-# Main author: Yann N. Dauphin <dauphiya@iro.umontreal.ca>
-# Author: Vlad Niculae
-# Author: Gabriel Synnaeve
-# License: BSD Style.
+# Authors: Yann N. Dauphin <dauphiya@iro.umontreal.ca>
+#          Vlad Niculae
+#          Gabriel Synnaeve
+#          Lars Buitinck
+# License: BSD 3 clause
 
 import time
 
@@ -19,7 +20,8 @@ from ..utils import check_random_state
 from ..utils import gen_even_slices
 from ..utils import issparse
 from ..utils.extmath import safe_sparse_dot
-from ..utils.extmath import logistic_sigmoid
+from ..utils.extmath import log_logistic
+from ..utils.fixes import expit             # logistic function
 
 
 class BernoulliRBM(BaseEstimator, TransformerMixin):
@@ -130,8 +132,9 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         h : array-like, shape (n_samples, n_components)
             Corresponding mean field values for the hidden layer.
         """
-        return logistic_sigmoid(safe_sparse_dot(v, self.components_.T)
-                                + self.intercept_hidden_)
+        p = safe_sparse_dot(v, self.components_.T)
+        p += self.intercept_hidden_
+        return expit(p, out=p)
 
     def _sample_hiddens(self, v, rng):
         """Sample from the distribution P(h|v).
@@ -150,8 +153,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
             Values of the hidden layer.
         """
         p = self._mean_hiddens(v)
-        p[rng.uniform(size=p.shape) < p] = 1.
-        return np.floor(p, p)
+        return (rng.random_sample(size=p.shape) < p)
 
     def _sample_visibles(self, h, rng):
         """Sample from the distribution P(v|h).
@@ -169,10 +171,10 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         v : array-like, shape (n_samples, n_features)
             Values of the visible layer.
         """
-        p = logistic_sigmoid(np.dot(h, self.components_)
-                             + self.intercept_visible_)
-        p[rng.uniform(size=p.shape) < p] = 1.
-        return np.floor(p, p)
+        p = np.dot(h, self.components_)
+        p += self.intercept_visible_
+        expit(p, out=p)
+        return (rng.random_sample(size=p.shape) < p)
 
     def _free_energy(self, v):
         """Computes the free energy F(v) = - log sum_h exp(-E(v,h)).
@@ -188,8 +190,8 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
             The value of the free energy.
         """
         return (- safe_sparse_dot(v, self.intercept_visible_)
-                - np.log1p(np.exp(safe_sparse_dot(v, self.components_.T)
-                                  + self.intercept_hidden_)).sum(axis=1))
+                - np.logaddexp(0, safe_sparse_dot(v, self.components_.T)
+                               + self.intercept_hidden_).sum(axis=1))
 
     def gibbs(self, v):
         """Perform one Gibbs sampling step.
@@ -209,6 +211,40 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         v_ = self._sample_visibles(h_, rng)
 
         return v_
+
+    def partial_fit(self, X):
+        """Fit the model to the data X which should contain a partial
+        segment of the data.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            Training data.
+
+        Returns
+        -------
+        self : BernoulliRBM
+            The fitted model.
+        """
+        X, = check_arrays(X, sparse_format='csr', dtype=np.float)
+        if not hasattr(self, 'random_state_'):
+            self.random_state_ = check_random_state(self.random_state)
+        if not hasattr(self, 'components_'):
+            self.components_ = np.asarray(
+                self.random_state_.normal(
+                    0,
+                    0.01,
+                    (self.n_components, X.shape[1])
+                ),
+                order='fortran')
+        if not hasattr(self, 'intercept_hidden_'):
+            self.intercept_hidden_ = np.zeros(self.n_components, )
+        if not hasattr(self, 'intercept_visible_'):
+            self.intercept_visible_ = np.zeros(X.shape[1], )
+        if not hasattr(self, 'h_samples_'):
+            self.h_samples_ = np.zeros((self.batch_size, self.n_components))
+
+        self._fit(X, self.random_state_)
 
     def _fit(self, v_pos, rng):
         """Inner fit for one mini-batch.
@@ -230,7 +266,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
 
         lr = float(self.learning_rate) / v_pos.shape[0]
         update = safe_sparse_dot(v_pos.T, h_pos, dense_output=True).T
-        update -= np.dot(v_neg.T, h_neg).T
+        update -= np.dot(h_neg.T, v_neg)
         self.components_ += lr * update
         self.intercept_hidden_ += lr * (h_pos.sum(axis=0) - h_neg.sum(axis=0))
         self.intercept_visible_ += lr * (np.asarray(
@@ -274,7 +310,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
 
         fe = self._free_energy(v)
         fe_ = self._free_energy(v_)
-        return v.shape[1] * logistic_sigmoid(fe_ - fe, log=True)
+        return v.shape[1] * log_logistic(fe_ - fe)
 
     def fit(self, X, y=None):
         """Fit the model to the data X.

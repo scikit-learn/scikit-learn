@@ -37,8 +37,8 @@ from ..base import ClassifierMixin
 from ..base import RegressorMixin
 from ..utils import check_random_state, array2d, check_arrays, column_or_1d
 from ..utils.extmath import logsumexp
-from ..utils.fixes import unique
 from ..externals import six
+from ..feature_selection.from_model import _LearntSelectorMixin
 
 from ..tree.tree import DecisionTreeRegressor
 from ..tree._tree import DTYPE, TREE_LEAF
@@ -514,7 +514,8 @@ class VerboseReporter(object):
                 self.verbose_mod *= 10
 
 
-class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
+class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
+                                              _LearntSelectorMixin)):
     """Abstract base class for Gradient Boosting. """
 
     @abstractmethod
@@ -589,8 +590,8 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             raise ValueError("learning_rate must be greater than 0 but "
                              "was %r" % self.learning_rate)
 
-        if (self.loss not in self._SUPPORTED_LOSS or
-            self.loss not in LOSS_FUNCTIONS):
+        if (self.loss not in self._SUPPORTED_LOSS
+                or self.loss not in LOSS_FUNCTIONS):
             raise ValueError("Loss '{0:s}' not supported. ".format(self.loss))
 
         if self.loss in ('mdeviance', 'bdeviance'):
@@ -619,7 +620,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
                     raise ValueError('init="%s" is not supported' % self.init)
             else:
                 if (not hasattr(self.init, 'fit')
-                    or not hasattr(self.init, 'predict')):
+                        or not hasattr(self.init, 'predict')):
                     raise ValueError("init=%r must be valid BaseEstimator "
                                      "and support both fit and "
                                      "predict" % self.init)
@@ -696,8 +697,8 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         self.estimators_.resize((total_n_estimators, self.loss_.K))
         self.train_score_.resize(total_n_estimators)
         if (self.subsample < 1
-            or hasattr(self, '_oob_score_')
-            or hasattr(self, 'oob_improvement_')):
+                or hasattr(self, '_oob_score_')
+                or hasattr(self, 'oob_improvement_')):
             # if do oob resize arrays or create new if not available
             if hasattr(self, '_oob_score_'):
                 self._oob_score_.resize(total_n_estimators)
@@ -878,10 +879,10 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         Returns
         -------
         score : array, shape = [n_samples, k]
-            The decision function of the input samples. Classes are
-            ordered by arithmetical order. Regression and binary
-            classification are special cases with ``k == 1``,
-            otherwise ``k==n_classes``.
+            The decision function of the input samples. The order of the
+            classes corresponds to that in the attribute `classes_`.
+            Regression and binary classification are special cases with
+            ``k == 1``, otherwise ``k==n_classes``.
         """
         X = array2d(X, dtype=DTYPE, order="C")
         score = self._init_decision_function(X)
@@ -902,10 +903,10 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         Returns
         -------
         score : generator of array, shape = [n_samples, k]
-            The decision function of the input samples. Classes are
-            ordered by arithmetical order. Regression and binary
-            classification are special cases with ``k == 1``,
-            otherwise ``k==n_classes``.
+            The decision function of the input samples. The order of the
+            classes corresponds to that in the attribute `classes_`.
+            Regression and binary classification are special cases with
+            ``k == 1``, otherwise ``k==n_classes``.
         """
         X = array2d(X, dtype=DTYPE, order="C")
         score = self._init_decision_function(X)
@@ -1006,6 +1007,10 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
 
         Choosing `max_features < n_features` leads to a reduction of variance
         and an increase in bias.
+
+        Note: the search for a split does not stop until at least one
+        valid partition of the node samples is found, even if it requires to
+        effectively inspect more than ``max_features`` features.
 
     max_leaf_nodes : int or None, optional (default=None)
         Grow trees with ``max_leaf_nodes`` in best-first fashion.
@@ -1119,7 +1124,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
             Returns self.
         """
         y = column_or_1d(y, warn=True)
-        self.classes_, y = unique(y, return_inverse=True)
+        self.classes_, y = np.unique(y, return_inverse=True)
         self.n_classes_ = len(self.classes_)
         return super(GradientBoostingClassifier, self).fit(X, y, monitor)
 
@@ -1145,8 +1150,8 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         Returns
         -------
         p : array of shape = [n_samples]
-            The class probabilities of the input samples. Classes are
-            ordered by arithmetical order.
+            The class probabilities of the input samples. The order of the
+            classes corresponds to that in the attribute `classes_`.
         """
         score = self.decision_function(X)
         return self._score_to_proba(score)
@@ -1187,7 +1192,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         return self.classes_.take(np.argmax(proba, axis=1), axis=0)
 
     def staged_predict(self, X):
-        """Predict class probabilities at each stage for X.
+        """Predict classes at each stage for X.
 
         This method allows monitoring (i.e. determine error on testing set)
         after each stage.
@@ -1264,6 +1269,10 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
 
         Choosing `max_features < n_features` leads to a reduction of variance
         and an increase in bias.
+
+        Note: the search for a split does not stop until at least one
+        valid partition of the node samples is found, even if it requires to
+        effectively inspect more than ``max_features`` features.
 
     max_leaf_nodes : int or None, optional (default=None)
         Grow trees with ``max_leaf_nodes`` in best-first fashion.

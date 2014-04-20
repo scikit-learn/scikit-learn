@@ -125,29 +125,29 @@ def test_boston():
                                     random_state=1)
         clf.fit(boston.data, boston.target)
         score = clf.score(boston.data, boston.target)
-        assert score < 3, ("Failed with max_features=None, "
-                           "criterion %s and score = %f" % (c, score))
+        assert score > 0.95, ("Failed with max_features=None, "
+                              "criterion %s and score = %f" % (c, score))
 
         clf = RandomForestRegressor(n_estimators=5, criterion=c,
                                     max_features=6, random_state=1)
         clf.fit(boston.data, boston.target)
         score = clf.score(boston.data, boston.target)
-        assert score < 3, ("Failed with max_features=None, "
-                           "criterion %s and score = %f" % (c, score))
+        assert score > 0.95, ("Failed with max_features=6, "
+                              "criterion %s and score = %f" % (c, score))
 
         # Extra-trees
         clf = ExtraTreesRegressor(n_estimators=5, criterion=c, random_state=1)
         clf.fit(boston.data, boston.target)
         score = clf.score(boston.data, boston.target)
-        assert score < 3, ("Failed with max_features=None, "
-                           "criterion %s and score = %f" % (c, score))
+        assert score > 0.95, ("Failed with max_features=None, "
+                              "criterion %s and score = %f" % (c, score))
 
         clf = ExtraTreesRegressor(n_estimators=5, criterion=c, max_features=6,
                                   random_state=1)
         clf.fit(boston.data, boston.target)
         score = clf.score(boston.data, boston.target)
-        assert score < 3, ("Failed with max_features=None, "
-                           "criterion %s and score = %f" % (c, score))
+        assert score > 0.95, ("Failed with max_features=6, "
+                              "criterion %s and score = %f" % (c, score))
 
 
 def test_regressor_attributes():
@@ -207,15 +207,29 @@ def test_importances():
     X_new = clf.transform(X, threshold="mean")
     assert_less(0 < X_new.shape[1], X.shape[1])
 
+    # Check with sample weights
+    sample_weight = np.ones(y.shape)
+    sample_weight[y == 1] *= 100
+
+    clf = RandomForestClassifier(n_estimators=50, random_state=0)
+    clf.fit(X, y, sample_weight=sample_weight)
+    importances = clf.feature_importances_
+    assert np.all(importances >= 0.0)
+
+    clf = RandomForestClassifier(n_estimators=50, random_state=0)
+    clf.fit(X, y, sample_weight=3*sample_weight)
+    importances_bis = clf.feature_importances_
+    assert_almost_equal(importances, importances_bis)
+
 
 def test_oob_score_classification():
     """Check that oob prediction is a good estimation of the generalization
     error."""
     clf = RandomForestClassifier(oob_score=True, random_state=rng)
     n_samples = iris.data.shape[0]
-    clf.fit(iris.data[:n_samples / 2, :], iris.target[:n_samples / 2])
-    test_score = clf.score(iris.data[n_samples / 2:, :],
-                           iris.target[n_samples / 2:])
+    clf.fit(iris.data[:n_samples // 2, :], iris.target[:n_samples // 2])
+    test_score = clf.score(iris.data[n_samples // 2:, :],
+                           iris.target[n_samples // 2:])
     assert_less(abs(test_score - clf.oob_score_), 0.1)
 
 
@@ -226,9 +240,9 @@ def test_oob_score_classification_for_non_contiguous_target():
     clf = RandomForestClassifier(n_estimators=50,
                                  oob_score=True, random_state=rng)
     n_samples = iris.data.shape[0]
-    clf.fit(iris.data[:n_samples / 2, :], iris_target[:n_samples / 2])
-    test_score = clf.score(iris.data[n_samples / 2:, :],
-                           iris_target[n_samples / 2:])
+    clf.fit(iris.data[:n_samples // 2, :], iris_target[:n_samples // 2])
+    test_score = clf.score(iris.data[n_samples // 2:, :],
+                           iris_target[n_samples // 2:])
     assert_less(abs(test_score - clf.oob_score_), 0.1)
 
 
@@ -238,9 +252,9 @@ def test_oob_score_regression():
     clf = RandomForestRegressor(n_estimators=50, oob_score=True,
                                 random_state=rng)
     n_samples = boston.data.shape[0]
-    clf.fit(boston.data[:n_samples / 2, :], boston.target[:n_samples / 2])
-    test_score = clf.score(boston.data[n_samples / 2:, :],
-                           boston.target[n_samples / 2:])
+    clf.fit(boston.data[:n_samples // 2, :], boston.target[:n_samples // 2])
+    test_score = clf.score(boston.data[n_samples // 2:, :],
+                           boston.target[n_samples // 2:])
     assert_greater(test_score, clf.oob_score_)
     assert_greater(clf.oob_score_, .8)
 
@@ -287,10 +301,6 @@ def test_parallel():
     forest.set_params(n_jobs=2)
     y2 = forest.predict(boston.data)
     assert_array_almost_equal(y1, y2, 3)
-
-    # Use all cores on the classification dataset
-    forest = RandomForestClassifier(n_jobs=-1)
-    forest.fit(iris.data, iris.target)
 
 
 def test_pickle():

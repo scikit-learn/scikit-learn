@@ -194,8 +194,8 @@ The updates
 
 The updates for mu essentially are just weighted expectations of
 :math:`X` regularized by the prior. We can see this by taking the
-gradient of the bound w.r.t. :math:`\nu_{\mu}` and setting it to zero. The
-gradient is
+gradient of the bound with regards to :math:`\nu_{\mu}` and setting it to zero.
+The gradient is
 
 .. math::
 

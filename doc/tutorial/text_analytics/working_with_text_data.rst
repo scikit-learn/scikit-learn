@@ -25,12 +25,10 @@ Tutorial setup
 --------------
 
 To get started with this tutorial, you firstly must have the
-*scikit-learn* and all of its requiered dependencies installed.
+*scikit-learn* and all of its required dependencies installed.
 
-Please refer to the `scikit-learn install`_ page for more information
-and for per-system instructions.
-
-.. _`scikit-learn install`: http://scikit-learn.sourceforge.net/install.html
+Please refer to the :ref:`installation instructions <installation-instructions>`
+page for more information and for per-system instructions.
 
 The source of this tutorial can be found within your
 scikit-learn folder::
@@ -419,7 +417,7 @@ Instead of tweaking the parameters of the various components of the
 chain, it is possible to run an exhaustive search of the best
 parameters on a grid of possible values. We try out all classifiers
 on either words or bigrams, with or without idf, and with a penalty
-parameter of either 100 or 1000 for the linear SVM::
+parameter of either 0.01 or 0.001 for the linear SVM::
 
   >>> from sklearn.grid_search import GridSearchCV
   >>> parameters = {'vect__ngram_range': [(1, 1), (1, 2)],

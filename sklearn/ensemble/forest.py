@@ -55,7 +55,6 @@ from ..tree import (DecisionTreeClassifier, DecisionTreeRegressor,
 from ..tree._tree import DTYPE, DOUBLE
 from ..utils import array2d, check_random_state, check_arrays, safe_asarray
 from ..utils.validation import DataConversionWarning
-from ..utils.fixes import bincount, unique
 
 from .base import BaseEnsemble, _partition_estimators
 
@@ -82,7 +81,7 @@ def _parallel_build_trees(trees, forest, X, y, sample_weight, verbose):
 
             random_state = check_random_state(tree.random_state)
             indices = random_state.randint(0, n_samples, n_samples)
-            sample_counts = bincount(indices, minlength=n_samples)
+            sample_counts = np.bincount(indices, minlength=n_samples)
             curr_sample_weight *= sample_counts
 
             tree.fit(X, y,
@@ -204,8 +203,8 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
             The training input samples.
 
         y : array-like, shape = [n_samples] or [n_samples, n_outputs]
-            The target values (integers that correspond to classes in
-            classification, real numbers in regression).
+            The target values (class labels in classification, real numbers in
+            regression).
 
         sample_weight : array-like, shape = [n_samples] or None
             Sample weights. If None, then samples are equally weighted. Splits
@@ -395,7 +394,7 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
         self.n_classes_ = []
 
         for k in xrange(self.n_outputs_):
-            classes_k, y[:, k] = unique(y[:, k], return_inverse=True)
+            classes_k, y[:, k] = np.unique(y[:, k], return_inverse=True)
             self.classes_.append(classes_k)
             self.n_classes_.append(classes_k.shape[0])
 
@@ -448,8 +447,8 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
         -------
         p : array of shape = [n_samples, n_classes], or a list of n_outputs
             such arrays if n_outputs > 1.
-            The class probabilities of the input samples. Classes are
-            ordered by arithmetical order.
+            The class probabilities of the input samples. The order of the
+            classes corresponds to that in the attribute `classes_`.
         """
         # Check data
         if getattr(X, "dtype", None) != DTYPE or X.ndim != 2:
@@ -503,8 +502,8 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
         -------
         p : array of shape = [n_samples, n_classes], or a list of n_outputs
             such arrays if n_outputs > 1.
-            The class log-probabilities of the input samples. Classes are
-            ordered by arithmetical order.
+            The class probabilities of the input samples. The order of the
+            classes corresponds to that in the attribute `classes_`.
         """
         proba = self.predict_proba(X)
 
@@ -647,6 +646,9 @@ class RandomForestClassifier(ForestClassifier):
           - If "log2", then `max_features=log2(n_features)`.
           - If None, then `max_features=n_features`.
 
+        Note: the search for a split does not stop until at least one
+        valid partition of the node samples is found, even if it requires to
+        effectively inspect more than ``max_features`` features.
         Note: this parameter is tree-specific.
 
     max_depth : integer or None, optional (default=None)
@@ -801,6 +803,9 @@ class RandomForestRegressor(ForestRegressor):
           - If "log2", then `max_features=log2(n_features)`.
           - If None, then `max_features=n_features`.
 
+        Note: the search for a split does not stop until at least one
+        valid partition of the node samples is found, even if it requires to
+        effectively inspect more than ``max_features`` features.
         Note: this parameter is tree-specific.
 
     max_depth : integer or None, optional (default=None)
@@ -945,6 +950,9 @@ class ExtraTreesClassifier(ForestClassifier):
           - If "log2", then `max_features=log2(n_features)`.
           - If None, then `max_features=n_features`.
 
+        Note: the search for a split does not stop until at least one
+        valid partition of the node samples is found, even if it requires to
+        effectively inspect more than ``max_features`` features.
         Note: this parameter is tree-specific.
 
     max_depth : integer or None, optional (default=None)
@@ -1103,6 +1111,9 @@ class ExtraTreesRegressor(ForestRegressor):
           - If "log2", then `max_features=log2(n_features)`.
           - If None, then `max_features=n_features`.
 
+        Note: the search for a split does not stop until at least one
+        valid partition of the node samples is found, even if it requires to
+        effectively inspect more than ``max_features`` features.
         Note: this parameter is tree-specific.
 
     max_depth : integer or None, optional (default=None)

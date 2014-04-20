@@ -109,10 +109,8 @@ max, to be checked depending on the hardware) for the sparse input
 representation to be faster than the dense input representation on a machine
 with many CPUs and an optimized BLAS implementation.
 
-Here is sample code to test the sparsity of your input
-(requires a relatively recent NumPy for the ``count_nonzero`` function)::
+Here is sample code to test the sparsity of your input::
 
-    from sklearn.utils.fixes import count_nonzero
     def sparsity_ratio(X):
         return 1.0 - np.count_nonzero(X) / float(X.shape[0] * X.shape[1])
     print("input sparsity ratio:", sparsity_ratio(X))

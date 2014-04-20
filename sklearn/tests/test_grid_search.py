@@ -17,13 +17,14 @@ import scipy.sparse as sp
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_false, assert_true
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
 
 from scipy.stats import distributions
 
+from sklearn.externals.six.moves import zip
 from sklearn.base import BaseEstimator
 from sklearn.datasets import make_classification
 from sklearn.datasets import make_blobs
@@ -38,6 +39,8 @@ from sklearn.metrics import f1_score
 from sklearn.metrics import make_scorer
 from sklearn.metrics import roc_auc_score
 from sklearn.cross_validation import KFold, StratifiedKFold
+from sklearn.preprocessing import Imputer
+from sklearn.pipeline import Pipeline
 
 
 # Neither of the following two estimators inherit from BaseEstimator,
@@ -575,8 +578,8 @@ def test_grid_search_score_consistency():
                 if score == "f1":
                     correct_score = f1_score(y[test], clf.predict(X[test]))
                 elif score == "roc_auc":
-                    correct_score = roc_auc_score(y[test],
-                                              clf.decision_function(X[test]))
+                    dec = clf.decision_function(X[test])
+                    correct_score = roc_auc_score(y[test], dec)
                 assert_almost_equal(correct_score, scores[i])
                 i += 1
 
@@ -644,3 +647,24 @@ def test_grid_search_with_multioutput_data():
                 correct_score = est.score(X[test], y[test])
                 assert_almost_equal(correct_score,
                                     cv_validation_scores[i])
+
+
+def test_predict_proba_disabled():
+    """Test predict_proba when disabled on estimator."""
+    X = np.arange(20).reshape(5, -1)
+    y = [0, 0, 1, 1, 1]
+    clf = SVC(probability=False)
+    gs = GridSearchCV(clf, {}, cv=2).fit(X, y)
+    assert_false(hasattr(gs, "predict_proba"))
+
+
+def test_grid_search_allows_nans():
+    """ Test GridSearchCV with Imputer """
+    X = np.arange(20, dtype=np.float64).reshape(5, -1)
+    X[2, :] = np.nan
+    y = [0, 0, 1, 1, 1]
+    p = Pipeline([
+        ('imputer', Imputer(strategy='mean', missing_values='NaN')),
+        ('classifier', MockClassifier()),
+    ])
+    gs = GridSearchCV(p, {'classifier__foo_param': [1, 2, 3]}, cv=2).fit(X, y)

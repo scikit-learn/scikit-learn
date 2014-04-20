@@ -67,7 +67,7 @@ print(__doc__)
 # License: BSD 3 clause
 
 import numpy as np
-from matplotlib import pyplot as plt
+import matplotlib.pyplot as plt
 
 from sklearn.ensemble import BaggingRegressor
 from sklearn.tree import DecisionTreeRegressor

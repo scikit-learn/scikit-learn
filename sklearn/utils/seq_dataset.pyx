@@ -40,9 +40,15 @@ cdef class SequentialDataset:
         with gil:
             raise NotImplementedError()
 
-    cdef void shuffle(self, seed):
-        """Permutes the ordering of examples.  """
-        raise NotImplementedError()
+    cdef void shuffle(self, np.uint32_t seed) nogil:
+        """Permutes the ordering of examples."""
+        # Fisher-Yates shuffle
+        cdef int *ind = self.index_data_ptr
+        cdef int n = self.n_samples
+        cdef unsigned i, j
+        for i in range(n - 1):
+            j = i + our_rand_r(&seed) % (n - i)
+            ind[i], ind[j] = ind[j], ind[i]
 
 
 cdef class ArrayDataset(SequentialDataset):
@@ -88,11 +94,10 @@ cdef class ArrayDataset(SequentialDataset):
         self.sample_weight_data = <double *>sample_weights.data
 
         # Use index array for fast shuffling
-        cdef np.ndarray[int, ndim=1,
-                        mode='c'] index = np.arange(0, self.n_samples,
-                                                    dtype=np.intc)
+        cdef np.ndarray[int, ndim=1, mode='c'] index = \
+            np.arange(0, self.n_samples, dtype=np.intc)
         self.index = index
-        self.index_data_ptr = <int *> index.data
+        self.index_data_ptr = <int *>index.data
 
     cdef void next(self, double **x_data_ptr, int **x_ind_ptr,
                    int *nnz, double *y, double *sample_weight) nogil:
@@ -111,9 +116,6 @@ cdef class ArrayDataset(SequentialDataset):
         sample_weight[0] = self.sample_weight_data[sample_idx]
 
         self.current_index = current_index
-
-    cdef void shuffle(self, seed):
-        np.random.RandomState(seed).shuffle(self.index)
 
 
 cdef class CSRDataset(SequentialDataset):
@@ -178,5 +180,17 @@ cdef class CSRDataset(SequentialDataset):
 
         self.current_index = current_index
 
-    cdef void shuffle(self, seed):
-        np.random.RandomState(seed).shuffle(self.index)
+
+cdef enum:
+    RAND_R_MAX = 0x7FFFFFFF
+
+
+# rand_r replacement using a 32bit XorShift generator
+# See http://www.jstatsoft.org/v08/i14/paper for details
+# XXX copied over from sklearn/tree/_tree.pyx, should refactor
+cdef inline np.uint32_t our_rand_r(np.uint32_t* seed) nogil:
+    seed[0] ^= <np.uint32_t>(seed[0] << 13)
+    seed[0] ^= <np.uint32_t>(seed[0] >> 17)
+    seed[0] ^= <np.uint32_t>(seed[0] << 5)
+
+    return seed[0] % (<np.uint32_t>RAND_R_MAX + 1)

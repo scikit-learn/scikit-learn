@@ -233,7 +233,7 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
 
                 indptr.append(len(indices))
 
-            if len(indptr) == 0:
+            if len(indptr) == 1:
                 raise ValueError("Sample sequence X is empty.")
 
             if len(indices) > 0:

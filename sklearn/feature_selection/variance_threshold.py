@@ -5,7 +5,7 @@ import numpy as np
 from ..base import BaseEstimator
 from .base import SelectorMixin
 from ..utils import atleast2d_or_csr
-from ..utils.sparsefuncs import csr_mean_variance_axis0
+from ..utils.sparsefuncs_fast import csr_mean_variance_axis0
 
 
 class VarianceThreshold(BaseEstimator, SelectorMixin):

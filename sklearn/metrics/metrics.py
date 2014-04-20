@@ -34,7 +34,6 @@ from ..utils import deprecated
 from ..utils import column_or_1d
 from ..utils.multiclass import unique_labels
 from ..utils.multiclass import type_of_target
-from ..utils.fixes import bincount
 
 
 ###############################################################################
@@ -249,31 +248,23 @@ def hinge_loss(y_true, pred_decision, pos_label=None, neg_label=None):
     0.30...
 
     """
-    if pos_label is not None:
-        warnings.warn("'pos_label' is deprecated and will be removed in "
-                      "release 0.15.", DeprecationWarning)
-    if neg_label is not None:
-        warnings.warn("'neg_label' is unused and will be removed in "
-                      "release 0.15.", DeprecationWarning)
-
     # TODO: multi-class hinge-loss
     y_true, pred_decision = check_arrays(y_true, pred_decision)
 
     # the rest of the code assumes that positive and negative labels
     # are encoded as +1 and -1 respectively
-    if pos_label is not None:
-        y_true = (np.asarray(y_true) == pos_label) * 2 - 1
-    else:
-        y_true = LabelBinarizer(neg_label=-1).fit_transform(y_true)[:, 0]
+    lbin = LabelBinarizer(neg_label=-1)
+    y_true = lbin.fit_transform(y_true)[:, 0]
 
-    if pred_decision.ndim == 2 and pred_decision.shape[1] != 1:
+    if len(lbin.classes_) > 2 or (pred_decision.ndim == 2
+                                  and pred_decision.shape[1] != 1):
         raise ValueError("Multi-class hinge loss not supported")
     pred_decision = np.ravel(pred_decision)
 
     try:
         margin = y_true * pred_decision
     except TypeError:
-        raise ValueError("pred_decision should be an array of floats.")
+        raise TypeError("pred_decision should be an array of floats.")
     losses = 1 - margin
     # The hinge doesn't penalize good enough predictions.
     losses[losses <= 0] = 0
@@ -755,7 +746,7 @@ def roc_curve(y_true, y_score, pos_label=None):
 
     y_score : array, shape = [n_samples]
         Target scores, can either be probability estimates of the positive
-        class, confidence values, or binary decisions.
+        class or confidence values.
 
     pos_label : int
         Label considered as positive and others are considered negative.
@@ -767,7 +758,7 @@ def roc_curve(y_true, y_score, pos_label=None):
         positive rate of predictions with score >= thresholds[i].
 
     tpr : array, shape = [>2]
-        Increasing false positive rates such that element i is the true
+        Increasing true positive rates such that element i is the true
         positive rate of predictions with score >= thresholds[i].
 
     thresholds : array, shape = [n_thresholds]
@@ -1619,18 +1610,25 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
         # labels are now from 0 to len(labels) - 1 -> use bincount
         tp_bins = y_true[y_true == y_pred]
         if len(tp_bins):
-            tp_sum = bincount(tp_bins, minlength=len(labels))
+            tp_sum = np.bincount(tp_bins, minlength=len(labels))
         else:
             # Pathological case
             true_sum = pred_sum = tp_sum = np.zeros(len(labels))
         if len(y_pred):
-            pred_sum = bincount(y_pred, minlength=len(labels))
+            pred_sum = np.bincount(y_pred, minlength=len(labels))
         if len(y_true):
-            true_sum = bincount(y_true, minlength=len(labels))
+            true_sum = np.bincount(y_true, minlength=len(labels))
 
     ### Select labels to keep ###
 
     if y_type == 'binary' and average is not None and pos_label is not None:
+        if label_order is not None and len(label_order) == 2:
+            warnings.warn('In the future, providing two `labels` values, as '
+                          'well as `average` will average over those '
+                          'labels. For now, please use `labels=None` with '
+                          '`pos_label` to evaluate precision, recall and '
+                          'F-score for the positive label only.',
+                          FutureWarning)
         if pos_label not in labels:
             if len(labels) == 1:
                 # Only negative labels

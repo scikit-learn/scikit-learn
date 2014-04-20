@@ -15,7 +15,7 @@ features (words) may appear in each batch.
 The dataset used in this example is Reuters-21578 as provided by the UCI ML
 repository. It will be automatically downloaded and uncompressed on first run.
 
-The plot represents is the learning curve of the classifier: the evolution
+The plot represents the learning curve of the classifier: the evolution
 of classification accuracy over the course of the mini-batches. Accuracy is
 measured on the first 1000 samples, held out as a validation set.
 

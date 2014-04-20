@@ -62,7 +62,9 @@ Classes
    :template: class.rst
 
    cluster.AffinityPropagation
+   cluster.AgglomerativeClustering
    cluster.DBSCAN
+   cluster.FeatureAgglomeration
    cluster.KMeans
    cluster.MiniBatchKMeans
    cluster.MeanShift
@@ -624,6 +626,7 @@ From text
    :template: function.rst
 
    learning_curve.learning_curve
+   learning_curve.validation_curve
 
 .. _linear_model_ref:
 
@@ -657,6 +660,8 @@ From text
    linear_model.LogisticRegression
    linear_model.MultiTaskLasso
    linear_model.MultiTaskElasticNet
+   linear_model.MultiTaskLassoCV
+   linear_model.MultiTaskElasticNetCV
    linear_model.OrthogonalMatchingPursuit
    linear_model.OrthogonalMatchingPursuitCV
    linear_model.PassiveAggressiveClassifier
@@ -1057,6 +1062,7 @@ Pairwise metrics
    preprocessing.Normalizer
    preprocessing.OneHotEncoder
    preprocessing.StandardScaler
+   preprocessing.PolynomialFeatures
 
 .. autosummary::
    :toctree: generated/

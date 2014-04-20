@@ -58,9 +58,9 @@ class EstimatorWithFitAndPredict(object):
 def test_check_scoring():
     """Test all branches of check_scoring"""
     estimator = EstimatorWithoutFit()
-    assert_raises_regexp(TypeError,
-        r"estimator should a be an estimator implementing 'fit' method, .* "
-        "was passed", check_scoring, estimator)
+    pattern = (r"estimator should a be an estimator implementing 'fit' method,"
+               r" .* was passed")
+    assert_raises_regexp(TypeError, pattern, check_scoring, estimator)
 
     estimator = EstimatorWithFitAndScore()
     estimator.fit([[1]], [1])
@@ -69,17 +69,18 @@ def test_check_scoring():
 
     estimator = EstimatorWithFitAndPredict()
     estimator.fit([[1]], [1])
-    assert_raises_regexp(TypeError,
-        r"If no scoring is specified, the estimator passed should have a "
-        "'score' method\. The estimator .* does not.", check_scoring, estimator)
+    pattern = (r"If no scoring is specified, the estimator passed should have"
+               r" a 'score' method\. The estimator .* does not\.")
+    assert_raises_regexp(TypeError, pattern, check_scoring, estimator)
 
     scorer = check_scoring(estimator, "accuracy")
     assert_almost_equal(scorer(estimator, [[1]], [1]), 1.0)
 
     estimator = EstimatorWithFit()
-    assert_raises_regexp(TypeError,
-        r"The estimator passed should have a 'score' or a 'predict' method. "
-        "The estimator .* does not.", check_scoring, estimator, "accuracy")
+    pattern = (r"The estimator passed should have a 'score'"
+               r" or a 'predict' method\. The estimator .* does not\.")
+    assert_raises_regexp(TypeError, pattern, check_scoring, estimator,
+                         "accuracy")
 
     estimator = EstimatorWithFit()
     scorer = check_scoring(estimator, allow_none=True)

@@ -16,6 +16,7 @@ from sklearn.utils.testing import ignore_warnings
 
 from sklearn.metrics.scorer import SCORERS
 
+
 def test_rfe_set_params():
     generator = check_random_state(0)
     iris = load_iris()

@@ -34,10 +34,10 @@ test-coverage:
 test: test-code test-doc
 
 trailing-spaces:
-	find sklearn -name "*.py" | xargs perl -pi -e 's/[ \t]*$$//'
+	find sklearn -name "*.py" -exec perl -pi -e 's/[ \t]*$$//' {} \;
 
 cython:
-	find sklearn -name "*.pyx" | xargs $(CYTHON)
+	find sklearn -name "*.pyx" -exec $(CYTHON) {} \;
 
 ctags:
 	# make tags for symbol based navigation in emacs and vim

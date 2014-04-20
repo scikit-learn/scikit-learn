@@ -39,8 +39,8 @@ def make_sparse_random_data(n_samples, n_features, n_nonzeros):
     rng = np.random.RandomState(0)
     data_coo = sp.coo_matrix(
         (rng.randn(n_nonzeros),
-        (rng.randint(n_samples, size=n_nonzeros),
-         rng.randint(n_features, size=n_nonzeros))),
+         (rng.randint(n_samples, size=n_nonzeros),
+          rng.randint(n_features, size=n_nonzeros))),
         shape=(n_samples, n_features))
     return data_coo.toarray(), data_coo.tocsr()
 

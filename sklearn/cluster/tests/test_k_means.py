@@ -14,9 +14,9 @@ from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_warns
+from sklearn.utils.testing import if_not_mac_os
 
 from sklearn.utils.extmath import row_norms
-from sklearn.utils.fixes import unique
 from sklearn.metrics.cluster import v_measure_score
 from sklearn.cluster import KMeans, k_means
 from sklearn.cluster import MiniBatchKMeans
@@ -192,15 +192,8 @@ def test_k_means_new_centers():
         this_labels = km.labels_
         # Reorder the labels so that the first instance is in cluster 0,
         # the second in cluster 1, ...
-        this_labels = unique(this_labels, return_index=True)[1][this_labels]
+        this_labels = np.unique(this_labels, return_index=True)[1][this_labels]
         np.testing.assert_array_equal(this_labels, labels)
-
-
-def _is_mac_os_version(version):
-    """Returns True iff Mac OS X and newer than specified version."""
-    import platform
-    mac_version, _, _ = platform.mac_ver()
-    return mac_version.split('.')[:2] == version.split('.')[:2]
 
 
 def _has_blas_lib(libname):
@@ -208,10 +201,8 @@ def _has_blas_lib(libname):
     return libname in get_info('blas_opt').get('libraries', [])
 
 
+@if_not_mac_os()
 def test_k_means_plus_plus_init_2_jobs():
-    if _is_mac_os_version('10.7') or _is_mac_os_version('10.8'):
-        raise SkipTest('Multi-process bug in Mac OS X Lion (see issue #636)')
-
     if _has_blas_lib('openblas'):
         raise SkipTest('Multi-process bug with OpenBLAS (see issue #636)')
 
@@ -345,8 +336,8 @@ def test_minibatch_reassign():
             sys.stdout = old_stdout
         centers_after = mb_k_means.cluster_centers_.copy()
         # Check that all the centers have moved
-        assert_greater(((centers_before - centers_after)**2).sum(axis=1).min(),
-                       .2)
+        assert_greater(((centers_before - centers_after) ** 2)
+                       .sum(axis=1).min(), .2)
 
     # Give a perfect initialization, with a small reassignment_ratio,
     # no center should be reassigned
@@ -396,7 +387,8 @@ def test_mini_batch_k_means_random_init_partial_fit():
 
 def test_minibatch_default_init_size():
     mb_k_means = MiniBatchKMeans(init=centers.copy(), n_clusters=n_clusters,
-                                 batch_size=10, random_state=42, n_init=1).fit(X)
+                                 batch_size=10, random_state=42,
+                                 n_init=1).fit(X)
     assert_equal(mb_k_means.init_size_, 3 * mb_k_means.batch_size)
     _check_fitted_model(mb_k_means)
 
@@ -409,7 +401,8 @@ def test_minibatch_tol():
 
 def test_minibatch_set_init_size():
     mb_k_means = MiniBatchKMeans(init=centers.copy(), n_clusters=n_clusters,
-                                 init_size=666, random_state=42, n_init=1).fit(X)
+                                 init_size=666, random_state=42,
+                                 n_init=1).fit(X)
     assert_equal(mb_k_means.init_size, 666)
     assert_equal(mb_k_means.init_size_, n_samples)
     _check_fitted_model(mb_k_means)
@@ -614,7 +607,8 @@ def test_k_means_function():
     assert_greater(inertia, 0.0)
 
     # check warning when centers are passed
-    assert_warns(RuntimeWarning, k_means, X, n_clusters=n_clusters, init=centers)
+    assert_warns(RuntimeWarning, k_means, X, n_clusters=n_clusters,
+                 init=centers)
 
     # to many clusters desired
     assert_raises(ValueError, k_means, X, n_clusters=X.shape[0] + 1)

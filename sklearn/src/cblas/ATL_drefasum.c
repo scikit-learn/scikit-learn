@@ -47,15 +47,12 @@
  * Include files
  */
 #include "atlas_refmisc.h"
-#include "atlas_reflvl2.h"
-#include "atlas_reflevel2.h"
+#include "atlas_reflevel1.h"
 
-void ATL_dreftrsvUNU
+double ATL_drefasum
 (
    const int                  N,
-   const double               * A,
-   const int                  LDA,
-   double                     * X,
+   const double               * X,
    const int                  INCX
 )
 {
@@ -63,33 +60,74 @@ void ATL_dreftrsvUNU
  * Purpose
  * =======
  *
- * ATL_dreftrsvUNU( ... )
+ * ATL_drefasum   returns the sum of absolute values of the entries of a
+ * vector x.
  *
- * <=>
+ * Arguments
+ * =========
  *
- * ATL_dreftrsv( AtlasUpper, AtlasNoTrans, AtlasUnit, ... )
+ * N       (input)                       const int
+ *         On entry, N specifies the length of the vector x. N  must  be
+ *         at least zero. Unchanged on exit.
  *
- * See ATL_dreftrsv for details.
+ * X       (input)                       const double *
+ *         On entry,  X  points to the  first entry to be accessed of an
+ *         incremented array of size equal to or greater than
+ *            ( 1 + ( n - 1 ) * abs( INCX ) ) * sizeof(   double  ),
+ *         that contains the vector x. Unchanged on exit.
+ *
+ * INCX    (input)                       const int
+ *         On entry, INCX specifies the increment for the elements of X.
+ *         INCX must not be zero. Unchanged on exit.
  *
  * ---------------------------------------------------------------------
  */
 /*
  * .. Local Variables ..
  */
-   register double            t0;
-   int                        i, iaij, ix, j, jaj, jx;
+   register double            sum = ATL_dZERO, x0, x1, x2, x3,
+                              x4, x5, x6, x7;
+   double                     * StX;
+   register int               i;
+   int                        nu;
+   const int                  incX2 = 2 * INCX, incX3 = 3 * INCX,
+                              incX4 = 4 * INCX, incX5 = 5 * INCX,
+                              incX6 = 6 * INCX, incX7 = 7 * INCX,
+                              incX8 = 8 * INCX;
 /* ..
  * .. Executable Statements ..
  *
  */
-   for( j = N-1,     jaj  = (N-1)*LDA, jx  = (N-1)*INCX;
-        j >= 0; j--, jaj -= LDA,       jx -= INCX )
+   if( ( N > 0 ) && ( INCX >= 1 ) )
    {
-      t0 = X[jx];
-      for( i = 0, iaij = jaj, ix = 0; i < j; i++, iaij += 1, ix += INCX )
-      { X[ix] -= t0 * A[iaij]; }
+      if( ( nu = ( N >> 3 ) << 3 ) != 0 )
+      {
+         StX = (double *)X + nu * INCX;
+
+         do
+         {
+            x0 = (*X);     x4 = X[incX4]; x1 = X[INCX ]; x5 = X[incX5];
+            x2 = X[incX2]; x6 = X[incX6]; x3 = X[incX3]; x7 = X[incX7];
+
+            sum += Mdabs( x0 ); sum += Mdabs( x4 );
+            sum += Mdabs( x1 ); sum += Mdabs( x3 );
+            sum += Mdabs( x2 ); sum += Mdabs( x6 );
+            sum += Mdabs( x5 ); sum += Mdabs( x7 );
+
+            X  += incX8;
+
+         } while( X != StX );
+      }
+
+      for( i = N - nu; i != 0; i-- )
+      {
+         x0   = (*X);
+         sum += Mdabs( x0 );
+         X   += INCX;
+      }
    }
+   return( sum );
 /*
- * End of ATL_dreftrsvUNU
+ * End of ATL_drefasum
  */
 }

@@ -377,3 +377,130 @@ Vincent Dubourg, PHIMECA Engineering, PhD Engineer
 
    </span>
 
+`HowAboutWe <http://www.howaboutwe.com/>`_
+----------------------------------------------------------
+
+.. raw:: html
+
+  <div class="logo">
+
+.. image:: images/howaboutwe.png
+   :target: http://www.howaboutwe.com/
+
+.. raw:: html
+
+  </div>
+
+At HowAboutWe, scikit-learn lets us implement a wide array of machine learning
+techniques in analysis and in production, despite having a small team.  We use
+scikit-learn’s classification algorithms to predict user behavior, enabling us
+to (for example) estimate the value of leads from a given traffic source early
+in the lead’s tenure on our site. Also, our users' profiles consist of
+primarily unstructured data (answers to open-ended questions), so we use
+scikit-learn’s feature extraction and dimensionality reduction tools to
+translate these unstructured data into inputs for our matchmaking system.
+
+.. raw:: html
+
+   <span class="testimonial-author">
+
+Daniel Weitzenfeld, Senior Data Scientist at HowAboutWe
+
+.. raw:: html
+
+   </span>
+
+
+`PeerIndex <http://www.peerindex.com/>`_
+----------------------------------------
+
+.. raw:: html
+
+  <div class="logo">
+
+.. image:: images/peerindex.png
+   :target: http://www.peerindex.com/
+
+.. raw:: html
+
+  </div>
+
+At PeerIndex we use scientific methodology to build the Influence Graph - a
+unique dataset that allows us to identify who’s really influential and in which
+context. To do this, we have to tackle a range of machine learning and
+predictive modeling problems. Scikit-learn has emerged as our primary tool for
+developing prototypes and making quick progress. From predicting missing data
+and classifying tweets to clustering communities of social media users, scikit-
+learn proved useful in a variety of applications. Its very intuitive interface
+and excellent compatibility with other python tools makes it and indispensable
+tool in our daily research efforts.
+
+.. raw:: html
+
+   <span class="testimonial-author">
+
+Ferenc Huszar - Senior Data Scientist at Peerindex
+
+.. raw:: html
+
+   </span>
+
+
+`DataRobot <http://www.datarobot.com>`_
+------------------------------------
+
+.. raw:: html
+
+    <div class="logo">
+
+.. image:: images/datarobot.png
+    :target: http://www.datarobot.com
+
+.. raw:: html
+
+    </div>
+
+DataRobot is building next generation predictive analytics software to make data scientists more productive, and scikit-learn is an integral part of our system. The variety of machine learning techniques in combination with the solid implementations that scikit-learn offers makes it a one-stop-shopping library for machine learning in Python. Moreover, its consistent API, well-tested code and permissive licensing allow us to use it in a production environment. Scikit-learn has literally saved us years of work we would have had to do ourselves to bring our product to market.
+
+.. raw:: html
+
+   <span class="testimonial-author">
+
+Jeremy Achin, CEO & Co-founder DataRobot Inc.
+
+.. raw:: html
+
+   </span>
+
+
+`OkCupid <https://www.okcupid.com/>`_
+--------------------------------------
+
+.. raw:: html
+
+    <div class="logo">
+
+.. image:: images/okcupid.png
+    :target: https://www.okcupid.com
+
+.. raw:: html
+
+    </div>
+
+We're using scikit-learn at OkCupid to evaluate and improve our matchmaking
+system. The range of features it has, especially preprocessing utilities, means
+we can use it for a wide variety of projects, and it's performant enough to
+handle the volume of data that we need to sort through. The documentation is
+really thorough, as well, which makes the library quite easy to use.
+
+.. raw:: html
+
+   <span class="testimonial-author">
+
+David Koh - Senior Data Scientist at OkCupid
+
+.. raw:: html
+
+   </span>
+
+

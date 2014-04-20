@@ -105,15 +105,6 @@ class GaussianNB(BaseNB):
     """
     Gaussian Naive Bayes (GaussianNB)
 
-    Parameters
-    ----------
-    X : array-like, shape = [n_samples, n_features]
-        Training vector, where n_samples in the number of samples and
-        n_features is the number of features.
-
-    y : array, shape = [n_samples]
-        Target vector relative to X
-
     Attributes
     ----------
     `class_prior_` : array, shape = [n_classes]
@@ -287,7 +278,7 @@ class BaseDiscreteNB(BaseNB):
         self._update_class_log_prior()
         return self
 
-    def fit(self, X, y, sample_weight=None, class_prior=None):
+    def fit(self, X, y, sample_weight=None):
         """Fit Naive Bayes classifier according to X, y
 
         Parameters
@@ -323,12 +314,7 @@ class BaseDiscreteNB(BaseNB):
         if sample_weight is not None:
             Y *= array2d(sample_weight).T
 
-        if class_prior is not None:
-            warnings.warn('class_prior has been made an ``__init__`` parameter'
-                          ' and will be removed from fit in version 0.15.',
-                          DeprecationWarning)
-        else:
-            class_prior = self.class_prior
+        class_prior = self.class_prior
 
         # Count raw events from data before updating the class log prior
         # and feature log probas

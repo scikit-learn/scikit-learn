@@ -36,7 +36,7 @@ def test_1d(regr=regression.constant, corr=correlation.squared_exponential,
     y2_pred, MSE2 = gp.predict(X2, eval_MSE=True)
 
     assert_true(np.allclose(y_pred, y) and np.allclose(MSE, 0.)
-        and np.allclose(MSE2, 0., atol=10))
+                and np.allclose(MSE2, 0., atol=10))
 
 
 def test_2d(regr=regression.constant, corr=correlation.squared_exponential,
@@ -69,7 +69,7 @@ def test_2d(regr=regression.constant, corr=correlation.squared_exponential,
 
 
 def test_2d_2d(regr=regression.constant, corr=correlation.squared_exponential,
-            random_start=10, beta0=None):
+               random_start=10, beta0=None):
     """
     MLE estimation of a two-dimensional Gaussian Process model accounting for
     anisotropy. Check random start optimization.

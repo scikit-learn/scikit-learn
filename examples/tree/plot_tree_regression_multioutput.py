@@ -17,6 +17,8 @@ details of the training data and learn from the noise, i.e. they overfit.
 print(__doc__)
 
 import numpy as np
+import pylab as pl
+from sklearn.tree import DecisionTreeRegressor
 
 # Create a random dataset
 rng = np.random.RandomState(1)
@@ -25,8 +27,6 @@ y = np.array([np.pi * np.sin(X).ravel(), np.pi * np.cos(X).ravel()]).T
 y[::5, :] += (0.5 - rng.rand(20, 2))
 
 # Fit regression model
-from sklearn.tree import DecisionTreeRegressor
-
 clf_1 = DecisionTreeRegressor(max_depth=2)
 clf_2 = DecisionTreeRegressor(max_depth=5)
 clf_3 = DecisionTreeRegressor(max_depth=8)
@@ -41,8 +41,6 @@ y_2 = clf_2.predict(X_test)
 y_3 = clf_3.predict(X_test)
 
 # Plot the results
-import pylab as pl
-
 pl.figure()
 pl.scatter(y[:, 0], y[:, 1], c="k", label="data")
 pl.scatter(y_1[:, 0], y_1[:, 1], c="g", label="max_depth=2")

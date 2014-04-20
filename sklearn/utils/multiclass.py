@@ -161,7 +161,6 @@ def is_sequence_of_sequences(y):
         Return ``True``, if ``y`` is a sequence of sequences else ``False``.
 
     >>> import numpy as np
-    >>> from sklearn.utils.multiclass import is_multilabel
     >>> is_sequence_of_sequences([0, 1, 0, 1])
     False
     >>> is_sequence_of_sequences([[1], [0, 2], []])

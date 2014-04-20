@@ -13,6 +13,7 @@ from __future__ import print_function
 from math import log
 import sys
 import warnings
+from distutils.version import LooseVersion
 
 import numpy as np
 from scipy import linalg, interpolate
@@ -22,8 +23,14 @@ from .base import LinearModel
 from ..base import RegressorMixin
 from ..utils import array2d, arrayfuncs, as_float_array, check_arrays
 from ..cross_validation import _check_cv as check_cv
+from ..utils import ConvergenceWarning
 from ..externals.joblib import Parallel, delayed
 from ..externals.six.moves import xrange
+
+import scipy
+solve_triangular_args = {}
+if LooseVersion(scipy.__version__) >= LooseVersion('0.12'):
+    solve_triangular_args = {'check_finite': False}
 
 
 def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
@@ -136,7 +143,13 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
 
     # will hold the cholesky factorization. Only lower part is
     # referenced.
-    L = np.empty((max_features, max_features), dtype=X.dtype)
+    # We are initializing this to "zeros" and not empty, because
+    # it is passed to scipy linalg functions and thus if it has NaNs,
+    # even if they are in the upper part that it not used, we
+    # get errors raised.
+    # Once we support only scipy > 0.12 we can use check_finite=False and
+    # go back to "empty"
+    L = np.zeros((max_features, max_features), dtype=X.dtype)
     swap, nrm2 = linalg.get_blas_funcs(('swap', 'nrm2'), (X,))
     solve_cholesky, = get_lapack_funcs(('potrs',), (X,))
 
@@ -233,8 +246,13 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
                 L[n_active, :n_active] = Gram[n_active, :n_active]
 
             # Update the cholesky decomposition for the Gram matrix
-            arrayfuncs.solve_triangular(L[:n_active, :n_active],
-                                        L[n_active, :n_active])
+            if n_active:
+                linalg.solve_triangular(L[:n_active, :n_active],
+                                        L[n_active, :n_active],
+                                        trans=0, lower=1,
+                                        overwrite_b=True,
+                                        **solve_triangular_args)
+
             v = np.dot(L[n_active, :n_active], L[n_active, :n_active])
             diag = max(np.sqrt(np.abs(c - v)), eps)
             L[n_active, n_active] = diag
@@ -248,7 +266,8 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
                               'i.e. alpha=%.3e, '
                               'with an active set of %i regressors, and '
                               'the smallest cholesky pivot element being %.3e'
-                              % (n_iter, alpha, n_active, diag))
+                              % (n_iter, alpha, n_active, diag),
+                              ConvergenceWarning)
                 # XXX: need to figure a 'drop for good' way
                 Cov = Cov_not_shortened
                 Cov[0] = 0
@@ -272,7 +291,8 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
                           'longer well controlled. %i iterations, alpha=%.3e, '
                           'previous alpha=%.3e, with an active set of %i '
                           'regressors.'
-                          % (n_iter, alpha, prev_alpha, n_active))
+                          % (n_iter, alpha, prev_alpha, n_active),
+                          ConvergenceWarning)
             break
 
         # least squares solution
@@ -325,7 +345,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
         z_pos = arrayfuncs.min_pos(z)
         if z_pos < gamma_:
             # some coefficients have changed sign
-            idx = np.where(z == z_pos)[0]
+            idx = np.where(z == z_pos)[0][::-1]
 
             # update the sign, important for LAR
             sign_active[idx] = -sign_active[idx]
@@ -361,18 +381,22 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
         # See if any coefficient has changed sign
         if drop and method == 'lasso':
 
-            arrayfuncs.cholesky_delete(L[:n_active, :n_active], idx)
+            # handle the case when idx is not length of 1
+            [arrayfuncs.cholesky_delete(L[:n_active, :n_active], ii) for ii in
+                idx]
 
             n_active -= 1
             m, n = idx, n_active
-            drop_idx = active.pop(idx)
+            # handle the case when idx is not length of 1
+            drop_idx = [active.pop(ii) for ii in idx]
 
             if Gram is None:
                 # propagate dropped variable
-                for i in range(idx, n_active):
-                    X.T[i], X.T[i + 1] = swap(X.T[i], X.T[i + 1])
-                    # yeah this is stupid
-                    indices[i], indices[i + 1] = indices[i + 1], indices[i]
+                for ii in idx:
+                    for i in range(ii, n_active):
+                        X.T[i], X.T[i + 1] = swap(X.T[i], X.T[i + 1])
+                        # yeah this is stupid
+                        indices[i], indices[i + 1] = indices[i + 1], indices[i]
 
                 # TODO: this could be updated
                 residual = y - np.dot(X[:, :n_active], coef[active])
@@ -380,11 +404,12 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
 
                 Cov = np.r_[temp, Cov]
             else:
-                for i in range(idx, n_active):
-                    indices[i], indices[i + 1] = indices[i + 1], indices[i]
-                    Gram[i], Gram[i + 1] = swap(Gram[i], Gram[i + 1])
-                    Gram[:, i], Gram[:, i + 1] = swap(Gram[:, i],
-                                                      Gram[:, i + 1])
+                for ii in idx:
+                    for i in range(ii, n_active):
+                        indices[i], indices[i + 1] = indices[i + 1], indices[i]
+                        Gram[i], Gram[i + 1] = swap(Gram[i], Gram[i+1])
+                        Gram[:, i], Gram[:, i + 1] = swap(Gram[:, i],
+                                                          Gram[:, i + 1])
 
                 # Cov_n = Cov_j + x_j * X + increment(betas) TODO:
                 # will this still work with multiple drops ?

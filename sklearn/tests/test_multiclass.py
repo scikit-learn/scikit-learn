@@ -25,6 +25,7 @@ from sklearn.grid_search import GridSearchCV
 from sklearn.pipeline import Pipeline
 from sklearn import svm
 from sklearn import datasets
+from sklearn.externals.six.moves import zip
 
 iris = datasets.load_iris()
 rng = np.random.RandomState(0)
@@ -144,6 +145,11 @@ def test_ovr_multilabel_predict_proba():
 
         # decision function only estimator. Fails in current implementation.
         decision_only = OneVsRestClassifier(svm.SVR()).fit(X_train, Y_train)
+        assert_raises(AttributeError, decision_only.predict_proba, X_test)
+
+        # Estimator with predict_proba disabled, depending on parameters.
+        decision_only = OneVsRestClassifier(svm.SVC(probability=False))
+        decision_only.fit(X_train, Y_train)
         assert_raises(AttributeError, decision_only.predict_proba, X_test)
 
         Y_pred = clf.predict(X_test)

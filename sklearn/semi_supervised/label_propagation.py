@@ -53,7 +53,6 @@ Non-Parametric Function Induction in Semi-Supervised Learning. AISTAT 2005
 
 # Authors: Clay Woolam <clay@woolam.org>
 # Licence: BSD
-
 from abc import ABCMeta, abstractmethod
 from scipy import sparse
 import numpy as np
@@ -95,6 +94,7 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
     tol : float
         Convergence tolerance: threshold to consider the system at steady
         state
+
     """
 
     def __init__(self, kernel='rbf', gamma=20, n_neighbors=7,
@@ -280,6 +280,20 @@ class LabelPropagation(BaseLabelPropagation):
       Convergence tolerance: threshold to consider the system at steady
       state
 
+    Attributes
+    ----------
+    `X_` : array, shape = [n_samples, n_features]
+        Input array.
+
+    `classes_` : array, shape = [n_classes]
+        The distinct labels used in classifying instances.
+
+    `label_distributions_` : array, shape = [n_samples, n_classes]
+        Categorical distribution for each item.
+
+    `transduction_` : array, shape = [n_samples]
+        Label assigned to each item via the transduction.
+
     Examples
     --------
     >>> from sklearn import datasets
@@ -344,6 +358,20 @@ class LabelSpreading(BaseLabelPropagation):
     tol : float
       Convergence tolerance: threshold to consider the system at steady
       state
+
+    Attributes
+    ----------
+    `X_` : array, shape = [n_samples, n_features]
+        Input array.
+
+    `classes_` : array, shape = [n_classes]
+        The distinct labels used in classifying instances.
+
+    `label_distributions_` : array, shape = [n_samples, n_classes]
+        Categorical distribution for each item.
+
+    `transduction_` : array, shape = [n_samples]
+        Label assigned to each item via the transduction.
 
     Examples
     --------

@@ -73,8 +73,8 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             The training input samples.
 
         y : array-like of shape = [n_samples]
-            The target values (integers that correspond to classes in
-            classification, real numbers in regression).
+            The target values (class labels in classification, real numbers in
+            regression).
 
         sample_weight : array-like of shape = [n_samples], optional
             Sample weights. If None, the sample weights are initialized to
@@ -169,7 +169,7 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             The training input samples.
 
         y : array-like of shape = [n_samples]
-            The target values (integers that correspond to classes).
+            The target values (class labels).
 
         sample_weight : array-like of shape = [n_samples]
             The current sample weights.
@@ -358,7 +358,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             The training input samples.
 
         y : array-like of shape = [n_samples]
-            The target values (integers that correspond to classes).
+            The target values (class labels).
 
         sample_weight : array-like of shape = [n_samples], optional
             Sample weights. If None, the sample weights are initialized to
@@ -408,7 +408,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             The training input samples.
 
         y : array-like of shape = [n_samples]
-            The target values (integers that correspond to classes).
+            The target values (class labels).
 
         sample_weight : array-like of shape = [n_samples]
             The current sample weights.
@@ -925,8 +925,8 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
             The training input samples.
 
         y : array-like of shape = [n_samples]
-            The target values (integers that correspond to classes in
-            classification, real numbers in regression).
+            The target values (class labels in classification, real numbers in
+            regression).
 
         sample_weight : array-like of shape = [n_samples]
             The current sample weights.

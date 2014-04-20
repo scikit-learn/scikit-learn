@@ -402,7 +402,7 @@ div.admonition p.admonition-title + p {
 }
 
 div.highlight{
-    background-color: white;
+    background: none;
 }
 
 div.highlight a {
@@ -482,6 +482,10 @@ tt {
     /* padding: 1px 2px; */
     font-size: 1.1em;
     font-family: monospace;
+}
+
+a tt {
+	color: inherit;
 }
 
 .viewcode-back {

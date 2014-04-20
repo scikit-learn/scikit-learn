@@ -43,7 +43,7 @@ classifiers = dict(ols=linear_model.LinearRegression(),
                    ridge=linear_model.Ridge(alpha=.1))
 
 fignum = 1
-for name, clf in classifiers.iteritems():
+for name, clf in classifiers.items():
     fig = plt.figure(fignum, figsize=(4, 3))
     plt.clf()
     plt.title(name)

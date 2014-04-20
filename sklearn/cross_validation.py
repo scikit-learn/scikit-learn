@@ -24,9 +24,9 @@ import scipy.sparse as sp
 from .base import is_classifier, clone
 from .utils import check_arrays, check_random_state, safe_mask
 from .utils.validation import _num_samples
-from .utils.fixes import unique
 from .externals.joblib import Parallel, delayed, logger
 from .externals.six import with_metaclass
+from .externals.six.moves import zip
 from .metrics.scorer import check_scoring
 
 __all__ = ['Bootstrap',
@@ -379,7 +379,7 @@ class StratifiedKFold(_BaseKFold):
         super(StratifiedKFold, self).__init__(len(y), n_folds, indices)
         y = np.asarray(y)
         n_samples = y.shape[0]
-        unique_labels, y_inversed = unique(y, return_inverse=True)
+        unique_labels, y_inversed = np.unique(y, return_inverse=True)
         label_counts = np.bincount(y_inversed)
         min_labels = np.min(label_counts)
         if self.n_folds > min_labels:
@@ -474,7 +474,7 @@ class LeaveOneLabelOut(_PartitionIterator):
         super(LeaveOneLabelOut, self).__init__(len(labels), indices)
         # We make a copy of labels to avoid side-effects during iteration
         self.labels = np.array(labels, copy=True)
-        self.unique_labels = unique(labels)
+        self.unique_labels = np.unique(labels)
         self.n_unique_labels = len(self.unique_labels)
 
     def _iter_test_masks(self):
@@ -547,7 +547,7 @@ class LeavePLabelOut(_PartitionIterator):
         # We make a copy of labels to avoid side-effects during iteration
         super(LeavePLabelOut, self).__init__(len(labels), indices)
         self.labels = np.array(labels, copy=True)
-        self.unique_labels = unique(labels)
+        self.unique_labels = np.unique(labels)
         self.n_unique_labels = len(self.unique_labels)
         self.p = p
 
@@ -967,7 +967,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
             len(y), n_iter, test_size, train_size, indices, random_state,
             n_iterations)
         self.y = np.array(y)
-        self.classes, self.y_indices = unique(y, return_inverse=True)
+        self.classes, self.y_indices = np.unique(y, return_inverse=True)
         n_cls = self.classes.shape[0]
 
         if np.min(np.bincount(self.y_indices)) < 2:
@@ -998,11 +998,23 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
             test = []
 
             for i, cls in enumerate(self.classes):
-                permutation = rng.permutation(n_i[i] + t_i[i])
+                permutation = rng.permutation(cls_count[i])
                 cls_i = np.where((self.y == cls))[0][permutation]
 
                 train.extend(cls_i[:n_i[i]])
                 test.extend(cls_i[n_i[i]:n_i[i] + t_i[i]])
+
+            # Because of rounding issues (as n_train and n_test are not
+            # dividers of the number of elements per class), we may end
+            # up here with less samples in train and test than asked for.
+            if len(train) < self.n_train or len(test) < self.n_test:
+                # We complete by affecting randomly the missing indexes
+                missing_idx = np.where(np.bincount(train + test,
+                                                   minlength=len(self.y)) == 0,
+                                       )[0]
+                missing_idx = rng.permutation(missing_idx)
+                train.extend(missing_idx[:(self.n_train - len(train))])
+                test.extend(missing_idx[-(self.n_test - len(test)):])
 
             train = rng.permutation(train)
             test = rng.permutation(test)
@@ -1085,7 +1097,11 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
     scores : array of float, shape=(len(list(cv)),)
         Array of scores of the estimator for each run of the cross validation.
     """
-    X, y = check_arrays(X, y, sparse_format='csr', allow_lists=True)
+    X, y = check_arrays(X, y, sparse_format='csr', allow_lists=True,
+                        allow_nans=True)
+    if y is not None:
+        y = np.asarray(y)
+
     cv = _check_cv(cv, X, y, classifier=is_classifier(estimator))
     scorer = check_scoring(estimator, score_func=score_func, scoring=scoring)
     # We clone the estimator to make sure that all the folds are
@@ -1262,7 +1278,7 @@ def _shuffle(y, labels, random_state):
         ind = random_state.permutation(len(y))
     else:
         ind = np.arange(len(labels))
-        for label in unique(labels):
+        for label in np.unique(labels):
             this_mask = (labels == label)
             ind[this_mask] = random_state.permutation(ind[this_mask])
     return y[ind]
@@ -1393,7 +1409,7 @@ def permutation_test_score(estimator, X, y, score_func=None, cv=None,
         vol. 11
 
     """
-    X, y = check_arrays(X, y, sparse_format='csr')
+    X, y = check_arrays(X, y, sparse_format='csr', allow_nans=True)
     cv = _check_cv(cv, X, y, classifier=is_classifier(estimator))
     scorer = check_scoring(estimator, scoring=scoring, score_func=score_func)
     random_state = check_random_state(random_state)
@@ -1490,6 +1506,7 @@ def train_test_split(*arrays, **options):
     train_size = options.pop('train_size', None)
     random_state = options.pop('random_state', None)
     options['sparse_format'] = 'csr'
+    options['allow_nans'] = True
 
     if test_size is None and train_size is None:
         test_size = 0.25

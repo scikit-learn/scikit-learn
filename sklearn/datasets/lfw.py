@@ -33,7 +33,7 @@ import urllib
 from .base import get_data_home, Bunch
 from ..externals.joblib import Memory
 
-from ..externals.six import b, u
+from ..externals.six import b
 
 logger = logging.getLogger(__name__)
 

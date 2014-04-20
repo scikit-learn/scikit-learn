@@ -91,19 +91,23 @@ def test_dict_learning_online_verbosity():
     # test verbosity
     from sklearn.externals.six.moves import cStringIO as StringIO
     import sys
+
     old_stdout = sys.stdout
-    sys.stdout = StringIO()
-    dico = MiniBatchDictionaryLearning(n_components, n_iter=20, verbose=1,
-                                       random_state=0)
-    dico.fit(X)
-    dico = MiniBatchDictionaryLearning(n_components, n_iter=20, verbose=2,
-                                       random_state=0)
-    dico.fit(X)
-    dict_learning_online(X, n_components=n_components, alpha=1, verbose=1,
-                         random_state=0)
-    dict_learning_online(X, n_components=n_components, alpha=1, verbose=2,
-                         random_state=0)
-    sys.stdout = old_stdout
+    try:
+        sys.stdout = StringIO()
+        dico = MiniBatchDictionaryLearning(n_components, n_iter=20, verbose=1,
+                                           random_state=0)
+        dico.fit(X)
+        dico = MiniBatchDictionaryLearning(n_components, n_iter=20, verbose=2,
+                                           random_state=0)
+        dico.fit(X)
+        dict_learning_online(X, n_components=n_components, alpha=1, verbose=1,
+                             random_state=0)
+        dict_learning_online(X, n_components=n_components, alpha=1, verbose=2,
+                             random_state=0)
+    finally:
+        sys.stdout = old_stdout
+
     assert_true(dico.components_.shape == (n_components, n_features))
 
 

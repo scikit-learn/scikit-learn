@@ -4,6 +4,7 @@ import warnings
 
 import numpy as np
 from scipy.sparse import coo_matrix
+from scipy import stats
 
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_equal
@@ -17,8 +18,6 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_warns
 from sklearn.utils.testing import ignore_warnings
 
-from sklearn.utils.fixes import unique
-
 from sklearn import cross_validation as cval
 from sklearn.base import BaseEstimator
 from sklearn.datasets import make_regression
@@ -31,8 +30,13 @@ from sklearn.metrics import fbeta_score
 from sklearn.metrics import make_scorer
 
 from sklearn.externals import six
+from sklearn.externals.six.moves import zip
+
 from sklearn.linear_model import Ridge
 from sklearn.svm import SVC
+
+from sklearn.preprocessing import Imputer
+from sklearn.pipeline import Pipeline
 
 
 class MockListClassifier(BaseEstimator):
@@ -91,6 +95,7 @@ y = np.arange(10) // 2
 
 ##############################################################################
 # Tests
+
 
 def check_valid_split(train, test, n_samples=None):
     # Use python sets to get more informative assertion failure messages
@@ -299,7 +304,7 @@ def test_kfold_can_detect_dependent_samples_on_digits():  # see #2372
     assert_greater(mean_score, 0.85)
 
     # Shuffling the data artificially breaks the dependency and hides the
-    # overfitting of the model w.r.t. the writing style of the authors
+    # overfitting of the model with regards to the writing style of the authors
     # by yielding a seriously overestimated score:
 
     cv = cval.KFold(n, 5, shuffle=True, random_state=0)
@@ -372,12 +377,12 @@ def test_stratified_shuffle_split_iter():
         sss = cval.StratifiedShuffleSplit(y, 6, test_size=0.33,
                                           random_state=0)
         for train, test in sss:
-            assert_array_equal(unique(y[train]), unique(y[test]))
+            assert_array_equal(np.unique(y[train]), np.unique(y[test]))
             # Checks if folds keep classes proportions
-            p_train = (np.bincount(unique(y[train], return_inverse=True)[1]) /
-                       float(len(y[train])))
-            p_test = (np.bincount(unique(y[test], return_inverse=True)[1]) /
-                      float(len(y[test])))
+            p_train = (np.bincount(np.unique(y[train], return_inverse=True)[1])
+                       / float(len(y[train])))
+            p_test = (np.bincount(np.unique(y[test], return_inverse=True)[1])
+                      / float(len(y[test])))
             assert_array_almost_equal(p_train, p_test, 1)
             assert_equal(y[train].size + y[test].size, y.size)
             assert_array_equal(np.lib.arraysetops.intersect1d(train, test), [])
@@ -394,6 +399,54 @@ def test_stratified_shuffle_split_iter_no_indices():
     train_indices, test_indices = next(iter(sss2))
 
     assert_array_equal(sorted(test_indices), np.where(test_mask)[0])
+
+
+def test_stratified_shuffle_split_even():
+    # Test the StratifiedShuffleSplit, indices are drawn with a
+    # equal chance
+    n_folds = 5
+    n_iter = 1000
+
+    def assert_counts_are_ok(idx_counts, p):
+        # Here we test that the distribution of the counts
+        # per index is close enough to a binomial
+        threshold = 0.05 / n_splits
+        bf = stats.binom(n_splits, p)
+        for count in idx_counts:
+            p = bf.pmf(count)
+            assert_true(p > threshold,
+                        "An index is not drawn with chance corresponding "
+                        "to even draws")
+
+    for n_samples in (6, 22):
+        labels = np.array((n_samples // 2) * [0, 1])
+        splits = cval.StratifiedShuffleSplit(labels, n_iter=n_iter,
+                                             test_size=1./n_folds,
+                                             random_state=0)
+
+        train_counts = [0] * n_samples
+        test_counts = [0] * n_samples
+        n_splits = 0
+        for train, test in splits:
+            n_splits += 1
+            for counter, ids in [(train_counts, train), (test_counts, test)]:
+                for id in ids:
+                    counter[id] += 1
+        assert_equal(n_splits, n_iter)
+
+        assert_equal(len(train), splits.n_train)
+        assert_equal(len(test), splits.n_test)
+        assert_equal(len(set(train).intersection(test)), 0)
+
+        label_counts = np.unique(labels)
+        assert_equal(splits.test_size, 1.0 / n_folds)
+        assert_equal(splits.n_train + splits.n_test, len(labels))
+        assert_equal(len(label_counts), 2)
+        ex_test_p = float(splits.n_test) / n_samples
+        ex_train_p = float(splits.n_train) / n_samples
+
+        assert_counts_are_ok(train_counts, ex_train_p)
+        assert_counts_are_ok(test_counts, ex_test_p)
 
 
 def test_leave_label_out_changing_labels():
@@ -431,9 +484,9 @@ def test_cross_val_score():
         scores = cval.cross_val_score(clf, X_sparse, X)
         assert_array_equal(scores, clf.score(X_sparse, X))
 
-    # test with X as list
+    # test with X and y as list
     clf = MockListClassifier()
-    scores = cval.cross_val_score(clf, X.tolist(), y)
+    scores = cval.cross_val_score(clf, X.tolist(), y.tolist())
 
     assert_raises(ValueError, cval.cross_val_score, clf, X, y,
                   scoring="sklearn")
@@ -782,3 +835,55 @@ def test_cross_indices_exception():
     assert_raises(ValueError, cval.check_cv, skf, X, y)
     assert_raises(ValueError, cval.check_cv, lolo, X, y)
     assert_raises(ValueError, cval.check_cv, lopo, X, y)
+
+
+def test_safe_split_with_precomputed_kernel():
+    clf = SVC()
+    clfp = SVC(kernel="precomputed")
+
+    iris = load_iris()
+    X, y = iris.data, iris.target
+    K = np.dot(X, X.T)
+
+    cv = cval.ShuffleSplit(X.shape[0], test_size=0.25, random_state=0)
+    tr, te = list(cv)[0]
+
+    X_tr, y_tr = cval._safe_split(clf, X, y, tr)
+    K_tr, y_tr2 = cval._safe_split(clfp, K, y, tr)
+    assert_array_almost_equal(K_tr, np.dot(X_tr, X_tr.T))
+
+    X_te, y_te = cval._safe_split(clf, X, y, te, tr)
+    K_te, y_te2 = cval._safe_split(clfp, K, y, te, tr)
+    assert_array_almost_equal(K_te, np.dot(X_te, X_tr.T))
+
+
+def test_cross_val_score_allow_nans():
+    # Check that cross_val_score allows input data with NaNs
+    X = np.arange(200, dtype=np.float64).reshape(10, -1)
+    X[2, :] = np.nan
+    y = np.repeat([0, 1], X.shape[0]/2)
+    p = Pipeline([
+        ('imputer', Imputer(strategy='mean', missing_values='NaN')),
+        ('classifier', MockClassifier()),
+    ])
+    cval.cross_val_score(p, X, y, cv=5)
+
+
+def test_train_test_split_allow_nans():
+    # Check that train_test_split allows input data with NaNs
+    X = np.arange(200, dtype=np.float64).reshape(10, -1)
+    X[2, :] = np.nan
+    y = np.repeat([0, 1], X.shape[0]/2)
+    split = cval.train_test_split(X, y, test_size=0.2, random_state=42)
+
+
+def test_permutation_test_score_allow_nans():
+    # Check that permutation_test_score allows input data with NaNs
+    X = np.arange(200, dtype=np.float64).reshape(10, -1)
+    X[2, :] = np.nan
+    y = np.repeat([0, 1], X.shape[0]/2)
+    p = Pipeline([
+        ('imputer', Imputer(strategy='mean', missing_values='NaN')),
+        ('classifier', MockClassifier()),
+    ])
+    cval.permutation_test_score(p, X, y, cv=5)
