@@ -63,7 +63,7 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         required to store the tree.  The optimal value depends on the
         nature of the problem.
 
-    metric : string or DistanceMetric object (default='minkowski')
+    metric : string or DistanceMetric object (default = 'minkowski')
         the distance metric to use for the tree.  The default metric is
         minkowski, and with p=2 is equivalent to the standard Euclidean
         metric. See the documentation of the DistanceMetric class for a
@@ -74,9 +74,8 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         equivalent to using manhattan_distance (l1), and euclidean_distance
         (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
 
-    **kwargs :
-        additional keyword arguments are passed to the distance function as
-        additional arguments.
+    metric_kwds: dict, optional (default = None)
+        additional keyword arguments for the metric function.
 
     Examples
     --------
@@ -289,9 +288,8 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
         neighbors on given radius).
         If set to None, ValueError is raised, when outlier is detected.
 
-    **kwargs :
-        additional keyword arguments are passed to the distance function as
-        additional arguments.
+    metric_kwds: dict, optional (default = None)
+        additional keyword arguments for the metric function.
 
     Examples
     --------

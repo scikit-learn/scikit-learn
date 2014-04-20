@@ -74,9 +74,8 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
         equivalent to using manhattan_distance (l1), and euclidean_distance
         (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
 
-    **kwargs :
-        additional keyword arguments are passed to the distance function as
-        additional arguments.
+    metric_kwds: dict, optional (default = None)
+        additional keyword arguments for the metric function.
 
     Examples
     --------
@@ -113,7 +112,7 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
 
     def __init__(self, n_neighbors=5, weights='uniform',
                  algorithm='auto', leaf_size=30,
-                 p=2, metric='minkowski', metric_kwds=None, **kwargs):        
+                 p=2, metric='minkowski', metric_kwds=None, **kwargs):
         if kwargs:
             if 'warn_on_equidistant' in kwargs:
                 kwargs.pop('warn_on_equidistant')
@@ -123,7 +122,7 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
                               stacklevel=2)
         self._init_params(n_neighbors=n_neighbors,
                           algorithm=algorithm,
-                          leaf_size=leaf_size, metric=metric, p=p, 
+                          leaf_size=leaf_size, metric=metric, p=p,
                           metric_kwds=metric_kwds, **kwargs)
         self.weights = _check_weights(weights)
 
@@ -223,9 +222,8 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
         equivalent to using manhattan_distance (l1), and euclidean_distance
         (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
 
-    **kwargs :
-        additional keyword arguments are passed to the distance function as
-        additional arguments.
+    metric_kwds: dict, optional (default = None)
+        additional keyword arguments for the metric function.
 
     Examples
     --------
