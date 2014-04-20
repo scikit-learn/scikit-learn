@@ -280,6 +280,9 @@ class KNeighborsMixin(object):
 
         X = atleast2d_or_csr(X)
 
+        if self.effective_metric_ == 'precomputed' and X.shape[0] != X.shape[1]:
+            raise ValueError("Precomputed metric requires a square matrix.")
+
         if n_neighbors is None:
             n_neighbors = self.n_neighbors
 

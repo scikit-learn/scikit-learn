@@ -1,4 +1,5 @@
 from itertools import product
+import pickle
 
 import numpy as np
 from scipy.sparse import (bsr_matrix, coo_matrix, csc_matrix, csr_matrix,
@@ -97,7 +98,7 @@ def test_unsupervised_inputs():
 
 def test_unsupervisd_knn_distance():
     """Tests unsupervised NearestNeighbors with a distance matrix."""
-    X = rng.random_sample((3, 3))
+    X = rng.random_sample((3, 4))  # Must not be square for tests below.
     D = metrics.pairwise_distances(X, metric='euclidean')
     # As a feature matrix (n_samples by n_features)
     nbrs_X = neighbors.NearestNeighbors(n_neighbors=3)
@@ -111,6 +112,14 @@ def test_unsupervisd_knn_distance():
     # Assert that they give the same neighbors
     assert_array_almost_equal(dist_X, dist_D)
     assert_array_almost_equal(ind_X, ind_D)
+    # Test pickling
+    pickled_classifier = pickle.dumps(nbrs_D)
+    unpickled_classifier = pickle.loads(pickled_classifier)
+    unpickled_dist_D, unpickled_ind_D = unpickled_classifier.kneighbors(D)
+    assert_array_almost_equal(unpickled_dist_D, dist_D)
+    assert_array_almost_equal(unpickled_ind_D, ind_D)
+    # Must raise a ValueError if the matrix is not square
+    assert_raises(ValueError, nbrs_D.kneighbors, X)  # X is not square
 
 
 def test_unsupervised_radius_neighbors(n_samples=20, n_features=5,
