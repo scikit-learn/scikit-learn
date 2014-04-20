@@ -653,6 +653,14 @@ the local structure of sentences and paragraphs should thus be taken
 into account. Many such models will thus be casted as "Structured output"
 problems which are currently outside of the scope of scikit-learn.
 
+By default, whitespace is normalized for character n-gram extraction. Any
+sequence of whitespace characters is replaced with a single space. If
+this is not what you want, setting ``normalize_whitespace=False`` when
+creating the ``CountVectorizer`` instance stops this from happening. This is
+particularly useful in a number of contexts such as authorship analysis,
+where the different usage of whitespace is sometimes used as a feature in
+training.
+
 
 .. _hashing_vectorizer:
 
