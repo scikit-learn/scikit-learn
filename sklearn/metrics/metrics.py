@@ -1324,7 +1324,7 @@ def accuracy_score(y_true, y_pred, normalize=True, sample_weight=None):
         return np.mean(score)
     else:
         if sample_weight is not None:
-            return np.sum(np.multiply(score, sample_weight))
+            return np.dot(score, sample_weight)
         return np.sum(score)
 
 
