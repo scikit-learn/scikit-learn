@@ -210,6 +210,17 @@ def test_char_ngram_analyzer():
     text = StringIO("This is a test with a file-like object!")
     expected = ['thi', 'his', 'is ', 's i', ' is']
     assert_equal(cnga(text)[:5], expected)
+    # Whitespace should be normalsied by default
+    cnga = CountVectorizer(analyzer='char',
+                           ngram_range=(2, 2)).build_analyzer()
+    text = "This  text  contains  double  spaces."
+    assert_false("  " in cnga(text))
+    # Whitespace normalization turned off
+    cnga = CountVectorizer(analyzer='char', ngram_range=(2, 2),
+                           normalize_whitespace=False).build_analyzer()
+    text = "This  text  contains  double  spaces."
+    assert_true("  " in cnga(text))
+    
 
 
 def test_char_wb_ngram_analyzer():
