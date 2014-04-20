@@ -313,16 +313,14 @@ METRICS_WITH_SAMPLE_WEIGHT = [
     "accuracy_score", "unnormalized_accuracy_score",
     "zero_one_loss", "unnormalized_zero_one_loss",
 
-    "precision_score", "weighted_precision_score",
-
-    "average_precision_score", "weighted_average_precision_score",
-
+    "precision_score", "average_precision_score",
     "f1_score", "f2_score", "f0.5_score",
+    "recall_score", "roc_auc_score",
+
+    "weighted_precision_score",
+    "weighted_average_precision_score",
     "weighted_f0.5_score", "weighted_f1_score", "weighted_f2_score",
-
-    "recall_score", "weighted_recall_score",
-
-    "roc_auc_score", "weighted_roc_auc",
+    "weighted_recall_score", "weighted_roc_auc",
 
     "explained_variance_score",
     "mean_squared_error",
@@ -335,12 +333,11 @@ MULTILABEL_SEQUENCE_METRICS_WITH_SAMPLE_WEIGHT = [
     "accuracy_score", "unnormalized_accuracy_score",
     "zero_one_loss", "unnormalized_zero_one_loss",
 
-    "precision_score", "weighted_precision_score",
-
+    "precision_score", "recall_score",
     "f1_score", "f2_score", "f0.5_score",
-    "weighted_f0.5_score", "weighted_f1_score", "weighted_f2_score",
 
-    "recall_score", "weighted_recall_score",
+    "weighted_precision_score", "weighted_recall_score",
+    "weighted_f0.5_score", "weighted_f1_score", "weighted_f2_score",
 
     "micro_f0.5_score", "micro_f1_score", "micro_f2_score",
     "micro_precision_score", "micro_recall_score",
@@ -357,9 +354,11 @@ MULTILABEL_INDICATOR_METRICS_WITH_SAMPLE_WEIGHT = [
     "weighted_average_precision_score",
     "micro_average_precision_score",
     "macro_average_precision_score",
-    #"samples_average_precision_score",
-    #"samples_roc_auc",
+    "samples_average_precision_score",
+    "roc_auc_score",
     "micro_roc_auc",
+    "macro_roc_auc",
+    "samples_roc_auc",
 ]
 
 # Regression metrics that support multioutput and weighted samples
@@ -2657,11 +2656,11 @@ def test_sample_weight_invariance():
 
     # multilabel indicator
     _, y1 = make_multilabel_classification(
-        n_features=1, n_classes=3,
+        n_features=1, n_classes=6,
         random_state=0, n_samples=10,
         return_indicator=True)
     _, y2 = make_multilabel_classification(
-        n_features=1, n_classes=3,
+        n_features=1, n_classes=6,
         random_state=1, n_samples=10,
         return_indicator=True)
     for name in MULTILABEL_INDICATOR_METRICS_WITH_SAMPLE_WEIGHT:
