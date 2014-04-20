@@ -102,7 +102,7 @@ struct svm_csr_model *csr_set_model(struct svm_parameter *param, int nr_class,
                             char *SV_data, npy_intp *SV_indices_dims,
                             char *SV_indices, npy_intp *SV_indptr_dims,
                             char *SV_intptr,
-                            char *sv_coef, char *rho, char *nSV, char *label,
+                            char *sv_coef, char *rho, char *nSV,
                             char *probA, char *probB)
 {
     struct svm_csr_model *model;
@@ -136,7 +136,8 @@ struct svm_csr_model *csr_set_model(struct svm_parameter *param, int nr_class,
      */
     if (param->svm_type < 2) {
         memcpy(model->nSV,   nSV,   model->nr_class * sizeof(int));
-        memcpy(model->label, label, model->nr_class * sizeof(int));
+        for(i=0; i < model->nr_class; i++)
+            model->label[i] = i;
     }
 
     for (i=0; i < model->nr_class-1; i++) {

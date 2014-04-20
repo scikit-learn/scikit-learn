@@ -60,7 +60,8 @@ else:
     safe_copy = np.copy
 
 try:
-    if (not np.allclose(np.divide(.4, 1), np.divide(.4, 1, dtype=np.float))
+    if (not np.allclose(np.divide(.4, 1, casting="unsafe"),
+                        np.divide(.4, 1, casting="unsafe", dtype=np.float))
             or not np.allclose(np.divide(.4, 1), .4)):
         raise TypeError('Divide not working with dtype: '
                         'https://github.com/numpy/numpy/issues/3484')

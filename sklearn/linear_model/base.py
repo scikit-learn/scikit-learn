@@ -12,6 +12,7 @@ Generalized Linear models.
 #
 # License: BSD 3 clause
 
+from __future__ import division
 from abc import ABCMeta, abstractmethod
 import numbers
 
@@ -27,7 +28,6 @@ from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
 from ..utils import as_float_array, atleast2d_or_csr, safe_asarray
 from ..utils.extmath import safe_sparse_dot
 from ..utils.sparsefuncs import mean_variance_axis0, inplace_column_scale
-from .cd_fast import sparse_std
 
 
 ###
@@ -45,11 +45,7 @@ def sparse_center_data(X, y, fit_intercept, normalize=False):
     axis 0. Be aware that X will not be centered since it would break
     the sparsity, but will be normalized if asked so.
     """
-    X = safe_asarray(X, dtype=np.float64)
-
     if fit_intercept:
-        X_data = X.data
-
         # we might require not to change the csr matrix sometimes
         # store a copy if normalize is True.
         if sp.isspmatrix(X) and X.getformat() == 'csr':
@@ -57,11 +53,13 @@ def sparse_center_data(X, y, fit_intercept, normalize=False):
         else:
             X = sp.csc_matrix(X, copy=normalize)
 
-        X_mean, X_std = mean_variance_axis0(X)
+        X_mean, X_var = mean_variance_axis0(X)
         if normalize:
-            X_std = sparse_std(
-                X.shape[0], X.shape[1],
-                X_data, X.indices, X.indptr, X_mean)
+            # transform variance to std in-place
+            # XXX: currently scaled to variance=n_samples to match center_data
+            X_var *= X.shape[0]
+            X_std = np.sqrt(X_var, X_var)
+            del X_var
             X_std[X_std == 0] = 1
             inplace_column_scale(X, 1. / X_std)
         else:
@@ -86,36 +84,23 @@ def center_data(X, y, fit_intercept, normalize=False, copy=True,
     is zero, and not the mean itself
     """
     X = as_float_array(X, copy)
-    no_sample_weight = (sample_weight is None
-                        or isinstance(sample_weight, numbers.Number))
-
     if fit_intercept:
+        if isinstance(sample_weight, numbers.Number):
+            sample_weight = None
         if sp.issparse(X):
             X_mean = np.zeros(X.shape[1])
             X_std = np.ones(X.shape[1])
         else:
-            if no_sample_weight:
-                X_mean = X.mean(axis=0)
-            else:
-                X_mean = (np.sum(X * sample_weight[:, np.newaxis], axis=0)
-                          / np.sum(sample_weight))
+            X_mean = np.average(X, axis=0, weights=sample_weight)
             X -= X_mean
             if normalize:
+                # XXX: currently scaled to variance=n_samples
                 X_std = np.sqrt(np.sum(X ** 2, axis=0))
                 X_std[X_std == 0] = 1
                 X /= X_std
             else:
                 X_std = np.ones(X.shape[1])
-        if no_sample_weight:
-            y_mean = y.mean(axis=0)
-        else:
-            if y.ndim <= 1:
-                y_mean = (np.sum(y * sample_weight, axis=0)
-                          / np.sum(sample_weight))
-            else:
-                # cater for multi-output problems
-                y_mean = (np.sum(y * sample_weight[:, np.newaxis], axis=0)
-                          / np.sum(sample_weight))
+        y_mean = np.average(y, axis=0, weights=sample_weight)
         y = y - y_mean
     else:
         X_mean = np.zeros(X.shape[1])

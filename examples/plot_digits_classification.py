@@ -30,8 +30,8 @@ digits = datasets.load_digits()
 # pylab.imread.  Note that each image must have the same size. For these
 # images, we know which digit they represent: it is given in the 'target' of
 # the dataset.
-for index, (image, label) in enumerate(list(zip(digits.images,
-                                                digits.target))[:4]):
+images_and_labels = list(zip(digits.images, digits.target))
+for index, (image, label) in enumerate(images_and_labels[:4]):
     pl.subplot(2, 4, index + 1)
     pl.axis('off')
     pl.imshow(image, cmap=pl.cm.gray_r, interpolation='nearest')
@@ -56,8 +56,8 @@ print("Classification report for classifier %s:\n%s\n"
       % (classifier, metrics.classification_report(expected, predicted)))
 print("Confusion matrix:\n%s" % metrics.confusion_matrix(expected, predicted))
 
-for index, (image, prediction) in enumerate(
-        list(zip(digits.images[n_samples / 2:], predicted))[:4]):
+images_and_predictions = list(zip(digits.images[n_samples / 2:], predicted))
+for index, (image, prediction) in enumerate(images_and_predictions[:4]):
     pl.subplot(2, 4, index + 5)
     pl.axis('off')
     pl.imshow(image, cmap=pl.cm.gray_r, interpolation='nearest')

@@ -1,6 +1,6 @@
-"""Mean Shift clustering algorithm
+"""Mean shift clustering algorithm.
 
-MeanShift clustering aims to discover *blobs* in a smooth density of
+Mean shift clustering aims to discover *blobs* in a smooth density of
 samples. It is a centroid based algorithm, which works by updating candidates
 for centroids to be the mean of the points within a given region. These
 candidates are then filtered in a post-processing stage to eliminate
@@ -31,7 +31,7 @@ def estimate_bandwidth(X, quantile=0.3, n_samples=None, random_state=0):
 
     Parameters
     ----------
-    X : array [n_samples, n_features]
+    X : array-like, shape=[n_samples, n_features]
         Input points.
 
     quantile : float, default 0.3
@@ -66,20 +66,12 @@ def estimate_bandwidth(X, quantile=0.3, n_samples=None, random_state=0):
 
 def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
                min_bin_freq=1, cluster_all=True, max_iterations=300):
-    """Perform MeanShift Clustering of data using a flat kernel
-
-    MeanShift clustering aims to discover *blobs* in a smooth density of
-    samples. It is a centroid based algorithm, which works by updating candidates
-    for centroids to be the mean of the points within a given region. These
-    candidates are then filtered in a post-processing stage to eliminate
-    near-duplicates to form the final set of centroids.
-
-    Seeding is performed using a binning technique for scalability.
+    """Perform mean shift clustering of data using a flat kernel.
 
     Parameters
     ----------
 
-    X : array-like shape=[n_samples, n_features]
+    X : array-like, shape=[n_samples, n_features]
         Input data.
 
     bandwidth : float, optional
@@ -90,7 +82,7 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
         the number of samples. The sklearn.cluster.estimate_bandwidth function
         can be used to do this more efficiently.
 
-    seeds : array [n_seeds, n_features]
+    seeds : array-like, shape=[n_seeds, n_features]
         Point used as initial kernel locations.
 
     bin_seeding : boolean
@@ -109,10 +101,10 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
     Returns
     -------
 
-    cluster_centers : array [n_clusters, n_features]
+    cluster_centers : array, shape=[n_clusters, n_features]
         Coordinates of cluster centers.
 
-    labels : array [n_samples]
+    labels : array, shape=[n_samples]
         Cluster labels for each point.
 
     Notes
@@ -182,7 +174,7 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
 
 
 def get_bin_seeds(X, bin_size, min_bin_freq=1):
-    """Finds seeds for mean_shift
+    """Finds seeds for mean_shift.
 
     Finds seeds by first binning data onto a grid whose lines are
     spaced bin_size apart, and then choosing those bins with at least
@@ -225,7 +217,15 @@ def get_bin_seeds(X, bin_size, min_bin_freq=1):
 
 
 class MeanShift(BaseEstimator, ClusterMixin):
-    """MeanShift clustering
+    """Mean shift clustering using a flat kernel.
+
+    Mean shift clustering aims to discover "blobs" in a smooth density of
+    samples. It is a centroid-based algorithm, which works by updating
+    candidates for centroids to be the mean of the points within a given
+    region. These candidates are then filtered in a post-processing stage to
+    eliminate near-duplicates to form the final set of centroids.
+
+    Seeding is performed using a binning technique for scalability.
 
     Parameters
     ----------
@@ -236,7 +236,7 @@ class MeanShift(BaseEstimator, ClusterMixin):
         sklearn.cluster.estimate_bandwidth; see the documentation for that
         function for hints on scalability (see also the Notes, below).
 
-    seeds : array [n_samples, n_features], optional
+    seeds : array, shape=[n_samples, n_features], optional
         Seeds used to initialize kernels. If not set,
         the seeds are calculated by clustering.get_bin_seeds
         with bandwidth as the grid size and default values for
@@ -321,7 +321,7 @@ class MeanShift(BaseEstimator, ClusterMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix}, shape=[n_samples, n_features]
             New data to predict.
 
         Returns

@@ -69,7 +69,9 @@ class CleanCommand(Clean):
                              or filename.endswith('.dll')
                              or filename.endswith('.pyc')):
                     os.unlink(os.path.join(dirpath, filename))
-
+            for dirname in dirnames:
+                if dirname == '__pycache__':
+                    shutil.rmtree(os.path.join(dirpath, dirname))
 
 
 ###############################################################################
@@ -118,6 +120,7 @@ def setup_package():
                                  'Programming Language :: Python :: 2.7',
                                  'Programming Language :: Python :: 3',
                                  'Programming Language :: Python :: 3.3',
+                                 'Programming Language :: Python :: 3.4',
                                  ],
                     cmdclass={'clean': CleanCommand},
                     **extra_setuptools_args)

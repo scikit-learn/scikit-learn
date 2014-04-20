@@ -2,11 +2,14 @@
 """
 
 # Author: Lars Buitinck <L.J.Buitinck@uva.nl>
+#         Olivier Grisel <olivier.grisel@ensta.org>
+#         Michael Becker <mike@beckerfuffle.com>
 # License: 3-clause BSD.
 
 import warnings
 
 import numpy as np
+import scipy.sparse as sp
 
 try:
     from scipy.sparse.linalg import svds
@@ -17,6 +20,7 @@ from ..base import BaseEstimator, TransformerMixin
 from ..utils import (array2d, as_float_array, atleast2d_or_csr,
                      check_random_state)
 from ..utils.extmath import randomized_svd, safe_sparse_dot, svd_flip
+from ..utils.sparsefuncs import mean_variance_axis0
 
 __all__ = ["TruncatedSVD"]
 
@@ -60,6 +64,27 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
     Attributes
     ----------
     `components_` : array, shape (n_components, n_features)
+
+    `explained_variance_` : array, [n_components]
+        The variance of the training samples transformed by a projection to
+        each component.
+
+    `explained_variance_ratio_` : array, [n_components]
+        Percentage of variance explained by each of the selected components.
+
+    Examples
+    --------
+    >>> from sklearn.decomposition import TruncatedSVD
+    >>> from sklearn.random_projection import sparse_random_matrix
+    >>> X = sparse_random_matrix(100, 100, density=0.01, random_state=42)
+    >>> svd = TruncatedSVD(n_components=5, random_state=42)
+    >>> svd.fit(X) # doctest: +NORMALIZE_WHITESPACE
+    TruncatedSVD(algorithm='randomized', n_components=5, n_iter=5,
+            random_state=42, tol=0.0)
+    >>> print(svd.explained_variance_ratio_) # doctest: +ELLIPSIS
+    [ 0.07825... 0.05528... 0.05445... 0.04997... 0.04134...]
+    >>> print(svd.explained_variance_ratio_.sum()) # doctest: +ELLIPSIS
+    0.27930...
 
     See also
     --------
@@ -105,7 +130,7 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
         self : object
             Returns the transformer object.
         """
-        self._fit(X)
+        self.fit_transform(X)
         return self
 
     def fit_transform(self, X, y=None):
@@ -121,14 +146,12 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
         X_new : array, shape (n_samples, n_components)
             Reduced version of X. This will always be a dense array.
         """
-        U, Sigma, VT = self._fit(X)
-        Sigma = np.diag(Sigma)
-
-        return np.dot(U, Sigma.T)
-
-    def _fit(self, X):
         X = as_float_array(X, copy=False)
         random_state = check_random_state(self.random_state)
+
+        # If sparse and not csr or csc, convert to csr
+        if sp.issparse(X) and X.getformat() not in ["csr", "csc"]:
+            X = X.tocsr()
 
         if self.algorithm == "arpack":
             U, Sigma, VT = svds(X, k=self.n_components, tol=self.tol)
@@ -150,7 +173,18 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
             raise ValueError("unknown algorithm %r" % self.algorithm)
 
         self.components_ = VT
-        return U, Sigma, VT
+
+        # Calculate explained variance & explained variance ratio
+        n_samples = X.shape[0]
+        X_transformed = np.dot(U, np.diag(Sigma))
+        self.explained_variance_ = exp_var = np.var(X_transformed, axis=0)
+        if sp.issparse(X):
+            _, full_var = mean_variance_axis0(X)
+            full_var = full_var.sum()
+        else:
+            full_var = np.var(X, axis=0).sum()
+        self.explained_variance_ratio_ = exp_var / full_var
+        return X_transformed
 
     def transform(self, X):
         """Perform dimensionality reduction on X.

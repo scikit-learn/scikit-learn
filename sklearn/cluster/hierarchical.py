@@ -13,13 +13,12 @@ import sys
 
 import numpy as np
 from scipy import sparse
-from scipy.cluster import hierarchy
 
 from ..base import BaseEstimator, ClusterMixin
 from ..externals.joblib import Memory
 from ..externals import six
 from ..metrics.pairwise import paired_distances, pairwise_distances
-from ..utils import array2d
+from ..utils import array2d, safe_asarray
 from ..utils.sparsetools import connected_components
 
 from . import _hierarchical
@@ -150,6 +149,8 @@ def ward_tree(X, connectivity=None, n_components=None, copy=None,
     n_samples, n_features = X.shape
 
     if connectivity is None:
+        from scipy.cluster import hierarchy     # imports PIL
+
         if n_clusters is not None:
             warnings.warn('Partial build of the tree is implemented '
                           'only for structured clustering (i.e. with '
@@ -332,6 +333,8 @@ def linkage_tree(X, connectivity=None, n_components=None,
             'of %s, but %s was given' % (linkage_choices.keys(), linkage))
 
     if connectivity is None:
+        from scipy.cluster import hierarchy     # imports PIL
+
         if n_clusters is not None:
             warnings.warn('Partial build of the tree is implemented '
                           'only for structured clustering (i.e. with '
@@ -405,7 +408,7 @@ def linkage_tree(X, connectivity=None, n_components=None,
     heapify(inertia)
 
     # prepare the main fields
-    parent = np.arange(n_nodes, dtype=np.int)
+    parent = np.arange(n_nodes, dtype=np.intp)
     used_node = np.ones(n_nodes, dtype=np.intp)
     children = []
 
@@ -674,6 +677,11 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         -------
         self
         """
+        X = safe_asarray(X)
+        if not (len(X.shape) == 2 and X.shape[0] > 0):
+            raise ValueError('At least one sample is required to fit the '
+                'model. A data matrix of shape %s was given.'
+                % (X.shape, ))
         return AgglomerativeClustering.fit(self, X.T, **params)
 
 
