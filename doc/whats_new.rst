@@ -182,6 +182,22 @@ Changelog
      :class:`cluster.WardAgglomeration` when no samples are given,
      rather than returning meaningless clustering.
 
+   - Several classification and regression metrics now support weighted
+     samples with the new ``sample_weight`` argument:
+     :func:`metrics.accuracy_score`,
+     :func:`metrics.zero_one_loss`,
+     :func:`metrics.precision_score`,
+     :func:`metrics.average_precision_score`,
+     :func:`metrics.f1_score`,
+     :func:`metrics.fbeta_score`,
+     :func:`metrics.recall_score`,
+     :func:`metrics.roc_auc_score`,
+     :func:`metrics.explained_variance_score`,
+     :func:`metrics.mean_squared_error`,
+     :func:`metrics.mean_absolute_error`,
+     :func:`metrics.r2_score`.
+     By `Noel Dawe`_.
+
 
 API changes summary
 -------------------
