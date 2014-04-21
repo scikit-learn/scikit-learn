@@ -102,6 +102,8 @@ def test_check_arrays_exceptions():
     assert_raises(TypeError, check_arrays, [0, 1], [0, 1], meaning_of_life=42)
     assert_raises(ValueError, check_arrays, [0], [0], sparse_format='fake')
     assert_raises(ValueError, check_arrays, np.zeros((2, 3, 4)), [0])
+    assert_raises(ValueError, check_arrays, [0], [0], sparse_format=['csc',
+                                                                     'fake'])
 
 
 def test_np_matrix():
@@ -223,3 +225,25 @@ def test_check_arrays():
     # check that lists are passed through if allow_lists is true
     X_, Y_ = check_arrays(X, Y, allow_lists=True)
     assert_true(isinstance(X_, list))
+
+    # check that sparse matrix with allowed format comes through unchanged
+    X = sp.csc_matrix(np.arange(4))
+    Y = sp.csr_matrix(np.arange(4))
+    X_, Y_ = check_arrays(X, Y, sparse_format=['csc'])
+    assert_true(X is X_)
+    assert_true(type(X_) == type(Y_))
+    assert_array_equal(X_.todense(), Y_.todense())
+
+    # check functionality on sparse_format list
+    X = sp.csr_matrix(np.arange(4))
+    Y = [[0, 1, 2, 3]]
+    X_, Y_ = check_arrays(X, Y, sparse_format=['csc'])
+    assert_array_equal(X_.todense(), Y_)
+    assert_true(isinstance(X_, sp.csc_matrix))
+
+    # check functionality on sparse_format string
+    X = sp.csr_matrix(np.arange(4))
+    Y = [[0, 1, 2, 3]]
+    X_, Y_ = check_arrays(X, Y, sparse_format='csc')
+    assert_array_equal(X_.todense(), Y_)
+    assert_true(isinstance(X_, sp.csc_matrix))

@@ -60,8 +60,8 @@ def safe_asarray(X, dtype=None, order=None, copy=False, force_all_finite=True):
     formats are passed through. Other sparse formats are converted to CSR
     (somewhat arbitrarily).
 
-    If a specific compressed sparse format is required, use atleast2d_or_cs{c,r}
-    instead.
+    If a specific compressed sparse format is required, use atleast2d_or_csc
+    or atleast2d_or_csr instead.
     """
     if sp.issparse(X):
         if not isinstance(X, (sp.coo_matrix, sp.csc_matrix, sp.csr_matrix)):
@@ -171,6 +171,54 @@ def _num_samples(x):
     return x.shape[0] if hasattr(x, 'shape') else len(x)
 
 
+def _validate_sparse_format_options(sparse_format):
+    """Validates sparse_format options for `check_arrays`"""
+    valid_sparse_formats = ('csr', 'csc')
+    valid_sparse_options = ('csr', 'csc', 'dense', None)
+
+    is_valid_format = sparse_format in valid_sparse_options
+    contains_valid_formats = (
+        hasattr(sparse_format, '__iter__') and
+        all([f in valid_sparse_formats for f in sparse_format])
+    )
+
+    # Validate sparse_format option
+    if not(is_valid_format or contains_valid_formats):
+        raise ValueError('Unexpected sparse format(s): %r' % sparse_format)
+
+
+def _check_sparse_format(array, sparse_format):
+    """Validates array for proper sparse/dense format"""
+    if not hasattr(array, "shape"):
+        raise TypeError(
+            'Expected numpy/scipy array or matrix type.'
+            'Received: %r' % type(array)
+        )
+
+    # If input array is sparse, make sure it's format is allowed
+    if sp.issparse(array):
+        if isinstance(sparse_format, str):
+            if sparse_format == "dense":
+                raise TypeError(
+                    'A sparse matrix was passed, but dense '
+                    'data is required. Use X.toarray() to '
+                    'convert to a dense numpy array.')
+            else:
+                return getattr(array, 'to' + sparse_format)()
+        elif sparse_format is None:
+            return array
+        else:
+            if array.format in sparse_format:
+                output_format = array.format
+            else:
+                output_format = sparse_format[0]
+            return getattr(array, 'to' + output_format)()
+
+    # If input array is dense, you're good to go.
+    else:
+        return array
+
+
 def check_arrays(*arrays, **options):
     """Check that all arrays have consistent first dimensions.
 
@@ -192,9 +240,11 @@ def check_arrays(*arrays, **options):
         Python lists or tuples occurring in arrays are converted to 1D numpy
         arrays, unless allow_lists is specified.
 
-    sparse_format : 'csr', 'csc' or 'dense', None by default
-        If not None, any scipy.sparse matrix is converted to
-        Compressed Sparse Rows or Compressed Sparse Columns representations.
+    sparse_format : 'csr' | 'csc' | 'dense' | list,  None by default.
+        If not None, scipy.sparse matrices will be converted to the format(s)
+        specified, or left alone if they are already an accepted format.
+        If multiple sparse formats are accepted, pass them in via a list.
+        This list can contain 'csc' and/or 'csr.'
         If 'dense', an error is raised when a sparse array is
         passed.
 
@@ -216,8 +266,8 @@ def check_arrays(*arrays, **options):
         Allows nans in the arrays
     """
     sparse_format = options.pop('sparse_format', None)
-    if sparse_format not in (None, 'csr', 'csc', 'dense'):
-        raise ValueError('Unexpected sparse format: %r' % sparse_format)
+    _validate_sparse_format_options(sparse_format)
+
     copy = options.pop('copy', False)
     check_ccontiguous = options.pop('check_ccontiguous', False)
     dtype = options.pop('dtype', None)
@@ -247,14 +297,7 @@ def check_arrays(*arrays, **options):
 
         if not allow_lists or hasattr(array, "shape"):
             if sp.issparse(array):
-                if sparse_format == 'csr':
-                    array = array.tocsr()
-                elif sparse_format == 'csc':
-                    array = array.tocsc()
-                elif sparse_format == 'dense':
-                    raise TypeError('A sparse matrix was passed, but dense '
-                                    'data is required. Use X.toarray() to '
-                                    'convert to a dense numpy array.')
+                array = _check_sparse_format(array, sparse_format)
                 if check_ccontiguous:
                     array.data = np.ascontiguousarray(array.data, dtype=dtype)
                 else:
