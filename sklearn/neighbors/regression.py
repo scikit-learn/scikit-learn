@@ -112,7 +112,7 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
 
     def __init__(self, n_neighbors=5, weights='uniform',
                  algorithm='auto', leaf_size=30,
-                 p=2, metric='minkowski', metric_kwds=None, **kwargs):
+                 p=2, metric='minkowski', metric_kwds={}, **kwargs):
         if kwargs:
             if 'warn_on_equidistant' in kwargs:
                 kwargs.pop('warn_on_equidistant')
@@ -253,7 +253,7 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
 
     def __init__(self, radius=1.0, weights='uniform',
                  algorithm='auto', leaf_size=30,
-                 p=2, metric='minkowski', metric_kwds=None, **kwargs):
+                 p=2, metric='minkowski', metric_kwds={}, **kwargs):
         self._init_params(radius=radius,
                           algorithm=algorithm,
                           leaf_size=leaf_size,

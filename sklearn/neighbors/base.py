@@ -98,7 +98,7 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
     def _init_params(self, n_neighbors=None, radius=None,
                      algorithm='auto', leaf_size=30, metric='minkowski',
                      p=2, metric_kwds={}, **kwargs):
-        if metric_kwds is None:
+        if not metric_kwds:
             metric_kwds = {}
         if kwargs:
             warnings.warn("Passing additional arguments to the metric function "
