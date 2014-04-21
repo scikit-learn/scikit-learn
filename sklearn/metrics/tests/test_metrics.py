@@ -322,7 +322,7 @@ NOT_SYMMETRIC_METRICS = [
 METRICS_WITHOUT_SAMPLE_WEIGHT = [
     "confusion_matrix",
     "hamming_loss",
-    "hinge_loss"
+    "hinge_loss",
     "jaccard_similarity_score", "unnormalized_jaccard_similarity_score",
     "log_loss",
     "matthews_corrcoef_score",
@@ -2540,6 +2540,7 @@ def test_averaging_multilabel_all_ones():
 
 @ignore_warnings
 def check_sample_weight_invariance(name, metric, y1, y2):
+
     rng = np.random.RandomState(0)
     sample_weight = rng.randint(1, 10, size=len(y1))
 
