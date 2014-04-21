@@ -74,7 +74,7 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         equivalent to using manhattan_distance (l1), and euclidean_distance
         (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
 
-    metric_kwds: dict, optional (default = None)
+    metric_kwds: dict, optional (default = {})
         additional keyword arguments for the metric function.
 
     Examples
@@ -288,7 +288,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
         neighbors on given radius).
         If set to None, ValueError is raised, when outlier is detected.
 
-    metric_kwds: dict, optional (default = None)
+    metric_kwds: dict, optional (default = {})
         additional keyword arguments for the metric function.
 
     Examples
