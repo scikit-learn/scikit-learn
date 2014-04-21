@@ -149,6 +149,7 @@ CLASSIFICATION_METRICS = {
 THRESHOLDED_METRICS = {
     "log_loss": log_loss,
     "hinge_loss": hinge_loss,
+
     "roc_auc_score": roc_auc_score,
     "weighted_roc_auc": partial(roc_auc_score, average="weighted"),
     "samples_roc_auc": partial(roc_auc_score, average="samples"),
@@ -185,7 +186,13 @@ METRIC_UNDEFINED_MULTICLASS = [
     "samples_f0.5_score", "samples_f1_score", "samples_f2_score",
     "samples_precision_score", "samples_recall_score",
 
-    "samples_average_precision_score",  "samples_roc_auc",
+    # Those metrics don't support multiclass outputs
+    "average_precision_score", "weighted_average_precision_score",
+    "micro_average_precision_score", "macro_average_precision_score",
+    "samples_average_precision_score",
+
+    "roc_auc_score", "micro_roc_auc", "weighted_roc_auc",
+    "macro_roc_auc",  "samples_roc_auc",
 ]
 
 # Metrics with an "average" argument
@@ -239,8 +246,10 @@ METRICS_WITH_NORMALIZE_OPTION = [
 
 # Threshold-based metrics with "multilabel-indicator" format support
 THRESHOLDED_MULTILABEL_METRICS = [
+    "log_loss",
+
     "roc_auc_score", "weighted_roc_auc", "samples_roc_auc",
-    "micro_roc_auc", "macro_roc_auc", "log_loss",
+    "micro_roc_auc", "macro_roc_auc",
 
     "average_precision_score", "weighted_average_precision_score",
     "samples_average_precision_score", "micro_average_precision_score",
@@ -308,63 +317,15 @@ NOT_SYMMETRIC_METRICS = [
     "macro_recall_score", "log_loss", "hinge_loss"
 ]
 
-# Metrics that support weighted samples
-METRICS_WITH_SAMPLE_WEIGHT = [
-    "accuracy_score", "unnormalized_accuracy_score",
-    "zero_one_loss", "unnormalized_zero_one_loss",
 
-    "precision_score", "average_precision_score",
-    "f1_score", "f2_score", "f0.5_score",
-    "recall_score", "roc_auc_score",
-
-    "weighted_precision_score",
-    "weighted_average_precision_score",
-    "weighted_f0.5_score", "weighted_f1_score", "weighted_f2_score",
-    "weighted_recall_score", "weighted_roc_auc",
-
-    "micro_f0.5_score", "micro_f1_score", "micro_f2_score",
-    "micro_precision_score", "micro_recall_score",
-
-    "macro_f0.5_score", "macro_f1_score", "macro_f2_score",
-    "macro_precision_score", "macro_recall_score",
-
-    "explained_variance_score",
-    "mean_squared_error",
-    "mean_absolute_error",
-    "r2_score",
-]
-
-# Classification metrics that support multilabel and weighted samples
-MULTILABEL_SEQUENCE_METRICS_WITH_SAMPLE_WEIGHT = [
-    "accuracy_score", "unnormalized_accuracy_score",
-    "zero_one_loss", "unnormalized_zero_one_loss",
-
-    "precision_score", "recall_score",
-    "f1_score", "f2_score", "f0.5_score",
-
-    "weighted_precision_score", "weighted_recall_score",
-    "weighted_f0.5_score", "weighted_f1_score", "weighted_f2_score",
-
-    "micro_f0.5_score", "micro_f1_score", "micro_f2_score",
-    "micro_precision_score", "micro_recall_score",
-
-    "macro_f0.5_score", "macro_f1_score", "macro_f2_score",
-    "macro_precision_score", "macro_recall_score",
-
-    "samples_f0.5_score", "samples_f1_score", "samples_f2_score",
-    "samples_precision_score", "samples_recall_score",
-]
-
-MULTILABEL_INDICATOR_METRICS_WITH_SAMPLE_WEIGHT = [
-    "average_precision_score",
-    "weighted_average_precision_score",
-    "micro_average_precision_score",
-    "macro_average_precision_score",
-    "samples_average_precision_score",
-    "roc_auc_score",
-    "micro_roc_auc",
-    "macro_roc_auc",
-    "samples_roc_auc",
+# No Sample weight support
+METRICS_WITHOUT_SAMPLE_WEIGHT = [
+    "confusion_matrix",
+    "hamming_loss",
+    "hinge_loss"
+    "jaccard_similarity_score", "unnormalized_jaccard_similarity_score",
+    "log_loss",
+    "matthews_corrcoef_score",
 ]
 
 # Regression metrics that support multioutput and weighted samples
@@ -2643,38 +2604,56 @@ def check_sample_weight_invariance(name, metric, y1, y2):
 
 
 def test_sample_weight_invariance():
-    # binary
+    # binary output
     y1, y2, _ = make_prediction(binary=True)
-    for name in METRICS_WITH_SAMPLE_WEIGHT:
+    for name in ALL_METRICS:
+        if (name in METRICS_WITHOUT_SAMPLE_WEIGHT or
+                name in METRIC_UNDEFINED_MULTICLASS):
+            continue
         metric = ALL_METRICS[name]
         yield check_sample_weight_invariance, name, metric, y1, y2
 
+    # multiclass
+    y1, y2, _ = make_prediction()
+    for name in ALL_METRICS:
+        if (name in METRICS_WITHOUT_SAMPLE_WEIGHT or
+                name in METRIC_UNDEFINED_MULTICLASS):
+            continue
+        metric = ALL_METRICS[name]
+        yield check_sample_weight_invariance, name, metric, y1, y2
+
+
     # multilabel sequence
-    _, y1 = make_multilabel_classification(
+    _, ya = make_multilabel_classification(
         n_features=1, n_classes=3,
         random_state=0, n_samples=10)
-    _, y2 = make_multilabel_classification(
+    _, yb = make_multilabel_classification(
         n_features=1, n_classes=3,
         random_state=1, n_samples=10)
-    for name in MULTILABEL_SEQUENCE_METRICS_WITH_SAMPLE_WEIGHT:
+    y1 = ya + yb
+    y2 = ya + ya
+
+    for name in MULTILABELS_METRICS:
+        if name in METRICS_WITHOUT_SAMPLE_WEIGHT:
+            continue
         metric = ALL_METRICS[name]
         yield (check_sample_weight_invariance, name, metric, y1, y2)
 
     # multilabel indicator
-    _, y1 = make_multilabel_classification(
+    _, ya = make_multilabel_classification(
         n_features=1, n_classes=6,
         random_state=0, n_samples=10,
         return_indicator=True)
-    _, y2 = make_multilabel_classification(
+    _, yb = make_multilabel_classification(
         n_features=1, n_classes=6,
         random_state=1, n_samples=10,
         return_indicator=True)
-    for name in MULTILABEL_INDICATOR_METRICS_WITH_SAMPLE_WEIGHT:
+    y1 = np.vstack([ya, yb])
+    y2 = np.vstack([ya, ya])
+    for name in (MULTILABELS_METRICS + THRESHOLDED_MULTILABEL_METRICS +
+                 MULTIOUTPUT_METRICS):
+        if name in METRICS_WITHOUT_SAMPLE_WEIGHT:
+            continue
+
         metric = ALL_METRICS[name]
         yield (check_sample_weight_invariance, name, metric, y1, y2)
-
-    # multioutput
-    for name in MULTIOUTPUT_METRICS_WITH_SAMPLE_WEIGHT:
-        metric = ALL_METRICS[name]
-        yield (check_sample_weight_invariance,
-               name, metric, y1, y2)
