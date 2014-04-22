@@ -1077,7 +1077,8 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
 
 
 def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
-                    verbose=0, fit_params=None, pre_dispatch='2*n_jobs'):
+                    verbose=0, fit_params=None, pre_dispatch='2*n_jobs',
+                    sample_weight=None):
     """Evaluate a score by cross-validation
 
     Parameters
@@ -1091,6 +1092,9 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
     y : array-like, optional, default: None
         The target variable to try to predict in the case of
         supervised learning.
+
+    sample_weight : array-like, optional, default: None
+        Sample weights.
 
     scoring : string, callable or None, optional, default: None
         A string (see model evaluation documentation) or
@@ -1135,7 +1139,7 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
     scores : array of float, shape=(len(list(cv)),)
         Array of scores of the estimator for each run of the cross validation.
     """
-    X, y = indexable(X, y)
+    X, y, sample_weight = indexable(X, y, sample_weight)
 
     cv = _check_cv(cv, X, y, classifier=is_classifier(estimator))
     scorer = check_scoring(estimator, scoring=scoring)
@@ -1143,7 +1147,8 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
     # independent, and that it is pickle-able.
     parallel = Parallel(n_jobs=n_jobs, verbose=verbose,
                         pre_dispatch=pre_dispatch)
-    scores = parallel(delayed(_fit_and_score)(clone(estimator), X, y, scorer,
+    scores = parallel(delayed(_fit_and_score)(clone(estimator), X, y,
+                                              sample_weight, scorer,
                                               train, test, verbose, None,
                                               fit_params)
                       for train, test in cv)
@@ -1233,15 +1238,15 @@ def _fit_and_score(estimator, X, y, sample_weight,
 
     start_time = time.time()
 
-    X_train, y_train = _safe_split(estimator, X, y, train)
-    X_test, y_test = _safe_split(estimator, X, y, test, train)
+    X_train, y_train, sample_weight_train = _safe_split(
+        estimator, X, y, sample_weight, train)
+    X_test, y_test, sample_weight_test = _safe_split(
+        estimator, X, y, sample_weight, test, train)
 
-    test_score_params = dict()
-    train_score_params = dict()
+    test_score_params = {}
+    train_score_params = {}
     if sample_weight is not None:
-        # move to _safe_split?
-        sample_weight_train = sample_weight[safe_mask(sample_weight, train)]
-        sample_weight_test = sample_weight[safe_mask(sample_weight, test)]
+        fit_params = fit_params.copy()
         fit_params['sample_weight'] = sample_weight_train
         test_score_params['sample_weight'] = sample_weight_test
         train_score_params['sample_weight'] = sample_weight_train
@@ -1271,7 +1276,7 @@ def _fit_and_score(estimator, X, y, sample_weight,
     return ret
 
 
-def _safe_split(estimator, X, y, indices, train_indices=None):
+def _safe_split(estimator, X, y, sample_weight, indices, train_indices=None):
     """Create subset of dataset and properly handle kernels."""
     if hasattr(estimator, 'kernel') and callable(estimator.kernel):
         # cannot compute the kernel values with custom function
@@ -1300,7 +1305,12 @@ def _safe_split(estimator, X, y, indices, train_indices=None):
     else:
         y_subset = None
 
-    return X_subset, y_subset
+    if sample_weight is not None:
+        sample_weight_subset = np.asarray(sample_weight)[indices]
+    else:
+        sample_weight_subset = None
+
+    return X_subset, y_subset, sample_weight_subset
 
 
 def _score(estimator, X_test, y_test, scorer, **params):
