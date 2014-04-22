@@ -14,7 +14,8 @@ from .cross_validation import _safe_split, _score, _fit_and_score
 from .metrics.scorer import check_scoring
 
 
-def learning_curve(estimator, X, y, train_sizes=np.linspace(0.1, 1.0, 5),
+def learning_curve(estimator, X, y, sample_weight=None,
+                   train_sizes=np.linspace(0.1, 1.0, 10),
                    cv=None, scoring=None, exploit_incremental_learning=False,
                    n_jobs=1, pre_dispatch="all", verbose=0):
     """Learning curve.
@@ -40,6 +41,9 @@ def learning_curve(estimator, X, y, train_sizes=np.linspace(0.1, 1.0, 5),
     y : array-like, shape (n_samples) or (n_samples, n_features), optional
         Target relative to X for classification or regression;
         None for unsupervised learning.
+
+    sample_weight : array-like, shape (n_samples), optional
+        Sample weights.
 
     train_sizes : array-like, shape (n_ticks,), dtype float or int
         Relative or absolute numbers of training examples that will be used to
@@ -124,11 +128,13 @@ def learning_curve(estimator, X, y, train_sizes=np.linspace(0.1, 1.0, 5),
     if exploit_incremental_learning:
         classes = np.unique(y) if is_classifier(estimator) else None
         out = parallel(delayed(_incremental_fit_estimator)(
-            clone(estimator), X, y, classes, train, test, train_sizes_abs,
+            clone(estimator), X, y, sample_weight,
+            classes, train, test, train_sizes_abs,
             scorer, verbose) for train, test in cv)
     else:
         out = parallel(delayed(_fit_and_score)(
-            clone(estimator), X, y, scorer, train[:n_train_samples], test,
+            clone(estimator), X, y, sample_weight,
+            scorer, train[:n_train_samples], test,
             verbose, parameters=None, fit_params=None, return_train_score=True)
             for train, test in cv for n_train_samples in train_sizes_abs)
         out = np.array(out)[:, :2]
@@ -199,29 +205,45 @@ def _translate_train_sizes(train_sizes, n_max_training_samples):
     return train_sizes_abs
 
 
-def _incremental_fit_estimator(estimator, X, y, classes, train, test,
+def _incremental_fit_estimator(estimator, X, y, sample_weight,
+                               classes, train, test,
                                train_sizes, scorer, verbose):
     """Train estimator on training subsets incrementally and compute scores."""
     train_scores, test_scores = [], []
     partitions = zip(train_sizes, np.split(train, train_sizes)[:-1])
     for n_train_samples, partial_train in partitions:
         train_subset = train[:n_train_samples]
-        X_train, y_train = _safe_split(estimator, X, y, train_subset)
-        X_partial_train, y_partial_train = _safe_split(estimator, X, y,
-                                                       partial_train)
-        X_test, y_test = _safe_split(estimator, X, y, test, train_subset)
+        X_train, y_train, sample_weight_train = _safe_split(
+            estimator, X, y, sample_weight, train_subset)
+        X_partial_train, y_partial_train, sample_weight_partial_train = \
+            _safe_split(estimator, X, y, sample_weight, partial_train)
+        X_test, y_test, sample_weight_test = _safe_split(
+            estimator, X, y, sample_weight, test, train_subset)
+
+        fit_params = dict()
+        train_score_params = dict()
+        test_score_params = dict()
+        if sample_weight is not None:
+            fit_params['sample_weight'] = sample_weight_partial_train
+            train_score_params['sample_weight'] = sample_weight_train
+            test_score_params['sample_weight'] = sample_weight_test
+
         if y_partial_train is None:
-            estimator.partial_fit(X_partial_train, classes=classes)
+            estimator.partial_fit(X_partial_train,
+                                  classes=classes, **fit_params)
         else:
             estimator.partial_fit(X_partial_train, y_partial_train,
-                                  classes=classes)
-        train_scores.append(_score(estimator, X_train, y_train, scorer))
-        test_scores.append(_score(estimator, X_test, y_test, scorer))
+                                  classes=classes, **fit_params)
+        train_scores.append(_score(
+            estimator, X_train, y_train, scorer, **train_score_params))
+        test_scores.append(_score(
+            estimator, X_test, y_test, scorer, **test_score_params))
     return np.array((train_scores, test_scores)).T
 
 
-def validation_curve(estimator, X, y, param_name, param_range, cv=None,
-                     scoring=None, n_jobs=1, pre_dispatch="all", verbose=0):
+def validation_curve(estimator, X, y, param_name, param_range,
+                     sample_weight=None, cv=None, scoring=None,
+                     n_jobs=1, pre_dispatch="all", verbose=0):
     """Validation curve.
 
     Determine training and test scores for varying parameter values.
@@ -249,6 +271,9 @@ def validation_curve(estimator, X, y, param_name, param_range, cv=None,
 
     param_range : array-like, shape (n_values,)
         The values of the parameter that will be evaluated.
+
+    sample_weight : array-like, shape (n_samples,), optional
+        Sample weights.
 
     cv : integer, cross-validation generator, optional
         If an integer is passed, it is the number of folds (defaults to 3).
@@ -291,7 +316,7 @@ def validation_curve(estimator, X, y, param_name, param_range, cv=None,
     parallel = Parallel(n_jobs=n_jobs, pre_dispatch=pre_dispatch,
                         verbose=verbose)
     out = parallel(delayed(_fit_and_score)(
-        estimator, X, y, scorer, train, test, verbose,
+        estimator, X, y, sample_weight, scorer, train, test, verbose,
         parameters={param_name: v}, fit_params=None, return_train_score=True)
         for train, test in cv for v in param_range)
 
