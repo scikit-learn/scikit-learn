@@ -305,7 +305,7 @@ class RFECV(RFE, MetaEstimatorMixin):
         self.estimator_params = estimator_params
         self.verbose = verbose
 
-    def fit(self, X, y):
+    def fit(self, X, y, sample_weight=None):
         """Fit the RFE model and automatically tune the number of selected
            features.
 
@@ -318,6 +318,9 @@ class RFECV(RFE, MetaEstimatorMixin):
         y : array-like, shape = [n_samples]
             Target values (integers for classification, real numbers for
             regression).
+
+        sample_weight : array-like, shape = [n_samples], optional (default=None)
+            Sample weights.
         """
         X, y = check_arrays(X, y, sparse_format="csr")
         # Initialization
@@ -332,17 +335,26 @@ class RFECV(RFE, MetaEstimatorMixin):
 
         # Cross-validation
         for n, (train, test) in enumerate(cv):
-            X_train, y_train = _safe_split(self.estimator, X, y, train)
-            X_test, y_test = _safe_split(self.estimator, X, y, test, train)
+            X_train, y_train, sample_weight_train = _safe_split(
+                self.estimator, X, y, sample_weight, train)
+            X_test, y_test, sample_weight_test = _safe_split(
+                self.estimator, X, y, sample_weight, test, train)
+
+            fit_params = dict()
+            score_params = dict()
+            if sample_weight is not None:
+                fit_params['sample_weight'] = sample_weight_train
+                score_params['sample_weight'] = sample_weight_test
 
             # Compute a full ranking of the features
-            ranking_ = rfe.fit(X_train, y_train).ranking_
+            ranking_ = rfe.fit(X_train, y_train, **fit_params).ranking_
             # Score each subset of features
             for k in range(0, max(ranking_)):
                 mask = np.where(ranking_ <= k + 1)[0]
                 estimator = clone(self.estimator)
-                estimator.fit(X_train[:, mask], y_train)
-                score = _score(estimator, X_test[:, mask], y_test, scorer)
+                estimator.fit(X_train[:, mask], y_train, **fit_params)
+                score = _score(
+                    estimator, X_test[:, mask], y_test, scorer, **score_params)
 
                 if self.verbose > 0:
                     print("Finished fold with %d / %d feature ranks, score=%f"
@@ -358,7 +370,10 @@ class RFECV(RFE, MetaEstimatorMixin):
                   n_features_to_select=k+1,
                   step=self.step, estimator_params=self.estimator_params)
 
-        rfe.fit(X, y)
+        if sample_weight is not None:
+            rfe.fit(X, y, sample_weight=sample_weight)
+        else:
+            rfe.fit(X, y)
 
         # Set final attributes
         self.support_ = rfe.support_
