@@ -71,9 +71,9 @@ class MockClassifier(BaseEstimator):
 
     def fit(self, X, Y=None, sample_weight=None, class_prior=None):
         if sample_weight is not None:
-            assert_true(sample_weight.shape[0] == X.shape[0],
+            assert_true(len(sample_weight) == X.shape[0],
                         'MockClassifier extra fit_param sample_weight.shape[0]'
-                        ' is {0}, should be {1}'.format(sample_weight.shape[0],
+                        ' is {0}, should be {1}'.format(len(sample_weight),
                                                         X.shape[0]))
         if class_prior is not None:
             assert_true(class_prior.shape[0] == len(np.unique(y)),
@@ -85,13 +85,15 @@ class MockClassifier(BaseEstimator):
     def predict(self, T):
         return T.shape[0]
 
-    def score(self, X=None, Y=None):
+    def score(self, X=None, Y=None, sample_weight=None):
         return 1. / (1 + np.abs(self.a))
 
 
 X = np.ones((10, 2))
 X_sparse = coo_matrix(X)
 y = np.arange(10) // 2
+rng = np.random.RandomState(0)
+int_weights = rng.randint(10, size=y.shape)
 
 ##############################################################################
 # Tests
@@ -488,8 +490,8 @@ def test_cross_val_score():
     for a in range(-10, 10):
         clf.a = a
         # Smoke test
-        scores = cval.cross_val_score(clf, X, y)
-        assert_array_equal(scores, clf.score(X, y))
+        scores = cval.cross_val_score(clf, X, y, sample_weight=int_weights)
+        assert_array_equal(scores, clf.score(X, y, sample_weight=int_weights))
 
         # test with multioutput y
         scores = cval.cross_val_score(clf, X_sparse, X)
@@ -501,6 +503,10 @@ def test_cross_val_score():
         # test with multioutput y
         scores = cval.cross_val_score(clf, X_sparse, X)
         assert_array_equal(scores, clf.score(X_sparse, X))
+
+    # test with sample_weight as list
+    scores = cval.cross_val_score(
+        clf, X, y, sample_weight=int_weights.tolist())
 
     # test with X and y as list
     clf = MockListClassifier()
