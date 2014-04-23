@@ -107,8 +107,3 @@ def test_empty_vocabulary():
     d = DictVectorizer()
     assert_raise_message(ValueError, 'empty vocabulary', d.fit, [{}])
     assert_raise_message(ValueError, 'empty vocabulary', d.fit_transform, [{}])
-
-if __name__ == '__main__':
-    for test in dir():
-        if test.startswith('test_'):
-            globals()[test]()

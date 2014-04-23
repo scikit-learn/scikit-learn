@@ -462,7 +462,7 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
 def _batch_iter(iterable, size):
     """Iterate an iterable in a group of 'size' as list"""
     c = count()
-    for k, g in groupby(iterable, lambda x: six.next(c)//size):
+    for k, g in groupby(iterable, lambda x: next(c)//size):
         yield list(g)  # To ensure the iterable is iterated in sequence
 
 

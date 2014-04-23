@@ -230,14 +230,14 @@ def test_char_wb_ngram_analyzer():
     assert_equal(cnga(text)[:6], expected)
 
 
-def _test_countvectorizer_custom_vocabulary(n):
+def test_countvectorizer_custom_vocabulary():
     vocab = {"pizza": 0, "beer": 1}
     terms = set(vocab.keys())
 
     # Try a few of the supported types.
     for typ in [dict, list, iter, partial(defaultdict, int)]:
         v = typ(vocab)
-        vect = CountVectorizer(vocabulary=v, n_jobs=n)
+        vect = CountVectorizer(vocabulary=v, n_jobs=1)
         vect.fit(JUNK_FOOD_DOCS)
         if isinstance(v, Mapping):
             assert_equal(vect.vocabulary_, vocab)
@@ -247,15 +247,10 @@ def _test_countvectorizer_custom_vocabulary(n):
         assert_equal(X.shape[1], len(terms))
 
 
-def test_countvectorizer_custom_vocabulary():
-    _test_countvectorizer_custom_vocabulary(1)
-    _test_countvectorizer_custom_vocabulary(2)
-
-
-def _test_countvectorizer_custom_vocabulary_pipeline(n):
+def test_countvectorizer_custom_vocabulary_pipeline():
     what_we_like = ["pizza", "beer"]
     pipe = Pipeline([
-        ('count', CountVectorizer(vocabulary=what_we_like, n_jobs=n)),
+        ('count', CountVectorizer(vocabulary=what_we_like, n_jobs=1)),
         ('tfidf', TfidfTransformer())])
     X = pipe.fit_transform(ALL_FOOD_DOCS)
     assert_equal(set(pipe.named_steps['count'].vocabulary_),
@@ -263,39 +258,24 @@ def _test_countvectorizer_custom_vocabulary_pipeline(n):
     assert_equal(X.shape[1], len(what_we_like))
 
 
-def test_countvectorizer_custom_vocabulary_pipeline():
-    _test_countvectorizer_custom_vocabulary_pipeline(1)
-    _test_countvectorizer_custom_vocabulary_pipeline(2)
-
-
-def _test_countvectorizer_custom_vocabulary_repeated_indices(n):
+def test_countvectorizer_custom_vocabulary_repeated_indices():
     vocab = {"pizza": 0, "beer": 0}
     try:
-        CountVectorizer(vocabulary=vocab, n_jobs=n)
+        CountVectorizer(vocabulary=vocab, n_jobs=1)
     except ValueError as e:
         assert_in("vocabulary contains repeated indices", str(e).lower())
 
 
-def test_countvectorizer_custom_vocabulary_repeated_indices():
-    _test_countvectorizer_custom_vocabulary_repeated_indices(1)
-    _test_countvectorizer_custom_vocabulary_repeated_indices(2)
-
-
-def _test_countvectorizer_custom_vocabulary_gap_index(n):
+def test_countvectorizer_custom_vocabulary_gap_index():
     vocab = {"pizza": 1, "beer": 2}
     try:
-        CountVectorizer(vocabulary=vocab, n_jobs=n)
+        CountVectorizer(vocabulary=vocab, n_jobs=1)
     except ValueError as e:
         assert_in("doesn't contain index", str(e).lower())
 
 
-def test_countvectorizer_custom_vocabulary_gap_index():
-    _test_countvectorizer_custom_vocabulary_gap_index(1)
-    _test_countvectorizer_custom_vocabulary_gap_index(2)
-
-
-def _test_countvectorizer_stop_words(n):
-    cv = CountVectorizer(n_jobs=n)
+def test_countvectorizer_stop_words():
+    cv = CountVectorizer(n_jobs=1)
     cv.set_params(stop_words='english')
     assert_equal(cv.get_stop_words(), ENGLISH_STOP_WORDS)
     cv.set_params(stop_words='_bad_str_stop_')
@@ -307,24 +287,14 @@ def _test_countvectorizer_stop_words(n):
     assert_equal(cv.get_stop_words(), stoplist)
 
 
-def test_countvectorizer_stop_words():
-    _test_countvectorizer_stop_words(1)
-    _test_countvectorizer_stop_words(2)
-
-
-def _test_countvectorizer_empty_vocabulary(n):
+def test_countvectorizer_empty_vocabulary():
     assert_raise_message(ValueError, 'empty vocabulary',
-                         CountVectorizer, vocabulary=[], n_jobs=n)
-    v = CountVectorizer(max_df=1.0, stop_words='english', n_jobs=n)
+                         CountVectorizer, vocabulary=[], n_jobs=1)
+    v = CountVectorizer(max_df=1.0, stop_words='english', n_jobs=1)
     assert_raise_message(ValueError, 'empty vocabulary',
                          v.fit, ['to be or not to be',
                                  'and me too',
                                  'and so do you'])
-
-
-def test_countvectorizer_empty_vocabulary():
-    _test_countvectorizer_empty_vocabulary(1)
-    _test_countvectorizer_empty_vocabulary(2)
 
 
 def _test_fit_countvectorizer_twice(n):
@@ -400,22 +370,31 @@ def test_sublinear_tf():
     assert_less(tfidf[2], 3)
 
 
-def _test_vectorizer(n):
+def test_vectorizer():
     # raw documents as an iterator
     train_data = iter(ALL_FOOD_DOCS[:-1])
     test_data = [ALL_FOOD_DOCS[-1]]
     n_train = len(ALL_FOOD_DOCS) - 1
 
     # test without vocabulary
-    v1 = CountVectorizer(max_df=0.5, n_jobs=n)
+    v1 = CountVectorizer(max_df=0.5, n_jobs=1)
     counts_train = v1.fit_transform(train_data)
     assert_equal(counts_train[0, v1.vocabulary_["pizza"]], 2)
 
     # build a vectorizer v1 with the same vocabulary as the one fitted by v1
-    v2 = CountVectorizer(vocabulary=v1.vocabulary_, n_jobs=n)
+    v2 = CountVectorizer(vocabulary=v1.vocabulary_, n_jobs=1)
+
+    # Test the multiprocess version
+    train_data = iter(ALL_FOOD_DOCS[:-1])
+    v1m = CountVectorizer(max_df=0.5, n_jobs=2)
+    counts_train = v1m.fit_transform(train_data)
+    assert_equal(counts_train[0, v1m.vocabulary_["pizza"]], 2)
+
+    # build a vectorizer v1 with the same vocabulary as the one fitted by v1
+    v2m = CountVectorizer(vocabulary=v1m.vocabulary_, n_jobs=2)
 
     # compare that the two vectorizer give the same output on the test sample
-    for v in (v1, v2):
+    for v in (v1, v2, v1m, v2m):
         counts_test = v.transform(test_data)
 
         vocabulary = v.vocabulary_
@@ -483,7 +462,7 @@ def _test_vectorizer(n):
     assert_array_almost_equal(tfidf_test, tfidf_test2)
 
     # test transform on unfitted vectorizer with empty vocabulary
-    v3 = CountVectorizer(vocabulary=None, n_jobs=n)
+    v3 = CountVectorizer(vocabulary=None, n_jobs=1)
     assert_raises(ValueError, v3.transform, train_data)
 
     # ascii preprocessor?
@@ -497,11 +476,6 @@ def _test_vectorizer(n):
     # error with bad analyzer type
     v3.set_params = '_invalid_analyzer_type_'
     assert_raises(ValueError, v3.build_analyzer)
-
-
-def test_vectorizer():
-    _test_vectorizer(1)
-    _test_vectorizer(2)
 
 
 def test_tfidf_vectorizer_setters():
@@ -555,8 +529,8 @@ def test_hashing_vectorizer():
         assert_almost_equal(np.linalg.norm(X[0].data, 1), 1.0)
 
 
-def _test_feature_names(n):
-    cv = CountVectorizer(max_df=0.5, n_jobs=n)
+def test_feature_names():
+    cv = CountVectorizer(max_df=0.5, n_jobs=1)
 
     # test for Value error on unfitted/empty vocabulary
     assert_raises(ValueError, cv.get_feature_names)
@@ -573,11 +547,6 @@ def _test_feature_names(n):
 
     for idx, name in enumerate(feature_names):
         assert_equal(idx, cv.vocabulary_.get(name))
-
-
-def test_feature_names():
-    _test_feature_names(1)
-    _test_feature_names(2)
 
 
 def _test_vectorizer_max_features(n):
@@ -603,40 +572,40 @@ def test_vectorizer_max_features():
     _test_vectorizer_max_features(2)
 
 
-def _test_count_vectorizer_max_features(n):
+def test_count_vectorizer_max_features():
     """Regression test: max_features didn't work correctly in 0.14."""
 
-    cv_1 = CountVectorizer(max_features=1, n_jobs=n)
-    cv_3 = CountVectorizer(max_features=3, n_jobs=n)
-    cv_None = CountVectorizer(max_features=None, n_jobs=n)
+    cv_1 = CountVectorizer(max_features=1, n_jobs=1)
+    cv_3 = CountVectorizer(max_features=3, n_jobs=1)
+    cv_None = CountVectorizer(max_features=None, n_jobs=1)
+    cv_3m = CountVectorizer(max_features=3, n_jobs=2)
 
     counts_1 = cv_1.fit_transform(JUNK_FOOD_DOCS).sum(axis=0)
     counts_3 = cv_3.fit_transform(JUNK_FOOD_DOCS).sum(axis=0)
     counts_None = cv_None.fit_transform(JUNK_FOOD_DOCS).sum(axis=0)
+    counts_3m = cv_3m.fit_transform(JUNK_FOOD_DOCS).sum(axis=0)
 
     features_1 = cv_1.get_feature_names()
     features_3 = cv_3.get_feature_names()
     features_None = cv_None.get_feature_names()
+    features_3m = cv_3m.get_feature_names()
 
     # The most common feature is "the", with frequency 7.
     assert_equal(7, counts_1.max())
     assert_equal(7, counts_3.max())
     assert_equal(7, counts_None.max())
+    assert_equal(7, counts_3m.max())
 
     # The most common feature should be the same
     assert_equal("the", features_1[np.argmax(counts_1)])
     assert_equal("the", features_3[np.argmax(counts_3)])
     assert_equal("the", features_None[np.argmax(counts_None)])
+    assert_equal("the", features_3m[np.argmax(counts_3m)])
 
 
-def test_count_vectorizer_max_features():
-    _test_count_vectorizer_max_features(1)
-    _test_count_vectorizer_max_features(2)
-
-
-def _test_vectorizer_max_df(n):
+def test_vectorizer_max_df():
     test_data = ['abc', 'dea', 'eat']
-    vect = CountVectorizer(analyzer='char', max_df=1.0, n_jobs=n)
+    vect = CountVectorizer(analyzer='char', max_df=1.0, n_jobs=1)
     vect.fit(test_data)
     assert_true('a' in vect.vocabulary_.keys())
     assert_equal(len(vect.vocabulary_.keys()), 6)
@@ -657,14 +626,9 @@ def _test_vectorizer_max_df(n):
     assert_equal(len(vect.stop_words_), 2)
 
 
-def test_vectorizer_max_df():
-    _test_vectorizer_max_df(1)
-    _test_vectorizer_max_df(2)
-
-
-def _test_vectorizer_min_df(n):
+def test_vectorizer_min_df():
     test_data = ['abc', 'dea', 'eat']
-    vect = CountVectorizer(analyzer='char', min_df=1, n_jobs=n)
+    vect = CountVectorizer(analyzer='char', min_df=1, n_jobs=1)
     vect.fit(test_data)
     assert_true('a' in vect.vocabulary_.keys())
     assert_equal(len(vect.vocabulary_.keys()), 6)
@@ -683,11 +647,6 @@ def _test_vectorizer_min_df(n):
     assert_equal(len(vect.vocabulary_.keys()), 1)    # {a} remains
     assert_true('c' in vect.stop_words_)
     assert_equal(len(vect.stop_words_), 5)
-
-
-def test_vectorizer_min_df():
-    _test_vectorizer_min_df(1)
-    _test_vectorizer_min_df(2)
 
 
 def test_count_binary_occurrences():
@@ -738,10 +697,10 @@ def test_hashed_binary_occurrences():
     assert_equal(X.dtype, np.float64)
 
 
-def _test_vectorizer_inverse_transform(n):
+def test_vectorizer_inverse_transform():
     # raw documents
     data = ALL_FOOD_DOCS
-    for vectorizer in (TfidfVectorizer(), CountVectorizer(n_jobs=n)):
+    for vectorizer in (TfidfVectorizer(), CountVectorizer(n_jobs=1)):
         transformed_data = vectorizer.fit_transform(data)
         inversed_data = vectorizer.inverse_transform(transformed_data)
         analyze = vectorizer.build_analyzer()
@@ -757,12 +716,7 @@ def _test_vectorizer_inverse_transform(n):
             assert_array_equal(np.sort(terms), np.sort(terms2))
 
 
-def test_vectorizer_inverse_transform():
-    _test_vectorizer_inverse_transform(1)
-    _test_vectorizer_inverse_transform(2)
-
-
-def _test_count_vectorizer_pipeline_grid_selection(n):
+def test_count_vectorizer_pipeline_grid_selection():
     # raw documents
     data = JUNK_FOOD_DOCS + NOTJUNK_FOOD_DOCS
     # simulate iterables
@@ -775,7 +729,7 @@ def _test_count_vectorizer_pipeline_grid_selection(n):
     y_train = y[1:-1]
     y_test = np.array([y[0], y[-1]])
 
-    pipeline = Pipeline([('vect', CountVectorizer(n_jobs=n)),
+    pipeline = Pipeline([('vect', CountVectorizer(n_jobs=1)),
                          ('svc', LinearSVC())])
 
     parameters = {
@@ -798,11 +752,6 @@ def _test_count_vectorizer_pipeline_grid_selection(n):
     assert_equal(grid_search.best_score_, 1.0)
     best_vectorizer = grid_search.best_estimator_.named_steps['vect']
     assert_equal(best_vectorizer.ngram_range, (1, 1))
-
-
-def test_count_vectorizer_pipeline_grid_selection():
-    _test_count_vectorizer_pipeline_grid_selection(1)
-    _test_count_vectorizer_pipeline_grid_selection(2)
 
 
 def test_vectorizer_pipeline_grid_selection():
@@ -846,7 +795,7 @@ def test_vectorizer_pipeline_grid_selection():
     assert_false(best_vectorizer.fixed_vocabulary)
 
 
-def _test_vectorizer_unicode(n):
+def test_vectorizer_unicode():
     # tests that the count vectorizer works with cyrillic.
     document = (
         "\xd0\x9c\xd0\xb0\xd1\x88\xd0\xb8\xd0\xbd\xd0\xbd\xd0\xbe\xd0"
@@ -865,7 +814,7 @@ def _test_vectorizer_unicode(n):
         "\xd0\xbe\xd0\xb1\xd1\x83\xd1\x87\xd0\xb0\xd1\x82\xd1\x8c\xd1\x81\xd1"
         "\x8f.")
 
-    vect = CountVectorizer(n_jobs=n)
+    vect = CountVectorizer(n_jobs=1)
     X_counted = vect.fit_transform([document])
     assert_equal(X_counted.shape, (1, 15))
 
@@ -879,11 +828,6 @@ def _test_vectorizer_unicode(n):
     # When norm is None and non_negative, the tokens are counted up to
     # collisions
     assert_array_equal(np.sort(X_counted.data), np.sort(X_hashed.data))
-
-
-def test_vectorizer_unicode():
-    _test_vectorizer_unicode(1)
-    _test_vectorizer_unicode(2)
 
 
 def test_tfidf_vectorizer_with_fixed_vocabulary():
