@@ -403,13 +403,14 @@ class PCA(BaseEstimator, TransformerMixin):
         Returns
         -------
         X_original array-like, shape (n_samples, n_features)
-
-        Notes
-        -----
-        If whitening is enabled, inverse_transform does not compute the
-        exact inverse operation as transform.
         """
-        return fast_dot(X, self.components_) + self.mean_
+        if self.whiten:
+            return fast_dot(X,
+                            self.explained_variance_[:, np.newaxis] *
+                            self.components_) + self.mean_
+        else:
+            return fast_dot(X, self.components_) + self.mean_
+
 
     def score_samples(self, X):
         """Return the log-likelihood of each sample
