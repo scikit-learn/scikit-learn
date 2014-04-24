@@ -340,7 +340,7 @@ class StratifiedKFold(_BaseKFold):
 
     Provides train/test indices to split data in train test sets.
 
-    This cross-validation object is a variation of KFold, which
+    This cross-validation object is a variation of KFold that
     returns stratified folds. The folds are made by preserving
     the percentage of samples for each class.
 
