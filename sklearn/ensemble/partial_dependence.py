@@ -268,7 +268,7 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
     # convert feature_names to list
     if feature_names is None:
         # if not feature_names use fx indices as name
-        feature_names = map(str, range(gbrt.n_features))
+        feature_names = list(map(str, range(gbrt.n_features)))
     elif isinstance(feature_names, np.ndarray):
         feature_names = feature_names.tolist()
 
@@ -300,7 +300,11 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
     names = []
     try:
         for fxs in features:
-            names.append([feature_names[i] for i in fxs])
+            l = []
+            # explicit loop so "i" is bound for exception below
+            for i in fxs:
+                l.append(feature_names[i])
+            names.append(l)
     except IndexError:
         raise ValueError('features[i] must be in [0, n_features) '
                          'but was %d' % i)
@@ -344,7 +348,7 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
             # make contour plot
             assert len(axes) == 2
             XX, YY = np.meshgrid(axes[0], axes[1])
-            Z = pdp[label_idx].reshape(map(np.size, axes)).T
+            Z = pdp[label_idx].reshape(list(map(np.size, axes))).T
             CS = ax.contour(XX, YY, Z, levels=Z_level, linewidths=0.5,
                             colors='k')
             ax.contourf(XX, YY, Z, levels=Z_level, vmax=Z_level[-1],
