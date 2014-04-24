@@ -234,7 +234,7 @@ class _BaseKFold(with_metaclass(ABCMeta, _PartitionIterator)):
     """Base class to validate KFold approaches"""
 
     @abstractmethod
-    def __init__(self, n, n_folds, indices):
+    def __init__(self, n, n_folds, indices, shuffle, random_state):
         super(_BaseKFold, self).__init__(n, indices)
 
         if abs(n_folds - int(n_folds)) >= np.finfo('f').eps:
@@ -250,6 +250,12 @@ class _BaseKFold(with_metaclass(ABCMeta, _PartitionIterator)):
             raise ValueError(
                 ("Cannot have number of folds n_folds={0} greater"
                  " than the number of samples: {1}.").format(n_folds, n))
+
+        if not isinstance(shuffle, bool):
+            raise TypeError("shuffle must be True or False;"
+                            " got {0}".format(shuffle))
+        self.shuffle = shuffle
+        self.random_state = random_state
 
 
 class KFold(_BaseKFold):
@@ -272,8 +278,9 @@ class KFold(_BaseKFold):
     shuffle : boolean, optional
         Whether to shuffle the data before splitting into batches.
 
-    random_state : int or RandomState
-            Pseudo number generator state used for random sampling.
+    random_state : None, int or RandomState
+        Pseudo-random number generator state used for random
+        sampling. If None, use default numpy RNG for shuffling
 
     Examples
     --------
@@ -284,7 +291,8 @@ class KFold(_BaseKFold):
     >>> len(kf)
     2
     >>> print(kf)
-    sklearn.cross_validation.KFold(n=4, n_folds=2)
+    sklearn.cross_validation.KFold(n=4, n_folds=2, shuffle=False,
+                                   random_state=None)
     >>> for train_index, test_index in kf:
     ...    print("TRAIN:", train_index, "TEST:", test_index)
     ...    X_train, X_test = X[train_index], X[test_index]
@@ -306,11 +314,11 @@ class KFold(_BaseKFold):
 
     def __init__(self, n, n_folds=3, indices=None, shuffle=False,
                  random_state=None):
-        super(KFold, self).__init__(n, n_folds, indices)
-        random_state = check_random_state(random_state)
+        super(KFold, self).__init__(n, n_folds, indices, shuffle, random_state)
         self.idxs = np.arange(n)
         if shuffle:
-            random_state.shuffle(self.idxs)
+            rng = check_random_state(self.random_state)
+            rng.shuffle(self.idxs)
 
     def _iter_test_indices(self):
         n = self.n
@@ -324,11 +332,13 @@ class KFold(_BaseKFold):
             current = stop
 
     def __repr__(self):
-        return '%s.%s(n=%i, n_folds=%i)' % (
+        return '%s.%s(n=%i, n_folds=%i, shuffle=%s, random_state=%s)' % (
             self.__class__.__module__,
             self.__class__.__name__,
             self.n,
             self.n_folds,
+            self.shuffle,
+            self.random_state,
         )
 
     def __len__(self):
@@ -340,7 +350,7 @@ class StratifiedKFold(_BaseKFold):
 
     Provides train/test indices to split data in train test sets.
 
-    This cross-validation object is a variation of KFold, which
+    This cross-validation object is a variation of KFold that
     returns stratified folds. The folds are made by preserving
     the percentage of samples for each class.
 
@@ -352,6 +362,14 @@ class StratifiedKFold(_BaseKFold):
     n_folds : int, default=3
         Number of folds. Must be at least 2.
 
+    shuffle : boolean, optional
+        Whether to shuffle each stratification of the data before splitting
+        into batches.
+
+    random_state : None, int or RandomState
+        Pseudo-random number generator state used for random
+        sampling. If None, use default numpy RNG for shuffling
+
     Examples
     --------
     >>> from sklearn import cross_validation
@@ -361,7 +379,8 @@ class StratifiedKFold(_BaseKFold):
     >>> len(skf)
     2
     >>> print(skf)
-    sklearn.cross_validation.StratifiedKFold(labels=[0 0 1 1], n_folds=2)
+    sklearn.cross_validation.StratifiedKFold(labels=[0 0 1 1], n_folds=2,
+                                             shuffle=False, random_state=None)
     >>> for train_index, test_index in skf:
     ...    print("TRAIN:", train_index, "TEST:", test_index)
     ...    X_train, X_test = X[train_index], X[test_index]
@@ -373,10 +392,13 @@ class StratifiedKFold(_BaseKFold):
     -----
     All the folds have size trunc(n_samples / n_folds), the last one has the
     complementary.
+
     """
 
-    def __init__(self, y, n_folds=3, indices=None):
-        super(StratifiedKFold, self).__init__(len(y), n_folds, indices)
+    def __init__(self, y, n_folds=3, indices=None, shuffle=False,
+                 random_state=None):
+        super(StratifiedKFold, self).__init__(
+            len(y), n_folds, indices, shuffle, random_state)
         y = np.asarray(y)
         n_samples = y.shape[0]
         unique_labels, y_inversed = np.unique(y, return_inverse=True)
@@ -389,11 +411,18 @@ class StratifiedKFold(_BaseKFold):
                           " be less than n_folds=%d."
                           % (min_labels, self.n_folds)), Warning)
 
+        # don't want to use the same seed in each label's shuffle
+        if self.shuffle:
+            rng = check_random_state(self.random_state)
+        else:
+            rng = self.random_state
+
         # pre-assign each sample to a test fold index using individual KFold
         # splitting strategies for each label so as to respect the
         # balance of labels
-        per_label_cvs = [KFold(max(c, self.n_folds), self.n_folds)
-                         for c in label_counts]
+        per_label_cvs = [
+            KFold(max(c, self.n_folds), self.n_folds, shuffle=self.shuffle,
+                  random_state=rng) for c in label_counts]
         test_folds = np.zeros(n_samples, dtype=np.int)
         for test_fold_idx, per_label_splits in enumerate(zip(*per_label_cvs)):
             for label, (_, test_split) in zip(unique_labels, per_label_splits):
@@ -416,11 +445,13 @@ class StratifiedKFold(_BaseKFold):
             yield self.test_folds == i
 
     def __repr__(self):
-        return '%s.%s(labels=%s, n_folds=%i)' % (
+        return '%s.%s(labels=%s, n_folds=%i, shuffle=%s, random_state=%s)' % (
             self.__class__.__module__,
             self.__class__.__name__,
             self.y,
             self.n_folds,
+            self.shuffle,
+            self.random_state,
         )
 
     def __len__(self):

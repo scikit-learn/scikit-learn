@@ -223,18 +223,22 @@ def test_stratified_kfold_no_shuffle():
 
 def test_stratified_kfold_ratios():
     # Check that stratified kfold preserves label ratios in individual splits
+    # Repeat with shuffling turned off and on
     n_samples = 1000
     labels = np.array([4] * int(0.10 * n_samples) +
                       [0] * int(0.89 * n_samples) +
                       [1] * int(0.01 * n_samples))
-
-    for train, test in cval.StratifiedKFold(labels, 5):
-        assert_almost_equal(np.sum(labels[train] == 4) / len(train), 0.10, 2)
-        assert_almost_equal(np.sum(labels[train] == 0) / len(train), 0.89, 2)
-        assert_almost_equal(np.sum(labels[train] == 1) / len(train), 0.01, 2)
-        assert_almost_equal(np.sum(labels[test] == 4) / len(test), 0.10, 2)
-        assert_almost_equal(np.sum(labels[test] == 0) / len(test), 0.89, 2)
-        assert_almost_equal(np.sum(labels[test] == 1) / len(test), 0.01, 2)
+    for shuffle in [False, True]:
+        for train, test in cval.StratifiedKFold(labels, 5, shuffle=shuffle):
+            assert_almost_equal(np.sum(labels[train] == 4) / len(train), 0.10,
+                                2)
+            assert_almost_equal(np.sum(labels[train] == 0) / len(train), 0.89,
+                                2)
+            assert_almost_equal(np.sum(labels[train] == 1) / len(train), 0.01,
+                                2)
+            assert_almost_equal(np.sum(labels[test] == 4) / len(test), 0.10, 2)
+            assert_almost_equal(np.sum(labels[test] == 0) / len(test), 0.89, 2)
+            assert_almost_equal(np.sum(labels[test] == 1) / len(test), 0.01, 2)
 
 
 def test_kfold_balance():
@@ -251,14 +255,17 @@ def test_kfold_balance():
 def test_stratifiedkfold_balance():
     # Check that KFold returns folds with balanced sizes (only when
     # stratification is possible)
+    # Repeat with shuffling turned off and on
     labels = [0] * 3 + [1] * 14
-    for skf in [cval.StratifiedKFold(labels[:i], 3) for i in range(11, 17)]:
-        sizes = []
-        for _, test in skf:
-            sizes.append(len(test))
+    for shuffle in [False, True]:
+        for skf in [cval.StratifiedKFold(labels[:i], 3, shuffle=shuffle)
+                    for i in range(11, 17)]:
+            sizes = []
+            for _, test in skf:
+                sizes.append(len(test))
 
-        assert_true((np.max(sizes) - np.min(sizes)) <= 1)
-        assert_equal(np.sum(sizes), skf.n)
+            assert_true((np.max(sizes) - np.min(sizes)) <= 1)
+            assert_equal(np.sum(sizes), skf.n)
 
 
 def test_shuffle_kfold():
@@ -282,6 +289,17 @@ def test_shuffle_kfold():
 
     all_folds.sort()
     assert_array_equal(all_folds, ind)
+
+
+def test_shuffle_stratifiedkfold():
+    # Check that shuffling is happening when requested, and for proper
+    # sample coverage
+    labels = [0] * 20 + [1] * 20
+    kf0 = list(cval.StratifiedKFold(labels, 5, shuffle=True, random_state=0))
+    kf1 = list(cval.StratifiedKFold(labels, 5, shuffle=True, random_state=1))
+    for (_, test0), (_, test1) in zip(kf0, kf1):
+        assert_true(set(test0) != set(test1))
+    check_cv_coverage(kf0, expected_n_iter=5, n_samples=40)
 
 
 def test_kfold_can_detect_dependent_samples_on_digits():  # see #2372
