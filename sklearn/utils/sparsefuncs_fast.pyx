@@ -346,3 +346,101 @@ def assign_rows_csr(X,
         for ind in range(indptr[rX], indptr[rX + 1]):
             j = indices[ind]
             out[out_rows[i], j] = data[ind]
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+def swap_row_csc(X, int m, int n):
+    """
+    Swaps two rows of a CSC matrix in-place.
+
+    Parameters
+    ----------
+    X : scipy.sparse.csc_matrix, shape=(n_samples, n_features)
+    m : int, index of first_sample
+    n : int, index of second_sample
+    """
+    cdef np.ndarray[int, ndim=1] indices = X.indices
+    cdef unsigned int i
+    cdef unsigned nonzero = indices.shape[0]
+
+    if m < 0:
+        m += X.shape[0]
+    if n < 0:
+        n += X.shape[0]
+
+    for i in range(nonzero):
+        if indices[i] == m:
+            indices[i] = n
+        elif indices[i] == n:
+            indices[i] = m
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+def swap_row_csr(X, int m, int n):
+    """
+    Swaps two rows of a CSC matrix in-place.
+
+    Parameters
+    ----------
+    X : scipy.sparse.csc_matrix, shape=(n_samples, n_features)
+    m : int, index of first_sample
+    n : int, index of second_sample
+    """
+    cdef np.ndarray[int, ndim=1] indices = X.indices, indptr = X.indptr
+    cdef np.ndarray[DOUBLE, ndim=1] data = X.data
+    cdef unsigned int n_nz_rm, n_nz_rn, i, j1, j2, j3
+    cdef unsigned int mptr, nptr
+
+    # Some copies to retain the original information
+    cdef np.ndarray[int, ndim=1] ptrcopy = np.copy(indptr)
+    cdef np.ndarray[int, ndim=1] indcopy = np.copy(indices)
+    cdef np.ndarray[DOUBLE, ndim=1] datacopy = np.copy(data)
+
+    if m < 0:
+        m += X.shape[0]
+    if n < 0:
+        n += X.shape[0]
+
+    if m > n:
+        m, n = n, m
+
+    # Modify indptr in the region in between the indices of two rows to
+    # be swapped, if the number of non-zero values in both the rows are
+    # not equal.
+    n_nz_rm = indptr[m + 1] - indptr[m]
+    n_nz_rn = indptr[n + 1] - indptr[n]
+
+    if n_nz_rm != n_nz_rn:
+        indptr[m + 1] = indptr[m] + n_nz_rn
+        for i in range(m + 2, n + 1):
+            indptr[i] = indptr[i - 1] + (ptrcopy[i] - ptrcopy[i - 1])
+
+    # Modify indices and data in between the indices of two rows to be swapped
+    m_ptr = ptrcopy[m]
+    n_ptr = ptrcopy[n]
+    if n_nz_rm == n_nz_rn:
+        for i in range(n_nz_rm):
+            indices[m_ptr + i], indices[n_ptr + i] = \
+                indices[n_ptr + i], indices[m_ptr + i]
+            data[m_ptr + i], data[n_ptr + i] = \
+                data[n_ptr + i], data[m_ptr + i]
+
+    else:
+        j1 = 0
+        j2 = ptrcopy[m + 1]
+        j3 = 0
+        for i in range(m_ptr, ptrcopy[n + 1]):
+            if i < m_ptr + n_nz_rn:
+                indices[i] = indcopy[n_ptr + j1]
+                data[i] = datacopy[n_ptr + j1]
+                j1 += 1
+            elif i >= m_ptr + n_nz_rn and i < ptrcopy[n + 1] - n_nz_rm:
+                indices[i] = indcopy[j2]
+                data[i] = datacopy[j2]
+                j2 += 1
+            else:
+                indices[i] = indcopy[m_ptr + j3]
+                data[i] = datacopy[m_ptr + j3]
+                j3 += 1
