@@ -352,6 +352,13 @@ class StratifiedKFold(_BaseKFold):
     n_folds : int, default=3
         Number of folds. Must be at least 2.
 
+    shuffle : boolean, optional
+        Whether to shuffle each stratification of the data before splitting
+        into batches.
+
+    random_state : int or RandomState
+            Pseudo number generator state used for random sampling.
+
     Examples
     --------
     >>> from sklearn import cross_validation
@@ -375,7 +382,8 @@ class StratifiedKFold(_BaseKFold):
     complementary.
     """
 
-    def __init__(self, y, n_folds=3, indices=None):
+    def __init__(self, y, n_folds=3, indices=None, shuffle=False,
+                 random_state=None):
         super(StratifiedKFold, self).__init__(len(y), n_folds, indices)
         y = np.asarray(y)
         n_samples = y.shape[0]
@@ -392,8 +400,9 @@ class StratifiedKFold(_BaseKFold):
         # pre-assign each sample to a test fold index using individual KFold
         # splitting strategies for each label so as to respect the
         # balance of labels
-        per_label_cvs = [KFold(max(c, self.n_folds), self.n_folds)
-                         for c in label_counts]
+        per_label_cvs = [
+            KFold(max(c, self.n_folds), self.n_folds, shuffle=shuffle,
+                  random_state=random_state) for c in label_counts]
         test_folds = np.zeros(n_samples, dtype=np.int)
         for test_fold_idx, per_label_splits in enumerate(zip(*per_label_cvs)):
             for label, (_, test_split) in zip(unique_labels, per_label_splits):
