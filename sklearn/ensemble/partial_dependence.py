@@ -4,19 +4,15 @@
 # License: BSD 3 clause
 
 from itertools import count
-
-from sklearn.externals.six.moves import zip
-
 import numbers
 
 import numpy as np
-
 from scipy.stats.mstats import mquantiles
 
 from ..utils.extmath import cartesian
 from ..externals.joblib import Parallel, delayed
 from ..externals import six
-from ..externals.six.moves import xrange
+from ..externals.six.moves import map, range, zip
 from ..utils import array2d
 from ..tree._tree import DTYPE
 
@@ -52,7 +48,7 @@ def _grid_from_X(X, percentiles=(0.05, 0.95), grid_resolution=100):
     """
     if len(percentiles) != 2:
         raise ValueError('percentile must be tuple of len 2')
-    if not all(map(lambda x: 0.0 <= x <= 1.0, percentiles)):
+    if not all(0. <= x <= 1. for x in percentiles):
         raise ValueError('percentile values must be in [0, 1]')
 
     axes = []
@@ -157,7 +153,7 @@ def partial_dependence(gbrt, target_variables, grid=None, X=None,
     n_estimators = gbrt.estimators_.shape[0]
     pdp = np.zeros((n_trees_per_stage, grid.shape[0],), dtype=np.float64,
                    order='C')
-    for stage in xrange(n_estimators):
+    for stage in range(n_estimators):
         for k in range(n_trees_per_stage):
             tree = gbrt.estimators_[stage, k].tree_
             _partial_dependence_tree(tree, grid, target_variables,
@@ -268,7 +264,7 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
     # convert feature_names to list
     if feature_names is None:
         # if not feature_names use fx indices as name
-        feature_names = list(map(str, range(gbrt.n_features)))
+        feature_names = [str(i) for i in range(gbrt.n_features)]
     elif isinstance(feature_names, np.ndarray):
         feature_names = feature_names.tolist()
 
