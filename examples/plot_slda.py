@@ -39,9 +39,9 @@ for m in m_range:
         nlda = sLDA(shrinkage=None).fit(X, y)
 
         X, y = generate_data(n_test, m)
-        tmp_lda += np.mean(lda.predict(X) == y) / n_averages
-        tmp_slda += np.mean(slda.predict(X) == y) / n_averages
-        tmp_nlda += np.mean(nlda.predict(X) == y) / n_averages
+        tmp_lda += lda.score(X, y) / n_averages
+        tmp_slda += slda.score(X, y) / n_averages
+        tmp_nlda += nlda.score(X, y) / n_averages
 
     acc_lda.append(tmp_lda)
     acc_slda.append(tmp_slda)
