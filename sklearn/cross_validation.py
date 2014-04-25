@@ -269,12 +269,6 @@ class KFold(_BaseKFold):
     n_folds : int, default=3
         Number of folds. Must be at least 2.
 
-    shuffle : boolean, optional
-        Whether to shuffle the data before splitting into batches.
-
-    random_state : int or RandomState
-            Pseudo number generator state used for random sampling.
-
     Examples
     --------
     >>> from sklearn import cross_validation
@@ -310,6 +304,8 @@ class KFold(_BaseKFold):
         random_state = check_random_state(random_state)
         self.idxs = np.arange(n)
         if shuffle:
+            warnings.warn("The shuffle parameter is deprecated",
+                DeprecationWarning)
             random_state.shuffle(self.idxs)
 
     def _iter_test_indices(self):
@@ -333,6 +329,67 @@ class KFold(_BaseKFold):
 
     def __len__(self):
         return self.n_folds
+
+class ShuffleKFold(KFold):
+    """K-Folds cross validation iterator.
+
+    Provides train/test indices to split data in train test sets. Split
+    dataset into k consecutive folds with shuffling.
+
+    Each fold is then used a validation set once while the k - 1 remaining
+    fold form the training set.
+
+    Parameters
+    ----------
+    n : int
+        Total number of elements.
+
+    n_folds : int, default=3
+        Number of folds. Must be at least 2.
+
+    shuffle : boolean, optional
+        Whether to shuffle the data before splitting into batches.
+
+    random_state : int or RandomState
+            Pseudo number generator state used for random sampling.
+
+    Examples
+    --------
+    >>> from sklearn import cross_validation
+    >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4]])
+    >>> y = np.array([1, 2, 3, 4])
+    >>> kf = cross_validation.ShuffleKFold(4, n_folds=2, random_state=42)
+    >>> len(kf)
+    2
+    >>> print(kf)
+    sklearn.cross_validation.ShuffleKFold(n=4, n_folds=2)
+    >>> for train_index, test_index in kf:
+    ...    print("TRAIN:", train_index, "TEST:", test_index)
+    ...    X_train, X_test = X[train_index], X[test_index]
+    ...    y_train, y_test = y[train_index], y[test_index]
+    TRAIN: [1 3] TEST: [0 2]
+    TRAIN: [2 0] TEST: [3 1]
+
+    Notes
+    -----
+    The first n % n_folds folds have size n // n_folds + 1, other folds have
+    size n // n_folds.
+
+    Unlike ShuffleSplit, ShuffleKFold permutes the samples once, and ensures
+    that the splits do not overlap.
+
+    See also
+    --------
+    StratifiedKFold: take label information into account to avoid building
+    folds with imbalanced class distributions (for binary or multiclass
+    classification tasks).
+    """
+
+    def __init__(self, n, n_folds=3, indices=None, random_state=None):
+        super(KFold, self).__init__(n, n_folds, indices)
+        random_state = check_random_state(random_state)
+        self.idxs = np.arange(n)
+        random_state.shuffle(self.idxs)
 
 
 class StratifiedKFold(_BaseKFold):
