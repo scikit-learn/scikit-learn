@@ -12,6 +12,7 @@ import warnings
 
 import numpy as np
 
+from .base import KERNEL_WEIGHTS
 from .base import _get_weights, _check_weights, NeighborsBase, KNeighborsMixin
 from .base import RadiusNeighborsMixin, SupervisedFloatMixin
 from ..base import RegressorMixin
@@ -141,9 +142,16 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
         """
         X = atleast2d_or_csr(X)
 
-        neigh_dist, neigh_ind = self.kneighbors(X)
-
-        weights = _get_weights(neigh_dist, self.weights)
+        if self.weights in KERNEL_WEIGHTS:
+            neigh_dist, neigh_ind = \
+				self.kneighbors(X, n_neighbors=self.n_neighbors + 1)
+            bandwidth = neigh_dist[:, -1]
+            neigh_dist, neigh_ind  = neigh_dist[:, :-1], neigh_ind[:, :-1]
+            weights = _get_weights(neigh_dist, self.weights,
+								   bandwidth=bandwidth)
+        else:
+            neigh_dist, neigh_ind = self.kneighbors(X)
+            weights = _get_weights(neigh_dist, self.weights)
 
         _y = self._y
         if _y.ndim == 1:
@@ -277,7 +285,7 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
 
         neigh_dist, neigh_ind = self.radius_neighbors(X)
 
-        weights = _get_weights(neigh_dist, self.weights)
+        weights = _get_weights(neigh_dist, self.weights, bandwidth=self.radius)
 
         _y = self._y
         if _y.ndim == 1:

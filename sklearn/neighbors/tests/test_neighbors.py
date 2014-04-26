@@ -1,3 +1,5 @@
+'gaussian', 'epanechnikov', 'exponential', 'linear', 'cosine'
+
 from itertools import product
 
 import numpy as np
@@ -149,7 +151,8 @@ def test_kneighbors_classifier(n_samples=40,
     weight_func = _weight_func
 
     for algorithm in ALGORITHMS:
-        for weights in ['uniform', 'distance', weight_func]:
+        for weights in ['uniform', 'distance', weight_func, 'gaussian',
+                        'epanechnikov', 'exponential', 'linear', 'cosine']:
             knn = neighbors.KNeighborsClassifier(n_neighbors=n_neighbors,
                                                  weights=weights,
                                                  algorithm=algorithm)
@@ -225,7 +228,8 @@ def test_radius_neighbors_classifier(n_samples=40,
     weight_func = _weight_func
 
     for algorithm in ALGORITHMS:
-        for weights in ['uniform', 'distance', weight_func]:
+        for weights in ['uniform', 'distance', weight_func, 'gaussian',
+                        'epanechnikov', 'exponential', 'linear', 'cosine']:
             neigh = neighbors.RadiusNeighborsClassifier(radius=radius,
                                                         weights=weights,
                                                         algorithm=algorithm)
@@ -253,7 +257,9 @@ def test_radius_neighbors_classifier_when_no_neighbors():
 
     for outlier_label in [0, -1, None]:
         for algorithm in ALGORITHMS:
-            for weights in ['uniform', 'distance', weight_func]:
+            for weights in ['uniform', 'distance', weight_func,
+                            'gaussian', 'epanechnikov', 'exponential',
+                            'linear', 'cosine']:
                 rnc = neighbors.RadiusNeighborsClassifier
                 clf = rnc(radius=radius, weights=weights, algorithm=algorithm,
                           outlier_label=outlier_label)
@@ -283,7 +289,8 @@ def test_radius_neighbors_classifier_outlier_labeling():
     weight_func = _weight_func
 
     for algorithm in ALGORITHMS:
-        for weights in ['uniform', 'distance', weight_func]:
+        for weights in ['uniform', 'distance', weight_func, 'gaussian',
+                        'epanechnikov', 'exponential', 'linear', 'cosine']:
             clf = neighbors.RadiusNeighborsClassifier(radius=radius,
                                                       weights=weights,
                                                       algorithm=algorithm,
@@ -306,7 +313,8 @@ def test_radius_neighbors_classifier_zero_distance():
     weight_func = _weight_func
 
     for algorithm in ALGORITHMS:
-        for weights in ['uniform', 'distance', weight_func]:
+        for weights in ['uniform', 'distance', weight_func, 'gaussian',
+                        'epanechnikov', 'exponential', 'linear', 'cosine']:
             clf = neighbors.RadiusNeighborsClassifier(radius=radius,
                                                       weights=weights,
                                                       algorithm=algorithm)
@@ -326,7 +334,8 @@ def test_RadiusNeighborsClassifier_multioutput():
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 
-    weights = [None, 'uniform', 'distance', _weight_func]
+    weights = [None, 'uniform', 'distance', _weight_func, 'gaussian',
+               'epanechnikov', 'exponential', 'linear', 'cosine']
 
     for algorithm, weights in product(ALGORITHMS, weights):
         # Stack single output prediction
@@ -385,7 +394,8 @@ def test_KNeighborsClassifier_multioutput():
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 
-    weights = [None, 'uniform', 'distance', _weight_func]
+    weights = [None, 'uniform', 'distance', _weight_func, 'gaussian',
+               'epanechnikov', 'exponential', 'linear', 'cosine']
 
     for algorithm, weights in product(ALGORITHMS, weights):
         # Stack single output prediction
@@ -435,7 +445,8 @@ def test_kneighbors_regressor(n_samples=40,
     weight_func = _weight_func
 
     for algorithm in ALGORITHMS:
-        for weights in ['uniform', 'distance', weight_func]:
+        for weights in [None, 'uniform', 'distance', weight_func, 'gaussian',
+                        'epanechnikov', 'exponential', 'linear', 'cosine']:
             knn = neighbors.KNeighborsRegressor(n_neighbors=n_neighbors,
                                                 weights=weights,
                                                 algorithm=algorithm)
@@ -486,7 +497,8 @@ def test_kneighbors_regressor_multioutput(n_samples=40,
 
     y_target = y[:n_test_pts]
 
-    weights = ['uniform', 'distance', _weight_func]
+    weights = ['uniform', 'distance', _weight_func, 'gaussian',
+               'epanechnikov','exponential', 'linear', 'cosine']
     for algorithm, weights in product(ALGORITHMS, weights):
         knn = neighbors.KNeighborsRegressor(n_neighbors=n_neighbors,
                                             weights=weights,
@@ -515,7 +527,8 @@ def test_radius_neighbors_regressor(n_samples=40,
     weight_func = _weight_func
 
     for algorithm in ALGORITHMS:
-        for weights in ['uniform', 'distance', weight_func]:
+        for weights in [None, 'uniform', 'distance', weight_func, 'gaussian',
+                        'epanechnikov', 'exponential', 'linear', 'cosine']:
             neigh = neighbors.RadiusNeighborsRegressor(radius=radius,
                                                        weights=weights,
                                                        algorithm=algorithm)
@@ -568,7 +581,8 @@ def test_RadiusNeighborsRegressor_multioutput(n_samples=40,
     y = np.vstack([y, y]).T
 
     y_target = y[:n_test_pts]
-    weights = ['uniform', 'distance', _weight_func]
+    weights = [None, 'uniform', 'distance', _weight_func, 'gaussian',
+               'epanechnikov', 'exponential', 'linear', 'cosine']
 
     for algorithm, weights in product(ALGORITHMS, weights):
         rnn = neighbors.RadiusNeighborsRegressor(n_neighbors=n_neighbors,

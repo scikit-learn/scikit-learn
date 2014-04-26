@@ -71,7 +71,7 @@ def _check_weights(weights):
                          ", or a callable function")
 
 
-def _get_weights(dist, weights, h=1.0):
+def _get_weights(dist, weights, bandwidth=None):
     """Get the weights from an array of distances and a parameter ``weights``
 
     Parameters
@@ -91,13 +91,20 @@ def _get_weights(dist, weights, h=1.0):
         return None
     elif weights == 'distance':
         with np.errstate(divide='ignore'):
-            dist = 1. / dist
+            dist = 1.0 / dist
         return dist
     elif callable(weights):
         return weights(dist)
     else:
-        h = np.asarray(h).reshape((-1, 1))
-        return KERNEL_WEIGHTS[weights](dist / h)
+        kernel = KERNEL_WEIGHTS[weights]
+        if isinstance(bandwidth, np.ndarray):
+            bandwidth = bandwidth.ravel()        
+        if dist.dtype == np.ndarray:
+            dist = dist / bandwidth
+            weights = [kernel(instance_dist) for instance_dist in dist]
+            return np.asarray(weights)
+        else:
+            return kernel(dist.T / bandwidth).T
 
 
 class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):

@@ -15,6 +15,7 @@ from scipy import stats
 from ..utils.extmath import weighted_mode
 
 from .base import \
+    KERNEL_WEIGHTS, \
     _check_weights, _get_weights, \
     NeighborsBase, KNeighborsMixin,\
     RadiusNeighborsMixin, SupervisedIntegerMixin
@@ -143,7 +144,16 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         """
         X = atleast2d_or_csr(X)
 
-        neigh_dist, neigh_ind = self.kneighbors(X)
+        if self.weights in KERNEL_WEIGHTS:
+            neigh_dist, neigh_ind = \
+                self.kneighbors(X, n_neighbors=self.n_neighbors + 1)
+            bandwidth = neigh_dist[:, -1]
+            neigh_dist, neigh_ind  = neigh_dist[:, :-1], neigh_ind[:, :-1]
+            weights = _get_weights(neigh_dist, self.weights,
+								   bandwidth=bandwidth)
+        else:
+            neigh_dist, neigh_ind = self.kneighbors(X)
+            weights = _get_weights(neigh_dist, self.weights)
 
         classes_ = self.classes_
         _y = self._y
@@ -153,8 +163,6 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
 
         n_outputs = len(classes_)
         n_samples = X.shape[0]
-        weights = _get_weights(neigh_dist, self.weights)
-
         y_pred = np.empty((n_samples, n_outputs), dtype=classes_[0].dtype)
         for k, classes_k in enumerate(classes_):
             if weights is None:
@@ -187,7 +195,16 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         """
         X = atleast2d_or_csr(X)
 
-        neigh_dist, neigh_ind = self.kneighbors(X)
+        if self.weights in KERNEL_WEIGHTS:
+            neigh_dist, neigh_ind = \
+                self.kneighbors(X, n_neighbors=self.n_neighbors + 1)
+            bandwidth = neigh_dist[:, -1]
+            neigh_dist, neigh_ind  = neigh_dist[:, :-1], neigh_ind[:, :-1]
+            weights = _get_weights(neigh_dist, self.weights,
+								   bandwidth=bandwidth)
+        else:
+            neigh_dist, neigh_ind = self.kneighbors(X)
+            weights = _get_weights(neigh_dist, self.weights)
 
         classes_ = self.classes_
         _y = self._y
@@ -196,8 +213,7 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
             classes_ = [self.classes_]
 
         n_samples = X.shape[0]
-
-        weights = _get_weights(neigh_dist, self.weights)
+        
         if weights is None:
             weights = np.ones_like(neigh_ind)
         else:
@@ -363,7 +379,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
                              'or consider removing them from your dataset.'
                              % outliers)
 
-        weights = _get_weights(neigh_dist, self.weights)
+        weights = _get_weights(neigh_dist, self.weights, bandwidth=self.radius)
 
         y_pred = np.empty((n_samples, n_outputs), dtype=classes_[0].dtype)
         for k, classes_k in enumerate(classes_):
