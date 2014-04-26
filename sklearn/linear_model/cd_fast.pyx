@@ -35,6 +35,30 @@ cdef inline double fsign(double f) nogil:
         return -1.0
 
 
+cdef double abs_max(int n, double* a) nogil:
+    """np.max(np.abs(a))"""
+    cdef int i
+    cdef double m = fabs(a[0])
+    cdef double d
+    for i in xrange(1, n):
+        d = fabs(a[i])
+        if d > m:
+            m = d
+    return m
+
+
+cdef double max(int n, double* a) nogil:
+    """np.max(np.abs(a))"""
+    cdef int i
+    cdef double m = a[0]
+    cdef double d
+    for i in xrange(1, n):
+        d = a[i]
+        if d > m:
+            m = d
+    return m
+
+
 cdef extern from "cblas.h":
     enum CBLAS_ORDER:
         CblasRowMajor=101
@@ -88,8 +112,9 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
     cdef np.ndarray[DOUBLE, ndim=1] norm_cols_X = (X**2).sum(axis=0)
 
     # initial value of the residuals
-    cdef np.ndarray[DOUBLE, ndim=1] R
+    cdef np.ndarray[DOUBLE, ndim=1] R = np.empty(n_samples)
 
+    cdef np.ndarray[DOUBLE, ndim=1] XtA = np.empty(n_features)
     cdef double tmp
     cdef double w_ii
     cdef double d_w_max
@@ -97,18 +122,29 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
     cdef double d_w_ii
     cdef double gap = tol + 1.0
     cdef double d_w_tol = tol
+    cdef double dual_norm_XtA
+    cdef double R_norm2
+    cdef double w_norm2
+    cdef double l1_norm
     cdef unsigned int ii
+    cdef unsigned int i
     cdef unsigned int n_iter
 
     if alpha == 0:
         warnings.warn("Coordinate descent with alpha=0 may lead to unexpected"
             " results and is discouraged.")
 
-    R = y - np.dot(X, w)
-
-    tol = tol * np.dot(y, y)
-
     with nogil:
+
+        # R = y - np.dot(X, w)
+        for i in range(n_samples):
+            R[i] = y[i] - ddot(n_features,
+                               <DOUBLE*>(X.data + i * sizeof(DOUBLE)),
+                               n_samples, <DOUBLE*>w.data, 1)
+
+        # tol *= np.dot(y, y)
+        tol *= ddot(n_samples, <DOUBLE*>y.data, 1, <DOUBLE*>y.data, 1)
+
         for n_iter in range(max_iter):
             w_max = 0.0
             d_w_max = 0.0
@@ -156,18 +192,26 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                 # than the tolerance: check the duality gap as ultimate
                 # stopping criterion
 
-                with gil:
-                    # TODO: investigate whether it's worth replacing calls to
-                    # dot and linalg.norm by BLAS functions that do not
-                    # require the GIL
-                    XtA = np.dot(X.T, R) - beta * w
-                    if positive:
-                        dual_norm_XtA = np.max(XtA)
-                    else:
-                        dual_norm_XtA = linalg.norm(XtA, np.inf)
+                # XtA = np.dot(X.T, R) - beta * w
+                for i in range(n_features):
+                    XtA[i] = ddot(
+                        n_samples,
+                        <DOUBLE*>(X.data + i * n_samples *sizeof(DOUBLE)),
+                        1, <DOUBLE*>R.data, 1) - beta * w[i]
 
-                    R_norm2 = np.dot(R, R)
-                    w_norm2 = np.dot(w, w)
+                    if positive:
+                        dual_norm_XtA = max(n_features, <DOUBLE*>XtA.data)
+                    else:
+                        dual_norm_XtA = abs_max(n_features, <DOUBLE*>XtA.data)
+
+                    # R_norm2 = np.dot(R, R)
+                    R_norm2 = ddot(n_samples, <DOUBLE*>R.data, 1,
+                                   <DOUBLE*>R.data, 1)
+
+                    # w_norm2 = np.dot(w, w)
+                    w_norm2 = ddot(n_features, <DOUBLE*>w.data, 1,
+                                   <DOUBLE*>w.data, 1)
+
                     if (dual_norm_XtA > alpha):
                         const = alpha / dual_norm_XtA
                         A_norm2 = R_norm2 * (const ** 2)
@@ -176,7 +220,12 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                         const = 1.0
                         gap = R_norm2
 
-                    gap += (alpha * linalg.norm(w, 1) - const * np.dot(R.T, y)
+                    l1_norm = 0.0
+                    for i in range(n_features):
+                        l1_norm += fabs(w[i])
+
+                with gil:
+                    gap += (alpha * l1_norm - const * np.dot(R.T, y)
                             + 0.5 * beta * (1 + const ** 2) * (w_norm2))
 
                     if gap < tol:
@@ -480,18 +529,6 @@ def enet_coordinate_descent_gram(np.ndarray[DOUBLE, ndim=1] w,
                 break
 
     return w, gap, tol
-
-
-cdef double abs_max(int n, double* a):
-    """np.max(np.abs(a))"""
-    cdef int i
-    cdef double m = fabs(a[0])
-    cdef double d
-    for i in xrange(1, n):
-        d = fabs(a[i])
-        if d > m:
-            m = d
-    return m
 
 
 cdef double diff_abs_max(int n, double* a, double* b):
