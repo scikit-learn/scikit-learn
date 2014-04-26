@@ -93,7 +93,16 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
                 print('warning: the priors do not sum to 1. Renormalizing')
                 self.priors = self.priors / self.priors.sum()
 
-    def fit(self, X, y, store_covariance=False, tol=1.0e-4):
+        if shrinkage is not None:
+            if shrinkage == 'auto':
+                self._cov_estimator = _ledoit_wolf
+            else:
+                print('warning: unknown shrinkage method, using no shrinkage')
+                self._cov_estimator = empirical_covariance
+        else:
+            self._cov_estimator = empirical_covariance
+
+    def fit(self, X, y):
         """
         Fit the LDA model according to the given training data and parameters.
 
@@ -285,3 +294,10 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
         loglikelihood = (values - values.max(axis=1)[:, np.newaxis])
         normalization = logsumexp(loglikelihood, axis=1)
         return loglikelihood - normalization[:, np.newaxis]
+
+
+def _ledoit_wolf(*args, **kwargs):
+    """
+    This function returns only the covariance estimated with :func:`ledoit_wolf`.
+    """
+    return ledoit_wolf(*args, **kwargs)[0]
