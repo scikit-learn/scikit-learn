@@ -97,14 +97,14 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
 
     def _init_params(self, n_neighbors=None, radius=None,
                      algorithm='auto', leaf_size=30, metric='minkowski',
-                     p=2, metric_kwds={}, **kwargs):
-        if not metric_kwds:
-            metric_kwds = {}
+                     p=2, metric_kwds=None, **kwargs):
         if kwargs:
             warnings.warn("Passing additional arguments to the metric function "
                           "as **kwargs is deprecated. Use metric_kwds dict instead.",
                           DeprecationWarning,
                           stacklevel=3)
+            if metric_kwds is None:
+                metric_kwds = {}
             metric_kwds.update(kwargs)
 
         self.n_neighbors = n_neighbors
@@ -142,14 +142,15 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
         self._fit_method = None
 
     def _fit(self, X):
-        if self.metric in ['wminkowski', 'minkowski']:
-            self.metric_kwds['p'] = self.p
         self.effective_metric_ = self.metric
-        self.effective_metric_kwds_ = self.metric_kwds
+        self.effective_metric_kwds_ = \
+            self.metric_kwds.copy() if self.metric_kwds is not None else {}
+
+        if self.effective_metric_ in ['wminkowski', 'minkowski']:
+            self.effective_metric_kwds_['p'] = self.p
 
         # For minkowski distance, use more efficient methods where available
         if self.metric == 'minkowski':
-            self.effective_metric_kwds_ = self.metric_kwds.copy()
             p = self.effective_metric_kwds_.pop('p', 2)
             if p < 1:
                 raise ValueError("p must be greater than one "
