@@ -18,13 +18,15 @@ X1 = np.array([[-2, ], [-1, ], [-1, ], [1, ], [1, ], [2, ]])
 
 def test_lda_predict():
     """
-    LDA classification.
+    SLDA classification.
 
-    This checks that LDA implements fit and predict and returns
+    This checks that SLDA implements fit and predict and returns
     correct values for a simple toy dataset.
+
+    These are the same tests as with the LDA classifier.
     """
 
-    clf = slda.LDA()
+    clf = slda.SLDA()
     y_pred = clf.fit(X, y).predict(X)
 
     assert_array_equal(y_pred, y)
@@ -33,7 +35,7 @@ def test_lda_predict():
     y_pred1 = clf.fit(X1, y).predict(X1)
     assert_array_equal(y_pred1, y)
 
-    # Test probas estimates
+    # Test probability estimates
     y_proba_pred1 = clf.predict_proba(X1)
     assert_array_equal((y_proba_pred1[:, 1] > 0.5) + 1, y)
     y_log_proba_pred1 = clf.predict_log_proba(X1)
