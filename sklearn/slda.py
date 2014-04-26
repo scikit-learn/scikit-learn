@@ -86,7 +86,7 @@ class SLDA(BaseEstimator, ClassifierMixin):
 
         if shrinkage is not None:
             if shrinkage == 'auto':
-                self._cov_estimator = lambda x: ledoit_wolf(x)[0]
+                self._cov_estimator = _ledoit_wolf
             else:
                 print('warning: unknown shrinkage method, using no shrinkage')
                 self._cov_estimator = empirical_covariance
@@ -223,3 +223,10 @@ class SLDA(BaseEstimator, ClassifierMixin):
         loglikelihood = (values - values.max(axis=1)[:, np.newaxis])
         normalization = logsumexp(loglikelihood, axis=1)
         return loglikelihood - normalization[:, np.newaxis]
+
+
+def _ledoit_wolf(*args, **kwargs):
+    """
+    This function returns only the covariance estimated with :func:`ledoit_wolf`.
+    """
+    return ledoit_wolf(*args, **kwargs)[0]
