@@ -41,6 +41,16 @@ VALID_METRICS_SPARSE = dict(ball_tree=[],
                             brute=PAIRWISE_DISTANCE_FUNCTIONS.keys())
 
 
+KERNEL_WEIGHTS = {'gaussian': lambda dist: np.exp(-0.5 * dist**2),
+                  'epanechnikov': lambda dist: 1.0 - dist**2,
+                  'exponential': lambda dist: np.exp(-dist),
+                  'linear': lambda dist: 1.0 - dist,
+                  'cosine': lambda dist: np.cos(0.5 * np.pi * dist) }
+
+
+VALID_WEIGHTS = ['uniform', 'distance', 'tophat'] + list(KERNEL_WEIGHTS.keys())
+
+
 class NeighborsWarning(UserWarning):
     pass
 
@@ -51,16 +61,17 @@ warnings.simplefilter("always", NeighborsWarning)
 
 def _check_weights(weights):
     """Check to make sure weights are valid"""
-    if weights in (None, 'uniform', 'distance'):
+    if weights in VALID_WEIGHTS or weights is None:
         return weights
     elif callable(weights):
         return weights
     else:
-        raise ValueError("weights not recognized: should be 'uniform', "
-                         "'distance', or a callable function")
+        raise ValueError("weights not recognized: should be " +
+                         ", ".join(VALID_WEIGHTS) +
+                         ", or a callable function")
 
 
-def _get_weights(dist, weights):
+def _get_weights(dist, weights, h=1.0):
     """Get the weights from an array of distances and a parameter ``weights``
 
     Parameters
@@ -75,7 +86,8 @@ def _get_weights(dist, weights):
     weights_arr: array of the same shape as ``dist``
         if ``weights == 'uniform'``, then returns None
     """
-    if weights in (None, 'uniform'):
+    weights = _check_weights(weights)
+    if weights in (None, 'uniform', 'tophat'):
         return None
     elif weights == 'distance':
         with np.errstate(divide='ignore'):
@@ -84,8 +96,8 @@ def _get_weights(dist, weights):
     elif callable(weights):
         return weights(dist)
     else:
-        raise ValueError("weights not recognized: should be 'uniform', "
-                         "'distance', or a callable function")
+        h = np.asarray(h).reshape((-1, 1))
+        return KERNEL_WEIGHTS[weights](dist / h)
 
 
 class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
