@@ -15,10 +15,10 @@ from .utils import check_arrays, array2d, column_or_1d
 from .covariance import empirical_covariance, ledoit_wolf
 
 
-__all__ = ['LDA']
+__all__ = ['SLDA']
 
 
-class LDA(BaseEstimator, ClassifierMixin):
+class SLDA(BaseEstimator, ClassifierMixin):
     """
     Shrinkage Linear Discriminant Analysis (sLDA)
 
@@ -61,12 +61,12 @@ class LDA(BaseEstimator, ClassifierMixin):
     Examples
     --------
     >>> import numpy as np
-    >>> from sklearn.slda import LDA
+    >>> from sklearn.slda import SLDA
     >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
     >>> y = np.array([1, 1, 1, 2, 2, 2])
-    >>> clf = LDA()
+    >>> clf = SLDA()
     >>> clf.fit(X, y)
-    LDA(priors=None, shrinkage='auto')
+    SLDA(priors=None, shrinkage='auto')
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
 
