@@ -82,77 +82,77 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         if not hasattr(self, "classes_"):
             raise ValueError("LabelEncoder was not fitted yet.")
 
-    def fit(self, y):
+    def fit(self, X, y=None):
         """Fit label encoder
 
         Parameters
         ----------
-        y : array-like of shape (n_samples,)
+        X : array-like of shape (n_samples,)
             Target values.
 
         Returns
         -------
         self : returns an instance of self.
         """
-        y = column_or_1d(y, warn=True)
-        _check_numpy_unicode_bug(y)
-        self.classes_ = np.unique(y)
+        X = column_or_1d(X, warn=True)
+        _check_numpy_unicode_bug(X)
+        self.classes_ = np.unique(X)
         return self
 
-    def fit_transform(self, y):
+    def fit_transform(self, X, y=None):
         """Fit label encoder and return encoded labels
 
         Parameters
         ----------
-        y : array-like of shape [n_samples]
+        X : array-like of shape [n_samples]
             Target values.
 
         Returns
         -------
-        y : array-like of shape [n_samples]
+        X : array-like of shape [n_samples]
         """
-        y = column_or_1d(y, warn=True)
-        _check_numpy_unicode_bug(y)
-        self.classes_, y = np.unique(y, return_inverse=True)
-        return y
+        X = column_or_1d(X, warn=True)
+        _check_numpy_unicode_bug(X)
+        self.classes_, X = np.unique(X, return_inverse=True)
+        return X
 
-    def transform(self, y):
+    def transform(self, X, y=None):
         """Transform labels to normalized encoding.
 
         Parameters
         ----------
-        y : array-like of shape [n_samples]
+        X : array-like of shape [n_samples]
             Target values.
 
         Returns
         -------
-        y : array-like of shape [n_samples]
+        X : array-like of shape [n_samples]
         """
         self._check_fitted()
 
-        classes = np.unique(y)
+        classes = np.unique(X)
         _check_numpy_unicode_bug(classes)
         if len(np.intersect1d(classes, self.classes_)) < len(classes):
             diff = np.setdiff1d(classes, self.classes_)
             raise ValueError("y contains new labels: %s" % str(diff))
-        return np.searchsorted(self.classes_, y)
+        return np.searchsorted(self.classes_, X)
 
-    def inverse_transform(self, y):
+    def inverse_transform(self, X):
         """Transform labels back to original encoding.
 
         Parameters
         ----------
-        y : numpy array of shape [n_samples]
+        X : numpy array of shape [n_samples]
             Target values.
 
         Returns
         -------
-        y : numpy array of shape [n_samples]
+        X : numpy array of shape [n_samples]
         """
         self._check_fitted()
 
-        y = np.asarray(y)
-        return self.classes_[y]
+        X = np.asarray(X)
+        return self.classes_[X]
 
 
 class LabelBinarizer(BaseEstimator, TransformerMixin):
@@ -236,12 +236,12 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         if not hasattr(self, "classes_"):
             raise ValueError("LabelBinarizer was not fitted yet.")
 
-    def fit(self, y):
+    def fit(self, X, y=None):
         """Fit label binarizer
 
         Parameters
         ----------
-        y : numpy array of shape (n_samples,) or sequence of sequences
+        X : numpy array of shape (n_samples,) or sequence of sequences
             Target values. In the multilabel case the nested sequences can
             have variable lengths.
 
@@ -249,16 +249,16 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         -------
         self : returns an instance of self.
         """
-        y_type = type_of_target(y)
-        self.multilabel_ = y_type.startswith('multilabel')
+        x_type = type_of_target(X)
+        self.multilabel_ = x_type.startswith('multilabel')
         if self.multilabel_:
-            self.indicator_matrix_ = y_type == 'multilabel-indicator'
+            self.indicator_matrix_ = x_type == 'multilabel-indicator'
 
-        self.classes_ = unique_labels(y)
+        self.classes_ = unique_labels(X)
 
         return self
 
-    def transform(self, y):
+    def transform(self, X, y=None):
         """Transform multi-class labels to binary labels
 
         The output of transform is sometimes referred to by some authors as the
@@ -266,49 +266,49 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        y : numpy array of shape [n_samples] or sequence of sequences
+        X : numpy array of shape [n_samples] or sequence of sequences
             Target values. In the multilabel case the nested sequences can
             have variable lengths.
 
         Returns
         -------
-        Y : numpy array of shape [n_samples, n_classes]
+        x : numpy array of shape [n_samples, n_classes]
         """
         self._check_fitted()
 
-        y_is_multilabel = type_of_target(y).startswith('multilabel')
+        x_is_multilabel = type_of_target(X).startswith('multilabel')
 
-        if y_is_multilabel and not self.multilabel_:
+        if x_is_multilabel and not self.multilabel_:
             raise ValueError("The object was not fitted with multilabel"
                              " input.")
 
-        return label_binarize(y, self.classes_,
+        return label_binarize(X, self.classes_,
                               multilabel=self.multilabel_,
                               pos_label=self.pos_label,
                               neg_label=self.neg_label)
 
-    def inverse_transform(self, Y, threshold=None):
+    def inverse_transform(self, X, threshold=None):
         """Transform binary labels back to multi-class labels
 
         Parameters
         ----------
-        Y : numpy array of shape [n_samples, n_classes]
+        X : numpy array of shape [n_samples, n_classes]
             Target values.
 
         threshold : float or None
             Threshold used in the binary and multi-label cases.
 
             Use 0 when:
-                - Y contains the output of decision_function (classifier)
+                - X contains the output of decision_function (classifier)
             Use 0.5 when:
-                - Y contains the output of predict_proba
+                - X contains the output of predict_proba
 
             If None, the threshold is assumed to be half way between
             neg_label and pos_label.
 
         Returns
         -------
-        y : numpy array of shape [n_samples] or sequence of sequences
+        x : numpy array of shape [n_samples] or sequence of sequences
             Target values. In the multilabel case the nested sequences can
             have variable lengths.
 
@@ -327,23 +327,23 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
             threshold = self.neg_label + half
 
         if self.multilabel_:
-            Y = np.array(Y > threshold, dtype=int)
+            X = np.array(X > threshold, dtype=int)
             # Return the predictions in the same format as in fit
             if self.indicator_matrix_:
                 # Label indicator matrix format
-                return Y
+                return X
             else:
                 # Lists of tuples format
-                return [tuple(self.classes_[np.flatnonzero(Y[i])])
-                        for i in range(Y.shape[0])]
+                return [tuple(self.classes_[np.flatnonzero(X[i])])
+                        for i in range(X.shape[0])]
 
-        if len(Y.shape) == 1 or Y.shape[1] == 1:
-            y = np.array(Y.ravel() > threshold, dtype=int)
+        if len(X.shape) == 1 or X.shape[1] == 1:
+            x = np.array(X.ravel() > threshold, dtype=int)
 
         else:
-            y = Y.argmax(axis=1)
+            x = X.argmax(axis=1)
 
-        return self.classes_[y]
+        return self.classes_[x]
 
 
 def label_binarize(y, classes, multilabel=False, neg_label=0, pos_label=1):
