@@ -518,7 +518,7 @@ David Koh - Senior Data Scientist at OkCupid
 
     </div>
 
-At Lovely, we strive to deliver the best apartment marketplace, with respect to our users and our listings.  From understanding user behavior, improving data quality, and detecting fraud, scikit-learn is a regular tool for gathering insights, predictive modeling and improving our product. The easy-to-read documentation and intuitive  archetecture of the API makes machine learning both explorable and accessible to a wide range of python developers.  I'm constantly recommending that more developers and scientists try scikit-learn.
+At Lovely, we strive to deliver the best apartment marketplace, with respect to our users and our listings. From understanding user behavior, improving data quality, and detecting fraud, scikit-learn is a regular tool for gathering insights, predictive modeling and improving our product. The easy-to-read documentation and intuitive architecture of the API makes machine learning both explorable and accessible to a wide range of python developers. I'm constantly recommending that more developers and scientists try scikit-learn.
 
 .. raw:: html
 
