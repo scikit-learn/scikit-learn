@@ -48,7 +48,7 @@ cdef double abs_max(int n, double* a) nogil:
 
 
 cdef double max(int n, double* a) nogil:
-    """np.max(np.abs(a))"""
+    """np.max(a)"""
     cdef int i
     cdef double m = a[0]
     cdef double d
@@ -73,6 +73,7 @@ cdef extern from "cblas.h":
                              double *Y, int incY) nogil
     double ddot "cblas_ddot"(int N, double *X, int incX, double *Y, int incY
                              ) nogil
+    double dasum "cblas_dasum"(int N, double *X, int incX) nogil
     void dger "cblas_dger"(CBLAS_ORDER Order, int M, int N, double alpha,
                 double *X, int incX, double *Y, int incY, double *A, int lda)
     void dgemv "cblas_dgemv"(CBLAS_ORDER Order,
@@ -107,6 +108,9 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
     # get the data information into easy vars
     cdef unsigned int n_samples = X.shape[0]
     cdef unsigned int n_features = X.shape[1]
+
+    # get the number of tasks indirectly, using strides
+    cdef unsigned int n_tasks = y.strides[0] / sizeof(DOUBLE)
 
     # compute norms of the columns of X
     cdef np.ndarray[DOUBLE, ndim=1] norm_cols_X = (X**2).sum(axis=0)
@@ -143,7 +147,8 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                                n_samples, <DOUBLE*>w.data, 1)
 
         # tol *= np.dot(y, y)
-        tol *= ddot(n_samples, <DOUBLE*>y.data, 1, <DOUBLE*>y.data, 1)
+        tol *= ddot(n_samples, <DOUBLE*>y.data, n_tasks,
+                    <DOUBLE*>y.data, n_tasks)
 
         for n_iter in range(max_iter):
             w_max = 0.0
@@ -199,38 +204,39 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
                         <DOUBLE*>(X.data + i * n_samples *sizeof(DOUBLE)),
                         1, <DOUBLE*>R.data, 1) - beta * w[i]
 
-                    if positive:
-                        dual_norm_XtA = max(n_features, <DOUBLE*>XtA.data)
-                    else:
-                        dual_norm_XtA = abs_max(n_features, <DOUBLE*>XtA.data)
+                if positive:
+                    dual_norm_XtA = max(n_features, <DOUBLE*>XtA.data)
+                else:
+                    dual_norm_XtA = abs_max(n_features, <DOUBLE*>XtA.data)
 
-                    # R_norm2 = np.dot(R, R)
-                    R_norm2 = ddot(n_samples, <DOUBLE*>R.data, 1,
-                                   <DOUBLE*>R.data, 1)
+                # R_norm2 = np.dot(R, R)
+                R_norm2 = ddot(n_samples, <DOUBLE*>R.data, 1,
+                               <DOUBLE*>R.data, 1)
 
-                    # w_norm2 = np.dot(w, w)
-                    w_norm2 = ddot(n_features, <DOUBLE*>w.data, 1,
-                                   <DOUBLE*>w.data, 1)
+                # w_norm2 = np.dot(w, w)
+                w_norm2 = ddot(n_features, <DOUBLE*>w.data, 1,
+                               <DOUBLE*>w.data, 1)
 
-                    if (dual_norm_XtA > alpha):
-                        const = alpha / dual_norm_XtA
-                        A_norm2 = R_norm2 * (const ** 2)
-                        gap = 0.5 * (R_norm2 + A_norm2)
-                    else:
-                        const = 1.0
-                        gap = R_norm2
+                if (dual_norm_XtA > alpha):
+                    const = alpha / dual_norm_XtA
+                    A_norm2 = R_norm2 * (const ** 2)
+                    gap = 0.5 * (R_norm2 + A_norm2)
+                else:
+                    const = 1.0
+                    gap = R_norm2
 
-                    l1_norm = 0.0
-                    for i in range(n_features):
-                        l1_norm += fabs(w[i])
+                l1_norm = dasum(n_features, <DOUBLE*>w.data, 1)
 
-                with gil:
-                    gap += (alpha * l1_norm - const * np.dot(R.T, y)
-                            + 0.5 * beta * (1 + const ** 2) * (w_norm2))
+                # np.dot(R.T, y)
+                gap += (alpha * l1_norm - const * ddot(
+                            n_samples,
+                            <DOUBLE*>R.data, 1,
+                            <DOUBLE*>y.data, n_tasks)
+                        + 0.5 * beta * (1 + const ** 2) * (w_norm2))
 
-                    if gap < tol:
-                        # return if we reached desired tolerance
-                        break
+                if gap < tol:
+                    # return if we reached desired tolerance
+                    break
 
     return w, gap, tol
 
