@@ -14,6 +14,7 @@ from sklearn.preprocessing.label import label_binarize
 
 from sklearn import datasets
 from sklearn.linear_model.stochastic_gradient import SGDClassifier
+from sklearn.pipeline import Pipeline
 
 iris = datasets.load_iris()
 
@@ -253,3 +254,30 @@ def test_label_binarize_with_multilabel_indicator():
 
     output = lb.fit(y).transform(y)
     assert_array_equal(output, expected)
+
+
+def test_label_binarizer_with_pipeline():
+    lb = LabelBinarizer()
+    pipeline = Pipeline([
+        ('binarize', lb)
+    ])
+
+    inp = ["neg", "pos", "pos", "neg"]
+    expected = np.array([[0, 1, 1, 0]]).T
+    pipeline.fit(inp)
+    got = pipeline.transform(inp)
+    assert_array_equal(expected, got)
+    assert_array_equal(pipeline.inverse_transform(got), inp)
+
+
+def test_label_encoder_with_pipeline():
+    le = LabelEncoder()
+    pipeline = Pipeline([
+        ('encode', le)
+    ])
+
+    pipeline.fit(np.array([1, 1, 4, 5, -1, 0]))
+    assert_array_equal(pipeline.transform(np.array([0, 1, 4, 4, 5, -1, -1])),
+                       np.array([1, 2, 3, 3, 4, 0, 0]))
+    assert_array_equal(pipeline.inverse_transform(np.array([1, 2, 3, 3, 4, 0, 0])),
+                       np.array([[0, 1, 4, 4, 5, -1, -1]]))
