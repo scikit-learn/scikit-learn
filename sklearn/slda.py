@@ -1,5 +1,5 @@
 """
-The :mod:`sklearn.slda` module implements Shrinkage Linear Discriminant Analysis (sLDA).
+The :mod:`sklearn.slda` module implements Shrinkage LDA.
 """
 from __future__ import print_function
 # Authors: Martin Billinger
@@ -136,16 +136,17 @@ class SLDA(BaseEstimator, ClassifierMixin):
         self.means_ = np.asarray(means)
         self.xbar_ = np.dot(self.priors_, self.means_)
 
-        Sw = np.mean(covs, 0)  # Within-class scatter  # TODO: weight covariances with priors?
+        # TODO: weight covariances with priors?
+        Sw = np.mean(covs, 0)  # Within-class scatter
         means = self.means_ - self.xbar_
 
         self.coef_ = np.linalg.solve(Sw, means.T).T
-        self.intercept_ = -0.5 * np.diag(np.dot(means, self.coef_.T)) + np.log(self.priors_)
-
+        self.intercept_ = (-0.5 * np.diag(np.dot(means, self.coef_.T))
+                           + np.log(self.priors_))
         return self
 
     def _decision_function(self, X):
-        X = array2d(np.asarray(X).T).T  # make sure samples are in columns if X is 1D
+        X = array2d(np.asarray(X).T).T  # make sure samples are in columns
         return np.dot(X - self.xbar_, self.coef_.T) + self.intercept_
 
     def decision_function(self, X):
@@ -227,6 +228,6 @@ class SLDA(BaseEstimator, ClassifierMixin):
 
 def _ledoit_wolf(*args, **kwargs):
     """
-    This function returns only the covariance estimated with :func:`ledoit_wolf`.
+    This function returns the covariance estimated with :func:`ledoit_wolf`.
     """
     return ledoit_wolf(*args, **kwargs)[0]
