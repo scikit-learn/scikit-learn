@@ -227,8 +227,8 @@ class BaseBagging(with_metaclass(ABCMeta, BaseEnsemble)):
             The training input samples.
 
         y : array-like, shape = [n_samples]
-            The target values (integers that correspond to classes in
-            classification, real numbers in regression).
+            The target values (class labels in classification, real numbers in
+            regression).
 
         sample_weight : array-like, shape = [n_samples] or None
             Sample weights. If None, then samples are equally weighted.

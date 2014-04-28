@@ -73,8 +73,8 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             The training input samples.
 
         y : array-like of shape = [n_samples]
-            The target values (integers that correspond to classes in
-            classification, real numbers in regression).
+            The target values (class labels in classification, real numbers in
+            regression).
 
         sample_weight : array-like of shape = [n_samples], optional
             Sample weights. If None, the sample weights are initialized to
@@ -104,7 +104,7 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             sample_weight[:] = 1. / X.shape[0]
         else:
             # Normalize existing weights
-            sample_weight = np.copy(sample_weight) / sample_weight.sum()
+            sample_weight = sample_weight / sample_weight.sum(dtype=np.float64)
 
             # Check that the sample weights sum is positive
             if sample_weight.sum() <= 0:
@@ -169,7 +169,7 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             The training input samples.
 
         y : array-like of shape = [n_samples]
-            The target values (integers that correspond to classes).
+            The target values (class labels).
 
         sample_weight : array-like of shape = [n_samples]
             The current sample weights.
@@ -190,7 +190,7 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         """
         pass
 
-    def staged_score(self, X, y):
+    def staged_score(self, X, y, sample_weight=None):
         """Return staged scores for X, y.
 
         This generator method yields the ensemble score after each iteration of
@@ -205,15 +205,18 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         y : array-like, shape = [n_samples]
             Labels for X.
 
+        sample_weight : array-like, shape = [n_samples], optional
+            Sample weights.
+
         Returns
         -------
         z : float
         """
         for y_pred in self.staged_predict(X):
             if isinstance(self, ClassifierMixin):
-                yield accuracy_score(y, y_pred)
+                yield accuracy_score(y, y_pred, sample_weight=sample_weight)
             else:
-                yield r2_score(y, y_pred)
+                yield r2_score(y, y_pred, sample_weight=sample_weight)
 
     @property
     def feature_importances_(self):
@@ -358,7 +361,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             The training input samples.
 
         y : array-like of shape = [n_samples]
-            The target values (integers that correspond to classes).
+            The target values (class labels).
 
         sample_weight : array-like of shape = [n_samples], optional
             Sample weights. If None, the sample weights are initialized to
@@ -408,7 +411,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             The training input samples.
 
         y : array-like of shape = [n_samples]
-            The target values (integers that correspond to classes).
+            The target values (class labels).
 
         sample_weight : array-like of shape = [n_samples]
             The current sample weights.
@@ -925,8 +928,8 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
             The training input samples.
 
         y : array-like of shape = [n_samples]
-            The target values (integers that correspond to classes in
-            classification, real numbers in regression).
+            The target values (class labels in classification, real numbers in
+            regression).
 
         sample_weight : array-like of shape = [n_samples]
             The current sample weights.

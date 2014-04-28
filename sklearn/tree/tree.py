@@ -101,10 +101,9 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
             efficiency.
 
         y : array-like, shape = [n_samples] or [n_samples, n_outputs]
-            The target values (integers that correspond to classes in
-            classification, real numbers in regression).
-            Use ``dtype=np.float64`` and ``order='C'`` for maximum
-            efficiency.
+            The target values (class labels in classification, real numbers in
+            regression). In the regression case, use ``dtype=np.float64`` and
+            ``order='C'`` for maximum efficiency.
 
         sample_weight : array-like, shape = [n_samples] or None
             Sample weights. If None, then samples are equally weighted. Splits
@@ -251,16 +250,16 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
                                                 self.min_samples_leaf,
                                                 random_state)
 
-        self.tree_ = Tree(self.n_features_, self.n_classes_,
-                          self.n_outputs_, splitter, max_depth,
-                          min_samples_split, self.min_samples_leaf,
-                          max_leaf_nodes, random_state)
+        self.tree_ = Tree(self.n_features_, self.n_classes_, self.n_outputs_)
 
         # Use BestFirst if max_leaf_nodes given; use DepthFirst otherwise
         if max_leaf_nodes < 0:
-            builder = DepthFirstTreeBuilder()
+            builder = DepthFirstTreeBuilder(splitter, min_samples_split,
+                                            self.min_samples_leaf, max_depth)
         else:
-            builder = BestFirstTreeBuilder()
+            builder = BestFirstTreeBuilder(splitter, min_samples_split,
+                                           self.min_samples_leaf, max_depth,
+                                           max_leaf_nodes)
 
         builder.build(self.tree_, X, y, sample_weight)
 
@@ -373,6 +372,10 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
           - If "sqrt", then `max_features=sqrt(n_features)`.
           - If "log2", then `max_features=log2(n_features)`.
           - If None, then `max_features=n_features`.
+
+        Note: the search for a split does not stop until at least one
+        valid partition of the node samples is found, even if it requires to
+        effectively inspect more than ``max_features`` features.
 
     max_depth : int or None, optional (default=None)
         The maximum depth of the tree. If None, then nodes are expanded until
@@ -586,6 +589,10 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
           - If "sqrt", then `max_features=sqrt(n_features)`.
           - If "log2", then `max_features=log2(n_features)`.
           - If None, then `max_features=n_features`.
+
+        Note: the search for a split does not stop until at least one
+        valid partition of the node samples is found, even if it requires to
+        effectively inspect more than ``max_features`` features.
 
     max_depth : int or None, optional (default=None)
         The maximum depth of the tree. If None, then nodes are expanded until

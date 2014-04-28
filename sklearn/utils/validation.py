@@ -11,7 +11,7 @@ import warnings
 import numbers
 
 import numpy as np
-from scipy import sparse
+import scipy.sparse as sp
 
 from ..externals import six
 from .fixes import safe_copy
@@ -50,15 +50,23 @@ def assert_all_finite(X):
     # First try an O(n) time, O(1) space solution for the common case that
     # there everything is finite; fall back to O(n) space np.isfinite to
     # prevent false positives from overflow in sum method.
-    _assert_all_finite(X.data if sparse.issparse(X) else X)
+    _assert_all_finite(X.data if sp.issparse(X) else X)
 
 
 def safe_asarray(X, dtype=None, order=None, copy=False, force_all_finite=True):
-    """Convert X to an array or sparse matrix.
+    """Convert X to an array or CSC/CSR/COO sparse matrix.
 
-    Prevents copying X when possible; sparse matrices are passed through."""
-    if sparse.issparse(X):
-        if copy:
+    Prevents copying X when possible. Sparse matrices in CSR, CSC and COO
+    formats are passed through. Other sparse formats are converted to CSR
+    (somewhat arbitrarily).
+
+    If a specific compressed sparse format is required, use atleast2d_or_cs{c,r}
+    instead.
+    """
+    if sp.issparse(X):
+        if not isinstance(X, (sp.coo_matrix, sp.csc_matrix, sp.csr_matrix)):
+            X = X.tocsr()
+        elif copy:
             X = X.copy()
         if force_all_finite:
             _assert_all_finite(X.data)
@@ -92,10 +100,10 @@ def as_float_array(X, copy=True, force_all_finite=True):
         An array of type np.float
     """
     if isinstance(X, np.matrix) or (not isinstance(X, np.ndarray)
-                                    and not sparse.issparse(X)):
+                                    and not sp.issparse(X)):
         return safe_asarray(X, dtype=np.float64, copy=copy,
                             force_all_finite=force_all_finite)
-    elif sparse.issparse(X) and X.dtype in [np.float32, np.float64]:
+    elif sp.issparse(X) and X.dtype in [np.float32, np.float64]:
         return X.copy() if copy else X
     elif X.dtype in [np.float32, np.float64]:  # is numpy array
         return X.copy('F' if X.flags['F_CONTIGUOUS'] else 'C') if copy else X
@@ -105,7 +113,7 @@ def as_float_array(X, copy=True, force_all_finite=True):
 
 def array2d(X, dtype=None, order=None, copy=False, force_all_finite=True):
     """Returns at least 2-d array with data from X"""
-    if sparse.issparse(X):
+    if sp.issparse(X):
         raise TypeError('A sparse matrix was passed, but dense data '
                         'is required. Use X.toarray() to convert to dense.')
     X_2d = np.asarray(np.atleast_2d(X), dtype=dtype, order=order)
@@ -117,9 +125,11 @@ def array2d(X, dtype=None, order=None, copy=False, force_all_finite=True):
 
 
 def _atleast2d_or_sparse(X, dtype, order, copy, sparse_class, convmethod,
-                         force_all_finite):
-    if sparse.issparse(X):
-        if dtype is None or X.dtype == dtype:
+                         check_same_type, force_all_finite):
+    if sp.issparse(X):
+        if check_same_type(X) and X.dtype == dtype:
+            X = getattr(X, convmethod)(copy=copy)
+        elif dtype is None or X.dtype == dtype:
             X = getattr(X, convmethod)()
         else:
             X = sparse_class(X, dtype=dtype)
@@ -138,8 +148,9 @@ def atleast2d_or_csc(X, dtype=None, order=None, copy=False,
 
     Also, converts np.matrix to np.ndarray.
     """
-    return _atleast2d_or_sparse(X, dtype, order, copy, sparse.csc_matrix,
-                                "tocsc", force_all_finite)
+    return _atleast2d_or_sparse(X, dtype, order, copy, sp.csc_matrix,
+                                "tocsc", sp.isspmatrix_csc,
+                                force_all_finite)
 
 
 def atleast2d_or_csr(X, dtype=None, order=None, copy=False,
@@ -148,8 +159,9 @@ def atleast2d_or_csr(X, dtype=None, order=None, copy=False,
 
     Also, converts np.matrix to np.ndarray.
     """
-    return _atleast2d_or_sparse(X, dtype, order, copy, sparse.csr_matrix,
-                                "tocsr", force_all_finite)
+    return _atleast2d_or_sparse(X, dtype, order, copy, sp.csr_matrix,
+                                "tocsr", sp.isspmatrix_csr,
+                                force_all_finite)
 
 
 def _num_samples(x):
@@ -199,6 +211,9 @@ def check_arrays(*arrays, **options):
     allow_lists : bool
         Allow lists of arbitrary objects as input, just check their length.
         Disables
+
+    allow_nans : boolean, False by default
+        Allows nans in the arrays
     """
     sparse_format = options.pop('sparse_format', None)
     if sparse_format not in (None, 'csr', 'csc', 'dense'):
@@ -207,6 +222,8 @@ def check_arrays(*arrays, **options):
     check_ccontiguous = options.pop('check_ccontiguous', False)
     dtype = options.pop('dtype', None)
     allow_lists = options.pop('allow_lists', False)
+    allow_nans = options.pop('allow_nans', False)
+
     if options:
         raise TypeError("Unexpected keyword arguments: %r" % options.keys())
 
@@ -229,7 +246,7 @@ def check_arrays(*arrays, **options):
                              % (size, n_samples))
 
         if not allow_lists or hasattr(array, "shape"):
-            if sparse.issparse(array):
+            if sp.issparse(array):
                 if sparse_format == 'csr':
                     array = array.tocsr()
                 elif sparse_format == 'csc':
@@ -242,13 +259,19 @@ def check_arrays(*arrays, **options):
                     array.data = np.ascontiguousarray(array.data, dtype=dtype)
                 else:
                     array.data = np.asarray(array.data, dtype=dtype)
-                _assert_all_finite(array.data)
+                if not allow_nans:
+                    _assert_all_finite(array.data)
             else:
                 if check_ccontiguous:
                     array = np.ascontiguousarray(array, dtype=dtype)
                 else:
                     array = np.asarray(array, dtype=dtype)
-                _assert_all_finite(array)
+                if not allow_nans:
+                    _assert_all_finite(array)
+
+            if array.ndim >= 3:
+                raise ValueError("Found array with dim %d. Expected <= 2" %
+                                 array.ndim)
 
         if copy and array is array_orig:
             array = array.copy()

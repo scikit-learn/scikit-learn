@@ -9,6 +9,9 @@ The :mod:`sklearn.hmm` module implements hidden Markov models.
 
 **Warning:** :mod:`sklearn.hmm` is orphaned, undocumented and has known
 numerical stability issues. This module will be removed in version 0.17.
+
+It has been moved to a separate repository:
+https://github.com/hmmlearn/hmmlearn
 """
 
 import string
@@ -36,8 +39,10 @@ NEGINF = -np.inf
 decoder_algorithms = ("viterbi", "map")
 
 
-@deprecated("WARNING: The HMM module and its functions will be removed in 0.17"
-            "as it no longer falls within the project's scope and API.")
+@deprecated("WARNING: The HMM module and its functions will be removed in 0.17 "
+            "as it no longer falls within the project's scope and API. "
+            "It has been moved to a separate repository: "
+            "https://github.com/hmmlearn/hmmlearn")
 def normalize(A, axis=None):
     """ Normalize the input array so that it sums to 1.
 
@@ -70,7 +75,9 @@ def normalize(A, axis=None):
 
 
 @deprecated("WARNING: The HMM module and its function will be removed in 0.17"
-            "as it no longer falls within the project's scope and API.")
+            "as it no longer falls within the project's scope and API. "
+            "It has been moved to a separate repository: "
+            "https://github.com/hmmlearn/hmmlearn")
 class _BaseHMM(BaseEstimator):
     """Hidden Markov Model base class.
 
@@ -582,7 +589,7 @@ class _BaseHMM(BaseEstimator):
                 _hmmc._compute_lneta(n_observations, n_components, fwdlattice,
                                      self._log_transmat, bwdlattice, framelogprob,
                                      lnP, lneta)
-                stats["trans"] += np.exp(logsumexp(lneta, 0))
+                stats['trans'] += np.exp(np.minimum(logsumexp(lneta, 0), 700))
 
     def _do_mstep(self, stats, params):
         # Based on Huang, Acero, Hon, "Spoken Language Processing",

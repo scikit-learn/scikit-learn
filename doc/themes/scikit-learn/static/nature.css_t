@@ -484,6 +484,10 @@ tt {
     font-family: monospace;
 }
 
+a tt {
+	color: inherit;
+}
+
 .viewcode-back {
     font-family: Arial, sans-serif;
 }

@@ -9,39 +9,14 @@ cimport cython
 
 from libc.float cimport DBL_MAX, FLT_MAX
 
-np.import_array()
-
-cdef extern from "cblas.h":
-   enum CBLAS_ORDER:
-       CblasRowMajor=101
-       CblasColMajor=102
-   enum CBLAS_TRANSPOSE:
-       CblasNoTrans=111
-       CblasTrans=112
-       CblasConjTrans=113
-       AtlasConj=114
-   enum CBLAS_UPLO:
-       CblasUpper=121
-       CblasLower=122
-   enum CBLAS_DIAG:
-       CblasNonUnit=131
-       CblasUnit=132
-
-   void cblas_dtrsv(CBLAS_ORDER Order,  CBLAS_UPLO Uplo,
-                 CBLAS_TRANSPOSE TransA,  CBLAS_DIAG Diag,
-                 int N, double *A, int lda, double *X,
-                 int incX)
-
-   void cblas_strsv(CBLAS_ORDER Order,  CBLAS_UPLO Uplo,
-                 CBLAS_TRANSPOSE TransA,  CBLAS_DIAG Diag,
-                 int N, float *A, int lda, float *X,
-                 int incX)
-
 cdef extern from "src/cholesky_delete.h":
     int cholesky_delete_dbl(int m, int n, double *L, int go_out)
     int cholesky_delete_flt(int m, int n, float  *L, int go_out)
 
 ctypedef np.float64_t DOUBLE
+
+
+np.import_array()
 
 
 def min_pos(np.ndarray X):

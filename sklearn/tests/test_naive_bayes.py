@@ -254,27 +254,6 @@ def test_discretenb_provide_prior():
                       classes=[0, 1, 1])
 
 
-def test_deprecated_fit_param():
-    warnings.simplefilter("always", DeprecationWarning)
-    try:
-        for cls in [BernoulliNB, MultinomialNB]:
-            clf = cls()
-            with warnings.catch_warnings(record=True) as w:
-                clf.fit([[0], [1], [2]], [0, 1, 1], class_prior=[0.5, 0.5])
-
-            # Passing class_prior as a fit param should raise a deprecation
-            # warning
-            assert_equal(len(w), 1)
-            assert_equal(w[0].category, DeprecationWarning)
-
-            with warnings.catch_warnings(record=True):
-                # Inconsistent number of classes with prior
-                assert_raises(ValueError, clf.fit, [[0], [1], [2]], [0, 1, 2],
-                              class_prior=[0.5, 0.5])
-    finally:
-        warnings.filters.pop(0)
-
-
 def test_sample_weight_multiclass():
     for cls in [BernoulliNB, MultinomialNB]:
         # check shape consistency for number of samples at fit time

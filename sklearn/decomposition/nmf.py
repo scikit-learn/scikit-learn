@@ -20,7 +20,7 @@ from scipy.optimize import nnls
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import atleast2d_or_csr, check_random_state, check_arrays
-from ..utils.extmath import randomized_svd, safe_sparse_dot
+from ..utils.extmath import randomized_svd, safe_sparse_dot, squared_norm
 
 
 def safe_vstack(Xs):
@@ -35,8 +35,7 @@ def norm(x):
 
     See: http://fseoane.net/blog/2011/computing-the-vector-norm/
     """
-    x = x.ravel()
-    return np.sqrt(np.dot(x, x))
+    return sqrt(squared_norm(x))
 
 
 def trace_dot(X, Y):
@@ -392,15 +391,7 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
             else:
                 init = 'random'
 
-        if isinstance(init, (numbers.Integral, np.random.RandomState)):
-            random_state = check_random_state(init)
-            init = "random"
-            warnings.warn("Passing a random seed or generator as init "
-                          "is deprecated and will be removed in 0.15. Use "
-                          "init='random' and random_state instead.",
-                          DeprecationWarning)
-        else:
-            random_state = self.random_state
+        random_state = self.random_state
 
         if init == 'nndsvd':
             W, H = _initialize_nmf(X, self.n_components_)

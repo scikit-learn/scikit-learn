@@ -13,13 +13,12 @@ import sys
 
 import numpy as np
 from scipy import sparse
-from scipy.cluster import hierarchy
 
 from ..base import BaseEstimator, ClusterMixin
 from ..externals.joblib import Memory
 from ..externals import six
 from ..metrics.pairwise import paired_distances, pairwise_distances
-from ..utils import array2d
+from ..utils import array2d, safe_asarray
 from ..utils.sparsetools import connected_components
 
 from . import _hierarchical
@@ -150,6 +149,8 @@ def ward_tree(X, connectivity=None, n_components=None, copy=None,
     n_samples, n_features = X.shape
 
     if connectivity is None:
+        from scipy.cluster import hierarchy     # imports PIL
+
         if n_clusters is not None:
             warnings.warn('Partial build of the tree is implemented '
                           'only for structured clustering (i.e. with '
@@ -332,6 +333,8 @@ def linkage_tree(X, connectivity=None, n_components=None,
             'of %s, but %s was given' % (linkage_choices.keys(), linkage))
 
     if connectivity is None:
+        from scipy.cluster import hierarchy     # imports PIL
+
         if n_clusters is not None:
             warnings.warn('Partial build of the tree is implemented '
                           'only for structured clustering (i.e. with '
@@ -405,7 +408,7 @@ def linkage_tree(X, connectivity=None, n_components=None,
     heapify(inertia)
 
     # prepare the main fields
-    parent = np.arange(n_nodes, dtype=np.int)
+    parent = np.arange(n_nodes, dtype=np.intp)
     used_node = np.ones(n_nodes, dtype=np.intp)
     children = []
 
@@ -562,6 +565,11 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
             - complete or maximum linkage uses the maximum distances between
               all observations of the two sets.
 
+    pooling_func : callable, default=np.mean
+        This combines the values of agglomerated features into a single
+        value, and should accept an array of shape [M, N] and the keyword
+        argument `axis=1`, and reduce it to an array of size [M].
+
     Attributes
     ----------
     `children_` : array-like, shape = [n_nodes, 2]
@@ -582,7 +590,8 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
     def __init__(self, n_clusters=2, affinity="euclidean",
                  memory=Memory(cachedir=None, verbose=0),
                  connectivity=None, n_components=None,
-                 compute_full_tree='auto', linkage='ward'):
+                 compute_full_tree='auto', linkage='ward',
+                 pooling_func=np.mean):
         self.n_clusters = n_clusters
         self.memory = memory
         self.n_components = n_components
@@ -590,6 +599,7 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         self.compute_full_tree = compute_full_tree
         self.linkage = linkage
         self.affinity = affinity
+        self.pooling_func = pooling_func
 
     def fit(self, X):
         """Fit the hierarchical clustering on the data
@@ -674,6 +684,11 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         -------
         self
         """
+        X = safe_asarray(X)
+        if not (len(X.shape) == 2 and X.shape[0] > 0):
+            raise ValueError('At least one sample is required to fit the '
+                'model. A data matrix of shape %s was given.'
+                % (X.shape, ))
         return AgglomerativeClustering.fit(self, X.T, **params)
 
 
@@ -739,7 +754,7 @@ class Ward(AgglomerativeClustering):
 
     def __init__(self, n_clusters=2, memory=Memory(cachedir=None, verbose=0),
                  connectivity=None, copy=None, n_components=None,
-                 compute_full_tree='auto'):
+                 compute_full_tree='auto', pooling_func=np.mean):
 
         warnings.warn("The Ward class is deprecated since 0.14 and will be "
                       "removed in 0.17. Use the AgglomerativeClustering "
@@ -757,6 +772,7 @@ class Ward(AgglomerativeClustering):
         self.connectivity = connectivity
         self.compute_full_tree = compute_full_tree
         self.affinity = "euclidean"
+        self.pooling_func = pooling_func
 
 
 class WardAgglomeration(AgglomerationTransform, Ward):

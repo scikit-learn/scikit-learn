@@ -38,6 +38,7 @@ from ..base import RegressorMixin
 from ..utils import check_random_state, array2d, check_arrays, column_or_1d
 from ..utils.extmath import logsumexp
 from ..externals import six
+from ..feature_selection.from_model import _LearntSelectorMixin
 
 from ..tree.tree import DecisionTreeRegressor
 from ..tree._tree import DTYPE, TREE_LEAF
@@ -513,7 +514,8 @@ class VerboseReporter(object):
                 self.verbose_mod *= 10
 
 
-class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
+class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
+                                              _LearntSelectorMixin)):
     """Abstract base class for Gradient Boosting. """
 
     @abstractmethod
@@ -1006,6 +1008,10 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         Choosing `max_features < n_features` leads to a reduction of variance
         and an increase in bias.
 
+        Note: the search for a split does not stop until at least one
+        valid partition of the node samples is found, even if it requires to
+        effectively inspect more than ``max_features`` features.
+
     max_leaf_nodes : int or None, optional (default=None)
         Grow trees with ``max_leaf_nodes`` in best-first fashion.
         Best nodes are defined as relative reduction in impurity.
@@ -1186,7 +1192,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         return self.classes_.take(np.argmax(proba, axis=1), axis=0)
 
     def staged_predict(self, X):
-        """Predict class probabilities at each stage for X.
+        """Predict classes at each stage for X.
 
         This method allows monitoring (i.e. determine error on testing set)
         after each stage.
@@ -1263,6 +1269,10 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
 
         Choosing `max_features < n_features` leads to a reduction of variance
         and an increase in bias.
+
+        Note: the search for a split does not stop until at least one
+        valid partition of the node samples is found, even if it requires to
+        effectively inspect more than ``max_features`` features.
 
     max_leaf_nodes : int or None, optional (default=None)
         Grow trees with ``max_leaf_nodes`` in best-first fashion.

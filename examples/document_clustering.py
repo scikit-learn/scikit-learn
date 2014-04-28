@@ -159,11 +159,17 @@ if opts.n_components:
     # Vectorizer results are normalized, which makes KMeans behave as
     # spherical k-means for better results. Since LSA/SVD results are
     # not normalized, we have to redo the normalization.
-    lsa = make_pipeline(TruncatedSVD(opts.n_components),
-                        Normalizer(copy=False))
+    svd = TruncatedSVD(opts.n_components)
+    lsa = make_pipeline(svd, Normalizer(copy=False))
+
     X = lsa.fit_transform(X)
 
     print("done in %fs" % (time() - t0))
+
+    explained_variance = svd.explained_variance_ratio_.sum()
+    print("Explained variance of the SVD step: {}%".format(
+        int(explained_variance * 100)))
+
     print()
 
 
@@ -197,7 +203,7 @@ if not (opts.n_components or opts.use_hashing):
     print("Top terms per cluster:")
     order_centroids = km.cluster_centers_.argsort()[:, ::-1]
     terms = vectorizer.get_feature_names()
-    for i in xrange(true_k):
+    for i in range(true_k):
         print("Cluster %d:" % i, end='')
         for ind in order_centroids[i, :10]:
             print(' %s' % terms[ind], end='')

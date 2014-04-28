@@ -191,7 +191,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         """
         return (- safe_sparse_dot(v, self.intercept_visible_)
                 - np.logaddexp(0, safe_sparse_dot(v, self.components_.T)
-                                  + self.intercept_hidden_).sum(axis=1))
+                               + self.intercept_hidden_).sum(axis=1))
 
     def gibbs(self, v):
         """Perform one Gibbs sampling step.
@@ -211,6 +211,40 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         v_ = self._sample_visibles(h_, rng)
 
         return v_
+
+    def partial_fit(self, X):
+        """Fit the model to the data X which should contain a partial
+        segment of the data.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            Training data.
+
+        Returns
+        -------
+        self : BernoulliRBM
+            The fitted model.
+        """
+        X, = check_arrays(X, sparse_format='csr', dtype=np.float)
+        if not hasattr(self, 'random_state_'):
+            self.random_state_ = check_random_state(self.random_state)
+        if not hasattr(self, 'components_'):
+            self.components_ = np.asarray(
+                self.random_state_.normal(
+                    0,
+                    0.01,
+                    (self.n_components, X.shape[1])
+                ),
+                order='fortran')
+        if not hasattr(self, 'intercept_hidden_'):
+            self.intercept_hidden_ = np.zeros(self.n_components, )
+        if not hasattr(self, 'intercept_visible_'):
+            self.intercept_visible_ = np.zeros(X.shape[1], )
+        if not hasattr(self, 'h_samples_'):
+            self.h_samples_ = np.zeros((self.batch_size, self.n_components))
+
+        self._fit(X, self.random_state_)
 
     def _fit(self, v_pos, rng):
         """Inner fit for one mini-batch.

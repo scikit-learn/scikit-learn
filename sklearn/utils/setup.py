@@ -22,7 +22,7 @@ def configuration(parent_package='', top_path=None):
         libraries.append('m')
         cblas_libs.append('m')
 
-    config.add_extension('sparsefuncs', sources=['sparsefuncs.c'],
+    config.add_extension('sparsefuncs_fast', sources=['sparsefuncs_fast.c'],
                          libraries=libraries)
 
     config.add_extension('arrayfuncs',

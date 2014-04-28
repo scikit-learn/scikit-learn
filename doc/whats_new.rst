@@ -64,6 +64,14 @@ Changelog
      when fit with ``sample_weight != None`` and/or with ``bootstrap=True``.
      By `Gilles Louppe`_.
 
+   - Faster :class:`sklearn.ensemble.ExtraTrees` by caching feature values.
+     By `Arnaud Joly`_.
+
+   - Faster depth-based tree building algorithm such as decision tree,
+     random forest, extra trees or gradient tree boosting (with depth based
+     growing strategy) by avoiding trying to split on found constant features
+     in the sample subset. By `Arnaud Joly`_.
+
    - Added :func:`metrics.pairwise_distances_argmin_min`, by Philippe Gervais.
 
    - Added predict method to :class:`cluster.AffinityPropagation` and
@@ -115,12 +123,12 @@ Changelog
    - :class:`dummy.DummyClassifier` can now be used to predict a constant
      output value. By `Manoj Kumar`_.
 
-   - :class:`dummy.DummyRegressor` have now a strategy parameters which allows
+   - :class:`dummy.DummyRegressor` has now a strategy parameter which allows
      to predict the mean, the median of the training set or a constant
      output value. By `Maheshakya Wijewardena`_.
 
    - Fixed bug in :class:`decomposition.MiniBatchDictionaryLearning` :
-     partial_fit was not working properly.
+     ``partial_fit`` was not working properly.
 
    - Multi-label classification output in multilabel indicator format
      is now supported by :func:`metrics.roc_auc_score` and
@@ -161,6 +169,43 @@ Changelog
    - Significant performance improvements (more than 100x speedup for
      large problems) in :class:`isotonic.IsotonicRegression` by
      `Andrew Tulloch`_.
+
+   - Speed and memory usage improvements to the SGD algorithm for linear
+     models: it now uses threads, not separate processes, when ``n_jobs>1``.
+     By `Lars Buitinck`_.
+
+   - Added ``partial_fit`` to :class:`BernoulliRBM
+     <neural_network.BernoulliRBM>`
+     By `Danny Sullivan`_.
+
+   - Raise error in :class:`cluster.FeatureAgglomeration` and
+     :class:`cluster.WardAgglomeration` when no samples are given,
+     rather than returning meaningless clustering.
+
+   - Grid search and cross validation allow NaNs in the input arrays so that
+     preprocessors such as :class:`preprocessing.Imputer
+     <preprocessing.Imputer>` can be trained within the cross validation loop,
+     avoiding potentially skewed results.
+
+   - Ridge regression can now deal with sample weights in feature space
+     (only sample space until then). By `Michael Eickenberg`_.
+     Both solutions are provided by the Cholesky solver.
+
+   - Several classification and regression metrics now support weighted
+     samples with the new ``sample_weight`` argument:
+     :func:`metrics.accuracy_score`,
+     :func:`metrics.zero_one_loss`,
+     :func:`metrics.precision_score`,
+     :func:`metrics.average_precision_score`,
+     :func:`metrics.f1_score`,
+     :func:`metrics.fbeta_score`,
+     :func:`metrics.recall_score`,
+     :func:`metrics.roc_auc_score`,
+     :func:`metrics.explained_variance_score`,
+     :func:`metrics.mean_squared_error`,
+     :func:`metrics.mean_absolute_error`,
+     :func:`metrics.r2_score`.
+     By `Noel Dawe`_.
 
 
 API changes summary
@@ -2473,3 +2518,8 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Andrew Tulloch: http://tullo.ch
 
 .. _Maheshakya Wijewardena: https://github.com/maheshakya
+
+.. _Danny Sullivan: http://dannysullivan.co
+
+.. _Michael Eickenberg: https://github.com/eickenberg
+
