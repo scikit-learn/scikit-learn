@@ -13,7 +13,7 @@
 #
 # Licence: BSD 3 clause
 
-from libc.stdlib cimport calloc, free, malloc, realloc
+from libc.stdlib cimport calloc, free, realloc
 from libc.string cimport memcpy, memset
 from libc.math cimport log as ln
 from cpython cimport Py_INCREF, PyObject
@@ -169,9 +169,8 @@ cdef class ClassificationCriterion(Criterion):
         self.label_count_total = NULL
 
         # Count labels for each output
-        self.n_classes = <SIZE_t*> malloc(n_outputs * sizeof(SIZE_t))
-        if self.n_classes == NULL:
-            raise MemoryError()
+        self.n_classes = NULL
+        safe_realloc(&self.n_classes, n_outputs)
 
         cdef SIZE_t k = 0
         cdef SIZE_t label_count_stride = 0
@@ -941,17 +940,14 @@ cdef class Splitter:
     cdef void init(self,
                    np.ndarray[DTYPE_t, ndim=2] X,
                    np.ndarray[DOUBLE_t, ndim=2, mode="c"] y,
-                   DOUBLE_t* sample_weight):
+                   DOUBLE_t* sample_weight) except *:
         """Initialize the splitter."""
         # Reset random state
         self.rand_r_state = self.random_state.randint(0, RAND_R_MAX)
 
         # Initialize samples and features structures
         cdef SIZE_t n_samples = X.shape[0]
-        cdef SIZE_t* samples = <SIZE_t*> realloc(self.samples,
-                                                 n_samples * sizeof(SIZE_t))
-        if samples == NULL:
-            raise MemoryError()
+        cdef SIZE_t* samples = safe_realloc(&self.samples, n_samples)
 
         cdef SIZE_t i, j
         cdef double weighted_n_samples = 0.0
@@ -968,31 +964,19 @@ cdef class Splitter:
             else:
                 weighted_n_samples += 1.0
 
-        self.samples = samples
         self.n_samples = j
         self.weighted_n_samples = weighted_n_samples
 
         cdef SIZE_t n_features = X.shape[1]
-        cdef SIZE_t* features = <SIZE_t*> realloc(self.features,
-                                                  n_features * sizeof(SIZE_t))
-        if features == NULL:
-            raise MemoryError()
+        cdef SIZE_t* features = safe_realloc(&self.features, n_features)
 
         for i in range(n_features):
             features[i] = i
 
-        self.features = features
         self.n_features = n_features
 
-        cdef DTYPE_t* fv = <DTYPE_t*> realloc(self.feature_values,
-                                              n_samples * sizeof(DTYPE_t))
-        cdef SIZE_t* cf = <SIZE_t*> realloc(self.constant_features,
-                                            n_features * sizeof(SIZE_t))
-        if (fv == NULL or cf == NULL):
-            raise MemoryError()
-
-        self.feature_values = fv
-        self.constant_features = cf
+        safe_realloc(&self.feature_values, n_samples)
+        safe_realloc(&self.constant_features, n_features)
 
         # Initialize X, y, sample_weight
         self.X = <DTYPE_t*> X.data
@@ -1617,12 +1601,8 @@ cdef class PresortBestSplitter(Splitter):
                                        <SIZE_t> self.X_argsorted.itemsize)
 
             self.n_total_samples = X.shape[0]
-            sample_mask = realloc(self.sample_mask, self.n_total_samples)
-            if sample_mask == NULL:
-                raise MemoryError("failed to allocate %d bytes"
-                                  % self.n_total_samples)
+            sample_mask = safe_realloc(&self.sample_mask, self.n_total_samples)
             memset(sample_mask, 0, self.n_total_samples)
-            self.sample_mask = <unsigned char*> sample_mask
 
     cdef void node_split(self, double impurity, SIZE_t* pos, SIZE_t* feature,
                          double* threshold, double* impurity_left,
@@ -2323,10 +2303,8 @@ cdef class Tree:
         # Input/Output layout
         self.n_features = n_features
         self.n_outputs = n_outputs
-        self.n_classes = <SIZE_t*> malloc(n_outputs * sizeof(SIZE_t))
-
-        if self.n_classes == NULL:
-            raise MemoryError()
+        self.n_classes = NULL
+        safe_realloc(&self.n_classes, n_outputs)
 
         self.max_n_classes = np.max(n_classes)
         self.value_stride = n_outputs * self.max_n_classes
@@ -2392,7 +2370,7 @@ cdef class Tree:
         value = memcpy(self.value, (<np.ndarray> value_ndarray).data,
                        self.capacity * self.value_stride * sizeof(double))
 
-    cdef void _resize(self, SIZE_t capacity):
+    cdef void _resize(self, SIZE_t capacity) except *:
         """Resize all inner arrays to `capacity`, if `capacity` == -1, then
            double the size of the inner arrays."""
         if self._resize_c(capacity)!= 0:
@@ -2411,6 +2389,7 @@ cdef class Tree:
             else:
                 capacity = 2 * self.capacity
 
+        # XXX no safe_realloc here because we need to grab the GIL
         cdef void* ptr = realloc(self.nodes, capacity * sizeof(Node))
         if ptr == NULL:
             return -1
@@ -2583,6 +2562,38 @@ cdef class Tree:
 # =============================================================================
 # Utils
 # =============================================================================
+
+# safe_realloc(&p, n) resizes the allocation of p to n * sizeof(*p) bytes or
+# raises a MemoryError. It never calls free, since that's __dealloc__'s job.
+#   cdef DTYPE_t *p = NULL
+#   safe_realloc(&p, n)
+# is equivalent to p = malloc(n * sizeof(*p)) with error checking.
+ctypedef fused realloc_ptr:
+    # Add pointer types here as needed.
+    (DTYPE_t*)
+    (SIZE_t*)
+    (unsigned char*)
+
+cdef realloc_ptr safe_realloc(realloc_ptr* p, size_t n) except *:
+    # sizeof(realloc_ptr[0]) would be more like idiomatic C, but causes Cython
+    # 0.20.1 to crash.
+    n *= sizeof(p[0][0])
+    cdef realloc_ptr tmp = <realloc_ptr>realloc(p[0], n)
+    if tmp == NULL:
+        raise MemoryError("could not allocate %d bytes" % n)
+
+    p[0] = tmp
+    return tmp  # for convenience
+
+
+def _realloc_test():
+    # Helper for tests. Should raise an exception.
+    cdef unsigned char* p = NULL
+    safe_realloc(&p, <size_t>(-1))
+    if p != NULL:
+        free(p)
+        assert False, "we just allocated %d bytes!" % <size_t>(-1)
+
 
 # rand_r replacement using a 32bit XorShift generator
 # See http://www.jstatsoft.org/v08/i14/paper for details

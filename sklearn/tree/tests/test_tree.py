@@ -746,3 +746,8 @@ def test_big_input():
         clf.fit(X, [0, 1, 0, 1])
     except ValueError as e:
         assert_in("float32", str(e))
+
+
+def test_memoryerror():
+    from sklearn.tree._tree import _realloc_test
+    assert_raises(MemoryError, _realloc_test)
