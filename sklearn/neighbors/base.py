@@ -78,13 +78,20 @@ def _get_weights(dist, weights, bandwidth=None):
     ===========
     dist: ndarray
         The input distances
-    weights: {'uniform', 'distance' or a callable}
+    weights: None, string from VALID_WEIGHTS or callable        
         The kind of weighting used
+    bandwidth: float or ndarray
+        The kernel function bandwidth (only for kernel weighting). 
+        If float, then the bandwidth is the same for all queries.
+        If ndarray, then i-th element is used as a bandwidth for 
+        i-th query.
+
 
     Returns
     ========
     weights_arr: array of the same shape as ``dist``
-        if ``weights == 'uniform'``, then returns None
+        if ``weights == 'uniform'`` or ``weights == 'tophat'``, 
+        then returns None
     """
     weights = _check_weights(weights)
     if weights in (None, 'uniform', 'tophat'):
