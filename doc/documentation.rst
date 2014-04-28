@@ -24,33 +24,6 @@ Documentation of scikit-learn 0.15
                       	to apply them.
                     </blockquote>
                 </div>
-                <div class="span4 box">
-                    <h2><a href="tutorial/machine_learning_map/index.html">Flow Chart</a></h2>
-                    <blockquote>A graphical overview of basic areas of machine
-                        learning, and guidance which kind of algorithms
-                        to use in a given situation.
-                    </blockquote>
-                </div>
-            </div>
-
-          <!-- row -->
-            <div class="row-fluid">
-                <!-- Documentation overview -->
-                    <div class="row-fluid">
-                        <div class="span4 box">
-                            <h2><a href="tutorial/index.html">Tutorials</a></h2>
-                            <blockquote>Useful tutorials for developing a feel
-			    for some of scikit-learn's applications in the
-			    machine learning field.
-                            </blockquote>
-                        </div>
-                        <div class="span4 box">
-			    <h2><a href="modules/classes.html">API</a></h2>
-                    	    <blockquote>The exact API of all functions and classes, as given by the docstrings.
-                    	    The API documents expected types and allowed features for all functions,
-                    	    and all parameters available for the algorithms.
-                    	    </blockquote>
-                        </div>
 			<div class="span4 box">
 			<!-- doc versions -->
 			    <h2>Other Versions</h2>
@@ -78,6 +51,26 @@ Documentation of scikit-learn 0.15
 			</div>
                         <!-- row -->
                     </div>
+            </div>
+
+          <!-- row -->
+            <div class="row-fluid">
+                <!-- Documentation overview -->
+                    <div class="row-fluid">
+                        <div class="span4 box">
+                            <h2><a href="tutorial/index.html">Tutorials</a></h2>
+                            <blockquote>Useful tutorials for developing a feel
+			    for some of scikit-learn's applications in the
+			    machine learning field.
+                            </blockquote>
+                        </div>
+                        <div class="span4 box">
+			    <h2><a href="modules/classes.html">API</a></h2>
+                    	    <blockquote>The exact API of all functions and classes, as given by the docstrings.
+                    	    The API documents expected types and allowed features for all functions,
+                    	    and all parameters available for the algorithms.
+                    	    </blockquote>
+                        </div>
 	    </div>
 
           <!-- row -->
@@ -97,3 +90,18 @@ Documentation of scikit-learn 0.15
 		
             </div>
 
+            <div class="row-fluid">
+                <div class="span4 box">
+                    <h2><a href="tutorial/machine_learning_map/index.html">Flow Chart</a></h2>
+                    <blockquote>A graphical overview of basic areas of machine
+                        learning, and guidance which kind of algorithms
+                        to use in a given situation.
+                    </blockquote>
+                </div>
+                <div class="span4 box">
+                    <h2><a href="faq.html">FAQ</a></h2>
+                    <blockquote>Frequently asked questions about the project and contributing.
+                    </blockquote>
+                </div>
+
+            </div>
