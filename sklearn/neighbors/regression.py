@@ -32,7 +32,7 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
     n_neighbors : int, optional (default = 5)
         Number of neighbors to use by default for :meth:`k_neighbors` queries.
 
-    weights : str or callable
+    weights : string or callable, optional (default = 'uniform')
         weight function used in prediction.  Possible values:
 
         - 'uniform' : uniform weights.  All points in each neighborhood
@@ -40,11 +40,13 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
         - 'distance' : weight points by the inverse of their distance.
           in this case, closer neighbors of a query point will have a
           greater influence than neighbors which are further away.
+        - one of 'tophat', 'gaussian', 'epanechnikov', 'exponential',
+          'linear', 'cosine'. In this case the corresponding kernel
+          function is used for weighting. The bandwidth of the kernel
+          is equal to the distance to the n_neighbors+1 farthest point.
         - [callable] : a user-defined function which accepts an
           array of distances, and returns an array of the same shape
           containing the weights.
-
-        Uniform weights are used by default.
 
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, optional
         Algorithm used to compute the nearest neighbors:
@@ -96,6 +98,7 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
     RadiusNeighborsRegressor
     KNeighborsClassifier
     RadiusNeighborsClassifier
+    KernelDensity
 
     Notes
     -----
@@ -187,7 +190,7 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
         Range of parameter space to use by default for :meth`radius_neighbors`
         queries.
 
-    weights : str or callable
+    weights : string or callable, optional (default = 'uniform')
         weight function used in prediction.  Possible values:
 
         - 'uniform' : uniform weights.  All points in each neighborhood
@@ -195,11 +198,13 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
         - 'distance' : weight points by the inverse of their distance.
           in this case, closer neighbors of a query point will have a
           greater influence than neighbors which are further away.
+        - one of 'tophat', 'gaussian', 'epanechnikov', 'exponential',
+          'linear', 'cosine'. In this case the corresponding kernel
+          function is used for weighting. The bandwidth of the kernel
+          is equal to the radius parameter.
         - [callable] : a user-defined function which accepts an
           array of distances, and returns an array of the same shape
           containing the weights.
-
-        Uniform weights are used by default.
 
     algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, optional
         Algorithm used to compute the nearest neighbors:
@@ -251,6 +256,7 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
     KNeighborsRegressor
     KNeighborsClassifier
     RadiusNeighborsClassifier
+    KernelDensity
 
     Notes
     -----
