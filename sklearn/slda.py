@@ -5,6 +5,8 @@ from __future__ import print_function
 # Authors: Martin Billinger
 #          Clemens Brunner
 
+from __future__ import division
+
 import warnings  # TODO: replace print() with warnings?
 
 import numpy as np
