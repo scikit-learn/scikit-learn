@@ -153,7 +153,7 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
             bandwidth = neigh_dist[:, -1]
             neigh_dist, neigh_ind  = neigh_dist[:, :-1], neigh_ind[:, :-1]
             weights = _get_weights(neigh_dist, self.weights,
-								   bandwidth=bandwidth)
+                                   bandwidth=bandwidth)
         else:
             neigh_dist, neigh_ind = self.kneighbors(X)
             weights = _get_weights(neigh_dist, self.weights)
@@ -203,8 +203,8 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
                 self.kneighbors(X, n_neighbors=self.n_neighbors + 1)
             bandwidth = neigh_dist[:, -1]
             neigh_dist, neigh_ind  = neigh_dist[:, :-1], neigh_ind[:, :-1]
-            weights = _get_weights(neigh_dist, self.weights,
-								   bandwidth=bandwidth)
+            weights = _get_weights(neigh_dist, self.weights, 
+                                   bandwidth=bandwidth)
         else:
             neigh_dist, neigh_ind = self.kneighbors(X)
             weights = _get_weights(neigh_dist, self.weights)

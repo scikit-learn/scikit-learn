@@ -151,7 +151,7 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
             bandwidth = neigh_dist[:, -1]
             neigh_dist, neigh_ind  = neigh_dist[:, :-1], neigh_ind[:, :-1]
             weights = _get_weights(neigh_dist, self.weights,
-								   bandwidth=bandwidth)
+                                   bandwidth=bandwidth)
         else:
             neigh_dist, neigh_ind = self.kneighbors(X)
             weights = _get_weights(neigh_dist, self.weights)
