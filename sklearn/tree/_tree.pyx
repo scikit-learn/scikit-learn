@@ -983,14 +983,16 @@ cdef class Splitter:
 
         self.features = features
         self.n_features = n_features
-        self.constant_features = <SIZE_t*> realloc(self.constant_features,
-                                                   n_features * sizeof(SIZE_t))
 
         cdef DTYPE_t* fv = <DTYPE_t*> realloc(self.feature_values,
                                               n_samples * sizeof(DTYPE_t))
-        if fv == NULL:
+        cdef SIZE_t* cf = <SIZE_t*> realloc(self.constant_features,
+                                            n_features * sizeof(SIZE_t))
+        if (fv == NULL or cf == NULL):
             raise MemoryError()
+
         self.feature_values = fv
+        self.constant_features = cf
 
         # Initialize X, y, sample_weight
         self.X = <DTYPE_t*> X.data
