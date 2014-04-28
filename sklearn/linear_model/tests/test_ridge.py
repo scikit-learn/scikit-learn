@@ -743,3 +743,19 @@ def test_deprecation_warning_dense_cholesky():
     for func in [func1, func2, func3]:
         assert_warns_message(warning_class, warning_message, func)
 
+
+def test_raises_value_error_if_solver_not_supported():
+    """Tests whether a ValueError is raised if a non-identified solver
+    is passed to ridge_regression"""
+
+    wrong_solver = "This is not a solver (MagritteSolveCV QuantumBitcoin)"
+
+    exception = ValueError
+    message = "Solver %s not understood" % wrong_solver
+
+    def func():
+        X = np.eye(3)
+        y = np.ones(3)
+        ridge_regression(X, y, alpha=1., solver=wrong_solver)
+
+    assert_raise_message(exception, message, func)

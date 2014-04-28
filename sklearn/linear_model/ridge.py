@@ -304,7 +304,7 @@ def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         alpha = np.repeat(alpha, n_targets)
 
     if solver not in ('sparse_cg', 'cholesky', 'svd', 'lsqr'):
-        ValueError('Solver %s not understood' % solver)
+        raise ValueError('Solver %s not understood' % solver)
 
     if solver == 'sparse_cg':
         coef = _solve_sparse_cg(X, y, alpha, max_iter, tol)
