@@ -45,7 +45,7 @@ KERNEL_WEIGHTS = {'gaussian': lambda dist: np.exp(-0.5 * dist**2),
                   'epanechnikov': lambda dist: 1.0 - dist**2,
                   'exponential': lambda dist: np.exp(-dist),
                   'linear': lambda dist: 1.0 - dist,
-                  'cosine': lambda dist: np.cos(0.5 * np.pi * dist) }
+                  'cosine': lambda dist: np.cos(0.5 * np.pi * dist)}
 
 
 VALID_WEIGHTS = ['uniform', 'distance', 'tophat'] + list(KERNEL_WEIGHTS.keys())
