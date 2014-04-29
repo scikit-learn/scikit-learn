@@ -323,7 +323,8 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
         self._init_params(radius=radius,
                           algorithm=algorithm,
                           leaf_size=leaf_size,
-                          metric=metric, p=p, metric_kwds=metric_kwds, **kwargs)
+                          metric=metric, p=p, metric_kwds=metric_kwds,
+                          **kwargs)
         self.weights = _check_weights(weights)
         self.outlier_label = outlier_label
 

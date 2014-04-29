@@ -99,8 +99,9 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
                      algorithm='auto', leaf_size=30, metric='minkowski',
                      p=2, metric_kwds=None, **kwargs):
         if kwargs:
-            warnings.warn("Passing additional arguments to the metric function "
-                          "as **kwargs is deprecated. Use metric_kwds dict instead.",
+            warnings.warn("Passing additional arguments to the metric "
+                          "function as **kwargs is deprecated. "
+                          "Use metric_kwds dict instead.",
                           DeprecationWarning,
                           stacklevel=3)
             if metric_kwds is None:
@@ -142,13 +143,15 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
         self._fit_method = None
 
     def _fit(self, X):
-        self.effective_metric_ = self.metric
-        self.effective_metric_kwds_ = \
-            self.metric_kwds.copy() if self.metric_kwds is not None else {}
+        if self.metric_kwds is None:
+            self.effective_metric_kwds_ = {}
+        else:
+            self.effective_metric_kwds_ = self.metric_kwds.copy()
 
-        if self.effective_metric_ in ['wminkowski', 'minkowski']:
+        if self.metric in ['wminkowski', 'minkowski']:
             self.effective_metric_kwds_['p'] = self.p
 
+        self.effective_metric_ = self.metric
         # For minkowski distance, use more efficient methods where available
         if self.metric == 'minkowski':
             p = self.effective_metric_kwds_.pop('p', 2)

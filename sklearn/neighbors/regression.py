@@ -257,7 +257,8 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
         self._init_params(radius=radius,
                           algorithm=algorithm,
                           leaf_size=leaf_size,
-                          p=p, metric=metric, metric_kwds=metric_kwds, **kwargs)
+                          p=p, metric=metric, metric_kwds=metric_kwds,
+                          **kwargs)
         self.weights = _check_weights(weights)
 
     def predict(self, X):
