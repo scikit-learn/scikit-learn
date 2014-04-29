@@ -498,7 +498,7 @@ def test_kneighbors_regressor_multioutput(n_samples=40,
     y_target = y[:n_test_pts]
 
     weights = ['uniform', 'distance', _weight_func, 'gaussian',
-               'epanechnikov','exponential', 'linear', 'cosine']
+               'epanechnikov', 'exponential', 'linear', 'cosine']
     for algorithm, weights in product(ALGORITHMS, weights):
         knn = neighbors.KNeighborsRegressor(n_neighbors=n_neighbors,
                                             weights=weights,

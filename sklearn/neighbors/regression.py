@@ -147,9 +147,9 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
 
         if self.weights in KERNEL_WEIGHTS:
             neigh_dist, neigh_ind = \
-				self.kneighbors(X, n_neighbors=self.n_neighbors + 1)
+                self.kneighbors(X, n_neighbors=self.n_neighbors + 1)
             bandwidth = neigh_dist[:, -1]
-            neigh_dist, neigh_ind  = neigh_dist[:, :-1], neigh_ind[:, :-1]
+            neigh_dist, neigh_ind = neigh_dist[:, :-1], neigh_ind[:, :-1]
             weights = _get_weights(neigh_dist, self.weights,
                                    bandwidth=bandwidth)
         else:
