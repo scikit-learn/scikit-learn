@@ -70,7 +70,8 @@ def test_lda_transform():
     assert_equal(X_transformed.shape[1], 1)
 =======
     # Test priors
-    assert_raises(ValueError, slda.SLDA, priors=[2, -1])
+    clf = slda.SLDA(priors=[-2, 4])
+    assert_raises(ValueError, clf.fit, X, y1)
     clf = slda.SLDA(priors=[2, 1])
     y_pred = clf.fit(X, y2).predict(X)
     assert_array_equal(y_pred, y2)
