@@ -2154,10 +2154,11 @@ def label_ranking_average_precision_score(y_true, y_score):
     over the samples. A label with higher score is thus considered as having
     better rank.
 
-    The best value is one.
-
     This metrics is used in multilabel ranking problem, where the goal
-    is to rank the labels associated to each sample.
+    is to give better rank to the labels associated to each sample.
+
+    The obtained score is always strictly greater than 0 and
+    the best value is one.
 
     Parameters
     ----------

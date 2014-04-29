@@ -915,7 +915,17 @@ Label ranking average precision
 ...............................
 The :func:`label_ranking_average_precision_score` function
 implements the label ranking average precision (AP), which is also simply
-called average precision. It averages over each
+called mean average precision. This metric is linked to the :func:`average_precision_score` function, but is based on the notion of label
+ranking instead of precision and recall.
+
+
+This metrics will yield better score if you are able to give better rank
+to the labels associated to each sample. The obtained score is always strictly
+greater than 0 and the best value is one. If there is exactly one relevant
+label per sample, label ranking average precision is equivalent to the `mean
+reciprocal rank <http://en.wikipedia.org/wiki/Mean_reciprocal_rank>`.
+
+It averages over each
 sample and each relevant label :math:`r` the ratio between the number of
 relevant labels with higher or equal score to the label :math:`r` and the rank
 of the label, i.e. the number of labels with higher or equal score. Given
@@ -934,7 +944,8 @@ the average precision is defined as
 with :math:`\mathcal{L}_{ij} = \left\{k: y_{ik} = 1, \hat{f}_{ik} \geq \hat{f}_{ij} \right\}`,
 :math:`\text{rank}_{ij} = \left|\left\{k: \hat{f}_{ik} \geq \hat{f}_{ij} \right\}\right|`
 and :math:`|\cdot|` is the l0 norm or the cardinality of the set.
-The best value is one.
+
+
 
 Here a small example of usage of this function::
 
