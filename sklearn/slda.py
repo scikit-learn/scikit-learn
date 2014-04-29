@@ -141,7 +141,7 @@ class SLDA(BaseEstimator, ClassifierMixin):
         Sw = np.mean(covs, 0)  # Within-class scatter
         means = self.means_ - self.xbar_
 
-        self.coef_ = np.linalg.solve(Sw, means.T).T
+        self.coef_ = np.linalg.lstsq(Sw, means.T, rcond=1e-11)[0].T
         self.intercept_ = (-0.5 * np.diag(np.dot(means, self.coef_.T))
                            + np.log(self.priors_))
         return self
