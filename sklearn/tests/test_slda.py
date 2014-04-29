@@ -63,7 +63,8 @@ def test_lda_predict():
     assert_true(np.any(y_pred3 != y3))
 
     # Test priors
-    assert_raises(ValueError, slda.SLDA, priors=[2, -1])
+    clf = slda.SLDA(priors=[-2, 4])
+    assert_raises(ValueError, clf.fit, X, y1)
     clf = slda.SLDA(priors=[2, 1])
     y_pred = clf.fit(X, y2).predict(X)
     assert_array_equal(y_pred, y2)
