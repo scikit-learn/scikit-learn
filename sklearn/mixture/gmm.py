@@ -556,7 +556,7 @@ class GMM(BaseEstimator):
 #########################################################################
 
 
-def _log_multivariate_normal_density_diag(X, means=0.0, covars=1.0):
+def _log_multivariate_normal_density_diag(X, means, covars):
     """Compute Gaussian log-density at X for a diagonal model"""
     n_samples, n_dim = X.shape
     lpr = -0.5 * (n_dim * np.log(2 * np.pi) + np.sum(np.log(covars), 1)
@@ -566,7 +566,7 @@ def _log_multivariate_normal_density_diag(X, means=0.0, covars=1.0):
     return lpr
 
 
-def _log_multivariate_normal_density_spherical(X, means=0.0, covars=1.0):
+def _log_multivariate_normal_density_spherical(X, means, covars):
     """Compute Gaussian log-density at X for a spherical model"""
     cv = covars.copy()
     if covars.ndim == 1:
