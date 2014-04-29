@@ -7,7 +7,7 @@ from __future__ import print_function
 
 from __future__ import division
 
-import warnings  # TODO: replace print() with warnings?
+import warnings
 
 import numpy as np
 
@@ -78,23 +78,6 @@ class SLDA(BaseEstimator, ClassifierMixin):
         self.priors = np.asarray(priors) if priors is not None else None
         self.shrinkage = shrinkage
 
-        # TODO: support equal priors (with priors=='equal')
-        if self.priors is not None:
-            if (self.priors < 0).any():
-                raise ValueError('priors must be non-negative')
-            if self.priors.sum() != 1:
-                print('warning: the priors do not sum to 1. Renormalizing')
-                self.priors = self.priors / self.priors.sum()
-
-        if shrinkage is not None:
-            if shrinkage == 'auto':
-                self._cov_estimator = _ledoit_wolf
-            else:
-                print('warning: unknown shrinkage method, using no shrinkage')
-                self._cov_estimator = empirical_covariance
-        else:
-            self._cov_estimator = empirical_covariance
-
     def fit(self, X, y):
         """
         Fit the LDA model according to the given training data and parameters.
@@ -117,10 +100,26 @@ class SLDA(BaseEstimator, ClassifierMixin):
         n_classes = len(self.classes_)
         if n_classes < 2:
             raise ValueError('y has less than 2 classes')
-        if self.priors is None:
-            self.priors_ = np.bincount(y) / float(n_samples)
-        else:
+
+        # TODO: support equal priors (with priors=='equal')
+        if self.priors is not None:
+            if (self.priors < 0).any():
+                raise ValueError('priors must be non-negative')
+            if self.priors.sum() != 1:
+                warnings.warn('priors do not sum to 1; renormalizing')
+                self.priors = self.priors / self.priors.sum()
             self.priors_ = self.priors
+        else:
+            self.priors_ = np.bincount(y) / float(n_samples)
+
+        if self.shrinkage is not None:
+            if self.shrinkage == 'auto':
+                self._cov_estimator = _ledoit_wolf
+            else:
+                warnings.warn('unknown shrinkage method, using no shrinkage')
+                self._cov_estimator = empirical_covariance
+        else:
+            self._cov_estimator = empirical_covariance
 
         means = []
         covs = []
