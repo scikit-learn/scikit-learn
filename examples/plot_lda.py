@@ -11,8 +11,8 @@ from __future__ import division
 import numpy as np
 import matplotlib.pyplot as plt
 
-from sklearn.lda import LDA
-from sklearn.slda import SLDA
+from sklearn.lda import LDA, ShrinkageLDA
+
 
 n_train = 10     # samples per class for training
 n_test = 100    # samples per class for training
@@ -38,8 +38,8 @@ for m in m_range:
         X, y = generate_data(n_train, m)
 
         lda = LDA().fit(X, y)
-        slda = SLDA().fit(X, y)
-        nlda = SLDA(shrinkage=None).fit(X, y)
+        slda = ShrinkageLDA().fit(X, y)
+        nlda = ShrinkageLDA(shrinkage=None).fit(X, y)
 
         X, y = generate_data(n_test, m)
         tmp_lda += lda.score(X, y) / n_averages
@@ -52,14 +52,14 @@ for m in m_range:
 
 m_range = (1 + np.array(m_range)) / (2 * n_train)
 
-plt.plot(m_range, acc_lda, linewidth=2, label='sklearn.lda')
-plt.plot(m_range, acc_nlda, linewidth=2, label='empirical cov')
-plt.plot(m_range, acc_slda, linewidth=2, label='Ledoit-Wolf')
+plt.plot(m_range, acc_slda, linewidth=2, label='ShrinkageLDA()', color='r')
+plt.plot(m_range, acc_nlda, linewidth=2, label='ShrinkageLDA(shrinkage=None)', color='g')
+plt.plot(m_range, acc_lda, linewidth=2, label='LDA()', color='b')
 
 plt.xlabel('n_features / n_samples')
 plt.ylabel('Classification accuracy')
 
-plt.legend(loc=3)
+plt.legend(loc=4, prop={'size': 8})
 
 plt.suptitle('LDA vs sLDA (1 discriminative feature)')
 
