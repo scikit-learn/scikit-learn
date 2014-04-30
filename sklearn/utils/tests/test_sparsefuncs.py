@@ -1,10 +1,13 @@
 import numpy as np
 import scipy.sparse as sp
+
+from scipy import linalg
 from numpy.testing import assert_array_almost_equal, assert_array_equal
 
 from sklearn.datasets import make_classification
 from sklearn.utils.sparsefuncs import (mean_variance_axis0,
-                                       inplace_column_scale)
+                                       inplace_column_scale,
+                                       inplace_swap_row, inplace_swap_column)
 from sklearn.utils.sparsefuncs_fast import assign_rows_csr
 from sklearn.utils.testing import assert_raises
 
@@ -60,3 +63,55 @@ def test_inplace_column_scale():
     assert_array_almost_equal(XA, Xc.toarray())
     assert_array_almost_equal(XA, Xr.toarray())
     assert_raises(TypeError, inplace_column_scale, X.tolil(), scale)
+
+
+def test_inplace_swap_row():
+    X = np.array([[0, 3, 0],
+                  [2, 4, 0],
+                  [0, 0, 0],
+                  [9, 8, 7],
+                  [4, 0, 5]], dtype=np.float64)
+    X_csr = sp.csr_matrix(X)
+    X_csc = sp.csc_matrix(X)
+
+    swap = linalg.get_blas_funcs(('swap',), (X,))
+    swap = swap[0]
+    X[0], X[-1] = swap(X[0], X[-1])
+    inplace_swap_row(X_csr, 0, -1)
+    inplace_swap_row(X_csc, 0, -1)
+    assert_array_equal(X_csr.toarray(), X_csc.toarray())
+    assert_array_equal(X, X_csc.toarray())
+    assert_array_equal(X, X_csr.toarray())
+
+    X[2], X[3] = swap(X[2], X[3])
+    inplace_swap_row(X_csr, 2, 3)
+    inplace_swap_row(X_csc, 2, 3)
+    assert_array_equal(X_csr.toarray(), X_csc.toarray())
+    assert_array_equal(X, X_csc.toarray())
+    assert_array_equal(X, X_csr.toarray())
+
+
+def test_inplace_swap_column():
+    X = np.array([[0, 3, 0],
+                  [2, 4, 0],
+                  [0, 0, 0],
+                  [9, 8, 7],
+                  [4, 0, 5]], dtype=np.float64)
+    X_csr = sp.csr_matrix(X)
+    X_csc = sp.csc_matrix(X)
+
+    swap = linalg.get_blas_funcs(('swap',), (X,))
+    swap = swap[0]
+    X[:, 0], X[:, -1] = swap(X[:, 0], X[:, -1])
+    inplace_swap_column(X_csr, 0, -1)
+    inplace_swap_column(X_csc, 0, -1)
+    assert_array_equal(X_csr.toarray(), X_csc.toarray())
+    assert_array_equal(X, X_csc.toarray())
+    assert_array_equal(X, X_csr.toarray())
+
+    X[:, 0], X[:, 1] = swap(X[:, 0], X[:, 1])
+    inplace_swap_column(X_csr, 0, 1)
+    inplace_swap_column(X_csc, 0, 1)
+    assert_array_equal(X_csr.toarray(), X_csc.toarray())
+    assert_array_equal(X, X_csc.toarray())
+    assert_array_equal(X, X_csr.toarray())
