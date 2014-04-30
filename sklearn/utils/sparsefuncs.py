@@ -59,16 +59,25 @@ def inplace_column_scale(X, scale):
                 "Unsupported type; expected a CSR or CSC sparse matrix.")
 
 
-def swap_row_csc(X, m, n):
+def inplace_swap_row_csc(X, m, n):
     """
     Swaps two rows of a CSC matrix in-place.
 
     Parameters
     ----------
-    X : scipy.sparse.csc_matrix, shape=(n_samples, n_features)
-    m : int, index of first sample
-    n : int, index of second sample
+    X: scipy.sparse.csc_matrix, shape=(n_samples, n_features)
+        Matrix whose two rows are to be swapped.
+
+    m: int
+        Index of the row of X to be swapped.
+
+    n: int
+        Index of the row of X to be swapped.
     """
+    for t in [m, n]:
+        if isinstance(t, np.ndarray):
+            raise TypeError("m and n should be valid integers")
+
     if m < 0:
         m += X.shape[0]
     if n < 0:
@@ -79,20 +88,32 @@ def swap_row_csc(X, m, n):
     X.indices[m_mask] = n
 
 
-def swap_row_csr(X, m, n):
+def inplace_swap_row_csr(X, m, n):
     """
     Swaps two rows of a CSR matrix in-place.
 
     Parameters
     ----------
-    X : scipy.sparse.csc_matrix, shape=(n_samples, n_features)
-    m : int, index of first sample
-    n : int, index of second sample
+    X: scipy.sparse.csr_matrix, shape=(n_samples, n_features)
+        Matrix whose two rows are to be swapped.
+
+    m: int
+        Index of the row of X to be swapped.
+
+    n: int
+        Index of the row of X to be swapped.
     """
+    for t in [m, n]:
+        if isinstance(t, np.ndarray):
+            raise TypeError("m and n should be valid integers")
+
     if m < 0:
         m += X.shape[0]
     if n < 0:
         n += X.shape[0]
+
+    # The following swapping makes life easier since m is assumed to be the
+    # smaller integer below.
     if m > n:
         m, n = n, m
 
@@ -123,43 +144,53 @@ def swap_row_csr(X, m, n):
                              X.data[n_stop:]])
 
 
-def swap_row(X, m, n):
+def inplace_swap_row(X, m, n):
     """
     Swaps two rows of a CSC/CSR matrix in-place.
 
     Parameters
     ----------
-    X : scipy.sparse.csc_matrix, shape=(n_samples, n_features)
-    m : int, index of first sample
-    n : int, index of second sample
+    X : CSR or CSC sparse matrix, shape=(n_samples, n_features)
+        Matrix whose two rows are to be swapped.
+
+    m: int
+        Index of the row of X to be swapped.
+
+    n: int
+        Index of the row of X to be swapped.
     """
     if isinstance(X, sp.csc_matrix):
-        return swap_row_csc(X, m, n)
+        return inplace_swap_row_csc(X, m, n)
     elif isinstance(X, sp.csr_matrix):
-        return swap_row_csr(X, m, n)
+        return inplace_swap_row_csr(X, m, n)
     else:
         raise TypeError(
             "Unsupported type; expected a CSR or CSC sparse matrix.")
 
 
-def swap_column(X, m, n):
+def inplace_swap_column(X, m, n):
     """
     Swaps two columns of a CSC/CSR matrix in-place.
 
     Parameters
     ----------
-    X : scipy.sparse.csc_matrix, shape=(n_samples, n_features)
-    m : int, index of first sample
-    n : int, index of second sample
+    X : CSR or CSC sparse matrix, shape=(n_samples, n_features)
+        Matrix whose two columns are to be swapped.
+
+    m: int
+        Index of the column of X to be swapped.
+
+    n : int
+        Index of the column of X to be swapped.
     """
     if m < 0:
         m += X.shape[1]
     if n < 0:
         n += X.shape[1]
     if isinstance(X, sp.csc_matrix):
-        return swap_row_csr(X, m, n)
+        return inplace_swap_row_csr(X, m, n)
     elif isinstance(X, sp.csr_matrix):
-        return swap_row_csc(X, m, n)
+        return inplace_swap_row_csc(X, m, n)
     else:
         raise TypeError(
             "Unsupported type; expected a CSR or CSC sparse matrix.")
