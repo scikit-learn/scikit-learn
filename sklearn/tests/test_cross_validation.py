@@ -228,8 +228,8 @@ def test_stratified_kfold_ratios():
     labels = np.array([4] * int(0.10 * n_samples) +
                       [0] * int(0.89 * n_samples) +
                       [1] * int(0.01 * n_samples))
-    for shuf in [False, True]:
-        for train, test in cval.StratifiedKFold(labels, 5, shuffle=True):
+    for shuffle in [False, True]:
+        for train, test in cval.StratifiedKFold(labels, 5, shuffle=shuffle):
             assert_almost_equal(np.sum(labels[train] == 4) / len(train), 0.10, 2)
             assert_almost_equal(np.sum(labels[train] == 0) / len(train), 0.89, 2)
             assert_almost_equal(np.sum(labels[train] == 1) / len(train), 0.01, 2)
@@ -254,8 +254,9 @@ def test_stratifiedkfold_balance():
     # stratification is possible)
     # Repeat with shuffling turned off and on
     labels = [0] * 3 + [1] * 14
-    for shuf in [False, True]:
-        for skf in [cval.StratifiedKFold(labels[:i], 3, shuffle=shuf) for i in range(11, 17)]:
+    for shuffle in [False, True]:
+        for skf in [cval.StratifiedKFold(labels[:i], 3, shuffle=shuffle)
+                    for i in range(11, 17)]:
             sizes = []
             for _, test in skf:
                 sizes.append(len(test))
