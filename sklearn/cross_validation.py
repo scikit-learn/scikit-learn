@@ -1244,7 +1244,10 @@ def _safe_split(estimator, X, y, indices, train_indices=None):
             X_subset = X[safe_mask(X, indices)]
 
     if y is not None:
-        y_subset = y[safe_mask(y, indices)]
+        if not hasattr(y, "shape"):
+            y_subset = [y[idx] for idx in indices]
+        else:
+            y_subset = y[safe_mask(y, indices)]
     else:
         y_subset = None
 
