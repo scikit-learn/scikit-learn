@@ -478,7 +478,14 @@ class Nystroem(BaseEstimator, TransformerMixin):
         # sqrt of kernel matrix on basis vectors
         U, S, V = svd(basis_kernel)
 
-        self.normalization_ = np.dot(U * 1. / np.sqrt(S), V)
+        # Handle possible matrix singularity like scipy does in pinv2
+        t = U.dtype.char.lower()
+        factor = {'f': 1E3, 'd': 1E6}
+        cond = factor[t] * np.finfo(t).eps
+        rank = np.sum(S > cond * np.max(S))
+
+        self.normalization_ = np.dot(U[:, : rank] * 1. / np.sqrt(S[: rank]), V[: rank])
+
         self.components_ = basis
         self.component_indices_ = basis_inds
         return self
