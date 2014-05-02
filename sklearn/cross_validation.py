@@ -253,7 +253,7 @@ class _BaseKFold(with_metaclass(ABCMeta, _PartitionIterator)):
 
         if not isinstance(shuffle, bool):
             raise TypeError("shuffle must be True or False;"
-                             " got {0}".format(shuffle))
+                            " got {0}".format(shuffle))
         self.shuffle = shuffle
         self.random_state = random_state
 
