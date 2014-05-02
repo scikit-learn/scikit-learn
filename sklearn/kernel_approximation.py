@@ -15,6 +15,7 @@ from scipy.linalg import svd
 
 from .base import BaseEstimator
 from .base import TransformerMixin
+from sklearn.cluster import k_means
 from .utils import (array2d, atleast2d_or_csr, check_random_state,
                     as_float_array)
 from .utils.extmath import safe_sparse_dot
@@ -376,6 +377,10 @@ class Nystroem(BaseEstimator, TransformerMixin):
         If int, random_state is the seed used by the random number generator;
         if RandomState instance, random_state is the random number generator.
 
+    basis_method : string "random" or "clustered"
+        Form approximation using randomly sampled columns or k-means
+        cluster centers to construct the Nystrom Approximation
+
 
     Attributes
     ----------
@@ -401,6 +406,10 @@ class Nystroem(BaseEstimator, TransformerMixin):
       Comparison",
       Advances in Neural Information Processing Systems 2012
 
+    * Zhang, Kai, and James T. Kwok.
+      "Clustered Nystroem method for large scale manifold learning and
+      dimension reduction",
+      Neural Networks, IEEE Transactions on 21, no. 10 2010
 
     See also
     --------
@@ -410,7 +419,8 @@ class Nystroem(BaseEstimator, TransformerMixin):
     sklearn.metric.pairwise.kernel_metrics : List of built-in kernels.
     """
     def __init__(self, kernel="rbf", gamma=None, coef0=1, degree=3,
-                 kernel_params=None, n_components=100, random_state=None):
+                 kernel_params=None, n_components=100, random_state=None,
+                 basis_method="random"):
         self.kernel = kernel
         self.gamma = gamma
         self.coef0 = coef0
@@ -418,6 +428,7 @@ class Nystroem(BaseEstimator, TransformerMixin):
         self.kernel_params = kernel_params
         self.n_components = n_components
         self.random_state = random_state
+        self.basis_method = basis_method
 
     def fit(self, X, y=None):
         """Fit estimator to data.
@@ -446,10 +457,19 @@ class Nystroem(BaseEstimator, TransformerMixin):
 
         else:
             n_components = self.n_components
-        n_components = min(n_samples, n_components)
-        inds = rnd.permutation(n_samples)
-        basis_inds = inds[:n_components]
-        basis = X[basis_inds]
+
+        if self.basis_method == "random":
+            inds = rnd.permutation(n_samples)
+            basis_inds = inds[:n_components]
+            basis = X[basis_inds]
+        elif self.basis_method == "clustered":
+            # Zhang and Kwok use 5 in their paper so lets do that
+            basis, _, _ = k_means(X, n_components, init='random', max_iter=5, n_init=1, random_state=rnd)
+            #If we are using k_means centers as input, cannot record basis_inds
+            basis_inds = None
+
+        else:
+            raise NameError('{} is not a supported basis_method'.format(self.basis_method))
 
         basis_kernel = pairwise_kernels(basis, metric=self.kernel,
                                         filter_params=True,
@@ -457,9 +477,10 @@ class Nystroem(BaseEstimator, TransformerMixin):
 
         # sqrt of kernel matrix on basis vectors
         U, S, V = svd(basis_kernel)
+
         self.normalization_ = np.dot(U * 1. / np.sqrt(S), V)
         self.components_ = basis
-        self.component_indices_ = inds
+        self.component_indices_ = basis_inds
         return self
 
     def transform(self, X):

@@ -35,9 +35,15 @@ Nystroem Method for Kernel Approximation
 The Nystroem method, as implemented in :class:`Nystroem` is a general method
 for low-rank approximations of kernels. It achieves this by essentially subsampling
 the data on which the kernel is evaluated.
+The subsampling methodology used to generate the approximate kernel is specified by
+the parameter ``basis_method`` which can either be ``random`` or ``clustered``.
+If the ``random`` method is specified randomly selected data will be utilized in
+the approximation while the ``clustered`` method uses the cluster centers found via
+k-means clustering. Further details concerning the subsampling methods can be found
+in [ZK2010]_.
 By default :class:`Nystroem` uses the ``rbf`` kernel, but it can use any
 kernel function or a precomputed kernel matrix.
-The number of samples used - which is also the dimensionality of the features computed -
+The number of bases used - which is also the dimensionality of the features computed -
 is given by the parameter ``n_components``.
 
 
@@ -197,3 +203,6 @@ or store training examples.
     .. [VVZ2010] `"Generalized RBF feature maps for Efficient Detection"
       <http://eprints.pascal-network.org/archive/00007024/01/inproceedings.pdf.8a865c2a5421e40d.537265656b616e7468313047656e6572616c697a65642e706466.pdf>`_
       Vempati, S. and Vedaldi, A. and Zisserman, A. and Jawahar, CV - 2010
+    .. [ZK2010] `"Clustered Nystroem method for large scale manifold learning and dimension reduction"
+      <http://www.cs.ust.hk/~jamesk/papers/tnn10b.pdf>`_
+      Zhang, K. and Kwok, J.T. - Neural Networks, IEEE Transactions on 21, no. 10 2010

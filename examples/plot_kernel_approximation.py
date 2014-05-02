@@ -48,7 +48,7 @@ print(__doc__)
 # License: BSD 3 clause
 
 # Standard scientific Python imports
-import pylab as pl
+import matplotlib.pyplot as plt
 import numpy as np
 from time import time
 
@@ -75,22 +75,29 @@ data_train, targets_train = data[:n_samples / 2], digits.target[:n_samples / 2]
 data_test, targets_test = data[n_samples / 2:], digits.target[n_samples / 2:]
 #data_test = scaler.transform(data_test)
 
+
+kernel_gamma = 0.2
+
 # Create a classifier: a support vector classifier
-kernel_svm = svm.SVC(gamma=.2)
+kernel_svm = svm.SVC(gamma=kernel_gamma)
 linear_svm = svm.LinearSVC()
 
 # create pipeline from kernel approximation
 # and linear svm
-feature_map_fourier = RBFSampler(gamma=.2, random_state=1)
-feature_map_nystroem = Nystroem(gamma=.2, random_state=1)
+feature_map_fourier = RBFSampler(gamma=kernel_gamma, random_state=0)
+feature_map_random_nystroem = Nystroem(gamma=kernel_gamma, random_state=0, basis_method='random')
+feature_map_clusted_nystroem_ = Nystroem(gamma=kernel_gamma, random_state=0, basis_method='clustered')
+
 fourier_approx_svm = pipeline.Pipeline([("feature_map", feature_map_fourier),
                                         ("svm", svm.LinearSVC())])
 
-nystroem_approx_svm = pipeline.Pipeline([("feature_map", feature_map_nystroem),
-                                        ("svm", svm.LinearSVC())])
+random_nystroem_svm = pipeline.Pipeline([("feature_map", feature_map_random_nystroem),
+                                         ("svm", svm.LinearSVC())])
+
+clustered_nystroem_svm = pipeline.Pipeline([("feature_map", feature_map_clusted_nystroem_),
+                                            ("svm", svm.LinearSVC())])
 
 # fit and predict using linear and kernel svm:
-
 kernel_svm_time = time()
 kernel_svm.fit(data_train, targets_train)
 kernel_svm_score = kernel_svm.score(data_test, targets_test)
@@ -101,37 +108,48 @@ linear_svm.fit(data_train, targets_train)
 linear_svm_score = linear_svm.score(data_test, targets_test)
 linear_svm_time = time() - linear_svm_time
 
-sample_sizes = 30 * np.arange(1, 10)
+sample_sizes = 10 * np.arange(1, 30)
 fourier_scores = []
-nystroem_scores = []
+random_scores = []
+clustered_scores = []
 fourier_times = []
-nystroem_times = []
+random_times = []
+clustered_times = []
 
 for D in sample_sizes:
     fourier_approx_svm.set_params(feature_map__n_components=D)
-    nystroem_approx_svm.set_params(feature_map__n_components=D)
+    random_nystroem_svm.set_params(feature_map__n_components=D)
+    clustered_nystroem_svm.set_params(feature_map__n_components=D)
+
     start = time()
-    nystroem_approx_svm.fit(data_train, targets_train)
-    nystroem_times.append(time() - start)
+    random_nystroem_svm.fit(data_train, targets_train)
+    random_times.append(time() - start)
+
+    start = time()
+    clustered_nystroem_svm.fit(data_train, targets_train)
+    clustered_times.append(time() - start)
 
     start = time()
     fourier_approx_svm.fit(data_train, targets_train)
     fourier_times.append(time() - start)
 
-    fourier_score = fourier_approx_svm.score(data_test, targets_test)
-    nystroem_score = nystroem_approx_svm.score(data_test, targets_test)
-    nystroem_scores.append(nystroem_score)
-    fourier_scores.append(fourier_score)
+    fourier_scores.append(fourier_approx_svm.score(data_test, targets_test))
+    random_scores.append(random_nystroem_svm.score(data_test, targets_test))
+    clustered_scores.append(clustered_nystroem_svm.score(data_test, targets_test))
 
 # plot the results:
-pl.figure(figsize=(8, 8))
-accuracy = pl.subplot(211)
-# second y axis for timeings
-timescale = pl.subplot(212)
+plt.figure(figsize=(8, 8))
+accuracy = plt.subplot(211)
+# second y axis for timings
+timescale = plt.subplot(212)
 
-accuracy.plot(sample_sizes, nystroem_scores, label="Nystroem approx. kernel")
-timescale.plot(sample_sizes, nystroem_times, '--',
-               label='Nystroem approx. kernel')
+accuracy.plot(sample_sizes, random_scores, label="Random Nystroem approx. kernel")
+timescale.plot(sample_sizes, random_times, '--',
+               label='Random Nystroem approx. kernel')
+
+accuracy.plot(sample_sizes, clustered_scores, label="Clustered Nystroem approx. kernel")
+timescale.plot(sample_sizes, clustered_times, '--',
+               label='Clustered Nystroem approx. kernel')
 
 accuracy.plot(sample_sizes, fourier_scores, label="Fourier approx. kernel")
 timescale.plot(sample_sizes, fourier_times, '--',
@@ -149,7 +167,7 @@ timescale.plot([sample_sizes[0], sample_sizes[-1]],
                [kernel_svm_time, kernel_svm_time], '--', label='rbf svm')
 
 # vertical line for dataset dimensionality = 64
-accuracy.plot([64, 64], [0.7, 1], label="n_features")
+accuracy.plot([64, 64], accuracy.get_ylim(), label="n_features")
 
 # legends and labels
 accuracy.set_title("Classification accuracy")
@@ -165,7 +183,7 @@ timescale.legend(loc='best')
 
 # visualize the decision surface, projected down to the first
 # two principal components of the dataset
-pca = PCA(n_components=8).fit(data_train)
+pca = PCA(n_components=2).fit(data_train)
 
 X = pca.transform(data_train)
 
@@ -179,32 +197,40 @@ second = multiples[:, np.newaxis] * pca.components_[1, :]
 grid = first[np.newaxis, :, :] + second[:, np.newaxis, :]
 flat_grid = grid.reshape(-1, data.shape[1])
 
+n_components_to_plot = 100
+
 # title for the plots
 titles = ['SVC with rbf kernel',
-          'SVC (linear kernel)\n with Fourier rbf feature map\n'
-          'n_components=100',
-          'SVC (linear kernel)\n with Nystroem rbf feature map\n'
-          'n_components=100']
+          'SVC with linear kernel',
+          'SVC (linear kernel)\n with Fourier rbf approx\n'
+          'n_components={}'.format(n_components_to_plot),
+          'SVC (linear kernel)\n with clustered Nystroem rbf approx\n'
+          'n_components={}'.format(n_components_to_plot)]
 
-pl.tight_layout()
-pl.figure(figsize=(12, 5))
+plt.tight_layout()
+plt.figure(figsize=(14, 4))
+
+clustered_nystroem_svm.set_params(feature_map__n_components=n_components_to_plot)
+clustered_nystroem_svm.fit(data_train, targets_train)
+fourier_approx_svm.set_params(feature_map__n_components=n_components_to_plot)
+fourier_approx_svm.fit(data_train, targets_train)
 
 # predict and plot
-for i, clf in enumerate((kernel_svm, nystroem_approx_svm,
+for i, clf in enumerate((kernel_svm, linear_svm, clustered_nystroem_svm,
                          fourier_approx_svm)):
     # Plot the decision boundary. For that, we will assign a color to each
     # point in the mesh [x_min, m_max]x[y_min, y_max].
-    pl.subplot(1, 3, i + 1)
+    plt.subplot(1, 4, i + 1)
     Z = clf.predict(flat_grid)
 
     # Put the result into a color plot
     Z = Z.reshape(grid.shape[:-1])
-    pl.contourf(multiples, multiples, Z, cmap=pl.cm.Paired)
-    pl.axis('off')
+    plt.contourf(multiples, multiples, Z, cmap=plt.cm.Paired)
+    plt.axis('off')
 
     # Plot also the training points
-    pl.scatter(X[:, 0], X[:, 1], c=targets_train, cmap=pl.cm.Paired)
+    plt.scatter(X[:, 0], X[:, 1], c=targets_train, cmap=plt.cm.Paired)
 
-    pl.title(titles[i])
-pl.tight_layout()
-pl.show()
+    plt.title(titles[i])
+plt.tight_layout()
+plt.show()
