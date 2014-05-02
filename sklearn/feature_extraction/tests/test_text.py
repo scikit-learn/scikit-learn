@@ -9,6 +9,7 @@ from sklearn.feature_extraction.text import HashingVectorizer
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.feature_extraction.text import _batch_iter
 
 from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS
 
@@ -70,6 +71,24 @@ def split_tokenize(s):
 
 def lazy_analyze(s):
     return ['the_ultimate_feature']
+
+
+def test_batch_iter():
+    a_list = list(range(10))
+    an_iter = iter(range(10))
+    result = [[0, 1, 2], [3, 4, 5], [6, 7, 8], [9]]
+    assert_equal(list(_batch_iter(a_list, 3)), result)
+    assert_equal(list(_batch_iter(an_iter, 3)), result)
+
+    a_list = list(range(10))
+    an_iter = iter(range(10))
+    result = [[0, 1, 2, 3, 4], [5, 6, 7, 8, 9]]
+    assert_equal(list(_batch_iter(a_list, 5)), result)
+    assert_equal(list(_batch_iter(an_iter, 5)), result)
+
+    result = []
+    assert_equal(list(_batch_iter(list(), 5)), result)
+    assert_equal(list(_batch_iter(iter(list()), 5)), result)
 
 
 def test_strip_accents():

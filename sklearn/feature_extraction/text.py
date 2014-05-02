@@ -21,7 +21,7 @@ from operator import itemgetter
 import re
 import unicodedata
 import warnings
-from itertools import chain, count, groupby
+from itertools import chain, islice
 
 import numpy as np
 import scipy.sparse as sp
@@ -461,9 +461,11 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
 
 def _batch_iter(iterable, size):
     """Iterate an iterable in a group of 'size' as list"""
-    c = count()
-    for k, g in groupby(iterable, lambda x: next(c)//size):
-        yield list(g)  # To ensure the iterable is iterated in sequence
+    iterable = iter(iterable)
+    batch = list(islice(iterable, size))
+    while batch:
+        yield batch
+        batch = list(islice(iterable, size))
 
 
 def _document_frequency(X):
@@ -769,7 +771,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         """
         doc_list = Parallel(n_jobs=self.n_jobs)(
             delayed(_count_vocab_process)(docs, clone(self))
-            for docs in _batch_iter(raw_documents, 10))
+            for docs in _batch_iter(raw_documents, 100))
         doc_list = chain(*doc_list)
         dict_vectorizer = DictVectorizer(dtype=self.dtype, sparse=True)
         if fixed_vocab:
