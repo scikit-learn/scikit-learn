@@ -469,7 +469,7 @@ class Nystroem(BaseEstimator, TransformerMixin):
             basis_inds = None
 
         else:
-            raise NameError('{} is not a supported basis_method'.format(self.basis_method))
+            raise NameError('{0} is not a supported basis_method'.format(self.basis_method))
 
         basis_kernel = pairwise_kernels(basis, metric=self.kernel,
                                         filter_params=True,
