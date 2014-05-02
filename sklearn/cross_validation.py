@@ -1159,11 +1159,11 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose, parameters,
 
     Returns
     -------
+    train_score : float, optional
+        Score on training set, returned only if `return_train_score` is `True`. 
+        
     test_score : float
         Score on test set.
-
-    train_score : float, optional
-        Score on training set.
 
     n_test_samples : int
         Number of test samples.
