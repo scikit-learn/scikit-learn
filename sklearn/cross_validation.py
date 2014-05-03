@@ -24,6 +24,7 @@ import scipy.sparse as sp
 from .base import is_classifier, clone
 from .utils import indexable, check_random_state, safe_indexing
 from .utils.validation import _num_samples, check_array
+from .utils.multiclass import type_of_target
 from .externals.joblib import Parallel, delayed, logger
 from .externals.six import with_metaclass
 from .externals.six.moves import zip
@@ -1096,10 +1097,11 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)``.
 
-    cv : cross-validation generator, optional, default: None
-        A cross-validation generator. If None, a 3-fold cross
-        validation is used or 3-fold stratified cross-validation
-        when y is supplied and estimator is a classifier.
+    cv : cross-validation generator or int, optional, default: None
+        A cross-validation generator to use. If int, determines
+        the number of folds in StratifiedKFold if y is binary
+        or multiclass and estimator is a classifier, or the number
+        of folds in KFold otherwise. If None, it is equivalent to cv=3.
 
     n_jobs : integer, optional
         The number of CPUs to use to do the computation. -1 means
@@ -1360,7 +1362,10 @@ def _check_cv(cv, X=None, y=None, classifier=False, warn_mask=False):
         else:
             needs_indices = None
         if classifier:
-            cv = StratifiedKFold(y, cv, indices=needs_indices)
+            if type_of_target(y) in ['binary', 'multiclass']:
+                cv = StratifiedKFold(y, cv, indices=needs_indices)
+            else:
+                cv = KFold(_num_samples(y), cv, indices=needs_indices)
         else:
             if not is_sparse:
                 n_samples = len(X)

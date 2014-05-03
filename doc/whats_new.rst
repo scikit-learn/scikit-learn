@@ -66,7 +66,22 @@ API changes summary
       :func:`multiclass.fit_ecoc` and :func:`multiclass.predict_ecoc`
       are deprecated. Use the underlying estimators instead.
 
+.. _changes_0_15_1:
+
+0.15.1
+======
+
 .. _changes_0_15:
+
+
+Bug fixes
+---------
+
+   - Make :func:`cross_validation.cross_val_score` use
+     :class:`cross_validation.KFold` instead of
+     :class:`cross_validation.StratifiedKFold` on multi-output classification
+     problems. By `Nikolay Mayorov`_.
+
 
 0.15
 ====
@@ -2837,3 +2852,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Ronald Phlypo: https://github.com/rphlypo
 
 .. _Laurent Direr: https://github.com/ldirer
+
+.. _Nikolay Mayorov: https://github.com/nmayorov

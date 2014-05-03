@@ -28,14 +28,16 @@ from sklearn.datasets import load_iris
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import explained_variance_score
 from sklearn.metrics import make_scorer
+from sklearn.metrics import precision_score
 
 from sklearn.externals import six
 from sklearn.externals.six.moves import zip
 
 from sklearn.linear_model import Ridge
+from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
 
-from sklearn.preprocessing import Imputer
+from sklearn.preprocessing import Imputer, LabelBinarizer
 from sklearn.pipeline import Pipeline
 
 
@@ -951,3 +953,48 @@ def test_permutation_test_score_allow_nans():
         ('classifier', MockClassifier()),
     ])
     cval.permutation_test_score(p, X, y, cv=5)
+
+
+def test_check_cv_return_types():
+    X = np.ones((9, 2))
+    cv = cval._check_cv(3, X, classifier=False)
+    assert_true(isinstance(cv, cval.KFold))
+
+    y_binary = np.array([0, 1, 0, 1, 0, 0, 1, 1, 1])
+    cv = cval._check_cv(3, X, y_binary, classifier=True)
+    assert_true(isinstance(cv, cval.StratifiedKFold))
+
+    y_multiclass = np.array([0, 1, 0, 1, 2, 1, 2, 0, 2])
+    cv = cval._check_cv(3, X, y_multiclass, classifier=True)
+    assert_true(isinstance(cv, cval.StratifiedKFold))
+
+    X = np.ones((5, 2))
+    y_seq_of_seqs = [[], [1, 2], [3], [0, 1, 3], [2]]
+    cv = cval._check_cv(3, X, y_seq_of_seqs, classifier=True)
+    assert_true(isinstance(cv, cval.KFold))
+
+    y_indicator_matrix = LabelBinarizer().fit_transform(y_seq_of_seqs)
+    cv = cval._check_cv(3, X, y_indicator_matrix, classifier=True)
+    assert_true(isinstance(cv, cval.KFold))
+
+    y_multioutput = np.array([[1, 2], [0, 3], [0, 0], [3, 1], [2, 0]])
+    cv = cval._check_cv(3, X, y_multioutput, classifier=True)
+    assert_true(isinstance(cv, cval.KFold))
+
+
+def test_cross_val_score_multilabel():
+    X = np.array([[-3, 4], [2, 4], [3, 3], [0, 2], [-3, 1],
+                  [-2, 1], [0, 0], [-2, -1], [-1, -2], [1, -2]])
+    y = np.array([[1, 1], [0, 1], [0, 1], [0, 1], [1, 1],
+                  [0, 1], [1, 0], [1, 1], [1, 0], [0, 0]])
+    clf = KNeighborsClassifier(n_neighbors=1)
+    scoring_micro = make_scorer(precision_score, average='micro')
+    scoring_macro = make_scorer(precision_score, average='macro')
+    scoring_samples = make_scorer(precision_score, average='samples')
+    score_micro = cval.cross_val_score(clf, X, y, scoring=scoring_micro, cv=5)
+    score_macro = cval.cross_val_score(clf, X, y, scoring=scoring_macro, cv=5)
+    score_samples = cval.cross_val_score(clf, X, y,
+                                         scoring=scoring_samples, cv=5)
+    assert_almost_equal(score_micro, [1, 1/2, 3/4, 1/2, 1/3])
+    assert_almost_equal(score_macro, [1, 1/2, 3/4, 1/2, 1/4])
+    assert_almost_equal(score_samples, [1, 1/2, 3/4, 1/2, 1/4])
