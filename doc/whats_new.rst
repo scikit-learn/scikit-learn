@@ -1,5 +1,20 @@
 .. currentmodule:: sklearn
 
+.. _changes_0_15_1:
+
+0.15.1
+======
+
+
+Bug fixes
+---------
+
+   - Make :func:`cross_validation.cross_val_score` use
+     :class:`cross_validation.KFold` instead of
+     :class:`cross_validation.StratifiedKFold` on multi-output classification
+     problems. By `Nikolay Mayorov`_.
+
+
 .. _changes_0_15:
 
 0.15
@@ -2769,3 +2784,10 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Hamzeh Alsalhi: https://github.com/hamsal
 
 .. _Ronald Phlypo: https://github.com/rphlypo
+<<<<<<< HEAD
+=======
+
+.. _Laurent Direr: https://github.com/ldirer
+
+.. _Nikolay Mayorov: https://github.com/nmayorov
+>>>>>>> e894205... FIX Implemented correct handling of multilabel y in cross_val_score
