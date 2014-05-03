@@ -8,7 +8,7 @@ Here we try to give some answers to questions that regularly pop up on the maili
 
 What is the project name (a lot of people get it wrong)?
 --------------------------------------------------------
-scikit-learn, or sklearn for short, but not scikit or SciKit nor sci-kit learn. Also not scikits.learn or scikits-learn, which where previously used.
+scikit-learn, but not scikit or SciKit nor sci-kit learn. Also not scikits.learn or scikits-learn, which where previously used.
 
 How do you pronounce the project name?
 ------------------------------------------
@@ -16,9 +16,9 @@ sy-kit learn. sci stands for science!
 
 Why scikit?
 ------------
-There are multiple scikits, which are scientific toolboxes build around scipy.
-You can find a list here:
-Apart from scikit-learn, other popular ones are scikits.statsmodel and scikit-image.
+There are multiple scikits, which are scientific toolboxes build around SciPy.
+You can find a list at `https://scikits.appspot.com/scikits`_.
+Apart from scikit-learn, another popular one is `scikit-image <http://scikit-image.org/>`_.
 
 How can I contribute to scikit-learn?
 -----------------------------------------
