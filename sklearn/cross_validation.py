@@ -23,6 +23,7 @@ import scipy.sparse as sp
 
 from .base import is_classifier, clone
 from .utils import check_arrays, check_random_state, safe_mask
+from .utils.multiclass import is_multilabel, is_sequence_of_sequences
 from .utils.validation import _num_samples
 from .externals.joblib import Parallel, delayed, logger
 from .externals.six import with_metaclass
@@ -1327,7 +1328,14 @@ def _check_cv(cv, X=None, y=None, classifier=False, warn_mask=False):
         else:
             needs_indices = None
         if classifier:
-            cv = StratifiedKFold(y, cv, indices=needs_indices)
+            if is_multilabel(y):
+                if is_sequence_of_sequences(y):
+                    n_samples = len(y)
+                else:
+                    n_samples = y.shape[0]
+                cv = KFold(n_samples, cv, indices=needs_indices)
+            else:
+                cv = StratifiedKFold(y, cv, indices=needs_indices)
         else:
             if not is_sparse:
                 n_samples = len(X)
