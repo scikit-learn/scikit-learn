@@ -36,9 +36,9 @@ The Nystroem method, as implemented in :class:`Nystroem` is a general method
 for low-rank approximations of kernels. It achieves this by essentially subsampling
 the data on which the kernel is evaluated.
 The subsampling methodology used to generate the approximate kernel is specified by
-the parameter ``basis_method`` which can either be ``random`` or ``clustered``.
+the parameter ``basis_sampling`` which can either be ``random`` or ``kmeans``.
 If the ``random`` method is specified randomly selected data will be utilized in
-the approximation while the ``clustered`` method uses the cluster centers found via
+the approximation while the ``kmeans`` method uses the cluster centers found via
 k-means clustering. Further details concerning the subsampling methods can be found
 in [ZK2010]_.
 By default :class:`Nystroem` uses the ``rbf`` kernel, but it can use any

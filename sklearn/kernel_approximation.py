@@ -377,7 +377,7 @@ class Nystroem(BaseEstimator, TransformerMixin):
         If int, random_state is the seed used by the random number generator;
         if RandomState instance, random_state is the random number generator.
 
-    basis_method : string "random" or "clustered"
+    basis_sampling : string "random" or "kmeans"
         Form approximation using randomly sampled columns or k-means
         cluster centers to construct the Nystrom Approximation
 
@@ -420,7 +420,7 @@ class Nystroem(BaseEstimator, TransformerMixin):
     """
     def __init__(self, kernel="rbf", gamma=None, coef0=1, degree=3,
                  kernel_params=None, n_components=100, random_state=None,
-                 basis_method="random"):
+                 basis_sampling="random"):
         self.kernel = kernel
         self.gamma = gamma
         self.coef0 = coef0
@@ -428,7 +428,7 @@ class Nystroem(BaseEstimator, TransformerMixin):
         self.kernel_params = kernel_params
         self.n_components = n_components
         self.random_state = random_state
-        self.basis_method = basis_method
+        self.basis_sampling = basis_sampling
 
     def fit(self, X, y=None):
         """Fit estimator to data.
@@ -458,18 +458,17 @@ class Nystroem(BaseEstimator, TransformerMixin):
         else:
             n_components = self.n_components
 
-        if self.basis_method == "random":
+        if self.basis_sampling == "random":
             inds = rnd.permutation(n_samples)
             basis_inds = inds[:n_components]
             basis = X[basis_inds]
-        elif self.basis_method == "clustered":
+        elif self.basis_sampling == "kmeans":
             # Zhang and Kwok use 5 in their paper so lets do that
             basis, _, _ = k_means(X, n_components, init='random', max_iter=5, n_init=1, random_state=rnd)
             #If we are using k_means centers as input, cannot record basis_inds
             basis_inds = None
-
         else:
-            raise NameError('{0} is not a supported basis_method'.format(self.basis_method))
+            raise NameError('{0} is not a supported basis_sampling method'.format(self.basis_sampling))
 
         basis_kernel = pairwise_kernels(basis, metric=self.kernel,
                                         filter_params=True,

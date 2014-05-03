@@ -85,8 +85,8 @@ linear_svm = svm.LinearSVC()
 # create pipeline from kernel approximation
 # and linear svm
 feature_map_fourier = RBFSampler(gamma=kernel_gamma, random_state=0)
-feature_map_random_nystroem = Nystroem(gamma=kernel_gamma, random_state=0, basis_method='random')
-feature_map_clusted_nystroem_ = Nystroem(gamma=kernel_gamma, random_state=0, basis_method='clustered')
+feature_map_random_nystroem = Nystroem(gamma=kernel_gamma, random_state=0, basis_sampling='random')
+feature_map_clusted_nystroem_ = Nystroem(gamma=kernel_gamma, random_state=0, basis_sampling='kmeans')
 
 fourier_approx_svm = pipeline.Pipeline([("feature_map", feature_map_fourier),
                                         ("svm", svm.LinearSVC())])
@@ -147,9 +147,9 @@ accuracy.plot(sample_sizes, random_scores, label="Random Nystroem approx. kernel
 timescale.plot(sample_sizes, random_times, '--',
                label='Random Nystroem approx. kernel')
 
-accuracy.plot(sample_sizes, clustered_scores, label="Clustered Nystroem approx. kernel")
+accuracy.plot(sample_sizes, clustered_scores, label="K-means Nystroem approx. kernel")
 timescale.plot(sample_sizes, clustered_times, '--',
-               label='Clustered Nystroem approx. kernel')
+               label='K-means Nystroem approx. kernel')
 
 accuracy.plot(sample_sizes, fourier_scores, label="Fourier approx. kernel")
 timescale.plot(sample_sizes, fourier_times, '--',
@@ -204,7 +204,7 @@ titles = ['SVC with rbf kernel',
           'SVC with linear kernel',
           'SVC (linear kernel)\n with Fourier rbf approx\n'
           'n_components={}'.format(n_components_to_plot),
-          'SVC (linear kernel)\n with clustered Nystroem rbf approx\n'
+          'SVC (linear kernel)\n with K-means Nystroem rbf approx\n'
           'n_components={}'.format(n_components_to_plot)]
 
 plt.tight_layout()
