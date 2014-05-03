@@ -102,8 +102,7 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
             warnings.warn("Passing additional arguments to the metric "
                           "function as **kwargs is deprecated. "
                           "Use metric_params dict instead.",
-                          DeprecationWarning,
-                          stacklevel=3)
+                          DeprecationWarning, stacklevel=3)
             if metric_params is None:
                 metric_params = {}
             metric_params.update(kwargs)
@@ -138,8 +137,8 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
         effective_p = self.p
         if self.metric_params is not None and 'p' in self.metric_params:
             warnings.warn("Parameter p is found in metric_params. "
-                          "The corresponding parameter from __init__ "
-                          "is ignored.")
+                          "The corresponding parameter from __init__"
+                          "is ignored", SyntaxWarning, stacklevel=3)
             effective_p = metric_params['p']
 
         if self.metric in ['wminkowski', 'minkowski'] and effective_p < 1:
