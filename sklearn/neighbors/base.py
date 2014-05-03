@@ -134,12 +134,13 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
             raise ValueError("Metric '%s' not valid for algorithm '%s'"
                              % (metric, algorithm))
 
-        effective_p = self.p
         if self.metric_params is not None and 'p' in self.metric_params:
             warnings.warn("Parameter p is found in metric_params. "
-                          "The corresponding parameter from __init__"
-                          "is ignored", SyntaxWarning, stacklevel=3)
+                          "The corresponding parameter from __init__ "
+                          "is ignored.", SyntaxWarning, stacklevel=3)
             effective_p = metric_params['p']
+        else:
+            effective_p = self.p
 
         if self.metric in ['wminkowski', 'minkowski'] and effective_p < 1:
             raise ValueError("p must be greater than one for minkowski metric")
