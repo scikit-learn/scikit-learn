@@ -890,10 +890,7 @@ def test_permutation_test_score_allow_nans():
 
 
 def test_check_cv_return_types():
-    n_samples = 9
-    n_features = 2
-    X = np.ones((n_samples, n_features))
-
+    X = np.ones((9, 2))
     cv = cval._check_cv(3, X, classifier=False)
     assert_true(isinstance(cv, cval.KFold))
 
@@ -901,6 +898,7 @@ def test_check_cv_return_types():
     cv = cval._check_cv(3, X, y_multiclass, classifier=True)
     assert_true(isinstance(cv, cval.StratifiedKFold))
 
+    X = np.ones((5, 2))
     y_seq_of_seqs = [[], [1, 2], [3], [0, 1, 3], [2]]
     cv = cval._check_cv(3, X, y_seq_of_seqs, classifier=True)
     assert_true(isinstance(cv, cval.KFold))
