@@ -35,7 +35,7 @@ from sklearn.externals.six.moves import zip
 from sklearn.linear_model import Ridge
 from sklearn.svm import SVC
 
-from sklearn.preprocessing import Imputer
+from sklearn.preprocessing import Imputer, LabelBinarizer
 from sklearn.pipeline import Pipeline
 
 
@@ -887,3 +887,24 @@ def test_permutation_test_score_allow_nans():
         ('classifier', MockClassifier()),
     ])
     cval.permutation_test_score(p, X, y, cv=5)
+
+
+def test_check_cv_return_types():
+    n_samples = 9
+    n_features = 2
+    X = np.ones((n_samples, n_features))
+
+    cv = cval._check_cv(3, X, classifier=False)
+    assert_true(isinstance(cv, cval.KFold))
+
+    y_multiclass = np.array([0, 1, 0, 1, 2, 1, 2, 0, 2])
+    cv = cval._check_cv(3, X, y_multiclass, classifier=True)
+    assert_true(isinstance(cv, cval.StratifiedKFold))
+
+    y_seq_of_seqs = [[], [1, 2], [3], [0, 1, 3], [2]]
+    cv = cval._check_cv(3, X, y_seq_of_seqs, classifier=True)
+    assert_true(isinstance(cv, cval.KFold))
+
+    y_indicator_matrix = LabelBinarizer().fit_transform(y_seq_of_seqs)
+    cv = cval._check_cv(3, X, y_indicator_matrix, classifier=True)
+    assert_true(isinstance(cv, cval.KFold))
