@@ -43,7 +43,7 @@ VERSION = sklearn.__version__
 # For some commands, use setuptools
 if len(set(('develop', 'release', 'bdist_egg', 'bdist_rpm',
            'bdist_wininst', 'install_egg_info', 'build_sphinx',
-           'egg_info', 'easy_install', 'upload',
+           'egg_info', 'easy_install', 'upload', 'bdist_wheel',
            '--single-version-externally-managed',
             )).intersection(sys.argv)) > 0:
     import setuptools
