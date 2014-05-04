@@ -61,7 +61,7 @@ from sklearn.metrics.metrics import UndefinedMetricWarning
 
 from sklearn.externals.six.moves import xrange
 
-# Note toward developer about metric testing
+# Note toward developers about metric testing
 # -------------------------------------------
 # It is often possible to write one general test for several metrics:
 #
@@ -326,13 +326,6 @@ METRICS_WITHOUT_SAMPLE_WEIGHT = [
     "jaccard_similarity_score", "unnormalized_jaccard_similarity_score",
     "log_loss",
     "matthews_corrcoef_score",
-]
-
-# Regression metrics that support multioutput and weighted samples
-MULTIOUTPUT_METRICS_WITH_SAMPLE_WEIGHT = [
-    "mean_squared_error",
-    "mean_absolute_error",
-    "r2_score",
 ]
 
 ###############################################################################
