@@ -235,6 +235,7 @@ def test_select_kbest_all():
     X_r = univariate_filter.fit(X, y).transform(X)
     assert_array_equal(X, X_r)
 
+
 def test_select_kbest_zero():
     """
     Test whether k=0 correctly returns no features.
@@ -245,8 +246,9 @@ def test_select_kbest_zero():
     univariate_filter = SelectKBest(f_classif, k=0)
     univariate_filter.fit(X, y).transform(X)
     support = univariate_filter.get_support()
-    gtruth= np.zeros(10, dtype=bool)
+    gtruth = np.zeros(10, dtype=bool)
     assert_array_equal(support, gtruth)
+
 
 def test_select_fpr_classif():
     """
@@ -375,7 +377,11 @@ def test_select_percentile_regression_full():
 
 
 def test_invalid_percentile():
-    assert_raises(ValueError, SelectPercentile, percentile=101)
+    X, y = make_regression(n_samples=10, n_features=20,
+                           n_informative=2, shuffle=False, random_state=0)
+
+    assert_raises(ValueError, SelectPercentile(percentile=101).fit, X, y)
+    assert_raises(ValueError, SelectPercentile(percentile=-1).fit, X, y)
 
 
 def test_select_kbest_regression():
@@ -544,5 +550,10 @@ def test_nans():
 
 
 def test_score_func_error():
+    X = [[0, 1, 0],
+         [0, -1, -1],
+         [0, .5, .5]]
+    y = [1, 0, 1]
+
     # test that score-func needs to be a callable
-    assert_raises(TypeError, SelectKBest, score_func=10)
+    assert_raises(TypeError, SelectKBest(score_func=10).fit, X, y)
