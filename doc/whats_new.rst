@@ -207,6 +207,9 @@ Changelog
      :func:`metrics.r2_score`.
      By `Noel Dawe`_.
 
+   - Shuffle option for :class:`cross_validation.StratifiedKFold`.
+     By `Jeffrey Blackburne`_.
+
 
 API changes summary
 -------------------
@@ -2523,3 +2526,4 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 
 .. _Michael Eickenberg: https://github.com/eickenberg
 
+.. _Jeffrey Blackburne: https://github.com/jblackburne
