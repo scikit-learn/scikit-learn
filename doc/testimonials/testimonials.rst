@@ -447,7 +447,7 @@ Ferenc Huszar - Senior Data Scientist at Peerindex
 
 
 `DataRobot <http://www.datarobot.com>`_
-------------------------------------
+----------------------------------------
 
 .. raw:: html
 
@@ -505,7 +505,7 @@ David Koh - Senior Data Scientist at OkCupid
    
 
 `Lovely <https://www.livelovely.com/>`_
---------------------------------------
+-----------------------------------------
 
 .. raw:: html
 
