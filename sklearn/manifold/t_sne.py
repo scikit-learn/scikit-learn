@@ -5,6 +5,7 @@ from scipy.spatial.distance import squareform
 from ..base import BaseEstimator
 from ..utils import check_arrays
 from ..utils import check_random_state
+from ..utils.extmath import _ravel
 from . import _binary_search
 
 
@@ -74,21 +75,26 @@ def _kl_divergence(params, P, alpha, n_samples, n_components):
     X_embedded = params.reshape(n_samples, n_components)
 
     # Q is a heavy-tailed distribution: Student's t-distribution
-    n = ((1.0 + pdist(X_embedded, "sqeuclidean") / alpha) **
-         ((alpha + 1.0) / -2.0))
+    n = pdist(X_embedded, "sqeuclidean")
+    n += 1.
+    n /= alpha
+    n **= (alpha + 1.0) / -2.0
     Q = np.maximum(n / (2.0 * np.sum(n)), MACHINE_EPSILON)
 
+    # Optimization trick below: np.dot(x, y) is faster than
+    # np.sum(x * y) because it calls BLAS
+
     # Objective: C (Kullback-Leibler divergence of P and Q)
-    kl_divergence = 2.0 * np.sum(P * np.log(P / Q))
+    kl_divergence = 2.0 * np.dot(P, np.log(P / Q))
 
     # Gradient: dC/dY
     grad = np.ndarray((n_samples, n_components))
     PQd = squareform((P - Q) * n)
-    c = 2.0 * (alpha + 1.0) / alpha
     for i in range(n_samples):
-        grad[i] = c * np.sum(PQd[i].reshape(-1, 1) *
-                             (X_embedded[i] - X_embedded), axis=0)
+        grad[i] = np.dot(_ravel(PQd[i]), X_embedded[i] - X_embedded)
     grad = grad.ravel()
+    c = 2.0 * (alpha + 1.0) / alpha
+    grad *= c
 
     return kl_divergence, grad
 
