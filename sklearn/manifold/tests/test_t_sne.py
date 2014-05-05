@@ -11,7 +11,7 @@ from sklearn.manifold.t_sne import _kl_divergence
 from sklearn.manifold.t_sne import _gradient_descent
 from sklearn.manifold.t_sne import trustworthiness
 from sklearn.manifold.t_sne import TSNE
-from sklearn.manifold._binary_search import _binary_search_perplexity
+from sklearn.manifold._utils import _binary_search_perplexity
 from scipy.optimize import check_grad
 from scipy.spatial.distance import pdist
 from scipy.spatial.distance import squareform

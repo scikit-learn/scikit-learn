@@ -109,8 +109,7 @@ ax.yaxis.set_major_formatter(NullFormatter())
 plt.axis('tight')
 
 t0 = time()
-tsne = manifold.TSNE(n_components=n_components, perplexity=40, n_iter=200,
-                     random_state=0)
+tsne = manifold.TSNE(n_components=n_components, random_state=0)
 Y = tsne.fit_transform(X)
 t1 = time()
 print("t-SNE: %.2g sec" % (t1 - t0))

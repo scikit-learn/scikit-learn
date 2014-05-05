@@ -140,7 +140,7 @@ plt.axis('tight')
 
 # Perform t-distributed stochastic neighbor embedding.
 t0 = time()
-tsne = manifold.TSNE(n_components=2, learning_rate=500.0, random_state=0)
+tsne = manifold.TSNE(n_components=2, random_state=0)
 trans_data = tsne.fit_transform(sphere_data).T
 t1 = time()
 print("t-SNE: %.2g sec" % (t1 - t0))
