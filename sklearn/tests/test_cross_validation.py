@@ -894,6 +894,10 @@ def test_check_cv_return_types():
     cv = cval._check_cv(3, X, classifier=False)
     assert_true(isinstance(cv, cval.KFold))
 
+    y_binary = np.array([0, 1, 0, 1, 0, 0, 1, 1, 1])
+    cv = cval._check_cv(3, X, y_binary, classifier=True)
+    assert_true(isinstance(cv, cval.StratifiedKFold))
+
     y_multiclass = np.array([0, 1, 0, 1, 2, 1, 2, 0, 2])
     cv = cval._check_cv(3, X, y_multiclass, classifier=True)
     assert_true(isinstance(cv, cval.StratifiedKFold))
@@ -905,4 +909,8 @@ def test_check_cv_return_types():
 
     y_indicator_matrix = LabelBinarizer().fit_transform(y_seq_of_seqs)
     cv = cval._check_cv(3, X, y_indicator_matrix, classifier=True)
+    assert_true(isinstance(cv, cval.KFold))
+
+    y_multioutput = np.array([[1, 2], [0, 3], [0, 0], [3, 1], [2, 0]])
+    cv = cval._check_cv(3, X, y_multioutput, classifier=True)
     assert_true(isinstance(cv, cval.KFold))
