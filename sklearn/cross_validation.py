@@ -290,7 +290,7 @@ class KFold(_BaseKFold):
     >>> kf = cross_validation.KFold(4, n_folds=2)
     >>> len(kf)
     2
-    >>> print(kf)
+    >>> print(kf)  # doctest: +NORMALIZE_WHITESPACE
     sklearn.cross_validation.KFold(n=4, n_folds=2, shuffle=False,
                                    random_state=None)
     >>> for train_index, test_index in kf:
@@ -378,7 +378,7 @@ class StratifiedKFold(_BaseKFold):
     >>> skf = cross_validation.StratifiedKFold(y, n_folds=2)
     >>> len(skf)
     2
-    >>> print(skf)
+    >>> print(skf)  # doctest: +NORMALIZE_WHITESPACE
     sklearn.cross_validation.StratifiedKFold(labels=[0 0 1 1], n_folds=2,
                                              shuffle=False, random_state=None)
     >>> for train_index, test_index in skf:
