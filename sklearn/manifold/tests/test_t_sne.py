@@ -6,6 +6,7 @@ from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_raises_regexp
+from sklearn.utils import check_random_state
 from sklearn.manifold.t_sne import _joint_probabilities
 from sklearn.manifold.t_sne import _kl_divergence
 from sklearn.manifold.t_sne import _gradient_descent
@@ -97,7 +98,8 @@ def test_gradient_descent_stops():
 
 def test_binary_search():
     """Test if the binary search finds Gaussians with desired perplexity."""
-    affinities = np.random.randn(50, 2)
+    random_state = check_random_state(0)
+    affinities = random_state.randn(50, 2)
     affinities = affinities.dot(affinities.T)
     np.fill_diagonal(affinities, 0.0)
     desired_perplexity = 25.0
@@ -110,15 +112,17 @@ def test_binary_search():
 
 def test_gradient():
     """Test gradient of Kullback-Leibler divergence."""
+    random_state = check_random_state(0)
+
     n_samples = 50
     n_features = 2
     n_components = 2
     alpha = 1.0
 
-    affinities = np.random.randn(n_samples, n_features)
+    affinities = random_state.randn(n_samples, n_features)
     affinities = affinities.dot(affinities.T)
     np.fill_diagonal(affinities, 0.0)
-    X_embedded = np.random.randn(n_samples, n_components)
+    X_embedded = random_state.randn(n_samples, n_components)
 
     P = _joint_probabilities(affinities, desired_perplexity=25.0,
                              verbose=0)
@@ -132,14 +136,16 @@ def test_gradient():
 
 def test_trustworthiness():
     """Test trustworthiness score."""
+    random_state = check_random_state(0)
+
     # Affine transformation
-    X = np.random.randn(100, 2)
+    X = random_state.randn(100, 2)
     assert_equal(trustworthiness(X, 5.0 + X / 10.0), 1.0)
 
     # Randomly shuffled
     X = np.arange(100).reshape(-1, 1)
     X_embedded = X.copy()
-    np.random.shuffle(X_embedded)
+    random_state.shuffle(X_embedded)
     assert_less(trustworthiness(X, X_embedded), 0.6)
 
     # Completely different
@@ -150,7 +156,8 @@ def test_trustworthiness():
 
 def test_preserve_trustworthiness_approximately():
     """Nearest neighbors should be preserved approximately."""
-    X = np.random.randn(100, 2)
+    random_state = check_random_state(0)
+    X = random_state.randn(100, 2)
     tsne = TSNE(n_components=2, perplexity=10, learning_rate=100.0,
                 random_state=0)
     X_embedded = tsne.fit_transform(X)
@@ -160,7 +167,8 @@ def test_preserve_trustworthiness_approximately():
 
 def test_preserve_trustworthiness_approximately_with_precomputed_affinities():
     """Nearest neighbors should be preserved approximately."""
-    X = np.random.randn(100, 2)
+    random_state = check_random_state(0)
+    X = random_state.randn(100, 2)
     D = squareform(pdist(X), "sqeuclidean")
     tsne = TSNE(n_components=2, perplexity=10, learning_rate=100.0,
                 affinity="precomputed", random_state=0)
@@ -191,8 +199,9 @@ def test_non_square_precomputed_affinities():
 
 
 def test_verbose():
+    random_state = check_random_state(0)
     tsne = TSNE(verbose=2)
-    X = np.random.randn(5, 2)
+    X = random_state.randn(5, 2)
 
     old_stdout = sys.stdout
     sys.stdout = StringIO()
