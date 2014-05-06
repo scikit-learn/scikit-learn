@@ -41,14 +41,14 @@ The tutorial folder, should contain the following folders:
 
   * ``data`` - folder to put the datasets used during the tutorial
 
-  * ``skeletons`` - sample incomplete scripts for the exercices
+  * ``skeletons`` - sample incomplete scripts for the exercises
 
-  * ``solutions`` - solutions of the exercices
+  * ``solutions`` - solutions of the exercises
 
 
 You can already copy the skeletons into a new folder somewhere
 on your hard-drive named ``sklearn_tut_workspace`` where you
-will edit your own files for the exercices while keeping
+will edit your own files for the exercises while keeping
 the original skeletons intact::
 
     % cp -r skeletons work_directory/sklearn_tut_workspace
