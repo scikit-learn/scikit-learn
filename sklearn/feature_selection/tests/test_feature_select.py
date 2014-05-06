@@ -380,8 +380,12 @@ def test_invalid_percentile():
     X, y = make_regression(n_samples=10, n_features=20,
                            n_informative=2, shuffle=False, random_state=0)
 
-    assert_raises(ValueError, SelectPercentile(percentile=101).fit, X, y)
     assert_raises(ValueError, SelectPercentile(percentile=-1).fit, X, y)
+    assert_raises(ValueError, SelectPercentile(percentile=101).fit, X, y)
+    assert_raises(ValueError, GenericUnivariateSelect(mode='percentile',
+                                                      param=-1).fit, X, y)
+    assert_raises(ValueError, GenericUnivariateSelect(mode='percentile',
+                                                      param=101).fit, X, y)
 
 
 def test_select_kbest_regression():
@@ -538,9 +542,7 @@ def test_nans():
     """Assert that SelectKBest and SelectPercentile can handle NaNs."""
     # First feature has zero variance to confuse f_classif (ANOVA) and
     # make it return a NaN.
-    X = [[0, 1, 0],
-         [0, -1, -1],
-         [0, .5, .5]]
+    X = [[0, 1, 0], [0, -1, -1], [0, .5, .5]]
     y = [1, 0, 1]
 
     for select in (SelectKBest(f_classif, 2),
@@ -550,10 +552,21 @@ def test_nans():
 
 
 def test_score_func_error():
-    X = [[0, 1, 0],
-         [0, -1, -1],
-         [0, .5, .5]]
+    X = [[0, 1, 0], [0, -1, -1], [0, .5, .5]]
     y = [1, 0, 1]
 
-    # test that score-func needs to be a callable
-    assert_raises(TypeError, SelectKBest(score_func=10).fit, X, y)
+    for SelectFeatures in [SelectKBest, SelectPercentile, SelectFwe,
+                           SelectFdr, SelectFpr, GenericUnivariateSelect]:
+        assert_raises(TypeError, SelectFeatures(score_func=10).fit, X, y)
+
+
+def test_invalid_k():
+    X = [[0, 1, 0], [0, -1, -1], [0, .5, .5]]
+    y = [1, 0, 1]
+
+    assert_raises(ValueError, SelectKBest(k=-1).fit, X, y)
+    assert_raises(ValueError, SelectKBest(k=4).fit, X, y)
+    assert_raises(ValueError,
+                  GenericUnivariateSelect(mode='k_best', param=-1).fit, X, y)
+    assert_raises(ValueError,
+                  GenericUnivariateSelect(mode='k_best', param=4).fit, X, y)
