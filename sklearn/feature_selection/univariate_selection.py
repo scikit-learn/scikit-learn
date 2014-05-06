@@ -411,9 +411,6 @@ class SelectKBest(_BaseFilter):
             return np.zeros(self.scores_.shape, dtype=bool)
         else:
             scores = _clean_nans(self.scores_)
-            # XXX This should be refactored; we're getting an array of indices
-            # from argsort, which we transform to a mask, which we probably
-            # transform back to indices later.
             mask = np.zeros(scores.shape, dtype=bool)
 
             # Request a stable sort. Mergesort takes more memory (~40MB per
