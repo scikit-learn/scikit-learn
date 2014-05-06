@@ -420,10 +420,10 @@ If the data ordering is not arbitrary (e.g. samples with the same label are cont
 
 Some cross validation iterators, such as :class:`KFold`, have an inbuilt option to shuffle the data indices before splitting them. Note that:
 
-  * This consumes less memory than shuffling the data directly.
-  * By default no shuffling occurs, including for the (stratified) K fold cross-validation performed by specifying ``cv=some_integer`` to :func:`cross_val_score`, grid search, etc.
-  * The ``random_state`` parameter defaults to ``None``, meaning that the shuffling will be different every time ``KFold(..., shuffle=True)`` is iterated. However, ``GridSearchCV`` will use the same shuffling for each set of parameters validated by a single call to its ``fit`` method.
-  * To ensure results are repeatable (*on the same platform*), use a fixed value for ``random_state``.
+* This consumes less memory than shuffling the data directly.
+* By default no shuffling occurs, including for the (stratified) K fold cross-validation performed by specifying ``cv=some_integer`` to :func:`cross_val_score`, grid search, etc. Keep in mind that :func:`train_test_split` still returns a random split.
+* The ``random_state`` parameter defaults to ``None``, meaning that the shuffling will be different every time ``KFold(..., shuffle=True)`` is iterated. However, ``GridSearchCV`` will use the same shuffling for each set of parameters validated by a single call to its ``fit`` method.
+* To ensure results are repeatable (*on the same platform*), use a fixed value for ``random_state``.
 
 Cross validation and model selection
 ====================================
