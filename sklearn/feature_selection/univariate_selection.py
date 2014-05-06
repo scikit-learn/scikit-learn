@@ -399,7 +399,7 @@ class SelectKBest(_BaseFilter):
         self.k = k
 
     def _check_params(self, X, y):
-        if not (0 <= self.k <= X.shape[1] or self.k == "all"):
+        if not (self.k == "all" or 0 <= self.k <= X.shape[1]):
             raise ValueError("k should be >=0, <= n_features; got %r."
                              "Use k='all' to return all features."
                              % self.k)
