@@ -249,7 +249,7 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
 
     @property
     def _pairwise(self):
-        return self.affinity is "precomputed"
+        return self.affinity == "precomputed"
 
     def fit(self, X):
         """ Create affinity matrix from negative euclidean distances, then
@@ -263,9 +263,9 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
             similarities / affinities.
         """
 
-        if self.affinity is "precomputed":
+        if self.affinity == "precomputed":
             self.affinity_matrix_ = X
-        elif self.affinity is "euclidean":
+        elif self.affinity == "euclidean":
             self.affinity_matrix_ = -euclidean_distances(X, squared=True)
         else:
             raise ValueError("Affinity must be 'precomputed' or "
