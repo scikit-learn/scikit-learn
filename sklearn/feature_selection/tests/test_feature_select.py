@@ -6,12 +6,17 @@ import itertools
 import numpy as np
 from scipy import stats, sparse
 
-from nose.tools import (assert_equal, assert_almost_equal, assert_raises,
-                        assert_true)
-from numpy.testing import assert_array_equal, assert_array_almost_equal
-from sklearn.utils.testing import assert_not_in, ignore_warnings
-
+from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_almost_equal
+from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_not_in
+from sklearn.utils.testing import assert_less
+from sklearn.utils.testing import ignore_warnings
 from sklearn.utils import safe_mask
+
 from sklearn.datasets.samples_generator import (make_classification,
                                                 make_regression)
 from sklearn.feature_selection import (chi2, f_classif, f_oneway, f_regression,
@@ -60,11 +65,11 @@ def test_f_classif():
 
     F, pv = f_classif(X, y)
     F_sparse,  pv_sparse = f_classif(sparse.csr_matrix(X), y)
-    assert(F > 0).all()
-    assert(pv > 0).all()
-    assert(pv < 1).all()
-    assert(pv[:5] < 0.05).all()
-    assert(pv[5:] > 1.e-4).all()
+    assert_true((F > 0).all())
+    assert_true((pv > 0).all())
+    assert_true((pv < 1).all())
+    assert_true((pv[:5] < 0.05).all())
+    assert_true((pv[5:] > 1.e-4).all())
     assert_array_almost_equal(F_sparse, F)
     assert_array_almost_equal(pv_sparse, pv)
 
@@ -78,11 +83,11 @@ def test_f_regression():
                            shuffle=False, random_state=0)
 
     F, pv = f_regression(X, y)
-    assert(F > 0).all()
-    assert(pv > 0).all()
-    assert(pv < 1).all()
-    assert(pv[:5] < 0.05).all()
-    assert(pv[5:] > 1.e-4).all()
+    assert_true((F > 0).all())
+    assert_true((pv > 0).all())
+    assert_true((pv < 1).all())
+    assert_true((pv[:5] < 0.05).all())
+    assert_true((pv[5:] > 1.e-4).all())
 
     # again without centering, compare with sparse
     F, pv = f_regression(X, y, center=False)
@@ -137,11 +142,11 @@ def test_f_classif_multi_class():
                                class_sep=10, shuffle=False, random_state=0)
 
     F, pv = f_classif(X, y)
-    assert(F > 0).all()
-    assert(pv > 0).all()
-    assert(pv < 1).all()
-    assert(pv[:5] < 0.05).all()
-    assert(pv[5:] > 1.e-5).all()
+    assert_true((F > 0).all())
+    assert_true((pv > 0).all())
+    assert_true((pv < 1).all())
+    assert_true((pv[:5] < 0.05).all())
+    assert_true((pv[5:] > 1.e-4).all())
 
 
 def test_select_percentile_classif():
@@ -316,7 +321,7 @@ def test_select_fwe_classif():
     support = univariate_filter.get_support()
     gtruth = np.zeros(20)
     gtruth[:5] = 1
-    assert(np.sum(np.abs(support - gtruth)) < 2)
+    assert_array_almost_equal(support, gtruth)
 
 
 ##############################################################################
@@ -380,8 +385,12 @@ def test_invalid_percentile():
     X, y = make_regression(n_samples=10, n_features=20,
                            n_informative=2, shuffle=False, random_state=0)
 
-    assert_raises(ValueError, SelectPercentile(percentile=101).fit, X, y)
     assert_raises(ValueError, SelectPercentile(percentile=-1).fit, X, y)
+    assert_raises(ValueError, SelectPercentile(percentile=101).fit, X, y)
+    assert_raises(ValueError, GenericUnivariateSelect(mode='percentile',
+                                                      param=-1).fit, X, y)
+    assert_raises(ValueError, GenericUnivariateSelect(mode='percentile',
+                                                      param=101).fit, X, y)
 
 
 def test_select_kbest_regression():
@@ -422,8 +431,8 @@ def test_select_fpr_regression():
     support = univariate_filter.get_support()
     gtruth = np.zeros(20)
     gtruth[:5] = 1
-    assert(support[:5] == 1).all()
-    assert(np.sum(support[5:] == 1) < 3)
+    assert_array_equal(support[:5], np.ones((5, ), dtype=np.bool))
+    assert_less(np.sum(support[5:] == 1), 3)
 
 
 def test_select_fdr_regression():
@@ -463,8 +472,8 @@ def test_select_fwe_regression():
     support = univariate_filter.get_support()
     gtruth = np.zeros(20)
     gtruth[:5] = 1
-    assert(support[:5] == 1).all()
-    assert(np.sum(support[5:] == 1) < 2)
+    assert_array_equal(support[:5], np.ones((5, ), dtype=np.bool))
+    assert_less(np.sum(support[5:] == 1), 2)
 
 
 def test_selectkbest_tiebreaking():
@@ -538,9 +547,7 @@ def test_nans():
     """Assert that SelectKBest and SelectPercentile can handle NaNs."""
     # First feature has zero variance to confuse f_classif (ANOVA) and
     # make it return a NaN.
-    X = [[0, 1, 0],
-         [0, -1, -1],
-         [0, .5, .5]]
+    X = [[0, 1, 0], [0, -1, -1], [0, .5, .5]]
     y = [1, 0, 1]
 
     for select in (SelectKBest(f_classif, 2),
@@ -550,10 +557,21 @@ def test_nans():
 
 
 def test_score_func_error():
-    X = [[0, 1, 0],
-         [0, -1, -1],
-         [0, .5, .5]]
+    X = [[0, 1, 0], [0, -1, -1], [0, .5, .5]]
     y = [1, 0, 1]
 
-    # test that score-func needs to be a callable
-    assert_raises(TypeError, SelectKBest(score_func=10).fit, X, y)
+    for SelectFeatures in [SelectKBest, SelectPercentile, SelectFwe,
+                           SelectFdr, SelectFpr, GenericUnivariateSelect]:
+        assert_raises(TypeError, SelectFeatures(score_func=10).fit, X, y)
+
+
+def test_invalid_k():
+    X = [[0, 1, 0], [0, -1, -1], [0, .5, .5]]
+    y = [1, 0, 1]
+
+    assert_raises(ValueError, SelectKBest(k=-1).fit, X, y)
+    assert_raises(ValueError, SelectKBest(k=4).fit, X, y)
+    assert_raises(ValueError,
+                  GenericUnivariateSelect(mode='k_best', param=-1).fit, X, y)
+    assert_raises(ValueError,
+                  GenericUnivariateSelect(mode='k_best', param=4).fit, X, y)
