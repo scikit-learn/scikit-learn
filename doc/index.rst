@@ -12,6 +12,7 @@
     tutorial/index
     user_guide
     auto_examples/index
+    faq
     support
     whats_new
     presentations
