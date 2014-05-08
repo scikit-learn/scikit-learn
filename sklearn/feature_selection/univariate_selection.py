@@ -261,7 +261,7 @@ def f_regression(X, y, center=True):
 # Base classes
 
 class _BaseFilter(BaseEstimator, SelectorMixin):
-    """ Initialize the univariate feature selection.
+    """Initialize the univariate feature selection.
 
     Parameters
     ----------
