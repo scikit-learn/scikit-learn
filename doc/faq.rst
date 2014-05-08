@@ -67,6 +67,6 @@ do structured prediction:
 
 Will you add GPU support?
 --------------------------
-No, or at least not in the near future. The main reason is that GPU support will introduce many software dependencies and introduce platfom specific issues.
-Scikit-learn is designed to be easy to install on a wide variety of platforms.
+No, or at least not in the near future. The main reason is that GPU support will introduce many software dependencies and introduce platform specific issues.
+scikit-learn is designed to be easy to install on a wide variety of platforms.
 Outside of neural networks, GPUs don't play a large role in machine learning today, and much larger gains in speed can often be achieved by a careful choice of algorithms.
