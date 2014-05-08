@@ -77,6 +77,6 @@ Do you support PyPy?
 In case you didn't know, `PyPy <http://pypy.org/>`_ is the new, fast,
 just-in-time compiling Python implementation. We don't support it.
 When the `NumPy support <http://buildbot.pypy.org/numpy-status/latest.html>`_
-in PyPy is comlete or near-complete, and SciPy is ported over as well,
+in PyPy is complete or near-complete, and SciPy is ported over as well,
 we can start thinking of a port.
 We use too much of NumPy to work with a partial implementation.
