@@ -257,6 +257,42 @@ def smacof(similarities, metric=True, n_components=2, init=None, n_init=8,
     return best_pos, best_stress
 
 
+def svd_mds(similarities, n_components=2):
+    """
+    Computes multidimensional scaling using SVD algorithm
+
+    Parameters
+    ----------
+    similarities : symmetric ndarray, shape (n_samples, n_samples)
+        similarities between the points
+
+    n_components : int, optional, default: 2
+        number of dimension in which to immerse the similarities
+        overridden if initial array is provided.
+    """
+
+    similarities, = check_arrays(similarities, sparse_format='dense')
+    n_samples = similarities.shape[0]
+
+    if similarities.shape[0] != similarities.shape[1]:
+        raise ValueError("similarities must be a square array (shape=%d)" %
+                         n_samples)
+    if not np.allclose(similarities, similarities.T):
+        raise ValueError("similarities must be symmetric")
+
+    H = np.eye(*similarities.shape) - 1./n_samples*np.ones(similarities.shape)
+    K = -0.5*np.dot(H, np.dot(similarities**2, H))
+    w, V = np.linalg.eig(K)
+    # Sort eigenvalues and eigenvectors in decreasing order
+    ix = np.argsort(w)[::-1]
+    w = w[ix]
+    V = V[:, ix]
+    if not np.all(w >= -1e-12):
+        raise ValueError("similarities must be euclidean")
+    X = np.sqrt(w[:n_components])*V[:, :n_components]
+    return X
+
+
 class MDS(BaseEstimator):
     """Multidimensional scaling
 
