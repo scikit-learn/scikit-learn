@@ -70,3 +70,13 @@ Will you add GPU support?
 No, or at least not in the near future. The main reason is that GPU support will introduce many software dependencies and introduce platform specific issues.
 scikit-learn is designed to be easy to install on a wide variety of platforms.
 Outside of neural networks, GPUs don't play a large role in machine learning today, and much larger gains in speed can often be achieved by a careful choice of algorithms.
+
+Do you support PyPy?
+--------------------
+
+In case you didn't know, `PyPy <http://pypy.org/>`_ is the new, fast,
+just-in-time compiling Python implementation. We don't support it.
+When the `NumPy support <http://buildbot.pypy.org/numpy-status/latest.html>`_
+in PyPy is comlete or near-complete, and SciPy is ported over as well,
+we can start thinking of a port.
+We use too much of NumPy to work with a partial implementation.
