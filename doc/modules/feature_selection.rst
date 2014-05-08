@@ -66,20 +66,19 @@ as objects that implement the `transform` method:
     selection with a configurable strategy. This allows to select the best
     univariate selection strategy with hyper-parameter search estimator.
 
-Using the boolean-feature example given above,
-we can perform a :math:`\chi^2` test to the samples
+For instance, we can perform a :math:`\chi^2` test to the samples
 to retrieve only the two best features as follows:
 
-  >>> from sklearn.feature_selection import VarianceThreshold
-  >>> X = [[0, 0, 1], [0, 1, 0], [1, 0, 0], [0, 1, 1], [0, 1, 0], [0, 1, 1]]
-  >>> sel = VarianceThreshold(threshold=(.8 * (1 - .8)))
-  >>> sel.fit_transform(X)
-  array([[0, 1],
-         [1, 0],
-         [0, 0],
-         [1, 1],
-         [1, 0],
-         [1, 1]])
+  >>> from sklearn.datasets import load_iris
+  >>> from sklearn.feature_selection import SelectKBest
+  >>> from sklearn.feature_selection import chi2
+  >>> iris = load_iris()
+  >>> X, y = iris.data, iris.target
+  >>> X.shape
+  (150, 4)
+  >>> X_new = SelectKBest(chi2, k=2).fit_transform(X, y)
+  >>> X_new.shape
+  (150, 2)
 
 These objects take as input a scoring function that returns
 univariate p-values:
