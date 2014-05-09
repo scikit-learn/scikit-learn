@@ -111,23 +111,7 @@ labels are [-1, 1]) classification and multiclass (where the labels are
 [0, ..., K-1]) classification.
 
 Note that sparsity is supported by :class:`DecisionTreeClassifier`, i.e. 
-the input matrix X can be sparse and both ``predict`` and ``fit`` can take sparse inputs:
-
->>> from scipy import sparse
->>> from numpy import array
->>> I_train = array([0,3,1,0])
->>> J_train = array([0,3,1,2])
->>> V_train = array([4,5,7,9])
->>> X_train = sparse.coo_matrix((V_train,(I_train,J_train)),shape=(4,4))
->>> Y = [0, 1, 1, 0]
->>> clf = tree.DecisionTreeClassifier()
->>> clf = clf.fit(X_train, Y)
->>> I_test = array([1,2,0,1])
->>> J_test = array([0,3,2,1])
->>> V_test = array([2,3,1,7])
->>> X_test = sparse.coo_matrix((V_test,(I_test,J_test)),shape=(4,4))
->>> clf.predict(X_test)
-
+the input matrix X can be sparse in the both ``predict`` and ``fit`` methods.
 
 
 Using the Iris dataset, we can construct a tree as follows::

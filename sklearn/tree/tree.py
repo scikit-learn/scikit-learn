@@ -332,7 +332,6 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
             if X.indptr.dtype != np.int32:
                 X.indptr = np.ascontiguousarray(X.indptr, dtype=np.int32)
 
-
         elif getattr(X, "dtype", None) != DTYPE or X.ndim != 2:
             X = array2d(X, dtype=DTYPE)
 
