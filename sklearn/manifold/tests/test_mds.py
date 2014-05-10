@@ -4,6 +4,7 @@ from numpy.testing import assert_array_almost_equal
 from nose.tools import assert_raises
 from sklearn.manifold import mds
 from sklearn.metrics import euclidean_distances
+from sklearn.utils.testing import assert_less
 
 
 def test_smacof():
@@ -63,29 +64,60 @@ def test_MDS():
 
 
 def test_svd_mds():
-    # Generate 4 random points
-    Y = np.array([[1, 0, 1],
-                  [-1, 3, 2],
-                  [1, -2, 3],
+    # Generate 4 randomly chosen points
+    Y = np.array([[1,  0,  1],
+                  [-1, 3,  2],
+                  [1, -2,  3],
                   [2, -1, -3]])
     sim = euclidean_distances(Y)
     # calculate error or smacof-based solution
-    X_smacof, _ = mds.smacof(sim, n_components=2, random_state=42)
-    X_smacof_sim = euclidean_distances(X_smacof)
-    X_smacof_err = np.sum((X_smacof_sim - sim)**2)
+    X_smacof, smacof_stress = mds.smacof(sim, n_components=2, random_state=42)
+    X_svd, svd_stress = mds.svd_mds(sim, n_components=2)
+    assert_less(svd_stress, smacof_stress)
 
-    # calculate error of svd-based solution
-    X_svd = mds.svd_mds(sim, n_components=2)
-    X_svd_sim = euclidean_distances(X_svd)
-    X_svd_err = np.sum((X_svd_sim - sim)**2)
 
-    assert_array_almost_equal(X_svd_err, X_smacof_err, decimal=2)
+def test_svd_mds_non_square_matrix():
+    sim = np.ones((3, 4))
+    assert_raises(ValueError, mds.svd_mds, sim)
+
+
+def test_svd_mds_non_symmetric_matrix():
+    sim = np.ones((3, 3))
+    sim[0, 1] = 0
+    assert_raises(ValueError, mds.svd_mds, sim)
 
 
 def test_svd_mds_non_euclidean():
     # non euclidean similarities (no triangular inequality)
     sim = np.array([[0, 12, 3, 4],
                     [12, 0, 2, 2],
-                    [3, 2, 0, 1],
-                    [4, 2, 1, 0]])
+                    [3,  2, 0, 1],
+                    [4,  2, 1, 0]])
     assert_raises(ValueError, mds.svd_mds, sim)
+
+
+def test_MDS_svd():
+    Y = np.array([[1, 0, 1],
+                  [-1, 3, 2],
+                  [1, -2, 3],
+                  [2, -1, -3]])
+    mds_clf = mds.MDS(metric=True, method="svd")
+    mds_clf.fit(Y)
+
+
+def test_MDS_svd_non_metric():
+    Y = np.array([[1, 0, 1],
+                  [-1, 3, 2],
+                  [1, -2, 3],
+                  [2, -1, -3]])
+    mds_clf = mds.MDS(metric=False, method="svd")
+    assert_raises(ValueError, mds_clf.fit, Y)
+
+
+def test_MDS_unknown_method():
+    Y = np.array([[1, 0, 1],
+                  [-1, 3, 2],
+                  [1, -2, 3],
+                  [2, -1, -3]])
+    mds_clf = mds.MDS(metric=True, method="unknown_method")
+    assert_raises(ValueError, mds_clf.fit, Y)
