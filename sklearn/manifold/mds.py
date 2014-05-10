@@ -290,7 +290,9 @@ def svd_mds(similarities, n_components=2):
     if not np.all(w >= -1e-12):
         raise ValueError("similarities must be euclidean")
     X = np.sqrt(w[:n_components])*V[:, :n_components]
-    return X
+    dists = euclidean_distances(X)
+    stress = ((similarities.ravel() - dists.ravel()) ** 2).sum() / 2
+    return X, stress
 
 
 class MDS(BaseEstimator):
@@ -301,6 +303,10 @@ class MDS(BaseEstimator):
     metric : boolean, optional, default: True
         compute metric or nonmetric SMACOF (Scaling by Majorizing a
         Complicated Function) algorithm
+
+    method: string, optional, default: smacof
+        Methods for solving the MDS problem are "smacof" and "svd".
+        If SVD is used, the parameter ``metric`` must be set to True.
 
     n_components : int, optional, default: 2
         number of dimension in which to immerse the similarities
@@ -364,10 +370,12 @@ class MDS(BaseEstimator):
     """
     def __init__(self, n_components=2, metric=True, n_init=4,
                  max_iter=300, verbose=0, eps=1e-3, n_jobs=1,
-                 random_state=None, dissimilarity="euclidean"):
+                 random_state=None, dissimilarity="euclidean",
+                 method="smacof"):
         self.n_components = n_components
         self.dissimilarity = dissimilarity
         self.metric = metric
+        self.method = method
         self.n_init = n_init
         self.max_iter = max_iter
         self.eps = eps
@@ -423,10 +431,17 @@ class MDS(BaseEstimator):
             raise ValueError("Proximity must be 'precomputed' or 'euclidean'."
                              " Got %s instead" % str(self.dissimilarity))
 
-        self.embedding_, self.stress_ = smacof(
-            self.dissimilarity_matrix_, metric=self.metric,
-            n_components=self.n_components, init=init, n_init=self.n_init,
-            n_jobs=self.n_jobs, max_iter=self.max_iter, verbose=self.verbose,
-            eps=self.eps, random_state=self.random_state)
-
+        if self.method == "smacof":
+            self.embedding_, self.stress_ = smacof(
+                self.dissimilarity_matrix_, metric=self.metric,
+                n_components=self.n_components, init=init, n_init=self.n_init,
+                n_jobs=self.n_jobs, max_iter=self.max_iter, eps=self.eps,
+                verbose=self.verbose, random_state=self.random_state)
+        elif self.method == "svd":
+            if not self.metric:
+                raise ValueError("Using SVD requires metric=True")
+            self.embedding_, self.stress_ = svd_mds(
+                self.dissimilarity_matrix_, n_components=self.n_components)
+        else:
+            raise ValueError("Method %s is unknown" % str(self.method))
         return self.embedding_
