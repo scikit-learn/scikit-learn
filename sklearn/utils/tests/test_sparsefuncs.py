@@ -89,6 +89,7 @@ def test_inplace_swap_row():
     assert_array_equal(X_csr.toarray(), X_csc.toarray())
     assert_array_equal(X, X_csc.toarray())
     assert_array_equal(X, X_csr.toarray())
+    assert_raises(TypeError, inplace_swap_row, X_csr.tolil())
 
 
 def test_inplace_swap_column():
@@ -115,3 +116,4 @@ def test_inplace_swap_column():
     assert_array_equal(X_csr.toarray(), X_csc.toarray())
     assert_array_equal(X, X_csc.toarray())
     assert_array_equal(X, X_csr.toarray())
+    assert_raises(TypeError, inplace_swap_column, X_csr.tolil())
