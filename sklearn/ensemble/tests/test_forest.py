@@ -377,6 +377,41 @@ def test_classes_shape():
         yield check_classes_shape, name
 
 
+def test_random_trees_dense_type():
+    '''
+    Test that the `sparse_output` parameter of RandomTreesEmbedding
+    works by returning a dense array.
+    '''
+
+    # Create the RTE with sparse=False
+    hasher = RandomTreesEmbedding(n_estimators=10, sparse_output=False)
+    X, y = datasets.make_circles(factor=0.5)
+    X_transformed = hasher.fit_transform(X)
+
+    # Assert that type is ndarray, not scipy.sparse.csr.csr_matrix
+    assert_equal(type(X_transformed), np.ndarray)
+
+
+def test_random_trees_dense_equal():
+    '''
+    Test that the `sparse_output` parameter of RandomTreesEmbedding
+    works by returning the same array for both argument
+    values.
+    '''
+
+    # Create the RTEs
+    hasher_dense = RandomTreesEmbedding(n_estimators=10, sparse_output=False,
+                                        random_state=0)
+    hasher_sparse = RandomTreesEmbedding(n_estimators=10, sparse_output=True,
+                                         random_state=0)
+    X, y = datasets.make_circles(factor=0.5)
+    X_transformed_dense = hasher_dense.fit_transform(X)
+    X_transformed_sparse = hasher_sparse.fit_transform(X)
+
+    # Assert that dense and sparse hashers have same array.
+    assert_array_equal(X_transformed_sparse.toarray(), X_transformed_dense)
+
+
 def test_random_hasher():
     # test random forest hashing on circles dataset
     # make sure that it is linearly separable.

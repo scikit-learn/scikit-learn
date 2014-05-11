@@ -1271,6 +1271,10 @@ class RandomTreesEmbedding(BaseForest):
         If not None then ``max_depth`` will be ignored.
         Note: this parameter is tree-specific.
 
+    sparse_output: bool, optional (default=True)
+        Whether or not to return a sparse CSR matrix, as default behavior,
+        or to return a dense array compatible with dense pipeline operators.
+
     n_jobs : integer, optional (default=1)
         The number of jobs to run in parallel for both `fit` and `predict`.
         If -1, then the number of jobs is set to the number of cores.
@@ -1305,6 +1309,7 @@ class RandomTreesEmbedding(BaseForest):
                  min_samples_split=2,
                  min_samples_leaf=1,
                  max_leaf_nodes=None,
+                 sparse_output=True,
                  n_jobs=1,
                  random_state=None,
                  verbose=0,
@@ -1327,6 +1332,7 @@ class RandomTreesEmbedding(BaseForest):
         self.min_samples_leaf = min_samples_leaf
         self.max_features = 1
         self.max_leaf_nodes = max_leaf_nodes
+        self.sparse_output = sparse_output
 
         if min_density is not None:
             warn("The min_density parameter is deprecated as of version 0.14 "
@@ -1363,7 +1369,7 @@ class RandomTreesEmbedding(BaseForest):
         rnd = check_random_state(self.random_state)
         y = rnd.uniform(size=X.shape[0])
         super(RandomTreesEmbedding, self).fit(X, y)
-        self.one_hot_encoder_ = OneHotEncoder()
+        self.one_hot_encoder_ = OneHotEncoder(sparse=self.sparse_output)
         return self.one_hot_encoder_.fit_transform(self.apply(X))
 
     def transform(self, X):
