@@ -90,7 +90,7 @@ def csr_mean_variance_axis0(X):
     for i in xrange(non_zero):
         col_ind = X_indices[i]
         means[col_ind] += X_data[i]
-    
+
     means /= n_samples
 
     for i in xrange(non_zero):
@@ -104,6 +104,7 @@ def csr_mean_variance_axis0(X):
         variances[i] /= n_samples
 
     return means, variances
+
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
@@ -196,8 +197,40 @@ def inplace_csr_column_scale(X, np.ndarray[DOUBLE, ndim=1] scale):
     cdef unsigned int i
     cdef unsigned non_zero = len(X_indices)
 
-    for i in xrange(non_zero):
-        X_data[i] *= scale[X_indices[i]]
+    with nogil:
+        for i in xrange(non_zero):
+            X_data[i] *= scale[X_indices[i]]
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.cdivision(True)
+def inplace_csr_row_scale(X, np.ndarray[DOUBLE, ndim=1] scale):
+    """ Inplace row scaling of a CSR matrix.
+
+    Scale each sample of the data matrix by multiplying with specific scale
+    provided by the caller assuming a (n_samples, n_features) shape.
+
+    Parameters
+    ----------ls
+    X: CSR sparse matrix, shape (n_samples, n_features)
+    matrix to be scaled.
+
+    scale: float array with shape (n_features,)
+    Array of precomputed sample-wise values to use for scaling.
+    """
+    cdef unsigned int n_samples = X.shape[0]
+    cdef unsigned int n_features = X.shape[1]
+
+    cdef np.ndarray[DOUBLE, ndim=1] X_data = X.data
+    cdef np.ndarray[int, ndim=1] X_indices = X.indices
+    cdef np.ndarray[int, ndim=1] X_indptr = X.indptr
+    cdef unsigned int i, j
+
+    with nogil:
+        for i in xrange(n_samples):
+            for j in xrange(X_indptr[i], X_indptr[i + 1]):
+                X_data[j] *= scale[i]
 
 
 @cython.boundscheck(False)
@@ -263,36 +296,6 @@ def csc_mean_variance_axis0(X):
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-@cython.cdivision(True)
-def inplace_csc_column_scale(X, np.ndarray[DOUBLE, ndim=1] scale):
-    """Inplace column scaling of a CSC matrix.
-
-    Scale each feature of the data matrix by multiplying with specific scale
-    provided by the caller assuming a (n_samples, n_features) shape.
-
-    Parameters
-    ----------
-    X: CSC matrix with shape (n_samples, n_features)
-        Matrix to normalize using the variance of the features.
-
-    scale: float array with shape (n_features,)
-        Array of precomputed feature-wise values to use for scaling.
-    """
-    cdef unsigned int n_samples = X.shape[0]
-    cdef unsigned int n_features = X.shape[1]
-
-    cdef np.ndarray[DOUBLE, ndim=1] X_data = X.data
-    cdef np.ndarray[int, ndim=1] X_indices = X.indices
-    cdef np.ndarray[int, ndim=1] X_indptr = X.indptr
-
-    cdef unsigned int i, j
-    for i in xrange(n_features):
-        for j in xrange(X_indptr[i], X_indptr[i + 1]):
-            X_data[j] *= scale[i]
-
-
-@cython.boundscheck(False)
-@cython.wraparound(False)
 cdef void add_row_csr(np.ndarray[np.float64_t, ndim=1] data,
                       np.ndarray[int, ndim=1] indices,
                       np.ndarray[int, ndim=1] indptr,
@@ -316,8 +319,8 @@ def assign_rows_csr(X,
                     np.ndarray[np.float64_t, ndim=2, mode="c"] out):
     """Densify selected rows of a CSR matrix into a preallocated array.
 
-    Like out[out_rows] = X[X_rows].toarray() but without copying. Only supported for
-    dtype=np.float64.
+    Like out[out_rows] = X[X_rows].toarray() but without copying.
+    Only supported for dtype=np.float64.
 
     Parameters
     ----------
@@ -346,3 +349,120 @@ def assign_rows_csr(X,
         for ind in range(indptr[rX], indptr[rX + 1]):
             j = indices[ind]
             out[out_rows[i], j] = data[ind]
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.cdivision(True)
+def csr_min_max_axis0(X):
+    """Compute minimum and maximum along axis 0 on a CSR matrix
+
+    Parameters
+    ----------
+    X: CSR sparse matrix, shape (n_samples, n_features)
+        Input data.
+
+    Returns
+    -------
+
+    min: float array with shape (n_features,)
+        Feature-wise minima
+
+    max: float array with shape (n_features,)
+        Feature-wise maxima
+    """
+    cdef unsigned int n_samples = X.shape[0]
+    cdef unsigned int n_features = X.shape[1]
+
+    cdef np.ndarray[DOUBLE, ndim=1] X_data = X.data
+    cdef np.ndarray[int, ndim=1] X_indices = X.indices
+    cdef np.ndarray[int, ndim=1] X_indptr = X.indptr
+
+    cdef unsigned int i
+    cdef unsigned int j
+    cdef unsigned int ind
+    cdef double v
+
+    # mins[j] contains the minimum of feature j
+    cdef np.ndarray[DOUBLE, ndim=1] mins = np.empty((n_features))
+
+    # maxs[j] contains the maximum of feature j
+    cdef np.ndarray[DOUBLE, ndim=1] maxs = np.empty((n_features))
+
+    # nvals[j] contains the number of values for feature j
+    cdef np.ndarray[np.int64_t, ndim=1] nvals = np.zeros((n_features),
+                                                         dtype=np.int64)
+
+    mins[:] = np.inf
+    maxs[:] = -np.inf
+
+    for i in xrange(n_samples):
+        for j in xrange(X_indptr[i], X_indptr[i + 1]):
+            ind = X_indices[j]
+            v = X_data[j]
+            mins[ind] = min(mins[ind], v)
+            maxs[ind] = max(maxs[ind], v)
+            nvals[ind] += 1
+
+    # cython cannot do boolean arrays (yet)
+    # cdef np.ndarray[bool, ndim=1] not_dense = nvals != n_samples
+    not_dense = nvals != n_samples
+    mins[not_dense * (mins > 0.0)] = 0.0
+    maxs[not_dense * (maxs < 0.0)] = 0.0
+    return mins, maxs
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.cdivision(True)
+def csc_min_max_axis0(X):
+    """Compute minimum and maximum along axis 0 on a CSC matrix
+
+    Parameters
+    ----------
+    X: CSC sparse matrix, shape (n_samples, n_features)
+        Input data.
+
+    Returns
+    -------
+
+    min: float array with shape (n_features,)
+        Feature-wise minima
+
+    max: float array with shape (n_features,)
+        Feature-wise maxima
+    """
+    cdef unsigned int n_samples = X.shape[0]
+    cdef unsigned int n_features = X.shape[1]
+
+    cdef np.ndarray[DOUBLE, ndim=1] X_data = X.data
+    cdef np.ndarray[int, ndim=1] X_indices = X.indices
+    cdef np.ndarray[int, ndim=1] X_indptr = X.indptr
+
+    cdef unsigned int i
+    cdef unsigned int j
+    cdef double v
+
+    # mins[j] contains the mean of feature j
+    cdef np.ndarray[DOUBLE, ndim=1] mins = np.empty((n_features))
+
+    # maxs[j] contains the variance of feature j
+    cdef np.ndarray[DOUBLE, ndim=1] maxs = np.empty((n_features))
+
+    # nvals[j] contains the number of values for feature j
+    cdef np.ndarray[np.int64_t, ndim=1] nvals = np.zeros((n_features),
+                                                         dtype=np.int64)
+
+    for i in xrange(n_features):
+        for j in xrange(X_indptr[i], X_indptr[i + 1]):
+            v = X_data[j]
+            mins[i] = min(mins[i], v)
+            maxs[i] = max(maxs[i], v)
+            nvals[i] += 1
+
+    # cython cannot do boolean arrays (yet)
+    # cdef np.ndarray[bool, ndim=1] not_dense = nvals != n_samples
+    not_dense = nvals != n_samples
+    mins[not_dense * (mins > 0.0)] = 0.0
+    maxs[not_dense * (maxs < 0.0)] = 0.0
+    return mins, maxs

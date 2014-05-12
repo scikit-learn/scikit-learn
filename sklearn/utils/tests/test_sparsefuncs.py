@@ -7,9 +7,11 @@ from numpy.testing import assert_array_almost_equal, assert_array_equal
 from sklearn.datasets import make_classification
 from sklearn.utils.sparsefuncs import (mean_variance_axis0,
                                        inplace_column_scale,
-                                       inplace_swap_row, inplace_swap_column)
+                                       inplace_swap_row, inplace_swap_column,
+                                       min_max_axis0)
 from sklearn.utils.sparsefuncs_fast import assign_rows_csr
 from sklearn.utils.testing import assert_raises
+
 
 def test_mean_variance_axis0():
     X, _ = make_classification(5, 4, random_state=0)
@@ -43,7 +45,7 @@ def test_densify_rows():
     rows = np.array([0, 2, 3], dtype=np.intp)
     out = np.ones((rows.shape[0], X.shape[1]), dtype=np.float64)
 
-    assign_rows_csr(X, rows, 
+    assign_rows_csr(X, rows,
                     np.arange(out.shape[0], dtype=np.intp)[::-1], out)
     assert_array_equal(out, X[rows].toarray()[::-1])
 
@@ -117,3 +119,22 @@ def test_inplace_swap_column():
     assert_array_equal(X, X_csc.toarray())
     assert_array_equal(X, X_csr.toarray())
     assert_raises(TypeError, inplace_swap_column, X_csr.tolil())
+
+
+def test_min_max_axis0():
+    X = np.array([[0, 3, 0],
+                  [2, -1, 0],
+                  [0, 0, 0],
+                  [9, 8, 7],
+                  [4, 0, 5]], dtype=np.float64)
+    X_csr = sp.csr_matrix(X)
+    X_csc = sp.csc_matrix(X)
+
+    mins_csr, maxs_csr = min_max_axis0(X_csr)
+    assert_array_equal(mins_csr, X.min(0))
+    assert_array_equal(maxs_csr, X.max(0))
+
+    mins_csc, maxs_csc = min_max_axis0(X_csc)
+    assert_array_equal(mins_csc, X.min(0))
+    assert_array_equal(maxs_csc, X.max(0))
+    assert_raises(TypeError, min_max_axis0, X_csr.tolil())
