@@ -98,7 +98,6 @@ def sample_gaussian(mean, covar, covariance_type='diag', n_samples=1,
         rand = np.dot(np.diag(np.sqrt(covar)), rand)
     else:
         s, U = linalg.eigh(covar)
-        sqrtS = np.sqrt(s)
         sqrt_covar = U * np.sqrt(s)
         rand = np.dot(sqrt_covar, rand)
 
