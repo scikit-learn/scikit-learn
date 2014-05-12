@@ -1273,7 +1273,7 @@ class RandomTreesEmbedding(BaseForest):
        
     sparse: bool, optional (default=True)
         Whether or not to return a sparse CSR matrix, as default behavior,
-        or to return a dense matrix compatible with dense pipeline operators.
+        or to return a dense array compatible with dense pipeline operators.
 
     n_jobs : integer, optional (default=1)
         The number of jobs to run in parallel for both `fit` and `predict`.
