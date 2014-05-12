@@ -22,7 +22,7 @@ from ..utils import warn_if_not_float
 from ..utils.extmath import row_norms
 from ..utils.sparsefuncs_fast import inplace_csr_row_normalize_l1
 from ..utils.sparsefuncs_fast import inplace_csr_row_normalize_l2
-from ..utils.sparsefuncs_fast import inplace_csr_column_scale
+from ..utils.sparsefuncs import inplace_column_scale
 from ..utils.sparsefuncs import mean_variance_axis0
 
 zip = six.moves.zip
@@ -129,7 +129,7 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
             X = X.copy()
         _, var = mean_variance_axis0(X)
         var[var == 0.0] = 1.0
-        inplace_csr_column_scale(X, 1 / np.sqrt(var))
+        inplace_column_scale(X, 1 / np.sqrt(var))
     else:
         X = np.asarray(X)
         warn_if_not_float(X, estimator='The scale function')
@@ -348,7 +348,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
                     "Cannot center sparse matrices: pass `with_mean=False` "
                     "instead. See docstring for motivation and alternatives.")
             if self.std_ is not None:
-                inplace_csr_column_scale(X, 1 / self.std_)
+                inplace_column_scale(X, 1 / self.std_)
         else:
             if self.with_mean:
                 X -= self.mean_
@@ -376,7 +376,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
             if copy:
                 X = X.copy()
             if self.std_ is not None:
-                inplace_csr_column_scale(X, self.std_)
+                inplace_column_scale(X, self.std_)
         else:
             X = np.asarray(X)
             if copy:
