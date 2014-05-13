@@ -1,3 +1,10 @@
+scikit-learn (0.14.1-3) unstable; urgency=medium
+
+  * Cherry-pick a workaround for FTBFS due to error in current scipy
+    (Closes: #746096)
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 13 May 2014 10:07:58 -0400
+
 scikit-learn (0.14.1-2) unstable; urgency=low
 
   * Disable reporting to google analytics -- we haven't got any permission from
