@@ -1,0 +1,12 @@
+From: Gael Varoquaux <gael.varoquaux@inria.fr>
+Subject: TST: fix test on scipy dev version
+
+--- a/sklearn/cluster/bicluster/tests/test_utils.py
++++ b/sklearn/cluster/bicluster/tests/test_utils.py
+@@ -40,4 +40,6 @@ def test_get_submatrix():
+                                        [6, 7],
+                                        [18, 19]])
+         submatrix[:] = -1
++        if issparse(X):
++            X = X.todense()
+         assert_true(np.all(X != -1))
