@@ -89,7 +89,7 @@ def test_isotonic_censoring():
     values that are outside of training/fit data.
     '''
     # Create the regressor
-    ir = IsotonicRegression(x_censor=True)
+    ir = IsotonicRegression(clip_x=True)
 
     # Setup training/test X and Y
     x_train = [1, 2, 3, 4, 5, 6, 7]
