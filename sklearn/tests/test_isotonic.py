@@ -3,7 +3,7 @@ import numpy as np
 from sklearn.isotonic import isotonic_regression, IsotonicRegression
 
 from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_array_equal, assert_equal
 
 
 def test_isotonic_regression():
