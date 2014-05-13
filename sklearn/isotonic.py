@@ -114,7 +114,7 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         If not None, set the highest value of the fit to y_max.
 
     clip_x : boolean, optional, default : False
-        Whether to censor x values outside of [x_min, x_max] by matching
+        Whether to clip x values outside of [x_min, x_max] by matching
         them to the nearest edge of interval.
 
     Attributes
@@ -183,7 +183,7 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         self.y_ = isotonic_regression(y[order], sample_weight, self.y_min,
                                       self.y_max, increasing=self.increasing)
 
-        # Handle the left and right bounds on X if censoring
+        # Handle the left and right bounds on X if clipping
         if self.clip_x:
             self.X_min = np.min(self.X_)
             self.X_max = np.max(self.X_)
@@ -259,7 +259,7 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         self.y_ = isotonic_regression(y[order], sample_weight, self.y_min,
                                       self.y_max, increasing=self.increasing)
 
-        # Handle the left and right bounds on X if censoring
+        # Handle the left and right bounds on X if clipping
         if self.clip_x:
             self.X_min = np.min(self.X_)
             self.X_max = np.max(self.X_)

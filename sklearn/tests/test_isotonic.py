@@ -83,9 +83,9 @@ def test_isotonic_sample_weight():
     assert_array_equal(expected_y, received_y)
 
 
-def test_isotonic_censoring():
+def test_isotonic_clipping():
     '''
-    Test x-value censoring to handle out-of-bounds input X
+    Test x-value clipping to handle out-of-bounds input X
     values that are outside of training/fit data.
     '''
     # Create the regressor
