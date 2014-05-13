@@ -113,6 +113,10 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
     y_max : optional, default: None
         If not None, set the highest value of the fit to y_max.
 
+    x_censor : boolean, optional, default : False
+        Whether to censor x values outside of [x_min, x_max] by matching
+        them to the nearest edge of interval.
+
     Attributes
     ----------
     `X_` : ndarray (n_samples, )
@@ -128,10 +132,12 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
     Mathematics of Operations Research
     Vol. 14, No. 2 (May, 1989), pp. 303-308
     """
-    def __init__(self, y_min=None, y_max=None, increasing=True):
+    def __init__(self, y_min=None, y_max=None, increasing=True,
+                 x_censor=False):
         self.y_min = y_min
         self.y_max = y_max
         self.increasing = increasing
+        self.x_censor = x_censor
 
     def _check_fit_data(self, X, y, sample_weight=None):
         if len(X.shape) != 1:
@@ -176,6 +182,12 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         self.X_ = as_float_array(X[order], copy=False)
         self.y_ = isotonic_regression(y[order], sample_weight, self.y_min,
                                       self.y_max, increasing=self.increasing)
+
+        # Handle the left and right bounds on X if censoring
+        if self.x_censor:
+            self.X_min = np.min(self.X_)
+            self.X_max = np.max(self.X_)
+
         return self
 
     def transform(self, T):
@@ -197,6 +209,12 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
 
         f = interpolate.interp1d(self.X_, self.y_, kind='linear',
                                  bounds_error=True)
+
+        # If we are censoring, replace any out-of-bound values.
+        if self.x_censor:
+            T[T > self.X_max] = self.X_max
+            T[T < self.X_min] = self.X_min
+
         return f(T)
 
     def fit_transform(self, X, y, sample_weight=None, weight=None):
@@ -240,6 +258,12 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         self.X_ = as_float_array(X[order], copy=False)
         self.y_ = isotonic_regression(y[order], sample_weight, self.y_min,
                                       self.y_max, increasing=self.increasing)
+
+        # Handle the left and right bounds on X if censoring
+        if self.x_censor:
+            self.X_min = np.min(self.X_)
+            self.X_max = np.max(self.X_)
+
         return self.y_[order_inv]
 
     def predict(self, T):
@@ -255,4 +279,10 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         `T_` : array, shape=(n_samples,)
             Transformed data.
         """
+        
+        # If we are censoring, replace any out-of-bound values.
+        if self.x_censor:
+            T[T > self.X_max] = self.X_max
+            T[T < self.X_min] = self.X_min
+
         return self.transform(T)
