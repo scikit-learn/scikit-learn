@@ -62,20 +62,23 @@ as objects that implement the `transform` method:
    false positive rate :class:`SelectFpr`, false discovery rate
    :class:`SelectFdr`, or family wise error :class:`SelectFwe`.
 
-Using the boolean-feature example given above,
-we can perform a :math:`\chi^2` test to the samples
+ * :class:`GenericUnivariateSelect` allows to perform univariate feature
+    selection with a configurable strategy. This allows to select the best
+    univariate selection strategy with hyper-parameter search estimator.
+
+For instance, we can perform a :math:`\chi^2` test to the samples
 to retrieve only the two best features as follows:
 
-  >>> from sklearn.feature_selection import VarianceThreshold
-  >>> X = [[0, 0, 1], [0, 1, 0], [1, 0, 0], [0, 1, 1], [0, 1, 0], [0, 1, 1]]
-  >>> sel = VarianceThreshold(threshold=(.8 * (1 - .8)))
-  >>> sel.fit_transform(X)
-  array([[0, 1],
-         [1, 0],
-         [0, 0],
-         [1, 1],
-         [1, 0],
-         [1, 1]])
+  >>> from sklearn.datasets import load_iris
+  >>> from sklearn.feature_selection import SelectKBest
+  >>> from sklearn.feature_selection import chi2
+  >>> iris = load_iris()
+  >>> X, y = iris.data, iris.target
+  >>> X.shape
+  (150, 4)
+  >>> X_new = SelectKBest(chi2, k=2).fit_transform(X, y)
+  >>> X_new.shape
+  (150, 2)
 
 These objects take as input a scoring function that returns
 univariate p-values:
@@ -265,7 +268,7 @@ features::
 Feature selection as part of a pipeline
 =======================================
 
-Feature selection is usually used as a pre-processing step before doing 
+Feature selection is usually used as a pre-processing step before doing
 the actual learning. The recommended way to do this in scikit-learn is
 to use a :class:`sklearn.pipeline.Pipeline`::
 
@@ -275,10 +278,10 @@ to use a :class:`sklearn.pipeline.Pipeline`::
   ])
   clf.fit(X, y)
 
-In this snippet we make use of a :class:`sklearn.svm.LinearSVC` 
+In this snippet we make use of a :class:`sklearn.svm.LinearSVC`
 to evaluate feature importances and select the most relevant features.
-Then, a :class:`sklearn.ensemble.RandomForestClassifier` is trained on the 
-transformed output, i.e. using only relevant features. You can perform 
+Then, a :class:`sklearn.ensemble.RandomForestClassifier` is trained on the
+transformed output, i.e. using only relevant features. You can perform
 similar operations with the other feature selection methods and also
-classifiers that provide a way to evaluate feature importances of course. 
+classifiers that provide a way to evaluate feature importances of course.
 See the :class:`sklearn.pipeline.Pipeline` examples for more details.

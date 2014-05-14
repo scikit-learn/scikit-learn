@@ -12,6 +12,43 @@ from ..utils.random import sample_without_replacement
 from .base import LinearRegression
 
 
+_EPSILON = np.spacing(1)
+
+
+def _dynamic_max_trials(n_inliers, n_samples, min_samples, probability):
+    """Determine number trials such that at least one outlier-free subset is
+    sampled for the given inlier/outlier ratio.
+
+    Parameters
+    ----------
+    n_inliers : int
+        Number of inliers in the data.
+
+    n_samples : int
+        Total number of samples in the data.
+
+    min_samples : int
+        Minimum number of samples chosen randomly from original data.
+
+    probability : float
+        Probability (confidence) that one outlier-free sample is generated.
+
+    Returns
+    -------
+    trials : int
+        Number of trials.
+
+    """
+    inlier_ratio = n_inliers / float(n_samples)
+    nom = max(_EPSILON, 1 - probability)
+    denom = max(_EPSILON, 1 - inlier_ratio ** min_samples)
+    if nom == 1:
+        return 0
+    if denom == 1:
+        return float('inf')
+    return abs(float(np.ceil(np.log(nom) / np.log(denom))))
+
+
 class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
     """RANSAC (RANdom SAmple Consensus) algorithm.
 
@@ -44,7 +81,8 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
         Minimum number of samples chosen randomly from original data. Treated
         as an absolute number of samples for `min_samples >= 1`, treated as a
         relative number `ceil(min_samples * X.shape[0]`) for
-        `min_samples < 1`. By default a
+        `min_samples < 1`. This is typically chosen as the minimal number of
+        samples necessary to estimate the given `base_estimator`. By default a
         ``sklearn.linear_model.LinearRegression()`` estimator is assumed and
         `min_samples` is chosen as ``X.shape[1] + 1``.
 
@@ -74,6 +112,17 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
 
     stop_score : float, optional
         Stop iteration if score is greater equal than this threshold.
+
+    stop_probability : float in range [0, 1], optional
+        RANSAC iteration stops if at least one outlier-free set of the training
+        data is sampled in RANSAC. This requires to generate at least N
+        samples (iterations)::
+
+            N >= log(1 - probability) / log(1 - e**m)
+
+        where the probability (confidence) is typically set to high value such
+        as 0.99 (the default) and e is the current fraction of inliers w.r.t.
+        the total number of samples.
 
     residual_metric : callable, optional
         Metric to reduce the dimensionality of the residuals to 1 for
@@ -110,7 +159,8 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
                  residual_threshold=None, is_data_valid=None,
                  is_model_valid=None, max_trials=100,
                  stop_n_inliers=np.inf, stop_score=np.inf,
-                 residual_metric=None, random_state=None):
+                 stop_probability=0.99, residual_metric=None,
+                 random_state=None):
 
         self.base_estimator = base_estimator
         self.min_samples = min_samples
@@ -120,6 +170,7 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
         self.max_trials = max_trials
         self.stop_n_inliers = stop_n_inliers
         self.stop_score = stop_score
+        self.stop_probability = stop_probability
         self.residual_metric = residual_metric
         self.random_state = random_state
 
@@ -163,6 +214,9 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
         if min_samples > X.shape[0]:
             raise ValueError("`min_samples` may not be larger than number "
                              "of samples ``X.shape[0]``.")
+
+        if self.stop_probability < 0 or self.stop_probability > 1:
+            raise ValueError("`stop_probability` must be in range [0, 1].")
 
         if self.residual_threshold is None:
             # MAD (median absolute deviation)
@@ -258,7 +312,11 @@ class RANSACRegressor(BaseEstimator, MetaEstimatorMixin, RegressorMixin):
 
             # break if sufficient number of inliers or score is reached
             if (n_inliers_best >= self.stop_n_inliers
-                    or score_best >= self.stop_score):
+                    or score_best >= self.stop_score
+                    or self.n_trials_
+                       >= _dynamic_max_trials(n_inliers_best, n_samples,
+                                              min_samples,
+                                              self.stop_probability)):
                 break
 
         # if none of the iterations met the required criteria

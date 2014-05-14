@@ -259,7 +259,7 @@ class RandomizedLasso(BaseRandomizedLinearModel):
 
     memory : Instance of joblib.Memory or string
         Used for internal caching. By default, no caching is done.
-        If a string is given, it is thepath to the caching directory.
+        If a string is given, it is the path to the caching directory.
 
     Attributes
     ----------
@@ -427,7 +427,7 @@ class RandomizedLogisticRegression(BaseRandomizedLinearModel):
 
     memory : Instance of joblib.Memory or string
         Used for internal caching. By default, no caching is done.
-        If a string is given, it is thepath to the caching directory.
+        If a string is given, it is the path to the caching directory.
 
     Attributes
     ----------

@@ -20,6 +20,7 @@ from sklearn.utils.testing import assert_raises
 
 from sklearn.utils.extmath import density
 from sklearn.utils.extmath import logsumexp
+from sklearn.utils.extmath import norm, squared_norm
 from sklearn.utils.extmath import randomized_svd
 from sklearn.utils.extmath import row_norms
 from sklearn.utils.extmath import weighted_mode
@@ -123,6 +124,16 @@ def test_randomized_svd_low_rank():
     # compute the singular values of X using the fast approximate method
     Ua, sa, Va = randomized_svd(X, k)
     assert_almost_equal(s[:rank], sa[:rank])
+
+
+def test_norm_squared_norm():
+    X = np.random.RandomState(42).randn(50, 63)
+    X *= 100        # check stability
+    X += 200
+
+    assert_almost_equal(np.linalg.norm(X.ravel()), norm(X))
+    assert_almost_equal(norm(X) ** 2, squared_norm(X), decimal=6)
+    assert_almost_equal(np.linalg.norm(X), np.sqrt(squared_norm(X)), decimal=6)
 
 
 def test_row_norms():
@@ -336,15 +347,15 @@ def test_fast_dot():
         #  col < row
         C = np.dot(A.T, A)
         C_ = fast_dot(A.T, A)
-        assert_almost_equal(C, C_)
+        assert_almost_equal(C, C_, decimal=5)
 
         C = np.dot(A.T, B)
         C_ = fast_dot(A.T, B)
-        assert_almost_equal(C, C_)
+        assert_almost_equal(C, C_, decimal=5)
 
         C = np.dot(A, B.T)
         C_ = fast_dot(A, B.T)
-        assert_almost_equal(C, C_)
+        assert_almost_equal(C, C_, decimal=5)
 
     # Test square matrix * rectangular use case.
     A = rng.random_sample([2, 2])
@@ -354,11 +365,11 @@ def test_fast_dot():
 
         C = np.dot(A, B)
         C_ = fast_dot(A, B)
-        assert_almost_equal(C, C_)
+        assert_almost_equal(C, C_, decimal=5)
 
         C = np.dot(A.T, B)
         C_ = fast_dot(A.T, B)
-        assert_almost_equal(C, C_)
+        assert_almost_equal(C, C_, decimal=5)
 
     if has_blas:
         for x in [np.array([[d] * 10] * 2) for d in [np.inf, np.nan]]:
