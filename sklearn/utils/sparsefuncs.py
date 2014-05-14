@@ -7,10 +7,43 @@ import numpy as np
 
 from .sparsefuncs_fast import (csr_mean_variance_axis0,
                                csc_mean_variance_axis0,
-                               inplace_csr_column_scale,
-                               inplace_csr_row_scale,
                                csr_min_max_axis0,
                                csc_min_max_axis0)
+
+def inplace_csr_column_scale(X, scale):
+    """Inplace column scaling of a CSR matrix.
+
+    Scale each feature of the data matrix by multiplying with specific scale
+    provided by the caller assuming a (n_samples, n_features) shape.
+
+    Parameters
+    ----------
+    X: CSR matrix with shape (n_samples, n_features)
+        Matrix to normalize using the variance of the features.
+
+    scale: float array with shape (n_features,)
+        Array of precomputed feature-wise values to use for scaling.
+    """
+    assert scale.shape[0] == X.shape[1]
+    X.data *= scale.take(X.indices, mode='clip')
+
+
+def inplace_csr_row_scale(X, scale):
+    """ Inplace row scaling of a CSR matrix.
+
+    Scale each sample of the data matrix by multiplying with specific scale
+    provided by the caller assuming a (n_samples, n_features) shape.
+
+    Parameters
+    ----------
+    X: CSR sparse matrix, shape (n_samples, n_features)
+    matrix to be scaled.
+
+    scale: float array with shape (n_samples,)
+    Array of precomputed sample-wise values to use for scaling.
+    """
+    assert scale.shape[0] == X.shape[0]
+    X.data *= np.repeat(scale, np.diff(X.indptr))
 
 
 def mean_variance_axis0(X):

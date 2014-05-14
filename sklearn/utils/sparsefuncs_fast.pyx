@@ -177,65 +177,6 @@ def inplace_csr_row_normalize_l2(X):
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-def inplace_csr_column_scale(X, np.ndarray[DOUBLE, ndim=1] scale):
-    """Inplace column scaling of a CSR matrix.
-
-    Scale each feature of the data matrix by multiplying with specific scale
-    provided by the caller assuming a (n_samples, n_features) shape.
-
-    Parameters
-    ----------
-    X: CSR matrix with shape (n_samples, n_features)
-        Matrix to normalize using the variance of the features.
-
-    scale: float array with shape (n_features,)
-        Array of precomputed feature-wise values to use for scaling.
-    """
-    cdef np.ndarray[DOUBLE, ndim=1] X_data = X.data
-    cdef np.ndarray[int, ndim=1] X_indices = X.indices
-
-    cdef unsigned int i
-    cdef unsigned non_zero = len(X_indices)
-
-    with nogil:
-        for i in xrange(non_zero):
-            X_data[i] *= scale[X_indices[i]]
-
-
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
-def inplace_csr_row_scale(X, np.ndarray[DOUBLE, ndim=1] scale):
-    """ Inplace row scaling of a CSR matrix.
-
-    Scale each sample of the data matrix by multiplying with specific scale
-    provided by the caller assuming a (n_samples, n_features) shape.
-
-    Parameters
-    ----------ls
-    X: CSR sparse matrix, shape (n_samples, n_features)
-    matrix to be scaled.
-
-    scale: float array with shape (n_features,)
-    Array of precomputed sample-wise values to use for scaling.
-    """
-    cdef unsigned int n_samples = X.shape[0]
-    cdef unsigned int n_features = X.shape[1]
-
-    cdef np.ndarray[DOUBLE, ndim=1] X_data = X.data
-    cdef np.ndarray[int, ndim=1] X_indices = X.indices
-    cdef np.ndarray[int, ndim=1] X_indptr = X.indptr
-    cdef unsigned int i, j
-
-    with nogil:
-        for i in xrange(n_samples):
-            for j in xrange(X_indptr[i], X_indptr[i + 1]):
-                X_data[j] *= scale[i]
-
-
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
 def csc_mean_variance_axis0(X):
     """Compute mean and variance along axis 0 on a CSC matrix
 
