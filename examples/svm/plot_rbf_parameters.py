@@ -24,7 +24,7 @@ grid from `10**-3` to `10**3` is usually sufficient.
 print(__doc__)
 
 import numpy as np
-import pylab as pl
+import matplotlib.pyplot as plt
 
 from sklearn.svm import SVC
 from sklearn.preprocessing import StandardScaler
@@ -87,7 +87,7 @@ for C in C_2d_range:
 # visualization
 #
 # draw visualization of parameter effects
-pl.figure(figsize=(8, 6))
+plt.figure(figsize=(8, 6))
 xx, yy = np.meshgrid(np.linspace(-5, 5, 200), np.linspace(-5, 5, 200))
 for (k, (C, gamma, clf)) in enumerate(classifiers):
     # evaluate decision function in a grid
@@ -95,16 +95,16 @@ for (k, (C, gamma, clf)) in enumerate(classifiers):
     Z = Z.reshape(xx.shape)
 
     # visualize decision function for these parameters
-    pl.subplot(len(C_2d_range), len(gamma_2d_range), k + 1)
-    pl.title("gamma 10^%d, C 10^%d" % (np.log10(gamma), np.log10(C)),
+    plt.subplot(len(C_2d_range), len(gamma_2d_range), k + 1)
+    plt.title("gamma 10^%d, C 10^%d" % (np.log10(gamma), np.log10(C)),
              size='medium')
 
     # visualize parameter's effect on decision function
-    pl.pcolormesh(xx, yy, -Z, cmap=pl.cm.jet)
-    pl.scatter(X_2d[:, 0], X_2d[:, 1], c=Y_2d, cmap=pl.cm.jet)
-    pl.xticks(())
-    pl.yticks(())
-    pl.axis('tight')
+    plt.pcolormesh(xx, yy, -Z, cmap=plt.cm.jet)
+    plt.scatter(X_2d[:, 0], X_2d[:, 1], c=Y_2d, cmap=plt.cm.jet)
+    plt.xticks(())
+    plt.yticks(())
+    plt.axis('tight')
 
 # plot the scores of the grid
 # grid_scores_ contains parameter settings and scores
@@ -115,13 +115,13 @@ scores = [x[1] for x in score_dict]
 scores = np.array(scores).reshape(len(C_range), len(gamma_range))
 
 # draw heatmap of accuracy as a function of gamma and C
-pl.figure(figsize=(8, 6))
-pl.subplots_adjust(left=0.05, right=0.95, bottom=0.15, top=0.95)
-pl.imshow(scores, interpolation='nearest', cmap=pl.cm.spectral)
-pl.xlabel('gamma')
-pl.ylabel('C')
-pl.colorbar()
-pl.xticks(np.arange(len(gamma_range)), gamma_range, rotation=45)
-pl.yticks(np.arange(len(C_range)), C_range)
+plt.figure(figsize=(8, 6))
+plt.subplots_adjust(left=0.05, right=0.95, bottom=0.15, top=0.95)
+plt.imshow(scores, interpolation='nearest', cmap=plt.cm.spectral)
+plt.xlabel('gamma')
+plt.ylabel('C')
+plt.colorbar()
+plt.xticks(np.arange(len(gamma_range)), gamma_range, rotation=45)
+plt.yticks(np.arange(len(C_range)), C_range)
 
-pl.show()
+plt.show()

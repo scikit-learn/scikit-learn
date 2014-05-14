@@ -73,7 +73,7 @@ matrix as a binary prediction (micro-averaging).
 """
 print(__doc__)
 
-import pylab as pl
+import matplotlib.pyplot as plt
 import numpy as np
 from sklearn import svm, datasets
 from sklearn.metrics import precision_recall_curve
@@ -121,30 +121,30 @@ average_precision["micro"] = average_precision_score(y_test, y_score,
                                                      average="micro")
 
 # Plot Precision-Recall curve
-pl.clf()
-pl.plot(recall[0], precision[0], label='Precision-Recall curve')
-pl.xlabel('Recall')
-pl.ylabel('Precision')
-pl.ylim([0.0, 1.05])
-pl.xlim([0.0, 1.0])
-pl.title('Precision-Recall example: AUC={0:0.2f}'.format(average_precision[0]))
-pl.legend(loc="lower left")
-pl.show()
+plt.clf()
+plt.plot(recall[0], precision[0], label='Precision-Recall curve')
+plt.xlabel('Recall')
+plt.ylabel('Precision')
+plt.ylim([0.0, 1.05])
+plt.xlim([0.0, 1.0])
+plt.title('Precision-Recall example: AUC={0:0.2f}'.format(average_precision[0]))
+plt.legend(loc="lower left")
+plt.show()
 
 # Plot Precision-Recall curve for each class
-pl.clf()
-pl.plot(recall["micro"], precision["micro"],
+plt.clf()
+plt.plot(recall["micro"], precision["micro"],
         label='micro-average Precision-recall curve (area = {0:0.2f})'
               ''.format(average_precision["micro"]))
 for i in range(n_classes):
-    pl.plot(recall[i], precision[i],
+    plt.plot(recall[i], precision[i],
             label='Precision-recall curve of class {0} (area = {1:0.2f})'
                   ''.format(i, average_precision[i]))
 
-pl.xlim([0.0, 1.0])
-pl.ylim([0.0, 1.05])
-pl.xlabel('Recall')
-pl.ylabel('Precision')
-pl.title('Extension of Precision-Recall curve to multi-class')
-pl.legend(loc="lower right")
-pl.show()
+plt.xlim([0.0, 1.0])
+plt.ylim([0.0, 1.05])
+plt.xlabel('Recall')
+plt.ylabel('Precision')
+plt.title('Extension of Precision-Recall curve to multi-class')
+plt.legend(loc="lower right")
+plt.show()

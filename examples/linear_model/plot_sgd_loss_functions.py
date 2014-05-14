@@ -9,7 +9,7 @@ A plot that compares the various convex loss functions supported by
 print(__doc__)
 
 import numpy as np
-import pylab as pl
+import matplotlib.pyplot as plt
 
 
 def modified_huber_loss(y_true, y_pred):
@@ -22,20 +22,20 @@ def modified_huber_loss(y_true, y_pred):
 
 xmin, xmax = -4, 4
 xx = np.linspace(xmin, xmax, 100)
-pl.plot([xmin, 0, 0, xmax], [1, 1, 0, 0], 'k-',
+plt.plot([xmin, 0, 0, xmax], [1, 1, 0, 0], 'k-',
         label="Zero-one loss")
-pl.plot(xx, np.where(xx < 1, 1 - xx, 0), 'g-',
+plt.plot(xx, np.where(xx < 1, 1 - xx, 0), 'g-',
         label="Hinge loss")
-pl.plot(xx, -np.minimum(xx, 0), 'm-',
+plt.plot(xx, -np.minimum(xx, 0), 'm-',
         label="Perceptron loss")
-pl.plot(xx, np.log2(1 + np.exp(-xx)), 'r-',
+plt.plot(xx, np.log2(1 + np.exp(-xx)), 'r-',
         label="Log loss")
-pl.plot(xx, np.where(xx < 1, 1 - xx, 0) ** 2, 'b-',
+plt.plot(xx, np.where(xx < 1, 1 - xx, 0) ** 2, 'b-',
         label="Squared hinge loss")
-pl.plot(xx, modified_huber_loss(xx, 1), 'y--',
+plt.plot(xx, modified_huber_loss(xx, 1), 'y--',
         label="Modified Huber loss")
-pl.ylim((0, 8))
-pl.legend(loc="upper right")
-pl.xlabel(r"Decision function $f(x)$")
-pl.ylabel("$L(y, f(x))$")
-pl.show()
+plt.ylim((0, 8))
+plt.legend(loc="upper right")
+plt.xlabel(r"Decision function $f(x)$")
+plt.ylabel("$L(y, f(x))$")
+plt.show()
