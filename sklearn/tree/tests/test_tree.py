@@ -812,6 +812,11 @@ def test_big_input():
         assert_in("float32", str(e))
 
 
+def test_memoryerror():
+    from sklearn.tree._tree import _realloc_test
+    assert_raises(MemoryError, _realloc_test)
+
+
 def test_sparse_input_on_x_small():
 
     for max_features in [1, None]:
