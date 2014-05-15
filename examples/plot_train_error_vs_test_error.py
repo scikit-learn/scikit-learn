@@ -60,7 +60,7 @@ plt.subplot(2, 1, 1)
 plt.semilogx(alphas, train_errors, label='Train')
 plt.semilogx(alphas, test_errors, label='Test')
 plt.vlines(alpha_optim, plt.ylim()[0], np.max(test_errors), color='k',
-          linewidth=3, label='Optimum on test')
+           linewidth=3, label='Optimum on test')
 plt.legend(loc='lower left')
 plt.ylim([0, 1.2])
 plt.xlabel('Regularization parameter')

@@ -69,7 +69,7 @@ for pairidx, pair in enumerate([[0, 1], [0, 2], [0, 3],
     for i, color in zip(range(n_classes), plot_colors):
         idx = np.where(y == i)
         plt.scatter(X[idx, 0], X[idx, 1], c=color, label=iris.target_names[i],
-                   cmap=plt.cm.Paired)
+                    cmap=plt.cm.Paired)
 
     plt.axis("tight")
 

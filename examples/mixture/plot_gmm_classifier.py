@@ -76,7 +76,7 @@ n_classifiers = len(classifiers)
 
 plt.figure(figsize=(3 * n_classifiers / 2, 6))
 plt.subplots_adjust(bottom=.01, top=0.95, hspace=.15, wspace=.05,
-                   left=.01, right=.99)
+                    left=.01, right=.99)
 
 
 for index, (name, classifier) in enumerate(classifiers.items()):
@@ -94,7 +94,7 @@ for index, (name, classifier) in enumerate(classifiers.items()):
     for n, color in enumerate('rgb'):
         data = iris.data[iris.target == n]
         plt.scatter(data[:, 0], data[:, 1], 0.8, color=color,
-                   label=iris.target_names[n])
+                    label=iris.target_names[n])
     # Plot the test data with crosses
     for n, color in enumerate('rgb'):
         data = X_test[y_test == n]
@@ -103,12 +103,12 @@ for index, (name, classifier) in enumerate(classifiers.items()):
     y_train_pred = classifier.predict(X_train)
     train_accuracy = np.mean(y_train_pred.ravel() == y_train.ravel()) * 100
     plt.text(0.05, 0.9, 'Train accuracy: %.1f' % train_accuracy,
-            transform=h.transAxes)
+             transform=h.transAxes)
 
     y_test_pred = classifier.predict(X_test)
     test_accuracy = np.mean(y_test_pred.ravel() == y_test.ravel()) * 100
     plt.text(0.05, 0.8, 'Test accuracy: %.1f' % test_accuracy,
-            transform=h.transAxes)
+             transform=h.transAxes)
 
     plt.xticks(())
     plt.yticks(())

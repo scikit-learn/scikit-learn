@@ -46,7 +46,7 @@ for i in range(4):
         plt.title('Original data')
     plt.subplot(3, 4, 4 + i + 1)
     plt.imshow(images_restored[i], cmap=plt.cm.gray, vmax=16,
-              interpolation='nearest')
+               interpolation='nearest')
     if i == 1:
         plt.title('Agglomerated data')
     plt.xticks(())
@@ -54,7 +54,7 @@ for i in range(4):
 
 plt.subplot(3, 4, 10)
 plt.imshow(np.reshape(agglo.labels_, images[0].shape),
-          interpolation='nearest', cmap=plt.cm.spectral)
+           interpolation='nearest', cmap=plt.cm.spectral)
 plt.xticks(())
 plt.yticks(())
 plt.title('Labels')

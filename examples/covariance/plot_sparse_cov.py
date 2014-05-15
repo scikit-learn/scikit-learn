@@ -103,7 +103,7 @@ vmax = cov_.max()
 for i, (name, this_cov) in enumerate(covs):
     plt.subplot(2, 4, i + 1)
     plt.imshow(this_cov, interpolation='nearest', vmin=-vmax, vmax=vmax,
-              cmap=plt.cm.RdBu_r)
+               cmap=plt.cm.RdBu_r)
     plt.xticks(())
     plt.yticks(())
     plt.title('%s covariance' % name)
@@ -116,8 +116,8 @@ vmax = .9 * prec_.max()
 for i, (name, this_prec) in enumerate(precs):
     ax = plt.subplot(2, 4, i + 5)
     plt.imshow(np.ma.masked_equal(this_prec, 0),
-              interpolation='nearest', vmin=-vmax, vmax=vmax,
-              cmap=plt.cm.RdBu_r)
+               interpolation='nearest', vmin=-vmax, vmax=vmax,
+               cmap=plt.cm.RdBu_r)
     plt.xticks(())
     plt.yticks(())
     plt.title('%s precision' % name)

@@ -83,12 +83,12 @@ plt.figure(figsize=(4.2, 4))
 for i, comp in enumerate(V[:100]):
     plt.subplot(10, 10, i + 1)
     plt.imshow(comp.reshape(patch_size), cmap=plt.cm.gray_r,
-              interpolation='nearest')
+               interpolation='nearest')
     plt.xticks(())
     plt.yticks(())
 plt.suptitle('Dictionary learned from Lena patches\n' +
-            'Train time %.1fs on %d patches' % (dt, len(data)),
-            fontsize=16)
+             'Train time %.1fs on %d patches' % (dt, len(data)),
+             fontsize=16)
 plt.subplots_adjust(0.08, 0.02, 0.92, 0.85, 0.08, 0.23)
 
 
@@ -108,7 +108,7 @@ def show_with_diff(image, reference, title):
 
     plt.title('Difference (norm: %.2f)' % np.sqrt(np.sum(difference ** 2)))
     plt.imshow(difference, vmin=-0.5, vmax=0.5, cmap=plt.cm.PuOr,
-              interpolation='nearest')
+               interpolation='nearest')
     plt.xticks(())
     plt.yticks(())
     plt.suptitle(title, size=16)

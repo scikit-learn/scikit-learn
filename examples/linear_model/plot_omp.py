@@ -78,5 +78,5 @@ plt.stem(idx_r, coef[idx_r])
 
 plt.subplots_adjust(0.06, 0.04, 0.94, 0.90, 0.20, 0.38)
 plt.suptitle('Sparse signal recovery with Orthogonal Matching Pursuit',
-            fontsize=16)
+             fontsize=16)
 plt.show()

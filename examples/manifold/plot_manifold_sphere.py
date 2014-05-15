@@ -64,7 +64,7 @@ x, y, z = np.sin(t[indices]) * np.cos(p[indices]), \
 # Plot our dataset.
 fig = plt.figure(figsize=(15, 8))
 plt.suptitle("Manifold Learning with %i points, %i neighbors"
-            % (1000, n_neighbors), fontsize=14)
+             % (1000, n_neighbors), fontsize=14)
 
 ax = fig.add_subplot(241, projection='3d')
 ax.scatter(x, y, z, c=p[indices], cmap=plt.cm.rainbow)

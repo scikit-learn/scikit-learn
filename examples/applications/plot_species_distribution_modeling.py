@@ -157,8 +157,8 @@ def plot_species_distribution(species=["bradypus_variegatus_0",
         else:
             print(" - plot coastlines from coverage")
             plt.contour(X, Y, land_reference,
-                       levels=[-9999], colors="k",
-                       linestyles="solid")
+                        levels=[-9999], colors="k",
+                        linestyles="solid")
             plt.xticks([])
             plt.yticks([])
 
@@ -184,11 +184,11 @@ def plot_species_distribution(species=["bradypus_variegatus_0",
 
         # scatter training/testing points
         plt.scatter(species.pts_train['dd long'], species.pts_train['dd lat'],
-                   s=2 ** 2, c='black',
-                   marker='^', label='train')
+                    s=2 ** 2, c='black',
+                    marker='^', label='train')
         plt.scatter(species.pts_test['dd long'], species.pts_test['dd lat'],
-                   s=2 ** 2, c='black',
-                   marker='x', label='test')
+                    s=2 ** 2, c='black',
+                    marker='x', label='test')
         plt.legend()
         plt.title(species.name)
         plt.axis('equal')

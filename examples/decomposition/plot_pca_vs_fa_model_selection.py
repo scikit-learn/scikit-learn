@@ -106,17 +106,17 @@ for X, title in [(X_homo, 'Homoscedastic Noise'),
     plt.plot(n_components, fa_scores, 'r', label='FA scores')
     plt.axvline(rank, color='g', label='TRUTH: %d' % rank, linestyle='-')
     plt.axvline(n_components_pca, color='b',
-               label='PCA CV: %d' % n_components_pca, linestyle='--')
+                label='PCA CV: %d' % n_components_pca, linestyle='--')
     plt.axvline(n_components_fa, color='r',
-               label='FactorAnalysis CV: %d' % n_components_fa, linestyle='--')
+                label='FactorAnalysis CV: %d' % n_components_fa, linestyle='--')
     plt.axvline(n_components_pca_mle, color='k',
-               label='PCA MLE: %d' % n_components_pca_mle, linestyle='--')
+                label='PCA MLE: %d' % n_components_pca_mle, linestyle='--')
 
     # compare with other covariance estimators
     plt.axhline(shrunk_cov_score(X), color='violet',
-               label='Shrunk Covariance MLE', linestyle='-.')
+                label='Shrunk Covariance MLE', linestyle='-.')
     plt.axhline(lw_score(X), color='orange',
-               label='LedoitWolf MLE' % n_components_pca_mle, linestyle='-.')
+                label='LedoitWolf MLE' % n_components_pca_mle, linestyle='-.')
 
     plt.xlabel('nb of components')
     plt.ylabel('CV scores')

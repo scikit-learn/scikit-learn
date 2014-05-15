@@ -143,9 +143,9 @@ for fignum, (clf, cs, X, y) in enumerate(clf_sets):
             plt.ylabel('CV Score')
             grid_cs = cs * float(scaler)  # scale the C's
             plt.semilogx(grid_cs, scores, label="fraction %.2f" %
-                        train_size)
+                         train_size)
             plt.title('scaling=%s, penalty=%s, loss=%s' %
-                     (name, clf.penalty, clf.loss))
+                      (name, clf.penalty, clf.loss))
 
     plt.legend(loc="best")
 plt.show()

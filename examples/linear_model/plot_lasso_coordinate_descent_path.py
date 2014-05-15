@@ -83,6 +83,6 @@ plt.xlabel('-Log(alpha)')
 plt.ylabel('coefficients')
 plt.title('Elastic-Net and positive Elastic-Net')
 plt.legend((l1[-1], l2[-1]), ('Elastic-Net', 'positive Elastic-Net'),
-          loc='lower left')
+           loc='lower left')
 plt.axis('tight')
 plt.show()

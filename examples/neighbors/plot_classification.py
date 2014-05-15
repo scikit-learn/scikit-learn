@@ -50,6 +50,6 @@ for weights in ['uniform', 'distance']:
     plt.xlim(xx.min(), xx.max())
     plt.ylim(yy.min(), yy.max())
     plt.title("3-Class classification (k = %i, weights = '%s')"
-             % (n_neighbors, weights))
+              % (n_neighbors, weights))
 
 plt.show()

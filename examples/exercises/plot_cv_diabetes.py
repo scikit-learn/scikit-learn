@@ -38,9 +38,9 @@ plt.figure(figsize=(4, 3))
 plt.semilogx(alphas, scores)
 # plot error lines showing +/- std. errors of the scores
 plt.semilogx(alphas, np.array(scores) + np.array(scores_std) / np.sqrt(len(X)),
-            'b--')
+             'b--')
 plt.semilogx(alphas, np.array(scores) - np.array(scores_std) / np.sqrt(len(X)),
-            'b--')
+             'b--')
 plt.ylabel('CV score')
 plt.xlabel('alpha')
 plt.axhline(np.max(scores), linestyle='--', color='.5')

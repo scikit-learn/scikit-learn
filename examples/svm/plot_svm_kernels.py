@@ -56,7 +56,7 @@ for kernel in ('linear', 'poly', 'rbf'):
     plt.clf()
 
     plt.scatter(clf.support_vectors_[:, 0], clf.support_vectors_[:, 1], s=80,
-               facecolors='none', zorder=10)
+                facecolors='none', zorder=10)
     plt.scatter(X[:, 0], X[:, 1], c=Y, zorder=10, cmap=plt.cm.Paired)
 
     plt.axis('tight')
@@ -73,7 +73,7 @@ for kernel in ('linear', 'poly', 'rbf'):
     plt.figure(fignum, figsize=(4, 3))
     plt.pcolormesh(XX, YY, Z > 0, cmap=plt.cm.Paired)
     plt.contour(XX, YY, Z, colors=['k', 'k', 'k'], linestyles=['--', '-', '--'],
-               levels=[-.5, 0, .5])
+                levels=[-.5, 0, .5])
 
     plt.xlim(x_min, x_max)
     plt.ylim(y_min, y_max)

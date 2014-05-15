@@ -62,6 +62,6 @@ estimator = GridSearchCV(pipe,
 estimator.fit(X_digits, y_digits)
 
 plt.axvline(estimator.best_estimator_.named_steps['pca'].n_components,
-           linestyle=':', label='n_components chosen')
+            linestyle=':', label='n_components chosen')
 plt.legend(prop=dict(size=12))
 plt.show()

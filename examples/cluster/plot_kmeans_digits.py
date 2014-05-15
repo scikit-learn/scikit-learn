@@ -108,18 +108,18 @@ Z = Z.reshape(xx.shape)
 plt.figure(1)
 plt.clf()
 plt.imshow(Z, interpolation='nearest',
-          extent=(xx.min(), xx.max(), yy.min(), yy.max()),
-          cmap=plt.cm.Paired,
-          aspect='auto', origin='lower')
+           extent=(xx.min(), xx.max(), yy.min(), yy.max()),
+           cmap=plt.cm.Paired,
+           aspect='auto', origin='lower')
 
 plt.plot(reduced_data[:, 0], reduced_data[:, 1], 'k.', markersize=2)
 # Plot the centroids as a white X
 centroids = kmeans.cluster_centers_
 plt.scatter(centroids[:, 0], centroids[:, 1],
-           marker='x', s=169, linewidths=3,
-           color='w', zorder=10)
+            marker='x', s=169, linewidths=3,
+            color='w', zorder=10)
 plt.title('K-means clustering on the digits dataset (PCA-reduced data)\n'
-         'Centroids are marked with white cross')
+          'Centroids are marked with white cross')
 plt.xlim(x_min, x_max)
 plt.ylim(y_min, y_max)
 plt.xticks(())

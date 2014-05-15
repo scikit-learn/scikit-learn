@@ -41,7 +41,7 @@ n_components = 2
 
 fig = plt.figure(figsize=(15, 8))
 plt.suptitle("Manifold Learning with %i points, %i neighbors"
-            % (1000, n_neighbors), fontsize=14)
+             % (1000, n_neighbors), fontsize=14)
 
 try:
     # compatibility matplotlib < 1.0

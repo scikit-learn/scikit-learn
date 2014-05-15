@@ -178,7 +178,7 @@ for n_components in n_components_range:
     plt.xlabel("Pairwise squared distances in original space")
     plt.ylabel("Pairwise squared distances in projected space")
     plt.title("Pairwise distances distribution for n_components=%d" %
-             n_components)
+              n_components)
     cb = plt.colorbar()
     cb.set_label('Sample pairs counts')
 
@@ -191,7 +191,7 @@ for n_components in n_components_range:
     plt.xlabel("Squared distances rate: projected / original")
     plt.ylabel("Distribution of samples pairs")
     plt.title("Histogram of pairwise distance rates for n_components=%d" %
-             n_components)
+              n_components)
     plt.show()
 
     # TODO: compute the expected value of eps and add them to the previous plot

@@ -63,5 +63,5 @@ plt.plot(lasso.coef_, label='Lasso coefficients')
 plt.plot(coef, '--', label='original coefficients')
 plt.legend(loc='best')
 plt.title("Lasso R^2: %f, Elastic Net R^2: %f"
-         % (r2_score_lasso, r2_score_enet))
+          % (r2_score_lasso, r2_score_enet))
 plt.show()

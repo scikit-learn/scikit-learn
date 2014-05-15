@@ -59,7 +59,7 @@ for fig_num, kernel in enumerate(('linear', 'rbf', 'poly')):
     Z = Z.reshape(XX.shape)
     plt.pcolormesh(XX, YY, Z > 0, cmap=plt.cm.Paired)
     plt.contour(XX, YY, Z, colors=['k', 'k', 'k'], linestyles=['--', '-', '--'],
-               levels=[-.5, 0, .5])
+                levels=[-.5, 0, .5])
 
     plt.title(kernel)
 plt.show()

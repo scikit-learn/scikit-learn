@@ -48,7 +48,7 @@ colors = np.hstack([colors] * 20)
 
 plt.figure(figsize=(17, 9.5))
 plt.subplots_adjust(left=.001, right=.999, bottom=.001, top=.96, wspace=.05,
-                   hspace=.01)
+                    hspace=.01)
 
 plot_num = 1
 for i_dataset, dataset in enumerate([noisy_circles, noisy_moons, blobs,
@@ -118,8 +118,8 @@ for i_dataset, dataset in enumerate([noisy_circles, noisy_moons, blobs,
         plt.xticks(())
         plt.yticks(())
         plt.text(.99, .01, ('%.2fs' % (t1 - t0)).lstrip('0'),
-                transform=plt.gca().transAxes, size=15,
-                horizontalalignment='right')
+                 transform=plt.gca().transAxes, size=15,
+                 horizontalalignment='right')
         plot_num += 1
 
 plt.show()

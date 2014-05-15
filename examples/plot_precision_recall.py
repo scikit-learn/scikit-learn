@@ -134,12 +134,12 @@ plt.show()
 # Plot Precision-Recall curve for each class
 plt.clf()
 plt.plot(recall["micro"], precision["micro"],
-        label='micro-average Precision-recall curve (area = {0:0.2f})'
-              ''.format(average_precision["micro"]))
+         label='micro-average Precision-recall curve (area = {0:0.2f})'
+               ''.format(average_precision["micro"]))
 for i in range(n_classes):
     plt.plot(recall[i], precision[i],
-            label='Precision-recall curve of class {0} (area = {1:0.2f})'
-                  ''.format(i, average_precision[i]))
+             label='Precision-recall curve of class {0} (area = {1:0.2f})'
+                   ''.format(i, average_precision[i]))
 
 plt.xlim([0.0, 1.0])
 plt.ylim([0.0, 1.05])

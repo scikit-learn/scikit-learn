@@ -104,7 +104,7 @@ plt.ylabel('Error: negative log-likelihood on test data')
 plt.loglog(shrinkages, negative_logliks, label="Negative log-likelihood")
 
 plt.plot(plt.xlim(), 2 * [loglik_real], '--r',
-        label="Real covariance likelihood")
+         label="Real covariance likelihood")
 
 # adjust view
 lik_max = np.amax(negative_logliks)
@@ -115,14 +115,14 @@ xmin = shrinkages[0]
 xmax = shrinkages[-1]
 # LW likelihood
 plt.vlines(lw.shrinkage_, ymin, -loglik_lw, color='magenta',
-          linewidth=3, label='Ledoit-Wolf estimate')
+           linewidth=3, label='Ledoit-Wolf estimate')
 # OAS likelihood
 plt.vlines(oa.shrinkage_, ymin, -loglik_oa, color='purple',
-          linewidth=3, label='OAS estimate')
+           linewidth=3, label='OAS estimate')
 # best CV estimator likelihood
 plt.vlines(cv.best_estimator_.shrinkage, ymin,
-          -cv.best_estimator_.score(X_test), color='cyan',
-          linewidth=3, label='Cross-validation best estimate')
+           -cv.best_estimator_.score(X_test), color='cyan',
+           linewidth=3, label='Cross-validation best estimate')
 
 plt.ylim(ymin, ymax)
 plt.xlim(xmin, xmax)

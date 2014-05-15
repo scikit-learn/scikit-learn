@@ -57,8 +57,8 @@ ylim = plt.ylim()
 #plt.vlines(1.0 / n_classes, ylim[0], ylim[1], linestyle='--',
 #          color='k', linewidth=3, label='Luck')
 plt.plot(2 * [score], ylim, '--g', linewidth=3,
-        label='Classification Score'
-        ' (pvalue %s)' % pvalue)
+         label='Classification Score'
+         ' (pvalue %s)' % pvalue)
 plt.plot(2 * [1. / n_classes], ylim, '--k', linewidth=3, label='Luck')
 
 plt.ylim(ylim)

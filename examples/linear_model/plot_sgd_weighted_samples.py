@@ -24,7 +24,7 @@ sample_weight[:10] *= 10
 xx, yy = np.meshgrid(np.linspace(-4, 5, 500), np.linspace(-4, 5, 500))
 plt.figure()
 plt.scatter(X[:, 0], X[:, 1], c=y, s=sample_weight, alpha=0.9,
-           cmap=plt.cm.bone)
+            cmap=plt.cm.bone)
 
 ## fit the unweighted model
 clf = linear_model.SGDClassifier(alpha=0.01, n_iter=100)
@@ -41,7 +41,7 @@ Z = Z.reshape(xx.shape)
 samples_weights = plt.contour(xx, yy, Z, levels=[0], linestyles=['dashed'])
 
 plt.legend([no_weights.collections[0], samples_weights.collections[0]],
-          ["no weights", "with weights"], loc="lower left")
+           ["no weights", "with weights"], loc="lower left")
 
 plt.xticks(())
 plt.yticks(())

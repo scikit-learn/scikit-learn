@@ -50,7 +50,7 @@ for shrinkage in [None, 0.1]:
     # Plot also the training points
     plt.scatter(X[:, 0], X[:, 1], c=y, cmap=cmap_bold)
     plt.title("3-Class classification (shrink_threshold=%r)"
-             % shrinkage)
+              % shrinkage)
     plt.axis('tight')
 
 plt.show()

@@ -59,7 +59,7 @@ plt.figure()
 plt.plot(coef[:, feature_to_plot], 'k', label='Ground truth')
 plt.plot(coef_lasso_[:, feature_to_plot], 'g', label='Lasso')
 plt.plot(coef_multi_task_lasso_[:, feature_to_plot],
-        'r', label='MultiTaskLasso')
+         'r', label='MultiTaskLasso')
 plt.legend(loc='upper center')
 plt.axis('tight')
 plt.ylim([-1.1, 1.1])

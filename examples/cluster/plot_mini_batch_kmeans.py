@@ -97,7 +97,7 @@ ax.set_title('MiniBatchKMeans')
 ax.set_xticks(())
 ax.set_yticks(())
 plt.text(-3.5, 1.8, 'train time: %.2fs\ninertia: %f' %
-        (t_mini_batch, mbk.inertia_))
+         (t_mini_batch, mbk.inertia_))
 
 # Initialise the different array to all False
 different = (mbk_means_labels == 4)

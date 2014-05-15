@@ -52,10 +52,10 @@ plt.axis('tight')
 plt.xlim((-5, 5))
 plt.ylim((-5, 5))
 plt.legend([a.collections[0], b1, b2, c],
-          ["learned frontier", "training observations",
-           "new regular observations", "new abnormal observations"],
-          loc="upper left",
-          prop=matplotlib.font_manager.FontProperties(size=11))
+           ["learned frontier", "training observations",
+            "new regular observations", "new abnormal observations"],
+           loc="upper left",
+           prop=matplotlib.font_manager.FontProperties(size=11))
 plt.xlabel(
     "error train: %d/200 ; errors novel regular: %d/40 ; "
     "errors novel abnormal: %d/40"

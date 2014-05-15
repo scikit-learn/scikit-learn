@@ -62,7 +62,7 @@ for index, (name, classifier) in enumerate(classifiers.items()):
         if k == 0:
             plt.ylabel(name)
         imshow_handle = plt.imshow(probas[:, k].reshape((100, 100)),
-                                  extent=(3, 9, 1, 5), origin='lower')
+                                   extent=(3, 9, 1, 5), origin='lower')
         plt.xticks(())
         plt.yticks(())
         idx = (y_pred == k)

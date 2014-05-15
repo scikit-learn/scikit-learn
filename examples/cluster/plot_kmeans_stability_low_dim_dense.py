@@ -112,8 +112,8 @@ for k in range(n_clusters):
     plt.plot(X[my_members, 0], X[my_members, 1], 'o', marker='.', c=color)
     cluster_center = km.cluster_centers_[k]
     plt.plot(cluster_center[0], cluster_center[1], 'o',
-            markerfacecolor=color, markeredgecolor='k', markersize=6)
+             markerfacecolor=color, markeredgecolor='k', markersize=6)
     plt.title("Example cluster allocation with a single random init\n"
-             "with MiniBatchKMeans")
+              "with MiniBatchKMeans")
 
 plt.show()

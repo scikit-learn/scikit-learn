@@ -87,14 +87,14 @@ def plot_data(lda, X, y, y_pred, fig_index):
     Z = lda.predict_proba(np.c_[xx.ravel(), yy.ravel()])
     Z = Z[:, 1].reshape(xx.shape)
     plt.pcolormesh(xx, yy, Z, cmap='red_blue_classes',
-                  norm=colors.Normalize(0., 1.))
+                   norm=colors.Normalize(0., 1.))
     plt.contour(xx, yy, Z, [0.5], linewidths=2., colors='k')
 
     # means
     plt.plot(lda.means_[0][0], lda.means_[0][1],
-            'o', color='black', markersize=10)
+             'o', color='black', markersize=10)
     plt.plot(lda.means_[1][0], lda.means_[1][1],
-            'o', color='black', markersize=10)
+             'o', color='black', markersize=10)
 
     return splot
 

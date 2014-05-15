@@ -84,7 +84,7 @@ for score_func in score_funcs:
     names.append(score_func.__name__)
 
 plt.title("Clustering measures for 2 random uniform labelings\n"
-         "with equal number of clusters")
+          "with equal number of clusters")
 plt.xlabel('Number of clusters (Number of samples is fixed to %d)' % n_samples)
 plt.ylabel('Score value')
 plt.legend(plots, names)
@@ -115,7 +115,7 @@ for score_func in score_funcs:
     names.append(score_func.__name__)
 
 plt.title("Clustering measures for random uniform labeling\n"
-         "against reference assignment with %d classes" % n_classes)
+          "against reference assignment with %d classes" % n_classes)
 plt.xlabel('Number of clusters (Number of samples is fixed to %d)' % n_samples)
 plt.ylabel('Score value')
 plt.ylim(ymin=-0.05, ymax=1.05)

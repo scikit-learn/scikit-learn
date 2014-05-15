@@ -88,11 +88,11 @@ plt.show()
 # Plot ROC curve
 plt.clf()
 plt.plot(fpr["micro"], tpr["micro"],
-        label='micro-average ROC curve (area = {0:0.2f})'
-              ''.format(roc_auc["micro"]))
+         label='micro-average ROC curve (area = {0:0.2f})'
+               ''.format(roc_auc["micro"]))
 for i in range(n_classes):
     plt.plot(fpr[i], tpr[i], label='ROC curve of class {0} (area = {1:0.2f})'
-                                  ''.format(i, roc_auc[i]))
+                                   ''.format(i, roc_auc[i]))
 
 plt.plot([0, 1], [0, 1], 'k--')
 plt.xlim([0.0, 1.0])

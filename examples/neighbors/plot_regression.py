@@ -44,6 +44,6 @@ for i, weights in enumerate(['uniform', 'distance']):
     plt.axis('tight')
     plt.legend()
     plt.title("KNeighborsRegressor (k = %i, weights = '%s')" % (n_neighbors,
-                                                               weights))
+                                                                weights))
 
 plt.show()

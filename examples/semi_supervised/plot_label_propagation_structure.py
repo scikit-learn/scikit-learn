@@ -39,13 +39,13 @@ output_labels = label_spread.transduction_
 plt.figure(figsize=(8.5, 4))
 plt.subplot(1, 2, 1)
 plot_outer_labeled, = plt.plot(X[labels == outer, 0],
-                              X[labels == outer, 1], 'rs')
+                               X[labels == outer, 1], 'rs')
 plot_unlabeled, = plt.plot(X[labels == -1, 0], X[labels == -1, 1], 'g.')
 plot_inner_labeled, = plt.plot(X[labels == inner, 0],
-                              X[labels == inner, 1], 'bs')
+                               X[labels == inner, 1], 'bs')
 plt.legend((plot_outer_labeled, plot_inner_labeled, plot_unlabeled),
-          ('Outer Labeled', 'Inner Labeled', 'Unlabeled'), 'upper left',
-          numpoints=1, shadow=False)
+           ('Outer Labeled', 'Inner Labeled', 'Unlabeled'), 'upper left',
+           numpoints=1, shadow=False)
 plt.title("Raw data (2 classes=red and blue)")
 
 plt.subplot(1, 2, 2)
@@ -55,7 +55,7 @@ inner_numbers = np.where(output_label_array == inner)[0]
 plot_outer, = plt.plot(X[outer_numbers, 0], X[outer_numbers, 1], 'rs')
 plot_inner, = plt.plot(X[inner_numbers, 0], X[inner_numbers, 1], 'bs')
 plt.legend((plot_outer, plot_inner), ('Outer Learned', 'Inner Learned'),
-          'upper left', numpoints=1, shadow=False)
+           'upper left', numpoints=1, shadow=False)
 plt.title("Labels learned with Label Spreading (KNN)")
 
 plt.subplots_adjust(left=0.07, bottom=0.07, right=0.93, top=0.92)

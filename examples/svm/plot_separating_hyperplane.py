@@ -41,7 +41,7 @@ plt.plot(xx, yy_down, 'k--')
 plt.plot(xx, yy_up, 'k--')
 
 plt.scatter(clf.support_vectors_[:, 0], clf.support_vectors_[:, 1],
-           s=80, facecolors='none')
+            s=80, facecolors='none')
 plt.scatter(X[:, 0], X[:, 1], c=Y, cmap=plt.cm.Paired)
 
 plt.axis('tight')

@@ -41,7 +41,7 @@ plt.scatter(X2[:, 0], X2[:, 1], marker='o', c=Y2)
 
 plt.subplot(224)
 plt.title("Multi-class, two informative features, one cluster",
-         fontsize='small')
+          fontsize='small')
 X1, Y1 = make_classification(n_features=2, n_redundant=0, n_informative=2,
                              n_clusters_per_class=1, n_classes=3)
 plt.scatter(X1[:, 0], X1[:, 1], marker='o', c=Y1)
