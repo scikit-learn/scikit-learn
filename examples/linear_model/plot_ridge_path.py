@@ -23,7 +23,7 @@ exhibit big oscillations.
 print(__doc__)
 
 import numpy as np
-import pylab as pl
+import matplotlib.pyplot as plt
 from sklearn import linear_model
 
 # X is the 10x10 Hilbert matrix
@@ -46,14 +46,14 @@ for a in alphas:
 ###############################################################################
 # Display results
 
-ax = pl.gca()
+ax = plt.gca()
 ax.set_color_cycle(['b', 'r', 'g', 'c', 'k', 'y', 'm'])
 
 ax.plot(alphas, coefs)
 ax.set_xscale('log')
 ax.set_xlim(ax.get_xlim()[::-1])  # reverse axis
-pl.xlabel('alpha')
-pl.ylabel('weights')
-pl.title('Ridge coefficients as a function of the regularization')
-pl.axis('tight')
-pl.show()
+plt.xlabel('alpha')
+plt.ylabel('weights')
+plt.title('Ridge coefficients as a function of the regularization')
+plt.axis('tight')
+plt.show()

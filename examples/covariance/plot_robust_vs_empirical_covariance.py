@@ -51,7 +51,7 @@ References
 print(__doc__)
 
 import numpy as np
-import pylab as pl
+import matplotlib.pyplot as plt
 import matplotlib.font_manager
 
 from sklearn.covariance import EmpiricalCovariance, MinCovDet
@@ -111,38 +111,38 @@ for i, n_outliers in enumerate(range_n_outliers):
 
 # Display results
 font_prop = matplotlib.font_manager.FontProperties(size=11)
-pl.subplot(2, 1, 1)
-pl.errorbar(range_n_outliers, err_loc_mcd.mean(1),
-            yerr=err_loc_mcd.std(1) / np.sqrt(repeat),
-            label="Robust location", color='m')
-pl.errorbar(range_n_outliers, err_loc_emp_full.mean(1),
-            yerr=err_loc_emp_full.std(1) / np.sqrt(repeat),
-            label="Full data set mean", color='green')
-pl.errorbar(range_n_outliers, err_loc_emp_pure.mean(1),
-            yerr=err_loc_emp_pure.std(1) / np.sqrt(repeat),
-            label="Pure data set mean", color='black')
-pl.title("Influence of outliers on the location estimation")
-pl.ylabel(r"Error ($||\mu - \hat{\mu}||_2^2$)")
-pl.legend(loc="upper left", prop=font_prop)
+plt.subplot(2, 1, 1)
+plt.errorbar(range_n_outliers, err_loc_mcd.mean(1),
+             yerr=err_loc_mcd.std(1) / np.sqrt(repeat),
+             label="Robust location", color='m')
+plt.errorbar(range_n_outliers, err_loc_emp_full.mean(1),
+             yerr=err_loc_emp_full.std(1) / np.sqrt(repeat),
+             label="Full data set mean", color='green')
+plt.errorbar(range_n_outliers, err_loc_emp_pure.mean(1),
+             yerr=err_loc_emp_pure.std(1) / np.sqrt(repeat),
+             label="Pure data set mean", color='black')
+plt.title("Influence of outliers on the location estimation")
+plt.ylabel(r"Error ($||\mu - \hat{\mu}||_2^2$)")
+plt.legend(loc="upper left", prop=font_prop)
 
-pl.subplot(2, 1, 2)
+plt.subplot(2, 1, 2)
 x_size = range_n_outliers.size
-pl.errorbar(range_n_outliers, err_cov_mcd.mean(1),
-            yerr=err_cov_mcd.std(1),
-            label="Robust covariance (mcd)", color='m')
-pl.errorbar(range_n_outliers[:(x_size / 5 + 1)],
-            err_cov_emp_full.mean(1)[:(x_size / 5 + 1)],
-            yerr=err_cov_emp_full.std(1)[:(x_size / 5 + 1)],
-            label="Full data set empirical covariance", color='green')
-pl.plot(range_n_outliers[(x_size / 5):(x_size / 2 - 1)],
-        err_cov_emp_full.mean(1)[(x_size / 5):(x_size / 2 - 1)], color='green',
-        ls='--')
-pl.errorbar(range_n_outliers, err_cov_emp_pure.mean(1),
-            yerr=err_cov_emp_pure.std(1),
-            label="Pure data set empirical covariance", color='black')
-pl.title("Influence of outliers on the covariance estimation")
-pl.xlabel("Amount of contamination (%)")
-pl.ylabel("RMSE")
-pl.legend(loc="upper center", prop=font_prop)
+plt.errorbar(range_n_outliers, err_cov_mcd.mean(1),
+             yerr=err_cov_mcd.std(1),
+             label="Robust covariance (mcd)", color='m')
+plt.errorbar(range_n_outliers[:(x_size / 5 + 1)],
+             err_cov_emp_full.mean(1)[:(x_size / 5 + 1)],
+             yerr=err_cov_emp_full.std(1)[:(x_size / 5 + 1)],
+             label="Full data set empirical covariance", color='green')
+plt.plot(range_n_outliers[(x_size / 5):(x_size / 2 - 1)],
+         err_cov_emp_full.mean(1)[(x_size / 5):(x_size / 2 - 1)], color='green',
+         ls='--')
+plt.errorbar(range_n_outliers, err_cov_emp_pure.mean(1),
+             yerr=err_cov_emp_pure.std(1),
+             label="Pure data set empirical covariance", color='black')
+plt.title("Influence of outliers on the covariance estimation")
+plt.xlabel("Amount of contamination (%)")
+plt.ylabel("RMSE")
+plt.legend(loc="upper center", prop=font_prop)
 
-pl.show()
+plt.show()

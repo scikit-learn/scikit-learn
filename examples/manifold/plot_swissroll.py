@@ -12,7 +12,7 @@ with locally linear embedding
 
 print(__doc__)
 
-import pylab as pl
+import matplotlib.pyplot as plt
 
 # This import is needed to modify the way figure behaves
 from mpl_toolkits.mplot3d import Axes3D
@@ -32,19 +32,19 @@ print("Done. Reconstruction error: %g" % err)
 #----------------------------------------------------------------------
 # Plot result
 
-fig = pl.figure()
+fig = plt.figure()
 try:
     # compatibility matplotlib < 1.0
     ax = fig.add_subplot(211, projection='3d')
-    ax.scatter(X[:, 0], X[:, 1], X[:, 2], c=color, cmap=pl.cm.Spectral)
+    ax.scatter(X[:, 0], X[:, 1], X[:, 2], c=color, cmap=plt.cm.Spectral)
 except:
     ax = fig.add_subplot(211)
-    ax.scatter(X[:, 0], X[:, 2], c=color, cmap=pl.cm.Spectral)
+    ax.scatter(X[:, 0], X[:, 2], c=color, cmap=plt.cm.Spectral)
 
 ax.set_title("Original data")
 ax = fig.add_subplot(212)
-ax.scatter(X_r[:, 0], X_r[:, 1], c=color, cmap=pl.cm.Spectral)
-pl.axis('tight')
-pl.xticks([]), pl.yticks([])
-pl.title('Projected data')
-pl.show()
+ax.scatter(X_r[:, 0], X_r[:, 1], c=color, cmap=plt.cm.Spectral)
+plt.axis('tight')
+plt.xticks([]), plt.yticks([])
+plt.title('Projected data')
+plt.show()

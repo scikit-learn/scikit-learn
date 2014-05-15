@@ -18,7 +18,7 @@ import itertools
 
 import numpy as np
 from scipy import linalg
-import pylab as pl
+import matplotlib.pyplot as plt
 import matplotlib as mpl
 
 from sklearn import mixture
@@ -52,7 +52,7 @@ for i, (clf, title) in enumerate([
          "Dirichlet Process,alpha=100.")]):
 
     clf.fit(X)
-    splot = pl.subplot(3, 1, 1 + i)
+    splot = plt.subplot(3, 1, 1 + i)
     Y_ = clf.predict(X)
     for i, (mean, covar, color) in enumerate(zip(
             clf.means_, clf._get_covars(), color_iter)):
@@ -63,7 +63,7 @@ for i, (clf, title) in enumerate([
         # components.
         if not np.any(Y_ == i):
             continue
-        pl.scatter(X[Y_ == i, 0], X[Y_ == i, 1], .8, color=color)
+        plt.scatter(X[Y_ == i, 0], X[Y_ == i, 1], .8, color=color)
 
         # Plot an ellipse to show the Gaussian component
         angle = np.arctan(u[1] / u[0])
@@ -73,10 +73,10 @@ for i, (clf, title) in enumerate([
         ell.set_alpha(0.5)
         splot.add_artist(ell)
 
-    pl.xlim(-6, 4 * np.pi - 6)
-    pl.ylim(-5, 5)
-    pl.title(title)
-    pl.xticks(())
-    pl.yticks(())
+    plt.xlim(-6, 4 * np.pi - 6)
+    plt.ylim(-5, 5)
+    plt.title(title)
+    plt.xticks(())
+    plt.yticks(())
 
-pl.show()
+plt.show()
