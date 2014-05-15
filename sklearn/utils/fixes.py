@@ -102,7 +102,7 @@ else:
 
 try:
     sp.csr_matrix([1.0, 2.0, 3.0]).max(axis=0)
-except TypeError:
+except (TypeError, AttributeError):
     # in scipy < 14.0, sparse matrix min/max doesn't accept an `axis` argument
 
     def __minor_reduce(X, ufunc):
