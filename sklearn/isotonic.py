@@ -113,10 +113,6 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
     y_max : optional, default: None
         If not None, set the highest value of the fit to y_max.
 
-    clip_x : boolean, optional, default : False
-        Whether to clip x values outside of [x_min, x_max] by matching
-        them to the nearest edge of interval.
-
     Attributes
     ----------
     `X_` : ndarray (n_samples, )
@@ -132,12 +128,10 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
     Mathematics of Operations Research
     Vol. 14, No. 2 (May, 1989), pp. 303-308
     """
-    def __init__(self, y_min=None, y_max=None, increasing=True,
-                 clip_x=False):
+    def __init__(self, y_min=None, y_max=None, increasing=True):
         self.y_min = y_min
         self.y_max = y_max
         self.increasing = increasing
-        self.clip_x = clip_x
 
     def _check_fit_data(self, X, y, sample_weight=None):
         if len(X.shape) != 1:
@@ -183,10 +177,9 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         self.y_ = isotonic_regression(y[order], sample_weight, self.y_min,
                                       self.y_max, increasing=self.increasing)
 
-        # Handle the left and right bounds on X if clipping
-        if self.clip_x:
-            self.X_min = np.min(self.X_)
-            self.X_max = np.max(self.X_)
+        # Handle the left and right bounds on X
+        self.X_min_ = np.min(self.X_)
+        self.X_max_ = np.max(self.X_)
 
         return self
 
@@ -210,12 +203,9 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         f = interpolate.interp1d(self.X_, self.y_, kind='linear',
                                  bounds_error=True)
 
-        # If we are clipping, replace any out-of-bound values.
-        if self.clip_x:
-            T_clip = np.clip(T, self.X_min, self.X_max)
-            return f(T_clip)
-        else:
-            return f(T)
+        # Replace any out-of-bound values.
+        T_clip = np.clip(T, self.X_min_, self.X_max_)
+        return f(T_clip)
 
     def fit_transform(self, X, y, sample_weight=None, weight=None):
         """Fit model and transform y by linear interpolation.
@@ -259,10 +249,9 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         self.y_ = isotonic_regression(y[order], sample_weight, self.y_min,
                                       self.y_max, increasing=self.increasing)
 
-        # Handle the left and right bounds on X if clipping
-        if self.clip_x:
-            self.X_min = np.min(self.X_)
-            self.X_max = np.max(self.X_)
+        # Handle the left and right bounds on X
+        self.X_min_ = np.min(self.X_)
+        self.X_max_ = np.max(self.X_)
 
         return self.y_[order_inv]
 
