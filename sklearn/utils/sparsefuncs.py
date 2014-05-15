@@ -5,10 +5,10 @@
 import scipy.sparse as sp
 import numpy as np
 
+from .fixes import sparse_min_max
 from .sparsefuncs_fast import (csr_mean_variance_axis0,
-                               csc_mean_variance_axis0,
-                               csr_min_max_axis0,
-                               csc_min_max_axis0)
+                               csc_mean_variance_axis0)
+
 
 def inplace_csr_column_scale(X, scale):
     """Inplace column scaling of a CSR matrix.
@@ -269,9 +269,7 @@ def min_max_axis0(X):
     maxs: float array with shape (n_features,)
         Feature-wise maxima
     """
-    if isinstance(X, sp.csr_matrix):
-        return csr_min_max_axis0(X)
-    elif isinstance(X, sp.csc_matrix):
-        return csc_min_max_axis0(X)
+    if isinstance(X, sp.csr_matrix) or isinstance(X, sp.csc_matrix):
+        return sparse_min_max(X, axis=0)
     else:
         raise TypeError("Expected a CSR or CSC sparse matrix.")
