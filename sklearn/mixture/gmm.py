@@ -97,10 +97,8 @@ def sample_gaussian(mean, covar, covariance_type='diag', n_samples=1,
     elif covariance_type == 'diag':
         rand = np.dot(np.diag(np.sqrt(covar)), rand)
     else:
-        from scipy import linalg
-        U, s, V = linalg.svd(covar)
-        sqrtS = np.diag(np.sqrt(s))
-        sqrt_covar = np.dot(U, np.dot(sqrtS, V))
+        s, U = linalg.eigh(covar)
+        sqrt_covar = U * np.sqrt(s)
         rand = np.dot(sqrt_covar, rand)
 
     return (rand.T + mean).T
@@ -556,7 +554,7 @@ class GMM(BaseEstimator):
 #########################################################################
 
 
-def _log_multivariate_normal_density_diag(X, means=0.0, covars=1.0):
+def _log_multivariate_normal_density_diag(X, means, covars):
     """Compute Gaussian log-density at X for a diagonal model"""
     n_samples, n_dim = X.shape
     lpr = -0.5 * (n_dim * np.log(2 * np.pi) + np.sum(np.log(covars), 1)
@@ -566,7 +564,7 @@ def _log_multivariate_normal_density_diag(X, means=0.0, covars=1.0):
     return lpr
 
 
-def _log_multivariate_normal_density_spherical(X, means=0.0, covars=1.0):
+def _log_multivariate_normal_density_spherical(X, means, covars):
     """Compute Gaussian log-density at X for a spherical model"""
     cv = covars.copy()
     if covars.ndim == 1:
