@@ -28,7 +28,7 @@ stretched_gaussian = np.dot(np.random.randn(n_samples, 2), C)
 # concatenate the two datasets into the final training set
 X_train = np.vstack([shifted_gaussian, stretched_gaussian])
 
-# fit a Gaussian Mixture Model with two components 
+# fit a Gaussian Mixture Model with two components
 clf = mixture.GMM(n_components=2, covariance_type='full')
 clf.fit(X_train)
 
@@ -40,7 +40,7 @@ XX = np.array([X.ravel(), Y.ravel()]).T
 Z = -clf.score_samples(XX)[0]
 Z = Z.reshape(X.shape)
 
-CS = plt.contour(X, Y, Z, norm=LogNorm(vmin=1.0,vmax=1000.0),
+CS = plt.contour(X, Y, Z, norm=LogNorm(vmin=1.0, vmax=1000.0),
                  levels=np.logspace(0, 3, 10))
 CB = plt.colorbar(CS, shrink=0.8, extend='both')
 plt.scatter(X_train[:, 0], X_train[:, 1], .8)

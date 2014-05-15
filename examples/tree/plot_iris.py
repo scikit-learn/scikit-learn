@@ -30,7 +30,7 @@ iris = load_iris()
 
 for pairidx, pair in enumerate([[0, 1], [0, 2], [0, 3],
                                 [1, 2], [1, 3], [2, 3]]):
-     # We only take the two corresponding features
+    # We only take the two corresponding features
     X = iris.data[:, pair]
     y = iris.target
 
