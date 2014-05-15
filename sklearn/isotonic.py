@@ -105,6 +105,9 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
           If ``X`` is non-decreasing then ``y_`` is non-decreasing.
         - ``w[i]`` are optional strictly positive weights (default to 1.0)
 
+    Out-of-bound x values for predict/transform will be mapped to their nearest
+        interval endpoint.
+
     Parameters
     ----------
     y_min : optional, default: None
@@ -120,6 +123,12 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
 
     `y_` : ndarray (n_samples, )
         Isotonic fit of y.
+
+    `X_min_` : float
+        Minimum value of input array X_ for left bound.
+
+    `X_max_` : float
+        Maximum value of input array X_ for right bound.
 
     References
     ----------
