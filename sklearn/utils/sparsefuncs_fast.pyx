@@ -69,7 +69,8 @@ def csr_mean_variance_axis0(X):
     cdef unsigned int n_samples = X.shape[0]
     cdef unsigned int n_features = X.shape[1]
 
-    cdef np.ndarray[DOUBLE, ndim=1] X_data = X.data
+    cdef np.ndarray[DOUBLE, ndim=1, mode="c"] X_data
+    X_data = np.asarray(X.data, dtype=np.float64)     # might copy!
     cdef np.ndarray[int, ndim=1] X_indices = X.indices
 
     cdef unsigned int i
@@ -78,7 +79,8 @@ def csr_mean_variance_axis0(X):
     cdef double diff
 
     # means[j] contains the mean of feature j
-    cdef np.ndarray[DOUBLE, ndim=1] means = np.zeros(n_features)
+    cdef np.ndarray[DOUBLE, ndim=1] means = np.zeros(n_features,
+                                                     dtype=np.float64)
 
     # variances[j] contains the variance of feature j
     cdef np.ndarray[DOUBLE, ndim=1] variances = np.zeros_like(means)
@@ -101,6 +103,68 @@ def csr_mean_variance_axis0(X):
 
     for i in xrange(n_features):
         variances[i] += (n_samples - counts[i]) * means[i] ** 2
+        variances[i] /= n_samples
+
+    return means, variances
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.cdivision(True)
+def csc_mean_variance_axis0(X):
+    """Compute mean and variance along axis 0 on a CSC matrix
+
+    Parameters
+    ----------
+    X: CSC sparse matrix, shape (n_samples, n_features)
+        Input data.
+
+    Returns
+    -------
+
+    means: float array with shape (n_features,)
+        Feature-wise means
+
+    variances: float array with shape (n_features,)
+        Feature-wise variances
+
+    """
+    cdef unsigned int n_samples = X.shape[0]
+    cdef unsigned int n_features = X.shape[1]
+
+    cdef np.ndarray[DOUBLE, ndim=1] X_data
+    X_data = np.asarray(X.data, dtype=np.float64)     # might copy!
+    cdef np.ndarray[int, ndim=1] X_indices = X.indices
+    cdef np.ndarray[int, ndim=1] X_indptr = X.indptr
+
+    cdef unsigned int i
+    cdef unsigned int j
+    cdef unsigned int counts
+    cdef unsigned int startptr
+    cdef unsigned int endptr
+    cdef double diff
+
+    # means[j] contains the mean of feature j
+    cdef np.ndarray[DOUBLE, ndim=1] means = np.zeros(n_features, dtype=X.dtype)
+
+    # variances[j] contains the variance of feature j
+    cdef np.ndarray[DOUBLE, ndim=1] variances = np.zeros_like(means)
+
+    for i in xrange(n_features):
+
+        startptr = X_indptr[i]
+        endptr = X_indptr[i + 1]
+        counts = endptr - startptr
+
+        for j in xrange(startptr, endptr):
+            means[i] += X_data[j]
+        means[i] /= n_samples
+
+        for j in xrange(startptr, endptr):
+            diff = X_data[j] - means[i]
+            variances[i] += diff * diff
+
+        variances[i] += (n_samples - counts) * means[i] * means[i]
         variances[i] /= n_samples
 
     return means, variances
@@ -172,67 +236,6 @@ def inplace_csr_row_normalize_l2(X):
 
         for j in xrange(X_indptr[i], X_indptr[i + 1]):
             X_data[j] /= sum_
-
-
-@cython.boundscheck(False)
-@cython.wraparound(False)
-@cython.cdivision(True)
-def csc_mean_variance_axis0(X):
-    """Compute mean and variance along axis 0 on a CSC matrix
-
-    Parameters
-    ----------
-    X: CSC sparse matrix, shape (n_samples, n_features)
-        Input data.
-
-    Returns
-    -------
-
-    means: float array with shape (n_features,)
-        Feature-wise means
-
-    variances: float array with shape (n_features,)
-        Feature-wise variances
-
-    """
-    cdef unsigned int n_samples = X.shape[0]
-    cdef unsigned int n_features = X.shape[1]
-
-    cdef np.ndarray[DOUBLE, ndim=1] X_data = X.data
-    cdef np.ndarray[int, ndim=1] X_indices = X.indices
-    cdef np.ndarray[int, ndim=1] X_indptr = X.indptr
-
-    cdef unsigned int i
-    cdef unsigned int j
-    cdef unsigned int counts
-    cdef unsigned int startptr
-    cdef unsigned int endptr
-    cdef double diff
-
-    # means[j] contains the mean of feature j
-    cdef np.ndarray[DOUBLE, ndim=1] means = np.zeros(n_features)
-
-    # variances[j] contains the variance of feature j
-    cdef np.ndarray[DOUBLE, ndim=1] variances = np.zeros_like(means)
-
-    for i in xrange(n_features):
-
-        startptr = X_indptr[i]
-        endptr = X_indptr[i + 1]
-        counts = endptr - startptr
-
-        for j in xrange(startptr, endptr):
-            means[i] += X_data[j]
-        means[i] /= n_samples
-
-        for j in xrange(startptr, endptr):
-            diff = X_data[j] - means[i]
-            variances[i] += diff * diff
-
-        variances[i] += (n_samples - counts) * means[i] * means[i]
-        variances[i] /= n_samples
-
-    return means, variances
 
 
 @cython.boundscheck(False)

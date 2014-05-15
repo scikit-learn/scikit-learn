@@ -36,6 +36,17 @@ def test_mean_variance_axis0():
     assert_array_almost_equal(X_vars, np.var(X, axis=0))
     assert_raises(TypeError, mean_variance_axis0, X_lil)
 
+    X = X.astype(np.float32)
+    X_csr = X_csr.astype(np.float32)
+    X_csc = X_csr.astype(np.float32)
+    X_means, X_vars = mean_variance_axis0(X_csr)
+    assert_array_almost_equal(X_means, np.mean(X, axis=0))
+    assert_array_almost_equal(X_vars, np.var(X, axis=0))
+    X_means, X_vars = mean_variance_axis0(X_csc)
+    assert_array_almost_equal(X_means, np.mean(X, axis=0))
+    assert_array_almost_equal(X_vars, np.var(X, axis=0))
+    assert_raises(TypeError, mean_variance_axis0, X_lil)
+
 
 def test_densify_rows():
     X = sp.csr_matrix([[0, 3, 0],
@@ -67,6 +78,19 @@ def test_inplace_column_scale():
     assert_array_almost_equal(XA, Xr.toarray())
     assert_raises(TypeError, inplace_column_scale, X.tolil(), scale)
 
+    X = X.astype(np.float32)
+    scale = scale.astype(np.float32)
+    Xr = X.tocsr()
+    Xc = X.tocsc()
+    XA = X.toarray()
+    XA *= scale
+    inplace_column_scale(Xc, scale)
+    inplace_column_scale(Xr, scale)
+    assert_array_almost_equal(Xr.toarray(), Xc.toarray())
+    assert_array_almost_equal(XA, Xc.toarray())
+    assert_array_almost_equal(XA, Xr.toarray())
+    assert_raises(TypeError, inplace_column_scale, X.tolil(), scale)
+
 
 def test_inplace_row_scale():
     rng = np.random.RandomState(0)
@@ -77,6 +101,19 @@ def test_inplace_row_scale():
     scale = rng.rand(100)
     XA *= scale.reshape(-1, 1)
 
+    inplace_row_scale(Xc, scale)
+    inplace_row_scale(Xr, scale)
+    assert_array_almost_equal(Xr.toarray(), Xc.toarray())
+    assert_array_almost_equal(XA, Xc.toarray())
+    assert_array_almost_equal(XA, Xr.toarray())
+    assert_raises(TypeError, inplace_column_scale, X.tolil(), scale)
+
+    X = X.astype(np.float32)
+    scale = scale.astype(np.float32)
+    Xr = X.tocsr()
+    Xc = X.tocsc()
+    XA = X.toarray()
+    XA *= scale.reshape(-1, 1)
     inplace_row_scale(Xc, scale)
     inplace_row_scale(Xr, scale)
     assert_array_almost_equal(Xr.toarray(), Xc.toarray())
@@ -103,6 +140,29 @@ def test_inplace_swap_row():
     assert_array_equal(X, X_csc.toarray())
     assert_array_equal(X, X_csr.toarray())
 
+    X[2], X[3] = swap(X[2], X[3])
+    inplace_swap_row(X_csr, 2, 3)
+    inplace_swap_row(X_csc, 2, 3)
+    assert_array_equal(X_csr.toarray(), X_csc.toarray())
+    assert_array_equal(X, X_csc.toarray())
+    assert_array_equal(X, X_csr.toarray())
+    assert_raises(TypeError, inplace_swap_row, X_csr.tolil())
+
+    X = np.array([[0, 3, 0],
+                  [2, 4, 0],
+                  [0, 0, 0],
+                  [9, 8, 7],
+                  [4, 0, 5]], dtype=np.float32)
+    X_csr = sp.csr_matrix(X)
+    X_csc = sp.csc_matrix(X)
+    swap = linalg.get_blas_funcs(('swap',), (X,))
+    swap = swap[0]
+    X[0], X[-1] = swap(X[0], X[-1])
+    inplace_swap_row(X_csr, 0, -1)
+    inplace_swap_row(X_csc, 0, -1)
+    assert_array_equal(X_csr.toarray(), X_csc.toarray())
+    assert_array_equal(X, X_csc.toarray())
+    assert_array_equal(X, X_csr.toarray())
     X[2], X[3] = swap(X[2], X[3])
     inplace_swap_row(X_csr, 2, 3)
     inplace_swap_row(X_csc, 2, 3)
@@ -138,6 +198,29 @@ def test_inplace_swap_column():
     assert_array_equal(X, X_csr.toarray())
     assert_raises(TypeError, inplace_swap_column, X_csr.tolil())
 
+    X = np.array([[0, 3, 0],
+                  [2, 4, 0],
+                  [0, 0, 0],
+                  [9, 8, 7],
+                  [4, 0, 5]], dtype=np.float32)
+    X_csr = sp.csr_matrix(X)
+    X_csc = sp.csc_matrix(X)
+    swap = linalg.get_blas_funcs(('swap',), (X,))
+    swap = swap[0]
+    X[:, 0], X[:, -1] = swap(X[:, 0], X[:, -1])
+    inplace_swap_column(X_csr, 0, -1)
+    inplace_swap_column(X_csc, 0, -1)
+    assert_array_equal(X_csr.toarray(), X_csc.toarray())
+    assert_array_equal(X, X_csc.toarray())
+    assert_array_equal(X, X_csr.toarray())
+    X[:, 0], X[:, 1] = swap(X[:, 0], X[:, 1])
+    inplace_swap_column(X_csr, 0, 1)
+    inplace_swap_column(X_csc, 0, 1)
+    assert_array_equal(X_csr.toarray(), X_csc.toarray())
+    assert_array_equal(X, X_csc.toarray())
+    assert_array_equal(X, X_csr.toarray())
+    assert_raises(TypeError, inplace_swap_column, X_csr.tolil())
+
 
 def test_min_max_axis0():
     X = np.array([[0, 3, 0],
@@ -152,6 +235,17 @@ def test_min_max_axis0():
     assert_array_equal(mins_csr, X.min(0))
     assert_array_equal(maxs_csr, X.max(0))
 
+    mins_csc, maxs_csc = min_max_axis0(X_csc)
+    assert_array_equal(mins_csc, X.min(0))
+    assert_array_equal(maxs_csc, X.max(0))
+    assert_raises(TypeError, min_max_axis0, X_csr.tolil())
+
+    X = X.astype(np.float32)
+    X_csr = sp.csr_matrix(X)
+    X_csc = sp.csc_matrix(X)
+    mins_csr, maxs_csr = min_max_axis0(X_csr)
+    assert_array_equal(mins_csr, X.min(0))
+    assert_array_equal(maxs_csr, X.max(0))
     mins_csc, maxs_csc = min_max_axis0(X_csc)
     assert_array_equal(mins_csc, X.min(0))
     assert_array_equal(maxs_csc, X.max(0))
