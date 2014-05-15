@@ -115,7 +115,7 @@ except TypeError:
         return major_index, value
 
     def __min_or_max_axis(X, axis, min_or_max):
-        N, M = X.shape[axis], X.shape[1 - axis]
+        N = X.shape[axis]
         if N == 0:
             raise ValueError("zero-size array to reduction operation")
         mat = X.tocsc() if axis == 0 else X.tocsr()
