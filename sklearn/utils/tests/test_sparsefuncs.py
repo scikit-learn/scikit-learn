@@ -7,6 +7,7 @@ from numpy.testing import assert_array_almost_equal, assert_array_equal
 from sklearn.datasets import make_classification
 from sklearn.utils.sparsefuncs import (mean_variance_axis0,
                                        inplace_column_scale,
+                                       inplace_row_scale,
                                        inplace_swap_row, inplace_swap_column,
                                        min_max_axis0)
 from sklearn.utils.sparsefuncs_fast import assign_rows_csr
@@ -61,6 +62,23 @@ def test_inplace_column_scale():
 
     inplace_column_scale(Xc, scale)
     inplace_column_scale(Xr, scale)
+    assert_array_almost_equal(Xr.toarray(), Xc.toarray())
+    assert_array_almost_equal(XA, Xc.toarray())
+    assert_array_almost_equal(XA, Xr.toarray())
+    assert_raises(TypeError, inplace_column_scale, X.tolil(), scale)
+
+
+def test_inplace_row_scale():
+    rng = np.random.RandomState(0)
+    X = sp.rand(100, 200, 0.05)
+    Xr = X.tocsr()
+    Xc = X.tocsc()
+    XA = X.toarray()
+    scale = rng.rand(100)
+    XA *= scale.reshape(-1, 1)
+
+    inplace_row_scale(Xc, scale)
+    inplace_row_scale(Xr, scale)
     assert_array_almost_equal(Xr.toarray(), Xc.toarray())
     assert_array_almost_equal(XA, Xc.toarray())
     assert_array_almost_equal(XA, Xr.toarray())
