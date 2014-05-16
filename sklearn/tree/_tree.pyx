@@ -938,7 +938,6 @@ cdef class Splitter:
         """Initialize the splitter."""
         # Reset random state
         self.rand_r_state = self.random_state.randint(0, RAND_R_MAX)
-
         # Initialize samples and features structures
         cdef SIZE_t n_samples = X.shape[0]
         cdef SIZE_t* samples = <SIZE_t*> realloc(self.samples,
@@ -3365,20 +3364,21 @@ cdef inline void binary_search(INT32_t* sorted_array, INT32_t start, INT32_t end
     If not found, return -1. new_start is the last pivot + 1
     """
     cdef INT32_t pivot
-
+    index[0] = -1
     while start < end:
         pivot = start + (end - start) / 2
+
+        if sorted_array[pivot] == value:
+            index[0] = pivot
+            start = pivot + 1
+            break
 
         if sorted_array[pivot] < value:
             start = pivot + 1
         else:
             end = pivot
-
-    if start == end and sorted_array[start] == value:
-        index[0] = start
-    else:
-        index[0] = -1
     new_start[0] = start
+
 
 
 cdef inline void  extra_nnz_color(INT32_t* X_indices,
@@ -3543,7 +3543,6 @@ cdef inline void  extract_nnz(INT32_t* X_indices,
                                   samples, start, end, index_to_samples,
                                   Xf, end_negative, start_positive,
                                   sorted_samples, is_samples_sorted)
-
 
     # Using coloring technique to extract non zero values
     else:
