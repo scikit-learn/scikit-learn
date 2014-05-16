@@ -24,7 +24,7 @@ from __future__ import print_function
 
 import datetime
 import numpy as np
-import pylab as pl
+import matplotlib.pyplot as plt
 from matplotlib.finance import quotes_historical_yahoo
 from matplotlib.dates import YearLocator, MonthLocator, DateFormatter
 from sklearn.hmm import GaussianHMM
@@ -87,7 +87,7 @@ for i in range(n_components):
 years = YearLocator()   # every year
 months = MonthLocator()  # every month
 yearsFmt = DateFormatter('%Y')
-fig = pl.figure()
+fig = plt.figure()
 ax = fig.add_subplot(111)
 
 for i in range(n_components):
@@ -108,4 +108,4 @@ ax.fmt_ydata = lambda x: '$%1.2f' % x
 ax.grid(True)
 
 fig.autofmt_xdate()
-pl.show()
+plt.show()
