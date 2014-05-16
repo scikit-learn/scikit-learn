@@ -67,7 +67,7 @@ print(__doc__)
 import datetime
 
 import numpy as np
-import pylab as pl
+import matplotlib.pyplot as plt
 from matplotlib import finance
 from matplotlib.collections import LineCollection
 
@@ -188,10 +188,10 @@ embedding = node_position_model.fit_transform(X.T).T
 
 ###############################################################################
 # Visualization
-pl.figure(1, facecolor='w', figsize=(10, 8))
-pl.clf()
-ax = pl.axes([0., 0., 1., 1.])
-pl.axis('off')
+plt.figure(1, facecolor='w', figsize=(10, 8))
+plt.clf()
+ax = plt.axes([0., 0., 1., 1.])
+plt.axis('off')
 
 # Display a graph of the partial correlations
 partial_correlations = edge_model.precision_.copy()
@@ -201,8 +201,8 @@ partial_correlations *= d[:, np.newaxis]
 non_zero = (np.abs(np.triu(partial_correlations, k=1)) > 0.02)
 
 # Plot the nodes using the coordinates of our embedding
-pl.scatter(embedding[0], embedding[1], s=100 * d ** 2, c=labels,
-           cmap=pl.cm.spectral)
+plt.scatter(embedding[0], embedding[1], s=100 * d ** 2, c=labels,
+            cmap=plt.cm.spectral)
 
 # Plot the edges
 start_idx, end_idx = np.where(non_zero)
@@ -212,8 +212,8 @@ segments = [[embedding[:, start], embedding[:, stop]]
             for start, stop in zip(start_idx, end_idx)]
 values = np.abs(partial_correlations[non_zero])
 lc = LineCollection(segments,
-                    zorder=0, cmap=pl.cm.hot_r,
-                    norm=pl.Normalize(0, .7 * values.max()))
+                    zorder=0, cmap=plt.cm.hot_r,
+                    norm=plt.Normalize(0, .7 * values.max()))
 lc.set_array(values)
 lc.set_linewidths(15 * values)
 ax.add_collection(lc)
@@ -241,16 +241,16 @@ for index, (name, label, (x, y)) in enumerate(
     else:
         verticalalignment = 'top'
         y = y - .002
-    pl.text(x, y, name, size=10,
-            horizontalalignment=horizontalalignment,
-            verticalalignment=verticalalignment,
-            bbox=dict(facecolor='w',
-                      edgecolor=pl.cm.spectral(label / float(n_labels)),
-                      alpha=.6))
+    plt.text(x, y, name, size=10,
+             horizontalalignment=horizontalalignment,
+             verticalalignment=verticalalignment,
+             bbox=dict(facecolor='w',
+                       edgecolor=plt.cm.spectral(label / float(n_labels)),
+                       alpha=.6))
 
-pl.xlim(embedding[0].min() - .15 * embedding[0].ptp(),
-        embedding[0].max() + .10 * embedding[0].ptp(),)
-pl.ylim(embedding[1].min() - .03 * embedding[1].ptp(),
-        embedding[1].max() + .03 * embedding[1].ptp())
+plt.xlim(embedding[0].min() - .15 * embedding[0].ptp(),
+         embedding[0].max() + .10 * embedding[0].ptp(),)
+plt.ylim(embedding[1].min() - .03 * embedding[1].ptp(),
+         embedding[1].max() + .03 * embedding[1].ptp())
 
-pl.show()
+plt.show()
