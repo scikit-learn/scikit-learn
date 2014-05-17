@@ -10,7 +10,11 @@ print(__doc__)
 
 import numpy as np
 from sklearn.svm import SVR
+<<<<<<< HEAD
 import matplotlib.pyplot as plt
+=======
+import pylab as pl
+>>>>>>> 00a5d7ee3aa701b3a6d0d523ae0a9887911e651a
 
 ###############################################################################
 # Generate sample data
@@ -32,6 +36,7 @@ y_poly = svr_poly.fit(X, y).predict(X)
 
 ###############################################################################
 # look at the results
+<<<<<<< HEAD
 plt.scatter(X, y, c='k', label='data')
 plt.hold('on')
 plt.plot(X, y_rbf, c='g', label='RBF model')
@@ -42,3 +47,15 @@ plt.ylabel('target')
 plt.title('Support Vector Regression')
 plt.legend()
 plt.show()
+=======
+pl.scatter(X, y, c='k', label='data')
+pl.hold('on')
+pl.plot(X, y_rbf, c='g', label='RBF model')
+pl.plot(X, y_lin, c='r', label='Linear model')
+pl.plot(X, y_poly, c='b', label='Polynomial model')
+pl.xlabel('data')
+pl.ylabel('target')
+pl.title('Support Vector Regression')
+pl.legend()
+pl.show()
+>>>>>>> 00a5d7ee3aa701b3a6d0d523ae0a9887911e651a
