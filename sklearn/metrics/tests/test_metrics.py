@@ -1111,6 +1111,18 @@ def test_precision_recall_curve():
     assert_equal(p.size, t.size + 1)
 
 
+def test_precision_recall_curve_pos_label():
+    y_true, _, probas_pred = make_prediction(binary=False)
+    p, r, thresholds = precision_recall_curve(y_true,
+                                              probas_pred[:, 1],
+                                              pos_label=1)
+    precision_recall_auc = auc(r, p)
+    assert_array_almost_equal(precision_recall_auc, 0.44, 2)
+
+    assert_equal(p.size, r.size)
+    assert_equal(p.size, thresholds.size + 1)
+
+
 def _test_precision_recall_curve(y_true, probas_pred):
     """Test Precision-Recall and aread under PR curve"""
     p, r, thresholds = precision_recall_curve(y_true, probas_pred)
