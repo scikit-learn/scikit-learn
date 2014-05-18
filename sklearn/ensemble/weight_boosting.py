@@ -90,13 +90,9 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             raise ValueError("learning_rate must be greater than zero")
 
         # Check data
-        X, y = check_arrays(X, y, sparse_format="dense")
+        X, y = check_arrays(X, y)
 
         y = column_or_1d(y, warn=True)
-
-        if ((getattr(X, "dtype", None) != DTYPE) or
-                (X.ndim != 2) or (not X.flags.contiguous)):
-            X = np.ascontiguousarray(array2d(X), dtype=DTYPE)
 
         if sample_weight is None:
             # Initialize weights to 1 / n_samples
@@ -621,7 +617,6 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             class in ``classes_``, respectively.
         """
         self._check_fitted()
-        X = np.asarray(X)
 
         n_classes = self.n_classes_
         classes = self.classes_[:, np.newaxis]
@@ -664,7 +659,6 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             class in ``classes_``, respectively.
         """
         self._check_fitted()
-        X = np.asarray(X)
 
         n_classes = self.n_classes_
         classes = self.classes_[:, np.newaxis]
@@ -712,7 +706,6 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             The class probabilities of the input samples. The order of
             outputs is the same of that of the `classes_` attribute.
         """
-        X = np.asarray(X)
         n_classes = self.n_classes_
 
         if self.algorithm == 'SAMME.R':
@@ -1019,10 +1012,16 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
         weight_cdf = self.estimator_weights_[sorted_idx].cumsum(axis=1)
         median_or_above = weight_cdf >= 0.5 * weight_cdf[:, -1][:, np.newaxis]
         median_idx = median_or_above.argmax(axis=1)
-        median_estimators = sorted_idx[np.arange(len(X)), median_idx]
+        
+        if(hasattr(X,'shape')):
+            len_x = X.shape[0]
+        else:
+            len_x = len(X)
+
+        median_estimators = sorted_idx[np.arange(len_x), median_idx]
 
         # Return median predictions
-        return predictions[np.arange(len(X)), median_estimators]
+        return predictions[np.arange(len_x), median_estimators]
 
     def predict(self, X):
         """Predict regression value for X.
@@ -1041,7 +1040,6 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
             The predicted regression values.
         """
         self._check_fitted()
-        X = np.asarray(X)
         return self._get_median_predict(X, len(self.estimators_))
 
     def staged_predict(self, X):
@@ -1065,6 +1063,5 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
             The predicted regression values.
         """
         self._check_fitted()
-        X = np.asarray(X)
         for i, _ in enumerate(self.estimators_, 1):
             yield self._get_median_predict(X, limit=i)
