@@ -260,7 +260,7 @@ def inplace_swap_column(X, m, n):
         raise TypeError(err)
 
 
-def min_max_axis0(X):
+def min_max_axis(X, axis):
     """Compute minimum and maximum along axis 0 on a CSR or CSC matrix
 
     Parameters
@@ -278,7 +278,7 @@ def min_max_axis0(X):
         Feature-wise maxima
     """
     if isinstance(X, sp.csr_matrix) or isinstance(X, sp.csc_matrix):
-        return sparse_min_max(X, axis=0)
+        return sparse_min_max(X, axis=axis)
     else:
         input_type = X.format if sp.issparse(X) else type(X)
         err = "Expected a CSR or CSC sparse matrix, got %s." % input_type

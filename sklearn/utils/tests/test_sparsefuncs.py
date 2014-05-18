@@ -9,7 +9,7 @@ from sklearn.utils.sparsefuncs import (mean_variance_axis0,
                                        inplace_column_scale,
                                        inplace_row_scale,
                                        inplace_swap_row, inplace_swap_column,
-                                       min_max_axis0)
+                                       min_max_axis)
 from sklearn.utils.sparsefuncs_fast import assign_rows_csr
 from sklearn.utils.testing import assert_raises
 
@@ -231,22 +231,61 @@ def test_min_max_axis0():
     X_csr = sp.csr_matrix(X)
     X_csc = sp.csc_matrix(X)
 
-    mins_csr, maxs_csr = min_max_axis0(X_csr)
+    mins_csr, maxs_csr = min_max_axis(X_csr, axis=0)
     assert_array_equal(mins_csr, X.min(axis=0))
     assert_array_equal(maxs_csr, X.max(axis=0))
 
-    mins_csc, maxs_csc = min_max_axis0(X_csc)
+    mins_csc, maxs_csc = min_max_axis(X_csc, axis=0)
     assert_array_equal(mins_csc, X.min(axis=0))
     assert_array_equal(maxs_csc, X.max(axis=0))
-    assert_raises(TypeError, min_max_axis0, X_csr.tolil())
 
     X = X.astype(np.float32)
     X_csr = sp.csr_matrix(X)
     X_csc = sp.csc_matrix(X)
-    mins_csr, maxs_csr = min_max_axis0(X_csr)
+    mins_csr, maxs_csr = min_max_axis(X_csr, axis=0)
     assert_array_equal(mins_csr, X.min(axis=0))
     assert_array_equal(maxs_csr, X.max(axis=0))
-    mins_csc, maxs_csc = min_max_axis0(X_csc)
+    mins_csc, maxs_csc = min_max_axis(X_csc, axis=0)
     assert_array_equal(mins_csc, X.min(axis=0))
     assert_array_equal(maxs_csc, X.max(axis=0))
-    assert_raises(TypeError, min_max_axis0, X_csr.tolil())
+
+
+def test_min_max_axis1():
+    X = np.array([[0, 3, 0],
+                  [2, -1, 0],
+                  [0, 0, 0],
+                  [9, 8, 7],
+                  [4, 0, 5]], dtype=np.float64)
+    X_csr = sp.csr_matrix(X)
+    X_csc = sp.csc_matrix(X)
+
+    mins_csr, maxs_csr = min_max_axis(X_csr, axis=1)
+    assert_array_equal(mins_csr, X.min(axis=1))
+    assert_array_equal(maxs_csr, X.max(axis=1))
+
+    mins_csc, maxs_csc = min_max_axis(X_csc, axis=1)
+    assert_array_equal(mins_csc, X.min(axis=1))
+    assert_array_equal(maxs_csc, X.max(axis=1))
+
+    X = X.astype(np.float32)
+    X_csr = sp.csr_matrix(X)
+    X_csc = sp.csc_matrix(X)
+    mins_csr, maxs_csr = min_max_axis(X_csr, axis=1)
+    assert_array_equal(mins_csr, X.min(axis=1))
+    assert_array_equal(maxs_csr, X.max(axis=1))
+    mins_csc, maxs_csc = min_max_axis(X_csc, axis=1)
+    assert_array_equal(mins_csc, X.min(axis=1))
+    assert_array_equal(maxs_csc, X.max(axis=1))
+
+
+def test_min_max_axis_errors():
+    X = np.array([[0, 3, 0],
+                  [2, -1, 0],
+                  [0, 0, 0],
+                  [9, 8, 7],
+                  [4, 0, 5]], dtype=np.float64)
+    X_csr = sp.csr_matrix(X)
+    X_csc = sp.csc_matrix(X)
+    assert_raises(TypeError, min_max_axis, X_csr.tolil(), axis=0)
+    assert_raises(ValueError, min_max_axis, X_csr, axis=2)
+    assert_raises(ValueError, min_max_axis, X_csr, axis=-3)
