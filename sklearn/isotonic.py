@@ -5,6 +5,7 @@
 
 import numpy as np
 from scipy import interpolate
+from scipy.stats import pearsonr, spearmanr
 from .base import BaseEstimator, TransformerMixin, RegressorMixin
 from .utils import as_float_array, check_arrays
 from ._isotonic import _isotonic_regression
@@ -113,6 +114,15 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
     y_max : optional, default: None
         If not None, set the highest value of the fit to y_max.
 
+    increasing : optional, boolean or string, default : True
+        If boolean, whether or not to fit the isotonic regression with y 
+        increasing or decreasing.
+
+        If string and "pearson" or "spearman," determine whether y should
+        increase or decrease based on the Pearson or Spearman rho estimate
+        sign, respectively.
+        
+
     Attributes
     ----------
     `X_` : ndarray (n_samples, )
@@ -172,10 +182,29 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
                                            sparse_format='dense')
         y = as_float_array(y)
         self._check_fit_data(X, y, sample_weight)
+
+        # Determine the direction of increasing if Spearman or Pearson requested
+        increasing_bool = self.increasing
+
+        if self.increasing == 'pearson':
+            # Calculate Pearson rho estimate and set accordingly
+            rho, p_val = pearsonr(X, y)
+            if rho >= 0:
+                increasing_bool = True
+            else:
+                increasing_bool = False
+        elif self.increasing == 'spearman':
+            # Calculate Spearman rho estimate and set accordingly
+            rho, p_val = spearmanr(X, y)
+            if rho >= 0:
+                increasing_bool = True
+            else:
+                increasing_bool = False
+
         order = np.argsort(X)
         self.X_ = as_float_array(X[order], copy=False)
         self.y_ = isotonic_regression(y[order], sample_weight, self.y_min,
-                                      self.y_max, increasing=self.increasing)
+                                      self.y_max, increasing=increasing_bool)
         return self
 
     def transform(self, T):
@@ -235,11 +264,30 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
                                            sparse_format='dense')
         y = as_float_array(y)
         self._check_fit_data(X, y, sample_weight)
+
+        # Determine the direction of increasing if Spearman or Pearson requested
+        increasing_bool = self.increasing
+
+        if self.increasing == 'pearson':
+            # Calculate Pearson rho estimate and set accordingly
+            rho, p_val = pearsonr(X, y)
+            if rho >= 0:
+                increasing_bool = True
+            else:
+                increasing_bool = False
+        elif self.increasing == 'spearman':
+            # Calculate Spearman rho estimate and set accordingly
+            rho, p_val = spearmanr(X, y)
+            if rho >= 0:
+                increasing_bool = True
+            else:
+                increasing_bool = False
+
         order = np.lexsort((y, X))
         order_inv = np.argsort(order)
         self.X_ = as_float_array(X[order], copy=False)
         self.y_ = isotonic_regression(y[order], sample_weight, self.y_min,
-                                      self.y_max, increasing=self.increasing)
+                                      self.y_max, increasing=increasing_bool)
         return self.y_[order_inv]
 
     def predict(self, T):
