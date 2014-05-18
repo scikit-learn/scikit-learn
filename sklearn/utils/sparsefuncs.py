@@ -9,6 +9,7 @@ from .fixes import sparse_min_max
 from .sparsefuncs_fast import (csr_mean_variance_axis0,
                                csc_mean_variance_axis0)
 
+
 def _raise_typeerror(X):
     """Raises a TypeError if X is not a CSR or CSC matrix"""
     input_type = X.format if sp.issparse(X) else type(X)
@@ -75,7 +76,7 @@ def mean_variance_axis0(X):
     elif isinstance(X, sp.csc_matrix):
         return csc_mean_variance_axis0(X)
     else:
-         _raise_typeerror(X)
+        _raise_typeerror(X)
 
 
 def inplace_column_scale(X, scale):
@@ -97,7 +98,7 @@ def inplace_column_scale(X, scale):
     elif isinstance(X, sp.csr_matrix):
         inplace_csr_column_scale(X, scale)
     else:
-         _raise_typeerror(X)
+        _raise_typeerror(X)
 
 
 def inplace_row_scale(X, scale):
@@ -119,7 +120,7 @@ def inplace_row_scale(X, scale):
     elif isinstance(X, sp.csr_matrix):
         inplace_csr_row_scale(X, scale)
     else:
-         _raise_typeerror(X)
+        _raise_typeerror(X)
 
 
 def inplace_swap_row_csc(X, m, n):
@@ -226,7 +227,7 @@ def inplace_swap_row(X, m, n):
     elif isinstance(X, sp.csr_matrix):
         return inplace_swap_row_csr(X, m, n)
     else:
-         _raise_typeerror(X)
+        _raise_typeerror(X)
 
 
 def inplace_swap_column(X, m, n):
@@ -253,7 +254,7 @@ def inplace_swap_column(X, m, n):
     elif isinstance(X, sp.csr_matrix):
         return inplace_swap_row_csc(X, m, n)
     else:
-         _raise_typeerror(X)
+        _raise_typeerror(X)
 
 
 def min_max_axis(X, axis):
@@ -276,4 +277,4 @@ def min_max_axis(X, axis):
     if isinstance(X, sp.csr_matrix) or isinstance(X, sp.csc_matrix):
         return sparse_min_max(X, axis=axis)
     else:
-         _raise_typeerror(X)
+        _raise_typeerror(X)
