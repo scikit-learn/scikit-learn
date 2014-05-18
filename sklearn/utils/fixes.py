@@ -162,4 +162,5 @@ except (TypeError, AttributeError):
 
 else:
     def sparse_min_max(X, axis):
-        return X.min(axis=axis).toarray(), X.max(axis=axis).toarray()
+        return (X.min(axis=axis).toarray().ravel(),
+                X.max(axis=axis).toarray().ravel())
