@@ -104,8 +104,9 @@ try:
     sp.csr_matrix([1.0, 2.0, 3.0]).max(axis=0)
 except (TypeError, AttributeError):
     # in scipy < 14.0, sparse matrix min/max doesn't accept an `axis` argument
+    # the following code is taken from the scipy 0.14 codebase
 
-    def __minor_reduce(X, ufunc):
+    def _minor_reduce(X, ufunc):
         major_index = np.flatnonzero(np.diff(X.indptr))
         if X.data.size == 0 and major_index.size == 0:
             # Numpy < 1.8.0 don't handle empty arrays in reduceat
@@ -114,18 +115,18 @@ except (TypeError, AttributeError):
             value = ufunc.reduceat(X.data, X.indptr[major_index])
         return major_index, value
 
-    def __min_or_max_axis(X, axis, min_or_max):
+    def _min_or_max_axis(X, axis, min_or_max):
         N = X.shape[axis]
         if N == 0:
             raise ValueError("zero-size array to reduction operation")
         mat = X.tocsc() if axis == 0 else X.tocsr()
         mat.sum_duplicates()
-        major_index, value = __minor_reduce(mat, min_or_max)
+        major_index, value = _minor_reduce(mat, min_or_max)
         not_full = np.diff(mat.indptr)[major_index] < N
         value[not_full] = min_or_max(value[not_full], 0)
         return value
 
-    def __sparse_min_or_max(X, axis, min_or_max):
+    def _sparse_min_or_max(X, axis, min_or_max):
         if axis is None:
             if 0 in X.shape:
                 raise ValueError("zero-size array to reduction operation")
@@ -139,13 +140,13 @@ except (TypeError, AttributeError):
         if axis < 0:
             axis += 2
         if (axis == 0) or (axis == 1):
-            return __min_or_max_axis(X, axis, min_or_max)
+            return _min_or_max_axis(X, axis, min_or_max)
         else:
             raise ValueError("invalid axis, use 0 for rows, or 1 for columns")
 
     def sparse_min_max(X, axis):
-        return (__sparse_min_or_max(X, axis, np.minimum),
-                __sparse_min_or_max(X, axis, np.maximum))
+        return (_sparse_min_or_max(X, axis, np.minimum),
+                _sparse_min_or_max(X, axis, np.maximum))
 
 else:
     def sparse_min_max(X, axis):
