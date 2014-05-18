@@ -32,7 +32,6 @@ from sklearn.utils.fast_dict import IntFloatDict
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_warns
 
-
 def test_linkage_misc():
     # Misc tests on linkage
     rng = np.random.RandomState(42)

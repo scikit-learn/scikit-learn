@@ -226,7 +226,8 @@ def ward_tree(X, connectivity=None, n_components=None, copy=None,
         parent[i], parent[j] = k, k
         children.append((i, j))
         used_node[i] = used_node[j] = False
-        heights.append(inert**0.5)
+        # store inertia value
+        heights.append(inert)
 
         # update the moments
         moments_1[k] = moments_1[i] + moments_1[j]
@@ -259,9 +260,9 @@ def ward_tree(X, connectivity=None, n_components=None, copy=None,
     # sort children to get consistent output with unstructured version
     children = [c[::-1] for c in children]
     children = np.array(children)  # return numpy array for efficient caching
-    heights = np.array(heights)
 
     if return_height:
+        heights = (np.array(heights) * 2) ** 0.5  # scaling factor to compare w/ unstructured version
         return children, n_components, n_leaves, parent, heights
     else:
         return children, n_components, n_leaves, parent
