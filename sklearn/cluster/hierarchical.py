@@ -87,7 +87,8 @@ def _fix_connectivity(X, connectivity, n_components=None,
 ###############################################################################
 # Hierarchical tree building functions
 
-def ward_tree(X, connectivity=None, n_components=None, n_clusters=None):
+def ward_tree(X, connectivity=None, n_components=None, copy=None,
+              n_clusters=None, return_height=False):
     """Ward clustering based on a Feature matrix.
 
     Recursively merges the pair of clusters that minimally increases
@@ -121,6 +122,9 @@ def ward_tree(X, connectivity=None, n_components=None, n_clusters=None):
         limited use, and the 'parents' output should rather be used.
         This option is valid only when specifying a connectivity matrix.
 
+    return_height: bool (optional)
+        If True, return the distance between the clusters.
+
     Returns
     -------
     children : 2D array, shape (n_nodes, 2)
@@ -137,6 +141,10 @@ def ward_tree(X, connectivity=None, n_components=None, n_clusters=None):
     parents : 1D array, shape (n_nodes, ) or None
         The parent of each node. Only returned when a connectivity matrix
         is specified, elsewhere 'None' is returned.
+
+    heights : 1D array, shape (n_nodes, )
+        The distance between the clusters. Only returned if return_height is
+        set to True (for compatibility).
     """
     X = np.asarray(X)
     if X.ndim == 1:
@@ -156,7 +164,12 @@ def ward_tree(X, connectivity=None, n_components=None, n_clusters=None):
                           stacklevel=2)
         out = hierarchy.ward(X)
         children_ = out[:, :2].astype(np.intp)
-        return children_, 1, n_samples, None
+
+        if return_height:
+            heights = out[:, 2]
+            return children_, 1, n_samples, None, heights
+        else:
+            return children_, 1, n_samples, None
 
     connectivity = _fix_connectivity(X, connectivity,
                                      n_components=n_components)
@@ -199,6 +212,7 @@ def ward_tree(X, connectivity=None, n_components=None, n_clusters=None):
     parent = np.arange(n_nodes, dtype=np.intp)
     used_node = np.ones(n_nodes, dtype=bool)
     children = []
+    heights = []
 
     not_visited = np.empty(n_nodes, dtype=np.int8, order='C')
 
@@ -212,6 +226,7 @@ def ward_tree(X, connectivity=None, n_components=None, n_clusters=None):
         parent[i], parent[j] = k, k
         children.append((i, j))
         used_node[i] = used_node[j] = False
+        heights.append(inert**0.5)
 
         # update the moments
         moments_1[k] = moments_1[i] + moments_1[j]
@@ -244,8 +259,12 @@ def ward_tree(X, connectivity=None, n_components=None, n_clusters=None):
     # sort children to get consistent output with unstructured version
     children = [c[::-1] for c in children]
     children = np.array(children)  # return numpy array for efficient caching
+    heights = np.array(heights)
 
-    return children, n_components, n_leaves, parent
+    if return_height:
+        return children, n_components, n_leaves, parent, heights
+    else:
+        return children, n_components, n_leaves, parent
 
 
 # average and complete linkage
