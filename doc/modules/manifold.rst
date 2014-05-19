@@ -520,6 +520,23 @@ other manifold learning algorithms. The optimization is quite difficult
 and the computation of the gradient is on :math:`O[d N^2]`, where :math:`d`
 is the number of output dimensions and :math:`N` is the number of samples.
 
+While Isomap, LLE and variants are best suited to unfold a single continuous
+low dimensional manifold, t-SNE will focus on the local structure of the data
+and will tend to extract clustered local groups of samples as highlighted on
+the S-curve example. This ability to group samples based on the local structure
+might be beneficial to visually disentangle a dataset that comprises several
+manifolds at once as is the case in the digits dataset.
+
+Also note that the digits labels roughly match the natural grouping found by
+t-SNE while the linear 2D projection of the PCA model yields a representation
+where label regions largely overlap. This is a strong clue that this data can
+be well separated by non linear methods that focus on the local structure (e.g.
+an SVM with a Gaussian RBF kernel). However, failing to visualize well
+separated homogeneously labeled groups with t-SNE in 2D does not necessarily
+implie that the data cannot be correctly classified by a supervised model. It
+might be the case that 2 dimensions are not enough low to accurately represents
+the internal structure of the data.
+
 
 .. topic:: References:
 
