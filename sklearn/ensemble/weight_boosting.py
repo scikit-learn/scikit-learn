@@ -70,7 +70,7 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
 
         Parameters
         ----------
-        X : array-like of shape = [n_samples, n_features]
+        X : {array-like, sparse matrix} of shape = [n_samples, n_features]
             The training input samples.
 
         y : array-like of shape = [n_samples]
@@ -165,7 +165,7 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         iboost : int
             The index of the current boost iteration.
 
-        X : array-like of shape = [n_samples, n_features]
+        X : {array-like, sparse matrix} of shape = [n_samples, n_features]
             The training input samples.
 
         y : array-like of shape = [n_samples]
@@ -199,7 +199,7 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
             Training set.
 
         y : array-like, shape = [n_samples]
@@ -357,7 +357,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
 
         Parameters
         ----------
-        X : array-like of shape = [n_samples, n_features]
+        X : {array-like, sparse matrix} of shape = [n_samples, n_features]
             The training input samples.
 
         y : array-like of shape = [n_samples]
@@ -407,7 +407,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         iboost : int
             The index of the current boost iteration.
 
-        X : array-like of shape = [n_samples, n_features]
+        X : {array-like, sparse matrix} of shape = [n_samples, n_features]
             The training input samples.
 
         y : array-like of shape = [n_samples]
@@ -555,7 +555,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
 
         Parameters
         ----------
-        X : array-like of shape = [n_samples, n_features]
+        X : {array-like, sparse matrix} of shape = [n_samples, n_features]
             The input samples.
 
         Returns
@@ -607,7 +607,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
 
         Parameters
         ----------
-        X : array-like of shape = [n_samples, n_features]
+        X : {array-like, sparse matrix} of shape = [n_samples, n_features]
             The input samples.
 
         Returns
@@ -650,7 +650,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
 
         Parameters
         ----------
-        X : array-like of shape = [n_samples, n_features]
+        X : {array-like, sparse matrix} of shape = [n_samples, n_features]
             The input samples.
 
         Returns
@@ -703,7 +703,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
 
         Parameters
         ----------
-        X : array-like of shape = [n_samples, n_features]
+        X : {array-like, sparse matrix} of shape = [n_samples, n_features]
             The input samples.
 
         Returns
@@ -746,7 +746,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
 
         Parameters
         ----------
-        X : array-like of shape = [n_samples, n_features]
+        X : {array-like, sparse matrix} of shape = [n_samples, n_features]
             The input samples.
 
         Returns
@@ -790,7 +790,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
 
         Parameters
         ----------
-        X : array-like of shape = [n_samples, n_features]
+        X : {array-like, sparse matrix} of shape = [n_samples, n_features]
             The input samples.
 
         Returns
@@ -885,7 +885,7 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
 
         Parameters
         ----------
-        X : array-like of shape = [n_samples, n_features]
+        X : {array-like, sparse matrix} of shape = [n_samples, n_features]
             The training input samples.
 
         y : array-like of shape = [n_samples]
@@ -924,7 +924,7 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
         iboost : int
             The index of the current boost iteration.
 
-        X : array-like of shape = [n_samples, n_features]
+        X : {array-like, sparse matrix} of shape = [n_samples, n_features]
             The training input samples.
 
         y : array-like of shape = [n_samples]
@@ -1033,7 +1033,7 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
 
         Parameters
         ----------
-        X : array-like of shape = [n_samples, n_features]
+        X : {array-like, sparse matrix} of shape = [n_samples, n_features]
             The input samples.
 
         Returns
@@ -1058,7 +1058,7 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
 
         Parameters
         ----------
-        X : array-like of shape = [n_samples, n_features]
+        X : {array-like, sparse matrix} of shape = [n_samples, n_features]
             The input samples.
 
         Returns
