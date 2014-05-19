@@ -285,7 +285,9 @@ def test_ward_tree_children_order():
     unstructured versions of ward_tree.
     """
 
-    # test on five random datasets
+    def argsort(x, key, **kwargs):
+        return sorted(range(len(x)), key=lambda e: key(x.__getitem__(e)), **kwargs)
+
     n, p = 10, 5
     rng = np.random.RandomState(0)
 
