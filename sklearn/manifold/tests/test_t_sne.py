@@ -158,11 +158,12 @@ def test_preserve_trustworthiness_approximately():
     """Nearest neighbors should be preserved approximately."""
     random_state = check_random_state(0)
     X = random_state.randn(100, 2)
-    tsne = TSNE(n_components=2, perplexity=10, learning_rate=100.0,
-                random_state=0)
-    X_embedded = tsne.fit_transform(X)
-    assert_almost_equal(trustworthiness(X, X_embedded, n_neighbors=1), 1.0,
-                        decimal=1)
+    for init in ('random', 'pca'):
+        tsne = TSNE(n_components=2, perplexity=10, learning_rate=100.0,
+                    init=init, random_state=0)
+        X_embedded = tsne.fit_transform(X)
+        assert_almost_equal(trustworthiness(X, X_embedded, n_neighbors=1), 1.0,
+                            decimal=1)
 
 
 def test_preserve_trustworthiness_approximately_with_precomputed_affinities():

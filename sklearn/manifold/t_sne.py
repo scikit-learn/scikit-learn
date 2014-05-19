@@ -6,6 +6,8 @@ from ..base import BaseEstimator
 from ..utils import check_arrays
 from ..utils import check_random_state
 from ..utils.extmath import _ravel
+from ..decomposition import RandomizedPCA
+from ..metrics.pairwise import euclidean_distances
 from . import _utils
 
 
@@ -364,7 +366,8 @@ class TSNE(BaseEstimator):
     """
     def __init__(self, n_components=2, perplexity=30.0,
                  early_exaggeration=4.0, learning_rate=1000.0, n_iter=1000,
-                 affinity="sqeuclidean", verbose=0, random_state=None):
+                 affinity="sqeuclidean", verbose=0, init='random',
+                 random_state=None):
         self.n_components = n_components
         self.perplexity = perplexity
         self.early_exaggeration = early_exaggeration
@@ -373,6 +376,7 @@ class TSNE(BaseEstimator):
         self.affinity = affinity
         self.verbose = verbose
         self.random_state = random_state
+        self.init = init
 
     def _fit(self, X):
         """Fit the model using X as training data.
@@ -394,6 +398,9 @@ class TSNE(BaseEstimator):
             raise ValueError("n_iter should be at least 200")
 
         if self.affinity == "precomputed":
+            if self.init == 'pca':
+                raise ValueError('The parameter init="pca" cannot be used with '
+                                 ' affinity="precomputed".')
             if X.shape[0] != X.shape[1]:
                 raise ValueError("X should be a square affinity matrix")
             affinities = X
@@ -410,9 +417,20 @@ class TSNE(BaseEstimator):
         self.training_data_ = X
 
         P = _joint_probabilities(affinities, self.perplexity, self.verbose)
-        self.embedding_ = self._tsne(P, alpha, n_samples, random_state)
+        if self.init == 'pca':
+            pca = RandomizedPCA(n_components=self.n_components,
+                                random_state=random_state)
+            X_embedded = pca.fit_transform(X)
+        elif self.init == 'random':
+            X_embedded = None
+        else:
+            raise ValueError("Unsupported initialization scheme: %s"
+                             % self.init)
 
-    def _tsne(self, P, alpha, n_samples, random_state):
+        self.embedding_ = self._tsne(P, alpha, n_samples, random_state,
+                                     X_embedded=X_embedded)
+
+    def _tsne(self, P, alpha, n_samples, random_state, X_embedded=None):
         """Runs t-SNE."""
         # t-SNE minimizes the Kullback-Leiber divergence of the Gaussians P
         # and the Student's t-distributions Q. The optimization algorithm that
@@ -423,8 +441,9 @@ class TSNE(BaseEstimator):
         # The embedding is initialized with iid samples from Gaussians with
         # standard deviation 1e-4.
 
-        # Initialize embedding randomly
-        X_embedded = random_state.randn(n_samples, self.n_components) * 1e-4
+        if X_embedded is None:
+            # Initialize embedding randomly
+            X_embedded = random_state.randn(n_samples, self.n_components) * 1e-4
         params = X_embedded.ravel()
 
         # Early exaggeration
