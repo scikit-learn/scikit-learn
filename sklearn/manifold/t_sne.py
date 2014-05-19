@@ -93,7 +93,7 @@ def _kl_divergence(params, P, alpha, n_samples, n_components):
     grad = np.ndarray((n_samples, n_components))
     PQd = squareform((P - Q) * n)
     for i in range(n_samples):
-        grad[i] = np.dot(_ravel(PQd[i]), X_embedded[i] - X_embedded)
+        np.dot(_ravel(PQd[i]), X_embedded[i] - X_embedded, out=grad[i])
     grad = grad.ravel()
     c = 2.0 * (alpha + 1.0) / alpha
     grad *= c
