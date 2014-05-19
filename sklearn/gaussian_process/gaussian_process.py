@@ -296,10 +296,6 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
         # Calculate matrix of distances D between samples
         D, ij = l1_cross_distances(X)
-        if (np.min(np.sum(D, axis=1)) == 0.
-                and self.corr != correlation.pure_nugget):
-            raise Exception("Multiple input features cannot have the same"
-                            " value.")
 
         # Regression matrix and parameters
         F = self.regr(X)
@@ -586,9 +582,6 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         if D is None:
             # Light storage mode (need to recompute D, ij and F)
             D, ij = l1_cross_distances(self.X)
-            if (np.min(np.sum(D, axis=1)) == 0.
-                    and self.corr != correlation.pure_nugget):
-                raise Exception("Multiple X are not allowed")
             F = self.regr(self.X)
 
         # Set up R
@@ -715,8 +708,8 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                     # Generate a random starting point log10-uniformly
                     # distributed between bounds
                     log10theta0 = np.log10(self.thetaL) \
-                        + rand(self.theta0.size).reshape(self.theta0.shape) \
-                        * np.log10(self.thetaU / self.thetaL)
+                                  + rand(self.theta0.size).reshape(self.theta0.shape) \
+                                  * np.log10(self.thetaU / self.thetaL)
                     theta0 = 10. ** log10theta0
 
                 # Run Cobyla
@@ -788,7 +781,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                     return corr(array2d(np.hstack([optimal_theta[0][0:i],
                                                    t[0],
                                                    optimal_theta[0][(i + 1)::]]
-                                                  )), d)
+                    )), d)
 
                 self.corr = corr_cut
                 optimal_theta[0, i], optimal_rlf_value, optimal_par = \
@@ -873,7 +866,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         if np.any(self.nugget) < 0.:
             raise ValueError("nugget must be positive or zero.")
         if (n_samples is not None
-                and self.nugget.shape not in [(), (n_samples,)]):
+            and self.nugget.shape not in [(), (n_samples,)]):
             raise ValueError("nugget must be either a scalar "
                              "or array of length n_samples.")
 
