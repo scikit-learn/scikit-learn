@@ -11,7 +11,7 @@ This exercise is used in the :ref:`cv_estimators_tut` part of the
 from __future__ import print_function
 
 import numpy as np
-import pylab as pl
+import matplotlib.pyplot as plt
 
 from sklearn import cross_validation, datasets, linear_model
 
@@ -34,16 +34,16 @@ for alpha in alphas:
     scores.append(np.mean(this_scores))
     scores_std.append(np.std(this_scores))
 
-pl.figure(figsize=(4, 3))
-pl.semilogx(alphas, scores)
+plt.figure(figsize=(4, 3))
+plt.semilogx(alphas, scores)
 # plot error lines showing +/- std. errors of the scores
-pl.semilogx(alphas, np.array(scores) + np.array(scores_std) / np.sqrt(len(X)),
-            'b--')
-pl.semilogx(alphas, np.array(scores) - np.array(scores_std) / np.sqrt(len(X)),
-            'b--')
-pl.ylabel('CV score')
-pl.xlabel('alpha')
-pl.axhline(np.max(scores), linestyle='--', color='.5')
+plt.semilogx(alphas, np.array(scores) + np.array(scores_std) / np.sqrt(len(X)),
+             'b--')
+plt.semilogx(alphas, np.array(scores) - np.array(scores_std) / np.sqrt(len(X)),
+             'b--')
+plt.ylabel('CV score')
+plt.xlabel('alpha')
+plt.axhline(np.max(scores), linestyle='--', color='.5')
 
 ##############################################################################
 # Bonus: how much can you trust the selection of alpha?
@@ -70,4 +70,4 @@ print("Answer: Not very much since we obtained different alphas for different")
 print("subsets of the data and moreover, the scores for these alphas differ")
 print("quite substantially.")
 
-pl.show()
+plt.show()

@@ -89,3 +89,5 @@ People
   * `Arnaud Joly <http://www.ajoly.org>`_
 
   * `Kemal Eren <http://www.kemaleren.com>`_
+
+  * `Michael Becker <http://beckerfuffle.com>`_

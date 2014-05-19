@@ -9,11 +9,11 @@ randomized trees. Single and multi-output problems are both handled.
 #          Noel Dawe <noel@dawe.me>
 #          Satrajit Gosh <satrajit.ghosh@gmail.com>
 #          Joly Arnaud <arnaud.v.joly@gmail.com>
-#          Fares Hedayati <fareshedayat@yahoo.com>
 # Licence: BSD 3 clause
 
 from __future__ import division
 from scipy.sparse import csc_matrix, issparse, csr_matrix
+
 import numbers
 import numpy as np
 from abc import ABCMeta, abstractmethod
@@ -47,10 +47,10 @@ DOUBLE = _tree.DOUBLE
 
 CRITERIA_CLF = {"gini": _tree.Gini, "entropy": _tree.Entropy}
 CRITERIA_REG = {"mse": _tree.MSE, "friedman_mse": _tree.FriedmanMSE}
+
 DENSE_SPLITTERS = {"best": _tree.BestSplitter,
                    "presort-best": _tree.PresortBestSplitter,
                    "random": _tree.RandomSplitter}
-
 SPARSE_SPLITTER = {"best": _tree.BestSparseSplitter,
                    "random": _tree.RandomSparseSplitter}
 
@@ -159,6 +159,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
 
             else:
                 X, = check_arrays(X, dtype=DTYPE, sparse_format="dense")
+
 
         # Determine output settings
         n_samples, self.n_features_ = X.shape
@@ -316,6 +317,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         y : array of shape = [n_samples] or [n_samples, n_outputs]
             The predicted classes, or the predict values.
         """
+
         X_old_data = None  # This variable is used to avoid inplace
                            # of the data.
 
@@ -553,6 +555,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
             The class probabilities of the input samples. The order of the
             classes corresponds to that in the attribute `classes_`.
         """
+
         X_old_data = None
 
         if issparse(X):

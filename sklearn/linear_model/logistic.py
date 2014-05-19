@@ -57,6 +57,10 @@ class LogisticRegression(BaseLibLinear, LinearClassifierMixin,
         The 'auto' mode selects weights inversely proportional to class
         frequencies in the training set.
 
+    random_state: int seed, RandomState instance, or None (default)
+        The seed of the pseudo random number generator to use when
+        shuffling the data.
+
     tol: float, optional
         Tolerance for stopping criteria.
 
@@ -71,10 +75,6 @@ class LogisticRegression(BaseLibLinear, LinearClassifierMixin,
     `intercept_` : array, shape = [n_classes]
         Intercept (a.k.a. bias) added to the decision function.
         If `fit_intercept` is set to False, the intercept is set to zero.
-
-    random_state: int seed, RandomState instance, or None (default)
-        The seed of the pseudo random number generator to use when
-        shuffling the data.
 
     See also
     --------

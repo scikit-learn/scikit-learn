@@ -16,7 +16,7 @@ print(__doc__)
 # License: BSD 3 clause
 
 # Standard scientific Python imports
-import pylab as pl
+import matplotlib.pyplot as plt
 
 # Import datasets, classifiers and performance metrics
 from sklearn import datasets, svm, metrics
@@ -30,12 +30,19 @@ digits = datasets.load_digits()
 # pylab.imread.  Note that each image must have the same size. For these
 # images, we know which digit they represent: it is given in the 'target' of
 # the dataset.
-for index, (image, label) in enumerate(list(zip(digits.images,
-                                                digits.target))[:4]):
+images_and_labels = list(zip(digits.images, digits.target))
+for index, (image, label) in enumerate(images_and_labels[:4]):
+<<<<<<< HEAD
+    plt.subplot(2, 4, index + 1)
+    plt.axis('off')
+    plt.imshow(image, cmap=plt.cm.gray_r, interpolation='nearest')
+    plt.title('Training: %i' % label)
+=======
     pl.subplot(2, 4, index + 1)
     pl.axis('off')
     pl.imshow(image, cmap=pl.cm.gray_r, interpolation='nearest')
     pl.title('Training: %i' % label)
+>>>>>>> 00a5d7ee3aa701b3a6d0d523ae0a9887911e651a
 
 # To apply a classifier on this data, we need to flatten the image, to
 # turn the data in a (samples, feature) matrix:
@@ -56,11 +63,18 @@ print("Classification report for classifier %s:\n%s\n"
       % (classifier, metrics.classification_report(expected, predicted)))
 print("Confusion matrix:\n%s" % metrics.confusion_matrix(expected, predicted))
 
-for index, (image, prediction) in enumerate(
-        list(zip(digits.images[n_samples / 2:], predicted))[:4]):
+images_and_predictions = list(zip(digits.images[n_samples / 2:], predicted))
+for index, (image, prediction) in enumerate(images_and_predictions[:4]):
+<<<<<<< HEAD
+    plt.subplot(2, 4, index + 5)
+    plt.axis('off')
+    plt.imshow(image, cmap=plt.cm.gray_r, interpolation='nearest')
+    plt.title('Prediction: %i' % prediction)
+=======
     pl.subplot(2, 4, index + 5)
     pl.axis('off')
     pl.imshow(image, cmap=pl.cm.gray_r, interpolation='nearest')
     pl.title('Prediction: %i' % prediction)
+>>>>>>> 00a5d7ee3aa701b3a6d0d523ae0a9887911e651a
 
-pl.show()
+plt.show()

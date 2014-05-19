@@ -29,7 +29,7 @@ print(__doc__)
 # License: BSD 3 clause
 
 import numpy as np
-import pylab as pl
+import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
 from sklearn.cross_validation import train_test_split
 from sklearn.preprocessing import StandardScaler
@@ -68,7 +68,7 @@ datasets = [make_moons(noise=0.3, random_state=0),
             linearly_separable
             ]
 
-figure = pl.figure(figsize=(27, 9))
+figure = plt.figure(figsize=(27, 9))
 i = 1
 # iterate over datasets
 for ds in datasets:
@@ -83,9 +83,9 @@ for ds in datasets:
                          np.arange(y_min, y_max, h))
 
     # just plot the dataset first
-    cm = pl.cm.RdBu
+    cm = plt.cm.RdBu
     cm_bright = ListedColormap(['#FF0000', '#0000FF'])
-    ax = pl.subplot(len(datasets), len(classifiers) + 1, i)
+    ax = plt.subplot(len(datasets), len(classifiers) + 1, i)
     # Plot the training points
     ax.scatter(X_train[:, 0], X_train[:, 1], c=y_train, cmap=cm_bright)
     # and testing points
@@ -98,7 +98,7 @@ for ds in datasets:
 
     # iterate over classifiers
     for name, clf in zip(names, classifiers):
-        ax = pl.subplot(len(datasets), len(classifiers) + 1, i)
+        ax = plt.subplot(len(datasets), len(classifiers) + 1, i)
         clf.fit(X_train, y_train)
         score = clf.score(X_test, y_test)
 
@@ -129,4 +129,4 @@ for ds in datasets:
         i += 1
 
 figure.subplots_adjust(left=.02, right=.98)
-pl.show()
+plt.show()

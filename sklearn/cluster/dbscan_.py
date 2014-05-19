@@ -87,8 +87,7 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski',
 
     # If index order not given, create random order.
     random_state = check_random_state(random_state)
-    index_order = np.arange(n)
-    random_state.shuffle(index_order)
+    index_order = random_state.permutation(n)
 
     # check for known metric powers
     distance_matrix = True

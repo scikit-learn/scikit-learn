@@ -28,7 +28,11 @@ from os.path import join, exists, isdir
 
 import logging
 import numpy as np
-import urllib
+
+try:
+    import urllib.request as urllib #for backwards compatibility 
+except ImportError:
+    import urllib
 
 from .base import get_data_home, Bunch
 from ..externals.joblib import Memory

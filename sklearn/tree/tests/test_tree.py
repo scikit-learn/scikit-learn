@@ -1,11 +1,11 @@
 """
 Testing for the tree module (sklearn.tree).
 """
-
 import pickle
 import sys
 sys.path.insert(0, "/Users/fares19/GitTools2/scikit-learn/")
 import numpy as np
+
 from scipy.sparse import csc_matrix, csr_matrix, rand
 from functools import partial
 from itertools import product
@@ -61,6 +61,7 @@ ALL_TREES.update(CLF_TREES)
 ALL_TREES.update(REG_TREES)
 
 
+
 X_small = [[0, 0, 4, 0, 0, 0, 1, -14, 0, -4, 0, 0, 0, 0, ],
           [0, 0, 5, 3, 0, -4, 0, 0, 1, -5, 0.2, 0, 4, 1, ],
           [-1, -1, 0, 0, -4.5, 0, 0, 2.1, 1, 0, 0, -4.5, 0, 1, ],
@@ -89,6 +90,7 @@ y_small = [1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0,
            0, 0]
 y_small_reg = [1.0, 2.1, 1.2, 0.05, 10, 2.4, 3.1, 1.01, 0.01, 2.98, 3.1, 1.1,
                0.0, 1.2, 2, 11, 0, 0, 4.5, 0.201, 1.06, 0.9, 0]
+
 
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
@@ -344,6 +346,16 @@ def test_importances():
         assert_less(0, X_new.shape[1], "Failed with {0}".format(name))
         assert_less(X_new.shape[1], X.shape[1], "Failed with {0}".format(name))
 
+    # Check on iris that importances are the same for all builders
+    clf = DecisionTreeClassifier(random_state=0)
+    clf.fit(iris.data, iris.target)
+    clf2 = DecisionTreeClassifier(random_state=0,
+                                  max_leaf_nodes=len(iris.data))
+    clf2.fit(iris.data, iris.target)
+
+    assert_array_equal(clf.feature_importances_,
+                       clf2.feature_importances_)
+
 
 @raises(ValueError)
 def test_importances_raises():
@@ -363,8 +375,13 @@ def test_importances_gini_equal_mse():
                                         shuffle=False,
                                         random_state=0)
 
-    clf = DecisionTreeClassifier(criterion="gini", random_state=0).fit(X, y)
-    reg = DecisionTreeRegressor(criterion="mse", random_state=0).fit(X, y)
+    # The gini index and the mean square error (variance) might differ due
+    # to numerical instability. Since those instabilities mainly occurs at
+    # high tree depth, we restrict this maximal depth.
+    clf = DecisionTreeClassifier(criterion="gini", max_depth=8,
+                                 random_state=0).fit(X, y)
+    reg = DecisionTreeRegressor(criterion="mse", max_depth=8,
+                                random_state=0).fit(X, y)
 
     assert_almost_equal(clf.feature_importances_, reg.feature_importances_)
     assert_array_equal(clf.tree_.feature, reg.tree_.feature)
@@ -688,7 +705,7 @@ def test_sample_weight():
     clf.fit(X, y, sample_weight=sample_weight)
     assert_equal(clf.tree_.threshold[0], 149.5)
 
-    sample_weight[y == 2] = .50  # Samples of class '2' are no longer weightier
+    sample_weight[y == 2] = .5  # Samples of class '2' are no longer weightier
     clf = DecisionTreeClassifier(max_depth=1, random_state=0)
     clf.fit(X, y, sample_weight=sample_weight)
     assert_equal(clf.tree_.threshold[0], 49.5)  # Threshold should have moved
@@ -1184,3 +1201,8 @@ def test_random_sparse_matrix_of_random_forest():
 
         assert_array_almost_equal(s.predict_proba(X_test.toarray()),
                                   d.predict_proba(X_test.toarray()))
+
+def test_memoryerror():
+    from sklearn.tree._tree import _realloc_test
+    assert_raises(MemoryError, _realloc_test)
+

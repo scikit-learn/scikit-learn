@@ -46,7 +46,7 @@ from __future__ import print_function
 from time import time
 
 import numpy as np
-import pylab as pl
+import matplotlib.pyplot as plt
 
 from sklearn.datasets.base import Bunch
 from sklearn.datasets import fetch_species_distributions
@@ -146,7 +146,7 @@ def plot_species_distribution(species=["bradypus_variegatus_0",
         print("done.")
 
         # Plot map of South America
-        pl.subplot(1, 2, i + 1)
+        plt.subplot(1, 2, i + 1)
         if basemap:
             print(" - plot coastlines using basemap")
             m = Basemap(projection='cyl', llcrnrlat=Y.min(),
@@ -156,11 +156,11 @@ def plot_species_distribution(species=["bradypus_variegatus_0",
             m.drawcountries()
         else:
             print(" - plot coastlines from coverage")
-            pl.contour(X, Y, land_reference,
-                       levels=[-9999], colors="k",
-                       linestyles="solid")
-            pl.xticks([])
-            pl.yticks([])
+            plt.contour(X, Y, land_reference,
+                        levels=[-9999], colors="k",
+                        linestyles="solid")
+            plt.xticks([])
+            plt.yticks([])
 
         print(" - predict species distribution")
 
@@ -179,19 +179,19 @@ def plot_species_distribution(species=["bradypus_variegatus_0",
         Z[land_reference == -9999] = -9999
 
         # plot contours of the prediction
-        pl.contourf(X, Y, Z, levels=levels, cmap=pl.cm.Reds)
-        pl.colorbar(format='%.2f')
+        plt.contourf(X, Y, Z, levels=levels, cmap=plt.cm.Reds)
+        plt.colorbar(format='%.2f')
 
         # scatter training/testing points
-        pl.scatter(species.pts_train['dd long'], species.pts_train['dd lat'],
-                   s=2 ** 2, c='black',
-                   marker='^', label='train')
-        pl.scatter(species.pts_test['dd long'], species.pts_test['dd lat'],
-                   s=2 ** 2, c='black',
-                   marker='x', label='test')
-        pl.legend()
-        pl.title(species.name)
-        pl.axis('equal')
+        plt.scatter(species.pts_train['dd long'], species.pts_train['dd lat'],
+                    s=2 ** 2, c='black',
+                    marker='^', label='train')
+        plt.scatter(species.pts_test['dd long'], species.pts_test['dd lat'],
+                    s=2 ** 2, c='black',
+                    marker='x', label='test')
+        plt.legend()
+        plt.title(species.name)
+        plt.axis('equal')
 
         # Compute AUC with regards to background points
         pred_background = Z[background_points[0], background_points[1]]
@@ -201,11 +201,11 @@ def plot_species_distribution(species=["bradypus_variegatus_0",
         y = np.r_[np.ones(pred_test.shape), np.zeros(pred_background.shape)]
         fpr, tpr, thresholds = metrics.roc_curve(y, scores)
         roc_auc = metrics.auc(fpr, tpr)
-        pl.text(-35, -70, "AUC: %.3f" % roc_auc, ha="right")
+        plt.text(-35, -70, "AUC: %.3f" % roc_auc, ha="right")
         print("\n Area under the ROC curve : %f" % roc_auc)
 
     print("\ntime elapsed: %.2fs" % (time() - t0))
 
 
 plot_species_distribution()
-pl.show()
+plt.show()

@@ -10,7 +10,6 @@
 #          Lars Buitinck <L.J.Buitinck@uva.nl>
 #          Arnaud Joly <arnaud.v.joly@gmail.com>
 #          Joel Nothman <joel.nothman@gmail.com>
-#          Fares Hedayati <fareshedayat@yahoo.com>
 #
 # Licence: BSD 3 clause
 
@@ -70,7 +69,7 @@ cdef enum:
 # Repeat struct definition for numpy
 NODE_DTYPE = np.dtype({
     'names': ['left_child', 'right_child', 'feature', 'threshold', 'impurity',
-              'n_samples', 'weighted_n_samples'],
+              'n_node_samples', 'weighted_n_node_samples'],
     'formats': [np.intp, np.intp, np.intp, np.float64, np.float64, np.intp,
                 np.float64],
     'offsets': [
@@ -79,8 +78,8 @@ NODE_DTYPE = np.dtype({
         <Py_ssize_t> &(<Node*> NULL).feature,
         <Py_ssize_t> &(<Node*> NULL).threshold,
         <Py_ssize_t> &(<Node*> NULL).impurity,
-        <Py_ssize_t> &(<Node*> NULL).n_samples,
-        <Py_ssize_t> &(<Node*> NULL).weighted_n_samples
+        <Py_ssize_t> &(<Node*> NULL).n_node_samples,
+        <Py_ssize_t> &(<Node*> NULL).weighted_n_node_samples
     ]
 })
 
@@ -93,7 +92,8 @@ cdef class Criterion:
     """Interface for impurity criteria."""
 
     cdef void init(self, DOUBLE_t* y, SIZE_t y_stride, DOUBLE_t* sample_weight,
-                   SIZE_t* samples, SIZE_t start, SIZE_t end) nogil:
+                   double weighted_n_samples, SIZE_t* samples, SIZE_t start,
+                   SIZE_t end) nogil:
         """Initialize the criterion at node samples[start:end] and
            children samples[start:start] and samples[start:end]."""
         pass
@@ -123,18 +123,22 @@ cdef class Criterion:
         pass
 
     cdef double impurity_improvement(self, double impurity) nogil:
-        """Impurity improvement, i.e.
-           impurity - (left impurity + right impurity)."""
+        """Weighted impurity improvement, i.e.
+
+           N_t / N * (impurity - N_t_L / N_t * left impurity
+                               - N_t_L / N_t * right impurity),
+
+           where N is the total number of samples, N_t is the number of samples
+           in the current node, N_t_L is the number of samples in the left
+           child and N_t_R is the number of samples in the right child."""
         cdef double impurity_left
         cdef double impurity_right
 
         self.children_impurity(&impurity_left, &impurity_right)
 
-        return (impurity -
-                (self.weighted_n_right / self.weighted_n_node_samples *
-                 impurity_right) -
-                (self.weighted_n_left / self.weighted_n_node_samples *
-                 impurity_left))
+        return ((self.weighted_n_node_samples / self.weighted_n_samples) *
+                (impurity - self.weighted_n_right / self.weighted_n_node_samples * impurity_right
+                          - self.weighted_n_left / self.weighted_n_node_samples * impurity_left))
 
 
 cdef class ClassificationCriterion(Criterion):
@@ -168,9 +172,8 @@ cdef class ClassificationCriterion(Criterion):
         self.label_count_total = NULL
 
         # Count labels for each output
-        self.n_classes = <SIZE_t*> malloc(n_outputs * sizeof(SIZE_t))
-        if self.n_classes == NULL:
-            raise MemoryError()
+        self.n_classes = NULL
+        safe_realloc(&self.n_classes, n_outputs)
 
         cdef SIZE_t k = 0
         cdef SIZE_t label_count_stride = 0
@@ -215,8 +218,8 @@ cdef class ClassificationCriterion(Criterion):
         pass
 
     cdef void init(self, DOUBLE_t* y, SIZE_t y_stride,
-                   DOUBLE_t* sample_weight, SIZE_t* samples,
-                   SIZE_t start, SIZE_t end) nogil:
+                   DOUBLE_t* sample_weight, double weighted_n_samples,
+                   SIZE_t* samples, SIZE_t start, SIZE_t end) nogil:
         """Initialize the criterion at node samples[start:end] and
            children samples[start:start] and samples[start:end]."""
         # Initialize fields
@@ -227,6 +230,7 @@ cdef class ClassificationCriterion(Criterion):
         self.start = start
         self.end = end
         self.n_node_samples = end - start
+        self.weighted_n_samples = weighted_n_samples
         cdef double weighted_n_node_samples = 0.0
 
         # Initialize label_count_total and weighted_n_node_samples
@@ -481,7 +485,7 @@ cdef class Gini(ClassificationCriterion):
             gini = 0.0
 
             for c in range(n_classes[k]):
-                tmp = label_count_total[c]  # TODO: use weighted count instead
+                tmp = label_count_total[c]
                 gini += tmp * tmp
 
             gini = 1.0 - gini / (weighted_n_node_samples *
@@ -521,7 +525,7 @@ cdef class Gini(ClassificationCriterion):
             gini_right = 0.0
 
             for c in range(n_classes[k]):
-                tmp = label_count_left[c]   # TODO: use weighted count instead
+                tmp = label_count_left[c]
                 gini_left += tmp * tmp
                 tmp = label_count_right[c]
                 gini_right += tmp * tmp
@@ -641,7 +645,8 @@ cdef class RegressionCriterion(Criterion):
         pass
 
     cdef void init(self, DOUBLE_t* y, SIZE_t y_stride, DOUBLE_t* sample_weight,
-                   SIZE_t* samples, SIZE_t start, SIZE_t end) nogil:
+                   double weighted_n_samples, SIZE_t* samples, SIZE_t start,
+                   SIZE_t end) nogil:
         """Initialize the criterion at node samples[start:end] and
            children samples[start:start] and samples[start:end]."""
         # Initialize fields
@@ -652,6 +657,7 @@ cdef class RegressionCriterion(Criterion):
         self.start = start
         self.end = end
         self.n_node_samples = end - start
+        self.weighted_n_samples = weighted_n_samples
         cdef double weighted_n_node_samples = 0.
 
         # Initialize accumulators
@@ -910,6 +916,10 @@ cdef class Splitter:
         self.n_features = 0
         self.feature_values = NULL
 
+        # self.X = NULL
+        # self.X_sample_stride = 0
+        # self.X_fx_stride = 0
+
         self.y = NULL
         self.y_stride = 0
         self.sample_weight = NULL
@@ -934,18 +944,16 @@ cdef class Splitter:
     cdef void init(self,
                    object X,
                    np.ndarray[DOUBLE_t, ndim=2, mode="c"] y,
-                   DOUBLE_t* sample_weight):
+                   DOUBLE_t* sample_weight) except *:
         """Initialize the splitter."""
         # Reset random state
         self.rand_r_state = self.random_state.randint(0, RAND_R_MAX)
         # Initialize samples and features structures
         cdef SIZE_t n_samples = X.shape[0]
-        cdef SIZE_t* samples = <SIZE_t*> realloc(self.samples,
-                                                 n_samples * sizeof(SIZE_t))
-        if samples == NULL:
-            raise MemoryError()
+        cdef SIZE_t* samples = safe_realloc(&self.samples, n_samples)
 
         cdef SIZE_t i, j
+        cdef double weighted_n_samples = 0.0
         j = 0
 
         for i in range(n_samples):
@@ -954,28 +962,24 @@ cdef class Splitter:
                 samples[j] = i
                 j += 1
 
-        self.samples = samples
+            if sample_weight != NULL:
+                weighted_n_samples += sample_weight[i]
+            else:
+                weighted_n_samples += 1.0
+
         self.n_samples = j
+        self.weighted_n_samples = weighted_n_samples
 
         cdef SIZE_t n_features = X.shape[1]
-        cdef SIZE_t* features = <SIZE_t*> realloc(self.features,
-                                                  n_features * sizeof(SIZE_t))
-        if features == NULL:
-            raise MemoryError()
+        cdef SIZE_t* features = safe_realloc(&self.features, n_features)
 
         for i in range(n_features):
             features[i] = i
 
-        self.features = features
         self.n_features = n_features
-        self.constant_features = <SIZE_t*> realloc(self.constant_features,
-                                                   n_features * sizeof(SIZE_t))
 
-        cdef DTYPE_t* fv = <DTYPE_t*> realloc(self.feature_values,
-                                              n_samples * sizeof(DTYPE_t))
-        if fv == NULL:
-            raise MemoryError()
-        self.feature_values = fv
+        safe_realloc(&self.feature_values, n_samples)
+        safe_realloc(&self.constant_features, n_features)
 
         # Initialize y, sample_weight
         self.y = <DOUBLE_t*> y.data
@@ -991,6 +995,7 @@ cdef class Splitter:
         self.criterion.init(self.y,
                             self.y_stride,
                             self.sample_weight,
+                            self.weighted_n_samples,
                             self.samples,
                             start,
                             end)
@@ -2253,12 +2258,8 @@ cdef class PresortBestSplitter(DenseSplitter):
                                        <SIZE_t> self.X_argsorted.itemsize)
 
             self.n_total_samples = X.shape[0]
-            sample_mask = realloc(self.sample_mask, self.n_total_samples)
-            if sample_mask == NULL:
-                raise MemoryError("failed to allocate %d bytes"
-                                  % self.n_total_samples)
+            sample_mask = safe_realloc(&self.sample_mask, self.n_total_samples)
             memset(sample_mask, 0, self.n_total_samples)
-            self.sample_mask = <unsigned char*> sample_mask
 
     cdef void node_split(self, double impurity, SIZE_t* pos, SIZE_t* feature,
                          double* threshold, double* impurity_left,
@@ -2654,7 +2655,8 @@ cdef inline int _add_to_frontier(PriorityHeapRecord* rec,
     """Adds record ``rec`` to the priority queue ``frontier``; returns -1
     on memory-error. """
     return frontier.push(rec.node_id, rec.start, rec.end, rec.pos, rec.depth,
-                         rec.is_leaf, rec.improvement, rec.impurity)
+                         rec.is_leaf, rec.improvement, rec.impurity,
+                         rec.impurity_left, rec.impurity_right)
 
 
 cdef class BestFirstTreeBuilder(TreeBuilder):
@@ -2769,8 +2771,9 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                     # Compute left split node
                     rc = self._add_split_node(splitter, tree,
                                               record.start, record.pos,
-                                              record.impurity, IS_NOT_FIRST,
-                                              IS_LEFT, node, record.depth + 1,
+                                              record.impurity_left,
+                                              IS_NOT_FIRST, IS_LEFT, node,
+                                              record.depth + 1,
                                               &split_node_left)
                     if rc == -1:
                         break
@@ -2780,7 +2783,8 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
 
                     # Compute right split node
                     rc = self._add_split_node(splitter, tree, record.pos,
-                                              record.end, record.impurity,
+                                              record.end,
+                                              record.impurity_right,
                                               IS_NOT_FIRST, IS_NOT_LEFT, node,
                                               record.depth + 1,
                                               &split_node_right)
@@ -2868,11 +2872,16 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
             res.pos = pos
             res.is_leaf = 0
             res.improvement = split_improvement
+            res.impurity_left = split_impurity_left
+            res.impurity_right = split_impurity_right
+
         else:
             # is leaf => 0 improvement
             res.pos = end
             res.is_leaf = 1
             res.improvement = 0.0
+            res.impurity_left = impurity
+            res.impurity_right = impurity
 
         return 0
 
@@ -2932,7 +2941,7 @@ cdef class Tree:
         n_node_samples[i] holds the number of training samples reaching node i.
 
     weighted_n_node_samples : array of int, shape [node_count]
-        weighted_n_samples[i] holds the weighted number of training samples
+        weighted_n_node_samples[i] holds the weighted number of training samples
         reaching node i.
     """
     # Wrap for outside world.
@@ -2966,11 +2975,11 @@ cdef class Tree:
 
     property n_node_samples:
         def __get__(self):
-            return self._get_node_ndarray()['n_samples'][:self.node_count]
+            return self._get_node_ndarray()['n_node_samples'][:self.node_count]
 
     property weighted_n_node_samples:
         def __get__(self):
-            return self._get_node_ndarray()['weighted_n_samples'][:self.node_count]
+            return self._get_node_ndarray()['weighted_n_node_samples'][:self.node_count]
 
     property value:
         def __get__(self):
@@ -2982,10 +2991,8 @@ cdef class Tree:
         # Input/Output layout
         self.n_features = n_features
         self.n_outputs = n_outputs
-        self.n_classes = <SIZE_t*> malloc(n_outputs * sizeof(SIZE_t))
-
-        if self.n_classes == NULL:
-            raise MemoryError()
+        self.n_classes = NULL
+        safe_realloc(&self.n_classes, n_outputs)
 
         self.max_n_classes = np.max(n_classes)
         self.value_stride = n_outputs * self.max_n_classes
@@ -3051,7 +3058,7 @@ cdef class Tree:
         value = memcpy(self.value, (<np.ndarray> value_ndarray).data,
                        self.capacity * self.value_stride * sizeof(double))
 
-    cdef void _resize(self, SIZE_t capacity):
+    cdef void _resize(self, SIZE_t capacity) except *:
         """Resize all inner arrays to `capacity`, if `capacity` == -1, then
            double the size of the inner arrays."""
         if self._resize_c(capacity)!= 0:
@@ -3070,6 +3077,7 @@ cdef class Tree:
             else:
                 capacity = 2 * self.capacity
 
+        # XXX no safe_realloc here because we need to grab the GIL
         cdef void* ptr = realloc(self.nodes, capacity * sizeof(Node))
         if ptr == NULL:
             return -1
@@ -3095,7 +3103,7 @@ cdef class Tree:
 
     cdef SIZE_t _add_node(self, SIZE_t parent, bint is_left, bint is_leaf,
                           SIZE_t feature, double threshold, double impurity,
-                          SIZE_t n_samples, double weighted_n_samples) nogil:
+                          SIZE_t n_node_samples, double weighted_n_node_samples) nogil:
         """Add a node to the tree.
 
         The new node registers itself as the child of its parent.
@@ -3110,8 +3118,8 @@ cdef class Tree:
 
         cdef Node* node = &self.nodes[node_id]
         node.impurity = impurity
-        node.n_samples = n_samples
-        node.weighted_n_samples = weighted_n_samples
+        node.n_node_samples = n_node_samples
+        node.weighted_n_node_samples = weighted_n_node_samples
 
         if parent != _TREE_UNDEFINED:
             if is_left:
@@ -3264,12 +3272,12 @@ cdef class Tree:
                 right = &nodes[node.right_child]
 
                 importances[node.feature] += (
-                    node.weighted_n_samples * node.impurity -
-                    left.weighted_n_samples * left.impurity -
-                    right.weighted_n_samples * right.impurity)
+                    node.weighted_n_node_samples * node.impurity -
+                    left.weighted_n_node_samples * left.impurity -
+                    right.weighted_n_node_samples * right.impurity)
             node += 1
 
-        importances = importances / nodes[0].weighted_n_samples
+        importances = importances / nodes[0].weighted_n_node_samples
         cdef double normalizer
 
         if normalize:
@@ -3320,6 +3328,38 @@ cdef class Tree:
 # =============================================================================
 # Utils
 # =============================================================================
+
+# safe_realloc(&p, n) resizes the allocation of p to n * sizeof(*p) bytes or
+# raises a MemoryError. It never calls free, since that's __dealloc__'s job.
+#   cdef DTYPE_t *p = NULL
+#   safe_realloc(&p, n)
+# is equivalent to p = malloc(n * sizeof(*p)) with error checking.
+ctypedef fused realloc_ptr:
+    # Add pointer types here as needed.
+    (DTYPE_t*)
+    (SIZE_t*)
+    (unsigned char*)
+
+cdef realloc_ptr safe_realloc(realloc_ptr* p, size_t n) except *:
+    # sizeof(realloc_ptr[0]) would be more like idiomatic C, but causes Cython
+    # 0.20.1 to crash.
+    n *= sizeof(p[0][0])
+    cdef realloc_ptr tmp = <realloc_ptr>realloc(p[0], n)
+    if tmp == NULL:
+        raise MemoryError("could not allocate %d bytes" % n)
+
+    p[0] = tmp
+    return tmp  # for convenience
+
+
+def _realloc_test():
+    # Helper for tests. Should raise an exception.
+    cdef unsigned char* p = NULL
+    safe_realloc(&p, <size_t>(-1))
+    if p != NULL:
+        free(p)
+        assert False, "we just allocated %d bytes!" % <size_t>(-1)
+
 
 # rand_r replacement using a 32bit XorShift generator
 # See http://www.jstatsoft.org/v08/i14/paper for details

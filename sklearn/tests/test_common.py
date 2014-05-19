@@ -359,6 +359,8 @@ def check_estimators_nan_inf(name, Estimator, X_train, X_train_finite, y):
             # than the number of features.
             # So we impose a smaller number (avoid "auto" mode)
             estimator = Estimator(n_components=1)
+        elif name == "SelectKBest":
+            estimator = Estimator(k=1)
 
         set_random_state(estimator, 1)
         # try to fit
@@ -1039,6 +1041,7 @@ def test_estimators_overwrite_params():
                 # FIXME!
                 # in particular GaussianProcess!
                 continue
+
             yield (check_estimators_overwrite_params, name, Estimator, X,
                    multioutput_estimator_convert_y_2d(name, y))
 
@@ -1061,6 +1064,8 @@ def check_estimators_overwrite_params(name, Estimator, X, y):
         # than the number of features.
         # So we impose a smaller number (avoid "auto" mode)
         estimator = Estimator(n_components=1)
+    elif name == "SelectKBest":
+        estimator = Estimator(k=1)
 
     set_random_state(estimator)
 

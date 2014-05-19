@@ -35,7 +35,7 @@ print(__doc__)
 
 from time import time
 
-import pylab as pl
+import matplotlib.pyplot as plt
 import numpy as np
 
 from scipy.misc import lena
@@ -79,17 +79,17 @@ V = dico.fit(data).components_
 dt = time() - t0
 print('done in %.2fs.' % dt)
 
-pl.figure(figsize=(4.2, 4))
+plt.figure(figsize=(4.2, 4))
 for i, comp in enumerate(V[:100]):
-    pl.subplot(10, 10, i + 1)
-    pl.imshow(comp.reshape(patch_size), cmap=pl.cm.gray_r,
-              interpolation='nearest')
-    pl.xticks(())
-    pl.yticks(())
-pl.suptitle('Dictionary learned from Lena patches\n' +
-            'Train time %.1fs on %d patches' % (dt, len(data)),
-            fontsize=16)
-pl.subplots_adjust(0.08, 0.02, 0.92, 0.85, 0.08, 0.23)
+    plt.subplot(10, 10, i + 1)
+    plt.imshow(comp.reshape(patch_size), cmap=plt.cm.gray_r,
+               interpolation='nearest')
+    plt.xticks(())
+    plt.yticks(())
+plt.suptitle('Dictionary learned from Lena patches\n' +
+             'Train time %.1fs on %d patches' % (dt, len(data)),
+             fontsize=16)
+plt.subplots_adjust(0.08, 0.02, 0.92, 0.85, 0.08, 0.23)
 
 
 ###############################################################################
@@ -97,22 +97,22 @@ pl.subplots_adjust(0.08, 0.02, 0.92, 0.85, 0.08, 0.23)
 
 def show_with_diff(image, reference, title):
     """Helper function to display denoising"""
-    pl.figure(figsize=(5, 3.3))
-    pl.subplot(1, 2, 1)
-    pl.title('Image')
-    pl.imshow(image, vmin=0, vmax=1, cmap=pl.cm.gray, interpolation='nearest')
-    pl.xticks(())
-    pl.yticks(())
-    pl.subplot(1, 2, 2)
+    plt.figure(figsize=(5, 3.3))
+    plt.subplot(1, 2, 1)
+    plt.title('Image')
+    plt.imshow(image, vmin=0, vmax=1, cmap=plt.cm.gray, interpolation='nearest')
+    plt.xticks(())
+    plt.yticks(())
+    plt.subplot(1, 2, 2)
     difference = image - reference
 
-    pl.title('Difference (norm: %.2f)' % np.sqrt(np.sum(difference ** 2)))
-    pl.imshow(difference, vmin=-0.5, vmax=0.5, cmap=pl.cm.PuOr,
-              interpolation='nearest')
-    pl.xticks(())
-    pl.yticks(())
-    pl.suptitle(title, size=16)
-    pl.subplots_adjust(0.02, 0.02, 0.98, 0.79, 0.02, 0.2)
+    plt.title('Difference (norm: %.2f)' % np.sqrt(np.sum(difference ** 2)))
+    plt.imshow(difference, vmin=-0.5, vmax=0.5, cmap=plt.cm.PuOr,
+               interpolation='nearest')
+    plt.xticks(())
+    plt.yticks(())
+    plt.suptitle(title, size=16)
+    plt.subplots_adjust(0.02, 0.02, 0.98, 0.79, 0.02, 0.2)
 
 show_with_diff(distorted, lena, 'Distorted image')
 
@@ -161,4 +161,4 @@ for title, transform_algorithm, kwargs in transform_algorithms:
     show_with_diff(reconstructions[title], lena,
                    title + ' (time: %.1fs)' % dt)
 
-pl.show()
+plt.show()
