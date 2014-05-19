@@ -1113,12 +1113,15 @@ def test_precision_recall_curve():
 
 def test_precision_recall_curve_pos_label():
     y_true, _, probas_pred = make_prediction(binary=False)
+    pos_label = 2
     p, r, thresholds = precision_recall_curve(y_true,
-                                              probas_pred[:, 1],
-                                              pos_label=1)
-    precision_recall_auc = auc(r, p)
-    assert_array_almost_equal(precision_recall_auc, 0.44, 2)
-
+                                              probas_pred[:, pos_label],
+                                              pos_label=pos_label)
+    p2, r2, thresholds2 = precision_recall_curve(y_true == pos_label,
+                                                 probas_pred[:, pos_label])
+    assert_array_almost_equal(p, p2)
+    assert_array_almost_equal(r, r2)
+    assert_array_almost_equal(thresholds, thresholds2)
     assert_equal(p.size, r.size)
     assert_equal(p.size, thresholds.size + 1)
 
