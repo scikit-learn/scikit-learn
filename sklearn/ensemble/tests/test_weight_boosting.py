@@ -1,6 +1,4 @@
-"""
-Testing for the boost module (sklearn.ensemble.boost).
-"""
+"""Testing for the boost module (sklearn.ensemble.boost)."""
 
 import numpy as np
 from numpy.testing import assert_array_equal, assert_array_less
@@ -15,7 +13,8 @@ from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.svm import SVC, SVR
 from sklearn.utils import shuffle
 from sklearn.cross_validation import train_test_split
-from scipy.sparse import csc_matrix, csr_matrix
+from scipy.sparse import csc_matrix, csr_matrix, coo_matrix, dok_matrix
+from scipy.sparse import lil_matrix
 from sklearn import datasets
 
 
@@ -243,109 +242,91 @@ def test_base_estimator():
 
 
 def test_sparse_classification():
-    """Check classification for various parameter settings on sparse input."""
-
+    """Check classification on sparse input."""
     class CustomSVC(SVC):
-        """SVC variant that records the nature of the training set"""
+
+        """SVC variant that records the nature of the training set."""
 
         def fit(self, X, y, sample_weight=None):
+            """Modification on fit caries data type for later verification."""
             super(CustomSVC, self).fit(X, y, sample_weight=sample_weight)
             self.data_type_ = type(X)
             return self
 
-    X_train, X_test, y_train, y_test = train_test_split(iris.data,
-                                                        iris.target,
-                                                        random_state=rng)
-    parameter_sets = [
-        {"learning_rate": 0.5},
-        {"learning_rate": 1.0},
-    ]
+    X, y = datasets.make_classification()
 
-    for sparse_format in [csc_matrix, csr_matrix]:
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+
+    for sparse_format in [csc_matrix, csr_matrix, lil_matrix, coo_matrix,
+                          dok_matrix]:
         X_train_sparse = sparse_format(X_train)
         X_test_sparse = sparse_format(X_test)
 
-        for params in parameter_sets:
+        # Trained on sparse format
+        sparse_classifier = AdaBoostClassifier(
+            base_estimator=CustomSVC(),
+            random_state=1,
+            algorithm="SAMME"
+        ).fit(X_train_sparse, y_train)
+        sparse_results = sparse_classifier.predict(X_test_sparse)
 
-            # Trained on sparse format
-            sparse_classifier = AdaBoostClassifier(
-                base_estimator=CustomSVC(),
-                random_state=1,
-                algorithm="SAMME",
-                **params
-            ).fit(X_train_sparse, y_train)
-            sparse_results = sparse_classifier.predict(X_test_sparse)
+        # Trained on dense format
+        dense_results = AdaBoostClassifier(
+            base_estimator=CustomSVC(),
+            random_state=1,
+            algorithm="SAMME"
+        ).fit(X_train, y_train).predict(X_test)
 
-            # Trained on dense format
-            dense_results = AdaBoostClassifier(
-                base_estimator=CustomSVC(),
-                random_state=1,
-                algorithm="SAMME",
-                **params
-            ).fit(X_train, y_train).predict(X_test)
+        sparse_type = type(X_train_sparse)
+        types = [i.data_type_ for i in sparse_classifier.estimators_]
 
-            sparse_type = type(X_train_sparse)
-            types = [i.data_type_ for i in sparse_classifier.estimators_]
-
-            assert_array_equal(sparse_results, dense_results)
-            assert all([t == sparse_type for t in types])
+        assert_array_equal(sparse_results, dense_results)
+        print(types)
+        assert all([(t == csc_matrix or t == csr_matrix)
+                   for t in types])
 
 
 def test_sparse_regression():
-    """Check regression for various parameter settings on sparse input."""
-
+    """Check regression on sparse input."""
     class CustomSVR(SVR):
-        """SVR variant that records the nature of the training set"""
+
+        """SVR variant that records the nature of the training set."""
 
         def fit(self, X, y, sample_weight=None):
+            """Modification on fit caries data type for later verification."""
             super(CustomSVR, self).fit(X, y, sample_weight=sample_weight)
             self.data_type_ = type(X)
             return self
 
-    X_train, X_test, y_train, y_test = train_test_split(boston.data[:50],
-                                                        boston.target[:50],
-                                                        random_state=rng)
-    parameter_sets = [
-        {"learning_rate": 0.5,
-         "loss": 'linear'},
-        {"learning_rate": 1.0,
-         "loss": 'linear'},
-        {"learning_rate": 0.5,
-         "loss": 'square'},
-        {"learning_rate": 1.0,
-         "loss": 'square'},
-        {"learning_rate": 0.5,
-         "loss": 'exponential'},
-        {"learning_rate": 1.0,
-         "loss": 'exponential'},
-    ]
+    X, y = datasets.make_regression()
 
-    for sparse_format in [csc_matrix, csr_matrix]:
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+
+    for sparse_format in [csc_matrix, csr_matrix, lil_matrix, coo_matrix,
+                          dok_matrix]:
         X_train_sparse = sparse_format(X_train)
         X_test_sparse = sparse_format(X_test)
 
-        for params in parameter_sets:
+        # Trained on sparse format
+        sparse_classifier = AdaBoostRegressor(
+            base_estimator=CustomSVR(),
+            random_state=1
+        ).fit(X_train_sparse, y_train)
+        sparse_results = sparse_classifier.predict(X_test_sparse)
 
-            # Trained on sparse format
-            sparse_classifier = AdaBoostRegressor(
-                base_estimator=CustomSVR(),
-                random_state=1,
-                **params
-            ).fit(X_train_sparse, y_train)
-            sparse_results = sparse_classifier.predict(X_test_sparse)
+        # Trained on dense format
+        dense_results = AdaBoostRegressor(
+            base_estimator=CustomSVR(),
+            random_state=1
+        ).fit(X_train, y_train).predict(X_test)
 
-            # Trained on dense format
-            dense_results = AdaBoostRegressor(
-                base_estimator=CustomSVR(),
-                random_state=1,
-                **params
-            ).fit(X_train, y_train).predict(X_test)
+        sparse_type = type(X_train_sparse)
+        types = [i.data_type_ for i in sparse_classifier.estimators_]
 
-            sparse_type = type(X_train_sparse)
-            types = [i.data_type_ for i in sparse_classifier.estimators_]
-
-            assert_array_equal(sparse_results, dense_results)
-            assert all([t == sparse_type for t in types])
+        assert_array_equal(sparse_results, dense_results)
+        print(types)
+        assert all([(t == csc_matrix or t == csr_matrix)
+                   for t in types])
 
 if __name__ == "__main__":
     import nose
