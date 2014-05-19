@@ -13,8 +13,8 @@ from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.svm import SVC, SVR
 from sklearn.utils import shuffle
 from sklearn.cross_validation import train_test_split
-from scipy.sparse import csc_matrix, csr_matrix, coo_matrix, dok_matrix
-from scipy.sparse import lil_matrix
+from scipy.sparse import csc_matrix, csr_matrix, coo_matrix, dok_matrix, \
+    lil_matrix
 from sklearn import datasets
 
 
