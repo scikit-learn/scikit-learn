@@ -115,13 +115,13 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         If not None, set the highest value of the fit to y_max.
 
     increasing : optional, boolean or string, default : True
-        If boolean, whether or not to fit the isotonic regression with y 
+        If boolean, whether or not to fit the isotonic regression with y
         increasing or decreasing.
 
         If string and "pearson" or "spearman," determine whether y should
         increase or decrease based on the Pearson or Spearman rho estimate
         sign, respectively.
-        
+
 
     Attributes
     ----------
@@ -152,7 +152,7 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         Set the proper value of increasing based on the constructor
         parameter and the data.
         '''
-        # Determine the direction of increasing if Spearman or Pearson requested
+        # Determine increasing if Spearman or Pearson requested
         increasing_bool = self.increasing
 
         if self.increasing == 'pearson':
@@ -171,8 +171,6 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
                 increasing_bool = False
 
         return increasing_bool
-
-
 
     def fit(self, X, y, sample_weight=None, weight=None):
         """Fit the model using X, y as training data.
@@ -210,7 +208,7 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         y = as_float_array(y)
         self._check_fit_data(X, y, sample_weight)
 
-        # Determine the direction of increasing if Spearman or Pearson requested
+        # Determine increasing if Spearman or Pearson requested
         increasing_bool = self._check_increasing(X, y)
 
         order = np.argsort(X)
@@ -277,7 +275,7 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         y = as_float_array(y)
         self._check_fit_data(X, y, sample_weight)
 
-        # Determine the direction of increasing if Spearman or Pearson requested
+        # Determine increasing if Spearman or Pearson requested
         increasing_bool = self._check_increasing(X, y)
 
         order = np.lexsort((y, X))
