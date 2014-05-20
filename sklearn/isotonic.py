@@ -114,7 +114,7 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
     y_max : optional, default: None
         If not None, set the highest value of the fit to y_max.
 
-    increasing : optional, boolean or string, default : True
+    increasing : boolean or string, optional, default : True
         If boolean, whether or not to fit the isotonic regression with y
         increasing or decreasing.
 
@@ -148,10 +148,10 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
             raise ValueError("X should be a vector")
 
     def _check_increasing(self, X, y):
-        '''
+        """
         Set the proper value of increasing based on the constructor
         parameter and the data.
-        '''
+        """
         # Determine increasing if Spearman or Pearson requested
         increasing_bool = self.increasing
 
