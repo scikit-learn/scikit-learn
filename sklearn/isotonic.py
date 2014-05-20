@@ -147,6 +147,33 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         if len(X.shape) != 1:
             raise ValueError("X should be a vector")
 
+    def _check_increasing(self, X, y):
+        '''
+        Set the proper value of increasing based on the constructor
+        parameter and the data.
+        '''
+        # Determine the direction of increasing if Spearman or Pearson requested
+        increasing_bool = self.increasing
+
+        if self.increasing == 'pearson':
+            # Calculate Pearson rho estimate and set accordingly
+            rho, _ = pearsonr(X, y)
+            if rho >= 0:
+                increasing_bool = True
+            else:
+                increasing_bool = False
+        elif self.increasing == 'spearman':
+            # Calculate Spearman rho estimate and set accordingly
+            rho, _ = spearmanr(X, y)
+            if rho >= 0:
+                increasing_bool = True
+            else:
+                increasing_bool = False
+
+        return increasing_bool
+
+
+
     def fit(self, X, y, sample_weight=None, weight=None):
         """Fit the model using X, y as training data.
 
@@ -184,22 +211,7 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         self._check_fit_data(X, y, sample_weight)
 
         # Determine the direction of increasing if Spearman or Pearson requested
-        increasing_bool = self.increasing
-
-        if self.increasing == 'pearson':
-            # Calculate Pearson rho estimate and set accordingly
-            rho, p_val = pearsonr(X, y)
-            if rho >= 0:
-                increasing_bool = True
-            else:
-                increasing_bool = False
-        elif self.increasing == 'spearman':
-            # Calculate Spearman rho estimate and set accordingly
-            rho, p_val = spearmanr(X, y)
-            if rho >= 0:
-                increasing_bool = True
-            else:
-                increasing_bool = False
+        increasing_bool = self._check_increasing(X, y)
 
         order = np.argsort(X)
         self.X_ = as_float_array(X[order], copy=False)
@@ -266,22 +278,7 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         self._check_fit_data(X, y, sample_weight)
 
         # Determine the direction of increasing if Spearman or Pearson requested
-        increasing_bool = self.increasing
-
-        if self.increasing == 'pearson':
-            # Calculate Pearson rho estimate and set accordingly
-            rho, p_val = pearsonr(X, y)
-            if rho >= 0:
-                increasing_bool = True
-            else:
-                increasing_bool = False
-        elif self.increasing == 'spearman':
-            # Calculate Spearman rho estimate and set accordingly
-            rho, p_val = spearmanr(X, y)
-            if rho >= 0:
-                increasing_bool = True
-            else:
-                increasing_bool = False
+        increasing_bool = self._check_increasing(X, y)
 
         order = np.lexsort((y, X))
         order_inv = np.argsort(order)
