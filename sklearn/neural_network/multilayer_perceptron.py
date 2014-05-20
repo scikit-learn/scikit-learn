@@ -194,19 +194,20 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         """Initialize weight and bias parameters."""
         rng = check_random_state(self.random_state)
 
-
-
         if self.activation == 'tanh':
-            interval = np.sqrt(6./(self.n_features + self.n_hidden))
+            interval = np.sqrt(6. / (self.n_features + self.n_hidden))
 
         elif self.activation == 'logistic':
-            interval = 4 * np.sqrt(6./(self.n_features + self.n_hidden))
+            interval = 4 * np.sqrt(6. / (self.n_features + self.n_hidden))
 
         self.coef_hidden_ = rng.uniform(
             -interval, interval, (self.n_features, self.n_hidden))
-        self.coef_output_ = rng.uniform(-interval, interval, (self.n_hidden, self.n_outputs))
-        self.intercept_hidden_ = rng.uniform(-interval, interval, self.n_hidden)
-        self.intercept_output_ = rng.uniform(-interval, interval, self.n_outputs)
+        self.coef_output_ = rng.uniform(
+            -interval, interval, (self.n_hidden, self.n_outputs))
+        self.intercept_hidden_ = rng.uniform(
+            -interval, interval, self.n_hidden)
+        self.intercept_output_ = rng.uniform(
+            -interval, interval, self.n_outputs)
 
     def _init_param(self):
         """Sets the activation, derivative, loss and output functions."""
