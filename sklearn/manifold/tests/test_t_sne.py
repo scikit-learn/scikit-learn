@@ -199,6 +199,20 @@ def test_non_square_precomputed_affinities():
                          tsne.fit_transform, np.array([[0.0], [1.0]]))
 
 
+def test_init_not_available():
+    """'init' must be 'pca' or 'random'."""
+    assert_raises_regexp(ValueError, "'init' must be either 'pca' or 'random'",
+                         TSNE, init="not available")
+
+
+def test_pca_initialization_not_compatible_with_precomputed_kernel():
+    """Precomputed affinity matrices must be square matrices."""
+    tsne = TSNE(affinity="precomputed", init="pca")
+    assert_raises_regexp(ValueError, "The parameter init=\"pca\" cannot be "
+                         "used with  affinity=\"precomputed\".",
+                         tsne.fit_transform, np.array([[0.0], [1.0]]))
+
+
 def test_verbose():
     random_state = check_random_state(0)
     tsne = TSNE(verbose=2)
