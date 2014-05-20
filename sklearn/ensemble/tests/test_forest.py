@@ -427,6 +427,7 @@ def test_classes_shape():
     assert_equal(clf.n_classes_, [2, 2])
     assert_equal(clf.classes_, [[-1, 1], [-2, 2]])
 
+
 def test_random_trees_dense_type():
     '''
     Test that the `sparse` parameter of RandomTreesEmbedding
@@ -441,6 +442,7 @@ def test_random_trees_dense_type():
     # Assert that type is ndarray, not scipy.sparse.csr.csr_matrix
     assert_equal(type(X_transformed), np.ndarray)
 
+
 def test_random_trees_dense_equal():
     '''
     Test that the `sparse` parameter of RandomTreesEmbedding
@@ -449,8 +451,10 @@ def test_random_trees_dense_equal():
     '''
 
     # Create the RTEs
-    hasher_dense = RandomTreesEmbedding(n_estimators=10, sparse=False)
-    hasher_sparse = RandomTreesEmbedding(n_estimators=10, sparse=True)
+    hasher_dense = RandomTreesEmbedding(n_estimators=10, sparse=False,
+                                        random_state=0)
+    hasher_sparse = RandomTreesEmbedding(n_estimators=10, sparse=True,
+                                         random_state=0)
     X, y = datasets.make_circles(factor=0.5)
     X_transformed_dense = hasher_dense.fit_transform(X)
     X_transformed_sparse = hasher_sparse.fit_transform(X)
