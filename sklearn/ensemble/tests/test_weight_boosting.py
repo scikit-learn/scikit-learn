@@ -6,15 +6,18 @@ from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_equal
 from nose.tools import assert_raises
 
+from sklearn.cross_validation import train_test_split
 from sklearn.grid_search import GridSearchCV
 from sklearn.ensemble import AdaBoostClassifier
 from sklearn.ensemble import AdaBoostRegressor
-from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
+from scipy.sparse import csc_matrix
+from scipy.sparse import csr_matrix
+from scipy.sparse import coo_matrix
+from scipy.sparse import dok_matrix
+from scipy.sparse import lil_matrix
 from sklearn.svm import SVC, SVR
+from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils import shuffle
-from sklearn.cross_validation import train_test_split
-from scipy.sparse import csc_matrix, csr_matrix, coo_matrix, dok_matrix, \
-    lil_matrix
 from sklearn import datasets
 
 
@@ -253,7 +256,10 @@ def test_sparse_classification():
             self.data_type_ = type(X)
             return self
 
-    X, y = datasets.make_classification()
+    X, y = datasets.make_multilabel_classification(n_classes=1,
+                                                   return_indicator=True)
+    # Flatten y to a 1d array
+    y = np.ravel(y)
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 
@@ -297,7 +303,9 @@ def test_sparse_regression():
             self.data_type_ = type(X)
             return self
 
-    X, y = datasets.make_regression()
+    X, y = datasets.make_multilabel_classification(n_classes=20,
+                                                   return_indicator=True)
+    y = y.sum(axis=1)
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 
