@@ -36,6 +36,7 @@ def test_isotonic_regression_reversed():
         np.arange(len(y)), y)
     assert_array_equal(np.ones(y_[:-1].shape), ((y_[:-1] - y_[1:]) >= 0))
 
+
 def test_isotonic_regression_pearson_decreasing():
     # Set y and x for decreasing
     y = np.array([10, 9, 10, 7, 6, 6.1, 5])
@@ -46,6 +47,7 @@ def test_isotonic_regression_pearson_decreasing():
 
     is_increasing = y_[0] < y_[-1]
     assert_equal(is_increasing, False)
+
 
 def test_isotonic_regression_pearson_increasing():
     # Set y and x for decreasing
@@ -58,6 +60,7 @@ def test_isotonic_regression_pearson_increasing():
     is_increasing = y_[0] < y_[-1]
     assert_equal(is_increasing, True)
 
+
 def test_isotonic_regression_spearman_decreasing():
     # Set y and x for decreasing
     y = np.array([10, 9, 10, 7, 6, 6.1, 5])
@@ -68,6 +71,7 @@ def test_isotonic_regression_spearman_decreasing():
 
     is_increasing = y_[0] < y_[-1]
     assert_equal(is_increasing, False)
+
 
 def test_isotonic_regression_spearman_increasing():
     # Set y and x for decreasing
