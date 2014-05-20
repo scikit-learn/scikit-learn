@@ -336,6 +336,11 @@ class TSNE(BaseEstimator):
         An affinity metric that is defined in scipy.spatial.distance or
         'precomputed'.
 
+    init : string, optional (default: random)
+        Initialization of embedding. Possible options are 'random' and 'pca'.
+        PCA initialization cannot be used with precomputed distances and is
+        usually more globally stable than random initialization.
+
     verbose : int, optional (default: 0)
         Verbosity level.
 
@@ -376,17 +381,19 @@ class TSNE(BaseEstimator):
     """
     def __init__(self, n_components=2, perplexity=30.0,
                  early_exaggeration=4.0, learning_rate=1000.0, n_iter=1000,
-                 affinity="sqeuclidean", verbose=0, init='random',
+                 affinity="sqeuclidean", init="random", verbose=0,
                  random_state=None):
+        if init not in ["pca", "random"]:
+            raise ValueError("'init' must be either 'pca' or 'random'")
         self.n_components = n_components
         self.perplexity = perplexity
         self.early_exaggeration = early_exaggeration
         self.learning_rate = learning_rate
         self.n_iter = n_iter
         self.affinity = affinity
+        self.init = init
         self.verbose = verbose
         self.random_state = random_state
-        self.init = init
 
     def _fit(self, X):
         """Fit the model using X as training data.
