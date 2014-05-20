@@ -1,3 +1,13 @@
+# Author: Alexander Fabisch  -- <afabisch@informatik.uni-bremen.de>
+# License: BSD 3 clause (C) 2014
+
+# This is the standard t-SNE implementation. There are faster modifications of
+# the algorithm:
+# * Barnes-Hut-SNE: reduces the complexity of the gradient computation from
+#   N^2 to N log N (http://arxiv.org/abs/1301.3342)
+# * Fast Optimization for t-SNE:
+#   http://cseweb.ucsd.edu/~lvdmaaten/workshops/nips2010/papers/vandermaaten.pdf
+
 import numpy as np
 from scipy import linalg
 from scipy.spatial.distance import pdist
