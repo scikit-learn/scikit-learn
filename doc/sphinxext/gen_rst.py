@@ -7,7 +7,7 @@ example files.
 Files that generate images should start with 'plot'
 
 """
-from __future__ import division
+from __future__ import division, print_function
 from time import time
 import ast
 import os
@@ -839,8 +839,20 @@ class NameFinder(ast.NodeVisitor):
                 yield name, full_name
 
 
-def identify_names(example_file):
-    code = open(example_file).read()
+def identify_names(code):
+    """Builds a codeobj summary by identifying and resovles used names
+
+    >>> code = '''
+    ... from a.b import c
+    ... import d as e
+    ... print(c)
+    ... e.HelloWorld().f.g
+    ... '''
+    >>> for name, o in sorted(identify_names(code).items()):
+    ...     print(name, o['name'], o['module'], o['module_short'])
+    c c a.b a.b
+    e.HelloWorld HelloWorld d d
+    """
     finder = NameFinder()
     finder.visit(ast.parse(code))
 
@@ -1016,7 +1028,7 @@ def generate_file_rst(fname, target_dir, src_dir, root_dir, plot_gallery):
     f.flush()
 
     # save variables so we can later add links to the documentation
-    example_code_obj = identify_names(example_file)
+    example_code_obj = identify_names(open(example_file).read())
     if example_code_obj:
         codeobj_fname = example_file[:-3] + '_codeobj.pickle'
         with open(codeobj_fname, 'wb') as fid:
