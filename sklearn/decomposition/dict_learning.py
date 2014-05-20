@@ -510,7 +510,7 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
     n_components : int,
         Number of dictionary atoms to extract.
 
-    alpha : int | float,
+    alpha : float,
         Sparsity controlling parameter.
 
     n_iter : int,
@@ -835,7 +835,7 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
     n_components : int,
         number of dictionary elements to extract
 
-    alpha : int | float,
+    alpha : float,
         sparsity controlling parameter
 
     max_iter : int,
@@ -988,7 +988,7 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
     n_components : int,
         number of dictionary elements to extract
 
-    alpha : int | float,
+    alpha : float,
         sparsity controlling parameter
 
     n_iter : int,
