@@ -281,7 +281,6 @@ def test_sparse_classification():
         types = [i.data_type_ for i in sparse_classifier.estimators_]
 
         assert_array_equal(sparse_results, dense_results)
-        print(types)
         assert all([(t == csc_matrix or t == csr_matrix)
                    for t in types])
 
@@ -324,7 +323,6 @@ def test_sparse_regression():
         types = [i.data_type_ for i in sparse_classifier.estimators_]
 
         assert_array_equal(sparse_results, dense_results)
-        print(types)
         assert all([(t == csc_matrix or t == csr_matrix)
                    for t in types])
 
