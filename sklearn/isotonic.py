@@ -118,7 +118,7 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         If boolean, whether or not to fit the isotonic regression with y
         increasing or decreasing.
 
-        If string and set to "auto," determine whether y should
+        The string value "auto" determines whether y should
         increase or decrease based on the Spearman correlation estimate's
         sign.
 
