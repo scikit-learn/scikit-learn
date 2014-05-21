@@ -430,12 +430,12 @@ def test_classes_shape():
 
 def test_random_trees_dense_type():
     '''
-    Test that the `sparse` parameter of RandomTreesEmbedding
+    Test that the `sparse_output` parameter of RandomTreesEmbedding
     works by returning a dense array.
     '''
 
     # Create the RTE with sparse=False
-    hasher = RandomTreesEmbedding(n_estimators=10, sparse=False)
+    hasher = RandomTreesEmbedding(n_estimators=10, sparse_output=False)
     X, y = datasets.make_circles(factor=0.5)
     X_transformed = hasher.fit_transform(X)
 
@@ -445,15 +445,15 @@ def test_random_trees_dense_type():
 
 def test_random_trees_dense_equal():
     '''
-    Test that the `sparse` parameter of RandomTreesEmbedding
+    Test that the `sparse_output` parameter of RandomTreesEmbedding
     works by returning the same array for both argument
     values.
     '''
 
     # Create the RTEs
-    hasher_dense = RandomTreesEmbedding(n_estimators=10, sparse=False,
+    hasher_dense = RandomTreesEmbedding(n_estimators=10, sparse_output=False,
                                         random_state=0)
-    hasher_sparse = RandomTreesEmbedding(n_estimators=10, sparse=True,
+    hasher_sparse = RandomTreesEmbedding(n_estimators=10, sparse_output=True,
                                          random_state=0)
     X, y = datasets.make_circles(factor=0.5)
     X_transformed_dense = hasher_dense.fit_transform(X)
