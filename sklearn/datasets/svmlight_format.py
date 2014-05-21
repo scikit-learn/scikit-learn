@@ -25,8 +25,9 @@ import scipy.sparse as sp
 from ._svmlight_format import _load_svmlight_file
 from .. import __version__
 from ..externals import six
-from ..utils import atleast2d_or_csr
 from ..externals.six import u, b
+from ..externals.six.moves import range, zip
+from ..utils import atleast2d_or_csr
 
 
 def load_svmlight_file(f, n_features=None, dtype=np.float64,
@@ -72,7 +73,7 @@ def load_svmlight_file(f, n_features=None, dtype=np.float64,
     n_features: int or None
         The number of features to use. If None, it will be inferred. This
         argument is useful to load several files that are subsets of a
-        bigger sliced dataset: each subset might not have example of
+        bigger sliced dataset: each subset might not have examples of
         every feature, hence the inferred shape might vary from one
         slice to another.
 
@@ -129,12 +130,34 @@ def _gen_open(f):
         return open(f, "rb")
 
 
+def _frombuffer(x, dtype):
+    # np.frombuffer doesn't like zero-length buffers in older NumPy
+    if len(x):
+        return np.frombuffer(x, dtype=dtype)
+    else:
+        return np.empty(0, dtype=dtype)
+
+
 def _open_and_load(f, dtype, multilabel, zero_based, query_id):
     if hasattr(f, "read"):
-        return _load_svmlight_file(f, dtype, multilabel, zero_based, query_id)
+        actual_dtype, data, ind, indptr, labels, query = \
+            _load_svmlight_file(f, dtype, multilabel, zero_based, query_id)
     # XXX remove closing when Python 2.7+/3.1+ required
-    with closing(_gen_open(f)) as f:
-        return _load_svmlight_file(f, dtype, multilabel, zero_based, query_id)
+    else:
+        with closing(_gen_open(f)) as f:
+            actual_dtype, data, ind, indptr, labels, query = \
+                _load_svmlight_file(f, dtype, multilabel, zero_based, query_id)
+
+    # convert from array.array, give data the right dtype
+    if not multilabel:
+        labels = _frombuffer(labels, np.float64)
+    data = _frombuffer(data, actual_dtype)
+    indices = _frombuffer(ind, np.intc)
+    indptr = np.frombuffer(indptr, dtype=np.intc)   # never empty
+    query = _frombuffer(query, np.intc)
+
+    data = np.asarray(data, dtype=dtype)    # no-op for float{32,64}
+    return data, indices, indptr, labels, query
 
 
 def load_svmlight_files(files, n_features=None, dtype=np.float64,
@@ -166,6 +189,10 @@ def load_svmlight_files(files, n_features=None, dtype=np.float64,
     n_features: int or None
         The number of features to use. If None, it will be inferred from the
         maximum column index occurring in any of the files.
+
+        This can be set to a higher value than the actual number of features
+        in any of the input files, but setting it to a lower value will cause
+        an exception to be raised.
 
     multilabel: boolean, optional
         Samples may have several labels each (see
@@ -212,8 +239,13 @@ def load_svmlight_files(files, n_features=None, dtype=np.float64,
             indices = ind[1]
             indices -= 1
 
+    n_f = max(ind[1].max() for ind in r) + 1
     if n_features is None:
-        n_features = max(ind[1].max() for ind in r) + 1
+        n_features = n_f
+    elif n_features < n_f:
+        raise ValueError("n_features was set to {},"
+                         " but input file contains {} features"
+                         .format(n_features, n_f))
 
     result = []
     for data, indices, indptr, y, query_values in r:
@@ -253,8 +285,14 @@ def _dump_svmlight(X, y, f, one_based, comment, query_id):
         f.writelines(b("# %s\n" % line) for line in comment.splitlines())
 
     for i in range(X.shape[0]):
-        s = " ".join([value_pattern % (j + one_based, X[i, j])
-                      for j in X[i].nonzero()[is_sp]])
+        if is_sp:
+            span = slice(X.indptr[i], X.indptr[i + 1])
+            row = zip(X.indices[span], X.data[span])
+        else:
+            nz = X[i] != 0
+            row = zip(np.where(nz)[0], X[i, nz])
+
+        s = " ".join(value_pattern % (j + one_based, x) for j, x in row)
         if query_id is not None:
             feat = (y[i], query_id[i], s)
         else:

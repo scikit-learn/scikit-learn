@@ -79,6 +79,7 @@ param_grid = {"max_depth": [3, None],
 
 # run grid search
 grid_search = GridSearchCV(clf, param_grid=param_grid)
+start = time()
 grid_search.fit(X, y)
 
 print("GridSearchCV took %.2f seconds for %d candidate parameter settings."

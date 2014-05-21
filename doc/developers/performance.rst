@@ -39,7 +39,8 @@ looping code using the vectorized idioms of those libraries. In practice
 this means trying to **replace any nested for loops by calls to equivalent
 Numpy array methods**. The goal is to avoid the CPU wasting time in the
 Python interpreter rather than crunching numbers to fit your statistical
-model.
+model. It's generally a good idea to consider NumPy and SciPy performance tips:
+http://wiki.scipy.org/PerformanceTips
 
 Sometimes however an algorithm cannot be expressed efficiently in simple
 vectorized Numpy code. In this case, the recommended strategy is the
@@ -75,6 +76,37 @@ When using Cython, include the generated C source code alongside with
 the Cython source code. The goal is to make it possible to install the
 scikit on any machine with Python, Numpy, Scipy and C/C++ compiler.
 
+Fast matrix multiplications
+===========================
+
+Matrix multiplications (matrix-matrix and matrix-vector) are usually handled
+using the NumPy function ``np.dot``, but in versions of NumPy before 1.7.2
+this function is suboptimal when the inputs are not both in the C (row-major)
+layout; in that case, the inputs may be implicitly copied to obtain the right
+layout. This obviously consumes memory and takes time.
+
+The function ``fast_dot`` in ``sklearn.utils.extmath`` offers a fast
+replacement for ``np.dot`` that prevents copies from being made in some cases.
+In all other cases, it dispatches to ``np.dot`` and when the NumPy version is
+new enough, it is in fact an alias for that function, making it a drop-in
+replacement. Example usage of ``fast_dot``::
+
+  >>> import numpy as np
+  >>> from sklearn.utils.extmath import fast_dot
+  >>> X = np.random.random_sample([2, 10])
+  >>> np.allclose(np.dot(X, X.T), fast_dot(X, X.T))
+  True
+
+This function operates optimally on 2-dimensional arrays, both of the same
+dtype, which should be either single or double precision float. If these
+requirements aren't met or the BLAS package is not available, the call is
+silently dispatched to ``numpy.dot``. If you want to be sure when the original
+``numpy.dot`` has been invoked in a situation where it is suboptimal, you can
+activate the related warning::
+
+  >>> import warnings
+  >>> from sklearn.utils.validation import NonBLASDotWarning
+  >>> warnings.simplefilter('always', NonBLASDotWarning) # doctest: +SKIP
 
 .. _profiling-python-code:
 
@@ -346,7 +378,7 @@ Performance tips for the Cython developer
 If profiling of the Python code reveals that the Python interpreter
 overhead is larger by one order of magnitude or more than the cost of the
 actual numerical computation (e.g. ``for`` loops over vector components,
-nested evaluation of conditional expression, scalar arithmetics...), it
+nested evaluation of conditional expression, scalar arithmetic...), it
 is probably adequate to extract the hotspot portion of the code as a
 standalone function in a ``.pyx`` file, add static type declarations and
 then use Cython to generate a C program suitable to be compiled as a

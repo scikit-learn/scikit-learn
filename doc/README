@@ -25,8 +25,8 @@ First of, generate the html documentation::
 
     make html
 
-This should create a directory _build/html with the documentation in html
-format.
+This should create a directory _build/html/stable with the documentation in
+html format.
 
 
 Now can upload the generated HTML documentation using scp or some other SFTP
@@ -42,7 +42,7 @@ An example session might look like the following for Username "jsmith"
 uploading a file for this project, using rsync with the right switch for the
 permissions:
 
-[jsmith@linux ~]$ rsync -rltvz --delete _build/html/ \
+[jsmith@linux ~]$ rsync -rltvz --delete _build/html/stable/ \
 > jsmith,scikit-learn@web.sourceforge.net:htdocs/dev -essh
 Connecting to web.sourceforge.net...
 The authenticity of host 'web.sourceforge.net (216.34.181.57)' can't be established.

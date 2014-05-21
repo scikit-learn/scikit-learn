@@ -94,6 +94,10 @@ div.navbar ul li a:hover {
     color: #EEE;
 }
 
+/*-------------------------------------------------------------*/
+/* The next few elements have to do with the gsc (referring to */
+/* Google's custom search bar */
+
 .gsc-input {
     width: 180px;
     float: right;
@@ -101,11 +105,22 @@ div.navbar ul li a:hover {
 
 .search_form {
     margin-top: -23px;
+    /*The min-height is added here, to prevent the element from shrinking
+    too much, while the scripts are still loading the search-bar.
+    Without it, layout glitches occur, as the element keeps dynamically
+    changing it's size while its loading-contents adjusts into position.*/
+    min-height: 42px;
+}
+
+#cse .gsc-clear-button {
+    width: 50px;
 }
 
 .gsc-branding {
     display: none;
 }
+
+/*---------------------------------------------------------------*/
 
 .quote {
     text-align: right;
@@ -279,7 +294,7 @@ div.buttonPrevious, div.buttonNext {
 
 div.buttonPrevious {
     border-top-right-radius: .8em;
-    right: 1;
+    left: 0;
 }
 
 div.buttonNext {
@@ -387,7 +402,7 @@ div.admonition p.admonition-title + p {
 }
 
 div.highlight{
-    background-color: white;
+    background: none;
 }
 
 div.highlight a {
@@ -467,6 +482,10 @@ tt {
     /* padding: 1px 2px; */
     font-size: 1.1em;
     font-family: monospace;
+}
+
+a tt {
+	color: inherit;
 }
 
 .viewcode-back {
@@ -722,6 +741,7 @@ span.example-links {
 div.banner-container {
   width:100%;
   background-color: #3499CD;
+  min-height: 229px;
 }
 
 div.banner-inner {
@@ -784,12 +804,24 @@ div.container.index-lower ul {
 }
 
 div.container.index-lower ul li {
-    margin-bottom: 5px;
+    margin-bottom: 8px;
+    line-height: 1.3em;
 }
 
 div.container.index-lower ul li em {
     font-style: normal;
     font-weight: bold;
+}
+
+#paypal-form {
+    margin: 30px 0;
+    padding: 0;
+}
+
+div.container.index-lower a.cite-us {
+    margin-left: 60px;
+    padding-right: 20px;
+    padding-left: 20px;
 }
 
 div.box h2 {
@@ -830,10 +862,77 @@ div.box-links p {
     display: inline;
 }
 
+div#examples_carousel {
+    margin-bottom: 0px;
+}
+
+div.carousel>.carousel-inner>.item {
+  width: 100%;
+  margin: auto;
+}
+
+
 div.carousel img {
-    max-height: 80px;
-    height: 80px;
+    max-height: 70px;
     background-color: #fff;
+    margin: auto;
+}
+
+div#testimonials_carousel img {
+    max-width: 50%;
+}
+
+div#testimonials_carousel {
+    height: 120px;
+}
+
+
+div#examples_carousel img {
+    max-height: 201px;
+    height: 186px;
+    background-color: #fff;
+    margin: 10px auto;
+}
+
+div#examples_carousel .carousel-indicators {
+    position: absolute;
+    top: 200px;
+    right: 26%; # Should be adjusted as the number of elements grows
+}
+
+div#examples_carousel .carousel-indicators .active {
+    background-color: #0F72F0;
+}
+
+div#examples_carousel .carousel-indicators li {
+    background-color: rgba(52, 147, 235, 0.25);
+}
+
+div#examples_carousel .carousel-control {
+    top: 203px;
+    left: 1px;
+    width: 25px;
+    height: 25px;
+    font-size: 37px;
+    line-height: 19px;
+    background: rgba(28, 140, 245, 0.38);
+}
+
+div#examples_carousel .carousel-control.right {
+    left: auto;
+    right: 2px;
+}
+
+div#intro_to_sklearn_p li {
+    line-height: 22px;
+}
+
+div#index_carousel_tn {
+    height: 216px;
+    width: 380px;
+    max-width: 130%;
+    background: white;
+    padding: 0px;
 }
 
 p.doc-version {
@@ -909,21 +1008,44 @@ div.testimonial h2 {
     text-align: center;
 }
 
-div.testimonial img {
+
+div.logo {
     float: left;
-    padding-right: 30px;
+    width: 200px;
+}
+
+div.logo img {
+  max-width: 150px;
+  max-height: 150px;
 }
 
 div.testimonial p {
     line-height: 1.5em;
-    padding-left: 30px;
     font-size: 1.1em;
+    color: #1c1c1c;
+    padding-left: 230px;
 }
 
-div.testimonial-website {
+div.testimonial span.testimonial-author {
     width: 100%;
     text-align: right;
+    margin-bottom: 30px;
+}
+
+div.testimonial span.testimonial-author p{
     font-size: 0.8em;
+    font-style: italic;
+    color: #808080;
+}
+
+#index-funding-logo-big {
+    padding: 0 7px 7px 7px;
+    max-height: 40px
+}
+
+#index-funding-logo-small {
+    padding: 0 7px 7px 7px;
+    max-height: 24px
 }
 
 .no-display {
@@ -931,7 +1053,7 @@ div.testimonial-website {
 }
 
 .btn-group {
-  height: 100%	height: 100%;
+    height: 100%;
 }
 
 .btn-group .dropdown-menu {
@@ -954,7 +1076,7 @@ div.navbar ul.dropdown-menu li{
 }
 
 div.navbar ul.dropdown-menu li a {
-  font-size: 88%;
+  font-size: 100%;
   color: #2878A2;
   padding: 0;
   font-weight: normal;
@@ -986,6 +1108,39 @@ div.navbar ul.dropdown-menu li a.btn {
 .navbar .btn-group.open .btn.dropdown-toggle {
   background-color: transparent;
   box-shadow: inset 0 0px 0 rgba(255,255,255,.2), 0 0px 0px rgba(0,0,0,.05);
+}
+
+a.btn.dropdown-toggle,  a.btn.dropdown-toggle:hover{
+  vertical-align: baseline;
+}
+
+li#other-versions {
+  position: absolute;
+  left: inherit;
+  right: inherit;
+  top: inherit;
+}
+
+#other-versions a.btn.dropdown-toggle {
+  margin-left: 0.5em;
+  padding: 4px 6px 4px 11px;
+}
+
+#other-versions .caret {
+  border-left: 5px solid transparent;
+  border-right: 6px solid transparent;
+  border-bottom: 8px solid black;
+  border-top: 0px;
+  margin-right: 5px;
+  margin-top: 0px;
+  vertical-align: middle;
+}
+
+#other-versions .dropdown-menu {
+  position: absolute;
+  right: -60%;
+  top: -805%;
+  left: initial;
 }
 
 .navbar .btn, .navbar .open>.btn, .navbar .btn:hover{
@@ -1039,7 +1194,7 @@ div.navbar ul.dropdown-menu li a.btn {
 
 .navbar ul.dropdown-menu li {
   font-weight: bold;
-  font-size: 11px;
+  font-size: 12px;
   color: #000;
 }
 
@@ -1050,6 +1205,7 @@ div.navbar ul.dropdown-menu li a.btn {
 div.container-index {
   margin-left: -210px;
 }
+
 
 @media all and (max-width: 780px) {
   .fork-me {

@@ -10,8 +10,7 @@ from . import libsvm_sparse
 from ..base import BaseEstimator, ClassifierMixin
 from ..preprocessing import LabelEncoder
 from ..utils import atleast2d_or_csr, array2d, check_random_state, column_or_1d
-from ..utils import ConvergenceWarning, compute_class_weight, deprecated
-from ..utils.fixes import unique
+from ..utils import ConvergenceWarning, compute_class_weight
 from ..utils.extmath import safe_sparse_dot
 from ..externals import six
 
@@ -93,6 +92,7 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
 
     @property
     def _pairwise(self):
+        # Used by cross_val_score.
         kernel = self.kernel
         return kernel == "precomputed" or callable(kernel)
 
@@ -129,12 +129,10 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         rnd = check_random_state(self.random_state)
 
-        self._sparse = sp.isspmatrix(X) and not self._pairwise
-
-        if self._sparse and self._pairwise:
-            raise ValueError("Sparse precomputed kernels are not supported. "
-                             "Using sparse data and dense kernels is possible "
-                             "by not using the ``sparse`` parameter")
+        sparse = sp.isspmatrix(X)
+        if sparse and self.kernel == "precomputed":
+            raise TypeError("Sparse precomputed kernels are not supported.")
+        self._sparse = sparse and not callable(self.kernel)
 
         X = atleast2d_or_csr(X, dtype=np.float64, order='C')
         y = self._validate_targets(y)
@@ -154,7 +152,7 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
             raise ValueError("X.shape[0] should be equal to X.shape[1]")
 
         if sample_weight.shape[0] > 0 and sample_weight.shape[0] != X.shape[0]:
-            raise ValueError("sample_weight and X have incompatible shapes:"
+            raise ValueError("sample_weight and X have incompatible shapes: "
                              "%r vs %r\n"
                              "Note: Sparse matrices cannot be indexed w/"
                              "boolean masks (use `indices=True` in CV)."
@@ -221,7 +219,7 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         # we don't pass **self.get_params() to allow subclasses to
         # add other parameters to __init__
         self.support_, self.support_vectors_, self.n_support_, \
-            self.dual_coef_, self.intercept_, self._label, self.probA_, \
+            self.dual_coef_, self.intercept_, self.probA_, \
             self.probB_, self.fit_status_ = libsvm.fit(
                 X, y,
                 svm_type=solver_type, sample_weight=sample_weight,
@@ -244,7 +242,7 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         libsvm_sparse.set_verbosity_wrap(self.verbose)
 
         self.support_, self.support_vectors_, dual_coef_data, \
-            self.intercept_, self._label, self.n_support_, \
+            self.intercept_, self.n_support_, \
             self.probA_, self.probB_, self.fit_status_ = \
             libsvm_sparse.libsvm_sparse_train(
                 X.shape[1], X.data, X.indices, X.indptr, y, solver_type,
@@ -256,7 +254,10 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         self._warn_from_fit_status()
 
-        n_class = len(self._label) - 1
+        if hasattr(self, "classes_"):
+            n_class = len(self.classes_) - 1
+        else:   # regression
+            n_class = 1
         n_SV = self.support_vectors_.shape[0]
 
         dual_coef_indices = np.tile(np.arange(n_SV), n_class)
@@ -301,7 +302,7 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         return libsvm.predict(
             X, self.support_, self.support_vectors_, self.n_support_,
-            self.dual_coef_, self._intercept_, self._label,
+            self.dual_coef_, self._intercept_,
             self.probA_, self.probB_, svm_type=svm_type, kernel=kernel,
             degree=self.degree, coef0=self.coef0, gamma=self._gamma,
             cache_size=self.cache_size)
@@ -327,7 +328,7 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
             self.degree, self._gamma, self.coef0, self.tol,
             C, self.class_weight_,
             self.nu, self.epsilon, self.shrinking,
-            self.probability, self.n_support_, self._label,
+            self.probability, self.n_support_,
             self.probA_, self.probB_)
 
     def _compute_kernel(self, X):
@@ -367,7 +368,7 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         dec_func = libsvm.decision_function(
             X, self.support_, self.support_vectors_, self.n_support_,
-            self.dual_coef_, self._intercept_, self._label,
+            self.dual_coef_, self._intercept_,
             self.probA_, self.probB_,
             svm_type=LIBSVM_IMPL.index(self._impl),
             kernel=kernel, degree=self.degree, cache_size=self.cache_size,
@@ -437,9 +438,9 @@ class BaseSVC(BaseLibSVM, ClassifierMixin):
     """ABC for LibSVM-based classifiers."""
 
     def _validate_targets(self, y):
-        y = column_or_1d(y, warn=True)
-        cls, y = unique(y, return_inverse=True)
-        self.class_weight_ = compute_class_weight(self.class_weight, cls, y)
+        y_ = column_or_1d(y, warn=True)
+        cls, y = np.unique(y_, return_inverse=True)
+        self.class_weight_ = compute_class_weight(self.class_weight, cls, y_)
         if len(cls) < 2:
             raise ValueError(
                 "The number of classes has to be greater than one; got %d"
@@ -464,9 +465,22 @@ class BaseSVC(BaseLibSVM, ClassifierMixin):
             Class labels for samples in X.
         """
         y = super(BaseSVC, self).predict(X)
-        return self.classes_.take(y.astype(np.int))
+        return self.classes_.take(np.asarray(y, dtype=np.intp))
 
-    def predict_proba(self, X):
+    # Hacky way of getting predict_proba to raise an AttributeError when
+    # probability=False using properties. Do not use this in new code; when
+    # probabilities are not available depending on a setting, introduce two
+    # estimators.
+    def _check_proba(self):
+        if not self.probability:
+            raise AttributeError("predict_proba is not available when"
+                                 " probability=%r" % self.probability)
+        if self._impl not in ('c_svc', 'nu_svc'):
+            raise AttributeError("predict_proba only implemented for SVC"
+                                 " and NuSVC")
+
+    @property
+    def predict_proba(self):
         """Compute probabilities of possible outcomes for samples in X.
 
         The model need to have probability information computed at training
@@ -478,7 +492,7 @@ class BaseSVC(BaseLibSVM, ClassifierMixin):
 
         Returns
         -------
-        X : array-like, shape = [n_samples, n_classes]
+        T : array-like, shape = [n_samples, n_classes]
             Returns the probability of the sample for each class in
             the model. The columns correspond to the classes in sorted
             order, as they appear in the attribute `classes_`.
@@ -490,20 +504,17 @@ class BaseSVC(BaseLibSVM, ClassifierMixin):
         predict. Also, it will produce meaningless results on very small
         datasets.
         """
-        if not self.probability:
-            raise NotImplementedError(
-                "probability estimates must be enabled to use this method")
+        self._check_proba()
+        return self._predict_proba
 
-        if self._impl not in ('c_svc', 'nu_svc'):
-            raise NotImplementedError("predict_proba only implemented for SVC "
-                                      "and NuSVC")
-
+    def _predict_proba(self, X):
         X = self._validate_for_predict(X)
         pred_proba = (self._sparse_predict_proba
                       if self._sparse else self._dense_predict_proba)
         return pred_proba(X)
 
-    def predict_log_proba(self, X):
+    @property
+    def predict_log_proba(self):
         """Compute log probabilities of possible outcomes for samples in X.
 
         The model need to have probability information computed at training
@@ -515,7 +526,7 @@ class BaseSVC(BaseLibSVM, ClassifierMixin):
 
         Returns
         -------
-        X : array-like, shape = [n_samples, n_classes]
+        T : array-like, shape = [n_samples, n_classes]
             Returns the log-probabilities of the sample for each class in
             the model. The columns correspond to the classes in sorted
             order, as they appear in the attribute `classes_`.
@@ -527,6 +538,10 @@ class BaseSVC(BaseLibSVM, ClassifierMixin):
         predict. Also, it will produce meaningless results on very small
         datasets.
         """
+        self._check_proba()
+        return self._predict_log_proba
+
+    def _predict_log_proba(self, X):
         return np.log(self.predict_proba(X))
 
     def _dense_predict_proba(self, X):
@@ -539,7 +554,7 @@ class BaseSVC(BaseLibSVM, ClassifierMixin):
         svm_type = LIBSVM_IMPL.index(self._impl)
         pprob = libsvm.predict_proba(
             X, self.support_, self.support_vectors_, self.n_support_,
-            self.dual_coef_, self._intercept_, self._label,
+            self.dual_coef_, self._intercept_,
             self.probA_, self.probB_,
             svm_type=svm_type, kernel=kernel, degree=self.degree,
             cache_size=self.cache_size, coef0=self.coef0, gamma=self._gamma)
@@ -565,14 +580,8 @@ class BaseSVC(BaseLibSVM, ClassifierMixin):
             self.degree, self._gamma, self.coef0, self.tol,
             self.C, self.class_weight_,
             self.nu, self.epsilon, self.shrinking,
-            self.probability, self.n_support_, self._label,
+            self.probability, self.n_support_,
             self.probA_, self.probB_)
-
-    @property
-    @deprecated("The ``label_`` attribute has been renamed to ``classes_`` "
-                "for consistency and will be removed in 0.15.")
-    def label_(self):
-        return self.classes_
 
 
 class BaseLibLinear(six.with_metaclass(ABCMeta, BaseEstimator)):
@@ -620,26 +629,28 @@ class BaseLibLinear(six.with_metaclass(ABCMeta, BaseEstimator)):
         """
         if self.multi_class == 'crammer_singer':
             solver_type = 'MC_SVC'
-        else:
-            if self.multi_class != 'ovr':
-                raise ValueError("`multi_class` must be one of `ovr`, "
-                                 "`crammer_singer`")
+        elif self.multi_class == 'ovr':
             solver_type = "P%s_L%s_D%d" % (
                 self.penalty.upper(), self.loss.upper(), int(self.dual))
+        else:
+            raise ValueError("`multi_class` must be one of `ovr`, "
+                             "`crammer_singer`, got %r" % self.multi_class)
         if not solver_type in self._solver_type_dict:
             if self.penalty.upper() == 'L1' and self.loss.upper() == 'L1':
                 error_string = ("The combination of penalty='l1' "
                                 "and loss='l1' is not supported.")
             elif self.penalty.upper() == 'L2' and self.loss.upper() == 'L1':
                 # this has to be in primal
-                error_string = ("penalty='l2' and ploss='l1' is "
+                error_string = ("penalty='l2' and loss='l1' is "
                                 "only supported when dual='true'.")
             else:
                 # only PL1 in dual remains
                 error_string = ("penalty='l1' is only supported "
                                 "when dual='false'.")
-            raise ValueError('Not supported set of arguments: '
-                             + error_string)
+            raise ValueError('Unsupported set of arguments: %s, '
+                             'Parameters: penalty=%r, loss=%r, dual=%r'
+                             % (error_string, self.penalty,
+                                self.loss, self.dual))
         return self._solver_type_dict[solver_type]
 
     def fit(self, X, y):
@@ -660,7 +671,7 @@ class BaseLibLinear(six.with_metaclass(ABCMeta, BaseEstimator)):
             Returns self.
         """
         self._enc = LabelEncoder()
-        y = self._enc.fit_transform(y)
+        y_ind = self._enc.fit_transform(y)
         if len(self.classes_) < 2:
             raise ValueError("The number of classes has to be greater than"
                              " one.")
@@ -670,10 +681,10 @@ class BaseLibLinear(six.with_metaclass(ABCMeta, BaseEstimator)):
         self.class_weight_ = compute_class_weight(self.class_weight,
                                                   self.classes_, y)
 
-        if X.shape[0] != y.shape[0]:
+        if X.shape[0] != y_ind.shape[0]:
             raise ValueError("X and y have incompatible shapes.\n"
                              "X has %s samples, but y has %s." %
-                             (X.shape[0], y.shape[0]))
+                             (X.shape[0], y_ind.shape[0]))
 
         liblinear.set_verbosity_wrap(self.verbose)
 
@@ -682,8 +693,8 @@ class BaseLibLinear(six.with_metaclass(ABCMeta, BaseEstimator)):
             print('[LibLinear]', end='')
 
         # LibLinear wants targets as doubles, even for classification
-        y = np.asarray(y, dtype=np.float64).ravel()
-        self.raw_coef_ = liblinear.train_wrap(X, y,
+        y_ind = np.asarray(y_ind, dtype=np.float64).ravel()
+        self.raw_coef_ = liblinear.train_wrap(X, y_ind,
                                               sp.isspmatrix(X),
                                               self._get_solver_type(),
                                               self.tol, self._get_bias(),
@@ -702,16 +713,16 @@ class BaseLibLinear(six.with_metaclass(ABCMeta, BaseEstimator)):
             self.coef_ = self.raw_coef_
             self.intercept_ = 0.
 
+        if self.multi_class == "crammer_singer" and len(self.classes_) == 2:
+            self.coef_ = (self.coef_[1] - self.coef_[0]).reshape(1, -1)
+            if self.fit_intercept:
+                intercept = self.intercept_[1] - self.intercept_[0]
+                self.intercept_ = np.array([intercept])
+
         return self
 
     @property
     def classes_(self):
-        return self._enc.classes_
-
-    @property
-    @deprecated("The ``label_`` attribute has been renamed to ``classes_`` "
-                "for consistency and will be removed in 0.15.")
-    def label_(self):
         return self._enc.classes_
 
     def _get_bias(self):

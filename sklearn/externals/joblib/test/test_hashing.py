@@ -128,11 +128,22 @@ def test_hash_numpy():
 
 
 @with_numpy
+def test_hash_numpy_noncontiguous():
+    a = np.asarray(np.arange(6000).reshape((1000, 2, 3)),
+                   order='F')[:, :1, :]
+    b = np.ascontiguousarray(a)
+    nose.tools.assert_not_equal(hash(a), hash(b))
+
+    c = np.asfortranarray(a)
+    nose.tools.assert_not_equal(hash(a), hash(c))
+
+
+@with_numpy
 def test_hash_memmap():
     """ Check that memmap and arrays hash identically if coerce_mmap is
         True.
     """
-    filename = tempfile.mktemp()
+    filename = tempfile.mktemp(prefix='joblib_test_hash_memmap_')
     try:
         m = np.memmap(filename, shape=(10, 10), mode='w+')
         a = np.asarray(m)
@@ -237,6 +248,7 @@ def test_numpy_scalar():
     nose.tools.assert_not_equal(hash(a), hash(b))
 
 
+@nose.tools.with_setup(test_memory_setup_func, test_memory_teardown_func)
 def test_dict_hash():
     # Check that dictionaries hash consistently, eventhough the ordering
     # of the keys is not garanteed
@@ -263,6 +275,7 @@ def test_dict_hash():
                             hash(b))
 
 
+@nose.tools.with_setup(test_memory_setup_func, test_memory_teardown_func)
 def test_set_hash():
     # Check that sets hash consistently, eventhough their ordering
     # is not garanteed

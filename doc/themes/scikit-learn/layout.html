@@ -24,10 +24,11 @@
 {% endblock %}
 
 {% block extrahead %}
+  {% if pagename != 'index' %}
    {% if theme_collapsiblesidebar|tobool %}
        <script type="text/javascript" src="{{ pathto('_static/sidebar.js', 1) }}"></script>
    {% endif %}
-
+  {% endif %}
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="{{ pathto('_static/js/bootstrap.min.js', 1)}}" type="text/javascript"></script>
   <link rel="canonical" href="http://scikit-learn.org/stable/{{pagename}}.html" />
@@ -69,8 +70,8 @@
         {%- block navbar -%}
         <div class="navbar">
             <ul>
-                <li><a href="{{pathto('index')}}">Home</a></li>
-                <li><a href="{{pathto('install')}}">Installation</a></li>
+                <li><a href="{{pathto('../stable/index')}}">Home</a></li>
+                <li><a href="{{pathto('../stable/install')}}">Installation</a></li>
                 <li class="btn-li"><div class="btn-group">
 		      <a href="{{pathto('documentation')}}">Documentation</a>
 		      <a class="btn dropdown-toggle" data-toggle="dropdown">
@@ -78,12 +79,12 @@
 		      </a>
 		      <ul class="dropdown-menu">
 			<li class="link-title">Scikit-learn 0.14 (stable)</li>
-			<li><a href="{{ pathto('tutorial/basic/tutorial') }}">Quick Start</a></li>
 			<li><a href="{{ pathto('tutorial/index') }}">Tutorials</a></li>
 			<li><a href="{{ pathto('user_guide') }}">User guide</a></li>
 			<li><a href="{{ pathto('modules/classes') }}">API</a></li>
+			<li><a href="{{ pathto('faq') }}">FAQ</a></li>
 			<li class="divider"></li>
-		        <li><a href="http://scikit-learn.org/dev/">Development</a></li>
+		        <li><a href="http://scikit-learn.org/dev/documentation.html">Development</a></li>
 		        <li><a href="http://scikit-learn.org/0.13/">Scikit-learn 0.13</a></li>
 		        <li><a href="http://scikit-learn.org/0.12/">Scikit-learn 0.12</a></li>
 		        <li><a href="http://scikit-learn.org/0.11/">Scikit-learn 0.11</a></li>
@@ -108,27 +109,88 @@
 {%- if pagename == 'index' %}
 <!-- Banner -->
 <div class="container banner-container">
-    <div class="row-fluid banner-inner">
-        <div class="span6">
-            <div class="row-fluid">
-                <div class="offset2 span8"><div class="thumbnail">
-		  <a href="{{ pathto('auto_examples/plot_classifier_comparison') }}">
-		    <img src="{{ pathto('_static/banner_example.png', 1) }}"/>
-		  </a>
-		</div></div>
-            </div>
-        </div>
-        <div class="span6">
-            <h1>scikit-learn</h1>
-            <h2>Machine Learning in Python</h2>
-            <ul>
-                <li>Simple and efficient tools for data mining and data analysis</li>
-                <li>Accessible to everybody, and reusable in various contexts</li>
-                <li>Built on NumPy, SciPy, and matplotlib</li>
-                <li>Open source, commercially usable - BSD license</li>
-            </ul>
-        </div>
+  <div class="row-fluid banner-inner">
+    <div class="hidden-phone">
+      <div class="span6">
+	<div class="row-fluid">
+          <div class="offset2 span8"><div id="index_carousel_tn" class="thumbnail">
+	      <div id="examples_carousel" class="carousel slide" data-interval="false">
+		<ol id="scikit_learn_index_indicators" class="carousel-indicators">
+		  <li data-target="#examples_carousel" data-slide-to="0" class="active"></li>
+		  <li data-target="#examples_carousel" data-slide-to="1"></li>
+		  <li data-target="#examples_carousel" data-slide-to="2"></li>
+		  <li data-target="#examples_carousel" data-slide-to="3"></li>
+		  <li data-target="#examples_carousel" data-slide-to="4"></li>
+		  <li data-target="#examples_carousel" data-slide-to="5"></li>
+		  <li data-target="#examples_carousel" data-slide-to="6"></li>
+		  <li data-target="#examples_carousel" data-slide-to="7"></li>
+		  <li data-target="#examples_carousel" data-slide-to="8"></li>
+		  <li data-target="#examples_carousel" data-slide-to="9"></li>
+		</ol>
+		<!-- Carousel items -->
+		<div class="carousel-inner">
+		  <div class="active item">
+		    <a href="{{ pathto('auto_examples/plot_classifier_comparison') }}">
+		      <div class="crop-wrapper" style="width: 380px; height: 190px; overflow: hidden">
+			<img src="_images/plot_classifier_comparison_carousel.png"
+			     style="max-height: 200px; max-width: 629px; margin-left: -21px;"></div></a>
+		  </div>
+		  <div class="item">
+		    <a href="auto_examples/covariance/plot_outlier_detection.html">
+		      <img src="_images/plot_outlier_detection_carousel.png"></a>
+		  </div>
+		  <div class="item">
+		    <a href="{{pathto('auto_examples/neighbors/plot_species_kde') }}">
+		      <img src="_images/plot_species_kde.png"></a>
+		  </div>
+		  <div class="item">
+		    <a href="{{pathto('auto_examples/linear_model/plot_lasso_lars') }}">
+		      <img src="_images/plot_lasso_lars.png"></a>
+		  </div>
+		  <div class="item">
+		    <a href="{{ pathto('auto_examples/cluster/plot_cluster_comparison') }}">
+		      <img src="_images/plot_cluster_comparison.png"></a>
+		  </div>
+		  <div class="item">
+		    <a href="{{ pathto('auto_examples/ensemble/plot_adaboost_twoclass') }}">
+		      <img src="_images/plot_adaboost_twoclass_carousel.png"></a>
+		  </div>
+		  <div class="item">
+		    <a href="{{pathto('auto_examples/gaussian_process/plot_gp_regression') }}">
+		      <img src="_images/plot_gp_regression_carousel.png"></a>
+		  </div>
+		  <div class="item">
+		    <a href="{{ pathto('auto_examples/manifold/plot_compare_methods') }}">
+		      <img src="_images/plot_compare_methods_carousel.png"></a>
+		  </div>
+		  <div class="item">
+		    <a href="{{ pathto('auto_examples/mixture/plot_gmm_pdf') }}">
+		      <img src="_images/plot_gmm_pdf.png"></a>
+		  </div>
+		  <div class="item">
+		    <a href="{{ pathto('auto_examples/cluster/plot_lena_ward_segmentation') }}">
+		      <img src="_images/plot_lena_ward_segmentation.png"></a>
+		  </div>
+		</div>
+		<!-- Carousel nav -->
+		<a class="carousel-control left" href="#examples_carousel" data-slide="prev">&lsaquo;</a>
+		<a class="carousel-control right" href="#examples_carousel" data-slide="next">&rsaquo;</a>
+	      </div>
+	  </div></div>
+	</div>
+      </div>
     </div>
+    <div id="intro_to_sklearn_p" class="span6">
+      <h1>scikit-learn</h1>
+      <h2>Machine Learning in Python</h2>
+      <ul>
+        <li>Simple and efficient tools for data mining and data analysis</li>
+        <li>Accessible to everybody, and reusable in various contexts</li>
+        <li>Built on NumPy, SciPy, and matplotlib</li>
+        <li>Open source, commercially usable - BSD license</li>
+      </ul>
+    </div>
+  </div>
 </div>
 {%- endif %}
 
@@ -231,18 +293,20 @@
 
 {%- block footer %}
     <div class="footer">
-    {%- if show_copyright %}
+    {%- if pagename != 'index' %}
+     {%- if show_copyright %}
       {%- if hasdoc('copyright') %}
         {% trans path=pathto('copyright'), copyright=copyright|e %}&copy; {{ copyright }}.{% endtrans %}
       {%- else %}
         {% trans copyright=copyright|e %}&copy; {{ copyright }}.{% endtrans %}
       {%- endif %}
-    {%- endif %}
-    {%- if last_updated %}
+     {%- endif %}
+     {%- if last_updated %}
       {% trans last_updated=last_updated|e %}Last updated on {{ last_updated }}.{% endtrans %}
-    {%- endif %}
-    {%- if show_source and has_source and sourcename %}
+     {%- endif %}
+     {%- if show_source and has_source and sourcename %}
       <a href="{{ pathto('_sources/' + sourcename, true)|e }}" rel="nofollow">{{ _('Show this page source') }}</a>
+     {%- endif %}
     {%- endif %}
     </div>
 

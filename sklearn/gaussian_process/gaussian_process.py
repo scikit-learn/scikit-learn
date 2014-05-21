@@ -1,28 +1,21 @@
-from __future__ import print_function
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # Author: Vincent Dubourg <vincent.dubourg@gmail.com>
 #         (mostly translation, see implementation details)
 # Licence: BSD 3 clause
 
+from __future__ import print_function
+
 import numpy as np
 from scipy import linalg, optimize, rand
 
 from ..base import BaseEstimator, RegressorMixin
 from ..metrics.pairwise import manhattan_distances
-from ..utils import array2d, check_random_state
+from ..utils import array2d, check_random_state, check_arrays
 from . import regression_models as regression
 from . import correlation_models as correlation
 
 MACHINE_EPSILON = np.finfo(np.double).eps
-if hasattr(linalg, 'solve_triangular'):
-    # only in scipy since 0.9
-    solve_triangular = linalg.solve_triangular
-else:
-    # slower, but works
-    def solve_triangular(x, y, lower=True):
-        return linalg.solve(x, y)
 
 
 def l1_cross_distances(X):
@@ -48,7 +41,7 @@ def l1_cross_distances(X):
     """
     X = array2d(X)
     n_samples, n_features = X.shape
-    n_nonzero_cross_dist = n_samples * (n_samples - 1) / 2
+    n_nonzero_cross_dist = n_samples * (n_samples - 1) // 2
     ij = np.zeros((n_nonzero_cross_dist, 2), dtype=np.int)
     D = np.zeros((n_nonzero_cross_dist, n_features))
     ll_1 = 0
@@ -255,8 +248,8 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             observations were made.
 
         y : double array_like
-            An array with shape (n_samples, ) with the observations of the
-            scalar output to be predicted.
+            An array with shape (n_samples, ) or shape (n_samples, n_targets)
+            with the observations of the output to be predicted.
 
         Returns
         -------
@@ -271,16 +264,15 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
         # Force data to 2D numpy.array
         X = array2d(X)
-        y = np.asarray(y).ravel()[:, np.newaxis]
+        y = np.asarray(y)
+        self.y_ndim_ = y.ndim
+        if y.ndim == 1:
+            y = y[:, np.newaxis]
+        X, y = check_arrays(X, y)
 
         # Check shapes of DOE & observations
-        n_samples_X, n_features = X.shape
-        n_samples_y = y.shape[0]
-
-        if n_samples_X != n_samples_y:
-            raise ValueError("X and y must have the same number of rows.")
-        else:
-            n_samples = n_samples_X
+        n_samples, n_features = X.shape
+        _, n_targets = y.shape
 
         # Run input checks
         self._check_params(n_samples)
@@ -406,26 +398,32 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
         Returns
         -------
-        y : array_like
-            An array with shape (n_eval, ) with the Best Linear Unbiased
+        y : array_like, shape (n_samples, ) or (n_samples, n_targets)
+            An array with shape (n_eval, ) if the Gaussian Process was trained
+            on an array of shape (n_samples, ) or an array with shape
+            (n_eval, n_targets) if the Gaussian Process was trained on an array
+            of shape (n_samples, n_targets) with the Best Linear Unbiased
             Prediction at x.
 
         MSE : array_like, optional (if eval_MSE == True)
-            An array with shape (n_eval, ) with the Mean Squared Error at x.
+            An array with shape (n_eval, ) or (n_eval, n_targets) as with y,
+            with the Mean Squared Error at x.
         """
 
         # Check input shapes
         X = array2d(X)
-        n_eval, n_features_X = X.shape
+        n_eval, _ = X.shape
         n_samples, n_features = self.X.shape
+        n_samples_y, n_targets = self.y.shape
 
         # Run input checks
         self._check_params(n_samples)
 
-        if n_features_X != n_features:
+        if X.shape[1] != n_features:
             raise ValueError(("The number of features in X (X.shape[1] = %d) "
-                             "should match the sample size used for fit() "
-                             "which is %d.") % (n_features_X, n_features))
+                              "should match the number of features used "
+                              "for fit() "
+                              "which is %d.") % (X.shape[1], n_features))
 
         if batch_size is None:
             # No memory management
@@ -449,7 +447,10 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             y_ = np.dot(f, self.beta) + np.dot(r, self.gamma)
 
             # Predictor
-            y = (self.y_mean + self.y_std * y_).ravel()
+            y = (self.y_mean + self.y_std * y_).reshape(n_eval, n_targets)
+
+            if self.y_ndim_ == 1:
+                y = y.ravel()
 
             # Mean Squared Error
             if eval_MSE:
@@ -466,22 +467,27 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                     self.Ft = par['Ft']
                     self.G = par['G']
 
-                rt = solve_triangular(self.C, r.T, lower=True)
+                rt = linalg.solve_triangular(self.C, r.T, lower=True)
 
                 if self.beta0 is None:
                     # Universal Kriging
-                    u = solve_triangular(self.G.T,
-                                         np.dot(self.Ft.T, rt) - f.T)
+                    u = linalg.solve_triangular(self.G.T,
+                                                np.dot(self.Ft.T, rt) - f.T)
                 else:
                     # Ordinary Kriging
-                    u = np.zeros(y.shape)
+                    u = np.zeros((n_targets, n_eval))
 
-                MSE = self.sigma2 * (1. - (rt ** 2.).sum(axis=0)
-                                     + (u ** 2.).sum(axis=0))
+                MSE = np.dot(self.sigma2.reshape(n_targets, 1),
+                             (1. - (rt ** 2.).sum(axis=0)
+                              + (u ** 2.).sum(axis=0))[np.newaxis, :])
+                MSE = np.sqrt((MSE ** 2.).sum(axis=0) / n_targets)
 
                 # Mean Squared Error might be slightly negative depending on
                 # machine precision: force to zero!
                 MSE[MSE < 0.] = 0.
+
+                if self.y_ndim_ == 1:
+                    MSE = MSE.ravel()
 
                 return y, MSE
 
@@ -598,7 +604,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             return reduced_likelihood_function_value, par
 
         # Get generalized least squares solution
-        Ft = solve_triangular(C, F, lower=True)
+        Ft = linalg.solve_triangular(C, F, lower=True)
         try:
             Q, G = linalg.qr(Ft, econ=True)
         except:
@@ -622,10 +628,10 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                 # Ft is too ill conditioned, get out (try different theta)
                 return reduced_likelihood_function_value, par
 
-        Yt = solve_triangular(C, self.y, lower=True)
+        Yt = linalg.solve_triangular(C, self.y, lower=True)
         if self.beta0 is None:
             # Universal Kriging
-            beta = solve_triangular(G, np.dot(Q.T, Yt))
+            beta = linalg.solve_triangular(G, np.dot(Q.T, Yt))
         else:
             # Ordinary Kriging
             beta = np.array(self.beta0)
@@ -640,7 +646,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         reduced_likelihood_function_value = - sigma2.sum() * detR
         par['sigma2'] = sigma2 * self.y_std ** 2.
         par['beta'] = beta
-        par['gamma'] = solve_triangular(C.T, rho)
+        par['gamma'] = linalg.solve_triangular(C.T, rho)
         par['C'] = C
         par['Ft'] = Ft
         par['G'] = G

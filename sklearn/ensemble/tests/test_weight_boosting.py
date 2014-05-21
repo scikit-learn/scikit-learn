@@ -8,11 +8,10 @@ from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_equal
 from nose.tools import assert_raises
 
-from sklearn.dummy import DummyClassifier
-from sklearn.dummy import DummyRegressor
 from sklearn.grid_search import GridSearchCV
 from sklearn.ensemble import AdaBoostClassifier
 from sklearn.ensemble import AdaBoostRegressor
+from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils import shuffle
 from sklearn import datasets
 
@@ -42,7 +41,7 @@ boston.data, boston.target = shuffle(boston.data, boston.target,
 def test_classification_toy():
     """Check classification on a toy dataset."""
     for alg in ['SAMME', 'SAMME.R']:
-        clf = AdaBoostClassifier(algorithm=alg)
+        clf = AdaBoostClassifier(algorithm=alg, random_state=0)
         clf.fit(X, y_class)
         assert_array_equal(clf.predict(T), y_t_class)
         assert_array_equal(np.unique(np.asarray(y_t_class)), clf.classes_)
@@ -53,7 +52,6 @@ def test_classification_toy():
 def test_regression_toy():
     """Check classification on a toy dataset."""
     clf = AdaBoostRegressor(random_state=0)
-    clf = AdaBoostRegressor()
     clf.fit(X, y_regr)
     assert_array_equal(clf.predict(T), y_t_regr)
 
@@ -97,17 +95,23 @@ def test_boston():
 
 def test_staged_predict():
     """Check staged predictions."""
+    rng = np.random.RandomState(0)
+    iris_weights = rng.randint(10, size=iris.target.shape)
+    boston_weights = rng.randint(10, size=boston.target.shape)
+
     # AdaBoost classification
     for alg in ['SAMME', 'SAMME.R']:
         clf = AdaBoostClassifier(algorithm=alg, n_estimators=10)
-        clf.fit(iris.data, iris.target)
+        clf.fit(iris.data, iris.target, sample_weight=iris_weights)
 
         predictions = clf.predict(iris.data)
         staged_predictions = [p for p in clf.staged_predict(iris.data)]
         proba = clf.predict_proba(iris.data)
         staged_probas = [p for p in clf.staged_predict_proba(iris.data)]
-        score = clf.score(iris.data, iris.target)
-        staged_scores = [s for s in clf.staged_score(iris.data, iris.target)]
+        score = clf.score(iris.data, iris.target, sample_weight=iris_weights)
+        staged_scores = [
+            s for s in clf.staged_score(
+                iris.data, iris.target, sample_weight=iris_weights)]
 
         assert_equal(len(staged_predictions), 10)
         assert_array_almost_equal(predictions, staged_predictions[-1])
@@ -118,12 +122,14 @@ def test_staged_predict():
 
     # AdaBoost regression
     clf = AdaBoostRegressor(n_estimators=10, random_state=0)
-    clf.fit(boston.data, boston.target)
+    clf.fit(boston.data, boston.target, sample_weight=boston_weights)
 
     predictions = clf.predict(boston.data)
     staged_predictions = [p for p in clf.staged_predict(boston.data)]
-    score = clf.score(boston.data, boston.target)
-    staged_scores = [s for s in clf.staged_score(boston.data, boston.target)]
+    score = clf.score(boston.data, boston.target, sample_weight=boston_weights)
+    staged_scores = [
+        s for s in clf.staged_score(
+            boston.data, boston.target, sample_weight=boston_weights)]
 
     assert_equal(len(staged_predictions), 10)
     assert_array_almost_equal(predictions, staged_predictions[-1])
@@ -134,7 +140,7 @@ def test_staged_predict():
 def test_gridsearch():
     """Check that base trees can be grid-searched."""
     # AdaBoost classification
-    boost = AdaBoostClassifier()
+    boost = AdaBoostClassifier(base_estimator=DecisionTreeClassifier())
     parameters = {'n_estimators': (1, 2),
                   'base_estimator__max_depth': (1, 2),
                   'algorithm': ('SAMME', 'SAMME.R')}
@@ -142,7 +148,8 @@ def test_gridsearch():
     clf.fit(iris.data, iris.target)
 
     # AdaBoost regression
-    boost = AdaBoostRegressor(random_state=0)
+    boost = AdaBoostRegressor(base_estimator=DecisionTreeRegressor(),
+                              random_state=0)
     parameters = {'n_estimators': (1, 2),
                   'base_estimator__max_depth': (1, 2)}
     clf = GridSearchCV(boost, parameters)
@@ -207,15 +214,6 @@ def test_error():
     assert_raises(ValueError,
                   AdaBoostClassifier(algorithm="foo").fit,
                   X, y_class)
-
-    assert_raises(TypeError,
-                  AdaBoostClassifier(base_estimator=DummyRegressor()).fit,
-                  X, y_class)
-
-    assert_raises(TypeError,
-                  AdaBoostRegressor(base_estimator=DummyClassifier(),
-                                    random_state=0).fit,
-                  X, y_regr)
 
 
 def test_base_estimator():

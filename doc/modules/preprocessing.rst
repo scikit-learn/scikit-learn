@@ -267,9 +267,7 @@ features to get boolean values**. This can be useful for downstream
 probabilistic estimators that make assumption that the input data
 is distributed according to a multi-variate `Bernoulli distribution
 <http://en.wikipedia.org/wiki/Bernoulli_distribution>`_. For instance,
-this is the case for the most common class of `(Restricted) Boltzmann
-Machines <http://en.wikipedia.org/wiki/Boltzmann_machine>`_
-(not yet implemented in the scikit).
+this is the case for the :class:`sklearn.neural_network.BernoulliRBM`.
 
 It is also common among the text processing community to use binary
 feature values (probably to simplify the probabilistic reasoning) even
@@ -345,7 +343,7 @@ Continuing the example above::
   >>> enc = preprocessing.OneHotEncoder()
   >>> enc.fit([[0, 0, 3], [1, 1, 0], [0, 2, 1], [1, 0, 2]])  # doctest: +ELLIPSIS
   OneHotEncoder(categorical_features='all', dtype=<... 'float'>,
-         n_values='auto')
+         n_values='auto', sparse=True)
   >>> enc.transform([[0, 1, 3]]).toarray()
   array([[ 1.,  0.,  0.,  1.,  0.,  0.,  0.,  0.,  1.]])
 
@@ -447,9 +445,9 @@ that contain the missing values::
     >>> imp.fit([[1, 2], [np.nan, 3], [7, 6]])
     Imputer(axis=0, copy=True, missing_values='NaN', strategy='mean', verbose=0)
     >>> X = [[np.nan, 2], [6, np.nan], [7, 6]]
-    >>> print(imp.transform(X))
+    >>> print(imp.transform(X))                           # doctest: +ELLIPSIS
     [[ 4.          2.        ]
-     [ 6.          3.66666667]
+     [ 6.          3.666...]
      [ 7.          6.        ]]
 
 The :class:`Imputer` class also supports sparse matrices::
@@ -460,9 +458,9 @@ The :class:`Imputer` class also supports sparse matrices::
     >>> imp.fit(X)
     Imputer(axis=0, copy=True, missing_values=0, strategy='mean', verbose=0)
     >>> X_test = sp.csc_matrix([[0, 2], [6, 0], [7, 6]])
-    >>> print(imp.transform(X_test))
+    >>> print(imp.transform(X_test))                      # doctest: +ELLIPSIS
     [[ 4.          2.        ]
-     [ 6.          3.66666667]
+     [ 6.          3.666...]
      [ 7.          6.        ]]
 
 Note that, here, missing values are encoded by 0 and are thus implicitly stored
@@ -471,3 +469,62 @@ values than observed values.
 
 :class:`Imputer` can be used in a Pipeline as a way to build a composite
 estimator that supports imputation. See :ref:`example_imputation.py`
+
+.. _data_reduction:
+
+Unsupervised data reduction
+============================
+
+If your number of features is high, it may be useful to reduce it with an
+unsupervised step prior to supervised steps. Many of the
+:ref:`unsupervised-learning` methods implement a `transform` method that
+can be used to reduce the dimensionality. Below we discuss two specific
+example of this pattern that are heavily used.
+
+.. topic:: **Pipelining**
+
+    The unsupervised data reduction and the supervised estimator can be
+    chained in one step. See :ref:`pipeline`.
+
+.. currentmodule:: sklearn
+
+PCA: principal component analysis
+----------------------------------
+
+:class:`decomposition.PCA` looks for a combination of features that
+capture well the variance of the original features.
+
+.. topic:: **Examples**
+
+   * :ref:`example_applications_face_recognition.py`
+
+Random projections
+-------------------
+
+The module: :mod:`random_projection` provides several tools for data
+reduction by random projections. See the relevant section of the
+documentation: :ref:`random_projection`.
+
+.. topic:: **Examples**
+
+   * :ref:`example_plot_johnson_lindenstrauss_bound.py`
+
+Feature agglometration
+------------------------
+
+:class:`cluster.FeatureAgglomeration` applies
+:ref:`hierarchical_clustering` to group together features that behave
+similarly.
+
+.. topic:: **Examples**
+
+   * :ref:`example_cluster_plot_feature_agglomeration_vs_univariate_selection.py`
+   * :ref:`example_cluster_plot_digits_agglomeration.py`
+
+.. topic:: **Feature scaling**
+
+   Note that if features have very different scaling or statistical
+   properties, :class:`cluster.FeatureAgglomeration` maye not be able to
+   capture the links between related features. Using a 
+   :class:`preprocessing.StandardScaler` can be useful in these settings.
+

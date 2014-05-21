@@ -49,7 +49,7 @@ FAKE_NAMES = [
 def setup_module():
     """Test fixture run once and common to all tests of this module"""
     if imsave is None:
-        raise SkipTest
+        raise SkipTest("PIL not installed.")
 
     if not os.path.exists(LFW_HOME):
         os.makedirs(LFW_HOME)
@@ -72,8 +72,7 @@ def setup_module():
             try:
                 imsave(file_path, uniface)
             except ImportError:
-                # PIL is not properly installed, skip those tests
-                raise SkipTest
+                raise SkipTest("PIL not installed")
 
     # add some random file pollution to test robustness
     with open(os.path.join(LFW_HOME, 'lfw_funneled', '.test.swp'), 'wb') as f:

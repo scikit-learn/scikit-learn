@@ -51,6 +51,8 @@ EXAMPLES = {
         [0, 1, 2],
         ['a', 'b', 'c'],
         np.array([u'a', u'b', u'c']),
+        np.array([u'a', u'b', u'c'], dtype=object),
+        np.array(['a', 'b', 'c'], dtype=object),
     ],
     'multiclass-multioutput': [
         np.array([[1, 0, 2, 2], [1, 4, 2, 4]]),
@@ -60,6 +62,7 @@ EXAMPLES = {
         np.array([[1, 0, 2, 2], [1, 4, 2, 4]], dtype=np.float32),
         np.array([['a', 'b'], ['c', 'd']]),
         np.array([[u'a', u'b'], [u'c', u'd']]),
+        np.array([[u'a', u'b'], [u'c', u'd']], dtype=object),
         np.array([[1, 0, 2]]),
     ],
     'binary': [
@@ -79,7 +82,9 @@ EXAMPLES = {
         ['a'],
         ['a', 'b'],
         ['abc', 'def'],
+        np.array(['abc', 'def']),
         [u'a', u'b'],
+        np.array(['abc', 'def'], dtype=object),
     ],
     'continuous': [
         [1e-5],

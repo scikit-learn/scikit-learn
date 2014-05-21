@@ -35,6 +35,8 @@ samples
 doc/coverages
 doc/samples
 *.prof
+.tox/
+.coverage
 
 lfw_preprocessed/
 nips2010_pdf/

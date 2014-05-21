@@ -7,6 +7,7 @@ example files.
 Files that generate images should start with 'plot'
 
 """
+from __future__ import division
 from time import time
 import os
 import re
@@ -14,15 +15,26 @@ import shutil
 import traceback
 import glob
 import sys
-from StringIO import StringIO
-import cPickle
-import urllib2
 import gzip
 import posixpath
-
+import subprocess
+# Try Python 2 first, otherwise load from Python 3
+try:
+    from StringIO import StringIO
+    import cPickle as pickle
+    import urllib2 as urllib
+    from urllib2 import HTTPError, URLError
+except ImportError:
+    from io import StringIO
+    import pickle
+    import urllib.request
+    import urllib.error
+    import urllib.parse
+    from urllib.error import HTTPError, URLError
+    
 try:
     from PIL import Image
-except:
+except ImportError:
     import Image
 
 import matplotlib
@@ -32,6 +44,7 @@ import token
 import tokenize
 import numpy as np
 
+from sklearn.externals import joblib
 
 ###############################################################################
 # A tee object to redict streams to multiple outputs
@@ -54,11 +67,16 @@ class Tee(object):
 # Documentation link resolver objects
 
 
-def get_data(url):
+def _get_data(url):
     """Helper function to get data over http or from a local file"""
     if url.startswith('http://'):
-        resp = urllib2.urlopen(url)
-        encoding = resp.headers.dict.get('content-encoding', 'plain')
+        # Try Python 2, use Python 3 on exception
+        try:
+            resp = urllib.urlopen(url)
+            encoding = resp.headers.dict.get('content-encoding', 'plain')
+        except AttributeError:
+            resp = urllib.request.urlopen(url)
+            encoding = resp.headers.get('content-encoding', 'plain')
         data = resp.read()
         if encoding == 'plain':
             pass
@@ -73,6 +91,9 @@ def get_data(url):
         fid.close()
 
     return data
+
+mem = joblib.Memory(cachedir='_build')
+get_data = mem.cache(_get_data)
 
 
 def parse_sphinx_searchindex(searchindex):
@@ -146,6 +167,10 @@ def parse_sphinx_searchindex(searchindex):
 
         return dict_out
 
+    # Make sure searchindex uses UTF-8 encoding
+    if hasattr(searchindex, 'decode'):
+        searchindex = searchindex.decode('UTF-8')
+    
     # parse objects
     query = 'objects:'
     pos = searchindex.find(query)
@@ -203,7 +228,7 @@ class SphinxDocLinkResolver(object):
         if os.name.lower() == 'nt' and not doc_url.startswith('http://'):
             if not relative:
                 raise ValueError('You have to use relative=True for the local'
-                                 'package on a Windows system.')
+                                 ' package on a Windows system.')
             self._is_windows = True
         else:
             self._is_windows = False
@@ -331,7 +356,8 @@ plot_rst_template = """
 .. literalinclude:: %(fname)s
     :lines: %(end_row)s-
 
-**Total running time of the example:** %(time_elapsed) .2f seconds
+**Total running time of the example:** %(time_elapsed) .2f seconds 
+(%(time_m) .0f minutes %(time_s) .2f seconds)
     """
 
 # The following strings are used when we have several pictures: we use
@@ -354,18 +380,29 @@ SINGLE_IMAGE = """
     :align: center
 """
 
+# The following dictionary contains the information used to create the
+# thumbnails for the front page of the scikit-learn home page.
+# key: first image in set
+# values: (number of plot in set, height of thumbnail)
+carousel_thumbs = {'plot_classifier_comparison_1.png': (1, 600),
+                   'plot_outlier_detection_1.png': (3, 372),
+                   'plot_gp_regression_1.png': (2, 250),
+                   'plot_adaboost_twoclass_1.png': (1, 372),
+                   'plot_compare_methods_1.png': (1, 349)}
+
 
 def extract_docstring(filename, ignore_heading=False):
     """ Extract a module-level docstring, if any
     """
-    lines = file(filename).readlines()
+    lines = open(filename).readlines()
     start_row = 0
     if lines[0].startswith('#!'):
         lines.pop(0)
         start_row = 1
     docstring = ''
     first_par = ''
-    tokens = tokenize.generate_tokens(iter(lines).next)
+    line_iterator = iter(lines)
+    tokens = tokenize.generate_tokens(lambda: next(line_iterator))
     for tok_type, tok_content, _, (erow, _), _ in tokens:
         tok_type = token.tok_name[tok_type]
         if tok_type in ('NEWLINE', 'COMMENT', 'NL', 'INDENT', 'DEDENT'):
@@ -410,7 +447,7 @@ def generate_example_rst(app):
         os.makedirs(root_dir)
 
     # we create an index.rst with all examples
-    fhindex = file(os.path.join(root_dir, 'index.rst'), 'w')
+    fhindex = open(os.path.join(root_dir, 'index.rst'), 'w')
     #Note: The sidebar button has been removed from the examples page for now
     #      due to how it messes up the layout. Will be fixed at a later point
     fhindex.write("""\
@@ -562,12 +599,13 @@ Examples
 def extract_line_count(filename, target_dir):
     # Extract the line count of a file
     example_file = os.path.join(target_dir, filename)
-    lines = file(example_file).readlines()
+    lines = open(example_file).readlines()
     start_row = 0
     if lines and lines[0].startswith('#!'):
         lines.pop(0)
         start_row = 1
-    tokens = tokenize.generate_tokens(lines.__iter__().next)
+    line_iterator = iter(lines)
+    tokens = tokenize.generate_tokens(lambda: next(line_iterator))
     check_docstring = True
     erow_docstring = 0
     for tok_type, _, _, (erow, _), _ in tokens:
@@ -582,7 +620,7 @@ def extract_line_count(filename, target_dir):
 
 def line_count_sort(file_list, target_dir):
     # Sort the list of examples by line-count
-    new_list = filter(lambda x: x.endswith('.py'), file_list)
+    new_list = [x for x in file_list if x.endswith('.py')]
     unsorted = np.zeros(shape=(len(new_list), 2))
     unsorted = unsorted.astype(np.object)
     for count, exmpl in enumerate(new_list):
@@ -606,26 +644,29 @@ def generate_dir_rst(dir, fhindex, example_dir, root_dir, plot_gallery):
         target_dir = root_dir
         src_dir = example_dir
     if not os.path.exists(os.path.join(src_dir, 'README.txt')):
-        print 80 * '_'
-        print ('Example directory %s does not have a README.txt file' %
+        print(80 * '_')
+        print('Example directory %s does not have a README.txt file' %
                src_dir)
-        print 'Skipping this directory'
-        print 80 * '_'
+        print('Skipping this directory')
+        print(80 * '_')
         return
+
     fhindex.write("""
 
 
 %s
 
 
-""" % file(os.path.join(src_dir, 'README.txt')).read())
+""" % open(os.path.join(src_dir, 'README.txt')).read())
     if not os.path.exists(target_dir):
         os.makedirs(target_dir)
     sorted_listdir = line_count_sort(os.listdir(src_dir),
                                      src_dir)
+    if not os.path.exists(os.path.join(dir, 'images', 'thumb')):
+        os.makedirs(os.path.join(dir, 'images', 'thumb'))
     for fname in sorted_listdir:
         if fname.endswith('py'):
-            generate_file_rst(fname, target_dir, src_dir, plot_gallery)
+            generate_file_rst(fname, target_dir, src_dir, root_dir, plot_gallery)
             new_fname = os.path.join(src_dir, fname)
             _, fdocstring, _ = extract_docstring(new_fname, True)
             thumb = os.path.join(dir, 'images', 'thumb', fname[:-3] + '.png')
@@ -698,10 +739,18 @@ def make_thumbnail(in_fname, out_fname, width, height):
 
     # insert centered
     thumb = Image.new('RGB', (width, height), (255, 255, 255))
-    pos_insert = ((width - width_sc) / 2, (height - height_sc) / 2)
+    pos_insert = ((width - width_sc) // 2, (height - height_sc) // 2)
     thumb.paste(img, pos_insert)
 
     thumb.save(out_fname)
+    # Use optipng to perform lossless compression on the resized image if
+    # software is installed
+    if os.environ.get('SKLEARN_DOC_OPTIPNG', False):
+        try:
+            subprocess.call(["optipng", "-quiet", "-o", "9", out_fname])
+        except Exception:
+            warnings.warn('Install optipng to reduce the size of the generated images')
+
 
 
 def get_short_module_name(module_name, obj_name):
@@ -719,7 +768,7 @@ def get_short_module_name(module_name, obj_name):
     return short_name
 
 
-def generate_file_rst(fname, target_dir, src_dir, plot_gallery):
+def generate_file_rst(fname, target_dir, src_dir, root_dir, plot_gallery):
     """ Generate the rst file for a given example.
     """
     base_image_name = os.path.splitext(fname)[0]
@@ -753,6 +802,8 @@ def generate_file_rst(fname, target_dir, src_dir, plot_gallery):
                              'time_%s.txt' % base_image_name)
     thumb_file = os.path.join(thumb_dir, fname[:-3] + '.png')
     time_elapsed = 0
+    time_m = 0
+    time_s = 0
     if plot_gallery and fname.startswith('plot'):
         # generate the plot as png image if file name
         # starts with plot and if it is more recent than an
@@ -768,7 +819,7 @@ def generate_file_rst(fname, target_dir, src_dir, plot_gallery):
         if not os.path.exists(first_image_file) or \
            os.stat(first_image_file).st_mtime <= os.stat(src_file).st_mtime:
             # We need to execute the code
-            print 'plotting %s' % fname
+            print('plotting %s' % fname)
             t0 = time()
             import matplotlib.pyplot as plt
             plt.close('all')
@@ -789,7 +840,7 @@ def generate_file_rst(fname, target_dir, src_dir, plot_gallery):
 
                 # get variables so we can later add links to the documentation
                 example_code_obj = {}
-                for var_name, var in my_globals.iteritems():
+                for var_name, var in my_globals.items():
                     if not hasattr(var, '__module__'):
                         continue
                     if not isinstance(var.__module__, basestring):
@@ -857,8 +908,7 @@ def generate_file_rst(fname, target_dir, src_dir, plot_gallery):
                     # save the dictionary, so we can later add hyperlinks
                     codeobj_fname = example_file[:-3] + '_codeobj.pickle'
                     with open(codeobj_fname, 'wb') as fid:
-                        cPickle.dump(example_code_obj, fid,
-                                     cPickle.HIGHEST_PROTOCOL)
+                        pickle.dump(example_code_obj, fid, pickle.HIGHEST_PROTOCOL)
                     fid.close()
 
                 if '__doc__' in my_globals:
@@ -889,15 +939,15 @@ def generate_file_rst(fname, target_dir, src_dir, plot_gallery):
                     plt.savefig(image_path % fig_num)
                     figure_list.append(image_fname % fig_num)
             except:
-                print 80 * '_'
-                print '%s is not compiling:' % fname
+                print(80 * '_')
+                print('%s is not compiling:' % fname)
                 traceback.print_exc()
-                print 80 * '_'
+                print(80 * '_')
             finally:
                 os.chdir(cwd)
                 sys.stdout = orig_stdout
 
-            print " - time elapsed : %.2g sec" % time_elapsed
+            print(" - time elapsed : %.2g sec" % time_elapsed)
         else:
             figure_list = [f[len(image_dir):]
                             for f in glob.glob(image_path % '[1-9]')]
@@ -905,7 +955,27 @@ def generate_file_rst(fname, target_dir, src_dir, plot_gallery):
 
         # generate thumb file
         this_template = plot_rst_template
+        car_thumb_path =  os.path.join(os.path.split(root_dir)[0], '_build/html/stable/_images/')
+        # Note: normaly, make_thumbnail is used to write to the path contained in `thumb_file`
+        # which is within `auto_examples/../images/thumbs` depending on the example.
+        # Because the carousel has different dimensions than those of the examples gallery,
+        # I did not simply reuse them all as some contained whitespace due to their default gallery
+        # thumbnail size. Below, for a few cases, seperate thumbnails are created (the originals can't
+        # just be overwritten with the carousel dimensions as it messes up the examples gallery layout).
+        # The special carousel thumbnails are written directly to _build/html/stable/_images/,
+        # as for some reason unknown to me, Sphinx refuses to copy my 'extra' thumbnails from the
+        # auto examples gallery to the _build folder. This works fine as is, but it would be cleaner to
+        # have it happen with the rest. Ideally the should be written to 'thumb_file' as well, and then
+        # copied to the _images folder during the `Copying Downloadable Files` step like the rest.
+        if not os.path.exists(car_thumb_path):
+            os.makedirs(car_thumb_path)
         if os.path.exists(first_image_file):
+            # We generate extra special thumbnails for the carousel
+            carousel_tfile = os.path.join(car_thumb_path, fname[:-3] + '_carousel.png')
+            first_img = image_fname % 1
+            if first_img in carousel_thumbs:
+                make_thumbnail((image_path % carousel_thumbs[first_img][0]),
+                               carousel_tfile, carousel_thumbs[first_img][1], 190)
             make_thumbnail(first_image_file, thumb_file, 400, 280)
 
     if not os.path.exists(thumb_file):
@@ -924,6 +994,7 @@ def generate_file_rst(fname, target_dir, src_dir, plot_gallery):
         for figure_name in figure_list:
             image_list += HLIST_IMAGE_TEMPLATE % figure_name.lstrip('/')
 
+    time_m, time_s = divmod(time_elapsed, 60)
     f = open(os.path.join(target_dir, fname[:-2] + 'rst'), 'w')
     f.write(this_template % locals())
     f.flush()
@@ -934,7 +1005,7 @@ def embed_code_links(app, exception):
     try:
         if exception is not None:
             return
-        print 'Embedding documentation hyperlinks in examples..'
+        print('Embedding documentation hyperlinks in examples..')
 
         # Add resolvers for the packages for which we want to show links
         doc_resolvers = {}
@@ -961,7 +1032,7 @@ def embed_code_links(app, exception):
 
         for dirpath, _, filenames in os.walk(html_example_dir):
             for fname in filenames:
-                print '\tprocessing: %s' % fname
+                print('\tprocessing: %s' % fname)
                 full_fname = os.path.join(html_example_dir, dirpath, fname)
                 subpath = dirpath[len(html_example_dir) + 1:]
                 pickle_fname = os.path.join(example_dir, subpath,
@@ -970,11 +1041,11 @@ def embed_code_links(app, exception):
                 if os.path.exists(pickle_fname):
                     # we have a pickle file with the objects to embed links for
                     with open(pickle_fname, 'rb') as fid:
-                        example_code_obj = cPickle.load(fid)
+                        example_code_obj = pickle.load(fid)
                     fid.close()
                     str_repl = {}
                     # generate replacement strings with the links
-                    for name, cobj in example_code_obj.iteritems():
+                    for name, cobj in example_code_obj.items():
                         this_module = cobj['module'].split('.')[0]
 
                         if this_module not in doc_resolvers:
@@ -998,16 +1069,16 @@ def embed_code_links(app, exception):
                                 for name, link in str_repl.iteritems():
                                     line = line.replace(name, link)
                                 fid.write(line.encode('utf-8'))
-    except urllib2.HTTPError, e:
-        print ("The following HTTP Error has occurred:\n")
-        print e.code
-    except urllib2.URLError, e:
-        print ("\n...\n"
-               "Warning: Embedding the documentation hyperlinks requires "
-               "internet access.\nPlease check your network connection.\n"
-               "Unable to continue embedding due to a URL Error: \n")
-        print e.args
-    print '[done]'
+    except HTTPError as e:
+        print("The following HTTP Error has occurred:\n")
+        print(e.code)
+    except URLError as e:
+        print("\n...\n"
+              "Warning: Embedding the documentation hyperlinks requires "
+              "internet access.\nPlease check your network connection.\n"
+              "Unable to continue embedding due to a URL Error: \n")
+        print(e.args)
+    print('[done]')
 
 
 def setup(app):

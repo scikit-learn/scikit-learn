@@ -17,10 +17,10 @@ print(__doc__)
 import time
 
 import numpy as np
-import pylab as pl
+import matplotlib.pyplot as plt
 
 from sklearn.cluster import MiniBatchKMeans, KMeans
-from sklearn.metrics.pairwise import euclidean_distances
+from sklearn.metrics.pairwise import pairwise_distances_argmin
 from sklearn.datasets.samples_generator import make_blobs
 
 ##############################################################################
@@ -58,7 +58,7 @@ mbk_means_labels_unique = np.unique(mbk_means_labels)
 ##############################################################################
 # Plot result
 
-fig = pl.figure(figsize=(8, 3))
+fig = plt.figure(figsize=(8, 3))
 fig.subplots_adjust(left=0.02, right=0.98, bottom=0.05, top=0.9)
 colors = ['#4EACC5', '#FF9C34', '#4E9A06']
 
@@ -66,10 +66,8 @@ colors = ['#4EACC5', '#FF9C34', '#4E9A06']
 # MiniBatchKMeans and the KMeans algorithm. Let's pair the cluster centers per
 # closest one.
 
-distance = euclidean_distances(k_means_cluster_centers,
-                               mbk_means_cluster_centers,
-                               squared=True)
-order = distance.argmin(axis=1)
+order = pairwise_distances_argmin(k_means_cluster_centers,
+                                  mbk_means_cluster_centers)
 
 # KMeans
 ax = fig.add_subplot(1, 3, 1)
@@ -83,7 +81,7 @@ for k, col in zip(range(n_clusters), colors):
 ax.set_title('KMeans')
 ax.set_xticks(())
 ax.set_yticks(())
-pl.text(-3.5, 1.8,  'train time: %.2fs\ninertia: %f' % (
+plt.text(-3.5, 1.8,  'train time: %.2fs\ninertia: %f' % (
     t_batch, k_means.inertia_))
 
 # MiniBatchKMeans
@@ -98,8 +96,8 @@ for k, col in zip(range(n_clusters), colors):
 ax.set_title('MiniBatchKMeans')
 ax.set_xticks(())
 ax.set_yticks(())
-pl.text(-3.5, 1.8, 'train time: %.2fs\ninertia: %f' %
-        (t_mini_batch, mbk.inertia_))
+plt.text(-3.5, 1.8, 'train time: %.2fs\ninertia: %f' %
+         (t_mini_batch, mbk.inertia_))
 
 # Initialise the different array to all False
 different = (mbk_means_labels == 4)
@@ -117,4 +115,4 @@ ax.set_title('Difference')
 ax.set_xticks(())
 ax.set_yticks(())
 
-pl.show()
+plt.show()

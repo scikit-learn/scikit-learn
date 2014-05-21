@@ -70,25 +70,24 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski',
 
     Notes
     -----
-    See examples/plot_dbscan.py for an example.
+    See examples/cluster/plot_dbscan.py for an example.
 
     References
     ----------
-    Ester, M., H. P. Kriegel, J. Sander, and X. Xu, “A Density-Based
-    Algorithm for Discovering Clusters in Large Spatial Databases with Noise”.
+    Ester, M., H. P. Kriegel, J. Sander, and X. Xu, "A Density-Based
+    Algorithm for Discovering Clusters in Large Spatial Databases with Noise".
     In: Proceedings of the 2nd International Conference on Knowledge Discovery
-    and Data Mining, Portland, OR, AAAI Press, pp. 226–231. 1996
+    and Data Mining, Portland, OR, AAAI Press, pp. 226-231. 1996
     """
     if not eps > 0.0:
-	    raise ValueError("eps must be positive.")
+        raise ValueError("eps must be positive.")
 
     X = np.asarray(X)
     n = X.shape[0]
 
     # If index order not given, create random order.
     random_state = check_random_state(random_state)
-    index_order = np.arange(n)
-    random_state.shuffle(index_order)
+    index_order = random_state.permutation(n)
 
     # check for known metric powers
     distance_matrix = True
@@ -109,7 +108,7 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski',
         neighborhoods = [np.where(x <= eps)[0] for x in D]
 
     # Initially, all samples are noise.
-    labels = -np.ones(n)
+    labels = -np.ones(n, dtype=np.int)
 
     # A list of all core samples found.
     core_samples = []
@@ -218,10 +217,10 @@ class DBSCAN(BaseEstimator, ClusterMixin):
 
     References
     ----------
-    Ester, M., H. P. Kriegel, J. Sander, and X. Xu, “A Density-Based
-    Algorithm for Discovering Clusters in Large Spatial Databases with Noise”.
+    Ester, M., H. P. Kriegel, J. Sander, and X. Xu, "A Density-Based
+    Algorithm for Discovering Clusters in Large Spatial Databases with Noise".
     In: Proceedings of the 2nd International Conference on Knowledge Discovery
-    and Data Mining, Portland, OR, AAAI Press, pp. 226–231. 1996
+    and Data Mining, Portland, OR, AAAI Press, pp. 226-231. 1996
     """
 
     def __init__(self, eps=0.5, min_samples=5, metric='euclidean',

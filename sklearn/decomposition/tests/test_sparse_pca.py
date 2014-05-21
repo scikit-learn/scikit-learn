@@ -11,6 +11,7 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import SkipTest
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
+from sklearn.utils.testing import if_not_mac_os
 
 from sklearn.decomposition import SparsePCA, MiniBatchSparsePCA
 from sklearn.utils import check_random_state
@@ -62,29 +63,29 @@ def test_fit_transform():
     spca_lars = SparsePCA(n_components=3, method='lars', alpha=alpha,
                           random_state=0)
     spca_lars.fit(Y)
-    U1 = spca_lars.transform(Y)
-    # Test multiple CPUs
-    if sys.platform == 'win32':  # fake parallelism for win32
-        import sklearn.externals.joblib.parallel as joblib_par
-        _mp = joblib_par.multiprocessing
-        joblib_par.multiprocessing = None
-        try:
-            spca = SparsePCA(n_components=3, n_jobs=2, random_state=0,
-                             alpha=alpha).fit(Y)
-            U2 = spca.transform(Y)
-        finally:
-            joblib_par.multiprocessing = _mp
-    else:  # we can efficiently use parallelism
-        spca = SparsePCA(n_components=3, n_jobs=2, method='lars', alpha=alpha,
-                         random_state=0).fit(Y)
-        U2 = spca.transform(Y)
-    assert_true(not np.all(spca_lars.components_ == 0))
-    assert_array_almost_equal(U1, U2)
+
     # Test that CD gives similar results
     spca_lasso = SparsePCA(n_components=3, method='cd', random_state=0,
                            alpha=alpha)
     spca_lasso.fit(Y)
     assert_array_almost_equal(spca_lasso.components_, spca_lars.components_)
+
+
+@if_not_mac_os()
+def test_fit_transform_parallel():
+    alpha = 1
+    rng = np.random.RandomState(0)
+    Y, _, _ = generate_toy_data(3, 10, (8, 8), random_state=rng)  # wide array
+    spca_lars = SparsePCA(n_components=3, method='lars', alpha=alpha,
+                          random_state=0)
+    spca_lars.fit(Y)
+    U1 = spca_lars.transform(Y)
+    # Test multiple CPUs
+    spca = SparsePCA(n_components=3, n_jobs=2, method='lars', alpha=alpha,
+                     random_state=0).fit(Y)
+    U2 = spca.transform(Y)
+    assert_true(not np.all(spca_lars.components_ == 0))
+    assert_array_almost_equal(U1, U2)
 
 
 def test_transform_nan():
@@ -135,7 +136,7 @@ def test_mini_batch_correct_shapes():
 
 
 def test_mini_batch_fit_transform():
-    raise SkipTest
+    raise SkipTest("skipping mini_batch_fit_transform.")
     alpha = 1
     rng = np.random.RandomState(0)
     Y, _, _ = generate_toy_data(3, 10, (8, 8), random_state=rng)  # wide array

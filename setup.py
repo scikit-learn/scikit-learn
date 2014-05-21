@@ -7,6 +7,8 @@ descr = """A set of python modules for machine learning and data mining"""
 
 import sys
 import os
+import shutil
+from distutils.command.clean import clean as Clean
 
 if sys.version_info[0] < 3:
     import __builtin__ as builtins
@@ -41,7 +43,7 @@ VERSION = sklearn.__version__
 # For some commands, use setuptools
 if len(set(('develop', 'release', 'bdist_egg', 'bdist_rpm',
            'bdist_wininst', 'install_egg_info', 'build_sphinx',
-           'egg_info', 'easy_install', 'upload',
+           'egg_info', 'easy_install', 'upload', 'bdist_wheel',
            '--single-version-externally-managed',
             )).intersection(sys.argv)) > 0:
     import setuptools
@@ -52,7 +54,27 @@ if len(set(('develop', 'release', 'bdist_egg', 'bdist_rpm',
 else:
     extra_setuptools_args = dict()
 
+###############################################################################
 
+class CleanCommand(Clean):
+    description = "Remove build directories, and compiled file in the source tree"
+
+    def run(self):
+        Clean.run(self)
+        if os.path.exists('build'):
+            shutil.rmtree('build')
+        for dirpath, dirnames, filenames in os.walk('sklearn'):
+            for filename in filenames:
+                if (filename.endswith('.so') or filename.endswith('.pyd')
+                             or filename.endswith('.dll')
+                             or filename.endswith('.pyc')):
+                    os.unlink(os.path.join(dirpath, filename))
+            for dirname in dirnames:
+                if dirname == '__pycache__':
+                    shutil.rmtree(os.path.join(dirpath, dirname))
+
+
+###############################################################################
 def configuration(parent_package='', top_path=None):
     if os.path.exists('MANIFEST'):
         os.remove('MANIFEST')
@@ -98,7 +120,9 @@ def setup_package():
                                  'Programming Language :: Python :: 2.7',
                                  'Programming Language :: Python :: 3',
                                  'Programming Language :: Python :: 3.3',
+                                 'Programming Language :: Python :: 3.4',
                                  ],
+                    cmdclass={'clean': CleanCommand},
                     **extra_setuptools_args)
 
     if (len(sys.argv) >= 2

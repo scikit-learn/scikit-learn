@@ -125,12 +125,9 @@ class LinearSVC(BaseLibLinear, LinearClassifierMixin, _LearntSelectorMixin,
 
     sklearn.linear_model.SGDClassifier
         SGDClassifier can optimize the same cost function as LinearSVC
-        by adjusting the penalty and loss parameters. Furthermore
-        SGDClassifier is scalable to large number of samples as it uses
-        a Stochastic Gradient Descent optimizer.
-
-        Finally SGDClassifier can fit both dense and sparse data without
-        memory copy if the input is C-contiguous or CSR.
+        by adjusting the penalty and loss parameters. In addition it requires
+        less memory, allows incremental (online) learning, and implements
+        various loss functions and regularization regimes.
 
     """
 
@@ -178,7 +175,7 @@ class SVC(BaseSVC):
         Ignored by all other kernels.
 
     gamma : float, optional (default=0.0)
-        Kernel coefficient for 'rbf', 'poly' and 'sigm'.
+        Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
         If gamma is 0.0 then 1/n_features will be used instead.
 
     coef0 : float, optional (default=0.0)
@@ -658,16 +655,17 @@ class OneClassSVM(BaseLibSVM):
         vectors. Should be in the interval (0, 1]. By default 0.5
         will be taken.
 
-    degree : int, optional
-        Degree of kernel function. Significant only in poly, rbf, sigmoid.
+    degree : int, optional (default=3)
+        Degree of the polynomial kernel function ('poly').
+        Ignored by all other kernels.
 
     gamma : float, optional (default=0.0)
-        kernel coefficient for rbf and poly, if gamma is 0.0 then 1/n_features
-        will be taken.
+        Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
+        If gamma is 0.0 then 1/n_features will be used instead.
 
-    coef0 : float, optional
-        Independent term in kernel function. It is only significant in
-        poly/sigmoid.
+    coef0 : float, optional (default=0.0)
+        Independent term in kernel function.
+        It is only significant in 'poly' and 'sigmoid'.
 
     tol : float, optional
         Tolerance for stopping criterion.

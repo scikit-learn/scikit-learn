@@ -25,6 +25,7 @@ from sklearn.grid_search import GridSearchCV
 from sklearn.pipeline import Pipeline
 from sklearn import svm
 from sklearn import datasets
+from sklearn.externals.six.moves import zip
 
 iris = datasets.load_iris()
 rng = np.random.RandomState(0)
@@ -144,6 +145,11 @@ def test_ovr_multilabel_predict_proba():
 
         # decision function only estimator. Fails in current implementation.
         decision_only = OneVsRestClassifier(svm.SVR()).fit(X_train, Y_train)
+        assert_raises(AttributeError, decision_only.predict_proba, X_test)
+
+        # Estimator with predict_proba disabled, depending on parameters.
+        decision_only = OneVsRestClassifier(svm.SVC(probability=False))
+        decision_only.fit(X_train, Y_train)
         assert_raises(AttributeError, decision_only.predict_proba, X_test)
 
         Y_pred = clf.predict(X_test)
@@ -310,6 +316,17 @@ def test_ovo_ties2():
         multi_clf = OneVsOneClassifier(Perceptron())
         ovo_prediction = multi_clf.fit(X, y).predict(X)
         assert_equal(ovo_prediction[0], (1 + i) % 3)
+
+
+def test_ovo_string_y():
+    "Test that the OvO doesn't screw the encoding of string labels"
+    X = np.eye(4)
+    y = np.array(['a', 'b', 'c', 'd'])
+
+    svc = LinearSVC()
+    ovo = OneVsOneClassifier(svc)
+    ovo.fit(X, y)
+    assert_array_equal(y, ovo.predict(X))
 
 
 def test_ecoc_exceptions():

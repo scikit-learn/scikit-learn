@@ -12,6 +12,36 @@ from sklearn.utils import (array2d, as_float_array, atleast2d_or_csr,
 from sklearn.random_projection import sparse_random_matrix
 
 
+def test_safe_asarray():
+    """Test that array dtype conversion works."""
+    # Test with sparse arrays
+    X = sp.csc_matrix(np.arange(4, dtype=np.float))
+    Y = safe_asarray(X)
+    assert_true(Y.dtype == np.float)
+    # Check that no copy has been performed
+    Y.data[0] = 7  # value not in original array
+    assert_equal(X.data[0], Y.data[0])
+
+    Y = safe_asarray(X, dtype=np.int)
+    assert_equal(Y.data.dtype, np.int)
+
+    # Test with dense arrays
+    X = np.arange(4, dtype=np.float)
+    Y = safe_asarray(X)
+    assert_true(Y.dtype == np.float)
+    # Check that no copy has been performed
+    Y[0] = 7
+    assert_equal(X[0], Y[0])
+
+    Y = safe_asarray(X, dtype=np.int)
+    assert_equal(Y.dtype, np.int)
+
+    # Non-regression: LIL and DOK used to fail for lack of a .data attribute
+    X = np.ones([2, 3])
+    safe_asarray(sp.dok_matrix(X))
+    safe_asarray(sp.lil_matrix(X), dtype=X.dtype)
+
+
 def test_as_float_array():
     """Test function for as_float_array"""
     X = np.ones((3, 10), dtype=np.int32)
@@ -45,6 +75,25 @@ def test_as_float_array():
         assert_false(np.isnan(M).any())
 
 
+def test_atleast2d_or_sparse():
+    for typ in [sp.csr_matrix, sp.dok_matrix, sp.lil_matrix, sp.coo_matrix]:
+        X = typ(np.arange(9, dtype=float).reshape(3, 3))
+
+        Y = atleast2d_or_csr(X, copy=True)
+        assert_true(isinstance(Y, sp.csr_matrix))
+        Y.data[:] = 1
+        assert_array_equal(X.toarray().ravel(), np.arange(9))
+
+        Y = atleast2d_or_csc(X, copy=False)
+        Y.data[:] = 4
+        assert_true(np.all(X.data == 4)
+                    if isinstance(X, sp.csc_matrix)
+                    else np.all(X.toarray().ravel() == np.arange(9)))
+
+        Y = atleast2d_or_csr(X, dtype=np.float32)
+        assert_true(Y.dtype == np.float32)
+
+
 def test_check_arrays_exceptions():
     """Check that invalid arguments raise appropriate exceptions"""
     assert_raises(ValueError, check_arrays, [0], [0, 1])
@@ -52,6 +101,7 @@ def test_check_arrays_exceptions():
     assert_raises(TypeError, check_arrays, [0], 0)
     assert_raises(TypeError, check_arrays, [0, 1], [0, 1], meaning_of_life=42)
     assert_raises(ValueError, check_arrays, [0], [0], sparse_format='fake')
+    assert_raises(ValueError, check_arrays, np.zeros((2, 3, 4)), [0])
 
 
 def test_np_matrix():

@@ -34,11 +34,12 @@ Important links
 Dependencies
 ============
 
-scikit-learn is tested to work under Python 2.6+ and Python 3.3+
-(using the same codebase thanks to an embedded copy of [six](
-http://pythonhosted.org/six/)).
+scikit-learn is tested to work under Python 2.6, Python 2.7, and Python 3.4.
+(using the same codebase thanks to an embedded copy of
+`six <http://pythonhosted.org/six/>`_). It should also work against Python
+3.3.
 
-The required dependencies to build the software Numpy >= 1.3, SciPy >= 0.7
+The required dependencies to build the software NumPy >= 1.6.2, SciPy >= 0.11
 and a working C/C++ compiler.
 
 For running the examples Matplotlib >= 0.99.1 is required and for running the
@@ -72,11 +73,22 @@ GIT
 
 You can check the latest sources with the command::
 
-    git clone git://github.com/scikit-learn/scikit-learn.git
+    git clone https://github.com/scikit-learn/scikit-learn.git
 
 or if you have write privileges::
 
     git clone git@github.com:scikit-learn/scikit-learn.git
+
+
+Contributing
+~~~~~~~~~~~~
+
+Quick tutorial on how to go about setting up your environment to
+contribute to scikit-learn: https://github.com/scikit-learn/scikit-learn/blob/master/CONTRIBUTING.md
+
+Before opening a Pull Request, have a look at the
+full Contributing page to make sure your code complies
+with our guidelines: http://scikit-learn.org/stable/developers/index.html
 
 
 Testing
