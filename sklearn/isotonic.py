@@ -5,7 +5,7 @@
 
 import numpy as np
 from scipy import interpolate
-from scipy.stats import pearsonr, spearmanr
+from scipy.stats import spearmanr
 from .base import BaseEstimator, TransformerMixin, RegressorMixin
 from .utils import as_float_array, check_arrays
 from ._isotonic import _isotonic_regression
@@ -114,12 +114,12 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
     y_max : optional, default: None
         If not None, set the highest value of the fit to y_max.
 
-    increasing : boolean or string, optional, default : True
+    increasing : boolean or string, optional, default : 'auto'
         If boolean, whether or not to fit the isotonic regression with y
         increasing or decreasing.
 
-        If string and "pearson" or "spearman," determine whether y should
-        increase or decrease based on the Pearson or Spearman rho estimate
+        If string and set to "auto," determine whether y should
+        increase or decrease based on the Spearman correlation estimate's
         sign, respectively.
 
 
@@ -149,26 +149,38 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
 
     def _check_increasing(self, X, y):
         """
-        Set the proper value of increasing based on the constructor
+        Set the proper value of ``increasing`` based on the constructor
         parameter and the data.
+
+        The Spearman correlation coefficent is estimated from the data,
+        and the sign of the resulting estiamte is used to set ``increasing``.
+
+        In the event that the confidence interval based on Fisher transform
+        spans zero, a warning is raised.
         """
-        # Determine increasing if Spearman or Pearson requested
+        # Determine increasing if Spearman requested
         increasing_bool = self.increasing
 
-        if self.increasing == 'pearson':
-            # Calculate Pearson rho estimate and set accordingly
-            rho, _ = pearsonr(X, y)
-            if rho >= 0:
-                increasing_bool = True
-            else:
-                increasing_bool = False
-        elif self.increasing == 'spearman':
+        if self.increasing == 'auto':
             # Calculate Spearman rho estimate and set accordingly
             rho, _ = spearmanr(X, y)
             if rho >= 0:
                 increasing_bool = True
             else:
                 increasing_bool = False
+
+            # Run Fisher transform to get the rho CI
+            F = 0.5 * np.log((1 + rho) / (1 - rho))
+            F_se = 1 / np.sqrt(len(X) - 3)
+            rho_0 = np.tanh(F - F_se)
+            rho_1 = np.tanh(F + F_se)
+
+            # Warn if the CI spans zero.
+            if np.sign(rho_0) != np.sign(rho_1):
+                warnings.warn("Confidence interval of the Spearman "
+                              "correlation coefficient spans zero. "
+                              "Determination of ``increasing`` may be "
+                              "suspect.")
 
         return increasing_bool
 
@@ -208,7 +220,7 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         y = as_float_array(y)
         self._check_fit_data(X, y, sample_weight)
 
-        # Determine increasing if Spearman or Pearson requested
+        # Determine increasing if auto-determination requested
         increasing_bool = self._check_increasing(X, y)
 
         order = np.argsort(X)
@@ -275,7 +287,7 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         y = as_float_array(y)
         self._check_fit_data(X, y, sample_weight)
 
-        # Determine increasing if Spearman or Pearson requested
+        # Determine increasing if auto-determination requested
         increasing_bool = self._check_increasing(X, y)
 
         order = np.lexsort((y, X))
