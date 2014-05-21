@@ -6,6 +6,8 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
 
+import warnings
+
 
 def test_isotonic_regression():
     y = np.array([3, 7, 5, 9, 8, 7, 10])
@@ -37,52 +39,47 @@ def test_isotonic_regression_reversed():
     assert_array_equal(np.ones(y_[:-1].shape), ((y_[:-1] - y_[1:]) >= 0))
 
 
-def test_isotonic_regression_pearson_decreasing():
+def test_isotonic_regression_auto_decreasing():
     # Set y and x for decreasing
     y = np.array([10, 9, 10, 7, 6, 6.1, 5])
     x = np.arange(len(y))
 
-    y_ = IsotonicRegression(increasing='pearson').fit_transform(
+    y_ = IsotonicRegression(increasing='auto').fit_transform(
         x, y)
 
     is_increasing = y_[0] < y_[-1]
     assert_equal(is_increasing, False)
 
 
-def test_isotonic_regression_pearson_increasing():
+def test_isotonic_regression_auto_increasing():
     # Set y and x for decreasing
     y = np.array([5, 6.1, 6, 7, 10, 9, 10])
     x = np.arange(len(y))
 
-    y_ = IsotonicRegression(increasing='pearson').fit_transform(
+    y_ = IsotonicRegression(increasing='auto').fit_transform(
         x, y)
 
     is_increasing = y_[0] < y_[-1]
     assert_equal(is_increasing, True)
 
 
-def test_isotonic_regression_spearman_decreasing():
+def test_isotonic_regression_auto_ci_check():
     # Set y and x for decreasing
-    y = np.array([10, 9, 10, 7, 6, 6.1, 5])
+    y = np.array([-5, 6.1, -6, 7, -10, 9, -10])
     x = np.arange(len(y))
 
-    y_ = IsotonicRegression(increasing='spearman').fit_transform(
-        x, y)
+    # Check that a warning is thrown
+    with warnings.catch_warnings(record=True) as w:
+        # Trigger all warnings
+        warnings.simplefilter("always")
 
-    is_increasing = y_[0] < y_[-1]
-    assert_equal(is_increasing, False)
+        # Fit and transform
+        y_ = IsotonicRegression(increasing='auto').fit_transform(
+            x, y)
 
-
-def test_isotonic_regression_spearman_increasing():
-    # Set y and x for decreasing
-    y = np.array([5, 6.1, 6, 7, 10, 9, 10])
-    x = np.arange(len(y))
-
-    y_ = IsotonicRegression(increasing='spearman').fit_transform(
-        x, y)
-
-    is_increasing = y_[0] < y_[-1]
-    assert_equal(is_increasing, True)
+        # Ensure that we got a warning
+        assert_equal(len(w), 1)
+        assert_equal(True, "interval" in str(w[-1].message))
 
 
 def test_assert_raises_exceptions():
