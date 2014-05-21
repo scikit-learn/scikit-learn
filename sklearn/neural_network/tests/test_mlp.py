@@ -334,7 +334,7 @@ def test_partial_fit_classification():
         mlp.fit(X, y)
         pred1 = mlp.predict(X)
         mlp = MultilayerPerceptronClassifier(algorithm='sgd', random_state=1)
-        for i in xrange(100):
+        for i in range(100):
             mlp.partial_fit(X, y, classes=np.unique(y))
         pred2 = mlp.predict(X)
         assert_array_equal(pred1, pred2)
@@ -361,7 +361,7 @@ def test_partial_fit_regression():
             algorithm='sgd',
             activation=activation,
             random_state=1)
-        for i in xrange(400):
+        for i in range(400):
             mlp.partial_fit(X, y)
         pred2 = mlp.predict(X)
         assert_almost_equal(pred1, pred2, decimal=2)
