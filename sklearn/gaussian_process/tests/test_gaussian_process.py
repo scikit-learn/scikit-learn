@@ -163,45 +163,6 @@ def test_no_multiple_feature():
     check2d(X)
 
 
-def check2dNoisy(X, regr=regression.constant, corr=correlation.squared_exponential,
-                 random_start=10, beta0=None):
-    """
-    MLE estimation of a two-dimensional Gaussian Process model accounting for
-    anisotropy. Check random start optimization.
-
-    Test the interpolating property.
-    """
-    b, kappa, e = 5., .5, .1
-    g = lambda x: b - x[:, 1] - kappa * (x[:, 0] - e) ** 2.
-
-    y = g(X).ravel() + np.random.normal(0, 0.1, X.shape[0])
-    gp = GaussianProcess(regr=regr, corr=corr, beta0=beta0,
-                         theta0=[1e-2] * 2, thetaL=[1e-4] * 2,
-                         thetaU=[1.] * 2,
-                         random_start=random_start, verbose=False, nugget=0.1)
-    gp.fit(X, y)
-    y_pred, MSE = gp.predict(X, eval_MSE=True)
-
-    fig = pl.figure()
-    pl.plot(X, f(X), 'r:', label=u'$f(x) = x\,\sin(x)$')
-    pl.plot(X, y, 'r.', markersize=10, label=u'Observations')
-    pl.plot(X, y_pred, 'b-', label=u'Prediction')
-    pl.fill(np.concatenate([X, X[::-1]]),
-            np.concatenate([y_pred - 1.9600 * MSE,
-                            (y_pred + 1.9600 * MSE)[::-1]]),
-            alpha=.5, fc='b', ec='None', label='95% confidence interval')
-    pl.xlabel('$x$')
-    pl.ylabel('$f(x)$')
-    pl.ylim(-10, 10)
-    pl.legend(loc='upper left')
-    pl.show()
-
-    print((np.abs(y_pred - y) <= ss.norm.ppf(0.999, y_pred, np.sqrt(MSE))))
-
-    assert_true((np.abs(y_pred - y) <= ss.norm.ppf(0.999, y_pred, np.sqrt(
-        MSE))).all())  #check that difference between prediction and truth is smaller than 99.9% conf int.
-
-
 def test_1d_noisy(regr=regression.constant, corr=correlation.absolute_exponential,
                   random_start=10, beta0=None):
     """
