@@ -14,7 +14,7 @@ from numpy.testing import assert_almost_equal, assert_array_equal
 from sklearn.datasets import load_digits, load_boston
 from sklearn.datasets import make_regression, make_multilabel_classification
 from sklearn.externals.six.moves import cStringIO as StringIO
-from sklearn.metrics import auc_score
+from sklearn.metrics import roc_auc_score
 from sklearn.neural_network import MultilayerPerceptronClassifier
 from sklearn.neural_network import MultilayerPerceptronRegressor
 from sklearn.preprocessing import LabelBinarizer
@@ -125,7 +125,7 @@ def test_fit():
     # b2 = b2 - eta * b2grad = 1.0 - 0.1 * 0.765 = 0.9235
     assert_almost_equal(mlp.coef_hidden_, np.array(
         [[0.098, 0.195756], [0.2956664, 0.096008],
-        [0.4939998, -0.002244]]), decimal=3)
+         [0.4939998, -0.002244]]), decimal=3)
     assert_almost_equal(
         mlp.coef_output_,
         np.array([[0.04706],
@@ -159,7 +159,8 @@ def test_gradient():
     y = 1 + np.mod(np.arange(n_samples) + 1, n_labels)
     Y = LabelBinarizer().fit_transform(y)
     n_outputs = Y.shape[1]
-    mlp = MultilayerPerceptronClassifier(alpha=0.5, n_hidden=2)
+    mlp = MultilayerPerceptronClassifier(alpha=0.5, activation='logistic',
+                                         n_hidden=2)
     mlp.classes_ = np.unique(Y)
     mlp.n_features = n_features
     mlp.n_outputs = n_outputs
@@ -350,7 +351,7 @@ def test_partial_fit_regression():
     for activation in ACTIVATION_TYPES:
         mlp = MultilayerPerceptronRegressor(
             algorithm='sgd',
-            max_iter=100,
+            max_iter=400,
             random_state=1,
             activation=activation,
             batch_size=X.shape[0])
@@ -360,7 +361,7 @@ def test_partial_fit_regression():
             algorithm='sgd',
             activation=activation,
             random_state=1)
-        for i in xrange(100):
+        for i in xrange(400):
             mlp.partial_fit(X, y)
         pred2 = mlp.predict(X)
         assert_almost_equal(pred1, pred2, decimal=2)
@@ -422,7 +423,7 @@ def test_predict_proba_binary():
     assert_array_equal(proba_max, proba_log_max)
     assert_array_equal(y_log_proba, np.log(y_proba))
 
-    assert_equal(auc_score(y, y_proba[:, 1]), 1.0)
+    assert_equal(roc_auc_score(y, y_proba[:, 1]), 1.0)
 
 
 def test_predict_proba_multi():
