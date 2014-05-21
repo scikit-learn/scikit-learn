@@ -266,6 +266,5 @@ def test_pipeline():
 
 
 if __name__ == '__main__':
-    #import nose
-    #nose.runmodule()
-    test_isomap_incremental_adapt()
+    import nose
+    nose.runmodule()

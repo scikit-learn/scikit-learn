@@ -9,4 +9,5 @@ from .mds import MDS
 from .spectral_embedding_ import SpectralEmbedding, spectral_embedding
 
 __all__ = ['locally_linear_embedding', 'LocallyLinearEmbedding', 'Isomap',
-           'MDS', 'SpectralEmbedding', 'spectral_embedding']
+           'IncrementalIsomap', 'MDS', 'SpectralEmbedding', 
+           'spectral_embedding']

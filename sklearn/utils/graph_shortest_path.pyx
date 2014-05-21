@@ -95,13 +95,12 @@ def graph_shortest_path(dist_matrix not None, directed=True, method='auto'):
         else:
             method = 'FW'
 
+    predecessors = np.zeros(dist_matrix.shape, dtype=ITYPE, order='C')
     if method == 'FW':
         graph = np.asarray(dist_matrix.toarray(), dtype=DTYPE, order='C')
-        predecessors = np.zeros(dist_matrix.shape, dtype=ITYPE, order='C')
         floyd_warshall(graph, predecessors, directed)
     elif method == 'D':
         graph = np.zeros((N, N), dtype=DTYPE, order='C')
-        predecessors = np.zeros(dist_matrix.shape, dtype=ITYPE, order='C')
         dijkstra(dist_matrix, graph, predecessors, directed)
     else:
         raise ValueError("unrecognized method '%s'" % method)
