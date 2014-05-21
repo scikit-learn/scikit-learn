@@ -15,7 +15,8 @@ from ..preprocessing import LabelBinarizer
 from ..utils import gen_even_slices
 from ..utils import shuffle
 from ..utils import atleast2d_or_csr, check_random_state, column_or_1d
-from ..utils.extmath import logistic_sigmoid, safe_sparse_dot
+from ..utils.extmath import safe_sparse_dot
+from ..utils.fixes import expit as logistic_sigmoid
 
 
 def _identity(X):
@@ -278,7 +279,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
             batch_size = n_samples
         else:
             batch_size = np.clip(self.batch_size, 0, n_samples)
-            n_batches = n_samples / batch_size
+            n_batches = int(n_samples / batch_size)
             batch_slices = list(
                 gen_even_slices(
                     n_batches * batch_size,

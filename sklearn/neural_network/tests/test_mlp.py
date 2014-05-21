@@ -288,7 +288,7 @@ def test_multilabel_classification():
         activation='logistic')
     y = np.atleast_1d(y)
     classes_ = np.unique(y)
-    for i in xrange(100):
+    for i in range(100):
             mlp.partial_fit(X, y, classes=classes_)
     assert_greater(mlp.score(X, y), 0.95)
 
