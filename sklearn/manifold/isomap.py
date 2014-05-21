@@ -59,7 +59,7 @@ class Isomap(BaseEstimator, TransformerMixin):
     `kernel_pca_` : object
         `KernelPCA` object used to implement the embedding.
 
-    `training_data_` : array-like, shape (n_samples, n_features)
+    `train_data_` : array-like, shape (n_samples, n_features)
         Stores the training data.
 
     `nbrs_` : sklearn.neighbors.NearestNeighbors instance
@@ -93,7 +93,7 @@ class Isomap(BaseEstimator, TransformerMixin):
     def _fit_transform(self, X):
         X, = check_arrays(X, sparse_format='dense')
         self.nbrs_.fit(X)
-        self.training_data_ = self.nbrs_._fit_X
+        self.train_data_ = self.nbrs_._fit_X
         self.kernel_pca_ = KernelPCA(n_components=self.n_components,
                                      kernel="precomputed",
                                      eigen_solver=self.eigen_solver,
@@ -102,7 +102,7 @@ class Isomap(BaseEstimator, TransformerMixin):
         kng = kneighbors_graph(self.nbrs_, self.n_neighbors,
                                mode='distance')
 
-        self.dist_matrix_ = graph_shortest_path(kng,
+        self.dist_matrix_, _ = graph_shortest_path(kng,
                                                 method=self.path_method,
                                                 directed=False)
         G = self.dist_matrix_ ** 2
@@ -188,11 +188,11 @@ class Isomap(BaseEstimator, TransformerMixin):
         """
         distances, indices = self.nbrs_.kneighbors(X, return_distance=True)
 
-        #Create the graph of shortest distances from X to self.training_data_
+        #Create the graph of shortest distances from X to self.train_data_
         # via the nearest neighbors of X.
         #This can be done as a single array operation, but it potentially
         # takes a lot of memory.  To avoid that, use a loop:
-        G_X = np.zeros((X.shape[0], self.training_data_.shape[0]))
+        G_X = np.zeros((X.shape[0], self.train_data_.shape[0]))
         for i in range(X.shape[0]):
             G_X[i] = np.min((self.dist_matrix_[indices[i]]
                              + distances[i][:, None]), 0)
