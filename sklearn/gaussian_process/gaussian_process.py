@@ -16,6 +16,7 @@ from . import regression_models as regression
 from . import correlation_models as correlation
 
 MACHINE_EPSILON = np.finfo(np.double).eps
+DEFAULT_NUGGET = 10. * MACHINE_EPSILON
 
 
 def l1_cross_distances(X):
@@ -221,7 +222,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                  storage_mode='full', verbose=False, theta0=1e-1,
                  thetaL=None, thetaU=None, optimizer='fmin_cobyla',
                  random_start=1, normalize=True,
-                 nugget=10. * MACHINE_EPSILON, random_state=None):
+                 nugget=DEFAULT_NUGGET, random_state=None):
 
         self.regr = regr
         self.corr = corr
@@ -296,6 +297,9 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
         # Calculate matrix of distances D between samples
         D, ij = l1_cross_distances(X)
+        if self._prohibitMultipleInputFeature(D):
+            raise Exception("Multiple input features cannot have the same"
+                            " value for non-noisy data.")
 
         # Regression matrix and parameters
         F = self.regr(X)
@@ -521,6 +525,15 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
                 return y
 
+    def _prohibitMultipleInputFeature(self, D):
+        """
+        Multiple input features are only allowed for noisy data
+        """
+        return self.nugget <= DEFAULT_NUGGET and \
+               np.min(np.sum(D, axis=1)) == 0. and \
+               self.corr != correlation.pure_nugget
+
+
     def reduced_likelihood_function(self, theta=None):
         """
         This function determines the BLUP parameters and evaluates the reduced
@@ -582,6 +595,8 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         if D is None:
             # Light storage mode (need to recompute D, ij and F)
             D, ij = l1_cross_distances(self.X)
+            if self._prohibitMultipleInputFeature(D):
+                raise Exception("Multiple X only make sense for noisy data")
             F = self.regr(self.X)
 
         # Set up R

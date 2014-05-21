@@ -9,6 +9,9 @@ from nose.tools import raises
 from nose.tools import assert_true
 
 import numpy as np
+import scipy.stats as ss
+
+import pylab as pl
 
 from sklearn.gaussian_process import GaussianProcess
 from sklearn.gaussian_process import regression_models as regression
@@ -39,7 +42,7 @@ def test_1d(regr=regression.constant, corr=correlation.squared_exponential,
                 and np.allclose(MSE2, 0., atol=10))
 
 
-def test_2d(regr=regression.constant, corr=correlation.squared_exponential,
+def check2d(X, regr=regression.constant, corr=correlation.squared_exponential,
             random_start=10, beta0=None):
     """
     MLE estimation of a two-dimensional Gaussian Process model accounting for
@@ -49,14 +52,7 @@ def test_2d(regr=regression.constant, corr=correlation.squared_exponential,
     """
     b, kappa, e = 5., .5, .1
     g = lambda x: b - x[:, 1] - kappa * (x[:, 0] - e) ** 2.
-    X = np.array([[-4.61611719, -6.00099547],
-                  [4.10469096, 5.32782448],
-                  [0.00000000, -0.50000000],
-                  [-6.17289014, -4.6984743],
-                  [1.3109306, -6.93271427],
-                  [-5.03823144, 3.10584743],
-                  [-2.87600388, 6.74310541],
-                  [5.21301203, 4.26386883]])
+
     y = g(X).ravel()
     gp = GaussianProcess(regr=regr, corr=corr, beta0=beta0,
                          theta0=[1e-2] * 2, thetaL=[1e-4] * 2,
@@ -68,7 +64,7 @@ def test_2d(regr=regression.constant, corr=correlation.squared_exponential,
     assert_true(np.allclose(y_pred, y) and np.allclose(MSE, 0.))
 
 
-def test_2d_2d(regr=regression.constant, corr=correlation.squared_exponential,
+def check2d_2d(X, regr=regression.constant, corr=correlation.squared_exponential,
                random_start=10, beta0=None):
     """
     MLE estimation of a two-dimensional Gaussian Process model accounting for
@@ -79,14 +75,7 @@ def test_2d_2d(regr=regression.constant, corr=correlation.squared_exponential,
     b, kappa, e = 5., .5, .1
     g = lambda x: b - x[:, 1] - kappa * (x[:, 0] - e) ** 2.
     f = lambda x: np.vstack((g(x), g(x))).T
-    X = np.array([[-4.61611719, -6.00099547],
-                  [4.10469096, 5.32782448],
-                  [0.00000000, -0.50000000],
-                  [-6.17289014, -4.6984743],
-                  [1.3109306, -6.93271427],
-                  [-5.03823144, 3.10584743],
-                  [-2.87600388, 6.74310541],
-                  [5.21301203, 4.26386883]])
+
     y = f(X)
     gp = GaussianProcess(regr=regr, corr=corr, beta0=beta0,
                          theta0=[1e-2] * 2, thetaL=[1e-4] * 2,
@@ -112,10 +101,19 @@ def test_more_builtin_correlation_models(random_start=1):
     all_corr = ['absolute_exponential', 'squared_exponential', 'cubic',
                 'linear']
 
+    X = np.array([[-4.61611719, -6.00099547],
+                  [4.10469096, 5.32782448],
+                  [0.00000000, -0.50000000],
+                  [-6.17289014, -4.6984743],
+                  [1.3109306, -6.93271427],
+                  [-5.03823144, 3.10584743],
+                  [-2.87600388, 6.74310541],
+                  [5.21301203, 4.26386883]])
+
     for corr in all_corr:
         test_1d(regr='constant', corr=corr, random_start=random_start)
-        test_2d(regr='constant', corr=corr, random_start=random_start)
-        test_2d_2d(regr='constant', corr=corr, random_start=random_start)
+        check2d(X, regr='constant', corr=corr, random_start=random_start)
+        check2d_2d(X, regr='constant', corr=corr, random_start=random_start)
 
 
 def test_ordinary_kriging():
@@ -123,15 +121,108 @@ def test_ordinary_kriging():
     Repeat test_1d and test_2d with given regression weights (beta0) for
     different regression models (Ordinary Kriging).
     """
+
+    X = np.array([[-4.61611719, -6.00099547],
+                  [4.10469096, 5.32782448],
+                  [0.00000000, -0.50000000],
+                  [-6.17289014, -4.6984743],
+                  [1.3109306, -6.93271427],
+                  [-5.03823144, 3.10584743],
+                  [-2.87600388, 6.74310541],
+                  [5.21301203, 4.26386883]])
+
     test_1d(regr='linear', beta0=[0., 0.5])
     test_1d(regr='quadratic', beta0=[0., 0.5, 0.5])
-    test_2d(regr='linear', beta0=[0., 0.5, 0.5])
-    test_2d(regr='quadratic', beta0=[0., 0.5, 0.5, 0.5, 0.5, 0.5])
-    test_2d_2d(regr='linear', beta0=[0., 0.5, 0.5])
-    test_2d_2d(regr='quadratic', beta0=[0., 0.5, 0.5, 0.5, 0.5, 0.5])
+    check2d(X, regr='linear', beta0=[0., 0.5, 0.5])
+    check2d(X, regr='quadratic', beta0=[0., 0.5, 0.5, 0.5, 0.5, 0.5])
+    check2d_2d(X, regr='linear', beta0=[0., 0.5, 0.5])
+    check2d_2d(X, regr='quadratic', beta0=[0., 0.5, 0.5, 0.5, 0.5, 0.5])
 
 
 def test_no_normalize():
     gp = GaussianProcess(normalize=False).fit(X, y)
     y_pred = gp.predict(X)
     assert_true(np.allclose(y_pred, y))
+
+
+@raises(Exception)
+def test_no_multiple_feature():
+    '''
+    check that multiple features are not allowed for non-noisy data
+    '''
+    X = np.array([[-4.61611719, -6.00099547],
+                  [4.10469096, 5.32782448],
+                  [0.00000000, -0.50000000],
+                  [-6.17289014, -4.6984743],
+                  [-6.17289014, -4.6984743],
+                  [1.3109306, -6.93271427],
+                  [-5.03823144, 3.10584743],
+                  [-2.87600388, 6.74310541],
+                  [5.21301203, 4.26386883]])
+
+    check2d(X)
+
+
+def check2dNoisy(X, regr=regression.constant, corr=correlation.squared_exponential,
+                 random_start=10, beta0=None):
+    """
+    MLE estimation of a two-dimensional Gaussian Process model accounting for
+    anisotropy. Check random start optimization.
+
+    Test the interpolating property.
+    """
+    b, kappa, e = 5., .5, .1
+    g = lambda x: b - x[:, 1] - kappa * (x[:, 0] - e) ** 2.
+
+    y = g(X).ravel() + np.random.normal(0, 0.1, X.shape[0])
+    gp = GaussianProcess(regr=regr, corr=corr, beta0=beta0,
+                         theta0=[1e-2] * 2, thetaL=[1e-4] * 2,
+                         thetaU=[1.] * 2,
+                         random_start=random_start, verbose=False, nugget=0.1)
+    gp.fit(X, y)
+    y_pred, MSE = gp.predict(X, eval_MSE=True)
+
+    fig = pl.figure()
+    pl.plot(X, f(X), 'r:', label=u'$f(x) = x\,\sin(x)$')
+    pl.plot(X, y, 'r.', markersize=10, label=u'Observations')
+    pl.plot(X, y_pred, 'b-', label=u'Prediction')
+    pl.fill(np.concatenate([X, X[::-1]]),
+            np.concatenate([y_pred - 1.9600 * MSE,
+                            (y_pred + 1.9600 * MSE)[::-1]]),
+            alpha=.5, fc='b', ec='None', label='95% confidence interval')
+    pl.xlabel('$x$')
+    pl.ylabel('$f(x)$')
+    pl.ylim(-10, 10)
+    pl.legend(loc='upper left')
+    pl.show()
+
+    print((np.abs(y_pred - y) <= ss.norm.ppf(0.999, y_pred, np.sqrt(MSE))))
+
+    assert_true((np.abs(y_pred - y) <= ss.norm.ppf(0.999, y_pred, np.sqrt(
+        MSE))).all())  #check that difference between prediction and truth is smaller than 99.9% conf int.
+
+
+def test_1d_noisy(regr=regression.constant, corr=correlation.absolute_exponential,
+                  random_start=10, beta0=None):
+    """
+    MLE estimation of a one-dimensional Gaussian Process model.
+    Check random start optimization with noisy / duplicate inputs.
+
+    Test the interpolating property.
+    """
+
+    X = np.atleast_2d([1., 3., 5., 6., 7., 8., 9., 10.] * 2).T
+    x = np.atleast_2d(np.linspace(0, 10, 50)).T
+
+    y = f(X).ravel() + np.random.normal(0, 0.1, len(X))
+
+    gp = GaussianProcess(regr=regr, corr=corr, beta0=beta0,
+                         theta0=1e-2, thetaL=1e-4, thetaU=1e-1,
+                         random_start=random_start, verbose=False, nugget=0.01).fit(X, y)
+    y_pred, MSE = gp.predict(x, eval_MSE=True)
+
+    y = f(x).ravel()
+    assert_true((np.abs(y_pred - y) <= np.abs(
+        ss.norm.ppf(0.025, y_pred, np.sqrt(MSE)))  ).all())  #check that true value is within 95% conf. int.
+
+
