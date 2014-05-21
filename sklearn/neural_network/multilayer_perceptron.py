@@ -292,7 +292,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
         if self.algorithm == 'sgd':
             prev_cost = np.inf
 
-            for i in xrange(self.max_iter):
+            for i in range(self.max_iter):
                 for batch_slice in batch_slices:
                     cost = self._backprop_sgd(
                         X[batch_slice], y[batch_slice],
