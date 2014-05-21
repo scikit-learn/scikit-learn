@@ -124,7 +124,7 @@ def _to_graph(n_x, n_y, n_z, mask=None, img=None,
                               (n_voxels, n_voxels),
                               dtype=dtype)
     if return_as is np.ndarray:
-        return graph.todense()
+        return graph.toarray()
     return return_as(graph)
 
 
