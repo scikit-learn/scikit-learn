@@ -12,6 +12,7 @@ randomized trees. Single and multi-output problems are both handled.
 # Licence: BSD 3 clause
 
 from __future__ import division
+from scipy.sparse import csc_matrix, issparse, csr_matrix
 
 import numbers
 import numpy as np
@@ -46,14 +47,17 @@ DOUBLE = _tree.DOUBLE
 
 CRITERIA_CLF = {"gini": _tree.Gini, "entropy": _tree.Entropy}
 CRITERIA_REG = {"mse": _tree.MSE, "friedman_mse": _tree.FriedmanMSE}
-SPLITTERS = {"best": _tree.BestSplitter,
-             "presort-best": _tree.PresortBestSplitter,
-             "random": _tree.RandomSplitter}
 
+DENSE_SPLITTERS = {"best": _tree.BestSplitter,
+                   "presort-best": _tree.PresortBestSplitter,
+                   "random": _tree.RandomSplitter}
+SPARSE_SPLITTER = {"best": _tree.BestSparseSplitter,
+                   "random": _tree.RandomSparseSplitter}
 
 # =============================================================================
 # Base decision tree
 # =============================================================================
+
 
 class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
                                           _LearntSelectorMixin)):
@@ -98,7 +102,8 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         ----------
         X : array-like, shape = [n_samples, n_features]
             The training input samples. Use ``dtype=np.float32`` for maximum
-            efficiency.
+            efficiency. Sparse matrices are also supported, use csc_matrix for
+            maximum efficieny.
 
         y : array-like, shape = [n_samples] or [n_samples, n_outputs]
             The target values (class labels in classification, real numbers in
@@ -132,9 +137,29 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
             warn("The X_argsorted parameter is deprecated as of version 0.14 "
                  "and will be removed in 0.16.", DeprecationWarning)
 
-        # Convert data
+        # Convert X to the proper type
+        X_old_data = None
+
         if check_input:
-            X, = check_arrays(X, dtype=DTYPE, sparse_format="dense")
+            if issparse(X):
+                X = X.tocsc()
+                X_old_data = X.data
+
+                if not X.has_sorted_indices:
+                    X = X.sort_indices()
+
+                if X.data.dtype != DTYPE:
+                    X.data = np.ascontiguousarray(X.data, dtype=DTYPE)
+
+                if X.indices.dtype != np.int32:
+                    X.indices = np.ascontiguousarray(X.indices, dtype=np.int32)
+
+                if X.indptr.dtype != np.int32:
+                    X.indptr = np.ascontiguousarray(X.indptr, dtype=np.int32)
+
+            else:
+                X, = check_arrays(X, dtype=DTYPE, sparse_format="dense")
+
 
         # Determine output settings
         n_samples, self.n_features_ = X.shape
@@ -243,6 +268,8 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
             else:
                 criterion = CRITERIA_REG[self.criterion](self.n_outputs_)
 
+        SPLITTERS = SPARSE_SPLITTER if issparse(X) else DENSE_SPLITTERS
+
         splitter = self.splitter
         if not isinstance(self.splitter, Splitter):
             splitter = SPLITTERS[self.splitter](criterion,
@@ -267,6 +294,9 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
             self.n_classes_ = self.n_classes_[0]
             self.classes_ = self.classes_[0]
 
+        if X_old_data is not None:
+            X.data = X_old_data
+
         return self
 
     def predict(self, X):
@@ -279,14 +309,32 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         Parameters
         ----------
         X : array-like of shape = [n_samples, n_features]
-            The input samples.
+            The input samples. Sparse matrices are also supported.
+            Use csr_matrix in case of sparse data.
 
         Returns
         -------
         y : array of shape = [n_samples] or [n_samples, n_outputs]
             The predicted classes, or the predict values.
         """
-        if getattr(X, "dtype", None) != DTYPE or X.ndim != 2:
+
+        X_old_data = None  # This variable is used to avoid inplace
+                           # of the data.
+
+        if issparse(X):
+            X = X.tocsr()
+            X_old_data = X.data
+
+            if X.data.dtype != DTYPE:
+                X.data = np.ascontiguousarray(X.data, dtype=DTYPE)
+
+            if X.indices.dtype != np.int32:
+                X.indices = np.ascontiguousarray(X.indices, dtype=np.int32)
+
+            if X.indptr.dtype != np.int32:
+                X.indptr = np.ascontiguousarray(X.indptr, dtype=np.int32)
+
+        elif getattr(X, "dtype", None) != DTYPE or X.ndim != 2:
             X = array2d(X, dtype=DTYPE)
 
         n_samples, n_features = X.shape
@@ -300,7 +348,12 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
                              " input n_features is %s "
                              % (self.n_features_, n_features))
 
+
         proba = self.tree_.predict(X)
+
+        # Revert previous X.data
+        if X_old_data is not None:
+            X.data = X_old_data
 
         # Classification
         if isinstance(self, ClassifierMixin):
@@ -502,7 +555,23 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
             The class probabilities of the input samples. The order of the
             classes corresponds to that in the attribute `classes_`.
         """
-        if getattr(X, "dtype", None) != DTYPE or X.ndim != 2:
+
+        X_old_data = None
+
+        if issparse(X):
+            X = X.tocsr()
+            X_old_data = X.data
+
+            if X.data.dtype != DTYPE:
+                X.data = np.ascontiguousarray(X.data, dtype=DTYPE)
+
+            if X.indices.dtype != np.int32:
+                X.indices = np.ascontiguousarray(X.indices, dtype=np.int32)
+
+            if X.indptr.dtype != np.int32:
+                X.indptr = np.ascontiguousarray(X.indptr, dtype=np.int32)
+
+        elif getattr(X, "dtype", None) != DTYPE or X.ndim != 2:
             X = array2d(X, dtype=DTYPE)
 
         n_samples, n_features = X.shape
@@ -517,6 +586,9 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
                              % (self.n_features_, n_features))
 
         proba = self.tree_.predict(X)
+
+        if X_old_data is not None:
+            X.data = X_old_data
 
         if self.n_outputs_ == 1:
             proba = proba[:, :self.n_classes_]

@@ -2,8 +2,11 @@
 Testing for the tree module (sklearn.tree).
 """
 import pickle
+import sys
+sys.path.insert(0, "/Users/fares19/GitTools2/scikit-learn/")
 import numpy as np
 
+from scipy.sparse import csc_matrix, csr_matrix, rand
 from functools import partial
 from itertools import product
 
@@ -28,7 +31,10 @@ from sklearn.tree import ExtraTreeClassifier
 from sklearn.tree import ExtraTreeRegressor
 
 from sklearn import tree
+from sklearn.tree.tree import SPARSE_SPLITTER
 from sklearn import datasets
+from sklearn.ensemble import RandomForestClassifier
+import time
 
 from sklearn.preprocessing._weights import _balance_weights
 
@@ -55,6 +61,37 @@ ALL_TREES.update(CLF_TREES)
 ALL_TREES.update(REG_TREES)
 
 
+
+X_small = [[0, 0, 4, 0, 0, 0, 1, -14, 0, -4, 0, 0, 0, 0, ],
+          [0, 0, 5, 3, 0, -4, 0, 0, 1, -5, 0.2, 0, 4, 1, ],
+          [-1, -1, 0, 0, -4.5, 0, 0, 2.1, 1, 0, 0, -4.5, 0, 1, ],
+          [-1, -1, 0, -1.2, 0, 0, 0, 0, 0, 0, 0.2, 0, 0, 1, ],
+          [-1, -1, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 1, ],
+          [-1, -2, 0, 4, -3, 10, 4, 0, -3.2, 0, 4, 3, -4, 1, ],
+          [2.11, 0, -6, -0.5, 0, 11, 0, 0, -3.2, 6, 0.5, 0, -3, 1, ],
+          [2.11, 0, -6, -0.5, 0, 11, 0, 0, -3.2, 6, 0, 0, -2, 1, ],
+          [2.11, 8, -6, -0.5, 0, 11, 0, 0, -3.2, 6, 0, 0, -2, 1, ],
+          [2.11, 8, -6, -0.5, 0, 11, 0, 0, -3.2, 6, 0.5, 0, -1, 0, ],
+          [2, 8, 5, 1, 0.5, -4, 10, 0, 1, -5, 3, 0, 2, 0, ],
+          [2, 0, 1, 1, 1, -1, 1, 0, 0, -2, 3, 0, 1, 0, ],
+          [2, 0, 1, 2, 3, -1, 10, 2, 0, -1, 1, 2, 2, 0, ],
+          [1, 1, 0, 2, 2, -1, 1, 2, 0, -5, 1, 2, 3, 0, ],
+          [3, 1, 0, 3, 0, -4, 10, 0, 1, -5, 3, 0, 3, 1, ],
+          [2.11, 8, -6, -0.5, 0, 1, 0, 0, -3.2, 6, 0.5, 0, -3, 1, ],
+          [2.11, 8, -6, -0.5, 0, 1, 0, 0, -3.2, 6, 1.5, 1, -1, -1, ],
+          [2.11, 8, -6, -0.5, 0, 10, 0, 0, -3.2, 6, 0.5, 0, -1, -1, ],
+          [2, 0, 5, 1, 0.5, -2, 10, 0, 1, -5, 3, 1, 0, -1, ],
+          [2, 0, 1, 1, 1, -2, 1, 0, 0, -2, 0, 0, 0, 1, ],
+          [2, 1, 1, 1, 2, -1, 10, 2, 0, -1, 0, 2, 1, 1, ],
+          [1, 1, 0, 0, 1, -3, 1, 2, 0, -5, 1, 2, 1, 1, ],
+          [3, 1, 0, 1, 0, -4, 1, 0, 1, -2, 0, 0, 1, 0, ]]
+
+y_small = [1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0,
+           0, 0]
+y_small_reg = [1.0, 2.1, 1.2, 0.05, 10, 2.4, 3.1, 1.01, 0.01, 2.98, 3.1, 1.1,
+               0.0, 1.2, 2, 11, 0, 0, 4.5, 0.201, 1.06, 0.9, 0]
+
+
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
 y = [-1, -1, -1, 1, 1, 1]
@@ -75,6 +112,39 @@ boston = datasets.load_boston()
 perm = rng.permutation(boston.target.size)
 boston.data = boston.data[perm]
 boston.target = boston.target[perm]
+
+digits = datasets.load_digits()
+perm = rng.permutation(digits.target.size)
+digits.data = digits.data[perm]
+digits.target = digits.target[perm]
+
+
+def assert_tree_equal(d, s, message):
+    from sklearn.tree._tree import TREE_LEAF
+    assert_equal(s.node_count, d.node_count,
+                 "{0}: inequal number of node ({1} != {2})"
+                 "".format(message, s.node_count, d.node_count))
+
+    assert_array_equal(d.children_right, s.children_right,
+                       message + ": inequal n_node_samples")
+    assert_array_equal(d.children_left, s.children_left,
+                       message + ": inequal children_left")
+
+    external = d.children_right == TREE_LEAF
+    internal = np.logical_not(external)
+
+    assert_array_equal(d.feature[internal], s.feature[internal],
+                       message + ": inequal features")
+    assert_array_equal(d.threshold[internal], s.threshold[internal],
+                       message + ": inequal threshold")
+    assert_array_equal(d.n_node_samples, s.n_node_samples,
+                       message + ": inequal n_node_samples")
+
+    assert_almost_equal(d.impurity, s.impurity,
+                        err_msg=message + ": inequal impurity")
+
+    assert_array_almost_equal(d.value[external], s.value[external],
+                              err_msg=message + ": inequal value")
 
 
 def test_classification_toy():
@@ -590,6 +660,17 @@ def test_memory_layout():
         y = iris.target
         assert_array_equal(est.fit(X, y).predict(X), y)
 
+        if est.splitter in SPARSE_SPLITTER:
+            # csr matrix
+            X = csr_matrix(iris.data)
+            y = iris.target
+            assert_array_equal(est.fit(X, y).predict(X), y)
+
+            # csc_matrix
+            X = csc_matrix(iris.data)
+            y = iris.target
+            assert_array_equal(est.fit(X, y).predict(X), y)
+
         # Strided
         X = np.asarray(iris.data[::3], dtype=dtype)
         y = iris.target[::3]
@@ -748,6 +829,380 @@ def test_big_input():
         assert_in("float32", str(e))
 
 
+# def test_memoryerror():
+#     from sklearn.tree._tree import _realloc_test
+#     assert_raises(MemoryError, _realloc_test)
+
+
+def test_sparse_input_on_x_small():
+
+    for max_features in [1, None]:
+        s = DecisionTreeClassifier(random_state=0, max_features=max_features)
+        s.fit(csc_matrix(X_small), y_small)
+
+        d = DecisionTreeClassifier(random_state=0, max_features=max_features)
+        d.fit(X_small, y_small)
+
+        assert_tree_equal(d.tree_, s.tree_,
+                          "dense and sparse format gave different trees")
+        assert_array_almost_equal(s.predict(X_small), d.predict(X_small))
+
+    for max_features in [1, None]:
+        s = DecisionTreeRegressor(random_state=0, max_features=max_features)
+        s.fit(csc_matrix(X_small), y_small)
+
+        d = DecisionTreeRegressor(random_state=0, max_features=max_features)
+        d.fit(X_small, y_small)
+
+        assert_tree_equal(d.tree_, s.tree_,
+                          "dense and sparse format gave different trees")
+        assert_array_almost_equal(s.predict(X_small), d.predict(X_small))
+
+
+def test_sparse_input_on_random_data():
+    rng = np.random.RandomState(0)
+    X = rng.rand(40, 10)
+    X[X < .8] = 0
+    X = csr_matrix(X)
+    y = (4 * rng.rand(40)).astype(np.int)
+
+    for name, TreeEstimator in ALL_TREES.items():
+
+        d = TreeEstimator(random_state=0).fit(X.toarray(), y)
+        if d.splitter not in SPARSE_SPLITTER:
+            continue
+
+        s = TreeEstimator(random_state=0).fit(X, y)
+
+        assert_tree_equal(d.tree_, s.tree_,
+                          "{0} with dense and sparse format gave different "
+                          "trees".format(name))
+        assert_array_almost_equal(s.predict(X), d.predict(X))
+
+
+def test_sparse_input_boston():
+    for max_leaf_nodes in [None, 10, 20]:
+        d = DecisionTreeClassifier(random_state=0,
+                                   max_leaf_nodes=max_leaf_nodes)
+        d.fit(csc_matrix(boston.data), boston.target)
+
+        # csc data
+        csc = DecisionTreeClassifier(random_state=0,
+                                     max_leaf_nodes=max_leaf_nodes)
+        csc.fit(csc_matrix(boston.data), boston.target)
+        assert_tree_equal(d.tree_, csc.tree_,
+                          "dense and sparse format gave different trees")
+        assert_array_almost_equal(csc.predict(boston.data),
+                                  d.predict(boston.data))
+
+        # csr data
+        csr = DecisionTreeClassifier(random_state=0,
+                                     max_leaf_nodes=max_leaf_nodes)
+        csr.fit(csc_matrix(boston.data), boston.target)
+
+        assert_tree_equal(d.tree_, csr.tree_,
+                          "dense and sparse format gave different trees")
+        assert_array_almost_equal(csr.predict(boston.data),
+                                  d.predict(boston.data))
+
+
+def test_sparse_input_digits():
+    for max_leaf_nodes in [None, 10, 20]:
+        d = DecisionTreeClassifier(random_state=0,
+                                   max_leaf_nodes=max_leaf_nodes)
+        d.fit(digits.data, digits.target)
+
+        # csc data
+        csc = DecisionTreeClassifier(random_state=0,
+                                     max_leaf_nodes=max_leaf_nodes)
+        csc.fit(csc_matrix(digits.data), digits.target)
+        assert_tree_equal(d.tree_, csc.tree_,
+                          "dense and sparse format gave different trees")
+        assert_array_almost_equal(csc.predict(csc_matrix(digits.data)),
+                                  d.predict(digits.data))
+
+        # csr data
+        csr = DecisionTreeClassifier(random_state=0,
+                                     max_leaf_nodes=max_leaf_nodes)
+        csr.fit(csr_matrix(digits.data), digits.target)
+
+        assert_tree_equal(d.tree_, csr.tree_,
+                          "dense and sparse format gave different trees")
+        assert_array_almost_equal(csr.predict(csr_matrix(digits.data)),
+                                  d.predict(digits.data))
+
+
+def test_sparse_with_various_criterion():
+    B = datasets.load_digits()
+    X_ = B.data
+    y_ = B.target
+    d = DecisionTreeClassifier(random_state=0,
+                               criterion="entropy").fit(X_, y_).tree_
+    s = DecisionTreeClassifier(random_state=0,
+                               criterion="entropy").fit(csc_matrix(X_),
+                                                        y_).tree_
+    message = 'Sparse & Dense Trees are not the same, fitting the digits data'
+    assert_tree_equal(d, s, message)
+
+
+def test_equality_of_sparse_and_dense_tree_with_digits_max_depth():
+
+    B = datasets.load_digits()
+    X_ = B.data
+    y_ = B.target
+    d = DecisionTreeClassifier(random_state=0, max_depth=1).fit(X_, y_).tree_
+    s = DecisionTreeClassifier(random_state=0,
+                               max_depth=1).fit(csc_matrix(X_), y_).tree_
+    message = 'Sparse & Dense Trees are not the same, fitting the digits data'
+    assert_tree_equal(d, s, message)
+
+
+def test_equality_of_sparse_and_dense_tree_with_digits_min_samples_split():
+
+    B = datasets.load_digits()
+    X_ = B.data
+    y_ = B.target
+    d = DecisionTreeClassifier(random_state=0,
+                               min_samples_split=4).fit(X_, y_).tree_
+    s = DecisionTreeClassifier(random_state=0,
+                               min_samples_split=4).fit(csc_matrix(X_),
+                                                        y_).tree_
+    message = 'Sparse & Dense Trees are not the same, fitting the digits data'
+    assert_tree_equal(d, s, message)
+
+
+def test_equality_of_sparse_and_dense_tree_with_digits_min_samples_leaf():
+
+    B = datasets.load_digits()
+    X_ = B.data
+    y_ = B.target
+    d = DecisionTreeClassifier(random_state=0,
+                               min_samples_leaf=10).fit(X_, y_).tree_
+    s = DecisionTreeClassifier(random_state=0,
+                               min_samples_leaf=10).fit(csc_matrix(X_),
+                                                        y_).tree_
+    message = 'Sparse & Dense Trees are not the same, fitting the digits data'
+    assert_tree_equal(d, s, message)
+
+
+def test_random_sparse_matrix_best_first_search():
+    n_samples = 40
+    n_features = 20
+
+    n_test = 20
+    for dens in [0.0, 0.3, 1.0]:
+        X_ = rand(n_samples, n_features, density=dens, format='csc')
+        y_ = np.random.randint(2, size=n_samples)
+        X_test = rand(n_test, n_features, density=dens, format='csr')
+
+        s = DecisionTreeClassifier(random_state=0,
+                                   max_leaf_nodes=5).fit(X_, y_)
+
+        d = DecisionTreeClassifier(random_state=0,
+                                   max_leaf_nodes=5).fit(X_.toarray(), y_)
+
+        assert_array_equal(s.predict(X_test),
+                           d.predict(X_test))
+
+        assert_array_equal(s.predict_proba(X_test.toarray()),
+                           d.predict_proba(X_test.toarray()))
+
+        assert_tree_equal(d.tree_, s.tree_,
+                          "Sparse and Dense Trees are not the same,"
+                          "fitting the random data")
+
+
+def test_random_sparse_matrix_depth_first_search():
+    n_samples = 20
+    n_features = 20
+    n_test = 100
+    for density in [0.01, 0.1, 0.5]:
+        X_ = rand(n_samples, n_features, density=density, format='csc')
+        y_ = np.random.randint(2, size=n_samples)
+        X_test = rand(n_test, n_features, density=density, format='csr')
+
+        s = DecisionTreeClassifier(random_state=0,
+                                   max_depth=100).fit(X_, y_)
+        d = DecisionTreeClassifier(random_state=0,
+                                   max_depth=100).fit(X_.toarray(), y_)
+
+        assert_tree_equal(d.tree_, s.tree_,
+                          "Sparse and Dense Trees are not the same,"
+                          "fitting the random data")
+
+        assert_array_equal(s.predict(X_test),
+                           d.predict(X_test))
+
+        assert_array_equal(s.predict_proba(X_test.toarray()),
+                           d.predict_proba(X_test.toarray()))
+
+
+def test_random_sparse_matrix_best_first_search_reg():
+
+    n_samples = 40
+    n_features = 20
+
+    n_test = 20
+    for dens in [0.0, 0.3, 1.0]:
+        X_ = rand(n_samples, n_features, density=dens, format='csc')
+        y_ = np.random.randint(2, size=n_samples)
+        X_test = rand(n_test, n_features, density=dens, format='csr')
+
+        s = DecisionTreeRegressor(random_state=0,
+                                  max_leaf_nodes=5).fit(X_, y_)
+
+        d = DecisionTreeRegressor(random_state=0,
+                                  max_leaf_nodes=5).fit(X_.toarray(), y_)
+
+        assert_array_equal(s.predict(X_test),
+                           d.predict(X_test))
+
+        assert_tree_equal(d.tree_, s.tree_,
+                          "Sparse and Dense Trees are not the same, "
+                          "fitting the random data")
+
+
+def test_random_sparse_matrix_depth_first_search_reg():
+
+    n_samples = 40
+    n_features = 20
+
+    n_test = 20
+    for dens in [0.0, 0.3, 1.0]:
+        X_ = rand(n_samples, n_features, density=dens, format='csc')
+        y_ = np.random.randint(2, size=n_samples)
+        X_test = rand(n_test, n_features, density=dens, format='csr')
+
+        s = DecisionTreeRegressor(random_state=0,
+                                  max_depth=100).fit(X_, y_)
+
+        d = DecisionTreeRegressor(random_state=0,
+                                  max_depth=100).fit(X_.toarray(), y_)
+
+        assert_array_equal(s.predict(X_test),
+                           d.predict(X_test))
+
+        assert_tree_equal(d.tree_, s.tree_,
+                          "Sparse and Dense Trees are not the same,"
+                          "fitting the random data")
+
+
+def test_random_sparse_matrix_depth_first_search_negative_input():
+    n_samples = 40
+    n_features = 20
+
+    n_test = 20
+    for dens in [0.0, 0.3, 1.0]:
+        X_ = -1*rand(n_samples, n_features, density=dens, format='csc')
+        y_ = np.random.randint(2, size=n_samples)
+        X_test = -1*rand(n_test, n_features, density=dens, format='csr')
+
+        s = DecisionTreeClassifier(random_state=0,
+                                   max_depth=100).fit(X_, y_)
+
+        d = DecisionTreeClassifier(random_state=0,
+                                   max_depth=100).fit(X_.toarray(), y_)
+
+        assert_array_equal(s.predict(X_test),
+                           d.predict(X_test))
+
+        assert_array_equal(s.predict_proba(X_test.toarray()),
+                           d.predict_proba(X_test.toarray()))
+
+        assert_tree_equal(d.tree_, s.tree_,
+                          "Sparse and Dense Trees are not the same,"
+                          "fitting the random data")
+
+
+def test_random_sparse_matrix_depth_first_search_mixed_input():
+    n_samples = 40
+    n_features = 20
+
+    n_test = 20
+    X_ = rand(n_samples, n_features, density=0.3, format='csc')
+    X_.data = np.array([(np.random.uniform(0, 2)*2-1)*x for x in X_.data])
+
+    X_test = rand(n_test, n_features, density=0.3, format='csr')
+    X_test.data = np.array([(np.random.uniform(0, 2)*2-1)*x
+                            for x in X_test.data])
+
+    y_ = np.random.randint(2, size=n_samples)
+    s = DecisionTreeClassifier(random_state=0,
+                               max_depth=100).fit(X_, y_)
+
+    d = DecisionTreeClassifier(random_state=0,
+                               max_depth=100).fit(X_.toarray(), y_)
+
+    assert_array_equal(s.predict(X_test),
+                       d.predict(X_test))
+
+    assert_array_equal(s.predict_proba(X_test.toarray()),
+                       d.predict_proba(X_test.toarray()))
+
+    assert_tree_equal(d.tree_, s.tree_,
+                      "Sparse and Dense Trees are not the same,"
+                      "fitting the random data")
+
+
+def test_multi_label_classification():
+    n_samples = 40
+    n_features = 20
+
+    n_test = 20
+    X_ = rand(n_samples, n_features, density=0.3, format='csc')
+    X_.data = np.array([(np.random.uniform(0, 2)*2-1)*x for x in X_.data])
+
+    X_test = rand(n_test, n_features, density=0.3, format='csr')
+    X_test.data = np.array([(np.random.uniform(0, 2)*2-1)*x
+                            for x in X_test.data])
+
+    y_ = np.random.randint(2, size=(n_samples, 3))
+    s = DecisionTreeClassifier(random_state=0,
+                               max_depth=100).fit(X_, y_)
+
+    d = DecisionTreeClassifier(random_state=0,
+                               max_depth=100).fit(X_.toarray(), y_)
+
+    assert_array_equal(s.predict(X_test),
+                       d.predict(X_test))
+
+    assert_array_equal(s.predict_proba(X_test.toarray()),
+                       d.predict_proba(X_test.toarray()))
+
+    assert_tree_equal(d.tree_, s.tree_,
+                      "Sparse and Dense Trees are not the same,"
+                      "fitting the random data")
+
+
+def test_random_sparse_matrix_of_random_forest():
+    n_samples = 40
+    n_features = 20
+
+    n_test = 20
+    for dens in [0.1, 0.3, 1.0]:
+        X_ = rand(n_samples, n_features, density=dens, format='csc')
+        y_ = np.random.randint(2, size=n_samples)
+        X_test = rand(n_test, n_features, density=dens, format='csr')
+
+        s = RandomForestClassifier(n_estimators=2, random_state=0,
+                                   max_depth=100).fit(X_, y_)
+
+        d = RandomForestClassifier(n_estimators=2, random_state=0,
+                                   max_depth=100).fit(X_.toarray(), y_)
+
+        Ss = s.estimators_
+        Ds = d.estimators_
+        for i in range(len(Ds)):
+            assert_tree_equal(Ds[i].tree_, Ss[i].tree_,
+                              "Sparse and Dense Random Forests not the same")
+
+        assert_array_equal(s.predict(X_test.toarray()),
+                           d.predict(X_test.toarray()))
+
+        assert_array_almost_equal(s.predict_proba(X_test.toarray()),
+                                  d.predict_proba(X_test.toarray()))
+
 def test_memoryerror():
     from sklearn.tree._tree import _realloc_test
     assert_raises(MemoryError, _realloc_test)
+
