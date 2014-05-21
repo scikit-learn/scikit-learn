@@ -172,8 +172,11 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
             # Run Fisher transform to get the rho CI
             F = 0.5 * np.log((1 + rho) / (1 - rho))
             F_se = 1 / np.sqrt(len(X) - 3)
-            rho_0 = np.tanh(F - 2.0 * F_se)
-            rho_1 = np.tanh(F + 2.0 * F_se)
+            
+            # Use a 95% CI, i.e., +/-1.96 S.E.
+            # http://en.wikipedia.org/wiki/Fisher_transformation
+            rho_0 = np.tanh(F - 1.96 * F_se)
+            rho_1 = np.tanh(F + 1.96 * F_se)
 
             # Warn if the CI spans zero.
             if np.sign(rho_0) != np.sign(rho_1):
