@@ -120,7 +120,7 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
 
         If string and set to "auto," determine whether y should
         increase or decrease based on the Spearman correlation estimate's
-        sign, respectively.
+        sign.
 
 
     Attributes
@@ -155,7 +155,7 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         The Spearman correlation coefficent is estimated from the data,
         and the sign of the resulting estiamte is used to set ``increasing``.
 
-        In the event that the confidence interval based on Fisher transform
+        In the event that the 95% confidence interval based on Fisher transform
         spans zero, a warning is raised.
         """
         # Determine increasing if Spearman requested
@@ -172,8 +172,8 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
             # Run Fisher transform to get the rho CI
             F = 0.5 * np.log((1 + rho) / (1 - rho))
             F_se = 1 / np.sqrt(len(X) - 3)
-            rho_0 = np.tanh(F - F_se)
-            rho_1 = np.tanh(F + F_se)
+            rho_0 = np.tanh(F - 2.0 * F_se)
+            rho_1 = np.tanh(F + 2.0 * F_se)
 
             # Warn if the CI spans zero.
             if np.sign(rho_0) != np.sign(rho_1):
