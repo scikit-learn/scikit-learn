@@ -153,7 +153,7 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         parameter and the data.
 
         The Spearman correlation coefficent is estimated from the data,
-        and the sign of the resulting estiamte is used to set ``increasing``.
+        and the sign of the resulting estimate is used to set ``increasing``.
 
         In the event that the 95% confidence interval based on Fisher transform
         spans zero, a warning is raised.
