@@ -1151,3 +1151,8 @@ def setup(app):
         for filename in filelist:
             if filename.endswith('png'):
                 os.remove(os.path.join(build_image_dir, filename))
+
+
+def setup_module():
+    # HACK: Stop nosetests running setup() above
+    pass
