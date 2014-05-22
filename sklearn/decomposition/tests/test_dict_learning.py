@@ -176,6 +176,13 @@ def test_sparse_encode_error():
     assert_less(np.sqrt(np.sum((np.dot(code, V) - X) ** 2)), 0.1)
 
 
+def test_sparse_encode_error_default_sparsity():
+    X = np.random.randn(100, 64)
+    D = np.random.randn(2, 64)
+    code = sparse_encode(X, D, algorithm='omp', n_nonzero_coefs=None)
+    assert_equal(code.shape, (100, 2))
+
+
 def test_unknown_method():
     n_components = 12
     rng = np.random.RandomState(0)
