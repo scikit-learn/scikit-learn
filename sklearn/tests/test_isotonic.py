@@ -3,54 +3,58 @@ import numpy as np
 from sklearn.isotonic import check_increasing, isotonic_regression,\
     IsotonicRegression
 
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_raises, assert_equal, \
+    assert_array_equal, assert_true, assert_false
 
-import warnings
+from sklearn.utils.testing import assert_warns_message, assert_no_warnings
 
 
 def test_check_increasing_up():
-    X = [0, 1, 2, 3, 4, 5]
+    x = [0, 1, 2, 3, 4, 5]
+    y = [0, 1.5, 2.77, 8.99, 8.99, 50]
+
+    # Check that we got increasing=True and no warnings
+    is_increasing = assert_no_warnings(check_increasing, x, y)
+    assert_true(is_increasing)
+
+
+def test_check_increasing_up_extreme():
+    x = [0, 1, 2, 3, 4, 5]
     y = [0, 1, 2, 3, 4, 5]
 
     # Check that we got increasing=True and no warnings
-    with warnings.catch_warnings(record=True) as w:
-        # Trigger all warnings
-        warnings.simplefilter("always")
-
-        is_increasing = check_increasing(X, y)
-        assert_equal(is_increasing, True)
-        assert_equal(len(w), 0)
+    is_increasing = assert_no_warnings(check_increasing, x, y)
+    assert_true(is_increasing)
 
 
 def test_check_increasing_down():
-    X = [0, 1, 2, 3, 4, 5]
+    x = [0, 1, 2, 3, 4, 5]
+    y = [0, -1.5, -2.77, -8.99, -8.99, -50]
+
+    # Check that we got increasing=False and no warnings
+    is_increasing = assert_no_warnings(check_increasing, x, y)
+    assert_false(is_increasing)
+
+
+def test_check_increasing_down_extreme():
+    x = [0, 1, 2, 3, 4, 5]
     y = [0, -1, -2, -3, -4, -5]
 
     # Check that we got increasing=False and no warnings
-    with warnings.catch_warnings(record=True) as w:
-        # Trigger all warnings
-        warnings.simplefilter("always")
-
-        is_increasing = check_increasing(X, y)
-        assert_equal(is_increasing, False)
-        assert_equal(len(w), 0)
+    is_increasing = assert_no_warnings(check_increasing, x, y)
+    assert_false(is_increasing)
 
 
-def test_check_increasing_ci():
-    X = [0, 1, 2, 3, 4, 5]
+def test_check_ci_warn():
+    x = [0, 1, 2, 3, 4, 5]
     y = [0, -1, 2, -3, 4, -5]
 
-    # Check that we got increasing=False and CI warning
-    with warnings.catch_warnings(record=True) as w:
-        # Trigger all warnings
-        warnings.simplefilter("always")
+    # Check that we got increasing=False and CI interval warning
+    is_increasing = assert_warns_message(UserWarning, "interval",
+                                         check_increasing,
+                                         x, y)
 
-        is_increasing = check_increasing(X, y)
-        assert_equal(is_increasing, False)
-        assert_equal(len(w), 1)
-        assert_equal(True, "interval" in str(w[-1].message))
+    assert_false(is_increasing)
 
 
 def test_isotonic_regression():
