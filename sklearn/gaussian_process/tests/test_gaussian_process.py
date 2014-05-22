@@ -4,14 +4,13 @@ Testing for Gaussian Process module (sklearn.gaussian_process)
 
 # Author: Vincent Dubourg <vincent.dubourg@gmail.com>
 # Licence: BSD 3 clause
+from macpath import norm_error
 
 from nose.tools import raises
 from nose.tools import assert_true
 
 import numpy as np
 import scipy.stats as ss
-
-import pylab as pl
 
 from sklearn.gaussian_process import GaussianProcess
 from sklearn.gaussian_process import regression_models as regression
@@ -65,7 +64,7 @@ def check2d(X, regr=regression.constant, corr=correlation.squared_exponential,
 
 
 def check2d_2d(X, regr=regression.constant, corr=correlation.squared_exponential,
-               random_start=10, beta0=None):
+               random_start=10, beta0=None, theta0=[1e-2] * 2, thetaL=[1e-4] * 2, thetaU=[1e-1] * 2):
     """
     MLE estimation of a two-dimensional Gaussian Process model accounting for
     anisotropy. Check random start optimization.
@@ -78,8 +77,8 @@ def check2d_2d(X, regr=regression.constant, corr=correlation.squared_exponential
 
     y = f(X)
     gp = GaussianProcess(regr=regr, corr=corr, beta0=beta0,
-                         theta0=[1e-2] * 2, thetaL=[1e-4] * 2,
-                         thetaU=[1e-1] * 2,
+                         theta0=theta0, thetaL=thetaL,
+                         thetaU=thetaU,
                          random_start=random_start, verbose=False)
     gp.fit(X, y)
     y_pred, MSE = gp.predict(X, eval_MSE=True)
@@ -185,5 +184,3 @@ def test_1d_noisy(regr=regression.constant, corr=correlation.absolute_exponentia
     y = f(x).ravel()
     assert_true((np.abs(y_pred - y) <= np.abs(
         ss.norm.ppf(0.025, y_pred, np.sqrt(MSE)))  ).all())  #check that true value is within 95% conf. int.
-
-
