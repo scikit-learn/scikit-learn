@@ -65,7 +65,7 @@ def test_isomap_incremental_grid():
                                          n_max_samples=Npts)
     clf.fit(X_train)
 
-    for i in xrange(len(i_test)):
+    for i in range(len(i_test)):
         clf.partial_fit_transform(X_test[i, :].reshape(1, -1))
 
     iso_incremental = (clf.transform(X) / np.sqrt(clf.n) *
@@ -100,7 +100,7 @@ def test_isomap_incremental_extend():
                                      n_max_samples=n_train, overflow_mode="extend")
     clf.fit(X_train)
 
-    for i in xrange(len(i_test)):
+    for i in range(len(i_test)):
         clf.partial_fit(X_test[i, :].reshape(1, -1))
     iso_incremental = (clf.transform(X) / np.sqrt(clf.n) *
                                     np.sqrt(clf.kernel_pca_.lambdas_))
@@ -138,7 +138,7 @@ def test_isomap_incremental_embed():
                                      overflow_mode="embed")
     clf.fit(X_train)
     iso_incremental = np.zeros((len(i_test), clf.n_components), dtype=np.float)
-    for i in xrange(len(i_test)):
+    for i in range(len(i_test)):
         iso_incremental[i, :] = clf.partial_fit_transform(X_test[i, :].reshape(1, -1))
 
     iso_incremental *= 1.0 / np.sqrt(clf.n) * np.sqrt(clf.kernel_pca_.lambdas_)
@@ -172,7 +172,7 @@ def test_isomap_incremental_adapt():
                                      n_max_samples=2 * n_train,
                                      overflow_mode="adapt")
     clf.fit(X_train)
-    for i in xrange(len(i_test)):
+    for i in range(len(i_test)):
         clf.partial_fit(X_test[i, :].reshape(1, -1))
 
     iso_incremental = clf.embedding_
