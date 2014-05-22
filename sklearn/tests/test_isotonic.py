@@ -3,8 +3,8 @@ import numpy as np
 from sklearn.isotonic import check_increasing, isotonic_regression,\
     IsotonicRegression
 
-from sklearn.utils.testing import assert_raises, assert_equal, \
-    assert_array_equal, assert_true, assert_false
+from sklearn.utils.testing import assert_raises, assert_array_equal,\
+    assert_true, assert_false
 
 from sklearn.utils.testing import assert_warns_message, assert_no_warnings
 
@@ -96,7 +96,7 @@ def test_isotonic_regression_auto_decreasing():
         x, y)
 
     is_increasing = y_[0] < y_[-1]
-    assert_equal(is_increasing, False)
+    assert_false(is_increasing)
 
 
 def test_isotonic_regression_auto_increasing():
@@ -108,7 +108,7 @@ def test_isotonic_regression_auto_increasing():
         x, y)
 
     is_increasing = y_[0] < y_[-1]
-    assert_equal(is_increasing, True)
+    assert_true(is_increasing)
 
 
 def test_assert_raises_exceptions():
