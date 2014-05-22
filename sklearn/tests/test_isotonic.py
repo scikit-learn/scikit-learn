@@ -1,12 +1,56 @@
 import numpy as np
 
-from sklearn.isotonic import isotonic_regression, IsotonicRegression
+from sklearn.isotonic import check_increasing, isotonic_regression,\
+    IsotonicRegression
 
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
 
 import warnings
+
+
+def test_check_increasing_up():
+    X = [0, 1, 2, 3, 4, 5]
+    y = [0, 1, 2, 3, 4, 5]
+
+    # Check that we got increasing=True and no warnings
+    with warnings.catch_warnings(record=True) as w:
+        # Trigger all warnings
+        warnings.simplefilter("always")
+
+        is_increasing = check_increasing(X, y)
+        assert_equal(is_increasing, True)
+        assert_equal(len(w), 0)
+
+
+def test_check_increasing_down():
+    X = [0, 1, 2, 3, 4, 5]
+    y = [0, -1, -2, -3, -4, -5]
+
+    # Check that we got increasing=False and no warnings
+    with warnings.catch_warnings(record=True) as w:
+        # Trigger all warnings
+        warnings.simplefilter("always")
+
+        is_increasing = check_increasing(X, y)
+        assert_equal(is_increasing, False)
+        assert_equal(len(w), 0)
+
+
+def test_check_increasing_ci():
+    X = [0, 1, 2, 3, 4, 5]
+    y = [0, -1, 2, -3, 4, -5]
+
+    # Check that we got increasing=False and CI warning
+    with warnings.catch_warnings(record=True) as w:
+        # Trigger all warnings
+        warnings.simplefilter("always")
+
+        is_increasing = check_increasing(X, y)
+        assert_equal(is_increasing, False)
+        assert_equal(len(w), 1)
+        assert_equal(True, "interval" in str(w[-1].message))
 
 
 def test_isotonic_regression():
@@ -59,39 +103,8 @@ def test_isotonic_regression_auto_increasing():
     y_ = IsotonicRegression(increasing='auto').fit_transform(
         x, y)
 
-    # Check that a warning is NOT thrown
-    with warnings.catch_warnings(record=True) as w:
-        # Trigger all warnings
-        warnings.simplefilter("always")
-
-        # Fit and transform
-        y_ = IsotonicRegression(increasing='auto').fit_transform(
-            x, y)
-
-        # Ensure that we got no warning
-        assert_equal(len(w), 0)
-
     is_increasing = y_[0] < y_[-1]
     assert_equal(is_increasing, True)
-
-
-def test_isotonic_regression_auto_ci_check():
-    # Set y and x for decreasing
-    y = np.array([-5, 6.1, -6, 7, -10, 9, -10])
-    x = np.arange(len(y))
-
-    # Check that a warning is thrown
-    with warnings.catch_warnings(record=True) as w:
-        # Trigger all warnings
-        warnings.simplefilter("always")
-
-        # Fit and transform
-        y_ = IsotonicRegression(increasing='auto').fit_transform(
-            x, y)
-
-        # Ensure that we got a warning
-        assert_equal(len(w), 1)
-        assert_equal(True, "interval" in str(w[-1].message))
 
 
 def test_assert_raises_exceptions():
