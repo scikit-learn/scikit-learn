@@ -216,43 +216,29 @@ def test_importances():
     for name in FOREST_CLASSIFIERS:
         yield check_importance, name, X, y
 
-
-def test_oob_score_classification():
+def check_oob_score(name, X, y, n_estimators=20):
     """Check that oob prediction is a good estimation of the generalization
-    error."""
-    clf = RandomForestClassifier(oob_score=True, random_state=rng)
-    n_samples = iris.data.shape[0]
-    clf.fit(iris.data[:n_samples // 2, :], iris.target[:n_samples // 2])
-    test_score = clf.score(iris.data[n_samples // 2:, :],
-                           iris.target[n_samples // 2:])
-    assert_less(abs(test_score - clf.oob_score_), 0.1)
+       error."""
+    est = FOREST_ESTIMATORS[name](oob_score=True, random_state=0,
+                                  n_estimators=n_estimators)
+    n_samples = X.shape[0]
+    est.fit(X[:n_samples // 2, :], y[:n_samples // 2])
+    test_score = est.score(X[n_samples // 2:, :], y[n_samples // 2:])
 
+    if name in FOREST_CLASSIFIERS:
+        assert_less(abs(test_score - est.oob_score_), 0.1)
+    else:
+        assert_greater(test_score, est.oob_score_)
+        assert_greater(est.oob_score_, .8)
 
-def test_oob_score_classification_for_non_contiguous_target():
-    """Check that oob prediction is a good estimation of the generalization
-    error for non-contiguous targets."""
-    iris_target = iris.target * 2 + 1
-    clf = RandomForestClassifier(n_estimators=50,
-                                 oob_score=True, random_state=rng)
-    n_samples = iris.data.shape[0]
-    clf.fit(iris.data[:n_samples // 2, :], iris_target[:n_samples // 2])
-    test_score = clf.score(iris.data[n_samples // 2:, :],
-                           iris_target[n_samples // 2:])
-    assert_less(abs(test_score - clf.oob_score_), 0.1)
+def test_oob_score():
+    yield check_oob_score, "RandomForestClassifier", iris.data, iris.target
+    yield (check_oob_score, "RandomForestRegressor", boston.data,
+           boston.target, 50)
 
-
-def test_oob_score_regression():
-    """Check that oob prediction is pessimistic estimate.
-    Not really a good test that prediction is independent."""
-    clf = RandomForestRegressor(n_estimators=50, oob_score=True,
-                                random_state=rng)
-    n_samples = boston.data.shape[0]
-    clf.fit(boston.data[:n_samples // 2, :], boston.target[:n_samples // 2])
-    test_score = clf.score(boston.data[n_samples // 2:, :],
-                           boston.target[n_samples // 2:])
-    assert_greater(test_score, clf.oob_score_)
-    assert_greater(clf.oob_score_, .8)
-
+    # non-contiguous targets in classification
+    yield (check_oob_score, "RandomForestClassifier", iris.data,
+           iris.target * 2 + 1)
 
 def check_gridsearch(name):
     forest = FOREST_CLASSIFIERS[name]()
