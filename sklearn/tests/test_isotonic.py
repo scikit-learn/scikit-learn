@@ -68,7 +68,7 @@ def test_isotonic_regression_auto_increasing():
         y_ = IsotonicRegression(increasing='auto').fit_transform(
             x, y)
 
-        # Ensure that we got a warning
+        # Ensure that we got no warning
         assert_equal(len(w), 0)
 
     is_increasing = y_[0] < y_[-1]
