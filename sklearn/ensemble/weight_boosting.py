@@ -32,7 +32,7 @@ from .base import BaseEnsemble
 from ..base import ClassifierMixin, RegressorMixin
 from ..externals import six
 from ..externals.six.moves import xrange, zip
-from forest import BaseForest
+from .forest import BaseForest
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
 from ..tree.tree import BaseDecisionTree
 from ..tree._tree import DTYPE
