@@ -5,7 +5,7 @@
 from sys import version_info
 
 import numpy as np
-from scipy import interpolate
+from scipy import interpolate, sparse
 
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_almost_equal
@@ -441,6 +441,23 @@ def test_1d_multioutput_lasso_and_multitask_lasso_cv():
     assert_almost_equal(clf.alpha_, clf1.alpha_)
     assert_almost_equal(clf.coef_, clf1.coef_[0])
     assert_almost_equal(clf.intercept_, clf1.intercept_[0])
+
+
+def test_sparse_input_dtype_enet_and_lassocv():
+    X, y, _, _ = build_dataset(n_features=10)
+    clf = ElasticNetCV(n_alphas=5)
+    clf.fit(sparse.csr_matrix(X), y)
+    clf1 = ElasticNetCV(n_alphas=5)
+    clf1.fit(sparse.csr_matrix(X, dtype=np.float32), y)
+    assert_almost_equal(clf.alpha_, clf1.alpha_, decimal=6)
+    assert_almost_equal(clf.coef_, clf1.coef_, decimal=6)
+
+    clf = LassoCV(n_alphas=5)
+    clf.fit(sparse.csr_matrix(X), y)
+    clf1 = LassoCV(n_alphas=5)
+    clf1.fit(sparse.csr_matrix(X, dtype=np.float32), y)
+    assert_almost_equal(clf.alpha_, clf1.alpha_, decimal=6)
+    assert_almost_equal(clf.coef_, clf1.coef_, decimal=6)
 
 
 if __name__ == '__main__':
