@@ -23,16 +23,11 @@ from libc.stdlib cimport malloc, free
 from libcpp.vector cimport vector
 from libc.math cimport sqrt
 
-# for parallelization
-from cython cimport parallel
-DEF OMP_NUM_THREADS_CONST = 8  # equals C's #define
-DEF OMP_SCHEDULE_CONST = "static"
-
 DTYPE = np.float64
 ctypedef np.float64_t DTYPE_t
 
-ITYPE = np.int32
-ctypedef np.int32_t ITYPE_t
+ITYPE = np.long
+ctypedef np.long_t ITYPE_t
 
 ######################################################################
 # FibonacciNode structure
@@ -40,9 +35,9 @@ ctypedef np.int32_t ITYPE_t
 #  Fibonacci heap.
 #
 cdef struct FibonacciNode:
-    unsigned int index
-    unsigned int rank
-    unsigned int state
+    ITYPE_t index
+    ITYPE_t rank
+    ITYPE_t state
     DTYPE_t val
     FibonacciNode* parent
     FibonacciNode* left_sibling
@@ -51,7 +46,7 @@ cdef struct FibonacciNode:
 
 
 cdef void initialize_node(FibonacciNode* node,
-                          unsigned int index,
+                          ITYPE_t index,
                           DTYPE_t val=0):
     # Assumptions: - node is a valid pointer
     #              - node is not currently part of a heap
@@ -199,7 +194,7 @@ cdef FibonacciNode* remove_min(FibonacciHeap* heap):
     # Assumptions: - heap is a valid pointer
     #              - heap.min_node is a valid pointer
     cdef FibonacciNode *temp, *temp_right, *out
-    cdef unsigned int i
+    cdef ITYPE_t i
 
     # make all min_node children into root nodes
     if heap.min_node.children:
@@ -262,8 +257,8 @@ cdef FibonacciNode* remove_min(FibonacciHeap* heap):
 #        print "[empty heap]"
 
 
-cdef void _construct_fab(unsigned int a, unsigned int b,
-                         unsigned int N,
+cdef void _construct_fab(ITYPE_t a, ITYPE_t b,
+                         size_t N,
                          np.ndarray[ITYPE_t, ndim=2, mode='c'] F,
                          np.ndarray[ITYPE_t, ndim=1, mode='c'] neighbors,
                          np.ndarray[DTYPE_t, ndim=1, mode='c'] distances,
@@ -277,9 +272,9 @@ cdef void _construct_fab(unsigned int a, unsigned int b,
     Changed to store F directly in auxiliary matrix 
     pi = self.predecessor_matrix_
     '''
-    cdef unsigned int i, j
+    cdef size_t i, j
     cdef FibonacciNode *v, *current_neighbor
-    cdef int s, t, u
+    cdef ITYPE_t s, t, u, k
 
     for i from 0 <= i < N:
         initialize_node(&nodes[i], i)
@@ -287,14 +282,14 @@ cdef void _construct_fab(unsigned int a, unsigned int b,
 
     if pred_[a, b] == a:
         insert_node(heap, &nodes[a])
-    cdef vector[int] Rab
+    cdef vector[ITYPE_t] Rab
     while heap.min_node:
         v = remove_min(heap)
         v.state = 2  # 2 -> SCANNED
         t = v.index
         Rab.push_back(t)
-        for i from indptr[t] <= i < indptr[t + 1]:
-            u = neighbors[i]
+        for k from indptr[t] <= k < indptr[t + 1]:
+            u = neighbors[k]
             current_neighbor = &nodes[u]
             if current_neighbor.state != 2:             # 2 -> SCANNED
                 if pred_[u, b] == a and u != a:
@@ -316,8 +311,8 @@ cdef void _construct_fab(unsigned int a, unsigned int b,
             if pred_[u, t] == pred_[a, t]:
                 F[u, t] = 1
                 F[t, u] = 1
-                for i from indptr[t] <= i < indptr[t + 1]:
-                    s = neighbors[i]
+                for k from indptr[t] <= k < indptr[t + 1]:
+                    s = neighbors[k]
                     current_neighbor = &nodes[s]
                     if current_neighbor.state != 2:  # 2 -> SCANNED
                         if pred_[a, s] == t and s != b:
@@ -328,10 +323,10 @@ cdef void _construct_fab(unsigned int a, unsigned int b,
 
 
 def _construct_f(deleted_edges,
-                 unsigned int N,
+                 size_t N,
                  kng not None,
                  np.ndarray pred_ not None):
-    cdef unsigned int a, b
+    cdef ITYPE_t a, b
 
     # Initialize heap
     cdef FibonacciHeap heap
@@ -355,14 +350,14 @@ def _construct_f(deleted_edges,
     return F
 
 
-cdef void _update_insert_ab(unsigned int a, unsigned int b, unsigned int n,
-                            unsigned int N,
+cdef void _update_insert_ab(ITYPE_t a, ITYPE_t b, size_t n,
+                            size_t N,
                      np.ndarray[DTYPE_t, ndim=2, mode='c'] dist_matrix_,
                      np.ndarray[ITYPE_t, ndim=2, mode='c'] pred_,
                      FibonacciHeap* heap,
                      FibonacciNode* nodes):
-    cdef unsigned int i, j
-    cdef int s, t, u
+    cdef size_t i, j
+    cdef ITYPE_t s, t, u
     cdef FibonacciNode *v, *current_neighbor
     cdef DTYPE_t dist
 
@@ -371,7 +366,7 @@ cdef void _update_insert_ab(unsigned int a, unsigned int b, unsigned int n,
     heap.min_node = NULL
     insert_node(heap, &nodes[a])
 
-    cdef vector[int] S
+    cdef vector[ITYPE_t] S
     while heap.min_node:
         v = remove_min(heap)
         v.state = 2  # -> scanned
@@ -418,7 +413,7 @@ cdef void _update_insert_ab(unsigned int a, unsigned int b, unsigned int n,
     return
 
 
-def _update_insert(unsigned int n, unsigned int N,
+def _update_insert(size_t n, size_t N,
                    np.ndarray[ITYPE_t, ndim=1, mode='c'] neighbors not None,
                    np.ndarray[DTYPE_t, ndim=2, mode='c'] dist_matrix_ not None,
                    np.ndarray[ITYPE_t, ndim=2, mode='c'] pred_ not None):
@@ -430,9 +425,9 @@ def _update_insert(unsigned int n, unsigned int N,
     # Search over all vertex pairs that are neighbors of new point
     # insert these pairs into _update_insert_ab(), where path via new point is
     # better than old path
-    cdef unsigned int a, b
-    cdef unsigned int i, j
-    cdef unsigned int neighbors_len = neighbors.shape[0]
+    cdef ITYPE_t a, b
+    cdef size_t i, j
+    cdef size_t neighbors_len = neighbors.shape[0]
 
     cdef FibonacciHeap heap
     cdef FibonacciNode* nodes = <FibonacciNode*> malloc((N) *
@@ -453,11 +448,11 @@ def _update_insert(unsigned int n, unsigned int N,
     return
 
 
-def _update_edge(unsigned int a,
+def _update_edge(ITYPE_t a,
                  np.ndarray[ITYPE_t, ndim=1, mode='c'] neighbors_a not None,
-                 unsigned int n,
+                 size_t n,
                  np.ndarray[ITYPE_t, ndim=1, mode='c'] neighbors_n not None,
-                 unsigned int N,
+                 size_t N,
                  np.ndarray[DTYPE_t, ndim=2, mode='c'] dist_matrix_ not None,
                  np.ndarray[ITYPE_t, ndim=2, mode='c'] pred_ not None):
     '''
@@ -468,13 +463,13 @@ def _update_edge(unsigned int a,
     is better than old path. The same is done when switching roles of start (n)
     and endpoint (a)
     '''
-    cdef unsigned int b
-    cdef unsigned int i
+    cdef ITYPE_t b
+    cdef size_t i
     cdef FibonacciHeap heap
     cdef FibonacciNode* nodes = <FibonacciNode*> malloc((N) *
                                                     sizeof(FibonacciNode))
 
-    cdef unsigned int neighbors_len = neighbors_n.shape[0]
+    cdef size_t neighbors_len = neighbors_n.shape[0]
     for i in xrange(neighbors_len):
         b = neighbors_n[i]
         if (dist_matrix_[a, n] + dist_matrix_[n, b] <
@@ -494,9 +489,9 @@ def _update_edge(unsigned int a,
 
 
 def _determine_edge_changes(
-                    unsigned int i_node,
-                    unsigned int N,
-                    unsigned int n_neighbors,
+                    ITYPE_t i_node,
+                    size_t N,
+                    size_t n_neighbors,
                     DTYPE_t[:, :] knn_dist,
                     ITYPE_t[:, :] knn_point,
                     kng not None,
@@ -505,7 +500,8 @@ def _determine_edge_changes(
     '''
     cdef ITYPE_t idx, max_idx, max_idx_full, max_j
     cdef DTYPE_t dist, x_dist, max_dist
-    cdef unsigned int i, j
+    cdef size_t i, j
+    cdef ITYPE_t k
 
     if not isspmatrix_csr(kng):
         dist_matrix = csr_matrix(kng)
@@ -530,11 +526,11 @@ def _determine_edge_changes(
         # max for each row of the sparse matrix
         max_idx = -1
         max_dist = -1
-        for j from indptr[idx] <= j < indptr[idx + 1]:
-            if distances[j] > max_dist:
-                max_dist = distances[j]
-                max_idx = neighbors[j]
-        if (indptr[idx + 1] - indptr[idx]) < n_neighbors:
+        for k from indptr[idx] <= k < indptr[idx + 1]:
+            if distances[k] > max_dist:
+                max_dist = distances[k]
+                max_idx = neighbors[k]
+        if <size_t>(indptr[idx + 1] - indptr[idx]) < n_neighbors:
             # useful for forgetting
             # add edge if idx does not have enough neighbors
             added_edges.append(((idx, i_node), x_dist))
@@ -544,47 +540,3 @@ def _determine_edge_changes(
             # --> remove edge from old point to old kNN
             deleted_edges.append((idx, max_idx))
     return added_edges, deleted_edges
-
-
-def euclidean_distances_cython_initial(
-                    DTYPE_t[:, ::1] X,
-                    DTYPE_t[:, ::1] Y):
-    '''
-    Parallel naive euclidean distance computation
-    '''
-    cdef np.ndarray[DTYPE_t, ndim=2, mode='c'] res = np.zeros((X.shape[0],
-                                                               Y.shape[0]),
-                                                               dtype=DTYPE)
-    cdef Py_ssize_t i, j, k
-    assert X.shape[1] == Y.shape[1]
-    # Parallelize over Y
-    for i in parallel.prange(Y.shape[0], nogil=True,
-                             schedule=OMP_SCHEDULE_CONST,
-                             num_threads=OMP_NUM_THREADS_CONST):
-        for k in xrange(X.shape[0]):
-            for j in xrange(X.shape[1]):
-                res[k, i] += (X[k, j] - Y[i, j]) ** 2
-    return res
-
-
-def euclidean_distances_cython(
-                    DTYPE_t[:, ::1] X,
-                    DTYPE_t[:, ::1] Y):
-    '''
-    Parallel euclidean distance computation
-    '''
-    cdef np.ndarray[DTYPE_t, ndim=2, mode='c'] res = np.zeros((X.shape[0],
-                                                               Y.shape[0]),
-                                                               dtype=DTYPE)
-    cdef Py_ssize_t i, j, k
-    assert X.shape[1] == Y.shape[1]
-    cdef DTYPE_t diff
-    # Parallelize over Y
-    for i in parallel.prange(Y.shape[0], nogil=True,
-                             schedule=OMP_SCHEDULE_CONST,
-                             num_threads=OMP_NUM_THREADS_CONST):
-        for k in xrange(X.shape[0]):
-            for j in xrange(X.shape[1]):
-                diff = X[k, j] - Y[i, j]
-                res[k, i] += diff * diff
-    return res

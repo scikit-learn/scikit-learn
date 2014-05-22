@@ -25,8 +25,10 @@ from ..utils.incremental_isomap_utilities import _construct_f, _determine_edge_c
 class IncrementalIsomap(BaseEstimator, TransformerMixin):
     """Isomap Embedding
 
-    Non-linear dimensionality reduction through Isomap. Incremental using
-    fit_transform_incremental and fit_incremental.
+    Non-linear dimensionality reduction through Isomap.
+    Basic manifold has to be learned first using fit method with at least
+    n_neighbors samples. Then, incremental using partial_fit_transform and
+    partial_fit functions.
     Constraint: incremental fitting with 1 new sample at a time
 
     Parameters
@@ -145,7 +147,7 @@ class IncrementalIsomap(BaseEstimator, TransformerMixin):
 
         # Create symmetric version of self.kng_
         self.kng_symmetric_ = self.kng_.copy()
-        for i in xrange(self.kng_.shape[0]):
+        for i in range(self.kng_.shape[0]):
             for j in self.kng_.getrowview(i).rows[0]:
                 if self.kng_[i, j] > 0:
                     self.kng_symmetric_[j, i] = self.kng_[i, j]
@@ -207,7 +209,10 @@ class IncrementalIsomap(BaseEstimator, TransformerMixin):
         self.train_data_norm2_ = new
         return
 
-    def _fit_transform_incremental(self, X):
+    def _partial_fit_transform(self, X):
+        # Assert that manifold has been initially trained using fit()
+        if self.n == 0:
+            raise RuntimeError("Must be initialized using fit() first.")
         # Update data structures for this iteration
         if self.n < self.n_max_samples:
             self.n += 1
@@ -332,7 +337,7 @@ class IncrementalIsomap(BaseEstimator, TransformerMixin):
         ## Update all coordinates
         # incremental eigenvalue problem
         # converges to solution of linalg.eigh in few iterations
-        for _ in xrange(self.n_iter):
+        for _ in range(self.n_iter):
             Z = np.dot(B, self.embedding_[:self.n, :] / np.sqrt(self.n))
             Q, R = np.linalg.qr(Z)
             Q *= np.sign(np.diag(R))
@@ -410,22 +415,22 @@ class IncrementalIsomap(BaseEstimator, TransformerMixin):
         self._fit_transform(X)
         return self.embedding_[:self.n, :]
 
-    def fit_incremental(self, X, y=None):
+    def partial_fit(self, X, y=None):
         """Update the model from data in X
 
         Parameters
         ----------
         X : {array-like, sparse matrix}
-            SNew data point, shape = (1, n_features)
+            New data point, shape = (1, n_features)
 
         Returns
         -------
         self : returns an instance of self.
         """
-        self._fit_transform_incremental(X)
+        self._partial_fit_transform(X)
         return self
 
-    def fit_transform_incremental(self, X, y=None):
+    def partial_fit_transform(self, X, y=None):
         """Update the model from data in X and transform X.
 
         Parameters
@@ -437,7 +442,7 @@ class IncrementalIsomap(BaseEstimator, TransformerMixin):
         -------
         X_new: array-like, shape (1, n_components)
         """
-        return self._fit_transform_incremental(X)
+        return self._partial_fit_transform(X)
 
     def transform(self, X):
         """Transform X.
@@ -473,7 +478,7 @@ class IncrementalIsomap(BaseEstimator, TransformerMixin):
         #This can be done as a single array operation, but it potentially
         # takes a lot of memory.  To avoid that, use a loop:
         G_X = np.zeros((X.shape[0], self.n))
-        for i in xrange(X.shape[0]):
+        for i in range(X.shape[0]):
             G_X[i] = np.min((self.dist_matrix_[indices[i], :self.n]
                              + distances[i][:, None]), 0)
         G_X **= 2
@@ -578,9 +583,9 @@ class IncrementalIsomap(BaseEstimator, TransformerMixin):
 
         # Reconstruct shortest paths
         B_auxiliary = F
-        l = [collections.deque([]) for _ in xrange(self.n)]
+        l = [collections.deque([]) for _ in range(self.n)]
         l_index = np.zeros((self.n,), np.int)
-        for i in xrange(self.n):
+        for i in range(self.n):
             # -1 to convert to 0-based indexing
             i_deg = np.count_nonzero(B_auxiliary[i, :]) - 1
             if i_deg >= 0:
@@ -588,7 +593,7 @@ class IncrementalIsomap(BaseEstimator, TransformerMixin):
                 l_index[i] = i_deg
         pos = 0
         self.kng_symmetric_ = self.kng_symmetric_.tocsr()
-        for i in xrange(self.n):
+        for i in range(self.n):
             try:
                 while not l[pos]:
                     pos += 1
