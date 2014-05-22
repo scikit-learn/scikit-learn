@@ -6,6 +6,7 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import ignore_warnings
 
 from sklearn.decomposition import DictionaryLearning
 from sklearn.decomposition import MiniBatchDictionaryLearning
@@ -177,9 +178,11 @@ def test_sparse_encode_error():
 
 
 def test_sparse_encode_error_default_sparsity():
-    X = np.random.randn(100, 64)
-    D = np.random.randn(2, 64)
-    code = sparse_encode(X, D, algorithm='omp', n_nonzero_coefs=None)
+    rng = np.random.RandomState(0)
+    X = rng.randn(100, 64)
+    D = rng.randn(2, 64)
+    code = ignore_warnings(sparse_encode)(X, D, algorithm='omp',
+                                          n_nonzero_coefs=None)
     assert_equal(code.shape, (100, 2))
 
 
