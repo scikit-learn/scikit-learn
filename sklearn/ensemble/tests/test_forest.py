@@ -2,29 +2,34 @@
 Testing for the forest module (sklearn.ensemble.forest).
 """
 
-# Authors: Gilles Louppe, Brian Holt, Andreas Mueller
+# Authors: Gilles Louppe,
+#          Brian Holt,
+#          Andreas Mueller,
+#          Arnaud Joly
 # License: BSD 3 clause
 
+import pickle
 from collections import defaultdict
+from itertools import product
 
 import numpy as np
-from numpy.testing import assert_array_equal
-from numpy.testing import assert_array_almost_equal
-from numpy.testing import assert_equal
-from numpy.testing import assert_almost_equal
-from nose.tools import assert_false, assert_true
-
+from sklearn.utils.testing import assert_almost_equal
+from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_false, assert_true
 from sklearn.utils.testing import assert_less, assert_greater
 
-from sklearn.grid_search import GridSearchCV
+from sklearn import datasets
+from sklearn.decomposition import TruncatedSVD
+from sklearn.ensemble import ExtraTreesClassifier
+from sklearn.ensemble import ExtraTreesRegressor
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.ensemble import RandomTreesEmbedding
-from sklearn.ensemble import ExtraTreesClassifier
-from sklearn.ensemble import ExtraTreesRegressor
+from sklearn.grid_search import GridSearchCV
 from sklearn.svm import LinearSVC
-from sklearn.decomposition import TruncatedSVD
-from sklearn import datasets
+from sklearn.utils.validation import check_random_state
 
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
@@ -35,7 +40,7 @@ true_result = [-1, 1, 1]
 # also load the iris dataset
 # and randomly permute it
 iris = datasets.load_iris()
-rng = np.random.RandomState(0)
+rng = check_random_state(0)
 perm = rng.permutation(iris.target.size)
 iris.data = iris.data[perm]
 iris.target = iris.target[perm]
@@ -47,112 +52,100 @@ perm = rng.permutation(boston.target.size)
 boston.data = boston.data[perm]
 boston.target = boston.target[perm]
 
+FOREST_CLASSIFIERS = {
+    "ExtraTreesClassifier": ExtraTreesClassifier,
+    "RandomForestClassifier": RandomForestClassifier,
+}
+
+FOREST_REGRESSORS = {
+    "ExtraTreesRegressor": ExtraTreesRegressor,
+    "RandomForestRegressor": RandomForestRegressor,
+}
+
+FOREST_TRANSFORMERS = {
+    "RandomTreesEmbedding": RandomTreesEmbedding,
+}
+
+FOREST_ESTIMATORS = dict()
+FOREST_ESTIMATORS.update(FOREST_CLASSIFIERS)
+FOREST_ESTIMATORS.update(FOREST_REGRESSORS)
+FOREST_ESTIMATORS.update(FOREST_TRANSFORMERS)
+
+
+def check_classification_toy(name):
+    """Check classification on a toy dataset."""
+    ForestClassifier = FOREST_CLASSIFIERS[name]
+
+    clf = ForestClassifier(n_estimators=10, random_state=1)
+    clf.fit(X, y)
+    assert_array_equal(clf.predict(T), true_result)
+    assert_equal(10, len(clf))
+
+    clf = ForestClassifier(n_estimators=10, max_features=1, random_state=1)
+    clf.fit(X, y)
+    assert_array_equal(clf.predict(T), true_result)
+    assert_equal(10, len(clf))
+
+    # also test apply
+    leaf_indices = clf.apply(X)
+    assert_equal(leaf_indices.shape, (len(X), clf.n_estimators))
+
 
 def test_classification_toy():
-    """Check classification on a toy dataset."""
-    # Random forest
-    clf = RandomForestClassifier(n_estimators=10, random_state=1)
-    clf.fit(X, y)
-    assert_array_equal(clf.predict(T), true_result)
-    assert_equal(10, len(clf))
+    for name in FOREST_CLASSIFIERS:
+        yield check_classification_toy, name
 
-    clf = RandomForestClassifier(n_estimators=10, max_features=1,
-                                 random_state=1)
-    clf.fit(X, y)
-    assert_array_equal(clf.predict(T), true_result)
-    assert_equal(10, len(clf))
 
-    # also test apply
-    leaf_indices = clf.apply(X)
-    assert_equal(leaf_indices.shape, (len(X), clf.n_estimators))
+def check_iris_criterion(name, criterion):
+    """Check consistency on dataset iris."""
+    ForestClassifier = FOREST_CLASSIFIERS[name]
 
-    # Extra-trees
-    clf = ExtraTreesClassifier(n_estimators=10, random_state=1)
-    clf.fit(X, y)
-    assert_array_equal(clf.predict(T), true_result)
-    assert_equal(10, len(clf))
+    clf = ForestClassifier(n_estimators=10, criterion=criterion,
+                           random_state=1)
+    clf.fit(iris.data, iris.target)
+    score = clf.score(iris.data, iris.target)
+    assert_greater(score, 0.9, "Failed with criterion %s and score = %f"
+                               % (criterion, score))
 
-    clf = ExtraTreesClassifier(n_estimators=10, max_features=1,
-                               random_state=1)
-    clf.fit(X, y)
-    assert_array_equal(clf.predict(T), true_result)
-    assert_equal(10, len(clf))
-
-    # also test apply
-    leaf_indices = clf.apply(X)
-    assert_equal(leaf_indices.shape, (len(X), clf.n_estimators))
+    clf = ForestClassifier(n_estimators=10, criterion=criterion,
+                           max_features=2, random_state=1)
+    clf.fit(iris.data, iris.target)
+    score = clf.score(iris.data, iris.target)
+    assert_greater(score, 0.5, "Failed with criterion %s and score = %f"
+                               % (criterion, score))
 
 
 def test_iris():
-    """Check consistency on dataset iris."""
-    for c in ("gini", "entropy"):
-        # Random forest
-        clf = RandomForestClassifier(n_estimators=10, criterion=c,
-                                     random_state=1)
-        clf.fit(iris.data, iris.target)
-        score = clf.score(iris.data, iris.target)
-        assert score > 0.9, "Failed with criterion %s and score = %f" % (c,
-                                                                         score)
+    for name, criterion in product(FOREST_CLASSIFIERS, ("gini", "entropy")):
+        yield check_iris_criterion, name, criterion
 
-        clf = RandomForestClassifier(n_estimators=10, criterion=c,
-                                     max_features=2, random_state=1)
-        clf.fit(iris.data, iris.target)
-        score = clf.score(iris.data, iris.target)
-        assert score > 0.5, "Failed with criterion %s and score = %f" % (c,
-                                                                         score)
 
-        # Extra-trees
-        clf = ExtraTreesClassifier(n_estimators=10, criterion=c,
-                                   random_state=1)
-        clf.fit(iris.data, iris.target)
-        score = clf.score(iris.data, iris.target)
-        assert score > 0.9, "Failed with criterion %s and score = %f" % (c,
-                                                                         score)
+def check_boston_criterion(name, criterion):
+    """Check consistency on dataset boston house prices."""
+    ForestRegressor = FOREST_REGRESSORS[name]
 
-        clf = ExtraTreesClassifier(n_estimators=10, criterion=c,
-                                   max_features=2, random_state=1)
-        clf.fit(iris.data, iris.target)
-        score = clf.score(iris.data, iris.target)
-        assert score > 0.9, "Failed with criterion %s and score = %f" % (c,
-                                                                         score)
+    clf = ForestRegressor(n_estimators=5, criterion=criterion, random_state=1)
+    clf.fit(boston.data, boston.target)
+    score = clf.score(boston.data, boston.target)
+    assert_greater(score, 0.95, "Failed with max_features=None, criterion %s "
+                                "and score = %f" % (criterion, score))
+
+    clf = ForestRegressor(n_estimators=5, criterion=criterion,
+                          max_features=6, random_state=1)
+    clf.fit(boston.data, boston.target)
+    score = clf.score(boston.data, boston.target)
+    assert_greater(score, 0.95, "Failed with max_features=6, criterion %s "
+                                "and score = %f" % (criterion, score))
 
 
 def test_boston():
-    """Check consistency on dataset boston house prices."""
-    for c in ("mse",):
-        # Random forest
-        clf = RandomForestRegressor(n_estimators=5, criterion=c,
-                                    random_state=1)
-        clf.fit(boston.data, boston.target)
-        score = clf.score(boston.data, boston.target)
-        assert score > 0.95, ("Failed with max_features=None, "
-                              "criterion %s and score = %f" % (c, score))
-
-        clf = RandomForestRegressor(n_estimators=5, criterion=c,
-                                    max_features=6, random_state=1)
-        clf.fit(boston.data, boston.target)
-        score = clf.score(boston.data, boston.target)
-        assert score > 0.95, ("Failed with max_features=6, "
-                              "criterion %s and score = %f" % (c, score))
-
-        # Extra-trees
-        clf = ExtraTreesRegressor(n_estimators=5, criterion=c, random_state=1)
-        clf.fit(boston.data, boston.target)
-        score = clf.score(boston.data, boston.target)
-        assert score > 0.95, ("Failed with max_features=None, "
-                              "criterion %s and score = %f" % (c, score))
-
-        clf = ExtraTreesRegressor(n_estimators=5, criterion=c, max_features=6,
-                                  random_state=1)
-        clf.fit(boston.data, boston.target)
-        score = clf.score(boston.data, boston.target)
-        assert score > 0.95, ("Failed with max_features=6, "
-                              "criterion %s and score = %f" % (c, score))
+    for name, criterion in product(FOREST_REGRESSORS, ("mse", )):
+        yield check_boston_criterion, name, criterion
 
 
-def test_regressor_attributes():
+def check_regressor_attributes(name):
     """Regression models should not have a classes_ attribute."""
-    r = RandomForestRegressor()
+    r = FOREST_REGRESSORS[name](random_state=0)
     assert_false(hasattr(r, "classes_"))
     assert_false(hasattr(r, "n_classes_"))
 
@@ -161,46 +154,38 @@ def test_regressor_attributes():
     assert_false(hasattr(r, "n_classes_"))
 
 
-def test_probability():
+def test_regressor_attributes():
+    for name in FOREST_REGRESSORS:
+        yield check_regressor_attributes, name
+
+
+def check_probability(name):
     """Predict probabilities."""
-    olderr = np.seterr(divide="ignore")
-
-    # Random forest
-    clf = RandomForestClassifier(n_estimators=10, random_state=1,
-                                 max_features=1, max_depth=1)
-    clf.fit(iris.data, iris.target)
-    assert_array_almost_equal(np.sum(clf.predict_proba(iris.data), axis=1),
-                              np.ones(iris.data.shape[0]))
-    assert_array_almost_equal(clf.predict_proba(iris.data),
-                              np.exp(clf.predict_log_proba(iris.data)))
-
-    # Extra-trees
-    clf = ExtraTreesClassifier(n_estimators=10, random_state=1, max_features=1,
+    ForestClassifier = FOREST_CLASSIFIERS[name]
+    with np.errstate(divide="ignore"):
+        clf = ForestClassifier(n_estimators=10, random_state=1, max_features=1,
                                max_depth=1)
-    clf.fit(iris.data, iris.target)
-    assert_array_almost_equal(np.sum(clf.predict_proba(iris.data), axis=1),
-                              np.ones(iris.data.shape[0]))
-    assert_array_almost_equal(clf.predict_proba(iris.data),
-                              np.exp(clf.predict_log_proba(iris.data)))
-
-    np.seterr(**olderr)
+        clf.fit(iris.data, iris.target)
+        assert_array_almost_equal(np.sum(clf.predict_proba(iris.data), axis=1),
+                                  np.ones(iris.data.shape[0]))
+        assert_array_almost_equal(clf.predict_proba(iris.data),
+                                  np.exp(clf.predict_log_proba(iris.data)))
 
 
-def test_importances():
+def test_probability():
+    for name in FOREST_CLASSIFIERS:
+        yield check_probability, name
+
+
+def check_importance(name, X, y):
     """Check variable importances."""
-    X, y = datasets.make_classification(n_samples=1000,
-                                        n_features=10,
-                                        n_informative=3,
-                                        n_redundant=0,
-                                        n_repeated=0,
-                                        shuffle=False,
-                                        random_state=0)
 
-    clf = RandomForestClassifier(n_estimators=10)
+    ForestClassifier = FOREST_CLASSIFIERS[name]
+
+    clf = ForestClassifier(n_estimators=10)
     clf.fit(X, y)
     importances = clf.feature_importances_
-    n_important = sum(importances > 0.1)
-
+    n_important = np.sum(importances > 0.1)
     assert_equal(importances.shape[0], 10)
     assert_equal(n_important, 3)
 
@@ -211,15 +196,25 @@ def test_importances():
     sample_weight = np.ones(y.shape)
     sample_weight[y == 1] *= 100
 
-    clf = RandomForestClassifier(n_estimators=50, random_state=0)
+    clf = ForestClassifier(n_estimators=50, random_state=0)
     clf.fit(X, y, sample_weight=sample_weight)
     importances = clf.feature_importances_
-    assert np.all(importances >= 0.0)
+    assert_true(np.all(importances >= 0.0))
 
-    clf = RandomForestClassifier(n_estimators=50, random_state=0)
-    clf.fit(X, y, sample_weight=3*sample_weight)
+    clf = ForestClassifier(n_estimators=50, random_state=0)
+    clf.fit(X, y, sample_weight=3 * sample_weight)
     importances_bis = clf.feature_importances_
     assert_almost_equal(importances, importances_bis)
+
+
+def test_importances():
+    X, y = datasets.make_classification(n_samples=1000, n_features=10,
+                                        n_informative=3, n_redundant=0,
+                                        n_repeated=0, shuffle=False,
+                                        random_state=0)
+
+    for name in FOREST_CLASSIFIERS:
+        yield check_importance, name, X, y
 
 
 def test_oob_score_classification():
@@ -259,173 +254,141 @@ def test_oob_score_regression():
     assert_greater(clf.oob_score_, .8)
 
 
+def check_gridsearch(name):
+    forest = FOREST_CLASSIFIERS[name]()
+    clf = GridSearchCV(forest, {'n_estimators': (1, 2), 'max_depth': (1, 2)})
+    clf.fit(iris.data, iris.target)
+
+
 def test_gridsearch():
     """Check that base trees can be grid-searched."""
-    # Random forest
-    forest = RandomForestClassifier()
-    parameters = {'n_estimators': (1, 2),
-                  'max_depth': (1, 2)}
-    clf = GridSearchCV(forest, parameters)
-    clf.fit(iris.data, iris.target)
-
-    # Extra-trees
-    forest = ExtraTreesClassifier()
-    parameters = {'n_estimators': (1, 2),
-                  'max_depth': (1, 2)}
-    clf = GridSearchCV(forest, parameters)
-    clf.fit(iris.data, iris.target)
+    for name in FOREST_CLASSIFIERS:
+        yield check_gridsearch, name
 
 
-def test_parallel():
-    """Check parallel computations."""
-    # Classification
-    forest = RandomForestClassifier(n_estimators=10, n_jobs=3, random_state=0)
+def check_parallel(name, X, y):
+    """Check parallel computations in classification"""
+    ForestEstimator = FOREST_ESTIMATORS[name]
+    forest = ForestEstimator(n_estimators=10, n_jobs=3, random_state=0)
 
-    forest.fit(iris.data, iris.target)
-    assert_true(10 == len(forest))
+    forest.fit(X, y)
+    assert_equal(len(forest), 10)
 
     forest.set_params(n_jobs=1)
-    y1 = forest.predict(iris.data)
+    y1 = forest.predict(X)
     forest.set_params(n_jobs=2)
-    y2 = forest.predict(iris.data)
-    assert_array_equal(y1, y2)
-
-    # Regression
-    forest = RandomForestRegressor(n_estimators=10, n_jobs=3, random_state=0)
-
-    forest.fit(boston.data, boston.target)
-    assert_true(10 == len(forest))
-
-    forest.set_params(n_jobs=1)
-    y1 = forest.predict(boston.data)
-    forest.set_params(n_jobs=2)
-    y2 = forest.predict(boston.data)
+    y2 = forest.predict(X)
     assert_array_almost_equal(y1, y2, 3)
 
 
-def test_pickle():
+def test_parallel():
+    for name in FOREST_CLASSIFIERS:
+        yield check_parallel, name, iris.data, iris.target
+
+    for name in FOREST_REGRESSORS:
+        yield check_parallel, name,  boston.data, boston.target
+
+
+def check_pickle(name, X, y):
     """Check pickability."""
-    import pickle
 
-    # Random forest
-    obj = RandomForestClassifier(random_state=0)
-    obj.fit(iris.data, iris.target)
-    score = obj.score(iris.data, iris.target)
-    s = pickle.dumps(obj)
+    ForestEstimator = FOREST_ESTIMATORS[name]
+    obj = ForestEstimator(random_state=0)
+    obj.fit(X, y)
+    score = obj.score(X, y)
+    pickle_object = pickle.dumps(obj)
 
-    obj2 = pickle.loads(s)
+    obj2 = pickle.loads(pickle_object)
     assert_equal(type(obj2), obj.__class__)
-    score2 = obj2.score(iris.data, iris.target)
-    assert_true(score == score2)
+    score2 = obj2.score(X, y)
+    assert_equal(score, score2)
 
-    obj = RandomForestRegressor(random_state=0)
-    obj.fit(boston.data, boston.target)
-    score = obj.score(boston.data, boston.target)
-    s = pickle.dumps(obj)
 
-    obj2 = pickle.loads(s)
-    assert_equal(type(obj2), obj.__class__)
-    score2 = obj2.score(boston.data, boston.target)
-    assert_true(score == score2)
+def test_pickle():
+    for name in FOREST_CLASSIFIERS:
+        yield check_pickle, name, iris.data[::2], iris.target[::2]
 
-    # Extra-trees
-    obj = ExtraTreesClassifier(random_state=0)
-    obj.fit(iris.data, iris.target)
-    score = obj.score(iris.data, iris.target)
-    s = pickle.dumps(obj)
+    for name in FOREST_REGRESSORS:
+        yield check_pickle, name,  boston.data[::2], boston.target[::2]
 
-    obj2 = pickle.loads(s)
-    assert_equal(type(obj2), obj.__class__)
-    score2 = obj2.score(iris.data, iris.target)
-    assert_true(score == score2)
 
-    obj = ExtraTreesRegressor(random_state=0)
-    obj.fit(boston.data, boston.target)
-    score = obj.score(boston.data, boston.target)
-    s = pickle.dumps(obj)
+def check_multioutput(name,  X_train, X_test, y_train, y_test):
+    """Check estimators on multi-output problems."""
+    est = FOREST_ESTIMATORS[name](random_state=0, bootstrap=False)
+    y_pred = est.fit(X_train, y_train).predict(X_test)
+    assert_array_almost_equal(y_pred, y_test)
 
-    obj2 = pickle.loads(s)
-    assert_equal(type(obj2), obj.__class__)
-    score2 = obj2.score(boston.data, boston.target)
-    assert_true(score == score2)
+    if name in FOREST_CLASSIFIERS:
+        with np.errstate(divide="ignore"):
+            proba = est.predict_proba(X_test)
+            assert_equal(len(proba), 2)
+            assert_equal(proba[0].shape, (4, 2))
+            assert_equal(proba[1].shape, (4, 4))
+
+            log_proba = est.predict_log_proba(X_test)
+            assert_equal(len(log_proba), 2)
+            assert_equal(log_proba[0].shape, (4, 2))
+            assert_equal(log_proba[1].shape, (4, 4))
 
 
 def test_multioutput():
-    """Check estimators on multi-output problems."""
-    olderr = np.seterr(divide="ignore")
+    X_train = [[-2, -1],
+               [-1, -1],
+               [-1, -2],
+               [1, 1],
+               [1, 2],
+               [2, 1],
+               [-2, 1],
+               [-1, 1],
+               [-1, 2],
+               [2, -1],
+               [1, -1],
+               [1, -2]]
 
-    X = [[-2, -1],
-         [-1, -1],
-         [-1, -2],
-         [1, 1],
-         [1, 2],
-         [2, 1],
-         [-2, 1],
-         [-1, 1],
-         [-1, 2],
-         [2, -1],
-         [1, -1],
-         [1, -2]]
+    y_train = [[-1, 0],
+               [-1, 0],
+               [-1, 0],
+               [1, 1],
+               [1, 1],
+               [1, 1],
+               [-1, 2],
+               [-1, 2],
+               [-1, 2],
+               [1, 3],
+               [1, 3],
+               [1, 3]]
 
-    y = [[-1, 0],
-         [-1, 0],
-         [-1, 0],
-         [1, 1],
-         [1, 1],
-         [1, 1],
-         [-1, 2],
-         [-1, 2],
-         [-1, 2],
-         [1, 3],
-         [1, 3],
-         [1, 3]]
+    X_test = [[-1, -1], [1, 1], [-1, 1], [1, -1]]
+    y_test = [[-1, 0], [1, 1], [-1, 2], [1, 3]]
 
-    T = [[-1, -1], [1, 1], [-1, 1], [1, -1]]
-    y_true = [[-1, 0], [1, 1], [-1, 2], [1, 3]]
+    for name in FOREST_CLASSIFIERS:
+        yield check_multioutput, name, X_train, X_test, y_train, y_test
 
-    # toy classification problem
-    clf = ExtraTreesClassifier(random_state=0)
-    y_hat = clf.fit(X, y).predict(T)
-    assert_array_equal(y_hat, y_true)
-    assert_equal(y_hat.shape, (4, 2))
-
-    proba = clf.predict_proba(T)
-    assert_equal(len(proba), 2)
-    assert_equal(proba[0].shape, (4, 2))
-    assert_equal(proba[1].shape, (4, 4))
-
-    log_proba = clf.predict_log_proba(T)
-    assert_equal(len(log_proba), 2)
-    assert_equal(log_proba[0].shape, (4, 2))
-    assert_equal(log_proba[1].shape, (4, 4))
-
-    # toy regression problem
-    clf = ExtraTreesRegressor(random_state=0)
-    y_hat = clf.fit(X, y).predict(T)
-    assert_almost_equal(y_hat, y_true)
-    assert_equal(y_hat.shape, (4, 2))
-
-    np.seterr(**olderr)
+    for name in FOREST_REGRESSORS:
+        yield check_multioutput, name, X_train, X_test, y_train, y_test
 
 
-def test_classes_shape():
+def check_classes_shape(name):
     """Test that n_classes_ and classes_ have proper shape."""
+    ForestClassifier = FOREST_CLASSIFIERS[name]
+
     # Classification, single output
-    clf = RandomForestClassifier()
-    clf.fit(X, y)
+    clf = ForestClassifier(random_state=0).fit(X, y)
 
     assert_equal(clf.n_classes_, 2)
-    assert_equal(clf.classes_, [-1, 1])
+    assert_array_equal(clf.classes_, [-1, 1])
 
     # Classification, multi-output
     _y = np.vstack((y, np.array(y) * 2)).T
-    clf = RandomForestClassifier()
-    clf.fit(X, _y)
+    clf = ForestClassifier(random_state=0).fit(X, _y)
 
-    assert_equal(len(clf.n_classes_), 2)
-    assert_equal(len(clf.classes_), 2)
-    assert_equal(clf.n_classes_, [2, 2])
-    assert_equal(clf.classes_, [[-1, 1], [-2, 2]])
+    assert_array_equal(clf.n_classes_, [2, 2])
+    assert_array_equal(clf.classes_, [[-1, 1], [-2, 2]])
+
+
+def test_classes_shape():
+    for name in FOREST_CLASSIFIERS:
+        yield check_classes_shape, name
 
 
 def test_random_hasher():
@@ -453,34 +416,25 @@ def test_random_hasher():
 
 
 def test_parallel_train():
-    rng = np.random.RandomState(12321)
+    rng = check_random_state(12321)
     n_samples, n_features = 80, 30
     X_train = rng.randn(n_samples, n_features)
     y_train = rng.randint(0, 2, n_samples)
 
     clfs = [
-        RandomForestClassifier(n_estimators=20,
-                               n_jobs=n_jobs,
-                               random_state=12345)
+        RandomForestClassifier(n_estimators=20, n_jobs=n_jobs,
+                               random_state=12345).fit(X_train, y_train)
         for n_jobs in [1, 2, 3, 8, 16, 32]
     ]
 
-    for clf in clfs:
-        clf.fit(X_train, y_train)
-
     X_test = rng.randn(n_samples, n_features)
-
-    probas = []
-    for clf in clfs:
-        proba = clf.predict_proba(X_test)
-        probas.append(proba)
-
+    probas = [clf.predict_proba(X_test) for clf in clfs]
     for proba1, proba2 in zip(probas, probas[1:]):
         assert_array_almost_equal(proba1, proba2)
 
 
 def test_distribution():
-    rng = np.random.RandomState(12321)
+    rng = check_random_state(12321)
 
     # Single variable with 4 values
     X = rng.randint(0, 4, size=(1000, 1))
@@ -518,8 +472,7 @@ def test_distribution():
     X[:, 1] = np.random.randint(0, 3, 1000)
     y = rng.rand(1000)
 
-    clf = ExtraTreesRegressor(n_estimators=100,
-                              max_features=1,
+    clf = ExtraTreesRegressor(n_estimators=100, max_features=1,
                               random_state=1).fit(X, y)
 
     uniques = defaultdict(int)
@@ -534,24 +487,21 @@ def test_distribution():
     assert_equal(len(uniques), 8)
 
 
+def check_max_leaf_nodes_max_depth(name, X, y):
+    """Test precedence of max_leaf_nodes over max_depth. """
+    ForestEstimator = FOREST_ESTIMATORS[name]
+    est = ForestEstimator(max_depth=1, max_leaf_nodes=4,
+                          n_estimators=1).fit(X, y)
+    assert_greater(est.estimators_[0].tree_.max_depth, 1)
+
+    est = ForestEstimator(max_depth=1, n_estimators=1).fit(X, y)
+    assert_equal(est.estimators_[0].tree_.max_depth, 1)
+
+
 def test_max_leaf_nodes_max_depth():
-    """Test preceedence of max_leaf_nodes over max_depth. """
     X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
-    all_forests = [RandomForestClassifier,
-                   RandomForestRegressor,
-                   RandomTreesEmbedding,
-                   ExtraTreesClassifier,
-                   ExtraTreesRegressor]
-
-    k = 4
-    for ForestEstimator in all_forests:
-        est = ForestEstimator(max_depth=1, max_leaf_nodes=k).fit(X, y)
-        tree = est.estimators_[0].tree_
-        assert_greater(tree.max_depth, 1)
-
-        est = ForestEstimator(max_depth=1).fit(X, y)
-        tree = est.estimators_[0].tree_
-        assert_equal(tree.max_depth, 1)
+    for name in FOREST_ESTIMATORS:
+        yield check_max_leaf_nodes_max_depth, name, X, y
 
 
 if __name__ == "__main__":
