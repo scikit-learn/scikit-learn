@@ -4,8 +4,6 @@ Testing for Gaussian Process module (sklearn.gaussian_process)
 
 # Author: Vincent Dubourg <vincent.dubourg@gmail.com>
 # Licence: BSD 3 clause
-from macpath import norm_error
-
 from nose.tools import raises
 from nose.tools import assert_true
 
@@ -182,5 +180,5 @@ def test_1d_noisy(regr=regression.constant, corr=correlation.absolute_exponentia
     y_pred, MSE = gp.predict(x, eval_MSE=True)
 
     y = f(x).ravel()
-    assert_true((np.abs(y_pred - y) <= np.abs(
-        ss.norm.ppf(0.025, y_pred, np.sqrt(MSE)))  ).all())  #check that true value is within 95% conf. int.
+    assert_true((np.abs(y_pred - y) <= (1.96 * MSE)  ).all())  #check that true value is within 95% conf. int.
+
