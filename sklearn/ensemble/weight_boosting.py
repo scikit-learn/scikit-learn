@@ -32,7 +32,9 @@ from .base import BaseEnsemble
 from ..base import ClassifierMixin, RegressorMixin
 from ..externals import six
 from ..externals.six.moves import xrange, zip
+from forest import BaseForest
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
+from ..tree.tree import BaseDecisionTree
 from ..tree._tree import DTYPE
 from ..utils import array2d, check_arrays, check_random_state, column_or_1d
 from ..utils import safe_asarray
@@ -101,7 +103,9 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         if (X.ndim != 2 and not issparse(X)):
             X = array2d(X)
 
-        X, = check_arrays(X, dtype=DTYPE)
+        if(self.base_estimator is None or
+           isinstance(self.base_estimator, (BaseDecisionTree, BaseForest))):
+            X, = check_arrays(X, dtype=DTYPE)
         X, y = check_arrays(X, y, check_ccontiguous=True)
 
         y = column_or_1d(y, warn=True)
