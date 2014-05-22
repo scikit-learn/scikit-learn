@@ -76,7 +76,9 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         ----------
         X : {array-like, sparse matrix} of shape = [n_samples, n_features]
             The training input samples. Sparse matrix can be csc, csr, coo,
-            dok, or lil. coo, dok, and lil are converted to csr.
+            dok, or lil. coo, dok, and lil are converted to csr. The dtype is 
+            forced to DTYPE from tree._tree if the base classifier of this 
+            ensemble weighted boosting classifier is a tree or forest.
 
         y : array-like of shape = [n_samples]
             The target values (class labels in classification, real numbers in
