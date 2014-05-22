@@ -877,3 +877,9 @@ def test_tfidfvectorizer_binary():
     assert_array_equal(X.ravel(), [1, 1, 1, 0])
     X2 = v.transform(['hello world', 'hello hello']).toarray()
     assert_array_equal(X2.ravel(), [1, 1, 1, 0])
+
+
+def test_tfidfvectorizer_export_idf():
+    vect = TfidfVectorizer(use_idf=True)
+    vect.fit(JUNK_FOOD_DOCS)
+    assert_array_almost_equal(vect.idf_, vect._tfidf.idf_)
