@@ -12,19 +12,41 @@ from ._isotonic import _isotonic_regression
 import warnings
 
 
-def check_increasing(X, y):
-    """
-    Determine whether the relationship between X and y appears to be
+def check_increasing(x, y):
+    """Determine whether the relationship between x and y appears to be
+    increasing or decreasing based on Spearman correlation.
+
+    Parameters
+    ----------
+    x : array-like, shape=(n_samples,)
+            Training data.
+
+    y : array-like, shape=(n_samples,)
+        Training target.
+
+    Returns
+    -------
+    `increasing_bool` : boolean
+        Whether the relationship is increasing or decreasing.
+
+    Notes
+    -----
+    Determine whether the relationship between x and y appears to be
     increasing or decreasing.  The Spearman correlation coefficient is
     estimated from the data, and the sign of the resulting estimate
     is used as the result.
 
     In the event that the 95% confidence interval based on Fisher transform
     spans zero, a warning is raised.
+
+    References
+    ----------
+    Fisher transformation. Wikipedia.
+    http://en.wikipedia.org/w/index.php?title=Fisher_transformation
     """
 
     # Calculate Spearman rho estimate and set return accordingly.
-    rho, _ = spearmanr(X, y)
+    rho, _ = spearmanr(x, y)
     if rho >= 0:
         increasing_bool = True
     else:
@@ -33,7 +55,7 @@ def check_increasing(X, y):
     # Run Fisher transform to get the rho CI, but handle rho=+/-1
     if rho not in [-1.0, 1.0]:
         F = 0.5 * np.log((1 + rho) / (1 - rho))
-        F_se = 1 / np.sqrt(len(X) - 3)
+        F_se = 1 / np.sqrt(len(x) - 3)
 
         # Use a 95% CI, i.e., +/-1.96 S.E.
         # http://en.wikipedia.org/wiki/Fisher_transformation
