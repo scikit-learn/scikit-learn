@@ -74,9 +74,8 @@ class ParameterGrid(object):
 
     def __init__(self, param_grid):
         if isinstance(param_grid, Mapping):
-            # wrap dictionary in a singleton list
-            # XXX Why? The behavior when passing a list is undocumented,
-            # but not doing this breaks one of the tests.
+            # wrap dictionary in a singleton list to support either dict
+            # or list of dicts
             param_grid = [param_grid]
         self.param_grid = param_grid
 
