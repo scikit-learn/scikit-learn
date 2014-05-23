@@ -31,7 +31,22 @@ except ImportError:
     import urllib.error
     import urllib.parse
     from urllib.error import HTTPError, URLError
-    
+
+
+try:
+    # Python 2 built-in
+    execfile
+except NameError:
+    def execfile(filename, global_vars=None, local_vars=None):
+        with open(filename) as f:
+            code = compile(f.read(), filename, 'exec')
+            exec(code, global_vars, local_vars)
+
+try:
+    basestring
+except NameError:
+    basestring = str
+
 try:
     from PIL import Image
 except ImportError:
@@ -170,7 +185,7 @@ def parse_sphinx_searchindex(searchindex):
     # Make sure searchindex uses UTF-8 encoding
     if hasattr(searchindex, 'decode'):
         searchindex = searchindex.decode('UTF-8')
-    
+
     # parse objects
     query = 'objects:'
     pos = searchindex.find(query)
@@ -356,7 +371,7 @@ plot_rst_template = """
 .. literalinclude:: %(fname)s
     :lines: %(end_row)s-
 
-**Total running time of the example:** %(time_elapsed) .2f seconds 
+**Total running time of the example:** %(time_elapsed) .2f seconds
 (%(time_m) .0f minutes %(time_s) .2f seconds)
     """
 
