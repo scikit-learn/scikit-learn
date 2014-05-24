@@ -1,5 +1,6 @@
 import numpy as np
 from numpy.testing import assert_equal, assert_raises
+from numpy.testing import assert_array_almost_equal
 from scipy import sparse
 
 from sklearn.utils.testing import assert_less
@@ -193,7 +194,8 @@ def test_ransac_none_estimator():
     ransac_estimator.fit(X, y)
     ransac_none_estimator.fit(X, y)
 
-    assert_equal(ransac_estimator.predict(X), ransac_none_estimator.predict(X))
+    assert_array_almost_equal(ransac_estimator.predict(X),
+                              ransac_none_estimator.predict(X))
 
 
 def test_ransac_min_n_samples():
@@ -220,9 +222,13 @@ def test_ransac_min_n_samples():
     ransac_estimator5.fit(X, y)
     ransac_estimator6.fit(X, y)
 
-    assert_equal(ransac_estimator1.predict(X), ransac_estimator2.predict(X))
-    assert_equal(ransac_estimator1.predict(X), ransac_estimator5.predict(X))
-    assert_equal(ransac_estimator1.predict(X), ransac_estimator6.predict(X))
+    assert_array_almost_equal(ransac_estimator1.predict(X),
+                              ransac_estimator2.predict(X))
+    assert_array_almost_equal(ransac_estimator1.predict(X),
+                              ransac_estimator5.predict(X))
+    assert_array_almost_equal(ransac_estimator1.predict(X),
+                              ransac_estimator6.predict(X))
+
     assert_raises(ValueError, ransac_estimator3.fit, X, y)
     assert_raises(ValueError, ransac_estimator4.fit, X, y)
     assert_raises(ValueError, ransac_estimator7.fit, X, y)
@@ -268,13 +274,16 @@ def test_ransac_residual_metric():
     ransac_estimator0.fit(X, yyy)
     ransac_estimator1.fit(X, yyy)
     ransac_estimator2.fit(X, yyy)
-    assert_equal(ransac_estimator0.predict(X), ransac_estimator1.predict(X))
-    assert_equal(ransac_estimator0.predict(X), ransac_estimator2.predict(X))
+    assert_array_almost_equal(ransac_estimator0.predict(X),
+                              ransac_estimator1.predict(X))
+    assert_array_almost_equal(ransac_estimator0.predict(X),
+                              ransac_estimator2.predict(X))
 
     # one-dimensional
     ransac_estimator0.fit(X, y)
     ransac_estimator2.fit(X, y)
-    assert_equal(ransac_estimator0.predict(X), ransac_estimator2.predict(X))
+    assert_array_almost_equal(ransac_estimator0.predict(X),
+                              ransac_estimator2.predict(X))
 
 
 def test_ransac_default_residual_threshold():
