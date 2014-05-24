@@ -37,8 +37,8 @@ def kneighbors_graph(X, n_neighbors, mode='connectivity'):
     >>> A = kneighbors_graph(X, 2)
     >>> A.toarray()
     array([[ 1.,  0.,  1.],
-            [ 0.,  1.,  1.],
-            [ 1.,  0.,  1.]])
+           [ 0.,  1.,  1.],
+           [ 1.,  0.,  1.]])
 
     See also
     --------
@@ -81,8 +81,8 @@ def radius_neighbors_graph(X, radius, mode='connectivity'):
     >>> A = radius_neighbors_graph(X, 1.5)
     >>> A.toarray()
     array([[ 1.,  0.,  1.],
-            [ 0.,  1.,  0.],
-            [ 1.,  0.,  1.]])
+           [ 0.,  1.,  0.],
+           [ 1.,  0.,  1.]])
 
     See also
     --------
