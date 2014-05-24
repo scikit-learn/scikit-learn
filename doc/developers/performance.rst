@@ -155,7 +155,7 @@ magic command::
           1    0.000    0.000    0.000    0.000 nmf.py:337(__init__)
           1    0.000    0.000    1.681    1.681 nmf.py:461(fit)
 
-The ``tottime`` columns is the most interesting: it gives to total time spent
+The ``tottime`` column is the most interesting: it gives to total time spent
 executing the code of a given function ignoring the time spent in executing the
 sub-functions. The real total time (local code + sub-function calls) is given by
 the ``cumtime`` column.
