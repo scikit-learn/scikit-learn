@@ -270,23 +270,74 @@ def test_sparse_classification():
 
         # Trained on sparse format
         sparse_classifier = AdaBoostClassifier(
-            base_estimator=CustomSVC(),
+            base_estimator=CustomSVC(probability=True),
             random_state=1,
             algorithm="SAMME"
         ).fit(X_train_sparse, y_train)
-        sparse_results = sparse_classifier.predict(X_test_sparse)
 
         # Trained on dense format
-        dense_results = AdaBoostClassifier(
-            base_estimator=CustomSVC(),
+        dense_classifier = AdaBoostClassifier(
+            base_estimator=CustomSVC(probability=True),
             random_state=1,
             algorithm="SAMME"
-        ).fit(X_train, y_train).predict(X_test)
+        ).fit(X_train, y_train)
 
+        # predict
+        sparse_results = sparse_classifier.predict(X_test_sparse)
+        dense_results = dense_classifier.predict(X_test)
+        assert_array_equal(sparse_results, dense_results)
+        sparse_y_pred, dense_y_pred = sparse_results, dense_results
+
+        # decision_function
+        sparse_results = sparse_classifier.decision_function(X_test_sparse)
+        dense_results = dense_classifier.decision_function(X_test)
+        assert_array_equal(sparse_results, dense_results)
+
+        # predict_log_proba
+        sparse_results = sparse_classifier.predict_log_proba(X_test_sparse)
+        dense_results = dense_classifier.predict_log_proba(X_test)
+        assert_array_equal(sparse_results, dense_results)
+
+        # predict_proba
+        sparse_results = sparse_classifier.predict_proba(X_test_sparse)
+        dense_results = dense_classifier.predict_proba(X_test)
+        assert_array_equal(sparse_results, dense_results)
+
+        # score
+        sparse_results = sparse_classifier.score(X_test_sparse, sparse_y_pred)
+        dense_results = dense_classifier.score(X_test, dense_y_pred)
+        assert_array_equal(sparse_results, dense_results)
+
+        # staged_decision_function
+        sparse_results = sparse_classifier.staged_decision_function(
+            X_test_sparse)
+        dense_results = dense_classifier.staged_decision_function(X_test)
+        for sprase_res, dense_res in zip(sparse_results, dense_results):
+            assert_array_equal(sprase_res, dense_res)
+
+        # staged_predict
+        sparse_results = sparse_classifier.staged_predict(X_test_sparse)
+        dense_results = dense_classifier.staged_predict(X_test)
+        for sprase_res, dense_res in zip(sparse_results, dense_results):
+            assert_array_equal(sprase_res, dense_res)
+
+        # staged_predict_proba
+        sparse_results = sparse_classifier.staged_predict_proba(X_test_sparse)
+        dense_results = dense_classifier.staged_predict_proba(X_test)
+        for sprase_res, dense_res in zip(sparse_results, dense_results):
+            assert_array_equal(sprase_res, dense_res)
+
+        # staged_score
+        sparse_results = sparse_classifier.staged_score(X_test_sparse,
+                                                        sparse_y_pred)
+        dense_results = dense_classifier.staged_score(X_test, dense_y_pred)
+        for sprase_res, dense_res in zip(sparse_results, dense_results):
+            assert_array_equal(sprase_res, dense_res)
+
+        # Verify sparsity of data is maintained during training
         sparse_type = type(X_train_sparse)
         types = [i.data_type_ for i in sparse_classifier.estimators_]
 
-        assert_array_equal(sparse_results, dense_results)
         assert all([(t == csc_matrix or t == csr_matrix)
                    for t in types])
 
@@ -316,21 +367,30 @@ def test_sparse_regression():
 
         # Trained on sparse format
         sparse_classifier = AdaBoostRegressor(
-            base_estimator=CustomSVR(),
+            base_estimator=CustomSVR(probability=True),
             random_state=1
         ).fit(X_train_sparse, y_train)
-        sparse_results = sparse_classifier.predict(X_test_sparse)
 
         # Trained on dense format
-        dense_results = AdaBoostRegressor(
-            base_estimator=CustomSVR(),
+        dense_classifier = dense_results = AdaBoostRegressor(
+            base_estimator=CustomSVR(probability=True),
             random_state=1
-        ).fit(X_train, y_train).predict(X_test)
+        ).fit(X_train, y_train)
+
+        # predict
+        sparse_results = sparse_classifier.predict(X_test_sparse)
+        dense_results = dense_classifier.predict(X_test)
+        assert_array_equal(sparse_results, dense_results)
+
+        # staged_predict
+        sparse_results = sparse_classifier.staged_predict(X_test_sparse)
+        dense_results = dense_classifier.staged_predict(X_test)
+        for sprase_res, dense_res in zip(sparse_results, dense_results):
+            assert_array_equal(sprase_res, dense_res)
 
         sparse_type = type(X_train_sparse)
         types = [i.data_type_ for i in sparse_classifier.estimators_]
 
-        assert_array_equal(sparse_results, dense_results)
         assert all([(t == csc_matrix or t == csr_matrix)
                    for t in types])
 
