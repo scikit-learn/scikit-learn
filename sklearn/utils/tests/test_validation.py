@@ -66,8 +66,8 @@ def test_as_float_array():
     # Test the copy parameter with some matrices
     matrices = [
         np.matrix(np.arange(5)),
-        sp.csc_matrix(np.arange(5)).todense(),
-        sparse_random_matrix(10, 10, density=0.10).todense()
+        sp.csc_matrix(np.arange(5)).toarray(),
+        sparse_random_matrix(10, 10, density=0.10).toarray()
     ]
     for M in matrices:
         N = as_float_array(M, copy=True)

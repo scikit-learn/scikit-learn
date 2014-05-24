@@ -62,8 +62,8 @@ def test_transform_sparse():
     sel = StepSelector()
     Xt_actual = sel.fit(sparse(X)).transform(sparse(X))
     Xt_actual2 = sel.fit_transform(sparse(X))
-    assert_array_equal(Xt, Xt_actual.todense())
-    assert_array_equal(Xt, Xt_actual2.todense())
+    assert_array_equal(Xt, Xt_actual.toarray())
+    assert_array_equal(Xt, Xt_actual2.toarray())
 
     # Check dtype matches
     assert_equal(np.int32, sel.transform(sparse(X).astype(np.int32)).dtype)
@@ -96,7 +96,7 @@ def test_inverse_transform_sparse():
     sparse = sp.csc_matrix
     sel = StepSelector()
     Xinv_actual = sel.fit(sparse(X)).inverse_transform(sparse(Xt))
-    assert_array_equal(Xinv, Xinv_actual.todense())
+    assert_array_equal(Xinv, Xinv_actual.toarray())
 
     # Check dtype matches
     assert_equal(np.int32,

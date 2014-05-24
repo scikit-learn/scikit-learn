@@ -288,7 +288,7 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
             # number of nodes
             # lobpcg will fallback to symeig, so we short circuit it
             if sparse.isspmatrix(laplacian):
-                laplacian = laplacian.todense()
+                laplacian = laplacian.toarray()
             lambdas, diffusion_map = symeig(laplacian)
             embedding = diffusion_map.T[:n_components] * dd
         else:
