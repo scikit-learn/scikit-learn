@@ -569,6 +569,12 @@ From text
 
    isotonic.isotonic_regression
 
+.. autosummary::
+   :toctree: generated
+   :template: function.rst
+
+   isotonic.check_increasing
+
 .. _kernel_approximation_ref:
 
 :mod:`sklearn.kernel_approximation` Kernel Approximation
