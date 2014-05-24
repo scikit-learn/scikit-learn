@@ -174,7 +174,7 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
     y_max : optional, default: None
         If not None, set the highest value of the fit to y_max.
 
-    increasing : boolean or string, optional, default : 'auto'
+    increasing : boolean or string, optional, default: True
         If boolean, whether or not to fit the isotonic regression with y
         increasing or decreasing.
 
