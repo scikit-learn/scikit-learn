@@ -92,9 +92,11 @@ def test_isotonic_regression_auto_decreasing():
     y = np.array([10, 9, 10, 7, 6, 6.1, 5])
     x = np.arange(len(y))
 
-    y_ = IsotonicRegression(increasing='auto').fit_transform(
-        x, y)
+    # Create model and fit_transform
+    ir = IsotonicRegression(increasing='auto')
+    y_ = assert_no_warnings(ir.fit_transform, x, y)
 
+    # Check that relationship decreases
     is_increasing = y_[0] < y_[-1]
     assert_false(is_increasing)
 
@@ -104,9 +106,11 @@ def test_isotonic_regression_auto_increasing():
     y = np.array([5, 6.1, 6, 7, 10, 9, 10])
     x = np.arange(len(y))
 
-    y_ = IsotonicRegression(increasing='auto').fit_transform(
-        x, y)
+    # Create model and fit_transform
+    ir = IsotonicRegression(increasing='auto')
+    y_ = assert_no_warnings(ir.fit_transform, x, y)
 
+    # Check that relationship increases
     is_increasing = y_[0] < y_[-1]
     assert_true(is_increasing)
 
