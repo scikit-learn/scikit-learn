@@ -7,6 +7,7 @@
 import numbers
 import warnings
 import itertools
+import math
 
 import numpy as np
 from scipy import sparse
@@ -427,8 +428,7 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
     Notes
     -----
     Be aware that the number of features in the output array scales
-    exponentially in the number of features of the input array, so this
-    is not suitable for higher-dimensional data.
+    polynomially in the number of features of the input array.
 
     See :ref:`examples/plot_polynomial_regression.py
     <example_plot_polynomial_regression.py>`
@@ -438,13 +438,53 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
         self.include_bias = include_bias
 
     @staticmethod
+    def nCr(n, r):
+        """Number of combinations when we choose r out of n."""
+        f = math.factorial
+        return f(n) / f(r) / f(n-r)
+
+    @staticmethod
+    def __power_matrix(n_features, degree):
+        """Matrix of polynomial powers with specific degree."""
+
+        # This problem is equivalent to distributing indistinguishable
+        # balls into distinguishable boxes. Here, number of balls is equal
+        # to degree, and the number of features equal to number of boxes.
+        # For more, check:
+        # http://2000clicks.com/mathhelp/CountingObjectsInBoxes.aspx#UnlabLab
+
+        k = n_features
+        balls = degree
+        bars = k - 1
+        total = balls + bars
+        rows = PolynomialFeatures.nCr(total, bars)
+
+        # Compute all possible ways to partition a degree into k features.
+        combs = np.asarray(list(itertools.combinations(xrange(total), bars)))
+
+        assert rows == combs.shape[0]
+
+        # Compute how many powers each feature had for each partitioning
+        last_column = total*np.ones((rows, 1))
+        powers_ = np.hstack((combs, last_column))
+        powers = np.zeros_like(powers_)
+
+        powers[:, 0] = powers_[:, 0]
+        for j in xrange(1, powers_.shape[1]):
+            powers[:, j] = powers_[:, j] - powers_[:, j-1] - 1
+        return powers
+
+
+    @staticmethod
     def _power_matrix(n_features, degree, include_bias):
-        """Compute the matrix of polynomial powers"""
+        """Compute the matrix of polynomial powers up to a degree."""
         # Find permutations/combinations which add to degree or less
         deg_min = 0 if include_bias else 1
-        powers = itertools.product(*(range(degree + 1)
-                                     for i in range(n_features)))
-        powers = np.array([c for c in powers if deg_min <= sum(c) <= degree])
+        powers = []
+        for n in range(deg_min, degree + 1):
+           powers_ = PolynomialFeatures.__power_matrix(n_features, n)
+           powers.extend(powers_)
+        powers = np.asarray(powers)
 
         # sort so that the order of the powers makes sense
         i = np.lexsort(np.vstack([powers.T, powers.sum(1)]))
