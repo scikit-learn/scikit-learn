@@ -568,11 +568,6 @@ From text
    :template: function.rst
 
    isotonic.isotonic_regression
-
-.. autosummary::
-   :toctree: generated
-   :template: function.rst
-
    isotonic.check_increasing
 
 .. _kernel_approximation_ref:
