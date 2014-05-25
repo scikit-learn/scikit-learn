@@ -1,9 +1,60 @@
 import numpy as np
 
-from sklearn.isotonic import isotonic_regression, IsotonicRegression
+from sklearn.isotonic import check_increasing, isotonic_regression,\
+    IsotonicRegression
 
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_raises, assert_array_equal,\
+    assert_true, assert_false
+
+from sklearn.utils.testing import assert_warns_message, assert_no_warnings
+
+
+def test_check_increasing_up():
+    x = [0, 1, 2, 3, 4, 5]
+    y = [0, 1.5, 2.77, 8.99, 8.99, 50]
+
+    # Check that we got increasing=True and no warnings
+    is_increasing = assert_no_warnings(check_increasing, x, y)
+    assert_true(is_increasing)
+
+
+def test_check_increasing_up_extreme():
+    x = [0, 1, 2, 3, 4, 5]
+    y = [0, 1, 2, 3, 4, 5]
+
+    # Check that we got increasing=True and no warnings
+    is_increasing = assert_no_warnings(check_increasing, x, y)
+    assert_true(is_increasing)
+
+
+def test_check_increasing_down():
+    x = [0, 1, 2, 3, 4, 5]
+    y = [0, -1.5, -2.77, -8.99, -8.99, -50]
+
+    # Check that we got increasing=False and no warnings
+    is_increasing = assert_no_warnings(check_increasing, x, y)
+    assert_false(is_increasing)
+
+
+def test_check_increasing_down_extreme():
+    x = [0, 1, 2, 3, 4, 5]
+    y = [0, -1, -2, -3, -4, -5]
+
+    # Check that we got increasing=False and no warnings
+    is_increasing = assert_no_warnings(check_increasing, x, y)
+    assert_false(is_increasing)
+
+
+def test_check_ci_warn():
+    x = [0, 1, 2, 3, 4, 5]
+    y = [0, -1, 2, -3, 4, -5]
+
+    # Check that we got increasing=False and CI interval warning
+    is_increasing = assert_warns_message(UserWarning, "interval",
+                                         check_increasing,
+                                         x, y)
+
+    assert_false(is_increasing)
 
 
 def test_isotonic_regression():
@@ -34,6 +85,34 @@ def test_isotonic_regression_reversed():
     y_ = IsotonicRegression(increasing=False).fit_transform(
         np.arange(len(y)), y)
     assert_array_equal(np.ones(y_[:-1].shape), ((y_[:-1] - y_[1:]) >= 0))
+
+
+def test_isotonic_regression_auto_decreasing():
+    # Set y and x for decreasing
+    y = np.array([10, 9, 10, 7, 6, 6.1, 5])
+    x = np.arange(len(y))
+
+    # Create model and fit_transform
+    ir = IsotonicRegression(increasing='auto')
+    y_ = assert_no_warnings(ir.fit_transform, x, y)
+
+    # Check that relationship decreases
+    is_increasing = y_[0] < y_[-1]
+    assert_false(is_increasing)
+
+
+def test_isotonic_regression_auto_increasing():
+    # Set y and x for decreasing
+    y = np.array([5, 6.1, 6, 7, 10, 9, 10])
+    x = np.arange(len(y))
+
+    # Create model and fit_transform
+    ir = IsotonicRegression(increasing='auto')
+    y_ = assert_no_warnings(ir.fit_transform, x, y)
+
+    # Check that relationship increases
+    is_increasing = y_[0] < y_[-1]
+    assert_true(is_increasing)
 
 
 def test_assert_raises_exceptions():

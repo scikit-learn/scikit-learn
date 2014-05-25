@@ -568,6 +568,7 @@ From text
    :template: function.rst
 
    isotonic.isotonic_regression
+   isotonic.check_increasing
 
 .. _kernel_approximation_ref:
 

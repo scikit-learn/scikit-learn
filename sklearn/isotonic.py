@@ -5,10 +5,72 @@
 
 import numpy as np
 from scipy import interpolate
+from scipy.stats import spearmanr
 from .base import BaseEstimator, TransformerMixin, RegressorMixin
 from .utils import as_float_array, check_arrays
 from ._isotonic import _isotonic_regression
 import warnings
+import math
+
+
+def check_increasing(x, y):
+    """Determine whether the relationship between x and y appears to be
+    increasing or decreasing based on Spearman correlation.
+
+    Parameters
+    ----------
+    x : array-like, shape=(n_samples,)
+            Training data.
+
+    y : array-like, shape=(n_samples,)
+        Training target.
+
+    Returns
+    -------
+    `increasing_bool` : boolean
+        Whether the relationship is increasing or decreasing.
+
+    Notes
+    -----
+    Determine whether the relationship between x and y appears to be
+    increasing or decreasing.  The Spearman correlation coefficient is
+    estimated from the data, and the sign of the resulting estimate
+    is used as the result.
+
+    In the event that the 95% confidence interval based on Fisher transform
+    spans zero, a warning is raised.
+
+    References
+    ----------
+    Fisher transformation. Wikipedia.
+    http://en.wikipedia.org/w/index.php?title=Fisher_transformation
+    """
+
+    # Calculate Spearman rho estimate and set return accordingly.
+    rho, _ = spearmanr(x, y)
+    if rho >= 0:
+        increasing_bool = True
+    else:
+        increasing_bool = False
+
+    # Run Fisher transform to get the rho CI, but handle rho=+/-1
+    if rho not in [-1.0, 1.0]:
+        F = 0.5 * math.log((1. + rho) / (1. - rho))
+        F_se = 1 / math.sqrt(len(x) - 3)
+
+        # Use a 95% CI, i.e., +/-1.96 S.E.
+        # http://en.wikipedia.org/wiki/Fisher_transformation
+        rho_0 = math.tanh(F - 1.96 * F_se)
+        rho_1 = math.tanh(F + 1.96 * F_se)
+
+        # Warn if the CI spans zero.
+        if np.sign(rho_0) != np.sign(rho_1):
+            warnings.warn("Confidence interval of the Spearman "
+                          "correlation coefficient spans zero. "
+                          "Determination of ``increasing`` may be "
+                          "suspect.")
+
+    return increasing_bool
 
 
 def isotonic_regression(y, sample_weight=None, y_min=None, y_max=None,
@@ -113,6 +175,15 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
     y_max : optional, default: None
         If not None, set the highest value of the fit to y_max.
 
+    increasing : boolean or string, optional, default: True
+        If boolean, whether or not to fit the isotonic regression with y
+        increasing or decreasing.
+
+        The string value "auto" determines whether y should
+        increase or decrease based on the Spearman correlation estimate's
+        sign.
+
+
     Attributes
     ----------
     `X_` : ndarray (n_samples, )
@@ -172,10 +243,17 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
                                            sparse_format='dense')
         y = as_float_array(y)
         self._check_fit_data(X, y, sample_weight)
+
+        # Determine increasing if auto-determination requested
+        if self.increasing == 'auto':
+            self.increasing_ = check_increasing(X, y)
+        else:
+            self.increasing_ = self.increasing
+
         order = np.argsort(X)
         self.X_ = as_float_array(X[order], copy=False)
         self.y_ = isotonic_regression(y[order], sample_weight, self.y_min,
-                                      self.y_max, increasing=self.increasing)
+                                      self.y_max, increasing=self.increasing_)
         return self
 
     def transform(self, T):
@@ -235,11 +313,18 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
                                            sparse_format='dense')
         y = as_float_array(y)
         self._check_fit_data(X, y, sample_weight)
+
+        # Determine increasing if auto-determination requested
+        if self.increasing == 'auto':
+            self.increasing_ = check_increasing(X, y)
+        else:
+            self.increasing_ = self.increasing
+
         order = np.lexsort((y, X))
         order_inv = np.argsort(order)
         self.X_ = as_float_array(X[order], copy=False)
         self.y_ = isotonic_regression(y[order], sample_weight, self.y_min,
-                                      self.y_max, increasing=self.increasing)
+                                      self.y_max, increasing=self.increasing_)
         return self.y_[order_inv]
 
     def predict(self, T):
