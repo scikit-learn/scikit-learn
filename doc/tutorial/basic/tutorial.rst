@@ -82,7 +82,7 @@ datasets for classification and the `boston house prices dataset
 In the following, we start a Python interpreter from our shell and then
 load the `iris` and `digits` datasets.  Our notational convention is that
 ``$`` denotes the shell prompt while ``>>>`` denotes the Python
-interpreter prompt.::
+interpreter prompt::
 
   $ python
   >>> from sklearn import datasets
