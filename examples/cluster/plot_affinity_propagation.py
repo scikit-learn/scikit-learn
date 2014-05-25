@@ -41,22 +41,22 @@ print("Silhouette Coefficient: %0.3f"
 
 ##############################################################################
 # Plot result
-import pylab as pl
+import matplotlib.pyplot as plt
 from itertools import cycle
 
-pl.close('all')
-pl.figure(1)
-pl.clf()
+plt.close('all')
+plt.figure(1)
+plt.clf()
 
 colors = cycle('bgrcmykbgrcmykbgrcmykbgrcmyk')
 for k, col in zip(range(n_clusters_), colors):
     class_members = labels == k
     cluster_center = X[cluster_centers_indices[k]]
-    pl.plot(X[class_members, 0], X[class_members, 1], col + '.')
-    pl.plot(cluster_center[0], cluster_center[1], 'o', markerfacecolor=col,
-            markeredgecolor='k', markersize=14)
+    plt.plot(X[class_members, 0], X[class_members, 1], col + '.')
+    plt.plot(cluster_center[0], cluster_center[1], 'o', markerfacecolor=col,
+             markeredgecolor='k', markersize=14)
     for x in X[class_members]:
-        pl.plot([cluster_center[0], x[0]], [cluster_center[1], x[1]], col)
+        plt.plot([cluster_center[0], x[0]], [cluster_center[1], x[1]], col)
 
-pl.title('Estimated number of clusters: %d' % n_clusters_)
-pl.show()
+plt.title('Estimated number of clusters: %d' % n_clusters_)
+plt.show()

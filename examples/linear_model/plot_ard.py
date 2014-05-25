@@ -19,7 +19,7 @@ marginal log-likelihood of the observations.
 print(__doc__)
 
 import numpy as np
-import pylab as pl
+import matplotlib.pyplot as plt
 from scipy import stats
 
 from sklearn.linear_model import ARDRegression, LinearRegression
@@ -56,27 +56,27 @@ ols.fit(X, y)
 ###############################################################################
 # Plot the true weights, the estimated weights and the histogram of the
 # weights
-pl.figure(figsize=(6, 5))
-pl.title("Weights of the model")
-pl.plot(clf.coef_, 'b-', label="ARD estimate")
-pl.plot(ols.coef_, 'r--', label="OLS estimate")
-pl.plot(w, 'g-', label="Ground truth")
-pl.xlabel("Features")
-pl.ylabel("Values of the weights")
-pl.legend(loc=1)
+plt.figure(figsize=(6, 5))
+plt.title("Weights of the model")
+plt.plot(clf.coef_, 'b-', label="ARD estimate")
+plt.plot(ols.coef_, 'r--', label="OLS estimate")
+plt.plot(w, 'g-', label="Ground truth")
+plt.xlabel("Features")
+plt.ylabel("Values of the weights")
+plt.legend(loc=1)
 
-pl.figure(figsize=(6, 5))
-pl.title("Histogram of the weights")
-pl.hist(clf.coef_, bins=n_features, log=True)
-pl.plot(clf.coef_[relevant_features], 5 * np.ones(len(relevant_features)),
-        'ro', label="Relevant features")
-pl.ylabel("Features")
-pl.xlabel("Values of the weights")
-pl.legend(loc=1)
+plt.figure(figsize=(6, 5))
+plt.title("Histogram of the weights")
+plt.hist(clf.coef_, bins=n_features, log=True)
+plt.plot(clf.coef_[relevant_features], 5 * np.ones(len(relevant_features)),
+         'ro', label="Relevant features")
+plt.ylabel("Features")
+plt.xlabel("Values of the weights")
+plt.legend(loc=1)
 
-pl.figure(figsize=(6, 5))
-pl.title("Marginal log-likelihood")
-pl.plot(clf.scores_)
-pl.ylabel("Score")
-pl.xlabel("Iterations")
-pl.show()
+plt.figure(figsize=(6, 5))
+plt.title("Marginal log-likelihood")
+plt.plot(clf.scores_)
+plt.ylabel("Score")
+plt.xlabel("Iterations")
+plt.show()

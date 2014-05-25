@@ -12,8 +12,8 @@ python -c "import scipy; print('scipy %s' % scipy.__version__)"
 python setup.py build_ext --inplace
 
 if [[ "$COVERAGE" == "true" ]]; then
-    export WITH_COVERAGE="--with-coverage"
+    make test-coverage
 else
-    export WITH_COVERAGE=""
+    make test-code
 fi
-nosetests -s -v $WITH_COVERAGE sklearn
+make test-doc

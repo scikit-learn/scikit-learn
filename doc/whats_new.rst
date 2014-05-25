@@ -7,6 +7,10 @@
 
 Changelog
 ---------
+   - The ``img_to_graph`` and ``grid_tograph`` functions in
+     :mod:`sklearn.feature_extraction.image` now return ``np.ndarray``
+     instead of ``np.matrix`` when ``return_as=np.ndarray``.  See the
+     Notes section for more information on compatibility.
 
    - The :ref:`Working With Text Data <text_data_tutorial>` tutorial
      has now been worked in to the main documentation's tutorial section.

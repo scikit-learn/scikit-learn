@@ -10,7 +10,7 @@ trained using SGD.
 print(__doc__)
 
 import numpy as np
-import pylab as pl
+import matplotlib.pyplot as plt
 from sklearn.linear_model import SGDClassifier
 from sklearn.datasets.samples_generator import make_blobs
 
@@ -35,8 +35,8 @@ for (i, j), val in np.ndenumerate(X1):
 levels = [-1.0, 0.0, 1.0]
 linestyles = ['dashed', 'solid', 'dashed']
 colors = 'k'
-pl.contour(X1, X2, Z, levels, colors=colors, linestyles=linestyles)
-pl.scatter(X[:, 0], X[:, 1], c=Y, cmap=pl.cm.Paired)
+plt.contour(X1, X2, Z, levels, colors=colors, linestyles=linestyles)
+plt.scatter(X[:, 0], X[:, 1], c=Y, cmap=plt.cm.Paired)
 
-pl.axis('tight')
-pl.show()
+plt.axis('tight')
+plt.show()
