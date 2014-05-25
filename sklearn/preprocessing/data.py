@@ -14,6 +14,7 @@ from scipy import sparse
 
 from ..base import BaseEstimator, TransformerMixin
 from ..externals import six
+from ..externals.six.moves import xrange
 from ..utils import check_arrays
 from ..utils import atleast2d_or_csc
 from ..utils import array2d
