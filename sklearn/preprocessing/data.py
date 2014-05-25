@@ -460,7 +460,8 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
         rows = PolynomialFeatures.nCr(total, bars)
 
         # Compute all possible ways to partition a degree into k features.
-        combs = np.asarray(list(itertools.combinations(xrange(total), bars)))
+        combs = list(itertools.combinations(xrange(total), bars))
+        combs = np.asarray(combs)
 
         assert rows == combs.shape[0]
 
@@ -472,7 +473,7 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
         powers[:, 0] = powers_[:, 0]
         for j in xrange(1, powers_.shape[1]):
             powers[:, j] = powers_[:, j] - powers_[:, j-1] - 1
-        return powers
+        return powers.astype('int')
 
 
     @staticmethod
