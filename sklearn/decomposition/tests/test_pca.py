@@ -248,7 +248,7 @@ def test_sparse_randomized_pca_inverse():
     Y = pca.transform(X)
 
     Y_inverse = pca.inverse_transform(Y)
-    assert_almost_equal(X.todense(), Y_inverse, decimal=2)
+    assert_almost_equal(X.toarray(), Y_inverse, decimal=2)
 
     # same as above with whitening (approximate reconstruction)
     pca = assert_warns(DeprecationWarning, RandomizedPCA(n_components=2,

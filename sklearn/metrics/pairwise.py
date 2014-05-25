@@ -994,20 +994,17 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
     If Y is given (default is None), then the returned matrix is the pairwise
     distance between the arrays from both X and Y.
 
-    Please note that support for sparse matrices is currently limited to
-    'euclidean', 'l2' and 'cosine'.
-
     Valid values for metric are:
 
-    - from scikit-learn: ['cityblock', 'cosine', 'euclidean', 'l1', 'l2',
-      'manhattan']
+    - From scikit-learn: ['cityblock', 'cosine', 'euclidean', 'l1', 'l2',
+      'manhattan']. These metrics support sparse matrix inputs.
 
-    - from scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
+    - From scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
       'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski', 'mahalanobis',
       'matching', 'minkowski', 'rogerstanimoto', 'russellrao', 'seuclidean',
       'sokalmichener', 'sokalsneath', 'sqeuclidean', 'yule']
       See the documentation for scipy.spatial.distance for details on these
-      metrics.
+      metrics. These metrics do not support sparse matrix inputs.
 
     Note that in the case of 'cityblock', 'cosine' and 'euclidean' (which are
     valid scipy.spatial.distance metrics), the scikit-learn implementation

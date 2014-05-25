@@ -799,6 +799,7 @@ def precision_recall_curve(y_true, probas_pred, pos_label=None,
 
     """
     fps, tps, thresholds = _binary_clf_curve(y_true, probas_pred,
+                                             pos_label=pos_label,
                                              sample_weight=sample_weight)
 
     precision = tps / (tps + fps)
@@ -969,12 +970,9 @@ def confusion_matrix(y_true, y_pred, labels=None):
     y_pred = y_pred[ind]
     y_true = y_true[ind]
 
-    CM = np.asarray(
-        coo_matrix(
-            (np.ones(y_true.shape[0], dtype=np.int), (y_true, y_pred)),
-            shape=(n_labels, n_labels)
-        ).todense()
-    )
+    CM = coo_matrix((np.ones(y_true.shape[0], dtype=np.int), (y_true, y_pred)),
+                    shape=(n_labels, n_labels)
+                    ).toarray()
 
     return CM
 

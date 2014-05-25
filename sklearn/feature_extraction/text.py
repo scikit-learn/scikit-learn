@@ -1145,6 +1145,12 @@ class TfidfVectorizer(CountVectorizer):
     sublinear_tf : boolean, optional
         Apply sublinear tf scaling, i.e. replace tf with 1 + log(tf).
 
+    Attributes
+    ----------
+    ``idf_`` : array, shape = [n_features], or None
+        The learned idf vector (global term weights)
+        when ``use_idf`` is set to True, None otherwise.
+
     See also
     --------
     CountVectorizer
@@ -1215,6 +1221,10 @@ class TfidfVectorizer(CountVectorizer):
     @sublinear_tf.setter
     def sublinear_tf(self, value):
         self._tfidf.sublinear_tf = value
+
+    @property
+    def idf_(self):
+        return self._tfidf.idf_
 
     def fit(self, raw_documents, y=None):
         """Learn a conversion law from documents to array data"""

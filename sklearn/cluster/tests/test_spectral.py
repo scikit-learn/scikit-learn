@@ -188,7 +188,7 @@ def test_discretize(seed=8):
                                              y_true)),
                                             shape=(n_samples,
                                                    n_class + 1))
-            y_true_noisy = (y_indicator.todense()
+            y_true_noisy = (y_indicator.toarray()
                             + 0.1 * random_state.randn(n_samples,
                                                        n_class + 1))
             y_pred = discretize(y_true_noisy, random_state)

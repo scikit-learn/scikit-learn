@@ -35,11 +35,11 @@ def test_get_submatrix():
     for X in (data, csr_matrix(data)):
         submatrix = get_submatrix(rows, cols, X)
         if issparse(submatrix):
-            submatrix = submatrix.todense()
+            submatrix = submatrix.toarray()
         assert_array_equal(submatrix, [[2, 3],
                                        [6, 7],
                                        [18, 19]])
         submatrix[:] = -1
         if issparse(X):
-            X = X.todense()
+            X = X.toarray()
         assert_true(np.all(X != -1))

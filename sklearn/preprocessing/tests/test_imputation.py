@@ -256,7 +256,7 @@ def test_imputation_pipeline_grid_search():
 
     l = 100
     X = sparse_random_matrix(l, l, density=0.10)
-    Y = sparse_random_matrix(l, 1, density=0.10).todense()
+    Y = sparse_random_matrix(l, 1, density=0.10).toarray()
     gs = grid_search.GridSearchCV(pipeline, parameters)
     gs.fit(X, Y)
 
@@ -285,7 +285,7 @@ def test_imputation_copy():
     X_orig = sparse_random_matrix(5, 5, density=0.75, random_state=0)
 
     # copy=True, dense => copy
-    X = X_orig.copy().todense()
+    X = X_orig.copy().toarray()
     imputer = Imputer(missing_values=0, strategy="mean", copy=True)
     Xt = imputer.fit(X).transform(X)
     Xt[0, 0] = -1
@@ -299,7 +299,7 @@ def test_imputation_copy():
     assert_false(np.all(X.data == Xt.data))
 
     # copy=False, dense => no copy
-    X = X_orig.copy().todense()
+    X = X_orig.copy().toarray()
     imputer = Imputer(missing_values=0, strategy="mean", copy=False)
     Xt = imputer.fit(X).transform(X)
     Xt[0, 0] = -1

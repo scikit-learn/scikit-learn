@@ -47,6 +47,7 @@ np.random.seed(0)
 n_features = 2000
 t = np.pi * np.linspace(0, 1, n_features)
 
+
 def sqr(x):
     return np.sign(np.cos(x))
 

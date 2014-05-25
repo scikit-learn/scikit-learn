@@ -1,13 +1,57 @@
 # Authors: Manoj Kumar
+#          Thomas Unterthiner
 
 # License: BSD 3 clause
 import scipy.sparse as sp
 import numpy as np
 
+from .fixes import sparse_min_max
 from .sparsefuncs_fast import (csr_mean_variance_axis0,
-                               csc_mean_variance_axis0,
-                               inplace_csr_column_scale,
-                               inplace_csc_column_scale)
+                               csc_mean_variance_axis0)
+
+
+def _raise_typeerror(X):
+    """Raises a TypeError if X is not a CSR or CSC matrix"""
+    input_type = X.format if sp.issparse(X) else type(X)
+    err = "Expected a CSR or CSC sparse matrix, got %s." % input_type
+    raise TypeError(err)
+
+
+def inplace_csr_column_scale(X, scale):
+    """Inplace column scaling of a CSR matrix.
+
+    Scale each feature of the data matrix by multiplying with specific scale
+    provided by the caller assuming a (n_samples, n_features) shape.
+
+    Parameters
+    ----------
+    X: CSR matrix with shape (n_samples, n_features)
+        Matrix to normalize using the variance of the features.
+
+    scale: float array with shape (n_features,)
+        Array of precomputed feature-wise values to use for scaling.
+    """
+    assert scale.shape[0] == X.shape[1]
+    X.data *= scale.take(X.indices, mode='clip')
+
+
+def inplace_csr_row_scale(X, scale):
+    """ Inplace row scaling of a CSR matrix.
+
+    Scale each sample of the data matrix by multiplying with specific scale
+    provided by the caller assuming a (n_samples, n_features) shape.
+
+    Parameters
+    ----------
+    X: CSR sparse matrix, shape (n_samples, n_features)
+    matrix to be scaled.
+
+    scale: float array with shape (n_samples,)
+    Array of precomputed sample-wise values to use for scaling.
+    """
+    assert scale.shape[0] == X.shape[0]
+    X.data *= np.repeat(scale, np.diff(X.indptr))
+
 
 def mean_variance_axis0(X):
     """Compute mean and variance along axis 0 on a CSR or CSC matrix
@@ -32,8 +76,7 @@ def mean_variance_axis0(X):
     elif isinstance(X, sp.csc_matrix):
         return csc_mean_variance_axis0(X)
     else:
-        raise TypeError(
-                "Unsupported type; expected a CSR or CSC sparse matrix.")
+        _raise_typeerror(X)
 
 
 def inplace_column_scale(X, scale):
@@ -50,13 +93,34 @@ def inplace_column_scale(X, scale):
     scale: float array with shape (n_features,)
         Array of precomputed feature-wise values to use for scaling.
     """
-    if isinstance(X, sp.csr_matrix):
-        return inplace_csr_column_scale(X, scale)
-    elif isinstance(X, sp.csc_matrix):
-        return inplace_csc_column_scale(X, scale)
+    if isinstance(X, sp.csc_matrix):
+        inplace_csr_row_scale(X.T, scale)
+    elif isinstance(X, sp.csr_matrix):
+        inplace_csr_column_scale(X, scale)
     else:
-        raise TypeError(
-                "Unsupported type; expected a CSR or CSC sparse matrix.")
+        _raise_typeerror(X)
+
+
+def inplace_row_scale(X, scale):
+    """ Inplace row scaling of a CSR or CSC matrix.
+
+    Scale each row of the data matrix by multiplying with specific scale
+    provided by the caller assuming a (n_samples, n_features) shape.
+
+    Parameters
+    ----------
+    X: CSR or CSC sparse matrix, shape (n_samples, n_features)
+    matrix to be scaled.
+
+    scale: float array with shape (n_features,)
+    Array of precomputed sample-wise values to use for scaling.
+    """
+    if isinstance(X, sp.csc_matrix):
+        inplace_csr_column_scale(X.T, scale)
+    elif isinstance(X, sp.csr_matrix):
+        inplace_csr_row_scale(X, scale)
+    else:
+        _raise_typeerror(X)
 
 
 def inplace_swap_row_csc(X, m, n):
@@ -125,7 +189,6 @@ def inplace_swap_row_csr(X, m, n):
     nz_m = m_stop - m_start
     nz_n = n_stop - n_start
 
-
     if nz_m != nz_n:
         # Modify indptr first
         X.indptr[m + 2:n] += nz_n - nz_m
@@ -164,8 +227,7 @@ def inplace_swap_row(X, m, n):
     elif isinstance(X, sp.csr_matrix):
         return inplace_swap_row_csr(X, m, n)
     else:
-        raise TypeError("Unsupported type %s; expected a "
-                        "CSR or CSC sparse matrix." % X.get_format())
+        _raise_typeerror(X)
 
 
 def inplace_swap_column(X, m, n):
@@ -192,5 +254,27 @@ def inplace_swap_column(X, m, n):
     elif isinstance(X, sp.csr_matrix):
         return inplace_swap_row_csc(X, m, n)
     else:
-        raise TypeError("Unsupported type %s; expected a "
-                        "CSR or CSC sparse matrix." % X.get_format())
+        _raise_typeerror(X)
+
+
+def min_max_axis(X, axis):
+    """Compute minimum and maximum along axis 0 on a CSR or CSC matrix
+
+    Parameters
+    ----------
+    X: CSR or CSC sparse matrix, shape (n_samples, n_features)
+        Input data.
+
+    Returns
+    -------
+
+    mins: float array with shape (n_features,)
+        Feature-wise minima
+
+    maxs: float array with shape (n_features,)
+        Feature-wise maxima
+    """
+    if isinstance(X, sp.csr_matrix) or isinstance(X, sp.csc_matrix):
+        return sparse_min_max(X, axis=axis)
+    else:
+        _raise_typeerror(X)
