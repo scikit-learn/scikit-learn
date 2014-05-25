@@ -50,13 +50,13 @@ def test_svc():
 
     assert_true(sparse.issparse(sp_clf.support_vectors_))
     assert_array_almost_equal(clf.support_vectors_,
-                              sp_clf.support_vectors_.todense())
+                              sp_clf.support_vectors_.toarray())
 
     assert_true(sparse.issparse(sp_clf.dual_coef_))
-    assert_array_almost_equal(clf.dual_coef_, sp_clf.dual_coef_.todense())
+    assert_array_almost_equal(clf.dual_coef_, sp_clf.dual_coef_.toarray())
 
     assert_true(sparse.issparse(sp_clf.coef_))
-    assert_array_almost_equal(clf.coef_, sp_clf.coef_.todense())
+    assert_array_almost_equal(clf.coef_, sp_clf.coef_.toarray())
     assert_array_almost_equal(clf.support_, sp_clf.support_)
     assert_array_almost_equal(clf.predict(T), sp_clf.predict(T))
 
@@ -64,9 +64,9 @@ def test_svc():
     clf.fit(X2, Y2)
     sp_clf.fit(X2_sp, Y2)
     assert_array_almost_equal(clf.support_vectors_,
-                              sp_clf.support_vectors_.todense())
-    assert_array_almost_equal(clf.dual_coef_, sp_clf.dual_coef_.todense())
-    assert_array_almost_equal(clf.coef_, sp_clf.coef_.todense())
+                              sp_clf.support_vectors_.toarray())
+    assert_array_almost_equal(clf.dual_coef_, sp_clf.dual_coef_.toarray())
+    assert_array_almost_equal(clf.coef_, sp_clf.coef_.toarray())
     assert_array_almost_equal(clf.support_, sp_clf.support_)
     assert_array_almost_equal(clf.predict(T2), sp_clf.predict(T2))
     assert_array_almost_equal(clf.predict_proba(T2),
@@ -117,15 +117,15 @@ def test_svc_iris():
     """Test the sparse SVC with the iris dataset"""
     for k in ('linear', 'poly', 'rbf'):
         sp_clf = svm.SVC(kernel=k).fit(iris.data, iris.target)
-        clf = svm.SVC(kernel=k).fit(iris.data.todense(), iris.target)
+        clf = svm.SVC(kernel=k).fit(iris.data.toarray(), iris.target)
 
         assert_array_almost_equal(clf.support_vectors_,
-                                  sp_clf.support_vectors_.todense())
-        assert_array_almost_equal(clf.dual_coef_, sp_clf.dual_coef_.todense())
+                                  sp_clf.support_vectors_.toarray())
+        assert_array_almost_equal(clf.dual_coef_, sp_clf.dual_coef_.toarray())
         assert_array_almost_equal(
-            clf.predict(iris.data.todense()), sp_clf.predict(iris.data))
+            clf.predict(iris.data.toarray()), sp_clf.predict(iris.data))
         if k == 'linear':
-            assert_array_almost_equal(clf.coef_, sp_clf.coef_.todense())
+            assert_array_almost_equal(clf.coef_, sp_clf.coef_.toarray())
 
 
 def test_error():
@@ -170,17 +170,17 @@ def test_linearsvc_iris():
     """Test the sparse LinearSVC with the iris dataset"""
 
     sp_clf = svm.LinearSVC(random_state=0).fit(iris.data, iris.target)
-    clf = svm.LinearSVC(random_state=0).fit(iris.data.todense(), iris.target)
+    clf = svm.LinearSVC(random_state=0).fit(iris.data.toarray(), iris.target)
 
     assert_equal(clf.fit_intercept, sp_clf.fit_intercept)
 
     assert_array_almost_equal(clf.raw_coef_, sp_clf.raw_coef_, decimal=1)
     assert_array_almost_equal(
-        clf.predict(iris.data.todense()), sp_clf.predict(iris.data))
+        clf.predict(iris.data.toarray()), sp_clf.predict(iris.data))
 
     # check decision_function
     pred = np.argmax(sp_clf.decision_function(iris.data), 1)
-    assert_array_almost_equal(pred, clf.predict(iris.data.todense()))
+    assert_array_almost_equal(pred, clf.predict(iris.data.toarray()))
 
     # sparsify the coefficients on both models and check that they still
     # produce the same results
@@ -252,11 +252,11 @@ def test_sparse_realdata():
          3.,  0.,  0.,  2.,  2.,  1.,  3.,  1.,  1.,  0.,  1.,  2.,  1.,
          1.,  3.])
 
-    clf = svm.SVC(kernel='linear').fit(X.todense(), y)
+    clf = svm.SVC(kernel='linear').fit(X.toarray(), y)
     sp_clf = svm.SVC(kernel='linear').fit(sparse.coo_matrix(X), y)
 
-    assert_array_equal(clf.support_vectors_, sp_clf.support_vectors_.todense())
-    assert_array_equal(clf.dual_coef_, sp_clf.dual_coef_.todense())
+    assert_array_equal(clf.support_vectors_, sp_clf.support_vectors_.toarray())
+    assert_array_equal(clf.dual_coef_, sp_clf.dual_coef_.toarray())
 
 
 def test_sparse_svc_clone_with_callable_kernel():

@@ -31,7 +31,22 @@ except ImportError:
     import urllib.error
     import urllib.parse
     from urllib.error import HTTPError, URLError
-    
+
+
+try:
+    # Python 2 built-in
+    execfile
+except NameError:
+    def execfile(filename, global_vars=None, local_vars=None):
+        with open(filename) as f:
+            code = compile(f.read(), filename, 'exec')
+            exec(code, global_vars, local_vars)
+
+try:
+    basestring
+except NameError:
+    basestring = str
+
 try:
     from PIL import Image
 except ImportError:
@@ -170,7 +185,7 @@ def parse_sphinx_searchindex(searchindex):
     # Make sure searchindex uses UTF-8 encoding
     if hasattr(searchindex, 'decode'):
         searchindex = searchindex.decode('UTF-8')
-    
+
     # parse objects
     query = 'objects:'
     pos = searchindex.find(query)
@@ -247,7 +262,7 @@ class SphinxDocLinkResolver(object):
         if full_name in self._searchindex['objects']:
             value = self._searchindex['objects'][full_name]
             if isinstance(value, dict):
-                value = value[value.keys()[0]]
+                value = value[next(iter(value.keys()))]
             fname_idx = value[0]
         elif cobj['module_short'] in self._searchindex['objects']:
             value = self._searchindex['objects'][cobj['module_short']]
@@ -263,6 +278,9 @@ class SphinxDocLinkResolver(object):
             else:
                 link = posixpath.join(self.doc_url, fname)
 
+            if hasattr(link, 'decode'):
+                link = link.decode('utf-8', 'replace')
+
             if link in self._page_cache:
                 html = self._page_cache[link]
             else:
@@ -275,9 +293,16 @@ class SphinxDocLinkResolver(object):
                 for mod in self.extra_modules_test:
                     comb_names.append(mod + '.' + cobj['name'])
             url = False
+            if hasattr(html, 'decode'):
+                # Decode bytes under Python 3
+                html = html.decode('utf-8', 'replace')
+
             for comb_name in comb_names:
-                if html.find(comb_name) >= 0:
-                    url = link + '#' + comb_name
+                if hasattr(comb_name, 'decode'):
+                    # Decode bytes under Python 3
+                    comb_name = comb_name.decode('utf-8', 'replace')
+                if comb_name in html:
+                    url = link + u'#' + comb_name
             link = url
         else:
             link = False
@@ -356,7 +381,7 @@ plot_rst_template = """
 .. literalinclude:: %(fname)s
     :lines: %(end_row)s-
 
-**Total running time of the example:** %(time_elapsed) .2f seconds 
+**Total running time of the example:** %(time_elapsed) .2f seconds
 (%(time_m) .0f minutes %(time_s) .2f seconds)
     """
 
@@ -1066,7 +1091,7 @@ def embed_code_links(app, exception):
                         with open(full_fname, 'wb') as fid:
                             for line in lines_in:
                                 line = line.decode('utf-8')
-                                for name, link in str_repl.iteritems():
+                                for name, link in str_repl.items():
                                     line = line.replace(name, link)
                                 fid.write(line.encode('utf-8'))
     except HTTPError as e:
