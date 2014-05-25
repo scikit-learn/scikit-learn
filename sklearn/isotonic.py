@@ -10,6 +10,7 @@ from .base import BaseEstimator, TransformerMixin, RegressorMixin
 from .utils import as_float_array, check_arrays
 from ._isotonic import _isotonic_regression
 import warnings
+import math
 
 
 def check_increasing(x, y):
@@ -54,13 +55,13 @@ def check_increasing(x, y):
 
     # Run Fisher transform to get the rho CI, but handle rho=+/-1
     if rho not in [-1.0, 1.0]:
-        F = 0.5 * np.log((1 + rho) / (1 - rho))
-        F_se = 1 / np.sqrt(len(x) - 3)
+        F = 0.5 * math.log((1. + rho) / (1. - rho))
+        F_se = 1 / math.sqrt(len(x) - 3)
 
         # Use a 95% CI, i.e., +/-1.96 S.E.
         # http://en.wikipedia.org/wiki/Fisher_transformation
-        rho_0 = np.tanh(F - 1.96 * F_se)
-        rho_1 = np.tanh(F + 1.96 * F_se)
+        rho_0 = math.tanh(F - 1.96 * F_se)
+        rho_1 = math.tanh(F + 1.96 * F_se)
 
         # Warn if the CI spans zero.
         if np.sign(rho_0) != np.sign(rho_1):
