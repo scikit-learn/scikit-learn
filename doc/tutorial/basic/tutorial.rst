@@ -171,7 +171,9 @@ We call our estimator instance `clf` as it is a classifier. It now must
 be fitted to the model, that is, it must `learn` from the model. This is
 done by passing our training set to the ``fit`` method. As a training
 set, let us use all the images of our dataset apart from the last
-one::
+one. We select this training set with the ``[:-1]`` Python syntax,
+which produces a new array that contains all but
+the last entry of ``digits.data``::
 
   >>> clf.fit(digits.data[:-1], digits.target[:-1])  # doctest: +NORMALIZE_WHITESPACE
   SVC(C=100.0, cache_size=200, class_weight=None, coef0=0.0, degree=3,
