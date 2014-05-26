@@ -14,8 +14,10 @@ import math
 
 
 def check_increasing(x, y):
-    """Determine whether the relationship between x and y appears to be
-    increasing or decreasing based on Spearman correlation.
+    """Determine whether y is monotonically correlated with x.
+
+    y is found increasing or decreasing with respect to x based on a Spearman
+    correlation test.
 
     Parameters
     ----------
@@ -32,10 +34,8 @@ def check_increasing(x, y):
 
     Notes
     -----
-    Determine whether the relationship between x and y appears to be
-    increasing or decreasing.  The Spearman correlation coefficient is
-    estimated from the data, and the sign of the resulting estimate
-    is used as the result.
+    The Spearman correlation coefficient is estimated from the data, and the
+    sign of the resulting estimate is used as the result.
 
     In the event that the 95% confidence interval based on Fisher transform
     spans zero, a warning is raised.
@@ -48,10 +48,7 @@ def check_increasing(x, y):
 
     # Calculate Spearman rho estimate and set return accordingly.
     rho, _ = spearmanr(x, y)
-    if rho >= 0:
-        increasing_bool = True
-    else:
-        increasing_bool = False
+    increasing_bool = rho >= 0
 
     # Run Fisher transform to get the rho CI, but handle rho=+/-1
     if rho not in [-1.0, 1.0]:
