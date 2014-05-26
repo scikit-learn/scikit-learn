@@ -4,7 +4,7 @@ from sklearn.isotonic import check_increasing, isotonic_regression,\
     IsotonicRegression
 
 from sklearn.utils.testing import assert_raises, assert_array_equal,\
-    assert_true, assert_false
+    assert_true, assert_false, assert_equal
 
 from sklearn.utils.testing import assert_warns_message, assert_no_warnings
 
@@ -161,6 +161,48 @@ def test_isotonic_sample_weight():
 
     assert_array_equal(expected_y, received_y)
 
+
+def test_isotonic_regression_oob_raise():
+    # Set y and x
+    y = np.array([3, 7, 5, 9, 8, 7, 10])
+    x = np.arange(len(y))
+
+    # Create model and fit
+    ir = IsotonicRegression(increasing='auto', out_of_bounds="raise")
+    ir.fit(x, y)
+
+    # Check that an exception is thrown
+    assert_raises(ValueError, ir.predict, [min(x)-10, max(x)+10])
+
+
+def test_isotonic_regression_oob_clip():
+    # Set y and x
+    y = np.array([3, 7, 5, 9, 8, 7, 10])
+    x = np.arange(len(y))
+
+    # Create model and fit
+    ir = IsotonicRegression(increasing='auto', out_of_bounds="clip")
+    ir.fit(x, y)
+
+    # Predict from  training and test x and check that min/max match.
+    y1 = ir.predict([min(x) - 10, max(x) + 10])
+    y2 = ir.predict(x)
+    assert_equal(max(y1), max(y2))
+    assert_equal(min(y1), min(y2))
+
+
+def test_isotonic_regression_oob_nan():
+    # Set y and x
+    y = np.array([3, 7, 5, 9, 8, 7, 10])
+    x = np.arange(len(y))
+
+    # Create model and fit
+    ir = IsotonicRegression(increasing='auto', out_of_bounds="nan")
+    ir.fit(x, y)
+
+    # Predict from  training and test x and check that we have two NaNs.
+    y1 = ir.predict([min(x)-10, max(x)+10])
+    assert_equal(sum(np.isnan(y1)), 2)
 
 if __name__ == "__main__":
     import nose
