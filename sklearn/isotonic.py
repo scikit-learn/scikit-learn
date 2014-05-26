@@ -293,21 +293,23 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         if len(T.shape) != 1:
             raise ValueError("X should be a vector")
 
-        # Only raise exception on out-of-bounds data if requested.
+        # Handle the out_of_bounds argument by setting bounds_error and T
         if self.out_of_bounds == "raise":
             f = interpolate.interp1d(self.X_, self.y_, kind='linear',
                                      bounds_error=True)
-        else:
+        elif self.out_of_bounds == "nan":
             f = interpolate.interp1d(self.X_, self.y_, kind='linear',
                                      bounds_error=False)
-
-        # Clip out-of-bounds values if requested.
-        if self.out_of_bounds == "clip":
-            T_final = np.clip(T, self.X_min_, self.X_max_)
+        elif self.out_of_bounds == "clip":
+            f = interpolate.interp1d(self.X_, self.y_, kind='linear',
+                                     bounds_error=False)
+            T = np.clip(T, self.X_min_, self.X_max_)
         else:
-            T_final = T
+            raise ValueError("The argument ``out_of_bounds`` must be in "
+                             "'nan', 'clip', 'raise'; got {0}"\
+                             .format(self.out_of_bounds))
 
-        return f(T_final)
+        return f(T)
 
     def fit_transform(self, X, y, sample_weight=None, weight=None):
         """Fit model and transform y by linear interpolation.
