@@ -336,7 +336,7 @@ class TSNE(BaseEstimator):
         An affinity metric that is defined in scipy.spatial.distance or
         'precomputed'.
 
-    init : string, optional (default: random)
+    init : string, optional (default: "random")
         Initialization of embedding. Possible options are 'random' and 'pca'.
         PCA initialization cannot be used with precomputed distances and is
         usually more globally stable than random initialization.
