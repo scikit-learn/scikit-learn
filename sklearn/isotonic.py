@@ -306,7 +306,7 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
             T = np.clip(T, self.X_min_, self.X_max_)
         else:
             raise ValueError("The argument ``out_of_bounds`` must be in "
-                             "'nan', 'clip', 'raise'; got {0}"\
+                             "'nan', 'clip', 'raise'; got {0}"
                              .format(self.out_of_bounds))
 
         return f(T)
