@@ -343,10 +343,10 @@ class KNeighborsMixin(object):
         >>> neigh.fit(X) # doctest: +ELLIPSIS
         NearestNeighbors(algorithm='auto', leaf_size=30, ...)
         >>> A = neigh.kneighbors_graph(X)
-        >>> A.todense()
-        matrix([[ 1.,  0.,  1.],
-                [ 0.,  1.,  1.],
-                [ 1.,  0.,  1.]])
+        >>> A.toarray()
+        array([[ 1.,  0.,  1.],
+               [ 0.,  1.,  1.],
+               [ 1.,  0.,  1.]])
 
         See also
         --------
@@ -523,10 +523,10 @@ class RadiusNeighborsMixin(object):
         >>> neigh.fit(X) # doctest: +ELLIPSIS
         NearestNeighbors(algorithm='auto', leaf_size=30, ...)
         >>> A = neigh.radius_neighbors_graph(X)
-        >>> A.todense()
-        matrix([[ 1.,  0.,  1.],
-                [ 0.,  1.,  0.],
-                [ 1.,  0.,  1.]])
+        >>> A.toarray()
+        array([[ 1.,  0.,  1.],
+               [ 0.,  1.,  0.],
+               [ 1.,  0.,  1.]])
 
         See also
         --------
