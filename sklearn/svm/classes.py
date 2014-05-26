@@ -746,3 +746,114 @@ class OneClassSVM(BaseLibSVM):
         super(OneClassSVM, self).fit(X, [], sample_weight=sample_weight,
                                      **params)
         return self
+
+
+class SVDD(BaseLibSVM):
+    """
+    Finds the smallest ball containing all data.
+
+    The implemintation based on libsvm.
+    Parameters
+    ----------
+    C : float, optional (default=1.0)
+        Penalty parameter C of the error term.
+
+    kernel : string, optional (default='rbf')
+         Specifies the kernel type to be used in the algorithm.
+         It must be one of 'linear', 'poly', 'rbf' or 'sigmoid'.
+         If none is given, 'rbf' will be used. Callable and 
+         precomputed kernels arenot supported yet.
+
+    degree : int, optional (default=3)
+        Degree of the polynomial kernel function ('poly').
+        Ignored by all other kernels.
+
+    gamma : float, optional (default=0.0)
+        Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
+        If gamma is 0.0 then 1/n_features will be used instead.
+
+    coef0 : float, optional (default=0.0)
+        Independent term in kernel function.
+        It is only significant in 'poly' and 'sigmoid'.
+
+    shrinking: boolean, optional (default=True)
+        Whether to use the shrinking heuristic.
+
+    tol : float, optional (default=1e-3)
+        Tolerance for stopping criterion.
+
+    cache_size : float, optional
+        Specify the size of the kernel cache (in MB)
+
+    verbose : bool, default: False
+        Enable verbose output. Note that this setting takes advantage of a
+        per-process runtime setting in libsvm that, if enabled, may not work
+        properly in a multithreaded context.
+
+    max_iter : int, optional (default=-1)
+        Hard limit on iterations within solver, or -1 for no limit.
+
+    random_state : int seed, RandomState instance, or None (default)
+        The seed of the pseudo random number generator to use when
+        shuffling the data for probability estimation.
+        
+    Attributes
+    ----------
+    `support_` : array-like, shape = [n_SV]
+        Index of support vectors.
+
+    `support_vectors_` : array-like, shape = [nSV, n_features]
+        Support vectors.
+
+    `dual_coef_` : array, shape = [n_classes-1, n_SV]
+        Coefficients of the support vector in the decision function.
+
+    `coef_` : array, shape = [n_classes-1, n_features]
+        Weights asigned to the features (coefficients in the primal
+        problem). This is only available in the case of linear kernel.
+
+        `coef_` is readonly property derived from `dual_coef_` and
+        `support_vectors_`
+
+    `intercept_` : array, shape = [n_class * (n_class-1) / 2]
+        Constants in decision function.
+
+    """
+    def __init__(self, regularization = None, kernel='rbf', degree=3, gamma=0.0, 
+                 coef0=0.0, tol=1e-3, C=1, nu=0.5, shrinking=True, cache_size=200, 
+                 verbose=False, max_iter=-1, random_state=None):
+        self.regularization = regularization
+        if (regularization == None):
+            super(SVDD, self).__init__(
+                'svdd', kernel, degree, gamma, coef0, tol, C, nu, 0.0,
+                shrinking, False, cache_size, None, verbose, max_iter,
+                random_state)
+        elif(regularization == 'l1'):
+            super(SVDD, self).__init__(
+                'svdd_r2', kernel, degree, gamma, coef0, tol, C, nu, 0.0,
+                shrinking, False, cache_size, None, verbose, max_iter,
+                random_state)
+        elif(regularization == 'l2'):
+            super(SVDD, self).__init__(
+                'svdd_r2q', kernel, degree, gamma, coef0, tol, C, nu, 0.0,
+                shrinking, False, cache_size, None, verbose, max_iter,
+                random_state)
+            print self._impl
+
+
+
+
+    def fit(self, X, sample_weight=None, **params):
+        if (self.regularization == None):
+            super(SVDD, self).fit(X, [], sample_weight=sample_weight,
+                                     **params)
+        elif (self.regularization == 'l1'):
+            super(SVDD, self).fit(X, [], sample_weight=sample_weight,
+                                     **params)
+        elif (self.regularization == 'l2'):
+            super(SVDD, self).fit(X, [], sample_weight=sample_weight,
+                                     **params)
+
+        print self._impl
+        return self
+        
