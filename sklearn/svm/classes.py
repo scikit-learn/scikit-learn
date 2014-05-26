@@ -850,6 +850,5 @@ class SVDD(BaseLibSVM):
             super(SVDD, self).fit(X, [], sample_weight=sample_weight,
                                      **params)
 
-        print self._impl
         return self
         
