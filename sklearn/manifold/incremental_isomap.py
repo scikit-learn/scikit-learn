@@ -2,7 +2,7 @@
 
 # Author: Peter Fischer <peter.fischer@fau.de>
 # License: BSD, (C) 2014
-from __future__ import division, print_function
+from __future__ import division
 import collections
 
 import numpy as np
@@ -200,13 +200,15 @@ class IncrementalIsomap(BaseEstimator, TransformerMixin):
         self.embedding_ = new
 
         new = np.zeros((self.n_max_samples, self.train_data_.shape[1]),
-                       np.float)
+                       dtype=self.train_data_.dtype)
         new[:self.n, :] = self.train_data_
         self.train_data_ = new
 
-        new = np.zeros((1, self.n_max_samples), np.float)
+        new = np.zeros((1, self.n_max_samples),
+                       dtype=self.train_data_norm2_.dtype)
         new[:, :self.n] = self.train_data_norm2_
         self.train_data_norm2_ = new
+
         return
 
     def _partial_fit_transform(self, X):
@@ -266,10 +268,10 @@ class IncrementalIsomap(BaseEstimator, TransformerMixin):
                 a_rowview = self.kng_symmetric_.getrowview(a)
                 b_rowview = self.kng_symmetric_.getrowview(b)
                 _update_edge(a,
-                             np.array(a_rowview.rows[0], np.int),
+                             np.array(a_rowview.rows[0], np.int_),
                              b,
-                             np.array(b_rowview.rows[0], np.int),
-                             self.n + 1,
+                             np.array(b_rowview.rows[0], np.int_),
+                             self.n,
                              self.dist_matrix_,
                              self.predecessor_matrix_)
 
@@ -299,7 +301,7 @@ class IncrementalIsomap(BaseEstimator, TransformerMixin):
 
         # Find added and deleted edges caused by the new point
         knn_dist = np.ascontiguousarray(knn_dist, dtype=np.float64)
-        knn_point = np.ascontiguousarray(knn_point, dtype=np.int)
+        knn_point = np.ascontiguousarray(knn_point, dtype=np.int_)
         added_edges, deleted_edges = _determine_edge_changes(
                                                 self.i,
                                                 self.n,
@@ -317,9 +319,9 @@ class IncrementalIsomap(BaseEstimator, TransformerMixin):
         self._add_point(added_edges)
 
         # Shorten geodesic distances using new point
-        _update_insert(self.i, self.n + 1,
+        _update_insert(self.i, self.n,
                        np.array(self.kng_symmetric_.getrowview(self.i).rows[0],
-                                np.int),
+                                np.int_),
                        self.dist_matrix_,
                        self.predecessor_matrix_)
 
@@ -584,7 +586,7 @@ class IncrementalIsomap(BaseEstimator, TransformerMixin):
         # Reconstruct shortest paths
         B_auxiliary = F
         l = [collections.deque([]) for _ in range(self.n)]
-        l_index = np.zeros((self.n,), np.int)
+        l_index = np.zeros((self.n,), np.int_)
         for i in range(self.n):
             # -1 to convert to 0-based indexing
             i_deg = np.count_nonzero(B_auxiliary[i, :]) - 1
@@ -602,7 +604,7 @@ class IncrementalIsomap(BaseEstimator, TransformerMixin):
             u = l[pos].pop()
             l_index[u] = 0
             C_u = np.ascontiguousarray(np.nonzero(B_auxiliary[u, :])[0],
-                                       dtype=np.int)
+                                       dtype=np.int_)
             self.dist_matrix_, self.predecessor_matrix_ = \
                 modified_graph_shortest_path(u, self.n, C_u,
                                              self.kng_symmetric_,

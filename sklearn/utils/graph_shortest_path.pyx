@@ -1,3 +1,4 @@
+#cython: boundscheck=True
 """
 Routines for performing shortest-path graph searches
 
@@ -28,8 +29,8 @@ np.import_array()
 DTYPE = np.float64
 ctypedef np.float64_t DTYPE_t
 
-ITYPE = np.int32
-ctypedef np.int32_t ITYPE_t
+ITYPE = np.int_
+ctypedef np.int_t ITYPE_t
 
 
 def graph_shortest_path(dist_matrix not None, directed=True, method='auto'):
@@ -84,7 +85,7 @@ def graph_shortest_path(dist_matrix not None, directed=True, method='auto'):
     reduce the number of computations by a factor of 2.
     """
     if not isspmatrix_csr(dist_matrix):
-        dist_matrix = csr_matrix(dist_matrix)
+        dist_matrix = csr_matrix(dist_matrix, dtype=dist_matrix.dtype)
 
     N = dist_matrix.shape[0]
     Nk = len(dist_matrix.data)
@@ -133,10 +134,10 @@ cdef void floyd_warshall(DTYPE_t[:, ::1] graph,
         the matrix of shortest paths between points.
         If no path exists, the path length is zero
     """
-    cdef unsigned int N = graph.shape[0]
+    cdef Py_ssize_t N = graph.shape[0]
     assert graph.shape[1] == N
 
-    cdef unsigned int i, j, k, m
+    cdef Py_ssize_t i, j, k, m
 
     cdef DTYPE_t sum_ijk
 
@@ -220,8 +221,8 @@ cdef void dijkstra(dist_matrix,
         the matrix of shortest paths between points.
         If no path exists, the path length is zero
     """
-    cdef unsigned int N = graph.shape[0]
-    cdef unsigned int i
+    cdef Py_ssize_t N = graph.shape[0]
+    cdef Py_ssize_t i
 
     cdef FibonacciHeap heap
 
@@ -233,7 +234,7 @@ cdef void dijkstra(dist_matrix,
     cdef ITYPE_t[::1] predecessor_buffer
 
     if not isspmatrix_csr(dist_matrix):
-        dist_matrix = csr_matrix(dist_matrix)
+        dist_matrix = csr_matrix(dist_matrix, dtype=dist_matrix.dtype)
 
     distances = dist_matrix.data
     neighbors = dist_matrix.indices
@@ -280,9 +281,9 @@ cdef void dijkstra(dist_matrix,
 #
 
 cdef struct FibonacciNode:
-    unsigned int index
-    unsigned int rank
-    unsigned int state
+    Py_ssize_t index
+    Py_ssize_t rank
+    Py_ssize_t state
     DTYPE_t val
     FibonacciNode* parent
     FibonacciNode* left_sibling
@@ -291,7 +292,7 @@ cdef struct FibonacciNode:
 
 
 cdef void initialize_node(FibonacciNode* node,
-                          unsigned int index,
+                          Py_ssize_t index,
                           DTYPE_t val=0):
     # Assumptions: - node is a valid pointer
     #              - node is not currently part of a heap
@@ -439,7 +440,7 @@ cdef FibonacciNode* remove_min(FibonacciHeap* heap):
     # Assumptions: - heap is a valid pointer
     #              - heap.min_node is a valid pointer
     cdef FibonacciNode *temp, *temp_right, *out
-    cdef unsigned int i
+    cdef size_t i
 
     # make all min_node children into root nodes
     if heap.min_node.children:
@@ -503,7 +504,7 @@ cdef FibonacciNode* remove_min(FibonacciHeap* heap):
 
 
 cdef void dijkstra_directed_one_row(
-                    unsigned int i_node,
+                    Py_ssize_t i_node,
                     ITYPE_t[::1] neighbors,
                     DTYPE_t[::1] distances,
                     ITYPE_t[::1] indptr,
@@ -531,8 +532,8 @@ cdef void dijkstra_directed_one_row(
     heap: the Fibonacci heap object to use
     nodes : the array of nodes to use
     """
-    cdef unsigned int N = graph.shape[0]
-    cdef unsigned int i
+    cdef Py_ssize_t N = graph.shape[0]
+    cdef Py_ssize_t i
     cdef FibonacciNode *v, *current_neighbor
     cdef DTYPE_t dist
 
@@ -566,7 +567,7 @@ cdef void dijkstra_directed_one_row(
     return
 
 
-cdef void dijkstra_one_row(unsigned int i_node,
+cdef void dijkstra_one_row(Py_ssize_t i_node,
                     ITYPE_t[::1] neighbors1,
                     DTYPE_t[::1] distances1,
                     ITYPE_t[::1] indptr1,
@@ -601,8 +602,8 @@ cdef void dijkstra_one_row(unsigned int i_node,
     heap: the Fibonacci heap object to use
     nodes : the array of nodes to use
     """
-    cdef unsigned int N = graph.shape[0]
-    cdef unsigned int i
+    cdef Py_ssize_t N = graph.shape[0]
+    cdef Py_ssize_t i
     cdef FibonacciNode *v, *current_neighbor
     cdef DTYPE_t dist
 
@@ -701,19 +702,19 @@ def modified_graph_shortest_path(i_node,
     be handled by specialized algorithms.
     """
     if not isspmatrix_csr(kng):
-        neighbor_matrix = csr_matrix(kng)
+        neighbor_matrix = csr_matrix(kng, dtype=kng.dtype)
     else:
         neighbor_matrix = kng
 
-    modified_dijkstra(i_node, N, targets, neighbor_matrix, 
+    modified_dijkstra(i_node, N, targets, neighbor_matrix,
                       graph, predecessors, directed)
 
     return graph, predecessors
 
 
 @cython.boundscheck(False)
-cdef void modified_dijkstra(unsigned int i_node,
-                         unsigned int N,
+cdef void modified_dijkstra(Py_ssize_t i_node,
+                         Py_ssize_t N,
                          ITYPE_t[::1] targets,
                          kng,
                          DTYPE_t[:, ::1] graph,
@@ -747,7 +748,7 @@ cdef void modified_dijkstra(unsigned int i_node,
         the matrix of shortest paths between points.
         If no path exists, the path length is zero
     """
-    cdef unsigned int i
+    cdef Py_ssize_t i
     cdef FibonacciHeap heap
     cdef FibonacciNode* nodes = <FibonacciNode*> malloc(N *
                                                         sizeof(FibonacciNode))
@@ -778,8 +779,8 @@ cdef void modified_dijkstra(unsigned int i_node,
 
 @cython.boundscheck(False)
 cdef void modified_dijkstra_directed_one_row(
-                    unsigned int i_node,
-                    unsigned int N,
+                    Py_ssize_t i_node,
+                    Py_ssize_t N,
                     ITYPE_t[::1] targets,
                     ITYPE_t[::1] neighbors,
                     DTYPE_t[::1] distances,
@@ -813,8 +814,8 @@ cdef void modified_dijkstra_directed_one_row(
     heap: the Fibonacci heap object to use
     nodes : the array of nodes to use
     """
-    cdef unsigned int K = targets.shape[0]
-    cdef unsigned int i, j, k, l, m
+    cdef Py_ssize_t K = targets.shape[0]
+    cdef Py_ssize_t i, j, k, l, m
     cdef FibonacciNode *v, *current_neighbor
     cdef DTYPE_t dist
     cdef DTYPE_t delta
@@ -875,8 +876,8 @@ cdef void modified_dijkstra_directed_one_row(
 
 @cython.boundscheck(False)
 cdef void modified_dijkstra_one_row(
-                    unsigned int i_node,
-                    unsigned int N,
+                    Py_ssize_t i_node,
+                    Py_ssize_t N,
                     ITYPE_t[::1] targets,
                     ITYPE_t[::1] neighbors1,
                     DTYPE_t[::1] distances1,
@@ -915,8 +916,9 @@ cdef void modified_dijkstra_one_row(
     heap: the Fibonacci heap object to use
     nodes : the array of nodes to use
     """
-    cdef unsigned int K = targets.shape[0]
-    cdef int i, j, k, l, m
+    cdef Py_ssize_t K = targets.shape[0]
+    cdef Py_ssize_t i,
+    cdef ITYPE_t j, k, l, m
     cdef FibonacciNode *v, *current_neighbor
     cdef DTYPE_t dist
     cdef DTYPE_t delta
@@ -972,7 +974,7 @@ cdef void modified_dijkstra_one_row(
         # in undirected dijkstra, assume distance in both directions is the same
         graph[k, i_node] = v.val
 
-        for i from indptr1[k] <= i < indptr1[k + 1]:
+        for l from indptr1[k] <= l < indptr1[k + 1]:
             j = neighbors1[i]
             current_neighbor = &nodes[j]
             if current_neighbor.state == 2:

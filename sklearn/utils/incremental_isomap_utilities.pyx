@@ -1,4 +1,4 @@
-#cython: boundscheck=False
+#cython: boundscheck=True
 #cython: wraparound=False
 #cython: cdivision=True
 #cython: profile=False
@@ -26,8 +26,8 @@ from libc.math cimport sqrt
 DTYPE = np.float64
 ctypedef np.float64_t DTYPE_t
 
-ITYPE = np.long
-ctypedef np.long_t ITYPE_t
+ITYPE = np.int_
+ctypedef np.int_t ITYPE_t
 
 ######################################################################
 # FibonacciNode structure
@@ -35,9 +35,9 @@ ctypedef np.long_t ITYPE_t
 #  Fibonacci heap.
 #
 cdef struct FibonacciNode:
-    ITYPE_t index
-    ITYPE_t rank
-    ITYPE_t state
+    Py_ssize_t index
+    Py_ssize_t rank
+    Py_ssize_t state
     DTYPE_t val
     FibonacciNode* parent
     FibonacciNode* left_sibling
@@ -46,7 +46,7 @@ cdef struct FibonacciNode:
 
 
 cdef void initialize_node(FibonacciNode* node,
-                          ITYPE_t index,
+                          Py_ssize_t index,
                           DTYPE_t val=0):
     # Assumptions: - node is a valid pointer
     #              - node is not currently part of a heap
@@ -194,7 +194,7 @@ cdef FibonacciNode* remove_min(FibonacciHeap* heap):
     # Assumptions: - heap is a valid pointer
     #              - heap.min_node is a valid pointer
     cdef FibonacciNode *temp, *temp_right, *out
-    cdef ITYPE_t i
+    cdef Py_ssize_t i
 
     # make all min_node children into root nodes
     if heap.min_node.children:
@@ -258,7 +258,7 @@ cdef FibonacciNode* remove_min(FibonacciHeap* heap):
 
 
 cdef void _construct_fab(ITYPE_t a, ITYPE_t b,
-                         size_t N,
+                         Py_ssize_t N,
                          np.ndarray[ITYPE_t, ndim=2, mode='c'] F,
                          np.ndarray[ITYPE_t, ndim=1, mode='c'] neighbors,
                          np.ndarray[DTYPE_t, ndim=1, mode='c'] distances,
@@ -272,9 +272,9 @@ cdef void _construct_fab(ITYPE_t a, ITYPE_t b,
     Changed to store F directly in auxiliary matrix 
     pi = self.predecessor_matrix_
     '''
-    cdef size_t i, j
+    cdef Py_ssize_t i, j, t
     cdef FibonacciNode *v, *current_neighbor
-    cdef ITYPE_t s, t, u, k
+    cdef ITYPE_t s, u, k
 
     for i from 0 <= i < N:
         initialize_node(&nodes[i], i)
@@ -323,7 +323,7 @@ cdef void _construct_fab(ITYPE_t a, ITYPE_t b,
 
 
 def _construct_f(deleted_edges,
-                 size_t N,
+                 Py_ssize_t N,
                  kng not None,
                  np.ndarray pred_ not None):
     cdef ITYPE_t a, b
@@ -350,14 +350,14 @@ def _construct_f(deleted_edges,
     return F
 
 
-cdef void _update_insert_ab(ITYPE_t a, ITYPE_t b, size_t n,
-                            size_t N,
+cdef void _update_insert_ab(ITYPE_t a, ITYPE_t b, Py_ssize_t n,
+                            Py_ssize_t N,
                      np.ndarray[DTYPE_t, ndim=2, mode='c'] dist_matrix_,
                      np.ndarray[ITYPE_t, ndim=2, mode='c'] pred_,
                      FibonacciHeap* heap,
                      FibonacciNode* nodes):
-    cdef size_t i, j
-    cdef ITYPE_t s, t, u
+    cdef Py_ssize_t i, j, t
+    cdef ITYPE_t s, u
     cdef FibonacciNode *v, *current_neighbor
     cdef DTYPE_t dist
 
@@ -413,7 +413,7 @@ cdef void _update_insert_ab(ITYPE_t a, ITYPE_t b, size_t n,
     return
 
 
-def _update_insert(size_t n, size_t N,
+def _update_insert(Py_ssize_t n, Py_ssize_t N,
                    np.ndarray[ITYPE_t, ndim=1, mode='c'] neighbors not None,
                    np.ndarray[DTYPE_t, ndim=2, mode='c'] dist_matrix_ not None,
                    np.ndarray[ITYPE_t, ndim=2, mode='c'] pred_ not None):
@@ -426,8 +426,8 @@ def _update_insert(size_t n, size_t N,
     # insert these pairs into _update_insert_ab(), where path via new point is
     # better than old path
     cdef ITYPE_t a, b
-    cdef size_t i, j
-    cdef size_t neighbors_len = neighbors.shape[0]
+    cdef Py_ssize_t i, j
+    cdef Py_ssize_t neighbors_len = neighbors.shape[0]
 
     cdef FibonacciHeap heap
     cdef FibonacciNode* nodes = <FibonacciNode*> malloc((N) *
@@ -439,9 +439,6 @@ def _update_insert(size_t n, size_t N,
             b = neighbors[j]
             if (dist_matrix_[a, n] + dist_matrix_[n, b] <
                 dist_matrix_[a, b]):
-                #print "Enter _update_insert_ab"
-                #print neighbors_len
-                #print i, j, a, b
                 _update_insert_ab(a, b, n, N, dist_matrix_, pred_,
                                   &heap, nodes)
     free(nodes)
@@ -450,9 +447,9 @@ def _update_insert(size_t n, size_t N,
 
 def _update_edge(ITYPE_t a,
                  np.ndarray[ITYPE_t, ndim=1, mode='c'] neighbors_a not None,
-                 size_t n,
+                 Py_ssize_t n,
                  np.ndarray[ITYPE_t, ndim=1, mode='c'] neighbors_n not None,
-                 size_t N,
+                 Py_ssize_t N,
                  np.ndarray[DTYPE_t, ndim=2, mode='c'] dist_matrix_ not None,
                  np.ndarray[ITYPE_t, ndim=2, mode='c'] pred_ not None):
     '''
@@ -464,12 +461,12 @@ def _update_edge(ITYPE_t a,
     and endpoint (a)
     '''
     cdef ITYPE_t b
-    cdef size_t i
+    cdef Py_ssize_t i
     cdef FibonacciHeap heap
     cdef FibonacciNode* nodes = <FibonacciNode*> malloc((N) *
                                                     sizeof(FibonacciNode))
 
-    cdef size_t neighbors_len = neighbors_n.shape[0]
+    cdef Py_ssize_t neighbors_len = neighbors_n.shape[0]
     for i in xrange(neighbors_len):
         b = neighbors_n[i]
         if (dist_matrix_[a, n] + dist_matrix_[n, b] <
@@ -490,8 +487,8 @@ def _update_edge(ITYPE_t a,
 
 def _determine_edge_changes(
                     ITYPE_t i_node,
-                    size_t N,
-                    size_t n_neighbors,
+                    Py_ssize_t N,
+                    Py_ssize_t n_neighbors,
                     DTYPE_t[:, :] knn_dist,
                     ITYPE_t[:, :] knn_point,
                     kng not None,
@@ -500,7 +497,7 @@ def _determine_edge_changes(
     '''
     cdef ITYPE_t idx, max_idx, max_idx_full, max_j
     cdef DTYPE_t dist, x_dist, max_dist
-    cdef size_t i, j
+    cdef Py_ssize_t i, j
     cdef ITYPE_t k
 
     if not isspmatrix_csr(kng):
@@ -530,7 +527,7 @@ def _determine_edge_changes(
             if distances[k] > max_dist:
                 max_dist = distances[k]
                 max_idx = neighbors[k]
-        if <size_t>(indptr[idx + 1] - indptr[idx]) < n_neighbors:
+        if (indptr[idx + 1] - indptr[idx]) < n_neighbors:
             # useful for forgetting
             # add edge if idx does not have enough neighbors
             added_edges.append(((idx, i_node), x_dist))
