@@ -183,6 +183,13 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         increase or decrease based on the Spearman correlation estimate's
         sign.
 
+    out_of_bounds : string, optional, default: "nan"
+        The ``out_of_bounds`` parameter handles how x-values outside of the
+        training domain are handled.  When set to "nan", predicted y-values
+        will be NaN.  When set to "clip", predicted y-values will be
+        set to the value corresponding to the nearest train interval endpoint.
+        When set to "raise", allow ``interp1d`` to throw ValueError.
+
 
     Attributes
     ----------
@@ -192,6 +199,12 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
     `y_` : ndarray (n_samples, )
         Isotonic fit of y.
 
+    `X_min_` : float
+        Minimum value of input array X_ for left bound.
+
+    `X_max_` : float
+        Maximum value of input array X_ for right bound.
+
     References
     ----------
     Isotonic Median Regression: A Linear Programming Approach
@@ -199,10 +212,12 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
     Mathematics of Operations Research
     Vol. 14, No. 2 (May, 1989), pp. 303-308
     """
-    def __init__(self, y_min=None, y_max=None, increasing=True):
+    def __init__(self, y_min=None, y_max=None, increasing=True,
+                 out_of_bounds='nan'):
         self.y_min = y_min
         self.y_max = y_max
         self.increasing = increasing
+        self.out_of_bounds = out_of_bounds
 
     def _check_fit_data(self, X, y, sample_weight=None):
         if len(X.shape) != 1:
@@ -254,6 +269,11 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         self.X_ = as_float_array(X[order], copy=False)
         self.y_ = isotonic_regression(y[order], sample_weight, self.y_min,
                                       self.y_max, increasing=self.increasing_)
+
+        # Handle the left and right bounds on X
+        self.X_min_ = np.min(self.X_)
+        self.X_max_ = np.max(self.X_)
+
         return self
 
     def transform(self, T):
@@ -273,9 +293,21 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         if len(T.shape) != 1:
             raise ValueError("X should be a vector")
 
-        f = interpolate.interp1d(self.X_, self.y_, kind='linear',
-                                 bounds_error=True)
-        return f(T)
+        # Only raise exception on out-of-bounds data if requested.
+        if self.out_of_bounds == "raise":
+            f = interpolate.interp1d(self.X_, self.y_, kind='linear',
+                                     bounds_error=True)
+        else:
+            f = interpolate.interp1d(self.X_, self.y_, kind='linear',
+                                     bounds_error=False)
+
+        # Clip out-of-bounds values if requested.
+        if self.out_of_bounds == "clip":
+            T_final = np.clip(T, self.X_min_, self.X_max_)
+        else:
+            T_final = T
+
+        return f(T_final)
 
     def fit_transform(self, X, y, sample_weight=None, weight=None):
         """Fit model and transform y by linear interpolation.
@@ -325,6 +357,11 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         self.X_ = as_float_array(X[order], copy=False)
         self.y_ = isotonic_regression(y[order], sample_weight, self.y_min,
                                       self.y_max, increasing=self.increasing_)
+
+        # Handle the left and right bounds on X
+        self.X_min_ = np.min(self.X_)
+        self.X_max_ = np.max(self.X_)
+
         return self.y_[order_inv]
 
     def predict(self, T):
