@@ -167,6 +167,9 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
           If ``X`` is non-decreasing then ``y_`` is non-decreasing.
         - ``w[i]`` are optional strictly positive weights (default to 1.0)
 
+    Out-of-bound x values for predict/transform will be mapped to their nearest
+        interval endpoint.
+
     Parameters
     ----------
     y_min : optional, default: None
@@ -191,6 +194,12 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
 
     `y_` : ndarray (n_samples, )
         Isotonic fit of y.
+
+    `X_min_` : float
+        Minimum value of input array X_ for left bound.
+
+    `X_max_` : float
+        Maximum value of input array X_ for right bound.
 
     References
     ----------
@@ -254,6 +263,11 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         self.X_ = as_float_array(X[order], copy=False)
         self.y_ = isotonic_regression(y[order], sample_weight, self.y_min,
                                       self.y_max, increasing=self.increasing_)
+
+        # Handle the left and right bounds on X
+        self.X_min_ = np.min(self.X_)
+        self.X_max_ = np.max(self.X_)
+
         return self
 
     def transform(self, T):
@@ -275,7 +289,10 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
 
         f = interpolate.interp1d(self.X_, self.y_, kind='linear',
                                  bounds_error=True)
-        return f(T)
+
+        # Replace any out-of-bound values.
+        T_clip = np.clip(T, self.X_min_, self.X_max_)
+        return f(T_clip)
 
     def fit_transform(self, X, y, sample_weight=None, weight=None):
         """Fit model and transform y by linear interpolation.
@@ -325,6 +342,11 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         self.X_ = as_float_array(X[order], copy=False)
         self.y_ = isotonic_regression(y[order], sample_weight, self.y_min,
                                       self.y_max, increasing=self.increasing_)
+
+        # Handle the left and right bounds on X
+        self.X_min_ = np.min(self.X_)
+        self.X_max_ = np.max(self.X_)
+
         return self.y_[order_inv]
 
     def predict(self, T):

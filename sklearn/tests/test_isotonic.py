@@ -4,7 +4,7 @@ from sklearn.isotonic import check_increasing, isotonic_regression,\
     IsotonicRegression
 
 from sklearn.utils.testing import assert_raises, assert_array_equal,\
-    assert_true, assert_false
+    assert_true, assert_false, assert_equal
 
 from sklearn.utils.testing import assert_warns_message, assert_no_warnings
 
@@ -160,6 +160,31 @@ def test_isotonic_sample_weight():
     received_y = ir.fit_transform(x, y, sample_weight=sample_weight)
 
     assert_array_equal(expected_y, received_y)
+
+
+def test_isotonic_clipping():
+    '''
+    Test x-value clipping to handle out-of-bounds input X
+    values that are outside of training/fit data.
+    '''
+    # Create the regressor
+    ir = IsotonicRegression()
+
+    # Setup training/test X and Y
+    x_train = [1, 2, 3, 4, 5, 6, 7]
+    x_test = [-1, 2, 3, 4, 5, 6, 9]
+    y_train = [1, 41, 51, 1, 2, 5, 24]
+
+    # Fit train data
+    ir.fit(x_train, x_test)
+
+    # Now get the predicted y-values
+    y_predict_train = ir.predict(x_train)
+    y_predict_test = ir.predict(x_test)
+
+    # Check that max values are identical
+    assert_equal(np.max(y_predict_train), np.max(y_predict_test))
+    assert_equal(np.min(y_predict_train), np.min(y_predict_test))
 
 
 if __name__ == "__main__":
