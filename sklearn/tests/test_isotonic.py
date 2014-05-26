@@ -204,6 +204,20 @@ def test_isotonic_regression_oob_nan():
     y1 = ir.predict([min(x)-10, max(x)+10])
     assert_equal(sum(np.isnan(y1)), 2)
 
+
+def test_isotonic_regression_oob_bad():
+    # Set y and x
+    y = np.array([3, 7, 5, 9, 8, 7, 10])
+    x = np.arange(len(y))
+
+    # Create model and fit
+    ir = IsotonicRegression(increasing='auto', out_of_bounds="xyz")
+    ir.fit(x, y)
+
+    # Make sure that we throw an error for bad out_of_bounds value
+    assert_raises(ValueError, ir.predict, [min(x)-10, max(x)+10])
+
+
 if __name__ == "__main__":
     import nose
     nose.run(argv=['', __file__])
