@@ -17,9 +17,9 @@ from scipy import optimize, sparse
 
 from .base import LinearClassifierMixin, SparseCoefMixin, BaseEstimator
 from ..feature_selection.from_model import _LearntSelectorMixin
-from ..preprocessing import LabelEncoder
+from ..preprocessing import LabelEncoder, LabelBinarizer
 from ..svm.base import BaseLibLinear
-from ..utils import as_float_array
+from ..utils import as_float_array, check_arrays
 from ..externals.joblib import Parallel, delayed
 from ..cross_validation import check_cv
 from ..utils.optimize import newton_cg
@@ -553,22 +553,13 @@ class LogisticRegressionCV(BaseEstimator, LinearClassifierMixin,
         self : object
             Returns self.
         """
-        self._enc = LabelEncoder()
-        X = as_float_array(X, copy=False)
-        y = self._enc.fit_transform(y)
+        X, y = check_arrays(X, y, copy=False)
+        self._lb = LabelBinarizer(neg_label=-1, pos_label=1)
+        y = np.squeeze(self._lb.fit_transform(y))
         if len(self.classes_) != 2:
             raise ValueError("LogisticRegressionCV works only on 2 "
                              "class problems. Please use "
                              "OneVsOneClassifier or OneVsRestClassifier")
-
-        if X.shape[0] != y.shape[0]:
-            raise ValueError("X and y have incompatible shapes.\n"
-                             "X has %s samples, but y has %s." %
-                             (X.shape[0], y.shape[0]))
-
-        # Transform to [-1, 1] classes, as y is [0, 1]
-        y *= 2
-        y -= 1
 
         # init cross-validation generator
         cv = check_cv(self.cv, X, y, classifier=True)
@@ -608,5 +599,5 @@ class LogisticRegressionCV(BaseEstimator, LinearClassifierMixin,
 
     @property
     def classes_(self):
-        return self._enc.classes_
+        return self._lb.classes_
 
