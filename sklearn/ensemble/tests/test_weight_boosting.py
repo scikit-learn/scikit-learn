@@ -220,6 +220,10 @@ def test_error():
                   AdaBoostClassifier(algorithm="foo").fit,
                   X, y_class)
 
+    assert_raises(ValueError,
+                  AdaBoostClassifier().fit,
+                  X, y_class, sample_weight=np.asarray([-1]))
+
 
 def test_base_estimator():
     """Test different base estimators."""
