@@ -28,7 +28,7 @@ def test_isomap_simple_grid():
 
     for eigen_solver in eigen_solvers:
         for path_method in path_methods:
-            clf = manifold.IncrementalIsomap(n_neighbors=n_neighbors, n_components=2,
+            clf = manifold.MiniBatchIsomap(n_neighbors=n_neighbors, n_components=2,
                                   eigen_solver=eigen_solver,
                                   path_method=path_method)
             clf.fit(X)
@@ -40,7 +40,7 @@ def test_isomap_simple_grid():
             assert_array_almost_equal(G, G_iso)
 
 
-def test_isomap_incremental_grid():
+def test_isomap_minibatch_grid():
     # Isomap on full dataset should be equal to incremental isomap
     # after full dataset has been processed
     N_per_side = 10
@@ -61,7 +61,7 @@ def test_isomap_incremental_grid():
     i_test = np.setdiff1d(range(Npts), i_train)
     X_train = X[i_train]
     X_test = X[i_test]
-    clf = manifold.IncrementalIsomap(n_neighbors=n_neighbors, n_components=2,
+    clf = manifold.MiniBatchIsomap(n_neighbors=n_neighbors, n_components=2,
                                          n_max_samples=Npts)
     clf.fit(X_train)
 
@@ -70,13 +70,13 @@ def test_isomap_incremental_grid():
 
     iso_incremental = (clf.transform(X) / np.sqrt(clf.n) *
                                     np.sqrt(clf.kernel_pca_.lambdas_))
-    #assert_array_almost_equal(clf_iso.kng_.todense(), clf.kng_.todense())  # only possible if both clf are of class IncrementalIsomap
+    #assert_array_almost_equal(clf_iso.kng_.todense(), clf.kng_.todense())  # only possible if both clf are of class MiniBatchIsomap
     assert_array_almost_equal(iso_full, np.sign(iso_full[0, :]) *  # assure same signs for both embeddings
                                         np.sign(iso_incremental[0, :]) *
                                         iso_incremental)
 
 
-def test_isomap_incremental_extend():
+def test_isomap_minibatch_extend():
     # Same as above, only n_max_samples is set to smaller values and must be extended automatically
     N_per_side = 10
     Npts = N_per_side ** 2
@@ -96,7 +96,7 @@ def test_isomap_incremental_extend():
     i_test = np.setdiff1d(range(Npts), i_train)
     X_train = X[i_train]
     X_test = X[i_test]
-    clf = manifold.IncrementalIsomap(n_neighbors=n_neighbors, n_components=2,
+    clf = manifold.MiniBatchIsomap(n_neighbors=n_neighbors, n_components=2,
                                      n_max_samples=n_train, overflow_mode="extend")
     clf.fit(X_train)
 
@@ -109,7 +109,7 @@ def test_isomap_incremental_extend():
                                         iso_incremental)
 
 
-def test_isomap_incremental_embed():
+def test_isomap_minibatch_embed():
     # Same as above, only n_max_samples is set to smaller values remaining 
     # values are just embedded with oose
     N_per_side = 10
@@ -133,7 +133,7 @@ def test_isomap_incremental_embed():
     clf_iso.fit(X_train)
     iso_full = clf_iso.transform(X_test)
 
-    clf = manifold.IncrementalIsomap(n_neighbors=n_neighbors, n_components=2,
+    clf = manifold.MiniBatchIsomap(n_neighbors=n_neighbors, n_components=2,
                                      n_max_samples=n_train,
                                      overflow_mode="embed")
     clf.fit(X_train)
@@ -148,7 +148,7 @@ def test_isomap_incremental_embed():
                                         iso_incremental)
 
 
-def test_isomap_incremental_adapt():
+def test_isomap_minibatch_adapt():
     # Same as above, only n_max_samples is set to smaller values remaining
     # Manifold is trained adaptively -> must be equal to normal isomap on last samples
     N_per_side = 10
@@ -168,7 +168,7 @@ def test_isomap_incremental_adapt():
     X_test = X[i_test]
 
     # Incremental Isomap
-    clf = manifold.IncrementalIsomap(n_neighbors=n_neighbors, n_components=2,
+    clf = manifold.MiniBatchIsomap(n_neighbors=n_neighbors, n_components=2,
                                      n_max_samples=2 * n_train,
                                      overflow_mode="adapt")
     clf.fit(X_train)
@@ -211,7 +211,7 @@ def test_isomap_reconstruction_error():
 
     for eigen_solver in eigen_solvers:
         for path_method in path_methods:
-            clf = manifold.IncrementalIsomap(n_neighbors=n_neighbors, n_components=2,
+            clf = manifold.MiniBatchIsomap(n_neighbors=n_neighbors, n_components=2,
                                   eigen_solver=eigen_solver,
                                   path_method=path_method)
             clf.fit(X)
@@ -241,7 +241,7 @@ def test_transform():
     X, y = datasets.samples_generator.make_s_curve(n_samples)
 
     # Compute isomap embedding
-    iso = manifold.IncrementalIsomap(n_components, 2)
+    iso = manifold.MiniBatchIsomap(n_components, 2)
     X_iso = iso.fit_transform(X)
 
     # Re-embed a noisy version of the points
@@ -259,7 +259,7 @@ def test_pipeline():
     # TODO check that it actually does something useful
     X, y = datasets.make_blobs(random_state=0)
     clf = pipeline.Pipeline(
-        [('isomap', manifold.IncrementalIsomap()),
+        [('isomap', manifold.MiniBatchIsomap()),
          ('clf', neighbors.KNeighborsClassifier())])
     clf.fit(X, y)
     assert_less(.9, clf.score(X, y))

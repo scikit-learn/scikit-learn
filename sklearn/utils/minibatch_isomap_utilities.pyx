@@ -1,10 +1,13 @@
-#cython: boundscheck=True
+#cython: boundscheck=False
 #cython: wraparound=False
 #cython: cdivision=True
 #cython: profile=False
 
 """
-Helper functions for incremental isomap
+Author:  Peter Fischer -- <peter.fischer@fau.de>
+License: BSD 3 clause, (C) 2014
+
+Helper functions for minibatch isomap
 Law and Jain. Incremental Nonlinear Dimensionality Reduction
 by Manifold Learning. TPAMI 2006
 """

@@ -1,4 +1,4 @@
-"""Incremental Isomap for Manifold Learning"""
+"""MiniBatchIsomap for Incremental Manifold Learning"""
 
 # Author: Peter Fischer <peter.fischer@fau.de>
 # License: BSD, (C) 2014
@@ -18,11 +18,11 @@ from ..metrics.pairwise import euclidean_distances
 
 from ..utils.graph import graph_shortest_path
 from ..utils.graph import modified_graph_shortest_path
-from ..utils.incremental_isomap_utilities import _update_insert, _update_edge
-from ..utils.incremental_isomap_utilities import _construct_f, _determine_edge_changes
+from ..utils.minibatch_isomap_utilities import _update_insert, _update_edge
+from ..utils.minibatch_isomap_utilities import _construct_f, _determine_edge_changes
 
 
-class IncrementalIsomap(BaseEstimator, TransformerMixin):
+class MiniBatchIsomap(BaseEstimator, TransformerMixin):
     """Isomap Embedding
 
     Non-linear dimensionality reduction through Isomap.

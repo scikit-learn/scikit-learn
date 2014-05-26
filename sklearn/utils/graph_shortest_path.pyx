@@ -1,4 +1,3 @@
-#cython: boundscheck=True
 """
 Routines for performing shortest-path graph searches
 
