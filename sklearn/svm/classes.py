@@ -838,10 +838,6 @@ class SVDD(BaseLibSVM):
                 'svdd_r2q', kernel, degree, gamma, coef0, tol, C, nu, 0.0,
                 shrinking, False, cache_size, None, verbose, max_iter,
                 random_state)
-            print self._impl
-
-
-
 
     def fit(self, X, sample_weight=None, **params):
         if (self.regularization == None):
