@@ -308,8 +308,8 @@ def test_sparse_classification():
         assert_array_equal(sparse_results, dense_results)
 
         # score
-        sparse_results = sparse_classifier.score(X_test_sparse, sparse_y_pred)
-        dense_results = dense_classifier.score(X_test, dense_y_pred)
+        sparse_results = sparse_classifier.score(X_test_sparse, y_test)
+        dense_results = dense_classifier.score(X_test, y_test)
         assert_array_equal(sparse_results, dense_results)
 
         # staged_decision_function
@@ -333,8 +333,8 @@ def test_sparse_classification():
 
         # staged_score
         sparse_results = sparse_classifier.staged_score(X_test_sparse,
-                                                        sparse_y_pred)
-        dense_results = dense_classifier.staged_score(X_test, dense_y_pred)
+                                                        y_test)
+        dense_results = dense_classifier.staged_score(X_test, y_test)
         for sprase_res, dense_res in zip(sparse_results, dense_results):
             assert_array_equal(sprase_res, dense_res)
 
