@@ -249,7 +249,7 @@ def sparse_enet_coordinate_descent(double[:] w,
                             double[:] X_data, int[:] X_indices,
                             int[:] X_indptr, double[:] y,
                             double[:] X_mean, int max_iter,
-                            double tol, bool positive=False):
+                            double tol, bint positive=0):
     """Cython version of the coordinate descent algorithm for Elastic-Net
 
     We minimize:
@@ -271,6 +271,9 @@ def sparse_enet_coordinate_descent(double[:] w,
     cdef unsigned int startptr = X_indptr[0]
     cdef unsigned int endptr
 
+    # get the number of tasks indirectly, using strides
+    cdef unsigned int n_tasks = y.strides[0] / sizeof(DOUBLE)
+
     # initial value of the residuals
     cdef double[:] R = y.copy()
 
@@ -291,129 +294,137 @@ def sparse_enet_coordinate_descent(double[:] w,
     cdef unsigned int n_iter
     cdef bint center = False
 
-    # center = (X_mean != 0).any()
-    for ii in xrange(n_samples):
-        if X_mean[ii]:
-           center = True
-           break
+    with nogil:
+        # center = (X_mean != 0).any()
+        for ii in xrange(n_samples):
+            if X_mean[ii]:
+                center = True
+                break
 
-    for ii in xrange(n_features):
-        X_mean_ii = X_mean[ii]
-        endptr = X_indptr[ii + 1]
-        normalize_sum = 0.0
-        w_ii = w[ii]
-
-        for jj in xrange(startptr, endptr):
-            normalize_sum += (X_data[jj] - X_mean_ii) ** 2
-            R[X_indices[jj]] -= X_data[jj] * w_ii
-        norm_cols_X[ii] = normalize_sum + \
-            (n_samples - endptr + startptr) * X_mean_ii ** 2
-
-        if center:
-            for jj in xrange(n_samples):
-                R[jj] += X_mean_ii * w_ii
-        startptr = endptr
-
-    #tol *= np.dot(y, y)
-    tol *= ddot(n_samples, <DOUBLE*>&y[0], 1, <DOUBLE*>&y[0], 1)
-
-    for n_iter in range(max_iter):
-
-        w_max = 0.0
-        d_w_max = 0.0
-        startptr = X_indptr[0]
-
-        for ii in xrange(n_features):  # Loop over coordinates
-
-            if norm_cols_X[ii] == 0.0:
-                continue
-
-            endptr = X_indptr[ii + 1]
-            w_ii = w[ii]  # Store previous value
+        for ii in xrange(n_features):
             X_mean_ii = X_mean[ii]
+            endptr = X_indptr[ii + 1]
+            normalize_sum = 0.0
+            w_ii = w[ii]
 
-            if w_ii != 0.0:
-                # R += w_ii * X[:,ii]
-                for jj in xrange(startptr, endptr):
-                    R[X_indices[jj]] += X_data[jj] * w_ii
-                if center:
-                    for jj in xrange(n_samples):
-                        R[jj] -= X_mean_ii * w_ii
-
-            # tmp = (X[:,ii] * R).sum()
-            tmp = 0.0
             for jj in xrange(startptr, endptr):
-                tmp += R[X_indices[jj]] * X_data[jj]
+                normalize_sum += (X_data[jj] - X_mean_ii) ** 2
+                R[X_indices[jj]] -= X_data[jj] * w_ii
+            norm_cols_X[ii] = normalize_sum + \
+                (n_samples - endptr + startptr) * X_mean_ii ** 2
 
             if center:
-                R_sum = 0.0
                 for jj in xrange(n_samples):
-                    R_sum += R[jj]
-                tmp -= R_sum * X_mean_ii
+                    R[jj] += X_mean_ii * w_ii
+            startptr = endptr
 
-            if positive and tmp < 0.0:
-                w[ii] = 0.0
-            else:
-                w[ii] = fsign(tmp) * fmax(fabs(tmp) - alpha, 0) \
-                        / (norm_cols_X[ii] + beta)
+        # tol *= np.dot(y, y)
+        tol *= ddot(n_samples, <DOUBLE*>&y[0], 1, <DOUBLE*>&y[0], 1)
 
-            if w[ii] != 0.0:
-                # R -=  w[ii] * X[:,ii] # Update residual
+        for n_iter in range(max_iter):
+
+            w_max = 0.0
+            d_w_max = 0.0
+            startptr = X_indptr[0]
+
+            for ii in xrange(n_features):  # Loop over coordinates
+
+                if norm_cols_X[ii] == 0.0:
+                    continue
+
+                endptr = X_indptr[ii + 1]
+                w_ii = w[ii]  # Store previous value
+                X_mean_ii = X_mean[ii]
+
+                if w_ii != 0.0:
+                    # R += w_ii * X[:,ii]
+                    for jj in xrange(startptr, endptr):
+                        R[X_indices[jj]] += X_data[jj] * w_ii
+                    if center:
+                        for jj in xrange(n_samples):
+                            R[jj] -= X_mean_ii * w_ii
+
+                # tmp = (X[:,ii] * R).sum()
+                tmp = 0.0
                 for jj in xrange(startptr, endptr):
-                    R[X_indices[jj]] -= X_data[jj] * w[ii]
+                    tmp += R[X_indices[jj]] * X_data[jj]
 
                 if center:
+                    R_sum = 0.0
                     for jj in xrange(n_samples):
-                        R[jj] += X_mean_ii * w[ii]
+                        R_sum += R[jj]
+                    tmp -= R_sum * X_mean_ii
 
-            # update the maximum absolute coefficient update
-            d_w_ii = fabs(w[ii] - w_ii)
-            if d_w_ii > d_w_max:
-                d_w_max = d_w_ii
+                if positive and tmp < 0.0:
+                    w[ii] = 0.0
+                else:
+                    w[ii] = fsign(tmp) * fmax(fabs(tmp) - alpha, 0) \
+                            / (norm_cols_X[ii] + beta)
 
-            if w[ii] > w_max:
-                w_max = w[ii]
-            startptr = endptr
-        if w_max == 0.0 or d_w_max / w_max < d_w_tol or n_iter == max_iter - 1:
-            # the biggest coordinate update of this iteration was smaller than
-            # the tolerance: check the duality gap as ultimate stopping
-            # criterion
+                if w[ii] != 0.0:
+                    # R -=  w[ii] * X[:,ii] # Update residual
+                    for jj in xrange(startptr, endptr):
+                        R[X_indices[jj]] -= X_data[jj] * w[ii]
 
-            # sparse X.T / dense R dot product
-            for ii in xrange(n_features):
-                for jj in xrange(X_indptr[ii], X_indptr[ii + 1]):
-                    X_T_R[ii] += X_data[jj] * R[X_indices[jj]]
-                R_sum = 0.0
-                for jj in xrange(n_samples):
-                    R_sum += R[jj]
-                X_T_R[ii] -= X_mean[ii] * R_sum
+                    if center:
+                        for jj in xrange(n_samples):
+                            R[jj] += X_mean_ii * w[ii]
 
-            for jj in xrange(n_features):
-                XtA[jj] = X_T_R[jj] - beta * w[jj]
-            if positive:
-                dual_norm_XtA = np.max(XtA)
-            else:
-                dual_norm_XtA = linalg.norm(XtA, np.inf)
+                # update the maximum absolute coefficient update
+                d_w_ii = fabs(w[ii] - w_ii)
+                if d_w_ii > d_w_max:
+                    d_w_max = d_w_ii
 
-            #R_norm2 = np.dot(R, R)
-            R_norm2 = ddot(n_samples, <DOUBLE*>&R[0], 1, <DOUBLE*>&R[0], 1)
+                if w[ii] > w_max:
+                    w_max = w[ii]
+                startptr = endptr
+            if w_max == 0.0 or d_w_max / w_max < d_w_tol or n_iter == max_iter - 1:
+                # the biggest coordinate update of this iteration was smaller than
+                # the tolerance: check the duality gap as ultimate stopping
+                # criterion
 
-            #w_norm2 = np.dot(w, w)
-            w_norm2 = ddot(n_features, <DOUBLE*>&w[0], 1, <DOUBLE*>&w[0], 1)
-            if (dual_norm_XtA > alpha):
-                const = alpha / dual_norm_XtA
-                A_norm2 = R_norm2 * const**2
-                gap = 0.5 * (R_norm2 + A_norm2)
-            else:
-                const = 1.0
-                gap = R_norm2
+                # sparse X.T / dense R dot product
+                for ii in xrange(n_features):
+                    for jj in xrange(X_indptr[ii], X_indptr[ii + 1]):
+                        X_T_R[ii] += X_data[jj] * R[X_indices[jj]]
+                    R_sum = 0.0
+                    for jj in xrange(n_samples):
+                        R_sum += R[jj]
+                    X_T_R[ii] -= X_mean[ii] * R_sum
 
-            gap += alpha * linalg.norm(w, 1) - const * np.dot(R.T, y) + \
-                  0.5 * beta * (1 + const ** 2) * (w_norm2)
+                for jj in xrange(n_features):
+                    XtA[jj] = X_T_R[jj] - beta * w[jj]
+                if positive:
+                    dual_norm_XtA = max(n_features, &XtA[0])
+                else:
+                    dual_norm_XtA = abs_max(n_features, &XtA[0])
 
-            if gap < tol:
-                # return if we reached desired tolerance
-                break
+                # R_norm2 = np.dot(R, R)
+                R_norm2 = ddot(n_samples, <DOUBLE*>&R[0], 1, <DOUBLE*>&R[0], 1)
+
+                # w_norm2 = np.dot(w, w)
+                w_norm2 = ddot(n_features, <DOUBLE*>&w[0], 1, <DOUBLE*>&w[0], 1)
+                if (dual_norm_XtA > alpha):
+                    const = alpha / dual_norm_XtA
+                    A_norm2 = R_norm2 * const**2
+                    gap = 0.5 * (R_norm2 + A_norm2)
+                else:
+                    const = 1.0
+                    gap = R_norm2
+
+                l1_norm = dasum(n_features, <DOUBLE*>&w[0], 1)
+
+                # The expression inside ddot is equivalent to np.dot(R.T, y)
+                gap += (alpha * l1_norm - const * ddot(
+                            n_samples,
+                            <DOUBLE*>&R[0], 1,
+                            <DOUBLE*>&y[0], n_tasks
+                            )
+                        + 0.5 * beta * (1 + const ** 2) * w_norm2)
+
+                if gap < tol:
+                    # return if we reached desired tolerance
+                    break
 
     return w, gap, tol
 
