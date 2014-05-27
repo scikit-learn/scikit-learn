@@ -98,11 +98,11 @@ def test_gradient_descent_stops():
 def test_binary_search():
     """Test if the binary search finds Gaussians with desired perplexity."""
     random_state = check_random_state(0)
-    affinities = random_state.randn(50, 2)
-    affinities = affinities.dot(affinities.T)
-    np.fill_diagonal(affinities, 0.0)
+    distances = random_state.randn(50, 2)
+    distances = distances.dot(distances.T)
+    np.fill_diagonal(distances, 0.0)
     desired_perplexity = 25.0
-    P = _binary_search_perplexity(affinities, desired_perplexity, verbose=1)
+    P = _binary_search_perplexity(distances, desired_perplexity, verbose=0)
     P = np.maximum(P, np.finfo(np.double).eps)
     mean_perplexity = np.mean([np.exp(-np.sum(P[i] * np.log(P[i])))
                                for i in range(P.shape[0])])
@@ -118,12 +118,12 @@ def test_gradient():
     n_components = 2
     alpha = 1.0
 
-    affinities = random_state.randn(n_samples, n_features)
-    affinities = affinities.dot(affinities.T)
-    np.fill_diagonal(affinities, 0.0)
+    distances = random_state.randn(n_samples, n_features)
+    distances = distances.dot(distances.T)
+    np.fill_diagonal(distances, 0.0)
     X_embedded = random_state.randn(n_samples, n_components)
 
-    P = _joint_probabilities(affinities, desired_perplexity=25.0,
+    P = _joint_probabilities(distances, desired_perplexity=25.0,
                              verbose=0)
     fun = lambda params: _kl_divergence(params, P, alpha, n_samples,
                                         n_components)[0]
@@ -165,13 +165,13 @@ def test_preserve_trustworthiness_approximately():
                             decimal=1)
 
 
-def test_preserve_trustworthiness_approximately_with_precomputed_affinities():
+def test_preserve_trustworthiness_approximately_with_precomputed_distances():
     """Nearest neighbors should be preserved approximately."""
     random_state = check_random_state(0)
     X = random_state.randn(100, 2)
     D = squareform(pdist(X), "sqeuclidean")
     tsne = TSNE(n_components=2, perplexity=10, learning_rate=100.0,
-                affinity="precomputed", random_state=0)
+                metric="precomputed", random_state=0)
     X_embedded = tsne.fit_transform(D)
     assert_almost_equal(trustworthiness(D, X_embedded, n_neighbors=1,
                                         precomputed=True), 1.0, decimal=1)
@@ -191,10 +191,10 @@ def test_too_few_iterations():
                          np.array([[0.0]]))
 
 
-def test_non_square_precomputed_affinities():
-    """Precomputed affinity matrices must be square matrices."""
-    tsne = TSNE(affinity="precomputed")
-    assert_raises_regexp(ValueError, ".* square affinity matrix",
+def test_non_square_precomputed_distances():
+    """Precomputed distance matrices must be square matrices."""
+    tsne = TSNE(metric="precomputed")
+    assert_raises_regexp(ValueError, ".* square distance matrix",
                          tsne.fit_transform, np.array([[0.0], [1.0]]))
 
 
@@ -204,18 +204,18 @@ def test_init_not_available():
                          TSNE, init="not available")
 
 
-def test_affinity_not_available():
-    """'init' must be 'pca' or 'random'."""
-    assert_raises_regexp(ValueError, "'affinity' must be either "
-                         "'precomputed' or 'euclidean'",
-                         TSNE, affinity="not available")
+def test_distance_not_available():
+    """'metric' must be valid."""
+    tsne = TSNE(metric="not available")
+    assert_raises_regexp(ValueError, "Unknown metric not available.*",
+                         tsne.fit_transform, np.array([[0.0], [1.0]]))
 
 
 def test_pca_initialization_not_compatible_with_precomputed_kernel():
-    """Precomputed affinity matrices must be square matrices."""
-    tsne = TSNE(affinity="precomputed", init="pca")
+    """Precomputed distance matrices must be square matrices."""
+    tsne = TSNE(metric="precomputed", init="pca")
     assert_raises_regexp(ValueError, "The parameter init=\"pca\" cannot be "
-                         "used with affinity=\"precomputed\".",
+                         "used with metric=\"precomputed\".",
                          tsne.fit_transform, np.array([[0.0], [1.0]]))
 
 
@@ -234,7 +234,7 @@ def test_verbose():
         sys.stdout = old_stdout
 
     assert("[t-SNE]" in out)
-    assert("Computing pairwise affinities" in out)
+    assert("Computing pairwise distances" in out)
     assert("Computed conditional probabilities" in out)
     assert("Mean sigma" in out)
     assert("Finished" in out)
