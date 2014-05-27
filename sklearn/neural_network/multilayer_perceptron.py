@@ -78,10 +78,7 @@ def _d_tanh(Z):
     -------
     X_new : {array-like, sparse matrix}, shape (n_samples, n_features)
     """
-    Z *= Z
-    Z *= -1
-    Z += 1
-    return Z
+    return 1 - (Z ** 2)
 
 
 def _squared_loss(Y, Z):
@@ -440,11 +437,7 @@ class BaseMultilayerPerceptron(six.with_metaclass(ABCMeta, BaseEstimator)):
             maxfun=self.max_iter,
             iprint=iprint,
             pgtol=self.tol,
-            args=(
-                X,
-                y,
-                n_samples,
-                a_hidden, a_output, delta_o))
+            args=(X, y, n_samples, a_hidden, a_output, delta_o))
 
         self._unpack(optTheta)
 

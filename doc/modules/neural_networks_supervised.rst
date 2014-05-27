@@ -13,7 +13,8 @@ Multi-layer Perceptron
 ======================
 
 **Multi-layer Perceptron (MLP)** is a supervised algorithm that tries to learn 
-the relationship between the input features :math:`X` and the target :math:`y`. 
+the relationship between input features :math:`X` and target :math:`y` for 
+either classification or regression. 
 Here we implemented a single-layer feedforward network as shown in Figure 1.
 
 .. figure:: ../images/multilayerperceptron_network.png
@@ -37,16 +38,15 @@ The advantages of Multi-layer Perceptron are:
 
     + Capability to learn complex/non-linear models.
 
-    + Flexibility (parameters can be tuned to address different problems).
+    + Capability to learn models in real-time (on-line learning) 
+      using ``partial_fit``
       
-    + Scalability (the readability of the code provides users opportunities to 
-      develop more sophisticated networks).
       
-The disadvantages of Multi-layer Perceptron include:
+The disadvantages of Multi-layer Perceptron (MLP) include:
 
-    + Hidden layers in MLP make the loss function non-convex (has more than 
-      one local minimum), and therefore solutions may not converge to the 
-      global minimum.
+    + Since hidden layers in MLP make the loss function non-convex 
+      - which contains more than one local minimum, random weights'
+      initialization could impact the predictive accuracy of a trained model.
 
     + MLP suffers from the Backpropagation diffusion problem; layers far from 
       the output update with decreasing momentum, leading to slow convergence.
@@ -66,10 +66,10 @@ Classification
 The class :class:`MultilayerPerceptronClassifier` implements single-layer 
 feedforward network that trains using Backpropagation. 
 
-Like all classifiers, MLP trains on two arrays: an array X
-of size [n_samples, n_features] holding the training samples, and an
-array y of size [n_samples] holding the target values (class labels)
-for the training samples::
+Like all classifiers, MLP trains on two arrays: array X
+of size [n_samples, n_features] holding the training samples represented as 
+floating point feature vectors, and array y of size [n_samples] holding 
+the target values (class labels) for the training samples::
 
     >>> from sklearn.neural_network import MultilayerPerceptronClassifier
     >>> X = [[0., 0.], [1., 1.]]
@@ -84,20 +84,19 @@ for the training samples::
 
 After fitting (training), the model can predict labels for new samples::
 
-    >>> clf.predict([[2., 2.], [1., 2.]]) 
-    >>> array([1, 1])
+    >>> clf.predict([[2., 2.], [-1., -2.]]) 
+    >>> array([1, 0])
 
 MLP can fit a non-linear model to the training data. The members 
 ``clf.coef_hidden_`` and ``clf.coef_output_`` (denoted as :math:`W_1` and 
 :math:`W_2`  in Figure 1, respectively) constitute the model parameters::
 
     >>> clf.coef_hidden_ 
-    array([[-3.03439668,  3.10077632],
-           [-3.52570416,  3.11540912]])
+    array([[-1.89246274, -1.54302052],
+           [-2.69710894, -2.97215466]])
     >>> clf.coef_output_
-    array([[-9.85365392],
-           [ 9.94168421]])
-
+    array([[-5.05305052],
+           [-2.80708402]])
 
 The members ``clf.intercept_hidden_`` and ``clf.intercept_output_`` hold the 
 intercepts (denoted as :math:`b_1` and :math:`b_2` in Figure 1, respectively):
@@ -187,9 +186,9 @@ With SGD, training supports online and mini-batch learning.
 More details can be seen in the documentation of 
 `SGD <http://scikit-learn.org/stable/modules/sgd.html>`_ 
 
-L-BFGS is a powerful method for parameter search. It computes the Hessian 
-matrix which is the second-order partial derivative of a function. Further it 
-approximates the inverse of the Hessian matrix to perform
+L-BFGS is a fast learning algorithm but it works in batch mode only. It 
+approximates the Hessian matrix which is the second-order partial derivative of
+a function. Further it approximates the inverse of the Hessian matrix to perform
 parameter update. The implementation uses the Scipy's version of 
 `L-BFGS <http://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.fmin_l_bfgs_b.html>`_..
 
@@ -226,8 +225,8 @@ output activation for multi-classification is the Softmax,
       \text{Softmax} = \frac{\exp(W_j^Tx)}{\sum_{l=1}^k\exp(W_l^Tx)} 
 
 where :math:`W_i` is  the incoming weights to output neuron :math:`i`, and `K`
- is the number of classes. For a sample :math:`x`, ``Softmax`` returns the 
- class with the highest probability.
+is the number of classes. For a sample :math:`x`, ``Softmax`` returns the 
+class with the highest probability.
 
 
 For classification, it finds the model parameters by minimizing the regularized
@@ -258,18 +257,15 @@ Tips on Practical Use
   * Multi-layer Perceptron is sensitive to feature scaling, so it
     is highly recommended to scale your data. For example, scale each
     attribute on the input vector X to [0, 1] or [-1, +1], or standardize
-    it to have mean 0 and variance 1. Note that the *same* scaling
-    must be applied to the test vector to obtain meaningful
-    results. This can be easily done using :class:`StandardScaler`::
+    it to have mean 0 and variance 1. Note that you must apply the *same* 
+    scaling to the test vector for meaningful results. 
+    You can use :class:`StandardScaler`:: for standarization.
 
       from sklearn.preprocessing import StandardScaler
       scaler = StandardScaler()
       scaler.fit(X_train)  # Don't cheat - fit only on training data
       X_train = scaler.transform(X_train)
       X_test = scaler.transform(X_test)  # apply same transformation to test data
-
-    If your attributes have an intrinsic scale (e.g. word frequencies or
-    indicator features) scaling is not needed.
 
   * Finding a reasonable regularization term :math:`\alpha` is
     best done using :class:`GridSearchCV`, usually in the

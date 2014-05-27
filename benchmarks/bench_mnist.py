@@ -15,14 +15,16 @@ operating the Windows 7 64-bit version.
     ===========================
     Classifier            train-time  test-time error-rate
     ------------------------------------------------------
-    MultilayerPerceptron    621.076s    0.2340s   0.0187
-    nystroem_approx_svm     124.243s    1.0490s   0.0236
-    ExtraTrees              81.225s     0.3560s   0.0256
-    fourier_approx_svm      145.421s    0.6300s   0.0487
-    LogisticRegression      73.815s     0.2700s   0.0799  
+    nystroem_approx_svm     124.819s    0.811s    0.0242 
+    MultilayerPerceptron    359.460s    0.217s    0.0271
+    ExtraTrees              79.957s     0.344s    0.0271
+    fourier_approx_svm      147.744s    0.594s    0.0488
+    LogisticRegression      69.162s     0.136s    0.0799  
 
 
 """
+
+
 from __future__ import division, print_function
 
 print(__doc__)
@@ -118,10 +120,12 @@ classifiers['MultilayerPerceptron'] = MultilayerPerceptronClassifier(
     n_hidden=100,
     max_iter=400,
     alpha=0.1,
-    algorithm='l-bfgs')
+    algorithm='l-bfgs',
+    random_state=1)
 
 # Train Extra-Trees model
-classifiers['ExtraTrees'] = ExtraTreesClassifier(n_estimators=100)
+classifiers['ExtraTrees'] = ExtraTreesClassifier(n_estimators=100,
+                                                 random_state=1)
 
 # Train linear svm with kernel approximation of RBFSampler and Nystroem
 
@@ -141,7 +145,7 @@ classifiers['fourier_approx_svm'] = \
 classifiers['nystroem_approx_svm'] = \
     pipeline.Pipeline([("feature_map",
                         feature_map_nystroem),
-                       ("svm", svm.LinearSVC(C=100))])
+                       ("svm", svm.LinearSVC(C=100, random_state=1))])
 
 selected_classifiers = classifiers.keys()
 for name in selected_classifiers:

@@ -32,7 +32,7 @@ from sklearn.neural_network import MultilayerPerceptronClassifier
 
 h = .02  # step size in the mesh
 
-alphas = np.arange(0, 1, 0.2)
+alphas = np.arange(0, 3, 0.4)
 names = []
 for i in alphas:
     names.append('alpha ' + str(i))
@@ -42,7 +42,7 @@ for i in alphas:
     classifiers.append(MultilayerPerceptronClassifier(alpha=i, random_state=1))
 
 X, y = make_classification(n_features=2, n_redundant=0, n_informative=2,
-                           random_state=1, n_clusters_per_class=1)
+                           random_state=0, n_clusters_per_class=1)
 rng = np.random.RandomState(2)
 X += 2 * rng.uniform(size=X.shape)
 linearly_separable = (X, y)

@@ -170,15 +170,11 @@ def test_gradient():
                       mlp.intercept_hidden_, mlp.intercept_output_)
     a_hidden, a_output, delta_o = mlp._preallocate_memory(n_samples)
     # analytically compute the gradients
-    J = lambda t: mlp._cost_grad(
-        t,
-        X,
-        Y,
-        n_samples,
-        a_hidden,
+    cost_grad_fun = lambda t: mlp._cost_grad(
+        t, X, Y, n_samples, a_hidden,
         a_output,
         delta_o)
-    [value, grad] = J(theta)
+    [value, grad] = cost_grad_fun(theta)
     numgrad = np.zeros(np.size(theta))
     n = np.size(theta, 0)
     E = np.eye(n)
@@ -187,7 +183,8 @@ def test_gradient():
     for i in range(n):
         dtheta = E[:, i] * epsilon
         numgrad[i] = (
-            J(theta + dtheta)[0] - J(theta - dtheta)[0]) / (epsilon * 2.0)
+            cost_grad_fun(theta + dtheta)[0] -
+            cost_grad_fun(theta - dtheta)[0]) / (epsilon * 2.0)
     assert_almost_equal(numgrad, grad)
 
 
@@ -213,8 +210,7 @@ def test_lbfgs_classification():
                 activation=activation)
             mlp.fit(X_train, y_train)
             y_predict = mlp.predict(X_test)
-
-            assert_greater(mlp.score(X_train, y_train), 0.9)
+            assert_greater(mlp.score(X_train, y_train), 0.95)
             assert_equal(
                 (y_predict.shape[0],
                  y_predict.dtype.kind),
@@ -301,7 +297,7 @@ def test_multioutput_regression():
     mlp = MultilayerPerceptronRegressor(
         algorithm='l-bfgs',
         n_hidden=50,
-        max_iter=150,
+        max_iter=200,
         random_state=1,
         activation='logistic')
     mlp.fit(X, y)
@@ -351,8 +347,9 @@ def test_partial_fit_regression():
     for activation in ACTIVATION_TYPES:
         mlp = MultilayerPerceptronRegressor(
             algorithm='sgd',
-            max_iter=400,
+            max_iter=300,
             random_state=1,
+            eta0=0.08,
             activation=activation,
             batch_size=X.shape[0])
         mlp.fit(X, y)
@@ -360,12 +357,14 @@ def test_partial_fit_regression():
         mlp = MultilayerPerceptronRegressor(
             algorithm='sgd',
             activation=activation,
+            eta0=0.08,
             random_state=1)
-        for i in range(400):
+        for i in range(300):
             mlp.partial_fit(X, y)
         pred2 = mlp.predict(X)
         assert_almost_equal(pred1, pred2, decimal=2)
-        assert_greater(mlp.score(X, y), 0.9)
+        score = mlp.score(X, y)
+        assert_greater(score, 0.9)
 
 
 def test_partial_fit_errors():
@@ -479,7 +478,7 @@ def test_tolerance():
         max_iter=3000,
         algorithm='sgd')
     clf.fit(X, y)
-    assert clf.t_ != clf.max_iter
+    assert_greater(clf.max_iter, clf.t_)
 
 
 def test_verbose_sgd():
