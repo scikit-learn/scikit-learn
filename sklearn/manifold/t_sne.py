@@ -17,20 +17,20 @@ from ..utils import check_arrays
 from ..utils import check_random_state
 from ..utils.extmath import _ravel
 from ..decomposition import RandomizedPCA
-from ..metrics.pairwise import euclidean_distances
+from ..metrics.pairwise import pairwise_distances
 from . import _utils
 
 
 MACHINE_EPSILON = np.finfo(np.double).eps
 
 
-def _joint_probabilities(affinities, desired_perplexity, verbose):
-    """Compute joint probabilities p_ij from affinities.
+def _joint_probabilities(distances, desired_perplexity, verbose):
+    """Compute joint probabilities p_ij from distances.
 
     Parameters
     ----------
-    affinities : array, shape (n_samples * (n_samples-1) / 2,)
-        Affinities of samples are stored as condensed matrices, i.e.
+    distances : array, shape (n_samples * (n_samples-1) / 2,)
+        Distances of samples are stored as condensed matrices, i.e.
         we omit the diagonal and duplicate entries and store everything
         in a one-dimensional array.
 
@@ -48,7 +48,7 @@ def _joint_probabilities(affinities, desired_perplexity, verbose):
     # Compute conditional probabilities such that they approximately match
     # the desired perplexity
     conditional_P = _utils._binary_search_perplexity(
-        affinities, desired_perplexity, verbose)
+        distances, desired_perplexity, verbose)
     P = conditional_P + conditional_P.T
     sum_P = np.maximum(np.sum(P), MACHINE_EPSILON)
     P = np.maximum(squareform(P) / sum_P, MACHINE_EPSILON)
@@ -246,7 +246,7 @@ def trustworthiness(X, X_embedded, n_neighbors=5, precomputed=False):
     Parameters
     ----------
     X : array, shape (n_samples, n_features) or (n_samples, n_samples)
-        If the affinity is 'precomputed' X must be a square affinity
+        If the metric is 'precomputed' X must be a square distance
         matrix. Otherwise it contains a sample per row.
 
     X_embedded : array, shape (n_samples, n_components)
@@ -256,7 +256,7 @@ def trustworthiness(X, X_embedded, n_neighbors=5, precomputed=False):
         Number of neighbors k that will be considered.
 
     precomputed : bool, optional (default: False)
-        Set this flag if X is a precomputed square affinity matrix.
+        Set this flag if X is a precomputed square distance matrix.
 
     Returns
     -------
@@ -266,8 +266,8 @@ def trustworthiness(X, X_embedded, n_neighbors=5, precomputed=False):
     if precomputed:
         dist_X = X
     else:
-        dist_X = euclidean_distances(X, squared=True)
-    dist_X_embedded = euclidean_distances(X_embedded, squared=True)
+        dist_X = pairwise_distances(X, squared=True)
+    dist_X_embedded = pairwise_distances(X_embedded, squared=True)
     ind_X = np.argsort(dist_X, axis=1)
     ind_X_embedded = np.argsort(dist_X_embedded, axis=1)[:, 1:n_neighbors + 1]
 
@@ -333,8 +333,16 @@ class TSNE(BaseEstimator):
         Maximum number of iterations for the optimization. Should be at
         least 200.
 
-    affinity : string, optional (default: "euclidean")
-        Either "precomputed" or "euclidean".
+    metric : string or callable, (default: "euclidean")
+        The metric to use when calculating distance between instances in a
+        feature array. If metric is a string, it must be one of the options
+        allowed by scipy.spatial.distance.pdist for its metric parameter, or
+        a metric listed in pairwise.PAIRWISE_DISTANCE_FUNCTIONS.
+        If metric is "precomputed", X is assumed to be a distance matrix.
+        Alternatively, if metric is a callable function, it is called on each
+        pair of instances (rows) and the resulting value recorded. The callable
+        should take two arrays from X as input and return a value indicating
+        the distance between them.
 
     init : string, optional (default: "random")
         Initialization of embedding. Possible options are 'random' and 'pca'.
@@ -381,19 +389,16 @@ class TSNE(BaseEstimator):
     """
     def __init__(self, n_components=2, perplexity=30.0,
                  early_exaggeration=4.0, learning_rate=1000.0, n_iter=1000,
-                 affinity="euclidean", init="random", verbose=0,
+                 metric="euclidean", init="random", verbose=0,
                  random_state=None):
         if init not in ["pca", "random"]:
             raise ValueError("'init' must be either 'pca' or 'random'")
-        if affinity not in ["precomputed", "euclidean"]:
-            raise ValueError("'affinity' must be either 'precomputed' or "
-                             "'euclidean'")
         self.n_components = n_components
         self.perplexity = perplexity
         self.early_exaggeration = early_exaggeration
         self.learning_rate = learning_rate
         self.n_iter = n_iter
-        self.affinity = affinity
+        self.metric = metric
         self.init = init
         self.verbose = verbose
         self.random_state = random_state
@@ -404,7 +409,7 @@ class TSNE(BaseEstimator):
         Parameters
         ----------
         X : array, shape (n_samples, n_features) or (n_samples, n_samples)
-            If the affinity is 'precomputed' X must be a square affinity
+            If the metric is 'precomputed' X must be a square distance
             matrix. Otherwise it contains a sample per row.
         """
         X, = check_arrays(X, sparse_format='dense')
@@ -417,17 +422,17 @@ class TSNE(BaseEstimator):
         if self.n_iter < 200:
             raise ValueError("n_iter should be at least 200")
 
-        if self.affinity == "precomputed":
+        if self.metric == "precomputed":
             if self.init == 'pca':
                 raise ValueError("The parameter init=\"pca\" cannot be used "
-                                 "with affinity=\"precomputed\".")
+                                 "with metric=\"precomputed\".")
             if X.shape[0] != X.shape[1]:
-                raise ValueError("X should be a square affinity matrix")
-            affinities = X
-        elif self.affinity == "euclidean":
+                raise ValueError("X should be a square distance matrix")
+            distances = X
+        else:
             if self.verbose:
-                print("[t-SNE] Computing pairwise affinities...")
-            affinities = euclidean_distances(X, squared=True)
+                print("[t-SNE] Computing pairwise distances...")
+            distances = pairwise_distances(X, metric=self.metric, squared=True)
 
         # Degrees of freedom of the Student's t-distribution. The suggestion
         # alpha = n_components - 1 comes from "Learning a Parametric Embedding
@@ -436,7 +441,7 @@ class TSNE(BaseEstimator):
         n_samples = X.shape[0]
         self.training_data_ = X
 
-        P = _joint_probabilities(affinities, self.perplexity, self.verbose)
+        P = _joint_probabilities(distances, self.perplexity, self.verbose)
         if self.init == 'pca':
             pca = RandomizedPCA(n_components=self.n_components,
                                 random_state=random_state)
@@ -503,7 +508,7 @@ class TSNE(BaseEstimator):
         Parameters
         ----------
         X : array, shape (n_samples, n_features) or (n_samples, n_samples)
-            If the affinity is 'precomputed' X must be a square affinity
+            If the metric is 'precomputed' X must be a square distance
             matrix. Otherwise it contains a sample per row.
 
         Returns
