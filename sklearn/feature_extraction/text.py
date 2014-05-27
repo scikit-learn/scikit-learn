@@ -420,7 +420,7 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
         return self
 
     def transform(self, X, y=None):
-        """Transform a sequence of instances to a scipy.sparse matrix.
+        """Transform a sequence of documents to a document-term matrix.
 
         Parameters
         ----------
@@ -434,7 +434,7 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
         Returns
         -------
         X : scipy.sparse matrix, shape = (n_samples, self.n_features)
-            Feature matrix, for use with estimators or further transformers.
+            Document-term matrix.
 
         """
         analyzer = self.build_analyzer()
@@ -779,9 +779,10 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         return self
 
     def fit_transform(self, raw_documents, y=None):
-        """Learn the vocabulary dictionary and return the count vectors.
+        """Learn the vocabulary dictionary and return term-document matrix.
 
-        This is more efficient than calling fit followed by transform.
+        This is equivalent to fit followed by transform, but more efficiently
+        implemented.
 
         Parameters
         ----------
@@ -790,7 +791,8 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
 
         Returns
         -------
-        vectors : array, [n_samples, n_features]
+        X : array, [n_samples, n_features]
+            Document-term matrix.
         """
         # We intentionally don't call the transform method to make
         # fit_transform overridable without unwanted side effects in
@@ -827,8 +829,10 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         return X
 
     def transform(self, raw_documents):
-        """Extract token counts out of raw text documents using the vocabulary
-        fitted with fit or the one provided in the constructor.
+        """Transform documents to document-term matrix.
+
+        Extract token counts out of raw text documents using the vocabulary
+        fitted with fit or the one provided to the constructor.
 
         Parameters
         ----------
@@ -837,7 +841,8 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
 
         Returns
         -------
-        vectors : sparse matrix, [n_samples, n_features]
+        X : sparse matrix, [n_samples, n_features]
+            Document-term matrix.
         """
         if not hasattr(self, 'vocabulary_') or len(self.vocabulary_) == 0:
             raise ValueError("Vocabulary wasn't fitted or is empty!")
@@ -1227,13 +1232,7 @@ class TfidfVectorizer(CountVectorizer):
         return self._tfidf.idf_
 
     def fit(self, raw_documents, y=None):
-        """Learn a conversion law from documents to array data"""
-        X = super(TfidfVectorizer, self).fit_transform(raw_documents)
-        self._tfidf.fit(X)
-        return self
-
-    def fit_transform(self, raw_documents, y=None):
-        """Learn the representation and return the vectors.
+        """Learn vocabulary and idf from training set.
 
         Parameters
         ----------
@@ -1242,7 +1241,27 @@ class TfidfVectorizer(CountVectorizer):
 
         Returns
         -------
-        vectors : array, [n_samples, n_features]
+        self : TfidfVectorizer
+        """
+        X = super(TfidfVectorizer, self).fit_transform(raw_documents)
+        self._tfidf.fit(X)
+        return self
+
+    def fit_transform(self, raw_documents, y=None):
+        """Learn vocabulary and idf, return term-document matrix.
+
+        This is equivalent to fit followed by transform, but more efficiently
+        implemented.
+
+        Parameters
+        ----------
+        raw_documents : iterable
+            an iterable which yields either str, unicode or file objects
+
+        Returns
+        -------
+        X : sparse matrix, [n_samples, n_features]
+            Tf-idf-weighted document-term matrix.
         """
         X = super(TfidfVectorizer, self).fit_transform(raw_documents)
         self._tfidf.fit(X)
@@ -1251,7 +1270,10 @@ class TfidfVectorizer(CountVectorizer):
         return self._tfidf.transform(X, copy=False)
 
     def transform(self, raw_documents, copy=True):
-        """Transform raw text documents to tf-idf vectors
+        """Transform documents to document-term matrix.
+
+        Uses the vocabulary and document frequencies (df) learned by fit (or
+        fit_transform).
 
         Parameters
         ----------
@@ -1260,7 +1282,8 @@ class TfidfVectorizer(CountVectorizer):
 
         Returns
         -------
-        vectors : sparse matrix, [n_samples, n_features]
+        X : sparse matrix, [n_samples, n_features]
+            Tf-idf-weighted document-term matrix.
         """
         X = super(TfidfVectorizer, self).transform(raw_documents)
         return self._tfidf.transform(X, copy=False)
