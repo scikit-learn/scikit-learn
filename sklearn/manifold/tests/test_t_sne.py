@@ -4,7 +4,6 @@ import numpy as np
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_less
-from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_raises_regexp
 from sklearn.utils import check_random_state
 from sklearn.manifold.t_sne import _joint_probabilities
@@ -209,7 +208,7 @@ def test_pca_initialization_not_compatible_with_precomputed_kernel():
     """Precomputed affinity matrices must be square matrices."""
     tsne = TSNE(affinity="precomputed", init="pca")
     assert_raises_regexp(ValueError, "The parameter init=\"pca\" cannot be "
-                         "used with  affinity=\"precomputed\".",
+                         "used with affinity=\"precomputed\".",
                          tsne.fit_transform, np.array([[0.0], [1.0]]))
 
 
