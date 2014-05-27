@@ -204,6 +204,13 @@ def test_init_not_available():
                          TSNE, init="not available")
 
 
+def test_affinity_not_available():
+    """'init' must be 'pca' or 'random'."""
+    assert_raises_regexp(ValueError, "'affinity' must be either "
+                         "'precomputed' or 'euclidean'",
+                         TSNE, affinity="not available")
+
+
 def test_pca_initialization_not_compatible_with_precomputed_kernel():
     """Precomputed affinity matrices must be square matrices."""
     tsne = TSNE(affinity="precomputed", init="pca")
