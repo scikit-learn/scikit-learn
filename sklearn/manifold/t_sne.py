@@ -424,7 +424,7 @@ class TSNE(BaseEstimator):
         else:
             if self.verbose:
                 print("[t-SNE] Computing pairwise affinities...")
-            affinities = squareform(pdist(X, self.affinity))
+            affinities = euclidean_distances(X, squared=True)
 
         # Degrees of freedom of the Student's t-distribution. The suggestion
         # alpha = n_components - 1 comes from "Learning a Parametric Embedding
