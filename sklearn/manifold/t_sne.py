@@ -333,9 +333,8 @@ class TSNE(BaseEstimator):
         Maximum number of iterations for the optimization. Should be at
         least 200.
 
-    affinity : string, optional (default: sqeuclidean)
-        An affinity metric that is defined in scipy.spatial.distance or
-        'precomputed'.
+    affinity : string, optional (default: "euclidean")
+        Either "precomputed" or "euclidean".
 
     init : string, optional (default: "random")
         Initialization of embedding. Possible options are 'random' and 'pca'.
@@ -382,10 +381,13 @@ class TSNE(BaseEstimator):
     """
     def __init__(self, n_components=2, perplexity=30.0,
                  early_exaggeration=4.0, learning_rate=1000.0, n_iter=1000,
-                 affinity="sqeuclidean", init="random", verbose=0,
+                 affinity="euclidean", init="random", verbose=0,
                  random_state=None):
         if init not in ["pca", "random"]:
             raise ValueError("'init' must be either 'pca' or 'random'")
+        if affinity not in ["precomputed", "euclidean"]:
+            raise ValueError("'affinity' must be either 'precomputed' or "
+                             "'euclidean'")
         self.n_components = n_components
         self.perplexity = perplexity
         self.early_exaggeration = early_exaggeration
@@ -422,7 +424,7 @@ class TSNE(BaseEstimator):
             if X.shape[0] != X.shape[1]:
                 raise ValueError("X should be a square affinity matrix")
             affinities = X
-        else:
+        elif self.affinity == "euclidean":
             if self.verbose:
                 print("[t-SNE] Computing pairwise affinities...")
             affinities = euclidean_distances(X, squared=True)
