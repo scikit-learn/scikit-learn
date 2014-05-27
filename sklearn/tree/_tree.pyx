@@ -913,7 +913,9 @@ cdef inline void _init_split(SplitRecord* self, SIZE_t start_pos) nogil:
 
 cdef class Splitter:
     def __cinit__(self, Criterion criterion, SIZE_t max_features,
-                  SIZE_t min_samples_leaf, object random_state):
+                  SIZE_t min_samples_leaf,
+                  double min_weight_fraction_leaf,
+                  object random_state):
         self.criterion = criterion
 
         self.samples = NULL
@@ -931,6 +933,7 @@ cdef class Splitter:
 
         self.max_features = max_features
         self.min_samples_leaf = min_samples_leaf
+        self.min_weight_fraction_leaf = min_weight_fraction_leaf
         self.random_state = random_state
 
     def __dealloc__(self):
@@ -1031,6 +1034,7 @@ cdef class BestSplitter(Splitter):
         return (BestSplitter, (self.criterion,
                                self.max_features,
                                self.min_samples_leaf,
+                               self.min_weight_fraction_leaf,
                                self.random_state), self.__getstate__())
 
     cdef void node_split(self, double impurity, SplitRecord* split,
@@ -1051,6 +1055,8 @@ cdef class BestSplitter(Splitter):
         cdef SIZE_t X_fx_stride = self.X_fx_stride
         cdef SIZE_t max_features = self.max_features
         cdef SIZE_t min_samples_leaf = self.min_samples_leaf
+        cdef double min_weight_fraction_leaf = self.min_weight_fraction_leaf
+        cdef double weighted_n_samples = self.weighted_n_samples
         cdef UINT32_t* random_state = &self.rand_r_state
 
         cdef SplitRecord best, current
@@ -1162,6 +1168,13 @@ cdef class BestSplitter(Splitter):
                                 continue
 
                             self.criterion.update(current.pos)
+
+                            # Reject if min_weight_fraction_leaf is not satisfied
+                            if min_weight_fraction_leaf > 0 and (
+                                    (self.criterion.weighted_n_left / weighted_n_samples < min_weight_fraction_leaf) or
+                                    (self.criterion.weighted_n_right / weighted_n_samples < min_weight_fraction_leaf)):
+                                continue
+
                             current.improvement = self.criterion.impurity_improvement(impurity)
 
                             if current.improvement > best.improvement:
@@ -1322,6 +1335,7 @@ cdef class RandomSplitter(Splitter):
         return (RandomSplitter, (self.criterion,
                                  self.max_features,
                                  self.min_samples_leaf,
+                                 self.min_weight_fraction_leaf,
                                  self.random_state), self.__getstate__())
 
     cdef void node_split(self, double impurity, SplitRecord* split,
@@ -1342,6 +1356,8 @@ cdef class RandomSplitter(Splitter):
         cdef SIZE_t X_fx_stride = self.X_fx_stride
         cdef SIZE_t max_features = self.max_features
         cdef SIZE_t min_samples_leaf = self.min_samples_leaf
+        cdef double min_weight_fraction_leaf = self.min_weight_fraction_leaf
+        cdef double weighted_n_samples = self.weighted_n_samples
         cdef UINT32_t* random_state = &self.rand_r_state
 
         cdef SplitRecord best, current
@@ -1472,6 +1488,13 @@ cdef class RandomSplitter(Splitter):
                     # Evaluate split
                     self.criterion.reset()
                     self.criterion.update(current.pos)
+
+                    # Reject if min_weight_fraction_leaf is not satisfied
+                    if min_weight_fraction_leaf > 0 and ( 
+                            (self.criterion.weighted_n_left / weighted_n_samples < min_weight_fraction_leaf) or
+                            (self.criterion.weighted_n_right / weighted_n_samples < min_weight_fraction_leaf)):
+                        continue
+
                     current.improvement = self.criterion.impurity_improvement(impurity)
 
                     if current.improvement > best.improvement:
@@ -1522,7 +1545,9 @@ cdef class PresortBestSplitter(Splitter):
     cdef unsigned char* sample_mask
 
     def __cinit__(self, Criterion criterion, SIZE_t max_features,
-                  SIZE_t min_samples_leaf, object random_state):
+                  SIZE_t min_samples_leaf,
+                  double min_weight_fraction_leaf,
+                  object random_state):
         # Initialize pointers
         self.X_old = NULL
         self.X_argsorted_ptr = NULL
@@ -1537,6 +1562,7 @@ cdef class PresortBestSplitter(Splitter):
         return (PresortBestSplitter, (self.criterion,
                                       self.max_features,
                                       self.min_samples_leaf,
+                                      self.min_weight_fraction_leaf,
                                       self.random_state), self.__getstate__())
 
     cdef void init(self,
@@ -1584,6 +1610,8 @@ cdef class PresortBestSplitter(Splitter):
 
         cdef SIZE_t max_features = self.max_features
         cdef SIZE_t min_samples_leaf = self.min_samples_leaf
+        cdef double min_weight_fraction_leaf = self.min_weight_fraction_leaf
+        cdef double weighted_n_samples = self.weighted_n_samples
         cdef UINT32_t* random_state = &self.rand_r_state
 
         cdef SplitRecord best, current
@@ -1699,6 +1727,13 @@ cdef class PresortBestSplitter(Splitter):
                                 continue
 
                             self.criterion.update(current.pos)
+
+                            # Reject if min_weight_fraction_leaf is not satisfied
+                            if min_weight_fraction_leaf > 0 and (
+                                    (self.criterion.weighted_n_left / weighted_n_samples < min_weight_fraction_leaf) or
+                                    (self.criterion.weighted_n_right / weighted_n_samples < min_weight_fraction_leaf)):
+                                continue
+
                             current.improvement = self.criterion.impurity_improvement(impurity)
 
                             if current.improvement > best.improvement:
@@ -1765,10 +1800,13 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
     """Build a decision tree in depth-first fashion."""
 
     def __cinit__(self, Splitter splitter, SIZE_t min_samples_split,
-                  SIZE_t min_samples_leaf, SIZE_t max_depth):
+                  SIZE_t min_samples_leaf,
+                  double min_weight_fraction_leaf,
+                  SIZE_t max_depth):
         self.splitter = splitter
         self.min_samples_split = min_samples_split
         self.min_samples_leaf = min_samples_leaf
+        self.min_weight_fraction_leaf = min_weight_fraction_leaf
         self.max_depth = max_depth
 
     cpdef build(self, Tree tree, np.ndarray X, np.ndarray y,
@@ -1804,6 +1842,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         cdef Splitter splitter = self.splitter
         cdef SIZE_t max_depth = self.max_depth
         cdef SIZE_t min_samples_leaf = self.min_samples_leaf
+        cdef double min_weight_fraction_leaf = self.min_weight_fraction_leaf
         cdef SIZE_t min_samples_split = self.min_samples_split
 
         # Recursive partition (without actual recursion)
@@ -1815,6 +1854,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         cdef SIZE_t parent
         cdef bint is_left
         cdef SIZE_t n_node_samples = splitter.n_samples
+        cdef double weighted_n_samples = splitter.weighted_n_samples
         cdef double weighted_n_node_samples
         cdef SplitRecord split
         cdef SIZE_t node_id
@@ -1849,11 +1889,12 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                 n_constant_features = stack_record.n_constant_features
 
                 n_node_samples = end - start
+                splitter.node_reset(start, end, &weighted_n_node_samples)
+
                 is_leaf = ((depth >= max_depth) or
                            (n_node_samples < min_samples_split) or
-                           (n_node_samples < 2 * min_samples_leaf))
-
-                splitter.node_reset(start, end, &weighted_n_node_samples)
+                           (n_node_samples < 2 * min_samples_leaf) or
+                           (weighted_n_node_samples / weighted_n_samples < min_weight_fraction_leaf))
 
                 if first:
                     impurity = splitter.node_impurity()
@@ -1922,11 +1963,14 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
     cdef SIZE_t max_leaf_nodes
 
     def __cinit__(self, Splitter splitter, SIZE_t min_samples_split,
-                  SIZE_t min_samples_leaf, SIZE_t max_depth,
+                  SIZE_t min_samples_leaf,
+                  double min_weight_fraction_leaf,
+                  SIZE_t max_depth,
                   SIZE_t max_leaf_nodes):
         self.splitter = splitter
         self.min_samples_split = min_samples_split
         self.min_samples_leaf = min_samples_leaf
+        self.min_weight_fraction_leaf = min_weight_fraction_leaf
         self.max_depth = max_depth
         self.max_leaf_nodes = max_leaf_nodes
 
@@ -1953,6 +1997,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         cdef Splitter splitter = self.splitter
         cdef SIZE_t max_leaf_nodes = self.max_leaf_nodes
         cdef SIZE_t min_samples_leaf = self.min_samples_leaf
+        cdef double min_weight_fraction_leaf = self.min_weight_fraction_leaf
         cdef SIZE_t min_samples_split = self.min_samples_split
 
         # Recursive partition (without actual recursion)
@@ -2058,6 +2103,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         cdef SIZE_t node_id
         cdef SIZE_t n_node_samples
         cdef SIZE_t n_constant_features = 0
+        cdef double weighted_n_samples = splitter.weighted_n_samples
         cdef double weighted_n_node_samples
         cdef bint is_leaf
         cdef SIZE_t n_left, n_right
@@ -2072,6 +2118,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         is_leaf = ((depth > self.max_depth) or
                    (n_node_samples < self.min_samples_split) or
                    (n_node_samples < 2 * self.min_samples_leaf) or
+                   (weighted_n_node_samples / weighted_n_samples < self.min_weight_fraction_leaf) or
                    (impurity <= MIN_IMPURITY_SPLIT))
 
         if not is_leaf:
