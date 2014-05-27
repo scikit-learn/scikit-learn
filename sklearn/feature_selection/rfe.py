@@ -53,7 +53,8 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
 
     estimator_params : dict
         Parameters for the external estimator.
-        Useful for doing grid searches.
+        Useful for doing grid searches when an `RFE` object is passed as an
+        argument to, e.g., a `sklearn.grid_search.GridSearchCV` object.
 
     Attributes
     ----------
@@ -243,7 +244,8 @@ class RFECV(RFE, MetaEstimatorMixin):
 
     estimator_params : dict
         Parameters for the external estimator.
-        Useful for doing grid searches.
+        Useful for doing grid searches when an `RFE` object is passed as an
+        argument to, e.g., a `sklearn.grid_search.GridSearchCV` object.
 
     verbose : int, default=0
         Controls verbosity of output.
