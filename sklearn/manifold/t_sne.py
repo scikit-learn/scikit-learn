@@ -295,10 +295,11 @@ class TSNE(BaseEstimator):
     i.e. with different initializations we can get different results.
 
     It is highly recommended to use another dimensionality reduction
-    method (e.g. PCA) to reduce the number of dimensions to a reasonable
-    amount (e.g. 50) if the number of features is very high. This will
-    often improve the visualization. For more tips see Laurens van der
-    Maaten's FAQ [2].
+    method (e.g. PCA for dense data or TruncatedSVD for sparse data)
+    to reduce the number of dimensions to a reasonable amount (e.g. 50)
+    if the number of features is very high. This will suppress some
+    noise and speed up the computation of pairwise distances between
+    samples. For more tips see Laurens van der Maaten's FAQ [2].
 
     Parameters
     ----------
@@ -416,8 +417,8 @@ class TSNE(BaseEstimator):
 
         if self.affinity == "precomputed":
             if self.init == 'pca':
-                raise ValueError('The parameter init="pca" cannot be used with '
-                                 ' affinity="precomputed".')
+                raise ValueError("The parameter init=\"pca\" cannot be used "
+                                 "with affinity=\"precomputed\".")
             if X.shape[0] != X.shape[1]:
                 raise ValueError("X should be a square affinity matrix")
             affinities = X
@@ -460,7 +461,8 @@ class TSNE(BaseEstimator):
 
         if X_embedded is None:
             # Initialize embedding randomly
-            X_embedded = random_state.randn(n_samples, self.n_components) * 1e-4
+            X_embedded = 1e-4 * random_state.randn(n_samples,
+                                                   self.n_components)
         params = X_embedded.ravel()
 
         # Early exaggeration
