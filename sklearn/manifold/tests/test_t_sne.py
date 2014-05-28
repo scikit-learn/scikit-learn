@@ -1,6 +1,7 @@
 import sys
 from sklearn.externals.six.moves import cStringIO as StringIO
 import numpy as np
+import scipy.sparse as sp
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_less
@@ -163,6 +164,19 @@ def test_preserve_trustworthiness_approximately():
         X_embedded = tsne.fit_transform(X)
         assert_almost_equal(trustworthiness(X, X_embedded, n_neighbors=1), 1.0,
                             decimal=1)
+
+
+def test_fit_csr_matrix():
+    """X can be a sparse matrix."""
+    random_state = check_random_state(0)
+    X = random_state.randn(100, 2)
+    X[(np.random.randint(0, 100, 50), np.random.randint(0, 2, 50))] = 0.0
+    X_csr = sp.csr_matrix(X)
+    tsne = TSNE(n_components=2, perplexity=10, learning_rate=100.0,
+                random_state=0)
+    X_embedded = tsne.fit_transform(X_csr)
+    assert_almost_equal(trustworthiness(X_csr, X_embedded, n_neighbors=1), 1.0,
+                        decimal=1)
 
 
 def test_preserve_trustworthiness_approximately_with_precomputed_distances():
