@@ -351,6 +351,10 @@ def test_max_features():
         est.fit(iris.data, iris.target)
         assert_equal(est.max_features_, 3)
 
+        est = TreeEstimator(max_features=0.01)
+        est.fit(iris.data, iris.target)
+        assert_equal(est.max_features_, 1)
+
         est = TreeEstimator(max_features=0.5)
         est.fit(iris.data, iris.target)
         assert_equal(est.max_features_,
