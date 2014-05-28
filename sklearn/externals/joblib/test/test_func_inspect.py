@@ -12,15 +12,22 @@ import nose
 import tempfile
 import functools
 
-from ..func_inspect import filter_args, get_func_name, get_func_code, \
-        _clean_win_chars
+from ..func_inspect import filter_args, get_func_name, get_func_code
+from ..func_inspect import _clean_win_chars, format_signature
 from ..memory import Memory
+from .common import with_numpy
 
 
 ###############################################################################
 # Module-level functions, for tests
 def f(x, y=0):
     pass
+
+
+def g(x, y=1):
+    """ A module-level function for testing purposes.
+    """
+    return x ** 2 + y
 
 
 def f2(x):
@@ -180,3 +187,18 @@ def test_clean_win_chars():
     mangled_string = _clean_win_chars(string)
     for char in ('\\', ':', '<', '>', '!'):
         nose.tools.assert_false(char in mangled_string)
+
+
+def test_format_signature():
+    # Test signature formatting.
+    path, sgn = format_signature(g, list(range(10)))
+    nose.tools.assert_equal(sgn, 'g([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])')
+    path, sgn = format_signature(g, list(range(10)), y=list(range(10)))
+    nose.tools.assert_equal(sgn, 'g([0, 1, 2, 3, 4, 5, 6, 7, 8, 9],'
+                            ' y=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9])')
+
+@with_numpy
+def test_format_signature_numpy():
+    """ Test the format signature formatting with numpy.
+    """
+

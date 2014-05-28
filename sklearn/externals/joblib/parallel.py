@@ -20,7 +20,7 @@ try:
 except:
     import pickle
 
-from ._multiprocessing import mp
+from ._multiprocessing_helpers import mp
 if mp is not None:
     from .pool import MemmapingPool
     from multiprocessing.pool import ThreadPool
