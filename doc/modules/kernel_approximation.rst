@@ -157,9 +157,9 @@ into a Hilbert space :math:`\mathcal{H}`, such that
 
 .. math::
 
-        k(x,y) = < \phi(x), \phi(y)>
+        k(x,y) = \langle \phi(x), \phi(y) \rangle
 
-Where :math:`< \cdot, \cdot >` denotes the inner product in the
+Where :math:`\langle \cdot, \cdot \rangle` denotes the inner product in the
 Hilbert space.
 
 If an algorithm, such as a linear support vector machine or PCA,
