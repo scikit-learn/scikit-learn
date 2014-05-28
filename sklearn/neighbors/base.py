@@ -293,8 +293,11 @@ class KNeighborsMixin(object):
                                           self.effective_metric_,
                                           **self.effective_metric_kwds_)
 
-            # XXX: should be implemented with a partial sort
-            neigh_ind = dist.argsort(axis=1)
+            # numpy 1.8+ includes a partial sort
+            if hasattr(np, 'argpartition'):
+                neigh_ind = np.argpartition(dist, n_neighbors - 1, axis=1)
+            else:
+                neigh_ind = dist.argsort(axis=1)
             neigh_ind = neigh_ind[:, :n_neighbors]
             if return_distance:
                 j = np.arange(neigh_ind.shape[0])[:, None]
