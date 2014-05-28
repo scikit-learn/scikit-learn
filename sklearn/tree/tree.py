@@ -194,7 +194,10 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         elif isinstance(self.max_features, (numbers.Integral, np.integer)):
             max_features = self.max_features
         else:  # float
-            max_features = int(self.max_features * self.n_features_)
+            if self.max_features > 0.0:
+                max_features = max(1, int(self.max_features * self.n_features_))
+            else:
+                max_features = 0
 
         self.max_features_ = max_features
 
