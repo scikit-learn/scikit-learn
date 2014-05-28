@@ -164,3 +164,11 @@ else:
     def sparse_min_max(X, axis):
         return (X.min(axis=axis).toarray().ravel(),
                 X.max(axis=axis).toarray().ravel())
+
+
+try:
+    from numpy import argpartition
+except ImportError:
+    # numpy.argpartition was introduced in v 1.8.0
+    def argpartition(a, kth, axis=-1, kind='introselect', order=None):
+        return np.argsort(a, axis=axis, order=order)
