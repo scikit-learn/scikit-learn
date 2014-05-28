@@ -8,15 +8,19 @@ Test the memory module.
 
 import shutil
 import os
+import os.path
 from tempfile import mkdtemp
 import pickle
 import warnings
 import io
 import sys
+import time
+import imp
 
 import nose
 
-from ..memory import Memory, MemorizedFunc
+from ..memory import Memory, MemorizedFunc, NotMemorizedFunc, MemorizedResult
+from ..memory import NotMemorizedResult
 from .common import with_numpy, np
 
 
@@ -37,13 +41,12 @@ def setup_module():
     """ Test setup.
     """
     cachedir = mkdtemp()
-    #cachedir = 'foobar'
     env['dir'] = cachedir
     if os.path.exists(cachedir):
         shutil.rmtree(cachedir)
     # Don't make the cachedir, Memory should be able to do that on the fly
     print(80 * '_')
-    print('test_memory setup')
+    print('test_memory setup (%s)' % env['dir'])
     print(80 * '_')
 
 
@@ -60,7 +63,7 @@ def teardown_module():
     """
     shutil.rmtree(env['dir'], False, _rmtree_onerror)
     print(80 * '_')
-    print('test_memory teardown')
+    print('test_memory teardown (%s)' % env['dir'])
     print(80 * '_')
 
 
@@ -68,7 +71,7 @@ def teardown_module():
 # Helper function for the tests
 def check_identity_lazy(func, accumulator):
     """ Given a function and an accumulator (a list that grows every
-        time the function is called, check that the function can be
+        time the function is called), check that the function can be
         decorated by memory to be a lazy identity.
     """
     # Call each function with several arguments, and check that it is
@@ -477,36 +480,177 @@ def test_persistence():
     # Smoke test that pickling a memory with cachedir=None works
     memory = Memory(cachedir=None, verbose=0)
     pickle.loads(pickle.dumps(memory))
+    g = memory.cache(f)
+    gp = pickle.loads(pickle.dumps(g))
+    gp(1)
 
 
-def test_format_signature():
-    # Test the signature formatting.
-    func = MemorizedFunc(f, cachedir=env['dir'])
-    path, sgn = func.format_signature(f, list(range(10)))
-    yield nose.tools.assert_equal, \
-                sgn, \
-                'f([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])'
-    path, sgn = func.format_signature(f, list(range(10)),
-                                      y=list(range(10)))
-    yield nose.tools.assert_equal, \
-                sgn, \
-        'f([0, 1, 2, 3, 4, 5, 6, 7, 8, 9], y=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9])'
-
-
-@with_numpy
-def test_format_signature_numpy():
-    """ Test the format signature formatting with numpy.
+def test_call_and_shelve():
+    """Test MemorizedFunc outputting a reference to cache.
     """
 
+    for func, Result in zip((MemorizedFunc(f, env['dir']),
+                             NotMemorizedFunc(f),
+                             Memory(cachedir=env['dir']).cache(f),
+                             Memory(cachedir=None).cache(f),
+                             ),
+                            (MemorizedResult, NotMemorizedResult,
+                             MemorizedResult, NotMemorizedResult)):
+        nose.tools.assert_equal(func(2), 5)
+        result = func.call_and_shelve(2)
+        nose.tools.assert_true(isinstance(result, Result))
+        nose.tools.assert_equal(result.get(), 5)
 
-def test_persist_with_output_dir_keyword_arg():
-    """Test that "output_dir" keyword argument can be persisted (issue #72)"""
+        result.clear()
+        nose.tools.assert_raises(KeyError, result.get)
+        result.clear()  # Do nothing if there is no cache.
 
-    def f(output_dir="thing"):
-        return output_dir
 
-    mem = Memory(cachedir=env['dir'])
-    first_result = mem.cache(f)(output_dir="other/thing")
-    cached_result = mem.cache(f)(output_dir="other/thing")
-    nose.tools.assert_equal(first_result, "other/thing")
-    nose.tools.assert_equal(cached_result, "other/thing")
+def test_memorized_pickling():
+    for func in (MemorizedFunc(f, env['dir']), NotMemorizedFunc(f)):
+        filename = os.path.join(env['dir'], 'pickling_test.dat')
+        result = func.call_and_shelve(2)
+        with open(filename, 'wb') as fp:
+            pickle.dump(result, fp)
+        with open(filename, 'rb') as fp:
+            result2 = pickle.load(fp)
+        nose.tools.assert_equal(result2.get(), result.get())
+        os.remove(filename)
+
+
+def test_memorized_repr():
+    func = MemorizedFunc(f, env['dir'])
+    result = func.call_and_shelve(2)
+
+    func2 = MemorizedFunc(f, env['dir'])
+    result2 = func2.call_and_shelve(2)
+    nose.tools.assert_equal(result.get(), result2.get())
+    nose.tools.assert_equal(repr(func), repr(func2))
+
+    # Smoke test on deprecated methods
+    func.format_signature(2)
+    func.format_call(2)
+
+    # Smoke test with NotMemorizedFunc
+    func = NotMemorizedFunc(f)
+    repr(func)
+    repr(func.call_and_shelve(2))
+
+    # Smoke test for message output (increase code coverage)
+    func = MemorizedFunc(f, env['dir'], verbose=11, timestamp=time.time())
+    result = func.call_and_shelve(11)
+    result.get()
+
+    func = MemorizedFunc(f, env['dir'], verbose=11)
+    result = func.call_and_shelve(11)
+    result.get()
+
+    func = MemorizedFunc(f, env['dir'], verbose=5, timestamp=time.time())
+    result = func.call_and_shelve(11)
+    result.get()
+
+    func = MemorizedFunc(f, env['dir'], verbose=5)
+    result = func.call_and_shelve(11)
+    result.get()
+
+
+def test_memory_file_modification():
+    # Test that modifying a Python file after loading it does not lead to
+    # Recomputation
+    dir_name = os.path.join(env['dir'], 'tmp_import')
+    if not os.path.exists(dir_name):
+        os.mkdir(dir_name)
+    filename = os.path.join(dir_name, 'tmp_joblib_.py')
+    content = 'def f(x):\n    print(x)\n    return x\n'
+    with open(filename, 'w') as module_file:
+        module_file.write(content)
+
+    # Load the module:
+    sys.path.append(dir_name)
+    import tmp_joblib_ as tmp
+
+    mem = Memory(cachedir=env['dir'], verbose=0)
+    f = mem.cache(tmp.f)
+    # Capture sys.stdout to count how many time f is called
+    orig_stdout = sys.stdout
+    if sys.version_info[0] == 3:
+        my_stdout = io.StringIO()
+    else:
+        my_stdout = io.BytesIO()
+
+    try:
+        sys.stdout = my_stdout
+
+        # First call f a few times
+        f(1)
+        f(2)
+        f(1)
+
+        # Now modify the module where f is stored without modifying f
+        with open(filename, 'w') as module_file:
+            module_file.write('\n\n' + content)
+
+        # And call f a couple more times
+        f(1)
+        f(1)
+
+        # Flush the .pyc files
+        shutil.rmtree(dir_name)
+        os.mkdir(dir_name)
+        # Now modify the module where f is stored, modifying f
+        content = 'def f(x):\n    print("x=%s" % x)\n    return x\n'
+        with open(filename, 'w') as module_file:
+            module_file.write(content)
+
+        # And call f more times prior to reloading: the cache should not be
+        # invalidated at this point as the active function definition has not
+        # changed in memory yet.
+        f(1)
+        f(1)
+
+        # Now reload
+        my_stdout.write('Reloading\n')
+        sys.modules.pop('tmp_joblib_')
+        import tmp_joblib_ as tmp
+        f = mem.cache(tmp.f)
+
+        # And call f more times
+        f(1)
+        f(1)
+
+    finally:
+        sys.stdout = orig_stdout
+    nose.tools.assert_equal(my_stdout.getvalue(), '1\n2\nReloading\nx=1\n')
+
+
+def _function_to_cache(a, b):
+    # Just a place holder function to be mutated by tests
+    pass
+
+
+def _sum(a, b):
+    return a + b
+
+
+def _product(a, b):
+    return a * b
+
+
+def test_memory_in_memory_function_code_change():
+    _function_to_cache.__code__ = _sum.__code__
+
+    mem = Memory(cachedir=env['dir'], verbose=0)
+    f = mem.cache(_function_to_cache)
+
+    nose.tools.assert_equal(f(1, 2), 3)
+    nose.tools.assert_equal(f(1, 2), 3)
+
+    with warnings.catch_warnings(record=True):
+        # ignore name collision warnings
+        warnings.simplefilter("always")
+
+        # Check that inline function modification triggers a cache invalidation
+
+        _function_to_cache.__code__ = _product.__code__
+        nose.tools.assert_equal(f(1, 2), 2)
+        nose.tools.assert_equal(f(1, 2), 2)
