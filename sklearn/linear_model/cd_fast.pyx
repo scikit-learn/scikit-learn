@@ -40,7 +40,7 @@ cdef double abs_max(int n, double* a) nogil:
     cdef int i
     cdef double m = fabs(a[0])
     cdef double d
-    for i in xrange(1, n):
+    for i in range(1, n):
         d = fabs(a[i])
         if d > m:
             m = d
@@ -52,7 +52,7 @@ cdef double max(int n, double* a) nogil:
     cdef int i
     cdef double m = a[0]
     cdef double d
-    for i in xrange(1, n):
+    for i in range(1, n):
         d = a[i]
         if d > m:
             m = d
@@ -153,7 +153,7 @@ def enet_coordinate_descent(np.ndarray[DOUBLE, ndim=1] w,
         for n_iter in range(max_iter):
             w_max = 0.0
             d_w_max = 0.0
-            for ii in xrange(n_features):  # Loop over coordinates
+            for ii in range(n_features):  # Loop over coordinates
                 if norm_cols_X[ii] == 0.0:
                     continue
 
@@ -296,25 +296,25 @@ def sparse_enet_coordinate_descent(double[:] w,
 
     with nogil:
         # center = (X_mean != 0).any()
-        for ii in xrange(n_samples):
+        for ii in range(n_samples):
             if X_mean[ii]:
                 center = True
                 break
 
-        for ii in xrange(n_features):
+        for ii in range(n_features):
             X_mean_ii = X_mean[ii]
             endptr = X_indptr[ii + 1]
             normalize_sum = 0.0
             w_ii = w[ii]
 
-            for jj in xrange(startptr, endptr):
+            for jj in range(startptr, endptr):
                 normalize_sum += (X_data[jj] - X_mean_ii) ** 2
                 R[X_indices[jj]] -= X_data[jj] * w_ii
             norm_cols_X[ii] = normalize_sum + \
                 (n_samples - endptr + startptr) * X_mean_ii ** 2
 
             if center:
-                for jj in xrange(n_samples):
+                for jj in range(n_samples):
                     R[jj] += X_mean_ii * w_ii
             startptr = endptr
 
@@ -327,7 +327,7 @@ def sparse_enet_coordinate_descent(double[:] w,
             d_w_max = 0.0
             startptr = X_indptr[0]
 
-            for ii in xrange(n_features):  # Loop over coordinates
+            for ii in range(n_features):  # Loop over coordinates
 
                 if norm_cols_X[ii] == 0.0:
                     continue
@@ -338,20 +338,20 @@ def sparse_enet_coordinate_descent(double[:] w,
 
                 if w_ii != 0.0:
                     # R += w_ii * X[:,ii]
-                    for jj in xrange(startptr, endptr):
+                    for jj in range(startptr, endptr):
                         R[X_indices[jj]] += X_data[jj] * w_ii
                     if center:
-                        for jj in xrange(n_samples):
+                        for jj in range(n_samples):
                             R[jj] -= X_mean_ii * w_ii
 
                 # tmp = (X[:,ii] * R).sum()
                 tmp = 0.0
-                for jj in xrange(startptr, endptr):
+                for jj in range(startptr, endptr):
                     tmp += R[X_indices[jj]] * X_data[jj]
 
                 if center:
                     R_sum = 0.0
-                    for jj in xrange(n_samples):
+                    for jj in range(n_samples):
                         R_sum += R[jj]
                     tmp -= R_sum * X_mean_ii
 
@@ -363,11 +363,11 @@ def sparse_enet_coordinate_descent(double[:] w,
 
                 if w[ii] != 0.0:
                     # R -=  w[ii] * X[:,ii] # Update residual
-                    for jj in xrange(startptr, endptr):
+                    for jj in range(startptr, endptr):
                         R[X_indices[jj]] -= X_data[jj] * w[ii]
 
                     if center:
-                        for jj in xrange(n_samples):
+                        for jj in range(n_samples):
                             R[jj] += X_mean_ii * w[ii]
 
                 # update the maximum absolute coefficient update
@@ -384,15 +384,15 @@ def sparse_enet_coordinate_descent(double[:] w,
                 # criterion
 
                 # sparse X.T / dense R dot product
-                for ii in xrange(n_features):
-                    for jj in xrange(X_indptr[ii], X_indptr[ii + 1]):
+                for ii in range(n_features):
+                    for jj in range(X_indptr[ii], X_indptr[ii + 1]):
                         X_T_R[ii] += X_data[jj] * R[X_indices[jj]]
                     R_sum = 0.0
-                    for jj in xrange(n_samples):
+                    for jj in range(n_samples):
                         R_sum += R[jj]
                     X_T_R[ii] -= X_mean[ii] * R_sum
 
-                for jj in xrange(n_features):
+                for jj in range(n_features):
                     XtA[jj] = X_T_R[jj] - beta * w[jj]
                 if positive:
                     dual_norm_XtA = max(n_features, &XtA[0])
@@ -479,7 +479,7 @@ def enet_coordinate_descent_gram(np.ndarray[DOUBLE, ndim=1] w,
     for n_iter in range(max_iter):
         w_max = 0.0
         d_w_max = 0.0
-        for ii in xrange(n_features):  # Loop over coordinates
+        for ii in range(n_features):  # Loop over coordinates
             if Q[ii, ii] == 0.0:
                 continue
 
@@ -553,7 +553,7 @@ cdef double diff_abs_max(int n, double* a, double* b):
     cdef int i
     cdef double m = fabs(a[0] - b[0])
     cdef double d
-    for i in xrange(1, n):
+    for i in range(1, n):
         d = fabs(a[i] - b[i])
         if d > m:
             m = d
@@ -614,7 +614,7 @@ def enet_coordinate_descent_multi_task(np.ndarray[DOUBLE, ndim=2, mode='fortran'
     for n_iter in range(max_iter):
         w_max = 0.0
         d_w_max = 0.0
-        for ii in xrange(n_features): # Loop over coordinates
+        for ii in range(n_features): # Loop over coordinates
             if norm_cols_X[ii] == 0.0:
                 continue
 
