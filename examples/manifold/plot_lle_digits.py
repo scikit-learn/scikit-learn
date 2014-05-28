@@ -227,4 +227,4 @@ plot_embedding(X_tsne,
                "t-SNE embedding of the digits (time %.2fs)" %
                (time() - t0))
 
-pl.show()
+plt.show()
