@@ -18,6 +18,7 @@ from ..base import BaseEstimator
 from ..metrics import pairwise_distances
 from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
 from ..utils import safe_asarray, atleast2d_or_csr, check_arrays
+from ..utils.fixes import argpartition
 from ..utils.validation import DataConversionWarning
 from ..externals import six
 
@@ -293,11 +294,7 @@ class KNeighborsMixin(object):
                                           self.effective_metric_,
                                           **self.effective_metric_kwds_)
 
-            # numpy 1.8+ includes a partial sort
-            if hasattr(np, 'argpartition'):
-                neigh_ind = np.argpartition(dist, n_neighbors - 1, axis=1)
-            else:
-                neigh_ind = dist.argsort(axis=1)
+            neigh_ind = argpartition(dist, n_neighbors - 1, axis=1)
             neigh_ind = neigh_ind[:, :n_neighbors]
             if return_distance:
                 j = np.arange(neigh_ind.shape[0])[:, None]
