@@ -467,12 +467,16 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
                 coef_, l1_reg, l2_reg, X.data, X.indices,
                 X.indptr, y, X_sparse_scaling,
                 max_iter, tol, positive)
-        elif not multi_output:
-            model = cd_fast.enet_coordinate_descent(
-                coef_, l1_reg, l2_reg, X, y, max_iter, tol, positive)
-        else:
+        elif multi_output:
             model = cd_fast.enet_coordinate_descent_multi_task(
                 coef_, l1_reg, l2_reg, X, y, max_iter, tol)
+        elif isinstance(precompute, np.ndarray):
+            model = cd_fast.enet_coordinate_descent_gram(
+                coef_, l1_reg, l2_reg, precompute, Xy, y, max_iter,
+                tol, positive)
+        else:
+            model = cd_fast.enet_coordinate_descent(
+                coef_, l1_reg, l2_reg, X, y, max_iter, tol, positive)
         coef_, dual_gap_, eps_ = model
         coefs[..., i] = coef_
         dual_gaps[i] = dual_gap_
