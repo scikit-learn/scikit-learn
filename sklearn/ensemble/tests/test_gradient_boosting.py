@@ -289,6 +289,10 @@ def test_check_inputs():
     clf = GradientBoostingClassifier().fit(X, y)
     assert_raises(TypeError, clf.predict, X_sparse)
 
+    clf = GradientBoostingClassifier(n_estimators=100, random_state=1)
+    assert_raises(ValueError, clf.fit, X, y,
+                  sample_weight=([1] * len(y)) + [0, 1])
+
 
 def test_check_inputs_predict():
     """X has wrong shape """
@@ -949,7 +953,7 @@ def test_probability_exponential():
     clf.fit(X, y)
     assert_array_equal(clf.predict(T), true_result)
     assert_raises(AttributeError, clf.predict_proba, T)
-    assert_raises(AttributeError, clf.staged_predict_proba, T)
+    assert_raises(AttributeError, lambda : next(clf.staged_predict_proba(T)))
 
 
 if __name__ == "__main__":

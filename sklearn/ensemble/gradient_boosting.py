@@ -903,6 +903,16 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
         n_samples, n_features = X.shape
         if sample_weight is None:
             sample_weight = np.ones(n_samples, dtype=np.float32)
+        else:
+            sample_weight = column_or_1d(sample_weight, warn=True)
+
+        if y.shape[0] != n_samples:
+            raise ValueError('Shape mismatch of X and y: %d != %d' %
+                             (n_samples, y.shape[0]))
+        if n_samples != sample_weight.shape[0]:
+            raise ValueError('Shape mismatch of sample_weight: %d != %d' %
+                             (sample_weight.shape[0], n_samples))
+
         self.n_features = n_features
         random_state = check_random_state(self.random_state)
         self._check_params()
@@ -1239,6 +1249,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
     See also
     --------
     sklearn.tree.DecisionTreeClassifier, RandomForestClassifier
+    AdaBoostClassifier
 
     References
     ----------
