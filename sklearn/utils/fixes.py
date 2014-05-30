@@ -171,6 +171,3 @@ except ImportError:
     # numpy.argpartition was introduced in v 1.8.0
     def argpartition(a, kth, axis=-1, kind='introselect', order=None):
         return np.argsort(a, axis=axis, order=order)
-else:
-    def argpartition(a, kth, axis=-1, kind='introselect', order=None):
-        return np.argpartition(a, kth, axis=axis, kind=kind, order=order)

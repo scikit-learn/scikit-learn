@@ -296,8 +296,10 @@ class KNeighborsMixin(object):
 
             neigh_ind = argpartition(dist, n_neighbors - 1, axis=1)
             neigh_ind = neigh_ind[:, :n_neighbors]
+            # argpartition doesn't guarantee sorted order, so we sort again
+            j = np.arange(neigh_ind.shape[0])[:, None]
+            neigh_ind = neigh_ind[j, np.argsort(dist[j, neigh_ind])]
             if return_distance:
-                j = np.arange(neigh_ind.shape[0])[:, None]
                 if self.effective_metric_ == 'euclidean':
                     return np.sqrt(dist[j, neigh_ind]), neigh_ind
                 else:
