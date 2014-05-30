@@ -48,17 +48,20 @@ iris.target = iris.target[perm]
 
 def test_classification_toy():
     """Check classification on a toy dataset."""
-    clf = GradientBoostingClassifier(n_estimators=100, random_state=1)
 
-    assert_raises(ValueError, clf.predict, T)
+    for loss in ('deviance', 'exponential'):
+        clf = GradientBoostingClassifier(loss=loss, n_estimators=10,
+                                         random_state=1)
 
-    clf.fit(X, y)
-    assert_array_equal(clf.predict(T), true_result)
-    assert_equal(100, len(clf.estimators_))
+        assert_raises(ValueError, clf.predict, T)
 
-    deviance_decrease = (clf.train_score_[:-1] - clf.train_score_[1:])
-    assert np.any(deviance_decrease >= 0.0), \
-        "Train deviance does not monotonically decrease."
+        clf.fit(X, y)
+        assert_array_equal(clf.predict(T), true_result)
+        assert_equal(10, len(clf.estimators_))
+
+        deviance_decrease = (clf.train_score_[:-1] - clf.train_score_[1:])
+        assert np.any(deviance_decrease >= 0.0), \
+            "Train deviance does not monotonically decrease."
 
 
 def test_parameter_checks():
@@ -131,6 +134,8 @@ def test_loss_function():
                   GradientBoostingClassifier(loss='huber').fit, X, y)
     assert_raises(ValueError,
                   GradientBoostingRegressor(loss='deviance').fit, X, y)
+    assert_raises(ValueError,
+                  GradientBoostingRegressor(loss='exponential').fit, X, y)
 
 
 def test_classification_synthetic():
@@ -141,22 +146,25 @@ def test_classification_synthetic():
     X_train, X_test = X[:2000], X[2000:]
     y_train, y_test = y[:2000], y[2000:]
 
-    gbrt = GradientBoostingClassifier(n_estimators=100, min_samples_split=1,
-                                      max_depth=1,
-                                      learning_rate=1.0, random_state=0)
-    gbrt.fit(X_train, y_train)
-    error_rate = (1.0 - gbrt.score(X_test, y_test))
-    assert error_rate < 0.085, \
-        "GB failed with error %.4f" % error_rate
+    for loss in ('deviance', 'exponential'):
 
-    gbrt = GradientBoostingClassifier(n_estimators=200, min_samples_split=1,
-                                      max_depth=1,
-                                      learning_rate=1.0, subsample=0.5,
-                                      random_state=0)
-    gbrt.fit(X_train, y_train)
-    error_rate = (1.0 - gbrt.score(X_test, y_test))
-    assert error_rate < 0.08, \
-        "Stochastic GB failed with error %.4f" % error_rate
+        gbrt = GradientBoostingClassifier(n_estimators=100, min_samples_split=1,
+                                          max_depth=1, loss=loss,
+                                          learning_rate=1.0, random_state=0)
+        gbrt.fit(X_train, y_train)
+        error_rate = (1.0 - gbrt.score(X_test, y_test))
+        assert error_rate < 0.09, \
+            "GB(loss={}) failed with error {}".format(loss, error_rate)
+
+        gbrt = GradientBoostingClassifier(n_estimators=200, min_samples_split=1,
+                                          max_depth=1,
+                                          learning_rate=1.0, subsample=0.5,
+                                          random_state=0)
+        gbrt.fit(X_train, y_train)
+        error_rate = (1.0 - gbrt.score(X_test, y_test))
+        assert error_rate < 0.08, \
+            "Stochastic GB(loss={} failed with error {}".format(loss,
+                                                                error_rate)
 
 
 def test_boston():
@@ -164,28 +172,31 @@ def test_boston():
     and least absolute deviation. """
     for loss in ("ls", "lad", "huber"):
         for subsample in (1.0, 0.5):
-            clf = GradientBoostingRegressor(n_estimators=100, loss=loss,
-                                            max_depth=4, subsample=subsample,
-                                            min_samples_split=1,
-                                            random_state=1)
+            for sample_weight in (None, np.ones(len(boston.target))):
+                clf = GradientBoostingRegressor(n_estimators=100, loss=loss,
+                                                max_depth=4, subsample=subsample,
+                                                min_samples_split=1,
+                                                random_state=1)
 
-            assert_raises(ValueError, clf.predict, boston.data)
-            clf.fit(boston.data, boston.target)
-            y_pred = clf.predict(boston.data)
-            mse = mean_squared_error(boston.target, y_pred)
-            assert mse < 6.0, "Failed with loss %s and " \
-                "mse = %.4f" % (loss, mse)
+                assert_raises(ValueError, clf.predict, boston.data)
+                clf.fit(boston.data, boston.target,
+                        sample_weight=sample_weight)
+                y_pred = clf.predict(boston.data)
+                mse = mean_squared_error(boston.target, y_pred)
+                assert mse < 6.0, "Failed with loss %s and " \
+                    "mse = %.4f" % (loss, mse)
 
 
 def test_iris():
     """Check consistency on dataset iris."""
     for subsample in (1.0, 0.5):
-        clf = GradientBoostingClassifier(n_estimators=100, loss='deviance',
-                                         random_state=1, subsample=subsample)
-        clf.fit(iris.data, iris.target)
-        score = clf.score(iris.data, iris.target)
-        assert score > 0.9, "Failed with subsample %.1f " \
-            "and score = %f" % (subsample, score)
+        for sample_weight in (None, np.ones(len(iris.target))):
+            clf = GradientBoostingClassifier(n_estimators=100, loss='deviance',
+                                             random_state=1, subsample=subsample)
+            clf.fit(iris.data, iris.target, sample_weight=sample_weight)
+            score = clf.score(iris.data, iris.target)
+            assert score > 0.9, "Failed with subsample %.1f " \
+                "and score = %f" % (subsample, score)
 
 
 def test_regression_synthetic():
@@ -926,6 +937,19 @@ def test_warm_start_wo_nestimators_change():
     assert clf.estimators_.shape[0] == 10
     clf.fit([[0, 1], [2, 3]], [0, 1])
     assert clf.estimators_.shape[0] == 10
+
+
+def test_probability_exponential():
+    """Predict probabilities."""
+    clf = GradientBoostingClassifier(loss='exponential',
+                                     n_estimators=100, random_state=1)
+
+    assert_raises(ValueError, clf.predict_proba, T)
+
+    clf.fit(X, y)
+    assert_array_equal(clf.predict(T), true_result)
+    assert_raises(AttributeError, clf.predict_proba, T)
+    assert_raises(AttributeError, clf.staged_predict_proba, T)
 
 
 if __name__ == "__main__":
