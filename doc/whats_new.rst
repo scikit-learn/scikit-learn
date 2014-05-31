@@ -132,6 +132,13 @@ API changes summary
       but previous versions accidentally returned only the positive
       probability. Fixed by Will Lamond and `Lars Buitinck`_.
 
+    - Change default value of precompute in :class:`ElasticNet` and :class:`Lasso`
+      to False. Setting precompute to "auto" was found to be slower when
+      n_samples > n_features since the computation of the Gram matrix is
+      computationally expensive and outweighs the benefit of fitting the Gram
+      for just one alpha.
+      ``precompute="auto"`` is now deprecated and will be removed in 0.18
+      By `Manoj Kumar`_.
 
 .. _changes_0_15_2:
 
