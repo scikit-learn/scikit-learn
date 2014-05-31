@@ -76,7 +76,7 @@ Remarks
 =======
 
 According to the JL lemma, projecting 500 samples without too much distortion
-will require at least several thousands dimensions, irrespectively of the
+will require at least several thousands dimensions, irrespective of the
 number of features of the original dataset.
 
 Hence using random projections on the digits dataset which only has 64 features
