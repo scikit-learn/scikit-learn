@@ -13,7 +13,7 @@ Logistic Regression
 import numbers
 
 import numpy as np
-from scipy import optimize, sparse
+from scipy import optimize, sparse, special
 
 from .base import LinearClassifierMixin, SparseCoefMixin, BaseEstimator
 from ..feature_selection.from_model import _LearntSelectorMixin
@@ -28,17 +28,6 @@ from ..metrics import SCORERS
 
 
 # .. some helper functions for logistic_regression_path ..
-def _phi(t, copy=True):
-    # helper function: return 1. / (1 + np.exp(-t))
-    if copy:
-        t = np.copy(t)
-    t *= -1.
-    t = np.exp(t, t)
-    t += 1
-    t = np.reciprocal(t, t)
-    return t
-
-
 def _logistic_loss_and_grad(w, X, y, alpha):
     # the logistic loss and its gradient
     z = X.dot(w)
@@ -49,7 +38,7 @@ def _logistic_loss_and_grad(w, X, y, alpha):
     out[~idx] = (-yz[~idx] + np.log(1 + np.exp(yz[~idx])))
     out = out.sum() + .5 * alpha * w.dot(w)
 
-    z = _phi(yz, copy=False)
+    z = special.expit(yz)
     z0 = (z - 1) * y
     grad = X.T.dot(z0) + alpha * w
     return out, grad
@@ -78,7 +67,7 @@ def _logistic_loss_grad_hess(w, X, y, alpha):
     out[~idx] = (-yz[~idx] + np.log(1 + np.exp(yz[~idx])))
     out = out.sum() + .5 * alpha * w.dot(w)
 
-    z = _phi(yz, copy=False)
+    z = special.expit(yz)
     z0 = (z - 1) * y
     grad = X.T.dot(z0) + alpha * w
 
@@ -112,7 +101,7 @@ def _logistic_loss_and_grad_intercept(w_c, X, y, alpha):
     out[~idx] = (-yz[~idx] + np.log(1 + np.exp(yz[~idx])))
     out = out.sum() + .5 * alpha * w.dot(w)
 
-    z = _phi(yz, copy=False)
+    z = special.expit(yz)
     z0 = (z - 1) * y
     grad = np.empty_like(w_c)
     grad[:-1] = X.T.dot(z0) + alpha * w
@@ -150,7 +139,7 @@ def _logistic_loss_grad_hess_intercept(w_c, X, y, alpha):
     out[~idx] = (-yz[~idx] + np.log(1 + np.exp(yz[~idx])))
     out = out.sum() + .5 * alpha * w.dot(w)
 
-    z = _phi(yz, copy=False)
+    z = special.expit(yz)
     z0 = (z - 1) * y
     grad = np.empty_like(w_c)
     grad[:-1] = X.T.dot(z0) + alpha * w
@@ -584,11 +573,11 @@ class LogisticRegressionCV(BaseEstimator, LinearClassifierMixin,
         best_index = self.scores_.sum(axis=0).argmax()
         self.C_ = self.Cs_[best_index]
         coef_init = np.mean([c[best_index] for c in coefs_paths], axis=0)
-        w = logistic_regression_path(
+        w, _ = logistic_regression_path(
             X, y, Cs=[self.C_], fit_intercept=self.fit_intercept,
             coef=coef_init, solver=self.solver, max_iter=self.max_iter,
             gtol=self.gtol, verbose=max(0, self.verbose - 1))
-        w = w[0][0][:, np.newaxis].T
+        w = w[0][:, np.newaxis].T
         if self.fit_intercept:
             self.coef_ = w[:, :-1]
             self.intercept_ = w[:, -1]
