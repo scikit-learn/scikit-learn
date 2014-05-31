@@ -619,7 +619,7 @@ class ElasticNet(LinearModel, RegressorMixin):
     path = staticmethod(enet_path)
 
     def __init__(self, alpha=1.0, l1_ratio=0.5, fit_intercept=True,
-                 normalize=False, precompute='auto', max_iter=1000,
+                 normalize=False, precompute=False, max_iter=1000,
                  copy_X=True, tol=1e-4, warm_start=False, positive=False):
         self.alpha = alpha
         self.l1_ratio = l1_ratio
@@ -1349,7 +1349,7 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
     path = staticmethod(enet_path)
 
     def __init__(self, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
-                 fit_intercept=True, normalize=False, precompute='auto',
+                 fit_intercept=True, normalize=False, precompute=False,
                  max_iter=1000, tol=1e-4, cv=None, copy_X=True,
                  verbose=0, n_jobs=1, positive=False):
         self.l1_ratio = l1_ratio
