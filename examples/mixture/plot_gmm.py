@@ -3,7 +3,7 @@
 Gaussian Mixture Model Ellipsoids
 =================================
 
-Plot the confidence ellipsoids of a mixture of two gaussians with EM
+Plot the confidence ellipsoids of a mixture of two Gaussians with EM
 and variational dirichlet process.
 
 Both models have access to five components with which to fit the
@@ -38,11 +38,11 @@ C = np.array([[0., -0.1], [1.7, .4]])
 X = np.r_[np.dot(np.random.randn(n_samples, 2), C),
           .7 * np.random.randn(n_samples, 2) + np.array([-6, 3])]
 
-# Fit a mixture of gaussians with EM using five components
+# Fit a mixture of Gaussians with EM using five components
 gmm = mixture.GMM(n_components=5, covariance_type='full')
 gmm.fit(X)
 
-# Fit a dirichlet process mixture of gaussians using five components
+# Fit a dirichlet process mixture of Gaussians using five components
 dpgmm = mixture.DPGMM(n_components=5, covariance_type='full')
 dpgmm.fit(X)
 

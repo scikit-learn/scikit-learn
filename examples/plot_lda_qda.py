@@ -104,7 +104,7 @@ def plot_ellipse(splot, mean, cov, color):
     u = w[0] / linalg.norm(w[0])
     angle = np.arctan(u[1] / u[0])
     angle = 180 * angle / np.pi  # convert to degrees
-    # filled gaussian at 2 standard deviation
+    # filled Gaussian at 2 standard deviation
     ell = mpl.patches.Ellipse(mean, 2 * v[0] ** 0.5, 2 * v[1] ** 0.5,
                               180 + angle, color=color)
     ell.set_clip_box(splot.bbox)

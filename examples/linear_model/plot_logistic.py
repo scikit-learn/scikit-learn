@@ -24,7 +24,7 @@ import matplotlib.pyplot as plt
 from sklearn import linear_model
 
 # this is our test set, it's just a straight line with some
-# gaussian noise
+# Gaussian noise
 xmin, xmax = -5, 5
 n_samples = 100
 np.random.seed(0)
