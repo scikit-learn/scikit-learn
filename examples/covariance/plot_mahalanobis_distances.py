@@ -10,7 +10,7 @@ For Gaussian distributed data, the distance of an observation
 :math:`x_i` to the mode of the distribution can be computed using its
 Mahalanobis distance: :math:`d_{(\mu,\Sigma)}(x_i)^2 = (x_i -
 \mu)'\Sigma^{-1}(x_i - \mu)` where :math:`\mu` and :math:`\Sigma` are
-the location and the covariance of the underlying gaussian
+the location and the covariance of the underlying Gaussian
 distribution.
 
 In practice, :math:`\mu` and :math:`\Sigma` are replaced by some

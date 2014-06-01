@@ -3,8 +3,8 @@
 Density Estimation for a mixture of Gaussians
 =============================================
 
-Plot the density estimation of a mixture of two gaussians. Data is
-generated from two gaussians with different centers and covariance
+Plot the density estimation of a mixture of two Gaussians. Data is
+generated from two Gaussians with different centers and covariance
 matrices.
 """
 
@@ -21,7 +21,7 @@ np.random.seed(0)
 # generate spherical data centered on (20, 20)
 shifted_gaussian = np.random.randn(n_samples, 2) + np.array([20, 20])
 
-# generate zero centered stretched gaussian data
+# generate zero centered stretched Gaussian data
 C = np.array([[0., -0.7], [3.5, .7]])
 stretched_gaussian = np.dot(np.random.randn(n_samples, 2), C)
 
