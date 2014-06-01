@@ -832,7 +832,7 @@ class Lasso(ElasticNet):
     path = staticmethod(enet_path)
 
     def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
-                 precompute='auto', copy_X=True, max_iter=1000,
+                 precompute=False, copy_X=True, max_iter=1000,
                  tol=1e-4, warm_start=False, positive=False):
         super(Lasso, self).__init__(
             alpha=alpha, l1_ratio=1.0, fit_intercept=fit_intercept,
@@ -1222,7 +1222,7 @@ class LassoCV(LinearModelCV, RegressorMixin):
     path = staticmethod(lasso_path)
 
     def __init__(self, eps=1e-3, n_alphas=100, alphas=None, fit_intercept=True,
-                 normalize=False, precompute='auto', max_iter=1000, tol=1e-4,
+                 normalize=False, precompute=False, max_iter=1000, tol=1e-4,
                  copy_X=True, cv=None, verbose=False, n_jobs=1,
                  positive=False):
         super(LassoCV, self).__init__(
