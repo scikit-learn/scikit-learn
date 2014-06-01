@@ -228,7 +228,7 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
     if algorithm in ('lars', 'omp'):
         regularization = n_nonzero_coefs
         if regularization is None:
-            regularization = max(n_features / 10, 1)
+            regularization = min(max(n_features / 10, 1), n_components)
     else:
         regularization = alpha
         if regularization is None:
