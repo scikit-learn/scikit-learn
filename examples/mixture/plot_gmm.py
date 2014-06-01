@@ -4,7 +4,7 @@ Gaussian Mixture Model Ellipsoids
 =================================
 
 Plot the confidence ellipsoids of a mixture of two Gaussians with EM
-and variational dirichlet process.
+and variational Dirichlet process.
 
 Both models have access to five components with which to fit the
 data. Note that the EM model will necessarily use all five components
@@ -15,7 +15,7 @@ is trying to fit too many components, while the Dirichlet Process model
 adapts it number of state automatically.
 
 This example doesn't show it, as we're in a low-dimensional space, but
-another advantage of the dirichlet process model is that it can fit
+another advantage of the Dirichlet process model is that it can fit
 full covariance matrices effectively even when there are less examples
 per cluster than there are dimensions in the data, due to
 regularization properties of the inference algorithm.
@@ -42,7 +42,7 @@ X = np.r_[np.dot(np.random.randn(n_samples, 2), C),
 gmm = mixture.GMM(n_components=5, covariance_type='full')
 gmm.fit(X)
 
-# Fit a dirichlet process mixture of Gaussians using five components
+# Fit a Dirichlet process mixture of Gaussians using five components
 dpgmm = mixture.DPGMM(n_components=5, covariance_type='full')
 dpgmm.fit(X)
 
