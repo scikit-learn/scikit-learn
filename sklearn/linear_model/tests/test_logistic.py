@@ -12,8 +12,7 @@ from sklearn.utils.testing import raises
 
 from sklearn.linear_model.logistic import (LogisticRegression,
     logistic_regression_path, LogisticRegressionCV,
-    _logistic_loss_and_grad, _logistic_loss_and_grad_intercept,
-    _logistic_loss_grad_hess, _logistic_loss_grad_hess_intercept)
+    _logistic_loss_and_grad, _logistic_loss_grad_hess)
 from sklearn.datasets import load_iris, make_classification
 
 X = [[-1, 0], [0, 1], [1, 1]]
@@ -203,12 +202,12 @@ def test__logistic_loss_and_grad():
 
         # Second check that our intercept implementation is good
         w = np.zeros(n_features + 1)
-        loss_interp, grad_interp = _logistic_loss_and_grad_intercept(w,
+        loss_interp, grad_interp = _logistic_loss_and_grad(w,
                                                     X, y, alpha=1.)
         assert_array_almost_equal(loss, loss_interp)
 
         approx_grad = optimize.approx_fprime(w,
-                            lambda w: _logistic_loss_and_grad_intercept(
+                            lambda w: _logistic_loss_and_grad(
                                           w, X, y, alpha=1.)[0], 1e-3)
         assert_array_almost_equal(grad_interp, approx_grad, decimal=2)
 
@@ -258,10 +257,10 @@ def test__logistic_loss_grad_hess():
 
         # Second check that our intercept implementation is good
         w = np.zeros(n_features + 1)
-        loss_interp, grad_interp = _logistic_loss_and_grad_intercept(w,
+        loss_interp, grad_interp = _logistic_loss_and_grad(w,
                                                     X, y, alpha=1.)
         loss_interp_2, grad_interp_2, hess = \
-                    _logistic_loss_grad_hess_intercept(w, X, y, alpha=1.)
+                    _logistic_loss_grad_hess(w, X, y, alpha=1.)
         assert_array_almost_equal(loss_interp, loss_interp_2)
         assert_array_almost_equal(grad_interp, grad_interp_2)
 

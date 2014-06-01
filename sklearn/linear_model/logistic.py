@@ -20,6 +20,7 @@ from ..feature_selection.from_model import _LearntSelectorMixin
 from ..preprocessing import LabelEncoder, LabelBinarizer
 from ..svm.base import BaseLibLinear
 from ..utils import as_float_array, check_arrays
+from ..utils.extmath import log_logistic, safe_sparse_dot
 from ..externals.joblib import Parallel, delayed
 from ..cross_validation import check_cv
 from ..utils.optimize import newton_cg
@@ -30,139 +31,100 @@ from ..metrics import SCORERS
 # .. some helper functions for logistic_regression_path ..
 def _logistic_loss_and_grad(w, X, y, alpha):
     # the logistic loss and its gradient
-    z = X.dot(w)
+    fit_intercept = False
+    c = 0
+    _, n_features = X.shape
+    grad = np.empty_like(w)
+
+    # the fit_intercept case
+    if w.size == n_features + 1:
+        fit_intercept = True
+        c = w[-1]
+        w = w[:-1]
+
+    z = safe_sparse_dot(X, w)
+    z += c
     yz = y * z
-    out = np.empty_like(yz)
-    idx = yz > 0
-    out[idx] = np.log(1 + np.exp(-yz[idx]))
-    out[~idx] = (-yz[~idx] + np.log(1 + np.exp(yz[~idx])))
-    out = out.sum() + .5 * alpha * w.dot(w)
+
+    # Logistic loss is the negative of the log of the logistic function.
+    out = -np.sum(log_logistic(yz)) + .5 * alpha * np.dot(w, w)
 
     z = special.expit(yz)
     z0 = (z - 1) * y
-    grad = X.T.dot(z0) + alpha * w
+
+    grad[:n_features] = safe_sparse_dot(X.T, z0) + alpha * w
+    if fit_intercept:
+        grad[-1] = z0.sum()
     return out, grad
 
 
 def _logistic_loss(w, X, y, alpha):
+
+    # For the fit_intercept case.
+    c = 0
+    if w.size == X.shape[1] + 1:
+         c = w[-1]
+         w = w[:-1]
+
     # the logistic loss and
-    z = X.dot(w)
+    z = safe_sparse_dot(X, w)
+    z += c
     yz = y * z
-    out = np.empty_like(yz)
-    idx = yz > 0
-    out[idx] = np.log(1 + np.exp(-yz[idx]))
-    out[~idx] = (-yz[~idx] + np.log(1 + np.exp(yz[~idx])))
-    out = out.sum() + .5 * alpha * w.dot(w)
-    #print 'Loss %r' % out
+
+    # Logistic loss is the negative of the log of the logistic function.
+    out = -np.sum(log_logistic(yz)) + .5 * alpha * np.dot(w, w)
     return out
+
 
 def _logistic_loss_grad_hess(w, X, y, alpha):
     # the logistic loss, its gradient, and the matvec application of the
     # Hessian
-    z = X.dot(w)
+
+    n_samples, n_features = X.shape
+    fit_intercept = False
+    c = 0
+    grad = np.empty_like(w)
+
+    if w.size == n_features + 1:
+        fit_intercept = True
+        c = w[-1]    
+        w = w[:-1]
+
+    z = safe_sparse_dot(X, w)
+    z += c
     yz = y * z
-    out = np.empty_like(yz)
-    idx = yz > 0
-    out[idx] = np.log(1 + np.exp(-yz[idx]))
-    out[~idx] = (-yz[~idx] + np.log(1 + np.exp(yz[~idx])))
-    out = out.sum() + .5 * alpha * w.dot(w)
+
+    # Logistic loss is the negative of the log of the logistic function.
+    out = -np.sum(log_logistic(yz)) + .5 * alpha * np.dot(w, w)
 
     z = special.expit(yz)
     z0 = (z - 1) * y
-    grad = X.T.dot(z0) + alpha * w
+    grad[:n_features] = safe_sparse_dot(X.T, z0) + alpha * w
+    if fit_intercept:
+        z0_sum = np.sum(z0)
+        grad[-1] = np.sum(z0)
 
     # The mat-vec product of the Hessian
     d = z * (1 - z)
     d = np.sqrt(d, out=d)
     if sparse.issparse(X):
-        dX = sparse.dia_matrix((d, 0), shape=(d.size, d.size)).dot(X)
+        dX = safe_sparse_dot(sparse.dia_matrix((d, 0),
+                             shape=(n_samples, n_samples)), X)
     else:
         # Precompute as much as possible
         dX = d[:, np.newaxis] * X
 
     def Hs(s):
-        ret = dX.T.dot(dX.dot(s))
-        ret += alpha * s
+        ret = np.empty_like(s)
+        ret[:n_features] = dX.T.dot(dX.dot(s[:n_features]))
+        ret[:n_features] += alpha * s[:n_features]
+        if fit_intercept:
+            # XXX: Is this right?
+            ret[-1] = z0_sum * s[-1]
         return ret
     #print 'Loss/grad/hess %r, %r' % (out, grad.dot(grad))
     return out, grad, Hs
 
-
-def _logistic_loss_and_grad_intercept(w_c, X, y, alpha):
-    w = w_c[:-1]
-    c = w_c[-1]
-
-    z = X.dot(w)
-    z += c
-    yz = y * z
-    out = np.empty_like(yz)
-    idx = yz > 0
-    out[idx] = np.log(1 + np.exp(-yz[idx]))
-    out[~idx] = (-yz[~idx] + np.log(1 + np.exp(yz[~idx])))
-    out = out.sum() + .5 * alpha * w.dot(w)
-
-    z = special.expit(yz)
-    z0 = (z - 1) * y
-    grad = np.empty_like(w_c)
-    grad[:-1] = X.T.dot(z0) + alpha * w
-    grad[-1] = z0.sum()
-    return out, grad
-
-
-def _logistic_loss_intercept(w_c, X, y, alpha):
-    w = w_c[:-1]
-    c = w_c[-1]
-
-    z = X.dot(w)
-    z += c
-    yz = y * z
-    out = np.empty_like(yz)
-    idx = yz > 0
-    out[idx] = np.log(1 + np.exp(-yz[idx]))
-    out[~idx] = (-yz[~idx] + np.log(1 + np.exp(yz[~idx])))
-    out = out.sum() + .5 * alpha * w.dot(w)
-
-    #print 'Loss %r' % out
-    return out
-
-
-def _logistic_loss_grad_hess_intercept(w_c, X, y, alpha):
-    w = w_c[:-1]
-    c = w_c[-1]
-
-    z = X.dot(w)
-    z += c
-    yz = y * z
-    out = np.empty_like(yz)
-    idx = yz > 0
-    out[idx] = np.log(1 + np.exp(-yz[idx]))
-    out[~idx] = (-yz[~idx] + np.log(1 + np.exp(yz[~idx])))
-    out = out.sum() + .5 * alpha * w.dot(w)
-
-    z = special.expit(yz)
-    z0 = (z - 1) * y
-    grad = np.empty_like(w_c)
-    grad[:-1] = X.T.dot(z0) + alpha * w
-    z0_sum = z0.sum()
-    grad[-1] = z0_sum
-    # The mat-vec product of the Hessian
-    d = z * (1 - z)
-    d = np.sqrt(d, out=d)
-    if sparse.issparse(X):
-        dX = sparse.dia_matrix((d, 0), shape=(d.size, d.size)).dot(X)
-    else:
-        # Precompute as much as possible
-        dX = d[:, np.newaxis] * X
-    def Hs(s):
-        ret = np.empty_like(s)
-        ret[:-1] = dX.T.dot(dX.dot(s[:-1]))
-        ret[:-1] += alpha * s[:-1]
-        # XXX: I am not sure that this last line of the Hessian is right
-        # Without the intercept the Hessian is right, though
-        ret[-1] = z0_sum * s[-1]
-        return ret
-
-    return out, grad, Hs
 
 def logistic_regression_path(X, y, Cs=10, fit_intercept=True,
                              max_iter=100, gtol=1e-4, verbose=0,
@@ -239,10 +201,8 @@ def logistic_regression_path(X, y, Cs=10, fit_intercept=True,
                                   'implemented for the binary class case')
     if fit_intercept:
         w0 = np.zeros(X.shape[1] + 1)
-        func = _logistic_loss_and_grad_intercept
     else:
         w0 = np.zeros(X.shape[1])
-        func = _logistic_loss_and_grad
 
     if coef is not None:
         # it must work both giving the bias term and not
@@ -255,6 +215,7 @@ def logistic_regression_path(X, y, Cs=10, fit_intercept=True,
         if callback is not None:
             callback(w0, X, y, 1. / C)
         if solver == 'lbfgs':
+            func = _logistic_loss_and_grad
             try:
                 out = optimize.fmin_l_bfgs_b(
                     func, w0, fprime=None,
@@ -268,17 +229,9 @@ def logistic_regression_path(X, y, Cs=10, fit_intercept=True,
                     iprint=verbose > 0, pgtol=gtol)
             w0 = out[0]
         elif solver == 'newton-cg':
-            if fit_intercept:
-                func_grad_hess = _logistic_loss_grad_hess_intercept
-                func = _logistic_loss_intercept
-                grad = lambda x, *args: _logistic_loss_and_grad_intercept(x, *args)[1]
-            else:
-                func_grad_hess = _logistic_loss_grad_hess
-                func = _logistic_loss
-                grad = lambda x, *args: _logistic_loss_and_grad(x, *args)[1]
-
-            w0 = newton_cg(func_grad_hess, func, grad, w0, args=(X, y, 1./C),
-                        maxiter=max_iter)
+            grad = lambda x, *args: _logistic_loss_and_grad(x, *args)[1]
+            w0 = newton_cg(_logistic_loss_grad_hess, _logistic_loss, grad,
+                           w0, args=(X, y, 1./C), maxiter=max_iter)
         elif solver == 'liblinear':
             lr = LogisticRegression(C=C, fit_intercept=fit_intercept, tol=gtol)
             lr.fit(X, y)
