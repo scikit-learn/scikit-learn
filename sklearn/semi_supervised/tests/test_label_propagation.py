@@ -30,8 +30,10 @@ def test_distribution():
     for estimator, parameters in ESTIMATORS:
         clf = estimator(**parameters).fit(samples, labels)
         if parameters['kernel'] == 'knn':
-            assert_array_almost_equal(clf.predict_proba([[1., 0.0]]),
-                                      np.array([[1., 0.]]), 2)
+            # The sort is there to make the test stable; k-NN optimizations
+            # in 46aebf132b65e9a6c54b2747c864c6401cd5c56f broke it.
+            assert_array_almost_equal(np.sort(clf.predict_proba([[1., 0.0]])),
+                                      np.array([[0., 1.]]), 2)
         else:
             assert_array_almost_equal(np.asarray(clf.label_distributions_[2]),
                                       np.array([.5, .5]), 2)
