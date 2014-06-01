@@ -299,7 +299,15 @@ class LeastAbsoluteError(RegressionLossFunction):
 
 
 class HuberLossFunction(RegressionLossFunction):
-    """Loss function for least absolute deviation (LAD) regression. """
+    """Huber loss function forrobust regression.
+
+    M-Regression proposed in Friedman 2001.
+
+    See
+    ---
+    J. Friedman, Greedy Function Approximation: A Gradient Boosting
+    Machine, The Annals of Statistics, Vol. 29, No. 5, 2001.
+    """
 
     def __init__(self, n_classes, alpha=0.9):
         super(HuberLossFunction, self).__init__(n_classes)
@@ -333,7 +341,6 @@ class HuberLossFunction(RegressionLossFunction):
 
     def _update_terminal_region(self, tree, terminal_regions, leaf, X, y,
                                 residual, pred, sample_weight):
-        """LAD updates terminal regions to median estimates. """
         terminal_region = np.where(terminal_regions == leaf)[0]
         gamma = self.gamma
         diff = (y.take(terminal_region, axis=0)
@@ -378,7 +385,6 @@ class QuantileLossFunction(RegressionLossFunction):
 
     def _update_terminal_region(self, tree, terminal_regions, leaf, X, y,
                                 residual, pred, sample_weight):
-        """LAD updates terminal regions to median estimates. """
         terminal_region = np.where(terminal_regions == leaf)[0]
         diff = (y.take(terminal_region, axis=0)
                 - pred.take(terminal_region, axis=0))
@@ -905,6 +911,9 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble,
             sample_weight = np.ones(n_samples, dtype=np.float32)
         else:
             sample_weight = column_or_1d(sample_weight, warn=True)
+            if self.loss in ('lad', 'huber', 'quantile'):
+                raise ValueError('sample_weight not supported for loss=%r' %
+                                 self.loss)
 
         if y.shape[0] != n_samples:
             raise ValueError('Shape mismatch of X and y: %d != %d' %

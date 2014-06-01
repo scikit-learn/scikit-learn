@@ -173,6 +173,10 @@ def test_boston():
     for loss in ("ls", "lad", "huber"):
         for subsample in (1.0, 0.5):
             for sample_weight in (None, np.ones(len(boston.target))):
+                if sample_weight is not None and loss != 'ls':
+                    # 'lad' and 'huber' don't support sample_weights
+                    continue
+
                 clf = GradientBoostingRegressor(n_estimators=100, loss=loss,
                                                 max_depth=4, subsample=subsample,
                                                 min_samples_split=1,
@@ -954,6 +958,15 @@ def test_probability_exponential():
     assert_array_equal(clf.predict(T), true_result)
     assert_raises(AttributeError, clf.predict_proba, T)
     assert_raises(AttributeError, lambda : next(clf.staged_predict_proba(T)))
+
+
+def test_sample_weight_robust():
+    """Test that robost regression loss raise ValueError. """
+    sample_weight = np.ones(len(boston.target))
+    for loss in ('lad', 'huber', 'quantile'):
+        est = GradientBoostingRegressor(n_estimators=1, loss=loss)
+        assert_raises(ValueError, est.fit, boston.data, boston.target,
+                      sample_weight=sample_weight)
 
 
 if __name__ == "__main__":
