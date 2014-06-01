@@ -15,7 +15,7 @@ available.
 
 A common practice for evaluating the results of image denoising is by looking
 at the difference between the reconstruction and the original image. If the
-reconstruction is perfect this will look like gaussian noise.
+reconstruction is perfect this will look like Gaussian noise.
 
 It can be seen from the plots that the results of :ref:`omp` with two
 non-zero coefficients is a bit less biased than when keeping only one

@@ -18,7 +18,7 @@ estimator using a ``init="random"`` and ``n_init=1``. This run leads to
 a bad convergence (local optimum) with estimated centers between stucked
 between ground truth clusters.
 
-The dataset used for evaluation is a 2D grid of isotropic gaussian
+The dataset used for evaluation is a 2D grid of isotropic Gaussian
 clusters widely spaced.
 """
 print(__doc__)

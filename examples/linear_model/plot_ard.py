@@ -25,12 +25,12 @@ from scipy import stats
 from sklearn.linear_model import ARDRegression, LinearRegression
 
 ###############################################################################
-# Generating simulated data with Gaussian weigthts
+# Generating simulated data with Gaussian weights
 
 # Parameters of the example
 np.random.seed(0)
 n_samples, n_features = 100, 100
-# Create gaussian data
+# Create Gaussian data
 X = np.random.randn(n_samples, n_features)
 # Create weigts with a precision lambda_ of 4.
 lambda_ = 4.
