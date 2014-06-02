@@ -114,12 +114,9 @@ class PriorProbabilityEstimator(BaseEstimator):
     """
     def fit(self, X, y, sample_weight=None):
         if sample_weight is None:
-            class_counts = np.bincount(y)
-            priors = class_counts / float(y.shape[0])
-        else:
-            weighted_class_counts = np.bincount(y, weights=sample_weight)
-            priors = weighted_class_counts / sample_weight.sum()
-        self.priors = priors
+            sample_weight = np.ones_like(y, dtype=np.float)
+        class_counts = np.bincount(y, weights=sample_weight)
+        self.priors = class_counts / class_counts.sum()
 
     def predict(self, X):
         y = np.empty((X.shape[0], self.priors.shape[0]), dtype=np.float64)
