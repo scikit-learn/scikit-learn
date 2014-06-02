@@ -117,13 +117,8 @@ class PriorProbabilityEstimator(BaseEstimator):
             class_counts = np.bincount(y)
             priors = class_counts / float(y.shape[0])
         else:
-            classes = np.unique(y)
-            n_classes = classes.shape[0]
-            priors = np.zeros(n_classes, dtype=np.float64)
-            for c in classes:
-                mask = y == c
-                priors[c] = np.sum(sample_weight[mask])
-            priors /= priors.sum()
+            weighted_class_counts = np.bincount(y, weights=sample_weight)
+            priors = weighted_class_counts / sample_weight.sum()
         self.priors = priors
 
     def predict(self, X):
