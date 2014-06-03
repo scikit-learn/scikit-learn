@@ -249,7 +249,7 @@ def test_base_estimator():
 
 
 def test_sparse_classification():
-    """Check classification on sparse input."""
+    """Check classification with sparse input."""
     class CustomSVC(SVC):
 
         """SVC variant that records the nature of the training set."""
@@ -347,7 +347,7 @@ def test_sparse_classification():
 
 
 def test_sparse_regression():
-    """Check regression on sparse input."""
+    """Check regression with sparse input."""
     class CustomSVR(SVR):
 
         """SVR variant that records the nature of the training set."""
