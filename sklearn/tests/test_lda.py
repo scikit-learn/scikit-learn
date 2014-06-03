@@ -46,22 +46,12 @@ def test_lda_predict():
     # LDA shouldn't be able to separate those
     assert_true(np.any(y_pred3 != y3))
 
-<<<<<<< HEAD
-<<<<<<< HEAD:sklearn/tests/test_lda.py
 
-=======
->>>>>>> Renamed SLDA to ShrinkageLDA and moved it to lda.py.
 def test_lda_transform():
     clf = lda.LDA()
     X_transformed = clf.fit(X, y2).transform(X)
     assert_equal(X_transformed.shape[1], 1)
-<<<<<<< HEAD
-=======
-    # Test priors
-    clf = slda.SLDA(priors=[-2, 4])
-    assert_raises(ValueError, clf.fit, X, y1)
-    clf = slda.SLDA(priors=[2, 1])
-=======
+
 
 def test_slda_predict():
     """
@@ -111,13 +101,8 @@ def test_slda_predict():
     clf = lda.ShrinkageLDA(priors=[-2, 4])
     assert_raises(ValueError, clf.fit, X, y1)
     clf = lda.ShrinkageLDA(priors=[2, 1])
->>>>>>> Renamed SLDA to ShrinkageLDA and moved it to lda.py.
     y_pred = clf.fit(X, y2).predict(X)
     assert_array_equal(y_pred, y2)
 
     # Test one class
     assert_raises(ValueError, clf.fit, X, y1)
-<<<<<<< HEAD
->>>>>>> Added more tests for improved coverage:sklearn/tests/test_slda.py
-=======
->>>>>>> Renamed SLDA to ShrinkageLDA and moved it to lda.py.
