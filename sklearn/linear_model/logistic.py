@@ -29,22 +29,25 @@ from ..metrics import SCORERS
 
 
 # .. some helper functions for logistic_regression_path ..
-def _logistic_loss_and_grad(w, X, y, alpha):
-    # the logistic loss and its gradient
-    fit_intercept = False
-    c = 0
-    _, n_features = X.shape
-    grad = np.empty_like(w)
+def _intercept_dot(w, X, y):
 
-    # the fit_intercept case
-    if w.size == n_features + 1:
-        fit_intercept = True
+    c = None
+    if w.size == X.shape[1] + 1:
         c = w[-1]
         w = w[:-1]
 
     z = safe_sparse_dot(X, w)
-    z += c
-    yz = y * z
+    if c is not None:
+        z += c
+    return w, c, y*z
+
+
+def _logistic_loss_and_grad(w, X, y, alpha):
+    # the logistic loss and its gradient
+    _, n_features = X.shape
+    grad = np.empty_like(w)
+
+    w, c, yz = _intercept_dot(w, X, y)
 
     # Logistic loss is the negative of the log of the logistic function.
     out = -np.sum(log_logistic(yz)) + .5 * alpha * np.dot(w, w)
@@ -53,23 +56,14 @@ def _logistic_loss_and_grad(w, X, y, alpha):
     z0 = (z - 1) * y
 
     grad[:n_features] = safe_sparse_dot(X.T, z0) + alpha * w
-    if fit_intercept:
+    if c is not None:
         grad[-1] = z0.sum()
     return out, grad
 
 
-def _logistic_loss(w, X, y, alpha):
+def _logistic_loss(w, X, y, alpha, fit_intercept=False):
 
-    # For the fit_intercept case.
-    c = 0
-    if w.size == X.shape[1] + 1:
-         c = w[-1]
-         w = w[:-1]
-
-    # the logistic loss and
-    z = safe_sparse_dot(X, w)
-    z += c
-    yz = y * z
+    w, c, yz = _intercept_dot(w, X, y)
 
     # Logistic loss is the negative of the log of the logistic function.
     out = -np.sum(log_logistic(yz)) + .5 * alpha * np.dot(w, w)
@@ -81,18 +75,9 @@ def _logistic_loss_grad_hess(w, X, y, alpha):
     # Hessian
 
     n_samples, n_features = X.shape
-    fit_intercept = False
-    c = 0
     grad = np.empty_like(w)
 
-    if w.size == n_features + 1:
-        fit_intercept = True
-        c = w[-1]    
-        w = w[:-1]
-
-    z = safe_sparse_dot(X, w)
-    z += c
-    yz = y * z
+    w, c, yz = _intercept_dot(w, X, y)
 
     # Logistic loss is the negative of the log of the logistic function.
     out = -np.sum(log_logistic(yz)) + .5 * alpha * np.dot(w, w)
@@ -100,7 +85,7 @@ def _logistic_loss_grad_hess(w, X, y, alpha):
     z = special.expit(yz)
     z0 = (z - 1) * y
     grad[:n_features] = safe_sparse_dot(X.T, z0) + alpha * w
-    if fit_intercept:
+    if c is not None:
         z0_sum = np.sum(z0)
         grad[-1] = np.sum(z0)
 
@@ -118,7 +103,7 @@ def _logistic_loss_grad_hess(w, X, y, alpha):
         ret = np.empty_like(s)
         ret[:n_features] = dX.T.dot(dX.dot(s[:n_features]))
         ret[:n_features] += alpha * s[:n_features]
-        if fit_intercept:
+        if c is not None:
             # XXX: Is this right?
             ret[-1] = z0_sum * s[-1]
         return ret
