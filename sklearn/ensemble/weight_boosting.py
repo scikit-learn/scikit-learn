@@ -100,7 +100,7 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
 
         # Check data
         if isinstance(X, coo_matrix):
-            X = X.toCSR()
+            X = X.tocsr()
         X = safe_asarray(X)
 
         if (X.ndim != 2 and not issparse(X)):
