@@ -919,10 +919,10 @@ def test_check_cv_return_types():
 
 
 def test_cross_val_score_multilabel():
-    X = [[-3, 4], [2, 4], [3, 3], [0, 2], [-3, 1],
-         [-2, 1], [0, 0], [-2, -1], [-1, -2], [1, -2]]
-    y = [[1, 1], [0, 1], [0, 1], [0, 1], [1, 1],
-         [0, 1], [1, 0], [1, 1], [1, 0], [0, 0]]
+    X = np.array([[-3, 4], [2, 4], [3, 3], [0, 2], [-3, 1],
+                  [-2, 1], [0, 0], [-2, -1], [-1, -2], [1, -2]])
+    y = np.array([[1, 1], [0, 1], [0, 1], [0, 1], [1, 1],
+                  [0, 1], [1, 0], [1, 1], [1, 0], [0, 0]])
     clf = KNeighborsClassifier(n_neighbors=1)
     scoring_micro = make_scorer(precision_score, average='micro')
     scoring_macro = make_scorer(precision_score, average='macro')
