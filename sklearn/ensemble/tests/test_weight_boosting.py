@@ -19,6 +19,7 @@ from sklearn.svm import SVC, SVR
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils import shuffle
 from sklearn import datasets
+import time
 
 
 # Common random state
@@ -250,8 +251,8 @@ def test_base_estimator():
 
 def test_sparse_classification():
     """Check classification with sparse input."""
-    class CustomSVC(SVC):
 
+    class CustomSVC(SVC):
         """SVC variant that records the nature of the training set."""
 
         def fit(self, X, y, sample_weight=None):
@@ -260,8 +261,10 @@ def test_sparse_classification():
             self.data_type_ = type(X)
             return self
 
-    X, y = datasets.make_multilabel_classification(n_classes=1,
-                                                   return_indicator=True)
+    X, y = datasets.make_multilabel_classification(n_classes=1, n_samples=100,
+                                                   n_features=50,
+                                                   return_indicator=True,
+                                                   random_state=42)
     # Flatten y to a 1d array
     y = np.ravel(y)
 
@@ -348,8 +351,8 @@ def test_sparse_classification():
 
 def test_sparse_regression():
     """Check regression with sparse input."""
-    class CustomSVR(SVR):
 
+    class CustomSVR(SVR):
         """SVR variant that records the nature of the training set."""
 
         def fit(self, X, y, sample_weight=None):
@@ -358,9 +361,8 @@ def test_sparse_regression():
             self.data_type_ = type(X)
             return self
 
-    X, y = datasets.make_multilabel_classification(n_classes=20,
-                                                   return_indicator=True)
-    y = y.sum(axis=1)
+    X, y = datasets.make_regression(n_samples=100, n_features=50, n_targets=1,
+                                    random_state=42)
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 
@@ -397,6 +399,7 @@ def test_sparse_regression():
 
         assert all([(t == csc_matrix or t == csr_matrix)
                    for t in types])
+
 
 if __name__ == "__main__":
     import nose
