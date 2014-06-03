@@ -28,23 +28,22 @@ def test_lda_predict():
 
     clf = lda.LDA()
     y_pred = clf.fit(X, y2).predict(X)
-
     assert_array_equal(y_pred, y2)
 
     # Assure that it works with 1D data
-    y_pred1 = clf.fit(X1, y2).predict(X1)
-    assert_array_equal(y_pred1, y2)
+    y_pred = clf.fit(X1, y2).predict(X1)
+    assert_array_equal(y_pred, y2)
 
     # Test probas estimates
-    y_proba_pred1 = clf.predict_proba(X1)
-    assert_array_equal((y_proba_pred1[:, 1] > 0.5) + 1, y2)
-    y_log_proba_pred1 = clf.predict_log_proba(X1)
-    assert_array_almost_equal(np.exp(y_log_proba_pred1), y_proba_pred1, 8)
+    y_proba_pred = clf.predict_proba(X1)
+    assert_array_equal((y_proba_pred[:, 1] > 0.5) + 1, y2)
+    y_log_proba_pred = clf.predict_log_proba(X1)
+    assert_array_almost_equal(np.exp(y_log_proba_pred), y_proba_pred, 8)
 
     # Primarily test for commit 2f34950 -- "reuse" of priors
-    y_pred3 = clf.fit(X, y3).predict(X)
+    y_pred = clf.fit(X, y3).predict(X)
     # LDA shouldn't be able to separate those
-    assert_true(np.any(y_pred3 != y3))
+    assert_true(np.any(y_pred != y3))
 
 
 def test_lda_transform():
@@ -77,8 +76,8 @@ def test_slda_predict():
     assert_array_equal(y_pred, y2)
 
     # Assure that it works with 1D data
-    y_pred1 = clf.fit(X1, y2).predict(X1)
-    assert_array_equal(y_pred1, y2)
+    y_pred = clf.fit(X1, y2).predict(X1)
+    assert_array_equal(y_pred, y2)
 
     # Test decision function (two-class case)
     clf = lda.ShrinkageLDA().fit(X, y2)
@@ -87,15 +86,15 @@ def test_slda_predict():
     assert_array_almost_equal(y_decf, y_logp[:, 1] - y_logp[:, 0], 8)
 
     # Test probability estimates
-    y_proba_pred1 = clf.predict_proba(X1)
-    assert_array_equal((y_proba_pred1[:, 1] > 0.5) + 1, y2)
-    y_log_proba_pred1 = clf.predict_log_proba(X1)
-    assert_array_almost_equal(np.exp(y_log_proba_pred1), y_proba_pred1, 8)
+    y_proba_pred = clf.predict_proba(X1)
+    assert_array_equal((y_proba_pred[:, 1] > 0.5) + 1, y2)
+    y_log_proba_pred = clf.predict_log_proba(X1)
+    assert_array_almost_equal(np.exp(y_log_proba_pred), y_proba_pred, 8)
 
     # Primarily test for commit 2f34950 -- "reuse" of priors
-    y_pred3 = clf.fit(X, y3).predict(X)
+    y_pred = clf.fit(X, y3).predict(X)
     # LDA shouldn't be able to separate those
-    assert_true(np.any(y_pred3 != y3))
+    assert_true(np.any(y_pred != y3))
 
     # Test priors
     clf = lda.ShrinkageLDA(priors=[-2, 4])

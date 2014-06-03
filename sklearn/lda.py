@@ -98,16 +98,7 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
                 warnings.warning('priors do not sum to 1; renormalizing')
                 self.priors = self.priors / self.priors.sum()
 
-        if shrinkage is not None:
-            if shrinkage == 'auto':
-                self._cov_estimator = _ledoit_wolf
-            else:
-                print('warning: unknown shrinkage method, using no shrinkage')
-                self._cov_estimator = empirical_covariance
-        else:
-            self._cov_estimator = empirical_covariance
-
-    def fit(self, X, y):
+    def fit(self, X, y, store_covariance=False, tol=1.0e-4):
         """
         Fit the LDA model according to the given training data and parameters.
 
