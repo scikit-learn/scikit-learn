@@ -4,9 +4,8 @@
 #          Andreas Mueller <amueller@ais.uni-bonn.de>
 # License: BSD 3 clause
 
+from itertools import chain
 import numbers
-import warnings
-import itertools
 
 import numpy as np
 from scipy import sparse
@@ -20,6 +19,7 @@ from ..utils import atleast2d_or_csr
 from ..utils import safe_asarray
 from ..utils import warn_if_not_float
 from ..utils.extmath import row_norms
+from ..utils.fixes import combinations_with_replacement as comb_w_r
 from ..utils.sparsefuncs_fast import inplace_csr_row_normalize_l1
 from ..utils.sparsefuncs_fast import inplace_csr_row_normalize_l2
 from ..utils.sparsefuncs import inplace_column_scale
@@ -27,6 +27,7 @@ from ..utils.sparsefuncs import mean_variance_axis0
 
 zip = six.moves.zip
 map = six.moves.map
+range = six.moves.range
 
 __all__ = [
     'Binarizer',
@@ -427,8 +428,8 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
     Notes
     -----
     Be aware that the number of features in the output array scales
-    exponentially in the number of features of the input array, so this
-    is not suitable for higher-dimensional data.
+    polynomially in the number of features of the input array, and
+    exponentially in the degree. High degrees can cause overfitting.
 
     See :ref:`examples/plot_polynomial_regression.py
     <example_plot_polynomial_regression.py>`
@@ -440,15 +441,11 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
     @staticmethod
     def _power_matrix(n_features, degree, include_bias):
         """Compute the matrix of polynomial powers"""
-        # Find permutations/combinations which add to degree or less
-        deg_min = 0 if include_bias else 1
-        powers = itertools.product(*(range(degree + 1)
-                                     for i in range(n_features)))
-        powers = np.array([c for c in powers if deg_min <= sum(c) <= degree])
-
-        # sort so that the order of the powers makes sense
-        i = np.lexsort(np.vstack([powers.T, powers.sum(1)]))
-        return powers[i]
+        start = int(not include_bias)
+        combn = chain.from_iterable(comb_w_r(range(n_features), i)
+                                    for i in range(start, degree + 1))
+        powers = np.vstack(np.bincount(c, minlength=n_features) for c in combn)
+        return powers
 
     def fit(self, X, y=None):
         """
