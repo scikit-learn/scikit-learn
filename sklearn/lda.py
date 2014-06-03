@@ -344,7 +344,7 @@ class ShrinkageLDA(BaseEstimator, ClassifierMixin):
     Examples
     --------
     >>> import numpy as np
-    >>> from sklearn.slda import ShrinkageLDA
+    >>> from sklearn.lda import ShrinkageLDA
     >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
     >>> y = np.array([1, 1, 1, 2, 2, 2])
     >>> clf = ShrinkageLDA()
