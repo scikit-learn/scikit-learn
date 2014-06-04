@@ -43,6 +43,15 @@ def _check_numpy_unicode_bug(labels):
 class LabelEncoder(BaseEstimator, TransformerMixin):
     """Encode labels with value between 0 and n_classes-1.
 
+    Parameters
+    ----------
+
+    new_labels : string, optional (default: "raise")
+        Determines how to handle newly seen labels, i.e., data
+        not seen in the fit domain.  If "raise", then raise ValueError;
+        if "map", then re-map the new labels to class N, where seen
+        classes are in {0, ..., N-1}.
+
     Attributes
     ----------
     `classes_` : array of shape (n_class,)
@@ -77,6 +86,9 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
     ['tokyo', 'tokyo', 'paris']
 
     """
+    def __init__(self, new_labels="raise"):
+        """Constructor"""
+        self.new_labels = new_labels
 
     def _check_fitted(self):
         if not hasattr(self, "classes_"):
@@ -134,7 +146,27 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         _check_numpy_unicode_bug(classes)
         if len(np.intersect1d(classes, self.classes_)) < len(classes):
             diff = np.setdiff1d(classes, self.classes_)
-            raise ValueError("y contains new labels: %s" % str(diff))
+
+            # If we are mapping new labels, get "new" ID and change in copy.
+            if self.new_labels == "map":
+                # Get new ID and append to class list
+                missing_id = len(self.classes_)
+                self.classes_.resize(len(self.classes_)+1)
+                self.classes_[-1] = missing_id
+
+                # Reset the value in y_copy
+                missing_mask = np.in1d(y, diff)
+                y_copy = np.array(y)
+                y_copy[missing_mask] = missing_id
+
+                # Return mapped encoding
+                return np.searchsorted(self.classes_, y_copy)
+            elif self.new_labels == "raise":
+                raise ValueError("y contains new labels: %s" % str(diff))
+            else:
+                raise ValueError("Value of argument `new_labels`={0} "
+                                 "is unknown.".format(self.new_labels))
+
         return np.searchsorted(self.classes_, y)
 
     def inverse_transform(self, y):
