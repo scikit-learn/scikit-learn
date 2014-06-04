@@ -31,7 +31,19 @@ from ..metrics import SCORERS
 # .. some helper functions for logistic_regression_path ..
 def _intercept_dot(w, X, y):
     """
+    Computes y * np.dot(w, X), taking into consideration
+    if the intercept should be fit or not.
 
+    Parameters
+    ----------
+    w : ndarray, shape = (n_features,) or (n_features + 1,)
+        Coefficient vector
+
+    X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        Training data
+
+    y : ndarray, shape (n_samples)
+        Array of labels
     """
     c = None
     if w.size == X.shape[1] + 1:
@@ -46,7 +58,21 @@ def _intercept_dot(w, X, y):
 
 def _logistic_loss_and_grad(w, X, y, alpha):
     """
+    Computes the logistic loss and gradient.
 
+    Parameters
+    ----------
+    w : ndarray, shape = (n_features,) or (n_features + 1,)
+        Coefficient vector
+
+    X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        Training data
+
+    y : ndarray, shape (n_samples)
+        Array of labels.
+
+    alpha : float
+        Inverse of the cross_validation parameter.
     """
     _, n_features = X.shape
     grad = np.empty_like(w)
@@ -67,7 +93,21 @@ def _logistic_loss_and_grad(w, X, y, alpha):
 
 def _logistic_loss(w, X, y, alpha, fit_intercept=False):
     """
+    Computes the logistic loss and gradient.
 
+    Parameters
+    ----------
+    w : ndarray, shape = (n_features,) or (n_features + 1,)
+        Coefficient vector
+
+    X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        Training data
+
+    y : ndarray, shape (n_samples)
+        Array of labels.
+
+    alpha : float
+        Inverse of the cross_validation parameter.
     """
     w, c, yz = _intercept_dot(w, X, y)
 
@@ -78,12 +118,22 @@ def _logistic_loss(w, X, y, alpha, fit_intercept=False):
 
 def _logistic_loss_grad_hess(w, X, y, alpha):
     """
+    Computes the logistic loss, gradient and the Hessian.
 
+    Parameters
+    ----------
+    w : ndarray, shape = (n_features,) or (n_features + 1,)
+        Coefficient vector
 
+    X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        Training data
+
+    y : ndarray, shape (n_samples)
+        Array of labels.
+
+    alpha : float
+        Inverse of the cross_validation parameter.
     """
-    # the logistic loss, its gradient, and the matvec application of the
-    # Hessian
-
     n_samples, n_features = X.shape
     grad = np.empty_like(w)
 
@@ -194,6 +244,7 @@ def logistic_regression_path(X, y, Cs=10, fit_intercept=True,
     if isinstance(Cs, numbers.Integral):
         Cs = np.logspace(-4, 4, Cs)
     Cs = np.sort(Cs)
+
     y = np.sign(y - np.asarray(y).mean())
     X = as_float_array(X, copy=False)
     if not (np.unique(y).size == 2):
