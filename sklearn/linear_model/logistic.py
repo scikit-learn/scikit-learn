@@ -30,7 +30,9 @@ from ..metrics import SCORERS
 
 # .. some helper functions for logistic_regression_path ..
 def _intercept_dot(w, X, y):
+    """
 
+    """
     c = None
     if w.size == X.shape[1] + 1:
         c = w[-1]
@@ -43,7 +45,9 @@ def _intercept_dot(w, X, y):
 
 
 def _logistic_loss_and_grad(w, X, y, alpha):
-    # the logistic loss and its gradient
+    """
+
+    """
     _, n_features = X.shape
     grad = np.empty_like(w)
 
@@ -62,7 +66,9 @@ def _logistic_loss_and_grad(w, X, y, alpha):
 
 
 def _logistic_loss(w, X, y, alpha, fit_intercept=False):
+    """
 
+    """
     w, c, yz = _intercept_dot(w, X, y)
 
     # Logistic loss is the negative of the log of the logistic function.
@@ -71,6 +77,10 @@ def _logistic_loss(w, X, y, alpha, fit_intercept=False):
 
 
 def _logistic_loss_grad_hess(w, X, y, alpha):
+    """
+
+
+    """
     # the logistic loss, its gradient, and the matvec application of the
     # Hessian
 
@@ -91,7 +101,6 @@ def _logistic_loss_grad_hess(w, X, y, alpha):
 
     # The mat-vec product of the Hessian
     d = z * (1 - z)
-    d = np.sqrt(d, out=d)
     if sparse.issparse(X):
         dX = safe_sparse_dot(sparse.dia_matrix((d, 0),
                              shape=(n_samples, n_samples)), X)
@@ -99,15 +108,21 @@ def _logistic_loss_grad_hess(w, X, y, alpha):
         # Precompute as much as possible
         dX = d[:, np.newaxis] * X
 
+    if c is not None:
+        # Calculate the double derivative with respect to intecept.
+        dd_intercept = dX.sum(axis=0)
+
     def Hs(s):
         ret = np.empty_like(s)
-        ret[:n_features] = dX.T.dot(dX.dot(s[:n_features]))
+        ret[:n_features] = X.T.dot(dX.dot(s[:n_features]))
         ret[:n_features] += alpha * s[:n_features]
+
         if c is not None:
-            # XXX: Is this right?
-            ret[-1] = z0_sum * s[-1]
+            ret[:n_features] += s[-1] * dd_intercept
+            ret[-1] = dd_intercept.dot(s[:n_features])
+            ret[-1] += z0_sum * s[-1]
         return ret
-    #print 'Loss/grad/hess %r, %r' % (out, grad.dot(grad))
+
     return out, grad, Hs
 
 
