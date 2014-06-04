@@ -224,7 +224,7 @@ class Parallel(Logger):
             Only active when backend="multiprocessing".
         max_nbytes int, str, or None, optional, 100e6 (100MB) by default
             Threshold on the size of arrays passed to the workers that
-            triggers automated memmory mapping in temp_folder. Can be an int
+            triggers automated memory mapping in temp_folder. Can be an int
             in Bytes, or a human-readable string, e.g., '1M' for 1 megabyte.
             Use None to disable memmaping of large arrays.
             Only active when backend="multiprocessing".
@@ -577,7 +577,7 @@ class Parallel(Logger):
             else:
                 already_forked = int(os.environ.get('__JOBLIB_SPAWNED_PARALLEL__', 0))
                 if already_forked:
-                    raise ImportError('[joblib] Attempting to do parallel computing'
+                    raise ImportError('[joblib] Attempting to do parallel computing '
                             'without protecting your import on a system that does '
                             'not support forking. To use parallel-computing in a '
                             'script, you must protect you main loop using "if '
