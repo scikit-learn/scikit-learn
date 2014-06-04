@@ -25,6 +25,10 @@ Changelog
      any kind of base estimator. See the :ref:`Bagging <bagging>` section of
      the user guide for details and examples. By `Gilles Louppe`_.
 
+   - Add sparse input support to :class:`ensemble.AdaBoostClassifier` and
+     :class:`ensemble.AdaBoostRegressor` meta-estimators.
+     By `Hamzeh Alsalhi`_.
+
    - Memory improvements of decision trees, by `Arnaud Joly`_.
 
    - Decision trees can now be built in best-first manner by using ``max_leaf_nodes``
@@ -2531,3 +2535,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Michael Eickenberg: https://github.com/eickenberg
 
 .. _Jeffrey Blackburne: https://github.com/jblackburne
+
+.. _Hamzeh Alsalhi: https://github.com/hamsal
