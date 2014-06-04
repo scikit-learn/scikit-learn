@@ -47,10 +47,13 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
     ----------
 
     new_labels : string, optional (default: "raise")
-        Determines how to handle newly seen labels, i.e., data
-        not seen in the fit domain.  If "raise", then raise ValueError;
-        if "map", then re-map the new labels to class N, where seen
-        classes are in {0, ..., N-1}.
+        Determines how to handle new labels, i.e., data
+        not seen in the training domain.
+        - If "raise", then raise ValueError.
+        - If "update", then re-map the new labels to classes
+          `[N, ..., N+m-1]`, where `m` is the number of new labels.
+        - If "nan", then re-map the new labels to numpy.nan.
+
 
     Attributes
     ----------
@@ -148,21 +151,30 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
             diff = np.setdiff1d(classes, self.classes_)
 
             # If we are mapping new labels, get "new" ID and change in copy.
-            if self.new_labels == "map":
-                # Get new ID and append to class list
-                missing_id = len(self.classes_)
-                self.classes_ = np.append(self.classes_, missing_id)
-
-                # Reset the value in y_copy
-                missing_mask = np.in1d(y, diff)
-                y_copy = np.array(y)
-                y_copy[missing_mask] = missing_id
+            if self.new_labels == "update":
+                # Update the class list with new labels
+                self.classes_ = np.append(self.classes_, np.sort(diff))
 
                 # Return mapped encoding
-                return np.searchsorted(self.classes_, y_copy)
+                return np.searchsorted(self.classes_, y)
+            elif self.new_labels == "nan":
+                # Create copy of array and return
+                y_array = np.array(y)
+                z = np.zeros(y_array.shape)
+
+                # Find entries with new labels
+                missing_mask = np.in1d(y, diff)
+
+                # Populate return array properly and return
+                z[-missing_mask] = np.searchsorted(self.classes_,
+                                                   y_array[-missing_mask])
+                z[missing_mask] = np.nan
+                return z
             elif self.new_labels == "raise":
+                # Return ValueError, original behavior.
                 raise ValueError("y contains new labels: %s" % str(diff))
             else:
+                # Raise on invalid argument.
                 raise ValueError("Value of argument `new_labels`={0} "
                                  "is unknown.".format(self.new_labels))
 
