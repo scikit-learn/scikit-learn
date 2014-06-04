@@ -65,9 +65,9 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
     `LabelEncoder` can be used to normalize labels.
 
     >>> from sklearn import preprocessing
-    >>> le = preprocessing.LabelEncoder(new_labels='raise')
+    >>> le = preprocessing.LabelEncoder()
     >>> le.fit([1, 2, 2, 6])
-    LabelEncoder()
+    LabelEncoder(new_labels='raise')
     >>> le.classes_
     array([1, 2, 6])
     >>> le.transform([1, 1, 2, 6]) #doctest: +ELLIPSIS
@@ -78,9 +78,9 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
     It can also be used to transform non-numerical labels (as long as they are
     hashable and comparable) to numerical labels.
 
-    >>> le = preprocessing.LabelEncoder(new_labels='raise')
+    >>> le = preprocessing.LabelEncoder()
     >>> le.fit(["paris", "paris", "tokyo", "amsterdam"])
-    LabelEncoder()
+    LabelEncoder(new_labels='raise')
     >>> list(le.classes_)
     ['amsterdam', 'paris', 'tokyo']
     >>> le.transform(["tokyo", "tokyo", "paris"]) #doctest: +ELLIPSIS
