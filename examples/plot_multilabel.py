@@ -55,9 +55,7 @@ def plot_subfigure(X, Y, subplot, title, transform):
     if transform == "pca":
         X = PCA(n_components=2).fit_transform(X)
     elif transform == "cca":
-        # Convert list of tuples to a class indicator matrix first
-        Y_indicator = LabelBinarizer().fit(Y).transform(Y)
-        X = CCA(n_components=2).fit(X, Y_indicator).transform(X)
+        X = CCA(n_components=2).fit(X, Y).transform(X)
     else:
         raise ValueError
 
@@ -73,8 +71,8 @@ def plot_subfigure(X, Y, subplot, title, transform):
     pl.subplot(2, 2, subplot)
     pl.title(title)
 
-    zero_class = np.where([0 in y for y in Y])
-    one_class = np.where([1 in y for y in Y])
+    zero_class = np.where(Y[:, 0])
+    one_class = np.where(Y[:, 1])
     pl.scatter(X[:, 0], X[:, 1], s=40, c='gray')
     pl.scatter(X[zero_class, 0], X[zero_class, 1], s=160, edgecolors='b',
                facecolors='none', linewidths=2, label='Class 1')
@@ -100,6 +98,7 @@ pl.figure(figsize=(8, 6))
 
 X, Y = make_multilabel_classification(n_classes=2, n_labels=1,
                                       allow_unlabeled=True,
+                                      return_indicator=True,
                                       random_state=1)
 
 plot_subfigure(X, Y, 1, "With unlabeled samples + CCA", "cca")
@@ -107,6 +106,7 @@ plot_subfigure(X, Y, 2, "With unlabeled samples + PCA", "pca")
 
 X, Y = make_multilabel_classification(n_classes=2, n_labels=1,
                                       allow_unlabeled=False,
+                                      return_indicator=True,
                                       random_state=1)
 
 plot_subfigure(X, Y, 3, "Without unlabeled samples + CCA", "cca")
