@@ -397,7 +397,7 @@ follows::
     >>> from sklearn import preprocessing
     >>> le = preprocessing.LabelEncoder()
     >>> le.fit([1, 2, 2, 6])
-    LabelEncoder()
+    LabelEncoder(new_labels='raise')
     >>> le.classes_
     array([1, 2, 6])
     >>> le.transform([1, 1, 2, 6])
@@ -410,7 +410,7 @@ hashable and comparable) to numerical labels::
 
     >>> le = preprocessing.LabelEncoder()
     >>> le.fit(["paris", "paris", "tokyo", "amsterdam"])
-    LabelEncoder()
+    LabelEncoder(new_labels='raise')
     >>> list(le.classes_)
     ['amsterdam', 'paris', 'tokyo']
     >>> le.transform(["tokyo", "tokyo", "paris"])
