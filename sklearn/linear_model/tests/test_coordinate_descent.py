@@ -460,6 +460,13 @@ def test_sparse_input_dtype_enet_and_lassocv():
     assert_almost_equal(clf.coef_, clf1.coef_, decimal=6)
 
 
+def test_precompute_invalid_argument():
+    X, y, _, _ = build_dataset()
+    for clf in [ElasticNetCV(precompute="invalid"),
+                LassoCV(precompute="invalid")]:
+        assert_raises(ValueError, clf.fit, X, y)
+
+
 if __name__ == '__main__':
     import nose
     nose.runmodule()
