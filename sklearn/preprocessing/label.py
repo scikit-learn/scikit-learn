@@ -59,10 +59,11 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
     new_labels : string, optional (default: "raise")
         Determines how to handle new labels, i.e., data
         not seen in the training domain.
-        - If "raise", then raise ValueError.
-        - If "update", then re-map the new labels to classes
-          `[N, ..., N+m-1]`, where `m` is the number of new labels.
-        - If "nan", then re-map the new labels to numpy.nan.
+
+        - If ``"raise"``, then raise ValueError.
+        - If ``"update"``, then re-map the new labels to
+          classes ``[N, ..., N+m-1]``, where ``m`` is the number of new labels.
+        - If ``"nan"``, then re-map the new labels to ``numpy.nan``.
 
 
     Attributes
