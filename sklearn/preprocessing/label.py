@@ -151,8 +151,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
             if self.new_labels == "map":
                 # Get new ID and append to class list
                 missing_id = len(self.classes_)
-                self.classes_.resize(len(self.classes_)+1)
-                self.classes_[-1] = missing_id
+                self.classes_ = np.append(self.classes_, missing_id)
 
                 # Reset the value in y_copy
                 missing_mask = np.in1d(y, diff)
