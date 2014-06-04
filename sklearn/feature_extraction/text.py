@@ -726,7 +726,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
             vocabulary = self.vocabulary_
         else:
             # Add a new value when a new vocabulary item is seen
-            vocabulary = defaultdict(None)
+            vocabulary = defaultdict()
             vocabulary.default_factory = vocabulary.__len__
 
         analyze = self.build_analyzer()
