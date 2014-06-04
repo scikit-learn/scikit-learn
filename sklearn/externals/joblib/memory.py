@@ -95,7 +95,7 @@ def _cache_key_to_dir(cachedir, func, argument_hash):
     return os.path.join(*parts)
 
 
-def _load_output(output_dir, func, timestamp=None, metadata=None,
+def _load_output(output_dir, func_name, timestamp=None, metadata=None,
                  mmap_mode=None, verbose=0):
     """Load output of a computation."""
     if verbose > 1:
@@ -105,10 +105,10 @@ def _load_output(output_dir, func, timestamp=None, metadata=None,
                 args = ", ".join(['%s=%s' % (name, value)
                                   for name, value
                                   in metadata['input_args'].items()])
-                signature = "%s(%s)" % (os.path.basename(func),
+                signature = "%s(%s)" % (os.path.basename(func_name),
                                              args)
             else:
-                signature = os.path.basename(func)
+                signature = os.path.basename(func_name)
         except KeyError:
             pass
 
@@ -197,7 +197,7 @@ class MemorizedResult(Logger):
 
     def get(self):
         """Read value from cache and return it."""
-        return _load_output(self._output_dir, self.func,
+        return _load_output(self._output_dir, _get_func_fullname(self.func),
                             timestamp=self.timestamp,
                             metadata=self.metadata, mmap_mode=self.mmap_mode,
                             verbose=self.verbose)
@@ -429,7 +429,7 @@ class MemorizedFunc(Logger):
             if self.mmap_mode is not None:
                 # Memmap the output at the first call to be consistent with
                 # later calls
-                out = _load_output(output_dir, self.func,
+                out = _load_output(output_dir, _get_func_fullname(self.func),
                                    timestamp=self.timestamp,
                                    mmap_mode=self.mmap_mode,
                                    verbose=self._verbose)
@@ -757,7 +757,8 @@ class MemorizedFunc(Logger):
                       "of joblib. A MemorizedResult provides similar features",
                       DeprecationWarning)
         # No metadata available here.
-        return _load_output(output_dir, self.func, timestamp=self.timestamp,
+        return _load_output(output_dir, _get_func_fullname(self.func),
+                            timestamp=self.timestamp,
                             mmap_mode=self.mmap_mode, verbose=self._verbose)
 
     # XXX: Need a method to check if results are available.
