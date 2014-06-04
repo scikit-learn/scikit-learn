@@ -4,7 +4,7 @@
 #          Andreas Mueller <amueller@ais.uni-bonn.de>
 # License: BSD 3 clause
 
-from itertools import chain
+from itertools import chain, combinations
 import numbers
 
 import numpy as np
@@ -19,7 +19,7 @@ from ..utils import atleast2d_or_csr
 from ..utils import safe_asarray
 from ..utils import warn_if_not_float
 from ..utils.extmath import row_norms
-from ..utils.fixes import combinations_with_replacement as comb_w_r
+from ..utils.fixes import combinations_with_replacement as combinations_w_r
 from ..utils.sparsefuncs_fast import inplace_csr_row_normalize_l1
 from ..utils.sparsefuncs_fast import inplace_csr_row_normalize_l2
 from ..utils.sparsefuncs import inplace_column_scale
@@ -390,7 +390,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
 
 
 class PolynomialFeatures(BaseEstimator, TransformerMixin):
-    """Generate polynomial (interaction) features.
+    """Generate polynomial and interaction features.
 
     Generate a new feature matrix consisting of all polynomial combinations
     of the features with degree less than or equal to the specified degree.
@@ -401,7 +401,11 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
     ----------
     degree : integer
         The degree of the polynomial features. Default = 2.
-    include_bias : integer
+    interaction_only : boolean, default = False
+        If true, only interaction features are produced: features that are
+        products of at most ``degree`` *distinct* input features (so not
+        ``x[1] ** 2``, ``x[0] * x[2] ** 3``, etc.).
+    include_bias : boolean
         If True (default), then include a bias column, the feature in which
         all polynomial powers are zero (i.e. a column of ones - acts as an
         intercept term in a linear model).
@@ -418,6 +422,11 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
     array([[ 1,  0,  1,  0,  0,  1],
            [ 1,  2,  3,  4,  6,  9],
            [ 1,  4,  5, 16, 20, 25]])
+    >>> poly = PolynomialFeatures(interaction_only=True)
+    >>> poly.fit_transform(X)
+    array([[ 1,  0,  1,  0],
+           [ 1,  2,  3,  6],
+           [ 1,  4,  5, 20]])
 
     Attributes
     ----------
@@ -434,15 +443,17 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
     See :ref:`examples/plot_polynomial_regression.py
     <example_plot_polynomial_regression.py>`
     """
-    def __init__(self, degree=2, include_bias=True):
+    def __init__(self, degree=2, interaction_only=False, include_bias=True):
         self.degree = degree
+        self.interaction_only = interaction_only
         self.include_bias = include_bias
 
     @staticmethod
-    def _power_matrix(n_features, degree, include_bias):
+    def _power_matrix(n_features, degree, interaction_only, include_bias):
         """Compute the matrix of polynomial powers"""
+        comb = (combinations if interaction_only else combinations_w_r)
         start = int(not include_bias)
-        combn = chain.from_iterable(comb_w_r(range(n_features), i)
+        combn = chain.from_iterable(comb(range(n_features), i)
                                     for i in range(start, degree + 1))
         powers = np.vstack(np.bincount(c, minlength=n_features) for c in combn)
         return powers
@@ -452,8 +463,8 @@ class PolynomialFeatures(BaseEstimator, TransformerMixin):
         Compute the polynomial feature combinations
         """
         n_samples, n_features = array2d(X).shape
-        self.powers_ = self._power_matrix(n_features,
-                                          self.degree,
+        self.powers_ = self._power_matrix(n_features, self.degree,
+                                          self.interaction_only,
                                           self.include_bias)
         return self
 
