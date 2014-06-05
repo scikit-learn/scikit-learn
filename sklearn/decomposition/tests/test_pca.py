@@ -6,6 +6,7 @@ from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_greater
+from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_warns
 
 from sklearn import datasets
@@ -163,6 +164,12 @@ def test_pca_inverse():
     Y_inverse = pca.inverse_transform(Y)
     relative_max_delta = (np.abs(X - Y_inverse) / np.abs(X).mean()).max()
     assert_almost_equal(relative_max_delta, 0.11, decimal=2)
+
+
+def test_pca_validation():
+    X = [[0, 1], [1, 0]]
+    for n_components in [-1, 3]:
+        assert_raises(ValueError, PCA(n_components).fit, X)
 
 
 def test_randomized_pca_check_projection():

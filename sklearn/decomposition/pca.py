@@ -292,6 +292,9 @@ class PCA(BaseEstimator, TransformerMixin):
 
             n_components = _infer_dimension_(explained_variance_,
                                              n_samples, n_features)
+        elif not 0 <= n_components <= n_features:
+            raise ValueError("n_components=%r invalid for n_features=%d"
+                             % (n_components, n_features))
 
         if 0 < n_components < 1.0:
             # number of components for which the cumulated explained variance
