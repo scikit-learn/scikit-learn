@@ -218,7 +218,7 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
 
     def _check_fit_data(self, x, y, sample_weight=None):
         if len(x.shape) != 1:
-            raise ValueError("x should be a vector")
+            raise ValueError("x should be a 1d array")
 
     def _build_f(self, x, y):
         """Build the f_ interp1d function."""
@@ -314,7 +314,7 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         """
         T = as_float_array(T)
         if len(T.shape) != 1:
-            raise ValueError("T should be a vector")
+            raise ValueError("T should be a 1d array")
 
         # Handle the out_of_bounds argument by setting bounds_error and T
         if self.out_of_bounds == "clip":
