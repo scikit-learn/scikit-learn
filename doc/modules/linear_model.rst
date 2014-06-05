@@ -795,7 +795,7 @@ performance.
 
 .. _polynomial_regression:
 
-Polynomial Regression: Extending Linear Models with Basis Functions
+Polynomial regression: extending linear models with basis functions
 ===================================================================
 
 .. currentmodule:: sklearn.preprocessing
@@ -842,7 +842,7 @@ polynomial features of varying degrees:
 
 This figure is created using the :class:`PolynomialFeatures` preprocessor.
 This preprocessor transforms an input data matrix into a new data matrix
-of a given degree.  It can be used as follows:
+of a given degree.  It can be used as follows::
 
     >>> from sklearn.preprocessing import PolynomialFeatures
     >>> import numpy as np
@@ -863,7 +863,7 @@ any linear model.
 
 This sort of preprocessing can be streamlined with the
 :ref:`Pipeline <pipeline>` tools. A single object representing a simple
-polynomial regression can be created and used as follows:
+polynomial regression can be created and used as follows::
 
     >>> from sklearn.preprocessing import PolynomialFeatures
     >>> from sklearn.linear_model import LinearRegression
@@ -879,3 +879,28 @@ polynomial regression can be created and used as follows:
 
 The linear model trained on polynomial features is able to exactly recover
 the input polynomial coefficients.
+
+In some cases it's not necessary to include higher powers of any single feature,
+but only the so-called *interaction features*
+that multiply together at most :math:`d` distinct features.
+These can be gotten from :class:`PolynomialFeatures` with the setting
+``interaction_only=True``.
+
+For example, when dealing with boolean features,
+:math:`x_i^n = x_i` for all :math:`n` and is therefore useless;
+but :math:`x_i x_j` represents the conjunction of two booleans.
+This way, we can solve the XOR problem with a linear classifier::
+
+    >>> from sklearn.linear_model import Perceptron
+    >>> from sklearn.preprocessing import PolynomialFeatures
+    >>> X = np.array([[0, 0], [0, 1], [1, 0], [1, 1]])
+    >>> y = X[:, 0] ^ X[:, 1]
+    >>> X = PolynomialFeatures(interaction_only=True).fit_transform(X)
+    >>> X
+    array([[1, 0, 0, 0],
+           [1, 0, 1, 0],
+           [1, 1, 0, 0],
+           [1, 1, 1, 1]])
+    >>> clf = Perceptron(fit_intercept=False, n_iter=10).fit(X, y)
+    >>> clf.score(X, y)
+    1.0
