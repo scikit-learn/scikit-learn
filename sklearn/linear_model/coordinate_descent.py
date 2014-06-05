@@ -474,9 +474,12 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
             model = cd_fast.enet_coordinate_descent_gram(
                 coef_, l1_reg, l2_reg, precompute, Xy, y, max_iter,
                 tol, positive)
-        else:
+        elif precompute is False:
             model = cd_fast.enet_coordinate_descent(
                 coef_, l1_reg, l2_reg, X, y, max_iter, tol, positive)
+        else:
+            raise ValueError("Precompute should be one of True, False, "
+                            "'auto' or array-like")
         coef_, dual_gap_, eps_ = model
         coefs[..., i] = coef_
         dual_gaps[i] = dual_gap_
