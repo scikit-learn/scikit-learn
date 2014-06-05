@@ -377,8 +377,9 @@ matrix from a list of multi-class labels::
     array([[1, 0, 0, 0],
            [0, 0, 0, 1]])
 
-:class:`LabelBinarizer` also supports multiple labels per instance::
+For multiple labels per instance, use :class:`MultiLabelBinarizer`::
 
+    >>> lb = preprocessing.MultiLabelBinarizer()
     >>> lb.fit_transform([(1, 2), (3,)])
     array([[1, 1, 0],
            [0, 0, 1]])
