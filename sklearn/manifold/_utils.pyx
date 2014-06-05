@@ -2,6 +2,8 @@ from libc cimport math
 cimport cython
 import numpy as np
 cimport numpy as np
+cdef extern from "numpy/npy_math.h":
+    float NPY_INFINITY
 
 
 cdef double EPSILON_DBL = 1e-7
@@ -59,8 +61,8 @@ cpdef np.ndarray[np.float_t, ndim=2] _binary_search_perplexity(
     cdef int j
 
     for i in range(n_samples):
-        beta_min = -math.INFINITY
-        beta_max = math.INFINITY
+        beta_min = -NPY_INFINITY
+        beta_max = NPY_INFINITY
         beta = 1.0
 
         # Binary search of precision for i-th conditional distribution
@@ -86,13 +88,13 @@ cpdef np.ndarray[np.float_t, ndim=2] _binary_search_perplexity(
 
             if entropy_diff > 0.0:
                 beta_min = beta
-                if beta_max == math.INFINITY:
+                if beta_max == NPY_INFINITY:
                     beta *= 2.0
                 else:
                     beta = (beta + beta_max) / 2.0
             else:
                 beta_max = beta
-                if beta_min == -math.INFINITY:
+                if beta_min == -NPY_INFINITY:
                     beta /= 2.0
                 else:
                     beta = (beta + beta_min) / 2.0
