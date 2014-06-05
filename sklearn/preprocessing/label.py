@@ -469,8 +469,9 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
     >>> mlb.fit_transform([set(['sci-fi', 'thriller']), set(['comedy'])])
     array([[0, 1, 1],
            [1, 0, 0]])
-    >>> mlb.classes_
-    array(['comedy', 'sci-fi', 'thriller'], dtype=object)
+    >>> list(mlb.classes_)
+    ['comedy', 'sci-fi', 'thriller']
+
     """
     def __init__(self, classes=None):
         self.classes = classes
