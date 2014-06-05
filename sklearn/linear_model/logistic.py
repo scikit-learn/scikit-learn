@@ -306,6 +306,38 @@ def _log_reg_scoring_path(X, y, train, test, Cs=10, scoring=None,
                           fit_intercept=False,
                           max_iter=100, gtol=1e-4,
                           tol=1e-4, verbose=0, method='liblinear'):
+    """
+    Computes scores across logistic_regression_path
+
+    Parameters
+    ----------
+    X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        Training data.
+
+    y : array-like, shape (n_samples,) or (n_samples, n_targets)
+        Target values
+
+    train : list of indices
+        The indices of the train set
+
+    test : list of indices
+        The indices of the test set
+
+    fit_intercept : bool
+        If False, then the bias term is set to zero.
+
+    max_iter : int
+        Maximum no. of iterations for the solver.
+
+    gtol : float
+        Stopping criteria
+
+    verbose : int
+        Amount of verbosity
+
+    method : {'lbfgs', 'newton-cg', 'liblinear'}
+        Decides which solver to use.
+    """
     log_reg = LogisticRegression(fit_intercept=fit_intercept)
     log_reg._enc = LabelEncoder()
     log_reg._enc.fit_transform([-1, 1])
@@ -487,10 +519,16 @@ class LogisticRegressionCV(BaseEstimator, LinearClassifierMixin,
         Specifies if a constant (a.k.a. bias or intercept) should be
         added the decision function.
 
+    cv : integer or cross-validation generator
+        The default cross-validation generator used is Stratified K-Folds.
+        If an integer is provided, then it is the number of folds used.
+        See the module :mod:`sklearn.cross_validation` module for the
+        list of possible cross-validation objects.
+
     max_iter: integer, optional
         Maximum number of iterations of the optimization algorithm.
 
-    tol: float, optional
+    gtol: float, optional
         Tolerance for stopping criteria.
 
     scoring: callabale
@@ -499,17 +537,36 @@ class LogisticRegressionCV(BaseEstimator, LinearClassifierMixin,
     solver: {'newton-cg', 'lbfgs', 'liblinear'}
         Algorithm to use in the optimization problem.
 
+    verbose : bool or integer
+        Amount of verbosity.
+
+    n_jobs : integer, optional
+        Number of CPU cores used during the cross-validation loop. If given
+        a value of -1, all cores are used.
+
     Attributes
     ----------
-    `coef_` : array, shape = [n_classes-1, n_features]
+    `coef_` : array, shape = (n_classes-1, n_features)
         Coefficient of the features in the decision function.
 
         `coef_` is readonly property derived from `raw_coef_` that \
         follows the internal memory layout of liblinear.
 
-    `intercept_` : array, shape = [n_classes-1]
+    `intercept_` : array, shape = (n_classes-1)
         Intercept (a.k.a. bias) added to the decision function.
         It is available only when parameter intercept is set to True.
+
+    `Cs_` : array
+        Array of C i.e inverse of regularization parameter values used
+        for cross-validation.
+
+    `coefs_paths_` : array, shape = (n_folds, len(Cs_), n_features + 1) or
+                     (n_folds, len(Cs_), n_features + 1)
+        path of coefficients obtained during cross-validating across each
+        fold and then across each Cs.
+
+    `scores_` : array, shape = [n_folds, len(Cs_)]
+        grid of scores obtained during cross-validating each fold.
 
     See also
     --------

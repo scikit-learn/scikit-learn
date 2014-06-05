@@ -329,3 +329,27 @@ def test_intercept_logistic_helper():
     hess = hess(grad)
     assert_array_almost_equal(hess_interp[:n_features], hess[:n_features])
     assert_almost_equal(hess_interp[-1] + alpha * grad[-1], hess[-1])
+
+
+def test_error_multitask():
+    # Right now LogisticRegressionCV cannot handle multiple classes.
+    X, y = make_classification(n_samples=100, n_features=50,
+                               n_informative=20, n_classes=3)
+    assert_raises(ValueError, LogisticRegressionCV().fit, X, y)
+
+
+def test_shape_attributes_logregcv():
+    n_samples, n_features = 100, 100
+    X, y = make_classification(n_samples=n_samples, n_features=n_features,
+                               n_informative=20)
+    clf = LogisticRegressionCV(cv=3)
+    clf.fit(X, y)
+
+    assert_array_equal(clf.coef_.shape, (1, n_features))
+    assert_array_equal(clf.classes_, [0, 1])
+    assert_equal(len(clf.classes_), 2)
+
+    coefs_paths = np.asarray(clf.coefs_paths_)
+    assert_array_equal(coefs_paths.shape, (3, 10, n_features + 1))
+    assert_array_equal(clf.Cs_.shape, (10, ))
+    assert_array_equal(clf.scores_.shape, (3, 10))
