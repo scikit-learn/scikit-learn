@@ -225,10 +225,10 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
 
         # Handle the out_of_bounds argument by setting bounds_error
         if self.out_of_bounds in ["raise"]:
-            self.f_ = interpolate.interp1d(self.x_, self.y_, kind='linear',
+            self.f_ = interpolate.interp1d(x, y, kind='linear',
                                            bounds_error=True)
         elif self.out_of_bounds in ["nan", "clip"]:
-            self.f_ = interpolate.interp1d(self.x_, self.y_, kind='linear',
+            self.f_ = interpolate.interp1d(x, y, kind='linear',
                                            bounds_error=False)
         else:
             raise ValueError("The argument ``out_of_bounds`` must be in "
