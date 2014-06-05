@@ -463,11 +463,14 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
     >>> mlb.fit_transform([(1, 2), (3,)])
     array([[1, 1, 0],
            [0, 0, 1]])
-    >>> mlb.classes_          # doctest: +ELLIPSIS
-    array([1, 2, 3]...)
-    >>> mlb.fit_transform([set([1, 2]), set([3])])
-    array([[1, 1, 0],
-           [0, 0, 1]])
+    >>> mlb.classes_
+    array([1, 2, 3])
+
+    >>> mlb.fit_transform([set(['sci-fi', 'thriller']), set(['comedy'])])
+    array([[0, 1, 1],
+           [1, 0, 0]])
+    >>> mlb.classes_
+    array(['comedy', 'sci-fi', 'thriller'], dtype=object)
     """
     def __init__(self, classes=None):
         self.classes = classes
@@ -490,7 +493,8 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
             classes = sorted(set(itertools.chain.from_iterable(y)))
         else:
             classes = self.classes
-        self.classes_ = np.empty(len(classes), dtype=object)
+        dtype = np.int if all(isinstance(c, int) for c in classes) else object
+        self.classes_ = np.empty(len(classes), dtype=dtype)
         self.classes_[:] = classes
         return self
 
@@ -520,8 +524,10 @@ class MultiLabelBinarizer(BaseEstimator, TransformerMixin):
 
         # sort classes and reorder columns
         tmp = sorted(class_mapping, key=class_mapping.get)
+
         # (make safe for tuples)
-        class_mapping = np.empty(len(tmp), dtype=object)
+        dtype = np.int if all(isinstance(c, int) for c in tmp) else object
+        class_mapping = np.empty(len(tmp), dtype=dtype)
         class_mapping[:] = tmp
         self.classes_, inverse = np.unique(class_mapping, return_inverse=True)
         yt.indices = np.take(inverse, yt.indices)
