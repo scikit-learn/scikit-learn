@@ -54,6 +54,11 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         - If ``"update"``, then re-map the new labels to
           classes ``[N, ..., N+m-1]``, where ``m`` is the number of new labels.
         - If ``"nan"``, then re-map the new labels to ``numpy.nan``.
+        - If ``"label"``, then use the value of ``new_label_class``.
+    
+    new_label_class : integer, optional (default: -1)
+        If ``new_labels="label"``, then this value will be assigned to
+        as the class for any new labels that are encountered.
 
 
     Attributes
