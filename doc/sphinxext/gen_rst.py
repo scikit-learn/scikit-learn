@@ -48,14 +48,6 @@ try:
 except NameError:
     basestring = str
 
-try:
-    from PIL import Image
-except ImportError:
-    import Image
-
-import matplotlib
-matplotlib.use('Agg')
-
 import token
 import tokenize
 import numpy as np
@@ -747,6 +739,11 @@ def make_thumbnail(in_fname, out_fname, width, height):
     """Make a thumbnail with the same aspect ratio centered in an
        image with a given width and height
     """
+    # local import to avoid testing dependency on PIL:
+    try:
+        from PIL import Image
+    except ImportError:
+        import Image
     img = Image.open(in_fname)
     width_in, height_in = img.size
     scale_w = width / float(width_in)
@@ -922,6 +919,8 @@ def generate_file_rst(fname, target_dir, src_dir, root_dir, plot_gallery):
             # We need to execute the code
             print('plotting %s' % fname)
             t0 = time()
+            import matplotlib
+            matplotlib.use('Agg')
             import matplotlib.pyplot as plt
             plt.close('all')
             cwd = os.getcwd()
