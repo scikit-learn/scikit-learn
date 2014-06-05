@@ -83,7 +83,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
     >>> from sklearn import preprocessing
     >>> le = preprocessing.LabelEncoder()
     >>> le.fit([1, 2, 2, 6])
-    LabelEncoder(new_labels='raise')
+    LabelEncoder(new_label_class=-1, new_labels='raise')
     >>> le.classes_
     array([1, 2, 6])
     >>> le.transform([1, 1, 2, 6]) #doctest: +ELLIPSIS
@@ -96,7 +96,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
 
     >>> le = preprocessing.LabelEncoder()
     >>> le.fit(["paris", "paris", "tokyo", "amsterdam"])
-    LabelEncoder(new_labels='raise')
+    LabelEncoder(new_label_class=-1, new_labels='raise')
     >>> list(le.classes_)
     ['amsterdam', 'paris', 'tokyo']
     >>> le.transform(["tokyo", "tokyo", "paris"]) #doctest: +ELLIPSIS
