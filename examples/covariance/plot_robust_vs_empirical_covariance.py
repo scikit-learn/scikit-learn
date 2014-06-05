@@ -1,4 +1,4 @@
-"""
+r"""
 =======================================
 Robust vs Empirical covariance estimate
 =======================================
@@ -12,8 +12,10 @@ Minimum Covariance Determinant Estimator
 ----------------------------------------
 The Minimum Covariance Determinant estimator is a robust, high-breakdown point
 (i.e. it can be used to estimate the covariance matrix of highly contaminated
-datasets, up to :math:`\\frac{n_samples - n_features-1}{2}` outliers) estimator of
-covariance. The idea is to find :math:`\\frac{n_samples+n_features+1}{2}`
+datasets, up to
+:math:`\frac{n_\text{samples} - n_\text{features}-1}{2}` outliers) estimator of
+covariance. The idea is to find
+:math:`\frac{n_\text{samples} + n_\text{features}+1}{2}`
 observations whose empirical covariance has the smallest determinant, yielding
 a "pure" subset of observations from which to compute standards estimates of
 location and covariance. After a correction step aiming at compensating the
@@ -31,7 +33,8 @@ distributed data sets:
 
 - The mean and the empirical covariance of the full dataset, which break
   down as soon as there are outliers in the data set
-- The robust MCD, that has a low error provided n_samples > 5 * n_features
+- The robust MCD, that has a low error provided
+  :math:`n_\text{samples} > 5n_\text{features}`
 - The mean and the empirical covariance of the observations that are known
   to be good ones. This can be considered as a "perfect" MCD estimation,
   so one can trust our implementation by comparing to this case.
