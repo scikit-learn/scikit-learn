@@ -159,6 +159,11 @@ Changelog
      :class:`ElasticNetCV <linear_model.ElasticNetCV>`.
      By Brian Wignall and `Alexandre Gramfort`_.
 
+   - Fixed a bug in :class:`LassoCV <linear_model.LassoCV>` and
+     :class:`ElasticNetCV <linear_model.ElasticNetCV>`: they would not
+     pre-compute the Gram matrix with ``precompute=True`` or
+     ``precompute="auto"`` and ``n_samples > n_features``. By `Manoj Kumar`_.
+
    - Fixed a race condition in parallel processing with
      ``pre_dispatch != "all"`` (for instance in ``cross_val_score``).
      By `Olivier Grisel`_.
