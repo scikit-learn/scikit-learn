@@ -183,7 +183,7 @@ def test_liblinear_random_state():
     assert_array_almost_equal(lr1.coef_, lr2.coef_)
 
 
-def test__logistic_loss_and_grad():
+def test_logistic_loss_and_grad():
     X_ref, y = make_classification(n_samples=20)
     n_features = X_ref.shape[1]
 
@@ -212,7 +212,7 @@ def test__logistic_loss_and_grad():
         assert_array_almost_equal(grad_interp, approx_grad, decimal=2)
 
 
-def test__logistic_loss_grad_hess():
+def test_logistic_loss_grad_hess():
     n_samples, n_features = 100, 5
     X_ref = np.random.randn(n_samples, n_features)
     y = np.sign(X_ref.dot(5 * np.random.randn(n_features)))
@@ -278,3 +278,20 @@ def test_logistic_cv():
     lr = LogisticRegression(C=1, fit_intercept=False)
     lr.fit(X_ref, y)
     assert_array_almost_equal(lr.coef_, lr_cv.coef_, decimal=2)
+
+
+def test_logistic_cv_sparse():
+    X, y = make_classification(n_samples=100, n_features=5)
+    X[X < 1.0] = 0.0
+    csr = sp.csr_matrix(X)
+    csc = sp.csc_matrix(X)
+
+    for fit_intercept in [True, False]:
+        clf = LogisticRegressionCV(fit_intercept=fit_intercept)
+        clf.fit(X, y)
+        for data in [csr, csc]:
+            clfs = LogisticRegressionCV(fit_intercept=fit_intercept)
+            clfs.fit(data, y)
+            assert_array_almost_equal(clfs.coef_, clf.coef_)
+            assert_array_almost_equal(clfs.intercept_, clf.intercept_)
+            assert_equal(clfs.C_, clf.C_)

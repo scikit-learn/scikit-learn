@@ -19,7 +19,7 @@ from .base import LinearClassifierMixin, SparseCoefMixin, BaseEstimator
 from ..feature_selection.from_model import _LearntSelectorMixin
 from ..preprocessing import LabelEncoder, LabelBinarizer
 from ..svm.base import BaseLibLinear
-from ..utils import as_float_array, check_arrays
+from ..utils import atleast2d_or_csc, as_float_array, check_arrays
 from ..utils.extmath import log_logistic, safe_sparse_dot
 from ..externals.joblib import Parallel, delayed
 from ..cross_validation import check_cv
@@ -159,8 +159,9 @@ def _logistic_loss_grad_hess(w, X, y, alpha):
         dX = d[:, np.newaxis] * X
 
     if c is not None:
-        # Calculate the double derivative with respect to intecept.
-        dd_intercept = dX.sum(axis=0)
+        # Calculate the double derivative with respect to intecept
+        # In the case of sparse matrices this returns a matrix object.
+        dd_intercept = np.squeeze(np.array(dX.sum(axis=0)))
 
     def Hs(s):
         ret = np.empty_like(s)
@@ -246,7 +247,8 @@ def logistic_regression_path(X, y, Cs=10, fit_intercept=True,
     Cs = np.sort(Cs)
 
     y = np.sign(y - np.asarray(y).mean())
-    X = as_float_array(X, copy=False)
+    X = atleast2d_or_csc(X, dtype=np.float64)
+    X, y = check_arrays(X, y, copy=False)
     if not (np.unique(y).size == 2):
         raise NotImplementedError('logistic_regression_path is currently only '
                                   'implemented for the binary class case')
@@ -546,6 +548,7 @@ class LogisticRegressionCV(BaseEstimator, LinearClassifierMixin,
         self : object
             Returns self.
         """
+        X = atleast2d_or_csc(X, dtype=np.float64)
         X, y = check_arrays(X, y, copy=False)
         self._lb = LabelBinarizer(neg_label=-1, pos_label=1)
         y = np.squeeze(self._lb.fit_transform(y))

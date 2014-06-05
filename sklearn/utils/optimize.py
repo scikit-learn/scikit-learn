@@ -127,12 +127,10 @@ if __name__ == "__main__":
     A = np.random.normal(size=(10, 10))
 
     def func(x):
-        print 'Call to f: x %r' % x
         Ax = A.dot(x)
         return .5*(Ax).dot(Ax)
 
     def func_grad_hess(x):
-        print 'Call to f_g_h: x %r' % x
         return func(x), A.T.dot(A.dot(x)), lambda x: A.T.dot(A.dot(x))
 
     x0 = np.ones(10)
