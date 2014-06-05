@@ -100,9 +100,10 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
     ['tokyo', 'tokyo', 'paris']
 
     """
-    def __init__(self, new_labels="raise"):
+    def __init__(self, new_labels="raise", new_label_class=-1):
         """Constructor"""
         self.new_labels = new_labels
+        self.new_label_class = new_label_class
 
     def _check_fitted(self):
         if not hasattr(self, "classes_"):
@@ -180,6 +181,19 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
                 z[-missing_mask] = np.searchsorted(self.classes_,
                                                    y_array[-missing_mask])
                 z[missing_mask] = np.nan
+                return z
+            elif self.new_labels == "label":
+                # Create copy of array and return
+                y_array = np.array(y)
+                z = np.zeros(y_array.shape)
+
+                # Find entries with new labels
+                missing_mask = np.in1d(y, diff)
+
+                # Populate return array properly and return
+                z[-missing_mask] = np.searchsorted(self.classes_,
+                                                   y_array[-missing_mask])
+                z[missing_mask] = self.new_label_class
                 return z
             elif self.new_labels == "raise":
                 # Return ValueError, original behavior.
