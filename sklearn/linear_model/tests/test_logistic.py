@@ -2,6 +2,7 @@ import numpy as np
 import scipy.sparse as sp
 from scipy import linalg, optimize
 
+from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_equal
@@ -281,7 +282,8 @@ def test_logistic_cv():
 
 
 def test_logistic_cv_sparse():
-    X, y = make_classification(n_samples=100, n_features=5)
+    X, y = make_classification(n_samples=100, n_features=5,
+                               random_state=np.random.RandomState(0))
     X[X < 1.0] = 0.0
     csr = sp.csr_matrix(X)
     csc = sp.csc_matrix(X)
@@ -295,3 +297,35 @@ def test_logistic_cv_sparse():
             assert_array_almost_equal(clfs.coef_, clf.coef_)
             assert_array_almost_equal(clfs.intercept_, clf.intercept_)
             assert_equal(clfs.C_, clf.C_)
+
+
+def test_intercept_logistic_helper():
+    n_samples, n_features = 100, 5
+    X, y = make_classification(n_samples=n_samples, n_features=n_features,
+                               random_state=np.random.RandomState(0))
+
+    # Fit intercept case.
+    alpha = 1.
+    w = np.ones(n_features + 1)
+    loss_interp, grad_interp, hess_interp = _logistic_loss_grad_hess(
+        w, X, y, alpha)
+
+    # Do not fit intercept. This can be considered equivalent to adding
+    # a feature vector of ones, i.e column of one vectors.
+    X_ = np.hstack((X, np.ones(100)[:, np.newaxis]))
+    loss, grad, hess = _logistic_loss_grad_hess(w, X_, y, alpha)
+
+    # In the fit_intercept=False case, the feature vector of ones is
+    # penalized. This should be taken care of.
+    assert_equal(loss_interp + 0.5 * (w[-1]**2), loss)
+
+    # Check gradient.
+    assert_array_equal(grad_interp[:n_features], grad[:n_features])
+    assert_equal(grad_interp[-1] + alpha * w[-1], grad[-1])
+
+    np.random.seed(0)
+    grad = np.random.rand(n_features + 1)
+    hess_interp = hess_interp(grad)
+    hess = hess(grad)
+    assert_array_almost_equal(hess_interp[:n_features], hess[:n_features])
+    assert_almost_equal(hess_interp[-1] + alpha * grad[-1], hess[-1])

@@ -171,7 +171,7 @@ def _logistic_loss_grad_hess(w, X, y, alpha):
         if c is not None:
             ret[:n_features] += s[-1] * dd_intercept
             ret[-1] = dd_intercept.dot(s[:n_features])
-            ret[-1] += z0_sum * s[-1]
+            ret[-1] += d.sum() * s[-1]
         return ret
 
     return out, grad, Hs
