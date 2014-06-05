@@ -19,7 +19,7 @@ External Tutorials
 There are several online tutorials available which are geared toward
 specific subject areas:
 
-- `Machine Learning for NeuroImaging in Python <http://nisl.github.com/>`_
+- `Machine Learning for NeuroImaging in Python <http://nilearn.github.io/>`_
 - `Machine Learning for Astronomical Data Analysis <http://astroml.github.com/sklearn_tutorial/>`_
 
 .. _videos:
